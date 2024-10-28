@@ -1,6 +1,7 @@
 import hre from "hardhat";
 import * as keys from "../utils/keys";
 import { formatAmount } from "../utils/math";
+import { getBalanceOf } from "../utils/token";
 import got from "got";
 
 function getOracleAbi() {
@@ -34,6 +35,7 @@ async function main() {
 
   const pricesByToken = await getPricesFromTickers();
   const dataStore = await hre.ethers.getContract("DataStore");
+  const feeHandler = await hre.ethers.getContract("FeeHandler");
   const buybackTokens = [tokens.GMX, hre.network.name === "arbitrum" ? tokens.WETH : tokens.WAVAX];
 
   const data = await Promise.all(
@@ -48,9 +50,16 @@ async function main() {
 
   const tokensLength = Object.values(tokens).length;
 
-  console.log("buybackAvailableFeeAmount:");
   for (const [i, buybackToken] of buybackTokens.entries()) {
     console.log(`Buyback token: ${buybackToken.symbol}`);
+    const withdrawableAmount = await dataStore.getUint(keys.withdrawableBuybackTokenAmountKey(buybackToken.address));
+    const contractBalance = await getBalanceOf(buybackToken.address, feeHandler.address);
+    console.log(
+      `Withdrawable amount: ${withdrawableAmount.toString()}, Contract balance: ${contractBalance.toString()}`
+    );
+    if (contractBalance.lt(withdrawableAmount)) {
+      throw new Error(`Insufficient contract balance`);
+    }
     for (const [j, feeToken] of Object.values(tokens).entries()) {
       const dataIndex = i * tokensLength + j;
       const amount = data[dataIndex];

@@ -8,11 +8,7 @@ export async function deployContract(name, args, contractOptions = {}) {
 }
 
 export async function contractAt(name, address, provider?) {
-  let contractFactory = await ethers.getContractFactory(name);
-  if (provider) {
-    contractFactory = contractFactory.connect(provider);
-  }
-  return await contractFactory.attach(address);
+  return ethers.getContractAt(name, address, provider);
 }
 
 export function createDeployFunction({
