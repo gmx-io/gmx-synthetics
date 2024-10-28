@@ -5,7 +5,7 @@ import { performMulticall } from "../utils/multicall";
 import { SECONDS_PER_YEAR } from "../utils/constants";
 import * as keys from "../utils/keys";
 
-const priceImpactBpsList = [1, 5, 10];
+const priceImpactBpsList = [1, 5, 10, 40];
 
 const stablecoinSymbols = {
   USDC: true,
@@ -273,10 +273,10 @@ function getTradeSizeForImpact({ priceImpactBps, impactExponentFactor, impactFac
   if (bigNumberify(0).eq(impactFactor)) {
     return bigNumberify(0);
   }
-  const exponent = 1 / (impactExponentFactor.div(decimalToFloat(1)).toNumber() - 1);
+  const exponent = 1 / (impactExponentFactor.div(decimalToFloat(1, 2)).toNumber() / 100 - 1);
   const base = bigNumberify(priceImpactBps).mul(decimalToFloat(1)).div(10_000).div(impactFactor).toNumber();
 
-  const tradeSize = Math.pow(base, exponent);
+  const tradeSize = Math.pow(base, exponent).toFixed(0);
   return tradeSize;
 }
 
