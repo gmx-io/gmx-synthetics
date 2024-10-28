@@ -28,6 +28,12 @@ const func = createDeployFunction({
   afterDeploy: async ({ deployedContract }) => {
     await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
   },
+  // FeeHandler should not be re-deployed as the new FeeHandler would not have
+  // the funds from the existing FeeHandler which could lead to errors in
+  // buybacks and withdrawal of fees as the amounts in the DataStore would
+  // not match the contract balance
+  // The migration of funds must be explicitly handled if a re-deploy is required
+  id: "FeeHandler_1",
 });
 
 func.dependencies = func.dependencies.concat(["MockVaultV1"]);
