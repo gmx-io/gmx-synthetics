@@ -1455,9 +1455,9 @@ const config: {
 
       maxPoolUsdForDeposit: decimalToFloat(3_500_000),
 
-      negativePositionImpactFactor: exponentToFloat("7.5e-10"),
-      positivePositionImpactFactor: exponentToFloat("2.5e-10"),
-      positionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
+      negativePositionImpactFactor: exponentToFloat("3.116e-6"),
+      positivePositionImpactFactor: exponentToFloat("1.038e-6"),
+      positionImpactExponentFactor: exponentToFloat("1.62e0"),
 
       negativeSwapImpactFactor: exponentToFloat("12e-9"),
       positiveSwapImpactFactor: exponentToFloat("6e-9"),
