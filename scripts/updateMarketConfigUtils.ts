@@ -1,4 +1,4 @@
-import hre, { network } from "hardhat";
+import hre from "hardhat";
 
 import fetch from "node-fetch";
 import { handleInBatches } from "../utils/batch";
@@ -635,8 +635,8 @@ const processMarkets = async ({
   return ignoredRiskOracleParams;
 };
 
-export async function updateMarketConfig({ write, marketAddress, includeRiskOracleBaseKeys = false }) {
-  if (!["arbitrumGoerli", "avalancheFuji", "hardhat"].includes(network.name)) {
+export async function updateMarketConfig({ write, marketAddress = undefined, includeRiskOracleBaseKeys = false }) {
+  if (!["arbitrumGoerli", "avalancheFuji", "hardhat"].includes(hre.network.name)) {
     const { errors } = await validateMarketConfigs();
     if (errors.length !== 0) {
       throw new Error("Invalid market configs");
@@ -760,14 +760,15 @@ async function getSupportedRiskOracleMarkets(markets, tokens, onchainMarketsByTo
     return supported;
   }
 
-  if (!RISK_ORACLE_SUPPORTED_NETWORKS.includes(network.name)) {
+  // Chaos API does not support fuji
+  if (hre.network.name === "avalancheFuji") {
     return supported;
   }
 
   const response = await fetch("https://cloud.chaoslabs.co/query/ccar-perpetuals", {
     method: "POST",
     headers: {
-      protocol: `gmx-v2-${network.name}`,
+      protocol: `gmx-v2-${hre.network.name}`,
       "content-type": "application/json",
     },
     body: `{

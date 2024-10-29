@@ -215,7 +215,7 @@ const singleTokenMarketConfig: Partial<BaseMarketConfig> = {
   swapImpactExponentFactor: decimalToFloat(1),
 };
 
-const synthethicMarketConfig: Partial<BaseMarketConfig> = {
+const syntheticMarketConfig: Partial<BaseMarketConfig> = {
   ...baseMarketConfig,
 
   reserveFactor: percentageToFloat("95%"),
@@ -230,7 +230,7 @@ const synthethicMarketConfig: Partial<BaseMarketConfig> = {
 };
 
 const synthethicMarketConfig_IncreasedCapacity: Partial<BaseMarketConfig> = {
-  ...synthethicMarketConfig,
+  ...syntheticMarketConfig,
 
   reserveFactor: percentageToFloat("125%"),
   openInterestReserveFactor: percentageToFloat("120%"),
@@ -703,7 +703,7 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:EIGEN/USD"),
       virtualMarketId: hashString("SPOT:WETH/USD"),
 
-      ...synthethicMarketConfig,
+      ...syntheticMarketConfig,
 
       maxLongTokenPoolAmount: expandDecimals(1249, 18), // ~$3m
       maxShortTokenPoolAmount: expandDecimals(3_000_000, 6),
@@ -742,7 +742,7 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:SHIB/USD"),
       virtualMarketId: hashString("SPOT:ETH/USD"),
 
-      ...synthethicMarketConfig,
+      ...syntheticMarketConfig,
 
       maxPoolUsdForDeposit: decimalToFloat(1_500_000), // x1.5 of max open interest
 
@@ -782,7 +782,7 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:AAVE/USD"),
       virtualMarketId: hashString("SPOT:ETH/USD"),
 
-      ...synthethicMarketConfig,
+      ...syntheticMarketConfig,
 
       positionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
 
@@ -827,7 +827,7 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:UNI/USD"),
       virtualMarketId: hashString("SPOT:ETH/USD"),
 
-      ...synthethicMarketConfig,
+      ...syntheticMarketConfig,
 
       positionImpactExponentFactor: exponentToFloat("2e0"),
 
@@ -873,7 +873,7 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:PEPE/USD"),
       virtualMarketId: hashString("SPOT:ETH/USD"),
 
-      ...synthethicMarketConfig,
+      ...syntheticMarketConfig,
 
       positionImpactExponentFactor: exponentToFloat("2.2e0"),
 
@@ -960,7 +960,7 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:STX/USD"),
       virtualMarketId: hashString("SPOT:BTC/USD"),
 
-      ...synthethicMarketConfig,
+      ...syntheticMarketConfig,
 
       positionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
       positivePositionImpactFactor: exponentToFloat("2.5e-10"), // 0.05% for ~90,000 USD of imbalance
@@ -1001,7 +1001,7 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:SATS/USD"),
       virtualMarketId: hashString("SPOT:BTC/USD"),
 
-      ...synthethicMarketConfig,
+      ...syntheticMarketConfig,
 
       positionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
       positivePositionImpactFactor: exponentToFloat("2.5e-10"), // 0.05% for ~90,000 USD of imbalance
@@ -1042,7 +1042,7 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:LTC/USD"),
       virtualMarketId: hashString("SPOT:LTC/USD"),
 
-      ...synthethicMarketConfig,
+      ...syntheticMarketConfig,
       maxLongTokenPoolAmount: expandDecimals(800, 18),
       maxShortTokenPoolAmount: expandDecimals(1_500_000, 6),
 
@@ -1288,7 +1288,7 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:ATOM/USD"),
       virtualMarketId: hashString("SPOT:ETH/USD"),
 
-      ...synthethicMarketConfig,
+      ...syntheticMarketConfig,
 
       maxLongTokenPoolAmount: expandDecimals(900, 18),
       maxShortTokenPoolAmount: expandDecimals(3_500_000, 6),
@@ -1330,7 +1330,7 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:NEAR/USD"),
       virtualMarketId: hashString("SPOT:ETH/USD"),
 
-      ...synthethicMarketConfig,
+      ...syntheticMarketConfig,
 
       maxLongTokenPoolAmount: expandDecimals(1515, 18),
       maxShortTokenPoolAmount: expandDecimals(5_000_000, 6),
@@ -1411,7 +1411,7 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:ORDI/USD"),
       virtualMarketId: hashString("SPOT:BTC/USD"),
 
-      ...synthethicMarketConfig,
+      ...syntheticMarketConfig,
 
       positionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
       positivePositionImpactFactor: exponentToFloat("2.5e-10"), // 0.05% for ~90,000 USD of imbalance
@@ -1575,7 +1575,7 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:POL/USD"),
       virtualMarketId: hashString("SPOT:ETH/USD"),
 
-      ...synthethicMarketConfig,
+      ...syntheticMarketConfig,
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
@@ -1617,7 +1617,7 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:SUI/USD"),
       virtualMarketId: hashString("SPOT:ETH/USD"),
 
-      ...synthethicMarketConfig,
+      ...syntheticMarketConfig,
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
@@ -1661,7 +1661,7 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:SEI/USD"),
       virtualMarketId: hashString("SPOT:ETH/USD"),
 
-      ...synthethicMarketConfig,
+      ...syntheticMarketConfig,
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
@@ -1935,7 +1935,7 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:XRP/USD"),
       virtualMarketId: hashString("SPOT:XRP/USD"),
 
-      ...synthethicMarketConfig,
+      ...syntheticMarketConfig,
 
       maxLongTokenPoolAmount: expandDecimals(75_000, 18),
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
@@ -1973,7 +1973,7 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:DOGE/USD"),
       virtualMarketId: hashString("SPOT:DOGE/USD"),
 
-      ...synthethicMarketConfig,
+      ...syntheticMarketConfig,
 
       maxLongTokenPoolAmount: expandDecimals(75_000, 18),
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
@@ -2046,7 +2046,7 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:LTC/USD"),
       virtualMarketId: hashString("SPOT:LTC/USD"),
 
-      ...synthethicMarketConfig,
+      ...syntheticMarketConfig,
 
       maxLongTokenPoolAmount: expandDecimals(75_000, 18),
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
@@ -2324,11 +2324,14 @@ const config: {
   ],
   avalancheFuji: [
     {
+      ...baseMarketConfig,
+
       tokens: { indexToken: "WAVAX", longToken: "WAVAX", shortToken: "USDC" },
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
     },
     {
+      ...baseMarketConfig,
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC" },
       virtualMarketId: "0x04533437e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481d",
 
@@ -2344,6 +2347,7 @@ const config: {
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
     },
     {
+      ...baseMarketConfig,
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "DAI" },
       virtualMarketId: hashString("SPOT:AVAX/USD"),
       virtualTokenIdForIndexToken: "0x275d2a6e341e6a078d4eee59b08907d1e50825031c5481f9551284f4b7ee2fb9",
@@ -2352,6 +2356,7 @@ const config: {
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
     },
     {
+      ...baseMarketConfig,
       tokens: { indexToken: "WETH", longToken: "USDC", shortToken: "USDC" },
       virtualTokenIdForIndexToken: "0x275d2a6e341e6a078d4eee59b08907d1e50825031c5481f9551284f4b7ee2fb9",
 
@@ -2359,6 +2364,7 @@ const config: {
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
     },
     {
+      ...baseMarketConfig,
       tokens: { indexToken: "WBTC", longToken: "WBTC", shortToken: "USDC" },
       virtualMarketId: "0x11111137e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481f",
       virtualTokenIdForIndexToken: "0x04533137e2e8ae1c11111111a0dd36e023e0d6217198f889f9eb9c2a6727481d",
@@ -2369,6 +2375,7 @@ const config: {
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
     },
     {
+      ...baseMarketConfig,
       tokens: { indexToken: "WBTC", longToken: "WBTC", shortToken: "DAI" },
       virtualMarketId: "0x11111137e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481f",
 
@@ -2376,6 +2383,8 @@ const config: {
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
     },
     {
+      ...baseMarketConfig,
+      ...singleTokenMarketConfig,
       tokens: { indexToken: "WBTC", longToken: "WBTC", shortToken: "WBTC" },
       virtualMarketId: "0x11111137e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481f",
 
@@ -2387,6 +2396,8 @@ const config: {
       minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
     },
     {
+      ...baseMarketConfig,
+      ...syntheticMarketConfig,
       tokens: { indexToken: "SOL", longToken: "WETH", shortToken: "USDC" },
       virtualMarketId: "0x04533437e2e8ae1c70c421e7a0dd36e023e0d6217198f889f9eb9c2a6727481d",
 
@@ -2394,6 +2405,8 @@ const config: {
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
     },
     {
+      ...baseMarketConfig,
+      ...stablecoinSwapMarketConfig,
       tokens: { longToken: "USDC", shortToken: "USDT" },
       swapOnly: true,
 
@@ -2401,6 +2414,8 @@ const config: {
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
     },
     {
+      ...baseMarketConfig,
+      ...syntheticMarketConfig,
       tokens: { indexToken: "DOGE", longToken: "WETH", shortToken: "DAI" },
       positionImpactPoolDistributionRate: expandDecimals(12, 33), // ~10 DOGE per day
       minPositionImpactPoolAmount: expandDecimals(1, 8),
@@ -2409,9 +2424,13 @@ const config: {
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
     },
     {
+      ...baseMarketConfig,
+      ...syntheticMarketConfig,
       tokens: { indexToken: "LINK", longToken: "WETH", shortToken: "DAI" },
     },
     {
+      ...baseMarketConfig,
+      ...syntheticMarketConfig,
       tokens: { indexToken: "BNB", longToken: "WETH", shortToken: "DAI" },
       negativeMaxPositionImpactFactor: decimalToFloat(1, 5), // 0.001%
       positiveMaxPositionImpactFactor: decimalToFloat(1, 5), // 0.001%
@@ -2422,36 +2441,48 @@ const config: {
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
     },
     {
+      ...baseMarketConfig,
+      ...syntheticMarketConfig,
       tokens: { indexToken: "ADA", longToken: "WETH", shortToken: "DAI" },
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
     },
     {
+      ...baseMarketConfig,
+      ...syntheticMarketConfig,
       tokens: { indexToken: "TRX", longToken: "WETH", shortToken: "DAI" },
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
     },
     {
+      ...baseMarketConfig,
+      ...syntheticMarketConfig,
       tokens: { indexToken: "MATIC", longToken: "WETH", shortToken: "USDC" },
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
     },
     {
+      ...baseMarketConfig,
+      ...syntheticMarketConfig,
       tokens: { indexToken: "DOT", longToken: "WETH", shortToken: "USDC" },
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
     },
     {
+      ...baseMarketConfig,
+      ...syntheticMarketConfig,
       tokens: { indexToken: "UNI", longToken: "WETH", shortToken: "USDC" },
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
     },
     {
+      ...baseMarketConfig,
+      ...syntheticMarketConfig,
       tokens: {
         indexToken: "TEST",
         longToken: "WETH",
@@ -2474,6 +2505,8 @@ const config: {
     },
 
     {
+      ...baseMarketConfig,
+      ...syntheticMarketConfig,
       tokens: { indexToken: "WBTC", longToken: "USDC", shortToken: "USDT" },
 
       borrowingFactor: decimalToFloat(3, 7), // 0.0000003, 0.00003% / second, 946% per year if the pool is 100% utilized
@@ -2484,6 +2517,8 @@ const config: {
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
     },
     {
+      ...baseMarketConfig,
+      ...syntheticMarketConfig,
       tokens: { indexToken: "WETH", longToken: "USDC", shortToken: "DAI" },
 
       borrowingFactor: decimalToFloat(3, 7), // 0.0000003, 0.00003% / second, 946% per year if the pool is 100% utilized
