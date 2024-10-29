@@ -14,11 +14,13 @@ const RISK_ORACLE_SUPPORTED_NETWORKS = ["arbitrum", "avalanche", "avalancheFuji"
 
 const processMarkets = async ({
   markets,
+  marketAddress,
   onchainMarketsByTokens,
   supportedRiskOracleMarkets,
   tokens,
   generalConfig,
   handleConfig: handleConfigArg,
+  includeRiskOracleBaseKeys,
 }) => {
   const shouldHandleBaseKey = (baseKey: string, isSupportedByRiskOracle: boolean) => {
     if (!RISK_ORACLE_SUPPORTED_NETWORKS.includes(hre.network.name)) {
@@ -30,7 +32,7 @@ const processMarkets = async ({
     }
 
     if (isSupportedByRiskOracle) {
-      return process.env.INCLUDE_RISK_ORACLE_BASE_KEYS;
+      return includeRiskOracleBaseKeys;
     }
 
     return true;
@@ -49,6 +51,19 @@ const processMarkets = async ({
     }
 
     const marketToken = onchainMarket.marketToken;
+    if (marketAddress && marketToken !== marketAddress) {
+      console.info(
+        "skip market %s:%s:%s:%s, market token %s does not match %s",
+        marketKey,
+        indexToken,
+        longToken,
+        shortToken,
+        marketToken,
+        marketAddress
+      );
+      continue;
+    }
+
     const marketLabel = `${marketConfig.tokens.indexToken} [${marketConfig.tokens.longToken}-${marketConfig.tokens.shortToken}]`;
 
     const handleConfig = async (type, baseKey, keyData, value, label) => {
@@ -620,7 +635,7 @@ const processMarkets = async ({
   return ignoredRiskOracleParams;
 };
 
-export async function updateMarketConfig({ write }) {
+export async function updateMarketConfig({ write, marketAddress, includeRiskOracleBaseKeys = false }) {
   if (!["arbitrumGoerli", "avalancheFuji", "hardhat"].includes(network.name)) {
     const { errors } = await validateMarketConfigs();
     if (errors.length !== 0) {
@@ -647,10 +662,12 @@ export async function updateMarketConfig({ write }) {
 
   await processMarkets({
     markets,
+    marketAddress,
     onchainMarketsByTokens,
     tokens,
     supportedRiskOracleMarkets,
     generalConfig,
+    includeRiskOracleBaseKeys,
     handleConfig: async (type, baseKey, keyData) => {
       if (type !== "uint") {
         throw new Error("Unsupported type");
@@ -679,10 +696,12 @@ export async function updateMarketConfig({ write }) {
 
   const ignoredRiskOracleParams = await processMarkets({
     markets,
+    marketAddress,
     onchainMarketsByTokens,
     supportedRiskOracleMarkets,
     tokens,
     generalConfig,
+    includeRiskOracleBaseKeys,
     handleConfig: async (type, baseKey, keyData, value, label) => {
       if (type !== "uint") {
         throw new Error("Unsupported type");
@@ -730,7 +749,7 @@ export async function updateMarketConfig({ write }) {
     console.info("\n=================\n");
     console.info(`WARN: Ignored risk oracle params for ${supportedRiskOracleMarkets.size} markets`);
     console.info(`Ignored params: ${ignoredParameterNames.join(",")}`);
-    console.info("Add `INCLUDE_RISK_ORACLE_BASE_KEYS=1` to include them\n");
+    console.info("Add INCLUDE_RISK_ORACLE_BASE_KEYS=true to include them\n");
   }
 }
 
