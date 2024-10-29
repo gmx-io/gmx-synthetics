@@ -311,6 +311,9 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"), // 2.5e-9
 
+      reserveFactor: percentageToFloat("105%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
+
       maxOpenInterest: decimalToFloat(1_000_000),
       optimalUsageFactor: percentageToFloat("75%"),
       baseBorrowingFactor: percentageToFloat("70%").div(SECONDS_PER_YEAR),
@@ -1020,6 +1023,9 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"), // 2.5e-9
 
+      reserveFactor: percentageToFloat("105%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
+
       maxOpenInterest: decimalToFloat(500_000),
 
       optimalUsageFactor: percentageToFloat("75%"),
@@ -1581,6 +1587,9 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 4,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
 
+      reserveFactor: percentageToFloat("105%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
+
       optimalUsageFactor: percentageToFloat("75%"),
       baseBorrowingFactor: percentageToFloat("70%").div(SECONDS_PER_YEAR),
       aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR),
@@ -1620,8 +1629,8 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 4,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
 
-      reserveFactor: percentageToFloat("100%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("95%"), // default is 90%
+      reserveFactor: percentageToFloat("105%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
 
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
@@ -1664,8 +1673,8 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 4,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
 
-      reserveFactor: percentageToFloat("80%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("75%"), // default is 90%
+      reserveFactor: percentageToFloat("105%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
 
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
