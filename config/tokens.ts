@@ -157,7 +157,7 @@ const config: {
       address: "0x5979D7b546E38E414F7E9822514be443A4800529",
       decimals: 18,
       transferGasLimit: 200 * 1000,
-      dataStreamFeedId: "0x000372582d07a8b67e9b6989a0181a955bbac570532a1389d4a27042a3032605", // note that this must be for wstETH/USD and not wstETH/ETH
+      dataStreamFeedId: "0x0003db069f3010212c213d1a0d4bc2cce328471aca2bff86bbfc0226fd060e90", // note that this must be for wstETH/USD and not wstETH/ETH
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
       buybackMaxPriceImpactFactor: MID_BUYBACK_IMPACT,
