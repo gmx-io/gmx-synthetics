@@ -1705,7 +1705,7 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:APT/USD"),
       virtualMarketId: hashString("SPOT:ETH/USD"),
 
-      ...synthethicMarketConfig,
+      ...syntheticMarketConfig,
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
@@ -1749,7 +1749,7 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:TIA/USD"),
       virtualMarketId: hashString("SPOT:ETH/USD"),
 
-      ...synthethicMarketConfig,
+      ...syntheticMarketConfig,
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
