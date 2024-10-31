@@ -421,16 +421,6 @@ const processMarkets = async ({
       );
     }
 
-    if (marketConfig.minFundingFactorPerSecond) {
-      await handleConfig(
-        "uint",
-        keys.MIN_FUNDING_FACTOR_PER_SECOND,
-        encodeData(["address"], [marketToken]),
-        marketConfig.minFundingFactorPerSecond,
-        `minFundingFactorPerSecond ${marketLabel} (${marketToken})`
-      );
-    }
-
     if (marketConfig.maxFundingFactorPerSecond) {
       await handleConfig(
         "uint",
@@ -438,6 +428,16 @@ const processMarkets = async ({
         encodeData(["address"], [marketToken]),
         marketConfig.maxFundingFactorPerSecond,
         `maxFundingFactorPerSecond ${marketLabel} (${marketToken})`
+      );
+    }
+
+    if (marketConfig.minFundingFactorPerSecond) {
+      await handleConfig(
+        "uint",
+        keys.MIN_FUNDING_FACTOR_PER_SECOND,
+        encodeData(["address"], [marketToken]),
+        marketConfig.minFundingFactorPerSecond,
+        `minFundingFactorPerSecond ${marketLabel} (${marketToken})`
       );
     }
 

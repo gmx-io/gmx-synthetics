@@ -337,6 +337,26 @@ const config: {
       oracleTimestampAdjustment: 1,
       // Chainlink on-chain feed not available
     },
+    APT: {
+      synthetic: true,
+      decimals: 8,
+      dataStreamFeedId: "0x0003c6405661f306b96c352b0ed428e190b76e1f14641fb5b68652f9ca8d9af5",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      // Chainlink on-chain feed not available
+    },
+    TIA: {
+      synthetic: true,
+      decimals: 6,
+      dataStreamFeedId: "0x00034a6c27424c06b3441b8714c9b11bb4e7dc38548a525cee36ee232ffea013",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x4096b9bfB4c34497B7a3939D4f629cf65EBf5634",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+    },
     AAVE: {
       address: "0xba5ddd1f9d7f570dc94a51479a000e3bce967196",
       decimals: 18,
