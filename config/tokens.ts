@@ -357,6 +357,22 @@ const config: {
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
     },
+    TRX: {
+      synthetic: true,
+      decimals: 6,
+      dataStreamFeedId: "0x000310286f692877b46996d4c597fea8270d1922cc4ddf486165a192ed70111a",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      // Chainlink on-chain feed not available
+    },
+    TON: {
+      synthetic: true,
+      decimals: 9,
+      dataStreamFeedId: "0x0003f9ec12942ff27b28ab151905c8fc1cb280518d8bbd3885d410eaa50ddc56",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      // Chainlink on-chain feed not available
+    },
     AAVE: {
       address: "0xba5ddd1f9d7f570dc94a51479a000e3bce967196",
       decimals: 18,
