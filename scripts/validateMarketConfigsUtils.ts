@@ -218,7 +218,7 @@ const recommendedMarketConfig = {
       expectedPositionImpactRatio: 20_000,
     },
     wstETH: {
-      negativeSwapImpactFactor: exponentToFloat("3e-8"),
+      negativeSwapImpactFactor: exponentToFloat("1e-8"),
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
     },

@@ -547,8 +547,8 @@ const config: {
       positionImpactPoolDistributionRate: bigNumberify(0),
       minPositionImpactPoolAmount: bigNumberify(0),
 
-      negativeSwapImpactFactor: exponentToFloat("3e-8"),
-      positiveSwapImpactFactor: exponentToFloat("1.5e-8"),
+      negativeSwapImpactFactor: exponentToFloat("1e-8"),
+      positiveSwapImpactFactor: exponentToFloat("5e-9"),
 
       minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
 
@@ -568,8 +568,8 @@ const config: {
       baseBorrowingFactor: percentageToFloat("70%").div(SECONDS_PER_YEAR),
       aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR),
 
-      swapFeeFactorForPositiveImpact: percentageToFloat("1%"),
-      swapFeeFactorForNegativeImpact: percentageToFloat("1%"),
+      swapFeeFactorForPositiveImpact: percentageToFloat("0.25%"),
+      swapFeeFactorForNegativeImpact: percentageToFloat("0.25%"),
     },
     {
       tokens: { indexToken: "BNB", longToken: "BNB", shortToken: "USDC" },
@@ -1802,11 +1802,11 @@ const config: {
 
       maxPoolUsdForDeposit: decimalToFloat(10_000_000),
 
-      negativeSwapImpactFactor: exponentToFloat("5e-9"),
+      negativeSwapImpactFactor: exponentToFloat("1e-8"),
       positiveSwapImpactFactor: exponentToFloat("5e-9"),
 
-      swapFeeFactorForPositiveImpact: percentageToFloat("1%"),
-      swapFeeFactorForNegativeImpact: percentageToFloat("1%"),
+      swapFeeFactorForPositiveImpact: percentageToFloat("0.3%"),
+      swapFeeFactorForNegativeImpact: percentageToFloat("0.3%"),
     },
     {
       tokens: { longToken: "USDe", shortToken: "USDC" },
