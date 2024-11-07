@@ -331,8 +331,8 @@ const config: {
 
       ...baseMarketConfig,
 
-      reserveFactor: percentageToFloat("135%"),
-      openInterestReserveFactor: percentageToFloat("130%"),
+      reserveFactor: percentageToFloat("175%"),
+      openInterestReserveFactor: percentageToFloat("170%"),
 
       maxLongTokenPoolAmount: expandDecimals(2200, 8),
       maxShortTokenPoolAmount: expandDecimals(110_000_000, 6),
