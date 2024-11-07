@@ -46,8 +46,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           },
           {
             indexToken: "DOGE",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(1_900_000, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(3_000_000),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(2_100_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(3_500_000),
           },
           {
             indexToken: "LTC",
@@ -72,7 +72,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           {
             indexToken: "SHIB",
             glvMaxMarketTokenBalanceAmount: expandDecimals(500_000, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(500_000),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(575_000),
           },
           {
             indexToken: "EIGEN",
@@ -87,11 +87,11 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           {
             indexToken: "AAVE",
             glvMaxMarketTokenBalanceAmount: expandDecimals(1_000_000, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(1_400_000),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(1_025_000),
           },
           {
             indexToken: "PEPE",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(810_000, 18),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(935_000, 18),
             glvMaxMarketTokenBalanceUsd: decimalToFloat(1_000_000),
           },
           {
