@@ -184,12 +184,12 @@ const baseMarketConfig: Partial<BaseMarketConfig> = {
   fundingFactor: exponentToFloat("2e-8"), // ~63% per year for a 100% skew
   fundingExponentFactor: decimalToFloat(1),
 
-  fundingIncreaseFactorPerSecond: 0,
-  fundingDecreaseFactorPerSecond: 0,
-  thresholdForStableFunding: 0,
-  thresholdForDecreaseFunding: 0,
-  minFundingFactorPerSecond: 0,
-  maxFundingFactorPerSecond: exponentToFloat("1e-7"), // 0.00001%, 0.864% per day, 315.36% per year
+  fundingIncreaseFactorPerSecond: exponentToFloat("1.392e-12"), // 0.000000000001392, at least 3.5 hours to reach max funding
+  fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
+  minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
+  maxFundingFactorPerSecond: exponentToFloat("1.8e-8"), // 0.00000180%,  0.15552% per day, ~56.7648% per year
+  thresholdForStableFunding: percentageToFloat("5%"), // 5%
+  thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
   positionImpactPoolDistributionRate: bigNumberify(0),
   minPositionImpactPoolAmount: 0,
@@ -298,15 +298,6 @@ const config: {
       positiveSwapImpactFactor: exponentToFloat("1.5e-8"), // 1.5e-8
       negativeSwapImpactFactor: exponentToFloat("3e-8"),
 
-      fundingIncreaseFactorPerSecond: exponentToFloat("1.16e-12"),
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-
-      maxFundingFactorPerSecond: exponentToFloat("1.5e-8"),
-      minFundingFactorPerSecond: exponentToFloat("3e-10"),
-
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
-
       minCollateralFactor: percentageToFloat("1%"), // 1%
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"), // 2.5e-9
@@ -355,12 +346,8 @@ const config: {
 
       maxOpenInterest: decimalToFloat(74_000_000),
 
-      fundingIncreaseFactorPerSecond: exponentToFloat("5.76e-13"), // 0.00000000000576, at least ~4,8 hours to reach max funding
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: exponentToFloat("1e-8"), // 0.000001%,  0.0864% per day, ~31.5% per year
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
+      fundingIncreaseFactorPerSecond: exponentToFloat("6.912e-13"), // 0.000000000006912, at least ~4.8 hours to reach max funding
+      maxFundingFactorPerSecond: exponentToFloat("1.2e-8"), // 0.0000012%,  0.10368% per day, ~37.84% per year
 
       optimalUsageFactor: percentageToFloat("75%"),
       baseBorrowingFactor: percentageToFloat("60%").div(SECONDS_PER_YEAR),
@@ -394,12 +381,8 @@ const config: {
       maxOpenInterest: decimalToFloat(5_000_000),
 
       // funding increase rate is higher for single asset pools
-      fundingIncreaseFactorPerSecond: exponentToFloat("1.58e-12"), // 0.0000000000158, at least 1h45m to reach max funding
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: exponentToFloat("1e-8"), // 0.000001%,  0.0864% per day, ~31.5% per year
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
+      fundingIncreaseFactorPerSecond: exponentToFloat("1.896e-12"), // 0.00000000001896, at least 1h45m to reach max funding
+      maxFundingFactorPerSecond: exponentToFloat("1.3e-8"), // 0.0000013%,  0.11232% per day, ~40.1% per year
 
       optimalUsageFactor: percentageToFloat("75%"),
       baseBorrowingFactor: percentageToFloat("65%").div(SECONDS_PER_YEAR),
@@ -432,13 +415,8 @@ const config: {
 
       maxOpenInterest: decimalToFloat(1_000_000),
 
-      // funding increase rate is higher for single asset pools
-      fundingIncreaseFactorPerSecond: exponentToFloat("3e-12"),
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: exponentToFloat("1e-8"), // 0.000001%,  0.0864% per day, ~31.5% per year
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
+      fundingIncreaseFactorPerSecond: exponentToFloat("6.912e-13"), // 0.000000000006912, at least ~4.8 hours to reach max funding
+      maxFundingFactorPerSecond: exponentToFloat("1.2e-8"), // 0.0000012%,  0.10368% per day, ~37.84% per year
 
       optimalUsageFactor: percentageToFloat("75%"),
       baseBorrowingFactor: percentageToFloat("65%").div(SECONDS_PER_YEAR),
@@ -475,12 +453,8 @@ const config: {
 
       maxOpenInterest: decimalToFloat(80_000_000),
 
-      fundingIncreaseFactorPerSecond: exponentToFloat("5.76e-13"), // 0.00000000000576, at least ~4,8 hours to reach max funding
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: exponentToFloat("1e-8"), // 0.000001%,  0.0864% per day, ~31.5% per year
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
+      fundingIncreaseFactorPerSecond: exponentToFloat("6.912e-13"), // 0.000000000006912, at least ~4.8 hours to reach max funding
+      maxFundingFactorPerSecond: exponentToFloat("1.2e-8"), // 0.0000012%,  0.10368% per day, ~37.84% per year
 
       optimalUsageFactor: percentageToFloat("75%"),
       baseBorrowingFactor: percentageToFloat("60%").div(SECONDS_PER_YEAR),
@@ -514,12 +488,8 @@ const config: {
       maxOpenInterest: decimalToFloat(5_000_000),
 
       // funding increase rate is higher for single asset pools
-      fundingIncreaseFactorPerSecond: exponentToFloat("1.58e-12"), // 0.0000000000158, at least 1h45m to reach max funding
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: exponentToFloat("1e-8"), // 0.000001%,  0.0864% per day, ~31.5% per year
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
+      fundingIncreaseFactorPerSecond: exponentToFloat("1.896e-12"), // 0.00000000001896, at least 1h45m to reach max funding
+      maxFundingFactorPerSecond: exponentToFloat("1.3e-8"), // 0.0000013%,  0.11232% per day, ~40.1% per year
 
       optimalUsageFactor: percentageToFloat("75%"),
       baseBorrowingFactor: percentageToFloat("65%").div(SECONDS_PER_YEAR),
@@ -557,12 +527,8 @@ const config: {
 
       maxOpenInterest: decimalToFloat(1_000_000),
 
-      fundingIncreaseFactorPerSecond: exponentToFloat("5.76e-13"), // 0.00000000000576, at least ~4,8 hours to reach max funding
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: exponentToFloat("1e-8"), // 0.000001%,  0.0864% per day, ~31.5% per year
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
+      fundingIncreaseFactorPerSecond: exponentToFloat("6.912e-13"), // 0.000000000006912, at least ~4.8 hours to reach max funding
+      maxFundingFactorPerSecond: exponentToFloat("1.2e-8"), // 0.0000012%,  0.10368% per day, ~37.84% per year
 
       optimalUsageFactor: percentageToFloat("75%"),
       baseBorrowingFactor: percentageToFloat("70%").div(SECONDS_PER_YEAR),
@@ -605,13 +571,6 @@ const config: {
       minPositionImpactPoolAmount: expandDecimals(53, 16), // 0.53 BNB
 
       maxOpenInterest: decimalToFloat(5_000_000),
-
-      fundingIncreaseFactorPerSecond: exponentToFloat("1.16e-12"), // 0.00000000000116, at least 3.5 hours to reach max funding
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: exponentToFloat("1.5e-8"), // 0.00000150%,  0.1296% per day, ~47.3% per year
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
     },
     {
       tokens: { indexToken: "XRP", longToken: "WETH", shortToken: "USDC" },
@@ -647,13 +606,6 @@ const config: {
       minPositionImpactPoolAmount: expandDecimals(4169, 6), // 4169.846154 XRP
 
       maxOpenInterest: decimalToFloat(2_000_000),
-
-      fundingIncreaseFactorPerSecond: exponentToFloat("1.16e-12"), // 0.00000000000116, at least 3.5 hours to reach max funding
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: exponentToFloat("1.5e-8"), // 0.00000150%,  0.1296% per day, ~47.3% per year
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
     },
     {
       tokens: { indexToken: "DOGE", longToken: "WETH", shortToken: "USDC" },
@@ -690,13 +642,6 @@ const config: {
       minPositionImpactPoolAmount: expandDecimals(26000, 8), // 26000 DOGE
 
       maxOpenInterest: decimalToFloat(6_000_000),
-
-      fundingIncreaseFactorPerSecond: exponentToFloat("1.16e-12"), // 0.00000000000116, at least 3.5 hours to reach max funding
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: exponentToFloat("1.5e-8"), // 0.00000150%,  0.1296% per day, ~47.3% per year
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
     },
     {
       tokens: { indexToken: "EIGEN", longToken: "WETH", shortToken: "USDC" },
@@ -721,12 +666,8 @@ const config: {
       baseBorrowingFactor: percentageToFloat("70%").div(SECONDS_PER_YEAR),
       aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR),
 
-      fundingIncreaseFactorPerSecond: exponentToFloat("1.81e-12"), // 181e-14
-
-      maxFundingFactorPerSecond: exponentToFloat("2.35e-8"), // 235e-10
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 3e-10
-
-      thresholdForStableFunding: percentageToFloat("5%"),
+      fundingIncreaseFactorPerSecond: exponentToFloat("2e-12"),
+      maxFundingFactorPerSecond: exponentToFloat("2.6e-8"), // 260e-10
 
       minCollateralFactor: percentageToFloat("1%"),
 
@@ -757,15 +698,6 @@ const config: {
       positiveSwapImpactFactor: exponentToFloat("5e-9"),
       negativeSwapImpactFactor: exponentToFloat("5e-9"),
 
-      fundingIncreaseFactorPerSecond: exponentToFloat("1.16e-12"), // 0.00000000000116, at least 3.5 hours to reach max funding
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: exponentToFloat("1.5e-8"), // 0.00000150%,  0.1296% per day, ~47.3% per year
-
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
-
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"), // 2.5e-9
 
       maxOpenInterest: decimalToFloat(1_000_000),
@@ -791,15 +723,6 @@ const config: {
 
       positiveSwapImpactFactor: exponentToFloat("2e-10"),
       negativeSwapImpactFactor: exponentToFloat("2e-10"),
-
-      fundingIncreaseFactorPerSecond: exponentToFloat("1.16e-12"), // 0.00000000000116, at least 3.5 hours to reach max funding
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-
-      maxFundingFactorPerSecond: exponentToFloat("1.5e-8"), // 0.00000150%,  0.1296% per day, ~47.3% per year
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
-
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.8e-9"),
 
@@ -836,15 +759,6 @@ const config: {
 
       positiveSwapImpactFactor: exponentToFloat("2e-10"),
       negativeSwapImpactFactor: exponentToFloat("2e-10"),
-
-      fundingIncreaseFactorPerSecond: exponentToFloat("1.16e-12"), // 0.00000000000116, at least 3.5 hours to reach max funding
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-
-      maxFundingFactorPerSecond: exponentToFloat("1.5e-8"), // 0.00000150%,  0.1296% per day, ~47.3% per year
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
-
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
       minCollateralFactor: percentageToFloat("0.833%"), // max leverage 120x
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.5e-9"),
@@ -883,14 +797,8 @@ const config: {
       positiveSwapImpactFactor: exponentToFloat("2e-10"),
       negativeSwapImpactFactor: exponentToFloat("2e-10"),
 
-      fundingIncreaseFactorPerSecond: exponentToFloat("1.74e-12"), // 0.00000000000116, at least 3.5 hours to reach max funding
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-
-      maxFundingFactorPerSecond: exponentToFloat("1.5e-8"), // 0.00000150%,  0.1296% per day, ~47.3% per year
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
-
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
+      fundingIncreaseFactorPerSecond: exponentToFloat("2.08e-12"),
+      maxFundingFactorPerSecond: exponentToFloat("2e-8"), // ~63% per year
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
 
@@ -948,12 +856,7 @@ const config: {
 
       maxOpenInterest: decimalToFloat(17_500_000),
 
-      fundingIncreaseFactorPerSecond: exponentToFloat("8.46e-13"), // 0.00000000000846, at least ~5 hours to reach max funding
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: exponentToFloat("1.5e-8"), // 0.00000150%,  0.1296% per day, ~47.3% per year
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
+      fundingIncreaseFactorPerSecond: exponentToFloat("10.152e-13"), // 0.00000000000846, at least ~5 hours to reach max funding
     },
     {
       tokens: { indexToken: "STX", longToken: "WBTC.e", shortToken: "USDC" },
@@ -969,14 +872,8 @@ const config: {
       positiveSwapImpactFactor: exponentToFloat("1.25e-9"), // 1.25e-9
       negativeSwapImpactFactor: exponentToFloat("2.5e-9"), // 2.5e-9
 
-      fundingIncreaseFactorPerSecond: exponentToFloat("1.74e-12"), // 0.00000000000174, at least 3.5 hours to reach max funding
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-
-      maxFundingFactorPerSecond: exponentToFloat("2.25e-8"), // 0.00000225%,  0,1944% per day, ~71% per year
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
-
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
+      fundingIncreaseFactorPerSecond: exponentToFloat("2e-12"),
+      maxFundingFactorPerSecond: exponentToFloat("2.7e-8"), // 0.233% per day, 85.16% per year
 
       minCollateralFactor: percentageToFloat("1%"), // 1%
 
@@ -1010,14 +907,8 @@ const config: {
       positiveSwapImpactFactor: exponentToFloat("1.25e-9"), // 1.25e-9
       negativeSwapImpactFactor: exponentToFloat("2.5e-9"), // 2.5e-9
 
-      fundingIncreaseFactorPerSecond: exponentToFloat("1.74e-12"), // 0.00000000000174, at least 3.5 hours to reach max funding
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-
-      maxFundingFactorPerSecond: exponentToFloat("2.25e-8"), // 0.00000225%,  0,1944% per day, ~71% per year
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
-
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
+      fundingIncreaseFactorPerSecond: exponentToFloat("2e-12"),
+      maxFundingFactorPerSecond: exponentToFloat("2.7e-8"), // 0.233% per day, 85.16% per year
 
       minCollateralFactor: percentageToFloat("1%"), // 1%
 
@@ -1069,13 +960,6 @@ const config: {
       minPositionImpactPoolAmount: expandDecimals(28, 8), // 28 LTC
 
       maxOpenInterest: decimalToFloat(1_000_000),
-
-      fundingIncreaseFactorPerSecond: exponentToFloat("1.16e-12"), // 0.00000000000116, at least 3.5 hours to reach max funding
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: exponentToFloat("1.5e-8"), // 0.00000150%,  0.1296% per day, ~47.3% per year
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
     },
     {
       tokens: { indexToken: "UNI", longToken: "UNI", shortToken: "USDC" },
@@ -1109,13 +993,6 @@ const config: {
       minPositionImpactPoolAmount: expandDecimals(170, 18),
 
       maxOpenInterest: decimalToFloat(1_000_000),
-
-      fundingIncreaseFactorPerSecond: exponentToFloat("1.16e-12"), // 0.00000000000116, at least 3.5 hours to reach max funding
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: exponentToFloat("1.5e-8"), // 0.00000150%,  0.1296% per day, ~47.3% per year
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
     },
     {
       tokens: { indexToken: "LINK", longToken: "LINK", shortToken: "USDC" },
@@ -1152,12 +1029,7 @@ const config: {
 
       maxOpenInterest: decimalToFloat(10_000_000),
 
-      fundingIncreaseFactorPerSecond: exponentToFloat("8.46e-13"), // 0.00000000000846, at least ~5 hours to reach max funding
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: exponentToFloat("1.5e-8"), // 0.00000150%,  0.1296% per day, ~47.3% per year
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
+      fundingIncreaseFactorPerSecond: exponentToFloat("10.152e-13"), // 0.000000000010152, at least ~5 hours to reach max funding
     },
     {
       tokens: { indexToken: "ARB", longToken: "ARB", shortToken: "USDC" },
@@ -1189,12 +1061,7 @@ const config: {
       baseBorrowingFactor: percentageToFloat("60%").div(SECONDS_PER_YEAR),
       aboveOptimalUsageBorrowingFactor: percentageToFloat("120%").div(SECONDS_PER_YEAR),
 
-      fundingIncreaseFactorPerSecond: exponentToFloat("8.46e-13"), // 0.00000000000846, at least ~5 hours to reach max funding
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: exponentToFloat("1.5e-8"), // 0.00000150%,  0.1296% per day, ~47.3% per year
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
+      fundingIncreaseFactorPerSecond: exponentToFloat("10.152e-13"), // 0.000000000010152, at least ~5 hours to reach max funding
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(800, 43), // 0.800565E+46, 691.69 ARB / day
       minPositionImpactPoolAmount: expandDecimals(27598, 18), // 27598 ARB
@@ -1230,13 +1097,6 @@ const config: {
       baseBorrowingFactor: percentageToFloat("65%").div(SECONDS_PER_YEAR),
       aboveOptimalUsageBorrowingFactor: percentageToFloat("120%").div(SECONDS_PER_YEAR),
 
-      fundingIncreaseFactorPerSecond: exponentToFloat("1.16e-12"), // 0.00000000000116, at least 3.5 hours to reach max funding
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: exponentToFloat("1.5e-8"), // 0.00000150%,  0.1296% per day, ~47.3% per year
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
-
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(1097, 40), // 1.0973075E+43, 0.948074216 AAVE / day
       minPositionImpactPoolAmount: expandDecimals(723, 16), // 7.23 AAVE
 
@@ -1270,13 +1130,6 @@ const config: {
       optimalUsageFactor: percentageToFloat("75%"),
       baseBorrowingFactor: percentageToFloat("65%").div(SECONDS_PER_YEAR),
       aboveOptimalUsageBorrowingFactor: percentageToFloat("120%").div(SECONDS_PER_YEAR),
-
-      fundingIncreaseFactorPerSecond: exponentToFloat("1.16e-12"), // 0.00000000000116, at least 3.5 hours to reach max funding
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: exponentToFloat("1.5e-8"), // 0.00000150%,  0.1296% per day, ~47.3% per year
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(1643, 41), // 1.64325E+44, 14,2 AVAX / day
       minPositionImpactPoolAmount: expandDecimals(79, 18), // 79.18 AVAX
@@ -1317,13 +1170,6 @@ const config: {
       minPositionImpactPoolAmount: expandDecimals(611, 6), // 611 ATOM
 
       maxOpenInterest: decimalToFloat(1_000_000),
-
-      fundingIncreaseFactorPerSecond: exponentToFloat("1.16e-12"), // 0.00000000000116, at least 3.5 hours to reach max funding
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: exponentToFloat("1.5e-8"), // 0.00000150%,  0.1296% per day, ~47.3% per year
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
     },
     {
       tokens: { indexToken: "NEAR", longToken: "WETH", shortToken: "USDC" },
@@ -1357,13 +1203,6 @@ const config: {
       minPositionImpactPoolAmount: expandDecimals(4361, 24), // 4361 NEAR
 
       maxOpenInterest: decimalToFloat(1_000_000),
-
-      fundingIncreaseFactorPerSecond: exponentToFloat("1.16e-12"), // 0.00000000000116, at least 3.5 hours to reach max funding
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: exponentToFloat("1.5e-8"), // 0.00000150%,  0.1296% per day, ~47.3% per year
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
     },
     {
       tokens: { indexToken: "OP", longToken: "OP", shortToken: "USDC" },
@@ -1394,13 +1233,6 @@ const config: {
       baseBorrowingFactor: percentageToFloat("65%").div(SECONDS_PER_YEAR),
       aboveOptimalUsageBorrowingFactor: percentageToFloat("120%").div(SECONDS_PER_YEAR),
 
-      fundingIncreaseFactorPerSecond: exponentToFloat("1.16e-12"), // 0.00000000000116, at least 3.5 hours to reach max funding
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: exponentToFloat("1.5e-8"), // 0.00000150%,  0.1296% per day, ~47.3% per year
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
-
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(2100, 41), // 2.1E+44, 18.14 OP / day
       minPositionImpactPoolAmount: expandDecimals(311, 18), // 311 OP
 
@@ -1422,14 +1254,8 @@ const config: {
 
       borrowingFactor: exponentToFloat("1.6e-8"), // 1.60E-08, ~50% if 100% utilized
 
-      fundingIncreaseFactorPerSecond: exponentToFloat("1.74e-12"), // 0.00000000000174, at least 3.5 hours to reach max funding
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-
-      maxFundingFactorPerSecond: exponentToFloat("2.25e-8"), // 0.00000225%,  0,1944% per day, ~71% per year
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
-
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
+      fundingIncreaseFactorPerSecond: exponentToFloat("2e-12"),
+      maxFundingFactorPerSecond: exponentToFloat("2.7e-8"), // 0.233% per day, 85.16% per year
 
       minCollateralFactor: percentageToFloat("1%"), // 1%
 
@@ -1478,13 +1304,6 @@ const config: {
       baseBorrowingFactor: percentageToFloat("65%").div(SECONDS_PER_YEAR),
       aboveOptimalUsageBorrowingFactor: percentageToFloat("120%").div(SECONDS_PER_YEAR),
 
-      fundingIncreaseFactorPerSecond: exponentToFloat("1.16e-12"), // 0.00000000000116, at least 3.5 hours to reach max funding
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: exponentToFloat("1.5e-8"), // 0.00000150%,  0.1296% per day, ~47.3% per year
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
-
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(65, 42), // 6.5e43, 5.6 GMX / day
       minPositionImpactPoolAmount: expandDecimals(50, 18), // 50 GMX
 
@@ -1518,12 +1337,8 @@ const config: {
       baseBorrowingFactor: percentageToFloat("65%").div(SECONDS_PER_YEAR),
       aboveOptimalUsageBorrowingFactor: percentageToFloat("120%").div(SECONDS_PER_YEAR),
 
-      fundingIncreaseFactorPerSecond: exponentToFloat("1.74e-12"), // 0.00000000000174, at least 3.5 hours to reach max funding
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: exponentToFloat("2.25e-8"), // 0.00000225%,  0,1944% per day, ~71% per year
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
+      fundingIncreaseFactorPerSecond: exponentToFloat("2e-12"),
+      maxFundingFactorPerSecond: exponentToFloat("2.7e-8"), // 0.233% per day, 85.16% per year
 
       positionImpactPoolDistributionRate: bigNumberify(0),
       minPositionImpactPoolAmount: 0,
@@ -1558,12 +1373,8 @@ const config: {
       baseBorrowingFactor: percentageToFloat("65%").div(SECONDS_PER_YEAR),
       aboveOptimalUsageBorrowingFactor: percentageToFloat("120%").div(SECONDS_PER_YEAR),
 
-      fundingIncreaseFactorPerSecond: exponentToFloat("1.74e-12"), // 0.00000000000174, at least 3.5 hours to reach max funding
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
-      maxFundingFactorPerSecond: exponentToFloat("2.25e-8"), // 0.00000225%,  0,1944% per day, ~71% per year
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
+      fundingIncreaseFactorPerSecond: exponentToFloat("2e-12"),
+      maxFundingFactorPerSecond: exponentToFloat("2.7e-8"), // 0.233% per day, 85.16% per year
 
       positionImpactPoolDistributionRate: bigNumberify(0),
       minPositionImpactPoolAmount: 0,
@@ -1603,14 +1414,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(400, 18),
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
 
-      fundingIncreaseFactorPerSecond: exponentToFloat("1.74e-12"),
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-
-      maxFundingFactorPerSecond: exponentToFloat("2.25e-8"), // 0.00000225%,  0,1944% per day, ~71% per year
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
-
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
+      fundingIncreaseFactorPerSecond: exponentToFloat("2e-12"),
+      maxFundingFactorPerSecond: exponentToFloat("2.7e-8"), // 0.233% per day, 85.16% per year
     },
     {
       tokens: { indexToken: "SUI", longToken: "WETH", shortToken: "USDC" },
@@ -1646,15 +1451,6 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(763, 18), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
-
-      fundingIncreaseFactorPerSecond: exponentToFloat("1.16e-12"),
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-
-      maxFundingFactorPerSecond: exponentToFloat("1.5e-8"), // 0.00000150%,  0.1296% per day, ~47.3% per year
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
-
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
     },
     {
       tokens: { indexToken: "SEI", longToken: "WETH", shortToken: "USDC" },
@@ -1690,15 +1486,6 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(763, 18), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
-
-      fundingIncreaseFactorPerSecond: exponentToFloat("1.16e-12"),
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-
-      maxFundingFactorPerSecond: exponentToFloat("1.5e-8"), // 0.00000150%,  0.1296% per day, ~47.3% per year
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
-
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
     },
     {
       tokens: { indexToken: "APT", longToken: "WETH", shortToken: "USDC" },
@@ -1734,15 +1521,6 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(380, 18), // ~1M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x the max open interest)
-
-      fundingIncreaseFactorPerSecond: exponentToFloat("1.16e-12"),
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-
-      maxFundingFactorPerSecond: exponentToFloat("1.5e-8"), // 0.00000150%,  0.1296% per day, ~47.3% per year
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
-
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
     },
     {
       tokens: { indexToken: "TIA", longToken: "WETH", shortToken: "USDC" },
@@ -1778,15 +1556,6 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(380, 18), // ~1M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x the max open interest)
-
-      fundingIncreaseFactorPerSecond: exponentToFloat("1.16e-12"),
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-
-      maxFundingFactorPerSecond: exponentToFloat("1.5e-8"), // 0.00000150%,  0.1296% per day, ~47.3% per year
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
-
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
     },
     {
       tokens: { indexToken: "TRX", longToken: "WETH", shortToken: "USDC" },
@@ -1822,15 +1591,6 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(400, 18), // ~1M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x the max open interest)
-
-      fundingIncreaseFactorPerSecond: exponentToFloat("1.16e-12"),
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-
-      maxFundingFactorPerSecond: exponentToFloat("1.5e-8"), // 0.00000150%,  0.1296% per day, ~47.3% per year
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
-
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
     },
     {
       tokens: { indexToken: "TON", longToken: "WETH", shortToken: "USDC" },
@@ -1866,15 +1626,6 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(800, 18), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
-
-      fundingIncreaseFactorPerSecond: exponentToFloat("1.16e-12"),
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-
-      maxFundingFactorPerSecond: exponentToFloat("1.5e-8"), // 0.00000150%,  0.1296% per day, ~47.3% per year
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
-
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
     },
     {
       tokens: { longToken: "wstETH", shortToken: "WETH" },
@@ -1995,9 +1746,7 @@ const config: {
 
       fundingIncreaseFactorPerSecond: exponentToFloat("1.36e-12"), // 0.00000000000136, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
       maxFundingFactorPerSecond: exponentToFloat("1.7e-8"), // 0.0000017%,  0.14212% per hour, 53.61% per year
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
       // for OI reserve factor = 100%
@@ -2029,11 +1778,7 @@ const config: {
       maxOpenInterest: decimalToFloat(3_000_000),
 
       fundingIncreaseFactorPerSecond: exponentToFloat("1.36e-12"), // 0.00000000000136, at least 3.5 hours to reach max funding
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
       maxFundingFactorPerSecond: exponentToFloat("1.7e-8"), // 0.0000017%,  0.14212% per hour, 53.61% per year
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
       // factor in open interest reserve factor 45%
       borrowingFactor: decimalToFloat(282, 10), // 2.82-8, 40% at 100% utilisation
@@ -2065,11 +1810,7 @@ const config: {
       maxOpenInterest: decimalToFloat(1_000_000),
 
       fundingIncreaseFactorPerSecond: exponentToFloat("1.36e-12"), // 0.00000000000136, at least 3.5 hours to reach max funding
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
       maxFundingFactorPerSecond: exponentToFloat("1.7e-8"), // 0.0000017%,  0.14212% per hour, 53.61% per year
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
       // for OI reserve factor = 100%
       borrowingFactor: decimalToFloat(1900, 11), // 0.000000019 * 100% max reserve, 60% per year
@@ -2097,11 +1838,7 @@ const config: {
       maxOpenInterest: decimalToFloat(3_000_000),
 
       fundingIncreaseFactorPerSecond: exponentToFloat("1.36e-12"), // 0.00000000000136, at least 3.5 hours to reach max funding
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
       maxFundingFactorPerSecond: exponentToFloat("1.7e-8"), // 0.0000017%,  0.14212% per hour, 53.61% per year
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
       // factor in open interest reserve factor 35%
       borrowingFactor: exponentToFloat("3.6e-8"), // 3.60-8, 40% at 100% utilisation
@@ -2135,11 +1872,7 @@ const config: {
       maxOpenInterest: decimalToFloat(1_000_000),
 
       fundingIncreaseFactorPerSecond: exponentToFloat("1.6e-12"), // 0.0000000000016, at least 3.5 hours to reach max funding
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
       maxFundingFactorPerSecond: exponentToFloat("2e-8"), // 0.000002%,  0.0072% per hour, 63% per year
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
       // for OI reserve factor = 75%
       borrowingFactor: exponentToFloat("2.95e-8"), // 0.0000000295 * 75% max reserve, ~70%
@@ -2172,11 +1905,7 @@ const config: {
       maxOpenInterest: decimalToFloat(1_000_000),
 
       fundingIncreaseFactorPerSecond: exponentToFloat("1.6e-12"), // 0.0000000000016, at least 3.5 hours to reach max funding
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
       maxFundingFactorPerSecond: exponentToFloat("2e-8"), // 0.000002%,  0.0072% per hour, 63% per year
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
       // for OI reserve factor = 75%
       borrowingFactor: exponentToFloat("2.95e-8"), // 0.0000000295 * 75% max reserve, ~70%
@@ -2208,11 +1937,7 @@ const config: {
       maxOpenInterest: decimalToFloat(1_000_000),
 
       fundingIncreaseFactorPerSecond: exponentToFloat("1.6e-12"), // 0.0000000000016, at least 3.5 hours to reach max funding
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
       maxFundingFactorPerSecond: exponentToFloat("2e-8"), // 0.000002%,  0.0072% per hour, 63% per year
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
       // for OI reserve factor = 100%
       borrowingFactor: exponentToFloat("2.22e-8"), // 0.0000000222 * 100% max reserve, 70% per year
@@ -2244,11 +1969,7 @@ const config: {
       maxOpenInterest: decimalToFloat(1_000_000),
 
       fundingIncreaseFactorPerSecond: exponentToFloat("1.6e-12"), // 0.0000000000016, at least 3.5 hours to reach max funding
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
       maxFundingFactorPerSecond: exponentToFloat("2e-8"), // 0.000002%,  0.0072% per hour, 63% per year
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
       // for OI reserve factor = 75%
       borrowingFactor: exponentToFloat("2.95e-8"), // 0.0000000295 * 75% max reserve, ~70%
@@ -2283,11 +2004,7 @@ const config: {
       maxOpenInterest: decimalToFloat(3_000_000),
 
       fundingIncreaseFactorPerSecond: exponentToFloat("1.6e-12"), // 0.0000000000016, at least 3.5 hours to reach max funding
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
       maxFundingFactorPerSecond: exponentToFloat("2e-8"), // 0.000002%,  0.0072% per hour, 63% per year
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
       // for OI reserve factor = 150%
       borrowingFactor: exponentToFloat("2e-8"), // 0.00000002 * 150% max reserve, 94.6% per year
@@ -2315,11 +2032,7 @@ const config: {
       maxOpenInterest: decimalToFloat(1_000_000),
 
       fundingIncreaseFactorPerSecond: exponentToFloat("1.6e-12"), // 0.0000000000016, at least 3.5 hours to reach max funding
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-      minFundingFactorPerSecond: exponentToFloat("3e-10"), // 0.00000003%, 0.000108% per hour, 0.95% per year
       maxFundingFactorPerSecond: exponentToFloat("2e-8"), // 0.000002%,  0.0072% per hour, 63% per year
-      thresholdForStableFunding: percentageToFloat("5%"), // 5%
-      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
       // factor in open interest reserve factor 35%
       borrowingFactor: exponentToFloat("3.6e-8"), // 3.60-8, 40% at 100% utilisation
