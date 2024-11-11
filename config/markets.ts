@@ -415,7 +415,8 @@ const config: {
 
       maxOpenInterest: decimalToFloat(1_000_000),
 
-      fundingIncreaseFactorPerSecond: exponentToFloat("6.912e-13"), // 0.000000000006912, at least ~4.8 hours to reach max funding
+      // funding increase rate is higher for single asset pools
+      fundingIncreaseFactorPerSecond: exponentToFloat("3e-12"),
       maxFundingFactorPerSecond: exponentToFloat("1.2e-8"), // 0.0000012%,  0.10368% per day, ~37.84% per year
 
       optimalUsageFactor: percentageToFloat("75%"),
