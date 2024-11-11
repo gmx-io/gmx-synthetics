@@ -367,8 +367,8 @@ const config: {
 
       maxPoolUsdForDeposit: decimalToFloat(100_000_000),
 
-      negativePositionImpactFactor: 0, // exponentToFloat("9e-11"),
-      positivePositionImpactFactor: 0, // exponentToFloat("3e-11"),
+      negativePositionImpactFactor: 0,
+      positivePositionImpactFactor: 0,
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(46530, 26), // 4,653E+30, 0.0040202449 BTC / day
       minPositionImpactPoolAmount: expandDecimals(5, 6), // 0.05 BTC
@@ -378,7 +378,7 @@ const config: {
       // minCollateralFactor of 0.005 (0.5%) when open interest is 83,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6e-11"),
 
-      maxOpenInterest: decimalToFloat(5_000_000),
+      maxOpenInterest: decimalToFloat(10_000_000),
 
       // funding increase rate is higher for single asset pools
       fundingIncreaseFactorPerSecond: exponentToFloat("1.896e-12"), // 0.00000000001896, at least 1h45m to reach max funding
@@ -452,7 +452,7 @@ const config: {
       // minCollateralFactor of 0.005 (0.5%) when open interest is 83,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6e-11"),
 
-      maxOpenInterest: decimalToFloat(80_000_000),
+      maxOpenInterest: decimalToFloat(70_000_000),
 
       fundingIncreaseFactorPerSecond: exponentToFloat("6.912e-13"), // 0.000000000006912, at least ~4.8 hours to reach max funding
       maxFundingFactorPerSecond: exponentToFloat("1.2e-8"), // 0.0000012%,  0.10368% per day, ~37.84% per year
@@ -475,8 +475,8 @@ const config: {
 
       maxPoolUsdForDeposit: decimalToFloat(60_000_000),
 
-      negativePositionImpactFactor: 0, // exponentToFloat("9e-11"),
-      positivePositionImpactFactor: 0, // exponentToFloat("3e-11"),
+      negativePositionImpactFactor: 0,
+      positivePositionImpactFactor: 0,
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(37181, 37), // 3.718184E+41, 0.0321250994 ETH / day
       minPositionImpactPoolAmount: expandDecimals(5, 17), // 0.5 ETH
@@ -486,7 +486,7 @@ const config: {
       // minCollateralFactor of 0.005 (0.5%) when open interest is 83,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6e-11"),
 
-      maxOpenInterest: decimalToFloat(5_000_000),
+      maxOpenInterest: decimalToFloat(9_000_000),
 
       // funding increase rate is higher for single asset pools
       fundingIncreaseFactorPerSecond: exponentToFloat("1.896e-12"), // 0.00000000001896, at least 1h45m to reach max funding
