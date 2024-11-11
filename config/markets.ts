@@ -615,10 +615,10 @@ const config: {
 
       ...synthethicMarketConfig_IncreasedCapacity,
 
-      maxLongTokenPoolAmount: expandDecimals(1410, 18),
-      maxShortTokenPoolAmount: expandDecimals(4_800_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(1700, 18),
+      maxShortTokenPoolAmount: expandDecimals(5_500_000, 6),
 
-      maxPoolUsdForDeposit: decimalToFloat(4_300_000),
+      maxPoolUsdForDeposit: decimalToFloat(5_000_000),
 
       negativePositionImpactFactor: exponentToFloat("1.5e-8"),
       positivePositionImpactFactor: exponentToFloat("7.5e-9"),
