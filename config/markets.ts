@@ -185,8 +185,8 @@ const baseMarketConfig: Partial<BaseMarketConfig> = {
   fundingExponentFactor: decimalToFloat(1),
 
   minFundingFactorPerSecond: percentageToFloat("1%").div(SECONDS_PER_YEAR),
-  maxFundingFactorPerSecond: percentageToFloat("70%").div(SECONDS_PER_YEAR), // ~0.19% per day
-  fundingIncreaseFactorPerSecond: percentageToFloat("70%")
+  maxFundingFactorPerSecond: percentageToFloat("90%").div(SECONDS_PER_YEAR), // ~0.246% per day
+  fundingIncreaseFactorPerSecond: percentageToFloat("90%")
     .div(SECONDS_PER_YEAR)
     .div(SECONDS_PER_HOUR * 3),
   fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
@@ -309,8 +309,8 @@ const config: {
 
       maxOpenInterest: decimalToFloat(1_000_000),
       optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("70%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      baseBorrowingFactor: percentageToFloat("60%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("150%").div(SECONDS_PER_YEAR),
 
       maxPoolUsdForDeposit: decimalToFloat(1_500_000), // x1.5 of max open interest
 
@@ -348,14 +348,14 @@ const config: {
 
       maxOpenInterest: decimalToFloat(74_000_000),
 
-      fundingIncreaseFactorPerSecond: percentageToFloat("60%")
+      fundingIncreaseFactorPerSecond: percentageToFloat("80%")
         .div(SECONDS_PER_YEAR)
-        .div(SECONDS_PER_HOUR * 4),
-      maxFundingFactorPerSecond: percentageToFloat("60%").div(SECONDS_PER_YEAR),
+        .div(SECONDS_PER_HOUR * 3),
+      maxFundingFactorPerSecond: percentageToFloat("80%").div(SECONDS_PER_YEAR),
 
       optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("60%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("120%").div(SECONDS_PER_YEAR),
+      baseBorrowingFactor: percentageToFloat("50%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("110%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "BTC", longToken: "WBTC.e", shortToken: "WBTC.e" },
@@ -385,14 +385,14 @@ const config: {
       maxOpenInterest: decimalToFloat(10_000_000),
 
       // funding increase rate is higher for single asset pools
-      fundingIncreaseFactorPerSecond: percentageToFloat("70%")
+      fundingIncreaseFactorPerSecond: percentageToFloat("90%")
         .div(SECONDS_PER_YEAR)
         .div(SECONDS_PER_HOUR * 2), // at least 2h to reach max funding
-      maxFundingFactorPerSecond: percentageToFloat("70%").div(SECONDS_PER_YEAR),
+      maxFundingFactorPerSecond: percentageToFloat("90%").div(SECONDS_PER_YEAR),
 
       optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("65%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      baseBorrowingFactor: percentageToFloat("55%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("150%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "BTC", longToken: "tBTC", shortToken: "tBTC" },
@@ -422,14 +422,14 @@ const config: {
       maxOpenInterest: decimalToFloat(1_000_000),
 
       // funding increase rate is higher for single asset pools
-      fundingIncreaseFactorPerSecond: percentageToFloat("70%")
+      fundingIncreaseFactorPerSecond: percentageToFloat("90%")
         .div(SECONDS_PER_YEAR)
         .div(SECONDS_PER_HOUR * 2),
-      maxFundingFactorPerSecond: percentageToFloat("70%").div(SECONDS_PER_YEAR),
+      maxFundingFactorPerSecond: percentageToFloat("90%").div(SECONDS_PER_YEAR),
 
       optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("65%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      baseBorrowingFactor: percentageToFloat("55%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("150%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC" },
@@ -462,14 +462,14 @@ const config: {
 
       maxOpenInterest: decimalToFloat(70_000_000),
 
-      fundingIncreaseFactorPerSecond: percentageToFloat("60%")
+      fundingIncreaseFactorPerSecond: percentageToFloat("80%")
         .div(SECONDS_PER_YEAR)
-        .div(SECONDS_PER_HOUR * 4), // at least ~4 hours to reach max funding
-      maxFundingFactorPerSecond: percentageToFloat("60%").div(SECONDS_PER_YEAR),
+        .div(SECONDS_PER_HOUR * 3), // at least ~3 hours to reach max funding
+      maxFundingFactorPerSecond: percentageToFloat("80%").div(SECONDS_PER_YEAR),
 
       optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("60%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("120%").div(SECONDS_PER_YEAR),
+      baseBorrowingFactor: percentageToFloat("50%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("110%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "WETH" },
@@ -499,14 +499,14 @@ const config: {
       maxOpenInterest: decimalToFloat(10_000_000),
 
       // funding increase rate is higher for single asset pools
-      fundingIncreaseFactorPerSecond: percentageToFloat("70%")
+      fundingIncreaseFactorPerSecond: percentageToFloat("90%")
         .div(SECONDS_PER_YEAR)
         .div(SECONDS_PER_HOUR * 2),
-      maxFundingFactorPerSecond: percentageToFloat("70%").div(SECONDS_PER_YEAR),
+      maxFundingFactorPerSecond: percentageToFloat("90%").div(SECONDS_PER_YEAR),
 
       optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("65%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      baseBorrowingFactor: percentageToFloat("55%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("150%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "WETH", longToken: "wstETH", shortToken: "USDe" },
@@ -540,14 +540,14 @@ const config: {
 
       maxOpenInterest: decimalToFloat(1_000_000),
 
-      fundingIncreaseFactorPerSecond: percentageToFloat("60%")
+      fundingIncreaseFactorPerSecond: percentageToFloat("80%")
         .div(SECONDS_PER_YEAR)
-        .div(SECONDS_PER_HOUR * 4),
-      maxFundingFactorPerSecond: percentageToFloat("60%").div(SECONDS_PER_YEAR),
+        .div(SECONDS_PER_HOUR * 3),
+      maxFundingFactorPerSecond: percentageToFloat("80%").div(SECONDS_PER_YEAR),
 
       optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("70%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      baseBorrowingFactor: percentageToFloat("60%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("150%").div(SECONDS_PER_YEAR),
 
       swapFeeFactorForPositiveImpact: percentageToFloat("0.25%"),
       swapFeeFactorForNegativeImpact: percentageToFloat("0.25%"),
@@ -579,8 +579,8 @@ const config: {
       minCollateralFactorForOpenInterestMultiplier: decimalToFloat(8, 10),
 
       optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("65%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("120%").div(SECONDS_PER_YEAR),
+      baseBorrowingFactor: percentageToFloat("55%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("110%").div(SECONDS_PER_YEAR),
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(727, 40), // 0.727895E+43, 0.6289008462 BNB / day
       minPositionImpactPoolAmount: expandDecimals(53, 16), // 0.53 BNB
@@ -650,8 +650,8 @@ const config: {
       openInterestReserveFactor: percentageToFloat("160%"),
 
       optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("65%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      baseBorrowingFactor: percentageToFloat("55%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("150%").div(SECONDS_PER_YEAR),
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(488, 34), // 0.488E+37, 4216 DOGE / day
       minPositionImpactPoolAmount: expandDecimals(26000, 8), // 26000 DOGE
@@ -678,13 +678,8 @@ const config: {
       negativeSwapImpactFactor: exponentToFloat("5e-9"), // 5e-9
 
       optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("70%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR),
-
-      fundingIncreaseFactorPerSecond: percentageToFloat("90%")
-        .div(SECONDS_PER_YEAR)
-        .div(SECONDS_PER_HOUR * 3),
-      maxFundingFactorPerSecond: percentageToFloat("90%").div(SECONDS_PER_YEAR),
+      baseBorrowingFactor: percentageToFloat("60%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("150%").div(SECONDS_PER_YEAR),
 
       minCollateralFactor: percentageToFloat("1%"),
 
@@ -723,8 +718,8 @@ const config: {
       openInterestReserveFactor: percentageToFloat("100%"),
 
       optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("70%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      baseBorrowingFactor: percentageToFloat("60%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("150%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "AAVE", longToken: "WETH", shortToken: "USDC" },
@@ -759,8 +754,8 @@ const config: {
       maxPnlFactorForWithdrawals: percentageToFloat("60%"),
 
       optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("65%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      baseBorrowingFactor: percentageToFloat("55%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("150%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "UNI", longToken: "WETH", shortToken: "USDC" },
@@ -796,8 +791,8 @@ const config: {
       maxPnlFactorForWithdrawals: percentageToFloat("60%"),
 
       optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("65%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      baseBorrowingFactor: percentageToFloat("55%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("150%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "PEPE", longToken: "WETH", shortToken: "USDC" },
@@ -837,8 +832,8 @@ const config: {
       maxPnlFactorForWithdrawals: percentageToFloat("35%"),
 
       optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("70%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      baseBorrowingFactor: percentageToFloat("60%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("150%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "SOL", longToken: "SOL", shortToken: "USDC" },
@@ -867,15 +862,13 @@ const config: {
       openInterestReserveFactor: percentageToFloat("230%"),
 
       optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("60%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("120%").div(SECONDS_PER_YEAR),
+      baseBorrowingFactor: percentageToFloat("50%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("110%").div(SECONDS_PER_YEAR),
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(230, 33), // 0.2300306+36, 20 SOL / day
       minPositionImpactPoolAmount: expandDecimals(219, 9), // 219 SOL
 
       maxOpenInterest: decimalToFloat(17_500_000),
-
-      fundingIncreaseFactorPerSecond: exponentToFloat("10.152e-13"), // 0.00000000000846, at least ~5 hours to reach max funding
     },
     {
       tokens: { indexToken: "STX", longToken: "WBTC.e", shortToken: "USDC" },
@@ -906,8 +899,8 @@ const config: {
       openInterestReserveFactor: percentageToFloat("100%"),
 
       optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("70%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      baseBorrowingFactor: percentageToFloat("60%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("150%").div(SECONDS_PER_YEAR),
 
       maxPoolUsdForDeposit: decimalToFloat(1_000_000), // x2 of max open interest
 
@@ -943,8 +936,8 @@ const config: {
       maxOpenInterest: decimalToFloat(500_000),
 
       optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("70%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      baseBorrowingFactor: percentageToFloat("60%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("150%").div(SECONDS_PER_YEAR),
 
       maxPoolUsdForDeposit: decimalToFloat(1_000_000), // x2 of max open interest
 
@@ -976,8 +969,8 @@ const config: {
       openInterestReserveFactor: percentageToFloat("120%"),
 
       optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("70%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      baseBorrowingFactor: percentageToFloat("60%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("150%").div(SECONDS_PER_YEAR),
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(2709, 30), // 2.709055E+33, 2.34 LTC / day
       minPositionImpactPoolAmount: expandDecimals(28, 8), // 28 LTC
@@ -1044,15 +1037,13 @@ const config: {
       minCollateralFactorForOpenInterestMultiplier: decimalToFloat(64, 11),
 
       optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("60%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("120%").div(SECONDS_PER_YEAR),
+      baseBorrowingFactor: percentageToFloat("50%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("110%").div(SECONDS_PER_YEAR),
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(827, 42), // 0.827E+45, 71.488 LINK / day
       minPositionImpactPoolAmount: expandDecimals(638, 18), // 638 LINK
 
       maxOpenInterest: decimalToFloat(10_000_000),
-
-      fundingIncreaseFactorPerSecond: exponentToFloat("10.152e-13"), // 0.000000000010152, at least ~5 hours to reach max funding
     },
     {
       tokens: { indexToken: "ARB", longToken: "ARB", shortToken: "USDC" },
@@ -1081,10 +1072,8 @@ const config: {
       openInterestReserveFactor: percentageToFloat("230%"),
 
       optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("60%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("120%").div(SECONDS_PER_YEAR),
-
-      fundingIncreaseFactorPerSecond: exponentToFloat("10.152e-13"), // 0.000000000010152, at least ~5 hours to reach max funding
+      baseBorrowingFactor: percentageToFloat("50%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("110%").div(SECONDS_PER_YEAR),
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(800, 43), // 0.800565E+46, 691.69 ARB / day
       minPositionImpactPoolAmount: expandDecimals(27598, 18), // 27598 ARB
@@ -1117,8 +1106,8 @@ const config: {
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.8e-9"),
 
       optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("65%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("120%").div(SECONDS_PER_YEAR),
+      baseBorrowingFactor: percentageToFloat("55%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("110%").div(SECONDS_PER_YEAR),
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(1097, 40), // 1.0973075E+43, 0.948074216 AAVE / day
       minPositionImpactPoolAmount: expandDecimals(723, 16), // 7.23 AAVE
@@ -1151,8 +1140,8 @@ const config: {
       openInterestReserveFactor: percentageToFloat("130%"),
 
       optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("65%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("120%").div(SECONDS_PER_YEAR),
+      baseBorrowingFactor: percentageToFloat("55%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("110%").div(SECONDS_PER_YEAR),
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(1643, 41), // 1.64325E+44, 14,2 AVAX / day
       minPositionImpactPoolAmount: expandDecimals(79, 18), // 79.18 AVAX
@@ -1186,8 +1175,8 @@ const config: {
       openInterestReserveFactor: percentageToFloat("120%"),
 
       optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("70%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      baseBorrowingFactor: percentageToFloat("60%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("150%").div(SECONDS_PER_YEAR),
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(5442, 28), // 5.442645E+31, 4,7 ATOM / day
       minPositionImpactPoolAmount: expandDecimals(611, 6), // 611 ATOM
@@ -1219,8 +1208,8 @@ const config: {
       openInterestReserveFactor: percentageToFloat("120%"),
 
       optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("70%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      baseBorrowingFactor: percentageToFloat("60%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("150%").div(SECONDS_PER_YEAR),
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(928, 48), // 0.928E+51, 80.22629972 NEAR / day
       minPositionImpactPoolAmount: expandDecimals(4361, 24), // 4361 NEAR
@@ -1253,8 +1242,8 @@ const config: {
       openInterestReserveFactor: percentageToFloat("130%"),
 
       optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("65%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("120%").div(SECONDS_PER_YEAR),
+      baseBorrowingFactor: percentageToFloat("55%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("110%").div(SECONDS_PER_YEAR),
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(2100, 41), // 2.1E+44, 18.14 OP / day
       minPositionImpactPoolAmount: expandDecimals(311, 18), // 311 OP
@@ -1292,8 +1281,8 @@ const config: {
       openInterestReserveFactor: percentageToFloat("100%"),
 
       optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("70%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      baseBorrowingFactor: percentageToFloat("60%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("150%").div(SECONDS_PER_YEAR),
 
       maxPoolUsdForDeposit: decimalToFloat(1_000_000), // x2 of max open interest
 
@@ -1326,8 +1315,8 @@ const config: {
       openInterestReserveFactor: percentageToFloat("130%"),
 
       optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("65%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("120%").div(SECONDS_PER_YEAR),
+      baseBorrowingFactor: percentageToFloat("55%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("110%").div(SECONDS_PER_YEAR),
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(65, 42), // 6.5e43, 5.6 GMX / day
       minPositionImpactPoolAmount: expandDecimals(50, 18), // 50 GMX
@@ -1359,8 +1348,8 @@ const config: {
       openInterestReserveFactor: percentageToFloat("120%"),
 
       optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("65%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("120%").div(SECONDS_PER_YEAR),
+      baseBorrowingFactor: percentageToFloat("55%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("110%").div(SECONDS_PER_YEAR),
 
       fundingIncreaseFactorPerSecond: percentageToFloat("90%")
         .div(SECONDS_PER_YEAR)
@@ -1397,8 +1386,8 @@ const config: {
       openInterestReserveFactor: percentageToFloat("120%"),
 
       optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("65%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("120%").div(SECONDS_PER_YEAR),
+      baseBorrowingFactor: percentageToFloat("55%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("110%").div(SECONDS_PER_YEAR),
 
       fundingIncreaseFactorPerSecond: percentageToFloat("90%")
         .div(SECONDS_PER_YEAR)
@@ -1431,8 +1420,8 @@ const config: {
       openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
 
       optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("70%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      baseBorrowingFactor: percentageToFloat("60%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("150%").div(SECONDS_PER_YEAR),
 
       positionImpactPoolDistributionRate: bigNumberify(0),
       minPositionImpactPoolAmount: bigNumberify(0),
@@ -1471,8 +1460,8 @@ const config: {
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
       optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("70%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      baseBorrowingFactor: percentageToFloat("60%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("150%").div(SECONDS_PER_YEAR),
 
       positionImpactPoolDistributionRate: bigNumberify(0),
       minPositionImpactPoolAmount: bigNumberify(0),
@@ -1506,8 +1495,8 @@ const config: {
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
       optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("70%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      baseBorrowingFactor: percentageToFloat("60%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("150%").div(SECONDS_PER_YEAR),
 
       positionImpactPoolDistributionRate: bigNumberify(0),
       minPositionImpactPoolAmount: bigNumberify(0),
@@ -1541,8 +1530,8 @@ const config: {
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
       optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("70%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      baseBorrowingFactor: percentageToFloat("60%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("150%").div(SECONDS_PER_YEAR),
 
       positionImpactPoolDistributionRate: bigNumberify(0),
       minPositionImpactPoolAmount: bigNumberify(0),
@@ -1576,8 +1565,8 @@ const config: {
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
       optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("70%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      baseBorrowingFactor: percentageToFloat("60%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("150%").div(SECONDS_PER_YEAR),
 
       positionImpactPoolDistributionRate: bigNumberify(0),
       minPositionImpactPoolAmount: bigNumberify(0),
@@ -1611,8 +1600,8 @@ const config: {
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
       optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("70%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      baseBorrowingFactor: percentageToFloat("60%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("150%").div(SECONDS_PER_YEAR),
 
       positionImpactPoolDistributionRate: bigNumberify(0),
       minPositionImpactPoolAmount: bigNumberify(0),
@@ -1646,8 +1635,8 @@ const config: {
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
       optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("70%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      baseBorrowingFactor: percentageToFloat("60%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("150%").div(SECONDS_PER_YEAR),
 
       positionImpactPoolDistributionRate: bigNumberify(0),
       minPositionImpactPoolAmount: bigNumberify(0),
