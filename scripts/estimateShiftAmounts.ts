@@ -1,7 +1,6 @@
-import got, { withoutBody } from "got";
+import got from "got";
 import hre from "hardhat";
 import { bigNumberify, expandDecimals, formatAmount } from "../utils/math";
-import { toLoggableObject } from "../utils/print";
 
 function getOracleAbi() {
   if (hre.network.name === "arbitrum") {
