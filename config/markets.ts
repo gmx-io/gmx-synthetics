@@ -496,7 +496,7 @@ const config: {
       // minCollateralFactor of 0.005 (0.5%) when open interest is 83,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6e-11"),
 
-      maxOpenInterest: decimalToFloat(9_000_000),
+      maxOpenInterest: decimalToFloat(10_000_000),
 
       // funding increase rate is higher for single asset pools
       fundingIncreaseFactorPerSecond: percentageToFloat("70%")
