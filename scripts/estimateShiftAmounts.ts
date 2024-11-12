@@ -24,13 +24,14 @@ async function getTickers() {
 function getPriceProp(ticker) {
   return {
     min: ticker.minPrice,
-    max: ticker.maxPrice,
+    // max: ticker.maxPrice,
+    max: ticker.minPrice,
   };
 }
 
 async function main() {
-  const marketFromAddress = "0x70d95587d40A2caf56bd97485aB3Eec10Bee6336"; // ETH
-  const marketToAddress = "0x6853EA96FF216fAb11D2d930CE3C508556A4bdc4"; // DOGE
+  const marketFromAddress = "0x6853EA96FF216fAb11D2d930CE3C508556A4bdc4"; // DOGE
+  const marketToAddress = "0x70d95587d40A2caf56bd97485aB3Eec10Bee6336"; // ETH
   const blockNumber = await hre.ethers.provider.getBlockNumber();
   console.log("blockNumber", blockNumber);
 
@@ -56,13 +57,13 @@ async function main() {
     marketFromPrices.longTokenPrice,
     marketFromPrices.shortTokenPrice,
     "0xdd8747ceca84c84319e46661e0ee4095cc511df8c2208b6ff4e9d2b2e6930bb6", // MAX_PNL_FACTOR_FOR_WITHDRAWALS
-    true,
+    false,
     { blockTag: blockNumber }
   );
-  console.log("marketFromTokenPriceOnchain", formatAmount(marketFromTokenPriceOnchain, 30));
+  console.log("marketFromTokenPriceOnchain $%s", formatAmount(marketFromTokenPriceOnchain, 30));
   const marketFromAmountIn = expandDecimals(1000, 18);
   const marketFromAmountInUsd = marketFromAmountIn.mul(marketFromTokenPriceOnchain).div(expandDecimals(1, 18));
-  console.log("marketFromAmountInUsd", formatAmount(marketFromAmountInUsd, 30));
+  console.log("marketFromAmountInUsd $%s", formatAmount(marketFromAmountInUsd, 30));
 
   const withdrawalOutput = await reader.getWithdrawalAmountOut(
     dataStore.address,
@@ -74,7 +75,11 @@ async function main() {
     { blockTag: blockNumber }
   );
 
-  console.log("withdrawalOutput", formatAmount(withdrawalOutput[0], 18), formatAmount(withdrawalOutput[1], 6));
+  console.log(
+    "withdrawalOutput %s ETH %s USDC",
+    formatAmount(withdrawalOutput[0], 18),
+    formatAmount(withdrawalOutput[1], 6)
+  );
 
   const marketToPrices = {
     indexTokenPrice: getPriceProp(tickers[marketTo.indexToken]),
@@ -94,7 +99,7 @@ async function main() {
     { blockTag: blockNumber }
   );
 
-  console.log("depositOutput", formatAmount(depositOutput, 18));
+  console.log("depositOutput %s GM", formatAmount(depositOutput, 18));
 
   const [marketToTokenPriceOnchain] = await reader.getMarketTokenPrice(
     dataStore.address,
@@ -107,13 +112,11 @@ async function main() {
     { blockTag: blockNumber }
   );
   const marketToAmountOutUsd = depositOutput.mul(marketToTokenPriceOnchain).div(expandDecimals(1, 18));
-  console.log("marketToAmountOutUsd", formatAmount(marketToAmountOutUsd, 30));
+  console.log("marketToAmountOutUsd $%s", formatAmount(marketToAmountOutUsd, 30));
 
-  const priceImpact = marketToAmountOutUsd
-    .sub(marketFromAmountInUsd)
-    .mul(expandDecimals(1, 30))
-    .div(marketToAmountOutUsd);
-  console.log("priceImpact %s%", formatAmount(priceImpact, 28));
+  const priceImpactUsd = marketToAmountOutUsd.sub(marketFromAmountInUsd);
+  const priceImpactPercent = priceImpactUsd.mul(expandDecimals(1, 30)).div(marketToAmountOutUsd);
+  console.log("priceImpact $%s (%s%)", formatAmount(priceImpactUsd, 30), formatAmount(priceImpactPercent, 28));
 }
 
 main()
