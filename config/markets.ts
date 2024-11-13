@@ -136,6 +136,40 @@ export type PerpMarketConfig = Partial<BaseMarketConfig> & {
 
 export type MarketConfig = SpotMarketConfig | PerpMarketConfig;
 
+type FundingRateConfig = Partial<{
+  fundingFactor: BigNumberish;
+  fundingExponentFactor: BigNumberish;
+
+  fundingIncreaseFactorPerSecond: BigNumberish;
+  fundingDecreaseFactorPerSecond: BigNumberish;
+  thresholdForStableFunding: BigNumberish;
+  thresholdForDecreaseFunding: BigNumberish;
+  minFundingFactorPerSecond: BigNumberish;
+  maxFundingFactorPerSecond: BigNumberish;
+}>;
+
+const fundingRateConfig_Default: FundingRateConfig = {
+  fundingIncreaseFactorPerSecond: percentageToFloat("90%")
+    .div(SECONDS_PER_YEAR)
+    .div(SECONDS_PER_HOUR * 3),
+  maxFundingFactorPerSecond: percentageToFloat("90%").div(SECONDS_PER_YEAR),
+};
+
+const fundingRateConfig_MainMarket: FundingRateConfig = {
+  fundingIncreaseFactorPerSecond: percentageToFloat("80%")
+    .div(SECONDS_PER_YEAR)
+    .div(SECONDS_PER_HOUR * 3),
+  maxFundingFactorPerSecond: percentageToFloat("80%").div(SECONDS_PER_YEAR),
+};
+
+const fundingRateConfig_SingleToken: FundingRateConfig = {
+  // funding increase rate is higher for single asset pools
+  fundingIncreaseFactorPerSecond: percentageToFloat("90%")
+    .div(SECONDS_PER_YEAR)
+    .div(SECONDS_PER_HOUR * 2),
+  maxFundingFactorPerSecond: percentageToFloat("90%").div(SECONDS_PER_YEAR),
+};
+
 const baseMarketConfig: Partial<BaseMarketConfig> = {
   minCollateralFactor: percentageToFloat("1%"), // 1%
 
@@ -292,6 +326,7 @@ const config: {
       virtualMarketId: hashString("SPOT:APE/USD"),
 
       ...baseMarketConfig,
+      ...fundingRateConfig_Default,
 
       positionImpactExponentFactor: exponentToFloat("2.2e0"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"), // 0.05% for ~90,000 USD of imbalance
@@ -323,6 +358,7 @@ const config: {
       virtualMarketId: hashString("SPOT:BTC/USD"),
 
       ...baseMarketConfig,
+      ...fundingRateConfig_MainMarket,
 
       reserveFactor: percentageToFloat("175%"),
       openInterestReserveFactor: percentageToFloat("170%"),
@@ -348,11 +384,6 @@ const config: {
 
       maxOpenInterest: decimalToFloat(74_000_000),
 
-      fundingIncreaseFactorPerSecond: percentageToFloat("80%")
-        .div(SECONDS_PER_YEAR)
-        .div(SECONDS_PER_HOUR * 3),
-      maxFundingFactorPerSecond: percentageToFloat("80%").div(SECONDS_PER_YEAR),
-
       optimalUsageFactor: percentageToFloat("75%"),
       baseBorrowingFactor: percentageToFloat("50%").div(SECONDS_PER_YEAR),
       aboveOptimalUsageBorrowingFactor: percentageToFloat("110%").div(SECONDS_PER_YEAR),
@@ -362,6 +393,7 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:BTC/USD"),
 
       ...singleTokenMarketConfig,
+      ...fundingRateConfig_SingleToken,
 
       reserveFactor: percentageToFloat("105%"),
       openInterestReserveFactor: percentageToFloat("100%"),
@@ -384,12 +416,6 @@ const config: {
 
       maxOpenInterest: decimalToFloat(10_000_000),
 
-      // funding increase rate is higher for single asset pools
-      fundingIncreaseFactorPerSecond: percentageToFloat("90%")
-        .div(SECONDS_PER_YEAR)
-        .div(SECONDS_PER_HOUR * 2), // at least 2h to reach max funding
-      maxFundingFactorPerSecond: percentageToFloat("90%").div(SECONDS_PER_YEAR),
-
       optimalUsageFactor: percentageToFloat("75%"),
       baseBorrowingFactor: percentageToFloat("55%").div(SECONDS_PER_YEAR),
       aboveOptimalUsageBorrowingFactor: percentageToFloat("150%").div(SECONDS_PER_YEAR),
@@ -399,6 +425,7 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:BTC/USD"),
 
       ...singleTokenMarketConfig,
+      ...fundingRateConfig_SingleToken,
 
       reserveFactor: percentageToFloat("85%"),
       openInterestReserveFactor: percentageToFloat("80%"),
@@ -421,12 +448,6 @@ const config: {
 
       maxOpenInterest: decimalToFloat(1_000_000),
 
-      // funding increase rate is higher for single asset pools
-      fundingIncreaseFactorPerSecond: percentageToFloat("90%")
-        .div(SECONDS_PER_YEAR)
-        .div(SECONDS_PER_HOUR * 2),
-      maxFundingFactorPerSecond: percentageToFloat("90%").div(SECONDS_PER_YEAR),
-
       optimalUsageFactor: percentageToFloat("75%"),
       baseBorrowingFactor: percentageToFloat("55%").div(SECONDS_PER_YEAR),
       aboveOptimalUsageBorrowingFactor: percentageToFloat("150%").div(SECONDS_PER_YEAR),
@@ -437,6 +458,7 @@ const config: {
       virtualMarketId: hashString("SPOT:ETH/USD"),
 
       ...baseMarketConfig,
+      ...fundingRateConfig_MainMarket,
 
       reserveFactor: percentageToFloat("235%"),
       openInterestReserveFactor: percentageToFloat("230%"),
@@ -462,11 +484,6 @@ const config: {
 
       maxOpenInterest: decimalToFloat(70_000_000),
 
-      fundingIncreaseFactorPerSecond: percentageToFloat("80%")
-        .div(SECONDS_PER_YEAR)
-        .div(SECONDS_PER_HOUR * 3), // at least ~3 hours to reach max funding
-      maxFundingFactorPerSecond: percentageToFloat("80%").div(SECONDS_PER_YEAR),
-
       optimalUsageFactor: percentageToFloat("75%"),
       baseBorrowingFactor: percentageToFloat("50%").div(SECONDS_PER_YEAR),
       aboveOptimalUsageBorrowingFactor: percentageToFloat("110%").div(SECONDS_PER_YEAR),
@@ -476,6 +493,7 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:ETH/USD"),
 
       ...singleTokenMarketConfig,
+      ...fundingRateConfig_SingleToken,
 
       reserveFactor: percentageToFloat("105%"),
       openInterestReserveFactor: percentageToFloat("100%"),
@@ -498,12 +516,6 @@ const config: {
 
       maxOpenInterest: decimalToFloat(10_000_000),
 
-      // funding increase rate is higher for single asset pools
-      fundingIncreaseFactorPerSecond: percentageToFloat("90%")
-        .div(SECONDS_PER_YEAR)
-        .div(SECONDS_PER_HOUR * 2),
-      maxFundingFactorPerSecond: percentageToFloat("90%").div(SECONDS_PER_YEAR),
-
       optimalUsageFactor: percentageToFloat("75%"),
       baseBorrowingFactor: percentageToFloat("55%").div(SECONDS_PER_YEAR),
       aboveOptimalUsageBorrowingFactor: percentageToFloat("150%").div(SECONDS_PER_YEAR),
@@ -514,6 +526,7 @@ const config: {
       virtualMarketId: hashString("SPOT:wstETH/USD"),
 
       ...baseMarketConfig,
+      ...fundingRateConfig_MainMarket,
 
       reserveFactor: percentageToFloat("125%"),
 
@@ -540,11 +553,6 @@ const config: {
 
       maxOpenInterest: decimalToFloat(1_000_000),
 
-      fundingIncreaseFactorPerSecond: percentageToFloat("80%")
-        .div(SECONDS_PER_YEAR)
-        .div(SECONDS_PER_HOUR * 3),
-      maxFundingFactorPerSecond: percentageToFloat("80%").div(SECONDS_PER_YEAR),
-
       optimalUsageFactor: percentageToFloat("75%"),
       baseBorrowingFactor: percentageToFloat("60%").div(SECONDS_PER_YEAR),
       aboveOptimalUsageBorrowingFactor: percentageToFloat("150%").div(SECONDS_PER_YEAR),
@@ -558,6 +566,7 @@ const config: {
       virtualMarketId: hashString("SPOT:BNB/USD"),
 
       ...baseMarketConfig,
+      ...fundingRateConfig_Default,
 
       reserveFactor: percentageToFloat("135%"),
       openInterestReserveFactor: percentageToFloat("130%"),
@@ -593,6 +602,7 @@ const config: {
       virtualMarketId: hashString("SPOT:XRP/USD"),
 
       ...synthethicMarketConfig_IncreasedCapacity,
+      ...fundingRateConfig_Default,
 
       maxLongTokenPoolAmount: expandDecimals(1056, 18),
       maxShortTokenPoolAmount: expandDecimals(2_500_000, 6),
@@ -628,6 +638,7 @@ const config: {
       virtualMarketId: hashString("SPOT:DOGE/USD"),
 
       ...synthethicMarketConfig_IncreasedCapacity,
+      ...fundingRateConfig_Default,
 
       maxLongTokenPoolAmount: expandDecimals(1800, 18),
       maxShortTokenPoolAmount: expandDecimals(6_000_000, 6),
@@ -664,6 +675,7 @@ const config: {
       virtualMarketId: hashString("SPOT:WETH/USD"),
 
       ...syntheticMarketConfig,
+      ...fundingRateConfig_Default,
 
       maxLongTokenPoolAmount: expandDecimals(1249, 18), // ~$3m
       maxShortTokenPoolAmount: expandDecimals(3_000_000, 6),
@@ -696,6 +708,7 @@ const config: {
       virtualMarketId: hashString("SPOT:ETH/USD"),
 
       ...syntheticMarketConfig,
+      ...fundingRateConfig_Default,
 
       maxPoolUsdForDeposit: decimalToFloat(1_500_000), // x1.5 of max open interest
 
@@ -727,6 +740,7 @@ const config: {
       virtualMarketId: hashString("SPOT:ETH/USD"),
 
       ...syntheticMarketConfig,
+      ...fundingRateConfig_Default,
 
       positionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
 
@@ -763,6 +777,7 @@ const config: {
       virtualMarketId: hashString("SPOT:ETH/USD"),
 
       ...syntheticMarketConfig,
+      ...fundingRateConfig_Default,
 
       positionImpactExponentFactor: exponentToFloat("2e0"),
 
@@ -800,6 +815,7 @@ const config: {
       virtualMarketId: hashString("SPOT:ETH/USD"),
 
       ...syntheticMarketConfig,
+      ...fundingRateConfig_Default,
 
       positionImpactExponentFactor: exponentToFloat("2.2e0"),
 
@@ -808,11 +824,6 @@ const config: {
 
       positiveSwapImpactFactor: exponentToFloat("2e-10"),
       negativeSwapImpactFactor: exponentToFloat("2e-10"),
-
-      fundingIncreaseFactorPerSecond: percentageToFloat("90%")
-        .div(SECONDS_PER_YEAR)
-        .div(SECONDS_PER_HOUR * 3),
-      maxFundingFactorPerSecond: percentageToFloat("90%").div(SECONDS_PER_YEAR),
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
 
@@ -841,6 +852,7 @@ const config: {
       virtualMarketId: hashString("SPOT:SOL/USD"),
 
       ...baseMarketConfig,
+      ...fundingRateConfig_Default,
 
       maxLongTokenPoolAmount: expandDecimals(140_000, 9),
       maxShortTokenPoolAmount: expandDecimals(20_000_000, 6),
@@ -876,18 +888,13 @@ const config: {
       virtualMarketId: hashString("SPOT:BTC/USD"),
 
       ...syntheticMarketConfig,
-
+      ...fundingRateConfig_Default,
       positionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
       positivePositionImpactFactor: exponentToFloat("2.5e-10"), // 0.05% for ~90,000 USD of imbalance
       negativePositionImpactFactor: exponentToFloat("5e-10"), // 0.05% for ~45,000 USD of imbalance
 
       positiveSwapImpactFactor: exponentToFloat("1.25e-9"), // 1.25e-9
       negativeSwapImpactFactor: exponentToFloat("2.5e-9"), // 2.5e-9
-
-      fundingIncreaseFactorPerSecond: percentageToFloat("90%")
-        .div(SECONDS_PER_YEAR)
-        .div(SECONDS_PER_HOUR * 3),
-      maxFundingFactorPerSecond: percentageToFloat("90%").div(SECONDS_PER_YEAR),
 
       minCollateralFactor: percentageToFloat("1%"), // 1%
 
@@ -913,6 +920,7 @@ const config: {
       virtualMarketId: hashString("SPOT:BTC/USD"),
 
       ...syntheticMarketConfig,
+      ...fundingRateConfig_Default,
 
       positionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
       positivePositionImpactFactor: exponentToFloat("2.5e-10"), // 0.05% for ~90,000 USD of imbalance
@@ -920,11 +928,6 @@ const config: {
 
       positiveSwapImpactFactor: exponentToFloat("1.25e-9"), // 1.25e-9
       negativeSwapImpactFactor: exponentToFloat("2.5e-9"), // 2.5e-9
-
-      fundingIncreaseFactorPerSecond: percentageToFloat("90%")
-        .div(SECONDS_PER_YEAR)
-        .div(SECONDS_PER_HOUR * 3),
-      maxFundingFactorPerSecond: percentageToFloat("90%").div(SECONDS_PER_YEAR),
 
       minCollateralFactor: percentageToFloat("1%"), // 1%
 
@@ -950,6 +953,8 @@ const config: {
       virtualMarketId: hashString("SPOT:LTC/USD"),
 
       ...syntheticMarketConfig,
+      ...fundingRateConfig_Default,
+
       maxLongTokenPoolAmount: expandDecimals(800, 18),
       maxShortTokenPoolAmount: expandDecimals(1_500_000, 6),
 
@@ -983,6 +988,7 @@ const config: {
       virtualMarketId: hashString("SPOT:UNI/USD"),
 
       ...baseMarketConfig,
+      ...fundingRateConfig_Default,
 
       reserveFactor: percentageToFloat("105%"),
       openInterestReserveFactor: percentageToFloat("100%"),
@@ -1016,6 +1022,7 @@ const config: {
       virtualMarketId: hashString("SPOT:LINK/USD"),
 
       ...baseMarketConfig,
+      ...fundingRateConfig_Default,
 
       reserveFactor: percentageToFloat("235%"),
       openInterestReserveFactor: percentageToFloat("230%"),
@@ -1051,6 +1058,7 @@ const config: {
       virtualMarketId: hashString("SPOT:ARB/USD"),
 
       ...baseMarketConfig,
+      ...fundingRateConfig_Default,
 
       maxLongTokenPoolAmount: expandDecimals(7_524_000, 18),
       maxShortTokenPoolAmount: expandDecimals(15_500_000, 6),
@@ -1086,6 +1094,7 @@ const config: {
       virtualMarketId: hashString("SPOT:AAVE/USD"),
 
       ...baseMarketConfig,
+      ...fundingRateConfig_Default,
 
       reserveFactor: percentageToFloat("135%"),
       openInterestReserveFactor: percentageToFloat("130%"),
@@ -1120,7 +1129,7 @@ const config: {
       virtualMarketId: hashString("SPOT:AVAX/USD"),
 
       ...baseMarketConfig,
-
+      ...fundingRateConfig_Default,
       maxLongTokenPoolAmount: expandDecimals(83_300, 18),
       maxShortTokenPoolAmount: expandDecimals(3_500_000, 6),
 
@@ -1154,6 +1163,7 @@ const config: {
       virtualMarketId: hashString("SPOT:ETH/USD"),
 
       ...syntheticMarketConfig,
+      ...fundingRateConfig_Default,
 
       maxLongTokenPoolAmount: expandDecimals(900, 18),
       maxShortTokenPoolAmount: expandDecimals(3_500_000, 6),
@@ -1189,7 +1199,7 @@ const config: {
       virtualMarketId: hashString("SPOT:ETH/USD"),
 
       ...syntheticMarketConfig,
-
+      ...fundingRateConfig_Default,
       maxLongTokenPoolAmount: expandDecimals(1515, 18),
       maxShortTokenPoolAmount: expandDecimals(5_000_000, 6),
 
@@ -1222,6 +1232,7 @@ const config: {
       virtualMarketId: hashString("SPOT:OP/USD"),
 
       ...baseMarketConfig,
+      ...fundingRateConfig_Default,
 
       maxLongTokenPoolAmount: expandDecimals(750_000, 18),
       maxShortTokenPoolAmount: expandDecimals(3_000_000, 6),
@@ -1256,6 +1267,7 @@ const config: {
       virtualMarketId: hashString("SPOT:BTC/USD"),
 
       ...syntheticMarketConfig,
+      ...fundingRateConfig_Default,
 
       positionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
       positivePositionImpactFactor: exponentToFloat("2.5e-10"), // 0.05% for ~90,000 USD of imbalance
@@ -1265,11 +1277,6 @@ const config: {
       negativeSwapImpactFactor: exponentToFloat("2.5e-9"), // 2.5e-9
 
       borrowingFactor: exponentToFloat("1.6e-8"), // 1.60E-08, ~50% if 100% utilized
-
-      fundingIncreaseFactorPerSecond: percentageToFloat("90%")
-        .div(SECONDS_PER_YEAR)
-        .div(SECONDS_PER_HOUR * 3),
-      maxFundingFactorPerSecond: percentageToFloat("90%").div(SECONDS_PER_YEAR),
 
       minCollateralFactor: percentageToFloat("1%"), // 1%
 
@@ -1295,7 +1302,7 @@ const config: {
       virtualMarketId: hashString("SPOT:GMX/USD"),
 
       ...baseMarketConfig,
-
+      ...fundingRateConfig_Default,
       maxLongTokenPoolAmount: expandDecimals(160_000, 18),
       maxShortTokenPoolAmount: expandDecimals(4_000_000, 6),
 
@@ -1329,6 +1336,7 @@ const config: {
       virtualMarketId: hashString("SPOT:PEPE/USD"),
 
       ...baseMarketConfig,
+      ...fundingRateConfig_Default,
 
       maxLongTokenPoolAmount: expandDecimals(243_000_000_000, 18),
       maxShortTokenPoolAmount: expandDecimals(3_000_000, 6),
@@ -1351,11 +1359,6 @@ const config: {
       baseBorrowingFactor: percentageToFloat("55%").div(SECONDS_PER_YEAR),
       aboveOptimalUsageBorrowingFactor: percentageToFloat("110%").div(SECONDS_PER_YEAR),
 
-      fundingIncreaseFactorPerSecond: percentageToFloat("90%")
-        .div(SECONDS_PER_YEAR)
-        .div(SECONDS_PER_HOUR * 3),
-      maxFundingFactorPerSecond: percentageToFloat("90%").div(SECONDS_PER_YEAR),
-
       positionImpactPoolDistributionRate: bigNumberify(0),
       minPositionImpactPoolAmount: 0,
 
@@ -1367,6 +1370,7 @@ const config: {
       virtualMarketId: hashString("SPOT:WIF/USD"),
 
       ...baseMarketConfig,
+      ...fundingRateConfig_Default,
 
       maxLongTokenPoolAmount: expandDecimals(870_000, 6),
       maxShortTokenPoolAmount: expandDecimals(2_400_000, 6),
@@ -1389,11 +1393,6 @@ const config: {
       baseBorrowingFactor: percentageToFloat("55%").div(SECONDS_PER_YEAR),
       aboveOptimalUsageBorrowingFactor: percentageToFloat("110%").div(SECONDS_PER_YEAR),
 
-      fundingIncreaseFactorPerSecond: percentageToFloat("90%")
-        .div(SECONDS_PER_YEAR)
-        .div(SECONDS_PER_HOUR * 3),
-      maxFundingFactorPerSecond: percentageToFloat("90%").div(SECONDS_PER_YEAR),
-
       positionImpactPoolDistributionRate: bigNumberify(0),
       minPositionImpactPoolAmount: 0,
 
@@ -1405,6 +1404,7 @@ const config: {
       virtualMarketId: hashString("SPOT:ETH/USD"),
 
       ...syntheticMarketConfig,
+      ...fundingRateConfig_Default,
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
@@ -1431,11 +1431,6 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(400, 18),
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
-
-      fundingIncreaseFactorPerSecond: percentageToFloat("90%")
-        .div(SECONDS_PER_YEAR)
-        .div(SECONDS_PER_HOUR * 3),
-      maxFundingFactorPerSecond: percentageToFloat("90%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "SUI", longToken: "WETH", shortToken: "USDC" },
@@ -1443,6 +1438,7 @@ const config: {
       virtualMarketId: hashString("SPOT:ETH/USD"),
 
       ...syntheticMarketConfig,
+      ...fundingRateConfig_Default,
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
@@ -1478,6 +1474,7 @@ const config: {
       virtualMarketId: hashString("SPOT:ETH/USD"),
 
       ...syntheticMarketConfig,
+      ...fundingRateConfig_Default,
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
@@ -1513,6 +1510,7 @@ const config: {
       virtualMarketId: hashString("SPOT:ETH/USD"),
 
       ...syntheticMarketConfig,
+      ...fundingRateConfig_Default,
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
@@ -1548,6 +1546,7 @@ const config: {
       virtualMarketId: hashString("SPOT:ETH/USD"),
 
       ...syntheticMarketConfig,
+      ...fundingRateConfig_Default,
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
@@ -1583,6 +1582,7 @@ const config: {
       virtualMarketId: hashString("SPOT:ETH/USD"),
 
       ...syntheticMarketConfig,
+      ...fundingRateConfig_Default,
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
@@ -1618,6 +1618,7 @@ const config: {
       virtualMarketId: hashString("SPOT:ETH/USD"),
 
       ...syntheticMarketConfig,
+      ...fundingRateConfig_Default,
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
