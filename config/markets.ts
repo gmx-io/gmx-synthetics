@@ -843,7 +843,7 @@ const config: {
       maxFundingFactorPerSecond: percentageToFloat("130%").div(SECONDS_PER_YEAR),
 
       baseBorrowingFactor: percentageToFloat("65%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("120%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("170%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "SOL", longToken: "SOL", shortToken: "USDC" },
