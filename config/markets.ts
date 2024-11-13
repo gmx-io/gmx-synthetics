@@ -836,6 +836,11 @@ const config: {
       maxPnlFactorForAdl: percentageToFloat("45%"),
       minPnlFactorAfterAdl: percentageToFloat("40%"),
       maxPnlFactorForWithdrawals: percentageToFloat("35%"),
+
+      fundingIncreaseFactorPerSecond: percentageToFloat("120%")
+        .div(SECONDS_PER_YEAR)
+        .div(SECONDS_PER_HOUR * 3),
+      maxFundingFactorPerSecond: percentageToFloat("120%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "SOL", longToken: "SOL", shortToken: "USDC" },
@@ -1316,6 +1321,11 @@ const config: {
       minPositionImpactPoolAmount: 0,
 
       maxOpenInterest: decimalToFloat(1_500_000),
+
+      fundingIncreaseFactorPerSecond: percentageToFloat("120%")
+        .div(SECONDS_PER_YEAR)
+        .div(SECONDS_PER_HOUR * 3),
+      maxFundingFactorPerSecond: percentageToFloat("120%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "WIF", longToken: "WIF", shortToken: "USDC" },
