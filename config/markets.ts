@@ -1329,7 +1329,7 @@ const config: {
         .div(SECONDS_PER_YEAR)
         .div(SECONDS_PER_HOUR * 3),
       maxFundingFactorPerSecond: percentageToFloat("130%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("140%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("130%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "WIF", longToken: "WIF", shortToken: "USDC" },
