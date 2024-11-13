@@ -650,10 +650,10 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_LowBase_HighMax,
 
-      maxLongTokenPoolAmount: expandDecimals(1800, 18),
-      maxShortTokenPoolAmount: expandDecimals(6_000_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(3450, 18),
+      maxShortTokenPoolAmount: expandDecimals(11_000_000, 6),
 
-      maxPoolUsdForDeposit: decimalToFloat(5_500_000),
+      maxPoolUsdForDeposit: decimalToFloat(10_000_000),
 
       negativePositionImpactFactor: exponentToFloat("1.5e-8"),
       positivePositionImpactFactor: exponentToFloat("7.5e-9"),
@@ -1411,10 +1411,10 @@ const config: {
       minPositionImpactPoolAmount: bigNumberify(0),
 
       maxOpenInterest: decimalToFloat(1_000_000),
-      maxPoolUsdForDeposit: decimalToFloat(1_500_000), // 1.5x the max open interest
 
-      maxLongTokenPoolAmount: expandDecimals(763, 18), // ~2M USD (2x the max open interest)
-      maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+      maxPoolUsdForDeposit: decimalToFloat(3_000_000),
+      maxLongTokenPoolAmount: expandDecimals(1100, 18),
+      maxShortTokenPoolAmount: expandDecimals(3_500_000, 6),
     },
     {
       tokens: { indexToken: "SEI", longToken: "WETH", shortToken: "USDC" },
