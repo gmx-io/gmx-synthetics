@@ -365,6 +365,34 @@ const config: {
       oracleTimestampAdjustment: 1,
       // Chainlink on-chain feed not available
     },
+    TAO: {
+      synthetic: true,
+      decimals: 9,
+      dataStreamFeedId: "0x0003194c47ff85edd20e877289d23f0cac00f425ea9b558b5b015df87e162cb2",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x6aCcBB82aF71B8a576B4C05D4aF92A83A035B991",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+    },
+    BONK: {
+      synthetic: true,
+      decimals: 5,
+      dataStreamFeedId: "0x00033bba2b72b1d4220f0519eacd8a4d01e12aabb3eedb2c442db6e3d8994d99",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      // Chainlink on-chain feed not available
+    },
+    WLD: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x000365f820b0633946b78232bb91a97cf48100c426518e732465c3a050edb9f1",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      // Chainlink on-chain feed not available
+    },
     TON: {
       synthetic: true,
       decimals: 9,
