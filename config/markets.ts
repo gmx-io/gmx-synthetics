@@ -837,13 +837,13 @@ const config: {
       minPnlFactorAfterAdl: percentageToFloat("40%"),
       maxPnlFactorForWithdrawals: percentageToFloat("35%"),
 
-      fundingIncreaseFactorPerSecond: percentageToFloat("115%")
+      fundingIncreaseFactorPerSecond: percentageToFloat("130%")
         .div(SECONDS_PER_YEAR)
         .div(SECONDS_PER_HOUR * 3),
-      maxFundingFactorPerSecond: percentageToFloat("115%").div(SECONDS_PER_YEAR),
+      maxFundingFactorPerSecond: percentageToFloat("130%").div(SECONDS_PER_YEAR),
 
       baseBorrowingFactor: percentageToFloat("65%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("170%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "SOL", longToken: "SOL", shortToken: "USDC" },
@@ -1325,10 +1325,11 @@ const config: {
 
       maxOpenInterest: decimalToFloat(1_500_000),
 
-      fundingIncreaseFactorPerSecond: percentageToFloat("100%")
+      fundingIncreaseFactorPerSecond: percentageToFloat("130%")
         .div(SECONDS_PER_YEAR)
         .div(SECONDS_PER_HOUR * 3),
-      maxFundingFactorPerSecond: percentageToFloat("100%").div(SECONDS_PER_YEAR),
+      maxFundingFactorPerSecond: percentageToFloat("130%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("140%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "WIF", longToken: "WIF", shortToken: "USDC" },
