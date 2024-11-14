@@ -176,25 +176,23 @@ type BorrowingRateConfig = Partial<{
   aboveOptimalUsageBorrowingFactor: BigNumberish;
 }>;
 
-const borrowingRateConfig_LowBase_LowMax: BorrowingRateConfig = {
+const borrowingRateConfig_LowMax_WithLowerBase: BorrowingRateConfig = {
   optimalUsageFactor: percentageToFloat("75%"),
   baseBorrowingFactor: percentageToFloat("50%").div(SECONDS_PER_YEAR),
   aboveOptimalUsageBorrowingFactor: percentageToFloat("110%").div(SECONDS_PER_YEAR),
 };
-
-const borrowingRateConfig_LowBase_HighMax: BorrowingRateConfig = {
-  optimalUsageFactor: percentageToFloat("75%"),
-  baseBorrowingFactor: percentageToFloat("55%").div(SECONDS_PER_YEAR),
-  aboveOptimalUsageBorrowingFactor: percentageToFloat("150%").div(SECONDS_PER_YEAR),
-};
-
-const borrowingRateConfig_HighBase_LowMax: BorrowingRateConfig = {
+const borrowingRateConfig_LowMax_WithHigherBase: BorrowingRateConfig = {
   optimalUsageFactor: percentageToFloat("75%"),
   baseBorrowingFactor: percentageToFloat("55%").div(SECONDS_PER_YEAR),
   aboveOptimalUsageBorrowingFactor: percentageToFloat("110%").div(SECONDS_PER_YEAR),
 };
 
-const borrowingRateConfig_HighBase_HighMax: BorrowingRateConfig = {
+const borrowingRateConfig_HighMax_WithLowerBase: BorrowingRateConfig = {
+  optimalUsageFactor: percentageToFloat("75%"),
+  baseBorrowingFactor: percentageToFloat("55%").div(SECONDS_PER_YEAR),
+  aboveOptimalUsageBorrowingFactor: percentageToFloat("150%").div(SECONDS_PER_YEAR),
+};
+const borrowingRateConfig_HighMax_WithHigherBase: BorrowingRateConfig = {
   optimalUsageFactor: percentageToFloat("75%"),
   baseBorrowingFactor: percentageToFloat("60%").div(SECONDS_PER_YEAR),
   aboveOptimalUsageBorrowingFactor: percentageToFloat("150%").div(SECONDS_PER_YEAR),
@@ -389,7 +387,7 @@ const config: {
 
       ...baseMarketConfig,
       ...fundingRateConfig_MainMarket,
-      ...borrowingRateConfig_LowBase_LowMax,
+      ...borrowingRateConfig_LowMax_WithLowerBase,
 
       reserveFactor: percentageToFloat("175%"),
       openInterestReserveFactor: percentageToFloat("170%"),
@@ -421,7 +419,7 @@ const config: {
 
       ...singleTokenMarketConfig,
       ...fundingRateConfig_SingleToken,
-      ...borrowingRateConfig_LowBase_HighMax,
+      ...borrowingRateConfig_HighMax_WithLowerBase,
 
       reserveFactor: percentageToFloat("105%"),
       openInterestReserveFactor: percentageToFloat("100%"),
@@ -450,7 +448,7 @@ const config: {
 
       ...singleTokenMarketConfig,
       ...fundingRateConfig_SingleToken,
-      ...borrowingRateConfig_LowBase_HighMax,
+      ...borrowingRateConfig_HighMax_WithLowerBase,
 
       reserveFactor: percentageToFloat("85%"),
       openInterestReserveFactor: percentageToFloat("80%"),
@@ -480,7 +478,7 @@ const config: {
 
       ...baseMarketConfig,
       ...fundingRateConfig_MainMarket,
-      ...borrowingRateConfig_LowBase_LowMax,
+      ...borrowingRateConfig_LowMax_WithLowerBase,
 
       reserveFactor: percentageToFloat("235%"),
       openInterestReserveFactor: percentageToFloat("230%"),
@@ -512,7 +510,7 @@ const config: {
 
       ...singleTokenMarketConfig,
       ...fundingRateConfig_SingleToken,
-      ...borrowingRateConfig_LowBase_HighMax,
+      ...borrowingRateConfig_HighMax_WithLowerBase,
 
       reserveFactor: percentageToFloat("105%"),
       openInterestReserveFactor: percentageToFloat("100%"),
@@ -542,7 +540,7 @@ const config: {
 
       ...baseMarketConfig,
       ...fundingRateConfig_MainMarket,
-      ...borrowingRateConfig_HighBase_HighMax,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
 
       reserveFactor: percentageToFloat("125%"),
 
@@ -579,7 +577,7 @@ const config: {
 
       ...baseMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighBase_LowMax,
+      ...borrowingRateConfig_LowMax_WithHigherBase,
 
       reserveFactor: percentageToFloat("135%"),
       openInterestReserveFactor: percentageToFloat("130%"),
@@ -648,7 +646,7 @@ const config: {
 
       ...synthethicMarketConfig_IncreasedCapacity,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowBase_HighMax,
+      ...borrowingRateConfig_HighMax_WithLowerBase,
 
       maxLongTokenPoolAmount: expandDecimals(1800, 18),
       maxShortTokenPoolAmount: expandDecimals(6_000_000, 6),
@@ -682,7 +680,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighBase_HighMax,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
 
       maxLongTokenPoolAmount: expandDecimals(1249, 18), // ~$3m
       maxShortTokenPoolAmount: expandDecimals(3_000_000, 6),
@@ -712,7 +710,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighBase_HighMax,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
 
       maxPoolUsdForDeposit: decimalToFloat(1_500_000), // x1.5 of max open interest
 
@@ -741,7 +739,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowBase_HighMax,
+      ...borrowingRateConfig_HighMax_WithLowerBase,
 
       positionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
 
@@ -775,7 +773,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowBase_HighMax,
+      ...borrowingRateConfig_HighMax_WithLowerBase,
 
       positionImpactExponentFactor: exponentToFloat("2e0"),
 
@@ -810,7 +808,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighBase_HighMax,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
 
       positionImpactExponentFactor: exponentToFloat("2.2e0"),
 
@@ -844,7 +842,7 @@ const config: {
 
       ...baseMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowBase_LowMax,
+      ...borrowingRateConfig_LowMax_WithLowerBase,
 
       maxLongTokenPoolAmount: expandDecimals(140_000, 9),
       maxShortTokenPoolAmount: expandDecimals(20_000_000, 6),
@@ -877,7 +875,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighBase_HighMax,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
 
       positionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
       positivePositionImpactFactor: exponentToFloat("2.5e-10"), // 0.05% for ~90,000 USD of imbalance
@@ -907,7 +905,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighBase_HighMax,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
 
       positionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
       positivePositionImpactFactor: exponentToFloat("2.5e-10"), // 0.05% for ~90,000 USD of imbalance
@@ -937,7 +935,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighBase_HighMax,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
 
       maxLongTokenPoolAmount: expandDecimals(800, 18),
       maxShortTokenPoolAmount: expandDecimals(1_500_000, 6),
@@ -1003,7 +1001,7 @@ const config: {
 
       ...baseMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowBase_LowMax,
+      ...borrowingRateConfig_LowMax_WithLowerBase,
 
       reserveFactor: percentageToFloat("235%"),
       openInterestReserveFactor: percentageToFloat("230%"),
@@ -1036,7 +1034,7 @@ const config: {
 
       ...baseMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowBase_LowMax,
+      ...borrowingRateConfig_LowMax_WithLowerBase,
 
       maxLongTokenPoolAmount: expandDecimals(7_524_000, 18),
       maxShortTokenPoolAmount: expandDecimals(15_500_000, 6),
@@ -1069,7 +1067,7 @@ const config: {
 
       ...baseMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighBase_LowMax,
+      ...borrowingRateConfig_LowMax_WithHigherBase,
 
       reserveFactor: percentageToFloat("135%"),
       openInterestReserveFactor: percentageToFloat("130%"),
@@ -1101,7 +1099,7 @@ const config: {
 
       ...baseMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighBase_LowMax,
+      ...borrowingRateConfig_LowMax_WithHigherBase,
 
       maxLongTokenPoolAmount: expandDecimals(83_300, 18),
       maxShortTokenPoolAmount: expandDecimals(3_500_000, 6),
@@ -1133,7 +1131,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighBase_HighMax,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
 
       maxLongTokenPoolAmount: expandDecimals(900, 18),
       maxShortTokenPoolAmount: expandDecimals(3_500_000, 6),
@@ -1166,7 +1164,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighBase_HighMax,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
 
       maxLongTokenPoolAmount: expandDecimals(1515, 18),
       maxShortTokenPoolAmount: expandDecimals(5_000_000, 6),
@@ -1197,7 +1195,7 @@ const config: {
 
       ...baseMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighBase_LowMax,
+      ...borrowingRateConfig_LowMax_WithHigherBase,
 
       maxLongTokenPoolAmount: expandDecimals(750_000, 18),
       maxShortTokenPoolAmount: expandDecimals(3_000_000, 6),
@@ -1229,7 +1227,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighBase_HighMax,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
 
       positionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
       positivePositionImpactFactor: exponentToFloat("2.5e-10"), // 0.05% for ~90,000 USD of imbalance
@@ -1261,7 +1259,7 @@ const config: {
 
       ...baseMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighBase_LowMax,
+      ...borrowingRateConfig_LowMax_WithHigherBase,
 
       maxLongTokenPoolAmount: expandDecimals(160_000, 18),
       maxShortTokenPoolAmount: expandDecimals(4_000_000, 6),
@@ -1293,7 +1291,7 @@ const config: {
 
       ...baseMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighBase_LowMax,
+      ...borrowingRateConfig_LowMax_WithHigherBase,
 
       maxLongTokenPoolAmount: expandDecimals(243_000_000_000, 18),
       maxShortTokenPoolAmount: expandDecimals(3_000_000, 6),
@@ -1324,7 +1322,7 @@ const config: {
 
       ...baseMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighBase_LowMax,
+      ...borrowingRateConfig_LowMax_WithHigherBase,
 
       maxLongTokenPoolAmount: expandDecimals(870_000, 6),
       maxShortTokenPoolAmount: expandDecimals(2_400_000, 6),
@@ -1355,7 +1353,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighBase_HighMax,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
@@ -1390,7 +1388,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighBase_HighMax,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
@@ -1423,7 +1421,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighBase_HighMax,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
@@ -1456,7 +1454,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighBase_HighMax,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
@@ -1489,7 +1487,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighBase_HighMax,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
@@ -1522,7 +1520,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighBase_HighMax,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
@@ -1555,7 +1553,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_HighBase_HighMax,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
