@@ -237,6 +237,13 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         shiftHandler.simulateExecuteShift(key, simulatedOracleParams);
     }
 
+    function simulateExecuteLatestShift(
+        OracleUtils.SimulatePricesParams memory simulatedOracleParams
+    ) external payable nonReentrant {
+        bytes32 key = NonceUtils.getCurrentKey(dataStore);
+        shiftHandler.simulateExecuteShift(key, simulatedOracleParams);
+    }
+
     /**
      * @dev Creates a new order with the given amount, order parameters. The order is
      * created by transferring the specified amount of collateral tokens from the caller's account to the
