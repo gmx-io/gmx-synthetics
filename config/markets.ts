@@ -655,8 +655,9 @@ const config: {
 
       maxPoolUsdForDeposit: decimalToFloat(10_000_000),
 
-      negativePositionImpactFactor: exponentToFloat("1.5e-8"),
-      positivePositionImpactFactor: exponentToFloat("7.5e-9"),
+      positionImpactExponentFactor: exponentToFloat("1.62e0"),
+      negativePositionImpactFactor: exponentToFloat("3.18e-7"),
+      positivePositionImpactFactor: exponentToFloat("1.06e-7"),
 
       // the swap impact factor is for WETH-stablecoin swaps
       negativeSwapImpactFactor: exponentToFloat("2e-9"),
