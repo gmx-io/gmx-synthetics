@@ -1340,10 +1340,10 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_HighBase_LowMax,
 
-      maxLongTokenPoolAmount: expandDecimals(870_000, 6),
-      maxShortTokenPoolAmount: expandDecimals(2_400_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(1_135_000, 6),
+      maxShortTokenPoolAmount: expandDecimals(4_800_000, 6),
 
-      maxPoolUsdForDeposit: decimalToFloat(2_200_000),
+      maxPoolUsdForDeposit: decimalToFloat(4_400_000),
 
       negativePositionImpactFactor: exponentToFloat("5e-10"), // 0.05% for ~100,000 USD of imbalance
       positivePositionImpactFactor: exponentToFloat("2.5e-10"), // 0.05% for ~178,180 USD of imbalance
