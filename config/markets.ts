@@ -1586,6 +1586,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
@@ -1601,10 +1602,6 @@ const config: {
       openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
 
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
-
-      optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("70%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR),
 
       positionImpactPoolDistributionRate: bigNumberify(0),
       minPositionImpactPoolAmount: bigNumberify(0),
@@ -1622,6 +1619,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
@@ -1637,10 +1635,6 @@ const config: {
       openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
 
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
-
-      optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("70%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR),
 
       positionImpactPoolDistributionRate: bigNumberify(0),
       minPositionImpactPoolAmount: bigNumberify(0),
@@ -1658,6 +1652,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
@@ -1673,10 +1668,6 @@ const config: {
       openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
 
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
-
-      optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("70%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR),
 
       positionImpactPoolDistributionRate: bigNumberify(0),
       minPositionImpactPoolAmount: bigNumberify(0),
