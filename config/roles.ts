@@ -111,9 +111,9 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x7A967D114B8676874FA2cFC1C14F3095C88418Eb": true, // Timelock_4
       },
       ROUTER_PLUGIN: {
-        "0x674Ee2FFe588c4b1Fde6D5481c55Ef6133004cbA": true, // ExchangeRouter_4
+        "0x900173A66dbD345006C51fA35fA3aB760FcD843b": true, // ExchangeRouter_4
         "0xa329221a77BE08485f59310b873b14815c82E10D": true, // SubaccountRouter_4
-        "0xd59a808bCA24812C483C1B3bF0A0E8D7D5932E4c": true, // GlvRouter_4
+        "0x105b5aFe50FBCe7759051974fB1710ce331C77B3": true, // GlvRouter_4
       },
       TIMELOCK_ADMIN: {
         "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // timelock_admin_1
@@ -137,14 +137,14 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0xfe2Df84627950A0fB98EaD49c69a1DE3F66867d6": true, // DepositHandler_4
         "0x64fbD82d9F987baF5A59401c64e823232182E8Ed": true, // WithdrawalHandler_4
         "0xe68CAAACdf6439628DFD2fe624847602991A31eB": true, // OrderHandler_4
-        "0x674Ee2FFe588c4b1Fde6D5481c55Ef6133004cbA": true, // ExchangeRouter_4
+        "0x900173A66dbD345006C51fA35fA3aB760FcD843b": true, // ExchangeRouter_4
         "0x7EB417637a3E6d1C19E6d69158c47610b7a5d9B3": true, // FeeHandler_4
         "0xdAb9bA9e3a301CCb353f18B4C8542BA2149E4010": true, // LiquidationHandler_4
         "0xa329221a77BE08485f59310b873b14815c82E10D": true, // SubaccountRouter_4
 
         "0x48787F7847068f9Cc1398e5f589BEf9744730C8D": true, // ShiftHandler_4
         "0x3f6dF0c3A7221BA1375E87e7097885a601B41Afc": true, // GlvHandler_4
-        "0xd59a808bCA24812C483C1B3bF0A0E8D7D5932E4c": true, // GlvRouter_4
+        "0x105b5aFe50FBCe7759051974fB1710ce331C77B3": true, // GlvRouter_4
       },
       GOV_TOKEN_CONTROLLER: {
         "0x5E4766F932ce00aA4a1A82d3Da85adf15C5694A1": true, // RewardRouterV2_2
@@ -175,9 +175,9 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0xdF23692341538340db0ff04C65017F51b69a29f6": true, // Timelock_4
       },
       ROUTER_PLUGIN: {
-        "0xe60B7526e05d8D8aEA17607245fd6D7C9953A1CA": true, // ExchangeRouter_4
+        "0x2b76df209E1343da5698AF0f8757f6170162e78b": true, // ExchangeRouter_4
         "0x5aEb6AD978f59e220aA9099e09574e1c5E03AafD": true, // SubaccountRouter_4
-        "0x2098465FC0329C4d2F3B266190a6A664fBC6E0Db": true, // GlvRouter_4
+        "0x6BE75346C0262015E45c6fC0e3268BBa73e87D1a": true, // GlvRouter_4
       },
       TIMELOCK_ADMIN: {
         "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // timelock_admin_1
@@ -201,14 +201,14 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x8AE344DEeD1526B1772adDF78718722A169288Dc": true, // DepositHandler_4
         "0x1b0a44dD3bCCC2Ddae33921694EBc34E3ECC1415": true, // WithdrawalHandler_4
         "0x088711C3d2FA992188125e009E65c726bA090AD6": true, // OrderHandler_4
-        "0xe60B7526e05d8D8aEA17607245fd6D7C9953A1CA": true, // ExchangeRouter_4
+        "0x2b76df209E1343da5698AF0f8757f6170162e78b": true, // ExchangeRouter_4
         "0x1A3A103F9F536a0456C9b205152A3ac2b3c54490": true, // FeeHandler_4
         "0x34acBf9Fb2f0dDAB489F6B75FBf394C240b97276": true, // LiquidationHandler_4
         "0x5aEb6AD978f59e220aA9099e09574e1c5E03AafD": true, // SubaccountRouter_4
 
         "0x418F9CC6cA4870be1088Ce03CC48985B145c79a8": true, // ShiftHandler_4
         "0x48486CaF8851ed0085432789D28A8820bEcbfd45": true, // GlvHandler_4
-        "0x2098465FC0329C4d2F3B266190a6A664fBC6E0Db": true, // GlvRouter_4
+        "0x6BE75346C0262015E45c6fC0e3268BBa73e87D1a": true, // GlvRouter_4
       },
       GOV_TOKEN_CONTROLLER: {
         "0x091eD806490Cc58Fd514441499e58984cCce0630": true, // RewardRouterV2_2

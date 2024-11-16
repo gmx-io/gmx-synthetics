@@ -80,13 +80,37 @@ async function main() {
     arbitrum: [
       {
         role: "CONTROLLER",
-        member: "0x7eb417637a3e6d1c19e6d69158c47610b7a5d9b3",
+        member: "0x900173a66dbd345006c51fa35fa3ab760fcd843b",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x105b5afe50fbce7759051974fb1710ce331c77b3",
+      },
+      {
+        role: "ROUTER_PLUGIN",
+        member: "0x900173a66dbd345006c51fa35fa3ab760fcd843b",
+      },
+      {
+        role: "ROUTER_PLUGIN",
+        member: "0x105b5afe50fbce7759051974fb1710ce331c77b3",
       },
     ],
     avalanche: [
       {
         role: "CONTROLLER",
-        member: "0x1a3a103f9f536a0456c9b205152a3ac2b3c54490",
+        member: "0x2b76df209e1343da5698af0f8757f6170162e78b",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x6be75346c0262015e45c6fc0e3268bba73e87d1a",
+      },
+      {
+        role: "ROUTER_PLUGIN",
+        member: "0x2b76df209e1343da5698af0f8757f6170162e78b",
+      },
+      {
+        role: "ROUTER_PLUGIN",
+        member: "0x6be75346c0262015e45c6fc0e3268bba73e87d1a",
       },
     ],
   };
@@ -171,7 +195,11 @@ async function main() {
       },
       {
         role: "CONTROLLER",
-        member: "0x7cC506C8d711C2A17B61A75bd082d2514160baAd",
+        member: "0x674Ee2FFe588c4b1Fde6D5481c55Ef6133004cbA",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0xd59a808bCA24812C483C1B3bF0A0E8D7D5932E4c",
       },
       {
         role: "GOV_TOKEN_CONTROLLER",
@@ -192,6 +220,14 @@ async function main() {
       {
         role: "ROUTER_PLUGIN",
         member: "0x75eAFD2B4e306Dad8dd6334456F8018218Bc9882",
+      },
+      {
+        role: "ROUTER_PLUGIN",
+        member: "0x674Ee2FFe588c4b1Fde6D5481c55Ef6133004cbA",
+      },
+      {
+        role: "ROUTER_PLUGIN",
+        member: "0xd59a808bCA24812C483C1B3bF0A0E8D7D5932E4c",
       },
     ],
     avalanche: [
@@ -269,7 +305,11 @@ async function main() {
       },
       {
         role: "CONTROLLER",
-        member: "0x775CaaA2cB635a56c6C3dFb9C65B5Fa6335F79E7",
+        member: "0xe60B7526e05d8D8aEA17607245fd6D7C9953A1CA",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x2098465FC0329C4d2F3B266190a6A664fBC6E0Db",
       },
       {
         role: "GOV_TOKEN_CONTROLLER",
@@ -290,6 +330,14 @@ async function main() {
       {
         role: "ROUTER_PLUGIN",
         member: "0xEa90EC1228F7D1b3D47D84d1c9D46dBDFEfF7709",
+      },
+      {
+        role: "ROUTER_PLUGIN",
+        member: "0xe60B7526e05d8D8aEA17607245fd6D7C9953A1CA",
+      },
+      {
+        role: "ROUTER_PLUGIN",
+        member: "0x2098465FC0329C4d2F3B266190a6A664fBC6E0Db",
       },
     ],
   };
