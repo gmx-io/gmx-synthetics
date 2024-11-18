@@ -1630,9 +1630,7 @@ const config: {
       minPositionImpactPoolAmount: bigNumberify(0),
 
       maxOpenInterest: decimalToFloat(1_000_000),
-      // maxPoolUsdForDeposit: decimalToFloat(1_500_000), // 1.5x the max open interest
-      // temporarily disabled for deposits
-      maxPoolUsdForDeposit: bigNumberify(0),
+      maxPoolUsdForDeposit: decimalToFloat(1_500_000), // 1.5x the max open interest
 
       maxLongTokenPoolAmount: expandDecimals(23, 8), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
