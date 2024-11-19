@@ -103,10 +103,14 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
   }
 
   const write = process.env.FOR_EXISTING_MAINNET_DEPLOYMENT ? false : true;
-  await updateMarketConfig({ write });
+  if (write) {
+    await updateMarketConfig({ write: true });
+  }
 };
 
 func.skip = async ({ gmx, network }) => {
+  // TODO remove
+  return true;
   // skip if no markets configured
   const markets = await gmx.getMarkets();
   if (!markets || markets.length === 0) {

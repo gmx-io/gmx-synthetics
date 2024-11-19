@@ -21,7 +21,6 @@ const func = createDeployFunction({
   afterDeploy: async ({ deployedContract }) => {
     await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
   },
-  id: "GlvHandler_1",
 });
 
 export default func;

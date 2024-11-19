@@ -1,4 +1,4 @@
-import hre, { network } from "hardhat";
+import hre from "hardhat";
 
 import fetch from "node-fetch";
 import { handleInBatches } from "../utils/batch";
@@ -14,11 +14,13 @@ const RISK_ORACLE_SUPPORTED_NETWORKS = ["arbitrum", "avalanche", "avalancheFuji"
 
 const processMarkets = async ({
   markets,
+  marketAddress,
   onchainMarketsByTokens,
   supportedRiskOracleMarkets,
   tokens,
   generalConfig,
   handleConfig: handleConfigArg,
+  includeRiskOracleBaseKeys,
 }) => {
   const shouldHandleBaseKey = (baseKey: string, isSupportedByRiskOracle: boolean) => {
     if (!RISK_ORACLE_SUPPORTED_NETWORKS.includes(hre.network.name)) {
@@ -30,7 +32,7 @@ const processMarkets = async ({
     }
 
     if (isSupportedByRiskOracle) {
-      return process.env.INCLUDE_RISK_ORACLE_BASE_KEYS;
+      return includeRiskOracleBaseKeys;
     }
 
     return true;
@@ -49,6 +51,19 @@ const processMarkets = async ({
     }
 
     const marketToken = onchainMarket.marketToken;
+    if (marketAddress && marketToken !== marketAddress) {
+      console.info(
+        "skip market %s:%s:%s:%s, market token %s does not match %s",
+        marketKey,
+        indexToken,
+        longToken,
+        shortToken,
+        marketToken,
+        marketAddress
+      );
+      continue;
+    }
+
     const marketLabel = `${marketConfig.tokens.indexToken} [${marketConfig.tokens.longToken}-${marketConfig.tokens.shortToken}]`;
 
     const handleConfig = async (type, baseKey, keyData, value, label) => {
@@ -121,45 +136,45 @@ const processMarkets = async ({
       );
     }
 
-    // if (marketConfig.depositFeeFactorForPositiveImpact || marketConfig.swapFeeFactorForPositiveImpact) {
-    //   await handleConfig(
-    //     "uint",
-    //     keys.DEPOSIT_FEE_FACTOR,
-    //     encodeData(["address", "bool"], [marketToken, true]),
-    //     marketConfig.depositFeeFactorForPositiveImpact ?? marketConfig.swapFeeFactorForPositiveImpact,
-    //     `depositFeeFactorForPositiveImpact ${marketLabel} (${marketToken})`
-    //   );
-    // }
-    //
-    // if (marketConfig.depositFeeFactorForNegativeImpact || marketConfig.swapFeeFactorForNegativeImpact) {
-    //   await handleConfig(
-    //     "uint",
-    //     keys.DEPOSIT_FEE_FACTOR,
-    //     encodeData(["address", "bool"], [marketToken, true]),
-    //     marketConfig.depositFeeFactorForNegativeImpact ?? marketConfig.swapFeeFactorForNegativeImpact,
-    //     `depositFeeFactorForNegativeImpact ${marketLabel} (${marketToken})`
-    //   );
-    // }
-    //
-    // if (marketConfig.withdrawalFeeFactorForPositiveImpact || marketConfig.swapFeeFactorForPositiveImpact) {
-    //   await handleConfig(
-    //     "uint",
-    //     keys.WITHDRAWAL_FEE_FACTOR,
-    //     encodeData(["address", "bool"], [marketToken, true]),
-    //     marketConfig.withdrawalFeeFactorForPositiveImpact ?? marketConfig.swapFeeFactorForPositiveImpact,
-    //     `withdrawalFeeFactorForPositiveImpact ${marketLabel} (${marketToken})`
-    //   );
-    // }
-    //
-    // if (marketConfig.withdrawalFeeFactorForNegativeImpact || marketConfig.swapFeeFactorForNegativeImpact) {
-    //   await handleConfig(
-    //     "uint",
-    //     keys.WITHDRAWAL_FEE_FACTOR,
-    //     encodeData(["address", "bool"], [marketToken, true]),
-    //     marketConfig.withdrawalFeeFactorForNegativeImpact ?? marketConfig.swapFeeFactorForNegativeImpact,
-    //     `withdrawalFeeFactorForNegativeImpact ${marketLabel} (${marketToken})`
-    //   );
-    // }
+    if (marketConfig.depositFeeFactorForPositiveImpact || marketConfig.swapFeeFactorForPositiveImpact) {
+      await handleConfig(
+        "uint",
+        keys.DEPOSIT_FEE_FACTOR,
+        encodeData(["address", "bool"], [marketToken, true]),
+        marketConfig.depositFeeFactorForPositiveImpact ?? marketConfig.swapFeeFactorForPositiveImpact,
+        `depositFeeFactorForPositiveImpact ${marketLabel} (${marketToken})`
+      );
+    }
+
+    if (marketConfig.depositFeeFactorForNegativeImpact || marketConfig.swapFeeFactorForNegativeImpact) {
+      await handleConfig(
+        "uint",
+        keys.DEPOSIT_FEE_FACTOR,
+        encodeData(["address", "bool"], [marketToken, false]),
+        marketConfig.depositFeeFactorForNegativeImpact ?? marketConfig.swapFeeFactorForNegativeImpact,
+        `depositFeeFactorForNegativeImpact ${marketLabel} (${marketToken})`
+      );
+    }
+
+    if (marketConfig.withdrawalFeeFactorForPositiveImpact || marketConfig.swapFeeFactorForPositiveImpact) {
+      await handleConfig(
+        "uint",
+        keys.WITHDRAWAL_FEE_FACTOR,
+        encodeData(["address", "bool"], [marketToken, true]),
+        marketConfig.withdrawalFeeFactorForPositiveImpact ?? marketConfig.swapFeeFactorForPositiveImpact,
+        `withdrawalFeeFactorForPositiveImpact ${marketLabel} (${marketToken})`
+      );
+    }
+
+    if (marketConfig.withdrawalFeeFactorForNegativeImpact || marketConfig.swapFeeFactorForNegativeImpact) {
+      await handleConfig(
+        "uint",
+        keys.WITHDRAWAL_FEE_FACTOR,
+        encodeData(["address", "bool"], [marketToken, false]),
+        marketConfig.withdrawalFeeFactorForNegativeImpact ?? marketConfig.swapFeeFactorForNegativeImpact,
+        `withdrawalFeeFactorForNegativeImpact ${marketLabel} (${marketToken})`
+      );
+    }
 
     if (marketConfig.atomicSwapFeeFactor) {
       await handleConfig(
@@ -406,16 +421,6 @@ const processMarkets = async ({
       );
     }
 
-    if (marketConfig.minFundingFactorPerSecond) {
-      await handleConfig(
-        "uint",
-        keys.MIN_FUNDING_FACTOR_PER_SECOND,
-        encodeData(["address"], [marketToken]),
-        marketConfig.minFundingFactorPerSecond,
-        `minFundingFactorPerSecond ${marketLabel} (${marketToken})`
-      );
-    }
-
     if (marketConfig.maxFundingFactorPerSecond) {
       await handleConfig(
         "uint",
@@ -423,6 +428,16 @@ const processMarkets = async ({
         encodeData(["address"], [marketToken]),
         marketConfig.maxFundingFactorPerSecond,
         `maxFundingFactorPerSecond ${marketLabel} (${marketToken})`
+      );
+    }
+
+    if (marketConfig.minFundingFactorPerSecond) {
+      await handleConfig(
+        "uint",
+        keys.MIN_FUNDING_FACTOR_PER_SECOND,
+        encodeData(["address"], [marketToken]),
+        marketConfig.minFundingFactorPerSecond,
+        `minFundingFactorPerSecond ${marketLabel} (${marketToken})`
       );
     }
 
@@ -620,8 +635,8 @@ const processMarkets = async ({
   return ignoredRiskOracleParams;
 };
 
-export async function updateMarketConfig({ write }) {
-  if (!["arbitrumGoerli", "avalancheFuji", "hardhat"].includes(network.name)) {
+export async function updateMarketConfig({ write, marketAddress = undefined, includeRiskOracleBaseKeys = false }) {
+  if (!["arbitrumGoerli", "avalancheFuji", "hardhat"].includes(hre.network.name)) {
     const { errors } = await validateMarketConfigs();
     if (errors.length !== 0) {
       throw new Error("Invalid market configs");
@@ -647,10 +662,12 @@ export async function updateMarketConfig({ write }) {
 
   await processMarkets({
     markets,
+    marketAddress,
     onchainMarketsByTokens,
     tokens,
     supportedRiskOracleMarkets,
     generalConfig,
+    includeRiskOracleBaseKeys,
     handleConfig: async (type, baseKey, keyData) => {
       if (type !== "uint") {
         throw new Error("Unsupported type");
@@ -679,10 +696,12 @@ export async function updateMarketConfig({ write }) {
 
   const ignoredRiskOracleParams = await processMarkets({
     markets,
+    marketAddress,
     onchainMarketsByTokens,
     supportedRiskOracleMarkets,
     tokens,
     generalConfig,
+    includeRiskOracleBaseKeys,
     handleConfig: async (type, baseKey, keyData, value, label) => {
       if (type !== "uint") {
         throw new Error("Unsupported type");
@@ -730,7 +749,7 @@ export async function updateMarketConfig({ write }) {
     console.info("\n=================\n");
     console.info(`WARN: Ignored risk oracle params for ${supportedRiskOracleMarkets.size} markets`);
     console.info(`Ignored params: ${ignoredParameterNames.join(",")}`);
-    console.info("Add `INCLUDE_RISK_ORACLE_BASE_KEYS=1` to include them\n");
+    console.info("Add INCLUDE_RISK_ORACLE_BASE_KEYS=true to include them\n");
   }
 }
 
@@ -741,14 +760,15 @@ async function getSupportedRiskOracleMarkets(markets, tokens, onchainMarketsByTo
     return supported;
   }
 
-  if (!RISK_ORACLE_SUPPORTED_NETWORKS.includes(network.name)) {
+  // Chaos API does not support fuji
+  if (hre.network.name === "avalancheFuji") {
     return supported;
   }
 
   const response = await fetch("https://cloud.chaoslabs.co/query/ccar-perpetuals", {
     method: "POST",
     headers: {
-      protocol: `gmx-v2-${network.name}`,
+      protocol: `gmx-v2-${hre.network.name}`,
       "content-type": "application/json",
     },
     body: `{

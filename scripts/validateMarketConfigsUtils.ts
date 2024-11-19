@@ -5,7 +5,7 @@ import { performMulticall } from "../utils/multicall";
 import { SECONDS_PER_YEAR } from "../utils/constants";
 import * as keys from "../utils/keys";
 
-const priceImpactBpsList = [1, 5, 10];
+const priceImpactBpsList = [1, 5, 10, 40];
 
 const stablecoinSymbols = {
   USDC: true,
@@ -197,8 +197,53 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
     },
+    SUI: {
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    SEI: {
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    APT: {
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    TIA: {
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    TRX: {
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    TAO: {
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    BONK: {
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    WLD: {
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    TON: {
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
     wstETH: {
-      negativeSwapImpactFactor: exponentToFloat("3e-8"),
+      negativeSwapImpactFactor: exponentToFloat("1e-8"),
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
     },
@@ -263,10 +308,10 @@ function getTradeSizeForImpact({ priceImpactBps, impactExponentFactor, impactFac
   if (bigNumberify(0).eq(impactFactor)) {
     return bigNumberify(0);
   }
-  const exponent = 1 / (impactExponentFactor.div(decimalToFloat(1)).toNumber() - 1);
+  const exponent = 1 / (impactExponentFactor.div(decimalToFloat(1, 2)).toNumber() / 100 - 1);
   const base = bigNumberify(priceImpactBps).mul(decimalToFloat(1)).div(10_000).div(impactFactor).toNumber();
 
-  const tradeSize = Math.pow(base, exponent);
+  const tradeSize = Math.pow(base, exponent).toFixed(0);
   return tradeSize;
 }
 
@@ -760,11 +805,21 @@ export async function validateMarketConfigs() {
     await validateSwapConfig({ marketConfig, indexTokenSymbol, longTokenSymbol, shortTokenSymbol, dataStore, errors });
   }
 
+  const marketKeysToSkip = {
+    "0x74885b4D524d497261259B38900f54e6dbAd2210:0x74885b4D524d497261259B38900f54e6dbAd2210:0xaf88d065e77c8cC2239327C5EDb3A432268e5831":
+      true, // old APE market
+  };
+
   for (const market of markets) {
     const indexTokenSymbol = addressToSymbol[market.indexToken];
     const longTokenSymbol = addressToSymbol[market.longToken];
     const shortTokenSymbol = addressToSymbol[market.shortToken];
     const marketKey = getMarketKey(market.indexToken, market.longToken, market.shortToken);
+
+    if (marketKeysToSkip[marketKey]) {
+      continue;
+    }
+
     const marketConfig = marketConfigByKey[marketKey];
 
     console.log(

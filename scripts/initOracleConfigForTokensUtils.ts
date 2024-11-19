@@ -9,7 +9,7 @@ import { OracleProvider } from "../config/oracle";
 
 const DEFAULT_ORACLE_PROVIDER: OracleProvider = "chainlinkDataStream";
 
-export async function updateOracleConfigForTokens({ write }) {
+export async function initOracleConfigForTokens({ write }) {
   const tokens = await hre.gmx.getTokens();
 
   const dataStore = await hre.ethers.getContract("DataStore");
@@ -98,6 +98,7 @@ export async function updateOracleConfigForTokens({ write }) {
 
   for (let i = 0; i < tokenSymbols.length; i++) {
     const tokenSymbol = tokenSymbols[i];
+    console.log(`checking ${tokenSymbol}`);
     const token = tokens[tokenSymbol];
     const onchainConfig = onchainOracleConfig[tokenSymbol];
 

@@ -28,7 +28,9 @@ const func = async ({ gmx }: HardhatRuntimeEnvironment) => {
   );
 
   const write = process.env.FOR_EXISTING_MAINNET_DEPLOYMENT ? false : true;
-  await updateGeneralConfig({ write });
+  if (write) {
+    await updateGeneralConfig({ write: true });
+  }
 };
 
 func.tags = ["GeneralSettings"];

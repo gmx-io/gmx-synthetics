@@ -7,7 +7,6 @@ import "../event/EventUtils.sol";
 import "../utils/Cast.sol";
 
 import "./Deposit.sol";
-import "./DepositUtils.sol";
 import "../pricing/ISwapPricingUtils.sol";
 
 library DepositEventUtils {
@@ -25,7 +24,7 @@ library DepositEventUtils {
         EventEmitter eventEmitter,
         bytes32 key,
         Deposit.Props memory deposit,
-        DepositUtils.DepositType depositType
+        Deposit.DepositType depositType
     ) external {
         EventUtils.EventLogData memory eventData;
 
