@@ -1875,6 +1875,36 @@ const config: {
       borrowingFactor: decimalToFloat(282, 10), // 2.82-8, 40% at 100% utilisation
     },
     {
+      tokens: { indexToken: "PENDLE", longToken: "PENDLE", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:PENDLE/USD"),
+      virtualMarketId: hashString("SPOT:PENDLE/USD"),
+
+      ...baseMarketConfig,
+      ...fundingRateConfig_High,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
+
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      positivePositionImpactFactor: exponentToFloat("2.5e-10"),
+      positionImpactExponentFactor: exponentToFloat("2.2e0"),
+
+      negativeSwapImpactFactor: exponentToFloat("5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("2.5e-9"),
+
+      // minCollateralFactor of 0.01 (1%)
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
+
+      reserveFactor: percentageToFloat("125%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("120%"), // default is 90%
+
+      maxPnlFactorForTraders: percentageToFloat("50%"), // default is 90%
+
+      maxOpenInterest: decimalToFloat(1_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(1_500_000), // x1.5 of max open interest
+
+      maxLongTokenPoolAmount: expandDecimals(3_439_653, 18), // ~2M USD (x2 of max open interest)
+      maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (x2 of max open interest)
+    },
+    {
       tokens: { indexToken: "WETH.e", longToken: "WETH.e", shortToken: "USDC" },
       virtualTokenIdForIndexToken: hashString("PERP:ETH/USD"),
       virtualMarketId: hashString("SPOT:ETH/USD"),
