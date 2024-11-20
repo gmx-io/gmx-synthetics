@@ -165,8 +165,8 @@ const fundingRateConfig_Default: FundingRateConfig = {
 const fundingRateConfig_High: FundingRateConfig = {
   fundingIncreaseFactorPerSecond: percentageToFloat("90%")
     .div(SECONDS_PER_YEAR)
-    .div(SECONDS_PER_HOUR * 3), // 2.64E-12
-  maxFundingFactorPerSecond: percentageToFloat("90%").div(SECONDS_PER_YEAR), // 2.85E-08
+    .div(SECONDS_PER_HOUR * 3),
+  maxFundingFactorPerSecond: percentageToFloat("90%").div(SECONDS_PER_YEAR),
 };
 
 const fundingRateConfig_SingleToken: FundingRateConfig = {
