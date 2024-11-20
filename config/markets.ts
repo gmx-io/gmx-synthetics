@@ -1318,6 +1318,36 @@ const config: {
       maxOpenInterest: decimalToFloat(1_800_000),
     },
     {
+      tokens: { indexToken: "GMX", longToken: "GMX", shortToken: "GMX" },
+      virtualTokenIdForIndexToken: hashString("PERP:GMX/USD"),
+
+      ...baseMarketConfig,
+      ...singleTokenMarketConfig,
+      ...fundingRateConfig_High, // TODO: initial recomandations corespond to fundingRateConfig_High not fundingRateConfig_SingleToken
+      ...borrowingRateConfig_HighMax_WithLowerBase,
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR), // default 150%
+
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      positivePositionImpactFactor: exponentToFloat("2.5e-10"),
+      positionImpactExponentFactor: exponentToFloat("2.2e0"),
+
+      // minCollateralFactor of 0.01 (1%) => 100x leverage
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
+
+      reserveFactor: percentageToFloat("85%"),
+      openInterestReserveFactor: percentageToFloat("80%"),
+
+      maxPnlFactorForTraders: percentageToFloat("50%"),
+
+      maxOpenInterest: decimalToFloat(500_000),
+      maxPoolUsdForDeposit: decimalToFloat(750_000), // 1.5x the max open interest
+
+      maxLongTokenPoolAmount: expandDecimals(36_500, 18), // ~1M USD (2x the max open interest)
+      maxShortTokenPoolAmount: expandDecimals(36_500, 18), // ~1M USD (2x the max open interest)
+
+      thresholdForStableFunding: percentageToFloat("5%"), // default is 4%
+    },
+    {
       tokens: { indexToken: "PEPE", longToken: "PEPE", shortToken: "USDC" },
       virtualTokenIdForIndexToken: hashString("PERP:PEPE/USD"),
       virtualMarketId: hashString("SPOT:PEPE/USD"),
