@@ -1323,7 +1323,7 @@ const config: {
 
       ...baseMarketConfig,
       ...singleTokenMarketConfig,
-      ...fundingRateConfig_High, // TODO: initial recomandations corespond to fundingRateConfig_High not fundingRateConfig_SingleToken
+      ...fundingRateConfig_High, // initial recommendations correspond to fundingRateConfig_High not fundingRateConfig_SingleToken
       ...borrowingRateConfig_HighMax_WithLowerBase,
       aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR), // default 150%
 
@@ -1344,8 +1344,6 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(36_500, 18), // ~1M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(36_500, 18), // ~1M USD (2x the max open interest)
-
-      thresholdForStableFunding: percentageToFloat("5%"), // default is 4%
     },
     {
       tokens: { indexToken: "PEPE", longToken: "PEPE", shortToken: "USDC" },
