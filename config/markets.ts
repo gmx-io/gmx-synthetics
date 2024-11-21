@@ -1321,29 +1321,41 @@ const config: {
       tokens: { indexToken: "GMX", longToken: "GMX", shortToken: "GMX" },
       virtualTokenIdForIndexToken: hashString("PERP:GMX/USD"),
 
-      ...baseMarketConfig,
       ...singleTokenMarketConfig,
+      reserveFactor: percentageToFloat("85%"),
+      openInterestReserveFactor: percentageToFloat("80%"),
+      maxPnlFactorForTraders: percentageToFloat("50%"),
+
       ...fundingRateConfig_High, // initial recommendations correspond to fundingRateConfig_High not fundingRateConfig_SingleToken
-      ...borrowingRateConfig_HighMax_WithLowerBase,
+
+      ...borrowingRateConfig_HighMax_WithHigherBase,
       aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR), // default 150%
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
       positionImpactExponentFactor: exponentToFloat("2.2e0"),
 
-      // minCollateralFactor of 0.01 (1%) => 100x leverage
+      positiveMaxPositionImpactFactor: percentageToFloat("0.5%"),
+      negativeMaxPositionImpactFactor: percentageToFloat("0.5%"),
+      maxPositionImpactFactorForLiquidations: bigNumberify(0), // 0%
+
+      positionFeeFactorForPositiveImpact: percentageToFloat("0.05%"),
+      positionFeeFactorForNegativeImpact: percentageToFloat("0.07%"),
+
+      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
+      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
+
+      minFundingFactorPerSecond: percentageToFloat("1%").div(SECONDS_PER_YEAR),
+      thresholdForStableFunding: percentageToFloat("4%"),
+
+      minCollateralFactor: percentageToFloat("1%"), // 100x leverage
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
-
-      reserveFactor: percentageToFloat("85%"),
-      openInterestReserveFactor: percentageToFloat("80%"),
-
-      maxPnlFactorForTraders: percentageToFloat("50%"),
 
       maxOpenInterest: decimalToFloat(500_000),
       maxPoolUsdForDeposit: decimalToFloat(750_000), // 1.5x the max open interest
 
-      maxLongTokenPoolAmount: expandDecimals(36_500, 18), // ~1M USD (2x the max open interest)
-      maxShortTokenPoolAmount: expandDecimals(36_500, 18), // ~1M USD (2x the max open interest)
+      maxLongTokenPoolAmount: expandDecimals(35_000, 18), // ~1M USD (2x the max open interest)
+      maxShortTokenPoolAmount: expandDecimals(35_000, 18), // ~1M USD (2x the max open interest)
     },
     {
       tokens: { indexToken: "PEPE", longToken: "PEPE", shortToken: "USDC" },
