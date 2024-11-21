@@ -10,7 +10,7 @@ import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
 import Keys from "../../artifacts/contracts/data/Keys.sol/Keys.json";
 
-describe.only("Config", () => {
+describe("Config", () => {
   let fixture;
   let user0, user1, user2;
   let config, dataStore, roleStore, ethUsdMarket, wnt;

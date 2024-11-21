@@ -269,38 +269,40 @@ describe("Timelock", () => {
   });
 
   it("setDataStream", async () => {
-    await expect(timelock.connect(user2).signalSetDataStream(wnt.address, hashString("WNT"), expandDecimals(1, 34)))
+    await expect(timelock.connect(user2).signalSetDataStream(wnt.address, hashString("WNT"), expandDecimals(1, 34), 0))
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
       .withArgs(user2.address, "TIMELOCK_ADMIN");
 
-    await timelock.connect(timelockAdmin).signalSetDataStream(wnt.address, hashString("WNT"), expandDecimals(1, 34));
+    await timelock.connect(timelockAdmin).signalSetDataStream(wnt.address, hashString("WNT"), expandDecimals(1, 34), 1);
 
     await expect(
-      timelock.connect(user2).setDataStreamAfterSignal(wnt.address, hashString("WNT"), expandDecimals(1, 34))
+      timelock.connect(user2).setDataStreamAfterSignal(wnt.address, hashString("WNT"), expandDecimals(1, 34), 1)
     )
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
       .withArgs(user2.address, "TIMELOCK_ADMIN");
 
     await expect(
-      timelock.connect(user2).setDataStreamAfterSignal(wnt.address, hashString("WNT"), expandDecimals(1, 34))
+      timelock.connect(user2).setDataStreamAfterSignal(wnt.address, hashString("WNT"), expandDecimals(1, 34), 1)
     )
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
       .withArgs(user2.address, "TIMELOCK_ADMIN");
 
     await expect(
-      timelock.connect(timelockAdmin).setDataStreamAfterSignal(wnt.address, hashString("WNT"), expandDecimals(1, 34))
+      timelock.connect(timelockAdmin).setDataStreamAfterSignal(wnt.address, hashString("WNT"), expandDecimals(1, 34), 1)
     ).to.be.revertedWithCustomError(errorsContract, "SignalTimeNotYetPassed");
 
     await time.increase(1 * 24 * 60 * 60 + 10);
 
     expect(await dataStore.getBytes32(keys.dataStreamIdKey(wnt.address))).eq(ethers.constants.HashZero);
     expect(await dataStore.getUint(keys.dataStreamMultiplierKey(wnt.address))).eq(0);
+    expect(await dataStore.getUint(keys.dataStreamSpreadFactorKey(wnt.address))).eq(0);
 
     await timelock
       .connect(timelockAdmin)
-      .setDataStreamAfterSignal(wnt.address, hashString("WNT"), expandDecimals(1, 34));
+      .setDataStreamAfterSignal(wnt.address, hashString("WNT"), expandDecimals(1, 34), 1);
 
     expect(await dataStore.getBytes32(keys.dataStreamIdKey(wnt.address))).eq(hashString("WNT"));
     expect(await dataStore.getUint(keys.dataStreamMultiplierKey(wnt.address))).eq(expandDecimals(1, 34));
+    expect(await dataStore.getUint(keys.dataStreamSpreadFactorKey(wnt.address))).eq(1);
   });
 });
