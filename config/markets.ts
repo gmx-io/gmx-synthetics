@@ -151,30 +151,30 @@ type FundingRateConfig = Partial<{
 const fundingRateConfig_Low: FundingRateConfig = {
   fundingIncreaseFactorPerSecond: percentageToFloat("70%")
     .div(SECONDS_PER_YEAR)
-    .div(SECONDS_PER_HOUR * 3),
-  maxFundingFactorPerSecond: percentageToFloat("70%").div(SECONDS_PER_YEAR),
+    .div(SECONDS_PER_HOUR * 3), // 2.05E-12
+  maxFundingFactorPerSecond: percentageToFloat("70%").div(SECONDS_PER_YEAR), // 2.22E-8
 };
 
 const fundingRateConfig_Default: FundingRateConfig = {
   fundingIncreaseFactorPerSecond: percentageToFloat("80%")
     .div(SECONDS_PER_YEAR)
-    .div(SECONDS_PER_HOUR * 3),
-  maxFundingFactorPerSecond: percentageToFloat("80%").div(SECONDS_PER_YEAR),
+    .div(SECONDS_PER_HOUR * 3), // 2.35E-12
+  maxFundingFactorPerSecond: percentageToFloat("80%").div(SECONDS_PER_YEAR), // 2.54E-8
 };
 
 const fundingRateConfig_High: FundingRateConfig = {
   fundingIncreaseFactorPerSecond: percentageToFloat("90%")
     .div(SECONDS_PER_YEAR)
-    .div(SECONDS_PER_HOUR * 3),
-  maxFundingFactorPerSecond: percentageToFloat("90%").div(SECONDS_PER_YEAR),
+    .div(SECONDS_PER_HOUR * 3), // 2.64E-12
+  maxFundingFactorPerSecond: percentageToFloat("90%").div(SECONDS_PER_YEAR), // 2.85E-8
 };
 
 const fundingRateConfig_SingleToken: FundingRateConfig = {
   // funding increase rate is higher for single asset pools
   fundingIncreaseFactorPerSecond: percentageToFloat("80%")
     .div(SECONDS_PER_YEAR)
-    .div(SECONDS_PER_HOUR * 2),
-  maxFundingFactorPerSecond: percentageToFloat("80%").div(SECONDS_PER_YEAR),
+    .div(SECONDS_PER_HOUR * 2), // 3.52E-12
+  maxFundingFactorPerSecond: percentageToFloat("80%").div(SECONDS_PER_YEAR), // 2.54E-8
 };
 
 type BorrowingRateConfig = Partial<{
