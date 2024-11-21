@@ -242,6 +242,26 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
     },
+    BOME: {
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    MEME: {
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    FLOKI: {
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    MEW: {
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
     wstETH: {
       negativeSwapImpactFactor: exponentToFloat("1e-8"),
       expectedSwapImpactRatio: 20_000,
