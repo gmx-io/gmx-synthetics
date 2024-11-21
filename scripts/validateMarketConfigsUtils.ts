@@ -251,6 +251,8 @@ const recommendedMarketConfig = {
     PENDLE: {
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       negativeSwapImpactFactor: exponentToFloat("5e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
     },
     BOME: {
       negativePositionImpactFactor: exponentToFloat("5e-10"),
