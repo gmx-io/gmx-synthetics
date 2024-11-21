@@ -1,6 +1,6 @@
 import hre, { ethers } from "hardhat";
 
-import { expandDecimals } from "../utils/math";
+import { bigNumberify, expandDecimals, percentageToFloat } from "../utils/math";
 import { encodeData } from "../utils/hash";
 import { getFullKey } from "../utils/config";
 import { timelockWriteMulticall } from "../utils/timelock";
@@ -70,6 +70,14 @@ export async function updateOracleConfigForTokens({ write }) {
       ]),
     });
 
+    multicallReadParams.push({
+      target: dataStore.address,
+      allowFailure: false,
+      callData: dataStore.interface.encodeFunctionData("getUint", [
+        getFullKey(keys.DATA_STREAM_SPREAD_FACTOR, encodeData(["address"], [token.address])),
+      ]),
+    });
+
     if (paramsCount === undefined) {
       paramsCount = multicallReadParams.length;
     }
@@ -88,6 +96,7 @@ export async function updateOracleConfigForTokens({ write }) {
       stablePrice: defaultAbiCoder.decode(["uint"], result[i * paramsCount + 2].returnData)[0],
       dataStreamId: result[i * paramsCount + 3].returnData,
       dataStreamMultiplier: defaultAbiCoder.decode(["uint"], result[i * paramsCount + 4].returnData)[0],
+      dataStreamSpreadFactor: defaultAbiCoder.decode(["uint"], result[i * paramsCount + 5].returnData)[0],
     };
   }
 
@@ -135,22 +144,37 @@ export async function updateOracleConfigForTokens({ write }) {
       );
     }
 
-    if (token.dataStreamFeedId && onchainConfig.dataStreamId !== token.dataStreamFeedId) {
-      const dataStreamMultiplier = expandDecimals(1, 60 - token.decimals - token.dataStreamFeedDecimals);
+    if (token.dataStreamFeedId) {
+      const dataStreamSpreadFactor = bigNumberify(token.dataStreamSpreadFactor ?? percentageToFloat("100%"));
+      if (
+        onchainConfig.dataStreamId !== token.dataStreamFeedId ||
+        !onchainConfig.dataStreamSpreadFactor.eq(dataStreamSpreadFactor)
+      ) {
+        const dataStreamMultiplier = expandDecimals(1, 60 - token.decimals - token.dataStreamFeedDecimals);
 
-      if (!onchainConfig.dataStreamMultiplier.eq(dataStreamMultiplier)) {
-        throw new Error(
-          `dataStreamMultiplier mismatch for ${tokenSymbol}: ${dataStreamMultiplier.toString()}, ${onchainConfig.dataStreamMultiplier.toString()}`
+        if (!onchainConfig.dataStreamMultiplier.eq(dataStreamMultiplier)) {
+          throw new Error(
+            `dataStreamMultiplier mismatch for ${tokenSymbol}: ${dataStreamMultiplier.toString()}, ${onchainConfig.dataStreamMultiplier.toString()}`
+          );
+        }
+
+        console.log(
+          `setDataStream(${tokenSymbol} ${
+            token.dataStreamFeedId
+          }, ${dataStreamMultiplier.toString()}, ${dataStreamSpreadFactor.toString()})`
+        );
+
+        const method = phase === "signal" ? "signalSetDataStream" : "setDataStreamAfterSignal";
+
+        multicallWriteParams.push(
+          timelock.interface.encodeFunctionData(method, [
+            token.address,
+            token.dataStreamFeedId,
+            dataStreamMultiplier,
+            dataStreamSpreadFactor,
+          ])
         );
       }
-
-      console.log(`setDataStream(${tokenSymbol} ${token.dataStreamFeedId}, ${dataStreamMultiplier.toString()})`);
-
-      const method = phase === "signal" ? "signalSetDataStream" : "setDataStreamAfterSignal";
-
-      multicallWriteParams.push(
-        timelock.interface.encodeFunctionData(method, [token.address, token.dataStreamFeedId, dataStreamMultiplier])
-      );
     }
   }
 

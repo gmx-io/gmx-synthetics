@@ -108,7 +108,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     function setDataStream(
         address token,
         bytes32 feedId,
-        uint256 dataStreamMultiplier
+        uint256 dataStreamMultiplier,
+        uint256 dataStreamSpreadFactor
     ) external onlyConfigKeeper nonReentrant {
         if (dataStore.getBytes32(Keys.dataStreamIdKey(token)) != bytes32(0)) {
             revert Errors.DataStreamIdAlreadyExistsForToken(token);
@@ -116,14 +117,16 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
         dataStore.setBytes32(Keys.dataStreamIdKey(token), feedId);
         dataStore.setUint(Keys.dataStreamMultiplierKey(token), dataStreamMultiplier);
+        dataStore.setUint(Keys.dataStreamSpreadFactorKey(token), dataStreamSpreadFactor);
 
         EventUtils.EventLogData memory eventData;
         eventData.addressItems.initItems(1);
         eventData.addressItems.setItem(0, "token", token);
         eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "feedId", feedId);
-        eventData.uintItems.initItems(1);
+        eventData.uintItems.initItems(2);
         eventData.uintItems.setItem(0, "dataStreamMultiplier", dataStreamMultiplier);
+        eventData.uintItems.setItem(1, "dataStreamSpreadFactor", dataStreamSpreadFactor);
         eventEmitter.emitEventLog1(
             "ConfigSetDataStream",
             Cast.toBytes32(token),

@@ -7,7 +7,7 @@ import { getFullKey, appendUintConfigIfDifferent } from "../utils/config";
 import * as keys from "../utils/keys";
 
 const processTokens = async ({ tokens, handleConfig }) => {
-  for (const [, token] of Object.entries(tokens)) {
+  for (const [, token] of Object.entries(tokens) as any) {
     // the config below is for non-synthetic markets only
     if (token.synthetic) {
       continue;
