@@ -1734,7 +1734,7 @@ const config: {
       negativeSwapImpactFactor: exponentToFloat("5e-9"),
       positiveSwapImpactFactor: exponentToFloat("2.5e-9"),
 
-      minCollateralFactor: percentageToFloat("0.02%"), // 50x leverage
+      minCollateralFactor: percentageToFloat("2%"), // 50x leverage
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
 
       reserveFactor: percentageToFloat("105%"), // default is 95%
@@ -1767,7 +1767,7 @@ const config: {
       negativeSwapImpactFactor: exponentToFloat("5e-9"),
       positiveSwapImpactFactor: exponentToFloat("2.5e-9"),
 
-      minCollateralFactor: percentageToFloat("0.02%"), // 50x leverage
+      minCollateralFactor: percentageToFloat("2%"), // 50x leverage
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
 
       reserveFactor: percentageToFloat("105%"), // default is 95%
