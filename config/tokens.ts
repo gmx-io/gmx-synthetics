@@ -79,8 +79,8 @@ export type TestTokenConfig = {
 export type TokenConfig = SyntheticTokenConfig | RealTokenConfig | TestTokenConfig;
 export type TokensConfig = { [tokenSymbol: string]: TokenConfig };
 
-const LOW_BUYBACK_IMPACT = percentageToFloat("0.25%");
-const MID_BUYBACK_IMPACT = percentageToFloat("0.45%");
+const LOW_BUYBACK_IMPACT = percentageToFloat("0.20%");
+const MID_BUYBACK_IMPACT = percentageToFloat("0.40%");
 
 const config: {
   [network: string]: TokensConfig;
