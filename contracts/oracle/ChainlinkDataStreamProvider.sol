@@ -80,9 +80,9 @@ contract ChainlinkDataStreamProvider is IOracleProvider {
         uint256 spreadFactor = dataStore.getUint(Keys.dataStreamSpreadFactorKey(token));
         if (spreadFactor != Precision.FLOAT_PRECISION) {
             uint256 adjustedMidPrice = (adjustedBidPrice + adjustedAskPrice) / 2;
-            uint256 spread = adjustedAskPrice - adjustedBidPrice;
-            adjustedBidPrice = adjustedMidPrice - Precision.applyFactor(spread, spreadFactor);
-            adjustedAskPrice = adjustedMidPrice + Precision.applyFactor(spread, spreadFactor);
+            uint256 halfSpread = (adjustedAskPrice - adjustedBidPrice) / 2;
+            adjustedBidPrice = adjustedMidPrice - Precision.applyFactor(halfSpread, spreadFactor);
+            adjustedAskPrice = adjustedMidPrice + Precision.applyFactor(halfSpread, spreadFactor);
         }
 
         return OracleUtils.ValidatedPrice({
