@@ -101,8 +101,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           },
           {
             indexToken: "SUI",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(3_000_000, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(3_000_000),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(5_350_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(6_000_000),
           },
           {
             indexToken: "SEI",
