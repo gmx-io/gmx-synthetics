@@ -401,6 +401,20 @@ const config: {
       oracleTimestampAdjustment: 1,
       // Chainlink on-chain feed not available
     },
+    PENDLE: {
+      address: "0x0c880f6761F1af8d9Aa9C466984b80DAb9a8c9e8",
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003bed8b27802e5a77d457035227acd3ac5dc9ce941a3ba0eef310bfa9ba89f",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x66853E19d73c0F9301fe099c324A1E9726953433",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+      buybackMaxPriceImpactFactor: MID_BUYBACK_IMPACT,
+    },
     BOME: {
       synthetic: true,
       decimals: 6, // https://solscan.io/token/ukHH6c7mMyiWCf1b9pnWe25TSpkDDt3H5pQZgZ74J82

@@ -151,30 +151,30 @@ type FundingRateConfig = Partial<{
 const fundingRateConfig_Low: FundingRateConfig = {
   fundingIncreaseFactorPerSecond: percentageToFloat("70%")
     .div(SECONDS_PER_YEAR)
-    .div(SECONDS_PER_HOUR * 3),
-  maxFundingFactorPerSecond: percentageToFloat("70%").div(SECONDS_PER_YEAR),
+    .div(SECONDS_PER_HOUR * 3), // 2.05E-12
+  maxFundingFactorPerSecond: percentageToFloat("70%").div(SECONDS_PER_YEAR), // 2.22E-8
 };
 
 const fundingRateConfig_Default: FundingRateConfig = {
   fundingIncreaseFactorPerSecond: percentageToFloat("80%")
     .div(SECONDS_PER_YEAR)
-    .div(SECONDS_PER_HOUR * 3),
-  maxFundingFactorPerSecond: percentageToFloat("80%").div(SECONDS_PER_YEAR),
+    .div(SECONDS_PER_HOUR * 3), // 2.35E-12
+  maxFundingFactorPerSecond: percentageToFloat("80%").div(SECONDS_PER_YEAR), // 2.54E-8
 };
 
 const fundingRateConfig_High: FundingRateConfig = {
   fundingIncreaseFactorPerSecond: percentageToFloat("90%")
     .div(SECONDS_PER_YEAR)
-    .div(SECONDS_PER_HOUR * 3),
-  maxFundingFactorPerSecond: percentageToFloat("90%").div(SECONDS_PER_YEAR),
+    .div(SECONDS_PER_HOUR * 3), // 2.64E-12
+  maxFundingFactorPerSecond: percentageToFloat("90%").div(SECONDS_PER_YEAR), // 2.85E-8
 };
 
 const fundingRateConfig_SingleToken: FundingRateConfig = {
   // funding increase rate is higher for single asset pools
   fundingIncreaseFactorPerSecond: percentageToFloat("80%")
     .div(SECONDS_PER_YEAR)
-    .div(SECONDS_PER_HOUR * 2),
-  maxFundingFactorPerSecond: percentageToFloat("80%").div(SECONDS_PER_YEAR),
+    .div(SECONDS_PER_HOUR * 2), // 3.52E-12
+  maxFundingFactorPerSecond: percentageToFloat("80%").div(SECONDS_PER_YEAR), // 2.54E-8
 };
 
 type BorrowingRateConfig = Partial<{
@@ -1318,6 +1318,46 @@ const config: {
       maxOpenInterest: decimalToFloat(1_800_000),
     },
     {
+      tokens: { indexToken: "GMX", longToken: "GMX", shortToken: "GMX" },
+      virtualTokenIdForIndexToken: hashString("PERP:GMX/USD"),
+
+      ...singleTokenMarketConfig,
+      reserveFactor: percentageToFloat("85%"),
+      openInterestReserveFactor: percentageToFloat("80%"),
+      maxPnlFactorForTraders: percentageToFloat("50%"),
+
+      ...fundingRateConfig_High, // initial recommendations correspond to fundingRateConfig_High not fundingRateConfig_SingleToken
+
+      ...borrowingRateConfig_HighMax_WithHigherBase,
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR), // default 150%
+
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      positivePositionImpactFactor: exponentToFloat("2.5e-10"),
+      positionImpactExponentFactor: exponentToFloat("2.2e0"),
+
+      positiveMaxPositionImpactFactor: percentageToFloat("0.5%"),
+      negativeMaxPositionImpactFactor: percentageToFloat("0.5%"),
+      maxPositionImpactFactorForLiquidations: bigNumberify(0), // 0%
+
+      positionFeeFactorForPositiveImpact: percentageToFloat("0.05%"),
+      positionFeeFactorForNegativeImpact: percentageToFloat("0.07%"),
+
+      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
+      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
+
+      minFundingFactorPerSecond: percentageToFloat("1%").div(SECONDS_PER_YEAR),
+      thresholdForStableFunding: percentageToFloat("4%"),
+
+      minCollateralFactor: percentageToFloat("1%"), // 100x leverage
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
+
+      maxOpenInterest: decimalToFloat(500_000),
+      maxPoolUsdForDeposit: decimalToFloat(750_000), // 1.5x the max open interest
+
+      maxLongTokenPoolAmount: expandDecimals(35_000, 18), // ~1M USD (2x the max open interest)
+      maxShortTokenPoolAmount: expandDecimals(35_000, 18), // ~1M USD (2x the max open interest)
+    },
+    {
       tokens: { indexToken: "PEPE", longToken: "PEPE", shortToken: "USDC" },
       virtualTokenIdForIndexToken: hashString("PERP:PEPE/USD"),
       virtualMarketId: hashString("SPOT:PEPE/USD"),
@@ -2005,6 +2045,36 @@ const config: {
 
       // factor in open interest reserve factor 45%
       borrowingFactor: decimalToFloat(282, 10), // 2.82-8, 40% at 100% utilisation
+    },
+    {
+      tokens: { indexToken: "PENDLE", longToken: "PENDLE", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:PENDLE/USD"),
+      virtualMarketId: hashString("SPOT:PENDLE/USD"),
+
+      ...baseMarketConfig,
+      ...fundingRateConfig_High,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
+
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      positivePositionImpactFactor: exponentToFloat("2.5e-10"),
+      positionImpactExponentFactor: exponentToFloat("2.2e0"),
+
+      negativeSwapImpactFactor: exponentToFloat("5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("2.5e-9"),
+
+      // minCollateralFactor of 0.01 (1%)
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
+
+      reserveFactor: percentageToFloat("125%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("120%"), // default is 90%
+
+      maxPnlFactorForTraders: percentageToFloat("50%"), // default is 90%
+
+      maxOpenInterest: decimalToFloat(1_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(1_500_000), // x1.5 of max open interest
+
+      maxLongTokenPoolAmount: expandDecimals(375_000, 18), // ~2M USD (x2 of max open interest)
+      maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (x2 of max open interest)
     },
     {
       tokens: { indexToken: "WETH.e", longToken: "WETH.e", shortToken: "USDC" },
