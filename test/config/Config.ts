@@ -4,7 +4,7 @@ import { deployFixture } from "../../utils/fixture";
 import { EXCLUDED_CONFIG_KEYS } from "../../utils/config";
 import { grantRole } from "../../utils/role";
 import { encodeData, hashString } from "../../utils/hash";
-import { decimalToFloat, expandDecimals } from "../../utils/math";
+import { bigNumberify, decimalToFloat, expandDecimals } from "../../utils/math";
 import { TOKEN_ORACLE_TYPES } from "../../utils/oracle";
 import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
@@ -372,6 +372,46 @@ describe("Config", () => {
     expect(await dataStore.getUint(keys.claimableCollateralFactorKey(ethUsdMarket.marketToken, wnt.address, 100))).eq(
       expandDecimals(1, 30)
     );
+  });
+
+  it("validates funding increase factor", async () => {
+    const validValue = bigNumberify("100000000000000000000000").div(3600);
+    await expect(
+      config.setUint(
+        keys.FUNDING_INCREASE_FACTOR_PER_SECOND,
+        encodeData(["address"], [ethUsdMarket.marketToken]),
+        validValue.add(100)
+      )
+    ).to.be.revertedWithCustomError(errorsContract, "ConfigValueExceedsAllowedRange");
+
+    await config.setUint(
+      keys.FUNDING_INCREASE_FACTOR_PER_SECOND,
+      encodeData(["address"], [ethUsdMarket.marketToken]),
+      validValue
+    );
+
+    const onchainValue = await dataStore.getUint(keys.fundingIncreaseFactorPerSecondKey(ethUsdMarket.marketToken));
+    expect(onchainValue).eq(validValue);
+  });
+
+  it("validates funding decrease factor", async () => {
+    const validValue = bigNumberify("100000000000000000000000").div(86400);
+    await expect(
+      config.setUint(
+        keys.FUNDING_DECREASE_FACTOR_PER_SECOND,
+        encodeData(["address"], [ethUsdMarket.marketToken]),
+        validValue.add(100)
+      )
+    ).to.be.revertedWithCustomError(errorsContract, "ConfigValueExceedsAllowedRange");
+
+    await config.setUint(
+      keys.FUNDING_DECREASE_FACTOR_PER_SECOND,
+      encodeData(["address"], [ethUsdMarket.marketToken]),
+      validValue
+    );
+
+    const onchainValue = await dataStore.getUint(keys.fundingDecreaseFactorPerSecondKey(ethUsdMarket.marketToken));
+    expect(onchainValue).eq(validValue);
   });
 
   it("validates max funding fee factor is higher than min funding fee factor", async () => {
