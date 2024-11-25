@@ -115,6 +115,10 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             revert Errors.DataStreamIdAlreadyExistsForToken(token);
         }
 
+        if (dataStreamSpreadFactor > Precision.FLOAT_PRECISION * 3) {
+            revert Errors.ConfigValueExceedsAllowedRange(Keys.DATA_STREAM_SPREAD_FACTOR, dataStreamSpreadFactor);
+        }
+
         dataStore.setBytes32(Keys.dataStreamIdKey(token), feedId);
         dataStore.setUint(Keys.dataStreamMultiplierKey(token), dataStreamMultiplier);
         dataStore.setUint(Keys.dataStreamSpreadFactorKey(token), dataStreamSpreadFactor);

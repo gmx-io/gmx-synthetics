@@ -31,7 +31,7 @@ function encodeReport(feedId: string, bid: BigNumberish, ask: BigNumberish) {
   );
 }
 
-describe.only("ChainlinkDataStreamProvider", () => {
+describe("ChainlinkDataStreamProvider", () => {
   let fixture;
   let dataStore, chainlinkDataStreamProvider, wnt, oracle;
 

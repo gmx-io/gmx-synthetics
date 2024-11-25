@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../role/RoleModule.sol";
 import "../event/EventEmitter.sol";
 import "../utils/BasicMulticall.sol";
+import "../utils/Precision.sol";
 import "../oracle/OracleStore.sol";
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
@@ -479,6 +480,10 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
         uint256 dataStreamMultiplier,
         uint256 dataStreamSpreadFactor
     ) external onlyTimelockAdmin nonReentrant {
+        if (dataStreamSpreadFactor > Precision.FLOAT_PRECISION * 3) {
+            revert Errors.ConfigValueExceedsAllowedRange(Keys.DATA_STREAM_SPREAD_FACTOR, dataStreamSpreadFactor);
+        }
+
         bytes32 actionKey = _setDataStreamActionKey(
             token,
             feedId,
