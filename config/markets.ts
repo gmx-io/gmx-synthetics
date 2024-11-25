@@ -59,6 +59,7 @@ export type BaseMarketConfig = {
 
   positionFeeFactorForPositiveImpact: BigNumberish;
   positionFeeFactorForNegativeImpact: BigNumberish;
+  liquidationFeeFactor: BigNumberish;
 
   negativePositionImpactFactor: BigNumberish;
   positivePositionImpactFactor: BigNumberish;
@@ -2511,6 +2512,7 @@ const config: {
       tokens: { indexToken: "WAVAX", longToken: "WAVAX", shortToken: "USDC" },
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
     {
       ...baseMarketConfig,
@@ -2527,6 +2529,7 @@ const config: {
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
     {
       ...baseMarketConfig,
@@ -2536,6 +2539,7 @@ const config: {
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
     {
       ...baseMarketConfig,
@@ -2544,6 +2548,7 @@ const config: {
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
     {
       ...baseMarketConfig,
@@ -2555,6 +2560,7 @@ const config: {
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
     {
       ...baseMarketConfig,
@@ -2563,6 +2569,7 @@ const config: {
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
     {
       ...baseMarketConfig,
@@ -2576,6 +2583,7 @@ const config: {
       maxOpenInterest: decimalToFloat(250_000),
 
       minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
     {
       ...baseMarketConfig,
@@ -2585,6 +2593,7 @@ const config: {
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
     {
       ...baseMarketConfig,
@@ -2594,6 +2603,7 @@ const config: {
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
     {
       ...baseMarketConfig,
@@ -2604,11 +2614,13 @@ const config: {
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
     {
       ...baseMarketConfig,
       ...syntheticMarketConfig,
       tokens: { indexToken: "LINK", longToken: "WETH", shortToken: "DAI" },
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
     {
       ...baseMarketConfig,
@@ -2621,6 +2633,7 @@ const config: {
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
     {
       ...baseMarketConfig,
@@ -2629,6 +2642,7 @@ const config: {
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
     {
       ...baseMarketConfig,
@@ -2637,6 +2651,7 @@ const config: {
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
     {
       ...baseMarketConfig,
@@ -2645,6 +2660,7 @@ const config: {
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
     {
       ...baseMarketConfig,
@@ -2653,6 +2669,7 @@ const config: {
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
     {
       ...baseMarketConfig,
@@ -2661,6 +2678,7 @@ const config: {
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
     {
       ...baseMarketConfig,
@@ -2684,6 +2702,7 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(300_000, 6),
 
       maxPoolUsdForDeposit: decimalToFloat(300_000),
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
 
     {
@@ -2697,6 +2716,7 @@ const config: {
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
     {
       ...baseMarketConfig,
@@ -2709,6 +2729,7 @@ const config: {
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
   ],
   hardhat: [
