@@ -1490,9 +1490,9 @@ const config: {
 
       maxOpenInterest: decimalToFloat(1_000_000),
 
-      maxPoolUsdForDeposit: decimalToFloat(3_000_000),
-      maxLongTokenPoolAmount: expandDecimals(1100, 18),
-      maxShortTokenPoolAmount: expandDecimals(3_500_000, 6),
+      maxPoolUsdForDeposit: decimalToFloat(4_500_000),
+      maxLongTokenPoolAmount: expandDecimals(1430, 18),
+      maxShortTokenPoolAmount: expandDecimals(5_000_000, 6),
     },
     {
       tokens: { indexToken: "SEI", longToken: "WETH", shortToken: "USDC" },
