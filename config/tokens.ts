@@ -401,6 +401,52 @@ const config: {
       oracleTimestampAdjustment: 1,
       // Chainlink on-chain feed not available
     },
+    PENDLE: {
+      address: "0x0c880f6761F1af8d9Aa9C466984b80DAb9a8c9e8",
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003bed8b27802e5a77d457035227acd3ac5dc9ce941a3ba0eef310bfa9ba89f",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x66853E19d73c0F9301fe099c324A1E9726953433",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+      buybackMaxPriceImpactFactor: MID_BUYBACK_IMPACT,
+    },
+    BOME: {
+      synthetic: true,
+      decimals: 6, // https://solscan.io/token/ukHH6c7mMyiWCf1b9pnWe25TSpkDDt3H5pQZgZ74J82
+      dataStreamFeedId: "0x0003bf78b6030628c512b439169066c7db546a4dea5a978b54dde6350b6764ad",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      // Chainlink on-chain feed not available
+    },
+    MEME: {
+      synthetic: true,
+      decimals: 18, // https://etherscan.io/token/0xb131f4a55907b10d1f0a50d8ab8fa09ec342cd74#readContract
+      dataStreamFeedId: "0x0003f43194e41b8cb88e552eb5399be7d1f5d0c36b366eaa09e73fa9baf7bfd3",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      // Chainlink on-chain feed not available
+    },
+    FLOKI: {
+      synthetic: true,
+      decimals: 9, // https://etherscan.io/token/0xcf0c122c6b73ff809c693db761e7baebe62b6a2e#readContract
+      dataStreamFeedId: "0x000346d0958f98acea3450ce438790e5618fdfe50f8e36a80cabc622fe3e25ed",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      // Chainlink on-chain feed not available
+    },
+    MEW: {
+      synthetic: true,
+      decimals: 5, // https://solscan.io/token/MEW1gQWJ3nEXg2qgERiKu7FAFj79PHvQVREQUzScPP5
+      dataStreamFeedId: "0x0003d0d97dfc557e862e944a4581956aff826e59ca3b57b19e22744055c11539",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      // Chainlink on-chain feed not available
+    },
     AAVE: {
       address: "0xba5ddd1f9d7f570dc94a51479a000e3bce967196",
       decimals: 18,
