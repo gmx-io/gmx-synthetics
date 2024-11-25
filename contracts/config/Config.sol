@@ -25,6 +25,13 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
     uint256 public constant MAX_FEE_FACTOR = 5 * Precision.FLOAT_PRECISION / 100; // 5%
 
+    // 0.00001% per second, ~315% per year
+    uint256 public constant MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND = 100000000000000000000000;
+    // at this rate max allowed funding rate will be reached in 1 hour at 100% imbalance if max funding rate is 315%
+    uint256 public constant MAX_ALLOWED_FUNDING_INCREASE_FACTOR_PER_SECOND = MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND / 1 hours;
+    // at this rate zero funding rate will be reached in 24 hours if max funding rate is 315%
+    uint256 public constant MAX_ALLOWED_FUNDING_DECREASE_FACTOR_PER_SECOND = MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND / 24 hours;
+
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
 
@@ -554,6 +561,9 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedLimitedBaseKeys[Keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR] = true;
 
         allowedLimitedBaseKeys[Keys.MAX_FUNDING_FACTOR_PER_SECOND] = true;
+        allowedLimitedBaseKeys[Keys.MIN_FUNDING_FACTOR_PER_SECOND] = true;
+        allowedLimitedBaseKeys[Keys.FUNDING_INCREASE_FACTOR_PER_SECOND] = true;
+        allowedLimitedBaseKeys[Keys.FUNDING_DECREASE_FACTOR_PER_SECOND] = true;
 
         allowedLimitedBaseKeys[Keys.MAX_POOL_AMOUNT] = true;
         allowedLimitedBaseKeys[Keys.MAX_POOL_USD_FOR_DEPOSIT] = true;
@@ -600,8 +610,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         if (
             baseKey == Keys.MAX_FUNDING_FACTOR_PER_SECOND
         ) {
-            // 0.00001% per second, ~315% per year
-            if (value > 100000000000000000000000) {
+            if (value > MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND) {
                 revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
             }
 
@@ -618,6 +627,22 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             bytes32 maxFundingFactorPerSecondKey = Keys.getFullKey(Keys.MAX_FUNDING_FACTOR_PER_SECOND, data);
             uint256 maxFundingFactorPerSecond = dataStore.getUint(maxFundingFactorPerSecondKey);
             if (value > maxFundingFactorPerSecond) {
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
+            }
+        }
+
+        if (
+            baseKey == Keys.FUNDING_INCREASE_FACTOR_PER_SECOND
+        ) {
+            if (value > MAX_ALLOWED_FUNDING_INCREASE_FACTOR_PER_SECOND) {
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
+            }
+        }
+
+        if (
+            baseKey == Keys.FUNDING_DECREASE_FACTOR_PER_SECOND
+        ) {
+            if (value > MAX_ALLOWED_FUNDING_DECREASE_FACTOR_PER_SECOND) {
                 revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
             }
         }
