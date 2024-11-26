@@ -115,7 +115,7 @@ const recommendedMarketConfig = {
       expectedPositionImpactRatio: 20_000,
     },
     SOL: {
-      negativePositionImpactFactor: decimalToFloat(65, 12),
+      negativePositionImpactFactor: decimalToFloat(65, 12), // new recommandation is 1.35e-09
       negativeSwapImpactFactor: decimalToFloat(65, 12),
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
@@ -271,6 +271,36 @@ const recommendedMarketConfig = {
     },
     MEW: {
       negativePositionImpactFactor: exponentToFloat("5e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    ADA: {
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    XLM: {
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    BCH: {
+      negativePositionImpactFactor: exponentToFloat("2.5e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    DOT: {
+      negativePositionImpactFactor: exponentToFloat("2.5e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    ICP: {
+      negativePositionImpactFactor: exponentToFloat("2.5e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    RENDER: {
+      negativePositionImpactFactor: exponentToFloat("2.5e-9"),
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
     },
