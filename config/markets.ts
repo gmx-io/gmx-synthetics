@@ -2019,7 +2019,7 @@ const config: {
       openInterestReserveFactor: percentageToFloat("100%"),
       maxPnlFactorForTraders: percentageToFloat("90%"),
 
-      ...fundingRateConfig_SingleToken,
+      ...fundingRateConfig_Default, // fundingRateConfig_SingleToken has timeToReachMaxFundingFactorFromZero = 2 hours
 
       ...borrowingRateConfig_HighMax_WithLowerBase,
 
