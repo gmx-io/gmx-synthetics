@@ -2046,8 +2046,8 @@ const config: {
       maxOpenInterest: decimalToFloat(4_000_000),
       maxPoolUsdForDeposit: decimalToFloat(6_000_000), // 1.5x the max open interest
 
-      maxLongTokenPoolAmount: expandDecimals(34_500, 18), // ~8M USD (2x the max open interest)
-      maxShortTokenPoolAmount: expandDecimals(34_500, 18), // ~8M USD (2x the max open interest)
+      maxLongTokenPoolAmount: expandDecimals(34_500, 9), // ~8M USD (2x the max open interest)
+      maxShortTokenPoolAmount: expandDecimals(34_500, 9), // ~8M USD (2x the max open interest)
     },
     {
       tokens: { indexToken: "ADA", longToken: "WBTC.e", shortToken: "USDC" },
