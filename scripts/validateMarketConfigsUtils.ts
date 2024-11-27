@@ -187,7 +187,7 @@ const recommendedMarketConfig = {
       expectedPositionImpactRatio: 20_000,
     },
     "GMX:GMX:GMX": {
-      negativePositionImpactFactor: 0, // TODO: should be exponentToFloat("5e-10")
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
       negativeSwapImpactFactor: 0,
       expectedSwapImpactRatio: 10_000,
       expectedPositionImpactRatio: 20_000,
