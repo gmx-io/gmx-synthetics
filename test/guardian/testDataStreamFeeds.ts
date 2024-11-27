@@ -1,5 +1,5 @@
 import { deployFixture } from "../../utils/fixture";
-import { expandDecimals, decimalToFloat, percentageToFloat } from "../../utils/math";
+import { expandDecimals, decimalToFloat } from "../../utils/math";
 import { OrderType, getOrderCount, createOrder, executeOrder } from "../../utils/order";
 import { handleDeposit } from "../../utils/deposit";
 import { getPositionCount } from "../../utils/position";
@@ -70,10 +70,8 @@ describe("Guardian.DataStreamFeeds", () => {
     expect(await getOrderCount(dataStore)).eq(0);
     await dataStore.setBytes32(keys.dataStreamIdKey(wnt.address), hashString("WNT"));
     await dataStore.setUint(keys.dataStreamMultiplierKey(wnt.address), expandDecimals(1, 34));
-    await dataStore.setUint(keys.dataStreamSpreadFactorKey(wnt.address), percentageToFloat("100%"));
     await dataStore.setBytes32(keys.dataStreamIdKey(usdc.address), hashString("USDC"));
     await dataStore.setUint(keys.dataStreamMultiplierKey(usdc.address), expandDecimals(1, 46));
-    await dataStore.setUint(keys.dataStreamSpreadFactorKey(usdc.address), percentageToFloat("100%"));
 
     const increaseParams = {
       account: user1,
@@ -153,7 +151,6 @@ describe("Guardian.DataStreamFeeds", () => {
     expect(await getOrderCount(dataStore)).eq(0);
     await dataStore.setBytes32(keys.dataStreamIdKey(wnt.address), hashString("WNT"));
     await dataStore.setUint(keys.dataStreamMultiplierKey(wnt.address), expandDecimals(1, 34));
-    await dataStore.setUint(keys.dataStreamSpreadFactorKey(wnt.address), percentageToFloat("100%"));
     const increaseParams = {
       account: user1,
       market: ethUsdMarket,
@@ -226,7 +223,6 @@ describe("Guardian.DataStreamFeeds", () => {
     expect(await getOrderCount(dataStore)).eq(0);
     await dataStore.setBytes32(keys.dataStreamIdKey(wnt.address), hashString("WNT"));
     await dataStore.setUint(keys.dataStreamMultiplierKey(wnt.address), expandDecimals(1, 34));
-    await dataStore.setUint(keys.dataStreamSpreadFactorKey(wnt.address), percentageToFloat("100%"));
 
     const increaseParams = {
       account: user1,

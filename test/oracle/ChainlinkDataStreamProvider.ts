@@ -60,27 +60,24 @@ describe("ChainlinkDataStreamProvider", () => {
       return decodeValidatedPrice(result);
     }
 
-    await dataStore.setUint(keys.dataStreamSpreadFactorKey(wnt.address), percentageToFloat("100%"));
+    await dataStore.setUint(keys.dataStreamSpreadReductionFactorKey(wnt.address), 0);
     const oraclePriceA = await getOraclePrice();
     expect(oraclePriceA.min).eq(99999990);
     expect(oraclePriceA.max).eq(100000010);
 
-    await dataStore.setUint(keys.dataStreamSpreadFactorKey(wnt.address), percentageToFloat("50%"));
+    await dataStore.setUint(keys.dataStreamSpreadReductionFactorKey(wnt.address), percentageToFloat("50%"));
     const oraclePriceB = await getOraclePrice();
 
     expect(oraclePriceB.min).eq(99999995);
     expect(oraclePriceB.max).eq(100000005);
 
-    await dataStore.setUint(keys.dataStreamSpreadFactorKey(wnt.address), 0);
+    await dataStore.setUint(keys.dataStreamSpreadReductionFactorKey(wnt.address), percentageToFloat("100%"));
     const oraclePriceC = await getOraclePrice();
 
     expect(oraclePriceC.min).eq(100000000);
     expect(oraclePriceC.max).eq(100000000);
 
-    await dataStore.setUint(keys.dataStreamSpreadFactorKey(wnt.address), percentageToFloat("300%"));
-    const oraclePriceD = await getOraclePrice();
-
-    expect(oraclePriceD.min).eq(99999970);
-    expect(oraclePriceD.max).eq(100000030);
+    await dataStore.setUint(keys.dataStreamSpreadReductionFactorKey(wnt.address), percentageToFloat("300%"));
+    await expect(getOraclePrice()).to.be.rejected;
   });
 });

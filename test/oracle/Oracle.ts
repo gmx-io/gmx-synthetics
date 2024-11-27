@@ -25,7 +25,6 @@ describe("Oracle", () => {
 
     await dataStore.setBytes32(keys.dataStreamIdKey(wbtc.address), hashString("WBTC"));
     await dataStore.setUint(keys.dataStreamMultiplierKey(wbtc.address), expandDecimals(1, 34));
-    await dataStore.setUint(keys.dataStreamSpreadFactorKey(wbtc.address), expandDecimals(1, 30));
 
     const params = await getOracleParams({
       oracleSalt,

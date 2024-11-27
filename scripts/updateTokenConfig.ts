@@ -30,6 +30,16 @@ const processTokens = async ({ tokens, handleConfig }) => {
         `buybackMaxPriceImpactFactor ${token.buybackMaxPriceImpactFactor}`
       );
     }
+
+    if (token.dataStreamSpreadReductionFactor) {
+      await handleConfig(
+        "uint",
+        keys.DATA_STREAM_SPREAD_REDUCTION_FACTOR,
+        encodeData(["address"], [token.address]),
+        token.dataStreamSpreadReductionFactor,
+        `dataStreamSpreadReductionFactor ${token.dataStreamSpreadReductionFactor}`
+      );
+    }
   }
 };
 

@@ -116,19 +116,19 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         address token,
         bytes32 feedId,
         uint256 dataStreamMultiplier,
-        uint256 dataStreamSpreadFactor
+        uint256 dataStreamSpreadReductionFactor
     ) external onlyConfigKeeper nonReentrant {
         if (dataStore.getBytes32(Keys.dataStreamIdKey(token)) != bytes32(0)) {
             revert Errors.DataStreamIdAlreadyExistsForToken(token);
         }
 
-        if (dataStreamSpreadFactor > Precision.FLOAT_PRECISION * 3) {
-            revert Errors.ConfigValueExceedsAllowedRange(Keys.DATA_STREAM_SPREAD_FACTOR, dataStreamSpreadFactor);
+        if (dataStreamSpreadReductionFactor > Precision.FLOAT_PRECISION) {
+            revert Errors.ConfigValueExceedsAllowedRange(Keys.DATA_STREAM_SPREAD_REDUCTION_FACTOR, dataStreamSpreadReductionFactor);
         }
 
         dataStore.setBytes32(Keys.dataStreamIdKey(token), feedId);
         dataStore.setUint(Keys.dataStreamMultiplierKey(token), dataStreamMultiplier);
-        dataStore.setUint(Keys.dataStreamSpreadFactorKey(token), dataStreamSpreadFactor);
+        dataStore.setUint(Keys.dataStreamSpreadReductionFactorKey(token), dataStreamSpreadReductionFactor);
 
         EventUtils.EventLogData memory eventData;
         eventData.addressItems.initItems(1);
@@ -137,7 +137,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         eventData.bytes32Items.setItem(0, "feedId", feedId);
         eventData.uintItems.initItems(2);
         eventData.uintItems.setItem(0, "dataStreamMultiplier", dataStreamMultiplier);
-        eventData.uintItems.setItem(1, "dataStreamSpreadFactor", dataStreamSpreadFactor);
+        eventData.uintItems.setItem(1, "dataStreamSpreadReductionFactor", dataStreamSpreadReductionFactor);
         eventEmitter.emitEventLog1(
             "ConfigSetDataStream",
             Cast.toBytes32(token),
@@ -549,6 +549,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.BUYBACK_GMX_FACTOR] = true;
         allowedBaseKeys[Keys.BUYBACK_MAX_PRICE_IMPACT_FACTOR] = true;
         allowedBaseKeys[Keys.BUYBACK_MAX_PRICE_AGE] = true;
+
+        allowedBaseKeys[Keys.DATA_STREAM_SPREAD_REDUCTION_FACTOR] = true;
     }
 
     function _initAllowedLimitedBaseKeys() internal {
@@ -737,6 +739,13 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             baseKey == Keys.PRO_DISCOUNT_FACTOR ||
             baseKey == Keys.BUYBACK_GMX_FACTOR
         ) {
+            // revert if value > 100%
+            if (value > Precision.FLOAT_PRECISION) {
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
+            }
+        }
+
+        if (baseKey == Keys.DATA_STREAM_SPREAD_REDUCTION_FACTOR) {
             // revert if value > 100%
             if (value > Precision.FLOAT_PRECISION) {
                 revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);

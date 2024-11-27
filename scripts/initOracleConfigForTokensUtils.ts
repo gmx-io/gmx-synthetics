@@ -1,6 +1,6 @@
 import hre, { ethers } from "hardhat";
 
-import { bigNumberify, expandDecimals, percentageToFloat } from "../utils/math";
+import { bigNumberify, expandDecimals } from "../utils/math";
 import { encodeData } from "../utils/hash";
 import { getFullKey } from "../utils/config";
 
@@ -126,12 +126,12 @@ export async function initOracleConfigForTokens({ write }) {
 
     if (onchainConfig.dataStreamId === ethers.constants.HashZero && token.dataStreamFeedId) {
       const dataStreamMultiplier = expandDecimals(1, 60 - token.decimals - token.dataStreamFeedDecimals);
-      const dataStreamSpreadFactor = bigNumberify(token.dataStreamSpreadFactor ?? percentageToFloat("100%"));
+      const dataStreamSpreadReductionFactor = bigNumberify(token.dataStreamSpreadReductionFactor ?? 0);
 
       console.log(
         `setDataStream(${tokenSymbol} ${
           token.dataStreamFeedId
-        }, ${dataStreamMultiplier.toString()}, ${dataStreamSpreadFactor.toString()})`
+        }, ${dataStreamMultiplier.toString()}, ${dataStreamSpreadReductionFactor.toString()})`
       );
 
       multicallWriteParams.push(
@@ -139,7 +139,7 @@ export async function initOracleConfigForTokens({ write }) {
           token.address,
           token.dataStreamFeedId,
           dataStreamMultiplier,
-          dataStreamSpreadFactor,
+          dataStreamSpreadReductionFactor,
         ])
       );
     }

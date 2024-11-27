@@ -473,22 +473,22 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
     // @param token the token to set the data stream feed for
     // @param feedId the ID of the data stream feed
     // @param dataStreamMultiplier the multiplier to apply to the data stream feed results
-    // @param dataStreamSpreadFactor the factor to apply to the data stream price spread
+    // @param dataStreamSpreadReductionFactor the factor to apply to the data stream price spread
     function signalSetDataStream(
         address token,
         bytes32 feedId,
         uint256 dataStreamMultiplier,
-        uint256 dataStreamSpreadFactor
+        uint256 dataStreamSpreadReductionFactor
     ) external onlyTimelockAdmin nonReentrant {
-        if (dataStreamSpreadFactor > Precision.FLOAT_PRECISION * 3) {
-            revert Errors.ConfigValueExceedsAllowedRange(Keys.DATA_STREAM_SPREAD_FACTOR, dataStreamSpreadFactor);
+        if (dataStreamSpreadReductionFactor > Precision.FLOAT_PRECISION) {
+            revert Errors.ConfigValueExceedsAllowedRange(Keys.DATA_STREAM_SPREAD_REDUCTION_FACTOR, dataStreamSpreadReductionFactor);
         }
 
         bytes32 actionKey = _setDataStreamActionKey(
             token,
             feedId,
             dataStreamMultiplier,
-            dataStreamSpreadFactor
+            dataStreamSpreadReductionFactor
         );
 
         _signalPendingAction(actionKey, "setDataStream");
@@ -500,7 +500,7 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
         eventData.bytes32Items.setItem(0, "feedId", feedId);
         eventData.uintItems.initItems(2);
         eventData.uintItems.setItem(0, "dataStreamMultiplier", dataStreamMultiplier);
-        eventData.uintItems.setItem(1, "dataStreamSpreadFactor", dataStreamSpreadFactor);
+        eventData.uintItems.setItem(1, "dataStreamSpreadReductionFactor", dataStreamSpreadReductionFactor);
         eventEmitter.emitEventLog1(
             "SignalSetDataStream",
             actionKey,
@@ -517,20 +517,20 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
         address token,
         bytes32 feedId,
         uint256 dataStreamMultiplier,
-        uint256 dataStreamSpreadFactor
+        uint256 dataStreamSpreadReductionFactor
     ) external onlyTimelockAdmin nonReentrant {
         bytes32 actionKey = _setDataStreamActionKey(
             token,
             feedId,
             dataStreamMultiplier,
-            dataStreamSpreadFactor
+            dataStreamSpreadReductionFactor
         );
 
         _validateAndClearAction(actionKey, "setDataStream");
 
         dataStore.setBytes32(Keys.dataStreamIdKey(token), feedId);
         dataStore.setUint(Keys.dataStreamMultiplierKey(token), dataStreamMultiplier);
-        dataStore.setUint(Keys.dataStreamSpreadFactorKey(token), dataStreamSpreadFactor);
+        dataStore.setUint(Keys.dataStreamSpreadReductionFactorKey(token), dataStreamSpreadReductionFactor);
 
         EventUtils.EventLogData memory eventData;
         eventData.addressItems.initItems(1);
@@ -539,7 +539,7 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
         eventData.bytes32Items.setItem(0, "feedId", feedId);
         eventData.uintItems.initItems(2);
         eventData.uintItems.setItem(0, "dataStreamMultiplier", dataStreamMultiplier);
-        eventData.uintItems.setItem(1, "dataStreamSpreadFactor", dataStreamSpreadFactor);
+        eventData.uintItems.setItem(1, "dataStreamSpreadReductionFactor", dataStreamSpreadReductionFactor);
         eventEmitter.emitEventLog1(
             "SetDataStream",
             actionKey,
@@ -632,14 +632,14 @@ contract Timelock is ReentrancyGuard, RoleModule, BasicMulticall {
         address token,
         bytes32 feedId,
         uint256 dataStreamMultiplier,
-        uint256 dataStreamSpreadFactor
+        uint256 dataStreamSpreadReductionFactor
     ) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(
             "setDataStream",
             token,
             feedId,
             dataStreamMultiplier,
-            dataStreamSpreadFactor
+            dataStreamSpreadReductionFactor
         ));
     }
 
