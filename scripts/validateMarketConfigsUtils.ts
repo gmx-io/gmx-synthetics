@@ -115,9 +115,15 @@ const recommendedMarketConfig = {
       expectedPositionImpactRatio: 20_000,
     },
     SOL: {
-      negativePositionImpactFactor: decimalToFloat(65, 12), // new recommandation is 1.35e-09
+      negativePositionImpactFactor: decimalToFloat(65, 12),
       negativeSwapImpactFactor: decimalToFloat(65, 12),
       expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    "SOL:SOL:SOL": {
+      negativePositionImpactFactor: exponentToFloat("1.35e-09"),
+      negativeSwapImpactFactor: 0,
+      expectedSwapImpactRatio: 10_000,
       expectedPositionImpactRatio: 20_000,
     },
     STX: {
@@ -181,7 +187,7 @@ const recommendedMarketConfig = {
       expectedPositionImpactRatio: 20_000,
     },
     "GMX:GMX:GMX": {
-      negativePositionImpactFactor: 0,
+      negativePositionImpactFactor: 0, // TODO: should be exponentToFloat("5e-10")
       negativeSwapImpactFactor: 0,
       expectedSwapImpactRatio: 10_000,
       expectedPositionImpactRatio: 20_000,
