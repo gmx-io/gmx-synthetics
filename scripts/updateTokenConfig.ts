@@ -21,7 +21,7 @@ const processTokens = async ({ tokens, handleConfig }) => {
       `transferGasLimit ${token.transferGasLimit}`
     );
 
-    if (token.buybackMaxPriceImpactFactor) {
+    if (token.buybackMaxPriceImpactFactor !== undefined) {
       await handleConfig(
         "uint",
         keys.BUYBACK_MAX_PRICE_IMPACT_FACTOR,
@@ -31,7 +31,7 @@ const processTokens = async ({ tokens, handleConfig }) => {
       );
     }
 
-    if (token.dataStreamSpreadReductionFactor) {
+    if (token.dataStreamSpreadReductionFactor !== undefined) {
       await handleConfig(
         "uint",
         keys.DATA_STREAM_SPREAD_REDUCTION_FACTOR,
