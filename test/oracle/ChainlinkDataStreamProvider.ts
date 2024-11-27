@@ -65,11 +65,11 @@ describe("ChainlinkDataStreamProvider", () => {
     expect(oraclePriceA.min).eq(99999990);
     expect(oraclePriceA.max).eq(100000010);
 
-    await dataStore.setUint(keys.dataStreamSpreadReductionFactorKey(wnt.address), percentageToFloat("50%"));
+    await dataStore.setUint(keys.dataStreamSpreadReductionFactorKey(wnt.address), percentageToFloat("90%"));
     const oraclePriceB = await getOraclePrice();
 
-    expect(oraclePriceB.min).eq(99999995);
-    expect(oraclePriceB.max).eq(100000005);
+    expect(oraclePriceB.min).eq(99999999);
+    expect(oraclePriceB.max).eq(100000001);
 
     await dataStore.setUint(keys.dataStreamSpreadReductionFactorKey(wnt.address), percentageToFloat("100%"));
     const oraclePriceC = await getOraclePrice();
