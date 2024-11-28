@@ -735,15 +735,9 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             baseKey == Keys.MIN_PNL_FACTOR_AFTER_ADL ||
             baseKey == Keys.OPTIMAL_USAGE_FACTOR ||
             baseKey == Keys.PRO_DISCOUNT_FACTOR ||
-            baseKey == Keys.BUYBACK_GMX_FACTOR
+            baseKey == Keys.BUYBACK_GMX_FACTOR ||
+            baseKey == Keys.DATA_STREAM_SPREAD_REDUCTION_FACTOR
         ) {
-            // revert if value > 100%
-            if (value > Precision.FLOAT_PRECISION) {
-                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
-            }
-        }
-
-        if (baseKey == Keys.DATA_STREAM_SPREAD_REDUCTION_FACTOR) {
             // revert if value > 100%
             if (value > Precision.FLOAT_PRECISION) {
                 revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
