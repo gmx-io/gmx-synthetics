@@ -801,8 +801,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(1525, 18),
       maxShortTokenPoolAmount: expandDecimals(4_000_000, 6),
 
-      reserveFactor: percentageToFloat("165%"),
-      openInterestReserveFactor: percentageToFloat("160%"),
+      reserveFactor: percentageToFloat("125%"),
+      openInterestReserveFactor: percentageToFloat("120%"),
 
       maxPnlFactorForTraders: percentageToFloat("75%"),
       maxPnlFactorForDeposits: percentageToFloat("75%"),
@@ -985,8 +985,8 @@ const config: {
       ...baseMarketConfig,
       ...fundingRateConfig_Default,
 
-      reserveFactor: percentageToFloat("105%"),
-      openInterestReserveFactor: percentageToFloat("100%"),
+      reserveFactor: percentageToFloat("165%"),
+      openInterestReserveFactor: percentageToFloat("160%"),
 
       maxLongTokenPoolAmount: expandDecimals(300_000, 18),
       maxShortTokenPoolAmount: expandDecimals(1_500_000, 6),
