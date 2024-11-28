@@ -79,38 +79,14 @@ async function main() {
   const rolesToAdd = {
     arbitrum: [
       {
-        role: "CONTROLLER",
-        member: "0x900173a66dbd345006c51fa35fa3ab760fcd843b",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x105b5afe50fbce7759051974fb1710ce331c77b3",
-      },
-      {
-        role: "ROUTER_PLUGIN",
-        member: "0x900173a66dbd345006c51fa35fa3ab760fcd843b",
-      },
-      {
-        role: "ROUTER_PLUGIN",
-        member: "0x105b5afe50fbce7759051974fb1710ce331c77b3",
+        role: "CONFIG_KEEPER",
+        member: "0x55e8e153048294c060455e5762d7280faee86dc7",
       },
     ],
     avalanche: [
       {
-        role: "CONTROLLER",
-        member: "0x2b76df209e1343da5698af0f8757f6170162e78b",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x6be75346c0262015e45c6fc0e3268bba73e87d1a",
-      },
-      {
-        role: "ROUTER_PLUGIN",
-        member: "0x2b76df209e1343da5698af0f8757f6170162e78b",
-      },
-      {
-        role: "ROUTER_PLUGIN",
-        member: "0x6be75346c0262015e45c6fc0e3268bba73e87d1a",
+        role: "CONFIG_KEEPER",
+        member: "0xcf71721924c312374bf8366c3f60a127a1e80e3c",
       },
     ],
   };

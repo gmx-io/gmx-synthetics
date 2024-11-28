@@ -97,7 +97,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
         "0xD5F8b9ba4255B2F73b06f245fcca73D114D1D460": true, // general_keeper_3
         "0x4b6ACC5b2db1757bD49408FeE92e32D39608B5d9": true, // multisig_1
-        "0x31FaBf54278E79069c4E102e9fB79d6a44be53A8": true, // ConfigSyncer_3
+        "0x55E8E153048294c060455e5762d7280FAee86Dc7": true, // ConfigSyncer_4
       },
       FEE_KEEPER: {
         "0x43CE1d475e06c65DD879f4ec644B8e0E10ff2b6D": true, // fee_keeper_1
@@ -161,7 +161,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
         "0xD5F8b9ba4255B2F73b06f245fcca73D114D1D460": true, // general_keeper_3
         "0x15F9eBC71c539926B8f652a534d29B4Af57CaD55": true, // multisig_1
-        "0xe75f1fA4858A99e07ca878388AE9259Ba048C87A": true, // ConfigSyncer_3
+        "0xcF71721924c312374bF8366c3f60a127A1e80e3C": true, // ConfigSyncer_4
       },
       FEE_KEEPER: {
         "0x43CE1d475e06c65DD879f4ec644B8e0E10ff2b6D": true, // fee_keeper_1
