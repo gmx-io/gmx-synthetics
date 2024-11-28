@@ -1352,11 +1352,11 @@ const config: {
       minCollateralFactor: percentageToFloat("1%"), // 100x leverage
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
 
-      maxOpenInterest: decimalToFloat(500_000),
-      maxPoolUsdForDeposit: decimalToFloat(750_000), // 1.5x the max open interest
+      maxOpenInterest: decimalToFloat(750_000),
+      maxPoolUsdForDeposit: decimalToFloat(1250_000),
 
-      maxLongTokenPoolAmount: expandDecimals(35_000, 18), // ~1M USD (2x the max open interest)
-      maxShortTokenPoolAmount: expandDecimals(35_000, 18), // ~1M USD (2x the max open interest)
+      maxLongTokenPoolAmount: expandDecimals(50_000, 18),
+      maxShortTokenPoolAmount: expandDecimals(50_000, 18),
     },
     {
       tokens: { indexToken: "PEPE", longToken: "PEPE", shortToken: "USDC" },
@@ -1481,8 +1481,8 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 4,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
 
-      reserveFactor: percentageToFloat("105%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
+      reserveFactor: percentageToFloat("135%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("130%"), // default is 90%
 
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
