@@ -120,6 +120,12 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
     },
+    "SOL:SOL:SOL": {
+      negativePositionImpactFactor: exponentToFloat("1.35e-09"),
+      negativeSwapImpactFactor: 0,
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 20_000,
+    },
     STX: {
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       negativeSwapImpactFactor: exponentToFloat("5e-9"),
@@ -181,7 +187,7 @@ const recommendedMarketConfig = {
       expectedPositionImpactRatio: 20_000,
     },
     "GMX:GMX:GMX": {
-      negativePositionImpactFactor: 0,
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
       negativeSwapImpactFactor: 0,
       expectedSwapImpactRatio: 10_000,
       expectedPositionImpactRatio: 20_000,
@@ -271,6 +277,36 @@ const recommendedMarketConfig = {
     },
     MEW: {
       negativePositionImpactFactor: exponentToFloat("5e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    ADA: {
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    XLM: {
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    BCH: {
+      negativePositionImpactFactor: exponentToFloat("2.5e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    DOT: {
+      negativePositionImpactFactor: exponentToFloat("2.5e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    ICP: {
+      negativePositionImpactFactor: exponentToFloat("2.5e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    RENDER: {
+      negativePositionImpactFactor: exponentToFloat("2.5e-9"),
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
     },
