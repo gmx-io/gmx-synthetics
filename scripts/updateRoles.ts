@@ -80,19 +80,43 @@ async function main() {
     arbitrum: [
       {
         role: "CONFIG_KEEPER",
-        member: "0x55e8e153048294c060455e5762d7280faee86dc7",
+        member: "0xb6d37dfcda9c237ca98215f9154dc414efe0ac1b",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0xd1781719edbed8940534511ac671027989e724b9",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0xb6d37dfcda9c237ca98215f9154dc414efe0ac1b",
       },
     ],
     avalanche: [
       {
         role: "CONFIG_KEEPER",
-        member: "0xcf71721924c312374bf8366c3f60a127a1e80e3c",
+        member: "0x7dcec0356434d03a6071c96347516df3ef4471bb",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0xeb376626d44c638fd0c41170a40fd23a1a0622b7",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x7dcec0356434d03a6071c96347516df3ef4471bb",
       },
     ],
   };
 
   const rolesToRemove = {
     arbitrum: [
+      {
+        role: "CONFIG_KEEPER",
+        member: "0x31FaBf54278E79069c4E102e9fB79d6a44be53A8",
+      },
+      {
+        role: "CONFIG_KEEPER",
+        member: "0x55E8E153048294c060455e5762d7280FAee86Dc7",
+      },
       {
         role: "CONTROLLER",
         member: "0x9F48160eDc3Ad78F4cA0E3FDF54A75D8FB228452",
@@ -171,6 +195,14 @@ async function main() {
       },
       {
         role: "CONTROLLER",
+        member: "0xE37D052e1DeB99901de205E7186E31A36E4Ef70c",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x55E8E153048294c060455e5762d7280FAee86Dc7",
+      },
+      {
+        role: "CONTROLLER",
         member: "0x674Ee2FFe588c4b1Fde6D5481c55Ef6133004cbA",
       },
       {
@@ -207,6 +239,14 @@ async function main() {
       },
     ],
     avalanche: [
+      {
+        role: "CONFIG_KEEPER",
+        member: "0xe75f1fA4858A99e07ca878388AE9259Ba048C87A",
+      },
+      {
+        role: "CONFIG_KEEPER",
+        member: "0xcF71721924c312374bF8366c3f60a127A1e80e3C",
+      },
       {
         role: "CONTROLLER",
         member: "0xe5485a4fD6527911e9b82A75A1bFEd6e47BE2241",
@@ -278,6 +318,14 @@ async function main() {
       {
         role: "CONTROLLER",
         member: "0xEa90EC1228F7D1b3D47D84d1c9D46dBDFEfF7709",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x1Ad2560bD34D17A413e4eb9420643d1782466dDA",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0xcF71721924c312374bF8366c3f60a127A1e80e3C",
       },
       {
         role: "CONTROLLER",
