@@ -1,6 +1,6 @@
 import hre, { ethers } from "hardhat";
 
-import { expandDecimals } from "../utils/math";
+import { bigNumberify, expandDecimals } from "../utils/math";
 import { encodeData } from "../utils/hash";
 import { getFullKey } from "../utils/config";
 import { timelockWriteMulticall } from "../utils/timelock";
@@ -70,6 +70,14 @@ export async function updateOracleConfigForTokens({ write }) {
       ]),
     });
 
+    multicallReadParams.push({
+      target: dataStore.address,
+      allowFailure: false,
+      callData: dataStore.interface.encodeFunctionData("getUint", [
+        getFullKey(keys.DATA_STREAM_SPREAD_REDUCTION_FACTOR, encodeData(["address"], [token.address])),
+      ]),
+    });
+
     if (paramsCount === undefined) {
       paramsCount = multicallReadParams.length;
     }
@@ -88,6 +96,7 @@ export async function updateOracleConfigForTokens({ write }) {
       stablePrice: defaultAbiCoder.decode(["uint"], result[i * paramsCount + 2].returnData)[0],
       dataStreamId: result[i * paramsCount + 3].returnData,
       dataStreamMultiplier: defaultAbiCoder.decode(["uint"], result[i * paramsCount + 4].returnData)[0],
+      dataStreamSpreadReductionFactor: defaultAbiCoder.decode(["uint"], result[i * paramsCount + 5].returnData)[0],
     };
   }
 
@@ -136,6 +145,7 @@ export async function updateOracleConfigForTokens({ write }) {
     }
 
     if (token.dataStreamFeedId && onchainConfig.dataStreamId !== token.dataStreamFeedId) {
+      const dataStreamSpreadReductionFactor = bigNumberify(token.dataStreamSpreadReductionFactor ?? 0);
       const dataStreamMultiplier = expandDecimals(1, 60 - token.decimals - token.dataStreamFeedDecimals);
 
       if (!onchainConfig.dataStreamMultiplier.eq(dataStreamMultiplier)) {
@@ -144,12 +154,21 @@ export async function updateOracleConfigForTokens({ write }) {
         );
       }
 
-      console.log(`setDataStream(${tokenSymbol} ${token.dataStreamFeedId}, ${dataStreamMultiplier.toString()})`);
+      console.log(
+        `setDataStream(${tokenSymbol} ${
+          token.dataStreamFeedId
+        }, ${dataStreamMultiplier.toString()}, ${dataStreamSpreadReductionFactor.toString()})`
+      );
 
       const method = phase === "signal" ? "signalSetDataStream" : "setDataStreamAfterSignal";
 
       multicallWriteParams.push(
-        timelock.interface.encodeFunctionData(method, [token.address, token.dataStreamFeedId, dataStreamMultiplier])
+        timelock.interface.encodeFunctionData(method, [
+          token.address,
+          token.dataStreamFeedId,
+          dataStreamMultiplier,
+          dataStreamSpreadReductionFactor,
+        ])
       );
     }
   }
