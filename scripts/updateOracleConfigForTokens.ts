@@ -6,6 +6,7 @@ import { getFullKey } from "../utils/config";
 import { timelockWriteMulticall } from "../utils/timelock";
 
 import * as keys from "../utils/keys";
+import { getOracleProviderAddress, getOracleProviderKey } from "../utils/oracle";
 
 const expectedPhases = ["signal", "finalize"];
 
@@ -21,7 +22,7 @@ export async function updateOracleConfigForTokens({ write }) {
   const phase = process.env.PHASE;
 
   if (!expectedPhases.includes(phase)) {
-    throw new Error(`Unexpected PHASE: ${phase}`);
+    throw new Error(`Unexpected PHASE: ${phase}. valid values: ${expectedPhases.join(", ")}`);
   }
 
   const tokenSymbols = Object.keys(tokens);
@@ -78,6 +79,14 @@ export async function updateOracleConfigForTokens({ write }) {
       ]),
     });
 
+    multicallReadParams.push({
+      target: dataStore.address,
+      allowFailure: false,
+      callData: dataStore.interface.encodeFunctionData("getAddress", [
+        getFullKey(keys.ORACLE_PROVIDER_FOR_TOKEN, encodeData(["address"], [token.address])),
+      ]),
+    });
+
     if (paramsCount === undefined) {
       paramsCount = multicallReadParams.length;
     }
@@ -97,13 +106,13 @@ export async function updateOracleConfigForTokens({ write }) {
       dataStreamId: result[i * paramsCount + 3].returnData,
       dataStreamMultiplier: defaultAbiCoder.decode(["uint"], result[i * paramsCount + 4].returnData)[0],
       dataStreamSpreadReductionFactor: defaultAbiCoder.decode(["uint"], result[i * paramsCount + 5].returnData)[0],
+      oracleProviderForToken: defaultAbiCoder.decode(["address"], result[i * paramsCount + 6].returnData)[0],
     };
   }
 
   const multicallWriteParams = [];
 
-  for (let i = 0; i < tokenSymbols.length; i++) {
-    const tokenSymbol = tokenSymbols[i];
+  for (const tokenSymbol of tokenSymbols) {
     console.log(`checking: ${tokenSymbol}`);
     const token = tokens[tokenSymbol];
     const onchainConfig = onchainOracleConfig[tokenSymbol];
@@ -170,6 +179,16 @@ export async function updateOracleConfigForTokens({ write }) {
           dataStreamSpreadReductionFactor,
         ])
       );
+    }
+
+    const oracleProviderAddress = await getOracleProviderAddress(token.oracleProvider);
+    if (oracleProviderAddress !== onchainConfig.oracleProviderForToken) {
+      const oracleProviderKey = await getOracleProviderKey(oracleProviderAddress);
+      console.log(`setOracleProviderForToken(${tokenSymbol} ${oracleProviderKey} ${oracleProviderAddress})`);
+
+      const method = phase === "signal" ? "signalSetOracleProviderForToken" : "setOracleProviderForToken";
+
+      multicallWriteParams.push(timelock.interface.encodeFunctionData(method, [token.address, oracleProviderAddress]));
     }
   }
 

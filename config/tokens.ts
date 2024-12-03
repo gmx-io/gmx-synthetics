@@ -2,11 +2,10 @@ import { ethers } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { getSyntheticTokenAddress } from "../utils/token";
 import { decimalToFloat, percentageToFloat } from "../utils/math";
-import { OracleProvider } from "./oracle";
 import { BigNumberish } from "ethers";
 import { TOKEN_ORACLE_TYPES } from "../utils/oracle";
 
-export type OracleProvider = "gmOracle" | "chainlinkDataStream" | "chainlinkPriceFeed";
+import { OracleProvider } from "./types";
 
 type OracleRealPriceFeed = {
   address: string;
