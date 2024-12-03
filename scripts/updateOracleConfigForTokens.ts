@@ -10,7 +10,7 @@ import { getOracleProviderAddress, getOracleProviderKey } from "../utils/oracle"
 
 const expectedPhases = ["signal", "finalize"];
 
-export async function updateOracleConfigForTokens({ write }) {
+export async function updateOracleConfigForTokens() {
   const tokens = await hre.gmx.getTokens();
 
   const dataStore = await hre.ethers.getContract("DataStore");
@@ -198,7 +198,7 @@ export async function updateOracleConfigForTokens({ write }) {
 }
 
 async function main() {
-  await updateOracleConfigForTokens({ write: process.env.WRITE });
+  await updateOracleConfigForTokens();
 }
 
 main().catch((ex) => {
