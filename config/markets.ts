@@ -619,10 +619,10 @@ const config: {
       ...synthethicMarketConfig_IncreasedCapacity,
       ...fundingRateConfig_Default,
 
-      maxLongTokenPoolAmount: expandDecimals(1056, 18),
-      maxShortTokenPoolAmount: expandDecimals(2_500_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(1285, 18),
+      maxShortTokenPoolAmount: expandDecimals(4_500_000, 6),
 
-      maxPoolUsdForDeposit: decimalToFloat(2_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(4_000_000),
 
       negativePositionImpactFactor: exponentToFloat("21e-9"),
       positivePositionImpactFactor: exponentToFloat("7e-9"),
@@ -635,8 +635,8 @@ const config: {
       // minCollateralFactor of 0.005 (0.5%) when open interest is 2,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
 
-      reserveFactor: percentageToFloat("125%"),
-      openInterestReserveFactor: percentageToFloat("120%"),
+      reserveFactor: percentageToFloat("145%"),
+      openInterestReserveFactor: percentageToFloat("140%"),
 
       // factor in open interest reserve factor 120%
       borrowingFactor: exponentToFloat("1.68e-11"), // 1.68E-11, ~58% at 100% utilisation
