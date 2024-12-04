@@ -420,4 +420,7 @@ library Errors {
 
     // Reader errors
     error EmptyMarketPrice(address market);
+
+    // Multichain errors
+    error EmptyMultichainAmount();
 }
