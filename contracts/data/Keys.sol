@@ -477,6 +477,9 @@ library Keys {
     // @dev constant for user initiated cancel reason
     string public constant USER_INITIATED_CANCEL = "USER_INITIATED_CANCEL";
 
+    // @dev key for user's multichain balance
+    string public constant MULTICHAIN_BALANCE = "MULTICHAIN_BALANCE";
+
     // @dev function used to calculate fullKey for a given market parameter
     // @param baseKey the base key for the market parameter
     // @param data the additional data for the market parameter
@@ -2098,6 +2101,17 @@ library Keys {
     function buybackMaxPriceImpactFactorKey(address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             BUYBACK_MAX_PRICE_IMPACT_FACTOR,
+            token
+        ));
+    }
+
+    // @dev key for the multichain user balance
+    // @param token the token for which to retreive the user balance key
+    // @return key for mutichain balance for a given user and token
+    function multichainBalanceKey(address virtualAccount, address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            MULTICHAIN_BALANCE,
+            virtualAccount,
             token
         ));
     }
