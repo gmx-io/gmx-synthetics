@@ -422,5 +422,7 @@ library Errors {
     error EmptyMarketPrice(address market);
 
     // Multichain errors
-    error EmptyMultichainAmount();
+    error EmptyMultichainDepositAmount();
+    error EmptyMultichainWithdrawalAmount();
+    error InsufficientMultichainBalance();
 }
