@@ -101,6 +101,14 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
     `positionFeeReceiverFactor`
   );
 
+  await handleConfig(
+    "uint",
+    keys.LIQUIDATION_FEE_RECEIVER_FACTOR,
+    "0x",
+    generalConfig.liquidationFeeReceiverFactor,
+    `liquidationFeeReceiverFactor`
+  );
+
   await handleConfig("uint", keys.DEPOSIT_GAS_LIMIT, "0x", generalConfig.depositGasLimit, `depositGasLimit`);
 
   await handleConfig("uint", keys.WITHDRAWAL_GAS_LIMIT, "0x", generalConfig.withdrawalGasLimit, `withdrawalGasLimit`);
