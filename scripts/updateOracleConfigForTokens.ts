@@ -186,7 +186,7 @@ export async function updateOracleConfigForTokens() {
       const oracleProviderKey = await getOracleProviderKey(oracleProviderAddress);
       console.log(`setOracleProviderForToken(${tokenSymbol} ${oracleProviderKey} ${oracleProviderAddress})`);
 
-      const method = phase === "signal" ? "signalSetOracleProviderForToken" : "setOracleProviderForToken";
+      const method = phase === "signal" ? "signalSetOracleProviderForToken" : "setOracleProviderForTokenAfterSignal";
 
       multicallWriteParams.push(timelock.interface.encodeFunctionData(method, [token.address, oracleProviderAddress]));
     }
