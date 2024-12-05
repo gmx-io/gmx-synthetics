@@ -44,6 +44,12 @@ library Role {
     bytes32 public constant CONTROLLER = keccak256(abi.encode("CONTROLLER"));
 
     /**
+     * @dev The MULTICHAIN_CONTROLLER role.
+     * Hash: 0x8061565a700f909f44d6a4d48782e0ca745eec3662480ec6dba3f9dc8b4554d0
+     */
+    bytes32 public constant MULTICHAIN_CONTROLLER = keccak256(abi.encode("MULTICHAIN_CONTROLLER"));
+
+    /**
      * @dev The GOV_TOKEN_CONTROLLER role.
      * Hash: 0x16a157db08319d4eaf6b157a71f5d2e18c6500cab8a25bee0b4f9c753cb13690
      */
