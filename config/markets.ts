@@ -2130,6 +2130,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(375_000, 18), // ~2M USD (x2 of max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (x2 of max open interest)
+
+      minFundingFactorPerSecond: percentageToFloat("35%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "SOL", longToken: "SOL", shortToken: "SOL" },
@@ -2158,9 +2160,6 @@ const config: {
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
-      minFundingFactorPerSecond: percentageToFloat("1%").div(SECONDS_PER_YEAR),
-      thresholdForStableFunding: percentageToFloat("4%"),
-
       minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6.0e-11"),
 
@@ -2169,6 +2168,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(34_500, 9), // ~8M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(34_500, 9), // ~8M USD (2x the max open interest)
+
+      minFundingFactorPerSecond: percentageToFloat("22%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "ADA", longToken: "WBTC.e", shortToken: "USDC" },
@@ -2199,6 +2200,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(44, 8), // ~4M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(4_000_000, 6), // ~4M USD (2x the max open interest)
+
+      minFundingFactorPerSecond: percentageToFloat("27%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "XLM", longToken: "WBTC.e", shortToken: "USDC" },
@@ -2229,6 +2232,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(44, 8), // ~4M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(4_000_000, 6), // ~4M USD (2x the max open interest)
+
+      minFundingFactorPerSecond: percentageToFloat("20%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "BCH", longToken: "WBTC.e", shortToken: "USDC" },
@@ -2259,6 +2264,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(22, 8), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+
+      minFundingFactorPerSecond: percentageToFloat("20%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "DOT", longToken: "WBTC.e", shortToken: "USDC" },
@@ -2289,6 +2296,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(22, 8), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+
+      minFundingFactorPerSecond: percentageToFloat("22%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "ICP", longToken: "WBTC.e", shortToken: "USDC" },
@@ -2319,6 +2328,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(22, 8), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+
+      minFundingFactorPerSecond: percentageToFloat("26%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "RENDER", longToken: "WETH", shortToken: "USDC" },
@@ -2349,6 +2360,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(600, 18), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+
+      minFundingFactorPerSecond: percentageToFloat("25%").div(SECONDS_PER_YEAR),
     },
   ],
   avalanche: [
