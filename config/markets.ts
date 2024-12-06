@@ -1975,7 +1975,7 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(21, 8), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
 
-      minFundingFactorPerSecond: percentageToFloat("26").div(SECONDS_PER_YEAR),
+      minFundingFactorPerSecond: percentageToFloat("26%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "MEW", longToken: "WBTC.e", shortToken: "USDC" },
