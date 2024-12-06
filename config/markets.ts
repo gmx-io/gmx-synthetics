@@ -406,6 +406,7 @@ const config: {
 
       ...baseMarketConfig,
       ...fundingRateConfig_Default,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
 
       positionImpactExponentFactor: exponentToFloat("2.2e0"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"), // 0.05% for ~90,000 USD of imbalance
@@ -422,9 +423,6 @@ const config: {
       openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
 
       maxOpenInterest: decimalToFloat(1_000_000),
-      optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("60%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("150%").div(SECONDS_PER_YEAR),
 
       maxPoolUsdForDeposit: decimalToFloat(1_500_000), // x1.5 of max open interest
 
@@ -925,10 +923,6 @@ const config: {
         .div(SECONDS_PER_YEAR)
         .div(SECONDS_PER_HOUR * 48),
       maxFundingFactorPerSecond: percentageToFloat("125%").div(SECONDS_PER_YEAR),
-
-      baseBorrowingFactor: percentageToFloat("65%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("170%").div(SECONDS_PER_YEAR),
-
       minFundingFactorPerSecond: percentageToFloat("28%").div(SECONDS_PER_YEAR),
     },
     {
@@ -1425,10 +1419,8 @@ const config: {
       openInterestReserveFactor: percentageToFloat("80%"),
       maxPnlFactorForTraders: percentageToFloat("50%"),
 
-      ...fundingRateConfig_High, // initial recommendations correspond to fundingRateConfig_High not fundingRateConfig_SingleToken
-
+      ...fundingRateConfig_High,
       ...borrowingRateConfig_HighMax_WithHigherBase,
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("160%").div(SECONDS_PER_YEAR), // default 150%
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
@@ -1482,8 +1474,6 @@ const config: {
       minPositionImpactPoolAmount: 0,
 
       maxOpenInterest: decimalToFloat(1_500_000),
-
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("140%").div(SECONDS_PER_YEAR),
 
       minFundingFactorPerSecond: percentageToFloat("28%").div(SECONDS_PER_YEAR),
     },
@@ -1541,10 +1531,6 @@ const config: {
 
       reserveFactor: percentageToFloat("105%"), // default is 95%
       openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
-
-      optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("60%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("150%").div(SECONDS_PER_YEAR),
 
       positionImpactPoolDistributionRate: bigNumberify(0),
       minPositionImpactPoolAmount: bigNumberify(0),
