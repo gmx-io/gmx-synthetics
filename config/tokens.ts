@@ -27,52 +27,45 @@ type OracleTestPriceFeed = {
 
 type OraclePriceFeed = OracleRealPriceFeed | OracleTestPriceFeed;
 
+type BaseTokenConfig = {
+  decimals: number;
+  transferGasLimit?: number;
+  oracleProvider?: OracleProvider;
+  oracleTimestampAdjustment?: number;
+  dataStreamFeedId?: string;
+  dataStreamFeedDecimals?: number;
+  dataStreamSpreadReductionFactor?: BigNumberish;
+};
+
 // synthetic token without corresponding token
 // address will be generated in runtime in hardhat.config.ts
 // should not be deployed
 // should not be wrappedNative
-type SyntheticTokenConfig = {
+type SyntheticTokenConfig = BaseTokenConfig & {
   address?: never;
-  decimals: number;
   synthetic: true;
   wrappedNative?: never;
   deploy?: never;
-  transferGasLimit?: never;
-  dataStreamFeedId?: string;
-  dataStreamFeedDecimals?: number;
-  oracleProvider?: OracleProvider;
-  oracleTimestampAdjustment?: number;
   priceFeed?: OraclePriceFeed;
   oracleType?: string;
 };
 
-type RealTokenConfig = {
+type RealTokenConfig = BaseTokenConfig & {
   address: string;
-  decimals: number;
-  transferGasLimit: number;
   synthetic?: never;
   wrappedNative?: true;
   deploy?: never;
-  dataStreamFeedId?: string;
-  dataStreamFeedDecimals?: number;
-  oracleProvider?: OracleProvider;
-  oracleTimestampAdjustment?: number;
   buybackMaxPriceImpactFactor?: BigNumberish;
 };
 
 // test token to deploy in local and test networks
 // automatically deployed in localhost and hardhat networks
 // `deploy` should be set to `true` to deploy on live networks
-export type TestTokenConfig = {
+export type TestTokenConfig = BaseTokenConfig & {
   address?: never;
-  decimals: number;
-  transferGasLimit: number;
   deploy: true;
   wrappedNative?: boolean;
   synthetic?: never;
-  dataStreamFeedId?: string;
-  oracleProvider?: OracleProvider;
-  oracleTimestampAdjustment?: number;
 };
 
 export type TokenConfig = SyntheticTokenConfig | RealTokenConfig | TestTokenConfig;
@@ -472,6 +465,7 @@ const config: {
       dataStreamFeedId: "0x00031dcbdf6f280392039ea6381b85a23bc0b90a40b676c4ec0b669dd8f0f38e",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
+      dataStreamSpreadReductionFactor: percentageToFloat("1%"),
       // Chainlink on-chain feed not available
     },
     DOT: {
