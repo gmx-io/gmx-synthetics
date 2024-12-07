@@ -150,44 +150,26 @@ type FundingRateConfig = Partial<{
 }>;
 
 const fundingRateConfig_Low: FundingRateConfig = {
-  // increase to 65% at 100% imbalance (100%/0%) in 3 hours
-  // increase to 65% at 20% imbalance (60%/40%) in 15 hours
-  fundingIncreaseFactorPerSecond: percentageToFloat("65%")
+  // increase to 75% at 100% imbalance (100%/0%) in 3 hours
+  // increase to 75% at 20% imbalance (60.%/40%) in 15 hours
+  fundingIncreaseFactorPerSecond: percentageToFloat("75%")
     .div(SECONDS_PER_YEAR)
     .div(SECONDS_PER_HOUR * 3),
 
-  // reduce from max 65% to 0% in 48 hours
-  fundingDecreaseFactorPerSecond: percentageToFloat("65%")
+  // reduce from max 75% to 0% in 48 hours
+  fundingDecreaseFactorPerSecond: percentageToFloat("75%")
     .div(SECONDS_PER_YEAR)
     .div(SECONDS_PER_HOUR * 48),
 
-  maxFundingFactorPerSecond: percentageToFloat("65%").div(SECONDS_PER_YEAR),
+  maxFundingFactorPerSecond: percentageToFloat("75%").div(SECONDS_PER_YEAR),
 
   thresholdForStableFunding: percentageToFloat("4%"),
   thresholdForDecreaseFunding: percentageToFloat("2%"),
 };
 
 const fundingRateConfig_Default: FundingRateConfig = {
-  // increase to 80% at 100% imbalance (100%/0%) in 3 hours
-  // increase to 80% at 20% imbalance (60%/40%) in 15 hours
-  fundingIncreaseFactorPerSecond: percentageToFloat("80%")
-    .div(SECONDS_PER_YEAR)
-    .div(SECONDS_PER_HOUR * 3),
-
-  // reduce from max 80% to 0% in 48 hours
-  fundingDecreaseFactorPerSecond: percentageToFloat("80%")
-    .div(SECONDS_PER_YEAR)
-    .div(SECONDS_PER_HOUR * 48),
-
-  maxFundingFactorPerSecond: percentageToFloat("80%").div(SECONDS_PER_YEAR),
-
-  thresholdForStableFunding: percentageToFloat("4%"),
-  thresholdForDecreaseFunding: percentageToFloat("2%"),
-};
-
-const fundingRateConfig_High: FundingRateConfig = {
   // increase to 90% at 100% imbalance (100%/0%) in 3 hours
-  // increase to 90% at 20% imbalance (60%/40%) in 15 hours
+  // increase to 90% at 20% imbalance (60.%/40%) in 15 hours
   fundingIncreaseFactorPerSecond: percentageToFloat("90%")
     .div(SECONDS_PER_YEAR)
     .div(SECONDS_PER_HOUR * 3),
@@ -198,6 +180,24 @@ const fundingRateConfig_High: FundingRateConfig = {
     .div(SECONDS_PER_HOUR * 48),
 
   maxFundingFactorPerSecond: percentageToFloat("90%").div(SECONDS_PER_YEAR),
+
+  thresholdForStableFunding: percentageToFloat("4%"),
+  thresholdForDecreaseFunding: percentageToFloat("2%"),
+};
+
+const fundingRateConfig_High: FundingRateConfig = {
+  // increase to 100% at 100% imbalance (100%/0%) in 3 hours
+  // increase to 100% at 20% imbalance (60.%/40%) in 15 hours
+  fundingIncreaseFactorPerSecond: percentageToFloat("100%")
+    .div(SECONDS_PER_YEAR)
+    .div(SECONDS_PER_HOUR * 3),
+
+  // reduce from max 100% to 0% in 48 hours
+  fundingDecreaseFactorPerSecond: percentageToFloat("100%")
+    .div(SECONDS_PER_YEAR)
+    .div(SECONDS_PER_HOUR * 48),
+
+  maxFundingFactorPerSecond: percentageToFloat("100%").div(SECONDS_PER_YEAR),
 
   thresholdForStableFunding: percentageToFloat("4%"),
   thresholdForDecreaseFunding: percentageToFloat("2%"),
