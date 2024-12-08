@@ -425,4 +425,7 @@ library Errors {
     error EmptyMultichainDepositAmount();
     error EmptyMultichainWithdrawalAmount();
     error InsufficientMultichainBalance();
+    error InvalidMultichainProviderSignature();
+    error InvalidStargatePool();
+    error InvalidLzEndpoint();
 }

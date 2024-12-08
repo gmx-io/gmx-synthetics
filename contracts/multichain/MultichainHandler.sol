@@ -2,20 +2,20 @@
 
 pragma solidity ^0.8.0;
 
-import "../oracle/OracleModule.sol";
-import "../role/RoleModule.sol";
-import "../utils/GlobalReentrancyGuard.sol";
-
 import { RoleStore } from "../role/RoleStore.sol";
+import { RoleModule } from "../role/RoleModule.sol";
 import { DataStore } from "../data/DataStore.sol";
-import { EventEmitter } from "../event/EventEmitter.sol";
-import { Oracle } from "../oracle/Oracle.sol";
 import { Keys } from "../data/Keys.sol";
+import { Oracle } from "../oracle/Oracle.sol";
+import { OracleModule } from "../oracle/OracleModule.sol";
+import { EventEmitter } from "../event/EventEmitter.sol";
+import { Errors } from "../error/Errors.sol";
+import { GlobalReentrancyGuard } from "../utils/GlobalReentrancyGuard.sol";
+import { PayableMulticall } from "../utils/PayableMulticall.sol"; // TODO: what contract should this be?
+
 import { MultichainVault } from "./MultichainVault.sol";
 import { MultichainUtils } from "./MultichainUtils.sol";
 import { MultichainEventUtils } from "./MultichainEventUtils.sol";
-
-import { PayableMulticall } from "../utils/PayableMulticall.sol"; // TODO: what contract is this?
 
 /**
  * @title MultichainHandler
@@ -39,7 +39,7 @@ contract MultichainHandler is RoleModule, GlobalReentrancyGuard, OracleModule {
     }
 
     /**
-     * Record a deposit from another chain
+     * Records a deposit from another chain. IMultichainProvider has MULTICHAIN_CONTROLLER role
      * @param account user address on the source chain
      * @param token address of the token being deposited
      * @param sourceChainId chain id of the source chain
@@ -59,7 +59,7 @@ contract MultichainHandler is RoleModule, GlobalReentrancyGuard, OracleModule {
     }
 
     /**
-     * Record a message from another chain. Executes a multicall.
+     * Executes the multicall for the given args
      * The multicall arguments contains the function calls to be executed (e.g. createDeposit, createOrder, createWithdrawal, etc)
      * @param account user address on the source chain
      * @param sourceChainId chain id of the source chain
@@ -70,22 +70,26 @@ contract MultichainHandler is RoleModule, GlobalReentrancyGuard, OracleModule {
         uint256 sourceChainId,
         bytes[] calldata multicallArgs
     ) external onlyMultichainController {
-        address virtualAccount = MultichainUtils.getVirtualAccount(account, sourceChainId);
-
         // execute multicall
         payableMulticall.multicall(multicallArgs);
 
+        address virtualAccount = MultichainUtils.getVirtualAccount(account, sourceChainId);
         MultichainEventUtils.emitMultichainMessage(eventEmitter, virtualAccount, sourceChainId);
     }
 
     /**
-     * Record a withdrawal to another chain
+     * Record a withdrawal to another chain. IMultichainProvider has MULTICHAIN_CONTROLLER role
      * @param account user address on the source chain
      * @param token address of the token being withdrawn
      * @param amount amount of token being withdrawn
      * @param sourceChainId chain id of the source chain
      */
-    function recordWithdrawal(address account, address token, uint256 amount, uint256 sourceChainId, bytes[] memory multicallArgs) external onlyMultichainController {
+    function recordWithdrawal(
+        address account,
+        address token,
+        uint256 amount,
+        uint256 sourceChainId
+    ) external onlyMultichainController {
         if (amount == 0) {
             revert Errors.EmptyMultichainWithdrawalAmount();
         }
@@ -96,7 +100,7 @@ contract MultichainHandler is RoleModule, GlobalReentrancyGuard, OracleModule {
         uint256 balance = dataStore.getUint(balanceKey);
         if (balance < amount) {
             revert Errors.InsufficientMultichainBalance();
-            // should amount be capped instead of reverting? i.e. amount = balance;
+            // TODO: should amount be capped instead of reverting? i.e. amount = balance;
         }
 
         dataStore.decrementUint(balanceKey, amount);
