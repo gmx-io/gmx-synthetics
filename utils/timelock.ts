@@ -10,6 +10,15 @@ export async function timelockWriteMulticall({ timelock, multicallWriteParams })
 
     await signExternally(await timelock.populateTransaction.multicall(multicallWriteParams));
   } else {
-    console.info("NOTE: executed in read-only mode, no transactions were sent");
+    await hre.deployments.read(
+      "Timelock",
+      {
+        from: "0xE014cbD60A793901546178E1c16ad9132C927483",
+        log: true,
+      },
+      "multicall",
+      multicallWriteParams
+    );
+    console.info("NOTE: executed in read-only mode, no transactions were sent, simulation was successful");
   }
 }
