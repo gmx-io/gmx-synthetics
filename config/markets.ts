@@ -464,7 +464,7 @@ const config: {
 
       maxOpenInterest: decimalToFloat(74_000_000),
 
-      minFundingFactorPerSecond: percentageToFloat("23%").div(SECONDS_PER_YEAR),
+      minFundingFactorPerSecond: percentageToFloat("30%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "BTC", longToken: "WBTC.e", shortToken: "WBTC.e" },
@@ -495,7 +495,7 @@ const config: {
 
       maxOpenInterest: decimalToFloat(10_000_000),
 
-      minFundingFactorPerSecond: percentageToFloat("23%").div(SECONDS_PER_YEAR),
+      minFundingFactorPerSecond: percentageToFloat("30%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "BTC", longToken: "tBTC", shortToken: "tBTC" },
@@ -526,7 +526,7 @@ const config: {
 
       maxOpenInterest: decimalToFloat(1_000_000),
 
-      minFundingFactorPerSecond: percentageToFloat("23%").div(SECONDS_PER_YEAR),
+      minFundingFactorPerSecond: percentageToFloat("30%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC" },
@@ -561,7 +561,7 @@ const config: {
 
       maxOpenInterest: decimalToFloat(70_000_000),
 
-      minFundingFactorPerSecond: percentageToFloat("27%").div(SECONDS_PER_YEAR),
+      minFundingFactorPerSecond: percentageToFloat("30%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "WETH" },
@@ -592,7 +592,7 @@ const config: {
 
       maxOpenInterest: decimalToFloat(10_000_000),
 
-      minFundingFactorPerSecond: percentageToFloat("27%").div(SECONDS_PER_YEAR),
+      minFundingFactorPerSecond: percentageToFloat("30%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "WETH", longToken: "wstETH", shortToken: "USDe" },
@@ -631,7 +631,7 @@ const config: {
       swapFeeFactorForPositiveImpact: percentageToFloat("0.25%"),
       swapFeeFactorForNegativeImpact: percentageToFloat("0.25%"),
 
-      minFundingFactorPerSecond: percentageToFloat("27%").div(SECONDS_PER_YEAR),
+      minFundingFactorPerSecond: percentageToFloat("30%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "BNB", longToken: "BNB", shortToken: "USDC" },
@@ -745,7 +745,7 @@ const config: {
 
       maxOpenInterest: decimalToFloat(6_000_000),
 
-      minFundingFactorPerSecond: percentageToFloat("28%").div(SECONDS_PER_YEAR),
+      minFundingFactorPerSecond: percentageToFloat("36%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "EIGEN", longToken: "WETH", shortToken: "USDC" },
@@ -808,7 +808,7 @@ const config: {
       reserveFactor: percentageToFloat("105%"),
       openInterestReserveFactor: percentageToFloat("100%"),
 
-      minFundingFactorPerSecond: percentageToFloat("29%").div(SECONDS_PER_YEAR),
+      minFundingFactorPerSecond: percentageToFloat("36%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "AAVE", longToken: "WETH", shortToken: "USDC" },
@@ -923,7 +923,7 @@ const config: {
         .div(SECONDS_PER_YEAR)
         .div(SECONDS_PER_HOUR * 48),
       maxFundingFactorPerSecond: percentageToFloat("125%").div(SECONDS_PER_YEAR),
-      minFundingFactorPerSecond: percentageToFloat("28%").div(SECONDS_PER_YEAR),
+      minFundingFactorPerSecond: percentageToFloat("36%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "SOL", longToken: "SOL", shortToken: "USDC" },
@@ -962,7 +962,7 @@ const config: {
 
       maxOpenInterest: decimalToFloat(17_500_000),
 
-      minFundingFactorPerSecond: percentageToFloat("22%").div(SECONDS_PER_YEAR),
+      minFundingFactorPerSecond: percentageToFloat("30%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "STX", longToken: "WBTC.e", shortToken: "USDC" },
@@ -1475,7 +1475,7 @@ const config: {
 
       maxOpenInterest: decimalToFloat(1_500_000),
 
-      minFundingFactorPerSecond: percentageToFloat("28%").div(SECONDS_PER_YEAR),
+      minFundingFactorPerSecond: percentageToFloat("36%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "WIF", longToken: "WIF", shortToken: "USDC" },
