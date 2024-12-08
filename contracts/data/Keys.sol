@@ -325,6 +325,7 @@ library Keys {
     bytes32 public constant DATA_STREAM_ID = keccak256(abi.encode("DATA_STREAM_ID"));
     // @dev key for data stream feed multipler
     bytes32 public constant DATA_STREAM_MULTIPLIER = keccak256(abi.encode("DATA_STREAM_MULTIPLIER"));
+    bytes32 public constant DATA_STREAM_SPREAD_REDUCTION_FACTOR = keccak256(abi.encode("DATA_STREAM_SPREAD_REDUCTION_FACTOR"));
     // @dev key for stable price
     bytes32 public constant STABLE_PRICE = keccak256(abi.encode("STABLE_PRICE"));
     // @dev key for reserve factor
@@ -468,6 +469,9 @@ library Keys {
 
     // @dev constant for user initiated cancel reason
     string public constant USER_INITIATED_CANCEL = "USER_INITIATED_CANCEL";
+
+    // @dev key for user's multichain balance
+    string public constant MULTICHAIN_BALANCE = "MULTICHAIN_BALANCE";
 
     // @dev function used to calculate fullKey for a given market parameter
     // @param baseKey the base key for the market parameter
@@ -1826,6 +1830,13 @@ library Keys {
         ));
     }
 
+    function dataStreamSpreadReductionFactorKey(address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            DATA_STREAM_SPREAD_REDUCTION_FACTOR,
+            token
+        ));
+    }
+
     // @dev key for price feed multiplier
     // @param token the token to get the key for
     // @return key for price feed multiplier
@@ -2065,6 +2076,17 @@ library Keys {
     function buybackMaxPriceImpactFactorKey(address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             BUYBACK_MAX_PRICE_IMPACT_FACTOR,
+            token
+        ));
+    }
+
+    // @dev key for the multichain user balance
+    // @param token the token for which to retreive the user balance key
+    // @return key for mutichain balance for a given user and token
+    function multichainBalanceKey(address virtualAccount, address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            MULTICHAIN_BALANCE,
+            virtualAccount,
             token
         ));
     }
