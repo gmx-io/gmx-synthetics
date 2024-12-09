@@ -23,7 +23,7 @@ library LayerZeroProviderEventUtils {
         bytes calldata message,
         address executor,
         bytes calldata extraData
-    ) external {
+    ) internal {
         EventUtils.EventLogData memory eventData;
 
         eventData.addressItems.initItems(3);
@@ -50,7 +50,7 @@ library LayerZeroProviderEventUtils {
         uint256 lzTokenFee,
         uint256 amountSentLD,
         uint256 amountReceivedLD
-    ) external {
+    ) internal {
         EventUtils.EventLogData memory eventData;
         
         eventData.uintItems.initItems(5);
