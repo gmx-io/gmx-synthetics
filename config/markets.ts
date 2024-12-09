@@ -2042,6 +2042,8 @@ const config: {
       ...baseMarketConfig,
       ...stablecoinSwapMarketConfig,
 
+      swapOnly: true,
+
       maxLongTokenPoolAmount: expandDecimals(10_000_000, 6),
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
 
@@ -2059,6 +2061,8 @@ const config: {
       ...baseMarketConfig,
       ...stablecoinSwapMarketConfig,
 
+      swapOnly: true,
+
       maxLongTokenPoolAmount: expandDecimals(10_000_000, 6),
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
 
@@ -2075,6 +2079,8 @@ const config: {
 
       ...baseMarketConfig,
       ...stablecoinSwapMarketConfig,
+
+      swapOnly: true,
 
       maxLongTokenPoolAmount: expandDecimals(10_000_000, 6),
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 18),
@@ -2676,6 +2682,8 @@ const config: {
       ...baseMarketConfig,
       ...stablecoinSwapMarketConfig,
 
+      swapOnly: true,
+
       maxLongTokenPoolAmount: expandDecimals(10_000_000, 6),
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
 
@@ -2686,6 +2694,8 @@ const config: {
 
       ...baseMarketConfig,
       ...stablecoinSwapMarketConfig,
+
+      swapOnly: true,
 
       maxLongTokenPoolAmount: expandDecimals(10_000_000, 6),
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
@@ -2698,6 +2708,8 @@ const config: {
       ...baseMarketConfig,
       ...stablecoinSwapMarketConfig,
 
+      swapOnly: true,
+
       maxLongTokenPoolAmount: expandDecimals(10_000_000, 6),
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
 
@@ -2708,6 +2720,8 @@ const config: {
 
       ...baseMarketConfig,
       ...stablecoinSwapMarketConfig,
+
+      swapOnly: true,
 
       maxLongTokenPoolAmount: expandDecimals(10_000_000, 6),
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 18),
