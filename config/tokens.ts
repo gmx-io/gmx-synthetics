@@ -975,6 +975,7 @@ const config: {
       dataStreamFeedId: "0x0003735a076086936550bd316b18e5e27fc4f280ee5b6530ce68f5aad404c796",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 3,
+      dataStreamSpreadReductionFactor: percentageToFloat("100%"),
     },
     TEST: {
       synthetic: true,
