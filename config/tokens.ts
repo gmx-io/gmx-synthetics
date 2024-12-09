@@ -35,6 +35,7 @@ type BaseTokenConfig = {
   dataStreamFeedId?: string;
   dataStreamFeedDecimals?: number;
   dataStreamSpreadReductionFactor?: BigNumberish;
+  priceFeed?: OraclePriceFeed;
 };
 
 // synthetic token without corresponding token
@@ -46,7 +47,6 @@ type SyntheticTokenConfig = BaseTokenConfig & {
   synthetic: true;
   wrappedNative?: never;
   deploy?: never;
-  priceFeed?: OraclePriceFeed;
   oracleType?: string;
 };
 
@@ -600,6 +600,7 @@ const config: {
         stablePrice: decimalToFloat(1),
       },
       buybackMaxPriceImpactFactor: LOW_BUYBACK_IMPACT,
+      dataStreamSpreadReductionFactor: percentageToFloat("100%"),
     },
     "USDC.e": {
       address: "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
