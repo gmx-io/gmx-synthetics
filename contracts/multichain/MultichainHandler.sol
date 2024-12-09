@@ -11,7 +11,7 @@ import { OracleModule } from "../oracle/OracleModule.sol";
 import { EventEmitter } from "../event/EventEmitter.sol";
 import { Errors } from "../error/Errors.sol";
 import { GlobalReentrancyGuard } from "../utils/GlobalReentrancyGuard.sol";
-import { PayableMulticall } from "../utils/PayableMulticall.sol"; // TODO: what contract should this be?
+import { ExchangeRouter } from "../router/ExchangeRouter.sol";
 
 import { MultichainVault } from "./MultichainVault.sol";
 import { MultichainUtils } from "./MultichainUtils.sol";
@@ -23,7 +23,7 @@ import { MultichainEventUtils } from "./MultichainEventUtils.sol";
 contract MultichainHandler is RoleModule, GlobalReentrancyGuard, OracleModule {
     MultichainVault public multichainVault;
     EventEmitter public eventEmitter;
-    PayableMulticall public payableMulticall;
+    ExchangeRouter public exchangeRouter;
 
     constructor(
         RoleStore _roleStore,
@@ -31,11 +31,11 @@ contract MultichainHandler is RoleModule, GlobalReentrancyGuard, OracleModule {
         EventEmitter _eventEmitter,
         Oracle _oracle,
         MultichainVault _multichainVault,
-        PayableMulticall _payableMulticall
+        ExchangeRouter _exchangeRouter
     ) RoleModule(_roleStore) GlobalReentrancyGuard(_dataStore) OracleModule(_oracle) {
         multichainVault = _multichainVault;
         eventEmitter = _eventEmitter;
-        payableMulticall = _payableMulticall;
+        exchangeRouter = _exchangeRouter;
     }
 
     /**
@@ -44,14 +44,18 @@ contract MultichainHandler is RoleModule, GlobalReentrancyGuard, OracleModule {
      * @param token address of the token being deposited
      * @param sourceChainId chain id of the source chain
      */
-    function recordDeposit(address account, address token, uint256 sourceChainId) external onlyMultichainController {
+    function recordDeposit(
+        address account,
+        address token,
+        uint256 sourceChainId
+    ) external onlyMultichainController returns (address virtualAccount) {
         // token should have been transferred to multichainVault by IMultichainProvider
         uint256 amount = multichainVault.recordTransferIn(token);
         if (amount == 0) {
             revert Errors.EmptyMultichainDepositAmount();
         }
 
-        address virtualAccount = MultichainUtils.getVirtualAccount(account, sourceChainId);
+        virtualAccount = MultichainUtils.getVirtualAccount(account, sourceChainId);
 
         dataStore.incrementUint(Keys.multichainBalanceKey(virtualAccount, token), amount);
 
@@ -71,7 +75,7 @@ contract MultichainHandler is RoleModule, GlobalReentrancyGuard, OracleModule {
         bytes[] calldata multicallArgs
     ) external onlyMultichainController {
         // execute multicall
-        payableMulticall.multicall(multicallArgs);
+        exchangeRouter.multicall(multicallArgs);
 
         address virtualAccount = MultichainUtils.getVirtualAccount(account, sourceChainId);
         MultichainEventUtils.emitMultichainMessage(eventEmitter, virtualAccount, sourceChainId);
