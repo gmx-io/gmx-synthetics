@@ -9,29 +9,34 @@ import { MessagingFee, MessagingReceipt, OFTReceipt, SendParam } from "@layerzer
 
 import { IStargate } from "@stargatefinance/stg-evm-v2/src/interfaces/IStargate.sol";
 
+import { EventEmitter } from "../event/EventEmitter.sol";
 import { Errors } from "../error/Errors.sol";
 
 import { MultichainVault } from "./MultichainVault.sol";
 import { MultichainHandler } from "./MultichainHandler.sol";
+import { MultichainUtils } from "./MultichainUtils.sol";
 import { IMultichainProvider } from "./IMultichainProvider.sol";
 import { MultichainProviderUtils } from "./MultichainProviderUtils.sol";
+import { LayerZeroProviderEventUtils } from "./LayerZeroProviderEventUtils.sol";
 import { MultichainProviderSignature } from "./MultichainProviderSignature.sol";
 
 /**
  * @title LayerZeroProvider
+ * Defines lzCompose method which is called by the Stargate executor
  * Receives tokens and messages from source chains. Sends tokens to source chains
  * Messages contain multicall args for e.g. createDeposit, createWithdrawal
  * Deposit is done using lzCompose after tokens are received in this contract
  *  Tokens are forwarded to MultichainVault and recorded by MultichainHandler
- * Withdrawal is done using by verifying the signature and then sending the tokens back to the source chain using Stargate
- * Non USDC tokens are swapped to USDC before withdrawal
- * Defines _lzReceive and lzCompose methods which are called by the Executor
+ * Withdrawal is done by verifying the signature and then sending the tokens back to the source chain using Stargate
+ *  Non USDC tokens are swapped to USDC before withdrawal
  * @dev LayerZeroProvider is specific to one Stargate pool (e.g. StargatePoolUSDC). TODO: generalize for multiple pools
  * @dev security implications must be considered when using ERC2771 in combination with multicall
  */
 contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer {
     address public stargatePool;
     address public lzEndpoint;
+
+    EventEmitter public eventEmitter;
 
     MultichainVault public multichainVault;
     MultichainHandler public multichainHandler;
@@ -42,17 +47,18 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer {
      * @param endpoint LZ endpoint address from Arbitrum
      * @param handler MultichainHandler address
      * @param vault MultichainVault address
-     * @dev must transfer ownership after deployment
      */
     constructor(
         address stargate,
         address endpoint,
+        address _eventEmitter,
         address vault,
         address handler,
         address signature
     ) {
         stargatePool = stargate;
         lzEndpoint = endpoint;
+        eventEmitter = EventEmitter(_eventEmitter);
         multichainVault = MultichainVault(payable(vault));
         multichainHandler = MultichainHandler(handler);
         multichainProviderSignature = MultichainProviderSignature(signature);
@@ -84,8 +90,13 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer {
         // TODO: handle guid, executor, extraData
 
         // decode composed message
-        (address account, address token, uint256 sourceChainId, , bytes[] memory multicallArgs) = MultichainProviderUtils
-            .decodeDeposit(message);
+        (
+            address account,
+            address token,
+            uint256 sourceChainId,
+            ,
+            bytes[] memory multicallArgs
+        ) = MultichainProviderUtils.decodeDeposit(message);
 
         // forward tokens to MultichainVault
         uint256 amount = IERC20(token).balanceOf(address(this));
@@ -106,7 +117,8 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer {
 
     /**
      * External call to this contract to create a withdrawal
-     * contains user signature
+     * @param message The ABI encoded parameters (token, amount, account, sourceChainId, srcEid).
+     * @param signature The EIP-712 signature of the message.
      */
     function createWithdrawal(bytes calldata message, bytes calldata signature) external {
         // verify signature
@@ -123,23 +135,33 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer {
         multichainHandler.recordWithdrawal(account, token, amount, sourceChainId);
 
         // send tokens to source chain
-        _sendTokens(token, account, amount, srcEid);
+        _sendTokens(token, account, amount, sourceChainId, srcEid);
     }
 
-    function _sendTokens(address token, address account, uint256 amount, uint32 srcEid) private {
+    function _sendTokens(address token, address account, uint256 amount, uint256 sourceChainId, uint32 srcEid) private {
         (uint256 valueToSend, SendParam memory sendParam, MessagingFee memory messagingFee) = _prepareSendTokens(
             stargatePool,
             srcEid,
             amount,
             account
         );
+
         IERC20(token).approve(stargatePool, amount);
-        (MessagingReceipt memory msgReceipt, OFTReceipt memory oftReceipt) = IStargate(stargatePool).send{ value: valueToSend }(
-            sendParam,
-            messagingFee,
-            account
+        (MessagingReceipt memory msgReceipt, OFTReceipt memory oftReceipt) = IStargate(stargatePool).send{
+            value: valueToSend
+        }(sendParam, messagingFee, account);
+
+        address virtualAccount = MultichainUtils.getVirtualAccount(account, sourceChainId);
+        LayerZeroProviderEventUtils.emitWithdrawalReceipt(
+            eventEmitter,
+            virtualAccount,
+            msgReceipt.guid,
+            msgReceipt.nonce,
+            msgReceipt.fee.nativeFee,
+            msgReceipt.fee.lzTokenFee,
+            oftReceipt.amountSentLD,
+            oftReceipt.amountReceivedLD
         );
-        // TODO: emit event
     }
 
     function _prepareSendTokens(
