@@ -19,7 +19,7 @@ library MultichainEventUtils {
         address virtualAccount,
         uint256 amount,
         uint256 sourceChainId
-    ) external {
+    ) internal {
         EventUtils.EventLogData memory eventData;
 
         eventData.addressItems.initItems(2);
@@ -37,7 +37,7 @@ library MultichainEventUtils {
         EventEmitter eventEmitter,
         address virtualAccount,
         uint256 sourceChainId
-    ) external {
+    ) internal {
         EventUtils.EventLogData memory eventData;
 
         eventData.addressItems.initItems(1);
@@ -55,7 +55,7 @@ library MultichainEventUtils {
         address virtualAccount,
         uint256 amount,
         uint256 sourceChainId
-    ) external {
+    ) internal {
         EventUtils.EventLogData memory eventData;
 
         eventData.addressItems.initItems(2);
