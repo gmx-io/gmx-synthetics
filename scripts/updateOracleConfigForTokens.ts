@@ -188,6 +188,15 @@ export async function updateOracleConfigForTokens() {
 
       const method = phase === "signal" ? "signalSetOracleProviderForToken" : "setOracleProviderForTokenAfterSignal";
 
+      if (method === "signalSetOracleProviderForToken") {
+        multicallWriteParams.push(
+          timelock.interface.encodeFunctionData("signalSetOracleProviderForToken", [
+            token.address,
+            onchainConfig.oracleProviderForToken,
+          ])
+        );
+      }
+
       multicallWriteParams.push(timelock.interface.encodeFunctionData(method, [token.address, oracleProviderAddress]));
     }
   }
