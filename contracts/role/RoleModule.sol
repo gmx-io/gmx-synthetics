@@ -71,6 +71,14 @@ contract RoleModule {
     }
 
     /**
+     * @dev Only allows addresses with the MULTICHAIN_CONTROLLER role to call the function.
+     */
+    modifier onlyMultichainController() {
+        _validateRole(Role.MULTICHAIN_CONTROLLER, "MULTICHAIN_CONTROLLER");
+        _;
+    }
+
+    /**
      * @dev Only allows addresses with the GOV_TOKEN_CONTROLLER role to call the function.
      */
     modifier onlyGovTokenController() {
