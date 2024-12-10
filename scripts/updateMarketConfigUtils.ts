@@ -9,7 +9,11 @@ import { getMarketKey, getMarketTokenAddresses, getOnchainMarkets } from "../uti
 import { bigNumberify } from "../utils/math";
 import { validateMarketConfigs } from "./validateMarketConfigsUtils";
 
-const RISK_ORACLE_MANAGED_BASE_KEYS = [keys.MAX_OPEN_INTEREST];
+const RISK_ORACLE_MANAGED_BASE_KEYS = [
+  keys.MAX_OPEN_INTEREST,
+  keys.POSITION_IMPACT_FACTOR,
+  keys.POSITION_IMPACT_EXPONENT_FACTOR,
+];
 const RISK_ORACLE_SUPPORTED_NETWORKS = ["arbitrum", "avalanche", "avalancheFuji"];
 
 const processMarkets = async ({
