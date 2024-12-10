@@ -54,6 +54,12 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 10_000,
       expectedPositionImpactRatio: 20_000,
     },
+    cbBTC: {
+      negativePositionImpactFactor: exponentToFloat("9e-11"),
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 20_000,
+    },
     WETH: {
       negativePositionImpactFactor: exponentToFloat("5e-11"),
       negativeSwapImpactFactor: exponentToFloat("5e-11"),
@@ -307,6 +313,11 @@ const recommendedMarketConfig = {
     },
     RENDER: {
       negativePositionImpactFactor: exponentToFloat("2.5e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    FIL: {
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
     },

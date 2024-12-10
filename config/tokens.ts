@@ -131,6 +131,19 @@ const config: {
       },
       buybackMaxPriceImpactFactor: MID_BUYBACK_IMPACT,
     },
+    cbBTC: {
+      address: "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
+      decimals: 8, // https://arbiscan.io/address/0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf#readProxyContract
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x00039d9e45394f473ab1f050a1b963e6b05351e52d71e507509ada0c95ed75b8", // uses BTC/USD data stream
+      dataStreamFeedDecimals: 18,
+      priceFeed: {
+        address: "0x6ce185860a4963106506C203335A2910413708e9", // uses Arbitrum BTC/USD price feed
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+      buybackMaxPriceImpactFactor: MID_BUYBACK_IMPACT,
+    },
     WETH: {
       address: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
       decimals: 18,
@@ -492,6 +505,15 @@ const config: {
       synthetic: true,
       decimals: 18, // https://etherscan.io/token/0x6de037ef9ad2725eb40118bb1702ebb27e4aeb24#readProxyContract
       dataStreamFeedId: "0x00034e3ab3a1c0809fe3f56ffe755155ace8564512cbc3884e9463dba081c02a",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      // Chainlink on-chain feed not available
+    },
+    FIL: {
+      synthetic: true,
+      decimals: 18, // https://docs.filecoin.io/basics/assets/the-fil-token
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x00036d46e681d182bbf68be46c5e5670c5b94329dba90ce5c52bf76c42bee68d",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
       // Chainlink on-chain feed not available
