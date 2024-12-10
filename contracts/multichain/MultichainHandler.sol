@@ -57,7 +57,7 @@ contract MultichainHandler is RoleModule, GlobalReentrancyGuard, OracleModule {
 
         virtualAccount = MultichainUtils.getVirtualAccount(account, sourceChainId);
 
-        dataStore.incrementUint(Keys.multichainBalanceKey(virtualAccount, token), amount);
+        dataStore.incrementUint(Keys.sourceChainBalanceKey(virtualAccount, token), amount);
 
         MultichainEventUtils.emitMultichainDeposit(eventEmitter, token, virtualAccount, amount, sourceChainId);
     }
@@ -99,7 +99,7 @@ contract MultichainHandler is RoleModule, GlobalReentrancyGuard, OracleModule {
         }
 
         address virtualAccount = MultichainUtils.getVirtualAccount(account, sourceChainId);
-        bytes32 balanceKey = Keys.multichainBalanceKey(virtualAccount, token);
+        bytes32 balanceKey = Keys.sourceChainBalanceKey(virtualAccount, token);
 
         uint256 balance = dataStore.getUint(balanceKey);
         if (balance < amount) {
