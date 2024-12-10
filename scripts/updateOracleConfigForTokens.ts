@@ -188,6 +188,8 @@ export async function updateOracleConfigForTokens() {
 
       const method = phase === "signal" ? "signalSetOracleProviderForToken" : "setOracleProviderForTokenAfterSignal";
 
+      // signalSetOracleProviderForToken back to the current oracle provider in case
+      // the oracle provider change needs to be rolled back
       if (method === "signalSetOracleProviderForToken") {
         multicallWriteParams.push(
           timelock.interface.encodeFunctionData("signalSetOracleProviderForToken", [
