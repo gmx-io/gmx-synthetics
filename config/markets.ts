@@ -535,7 +535,7 @@ const config: {
 
       ...baseMarketConfig,
       ...fundingRateConfig_Low,
-      // overriding fundingRateConfig_Low because it has 80%, but initial recomandation is for 75%
+      // overriding fundingRateConfig_Low because it has 75%, but initial recomandation is for 80%
       fundingIncreaseFactorPerSecond: percentageToFloat("80%")
         .div(SECONDS_PER_YEAR)
         .div(SECONDS_PER_HOUR * 3),
