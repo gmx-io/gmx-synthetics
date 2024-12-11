@@ -9,7 +9,11 @@ import { getMarketKey, getMarketTokenAddresses, getOnchainMarkets } from "../uti
 import { bigNumberify } from "../utils/math";
 import { validateMarketConfigs } from "./validateMarketConfigsUtils";
 
-const RISK_ORACLE_MANAGED_BASE_KEYS = [keys.MAX_OPEN_INTEREST];
+const RISK_ORACLE_MANAGED_BASE_KEYS = [
+  keys.MAX_OPEN_INTEREST,
+  keys.POSITION_IMPACT_FACTOR,
+  keys.POSITION_IMPACT_EXPONENT_FACTOR,
+];
 const RISK_ORACLE_SUPPORTED_NETWORKS = ["arbitrum", "avalanche", "avalancheFuji"];
 
 const processMarkets = async ({
@@ -74,37 +78,45 @@ const processMarkets = async ({
       }
     };
 
-    await handleConfig(
-      "uint",
-      keys.MAX_POOL_AMOUNT,
-      encodeData(["address", "address"], [marketToken, longToken]),
-      marketConfig.maxLongTokenPoolAmount,
-      `maxLongTokenPoolAmount ${marketLabel} (${marketToken}), ${longToken}`
-    );
+    if (marketConfig.maxLongTokenPoolAmount) {
+      await handleConfig(
+        "uint",
+        keys.MAX_POOL_AMOUNT,
+        encodeData(["address", "address"], [marketToken, longToken]),
+        marketConfig.maxLongTokenPoolAmount,
+        `maxLongTokenPoolAmount ${marketLabel} (${marketToken}), ${longToken}`
+      );
+    }
 
-    await handleConfig(
-      "uint",
-      keys.MAX_POOL_AMOUNT,
-      encodeData(["address", "address"], [marketToken, shortToken]),
-      marketConfig.maxShortTokenPoolAmount,
-      `maxShortTokenPoolAmount ${marketLabel} (${marketToken}), ${shortToken}`
-    );
+    if (marketConfig.maxShortTokenPoolAmount) {
+      await handleConfig(
+        "uint",
+        keys.MAX_POOL_AMOUNT,
+        encodeData(["address", "address"], [marketToken, shortToken]),
+        marketConfig.maxShortTokenPoolAmount,
+        `maxShortTokenPoolAmount ${marketLabel} (${marketToken}), ${shortToken}`
+      );
+    }
 
-    await handleConfig(
-      "uint",
-      keys.MAX_POOL_USD_FOR_DEPOSIT,
-      encodeData(["address", "address"], [marketToken, longToken]),
-      marketConfig.maxLongTokenPoolUsdForDeposit,
-      `maxLongTokenPoolUsdForDeposit ${marketLabel} (${marketToken}), ${longToken}`
-    );
+    if (marketConfig.maxLongTokenPoolUsdForDeposit) {
+      await handleConfig(
+        "uint",
+        keys.MAX_POOL_USD_FOR_DEPOSIT,
+        encodeData(["address", "address"], [marketToken, longToken]),
+        marketConfig.maxLongTokenPoolUsdForDeposit,
+        `maxLongTokenPoolUsdForDeposit ${marketLabel} (${marketToken}), ${longToken}`
+      );
+    }
 
-    await handleConfig(
-      "uint",
-      keys.MAX_POOL_USD_FOR_DEPOSIT,
-      encodeData(["address", "address"], [marketToken, shortToken]),
-      marketConfig.maxShortTokenPoolUsdForDeposit,
-      `maxShortTokenPoolUsdForDeposit ${marketLabel} (${marketToken}), ${shortToken}`
-    );
+    if (marketConfig.maxShortTokenPoolUsdForDeposit) {
+      await handleConfig(
+        "uint",
+        keys.MAX_POOL_USD_FOR_DEPOSIT,
+        encodeData(["address", "address"], [marketToken, shortToken]),
+        marketConfig.maxShortTokenPoolUsdForDeposit,
+        `maxShortTokenPoolUsdForDeposit ${marketLabel} (${marketToken}), ${shortToken}`
+      );
+    }
 
     if (marketConfig.swapImpactExponentFactor) {
       await handleConfig(
@@ -243,21 +255,25 @@ const processMarkets = async ({
       `minCollateralFactorForOpenInterestMultiplierShort ${marketLabel} (${marketToken})`
     );
 
-    await handleConfig(
-      "uint",
-      keys.MAX_OPEN_INTEREST,
-      encodeData(["address", "bool"], [marketToken, true]),
-      marketConfig.maxOpenInterestForLongs,
-      `maxOpenInterestForLongs ${marketLabel} (${marketToken})`
-    );
+    if (marketConfig.maxOpenInterestForLongs) {
+      await handleConfig(
+        "uint",
+        keys.MAX_OPEN_INTEREST,
+        encodeData(["address", "bool"], [marketToken, true]),
+        marketConfig.maxOpenInterestForLongs,
+        `maxOpenInterestForLongs ${marketLabel} (${marketToken})`
+      );
+    }
 
-    await handleConfig(
-      "uint",
-      keys.MAX_OPEN_INTEREST,
-      encodeData(["address", "bool"], [marketToken, false]),
-      marketConfig.maxOpenInterestForShorts,
-      `maxOpenInterestForShorts ${marketLabel} (${marketToken})`
-    );
+    if (marketConfig.maxOpenInterestForShorts) {
+      await handleConfig(
+        "uint",
+        keys.MAX_OPEN_INTEREST,
+        encodeData(["address", "bool"], [marketToken, false]),
+        marketConfig.maxOpenInterestForShorts,
+        `maxOpenInterestForShorts ${marketLabel} (${marketToken})`
+      );
+    }
 
     await handleConfig(
       "uint",
@@ -458,6 +474,16 @@ const processMarkets = async ({
         encodeData(["address"], [marketToken]),
         marketConfig.thresholdForDecreaseFunding,
         `thresholdForDecreaseFunding ${marketLabel} (${marketToken})`
+      );
+    }
+
+    if (marketConfig.liquidationFeeFactor) {
+      await handleConfig(
+        "uint",
+        keys.LIQUIDATION_FEE_FACTOR,
+        encodeData(["address"], [marketToken]),
+        marketConfig.liquidationFeeFactor,
+        `liquidationFeeFactor ${marketLabel} (${marketToken})`
       );
     }
 

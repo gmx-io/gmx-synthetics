@@ -1,13 +1,11 @@
 import hre, { ethers } from "hardhat";
 
-import { expandDecimals } from "../utils/math";
+import { bigNumberify, expandDecimals } from "../utils/math";
 import { encodeData } from "../utils/hash";
 import { getFullKey } from "../utils/config";
 
 import * as keys from "../utils/keys";
-import { OracleProvider } from "../config/oracle";
-
-const DEFAULT_ORACLE_PROVIDER: OracleProvider = "chainlinkDataStream";
+import { getOracleProviderAddress } from "../utils/oracle";
 
 export async function initOracleConfigForTokens({ write }) {
   const tokens = await hre.gmx.getTokens();
@@ -16,23 +14,6 @@ export async function initOracleConfigForTokens({ write }) {
   const multicall = await hre.ethers.getContract("Multicall3");
   const config = await hre.ethers.getContract("Config");
 
-  const chainlinkPriceFeedProvider = (await hre.ethers.getContract("ChainlinkPriceFeedProvider")).address;
-  const chainlinkDataStreamProvider = (await hre.ethers.getContract("ChainlinkDataStreamProvider")).address;
-  const gmOracleProvider = (await hre.ethers.getContract("GmOracleProvider")).address;
-
-  function getOracleProvider(oracleProviderKey?: OracleProvider) {
-    if (oracleProviderKey === undefined || oracleProviderKey === "chainlinkDataStream") {
-      // use Chainlink data stream by default
-      return chainlinkDataStreamProvider;
-    } else if (oracleProviderKey === "gmOracle") {
-      return gmOracleProvider;
-    } else if (oracleProviderKey === "chainlinkPriceFeed") {
-      return chainlinkPriceFeedProvider;
-    }
-
-    throw Error(`Unknown provider ${oracleProviderKey}`);
-  }
-
   const multicallReadParams = [];
 
   const tokenSymbols = Object.keys(tokens);
@@ -40,7 +21,7 @@ export async function initOracleConfigForTokens({ write }) {
 
   for (const tokenSymbol of tokenSymbols) {
     const token = tokens[tokenSymbol];
-    const oracleProvider = getOracleProvider(token.oracleProvider);
+    const oracleProviderAddress = await getOracleProviderAddress(token.oracleProvider);
     multicallReadParams.push({
       target: dataStore.address,
       allowFailure: false,
@@ -69,7 +50,7 @@ export async function initOracleConfigForTokens({ write }) {
       callData: dataStore.interface.encodeFunctionData("getUint", [
         getFullKey(
           keys.ORACLE_TIMESTAMP_ADJUSTMENT,
-          encodeData(["address", "address"], [oracleProvider, token.address])
+          encodeData(["address", "address"], [oracleProviderAddress, token.address])
         ),
       ]),
     });
@@ -126,14 +107,20 @@ export async function initOracleConfigForTokens({ write }) {
 
     if (onchainConfig.dataStreamId === ethers.constants.HashZero && token.dataStreamFeedId) {
       const dataStreamMultiplier = expandDecimals(1, 60 - token.decimals - token.dataStreamFeedDecimals);
+      const dataStreamSpreadReductionFactor = bigNumberify(token.dataStreamSpreadReductionFactor ?? 0);
 
-      console.log(`setDataStream(${tokenSymbol} ${token.dataStreamFeedId}, ${dataStreamMultiplier.toString()})`);
+      console.log(
+        `setDataStream(${tokenSymbol} ${
+          token.dataStreamFeedId
+        }, ${dataStreamMultiplier.toString()}, ${dataStreamSpreadReductionFactor.toString()})`
+      );
 
       multicallWriteParams.push(
         config.interface.encodeFunctionData("setDataStream", [
           token.address,
           token.dataStreamFeedId,
           dataStreamMultiplier,
+          dataStreamSpreadReductionFactor,
         ])
       );
     }
@@ -142,16 +129,15 @@ export async function initOracleConfigForTokens({ write }) {
       token.oracleTimestampAdjustment !== undefined &&
       !onchainConfig.oracleTimestampAdjustment.eq(token.oracleTimestampAdjustment)
     ) {
-      const oracleProviderKey = token.oracleProvider || DEFAULT_ORACLE_PROVIDER;
+      const oracleProviderAddress = await getOracleProviderAddress(token.oracleProvider);
       console.log(
-        `set oracle timestamp adjustment ${oracleProviderKey} ${tokenSymbol} ${token.oracleTimestampAdjustment}`
+        `set oracle timestamp adjustment ${oracleProviderAddress} ${tokenSymbol} ${token.oracleTimestampAdjustment}`
       );
 
-      const oracleProvider = getOracleProvider(token.oracleProvider);
       multicallWriteParams.push(
         config.interface.encodeFunctionData("setUint", [
           keys.ORACLE_TIMESTAMP_ADJUSTMENT,
-          defaultAbiCoder.encode(["address", "address"], [oracleProvider, token.address]),
+          defaultAbiCoder.encode(["address", "address"], [oracleProviderAddress, token.address]),
           token.oracleTimestampAdjustment,
         ])
       );
@@ -161,12 +147,12 @@ export async function initOracleConfigForTokens({ write }) {
   for (const tokenSymbol of tokenSymbols) {
     const token = tokens[tokenSymbol];
     const onchainConfig = onchainOracleConfig[tokenSymbol];
-    const oracleProvider = getOracleProvider(token.oracleProvider);
+    const oracleProviderAddress = await getOracleProviderAddress(token.oracleProvider);
 
-    if (onchainConfig.oracleProvider.toLowerCase() !== oracleProvider.toLowerCase()) {
+    if (onchainConfig.oracleProvider.toLowerCase() !== oracleProviderAddress.toLowerCase()) {
       console.log(`update oracle provider for ${tokenSymbol}`);
       multicallWriteParams.push(
-        config.interface.encodeFunctionData("initOracleProviderForToken", [token.address, oracleProvider])
+        config.interface.encodeFunctionData("initOracleProviderForToken", [token.address, oracleProviderAddress])
       );
     }
   }
