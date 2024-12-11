@@ -18,7 +18,7 @@ library MultichainProviderUtils {
         return abi.decode(message, (address, uint256, address, uint256, uint32));
     }
 
-    function addressToBytes32(address _addr) public pure returns (bytes32) {
+    function addressToBytes32(address _addr) internal pure returns (bytes32) {
         return bytes32(uint256(uint160(_addr)));
     }
 }
