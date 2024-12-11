@@ -48,7 +48,7 @@ contract MultichainHandler is RoleModule, GlobalReentrancyGuard, OracleModule {
         address account,
         address token,
         uint256 sourceChainId
-    ) external onlyMultichainController returns (address virtualAccount) {
+    ) external onlyController returns (address virtualAccount) {
         // token should have been transferred to multichainVault by IMultichainProvider
         uint256 amount = multichainVault.recordTransferIn(token);
         if (amount == 0) {
@@ -73,7 +73,7 @@ contract MultichainHandler is RoleModule, GlobalReentrancyGuard, OracleModule {
         address account,
         uint256 sourceChainId,
         bytes[] calldata multicallArgs
-    ) external onlyMultichainController {
+    ) external onlyController {
         // execute multicall
         exchangeRouter.multicall(multicallArgs);
 
@@ -93,7 +93,7 @@ contract MultichainHandler is RoleModule, GlobalReentrancyGuard, OracleModule {
         address token,
         uint256 amount,
         uint256 sourceChainId
-    ) external onlyMultichainController {
+    ) external onlyController {
         if (amount == 0) {
             revert Errors.EmptyMultichainWithdrawalAmount();
         }
