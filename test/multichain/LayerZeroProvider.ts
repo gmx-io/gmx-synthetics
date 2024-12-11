@@ -7,7 +7,7 @@ import { deployFixture } from "../../utils/fixture";
 import { expandDecimals } from "../../utils/math";
 import { encodeData } from "../../utils/hash";
 
-describe.only("LayerZeroProvider", () => {
+describe("LayerZeroProvider", () => {
   let fixture;
   let user0;
   let dataStore, usdc, multichainVault, layerZeroProvider, mockStargatePool;
