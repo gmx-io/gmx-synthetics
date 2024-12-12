@@ -102,6 +102,7 @@ const config: {
         decimals: 8,
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
+      dataStreamSpreadReductionFactor: percentageToFloat("100%"),
     },
     "WBTC.e": {
       address: "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
@@ -116,6 +117,7 @@ const config: {
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
       buybackMaxPriceImpactFactor: LOW_BUYBACK_IMPACT,
+      dataStreamSpreadReductionFactor: percentageToFloat("100%"),
     },
     tBTC: {
       address: "0x6c84a8f1c29108f47a79964b5fe888d4f4d0de40",
@@ -157,6 +159,7 @@ const config: {
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
       buybackMaxPriceImpactFactor: LOW_BUYBACK_IMPACT,
+      dataStreamSpreadReductionFactor: percentageToFloat("100%"),
     },
     wstETH: {
       address: "0x5979D7b546E38E414F7E9822514be443A4800529",

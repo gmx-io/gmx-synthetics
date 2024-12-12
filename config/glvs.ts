@@ -46,8 +46,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           },
           {
             indexToken: "DOGE",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(5_000_000, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(10_000_000),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(5_600_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(11_000_000),
           },
           {
             indexToken: "LTC",
@@ -116,8 +116,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           },
           {
             indexToken: "TIA",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(1_000_000, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(1_000_000),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(1_600_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(2_000_000),
           },
           {
             indexToken: "TON",
