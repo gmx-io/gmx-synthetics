@@ -529,45 +529,6 @@ const config: {
       minFundingFactorPerSecond: percentageToFloat("30%").div(SECONDS_PER_YEAR),
     },
     {
-      tokens: { indexToken: "BTC", longToken: "cbBTC", shortToken: "USDC" },
-      virtualTokenIdForIndexToken: hashString("PERP:BTC/USD"),
-      virtualMarketId: hashString("SPOT:BTC/USD"),
-
-      ...baseMarketConfig,
-      ...fundingRateConfig_Low,
-      // overriding fundingRateConfig_Low because it has 75%, but initial recomandation is for 80%
-      fundingIncreaseFactorPerSecond: percentageToFloat("80%")
-        .div(SECONDS_PER_YEAR)
-        .div(SECONDS_PER_HOUR * 3),
-      fundingDecreaseFactorPerSecond: percentageToFloat("80%")
-        .div(SECONDS_PER_YEAR)
-        .div(SECONDS_PER_HOUR * 48),
-      maxFundingFactorPerSecond: percentageToFloat("80%").div(SECONDS_PER_YEAR),
-      ...borrowingRateConfig_HighMax_WithHigherBase,
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("130%").div(SECONDS_PER_YEAR),
-
-      negativePositionImpactFactor: exponentToFloat("9e-11"),
-      positivePositionImpactFactor: exponentToFloat("3e-11"),
-      positionImpactExponentFactor: exponentToFloat("2.0e0"),
-
-      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
-      positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
-
-      minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
-      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2e-10"),
-
-      reserveFactor: percentageToFloat("135%"),
-      openInterestReserveFactor: percentageToFloat("130%"),
-
-      maxOpenInterest: decimalToFloat(2_000_000),
-      maxPoolUsdForDeposit: decimalToFloat(3_000_000), // 1.5x the max open interest
-
-      maxLongTokenPoolAmount: expandDecimals(42, 8), // ~4M USD (2x the max open interest)
-      maxShortTokenPoolAmount: expandDecimals(4_000_000, 6), // ~4M USD (2x the max open interest)
-
-      minFundingFactorPerSecond: percentageToFloat("20%").div(SECONDS_PER_YEAR),
-    },
-    {
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC" },
       virtualTokenIdForIndexToken: hashString("PERP:ETH/USD"),
       virtualMarketId: hashString("SPOT:ETH/USD"),
