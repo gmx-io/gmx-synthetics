@@ -499,6 +499,15 @@ const config: {
       oracleTimestampAdjustment: 1,
       // Chainlink on-chain feed not available
     },
+    FIL: {
+      synthetic: true,
+      decimals: 18, // https://docs.filecoin.io/basics/assets/the-fil-token
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x00036d46e681d182bbf68be46c5e5670c5b94329dba90ce5c52bf76c42bee68d",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      // Chainlink on-chain feed not available
+    },
     AAVE: {
       address: "0xba5ddd1f9d7f570dc94a51479a000e3bce967196",
       decimals: 18,
