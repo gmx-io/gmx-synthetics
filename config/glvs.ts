@@ -35,7 +35,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         address: "0x528A5bac7E746C9A509A1f4F6dF58A03d44279F9",
         longToken: "WETH",
         shortToken: "USDC",
-        shiftMaxPriceImpactFactor: percentageToFloat("0.01%"),
+        shiftMaxPriceImpactFactor: percentageToFloat("0.02%"),
         shiftMinInterval: 30 * 60, // 30 minutes
         minTokensForFirstGlvDeposit: expandDecimals(1, 18),
         markets: [
@@ -152,7 +152,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         address: "0xdF03EEd325b82bC1d4Db8b49c30ecc9E05104b96",
         longToken: "WBTC.e",
         shortToken: "USDC",
-        shiftMaxPriceImpactFactor: percentageToFloat("0.01%"),
+        shiftMaxPriceImpactFactor: percentageToFloat("0.02%"),
         shiftMinInterval: 30 * 60, // 30 minutes
         minTokensForFirstGlvDeposit: expandDecimals(1, 18),
         markets: [
