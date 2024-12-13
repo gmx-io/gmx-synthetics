@@ -1,4 +1,3 @@
-import hre from "hardhat";
 import { decimalToFloat, exponentToFloat, bigNumberify, formatAmount, pow, FLOAT_PRECISION } from "../utils/math";
 import { createMarketConfigByKey, getMarketKey } from "../utils/market";
 import { performMulticall } from "../utils/multicall";

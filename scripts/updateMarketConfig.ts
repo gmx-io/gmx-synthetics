@@ -4,7 +4,7 @@ async function main() {
   await updateMarketConfig({
     write: process.env.WRITE,
     includeRiskOracleBaseKeys: process.env.INCLUDE_RISK_ORACLE_BASE_KEYS === "true",
-    marketAddress: process.env.MARKET,
+    market: process.env.MARKET,
   });
 }
 

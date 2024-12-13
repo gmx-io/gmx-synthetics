@@ -1,4 +1,4 @@
-import hre from "hardhat";
+import prompts from "prompts";
 
 import fetch from "node-fetch";
 import { handleInBatches } from "../utils/batch";
@@ -18,7 +18,7 @@ const RISK_ORACLE_SUPPORTED_NETWORKS = ["arbitrum", "avalanche", "avalancheFuji"
 
 const processMarkets = async ({
   markets,
-  marketAddress,
+  includeMarket,
   onchainMarketsByTokens,
   supportedRiskOracleMarkets,
   tokens,
@@ -55,7 +55,7 @@ const processMarkets = async ({
     }
 
     const marketToken = onchainMarket.marketToken;
-    if (marketAddress && marketToken !== marketAddress) {
+    if (includeMarket && marketToken !== includeMarket) {
       console.info(
         "skip market %s:%s:%s:%s, market token %s does not match %s",
         marketKey,
@@ -63,7 +63,7 @@ const processMarkets = async ({
         longToken,
         shortToken,
         marketToken,
-        marketAddress
+        includeMarket
       );
       continue;
     }
@@ -661,7 +661,7 @@ const processMarkets = async ({
   return ignoredRiskOracleParams;
 };
 
-export async function updateMarketConfig({ write, marketAddress = undefined, includeRiskOracleBaseKeys = false }) {
+export async function updateMarketConfig({ write = false, market = undefined, includeRiskOracleBaseKeys = false }) {
   if (!["arbitrumGoerli", "avalancheFuji", "hardhat"].includes(hre.network.name)) {
     const { errors } = await validateMarketConfigs();
     if (errors.length !== 0) {
@@ -688,7 +688,7 @@ export async function updateMarketConfig({ write, marketAddress = undefined, inc
 
   await processMarkets({
     markets,
-    marketAddress,
+    includeMarket: market,
     onchainMarketsByTokens,
     tokens,
     supportedRiskOracleMarkets,
@@ -722,7 +722,7 @@ export async function updateMarketConfig({ write, marketAddress = undefined, inc
 
   const ignoredRiskOracleParams = await processMarkets({
     markets,
-    marketAddress,
+    includeMarket: market,
     onchainMarketsByTokens,
     supportedRiskOracleMarkets,
     tokens,
@@ -737,19 +737,34 @@ export async function updateMarketConfig({ write, marketAddress = undefined, inc
     },
   });
 
+  if (multicallWriteParams.length === 0) {
+    console.log("no changes to apply");
+    return;
+  }
+
   console.info(`updating ${multicallWriteParams.length} params`);
   console.info("multicallWriteParams", multicallWriteParams);
 
-  if (write) {
+  console.log("running simulation");
+  await handleInBatches(multicallWriteParams, 100, async (batch) => {
+    await config.callStatic.multicall(batch);
+  });
+
+  if (!write) {
+    ({ write } = await prompts({
+      type: "confirm",
+      name: "write",
+      message: "Do you want to execute the transactions?",
+    }));
+  }
+
+  if (!write) {
+    console.info("NOTE: executed in read-only mode, no transactions were sent");
+  } else {
     await handleInBatches(multicallWriteParams, 100, async (batch) => {
       const tx = await config.multicall(batch);
       console.info(`tx sent: ${tx.hash}`);
     });
-  } else {
-    await handleInBatches(multicallWriteParams, 100, async (batch) => {
-      await config.callStatic.multicall(batch);
-    });
-    await console.info("NOTE: executed in read-only mode, no transactions were sent");
   }
 
   if (ignoredRiskOracleParams.length > 0) {
