@@ -20,7 +20,6 @@ library ReaderPricingUtils {
 
     struct ExecutionPriceResult {
         int256 priceImpactUsd;
-        uint256 priceImpactDiffUsd;
         uint256 executionPrice;
     }
 
@@ -180,7 +179,7 @@ library ReaderPricingUtils {
                 indexTokenPrice
             );
         } else {
-             (result.priceImpactUsd, result.priceImpactDiffUsd, result.executionPrice) = PositionUtils.getExecutionPriceForDecrease(
+             (result.priceImpactUsd, result.executionPrice) = PositionUtils.getExecutionPriceForDecrease(
                 params,
                 indexTokenPrice
             );

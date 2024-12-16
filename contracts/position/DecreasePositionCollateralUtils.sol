@@ -39,12 +39,19 @@ library DecreasePositionCollateralUtils {
         bool wasSwapped;
         uint256 swapOutputAmount;
         PayForCostResult result;
+        PriceImpact priceImpact;
     }
 
     struct PayForCostResult {
         uint256 amountPaidInCollateralToken;
         uint256 amountPaidInSecondaryOutputToken;
         uint256 remainingCostUsd;
+    }
+
+    struct PriceImpact {
+        int256 proportionalImpactPendingAmount;
+        int256 proportionalImpactPendingUsd;
+        int256 cappedTotalImpactUsd;
     }
 
     // @dev handle the collateral changes of the position
@@ -88,7 +95,8 @@ library DecreasePositionCollateralUtils {
         // priceImpactDiffUsd is the difference between the maximum price impact and the originally calculated price impact
         // e.g. if the originally calculated price impact is -$100, but the capped price impact is -$80
         // then priceImpactDiffUsd would be $20
-        (values.priceImpactUsd, values.priceImpactDiffUsd, values.executionPrice) = PositionUtils.getExecutionPriceForDecrease(params, cache.prices.indexTokenPrice);
+        // priceImpactUsd amount charged upfront; priceImpactDiffUsd amount claimable later
+        (values.priceImpactUsd, values.executionPrice) = PositionUtils.getExecutionPriceForDecrease(params, cache.prices.indexTokenPrice);
 
         // the totalPositionPnl is calculated based on the current indexTokenPrice instead of the executionPrice
         // since the executionPrice factors in price impact which should be accounted for separately
@@ -136,9 +144,42 @@ library DecreasePositionCollateralUtils {
             }
         }
 
-        if (values.priceImpactUsd > 0) {
-            // use indexTokenPrice.min to maximize the position impact pool reduction
-            uint256 deductionAmountForImpactPool = Calc.roundUpDivision(values.priceImpactUsd.toUint256(), cache.prices.indexTokenPrice.min);
+        // order size has been enforced to be less or equal than position size (i.e. sizeDeltaUsd <= sizeInUsd)
+        (collateralCache.priceImpact.proportionalImpactPendingAmount, collateralCache.priceImpact.proportionalImpactPendingUsd) = _getProportionalImpactPendingValues(
+            params.contracts.dataStore,
+            params.positionKey,
+            params.position.sizeInUsd(),
+            params.order.sizeDeltaUsd(),
+            cache.prices.indexTokenPrice
+        );
+
+        // priceImpactUsd + proportionalImpactUsd - maxPriceImpactUsd
+        values.priceImpactDiffUsd = _getPriceImpactDiffUsd(
+            params.contracts.dataStore,
+            params.market.marketToken,
+            params.order.sizeDeltaUsd(),
+            values.priceImpactUsd + collateralCache.priceImpact.proportionalImpactPendingUsd
+        );
+
+        MarketUtils.applyDeltaToPositionImpactPendingAmount(
+            params.contracts.dataStore,
+            params.contracts.eventEmitter,
+            params.positionKey,
+            collateralCache.priceImpact.proportionalImpactPendingAmount
+        );
+
+        // use indexTokenPrice.min to maximize the position impact pool reduction
+        collateralCache.priceImpact.cappedTotalImpactUsd = MarketUtils.getCappedPositionImpactUsd(
+            params.contracts.dataStore,
+            params.market.marketToken,
+            cache.prices.indexTokenPrice,
+            values.priceImpactUsd,
+            collateralCache.priceImpact.proportionalImpactPendingUsd,
+            params.order.sizeDeltaUsd()
+        );
+
+        if (collateralCache.priceImpact.cappedTotalImpactUsd > 0) {
+            uint256 deductionAmountForImpactPool = Calc.roundUpDivision(collateralCache.priceImpact.cappedTotalImpactUsd.toUint256(), cache.prices.indexTokenPrice.min);
 
             MarketUtils.applyDeltaToPositionImpactPool(
                 params.contracts.dataStore,
@@ -376,13 +417,13 @@ library DecreasePositionCollateralUtils {
         }
 
         // pay for negative price impact
-        if (values.priceImpactUsd < 0) {
+        if (collateralCache.priceImpact.cappedTotalImpactUsd < 0) {
             (values, collateralCache.result) = payForCost(
                 params,
                 values,
                 cache.prices,
                 cache.collateralTokenPrice,
-                (-values.priceImpactUsd).toUint256()
+                (-collateralCache.priceImpact.cappedTotalImpactUsd).toUint256()
             );
 
             if (collateralCache.result.amountPaidInCollateralToken > 0) {
@@ -692,5 +733,40 @@ library DecreasePositionCollateralUtils {
         });
 
         return _fees;
+    }
+
+    function _getProportionalImpactPendingValues(
+        DataStore dataStore,
+        bytes32 positionKey,
+        uint256 sizeInUsd,
+        uint256 sizeDeltaUsd,
+        Price.Props memory indexTokenPrice
+    ) private view returns (int256, int256) {
+        int256 positionImpactPendingAmount = MarketUtils.getPositionImpactPendingAmount(dataStore, positionKey);
+        int256 proportionalImpactPendingAmount = positionImpactPendingAmount * sizeDeltaUsd.toInt256() / sizeInUsd.toInt256();
+
+        int256 proportionalImpactPendingUsd = proportionalImpactPendingAmount > 0
+            ? proportionalImpactPendingAmount * indexTokenPrice.min.toInt256()
+            : proportionalImpactPendingAmount * indexTokenPrice.max.toInt256();
+
+        return (proportionalImpactPendingAmount, proportionalImpactPendingUsd);
+    }
+
+    // TODO: double check this
+    function _getPriceImpactDiffUsd(
+        DataStore dataStore,
+        address market,
+        uint256 sizeDeltaUsd,
+        int256 totalPriceImpactUsd
+    ) private view returns (uint256) {
+        int256 maxPriceImpactUsdBasedOnMaxPriceImpactFactor = MarketUtils.getMaxPriceImpactUsd(
+            dataStore,
+            market,
+            sizeDeltaUsd,
+            totalPriceImpactUsd > 0
+        );
+        return totalPriceImpactUsd - maxPriceImpactUsdBasedOnMaxPriceImpactFactor > 0
+            ? (totalPriceImpactUsd - maxPriceImpactUsdBasedOnMaxPriceImpactFactor).toUint256()
+            : 0;
     }
 }
