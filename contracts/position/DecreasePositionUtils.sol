@@ -120,6 +120,7 @@ library DecreasePositionUtils {
                 params.position.sizeInUsd()
             );
 
+            // TODO q: is price impact considered for pnl?
             cache.estimatedRealizedPnlUsd = Precision.mulDiv(cache.estimatedPositionPnlUsd, params.order.sizeDeltaUsd(), params.position.sizeInUsd());
             cache.estimatedRemainingPnlUsd = cache.estimatedPositionPnlUsd - cache.estimatedRealizedPnlUsd;
 
@@ -247,6 +248,11 @@ library DecreasePositionUtils {
         );
 
         params.position.setSizeInUsd(cache.nextPositionSizeInUsd);
+        // TODO: values.sizeDeltaInTokens is calculated as position.sizeInTokens() * sizeDeltaUsd / position.sizeInUsd() AND sizeDeltaUsd is the change in position size
+        // we decrease the position size in tokens by the delta/order size in tokens
+        // TODO: params.position.sizeInTokens() doesn't include the price impact from increasePosition. Instead the impact was stored
+        // TODO: values.sizeDeltaInTokens also doesn't include the impact because it is calculated from position.sizeInTokens()
+        //      it's a % of the position in tokens, proportional to the order size in usd, but using the position size in usd which did take into account the price impact
         params.position.setSizeInTokens(params.position.sizeInTokens() - values.sizeDeltaInTokens);
         params.position.setCollateralAmount(values.remainingCollateralAmount);
         params.position.setPendingImpactAmount(params.position.pendingImpactAmount() - values.proportionalPendingImpactAmount);
@@ -282,6 +288,9 @@ library DecreasePositionUtils {
             -(cache.initialCollateralAmount - params.position.collateralAmount()).toInt256()
         );
 
+        // TODO: sizeDeltaInTokens includes impact? (is taken from position)
+        // I guess not =>  params.position.setSizeInTokens(params.position.sizeInTokens() + cache.baseSizeDeltaInTokens);
+        // => no changes necessary here in DecreasePositionUtils
         PositionUtils.updateOpenInterest(
             params,
             -params.order.sizeDeltaUsd().toInt256(),
