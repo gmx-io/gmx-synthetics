@@ -201,6 +201,28 @@ library MarketEventUtils {
         );
     }
 
+    function emitPositionImpactPendingAmountUpdated(
+        EventEmitter eventEmitter,
+        bytes32 positionKey,
+        int256 delta,
+        int256 nextValue
+    ) external {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "positionKey", positionKey);
+
+        eventData.intItems.initItems(2);
+        eventData.intItems.setItem(0, "delta", delta);
+        eventData.intItems.setItem(1, "nextValue", nextValue);
+
+        eventEmitter.emitEventLog1(
+            "PositionImpactPendingAmountUpdated",
+            positionKey,
+            eventData
+        );
+    }
+
     function emitOpenInterestUpdated(
         EventEmitter eventEmitter,
         address market,

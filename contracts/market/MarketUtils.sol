@@ -792,39 +792,51 @@ library MarketUtils {
         return (positiveImpactFactor, negativeImpactFactor);
     }
 
-    // @dev cap the input priceImpactUsd by the available amount in the position
+    // @dev cap the total priceImpactUsd by the impact pool amount and max impact factor
     // impact pool and the max positive position impact factor
     // @param dataStore DataStore
     // @param market the trading market
     // @param tokenPrice the price of the token
-    // @param priceImpactUsd the calculated USD price impact
-    // @return the capped priceImpactUsd
+    // @param priceImpactUsdFromIncrease the pending price impact stored on position increase
+    // @param priceImpactUsdFromDecrease the calculated price impact on position decrease
+    // @return the capped total priceImpactUsd
     function getCappedPositionImpactUsd(
         DataStore dataStore,
         address market,
         Price.Props memory indexTokenPrice,
-        int256 priceImpactUsd,
+        int256 priceImpactUsdFromIncrease,
+        int256 priceImpactUsdFromDecrease,
         uint256 sizeDeltaUsd
     ) internal view returns (int256) {
-        if (priceImpactUsd < 0) {
-            return priceImpactUsd;
+        int256 totalPriceImpactUsd = priceImpactUsdFromIncrease + priceImpactUsdFromDecrease;
+        if (totalPriceImpactUsd < 0) {
+            return totalPriceImpactUsd;
         }
 
         uint256 impactPoolAmount = getPositionImpactPoolAmount(dataStore, market);
         int256 maxPriceImpactUsdBasedOnImpactPool = (impactPoolAmount * indexTokenPrice.min).toInt256();
 
-        if (priceImpactUsd > maxPriceImpactUsdBasedOnImpactPool) {
-            priceImpactUsd = maxPriceImpactUsdBasedOnImpactPool;
+        if (totalPriceImpactUsd > maxPriceImpactUsdBasedOnImpactPool) {
+            totalPriceImpactUsd = maxPriceImpactUsdBasedOnImpactPool;
         }
 
-        uint256 maxPriceImpactFactor = getMaxPositionImpactFactor(dataStore, market, true);
-        int256 maxPriceImpactUsdBasedOnMaxPriceImpactFactor = Precision.applyFactor(sizeDeltaUsd, maxPriceImpactFactor).toInt256();
+        int256 maxPriceImpactUsdBasedOnMaxPriceImpactFactor = getMaxPriceImpactUsd(dataStore, market, sizeDeltaUsd, true);
 
-        if (priceImpactUsd > maxPriceImpactUsdBasedOnMaxPriceImpactFactor) {
-            priceImpactUsd = maxPriceImpactUsdBasedOnMaxPriceImpactFactor;
+        if (totalPriceImpactUsd > maxPriceImpactUsdBasedOnMaxPriceImpactFactor) {
+            totalPriceImpactUsd = maxPriceImpactUsdBasedOnMaxPriceImpactFactor;
         }
 
-        return priceImpactUsd;
+        return totalPriceImpactUsd;
+    }
+
+    function getMaxPriceImpactUsd(
+        DataStore dataStore,
+        address market,
+        uint256 sizeDeltaUsd,
+        bool isPositive
+    ) internal view returns (int256) {
+        uint256 maxPriceImpactFactor = getMaxPositionImpactFactor(dataStore, market, isPositive);
+        return Precision.applyFactor(sizeDeltaUsd, maxPriceImpactFactor).toInt256();
     }
 
     // @dev get the position impact pool amount
@@ -886,6 +898,29 @@ library MarketUtils {
         MarketEventUtils.emitPositionImpactPoolAmountUpdated(eventEmitter, market, delta, nextValue);
 
         return nextValue;
+    }
+
+    function applyDeltaToPositionImpactPendingAmount(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        bytes32 positionKey,
+        int256 delta
+    ) internal returns (int256) {
+        int256 nextValue = dataStore.applyDeltaToInt(
+            Keys.positionImpactPendingAmountKey(positionKey),
+            delta
+        );
+
+        MarketEventUtils.emitPositionImpactPendingAmountUpdated(eventEmitter, positionKey, delta, nextValue);
+
+        return nextValue;
+    }
+
+    function getPositionImpactPendingAmount(
+        DataStore dataStore,
+        bytes32 positionKey
+    ) internal view returns (int256) {
+        return dataStore.getInt(Keys.positionImpactPendingAmountKey(positionKey));
     }
 
     // @dev apply a delta to the open interest
