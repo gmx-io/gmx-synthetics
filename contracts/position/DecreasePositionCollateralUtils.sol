@@ -752,7 +752,6 @@ library DecreasePositionCollateralUtils {
         return (proportionalImpactPendingAmount, proportionalImpactPendingUsd);
     }
 
-    // TODO: double check this
     function _getPriceImpactDiffUsd(
         DataStore dataStore,
         address market,
