@@ -124,7 +124,7 @@ library IncreasePositionUtils {
         MarketUtils.applyDeltaToPositionImpactPendingAmount(
             params.contracts.dataStore,
             params.contracts.eventEmitter,
-            params.positionKey,
+            Position.getCombinedPositionKey(params.position.account(), params.position.market()),
             cache.priceImpactAmount
         );
 
@@ -234,7 +234,7 @@ library IncreasePositionUtils {
         eventParams.executionPrice = cache.executionPrice;
         eventParams.collateralTokenPrice = cache.collateralTokenPrice;
         eventParams.sizeDeltaUsd = params.order.sizeDeltaUsd();
-        eventParams.sizeDeltaInTokens = cache.baseSizeDeltaInTokens; // event key remains the unchanged as it's used for e.g. analytics
+        eventParams.sizeDeltaInTokens = cache.baseSizeDeltaInTokens; // event key remains unchanged as it's used for e.g. analytics
         eventParams.collateralDeltaAmount = cache.collateralDeltaAmount;
         eventParams.priceImpactUsd = cache.priceImpactUsd;
         eventParams.priceImpactAmount = cache.priceImpactAmount;
