@@ -30,7 +30,7 @@ library PositionEventUtils {
         Price.Props collateralTokenPrice;
         uint256 executionPrice;
         uint256 sizeDeltaUsd;
-        uint256 baseSizeDeltaInTokens;
+        uint256 sizeDeltaInTokens;
         int256 collateralDeltaAmount;
         int256 priceImpactUsd;
         int256 priceImpactAmount;
@@ -59,7 +59,7 @@ library PositionEventUtils {
         eventData.uintItems.setItem(10, "collateralTokenPrice.max", params.collateralTokenPrice.max);
         eventData.uintItems.setItem(11, "collateralTokenPrice.min", params.collateralTokenPrice.min);
         eventData.uintItems.setItem(12, "sizeDeltaUsd", params.sizeDeltaUsd);
-        eventData.uintItems.setItem(13, "baseSizeDeltaInTokens", params.baseSizeDeltaInTokens);
+        eventData.uintItems.setItem(13, "sizeDeltaInTokens", params.sizeDeltaInTokens);
         eventData.uintItems.setItem(14, "orderType", uint256(params.orderType));
         eventData.uintItems.setItem(15, "increasedAtTime", uint256(params.position.increasedAtTime()));
 
