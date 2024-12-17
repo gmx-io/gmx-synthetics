@@ -17,6 +17,10 @@ export function getAccountPositionKeys(dataStore, account, start, end) {
   return dataStore.getBytes32ValuesAt(keys.accountPositionListKey(account), start, end);
 }
 
+export function getCombinedPositionKey(account, market) {
+  return hashData(["address", "address"], [account, market]);
+}
+
 export function getPositionKey(account, market, collateralToken, isLong) {
   return hashData(["address", "address", "address", "bool"], [account, market, collateralToken, isLong]);
 }
