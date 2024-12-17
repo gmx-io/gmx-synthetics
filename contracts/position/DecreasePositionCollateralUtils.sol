@@ -164,7 +164,7 @@ library DecreasePositionCollateralUtils {
         MarketUtils.applyDeltaToPositionImpactPendingAmount(
             params.contracts.dataStore,
             params.contracts.eventEmitter,
-            params.positionKey,
+            Position.getCombinedPositionKey(params.position.account(), params.position.market()),
             collateralCache.priceImpact.proportionalImpactPendingAmount
         );
 
