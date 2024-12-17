@@ -234,7 +234,7 @@ library IncreasePositionUtils {
         eventParams.executionPrice = cache.executionPrice;
         eventParams.collateralTokenPrice = cache.collateralTokenPrice;
         eventParams.sizeDeltaUsd = params.order.sizeDeltaUsd();
-        eventParams.baseSizeDeltaInTokens = cache.baseSizeDeltaInTokens;
+        eventParams.sizeDeltaInTokens = cache.baseSizeDeltaInTokens; // event key remains the unchanged as it's used for e.g. analytics
         eventParams.collateralDeltaAmount = cache.collateralDeltaAmount;
         eventParams.priceImpactUsd = cache.priceImpactUsd;
         eventParams.priceImpactAmount = cache.priceImpactAmount;
