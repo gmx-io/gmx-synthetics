@@ -1,5 +1,3 @@
-import hre, { ethers } from "hardhat";
-
 import { bigNumberify, expandDecimals } from "../utils/math";
 import { encodeData } from "../utils/hash";
 import { getFullKey } from "../utils/config";
@@ -95,7 +93,7 @@ export async function updateOracleConfigForTokens() {
   const result = await multicall.callStatic.aggregate3(multicallReadParams);
 
   const onchainOracleConfig = {};
-  const { defaultAbiCoder } = ethers.utils;
+  const { defaultAbiCoder } = hre.ethers.utils;
 
   for (let i = 0; i < tokenSymbols.length; i++) {
     const tokenSymbol = tokenSymbols[i];
