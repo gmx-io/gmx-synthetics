@@ -203,9 +203,4 @@ library Position {
 
         return _key;
     }
-
-    function getCombinedPositionKey(address _account, address _market) internal pure returns (bytes32) {
-        bytes32 _key = keccak256(abi.encode(_account, _market));
-        return _key;
-    }
 }
