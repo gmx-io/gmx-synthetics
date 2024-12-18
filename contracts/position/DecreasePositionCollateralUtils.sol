@@ -50,7 +50,6 @@ library DecreasePositionCollateralUtils {
     }
 
     struct PriceImpact {
-        int256 proportionalImpactPendingAmount;
         int256 proportionalImpactPendingUsd;
         int256 cappedTotalImpactUsd;
     }
@@ -146,7 +145,7 @@ library DecreasePositionCollateralUtils {
         }
 
         // order size has been enforced to be less or equal than position size (i.e. sizeDeltaUsd <= sizeInUsd)
-        (collateralCache.priceImpact.proportionalImpactPendingAmount, collateralCache.priceImpact.proportionalImpactPendingUsd) = _getProportionalImpactPendingValues(
+        (values.proportionalImpactPendingAmount, collateralCache.priceImpact.proportionalImpactPendingUsd) = _getProportionalImpactPendingValues(
             params.position.sizeInUsd(),
             params.position.impactPendingAmount(),
             params.order.sizeDeltaUsd(),
@@ -160,8 +159,6 @@ library DecreasePositionCollateralUtils {
             params.order.sizeDeltaUsd(),
             values.priceImpactUsd + collateralCache.priceImpact.proportionalImpactPendingUsd
         );
-
-        params.position.setImpactPendingAmount(params.position.impactPendingAmount() + collateralCache.priceImpact.proportionalImpactPendingAmount);
 
         // use indexTokenPrice.min to maximize the position impact pool reduction
         collateralCache.priceImpact.cappedTotalImpactUsd = MarketUtils.getCappedPositionImpactUsd(
