@@ -305,8 +305,6 @@ library Keys {
     bytes32 public constant MAX_POOL_USD_FOR_DEPOSIT = keccak256(abi.encode("MAX_POOL_USD_FOR_DEPOSIT"));
     // @dev key for max open interest
     bytes32 public constant MAX_OPEN_INTEREST = keccak256(abi.encode("MAX_OPEN_INTEREST"));
-    // @dev key for position impact pending  amount
-    bytes32 public constant POSITION_IMPACT_PENDING_AMOUNT = keccak256(abi.encode("POSITION_IMPACT_PENDING_AMOUNT"));
     // @dev key for position impact pool amount
     bytes32 public constant POSITION_IMPACT_POOL_AMOUNT = keccak256(abi.encode("POSITION_IMPACT_POOL_AMOUNT"));
     // @dev key for min position impact pool amount
@@ -1291,12 +1289,6 @@ library Keys {
         ));
     }
 
-    function positionImpactPendingAmountKey(bytes32 positionKey) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            POSITION_IMPACT_PENDING_AMOUNT,
-            positionKey
-        ));
-    }
 
     // @dev key for min amount of tokens in a market's position impact pool
     // @param market the market to check

@@ -121,12 +121,7 @@ library IncreasePositionUtils {
 
         // Instead of applying the delta to the pool, store it using the positionKey
         // No need to flip the priceImpactAmount sign since it isn't applied to the pool, it's just stored
-        MarketUtils.applyDeltaToPositionImpactPendingAmount(
-            params.contracts.dataStore,
-            params.contracts.eventEmitter,
-            params.positionKey,
-            cache.priceImpactAmount
-        );
+        params.position.setImpactPendingAmount(params.position.impactPendingAmount() + cache.priceImpactAmount);
 
         cache.nextPositionSizeInUsd = params.position.sizeInUsd() + params.order.sizeDeltaUsd();
         cache.nextPositionBorrowingFactor = MarketUtils.getCumulativeBorrowingFactor(

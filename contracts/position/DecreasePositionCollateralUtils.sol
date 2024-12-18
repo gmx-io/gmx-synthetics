@@ -13,6 +13,7 @@ import "./PositionEventUtils.sol";
 import "./PositionUtils.sol";
 import "../order/BaseOrderUtils.sol";
 import "../order/OrderEventUtils.sol";
+import "../utils/Precision.sol";
 
 import "./DecreasePositionSwapUtils.sol";
 
@@ -146,9 +147,8 @@ library DecreasePositionCollateralUtils {
 
         // order size has been enforced to be less or equal than position size (i.e. sizeDeltaUsd <= sizeInUsd)
         (collateralCache.priceImpact.proportionalImpactPendingAmount, collateralCache.priceImpact.proportionalImpactPendingUsd) = _getProportionalImpactPendingValues(
-            params.contracts.dataStore,
-            params.positionKey,
             params.position.sizeInUsd(),
+            params.position.impactPendingAmount(),
             params.order.sizeDeltaUsd(),
             cache.prices.indexTokenPrice
         );
@@ -161,12 +161,7 @@ library DecreasePositionCollateralUtils {
             values.priceImpactUsd + collateralCache.priceImpact.proportionalImpactPendingUsd
         );
 
-        MarketUtils.applyDeltaToPositionImpactPendingAmount(
-            params.contracts.dataStore,
-            params.contracts.eventEmitter,
-            params.positionKey,
-            collateralCache.priceImpact.proportionalImpactPendingAmount
-        );
+        params.position.setImpactPendingAmount(params.position.impactPendingAmount() + collateralCache.priceImpact.proportionalImpactPendingAmount);
 
         // use indexTokenPrice.min to maximize the position impact pool reduction
         collateralCache.priceImpact.cappedTotalImpactUsd = MarketUtils.getCappedPositionImpactUsd(
@@ -736,14 +731,12 @@ library DecreasePositionCollateralUtils {
     }
 
     function _getProportionalImpactPendingValues(
-        DataStore dataStore,
-        bytes32 positionKey,
         uint256 sizeInUsd,
+        int256 positionImpactPendingAmount,
         uint256 sizeDeltaUsd,
         Price.Props memory indexTokenPrice
-    ) private view returns (int256, int256) {
-        int256 positionImpactPendingAmount = MarketUtils.getPositionImpactPendingAmount(dataStore, positionKey);
-        int256 proportionalImpactPendingAmount = positionImpactPendingAmount * sizeDeltaUsd.toInt256() / sizeInUsd.toInt256();
+    ) private pure returns (int256, int256) {
+        int256 proportionalImpactPendingAmount = Precision.mulDiv(positionImpactPendingAmount, sizeDeltaUsd, sizeInUsd);
 
         int256 proportionalImpactPendingUsd = proportionalImpactPendingAmount > 0
             ? proportionalImpactPendingAmount * indexTokenPrice.min.toInt256()

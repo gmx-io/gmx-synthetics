@@ -900,28 +900,6 @@ library MarketUtils {
         return nextValue;
     }
 
-    function applyDeltaToPositionImpactPendingAmount(
-        DataStore dataStore,
-        EventEmitter eventEmitter,
-        bytes32 positionKey,
-        int256 delta
-    ) internal returns (int256) {
-        int256 nextValue = dataStore.applyDeltaToInt(
-            Keys.positionImpactPendingAmountKey(positionKey),
-            delta
-        );
-
-        MarketEventUtils.emitPositionImpactPendingAmountUpdated(eventEmitter, positionKey, delta, nextValue);
-
-        return nextValue;
-    }
-
-    function getPositionImpactPendingAmount(
-        DataStore dataStore,
-        bytes32 positionKey
-    ) internal view returns (int256) {
-        return dataStore.getInt(Keys.positionImpactPendingAmountKey(positionKey));
-    }
 
     // @dev apply a delta to the open interest
     // @param dataStore DataStore
