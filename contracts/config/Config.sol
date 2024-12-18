@@ -555,7 +555,6 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
         allowedBaseKeys[Keys.SOURCE_CHAIN_BALANCE] = true;
 
-        allowedBaseKeys[Keys.POSITION_IMPACT_PENDING_AMOUNT] = true;
     }
 
     function _initAllowedLimitedBaseKeys() internal {
