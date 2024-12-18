@@ -135,7 +135,7 @@ export const MAX_POOL_USD_FOR_DEPOSIT = hashString("MAX_POOL_USD_FOR_DEPOSIT");
 export const MAX_OPEN_INTEREST = hashString("MAX_OPEN_INTEREST");
 
 export const POSITION_IMPACT_POOL_AMOUNT = hashString("POSITION_IMPACT_POOL_AMOUNT");
-export const POSITION_IMPACT_PENDING_AMOUNT = hashString("POSITION_IMPACT_PENDING_AMOUNT");
+export const IMPACT_PENDING_AMOUNT = hashString("IMPACT_PENDING_AMOUNT");
 export const MIN_POSITION_IMPACT_POOL_AMOUNT = hashString("MIN_POSITION_IMPACT_POOL_AMOUNT");
 export const POSITION_IMPACT_POOL_DISTRIBUTION_RATE = hashString("POSITION_IMPACT_POOL_DISTRIBUTION_RATE");
 export const POSITION_IMPACT_POOL_DISTRIBUTED_AT = hashString("POSITION_IMPACT_POOL_DISTRIBUTED_AT");
@@ -489,10 +489,6 @@ export function maxOpenInterestKey(market: string, isLong: boolean) {
 
 export function positionImpactPoolAmountKey(market: string) {
   return hashData(["bytes32", "address"], [POSITION_IMPACT_POOL_AMOUNT, market]);
-}
-
-export function positionImpactPendingAmountKey(positionKey: string) {
-  return hashData(["bytes32", "bytes32"], [POSITION_IMPACT_PENDING_AMOUNT, positionKey]);
 }
 
 export function minPositionImpactPoolAmountKey(market: string) {
