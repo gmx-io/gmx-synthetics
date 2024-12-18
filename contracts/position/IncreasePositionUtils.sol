@@ -124,7 +124,7 @@ library IncreasePositionUtils {
         MarketUtils.applyDeltaToPositionImpactPendingAmount(
             params.contracts.dataStore,
             params.contracts.eventEmitter,
-            Position.getCombinedPositionKey(params.position.account(), params.position.market()),
+            params.positionKey,
             cache.priceImpactAmount
         );
 
