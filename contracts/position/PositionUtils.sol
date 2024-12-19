@@ -705,7 +705,7 @@ library PositionUtils {
         return (priceImpactUsd, priceImpactAmount, baseSizeDeltaInTokens, executionPrice);
     }
 
-    // returns priceImpactUsd, priceImpactDiffUsd, executionPrice
+    // returns priceImpactUsd, executionPrice
     function getExecutionPriceForDecrease(
         UpdatePositionParams memory params,
         Price.Props memory indexTokenPrice
