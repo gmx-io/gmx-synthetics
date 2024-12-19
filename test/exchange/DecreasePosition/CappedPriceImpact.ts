@@ -178,20 +178,20 @@ describe("Exchange.DecreasePosition", () => {
     await scenes.increasePosition.long(fixture);
 
     expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(0);
-    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0Long))).eq("-799999999999999986"); // -0.799999999999999986;
+    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0Long))).eq("-799999999999999986"); // -0.799999999999999986
     expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0Short))).eq(0);
 
     await scenes.increasePosition.short(fixture);
 
-    // positive price impact: 0.799999999999999986 - 0.779999999999999986 => 0.02 ETH
     expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(0);
+    // no capping on position increase, all impact is stored as long + short pending: -0.799999999999999986 + 0.399999999999999992 = -0.399999999999999994 ETH
     const positionImpactPendingAmount0Long = await dataStore.getInt(getImpactPendingAmountKey(positionKey0Long));
     const positionImpactPendingAmount0Short = await dataStore.getInt(getImpactPendingAmountKey(positionKey0Short));
-    expect(positionImpactPendingAmount0Long).eq("-799999999999999986"); // -0.799999999999999986;
-    expect(positionImpactPendingAmount0Short).eq("399999999999999992"); // 0.399999999999999992 // TODO: debug why it's not considering the maxPositionImpactFactor
+    expect(positionImpactPendingAmount0Long).eq("-799999999999999986"); // -0.799999999999999986
+    expect(positionImpactPendingAmount0Short).eq("399999999999999992"); // 0.399999999999999992
     expect(positionImpactPendingAmount0Long.add(positionImpactPendingAmount0Short).toString()).eq(
       "-399999999999999994"
-    ); // -0.2 // TODO: debug why it's not considering the maxPositionImpactFactor
+    ); // -0.399999999999999994
 
     await usingResult(
       reader.getPositionInfo(
@@ -207,7 +207,7 @@ describe("Exchange.DecreasePosition", () => {
         expect(positionInfo.position.numbers.collateralAmount).eq(expandDecimals(50_000, 6));
         expect(positionInfo.position.numbers.sizeInTokens).eq("40000000000000000000"); // 40.0
         expect(positionInfo.position.numbers.sizeInUsd).eq(decimalToFloat(200_000));
-        expect(positionInfo.basePnlUsd).eq("0"); // -4000
+        expect(positionInfo.basePnlUsd).eq("0"); // no pnl from from position increase
       }
     );
 
@@ -218,9 +218,6 @@ describe("Exchange.DecreasePosition", () => {
         expect(poolValueInfo.poolValue).eq(decimalToFloat(6_000_000));
       }
     );
-
-    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(0);
-    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0Long))).eq("-779999999999999986"); // -0.779999999999999986; // TODO: actual is -799999999999999986
 
     expect(await wnt.balanceOf(user1.address)).eq(0);
     expect(await usdc.balanceOf(user1.address)).eq(0);
@@ -243,23 +240,26 @@ describe("Exchange.DecreasePosition", () => {
       },
     });
 
+    // long position decreased by 10% => impact pending amount is decreased by 10% => 0.8 * 0.08 = 0.72
+    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0Long))).eq("-719999999999999988"); // -0.719999999999999988
+    // short position not decreased => position impact pending amount doesn't change
+    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0Short))).eq("399999999999999992");
+
     expect(
       await dataStore.getUint(
         keys.claimableCollateralAmountKey(ethUsdMarket.marketToken, usdc.address, timeKey, user0.address)
       )
-    ).eq(expandDecimals(20, 6)); // TODO actual is 0
+    ).eq(expandDecimals(20, 6)); // TODO: actual is 0. debug why there is no claimable collateral?
 
-    // the impact pool increased by ~0.004 ETH, 20 USD
-    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(
-      "783999999999999986"
-    ); // 0.783999999999999986 ETH // TODO: actual is 88000000000000000
+    // the impact pool increased from 0 by ~0.004 ETH, 20 USD
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq("88000000000000000"); // 0.88000000000000000 ETH // TODO: why is 88000000000000000 and not 80000000000000000? The other test was the same and it didn't seem to be an issue
 
     expect(await wnt.balanceOf(user1.address)).eq(0);
     expect(await usdc.balanceOf(user1.address)).eq(0);
 
     expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, wnt.address)).eq(expandDecimals(1000, 18));
     // 2 USD was paid from the position's collateral for price impact
-    expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, usdc.address)).eq(expandDecimals(1_000_420, 6)); // TODO: actual is 1000440000000
+    expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, usdc.address)).eq(expandDecimals(1_000_420, 6)); // TODO: actual is 1000440000000. Debug why the 2 USD was not paid?
 
     await usingResult(
       reader.getPositionInfo(
@@ -273,7 +273,7 @@ describe("Exchange.DecreasePosition", () => {
       ),
       (positionInfo) => {
         expect(positionInfo.position.numbers.collateralAmount).eq(expandDecimals(49_560, 6));
-        expect(positionInfo.position.numbers.sizeInTokens).eq("36000000000000000000"); // 36.00 price impact not included
+        expect(positionInfo.position.numbers.sizeInTokens).eq("36000000000000000000"); // 36.00 - price impact not included
         expect(positionInfo.position.numbers.sizeInUsd).eq(decimalToFloat(180_000));
         expect(positionInfo.basePnlUsd).eq("0");
       }
@@ -297,6 +297,6 @@ describe("Exchange.DecreasePosition", () => {
       .connect(user0)
       .claimCollateral([ethUsdMarket.marketToken], [usdc.address], [timeKey], user1.address); // TODO: VM Exception while processing transaction: reverted with custom error 'CollateralAlreadyClaimed(0, 0)'
 
-    expect(await usdc.balanceOf(user1.address)).eq(expandDecimals(16, 6)); // TODO: actual is 0
+    expect(await usdc.balanceOf(user1.address)).eq(expandDecimals(16, 6)); // TODO: actual is 0. Why didn't user1 receive the tokens on collateral claim?
   });
 });
