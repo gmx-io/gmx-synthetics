@@ -165,8 +165,8 @@ library DecreasePositionCollateralUtils {
             params.contracts.dataStore,
             params.market.marketToken,
             cache.prices.indexTokenPrice,
-            values.priceImpactUsd,
-            collateralCache.priceImpact.proportionalImpactPendingUsd,
+            collateralCache.priceImpact.proportionalImpactPendingUsd, // from increase
+            values.priceImpactUsd, // from decrease
             params.order.sizeDeltaUsd()
         );
 
@@ -742,6 +742,7 @@ library DecreasePositionCollateralUtils {
         return (proportionalImpactPendingAmount, proportionalImpactPendingUsd);
     }
 
+    // capped at max price impact factor, not the pool impact amount
     function _getPriceImpactDiffUsd(
         DataStore dataStore,
         address market,
