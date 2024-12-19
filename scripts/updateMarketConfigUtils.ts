@@ -1,4 +1,4 @@
-import hre from "hardhat";
+import prompts from "prompts";
 
 import fetch from "node-fetch";
 import { handleInBatches } from "../utils/batch";
@@ -9,12 +9,16 @@ import { getMarketKey, getMarketTokenAddresses, getOnchainMarkets } from "../uti
 import { bigNumberify } from "../utils/math";
 import { validateMarketConfigs } from "./validateMarketConfigsUtils";
 
-const RISK_ORACLE_MANAGED_BASE_KEYS = [keys.MAX_OPEN_INTEREST];
+const RISK_ORACLE_MANAGED_BASE_KEYS = [
+  keys.MAX_OPEN_INTEREST,
+  keys.POSITION_IMPACT_FACTOR,
+  keys.POSITION_IMPACT_EXPONENT_FACTOR,
+];
 const RISK_ORACLE_SUPPORTED_NETWORKS = ["arbitrum", "avalanche", "avalancheFuji"];
 
 const processMarkets = async ({
   markets,
-  marketAddress,
+  includeMarket,
   onchainMarketsByTokens,
   supportedRiskOracleMarkets,
   tokens,
@@ -51,7 +55,7 @@ const processMarkets = async ({
     }
 
     const marketToken = onchainMarket.marketToken;
-    if (marketAddress && marketToken !== marketAddress) {
+    if (includeMarket && marketToken !== includeMarket) {
       console.info(
         "skip market %s:%s:%s:%s, market token %s does not match %s",
         marketKey,
@@ -59,7 +63,7 @@ const processMarkets = async ({
         longToken,
         shortToken,
         marketToken,
-        marketAddress
+        includeMarket
       );
       continue;
     }
@@ -74,37 +78,45 @@ const processMarkets = async ({
       }
     };
 
-    await handleConfig(
-      "uint",
-      keys.MAX_POOL_AMOUNT,
-      encodeData(["address", "address"], [marketToken, longToken]),
-      marketConfig.maxLongTokenPoolAmount,
-      `maxLongTokenPoolAmount ${marketLabel} (${marketToken}), ${longToken}`
-    );
+    if (marketConfig.maxLongTokenPoolAmount) {
+      await handleConfig(
+        "uint",
+        keys.MAX_POOL_AMOUNT,
+        encodeData(["address", "address"], [marketToken, longToken]),
+        marketConfig.maxLongTokenPoolAmount,
+        `maxLongTokenPoolAmount ${marketLabel} (${marketToken}), ${longToken}`
+      );
+    }
 
-    await handleConfig(
-      "uint",
-      keys.MAX_POOL_AMOUNT,
-      encodeData(["address", "address"], [marketToken, shortToken]),
-      marketConfig.maxShortTokenPoolAmount,
-      `maxShortTokenPoolAmount ${marketLabel} (${marketToken}), ${shortToken}`
-    );
+    if (marketConfig.maxShortTokenPoolAmount) {
+      await handleConfig(
+        "uint",
+        keys.MAX_POOL_AMOUNT,
+        encodeData(["address", "address"], [marketToken, shortToken]),
+        marketConfig.maxShortTokenPoolAmount,
+        `maxShortTokenPoolAmount ${marketLabel} (${marketToken}), ${shortToken}`
+      );
+    }
 
-    await handleConfig(
-      "uint",
-      keys.MAX_POOL_USD_FOR_DEPOSIT,
-      encodeData(["address", "address"], [marketToken, longToken]),
-      marketConfig.maxLongTokenPoolUsdForDeposit,
-      `maxLongTokenPoolUsdForDeposit ${marketLabel} (${marketToken}), ${longToken}`
-    );
+    if (marketConfig.maxLongTokenPoolUsdForDeposit) {
+      await handleConfig(
+        "uint",
+        keys.MAX_POOL_USD_FOR_DEPOSIT,
+        encodeData(["address", "address"], [marketToken, longToken]),
+        marketConfig.maxLongTokenPoolUsdForDeposit,
+        `maxLongTokenPoolUsdForDeposit ${marketLabel} (${marketToken}), ${longToken}`
+      );
+    }
 
-    await handleConfig(
-      "uint",
-      keys.MAX_POOL_USD_FOR_DEPOSIT,
-      encodeData(["address", "address"], [marketToken, shortToken]),
-      marketConfig.maxShortTokenPoolUsdForDeposit,
-      `maxShortTokenPoolUsdForDeposit ${marketLabel} (${marketToken}), ${shortToken}`
-    );
+    if (marketConfig.maxShortTokenPoolUsdForDeposit) {
+      await handleConfig(
+        "uint",
+        keys.MAX_POOL_USD_FOR_DEPOSIT,
+        encodeData(["address", "address"], [marketToken, shortToken]),
+        marketConfig.maxShortTokenPoolUsdForDeposit,
+        `maxShortTokenPoolUsdForDeposit ${marketLabel} (${marketToken}), ${shortToken}`
+      );
+    }
 
     if (marketConfig.swapImpactExponentFactor) {
       await handleConfig(
@@ -243,21 +255,25 @@ const processMarkets = async ({
       `minCollateralFactorForOpenInterestMultiplierShort ${marketLabel} (${marketToken})`
     );
 
-    await handleConfig(
-      "uint",
-      keys.MAX_OPEN_INTEREST,
-      encodeData(["address", "bool"], [marketToken, true]),
-      marketConfig.maxOpenInterestForLongs,
-      `maxOpenInterestForLongs ${marketLabel} (${marketToken})`
-    );
+    if (marketConfig.maxOpenInterestForLongs) {
+      await handleConfig(
+        "uint",
+        keys.MAX_OPEN_INTEREST,
+        encodeData(["address", "bool"], [marketToken, true]),
+        marketConfig.maxOpenInterestForLongs,
+        `maxOpenInterestForLongs ${marketLabel} (${marketToken})`
+      );
+    }
 
-    await handleConfig(
-      "uint",
-      keys.MAX_OPEN_INTEREST,
-      encodeData(["address", "bool"], [marketToken, false]),
-      marketConfig.maxOpenInterestForShorts,
-      `maxOpenInterestForShorts ${marketLabel} (${marketToken})`
-    );
+    if (marketConfig.maxOpenInterestForShorts) {
+      await handleConfig(
+        "uint",
+        keys.MAX_OPEN_INTEREST,
+        encodeData(["address", "bool"], [marketToken, false]),
+        marketConfig.maxOpenInterestForShorts,
+        `maxOpenInterestForShorts ${marketLabel} (${marketToken})`
+      );
+    }
 
     await handleConfig(
       "uint",
@@ -461,6 +477,16 @@ const processMarkets = async ({
       );
     }
 
+    if (marketConfig.liquidationFeeFactor) {
+      await handleConfig(
+        "uint",
+        keys.LIQUIDATION_FEE_FACTOR,
+        encodeData(["address"], [marketToken]),
+        marketConfig.liquidationFeeFactor,
+        `liquidationFeeFactor ${marketLabel} (${marketToken})`
+      );
+    }
+
     if (marketConfig.positionFeeFactorForPositiveImpact) {
       await handleConfig(
         "uint",
@@ -635,7 +661,7 @@ const processMarkets = async ({
   return ignoredRiskOracleParams;
 };
 
-export async function updateMarketConfig({ write, marketAddress = undefined, includeRiskOracleBaseKeys = false }) {
+export async function updateMarketConfig({ write = false, market = undefined, includeRiskOracleBaseKeys = false }) {
   if (!["arbitrumGoerli", "avalancheFuji", "hardhat"].includes(hre.network.name)) {
     const { errors } = await validateMarketConfigs();
     if (errors.length !== 0) {
@@ -662,7 +688,7 @@ export async function updateMarketConfig({ write, marketAddress = undefined, inc
 
   await processMarkets({
     markets,
-    marketAddress,
+    includeMarket: market,
     onchainMarketsByTokens,
     tokens,
     supportedRiskOracleMarkets,
@@ -696,7 +722,7 @@ export async function updateMarketConfig({ write, marketAddress = undefined, inc
 
   const ignoredRiskOracleParams = await processMarkets({
     markets,
-    marketAddress,
+    includeMarket: market,
     onchainMarketsByTokens,
     supportedRiskOracleMarkets,
     tokens,
@@ -711,19 +737,34 @@ export async function updateMarketConfig({ write, marketAddress = undefined, inc
     },
   });
 
+  if (multicallWriteParams.length === 0) {
+    console.log("no changes to apply");
+    return;
+  }
+
   console.info(`updating ${multicallWriteParams.length} params`);
   console.info("multicallWriteParams", multicallWriteParams);
 
-  if (write) {
+  console.log("running simulation");
+  await handleInBatches(multicallWriteParams, 100, async (batch) => {
+    await config.callStatic.multicall(batch);
+  });
+
+  if (!write) {
+    ({ write } = await prompts({
+      type: "confirm",
+      name: "write",
+      message: "Do you want to execute the transactions?",
+    }));
+  }
+
+  if (!write) {
+    console.info("NOTE: executed in read-only mode, no transactions were sent");
+  } else {
     await handleInBatches(multicallWriteParams, 100, async (batch) => {
       const tx = await config.multicall(batch);
       console.info(`tx sent: ${tx.hash}`);
     });
-  } else {
-    await handleInBatches(multicallWriteParams, 100, async (batch) => {
-      await config.callStatic.multicall(batch);
-    });
-    await console.info("NOTE: executed in read-only mode, no transactions were sent");
   }
 
   if (ignoredRiskOracleParams.length > 0) {

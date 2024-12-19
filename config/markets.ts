@@ -59,6 +59,7 @@ export type BaseMarketConfig = {
 
   positionFeeFactorForPositiveImpact: BigNumberish;
   positionFeeFactorForNegativeImpact: BigNumberish;
+  liquidationFeeFactor: BigNumberish;
 
   negativePositionImpactFactor: BigNumberish;
   positivePositionImpactFactor: BigNumberish;
@@ -149,32 +150,75 @@ type FundingRateConfig = Partial<{
 }>;
 
 const fundingRateConfig_Low: FundingRateConfig = {
-  fundingIncreaseFactorPerSecond: percentageToFloat("70%")
+  // increase to 75% at 100% imbalance (100%/0%) in 3 hours
+  // increase to 75% at 20% imbalance (60.%/40%) in 15 hours
+  fundingIncreaseFactorPerSecond: percentageToFloat("75%")
     .div(SECONDS_PER_YEAR)
     .div(SECONDS_PER_HOUR * 3),
-  maxFundingFactorPerSecond: percentageToFloat("70%").div(SECONDS_PER_YEAR),
+
+  // reduce from max 75% to 0% in 48 hours
+  fundingDecreaseFactorPerSecond: percentageToFloat("75%")
+    .div(SECONDS_PER_YEAR)
+    .div(SECONDS_PER_HOUR * 48),
+
+  maxFundingFactorPerSecond: percentageToFloat("75%").div(SECONDS_PER_YEAR),
+
+  thresholdForStableFunding: percentageToFloat("4%"),
+  thresholdForDecreaseFunding: percentageToFloat("2%"),
 };
 
 const fundingRateConfig_Default: FundingRateConfig = {
-  fundingIncreaseFactorPerSecond: percentageToFloat("80%")
-    .div(SECONDS_PER_YEAR)
-    .div(SECONDS_PER_HOUR * 3),
-  maxFundingFactorPerSecond: percentageToFloat("80%").div(SECONDS_PER_YEAR),
-};
-
-const fundingRateConfig_High: FundingRateConfig = {
+  // increase to 90% at 100% imbalance (100%/0%) in 3 hours
+  // increase to 90% at 20% imbalance (60.%/40%) in 15 hours
   fundingIncreaseFactorPerSecond: percentageToFloat("90%")
     .div(SECONDS_PER_YEAR)
     .div(SECONDS_PER_HOUR * 3),
+
+  // reduce from max 90% to 0% in 48 hours
+  fundingDecreaseFactorPerSecond: percentageToFloat("90%")
+    .div(SECONDS_PER_YEAR)
+    .div(SECONDS_PER_HOUR * 48),
+
   maxFundingFactorPerSecond: percentageToFloat("90%").div(SECONDS_PER_YEAR),
+
+  thresholdForStableFunding: percentageToFloat("4%"),
+  thresholdForDecreaseFunding: percentageToFloat("2%"),
+};
+
+const fundingRateConfig_High: FundingRateConfig = {
+  // increase to 100% at 100% imbalance (100%/0%) in 3 hours
+  // increase to 100% at 20% imbalance (60.%/40%) in 15 hours
+  fundingIncreaseFactorPerSecond: percentageToFloat("100%")
+    .div(SECONDS_PER_YEAR)
+    .div(SECONDS_PER_HOUR * 3),
+
+  // reduce from max 100% to 0% in 48 hours
+  fundingDecreaseFactorPerSecond: percentageToFloat("100%")
+    .div(SECONDS_PER_YEAR)
+    .div(SECONDS_PER_HOUR * 48),
+
+  maxFundingFactorPerSecond: percentageToFloat("100%").div(SECONDS_PER_YEAR),
+
+  thresholdForStableFunding: percentageToFloat("4%"),
+  thresholdForDecreaseFunding: percentageToFloat("2%"),
 };
 
 const fundingRateConfig_SingleToken: FundingRateConfig = {
-  // funding increase rate is higher for single asset pools
-  fundingIncreaseFactorPerSecond: percentageToFloat("80%")
+  // increase to 90% at 100% imbalance (100%/0%) in 3 hours
+  // increase to 90% at 20% imbalance (60%/40%) in 15 hours
+  fundingIncreaseFactorPerSecond: percentageToFloat("90%")
     .div(SECONDS_PER_YEAR)
-    .div(SECONDS_PER_HOUR * 2),
-  maxFundingFactorPerSecond: percentageToFloat("80%").div(SECONDS_PER_YEAR),
+    .div(SECONDS_PER_HOUR * 3),
+
+  // reduce from max 90% to 0% in 48 hours
+  fundingDecreaseFactorPerSecond: percentageToFloat("90%")
+    .div(SECONDS_PER_YEAR)
+    .div(SECONDS_PER_HOUR * 48),
+
+  maxFundingFactorPerSecond: percentageToFloat("90%").div(SECONDS_PER_YEAR),
+
+  thresholdForStableFunding: percentageToFloat("4%"),
+  thresholdForDecreaseFunding: percentageToFloat("2%"),
 };
 
 type BorrowingRateConfig = Partial<{
@@ -185,24 +229,24 @@ type BorrowingRateConfig = Partial<{
 
 const borrowingRateConfig_LowMax_WithLowerBase: BorrowingRateConfig = {
   optimalUsageFactor: percentageToFloat("75%"),
-  baseBorrowingFactor: percentageToFloat("50%").div(SECONDS_PER_YEAR),
-  aboveOptimalUsageBorrowingFactor: percentageToFloat("110%").div(SECONDS_PER_YEAR),
+  baseBorrowingFactor: percentageToFloat("40%").div(SECONDS_PER_YEAR),
+  aboveOptimalUsageBorrowingFactor: percentageToFloat("100%").div(SECONDS_PER_YEAR),
 };
 const borrowingRateConfig_LowMax_WithHigherBase: BorrowingRateConfig = {
   optimalUsageFactor: percentageToFloat("75%"),
-  baseBorrowingFactor: percentageToFloat("55%").div(SECONDS_PER_YEAR),
-  aboveOptimalUsageBorrowingFactor: percentageToFloat("110%").div(SECONDS_PER_YEAR),
+  baseBorrowingFactor: percentageToFloat("45%").div(SECONDS_PER_YEAR),
+  aboveOptimalUsageBorrowingFactor: percentageToFloat("100%").div(SECONDS_PER_YEAR),
 };
 
 const borrowingRateConfig_HighMax_WithLowerBase: BorrowingRateConfig = {
   optimalUsageFactor: percentageToFloat("75%"),
-  baseBorrowingFactor: percentageToFloat("55%").div(SECONDS_PER_YEAR),
-  aboveOptimalUsageBorrowingFactor: percentageToFloat("150%").div(SECONDS_PER_YEAR),
+  baseBorrowingFactor: percentageToFloat("45%").div(SECONDS_PER_YEAR),
+  aboveOptimalUsageBorrowingFactor: percentageToFloat("130%").div(SECONDS_PER_YEAR),
 };
 const borrowingRateConfig_HighMax_WithHigherBase: BorrowingRateConfig = {
   optimalUsageFactor: percentageToFloat("75%"),
-  baseBorrowingFactor: percentageToFloat("60%").div(SECONDS_PER_YEAR),
-  aboveOptimalUsageBorrowingFactor: percentageToFloat("150%").div(SECONDS_PER_YEAR),
+  baseBorrowingFactor: percentageToFloat("50%").div(SECONDS_PER_YEAR),
+  aboveOptimalUsageBorrowingFactor: percentageToFloat("130%").div(SECONDS_PER_YEAR),
 };
 
 const baseMarketConfig: Partial<BaseMarketConfig> = {
@@ -362,6 +406,7 @@ const config: {
 
       ...baseMarketConfig,
       ...fundingRateConfig_Default,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
 
       positionImpactExponentFactor: exponentToFloat("2.2e0"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"), // 0.05% for ~90,000 USD of imbalance
@@ -378,14 +423,13 @@ const config: {
       openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
 
       maxOpenInterest: decimalToFloat(1_000_000),
-      optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("60%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("150%").div(SECONDS_PER_YEAR),
 
       maxPoolUsdForDeposit: decimalToFloat(1_500_000), // x1.5 of max open interest
 
       maxLongTokenPoolAmount: expandDecimals(3_439_653, 18), // ~2M USD (x2 of max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (x2 of max open interest)
+
+      minFundingFactorPerSecond: percentageToFloat("34%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "BTC", longToken: "WBTC.e", shortToken: "USDC" },
@@ -396,8 +440,8 @@ const config: {
       ...fundingRateConfig_Low,
       ...borrowingRateConfig_LowMax_WithLowerBase,
 
-      reserveFactor: percentageToFloat("175%"),
-      openInterestReserveFactor: percentageToFloat("170%"),
+      reserveFactor: percentageToFloat("205%"),
+      openInterestReserveFactor: percentageToFloat("200%"),
 
       maxLongTokenPoolAmount: expandDecimals(2200, 8),
       maxShortTokenPoolAmount: expandDecimals(110_000_000, 6),
@@ -419,6 +463,8 @@ const config: {
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6e-11"),
 
       maxOpenInterest: decimalToFloat(74_000_000),
+
+      minFundingFactorPerSecond: percentageToFloat("30%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "BTC", longToken: "WBTC.e", shortToken: "WBTC.e" },
@@ -448,6 +494,8 @@ const config: {
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6e-11"),
 
       maxOpenInterest: decimalToFloat(10_000_000),
+
+      minFundingFactorPerSecond: percentageToFloat("30%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "BTC", longToken: "tBTC", shortToken: "tBTC" },
@@ -463,7 +511,7 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(45, 18),
       maxShortTokenPoolAmount: expandDecimals(45, 18),
 
-      maxPoolUsdForDeposit: decimalToFloat(2_500_000),
+      maxPoolUsdForDeposit: decimalToFloat(4_500_000),
 
       negativePositionImpactFactor: exponentToFloat("9e-11"),
       positivePositionImpactFactor: exponentToFloat("3e-11"),
@@ -477,6 +525,8 @@ const config: {
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6e-11"),
 
       maxOpenInterest: decimalToFloat(1_000_000),
+
+      minFundingFactorPerSecond: percentageToFloat("30%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC" },
@@ -487,8 +537,8 @@ const config: {
       ...fundingRateConfig_Low,
       ...borrowingRateConfig_LowMax_WithLowerBase,
 
-      reserveFactor: percentageToFloat("235%"),
-      openInterestReserveFactor: percentageToFloat("230%"),
+      reserveFactor: percentageToFloat("275%"),
+      openInterestReserveFactor: percentageToFloat("270%"),
 
       maxLongTokenPoolAmount: expandDecimals(37_792, 18),
       maxShortTokenPoolAmount: expandDecimals(100_000_000, 6),
@@ -510,6 +560,8 @@ const config: {
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6e-11"),
 
       maxOpenInterest: decimalToFloat(70_000_000),
+
+      minFundingFactorPerSecond: percentageToFloat("30%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "WETH" },
@@ -539,6 +591,8 @@ const config: {
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6e-11"),
 
       maxOpenInterest: decimalToFloat(10_000_000),
+
+      minFundingFactorPerSecond: percentageToFloat("30%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "WETH", longToken: "wstETH", shortToken: "USDe" },
@@ -576,6 +630,8 @@ const config: {
 
       swapFeeFactorForPositiveImpact: percentageToFloat("0.25%"),
       swapFeeFactorForNegativeImpact: percentageToFloat("0.25%"),
+
+      minFundingFactorPerSecond: percentageToFloat("30%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "BNB", longToken: "BNB", shortToken: "USDC" },
@@ -586,8 +642,8 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_LowMax_WithHigherBase,
 
-      reserveFactor: percentageToFloat("135%"),
-      openInterestReserveFactor: percentageToFloat("130%"),
+      reserveFactor: percentageToFloat("165%"),
+      openInterestReserveFactor: percentageToFloat("160%"),
 
       maxLongTokenPoolAmount: expandDecimals(14_120, 18),
       maxShortTokenPoolAmount: expandDecimals(5_000_000, 6),
@@ -609,6 +665,8 @@ const config: {
       minPositionImpactPoolAmount: expandDecimals(53, 16), // 0.53 BNB
 
       maxOpenInterest: decimalToFloat(5_000_000),
+
+      minFundingFactorPerSecond: percentageToFloat("31%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "XRP", longToken: "WETH", shortToken: "USDC" },
@@ -618,10 +676,10 @@ const config: {
       ...synthethicMarketConfig_IncreasedCapacity,
       ...fundingRateConfig_Default,
 
-      maxLongTokenPoolAmount: expandDecimals(1056, 18),
-      maxShortTokenPoolAmount: expandDecimals(2_500_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(1285, 18),
+      maxShortTokenPoolAmount: expandDecimals(4_500_000, 6),
 
-      maxPoolUsdForDeposit: decimalToFloat(2_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(4_000_000),
 
       negativePositionImpactFactor: exponentToFloat("21e-9"),
       positivePositionImpactFactor: exponentToFloat("7e-9"),
@@ -634,8 +692,8 @@ const config: {
       // minCollateralFactor of 0.005 (0.5%) when open interest is 2,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
 
-      reserveFactor: percentageToFloat("125%"),
-      openInterestReserveFactor: percentageToFloat("120%"),
+      reserveFactor: percentageToFloat("185%"),
+      openInterestReserveFactor: percentageToFloat("180%"),
 
       // factor in open interest reserve factor 120%
       borrowingFactor: exponentToFloat("1.68e-11"), // 1.68E-11, ~58% at 100% utilisation
@@ -645,6 +703,8 @@ const config: {
       minPositionImpactPoolAmount: expandDecimals(4169, 6), // 4169.846154 XRP
 
       maxOpenInterest: decimalToFloat(2_000_000),
+
+      minFundingFactorPerSecond: percentageToFloat("22%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "DOGE", longToken: "WETH", shortToken: "USDC" },
@@ -654,6 +714,10 @@ const config: {
       ...synthethicMarketConfig_IncreasedCapacity,
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_HighMax_WithLowerBase,
+
+      positionFeeFactorForNegativeImpact: percentageToFloat("0.045%"),
+      positionFeeFactorForPositiveImpact: percentageToFloat("0.045%"),
+      liquidationFeeFactor: percentageToFloat("0.20%"),
 
       maxLongTokenPoolAmount: expandDecimals(3450, 18),
       maxShortTokenPoolAmount: expandDecimals(11_000_000, 6),
@@ -673,13 +737,15 @@ const config: {
       // minCollateralFactor of 0.005 (0.5%) when open interest is 5,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("1e-9"),
 
-      reserveFactor: percentageToFloat("165%"),
-      openInterestReserveFactor: percentageToFloat("160%"),
+      reserveFactor: percentageToFloat("185%"),
+      openInterestReserveFactor: percentageToFloat("180%"),
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(488, 34), // 0.488E+37, 4216 DOGE / day
       minPositionImpactPoolAmount: expandDecimals(26000, 8), // 26000 DOGE
 
       maxOpenInterest: decimalToFloat(6_000_000),
+
+      minFundingFactorPerSecond: percentageToFloat("36%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "EIGEN", longToken: "WETH", shortToken: "USDC" },
@@ -708,8 +774,10 @@ const config: {
 
       maxOpenInterest: decimalToFloat(1_000_000),
 
-      reserveFactor: percentageToFloat("105%"),
-      openInterestReserveFactor: percentageToFloat("100%"),
+      reserveFactor: percentageToFloat("165%"),
+      openInterestReserveFactor: percentageToFloat("160%"),
+
+      minFundingFactorPerSecond: percentageToFloat("20%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "SHIB", longToken: "WETH", shortToken: "USDC" },
@@ -739,6 +807,8 @@ const config: {
 
       reserveFactor: percentageToFloat("105%"),
       openInterestReserveFactor: percentageToFloat("100%"),
+
+      minFundingFactorPerSecond: percentageToFloat("36%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "AAVE", longToken: "WETH", shortToken: "USDC" },
@@ -773,6 +843,7 @@ const config: {
       maxPnlFactorForAdl: percentageToFloat("70%"),
       minPnlFactorAfterAdl: percentageToFloat("65%"),
       maxPnlFactorForWithdrawals: percentageToFloat("60%"),
+      minFundingFactorPerSecond: percentageToFloat("27%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "UNI", longToken: "WETH", shortToken: "USDC" },
@@ -800,14 +871,16 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(1525, 18),
       maxShortTokenPoolAmount: expandDecimals(4_000_000, 6),
 
-      reserveFactor: percentageToFloat("165%"),
-      openInterestReserveFactor: percentageToFloat("160%"),
+      reserveFactor: percentageToFloat("125%"),
+      openInterestReserveFactor: percentageToFloat("120%"),
 
       maxPnlFactorForTraders: percentageToFloat("75%"),
       maxPnlFactorForDeposits: percentageToFloat("75%"),
       maxPnlFactorForAdl: percentageToFloat("70%"),
       minPnlFactorAfterAdl: percentageToFloat("65%"),
       maxPnlFactorForWithdrawals: percentageToFloat("60%"),
+
+      minFundingFactorPerSecond: percentageToFloat("28%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "PEPE", longToken: "WETH", shortToken: "USDC" },
@@ -843,13 +916,14 @@ const config: {
       minPnlFactorAfterAdl: percentageToFloat("40%"),
       maxPnlFactorForWithdrawals: percentageToFloat("35%"),
 
-      fundingIncreaseFactorPerSecond: percentageToFloat("115%")
+      fundingIncreaseFactorPerSecond: percentageToFloat("125%")
         .div(SECONDS_PER_YEAR)
         .div(SECONDS_PER_HOUR * 3),
-      maxFundingFactorPerSecond: percentageToFloat("115%").div(SECONDS_PER_YEAR),
-
-      baseBorrowingFactor: percentageToFloat("65%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("170%").div(SECONDS_PER_YEAR),
+      fundingDecreaseFactorPerSecond: percentageToFloat("125%")
+        .div(SECONDS_PER_YEAR)
+        .div(SECONDS_PER_HOUR * 48),
+      maxFundingFactorPerSecond: percentageToFloat("125%").div(SECONDS_PER_YEAR),
+      minFundingFactorPerSecond: percentageToFloat("36%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "SOL", longToken: "SOL", shortToken: "USDC" },
@@ -859,6 +933,10 @@ const config: {
       ...baseMarketConfig,
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_LowMax_WithLowerBase,
+
+      positionFeeFactorForNegativeImpact: percentageToFloat("0.045%"),
+      positionFeeFactorForPositiveImpact: percentageToFloat("0.045%"),
+      liquidationFeeFactor: percentageToFloat("0.20%"),
 
       maxLongTokenPoolAmount: expandDecimals(140_000, 9),
       maxShortTokenPoolAmount: expandDecimals(20_000_000, 6),
@@ -876,13 +954,15 @@ const config: {
       // minCollateralFactor of 0.005 (0.5%) when open interest is 25,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2e-10"),
 
-      reserveFactor: percentageToFloat("235%"),
-      openInterestReserveFactor: percentageToFloat("230%"),
+      reserveFactor: percentageToFloat("265%"),
+      openInterestReserveFactor: percentageToFloat("260%"),
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(230, 33), // 0.2300306+36, 20 SOL / day
       minPositionImpactPoolAmount: expandDecimals(219, 9), // 219 SOL
 
       maxOpenInterest: decimalToFloat(17_500_000),
+
+      minFundingFactorPerSecond: percentageToFloat("30%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "STX", longToken: "WBTC.e", shortToken: "USDC" },
@@ -913,6 +993,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(25, 8), // ~1,5M USD (x3 of max open interest)
       maxShortTokenPoolAmount: expandDecimals(1_500_000, 6), // ~1,5M USD (x3 of max open interest)
+
+      minFundingFactorPerSecond: percentageToFloat("40%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "SATS", longToken: "WBTC.e", shortToken: "USDC" },
@@ -943,6 +1025,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(25, 8), // ~1,5M USD (x3 of max open interest)
       maxShortTokenPoolAmount: expandDecimals(1_500_000, 6), // ~1,5M USD (x3 of max open interest)
+
+      minFundingFactorPerSecond: percentageToFloat("40%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "LTC", longToken: "WETH", shortToken: "USDC" },
@@ -968,13 +1052,15 @@ const config: {
       // minCollateralFactor of 0.005 (0.5%) when open interest is 1,500,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.5e-9"),
 
-      reserveFactor: percentageToFloat("125%"),
-      openInterestReserveFactor: percentageToFloat("120%"),
+      reserveFactor: percentageToFloat("165%"),
+      openInterestReserveFactor: percentageToFloat("160%"),
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(2709, 30), // 2.709055E+33, 2.34 LTC / day
       minPositionImpactPoolAmount: expandDecimals(28, 8), // 28 LTC
 
       maxOpenInterest: decimalToFloat(1_000_000),
+
+      minFundingFactorPerSecond: percentageToFloat("31%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "UNI", longToken: "UNI", shortToken: "USDC" },
@@ -984,8 +1070,8 @@ const config: {
       ...baseMarketConfig,
       ...fundingRateConfig_Default,
 
-      reserveFactor: percentageToFloat("105%"),
-      openInterestReserveFactor: percentageToFloat("100%"),
+      reserveFactor: percentageToFloat("165%"),
+      openInterestReserveFactor: percentageToFloat("160%"),
 
       maxLongTokenPoolAmount: expandDecimals(300_000, 18),
       maxShortTokenPoolAmount: expandDecimals(1_500_000, 6),
@@ -1009,6 +1095,8 @@ const config: {
       minPositionImpactPoolAmount: expandDecimals(170, 18),
 
       maxOpenInterest: decimalToFloat(1_000_000),
+
+      minFundingFactorPerSecond: percentageToFloat("28%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "LINK", longToken: "LINK", shortToken: "USDC" },
@@ -1018,6 +1106,10 @@ const config: {
       ...baseMarketConfig,
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_LowMax_WithLowerBase,
+
+      positionFeeFactorForNegativeImpact: percentageToFloat("0.045%"),
+      positionFeeFactorForPositiveImpact: percentageToFloat("0.045%"),
+      liquidationFeeFactor: percentageToFloat("0.20%"),
 
       reserveFactor: percentageToFloat("235%"),
       openInterestReserveFactor: percentageToFloat("230%"),
@@ -1042,6 +1134,8 @@ const config: {
       minPositionImpactPoolAmount: expandDecimals(638, 18), // 638 LINK
 
       maxOpenInterest: decimalToFloat(10_000_000),
+
+      minFundingFactorPerSecond: percentageToFloat("34%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "ARB", longToken: "ARB", shortToken: "USDC" },
@@ -1075,6 +1169,8 @@ const config: {
       minPositionImpactPoolAmount: expandDecimals(27598, 18), // 27598 ARB
 
       maxOpenInterest: decimalToFloat(5_000_000),
+
+      minFundingFactorPerSecond: percentageToFloat("30%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "AAVE", longToken: "AAVE", shortToken: "USDC" },
@@ -1085,8 +1181,8 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_LowMax_WithHigherBase,
 
-      reserveFactor: percentageToFloat("135%"),
-      openInterestReserveFactor: percentageToFloat("130%"),
+      reserveFactor: percentageToFloat("165%"),
+      openInterestReserveFactor: percentageToFloat("160%"),
 
       maxLongTokenPoolAmount: expandDecimals(27_800, 18),
       maxShortTokenPoolAmount: expandDecimals(3_500_000, 6),
@@ -1107,6 +1203,8 @@ const config: {
       minPositionImpactPoolAmount: expandDecimals(723, 16), // 7.23 AAVE
 
       maxOpenInterest: decimalToFloat(1_500_000),
+
+      minFundingFactorPerSecond: percentageToFloat("27%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "AVAX", longToken: "AVAX", shortToken: "USDC" },
@@ -1132,13 +1230,15 @@ const config: {
       // minCollateralFactor of 0.00833 (0.833%) when open interest is 3,300,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
 
-      reserveFactor: percentageToFloat("135%"),
-      openInterestReserveFactor: percentageToFloat("130%"),
+      reserveFactor: percentageToFloat("165%"),
+      openInterestReserveFactor: percentageToFloat("160%"),
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(1643, 41), // 1.64325E+44, 14,2 AVAX / day
       minPositionImpactPoolAmount: expandDecimals(79, 18), // 79.18 AVAX
 
       maxOpenInterest: decimalToFloat(1_000_000),
+
+      minFundingFactorPerSecond: percentageToFloat("24%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "ATOM", longToken: "WETH", shortToken: "USDC" },
@@ -1165,13 +1265,15 @@ const config: {
       // minCollateralFactor of 0.00833 (0.833%) when open interest is 1,700,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("5e-9"),
 
-      reserveFactor: percentageToFloat("125%"),
-      openInterestReserveFactor: percentageToFloat("120%"),
+      reserveFactor: percentageToFloat("165%"),
+      openInterestReserveFactor: percentageToFloat("160%"),
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(5442, 28), // 5.442645E+31, 4,7 ATOM / day
       minPositionImpactPoolAmount: expandDecimals(611, 6), // 611 ATOM
 
       maxOpenInterest: decimalToFloat(1_000_000),
+
+      minFundingFactorPerSecond: percentageToFloat("20%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "NEAR", longToken: "WETH", shortToken: "USDC" },
@@ -1196,13 +1298,15 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 4,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
 
-      reserveFactor: percentageToFloat("125%"),
-      openInterestReserveFactor: percentageToFloat("120%"),
+      reserveFactor: percentageToFloat("135%"),
+      openInterestReserveFactor: percentageToFloat("130%"),
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(928, 48), // 0.928E+51, 80.22629972 NEAR / day
       minPositionImpactPoolAmount: expandDecimals(4361, 24), // 4361 NEAR
 
       maxOpenInterest: decimalToFloat(1_000_000),
+
+      minFundingFactorPerSecond: percentageToFloat("27%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "OP", longToken: "OP", shortToken: "USDC" },
@@ -1235,6 +1339,8 @@ const config: {
       minPositionImpactPoolAmount: expandDecimals(311, 18), // 311 OP
 
       maxOpenInterest: decimalToFloat(1_000_000),
+
+      minFundingFactorPerSecond: percentageToFloat("31%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "ORDI", longToken: "WBTC.e", shortToken: "USDC" },
@@ -1267,6 +1373,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(25, 8), // ~1,5M USD (x3 of max open interest)
       maxShortTokenPoolAmount: expandDecimals(1_500_000, 6), // ~1,5M USD (x3 of max open interest)
+
+      minFundingFactorPerSecond: percentageToFloat("40%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "GMX", longToken: "GMX", shortToken: "USDC" },
@@ -1292,13 +1400,49 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 2,632,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.8e-9"),
 
-      reserveFactor: percentageToFloat("185%"),
-      openInterestReserveFactor: percentageToFloat("180%"),
+      reserveFactor: percentageToFloat("205%"),
+      openInterestReserveFactor: percentageToFloat("200%"),
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(65, 42), // 6.5e43, 5.6 GMX / day
       minPositionImpactPoolAmount: expandDecimals(50, 18), // 50 GMX
 
       maxOpenInterest: decimalToFloat(1_800_000),
+
+      minFundingFactorPerSecond: percentageToFloat("26%").div(SECONDS_PER_YEAR),
+    },
+    {
+      tokens: { indexToken: "GMX", longToken: "GMX", shortToken: "GMX" },
+      virtualTokenIdForIndexToken: hashString("PERP:GMX/USD"),
+
+      ...singleTokenMarketConfig,
+      reserveFactor: percentageToFloat("85%"),
+      openInterestReserveFactor: percentageToFloat("80%"),
+      maxPnlFactorForTraders: percentageToFloat("50%"),
+
+      ...fundingRateConfig_High,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
+
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      positivePositionImpactFactor: exponentToFloat("2.5e-10"),
+      positionImpactExponentFactor: exponentToFloat("2.2e0"),
+
+      positiveMaxPositionImpactFactor: percentageToFloat("0.5%"),
+      negativeMaxPositionImpactFactor: percentageToFloat("0.5%"),
+      maxPositionImpactFactorForLiquidations: bigNumberify(0), // 0%
+
+      positionFeeFactorForPositiveImpact: percentageToFloat("0.05%"),
+      positionFeeFactorForNegativeImpact: percentageToFloat("0.07%"),
+
+      minCollateralFactor: percentageToFloat("1%"), // 100x leverage
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
+
+      maxOpenInterest: decimalToFloat(750_000),
+      maxPoolUsdForDeposit: decimalToFloat(1250_000),
+
+      maxLongTokenPoolAmount: expandDecimals(50_000, 18),
+      maxShortTokenPoolAmount: expandDecimals(50_000, 18),
+
+      minFundingFactorPerSecond: percentageToFloat("26%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "PEPE", longToken: "PEPE", shortToken: "USDC" },
@@ -1306,7 +1450,7 @@ const config: {
       virtualMarketId: hashString("SPOT:PEPE/USD"),
 
       ...baseMarketConfig,
-      ...fundingRateConfig_Default,
+      ...fundingRateConfig_High,
       ...borrowingRateConfig_LowMax_WithHigherBase,
 
       maxLongTokenPoolAmount: expandDecimals(243_000_000_000, 18),
@@ -1331,12 +1475,7 @@ const config: {
 
       maxOpenInterest: decimalToFloat(1_500_000),
 
-      fundingIncreaseFactorPerSecond: percentageToFloat("95%")
-        .div(SECONDS_PER_YEAR)
-        .div(SECONDS_PER_HOUR * 3),
-      maxFundingFactorPerSecond: percentageToFloat("95%").div(SECONDS_PER_YEAR),
-
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("140%").div(SECONDS_PER_YEAR),
+      minFundingFactorPerSecond: percentageToFloat("36%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "WIF", longToken: "WIF", shortToken: "USDC" },
@@ -1368,6 +1507,8 @@ const config: {
       minPositionImpactPoolAmount: 0,
 
       maxOpenInterest: decimalToFloat(500_000),
+
+      minFundingFactorPerSecond: percentageToFloat("23%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "POL", longToken: "WETH", shortToken: "USDC" },
@@ -1388,12 +1529,8 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 4,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
 
-      reserveFactor: percentageToFloat("105%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
-
-      optimalUsageFactor: percentageToFloat("75%"),
-      baseBorrowingFactor: percentageToFloat("60%").div(SECONDS_PER_YEAR),
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("150%").div(SECONDS_PER_YEAR),
+      reserveFactor: percentageToFloat("125%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("120%"), // default is 90%
 
       positionImpactPoolDistributionRate: bigNumberify(0),
       minPositionImpactPoolAmount: bigNumberify(0),
@@ -1403,6 +1540,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(400, 18),
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
+
+      minFundingFactorPerSecond: percentageToFloat("24%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "SUI", longToken: "WETH", shortToken: "USDC" },
@@ -1423,8 +1562,8 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 4,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
 
-      reserveFactor: percentageToFloat("105%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
+      reserveFactor: percentageToFloat("155%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("150%"), // default is 90%
 
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
@@ -1433,9 +1572,11 @@ const config: {
 
       maxOpenInterest: decimalToFloat(1_000_000),
 
-      maxPoolUsdForDeposit: decimalToFloat(3_000_000),
-      maxLongTokenPoolAmount: expandDecimals(1100, 18),
-      maxShortTokenPoolAmount: expandDecimals(3_500_000, 6),
+      maxPoolUsdForDeposit: decimalToFloat(4_500_000),
+      maxLongTokenPoolAmount: expandDecimals(1430, 18),
+      maxShortTokenPoolAmount: expandDecimals(5_000_000, 6),
+
+      minFundingFactorPerSecond: percentageToFloat("24%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "SEI", longToken: "WETH", shortToken: "USDC" },
@@ -1456,8 +1597,8 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 4,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
 
-      reserveFactor: percentageToFloat("105%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
+      reserveFactor: percentageToFloat("135%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("130%"), // default is 90%
 
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
@@ -1469,6 +1610,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(763, 18), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+
+      minFundingFactorPerSecond: percentageToFloat("30%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "APT", longToken: "WETH", shortToken: "USDC" },
@@ -1489,8 +1632,8 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 4,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
 
-      reserveFactor: percentageToFloat("80%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("75%"), // default is 90%
+      reserveFactor: percentageToFloat("125%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("120%"), // default is 90%
 
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
@@ -1502,6 +1645,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(380, 18), // ~1M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x the max open interest)
+
+      minFundingFactorPerSecond: percentageToFloat("39%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "TIA", longToken: "WETH", shortToken: "USDC" },
@@ -1522,8 +1667,8 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 4,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
 
-      reserveFactor: percentageToFloat("80%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("75%"), // default is 90%
+      reserveFactor: percentageToFloat("135%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("130%"), // default is 90%
 
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
@@ -1535,6 +1680,8 @@ const config: {
       maxPoolUsdForDeposit: decimalToFloat(750_000),
       maxLongTokenPoolAmount: expandDecimals(380, 18), // ~1M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x the max open interest)
+
+      minFundingFactorPerSecond: percentageToFloat("40%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "TRX", longToken: "WETH", shortToken: "USDC" },
@@ -1568,6 +1715,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(400, 18), // ~1M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x the max open interest)
+
+      minFundingFactorPerSecond: percentageToFloat("40%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "TON", longToken: "WETH", shortToken: "USDC" },
@@ -1588,8 +1737,8 @@ const config: {
       minCollateralFactor: percentageToFloat("0.667%"), // 150x leverage
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
 
-      reserveFactor: percentageToFloat("105%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
+      reserveFactor: percentageToFloat("165%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("160%"), // default is 90%
 
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
@@ -1601,6 +1750,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(800, 18), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+
+      minFundingFactorPerSecond: percentageToFloat("21%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "TAO", longToken: "WBTC.e", shortToken: "USDC" },
@@ -1634,6 +1785,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(23, 8), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+
+      minFundingFactorPerSecond: percentageToFloat("24%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "BONK", longToken: "WETH", shortToken: "USDC" },
@@ -1654,8 +1807,8 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 4,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
 
-      reserveFactor: percentageToFloat("105%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
+      reserveFactor: percentageToFloat("125%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("120%"), // default is 90%
 
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
@@ -1667,6 +1820,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(630, 18), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+
+      minFundingFactorPerSecond: percentageToFloat("24%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { indexToken: "WLD", longToken: "WETH", shortToken: "USDC" },
@@ -1700,6 +1855,148 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(630, 18), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+
+      minFundingFactorPerSecond: percentageToFloat("31%").div(SECONDS_PER_YEAR),
+    },
+    {
+      tokens: { indexToken: "BOME", longToken: "WBTC.e", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:BOME/USD"),
+      virtualMarketId: hashString("SPOT:BTC/USD"),
+
+      ...syntheticMarketConfig,
+      ...fundingRateConfig_High,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
+
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      positivePositionImpactFactor: exponentToFloat("2.5e-10"),
+      positionImpactExponentFactor: exponentToFloat("2.2e0"),
+
+      negativeSwapImpactFactor: exponentToFloat("5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("2.5e-9"),
+
+      minCollateralFactor: percentageToFloat("1%"), // 100x leverage
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
+
+      reserveFactor: percentageToFloat("105%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
+
+      maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
+
+      positionImpactPoolDistributionRate: bigNumberify(0),
+      minPositionImpactPoolAmount: bigNumberify(0),
+
+      maxOpenInterest: decimalToFloat(500_000),
+      maxPoolUsdForDeposit: decimalToFloat(750_000), // 1.5x the max open interest
+
+      maxLongTokenPoolAmount: expandDecimals(11, 8), // ~1M USD (2x the max open interest)
+      maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x the max open interest)
+
+      minFundingFactorPerSecond: percentageToFloat("23%").div(SECONDS_PER_YEAR),
+    },
+    {
+      tokens: { indexToken: "MEME", longToken: "WBTC.e", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:MEME/USD"),
+      virtualMarketId: hashString("SPOT:BTC/USD"),
+
+      ...syntheticMarketConfig,
+      ...fundingRateConfig_High,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
+
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      positivePositionImpactFactor: exponentToFloat("2.5e-10"),
+      positionImpactExponentFactor: exponentToFloat("2.2e0"),
+
+      negativeSwapImpactFactor: exponentToFloat("5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("2.5e-9"),
+
+      minCollateralFactor: percentageToFloat("1%"), // 100x leverage
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
+
+      reserveFactor: percentageToFloat("105%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
+
+      maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
+
+      positionImpactPoolDistributionRate: bigNumberify(0),
+      minPositionImpactPoolAmount: bigNumberify(0),
+
+      maxOpenInterest: decimalToFloat(500_000),
+      maxPoolUsdForDeposit: decimalToFloat(750_000), // 1.5x the max open interest
+
+      maxLongTokenPoolAmount: expandDecimals(11, 8), // ~1M USD (2x the max open interest)
+      maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x the max open interest)
+
+      minFundingFactorPerSecond: percentageToFloat("40%").div(SECONDS_PER_YEAR),
+    },
+    {
+      tokens: { indexToken: "FLOKI", longToken: "WBTC.e", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:FLOKI/USD"),
+      virtualMarketId: hashString("SPOT:BTC/USD"),
+
+      ...syntheticMarketConfig,
+      ...fundingRateConfig_High,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
+
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      positivePositionImpactFactor: exponentToFloat("2.5e-10"),
+      positionImpactExponentFactor: exponentToFloat("2.2e0"),
+
+      negativeSwapImpactFactor: exponentToFloat("5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("2.5e-9"),
+
+      // minCollateralFactor of 0.01 (1%)
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
+
+      reserveFactor: percentageToFloat("105%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
+
+      maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
+
+      positionImpactPoolDistributionRate: bigNumberify(0),
+      minPositionImpactPoolAmount: bigNumberify(0),
+
+      maxOpenInterest: decimalToFloat(1_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(1_500_000), // 1.5x the max open interest
+
+      maxLongTokenPoolAmount: expandDecimals(21, 8), // ~2M USD (2x the max open interest)
+      maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+
+      minFundingFactorPerSecond: percentageToFloat("26%").div(SECONDS_PER_YEAR),
+    },
+    {
+      tokens: { indexToken: "MEW", longToken: "WBTC.e", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:MEW/USD"),
+      virtualMarketId: hashString("SPOT:BTC/USD"),
+
+      ...syntheticMarketConfig,
+      ...fundingRateConfig_High,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
+
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      positivePositionImpactFactor: exponentToFloat("2.5e-10"),
+      positionImpactExponentFactor: exponentToFloat("2.2e0"),
+
+      negativeSwapImpactFactor: exponentToFloat("5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("2.5e-9"),
+
+      // minCollateralFactor of 0.01 (1%)
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
+
+      reserveFactor: percentageToFloat("105%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
+
+      maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
+
+      positionImpactPoolDistributionRate: bigNumberify(0),
+      minPositionImpactPoolAmount: bigNumberify(0),
+
+      maxOpenInterest: decimalToFloat(1_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(1_500_000), // 1.5x the max open interest
+
+      maxLongTokenPoolAmount: expandDecimals(21, 8), // ~2M USD (2x the max open interest)
+      maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+
+      minFundingFactorPerSecond: percentageToFloat("40%").div(SECONDS_PER_YEAR),
     },
     {
       tokens: { longToken: "wstETH", shortToken: "WETH" },
@@ -1745,6 +2042,8 @@ const config: {
       ...baseMarketConfig,
       ...stablecoinSwapMarketConfig,
 
+      swapOnly: true,
+
       maxLongTokenPoolAmount: expandDecimals(10_000_000, 6),
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
 
@@ -1761,6 +2060,8 @@ const config: {
 
       ...baseMarketConfig,
       ...stablecoinSwapMarketConfig,
+
+      swapOnly: true,
 
       maxLongTokenPoolAmount: expandDecimals(10_000_000, 6),
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
@@ -1779,6 +2080,8 @@ const config: {
       ...baseMarketConfig,
       ...stablecoinSwapMarketConfig,
 
+      swapOnly: true,
+
       maxLongTokenPoolAmount: expandDecimals(10_000_000, 6),
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 18),
 
@@ -1789,6 +2092,300 @@ const config: {
 
       swapFeeFactorForPositiveImpact: decimalToFloat(5, 5), // 0.005%,
       swapFeeFactorForNegativeImpact: decimalToFloat(2, 4), // 0.02%,
+    },
+    {
+      tokens: { indexToken: "PENDLE", longToken: "PENDLE", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:PENDLE/USD"),
+      virtualMarketId: hashString("SPOT:PENDLE/USD"),
+
+      ...baseMarketConfig,
+      ...fundingRateConfig_High,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
+
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      positivePositionImpactFactor: exponentToFloat("2.5e-10"),
+      positionImpactExponentFactor: exponentToFloat("2.2e0"),
+
+      negativeSwapImpactFactor: exponentToFloat("5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("2.5e-9"),
+
+      // minCollateralFactor of 0.01 (1%)
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
+
+      reserveFactor: percentageToFloat("165%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("160%"), // default is 90%
+
+      maxPnlFactorForTraders: percentageToFloat("50%"), // default is 90%
+
+      maxOpenInterest: decimalToFloat(1_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(1_500_000), // x1.5 of max open interest
+
+      maxLongTokenPoolAmount: expandDecimals(375_000, 18), // ~2M USD (x2 of max open interest)
+      maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (x2 of max open interest)
+
+      minFundingFactorPerSecond: percentageToFloat("35%").div(SECONDS_PER_YEAR),
+    },
+    {
+      tokens: { indexToken: "SOL", longToken: "SOL", shortToken: "SOL" },
+      virtualTokenIdForIndexToken: hashString("PERP:SOL/USD"),
+
+      ...singleTokenMarketConfig,
+      reserveFactor: percentageToFloat("105%"),
+      openInterestReserveFactor: percentageToFloat("100%"),
+      maxPnlFactorForTraders: percentageToFloat("90%"),
+
+      ...fundingRateConfig_Default, // fundingRateConfig_SingleToken has timeToReachMaxFundingFactorFromZero = 2 hours
+
+      ...borrowingRateConfig_HighMax_WithLowerBase,
+
+      negativePositionImpactFactor: exponentToFloat("1.35e-9"),
+      positivePositionImpactFactor: exponentToFloat("4.5e-10"),
+      positionImpactExponentFactor: exponentToFloat("2.0e0"),
+
+      positiveMaxPositionImpactFactor: percentageToFloat("0.5%"),
+      negativeMaxPositionImpactFactor: percentageToFloat("0.5%"),
+      maxPositionImpactFactorForLiquidations: bigNumberify(0), // 0%
+
+      positionFeeFactorForPositiveImpact: percentageToFloat("0.05%"),
+      positionFeeFactorForNegativeImpact: percentageToFloat("0.07%"),
+
+      fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
+      thresholdForDecreaseFunding: decimalToFloat(0), // 0%
+
+      minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6.0e-11"),
+
+      maxOpenInterest: decimalToFloat(4_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(6_000_000), // 1.5x the max open interest
+
+      maxLongTokenPoolAmount: expandDecimals(34_500, 9), // ~8M USD (2x the max open interest)
+      maxShortTokenPoolAmount: expandDecimals(34_500, 9), // ~8M USD (2x the max open interest)
+
+      minFundingFactorPerSecond: percentageToFloat("22%").div(SECONDS_PER_YEAR),
+    },
+    {
+      tokens: { indexToken: "ADA", longToken: "WBTC.e", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:ADA/USD"),
+      virtualMarketId: hashString("SPOT:BTC/USD"),
+
+      ...syntheticMarketConfig,
+      ...fundingRateConfig_Default,
+      ...borrowingRateConfig_LowMax_WithLowerBase,
+
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      positivePositionImpactFactor: exponentToFloat("2.5e-10"),
+      positionImpactExponentFactor: exponentToFloat("2.0e0"),
+
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
+
+      // minCollateralFactor of 0.01 (1%)
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
+
+      reserveFactor: percentageToFloat("105%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
+
+      maxPnlFactorForTraders: percentageToFloat("90%"), // default is 60%
+
+      maxOpenInterest: decimalToFloat(2_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(3_000_000), // 1.5x the max open interest
+
+      maxLongTokenPoolAmount: expandDecimals(44, 8), // ~4M USD (2x the max open interest)
+      maxShortTokenPoolAmount: expandDecimals(4_000_000, 6), // ~4M USD (2x the max open interest)
+
+      minFundingFactorPerSecond: percentageToFloat("27%").div(SECONDS_PER_YEAR),
+    },
+    {
+      tokens: { indexToken: "XLM", longToken: "WBTC.e", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:XLM/USD"),
+      virtualMarketId: hashString("SPOT:BTC/USD"),
+
+      ...syntheticMarketConfig,
+      ...fundingRateConfig_Default,
+      ...borrowingRateConfig_LowMax_WithLowerBase,
+
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      positivePositionImpactFactor: exponentToFloat("2.5e-10"),
+      positionImpactExponentFactor: exponentToFloat("2.0e0"),
+
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
+
+      // minCollateralFactor of 0.01 (1%)
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
+
+      reserveFactor: percentageToFloat("105%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
+
+      maxPnlFactorForTraders: percentageToFloat("90%"), // default is 60%
+
+      maxOpenInterest: decimalToFloat(2_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(3_000_000), // 1.5x the max open interest
+
+      maxLongTokenPoolAmount: expandDecimals(44, 8), // ~4M USD (2x the max open interest)
+      maxShortTokenPoolAmount: expandDecimals(4_000_000, 6), // ~4M USD (2x the max open interest)
+
+      minFundingFactorPerSecond: percentageToFloat("20%").div(SECONDS_PER_YEAR),
+    },
+    {
+      tokens: { indexToken: "BCH", longToken: "WBTC.e", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:BCH/USD"),
+      virtualMarketId: hashString("SPOT:BTC/USD"),
+
+      ...syntheticMarketConfig,
+      ...fundingRateConfig_High,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
+
+      negativePositionImpactFactor: exponentToFloat("2.5e-9"),
+      positivePositionImpactFactor: exponentToFloat("1.25e-9"),
+      positionImpactExponentFactor: exponentToFloat("2.0e0"),
+
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
+
+      // minCollateralFactor of 0.01 (1%)
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
+
+      reserveFactor: percentageToFloat("90%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("85%"), // default is 90%
+
+      maxPnlFactorForTraders: percentageToFloat("75%"), // default is 60%
+
+      maxOpenInterest: decimalToFloat(1_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(1_500_000), // 1.5x the max open interest
+
+      maxLongTokenPoolAmount: expandDecimals(22, 8), // ~2M USD (2x the max open interest)
+      maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+
+      minFundingFactorPerSecond: percentageToFloat("20%").div(SECONDS_PER_YEAR),
+    },
+    {
+      tokens: { indexToken: "DOT", longToken: "WBTC.e", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:DOT/USD"),
+      virtualMarketId: hashString("SPOT:BTC/USD"),
+
+      ...syntheticMarketConfig,
+      ...fundingRateConfig_High,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
+
+      negativePositionImpactFactor: exponentToFloat("2.5e-9"),
+      positivePositionImpactFactor: exponentToFloat("1.25e-9"),
+      positionImpactExponentFactor: exponentToFloat("2.0e0"),
+
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
+
+      // minCollateralFactor of 0.01 (1%)
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
+
+      reserveFactor: percentageToFloat("90%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("85%"), // default is 90%
+
+      maxPnlFactorForTraders: percentageToFloat("75%"), // default is 60%
+
+      maxOpenInterest: decimalToFloat(1_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(1_500_000), // 1.5x the max open interest
+
+      maxLongTokenPoolAmount: expandDecimals(22, 8), // ~2M USD (2x the max open interest)
+      maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+
+      minFundingFactorPerSecond: percentageToFloat("22%").div(SECONDS_PER_YEAR),
+    },
+    {
+      tokens: { indexToken: "ICP", longToken: "WBTC.e", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:ICP/USD"),
+      virtualMarketId: hashString("SPOT:BTC/USD"),
+
+      ...syntheticMarketConfig,
+      ...fundingRateConfig_High,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
+
+      negativePositionImpactFactor: exponentToFloat("2.5e-9"),
+      positivePositionImpactFactor: exponentToFloat("1.25e-9"),
+      positionImpactExponentFactor: exponentToFloat("2.0e0"),
+
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
+
+      // minCollateralFactor of 0.01 (1%)
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
+
+      reserveFactor: percentageToFloat("90%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("85%"), // default is 90%
+
+      maxPnlFactorForTraders: percentageToFloat("75%"), // default is 60%
+
+      maxOpenInterest: decimalToFloat(1_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(1_500_000), // 1.5x the max open interest
+
+      maxLongTokenPoolAmount: expandDecimals(22, 8), // ~2M USD (2x the max open interest)
+      maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+
+      minFundingFactorPerSecond: percentageToFloat("26%").div(SECONDS_PER_YEAR),
+    },
+    {
+      tokens: { indexToken: "FIL", longToken: "WBTC.e", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:FIL/USD"),
+      virtualMarketId: hashString("SPOT:BTC/USD"),
+
+      ...syntheticMarketConfig,
+      ...fundingRateConfig_Default,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
+
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      positivePositionImpactFactor: exponentToFloat("2.5e-10"),
+      positionImpactExponentFactor: exponentToFloat("2.0e0"),
+
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
+
+      // minCollateralFactor of 0.01 (1%)
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2e-10"),
+
+      reserveFactor: percentageToFloat("65%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("60%"), // default is 90%
+
+      maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
+
+      maxOpenInterest: decimalToFloat(500_000),
+      maxPoolUsdForDeposit: decimalToFloat(750_000), // 1.5x the max open interest
+
+      maxLongTokenPoolAmount: expandDecimals(10, 8), // ~1M USD (2x the max open interest)
+      maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x the max open interest)
+
+      minFundingFactorPerSecond: percentageToFloat("60%").div(SECONDS_PER_YEAR),
+    },
+    {
+      tokens: { indexToken: "RENDER", longToken: "WETH", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:RENDER/USD"),
+      virtualMarketId: hashString("SPOT:ETH/USD"),
+
+      ...syntheticMarketConfig,
+      ...fundingRateConfig_High,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
+
+      negativePositionImpactFactor: exponentToFloat("2.5e-9"),
+      positivePositionImpactFactor: exponentToFloat("1.25e-9"),
+      positionImpactExponentFactor: exponentToFloat("2.0e0"),
+
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
+
+      // minCollateralFactor of 0.01 (1%)
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
+
+      reserveFactor: percentageToFloat("125%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("120%"), // default is 90%
+
+      maxPnlFactorForTraders: percentageToFloat("75%"), // default is 60%
+
+      maxOpenInterest: decimalToFloat(1_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(1_500_000), // 1.5x the max open interest
+
+      maxLongTokenPoolAmount: expandDecimals(600, 18), // ~2M USD (2x the max open interest)
+      maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+
+      minFundingFactorPerSecond: percentageToFloat("25%").div(SECONDS_PER_YEAR),
     },
   ],
   avalanche: [
@@ -2117,6 +2714,8 @@ const config: {
       ...baseMarketConfig,
       ...stablecoinSwapMarketConfig,
 
+      swapOnly: true,
+
       maxLongTokenPoolAmount: expandDecimals(10_000_000, 6),
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
 
@@ -2127,6 +2726,8 @@ const config: {
 
       ...baseMarketConfig,
       ...stablecoinSwapMarketConfig,
+
+      swapOnly: true,
 
       maxLongTokenPoolAmount: expandDecimals(10_000_000, 6),
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
@@ -2139,6 +2740,8 @@ const config: {
       ...baseMarketConfig,
       ...stablecoinSwapMarketConfig,
 
+      swapOnly: true,
+
       maxLongTokenPoolAmount: expandDecimals(10_000_000, 6),
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
 
@@ -2149,6 +2752,8 @@ const config: {
 
       ...baseMarketConfig,
       ...stablecoinSwapMarketConfig,
+
+      swapOnly: true,
 
       maxLongTokenPoolAmount: expandDecimals(10_000_000, 6),
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 18),
@@ -2292,6 +2897,7 @@ const config: {
       tokens: { indexToken: "WAVAX", longToken: "WAVAX", shortToken: "USDC" },
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
     {
       ...baseMarketConfig,
@@ -2308,6 +2914,7 @@ const config: {
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
     {
       ...baseMarketConfig,
@@ -2317,6 +2924,7 @@ const config: {
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
     {
       ...baseMarketConfig,
@@ -2325,6 +2933,7 @@ const config: {
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
     {
       ...baseMarketConfig,
@@ -2336,6 +2945,7 @@ const config: {
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
     {
       ...baseMarketConfig,
@@ -2344,6 +2954,7 @@ const config: {
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
     {
       ...baseMarketConfig,
@@ -2357,6 +2968,7 @@ const config: {
       maxOpenInterest: decimalToFloat(250_000),
 
       minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
     {
       ...baseMarketConfig,
@@ -2366,6 +2978,7 @@ const config: {
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
     {
       ...baseMarketConfig,
@@ -2375,6 +2988,7 @@ const config: {
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
     {
       ...baseMarketConfig,
@@ -2385,11 +2999,13 @@ const config: {
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
     {
       ...baseMarketConfig,
       ...syntheticMarketConfig,
       tokens: { indexToken: "LINK", longToken: "WETH", shortToken: "DAI" },
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
     {
       ...baseMarketConfig,
@@ -2402,6 +3018,7 @@ const config: {
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
     {
       ...baseMarketConfig,
@@ -2410,6 +3027,7 @@ const config: {
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
     {
       ...baseMarketConfig,
@@ -2418,6 +3036,7 @@ const config: {
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
     {
       ...baseMarketConfig,
@@ -2426,6 +3045,7 @@ const config: {
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
     {
       ...baseMarketConfig,
@@ -2434,6 +3054,7 @@ const config: {
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
     {
       ...baseMarketConfig,
@@ -2442,6 +3063,7 @@ const config: {
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
     {
       ...baseMarketConfig,
@@ -2465,6 +3087,7 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(300_000, 6),
 
       maxPoolUsdForDeposit: decimalToFloat(300_000),
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
 
     {
@@ -2478,6 +3101,7 @@ const config: {
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
     {
       ...baseMarketConfig,
@@ -2490,6 +3114,7 @@ const config: {
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
+      liquidationFeeFactor: percentageToFloat("0.20%"),
     },
   ],
   hardhat: [
