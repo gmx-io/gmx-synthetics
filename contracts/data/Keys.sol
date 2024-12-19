@@ -467,6 +467,9 @@ library Keys {
     // @dev key for the buyback withdrawable fees
     bytes32 public constant WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT = keccak256(abi.encode("WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT"));
 
+    // @dev key for user's balance for a source chain, recorded under the user's virtual account
+    bytes32 public constant SOURCE_CHAIN_BALANCE = keccak256(abi.encode("SOURCE_CHAIN_BALANCE"));
+
     // @dev constant for user initiated cancel reason
     string public constant USER_INITIATED_CANCEL = "USER_INITIATED_CANCEL";
 
@@ -2073,6 +2076,18 @@ library Keys {
     function buybackMaxPriceImpactFactorKey(address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             BUYBACK_MAX_PRICE_IMPACT_FACTOR,
+            token
+        ));
+    }
+
+    // @dev key for user's balance for a source chain, recorded under the user's virtual account
+    // @param virtualAccount the virtual account for which to retreive the user balance key
+    // @param token the token for which to retreive the user balance key
+    // @return key for a source chain balance for a given user and token
+    function sourceChainBalanceKey(address virtualAccount, address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            SOURCE_CHAIN_BALANCE,
+            virtualAccount,
             token
         ));
     }
