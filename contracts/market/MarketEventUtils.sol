@@ -201,7 +201,6 @@ library MarketEventUtils {
         );
     }
 
-
     function emitOpenInterestUpdated(
         EventEmitter eventEmitter,
         address market,
