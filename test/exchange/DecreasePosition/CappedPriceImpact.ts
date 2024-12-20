@@ -4,7 +4,7 @@ import { usingResult } from "../../../utils/use";
 import { scenes } from "../../scenes";
 import { deployFixture } from "../../../utils/fixture";
 import { expandDecimals, decimalToFloat } from "../../../utils/math";
-import { getPositionKey } from "../../../utils/position";
+import { getPositionKey, getImpactPendingAmountKey } from "../../../utils/position";
 import { getPoolAmount, getMarketTokenPriceWithPoolValue } from "../../../utils/market";
 import { prices } from "../../../utils/prices";
 import { getClaimableCollateralTimeKey } from "../../../utils/collateral";
@@ -39,22 +39,31 @@ describe("Exchange.DecreasePosition", () => {
       }
     );
 
+    const positionKey0 = getPositionKey(user0.address, ethUsdMarket.marketToken, usdc.address, true);
+    const positionKey0Long = positionKey0;
+    const positionKey0Short = getPositionKey(user0.address, ethUsdMarket.marketToken, wnt.address, false);
+
+    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0Long))).eq(0);
+    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0Short))).eq(0);
     expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(0);
 
     await scenes.increasePosition.long(fixture);
 
-    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(
-      "799999999999999986"
-    ); // 0.799999999999999986
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(0);
+    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0Long))).eq("-799999999999999986"); // -0.799999999999999986;
+    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0Short))).eq(0);
 
     await scenes.increasePosition.short(fixture);
 
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(0);
     // positive price impact: 0.799999999999999986 - 0.399999999999999994 => 0.4 ETH
-    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(
-      "399999999999999994"
-    ); // 0.399999999999999994
-
-    const positionKey0 = getPositionKey(user0.address, ethUsdMarket.marketToken, usdc.address, true);
+    const positionImpactPendingAmount0Long = await dataStore.getInt(getImpactPendingAmountKey(positionKey0Long));
+    const positionImpactPendingAmount0Short = await dataStore.getInt(getImpactPendingAmountKey(positionKey0Short));
+    expect(positionImpactPendingAmount0Long).eq("-799999999999999986"); // -0.799999999999999986;
+    expect(positionImpactPendingAmount0Short).eq("399999999999999992"); // 0.399999999999999992
+    expect(positionImpactPendingAmount0Long.add(positionImpactPendingAmount0Short).toString()).eq(
+      "-399999999999999994"
+    ); // -0.399999999999999994
 
     await usingResult(
       reader.getPositionInfo(
@@ -68,9 +77,9 @@ describe("Exchange.DecreasePosition", () => {
       ),
       (positionInfo) => {
         expect(positionInfo.position.numbers.collateralAmount).eq(expandDecimals(50_000, 6));
-        expect(positionInfo.position.numbers.sizeInTokens).eq("39200000000000000014"); // 39.2
+        expect(positionInfo.position.numbers.sizeInTokens).eq("40000000000000000000"); // 40.0 does not contain the impact
         expect(positionInfo.position.numbers.sizeInUsd).eq(decimalToFloat(200_000));
-        expect(positionInfo.basePnlUsd).eq("-3999999999999999930000000000000000"); // -4000
+        expect(positionInfo.basePnlUsd).eq("0");
       }
     );
 
@@ -82,9 +91,8 @@ describe("Exchange.DecreasePosition", () => {
       }
     );
 
-    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(
-      "399999999999999994"
-    ); // 0.4 ETH
+    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0Long))).eq("-799999999999999986"); // -0.8 ETH
+    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0Short))).eq("399999999999999992"); // 0.4 ETH
 
     expect(await wnt.balanceOf(user1.address)).eq(0);
     expect(await usdc.balanceOf(user1.address)).eq(0);
@@ -100,9 +108,12 @@ describe("Exchange.DecreasePosition", () => {
     });
 
     // the impact pool increased by ~0.008 ETH, 40 USD
-    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(
-      "407999999999999994"
-    ); // 0.407999999999999994 ETH
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq("88000000000000000");
+
+    // the impact pending amount for long is increased by ~0.008 ETH, 40 USD
+    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0Long))).eq("-719999999999999988"); // -0.719999999999999988 ETH
+    // the impact pending amount for short doesn't change
+    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0Short))).eq("399999999999999992"); // 0.4 ETH
 
     expect(await wnt.balanceOf(user1.address)).eq(0);
     expect(await usdc.balanceOf(user1.address)).eq(0);
@@ -123,17 +134,17 @@ describe("Exchange.DecreasePosition", () => {
       ),
       (positionInfo) => {
         expect(positionInfo.position.numbers.collateralAmount).eq(expandDecimals(49_560, 6));
-        expect(positionInfo.position.numbers.sizeInTokens).eq("35280000000000000012"); // 35.28
+        expect(positionInfo.position.numbers.sizeInTokens).eq("36000000000000000000"); // 36.00 - doesn't contain the impact
         expect(positionInfo.position.numbers.sizeInUsd).eq(decimalToFloat(180_000));
-        expect(positionInfo.basePnlUsd).eq("-3599999999999999940000000000000000");
+        expect(positionInfo.basePnlUsd).eq("0");
       }
     );
 
     await usingResult(
       getMarketTokenPriceWithPoolValue(fixture, { prices: prices.ethUsdMarket }),
       ([marketTokenPrice, poolValueInfo]) => {
-        expect(marketTokenPrice).eq("1000000000000000000001666666666");
-        expect(poolValueInfo.poolValue).eq("6000000000000000000010000000000000000");
+        expect(marketTokenPrice).eq("1000000000000000000000000000000");
+        expect(poolValueInfo.poolValue).eq("6000000000000000000000000000000000000");
       }
     );
   });
@@ -143,8 +154,8 @@ describe("Exchange.DecreasePosition", () => {
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 7));
     await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
 
-    await dataStore.setUint(keys.maxPositionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 4));
-    await dataStore.setUint(keys.maxPositionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 3));
+    await dataStore.setUint(keys.maxPositionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 4)); //  500000000000000000000000000 (27 digits)
+    await dataStore.setUint(keys.maxPositionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 3)); // 1000000000000000000000000000 (28 digits)
 
     expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(0);
 
@@ -156,22 +167,31 @@ describe("Exchange.DecreasePosition", () => {
       }
     );
 
+    const positionKey0 = getPositionKey(user0.address, ethUsdMarket.marketToken, usdc.address, true);
+    const positionKey0Long = positionKey0;
+    const positionKey0Short = getPositionKey(user0.address, ethUsdMarket.marketToken, wnt.address, false);
+
     expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(0);
+    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0Long))).eq(0);
+    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0Short))).eq(0);
 
     await scenes.increasePosition.long(fixture);
 
-    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(
-      "799999999999999986"
-    ); // 0.799999999999999986
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(0);
+    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0Long))).eq("-799999999999999986"); // -0.799999999999999986
+    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0Short))).eq(0);
 
     await scenes.increasePosition.short(fixture);
 
-    // positive price impact: 0.799999999999999986 - 0.779999999999999986 => 0.02 ETH
-    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(
-      "779999999999999986"
-    ); // 0.779999999999999986
-
-    const positionKey0 = getPositionKey(user0.address, ethUsdMarket.marketToken, usdc.address, true);
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(0);
+    // no capping on position increase, all impact is stored as long + short pending: -0.799999999999999986 + 0.399999999999999992 = -0.399999999999999994 ETH
+    const positionImpactPendingAmount0Long = await dataStore.getInt(getImpactPendingAmountKey(positionKey0Long));
+    const positionImpactPendingAmount0Short = await dataStore.getInt(getImpactPendingAmountKey(positionKey0Short));
+    expect(positionImpactPendingAmount0Long).eq("-799999999999999986"); // -0.799999999999999986
+    expect(positionImpactPendingAmount0Short).eq("399999999999999992"); // 0.399999999999999992
+    expect(positionImpactPendingAmount0Long.add(positionImpactPendingAmount0Short).toString()).eq(
+      "-399999999999999994"
+    ); // -0.399999999999999994
 
     await usingResult(
       reader.getPositionInfo(
@@ -185,9 +205,9 @@ describe("Exchange.DecreasePosition", () => {
       ),
       (positionInfo) => {
         expect(positionInfo.position.numbers.collateralAmount).eq(expandDecimals(50_000, 6));
-        expect(positionInfo.position.numbers.sizeInTokens).eq("39200000000000000014"); // 39.2
+        expect(positionInfo.position.numbers.sizeInTokens).eq("40000000000000000000"); // 40.0
         expect(positionInfo.position.numbers.sizeInUsd).eq(decimalToFloat(200_000));
-        expect(positionInfo.basePnlUsd).eq("-3999999999999999930000000000000000"); // -4000
+        expect(positionInfo.basePnlUsd).eq("0"); // no pnl from from position increase
       }
     );
 
@@ -198,10 +218,6 @@ describe("Exchange.DecreasePosition", () => {
         expect(poolValueInfo.poolValue).eq(decimalToFloat(6_000_000));
       }
     );
-
-    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(
-      "779999999999999986"
-    ); // 0.779999999999999986 ETH
 
     expect(await wnt.balanceOf(user1.address)).eq(0);
     expect(await usdc.balanceOf(user1.address)).eq(0);
@@ -224,23 +240,26 @@ describe("Exchange.DecreasePosition", () => {
       },
     });
 
+    // long position decreased by 10% => impact pending amount is decreased by 10% => 0.8 * 0.08 = 0.72
+    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0Long))).eq("-719999999999999988"); // -0.719999999999999988
+    // short position not decreased => position impact pending amount doesn't change
+    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0Short))).eq("399999999999999992");
+
     expect(
       await dataStore.getUint(
         keys.claimableCollateralAmountKey(ethUsdMarket.marketToken, usdc.address, timeKey, user0.address)
       )
-    ).eq(expandDecimals(20, 6));
+    ).eq(expandDecimals(20, 6)); // TODO: actual is 0. debug why there is no claimable collateral?
 
-    // the impact pool increased by ~0.004 ETH, 20 USD
-    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(
-      "783999999999999986"
-    ); // 0.783999999999999986 ETH
+    // the impact pool increased from 0 by ~0.004 ETH, 20 USD
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq("88000000000000000"); // 0.88000000000000000 ETH // TODO: why is 88000000000000000 and not 80000000000000000? The other test was the same and it didn't seem to be an issue
 
     expect(await wnt.balanceOf(user1.address)).eq(0);
     expect(await usdc.balanceOf(user1.address)).eq(0);
 
     expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, wnt.address)).eq(expandDecimals(1000, 18));
     // 2 USD was paid from the position's collateral for price impact
-    expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, usdc.address)).eq(expandDecimals(1_000_420, 6));
+    expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, usdc.address)).eq(expandDecimals(1_000_420, 6)); // TODO: actual is 1000440000000. Debug why the 2 USD was not paid?
 
     await usingResult(
       reader.getPositionInfo(
@@ -254,17 +273,17 @@ describe("Exchange.DecreasePosition", () => {
       ),
       (positionInfo) => {
         expect(positionInfo.position.numbers.collateralAmount).eq(expandDecimals(49_560, 6));
-        expect(positionInfo.position.numbers.sizeInTokens).eq("35280000000000000012"); // 35.28
+        expect(positionInfo.position.numbers.sizeInTokens).eq("36000000000000000000"); // 36.00 - price impact not included
         expect(positionInfo.position.numbers.sizeInUsd).eq(decimalToFloat(180_000));
-        expect(positionInfo.basePnlUsd).eq("-3599999999999999940000000000000000");
+        expect(positionInfo.basePnlUsd).eq("0");
       }
     );
 
     await usingResult(
       getMarketTokenPriceWithPoolValue(fixture, { prices: prices.ethUsdMarket }),
       ([marketTokenPrice, poolValueInfo]) => {
-        expect(marketTokenPrice).eq("1000000000000000000001666666666");
-        expect(poolValueInfo.poolValue).eq("6000000000000000000010000000000000000");
+        expect(marketTokenPrice).eq("1000000000000000000000000000000");
+        expect(poolValueInfo.poolValue).eq("6000000000000000000000000000000000000");
       }
     );
 
@@ -276,8 +295,8 @@ describe("Exchange.DecreasePosition", () => {
 
     await exchangeRouter
       .connect(user0)
-      .claimCollateral([ethUsdMarket.marketToken], [usdc.address], [timeKey], user1.address);
+      .claimCollateral([ethUsdMarket.marketToken], [usdc.address], [timeKey], user1.address); // TODO: VM Exception while processing transaction: reverted with custom error 'CollateralAlreadyClaimed(0, 0)'
 
-    expect(await usdc.balanceOf(user1.address)).eq(expandDecimals(16, 6));
+    expect(await usdc.balanceOf(user1.address)).eq(expandDecimals(16, 6)); // TODO: actual is 0. Why didn't user1 receive the tokens on collateral claim?
   });
 });
