@@ -1,4 +1,3 @@
-import hre from "hardhat";
 import { decimalToFloat, exponentToFloat, bigNumberify, formatAmount, pow, FLOAT_PRECISION } from "../utils/math";
 import { createMarketConfigByKey, getMarketKey } from "../utils/market";
 import { performMulticall } from "../utils/multicall";
@@ -120,6 +119,12 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
     },
+    "SOL:SOL:SOL": {
+      negativePositionImpactFactor: exponentToFloat("1.35e-09"),
+      negativeSwapImpactFactor: 0,
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 20_000,
+    },
     STX: {
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       negativeSwapImpactFactor: exponentToFloat("5e-9"),
@@ -180,6 +185,12 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
     },
+    "GMX:GMX:GMX": {
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      negativeSwapImpactFactor: 0,
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 20_000,
+    },
     PEPE: {
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       negativeSwapImpactFactor: exponentToFloat("3e-8"),
@@ -238,6 +249,67 @@ const recommendedMarketConfig = {
       expectedPositionImpactRatio: 20_000,
     },
     TON: {
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    PENDLE: {
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      negativeSwapImpactFactor: exponentToFloat("5e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    BOME: {
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    MEME: {
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    FLOKI: {
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    MEW: {
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    ADA: {
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    XLM: {
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    BCH: {
+      negativePositionImpactFactor: exponentToFloat("2.5e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    DOT: {
+      negativePositionImpactFactor: exponentToFloat("2.5e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    ICP: {
+      negativePositionImpactFactor: exponentToFloat("2.5e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    RENDER: {
+      negativePositionImpactFactor: exponentToFloat("2.5e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    FIL: {
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
