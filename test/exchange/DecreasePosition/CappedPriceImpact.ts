@@ -108,7 +108,7 @@ describe("Exchange.DecreasePosition", () => {
     });
 
     // the impact pool increased by ~0.008 ETH, 40 USD
-    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq("88000000000000000");
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq("88000000000000000"); // 0.088 ETH
 
     // the impact pending amount for long is increased by ~0.008 ETH, 40 USD
     expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0Long))).eq("-719999999999999988"); // -0.719999999999999988 ETH
@@ -154,8 +154,8 @@ describe("Exchange.DecreasePosition", () => {
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 7));
     await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
 
-    await dataStore.setUint(keys.maxPositionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 4)); //  500000000000000000000000000 (27 digits)
-    await dataStore.setUint(keys.maxPositionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 3)); // 1000000000000000000000000000 (28 digits)
+    await dataStore.setUint(keys.maxPositionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 4));
+    await dataStore.setUint(keys.maxPositionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 3));
 
     expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(0);
 
@@ -240,7 +240,7 @@ describe("Exchange.DecreasePosition", () => {
       },
     });
 
-    // long position decreased by 10% => impact pending amount is decreased by 10% => 0.8 * 0.08 = 0.72
+    // long position decreased by 10% => impact pending amount is decreased by 10% => 0.8 - 0.08 = 0.72
     expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0Long))).eq("-719999999999999988"); // -0.719999999999999988
     // short position not decreased => position impact pending amount doesn't change
     expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0Short))).eq("399999999999999992");
@@ -252,7 +252,7 @@ describe("Exchange.DecreasePosition", () => {
     ).eq(expandDecimals(430, 6)); // includes the pending impact from increase + calculated impact from decrease
 
     // the impact pool increased from 0 by ~0.004 ETH, 20 USD
-    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq("88000000000000000"); // 0.88000000000000000 ETH // TODO: why is 88000000000000000 and not 80000000000000000? The other test was the same and it didn't seem to be an issue
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq("88000000000000000"); // 0.088 ETH
 
     expect(await wnt.balanceOf(user1.address)).eq(0);
     expect(await usdc.balanceOf(user1.address)).eq(0);
