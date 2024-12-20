@@ -792,12 +792,12 @@ library MarketUtils {
         return (positiveImpactFactor, negativeImpactFactor);
     }
 
-    // @dev cap the total priceImpactUsd by the impact pool amount and max impact factor
+    // @dev cap the total priceImpactUsd by the available amount in the position
     // impact pool and the max positive position impact factor
     // @param dataStore DataStore
     // @param market the trading market
     // @param tokenPrice the price of the token
-    // @param priceImpactUsdFromIncrease the pending price impact stored on position increase
+    // @param priceImpactUsdFromIncrease the impact pending from position increase, proportional to sizeDeltaUsd
     // @param priceImpactUsdFromDecrease the calculated price impact on position decrease
     // @return the capped total priceImpactUsd
     function getCappedPositionImpactUsd(
@@ -899,7 +899,6 @@ library MarketUtils {
 
         return nextValue;
     }
-
 
     // @dev apply a delta to the open interest
     // @param dataStore DataStore
