@@ -152,7 +152,6 @@ library DecreasePositionCollateralUtils {
             cache.prices.indexTokenPrice
         );
 
-        // priceImpactUsd + proportionalImpactUsd - maxPriceImpactUsd
         values.priceImpactDiffUsd = _getPriceImpactDiffUsd(
             params.contracts.dataStore,
             params.market.marketToken,
@@ -749,14 +748,11 @@ library DecreasePositionCollateralUtils {
         uint256 sizeDeltaUsd,
         int256 totalPriceImpactUsd
     ) private view returns (uint256) {
-        int256 maxPriceImpactUsdBasedOnMaxPriceImpactFactor = MarketUtils.getMaxPriceImpactUsd(
-            dataStore,
-            market,
-            sizeDeltaUsd,
-            totalPriceImpactUsd > 0
-        );
-        return totalPriceImpactUsd - maxPriceImpactUsdBasedOnMaxPriceImpactFactor > 0
-            ? (totalPriceImpactUsd - maxPriceImpactUsdBasedOnMaxPriceImpactFactor).toUint256()
-            : 0;
+        if (totalPriceImpactUsd >= 0) { return 0; }
+
+        uint256 maxPriceImpactFactor = MarketUtils.getMaxPositionImpactFactor(dataStore, market, true);
+        int256 minPriceImpactUsd = -Precision.applyFactor(sizeDeltaUsd, maxPriceImpactFactor).toInt256();
+
+        return (minPriceImpactUsd - totalPriceImpactUsd).toUint256();
     }
 }
