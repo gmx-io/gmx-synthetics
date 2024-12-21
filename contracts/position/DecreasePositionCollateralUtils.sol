@@ -750,8 +750,8 @@ library DecreasePositionCollateralUtils {
     ) private view returns (uint256) {
         if (totalPriceImpactUsd >= 0) { return 0; }
 
-        uint256 maxPriceImpactFactor = MarketUtils.getMaxPositionImpactFactor(dataStore, market, true);
-        int256 minPriceImpactUsd = -Precision.applyFactor(sizeDeltaUsd, maxPriceImpactFactor).toInt256();
+        uint256 maxNegativeImpactFactor = MarketUtils.getMaxPositionImpactFactor(dataStore, market, false);
+        int256 minPriceImpactUsd = -Precision.applyFactor(sizeDeltaUsd, maxNegativeImpactFactor).toInt256();
 
         return (minPriceImpactUsd - totalPriceImpactUsd).toUint256();
     }
