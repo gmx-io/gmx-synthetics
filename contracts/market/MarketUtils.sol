@@ -830,7 +830,6 @@ library MarketUtils {
         return totalPriceImpactUsd;
     }
 
-
     // @dev get the position impact pool amount
     // @param dataStore DataStore
     // @param market the market to check

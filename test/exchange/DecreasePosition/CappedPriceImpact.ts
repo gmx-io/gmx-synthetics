@@ -249,17 +249,17 @@ describe("Exchange.DecreasePosition", () => {
       await dataStore.getUint(
         keys.claimableCollateralAmountKey(ethUsdMarket.marketToken, usdc.address, timeKey, user0.address)
       )
-    ).eq(expandDecimals(420, 6)); // includes the pending impact from increase + calculated impact from decrease
+    ).eq(expandDecimals(20, 6));
 
     // the impact pool increased from 0 by ~0.004 ETH, 20 USD
-    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq("88000000000000000"); // 0.088 ETH
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq("84000000000000000"); // 0.084 ETH
 
     expect(await wnt.balanceOf(user1.address)).eq(0);
     expect(await usdc.balanceOf(user1.address)).eq(0);
 
     expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, wnt.address)).eq(expandDecimals(1000, 18));
     // 2 USD was paid from the position's collateral for price impact
-    expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, usdc.address)).eq(expandDecimals(1_000_440, 6)); // TODO: Why the 2 USD was not paid?
+    expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, usdc.address)).eq(expandDecimals(1_000_420, 6));
 
     await usingResult(
       reader.getPositionInfo(
@@ -272,7 +272,7 @@ describe("Exchange.DecreasePosition", () => {
         true
       ),
       (positionInfo) => {
-        expect(positionInfo.position.numbers.collateralAmount).eq(expandDecimals(49_140, 6));
+        expect(positionInfo.position.numbers.collateralAmount).eq(expandDecimals(49_560, 6));
         expect(positionInfo.position.numbers.sizeInTokens).eq("36000000000000000000"); // 36.00 - price impact not included
         expect(positionInfo.position.numbers.sizeInUsd).eq(decimalToFloat(180_000));
         expect(positionInfo.basePnlUsd).eq("0");
@@ -297,6 +297,6 @@ describe("Exchange.DecreasePosition", () => {
       .connect(user0)
       .claimCollateral([ethUsdMarket.marketToken], [usdc.address], [timeKey], user1.address);
 
-    expect(await usdc.balanceOf(user1.address)).eq(expandDecimals(336, 6)); // TODO: confirm user1 received the corect amount
+    expect(await usdc.balanceOf(user1.address)).eq(expandDecimals(16, 6));
   });
 });

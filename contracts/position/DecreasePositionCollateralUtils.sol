@@ -152,12 +152,27 @@ library DecreasePositionCollateralUtils {
             cache.prices.indexTokenPrice
         );
 
-        values.priceImpactDiffUsd = _getPriceImpactDiffUsd(
-            params.contracts.dataStore,
-            params.market.marketToken,
-            params.order.sizeDeltaUsd(),
-            values.priceImpactUsd + collateralCache.priceImpact.proportionalImpactPendingUsd
-        );
+        if (values.priceImpactUsd + collateralCache.priceImpact.proportionalImpactPendingUsd < 0) {
+            uint256 maxPriceImpactFactor = MarketUtils.getMaxPositionImpactFactor(
+                params.contracts.dataStore,
+                params.market.marketToken,
+                false
+            );
+
+            // convert the max price impact to the min negative value
+            // e.g. if sizeDeltaUsd is 10,000 and maxPriceImpactFactor is 2%
+            // then minPriceImpactUsd = -200
+            int256 minPriceImpactUsd = -Precision.applyFactor(params.order.sizeDeltaUsd(), maxPriceImpactFactor).toInt256();
+
+            // cap priceImpactUsd to the min negative value and store the difference in priceImpactDiffUsd
+            // e.g. if priceImpactUsd is -500 and minPriceImpactUsd is -200
+            // then set priceImpactDiffUsd to -200 - -500 = 300
+            // set priceImpactUsd to -200
+            if (values.priceImpactUsd < minPriceImpactUsd) {
+                values.priceImpactDiffUsd = (minPriceImpactUsd - values.priceImpactUsd).toUint256();
+                values.priceImpactUsd = minPriceImpactUsd;
+            }
+        }
 
         // use indexTokenPrice.min to maximize the position impact pool reduction
         collateralCache.priceImpact.cappedTotalImpactUsd = MarketUtils.getCappedPositionImpactUsd(
@@ -739,20 +754,5 @@ library DecreasePositionCollateralUtils {
             : proportionalImpactPendingAmount * indexTokenPrice.max.toInt256();
 
         return (proportionalImpactPendingAmount, proportionalImpactPendingUsd);
-    }
-
-    // capped at max price impact factor, not the pool impact amount
-    function _getPriceImpactDiffUsd(
-        DataStore dataStore,
-        address market,
-        uint256 sizeDeltaUsd,
-        int256 totalPriceImpactUsd
-    ) private view returns (uint256) {
-        if (totalPriceImpactUsd >= 0) { return 0; }
-
-        uint256 maxNegativeImpactFactor = MarketUtils.getMaxPositionImpactFactor(dataStore, market, false);
-        int256 minPriceImpactUsd = -Precision.applyFactor(sizeDeltaUsd, maxNegativeImpactFactor).toInt256();
-
-        return (minPriceImpactUsd - totalPriceImpactUsd).toUint256();
     }
 }
