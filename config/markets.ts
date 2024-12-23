@@ -679,7 +679,7 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(1285, 18),
       maxShortTokenPoolAmount: expandDecimals(4_500_000, 6),
 
-      maxPoolUsdForDeposit: decimalToFloat(4_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(5_000_000),
 
       negativePositionImpactFactor: exponentToFloat("21e-9"),
       positivePositionImpactFactor: exponentToFloat("7e-9"),
