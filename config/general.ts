@@ -127,7 +127,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     arbitrum: {
       maxAutoCancelOrders: 11,
       maxTotalCallbackGasLimitForAutoCancelOrders: 10_000_000,
-      maxCallbackGasLimit: 4_000_000,
+      maxCallbackGasLimit: 5_000_000,
       estimatedGasPerOraclePrice: false,
       executionGasPerOraclePrice: false,
       estimatedGasFeeBaseAmount: false,

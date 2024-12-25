@@ -63,6 +63,7 @@
     "ethers-proxies": "^1.0.0",
     "express": "^4.18.2",
     "get-all-files": "^4.1.0",
+    "glob": "10",
     "graphql": "^16.8.1",
     "hardhat-contract-sizer": "^2.6.1",
     "javascript-time-ago": "^2.5.9",
