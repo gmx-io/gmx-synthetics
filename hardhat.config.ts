@@ -277,6 +277,7 @@ task("update-market-config", "Update market config")
   .addParam("write", "Write to the config", false, types.boolean)
   .addOptionalParam("market", "Market address", undefined, types.string)
   .addOptionalParam("includeRiskOracleBaseKeys", "Include risk oracle base keys", false, types.boolean)
+  .addOptionalParam("includeKeeperBaseKeys", "Include keeper base keys", false, types.boolean)
   .setAction(updateMarketConfig);
 
 export default config;

@@ -14,7 +14,30 @@ const RISK_ORACLE_MANAGED_BASE_KEYS = [
   keys.POSITION_IMPACT_FACTOR,
   keys.POSITION_IMPACT_EXPONENT_FACTOR,
 ];
+
 const RISK_ORACLE_SUPPORTED_NETWORKS = ["arbitrum", "avalanche", "avalancheFuji"];
+
+function getRiskOracleManagedBaseKeys() {
+  if (RISK_ORACLE_SUPPORTED_NETWORKS.includes(hre.network.name)) {
+    return RISK_ORACLE_MANAGED_BASE_KEYS;
+  }
+
+  return [];
+}
+
+const KEEPER_MANAGED_BASE_KEYS_ARBITRUM = [
+  keys.MAX_FUNDING_FACTOR_PER_SECOND,
+  keys.FUNDING_INCREASE_FACTOR_PER_SECOND,
+  keys.FUNDING_DECREASE_FACTOR_PER_SECOND,
+];
+
+function getKeeperManagedBaseKeys() {
+  if (hre.network.name === "arbitrum") {
+    return KEEPER_MANAGED_BASE_KEYS_ARBITRUM;
+  }
+
+  return [];
+}
 
 const processMarkets = async ({
   markets,
@@ -25,24 +48,25 @@ const processMarkets = async ({
   generalConfig,
   handleConfig: handleConfigArg,
   includeRiskOracleBaseKeys,
+  includeKeeperBaseKeys,
 }) => {
-  const shouldHandleBaseKey = (baseKey: string, isSupportedByRiskOracle: boolean) => {
-    if (!RISK_ORACLE_SUPPORTED_NETWORKS.includes(hre.network.name)) {
-      return true;
+  const shouldIgnoreBaseKey = (
+    baseKey: string,
+    isSupportedByRiskOracle: boolean
+  ): [true, "riskOracle" | "keeper"] | [false] => {
+    if (getRiskOracleManagedBaseKeys().includes(baseKey) && isSupportedByRiskOracle && !includeRiskOracleBaseKeys) {
+      return [true, "riskOracle"];
     }
 
-    if (!RISK_ORACLE_MANAGED_BASE_KEYS.includes(baseKey)) {
-      return true;
+    if (getKeeperManagedBaseKeys().includes(baseKey) && !includeKeeperBaseKeys) {
+      return [true, "keeper"];
     }
 
-    if (isSupportedByRiskOracle) {
-      return includeRiskOracleBaseKeys;
-    }
-
-    return true;
+    return [false];
   };
 
   const ignoredRiskOracleParams: string[] = [];
+  const ignoredKeeperParams: string[] = [];
 
   for (const marketConfig of markets) {
     const [indexToken, longToken, shortToken] = getMarketTokenAddresses(marketConfig, tokens);
@@ -71,10 +95,16 @@ const processMarkets = async ({
     const marketLabel = `${marketConfig.tokens.indexToken} [${marketConfig.tokens.longToken}-${marketConfig.tokens.shortToken}]`;
 
     const handleConfig = async (type, baseKey, keyData, value, label) => {
-      if (shouldHandleBaseKey(baseKey, supportedRiskOracleMarkets.has(marketConfig))) {
-        await handleConfigArg(type, baseKey, keyData, value, label);
+      const [skip, skipReason] = shouldIgnoreBaseKey(baseKey, supportedRiskOracleMarkets.has(marketConfig));
+
+      if (skip) {
+        if (skipReason === "riskOracle") {
+          ignoredRiskOracleParams.push(label);
+        } else if (skipReason === "keeper") {
+          ignoredKeeperParams.push(label);
+        }
       } else {
-        ignoredRiskOracleParams.push(label);
+        await handleConfigArg(type, baseKey, keyData, value, label);
       }
     };
 
@@ -417,7 +447,7 @@ const processMarkets = async ({
       );
     }
 
-    if (marketConfig.fundingIncreaseFactorPerSecond) {
+    if (marketConfig.fundingIncreaseFactorPerSecond !== undefined) {
       await handleConfig(
         "uint",
         keys.FUNDING_INCREASE_FACTOR_PER_SECOND,
@@ -427,7 +457,7 @@ const processMarkets = async ({
       );
     }
 
-    if (marketConfig.fundingDecreaseFactorPerSecond) {
+    if (marketConfig.fundingDecreaseFactorPerSecond !== undefined) {
       await handleConfig(
         "uint",
         keys.FUNDING_DECREASE_FACTOR_PER_SECOND,
@@ -437,7 +467,7 @@ const processMarkets = async ({
       );
     }
 
-    if (marketConfig.maxFundingFactorPerSecond) {
+    if (marketConfig.maxFundingFactorPerSecond !== undefined) {
       await handleConfig(
         "uint",
         keys.MAX_FUNDING_FACTOR_PER_SECOND,
@@ -447,7 +477,7 @@ const processMarkets = async ({
       );
     }
 
-    if (marketConfig.minFundingFactorPerSecond) {
+    if (marketConfig.minFundingFactorPerSecond !== undefined) {
       await handleConfig(
         "uint",
         keys.MIN_FUNDING_FACTOR_PER_SECOND,
@@ -457,7 +487,7 @@ const processMarkets = async ({
       );
     }
 
-    if (marketConfig.thresholdForStableFunding) {
+    if (marketConfig.thresholdForStableFunding !== undefined) {
       await handleConfig(
         "uint",
         keys.THRESHOLD_FOR_STABLE_FUNDING,
@@ -467,7 +497,7 @@ const processMarkets = async ({
       );
     }
 
-    if (marketConfig.thresholdForDecreaseFunding) {
+    if (marketConfig.thresholdForDecreaseFunding !== undefined) {
       await handleConfig(
         "uint",
         keys.THRESHOLD_FOR_DECREASE_FUNDING,
@@ -477,7 +507,7 @@ const processMarkets = async ({
       );
     }
 
-    if (marketConfig.liquidationFeeFactor) {
+    if (marketConfig.liquidationFeeFactor !== undefined) {
       await handleConfig(
         "uint",
         keys.LIQUIDATION_FEE_FACTOR,
@@ -487,7 +517,7 @@ const processMarkets = async ({
       );
     }
 
-    if (marketConfig.positionFeeFactorForPositiveImpact) {
+    if (marketConfig.positionFeeFactorForPositiveImpact !== undefined) {
       await handleConfig(
         "uint",
         keys.POSITION_FEE_FACTOR,
@@ -497,7 +527,7 @@ const processMarkets = async ({
       );
     }
 
-    if (marketConfig.positionFeeFactorForNegativeImpact) {
+    if (marketConfig.positionFeeFactorForNegativeImpact !== undefined) {
       await handleConfig(
         "uint",
         keys.POSITION_FEE_FACTOR,
@@ -527,7 +557,7 @@ const processMarkets = async ({
       );
     }
 
-    if (marketConfig.baseBorrowingFactorForLongs) {
+    if (marketConfig.baseBorrowingFactorForLongs !== undefined) {
       await handleConfig(
         "uint",
         keys.BASE_BORROWING_FACTOR,
@@ -537,7 +567,7 @@ const processMarkets = async ({
       );
     }
 
-    if (marketConfig.baseBorrowingFactorForShorts) {
+    if (marketConfig.baseBorrowingFactorForShorts !== undefined) {
       await handleConfig(
         "uint",
         keys.BASE_BORROWING_FACTOR,
@@ -547,7 +577,7 @@ const processMarkets = async ({
       );
     }
 
-    if (marketConfig.aboveOptimalUsageBorrowingFactorForLongs) {
+    if (marketConfig.aboveOptimalUsageBorrowingFactorForLongs !== undefined) {
       await handleConfig(
         "uint",
         keys.ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR,
@@ -557,7 +587,7 @@ const processMarkets = async ({
       );
     }
 
-    if (marketConfig.aboveOptimalUsageBorrowingFactorForShorts) {
+    if (marketConfig.aboveOptimalUsageBorrowingFactorForShorts !== undefined) {
       await handleConfig(
         "uint",
         keys.ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR,
@@ -567,7 +597,7 @@ const processMarkets = async ({
       );
     }
 
-    if (marketConfig.borrowingFactorForLongs) {
+    if (marketConfig.borrowingFactorForLongs !== undefined) {
       await handleConfig(
         "uint",
         keys.BORROWING_FACTOR,
@@ -577,7 +607,7 @@ const processMarkets = async ({
       );
     }
 
-    if (marketConfig.borrowingFactorForShorts) {
+    if (marketConfig.borrowingFactorForShorts !== undefined) {
       await handleConfig(
         "uint",
         keys.BORROWING_FACTOR,
@@ -587,7 +617,7 @@ const processMarkets = async ({
       );
     }
 
-    if (marketConfig.borrowingExponentFactorForLongs) {
+    if (marketConfig.borrowingExponentFactorForLongs !== undefined) {
       await handleConfig(
         "uint",
         keys.BORROWING_EXPONENT_FACTOR,
@@ -597,7 +627,7 @@ const processMarkets = async ({
       );
     }
 
-    if (marketConfig.borrowingExponentFactorForShorts) {
+    if (marketConfig.borrowingExponentFactorForShorts !== undefined) {
       await handleConfig(
         "uint",
         keys.BORROWING_EXPONENT_FACTOR,
@@ -658,10 +688,15 @@ const processMarkets = async ({
     }
   }
 
-  return ignoredRiskOracleParams;
+  return [ignoredRiskOracleParams, ignoredKeeperParams];
 };
 
-export async function updateMarketConfig({ write = false, market = undefined, includeRiskOracleBaseKeys = false }) {
+export async function updateMarketConfig({
+  write = false,
+  market = undefined,
+  includeRiskOracleBaseKeys = false,
+  includeKeeperBaseKeys = false,
+}) {
   if (!["arbitrumGoerli", "avalancheFuji", "hardhat"].includes(hre.network.name)) {
     const { errors } = await validateMarketConfigs();
     if (errors.length !== 0) {
@@ -694,6 +729,7 @@ export async function updateMarketConfig({ write = false, market = undefined, in
     supportedRiskOracleMarkets,
     generalConfig,
     includeRiskOracleBaseKeys,
+    includeKeeperBaseKeys,
     handleConfig: async (type, baseKey, keyData) => {
       if (type !== "uint") {
         throw new Error("Unsupported type");
@@ -720,7 +756,7 @@ export async function updateMarketConfig({ write = false, market = undefined, in
 
   const multicallWriteParams = [];
 
-  const ignoredRiskOracleParams = await processMarkets({
+  const [ignoredRiskOracleParams, ignoredKeeperParams] = await processMarkets({
     markets,
     includeMarket: market,
     onchainMarketsByTokens,
@@ -728,6 +764,7 @@ export async function updateMarketConfig({ write = false, market = undefined, in
     tokens,
     generalConfig,
     includeRiskOracleBaseKeys,
+    includeKeeperBaseKeys,
     handleConfig: async (type, baseKey, keyData, value, label) => {
       if (type !== "uint") {
         throw new Error("Unsupported type");
@@ -747,7 +784,14 @@ export async function updateMarketConfig({ write = false, market = undefined, in
 
   console.log("running simulation");
   await handleInBatches(multicallWriteParams, 100, async (batch) => {
-    await config.callStatic.multicall(batch);
+    await read(
+      "Config",
+      {
+        from: "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745",
+      },
+      "multicall",
+      batch
+    );
   });
 
   if (!write) {
@@ -768,30 +812,44 @@ export async function updateMarketConfig({ write = false, market = undefined, in
   }
 
   if (ignoredRiskOracleParams.length > 0) {
-    const ignoredParameterNames = [];
-
-    const marketsByParameterName = ignoredRiskOracleParams
-      .map((label) => {
-        return {
-          parameterName: label.split(" ")[0],
-          market: label.split(" ").slice(1, 3).join(" "),
-        };
-      })
-      .reduce((acc, { parameterName, market }) => {
-        acc[parameterName] = acc[parameterName] || [];
-        acc[parameterName].push(market);
-        return acc;
-      }, {} as Record<string, string[]>);
-
-    Object.entries(marketsByParameterName).forEach(([parameterName]) => {
-      ignoredParameterNames.push(parameterName);
-    });
+    const ignoredParameterNames = getIgnoredParameterNames(ignoredRiskOracleParams);
 
     console.info("\n=================\n");
     console.info(`WARN: Ignored risk oracle params for ${supportedRiskOracleMarkets.size} markets`);
     console.info(`Ignored params: ${ignoredParameterNames.join(",")}`);
     console.info("Add INCLUDE_RISK_ORACLE_BASE_KEYS=true to include them\n");
   }
+
+  if (ignoredKeeperParams.length > 0) {
+    const ignoredParameterNames = getIgnoredParameterNames(ignoredKeeperParams);
+
+    console.info("\n=================\n");
+    console.info(`Ignored params: ${ignoredParameterNames.join(",")}`);
+    console.info("Add INCLUDE_KEEPER_BASE_KEYS=true to include them\n");
+  }
+}
+
+function getIgnoredParameterNames(ignoredParams) {
+  const ignoredParameterNames = [];
+
+  const marketsByParameterName = ignoredParams
+    .map((label) => {
+      return {
+        parameterName: label.split(" ")[0],
+        market: label.split(" ").slice(1, 3).join(" "),
+      };
+    })
+    .reduce((acc, { parameterName, market }) => {
+      acc[parameterName] = acc[parameterName] || [];
+      acc[parameterName].push(market);
+      return acc;
+    }, {} as Record<string, string[]>);
+
+  Object.entries(marketsByParameterName).forEach(([parameterName]) => {
+    ignoredParameterNames.push(parameterName);
+  });
+
+  return ignoredParameterNames;
 }
 
 async function getSupportedRiskOracleMarkets(markets, tokens, onchainMarketsByTokens) {
