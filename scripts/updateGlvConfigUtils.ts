@@ -73,7 +73,7 @@ const processGlvs = async ({ glvs, onchainMarketsByTokens, tokens, handleConfig,
           keys.IS_GLV_MARKET_DISABLED,
           encodeData(["address", "address"], [glvAddress, marketAddress]),
           glvMarketConfig.isMarketDisabled,
-          `isMarketDisabled ${glvSymbol}`
+          `isMarketDisabled market ${indexToken.symbol}/USD in ${glvSymbol}`
         );
       }
       await handleConfig(
@@ -81,14 +81,14 @@ const processGlvs = async ({ glvs, onchainMarketsByTokens, tokens, handleConfig,
         keys.GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT,
         encodeData(["address", "address"], [glvAddress, marketAddress]),
         glvMarketConfig.glvMaxMarketTokenBalanceAmount,
-        `glvMaxMarketTokenBalanceAmount ${glvSymbol}`
+        `glvMaxMarketTokenBalanceAmount market ${indexToken.symbol}/USD in ${glvSymbol}`
       );
       await handleConfig(
         "uint",
         keys.GLV_MAX_MARKET_TOKEN_BALANCE_USD,
         encodeData(["address", "address"], [glvAddress, marketAddress]),
         glvMarketConfig.glvMaxMarketTokenBalanceUsd,
-        `glvMaxMarketTokenBalanceUsd ${glvSymbol}`
+        `glvMaxMarketTokenBalanceUsd market ${indexToken.symbol}/USD in ${glvSymbol}`
       );
     }
   }
