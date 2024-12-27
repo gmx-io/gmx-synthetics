@@ -429,8 +429,6 @@ describe("Guardian.Fees", () => {
       },
     });
 
-    // Resulting position has $25,000 - $50 of collateral
-    // & $50_000 - ~$25 of size in tokens E.g. 49,975 / 5,000 = 9.995 ETH
     const positionKey = getPositionKey(user0.address, ethUsdMarket.marketToken, usdc.address, true);
     const position = await reader.getPosition(dataStore.address, positionKey);
 
@@ -480,10 +478,8 @@ describe("Guardian.Fees", () => {
     expect(poolValueInfo.longTokenAmount).to.eq(expandDecimals(1_000, 18));
 
     let impactPoolAmount = bigNumberify(0);
-    // Now there is an offset of $25 worth of ETH that is being subtracted from the poolvalue, this way the trader's
-    // immediate net pnl of -$25 does not affect the pool value above.
-    const impactPendingAmountLong = bigNumberify(-expandDecimals(5, 15));
-    expect(poolValueInfo.impactPoolAmount).to.eq(impactPoolAmount); // 0.005 ETH
+    expect(poolValueInfo.impactPoolAmount).to.eq(impactPoolAmount); // 0
+    let impactPendingAmountLong = bigNumberify(-expandDecimals(5, 15));
     expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey))).to.eq(impactPendingAmountLong); // -0.005 ETH
 
     // Open a position and get positively impacted, pay a 0.05% positionFeeFactor rate
@@ -551,7 +547,7 @@ describe("Guardian.Fees", () => {
       prices.ethUsdMarket.withSpread.indexTokenPrice,
       true
     );
-    expect(poolPnl).to.eq(expandDecimals(200, 30)); // $100+ $100 = $200.00
+    expect(poolPnl).to.eq(expandDecimals(200, 30)); // $100 + $100 = $200.00
 
     // ETH Price down $10 for long,
     // $10 loss per ETH, position size of 10 ETH
@@ -1000,7 +996,8 @@ describe("Guardian.Fees", () => {
     // 0.005 ETH from opening long - 0.0025 ETH from opening short + 0.00125 ETH from decreasing short + 0.000625 ETH from decreasing long, extra wei from rounding
     // impact pool amount has not changed
     expect(poolValueInfo.impactPoolAmount).to.eq(impactPoolAmount); // 0.005625 ETH
-    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey))).to.eq(impactPendingAmountLong); // 0.005 ETH
+    impactPendingAmountLong = bigNumberify(0); // position has been decreased entirely => no impact pending
+    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey))).to.eq(impactPendingAmountLong); // 0
     expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey2))).to.eq(impactPendingAmountShort); // 0.00125 ETH
 
     user0WntBalBefore = await wnt.balanceOf(user0.address);
@@ -1058,6 +1055,8 @@ describe("Guardian.Fees", () => {
 
     expect(await getOrderCount(dataStore)).to.eq(0);
     expect(await getPositionCount(dataStore)).to.eq(0);
+    impactPendingAmountShort = bigNumberify(0); // short position has been liqudated => no impact pending
+    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey2))).to.eq(impactPendingAmountShort); // 0
 
     user0WntBalAfter = await wnt.balanceOf(user0.address);
     user0UsdcBalAfter = await usdc.balanceOf(user0.address);
@@ -1135,11 +1134,9 @@ describe("Guardian.Fees", () => {
     expect(poolValueInfo.poolValue).to.eq(depositedValue.sub(impactPoolAmount.add(1).mul(expandDecimals(5000, 12))));
     expect(marketTokenPrice).to.eq("1001037284414600781139500000000"); // TODO: market token price is slightly higher. Confirm this is correct
 
-    // TODO: long position was decreased entirely (i.e. closed)
-    // Why if querying the data store using getImpactPendingAmountKey the impactPendingAmount is NOT 0?
-    // but querying the position.numbers.impactPendingAmount it is 0
-    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey))).to.eq("-5000000000000000"); // -0.005 ETH
-    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey2))).to.eq("1250000000000000"); // 0.00125 ETH
+    // position 1 has been decreased entirely, position 2 has been liquidated => no impact pending for both
+    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey))).to.eq(0);
+    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey2))).to.eq(0);
     expect(position1.numbers.impactPendingAmount).to.eq(0);
     expect(position2.numbers.impactPendingAmount).to.eq(0);
   });

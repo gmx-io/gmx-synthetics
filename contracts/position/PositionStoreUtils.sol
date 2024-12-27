@@ -205,6 +205,10 @@ library PositionStoreUtils {
             keccak256(abi.encode(key, COLLATERAL_TOKEN))
         );
 
+        dataStore.removeInt(
+            keccak256(abi.encode(key, IMPACT_PENDING_AMOUNT))
+        );
+
         dataStore.removeUint(
             keccak256(abi.encode(key, SIZE_IN_USD))
         );
