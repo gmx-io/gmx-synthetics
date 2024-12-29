@@ -79,8 +79,8 @@ describe("Exchange.DecreasePosition", () => {
     );
 
     expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq("0");
-    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0Long))).eq("-79999999999999999"); // -0.08 ETH
-    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0Short))).eq("39999999999999999"); // 0.04 ETH
+    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0Long))).eq("-79999999999999999"); // -0.079999999999999999 ETH
+    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0Short))).eq("39999999999999999"); // 0.039999999999999999 ETH
 
     expect(await wnt.balanceOf(user1.address)).eq(0);
     expect(await usdc.balanceOf(user1.address)).eq(0);
@@ -96,15 +96,18 @@ describe("Exchange.DecreasePosition", () => {
     });
 
     // the impact pool increased by ~0.0088 ETH, 44 USD
-    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq("8796812749003984"); // ~0.00088 ETH
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq("8796812749003984"); // ~0.0088 ETH
     expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0Long))).eq("-72000000000000000"); // -0.072
-    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0Short))).eq("39999999999999999"); // 0.04
+    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0Short))).eq("39999999999999999"); // 0.039999999999999999
 
-    // since there is no pnl from increase/decrease and initialCollateralDeltaAmount for decrease is 0, the user doesn't receive any tokens
+    expect(await wnt.balanceOf(user1.address)).eq("15936254980079681"); // 0.015936254980079681, ~79,68 USD
     expect(await usdc.balanceOf(user1.address)).eq(0);
 
+    // the positive price impact is in WNT, and was deducted from user's collateral (poolAmount increased by $44.16, collateralAmount decreased by $44.16)
+    // the DecreasePositionCollateralUtils.payForCost function deducts from the collateral first before the secondaryOutputAmount
+    // so the collateral was reduced and the user received the positive price impact as an output amount
+    // 1000 - 0.015936254980079681 = 999.984063745019920319
     expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, wnt.address)).eq("999984063745019920319"); // 999.984063745019920319
-    // ~44 USD was paid from the position's collateral for price impact
     expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, usdc.address)).eq(expandDecimals(1_000_044_160, 3));
 
     await usingResult(
@@ -130,6 +133,9 @@ describe("Exchange.DecreasePosition", () => {
       ([marketTokenPrice, poolValueInfo]) => {
         expect(marketTokenPrice).eq("999986749110225763612500000000");
         expect(poolValueInfo.poolValue).eq("5999920494661354581675000000000000000");
+        expect(poolValueInfo.longPnl).eq(0);
+        expect(poolValueInfo.shortPnl).eq(0);
+        expect(poolValueInfo.netPnl).eq(0);
       }
     );
 
