@@ -258,7 +258,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
 
     await handleOrder(fixture, { create: params });
 
-    expect((await provider.getBalance(user1.address)).sub(initialBalance)).closeTo("206999985656000", "10000000000000");
+    expect((await provider.getBalance(user1.address)).sub(initialBalance)).closeTo("256473986051792", "10000000000000");
   });
 
   it("refund execution fee callback", async () => {
@@ -290,7 +290,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
 
     expect((await provider.getBalance(user1.address)).sub(initialBalance)).eq(0);
 
-    expect(await provider.getBalance(mockCallbackReceiver.address)).closeTo("187324985498600", "10000000000000");
+    expect(await provider.getBalance(mockCallbackReceiver.address)).closeTo("236798985894392", "10000000000000");
   });
 
   it("validates reserve", async () => {
@@ -390,6 +390,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
 
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 7));
 
+    // TODO: Error: Order was not cancelled, expected cancellation with reason: LiquidatablePosition
     await handleOrder(fixture, {
       create: { ...params, initialCollateralDeltaAmount: 0, minOutputAmount: 0, account: user0 },
       execute: {

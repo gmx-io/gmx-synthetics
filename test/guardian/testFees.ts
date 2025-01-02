@@ -1132,7 +1132,7 @@ describe("Guardian.Fees", () => {
     const depositedValue = poolValueInfo.shortTokenAmount.mul(expandDecimals(1, 24)).add(expandDecimals(5_000_000, 30));
 
     expect(poolValueInfo.poolValue).to.eq(depositedValue.sub(impactPoolAmount.add(1).mul(expandDecimals(5000, 12))));
-    expect(marketTokenPrice).to.eq("1001037284414600781139500000000"); // TODO: market token price is slightly higher. Confirm this is correct
+    expect(marketTokenPrice).to.eq("1001037284414600781139500000000");
 
     // position 1 has been decreased entirely, position 2 has been liquidated => no impact pending for both
     expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey))).to.eq(0);

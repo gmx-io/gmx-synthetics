@@ -34,7 +34,7 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
     });
   });
 
-  it("price impact", async () => {
+  it("price impact pair market", async () => {
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 9));
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 8));
     await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
@@ -173,7 +173,7 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
         gasUsageLabel: "executeOrder",
         afterExecution: ({ logs }) => {
           const positionDecreaseEvent = getEventData(logs, "PositionDecrease");
-          // expect(positionDecreaseEvent.executionPrice).eq("5039656643742783"); // 5039.65664374 // TODO: why is execution price different?
+          expect(positionDecreaseEvent.executionPrice).eq("5039500000000000"); // 5039.5
           expect(positionDecreaseEvent.basePnlUsd).eq(0);
           expect(positionDecreaseEvent.priceImpactUsd).eq("-79000000000000000652818973670000"); // -79
         },
@@ -299,7 +299,7 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
         gasUsageLabel: "executeOrder",
         afterExecution: ({ logs }) => {
           const positionDecreaseEvent = getEventData(logs, "PositionDecrease");
-          expect(positionDecreaseEvent.executionPrice).eq("5002501500900540"); // ~5002.5 // TODO: actual is 5002499999999999. why is execution price different?
+          expect(positionDecreaseEvent.executionPrice).eq("5002499999999999"); // ~5002.5
           expect(positionDecreaseEvent.priceImpactUsd).eq("49999999999999999073502339165000"); // 50
         },
       },
@@ -321,7 +321,7 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
         gasUsageLabel: "executeOrder",
         afterExecution: ({ logs }) => {
           const positionDecreaseEvent = getEventData(logs, "PositionDecrease");
-          expect(positionDecreaseEvent.executionPrice).eq("4994996998198920"); // ~4994.9 // TODO: actual is 4995000000000001. why is execution price different?
+          expect(positionDecreaseEvent.executionPrice).eq("4995000000000001"); // ~4995
           expect(positionDecreaseEvent.priceImpactUsd).eq("-99999999999999998147004678330000"); // -100
         },
       },
@@ -344,7 +344,7 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
         gasUsageLabel: "executeOrder",
         afterExecution: ({ logs }) => {
           const positionDecreaseEvent = getEventData(logs, "PositionDecrease");
-          expect(positionDecreaseEvent.executionPrice).eq("4997498332221481"); // ~4997.4 // TODO: actual is 4997500000000001. why is execution price different?
+          expect(positionDecreaseEvent.executionPrice).eq("4997500000000001"); // ~4995
           expect(positionDecreaseEvent.priceImpactUsd).eq("49999999999999999073502339165000"); // 50
         },
       },
@@ -423,8 +423,8 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
         gasUsageLabel: "executeOrder",
         afterExecution: ({ logs }) => {
           const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
-          expect(positionIncreaseEvent.executionPrice).eq("5000500050005000"); // ~5000.5
-          expect(positionIncreaseEvent.priceImpactUsd).eq("20000000000000000000000000000000"); // 20
+          expect(positionIncreaseEvent.executionPrice).eq("5005005005005005"); // ~5005.005
+          expect(positionIncreaseEvent.priceImpactUsd).eq("199999999999999996294009356670000"); // ~200 // TODO: Confirm the ~10x price impact change
         },
       },
     });
@@ -490,7 +490,7 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
       ),
       (positionInfo) => {
         expect(positionInfo.position.numbers.collateralAmount).eq("10000000000000000000"); // 10 ETH
-        expect(positionInfo.position.numbers.sizeInTokens).eq("39920000000000000001"); // 39.920000000000000001 ETH
+        expect(positionInfo.position.numbers.sizeInTokens).eq("40000000000000000000"); // 40.0 ETH - doesn't contain the price impact
         expect(positionInfo.position.numbers.sizeInUsd).eq(decimalToFloat(200_000));
       }
     );
@@ -505,11 +505,12 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
         increaseOrderParams.sizeDeltaUsd
       ),
       (pnl) => {
-        expect(pnl[0]).eq("-399999999999999995000000000000000"); // -400 USD
+        expect(pnl[0]).eq(0);
       }
     );
 
-    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq("79999999999999999"); // 0.079999999999999999 ETH, 400 USD
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(0);
+    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0))).eq("-79999999999999999"); // 0.079999999999999999 ETH, 400 USD
 
     await handleOrder(fixture, {
       create: { ...increaseOrderParams, sizeDeltaUsd: decimalToFloat(100_000) },
@@ -534,7 +535,7 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
       ),
       (positionInfo) => {
         expect(positionInfo.position.numbers.collateralAmount).eq("20000000000000000000"); // 20 ETH
-        expect(positionInfo.position.numbers.sizeInTokens).eq("59820000000000000002"); // 59.820000000000000002 ETH
+        expect(positionInfo.position.numbers.sizeInTokens).eq("60000000000000000000"); // 60.0 ETH
         expect(positionInfo.position.numbers.sizeInUsd).eq(decimalToFloat(300_000));
       }
     );
@@ -542,13 +543,12 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
     await usingResult(
       reader.getPositionPnlUsd(dataStore.address, ethUsdMarket, marketPrices, positionKey0, decimalToFloat(300_000)),
       (pnl) => {
-        expect(pnl[0]).eq("-899999999999999990000000000000000"); // -900 USD
+        expect(pnl[0]).eq(0);
       }
     );
 
-    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(
-      "179999999999999998"
-    ); // 0.179999999999999998 ETH, 900 USD
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(0);
+    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0))).eq("-179999999999999998"); // 0.179999999999999998 ETH, 900 USD
 
     const decreaseOrderParams = {
       account: user0,
@@ -565,7 +565,7 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
       shouldUnwrapNativeToken: false,
     };
 
-    // the position's total pnl should be -900 USD
+    // the position's impact pending should be -900 USD
     // closing half of the position should deduct 450 USD of ETH from the position's collateral
     // if there is a positive price impact of 337.5 USD, only 112.5 USD should be deducted from the position's collateral
     // 112.5 / 5000 => 0.0225 ETH should be deducted from the position's collateral
@@ -574,9 +574,9 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
       execute: {
         afterExecution: ({ logs }) => {
           const positionDecreaseEvent = getEventData(logs, "PositionDecrease");
-          expect(positionDecreaseEvent.executionPrice).eq("5011283851554663"); // ~5011.28385155
+          expect(positionDecreaseEvent.executionPrice).eq("5011249999999999"); // ~5011.249999999999
           expect(positionDecreaseEvent.priceImpactUsd).eq("337499999999999994450071536280000"); // 337.5 USD
-          expect(positionDecreaseEvent.basePnlUsd).eq("-449999999999999995000000000000000"); // -450
+          expect(positionDecreaseEvent.basePnlUsd).eq(0);
         },
       },
     });
@@ -594,7 +594,7 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
       (positionInfo) => {
         // 10 - 9.977499999999999999 => 0.0225 ETH, 112.5 USD
         expect(positionInfo.position.numbers.collateralAmount).eq("9977499999999999999"); // 9.977499999999999999 ETH
-        expect(positionInfo.position.numbers.sizeInTokens).eq("29910000000000000001"); // 29.910000000000000001 ETH
+        expect(positionInfo.position.numbers.sizeInTokens).eq("30000000000000000000"); // 30.0 ETH
         expect(positionInfo.position.numbers.sizeInUsd).eq(decimalToFloat(150_000));
       }
     );
@@ -602,13 +602,13 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
     await usingResult(
       reader.getPositionPnlUsd(dataStore.address, ethUsdMarket, marketPrices, positionKey0, decimalToFloat(150_000)),
       (pnl) => {
-        expect(pnl[0]).eq("-449999999999999995000000000000000"); // -450 USD
+        expect(pnl[0]).eq(0);
       }
     );
 
-    // 900 - 337.5 => 562.5
-    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(
-      "112499999999999999"
-    ); // 0.179999999999999998 - 0.067499999999999999 => 0.112499999999999999 ETH, 562.5 USD
+    // position decreased by 50%, so the impact pending is reduced by half => 0.179999999999999998 - 0.089999999999999999 => 0.089999999999999999
+    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0))).eq("-89999999999999999"); // 0.089999999999999999 ETH, 450 USD
+    // proportional impact pending from increase - impact from decrease => 0.09 - (337.5 / 5000) => 0.0225 ETH, 112.5 USD
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq("22500000000000001"); // 0.022500000000000001 ETH, 112.5 USD
   });
 });

@@ -168,11 +168,11 @@ describe("Guardian.Lifecycle", () => {
       execute: {
         afterExecution: ({ logs }) => {
           const positionDecreaseEvent = getEventData(logs, "PositionDecrease");
-          expect(positionDecreaseEvent.executionPrice).eq("5000550055005500"); // ~5000 per token
+          expect(positionDecreaseEvent.executionPrice).eq("5000549999999999"); // ~5000.55 per token
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).closeTo("2400400000000", "10000000000"); // 0.0000024004 ETH
-          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("2088127624896444", "100000000000"); // 0.0020881 ETH
+          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("2088296461742042", "100000000000"); // 0.0020881 ETH
         },
       },
     });
@@ -225,7 +225,7 @@ describe("Guardian.Lifecycle", () => {
       execute: {
         afterExecution: ({ logs }) => {
           const positionDecreaseEvent = getEventData(logs, "PositionDecrease");
-          expect(positionDecreaseEvent.executionPrice).eq("5001550155015501"); // ~5001 per token
+          expect(positionDecreaseEvent.executionPrice).eq("5001549999999999"); // ~5001.55 per token
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).to.closeTo("4124096103897", "10000000000"); // 0.000004124053 ETH
@@ -320,7 +320,7 @@ describe("Guardian.Lifecycle", () => {
       execute: {
         afterExecution: ({ logs }) => {
           const positionDecreaseEvent = getEventData(logs, "PositionDecrease");
-          expect(positionDecreaseEvent.executionPrice).eq("5000750157533081"); // ~5000 per token
+          expect(positionDecreaseEvent.executionPrice).eq("5000749999999999"); // ~5000.75 per token
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).closeTo("225779", "20000"); // 0.225779 USDC
@@ -396,7 +396,7 @@ describe("Guardian.Lifecycle", () => {
         initialCollateralDeltaAmount: 0,
         swapPath: [],
         sizeDeltaUsd: decimalToFloat(2 * 1000), // $2,000
-        acceptablePrice: expandDecimals(49986, 11), // 4998.6 per token
+        acceptablePrice: expandDecimals(49987, 11), // 4998.7 per token
         executionFee: expandDecimals(1, 15),
         minOutputAmount: 0,
         orderType: OrderType.MarketDecrease,
@@ -406,7 +406,7 @@ describe("Guardian.Lifecycle", () => {
       execute: {
         afterExecution: ({ logs }) => {
           const positionDecreaseEvent = getEventData(logs, "PositionDecrease");
-          expect(positionDecreaseEvent.executionPrice).eq("4998599747954632"); // ~4998 per token
+          expect(positionDecreaseEvent.executionPrice).eq("4998600000000001"); // ~4998.6 per token
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).closeTo("20738", "20000"); // 0.020738 USDC
@@ -435,7 +435,7 @@ describe("Guardian.Lifecycle", () => {
       execute: {
         afterExecution: ({ logs }) => {
           const positionDecreaseEvent = getEventData(logs, "PositionDecrease");
-          expect(positionDecreaseEvent.executionPrice).eq("4998449612403101"); // ~4998 per token
+          expect(positionDecreaseEvent.executionPrice).eq("4998450000000001"); // ~4998.45 per token
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).closeTo("1", "10"); // 0.000001 USDC
@@ -464,7 +464,7 @@ describe("Guardian.Lifecycle", () => {
       execute: {
         afterExecution: ({ logs }) => {
           const positionDecreaseEvent = getEventData(logs, "PositionDecrease");
-          expect(positionDecreaseEvent.executionPrice).eq("4998349620412695"); // ~4998 per token
+          expect(positionDecreaseEvent.executionPrice).eq("4998350000000000"); // ~4998.35 per token
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).closeTo("31107", "2000"); //  0.031107 USDC
@@ -497,7 +497,7 @@ describe("Guardian.Lifecycle", () => {
       execute: {
         afterExecution: ({ logs }) => {
           const positionDecreaseEvent = getEventData(logs, "PositionDecrease");
-          expect(positionDecreaseEvent.executionPrice).eq("4999250112483128"); // ~4999 per token
+          expect(positionDecreaseEvent.executionPrice).eq("4999250000000001"); // ~4999.25 per token
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).closeTo("155534", "20000"); // 0.155534 USDC

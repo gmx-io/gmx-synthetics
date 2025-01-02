@@ -95,7 +95,7 @@ describe("Exchange.DecreasePosition", () => {
     // the positive price impact is in WNT, and was deducted from user's collateral (poolAmount increased by $2, collateralAmount decreased by $2)
     // the DecreasePositionCollateralUtils.payForCost function deducts from the collateral first before the secondaryOutputAmount
     expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, wnt.address)).eq(expandDecimals(1000, 18));
-    expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, usdc.address)).eq(expandDecimals(1_000_002, 6)); // TODO: confirm this value
+    expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, usdc.address)).eq(expandDecimals(1_000_002, 6));
 
     await usingResult(
       reader.getPositionInfo(
