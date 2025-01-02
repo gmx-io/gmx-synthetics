@@ -10,7 +10,12 @@ import { getMarketTokenPriceWithPoolValue } from "../../utils/market";
 import { grantRole } from "../../utils/role";
 import * as keys from "../../utils/keys";
 import { handleWithdrawal } from "../../utils/withdrawal";
-import { getAccountPositionCount, getPositionKeys } from "../../utils/position";
+import {
+  getAccountPositionCount,
+  getImpactPendingAmountKey,
+  getPositionKey,
+  getPositionKeys,
+} from "../../utils/position";
 import { OrderType } from "../../utils/order";
 
 describe("Guardian.PositionImpactPoolDistribution", () => {
@@ -233,9 +238,12 @@ describe("Guardian.PositionImpactPoolDistribution", () => {
       },
     });
     // 10% * 2 * $100,000 = $20,000 = 4 ETH
-    const negativePI = bigNumberify("3999999999999999926"); // ~4 ETH
+    const negativePI = bigNumberify("-3999999999999999926"); // ~4 ETH
 
-    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).to.eq(negativePI);
+    const positionKey1 = getPositionKey(user1.address, ethUsdMarket.marketToken, usdc.address, false);
+    const impactPendingAmount1 = await dataStore.getInt(getImpactPendingAmountKey(positionKey1));
+    expect(impactPendingAmount1).eq(negativePI);
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).to.eq(0);
     await time.increase(50_000); // 0.00002 ETH/sec * 50,000 sec = 1 ETH should be distributed
 
     // Check that User1's order got filled
@@ -257,10 +265,15 @@ describe("Guardian.PositionImpactPoolDistribution", () => {
     });
     const positivePI = expandDecimals(4, 16);
     const distributionAmt = expandDecimals(1, 18);
+    // TODO: No distribution is done on position increase => test distribution differently
 
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).to.eq(0);
+    const positionKey0 = getPositionKey(user0.address, ethUsdMarket.marketToken, wnt.address, true);
+    const impactPendingAmount0 = await dataStore.getInt(getImpactPendingAmountKey(positionKey0));
+    expect(impactPendingAmount0).eq(positivePI); // Why is this failing? TODO: calculate the expected value
     // Approximate as distribution may not be exactly 1 ETH due to time differences
-    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).to.approximately(
-      negativePI.sub(distributionAmt).sub(positivePI),
+    expect(impactPendingAmount1.add(impactPendingAmount0)).to.approximately(
+      negativePI.add(positivePI),
       expandDecimals(1, 14)
     );
 
@@ -272,9 +285,9 @@ describe("Guardian.PositionImpactPoolDistribution", () => {
 
     const initialSizeInTokens = expandDecimals(2, 18);
 
-    // Because we experienced +PI, our size in tokens should be greater than ($10,000 / $5,000)
+    // Experienced +PI, but size in tokens remains the same (does not include the price impact)
     const sizeInTokens = longPosition.numbers.sizeInTokens;
-    expect(sizeInTokens).to.be.greaterThan(initialSizeInTokens);
-    expect(sizeInTokens).to.eq("2040000000000000000");
+    expect(sizeInTokens).to.be.eq(initialSizeInTokens);
+    expect(sizeInTokens).to.eq("2000000000000000000"); // price impact not included
   });
 });
