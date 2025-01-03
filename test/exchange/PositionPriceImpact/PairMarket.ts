@@ -171,8 +171,6 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
         .add(position0Short.numbers.impactPendingAmount)
     ).eq("-312099999999999995"); // -0.08 - 0.24 + 0.0079 = -0.3121 ETH, 1560.5 USD
 
-    console.log("await getPositionKeys(dataStore, 0, 10);", await getPositionKeys(dataStore, 0, 10));
-
     // decrease short position, negative price impact
     await handleOrder(fixture, {
       create: {
