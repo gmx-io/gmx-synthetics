@@ -117,12 +117,19 @@ async function main() {
   }
 
   const seenRecipients = new Set();
+  for (const recipient of recipients) {
+    if (seenRecipients.has(recipient)) {
+      throw new Error(`Duplicated recipient ${recipient}`);
+    }
+    seenRecipients.add(recipient);
+  }
+
   const txHashes = [];
   const batchesInProgress = readBatchesInProgress(data.id);
   const batchesCount = Math.ceil(amounts.length / batchSize);
   const lastSentBatchIndex = batchesInProgress[data.id].lastSentBatchIndex;
 
-  let recipientI = (lastSentBatchIndex + 1) * batchSize;
+  const firstRecipientIndex = (lastSentBatchIndex + 1) * batchSize;
   if (lastSentBatchIndex >= 0) {
     const firstRecipientIndex = (lastSentBatchIndex + 1) * batchSize;
     const firstRecipient = recipients[firstRecipientIndex];
@@ -136,23 +143,29 @@ async function main() {
     await setTimeout(5000);
   }
 
-  console.log("running simulation");
+  const batches = [];
   for (const batchIndex of range(lastSentBatchIndex + 1, batchesCount)) {
     const from = batchIndex * batchSize;
     const to = Math.min(from + batchSize, amounts.length);
     const batchAmounts = amounts.slice(from, to);
     const batchRecipients = recipients.slice(from, to);
+    batches.push({
+      from,
+      to,
+      batchAmounts,
+      batchRecipients,
+      batchIndex,
+    });
+  }
 
+  console.log("running simulation");
+  for (const [i, { batchIndex, from, to, batchAmounts, batchRecipients }] of batches.entries()) {
     console.log("simulating sending batch %s-%s token %s typeId %s", from, to, data.token, data.distributionTypeId);
 
     for (const [j, recipient] of batchRecipients.entries()) {
-      if (seenRecipients.has(recipient)) {
-        throw new Error(`Duplicated recipient ${recipient} batch ${from}-${to} (exclusive)`);
-      }
-      seenRecipients.add(recipient);
       console.log(
         "%s recipient %s amount %s (%s)",
-        recipientI++,
+        firstRecipientIndex + i,
         recipient,
         formatAmount(batchAmounts[j], 18, 2, true),
         batchAmounts[j]
@@ -177,18 +190,13 @@ async function main() {
   }
 
   if (write) {
-    for (const batchIndex of range(lastSentBatchIndex + 1, batchesCount)) {
-      const from = batchIndex * batchSize;
-      const to = Math.min(from + batchSize, amounts.length);
-      const batchAmounts = amounts.slice(from, to);
-      const batchRecipients = recipients.slice(from, to);
-
+    for (const [i, { batchIndex, from, to, batchAmounts, batchRecipients }] of batches.entries()) {
       console.log("sending batch %s-%s token %s typeId %s", from, to, data.token, data.distributionTypeId);
 
       for (const [j, recipient] of batchRecipients.entries()) {
         console.log(
           "%s recipient %s amount %s (%s)",
-          recipientI++,
+          firstRecipientIndex + i,
           recipient,
           formatAmount(batchAmounts[j], 18, 2, true),
           batchAmounts[j]
