@@ -224,7 +224,7 @@ describe("Guardian.PositionImpactPoolDistribution", () => {
     expect(await getAccountPositionCount(dataStore, user0.address)).eq(0);
     expect(await getAccountPositionCount(dataStore, user1.address)).eq(0);
 
-    // User1 creates a market increase unbalancing the pool
+    // User1 creates a short market increase unbalancing the pool
     await handleOrder(fixture, {
       create: {
         account: user1,
@@ -237,20 +237,17 @@ describe("Guardian.PositionImpactPoolDistribution", () => {
         isLong: false,
       },
     });
-    // 10% * 2 * $100,000 = $20,000 = 4 ETH
-    const negativePI = bigNumberify("-3999999999999999926"); // ~4 ETH
-
-    const positionKey1 = getPositionKey(user1.address, ethUsdMarket.marketToken, usdc.address, false);
-    const impactPendingAmount1 = await dataStore.getInt(getImpactPendingAmountKey(positionKey1));
-    expect(impactPendingAmount1).eq(negativePI);
-    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).to.eq(0);
-    await time.increase(50_000); // 0.00002 ETH/sec * 50,000 sec = 1 ETH should be distributed
 
     // Check that User1's order got filled
     expect(await getAccountPositionCount(dataStore, user1.address)).eq(1);
 
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).to.eq(0);
+
+    const positionKey1 = getPositionKey(user1.address, ethUsdMarket.marketToken, usdc.address, false);
+    let impactPendingAmount1 = await dataStore.getInt(getImpactPendingAmountKey(positionKey1));
+    expect(impactPendingAmount1).eq("-3999999999999999926"); // 10% * 2 * $100,000 = $20,000 = ~4 ETH
+
     // User0 creates a long market increase to balance the pool
-    // This order will distribute 1 ETH + take out 0.04 ETH
     await handleOrder(fixture, {
       create: {
         account: user0,
@@ -263,31 +260,61 @@ describe("Guardian.PositionImpactPoolDistribution", () => {
         isLong: true,
       },
     });
-    const positivePI = expandDecimals(4, 16);
-    const distributionAmt = expandDecimals(1, 18);
-    // TODO: No distribution is done on position increase => test distribution differently
-
-    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).to.eq(0);
-    const positionKey0 = getPositionKey(user0.address, ethUsdMarket.marketToken, wnt.address, true);
-    const impactPendingAmount0 = await dataStore.getInt(getImpactPendingAmountKey(positionKey0));
-    expect(impactPendingAmount0).eq(positivePI); // Why is this failing? TODO: calculate the expected value
-    // Approximate as distribution may not be exactly 1 ETH due to time differences
-    expect(impactPendingAmount1.add(impactPendingAmount0)).to.approximately(
-      negativePI.add(positivePI),
-      expandDecimals(1, 14)
-    );
 
     // Check that User0's order got filled
     expect(await getAccountPositionCount(dataStore, user0.address)).eq(1);
 
-    const positionKeys = await getPositionKeys(dataStore, 0, 2);
-    const longPosition = await reader.getPosition(dataStore.address, positionKeys[1]);
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).to.eq(0);
 
-    const initialSizeInTokens = expandDecimals(2, 18);
+    const positionKey0 = getPositionKey(user0.address, ethUsdMarket.marketToken, wnt.address, true);
+    let impactPendingAmount0 = await dataStore.getInt(getImpactPendingAmountKey(positionKey0));
+    expect(impactPendingAmount0).eq("759999999999999986"); // ~0.76 ETH
 
-    // Experienced +PI, but size in tokens remains the same (does not include the price impact)
-    const sizeInTokens = longPosition.numbers.sizeInTokens;
-    expect(sizeInTokens).to.be.eq(initialSizeInTokens);
-    expect(sizeInTokens).to.eq("2000000000000000000"); // price impact not included
+    // User1 creates a short market decrease, balancing the pool
+    await handleOrder(fixture, {
+      create: {
+        account: user1,
+        market: ethUsdMarket,
+        initialCollateralToken: usdc,
+        initialCollateralDeltaAmount: expandDecimals(50 * 1000, 6), // $50,000
+        sizeDeltaUsd: decimalToFloat(100 * 1000), // 2x position
+        acceptablePrice: expandDecimals(4201, 12),
+        orderType: OrderType.MarketDecrease,
+        isLong: false,
+      },
+    });
+
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).to.eq(
+      "800000000000000000"
+    ); // 0.8 eth 4,000 usd
+
+    impactPendingAmount1 = await dataStore.getInt(getImpactPendingAmountKey(positionKey1));
+    expect(impactPendingAmount1).eq(0); // short position decreased by 100% i.e. closed
+
+    await time.increase(25_000); // 0.00002 ETH/sec * 25,000 sec = 0.5 ETH should be distributed
+    const distributionAmt = expandDecimals(5, 17); // 0.5 eth
+
+    // User0 creates a long market decrease to balance the pool
+    await handleOrder(fixture, {
+      create: {
+        account: user0,
+        market: ethUsdMarket,
+        initialCollateralToken: wnt,
+        initialCollateralDeltaAmount: expandDecimals(1, 18), // $5,000
+        sizeDeltaUsd: decimalToFloat(10 * 1000), // 2x position
+        acceptablePrice: expandDecimals(4100, 12),
+        orderType: OrderType.MarketDecrease,
+        isLong: true,
+      },
+    });
+
+    impactPendingAmount0 = await dataStore.getInt(getImpactPendingAmountKey(positionKey0));
+    expect(impactPendingAmount0).eq(0); // long position decreased by 100% i.e. closed
+
+    const impactPoolAmountWithoutDistribution = expandDecimals(76, 16); // 0.8 - 0.04 = ~0.76 eth
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).to.approximately(
+      impactPoolAmountWithoutDistribution.sub(distributionAmt),
+      expandDecimals(1, 14)
+    );
   });
 });
