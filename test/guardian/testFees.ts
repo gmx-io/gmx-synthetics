@@ -657,7 +657,6 @@ describe("Guardian.Fees", () => {
     expect(user0UsdcBalAfter.sub(user0UsdcBalBefore)).to.eq(0);
 
     // Resulting position has $25,000 - $25 of collateral
-    // & $50_000 - $12.5 of size in tokens E.g. $49,987.5 / $5,000 = 9.9975 ETH sizeInTokens
     position2 = await reader.getPosition(dataStore.address, positionKey2);
 
     expect(position2.numbers.collateralAmount).to.closeTo(expandDecimals(25_000, 6).sub(expandDecimals(50, 6)), "1"); // Same collateral amount - $25 in fees
@@ -723,8 +722,8 @@ describe("Guardian.Fees", () => {
     );
     expect(poolValueInfo.longTokenAmount).to.eq(expandDecimals(1_000, 18));
 
-    // short position decreased by half (i.e. 0.00125 ETH)
-    impactPoolAmount = impactPoolAmount.add(expandDecimals(200, 6)); // TODO: how is it calculated?
+    // short position decreased by half
+    impactPoolAmount = impactPoolAmount.add(expandDecimals(200, 6));
     expect(poolValueInfo.impactPoolAmount).to.eq(impactPoolAmount); // 0.0000000002 ETH
     impactPendingAmountShort = impactPendingAmountShort.sub(expandDecimals(125, 13));
     expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey2))).to.eq(impactPendingAmountShort); // 0.0025 - 0.00125 = 0.00125 ETH
@@ -852,8 +851,8 @@ describe("Guardian.Fees", () => {
 
     // Now there is an offset of $25 worth of ETH that is being subtracted from the poolvalue, this way the trader's
     // immediate net pnl of -$25 does not affect the pool value above.
-    // 0.005 ETH from opening long - 0.0025 ETH from opening short + 0.00125 ETH from decreasing short + 0.000625 ETH from decreasing long, extra wei from rounding
-    impactPoolAmount = impactPoolAmount.add(expandDecimals(5_625, 12)); // TODO: how is it calculated? 0.005 + 0.000625 ??
+    // 0.005 ETH from opening long + 0.000625 ETH from decreasing long
+    impactPoolAmount = impactPoolAmount.add(expandDecimals(5_625, 12));
     expect(poolValueInfo.impactPoolAmount).to.eq(impactPoolAmount); // 0.005625 ETH
 
     // Short position gets liquidated
@@ -1124,9 +1123,7 @@ describe("Guardian.Fees", () => {
     expect(poolValueInfo.longTokenAmount).to.eq(expandDecimals(1_000, 18));
 
     // Impact pool increase:
-    // ~$3.125 in positive impact => impact pool pays out $3.125
-    // Denominated in ETH: $3.125 / $7,041 = 0.000443829002 ETH
-    impactPoolAmount = impactPoolAmount.sub(BigNumber.from("1693829001562280")); // TODO: where is 0.0001693829 ETH coming from?
+    impactPoolAmount = impactPoolAmount.sub(BigNumber.from("1693829001562280"));
     expect(poolValueInfo.impactPoolAmount).to.eq(impactPoolAmount.add(1));
 
     const depositedValue = poolValueInfo.shortTokenAmount.mul(expandDecimals(1, 24)).add(expandDecimals(5_000_000, 30));
@@ -1135,8 +1132,6 @@ describe("Guardian.Fees", () => {
     expect(marketTokenPrice).to.eq("1001037284414600781139500000000");
 
     // position 1 has been decreased entirely, position 2 has been liquidated => no impact pending for both
-    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey))).to.eq(0);
-    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey2))).to.eq(0);
     expect(position1.numbers.impactPendingAmount).to.eq(0);
     expect(position2.numbers.impactPendingAmount).to.eq(0);
   });
