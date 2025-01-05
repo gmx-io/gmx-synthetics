@@ -390,9 +390,14 @@ describe("Exchange.MarketIncreaseOrder", () => {
 
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 7));
 
-    // TODO: Error: Order was not cancelled, expected cancellation with reason: LiquidatablePosition
     await handleOrder(fixture, {
-      create: { ...params, initialCollateralDeltaAmount: 0, minOutputAmount: 0, account: user0 },
+      create: {
+        ...params,
+        orderType: OrderType.MarketDecrease,
+        initialCollateralDeltaAmount: expandDecimals(800, 6),
+        sizeDeltaUsd: decimalToFloat(1 * 1000),
+        acceptablePrice: expandDecimals(5000, 12),
+      },
       execute: {
         expectedCancellationReason: "LiquidatablePosition",
       },
