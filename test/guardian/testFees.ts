@@ -437,7 +437,7 @@ describe("Guardian.Fees", () => {
     expect(position.numbers.sizeInTokens).to.eq(expandDecimals(10, 18)); // 10 ETH
 
     // value of the pool has a net 0 change (other than fees) because pnl doesn't change due to the price impact
-    // price impact is stored as pending on increase and applyed on decrease (proportional to the size of the decrease)
+    // price impact is stored as pending on increase and applied on decrease (proportional to the size of the decrease)
 
     poolPnl = await reader.getNetPnl(dataStore.address, ethUsdMarket, prices.ethUsdMarket.indexTokenPrice, false);
     expect(poolPnl).to.eq(0);
