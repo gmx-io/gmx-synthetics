@@ -91,6 +91,7 @@ describe("Exchange.DecreasePosition", () => {
       }
     );
 
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(0);
     expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0Long))).eq("-799999999999999986"); // -0.8 ETH
     expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0Short))).eq("399999999999999992"); // 0.4 ETH
 
@@ -107,11 +108,11 @@ describe("Exchange.DecreasePosition", () => {
       },
     });
 
-    // the impact pool increased by ~0.008 ETH, 40 USD
+    // the impact pool increased by ~0.088 ETH, 440 USD
     expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq("88000000000000000"); // 0.088 ETH
 
-    // the impact pending amount for long is increased by ~0.008 ETH, 40 USD
-    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0Long))).eq("-719999999999999988"); // -0.719999999999999988 ETH
+    // the impact pending amount for long is increased by ~0.08 ETH, 400 USD
+    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0Long))).eq("-719999999999999988"); // -0.8 + 0.08 = -0.72 ETH
     // the impact pending amount for short doesn't change
     expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0Short))).eq("399999999999999992"); // 0.4 ETH
 
@@ -251,8 +252,8 @@ describe("Exchange.DecreasePosition", () => {
       )
     ).eq(expandDecimals(20, 6));
 
-    // the impact pool increased from 0 by ~0.004 ETH, 20 USD
-    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq("84000000000000000"); // 0.084 ETH
+    // the impact pool increased from 0 by ~0.084 ETH, 420 USD
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq("84000000000000000"); // 0.08 + 0.004 = 0.084 ETH
 
     expect(await wnt.balanceOf(user1.address)).eq(0);
     expect(await usdc.balanceOf(user1.address)).eq(0);
