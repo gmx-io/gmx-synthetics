@@ -170,12 +170,17 @@ library DecreasePositionCollateralUtils {
         }
 
         // use indexTokenPrice.min to maximize the position impact pool reduction
-        collateralCache.cappedTotalImpactUsd = MarketUtils.getCappedPositionImpactUsd(
+        collateralCache.cappedTotalImpactUsd = MarketUtils.capPositiveImpactUsdByPositionImpactPool(
             params.contracts.dataStore,
             params.market.marketToken,
             cache.prices.indexTokenPrice,
-            values.proportionalImpactPendingUsd, // from increase
-            values.priceImpactUsd, // from decrease
+            values.proportionalImpactPendingUsd + values.priceImpactUsd
+        );
+
+        collateralCache.cappedTotalImpactUsd = MarketUtils.capPositiveImpactUsdByMaxPositionImpact(
+            params.contracts.dataStore,
+            params.market.marketToken,
+            values.proportionalImpactPendingUsd + values.priceImpactUsd,
             params.order.sizeDeltaUsd()
         );
 
