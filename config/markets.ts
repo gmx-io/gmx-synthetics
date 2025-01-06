@@ -264,8 +264,8 @@ const baseMarketConfig: Partial<BaseMarketConfig> = {
   maxPnlFactorForDeposits: percentageToFloat("90%"),
   maxPnlFactorForWithdrawals: percentageToFloat("70%"),
 
-  positionFeeFactorForPositiveImpact: percentageToFloat("0.05%"),
-  positionFeeFactorForNegativeImpact: percentageToFloat("0.07%"),
+  positionFeeFactorForPositiveImpact: percentageToFloat("0.04%"),
+  positionFeeFactorForNegativeImpact: percentageToFloat("0.06%"),
 
   negativePositionImpactFactor: percentageToFloat("0.00001%"),
   positivePositionImpactFactor: percentageToFloat("0.000005%"),
@@ -307,6 +307,8 @@ const baseMarketConfig: Partial<BaseMarketConfig> = {
 
   positionImpactPoolDistributionRate: bigNumberify(0),
   minPositionImpactPoolAmount: 0,
+
+  liquidationFeeFactor: percentageToFloat("0.20%"),
 };
 
 const singleTokenMarketConfig: Partial<BaseMarketConfig> = {
@@ -327,6 +329,8 @@ const singleTokenMarketConfig: Partial<BaseMarketConfig> = {
   negativeSwapImpactFactor: bigNumberify(0),
   positiveSwapImpactFactor: bigNumberify(0),
   swapImpactExponentFactor: decimalToFloat(1),
+
+  liquidationFeeFactor: percentageToFloat("0.30%"),
 };
 
 const syntheticMarketConfig: Partial<BaseMarketConfig> = {
@@ -341,6 +345,8 @@ const syntheticMarketConfig: Partial<BaseMarketConfig> = {
 
   maxPnlFactorForDeposits: percentageToFloat("60%"),
   maxPnlFactorForWithdrawals: percentageToFloat("45%"),
+
+  liquidationFeeFactor: percentageToFloat("0.30%"),
 };
 
 const synthethicMarketConfig_IncreasedCapacity: Partial<BaseMarketConfig> = {
@@ -696,10 +702,6 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_HighMax_WithLowerBase,
 
-      positionFeeFactorForNegativeImpact: percentageToFloat("0.045%"),
-      positionFeeFactorForPositiveImpact: percentageToFloat("0.045%"),
-      liquidationFeeFactor: percentageToFloat("0.20%"),
-
       maxLongTokenPoolAmount: expandDecimals(3450, 18),
       maxShortTokenPoolAmount: expandDecimals(11_000_000, 6),
 
@@ -905,10 +907,6 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_LowMax_WithLowerBase,
 
-      positionFeeFactorForNegativeImpact: percentageToFloat("0.045%"),
-      positionFeeFactorForPositiveImpact: percentageToFloat("0.045%"),
-      liquidationFeeFactor: percentageToFloat("0.20%"),
-
       maxLongTokenPoolAmount: expandDecimals(140_000, 9),
       maxShortTokenPoolAmount: expandDecimals(20_000_000, 6),
 
@@ -1067,10 +1065,6 @@ const config: {
       ...baseMarketConfig,
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_LowMax_WithLowerBase,
-
-      positionFeeFactorForNegativeImpact: percentageToFloat("0.045%"),
-      positionFeeFactorForPositiveImpact: percentageToFloat("0.045%"),
-      liquidationFeeFactor: percentageToFloat("0.20%"),
 
       reserveFactor: percentageToFloat("235%"),
       openInterestReserveFactor: percentageToFloat("230%"),
