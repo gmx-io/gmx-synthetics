@@ -40,7 +40,6 @@ library DecreasePositionCollateralUtils {
         bool wasSwapped;
         uint256 swapOutputAmount;
         PayForCostResult result;
-        int256 proportionalImpactPendingUsd;
         int256 cappedTotalImpactUsd;
     }
 
@@ -141,14 +140,14 @@ library DecreasePositionCollateralUtils {
         }
 
         // order size has been enforced to be less or equal than position size (i.e. sizeDeltaUsd <= sizeInUsd)
-        (values.proportionalImpactPendingAmount, collateralCache.proportionalImpactPendingUsd) = _getProportionalImpactPendingValues(
+        (values.proportionalImpactPendingAmount, values.proportionalImpactPendingUsd) = _getProportionalImpactPendingValues(
             params.position.sizeInUsd(),
             params.position.impactPendingAmount(),
             params.order.sizeDeltaUsd(),
             cache.prices.indexTokenPrice
         );
 
-        if (values.priceImpactUsd + collateralCache.proportionalImpactPendingUsd < 0) {
+        if (values.priceImpactUsd + values.proportionalImpactPendingUsd < 0) {
             uint256 maxPriceImpactFactor = MarketUtils.getMaxPositionImpactFactor(
                 params.contracts.dataStore,
                 params.market.marketToken,
@@ -175,7 +174,7 @@ library DecreasePositionCollateralUtils {
             params.contracts.dataStore,
             params.market.marketToken,
             cache.prices.indexTokenPrice,
-            collateralCache.proportionalImpactPendingUsd, // from increase
+            values.proportionalImpactPendingUsd, // from increase
             values.priceImpactUsd, // from decrease
             params.order.sizeDeltaUsd()
         );
