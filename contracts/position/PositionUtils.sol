@@ -643,6 +643,22 @@ library PositionUtils {
             )
         );
 
+        // cap positive priceImpactUsd based on the amount available in the position impact pool
+        priceImpactUsd = MarketUtils.capPositiveImpactUsdByPositionImpactPool(
+            params.contracts.dataStore,
+            params.market.marketToken,
+            indexTokenPrice,
+            priceImpactUsd
+        );
+
+        // cap positive priceImpactUsd based on the max positive position impact factor
+        priceImpactUsd = MarketUtils.capPositiveImpactUsdByMaxPositionImpact(
+            params.contracts.dataStore,
+            params.market.marketToken,
+            priceImpactUsd,
+            params.order.sizeDeltaUsd()
+        );
+
         // for long positions
         //
         // if price impact is positive, the sizeDeltaInTokens would be increased by the priceImpactAmount
@@ -732,6 +748,22 @@ library PositionUtils {
                 -sizeDeltaUsd.toInt256(),
                 params.order.isLong()
             )
+        );
+
+        // cap positive priceImpactUsd based on the amount available in the position impact pool
+        cache.priceImpactUsd = MarketUtils.capPositiveImpactUsdByPositionImpactPool(
+            params.contracts.dataStore,
+            params.market.marketToken,
+            indexTokenPrice,
+            cache.priceImpactUsd
+        );
+
+        // cap positive priceImpactUsd based on the max positive position impact factor
+        cache.priceImpactUsd = MarketUtils.capPositiveImpactUsdByMaxPositionImpact(
+            params.contracts.dataStore,
+            params.market.marketToken,
+            cache.priceImpactUsd,
+            params.order.sizeDeltaUsd()
         );
 
         // the executionPrice is calculated after the price impact is capped

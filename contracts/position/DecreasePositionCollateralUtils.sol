@@ -40,6 +40,7 @@ library DecreasePositionCollateralUtils {
         bool wasSwapped;
         uint256 swapOutputAmount;
         PayForCostResult result;
+        int256 totalImpactUsd;
         int256 cappedTotalImpactUsd;
     }
 
@@ -90,7 +91,7 @@ library DecreasePositionCollateralUtils {
         // priceImpactDiffUsd is the difference between the maximum price impact and the originally calculated price impact
         // e.g. if the originally calculated price impact is -$100, but the capped price impact is -$80
         // then priceImpactDiffUsd would be $20
-        // priceImpactUsd amount charged upfront; priceImpactDiffUsd amount claimable later
+        // priceImpactUsd amount charged upfront, capped by impact pool and max positive factor; priceImpactDiffUsd amount claimable later
         (values.priceImpactUsd, values.executionPrice) = PositionUtils.getExecutionPriceForDecrease(params, cache.prices.indexTokenPrice);
 
         // the totalPositionPnl is calculated based on the current indexTokenPrice instead of the executionPrice
@@ -147,7 +148,9 @@ library DecreasePositionCollateralUtils {
             cache.prices.indexTokenPrice
         );
 
-        if (values.priceImpactUsd + values.proportionalImpactPendingUsd < 0) {
+        collateralCache.totalImpactUsd = values.proportionalImpactPendingUsd + values.priceImpactUsd;
+
+        if (collateralCache.totalImpactUsd < 0) {
             uint256 maxPriceImpactFactor = MarketUtils.getMaxPositionImpactFactor(
                 params.contracts.dataStore,
                 params.market.marketToken,
@@ -159,29 +162,22 @@ library DecreasePositionCollateralUtils {
             // then minPriceImpactUsd = -200
             int256 minPriceImpactUsd = -Precision.applyFactor(params.order.sizeDeltaUsd(), maxPriceImpactFactor).toInt256();
 
-            // cap priceImpactUsd to the min negative value and store the difference in priceImpactDiffUsd
-            // e.g. if priceImpactUsd is -500 and minPriceImpactUsd is -200
+            // cap totalImpactUsd to the min negative value and store the difference in priceImpactDiffUsd
+            // e.g. if totalImpactUsd is -500 and minPriceImpactUsd is -200
             // then set priceImpactDiffUsd to -200 - -500 = 300
-            // set priceImpactUsd to -200
-            if (values.priceImpactUsd < minPriceImpactUsd) {
-                values.priceImpactDiffUsd = (minPriceImpactUsd - values.priceImpactUsd).toUint256();
-                values.priceImpactUsd = minPriceImpactUsd;
+            // set totalImpactUsd to -200
+            if (collateralCache.totalImpactUsd < minPriceImpactUsd) {
+                values.priceImpactDiffUsd = (minPriceImpactUsd - collateralCache.totalImpactUsd).toUint256();
+                collateralCache.totalImpactUsd = minPriceImpactUsd;
             }
         }
 
-        // use indexTokenPrice.min to maximize the position impact pool reduction
+        // cap the positive totalImpactUsd by the available amount in the position impact pool
         collateralCache.cappedTotalImpactUsd = MarketUtils.capPositiveImpactUsdByPositionImpactPool(
             params.contracts.dataStore,
             params.market.marketToken,
             cache.prices.indexTokenPrice,
-            values.proportionalImpactPendingUsd + values.priceImpactUsd
-        );
-
-        collateralCache.cappedTotalImpactUsd = MarketUtils.capPositiveImpactUsdByMaxPositionImpact(
-            params.contracts.dataStore,
-            params.market.marketToken,
-            values.proportionalImpactPendingUsd + values.priceImpactUsd,
-            params.order.sizeDeltaUsd()
+            collateralCache.totalImpactUsd
         );
 
         if (collateralCache.cappedTotalImpactUsd > 0) {
