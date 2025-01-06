@@ -828,22 +828,22 @@ library MarketUtils {
     function capPositiveImpactUsdByMaxPositionImpact(
         DataStore dataStore,
         address market,
-        int256 totalPriceImpactUsd,
+        int256 priceImpactUsd,
         uint256 sizeDeltaUsd
     ) internal view returns (int256) {
-        if (totalPriceImpactUsd < 0) {
-            return totalPriceImpactUsd;
+        if (priceImpactUsd < 0) {
+            return priceImpactUsd;
         }
 
         uint256 maxPriceImpactFactor = getMaxPositionImpactFactor(dataStore, market, true);
         int256 maxPriceImpactUsdBasedOnMaxPriceImpactFactor = Precision.applyFactor(sizeDeltaUsd, maxPriceImpactFactor).toInt256();
 
         // capped by the positive price impact
-        if (totalPriceImpactUsd > maxPriceImpactUsdBasedOnMaxPriceImpactFactor) {
-            totalPriceImpactUsd = maxPriceImpactUsdBasedOnMaxPriceImpactFactor;
+        if (priceImpactUsd > maxPriceImpactUsdBasedOnMaxPriceImpactFactor) {
+            priceImpactUsd = maxPriceImpactUsdBasedOnMaxPriceImpactFactor;
         }
 
-        return totalPriceImpactUsd;
+        return priceImpactUsd;
     }
 
     // @dev get the position impact pool amount
