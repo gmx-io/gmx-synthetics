@@ -40,18 +40,14 @@ library DecreasePositionCollateralUtils {
         bool wasSwapped;
         uint256 swapOutputAmount;
         PayForCostResult result;
-        PriceImpact priceImpact;
+        int256 proportionalImpactPendingUsd;
+        int256 cappedTotalImpactUsd;
     }
 
     struct PayForCostResult {
         uint256 amountPaidInCollateralToken;
         uint256 amountPaidInSecondaryOutputToken;
         uint256 remainingCostUsd;
-    }
-
-    struct PriceImpact {
-        int256 proportionalImpactPendingUsd;
-        int256 cappedTotalImpactUsd;
     }
 
     // @dev handle the collateral changes of the position
@@ -145,14 +141,14 @@ library DecreasePositionCollateralUtils {
         }
 
         // order size has been enforced to be less or equal than position size (i.e. sizeDeltaUsd <= sizeInUsd)
-        (values.proportionalImpactPendingAmount, collateralCache.priceImpact.proportionalImpactPendingUsd) = _getProportionalImpactPendingValues(
+        (values.proportionalImpactPendingAmount, collateralCache.proportionalImpactPendingUsd) = _getProportionalImpactPendingValues(
             params.position.sizeInUsd(),
             params.position.impactPendingAmount(),
             params.order.sizeDeltaUsd(),
             cache.prices.indexTokenPrice
         );
 
-        if (values.priceImpactUsd + collateralCache.priceImpact.proportionalImpactPendingUsd < 0) {
+        if (values.priceImpactUsd + collateralCache.proportionalImpactPendingUsd < 0) {
             uint256 maxPriceImpactFactor = MarketUtils.getMaxPositionImpactFactor(
                 params.contracts.dataStore,
                 params.market.marketToken,
@@ -175,17 +171,17 @@ library DecreasePositionCollateralUtils {
         }
 
         // use indexTokenPrice.min to maximize the position impact pool reduction
-        collateralCache.priceImpact.cappedTotalImpactUsd = MarketUtils.getCappedPositionImpactUsd(
+        collateralCache.cappedTotalImpactUsd = MarketUtils.getCappedPositionImpactUsd(
             params.contracts.dataStore,
             params.market.marketToken,
             cache.prices.indexTokenPrice,
-            collateralCache.priceImpact.proportionalImpactPendingUsd, // from increase
+            collateralCache.proportionalImpactPendingUsd, // from increase
             values.priceImpactUsd, // from decrease
             params.order.sizeDeltaUsd()
         );
 
-        if (collateralCache.priceImpact.cappedTotalImpactUsd > 0) {
-            uint256 deductionAmountForImpactPool = Calc.roundUpDivision(collateralCache.priceImpact.cappedTotalImpactUsd.toUint256(), cache.prices.indexTokenPrice.min);
+        if (collateralCache.cappedTotalImpactUsd > 0) {
+            uint256 deductionAmountForImpactPool = Calc.roundUpDivision(collateralCache.cappedTotalImpactUsd.toUint256(), cache.prices.indexTokenPrice.min);
 
             MarketUtils.applyDeltaToPositionImpactPool(
                 params.contracts.dataStore,
@@ -423,13 +419,13 @@ library DecreasePositionCollateralUtils {
         }
 
         // pay for negative price impact
-        if (collateralCache.priceImpact.cappedTotalImpactUsd < 0) {
+        if (collateralCache.cappedTotalImpactUsd < 0) {
             (values, collateralCache.result) = payForCost(
                 params,
                 values,
                 cache.prices,
                 cache.collateralTokenPrice,
-                (-collateralCache.priceImpact.cappedTotalImpactUsd).toUint256()
+                (-collateralCache.cappedTotalImpactUsd).toUint256()
             );
 
             if (collateralCache.result.amountPaidInCollateralToken > 0) {
@@ -749,6 +745,7 @@ library DecreasePositionCollateralUtils {
     ) private pure returns (int256, int256) {
         int256 proportionalImpactPendingAmount = Precision.mulDiv(positionImpactPendingAmount, sizeDeltaUsd, sizeInUsd);
 
+        // minimize the positive impact, maximize the negative impact
         int256 proportionalImpactPendingUsd = proportionalImpactPendingAmount > 0
             ? proportionalImpactPendingAmount * indexTokenPrice.min.toInt256()
             : proportionalImpactPendingAmount * indexTokenPrice.max.toInt256();
