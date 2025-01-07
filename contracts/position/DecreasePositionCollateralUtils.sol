@@ -41,7 +41,6 @@ library DecreasePositionCollateralUtils {
         uint256 swapOutputAmount;
         PayForCostResult result;
         int256 totalImpactUsd;
-        int256 cappedTotalImpactUsd;
     }
 
     struct PayForCostResult {
@@ -173,15 +172,15 @@ library DecreasePositionCollateralUtils {
         }
 
         // cap the positive totalImpactUsd by the available amount in the position impact pool
-        collateralCache.cappedTotalImpactUsd = MarketUtils.capPositiveImpactUsdByPositionImpactPool(
+        collateralCache.totalImpactUsd = MarketUtils.capPositiveImpactUsdByPositionImpactPool(
             params.contracts.dataStore,
             params.market.marketToken,
             cache.prices.indexTokenPrice,
             collateralCache.totalImpactUsd
         );
 
-        if (collateralCache.cappedTotalImpactUsd > 0) {
-            uint256 deductionAmountForImpactPool = Calc.roundUpDivision(collateralCache.cappedTotalImpactUsd.toUint256(), cache.prices.indexTokenPrice.min);
+        if (collateralCache.totalImpactUsd > 0) {
+            uint256 deductionAmountForImpactPool = Calc.roundUpDivision(collateralCache.totalImpactUsd.toUint256(), cache.prices.indexTokenPrice.min);
 
             MarketUtils.applyDeltaToPositionImpactPool(
                 params.contracts.dataStore,
@@ -198,7 +197,7 @@ library DecreasePositionCollateralUtils {
             // the deduction value
             // the pool value is calculated by subtracting the worth of the tokens in the position impact pool
             // so this transfer of value would increase the price of the market token
-            uint256 deductionAmountForPool = values.priceImpactUsd.toUint256() / cache.pnlTokenPrice.max;
+            uint256 deductionAmountForPool = collateralCache.totalImpactUsd.toUint256() / cache.pnlTokenPrice.max;
 
             MarketUtils.applyDeltaToPoolAmount(
                 params.contracts.dataStore,
@@ -419,13 +418,13 @@ library DecreasePositionCollateralUtils {
         }
 
         // pay for negative price impact
-        if (collateralCache.cappedTotalImpactUsd < 0) {
+        if (collateralCache.totalImpactUsd < 0) {
             (values, collateralCache.result) = payForCost(
                 params,
                 values,
                 cache.prices,
                 cache.collateralTokenPrice,
-                (-collateralCache.cappedTotalImpactUsd).toUint256()
+                (-collateralCache.totalImpactUsd).toUint256()
             );
 
             if (collateralCache.result.amountPaidInCollateralToken > 0) {
