@@ -128,7 +128,7 @@ describe("Guardian.Lifecycle", () => {
         initialCollateralDeltaAmount: expandDecimals(1000, 6), // $1,000
         swapPath: [],
         sizeDeltaUsd: decimalToFloat(2 * 1000), // $2,000
-        acceptablePrice: expandDecimals(50009, 11), // 5000.9 per token
+        acceptablePrice: expandDecimals(5000, 12), // 5000 per token
         executionFee: expandDecimals(1, 15),
         minOutputAmount: 0,
         orderType: OrderType.MarketIncrease,
@@ -138,7 +138,7 @@ describe("Guardian.Lifecycle", () => {
       execute: {
         afterExecution: ({ logs }) => {
           const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
-          expect(positionIncreaseEvent.executionPrice).eq("5000900162029165"); // ~5000 per token
+          expect(positionIncreaseEvent.executionPrice).eq("5000000000000000"); // 5000 per token
         },
       },
     });
@@ -158,7 +158,7 @@ describe("Guardian.Lifecycle", () => {
         initialCollateralDeltaAmount: 0,
         swapPath: [],
         sizeDeltaUsd: decimalToFloat(5 * 1000), // $5,000
-        acceptablePrice: expandDecimals(50004, 11), // 5000.4 per token
+        acceptablePrice: expandDecimals(5000, 12), // 5000 per token
         executionFee: expandDecimals(1, 15),
         minOutputAmount: 0,
         orderType: OrderType.MarketDecrease,
@@ -168,7 +168,7 @@ describe("Guardian.Lifecycle", () => {
       execute: {
         afterExecution: ({ logs }) => {
           const positionDecreaseEvent = getEventData(logs, "PositionDecrease");
-          expect(positionDecreaseEvent.executionPrice).eq("5000549999999999"); // ~5000 per token
+          expect(positionDecreaseEvent.executionPrice).eq("5000000000000000"); // 5000 per token
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).closeTo("2400400000000", "10000000000"); // 0.0000024004 ETH
@@ -225,7 +225,7 @@ describe("Guardian.Lifecycle", () => {
       execute: {
         afterExecution: ({ logs }) => {
           const positionDecreaseEvent = getEventData(logs, "PositionDecrease");
-          expect(positionDecreaseEvent.executionPrice).eq("5001549999999999"); // ~5001 per token
+          expect(positionDecreaseEvent.executionPrice).eq("5000500000000000"); // ~5000 per token
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).to.closeTo("4124096103897", "10000000000"); // 0.000004124053 ETH
@@ -257,7 +257,7 @@ describe("Guardian.Lifecycle", () => {
         initialCollateralDeltaAmount: expandDecimals(3 * 1000, 6), // $3,000
         swapPath: [],
         sizeDeltaUsd: decimalToFloat(3 * 1000), // $3,000
-        acceptablePrice: expandDecimals(5001, 11), // 5001 per token
+        acceptablePrice: expandDecimals(5000, 12), // 5000 per token
         executionFee: expandDecimals(1, 15),
         minOutputAmount: 0,
         orderType: OrderType.MarketIncrease,
@@ -267,7 +267,7 @@ describe("Guardian.Lifecycle", () => {
       execute: {
         afterExecution: ({ logs }) => {
           const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
-          expect(positionIncreaseEvent.executionPrice).eq("5001150264560848"); // ~5001 per token
+          expect(positionIncreaseEvent.executionPrice).eq("5000833472245374"); // ~5001 per token
         },
       },
     });
@@ -320,7 +320,7 @@ describe("Guardian.Lifecycle", () => {
       execute: {
         afterExecution: ({ logs }) => {
           const positionDecreaseEvent = getEventData(logs, "PositionDecrease");
-          expect(positionDecreaseEvent.executionPrice).eq("5000749999999999"); // ~5000 per token
+          expect(positionDecreaseEvent.executionPrice).eq("5000166666666666"); // ~5000 per token
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).closeTo("225779", "20000"); // 0.225779 USDC
@@ -669,7 +669,7 @@ describe("Guardian.Lifecycle", () => {
         initialCollateralDeltaAmount: expandDecimals(1000, 6), // $1,000
         swapPath: [ethUsdMarket.marketToken],
         sizeDeltaUsd: decimalToFloat(2 * 1000), // $2,000
-        acceptablePrice: expandDecimals(50009, 11), // 5000.9 per token
+        acceptablePrice: expandDecimals(5000, 12), // 5000 per token
         executionFee: expandDecimals(1, 15),
         minOutputAmount: 0,
         orderType: OrderType.MarketIncrease,
@@ -679,7 +679,7 @@ describe("Guardian.Lifecycle", () => {
       execute: {
         afterExecution: ({ logs }) => {
           const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
-          expect(positionIncreaseEvent.executionPrice).eq("5000900162029165"); // ~5000 per token
+          expect(positionIncreaseEvent.executionPrice).eq("5000000000000000"); // 5000 per token
         },
       },
     });
@@ -699,7 +699,7 @@ describe("Guardian.Lifecycle", () => {
         initialCollateralDeltaAmount: 0,
         swapPath: [],
         sizeDeltaUsd: decimalToFloat(5 * 1000), // $5,000
-        acceptablePrice: expandDecimals(50004, 11), // 5000.4 per token
+        acceptablePrice: expandDecimals(5000, 12), // 5000 per token
         executionFee: expandDecimals(1, 15),
         minOutputAmount: 0,
         orderType: OrderType.MarketDecrease,
@@ -709,7 +709,7 @@ describe("Guardian.Lifecycle", () => {
       execute: {
         afterExecution: ({ logs }) => {
           const positionDecreaseEvent = getEventData(logs, "PositionDecrease");
-          expect(positionDecreaseEvent.executionPrice).eq("5000549999999999"); // ~5000 per token
+          expect(positionDecreaseEvent.executionPrice).eq("5000000000000000"); // 5000 per token
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).closeTo("2400400000000", "10000000000000"); // 0.0000024004 ETH
@@ -766,7 +766,7 @@ describe("Guardian.Lifecycle", () => {
       execute: {
         afterExecution: ({ logs }) => {
           const positionDecreaseEvent = getEventData(logs, "PositionDecrease");
-          expect(positionDecreaseEvent.executionPrice).eq("5001549999999999"); // ~5001 per token
+          expect(positionDecreaseEvent.executionPrice).eq("5000500000000000"); // ~5001 per token
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).closeTo("4124053246754", "100000000000"); // 0.000004124053 ETH
@@ -799,7 +799,7 @@ describe("Guardian.Lifecycle", () => {
         initialCollateralDeltaAmount: expandDecimals(3 * 1000, 6), // $3,000
         swapPath: [],
         sizeDeltaUsd: decimalToFloat(3 * 1000), // $3,000
-        acceptablePrice: expandDecimals(5001, 11), // 5001 per token
+        acceptablePrice: expandDecimals(5000, 12), // 5000 per token
         executionFee: expandDecimals(1, 15),
         minOutputAmount: 0,
         orderType: OrderType.MarketIncrease,
@@ -809,7 +809,7 @@ describe("Guardian.Lifecycle", () => {
       execute: {
         afterExecution: ({ logs }) => {
           const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
-          expect(positionIncreaseEvent.executionPrice).eq("5001150264560848"); // ~5001 per token
+          expect(positionIncreaseEvent.executionPrice).eq("5000833472245374"); // ~5001 per token
         },
       },
     });
@@ -862,7 +862,7 @@ describe("Guardian.Lifecycle", () => {
       execute: {
         afterExecution: ({ logs }) => {
           const positionDecreaseEvent = getEventData(logs, "PositionDecrease");
-          expect(positionDecreaseEvent.executionPrice).eq("5000749999999999"); // ~5000 per token
+          expect(positionDecreaseEvent.executionPrice).eq("5000166666666666"); // ~5000 per token
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).to.closeTo("225780", "20000"); // 0.225780 USDC
@@ -1217,7 +1217,7 @@ describe("Guardian.Lifecycle", () => {
         initialCollateralDeltaAmount: expandDecimals(1000, 6), // $1,000
         swapPath: [],
         sizeDeltaUsd: decimalToFloat(2 * 1000), // $2,000
-        acceptablePrice: expandDecimals(50009, 11), // 5000.9 per token
+        acceptablePrice: expandDecimals(5000, 12), // 5000 per token
         executionFee: expandDecimals(1, 15),
         minOutputAmount: 0,
         orderType: OrderType.MarketIncrease,
@@ -1227,7 +1227,7 @@ describe("Guardian.Lifecycle", () => {
       execute: {
         afterExecution: ({ logs }) => {
           const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
-          expect(positionIncreaseEvent.executionPrice).eq("5000900162029165"); // ~5000 per token
+          expect(positionIncreaseEvent.executionPrice).eq("5000000000000000"); // 5000 per token
         },
       },
     });
@@ -1247,7 +1247,7 @@ describe("Guardian.Lifecycle", () => {
         initialCollateralDeltaAmount: 0,
         swapPath: [],
         sizeDeltaUsd: decimalToFloat(5 * 1000), // $5,000
-        acceptablePrice: expandDecimals(50004, 11), // 5000.4 per token
+        acceptablePrice: expandDecimals(5000, 12), // 5000 per token
         executionFee: expandDecimals(1, 15),
         minOutputAmount: 0,
         orderType: OrderType.MarketDecrease,
@@ -1257,7 +1257,7 @@ describe("Guardian.Lifecycle", () => {
       execute: {
         afterExecution: ({ logs }) => {
           const positionDecreaseEvent = getEventData(logs, "PositionDecrease");
-          expect(positionDecreaseEvent.executionPrice).eq("5000549999999999"); // ~5000 per token
+          expect(positionDecreaseEvent.executionPrice).eq("5000000000000000"); // 5000 per token
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).closeTo("2400400000000", "100000000000"); // 0.0000024004 ETH
@@ -1314,7 +1314,7 @@ describe("Guardian.Lifecycle", () => {
       execute: {
         afterExecution: ({ logs }) => {
           const positionDecreaseEvent = getEventData(logs, "PositionDecrease");
-          expect(positionDecreaseEvent.executionPrice).eq("5001549999999999"); // ~5001 per token
+          expect(positionDecreaseEvent.executionPrice).eq("5000500000000000"); // ~5001 per token
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).closeTo("4124053246754", "100000000000"); // 0.000004124053 ETH
@@ -1346,7 +1346,7 @@ describe("Guardian.Lifecycle", () => {
         initialCollateralDeltaAmount: expandDecimals(3 * 1000, 6), // $3,000
         swapPath: [],
         sizeDeltaUsd: decimalToFloat(3 * 1000), // $3,000
-        acceptablePrice: expandDecimals(5001, 12), // 5001 per token
+        acceptablePrice: expandDecimals(5000, 12), // 5000 per token
         executionFee: expandDecimals(1, 15),
         minOutputAmount: 0,
         orderType: OrderType.MarketIncrease,
@@ -1356,7 +1356,7 @@ describe("Guardian.Lifecycle", () => {
       execute: {
         afterExecution: ({ logs }) => {
           const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
-          expect(positionIncreaseEvent.executionPrice).eq("5001150264560848"); // ~5001 per token
+          expect(positionIncreaseEvent.executionPrice).eq("5000833472245374"); // ~5001 per token
         },
       },
     });
@@ -1421,7 +1421,7 @@ describe("Guardian.Lifecycle", () => {
       execute: {
         afterExecution: ({ logs }) => {
           const positionDecreaseEvent = getEventData(logs, "PositionDecrease");
-          expect(positionDecreaseEvent.executionPrice).eq("5000749999999999"); // ~5000 per token
+          expect(positionDecreaseEvent.executionPrice).eq("5000166666666666"); // ~5000 per token
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).closeTo("225782", "10000"); // 0.225782 USDC
