@@ -76,8 +76,8 @@ describe("Exchange.DecreasePosition", () => {
     const positionImpactPendingAmount0Long = await dataStore.getInt(getImpactPendingAmountKey(positionKey0Long));
     const positionImpactPendingAmount0Short = await dataStore.getInt(getImpactPendingAmountKey(positionKey0Short));
     expect(positionImpactPendingAmount0Long).eq("-79999999999999999"); // -0.079999999999999999;
-    expect(positionImpactPendingAmount0Short).eq("39999999999999999"); // 0.039999999999999999
-    expect(positionImpactPendingAmount0Long.add(positionImpactPendingAmount0Short).toString()).eq("-40000000000000000"); // -0.04
+    expect(positionImpactPendingAmount0Short).eq(0);
+    expect(positionImpactPendingAmount0Long.add(positionImpactPendingAmount0Short).toString()).eq("-79999999999999999"); // -0.079999999999999999
 
     expect(await wnt.balanceOf(user1.address)).eq(0);
     expect(await usdc.balanceOf(user1.address)).eq(0);
@@ -95,7 +95,7 @@ describe("Exchange.DecreasePosition", () => {
     // the impact pool increased by 0.0088 ETH, 44 USD
     expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq("8800000000000000"); // 0.0088 ETH
     expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0Long))).eq("-72000000000000000"); // -0.072 (position decreased by 10%)
-    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0Short))).eq("39999999999999999"); // 0.039999999999999999
+    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0Short))).eq(0);
 
     // since there is no pnl from position increase/decrease and initialCollateralDeltaAmount for decrease was set to 0, user1 doesn't receive any tokens
     expect(await wnt.balanceOf(user1.address)).eq(0);

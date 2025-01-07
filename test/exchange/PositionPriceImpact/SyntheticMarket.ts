@@ -83,13 +83,13 @@ describe("Exchange.PositionPriceImpact.SyntheticMarket", () => {
         gasUsageLabel: "executeOrder",
         afterExecution: ({ logs }) => {
           const positionDecreaseEvent = getEventData(logs, "PositionDecrease");
-          expect(positionDecreaseEvent.executionPrice).eq("50049999999999999999073"); // 50.05
-          expect(positionDecreaseEvent.priceImpactUsd).eq("199999999999999996294009356670000"); // 200
+          expect(positionDecreaseEvent.executionPrice).eq("50000000000000000000000"); // 50
+          expect(positionDecreaseEvent.priceImpactUsd).eq(0); // positive impact is capped by the impact pool amount which is 0
         },
       },
     });
 
-    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(solUsdMarket.marketToken))).eq("4000000000"); // 4 SOL, 200 USD
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(solUsdMarket.marketToken))).eq("8000000000"); // 8 SOL, 400 USD
     expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0))).eq(0);
   });
 });

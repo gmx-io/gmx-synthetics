@@ -238,14 +238,14 @@ describe("Guardian.PositionImpactPoolDistribution", () => {
       },
     });
 
-    // Check that User1's order got filled
-    expect(await getAccountPositionCount(dataStore, user1.address)).eq(1);
-
     expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).to.eq(0);
 
     const positionKey1 = getPositionKey(user1.address, ethUsdMarket.marketToken, usdc.address, false);
-    let impactPendingAmount1 = await dataStore.getInt(getImpactPendingAmountKey(positionKey1));
-    expect(impactPendingAmount1).eq("-3999999999999999926"); // 10% * 2 * $100,000 = $20,000 = ~4 ETH
+    // 10% * 2 * $100,000 = $20,000 = 4 ETH
+    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey1))).eq("-3999999999999999926"); // ~4 ETH
+
+    // Check that User1's order got filled
+    expect(await getAccountPositionCount(dataStore, user1.address)).eq(1);
 
     // User0 creates a long market increase to balance the pool
     await handleOrder(fixture, {
@@ -267,8 +267,7 @@ describe("Guardian.PositionImpactPoolDistribution", () => {
     expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).to.eq(0);
 
     const positionKey0 = getPositionKey(user0.address, ethUsdMarket.marketToken, wnt.address, true);
-    let impactPendingAmount0 = await dataStore.getInt(getImpactPendingAmountKey(positionKey0));
-    expect(impactPendingAmount0).eq("759999999999999986"); // ~0.76 ETH
+    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0))).eq(0); // positive impact is capped by the impact pool amount which is 0
 
     // User1 creates a short market decrease, balancing the pool
     await handleOrder(fixture, {
@@ -278,21 +277,18 @@ describe("Guardian.PositionImpactPoolDistribution", () => {
         initialCollateralToken: usdc,
         initialCollateralDeltaAmount: expandDecimals(50 * 1000, 6), // $50,000
         sizeDeltaUsd: decimalToFloat(100 * 1000), // 2x position
-        acceptablePrice: expandDecimals(4201, 12),
+        acceptablePrice: expandDecimals(5000, 12),
         orderType: OrderType.MarketDecrease,
         isLong: false,
       },
     });
 
-    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).to.eq(
-      "800000000000000000"
-    ); // 0.8 eth 4,000 usd
+    const negativePI = expandDecimals(4, 17); // 0.4 eth 2,000 usd
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).to.eq(negativePI);
 
-    impactPendingAmount1 = await dataStore.getInt(getImpactPendingAmountKey(positionKey1));
-    expect(impactPendingAmount1).eq(0); // short position decreased by 100% i.e. closed
+    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey1))).eq(0); // short position decreased by 100% i.e. closed
 
-    await time.increase(25_000); // 0.00002 ETH/sec * 25,000 sec = 0.5 ETH should be distributed
-    const distributionAmt = expandDecimals(5, 17); // 0.5 eth
+    await time.increase(10_000); // 0.00002 ETH/sec * 10,000 sec = 0.2 ETH should be distributed
 
     // User0 creates a long market decrease to balance the pool
     await handleOrder(fixture, {
@@ -308,12 +304,13 @@ describe("Guardian.PositionImpactPoolDistribution", () => {
       },
     });
 
-    impactPendingAmount0 = await dataStore.getInt(getImpactPendingAmountKey(positionKey0));
-    expect(impactPendingAmount0).eq(0); // long position decreased by 100% i.e. closed
+    const positivePI = expandDecimals(4, 16); // 0.04 eth 200 usd
+    const distributionAmt = expandDecimals(2, 17); // 0.2 eth
 
-    const impactPoolAmountWithoutDistribution = expandDecimals(76, 16); // 0.8 - 0.04 = ~0.76 eth
+    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0))).eq(0); // long position decreased by 100% i.e. closed
+
     expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).to.approximately(
-      impactPoolAmountWithoutDistribution.sub(distributionAmt),
+      negativePI.sub(distributionAmt).sub(positivePI),
       expandDecimals(1, 14)
     );
   });
