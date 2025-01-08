@@ -612,7 +612,7 @@ describe("Guardian.Fees", () => {
           const autoAdjustCollateralEvent = getEventData(logs, "OrderCollateralDeltaAmountAutoUpdated");
 
           expect(autoAdjustCollateralEvent.collateralDeltaAmount).to.eq(expandDecimals(24_975, 6));
-          expect(autoAdjustCollateralEvent.nextCollateralDeltaAmount).to.eq(expandDecimals(24_950, 6)); // TODO: check this value
+          expect(autoAdjustCollateralEvent.nextCollateralDeltaAmount).to.eq(expandDecimals(24_950, 6)); // TODO: confirm this value
 
           // 25_000 * .1% = $25
           expect(positionFeesCollectedEvent.positionFeeAmount).to.eq(expandDecimals(25, 6)); // $25
@@ -700,7 +700,7 @@ describe("Guardian.Fees", () => {
 
     feeAmountCollected = expandDecimals(125, 6);
     let priceImpactAmountPaidToPool = expandDecimals(625, 4);
-    const claimedProfitAmount = 0; // TODO: check this vallue
+    const claimedProfitAmount = 0; // TODO: confirm this value
 
     expect(poolValueInfo.shortTokenAmount).to.eq(
       expandDecimals(5_000_000, 6).add(feeAmountCollected).add(priceImpactAmountPaidToPool).sub(claimedProfitAmount)
@@ -902,7 +902,7 @@ describe("Guardian.Fees", () => {
 
           // Decreased collateral as expected
           expect(positionDecreasedEvent.collateralDeltaAmount).to.eq(expandDecimals(14_500, 6));
-          expect(positionDecreasedEvent.collateralAmount).to.eq(expandDecimals(10_418_750, 3)); // TODO: compute value
+          expect(positionDecreasedEvent.collateralAmount).to.eq(expandDecimals(10_418_750, 3));
         },
       },
     });
@@ -985,8 +985,7 @@ describe("Guardian.Fees", () => {
     // Value of position: 5 * 7,041 = $35,205
     // E.g. PnL = $25,000 - $35,205 = -$10,205
     // min collateral necessary is ~250 USDC
-    // TODO: compute value
-    // Collateral is down to 10,450 - 10,205 = 245 USDC
+    // Collateral is down to 10,418.75 - 10,205 = 213.75 USDC
     // Extra $12.5 fee is applied and + 3.125 PI E.g. position is now liquidated
     // as
     await expect(
@@ -1039,13 +1038,12 @@ describe("Guardian.Fees", () => {
     user0UsdcBalAfter = await usdc.balanceOf(user0.address);
 
     // User receives their remaining collateral back
-    // TODO: compute value
-    // From losses, remaining is 10,450 - 10,205 = 245 USDC
+    // From losses, remaining is 10,418.75 - 10,205 = 213.75 USDC
     // Fees that further
     // $12.5 in fees
     // PI is positive
     // PI: +$3.125
-    // remaining collateral should be: 245 - 12.5 + 3.125 ~= 235.625 USDC
+    // remaining collateral should be: 213.75 - 12.5 + 3.125 ~= 204.375 USDC
     expect(user0UsdcBalAfter.sub(user0UsdcBalBefore)).to.eq(expandDecimals(204_375, 3).sub(1));
 
     // Nothing paid out in ETH, no positive PnL or positive impact
