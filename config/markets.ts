@@ -229,23 +229,23 @@ type BorrowingRateConfig = Partial<{
 
 const borrowingRateConfig_LowMax_WithLowerBase: BorrowingRateConfig = {
   optimalUsageFactor: percentageToFloat("75%"),
-  baseBorrowingFactor: percentageToFloat("40%").div(SECONDS_PER_YEAR),
+  baseBorrowingFactor: percentageToFloat("45%").div(SECONDS_PER_YEAR),
   aboveOptimalUsageBorrowingFactor: percentageToFloat("100%").div(SECONDS_PER_YEAR),
 };
 const borrowingRateConfig_LowMax_WithHigherBase: BorrowingRateConfig = {
   optimalUsageFactor: percentageToFloat("75%"),
-  baseBorrowingFactor: percentageToFloat("45%").div(SECONDS_PER_YEAR),
+  baseBorrowingFactor: percentageToFloat("50%").div(SECONDS_PER_YEAR),
   aboveOptimalUsageBorrowingFactor: percentageToFloat("100%").div(SECONDS_PER_YEAR),
 };
 
 const borrowingRateConfig_HighMax_WithLowerBase: BorrowingRateConfig = {
   optimalUsageFactor: percentageToFloat("75%"),
-  baseBorrowingFactor: percentageToFloat("45%").div(SECONDS_PER_YEAR),
+  baseBorrowingFactor: percentageToFloat("50%").div(SECONDS_PER_YEAR),
   aboveOptimalUsageBorrowingFactor: percentageToFloat("130%").div(SECONDS_PER_YEAR),
 };
 const borrowingRateConfig_HighMax_WithHigherBase: BorrowingRateConfig = {
   optimalUsageFactor: percentageToFloat("75%"),
-  baseBorrowingFactor: percentageToFloat("50%").div(SECONDS_PER_YEAR),
+  baseBorrowingFactor: percentageToFloat("55%").div(SECONDS_PER_YEAR),
   aboveOptimalUsageBorrowingFactor: percentageToFloat("130%").div(SECONDS_PER_YEAR),
 };
 
