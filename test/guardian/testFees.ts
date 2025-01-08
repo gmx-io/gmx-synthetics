@@ -436,7 +436,7 @@ describe("Guardian.Fees", () => {
     expect(position.numbers.sizeInUsd).to.eq(expandDecimals(50_000, 30));
     expect(position.numbers.sizeInTokens).to.eq(expandDecimals(10, 18)); // 10 ETH
 
-    // value of the pool has a net 0 change (other than fees) because pnl doesn't change due to the price impact
+    // value of the pool has a net 0 change (other than fees) because the pnl doesn't change due to the price impact
     // price impact is stored as pending on increase and applied on decrease (proportional to the size of the decrease)
 
     poolPnl = await reader.getNetPnl(dataStore.address, ethUsdMarket, prices.ethUsdMarket.indexTokenPrice, false);
@@ -479,7 +479,7 @@ describe("Guardian.Fees", () => {
 
     let impactPoolAmount = bigNumberify(0);
     expect(poolValueInfo.impactPoolAmount).to.eq(impactPoolAmount); // 0
-    let impactPendingAmountLong = bigNumberify(-expandDecimals(5, 15));
+    let impactPendingAmountLong = expandDecimals(5, 15).mul(-1);
     expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey))).to.eq(impactPendingAmountLong); // -0.005 ETH
 
     // Open a position and get positively impacted, pay a 0.05% positionFeeFactor rate
@@ -510,27 +510,20 @@ describe("Guardian.Fees", () => {
           // uiFeeAmount should be 0
           expect(positionFeesCollectedEvent.uiFeeAmount).to.eq(0);
 
-          // Negative impact amount for $50,000 of imbalance
-          // 50,000^2 * 5e21 / 1e30 = $12.5
-          expect(positionIncreaseEvent.priceImpactUsd).to.eq(0); // capped by the pool amount which is 0 at this point
+          expect(positionIncreaseEvent.priceImpactUsd).to.eq(0); // capped by the impact pool amount which is 0 at this point
         },
       },
     });
 
-    // TODO: update calculation: $25 --> $50
-    // Resulting position has $25,000 - $25 of collateral
-    // & $50_000 - $12.5 price impact E.g. 10 ETH - $49,987.5 / $5,000 = 0.0025 ETH pending impact amount
     const positionKey2 = getPositionKey(user0.address, ethUsdMarket.marketToken, usdc.address, false);
     let position2 = await reader.getPosition(dataStore.address, positionKey2);
 
     expect(position2.numbers.collateralAmount).to.eq(expandDecimals(25_000, 6).sub(expandDecimals(50, 6)));
     expect(position2.numbers.sizeInUsd).to.eq(expandDecimals(50_000, 30));
     expect(position2.numbers.sizeInTokens).to.eq("10000000000000000000"); // 10 ETH
-    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey2))).to.eq(0); // Why 0?
+    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey2))).to.eq(0); // capped by the impact pool amount
 
     // value of the pool has a net 0 change (other than fees) because the pnl doesn't change due to the price impact
-    // Long position is down $25
-    // Short position is up $12.5
     poolPnl = await reader.getNetPnl(dataStore.address, ethUsdMarket, prices.ethUsdMarket.indexTokenPrice, false);
     expect(poolPnl).to.eq(0);
 
@@ -577,16 +570,10 @@ describe("Guardian.Fees", () => {
     expect(poolValueInfo.shortTokenAmount).to.eq(expandDecimals(5_000_000, 6).add(feeAmountCollected));
     expect(poolValueInfo.longTokenAmount).to.eq(expandDecimals(1_000, 18));
 
-    // Now there is an offset of $25 worth of ETH that is being subtracted from the poolvalue, this way the trader's
-    // immediate net pnl of -$25 does not affect the pool value above.
     expect(poolValueInfo.impactPoolAmount).to.eq(0);
     let impactPendingAmountShort = bigNumberify(0);
-    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey2))).to.eq(0);
-    expect(
-      (await dataStore.getInt(getImpactPendingAmountKey(positionKey))).add(
-        await dataStore.getInt(getImpactPendingAmountKey(positionKey2))
-      )
-    ).to.eq(impactPendingAmountLong.add(impactPendingAmountShort)); // -0.005 ETH from long + 0.005 ETH from short, extra wei from rounding
+    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey2))).to.eq(impactPendingAmountShort); // 0
+    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey))).to.eq(impactPendingAmountLong); // -0.005 ETH from long
 
     // Test min collateral multiplier
     // goal min collateral factor of 0.15
@@ -625,7 +612,7 @@ describe("Guardian.Fees", () => {
           const autoAdjustCollateralEvent = getEventData(logs, "OrderCollateralDeltaAmountAutoUpdated");
 
           expect(autoAdjustCollateralEvent.collateralDeltaAmount).to.eq(expandDecimals(24_975, 6));
-          expect(autoAdjustCollateralEvent.nextCollateralDeltaAmount).to.eq(expandDecimals(24_950, 6));
+          expect(autoAdjustCollateralEvent.nextCollateralDeltaAmount).to.eq(expandDecimals(24_950, 6)); // TODO: check this value
 
           // 25_000 * .1% = $25
           expect(positionFeesCollectedEvent.positionFeeAmount).to.eq(expandDecimals(25, 6)); // $25
@@ -657,19 +644,17 @@ describe("Guardian.Fees", () => {
     // 12.5/2 - 6.25 = 0, Net gain should be 0
     expect(user0UsdcBalAfter.sub(user0UsdcBalBefore)).to.eq(0);
 
-    // Resulting position has $25,000 - $25 of collateral
+    // Resulting position has $25,000 - $75 of collateral + 6.25 PI
     position2 = await reader.getPosition(dataStore.address, positionKey2);
 
     expect(position2.numbers.collateralAmount).to.closeTo(
-      expandDecimals(25_000, 6).sub(expandDecimals(50 + 25, 6).add(expandDecimals(625, 4))),
+      expandDecimals(25_000, 6).sub(expandDecimals(75, 6).add(expandDecimals(625, 4))),
       "1"
-    ); // Same collateral amount - $25 in fees
+    ); // Same collateral amount - $75 in fees and $6.25 in PI
     expect(position2.numbers.sizeInUsd).to.eq(expandDecimals(25_000, 30)); // Size delta decreased 50%
     expect(position2.numbers.sizeInTokens).to.eq("5000000000000000000"); // 10/2 ETH
 
     // value of the pool has a net 0 change (other than fees) because the pnl doesn't change due to the price impact
-    // Long position is down $25
-    // Short position was up $12.5
     // Now short has decreased by half
     poolPnl = await reader.getNetPnl(dataStore.address, ethUsdMarket, prices.ethUsdMarket.indexTokenPrice, false);
     expect(poolPnl).to.eq(0);
@@ -724,7 +709,7 @@ describe("Guardian.Fees", () => {
 
     // Now there is an offset of $25 worth of ETH that is being subtracted from the poolvalue, this way the trader's
     // immediate net pnl of -$25 does not affect the pool value above.
-    // 0.005 ETH from opening long - 0.0025 ETH from opening short + 0.00125 ETH from decreasing short, extra wei from rounding
+    // 0 + 0.00125 ETH from decreasing short
     impactPoolAmount = impactPoolAmount.add(expandDecimals(125, 13));
     expect(poolValueInfo.impactPoolAmount).to.eq(impactPoolAmount); // 0.00125 ETH
     expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey2))).to.eq(impactPendingAmountShort); // 0
@@ -850,9 +835,7 @@ describe("Guardian.Fees", () => {
     );
     expect(poolValueInfo.longTokenAmount).to.eq(expandDecimals(1_000, 18));
 
-    // Now there is an offset of $25 worth of ETH that is being subtracted from the poolvalue, this way the trader's
-    // immediate net pnl of -$25 does not affect the pool value above.
-    // 0.005 ETH from opening long + 0.000625 ETH from decreasing long
+    // decrease long price impact: 0.005 ETH from proportional increase + 0.000625 ETH from calculated decrease
     impactPoolAmount = impactPoolAmount.add(expandDecimals(5_625, 12));
     expect(poolValueInfo.impactPoolAmount).to.eq(impactPoolAmount); // 0.005625 ETH
 
@@ -940,11 +923,7 @@ describe("Guardian.Fees", () => {
     expect(position2.numbers.sizeInUsd).to.eq(decimalToFloat(25_000));
     expect(position2.numbers.sizeInTokens).to.eq("5000000000000000000");
 
-    // value of the pool has a net 0 change (other than fees) because the positionImpactPool
-    // offsets the immediate PnL that is experienced
-    // Short position was up $12.5
-    // Now short has decreased by half, they paid the negative price impact on the way out
-    // leaving 6.25 in positive impact remaining PnL
+    // value of the pool has a net 0 change (other than fees) because the pnl doesn't change due to the price impact
     poolPnl = await reader.getNetPnl(dataStore.address, ethUsdMarket, prices.ethUsdMarket.indexTokenPrice, false);
     expect(poolPnl).to.eq(0);
 
@@ -990,10 +969,8 @@ describe("Guardian.Fees", () => {
     expect(marketTokenPrice).to.eq(marketTokenPriceBefore);
     expect(poolValueInfo.poolValue).to.eq(expandDecimals(10_000_000, 30).add(expandDecimals(175, 30))); // 10M + $175 of fees
 
-    // Now there is an offset of $25 worth of ETH that is being subtracted from the poolvalue, this way the trader's
-    // immediate net pnl of -$25 does not affect the pool value above.
-    // 0.005 ETH from opening long - 0.0025 ETH from opening short + 0.00125 ETH from decreasing short + 0.000625 ETH from decreasing long, extra wei from rounding
     // impact pool amount has not changed
+    // 0.005 ETH from proportional increase long + 0.000625 ETH from calculated decrease long
     expect(poolValueInfo.impactPoolAmount).to.eq(impactPoolAmount); // 0.005625 ETH
     impactPendingAmountLong = bigNumberify(0); // position has been decreased entirely => no impact pending
     expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey))).to.eq(impactPendingAmountLong); // 0
@@ -1008,6 +985,7 @@ describe("Guardian.Fees", () => {
     // Value of position: 5 * 7,041 = $35,205
     // E.g. PnL = $25,000 - $35,205 = -$10,205
     // min collateral necessary is ~250 USDC
+    // TODO: compute value
     // Collateral is down to 10,450 - 10,205 = 245 USDC
     // Extra $12.5 fee is applied and + 3.125 PI E.g. position is now liquidated
     // as
@@ -1061,13 +1039,14 @@ describe("Guardian.Fees", () => {
     user0UsdcBalAfter = await usdc.balanceOf(user0.address);
 
     // User receives their remaining collateral back
+    // TODO: compute value
     // From losses, remaining is 10,450 - 10,205 = 245 USDC
     // Fees that further
     // $12.5 in fees
     // PI is positive
     // PI: +$3.125
     // remaining collateral should be: 245 - 12.5 + 3.125 ~= 235.625 USDC
-    expect(user0UsdcBalAfter.sub(user0UsdcBalBefore)).to.eq("204374999"); // TODO: compute value
+    expect(user0UsdcBalAfter.sub(user0UsdcBalBefore)).to.eq(expandDecimals(204_375, 3).sub(1));
 
     // Nothing paid out in ETH, no positive PnL or positive impact
     expect(user0WntBalAfter.sub(user0WntBalAfter)).to.eq(0);
