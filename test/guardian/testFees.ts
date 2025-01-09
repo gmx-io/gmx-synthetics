@@ -482,7 +482,7 @@ describe("Guardian.Fees", () => {
     let impactPendingAmountLong = expandDecimals(5, 15).mul(-1);
     expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey))).to.eq(impactPendingAmountLong); // -0.005 ETH
 
-    // Open a position and get positively impacted, pay a 0.05% positionFeeFactor rate
+    // Open a position and get positively impacted, pay a 0.1% positionFeeFactor rate
     await handleOrder(fixture, {
       create: {
         account: user0,
@@ -503,8 +503,9 @@ describe("Guardian.Fees", () => {
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
 
-          // 50_000 * .05% = $25
-          expect(positionFeesCollectedEvent.positionFeeAmount).to.eq(expandDecimals(50, 6)); // $50 TODO: Why did this change?
+          // priceImpactUsd = 0 => negativePositionFeeFactor is used to calculate positionFeeFactor (i.e. forPositiveImpact = priceImpactUsd > 0)
+          // 50_000 * .1% = $50
+          expect(positionFeesCollectedEvent.positionFeeAmount).to.eq(expandDecimals(50, 6));
           expect(positionFeesCollectedEvent.uiFeeReceiver).to.eq(user1.address);
 
           // uiFeeAmount should be 0
@@ -612,7 +613,7 @@ describe("Guardian.Fees", () => {
           const autoAdjustCollateralEvent = getEventData(logs, "OrderCollateralDeltaAmountAutoUpdated");
 
           expect(autoAdjustCollateralEvent.collateralDeltaAmount).to.eq(expandDecimals(24_975, 6));
-          expect(autoAdjustCollateralEvent.nextCollateralDeltaAmount).to.eq(expandDecimals(24_950, 6)); // TODO: confirm this value
+          expect(autoAdjustCollateralEvent.nextCollateralDeltaAmount).to.eq(expandDecimals(24_950, 6));
 
           // 25_000 * .1% = $25
           expect(positionFeesCollectedEvent.positionFeeAmount).to.eq(expandDecimals(25, 6)); // $25
@@ -700,7 +701,7 @@ describe("Guardian.Fees", () => {
 
     feeAmountCollected = expandDecimals(125, 6);
     let priceImpactAmountPaidToPool = expandDecimals(625, 4);
-    const claimedProfitAmount = 0; // TODO: confirm this value
+    const claimedProfitAmount = 0;
 
     expect(poolValueInfo.shortTokenAmount).to.eq(
       expandDecimals(5_000_000, 6).add(feeAmountCollected).add(priceImpactAmountPaidToPool).sub(claimedProfitAmount)
