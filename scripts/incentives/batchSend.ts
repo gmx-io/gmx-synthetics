@@ -165,7 +165,7 @@ async function main() {
     for (const [j, recipient] of batchRecipients.entries()) {
       console.log(
         "%s recipient %s amount %s (%s)",
-        firstRecipientIndex + i,
+        firstRecipientIndex + i * batchSize + j,
         recipient,
         formatAmount(batchAmounts[j], 18, 2, true),
         batchAmounts[j]
@@ -196,7 +196,7 @@ async function main() {
       for (const [j, recipient] of batchRecipients.entries()) {
         console.log(
           "%s recipient %s amount %s (%s)",
-          firstRecipientIndex + i,
+          firstRecipientIndex + i * batchSize + j,
           recipient,
           formatAmount(batchAmounts[j], 18, 2, true),
           batchAmounts[j]
