@@ -80,9 +80,9 @@ contract GelatoRelayRouter is GelatoRelayContextERC2771, BaseRouter, OracleModul
         IBaseOrderUtils.CreateOrderParams memory params // can't use calldata because need to modify params.numbers.executionFee
     ) external nonReentrant withOraclePricesForAtomicAction(oracleParams) onlyGelatoRelayERC2771 returns (bytes32) {
         // should not use msg.sender directly
-        address msgSender = _getMsgSender();
+        address account = _getMsgSender();
 
-        if (params.addresses.receiver != msgSender) {
+        if (params.addresses.receiver != account) {
             // otherwise malicious relayer can set receiver to any address and steal user's funds
             revert Errors.InvalidReceiver(params.addresses.receiver);
         }
@@ -96,10 +96,10 @@ contract GelatoRelayRouter is GelatoRelayContextERC2771, BaseRouter, OracleModul
         );
 
         if (collateralAmount > 0) {
-            _sendTokens(msgSender, params.addresses.initialCollateralToken, address(orderVault), collateralAmount);
+            _sendTokens(account, params.addresses.initialCollateralToken, address(orderVault), collateralAmount);
         }
 
-        return orderHandler.createOrder(msgSender, params);
+        return orderHandler.createOrder(account, params);
     }
 
     function updateOrder(
@@ -110,15 +110,15 @@ contract GelatoRelayRouter is GelatoRelayContextERC2771, BaseRouter, OracleModul
         UpdateOrderParams calldata params
     ) external nonReentrant withOraclePricesForAtomicAction(oracleParams) onlyGelatoRelayERC2771 {
         // should not use msg.sender directly
-        address msgSender = _getMsgSender();
+        address account = _getMsgSender();
 
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);
-        if (order.account() != msgSender) {
-            revert Errors.Unauthorized(msgSender, "account for updateOrder");
+        if (order.account() != account) {
+            revert Errors.Unauthorized(account, "account for updateOrder");
         }
 
         _processPermits(permitParams);
-        _processFee(feeParams, key, order.uiFeeReceiver(), msgSender);
+        _processFee(feeParams, key, order.uiFeeReceiver(), account);
 
         orderHandler.updateOrder(
             key,
@@ -144,14 +144,14 @@ contract GelatoRelayRouter is GelatoRelayContextERC2771, BaseRouter, OracleModul
         }
 
         // should not use msg.sender directly
-        address msgSender = _getMsgSender();
+        address account = _getMsgSender();
 
-        if (order.account() != msgSender) {
-            revert Errors.Unauthorized(msgSender, "account for cancelOrder");
+        if (order.account() != account) {
+            revert Errors.Unauthorized(account, "account for cancelOrder");
         }
 
         _processPermits(permitParams);
-        _processFee(feeParams, key, order.uiFeeReceiver(), msgSender);
+        _processFee(feeParams, key, order.uiFeeReceiver(), account);
 
         orderHandler.cancelOrder(key);
     }
@@ -169,9 +169,9 @@ contract GelatoRelayRouter is GelatoRelayContextERC2771, BaseRouter, OracleModul
         }
 
         // should not use msg.sender directly
-        address msgSender = _getMsgSender();
+        address account = _getMsgSender();
 
-        _sendTokens(msgSender, feeParams.feeToken, address(orderVault), feeParams.feeAmount);
+        _sendTokens(account, feeParams.feeToken, address(orderVault), feeParams.feeAmount);
         uint256 outputAmount = _swapFeeTokens(wnt, feeParams, orderKey, uiFeeReceiver);
         _transferRelayFee();
 
