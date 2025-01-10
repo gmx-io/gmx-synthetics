@@ -1,4 +1,12 @@
-import { decimalToFloat, exponentToFloat, bigNumberify, formatAmount, pow, FLOAT_PRECISION } from "../utils/math";
+import {
+  decimalToFloat,
+  exponentToFloat,
+  bigNumberify,
+  formatAmount,
+  pow,
+  FLOAT_PRECISION,
+  expandDecimals,
+} from "../utils/math";
 import { createMarketConfigByKey, getMarketKey } from "../utils/market";
 import { performMulticall } from "../utils/multicall";
 import { SECONDS_PER_YEAR } from "../utils/constants";
@@ -393,8 +401,13 @@ function getTradeSizeForImpact({ priceImpactBps, impactExponentFactor, impactFac
   const exponent = 1 / (impactExponentFactor.div(decimalToFloat(1, 2)).toNumber() / 100 - 1);
   const base = bigNumberify(priceImpactBps).mul(decimalToFloat(1)).div(10_000).div(impactFactor).toNumber();
 
-  const tradeSize = Math.pow(base, exponent).toFixed(0);
-  return tradeSize;
+  const tradeSize = Math.pow(base, exponent);
+
+  if (tradeSize === Infinity) {
+    return 0;
+  }
+
+  return tradeSize.toFixed(0);
 }
 
 async function validatePerpConfig({
@@ -604,6 +617,11 @@ async function validatePerpConfig({
   if (negativePositionImpactFactor.gt(0) && positivePositionImpactFactor.gt(0)) {
     const impactRatio = negativePositionImpactFactor.mul(BASIS_POINTS_DIVISOR).div(positivePositionImpactFactor);
     if (impactRatio.lt(recommendedPerpConfig.expectedPositionImpactRatio)) {
+      console.error(
+        "invalid position impact factors ratio is %s expected ratio %s",
+        impactRatio,
+        recommendedPerpConfig.expectedPositionImpactRatio
+      );
       throw new Error(`Invalid position impact factors for ${marketLabel}`);
     }
   }

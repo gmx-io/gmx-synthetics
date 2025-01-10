@@ -487,7 +487,7 @@ const config: {
       maxPoolUsdForDeposit: decimalToFloat(100_000_000),
 
       positionImpactExponentFactor: exponentToFloat("1e0"),
-      negativePositionImpactFactor: exponentToFloat("1e-15"),
+      negativePositionImpactFactor: exponentToFloat("2e-15"),
       positivePositionImpactFactor: exponentToFloat("1e-15"),
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(46530, 26), // 4,653E+30, 0.0040202449 BTC / day
@@ -582,7 +582,7 @@ const config: {
       maxPoolUsdForDeposit: decimalToFloat(60_000_000),
 
       positionImpactExponentFactor: exponentToFloat("1e0"),
-      negativePositionImpactFactor: exponentToFloat("1e-15"),
+      negativePositionImpactFactor: exponentToFloat("2e-15"),
       positivePositionImpactFactor: exponentToFloat("1e-15"),
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(37181, 37), // 3.718184E+41, 0.0321250994 ETH / day
