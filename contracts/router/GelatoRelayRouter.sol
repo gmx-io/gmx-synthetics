@@ -51,6 +51,12 @@ contract GelatoRelayRouter is GelatoRelayContextERC2771, BaseRouter, OracleModul
         bool autoCancel;
     }
 
+    struct Contracts {
+        DataStore dataStore;
+        EventEmitter eventEmitter;
+        OrderVault orderVault;
+    }
+
     constructor(
         Router _router,
         RoleStore _roleStore,
@@ -79,7 +85,7 @@ contract GelatoRelayRouter is GelatoRelayContextERC2771, BaseRouter, OracleModul
         uint256 collateralAmount,
         IBaseOrderUtils.CreateOrderParams memory params // can't use calldata because need to modify params.numbers.executionFee
     ) external nonReentrant withOraclePricesForAtomicAction(oracleParams) onlyGelatoRelayERC2771 returns (bytes32) {
-        // should not use msg.sender directly
+        // should not use msg.sender directly because Gelato relayer passes it in calldata
         address account = _getMsgSender();
 
         if (params.addresses.receiver != account) {
@@ -87,16 +93,28 @@ contract GelatoRelayRouter is GelatoRelayContextERC2771, BaseRouter, OracleModul
             revert Errors.InvalidReceiver(params.addresses.receiver);
         }
 
+        Contracts memory contracts = Contracts({
+            dataStore: dataStore,
+            eventEmitter: eventEmitter,
+            orderVault: orderVault
+        });
+
         _processPermits(permitParams);
         params.numbers.executionFee = _processFee(
+            contracts,
             feeParams,
-            NonceUtils.getNextKey(dataStore), // order key
+            NonceUtils.getNextKey(contracts.dataStore), // order key
             params.addresses.uiFeeReceiver,
-            address(orderVault)
+            address(contracts.orderVault)
         );
 
         if (collateralAmount > 0) {
-            _sendTokens(account, params.addresses.initialCollateralToken, address(orderVault), collateralAmount);
+            _sendTokens(
+                account,
+                params.addresses.initialCollateralToken,
+                address(contracts.orderVault),
+                collateralAmount
+            );
         }
 
         return orderHandler.createOrder(account, params);
@@ -109,16 +127,22 @@ contract GelatoRelayRouter is GelatoRelayContextERC2771, BaseRouter, OracleModul
         bytes32 key,
         UpdateOrderParams calldata params
     ) external nonReentrant withOraclePricesForAtomicAction(oracleParams) onlyGelatoRelayERC2771 {
-        // should not use msg.sender directly
+        // should not use msg.sender directly because Gelato relayer passes it in calldata
         address account = _getMsgSender();
 
-        Order.Props memory order = OrderStoreUtils.get(dataStore, key);
+        Contracts memory contracts = Contracts({
+            dataStore: dataStore,
+            eventEmitter: eventEmitter,
+            orderVault: orderVault
+        });
+
+        Order.Props memory order = OrderStoreUtils.get(contracts.dataStore, key);
         if (order.account() != account) {
             revert Errors.Unauthorized(account, "account for updateOrder");
         }
 
         _processPermits(permitParams);
-        _processFee(feeParams, key, order.uiFeeReceiver(), account);
+        _processFee(contracts, feeParams, key, order.uiFeeReceiver(), account);
 
         orderHandler.updateOrder(
             key,
@@ -143,58 +167,69 @@ contract GelatoRelayRouter is GelatoRelayContextERC2771, BaseRouter, OracleModul
             revert Errors.EmptyOrder();
         }
 
-        // should not use msg.sender directly
+        // should not use msg.sender directly because Gelato relayer passes it in calldata
         address account = _getMsgSender();
 
         if (order.account() != account) {
             revert Errors.Unauthorized(account, "account for cancelOrder");
         }
 
+        Contracts memory contracts = Contracts({
+            dataStore: dataStore,
+            eventEmitter: eventEmitter,
+            orderVault: orderVault
+        });
+
         _processPermits(permitParams);
-        _processFee(feeParams, key, order.uiFeeReceiver(), account);
+        _processFee(contracts, feeParams, key, order.uiFeeReceiver(), account);
 
         orderHandler.cancelOrder(key);
     }
 
     function _processFee(
+        Contracts memory contracts,
         FeeParams calldata feeParams,
         bytes32 orderKey,
         address uiFeeReceiver,
         address residualFeeReceiver
     ) internal returns (uint256) {
-        address wnt = TokenUtils.wnt(dataStore);
+        address wnt = TokenUtils.wnt(contracts.dataStore);
 
         if (_getFeeToken() != wnt) {
             revert Errors.InvalidFeeToken(feeParams.feeToken, wnt);
         }
 
-        // should not use msg.sender directly
+        // should not use msg.sender directly because Gelato relayer passes it in calldata
         address account = _getMsgSender();
 
-        _sendTokens(account, feeParams.feeToken, address(orderVault), feeParams.feeAmount);
-        uint256 outputAmount = _swapFeeTokens(wnt, feeParams, orderKey, uiFeeReceiver);
+        _sendTokens(account, feeParams.feeToken, address(contracts.orderVault), feeParams.feeAmount);
+        uint256 outputAmount = _swapFeeTokens(contracts, wnt, feeParams, orderKey, uiFeeReceiver);
         _transferRelayFee();
 
         uint256 residualFee = outputAmount - _getFee();
-        TokenUtils.transfer(dataStore, wnt, residualFeeReceiver, residualFee);
+        TokenUtils.transfer(contracts.dataStore, wnt, residualFeeReceiver, residualFee);
         return residualFee;
     }
 
     function _swapFeeTokens(
+        Contracts memory contracts,
         address wnt,
         FeeParams calldata feeParams,
         bytes32 orderKey,
         address uiFeeReceiver
     ) internal returns (uint256) {
         // swap fee tokens to WNT
-        Market.Props[] memory swapPathMarkets = MarketUtils.getSwapPathMarkets(dataStore, feeParams.feeSwapPath);
+        Market.Props[] memory swapPathMarkets = MarketUtils.getSwapPathMarkets(
+            contracts.dataStore,
+            feeParams.feeSwapPath
+        );
 
         (address outputToken, uint256 outputAmount) = SwapUtils.swap(
             SwapUtils.SwapParams({
-                dataStore: dataStore,
-                eventEmitter: eventEmitter,
+                dataStore: contracts.dataStore,
+                eventEmitter: contracts.eventEmitter,
                 oracle: oracle,
-                bank: orderVault,
+                bank: contracts.orderVault,
                 key: orderKey,
                 tokenIn: feeParams.feeToken,
                 amountIn: feeParams.feeAmount,
