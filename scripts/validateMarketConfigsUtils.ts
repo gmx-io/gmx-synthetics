@@ -1,12 +1,4 @@
-import {
-  decimalToFloat,
-  exponentToFloat,
-  bigNumberify,
-  formatAmount,
-  pow,
-  FLOAT_PRECISION,
-  expandDecimals,
-} from "../utils/math";
+import { decimalToFloat, exponentToFloat, bigNumberify, formatAmount, pow, FLOAT_PRECISION } from "../utils/math";
 import { createMarketConfigByKey, getMarketKey } from "../utils/market";
 import { performMulticall } from "../utils/multicall";
 import { SECONDS_PER_YEAR } from "../utils/constants";
