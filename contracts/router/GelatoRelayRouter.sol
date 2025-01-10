@@ -16,6 +16,7 @@ import "../order/OrderVault.sol";
 import "../router/Router.sol";
 import "../token/TokenUtils.sol";
 import "../swap/SwapUtils.sol";
+import "../nonce/NonceUtils.sol";
 
 contract GelatoRelayRouter is GelatoRelayContextERC2771, BaseRouter, OracleModule {
     using Order for Order.Props;
@@ -65,7 +66,7 @@ contract GelatoRelayRouter is GelatoRelayContextERC2771, BaseRouter, OracleModul
         orderVault = _orderVault;
     }
 
-    function multicall(bytes[] calldata) external override payable virtual returns (bytes[] memory) {
+    function multicall(bytes[] calldata) external payable virtual override returns (bytes[] memory) {
         // disable multicall
         // https://docs.gelato.network/web3-services/relay/security-considerations/erc-2771-delegatecall-vulnerability#avoid-multicall-in-combination-with-erc-2771
         revert Errors.NotImplemented();
@@ -86,7 +87,12 @@ contract GelatoRelayRouter is GelatoRelayContextERC2771, BaseRouter, OracleModul
         }
 
         _processPermits(permitParams);
-        params.numbers.executionFee = _processFee(feeParams, params.addresses.uiFeeReceiver, address(orderVault));
+        params.numbers.executionFee = _processFee(
+            feeParams,
+            NonceUtils.getNextKey(dataStore), // order key
+            params.addresses.uiFeeReceiver,
+            address(orderVault)
+        );
 
         if (collateralAmount > 0) {
             _sendTokens(msgSender, params.addresses.initialCollateralToken, address(orderVault), collateralAmount);
@@ -110,7 +116,7 @@ contract GelatoRelayRouter is GelatoRelayContextERC2771, BaseRouter, OracleModul
         }
 
         _processPermits(permitParams);
-        _processFee(feeParams, order.uiFeeReceiver(), msgSender);
+        _processFee(feeParams, key, order.uiFeeReceiver(), msgSender);
 
         orderHandler.updateOrder(
             key,
@@ -142,13 +148,14 @@ contract GelatoRelayRouter is GelatoRelayContextERC2771, BaseRouter, OracleModul
         }
 
         _processPermits(permitParams);
-        _processFee(feeParams, order.uiFeeReceiver(), msgSender);
+        _processFee(feeParams, key, order.uiFeeReceiver(), msgSender);
 
         orderHandler.cancelOrder(key);
     }
 
     function _processFee(
         FeeParams calldata feeParams,
+        bytes32 orderKey,
         address uiFeeReceiver,
         address residualFeeReceiver
     ) internal returns (uint256) {
@@ -161,7 +168,7 @@ contract GelatoRelayRouter is GelatoRelayContextERC2771, BaseRouter, OracleModul
         address msgSender = _getMsgSender();
 
         _sendTokens(msgSender, feeParams.feeToken, address(orderVault), feeParams.feeAmount);
-        uint256 outputAmount = _swapFeeTokens(wnt, feeParams, uiFeeReceiver);
+        uint256 outputAmount = _swapFeeTokens(wnt, feeParams, orderKey, uiFeeReceiver);
         _transferRelayFee();
 
         uint256 residualFee = outputAmount - _getFee();
@@ -172,6 +179,7 @@ contract GelatoRelayRouter is GelatoRelayContextERC2771, BaseRouter, OracleModul
     function _swapFeeTokens(
         address wnt,
         FeeParams calldata feeParams,
+        bytes32 orderKey,
         address uiFeeReceiver
     ) internal returns (uint256) {
         // swap fee tokens to WNT
@@ -183,11 +191,11 @@ contract GelatoRelayRouter is GelatoRelayContextERC2771, BaseRouter, OracleModul
                 eventEmitter: eventEmitter,
                 oracle: oracle,
                 bank: orderVault,
-                key: bytes32(0), // TODO
+                key: orderKey,
                 tokenIn: feeParams.feeToken,
                 amountIn: feeParams.feeAmount,
                 swapPathMarkets: swapPathMarkets,
-                minOutputAmount: 0,
+                minOutputAmount: _getFee(),
                 receiver: address(this),
                 uiFeeReceiver: uiFeeReceiver,
                 shouldUnwrapNativeToken: false
