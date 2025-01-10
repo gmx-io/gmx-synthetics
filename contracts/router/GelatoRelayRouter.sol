@@ -210,9 +210,21 @@ contract GelatoRelayRouter is GelatoRelayContextERC2771, BaseRouter, OracleModul
     }
 
     function _processPermits(PermitParams[] memory permitParams) internal {
-        // TODO checks if Router already has sufficient allowance
+        address _router = address(router);
+
         for (uint256 i; i < permitParams.length; i++) {
             PermitParams memory permit = permitParams[i];
+
+            if (permit.spender != _router) {
+                // to avoid permitting spending by an incorrect spender for extra safety
+                revert Errors.InvalidPermitSpender(permit.spender, _router);
+            }
+
+            if (ERC20(permit.token).allowance(permit.owner, permit.spender) >= permit.value) {
+                // allowance is already sufficient
+                continue;
+            }
+
             IERC20Permit(permit.token).permit(
                 permit.owner,
                 permit.spender,
