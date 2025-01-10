@@ -67,7 +67,7 @@ contract GelatoRelayRouter is GelatoRelayContextERC2771, BaseRouter, OracleModul
     }
 
     function multicall(bytes[] calldata) external payable virtual override returns (bytes[] memory) {
-        // disable multicall
+        // disable multicall for safety
         // https://docs.gelato.network/web3-services/relay/security-considerations/erc-2771-delegatecall-vulnerability#avoid-multicall-in-combination-with-erc-2771
         revert Errors.NotImplemented();
     }
@@ -79,6 +79,7 @@ contract GelatoRelayRouter is GelatoRelayContextERC2771, BaseRouter, OracleModul
         uint256 collateralAmount,
         IBaseOrderUtils.CreateOrderParams memory params // can't use calldata because need to modify params.numbers.executionFee
     ) external nonReentrant withOraclePricesForAtomicAction(oracleParams) onlyGelatoRelayERC2771 returns (bytes32) {
+        // should not use msg.sender directly
         address msgSender = _getMsgSender();
 
         if (params.addresses.receiver != msgSender) {
@@ -107,7 +108,8 @@ contract GelatoRelayRouter is GelatoRelayContextERC2771, BaseRouter, OracleModul
         FeeParams calldata feeParams,
         bytes32 key,
         UpdateOrderParams calldata params
-    ) external withOraclePricesForAtomicAction(oracleParams) onlyGelatoRelayERC2771 nonReentrant {
+    ) external nonReentrant withOraclePricesForAtomicAction(oracleParams) onlyGelatoRelayERC2771 {
+        // should not use msg.sender directly
         address msgSender = _getMsgSender();
 
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);
@@ -136,12 +138,13 @@ contract GelatoRelayRouter is GelatoRelayContextERC2771, BaseRouter, OracleModul
         FeeParams calldata feeParams,
         bytes32 key
     ) external nonReentrant withOraclePricesForAtomicAction(oracleParams) onlyGelatoRelayERC2771 {
-        address msgSender = _getMsgSender();
-
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);
         if (order.account() == address(0)) {
             revert Errors.EmptyOrder();
         }
+
+        // should not use msg.sender directly
+        address msgSender = _getMsgSender();
 
         if (order.account() != msgSender) {
             revert Errors.Unauthorized(msgSender, "account for cancelOrder");
@@ -161,10 +164,11 @@ contract GelatoRelayRouter is GelatoRelayContextERC2771, BaseRouter, OracleModul
     ) internal returns (uint256) {
         address wnt = TokenUtils.wnt(dataStore);
 
-        if (feeParams.feeToken != wnt) {
+        if (_getFeeToken() != wnt) {
             revert Errors.InvalidFeeToken(feeParams.feeToken, wnt);
         }
 
+        // should not use msg.sender directly
         address msgSender = _getMsgSender();
 
         _sendTokens(msgSender, feeParams.feeToken, address(orderVault), feeParams.feeAmount);
@@ -210,6 +214,7 @@ contract GelatoRelayRouter is GelatoRelayContextERC2771, BaseRouter, OracleModul
     }
 
     function _processPermits(PermitParams[] memory permitParams) internal {
+        // not all tokens support ERC20Permit, for them separate transaction is needed
         address _router = address(router);
 
         for (uint256 i; i < permitParams.length; i++) {
