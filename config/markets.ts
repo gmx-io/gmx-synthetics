@@ -666,6 +666,7 @@ const config: {
 
       ...synthethicMarketConfig_IncreasedCapacity,
       ...fundingRateConfig_Default,
+      ...borrowingRateConfig_HighMax_WithLowerBase,
 
       maxLongTokenPoolAmount: expandDecimals(1930, 18),
       maxShortTokenPoolAmount: expandDecimals(6_300_000, 6),
@@ -685,10 +686,6 @@ const config: {
 
       reserveFactor: percentageToFloat("185%"),
       openInterestReserveFactor: percentageToFloat("180%"),
-
-      // factor in open interest reserve factor 120%
-      borrowingFactor: exponentToFloat("1.68e-11"), // 1.68E-11, ~58% at 100% utilisation
-      borrowingExponentFactor: exponentToFloat("1.5e0"), // 1.5
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(2491, 30), // 2.491335E+33, 215.25128205 XRP / day
       minPositionImpactPoolAmount: expandDecimals(4169, 6), // 4169.846154 XRP
