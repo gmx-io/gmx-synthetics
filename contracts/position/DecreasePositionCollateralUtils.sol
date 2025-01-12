@@ -41,6 +41,7 @@ library DecreasePositionCollateralUtils {
         uint256 swapOutputAmount;
         PayForCostResult result;
         int256 totalImpactUsd;
+        bool balanceWasImproved;
     }
 
     struct PayForCostResult {
@@ -91,7 +92,7 @@ library DecreasePositionCollateralUtils {
         // e.g. if the originally calculated price impact is -$100, but the capped price impact is -$80
         // then priceImpactDiffUsd would be $20
         // priceImpactUsd amount charged upfront, capped by impact pool and max positive factor; priceImpactDiffUsd amount claimable later
-        (values.priceImpactUsd, values.executionPrice) = PositionUtils.getExecutionPriceForDecrease(params, cache.prices.indexTokenPrice);
+        (values.priceImpactUsd, values.executionPrice, collateralCache.balanceWasImproved) = PositionUtils.getExecutionPriceForDecrease(params, cache.prices.indexTokenPrice);
 
         // the totalPositionPnl is calculated based on the current indexTokenPrice instead of the executionPrice
         // since the executionPrice factors in price impact which should be accounted for separately
@@ -111,7 +112,7 @@ library DecreasePositionCollateralUtils {
             params.contracts.referralStorage, // referralStorage
             params.position, // position
             cache.collateralTokenPrice, // collateralTokenPrice
-            values.priceImpactUsd > 0, // forPositiveImpact
+            collateralCache.balanceWasImproved, // balanceWasImproved
             params.market.longToken, // longToken
             params.market.shortToken, // shortToken
             params.order.sizeDeltaUsd(), // sizeDeltaUsd

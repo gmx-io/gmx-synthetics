@@ -1084,13 +1084,13 @@ library Keys {
 
     // @dev key for position fee factor
     // @param market the market address to check
-    // @param forPositiveImpact whether the fee is for an action that has a positive price impact
+    // @param balanceWasImproved whether the fee is for an action that has improved the balance
     // @return key for position fee factor
-    function positionFeeFactorKey(address market, bool forPositiveImpact) internal pure returns (bytes32) {
+    function positionFeeFactorKey(address market, bool balanceWasImproved) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             POSITION_FEE_FACTOR,
             market,
-            forPositiveImpact
+            balanceWasImproved
         ));
     }
 
@@ -1113,7 +1113,6 @@ library Keys {
 
     // @dev key for liquidation fee factor
     // @param market the market address to check
-    // @param forPositiveImpact whether the fee is for an action that has a positive price impact
     // @return key for liquidation fee factor
     function liquidationFeeFactorKey(address market) internal pure returns (bytes32) {
         return keccak256(abi.encode(
@@ -1147,12 +1146,13 @@ library Keys {
 
     // @dev key for swap fee factor
     // @param market the market address to check
+    // @param balanceWasImproved whether the fee is for an action that has improved the balance
     // @return key for swap fee factor
-    function swapFeeFactorKey(address market, bool forPositiveImpact) internal pure returns (bytes32) {
+    function swapFeeFactorKey(address market, bool balanceWasImproved) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             SWAP_FEE_FACTOR,
             market,
-            forPositiveImpact
+            balanceWasImproved
         ));
     }
 
@@ -1166,19 +1166,27 @@ library Keys {
         ));
     }
 
-    function depositFeeFactorKey(address market, bool forPositiveImpact) internal pure returns (bytes32) {
+    // @dev key for deposit fee factor
+    // @param market the market address to check
+    // @param balanceWasImproved whether the fee is for an action that has improved the balance
+    // @return key for deposit fee factor
+    function depositFeeFactorKey(address market, bool balanceWasImproved) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             DEPOSIT_FEE_FACTOR,
             market,
-            forPositiveImpact
+            balanceWasImproved
         ));
     }
 
-    function withdrawalFeeFactorKey(address market, bool forPositiveImpact) internal pure returns (bytes32) {
+    // @dev key for withdrawal fee factor
+    // @param market the market address to check
+    // @param balanceWasImproved whether the fee is for an action that has improved the balance
+    // @return key for withdrawal fee factor
+    function withdrawalFeeFactorKey(address market, bool balanceWasImproved) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             WITHDRAWAL_FEE_FACTOR,
             market,
-            forPositiveImpact
+            balanceWasImproved
         ));
     }
 
