@@ -215,7 +215,7 @@ library ReaderPositionUtils {
             referralStorage: referralStorage,
             position: positionInfo.position,
             collateralTokenPrice: cache.collateralTokenPrice,
-            forPositiveImpact: positionInfo.executionPriceResult.priceImpactUsd > 0,
+            balanceWasImproved: positionInfo.executionPriceResult.balanceWasImproved,
             longToken: cache.market.longToken,
             shortToken: cache.market.shortToken,
             sizeDeltaUsd: sizeDeltaUsd,

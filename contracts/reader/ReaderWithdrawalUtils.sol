@@ -89,7 +89,7 @@ library ReaderWithdrawalUtils {
             dataStore,
             market.marketToken,
             cache.longTokenOutputAmount,
-            false, // forPositiveImpact
+            false, // balanceWasImproved // TODO: Hardcoded false?
             uiFeeReceiver,
             swapPricingType
         );
@@ -98,7 +98,7 @@ library ReaderWithdrawalUtils {
             dataStore,
             market.marketToken,
             cache.shortTokenOutputAmount,
-            false, // forPositiveImpact
+            false, // balanceWasImproved // TODO: Hardcoded false?
             uiFeeReceiver,
             swapPricingType
         );
