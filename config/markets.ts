@@ -431,7 +431,7 @@ const config: {
 
       maxPoolUsdForDeposit: decimalToFloat(1_500_000), // x1.5 of max open interest
 
-      maxLongTokenPoolAmount: expandDecimals(3_439_653, 18), // ~2M USD (x2 of max open interest)
+      maxLongTokenPoolAmount: expandDecimals(1_800_000, 18), // ~2M USD (x2 of max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (x2 of max open interest)
     },
     {
@@ -478,8 +478,8 @@ const config: {
       reserveFactor: percentageToFloat("105%"),
       openInterestReserveFactor: percentageToFloat("100%"),
 
-      maxLongTokenPoolAmount: expandDecimals(1000, 8),
-      maxShortTokenPoolAmount: expandDecimals(1000, 8),
+      maxLongTokenPoolAmount: expandDecimals(1500, 8),
+      maxShortTokenPoolAmount: expandDecimals(1500, 8),
 
       maxPoolUsdForDeposit: decimalToFloat(100_000_000),
 
@@ -508,8 +508,8 @@ const config: {
       reserveFactor: percentageToFloat("85%"),
       openInterestReserveFactor: percentageToFloat("80%"),
 
-      maxLongTokenPoolAmount: expandDecimals(45, 18),
-      maxShortTokenPoolAmount: expandDecimals(45, 18),
+      maxLongTokenPoolAmount: expandDecimals(100, 18),
+      maxShortTokenPoolAmount: expandDecimals(100, 18),
 
       maxPoolUsdForDeposit: decimalToFloat(4_500_000),
 
@@ -538,7 +538,7 @@ const config: {
       reserveFactor: percentageToFloat("275%"),
       openInterestReserveFactor: percentageToFloat("270%"),
 
-      maxLongTokenPoolAmount: expandDecimals(37_792, 18),
+      maxLongTokenPoolAmount: expandDecimals(32_000, 18),
       maxShortTokenPoolAmount: expandDecimals(100_000_000, 6),
 
       maxPoolUsdForDeposit: decimalToFloat(90_000_000),
@@ -570,8 +570,8 @@ const config: {
       reserveFactor: percentageToFloat("105%"),
       openInterestReserveFactor: percentageToFloat("100%"),
 
-      maxLongTokenPoolAmount: expandDecimals(20_000, 18),
-      maxShortTokenPoolAmount: expandDecimals(20_000, 18),
+      maxLongTokenPoolAmount: expandDecimals(25_000, 18),
+      maxShortTokenPoolAmount: expandDecimals(25_000, 18),
 
       maxPoolUsdForDeposit: decimalToFloat(60_000_000),
 
@@ -602,7 +602,7 @@ const config: {
 
       openInterestReserveFactor: percentageToFloat("120%"),
 
-      maxLongTokenPoolAmount: expandDecimals(900, 18),
+      maxLongTokenPoolAmount: expandDecimals(650, 18),
       maxShortTokenPoolAmount: expandDecimals(2_500_000, 18),
 
       maxPoolUsdForDeposit: decimalToFloat(2_000_000),
@@ -638,7 +638,7 @@ const config: {
       reserveFactor: percentageToFloat("165%"),
       openInterestReserveFactor: percentageToFloat("160%"),
 
-      maxLongTokenPoolAmount: expandDecimals(14_120, 18),
+      maxLongTokenPoolAmount: expandDecimals(7_250, 18),
       maxShortTokenPoolAmount: expandDecimals(5_000_000, 6),
 
       maxPoolUsdForDeposit: decimalToFloat(4_500_000),
@@ -667,8 +667,8 @@ const config: {
       ...synthethicMarketConfig_IncreasedCapacity,
       ...fundingRateConfig_Default,
 
-      maxLongTokenPoolAmount: expandDecimals(1700, 18),
-      maxShortTokenPoolAmount: expandDecimals(5_500_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(1400, 18),
+      maxShortTokenPoolAmount: expandDecimals(4_500_000, 6),
 
       maxPoolUsdForDeposit: decimalToFloat(5_000_000),
 
@@ -909,7 +909,7 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_LowMax_WithLowerBase,
 
-      maxLongTokenPoolAmount: expandDecimals(140_000, 9),
+      maxLongTokenPoolAmount: expandDecimals(110_000, 9),
       maxShortTokenPoolAmount: expandDecimals(20_000_000, 6),
 
       maxPoolUsdForDeposit: decimalToFloat(17_500_000),
@@ -1002,8 +1002,8 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_HighMax_WithHigherBase,
 
-      maxLongTokenPoolAmount: expandDecimals(800, 18),
-      maxShortTokenPoolAmount: expandDecimals(1_500_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(625, 18),
+      maxShortTokenPoolAmount: expandDecimals(2_000_000, 6),
 
       maxPoolUsdForDeposit: decimalToFloat(1_500_000),
 
@@ -1036,8 +1036,8 @@ const config: {
       reserveFactor: percentageToFloat("165%"),
       openInterestReserveFactor: percentageToFloat("160%"),
 
-      maxLongTokenPoolAmount: expandDecimals(300_000, 18),
-      maxShortTokenPoolAmount: expandDecimals(1_500_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(150_000, 18),
+      maxShortTokenPoolAmount: expandDecimals(2_000_000, 6),
 
       maxPoolUsdForDeposit: decimalToFloat(1_500_000),
 
@@ -1071,7 +1071,7 @@ const config: {
       reserveFactor: percentageToFloat("235%"),
       openInterestReserveFactor: percentageToFloat("230%"),
 
-      maxLongTokenPoolAmount: expandDecimals(600_000, 18),
+      maxLongTokenPoolAmount: expandDecimals(400_000, 18),
       maxShortTokenPoolAmount: expandDecimals(8_000_000, 6),
 
       maxPoolUsdForDeposit: decimalToFloat(7_200_000),
@@ -1314,7 +1314,7 @@ const config: {
 
       maxPoolUsdForDeposit: decimalToFloat(1_000_000), // x2 of max open interest
 
-      maxLongTokenPoolAmount: expandDecimals(25, 8), // ~1,5M USD (x3 of max open interest)
+      maxLongTokenPoolAmount: expandDecimals(16, 8), // ~1,5M USD (x3 of max open interest)
       maxShortTokenPoolAmount: expandDecimals(1_500_000, 6), // ~1,5M USD (x3 of max open interest)
     },
     {
@@ -1378,8 +1378,8 @@ const config: {
       maxOpenInterest: decimalToFloat(750_000),
       maxPoolUsdForDeposit: decimalToFloat(1250_000),
 
-      maxLongTokenPoolAmount: expandDecimals(50_000, 18),
-      maxShortTokenPoolAmount: expandDecimals(50_000, 18),
+      maxLongTokenPoolAmount: expandDecimals(55_000, 18),
+      maxShortTokenPoolAmount: expandDecimals(55_000, 18),
     },
     {
       tokens: { indexToken: "PEPE", longToken: "PEPE", shortToken: "USDC" },
