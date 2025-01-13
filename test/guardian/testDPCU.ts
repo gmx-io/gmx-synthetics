@@ -130,7 +130,7 @@ describe("Guardian.DecreasePositionCollateralUtils", () => {
     // 140 tokens with each token profiting $500
     // 140 * $500 = $70,000
     // (5/7) * $70,000 = $50,000 profit = 9.090909 ETH of profit
-    // TODO: it seems there are no more position fees. Why?
+    // TODO: it seems there are no position fees anymore. Why?
 
     // ETH Pool Amount = 1,000 ETH - 9.090909 ETH = 990.90909 ETH
     // USDC Pool Amount = 1,000,000 USDC
@@ -173,7 +173,7 @@ describe("Guardian.DecreasePositionCollateralUtils", () => {
     await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 2)); // 5%
 
     // Entire collateral used to pay fees,
-    // so initialCollateralDeltaAmount of > 18k USDC will be needed to trigger auto-update
+    // so initialCollateralDeltaAmount of 1 USDC will be enough to trigger auto-update
     await scenes.decreasePosition.long.positivePnl(fixture, {
       create: {
         receiver: user1,
@@ -188,11 +188,11 @@ describe("Guardian.DecreasePositionCollateralUtils", () => {
         precisions: [8, 18],
         afterExecution: async ({ logs }) => {
           const autoUpdate = getEventData(logs, "OrderCollateralDeltaAmountAutoUpdated");
-          // TODO: remainingCollateralAmount changed from 0 to 20k
+          // TODO: remainingCollateralAmount changed from 0 to 20k. Debug why. Why auto-update is triggered only if initialCollateralDeltaAmount of > 18k USDC?
           //  => params.order.initialCollateralDeltaAmount() > values.remainingCollateralAmount changed from true to false
           //  => OrderCollateralDeltaAmountAutoUpdated not emitted anymore
-          // expect(autoUpdate.collateralDeltaAmount).to.eq(expandDecimals(1, 6));
-          // expect(autoUpdate.nextCollateralDeltaAmount).to.eq(0);
+          expect(autoUpdate.collateralDeltaAmount).to.eq(expandDecimals(1, 6));
+          expect(autoUpdate.nextCollateralDeltaAmount).to.eq(0);
         },
       },
     });
@@ -201,7 +201,7 @@ describe("Guardian.DecreasePositionCollateralUtils", () => {
     // 140 tokens with each token profiting $500
     // 140 * $500 = $70,000
     // (5/7) * $70,000 = $50,000 profit = 9.090909 ETH of profit
-    // TODO: it seems there are no more position fees. Why?
+    // TODO: it seems there are no position fees anymore. Why?
 
     // ETH Pool Amount = 1,000 ETH - 9.090909 ETH = 990.90909 ETH
     // USDC Pool Amount = 1,000,000 USDC
