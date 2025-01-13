@@ -198,7 +198,6 @@ library PositionPricingUtils {
 
         bool balanceWasImproved = nextDiffUsd < initialDiffUsd;
         if (isSameSideRebalance) {
-            // positive impact can't be smaller than the negative impact => adjust if necessary
             uint256 impactFactor = MarketUtils.getAdjustedPositionImpactFactor(dataStore, market, balanceWasImproved);
 
             return (

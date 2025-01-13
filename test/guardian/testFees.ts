@@ -105,7 +105,7 @@ describe("Guardian.Fees", () => {
 
     // User decreases their position by half, their fees are discounted
     // The Affiliate gets a portion of this claimable
-    // TODO: Why affiliates got 0 reward?
+    // TODO: Why position fee and affiliate reward from decrease are 0?
     await handleOrder(fixture, {
       create: {
         account: user0,
@@ -142,15 +142,16 @@ describe("Guardian.Fees", () => {
     });
 
     // Affiliate has more claimable rewards
-    const affiliateRewardsFromDecrease = expandDecimals(125, 5);
+    const affiliateRewardsFromDecrease = bigNumberify(0);
 
     affiliateReward = await dataStore.getUint(
       keys.affiliateRewardKey(ethUsdMarket.marketToken, usdc.address, user1.address)
     );
-    expect(affiliateReward).to.eq(affiliateRewardsFromIncrease);
+    expect(affiliateReward).to.eq(affiliateRewardsFromDecrease.add(affiliateRewardsFromIncrease));
 
     // User closes their position, their fees are discounted
     // The Affiliate gets a portion of this claimable
+    // TODO: Why position fee and affiliate reward from decrease are 0?
     await handleOrder(fixture, {
       create: {
         account: user0,
@@ -190,7 +191,7 @@ describe("Guardian.Fees", () => {
     affiliateReward = await dataStore.getUint(
       keys.affiliateRewardKey(ethUsdMarket.marketToken, usdc.address, user1.address)
     );
-    expect(affiliateReward).to.eq(affiliateRewardsFromIncrease);
+    expect(affiliateReward).to.eq(affiliateRewardsFromDecrease.mul(2).add(affiliateRewardsFromIncrease));
 
     const user1BalBefore = await usdc.balanceOf(user1.address);
     // The Affiliate can claim this amount
