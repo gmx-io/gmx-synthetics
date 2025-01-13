@@ -154,6 +154,7 @@ library Errors {
     error InsufficientExecutionGas(uint256 startingGas, uint256 estimatedGasLimit, uint256 minAdditionalGasForExecution);
     error InsufficientHandleExecutionErrorGas(uint256 gas, uint256 minHandleExecutionErrorGas);
     error InsufficientGasForCancellation(uint256 gas, uint256 minHandleExecutionErrorGas);
+    error InsufficientGasForAutoCancellation(uint256 gas, uint256 minHandleExecutionErrorGas);
 
     // MarketFactory errors
     error MarketAlreadyExists(bytes32 salt, address existingMarketAddress);
@@ -252,6 +253,7 @@ library Errors {
     // BaseOrderUtils errors
     error EmptyOrder();
     error UnsupportedOrderType(uint256 orderType);
+    error UnsupportedOrderTypeForAutoCancellation(uint256 orderType);
     error InvalidOrderPrices(
         uint256 primaryPriceMin,
         uint256 primaryPriceMax,
