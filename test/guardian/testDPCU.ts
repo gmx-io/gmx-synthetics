@@ -322,7 +322,7 @@ describe("Guardian.DecreasePositionCollateralUtils", () => {
     await scenes.increasePosition.long(fixture, {
       create: {
         sizeDeltaUsd: decimalToFloat(700_000),
-        initialCollateralDeltaAmount: expandDecimals(20_175, 6),
+        initialCollateralDeltaAmount: expandDecimals(20_700, 6),
       },
     });
 
