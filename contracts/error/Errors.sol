@@ -403,7 +403,6 @@ library Errors {
     error MinLongTokens(uint256 received, uint256 expected);
     error MinShortTokens(uint256 received, uint256 expected);
     error InsufficientMarketTokens(uint256 balance, uint256 expected);
-    error InsufficientWntAmount(uint256 wntAmount, uint256 executionFee);
     error InvalidPoolValueForWithdrawal(int256 poolValue);
 
     // Uint256Mask errors
