@@ -181,8 +181,8 @@ library SwapPricingUtils {
         bool isSameSideRebalance = (poolParams.poolUsdForTokenA <= poolParams.poolUsdForTokenB) == (poolParams.nextPoolUsdForTokenA <= poolParams.nextPoolUsdForTokenB);
         uint256 impactExponentFactor = dataStore.getUint(Keys.swapImpactExponentFactorKey(market.marketToken));
 
+        bool balanceWasImproved = nextDiffUsd < initialDiffUsd;
         if (isSameSideRebalance) {
-            bool balanceWasImproved = nextDiffUsd < initialDiffUsd;
             uint256 impactFactor = MarketUtils.getAdjustedSwapImpactFactor(dataStore, market.marketToken, balanceWasImproved);
 
             return (
@@ -205,7 +205,7 @@ library SwapPricingUtils {
                     negativeImpactFactor,
                     impactExponentFactor
                 ),
-                false // balanceWasImproved
+                balanceWasImproved
             );
         }
     }

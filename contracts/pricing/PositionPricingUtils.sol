@@ -196,8 +196,9 @@ library PositionPricingUtils {
         bool isSameSideRebalance = openInterestParams.longOpenInterest <= openInterestParams.shortOpenInterest == openInterestParams.nextLongOpenInterest <= openInterestParams.nextShortOpenInterest;
         uint256 impactExponentFactor = dataStore.getUint(Keys.positionImpactExponentFactorKey(market));
 
+        bool balanceWasImproved = nextDiffUsd < initialDiffUsd;
         if (isSameSideRebalance) {
-            bool balanceWasImproved = nextDiffUsd < initialDiffUsd;
+            // positive impact can't be smaller than the negative impact => adjust if necessary
             uint256 impactFactor = MarketUtils.getAdjustedPositionImpactFactor(dataStore, market, balanceWasImproved);
 
             return (
@@ -220,7 +221,7 @@ library PositionPricingUtils {
                     negativeImpactFactor,
                     impactExponentFactor
                 ),
-                false // balanceWasImproved
+                balanceWasImproved
             );
         }
     }
