@@ -193,7 +193,7 @@ library ExecuteWithdrawalUtils {
             params.dataStore,
             market.marketToken,
             cache.longTokenOutputAmount,
-            false, // balanceWasImproved // TODO: Hardcoded false? Should this comment even be changed?
+            false, // balanceWasImproved
             withdrawal.uiFeeReceiver(),
             params.swapPricingType
         );
@@ -221,7 +221,7 @@ library ExecuteWithdrawalUtils {
             params.dataStore,
             market.marketToken,
             cache.shortTokenOutputAmount,
-            false, // balanceWasImproved // TODO: Hardcoded false? Should this comment even be changed?
+            false, // balanceWasImproved
             withdrawal.uiFeeReceiver(),
             params.swapPricingType
         );

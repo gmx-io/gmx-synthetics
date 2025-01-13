@@ -105,6 +105,7 @@ describe("Guardian.Fees", () => {
 
     // User decreases their position by half, their fees are discounted
     // The Affiliate gets a portion of this claimable
+    // TODO: Why affiliates got 0 reward?
     await handleOrder(fixture, {
       create: {
         account: user0,
@@ -125,17 +126,13 @@ describe("Guardian.Fees", () => {
         afterExecution: ({ logs }) => {
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
 
-          // $25,000 size * .50% position fee -> $125 position fee
-          // with a 20% affiliate discount -> $25 discount | $100 position fee
-          // 50% discount share -> $12.5 discount to the trader | $12.5 claimable for the affiliate
-
-          // Original positionFee was $125
+          // Original positionFee was 0
           expect(positionFeesCollectedEvent.positionFeeAmount).to.eq(0);
 
-          // Discounted fee is $100
+          // Discounted fee is 0
           expect(positionFeesCollectedEvent.protocolFeeAmount).to.eq(0);
 
-          // Trader splits $25 discount with the affiliate
+          // Trader splits 0 discount with the affiliate
           expect(positionFeesCollectedEvent.affiliate).to.eq(user1.address);
           expect(positionFeesCollectedEvent["referral.totalRebateAmount"]).to.eq(0);
           expect(positionFeesCollectedEvent["referral.traderDiscountAmount"]).to.eq(0);
@@ -150,7 +147,7 @@ describe("Guardian.Fees", () => {
     affiliateReward = await dataStore.getUint(
       keys.affiliateRewardKey(ethUsdMarket.marketToken, usdc.address, user1.address)
     );
-    expect(affiliateReward).to.eq(affiliateRewardsFromIncrease); // TODO: Why affiliateRewardsFromDecrease isn't added anymore?
+    expect(affiliateReward).to.eq(affiliateRewardsFromIncrease);
 
     // User closes their position, their fees are discounted
     // The Affiliate gets a portion of this claimable
@@ -174,21 +171,17 @@ describe("Guardian.Fees", () => {
         afterExecution: ({ logs }) => {
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
 
-          // $25,000 size * .50% position fee -> $125 position fee
-          // with a 20% affiliate discount -> $25 discount | $100 position fee
-          // 50% discount share -> $12.5 discount to the trader | $12.5 claimable for the affiliate
+          // Original positionFee was 0
+          expect(positionFeesCollectedEvent.positionFeeAmount).to.eq(0);
 
-          // Original positionFee was $125
-          expect(positionFeesCollectedEvent.positionFeeAmount).to.eq(expandDecimals(125, 6));
+          // Discounted fee is 0
+          expect(positionFeesCollectedEvent.protocolFeeAmount).to.eq(0);
 
-          // Discounted fee is $100
-          expect(positionFeesCollectedEvent.protocolFeeAmount).to.eq(expandDecimals(100, 6));
-
-          // Trader splits $25 discount with the affiliate
+          // Trader splits 0 discount with the affiliate
           expect(positionFeesCollectedEvent.affiliate).to.eq(user1.address);
-          expect(positionFeesCollectedEvent["referral.totalRebateAmount"]).to.eq(expandDecimals(25, 6));
-          expect(positionFeesCollectedEvent["referral.traderDiscountAmount"]).to.eq(expandDecimals(125, 5));
-          expect(positionFeesCollectedEvent["referral.affiliateRewardAmount"]).to.eq(expandDecimals(125, 5));
+          expect(positionFeesCollectedEvent["referral.totalRebateAmount"]).to.eq(0);
+          expect(positionFeesCollectedEvent["referral.traderDiscountAmount"]).to.eq(0);
+          expect(positionFeesCollectedEvent["referral.affiliateRewardAmount"]).to.eq(0);
         },
       },
     });
@@ -197,7 +190,7 @@ describe("Guardian.Fees", () => {
     affiliateReward = await dataStore.getUint(
       keys.affiliateRewardKey(ethUsdMarket.marketToken, usdc.address, user1.address)
     );
-    expect(affiliateReward).to.eq(affiliateRewardsFromDecrease.add(affiliateRewardsFromIncrease)); // TODO: Why .mul(2) not needed anymore?
+    expect(affiliateReward).to.eq(affiliateRewardsFromIncrease);
 
     const user1BalBefore = await usdc.balanceOf(user1.address);
     // The Affiliate can claim this amount
@@ -482,7 +475,7 @@ describe("Guardian.Fees", () => {
     let impactPendingAmountLong = expandDecimals(5, 15).mul(-1);
     expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey))).to.eq(impactPendingAmountLong); // -0.005 ETH
 
-    // Open a position and get positively impacted, pay a 0.1% positionFeeFactor rate
+    // Open a position and get positively impacted, pay a 0.05% positionFeeFactor rate
     await handleOrder(fixture, {
       create: {
         account: user0,
@@ -503,12 +496,8 @@ describe("Guardian.Fees", () => {
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
 
-          // TODO: Why pay the negative positionFeeFactor if got positively impacted?
-          // balanceWasImproved is false because long of 50k unbalances the OI to 50k, short of 50k which balances the OI back to 0 => bool balanceWasImproved = nextDiffUsd < initialDiffUsd;
-          // if the short would be 49,999, positive positionFeeFactor would be used instead
-          //  => negativePositionFeeFactor is used to calculate positionFeeFactor
-          // 50_000 * .1% = $50
-          expect(positionFeesCollectedEvent.positionFeeAmount).to.eq(expandDecimals(50, 6));
+          // 50_000 * .05% = $25
+          expect(positionFeesCollectedEvent.positionFeeAmount).to.eq(expandDecimals(25, 6));
           expect(positionFeesCollectedEvent.uiFeeReceiver).to.eq(user1.address);
 
           // uiFeeAmount should be 0
@@ -522,7 +511,7 @@ describe("Guardian.Fees", () => {
     const positionKey2 = getPositionKey(user0.address, ethUsdMarket.marketToken, usdc.address, false);
     let position2 = await reader.getPosition(dataStore.address, positionKey2);
 
-    expect(position2.numbers.collateralAmount).to.eq(expandDecimals(25_000, 6).sub(expandDecimals(50, 6)));
+    expect(position2.numbers.collateralAmount).to.eq(expandDecimals(25_000, 6).sub(expandDecimals(25, 6)));
     expect(position2.numbers.sizeInUsd).to.eq(expandDecimals(50_000, 30));
     expect(position2.numbers.sizeInTokens).to.eq("10000000000000000000"); // 10 ETH
     expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey2))).to.eq(0); // capped by the impact pool amount
@@ -566,10 +555,10 @@ describe("Guardian.Fees", () => {
       prices: prices.ethUsdMarket,
     });
 
-    expect(marketTokenPrice).to.eq("1000010000000000000000000000000"); // Market token price is slightly higher as $100 of fees have accrued
-    expect(poolValueInfo.poolValue).to.eq(expandDecimals(10_000_000, 30).add(expandDecimals(100, 30))); // 10M + $100 of fees
+    expect(marketTokenPrice).to.eq("1000007500000000000000000000000"); // Market token price is slightly higher as $75 of fees have accrued
+    expect(poolValueInfo.poolValue).to.eq(expandDecimals(10_000_000, 30).add(expandDecimals(75, 30))); // 10M + $75 of fees
 
-    feeAmountCollected = expandDecimals(100, 6);
+    feeAmountCollected = expandDecimals(75, 6);
 
     expect(poolValueInfo.shortTokenAmount).to.eq(expandDecimals(5_000_000, 6).add(feeAmountCollected));
     expect(poolValueInfo.longTokenAmount).to.eq(expandDecimals(1_000, 18));
@@ -616,7 +605,7 @@ describe("Guardian.Fees", () => {
           const autoAdjustCollateralEvent = getEventData(logs, "OrderCollateralDeltaAmountAutoUpdated");
 
           expect(autoAdjustCollateralEvent.collateralDeltaAmount).to.eq(expandDecimals(24_975, 6));
-          expect(autoAdjustCollateralEvent.nextCollateralDeltaAmount).to.eq(expandDecimals(24_950, 6));
+          expect(autoAdjustCollateralEvent.nextCollateralDeltaAmount).to.eq(0);
 
           // 25_000 * .1% = $25
           expect(positionFeesCollectedEvent.positionFeeAmount).to.eq(expandDecimals(25, 6)); // $25
@@ -648,13 +637,13 @@ describe("Guardian.Fees", () => {
     // 12.5/2 - 6.25 = 0, Net gain should be 0
     expect(user0UsdcBalAfter.sub(user0UsdcBalBefore)).to.eq(0);
 
-    // Resulting position has $25,000 - $75 of collateral + 6.25 PI
+    // Resulting position has $25,000 - $50 of collateral + 6.25 PI
     position2 = await reader.getPosition(dataStore.address, positionKey2);
 
     expect(position2.numbers.collateralAmount).to.closeTo(
-      expandDecimals(25_000, 6).sub(expandDecimals(75, 6).add(expandDecimals(625, 4))),
+      expandDecimals(25_000, 6).sub(expandDecimals(50, 6).add(expandDecimals(625, 4))),
       "1"
-    ); // Same collateral amount - $75 in fees and $6.25 in PI
+    ); // Same collateral amount - $50 in fees and $6.25 in PI
     expect(position2.numbers.sizeInUsd).to.eq(expandDecimals(25_000, 30)); // Size delta decreased 50%
     expect(position2.numbers.sizeInTokens).to.eq("5000000000000000000"); // 10/2 ETH
 
@@ -698,11 +687,11 @@ describe("Guardian.Fees", () => {
       prices: prices.ethUsdMarket,
     });
 
-    // Market token price is slightly higher as $125 of fees have accrued
-    expect(marketTokenPrice).to.eq("1000012500000000000000000000000");
-    expect(poolValueInfo.poolValue).to.eq(expandDecimals(10_000_000, 30).add(expandDecimals(125, 30))); // 10M + $125 of fees
+    // Market token price is slightly higher as $100 of fees have accrued
+    expect(marketTokenPrice).to.eq("1000010000000000000000000000000");
+    expect(poolValueInfo.poolValue).to.eq(expandDecimals(10_000_000, 30).add(expandDecimals(100, 30))); // 10M + $100 of fees
 
-    feeAmountCollected = expandDecimals(125, 6);
+    feeAmountCollected = expandDecimals(100, 6);
     let priceImpactAmountPaidToPool = expandDecimals(625, 4);
     const claimedProfitAmount = 0;
 
@@ -822,9 +811,9 @@ describe("Guardian.Fees", () => {
       prices: prices.ethUsdMarket,
     });
 
-    // Market token price is slightly higher as $175 of fees have accrued
-    expect(marketTokenPrice).to.eq("1000017500000000000000000000000");
-    expect(poolValueInfo.poolValue).to.eq(expandDecimals(10_000_000, 30).add(expandDecimals(175, 30))); // 10M + $175 of fees & imprecision
+    // Market token price is slightly higher as $150 of fees have accrued
+    expect(marketTokenPrice).to.eq("1000015000000000000000000000000");
+    expect(poolValueInfo.poolValue).to.eq(expandDecimals(10_000_000, 30).add(expandDecimals(150, 30))); // 10M + $150 of fees & imprecision
 
     feeAmountCollected = feeAmountCollected.add(expandDecimals(50, 6));
     priceImpactAmountPaidToPool = priceImpactAmountPaidToPool.add(expandDecimals(3125, 3));
@@ -906,7 +895,7 @@ describe("Guardian.Fees", () => {
 
           // Decreased collateral as expected
           expect(positionDecreasedEvent.collateralDeltaAmount).to.eq(expandDecimals(14_500, 6));
-          expect(positionDecreasedEvent.collateralAmount).to.eq(expandDecimals(10_418_750, 3));
+          expect(positionDecreasedEvent.collateralAmount).to.eq(expandDecimals(10_443_750, 3));
         },
       },
     });
@@ -923,7 +912,7 @@ describe("Guardian.Fees", () => {
     position2 = await reader.getPosition(dataStore.address, positionKey2);
 
     // Position values have not changed
-    expect(position2.numbers.collateralAmount).to.eq(expandDecimals(10_418_750, 3));
+    expect(position2.numbers.collateralAmount).to.eq(expandDecimals(10_443_750, 3));
     expect(position2.numbers.sizeInUsd).to.eq(decimalToFloat(25_000));
     expect(position2.numbers.sizeInTokens).to.eq("5000000000000000000");
 
@@ -968,10 +957,10 @@ describe("Guardian.Fees", () => {
     );
     expect(poolValueInfo.longTokenAmount).to.eq(expandDecimals(1_000, 18));
 
-    // Market token price is slightly higher as $175 of fees have accrued
-    const marketTokenPriceBefore = BigNumber.from("1000017500000000000000000000000");
+    // Market token price is slightly higher as $150 of fees have accrued
+    const marketTokenPriceBefore = BigNumber.from("1000015000000000000000000000000");
     expect(marketTokenPrice).to.eq(marketTokenPriceBefore);
-    expect(poolValueInfo.poolValue).to.eq(expandDecimals(10_000_000, 30).add(expandDecimals(175, 30))); // 10M + $175 of fees
+    expect(poolValueInfo.poolValue).to.eq(expandDecimals(10_000_000, 30).add(expandDecimals(150, 30))); // 10M + $150 of fees
 
     // impact pool amount has not changed
     // 0.005 ETH from proportional increase long + 0.000625 ETH from calculated decrease long
@@ -989,7 +978,7 @@ describe("Guardian.Fees", () => {
     // Value of position: 5 * 7,041 = $35,205
     // E.g. PnL = $25,000 - $35,205 = -$10,205
     // min collateral necessary is ~250 USDC
-    // Collateral is down to 10,418.75 - 10,205 = 213.75 USDC
+    // Collateral is down to 10,443.75 - 10,205 = 238.75 USDC
     // Extra $12.5 fee is applied and + 3.125 PI E.g. position is now liquidated
     // as
     await expect(
@@ -1042,13 +1031,13 @@ describe("Guardian.Fees", () => {
     user0UsdcBalAfter = await usdc.balanceOf(user0.address);
 
     // User receives their remaining collateral back
-    // From losses, remaining is 10,418.75 - 10,205 = 213.75 USDC
+    // From losses, remaining is 10,443.75 - 10,205 = 238.75 USDC
     // Fees that further
     // $12.5 in fees
     // PI is positive
     // PI: +$3.125
-    // remaining collateral should be: 213.75 - 12.5 + 3.125 ~= 204.375 USDC
-    expect(user0UsdcBalAfter.sub(user0UsdcBalBefore)).to.eq(expandDecimals(204_375, 3).sub(1));
+    // remaining collateral should be: 238.75 - 12.5 + 3.125 ~= 229.375 USDC
+    expect(user0UsdcBalAfter.sub(user0UsdcBalBefore)).to.eq(expandDecimals(229_375, 3).sub(1));
 
     // Nothing paid out in ETH, no positive PnL or positive impact
     expect(user0WntBalAfter.sub(user0WntBalAfter)).to.eq(0);
@@ -1112,7 +1101,7 @@ describe("Guardian.Fees", () => {
     const depositedValue = poolValueInfo.shortTokenAmount.mul(expandDecimals(1, 24)).add(expandDecimals(5_000_000, 30));
 
     expect(poolValueInfo.poolValue).to.eq(depositedValue.sub(impactPoolAmount.mul(expandDecimals(5000, 12))));
-    expect(marketTokenPrice).to.eq("1001039159414600781139500000000");
+    expect(marketTokenPrice).to.eq("1001036659414600781139500000000");
 
     // position 1 has been decreased entirely, position 2 has been liquidated => no impact pending for both
     expect(position1.numbers.impactPendingAmount).to.eq(0);
