@@ -504,12 +504,12 @@ export function swapFeeFactorKey(market: string, balanceWasImproved: boolean) {
   return hashData(["bytes32", "address", "bool"], [SWAP_FEE_FACTOR, market, balanceWasImproved]);
 }
 
-export function depositFeeFactorKey(market: string, forPositiveImpact: boolean) {
-  return hashData(["bytes32", "address", "bool"], [DEPOSIT_FEE_FACTOR, market, forPositiveImpact]);
+export function depositFeeFactorKey(market: string, balanceWasImproved: boolean) {
+  return hashData(["bytes32", "address", "bool"], [DEPOSIT_FEE_FACTOR, market, balanceWasImproved]);
 }
 
-export function withdrawalFeeFactorKey(market: string, forPositiveImpact: boolean) {
-  return hashData(["bytes32", "address", "bool"], [WITHDRAWAL_FEE_FACTOR, market, forPositiveImpact]);
+export function withdrawalFeeFactorKey(market: string, balanceWasImproved: boolean) {
+  return hashData(["bytes32", "address", "bool"], [WITHDRAWAL_FEE_FACTOR, market, balanceWasImproved]);
 }
 
 export function atomicSwapFeeFactorKey(market: string) {

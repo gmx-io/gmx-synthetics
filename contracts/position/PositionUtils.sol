@@ -162,7 +162,6 @@ library PositionUtils {
 
     struct GetExecutionPriceForDecreaseCache {
         int256 priceImpactUsd;
-        uint256 priceImpactDiffUsd;
         bool balanceWasImproved;
         uint256 executionPrice;
     }
@@ -631,7 +630,6 @@ library PositionUtils {
         UpdatePositionParams memory params,
         Price.Props memory indexTokenPrice
     ) external view returns (int256, int256, uint256, uint256, bool) {
-        GetExecutionPriceForIncreaseCache memory cache;
         // note that the executionPrice is not validated against the order.acceptablePrice value
         // if the sizeDeltaUsd is zero
         // for limit orders the order.triggerPrice should still have been validated
@@ -641,6 +639,8 @@ library PositionUtils {
             //     - short: use the smaller price
             return (0, 0, 0, indexTokenPrice.pickPrice(params.position.isLong()), false);
         }
+
+        GetExecutionPriceForIncreaseCache memory cache;
 
         (cache.priceImpactUsd, cache.balanceWasImproved) = PositionPricingUtils.getPriceImpactUsd(
             PositionPricingUtils.GetPriceImpactUsdParams(
@@ -682,8 +682,6 @@ library PositionUtils {
         //
         // if price impact is negative, the sizeDeltaInTokens would be increased by the priceImpactAmount
         // the priceImpactAmount should be maximized
-
-        cache.priceImpactAmount;
 
         if (cache.priceImpactUsd > 0) {
             // use indexTokenPrice.max and round down to minimize the priceImpactAmount
