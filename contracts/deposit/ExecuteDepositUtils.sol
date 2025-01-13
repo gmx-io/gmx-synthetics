@@ -111,6 +111,7 @@ library ExecuteDepositUtils {
 
         if (params.oracle.minTimestamp() < deposit.updatedAtTime()) {
             revert Errors.OracleTimestampsAreSmallerThanRequired(
+                deposit.market(),
                 params.oracle.minTimestamp(),
                 deposit.updatedAtTime()
             );

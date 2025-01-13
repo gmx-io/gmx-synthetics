@@ -246,7 +246,7 @@ library Errors {
 
     error EmptyPrimaryPrice(address token);
 
-    error OracleTimestampsAreSmallerThanRequired(uint256 minOracleTimestamp, uint256 expectedTimestamp);
+    error OracleTimestampsAreSmallerThanRequired(address market, uint256 minOracleTimestamp, uint256 expectedTimestamp);
     error OracleTimestampsAreLargerThanRequestExpirationTime(uint256 maxOracleTimestamp, uint256 requestTimestamp, uint256 requestExpirationTime);
 
     // BaseOrderUtils errors
