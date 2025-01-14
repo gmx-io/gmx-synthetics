@@ -51,7 +51,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         onlyGelatoRelayERC2771
         returns (bytes32)
     {
-        _handleSubaccount(account, Keys.SUBACCOUNT_ORDER_ACTION, subaccountApproval);
+        _handleSubaccountAction(account, Keys.SUBACCOUNT_ORDER_ACTION, subaccountApproval);
         return _createOrder(relayParams.tokenPermit, relayParams.fee, collateralAmount, params, account);
     }
 
@@ -62,7 +62,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         bytes32 key,
         UpdateOrderParams calldata params
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelayERC2771 {
-        _handleSubaccount(account, Keys.SUBACCOUNT_ORDER_ACTION, subaccountApproval);
+        _handleSubaccountAction(account, Keys.SUBACCOUNT_ORDER_ACTION, subaccountApproval);
         _updateOrder(relayParams, account, key, params);
     }
 
@@ -72,21 +72,18 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         address account,
         bytes32 key
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelayERC2771 {
-        _handleSubaccount(account, Keys.SUBACCOUNT_ORDER_ACTION, subaccountApproval);
+        _handleSubaccountAction(account, Keys.SUBACCOUNT_ORDER_ACTION, subaccountApproval);
         _cancelOrder(relayParams, account, key);
     }
 
-    function _handleSubaccount(
+    function _handleSubaccountAction(
         address account,
         bytes32 actionType,
         SubaccountApproval calldata subaccountApproval
     ) internal {
-        _handleSubaccountApproval(account, subaccountApproval);
-        _handleSubaccountAction(account, actionType);
-    }
-
-    function _handleSubaccountAction(address account, bytes32 actionType) internal {
         FeatureUtils.validateFeature(dataStore, Keys.subaccountFeatureDisabledKey(address(this)));
+
+        _handleSubaccountApproval(account, subaccountApproval);
 
         // should not use msg.sender directly because Gelato relayer passes it in calldata
         address subaccount = _getMsgSender();
