@@ -9,20 +9,24 @@ import "../subaccount/SubaccountUtils.sol";
 import "./BaseGelatoRelayRouter.sol";
 
 contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
+    struct SubaccountApproval {
+        bytes32 id; // for replay attack protection
+        address subaccount;
+        uint256 expiresAt;
+        uint256 maxAllowedCount;
+        bytes32 actionType;
+        uint256 deadline;
+        bytes signature;
+    }
+
     bytes32 public constant _SUBACCOUNT_APPROVAL_TYPEHASH =
         keccak256(
             bytes(
-                "GelatoRelayRouterSubaccountApproval(address subaccount,uint256 deadline,uint256 maxAllowedCount,bytes signature)"
+                "SubaccountGelatoRelayRouter_SubaccountApproval(bytes32 id,address subaccount,uint256 expiresAt,uint256 maxAllowedCount,bytes32 actionType,bytes signature)"
             )
         );
 
-    struct SubaccountApproval {
-        address subaccount;
-        uint256 deadline;
-        uint256 maxAllowedCount;
-        bytes32 actionType;
-        bytes signature;
-    }
+    mapping(bytes32 => bool) public handledSubaccountApprovals;
 
     constructor(
         Router _router,
@@ -92,11 +96,18 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     }
 
     function _handleSubaccountApproval(address account, SubaccountApproval calldata subaccountApproval) internal {
-        // TODO protect from replay attack
-
         if (subaccountApproval.signature.length == 0) {
             return;
         }
+
+        if (subaccountApproval.deadline > 0 && block.timestamp > subaccountApproval.deadline) {
+            revert Errors.SubaccountApprovalDeadlinePassed(block.timestamp, subaccountApproval.deadline);
+        }
+
+        if (handledSubaccountApprovals[subaccountApproval.id]) {
+            revert Errors.SubaccountApprovalAlreadyHandled(subaccountApproval.id);
+        }
+        handledSubaccountApprovals[subaccountApproval.id] = true;
 
         bytes32 domainSeparator = _getDomainSeparator(block.chainid);
         bytes32 structHash = _getSubaccountApprovalStructHash(subaccountApproval);
@@ -114,14 +125,14 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             );
         }
 
-        if (subaccountApproval.deadline > 0) {
-            SubaccountUtils.setSubaccountDeadline(
+        if (subaccountApproval.expiresAt > 0) {
+            SubaccountUtils.setSubaccountExpiresAt(
                 dataStore,
                 eventEmitter,
                 account,
                 subaccountApproval.subaccount,
                 subaccountApproval.actionType,
-                subaccountApproval.deadline
+                subaccountApproval.expiresAt
             );
         }
 
@@ -142,8 +153,9 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             keccak256(
                 abi.encode(
                     _SUBACCOUNT_APPROVAL_TYPEHASH,
+                    subaccountApproval.id,
                     subaccountApproval.subaccount,
-                    subaccountApproval.deadline,
+                    subaccountApproval.expiresAt,
                     subaccountApproval.maxAllowedCount,
                     subaccountApproval.actionType
                 )

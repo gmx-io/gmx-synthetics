@@ -357,7 +357,7 @@ library Errors {
     // SubaccountUtils errors
     error SubaccountNotAuthorized(address account, address subaccount);
     error MaxSubaccountActionCountExceeded(address account, address subaccount, uint256 count, uint256 maxCount);
-    error SubaccountActionDeadlineExceeded(address account, address subaccount, uint256 deadline, uint256 currentTimestamp);
+    error SubaccountApprovalExpired(address account, address subaccount, uint256 deadline, uint256 currentTimestamp);
     error InvalidSubaccount(address subaccount, address msgSender);
     error InvalidSignature();
 
@@ -429,5 +429,6 @@ library Errors {
     error NotSupported();
     error InvalidPermitSpender(address spender, address expectedSpender);
     error InvalidUserNonce(uint256 storedUserNonce, uint256 userNonce);
-    error DeadlinePassed(uint256 currentTimestamp, uint256 deadline);
+    error SubaccountApprovalDeadlinePassed(uint256 currentTimestamp, uint256 deadline);
+    error SubaccountApprovalAlreadyHandled(bytes32 id);
 }

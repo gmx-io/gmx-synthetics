@@ -1747,7 +1747,7 @@ library Keys {
         ));
     }
 
-    function subaccountDeadlineKey(address account, address subaccount, bytes32 actionType) internal pure returns (bytes32) {
+    function subaccountExpiresAtKey(address account, address subaccount, bytes32 actionType) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             SUBACCOUNT_DEADLINE,
             account,

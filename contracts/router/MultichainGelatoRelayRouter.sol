@@ -10,6 +10,8 @@ contract MultichainGelatoRelayRouter is BaseGelatoRelayRouter {
     bytes32 public constant _MULTICHAIN_MESSAGE_TYPEHASH =
         keccak256(bytes("GelatoRelayRouterMultichainMessage(bytes message,uint256 userNonce,uint256 deadline)"));
 
+    mapping(address => uint256) public userNonces;
+
     constructor(
         Router _router,
         RoleStore _roleStore,
@@ -18,17 +20,7 @@ contract MultichainGelatoRelayRouter is BaseGelatoRelayRouter {
         Oracle _oracle,
         IOrderHandler _orderHandler,
         OrderVault _orderVault
-    )
-        BaseGelatoRelayRouter(
-            _router,
-            _roleStore,
-            _dataStore,
-            _eventEmitter,
-            _oracle,
-            _orderHandler,
-            _orderVault
-        )
-    {}
+    ) BaseGelatoRelayRouter(_router, _roleStore, _dataStore, _eventEmitter, _oracle, _orderHandler, _orderVault) {}
 
     function createOrder(
         RelayParams calldata relayParams,

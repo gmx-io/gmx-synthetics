@@ -93,7 +93,7 @@ library SubaccountUtils {
         );
     }
 
-    function setSubaccountDeadline(
+    function setSubaccountExpiresAt(
         DataStore dataStore,
         EventEmitter eventEmitter,
         address account,
@@ -101,7 +101,7 @@ library SubaccountUtils {
         bytes32 actionType,
         uint256 deadline
     ) internal {
-        bytes32 key = Keys.subaccountDeadlineKey(account, subaccount, actionType);
+        bytes32 key = Keys.subaccountExpiresAtKey(account, subaccount, actionType);
         dataStore.setUint(key, deadline);
 
         EventUtils.EventLogData memory eventData;
@@ -156,11 +156,11 @@ library SubaccountUtils {
         bytes32 actionType,
         uint256 count
     ) internal view {
-        bytes32 deadlineKey = Keys.subaccountDeadlineKey(account, subaccount, actionType);
-        uint256 deadline = dataStore.getUint(deadlineKey);
+        bytes32 expiresAtKey = Keys.subaccountExpiresAtKey(account, subaccount, actionType);
+        uint256 expiresAt = dataStore.getUint(expiresAtKey);
 
-        if (deadline > 0 && block.timestamp > deadline) {
-            revert Errors.SubaccountActionDeadlineExceeded(account, subaccount, deadline, block.timestamp);
+        if (expiresAt > 0 && block.timestamp > expiresAt) {
+            revert Errors.SubaccountApprovalExpired(account, subaccount, expiresAt, block.timestamp);
         }
 
         bytes32 maxCountKey = Keys.maxAllowedSubaccountActionCountKey(account, subaccount, actionType);

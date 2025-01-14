@@ -29,7 +29,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContextERC2771, Reentrancy
     EventEmitter public immutable eventEmitter;
 
     // Define the EIP-712 struct type:
-    bytes32 public constant _DOMAIN_SEPARATOR_TYPE_TYPEHASH =
+    bytes32 public constant _DOMAIN_SEPARATOR_TYPEHASH =
         keccak256(bytes("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"));
 
     bytes32 public constant _DOMAIN_SEPARATOR_NAME_HASH = keccak256(bytes("GmxBaseGelatoRelayRouter"));
@@ -72,8 +72,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContextERC2771, Reentrancy
         EventEmitter eventEmitter;
         OrderVault orderVault;
     }
-
-    mapping(address => uint256) public userNonces;
 
     constructor(
         Router _router,
@@ -328,7 +326,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContextERC2771, Reentrancy
         return
             keccak256(
                 abi.encode(
-                    _DOMAIN_SEPARATOR_TYPE_TYPEHASH,
+                    _DOMAIN_SEPARATOR_TYPEHASH,
                     _DOMAIN_SEPARATOR_NAME_HASH,
                     _DOMAIN_SEPARATOR_VERSION_HASH,
                     sourceChainId,
