@@ -187,7 +187,8 @@ describe("Guardian.Fees", () => {
           // Discounted fee is $100
           expect(positionFeesCollectedEvent.protocolFeeAmount).to.eq(expandDecimals(100, 6));
 
-          // Trader splits 25 discount with the affiliate
+          // Trader splits $25 discount with the affiliate
+          expect(positionFeesCollectedEvent.affiliate).to.eq(user1.address);
           expect(positionFeesCollectedEvent["referral.totalRebateAmount"]).to.eq(expandDecimals(25, 6));
           expect(positionFeesCollectedEvent["referral.traderDiscountAmount"]).to.eq(expandDecimals(125, 5));
           expect(positionFeesCollectedEvent["referral.affiliateRewardAmount"]).to.eq(expandDecimals(125, 5));

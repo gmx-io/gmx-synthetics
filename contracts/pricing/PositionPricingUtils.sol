@@ -154,7 +154,7 @@ library PositionPricingUtils {
         uint256 uiFeeAmount;
     }
 
-    // @dev get the price impact in USD for a position increase / decrease and whether the balance has improved
+    // @dev get the price impact in USD for a position increase / decrease and whether the balance was improved
     // @param params GetPriceImpactUsdParams and the balanceWasImproved boolean
     function getPriceImpactUsd(GetPriceImpactUsdParams memory params) internal view returns (int256, bool) {
         OpenInterestParams memory openInterestParams = getNextOpenInterest(params);
@@ -181,7 +181,7 @@ library PositionPricingUtils {
         return priceImpactUsdForVirtualInventory < priceImpactUsd ? (priceImpactUsdForVirtualInventory, balanceWasImprovedForVirtualInventory) : (priceImpactUsd, balanceWasImproved);
     }
 
-    // @dev get the price impact in USD for a position increase / decrease and whether the balance has improved
+    // @dev get the price impact in USD for a position increase / decrease and whether the balance was improved
     // @param dataStore DataStore
     // @param market the trading market
     // @param openInterestParams OpenInterestParams and the balanceWasImproved boolean

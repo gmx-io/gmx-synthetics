@@ -165,7 +165,7 @@ library SwapPricingUtils {
         return priceImpactUsdForVirtualInventory < priceImpactUsd ? (priceImpactUsdForVirtualInventory, balanceWasImprovedForVirtualInventory) : (priceImpactUsd, balanceWasImproved);
     }
 
-    // @dev get the price impact in USD and whether the balance has improved
+    // @dev get the price impact in USD and whether the balance was improved
     // @param dataStore DataStore
     // @param market the trading market
     // @param poolParams PoolParams
