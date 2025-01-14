@@ -172,8 +172,8 @@ describe("Guardian.DecreasePositionCollateralUtils", () => {
     // Position fee factor set which will be emptied on getEmptyFees. Balance was improved, positive fee factor is used.
     await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 2)); // 5%
 
-    // Collateral used to pay fees,
-    // so initialCollateralDeltaAmount of 19,000 USDC will trigger auto-update
+    // Entire collateral used to pay fees,
+    // so initialCollateralDeltaAmount of 1 USDC will be enough to trigger auto-update
     await scenes.decreasePosition.long.positivePnl(fixture, {
       create: {
         receiver: user1,
@@ -194,7 +194,7 @@ describe("Guardian.DecreasePositionCollateralUtils", () => {
       },
     });
 
-    expect(await getBalanceOf(usdc.address, user1.address)).to.eq(0);
+    expect(await getBalanceOf(usdc.address, user1.address)).to.eq("0");
     // 140 tokens with each token profiting $500
     // 140 * $500 = $70,000
     // (5/7) * $70,000 = $50,000 profit = 9.090909 ETH of profit
