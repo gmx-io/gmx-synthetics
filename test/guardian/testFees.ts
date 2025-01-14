@@ -103,9 +103,11 @@ describe("Guardian.Fees", () => {
     );
     expect(affiliateReward).to.eq(affiliateRewardsFromIncrease);
 
+    // Balance was improved, positive fee factor is used.
+    await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 3)); // 50 BIPs position fee
+
     // User decreases their position by half, their fees are discounted
     // The Affiliate gets a portion of this claimable
-    // TODO: Why position fee and affiliate reward from decrease are 0?
     await handleOrder(fixture, {
       create: {
         account: user0,
@@ -126,23 +128,27 @@ describe("Guardian.Fees", () => {
         afterExecution: ({ logs }) => {
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
 
-          // Original positionFee was 0
-          expect(positionFeesCollectedEvent.positionFeeAmount).to.eq(0);
+          // $25,000 size * .50% position fee -> $125 position fee
+          // with a 20% affiliate discount -> $25 discount | $100 position fee
+          // 50% discount share -> $12.5 discount to the trader | $12.5 claimable for the affiliate
 
-          // Discounted fee is 0
-          expect(positionFeesCollectedEvent.protocolFeeAmount).to.eq(0);
+          // Original positionFee was $125
+          expect(positionFeesCollectedEvent.positionFeeAmount).to.eq(expandDecimals(125, 6));
 
-          // Trader splits 0 discount with the affiliate
+          // Discounted fee is $100
+          expect(positionFeesCollectedEvent.protocolFeeAmount).to.eq(expandDecimals(100, 6));
+
+          // Trader splits $25 discount with the affiliate
           expect(positionFeesCollectedEvent.affiliate).to.eq(user1.address);
-          expect(positionFeesCollectedEvent["referral.totalRebateAmount"]).to.eq(0);
-          expect(positionFeesCollectedEvent["referral.traderDiscountAmount"]).to.eq(0);
-          expect(positionFeesCollectedEvent["referral.affiliateRewardAmount"]).to.eq(0);
+          expect(positionFeesCollectedEvent["referral.totalRebateAmount"]).to.eq(expandDecimals(25, 6));
+          expect(positionFeesCollectedEvent["referral.traderDiscountAmount"]).to.eq(expandDecimals(125, 5));
+          expect(positionFeesCollectedEvent["referral.affiliateRewardAmount"]).to.eq(expandDecimals(125, 5));
         },
       },
     });
 
     // Affiliate has more claimable rewards
-    const affiliateRewardsFromDecrease = bigNumberify(0);
+    const affiliateRewardsFromDecrease = expandDecimals(125, 5);
 
     affiliateReward = await dataStore.getUint(
       keys.affiliateRewardKey(ethUsdMarket.marketToken, usdc.address, user1.address)
@@ -151,7 +157,6 @@ describe("Guardian.Fees", () => {
 
     // User closes their position, their fees are discounted
     // The Affiliate gets a portion of this claimable
-    // TODO: Why position fee and affiliate reward from decrease are 0?
     await handleOrder(fixture, {
       create: {
         account: user0,
@@ -172,17 +177,20 @@ describe("Guardian.Fees", () => {
         afterExecution: ({ logs }) => {
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
 
-          // Original positionFee was 0
-          expect(positionFeesCollectedEvent.positionFeeAmount).to.eq(0);
+          // $25,000 size * .50% position fee -> $125 position fee
+          // with a 20% affiliate discount -> $25 discount | $100 position fee
+          // 50% discount share -> $12.5 discount to the trader | $12.5 claimable for the affiliate
 
-          // Discounted fee is 0
-          expect(positionFeesCollectedEvent.protocolFeeAmount).to.eq(0);
+          // Original positionFee was $125
+          expect(positionFeesCollectedEvent.positionFeeAmount).to.eq(expandDecimals(125, 6));
 
-          // Trader splits 0 discount with the affiliate
-          expect(positionFeesCollectedEvent.affiliate).to.eq(user1.address);
-          expect(positionFeesCollectedEvent["referral.totalRebateAmount"]).to.eq(0);
-          expect(positionFeesCollectedEvent["referral.traderDiscountAmount"]).to.eq(0);
-          expect(positionFeesCollectedEvent["referral.affiliateRewardAmount"]).to.eq(0);
+          // Discounted fee is $100
+          expect(positionFeesCollectedEvent.protocolFeeAmount).to.eq(expandDecimals(100, 6));
+
+          // Trader splits 25 discount with the affiliate
+          expect(positionFeesCollectedEvent["referral.totalRebateAmount"]).to.eq(expandDecimals(25, 6));
+          expect(positionFeesCollectedEvent["referral.traderDiscountAmount"]).to.eq(expandDecimals(125, 5));
+          expect(positionFeesCollectedEvent["referral.affiliateRewardAmount"]).to.eq(expandDecimals(125, 5));
         },
       },
     });
