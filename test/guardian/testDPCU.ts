@@ -130,16 +130,16 @@ describe("Guardian.DecreasePositionCollateralUtils", () => {
     // 140 tokens with each token profiting $500
     // 140 * $500 = $70,000
     // (5/7) * $70,000 = $50,000 profit = 9.090909 ETH of profit
-    // TODO: it seems there are no position fees anymore. Why?
+    // Position Fee: $500,000 * 0.05 = $25,000 in fees = 20,000 USDC (entire collateral) + 0.90909 ETH
 
-    // ETH Pool Amount = 1,000 ETH - 9.090909 ETH = 990.90909 ETH
-    // USDC Pool Amount = 1,000,000 USDC
-    // Receiver gets sent: 9.090909 ETH
-    expect(await getBalanceOf(wnt.address, user1.address)).to.eq("9090909090909090909"); // 9.090909 ETH
+    // ETH Pool Amount = 1,000 ETH - 9.090909 ETH + 0.90909 ETH = 991.818181 ETH
+    // USDC Pool Amount = 1,000,000 USDC + 20,000 USDC = 1,020,000 USDC
+    // Receiver gets sent: 9.090909 ETH - 0.90909 ETH = 8.181818 ETH
+    expect(await getBalanceOf(wnt.address, user1.address)).to.eq("8181818181818181819");
     expect(await getBalanceOf(usdc.address, user1.address)).to.eq("0");
     // Verify Pool Amounts
-    expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, wnt.address)).eq("990909090909090909091"); // 990.909090909090909091 ETH
-    expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, usdc.address)).eq(expandDecimals(1_000_000, 6));
+    expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, wnt.address)).eq("991818181818181818181"); // 991.818181 ETH
+    expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, usdc.address)).eq(expandDecimals(1_020_000, 6));
 
     expect(await getPositionCount(dataStore)).eq(1);
   });
@@ -172,8 +172,8 @@ describe("Guardian.DecreasePositionCollateralUtils", () => {
     // Position fee factor set which will be emptied on getEmptyFees. Balance was improved, positive fee factor is used.
     await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 2)); // 5%
 
-    // Entire collateral used to pay fees,
-    // so initialCollateralDeltaAmount of 1 USDC will be enough to trigger auto-update
+    // Collateral used to pay fees,
+    // so initialCollateralDeltaAmount of 19,000 USDC will trigger auto-update
     await scenes.decreasePosition.long.positivePnl(fixture, {
       create: {
         receiver: user1,
@@ -188,29 +188,26 @@ describe("Guardian.DecreasePositionCollateralUtils", () => {
         precisions: [8, 18],
         afterExecution: async ({ logs }) => {
           const autoUpdate = getEventData(logs, "OrderCollateralDeltaAmountAutoUpdated");
-          // TODO: remainingCollateralAmount changed from 0 to 20k. Debug why. Why auto-update is triggered only if initialCollateralDeltaAmount of > 18k USDC?
-          //  => params.order.initialCollateralDeltaAmount() > values.remainingCollateralAmount changed from true to false
-          //  => OrderCollateralDeltaAmountAutoUpdated not emitted anymore
           expect(autoUpdate.collateralDeltaAmount).to.eq(expandDecimals(1, 6));
           expect(autoUpdate.nextCollateralDeltaAmount).to.eq(0);
         },
       },
     });
 
-    expect(await getBalanceOf(usdc.address, user1.address)).to.eq(expandDecimals(1, 6));
+    expect(await getBalanceOf(usdc.address, user1.address)).to.eq(0);
     // 140 tokens with each token profiting $500
     // 140 * $500 = $70,000
     // (5/7) * $70,000 = $50,000 profit = 9.090909 ETH of profit
-    // TODO: it seems there are no position fees anymore. Why?
+    // Position Fee: $500,000 * 0.05 = $25,000 in fees = 20,000 USDC (entire collateral) + 0.90909 ETH
 
-    // ETH Pool Amount = 1,000 ETH - 9.090909 ETH = 990.90909 ETH
-    // USDC Pool Amount = 1,000,000 USDC
-    // Receiver gets sent: 9.090909 ETH
-    expect(await getBalanceOf(wnt.address, user1.address)).to.eq("9090909090909090909");
-    expect(await getBalanceOf(usdc.address, user1.address)).to.eq(expandDecimals(1, 6));
+    // ETH Pool Amount = 1,000 ETH - 9.090909 ETH + 0.90909 ETH = 991.818181 ETH
+    // USDC Pool Amount = 1,000,000 USDC + 20,000 USDC = 1,020,000 USDC
+    // Receiver gets sent: 9.090909 ETH - 0.90909 ETH = 8.181818 ETH
+    expect(await getBalanceOf(wnt.address, user1.address)).to.eq("8181818181818181819");
+    expect(await getBalanceOf(usdc.address, user1.address)).to.eq("0");
     // Verify Pool Amounts
-    expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, wnt.address)).eq("990909090909090909091"); // 990.909 ETH
-    expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, usdc.address)).eq(expandDecimals(1_000_000, 6));
+    expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, wnt.address)).eq("991818181818181818181"); // 991.818181 ETH
+    expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, usdc.address)).eq(expandDecimals(1_020_000, 6));
 
     expect(await getPositionCount(dataStore)).eq(1);
   });
