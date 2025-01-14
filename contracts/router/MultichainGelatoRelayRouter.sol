@@ -17,8 +17,7 @@ contract MultichainGelatoRelayRouter is BaseGelatoRelayRouter {
         EventEmitter _eventEmitter,
         Oracle _oracle,
         IOrderHandler _orderHandler,
-        OrderVault _orderVault,
-        IExternalHandler _externalHandler
+        OrderVault _orderVault
     )
         BaseGelatoRelayRouter(
             _router,
@@ -27,8 +26,7 @@ contract MultichainGelatoRelayRouter is BaseGelatoRelayRouter {
             _eventEmitter,
             _oracle,
             _orderHandler,
-            _orderVault,
-            _externalHandler
+            _orderVault
         )
     {}
 

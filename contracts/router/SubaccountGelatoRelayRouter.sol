@@ -31,20 +31,8 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         EventEmitter _eventEmitter,
         Oracle _oracle,
         IOrderHandler _orderHandler,
-        OrderVault _orderVault,
-        IExternalHandler _externalHandler
-    )
-        BaseGelatoRelayRouter(
-            _router,
-            _roleStore,
-            _dataStore,
-            _eventEmitter,
-            _oracle,
-            _orderHandler,
-            _orderVault,
-            _externalHandler
-        )
-    {}
+        OrderVault _orderVault
+    ) BaseGelatoRelayRouter(_router, _roleStore, _dataStore, _eventEmitter, _oracle, _orderHandler, _orderVault) {}
 
     function createOrder(
         RelayParams calldata relayParams,
