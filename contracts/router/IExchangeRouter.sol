@@ -23,7 +23,7 @@ interface IExchangeRouter {
 
     function executeAtomicWithdrawal(
         WithdrawalUtils.CreateWithdrawalParams calldata params,
-        OracleUtils.SetPricesParams calldata oracleParams
+        OracleUtils.SetPricesParams calldata oracle
     ) external payable;
 
     function createShift(

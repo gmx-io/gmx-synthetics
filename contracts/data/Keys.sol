@@ -406,6 +406,7 @@ library Keys {
     bytes32 public constant AFFILIATE_REWARD = keccak256(abi.encode("AFFILIATE_REWARD"));
     // @dev key for max allowed subaccount action count
     bytes32 public constant MAX_ALLOWED_SUBACCOUNT_ACTION_COUNT = keccak256(abi.encode("MAX_ALLOWED_SUBACCOUNT_ACTION_COUNT"));
+    bytes32 public constant SUBACCOUNT_DEADLINE = keccak256(abi.encode("SUBACCOUNT_DEADLINE"));
     // @dev key for subaccount action count
     bytes32 public constant SUBACCOUNT_ACTION_COUNT = keccak256(abi.encode("SUBACCOUNT_ACTION_COUNT"));
     // @dev key for subaccount auto top up amount
@@ -1740,6 +1741,15 @@ library Keys {
     function maxAllowedSubaccountActionCountKey(address account, address subaccount, bytes32 actionType) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             MAX_ALLOWED_SUBACCOUNT_ACTION_COUNT,
+            account,
+            subaccount,
+            actionType
+        ));
+    }
+
+    function subaccountDeadlineKey(address account, address subaccount, bytes32 actionType) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            SUBACCOUNT_DEADLINE,
             account,
             subaccount,
             actionType

@@ -357,6 +357,9 @@ library Errors {
     // SubaccountUtils errors
     error SubaccountNotAuthorized(address account, address subaccount);
     error MaxSubaccountActionCountExceeded(address account, address subaccount, uint256 count, uint256 maxCount);
+    error SubaccountActionDeadlineExceeded(address account, address subaccount, uint256 deadline, uint256 currentTimestamp);
+    error InvalidSubaccount(address subaccount, address msgSender);
+    error InvalidSignature();
 
     // TokenUtils errors
     error TokenTransferError(address token, address receiver, uint256 amount);
@@ -423,6 +426,8 @@ library Errors {
 
     // Gelato relay errors
     error InvalidFeeToken(address feeToken, address expectedFeeToken);
-    error NotImplemented();
+    error NotSupported();
     error InvalidPermitSpender(address spender, address expectedSpender);
+    error InvalidUserNonce(uint256 storedUserNonce, uint256 userNonce);
+    error DeadlinePassed(uint256 currentTimestamp, uint256 deadline);
 }

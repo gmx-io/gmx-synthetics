@@ -71,7 +71,7 @@ library SubaccountUtils {
     ) internal {
         bytes32 key = Keys.subaccountActionCountKey(account, subaccount, actionType);
         uint256 nextValue = dataStore.incrementUint(key, 1);
-        validateSubaccountActionCount(dataStore, account, subaccount, actionType, nextValue);
+        validateSubaccountActionCountAndDeadline(dataStore, account, subaccount, actionType, nextValue);
 
         EventUtils.EventLogData memory eventData;
 
@@ -87,6 +87,34 @@ library SubaccountUtils {
 
         eventEmitter.emitEventLog2(
             "IncrementSubaccountActionCount",
+            Cast.toBytes32(account),
+            Cast.toBytes32(subaccount),
+            eventData
+        );
+    }
+
+    function setSubaccountDeadline(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address account,
+        address subaccount,
+        bytes32 actionType,
+        uint256 deadline
+    ) internal {
+        bytes32 key = Keys.subaccountDeadlineKey(account, subaccount, actionType);
+        dataStore.setUint(key, deadline);
+
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "account", account);
+        eventData.addressItems.setItem(1, "subaccount", subaccount);
+
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "deadline", deadline);
+
+        eventEmitter.emitEventLog2(
+            "SetSubaccountDeadline",
             Cast.toBytes32(account),
             Cast.toBytes32(subaccount),
             eventData
@@ -121,15 +149,23 @@ library SubaccountUtils {
         );
     }
 
-    function validateSubaccountActionCount(
+    function validateSubaccountActionCountAndDeadline(
         DataStore dataStore,
         address account,
         address subaccount,
         bytes32 actionType,
         uint256 count
     ) internal view {
-        bytes32 key = Keys.maxAllowedSubaccountActionCountKey(account, subaccount, actionType);
-        uint256 maxCount = dataStore.getUint(key);
+        bytes32 deadlineKey = Keys.subaccountDeadlineKey(account, subaccount, actionType);
+        uint256 deadline = dataStore.getUint(deadlineKey);
+
+        if (deadline > 0 && block.timestamp > deadline) {
+            revert Errors.SubaccountActionDeadlineExceeded(account, subaccount, deadline, block.timestamp);
+        }
+
+        bytes32 maxCountKey = Keys.maxAllowedSubaccountActionCountKey(account, subaccount, actionType);
+        uint256 maxCount = dataStore.getUint(maxCountKey);
+
         if (count > maxCount) {
             revert Errors.MaxSubaccountActionCountExceeded(account, subaccount, count, maxCount);
         }
