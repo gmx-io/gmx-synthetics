@@ -75,7 +75,8 @@ library WithdrawalUtils {
         EventEmitter eventEmitter,
         WithdrawalVault withdrawalVault,
         address account,
-        CreateWithdrawalParams memory params
+        CreateWithdrawalParams memory params,
+        bool isAtomicWithdrawal
     ) external returns (bytes32) {
         AccountUtils.validateAccount(account);
 
@@ -126,7 +127,9 @@ library WithdrawalUtils {
 
         uint256 estimatedGasLimit = GasUtils.estimateExecuteWithdrawalGasLimit(dataStore, withdrawal);
         uint256 oraclePriceCount = GasUtils.estimateWithdrawalOraclePriceCount(withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length);
-        GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, params.executionFee, oraclePriceCount);
+        if (!isAtomicWithdrawal) {
+            GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, params.executionFee, oraclePriceCount);
+        }
 
         bytes32 key = NonceUtils.getNextKey(dataStore);
 
