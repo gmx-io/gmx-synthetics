@@ -31,6 +31,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     uint256 public constant MAX_ALLOWED_FUNDING_INCREASE_FACTOR_PER_SECOND = MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND / 1 hours;
     // at this rate zero funding rate will be reached in 24 hours if max funding rate is 315%
     uint256 public constant MAX_ALLOWED_FUNDING_DECREASE_FACTOR_PER_SECOND = MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND / 24 hours;
+    // minimum duration required to fully distribute the position impact pool amount
+    uint256 public constant MIN_POSITION_IMPACT_POOL_DISTRIBUTION_TIME = 7 days;
 
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
@@ -209,6 +211,15 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         uint256 positionImpactPoolDistributionRate
     ) external onlyConfigKeeper nonReentrant {
         MarketUtils.distributePositionImpactPool(dataStore, eventEmitter, market);
+
+        // Ensure the full positionImpactPoolAmount cannot be distributed in less then the minimum required time
+        uint256 positionImpactPoolAmount = MarketUtils.getPositionImpactPoolAmount(dataStore, market);
+        uint256 distributionAmount = Precision.applyFactor(MIN_POSITION_IMPACT_POOL_DISTRIBUTION_TIME, positionImpactPoolDistributionRate);
+        if (positionImpactPoolAmount > 0) {
+            if (distributionAmount >= positionImpactPoolAmount) {
+                revert Errors.InvalidPositionImpactPoolDistributionRate(distributionAmount, positionImpactPoolAmount);
+            }
+        }
 
         dataStore.setUint(Keys.minPositionImpactPoolAmountKey(market), minPositionImpactPoolAmount);
         dataStore.setUint(Keys.positionImpactPoolDistributionRateKey(market), positionImpactPoolDistributionRate);
