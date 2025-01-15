@@ -1099,6 +1099,12 @@ library MarketUtils {
         setSavedFundingFactorPerSecond(dataStore, market.marketToken, result.nextSavedFundingFactorPerSecond);
 
         dataStore.setUint(Keys.fundingUpdatedAtKey(market.marketToken), Chain.currentTimestamp());
+
+        MarketEventUtils.emitFunding(
+            eventEmitter,
+            market.marketToken,
+            result.fundingFactorPerSecond
+        );
     }
 
     // @dev get the next funding amount per size values
@@ -1440,7 +1446,7 @@ library MarketUtils {
         MarketPrices memory prices,
         bool isLong
     ) external {
-        (/* uint256 nextCumulativeBorrowingFactor */, uint256 delta) = getNextCumulativeBorrowingFactor(
+        (/* uint256 nextCumulativeBorrowingFactor */, uint256 delta, uint256 borrowingFactorPerSecond) = getNextCumulativeBorrowingFactor(
             dataStore,
             market,
             prices,
@@ -1456,6 +1462,12 @@ library MarketUtils {
         );
 
         dataStore.setUint(Keys.cumulativeBorrowingFactorUpdatedAtKey(market.marketToken, isLong), Chain.currentTimestamp());
+
+        MarketEventUtils.emitBorrowing(
+            eventEmitter,
+            market.marketToken,
+            borrowingFactorPerSecond
+        );
     }
 
     // @dev get the ratio of pnl to pool value
@@ -1740,7 +1752,7 @@ library MarketUtils {
     // @param prices the prices of the market tokens
     // @return the borrowing fees for a position
     function getNextBorrowingFees(DataStore dataStore, Position.Props memory position, Market.Props memory market, MarketPrices memory prices) internal view returns (uint256) {
-        (uint256 nextCumulativeBorrowingFactor, /* uint256 delta */) = getNextCumulativeBorrowingFactor(
+        (uint256 nextCumulativeBorrowingFactor, /* uint256 delta */, ) = getNextCumulativeBorrowingFactor(
             dataStore,
             market,
             prices,
@@ -2363,7 +2375,7 @@ library MarketUtils {
         Market.Props memory market,
         MarketPrices memory prices,
         bool isLong
-    ) internal view returns (uint256, uint256) {
+    ) internal view returns (uint256, uint256, uint256) {
         uint256 durationInSeconds = getSecondsSinceCumulativeBorrowingFactorUpdated(dataStore, market.marketToken, isLong);
         uint256 borrowingFactorPerSecond = getBorrowingFactorPerSecond(
             dataStore,
@@ -2376,7 +2388,7 @@ library MarketUtils {
 
         uint256 delta = durationInSeconds * borrowingFactorPerSecond;
         uint256 nextCumulativeBorrowingFactor = cumulativeBorrowingFactor + delta;
-        return (nextCumulativeBorrowingFactor, delta);
+        return (nextCumulativeBorrowingFactor, delta, borrowingFactorPerSecond);
     }
 
     // @dev get the borrowing factor per second
@@ -2577,7 +2589,7 @@ library MarketUtils {
             isLong
         );
 
-        (uint256 nextCumulativeBorrowingFactor, /* uint256 delta */) = getNextCumulativeBorrowingFactor(
+        (uint256 nextCumulativeBorrowingFactor, /* uint256 delta */, ) = getNextCumulativeBorrowingFactor(
             dataStore,
             market,
             prices,
