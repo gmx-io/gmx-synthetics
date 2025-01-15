@@ -35,7 +35,7 @@ library ReaderDepositUtils {
         ISwapPricingUtils.SwapPricingType swapPricingType;
     }
 
-    struct PriceImpactCache {
+    struct GetDepositAmountOutCache {
         int256 priceImpactUsd;
         bool balanceWasImproved;
     }
@@ -52,7 +52,7 @@ library ReaderDepositUtils {
     ) external view returns (uint256) {
         uint256 longTokenUsd = longTokenAmount * prices.longTokenPrice.midPrice();
         uint256 shortTokenUsd = shortTokenAmount * prices.shortTokenPrice.midPrice();
-        PriceImpactCache memory cache;
+        GetDepositAmountOutCache memory cache;
         (cache.priceImpactUsd, cache.balanceWasImproved) = SwapPricingUtils.getPriceImpactUsd(
             SwapPricingUtils.GetPriceImpactUsdParams(
                 dataStore,
