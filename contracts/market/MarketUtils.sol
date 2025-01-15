@@ -80,7 +80,7 @@ library MarketUtils {
 
         uint256 durationInSeconds;
 
-        uint256 sizeOfLargerSide;
+        uint256 sizeOfPayingSide;
         uint256 fundingUsd;
 
         uint256 fundingUsdForLongCollateral;
@@ -1138,8 +1138,6 @@ library MarketUtils {
         // this should be a rare occurrence so funding fees are not adjusted for this case
         cache.durationInSeconds = getSecondsSinceFundingUpdated(dataStore, market.marketToken);
 
-        cache.sizeOfLargerSide = cache.longOpenInterest > cache.shortOpenInterest ? cache.longOpenInterest : cache.shortOpenInterest;
-
         (result.fundingFactorPerSecond, result.longsPayShorts, result.nextSavedFundingFactorPerSecond) = getNextFundingFactorPerSecond(
             dataStore,
             market.marketToken,
@@ -1147,6 +1145,8 @@ library MarketUtils {
             cache.shortOpenInterest,
             cache.durationInSeconds
         );
+
+        cache.sizeOfPayingSide = result.longsPayShorts ? cache.longOpenInterest : cache.shortOpenInterest;
 
         // for single token markets, if there is $200,000 long open interest
         // and $100,000 short open interest and if the fundingUsd is $8:
@@ -1176,7 +1176,7 @@ library MarketUtils {
         //
         // due to these, the fundingUsd should be divided by the divisor
 
-        cache.fundingUsd = Precision.applyFactor(cache.sizeOfLargerSide, cache.durationInSeconds * result.fundingFactorPerSecond);
+        cache.fundingUsd = Precision.applyFactor(cache.sizeOfPayingSide, cache.durationInSeconds * result.fundingFactorPerSecond);
         cache.fundingUsd = cache.fundingUsd / divisor;
 
         // split the fundingUsd value by long and short collateral
