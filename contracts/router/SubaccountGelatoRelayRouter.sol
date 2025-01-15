@@ -10,23 +10,23 @@ import "./BaseGelatoRelayRouter.sol";
 
 contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     struct SubaccountApproval {
-        bytes32 id; // for replay attack protection
         address subaccount;
         uint256 expiresAt;
         uint256 maxAllowedCount;
         bytes32 actionType;
         uint256 deadline;
+        uint256 nonce; // for replay attack protection
         bytes signature;
     }
 
     bytes32 public constant _SUBACCOUNT_APPROVAL_TYPEHASH =
         keccak256(
             bytes(
-                "SubaccountGelatoRelayRouter_SubaccountApproval(bytes32 id,address subaccount,uint256 expiresAt,uint256 maxAllowedCount,bytes32 actionType,bytes signature)"
+                "SubaccountGelatoRelayRouter_SubaccountApproval(address subaccount,uint256 expiresAt,uint256 maxAllowedCount,bytes32 actionType,uint256 nonce,bytes signature)"
             )
         );
 
-    mapping(bytes32 => bool) public handledSubaccountApprovals;
+    mapping(address => uint256) public subaccountApprovalNonces;
 
     constructor(
         Router _router,
@@ -101,10 +101,11 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             revert Errors.SubaccountApprovalDeadlinePassed(block.timestamp, subaccountApproval.deadline);
         }
 
-        if (handledSubaccountApprovals[subaccountApproval.id]) {
-            revert Errors.SubaccountApprovalAlreadyHandled(subaccountApproval.id);
+        uint256 storedNonce = subaccountApprovalNonces[account];
+        if (storedNonce != subaccountApproval.nonce) {
+            revert Errors.InvalidSubaccountApprovalNonce(storedNonce, subaccountApproval.nonce);
         }
-        handledSubaccountApprovals[subaccountApproval.id] = true;
+        subaccountApprovalNonces[account] = storedNonce + 1;
 
         bytes32 domainSeparator = _getDomainSeparator(block.chainid);
         bytes32 structHash = _getSubaccountApprovalStructHash(subaccountApproval);
@@ -150,11 +151,11 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             keccak256(
                 abi.encode(
                     _SUBACCOUNT_APPROVAL_TYPEHASH,
-                    subaccountApproval.id,
                     subaccountApproval.subaccount,
                     subaccountApproval.expiresAt,
                     subaccountApproval.maxAllowedCount,
-                    subaccountApproval.actionType
+                    subaccountApproval.actionType,
+                    subaccountApproval.nonce
                 )
             );
     }

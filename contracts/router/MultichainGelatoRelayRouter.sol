@@ -40,7 +40,7 @@ contract MultichainGelatoRelayRouter is BaseGelatoRelayRouter {
 
     function _validateNonceAndDeadline(address account, uint256 userNonce, uint256 deadline) internal {
         if (block.timestamp > deadline) {
-            revert Errors.DeadlinePassed(block.timestamp, deadline);
+            revert Errors.MultichainDeadlinePassed(block.timestamp, deadline);
         }
 
         uint256 storedUserNonce = userNonces[account];
