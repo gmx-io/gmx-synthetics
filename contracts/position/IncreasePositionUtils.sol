@@ -39,6 +39,7 @@ library IncreasePositionUtils {
         Price.Props collateralTokenPrice;
         int256 priceImpactUsd;
         int256 priceImpactAmount;
+        bool balanceWasImproved;
         uint256 baseSizeDeltaInTokens;
         uint256 nextPositionSizeInUsd;
         uint256 nextPositionBorrowingFactor;
@@ -99,7 +100,7 @@ library IncreasePositionUtils {
             );
         }
 
-        (cache.priceImpactUsd, cache.priceImpactAmount, cache.baseSizeDeltaInTokens, cache.executionPrice) = PositionUtils.getExecutionPriceForIncrease(params, prices.indexTokenPrice);
+        (cache.priceImpactUsd, cache.priceImpactAmount, cache.baseSizeDeltaInTokens, cache.executionPrice, cache.balanceWasImproved) = PositionUtils.getExecutionPriceForIncrease(params, prices.indexTokenPrice);
 
         // process the collateral for the given position and order
         PositionPricingUtils.PositionFees memory fees;
@@ -107,7 +108,7 @@ library IncreasePositionUtils {
             params,
             cache.collateralTokenPrice,
             collateralIncrementAmount.toInt256(),
-            cache.priceImpactUsd
+            cache.balanceWasImproved
         );
 
         // check if there is sufficient collateral for the position
@@ -247,14 +248,14 @@ library IncreasePositionUtils {
         PositionUtils.UpdatePositionParams memory params,
         Price.Props memory collateralTokenPrice,
         int256 collateralDeltaAmount,
-        int256 priceImpactUsd
+        bool balanceWasImproved
     ) internal returns (int256, PositionPricingUtils.PositionFees memory) {
         PositionPricingUtils.GetPositionFeesParams memory getPositionFeesParams = PositionPricingUtils.GetPositionFeesParams(
             params.contracts.dataStore, // dataStore
             params.contracts.referralStorage, // referralStorage
             params.position, // position
             collateralTokenPrice, // collateralTokenPrice
-            priceImpactUsd > 0, // forPositiveImpact
+            balanceWasImproved, // balanceWasImproved
             params.market.longToken, // longToken
             params.market.shortToken, // shortToken
             params.order.sizeDeltaUsd(), // sizeDeltaUsd
