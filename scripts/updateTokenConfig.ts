@@ -8,6 +8,16 @@ import * as keys from "../utils/keys";
 
 const processTokens = async ({ tokens, handleConfig }) => {
   for (const [, token] of Object.entries(tokens) as any) {
+    if (token.dataStreamSpreadReductionFactor !== undefined) {
+      await handleConfig(
+        "uint",
+        keys.DATA_STREAM_SPREAD_REDUCTION_FACTOR,
+        encodeData(["address"], [token.address]),
+        token.dataStreamSpreadReductionFactor,
+        `dataStreamSpreadReductionFactor ${token.dataStreamSpreadReductionFactor}`
+      );
+    }
+
     // the config below is for non-synthetic markets only
     if (token.synthetic) {
       continue;
@@ -28,16 +38,6 @@ const processTokens = async ({ tokens, handleConfig }) => {
         encodeData(["address"], [token.address]),
         token.buybackMaxPriceImpactFactor,
         `buybackMaxPriceImpactFactor ${token.buybackMaxPriceImpactFactor}`
-      );
-    }
-
-    if (token.dataStreamSpreadReductionFactor !== undefined) {
-      await handleConfig(
-        "uint",
-        keys.DATA_STREAM_SPREAD_REDUCTION_FACTOR,
-        encodeData(["address"], [token.address]),
-        token.dataStreamSpreadReductionFactor,
-        `dataStreamSpreadReductionFactor ${token.dataStreamSpreadReductionFactor}`
       );
     }
   }
