@@ -345,6 +345,31 @@ describe("Config", () => {
     expect(await dataStore.getUint(keys.positionImpactPoolDistributionRateKey(ethUsdMarket.marketToken))).eq(2);
   });
 
+  it("setPositionImpactDistributionRate reverts if position impact pool is fully distributed in less than 1 week (604800 seconds)", async () => {
+    const positionImpactPoolAmount = expandDecimals(200, 18); // 200 ETH
+    await dataStore.setUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken), positionImpactPoolAmount);
+
+    const minPositionImpactPoolAmount = 1;
+    const invalidDistributionRate = expandDecimals(4, 44); // positionImpactPoolDistributionRate, 0.0004 ETH per second, 200 ETH for   500,0000 seconds
+    const validDistributionRate = expandDecimals(2, 44); // positionImpactPoolDistributionRate, 0.0002 ETH per second, 200 ETH for 1,000,0000 seconds
+
+    await expect(
+      config.setPositionImpactDistributionRate(
+        ethUsdMarket.marketToken,
+        minPositionImpactPoolAmount,
+        invalidDistributionRate
+      )
+    ).to.be.revertedWithCustomError(config, "InvalidPositionImpactPoolDistributionRate");
+
+    await expect(
+      config.setPositionImpactDistributionRate(
+        ethUsdMarket.marketToken,
+        minPositionImpactPoolAmount,
+        validDistributionRate
+      )
+    ).to.not.be.reverted;
+  });
+
   it("setClaimableCollateralFactorForTime", async () => {
     await expect(
       config.connect(user1).setClaimableCollateralFactorForTime(
