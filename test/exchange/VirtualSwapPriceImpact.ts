@@ -64,6 +64,7 @@ describe("Exchange.VirtualSwapPriceImpact", () => {
     await usingResult(
       handleOrder(fixture, {
         create: {
+          market: ethUsdcMarket,
           initialCollateralToken: wnt,
           initialCollateralDeltaAmount: expandDecimals(10, 18),
           acceptablePrice: 0,
@@ -87,6 +88,7 @@ describe("Exchange.VirtualSwapPriceImpact", () => {
     await usingResult(
       handleOrder(fixture, {
         create: {
+          market: ethUsdtMarket,
           initialCollateralToken: wnt,
           initialCollateralDeltaAmount: expandDecimals(10, 18),
           acceptablePrice: 0,
@@ -127,6 +129,7 @@ describe("Exchange.VirtualSwapPriceImpact", () => {
     await usingResult(
       handleOrder(fixture, {
         create: {
+          market: ethUsdcMarket,
           initialCollateralToken: wnt,
           initialCollateralDeltaAmount: expandDecimals(10, 18),
           acceptablePrice: 0,
@@ -150,6 +153,7 @@ describe("Exchange.VirtualSwapPriceImpact", () => {
     await usingResult(
       handleOrder(fixture, {
         create: {
+          market: ethUsdtMarket,
           initialCollateralToken: usdt,
           initialCollateralDeltaAmount: expandDecimals(50_000, 6),
           acceptablePrice: 0,
@@ -174,6 +178,7 @@ describe("Exchange.VirtualSwapPriceImpact", () => {
     await usingResult(
       handleOrder(fixture, {
         create: {
+          market: ethUsdtMarket,
           initialCollateralToken: wnt,
           initialCollateralDeltaAmount: expandDecimals(10, 18),
           acceptablePrice: 0,

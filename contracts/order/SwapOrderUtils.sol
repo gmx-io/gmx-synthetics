@@ -22,10 +22,6 @@ library SwapOrderUtils {
     // @dev process a swap order
     // @param params BaseOrderUtils.ExecuteOrderParams
     function processOrder(BaseOrderUtils.ExecuteOrderParams memory params) external returns (EventUtils.EventLogData memory) {
-        if (params.order.market() != address(0)) {
-            revert Errors.UnexpectedMarket();
-        }
-
         if (params.minOracleTimestamp < params.order.updatedAtTime()) {
             revert Errors.OracleTimestampsAreSmallerThanRequired(
                 params.minOracleTimestamp,

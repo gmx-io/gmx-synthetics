@@ -1369,6 +1369,7 @@ describe("Guardian.Lifecycle", () => {
     // #1 Swap 5,000
     await handleOrder(fixture, {
       create: {
+        market: ethUsdMarket,
         account: user1,
         initialCollateralToken: wnt,
         initialCollateralDeltaAmount: expandDecimals(1, 18),
@@ -1425,7 +1426,7 @@ describe("Guardian.Lifecycle", () => {
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).closeTo("225782", "10000"); // 0.225782 USDC
-          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("60904483", "100000"); // 60.904483 USDC
+          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("62832539", "100000"); // 62.832539 USDC
         },
       },
     });
@@ -1433,6 +1434,7 @@ describe("Guardian.Lifecycle", () => {
     // #2 Swap 4,000
     await handleOrder(fixture, {
       create: {
+        market: ethUsdMarket,
         account: user3,
         initialCollateralToken: usdc,
         initialCollateralDeltaAmount: expandDecimals(4000, 6),
@@ -1522,7 +1524,7 @@ describe("Guardian.Lifecycle", () => {
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).closeTo("20738", "20000"); // 0.020738 USDC
-          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("30677911", "20000"); // 30.67 USDC
+          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("30099876", "20000"); // 30.10 USDC
         },
       },
     });
@@ -1582,7 +1584,7 @@ describe("Guardian.Lifecycle", () => {
 
           const positionFeesCollectedEvent = getEventData(logs, "PositionFeesCollected");
           expect(positionFeesCollectedEvent.fundingFeeAmount).closeTo("31107", "20000"); //  0.031107 USDC
-          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("42921864", "20000"); // 42.921864 USDC
+          expect(positionFeesCollectedEvent.borrowingFeeAmount).closeTo("42054832", "20000"); // 42.054832 USDC
         },
       },
     });
