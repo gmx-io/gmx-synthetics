@@ -36,7 +36,6 @@ library DecreaseOrderUtils {
         validateOracleTimestamp(
             params.contracts.dataStore,
             order.orderType(),
-            order.market(),
             order.updatedAtTime(),
             order.validFromTime(),
             position.increasedAtTime(),
@@ -153,7 +152,6 @@ library DecreaseOrderUtils {
     function validateOracleTimestamp(
         DataStore dataStore,
         Order.OrderType orderType,
-        address market,
         uint256 orderUpdatedAtTime,
         uint256 orderValidFromTime,
         uint256 positionIncreasedAtTime,
@@ -163,7 +161,7 @@ library DecreaseOrderUtils {
     ) internal view {
         if (orderType == Order.OrderType.MarketDecrease) {
             if (minOracleTimestamp < orderUpdatedAtTime) {
-                revert Errors.OracleTimestampsAreSmallerThanRequired(market, minOracleTimestamp, orderUpdatedAtTime);
+                revert Errors.OracleTimestampsAreSmallerThanRequired(minOracleTimestamp, orderUpdatedAtTime);
             }
 
             uint256 requestExpirationTime = dataStore.getUint(Keys.REQUEST_EXPIRATION_TIME);
@@ -182,7 +180,7 @@ library DecreaseOrderUtils {
             !BaseOrderUtils.isMarketOrder(orderType) &&
             minOracleTimestamp < orderValidFromTime
         ) {
-            revert Errors.OracleTimestampsAreSmallerThanRequired(market, minOracleTimestamp, orderValidFromTime);
+            revert Errors.OracleTimestampsAreSmallerThanRequired(minOracleTimestamp, orderValidFromTime);
         }
 
         // a user could attempt to frontrun prices by creating a limit decrease
@@ -207,7 +205,7 @@ library DecreaseOrderUtils {
         ) {
             uint256 latestUpdatedAtTime = orderUpdatedAtTime > positionIncreasedAtTime ? orderUpdatedAtTime : positionIncreasedAtTime;
             if (minOracleTimestamp < latestUpdatedAtTime) {
-                revert Errors.OracleTimestampsAreSmallerThanRequired(market, minOracleTimestamp, latestUpdatedAtTime);
+                revert Errors.OracleTimestampsAreSmallerThanRequired(minOracleTimestamp, latestUpdatedAtTime);
             }
             return;
         }
@@ -215,7 +213,7 @@ library DecreaseOrderUtils {
         if (orderType == Order.OrderType.Liquidation) {
             uint256 latestUpdatedAtTime = positionIncreasedAtTime > positionDecreasedAtTime ? positionIncreasedAtTime : positionDecreasedAtTime;
             if (minOracleTimestamp < latestUpdatedAtTime) {
-                revert Errors.OracleTimestampsAreSmallerThanRequired(market, minOracleTimestamp, latestUpdatedAtTime);
+                revert Errors.OracleTimestampsAreSmallerThanRequired(minOracleTimestamp, latestUpdatedAtTime);
             }
             return;
         }

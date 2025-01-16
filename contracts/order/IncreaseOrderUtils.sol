@@ -52,7 +52,6 @@ library IncreaseOrderUtils {
 
         if (params.minOracleTimestamp < params.order.updatedAtTime()) {
             revert Errors.OracleTimestampsAreSmallerThanRequired(
-                params.order.market(),
                 params.minOracleTimestamp,
                 params.order.updatedAtTime()
             );
@@ -63,7 +62,6 @@ library IncreaseOrderUtils {
             params.minOracleTimestamp < params.order.validFromTime()
         ) {
             revert Errors.OracleTimestampsAreSmallerThanRequired(
-                params.order.market(),
                 params.minOracleTimestamp,
                 params.order.validFromTime()
             );
