@@ -1500,7 +1500,7 @@ const config: {
 
       maxOpenInterest: decimalToFloat(1_000_000),
 
-      maxPoolUsdForDeposit: decimalToFloat(4_500_000),
+      maxPoolUsdForDeposit: decimalToFloat(9_000_000),
       maxLongTokenPoolAmount: expandDecimals(1430, 18),
       maxShortTokenPoolAmount: expandDecimals(5_000_000, 6),
     },
