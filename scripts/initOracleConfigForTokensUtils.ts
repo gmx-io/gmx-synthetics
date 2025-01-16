@@ -1,3 +1,4 @@
+import prompts from "prompts";
 import hre, { ethers } from "hardhat";
 
 import { bigNumberify, expandDecimals } from "../utils/math";
@@ -157,10 +158,23 @@ export async function initOracleConfigForTokens({ write }) {
     }
   }
 
-  console.log(`updating ${multicallWriteParams.length} params`);
   console.log("multicallWriteParams", multicallWriteParams);
+  if (multicallWriteParams.length === 0) {
+    console.log("no params to update");
+    return;
+  }
 
-  if (write && multicallWriteParams.length > 0) {
+  console.log(`updating ${multicallWriteParams.length} params`);
+
+  if (!write) {
+    ({ write } = await prompts({
+      type: "confirm",
+      name: "write",
+      message: "Do you want to execute the transactions?",
+    }));
+  }
+
+  if (write) {
     const tx = await config.multicall(multicallWriteParams);
     console.log(`tx sent: ${tx.hash}`);
   } else {

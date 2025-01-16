@@ -27,52 +27,45 @@ type OracleTestPriceFeed = {
 
 type OraclePriceFeed = OracleRealPriceFeed | OracleTestPriceFeed;
 
+type BaseTokenConfig = {
+  decimals: number;
+  transferGasLimit?: number;
+  oracleProvider?: OracleProvider;
+  oracleTimestampAdjustment?: number;
+  dataStreamFeedId?: string;
+  dataStreamFeedDecimals?: number;
+  dataStreamSpreadReductionFactor?: BigNumberish;
+  priceFeed?: OraclePriceFeed;
+};
+
 // synthetic token without corresponding token
 // address will be generated in runtime in hardhat.config.ts
 // should not be deployed
 // should not be wrappedNative
-type SyntheticTokenConfig = {
+type SyntheticTokenConfig = BaseTokenConfig & {
   address?: never;
-  decimals: number;
   synthetic: true;
   wrappedNative?: never;
   deploy?: never;
-  transferGasLimit?: never;
-  dataStreamFeedId?: string;
-  dataStreamFeedDecimals?: number;
-  oracleProvider?: OracleProvider;
-  oracleTimestampAdjustment?: number;
-  priceFeed?: OraclePriceFeed;
   oracleType?: string;
 };
 
-type RealTokenConfig = {
+type RealTokenConfig = BaseTokenConfig & {
   address: string;
-  decimals: number;
-  transferGasLimit: number;
   synthetic?: never;
   wrappedNative?: true;
   deploy?: never;
-  dataStreamFeedId?: string;
-  dataStreamFeedDecimals?: number;
-  oracleProvider?: OracleProvider;
-  oracleTimestampAdjustment?: number;
   buybackMaxPriceImpactFactor?: BigNumberish;
 };
 
 // test token to deploy in local and test networks
 // automatically deployed in localhost and hardhat networks
 // `deploy` should be set to `true` to deploy on live networks
-export type TestTokenConfig = {
+export type TestTokenConfig = BaseTokenConfig & {
   address?: never;
-  decimals: number;
-  transferGasLimit: number;
   deploy: true;
   wrappedNative?: boolean;
   synthetic?: never;
-  dataStreamFeedId?: string;
-  oracleProvider?: OracleProvider;
-  oracleTimestampAdjustment?: number;
 };
 
 export type TokenConfig = SyntheticTokenConfig | RealTokenConfig | TestTokenConfig;
@@ -109,6 +102,7 @@ const config: {
         decimals: 8,
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
+      dataStreamSpreadReductionFactor: percentageToFloat("100%"),
     },
     "WBTC.e": {
       address: "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
@@ -123,6 +117,7 @@ const config: {
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
       buybackMaxPriceImpactFactor: LOW_BUYBACK_IMPACT,
+      dataStreamSpreadReductionFactor: percentageToFloat("100%"),
     },
     tBTC: {
       address: "0x6c84a8f1c29108f47a79964b5fe888d4f4d0de40",
@@ -151,6 +146,7 @@ const config: {
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
       buybackMaxPriceImpactFactor: LOW_BUYBACK_IMPACT,
+      dataStreamSpreadReductionFactor: percentageToFloat("100%"),
     },
     wstETH: {
       address: "0x5979D7b546E38E414F7E9822514be443A4800529",
@@ -472,6 +468,7 @@ const config: {
       dataStreamFeedId: "0x00031dcbdf6f280392039ea6381b85a23bc0b90a40b676c4ec0b669dd8f0f38e",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
+      dataStreamSpreadReductionFactor: percentageToFloat("1%"),
       // Chainlink on-chain feed not available
     },
     DOT: {
@@ -498,6 +495,33 @@ const config: {
       synthetic: true,
       decimals: 18, // https://etherscan.io/token/0x6de037ef9ad2725eb40118bb1702ebb27e4aeb24#readProxyContract
       dataStreamFeedId: "0x00034e3ab3a1c0809fe3f56ffe755155ace8564512cbc3884e9463dba081c02a",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      // Chainlink on-chain feed not available
+    },
+    FIL: {
+      synthetic: true,
+      decimals: 18, // https://docs.filecoin.io/basics/assets/the-fil-token
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x00036d46e681d182bbf68be46c5e5670c5b94329dba90ce5c52bf76c42bee68d",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      // Chainlink on-chain feed not available
+    },
+    INJ: {
+      synthetic: true,
+      decimals: 18, // https://docs.injective.network/getting-started/token-standards/inj-coin
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x000344d7a7d81f051ee273a63f94f8bef7d44ca89aa03e0c5bf4d085df19adb6",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      // Chainlink on-chain feed not available
+    },
+    DYDX: {
+      synthetic: true,
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x000348d8c6f4ff9e51a1baa88354d97749b3c1ffcdbfb9cf962b1882dba8cafb",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
       // Chainlink on-chain feed not available
@@ -606,6 +630,7 @@ const config: {
         stablePrice: decimalToFloat(1),
       },
       buybackMaxPriceImpactFactor: LOW_BUYBACK_IMPACT,
+      dataStreamSpreadReductionFactor: percentageToFloat("100%"),
     },
     "USDC.e": {
       address: "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
@@ -981,6 +1006,7 @@ const config: {
       dataStreamFeedId: "0x0003735a076086936550bd316b18e5e27fc4f280ee5b6530ce68f5aad404c796",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 3,
+      dataStreamSpreadReductionFactor: percentageToFloat("100%"),
     },
     TEST: {
       synthetic: true,

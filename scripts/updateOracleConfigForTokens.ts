@@ -1,5 +1,3 @@
-import hre, { ethers } from "hardhat";
-
 import { bigNumberify, expandDecimals } from "../utils/math";
 import { encodeData } from "../utils/hash";
 import { getFullKey } from "../utils/config";
@@ -95,7 +93,7 @@ export async function updateOracleConfigForTokens() {
   const result = await multicall.callStatic.aggregate3(multicallReadParams);
 
   const onchainOracleConfig = {};
-  const { defaultAbiCoder } = ethers.utils;
+  const { defaultAbiCoder } = hre.ethers.utils;
 
   for (let i = 0; i < tokenSymbols.length; i++) {
     const tokenSymbol = tokenSymbols[i];
@@ -186,7 +184,18 @@ export async function updateOracleConfigForTokens() {
       const oracleProviderKey = await getOracleProviderKey(oracleProviderAddress);
       console.log(`setOracleProviderForToken(${tokenSymbol} ${oracleProviderKey} ${oracleProviderAddress})`);
 
-      const method = phase === "signal" ? "signalSetOracleProviderForToken" : "setOracleProviderForToken";
+      const method = phase === "signal" ? "signalSetOracleProviderForToken" : "setOracleProviderForTokenAfterSignal";
+
+      // signalSetOracleProviderForToken back to the current oracle provider in case
+      // the oracle provider change needs to be rolled back
+      if (method === "signalSetOracleProviderForToken") {
+        multicallWriteParams.push(
+          timelock.interface.encodeFunctionData("signalSetOracleProviderForToken", [
+            token.address,
+            onchainConfig.oracleProviderForToken,
+          ])
+        );
+      }
 
       multicallWriteParams.push(timelock.interface.encodeFunctionData(method, [token.address, oracleProviderAddress]));
     }

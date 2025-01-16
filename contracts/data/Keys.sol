@@ -323,7 +323,7 @@ library Keys {
     bytes32 public constant PRICE_FEED_HEARTBEAT_DURATION = keccak256(abi.encode("PRICE_FEED_HEARTBEAT_DURATION"));
     // @dev key for data stream feed id
     bytes32 public constant DATA_STREAM_ID = keccak256(abi.encode("DATA_STREAM_ID"));
-    // @dev key for data stream feed multipler
+    // @dev key for data stream feed multiplier
     bytes32 public constant DATA_STREAM_MULTIPLIER = keccak256(abi.encode("DATA_STREAM_MULTIPLIER"));
     bytes32 public constant DATA_STREAM_SPREAD_REDUCTION_FACTOR = keccak256(abi.encode("DATA_STREAM_SPREAD_REDUCTION_FACTOR"));
     // @dev key for stable price
@@ -382,7 +382,6 @@ library Keys {
     bytes32 public constant CLAIMABLE_COLLATERAL_TIME_DIVISOR = keccak256(abi.encode("CLAIMABLE_COLLATERAL_TIME_DIVISOR"));
     // @dev key for claimed collateral amount
     bytes32 public constant CLAIMED_COLLATERAL_AMOUNT = keccak256(abi.encode("CLAIMED_COLLATERAL_AMOUNT"));
-    bytes32 public constant IGNORE_OPEN_INTEREST_FOR_USAGE_FACTOR = keccak256(abi.encode("IGNORE_OPEN_INTEREST_FOR_USAGE_FACTOR"));
     // @dev key for optimal usage factor
     bytes32 public constant OPTIMAL_USAGE_FACTOR = keccak256(abi.encode("OPTIMAL_USAGE_FACTOR"));
     // @dev key for base borrowing factor

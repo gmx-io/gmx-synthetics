@@ -165,6 +165,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
                 order.account(),
                 startingGas,
                 true, // isExternalCall
+                false, // isAutoCancel
                 Keys.USER_INITIATED_CANCEL,
                 ""
             )
@@ -327,6 +328,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
                     msg.sender,
                     startingGas,
                     true, // isExternalCall
+                    false, // isAutoCancel
                     reason,
                     reasonBytes
                 )
