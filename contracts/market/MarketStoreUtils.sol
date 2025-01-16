@@ -84,14 +84,9 @@ library MarketStoreUtils {
             keccak256(abi.encode(key, SHORT_TOKEN)),
             market.shortToken
         );
-
-        dataStore.setBytes32(
-            keccak256(abi.encode(key, MARKET_SALT)),
-            salt
-        );
     }
 
-    function remove(DataStore dataStore, address key) external {
+    function remove(DataStore dataStore, address key, bytes32 salt) external {
         if (!dataStore.containsAddress(Keys.MARKET_LIST, key)) {
             revert Errors.MarketNotFound(key);
         }
@@ -117,13 +112,8 @@ library MarketStoreUtils {
             keccak256(abi.encode(key, SHORT_TOKEN))
         );
 
-        bytes32 salt = dataStore.getBytes32(keccak256(abi.encode(key, MARKET_SALT)));
         dataStore.removeAddress(
             getMarketSaltHash(salt)
-        );
-
-        dataStore.removeBytes32(
-            keccak256(abi.encode(key, MARKET_SALT))
         );
     }
 
