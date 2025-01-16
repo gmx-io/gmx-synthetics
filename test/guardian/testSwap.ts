@@ -244,6 +244,7 @@ describe("Guardian.Swap", () => {
       // duplicated swap order
       await expect(
         createOrder(fixture, {
+          market: ethUsdSingleTokenMarket,
           initialCollateralToken: usdc,
           initialCollateralDeltaAmount: expandDecimals(4000, 6),
           acceptablePrice: 0,
@@ -260,6 +261,7 @@ describe("Guardian.Swap", () => {
       // duplicated swap order
       await handleOrder(fixture, {
         create: {
+          market: ethUsdMarket,
           initialCollateralToken: wnt,
           initialCollateralDeltaAmount: expandDecimals(1, 18),
           acceptablePrice: 0,

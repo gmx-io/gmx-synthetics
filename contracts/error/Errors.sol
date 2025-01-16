@@ -279,9 +279,6 @@ library Errors {
     // OrderStoreUtils errors
     error OrderNotFound(bytes32 key);
 
-    // SwapOrderUtils errors
-    error UnexpectedMarket();
-
     // DecreasePositionCollateralUtils errors
     error InsufficientFundsToPayForCosts(uint256 remainingCostUsd, string step);
     error InvalidOutputToken(address tokenOut, address expectedTokenOut);
