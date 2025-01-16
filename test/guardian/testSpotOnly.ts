@@ -42,6 +42,7 @@ describe("Guardian.SpotOnlyMarkets", () => {
 
     await handleOrder(fixture, {
       create: {
+        market: ethUsdSpotOnlyMarket,
         initialCollateralToken: wnt,
         initialCollateralDeltaAmount: expandDecimals(10, 18),
         acceptablePrice: 0,
@@ -61,6 +62,7 @@ describe("Guardian.SpotOnlyMarkets", () => {
 
     await handleOrder(fixture, {
       create: {
+        market: ethUsdSpotOnlyMarket,
         initialCollateralToken: usdc,
         initialCollateralDeltaAmount: expandDecimals(50_000, 6),
         acceptablePrice: 0,
