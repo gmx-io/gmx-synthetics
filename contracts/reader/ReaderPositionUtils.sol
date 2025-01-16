@@ -77,6 +77,7 @@ library ReaderPositionUtils {
                 uiFeeReceiver,
                 true // usePositionSizeAsSizeDeltaUsd
             );
+            positionInfoList[i].positionKey = positionKey;
         }
 
         return positionInfoList;
@@ -107,6 +108,7 @@ library ReaderPositionUtils {
                 uiFeeReceiver,
                 true // usePositionSizeAsSizeDeltaUsd
             );
+            positionInfoList[i].positionKey = positionKey;
         }
 
         return positionInfoList;
