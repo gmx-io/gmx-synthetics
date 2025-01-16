@@ -28,7 +28,6 @@ library SwapOrderUtils {
 
         if (params.minOracleTimestamp < params.order.updatedAtTime()) {
             revert Errors.OracleTimestampsAreSmallerThanRequired(
-                params.order.market(),
                 params.minOracleTimestamp,
                 params.order.updatedAtTime()
             );
@@ -39,7 +38,6 @@ library SwapOrderUtils {
             params.minOracleTimestamp < params.order.validFromTime()
         ) {
             revert Errors.OracleTimestampsAreSmallerThanRequired(
-                params.order.market(),
                 params.minOracleTimestamp,
                 params.order.validFromTime()
             );
