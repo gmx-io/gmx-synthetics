@@ -99,7 +99,6 @@ library ExecuteWithdrawalUtils {
 
         if (params.oracle.minTimestamp() < withdrawal.updatedAtTime()) {
             revert Errors.OracleTimestampsAreSmallerThanRequired(
-                withdrawal.market(),
                 params.oracle.minTimestamp(),
                 withdrawal.updatedAtTime()
             );
