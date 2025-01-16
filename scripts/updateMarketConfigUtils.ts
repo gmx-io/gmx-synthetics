@@ -800,16 +800,18 @@ export async function updateMarketConfig({
   console.info("multicallWriteParams", multicallWriteParams);
 
   console.log("running simulation");
-  await handleInBatches(multicallWriteParams, 100, async (batch) => {
-    await read(
-      "Config",
-      {
-        from: "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745",
-      },
-      "multicall",
-      batch
-    );
-  });
+  if (!["hardhat"].includes(hre.network.name)) {
+    await handleInBatches(multicallWriteParams, 100, async (batch) => {
+      await read(
+        "Config",
+        {
+          from: "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745",
+        },
+        "multicall",
+        batch
+      );
+    });
+  }
 
   if (!write) {
     ({ write } = await prompts({
