@@ -774,6 +774,23 @@ export async function updateMarketConfig({
     },
   });
 
+  if (ignoredRiskOracleParams.length > 0) {
+    const ignoredParameterNames = getIgnoredParameterNames(ignoredRiskOracleParams);
+
+    console.info("\n=================\n");
+    console.info(`WARN: Ignored risk oracle params for ${supportedRiskOracleMarkets.size} markets`);
+    console.info(`Ignored params: ${ignoredParameterNames.join(",")}`);
+    console.info("Add INCLUDE_RISK_ORACLE_BASE_KEYS=true to include them\n");
+  }
+
+  if (ignoredKeeperParams.length > 0) {
+    const ignoredParameterNames = getIgnoredParameterNames(ignoredKeeperParams);
+
+    console.info("\n=================\n");
+    console.info(`Ignored params: ${ignoredParameterNames.join(",")}`);
+    console.info("Add INCLUDE_KEEPER_BASE_KEYS=true to include them\n");
+  }
+
   if (multicallWriteParams.length === 0) {
     console.log("no changes to apply");
     return;
@@ -783,16 +800,18 @@ export async function updateMarketConfig({
   console.info("multicallWriteParams", multicallWriteParams);
 
   console.log("running simulation");
-  await handleInBatches(multicallWriteParams, 100, async (batch) => {
-    await read(
-      "Config",
-      {
-        from: "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745",
-      },
-      "multicall",
-      batch
-    );
-  });
+  if (!["hardhat"].includes(hre.network.name)) {
+    await handleInBatches(multicallWriteParams, 100, async (batch) => {
+      await read(
+        "Config",
+        {
+          from: "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745",
+        },
+        "multicall",
+        batch
+      );
+    });
+  }
 
   if (!write) {
     ({ write } = await prompts({
@@ -809,23 +828,6 @@ export async function updateMarketConfig({
       const tx = await config.multicall(batch);
       console.info(`tx sent: ${tx.hash}`);
     });
-  }
-
-  if (ignoredRiskOracleParams.length > 0) {
-    const ignoredParameterNames = getIgnoredParameterNames(ignoredRiskOracleParams);
-
-    console.info("\n=================\n");
-    console.info(`WARN: Ignored risk oracle params for ${supportedRiskOracleMarkets.size} markets`);
-    console.info(`Ignored params: ${ignoredParameterNames.join(",")}`);
-    console.info("Add INCLUDE_RISK_ORACLE_BASE_KEYS=true to include them\n");
-  }
-
-  if (ignoredKeeperParams.length > 0) {
-    const ignoredParameterNames = getIgnoredParameterNames(ignoredKeeperParams);
-
-    console.info("\n=================\n");
-    console.info(`Ignored params: ${ignoredParameterNames.join(",")}`);
-    console.info("Add INCLUDE_KEEPER_BASE_KEYS=true to include them\n");
   }
 }
 
