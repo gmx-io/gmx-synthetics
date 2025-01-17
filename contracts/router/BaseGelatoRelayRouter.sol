@@ -29,11 +29,11 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContextERC2771, Reentrancy
     EventEmitter public immutable eventEmitter;
 
     // Define the EIP-712 struct type:
-    bytes32 public constant _DOMAIN_SEPARATOR_TYPEHASH =
+    bytes32 public constant DOMAIN_SEPARATOR_TYPEHASH =
         keccak256(bytes("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"));
 
-    bytes32 public constant _DOMAIN_SEPARATOR_NAME_HASH = keccak256(bytes("GmxBaseGelatoRelayRouter"));
-    bytes32 public constant _DOMAIN_SEPARATOR_VERSION_HASH = keccak256(bytes("1"));
+    bytes32 public constant DOMAIN_SEPARATOR_NAME_HASH = keccak256(bytes("GmxBaseGelatoRelayRouter"));
+    bytes32 public constant DOMAIN_SEPARATOR_VERSION_HASH = keccak256(bytes("1"));
 
     struct TokenPermit {
         address owner;
@@ -259,17 +259,17 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContextERC2771, Reentrancy
         return _handleRelayFee(contracts, fee, account, orderKey, uiFeeReceiver, residualFeeReceiver);
     }
 
-    function _handleTokenPermits(TokenPermit[] calldata tokenPermit) internal {
+    function _handleTokenPermits(TokenPermit[] calldata tokenPermits) internal {
         // not all tokens support ERC20Permit, for them separate transaction is needed
 
-        if (tokenPermit.length == 0) {
+        if (tokenPermits.length == 0) {
             return;
         }
 
         address _router = address(router);
 
-        for (uint256 i; i < tokenPermit.length; i++) {
-            TokenPermit memory permit = tokenPermit[i];
+        for (uint256 i; i < tokenPermits.length; i++) {
+            TokenPermit memory permit = tokenPermits[i];
 
             if (permit.spender != _router) {
                 // to avoid permitting spending by an incorrect spender for extra safety
@@ -304,7 +304,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContextERC2771, Reentrancy
         address wnt = TokenUtils.wnt(contracts.dataStore);
 
         if (_getFeeToken() != wnt) {
-            revert Errors.InvalidFeeToken(fee.feeToken, wnt);
+            revert Errors.InvalidRelayFeeToken(fee.feeToken, wnt);
         }
 
         _sendTokens(account, fee.feeToken, address(contracts.orderVault), fee.feeAmount);
@@ -326,9 +326,9 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContextERC2771, Reentrancy
         return
             keccak256(
                 abi.encode(
-                    _DOMAIN_SEPARATOR_TYPEHASH,
-                    _DOMAIN_SEPARATOR_NAME_HASH,
-                    _DOMAIN_SEPARATOR_VERSION_HASH,
+                    DOMAIN_SEPARATOR_TYPEHASH,
+                    DOMAIN_SEPARATOR_NAME_HASH,
+                    DOMAIN_SEPARATOR_VERSION_HASH,
                     sourceChainId,
                     address(this)
                 )

@@ -7,7 +7,7 @@ import "../router/Router.sol";
 import "./BaseGelatoRelayRouter.sol";
 
 contract MultichainGelatoRelayRouter is BaseGelatoRelayRouter {
-    bytes32 public constant _MULTICHAIN_MESSAGE_TYPEHASH =
+    bytes32 public constant MULTICHAIN_MESSAGE_TYPEHASH =
         keccak256(bytes("GelatoRelayRouterMultichainMessage(bytes message,uint256 userNonce,uint256 deadline)"));
 
     mapping(address => uint256) public userNonces;
@@ -59,7 +59,7 @@ contract MultichainGelatoRelayRouter is BaseGelatoRelayRouter {
         address expectedSigner
     ) internal view {
         bytes32 domainSeparator = _getDomainSeparator(sourceChainId);
-        bytes32 structHash = keccak256(abi.encode(_MULTICHAIN_MESSAGE_TYPEHASH, message, userNonce, deadline));
+        bytes32 structHash = keccak256(abi.encode(MULTICHAIN_MESSAGE_TYPEHASH, message, userNonce, deadline));
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
         _validateSignature(digest, signature, expectedSigner);
     }

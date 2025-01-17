@@ -425,8 +425,7 @@ library Errors {
     error EmptyMarketPrice(address market);
 
     // Gelato relay errors
-    error InvalidFeeToken(address feeToken, address expectedFeeToken);
-    error NotSupported();
+    error InvalidRelayFeeToken(address feeToken, address expectedFeeToken);
     error InvalidPermitSpender(address spender, address expectedSpender);
     error InvalidUserNonce(uint256 storedUserNonce, uint256 userNonce);
     error SubaccountApprovalDeadlinePassed(uint256 currentTimestamp, uint256 deadline);
