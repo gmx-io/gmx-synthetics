@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+import {AddressCast} from "@layerzerolabs/lz-evm-protocol-v2/contracts/libs/AddressCast.sol";
 import {MessagingParams, MessagingFee, MessagingReceipt, ILayerZeroEndpointV2} from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/ILayerZeroEndpointV2.sol";
 import {Origin} from "@layerzerolabs/oapp-evm/contracts/oapp/OApp.sol";
 import {EVMCallRequestV1, ReadCodecV1} from "@layerzerolabs/oapp-evm/contracts/oapp/libs/ReadCodecV1.sol";
@@ -10,6 +11,7 @@ import {IOriginator} from "./IOriginator.sol";
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
 import "../role/RoleModule.sol";
+import "../event/EventEmitter.sol";
 
 contract MultichainReader is RoleModule {
     uint64 internal constant SENDER_VERSION = 1;
@@ -44,9 +46,9 @@ contract MultichainReader is RoleModule {
         MultichainReaderUtils.ExtraOptionsInputs calldata extraOptionsInputs
     ) external payable returns (MessagingReceipt memory, bytes32, MultichainReaderUtils.ReceivedData memory) {
         address originator = msg.sender;
-        bool isAuthorized = datastore.getBool(Keys.multichainAuthorizedOriginatorsKey(originator));
+        bool isAuthorized = dataStore.getBool(Keys.multichainAuthorizedOriginatorsKey(originator));
         if (!isAuthorized) {
-            revert Errors.UnauthorizedOriginator(originator);
+            revert Errors.Unauthorized(originator, "Only Originator");
         }
 
         bytes memory cmd = _getCmd(readRequestInputs);
@@ -59,7 +61,7 @@ contract MultichainReader is RoleModule {
         );
 
         bytes32 guid = messagingReceipt.guid;
-        dataStore.setAddress(keys.multichainGuidToOriginatorKey(guid), originator);
+        dataStore.setAddress(Keys.multichainGuidToOriginatorKey(guid), originator);
 
         MultichainReaderUtils.ReceivedData memory receivedData;
         receivedData.readNumber = IOriginator(originator).latestReadNumber() + 1;
@@ -76,24 +78,30 @@ contract MultichainReader is RoleModule {
         bytes calldata _extraData
     ) external payable {
         // Ensures that only the endpoint can attempt to lzReceive() messages to this OApp.
-        if (address(endpoint) != msg.sender) revert Errors.OnlyEndpoint(msg.sender);
+        if (address(endpoint) != msg.sender) revert Errors.Unauthorized(msg.sender, "Only Endpoint");
 
         // Ensure that the sender matches the expected peer for the source endpoint.
-        if (_getPeerOrRevert(_origin.srcEid) != _origin.sender) revert Errors.OnlyPeer(_origin.srcEid, _origin.sender);
+        if (_getPeerOrRevert(_origin.srcEid) != _origin.sender)
+            revert Errors.Unauthorized(AddressCast.toAddress(_origin.sender), "Only Peer");
 
         // Call the internal OApp implementation of lzReceive.
         _lzReceive(_origin, _guid, _message, _executor, _extraData);
     }
 
     function peers(uint32 _eid) external view returns (bytes32 peer) {
-        peer = datastore.getBytes32(keys.multichainPeersKey(_eid));
+        peer = dataStore.getBytes32(Keys.multichainPeersKey(_eid));
     }
 
     function quoteReadFee(
         MultichainReaderUtils.ReadRequestInputs[] calldata readRequestInputs,
         MultichainReaderUtils.ExtraOptionsInputs calldata extraOptionsInputs
     ) external view returns (MessagingFee memory fee) {
-        return _quote(uint32(dataStore.getUint(Keys.MULTICHAIN_READ_CHANNEL)), _getCmd(readRequestInputs), _extraOptions(extraOptionsInputs));
+        return
+            _quote(
+                uint32(dataStore.getUint(Keys.MULTICHAIN_READ_CHANNEL)),
+                _getCmd(readRequestInputs),
+                _extraOptions(extraOptionsInputs)
+            );
     }
 
     function isComposeMsgSender(
@@ -105,7 +113,7 @@ contract MultichainReader is RoleModule {
     }
 
     function allowInitializePath(Origin calldata origin) external view returns (bool) {
-        return datastore.getBytes32(keys.multichainPeersKey(origin.srcEid));
+        return dataStore.getBytes32(Keys.multichainPeersKey(origin.srcEid)) == origin.sender;
     }
 
     function nextNonce(uint32 /*_srcEid*/, bytes32 /*_sender*/) external pure returns (uint64 nonce) {
@@ -141,7 +149,7 @@ contract MultichainReader is RoleModule {
         address /*_executor*/,
         bytes calldata /*_extraData*/
     ) internal {
-        address originator = dataStore.getAddress(keys.multichainGuidToOriginatorKey(guid));
+        address originator = dataStore.getAddress(Keys.multichainGuidToOriginatorKey(_guid));
 
         (uint256 readNumber, uint256 timestamp, bool received, bytes memory readData) = IOriginator(originator)
             .receivedData(_guid);
@@ -155,17 +163,10 @@ contract MultichainReader is RoleModule {
         receivedData.readData = _message;
 
         IOriginator(originator).processLzReceive(_guid, receivedData);
-        bytes memory transactionCallData = IOriginator(originator).transactionCallData(_guid);
-        if (transactionCallData.length != 0) {
-            (bool success, ) = originator.call(transactionCallData);
-            if (!success) {
-                revert Errors.OriginatorCallFailed(transactionCallData);
-            }
-        }
     }
 
     function _payNative(uint256 _nativeFee) internal returns (uint256 nativeFee) {
-        if (msg.value != _nativeFee) revert Errors.NotEnoughNative(msg.value);
+        if (msg.value != _nativeFee) revert Errors.InsufficientMultichainNativeFee(msg.value);
         return _nativeFee;
     }
 
@@ -181,7 +182,7 @@ contract MultichainReader is RoleModule {
                 targetEid: chainId, // Endpoint ID of the target chain
                 isBlockNum: false, // Use timestamp instead of block number
                 blockNumOrTimestamp: uint64(block.timestamp), // Timestamp to read the state at
-                confirmations: uint16(dataStore.getUint(multichainConfirmationsKey(chainId))), // Number of confirmations to wait for finality
+                confirmations: uint16(dataStore.getUint(Keys.multichainConfirmationsKey(chainId))), // Number of confirmations to wait for finality
                 to: readRequestInputs[i].target, // Address of the contract to call
                 callData: readRequestInputs[i].callData // Encoded function call data
             });
@@ -191,8 +192,8 @@ contract MultichainReader is RoleModule {
     }
 
     function _getPeerOrRevert(uint32 _eid) internal view returns (bytes32) {
-        bytes32 peer = datastore.getBytes32(keys.multichainPeersKey(_eid));
-        if (peer == bytes32(0)) revert Errors.NoPeer(_eid);
+        bytes32 peer = dataStore.getBytes32(Keys.multichainPeersKey(_eid));
+        if (peer == bytes32(0)) revert Errors.EmptyPeer(_eid);
         return peer;
     }
 
