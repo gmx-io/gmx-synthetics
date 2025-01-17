@@ -122,6 +122,10 @@ library OrderUtils {
 
         if (BaseOrderUtils.isPositionOrder(params.orderType)) {
             MarketUtils.validatePositionMarket(dataStore, params.addresses.market);
+        } else {
+            if (params.addresses.market != address(0)) {
+                revert Errors.UnexpectedMarket();
+            }
         }
 
         if (BaseOrderUtils.isMarketOrder(params.orderType) && params.numbers.validFromTime != 0) {
