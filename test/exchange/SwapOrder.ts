@@ -33,7 +33,6 @@ describe("Exchange.SwapOrder", () => {
 
     await handleOrder(fixture, {
       create: {
-        market: ethUsdMarket,
         initialCollateralToken: wnt,
         initialCollateralDeltaAmount: expandDecimals(10, 18),
         acceptablePrice: 0,
@@ -64,7 +63,6 @@ describe("Exchange.SwapOrder", () => {
 
     await handleOrder(fixture, {
       create: {
-        market: ethUsdSpotOnlyMarket,
         initialCollateralToken: wnt,
         initialCollateralDeltaAmount: expandDecimals(10, 18),
         acceptablePrice: 0,
@@ -102,7 +100,6 @@ describe("Exchange.SwapOrder", () => {
     // should be empty and the priceImpactAmount should be zero
     await handleOrder(fixture, {
       create: {
-        market: ethUsdMarket,
         initialCollateralToken: wnt,
         initialCollateralDeltaAmount: expandDecimals(5, 18),
         acceptablePrice: 0,
@@ -133,7 +130,6 @@ describe("Exchange.SwapOrder", () => {
     // since the pool is mostly balanced, this order should have a negative price impact
     await handleOrder(fixture, {
       create: {
-        market: ethUsdMarket,
         initialCollateralToken: wnt,
         initialCollateralDeltaAmount: expandDecimals(1, 18),
         acceptablePrice: 0,
@@ -163,7 +159,6 @@ describe("Exchange.SwapOrder", () => {
     // this order should have a positive price impact
     await handleOrder(fixture, {
       create: {
-        market: ethUsdMarket,
         initialCollateralToken: usdc,
         initialCollateralDeltaAmount: expandDecimals(5000, 6),
         acceptablePrice: 0,
@@ -208,7 +203,6 @@ describe("Exchange.SwapOrder", () => {
     // should be empty and the priceImpactAmount should be zero
     await handleOrder(fixture, {
       create: {
-        market: ethUsdMarket,
         initialCollateralToken: wnt,
         initialCollateralDeltaAmount: expandDecimals(5, 18),
         acceptablePrice: 0,
@@ -241,7 +235,6 @@ describe("Exchange.SwapOrder", () => {
     // since the pool is mostly balanced, this order should have a negative price impact
     await handleOrder(fixture, {
       create: {
-        market: ethUsdMarket,
         initialCollateralToken: wnt,
         initialCollateralDeltaAmount: expandDecimals(1, 18),
         acceptablePrice: 0,
@@ -273,7 +266,6 @@ describe("Exchange.SwapOrder", () => {
     // this order should have a positive price impact
     await handleOrder(fixture, {
       create: {
-        market: ethUsdMarket,
         initialCollateralToken: usdc,
         initialCollateralDeltaAmount: expandDecimals(5000, 6),
         acceptablePrice: 0,

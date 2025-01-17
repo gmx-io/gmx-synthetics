@@ -35,7 +35,6 @@ describe("Guardian.MktSwapOrder", () => {
 
     await handleOrder(fixture, {
       create: {
-        market: ethUsdMarket,
         initialCollateralToken: wnt,
         initialCollateralDeltaAmount: expandDecimals(10, 18),
         acceptablePrice: 0,
@@ -80,7 +79,6 @@ describe("Guardian.MktSwapOrder", () => {
     // ETH -> USDC, USDC -> ETH, ETH -> USDC
     await handleOrder(fixture, {
       create: {
-        market: ethUsdMarket,
         initialCollateralToken: wnt,
         initialCollateralDeltaAmount: expandDecimals(10, 18),
         acceptablePrice: 0,
@@ -117,7 +115,6 @@ describe("Guardian.MktSwapOrder", () => {
     // Revert with InvalidTokenIn
     await handleOrder(fixture, {
       create: {
-        market: ethUsdMarket,
         initialCollateralToken: wbtc,
         initialCollateralDeltaAmount: expandDecimals(10, 8),
         acceptablePrice: 0,
@@ -142,7 +139,6 @@ describe("Guardian.MktSwapOrder", () => {
     // Revert with UsdDeltaExceedsPoolValue
     await handleOrder(fixture, {
       create: {
-        market: ethUsdMarket,
         initialCollateralToken: wnt,
         receiver: user0,
         initialCollateralDeltaAmount: expandDecimals(50, 18), // Swap for $250,000 USDC but pool only has $50,000
@@ -179,7 +175,6 @@ describe("Guardian.MktSwapOrder", () => {
     await expect(
       handleOrder(fixture, {
         create: {
-          market: ethUsdMarket,
           initialCollateralToken: wnt,
           receiver: user0,
           initialCollateralDeltaAmount: 0,
@@ -215,7 +210,6 @@ describe("Guardian.MktSwapOrder", () => {
     // Reverted with InsufficientSwapOutputAmount
     await handleOrder(fixture, {
       create: {
-        market: ethUsdMarket,
         initialCollateralToken: wnt,
         receiver: user0,
         initialCollateralDeltaAmount: expandDecimals(10, 18), // $50,000
@@ -269,7 +263,6 @@ describe("Guardian.MktSwapOrder", () => {
     // Decrease imbalance from $99,925 to $49,925 (increase WNT by $25,000 and decrease USDC by $25,000)
     await handleOrder(fixture, {
       create: {
-        market: ethUsdMarket,
         initialCollateralToken: wnt,
         receiver: user0,
         initialCollateralDeltaAmount: expandDecimals(5, 18), // $25,000
