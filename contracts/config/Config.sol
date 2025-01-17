@@ -214,6 +214,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
         // Ensure the full positionImpactPoolAmount cannot be distributed in less then the minimum required time
         uint256 positionImpactPoolAmount = MarketUtils.getPositionImpactPoolAmount(dataStore, market);
+        // positionImpactPoolDistributionRate has FLOAT_PRECISION, distributionAmount has WEI_PRECISION
         uint256 distributionAmount = Precision.applyFactor(MIN_POSITION_IMPACT_POOL_DISTRIBUTION_TIME, positionImpactPoolDistributionRate);
         if (positionImpactPoolAmount > 0) {
             if (distributionAmount >= positionImpactPoolAmount) {
