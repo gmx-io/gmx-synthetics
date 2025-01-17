@@ -297,7 +297,6 @@ describe("Guardian.GasEstimation", () => {
     // Gas required is around 50_000 + 7_000 * 7 prices + (4 swaps * 25_000 + 300_000) * 1.5 = 0.0007 ETH, create fails
     await expect(
       createOrder(fixture, {
-        market: ethUsdMarket,
         initialCollateralToken: wnt,
         initialCollateralDeltaAmount: expandDecimals(1, 18),
         swapPath: [
@@ -316,7 +315,6 @@ describe("Guardian.GasEstimation", () => {
 
     // Sufficient executionFee passes
     await createOrder(fixture, {
-      market: ethUsdMarket,
       initialCollateralToken: wnt,
       initialCollateralDeltaAmount: expandDecimals(1, 18),
       swapPath: [
