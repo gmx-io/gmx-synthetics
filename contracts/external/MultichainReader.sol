@@ -14,6 +14,10 @@ import "../role/RoleModule.sol";
 import "../event/EventEmitter.sol";
 
 contract MultichainReader is RoleModule {
+    using EventUtils for EventUtils.AddressItems;
+    using EventUtils for EventUtils.Bytes32Items;
+    using EventUtils for EventUtils.BytesItems;
+
     uint64 internal constant SENDER_VERSION = 1;
     uint64 internal constant RECEIVER_VERSION = 2;
     uint8 internal constant WORKER_ID = 1;
@@ -33,18 +37,21 @@ contract MultichainReader is RoleModule {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
         endpoint = ILayerZeroEndpointV2(_endpoint);
-        endpoint.setDelegate(msg.sender);
     }
 
-    // TODO: add modifier for access control
-    function setDelegate(address _delegate) external {
+    function setDelegate(address _delegate) external onlyTimelockMultisig {
         endpoint.setDelegate(_delegate);
     }
 
     function sendReadRequests(
         MultichainReaderUtils.ReadRequestInputs[] calldata readRequestInputs,
         MultichainReaderUtils.ExtraOptionsInputs calldata extraOptionsInputs
-    ) external payable returns (MessagingReceipt memory, bytes32, MultichainReaderUtils.ReceivedData memory) {
+    )
+        external
+        payable
+        onlyController
+        returns (MessagingReceipt memory, bytes32, MultichainReaderUtils.ReceivedData memory)
+    {
         address originator = msg.sender;
         bool isAuthorized = dataStore.getBool(Keys.multichainAuthorizedOriginatorsKey(originator));
         if (!isAuthorized) {
@@ -66,6 +73,19 @@ contract MultichainReader is RoleModule {
         MultichainReaderUtils.ReceivedData memory receivedData;
         receivedData.readNumber = IOriginator(originator).latestReadNumber() + 1;
         receivedData.timestamp = block.timestamp;
+
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "originator", originator);
+
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "guid", guid);
+
+        eventData.bytesItems.initItems(1);
+        eventData.bytesItems.setItem(0, "cmd", cmd);
+
+        eventEmitter.emitEventLog1("sendReadRequests", AddressCast.toBytes32(originator), eventData);
 
         return (messagingReceipt, guid, receivedData);
     }
@@ -163,6 +183,19 @@ contract MultichainReader is RoleModule {
         receivedData.readData = _message;
 
         IOriginator(originator).processLzReceive(_guid, receivedData);
+
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "originator", originator);
+
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "guid", _guid);
+
+        eventData.bytesItems.initItems(1);
+        eventData.bytesItems.setItem(0, "message", _message);
+
+        eventEmitter.emitEventLog1("lzReceive", AddressCast.toBytes32(originator), eventData);
     }
 
     function _payNative(uint256 _nativeFee) internal returns (uint256 nativeFee) {
