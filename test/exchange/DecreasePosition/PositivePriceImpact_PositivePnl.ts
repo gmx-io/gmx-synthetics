@@ -4,7 +4,7 @@ import { usingResult } from "../../../utils/use";
 import { scenes } from "../../scenes";
 import { deployFixture } from "../../../utils/fixture";
 import { expandDecimals, decimalToFloat } from "../../../utils/math";
-import { getImpactPendingAmountKey, getPositionKey } from "../../../utils/position";
+import { getPendingImpactAmountKey, getPositionKey } from "../../../utils/position";
 import { getPoolAmount, getMarketTokenPriceWithPoolValue } from "../../../utils/market";
 import { prices } from "../../../utils/prices";
 import * as keys from "../../../utils/keys";
@@ -96,7 +96,7 @@ describe("Exchange.DecreasePosition", () => {
     );
 
     expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(0);
-    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0))).eq("-79999999999999999"); // -0.079999999999999999
+    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey0))).eq("-79999999999999999"); // -0.079999999999999999
 
     expect(await wnt.balanceOf(user1.address)).eq(0);
     expect(await usdc.balanceOf(user1.address)).eq(0);
@@ -113,7 +113,7 @@ describe("Exchange.DecreasePosition", () => {
 
     // the impact pool increased by 0.008 ETH, 40 USD
     expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq("8000000000000000"); // 0.008 ETH
-    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0))).eq("-72000000000000000"); // -0.072
+    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey0))).eq("-72000000000000000"); // -0.072
 
     expect(await wnt.balanceOf(user1.address)).eq("15936254980079681"); // 0.015936254980079681 ETH, ~79.68 USD
     expect(await usdc.balanceOf(user1.address)).eq(0);

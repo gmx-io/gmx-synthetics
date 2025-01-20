@@ -8,7 +8,7 @@ import { getExecuteParams } from "../../../utils/exchange";
 import { getEventData } from "../../../utils/event";
 import { prices } from "../../../utils/prices";
 import * as keys from "../../../utils/keys";
-import { getImpactPendingAmountKey, getPositionKey } from "../../../utils/position";
+import { getPendingImpactAmountKey, getPositionKey } from "../../../utils/position";
 
 describe("Exchange.PositionPriceImpact.SyntheticMarket", () => {
   let fixture;
@@ -51,7 +51,7 @@ describe("Exchange.PositionPriceImpact.SyntheticMarket", () => {
     };
 
     const positionKey0 = getPositionKey(user0.address, solUsdMarket.marketToken, wnt.address, true);
-    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0))).eq(0);
+    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey0))).eq(0);
     expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(solUsdMarket.marketToken))).eq(0);
 
     // increase long position, negative price impact
@@ -69,7 +69,7 @@ describe("Exchange.PositionPriceImpact.SyntheticMarket", () => {
     });
 
     expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(solUsdMarket.marketToken))).eq(0);
-    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0))).eq("-8000000000"); // -8 SOL, -400 USD
+    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey0))).eq("-8000000000"); // -8 SOL, -400 USD
 
     // decrease long position, positive price impact
     await handleOrder(fixture, {
@@ -90,6 +90,6 @@ describe("Exchange.PositionPriceImpact.SyntheticMarket", () => {
     });
 
     expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(solUsdMarket.marketToken))).eq("8000000000"); // 8 SOL, 400 USD
-    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0))).eq(0);
+    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey0))).eq(0);
   });
 });
