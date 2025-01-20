@@ -163,8 +163,8 @@ const fundingRateConfig_Low: FundingRateConfig = {
 
   maxFundingFactorPerSecond: percentageToFloat("75%").div(SECONDS_PER_YEAR),
 
-  thresholdForStableFunding: 0,
-  thresholdForDecreaseFunding: percentageToFloat("2%"),
+  thresholdForStableFunding: percentageToFloat("4%"),
+  thresholdForDecreaseFunding: 0,
 };
 
 const fundingRateConfig_Default: FundingRateConfig = {
@@ -2346,9 +2346,6 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      fundingDecreaseFactorPerSecond: decimalToFloat(0), // timeToDecreaseFromMaxFundingToZero is "-" in initial recomandations
-      thresholdForStableFunding: percentageToFloat("4%"),
-      thresholdForDecreaseFunding: percentageToFloat("2%"),
       ...borrowingRateConfig_LowMax_WithHigherBase,
       aboveOptimalUsageBorrowingFactor: percentageToFloat("110%").div(SECONDS_PER_YEAR), // default is 100%
 
