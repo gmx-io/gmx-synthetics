@@ -163,8 +163,8 @@ const fundingRateConfig_Low: FundingRateConfig = {
 
   maxFundingFactorPerSecond: percentageToFloat("75%").div(SECONDS_PER_YEAR),
 
-  thresholdForStableFunding: 0,
-  thresholdForDecreaseFunding: percentageToFloat("2%"),
+  thresholdForStableFunding: percentageToFloat("4%"),
+  thresholdForDecreaseFunding: 0,
 };
 
 const fundingRateConfig_Default: FundingRateConfig = {
@@ -181,8 +181,8 @@ const fundingRateConfig_Default: FundingRateConfig = {
 
   maxFundingFactorPerSecond: percentageToFloat("90%").div(SECONDS_PER_YEAR),
 
-  thresholdForStableFunding: 0,
-  thresholdForDecreaseFunding: percentageToFloat("2%"),
+  thresholdForStableFunding: percentageToFloat("4%"),
+  thresholdForDecreaseFunding: 0,
 };
 
 const fundingRateConfig_High: FundingRateConfig = {
@@ -199,8 +199,8 @@ const fundingRateConfig_High: FundingRateConfig = {
 
   maxFundingFactorPerSecond: percentageToFloat("100%").div(SECONDS_PER_YEAR),
 
-  thresholdForStableFunding: 0,
-  thresholdForDecreaseFunding: percentageToFloat("2%"),
+  thresholdForStableFunding: percentageToFloat("4%"),
+  thresholdForDecreaseFunding: 0,
 };
 
 const fundingRateConfig_SingleToken: FundingRateConfig = {
@@ -217,8 +217,8 @@ const fundingRateConfig_SingleToken: FundingRateConfig = {
 
   maxFundingFactorPerSecond: percentageToFloat("90%").div(SECONDS_PER_YEAR),
 
-  thresholdForStableFunding: 0,
-  thresholdForDecreaseFunding: percentageToFloat("2%"),
+  thresholdForStableFunding: percentageToFloat("4%"),
+  thresholdForDecreaseFunding: 0,
 };
 
 type BorrowingRateConfig = Partial<{
@@ -1366,9 +1366,6 @@ const config: {
       negativeMaxPositionImpactFactor: percentageToFloat("0.5%"),
       maxPositionImpactFactorForLiquidations: bigNumberify(0), // 0%
 
-      positionFeeFactorForPositiveImpact: percentageToFloat("0.05%"),
-      positionFeeFactorForNegativeImpact: percentageToFloat("0.07%"),
-
       minCollateralFactor: percentageToFloat("1%"), // 100x leverage
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
 
@@ -2046,9 +2043,6 @@ const config: {
       negativeMaxPositionImpactFactor: percentageToFloat("0.5%"),
       maxPositionImpactFactorForLiquidations: bigNumberify(0), // 0%
 
-      positionFeeFactorForPositiveImpact: percentageToFloat("0.05%"),
-      positionFeeFactorForNegativeImpact: percentageToFloat("0.07%"),
-
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
@@ -2334,6 +2328,36 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(600, 18), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+    },
+    {
+      tokens: { indexToken: "TRUMP", longToken: "WETH", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:TRUMP/USD"),
+      virtualMarketId: hashString("SPOT:ETH/USD"),
+
+      ...syntheticMarketConfig,
+      ...fundingRateConfig_High,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("110%").div(SECONDS_PER_YEAR), // default is 100%
+
+      negativePositionImpactFactor: exponentToFloat("5e-7"),
+      positivePositionImpactFactor: exponentToFloat("2.5e-7"),
+      positionImpactExponentFactor: exponentToFloat("1.7e0"),
+
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
+
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2e-10"),
+
+      reserveFactor: percentageToFloat("55%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("50%"), // default is 90%
+
+      maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
+
+      maxOpenInterest: decimalToFloat(500_000),
+      maxPoolUsdForDeposit: decimalToFloat(750_000), // 1.5x the max open interest
+
+      maxLongTokenPoolAmount: expandDecimals(300, 18), // ~1M USD (2x the max open interest)
+      maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x the max open interest)
     },
   ],
   avalanche: [
