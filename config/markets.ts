@@ -1366,9 +1366,6 @@ const config: {
       negativeMaxPositionImpactFactor: percentageToFloat("0.5%"),
       maxPositionImpactFactorForLiquidations: bigNumberify(0), // 0%
 
-      positionFeeFactorForPositiveImpact: percentageToFloat("0.05%"),
-      positionFeeFactorForNegativeImpact: percentageToFloat("0.07%"),
-
       minCollateralFactor: percentageToFloat("1%"), // 100x leverage
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
 
@@ -2046,9 +2043,6 @@ const config: {
       negativeMaxPositionImpactFactor: percentageToFloat("0.5%"),
       maxPositionImpactFactorForLiquidations: bigNumberify(0), // 0%
 
-      positionFeeFactorForPositiveImpact: percentageToFloat("0.05%"),
-      positionFeeFactorForNegativeImpact: percentageToFloat("0.07%"),
-
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
@@ -2339,10 +2333,6 @@ const config: {
       tokens: { indexToken: "TRUMP", longToken: "WETH", shortToken: "USDC" },
       virtualTokenIdForIndexToken: hashString("PERP:TRUMP/USD"),
       virtualMarketId: hashString("SPOT:ETH/USD"),
-
-      positionFeeFactorForPositiveImpact: percentageToFloat("0.05%"), // default is 0.04%
-      positionFeeFactorForNegativeImpact: percentageToFloat("0.07%"), // default is 0.06%
-      minFundingFactorPerSecond: percentageToFloat("60%").div(SECONDS_PER_YEAR), // default is 1%
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
