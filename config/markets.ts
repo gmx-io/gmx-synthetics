@@ -2336,7 +2336,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_High,
-      ...borrowingRateConfig_LowMax_WithHigherBase,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
       aboveOptimalUsageBorrowingFactor: percentageToFloat("110%").div(SECONDS_PER_YEAR), // default is 100%
 
       negativePositionImpactFactor: exponentToFloat("5e-7"),
