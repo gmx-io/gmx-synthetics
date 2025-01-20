@@ -2335,6 +2335,44 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(600, 18), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
     },
+    {
+      tokens: { indexToken: "TRUMP", longToken: "WETH", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:TRUMP/USD"),
+      virtualMarketId: hashString("SPOT:WETH/USD"),
+
+      positionFeeFactorForPositiveImpact: percentageToFloat("0.05%"), // default is 0.04%
+      positionFeeFactorForNegativeImpact: percentageToFloat("0.07%"), // default is 0.06%
+      minFundingFactorPerSecond: percentageToFloat("60%").div(SECONDS_PER_YEAR), // default is 1%
+
+      ...syntheticMarketConfig,
+      ...fundingRateConfig_High,
+      fundingDecreaseFactorPerSecond: decimalToFloat(0), // timeToDecreaseFromMaxFundingToZero is "-" in initial recomandations
+      thresholdForStableFunding: percentageToFloat("4%"),
+      thresholdForDecreaseFunding: percentageToFloat("2%"),
+      ...borrowingRateConfig_LowMax_WithHigherBase,
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("110%").div(SECONDS_PER_YEAR), // default is 100%
+
+      negativePositionImpactFactor: exponentToFloat("5e-7"),
+      positivePositionImpactFactor: exponentToFloat("2.5e-7"),
+      positionImpactExponentFactor: exponentToFloat("1.7e0"),
+
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
+
+      minCollateralFactor: percentageToFloat("5%"), // default is 1%
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2e-10"),
+
+      reserveFactor: percentageToFloat("55%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("50%"), // default is 90%
+
+      maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
+
+      maxOpenInterest: decimalToFloat(500_000),
+      maxPoolUsdForDeposit: decimalToFloat(750_000), // 1.5x the max open interest
+
+      maxLongTokenPoolAmount: expandDecimals(300, 18), // ~1M USD (2x the max open interest)
+      maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x the max open interest)
+    },
   ],
   avalanche: [
     {

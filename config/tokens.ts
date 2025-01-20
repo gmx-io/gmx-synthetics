@@ -526,6 +526,19 @@ const config: {
       oracleTimestampAdjustment: 1,
       // Chainlink on-chain feed not available
     },
+    TRUMP: {
+      synthetic: true,
+      decimals: 6, // https://solscan.io/token/6p6xgHyF7AeE6TZkSmFsko444wqoP15icUSqi2jfGiPN
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003eae10f93ab9aeb6d1aa757b07938eed75a0d09cbe15df8521dc3d6bfb633",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x373510BDa1ab7e873c731968f4D81B685f520E4B", // indicated as New Token Feed
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+    },
     AAVE: {
       address: "0xba5ddd1f9d7f570dc94a51479a000e3bce967196",
       decimals: 18,
