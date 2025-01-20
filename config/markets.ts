@@ -181,8 +181,8 @@ const fundingRateConfig_Default: FundingRateConfig = {
 
   maxFundingFactorPerSecond: percentageToFloat("90%").div(SECONDS_PER_YEAR),
 
-  thresholdForStableFunding: 0,
-  thresholdForDecreaseFunding: percentageToFloat("2%"),
+  thresholdForStableFunding: percentageToFloat("4%"),
+  thresholdForDecreaseFunding: 0,
 };
 
 const fundingRateConfig_High: FundingRateConfig = {
@@ -199,8 +199,8 @@ const fundingRateConfig_High: FundingRateConfig = {
 
   maxFundingFactorPerSecond: percentageToFloat("100%").div(SECONDS_PER_YEAR),
 
-  thresholdForStableFunding: 0,
-  thresholdForDecreaseFunding: percentageToFloat("2%"),
+  thresholdForStableFunding: percentageToFloat("4%"),
+  thresholdForDecreaseFunding: 0,
 };
 
 const fundingRateConfig_SingleToken: FundingRateConfig = {
@@ -217,8 +217,8 @@ const fundingRateConfig_SingleToken: FundingRateConfig = {
 
   maxFundingFactorPerSecond: percentageToFloat("90%").div(SECONDS_PER_YEAR),
 
-  thresholdForStableFunding: 0,
-  thresholdForDecreaseFunding: percentageToFloat("2%"),
+  thresholdForStableFunding: percentageToFloat("4%"),
+  thresholdForDecreaseFunding: 0,
 };
 
 type BorrowingRateConfig = Partial<{
