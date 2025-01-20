@@ -80,7 +80,7 @@ library MarketUtils {
 
         uint256 durationInSeconds;
 
-        uint256 sizeOfLargerSide;
+        uint256 sizeOfPayingSide;
         uint256 fundingUsd;
 
         uint256 fundingUsdForLongCollateral;
@@ -1091,6 +1091,12 @@ library MarketUtils {
         setSavedFundingFactorPerSecond(dataStore, market.marketToken, result.nextSavedFundingFactorPerSecond);
 
         dataStore.setUint(Keys.fundingUpdatedAtKey(market.marketToken), Chain.currentTimestamp());
+
+        MarketEventUtils.emitFunding(
+            eventEmitter,
+            market.marketToken,
+            result.fundingFactorPerSecond
+        );
     }
 
     // @dev get the next funding amount per size values
@@ -1130,8 +1136,6 @@ library MarketUtils {
         // this should be a rare occurrence so funding fees are not adjusted for this case
         cache.durationInSeconds = getSecondsSinceFundingUpdated(dataStore, market.marketToken);
 
-        cache.sizeOfLargerSide = cache.longOpenInterest > cache.shortOpenInterest ? cache.longOpenInterest : cache.shortOpenInterest;
-
         (result.fundingFactorPerSecond, result.longsPayShorts, result.nextSavedFundingFactorPerSecond) = getNextFundingFactorPerSecond(
             dataStore,
             market.marketToken,
@@ -1139,6 +1143,8 @@ library MarketUtils {
             cache.shortOpenInterest,
             cache.durationInSeconds
         );
+
+        cache.sizeOfPayingSide = result.longsPayShorts ? cache.longOpenInterest : cache.shortOpenInterest;
 
         // for single token markets, if there is $200,000 long open interest
         // and $100,000 short open interest and if the fundingUsd is $8:
@@ -1168,7 +1174,7 @@ library MarketUtils {
         //
         // due to these, the fundingUsd should be divided by the divisor
 
-        cache.fundingUsd = Precision.applyFactor(cache.sizeOfLargerSide, cache.durationInSeconds * result.fundingFactorPerSecond);
+        cache.fundingUsd = Precision.applyFactor(cache.sizeOfPayingSide, cache.durationInSeconds * result.fundingFactorPerSecond);
         cache.fundingUsd = cache.fundingUsd / divisor;
 
         // split the fundingUsd value by long and short collateral
@@ -1432,7 +1438,7 @@ library MarketUtils {
         MarketPrices memory prices,
         bool isLong
     ) external {
-        (/* uint256 nextCumulativeBorrowingFactor */, uint256 delta) = getNextCumulativeBorrowingFactor(
+        (/* uint256 nextCumulativeBorrowingFactor */, uint256 delta, uint256 borrowingFactorPerSecond) = getNextCumulativeBorrowingFactor(
             dataStore,
             market,
             prices,
@@ -1448,6 +1454,12 @@ library MarketUtils {
         );
 
         dataStore.setUint(Keys.cumulativeBorrowingFactorUpdatedAtKey(market.marketToken, isLong), Chain.currentTimestamp());
+
+        MarketEventUtils.emitBorrowing(
+            eventEmitter,
+            market.marketToken,
+            borrowingFactorPerSecond
+        );
     }
 
     // @dev get the ratio of pnl to pool value
@@ -1732,7 +1744,7 @@ library MarketUtils {
     // @param prices the prices of the market tokens
     // @return the borrowing fees for a position
     function getNextBorrowingFees(DataStore dataStore, Position.Props memory position, Market.Props memory market, MarketPrices memory prices) internal view returns (uint256) {
-        (uint256 nextCumulativeBorrowingFactor, /* uint256 delta */) = getNextCumulativeBorrowingFactor(
+        (uint256 nextCumulativeBorrowingFactor, /* uint256 delta */, ) = getNextCumulativeBorrowingFactor(
             dataStore,
             market,
             prices,
@@ -2355,7 +2367,7 @@ library MarketUtils {
         Market.Props memory market,
         MarketPrices memory prices,
         bool isLong
-    ) internal view returns (uint256, uint256) {
+    ) internal view returns (uint256, uint256, uint256) {
         uint256 durationInSeconds = getSecondsSinceCumulativeBorrowingFactorUpdated(dataStore, market.marketToken, isLong);
         uint256 borrowingFactorPerSecond = getBorrowingFactorPerSecond(
             dataStore,
@@ -2368,7 +2380,7 @@ library MarketUtils {
 
         uint256 delta = durationInSeconds * borrowingFactorPerSecond;
         uint256 nextCumulativeBorrowingFactor = cumulativeBorrowingFactor + delta;
-        return (nextCumulativeBorrowingFactor, delta);
+        return (nextCumulativeBorrowingFactor, delta, borrowingFactorPerSecond);
     }
 
     // @dev get the borrowing factor per second
@@ -2569,7 +2581,7 @@ library MarketUtils {
             isLong
         );
 
-        (uint256 nextCumulativeBorrowingFactor, /* uint256 delta */) = getNextCumulativeBorrowingFactor(
+        (uint256 nextCumulativeBorrowingFactor, /* uint256 delta */, ) = getNextCumulativeBorrowingFactor(
             dataStore,
             market,
             prices,
