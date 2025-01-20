@@ -17,7 +17,6 @@ library MultichainReaderUtils {
     struct ReceivedData {
         uint256 readNumber;
         uint256 timestamp;
-        bool received;
         bytes readData;
     }
 }

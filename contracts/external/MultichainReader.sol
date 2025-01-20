@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {AddressCast} from "@layerzerolabs/lz-evm-protocol-v2/contracts/libs/AddressCast.sol";
 import {MessagingParams, MessagingFee, MessagingReceipt, ILayerZeroEndpointV2} from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/ILayerZeroEndpointV2.sol";
 import {Origin} from "@layerzerolabs/oapp-evm/contracts/oapp/OApp.sol";
-import {EVMCallRequestV1, ReadCodecV1} from "@layerzerolabs/oapp-evm/contracts/oapp/libs/ReadCodecV1.sol";
+import {EVMCallRequestV1, EVMCallComputeV1, ReadCodecV1} from "@layerzerolabs/oapp-evm/contracts/oapp/libs/ReadCodecV1.sol";
 import {MultichainReaderUtils} from "./MultichainReaderUtils.sol";
 import {IOriginator} from "./IOriginator.sol";
 
@@ -46,12 +46,7 @@ contract MultichainReader is RoleModule {
     function sendReadRequests(
         MultichainReaderUtils.ReadRequestInputs[] calldata readRequestInputs,
         MultichainReaderUtils.ExtraOptionsInputs calldata extraOptionsInputs
-    )
-        external
-        payable
-        onlyController
-        returns (MessagingReceipt memory, bytes32, MultichainReaderUtils.ReceivedData memory)
-    {
+    ) external payable onlyController returns (MessagingReceipt memory) {
         address originator = msg.sender;
         bool isAuthorized = dataStore.getBool(Keys.multichainAuthorizedOriginatorsKey(originator));
         if (!isAuthorized) {
@@ -70,10 +65,6 @@ contract MultichainReader is RoleModule {
         bytes32 guid = messagingReceipt.guid;
         dataStore.setAddress(Keys.multichainGuidToOriginatorKey(guid), originator);
 
-        MultichainReaderUtils.ReceivedData memory receivedData;
-        receivedData.readNumber = IOriginator(originator).latestReadNumber() + 1;
-        receivedData.timestamp = block.timestamp;
-
         EventUtils.EventLogData memory eventData;
 
         eventData.addressItems.initItems(1);
@@ -87,7 +78,7 @@ contract MultichainReader is RoleModule {
 
         eventEmitter.emitEventLog1("sendReadRequests", AddressCast.toBytes32(originator), eventData);
 
-        return (messagingReceipt, guid, receivedData);
+        return (messagingReceipt);
     }
 
     function lzReceive(
@@ -136,6 +127,16 @@ contract MultichainReader is RoleModule {
         return dataStore.getBytes32(Keys.multichainPeersKey(origin.srcEid)) == origin.sender;
     }
 
+    function lzReduce(bytes calldata _cmd, bytes[] calldata _responses) external pure returns (bytes memory) {
+        bytes memory responses;
+        for (uint256 i = 0; i < _responses.length; i++) {
+            responses = bytes.concat(responses, _responses[i]);
+        }
+
+        (, , EVMCallComputeV1 memory computeRequest) = ReadCodecV1.decode(_cmd);
+        return bytes.concat(abi.encodePacked(computeRequest.blockNumOrTimestamp), responses);
+    }
+
     function nextNonce(uint32 /*_srcEid*/, bytes32 /*_sender*/) external pure returns (uint64 nonce) {
         return 0;
     }
@@ -169,19 +170,20 @@ contract MultichainReader is RoleModule {
         address /*_executor*/,
         bytes calldata /*_extraData*/
     ) internal {
+        uint64 messageTimestamp;
+        uint256 messageLength = _message.length - 8;
+        bytes memory message = new bytes(messageLength);
+        assembly {
+            messageTimestamp := shr(192, calldataload(add(_message.offset, 0)))
+            calldatacopy(add(message, 32), add(_message.offset, 8), messageLength)
+        }
+
         address originator = dataStore.getAddress(Keys.multichainGuidToOriginatorKey(_guid));
-
-        (uint256 readNumber, uint256 timestamp, bool received, bytes memory readData) = IOriginator(originator)
-            .receivedData(_guid);
         MultichainReaderUtils.ReceivedData memory receivedData = MultichainReaderUtils.ReceivedData(
-            readNumber,
-            timestamp,
-            received,
-            readData
+            IOriginator(originator).latestReadNumber() + 1,
+            messageTimestamp,
+            message
         );
-        receivedData.received = true;
-        receivedData.readData = _message;
-
         IOriginator(originator).processLzReceive(_guid, receivedData);
 
         EventUtils.EventLogData memory eventData;
@@ -206,22 +208,33 @@ contract MultichainReader is RoleModule {
     function _getCmd(
         MultichainReaderUtils.ReadRequestInputs[] calldata readRequestInputs
     ) internal view returns (bytes memory) {
+        uint64 timestamp = uint64(block.timestamp);
         uint256 readRequestCount = readRequestInputs.length;
         EVMCallRequestV1[] memory readRequests = new EVMCallRequestV1[](readRequestCount);
         for (uint256 i; i < readRequestCount; i++) {
             uint32 chainId = readRequestInputs[i].chainId;
             readRequests[i] = EVMCallRequestV1({
-                appRequestLabel: 1,
+                appRequestLabel: 1, // Application-specific label for tracking
                 targetEid: chainId, // Endpoint ID of the target chain
                 isBlockNum: false, // Use timestamp instead of block number
-                blockNumOrTimestamp: uint64(block.timestamp), // Timestamp to read the state at
+                blockNumOrTimestamp: timestamp, // Timestamp to read the state at
                 confirmations: uint16(dataStore.getUint(Keys.multichainConfirmationsKey(chainId))), // Number of confirmations to wait for finality
                 to: readRequestInputs[i].target, // Address of the contract to call
                 callData: readRequestInputs[i].callData // Encoded function call data
             });
         }
 
-        return ReadCodecV1.encode(0, readRequests);
+        uint32 currentChainId = ILayerZeroEndpointV2(endpoint).eid();
+        EVMCallComputeV1 memory computeRequest = EVMCallComputeV1({
+            computeSetting: 1, // Use lzReduce()
+            targetEid: currentChainId, // Endpoint ID of the current chain
+            isBlockNum: false, // Use timestamp instead of block number
+            blockNumOrTimestamp: timestamp, // Timestamp to execute the compute at
+            confirmations: uint16(dataStore.getUint(Keys.multichainConfirmationsKey(currentChainId))), // Number of confirmations to wait for finality
+            to: address(this) // Address of this contract to lzReduce
+        });
+
+        return ReadCodecV1.encode(0, readRequests, computeRequest);
     }
 
     function _getPeerOrRevert(uint32 _eid) internal view returns (bytes32) {
