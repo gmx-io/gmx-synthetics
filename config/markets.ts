@@ -2338,7 +2338,7 @@ const config: {
     {
       tokens: { indexToken: "TRUMP", longToken: "WETH", shortToken: "USDC" },
       virtualTokenIdForIndexToken: hashString("PERP:TRUMP/USD"),
-      virtualMarketId: hashString("SPOT:WETH/USD"),
+      virtualMarketId: hashString("SPOT:ETH/USD"),
 
       positionFeeFactorForPositiveImpact: percentageToFloat("0.05%"), // default is 0.04%
       positionFeeFactorForNegativeImpact: percentageToFloat("0.07%"), // default is 0.06%
