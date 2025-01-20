@@ -61,7 +61,7 @@ library PositionStoreUtils {
             keccak256(abi.encode(key, COLLATERAL_AMOUNT))
         ));
 
-        position.setImpactPendingAmount(dataStore.getInt(
+        position.setPendingImpactAmount(dataStore.getInt(
             keccak256(abi.encode(key, IMPACT_PENDING_AMOUNT))
         ));
 
@@ -124,7 +124,7 @@ library PositionStoreUtils {
 
         dataStore.setInt(
             keccak256(abi.encode(key, IMPACT_PENDING_AMOUNT)),
-            position.impactPendingAmount()
+            position.pendingImpactAmount()
         );
 
         dataStore.setUint(
