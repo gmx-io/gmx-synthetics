@@ -10,7 +10,7 @@ import "../order/OrderVault.sol";
 import "../router/Router.sol";
 import "./BaseGelatoRelayRouter.sol";
 
-contract GelatoRelayRouter is BaseGelatoRelayRouter {
+contract GelatoRelayRouterNonEIP2771 is BaseGelatoRelayRouter {
     constructor(
         Router _router,
         RoleStore _roleStore,
