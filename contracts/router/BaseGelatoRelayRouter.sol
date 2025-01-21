@@ -119,7 +119,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContextERC2771, Reentrancy
             relayParams.fee,
             account,
             key,
-            order.uiFeeReceiver(),
             account
         );
 
@@ -157,7 +156,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContextERC2771, Reentrancy
             relayParams.fee,
             account,
             key,
-            order.uiFeeReceiver(),
             account
         );
 
@@ -196,7 +194,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContextERC2771, Reentrancy
             fee,
             account,
             NonceUtils.getNextKey(contracts.dataStore), // order key
-            params.addresses.uiFeeReceiver,
             address(contracts.orderVault)
         );
 
@@ -216,8 +213,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContextERC2771, Reentrancy
         Contracts memory contracts,
         address wnt,
         RelayFeeParams calldata fee,
-        bytes32 orderKey,
-        address uiFeeReceiver
+        bytes32 orderKey
     ) internal returns (uint256) {
         // swap fee tokens to WNT
         Market.Props[] memory swapPathMarkets = MarketUtils.getSwapPathMarkets(contracts.dataStore, fee.feeSwapPath);
@@ -234,7 +230,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContextERC2771, Reentrancy
                 swapPathMarkets: swapPathMarkets,
                 minOutputAmount: _getFee(),
                 receiver: address(this),
-                uiFeeReceiver: uiFeeReceiver,
+                uiFeeReceiver: address(0),
                 shouldUnwrapNativeToken: false
             })
         );
@@ -252,11 +248,10 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContextERC2771, Reentrancy
         RelayFeeParams calldata fee,
         address account,
         bytes32 orderKey,
-        address uiFeeReceiver,
         address residualFeeReceiver
     ) internal returns (uint256) {
         _handleTokenPermits(tokenPermit);
-        return _handleRelayFee(contracts, fee, account, orderKey, uiFeeReceiver, residualFeeReceiver);
+        return _handleRelayFee(contracts, fee, account, orderKey, residualFeeReceiver);
     }
 
     function _handleTokenPermits(TokenPermit[] calldata tokenPermits) internal {
@@ -298,7 +293,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContextERC2771, Reentrancy
         RelayFeeParams calldata fee,
         address account,
         bytes32 orderKey,
-        address uiFeeReceiver,
         address residualFeeReceiver
     ) internal returns (uint256) {
         address wnt = TokenUtils.wnt(contracts.dataStore);
@@ -308,7 +302,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContextERC2771, Reentrancy
         }
 
         _sendTokens(account, fee.feeToken, address(contracts.orderVault), fee.feeAmount);
-        uint256 outputAmount = _swapFeeTokens(contracts, wnt, fee, orderKey, uiFeeReceiver);
+        uint256 outputAmount = _swapFeeTokens(contracts, wnt, fee, orderKey);
         // TODO if Gelato accepts native token then it should be unwrapped in the swap
         _transferRelayFee();
 
