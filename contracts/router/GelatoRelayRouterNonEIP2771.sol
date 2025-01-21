@@ -46,6 +46,8 @@ contract GelatoRelayRouterNonEIP2771 is BaseGelatoRelayRouter {
             )
         );
 
+    mapping(address => uint256) public userNonces;
+
     constructor(
         Router _router,
         RoleStore _roleStore,
@@ -55,8 +57,6 @@ contract GelatoRelayRouterNonEIP2771 is BaseGelatoRelayRouter {
         IOrderHandler _orderHandler,
         OrderVault _orderVault
     ) BaseGelatoRelayRouter(_router, _roleStore, _dataStore, _eventEmitter, _oracle, _orderHandler, _orderVault) {}
-
-    mapping(address => uint256) public userNonces;
 
     function createOrder(
         RelayParams calldata relayParams,
@@ -68,9 +68,7 @@ contract GelatoRelayRouterNonEIP2771 is BaseGelatoRelayRouter {
         uint256 deadline
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) returns (bytes32) {
         bytes32 structHash = _getCreateOrderStructHash(relayParams, collateralAmount, params, userNonce, deadline);
-        _handleSignature(structHash, signature, account);
-        _handleNonce(account, userNonce);
-        _validateDeadline(deadline);
+        _handleAuthorization(userNonce, deadline, account, structHash, signature);
 
         return _createOrder(relayParams.tokenPermit, relayParams.fee, collateralAmount, params, account);
     }
@@ -85,9 +83,7 @@ contract GelatoRelayRouterNonEIP2771 is BaseGelatoRelayRouter {
         uint256 deadline
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelayERC2771 {
         bytes32 structHash = _getUpdateOrderStructHash(relayParams, key, params, userNonce, deadline);
-        _handleSignature(structHash, signature, account);
-        _handleNonce(account, userNonce);
-        _validateDeadline(deadline);
+        _handleAuthorization(userNonce, deadline, account, structHash, signature);
 
         _updateOrder(relayParams, account, key, params);
     }
@@ -101,11 +97,21 @@ contract GelatoRelayRouterNonEIP2771 is BaseGelatoRelayRouter {
         uint256 deadline
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelayERC2771 {
         bytes32 structHash = _getCancelOrderStructHash(relayParams, key, userNonce, deadline);
+        _handleAuthorization(userNonce, deadline, account, structHash, signature);
+
+        _cancelOrder(relayParams, account, key);
+    }
+
+    function _handleAuthorization(
+        uint256 userNonce,
+        uint256 deadline,
+        address account,
+        bytes32 structHash,
+        bytes calldata signature
+    ) internal {
         _handleSignature(structHash, signature, account);
         _handleNonce(account, userNonce);
         _validateDeadline(deadline);
-
-        _cancelOrder(relayParams, account, key);
     }
 
     function _validateDeadline(uint256 deadline) internal view {
