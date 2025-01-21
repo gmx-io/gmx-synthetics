@@ -21,6 +21,7 @@ library Deposit {
         Addresses addresses;
         Numbers numbers;
         Flags flags;
+        bytes dataField;
     }
 
     // @param account the account depositing liquidity
@@ -186,5 +187,13 @@ library Deposit {
 
     function setShouldUnwrapNativeToken(Props memory props, bool value) internal pure {
         props.flags.shouldUnwrapNativeToken = value;
+    }
+
+    function data(Props memory props) internal pure returns (bytes memory) {
+        return props.dataField;
+    }
+
+    function setData(Props memory props, bytes memory value) internal pure {
+        props.dataField = value;
     }
 }

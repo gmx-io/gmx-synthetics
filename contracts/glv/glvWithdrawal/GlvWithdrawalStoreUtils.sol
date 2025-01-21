@@ -32,6 +32,8 @@ library GlvWithdrawalStoreUtils {
 
     bytes32 public constant SHOULD_UNWRAP_NATIVE_TOKEN = keccak256(abi.encode("SHOULD_UNWRAP_NATIVE_TOKEN"));
 
+    bytes32 public constant DATA = keccak256(abi.encode("DATA"));
+
     function get(DataStore dataStore, bytes32 key) external view returns (GlvWithdrawal.Props memory) {
         GlvWithdrawal.Props memory withdrawal;
         if (!dataStore.containsBytes32(Keys.GLV_WITHDRAWAL_LIST, key)) {
@@ -96,6 +98,10 @@ library GlvWithdrawalStoreUtils {
 
         withdrawal.setShouldUnwrapNativeToken(dataStore.getBool(
             keccak256(abi.encode(key, SHOULD_UNWRAP_NATIVE_TOKEN))
+        ));
+
+        withdrawal.setData(dataStore.getBytes(
+            keccak256(abi.encode(key, DATA))
         ));
 
         return withdrawal;
@@ -186,6 +192,11 @@ library GlvWithdrawalStoreUtils {
             keccak256(abi.encode(key, SHOULD_UNWRAP_NATIVE_TOKEN)),
             withdrawal.shouldUnwrapNativeToken()
         );
+
+        dataStore.setBytes(
+            keccak256(abi.encode(key, DATA)),
+            withdrawal.data()
+        );
     }
 
     function remove(DataStore dataStore, bytes32 key, address account) external {
@@ -261,6 +272,10 @@ library GlvWithdrawalStoreUtils {
 
         dataStore.removeBool(
             keccak256(abi.encode(key, SHOULD_UNWRAP_NATIVE_TOKEN))
+        );
+
+        dataStore.removeBytes(
+            keccak256(abi.encode(key, DATA))
         );
     }
 

@@ -6,6 +6,7 @@ library GlvShift {
     struct Props {
         Addresses addresses;
         Numbers numbers;
+        bytes dataField;
     }
 
     struct Addresses {
@@ -66,5 +67,13 @@ library GlvShift {
 
     function setUpdatedAtTime(Props memory props, uint256 value) internal pure {
         props.numbers.updatedAtTime = value;
+    }
+
+    function data(Props memory props) internal pure returns (bytes memory) {
+        return props.dataField;
+    }
+
+    function setData(Props memory props, bytes memory value) internal pure {
+        props.dataField = value;
     }
 }
