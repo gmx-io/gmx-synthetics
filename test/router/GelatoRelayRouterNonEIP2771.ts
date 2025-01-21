@@ -18,6 +18,9 @@ describe("GelatoRelayRouterNonEIP2771", () => {
     swapUtils,
     mockContract;
 
+  const account = "0xb38302e27bAe8932536A84ab362c3d1013420Cb4";
+  const chainId = 42161;
+
   beforeEach(async () => {
     fixture = await deployFixture();
     ({
@@ -61,11 +64,9 @@ describe("GelatoRelayRouterNonEIP2771", () => {
     mockContract = await contractAt("MockGelatoRelayRouterNonEIP2771", verifierContract);
   });
 
-  it.only("testSimpleSignature", async () => {
+  it("testSimpleSignature", async () => {
     const signature =
       "0x122e3efab9b46c82dc38adf4ea6cd2c753b00f95c217a0e3a0f4dd110839f07a08eb29c1cc414d551349510e23a75219cd70c8b88515ed2b83bbd88216ffdb051c";
-    const account = "0xb38302e27bAe8932536A84ab362c3d1013420Cb4";
-    const chainId = 42161;
     await mockContract.testSimpleSignature(account, signature, chainId);
 
     const badSignature =
@@ -76,15 +77,13 @@ describe("GelatoRelayRouterNonEIP2771", () => {
     );
   });
 
-  it.only("testNestedSignature", async () => {
+  it("testNestedSignature", async () => {
     const signature =
       "0x239455ca6ae3cfda0b7bf6e7e8bb5f343e59cf30292c54c912977381ee9797e139c0d3aa706e42477ef425c19c55e0fa80eb11ec4fb6279ae0297ddf61092bc91c";
-    const account = "0xb38302e27bAe8932536A84ab362c3d1013420Cb4";
     const nested = {
       foo: 1,
       bar: true,
     };
-    const chainId = 42161;
 
     await mockContract.testNestedSignature(nested, account, signature, chainId);
 
@@ -92,6 +91,19 @@ describe("GelatoRelayRouterNonEIP2771", () => {
       "0x239455ca6ae3cfda0b7bf6e7e8bb5f343e59cf30292c54c912977381ee9797e139c0d3aa706e42477ef425c19c55e0fa80eb11ec4fb6279ae0297ddf61092bc91f";
     await expect(
       mockContract.testNestedSignature(nested, account, badSignature, chainId)
+    ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
+  });
+
+  it("testArraySignature", async () => {
+    const signature =
+      "0x3679fbad19a97bc7fe13222657c06a4b2302b8bf79d43aa8901984e274aa27d87492bc0363c2a96980f831369aa8d980414bfc94781033f6b18e6ca1bd3c32c41b";
+
+    await mockContract.testArraySignature([account, account], account, signature, chainId);
+
+    const badSignature =
+      "0x3679fbad19a97bc7fe13222657c06a4b2302b8bf79d43aa8901984e274aa27d87492bc0363c2a96980f831369aa8d980414bfc94781033f6b18e6ca1bd3c32c41f";
+    await expect(
+      mockContract.testArraySignature([account, account], account, badSignature, chainId)
     ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
   });
 });

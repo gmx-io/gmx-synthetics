@@ -63,6 +63,22 @@ contract MockGelatoRelayRouterNonEIP2771 is GelatoRelayRouterNonEIP2771 {
         _handleSignature(structHash, signature, account, chainId);
     }
 
+    function testArraySignature(
+        address[] memory array,
+        address account,
+        bytes calldata signature,
+        uint256 chainId
+    ) external view {
+        bytes32 structHash = keccak256(
+            abi.encode(
+                keccak256(bytes("PrimaryStruct(address account,address[] array)")),
+                account,
+                keccak256(abi.encodePacked(array))
+            )
+        );
+        _handleSignature(structHash, signature, account, chainId);
+    }
+
     function _handleSignature(
         bytes32 structHash,
         bytes calldata signature,
