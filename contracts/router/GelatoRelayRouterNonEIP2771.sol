@@ -68,7 +68,7 @@ contract GelatoRelayRouterNonEIP2771 is BaseGelatoRelayRouter {
         uint256 deadline
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) returns (bytes32) {
         bytes32 structHash = _getCreateOrderStructHash(relayParams, collateralAmount, params, userNonce, deadline);
-        _handleAuthorization(userNonce, deadline, account, structHash, signature);
+        _validateCall(userNonce, deadline, account, structHash, signature);
 
         return _createOrder(relayParams.tokenPermit, relayParams.fee, collateralAmount, params, account);
     }
@@ -83,7 +83,7 @@ contract GelatoRelayRouterNonEIP2771 is BaseGelatoRelayRouter {
         uint256 deadline
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelayERC2771 {
         bytes32 structHash = _getUpdateOrderStructHash(relayParams, key, params, userNonce, deadline);
-        _handleAuthorization(userNonce, deadline, account, structHash, signature);
+        _validateCall(userNonce, deadline, account, structHash, signature);
 
         _updateOrder(relayParams, account, key, params);
     }
@@ -97,20 +97,23 @@ contract GelatoRelayRouterNonEIP2771 is BaseGelatoRelayRouter {
         uint256 deadline
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelayERC2771 {
         bytes32 structHash = _getCancelOrderStructHash(relayParams, key, userNonce, deadline);
-        _handleAuthorization(userNonce, deadline, account, structHash, signature);
+        _validateCall(userNonce, deadline, account, structHash, signature);
 
         _cancelOrder(relayParams, account, key);
     }
 
-    function _handleAuthorization(
+    function _validateCall(
         uint256 userNonce,
         uint256 deadline,
         address account,
         bytes32 structHash,
         bytes calldata signature
     ) internal {
-        _handleSignature(structHash, signature, account);
-        _handleNonce(account, userNonce);
+        bytes32 domainSeparator = _getDomainSeparator(block.chainid);
+        bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
+        _validateSignature(digest, signature, account);
+
+        _validateNonce(account, userNonce);
         _validateDeadline(deadline);
     }
 
@@ -120,17 +123,11 @@ contract GelatoRelayRouterNonEIP2771 is BaseGelatoRelayRouter {
         }
     }
 
-    function _handleNonce(address account, uint256 userNonce) internal {
+    function _validateNonce(address account, uint256 userNonce) internal {
         if (userNonces[account] != 0) {
             revert Errors.InvalidUserNonce(userNonces[account], userNonce);
         }
         userNonces[account] = userNonce;
-    }
-
-    function _handleSignature(bytes32 structHash, bytes calldata signature, address account) internal view {
-        bytes32 domainSeparator = _getDomainSeparator(block.chainid);
-        bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
-        _validateSignature(digest, signature, account);
     }
 
     function _getUpdateOrderStructHash(
