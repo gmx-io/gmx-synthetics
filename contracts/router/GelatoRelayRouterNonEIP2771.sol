@@ -11,6 +11,41 @@ import "../router/Router.sol";
 import "./BaseGelatoRelayRouter.sol";
 
 contract GelatoRelayRouterNonEIP2771 is BaseGelatoRelayRouter {
+    bytes32 public constant UPDATE_ORDER_TYPEHASH =
+        keccak256(
+            bytes(
+                "UpdateOrder(bytes32 key,UpdateOrderParams params,uint256 userNonce,uint256 deadline,bytes32 relayParams)"
+            )
+        );
+    bytes32 public constant UPDATE_ORDER_PARAMS_TYPEHASH =
+        keccak256(
+            bytes(
+                "UpdateOrderParams(uint256 sizeDeltaUsd,uint256 acceptablePrice,uint256 triggerPrice,uint256 minOutputAmount,uint256 validFromTime,bool autoCancel)"
+            )
+        );
+
+    bytes32 public constant CANCEL_ORDER_TYPEHASH =
+        keccak256(bytes("CancelOrder(bytes32 key,uint256 userNonce,uint256 deadline,bytes32 relayParams)"));
+
+    bytes32 public constant CREATE_ORDER_TYPEHASH =
+        keccak256(
+            bytes(
+                "CreateOrder(uint256 collateralAmount,CreateOrderAddresses addresses,CreateOrderNumbers numbers,uint256 orderType,bool isLong,bool shouldUnwrapNativeToken,bool autoCancel,uint256 referralCode,uint256 userNonce,uin256 deadline,bytes32 relayParams)CreateOrderAddresses(address receiver,address cancellationReceiver,address callbackContract,address uiFeeReceiver,address market,address initialCollateralToken,address[] swapPath)CreateOrderNumbers(uint256 sizeDeltaUsd,uint256 initialCollateralDeltaAmount,uint256 triggerPrice,uint256 acceptablePrice,uint256 executionFee,uint256 callbackGasLimit,uint256 minOutputAmount,uint256 validFromTime)"
+            )
+        );
+    bytes32 public constant CREATE_ORDER_NUMBERS_TYPEHASH =
+        keccak256(
+            bytes(
+                "CreateOrderNumbers(uint256 sizeDeltaUsd,uint256 initialCollateralDeltaAmount,uint256 triggerPrice,uint256 acceptablePrice,uint256 executionFee,uint256 callbackGasLimit,uint256 minOutputAmount,uint256 validFromTime)"
+            )
+        );
+    bytes32 public constant CREATE_ORDER_ADDRESSES_TYPEHASH =
+        keccak256(
+            bytes(
+                "CreateOrderAddresses(address receiver,address cancellationReceiver,address callbackContract,address uiFeeReceiver,address market,address initialCollateralToken,address[] swapPath)"
+            )
+        );
+
     constructor(
         Router _router,
         RoleStore _roleStore,
@@ -102,11 +137,7 @@ contract GelatoRelayRouterNonEIP2771 is BaseGelatoRelayRouter {
         return
             keccak256(
                 abi.encode(
-                    keccak256(
-                        bytes(
-                            "UpdateOrder(bytes32 key,UpdateOrderParams params,uint256 userNonce,uint256 deadline,bytes32 relayParams)"
-                        )
-                    ),
+                    UPDATE_ORDER_TYPEHASH,
                     key,
                     _getUpdateOrderParamsStructHash(params),
                     userNonce,
@@ -120,11 +151,7 @@ contract GelatoRelayRouterNonEIP2771 is BaseGelatoRelayRouter {
         return
             keccak256(
                 abi.encode(
-                    keccak256(
-                        bytes(
-                            "UpdateOrderParams(uint256 sizeDeltaUsd,uint256 acceptablePrice,uint256 triggerPrice,uint256 minOutputAmount,uint256 validFromTime,bool autoCancel)"
-                        )
-                    ),
+                    UPDATE_ORDER_PARAMS_TYPEHASH,
                     params.sizeDeltaUsd,
                     params.acceptablePrice,
                     params.triggerPrice,
@@ -143,13 +170,7 @@ contract GelatoRelayRouterNonEIP2771 is BaseGelatoRelayRouter {
     ) internal pure returns (bytes32) {
         return
             keccak256(
-                abi.encode(
-                    keccak256(bytes("CancelOrder(bytes32 key,uint256 userNonce,uint256 deadline,bytes32 relayParams)")),
-                    key,
-                    userNonce,
-                    deadline,
-                    _getRelayParamsStructHash(relayParams)
-                )
+                abi.encode(CANCEL_ORDER_TYPEHASH, key, userNonce, deadline, _getRelayParamsStructHash(relayParams))
             );
     }
 
@@ -163,11 +184,7 @@ contract GelatoRelayRouterNonEIP2771 is BaseGelatoRelayRouter {
         return
             keccak256(
                 abi.encode(
-                    keccak256(
-                        bytes(
-                            "CreateOrder(uint256 collateralAmount,CreateOrderAddresses addresses,CreateOrderNumbers numbers,uint256 orderType,bool isLong,bool shouldUnwrapNativeToken,bool autoCancel,uint256 referralCode,uint256 userNonce,uin256 deadline,bytes32 relayParams)CreateOrderAddresses(address receiver,address cancellationReceiver,address callbackContract,address uiFeeReceiver,address market,address initialCollateralToken,address[] swapPath)CreateOrderNumbers(uint256 sizeDeltaUsd,uint256 initialCollateralDeltaAmount,uint256 triggerPrice,uint256 acceptablePrice,uint256 executionFee,uint256 callbackGasLimit,uint256 minOutputAmount,uint256 validFromTime)"
-                        )
-                    ),
+                    CREATE_ORDER_TYPEHASH,
                     collateralAmount,
                     _getAddressesStructHash(params.addresses),
                     _getCreateOrderNumbersStructHash(params.numbers),
@@ -189,11 +206,7 @@ contract GelatoRelayRouterNonEIP2771 is BaseGelatoRelayRouter {
         return
             keccak256(
                 abi.encode(
-                    keccak256(
-                        bytes(
-                            "CreateOrderNumbers(uint256 sizeDeltaUsd,uint256 initialCollateralDeltaAmount,uint256 triggerPrice,uint256 acceptablePrice,uint256 executionFee,uint256 callbackGasLimit,uint256 minOutputAmount,uint256 validFromTime)"
-                        )
-                    ),
+                    CREATE_ORDER_NUMBERS_TYPEHASH,
                     numbers.sizeDeltaUsd,
                     numbers.initialCollateralDeltaAmount,
                     numbers.triggerPrice,
@@ -212,11 +225,7 @@ contract GelatoRelayRouterNonEIP2771 is BaseGelatoRelayRouter {
         return
             keccak256(
                 abi.encode(
-                    keccak256(
-                        bytes(
-                            "CreateOrderAddresses(address receiver,address cancellationReceiver,address callbackContract,address uiFeeReceiver,address market,address initialCollateralToken,address[] swapPath)"
-                        )
-                    ),
+                    CREATE_ORDER_ADDRESSES_TYPEHASH,
                     addresses.receiver,
                     addresses.cancellationReceiver,
                     addresses.callbackContract,
