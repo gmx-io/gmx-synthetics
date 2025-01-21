@@ -6,6 +6,7 @@ library Shift {
     struct Props {
         Addresses addresses;
         Numbers numbers;
+        bytes dataField;
     }
 
     struct Addresses {
@@ -113,4 +114,11 @@ library Shift {
         props.numbers.callbackGasLimit = value;
     }
 
+    function data(Props memory props) internal pure returns (bytes memory) {
+        return props.dataField;
+    }
+
+    function setData(Props memory props, bytes memory value) internal pure {
+        props.dataField = value;
+    }
 }

@@ -17,6 +17,7 @@ library GlvWithdrawal {
         Addresses addresses;
         Numbers numbers;
         Flags flags;
+        bytes dataField;
     }
 
      // @param account The account to withdraw for.
@@ -173,5 +174,13 @@ library GlvWithdrawal {
 
     function setShouldUnwrapNativeToken(Props memory props, bool value) internal pure {
         props.flags.shouldUnwrapNativeToken = value;
+    }
+
+    function data(Props memory props) internal pure returns (bytes memory) {
+        return props.dataField;
+    }
+
+    function setData(Props memory props, bytes memory value) internal pure {
+        props.dataField = value;
     }
 }

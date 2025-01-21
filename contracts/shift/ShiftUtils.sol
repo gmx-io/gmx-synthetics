@@ -40,6 +40,7 @@ library ShiftUtils {
         uint256 minMarketTokens;
         uint256 executionFee;
         uint256 callbackGasLimit;
+        bytes data;
     }
 
     struct CreateShiftCache {
@@ -127,7 +128,8 @@ library ShiftUtils {
                 Chain.currentTimestamp(),
                 params.executionFee,
                 params.callbackGasLimit
-            )
+            ),
+            params.data
         );
 
         CallbackUtils.validateCallbackGasLimit(dataStore, shift.callbackGasLimit());
@@ -200,7 +202,8 @@ library ShiftUtils {
             ),
             Withdrawal.Flags(
                 false
-            )
+            ),
+            shift.data()
         );
 
         cache.withdrawalKey = NonceUtils.getNextKey(params.dataStore);
@@ -260,7 +263,8 @@ library ShiftUtils {
             ),
             Deposit.Flags(
                 false // shouldUnwrapNativeToken
-            )
+            ),
+            shift.data()
         );
 
         cache.depositKey = NonceUtils.getNextKey(params.dataStore);

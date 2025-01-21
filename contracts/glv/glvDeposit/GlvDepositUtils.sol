@@ -33,6 +33,7 @@ library GlvDepositUtils {
         uint256 callbackGasLimit;
         bool shouldUnwrapNativeToken;
         bool isMarketTokenDeposit;
+        bytes data;
     }
 
     struct CreateGlvDepositCache {
@@ -180,7 +181,8 @@ library GlvDepositUtils {
             GlvDeposit.Flags({
                 shouldUnwrapNativeToken: params.shouldUnwrapNativeToken,
                 isMarketTokenDeposit: params.isMarketTokenDeposit
-            })
+            }),
+            params.data
         );
 
         CallbackUtils.validateCallbackGasLimit(dataStore, params.callbackGasLimit);
@@ -407,7 +409,8 @@ library GlvDepositUtils {
                 executionFee: 0,
                 callbackGasLimit: 0
             }),
-            Deposit.Flags({shouldUnwrapNativeToken: false})
+            Deposit.Flags({shouldUnwrapNativeToken: false}),
+            glvDeposit.data()
         );
 
         bytes32 depositKey = NonceUtils.getNextKey(params.dataStore);
