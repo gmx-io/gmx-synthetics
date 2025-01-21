@@ -170,13 +170,8 @@ contract MultichainReader is RoleModule {
         address /*_executor*/,
         bytes calldata /*_extraData*/
     ) internal {
-        uint64 messageTimestamp;
-        uint256 messageLength = _message.length - 8;
-        bytes memory message = new bytes(messageLength);
-        assembly {
-            messageTimestamp := shr(192, calldataload(add(_message.offset, 0)))
-            calldatacopy(add(message, 32), add(_message.offset, 8), messageLength)
-        }
+        uint256 messageTimestamp = uint64(bytes8(_message[:8]));
+        bytes memory message = _message[8:_message.length];
 
         address originator = dataStore.getAddress(Keys.multichainGuidToOriginatorKey(_guid));
         MultichainReaderUtils.ReceivedData memory receivedData = MultichainReaderUtils.ReceivedData(
