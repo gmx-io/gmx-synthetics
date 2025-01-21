@@ -29,6 +29,8 @@ contract DataStore is RoleModule {
     mapping(bytes32 => string) public stringValues;
     // store for bytes32 values
     mapping(bytes32 => bytes32) public bytes32Values;
+    // store for bytes values
+    mapping(bytes32 => bytes) public bytesValues;
 
     // store for uint[] values
     mapping(bytes32 => uint256[]) public uintArrayValues;
@@ -272,6 +274,28 @@ contract DataStore is RoleModule {
     // @param key the key of the value
     function removeBytes32(bytes32 key) external onlyController {
         delete bytes32Values[key];
+    }
+
+    // @dev get the bytes value for the given key
+    // @param key the key of the value
+    // @return the bytes value for the key
+    function getBytes(bytes32 key) external view returns (bytes memory) {
+        return bytesValues[key];
+    }
+
+    // @dev set the bytes value for the given key
+    // @param key the key of the value
+    // @param value the value to set
+    // @return the bytes value for the key
+    function setBytes(bytes32 key, bytes memory value) external onlyController returns (bytes memory) {
+        bytesValues[key] = value;
+        return value;
+    }
+
+    // @dev delete the bytes value for the given key
+    // @param key the key of the value
+    function removeBytes(bytes32 key) external onlyController {
+        delete bytesValues[key];
     }
 
     // @dev get the uint array for the given key
