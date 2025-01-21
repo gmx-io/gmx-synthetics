@@ -242,13 +242,13 @@ abstract contract BaseGelatoRelayRouterNonERC2771 is GelatoRelayContext, Reentra
 
     function _handleRelay(
         Contracts memory contracts,
-        TokenPermit[] calldata tokenPermit,
+        TokenPermit[] calldata tokenPermits,
         RelayFeeParams calldata fee,
         address account,
         bytes32 orderKey,
         address residualFeeReceiver
     ) internal returns (uint256) {
-        _handleTokenPermits(tokenPermit);
+        _handleTokenPermits(tokenPermits);
         return _handleRelayFee(contracts, fee, account, orderKey, residualFeeReceiver);
     }
 

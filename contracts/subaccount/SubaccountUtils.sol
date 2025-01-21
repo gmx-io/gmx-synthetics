@@ -21,7 +21,7 @@ library SubaccountUtils {
         EventEmitter eventEmitter,
         address account,
         address subaccount
-    ) internal {
+    ) external {
         bytes32 setKey = Keys.subaccountListKey(account);
         dataStore.addAddress(setKey, subaccount);
 
@@ -68,7 +68,7 @@ library SubaccountUtils {
         address account,
         address subaccount,
         bytes32 actionType
-    ) internal {
+    ) external {
         bytes32 key = Keys.subaccountActionCountKey(account, subaccount, actionType);
         uint256 nextValue = dataStore.incrementUint(key, 1);
         validateSubaccountActionCountAndDeadline(dataStore, account, subaccount, actionType, nextValue);
@@ -100,7 +100,7 @@ library SubaccountUtils {
         address subaccount,
         bytes32 actionType,
         uint256 deadline
-    ) internal {
+    ) external {
         bytes32 key = Keys.subaccountExpiresAtKey(account, subaccount, actionType);
         dataStore.setUint(key, deadline);
 
@@ -128,7 +128,7 @@ library SubaccountUtils {
         address subaccount,
         bytes32 actionType,
         uint256 maxAllowedCount
-    ) internal {
+    ) external {
         bytes32 key = Keys.maxAllowedSubaccountActionCountKey(account, subaccount, actionType);
         dataStore.setUint(key, maxAllowedCount);
 
@@ -175,7 +175,7 @@ library SubaccountUtils {
         DataStore dataStore,
         address account,
         address subaccount
-    ) internal view {
+    ) external view {
         bytes32 setKey = Keys.subaccountListKey(account);
         if (!dataStore.containsAddress(setKey, subaccount)) {
             revert Errors.SubaccountNotAuthorized(account, subaccount);
