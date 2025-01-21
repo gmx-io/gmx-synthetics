@@ -81,7 +81,7 @@ contract GelatoRelayRouterNonEIP2771 is BaseGelatoRelayRouter {
         bytes calldata signature,
         uint256 userNonce,
         uint256 deadline
-    ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelayERC2771 {
+    ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) {
         bytes32 structHash = _getUpdateOrderStructHash(relayParams, key, params, userNonce, deadline);
         _validateCall(userNonce, deadline, account, structHash, signature);
 
@@ -95,7 +95,7 @@ contract GelatoRelayRouterNonEIP2771 is BaseGelatoRelayRouter {
         bytes calldata signature,
         uint256 userNonce,
         uint256 deadline
-    ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelayERC2771 {
+    ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) {
         bytes32 structHash = _getCancelOrderStructHash(relayParams, key, userNonce, deadline);
         _validateCall(userNonce, deadline, account, structHash, signature);
 
