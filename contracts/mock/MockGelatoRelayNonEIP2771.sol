@@ -7,9 +7,9 @@ import "../event/EventEmitter.sol";
 import "../exchange/IOrderHandler.sol";
 import "../order/OrderVault.sol";
 import "../router/Router.sol";
-import "../router/GelatoRelayRouterNonEIP2771.sol";
+import "../router/GelatoRelayRouterNonERC2771.sol";
 
-contract MockGelatoRelayRouterNonEIP2771 is GelatoRelayRouterNonEIP2771 {
+contract MockGelatoRelayRouterNonERC2771 is GelatoRelayRouterNonERC2771 {
     struct Nested {
         uint256 foo;
         bool bar;
@@ -17,14 +17,13 @@ contract MockGelatoRelayRouterNonEIP2771 is GelatoRelayRouterNonEIP2771 {
 
     constructor(
         Router _router,
-        RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
         Oracle _oracle,
         IOrderHandler _orderHandler,
         OrderVault _orderVault
     )
-        GelatoRelayRouterNonEIP2771(_router, _roleStore, _dataStore, _eventEmitter, _oracle, _orderHandler, _orderVault)
+        GelatoRelayRouterNonERC2771(_router, _dataStore, _eventEmitter, _oracle, _orderHandler, _orderVault)
     {}
 
     function testCancelOrderSignature(

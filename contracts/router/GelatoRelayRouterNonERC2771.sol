@@ -8,9 +8,9 @@ import "../exchange/IOrderHandler.sol";
 import "../order/IBaseOrderUtils.sol";
 import "../order/OrderVault.sol";
 import "../router/Router.sol";
-import "./BaseGelatoRelayRouter.sol";
+import "./BaseGelatoRelayRouterNonERC2771.sol";
 
-contract GelatoRelayRouterNonEIP2771 is BaseGelatoRelayRouter {
+contract GelatoRelayRouterNonERC2771 is BaseGelatoRelayRouterNonERC2771 {
     bytes32 public constant UPDATE_ORDER_TYPEHASH =
         keccak256(
             bytes(
@@ -50,13 +50,12 @@ contract GelatoRelayRouterNonEIP2771 is BaseGelatoRelayRouter {
 
     constructor(
         Router _router,
-        RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
         Oracle _oracle,
         IOrderHandler _orderHandler,
         OrderVault _orderVault
-    ) BaseGelatoRelayRouter(_router, _roleStore, _dataStore, _eventEmitter, _oracle, _orderHandler, _orderVault) {}
+    ) BaseGelatoRelayRouterNonERC2771(_router, _dataStore, _eventEmitter, _oracle, _orderHandler, _orderVault) {}
 
     function createOrder(
         RelayParams calldata relayParams,
@@ -189,7 +188,7 @@ contract GelatoRelayRouterNonEIP2771 is BaseGelatoRelayRouter {
                 abi.encode(
                     CREATE_ORDER_TYPEHASH,
                     collateralAmount,
-                    _getAddressesStructHash(params.addresses),
+                    _getCreateOrderAddressesStructHash(params.addresses),
                     _getCreateOrderNumbersStructHash(params.numbers),
                     uint256(params.orderType),
                     params.isLong,
@@ -222,7 +221,7 @@ contract GelatoRelayRouterNonEIP2771 is BaseGelatoRelayRouter {
             );
     }
 
-    function _getAddressesStructHash(
+    function _getCreateOrderAddressesStructHash(
         IBaseOrderUtils.CreateOrderParamsAddresses memory addresses
     ) internal pure returns (bytes32) {
         return
@@ -241,6 +240,6 @@ contract GelatoRelayRouterNonEIP2771 is BaseGelatoRelayRouter {
     }
 
     function _getRelayParamsStructHash(RelayParams calldata relayParams) internal pure returns (bytes32) {
-        return keccak256(abi.encode(relayParams.oracleParams, relayParams.tokenPermit, relayParams.fee));
+        return keccak256(abi.encode(relayParams));
     }
 }
