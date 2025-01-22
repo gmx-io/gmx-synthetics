@@ -4,7 +4,7 @@ import { contractAt, deployContract } from "../../utils/deploy";
 import { deployFixture } from "../../utils/fixture";
 import { errorsContract } from "../../utils/error";
 
-describe("GelatoRelayRouterNonERC2771", () => {
+describe("GelatoRelayRouter", () => {
   let fixture;
   let dataStore,
     roleStore,
@@ -39,7 +39,7 @@ describe("GelatoRelayRouterNonERC2771", () => {
 
   beforeEach(async () => {
     mockContract = await deployContract(
-      "MockGelatoRelayRouterNonERC2771",
+      "MockGelatoRelayRouter",
       [
         router.address,
         roleStore.address,
@@ -61,7 +61,7 @@ describe("GelatoRelayRouterNonERC2771", () => {
     // this verifier was used for signing signatures
     const verifierContract = "0x976C214741b4657bd99DFD38a5c0E3ac5C99D903";
     await hre.ethers.provider.send("hardhat_setCode", [verifierContract, code]);
-    mockContract = await contractAt("MockGelatoRelayRouterNonERC2771", verifierContract);
+    mockContract = await contractAt("MockGelatoRelayRouter", verifierContract);
   });
 
   it("testSimpleSignature", async () => {

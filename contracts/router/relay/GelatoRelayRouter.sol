@@ -2,15 +2,15 @@
 
 pragma solidity ^0.8.0;
 
-import "../data/DataStore.sol";
-import "../event/EventEmitter.sol";
-import "../exchange/IOrderHandler.sol";
-import "../order/IBaseOrderUtils.sol";
-import "../order/OrderVault.sol";
-import "../router/Router.sol";
-import "./BaseGelatoRelayRouterNonERC2771.sol";
+import "../../data/DataStore.sol";
+import "../../event/EventEmitter.sol";
+import "../../exchange/IOrderHandler.sol";
+import "../../order/IBaseOrderUtils.sol";
+import "../../order/OrderVault.sol";
+import "../../router/Router.sol";
+import "./BaseGelatoRelayRouter.sol";
 
-contract GelatoRelayRouterNonERC2771 is BaseGelatoRelayRouterNonERC2771 {
+contract GelatoRelayRouter is BaseGelatoRelayRouter {
     bytes32 public constant UPDATE_ORDER_TYPEHASH =
         keccak256(
             bytes(
@@ -53,7 +53,7 @@ contract GelatoRelayRouterNonERC2771 is BaseGelatoRelayRouterNonERC2771 {
         Oracle _oracle,
         IOrderHandler _orderHandler,
         OrderVault _orderVault
-    ) BaseGelatoRelayRouterNonERC2771(_router, _dataStore, _eventEmitter, _oracle, _orderHandler, _orderVault) {}
+    ) BaseGelatoRelayRouter(_router, _dataStore, _eventEmitter, _oracle, _orderHandler, _orderVault) {}
 
     function createOrder(
         RelayParams calldata relayParams,

@@ -2,24 +2,23 @@
 
 pragma solidity ^0.8.0;
 
-import {GelatoRelayContextERC2771} from "@gelatonetwork/relay-context/contracts/GelatoRelayContextERC2771.sol";
+import {GelatoRelayContext} from "@gelatonetwork/relay-context/contracts/GelatoRelayContext.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-import "../data/DataStore.sol";
-import "../event/EventEmitter.sol";
-import "../exchange/IOrderHandler.sol";
-import "../oracle/OracleModule.sol";
-import "../order/IBaseOrderUtils.sol";
-import "../order/OrderStoreUtils.sol";
-import "../order/OrderVault.sol";
-import "../router/Router.sol";
-import "../token/TokenUtils.sol";
-import "../swap/SwapUtils.sol";
-import "../nonce/NonceUtils.sol";
-import "../role/RoleModule.sol";
+import "../../data/DataStore.sol";
+import "../../event/EventEmitter.sol";
+import "../../exchange/IOrderHandler.sol";
+import "../../oracle/OracleModule.sol";
+import "../../order/IBaseOrderUtils.sol";
+import "../../order/OrderStoreUtils.sol";
+import "../../order/OrderVault.sol";
+import "../../router/Router.sol";
+import "../../token/TokenUtils.sol";
+import "../../swap/SwapUtils.sol";
+import "../../nonce/NonceUtils.sol";
 
-abstract contract BaseGelatoRelayRouter is GelatoRelayContextERC2771, ReentrancyGuard, OracleModule, RoleModule {
+abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, OracleModule {
     using Order for Order.Props;
 
     IOrderHandler public immutable orderHandler;
@@ -34,6 +33,8 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContextERC2771, Reentrancy
 
     bytes32 public constant DOMAIN_SEPARATOR_NAME_HASH = keccak256(bytes("GmxBaseGelatoRelayRouter"));
     bytes32 public constant DOMAIN_SEPARATOR_VERSION_HASH = keccak256(bytes("1"));
+
+    mapping(address => uint256) public userNonces;
 
     struct TokenPermit {
         address owner;
@@ -75,13 +76,12 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContextERC2771, Reentrancy
 
     constructor(
         Router _router,
-        RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
         Oracle _oracle,
         IOrderHandler _orderHandler,
         OrderVault _orderVault
-    ) RoleModule(_roleStore) OracleModule(_oracle) {
+    ) OracleModule(_oracle) {
         orderHandler = _orderHandler;
         orderVault = _orderVault;
         router = _router;
@@ -244,13 +244,13 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContextERC2771, Reentrancy
 
     function _handleRelay(
         Contracts memory contracts,
-        TokenPermit[] calldata tokenPermit,
+        TokenPermit[] calldata tokenPermits,
         RelayFeeParams calldata fee,
         address account,
         bytes32 orderKey,
         address residualFeeReceiver
     ) internal returns (uint256) {
-        _handleTokenPermits(tokenPermit);
+        _handleTokenPermits(tokenPermits);
         return _handleRelayFee(contracts, fee, account, orderKey, residualFeeReceiver);
     }
 
@@ -327,5 +327,33 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContextERC2771, Reentrancy
                     address(this)
                 )
             );
+    }
+
+    function _validateCall(
+        uint256 userNonce,
+        uint256 deadline,
+        address account,
+        bytes32 structHash,
+        bytes calldata signature
+    ) internal {
+        bytes32 domainSeparator = _getDomainSeparator(block.chainid);
+        bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
+        _validateSignature(digest, signature, account);
+
+        _validateNonce(account, userNonce);
+        _validateDeadline(deadline);
+    }
+
+    function _validateDeadline(uint256 deadline) internal view {
+        if (deadline > 0 && block.timestamp > deadline) {
+            revert Errors.MultichainDeadlinePassed(block.timestamp, deadline);
+        }
+    }
+
+    function _validateNonce(address account, uint256 userNonce) internal {
+        if (userNonces[account] != 0) {
+            revert Errors.InvalidUserNonce(userNonces[account], userNonce);
+        }
+        userNonces[account] = userNonce;
     }
 }

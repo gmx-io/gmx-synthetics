@@ -2,13 +2,13 @@
 
 pragma solidity ^0.8.0;
 
-import "../order/IBaseOrderUtils.sol";
-import "../router/Router.sol";
-import "../feature/FeatureUtils.sol";
-import "../subaccount/SubaccountUtils.sol";
-import "./BaseGelatoRelayRouterNonERC2771.sol";
+import "../../order/IBaseOrderUtils.sol";
+import "../../router/Router.sol";
+import "../../feature/FeatureUtils.sol";
+import "../../subaccount/SubaccountUtils.sol";
+import "./BaseGelatoRelayRouter.sol";
 
-contract SubaccountGelatoRelayRouterNonERC2771 is BaseGelatoRelayRouterNonERC2771 {
+contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     struct SubaccountApproval {
         address subaccount;
         uint256 expiresAt;
@@ -74,7 +74,7 @@ contract SubaccountGelatoRelayRouterNonERC2771 is BaseGelatoRelayRouterNonERC277
         Oracle _oracle,
         IOrderHandler _orderHandler,
         OrderVault _orderVault
-    ) BaseGelatoRelayRouterNonERC2771(_router, _dataStore, _eventEmitter, _oracle, _orderHandler, _orderVault) {}
+    ) BaseGelatoRelayRouter(_router, _dataStore, _eventEmitter, _oracle, _orderHandler, _orderVault) {}
 
     function createOrder(
         RelayParams calldata relayParams,

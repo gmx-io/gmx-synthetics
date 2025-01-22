@@ -2,15 +2,15 @@
 
 pragma solidity ^0.8.0;
 
-import "../data/DataStore.sol";
-import "../event/EventEmitter.sol";
-import "../exchange/IOrderHandler.sol";
-import "../order/IBaseOrderUtils.sol";
-import "../order/OrderVault.sol";
-import "../router/Router.sol";
-import "./BaseGelatoRelayRouter.sol";
+import "../../data/DataStore.sol";
+import "../../event/EventEmitter.sol";
+import "../../exchange/IOrderHandler.sol";
+import "../../order/IBaseOrderUtils.sol";
+import "../../order/OrderVault.sol";
+import "../../router/Router.sol";
+import "./BaseGelatoRelayRouterERC2771.sol";
 
-contract GelatoRelayRouter is BaseGelatoRelayRouter {
+contract GelatoRelayRouterERC2771 is BaseGelatoRelayRouterERC2771 {
     constructor(
         Router _router,
         RoleStore _roleStore,
@@ -19,7 +19,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         Oracle _oracle,
         IOrderHandler _orderHandler,
         OrderVault _orderVault
-    ) BaseGelatoRelayRouter(_router, _roleStore, _dataStore, _eventEmitter, _oracle, _orderHandler, _orderVault) {}
+    ) BaseGelatoRelayRouterERC2771(_router, _roleStore, _dataStore, _eventEmitter, _oracle, _orderHandler, _orderVault) {}
 
     function createOrder(
         RelayParams calldata relayParams,
