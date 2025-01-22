@@ -23,7 +23,7 @@ library Withdrawal {
         Addresses addresses;
         Numbers numbers;
         Flags flags;
-        bytes dataField;
+        bytes32[] _dataList;
     }
 
      // @param account The account to withdraw for.
@@ -172,11 +172,11 @@ library Withdrawal {
         props.flags.shouldUnwrapNativeToken = value;
     }
 
-    function data(Props memory props) internal pure returns (bytes memory) {
-        return props.dataField;
+    function dataList(Props memory props) internal pure returns (bytes32[] memory) {
+        return props._dataList;
     }
 
-    function setData(Props memory props, bytes memory value) internal pure {
-        props.dataField = value;
+    function setDataList(Props memory props, bytes32[] memory value) internal pure {
+        props._dataList = value;
     }
 }

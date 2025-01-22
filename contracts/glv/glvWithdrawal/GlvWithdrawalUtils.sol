@@ -31,7 +31,7 @@ library GlvWithdrawalUtils {
         bool shouldUnwrapNativeToken;
         uint256 executionFee;
         uint256 callbackGasLimit;
-        bytes data;
+        bytes32[] dataList;
     }
 
     struct ExecuteGlvWithdrawalParams {
@@ -112,7 +112,7 @@ library GlvWithdrawalUtils {
                 callbackGasLimit: params.callbackGasLimit
             }),
             GlvWithdrawal.Flags({shouldUnwrapNativeToken: params.shouldUnwrapNativeToken}),
-            params.data
+            params.dataList
         );
 
         CallbackUtils.validateCallbackGasLimit(dataStore, params.callbackGasLimit);
@@ -231,7 +231,7 @@ library GlvWithdrawalUtils {
                 callbackGasLimit: 0
             }),
             Withdrawal.Flags({shouldUnwrapNativeToken: glvWithdrawal.shouldUnwrapNativeToken()}),
-            glvWithdrawal.data()
+            glvWithdrawal.dataList()
         );
 
         bytes32 withdrawalKey = NonceUtils.getNextKey(params.dataStore);
