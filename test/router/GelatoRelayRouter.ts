@@ -1,13 +1,18 @@
 import { expect } from "chai";
 
-import { contractAt, deployContract } from "../../utils/deploy";
+import { deployContract } from "../../utils/deploy";
 import { deployFixture } from "../../utils/fixture";
 import { errorsContract } from "../../utils/error";
 
+const badSignature =
+  "0x122e3efab9b46c82dc38adf4ea6cd2c753b00f95c217a0e3a0f4dd110839f07a08eb29c1cc414d551349510e23a75219cd70c8b88515ed2b83bbd88216ffdb051f";
+const chainId = 42161;
+
 describe("GelatoRelayRouter", () => {
   let fixture;
+  let user0;
+  let domain;
   let dataStore,
-    roleStore,
     eventEmitter,
     oracle,
     orderHandler,
@@ -18,16 +23,13 @@ describe("GelatoRelayRouter", () => {
     swapUtils,
     mockContract;
 
-  const account = "0xb38302e27bAe8932536A84ab362c3d1013420Cb4";
-  const chainId = 42161;
-
   beforeEach(async () => {
     fixture = await deployFixture();
+    ({ user0 } = fixture.accounts);
     ({
       dataStore,
       orderVault,
       router,
-      roleStore,
       eventEmitter,
       oracle,
       orderHandler,
@@ -42,7 +44,6 @@ describe("GelatoRelayRouter", () => {
       "MockGelatoRelayRouter",
       [
         router.address,
-        roleStore.address,
         dataStore.address,
         eventEmitter.address,
         oracle.address,
@@ -57,20 +58,27 @@ describe("GelatoRelayRouter", () => {
         },
       }
     );
-    const code = await hre.ethers.provider.getCode(mockContract.address);
-    // this verifier was used for signing signatures
-    const verifierContract = "0x976C214741b4657bd99DFD38a5c0E3ac5C99D903";
-    await hre.ethers.provider.send("hardhat_setCode", [verifierContract, code]);
-    mockContract = await contractAt("MockGelatoRelayRouter", verifierContract);
+    domain = {
+      name: "GmxBaseGelatoRelayRouter",
+      version: "1",
+      chainId,
+      verifyingContract: mockContract.address,
+    };
   });
 
   it("testSimpleSignature", async () => {
-    const signature =
-      "0x122e3efab9b46c82dc38adf4ea6cd2c753b00f95c217a0e3a0f4dd110839f07a08eb29c1cc414d551349510e23a75219cd70c8b88515ed2b83bbd88216ffdb051c";
+    const types = {
+      PrimaryStruct: [{ name: "account", type: "address" }],
+    };
+
+    const account = user0.address;
+    const value = {
+      account: account,
+    };
+
+    const signature = await user0._signTypedData(domain, types, value);
     await mockContract.testSimpleSignature(account, signature, chainId);
 
-    const badSignature =
-      "0x122e3efab9b46c82dc38adf4ea6cd2c753b00f95c217a0e3a0f4dd110839f07a08eb29c1cc414d551349510e23a75219cd70c8b88515ed2b83bbd88216ffdb051f";
     await expect(mockContract.testSimpleSignature(account, badSignature, chainId)).to.be.revertedWithCustomError(
       errorsContract,
       "InvalidSignature"
@@ -78,30 +86,49 @@ describe("GelatoRelayRouter", () => {
   });
 
   it("testNestedSignature", async () => {
-    const signature =
-      "0x239455ca6ae3cfda0b7bf6e7e8bb5f343e59cf30292c54c912977381ee9797e139c0d3aa706e42477ef425c19c55e0fa80eb11ec4fb6279ae0297ddf61092bc91c";
+    const types = {
+      PrimaryStruct: [
+        { name: "account", type: "address" },
+        { name: "nested", type: "Nested" },
+      ],
+      Nested: [
+        { name: "foo", type: "uint256" },
+        { name: "bar", type: "bool" },
+      ],
+    };
     const nested = {
       foo: 1,
       bar: true,
     };
-
+    const account = user0.address;
+    const value = {
+      account: account,
+      nested: nested,
+    };
+    const signature = await user0._signTypedData(domain, types, value);
     await mockContract.testNestedSignature(nested, account, signature, chainId);
 
-    const badSignature =
-      "0x239455ca6ae3cfda0b7bf6e7e8bb5f343e59cf30292c54c912977381ee9797e139c0d3aa706e42477ef425c19c55e0fa80eb11ec4fb6279ae0297ddf61092bc91f";
     await expect(
       mockContract.testNestedSignature(nested, account, badSignature, chainId)
     ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
   });
 
   it("testArraySignature", async () => {
-    const signature =
-      "0x3679fbad19a97bc7fe13222657c06a4b2302b8bf79d43aa8901984e274aa27d87492bc0363c2a96980f831369aa8d980414bfc94781033f6b18e6ca1bd3c32c41b";
+    const types = {
+      PrimaryStruct: [
+        { name: "account", type: "address" },
+        { name: "array", type: "address[]" },
+      ],
+    };
 
+    const account = user0.address;
+    const value = {
+      account: account,
+      array: [account, account],
+    };
+    const signature = await user0._signTypedData(domain, types, value);
     await mockContract.testArraySignature([account, account], account, signature, chainId);
 
-    const badSignature =
-      "0x3679fbad19a97bc7fe13222657c06a4b2302b8bf79d43aa8901984e274aa27d87492bc0363c2a96980f831369aa8d980414bfc94781033f6b18e6ca1bd3c32c41f";
     await expect(
       mockContract.testArraySignature([account, account], account, badSignature, chainId)
     ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
