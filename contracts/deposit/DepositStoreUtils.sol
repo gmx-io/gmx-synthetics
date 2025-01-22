@@ -33,7 +33,7 @@ library DepositStoreUtils {
 
     bytes32 public constant SHOULD_UNWRAP_NATIVE_TOKEN = keccak256(abi.encode("SHOULD_UNWRAP_NATIVE_TOKEN"));
 
-    bytes32 public constant DATA = keccak256(abi.encode("DATA"));
+    bytes32 public constant DATA_LIST = keccak256(abi.encode("DATA_LIST"));
 
     function get(DataStore dataStore, bytes32 key) external view returns (Deposit.Props memory) {
         Deposit.Props memory deposit;
@@ -105,8 +105,8 @@ library DepositStoreUtils {
             keccak256(abi.encode(key, SHOULD_UNWRAP_NATIVE_TOKEN))
         ));
 
-        deposit.setData(dataStore.getBytes(
-            keccak256(abi.encode(key, DATA))
+        deposit.setDataList(dataStore.getBytes32Array(
+            keccak256(abi.encode(key, DATA_LIST))
         ));
 
         return deposit;
@@ -203,9 +203,9 @@ library DepositStoreUtils {
             deposit.shouldUnwrapNativeToken()
         );
 
-        dataStore.setBytes(
-            keccak256(abi.encode(key, DATA)),
-            deposit.data()
+        dataStore.setBytes32Array(
+            keccak256(abi.encode(key, DATA_LIST)),
+            deposit.dataList()
         );
     }
 
@@ -288,8 +288,8 @@ library DepositStoreUtils {
             keccak256(abi.encode(key, SHOULD_UNWRAP_NATIVE_TOKEN))
         );
 
-        dataStore.removeBytes(
-            keccak256(abi.encode(key, DATA))
+        dataStore.removeBytes32Array(
+            keccak256(abi.encode(key, DATA_LIST))
         );
     }
 
