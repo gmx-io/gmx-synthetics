@@ -71,6 +71,7 @@ export async function createDeposit(fixture, overrides: any = {}) {
     shouldUnwrapNativeToken,
     executionFee,
     callbackGasLimit,
+    dataList: [],
   };
 
   const txReceipt = await logGasUsage({

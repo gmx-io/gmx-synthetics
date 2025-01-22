@@ -60,6 +60,7 @@ export async function createWithdrawal(fixture, overrides: any = {}) {
     shouldUnwrapNativeToken,
     executionFee,
     callbackGasLimit,
+    dataList: [],
   };
 
   await logGasUsage({
@@ -156,6 +157,7 @@ export async function executeAtomicWithdrawal(fixture, overrides: any = {}) {
     shouldUnwrapNativeToken,
     executionFee,
     callbackGasLimit,
+    dataList: [],
   };
 
   let oracleParams = overrides.oracleParams;

@@ -26,6 +26,7 @@ export async function createGlvShift(fixture, overrides: any = {}) {
     toMarket: toMarket.marketToken,
     marketTokenAmount,
     minMarketTokens,
+    dataList: [],
   };
 
   for (const [key, value] of Object.entries(params)) {

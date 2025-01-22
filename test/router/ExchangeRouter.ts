@@ -71,6 +71,7 @@ describe("ExchangeRouter", () => {
             shouldUnwrapNativeToken: true,
             executionFee,
             callbackGasLimit: "200000",
+            dataList: [],
           },
         ]),
       ],
@@ -202,6 +203,7 @@ describe("ExchangeRouter", () => {
             shouldUnwrapNativeToken: true,
             executionFee,
             callbackGasLimit: "200000",
+            dataList: [],
           },
         ]),
       ],
@@ -262,6 +264,7 @@ describe("ExchangeRouter", () => {
               shouldUnwrapNativeToken: true,
               executionFee,
               callbackGasLimit: "200000",
+              dataList: [],
             },
           ]),
           exchangeRouter.interface.encodeFunctionData("simulateExecuteDeposit", [

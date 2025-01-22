@@ -96,6 +96,7 @@ export async function createGlvDeposit(fixture, overrides: any = {}) {
     callbackGasLimit,
     isMarketTokenDeposit,
     gasUsageLabel,
+    dataList: [],
   };
 
   const optionalParams = new Set(["gasUsageLabel", "simulate", "simulateExecute"]);
