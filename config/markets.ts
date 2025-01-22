@@ -2366,6 +2366,8 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
+      thresholdForDecreaseFunding: percentageToFloat("2%"), // default is 0
+      fundingDecreaseFactorPerSecond: decimalToFloat(0), // timeToDecreaseFromMaxFundingToZero is "-" in initial recomandations
       ...borrowingRateConfig_LowMax_WithHigherBase,
       aboveOptimalUsageBorrowingFactor: percentageToFloat("110%").div(SECONDS_PER_YEAR), // default is 100%
 
@@ -2396,6 +2398,7 @@ const config: {
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
+      fundingDecreaseFactorPerSecond: decimalToFloat(0), // timeToDecreaseFromMaxFundingToZero is "-" in initial recomandations
       ...borrowingRateConfig_LowMax_WithHigherBase,
       aboveOptimalUsageBorrowingFactor: percentageToFloat("110%").div(SECONDS_PER_YEAR), // default is 100%
 
