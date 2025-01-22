@@ -54,7 +54,7 @@ abstract contract BaseGelatoRelayRouterERC2771 is GelatoRelayContextERC2771, Ree
 
     struct RelayParams {
         OracleUtils.SetPricesParams oracleParams;
-        TokenPermit[] tokenPermit;
+        TokenPermit[] tokenPermits;
         RelayFeeParams fee;
     }
 
@@ -115,7 +115,7 @@ abstract contract BaseGelatoRelayRouterERC2771 is GelatoRelayContextERC2771, Ree
 
         _handleRelay(
             contracts,
-            relayParams.tokenPermit,
+            relayParams.tokenPermits,
             relayParams.fee,
             account,
             key,
@@ -152,7 +152,7 @@ abstract contract BaseGelatoRelayRouterERC2771 is GelatoRelayContextERC2771, Ree
 
         _handleRelay(
             contracts,
-            relayParams.tokenPermit,
+            relayParams.tokenPermits,
             relayParams.fee,
             account,
             key,
@@ -162,18 +162,10 @@ abstract contract BaseGelatoRelayRouterERC2771 is GelatoRelayContextERC2771, Ree
         orderHandler.cancelOrder(key);
     }
 
-    function _getCreateOrderSignatureMessage(
-        RelayParams memory relayParams,
-        uint256 collateralAmount,
-        IBaseOrderUtils.CreateOrderParams memory params
-    ) internal pure returns (bytes memory) {
-        return abi.encode(relayParams, collateralAmount, params);
-    }
-
     function _createOrder(
         TokenPermit[] calldata tokenPermit,
         RelayFeeParams calldata fee,
-        uint256 collateralAmount,
+        uint256 collateralDeltaAmount,
         IBaseOrderUtils.CreateOrderParams memory params, // can't use calldata because need to modify params.numbers.executionFee
         address account
     ) internal returns (bytes32) {
@@ -197,12 +189,12 @@ abstract contract BaseGelatoRelayRouterERC2771 is GelatoRelayContextERC2771, Ree
             address(contracts.orderVault)
         );
 
-        if (collateralAmount > 0) {
+        if (collateralDeltaAmount > 0) {
             _sendTokens(
                 account,
                 params.addresses.initialCollateralToken,
                 address(contracts.orderVault),
-                collateralAmount
+                collateralDeltaAmount
             );
         }
 

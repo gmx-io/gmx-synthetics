@@ -41,7 +41,7 @@ contract SubaccountGelatoRelayRouterERC2771 is BaseGelatoRelayRouterERC2771 {
     function createOrder(
         RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
-        uint256 collateralAmount,
+        uint256 collateralDeltaAmount,
         IBaseOrderUtils.CreateOrderParams memory params, // can't use calldata because need to modify params.numbers.executionFee
         address account
     )
@@ -52,7 +52,7 @@ contract SubaccountGelatoRelayRouterERC2771 is BaseGelatoRelayRouterERC2771 {
         returns (bytes32)
     {
         _handleSubaccountAction(account, Keys.SUBACCOUNT_ORDER_ACTION, subaccountApproval);
-        return _createOrder(relayParams.tokenPermit, relayParams.fee, collateralAmount, params, account);
+        return _createOrder(relayParams.tokenPermits, relayParams.fee, collateralDeltaAmount, params, account);
     }
 
     function updateOrder(

@@ -42,7 +42,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     bytes32 public constant CREATE_ORDER_TYPEHASH =
         keccak256(
             bytes(
-                "CreateOrder(uint256 collateralAmount,CreateOrderAddresses addresses,CreateOrderNumbers numbers,uint256 orderType,bool isLong,bool shouldUnwrapNativeToken,bool autoCancel,uint256 referralCode,uint256 userNonce,uin256 deadline,bytes32 relayParams,bytes32 subaccountApproval)CreateOrderAddresses(address receiver,address cancellationReceiver,address callbackContract,address uiFeeReceiver,address market,address initialCollateralToken,address[] swapPath)CreateOrderNumbers(uint256 sizeDeltaUsd,uint256 initialCollateralDeltaAmount,uint256 triggerPrice,uint256 acceptablePrice,uint256 executionFee,uint256 callbackGasLimit,uint256 minOutputAmount,uint256 validFromTime)"
+                "CreateOrder(uint256 collateralDeltaAmount,CreateOrderAddresses addresses,CreateOrderNumbers numbers,uint256 orderType,bool isLong,bool shouldUnwrapNativeToken,bool autoCancel,uint256 referralCode,uint256 userNonce,uint256 deadline,bytes32 relayParams,bytes32 subaccountApproval)CreateOrderAddresses(address receiver,address cancellationReceiver,address callbackContract,address uiFeeReceiver,address market,address initialCollateralToken,address[] swapPath)CreateOrderNumbers(uint256 sizeDeltaUsd,uint256 initialCollateralDeltaAmount,uint256 triggerPrice,uint256 acceptablePrice,uint256 executionFee,uint256 callbackGasLimit,uint256 minOutputAmount,uint256 validFromTime)"
             )
         );
     bytes32 public constant CREATE_ORDER_NUMBERS_TYPEHASH =
@@ -82,7 +82,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     function createOrder(
         RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
-        uint256 collateralAmount,
+        uint256 collateralDeltaAmount,
         IBaseOrderUtils.CreateOrderParams memory params, // can't use calldata because need to modify params.numbers.executionFee
         address account,
         address subaccount,
@@ -99,7 +99,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         bytes32 structHash = _getCreateOrderStructHash(
             relayParams,
             subaccountApproval,
-            collateralAmount,
+            collateralDeltaAmount,
             params,
             userNonce,
             deadline
@@ -107,7 +107,15 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         _validateCall(userNonce, deadline, subaccount, structHash, signature);
         _validateSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, subaccountApproval);
 
-        return _createOrder(relayParams.tokenPermit, relayParams.fee, collateralAmount, params, account);
+        if (params.addresses.receiver != account) {
+            revert Errors.InvalidReceiver(params.addresses.receiver);
+        }
+
+        if (params.addresses.cancellationReceiver != address(0) && params.addresses.cancellationReceiver != account) {
+            revert Errors.InvalidCancellationReceiverForSubaccountOrder(params.addresses.cancellationReceiver, account);
+        }
+
+        return _createOrder(relayParams.tokenPermits, relayParams.fee, collateralDeltaAmount, params, account);
     }
 
     function updateOrder(
@@ -270,16 +278,19 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     function _getCreateOrderStructHash(
         RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
-        uint256 collateralAmount,
+        uint256 collateralDeltaAmount,
         IBaseOrderUtils.CreateOrderParams memory params,
         uint256 userNonce,
         uint256 deadline
     ) internal pure returns (bytes32) {
+        bytes32 relayParamsHash = keccak256(abi.encode(relayParams));
+        bytes32 subaccountApprovalHash = keccak256(abi.encode(subaccountApproval));
+
         return
             keccak256(
                 abi.encode(
                     CREATE_ORDER_TYPEHASH,
-                    collateralAmount,
+                    collateralDeltaAmount,
                     _getCreateOrderAddressesStructHash(params.addresses),
                     _getCreateOrderNumbersStructHash(params.numbers),
                     uint256(params.orderType),
@@ -287,10 +298,10 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
                     params.shouldUnwrapNativeToken,
                     params.autoCancel,
                     params.referralCode,
-                    keccak256(abi.encode(relayParams)),
-                    keccak256(abi.encode(subaccountApproval)),
                     userNonce,
-                    deadline
+                    deadline,
+                    relayParamsHash,
+                    subaccountApprovalHash
                 )
             );
     }

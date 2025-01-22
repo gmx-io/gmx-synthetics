@@ -1,14 +1,14 @@
 import { expect } from "chai";
 
-import { deployContract } from "../../utils/deploy";
-import { deployFixture } from "../../utils/fixture";
-import { errorsContract } from "../../utils/error";
+import { deployContract } from "../../../utils/deploy";
+import { deployFixture } from "../../../utils/fixture";
+import { errorsContract } from "../../../utils/error";
 
 const badSignature =
   "0x122e3efab9b46c82dc38adf4ea6cd2c753b00f95c217a0e3a0f4dd110839f07a08eb29c1cc414d551349510e23a75219cd70c8b88515ed2b83bbd88216ffdb051f";
 const chainId = 42161;
 
-describe("GelatoRelayRouter", () => {
+describe("Relay signatures", () => {
   let fixture;
   let user0;
   let domain;
@@ -133,4 +133,5 @@ describe("GelatoRelayRouter", () => {
       mockContract.testArraySignature([account, account], account, badSignature, chainId)
     ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
   });
+
 });

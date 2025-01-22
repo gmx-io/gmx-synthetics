@@ -23,7 +23,7 @@ contract GelatoRelayRouterERC2771 is BaseGelatoRelayRouterERC2771 {
 
     function createOrder(
         RelayParams calldata relayParams,
-        uint256 collateralAmount,
+        uint256 collateralDeltaAmount,
         IBaseOrderUtils.CreateOrderParams memory params // can't use calldata because need to modify params.numbers.executionFee
     )
         external
@@ -34,7 +34,7 @@ contract GelatoRelayRouterERC2771 is BaseGelatoRelayRouterERC2771 {
     {
         // should not use msg.sender directly because Gelato relayer passes it in calldata
         address account = _getMsgSender();
-        return _createOrder(relayParams.tokenPermit, relayParams.fee, collateralAmount, params, account);
+        return _createOrder(relayParams.tokenPermits, relayParams.fee, collateralDeltaAmount, params, account);
     }
 
     function updateOrder(

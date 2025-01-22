@@ -93,6 +93,7 @@ export async function deployFixture() {
   const adlHandler = await hre.ethers.getContract("AdlHandler");
   const router = await hre.ethers.getContract("Router");
   const exchangeRouter = await hre.ethers.getContract("ExchangeRouter");
+  const gelatoRelayRouter = await hre.ethers.getContract("GelatoRelayRouter");
   const subaccountRouter = await hre.ethers.getContract("SubaccountRouter");
   const oracle = await hre.ethers.getContract("Oracle");
   const gmOracleProvider = await hre.ethers.getContract("GmOracleProvider");
@@ -268,6 +269,7 @@ export async function deployFixture() {
       adlHandler,
       router,
       exchangeRouter,
+      gelatoRelayRouter,
       subaccountRouter,
       oracle,
       gmOracleProvider,

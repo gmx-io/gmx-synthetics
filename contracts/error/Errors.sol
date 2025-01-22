@@ -353,6 +353,7 @@ library Errors {
 
     // SubaccountRouter errors
     error InvalidReceiverForSubaccountOrder(address receiver, address expectedReceiver);
+    error InvalidCancellationReceiverForSubaccountOrder(address cancellationReceiver, address expectedCancellationReceiver);
 
     // SubaccountUtils errors
     error SubaccountNotAuthorized(address account, address subaccount);

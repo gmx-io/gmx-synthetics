@@ -179,7 +179,11 @@ contract Oracle is RoleModule {
     // @param params OracleUtils.SetPricesParams
     function _setPrices(
         OracleUtils.ValidatedPrice[] memory prices
-    ) internal returns (OracleUtils.ValidatedPrice[] memory) {
+    ) internal {
+        if (prices.length == 0) {
+            return;
+        }
+
         if (tokensWithPrices.length() != 0) {
             revert Errors.NonEmptyTokensWithPrices(tokensWithPrices.length());
         }
@@ -223,8 +227,6 @@ contract Oracle is RoleModule {
 
         minTimestamp = _minTimestamp;
         maxTimestamp = _maxTimestamp;
-
-        return prices;
     }
 
     function _validatePrices(

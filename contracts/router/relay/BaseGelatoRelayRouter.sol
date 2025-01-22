@@ -21,21 +21,6 @@ import "../../nonce/NonceUtils.sol";
 abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, OracleModule {
     using Order for Order.Props;
 
-    IOrderHandler public immutable orderHandler;
-    OrderVault public immutable orderVault;
-    Router public immutable router;
-    DataStore public immutable dataStore;
-    EventEmitter public immutable eventEmitter;
-
-    // Define the EIP-712 struct type:
-    bytes32 public constant DOMAIN_SEPARATOR_TYPEHASH =
-        keccak256(bytes("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"));
-
-    bytes32 public constant DOMAIN_SEPARATOR_NAME_HASH = keccak256(bytes("GmxBaseGelatoRelayRouter"));
-    bytes32 public constant DOMAIN_SEPARATOR_VERSION_HASH = keccak256(bytes("1"));
-
-    mapping(address => uint256) public userNonces;
-
     struct TokenPermit {
         address owner;
         address spender;
@@ -55,7 +40,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
     struct RelayParams {
         OracleUtils.SetPricesParams oracleParams;
-        TokenPermit[] tokenPermit;
+        TokenPermit[] tokenPermits;
         RelayFeeParams fee;
     }
 
@@ -73,6 +58,21 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         EventEmitter eventEmitter;
         OrderVault orderVault;
     }
+
+    IOrderHandler public immutable orderHandler;
+    OrderVault public immutable orderVault;
+    Router public immutable router;
+    DataStore public immutable dataStore;
+    EventEmitter public immutable eventEmitter;
+
+    // Define the EIP-712 struct type:
+    bytes32 public constant DOMAIN_SEPARATOR_TYPEHASH =
+        keccak256(bytes("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"));
+
+    bytes32 public constant DOMAIN_SEPARATOR_NAME_HASH = keccak256(bytes("GmxBaseGelatoRelayRouter"));
+    bytes32 public constant DOMAIN_SEPARATOR_VERSION_HASH = keccak256(bytes("1"));
+
+    mapping(address => uint256) public userNonces;
 
     constructor(
         Router _router,
@@ -113,14 +113,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             revert Errors.Unauthorized(account, "account for updateOrder");
         }
 
-        _handleRelay(
-            contracts,
-            relayParams.tokenPermit,
-            relayParams.fee,
-            account,
-            key,
-            account
-        );
+        _handleRelay(contracts, relayParams.tokenPermits, relayParams.fee, account, key, account);
 
         orderHandler.updateOrder(
             key,
@@ -150,38 +143,18 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             orderVault: orderVault
         });
 
-        _handleRelay(
-            contracts,
-            relayParams.tokenPermit,
-            relayParams.fee,
-            account,
-            key,
-            account
-        );
+        _handleRelay(contracts, relayParams.tokenPermits, relayParams.fee, account, key, account);
 
         orderHandler.cancelOrder(key);
-    }
-
-    function _getCreateOrderSignatureMessage(
-        RelayParams memory relayParams,
-        uint256 collateralAmount,
-        IBaseOrderUtils.CreateOrderParams memory params
-    ) internal pure returns (bytes memory) {
-        return abi.encode(relayParams, collateralAmount, params);
     }
 
     function _createOrder(
         TokenPermit[] calldata tokenPermit,
         RelayFeeParams calldata fee,
-        uint256 collateralAmount,
+        uint256 collateralDeltaAmount,
         IBaseOrderUtils.CreateOrderParams memory params, // can't use calldata because need to modify params.numbers.executionFee
         address account
     ) internal returns (bytes32) {
-        if (params.addresses.receiver != account) {
-            // otherwise malicious relayer can set receiver to any address and steal user's funds
-            revert Errors.InvalidReceiver(params.addresses.receiver);
-        }
-
         Contracts memory contracts = Contracts({
             dataStore: dataStore,
             eventEmitter: eventEmitter,
@@ -197,12 +170,12 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             address(contracts.orderVault)
         );
 
-        if (collateralAmount > 0) {
+        if (collateralDeltaAmount > 0) {
             _sendTokens(
                 account,
                 params.addresses.initialCollateralToken,
                 address(contracts.orderVault),
-                collateralAmount
+                collateralDeltaAmount
             );
         }
 
@@ -298,7 +271,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         address wnt = TokenUtils.wnt(contracts.dataStore);
 
         if (_getFeeToken() != wnt) {
-            revert Errors.InvalidRelayFeeToken(fee.feeToken, wnt);
+            revert Errors.InvalidRelayFeeToken(_getFeeToken(), wnt);
         }
 
         _sendTokens(account, fee.feeToken, address(contracts.orderVault), fee.feeAmount);
