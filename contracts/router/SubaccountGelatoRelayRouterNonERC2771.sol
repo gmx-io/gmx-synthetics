@@ -65,7 +65,6 @@ contract SubaccountGelatoRelayRouterNonERC2771 is BaseGelatoRelayRouterNonERC277
             )
         );
 
-    mapping(address => uint256) public userNonces;
     mapping(address => uint256) public subaccountApprovalNonces;
 
     constructor(
@@ -228,34 +227,6 @@ contract SubaccountGelatoRelayRouterNonERC2771 is BaseGelatoRelayRouterNonERC277
                     subaccountApproval.nonce
                 )
             );
-    }
-
-    function _validateCall(
-        uint256 userNonce,
-        uint256 deadline,
-        address account,
-        bytes32 structHash,
-        bytes calldata signature
-    ) internal {
-        bytes32 domainSeparator = _getDomainSeparator(block.chainid);
-        bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
-        _validateSignature(digest, signature, account);
-
-        _validateNonce(account, userNonce);
-        _validateDeadline(deadline);
-    }
-
-    function _validateDeadline(uint256 deadline) internal view {
-        if (deadline > 0 && block.timestamp > deadline) {
-            revert Errors.MultichainDeadlinePassed(block.timestamp, deadline);
-        }
-    }
-
-    function _validateNonce(address account, uint256 userNonce) internal {
-        if (userNonces[account] != 0) {
-            revert Errors.InvalidUserNonce(userNonces[account], userNonce);
-        }
-        userNonces[account] = userNonce;
     }
 
     function _getCreateOrderStructHash(

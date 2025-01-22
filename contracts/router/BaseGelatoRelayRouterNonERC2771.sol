@@ -34,6 +34,8 @@ abstract contract BaseGelatoRelayRouterNonERC2771 is GelatoRelayContext, Reentra
     bytes32 public constant DOMAIN_SEPARATOR_NAME_HASH = keccak256(bytes("GmxBaseGelatoRelayRouter"));
     bytes32 public constant DOMAIN_SEPARATOR_VERSION_HASH = keccak256(bytes("1"));
 
+    mapping(address => uint256) public userNonces;
+
     struct TokenPermit {
         address owner;
         address spender;
@@ -325,5 +327,33 @@ abstract contract BaseGelatoRelayRouterNonERC2771 is GelatoRelayContext, Reentra
                     address(this)
                 )
             );
+    }
+
+    function _validateCall(
+        uint256 userNonce,
+        uint256 deadline,
+        address account,
+        bytes32 structHash,
+        bytes calldata signature
+    ) internal {
+        bytes32 domainSeparator = _getDomainSeparator(block.chainid);
+        bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
+        _validateSignature(digest, signature, account);
+
+        _validateNonce(account, userNonce);
+        _validateDeadline(deadline);
+    }
+
+    function _validateDeadline(uint256 deadline) internal view {
+        if (deadline > 0 && block.timestamp > deadline) {
+            revert Errors.MultichainDeadlinePassed(block.timestamp, deadline);
+        }
+    }
+
+    function _validateNonce(address account, uint256 userNonce) internal {
+        if (userNonces[account] != 0) {
+            revert Errors.InvalidUserNonce(userNonces[account], userNonce);
+        }
+        userNonces[account] = userNonce;
     }
 }

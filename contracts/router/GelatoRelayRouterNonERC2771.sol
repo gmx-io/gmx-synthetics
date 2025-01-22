@@ -46,8 +46,6 @@ contract GelatoRelayRouterNonERC2771 is BaseGelatoRelayRouterNonERC2771 {
             )
         );
 
-    mapping(address => uint256) public userNonces;
-
     constructor(
         Router _router,
         DataStore _dataStore,
@@ -101,34 +99,6 @@ contract GelatoRelayRouterNonERC2771 is BaseGelatoRelayRouterNonERC2771 {
         _cancelOrder(relayParams, account, key);
     }
 
-    function _validateCall(
-        uint256 userNonce,
-        uint256 deadline,
-        address account,
-        bytes32 structHash,
-        bytes calldata signature
-    ) internal {
-        bytes32 domainSeparator = _getDomainSeparator(block.chainid);
-        bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
-        _validateSignature(digest, signature, account);
-
-        _validateNonce(account, userNonce);
-        _validateDeadline(deadline);
-    }
-
-    function _validateDeadline(uint256 deadline) internal view {
-        if (deadline > 0 && block.timestamp > deadline) {
-            revert Errors.MultichainDeadlinePassed(block.timestamp, deadline);
-        }
-    }
-
-    function _validateNonce(address account, uint256 userNonce) internal {
-        if (userNonces[account] != 0) {
-            revert Errors.InvalidUserNonce(userNonces[account], userNonce);
-        }
-        userNonces[account] = userNonce;
-    }
-
     function _getUpdateOrderStructHash(
         RelayParams calldata relayParams,
         bytes32 key,
@@ -144,7 +114,7 @@ contract GelatoRelayRouterNonERC2771 is BaseGelatoRelayRouterNonERC2771 {
                     _getUpdateOrderParamsStructHash(params),
                     userNonce,
                     deadline,
-                    _getRelayParamsStructHash(relayParams)
+                    keccak256(abi.encode(relayParams))
                 )
             );
     }
@@ -172,7 +142,7 @@ contract GelatoRelayRouterNonERC2771 is BaseGelatoRelayRouterNonERC2771 {
     ) internal pure returns (bytes32) {
         return
             keccak256(
-                abi.encode(CANCEL_ORDER_TYPEHASH, key, userNonce, deadline, _getRelayParamsStructHash(relayParams))
+                abi.encode(CANCEL_ORDER_TYPEHASH, key, userNonce, deadline, keccak256(abi.encode(relayParams)))
             );
     }
 
@@ -195,7 +165,7 @@ contract GelatoRelayRouterNonERC2771 is BaseGelatoRelayRouterNonERC2771 {
                     params.shouldUnwrapNativeToken,
                     params.autoCancel,
                     params.referralCode,
-                    _getRelayParamsStructHash(relayParams),
+                    keccak256(abi.encode(relayParams)),
                     userNonce,
                     deadline
                 )
@@ -237,9 +207,5 @@ contract GelatoRelayRouterNonERC2771 is BaseGelatoRelayRouterNonERC2771 {
                     keccak256(abi.encodePacked(addresses.swapPath))
                 )
             );
-    }
-
-    function _getRelayParamsStructHash(RelayParams calldata relayParams) internal pure returns (bytes32) {
-        return keccak256(abi.encode(relayParams));
     }
 }
