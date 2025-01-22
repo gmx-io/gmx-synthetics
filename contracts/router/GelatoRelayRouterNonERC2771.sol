@@ -63,7 +63,13 @@ contract GelatoRelayRouterNonERC2771 is BaseGelatoRelayRouterNonERC2771 {
         bytes calldata signature,
         uint256 userNonce,
         uint256 deadline
-    ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) returns (bytes32) {
+    )
+        external
+        nonReentrant
+        withOraclePricesForAtomicAction(relayParams.oracleParams)
+        onlyGelatoRelay
+        returns (bytes32)
+    {
         bytes32 structHash = _getCreateOrderStructHash(relayParams, collateralAmount, params, userNonce, deadline);
         _validateCall(userNonce, deadline, account, structHash, signature);
 
@@ -78,7 +84,7 @@ contract GelatoRelayRouterNonERC2771 is BaseGelatoRelayRouterNonERC2771 {
         bytes calldata signature,
         uint256 userNonce,
         uint256 deadline
-    ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) {
+    ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelay {
         bytes32 structHash = _getUpdateOrderStructHash(relayParams, key, params, userNonce, deadline);
         _validateCall(userNonce, deadline, account, structHash, signature);
 
@@ -92,7 +98,7 @@ contract GelatoRelayRouterNonERC2771 is BaseGelatoRelayRouterNonERC2771 {
         bytes calldata signature,
         uint256 userNonce,
         uint256 deadline
-    ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) {
+    ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelay {
         bytes32 structHash = _getCancelOrderStructHash(relayParams, key, userNonce, deadline);
         _validateCall(userNonce, deadline, account, structHash, signature);
 
@@ -141,9 +147,7 @@ contract GelatoRelayRouterNonERC2771 is BaseGelatoRelayRouterNonERC2771 {
         uint256 deadline
     ) internal pure returns (bytes32) {
         return
-            keccak256(
-                abi.encode(CANCEL_ORDER_TYPEHASH, key, userNonce, deadline, keccak256(abi.encode(relayParams)))
-            );
+            keccak256(abi.encode(CANCEL_ORDER_TYPEHASH, key, userNonce, deadline, keccak256(abi.encode(relayParams))));
     }
 
     function _getCreateOrderStructHash(
