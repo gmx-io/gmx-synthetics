@@ -582,6 +582,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedLimitedBaseKeys[Keys.MAX_OPEN_INTEREST] = true;
 
         allowedLimitedBaseKeys[Keys.PRO_TRADER_TIER] = true;
+
+        // allowedBaseKeys[Keys.CLAIMABLE_COLLATERAL_REDUCTION_FACTOR] = true; // TODO: confirm allowing this key here instead of ConfigSyncer.sol + config.ts
     }
 
     // @dev validate that the baseKey is allowed to be used

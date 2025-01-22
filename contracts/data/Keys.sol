@@ -378,6 +378,8 @@ library Keys {
     bytes32 public constant CLAIMABLE_COLLATERAL_AMOUNT = keccak256(abi.encode("CLAIMABLE_COLLATERAL_AMOUNT"));
     // @dev key for claimable collateral factor
     bytes32 public constant CLAIMABLE_COLLATERAL_FACTOR = keccak256(abi.encode("CLAIMABLE_COLLATERAL_FACTOR"));
+    // @dev key for claimable collateral reduction factor
+    bytes32 public constant CLAIMABLE_COLLATERAL_REDUCTION_FACTOR = keccak256(abi.encode("CLAIMABLE_COLLATERAL_REDUCTION_FACTOR"));
     // @dev key for claimable collateral time divisor
     bytes32 public constant CLAIMABLE_COLLATERAL_TIME_DIVISOR = keccak256(abi.encode("CLAIMABLE_COLLATERAL_TIME_DIVISOR"));
     // @dev key for claimed collateral amount
@@ -1609,6 +1611,22 @@ library Keys {
     function claimableCollateralFactorKey(address market, address token, uint256 timeKey, address account) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             CLAIMABLE_COLLATERAL_FACTOR,
+            market,
+            token,
+            timeKey,
+            account
+        ));
+    }
+
+    // @dev key for claimable collateral reduction factor for a timeKey for an account
+    // @param market the market to check
+    // @param token the token to check
+    // @param timeKey the time key for the claimable factor
+    // @param account the account to check
+    // @return key for claimable funding factor
+    function claimableCollateralReductionFactorKey(address market, address token, uint256 timeKey, address account) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            CLAIMABLE_COLLATERAL_REDUCTION_FACTOR,
             market,
             token,
             timeKey,

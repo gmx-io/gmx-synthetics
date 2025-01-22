@@ -661,7 +661,10 @@ library MarketUtils {
 
         uint256 claimableFactor;
 
-        {
+        // TODO: bypassing the "if" case reduces the contract size by 0.5 KiB. Why there is such a big difference is code size?
+        if (_isFullyClaimable(dataStore, market, token, timeKey, account)) { // if (false) {
+            claimableFactor = Precision.FLOAT_PRECISION;
+        } else {
             uint256 claimableFactorForTime = dataStore.getUint(Keys.claimableCollateralFactorKey(market, token, timeKey));
             uint256 claimableFactorForAccount = dataStore.getUint(Keys.claimableCollateralFactorKey(market, token, timeKey, account));
             claimableFactor = claimableFactorForTime > claimableFactorForAccount ? claimableFactorForTime : claimableFactorForAccount;
@@ -710,6 +713,23 @@ library MarketUtils {
         );
 
         return amountToBeClaimed;
+    }
+
+    function _isFullyClaimable(
+        DataStore dataStore,
+        address market,
+        address token,
+        uint256 timeKey,
+        address account
+    ) private view returns (bool) {
+        // minimum duration required to automatically have the base rebate be 100%
+        uint256 minClaimableCollateralReductionTime = 3 days; // TODO: move to Config?
+
+        uint256 claimableReductionFactor = dataStore.getUint(Keys.claimableCollateralReductionFactorKey(market, token, timeKey, account));
+        uint256 divisor = dataStore.getUint(Keys.CLAIMABLE_COLLATERAL_TIME_DIVISOR);
+        uint256 currentTimeKey = Chain.currentTimestamp() / divisor;
+
+        return claimableReductionFactor == 0 && currentTimeKey - timeKey < minClaimableCollateralReductionTime;
     }
 
     // @dev apply a delta to the pool amount
