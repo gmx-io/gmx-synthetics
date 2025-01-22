@@ -61,9 +61,12 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     bytes32 public constant SUBACCOUNT_APPROVAL_TYPEHASH =
         keccak256(
             bytes(
-                "SubaccountGelatoRelayRouter_SubaccountApproval(address subaccount,uint256 expiresAt,uint256 maxAllowedCount,bytes32 actionType,uint256 nonce,bytes signature)"
+                "SubaccountApproval(address subaccount,uint256 expiresAt,uint256 maxAllowedCount,bytes32 actionType,uint256 nonce,bytes signature)"
             )
         );
+
+    bytes32 public constant REMOVE_SUBACCOUNT_TYPEHASH =
+        keccak256(bytes("RemoveSubaccount(address subaccount,uint256 userNonce,uint256 deadline,bytes32 relayParams)"));
 
     mapping(address => uint256) public subaccountApprovalNonces;
 
@@ -101,7 +104,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             userNonce,
             deadline
         );
-        _validateCall(userNonce, deadline, account, structHash, signature);
+        _validateCall(userNonce, deadline, subaccount, structHash, signature);
         _validateSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, subaccountApproval);
 
         return _createOrder(relayParams.tokenPermit, relayParams.fee, collateralAmount, params, account);
@@ -126,7 +129,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             userNonce,
             deadline
         );
-        _validateCall(userNonce, deadline, account, structHash, signature);
+        _validateCall(userNonce, deadline, subaccount, structHash, signature);
         _validateSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, subaccountApproval);
         _updateOrder(relayParams, account, key, params);
     }
@@ -142,9 +145,22 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         uint256 deadline
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelay {
         bytes32 structHash = _getCancelOrderStructHash(relayParams, subaccountApproval, key, userNonce, deadline);
-        _validateCall(userNonce, deadline, account, structHash, signature);
+        _validateCall(userNonce, deadline, subaccount, structHash, signature);
         _validateSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, subaccountApproval);
         _cancelOrder(relayParams, account, key);
+    }
+
+    function removeSubaccount(
+        RelayParams calldata relayParams,
+        address account,
+        address subaccount,
+        bytes calldata signature,
+        uint256 userNonce,
+        uint256 deadline
+    ) external payable nonReentrant {
+        bytes32 structHash = _getRemoveSubaccountStructHash(relayParams, subaccount, userNonce, deadline);
+        _validateCall(userNonce, deadline, account, structHash, signature);
+        SubaccountUtils.removeSubaccount(dataStore, eventEmitter, account, subaccount);
     }
 
     function _validateSubaccountAction(
@@ -162,7 +178,11 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         SubaccountUtils.incrementSubaccountActionCount(dataStore, eventEmitter, account, subaccount, actionType);
     }
 
-    function _handleSubaccountApproval(address account, address subaccount, SubaccountApproval calldata subaccountApproval) internal {
+    function _handleSubaccountApproval(
+        address account,
+        address subaccount,
+        SubaccountApproval calldata subaccountApproval
+    ) internal {
         if (subaccountApproval.signature.length == 0) {
             return;
         }
@@ -211,6 +231,24 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
 
             SubaccountUtils.addSubaccount(dataStore, eventEmitter, account, subaccountApproval.subaccount);
         }
+    }
+
+    function _getRemoveSubaccountStructHash(
+        RelayParams calldata relayParams,
+        address subaccount,
+        uint256 userNonce,
+        uint256 deadline
+    ) internal pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    REMOVE_SUBACCOUNT_TYPEHASH,
+                    subaccount,
+                    userNonce,
+                    deadline,
+                    keccak256(abi.encode(relayParams))
+                )
+            );
     }
 
     function _getSubaccountApprovalStructHash(

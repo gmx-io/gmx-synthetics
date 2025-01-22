@@ -44,7 +44,7 @@ library SubaccountUtils {
         EventEmitter eventEmitter,
         address account,
         address subaccount
-    ) internal {
+    ) external {
         bytes32 setKey = Keys.subaccountListKey(account);
         dataStore.removeAddress(setKey, subaccount);
 
