@@ -11,6 +11,7 @@ import "../feature/FeatureUtils.sol";
 // @title ConfigSyncer
 // @dev Contract to handle market parameter updates
 contract ConfigSyncer is ReentrancyGuard, RoleModule {
+    using EventUtils for EventUtils.AddressItems;
     using EventUtils for EventUtils.UintItems;
     using EventUtils for EventUtils.BoolItems;
 
@@ -119,6 +120,37 @@ contract ConfigSyncer is ReentrancyGuard, RoleModule {
         }
     }
 
+    function setClaimableCollateralReductionFactorForAccount(
+        address market,
+        address token,
+        uint256 timeKey,
+        address account,
+        uint256 factor
+    ) external onlyLimitedConfigKeeper nonReentrant { // TODO: confirm modifier
+        if (factor > Precision.FLOAT_PRECISION) { revert Errors.InvalidClaimableReductionFactor(factor); }
+
+        bytes32 key = Keys.claimableCollateralReductionFactorKey(market, token, timeKey, account);
+        dataStore.setUint(key, factor);
+
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(3);
+        eventData.addressItems.setItem(0, "market", market);
+        eventData.addressItems.setItem(1, "token", token);
+        eventData.addressItems.setItem(2, "account", account);
+
+        eventData.uintItems.initItems(2);
+        eventData.uintItems.setItem(0, "timeKey", timeKey);
+        eventData.uintItems.setItem(1, "factor", factor);
+
+        eventEmitter.emitEventLog2(
+            "SetClaimableCollateralReductionFactorForAccount",
+            Cast.toBytes32(market),
+            Cast.toBytes32(token),
+            eventData
+        );
+    }
+
     // @dev initialize the allowed base keys
     function _initAllowedBaseKeys() internal {
         allowedBaseKeys[Keys.MAX_POOL_AMOUNT] = true;
@@ -144,6 +176,8 @@ contract ConfigSyncer is ReentrancyGuard, RoleModule {
 
         allowedBaseKeys[Keys.RESERVE_FACTOR] = true;
         allowedBaseKeys[Keys.OPEN_INTEREST_RESERVE_FACTOR] = true;
+
+        // allowedBaseKeys[Keys.CLAIMABLE_COLLATERAL_REDUCTION_FACTOR] = true;
     }
 
     // @dev validate that the baseKey is allowed to be used
