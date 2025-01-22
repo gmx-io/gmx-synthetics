@@ -54,6 +54,7 @@ export async function createShift(fixture, overrides: any = {}) {
     minMarketTokens,
     executionFee,
     callbackGasLimit,
+    dataList: [],
   };
 
   const txReceipt = await logGasUsage({

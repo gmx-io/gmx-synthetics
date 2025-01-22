@@ -78,6 +78,7 @@ export async function createGlvWithdrawal(fixture, overrides: any = {}) {
     shouldUnwrapNativeToken,
     executionFee,
     callbackGasLimit,
+    dataList: [],
   };
 
   for (const [key, value] of Object.entries(params)) {
