@@ -2346,7 +2346,7 @@ const config: {
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
 
-      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2e-10"),
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2e-8"),
 
       reserveFactor: percentageToFloat("40%"), // default is 95%
       openInterestReserveFactor: percentageToFloat("35%"), // default is 90%
@@ -2354,10 +2354,10 @@ const config: {
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
       maxOpenInterest: decimalToFloat(500_000),
-      maxPoolUsdForDeposit: decimalToFloat(1_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(2_000_000),
 
-      maxLongTokenPoolAmount: expandDecimals(450, 18),
-      maxShortTokenPoolAmount: expandDecimals(1_500_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(900, 18),
+      maxShortTokenPoolAmount: expandDecimals(3_000_000, 6),
     },
   ],
   avalanche: [
