@@ -212,27 +212,14 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         address account,
         uint256 factor
     ) external onlyConfigKeeper nonReentrant {
-        if (factor > Precision.FLOAT_PRECISION) { revert Errors.InvalidClaimableReductionFactor(factor); }
-
-        bytes32 key = Keys.claimableCollateralReductionFactorKey(market, token, timeKey, account);
-        dataStore.setUint(key, factor);
-
-        EventUtils.EventLogData memory eventData;
-
-        eventData.addressItems.initItems(3);
-        eventData.addressItems.setItem(0, "market", market);
-        eventData.addressItems.setItem(1, "token", token);
-        eventData.addressItems.setItem(2, "account", account);
-
-        eventData.uintItems.initItems(2);
-        eventData.uintItems.setItem(0, "timeKey", timeKey);
-        eventData.uintItems.setItem(1, "factor", factor);
-
-        eventEmitter.emitEventLog2(
-            "SetClaimableCollateralReductionFactorForAccount",
-            Cast.toBytes32(market),
-            Cast.toBytes32(token),
-            eventData
+        ConfigUtils.setClaimableCollateralReductionFactorForAccount(
+            dataStore,
+            eventEmitter,
+            market,
+            token,
+            timeKey,
+            account,
+            factor
         );
     }
 
