@@ -50,4 +50,11 @@ contract BaseHandler is RoleModule, GlobalReentrancyGuard, OracleModule {
             ErrorUtils.revertWithCustomError(reasonBytes);
         }
     }
+
+    function validateDataSize(uint256 dataLength) internal view {
+        uint256 maxDataLength = dataStore.getUint(Keys.MAX_DATA_LENGTH);
+        if (dataLength > maxDataLength) {
+            revert Errors.MaxDataLengthExceeded(dataLength, maxDataLength);
+        }
+    }
 }

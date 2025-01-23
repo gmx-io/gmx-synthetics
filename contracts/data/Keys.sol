@@ -469,6 +469,9 @@ library Keys {
     // @dev key for user's balance for a source chain, recorded under the user's virtual account
     bytes32 public constant SOURCE_CHAIN_BALANCE = keccak256(abi.encode("SOURCE_CHAIN_BALANCE"));
 
+    // @dev key for the maximum length for data list array of bytes32
+    bytes32 public constant MAX_DATA_LENGTH = keccak256(abi.encode("MAX_DATA_LENGTH"));
+
     // @dev constant for user initiated cancel reason
     string public constant USER_INITIATED_CANCEL = "USER_INITIATED_CANCEL";
 
