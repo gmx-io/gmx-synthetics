@@ -218,16 +218,7 @@ async function getPermitSignature(
 describe("GelatoRelayRouter", () => {
   let fixture;
   let user0, user1, user2;
-  let reader,
-    dataStore,
-    router,
-    gelatoRelayRouter,
-    ethUsdMarket,
-    wnt,
-    usdc,
-    chainlinkPriceFeedProvider,
-    usdcPriceFeed,
-    wethPriceFeed;
+  let reader, dataStore, router, gelatoRelayRouter, ethUsdMarket, wnt, usdc, chainlinkPriceFeedProvider;
   let gelatoRelaySigner;
   let chainId;
   const executionFee = expandDecimals(1, 18);
@@ -238,18 +229,8 @@ describe("GelatoRelayRouter", () => {
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1, user2 } = fixture.accounts);
-    ({
-      reader,
-      dataStore,
-      router,
-      gelatoRelayRouter,
-      ethUsdMarket,
-      wnt,
-      usdc,
-      chainlinkPriceFeedProvider,
-      usdcPriceFeed,
-      wethPriceFeed,
-    } = fixture.contracts);
+    ({ reader, dataStore, router, gelatoRelayRouter, ethUsdMarket, wnt, usdc, chainlinkPriceFeedProvider } =
+      fixture.contracts);
 
     defaultParams = {
       addresses: {
@@ -395,6 +376,7 @@ describe("GelatoRelayRouter", () => {
       );
 
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, 0);
+      console.log(1);
       const tx = await sendCreateOrder({
         ...createOrderParams,
         tokenPermits: [tokenPermit],
