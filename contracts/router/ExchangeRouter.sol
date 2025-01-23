@@ -398,10 +398,28 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         address[] memory tokens,
         address receiver
     ) external payable nonReentrant returns (uint256[] memory) {
+        if (markets.length != tokens.length) {
+            revert Errors.InvalidClaimAffiliateRewardsInput(markets.length, tokens.length);
+        }
+
+        FeatureUtils.validateFeature(dataStore, Keys.claimAffiliateRewardsFeatureDisabledKey(address(this)));
+
         address account = msg.sender;
-        return ReferralUtils.batchClaimAffiliateRewards(
-            dataStore, eventEmitter, markets, tokens, receiver, account
-        );
+
+        uint256[] memory claimedAmounts = new uint256[](markets.length);
+
+        for (uint256 i; i < markets.length; i++) {
+            claimedAmounts[i] = ReferralUtils.claimAffiliateReward(
+                dataStore,
+                eventEmitter,
+                markets[i],
+                tokens[i],
+                account,
+                receiver
+            );
+        }
+
+        return claimedAmounts;
     }
 
     function setUiFeeFactor(uint256 uiFeeFactor) external payable nonReentrant {
@@ -414,7 +432,27 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         address[] memory tokens,
         address receiver
     ) external payable nonReentrant returns (uint256[] memory) {
+        if (markets.length != tokens.length) {
+            revert Errors.InvalidClaimUiFeesInput(markets.length, tokens.length);
+        }
+
+        FeatureUtils.validateFeature(dataStore, Keys.claimUiFeesFeatureDisabledKey(address(this)));
+
         address uiFeeReceiver = msg.sender;
-        return FeeUtils.batchClaimUiFees(dataStore, eventEmitter, markets, tokens, receiver, uiFeeReceiver);
+
+        uint256[] memory claimedAmounts = new uint256[](markets.length);
+
+        for (uint256 i; i < markets.length; i++) {
+            claimedAmounts[i] = FeeUtils.claimUiFees(
+                dataStore,
+                eventEmitter,
+                uiFeeReceiver,
+                markets[i],
+                tokens[i],
+                receiver
+            );
+        }
+
+        return claimedAmounts;
     }
 }
