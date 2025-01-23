@@ -318,14 +318,14 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
     function _validateDeadline(uint256 deadline) internal view {
         if (deadline > 0 && block.timestamp > deadline) {
-            revert Errors.MultichainDeadlinePassed(block.timestamp, deadline);
+            revert Errors.DeadlinePassed(block.timestamp, deadline);
         }
     }
 
     function _validateNonce(address account, uint256 userNonce) internal {
-        if (userNonces[account] != 0) {
+        if (userNonces[account] != userNonce) {
             revert Errors.InvalidUserNonce(userNonces[account], userNonce);
         }
-        userNonces[account] = userNonce;
+        userNonces[account] = userNonce + 1;
     }
 }

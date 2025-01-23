@@ -6,6 +6,13 @@ import { expandDecimals, decimalToFloat } from "../../../utils/math";
 import { logGasUsage } from "../../../utils/gas";
 import { hashString } from "../../../utils/hash";
 import { OrderType, DecreasePositionSwapType, getOrderKeys } from "../../../utils/order";
+import { errorsContract } from "../../../utils/error";
+import { expectTokenBalanceIncrease, getBalanceOf } from "../../../utils/token";
+import { expectBalance, expectBalances } from "../../../utils/validation";
+
+const BAD_SIGNATURE =
+  "0x122e3efab9b46c82dc38adf4ea6cd2c753b00f95c217a0e3a0f4dd110839f07a08eb29c1cc414d551349510e23a75219cd70c8b88515ed2b83bbd88216ffdb051f";
+const GELATO_RELAY_ADDRESS = "0xcd565435e0d2109feFde337a66491541Df0D1420";
 
 describe("GelatoRelayRouter", () => {
   let fixture;
@@ -19,7 +26,7 @@ describe("GelatoRelayRouter", () => {
     ({ reader, dataStore, router, gelatoRelayRouter, ethUsdMarket, wnt, usdc } = fixture.contracts);
   });
 
-  it("createOrder", async () => {
+  it.only("createOrder", async () => {
     const referralCode = hashString("referralCode");
     await usdc.mint(user0.address, expandDecimals(50 * 1000, 6));
     await usdc.connect(user0).approve(router.address, expandDecimals(50 * 1000, 6));
@@ -63,101 +70,189 @@ describe("GelatoRelayRouter", () => {
       referralCode,
     };
 
-    const types = {
-      CreateOrder: [
-        { name: "collateralDeltaAmount", type: "uint256" },
-        { name: "addresses", type: "CreateOrderAddresses" },
-        { name: "numbers", type: "CreateOrderNumbers" },
-        { name: "orderType", type: "uint256" },
-        { name: "isLong", type: "bool" },
-        { name: "shouldUnwrapNativeToken", type: "bool" },
-        { name: "autoCancel", type: "bool" },
-        { name: "referralCode", type: "bytes32" },
-        { name: "userNonce", type: "uint256" },
-        { name: "deadline", type: "uint256" },
-        { name: "relayParams", type: "bytes32" },
-      ],
-      CreateOrderAddresses: [
-        { name: "receiver", type: "address" },
-        { name: "cancellationReceiver", type: "address" },
-        { name: "callbackContract", type: "address" },
-        { name: "uiFeeReceiver", type: "address" },
-        { name: "market", type: "address" },
-        { name: "initialCollateralToken", type: "address" },
-        { name: "swapPath", type: "address[]" },
-      ],
-      CreateOrderNumbers: [
-        { name: "sizeDeltaUsd", type: "uint256" },
-        { name: "initialCollateralDeltaAmount", type: "uint256" },
-        { name: "triggerPrice", type: "uint256" },
-        { name: "acceptablePrice", type: "uint256" },
-        { name: "executionFee", type: "uint256" },
-        { name: "callbackGasLimit", type: "uint256" },
-        { name: "minOutputAmount", type: "uint256" },
-        { name: "validFromTime", type: "uint256" },
-      ],
-    };
-
-    const chainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
-    const domain = {
-      name: "GmxBaseGelatoRelayRouter",
-      version: "1",
-      chainId,
-      verifyingContract: gelatoRelayRouter.address,
-    };
-    const relayParamsHash = ethers.utils.keccak256(
-      ethers.utils.defaultAbiCoder.encode(
-        [
-          "tuple(tuple(address[] tokens, address[] providers, bytes[] data) oracleParams, tuple(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s, address token)[] tokenPermits, tuple(address feeToken, uint256 feeAmount, address[] feeSwapPath) fee)",
+    async function getCreateOrderSignature(relayParams, params, deadline, userNonce, chainId) {
+      const types = {
+        CreateOrder: [
+          { name: "collateralDeltaAmount", type: "uint256" },
+          { name: "addresses", type: "CreateOrderAddresses" },
+          { name: "numbers", type: "CreateOrderNumbers" },
+          { name: "orderType", type: "uint256" },
+          { name: "isLong", type: "bool" },
+          { name: "shouldUnwrapNativeToken", type: "bool" },
+          { name: "autoCancel", type: "bool" },
+          { name: "referralCode", type: "bytes32" },
+          { name: "userNonce", type: "uint256" },
+          { name: "deadline", type: "uint256" },
+          { name: "relayParams", type: "bytes32" },
         ],
-        [relayParams]
-      )
-    );
+        CreateOrderAddresses: [
+          { name: "receiver", type: "address" },
+          { name: "cancellationReceiver", type: "address" },
+          { name: "callbackContract", type: "address" },
+          { name: "uiFeeReceiver", type: "address" },
+          { name: "market", type: "address" },
+          { name: "initialCollateralToken", type: "address" },
+          { name: "swapPath", type: "address[]" },
+        ],
+        CreateOrderNumbers: [
+          { name: "sizeDeltaUsd", type: "uint256" },
+          { name: "initialCollateralDeltaAmount", type: "uint256" },
+          { name: "triggerPrice", type: "uint256" },
+          { name: "acceptablePrice", type: "uint256" },
+          { name: "executionFee", type: "uint256" },
+          { name: "callbackGasLimit", type: "uint256" },
+          { name: "minOutputAmount", type: "uint256" },
+          { name: "validFromTime", type: "uint256" },
+        ],
+      };
+      const domain = {
+        name: "GmxBaseGelatoRelayRouter",
+        version: "1",
+        chainId,
+        verifyingContract: gelatoRelayRouter.address,
+      };
 
-    const collateralDeltaAmount = expandDecimals(1, 17); // 0.1 ETH
-    const deadline = 0;
-    const userNonce = 0;
-    const typedData = {
-      collateralDeltaAmount: collateralDeltaAmount,
-      addresses: params.addresses,
-      numbers: params.numbers,
-      orderType: params.orderType,
-      isLong: params.isLong,
-      shouldUnwrapNativeToken: params.shouldUnwrapNativeToken,
-      autoCancel: false,
-      referralCode: params.referralCode,
-      userNonce,
-      deadline,
-      relayParams: relayParamsHash,
-    };
-    const signature = await user0._signTypedData(domain, types, typedData);
+      const relayParamsHash = ethers.utils.keccak256(
+        ethers.utils.defaultAbiCoder.encode(
+          [
+            "tuple(tuple(address[] tokens, address[] providers, bytes[] data) oracleParams, tuple(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s, address token)[] tokenPermits, tuple(address feeToken, uint256 feeAmount, address[] feeSwapPath) fee)",
+          ],
+          [relayParams]
+        )
+      );
+      const typedData = {
+        collateralDeltaAmount,
+        addresses: params.addresses,
+        numbers: params.numbers,
+        orderType: params.orderType,
+        isLong: params.isLong,
+        shouldUnwrapNativeToken: params.shouldUnwrapNativeToken,
+        autoCancel: false,
+        referralCode: params.referralCode,
+        userNonce,
+        deadline,
+        relayParams: relayParamsHash,
+      };
 
-    const gelatoRelayAddress = "0xcd565435e0d2109feFde337a66491541Df0D1420";
-    await impersonateAccount(gelatoRelayAddress);
-    await setBalance(gelatoRelayAddress, expandDecimals(100, 18));
-    const gelatoRelaySigner = await hre.ethers.getSigner(gelatoRelayAddress);
+      return user0._signTypedData(domain, types, typedData);
+    }
 
-    const createOrderCalldata = gelatoRelayRouter.interface.encodeFunctionData("createOrder", [
+    async function sendCreateOrder({
+      signer,
       relayParams,
       collateralDeltaAmount,
-      user0.address,
+      account,
       params,
-      signature,
+      signature = undefined,
       userNonce,
       deadline,
-    ]);
-    const calldata = ethers.utils.solidityPack(
-      ["bytes", "address", "address", "uint256"],
-      [createOrderCalldata, gelatoRelayAddress, wnt.address, expandDecimals(1, 15)]
-    );
+    }) {
+      if (!signature) {
+        signature = await getCreateOrderSignature(relayParams, params, deadline, userNonce, chainId);
+      }
+      const createOrderCalldata = gelatoRelayRouter.interface.encodeFunctionData("createOrder", [
+        relayParams,
+        collateralDeltaAmount,
+        account,
+        params,
+        signature,
+        userNonce,
+        deadline,
+      ]);
+      const calldata = ethers.utils.solidityPack(
+        ["bytes", "address", "address", "uint256"],
+        [createOrderCalldata, GELATO_RELAY_ADDRESS, wnt.address, gelatoRelayFee]
+      );
+      return signer.sendTransaction({
+        to: gelatoRelayRouter.address,
+        data: calldata,
+      });
+    }
+
+    const collateralDeltaAmount = expandDecimals(1, 17); // 0.1 ETH
+
+    await impersonateAccount(GELATO_RELAY_ADDRESS);
+    await setBalance(GELATO_RELAY_ADDRESS, expandDecimals(100, 18));
+    const gelatoRelaySigner = await hre.ethers.getSigner(GELATO_RELAY_ADDRESS);
 
     await wnt.connect(user0).deposit({ value: expandDecimals(1, 18) });
     await wnt.connect(user0).approve(router.address, expandDecimals(1, 18));
 
-    const tx = await gelatoRelaySigner.sendTransaction({
-      to: gelatoRelayRouter.address,
-      data: calldata,
+    const gelatoRelayFee = expandDecimals(1, 15);
+    await expect(
+      sendCreateOrder({
+        signer: gelatoRelaySigner,
+        relayParams,
+        collateralDeltaAmount,
+        account: user0.address,
+        params,
+        signature: BAD_SIGNATURE,
+        userNonce: 0,
+        deadline: 0,
+      })
+    ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
+
+    const chainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
+    await expect(
+      sendCreateOrder({
+        signer: user0,
+        relayParams,
+        collateralDeltaAmount,
+        account: user0.address,
+        params,
+        userNonce: 0,
+        deadline: 0,
+      })
+    ).to.be.revertedWith("onlyGelatoRelay");
+
+    await expect(
+      sendCreateOrder({
+        signer: gelatoRelaySigner,
+        relayParams,
+        collateralDeltaAmount,
+        account: user0.address,
+        params,
+        userNonce: 100,
+        deadline: 0,
+      })
+    ).to.be.revertedWithCustomError(errorsContract, "InvalidUserNonce");
+
+    await expect(
+      sendCreateOrder({
+        signer: gelatoRelaySigner,
+        relayParams,
+        collateralDeltaAmount,
+        account: user0.address,
+        params,
+        userNonce: 0,
+        deadline: 5,
+      })
+    ).to.be.revertedWithCustomError(errorsContract, "DeadlinePassed");
+
+    await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, 0);
+    const tx = await sendCreateOrder({
+      signer: gelatoRelaySigner,
+      relayParams,
+      collateralDeltaAmount,
+      account: user0.address,
+      params,
+      userNonce: 0,
+      deadline: 0,
     });
+    await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, gelatoRelayFee);
+
+    // same nonce should revert
+    await expect(
+      sendCreateOrder({
+        signer: gelatoRelaySigner,
+        relayParams,
+        collateralDeltaAmount,
+        account: user0.address,
+        params,
+        userNonce: 0,
+        deadline: 0,
+      })
+    ).to.be.revertedWithCustomError(errorsContract, "InvalidUserNonce");
 
     const orderKeys = await getOrderKeys(dataStore, 0, 1);
     const order = await reader.getOrder(dataStore.address, orderKeys[0]);
@@ -182,7 +277,7 @@ describe("GelatoRelayRouter", () => {
     expect(order.flags.shouldUnwrapNativeToken).eq(true);
     expect(order.flags.isFrozen).eq(false);
 
-    await stopImpersonatingAccount(gelatoRelayAddress);
+    await stopImpersonatingAccount(GELATO_RELAY_ADDRESS);
 
     await logGasUsage({
       tx,

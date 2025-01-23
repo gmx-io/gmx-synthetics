@@ -431,5 +431,5 @@ library Errors {
     error InvalidUserNonce(uint256 storedUserNonce, uint256 userNonce);
     error SubaccountApprovalDeadlinePassed(uint256 currentTimestamp, uint256 deadline);
     error InvalidSubaccountApprovalNonce(uint256 storedNonce, uint256 nonce);
-    error MultichainDeadlinePassed(uint256 currentTimestamp, uint256 deadline);
+    error DeadlinePassed(uint256 currentTimestamp, uint256 deadline);
 }

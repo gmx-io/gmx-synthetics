@@ -4,7 +4,7 @@ import { deployContract } from "../../../utils/deploy";
 import { deployFixture } from "../../../utils/fixture";
 import { errorsContract } from "../../../utils/error";
 
-const badSignature =
+const BAD_SIGNATURE =
   "0x122e3efab9b46c82dc38adf4ea6cd2c753b00f95c217a0e3a0f4dd110839f07a08eb29c1cc414d551349510e23a75219cd70c8b88515ed2b83bbd88216ffdb051f";
 const chainId = 42161;
 
@@ -79,7 +79,7 @@ describe("Relay signatures", () => {
     const signature = await user0._signTypedData(domain, types, value);
     await mockContract.testSimpleSignature(account, signature, chainId);
 
-    await expect(mockContract.testSimpleSignature(account, badSignature, chainId)).to.be.revertedWithCustomError(
+    await expect(mockContract.testSimpleSignature(account, BAD_SIGNATURE, chainId)).to.be.revertedWithCustomError(
       errorsContract,
       "InvalidSignature"
     );
@@ -109,7 +109,7 @@ describe("Relay signatures", () => {
     await mockContract.testNestedSignature(nested, account, signature, chainId);
 
     await expect(
-      mockContract.testNestedSignature(nested, account, badSignature, chainId)
+      mockContract.testNestedSignature(nested, account, BAD_SIGNATURE, chainId)
     ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
   });
 
@@ -130,8 +130,7 @@ describe("Relay signatures", () => {
     await mockContract.testArraySignature([account, account], account, signature, chainId);
 
     await expect(
-      mockContract.testArraySignature([account, account], account, badSignature, chainId)
+      mockContract.testArraySignature([account, account], account, BAD_SIGNATURE, chainId)
     ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
   });
-
 });
