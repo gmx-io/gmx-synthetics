@@ -180,16 +180,13 @@ contract Oracle is RoleModule {
     function _setPrices(
         OracleUtils.ValidatedPrice[] memory prices
     ) internal {
+        // in case of gasless relay the prices are not required if there is no need to swap fee tokens
         if (prices.length == 0) {
             return;
         }
 
         if (tokensWithPrices.length() != 0) {
             revert Errors.NonEmptyTokensWithPrices(tokensWithPrices.length());
-        }
-
-        if (prices.length == 0) {
-            revert Errors.EmptyValidatedPrices();
         }
 
         uint256 _minTimestamp = prices[0].timestamp;
@@ -242,6 +239,10 @@ contract Oracle is RoleModule {
         }
 
         OracleUtils.ValidatedPrice[] memory prices = new OracleUtils.ValidatedPrice[](params.tokens.length);
+
+        if (params.tokens.length == 0) {
+            return prices;
+        }
 
         uint256 maxPriceAge = dataStore.getUint(Keys.MAX_ORACLE_PRICE_AGE);
         uint256 maxRefPriceDeviationFactor = dataStore.getUint(Keys.MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR);

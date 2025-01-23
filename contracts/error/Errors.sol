@@ -195,7 +195,7 @@ library Errors {
     // Oracle errors
     error SequencerDown();
     error SequencerGraceDurationNotYetPassed(uint256 timeSinceUp, uint256 sequencerGraceDuration);
-    error EmptyValidatedPrices();
+    error EmptyValidatedPrices(); // not used, kept for compatibility
     error InvalidOracleProvider(address provider);
     error InvalidOracleProviderForToken(address provider, address expectedProvider);
     error GmEmptySigner(uint256 signerIndex);

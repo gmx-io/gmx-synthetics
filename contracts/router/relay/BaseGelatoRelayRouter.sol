@@ -276,7 +276,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
         _sendTokens(account, fee.feeToken, address(contracts.orderVault), fee.feeAmount);
         uint256 outputAmount = _swapFeeTokens(contracts, wnt, fee, orderKey);
-        // TODO if Gelato accepts native token then it should be unwrapped in the swap
         _transferRelayFee();
 
         uint256 residualFee = outputAmount - _getFee();
