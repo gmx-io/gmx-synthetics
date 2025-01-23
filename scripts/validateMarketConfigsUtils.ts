@@ -329,6 +329,16 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
     },
+    MELANIA: {
+      negativePositionImpactFactor: exponentToFloat("5e-7"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    ENA: {
+      negativePositionImpactFactor: exponentToFloat("8e-7"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
     wstETH: {
       negativeSwapImpactFactor: exponentToFloat("1e-8"),
       expectedSwapImpactRatio: 20_000,
