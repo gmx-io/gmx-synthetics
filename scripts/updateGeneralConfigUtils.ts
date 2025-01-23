@@ -390,9 +390,7 @@ export async function updateGeneralConfig({ write }) {
     }
 
     if (write) {
-      console.log(" TODO: FAILS HERE !!!");
-      const tx = await config.multicall(multicallWriteParams); // TODO: this seems to fails !!!
-      console.log(" TODO: FAILED !!!");
+      const tx = await config.multicall(multicallWriteParams);
       console.log(`tx sent: ${tx.hash}`);
     } else {
       await config.callStatic.multicall(multicallWriteParams, {
