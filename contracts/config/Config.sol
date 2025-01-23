@@ -13,7 +13,7 @@ import "../utils/Precision.sol";
 import "../utils/Cast.sol";
 import "../market/MarketUtils.sol";
 
-import "./IConfigUtils.sol";
+import "./ConfigUtils.sol";
 
 // @title Config
 contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
@@ -38,7 +38,6 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
-    IConfigUtils public immutable configUtils;
 
     // @dev the base keys that can be set
     mapping (bytes32 => bool) public allowedBaseKeys;
@@ -48,12 +47,10 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
-        EventEmitter _eventEmitter,
-        IConfigUtils _configUtils
+        EventEmitter _eventEmitter
     ) RoleModule(_roleStore) {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
-        configUtils = _configUtils;
 
         _initAllowedBaseKeys();
         _initAllowedLimitedBaseKeys();
@@ -95,7 +92,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         uint256 priceFeedHeartbeatDuration,
         uint256 stablePrice
     ) external onlyConfigKeeper nonReentrant {
-        configUtils.setPriceFeed(
+        ConfigUtils.setPriceFeed(
             dataStore,
             eventEmitter,
             token,
@@ -113,7 +110,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         uint256 dataStreamSpreadReductionFactor
     ) external onlyConfigKeeper nonReentrant {
 
-        configUtils.setDataStream(
+        ConfigUtils.setDataStream(
             dataStore,
             eventEmitter,
             token,
@@ -132,7 +129,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         uint256 timeKey,
         uint256 factor
     ) external onlyConfigKeeper nonReentrant {
-        configUtils.setClaimableCollateralFactorForTime(
+        ConfigUtils.setClaimableCollateralFactorForTime(
             dataStore,
             eventEmitter,
             market,
@@ -149,7 +146,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         address account,
         uint256 factor
     ) external onlyConfigKeeper nonReentrant {
-        configUtils.setClaimableCollateralFactorForAccount(
+        ConfigUtils.setClaimableCollateralFactorForAccount(
             dataStore,
             eventEmitter,
             market,
@@ -165,7 +162,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         uint256 minPositionImpactPoolAmount,
         uint256 positionImpactPoolDistributionRate
     ) external onlyConfigKeeper nonReentrant {
-        configUtils.setPositionImpactDistributionRate(
+        ConfigUtils.setPositionImpactDistributionRate(
             dataStore,
             eventEmitter,
             market,
@@ -269,7 +266,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
         bytes32 fullKey = Keys.getFullKey(baseKey, data);
 
-        configUtils.validateRange(
+        ConfigUtils.validateRange(
             dataStore,
             baseKey,
             data,
