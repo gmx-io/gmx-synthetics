@@ -13,12 +13,12 @@ import Keys from "../../artifacts/contracts/data/Keys.sol/Keys.json";
 describe("Config", () => {
   let fixture;
   let user0, user1, user2;
-  let config, dataStore, roleStore, ethUsdMarket, wnt;
+  let config, configUtils, dataStore, roleStore, ethUsdMarket, wnt;
   const { AddressZero } = ethers.constants;
 
   beforeEach(async () => {
     fixture = await deployFixture();
-    ({ config, dataStore, roleStore, ethUsdMarket, wnt } = fixture.contracts);
+    ({ config, configUtils, dataStore, roleStore, ethUsdMarket, wnt } = fixture.contracts);
     ({ user0, user1, user2 } = fixture.accounts);
 
     await grantRole(roleStore, user0.address, "CONFIG_KEEPER");
@@ -359,7 +359,7 @@ describe("Config", () => {
         minPositionImpactPoolAmount,
         invalidDistributionRate
       )
-    ).to.be.revertedWithCustomError(config, "InvalidPositionImpactPoolDistributionRate");
+    ).to.be.revertedWithCustomError(configUtils, "InvalidPositionImpactPoolDistributionRate");
 
     await expect(
       config.setPositionImpactDistributionRate(
