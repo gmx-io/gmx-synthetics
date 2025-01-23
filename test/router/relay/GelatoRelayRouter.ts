@@ -376,7 +376,6 @@ describe("GelatoRelayRouter", () => {
       );
 
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, 0);
-      console.log(1);
       const tx = await sendCreateOrder({
         ...createOrderParams,
         tokenPermits: [tokenPermit],

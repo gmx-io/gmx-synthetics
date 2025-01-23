@@ -188,6 +188,11 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         RelayFeeParams calldata fee,
         bytes32 orderKey
     ) internal returns (uint256) {
+        if (fee.feeToken == wnt) {
+            contracts.orderVault.transferOut(wnt, address(this), fee.feeAmount);
+            return fee.feeAmount;
+        }
+
         // swap fee tokens to WNT
         Market.Props[] memory swapPathMarkets = MarketUtils.getSwapPathMarkets(contracts.dataStore, fee.feeSwapPath);
 
