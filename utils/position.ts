@@ -17,8 +17,8 @@ export function getAccountPositionKeys(dataStore, account, start, end) {
   return dataStore.getBytes32ValuesAt(keys.accountPositionListKey(account), start, end);
 }
 
-export function getImpactPendingAmountKey(positionKey: string) {
-  return hashData(["bytes32", "bytes32"], [positionKey, keys.IMPACT_PENDING_AMOUNT]);
+export function getPendingImpactAmountKey(positionKey: string) {
+  return hashData(["bytes32", "bytes32"], [positionKey, keys.PENDING_IMPACT_AMOUNT]);
 }
 
 export function getPositionKey(account, market, collateralToken, isLong) {

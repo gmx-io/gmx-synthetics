@@ -12,7 +12,7 @@ import * as keys from "../../utils/keys";
 import { handleWithdrawal } from "../../utils/withdrawal";
 import {
   getAccountPositionCount,
-  getImpactPendingAmountKey,
+  getPendingImpactAmountKey,
   getPositionKey,
   getPositionKeys,
 } from "../../utils/position";
@@ -242,7 +242,7 @@ describe("Guardian.PositionImpactPoolDistribution", () => {
 
     const positionKey1 = getPositionKey(user1.address, ethUsdMarket.marketToken, usdc.address, false);
     // 10% * 2 * $100,000 = $20,000 = 4 ETH
-    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey1))).eq("-3999999999999999926"); // ~4 ETH
+    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey1))).eq("-3999999999999999926"); // ~4 ETH
 
     // Check that User1's order got filled
     expect(await getAccountPositionCount(dataStore, user1.address)).eq(1);
@@ -267,7 +267,7 @@ describe("Guardian.PositionImpactPoolDistribution", () => {
     expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).to.eq(0);
 
     const positionKey0 = getPositionKey(user0.address, ethUsdMarket.marketToken, wnt.address, true);
-    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0))).eq(0); // positive impact is capped by the impact pool amount which is 0
+    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey0))).eq(0); // positive impact is capped by the impact pool amount which is 0
 
     // User1 creates a short market decrease, balancing the pool
     await handleOrder(fixture, {
@@ -286,7 +286,7 @@ describe("Guardian.PositionImpactPoolDistribution", () => {
     const negativePI = expandDecimals(4, 17); // 0.4 eth 2,000 usd
     expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).to.eq(negativePI);
 
-    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey1))).eq(0); // short position decreased by 100% i.e. closed
+    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey1))).eq(0); // short position decreased by 100% i.e. closed
 
     await time.increase(10_000); // 0.00002 ETH/sec * 10,000 sec = 0.2 ETH should be distributed
 
@@ -307,7 +307,7 @@ describe("Guardian.PositionImpactPoolDistribution", () => {
     const positivePI = expandDecimals(4, 16); // 0.04 eth 200 usd
     const distributionAmt = expandDecimals(2, 17); // 0.2 eth
 
-    expect(await dataStore.getInt(getImpactPendingAmountKey(positionKey0))).eq(0); // long position decreased by 100% i.e. closed
+    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey0))).eq(0); // long position decreased by 100% i.e. closed
 
     expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).to.approximately(
       negativePI.sub(distributionAmt).sub(positivePI),
