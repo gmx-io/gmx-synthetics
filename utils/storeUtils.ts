@@ -157,6 +157,7 @@ export async function validateStoreUtils({
       addresses: {},
       numbers: {},
       flags: {},
+      _dataList: [],
     };
 
     setSampleItemAddresses({
