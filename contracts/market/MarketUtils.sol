@@ -659,16 +659,7 @@ library MarketUtils {
     ) internal returns (uint256) {
         uint256 claimableAmount = dataStore.getUint(Keys.claimableCollateralAmountKey(market, token, timeKey, account));
 
-        uint256 claimableFactor;
-
-        // TODO: bypassing the "if" case reduces the contract size by 0.5 KiB. Why there is such a big difference is code size?
-        if (_isFullyClaimable(dataStore, market, token, timeKey, account)) { // if (false) {
-            claimableFactor = Precision.FLOAT_PRECISION;
-        } else {
-            uint256 claimableFactorForTime = dataStore.getUint(Keys.claimableCollateralFactorKey(market, token, timeKey));
-            uint256 claimableFactorForAccount = dataStore.getUint(Keys.claimableCollateralFactorKey(market, token, timeKey, account));
-            claimableFactor = claimableFactorForTime > claimableFactorForAccount ? claimableFactorForTime : claimableFactorForAccount;
-        }
+        uint256 claimableFactor = _getClaimableFactor(dataStore, market, token, timeKey, account);
 
         if (claimableFactor > Precision.FLOAT_PRECISION) {
             revert Errors.InvalidClaimableFactor(claimableFactor);
@@ -715,21 +706,31 @@ library MarketUtils {
         return amountToBeClaimed;
     }
 
-    function _isFullyClaimable(
+    function _getClaimableFactor(
         DataStore dataStore,
         address market,
         address token,
         uint256 timeKey,
         address account
-    ) private view returns (bool) {
-        // minimum duration required to automatically have the base rebate be 100%
-        uint256 minClaimableCollateralReductionTime = 3 days; // TODO: move to Config?
+    ) internal view returns (uint256) {
+        uint256 claimableFactorForTime = dataStore.getUint(Keys.claimableCollateralFactorKey(market, token, timeKey));
+        uint256 claimableFactorForAccount = dataStore.getUint(Keys.claimableCollateralFactorKey(market, token, timeKey, account));
+        uint256 claimableFactor = claimableFactorForTime > claimableFactorForAccount
+            ? claimableFactorForTime
+            : claimableFactorForAccount;
+
+        // if the divisor is changed the timeDiff calculation would no longer be accurate
+        uint256 divisor = dataStore.getUint(Keys.CLAIMABLE_COLLATERAL_TIME_DIVISOR);
 
         uint256 claimableReductionFactor = dataStore.getUint(Keys.claimableCollateralReductionFactorKey(market, token, timeKey, account));
-        uint256 divisor = dataStore.getUint(Keys.CLAIMABLE_COLLATERAL_TIME_DIVISOR);
-        uint256 currentTimeKey = Chain.currentTimestamp() / divisor;
+        uint256 timeDiff = Chain.currentTimestamp() - timeKey * divisor;
+        uint256 claimableCollateralDelay = 3 days; // TODO: should be stored in dataStore (i.e. dataStore.getUint(Keys.CLAIMABLE_COLLATERAL_DELAY)) but if moved, exceeds contract size
 
-        return claimableReductionFactor == 0 && currentTimeKey - timeKey < minClaimableCollateralReductionTime;
+        if (claimableFactor == 0 && claimableReductionFactor == 0 && timeDiff > claimableCollateralDelay) {
+            claimableFactor = Precision.FLOAT_PRECISION;
+        }
+
+        return claimableFactor;
     }
 
     // @dev apply a delta to the pool amount
