@@ -141,9 +141,9 @@ library DecreasePositionCollateralUtils {
         }
 
         // order size has been enforced to be less or equal than position size (i.e. sizeDeltaUsd <= sizeInUsd)
-        (values.proportionalImpactPendingAmount, values.proportionalImpactPendingUsd) = _getProportionalImpactPendingValues(
+        (values.proportionalPendingImpactAmount, values.proportionalImpactPendingUsd) = _getProportionalImpactPendingValues(
             params.position.sizeInUsd(),
-            params.position.impactPendingAmount(),
+            params.position.pendingImpactAmount(),
             params.order.sizeDeltaUsd(),
             cache.prices.indexTokenPrice
         );
@@ -743,13 +743,13 @@ library DecreasePositionCollateralUtils {
         uint256 sizeDeltaUsd,
         Price.Props memory indexTokenPrice
     ) private pure returns (int256, int256) {
-        int256 proportionalImpactPendingAmount = Precision.mulDiv(positionImpactPendingAmount, sizeDeltaUsd, sizeInUsd);
+        int256 proportionalPendingImpactAmount = Precision.mulDiv(positionImpactPendingAmount, sizeDeltaUsd, sizeInUsd);
 
         // minimize the positive impact, maximize the negative impact
-        int256 proportionalImpactPendingUsd = proportionalImpactPendingAmount > 0
-            ? proportionalImpactPendingAmount * indexTokenPrice.min.toInt256()
-            : proportionalImpactPendingAmount * indexTokenPrice.max.toInt256();
+        int256 proportionalImpactPendingUsd = proportionalPendingImpactAmount > 0
+            ? proportionalPendingImpactAmount * indexTokenPrice.min.toInt256()
+            : proportionalPendingImpactAmount * indexTokenPrice.max.toInt256();
 
-        return (proportionalImpactPendingAmount, proportionalImpactPendingUsd);
+        return (proportionalPendingImpactAmount, proportionalImpactPendingUsd);
     }
 }
