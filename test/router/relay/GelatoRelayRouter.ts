@@ -9,6 +9,7 @@ import { OrderType, DecreasePositionSwapType, getOrderKeys } from "../../../util
 import { errorsContract } from "../../../utils/error";
 import { expectBalance } from "../../../utils/validation";
 import { BigNumberish } from "ethers";
+import { handleDeposit } from "../../../utils/deposit";
 
 const BAD_SIGNATURE =
   "0x122e3efab9b46c82dc38adf4ea6cd2c753b00f95c217a0e3a0f4dd110839f07a08eb29c1cc414d551349510e23a75219cd70c8b88515ed2b83bbd88216ffdb051f";
@@ -112,6 +113,71 @@ async function getCreateOrderSignature({
   return signer._signTypedData(domain, types, typedData);
 }
 
+async function sendCreateOrder({
+  signer,
+  sender,
+  oracleParams = undefined,
+  tokenPermits = undefined,
+  feeParams,
+  collateralDeltaAmount,
+  account,
+  params,
+  signature = undefined,
+  userNonce,
+  deadline,
+  router,
+  chainId,
+  relayFeeToken,
+  relayFeeAmount,
+}) {
+  if (!oracleParams) {
+    oracleParams = {
+      tokens: [],
+      providers: [],
+      data: [],
+    };
+  }
+  if (!tokenPermits) {
+    tokenPermits = [];
+  }
+
+  const relayParams = {
+    oracleParams,
+    tokenPermits,
+    fee: feeParams,
+  };
+
+  if (!signature) {
+    signature = await getCreateOrderSignature({
+      signer,
+      relayParams,
+      collateralDeltaAmount,
+      verifyingContract: router.address,
+      params,
+      deadline,
+      userNonce,
+      chainId,
+    });
+  }
+  const createOrderCalldata = router.interface.encodeFunctionData("createOrder", [
+    relayParams,
+    collateralDeltaAmount,
+    account,
+    params,
+    signature,
+    userNonce,
+    deadline,
+  ]);
+  const calldata = ethers.utils.solidityPack(
+    ["bytes", "address", "address", "uint256"],
+    [createOrderCalldata, GELATO_RELAY_ADDRESS, relayFeeToken, relayFeeAmount]
+  );
+  return sender.sendTransaction({
+    to: router.address,
+    data: calldata,
+  });
+}
+
 async function getPermitSignature(
   token: any,
   signer: any,
@@ -152,25 +218,40 @@ async function getPermitSignature(
 describe("GelatoRelayRouter", () => {
   let fixture;
   let user0, user1, user2;
-  let reader, dataStore, router, gelatoRelayRouter, ethUsdMarket, wnt, usdc;
+  let reader,
+    dataStore,
+    router,
+    gelatoRelayRouter,
+    ethUsdMarket,
+    wnt,
+    usdc,
+    chainlinkPriceFeedProvider,
+    usdcPriceFeed,
+    wethPriceFeed;
+  let gelatoRelaySigner;
+  let chainId;
   const executionFee = expandDecimals(1, 18);
+  const referralCode = hashString("referralCode");
+
+  let defaultParams;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1, user2 } = fixture.accounts);
-    ({ reader, dataStore, router, gelatoRelayRouter, ethUsdMarket, wnt, usdc } = fixture.contracts);
-  });
+    ({
+      reader,
+      dataStore,
+      router,
+      gelatoRelayRouter,
+      ethUsdMarket,
+      wnt,
+      usdc,
+      chainlinkPriceFeedProvider,
+      usdcPriceFeed,
+      wethPriceFeed,
+    } = fixture.contracts);
 
-  it("createOrder", async () => {
-    const referralCode = hashString("referralCode");
-    await usdc.mint(user0.address, expandDecimals(50 * 1000, 6));
-    await usdc.connect(user0).approve(router.address, expandDecimals(50 * 1000, 6));
-    const feeParams = {
-      feeToken: wnt.address,
-      feeAmount: expandDecimals(2, 15), // 0.001 ETH
-      feeSwapPath: [],
-    };
-    const params = {
+    defaultParams = {
       addresses: {
         receiver: user0.address,
         cancellationReceiver: user0.address,
@@ -197,202 +278,165 @@ describe("GelatoRelayRouter", () => {
       referralCode,
     };
 
-    const chainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
-
-    async function sendCreateOrder({
-      signer,
-      sender,
-      oracleParams = undefined,
-      tokenPermits = undefined,
-      feeParams,
-      collateralDeltaAmount,
-      account,
-      params,
-      signature = undefined,
-      userNonce,
-      deadline,
-    }) {
-      if (!oracleParams) {
-        oracleParams = {
-          tokens: [],
-          providers: [],
-          data: [],
-        };
-      }
-      if (!tokenPermits) {
-        tokenPermits = [];
-      }
-
-      const relayParams = {
-        oracleParams,
-        tokenPermits,
-        fee: feeParams,
-      };
-
-      if (!signature) {
-        signature = await getCreateOrderSignature({
-          signer,
-          relayParams,
-          collateralDeltaAmount,
-          verifyingContract: gelatoRelayRouter.address,
-          params,
-          deadline,
-          userNonce,
-          chainId,
-        });
-      }
-      const createOrderCalldata = gelatoRelayRouter.interface.encodeFunctionData("createOrder", [
-        relayParams,
-        collateralDeltaAmount,
-        account,
-        params,
-        signature,
-        userNonce,
-        deadline,
-      ]);
-      const calldata = ethers.utils.solidityPack(
-        ["bytes", "address", "address", "uint256"],
-        [createOrderCalldata, GELATO_RELAY_ADDRESS, wnt.address, gelatoRelayFee]
-      );
-      return sender.sendTransaction({
-        to: gelatoRelayRouter.address,
-        data: calldata,
-      });
-    }
-
-    const collateralDeltaAmount = expandDecimals(1, 17); // 0.1 ETH
-
     await impersonateAccount(GELATO_RELAY_ADDRESS);
     await setBalance(GELATO_RELAY_ADDRESS, expandDecimals(100, 18));
-    const gelatoRelaySigner = await hre.ethers.getSigner(GELATO_RELAY_ADDRESS);
-
+    await usdc.mint(user0.address, expandDecimals(1000, 6));
     await wnt.connect(user0).deposit({ value: expandDecimals(1, 18) });
 
-    const gelatoRelayFee = expandDecimals(1, 15);
-    await expect(
-      sendCreateOrder({
+    gelatoRelaySigner = await hre.ethers.getSigner(GELATO_RELAY_ADDRESS);
+    chainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
+  });
+
+  describe("createOrder", () => {
+    let createOrderParams;
+
+    beforeEach(async () => {
+      const feeParams = {
+        feeToken: wnt.address,
+        feeAmount: expandDecimals(2, 15), // 0.001 ETH
+        feeSwapPath: [],
+      };
+
+      createOrderParams = {
         sender: gelatoRelaySigner,
         signer: user0,
         feeParams,
-        collateralDeltaAmount,
+        tokenPermits: [],
+        collateralDeltaAmount: expandDecimals(1, 17),
         account: user0.address,
-        params,
-        signature: BAD_SIGNATURE,
+        params: defaultParams,
         userNonce: 0,
         deadline: 0,
-      })
-    ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
-
-    await expect(
-      sendCreateOrder({
-        sender: user0,
-        signer: user0,
-        feeParams,
-        collateralDeltaAmount,
-        account: user0.address,
-        params,
-        userNonce: 0,
-        deadline: 0,
-      })
-    ).to.be.revertedWith("onlyGelatoRelay");
-
-    await expect(
-      sendCreateOrder({
-        sender: gelatoRelaySigner,
-        signer: user0,
-        feeParams,
-        collateralDeltaAmount,
-        account: user0.address,
-        params,
-        userNonce: 100,
-        deadline: 0,
-      })
-    ).to.be.revertedWithCustomError(errorsContract, "InvalidUserNonce");
-
-    await expect(
-      sendCreateOrder({
-        sender: gelatoRelaySigner,
-        signer: user0,
-        feeParams,
-        collateralDeltaAmount,
-        account: user0.address,
-        params,
-        userNonce: 0,
-        deadline: 5,
-      })
-    ).to.be.revertedWithCustomError(errorsContract, "DeadlinePassed");
-
-    await expect(
-      sendCreateOrder({
-        sender: gelatoRelaySigner,
-        signer: user0,
-        feeParams,
-        collateralDeltaAmount,
-        account: user0.address,
-        params,
-        userNonce: 0,
-        deadline: 0,
-      })
-    ).to.be.revertedWith("ERC20: insufficient allowance");
-
-    const tokenPermit = await getTokenPermit(wnt, user0, router.address, expandDecimals(1, 18), 0, 9999999999, chainId);
-
-    await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, 0);
-    const tx = await sendCreateOrder({
-      sender: gelatoRelaySigner,
-      signer: user0,
-      feeParams,
-      tokenPermits: [tokenPermit],
-      collateralDeltaAmount,
-      account: user0.address,
-      params,
-      userNonce: 0,
-      deadline: 0,
+        router: gelatoRelayRouter,
+        chainId,
+        relayFeeToken: wnt.address,
+        relayFeeAmount: expandDecimals(1, 15),
+      };
     });
-    await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, gelatoRelayFee);
 
-    // same nonce should revert
-    await expect(
-      sendCreateOrder({
-        sender: gelatoRelaySigner,
-        signer: user0,
-        feeParams,
-        collateralDeltaAmount,
-        account: user0.address,
-        params,
-        userNonce: 0,
-        deadline: 0,
-      })
-    ).to.be.revertedWithCustomError(errorsContract, "InvalidUserNonce");
+    it("swap relay fee", async () => {
+      await handleDeposit(fixture, {
+        create: {
+          longTokenAmount: expandDecimals(10, 18),
+          shortTokenAmount: expandDecimals(10 * 5000, 6),
+        },
+      });
 
-    const orderKeys = await getOrderKeys(dataStore, 0, 1);
-    const order = await reader.getOrder(dataStore.address, orderKeys[0]);
+      await usdc.connect(user0).approve(router.address, expandDecimals(1000, 6));
+      await wnt.connect(user0).approve(router.address, expandDecimals(1, 18));
 
-    expect(order.addresses.account).eq(user0.address);
-    expect(order.addresses.receiver).eq(user0.address);
-    expect(order.addresses.callbackContract).eq(user1.address);
-    expect(order.addresses.market).eq(ethUsdMarket.marketToken);
-    expect(order.addresses.initialCollateralToken).eq(ethUsdMarket.longToken);
-    expect(order.addresses.swapPath).deep.eq([ethUsdMarket.marketToken]);
-    expect(order.numbers.orderType).eq(OrderType.LimitIncrease);
-    expect(order.numbers.decreasePositionSwapType).eq(DecreasePositionSwapType.SwapCollateralTokenToPnlToken);
-    expect(order.numbers.sizeDeltaUsd).eq(decimalToFloat(1000));
-    expect(order.numbers.initialCollateralDeltaAmount).eq(collateralDeltaAmount);
-    expect(order.numbers.triggerPrice).eq(decimalToFloat(4800));
-    expect(order.numbers.acceptablePrice).eq(decimalToFloat(4900));
-    expect(order.numbers.executionFee).eq(expandDecimals(1, 15));
-    expect(order.numbers.callbackGasLimit).eq("200000");
-    expect(order.numbers.minOutputAmount).eq(700);
+      const usdcBalanceBefore = await usdc.balanceOf(user0.address);
+      const feeAmount = expandDecimals(10, 6);
+      await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, 0);
+      await sendCreateOrder({
+        ...createOrderParams,
+        feeParams: {
+          feeToken: usdc.address,
+          feeAmount,
+          feeSwapPath: [ethUsdMarket.marketToken],
+        },
+        oracleParams: {
+          tokens: [usdc.address, wnt.address],
+          providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
+          data: ["0x", "0x"],
+        },
+      });
 
-    expect(order.flags.isLong).eq(true);
-    expect(order.flags.shouldUnwrapNativeToken).eq(true);
-    expect(order.flags.isFrozen).eq(false);
+      // feeCollector received in WETH
+      await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, createOrderParams.relayFeeAmount);
 
-    await stopImpersonatingAccount(GELATO_RELAY_ADDRESS);
+      // and user sent correct amount of USDC
+      const usdcBalanceAfter = await usdc.balanceOf(user0.address);
+      expect(usdcBalanceAfter).eq(usdcBalanceBefore.sub(feeAmount));
+    });
 
-    await logGasUsage({
-      tx,
-      label: "gelatoRelayRouter.createOrder",
+    it("createOrder", async () => {
+      const collateralDeltaAmount = createOrderParams.collateralDeltaAmount;
+      const gelatoRelayFee = createOrderParams.relayFeeAmount;
+
+      await expect(
+        sendCreateOrder({
+          ...createOrderParams,
+          signature: BAD_SIGNATURE,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
+
+      await expect(
+        sendCreateOrder({
+          ...createOrderParams,
+          sender: user0,
+        })
+      ).to.be.revertedWith("onlyGelatoRelay");
+
+      await expect(
+        sendCreateOrder({
+          ...createOrderParams,
+          userNonce: 100,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidUserNonce");
+
+      await expect(
+        sendCreateOrder({
+          ...createOrderParams,
+          deadline: 5,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "DeadlinePassed");
+
+      await expect(sendCreateOrder(createOrderParams)).to.be.revertedWith("ERC20: insufficient allowance");
+
+      const tokenPermit = await getTokenPermit(
+        wnt,
+        user0,
+        router.address,
+        expandDecimals(1, 18),
+        0,
+        9999999999,
+        chainId
+      );
+
+      await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, 0);
+      const tx = await sendCreateOrder({
+        ...createOrderParams,
+        tokenPermits: [tokenPermit],
+      });
+      await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, gelatoRelayFee);
+
+      // same nonce should revert
+      await expect(
+        sendCreateOrder({
+          ...createOrderParams,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidUserNonce");
+
+      const orderKeys = await getOrderKeys(dataStore, 0, 1);
+      const order = await reader.getOrder(dataStore.address, orderKeys[0]);
+
+      expect(order.addresses.account).eq(user0.address);
+      expect(order.addresses.receiver).eq(user0.address);
+      expect(order.addresses.callbackContract).eq(user1.address);
+      expect(order.addresses.market).eq(ethUsdMarket.marketToken);
+      expect(order.addresses.initialCollateralToken).eq(ethUsdMarket.longToken);
+      expect(order.addresses.swapPath).deep.eq([ethUsdMarket.marketToken]);
+      expect(order.numbers.orderType).eq(OrderType.LimitIncrease);
+      expect(order.numbers.decreasePositionSwapType).eq(DecreasePositionSwapType.SwapCollateralTokenToPnlToken);
+      expect(order.numbers.sizeDeltaUsd).eq(decimalToFloat(1000));
+      expect(order.numbers.initialCollateralDeltaAmount).eq(collateralDeltaAmount);
+      expect(order.numbers.triggerPrice).eq(decimalToFloat(4800));
+      expect(order.numbers.acceptablePrice).eq(decimalToFloat(4900));
+      expect(order.numbers.executionFee).eq(expandDecimals(1, 15));
+      expect(order.numbers.callbackGasLimit).eq("200000");
+      expect(order.numbers.minOutputAmount).eq(700);
+
+      expect(order.flags.isLong).eq(true);
+      expect(order.flags.shouldUnwrapNativeToken).eq(true);
+      expect(order.flags.isFrozen).eq(false);
+
+      await stopImpersonatingAccount(GELATO_RELAY_ADDRESS);
+
+      await logGasUsage({
+        tx,
+        label: "gelatoRelayRouter.createOrder",
+      });
     });
   });
 });
