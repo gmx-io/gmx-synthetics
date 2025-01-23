@@ -83,7 +83,8 @@ library LiquidationUtils {
         Order.Props memory order = Order.Props(
             addresses,
             numbers,
-            flags
+            flags,
+            new bytes32[](0) // TODO: Should this be added as createLiquidationOrder param or Position dataList? (should Positions have the `bytes32 dataList[]` as well?)
         );
 
         bytes32 key = NonceUtils.getNextKey(dataStore);
