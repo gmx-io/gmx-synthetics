@@ -22,6 +22,8 @@ import "../price/Price.sol";
 import "../utils/Calc.sol";
 import "../utils/Precision.sol";
 
+import "../feature/FeatureUtils.sol";
+
 // @title MarketUtils
 // @dev Library for market functions
 library MarketUtils {
@@ -638,6 +640,40 @@ library MarketUtils {
         );
 
         return claimableAmount;
+    }
+
+    function batchClaimCollateral(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address[] memory markets,
+        address[] memory tokens,
+        uint256[] memory timeKeys,
+        address receiver,
+        address account
+    ) internal returns (uint256[] memory) {
+        if (markets.length != tokens.length || tokens.length != timeKeys.length) {
+            revert Errors.InvalidClaimCollateralInput(markets.length, tokens.length, timeKeys.length);
+        }
+
+        FeatureUtils.validateFeature(dataStore, Keys.claimCollateralFeatureDisabledKey(address(this)));
+
+        AccountUtils.validateReceiver(receiver);
+
+        uint256[] memory claimedAmounts = new uint256[](markets.length);
+
+        for (uint256 i; i < markets.length; i++) {
+            claimedAmounts[i] = MarketUtils.claimCollateral(
+                dataStore,
+                eventEmitter,
+                markets[i],
+                tokens[i],
+                timeKeys[i],
+                account,
+                receiver
+            );
+        }
+
+        return claimedAmounts;
     }
 
     // @dev claim collateral

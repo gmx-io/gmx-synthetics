@@ -13,8 +13,6 @@ import "../referral/ReferralUtils.sol";
 
 import "../order/OrderStoreUtils.sol";
 
-import "../feature/FeatureUtils.sol";
-
 import "./BaseRouter.sol";
 import "./IExchangeRouter.sol";
 
@@ -377,31 +375,8 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         uint256[] memory timeKeys,
         address receiver
     ) external payable nonReentrant returns (uint256[] memory) {
-        if (markets.length != tokens.length || tokens.length != timeKeys.length) {
-            revert Errors.InvalidClaimCollateralInput(markets.length, tokens.length, timeKeys.length);
-        }
-
-        FeatureUtils.validateFeature(dataStore, Keys.claimCollateralFeatureDisabledKey(address(this)));
-
-        AccountUtils.validateReceiver(receiver);
-
         address account = msg.sender;
-
-        uint256[] memory claimedAmounts = new uint256[](markets.length);
-
-        for (uint256 i; i < markets.length; i++) {
-            claimedAmounts[i] = MarketUtils.claimCollateral(
-                dataStore,
-                eventEmitter,
-                markets[i],
-                tokens[i],
-                timeKeys[i],
-                account,
-                receiver
-            );
-        }
-
-        return claimedAmounts;
+        return MarketUtils.batchClaimCollateral(dataStore, eventEmitter, markets, tokens, timeKeys, receiver, account);
     }
 
     /**
