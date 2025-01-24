@@ -623,7 +623,7 @@ describe("SubaccountRouter", () => {
 
     await subaccountRouter.connect(subaccount).cancelOrder(orderKey);
 
-    expect(initialWntBalance0.sub(await wnt.balanceOf(user0.address))).closeTo("1142199006091728", "10000000000000"); // 0.001142199006091728 ETH // TODO: why was this value changed, and why it's the only one that changes? (~$0.02 diff)
+    expect(initialWntBalance0.sub(await wnt.balanceOf(user0.address))).closeTo("1142199006091728", "10000000000000"); // 0.001142199006091728 ETH
 
     expect(await usdc.balanceOf(user0.address)).eq(expandDecimals(101, 6));
 
