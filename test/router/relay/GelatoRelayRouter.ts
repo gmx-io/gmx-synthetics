@@ -272,16 +272,14 @@ describe("GelatoRelayRouter", () => {
     let createOrderParams;
 
     beforeEach(async () => {
-      const feeParams = {
-        feeToken: wnt.address,
-        feeAmount: expandDecimals(2, 15), // 0.001 ETH
-        feeSwapPath: [],
-      };
-
       createOrderParams = {
         sender: gelatoRelaySigner,
         signer: user0,
-        feeParams,
+        feeParams: {
+          feeToken: wnt.address,
+          feeAmount: expandDecimals(2, 15), // 0.002 ETH
+          feeSwapPath: [],
+        },
         tokenPermits: [],
         collateralDeltaAmount: expandDecimals(1, 17),
         account: user0.address,
@@ -329,6 +327,15 @@ describe("GelatoRelayRouter", () => {
       // and user sent correct amount of USDC
       const usdcBalanceAfter = await usdc.balanceOf(user0.address);
       expect(usdcBalanceAfter).eq(usdcBalanceBefore.sub(feeAmount));
+    });
+
+    it.only("InsufficientRelayFee", async () => {
+      await wnt.connect(user0).approve(router.address, expandDecimals(1, 18));
+      createOrderParams.feeParams.feeAmount = 1;
+      await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InsufficientRelayFee"
+      );
     });
 
     it("createOrder", async () => {

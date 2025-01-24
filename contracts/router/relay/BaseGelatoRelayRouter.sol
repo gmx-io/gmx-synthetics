@@ -279,11 +279,18 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             revert Errors.InvalidRelayFeeToken(_getFeeToken(), wnt);
         }
 
+
         _sendTokens(account, fee.feeToken, address(contracts.orderVault), fee.feeAmount);
         uint256 outputAmount = _swapFeeTokens(contracts, wnt, fee, orderKey);
+
+        uint256 requiredRelayFee = _getFee();
+        if (requiredRelayFee > outputAmount) {
+            revert Errors.InsufficientRelayFee(requiredRelayFee, outputAmount);
+        }
+
         _transferRelayFee();
 
-        uint256 residualFee = outputAmount - _getFee();
+        uint256 residualFee = outputAmount - requiredRelayFee;
         TokenUtils.transfer(contracts.dataStore, wnt, residualFeeReceiver, residualFee);
         return residualFee;
     }
