@@ -410,6 +410,8 @@ describe("GelatoRelayRouter", () => {
       ).to.be.revertedWithCustomError(errorsContract, "InvalidPermitSpender");
     });
 
+    it.skip("permit doesn't override allowance if it's already sufficient");
+
     it("creates order and sends relayer fee", async () => {
       const collateralDeltaAmount = createOrderParams.collateralDeltaAmount;
       const gelatoRelayFee = createOrderParams.relayFeeAmount;
