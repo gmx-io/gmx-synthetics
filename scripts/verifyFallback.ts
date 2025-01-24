@@ -155,7 +155,7 @@ async function main() {
 
   if (networkName === "avalanche") {
     await verifyForNetwork("avalanche");
-    await verifyForNetwork("snowscan");
+    // await verifyForNetwork("snowscan");
   } else {
     await verifyForNetwork(networkName);
   }
