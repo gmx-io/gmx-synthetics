@@ -256,7 +256,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             }
 
             if (ERC20(permit.token).allowance(permit.owner, permit.spender) >= permit.value) {
-                // allowance is already sufficient
+                // allowance is sufficient already
                 continue;
             }
 

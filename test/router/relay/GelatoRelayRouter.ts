@@ -395,6 +395,21 @@ describe("GelatoRelayRouter", () => {
       await expect(sendCreateOrder(createOrderParams)).to.be.revertedWith("ERC20: insufficient allowance");
     });
 
+    it("InvalidPermitSpender", async () => {
+      const tokenPermit = await getTokenPermit(
+        wnt,
+        user0,
+        user2.address,
+        expandDecimals(1, 18),
+        0,
+        9999999999,
+        chainId
+      );
+      await expect(
+        sendCreateOrder({ ...createOrderParams, tokenPermits: [tokenPermit] })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidPermitSpender");
+    });
+
     it("creates order and sends relayer fee", async () => {
       const collateralDeltaAmount = createOrderParams.collateralDeltaAmount;
       const gelatoRelayFee = createOrderParams.relayFeeAmount;
