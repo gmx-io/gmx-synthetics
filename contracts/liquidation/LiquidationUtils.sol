@@ -84,7 +84,7 @@ library LiquidationUtils {
             addresses,
             numbers,
             flags,
-            new bytes32[](0) // TODO: Should this be added as createLiquidationOrder param or Position dataList? (should Positions have the `bytes32 dataList[]` as well?)
+            new bytes32[](0)
         );
 
         bytes32 key = NonceUtils.getNextKey(dataStore);

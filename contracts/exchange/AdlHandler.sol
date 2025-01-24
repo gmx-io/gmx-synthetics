@@ -125,7 +125,7 @@ contract AdlHandler is BaseOrderHandler {
                 isLong,
                 sizeDeltaUsd,
                 oracle.minTimestamp(), // updatedAtTime
-                new bytes32[](0) // TODO: Should this be added as executeAdl param ?
+                new bytes32[](0)
             )
         );
 
