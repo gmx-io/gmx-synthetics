@@ -266,8 +266,8 @@ describe("GelatoRelayRouter", () => {
 
     await impersonateAccount(GELATO_RELAY_ADDRESS);
     await setBalance(GELATO_RELAY_ADDRESS, expandDecimals(100, 18));
-    await usdc.mint(user0.address, expandDecimals(1000, 6));
-    await wnt.connect(user0).deposit({ value: expandDecimals(1, 18) });
+    await usdc.mint(user0.address, expandDecimals(1, 30)); // very large amount
+    await wnt.connect(user0).deposit({ value: expandDecimals(1000, 18) });
 
     gelatoRelaySigner = await hre.ethers.getSigner(GELATO_RELAY_ADDRESS);
     chainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
@@ -408,6 +408,16 @@ describe("GelatoRelayRouter", () => {
       await expect(
         sendCreateOrder({ ...createOrderParams, tokenPermits: [tokenPermit] })
       ).to.be.revertedWithCustomError(errorsContract, "InvalidPermitSpender");
+    });
+
+    it("UnexpectedRelayFeeTokenAfterSwap", async () => {
+      await usdc.connect(user0).approve(router.address, expandDecimals(1000, 18));
+      createOrderParams.feeParams.feeToken = usdc.address;
+      createOrderParams.feeParams.feeAmount = expandDecimals(10, 18);
+      await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "UnexpectedRelayFeeTokenAfterSwap"
+      );
     });
 
     it.skip("permit doesn't override allowance if it's already sufficient");

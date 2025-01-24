@@ -426,7 +426,10 @@ library Errors {
 
     // Gelato relay errors
     error InvalidSignature();
-    error InvalidRelayFeeToken(address feeToken, address expectedFeeToken);
+    // User sent incorrect fee token or incorrect swap path
+    error UnexpectedRelayFeeTokenAfterSwap(address feeToken, address expectedFeeToken);
+    // Contract received unsupported fee token from Gelato relay
+    error UnsupportedRelayFeeToken(address feeToken, address expectedFeeToken);
     error InvalidPermitSpender(address spender, address expectedSpender);
     error InvalidUserNonce(uint256 storedUserNonce, uint256 userNonce);
     error SubaccountApprovalDeadlinePassed(uint256 currentTimestamp, uint256 deadline);

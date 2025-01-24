@@ -220,7 +220,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         );
 
         if (outputToken != wnt) {
-            revert Errors.InvalidSwapOutputToken(outputToken, wnt);
+            revert Errors.UnexpectedRelayFeeTokenAfterSwap(outputToken, wnt);
         }
 
         return outputAmount;
@@ -282,7 +282,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         address wnt = TokenUtils.wnt(contracts.dataStore);
 
         if (_getFeeToken() != wnt) {
-            revert Errors.InvalidRelayFeeToken(_getFeeToken(), wnt);
+            revert Errors.UnsupportedRelayFeeToken(_getFeeToken(), wnt);
         }
 
         _sendTokens(account, fee.feeToken, address(contracts.orderVault), fee.feeAmount);
