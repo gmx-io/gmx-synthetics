@@ -766,6 +766,12 @@ library MarketUtils {
             claimableFactor = Precision.FLOAT_PRECISION;
         }
 
+        if (claimableFactor > claimableReductionFactor) {
+            claimableFactor -= claimableReductionFactor;
+        } else {
+            claimableFactor = 0;
+        }
+
         return claimableFactor;
     }
 
