@@ -18,8 +18,6 @@ library GlvShiftStoreUtils {
     bytes32 public constant MIN_MARKET_TOKENS = keccak256(abi.encode("MIN_MARKET_TOKENS"));
     bytes32 public constant UPDATED_AT_TIME = keccak256(abi.encode("UPDATED_AT_TIME"));
 
-    bytes32 public constant DATA_LIST = keccak256(abi.encode("DATA_LIST"));
-
     function get(DataStore dataStore, bytes32 key) external view returns (GlvShift.Props memory) {
         GlvShift.Props memory glvShift;
         if (!dataStore.containsBytes32(Keys.GLV_SHIFT_LIST, key)) {
@@ -48,10 +46,6 @@ library GlvShiftStoreUtils {
 
         glvShift.setUpdatedAtTime(dataStore.getUint(
             keccak256(abi.encode(key, UPDATED_AT_TIME))
-        ));
-
-        glvShift.setDataList(dataStore.getBytes32Array(
-            keccak256(abi.encode(key, DATA_LIST))
         ));
 
         return glvShift;
@@ -92,11 +86,6 @@ library GlvShiftStoreUtils {
             keccak256(abi.encode(key, UPDATED_AT_TIME)),
             glvShift.updatedAtTime()
         );
-
-        dataStore.setBytes32Array(
-            keccak256(abi.encode(key, DATA_LIST)),
-            glvShift.dataList()
-        );
     }
 
     function remove(DataStore dataStore, bytes32 key) external {
@@ -131,10 +120,6 @@ library GlvShiftStoreUtils {
 
         dataStore.removeUint(
             keccak256(abi.encode(key, UPDATED_AT_TIME))
-        );
-
-        dataStore.removeBytes32Array(
-            keccak256(abi.encode(key, DATA_LIST))
         );
     }
 

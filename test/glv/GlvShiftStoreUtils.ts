@@ -37,7 +37,7 @@ describe("GlvShiftStoreUtils", () => {
       },
       getItemCount: getGlvShiftCount,
       getItemKeys: getGlvShiftKeys,
-      expectedPropsLength: 3,
+      expectedPropsLength: 2,
     });
   });
 });

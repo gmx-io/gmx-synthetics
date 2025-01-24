@@ -21,7 +21,6 @@ library GlvShiftUtils {
         address toMarket;
         uint256 marketTokenAmount;
         uint256 minMarketTokens;
-        bytes32[] dataList;
     }
 
     struct ExecuteGlvShiftParams {
@@ -80,8 +79,7 @@ library GlvShiftUtils {
                 marketTokenAmount: params.marketTokenAmount,
                 minMarketTokens: params.minMarketTokens,
                 updatedAtTime: Chain.currentTimestamp()
-            }),
-            params.dataList
+            })
         );
 
         bytes32 key = NonceUtils.getNextKey(dataStore);
@@ -142,7 +140,7 @@ library GlvShiftUtils {
                 executionFee: 0,
                 callbackGasLimit: 0
             }),
-            glvShift.dataList()
+            new bytes32[](0)
         );
 
         cache.shiftKey = NonceUtils.getNextKey(params.dataStore);
