@@ -1,5 +1,10 @@
 import { expect } from "chai";
-import { impersonateAccount, stopImpersonatingAccount, setBalance } from "@nomicfoundation/hardhat-network-helpers";
+import {
+  impersonateAccount,
+  stopImpersonatingAccount,
+  setBalance,
+  time,
+} from "@nomicfoundation/hardhat-network-helpers";
 
 import { deployFixture } from "../../../utils/fixture";
 import { expandDecimals, decimalToFloat } from "../../../utils/math";
@@ -285,7 +290,7 @@ describe("GelatoRelayRouter", () => {
         account: user0.address,
         params: defaultParams,
         userNonce: 0,
-        deadline: 0,
+        deadline: 9999999999,
         router: gelatoRelayRouter,
         chainId,
         relayFeeToken: wnt.address,
@@ -355,12 +360,35 @@ describe("GelatoRelayRouter", () => {
     });
 
     it("DeadlinePassed", async () => {
+      await wnt.connect(user0).approve(router.address, expandDecimals(1, 18));
+
       await expect(
         sendCreateOrder({
           ...createOrderParams,
           deadline: 5,
         })
       ).to.be.revertedWithCustomError(errorsContract, "DeadlinePassed");
+
+      await expect(
+        sendCreateOrder({
+          ...createOrderParams,
+          deadline: 0,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "DeadlinePassed");
+
+      await time.setNextBlockTimestamp(9999999100);
+      await expect(
+        sendCreateOrder({
+          ...createOrderParams,
+          deadline: 9999999099,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "DeadlinePassed");
+
+      await time.setNextBlockTimestamp(9999999200);
+      await sendCreateOrder({
+        ...createOrderParams,
+        deadline: 9999999200,
+      });
     });
 
     it("relay fee insufficient allowance", async () => {

@@ -170,7 +170,13 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             address(contracts.orderVault)
         );
 
-        if (collateralDeltaAmount > 0) {
+        if (
+            params.orderType == Order.OrderType.MarketSwap ||
+            params.orderType == Order.OrderType.LimitSwap ||
+            params.orderType == Order.OrderType.MarketIncrease ||
+            params.orderType == Order.OrderType.LimitIncrease ||
+            params.orderType == Order.OrderType.StopIncrease
+        ) {
             _sendTokens(
                 account,
                 params.addresses.initialCollateralToken,
@@ -279,7 +285,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             revert Errors.InvalidRelayFeeToken(_getFeeToken(), wnt);
         }
 
-
         _sendTokens(account, fee.feeToken, address(contracts.orderVault), fee.feeAmount);
         uint256 outputAmount = _swapFeeTokens(contracts, wnt, fee, orderKey);
 
@@ -329,7 +334,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     }
 
     function _validateDeadline(uint256 deadline) internal view {
-        if (deadline > 0 && block.timestamp > deadline) {
+        if (block.timestamp > deadline) {
             revert Errors.DeadlinePassed(block.timestamp, deadline);
         }
     }
