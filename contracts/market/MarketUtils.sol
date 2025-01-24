@@ -760,7 +760,7 @@ library MarketUtils {
 
         uint256 claimableReductionFactor = dataStore.getUint(Keys.claimableCollateralReductionFactorKey(market, token, timeKey, account));
         uint256 timeDiff = Chain.currentTimestamp() - timeKey * divisor;
-        uint256 claimableCollateralDelay = 3 days; // TODO: should be stored in dataStore (i.e. dataStore.getUint(Keys.CLAIMABLE_COLLATERAL_DELAY)) but if moved, exceeds contract size
+        uint256 claimableCollateralDelay = dataStore.getUint(Keys.CLAIMABLE_COLLATERAL_DELAY);
 
         if (claimableFactor == 0 && claimableReductionFactor == 0 && timeDiff > claimableCollateralDelay) {
             claimableFactor = Precision.FLOAT_PRECISION;

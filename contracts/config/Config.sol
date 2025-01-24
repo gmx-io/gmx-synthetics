@@ -516,6 +516,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.DATA_STREAM_SPREAD_REDUCTION_FACTOR] = true;
 
         allowedBaseKeys[Keys.SOURCE_CHAIN_BALANCE] = true;
+
+        allowedBaseKeys[Keys.CLAIMABLE_COLLATERAL_DELAY] = true;
     }
 
     function _initAllowedLimitedBaseKeys() internal {
