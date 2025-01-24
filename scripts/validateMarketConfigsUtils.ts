@@ -327,12 +327,12 @@ const recommendedMarketConfig = {
     TRUMP: {
       negativePositionImpactFactor: exponentToFloat("5e-7"),
       expectedSwapImpactRatio: 20_000,
-      expectedPositionImpactRatio: 20_000,
+      expectedPositionImpactRatio: 15_000,
     },
     MELANIA: {
       negativePositionImpactFactor: exponentToFloat("5e-7"),
       expectedSwapImpactRatio: 20_000,
-      expectedPositionImpactRatio: 20_000,
+      expectedPositionImpactRatio: 15_000,
     },
     ENA: {
       negativePositionImpactFactor: exponentToFloat("8e-7"),
