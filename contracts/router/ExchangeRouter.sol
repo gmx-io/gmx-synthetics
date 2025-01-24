@@ -367,30 +367,8 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         address[] memory tokens,
         address receiver
     ) external payable nonReentrant returns (uint256[] memory) {
-        if (markets.length != tokens.length) {
-            revert Errors.InvalidClaimFundingFeesInput(markets.length, tokens.length);
-        }
-
-        FeatureUtils.validateFeature(dataStore, Keys.claimFundingFeesFeatureDisabledKey(address(this)));
-
-        AccountUtils.validateReceiver(receiver);
-
         address account = msg.sender;
-
-        uint256[] memory claimedAmounts = new uint256[](markets.length);
-
-        for (uint256 i; i < markets.length; i++) {
-            claimedAmounts[i] = MarketUtils.claimFundingFees(
-                dataStore,
-                eventEmitter,
-                markets[i],
-                tokens[i],
-                account,
-                receiver
-            );
-        }
-
-        return claimedAmounts;
+        return FeeUtils.batchClaimFundingFees(dataStore, eventEmitter, markets, tokens, receiver, account);
     }
 
     function claimCollateral(
