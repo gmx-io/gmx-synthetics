@@ -539,6 +539,32 @@ const config: {
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
     },
+    MELANIA: {
+      synthetic: true,
+      decimals: 6, // https://solscan.io/token/FUAfBo2jgks6gB4Z4LfZkqSZgzNucisEHqnNebaRxM1P
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x000334e8e9fd64bd9068f44e7779f9b6437c86b1c148549d026c00b3a642caeb",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0xE2CB592D636c500a6e469628054F09d58e4d91BB", // no category ranking
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+    },
+    ENA: {
+      synthetic: true,
+      decimals: 18, // https://etherscan.io/token/0x57e114b691db790c35207b2e685d4a43181e6061#readContract
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x00033e05a40dd8c25ffa1b88a35234845c067635f7ddf5edde701f859f8894c1",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x9eE96caa9972c801058CAA8E23419fc6516FbF7e", // no category ranking
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+    },
     AAVE: {
       address: "0xba5ddd1f9d7f570dc94a51479a000e3bce967196",
       decimals: 18,
