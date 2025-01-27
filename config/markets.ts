@@ -443,8 +443,8 @@ const config: {
       ...fundingRateConfig_Low,
       ...borrowingRateConfig_LowMax_WithLowerBase,
 
-      reserveFactor: percentageToFloat("205%"),
-      openInterestReserveFactor: percentageToFloat("200%"),
+      reserveFactor: percentageToFloat("235%"),
+      openInterestReserveFactor: percentageToFloat("230%"),
 
       maxLongTokenPoolAmount: expandDecimals(2200, 8),
       maxShortTokenPoolAmount: expandDecimals(110_000_000, 6),
@@ -465,7 +465,7 @@ const config: {
       // minCollateralFactor of 0.005 (0.5%) when open interest is 83,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6e-11"),
 
-      maxOpenInterest: decimalToFloat(74_000_000),
+      maxOpenInterest: decimalToFloat(60_000_000),
     },
     {
       tokens: { indexToken: "BTC", longToken: "WBTC.e", shortToken: "WBTC.e" },
@@ -1500,9 +1500,9 @@ const config: {
 
       maxOpenInterest: decimalToFloat(1_000_000),
 
-      maxPoolUsdForDeposit: decimalToFloat(4_500_000),
-      maxLongTokenPoolAmount: expandDecimals(1430, 18),
-      maxShortTokenPoolAmount: expandDecimals(5_000_000, 6),
+      maxPoolUsdForDeposit: decimalToFloat(9_000_000),
+      maxLongTokenPoolAmount: expandDecimals(2960, 18),
+      maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
     },
     {
       tokens: { indexToken: "SEI", longToken: "WETH", shortToken: "USDC" },
@@ -2080,8 +2080,8 @@ const config: {
       // minCollateralFactor of 0.01 (1%)
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
 
-      reserveFactor: percentageToFloat("105%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
+      reserveFactor: percentageToFloat("135%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("130%"), // default is 90%
 
       maxPnlFactorForTraders: percentageToFloat("90%"), // default is 60%
 

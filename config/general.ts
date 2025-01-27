@@ -59,6 +59,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       liquidationFeeReceiverFactor: 0,
 
       skipBorrowingFeeForSmallerSide: false,
+
+      ignoreOpenInterestForUsageFactor: false,
     };
   }
 
@@ -115,6 +117,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     liquidationFeeReceiverFactor: decimalToFloat(37, 2), // 37%
 
     skipBorrowingFeeForSmallerSide: true,
+
+    ignoreOpenInterestForUsageFactor: false,
   };
 
   const networkConfig = {
@@ -127,7 +131,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     arbitrum: {
       maxAutoCancelOrders: 11,
       maxTotalCallbackGasLimitForAutoCancelOrders: 10_000_000,
-      maxCallbackGasLimit: 5_000_000,
+      maxCallbackGasLimit: 4_000_000,
       estimatedGasPerOraclePrice: false,
       executionGasPerOraclePrice: false,
       estimatedGasFeeBaseAmount: false,
