@@ -42,6 +42,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         bool shouldCapMaxExecutionFee
     ) external override globalNonReentrant onlyController returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createOrderFeatureDisabledKey(address(this), uint256(params.orderType)));
+        validateDataListLength(params.dataList.length);
 
         return OrderUtils.createOrder(
             dataStore,
