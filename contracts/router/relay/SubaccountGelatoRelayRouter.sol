@@ -188,7 +188,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     ) internal {
         FeatureUtils.validateFeature(dataStore, Keys.subaccountFeatureDisabledKey(address(this)));
 
-        _handleSubaccountApproval(account, subaccount, subaccountApproval);
+        _handleSubaccountApproval(account, subaccountApproval);
 
         SubaccountUtils.validateSubaccount(dataStore, account, subaccount);
 
@@ -197,7 +197,6 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
 
     function _handleSubaccountApproval(
         address account,
-        address subaccount,
         SubaccountApproval calldata subaccountApproval
     ) internal {
         if (subaccountApproval.signature.length == 0) {
@@ -242,10 +241,6 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         }
 
         if (subaccountApproval.subaccount != address(0)) {
-            if (subaccountApproval.subaccount != subaccount) {
-                revert Errors.InvalidSubaccount(subaccountApproval.subaccount, subaccount);
-            }
-
             SubaccountUtils.addSubaccount(dataStore, eventEmitter, account, subaccountApproval.subaccount);
         }
     }

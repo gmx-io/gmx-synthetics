@@ -159,7 +159,7 @@ library SubaccountUtils {
         bytes32 expiresAtKey = Keys.subaccountExpiresAtKey(account, subaccount, actionType);
         uint256 expiresAt = dataStore.getUint(expiresAtKey);
 
-        if (expiresAt > 0 && block.timestamp > expiresAt) {
+        if (block.timestamp > expiresAt) {
             revert Errors.SubaccountApprovalExpired(account, subaccount, expiresAt, block.timestamp);
         }
 

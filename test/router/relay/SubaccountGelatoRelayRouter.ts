@@ -99,7 +99,19 @@ describe("SubaccountGelatoRelayRouter", () => {
       };
     });
 
+    it.skip("InvalidCancellationReceiverForSubaccountOrder");
+
     it("InsufficientRelayFee", async () => {
+      await dataStore.addAddress(keys.subaccountListKey(user1.address), user0.address);
+      await dataStore.setUint(
+        keys.subaccountExpiresAtKey(user1.address, user0.address, keys.SUBACCOUNT_ORDER_ACTION),
+        9999999999
+      );
+      await dataStore.setUint(
+        keys.maxAllowedSubaccountActionCountKey(user1.address, user0.address, keys.SUBACCOUNT_ORDER_ACTION),
+        10
+      );
+
       await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
       createOrderParams.feeParams.feeAmount = 1;
       await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(
@@ -137,6 +149,71 @@ describe("SubaccountGelatoRelayRouter", () => {
           nonce: 0,
         },
       });
+    });
+
+    it("SubaccountNotAuthorized", async () => {
+      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
+      await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "SubaccountNotAuthorized"
+      );
+    });
+
+    it("MaxSubaccountActionCountExceeded", async () => {
+      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
+      await dataStore.addAddress(keys.subaccountListKey(user1.address), user0.address);
+      await dataStore.setUint(
+        keys.subaccountExpiresAtKey(user1.address, user0.address, keys.SUBACCOUNT_ORDER_ACTION),
+        9999999999
+      );
+      await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "MaxSubaccountActionCountExceeded"
+      );
+      await dataStore.setUint(
+        keys.maxAllowedSubaccountActionCountKey(user1.address, user0.address, keys.SUBACCOUNT_ORDER_ACTION),
+        10
+      );
+      await expect(sendCreateOrder(createOrderParams)).to.not.be.revertedWithCustomError(
+        errorsContract,
+        "MaxSubaccountActionCountExceeded"
+      );
+    });
+
+    it("SubaccountApprovalExpired", async () => {
+      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
+      await dataStore.addAddress(keys.subaccountListKey(user1.address), user0.address);
+      await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "SubaccountApprovalExpired"
+      );
+      await dataStore.setUint(
+        keys.subaccountExpiresAtKey(user1.address, user0.address, keys.SUBACCOUNT_ORDER_ACTION),
+        9999999999
+      );
+      await expect(sendCreateOrder(createOrderParams)).to.not.be.revertedWithCustomError(
+        errorsContract,
+        "SubaccountApprovalExpired"
+      );
+    });
+
+    it("InvalidSignature of subaccount approval", async () => {
+      await expect(
+        sendCreateOrder({
+          ...createOrderParams,
+          subaccountApproval: {
+            subaccount: user0.address,
+            expiresAt: 9999999999,
+            maxAllowedCount: 10,
+            actionType: keys.SUBACCOUNT_ORDER_ACTION,
+            deadline: 0,
+            nonce: 0,
+            signature: "0x123123",
+          },
+        })
+      )
+        .to.be.revertedWithCustomError(errorsContract, "InvalidSignature")
+        .withArgs(1);
     });
 
     it("InvalidSubaccountApprovalNonce", async () => {
@@ -196,7 +273,7 @@ describe("SubaccountGelatoRelayRouter", () => {
       ).to.be.revertedWithCustomError(errorsContract, "InvalidSubaccountApprovalNonce");
     });
 
-    it("updates subaccount approval", async () => {
+    it("updates subaccount approval, max allowed count, and expires at", async () => {
       await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
 
       const subaccountListKey = keys.subaccountListKey(user1.address);
@@ -236,6 +313,16 @@ describe("SubaccountGelatoRelayRouter", () => {
     });
 
     it("creates order and sends relayer fee", async () => {
+      await dataStore.addAddress(keys.subaccountListKey(user1.address), user0.address);
+      await dataStore.setUint(
+        keys.subaccountExpiresAtKey(user1.address, user0.address, keys.SUBACCOUNT_ORDER_ACTION),
+        9999999999
+      );
+      await dataStore.setUint(
+        keys.maxAllowedSubaccountActionCountKey(user1.address, user0.address, keys.SUBACCOUNT_ORDER_ACTION),
+        10
+      );
+
       const collateralDeltaAmount = createOrderParams.collateralDeltaAmount;
       const gelatoRelayFee = createOrderParams.relayFeeAmount;
 

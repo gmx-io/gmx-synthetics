@@ -359,7 +359,6 @@ library Errors {
     error SubaccountNotAuthorized(address account, address subaccount);
     error MaxSubaccountActionCountExceeded(address account, address subaccount, uint256 count, uint256 maxCount);
     error SubaccountApprovalExpired(address account, address subaccount, uint256 deadline, uint256 currentTimestamp);
-    error InvalidSubaccount(address subaccount, address msgSender);
 
     // TokenUtils errors
     error TokenTransferError(address token, address receiver, uint256 amount);

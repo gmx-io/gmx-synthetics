@@ -49,9 +49,9 @@ export async function sendCreateOrder(p: {
   const relayParams = getRelayParams(p.oracleParams, p.tokenPermits, p.feeParams);
 
   if (!p.subaccountApproval) {
-    p.subaccountApproval = getDefaultSubaccountApproval(p.subaccount);
+    p.subaccountApproval = getEmptySubaccountApproval();
   }
-  if (!p.subaccountApproval.signature) {
+  if (p.subaccountApproval && !p.subaccountApproval.signature) {
     p.subaccountApproval.signature = await getSubaccountApprovalSignature({
       signer: p.subaccountApprovalSigner,
       chainId: p.chainId,
@@ -84,15 +84,15 @@ export async function sendCreateOrder(p: {
   });
 }
 
-function getDefaultSubaccountApproval(subaccount: string) {
+function getEmptySubaccountApproval() {
   return {
-    subaccount,
-    expiresAt: 9999999999,
-    maxAllowedCount: 10,
+    subaccount: ethers.constants.AddressZero,
+    expiresAt: 0,
+    maxAllowedCount: 0,
     actionType: keys.SUBACCOUNT_ORDER_ACTION,
     deadline: 0,
     nonce: 0,
-    signature: undefined,
+    signature: "0x",
   };
 }
 
@@ -210,7 +210,7 @@ export async function sendUpdateOrder(p: {
   const relayParams = getRelayParams(p.oracleParams, p.tokenPermits, p.feeParams);
 
   if (!p.subaccountApproval) {
-    p.subaccountApproval = getDefaultSubaccountApproval(p.subaccount);
+    p.subaccountApproval = getEmptySubaccountApproval(p.subaccount);
   }
   if (!p.subaccountApproval.signature) {
     p.subaccountApproval.signature = await getSubaccountApprovalSignature({
@@ -328,7 +328,7 @@ export async function sendCancelOrder(p: {
   const relayParams = getRelayParams(p.oracleParams, p.tokenPermits, p.feeParams);
 
   if (!p.subaccountApproval) {
-    p.subaccountApproval = getDefaultSubaccountApproval(p.subaccount);
+    p.subaccountApproval = getEmptySubaccountApproval(p.subaccount);
   }
   if (!p.subaccountApproval.signature) {
     p.subaccountApproval.signature = await getSubaccountApprovalSignature({
