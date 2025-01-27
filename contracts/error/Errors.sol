@@ -372,6 +372,7 @@ library Errors {
     // AccountUtils errors
     error EmptyAccount();
     error EmptyReceiver();
+    error DataListLengthExceeded();
 
     // Array errors
     error CompactedArrayOutOfBounds(
