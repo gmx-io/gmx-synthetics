@@ -73,6 +73,7 @@ describe("Exchange.Shift", () => {
   });
 
   it("createShift", async () => {
+    const dataList = [ethers.utils.formatBytes32String("customData")];
     await createShift(fixture, {
       receiver: user1,
       callbackContract: user2,
@@ -83,6 +84,7 @@ describe("Exchange.Shift", () => {
       minMarketTokens: expandDecimals(7000, 18),
       executionFee: 500,
       callbackGasLimit: 200_000,
+      dataList,
     });
 
     const block = await provider.getBlock();
@@ -99,6 +101,7 @@ describe("Exchange.Shift", () => {
     expect(shift.numbers.updatedAtTime).eq(block.timestamp);
     expect(shift.numbers.executionFee).eq("500");
     expect(shift.numbers.callbackGasLimit).eq("200000");
+    expect(shift._dataList).deep.eq(dataList);
 
     await expect(
       createShift(fixture, {

@@ -67,6 +67,7 @@ describe("Exchange.Withdrawal", () => {
       },
     });
 
+    const dataList = [ethers.utils.formatBytes32String("customData")];
     await createWithdrawal(fixture, {
       account: user0,
       receiver: user1,
@@ -79,6 +80,7 @@ describe("Exchange.Withdrawal", () => {
       executionFee: 700,
       callbackGasLimit: 100000,
       gasUsageLabel: "createWithdrawal",
+      dataList,
     });
 
     expect(await getWithdrawalCount(dataStore)).eq(1);
@@ -96,6 +98,7 @@ describe("Exchange.Withdrawal", () => {
     expect(withdrawal.numbers.executionFee).eq(700);
     expect(withdrawal.numbers.callbackGasLimit).eq(100000);
     expect(withdrawal.flags.shouldUnwrapNativeToken).eq(true);
+    expect(withdrawal._dataList).deep.eq(dataList);
   });
 
   it("executeWithdrawal", async () => {
