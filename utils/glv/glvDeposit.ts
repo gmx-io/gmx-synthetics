@@ -267,4 +267,6 @@ export function expectGlvDeposit(glvDeposit: any, expected: any) {
       expect(glvDeposit.flags[key], key).eq(expected[key]);
     }
   });
+
+  expect(glvDeposit._dataList).deep.eq(expected.dataList);
 }
