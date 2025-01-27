@@ -184,7 +184,7 @@ describe("MarketUtils", () => {
     ).to.be.revertedWithCustomError(errorsContract, "CollateralAlreadyClaimed");
   });
 
-  it("claimCollateral applies claimableReductionFactor correctly before timeDelay", async () => {
+  it("claimCollateral applies claimableReductionFactor correctly after timeDelay", async () => {
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 7));
     await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
     await dataStore.setUint(keys.maxPositionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 3));
