@@ -22,7 +22,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     bytes32 public constant UPDATE_ORDER_TYPEHASH =
         keccak256(
             bytes(
-                "UpdateOrder(address account,bytes32 key,UpdateOrderParams params,uint256 userNonce,uint256 deadline,bytes32 relayParams,bytes32 subaccountApproval)"
+                "UpdateOrder(address account,bytes32 key,UpdateOrderParams params,uint256 userNonce,uint256 deadline,bytes32 relayParams,bytes32 subaccountApproval)UpdateOrderParams(uint256 sizeDeltaUsd,uint256 acceptablePrice,uint256 triggerPrice,uint256 minOutputAmount,uint256 validFromTime,bool autoCancel)"
             )
         );
     bytes32 public constant UPDATE_ORDER_PARAMS_TYPEHASH =
@@ -38,7 +38,6 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
                 "CancelOrder(address account,bytes32 key,uint256 userNonce,uint256 deadline,bytes32 relayParams,bytes32 subaccountApproval)"
             )
         );
-
 
     bytes32 public constant CREATE_ORDER_TYPEHASH =
         keccak256(
@@ -155,7 +154,14 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         uint256 userNonce,
         uint256 deadline
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelay {
-        bytes32 structHash = _getCancelOrderStructHash(relayParams, subaccountApproval, account, key, userNonce, deadline);
+        bytes32 structHash = _getCancelOrderStructHash(
+            relayParams,
+            subaccountApproval,
+            account,
+            key,
+            userNonce,
+            deadline
+        );
         _validateCall(userNonce, deadline, subaccount, structHash, signature);
         _validateSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, subaccountApproval);
         _cancelOrder(relayParams, account, key);
@@ -362,6 +368,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             keccak256(
                 abi.encode(
                     UPDATE_ORDER_TYPEHASH,
+                    // TODO should subaccount be added?
                     account,
                     key,
                     _getUpdateOrderParamsStructHash(params),

@@ -14,7 +14,7 @@ import { OrderType, DecreasePositionSwapType, getOrderKeys } from "../../../util
 import { errorsContract } from "../../../utils/error";
 import { expectBalance } from "../../../utils/validation";
 import * as keys from "../../../utils/keys";
-import { sendCreateOrder } from "../../../utils/relay/subaccountGelatoRelay";
+import { sendCancelOrder, sendCreateOrder, sendUpdateOrder } from "../../../utils/relay/subaccountGelatoRelay";
 import { GELATO_RELAY_ADDRESS } from "../../../utils/relay/addresses";
 import { getTokenPermit } from "../../../utils/relay/tokenPermit";
 
@@ -26,14 +26,14 @@ describe("SubaccountGelatoRelayRouter", () => {
   let chainId;
   const referralCode = hashString("referralCode");
 
-  let defaultParams;
+  let defaultCreateOrderParams;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1, user2, user3 } = fixture.accounts);
     ({ reader, dataStore, router, subaccountGelatoRelayRouter, ethUsdMarket, wnt, usdc } = fixture.contracts);
 
-    defaultParams = {
+    defaultCreateOrderParams = {
       addresses: {
         receiver: user1.address,
         cancellationReceiver: user1.address,
@@ -89,7 +89,7 @@ describe("SubaccountGelatoRelayRouter", () => {
         account: user1.address,
         // TODO use different subaccount wallet
         subaccount: user0.address,
-        params: defaultParams,
+        params: defaultCreateOrderParams,
         userNonce: 0,
         deadline: 9999999999,
         relayRouter: subaccountGelatoRelayRouter,
@@ -300,6 +300,88 @@ describe("SubaccountGelatoRelayRouter", () => {
         tx,
         label: "gelatoRelayRouter.createOrder",
       });
+    });
+  });
+
+  describe("updateOrder", () => {
+    it("signature is valid", async () => {
+      await expect(
+        sendUpdateOrder({
+          sender: relaySigner,
+          signer: user0,
+          subaccountApprovalSigner: user1,
+          feeParams: {
+            feeToken: wnt.address,
+            feeAmount: expandDecimals(2, 15), // 0.002 ETH
+            feeSwapPath: [],
+          },
+          tokenPermits: [],
+          account: user1.address,
+          subaccount: user0.address,
+          key: ethers.constants.HashZero,
+          params: {
+            sizeDeltaUsd: decimalToFloat(1000),
+            acceptablePrice: decimalToFloat(4900),
+            triggerPrice: decimalToFloat(4800),
+            minOutputAmount: 700,
+            validFromTime: 0,
+            autoCancel: false,
+          },
+          userNonce: 0,
+          deadline: 9999999999,
+          relayRouter: subaccountGelatoRelayRouter,
+          chainId,
+          relayFeeToken: wnt.address,
+          relayFeeAmount: expandDecimals(1, 15),
+          subaccountApproval: {
+            subaccount: user0.address,
+            expiresAt: 9999999999,
+            maxAllowedCount: 10,
+            actionType: keys.SUBACCOUNT_ORDER_ACTION,
+            deadline: 0,
+            nonce: 0,
+          },
+          verifyingContract: subaccountGelatoRelayRouter.address,
+        })
+        // should not fail with InvalidSignature
+      ).to.be.revertedWithCustomError(errorsContract, "Unauthorized");
+    });
+  });
+
+  describe.only("cancelOrder", () => {
+    it("signature is valid", async () => {
+      await expect(
+        await sendCancelOrder({
+          sender: relaySigner,
+          signer: user0,
+          subaccountApprovalSigner: user1,
+          feeParams: {
+            feeToken: wnt.address,
+            feeAmount: expandDecimals(2, 15), // 0.002 ETH
+            feeSwapPath: [],
+          },
+          tokenPermits: [],
+          account: user1.address,
+          subaccount: user0.address,
+          key: ethers.constants.HashZero,
+          userNonce: 0,
+          deadline: 9999999999,
+          relayRouter: subaccountGelatoRelayRouter,
+          chainId,
+          relayFeeToken: wnt.address,
+          relayFeeAmount: expandDecimals(1, 15),
+          subaccountApproval: {
+            subaccount: user0.address,
+            expiresAt: 9999999999,
+            maxAllowedCount: 10,
+            actionType: keys.SUBACCOUNT_ORDER_ACTION,
+            deadline: 0,
+            nonce: 0,
+          },
+          verifyingContract: subaccountGelatoRelayRouter.address,
+        })
+        // should not fail with InvalidSignature
+      ).to.be.revertedWithCustomError(errorsContract, "EmptyOrder");
     });
   });
 });

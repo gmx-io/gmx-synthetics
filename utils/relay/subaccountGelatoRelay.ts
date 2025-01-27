@@ -1,6 +1,7 @@
 import { BigNumberish, ethers } from "ethers";
 import * as keys from "../keys";
 import { GELATO_RELAY_ADDRESS } from "./addresses";
+import { getDomain, hashSubaccountApproval, hashRelayParams, getRelayParams } from "./helpers";
 
 export async function sendCreateOrder(p: {
   subaccountApprovalSigner: ethers.Signer;
@@ -45,32 +46,10 @@ export async function sendCreateOrder(p: {
   relayFeeToken: string;
   relayFeeAmount: BigNumberish;
 }) {
-  if (!p.oracleParams) {
-    p.oracleParams = {
-      tokens: [],
-      providers: [],
-      data: [],
-    };
-  }
-  if (!p.tokenPermits) {
-    p.tokenPermits = [];
-  }
-
-  const relayParams = {
-    oracleParams: p.oracleParams,
-    tokenPermits: p.tokenPermits,
-    fee: p.feeParams,
-  };
+  const relayParams = getRelayParams(p.oracleParams, p.tokenPermits, p.feeParams);
 
   if (!p.subaccountApproval) {
-    p.subaccountApproval = {
-      subaccount: p.subaccount,
-      expiresAt: 9999999999,
-      maxAllowedCount: 10,
-      actionType: keys.SUBACCOUNT_ORDER_ACTION,
-      deadline: 0,
-      nonce: 0,
-    } as any;
+    p.subaccountApproval = getDefaultSubaccountApproval(p.subaccount);
   }
   if (!p.subaccountApproval.signature) {
     p.subaccountApproval.signature = await getSubaccountApprovalSignature({
@@ -114,6 +93,18 @@ export async function sendCreateOrder(p: {
     to: p.relayRouter.address,
     data: calldata,
   });
+}
+
+function getDefaultSubaccountApproval(subaccount: string) {
+  return {
+    subaccount,
+    expiresAt: 9999999999,
+    maxAllowedCount: 10,
+    actionType: keys.SUBACCOUNT_ORDER_ACTION,
+    deadline: 0,
+    nonce: 0,
+    signature: undefined,
+  };
 }
 
 async function getCreateOrderSignature({
@@ -164,29 +155,8 @@ async function getCreateOrderSignature({
       { name: "validFromTime", type: "uint256" },
     ],
   };
-  const domain = {
-    name: "GmxBaseGelatoRelayRouter",
-    version: "1",
-    chainId,
-    verifyingContract,
-  };
-  const relayParamsHash = ethers.utils.keccak256(
-    ethers.utils.defaultAbiCoder.encode(
-      [
-        "tuple(tuple(address[] tokens, address[] providers, bytes[] data) oracleParams, tuple(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s, address token)[] tokenPermits, tuple(address feeToken, uint256 feeAmount, address[] feeSwapPath) fee)",
-      ],
-      [relayParams]
-    )
-  );
-  const subaccountApprovalHash = ethers.utils.keccak256(
-    ethers.utils.defaultAbiCoder.encode(
-      [
-        "tuple(address subaccount,uint256 expiresAt,uint256 maxAllowedCount,bytes32 actionType,uint256 nonce,uint256 deadline,bytes signature)",
-      ],
-      [subaccountApproval]
-    )
-  );
 
+  const domain = getDomain(chainId, verifyingContract);
   const typedData = {
     collateralDeltaAmount,
     account,
@@ -199,8 +169,263 @@ async function getCreateOrderSignature({
     referralCode: params.referralCode,
     userNonce,
     deadline,
-    relayParams: relayParamsHash,
-    subaccountApproval: subaccountApprovalHash,
+    relayParams: hashRelayParams(relayParams),
+    subaccountApproval: hashSubaccountApproval(subaccountApproval),
+  };
+
+  return signer._signTypedData(domain, types, typedData);
+}
+
+export async function sendUpdateOrder(p: {
+  sender: ethers.Signer;
+  signer: ethers.Signer;
+  oracleParams?: {
+    tokens: string[];
+    providers: string[];
+    data: string[];
+  };
+  tokenPermits?: {
+    token: string;
+    spender: string;
+    value: BigNumberish;
+    nonce: BigNumberish;
+    deadline: BigNumberish;
+    chainId: BigNumberish;
+  }[];
+  feeParams: {
+    feeToken: string;
+    feeAmount: BigNumberish;
+    feeSwapPath: string[];
+  };
+  subaccount: string;
+  key: string;
+  subaccountApproval: any;
+  subaccountApprovalSigner: ethers.Signer;
+  chainId: BigNumberish;
+  account: string;
+  verifyingContract: string;
+  params: {
+    sizeDeltaUsd: BigNumberish;
+    acceptablePrice: BigNumberish;
+    triggerPrice: BigNumberish;
+    minOutputAmount: BigNumberish;
+    validFromTime: BigNumberish;
+    autoCancel: boolean;
+  };
+  deadline: BigNumberish;
+  userNonce: BigNumberish;
+  relayRouter: ethers.Contract;
+  signature?: string;
+  relayFeeToken: string;
+  relayFeeAmount: BigNumberish;
+}) {
+  const relayParams = getRelayParams(p.oracleParams, p.tokenPermits, p.feeParams);
+
+  if (!p.subaccountApproval) {
+    p.subaccountApproval = getDefaultSubaccountApproval(p.subaccount);
+  }
+  if (!p.subaccountApproval.signature) {
+    p.subaccountApproval.signature = await getSubaccountApprovalSignature({
+      signer: p.subaccountApprovalSigner,
+      chainId: p.chainId,
+      verifyingContract: p.relayRouter.address,
+      ...p.subaccountApproval,
+    });
+  }
+
+  if (!p.signature) {
+    p.signature = await getUpdateOrderSignature({
+      signer: p.signer,
+      account: p.account,
+      relayParams,
+      subaccountApproval: p.subaccountApproval,
+      verifyingContract: p.relayRouter.address,
+      params: p.params,
+      key: p.key,
+      deadline: p.deadline,
+      userNonce: p.userNonce,
+      chainId: p.chainId,
+    });
+  }
+  const updateOrderCalldata = p.relayRouter.interface.encodeFunctionData("updateOrder", [
+    relayParams,
+    p.subaccountApproval,
+    p.account,
+    p.subaccount,
+    p.key,
+    p.params,
+    p.signature,
+    p.userNonce,
+    p.deadline,
+  ]);
+  const calldata = ethers.utils.solidityPack(
+    ["bytes", "address", "address", "uint256"],
+    [updateOrderCalldata, GELATO_RELAY_ADDRESS, p.relayFeeToken, p.relayFeeAmount]
+  );
+  return p.sender.sendTransaction({
+    to: p.relayRouter.address,
+    data: calldata,
+  });
+}
+
+async function getUpdateOrderSignature({
+  signer,
+  relayParams,
+  subaccountApproval,
+  account,
+  verifyingContract,
+  params,
+  key,
+  deadline,
+  userNonce,
+  chainId,
+}) {
+  const types = {
+    UpdateOrder: [
+      { name: "account", type: "address" },
+      { name: "key", type: "bytes32" },
+      { name: "params", type: "UpdateOrderParams" },
+      { name: "userNonce", type: "uint256" },
+      { name: "deadline", type: "uint256" },
+      { name: "relayParams", type: "bytes32" },
+      { name: "subaccountApproval", type: "bytes32" },
+    ],
+    UpdateOrderParams: [
+      { name: "sizeDeltaUsd", type: "uint256" },
+      { name: "acceptablePrice", type: "uint256" },
+      { name: "triggerPrice", type: "uint256" },
+      { name: "minOutputAmount", type: "uint256" },
+      { name: "validFromTime", type: "uint256" },
+      { name: "autoCancel", type: "bool" },
+    ],
+  };
+
+  const domain = getDomain(chainId, verifyingContract);
+  const typedData = {
+    account,
+    key,
+    params,
+    userNonce,
+    deadline,
+    relayParams: hashRelayParams(relayParams),
+    subaccountApproval: hashSubaccountApproval(subaccountApproval),
+  };
+
+  return signer._signTypedData(domain, types, typedData);
+}
+
+export async function sendCancelOrder(p: {
+  sender: ethers.Signer;
+  signer: ethers.Signer;
+  oracleParams?: {
+    tokens: string[];
+    providers: string[];
+    data: string[];
+  };
+  tokenPermits?: {
+    token: string;
+    spender: string;
+    value: BigNumberish;
+    nonce: BigNumberish;
+    deadline: BigNumberish;
+    chainId: BigNumberish;
+  }[];
+  feeParams: {
+    feeToken: string;
+    feeAmount: BigNumberish;
+    feeSwapPath: string[];
+  };
+  subaccount: string;
+  key: string;
+  subaccountApproval: any;
+  subaccountApprovalSigner: ethers.Signer;
+  chainId: BigNumberish;
+  account: string;
+  verifyingContract: string;
+  deadline: BigNumberish;
+  userNonce: BigNumberish;
+  relayRouter: ethers.Contract;
+  signature?: string;
+  relayFeeToken: string;
+  relayFeeAmount: BigNumberish;
+}) {
+  const relayParams = getRelayParams(p.oracleParams, p.tokenPermits, p.feeParams);
+
+  if (!p.subaccountApproval) {
+    p.subaccountApproval = getDefaultSubaccountApproval(p.subaccount);
+  }
+  if (!p.subaccountApproval.signature) {
+    p.subaccountApproval.signature = await getSubaccountApprovalSignature({
+      signer: p.subaccountApprovalSigner,
+      chainId: p.chainId,
+      verifyingContract: p.relayRouter.address,
+      ...p.subaccountApproval,
+    });
+  }
+
+  if (!p.signature) {
+    p.signature = await getCancelOrderSignature({
+      signer: p.signer,
+      account: p.account,
+      relayParams,
+      subaccountApproval: p.subaccountApproval,
+      verifyingContract: p.relayRouter.address,
+      key: p.key,
+      deadline: p.deadline,
+      userNonce: p.userNonce,
+      chainId: p.chainId,
+    });
+  }
+  const updateOrderCalldata = p.relayRouter.interface.encodeFunctionData("cancelOrder", [
+    relayParams,
+    p.subaccountApproval,
+    p.account,
+    p.subaccount,
+    p.key,
+    p.signature,
+    p.userNonce,
+    p.deadline,
+  ]);
+  const calldata = ethers.utils.solidityPack(
+    ["bytes", "address", "address", "uint256"],
+    [updateOrderCalldata, GELATO_RELAY_ADDRESS, p.relayFeeToken, p.relayFeeAmount]
+  );
+  return p.sender.sendTransaction({
+    to: p.relayRouter.address,
+    data: calldata,
+  });
+}
+
+async function getCancelOrderSignature({
+  signer,
+  relayParams,
+  subaccountApproval,
+  account,
+  verifyingContract,
+  key,
+  deadline,
+  userNonce,
+  chainId,
+}) {
+  const types = {
+    CancelOrder: [
+      { name: "account", type: "address" },
+      { name: "key", type: "bytes32" },
+      { name: "userNonce", type: "uint256" },
+      { name: "deadline", type: "uint256" },
+      { name: "relayParams", type: "bytes32" },
+      { name: "subaccountApproval", type: "bytes32" },
+    ],
+  };
+
+  const domain = getDomain(chainId, verifyingContract);
+  const typedData = {
+    account,
+    key,
+    userNonce,
+    deadline,
+    relayParams: hashRelayParams(relayParams),
+    subaccountApproval: hashSubaccountApproval(subaccountApproval),
   };
 
   return signer._signTypedData(domain, types, typedData);
