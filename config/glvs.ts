@@ -277,13 +277,13 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           },
           {
             indexToken: "XRP",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(345_810, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(644_971),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(440_303, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(773_965),
           },
           {
             indexToken: "DOGE",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(129_404, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(345_000),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(157_432, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(414_000),
           },
           {
             indexToken: "LTC",
