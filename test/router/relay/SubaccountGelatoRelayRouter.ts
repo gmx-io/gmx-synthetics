@@ -348,7 +348,7 @@ describe("SubaccountGelatoRelayRouter", () => {
     });
   });
 
-  describe.only("cancelOrder", () => {
+  describe("cancelOrder", () => {
     it("signature is valid", async () => {
       await expect(
         await sendCancelOrder({
