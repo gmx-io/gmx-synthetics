@@ -67,6 +67,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
 
   it("createOrder", async () => {
     expect(await getOrderCount(dataStore)).eq(0);
+    await dataStore.setUint(keys.MAX_DATA_LENGTH, 256);
     const dataList = [ethers.utils.formatBytes32String("customData")];
     const params = {
       market: ethUsdMarket,

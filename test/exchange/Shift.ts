@@ -73,6 +73,7 @@ describe("Exchange.Shift", () => {
   });
 
   it("createShift", async () => {
+    await dataStore.setUint(keys.MAX_DATA_LENGTH, 256);
     const dataList = [ethers.utils.formatBytes32String("customData")];
     await createShift(fixture, {
       receiver: user1,

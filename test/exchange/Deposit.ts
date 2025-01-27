@@ -162,6 +162,7 @@ describe("Exchange.Deposit", () => {
   });
 
   it("createDeposit", async () => {
+    await dataStore.setUint(keys.MAX_DATA_LENGTH, 256);
     const dataList = [ethers.utils.formatBytes32String("customData")];
     const params = {
       receiver: user1,
