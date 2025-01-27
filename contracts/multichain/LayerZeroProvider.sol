@@ -64,11 +64,12 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer {
 
         _transferToVault(token, address(multichainVault));
 
-        address virtualAccount = multichainHandler.recordDeposit(account, token, sourceChainId);
+        multichainHandler.recordDeposit(account, token, sourceChainId);
 
         LayerZeroProviderEventUtils.emitComposedMessageReceived(
             eventEmitter,
-            virtualAccount,
+            sourceChainId,
+            account,
             from,
             guid,
             message,
