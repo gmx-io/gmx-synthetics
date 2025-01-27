@@ -57,7 +57,6 @@ library AdlUtils {
         bool isLong;
         uint256 sizeDeltaUsd;
         uint256 updatedAtTime;
-        bytes32[] dataList;
     }
 
     // @dev Multiple positions may need to be reduced to ensure that the pending
@@ -191,7 +190,7 @@ library AdlUtils {
             addresses,
             numbers,
             flags,
-            params.dataList
+            new bytes32[](0)
         );
 
         bytes32 key = NonceUtils.getNextKey(params.dataStore);

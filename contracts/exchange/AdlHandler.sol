@@ -124,8 +124,7 @@ contract AdlHandler is BaseOrderHandler {
                 collateralToken,
                 isLong,
                 sizeDeltaUsd,
-                oracle.minTimestamp(), // updatedAtTime
-                new bytes32[](0)
+                oracle.minTimestamp() // updatedAtTime
             )
         );
 
