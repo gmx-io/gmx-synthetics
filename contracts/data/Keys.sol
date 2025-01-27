@@ -2098,13 +2098,15 @@ library Keys {
     }
 
     // @dev key for user's balance for a source chain, recorded under the user's virtual account
-    // @param virtualAccount the virtual account for which to retreive the user balance key
+    // @param chianId the chain id for the source chain
+    // @param account the account for which to retreive the user balance key
     // @param token the token for which to retreive the user balance key
     // @return key for a source chain balance for a given user and token
-    function sourceChainBalanceKey(address virtualAccount, address token) internal pure returns (bytes32) {
+    function sourceChainBalanceKey(uint256 chainId, address account, address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             SOURCE_CHAIN_BALANCE,
-            virtualAccount,
+            chainId,
+            account,
             token
         ));
     }

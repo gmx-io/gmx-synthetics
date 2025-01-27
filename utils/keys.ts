@@ -792,6 +792,6 @@ export function withdrawableBuybackTokenAmountKey(buybackToken: string) {
   return hashData(["bytes32", "address"], [WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT, buybackToken]);
 }
 
-export function sourceChainBalanceKey(virtualAccount: string, token: string) {
-  return hashData(["bytes32", "address", "address"], [SOURCE_CHAIN_BALANCE, virtualAccount, token]);
+export function sourceChainBalanceKey(sourceChainId: number, account: string, token: string) {
+  return hashData(["bytes32", "uint256", "address", "address"], [SOURCE_CHAIN_BALANCE, sourceChainId, account, token]);
 }
