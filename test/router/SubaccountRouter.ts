@@ -128,6 +128,7 @@ describe("SubaccountRouter", () => {
       .setMaxAllowedSubaccountActionCount(subaccount.address, keys.SUBACCOUNT_ORDER_ACTION, 0);
 
     const referralCode = hashString("referralCode");
+    await dataStore.setUint(keys.MAX_DATA_LENGTH, 256);
     const dataList = [ethers.utils.formatBytes32String("customData")];
     const params = {
       addresses: {
@@ -429,6 +430,7 @@ describe("SubaccountRouter", () => {
     await usdc.connect(user0).approve(router.address, expandDecimals(200, 6));
 
     const referralCode = hashString("referralCode");
+    await dataStore.setUint(keys.MAX_DATA_LENGTH, 256);
     const dataList = [ethers.utils.formatBytes32String("customData")];
     const params = {
       addresses: {
@@ -568,6 +570,7 @@ describe("SubaccountRouter", () => {
     await usdc.connect(user0).approve(router.address, expandDecimals(200, 6));
 
     const referralCode = hashString("referralCode");
+    await dataStore.setUint(keys.MAX_DATA_LENGTH, 256);
     const dataList = [ethers.utils.formatBytes32String("customData")];
     const params = {
       addresses: {

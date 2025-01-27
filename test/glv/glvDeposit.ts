@@ -197,6 +197,7 @@ describe("Glv Deposits", () => {
   });
 
   it("create glv deposit", async () => {
+    await dataStore.setUint(keys.MAX_DATA_LENGTH, 256);
     const params = {
       glv: ethUsdGlvAddress,
       receiver: user1,
@@ -229,6 +230,7 @@ describe("Glv Deposits", () => {
   });
 
   it("create glv deposit, market tokens", async () => {
+    await dataStore.setUint(keys.MAX_DATA_LENGTH, 256);
     const params = {
       glv: ethUsdGlvAddress,
       receiver: user1,
@@ -259,6 +261,7 @@ describe("Glv Deposits", () => {
   });
 
   it("create glv deposit, single asset", async () => {
+    await dataStore.setUint(keys.MAX_DATA_LENGTH, 256);
     const params = {
       glv: ethUsdSingleTokenGlvAddress,
       receiver: user1,

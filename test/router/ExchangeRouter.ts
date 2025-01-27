@@ -11,6 +11,7 @@ import { hashString } from "../../utils/hash";
 import { getNextKey } from "../../utils/nonce";
 import { errorsContract } from "../../utils/error";
 import { OrderType, DecreasePositionSwapType, getOrderKeys } from "../../utils/order";
+import * as keys from "../../utils/keys";
 
 describe("ExchangeRouter", () => {
   let fixture;
@@ -47,6 +48,7 @@ describe("ExchangeRouter", () => {
   });
 
   it("createDeposit", async () => {
+    await dataStore.setUint(keys.MAX_DATA_LENGTH, 256);
     const dataList = [ethers.utils.formatBytes32String("customData")];
     await usdc.mint(user0.address, expandDecimals(50 * 1000, 6));
     await usdc.connect(user0).approve(router.address, expandDecimals(50 * 1000, 6));
@@ -106,6 +108,7 @@ describe("ExchangeRouter", () => {
 
   it("createOrder", async () => {
     const referralCode = hashString("referralCode");
+    await dataStore.setUint(keys.MAX_DATA_LENGTH, 256);
     const dataList = [ethers.utils.formatBytes32String("customData")];
     await usdc.mint(user0.address, expandDecimals(50 * 1000, 6));
     await usdc.connect(user0).approve(router.address, expandDecimals(50 * 1000, 6));
@@ -184,6 +187,7 @@ describe("ExchangeRouter", () => {
       },
     });
 
+    await dataStore.setUint(keys.MAX_DATA_LENGTH, 256);
     const dataList = [ethers.utils.formatBytes32String("customData")];
     const marketToken = await contractAt("MarketToken", ethUsdMarket.marketToken);
     await marketToken.connect(user0).approve(router.address, expandDecimals(50 * 1000, 18));

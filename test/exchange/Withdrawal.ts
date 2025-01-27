@@ -67,6 +67,7 @@ describe("Exchange.Withdrawal", () => {
       },
     });
 
+    await dataStore.setUint(keys.MAX_DATA_LENGTH, 256);
     const dataList = [ethers.utils.formatBytes32String("customData")];
     await createWithdrawal(fixture, {
       account: user0,
