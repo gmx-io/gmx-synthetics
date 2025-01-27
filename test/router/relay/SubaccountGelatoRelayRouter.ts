@@ -49,6 +49,7 @@ async function getCreateOrderSignature({
   relayParams,
   subaccountApproval,
   collateralDeltaAmount,
+  account,
   verifyingContract,
   params,
   deadline,
@@ -58,6 +59,7 @@ async function getCreateOrderSignature({
   const types = {
     CreateOrder: [
       { name: "collateralDeltaAmount", type: "uint256" },
+      { name: "account", type: "address" },
       { name: "addresses", type: "CreateOrderAddresses" },
       { name: "numbers", type: "CreateOrderNumbers" },
       { name: "orderType", type: "uint256" },
@@ -115,6 +117,7 @@ async function getCreateOrderSignature({
 
   const typedData = {
     collateralDeltaAmount,
+    account,
     addresses: params.addresses,
     numbers: params.numbers,
     orderType: params.orderType,
@@ -190,6 +193,7 @@ async function sendCreateOrder({
   if (!signature) {
     signature = await getCreateOrderSignature({
       signer,
+      account,
       relayParams,
       subaccountApproval,
       collateralDeltaAmount,
