@@ -13,213 +13,14 @@ import { hashString } from "../../../utils/hash";
 import { OrderType, DecreasePositionSwapType, getOrderKeys } from "../../../utils/order";
 import { errorsContract } from "../../../utils/error";
 import { expectBalance } from "../../../utils/validation";
-import { BigNumberish } from "ethers";
 import { handleDeposit } from "../../../utils/deposit";
 import * as keys from "../../../utils/keys";
+import { GELATO_RELAY_ADDRESS } from "../../../utils/relay/addresses";
+import { sendCreateOrder } from "../../../utils/relay/gelatoRelay";
+import { getTokenPermit } from "../../../utils/relay/tokenPermit";
 
 const BAD_SIGNATURE =
   "0x122e3efab9b46c82dc38adf4ea6cd2c753b00f95c217a0e3a0f4dd110839f07a08eb29c1cc414d551349510e23a75219cd70c8b88515ed2b83bbd88216ffdb051f";
-const GELATO_RELAY_ADDRESS = "0xcd565435e0d2109feFde337a66491541Df0D1420";
-
-async function getTokenPermit(
-  token: any,
-  signer: any,
-  spender: string,
-  value: BigNumberish,
-  nonce: BigNumberish,
-  deadline: BigNumberish,
-  chainId: BigNumberish
-) {
-  const permitSignature = await getPermitSignature(token, signer, spender, value, nonce, deadline, chainId);
-  const { v, r, s } = ethers.utils.splitSignature(permitSignature);
-  return {
-    owner: signer.address,
-    spender,
-    value,
-    deadline,
-    v,
-    r,
-    s,
-    token: token.address,
-  };
-}
-
-async function getCreateOrderSignature({
-  signer,
-  relayParams,
-  collateralDeltaAmount,
-  verifyingContract,
-  params,
-  deadline,
-  userNonce,
-  chainId,
-}) {
-  const types = {
-    CreateOrder: [
-      { name: "collateralDeltaAmount", type: "uint256" },
-      { name: "addresses", type: "CreateOrderAddresses" },
-      { name: "numbers", type: "CreateOrderNumbers" },
-      { name: "orderType", type: "uint256" },
-      { name: "isLong", type: "bool" },
-      { name: "shouldUnwrapNativeToken", type: "bool" },
-      { name: "autoCancel", type: "bool" },
-      { name: "referralCode", type: "bytes32" },
-      { name: "userNonce", type: "uint256" },
-      { name: "deadline", type: "uint256" },
-      { name: "relayParams", type: "bytes32" },
-    ],
-    CreateOrderAddresses: [
-      { name: "receiver", type: "address" },
-      { name: "cancellationReceiver", type: "address" },
-      { name: "callbackContract", type: "address" },
-      { name: "uiFeeReceiver", type: "address" },
-      { name: "market", type: "address" },
-      { name: "initialCollateralToken", type: "address" },
-      { name: "swapPath", type: "address[]" },
-    ],
-    CreateOrderNumbers: [
-      { name: "sizeDeltaUsd", type: "uint256" },
-      { name: "initialCollateralDeltaAmount", type: "uint256" },
-      { name: "triggerPrice", type: "uint256" },
-      { name: "acceptablePrice", type: "uint256" },
-      { name: "executionFee", type: "uint256" },
-      { name: "callbackGasLimit", type: "uint256" },
-      { name: "minOutputAmount", type: "uint256" },
-      { name: "validFromTime", type: "uint256" },
-    ],
-  };
-  const domain = {
-    name: "GmxBaseGelatoRelayRouter",
-    version: "1",
-    chainId,
-    verifyingContract,
-  };
-  const relayParamsHash = ethers.utils.keccak256(
-    ethers.utils.defaultAbiCoder.encode(
-      [
-        "tuple(tuple(address[] tokens, address[] providers, bytes[] data) oracleParams, tuple(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s, address token)[] tokenPermits, tuple(address feeToken, uint256 feeAmount, address[] feeSwapPath) fee)",
-      ],
-      [relayParams]
-    )
-  );
-  const typedData = {
-    collateralDeltaAmount,
-    addresses: params.addresses,
-    numbers: params.numbers,
-    orderType: params.orderType,
-    isLong: params.isLong,
-    shouldUnwrapNativeToken: params.shouldUnwrapNativeToken,
-    autoCancel: false,
-    referralCode: params.referralCode,
-    userNonce,
-    deadline,
-    relayParams: relayParamsHash,
-  };
-
-  return signer._signTypedData(domain, types, typedData);
-}
-
-async function sendCreateOrder({
-  signer,
-  sender,
-  oracleParams = undefined,
-  tokenPermits = undefined,
-  feeParams,
-  collateralDeltaAmount,
-  account,
-  params,
-  signature = undefined,
-  userNonce,
-  deadline,
-  router,
-  chainId,
-  relayFeeToken,
-  relayFeeAmount,
-}) {
-  if (!oracleParams) {
-    oracleParams = {
-      tokens: [],
-      providers: [],
-      data: [],
-    };
-  }
-  if (!tokenPermits) {
-    tokenPermits = [];
-  }
-
-  const relayParams = {
-    oracleParams,
-    tokenPermits,
-    fee: feeParams,
-  };
-
-  if (!signature) {
-    signature = await getCreateOrderSignature({
-      signer,
-      relayParams,
-      collateralDeltaAmount,
-      verifyingContract: router.address,
-      params,
-      deadline,
-      userNonce,
-      chainId,
-    });
-  }
-  const createOrderCalldata = router.interface.encodeFunctionData("createOrder", [
-    relayParams,
-    collateralDeltaAmount,
-    account,
-    params,
-    signature,
-    userNonce,
-    deadline,
-  ]);
-  const calldata = ethers.utils.solidityPack(
-    ["bytes", "address", "address", "uint256"],
-    [createOrderCalldata, GELATO_RELAY_ADDRESS, relayFeeToken, relayFeeAmount]
-  );
-  return sender.sendTransaction({
-    to: router.address,
-    data: calldata,
-  });
-}
-
-async function getPermitSignature(
-  token: any,
-  signer: any,
-  spender: string,
-  value: BigNumberish,
-  nonce: BigNumberish,
-  deadline: BigNumberish,
-  chainId: BigNumberish
-) {
-  const types = {
-    Permit: [
-      { name: "owner", type: "address" },
-      { name: "spender", type: "address" },
-      { name: "value", type: "uint256" },
-      { name: "nonce", type: "uint256" },
-      { name: "deadline", type: "uint256" },
-    ],
-  };
-
-  const tokenName = await token.name();
-  const tokenVersion = "1";
-  const domain = {
-    name: tokenName,
-    version: tokenVersion,
-    chainId,
-    verifyingContract: token.address,
-  };
-  const typedData = {
-    owner: signer.address,
-    spender: spender,
-    value: value,
-    nonce: nonce,
-    deadline: deadline,
-  };
-  return signer._signTypedData(domain, types, typedData);
-}
 
 describe("GelatoRelayRouter", () => {
   let fixture;
@@ -291,7 +92,7 @@ describe("GelatoRelayRouter", () => {
         params: defaultParams,
         userNonce: 0,
         deadline: 9999999999,
-        router: gelatoRelayRouter,
+        relayRouter: gelatoRelayRouter,
         chainId,
         relayFeeToken: wnt.address,
         relayFeeAmount: expandDecimals(1, 15),
