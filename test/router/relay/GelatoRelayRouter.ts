@@ -16,7 +16,7 @@ import { expectBalance } from "../../../utils/validation";
 import { handleDeposit } from "../../../utils/deposit";
 import * as keys from "../../../utils/keys";
 import { GELATO_RELAY_ADDRESS } from "../../../utils/relay/addresses";
-import { sendCreateOrder } from "../../../utils/relay/gelatoRelay";
+import { sendCancelOrder, sendCreateOrder, sendUpdateOrder } from "../../../utils/relay/gelatoRelay";
 import { getTokenPermit } from "../../../utils/relay/tokenPermit";
 
 const BAD_SIGNATURE =
@@ -323,6 +323,66 @@ describe("GelatoRelayRouter", () => {
       // and user sent correct amount of USDC
       const usdcBalanceAfter = await usdc.balanceOf(user0.address);
       expect(usdcBalanceAfter).eq(usdcBalanceBefore.sub(feeAmount));
+    });
+  });
+
+  describe("updateOrder", () => {
+    it("signature is valid", async () => {
+      await expect(
+        sendUpdateOrder({
+          sender: relaySigner,
+          signer: user0,
+          feeParams: {
+            feeToken: wnt.address,
+            feeAmount: expandDecimals(2, 15), // 0.002 ETH
+            feeSwapPath: [],
+          },
+          tokenPermits: [],
+          account: user0.address,
+          key: ethers.constants.HashZero,
+          params: {
+            sizeDeltaUsd: decimalToFloat(1000),
+            acceptablePrice: decimalToFloat(4900),
+            triggerPrice: decimalToFloat(4800),
+            minOutputAmount: 700,
+            validFromTime: 0,
+            autoCancel: false,
+          },
+          userNonce: 0,
+          deadline: 9999999999,
+          relayRouter: gelatoRelayRouter,
+          chainId,
+          relayFeeToken: wnt.address,
+          relayFeeAmount: expandDecimals(1, 15),
+        })
+        // should not fail with InvalidSignature
+      ).to.be.revertedWithCustomError(errorsContract, "Unauthorized");
+    });
+  });
+
+  describe("cancelOrder", () => {
+    it("signature is valid", async () => {
+      await expect(
+        sendCancelOrder({
+          sender: relaySigner,
+          signer: user0,
+          feeParams: {
+            feeToken: wnt.address,
+            feeAmount: expandDecimals(2, 15), // 0.002 ETH
+            feeSwapPath: [],
+          },
+          tokenPermits: [],
+          account: user0.address,
+          key: ethers.constants.HashZero,
+          userNonce: 0,
+          deadline: 9999999999,
+          relayRouter: gelatoRelayRouter,
+          chainId,
+          relayFeeToken: wnt.address,
+          relayFeeAmount: expandDecimals(1, 15),
+        })
+        // should not fail with InvalidSignature
+      ).to.be.revertedWithCustomError(errorsContract, "EmptyOrder");
     });
   });
 });

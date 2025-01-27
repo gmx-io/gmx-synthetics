@@ -61,18 +61,7 @@ export async function sendCreateOrder(p: {
   }
 
   if (!p.signature) {
-    p.signature = await getCreateOrderSignature({
-      signer: p.signer,
-      account: p.account,
-      relayParams,
-      subaccountApproval: p.subaccountApproval,
-      collateralDeltaAmount: p.collateralDeltaAmount,
-      verifyingContract: p.relayRouter.address,
-      params: p.params,
-      deadline: p.deadline,
-      userNonce: p.userNonce,
-      chainId: p.chainId,
-    });
+    p.signature = await getCreateOrderSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
   }
   const createOrderCalldata = p.relayRouter.interface.encodeFunctionData("createOrder", [
     relayParams,
@@ -203,7 +192,6 @@ export async function sendUpdateOrder(p: {
   subaccountApprovalSigner: ethers.Signer;
   chainId: BigNumberish;
   account: string;
-  verifyingContract: string;
   params: {
     sizeDeltaUsd: BigNumberish;
     acceptablePrice: BigNumberish;
@@ -234,18 +222,7 @@ export async function sendUpdateOrder(p: {
   }
 
   if (!p.signature) {
-    p.signature = await getUpdateOrderSignature({
-      signer: p.signer,
-      account: p.account,
-      relayParams,
-      subaccountApproval: p.subaccountApproval,
-      verifyingContract: p.relayRouter.address,
-      params: p.params,
-      key: p.key,
-      deadline: p.deadline,
-      userNonce: p.userNonce,
-      chainId: p.chainId,
-    });
+    p.signature = await getUpdateOrderSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
   }
   const updateOrderCalldata = p.relayRouter.interface.encodeFunctionData("updateOrder", [
     relayParams,
@@ -341,7 +318,6 @@ export async function sendCancelOrder(p: {
   subaccountApprovalSigner: ethers.Signer;
   chainId: BigNumberish;
   account: string;
-  verifyingContract: string;
   deadline: BigNumberish;
   userNonce: BigNumberish;
   relayRouter: ethers.Contract;
@@ -364,17 +340,7 @@ export async function sendCancelOrder(p: {
   }
 
   if (!p.signature) {
-    p.signature = await getCancelOrderSignature({
-      signer: p.signer,
-      account: p.account,
-      relayParams,
-      subaccountApproval: p.subaccountApproval,
-      verifyingContract: p.relayRouter.address,
-      key: p.key,
-      deadline: p.deadline,
-      userNonce: p.userNonce,
-      chainId: p.chainId,
-    });
+    p.signature = await getCancelOrderSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
   }
   const updateOrderCalldata = p.relayRouter.interface.encodeFunctionData("cancelOrder", [
     relayParams,

@@ -1,5 +1,8 @@
 import { BigNumberish, ethers } from "ethers";
 import { GELATO_RELAY_ADDRESS } from "./addresses";
+import { hashRelayParams } from "./helpers";
+import { getDomain } from "./helpers";
+import { getRelayParams } from "./helpers";
 
 export async function sendCreateOrder(p: {
   signer: ethers.Signer;
@@ -33,34 +36,10 @@ export async function sendCreateOrder(p: {
   relayFeeToken: string;
   relayFeeAmount: BigNumberish;
 }) {
-  if (!p.oracleParams) {
-    p.oracleParams = {
-      tokens: [],
-      providers: [],
-      data: [],
-    };
-  }
-  if (!p.tokenPermits) {
-    p.tokenPermits = [];
-  }
-
-  const relayParams = {
-    oracleParams: p.oracleParams,
-    tokenPermits: p.tokenPermits,
-    fee: p.feeParams,
-  };
+  const relayParams = getRelayParams(p.oracleParams, p.tokenPermits, p.feeParams);
 
   if (!p.signature) {
-    p.signature = await getCreateOrderSignature({
-      signer: p.signer,
-      relayParams,
-      collateralDeltaAmount: p.collateralDeltaAmount,
-      verifyingContract: p.relayRouter.address,
-      params: p.params,
-      deadline: p.deadline,
-      userNonce: p.userNonce,
-      chainId: p.chainId,
-    });
+    p.signature = await getCreateOrderSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
   }
   const createOrderCalldata = p.relayRouter.interface.encodeFunctionData("createOrder", [
     relayParams,
@@ -151,6 +130,184 @@ async function getCreateOrderSignature({
     userNonce,
     deadline,
     relayParams: relayParamsHash,
+  };
+
+  return signer._signTypedData(domain, types, typedData);
+}
+
+export async function sendUpdateOrder(p: {
+  sender: ethers.Signer;
+  signer: ethers.Signer;
+  oracleParams?: {
+    tokens: string[];
+    providers: string[];
+    data: string[];
+  };
+  tokenPermits?: {
+    token: string;
+    spender: string;
+    value: BigNumberish;
+    nonce: BigNumberish;
+    deadline: BigNumberish;
+    chainId: BigNumberish;
+  }[];
+  feeParams: {
+    feeToken: string;
+    feeAmount: BigNumberish;
+    feeSwapPath: string[];
+  };
+  key: string;
+  chainId: BigNumberish;
+  account: string;
+  params: {
+    sizeDeltaUsd: BigNumberish;
+    acceptablePrice: BigNumberish;
+    triggerPrice: BigNumberish;
+    minOutputAmount: BigNumberish;
+    validFromTime: BigNumberish;
+    autoCancel: boolean;
+  };
+  deadline: BigNumberish;
+  userNonce: BigNumberish;
+  relayRouter: ethers.Contract;
+  signature?: string;
+  relayFeeToken: string;
+  relayFeeAmount: BigNumberish;
+}) {
+  const relayParams = getRelayParams(p.oracleParams, p.tokenPermits, p.feeParams);
+
+  if (!p.signature) {
+    p.signature = await getUpdateOrderSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
+  }
+  const updateOrderCalldata = p.relayRouter.interface.encodeFunctionData("updateOrder", [
+    relayParams,
+    p.key,
+    p.account,
+    p.params,
+    p.signature,
+    p.userNonce,
+    p.deadline,
+  ]);
+  const calldata = ethers.utils.solidityPack(
+    ["bytes", "address", "address", "uint256"],
+    [updateOrderCalldata, GELATO_RELAY_ADDRESS, p.relayFeeToken, p.relayFeeAmount]
+  );
+  return p.sender.sendTransaction({
+    to: p.relayRouter.address,
+    data: calldata,
+  });
+}
+
+async function getUpdateOrderSignature({
+  signer,
+  relayParams,
+  verifyingContract,
+  params,
+  key,
+  deadline,
+  userNonce,
+  chainId,
+}) {
+  const types = {
+    UpdateOrder: [
+      { name: "key", type: "bytes32" },
+      { name: "params", type: "UpdateOrderParams" },
+      { name: "userNonce", type: "uint256" },
+      { name: "deadline", type: "uint256" },
+      { name: "relayParams", type: "bytes32" },
+    ],
+    UpdateOrderParams: [
+      { name: "sizeDeltaUsd", type: "uint256" },
+      { name: "acceptablePrice", type: "uint256" },
+      { name: "triggerPrice", type: "uint256" },
+      { name: "minOutputAmount", type: "uint256" },
+      { name: "validFromTime", type: "uint256" },
+      { name: "autoCancel", type: "bool" },
+    ],
+  };
+
+  const domain = getDomain(chainId, verifyingContract);
+  const typedData = {
+    key,
+    params,
+    userNonce,
+    deadline,
+    relayParams: hashRelayParams(relayParams),
+  };
+
+  return signer._signTypedData(domain, types, typedData);
+}
+
+export async function sendCancelOrder(p: {
+  sender: ethers.Signer;
+  signer: ethers.Signer;
+  oracleParams?: {
+    tokens: string[];
+    providers: string[];
+    data: string[];
+  };
+  tokenPermits?: {
+    token: string;
+    spender: string;
+    value: BigNumberish;
+    nonce: BigNumberish;
+    deadline: BigNumberish;
+    chainId: BigNumberish;
+  }[];
+  feeParams: {
+    feeToken: string;
+    feeAmount: BigNumberish;
+    feeSwapPath: string[];
+  };
+  key: string;
+  chainId: BigNumberish;
+  account: string;
+  deadline: BigNumberish;
+  userNonce: BigNumberish;
+  relayRouter: ethers.Contract;
+  signature?: string;
+  relayFeeToken: string;
+  relayFeeAmount: BigNumberish;
+}) {
+  const relayParams = getRelayParams(p.oracleParams, p.tokenPermits, p.feeParams);
+
+  if (!p.signature) {
+    p.signature = await getCancelOrderSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
+  }
+  const cancelOrderCalldata = p.relayRouter.interface.encodeFunctionData("cancelOrder", [
+    relayParams,
+    p.key,
+    p.account,
+    p.signature,
+    p.userNonce,
+    p.deadline,
+  ]);
+  const calldata = ethers.utils.solidityPack(
+    ["bytes", "address", "address", "uint256"],
+    [cancelOrderCalldata, GELATO_RELAY_ADDRESS, p.relayFeeToken, p.relayFeeAmount]
+  );
+  return p.sender.sendTransaction({
+    to: p.relayRouter.address,
+    data: calldata,
+  });
+}
+
+async function getCancelOrderSignature({ signer, relayParams, verifyingContract, key, deadline, userNonce, chainId }) {
+  const types = {
+    CancelOrder: [
+      { name: "key", type: "bytes32" },
+      { name: "userNonce", type: "uint256" },
+      { name: "deadline", type: "uint256" },
+      { name: "relayParams", type: "bytes32" },
+    ],
+  };
+
+  const domain = getDomain(chainId, verifyingContract);
+  const typedData = {
+    key,
+    userNonce,
+    deadline,
+    relayParams: hashRelayParams(relayParams),
   };
 
   return signer._signTypedData(domain, types, typedData);

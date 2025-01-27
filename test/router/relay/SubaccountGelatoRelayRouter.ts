@@ -341,7 +341,6 @@ describe("SubaccountGelatoRelayRouter", () => {
             deadline: 0,
             nonce: 0,
           },
-          verifyingContract: subaccountGelatoRelayRouter.address,
         })
         // should not fail with InvalidSignature
       ).to.be.revertedWithCustomError(errorsContract, "Unauthorized");
@@ -351,7 +350,7 @@ describe("SubaccountGelatoRelayRouter", () => {
   describe("cancelOrder", () => {
     it("signature is valid", async () => {
       await expect(
-        await sendCancelOrder({
+        sendCancelOrder({
           sender: relaySigner,
           signer: user0,
           subaccountApprovalSigner: user1,
@@ -378,7 +377,6 @@ describe("SubaccountGelatoRelayRouter", () => {
             deadline: 0,
             nonce: 0,
           },
-          verifyingContract: subaccountGelatoRelayRouter.address,
         })
         // should not fail with InvalidSignature
       ).to.be.revertedWithCustomError(errorsContract, "EmptyOrder");
