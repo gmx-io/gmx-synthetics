@@ -425,7 +425,7 @@ library Errors {
     error EmptyMarketPrice(address market);
 
     // Gelato relay errors
-    error InvalidSignature();
+    error InvalidSignature(uint256 signatureType);
     // User sent incorrect fee token or incorrect swap path
     error UnexpectedRelayFeeTokenAfterSwap(address feeToken, address expectedFeeToken);
     // Contract received unsupported fee token from Gelato relay

@@ -14,8 +14,8 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         uint256 expiresAt;
         uint256 maxAllowedCount;
         bytes32 actionType;
-        uint256 deadline;
         uint256 nonce; // for replay attack protection
+        uint256 deadline;
         bytes signature;
     }
 
@@ -39,10 +39,11 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             )
         );
 
+
     bytes32 public constant CREATE_ORDER_TYPEHASH =
         keccak256(
             bytes(
-                "CreateOrder(uint256 collateralDeltaAmount,CreateOrderAddresses addresses,CreateOrderNumbers numbers,uint256 orderType,bool isLong,bool shouldUnwrapNativeToken,bool autoCancel,uint256 referralCode,uint256 userNonce,uint256 deadline,bytes32 relayParams,bytes32 subaccountApproval)CreateOrderAddresses(address receiver,address cancellationReceiver,address callbackContract,address uiFeeReceiver,address market,address initialCollateralToken,address[] swapPath)CreateOrderNumbers(uint256 sizeDeltaUsd,uint256 initialCollateralDeltaAmount,uint256 triggerPrice,uint256 acceptablePrice,uint256 executionFee,uint256 callbackGasLimit,uint256 minOutputAmount,uint256 validFromTime)"
+                "CreateOrder(uint256 collateralDeltaAmount,CreateOrderAddresses addresses,CreateOrderNumbers numbers,uint256 orderType,bool isLong,bool shouldUnwrapNativeToken,bool autoCancel,bytes32 referralCode,uint256 userNonce,uint256 deadline,bytes32 relayParams,bytes32 subaccountApproval)CreateOrderAddresses(address receiver,address cancellationReceiver,address callbackContract,address uiFeeReceiver,address market,address initialCollateralToken,address[] swapPath)CreateOrderNumbers(uint256 sizeDeltaUsd,uint256 initialCollateralDeltaAmount,uint256 triggerPrice,uint256 acceptablePrice,uint256 executionFee,uint256 callbackGasLimit,uint256 minOutputAmount,uint256 validFromTime)"
             )
         );
     bytes32 public constant CREATE_ORDER_NUMBERS_TYPEHASH =
@@ -61,7 +62,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     bytes32 public constant SUBACCOUNT_APPROVAL_TYPEHASH =
         keccak256(
             bytes(
-                "SubaccountApproval(address subaccount,uint256 expiresAt,uint256 maxAllowedCount,bytes32 actionType,uint256 nonce,bytes signature)"
+                "SubaccountApproval(address subaccount,uint256 expiresAt,uint256 maxAllowedCount,bytes32 actionType,uint256 nonce,uint256 deadline)"
             )
         );
 
@@ -83,9 +84,9 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
         uint256 collateralDeltaAmount,
-        IBaseOrderUtils.CreateOrderParams memory params, // can't use calldata because need to modify params.numbers.executionFee
         address account,
         address subaccount,
+        IBaseOrderUtils.CreateOrderParams memory params, // can't use calldata because need to modify params.numbers.executionFee
         bytes calldata signature,
         uint256 userNonce,
         uint256 deadline
@@ -208,7 +209,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         bytes32 domainSeparator = _getDomainSeparator(block.chainid);
         bytes32 structHash = _getSubaccountApprovalStructHash(subaccountApproval);
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
-        _validateSignature(digest, subaccountApproval.signature, account);
+        _validateSignature(digest, subaccountApproval.signature, account, 1);
 
         if (subaccountApproval.maxAllowedCount > 0) {
             SubaccountUtils.setMaxAllowedSubaccountActionCount(
@@ -270,7 +271,8 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
                     subaccountApproval.expiresAt,
                     subaccountApproval.maxAllowedCount,
                     subaccountApproval.actionType,
-                    subaccountApproval.nonce
+                    subaccountApproval.nonce,
+                    subaccountApproval.deadline
                 )
             );
     }

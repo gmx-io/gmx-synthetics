@@ -88,6 +88,6 @@ contract MockGelatoRelayRouter is GelatoRelayRouter {
         bytes32 domainSeparator = _getDomainSeparator(chainId);
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
 
-        _validateSignature(digest, signature, account);
+        _validateSignature(digest, signature, account, 0);
     }
 }
