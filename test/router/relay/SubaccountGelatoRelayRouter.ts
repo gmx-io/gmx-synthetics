@@ -99,7 +99,40 @@ describe("SubaccountGelatoRelayRouter", () => {
       };
     });
 
-    it.skip("InvalidCancellationReceiverForSubaccountOrder");
+    it("InvalidReceiver", async () => {
+      await dataStore.addAddress(keys.subaccountListKey(user1.address), user0.address);
+      await dataStore.setUint(
+        keys.subaccountExpiresAtKey(user1.address, user0.address, keys.SUBACCOUNT_ORDER_ACTION),
+        9999999999
+      );
+      await dataStore.setUint(
+        keys.maxAllowedSubaccountActionCountKey(user1.address, user0.address, keys.SUBACCOUNT_ORDER_ACTION),
+        10
+      );
+
+      createOrderParams.params.addresses.receiver = user2.address;
+      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
+      await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(errorsContract, "InvalidReceiver");
+    });
+
+    it("InvalidCancellationReceiverForSubaccountOrder", async () => {
+      await dataStore.addAddress(keys.subaccountListKey(user1.address), user0.address);
+      await dataStore.setUint(
+        keys.subaccountExpiresAtKey(user1.address, user0.address, keys.SUBACCOUNT_ORDER_ACTION),
+        9999999999
+      );
+      await dataStore.setUint(
+        keys.maxAllowedSubaccountActionCountKey(user1.address, user0.address, keys.SUBACCOUNT_ORDER_ACTION),
+        10
+      );
+
+      createOrderParams.params.addresses.cancellationReceiver = user2.address;
+      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
+      await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidCancellationReceiverForSubaccountOrder"
+      );
+    });
 
     it("InsufficientRelayFee", async () => {
       await dataStore.addAddress(keys.subaccountListKey(user1.address), user0.address);
