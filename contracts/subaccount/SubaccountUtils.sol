@@ -99,10 +99,10 @@ library SubaccountUtils {
         address account,
         address subaccount,
         bytes32 actionType,
-        uint256 deadline
+        uint256 expiresAt
     ) external {
         bytes32 key = Keys.subaccountExpiresAtKey(account, subaccount, actionType);
-        dataStore.setUint(key, deadline);
+        dataStore.setUint(key, expiresAt);
 
         EventUtils.EventLogData memory eventData;
 
@@ -111,10 +111,10 @@ library SubaccountUtils {
         eventData.addressItems.setItem(1, "subaccount", subaccount);
 
         eventData.uintItems.initItems(1);
-        eventData.uintItems.setItem(0, "deadline", deadline);
+        eventData.uintItems.setItem(0, "expiresAt", expiresAt);
 
         eventEmitter.emitEventLog2(
-            "SetSubaccountDeadline",
+            "SetSubaccountExpiresAt",
             Cast.toBytes32(account),
             Cast.toBytes32(subaccount),
             eventData

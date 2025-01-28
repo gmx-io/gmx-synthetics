@@ -369,7 +369,6 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             keccak256(
                 abi.encode(
                     UPDATE_ORDER_TYPEHASH,
-                    // TODO should subaccount be added?
                     account,
                     key,
                     _getUpdateOrderParamsStructHash(params),
