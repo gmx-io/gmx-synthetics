@@ -437,3 +437,87 @@ async function getSubaccountApprovalSignature(p: {
 
   return p.signer._signTypedData(domain, types, typedData);
 }
+
+export async function sendRemoveSubaccount(p: {
+  sender: ethers.Signer;
+  signer: ethers.Signer;
+  oracleParams?: {
+    tokens: string[];
+    providers: string[];
+    data: string[];
+  };
+  feeParams: {
+    feeToken: string;
+    feeAmount: BigNumberish;
+    feeSwapPath: string[];
+  };
+  tokenPermits?: {
+    token: string;
+    spender: string;
+    value: BigNumberish;
+    nonce: BigNumberish;
+    deadline: BigNumberish;
+    chainId: BigNumberish;
+  }[];
+  subaccount: string;
+  chainId: BigNumberish;
+  account: string;
+  deadline: BigNumberish;
+  userNonce: BigNumberish;
+  relayRouter: ethers.Contract;
+  signature?: string;
+  relayFeeToken: string;
+  relayFeeAmount: BigNumberish;
+}) {
+  const relayParams = getRelayParams(p.oracleParams, p.tokenPermits, p.feeParams);
+
+  if (!p.signature) {
+    p.signature = await getRemoveSubaccountSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
+  }
+
+  const createOrderCalldata = p.relayRouter.interface.encodeFunctionData("removeSubaccount", [
+    relayParams,
+    p.account,
+    p.subaccount,
+    p.userNonce,
+    p.deadline,
+    p.signature,
+  ]);
+  const calldata = ethers.utils.solidityPack(
+    ["bytes", "address", "address", "uint256"],
+    [createOrderCalldata, GELATO_RELAY_ADDRESS, p.relayFeeToken, p.relayFeeAmount]
+  );
+  return p.sender.sendTransaction({
+    to: p.relayRouter.address,
+    data: calldata,
+  });
+}
+
+async function getRemoveSubaccountSignature({
+  signer,
+  relayParams,
+  subaccount,
+  verifyingContract,
+  deadline,
+  userNonce,
+  chainId,
+}) {
+  const types = {
+    RemoveSubaccount: [
+      { name: "subaccount", type: "address" },
+      { name: "userNonce", type: "uint256" },
+      { name: "deadline", type: "uint256" },
+      { name: "relayParams", type: "bytes32" },
+    ],
+  };
+
+  const domain = getDomain(chainId, verifyingContract);
+  const typedData = {
+    subaccount,
+    userNonce,
+    deadline,
+    relayParams: hashRelayParams(relayParams),
+  };
+
+  return signer._signTypedData(domain, types, typedData);
+}

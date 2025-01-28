@@ -14,7 +14,12 @@ import { OrderType, DecreasePositionSwapType, getOrderKeys } from "../../../util
 import { errorsContract } from "../../../utils/error";
 import { expectBalance } from "../../../utils/validation";
 import * as keys from "../../../utils/keys";
-import { sendCancelOrder, sendCreateOrder, sendUpdateOrder } from "../../../utils/relay/subaccountGelatoRelay";
+import {
+  sendCancelOrder,
+  sendCreateOrder,
+  sendRemoveSubaccount,
+  sendUpdateOrder,
+} from "../../../utils/relay/subaccountGelatoRelay";
 import { GELATO_RELAY_ADDRESS } from "../../../utils/relay/addresses";
 import { getTokenPermit } from "../../../utils/relay/tokenPermit";
 
@@ -503,5 +508,35 @@ describe("SubaccountGelatoRelayRouter", () => {
         // should not fail with InvalidSignature
       ).to.be.revertedWithCustomError(errorsContract, "EmptyOrder");
     });
+  });
+
+  it("removeSubaccount", async () => {
+    await dataStore.addAddress(keys.subaccountListKey(user1.address), user0.address);
+    expect(await dataStore.getAddressCount(keys.subaccountListKey(user1.address))).to.eq(1);
+    const params = {
+      sender: relaySigner,
+      signer: user1,
+      feeParams: {
+        feeToken: wnt.address,
+        feeAmount: expandDecimals(2, 15), // 0.002 ETH
+        feeSwapPath: [],
+      },
+      tokenPermits: [],
+      subaccount: user0.address,
+      account: user1.address,
+      relayRouter: subaccountGelatoRelayRouter,
+      chainId,
+      relayFeeToken: wnt.address,
+      relayFeeAmount: expandDecimals(1, 15),
+      userNonce: 0,
+      deadline: 9999999999,
+    };
+    await expect(sendRemoveSubaccount({ ...params, signature: "0x1234" })).to.be.revertedWithCustomError(
+      errorsContract,
+      "InvalidSignature"
+    );
+
+    await sendRemoveSubaccount(params);
+    expect(await dataStore.getAddressCount(keys.subaccountListKey(user1.address))).to.eq(0);
   });
 });

@@ -171,9 +171,9 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         RelayParams calldata relayParams,
         address account,
         address subaccount,
-        bytes calldata signature,
         uint256 userNonce,
-        uint256 deadline
+        uint256 deadline,
+        bytes calldata signature
     ) external payable nonReentrant {
         bytes32 structHash = _getRemoveSubaccountStructHash(relayParams, subaccount, userNonce, deadline);
         _validateCall(userNonce, deadline, account, structHash, signature);
