@@ -2345,6 +2345,8 @@ const config: {
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
 
+      liquidationFeeFactor: percentageToFloat("0.45%"),
+
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2e-8"),
 
       reserveFactor: percentageToFloat("40%"), // default is 95%
@@ -2375,6 +2377,8 @@ const config: {
       positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2e-8"),
+
+      liquidationFeeFactor: percentageToFloat("0.45%"),
 
       reserveFactor: percentageToFloat("40%"), // default is 95%
       openInterestReserveFactor: percentageToFloat("35%"), // default is 90%
