@@ -410,7 +410,7 @@ library GlvDepositUtils {
                 callbackGasLimit: 0
             }),
             Deposit.Flags({shouldUnwrapNativeToken: false}),
-            glvDeposit.dataList()
+            new bytes32[](0) // dataList
         );
 
         bytes32 depositKey = NonceUtils.getNextKey(params.dataStore);
