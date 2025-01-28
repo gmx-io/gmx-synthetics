@@ -163,8 +163,8 @@ const fundingRateConfig_Low: FundingRateConfig = {
 
   maxFundingFactorPerSecond: percentageToFloat("75%").div(SECONDS_PER_YEAR),
 
-  thresholdForStableFunding: 0,
-  thresholdForDecreaseFunding: percentageToFloat("2%"),
+  thresholdForStableFunding: percentageToFloat("4%"),
+  thresholdForDecreaseFunding: 0,
 };
 
 const fundingRateConfig_Default: FundingRateConfig = {
@@ -181,8 +181,8 @@ const fundingRateConfig_Default: FundingRateConfig = {
 
   maxFundingFactorPerSecond: percentageToFloat("90%").div(SECONDS_PER_YEAR),
 
-  thresholdForStableFunding: 0,
-  thresholdForDecreaseFunding: percentageToFloat("2%"),
+  thresholdForStableFunding: percentageToFloat("4%"),
+  thresholdForDecreaseFunding: 0,
 };
 
 const fundingRateConfig_High: FundingRateConfig = {
@@ -199,8 +199,8 @@ const fundingRateConfig_High: FundingRateConfig = {
 
   maxFundingFactorPerSecond: percentageToFloat("100%").div(SECONDS_PER_YEAR),
 
-  thresholdForStableFunding: 0,
-  thresholdForDecreaseFunding: percentageToFloat("2%"),
+  thresholdForStableFunding: percentageToFloat("4%"),
+  thresholdForDecreaseFunding: 0,
 };
 
 const fundingRateConfig_SingleToken: FundingRateConfig = {
@@ -217,8 +217,8 @@ const fundingRateConfig_SingleToken: FundingRateConfig = {
 
   maxFundingFactorPerSecond: percentageToFloat("90%").div(SECONDS_PER_YEAR),
 
-  thresholdForStableFunding: 0,
-  thresholdForDecreaseFunding: percentageToFloat("2%"),
+  thresholdForStableFunding: percentageToFloat("4%"),
+  thresholdForDecreaseFunding: 0,
 };
 
 type BorrowingRateConfig = Partial<{
@@ -443,8 +443,8 @@ const config: {
       ...fundingRateConfig_Low,
       ...borrowingRateConfig_LowMax_WithLowerBase,
 
-      reserveFactor: percentageToFloat("205%"),
-      openInterestReserveFactor: percentageToFloat("200%"),
+      reserveFactor: percentageToFloat("235%"),
+      openInterestReserveFactor: percentageToFloat("230%"),
 
       maxLongTokenPoolAmount: expandDecimals(2200, 8),
       maxShortTokenPoolAmount: expandDecimals(110_000_000, 6),
@@ -465,7 +465,7 @@ const config: {
       // minCollateralFactor of 0.005 (0.5%) when open interest is 83,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6e-11"),
 
-      maxOpenInterest: decimalToFloat(74_000_000),
+      maxOpenInterest: decimalToFloat(60_000_000),
     },
     {
       tokens: { indexToken: "BTC", longToken: "WBTC.e", shortToken: "WBTC.e" },
@@ -922,8 +922,8 @@ const config: {
       // minCollateralFactor of 0.005 (0.5%) when open interest is 25,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2e-10"),
 
-      reserveFactor: percentageToFloat("265%"),
-      openInterestReserveFactor: percentageToFloat("260%"),
+      reserveFactor: percentageToFloat("275%"),
+      openInterestReserveFactor: percentageToFloat("270%"),
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(230, 33), // 0.2300306+36, 20 SOL / day
       minPositionImpactPoolAmount: expandDecimals(219, 9), // 219 SOL
@@ -1366,9 +1366,6 @@ const config: {
       negativeMaxPositionImpactFactor: percentageToFloat("0.5%"),
       maxPositionImpactFactorForLiquidations: bigNumberify(0), // 0%
 
-      positionFeeFactorForPositiveImpact: percentageToFloat("0.05%"),
-      positionFeeFactorForNegativeImpact: percentageToFloat("0.07%"),
-
       minCollateralFactor: percentageToFloat("1%"), // 100x leverage
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
 
@@ -1500,9 +1497,9 @@ const config: {
 
       maxOpenInterest: decimalToFloat(1_000_000),
 
-      maxPoolUsdForDeposit: decimalToFloat(4_500_000),
-      maxLongTokenPoolAmount: expandDecimals(1430, 18),
-      maxShortTokenPoolAmount: expandDecimals(5_000_000, 6),
+      maxPoolUsdForDeposit: decimalToFloat(9_000_000),
+      maxLongTokenPoolAmount: expandDecimals(2960, 18),
+      maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
     },
     {
       tokens: { indexToken: "SEI", longToken: "WETH", shortToken: "USDC" },
@@ -2046,9 +2043,6 @@ const config: {
       negativeMaxPositionImpactFactor: percentageToFloat("0.5%"),
       maxPositionImpactFactorForLiquidations: bigNumberify(0), // 0%
 
-      positionFeeFactorForPositiveImpact: percentageToFloat("0.05%"),
-      positionFeeFactorForNegativeImpact: percentageToFloat("0.07%"),
-
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
@@ -2080,8 +2074,8 @@ const config: {
       // minCollateralFactor of 0.01 (1%)
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
 
-      reserveFactor: percentageToFloat("105%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
+      reserveFactor: percentageToFloat("135%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("130%"), // default is 90%
 
       maxPnlFactorForTraders: percentageToFloat("90%"), // default is 60%
 
@@ -2328,6 +2322,93 @@ const config: {
       openInterestReserveFactor: percentageToFloat("120%"), // default is 90%
 
       maxPnlFactorForTraders: percentageToFloat("75%"), // default is 60%
+
+      maxOpenInterest: decimalToFloat(1_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(1_500_000), // 1.5x the max open interest
+
+      maxLongTokenPoolAmount: expandDecimals(600, 18), // ~2M USD (2x the max open interest)
+      maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+    },
+    {
+      tokens: { indexToken: "TRUMP", longToken: "WETH", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:TRUMP/USD"),
+      virtualMarketId: hashString("SPOT:ETH/USD"),
+
+      ...syntheticMarketConfig,
+      ...fundingRateConfig_High,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
+
+      negativePositionImpactFactor: exponentToFloat("5e-7"),
+      positivePositionImpactFactor: exponentToFloat("2.5e-7"),
+      positionImpactExponentFactor: exponentToFloat("1.7e0"),
+
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
+
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2e-8"),
+
+      reserveFactor: percentageToFloat("40%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("35%"), // default is 90%
+
+      maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
+
+      maxOpenInterest: decimalToFloat(750_000),
+      maxPoolUsdForDeposit: decimalToFloat(2_500_000),
+
+      maxLongTokenPoolAmount: expandDecimals(900, 18),
+      maxShortTokenPoolAmount: expandDecimals(3_000_000, 6),
+    },
+    {
+      tokens: { indexToken: "MELANIA", longToken: "WETH", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:MELANIA/USD"),
+      virtualMarketId: hashString("SPOT:ETH/USD"),
+
+      ...syntheticMarketConfig,
+      ...fundingRateConfig_Default,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
+
+      negativePositionImpactFactor: exponentToFloat("5e-7"),
+      positivePositionImpactFactor: exponentToFloat("2.5e-7"),
+      positionImpactExponentFactor: exponentToFloat("1.7e0"),
+
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
+
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2e-8"),
+
+      reserveFactor: percentageToFloat("40%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("35%"), // default is 90%
+
+      maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
+
+      maxOpenInterest: decimalToFloat(500_000),
+      maxPoolUsdForDeposit: decimalToFloat(750_000), // 1.5x the max open interest
+
+      maxLongTokenPoolAmount: expandDecimals(300, 18), // ~1M USD (2x the max open interest)
+      maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x the max open interest)
+    },
+    {
+      tokens: { indexToken: "ENA", longToken: "WETH", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:ENA/USD"),
+      virtualMarketId: hashString("SPOT:ETH/USD"),
+
+      ...syntheticMarketConfig,
+      ...fundingRateConfig_Default,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
+
+      negativePositionImpactFactor: exponentToFloat("8e-7"),
+      positivePositionImpactFactor: exponentToFloat("4e-7"),
+      positionImpactExponentFactor: exponentToFloat("1.6e0"),
+
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
+
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2e-10"),
+
+      reserveFactor: percentageToFloat("75%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("70%"), // default is 90%
+
+      maxPnlFactorForTraders: percentageToFloat("90%"), // default is 60%
 
       maxOpenInterest: decimalToFloat(1_000_000),
       maxPoolUsdForDeposit: decimalToFloat(1_500_000), // 1.5x the max open interest

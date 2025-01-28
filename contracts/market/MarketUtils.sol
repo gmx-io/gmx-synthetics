@@ -22,6 +22,8 @@ import "../price/Price.sol";
 import "../utils/Calc.sol";
 import "../utils/Precision.sol";
 
+import "../feature/FeatureUtils.sol";
+
 // @title MarketUtils
 // @dev Library for market functions
 library MarketUtils {
@@ -640,6 +642,40 @@ library MarketUtils {
         return claimableAmount;
     }
 
+    function batchClaimCollateral(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address[] memory markets,
+        address[] memory tokens,
+        uint256[] memory timeKeys,
+        address receiver,
+        address account
+    ) internal returns (uint256[] memory) {
+        if (markets.length != tokens.length || tokens.length != timeKeys.length) {
+            revert Errors.InvalidClaimCollateralInput(markets.length, tokens.length, timeKeys.length);
+        }
+
+        FeatureUtils.validateFeature(dataStore, Keys.claimCollateralFeatureDisabledKey(address(this)));
+
+        AccountUtils.validateReceiver(receiver);
+
+        uint256[] memory claimedAmounts = new uint256[](markets.length);
+
+        for (uint256 i; i < markets.length; i++) {
+            claimedAmounts[i] = MarketUtils.claimCollateral(
+                dataStore,
+                eventEmitter,
+                markets[i],
+                tokens[i],
+                timeKeys[i],
+                account,
+                receiver
+            );
+        }
+
+        return claimedAmounts;
+    }
+
     // @dev claim collateral
     // @param dataStore DataStore
     // @param eventEmitter EventEmitter
@@ -659,13 +695,7 @@ library MarketUtils {
     ) internal returns (uint256) {
         uint256 claimableAmount = dataStore.getUint(Keys.claimableCollateralAmountKey(market, token, timeKey, account));
 
-        uint256 claimableFactor;
-
-        {
-            uint256 claimableFactorForTime = dataStore.getUint(Keys.claimableCollateralFactorKey(market, token, timeKey));
-            uint256 claimableFactorForAccount = dataStore.getUint(Keys.claimableCollateralFactorKey(market, token, timeKey, account));
-            claimableFactor = claimableFactorForTime > claimableFactorForAccount ? claimableFactorForTime : claimableFactorForAccount;
-        }
+        uint256 claimableFactor = _getClaimableFactor(dataStore, market, token, timeKey, account);
 
         if (claimableFactor > Precision.FLOAT_PRECISION) {
             revert Errors.InvalidClaimableFactor(claimableFactor);
@@ -710,6 +740,39 @@ library MarketUtils {
         );
 
         return amountToBeClaimed;
+    }
+
+    function _getClaimableFactor(
+        DataStore dataStore,
+        address market,
+        address token,
+        uint256 timeKey,
+        address account
+    ) internal view returns (uint256) {
+        uint256 claimableFactorForTime = dataStore.getUint(Keys.claimableCollateralFactorKey(market, token, timeKey));
+        uint256 claimableFactorForAccount = dataStore.getUint(Keys.claimableCollateralFactorKey(market, token, timeKey, account));
+        uint256 claimableFactor = claimableFactorForTime > claimableFactorForAccount
+            ? claimableFactorForTime
+            : claimableFactorForAccount;
+
+        // if the divisor is changed the timeDiff calculation would no longer be accurate
+        uint256 divisor = dataStore.getUint(Keys.CLAIMABLE_COLLATERAL_TIME_DIVISOR);
+
+        uint256 claimableReductionFactor = dataStore.getUint(Keys.claimableCollateralReductionFactorKey(market, token, timeKey, account));
+        uint256 timeDiff = Chain.currentTimestamp() - timeKey * divisor;
+        uint256 claimableCollateralDelay = dataStore.getUint(Keys.CLAIMABLE_COLLATERAL_DELAY);
+
+        if (claimableFactor == 0 && claimableReductionFactor == 0 && timeDiff > claimableCollateralDelay) {
+            claimableFactor = Precision.FLOAT_PRECISION;
+        }
+
+        if (claimableFactor > claimableReductionFactor) {
+            claimableFactor -= claimableReductionFactor;
+        } else {
+            claimableFactor = 0;
+        }
+
+        return claimableFactor;
     }
 
     // @dev apply a delta to the pool amount

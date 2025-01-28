@@ -2,7 +2,12 @@ import hre, { network } from "hardhat";
 
 import prompts from "prompts";
 import { bigNumberify } from "../utils/math";
-import { getFullKey, appendUintConfigIfDifferent, appendAddressConfigIfDifferent } from "../utils/config";
+import {
+  getFullKey,
+  appendUintConfigIfDifferent,
+  appendAddressConfigIfDifferent,
+  appendBoolConfigIfDifferent,
+} from "../utils/config";
 import * as keys from "../utils/keys";
 
 const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig }) => {
@@ -304,8 +309,14 @@ export async function updateGeneralConfig({ write }) {
           allowFailure: false,
           callData: dataStore.interface.encodeFunctionData("getAddress", [key]),
         });
+      } else if (type === "bool") {
+        multicallReadParams.push({
+          target: dataStore.address,
+          allowFailure: false,
+          callData: dataStore.interface.encodeFunctionData("getBool", [key]),
+        });
       } else {
-        throw new Error("Unsupported type");
+        throw new Error(`Unsupported type: ${type}`);
       }
     },
   });
@@ -320,8 +331,10 @@ export async function updateGeneralConfig({ write }) {
       dataCache[key] = bigNumberify(value);
     } else if (type === "address") {
       dataCache[key] = ethers.utils.defaultAbiCoder.decode(["address"], value)[0];
+    } else if (type === "bool") {
+      dataCache[key] = ethers.utils.defaultAbiCoder.decode(["bool"], value)[0];
     } else {
-      throw new Error("Unsupported type");
+      throw new Error(`Unsupported type: ${type}`);
     }
   }
 
@@ -335,14 +348,21 @@ export async function updateGeneralConfig({ write }) {
         await appendUintConfigIfDifferent(multicallWriteParams, dataCache, baseKey, keyData, value, label);
       } else if (type === "address") {
         await appendAddressConfigIfDifferent(multicallWriteParams, dataCache, baseKey, keyData, value, label);
+      } else if (type === "bool") {
+        await appendBoolConfigIfDifferent(multicallWriteParams, dataCache, baseKey, keyData, value, label);
       } else {
-        throw new Error("Unsupported type");
+        throw new Error(`Unsupported type: ${type}`);
       }
     },
   });
 
   console.log(`updating ${multicallWriteParams.length} params`);
   console.log("multicallWriteParams", multicallWriteParams);
+
+  if (multicallWriteParams.length === 0) {
+    console.log("no changes to apply");
+    return;
+  }
 
   try {
     if (!write) {
