@@ -116,7 +116,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             revert Errors.InvalidCancellationReceiverForSubaccountOrder(params.addresses.cancellationReceiver, account);
         }
 
-        return _createOrder(relayParams.tokenPermits, relayParams.fee, account, collateralDeltaAmount, params);
+        return _createOrder(relayParams, account, collateralDeltaAmount, params);
     }
 
     function updateOrder(
@@ -216,7 +216,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         bytes32 domainSeparator = _getDomainSeparator(block.chainid);
         bytes32 structHash = _getSubaccountApprovalStructHash(subaccountApproval);
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
-        _validateSignature(digest, subaccountApproval.signature, account, Errors.SignatureType.SubaccountApproval);
+        _validateSignature(digest, subaccountApproval.signature, account, "subaccount approval");
 
         if (subaccountApproval.maxAllowedCount > 0) {
             SubaccountUtils.setMaxAllowedSubaccountActionCount(

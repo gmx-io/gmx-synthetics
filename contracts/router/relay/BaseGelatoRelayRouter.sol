@@ -18,6 +18,8 @@ import "../../token/TokenUtils.sol";
 import "../../swap/SwapUtils.sol";
 import "../../nonce/NonceUtils.sol";
 
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+
 abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, OracleModule {
     using Order for Order.Props;
 
@@ -65,7 +67,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
 
-    // Define the EIP-712 struct type:
     bytes32 public constant DOMAIN_SEPARATOR_TYPEHASH =
         keccak256(bytes("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"));
 
@@ -89,7 +90,12 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         eventEmitter = _eventEmitter;
     }
 
-    function _validateSignature(bytes32 digest, bytes calldata signature, address expectedSigner, Errors.SignatureType signatureType) internal pure {
+    function _validateSignature(
+        bytes32 digest,
+        bytes calldata signature,
+        address expectedSigner,
+        string memory signatureType
+    ) internal pure {
         (address recovered, ECDSA.RecoverError error) = ECDSA.tryRecover(digest, signature);
         if (error != ECDSA.RecoverError.NoError || recovered != expectedSigner) {
             revert Errors.InvalidSignature(signatureType);
@@ -109,6 +115,11 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         });
 
         Order.Props memory order = OrderStoreUtils.get(contracts.dataStore, key);
+
+        if (order.account() == address(0)) {
+            revert Errors.EmptyOrder();
+        }
+
         if (order.account() != account) {
             revert Errors.Unauthorized(account, "account for updateOrder");
         }
@@ -128,7 +139,13 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     }
 
     function _cancelOrder(RelayParams calldata relayParams, address account, bytes32 key) internal {
-        Order.Props memory order = OrderStoreUtils.get(dataStore, key);
+        Contracts memory contracts = Contracts({
+            dataStore: dataStore,
+            eventEmitter: eventEmitter,
+            orderVault: orderVault
+        });
+
+        Order.Props memory order = OrderStoreUtils.get(contracts.dataStore, key);
         if (order.account() == address(0)) {
             revert Errors.EmptyOrder();
         }
@@ -137,20 +154,13 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             revert Errors.Unauthorized(account, "account for cancelOrder");
         }
 
-        Contracts memory contracts = Contracts({
-            dataStore: dataStore,
-            eventEmitter: eventEmitter,
-            orderVault: orderVault
-        });
-
         _handleRelay(contracts, relayParams.tokenPermits, relayParams.fee, account, key, account);
 
         orderHandler.cancelOrder(key);
     }
 
     function _createOrder(
-        TokenPermit[] calldata tokenPermit,
-        RelayFeeParams calldata fee,
+        RelayParams calldata relayParams,
         address account,
         uint256 collateralDeltaAmount,
         IBaseOrderUtils.CreateOrderParams memory params // can't use calldata because need to modify params.numbers.executionFee
@@ -163,8 +173,8 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
         params.numbers.executionFee = _handleRelay(
             contracts,
-            tokenPermit,
-            fee,
+            relayParams.tokenPermits,
+            relayParams.fee,
             account,
             NonceUtils.getNextKey(contracts.dataStore), // order key
             address(contracts.orderVault)
@@ -296,6 +306,8 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         _transferRelayFee();
 
         uint256 residualFee = outputAmount - requiredRelayFee;
+        // for orders the residual fee is sent to the order vault
+        // for other actions the residual fee is sent back to the user
         TokenUtils.transfer(contracts.dataStore, wnt, residualFeeReceiver, residualFee);
         return residualFee;
     }
@@ -327,7 +339,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     ) internal {
         bytes32 domainSeparator = _getDomainSeparator(block.chainid);
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
-        _validateSignature(digest, signature, account, Errors.SignatureType.Call);
+        _validateSignature(digest, signature, account, "call");
 
         _validateNonce(account, userNonce);
         _validateDeadline(deadline);

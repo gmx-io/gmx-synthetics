@@ -429,7 +429,7 @@ library Errors {
     }
 
     // Gelato relay errors
-    error InvalidSignature(SignatureType signatureType);
+    error InvalidSignature(string signatureType);
     // User sent incorrect fee token or incorrect swap path
     error UnexpectedRelayFeeTokenAfterSwap(address feeToken, address expectedFeeToken);
     // Contract received unsupported fee token from Gelato relay
