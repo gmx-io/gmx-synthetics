@@ -89,7 +89,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         eventEmitter = _eventEmitter;
     }
 
-    function _validateSignature(bytes32 digest, bytes calldata signature, address expectedSigner, uint256 signatureType) internal pure {
+    function _validateSignature(bytes32 digest, bytes calldata signature, address expectedSigner, Errors.SignatureType signatureType) internal pure {
         (address recovered, ECDSA.RecoverError error) = ECDSA.tryRecover(digest, signature);
         if (error != ECDSA.RecoverError.NoError || recovered != expectedSigner) {
             revert Errors.InvalidSignature(signatureType);
@@ -327,7 +327,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     ) internal {
         bytes32 domainSeparator = _getDomainSeparator(block.chainid);
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
-        _validateSignature(digest, signature, account, 0);
+        _validateSignature(digest, signature, account, Errors.SignatureType.Call);
 
         _validateNonce(account, userNonce);
         _validateDeadline(deadline);

@@ -216,7 +216,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         bytes32 domainSeparator = _getDomainSeparator(block.chainid);
         bytes32 structHash = _getSubaccountApprovalStructHash(subaccountApproval);
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
-        _validateSignature(digest, subaccountApproval.signature, account, 1);
+        _validateSignature(digest, subaccountApproval.signature, account, Errors.SignatureType.SubaccountApproval);
 
         if (subaccountApproval.maxAllowedCount > 0) {
             SubaccountUtils.setMaxAllowedSubaccountActionCount(
