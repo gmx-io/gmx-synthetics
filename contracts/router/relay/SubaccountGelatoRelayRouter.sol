@@ -82,9 +82,9 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     function createOrder(
         RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
-        uint256 collateralDeltaAmount,
-        address account,
+        address account, // main account
         address subaccount,
+        uint256 collateralDeltaAmount,
         IBaseOrderUtils.CreateOrderParams memory params, // can't use calldata because need to modify params.numbers.executionFee
         uint256 userNonce,
         uint256 deadline,
@@ -99,8 +99,8 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         bytes32 structHash = _getCreateOrderStructHash(
             relayParams,
             subaccountApproval,
-            collateralDeltaAmount,
             account,
+            collateralDeltaAmount,
             params,
             userNonce,
             deadline
@@ -116,13 +116,13 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             revert Errors.InvalidCancellationReceiverForSubaccountOrder(params.addresses.cancellationReceiver, account);
         }
 
-        return _createOrder(relayParams.tokenPermits, relayParams.fee, collateralDeltaAmount, params, account);
+        return _createOrder(relayParams.tokenPermits, relayParams.fee, account, collateralDeltaAmount, params);
     }
 
     function updateOrder(
         RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
-        address account,
+        address account, // main account
         address subaccount,
         bytes32 key,
         UpdateOrderParams calldata params,
@@ -147,7 +147,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     function cancelOrder(
         RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
-        address account,
+        address account, // main account
         address subaccount,
         bytes32 key,
         uint256 userNonce,
@@ -283,8 +283,8 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     function _getCreateOrderStructHash(
         RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
-        uint256 collateralDeltaAmount,
         address account,
+        uint256 collateralDeltaAmount,
         IBaseOrderUtils.CreateOrderParams memory params,
         uint256 userNonce,
         uint256 deadline

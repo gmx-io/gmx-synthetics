@@ -66,9 +66,9 @@ export async function sendCreateOrder(p: {
   const createOrderCalldata = p.relayRouter.interface.encodeFunctionData("createOrder", [
     relayParams,
     p.subaccountApproval,
-    p.collateralDeltaAmount,
     p.account,
     p.subaccount,
+    p.collateralDeltaAmount,
     p.params,
     p.userNonce,
     p.deadline,

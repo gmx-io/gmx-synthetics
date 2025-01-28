@@ -57,8 +57,8 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
 
     function createOrder(
         RelayParams calldata relayParams,
-        uint256 collateralDeltaAmount,
         address account,
+        uint256 collateralDeltaAmount,
         IBaseOrderUtils.CreateOrderParams memory params, // can't use calldata because need to modify params.numbers.executionFee
         uint256 userNonce,
         uint256 deadline,
@@ -73,13 +73,13 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         bytes32 structHash = _getCreateOrderStructHash(relayParams, collateralDeltaAmount, params, userNonce, deadline);
         _validateCall(userNonce, deadline, account, structHash, signature);
 
-        return _createOrder(relayParams.tokenPermits, relayParams.fee, collateralDeltaAmount, params, account);
+        return _createOrder(relayParams.tokenPermits, relayParams.fee, account, collateralDeltaAmount, params);
     }
 
     function updateOrder(
         RelayParams calldata relayParams,
-        bytes32 key,
         address account,
+        bytes32 key,
         UpdateOrderParams calldata params,
         uint256 userNonce,
         uint256 deadline,
@@ -93,8 +93,8 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
 
     function cancelOrder(
         RelayParams calldata relayParams,
-        bytes32 key,
         address account,
+        bytes32 key,
         uint256 userNonce,
         uint256 deadline,
         bytes calldata signature
