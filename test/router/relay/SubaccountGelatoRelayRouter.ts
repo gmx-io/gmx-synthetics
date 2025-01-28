@@ -273,6 +273,8 @@ describe("SubaccountGelatoRelayRouter", () => {
       ).to.be.revertedWithCustomError(errorsContract, "InvalidSubaccountApprovalNonce");
     });
 
+    it.skip("increments subaccount action count");
+
     it("updates subaccount approval, max allowed count, and expires at", async () => {
       await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
 
