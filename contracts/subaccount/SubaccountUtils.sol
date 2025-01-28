@@ -113,6 +113,9 @@ library SubaccountUtils {
         eventData.uintItems.initItems(1);
         eventData.uintItems.setItem(0, "expiresAt", expiresAt);
 
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "actionType", actionType);
+
         eventEmitter.emitEventLog2(
             "SetSubaccountExpiresAt",
             Cast.toBytes32(account),
@@ -140,6 +143,9 @@ library SubaccountUtils {
 
         eventData.uintItems.initItems(1);
         eventData.uintItems.setItem(0, "maxAllowedCount", maxAllowedCount);
+
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "actionType", actionType);
 
         eventEmitter.emitEventLog2(
             "SetMaxAllowedSubaccountActionCount",
