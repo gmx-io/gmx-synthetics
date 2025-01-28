@@ -70,9 +70,9 @@ export async function sendCreateOrder(p: {
     p.account,
     p.subaccount,
     p.params,
-    p.signature,
     p.userNonce,
     p.deadline,
+    p.signature,
   ]);
   const calldata = ethers.utils.solidityPack(
     ["bytes", "address", "address", "uint256"],
@@ -210,7 +210,7 @@ export async function sendUpdateOrder(p: {
   const relayParams = getRelayParams(p.oracleParams, p.tokenPermits, p.feeParams);
 
   if (!p.subaccountApproval) {
-    p.subaccountApproval = getEmptySubaccountApproval(p.subaccount);
+    p.subaccountApproval = getEmptySubaccountApproval();
   }
   if (!p.subaccountApproval.signature) {
     p.subaccountApproval.signature = await getSubaccountApprovalSignature({
@@ -231,9 +231,9 @@ export async function sendUpdateOrder(p: {
     p.subaccount,
     p.key,
     p.params,
-    p.signature,
     p.userNonce,
     p.deadline,
+    p.signature,
   ]);
   const calldata = ethers.utils.solidityPack(
     ["bytes", "address", "address", "uint256"],
@@ -328,7 +328,7 @@ export async function sendCancelOrder(p: {
   const relayParams = getRelayParams(p.oracleParams, p.tokenPermits, p.feeParams);
 
   if (!p.subaccountApproval) {
-    p.subaccountApproval = getEmptySubaccountApproval(p.subaccount);
+    p.subaccountApproval = getEmptySubaccountApproval();
   }
   if (!p.subaccountApproval.signature) {
     p.subaccountApproval.signature = await getSubaccountApprovalSignature({
@@ -348,9 +348,9 @@ export async function sendCancelOrder(p: {
     p.account,
     p.subaccount,
     p.key,
-    p.signature,
     p.userNonce,
     p.deadline,
+    p.signature,
   ]);
   const calldata = ethers.utils.solidityPack(
     ["bytes", "address", "address", "uint256"],

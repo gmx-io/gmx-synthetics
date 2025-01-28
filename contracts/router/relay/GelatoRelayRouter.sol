@@ -60,9 +60,9 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         uint256 collateralDeltaAmount,
         address account,
         IBaseOrderUtils.CreateOrderParams memory params, // can't use calldata because need to modify params.numbers.executionFee
-        bytes calldata signature,
         uint256 userNonce,
-        uint256 deadline
+        uint256 deadline,
+        bytes calldata signature
     )
         external
         nonReentrant
@@ -81,9 +81,9 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         bytes32 key,
         address account,
         UpdateOrderParams calldata params,
-        bytes calldata signature,
         uint256 userNonce,
-        uint256 deadline
+        uint256 deadline,
+        bytes calldata signature
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelay {
         bytes32 structHash = _getUpdateOrderStructHash(relayParams, key, params, userNonce, deadline);
         _validateCall(userNonce, deadline, account, structHash, signature);
@@ -95,9 +95,9 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         RelayParams calldata relayParams,
         bytes32 key,
         address account,
-        bytes calldata signature,
         uint256 userNonce,
-        uint256 deadline
+        uint256 deadline,
+        bytes calldata signature
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelay {
         bytes32 structHash = _getCancelOrderStructHash(relayParams, key, userNonce, deadline);
         _validateCall(userNonce, deadline, account, structHash, signature);

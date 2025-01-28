@@ -47,9 +47,9 @@ export async function sendCreateOrder(p: {
     p.collateralDeltaAmount,
     p.account,
     p.params,
-    p.signature,
     p.userNonce,
     p.deadline,
+    p.signature,
   ]);
   const calldata = ethers.utils.solidityPack(
     ["bytes", "address", "address", "uint256"],
@@ -189,9 +189,9 @@ export async function sendUpdateOrder(p: {
     p.key,
     p.account,
     p.params,
-    p.signature,
     p.userNonce,
     p.deadline,
+    p.signature,
   ]);
   const calldata = ethers.utils.solidityPack(
     ["bytes", "address", "address", "uint256"],
@@ -291,9 +291,9 @@ export async function sendCancelOrder(p: {
     relayParams,
     p.key,
     p.account,
-    p.signature,
     p.userNonce,
     p.deadline,
+    p.signature,
   ]);
   const calldata = ethers.utils.solidityPack(
     ["bytes", "address", "address", "uint256"],
