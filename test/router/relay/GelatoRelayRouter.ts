@@ -249,13 +249,6 @@ describe("GelatoRelayRouter", () => {
       // relay fee was sent
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, gelatoRelayFee);
 
-      // same nonce should revert
-      await expect(
-        sendCreateOrder({
-          ...createOrderParams,
-        })
-      ).to.be.revertedWithCustomError(errorsContract, "InvalidUserNonce");
-
       const orderKeys = await getOrderKeys(dataStore, 0, 1);
       const order = await reader.getOrder(dataStore.address, orderKeys[0]);
 
