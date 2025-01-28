@@ -208,7 +208,7 @@ contract GlpMigrator is ReentrancyGuard, RoleModule {
                 false, // shouldUnwrapNativeToken;
                 migrationItem.executionFee, // executionFee;
                 0, // callbackGasLimit;
-                new bytes32[](0)
+                new bytes32[](0) // dataList;
             );
 
             cache.depositKey = depositHandler.createDeposit(
