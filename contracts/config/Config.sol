@@ -157,6 +157,24 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         );
     }
 
+    function setClaimableCollateralReductionFactorForAccount(
+        address market,
+        address token,
+        uint256 timeKey,
+        address account,
+        uint256 factor
+    ) external onlyConfigKeeper nonReentrant {
+        ConfigUtils.setClaimableCollateralReductionFactorForAccount(
+            dataStore,
+            eventEmitter,
+            market,
+            token,
+            timeKey,
+            account,
+            factor
+        );
+    }
+
     function setPositionImpactDistributionRate(
         address market,
         uint256 minPositionImpactPoolAmount,
@@ -498,6 +516,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.DATA_STREAM_SPREAD_REDUCTION_FACTOR] = true;
 
         allowedBaseKeys[Keys.SOURCE_CHAIN_BALANCE] = true;
+
+        allowedBaseKeys[Keys.CLAIMABLE_COLLATERAL_DELAY] = true;
     }
 
     function _initAllowedLimitedBaseKeys() internal {
