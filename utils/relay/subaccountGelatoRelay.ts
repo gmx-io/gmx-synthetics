@@ -8,6 +8,7 @@ export async function sendCreateOrder(p: {
   subaccount: string;
   subaccountApproval: {
     subaccount: string;
+    shouldAdd: boolean;
     expiresAt: BigNumberish;
     maxAllowedCount: BigNumberish;
     actionType: string;
@@ -87,6 +88,7 @@ export async function sendCreateOrder(p: {
 function getEmptySubaccountApproval() {
   return {
     subaccount: ethers.constants.AddressZero,
+    shouldAdd: false,
     expiresAt: 0,
     maxAllowedCount: 0,
     actionType: keys.SUBACCOUNT_ORDER_ACTION,
@@ -402,6 +404,7 @@ async function getSubaccountApprovalSignature(p: {
   chainId: BigNumberish;
   verifyingContract: string;
   subaccount: string;
+  shouldAdd: boolean;
   expiresAt: BigNumberish;
   maxAllowedCount: BigNumberish;
   actionType: string;
@@ -418,6 +421,7 @@ async function getSubaccountApprovalSignature(p: {
   const types = {
     SubaccountApproval: [
       { name: "subaccount", type: "address" },
+      { name: "shouldAdd", type: "bool" },
       { name: "expiresAt", type: "uint256" },
       { name: "maxAllowedCount", type: "uint256" },
       { name: "actionType", type: "bytes32" },
@@ -428,6 +432,7 @@ async function getSubaccountApprovalSignature(p: {
 
   const typedData = {
     subaccount: p.subaccount,
+    shouldAdd: p.shouldAdd,
     expiresAt: p.expiresAt,
     maxAllowedCount: p.maxAllowedCount,
     actionType: p.actionType,

@@ -11,6 +11,7 @@ import "./BaseGelatoRelayRouter.sol";
 contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     struct SubaccountApproval {
         address subaccount;
+        bool shouldAdd;
         uint256 expiresAt;
         uint256 maxAllowedCount;
         bytes32 actionType;
@@ -61,7 +62,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     bytes32 public constant SUBACCOUNT_APPROVAL_TYPEHASH =
         keccak256(
             bytes(
-                "SubaccountApproval(address subaccount,uint256 expiresAt,uint256 maxAllowedCount,bytes32 actionType,uint256 nonce,uint256 deadline)"
+                "SubaccountApproval(address subaccount,bool shouldAdd,uint256 expiresAt,uint256 maxAllowedCount,bytes32 actionType,uint256 nonce,uint256 deadline)"
             )
         );
 
@@ -203,6 +204,10 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             return;
         }
 
+        if (subaccountApproval.subaccount == address(0)) {
+            revert Errors.InvalidSubaccountApprovalSubaccount();
+        }
+
         if (subaccountApproval.deadline > 0 && block.timestamp > subaccountApproval.deadline) {
             revert Errors.SubaccountApprovalDeadlinePassed(block.timestamp, subaccountApproval.deadline);
         }
@@ -240,7 +245,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             );
         }
 
-        if (subaccountApproval.subaccount != address(0)) {
+        if (subaccountApproval.shouldAdd) {
             SubaccountUtils.addSubaccount(dataStore, eventEmitter, account, subaccountApproval.subaccount);
         }
     }
@@ -271,6 +276,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
                 abi.encode(
                     SUBACCOUNT_APPROVAL_TYPEHASH,
                     subaccountApproval.subaccount,
+                    subaccountApproval.shouldAdd,
                     subaccountApproval.expiresAt,
                     subaccountApproval.maxAllowedCount,
                     subaccountApproval.actionType,

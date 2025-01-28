@@ -166,6 +166,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           ...createOrderParams,
           subaccountApproval: {
             subaccount: user0.address,
+            shouldAdd: true,
             expiresAt: 9999999999,
             maxAllowedCount: 10,
             actionType: keys.SUBACCOUNT_ORDER_ACTION,
@@ -180,6 +181,7 @@ describe("SubaccountGelatoRelayRouter", () => {
         ...createOrderParams,
         subaccountApproval: {
           subaccount: user0.address,
+          shouldAdd: true,
           expiresAt: 9999999999,
           maxAllowedCount: 10,
           actionType: keys.SUBACCOUNT_ORDER_ACTION,
@@ -241,6 +243,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           ...createOrderParams,
           subaccountApproval: {
             subaccount: user0.address,
+            shouldAdd: true,
             expiresAt: 9999999999,
             maxAllowedCount: 10,
             actionType: keys.SUBACCOUNT_ORDER_ACTION,
@@ -251,7 +254,7 @@ describe("SubaccountGelatoRelayRouter", () => {
         })
       )
         .to.be.revertedWithCustomError(errorsContract, "InvalidSignature")
-        .withArgs(1);
+        .withArgs("subaccount approval");
     });
 
     it("InvalidSubaccountApprovalNonce", async () => {
@@ -261,6 +264,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           ...createOrderParams,
           subaccountApproval: {
             subaccount: user0.address,
+            shouldAdd: true,
             expiresAt: 9999999999,
             maxAllowedCount: 10,
             actionType: keys.SUBACCOUNT_ORDER_ACTION,
@@ -274,6 +278,7 @@ describe("SubaccountGelatoRelayRouter", () => {
         ...createOrderParams,
         subaccountApproval: {
           subaccount: user0.address,
+          shouldAdd: true,
           expiresAt: 9999999999,
           maxAllowedCount: 10,
           actionType: keys.SUBACCOUNT_ORDER_ACTION,
@@ -286,6 +291,7 @@ describe("SubaccountGelatoRelayRouter", () => {
         ...createOrderParams,
         subaccountApproval: {
           subaccount: user0.address,
+          shouldAdd: true,
           expiresAt: 9999999999,
           maxAllowedCount: 10,
           actionType: keys.SUBACCOUNT_ORDER_ACTION,
@@ -300,6 +306,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           ...createOrderParams,
           subaccountApproval: {
             subaccount: user0.address,
+            shouldAdd: true,
             expiresAt: 9999999999,
             maxAllowedCount: 10,
             actionType: keys.SUBACCOUNT_ORDER_ACTION,
@@ -332,6 +339,7 @@ describe("SubaccountGelatoRelayRouter", () => {
         ...createOrderParams,
         subaccountApproval: {
           subaccount: user0.address,
+          shouldAdd: true,
           expiresAt: 9999999999,
           maxAllowedCount: 10,
           actionType: keys.SUBACCOUNT_ORDER_ACTION,
@@ -462,6 +470,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           relayFeeAmount: expandDecimals(1, 15),
           subaccountApproval: {
             subaccount: user0.address,
+            shouldAdd: true,
             expiresAt: 9999999999,
             maxAllowedCount: 10,
             actionType: keys.SUBACCOUNT_ORDER_ACTION,
@@ -470,7 +479,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           },
         })
         // should not fail with InvalidSignature
-      ).to.be.revertedWithCustomError(errorsContract, "Unauthorized");
+      ).to.be.revertedWithCustomError(errorsContract, "EmptyOrder");
     });
   });
 
@@ -498,6 +507,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           relayFeeAmount: expandDecimals(1, 15),
           subaccountApproval: {
             subaccount: user0.address,
+            shouldAdd: true,
             expiresAt: 9999999999,
             maxAllowedCount: 10,
             actionType: keys.SUBACCOUNT_ORDER_ACTION,
