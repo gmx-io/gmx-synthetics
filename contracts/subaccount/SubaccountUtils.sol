@@ -71,7 +71,7 @@ library SubaccountUtils {
     ) external {
         bytes32 key = Keys.subaccountActionCountKey(account, subaccount, actionType);
         uint256 nextValue = dataStore.incrementUint(key, 1);
-        validateSubaccountActionCountAndDeadline(dataStore, account, subaccount, actionType, nextValue);
+        validateSubaccountActionCountAndExpiresAt(dataStore, account, subaccount, actionType, nextValue);
 
         EventUtils.EventLogData memory eventData;
 
@@ -155,7 +155,7 @@ library SubaccountUtils {
         );
     }
 
-    function validateSubaccountActionCountAndDeadline(
+    function validateSubaccountActionCountAndExpiresAt(
         DataStore dataStore,
         address account,
         address subaccount,
