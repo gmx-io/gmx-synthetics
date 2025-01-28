@@ -102,6 +102,11 @@ describe("SubaccountRouter", () => {
             keys.SUBACCOUNT_ORDER_ACTION,
             20,
           ]),
+          subaccountRouter.interface.encodeFunctionData("setSubaccountExpiresAt", [
+            subaccount.address,
+            keys.SUBACCOUNT_ORDER_ACTION,
+            9999999999,
+          ]),
           subaccountRouter.interface.encodeFunctionData("setSubaccountAutoTopUpAmount", [
             subaccount.address,
             expandDecimals(2, 17),
@@ -279,6 +284,11 @@ describe("SubaccountRouter", () => {
             keys.SUBACCOUNT_ORDER_ACTION,
             20,
           ]),
+          subaccountRouter.interface.encodeFunctionData("setSubaccountExpiresAt", [
+            subaccount.address,
+            keys.SUBACCOUNT_ORDER_ACTION,
+            9999999999,
+          ]),
           subaccountRouter.interface.encodeFunctionData("setSubaccountAutoTopUpAmount", [
             subaccount.address,
             expandDecimals(1, 17),
@@ -412,6 +422,11 @@ describe("SubaccountRouter", () => {
             subaccount.address,
             keys.SUBACCOUNT_ORDER_ACTION,
             20,
+          ]),
+          subaccountRouter.interface.encodeFunctionData("setSubaccountExpiresAt", [
+            subaccount.address,
+            keys.SUBACCOUNT_ORDER_ACTION,
+            9999999999,
           ]),
           subaccountRouter.interface.encodeFunctionData("setSubaccountAutoTopUpAmount", [
             subaccount.address,
@@ -548,6 +563,11 @@ describe("SubaccountRouter", () => {
             subaccount.address,
             keys.SUBACCOUNT_ORDER_ACTION,
             20,
+          ]),
+          subaccountRouter.interface.encodeFunctionData("setSubaccountExpiresAt", [
+            subaccount.address,
+            keys.SUBACCOUNT_ORDER_ACTION,
+            9999999999,
           ]),
           subaccountRouter.interface.encodeFunctionData("setSubaccountAutoTopUpAmount", [
             subaccount.address,

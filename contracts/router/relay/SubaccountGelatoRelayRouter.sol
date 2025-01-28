@@ -107,7 +107,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             deadline
         );
         _validateCall(userNonce, deadline, subaccount, structHash, signature);
-        _validateSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, subaccountApproval);
+        _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, subaccountApproval);
 
         if (params.addresses.receiver != account) {
             revert Errors.InvalidReceiver(params.addresses.receiver);
@@ -141,7 +141,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             deadline
         );
         _validateCall(userNonce, deadline, subaccount, structHash, signature);
-        _validateSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, subaccountApproval);
+        _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, subaccountApproval);
         _updateOrder(relayParams, account, key, params);
     }
 
@@ -164,7 +164,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             deadline
         );
         _validateCall(userNonce, deadline, subaccount, structHash, signature);
-        _validateSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, subaccountApproval);
+        _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, subaccountApproval);
         _cancelOrder(relayParams, account, key);
     }
 
@@ -181,7 +181,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         SubaccountUtils.removeSubaccount(dataStore, eventEmitter, account, subaccount);
     }
 
-    function _validateSubaccountAction(
+    function _handleSubaccountAction(
         address account,
         address subaccount,
         bytes32 actionType,
@@ -191,9 +191,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
 
         _handleSubaccountApproval(account, subaccountApproval);
 
-        SubaccountUtils.validateSubaccount(dataStore, account, subaccount);
-
-        SubaccountUtils.incrementSubaccountActionCount(dataStore, eventEmitter, account, subaccount, actionType);
+        SubaccountUtils.handleSubaccountAction(dataStore, eventEmitter, account, subaccount, actionType);
     }
 
     function _handleSubaccountApproval(

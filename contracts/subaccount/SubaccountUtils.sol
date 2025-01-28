@@ -62,13 +62,15 @@ library SubaccountUtils {
         );
     }
 
-    function incrementSubaccountActionCount(
+    function handleSubaccountAction(
         DataStore dataStore,
         EventEmitter eventEmitter,
         address account,
         address subaccount,
         bytes32 actionType
     ) external {
+        validateSubaccount(dataStore, account, subaccount);
+
         bytes32 key = Keys.subaccountActionCountKey(account, subaccount, actionType);
         uint256 nextValue = dataStore.incrementUint(key, 1);
         validateSubaccountActionCountAndExpiresAt(dataStore, account, subaccount, actionType, nextValue);
@@ -181,7 +183,7 @@ library SubaccountUtils {
         DataStore dataStore,
         address account,
         address subaccount
-    ) external view {
+    ) internal view {
         bytes32 setKey = Keys.subaccountListKey(account);
         if (!dataStore.containsAddress(setKey, subaccount)) {
             revert Errors.SubaccountNotAuthorized(account, subaccount);
