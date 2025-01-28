@@ -7,18 +7,16 @@ import { getRelayParams } from "./helpers";
 export async function sendCreateOrder(p: {
   signer: ethers.Signer;
   sender: ethers.Signer;
-  oracleParams: {
+  oracleParams?: {
     tokens: string[];
     providers: string[];
     data: string[];
   };
-  tokenPermits: {
+  tokenPermits?: {
     token: string;
     spender: string;
     value: BigNumberish;
-    nonce: BigNumberish;
     deadline: BigNumberish;
-    chainId: BigNumberish;
   }[];
   feeParams: {
     feeToken: string;
@@ -28,7 +26,7 @@ export async function sendCreateOrder(p: {
   collateralDeltaAmount: BigNumberish;
   account: string;
   params: any;
-  signature: string | undefined;
+  signature?: string;
   userNonce?: BigNumberish;
   deadline: BigNumberish;
   relayRouter: ethers.Contract;
@@ -153,9 +151,7 @@ export async function sendUpdateOrder(p: {
     token: string;
     spender: string;
     value: BigNumberish;
-    nonce: BigNumberish;
     deadline: BigNumberish;
-    chainId: BigNumberish;
   }[];
   feeParams: {
     feeToken: string;
@@ -266,9 +262,7 @@ export async function sendCancelOrder(p: {
     token: string;
     spender: string;
     value: BigNumberish;
-    nonce: BigNumberish;
     deadline: BigNumberish;
-    chainId: BigNumberish;
   }[];
   feeParams: {
     feeToken: string;
