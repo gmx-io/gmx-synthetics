@@ -29,7 +29,7 @@ export async function sendCreateOrder(p: {
   account: string;
   params: any;
   signature: string | undefined;
-  userNonce: BigNumberish;
+  userNonce?: BigNumberish;
   deadline: BigNumberish;
   relayRouter: ethers.Contract;
   chainId: BigNumberish;
@@ -37,6 +37,9 @@ export async function sendCreateOrder(p: {
   relayFeeAmount: BigNumberish;
 }) {
   const relayParams = getRelayParams(p.oracleParams, p.tokenPermits, p.feeParams);
+  if (p.userNonce === undefined) {
+    p.userNonce = await getUserNonce(p.account, p.relayRouter);
+  }
 
   if (!p.signature) {
     p.signature = await getCreateOrderSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
@@ -67,9 +70,12 @@ async function getCreateOrderSignature({
   verifyingContract,
   params,
   deadline,
-  userNonce,
+  userNonce = undefined,
   chainId,
 }) {
+  if (userNonce === undefined) {
+    throw new Error("userNonce is required");
+  }
   const types = {
     CreateOrder: [
       { name: "collateralDeltaAmount", type: "uint256" },
@@ -168,13 +174,16 @@ export async function sendUpdateOrder(p: {
     autoCancel: boolean;
   };
   deadline: BigNumberish;
-  userNonce: BigNumberish;
+  userNonce?: BigNumberish;
   relayRouter: ethers.Contract;
   signature?: string;
   relayFeeToken: string;
   relayFeeAmount: BigNumberish;
 }) {
   const relayParams = getRelayParams(p.oracleParams, p.tokenPermits, p.feeParams);
+  if (p.userNonce === undefined) {
+    p.userNonce = await getUserNonce(p.account, p.relayRouter);
+  }
 
   if (!p.signature) {
     p.signature = await getUpdateOrderSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
@@ -205,9 +214,12 @@ async function getUpdateOrderSignature({
   params,
   key,
   deadline,
-  userNonce,
+  userNonce = undefined,
   chainId,
 }) {
+  if (userNonce === undefined) {
+    throw new Error("userNonce is required");
+  }
   const types = {
     UpdateOrder: [
       { name: "key", type: "bytes32" },
@@ -238,6 +250,10 @@ async function getUpdateOrderSignature({
   return signer._signTypedData(domain, types, typedData);
 }
 
+async function getUserNonce(account: string, relayRouter: ethers.Contract) {
+  return relayRouter.userNonces(account);
+}
+
 export async function sendCancelOrder(p: {
   sender: ethers.Signer;
   signer: ethers.Signer;
@@ -263,13 +279,16 @@ export async function sendCancelOrder(p: {
   chainId: BigNumberish;
   account: string;
   deadline: BigNumberish;
-  userNonce: BigNumberish;
+  userNonce?: BigNumberish;
   relayRouter: ethers.Contract;
   signature?: string;
   relayFeeToken: string;
   relayFeeAmount: BigNumberish;
 }) {
   const relayParams = getRelayParams(p.oracleParams, p.tokenPermits, p.feeParams);
+  if (p.userNonce === undefined) {
+    p.userNonce = await getUserNonce(p.account, p.relayRouter);
+  }
 
   if (!p.signature) {
     p.signature = await getCancelOrderSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
@@ -292,7 +311,18 @@ export async function sendCancelOrder(p: {
   });
 }
 
-async function getCancelOrderSignature({ signer, relayParams, verifyingContract, key, deadline, userNonce, chainId }) {
+async function getCancelOrderSignature({
+  signer,
+  relayParams,
+  verifyingContract,
+  key,
+  deadline,
+  userNonce = undefined,
+  chainId,
+}) {
+  if (userNonce === undefined) {
+    throw new Error("userNonce is required");
+  }
   const types = {
     CancelOrder: [
       { name: "key", type: "bytes32" },
