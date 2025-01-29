@@ -1,12 +1,12 @@
 import { BigNumberish, ethers } from "ethers";
 import * as keys from "../keys";
 import { GELATO_RELAY_ADDRESS } from "./addresses";
-import { getDomain, hashSubaccountApproval, hashRelayParams, getRelayParams } from "./helpers";
+import { getDomain, hashSubaccountApproval, hashRelayParams, getRelayParams, getUserNonce } from "./helpers";
 
 export async function sendCreateOrder(p: {
   subaccountApprovalSigner: ethers.Signer;
   subaccount: string;
-  subaccountApproval: {
+  subaccountApproval?: {
     subaccount: string;
     shouldAdd: boolean;
     expiresAt: BigNumberish;
@@ -14,22 +14,20 @@ export async function sendCreateOrder(p: {
     actionType: string;
     deadline: BigNumberish;
     nonce: BigNumberish;
-    signature: string | undefined;
+    signature?: string;
   };
   signer: ethers.Signer;
   sender: ethers.Signer;
-  oracleParams: {
+  oracleParams?: {
     tokens: string[];
     providers: string[];
     data: string[];
   };
-  tokenPermits: {
+  tokenPermits?: {
     token: string;
     spender: string;
     value: BigNumberish;
-    nonce: BigNumberish;
     deadline: BigNumberish;
-    chainId: BigNumberish;
   }[];
   feeParams: {
     feeToken: string;
@@ -39,8 +37,8 @@ export async function sendCreateOrder(p: {
   collateralDeltaAmount: BigNumberish;
   account: string;
   params: any;
-  signature: string | undefined;
-  userNonce: BigNumberish;
+  signature?: string;
+  userNonce?: BigNumberish;
   deadline: BigNumberish;
   relayRouter: ethers.Contract;
   chainId: BigNumberish;
@@ -48,6 +46,9 @@ export async function sendCreateOrder(p: {
   relayFeeAmount: BigNumberish;
 }) {
   const relayParams = getRelayParams(p.oracleParams, p.tokenPermits, p.feeParams);
+  if (p.userNonce === undefined) {
+    p.userNonce = await getUserNonce(p.account, p.relayRouter);
+  }
 
   if (!p.subaccountApproval) {
     p.subaccountApproval = getEmptySubaccountApproval();
@@ -62,7 +63,13 @@ export async function sendCreateOrder(p: {
   }
 
   if (!p.signature) {
-    p.signature = await getCreateOrderSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
+    p.signature = await getCreateOrderSignature({
+      ...p,
+      relayParams,
+      verifyingContract: p.relayRouter.address,
+      subaccountApproval: p.subaccountApproval,
+      userNonce: p.userNonce,
+    });
   }
   const createOrderCalldata = p.relayRouter.interface.encodeFunctionData("createOrder", [
     relayParams,
@@ -203,13 +210,16 @@ export async function sendUpdateOrder(p: {
     autoCancel: boolean;
   };
   deadline: BigNumberish;
-  userNonce: BigNumberish;
+  userNonce?: BigNumberish;
   relayRouter: ethers.Contract;
   signature?: string;
   relayFeeToken: string;
   relayFeeAmount: BigNumberish;
 }) {
   const relayParams = getRelayParams(p.oracleParams, p.tokenPermits, p.feeParams);
+  if (p.userNonce === undefined) {
+    p.userNonce = await getUserNonce(p.account, p.relayRouter);
+  }
 
   if (!p.subaccountApproval) {
     p.subaccountApproval = getEmptySubaccountApproval();
@@ -224,7 +234,12 @@ export async function sendUpdateOrder(p: {
   }
 
   if (!p.signature) {
-    p.signature = await getUpdateOrderSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
+    p.signature = await getUpdateOrderSignature({
+      ...p,
+      relayParams,
+      verifyingContract: p.relayRouter.address,
+      userNonce: p.userNonce,
+    });
   }
   const updateOrderCalldata = p.relayRouter.interface.encodeFunctionData("updateOrder", [
     relayParams,
@@ -321,13 +336,16 @@ export async function sendCancelOrder(p: {
   chainId: BigNumberish;
   account: string;
   deadline: BigNumberish;
-  userNonce: BigNumberish;
+  userNonce?: BigNumberish;
   relayRouter: ethers.Contract;
   signature?: string;
   relayFeeToken: string;
   relayFeeAmount: BigNumberish;
 }) {
   const relayParams = getRelayParams(p.oracleParams, p.tokenPermits, p.feeParams);
+  if (p.userNonce === undefined) {
+    p.userNonce = await getUserNonce(p.account, p.relayRouter);
+  }
 
   if (!p.subaccountApproval) {
     p.subaccountApproval = getEmptySubaccountApproval();
@@ -342,7 +360,12 @@ export async function sendCancelOrder(p: {
   }
 
   if (!p.signature) {
-    p.signature = await getCancelOrderSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
+    p.signature = await getCancelOrderSignature({
+      ...p,
+      relayParams,
+      verifyingContract: p.relayRouter.address,
+      userNonce: p.userNonce,
+    });
   }
   const updateOrderCalldata = p.relayRouter.interface.encodeFunctionData("cancelOrder", [
     relayParams,

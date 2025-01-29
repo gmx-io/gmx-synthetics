@@ -18,7 +18,7 @@ import * as keys from "../../../utils/keys";
 import { GELATO_RELAY_ADDRESS } from "../../../utils/relay/addresses";
 import { sendCancelOrder, sendCreateOrder, sendUpdateOrder } from "../../../utils/relay/gelatoRelay";
 import { getTokenPermit } from "../../../utils/relay/tokenPermit";
-import { BigNumberish, ethers } from "ethers";
+import { ethers } from "ethers";
 
 const BAD_SIGNATURE =
   "0x122e3efab9b46c82dc38adf4ea6cd2c753b00f95c217a0e3a0f4dd110839f07a08eb29c1cc414d551349510e23a75219cd70c8b88515ed2b83bbd88216ffdb051f";
@@ -75,31 +75,7 @@ describe("GelatoRelayRouter", () => {
     chainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
   });
 
-  let createOrderParams: {
-    sender: ethers.Signer;
-    signer: ethers.Signer;
-    feeParams: {
-      feeToken: string;
-      feeAmount: BigNumberish;
-      feeSwapPath: string[];
-    };
-    tokenPermits: {
-      token: string;
-      spender: string;
-      value: BigNumberish;
-      deadline: BigNumberish;
-    }[];
-    collateralDeltaAmount: BigNumberish;
-    account: string;
-    params: any;
-    signature?: string;
-    userNonce?: BigNumberish;
-    deadline: BigNumberish;
-    relayRouter: ethers.Contract;
-    chainId: BigNumberish;
-    relayFeeToken: string;
-    relayFeeAmount: BigNumberish;
-  };
+  let createOrderParams: Parameters<typeof sendCreateOrder>[0];
   beforeEach(async () => {
     createOrderParams = {
       sender: relaySigner,
@@ -244,7 +220,27 @@ describe("GelatoRelayRouter", () => {
       );
     });
 
-    it.skip("permit doesn't override allowance if it's already sufficient");
+    it("permit doesn't override allowance if it's already sufficient", async () => {
+      await wnt.connect(user0).approve(router.address, expandDecimals(10, 18));
+      const tokenPermit = await getTokenPermit(
+        wnt,
+        user0,
+        router.address,
+        expandDecimals(1, 18),
+        0,
+        9999999999,
+        chainId
+      );
+
+      expect(await wnt.allowance(user0.address, router.address)).to.eq(expandDecimals(10, 18));
+      await sendCreateOrder({
+        ...createOrderParams,
+        tokenPermits: [tokenPermit],
+      });
+      // 0.1 ETH is spent for order
+      // 0.002 ETH is spent for relayer fee and execution fee
+      expect(await wnt.allowance(user0.address, router.address)).to.eq(expandDecimals(9898, 15)); // 9.898 ETH
+    });
 
     it("creates order and sends relayer fee", async () => {
       const collateralDeltaAmount = createOrderParams.collateralDeltaAmount;
@@ -343,31 +339,7 @@ describe("GelatoRelayRouter", () => {
   });
 
   describe("updateOrder", () => {
-    let updateOrderParams: {
-      sender: ethers.Signer;
-      signer: ethers.Signer;
-      feeParams: {
-        feeToken: string;
-        feeAmount: BigNumberish;
-        feeSwapPath: string[];
-      };
-      tokenPermits: {
-        token: string;
-        spender: string;
-        value: BigNumberish;
-        deadline: BigNumberish;
-      }[];
-      key: string;
-      account: string;
-      params: any;
-      signature?: string;
-      userNonce?: BigNumberish;
-      deadline: BigNumberish;
-      relayRouter: ethers.Contract;
-      chainId: BigNumberish;
-      relayFeeToken: string;
-      relayFeeAmount: BigNumberish;
-    };
+    let updateOrderParams: Parameters<typeof sendUpdateOrder>[0];
 
     beforeEach(() => {
       updateOrderParams = {
@@ -481,28 +453,9 @@ describe("GelatoRelayRouter", () => {
   });
 
   describe("cancelOrder", () => {
-    let cancelOrderParams: {
-      sender: ethers.Signer;
-      signer: ethers.Signer;
-      feeParams: {
-        feeToken: string;
-        feeAmount: BigNumberish;
-        feeSwapPath: string[];
-      };
-      tokenPermits: {
-        token: string;
-        spender: string;
-        value: BigNumberish;
-        deadline: BigNumberish;
-      }[];
-      key: string;
-      account: string;
-      deadline: BigNumberish;
-      relayRouter: ethers.Contract;
-      chainId: BigNumberish;
-      relayFeeToken: string;
-      relayFeeAmount: BigNumberish;
-    };
+    let cancelOrderParams: Parameters<typeof sendCancelOrder>[0];
+
+    it.skip("SubaccountNotAuthorized");
 
     beforeEach(() => {
       cancelOrderParams = {

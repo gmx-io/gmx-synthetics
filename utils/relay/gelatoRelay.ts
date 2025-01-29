@@ -1,6 +1,6 @@
 import { BigNumberish, ethers } from "ethers";
 import { GELATO_RELAY_ADDRESS } from "./addresses";
-import { hashRelayParams } from "./helpers";
+import { getUserNonce, hashRelayParams } from "./helpers";
 import { getDomain } from "./helpers";
 import { getRelayParams } from "./helpers";
 
@@ -244,10 +244,6 @@ async function getUpdateOrderSignature({
   };
 
   return signer._signTypedData(domain, types, typedData);
-}
-
-async function getUserNonce(account: string, relayRouter: ethers.Contract) {
-  return relayRouter.userNonces(account);
 }
 
 export async function sendCancelOrder(p: {

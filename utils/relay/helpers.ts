@@ -46,3 +46,6 @@ export function hashSubaccountApproval(subaccountApproval: any) {
     )
   );
 }
+export async function getUserNonce(account: string, relayRouter: ethers.Contract) {
+  return relayRouter.userNonces(account);
+}
