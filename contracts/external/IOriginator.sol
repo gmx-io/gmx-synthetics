@@ -5,5 +5,4 @@ import {MultichainReaderUtils} from "./MultichainReaderUtils.sol";
 
 interface IOriginator {
     function processLzReceive(bytes32 guid, MultichainReaderUtils.ReceivedData memory receivedDataInput) external;
-    function latestReadNumber() external view returns (uint256);
 }

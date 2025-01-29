@@ -205,7 +205,7 @@ contract MultichainReader is RoleModule {
         for (uint256 i; i < readRequestCount; i++) {
             uint32 chainId = readRequestInputs[i].chainId;
             readRequests[i] = EVMCallRequestV1({
-                appRequestLabel: 1, // Application-specific label for tracking
+                appRequestLabel: uint16(i + 1), // Application-specific label for tracking
                 targetEid: chainId, // Endpoint ID of the target chain
                 isBlockNum: false, // Use timestamp instead of block number
                 blockNumOrTimestamp: timestamp, // Timestamp to read the state at
