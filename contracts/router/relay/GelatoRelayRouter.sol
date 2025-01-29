@@ -14,7 +14,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
     bytes32 public constant UPDATE_ORDER_TYPEHASH =
         keccak256(
             bytes(
-                "UpdateOrder(bytes32 key,UpdateOrderParams params,uint256 userNonce,uint256 deadline,bytes32 relayParams)UpdateOrderParams(uint256 sizeDeltaUsd,uint256 acceptablePrice,uint256 triggerPrice,uint256 minOutputAmount,uint256 validFromTime,bool autoCancel)"
+                "UpdateOrder(bytes32 key,UpdateOrderParams params,bytes32 relayParams)UpdateOrderParams(uint256 sizeDeltaUsd,uint256 acceptablePrice,uint256 triggerPrice,uint256 minOutputAmount,uint256 validFromTime,bool autoCancel)"
             )
         );
     bytes32 public constant UPDATE_ORDER_PARAMS_TYPEHASH =
@@ -25,12 +25,12 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         );
 
     bytes32 public constant CANCEL_ORDER_TYPEHASH =
-        keccak256(bytes("CancelOrder(bytes32 key,uint256 userNonce,uint256 deadline,bytes32 relayParams)"));
+        keccak256(bytes("CancelOrder(bytes32 key,bytes32 relayParams)"));
 
     bytes32 public constant CREATE_ORDER_TYPEHASH =
         keccak256(
             bytes(
-                "CreateOrder(uint256 collateralDeltaAmount,CreateOrderAddresses addresses,CreateOrderNumbers numbers,uint256 orderType,bool isLong,bool shouldUnwrapNativeToken,bool autoCancel,bytes32 referralCode,uint256 userNonce,uint256 deadline,bytes32 relayParams)CreateOrderAddresses(address receiver,address cancellationReceiver,address callbackContract,address uiFeeReceiver,address market,address initialCollateralToken,address[] swapPath)CreateOrderNumbers(uint256 sizeDeltaUsd,uint256 initialCollateralDeltaAmount,uint256 triggerPrice,uint256 acceptablePrice,uint256 executionFee,uint256 callbackGasLimit,uint256 minOutputAmount,uint256 validFromTime)"
+                "CreateOrder(uint256 collateralDeltaAmount,CreateOrderAddresses addresses,CreateOrderNumbers numbers,uint256 orderType,bool isLong,bool shouldUnwrapNativeToken,bool autoCancel,bytes32 referralCode,bytes32 relayParams)CreateOrderAddresses(address receiver,address cancellationReceiver,address callbackContract,address uiFeeReceiver,address market,address initialCollateralToken,address[] swapPath)CreateOrderNumbers(uint256 sizeDeltaUsd,uint256 initialCollateralDeltaAmount,uint256 triggerPrice,uint256 acceptablePrice,uint256 executionFee,uint256 callbackGasLimit,uint256 minOutputAmount,uint256 validFromTime)"
             )
         );
     bytes32 public constant CREATE_ORDER_NUMBERS_TYPEHASH =
@@ -59,10 +59,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         RelayParams calldata relayParams,
         address account,
         uint256 collateralDeltaAmount,
-        IBaseOrderUtils.CreateOrderParams memory params, // can't use calldata because need to modify params.numbers.executionFee
-        uint256 userNonce,
-        uint256 deadline,
-        bytes calldata signature
+        IBaseOrderUtils.CreateOrderParams memory params // can't use calldata because need to modify params.numbers.executionFee
     )
         external
         nonReentrant
@@ -70,8 +67,8 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         onlyGelatoRelay
         returns (bytes32)
     {
-        bytes32 structHash = _getCreateOrderStructHash(relayParams, collateralDeltaAmount, params, userNonce, deadline);
-        _validateCall(userNonce, deadline, account, structHash, signature);
+        bytes32 structHash = _getCreateOrderStructHash(relayParams, collateralDeltaAmount, params);
+        _validateCall(relayParams, account, structHash);
 
         return _createOrder(relayParams, account, collateralDeltaAmount, params);
     }
@@ -80,13 +77,10 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         RelayParams calldata relayParams,
         address account,
         bytes32 key,
-        UpdateOrderParams calldata params,
-        uint256 userNonce,
-        uint256 deadline,
-        bytes calldata signature
+        UpdateOrderParams calldata params
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelay {
-        bytes32 structHash = _getUpdateOrderStructHash(relayParams, key, params, userNonce, deadline);
-        _validateCall(userNonce, deadline, account, structHash, signature);
+        bytes32 structHash = _getUpdateOrderStructHash(relayParams, key, params);
+        _validateCall(relayParams, account, structHash);
 
         _updateOrder(relayParams, account, key, params);
     }
@@ -94,13 +88,10 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
     function cancelOrder(
         RelayParams calldata relayParams,
         address account,
-        bytes32 key,
-        uint256 userNonce,
-        uint256 deadline,
-        bytes calldata signature
+        bytes32 key
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelay {
-        bytes32 structHash = _getCancelOrderStructHash(relayParams, key, userNonce, deadline);
-        _validateCall(userNonce, deadline, account, structHash, signature);
+        bytes32 structHash = _getCancelOrderStructHash(relayParams, key);
+        _validateCall(relayParams, account, structHash);
 
         _cancelOrder(relayParams, account, key);
     }
@@ -108,9 +99,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
     function _getUpdateOrderStructHash(
         RelayParams calldata relayParams,
         bytes32 key,
-        UpdateOrderParams calldata params,
-        uint256 userNonce,
-        uint256 deadline
+        UpdateOrderParams calldata params
     ) internal pure returns (bytes32) {
         return
             keccak256(
@@ -118,9 +107,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
                     UPDATE_ORDER_TYPEHASH,
                     key,
                     _getUpdateOrderParamsStructHash(params),
-                    userNonce,
-                    deadline,
-                    keccak256(abi.encode(relayParams))
+                    _getRelayParamsHash(relayParams)
                 )
             );
     }
@@ -140,25 +127,15 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
             );
     }
 
-    function _getCancelOrderStructHash(
-        RelayParams calldata relayParams,
-        bytes32 key,
-        uint256 userNonce,
-        uint256 deadline
-    ) internal pure returns (bytes32) {
-        return
-            keccak256(abi.encode(CANCEL_ORDER_TYPEHASH, key, userNonce, deadline, keccak256(abi.encode(relayParams))));
+    function _getCancelOrderStructHash(RelayParams calldata relayParams, bytes32 key) internal pure returns (bytes32) {
+        return keccak256(abi.encode(CANCEL_ORDER_TYPEHASH, key, _getRelayParamsHash(relayParams)));
     }
 
     function _getCreateOrderStructHash(
         RelayParams calldata relayParams,
         uint256 collateralDeltaAmount,
-        IBaseOrderUtils.CreateOrderParams memory params,
-        uint256 userNonce,
-        uint256 deadline
+        IBaseOrderUtils.CreateOrderParams memory params
     ) internal pure returns (bytes32) {
-        bytes32 relayParamsHash = keccak256(abi.encode(relayParams));
-
         return
             keccak256(
                 abi.encode(
@@ -171,9 +148,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
                     params.shouldUnwrapNativeToken,
                     params.autoCancel,
                     params.referralCode,
-                    userNonce,
-                    deadline,
-                    relayParamsHash
+                    _getRelayParamsHash(relayParams)
                 )
             );
     }

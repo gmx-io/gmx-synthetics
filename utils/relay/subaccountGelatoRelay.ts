@@ -1,7 +1,7 @@
 import { BigNumberish, ethers } from "ethers";
 import * as keys from "../keys";
 import { GELATO_RELAY_ADDRESS } from "./addresses";
-import { getDomain, hashSubaccountApproval, hashRelayParams, getRelayParams, getUserNonce } from "./helpers";
+import { getDomain, hashSubaccountApproval, hashRelayParams, getRelayParams } from "./helpers";
 
 export async function sendCreateOrder(p: {
   subaccountApprovalSigner: ethers.Signer;
@@ -45,10 +45,7 @@ export async function sendCreateOrder(p: {
   relayFeeToken: string;
   relayFeeAmount: BigNumberish;
 }) {
-  const relayParams = getRelayParams(p.oracleParams, p.tokenPermits, p.feeParams);
-  if (p.userNonce === undefined) {
-    p.userNonce = await getUserNonce(p.account, p.relayRouter);
-  }
+  const relayParams = await getRelayParams(p);
 
   if (!p.subaccountApproval) {
     p.subaccountApproval = getEmptySubaccountApproval();
@@ -68,19 +65,15 @@ export async function sendCreateOrder(p: {
       relayParams,
       verifyingContract: p.relayRouter.address,
       subaccountApproval: p.subaccountApproval,
-      userNonce: p.userNonce,
     });
   }
   const createOrderCalldata = p.relayRouter.interface.encodeFunctionData("createOrder", [
-    relayParams,
+    { ...relayParams, signature: p.signature },
     p.subaccountApproval,
     p.account,
     p.subaccount,
     p.collateralDeltaAmount,
     p.params,
-    p.userNonce,
-    p.deadline,
-    p.signature,
   ]);
   const calldata = ethers.utils.solidityPack(
     ["bytes", "address", "address", "uint256"],
@@ -113,8 +106,6 @@ async function getCreateOrderSignature({
   account,
   verifyingContract,
   params,
-  deadline,
-  userNonce,
   chainId,
 }) {
   const types = {
@@ -128,8 +119,6 @@ async function getCreateOrderSignature({
       { name: "shouldUnwrapNativeToken", type: "bool" },
       { name: "autoCancel", type: "bool" },
       { name: "referralCode", type: "bytes32" },
-      { name: "userNonce", type: "uint256" },
-      { name: "deadline", type: "uint256" },
       { name: "relayParams", type: "bytes32" },
       { name: "subaccountApproval", type: "bytes32" },
     ],
@@ -165,8 +154,6 @@ async function getCreateOrderSignature({
     shouldUnwrapNativeToken: params.shouldUnwrapNativeToken,
     autoCancel: false,
     referralCode: params.referralCode,
-    userNonce,
-    deadline,
     relayParams: hashRelayParams(relayParams),
     subaccountApproval: hashSubaccountApproval(subaccountApproval),
   };
@@ -216,10 +203,7 @@ export async function sendUpdateOrder(p: {
   relayFeeToken: string;
   relayFeeAmount: BigNumberish;
 }) {
-  const relayParams = getRelayParams(p.oracleParams, p.tokenPermits, p.feeParams);
-  if (p.userNonce === undefined) {
-    p.userNonce = await getUserNonce(p.account, p.relayRouter);
-  }
+  const relayParams = await getRelayParams(p);
 
   if (!p.subaccountApproval) {
     p.subaccountApproval = getEmptySubaccountApproval();
@@ -238,19 +222,15 @@ export async function sendUpdateOrder(p: {
       ...p,
       relayParams,
       verifyingContract: p.relayRouter.address,
-      userNonce: p.userNonce,
     });
   }
   const updateOrderCalldata = p.relayRouter.interface.encodeFunctionData("updateOrder", [
-    relayParams,
+    { ...relayParams, signature: p.signature },
     p.subaccountApproval,
     p.account,
     p.subaccount,
     p.key,
     p.params,
-    p.userNonce,
-    p.deadline,
-    p.signature,
   ]);
   const calldata = ethers.utils.solidityPack(
     ["bytes", "address", "address", "uint256"],
@@ -270,8 +250,6 @@ async function getUpdateOrderSignature({
   verifyingContract,
   params,
   key,
-  deadline,
-  userNonce,
   chainId,
 }) {
   const types = {
@@ -279,8 +257,6 @@ async function getUpdateOrderSignature({
       { name: "account", type: "address" },
       { name: "key", type: "bytes32" },
       { name: "params", type: "UpdateOrderParams" },
-      { name: "userNonce", type: "uint256" },
-      { name: "deadline", type: "uint256" },
       { name: "relayParams", type: "bytes32" },
       { name: "subaccountApproval", type: "bytes32" },
     ],
@@ -299,8 +275,6 @@ async function getUpdateOrderSignature({
     account,
     key,
     params,
-    userNonce,
-    deadline,
     relayParams: hashRelayParams(relayParams),
     subaccountApproval: hashSubaccountApproval(subaccountApproval),
   };
@@ -342,11 +316,7 @@ export async function sendCancelOrder(p: {
   relayFeeToken: string;
   relayFeeAmount: BigNumberish;
 }) {
-  const relayParams = getRelayParams(p.oracleParams, p.tokenPermits, p.feeParams);
-  if (p.userNonce === undefined) {
-    p.userNonce = await getUserNonce(p.account, p.relayRouter);
-  }
-
+  const relayParams = await getRelayParams(p);
   if (!p.subaccountApproval) {
     p.subaccountApproval = getEmptySubaccountApproval();
   }
@@ -364,22 +334,18 @@ export async function sendCancelOrder(p: {
       ...p,
       relayParams,
       verifyingContract: p.relayRouter.address,
-      userNonce: p.userNonce,
     });
   }
-  const updateOrderCalldata = p.relayRouter.interface.encodeFunctionData("cancelOrder", [
-    relayParams,
+  const cancelOrderCalldata = p.relayRouter.interface.encodeFunctionData("cancelOrder", [
+    { ...relayParams, signature: p.signature },
     p.subaccountApproval,
     p.account,
     p.subaccount,
     p.key,
-    p.userNonce,
-    p.deadline,
-    p.signature,
   ]);
   const calldata = ethers.utils.solidityPack(
     ["bytes", "address", "address", "uint256"],
-    [updateOrderCalldata, GELATO_RELAY_ADDRESS, p.relayFeeToken, p.relayFeeAmount]
+    [cancelOrderCalldata, GELATO_RELAY_ADDRESS, p.relayFeeToken, p.relayFeeAmount]
   );
   return p.sender.sendTransaction({
     to: p.relayRouter.address,
@@ -394,16 +360,12 @@ async function getCancelOrderSignature({
   account,
   verifyingContract,
   key,
-  deadline,
-  userNonce,
   chainId,
 }) {
   const types = {
     CancelOrder: [
       { name: "account", type: "address" },
       { name: "key", type: "bytes32" },
-      { name: "userNonce", type: "uint256" },
-      { name: "deadline", type: "uint256" },
       { name: "relayParams", type: "bytes32" },
       { name: "subaccountApproval", type: "bytes32" },
     ],
@@ -413,8 +375,6 @@ async function getCancelOrderSignature({
   const typedData = {
     account,
     key,
-    userNonce,
-    deadline,
     relayParams: hashRelayParams(relayParams),
     subaccountApproval: hashSubaccountApproval(subaccountApproval),
   };
@@ -497,19 +457,16 @@ export async function sendRemoveSubaccount(p: {
   relayFeeToken: string;
   relayFeeAmount: BigNumberish;
 }) {
-  const relayParams = getRelayParams(p.oracleParams, p.tokenPermits, p.feeParams);
+  const relayParams = await getRelayParams(p);
 
   if (!p.signature) {
     p.signature = await getRemoveSubaccountSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
   }
 
   const createOrderCalldata = p.relayRouter.interface.encodeFunctionData("removeSubaccount", [
-    relayParams,
+    { ...relayParams, signature: p.signature },
     p.account,
     p.subaccount,
-    p.userNonce,
-    p.deadline,
-    p.signature,
   ]);
   const calldata = ethers.utils.solidityPack(
     ["bytes", "address", "address", "uint256"],
@@ -521,20 +478,10 @@ export async function sendRemoveSubaccount(p: {
   });
 }
 
-async function getRemoveSubaccountSignature({
-  signer,
-  relayParams,
-  subaccount,
-  verifyingContract,
-  deadline,
-  userNonce,
-  chainId,
-}) {
+async function getRemoveSubaccountSignature({ signer, relayParams, subaccount, verifyingContract, chainId }) {
   const types = {
     RemoveSubaccount: [
       { name: "subaccount", type: "address" },
-      { name: "userNonce", type: "uint256" },
-      { name: "deadline", type: "uint256" },
       { name: "relayParams", type: "bytes32" },
     ],
   };
@@ -542,8 +489,6 @@ async function getRemoveSubaccountSignature({
   const domain = getDomain(chainId, verifyingContract);
   const typedData = {
     subaccount,
-    userNonce,
-    deadline,
     relayParams: hashRelayParams(relayParams),
   };
 

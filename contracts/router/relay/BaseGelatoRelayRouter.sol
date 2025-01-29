@@ -42,6 +42,9 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         OracleUtils.SetPricesParams oracleParams;
         TokenPermit[] tokenPermits;
         RelayFeeParams fee;
+        uint256 userNonce;
+        uint256 deadline;
+        bytes signature;
     }
 
     struct UpdateOrderParams {
@@ -328,19 +331,13 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             );
     }
 
-    function _validateCall(
-        uint256 userNonce,
-        uint256 deadline,
-        address account,
-        bytes32 structHash,
-        bytes calldata signature
-    ) internal {
+    function _validateCall(RelayParams calldata relayParams, address account, bytes32 structHash) internal {
         bytes32 domainSeparator = _getDomainSeparator(block.chainid);
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
-        _validateSignature(digest, signature, account, "call");
+        _validateSignature(digest, relayParams.signature, account, "call");
 
-        _validateNonce(account, userNonce);
-        _validateDeadline(deadline);
+        _validateNonce(account, relayParams.userNonce);
+        _validateDeadline(relayParams.deadline);
     }
 
     function _validateDeadline(uint256 deadline) internal view {
@@ -354,5 +351,18 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             revert Errors.InvalidUserNonce(userNonces[account], userNonce);
         }
         userNonces[account] = userNonce + 1;
+    }
+
+    function _getRelayParamsHash(RelayParams calldata relayParams) internal pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    relayParams.oracleParams,
+                    relayParams.tokenPermits,
+                    relayParams.fee,
+                    relayParams.userNonce,
+                    relayParams.deadline
+                )
+            );
     }
 }

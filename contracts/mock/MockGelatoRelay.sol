@@ -28,13 +28,10 @@ contract MockGelatoRelayRouter is GelatoRelayRouter {
         RelayParams calldata relayParams,
         bytes32 key,
         address account,
-        bytes calldata signature,
-        uint256 userNonce,
-        uint256 deadline,
         uint256 chainId
     ) external view {
-        bytes32 structHash = _getCancelOrderStructHash(relayParams, key, userNonce, deadline);
-        _handleSignature(structHash, signature, account, chainId);
+        bytes32 structHash = _getCancelOrderStructHash(relayParams, key);
+        _handleSignature(structHash, relayParams.signature, account, chainId);
     }
 
     function testSimpleSignature(address account, bytes calldata signature, uint256 chainId) external view {
