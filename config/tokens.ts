@@ -822,11 +822,7 @@ const config: {
       dataStreamFeedId: "0x0003eae10f93ab9aeb6d1aa757b07938eed75a0d09cbe15df8521dc3d6bfb633",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
-      priceFeed: {
-        address: "0x373510BDa1ab7e873c731968f4D81B685f520E4B", // indicated as New Token Feed
-        decimals: 8,
-        heartbeatDuration: (24 + 1) * 60 * 60,
-      },
+      // Chainlink on-chain feed not available
     },
     MELANIA: {
       synthetic: true,
@@ -835,11 +831,7 @@ const config: {
       dataStreamFeedId: "0x000334e8e9fd64bd9068f44e7779f9b6437c86b1c148549d026c00b3a642caeb",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
-      priceFeed: {
-        address: "0xE2CB592D636c500a6e469628054F09d58e4d91BB", // indicated as New Token Feed
-        decimals: 8,
-        heartbeatDuration: (24 + 1) * 60 * 60,
-      },
+      // Chainlink on-chain feed not available
     },
     WAVAX: {
       address: "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",
