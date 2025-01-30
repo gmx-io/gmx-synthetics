@@ -2355,10 +2355,10 @@ const config: {
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
       maxOpenInterest: decimalToFloat(750_000),
-      maxPoolUsdForDeposit: decimalToFloat(2_500_000),
+      maxPoolUsdForDeposit: decimalToFloat(3_300_000),
 
-      maxLongTokenPoolAmount: expandDecimals(900, 18),
-      maxShortTokenPoolAmount: expandDecimals(3_000_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(1100, 18),
+      maxShortTokenPoolAmount: expandDecimals(3_600_000, 6),
     },
     {
       tokens: { indexToken: "MELANIA", longToken: "WETH", shortToken: "USDC" },
