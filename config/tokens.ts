@@ -822,6 +822,11 @@ const config: {
       dataStreamFeedId: "0x0003eae10f93ab9aeb6d1aa757b07938eed75a0d09cbe15df8521dc3d6bfb633",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x0000000000000000000000000000000000000000",
+        decimals: 0,
+        heartbeatDuration: 0,
+      },
     },
     MELANIA: {
       synthetic: true,
@@ -830,6 +835,11 @@ const config: {
       dataStreamFeedId: "0x000334e8e9fd64bd9068f44e7779f9b6437c86b1c148549d026c00b3a642caeb",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x0000000000000000000000000000000000000000",
+        decimals: 0,
+        heartbeatDuration: 0,
+      },
     },
     WAVAX: {
       address: "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",
