@@ -256,6 +256,16 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
             glvMaxMarketTokenBalanceAmount: expandDecimals(300_000, 18),
             glvMaxMarketTokenBalanceUsd: decimalToFloat(300_000),
           },
+          {
+            indexToken: "FARTCOIN",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(250_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(250_000),
+          },
+          {
+            indexToken: "AI16Z",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(250_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(250_000),
+          },
         ],
       },
     ],
@@ -289,6 +299,16 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
             indexToken: "LTC",
             glvMaxMarketTokenBalanceAmount: expandDecimals(46_000, 18),
             glvMaxMarketTokenBalanceUsd: decimalToFloat(150_000),
+          },
+          {
+            indexToken: "TRUMP",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(250_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(250_000),
+          },
+          {
+            indexToken: "MELANIA",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(250_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(250_000),
           },
         ],
       },
