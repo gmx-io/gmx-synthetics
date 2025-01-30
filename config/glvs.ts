@@ -193,8 +193,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           },
           {
             indexToken: "TAO",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(769_230, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(900_000),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(893_743, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(1_080_000),
           },
           {
             indexToken: "BOME",
