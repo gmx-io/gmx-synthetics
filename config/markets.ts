@@ -1178,8 +1178,8 @@ const config: {
       // minCollateralFactor of 0.00833 (0.833%) when open interest is 3,300,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
 
-      reserveFactor: percentageToFloat("165%"),
-      openInterestReserveFactor: percentageToFloat("160%"),
+      reserveFactor: percentageToFloat("205%"),
+      openInterestReserveFactor: percentageToFloat("200%"),
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(1643, 41), // 1.64325E+44, 14,2 AVAX / day
       minPositionImpactPoolAmount: expandDecimals(79, 18), // 79.18 AVAX
