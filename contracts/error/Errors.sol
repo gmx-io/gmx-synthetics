@@ -424,4 +424,7 @@ library Errors {
     // MultichainReader errors
     error InsufficientMultichainNativeFee(uint256 msgValue);
     error EmptyPeer(uint32 eid);
+
+    // FeeDistributor errors
+    error OutdatedReadResponse(uint256 timestamp);
 }

@@ -478,10 +478,12 @@ library Keys {
     // @dev key for MultichainReader authorized orginators
     bytes32 public constant MULTICHAIN_AUTHORIZED_ORIGINATORS = keccak256(abi.encode("MULTICHAIN_AUTHORIZED_ORIGINATORS"));
 
-    // @dev key for FeeDistributor referral rewards latest timestamp
-    bytes32 public constant FEE_DISTRIBUTOR_REFERRAL_REWARDS_TIMESTAMP = keccak256(abi.encode("FEE_DISTRIBUTOR_REFERRAL_REWARDS_TIMESTAMP"));
     // @dev key for FeeDistributor referral rewards for a given timestamp
     bytes32 public constant FEE_DISTRIBUTOR_REFERRAL_REWARDS_AMOUNT = keccak256(abi.encode("FEE_DISTRIBUTOR_REFERRAL_REWARDS_AMOUNT"));
+    // @dev key for FeeDistributor max read response delay in seconds from MultichainReader
+    bytes32 public constant FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY = keccak256(abi.encode("FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY"));
+    // @dev key for FeeDistributor gas limit used for MultichainReader read request
+    bytes32 public constant FEE_DISTRIBUTOR_GAS_LIMIT = keccak256(abi.encode("FEE_DISTRIBUTOR_GAS_LIMIT"));
     // @dev key for FeeDistributor number of chains with GMX deployments
     bytes32 public constant FEE_DISTRIBUTOR_NUMBER_OF_CHAINS = keccak256(abi.encode("FEE_DISTRIBUTOR_NUMBER_OF_CHAINS"));
     // @dev key for FeeDistributor chain ID
