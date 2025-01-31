@@ -10,7 +10,7 @@ import "../GlvVault.sol";
 import "../GlvUtils.sol";
 import "./GlvDepositEventUtils.sol";
 import "./GlvDepositStoreUtils.sol";
-import "./GlvDepositHelper.sol";
+import "./GlvDepositCalc.sol";
 
 library GlvDepositUtils {
     using GlvDeposit for GlvDeposit.Props;
@@ -215,7 +215,7 @@ library GlvDepositUtils {
         GlvDepositStoreUtils.remove(params.dataStore, params.key, glvDeposit.account());
 
         // should be called before any tokens are minted
-        GlvDepositHelper.validateFirstGlvDeposit(params.dataStore, glvDeposit);
+        GlvDepositCalc.validateFirstGlvDeposit(params.dataStore, glvDeposit);
 
         ExecuteGlvDepositCache memory cache;
 
@@ -233,7 +233,7 @@ library GlvDepositUtils {
         GlvToken(payable(glvDeposit.glv())).syncTokenBalance(glvDeposit.market());
 
         cache.glvSupply = GlvToken(payable(glvDeposit.glv())).totalSupply();
-        cache.mintAmount = GlvDepositHelper.getMintAmount(
+        cache.mintAmount = GlvDepositCalc.getMintAmount(
             params.dataStore,
             params.oracle,
             glvDeposit,

@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 import "./GlvDeposit.sol";
 import "../GlvUtils.sol";
 
-library GlvDepositHelper {
+library GlvDepositCalc {
     using GlvDeposit for GlvDeposit.Props;
     using SafeCast for int256;
 
