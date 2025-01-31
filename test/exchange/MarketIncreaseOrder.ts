@@ -67,6 +67,8 @@ describe("Exchange.MarketIncreaseOrder", () => {
 
   it("createOrder", async () => {
     expect(await getOrderCount(dataStore)).eq(0);
+    await dataStore.setUint(keys.MAX_DATA_LENGTH, 256);
+    const dataList = [ethers.utils.formatBytes32String("customData")];
     const params = {
       market: ethUsdMarket,
       initialCollateralToken: wnt,
@@ -81,6 +83,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
       shouldUnwrapNativeToken: false,
       gasUsageLabel: "createOrder",
       cancellationReceiver: user1,
+      dataList,
     };
 
     await createOrder(fixture, params);
@@ -103,6 +106,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
     expect(order.numbers.minOutputAmount).eq(expandDecimals(50000, 6));
     expect(order.flags.isLong).eq(true);
     expect(order.flags.shouldUnwrapNativeToken).eq(false);
+    expect(order._dataList).deep.eq(dataList);
 
     await expect(createOrder(fixture, { ...params, cancellationReceiver: orderVault })).to.be.revertedWithCustomError(
       errorsContract,

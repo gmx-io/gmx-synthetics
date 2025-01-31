@@ -145,6 +145,7 @@ library OrderUtils {
         order.setIsLong(params.isLong);
         order.setShouldUnwrapNativeToken(params.shouldUnwrapNativeToken);
         order.setAutoCancel(params.autoCancel);
+        order.setDataList(params.dataList);
 
         AccountUtils.validateReceiver(order.receiver());
         if (order.cancellationReceiver() == address(orderVault)) {

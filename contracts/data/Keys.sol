@@ -378,8 +378,12 @@ library Keys {
     bytes32 public constant CLAIMABLE_COLLATERAL_AMOUNT = keccak256(abi.encode("CLAIMABLE_COLLATERAL_AMOUNT"));
     // @dev key for claimable collateral factor
     bytes32 public constant CLAIMABLE_COLLATERAL_FACTOR = keccak256(abi.encode("CLAIMABLE_COLLATERAL_FACTOR"));
+    // @dev key for claimable collateral reduction factor
+    bytes32 public constant CLAIMABLE_COLLATERAL_REDUCTION_FACTOR = keccak256(abi.encode("CLAIMABLE_COLLATERAL_REDUCTION_FACTOR"));
     // @dev key for claimable collateral time divisor
     bytes32 public constant CLAIMABLE_COLLATERAL_TIME_DIVISOR = keccak256(abi.encode("CLAIMABLE_COLLATERAL_TIME_DIVISOR"));
+    // @dev key for claimable collateral delay
+    bytes32 public constant CLAIMABLE_COLLATERAL_DELAY = keccak256(abi.encode("CLAIMABLE_COLLATERAL_DELAY"));
     // @dev key for claimed collateral amount
     bytes32 public constant CLAIMED_COLLATERAL_AMOUNT = keccak256(abi.encode("CLAIMED_COLLATERAL_AMOUNT"));
     // @dev key for optimal usage factor
@@ -469,6 +473,9 @@ library Keys {
 
     // @dev key for user's balance for a source chain, recorded under the user's virtual account
     bytes32 public constant SOURCE_CHAIN_BALANCE = keccak256(abi.encode("SOURCE_CHAIN_BALANCE"));
+
+    // @dev key for the maximum length for data list array of bytes32
+    bytes32 public constant MAX_DATA_LENGTH = keccak256(abi.encode("MAX_DATA_LENGTH"));
 
     // @dev constant for user initiated cancel reason
     string public constant USER_INITIATED_CANCEL = "USER_INITIATED_CANCEL";
@@ -1610,6 +1617,22 @@ library Keys {
     function claimableCollateralFactorKey(address market, address token, uint256 timeKey, address account) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             CLAIMABLE_COLLATERAL_FACTOR,
+            market,
+            token,
+            timeKey,
+            account
+        ));
+    }
+
+    // @dev key for claimable collateral reduction factor for a timeKey for an account
+    // @param market the market to check
+    // @param token the token to check
+    // @param timeKey the time key for the claimable factor
+    // @param account the account to check
+    // @return key for claimable funding factor
+    function claimableCollateralReductionFactorKey(address market, address token, uint256 timeKey, address account) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            CLAIMABLE_COLLATERAL_REDUCTION_FACTOR,
             market,
             token,
             timeKey,

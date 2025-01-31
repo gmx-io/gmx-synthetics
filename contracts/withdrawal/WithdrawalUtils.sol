@@ -58,6 +58,7 @@ library WithdrawalUtils {
         bool shouldUnwrapNativeToken;
         uint256 executionFee;
         uint256 callbackGasLimit;
+        bytes32[] dataList;
     }
 
     /**
@@ -120,7 +121,8 @@ library WithdrawalUtils {
             ),
             Withdrawal.Flags(
                 params.shouldUnwrapNativeToken
-            )
+            ),
+            params.dataList
         );
 
         CallbackUtils.validateCallbackGasLimit(dataStore, withdrawal.callbackGasLimit());

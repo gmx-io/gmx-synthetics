@@ -71,7 +71,9 @@ export const CLAIMABLE_FEE_AMOUNT = hashString("CLAIMABLE_FEE_AMOUNT");
 export const CLAIMABLE_FUNDING_AMOUNT = hashString("CLAIMABLE_FUNDING_AMOUNT");
 export const CLAIMABLE_COLLATERAL_AMOUNT = hashString("CLAIMABLE_COLLATERAL_AMOUNT");
 export const CLAIMABLE_COLLATERAL_FACTOR = hashString("CLAIMABLE_COLLATERAL_FACTOR");
+export const CLAIMABLE_COLLATERAL_REDUCTION_FACTOR = hashString("CLAIMABLE_COLLATERAL_REDUCTION_FACTOR");
 export const CLAIMABLE_COLLATERAL_TIME_DIVISOR = hashString("CLAIMABLE_COLLATERAL_TIME_DIVISOR");
+export const CLAIMABLE_COLLATERAL_DELAY = hashString("CLAIMABLE_COLLATERAL_DELAY");
 
 export const CLAIMABLE_UI_FEE_AMOUNT = hashString("CLAIMABLE_UI_FEE_AMOUNT");
 export const AFFILIATE_REWARD = hashString("AFFILIATE_REWARD");
@@ -259,6 +261,8 @@ export const SOURCE_CHAIN_BALANCE = hashString("SOURCE_CHAIN_BALANCE");
 
 export const VALID_FROM_TIME = hashString("VALID_FROM_TIME");
 
+export const MAX_DATA_LENGTH = hashString("MAX_DATA_LENGTH");
+
 export function accountDepositListKey(account) {
   return hashData(["bytes32", "address"], [ACCOUNT_DEPOSIT_LIST, account]);
 }
@@ -355,6 +359,18 @@ export function claimableCollateralFactorForAccountKey(
   return hashData(
     ["bytes32", "address", "address", "uint256", "address"],
     [CLAIMABLE_COLLATERAL_FACTOR, market, token, timeKey, account]
+  );
+}
+
+export function claimableCollateralReductionFactorForAccountKey(
+  market: string,
+  token: string,
+  timeKey: number,
+  account: string
+) {
+  return hashData(
+    ["bytes32", "address", "address", "uint256", "address"],
+    [CLAIMABLE_COLLATERAL_REDUCTION_FACTOR, market, token, timeKey, account]
   );
 }
 
