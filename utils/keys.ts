@@ -261,6 +261,8 @@ export const SOURCE_CHAIN_BALANCE = hashString("SOURCE_CHAIN_BALANCE");
 
 export const VALID_FROM_TIME = hashString("VALID_FROM_TIME");
 
+export const MAX_DATA_LENGTH = hashString("MAX_DATA_LENGTH");
+
 export function accountDepositListKey(account) {
   return hashData(["bytes32", "address"], [ACCOUNT_DEPOSIT_LIST, account]);
 }
