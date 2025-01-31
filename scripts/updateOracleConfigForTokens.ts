@@ -117,10 +117,17 @@ export async function updateOracleConfigForTokens() {
 
     if (token.priceFeed && onchainConfig.priceFeed.toLowerCase() !== token.priceFeed.address.toLowerCase()) {
       const { priceFeed } = token;
-      const priceFeedMultiplier = expandDecimals(1, 60 - token.decimals - priceFeed.decimals);
+      const priceFeedMultiplier =
+        token.priceFeed.address === ethers.constants.AddressZero
+          ? 0
+          : expandDecimals(1, 60 - token.decimals - priceFeed.decimals);
       const stablePrice = priceFeed.stablePrice ? priceFeed.stablePrice : 0;
 
-      if (!onchainConfig.priceFeedMultiplier.eq(priceFeedMultiplier)) {
+      if (
+        !onchainConfig.priceFeedMultiplier.eq(priceFeedMultiplier) &&
+        onchainConfig.priceFeed !== ethers.constants.AddressZero &&
+        token.priceFeed.address !== ethers.constants.AddressZero
+      ) {
         throw new Error(
           `priceFeedMultiplier mismatch for ${tokenSymbol}: ${priceFeedMultiplier.toString()}, ${onchainConfig.priceFeedMultiplier.toString()}`
         );
