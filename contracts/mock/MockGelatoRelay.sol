@@ -22,21 +22,16 @@ contract MockGelatoRelayRouter is GelatoRelayRouter {
         Oracle _oracle,
         IOrderHandler _orderHandler,
         OrderVault _orderVault
-    )
-        GelatoRelayRouter(_router, _dataStore, _eventEmitter, _oracle, _orderHandler, _orderVault)
-    {}
+    ) GelatoRelayRouter(_router, _dataStore, _eventEmitter, _oracle, _orderHandler, _orderVault) {}
 
     function testCancelOrderSignature(
         RelayParams calldata relayParams,
         bytes32 key,
         address account,
-        bytes calldata signature,
-        uint256 userNonce,
-        uint256 deadline,
         uint256 chainId
     ) external view {
-        bytes32 structHash = _getCancelOrderStructHash(relayParams, key, userNonce, deadline);
-        _handleSignature(structHash, signature, account, chainId);
+        bytes32 structHash = _getCancelOrderStructHash(relayParams, key);
+        _handleSignature(structHash, relayParams.signature, account, chainId);
     }
 
     function testSimpleSignature(address account, bytes calldata signature, uint256 chainId) external view {
@@ -88,6 +83,6 @@ contract MockGelatoRelayRouter is GelatoRelayRouter {
         bytes32 domainSeparator = _getDomainSeparator(chainId);
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
 
-        _validateSignature(digest, signature, account);
+        _validateSignature(digest, signature, account, "call");
     }
 }

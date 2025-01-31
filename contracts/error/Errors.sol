@@ -362,7 +362,6 @@ library Errors {
     error SubaccountNotAuthorized(address account, address subaccount);
     error MaxSubaccountActionCountExceeded(address account, address subaccount, uint256 count, uint256 maxCount);
     error SubaccountApprovalExpired(address account, address subaccount, uint256 deadline, uint256 currentTimestamp);
-    error InvalidSubaccount(address subaccount, address msgSender);
 
     // TokenUtils errors
     error TokenTransferError(address token, address receiver, uint256 amount);
@@ -434,8 +433,13 @@ library Errors {
     error InvalidStargatePool();
     error InvalidLzEndpoint();
 
+    enum SignatureType {
+        Call,
+        SubaccountApproval
+    }
+
     // Gelato relay errors
-    error InvalidSignature();
+    error InvalidSignature(string signatureType);
     // User sent incorrect fee token or incorrect swap path
     error UnexpectedRelayFeeTokenAfterSwap(address feeToken, address expectedFeeToken);
     // Contract received unsupported fee token from Gelato relay
@@ -446,4 +450,5 @@ library Errors {
     error InvalidSubaccountApprovalNonce(uint256 storedNonce, uint256 nonce);
     error DeadlinePassed(uint256 currentTimestamp, uint256 deadline);
     error InsufficientRelayFee(uint256 requiredRelayFee, uint256 feeAmount);
+    error InvalidSubaccountApprovalSubaccount();
 }

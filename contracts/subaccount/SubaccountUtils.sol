@@ -62,16 +62,18 @@ library SubaccountUtils {
         );
     }
 
-    function incrementSubaccountActionCount(
+    function handleSubaccountAction(
         DataStore dataStore,
         EventEmitter eventEmitter,
         address account,
         address subaccount,
         bytes32 actionType
     ) external {
+        validateSubaccount(dataStore, account, subaccount);
+
         bytes32 key = Keys.subaccountActionCountKey(account, subaccount, actionType);
         uint256 nextValue = dataStore.incrementUint(key, 1);
-        validateSubaccountActionCountAndDeadline(dataStore, account, subaccount, actionType, nextValue);
+        validateSubaccountActionCountAndExpiresAt(dataStore, account, subaccount, actionType, nextValue);
 
         EventUtils.EventLogData memory eventData;
 
@@ -99,10 +101,10 @@ library SubaccountUtils {
         address account,
         address subaccount,
         bytes32 actionType,
-        uint256 deadline
+        uint256 expiresAt
     ) external {
         bytes32 key = Keys.subaccountExpiresAtKey(account, subaccount, actionType);
-        dataStore.setUint(key, deadline);
+        dataStore.setUint(key, expiresAt);
 
         EventUtils.EventLogData memory eventData;
 
@@ -111,10 +113,13 @@ library SubaccountUtils {
         eventData.addressItems.setItem(1, "subaccount", subaccount);
 
         eventData.uintItems.initItems(1);
-        eventData.uintItems.setItem(0, "deadline", deadline);
+        eventData.uintItems.setItem(0, "expiresAt", expiresAt);
+
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "actionType", actionType);
 
         eventEmitter.emitEventLog2(
-            "SetSubaccountDeadline",
+            "SetSubaccountExpiresAt",
             Cast.toBytes32(account),
             Cast.toBytes32(subaccount),
             eventData
@@ -141,6 +146,9 @@ library SubaccountUtils {
         eventData.uintItems.initItems(1);
         eventData.uintItems.setItem(0, "maxAllowedCount", maxAllowedCount);
 
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "actionType", actionType);
+
         eventEmitter.emitEventLog2(
             "SetMaxAllowedSubaccountActionCount",
             Cast.toBytes32(account),
@@ -149,7 +157,7 @@ library SubaccountUtils {
         );
     }
 
-    function validateSubaccountActionCountAndDeadline(
+    function validateSubaccountActionCountAndExpiresAt(
         DataStore dataStore,
         address account,
         address subaccount,
@@ -159,7 +167,7 @@ library SubaccountUtils {
         bytes32 expiresAtKey = Keys.subaccountExpiresAtKey(account, subaccount, actionType);
         uint256 expiresAt = dataStore.getUint(expiresAtKey);
 
-        if (expiresAt > 0 && block.timestamp > expiresAt) {
+        if (block.timestamp > expiresAt) {
             revert Errors.SubaccountApprovalExpired(account, subaccount, expiresAt, block.timestamp);
         }
 
@@ -175,7 +183,7 @@ library SubaccountUtils {
         DataStore dataStore,
         address account,
         address subaccount
-    ) external view {
+    ) internal view {
         bytes32 setKey = Keys.subaccountListKey(account);
         if (!dataStore.containsAddress(setKey, subaccount)) {
             revert Errors.SubaccountNotAuthorized(account, subaccount);
