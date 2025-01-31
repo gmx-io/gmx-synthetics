@@ -10,7 +10,7 @@ const func = createDeployFunction({
     "GasUtils",
     "GlvDepositEventUtils",
     "GlvDepositStoreUtils",
-    "GlvDepositHelper",
+    "GlvDepositCalc",
     "MarketStoreUtils",
   ],
 });
