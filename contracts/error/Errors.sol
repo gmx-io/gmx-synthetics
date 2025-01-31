@@ -426,5 +426,8 @@ library Errors {
     error EmptyPeer(uint32 eid);
 
     // FeeDistributor errors
+    error DistributionThisWeekAlreadyCompleted(uint256 lastDistributionTime, uint256 startOfCurrentWeek);
     error OutdatedReadResponse(uint256 timestamp);
+    error DistributionNotInitiated();
+    error BridgedFeesRequired(uint256 feeAmount, uint256 requiredFeeAmount);
 }

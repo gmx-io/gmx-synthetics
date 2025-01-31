@@ -4,5 +4,5 @@ pragma solidity ^0.8.0;
 import {MultichainReaderUtils} from "./MultichainReaderUtils.sol";
 
 interface IOriginator {
-    function processLzReceive(bytes32 guid, MultichainReaderUtils.ReceivedData memory receivedDataInput) external;
+    function processLzReceive(bytes32 guid, MultichainReaderUtils.ReceivedData calldata receivedDataInput) external;
 }

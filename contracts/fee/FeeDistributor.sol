@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-import { MessagingFee, MessagingReceipt } from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/ILayerZeroEndpointV2.sol";
+import {MessagingFee, MessagingReceipt} from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/ILayerZeroEndpointV2.sol";
 
 import {MultichainReaderUtils} from "../external/MultichainReaderUtils.sol";
 
@@ -30,8 +30,6 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
     address public immutable routerV2;
     IExchangeRouter public immutable exchangeRouterV2;
 
-    address public immutable bridgingToken;
-
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
@@ -40,8 +38,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         IVaultV1 _vaultV1,
         IRouterV1 _routerV1,
         address _routerV2,
-        IExchangeRouter _exchangeRouterV2,
-        address _bridgingToken,
+        IExchangeRouter _exchangeRouterV2
     ) RoleModule(_roleStore) {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
@@ -52,71 +49,92 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
 
         routerV2 = _routerV2;
         exchangeRouterV2 = _exchangeRouterV2;
-
-        bridgingToken = _bridgingToken;
     }
 
-    function initiateDistribute() external nonReentrant return (MessagingReceipt memory) {
+    function initiateDistribute() external nonReentrant onlyFeeDistributionKeeper {
+        _validateDistributionNotCompleted();
         uint256 chains = dataStore.getUint(Keys.FEE_DISTRIBUTOR_NUMBER_OF_CHAINS);
         MultichainReaderUtils.ReadRequestInputs[]
             memory readRequestsInputs = new MultichainReaderUtils.ReadRequestInputs[]((chains - 1) * 3);
-
-        for (uint256 i = 1; i <= chains; i++) {
-            uint256 chainId = dataStore.getUint(Keys.feeDistributorChainIdKey(i));
+        bool skippedCurrentChain;
+        for (uint256 i; i < chains; i++) {
+            uint256 chainId = dataStore.getUint(Keys.feeDistributorChainIdKey(i + 1));
+            address gmx = dataStore.getAddress(
+                Keys.feeDistributorStoredAddressesKey(chainId, keccak256(abi.encode("GMX")))
+            );
+            address feeKeeper = dataStore.getAddress(
+                Keys.feeDistributorStoredAddressesKey(chainId, keccak256(abi.encode("FEE_KEEPER")))
+            );
+            address feeGmxTracker = dataStore.getAddress(
+                Keys.feeDistributorStoredAddressesKey(chainId, keccak256(abi.encode("FEE_GMX_TRACKER")))
+            );
             if (chainId == block.chainid) {
+                uint256 feeAmount = dataStore.getUint(Keys.withdrawableBuybackTokenAmountKey(gmx)) +
+                    IERC20(gmx).balanceOf(feeKeeper);
+                uint256 stakedGmx = IERC20(feeGmxTracker).totalSupply();
+                dataStore.setUint(Keys.feeDistributorFeeAmountKey(chainId), feeAmount);
+                dataStore.setUint(Keys.feeDistributorStakedGmxKey(chainId), stakedGmx);
+                skippedCurrentChain = true;
                 continue;
             }
-            
+
             uint32 layerZeroChainId = uint32(dataStore.getUint(Keys.feeDistributorLayerZeroChainIdKey(chainId)));
-            uint256 readRequest1 = (i * 3) - 3;
-            readRequestsInputs[readRequest1].chainId = layerZeroChainId;
-            readRequestsInputs[readRequest1].target = dataStore.getAddress(
-                Keys.feeDistributorAddressByChainIDKey(chainId, "DATASTORE")
+            uint256 readRequest = skippedCurrentChain ? (i - 1) * 3 : i * 3;
+            readRequestsInputs[readRequest].chainId = layerZeroChainId;
+            readRequestsInputs[readRequest].target = dataStore.getAddress(
+                Keys.feeDistributorStoredAddressesKey(chainId, keccak256(abi.encode("DATASTORE")))
             );
-            address gmx = dataStore.getAddress(Keys.feeDistributorAddressByChainIDKey(chainId, "GMX"));
-            readRequestsInputs[readRequest1].callData = abi.encodeWithSelector(
+            readRequestsInputs[readRequest].callData = abi.encodeWithSelector(
                 DataStore.getUint.selector,
                 Keys.withdrawableBuybackTokenAmountKey(gmx)
             );
+            readRequest++;
 
-            uint256 readRequest2 = (i * 3) - 2;
-            readRequestsInputs[readRequest2].chainId = layerZeroChainId;
-            readRequestsInputs[readRequest2].target = gmx;
-            readRequestsInputs[readRequest2].callData = abi.encodeWithSelector(
-                IERC20.balanceOf.selector,
-                dataStore.getAddress(Keys.feeDistributorAddressByChainIDKey(chainId, "FEE_KEEPER"))
-            );
+            readRequestsInputs[readRequest].chainId = layerZeroChainId;
+            readRequestsInputs[readRequest].target = gmx;
+            readRequestsInputs[readRequest].callData = abi.encodeWithSelector(IERC20.balanceOf.selector, feeKeeper);
+            readRequest++;
 
-            uint256 readRequest3 = (i * 3) - 1;
-            readRequestsInputs[readRequest3].chainId = layerZeroChainId;
-            readRequestsInputs[readRequest3].target = dataStore.getAddress(
-                Keys.feeDistributorAddressByChainIDKey(chainId, "FEE_GMX_TRACKER")
-            );
-            readRequestsInputs[readRequest3].callData = abi.encodeWithSelector(IERC20.totalSupply.selector);
+            readRequestsInputs[readRequest].chainId = layerZeroChainId;
+            readRequestsInputs[readRequest].target = feeGmxTracker;
+            readRequestsInputs[readRequest].callData = abi.encodeWithSelector(IERC20.totalSupply.selector);
         }
 
         MultichainReaderUtils.ExtraOptionsInputs memory extraOptionsInputs;
-        extraOptionsInputs.gasLimit = dataStore.getUint(Keys.FEE_DISTRIBUTOR_GAS_LIMIT);
+        extraOptionsInputs.gasLimit = uint128(dataStore.getUint(Keys.FEE_DISTRIBUTOR_GAS_LIMIT));
         extraOptionsInputs.returnDataSize = ((uint32(chains) - 1) * 96) + 8;
 
         MessagingFee memory messagingFee = multichainReader.quoteReadFee(readRequestsInputs, extraOptionsInputs);
-        return multichainReader.sendReadRequests{value: messagingFee.nativeFee}(readRequestsInputs, extraOptionsInputs);
+        multichainReader.sendReadRequests{value: messagingFee.nativeFee}(readRequestsInputs, extraOptionsInputs);
+
+        dataStore.setBool(Keys.FEE_DISTRIBUTOR_DISTRIBUTION_INITIATED, true);
     }
 
-    function processLzReceive(bytes32 guid, MultichainReaderUtils.ReceivedData memory receivedDataInput) external {
-        uint256 timestamp = receivedDataInput.timestamp;
-        if (block.timestamp - timestamp > dataStore.getUint(Keys.FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY)) {
-            revert Errors.OutdatedReadResponse(timestamp);
+    function processLzReceive(
+        bytes32 /*guid*/,
+        MultichainReaderUtils.ReceivedData calldata receivedDataInput
+    ) external {
+        _validateReadResponseTimestamp(receivedDataInput.timestamp);
+        dataStore.setUint(Keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP, receivedDataInput.timestamp);
+
+        uint256 chains = dataStore.getUint(Keys.FEE_DISTRIBUTOR_NUMBER_OF_CHAINS);
+        for (uint256 i; i < chains; i++) {
+            uint256 chainId = dataStore.getUint(Keys.feeDistributorChainIdKey(i + 1));
+            bool skippedCurrentChain;
+            if (chainId == block.chainid) {
+                skippedCurrentChain = true;
+                continue;
+            }
+
+            uint256 offset = skippedCurrentChain ? (i - 1) * 96 : i * 96;
+            (uint256 feeAmount1, uint256 feeAmount2, uint256 stakedGmx) = abi.decode(
+                receivedDataInput.readData[offset:offset + 96],
+                (uint256, uint256, uint256)
+            );
+            dataStore.setUint(Keys.feeDistributorFeeAmountKey(chainId), feeAmount1 + feeAmount2);
+            dataStore.setUint(Keys.feeDistributorStakedGmxKey(chainId), stakedGmx);
         }
-        
-        (uint256 feeAmount1, uint256 feeAmount2, uint256 totalStaked) = abi.decode(
-            receivedDataInput.readData,
-            (uint256, uint256, uint256)
-        ); // need to update logic to account for multiple chains, perhaps using slicing to make dynamic given variable number of elements
-        uint256 chain;
-        dataStore.setUint(Keys.feeDistributorFeeAmountKey(chain), feeAmount1 + feeAmount2);
-        dataStore.setUint(Keys.feeDistributorTotalStakedKey(chain), totalStaked);
-        
+
         EventUtils.EventLogData memory eventData;
         eventData.boolItems.initItems(1);
         eventData.boolItems.setItem(0, "distributeReferralRewards", false);
@@ -124,7 +142,54 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         eventEmitter.emitEventLog("TriggerReferralKeeper", eventData);
     }
 
-    function distribute() external {
-        // tbd
+    function distribute() external nonReentrant onlyFeeDistributionKeeper {
+        if (!dataStore.getBool(Keys.FEE_DISTRIBUTOR_DISTRIBUTION_INITIATED)) {
+            revert Errors.DistributionNotInitiated();
+        }
+        _validateReadResponseTimestamp(dataStore.getUint(Keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP));
+        _validateDistributionNotCompleted();
+
+        uint256 chains = dataStore.getUint(Keys.FEE_DISTRIBUTOR_NUMBER_OF_CHAINS);
+        uint256[] memory feeAmount = new uint256[](chains);
+        uint256 totalFeeAmount;
+        uint256[] memory stakedGmx = new uint256[](chains);
+        uint256 totalStakedGmx;
+        uint256 currentChain;
+        for (uint256 i; i < chains; i++) {
+            uint256 chainId = dataStore.getUint(Keys.feeDistributorChainIdKey(i + 1));
+            if (chainId == block.chainid) {
+                currentChain = i;
+            }
+            feeAmount[i] = dataStore.getUint(Keys.feeDistributorFeeAmountKey(chainId));
+            totalFeeAmount = totalFeeAmount + feeAmount[i];
+            stakedGmx[i] = dataStore.getUint(Keys.feeDistributorStakedGmxKey(chainId));
+            totalStakedGmx = totalStakedGmx + stakedGmx[i];
+        }
+
+        uint256 requiredFeeAmount = (totalFeeAmount * stakedGmx[currentChain]) / totalStakedGmx;
+        if (requiredFeeAmount > feeAmount[currentChain]) {
+            revert Errors.BridgedFeesRequired(feeAmount[currentChain], requiredFeeAmount);
+        }
+
+        // after distribution completed
+        dataStore.setUint(Keys.FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP, block.timestamp);
+        dataStore.setBool(Keys.FEE_DISTRIBUTOR_DISTRIBUTION_INITIATED, false);
+    }
+
+    function _validateDistributionNotCompleted() internal view {
+        uint256 dayOfWeek = ((block.timestamp / 86400) + 4) % 7;
+        uint256 daysSinceStartOfWeek = (dayOfWeek + 7 - dataStore.getUint(Keys.FEE_DISTRIBUTOR_DISTRIBUTION_DAY)) % 7;
+        uint256 midnightToday = (block.timestamp - (block.timestamp % 86400));
+        uint256 startOfWeek = midnightToday - (daysSinceStartOfWeek * 86400);
+        uint256 lastDistributionTime = dataStore.getUint(Keys.FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP);
+        if (lastDistributionTime > startOfWeek) {
+            revert Errors.DistributionThisWeekAlreadyCompleted(lastDistributionTime, startOfWeek);
+        }
+    }
+
+    function _validateReadResponseTimestamp(uint256 readResponseTimestamp) internal view {
+        if (block.timestamp - readResponseTimestamp > dataStore.getUint(Keys.FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY)) {
+            revert Errors.OutdatedReadResponse(readResponseTimestamp);
+        }
     }
 }
