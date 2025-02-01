@@ -7,7 +7,7 @@ import "../deposit/DepositUtils.sol";
 import "../deposit/DepositVault.sol";
 import "../exchange/IDepositHandler.sol";
 
-import "./MultichainHandler.sol";
+import "./MultichainVaultHandler.sol";
 import "./MultichainUtils.sol";
 
 contract MultichainRouter is GelatoRelayRouter {
@@ -27,7 +27,7 @@ contract MultichainRouter is GelatoRelayRouter {
     DepositVault depositVault;
     IDepositHandler depositHandler;
     MultichainVault multichainVault;
-    MultichainHandler multichainHandler;
+    MultichainVaultHandler multichainVaultHandler;
 
     constructor(
         Router _router,
@@ -39,12 +39,12 @@ contract MultichainRouter is GelatoRelayRouter {
         IDepositHandler _depositHandler,
         DepositVault _depositVault,
         MultichainVault _multichainVault,
-        MultichainHandler _multichainHandler
+        MultichainVaultHandler _multichainVaultHandler
     ) GelatoRelayRouter(_router, _dataStore, _eventEmitter, _oracle, _orderHandler, _orderVault) {
         depositVault = _depositVault;
         depositHandler = _depositHandler;
         multichainVault = _multichainVault;
-        multichainHandler = _multichainHandler;
+        multichainVaultHandler = _multichainVaultHandler;
     }
 
     // user funds are bridged into MultichainVault
@@ -99,7 +99,7 @@ contract MultichainRouter is GelatoRelayRouter {
     // TODO: confirm BaseGelatoRelayRouter._sendTokens override
     function _sendTokens(address account, address token, address receiver, uint256 amount) internal override {
         AccountUtils.validateReceiver(receiver);
-        multichainHandler.pluginTransfer(token, account, receiver, amount);
+        multichainVaultHandler.pluginTransfer(token, account, receiver, amount);
 
         // relay fee ise sent from MultichainVault, from the user's multichain balance
 
