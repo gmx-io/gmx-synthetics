@@ -21,9 +21,9 @@ import { MultichainUtils } from "./MultichainUtils.sol";
 import { MultichainEventUtils } from "./MultichainEventUtils.sol";
 
 /**
- * @title MultichainHandler
+ * @title MultichainVaultHandler
  */
-contract MultichainHandler is RoleModule, GlobalReentrancyGuard, OracleModule {
+contract MultichainVaultHandler is RoleModule, GlobalReentrancyGuard, OracleModule {
     using SafeERC20 for IERC20;
 
     MultichainVault public multichainVault;
