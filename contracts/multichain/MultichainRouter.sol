@@ -56,13 +56,10 @@ contract MultichainRouter is GelatoRelayRouter {
         RelayParams calldata relayParams,
         address account,
         uint256 chainId,
-        DepositUtils.CreateDepositParams memory params, // can't use calldata because need to modify params.numbers.executionFee
-        bytes calldata signature,
-        uint256 userNonce,
-        uint256 deadline
+        DepositUtils.CreateDepositParams memory params // can't use calldata because need to modify params.numbers.executionFee
     ) external nonReentrant onlyGelatoRelay returns (bytes32) {
-        bytes32 structHash = _getCreateDepositStructHash(relayParams, params, userNonce, deadline);
-        _validateCall(userNonce, deadline, account, structHash, signature);
+        bytes32 structHash = _getCreateDepositStructHash(relayParams, params);
+        _validateCall(relayParams, account, structHash);
 
         return _createDeposit(relayParams.tokenPermits, relayParams.fee, params, account, chainId);
     }
@@ -115,9 +112,7 @@ contract MultichainRouter is GelatoRelayRouter {
 
     function _getCreateDepositStructHash(
         RelayParams calldata relayParams,
-        DepositUtils.CreateDepositParams memory params,
-        uint256 userNonce,
-        uint256 deadline
+        DepositUtils.CreateDepositParams memory params
     ) internal pure returns (bytes32) {
         bytes32 relayParamsHash = keccak256(abi.encode(relayParams));
 
@@ -126,8 +121,6 @@ contract MultichainRouter is GelatoRelayRouter {
                 abi.encode(
                     CREATE_DEPOSIT_TYPEHASH,
                     _getCreateDepositParamsStructHash(params),
-                    userNonce,
-                    deadline,
                     relayParamsHash
                 )
             );
