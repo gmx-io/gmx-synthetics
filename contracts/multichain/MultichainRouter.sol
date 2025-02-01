@@ -12,6 +12,7 @@ import "./MultichainUtils.sol";
 
 contract MultichainRouter is GelatoRelayRouter {
     struct GaslessCreateDepositParams {
+        uint256 chainId;
         uint256 longTokenAmount;
         uint256 shortTokenAmount;
         DepositUtils.CreateDepositParams createDepositParams;
@@ -20,19 +21,19 @@ contract MultichainRouter is GelatoRelayRouter {
     bytes32 public constant CREATE_DEPOSIT_TYPEHASH =
         keccak256(
             bytes(
-                "CreateDeposit(uint256 chainId,CreateDepositParams params,bytes32 relayParams)CreateDepositParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minMarketTokens,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,bytes32[] dataList)"
+                "CreateDeposit(CreateDepositParams params,bytes32 relayParams)CreateDepositParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minMarketTokens,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,uint256 chainId,bytes32[] dataList)"
             )
         );
     bytes32 public constant CREATE_DEPOSIT_PARAMS_TYPEHASH =
         keccak256(
             bytes(
-                "CreateDepositParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minMarketTokens,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,bytes32[] dataList)"
+                "CreateDepositParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minMarketTokens,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,uint256 chainId,bytes32[] dataList)"
             )
         );
     bytes32 public constant GASLESS_CREATE_DEPOSIT_PARAMS_TYPEHASH =
         keccak256(
             bytes(
-                "GaslessCreateDepositParams(uint256 longTokenAmount,uint256 shortTokenAmount,CreateDepositParams params)CreateDepositParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minMarketTokens,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,bytes32[] dataList)"
+                "GaslessCreateDepositParams(uint256 chainId,uint256 longTokenAmount,uint256 shortTokenAmount,CreateDepositParams params)CreateDepositParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minMarketTokens,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,uint256 chainId,bytes32[] dataList)"
             )
         );
 
@@ -59,29 +60,22 @@ contract MultichainRouter is GelatoRelayRouter {
         multichainVaultHandler = _multichainVaultHandler;
     }
 
-    // user funds are bridged into MultichainVault
-    // inside depositHandler.createDeposit funds are recorded --> recordTransferIn
-    // it is assumed that funds have already been transfered when recordTransferIn is reached
-    // TODO: what is the amount and when are tokens transferred to DepositVault (from MultichainVault)? 
-
     function createDeposit(
         RelayParams calldata relayParams,
         address account,
-        uint256 chainId,
         GaslessCreateDepositParams memory params // can't use calldata because need to modify params.numbers.executionFee
     ) external nonReentrant onlyGelatoRelay returns (bytes32) {
         bytes32 structHash = _getGaslessCreateDepositStructHash(relayParams, params);
         _validateCall(relayParams, account, structHash);
 
-        return _createDeposit(relayParams.tokenPermits, relayParams.fee, params, account, chainId);
+        return _createDeposit(relayParams.tokenPermits, relayParams.fee, account, params);
     }
 
     function _createDeposit(
         TokenPermit[] calldata tokenPermits,
         RelayFeeParams calldata fee,
-        GaslessCreateDepositParams memory params, // can't use calldata because need to modify params.numbers.executionFee
         address account,
-        uint256 chainId
+        GaslessCreateDepositParams memory params // can't use calldata because need to modify params.numbers.executionFee
     ) internal returns (bytes32) {
         Contracts memory contracts = Contracts({
             dataStore: dataStore,
@@ -91,35 +85,38 @@ contract MultichainRouter is GelatoRelayRouter {
             orderVault: OrderVault(payable(depositVault))
         });
 
-        // calculate next key without incrementing (createDeposit will recalculate and increment)
-        bytes32 nextKey = NonceUtils.getKey(contracts.dataStore, NonceUtils.getCurrentNonce(dataStore) + 1);
+        // transfer long & short tokens from MultichainVault to DepositVault and decrement user's multichain balance
+        _sendTokens(
+            params.createDepositParams.chainId,
+            params.createDepositParams.initialLongToken,
+            account,
+            address(depositVault), // receiver
+            params.longTokenAmount
+        );
+        _sendTokens(
+            params.createDepositParams.chainId,
+            params.createDepositParams.initialShortToken,
+            account,
+            address(depositVault), // receiver
+            params.shortTokenAmount
+        );
 
-        // funds have already been transferred/bridged to multichain vault
-        // pay relay fee from the multicahin vault and decrease user's multichain balance
+        // pay relay fee tokens from MultichainVault to DepositVault and decrement user's multichain balance
         params.createDepositParams.executionFee = _handleRelay(
             contracts,
             tokenPermits,
             fee,
-            address(multichainVault), // account
-            nextKey, // deposit key
+            account,
+            NonceUtils.getKey(contracts.dataStore, NonceUtils.getCurrentNonce(dataStore) + 1), // calculate next key without incrementing
             address(depositVault) // residualFeeReceiver
         );
 
         return depositHandler.createDeposit(account, params.createDepositParams);
     }
 
-    // TODO: confirm BaseGelatoRelayRouter._sendTokens override
-    function _sendTokens(address account, address token, address receiver, uint256 amount) internal override {
+    function _sendTokens(uint256 chainId, address account, address token, address receiver, uint256 amount) internal { // TODO: confirm _sendTokens override and make BaseGelatoRelayRouter._sendTokens virtual
         AccountUtils.validateReceiver(receiver);
-        multichainVaultHandler.pluginTransfer(token, account, receiver, amount);
-
-        // relay fee ise sent from MultichainVault, from the user's multichain balance
-
-        // to access user's multichain balance --> chainId, account, token are needed
-        // dataStore.decrementUint(Keys.sourceChainBalanceKey(chainId, account, token), amount);
-
-        // TODO: means adding the chainId param but then can't override _sendTokens
-        // should BaseGelatoRelayRouter._sendTokens also have the chainId param? 
+        multichainVaultHandler.pluginTransfer(chainId, token, account, receiver, amount);
     }
 
     function _getGaslessCreateDepositStructHash(
@@ -145,6 +142,9 @@ contract MultichainRouter is GelatoRelayRouter {
             keccak256(
                 abi.encode(
                     GASLESS_CREATE_DEPOSIT_PARAMS_TYPEHASH,
+                    params.chainId,
+                    params.longTokenAmount,
+                    params.shortTokenAmount,
                     _getCreateDepositParamsStructHash(params.createDepositParams)
                 )
             );

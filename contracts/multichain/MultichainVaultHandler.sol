@@ -66,17 +66,15 @@ contract MultichainVaultHandler is RoleModule, GlobalReentrancyGuard, OracleModu
     }
 
     /**
-     * @dev transfer the specified amount of tokens from account to receiver
-     * @param account the account for which the tokens are subtracted
+     * @dev transfer the specified amount of tokens from MultichainVault to receiver and decrement multichain account balance
+     * @param account the account for which the tokens are transferred and multichain balance decremented
      * @param token the token to transfer
      * @param receiver the account to transfer to
      * @param amount the amount of tokens to transfer
      */
-    function pluginTransfer(address token, address account, address receiver, uint256 amount) external onlyRouterPlugin { // TODO: confirm access control
-        // TODO: tokens should come from MultichainVault and the user's multichain balance should be decreased
-        // dataStore.decrementUint(Keys.sourceChainBalanceKey(sourceChainId, account, token), amount);
-
-        IERC20(token).safeTransferFrom(account, receiver, amount);
+    function pluginTransfer(uint256 chainId, address token, address account, address receiver, uint256 amount) external onlyRouterPlugin { // TODO: confirm access control
+        dataStore.decrementUint(Keys.sourceChainBalanceKey(chainId, account, token), amount);
+        IERC20(token).safeTransferFrom(address(multichainVault), receiver, amount);
     }
 
     /**
