@@ -166,12 +166,74 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
             totalStakedGmx = totalStakedGmx + stakedGmx[i];
         }
 
+        // Need to add potential require checks on bridging calculation math
+        // Need to account for rounding errors and the cost of the bridging as the numbers won't be exact
         uint256 requiredFeeAmount = (totalFeeAmount * stakedGmx[currentChain]) / totalStakedGmx;
         if (requiredFeeAmount > feeAmount[currentChain]) {
-            revert Errors.BridgedFeesRequired(feeAmount[currentChain], requiredFeeAmount);
+            dataStore.setBool(Keys.FEE_DISTRIBUTOR_FEE_DEFICIT, true);
+            return;
+        }
+        if (!dataStore.getBool(Keys.FEE_DISTRIBUTOR_FEE_DEFICIT)) {
+            uint256[] memory target = new uint256[](chains);
+            for (uint256 i; i < chains; i++) {
+                if (totalStakedGmx == 0) {
+                    target[i] = 0;
+                } else {
+                    target[i] = (totalFeeAmount * stakedGmx[i]) / totalStakedGmx;
+                }
+            }
+
+            int256[] memory difference = new int256[](chains);
+            for (uint256 i; i < chains; i++) {
+                difference[i] = int256(feeAmount[i]) - int256(target[i]);
+            }
+
+            uint256[][] memory bridging = new uint256[][](chains);
+            for (uint256 i; i < chains; i++) {
+                bridging[i] = new uint256[](chains);
+            }
+
+            uint256 deficit;
+            for (uint256 surplus; surplus < chains; surplus++) {
+                if (difference[surplus] <= 0) continue;
+
+                while (deficit < chains && difference[deficit] >= 0) {
+                    deficit++;
+                }
+                if (deficit == chains) break;
+
+                while (difference[surplus] > 0 && deficit < chains) {
+                    int256 needed = -difference[deficit];
+                    if (needed > difference[surplus]) {
+                        bridging[surplus][deficit] += uint256(difference[surplus]);
+                        difference[deficit] += difference[surplus];
+                        difference[surplus] = 0;
+                    } else {
+                        bridging[surplus][deficit] += uint256(needed);
+                        difference[surplus] -= needed;
+                        difference[deficit] = 0;
+                        deficit++;
+                        while (deficit < chains && difference[deficit] >= 0) {
+                            deficit++;
+                        }
+                    }
+                }
+            }
+
+            uint256 amountToBridgeOut;
+            for (uint256 i; i < chains; i++) {
+                uint256 sendAmount = bridging[currentChain][i];
+                if (sendAmount > 0) {
+                    // bridging transaction to be added
+                }
+                amountToBridgeOut += sendAmount;
+            }
         }
 
         // after distribution completed
+        if (dataStore.getBool(Keys.FEE_DISTRIBUTOR_FEE_DEFICIT)) {
+            dataStore.setBool(Keys.FEE_DISTRIBUTOR_FEE_DEFICIT, false);
+        }
         dataStore.setUint(Keys.FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP, block.timestamp);
         dataStore.setBool(Keys.FEE_DISTRIBUTOR_DISTRIBUTION_INITIATED, false);
     }
