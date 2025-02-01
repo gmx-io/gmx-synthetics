@@ -313,7 +313,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         return residualFee;
     }
 
-    function _sendTokens(address account, address token, address receiver, uint256 amount) internal virtual {
+    function _sendTokens(address account, address token, address receiver, uint256 amount) internal {
         AccountUtils.validateReceiver(receiver);
         router.pluginTransfer(token, account, receiver, amount);
     }
