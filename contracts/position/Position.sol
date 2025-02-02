@@ -200,7 +200,7 @@ library Position {
     // @param chainId the source chain id
     // @return the position key
     function getPositionKey(address _account, address _market, address _collateralToken, bool _isLong/*, uint256 _chainId*/) internal pure returns (bytes32) {
-        // TODO: confirm orders should have a chainId as well
+        // TODO: handle the chainId cases bellow
         // bytes32 _key;
         // if (_chainId == 0) {
         //     _key = keccak256(abi.encode(_account, _market, _collateralToken, _isLong));
