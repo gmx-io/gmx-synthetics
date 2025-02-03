@@ -477,8 +477,8 @@ library Keys {
     // @dev key for the buyback withdrawable fees
     bytes32 public constant WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT = keccak256(abi.encode("WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT"));
 
-    // @dev key for user's balance for a source chain, recorded under the user's virtual account
-    bytes32 public constant SOURCE_CHAIN_BALANCE = keccak256(abi.encode("SOURCE_CHAIN_BALANCE"));
+    // @dev key for user's multichain balance
+    bytes32 public constant MULTICHAIN_BALANCE = keccak256(abi.encode("MULTICHAIN_BALANCE"));
 
     // @dev key for the maximum length for data list array of bytes32
     bytes32 public constant MAX_DATA_LENGTH = keccak256(abi.encode("MAX_DATA_LENGTH"));
@@ -2135,14 +2135,14 @@ library Keys {
         ));
     }
 
-    // @dev key for user's balance for a source chain, recorded under the user's virtual account
-    // @param chianId the chain id for the source chain
+    // @dev key for user's multichain balance
+    // @param chainId the chain id for the destination chain
     // @param account the account for which to retreive the user balance key
     // @param token the token for which to retreive the user balance key
-    // @return key for a source chain balance for a given user and token
-    function sourceChainBalanceKey(uint256 chainId, address account, address token) internal pure returns (bytes32) {
+    // @return key for multichain balance for a given user and token
+    function multichainBalanceKey(uint256 chainId, address account, address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            SOURCE_CHAIN_BALANCE,
+            MULTICHAIN_BALANCE,
             chainId,
             account,
             token

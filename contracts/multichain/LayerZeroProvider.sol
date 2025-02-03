@@ -49,7 +49,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer {
      *      TBD if this will change
      * @param from The address of the sender (i.e. Stargate address, not user's address).
      * @param guid A global unique identifier for tracking the packet.
-     * @param message Encoded message. Contains the params needed to record the deposit (account, token, sourceChainId)
+     * @param message Encoded message. Contains the params needed to record the deposit (account, token, multichainId)
      * @param executor The address of the Executor.
      * @param extraData Any extra data or options to trigger on receipt.
      */
@@ -60,15 +60,15 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer {
         address executor,
         bytes calldata extraData
     ) external payable {
-        (address account, address token, uint256 sourceChainId) = MultichainProviderUtils.decodeDeposit(message);
+        (address account, address token, uint256 multichainId) = MultichainProviderUtils.decodeDeposit(message);
 
         _transferToVault(token, address(multichainVault));
 
-        multichainVaultHandler.recordDeposit(account, token, sourceChainId);
+        multichainVaultHandler.recordDeposit(account, token, multichainId);
 
         LayerZeroProviderEventUtils.emitComposedMessageReceived(
             eventEmitter,
-            sourceChainId,
+            multichainId,
             account,
             from,
             guid,

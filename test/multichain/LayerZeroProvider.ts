@@ -19,7 +19,7 @@ describe("LayerZeroProvider", () => {
   });
 
   it("lzCompose", async () => {
-    const sourceChainId = 1;
+    const multichainId = 1;
     const amountUsdc = expandDecimals(50, 6);
 
     // mint usdc to users and approve StargatePool to spend it
@@ -27,14 +27,14 @@ describe("LayerZeroProvider", () => {
     await usdc.connect(user0).approve(mockStargatePool.address, amountUsdc);
 
     // encoded message must match the decoded message in MultichainProviderUtils.decodeDeposit(message)
-    const message0 = encodeData(["address", "address", "uint256"], [user0.address, usdc.address, sourceChainId]);
+    const message0 = encodeData(["address", "address", "uint256"], [user0.address, usdc.address, multichainId]);
 
     // StargatePool would deliver usdc to LayerZeroProvider contract and call LayerZeroProvider.lzCompose
     await mockStargatePool.connect(user0).sendToken(usdc.address, layerZeroProvider.address, amountUsdc, message0);
 
     const lzUsdcBalance = await usdc.balanceOf(layerZeroProvider.address);
     const multichainVaultBalance = await usdc.balanceOf(multichainVault.address);
-    const userBalance = await dataStore.getUint(keys.sourceChainBalanceKey(sourceChainId, user0.address, usdc.address));
+    const userBalance = await dataStore.getUint(keys.multichainBalanceKey(multichainId, user0.address, usdc.address));
 
     // usdc has been transterred from LayerZeroProvider to MultichainVault and recorded under the user's chainId + account
     expect(lzUsdcBalance).eq(0);
