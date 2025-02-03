@@ -105,6 +105,10 @@ contract SubaccountRouter is BaseRouter {
             revert Errors.InvalidReceiverForSubaccountOrder(params.addresses.receiver, account);
         }
 
+        if (params.addresses.cancellationReceiver != address(0) && params.addresses.cancellationReceiver != account) {
+            revert Errors.InvalidCancellationReceiverForSubaccountOrder(params.addresses.cancellationReceiver, account);
+        }
+
         if (
             params.orderType == Order.OrderType.MarketSwap ||
             params.orderType == Order.OrderType.LimitSwap ||
