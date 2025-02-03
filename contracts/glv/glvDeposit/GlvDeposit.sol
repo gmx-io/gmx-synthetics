@@ -52,6 +52,7 @@ library GlvDeposit {
         uint256 updatedAtTime;
         uint256 executionFee;
         uint256 callbackGasLimit;
+        uint256 chainId;
     }
 
     // @param shouldUnwrapNativeToken whether to unwrap the native token when
@@ -196,6 +197,14 @@ library GlvDeposit {
 
     function setCallbackGasLimit(Props memory props, uint256 value) internal pure {
         props.numbers.callbackGasLimit = value;
+    }
+
+    function chainId(Props memory props) internal pure returns (uint256) {
+        return props.numbers.chainId;
+    }
+
+    function setChainId(Props memory props, uint256 value) internal pure {
+        props.numbers.chainId = value;
     }
 
     function shouldUnwrapNativeToken(Props memory props) internal pure returns (bool) {

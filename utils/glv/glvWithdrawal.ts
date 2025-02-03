@@ -48,6 +48,7 @@ export async function createGlvWithdrawal(fixture, overrides: any = {}) {
   const shouldUnwrapNativeToken = overrides.shouldUnwrapNativeToken || false;
   const executionFee = bigNumberify(overrides.executionFee ?? "1000000000000000");
   const callbackGasLimit = bigNumberify(overrides.callbackGasLimit ?? 0);
+  const chainId = bigNumberify(overrides.chainId ?? 0);
   const useGlvHandler = Boolean(overrides.useGlvHandler) || false;
   const dataList = overrides.dataList || [];
 
@@ -79,6 +80,7 @@ export async function createGlvWithdrawal(fixture, overrides: any = {}) {
     shouldUnwrapNativeToken,
     executionFee,
     callbackGasLimit,
+    chainId,
     dataList,
   };
 
@@ -190,6 +192,7 @@ export function expectEmptyGlvWithdrawal(glvWithdrawal: any) {
   expect(glvWithdrawal.numbers.updatedAtTime).eq(0);
   expect(glvWithdrawal.numbers.executionFee).eq(0);
   expect(glvWithdrawal.numbers.callbackGasLimit).eq(0);
+  expect(glvWithdrawal.numbers.chainId).eq(0);
 
   expect(glvWithdrawal.flags.shouldUnwrapNativeToken).eq(false);
 }

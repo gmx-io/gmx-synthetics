@@ -138,7 +138,8 @@ library GlvShiftUtils {
                 marketTokenAmount: glvShift.marketTokenAmount(),
                 updatedAtTime: glvShift.updatedAtTime(),
                 executionFee: 0,
-                callbackGasLimit: 0
+                callbackGasLimit: 0,
+                chainId: 0 // TODO: should glvShift have the chainId as well?
             }),
             new bytes32[](0)
         );
