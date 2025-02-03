@@ -1,8 +1,6 @@
 import { expect } from "chai";
 
 import * as keys from "../../utils/keys";
-import * as multichain from "../../utils/multichain";
-
 import { deployFixture } from "../../utils/fixture";
 import { expandDecimals } from "../../utils/math";
 import { encodeData } from "../../utils/hash";
