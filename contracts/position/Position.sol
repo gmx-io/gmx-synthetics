@@ -197,7 +197,7 @@ library Position {
     // @param market the position's market
     // @param collateralToken the position's collateralToken
     // @param isLong whether the position is long or short
-    // @param chainId the source chain id
+    // @param chainId the destination chain id
     // @return the position key
     function getPositionKey(address _account, address _market, address _collateralToken, bool _isLong/*, uint256 _chainId*/) internal pure returns (bytes32) {
         // TODO: handle the chainId cases bellow

@@ -17,7 +17,7 @@ library LayerZeroProviderEventUtils {
 
     function emitComposedMessageReceived(
         EventEmitter eventEmitter,
-        uint256 sourceChainId,
+        uint256 multichainId,
         address account,
         address from,
         bytes32 guid,
@@ -33,7 +33,7 @@ library LayerZeroProviderEventUtils {
         eventData.addressItems.setItem(2, "executor", executor);
 
         eventData.uintItems.initItems(1);
-        eventData.uintItems.setItem(0, "sourceChainId", sourceChainId);
+        eventData.uintItems.setItem(0, "multichainId", multichainId);
         
         eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "guid", guid);
@@ -42,12 +42,12 @@ library LayerZeroProviderEventUtils {
         eventData.bytesItems.setItem(0, "message", message);
         eventData.bytesItems.setItem(1, "extraData", extraData);
 
-        eventEmitter.emitEventLog2("MessageComposedReceived", bytes32(sourceChainId), Cast.toBytes32(account), eventData);
+        eventEmitter.emitEventLog2("MessageComposedReceived", bytes32(multichainId), Cast.toBytes32(account), eventData);
     }
 
     function emitWithdrawalReceipt(
         EventEmitter eventEmitter,
-        uint256 sourceChainId,
+        uint256 multichainId,
         address account,
         bytes32 guid,
         uint64 nonce,
@@ -64,11 +64,11 @@ library LayerZeroProviderEventUtils {
         eventData.uintItems.setItem(2, "lzTokenFee", lzTokenFee);
         eventData.uintItems.setItem(3, "amountSentLD", amountSentLD);
         eventData.uintItems.setItem(4, "amountReceivedLD", amountReceivedLD);
-        eventData.uintItems.setItem(5, "sourceChainId", sourceChainId);
+        eventData.uintItems.setItem(5, "multichainId", multichainId);
 
         eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "guid", guid);
         
-        eventEmitter.emitEventLog2("WithdrawalReceipt", bytes32(sourceChainId), Cast.toBytes32(account), eventData);
+        eventEmitter.emitEventLog2("WithdrawalReceipt", bytes32(multichainId), Cast.toBytes32(account), eventData);
     }
 }
