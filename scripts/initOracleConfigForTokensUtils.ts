@@ -7,6 +7,8 @@ import { getFullKey } from "../utils/config";
 
 import * as keys from "../utils/keys";
 import { getOracleProviderAddress } from "../utils/oracle";
+import { TokenConfig } from "../config/tokens";
+import { handleInBatches } from "../utils/batch";
 
 export async function initOracleConfigForTokens({ write }) {
   const tokens = await hre.gmx.getTokens();
@@ -20,9 +22,12 @@ export async function initOracleConfigForTokens({ write }) {
   const tokenSymbols = Object.keys(tokens);
   let paramsCount: number | undefined = undefined;
 
+  await validatePriceFeeds(tokens);
+
   for (const tokenSymbol of tokenSymbols) {
     const token = tokens[tokenSymbol];
     const oracleProviderAddress = await getOracleProviderAddress(token.oracleProvider);
+
     multicallReadParams.push({
       target: dataStore.address,
       allowFailure: false,
@@ -179,5 +184,51 @@ export async function initOracleConfigForTokens({ write }) {
     console.log(`tx sent: ${tx.hash}`);
   } else {
     console.log("NOTE: executed in read-only mode, no transactions were sent");
+  }
+}
+
+export async function validatePriceFeeds(tokens: Record<string, TokenConfig>) {
+  if (process.env.SKIP_PRICE_FEED_VALIDATION) {
+    console.log("skipping price feed validation");
+    return;
+  }
+
+  console.log("validating price feeds. use SKIP_PRICE_FEED_VALIDATION=true to skip");
+
+  await handleInBatches(Object.entries(tokens), 25, async (batch) => {
+    for (const [tokenSymbol, tokenConfig] of batch) {
+      await validatePriceFeed(tokenSymbol, tokenConfig);
+    }
+  });
+}
+
+async function validatePriceFeed(tokenSymbol: string, token: TokenConfig) {
+  const { priceFeed } = token;
+
+  if (!priceFeed) {
+    return;
+  }
+
+  const contract = new ethers.Contract(
+    priceFeed.address,
+    ["function decimals() view returns (uint8)", "function description() view returns (string)"],
+    ethers.provider
+  );
+  const decimals = await contract.decimals();
+  const description = await contract.description();
+  if (decimals !== priceFeed.decimals) {
+    throw new Error(`Decimals mismatch for ${tokenSymbol}: ${decimals} !== ${priceFeed.decimals}`);
+  }
+
+  const tokenSymbolReplaced =
+    {
+      "WBTC.e": "BTC",
+      tBTC: "BTC",
+      WETH: "ETH",
+      "USDC.e": "USDC",
+    }[tokenSymbol] ?? tokenSymbol;
+
+  if (description !== `${tokenSymbolReplaced} / USD`) {
+    throw new Error(`Description mismatch for ${tokenSymbol}: ${description} !== ${tokenSymbolReplaced} / USD`);
   }
 }

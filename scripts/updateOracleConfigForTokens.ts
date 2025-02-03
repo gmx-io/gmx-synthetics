@@ -1,10 +1,11 @@
-import { bigNumberify, expandDecimals } from "../utils/math";
-import { encodeData } from "../utils/hash";
 import { getFullKey } from "../utils/config";
+import { encodeData } from "../utils/hash";
+import { bigNumberify, expandDecimals } from "../utils/math";
 import { timelockWriteMulticall } from "../utils/timelock";
 
 import * as keys from "../utils/keys";
 import { getOracleProviderAddress, getOracleProviderKey } from "../utils/oracle";
+import { validatePriceFeeds } from "./initOracleConfigForTokensUtils";
 
 const expectedPhases = ["signal", "finalize"];
 
@@ -25,6 +26,8 @@ export async function updateOracleConfigForTokens() {
 
   const tokenSymbols = Object.keys(tokens);
   let paramsCount: number | undefined = undefined;
+
+  await validatePriceFeeds(tokens);
 
   for (const tokenSymbol of tokenSymbols) {
     const token = tokens[tokenSymbol];
