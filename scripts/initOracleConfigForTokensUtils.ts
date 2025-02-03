@@ -205,7 +205,7 @@ export async function validatePriceFeeds(tokens: Record<string, TokenConfig>) {
 async function validatePriceFeed(tokenSymbol: string, token: TokenConfig) {
   const { priceFeed } = token;
 
-  if (!priceFeed) {
+  if (!priceFeed || priceFeed.address === ethers.constants.AddressZero) {
     return;
   }
 
@@ -214,8 +214,17 @@ async function validatePriceFeed(tokenSymbol: string, token: TokenConfig) {
     ["function decimals() view returns (uint8)", "function description() view returns (string)"],
     ethers.provider
   );
-  const decimals = await contract.decimals();
-  const description = await contract.description();
+
+  let decimals: number;
+  let description: string;
+
+  try {
+    [decimals, description] = await Promise.all([contract.decimals(), contract.description()]);
+  } catch (e) {
+    console.log(`failed to validate price feed for ${tokenSymbol}`);
+    throw e;
+  }
+
   if (decimals !== priceFeed.decimals) {
     throw new Error(`Decimals mismatch for ${tokenSymbol}: ${decimals} !== ${priceFeed.decimals}`);
   }
@@ -226,6 +235,11 @@ async function validatePriceFeed(tokenSymbol: string, token: TokenConfig) {
       tBTC: "BTC",
       WETH: "ETH",
       "USDC.e": "USDC",
+      "BTC.b": "BTC",
+      "WETH.e": "ETH",
+      WAVAX: "AVAX",
+      "USDT.e": "USDT",
+      "DAI.e": "DAI",
     }[tokenSymbol] ?? tokenSymbol;
 
   if (description !== `${tokenSymbolReplaced} / USD`) {
