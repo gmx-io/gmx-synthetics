@@ -1,14 +1,13 @@
-import prompts from "prompts";
 import hre, { ethers } from "hardhat";
+import prompts from "prompts";
 
-import { bigNumberify, expandDecimals } from "../utils/math";
-import { encodeData } from "../utils/hash";
 import { getFullKey } from "../utils/config";
+import { encodeData } from "../utils/hash";
+import { bigNumberify, expandDecimals } from "../utils/math";
 
+import { TokenConfig } from "../config/tokens";
 import * as keys from "../utils/keys";
 import { getOracleProviderAddress } from "../utils/oracle";
-import { TokenConfig } from "../config/tokens";
-import { handleInBatches } from "../utils/batch";
 
 export async function initOracleConfigForTokens({ write }) {
   const tokens = await hre.gmx.getTokens();
@@ -21,8 +20,6 @@ export async function initOracleConfigForTokens({ write }) {
 
   const tokenSymbols = Object.keys(tokens);
   let paramsCount: number | undefined = undefined;
-
-  await validatePriceFeeds(tokens);
 
   for (const tokenSymbol of tokenSymbols) {
     const token = tokens[tokenSymbol];
@@ -94,6 +91,7 @@ export async function initOracleConfigForTokens({ write }) {
       const priceFeedMultiplier = expandDecimals(1, 60 - token.decimals - priceFeed.decimals);
       const stablePrice = priceFeed.stablePrice ? priceFeed.stablePrice : 0;
 
+      await validatePriceFeed(tokenSymbol, token);
       console.log(
         `setPriceFeed(${tokenSymbol}, ${priceFeed.address}, ${priceFeedMultiplier.toString()}, ${
           priceFeed.heartbeatDuration
@@ -187,23 +185,14 @@ export async function initOracleConfigForTokens({ write }) {
   }
 }
 
-export async function validatePriceFeeds(tokens: Record<string, TokenConfig>) {
+export async function validatePriceFeed(tokenSymbol: string, token: TokenConfig) {
   if (process.env.SKIP_PRICE_FEED_VALIDATION) {
-    console.log("skipping price feed validation");
+    console.log(`skipping price feed validation for ${tokenSymbol}`);
     return;
   }
 
-  console.log("validating price feeds. use SKIP_PRICE_FEED_VALIDATION=true to skip");
-
-  await handleInBatches(Object.entries(tokens), 25, async (batch) => {
-    for (const [tokenSymbol, tokenConfig] of batch) {
-      await validatePriceFeed(tokenSymbol, tokenConfig);
-    }
-  });
-}
-
-async function validatePriceFeed(tokenSymbol: string, token: TokenConfig) {
   const { priceFeed } = token;
+  console.log(`validating price feed for ${tokenSymbol}. use SKIP_PRICE_FEED_VALIDATION=true to skip`);
 
   if (!priceFeed || priceFeed.address === ethers.constants.AddressZero) {
     return;

@@ -5,7 +5,7 @@ import { timelockWriteMulticall } from "../utils/timelock";
 
 import * as keys from "../utils/keys";
 import { getOracleProviderAddress, getOracleProviderKey } from "../utils/oracle";
-import { validatePriceFeeds } from "./initOracleConfigForTokensUtils";
+import { validatePriceFeed } from "./initOracleConfigForTokensUtils";
 
 const expectedPhases = ["signal", "finalize"];
 
@@ -26,8 +26,6 @@ export async function updateOracleConfigForTokens() {
 
   const tokenSymbols = Object.keys(tokens);
   let paramsCount: number | undefined = undefined;
-
-  await validatePriceFeeds(tokens);
 
   for (const tokenSymbol of tokenSymbols) {
     const token = tokens[tokenSymbol];
@@ -142,6 +140,7 @@ export async function updateOracleConfigForTokens() {
         );
       }
 
+      await validatePriceFeed(tokenSymbol, token);
       console.log(
         `setPriceFeed(${tokenSymbol}, ${priceFeed.address}, ${priceFeedMultiplier.toString()}, ${
           priceFeed.heartbeatDuration
