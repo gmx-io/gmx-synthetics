@@ -226,10 +226,12 @@ async function validatePriceFeed(tokenSymbol: string, token: TokenConfig) {
   }
 
   if (decimals !== priceFeed.decimals) {
-    throw new Error(`Decimals mismatch for ${tokenSymbol}: ${decimals} !== ${priceFeed.decimals}`);
+    throw new Error(
+      `Decimals mismatch for ${tokenSymbol}: ${decimals} !== ${priceFeed.decimals}. price feed: ${priceFeed.address}`
+    );
   }
 
-  const tokenSymbolReplaced =
+  let tokenSymbolReplaced =
     {
       "WBTC.e": "BTC",
       tBTC: "BTC",
@@ -242,7 +244,15 @@ async function validatePriceFeed(tokenSymbol: string, token: TokenConfig) {
       "DAI.e": "DAI",
     }[tokenSymbol] ?? tokenSymbol;
 
+  // in avalancheFuji USDT feed is used as USDC and DAI price feeds
+  const isAvalancheFuji = hre.network.name === "avalancheFuji";
+  if (isAvalancheFuji && (tokenSymbolReplaced === "USDC" || tokenSymbolReplaced === "DAI")) {
+    tokenSymbolReplaced = "USDT";
+  }
+
   if (description !== `${tokenSymbolReplaced} / USD`) {
-    throw new Error(`Description mismatch for ${tokenSymbol}: ${description} !== ${tokenSymbolReplaced} / USD`);
+    throw new Error(
+      `Description mismatch for ${tokenSymbol}: ${description} !== ${tokenSymbolReplaced} / USD. price feed: ${priceFeed.address}`
+    );
   }
 }
