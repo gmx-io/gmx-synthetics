@@ -40,6 +40,7 @@ library ShiftUtils {
         uint256 minMarketTokens;
         uint256 executionFee;
         uint256 callbackGasLimit;
+        uint256 chainId;
         bytes32[] dataList;
     }
 
@@ -127,7 +128,8 @@ library ShiftUtils {
                 params.minMarketTokens,
                 Chain.currentTimestamp(),
                 params.executionFee,
-                params.callbackGasLimit
+                params.callbackGasLimit,
+                params.chainId
             ),
             params.dataList
         );
@@ -198,7 +200,8 @@ library ShiftUtils {
                 0, // minShortTokenAmount
                 shift.updatedAtTime(),
                 0, // executionFee
-                0 // callbackGasLimit
+                0, // callbackGasLimit
+                shift.chainId()
             ),
             Withdrawal.Flags(
                 false
@@ -287,7 +290,8 @@ library ShiftUtils {
             params.keeper,
             params.startingGas,
             ISwapPricingUtils.SwapPricingType.Shift,
-            false // includeVirtualInventoryImpact
+            false, // includeVirtualInventoryImpact
+            shift.chainId()
         );
 
         cache.receivedMarketTokens = ExecuteDepositUtils.executeDeposit(

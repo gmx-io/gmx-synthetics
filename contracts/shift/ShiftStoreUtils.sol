@@ -25,6 +25,8 @@ library ShiftStoreUtils {
 
     bytes32 public constant DATA_LIST = keccak256(abi.encode("DATA_LIST"));
 
+    bytes32 public constant CHAIN_ID = keccak256(abi.encode("CHAIN_ID"));
+
     function get(DataStore dataStore, bytes32 key) external view returns (Shift.Props memory) {
         Shift.Props memory shift;
         if (!dataStore.containsBytes32(Keys.SHIFT_LIST, key)) {
@@ -73,6 +75,10 @@ library ShiftStoreUtils {
 
         shift.setCallbackGasLimit(dataStore.getUint(
             keccak256(abi.encode(key, CALLBACK_GAS_LIMIT))
+        ));
+
+        shift.setChainId(dataStore.getUint(
+            keccak256(abi.encode(key, CHAIN_ID))
         ));
 
         shift.setDataList(dataStore.getBytes32Array(
@@ -148,6 +154,11 @@ library ShiftStoreUtils {
             shift.callbackGasLimit()
         );
 
+        dataStore.setUint(
+            keccak256(abi.encode(key, CHAIN_ID)),
+            shift.chainId()
+        );
+
         dataStore.setBytes32Array(
             keccak256(abi.encode(key, DATA_LIST)),
             shift.dataList()
@@ -211,6 +222,10 @@ library ShiftStoreUtils {
 
         dataStore.removeUint(
             keccak256(abi.encode(key, CALLBACK_GAS_LIMIT))
+        );
+
+        dataStore.removeUint(
+            keccak256(abi.encode(key, CHAIN_ID))
         );
 
         dataStore.removeBytes32Array(

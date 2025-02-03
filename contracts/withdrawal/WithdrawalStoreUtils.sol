@@ -33,6 +33,8 @@ library WithdrawalStoreUtils {
 
     bytes32 public constant DATA_LIST = keccak256(abi.encode("DATA_LIST"));
 
+    bytes32 public constant CHAIN_ID = keccak256(abi.encode("CHAIN_ID"));
+
     function get(DataStore dataStore, bytes32 key) external view returns (Withdrawal.Props memory) {
         Withdrawal.Props memory withdrawal;
         if (!dataStore.containsBytes32(Keys.WITHDRAWAL_LIST, key)) {
@@ -89,6 +91,10 @@ library WithdrawalStoreUtils {
 
         withdrawal.setCallbackGasLimit(dataStore.getUint(
             keccak256(abi.encode(key, CALLBACK_GAS_LIMIT))
+        ));
+
+        withdrawal.setChainId(dataStore.getUint(
+            keccak256(abi.encode(key, CHAIN_ID))
         ));
 
         withdrawal.setShouldUnwrapNativeToken(dataStore.getBool(
@@ -178,6 +184,11 @@ library WithdrawalStoreUtils {
             withdrawal.callbackGasLimit()
         );
 
+        dataStore.setUint(
+            keccak256(abi.encode(key, CHAIN_ID)),
+            withdrawal.chainId()
+        );
+
         dataStore.setBool(
             keccak256(abi.encode(key, SHOULD_UNWRAP_NATIVE_TOKEN)),
             withdrawal.shouldUnwrapNativeToken()
@@ -250,6 +261,10 @@ library WithdrawalStoreUtils {
 
         dataStore.removeUint(
             keccak256(abi.encode(key, EXECUTION_FEE))
+        );
+
+        dataStore.removeUint(
+            keccak256(abi.encode(key, CHAIN_ID))
         );
 
         dataStore.removeUint(
