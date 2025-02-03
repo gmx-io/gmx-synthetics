@@ -383,6 +383,7 @@ describe("GelatoRelayRouter", () => {
         chainId,
         relayFeeToken: wnt.address,
         relayFeeAmount: expandDecimals(1, 15),
+        increaseExecutionFee: false,
       };
     });
 
@@ -466,6 +467,36 @@ describe("GelatoRelayRouter", () => {
       expect(order.numbers.minOutputAmount).eq(4);
       expect(order.numbers.validFromTime).eq(5);
       expect(order.flags.autoCancel).eq(true);
+    });
+
+    it.only("increases execution fee", async () => {
+      await wnt.connect(user0).approve(router.address, expandDecimals(1, 18));
+      await sendCreateOrder(createOrderParams);
+      const orderKeys = await getOrderKeys(dataStore, 0, 1);
+      let order = await reader.getOrder(dataStore.address, orderKeys[0]);
+
+      updateOrderParams.relayFeeAmount = expandDecimals(1, 15);
+      updateOrderParams.feeParams.feeAmount = expandDecimals(3, 15);
+
+      const initialWethBalance = await wnt.balanceOf(user0.address);
+      const gelatoRelayFee = updateOrderParams.relayFeeAmount;
+      await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, gelatoRelayFee);
+      await sendUpdateOrder({ ...updateOrderParams, key: orderKeys[0] });
+      await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, bigNumberify(gelatoRelayFee).mul(2));
+
+      // user receives the residual amount
+      await expectBalance(wnt.address, user0.address, initialWethBalance.sub(expandDecimals(1, 15)));
+      // and the execution fee stays the same
+      order = await reader.getOrder(dataStore.address, orderKeys[0]);
+      expect(order.numbers.executionFee).eq(expandDecimals(1, 15));
+
+      await sendUpdateOrder({ ...updateOrderParams, key: orderKeys[0], increaseExecutionFee: true });
+
+      // user doesn't receive the residual amount
+      await expectBalance(wnt.address, user0.address, initialWethBalance.sub(expandDecimals(4, 15)));
+      // and the execution fee is increased
+      order = await reader.getOrder(dataStore.address, orderKeys[0]);
+      expect(order.numbers.executionFee).eq(expandDecimals(3, 15));
     });
   });
 

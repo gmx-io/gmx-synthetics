@@ -103,63 +103,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         }
     }
 
-    function _updateOrder(
-        RelayParams calldata relayParams,
-        address account,
-        bytes32 key,
-        UpdateOrderParams calldata params
-    ) internal {
-        Contracts memory contracts = Contracts({
-            dataStore: dataStore,
-            eventEmitter: eventEmitter,
-            orderVault: orderVault
-        });
-
-        Order.Props memory order = OrderStoreUtils.get(contracts.dataStore, key);
-
-        if (order.account() == address(0)) {
-            revert Errors.EmptyOrder();
-        }
-
-        if (order.account() != account) {
-            revert Errors.Unauthorized(account, "account for updateOrder");
-        }
-
-        _handleRelay(contracts, relayParams.tokenPermits, relayParams.fee, account, key, account);
-
-        orderHandler.updateOrder(
-            key,
-            params.sizeDeltaUsd,
-            params.acceptablePrice,
-            params.triggerPrice,
-            params.minOutputAmount,
-            params.validFromTime,
-            params.autoCancel,
-            order
-        );
-    }
-
-    function _cancelOrder(RelayParams calldata relayParams, address account, bytes32 key) internal {
-        Contracts memory contracts = Contracts({
-            dataStore: dataStore,
-            eventEmitter: eventEmitter,
-            orderVault: orderVault
-        });
-
-        Order.Props memory order = OrderStoreUtils.get(contracts.dataStore, key);
-        if (order.account() == address(0)) {
-            revert Errors.EmptyOrder();
-        }
-
-        if (order.account() != account) {
-            revert Errors.Unauthorized(account, "account for cancelOrder");
-        }
-
-        _handleRelay(contracts, relayParams.tokenPermits, relayParams.fee, account, key, account);
-
-        orderHandler.cancelOrder(key);
-    }
-
     function _createOrder(
         RelayParams calldata relayParams,
         address account,
@@ -197,6 +140,65 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         }
 
         return orderHandler.createOrder(account, params);
+    }
+
+    function _updateOrder(
+        RelayParams calldata relayParams,
+        address account,
+        bytes32 key,
+        UpdateOrderParams calldata params,
+        bool increaseExecutionFee
+    ) internal {
+        Contracts memory contracts = Contracts({
+            dataStore: dataStore,
+            eventEmitter: eventEmitter,
+            orderVault: orderVault
+        });
+
+        Order.Props memory order = OrderStoreUtils.get(contracts.dataStore, key);
+
+        if (order.account() == address(0)) {
+            revert Errors.EmptyOrder();
+        }
+
+        if (order.account() != account) {
+            revert Errors.Unauthorized(account, "account for updateOrder");
+        }
+
+        address residualFeeReceiver = increaseExecutionFee ? address(contracts.orderVault) : account;
+        _handleRelay(contracts, relayParams.tokenPermits, relayParams.fee, account, key, residualFeeReceiver);
+
+        orderHandler.updateOrder(
+            key,
+            params.sizeDeltaUsd,
+            params.acceptablePrice,
+            params.triggerPrice,
+            params.minOutputAmount,
+            params.validFromTime,
+            params.autoCancel,
+            order
+        );
+    }
+
+    function _cancelOrder(RelayParams calldata relayParams, address account, bytes32 key) internal {
+        Contracts memory contracts = Contracts({
+            dataStore: dataStore,
+            eventEmitter: eventEmitter,
+            orderVault: orderVault
+        });
+
+        Order.Props memory order = OrderStoreUtils.get(contracts.dataStore, key);
+        if (order.account() == address(0)) {
+            revert Errors.EmptyOrder();
+        }
+
+        if (order.account() != account) {
+            revert Errors.Unauthorized(account, "account for cancelOrder");
+        }
+
+        _handleRelay(contracts, relayParams.tokenPermits, relayParams.fee, account, key, account);
+
+        orderHandler.cancelOrder(key);
     }
 
     function _swapFeeTokens(

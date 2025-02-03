@@ -541,6 +541,8 @@ describe("SubaccountGelatoRelayRouter", () => {
         label: "gelatoRelayRouter.createOrder",
       });
     });
+
+    it.skip("swap relay fee");
   });
 
   describe("updateOrder", () => {

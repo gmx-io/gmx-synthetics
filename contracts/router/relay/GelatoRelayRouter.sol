@@ -77,12 +77,13 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         RelayParams calldata relayParams,
         address account,
         bytes32 key,
-        UpdateOrderParams calldata params
+        UpdateOrderParams calldata params,
+        bool increaseExecutionFee
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelay {
         bytes32 structHash = _getUpdateOrderStructHash(relayParams, key, params);
         _validateCall(relayParams, account, structHash);
 
-        _updateOrder(relayParams, account, key, params);
+        _updateOrder(relayParams, account, key, params, increaseExecutionFee);
     }
 
     function cancelOrder(

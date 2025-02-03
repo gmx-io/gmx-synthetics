@@ -117,12 +117,13 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         address account, // main account
         address subaccount,
         bytes32 key,
-        UpdateOrderParams calldata params
+        UpdateOrderParams calldata params,
+        bool increaseExecutionFee
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelay {
         bytes32 structHash = _getUpdateOrderStructHash(relayParams, subaccountApproval, account, key, params);
         _validateCall(relayParams, subaccount, structHash);
         _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, subaccountApproval);
-        _updateOrder(relayParams, account, key, params);
+        _updateOrder(relayParams, account, key, params, increaseExecutionFee);
     }
 
     function cancelOrder(
