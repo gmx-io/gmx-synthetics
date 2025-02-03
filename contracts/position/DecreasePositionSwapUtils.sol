@@ -30,7 +30,8 @@ library DecreasePositionSwapUtils {
                     0, // minOutputAmount
                     params.market.marketToken, // receiver
                     params.order.uiFeeReceiver(), // uiFeeReceiver
-                    false // shouldUnwrapNativeToken
+                    false, // shouldUnwrapNativeToken
+                    ISwapPricingUtils.SwapPricingType.Swap
                 )
             ) returns (address tokenOut, uint256 swapOutputAmount) {
                 if (tokenOut != values.output.secondaryOutputToken) {
@@ -74,7 +75,8 @@ library DecreasePositionSwapUtils {
                     0, // minOutputAmount
                     params.market.marketToken, // receiver
                     params.order.uiFeeReceiver(), // uiFeeReceiver
-                    false // shouldUnwrapNativeToken
+                    false, // shouldUnwrapNativeToken
+                    ISwapPricingUtils.SwapPricingType.Swap
                 )
             ) returns (address /* tokenOut */, uint256 swapOutputAmount) {
                 return (true, swapOutputAmount);

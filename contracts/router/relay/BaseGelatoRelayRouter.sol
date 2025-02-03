@@ -226,7 +226,8 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
                 minOutputAmount: _getFee(),
                 receiver: address(this),
                 uiFeeReceiver: address(0),
-                shouldUnwrapNativeToken: false
+                shouldUnwrapNativeToken: false,
+                swapPricingType: ISwapPricingUtils.SwapPricingType.Atomic
             })
         );
 

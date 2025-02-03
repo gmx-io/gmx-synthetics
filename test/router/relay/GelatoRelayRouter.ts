@@ -7,7 +7,7 @@ import {
 } from "@nomicfoundation/hardhat-network-helpers";
 
 import { deployFixture } from "../../../utils/fixture";
-import { expandDecimals, decimalToFloat, bigNumberify } from "../../../utils/math";
+import { expandDecimals, decimalToFloat, bigNumberify, percentageToFloat, applyFactor } from "../../../utils/math";
 import { logGasUsage } from "../../../utils/gas";
 import { hashString } from "../../../utils/hash";
 import { OrderType, DecreasePositionSwapType, getOrderKeys, getOrderCount } from "../../../utils/order";
@@ -19,6 +19,7 @@ import { GELATO_RELAY_ADDRESS } from "../../../utils/relay/addresses";
 import { sendCancelOrder, sendCreateOrder, sendUpdateOrder } from "../../../utils/relay/gelatoRelay";
 import { getTokenPermit } from "../../../utils/relay/tokenPermit";
 import { ethers } from "ethers";
+import { parseLogs } from "../../../utils/event";
 
 const BAD_SIGNATURE =
   "0x122e3efab9b46c82dc38adf4ea6cd2c753b00f95c217a0e3a0f4dd110839f07a08eb29c1cc414d551349510e23a75219cd70c8b88515ed2b83bbd88216ffdb051f";
@@ -309,13 +310,19 @@ describe("GelatoRelayRouter", () => {
         },
       });
 
+      const atomicSwapFeeFactor = percentageToFloat("1%");
+      const swapFeeFactor = percentageToFloat("0.05%");
+      await dataStore.setUint(keys.atomicSwapFeeFactorKey(ethUsdMarket.marketToken), atomicSwapFeeFactor);
+      await dataStore.setUint(keys.swapFeeFactorKey(ethUsdMarket.marketToken, true), swapFeeFactor);
+      await dataStore.setUint(keys.swapFeeFactorKey(ethUsdMarket.marketToken, false), swapFeeFactor);
+
       await usdc.connect(user0).approve(router.address, expandDecimals(1000, 6));
       await wnt.connect(user0).approve(router.address, expandDecimals(1, 18));
 
       const usdcBalanceBefore = await usdc.balanceOf(user0.address);
       const feeAmount = expandDecimals(10, 6);
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, 0);
-      await sendCreateOrder({
+      const tx = await sendCreateOrder({
         ...createOrderParams,
         feeParams: {
           feeToken: usdc.address,
@@ -335,6 +342,16 @@ describe("GelatoRelayRouter", () => {
       // and user sent correct amount of USDC
       const usdcBalanceAfter = await usdc.balanceOf(user0.address);
       expect(usdcBalanceAfter).eq(usdcBalanceBefore.sub(feeAmount));
+
+      // check that atomic swap fee was applied
+      const txReceipt = await hre.ethers.provider.getTransactionReceipt(tx.hash);
+      const logs = parseLogs(fixture, txReceipt);
+      const swapInfoLog = logs.find((log) => log.parsedEventInfo?.eventName === "SwapInfo");
+      const swapFeesCollectedLog = logs.find((log) => log.parsedEventInfo?.eventName === "SwapFeesCollected");
+      expect(swapInfoLog.parsedEventData.amountIn.sub(swapInfoLog.parsedEventData.amountInAfterFees)).eq(
+        applyFactor(swapInfoLog.parsedEventData.amountIn, atomicSwapFeeFactor)
+      );
+      expect(swapFeesCollectedLog.parsedEventData.swapFeeType).eq(keys.ATOMIC_SWAP_FEE_FACTOR);
     });
   });
 

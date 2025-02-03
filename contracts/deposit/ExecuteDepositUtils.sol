@@ -538,7 +538,8 @@ library ExecuteDepositUtils {
                 0, // minOutputAmount
                 market, // receiver
                 uiFeeReceiver, // uiFeeReceiver
-                false // shouldUnwrapNativeToken
+                false, // shouldUnwrapNativeToken
+                ISwapPricingUtils.SwapPricingType.Swap
             )
         );
 
