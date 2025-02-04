@@ -196,7 +196,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             );
         }
 
-        return orderHandler.createOrder(account, params);
+        return orderHandler.createOrder(account, params); // TODO: key is incremented here, but also when passed as param to _handleRelay. Seems the relayFee is paid for prev key?
     }
 
     function _swapFeeTokens(
@@ -306,10 +306,14 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
         _transferRelayFee();
 
+        // TODO: should it be named remainingFee as it's intended to always include RelayFee + executionFee?
+        // For createOrder it's the executionFee and goes into depositVault. For update/cancelOrder is goes back to account
         uint256 residualFee = outputAmount - requiredRelayFee;
         // for orders the residual fee is sent to the order vault
         // for other actions the residual fee is sent back to the user
-        TokenUtils.transfer(contracts.dataStore, wnt, residualFeeReceiver, residualFee);
+        // for multichain actions, the residual fee is send back to MultichainVault and user's multichain balance is increased
+        _transferResidualFee(wnt, residualFeeReceiver, residualFee, account, 0); // TODO: solve chainId
+
         return residualFee;
     }
 
@@ -318,7 +322,20 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         router.pluginTransfer(token, account, receiver, amount);
     }
 
-    function _getDomainSeparator(uint256 sourceChainId) internal view returns (bytes32) {
+    // for multichain actions, residualFeeReceiver should be the MultichainVault contract
+    function _transferResidualFee(address wnt, address residualFeeReceiver, uint256 residualFee, address account, uint256 chainId) internal virtual {
+        // account and chainId not used here, but necessary when overriding _transferResidualFee in MultichainRouter
+        TokenUtils.transfer(dataStore, wnt, residualFeeReceiver, residualFee);
+
+        // TODO: confirm order actions (e.g. createOrder, updateOrder, cancelOrder) will have a chainId, otherwise how would we increase user's multichain balance with the residualFee?
+        // if orders have the chainId, then increasing user's multchain balance could be done here instead of overriding this method in MultichainRouter
+        // e.g.
+        // if (chainId != 0) {
+        //     MultichainUtils.increaseBalance(dataStore, chainId, account, wnt, residualFee);
+        // }
+    }
+
+    function _getDomainSeparator(uint256 sourceChainId) internal view returns (bytes32) { // TODO: why is this named sourceChainId if it's the block.chainid? It makes you think it refers to a source chain e.g. Base
         return
             keccak256(
                 abi.encode(
