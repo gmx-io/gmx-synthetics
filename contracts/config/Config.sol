@@ -437,6 +437,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.MIN_AFFILIATE_REWARD_FACTOR] = true;
 
         allowedBaseKeys[Keys.SUBACCOUNT_FEATURE_DISABLED] = true;
+        allowedBaseKeys[Keys.GASLESS_FEATURE_DISABLED] = true;
 
         allowedBaseKeys[Keys.MIN_ORACLE_BLOCK_CONFIRMATIONS] = true;
         allowedBaseKeys[Keys.MAX_ORACLE_PRICE_AGE] = true;

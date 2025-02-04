@@ -271,15 +271,17 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
                 revert Errors.InvalidPermitSpender(permit.spender, _router);
             }
 
-            IERC20Permit(permit.token).permit(
-                permit.owner,
-                permit.spender,
-                permit.value,
-                permit.deadline,
-                permit.v,
-                permit.r,
-                permit.s
-            );
+            try
+                IERC20Permit(permit.token).permit(
+                    permit.owner,
+                    permit.spender,
+                    permit.value,
+                    permit.deadline,
+                    permit.v,
+                    permit.r,
+                    permit.s
+                )
+            {} catch (bytes memory) {}
         }
     }
 

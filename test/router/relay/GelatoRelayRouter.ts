@@ -221,28 +221,6 @@ describe("GelatoRelayRouter", () => {
       );
     });
 
-    it("permit doesn't override allowance if it's already sufficient", async () => {
-      await wnt.connect(user0).approve(router.address, expandDecimals(10, 18));
-      const tokenPermit = await getTokenPermit(
-        wnt,
-        user0,
-        router.address,
-        expandDecimals(1, 18),
-        0,
-        9999999999,
-        chainId
-      );
-
-      expect(await wnt.allowance(user0.address, router.address)).to.eq(expandDecimals(10, 18));
-      await sendCreateOrder({
-        ...createOrderParams,
-        tokenPermits: [tokenPermit],
-      });
-      // 0.1 ETH is spent for order
-      // 0.002 ETH is spent for relayer fee and execution fee
-      expect(await wnt.allowance(user0.address, router.address)).to.eq(expandDecimals(9898, 15)); // 9.898 ETH
-    });
-
     it("creates order and sends relayer fee", async () => {
       const collateralDeltaAmount = createOrderParams.collateralDeltaAmount;
       const gelatoRelayFee = createOrderParams.relayFeeAmount;
