@@ -10,7 +10,7 @@ import "../data/Keys.sol";
  */
 library MultichainUtils {
     function increaseBalance(DataStore dataStore, uint256 chainId, address account, address token, uint256 amount) internal {
-        dataStore.decrementUint(Keys.multichainBalanceKey(chainId, account, token), amount);
+        dataStore.incrementUint(Keys.multichainBalanceKey(chainId, account, token), amount);
     }
 
     function decreaseBalance(DataStore dataStore, uint256 chainId, address account, address token, uint256 amount) internal {
