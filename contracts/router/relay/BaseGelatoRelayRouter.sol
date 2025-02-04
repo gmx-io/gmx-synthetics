@@ -310,7 +310,9 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         _transferRelayFee();
 
         uint256 residualFee = outputAmount - requiredRelayFee;
-        // for orders the residual fee is sent to the order vault
+        // for create orders the residual fee is sent to the order vault
+        // for update orders the residual fee could be sent to the order vault if order's execution fee should be increased
+        // otherwise the residual fee is sent back to the user
         // for other actions the residual fee is sent back to the user
         TokenUtils.transfer(contracts.dataStore, wnt, residualFeeReceiver, residualFee);
         return residualFee;
