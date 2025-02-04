@@ -423,11 +423,6 @@ library Errors {
     // Reader errors
     error EmptyMarketPrice(address market);
 
-    enum SignatureType {
-        Call,
-        SubaccountApproval
-    }
-
     // Gelato relay errors
     error InvalidSignature(string signatureType);
     // User sent incorrect fee token or incorrect swap path
