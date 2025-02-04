@@ -109,6 +109,7 @@ library GasUtils {
     // @param oraclePriceCount number of oracle prices
     // @param keeper the keeper to pay
     // @param refundReceiver the account that should receive any excess gas refunds
+    // @param isSubaccount whether the order is a subaccount order
     function payExecutionFee(
         DataStore dataStore,
         EventEmitter eventEmitter,
