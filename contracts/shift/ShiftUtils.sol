@@ -263,7 +263,7 @@ library ShiftUtils {
                 shift.updatedAtTime(),
                 0, // executionFee
                 0, // callbackGasLimit
-                0 // chainId // TODO: change to shift.chainId
+                shift.chainId()
             ),
             Deposit.Flags(
                 false // shouldUnwrapNativeToken
