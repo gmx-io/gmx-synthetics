@@ -171,6 +171,8 @@ library Keys {
     bytes32 public constant CLAIM_UI_FEES_FEATURE_DISABLED = keccak256(abi.encode("CLAIM_UI_FEES_FEATURE_DISABLED"));
     // @dev key for whether the subaccount feature is disabled
     bytes32 public constant SUBACCOUNT_FEATURE_DISABLED = keccak256(abi.encode("SUBACCOUNT_FEATURE_DISABLED"));
+    // @dev key for whether the gasless feature is disabled
+    bytes32 public constant GASLESS_FEATURE_DISABLED = keccak256(abi.encode("GASLESS_FEATURE_DISABLED"));
 
     // @dev key for the minimum required oracle signers for an oracle observation
     bytes32 public constant MIN_ORACLE_SIGNERS = keccak256(abi.encode("MIN_ORACLE_SIGNERS"));
@@ -902,6 +904,15 @@ library Keys {
     function subaccountFeatureDisabledKey(address module) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             SUBACCOUNT_FEATURE_DISABLED,
+            module
+        ));
+    }
+
+    // @dev key for whether subaccounts are disabled
+    // @param the gasless module
+    function gaslessFeatureDisabledKey(address module) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            GASLESS_FEATURE_DISABLED,
             module
         ));
     }

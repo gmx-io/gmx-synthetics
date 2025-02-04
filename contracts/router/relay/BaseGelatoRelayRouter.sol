@@ -6,6 +6,7 @@ import {GelatoRelayContext} from "@gelatonetwork/relay-context/contracts/GelatoR
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
+import "../../feature/FeatureUtils.sol";
 import "../../data/DataStore.sol";
 import "../../event/EventEmitter.sol";
 import "../../exchange/IOrderHandler.sol";
@@ -365,5 +366,9 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
                     relayParams.deadline
                 )
             );
+    }
+
+    function _validateGaslessFeature() internal view {
+        FeatureUtils.validateFeature(dataStore, Keys.gaslessFeatureDisabledKey(address(this)));
     }
 }

@@ -90,6 +90,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         onlyGelatoRelay
         returns (bytes32)
     {
+        _validateGaslessFeature();
         bytes32 structHash = _getCreateOrderStructHash(
             relayParams,
             subaccountApproval,
@@ -120,6 +121,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         UpdateOrderParams calldata params,
         bool increaseExecutionFee
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelay {
+        _validateGaslessFeature();
         bytes32 structHash = _getUpdateOrderStructHash(relayParams, subaccountApproval, account, key, params);
         _validateCall(relayParams, subaccount, structHash);
         _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, subaccountApproval);
@@ -133,6 +135,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         address subaccount,
         bytes32 key
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelay {
+        _validateGaslessFeature();
         bytes32 structHash = _getCancelOrderStructHash(relayParams, subaccountApproval, account, key);
         _validateCall(relayParams, subaccount, structHash);
         _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, subaccountApproval);
@@ -144,6 +147,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         address account,
         address subaccount
     ) external payable nonReentrant {
+        _validateGaslessFeature();
         bytes32 structHash = _getRemoveSubaccountStructHash(relayParams, subaccount);
         _validateCall(relayParams, account, structHash);
 

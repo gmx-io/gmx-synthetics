@@ -67,6 +67,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         onlyGelatoRelay
         returns (bytes32)
     {
+        _validateGaslessFeature();
         bytes32 structHash = _getCreateOrderStructHash(relayParams, collateralDeltaAmount, params);
         _validateCall(relayParams, account, structHash);
 
@@ -80,6 +81,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         UpdateOrderParams calldata params,
         bool increaseExecutionFee
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelay {
+        _validateGaslessFeature();
         bytes32 structHash = _getUpdateOrderStructHash(relayParams, key, params);
         _validateCall(relayParams, account, structHash);
 
@@ -91,6 +93,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         address account,
         bytes32 key
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelay {
+        _validateGaslessFeature();
         bytes32 structHash = _getCancelOrderStructHash(relayParams, key);
         _validateCall(relayParams, account, structHash);
 
