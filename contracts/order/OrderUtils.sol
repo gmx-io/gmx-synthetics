@@ -45,6 +45,12 @@ library OrderUtils {
         bytes reasonBytes;
     }
 
+    struct CreateOrderCache {
+        uint256 initialCollateralDeltaAmount;
+        address wnt;
+        bool shouldRecordSeparateExecutionFeeTransfer;
+    }
+
     // @dev creates an order in the order store
     // @param dataStore DataStore
     // @param eventEmitter EventEmitter
@@ -57,17 +63,17 @@ library OrderUtils {
         OrderVault orderVault,
         IReferralStorage referralStorage,
         address account,
-        IBaseOrderUtils.CreateOrderParams memory params
+        IBaseOrderUtils.CreateOrderParams memory params,
+        bool isSubaccount
     ) external returns (bytes32) {
         AccountUtils.validateAccount(account);
 
         ReferralUtils.setTraderReferralCode(referralStorage, account, params.referralCode);
 
-        uint256 initialCollateralDeltaAmount;
-
-        address wnt = TokenUtils.wnt(dataStore);
-
-        bool shouldRecordSeparateExecutionFeeTransfer = true;
+        CreateOrderCache memory cache;
+        cache.initialCollateralDeltaAmount;
+        cache.wnt = TokenUtils.wnt(dataStore);
+        cache.shouldRecordSeparateExecutionFeeTransfer = true;
 
         if (
             params.orderType == Order.OrderType.MarketSwap ||
@@ -78,13 +84,13 @@ library OrderUtils {
         ) {
             // for swaps and increase orders, the initialCollateralDeltaAmount is set based on the amount of tokens
             // transferred to the orderVault
-            initialCollateralDeltaAmount = orderVault.recordTransferIn(params.addresses.initialCollateralToken);
-            if (params.addresses.initialCollateralToken == wnt) {
-                if (initialCollateralDeltaAmount < params.numbers.executionFee) {
-                    revert Errors.InsufficientWntAmountForExecutionFee(initialCollateralDeltaAmount, params.numbers.executionFee);
+            cache.initialCollateralDeltaAmount = orderVault.recordTransferIn(params.addresses.initialCollateralToken);
+            if (params.addresses.initialCollateralToken == cache.wnt) {
+                if (cache.initialCollateralDeltaAmount < params.numbers.executionFee) {
+                    revert Errors.InsufficientWntAmountForExecutionFee(cache.initialCollateralDeltaAmount, params.numbers.executionFee);
                 }
-                initialCollateralDeltaAmount -= params.numbers.executionFee;
-                shouldRecordSeparateExecutionFeeTransfer = false;
+                cache.initialCollateralDeltaAmount -= params.numbers.executionFee;
+                cache.shouldRecordSeparateExecutionFeeTransfer = false;
             }
         } else if (
             params.orderType == Order.OrderType.MarketDecrease ||
@@ -92,13 +98,13 @@ library OrderUtils {
             params.orderType == Order.OrderType.StopLossDecrease
         ) {
             // for decrease orders, the initialCollateralDeltaAmount is based on the passed in value
-            initialCollateralDeltaAmount = params.numbers.initialCollateralDeltaAmount;
+            cache.initialCollateralDeltaAmount = params.numbers.initialCollateralDeltaAmount;
         } else {
             revert Errors.OrderTypeCannotBeCreated(uint256(params.orderType));
         }
 
-        if (shouldRecordSeparateExecutionFeeTransfer) {
-            uint256 wntAmount = orderVault.recordTransferIn(wnt);
+        if (cache.shouldRecordSeparateExecutionFeeTransfer) {
+            uint256 wntAmount = orderVault.recordTransferIn(cache.wnt);
             if (wntAmount < params.numbers.executionFee) {
                 revert Errors.InsufficientWntAmountForExecutionFee(wntAmount, params.numbers.executionFee);
             }
@@ -130,7 +136,7 @@ library OrderUtils {
         order.setOrderType(params.orderType);
         order.setDecreasePositionSwapType(params.decreasePositionSwapType);
         order.setSizeDeltaUsd(params.numbers.sizeDeltaUsd);
-        order.setInitialCollateralDeltaAmount(initialCollateralDeltaAmount);
+        order.setInitialCollateralDeltaAmount(cache.initialCollateralDeltaAmount);
         order.setTriggerPrice(params.numbers.triggerPrice);
         order.setAcceptablePrice(params.numbers.acceptablePrice);
         order.setExecutionFee(params.numbers.executionFee);
@@ -140,6 +146,7 @@ library OrderUtils {
         order.setIsLong(params.isLong);
         order.setShouldUnwrapNativeToken(params.shouldUnwrapNativeToken);
         order.setAutoCancel(params.autoCancel);
+        order.setIsSubaccount(isSubaccount);
 
         AccountUtils.validateReceiver(order.receiver());
         if (order.cancellationReceiver() == address(orderVault)) {
@@ -237,7 +244,8 @@ library OrderUtils {
             params.startingGas,
             GasUtils.estimateOrderOraclePriceCount(order.swapPath().length),
             params.keeper,
-            executionFeeReceiver
+            executionFeeReceiver,
+            order.isSubaccount()
         );
     }
 
@@ -294,7 +302,8 @@ library OrderUtils {
             startingGas,
             GasUtils.estimateOrderOraclePriceCount(order.swapPath().length),
             keeper,
-            order.receiver()
+            order.receiver(),
+            order.isSubaccount()
         );
     }
 

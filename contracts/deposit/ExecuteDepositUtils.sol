@@ -289,7 +289,8 @@ library ExecuteDepositUtils {
             params.startingGas,
             GasUtils.estimateDepositOraclePriceCount(deposit.longTokenSwapPath().length + deposit.shortTokenSwapPath().length),
             params.keeper,
-            deposit.receiver()
+            deposit.receiver(),
+            false
         );
 
         return cache.receivedMarketTokens;

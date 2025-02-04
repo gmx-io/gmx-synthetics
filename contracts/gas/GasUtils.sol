@@ -97,6 +97,7 @@ library GasUtils {
     struct PayExecutionFeeCache {
         uint256 refundFeeAmount;
         bool refundWasSent;
+        uint256 gasUsed;
     }
 
     // @dev pay the keeper the execution fee and refund any excess amount
@@ -118,18 +119,20 @@ library GasUtils {
         uint256 startingGas,
         uint256 oraclePriceCount,
         address keeper,
-        address refundReceiver
+        address refundReceiver,
+        bool isSubaccount
     ) external {
         if (executionFee == 0) {
             return;
         }
 
+        PayExecutionFeeCache memory cache;
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
         startingGas -= gasleft() / 63;
-        uint256 gasUsed = startingGas - gasleft();
+        cache.gasUsed = startingGas - gasleft();
 
         // each external call forwards 63/64 of the remaining gas
-        uint256 executionFeeForKeeper = adjustGasUsage(dataStore, gasUsed, oraclePriceCount) * tx.gasprice;
+        uint256 executionFeeForKeeper = adjustGasUsage(dataStore, cache.gasUsed, oraclePriceCount) * tx.gasprice;
 
         if (executionFeeForKeeper > executionFee) {
             executionFeeForKeeper = executionFee;
@@ -141,8 +144,6 @@ library GasUtils {
         );
 
         emitKeeperExecutionFee(eventEmitter, keeper, executionFeeForKeeper);
-
-        PayExecutionFeeCache memory cache;
 
         cache.refundFeeAmount = executionFee - executionFeeForKeeper;
         if (cache.refundFeeAmount == 0) {
@@ -160,7 +161,11 @@ library GasUtils {
 
         EventUtils.EventLogData memory eventData;
 
-        cache.refundWasSent = CallbackUtils.refundExecutionFee(dataStore, key, callbackContract, cache.refundFeeAmount, eventData);
+        if (!isSubaccount) {
+            // for subaccount orders residual execution fee should not be sent to the callback contract
+            // otherwise the malicious subaccount could drain the account's funds by creating orders with high execution fee
+            cache.refundWasSent = CallbackUtils.refundExecutionFee(dataStore, key, callbackContract, cache.refundFeeAmount, eventData);
+        }
 
         if (cache.refundWasSent) {
             emitExecutionFeeRefundCallback(eventEmitter, callbackContract, cache.refundFeeAmount);

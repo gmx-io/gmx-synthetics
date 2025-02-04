@@ -293,6 +293,7 @@ describe("GelatoRelayRouter", () => {
       expect(order.flags.isLong).eq(true);
       expect(order.flags.shouldUnwrapNativeToken).eq(true);
       expect(order.flags.isFrozen).eq(false);
+      expect(order.flags.isSubaccount).eq(false);
 
       await stopImpersonatingAccount(GELATO_RELAY_ADDRESS);
 
@@ -469,7 +470,7 @@ describe("GelatoRelayRouter", () => {
       expect(order.flags.autoCancel).eq(true);
     });
 
-    it.only("increases execution fee", async () => {
+    it("increases execution fee", async () => {
       await wnt.connect(user0).approve(router.address, expandDecimals(1, 18));
       await sendCreateOrder(createOrderParams);
       const orderKeys = await getOrderKeys(dataStore, 0, 1);

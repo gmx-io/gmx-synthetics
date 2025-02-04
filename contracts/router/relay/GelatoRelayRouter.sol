@@ -70,7 +70,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         bytes32 structHash = _getCreateOrderStructHash(relayParams, collateralDeltaAmount, params);
         _validateCall(relayParams, account, structHash);
 
-        return _createOrder(relayParams, account, collateralDeltaAmount, params);
+        return _createOrder(relayParams, account, collateralDeltaAmount, params, false);
     }
 
     function updateOrder(

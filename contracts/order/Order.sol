@@ -120,11 +120,14 @@ library Order {
     // @param shouldUnwrapNativeToken whether to unwrap native tokens before
     // transferring to the user
     // @param isFrozen whether the order is frozen
+    // @param autoCancel whether the order should be auto-cancelled
+    // @param isSubaccount whether the order was created by a subaccount order
     struct Flags {
         bool isLong;
         bool shouldUnwrapNativeToken;
         bool isFrozen;
         bool autoCancel;
+        bool isSubaccount;
     }
 
     // @dev the order account
@@ -424,6 +427,14 @@ library Order {
 
     function setAutoCancel(Props memory props, bool value) internal pure {
         props.flags.autoCancel = value;
+    }
+
+    function isSubaccount(Props memory props) internal pure returns (bool) {
+        return props.flags.isSubaccount;
+    }
+
+    function setIsSubaccount(Props memory props, bool value) internal pure {
+        props.flags.isSubaccount = value;
     }
 
     // @param props Props

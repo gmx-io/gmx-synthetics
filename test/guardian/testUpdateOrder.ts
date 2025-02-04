@@ -45,7 +45,7 @@ describe("Guardian.UpdateOrder", () => {
       )
     )
       .to.be.revertedWithCustomError(exchangeRouter, "Unauthorized")
-      .withArgs(user0.address, "account for updateOrder");
+      .withArgs(user0.address, "account updateOrder");
 
     const order = await reader.getOrder(dataStore.address, orderKeys[0]);
 
@@ -83,7 +83,7 @@ describe("Guardian.UpdateOrder", () => {
       )
     )
       .to.be.revertedWithCustomError(exchangeRouter, "Unauthorized")
-      .withArgs(user0.address, "account for updateOrder");
+      .withArgs(user0.address, "account updateOrder");
 
     const order = await reader.getOrder(dataStore.address, orderKeys[0]);
 
@@ -121,7 +121,7 @@ describe("Guardian.UpdateOrder", () => {
       )
     )
       .to.be.revertedWithCustomError(exchangeRouter, "Unauthorized")
-      .withArgs(user0.address, "account for updateOrder");
+      .withArgs(user0.address, "account updateOrder");
 
     const order = await reader.getOrder(dataStore.address, orderKeys[0]);
 
@@ -159,7 +159,7 @@ describe("Guardian.UpdateOrder", () => {
       )
     )
       .to.be.revertedWithCustomError(exchangeRouter, "Unauthorized")
-      .withArgs(user0.address, "account for updateOrder");
+      .withArgs(user0.address, "account updateOrder");
 
     const order = await reader.getOrder(dataStore.address, orderKeys[0]);
 
@@ -197,7 +197,7 @@ describe("Guardian.UpdateOrder", () => {
       )
     )
       .to.be.revertedWithCustomError(exchangeRouter, "Unauthorized")
-      .withArgs(user0.address, "account for updateOrder");
+      .withArgs(user0.address, "account updateOrder");
 
     const order = await reader.getOrder(dataStore.address, orderKeys[0]);
 
@@ -235,7 +235,7 @@ describe("Guardian.UpdateOrder", () => {
       )
     )
       .to.be.revertedWithCustomError(exchangeRouter, "Unauthorized")
-      .withArgs(user0.address, "account for updateOrder");
+      .withArgs(user0.address, "account updateOrder");
 
     const order = await reader.getOrder(dataStore.address, orderKeys[0]);
 

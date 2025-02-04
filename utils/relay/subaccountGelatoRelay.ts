@@ -202,6 +202,7 @@ export async function sendUpdateOrder(p: {
   signature?: string;
   relayFeeToken: string;
   relayFeeAmount: BigNumberish;
+  increaseExecutionFee: boolean;
 }) {
   const relayParams = await getRelayParams(p);
 
@@ -231,6 +232,7 @@ export async function sendUpdateOrder(p: {
     p.subaccount,
     p.key,
     p.params,
+    Boolean(p.increaseExecutionFee),
   ]);
   const calldata = ethers.utils.solidityPack(
     ["bytes", "address", "address", "uint256"],

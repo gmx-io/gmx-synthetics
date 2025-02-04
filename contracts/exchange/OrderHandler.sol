@@ -38,7 +38,8 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
     // @param params BaseOrderUtils.CreateOrderParams
     function createOrder(
         address account,
-        IBaseOrderUtils.CreateOrderParams calldata params
+        IBaseOrderUtils.CreateOrderParams calldata params,
+        bool isSubaccount
     ) external override globalNonReentrant onlyController returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createOrderFeatureDisabledKey(address(this), uint256(params.orderType)));
 
@@ -48,7 +49,8 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
             orderVault,
             referralStorage,
             account,
-            params
+            params,
+            isSubaccount
         );
     }
 
