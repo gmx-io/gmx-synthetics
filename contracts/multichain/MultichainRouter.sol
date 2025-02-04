@@ -18,6 +18,13 @@ contract MultichainRouter is GelatoRelayRouter {
         DepositUtils.CreateDepositParams createDepositParams;
     }
 
+    // TODO: change struct
+    // struct MultichainCreateDepositParams {
+    //     uint256 chainId;
+    //     uint256 longTokenAmount;
+    //     uint256 shortTokenAmount;
+    // }
+
     bytes32 public constant CREATE_DEPOSIT_TYPEHASH =
         keccak256(
             bytes(
@@ -101,23 +108,47 @@ contract MultichainRouter is GelatoRelayRouter {
             params.shortTokenAmount
         );
 
-        // pay relay fee tokens from MultichainVault to DepositVault and decrement user's multichain balance
+        // On create step: can deduct relay fee fully or partially depending on user’s MultichainVault balance, save any excess pending relay fees and validate that the user has sufficient position collateral to pay for the remaining relay fee
+        // On execute step: Deduct pending relay fees from user’s position collateral
+        // TODO: confirm partial fee deduction logic
+
+        // pay relay fee tokens from MultichainVault to DepositVault and decrease user's multichain balance
         params.createDepositParams.executionFee = _handleRelay(
             contracts,
             tokenPermits,
-            fee,
+            fee, // feeAmount is relayFee + executionFee
             account,
             NonceUtils.getKey(contracts.dataStore, NonceUtils.getCurrentNonce(dataStore) + 1), // calculate next key without incrementing
+            // if initialLongTokenAmount or initialShortTokenAmount is wnt then executionFee will be subracted (in DepositUtils.createDeposit) from one of them
+            // otherwise executionFee amount of wnt must be sent to DepositVault => it means the residualFeeReceiver should be the DepositVault
             address(depositVault) // residualFeeReceiver
         );
+
+        // TODO: revisit this logic and think if a different approach is better
+        address wnt = TokenUtils.wnt(contracts.dataStore);
+        if (params.createDepositParams.initialLongToken == wnt || params.createDepositParams.initialShortToken == wnt) {
+            // executionFee will be paid from long or short token
+            // but _handleRelay has also transferred the executionFee to depositVault
+            // send back executionFee to MultichainVault and increase user's multichain balance
+            MultichainUtils.increaseBalance(dataStore, params.createDepositParams.chainId, account, wnt, params.createDepositParams.executionFee);
+            multichainVaultHandler.pluginTransfer(wnt, address(depositVault), address(multichainVault), params.createDepositParams.executionFee);
+        }
 
         return depositHandler.createDeposit(account, params.createDepositParams);
     }
 
     function _sendTokens(uint256 chainId, address account, address token, address receiver, uint256 amount) internal { // TODO: confirm _sendTokens override and make BaseGelatoRelayRouter._sendTokens virtual
         AccountUtils.validateReceiver(receiver);
-        multichainVaultHandler.pluginTransfer(chainId, token, account, receiver, amount);
+        MultichainUtils.decreaseBalance(dataStore, chainId, account, token, amount);
+        multichainVaultHandler.pluginTransfer(token, address(multichainVault), receiver, amount);
     }
+
+    // function _transferResidualFee(address wnt, address residualFeeReceiver, uint256 residualFee, address account, uint256 chainId) internal override {
+    //     TokenUtils.transfer(dataStore, wnt, residualFeeReceiver, residualFee);
+    //     if (chainId != 0) {
+    //         MultichainUtils.increaseBalance(dataStore, chainId, account, wnt, residualFee);
+    //     }
+    // }
 
     function _getGaslessCreateDepositStructHash(
         RelayParams calldata relayParams,
