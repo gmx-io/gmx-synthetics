@@ -79,6 +79,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     function createOrder(
         RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
+        uint256 chainId,
         address account, // main account
         address subaccount,
         uint256 collateralDeltaAmount,
@@ -108,12 +109,13 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             revert Errors.InvalidCancellationReceiverForSubaccountOrder(params.addresses.cancellationReceiver, account);
         }
 
-        return _createOrder(relayParams, account, collateralDeltaAmount, params);
+        return _createOrder(relayParams, chainId, account, collateralDeltaAmount, params);
     }
 
     function updateOrder(
         RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
+        uint256 chainId,
         address account, // main account
         address subaccount,
         bytes32 key,
@@ -122,12 +124,13 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         bytes32 structHash = _getUpdateOrderStructHash(relayParams, subaccountApproval, account, key, params);
         _validateCall(relayParams, subaccount, structHash);
         _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, subaccountApproval);
-        _updateOrder(relayParams, account, key, params);
+        _updateOrder(relayParams, chainId, account, key, params);
     }
 
     function cancelOrder(
         RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
+        uint256 chainId,
         address account, // main account
         address subaccount,
         bytes32 key
@@ -135,7 +138,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         bytes32 structHash = _getCancelOrderStructHash(relayParams, subaccountApproval, account, key);
         _validateCall(relayParams, subaccount, structHash);
         _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, subaccountApproval);
-        _cancelOrder(relayParams, account, key);
+        _cancelOrder(relayParams, chainId, account, key);
     }
 
     function removeSubaccount(

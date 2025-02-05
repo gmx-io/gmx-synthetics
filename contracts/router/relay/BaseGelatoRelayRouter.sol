@@ -105,6 +105,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
     function _updateOrder(
         RelayParams calldata relayParams,
+        uint256 chainId,
         address account,
         bytes32 key,
         UpdateOrderParams calldata params
@@ -125,7 +126,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             revert Errors.Unauthorized(account, "account for updateOrder");
         }
 
-        _handleRelay(contracts, relayParams.tokenPermits, relayParams.fee, account, key, account);
+        _handleRelay(contracts, relayParams.tokenPermits, relayParams.fee, chainId, account, key, account);
 
         orderHandler.updateOrder(
             key,
@@ -139,7 +140,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         );
     }
 
-    function _cancelOrder(RelayParams calldata relayParams, address account, bytes32 key) internal {
+    function _cancelOrder(RelayParams calldata relayParams, uint256 chainId, address account, bytes32 key) internal {
         Contracts memory contracts = Contracts({
             dataStore: dataStore,
             eventEmitter: eventEmitter,
@@ -155,13 +156,14 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             revert Errors.Unauthorized(account, "account for cancelOrder");
         }
 
-        _handleRelay(contracts, relayParams.tokenPermits, relayParams.fee, account, key, account);
+        _handleRelay(contracts, relayParams.tokenPermits, relayParams.fee, chainId, account, key, account);
 
         orderHandler.cancelOrder(key);
     }
 
     function _createOrder(
         RelayParams calldata relayParams,
+        uint256 chainId,
         address account,
         uint256 collateralDeltaAmount,
         IBaseOrderUtils.CreateOrderParams memory params // can't use calldata because need to modify params.numbers.executionFee
@@ -176,6 +178,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             contracts,
             relayParams.tokenPermits,
             relayParams.fee,
+            chainId,
             account,
             NonceUtils.getNextKey(contracts.dataStore), // order key
             address(contracts.orderVault)
@@ -189,6 +192,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             params.orderType == Order.OrderType.StopIncrease
         ) {
             _sendTokens(
+                chainId,
                 account,
                 params.addresses.initialCollateralToken,
                 address(contracts.orderVault),
@@ -241,12 +245,13 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         Contracts memory contracts,
         TokenPermit[] calldata tokenPermits,
         RelayFeeParams calldata fee,
+        uint256 chainId,
         address account,
         bytes32 orderKey,
         address residualFeeReceiver
     ) internal returns (uint256) {
         _handleTokenPermits(tokenPermits);
-        return _handleRelayFee(contracts, fee, account, orderKey, residualFeeReceiver);
+        return _handleRelayFee(contracts, fee, chainId, account, orderKey, residualFeeReceiver);
     }
 
     function _handleTokenPermits(TokenPermit[] calldata tokenPermits) internal {
@@ -286,6 +291,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     function _handleRelayFee(
         Contracts memory contracts,
         RelayFeeParams calldata fee,
+        uint256 chainId,
         address account,
         bytes32 orderKey,
         address residualFeeReceiver
@@ -296,7 +302,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             revert Errors.UnsupportedRelayFeeToken(_getFeeToken(), wnt);
         }
 
-        _sendTokens(account, fee.feeToken, address(contracts.orderVault), fee.feeAmount);
+        _sendTokens(chainId, account, fee.feeToken, address(contracts.orderVault), fee.feeAmount);
         uint256 outputAmount = _swapFeeTokens(contracts, wnt, fee, orderKey);
 
         uint256 requiredRelayFee = _getFee();
@@ -311,28 +317,20 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         uint256 residualFee = outputAmount - requiredRelayFee;
         // for orders the residual fee is sent to the order vault
         // for other actions the residual fee is sent back to the user
-        // for multichain actions, the residual fee is send back to MultichainVault and user's multichain balance is increased
-        _transferResidualFee(wnt, residualFeeReceiver, residualFee, account, 0); // TODO: solve chainId
+        _transferResidualFee(wnt, residualFeeReceiver, residualFee, chainId, account);
 
         return residualFee;
     }
 
-    function _sendTokens(address account, address token, address receiver, uint256 amount) internal {
+    function _sendTokens(uint256 /*chainId*/, address account, address token, address receiver, uint256 amount) internal virtual {
         AccountUtils.validateReceiver(receiver);
         router.pluginTransfer(token, account, receiver, amount);
     }
 
-    // for multichain actions, residualFeeReceiver should be the MultichainVault contract
-    function _transferResidualFee(address wnt, address residualFeeReceiver, uint256 residualFee, address account, uint256 chainId) internal virtual {
+    // for multichain actions, the residual fee is send back to MultichainVault and user's multichain balance is increased
+    function _transferResidualFee(address wnt, address residualFeeReceiver, uint256 residualFee, uint256 /*chainId*/, address /*account*/) internal virtual {
         // account and chainId not used here, but necessary when overriding _transferResidualFee in MultichainRouter
         TokenUtils.transfer(dataStore, wnt, residualFeeReceiver, residualFee);
-
-        // TODO: confirm order actions (e.g. createOrder, updateOrder, cancelOrder) will have a chainId, otherwise how would we increase user's multichain balance with the residualFee?
-        // if orders have the chainId, then increasing user's multchain balance could be done here instead of overriding this method in MultichainRouter
-        // e.g.
-        // if (chainId != 0) {
-        //     MultichainUtils.increaseBalance(dataStore, chainId, account, wnt, residualFee);
-        // }
     }
 
     function _getDomainSeparator(uint256 sourceChainId) internal view returns (bytes32) { // TODO: why is this named sourceChainId if it's the block.chainid? It makes you think it refers to a source chain e.g. Base

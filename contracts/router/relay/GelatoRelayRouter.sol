@@ -57,6 +57,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
 
     function createOrder(
         RelayParams calldata relayParams,
+        uint256 chainId, // TODO: should this be part of CreateOrderParams instead? means adding it to Order.Props as well.
         address account,
         uint256 collateralDeltaAmount,
         IBaseOrderUtils.CreateOrderParams memory params // can't use calldata because need to modify params.numbers.executionFee
@@ -70,11 +71,12 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         bytes32 structHash = _getCreateOrderStructHash(relayParams, collateralDeltaAmount, params);
         _validateCall(relayParams, account, structHash);
 
-        return _createOrder(relayParams, account, collateralDeltaAmount, params);
+        return _createOrder(relayParams, chainId, account, collateralDeltaAmount, params);
     }
 
     function updateOrder(
         RelayParams calldata relayParams,
+        uint256 chainId,
         address account,
         bytes32 key,
         UpdateOrderParams calldata params
@@ -82,18 +84,19 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         bytes32 structHash = _getUpdateOrderStructHash(relayParams, key, params);
         _validateCall(relayParams, account, structHash);
 
-        _updateOrder(relayParams, account, key, params);
+        _updateOrder(relayParams, chainId, account, key, params);
     }
 
     function cancelOrder(
         RelayParams calldata relayParams,
+        uint256 chainId,
         address account,
         bytes32 key
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelay {
         bytes32 structHash = _getCancelOrderStructHash(relayParams, key);
         _validateCall(relayParams, account, structHash);
 
-        _cancelOrder(relayParams, account, key);
+        _cancelOrder(relayParams, chainId, account, key);
     }
 
     function _getUpdateOrderStructHash(

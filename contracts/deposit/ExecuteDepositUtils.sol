@@ -13,7 +13,6 @@ import "../pricing/SwapPricingUtils.sol";
 import "../oracle/Oracle.sol";
 import "../position/PositionUtils.sol";
 
-import "../multichain/MultichainVault.sol";
 import "../multichain/MultichainUtils.sol";
 
 import "../gas/GasUtils.sol";
@@ -46,7 +45,6 @@ library ExecuteDepositUtils {
         DataStore dataStore;
         EventEmitter eventEmitter;
         DepositVault depositVault;
-        MultichainVault multichainVault;
         Oracle oracle;
         bytes32 key;
         address keeper;
@@ -54,6 +52,7 @@ library ExecuteDepositUtils {
         ISwapPricingUtils.SwapPricingType swapPricingType;
         bool includeVirtualInventoryImpact;
         uint256 chainId;
+        // address multichainVault;
     }
 
     // @dev _ExecuteDepositParams struct used in executeDeposit to avoid stack
@@ -512,13 +511,12 @@ library ExecuteDepositUtils {
             _params.tokenIn
         );
 
-        // TODO: added multichainVault address to ExecuteDepositParams, but think if there is a better way
         if (params.chainId == 0) {
             // mint GM tokens to receiver
             MarketToken(payable(_params.market.marketToken)).mint(_params.receiver, mintAmount);
         } else {
             // mint GM tokens to MultichainVault and increase account's multichain GM balance
-            MarketToken(payable(_params.market.marketToken)).mint(address(params.multichainVault), mintAmount);
+            // MarketToken(payable(_params.market.marketToken)).mint(params.multichainVault, mintAmount); // TODO: add multichainVault address to ExecuteDepositParams, or is there a better approach?
             MultichainUtils.increaseBalance(params.dataStore, params.chainId, _params.account, _params.market.marketToken, mintAmount);
         }
 
