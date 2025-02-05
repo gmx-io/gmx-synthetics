@@ -192,7 +192,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             params.orderType == Order.OrderType.StopIncrease
         ) {
             _sendTokens(
-                chainId,
                 account,
                 params.addresses.initialCollateralToken,
                 address(contracts.orderVault),
@@ -302,7 +301,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             revert Errors.UnsupportedRelayFeeToken(_getFeeToken(), wnt);
         }
 
-        _sendTokens(chainId, account, fee.feeToken, address(contracts.orderVault), fee.feeAmount);
+        _sendTokens(account, fee.feeToken, address(contracts.orderVault), fee.feeAmount);
         uint256 outputAmount = _swapFeeTokens(contracts, wnt, fee, orderKey);
 
         uint256 requiredRelayFee = _getFee();
@@ -322,7 +321,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         return residualFee;
     }
 
-    function _sendTokens(uint256 /*chainId*/, address account, address token, address receiver, uint256 amount) internal virtual {
+    function _sendTokens(address account, address token, address receiver, uint256 amount) internal virtual {
         AccountUtils.validateReceiver(receiver);
         router.pluginTransfer(token, account, receiver, amount);
     }

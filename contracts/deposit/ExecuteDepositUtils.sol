@@ -517,7 +517,7 @@ library ExecuteDepositUtils {
         } else {
             // mint GM tokens to MultichainVault and increase account's multichain GM balance
             // MarketToken(payable(_params.market.marketToken)).mint(params.multichainVault, mintAmount); // TODO: add multichainVault address to ExecuteDepositParams, or is there a better approach?
-            MultichainUtils.increaseBalance(params.dataStore, params.chainId, _params.account, _params.market.marketToken, mintAmount);
+            MultichainUtils.increaseBalance(params.dataStore, _params.account, _params.market.marketToken, mintAmount);
         }
 
         return mintAmount;

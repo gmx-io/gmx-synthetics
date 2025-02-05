@@ -95,14 +95,12 @@ contract MultichainRouter is GelatoRelayRouter {
 
         // transfer long & short tokens from MultichainVault to DepositVault and decrement user's multichain balance
         _sendTokens(
-            params.createDepositParams.chainId,
             params.createDepositParams.initialLongToken,
             account,
             address(depositVault), // receiver
             params.longTokenAmount
         );
         _sendTokens(
-            params.createDepositParams.chainId,
             params.createDepositParams.initialShortToken,
             account,
             address(depositVault), // receiver
@@ -134,16 +132,16 @@ contract MultichainRouter is GelatoRelayRouter {
         // the alternative would be to have MultichainVault as the residualFeeReceiver, but then if none of the initial tokens are wnt, DepositUtils.createDeposit expects the fee to have already been transferred to depositVault and reverts otherwise
         address wnt = TokenUtils.wnt(contracts.dataStore);
         if (params.createDepositParams.initialLongToken == wnt || params.createDepositParams.initialShortToken == wnt) {
-            MultichainUtils.increaseBalance(dataStore, params.createDepositParams.chainId, account, wnt, params.createDepositParams.executionFee);
+            MultichainUtils.increaseBalance(dataStore, account, wnt, params.createDepositParams.executionFee);
             multichainVaultHandler.pluginTransfer(wnt, address(depositVault), address(multichainVault), params.createDepositParams.executionFee);
         }
 
         return depositHandler.createDeposit(account, params.createDepositParams);
     }
 
-    function _sendTokens(uint256 chainId, address account, address token, address receiver, uint256 amount) internal override {
+    function _sendTokens(address account, address token, address receiver, uint256 amount) internal override {
         AccountUtils.validateReceiver(receiver);
-        MultichainUtils.decreaseBalance(dataStore, chainId, account, token, amount);
+        MultichainUtils.decreaseBalance(dataStore, account, token, amount);
         multichainVaultHandler.pluginTransfer(token, address(multichainVault), receiver, amount);
     }
 
@@ -153,7 +151,7 @@ contract MultichainRouter is GelatoRelayRouter {
             TokenUtils.transfer(dataStore, wnt, residualFeeReceiver, residualFee);
         } else {
             // sent residualFee to MultichainVault and increase user's multichain balance
-            TokenUtils.multichainTransfer(dataStore, wnt, address(multichainVault), residualFee, chainId, account);
+            TokenUtils.multichainTransfer(dataStore, wnt, address(multichainVault), residualFee, account);
         }
     }
 

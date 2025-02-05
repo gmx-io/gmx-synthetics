@@ -32,7 +32,7 @@ describe("LayerZeroProvider", () => {
 
     const lzUsdcBalance = await usdc.balanceOf(layerZeroProvider.address);
     const multichainVaultBalance = await usdc.balanceOf(multichainVault.address);
-    const userBalance = await dataStore.getUint(keys.multichainBalanceKey(multichainId, user0.address, usdc.address));
+    const userBalance = await dataStore.getUint(keys.multichainBalanceKey(user0.address, usdc.address));
 
     // usdc has been transterred from LayerZeroProvider to MultichainVault and recorded under the user's chainId + account
     expect(lzUsdcBalance).eq(0);

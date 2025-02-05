@@ -2121,14 +2121,12 @@ library Keys {
     }
 
     // @dev key for user's multichain balance
-    // @param chainId the chain id for the destination chain
     // @param account the account for which to retreive the user balance key
     // @param token the token for which to retreive the user balance key
     // @return key for multichain balance for a given user and token
-    function multichainBalanceKey(uint256 chainId, address account, address token) internal pure returns (bytes32) {
+    function multichainBalanceKey(address account, address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             MULTICHAIN_BALANCE,
-            chainId,
             account,
             token
         ));
