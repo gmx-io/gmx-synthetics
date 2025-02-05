@@ -10,7 +10,7 @@ import "../data/DataStore.sol";
 import "../data/Keys.sol";
 import "../error/ErrorUtils.sol";
 import "../utils/AccountUtils.sol";
-// import "../multichain/MultichainUtils.sol";
+import "../multichain/MultichainUtils.sol";
 
 import "./IWNT.sol";
 
@@ -96,22 +96,17 @@ library TokenUtils {
         revert Errors.TokenTransferError(token, receiver, amount);
     }
 
-    // function multichainTransfer(
-    //     DataStore dataStore,
-    //     address token,
-    //     address receiver,
-    //     uint256 amount,
-    //     uint256 chainId,
-    //     address multichainVault,
-    //     address account
-    // ) internal {
-    //     if (chainId == 0) {
-    //         transfer(dataStore, token, receiver, amount);
-    //     } else {
-    //         transfer(dataStore, token, multichainVault, amount);
-    //         MultichainUtils.increaseBalance(dataStore, chainId, account, token, amount);
-    //     }
-    // }
+    function multichainTransfer(
+        DataStore dataStore,
+        address token,
+        address receiver,
+        uint256 amount,
+        uint256 chainId,
+        address account
+    ) internal {
+        transfer(dataStore, token, receiver, amount);
+        MultichainUtils.decreaseBalance(dataStore, chainId, account, token, amount);
+    }
 
     function sendNativeToken(
         DataStore dataStore,
