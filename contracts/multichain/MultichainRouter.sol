@@ -18,7 +18,7 @@ contract MultichainRouter is GelatoRelayRouter {
         DepositUtils.CreateDepositParams createDepositParams;
     }
 
-    // TODO: change struct
+    // TODO: extract multichain part from GaslessCreateDepositParams struct
     // struct MultichainCreateDepositParams {
     //     uint256 chainId;
     //     uint256 longTokenAmount;
@@ -89,6 +89,7 @@ contract MultichainRouter is GelatoRelayRouter {
             eventEmitter: eventEmitter,
             // TODO: confirm Contracts struct can be modified --> replace `OrderVault orderVault;` field with `StrictBank vault;`
             // otherwise, should probably overridde _handleRelay
+            // A: yes, it can be modified
             orderVault: OrderVault(payable(depositVault))
         });
 
@@ -117,6 +118,7 @@ contract MultichainRouter is GelatoRelayRouter {
             contracts,
             tokenPermits,
             fee, // feeAmount is relayFee + executionFee
+            params.createDepositParams.chainId,
             account,
             NonceUtils.getKey(contracts.dataStore, NonceUtils.getCurrentNonce(dataStore) + 1), // calculate next key without incrementing
             // if initialLongTokenAmount or initialShortTokenAmount is wnt then executionFee will be subracted (in DepositUtils.createDeposit) from one of them
@@ -124,12 +126,14 @@ contract MultichainRouter is GelatoRelayRouter {
             address(depositVault) // residualFeeReceiver
         );
 
-        // TODO: revisit this logic and think if a different approach is better
+        // TODO: revisit and confirm this logic
+        // executionFee will be paid (in DepositUtils.createDeposit) from long or short token
+        // but _handleRelay has also transferred the executionFee to depositVault
+        // send back executionFee to MultichainVault and re-increase user's multichain balance by the executionFee amount
+        // by not doing this check, I think execution fee could get paid twice when initial long or short tokens are the wnt
+        // the alternative would be to have MultichainVault as the residualFeeReceiver, but then if none of the initial tokens are wnt, DepositUtils.createDeposit expects the fee to have already been transferred to depositVault and reverts otherwise
         address wnt = TokenUtils.wnt(contracts.dataStore);
         if (params.createDepositParams.initialLongToken == wnt || params.createDepositParams.initialShortToken == wnt) {
-            // executionFee will be paid from long or short token
-            // but _handleRelay has also transferred the executionFee to depositVault
-            // send back executionFee to MultichainVault and increase user's multichain balance
             MultichainUtils.increaseBalance(dataStore, params.createDepositParams.chainId, account, wnt, params.createDepositParams.executionFee);
             multichainVaultHandler.pluginTransfer(wnt, address(depositVault), address(multichainVault), params.createDepositParams.executionFee);
         }
@@ -137,18 +141,21 @@ contract MultichainRouter is GelatoRelayRouter {
         return depositHandler.createDeposit(account, params.createDepositParams);
     }
 
-    function _sendTokens(uint256 chainId, address account, address token, address receiver, uint256 amount) internal { // TODO: confirm _sendTokens override and make BaseGelatoRelayRouter._sendTokens virtual
+    function _sendTokens(uint256 chainId, address account, address token, address receiver, uint256 amount) internal override {
         AccountUtils.validateReceiver(receiver);
         MultichainUtils.decreaseBalance(dataStore, chainId, account, token, amount);
         multichainVaultHandler.pluginTransfer(token, address(multichainVault), receiver, amount);
     }
 
-    // function _transferResidualFee(address wnt, address residualFeeReceiver, uint256 residualFee, address account, uint256 chainId) internal override {
-    //     TokenUtils.transfer(dataStore, wnt, residualFeeReceiver, residualFee);
-    //     if (chainId != 0) {
-    //         MultichainUtils.increaseBalance(dataStore, chainId, account, wnt, residualFee);
-    //     }
-    // }
+    function _transferResidualFee(address wnt, address residualFeeReceiver, uint256 residualFee, uint256 chainId, address account) internal override {
+        if (chainId == 0) {
+            // sent residualFee to residualFeeReceiver
+            TokenUtils.transfer(dataStore, wnt, residualFeeReceiver, residualFee);
+        } else {
+            // sent residualFee to MultichainVault and increase user's multichain balance
+            TokenUtils.multichainTransfer(dataStore, wnt, address(multichainVault), residualFee, chainId, account);
+        }
+    }
 
     function _getGaslessCreateDepositStructHash(
         RelayParams calldata relayParams,
