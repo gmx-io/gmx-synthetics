@@ -60,7 +60,7 @@ contract MultichainVaultHandler is RoleModule, GlobalReentrancyGuard, OracleModu
             revert Errors.EmptyMultichainDepositAmount();
         }
 
-        dataStore.incrementUint(Keys.multichainBalanceKey(multichainId, account, token), amount);
+        dataStore.incrementUint(Keys.multichainBalanceKey(account, token), amount);
 
         MultichainEventUtils.emitMultichainDeposit(eventEmitter, token, account, amount, multichainId);
     }
@@ -99,7 +99,6 @@ contract MultichainVaultHandler is RoleModule, GlobalReentrancyGuard, OracleModu
      * @param account user address on the source chain
      * @param token address of the token being withdrawn
      * @param amount amount of token being withdrawn
-     * @param multichainId chain id of the destination chain
      */
     function recordWithdrawal(
         address account,
@@ -111,7 +110,7 @@ contract MultichainVaultHandler is RoleModule, GlobalReentrancyGuard, OracleModu
             revert Errors.EmptyMultichainWithdrawalAmount();
         }
 
-        bytes32 balanceKey = Keys.multichainBalanceKey(multichainId, account, token);
+        bytes32 balanceKey = Keys.multichainBalanceKey(account, token);
 
         uint256 balance = dataStore.getUint(balanceKey);
         if (balance < amount) {

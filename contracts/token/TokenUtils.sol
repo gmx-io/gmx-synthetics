@@ -101,11 +101,10 @@ library TokenUtils {
         address token,
         address receiver,
         uint256 amount,
-        uint256 chainId,
         address account
     ) internal {
         transfer(dataStore, token, receiver, amount);
-        MultichainUtils.decreaseBalance(dataStore, chainId, account, token, amount);
+        MultichainUtils.decreaseBalance(dataStore, account, token, amount);
     }
 
     function sendNativeToken(
