@@ -214,6 +214,8 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             return fee.feeAmount;
         }
 
+        MarketUtils.validateSwapPath(contracts.dataStore, fee.feeSwapPath);
+
         // swap fee tokens to WNT
         Market.Props[] memory swapPathMarkets = MarketUtils.getSwapPathMarkets(contracts.dataStore, fee.feeSwapPath);
 
