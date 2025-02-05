@@ -207,11 +207,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         address wnt,
         RelayFeeParams calldata fee
     ) internal returns (uint256) {
-        if (fee.feeToken == wnt) {
-            contracts.orderVault.transferOut(wnt, address(this), fee.feeAmount);
-            return fee.feeAmount;
-        }
-
         // swap fee tokens to WNT
         MarketUtils.validateSwapPath(contracts.dataStore, fee.feeSwapPath);
         Market.Props[] memory swapPathMarkets = MarketUtils.getSwapPathMarkets(
@@ -299,8 +294,14 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             revert Errors.UnsupportedRelayFeeToken(_getFeeToken(), wnt);
         }
 
-        _sendTokens(account, fee.feeToken, address(contracts.orderVault), fee.feeAmount);
-        uint256 outputAmount = _swapFeeTokens(contracts, wnt, fee);
+        uint256 outputAmount;
+        if (fee.feeToken == wnt) {
+            _sendTokens(account, fee.feeToken, address(this), fee.feeAmount);
+            outputAmount = fee.feeAmount;
+        } else {
+            _sendTokens(account, fee.feeToken, address(contracts.orderVault), fee.feeAmount);
+            outputAmount = _swapFeeTokens(contracts, wnt, fee);
+        }
 
         uint256 requiredRelayFee = _getFee();
         if (requiredRelayFee > outputAmount) {
