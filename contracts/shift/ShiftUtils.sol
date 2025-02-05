@@ -312,8 +312,7 @@ library ShiftUtils {
             params.startingGas,
             GasUtils.estimateShiftOraclePriceCount(),
             params.keeper,
-            shift.receiver(),
-            false
+            shift.receiver()
         );
 
         return cache.receivedMarketTokens;
@@ -372,8 +371,7 @@ library ShiftUtils {
             startingGas,
             GasUtils.estimateShiftOraclePriceCount(),
             keeper,
-            shift.receiver(),
-            false
+            shift.receiver()
         );
     }
 }

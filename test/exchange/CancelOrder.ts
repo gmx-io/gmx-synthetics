@@ -70,7 +70,7 @@ describe("Exchange.CancelOrder", () => {
 
     await expect(exchangeRouter.connect(user1).cancelOrder(orderKeys[0]))
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
-      .withArgs(user1.address, "account cancelOrder");
+      .withArgs(user1.address, "account for cancelOrder");
 
     expect(await getOrderCount(dataStore)).eq(1);
 

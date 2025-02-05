@@ -183,8 +183,7 @@ library AdlUtils {
             position.isLong(), // isLong
             true, // shouldUnwrapNativeToken
             false, // isFrozen
-            false, // autoCancel
-            false // isSubaccount
+            false // autoCancel
         );
 
         Order.Props memory order = Order.Props(

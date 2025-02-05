@@ -234,7 +234,7 @@ export async function sendUpdateOrder(p: {
     p.subaccount,
     p.key,
     p.params,
-    Boolean(p.increaseExecutionFee),
+    p.increaseExecutionFee,
   ]);
   const calldata = ethers.utils.solidityPack(
     ["bytes", "address", "address", "uint256"],
@@ -253,6 +253,7 @@ async function getUpdateOrderSignature({
   account,
   verifyingContract,
   params,
+  increaseExecutionFee,
   key,
   chainId,
 }) {
@@ -262,6 +263,7 @@ async function getUpdateOrderSignature({
       { name: "key", type: "bytes32" },
       { name: "params", type: "UpdateOrderParams" },
       { name: "relayParams", type: "bytes32" },
+      { name: "increaseExecutionFee", type: "bool" },
       { name: "subaccountApproval", type: "bytes32" },
     ],
     UpdateOrderParams: [
@@ -280,6 +282,7 @@ async function getUpdateOrderSignature({
     key,
     params,
     relayParams: hashRelayParams(relayParams),
+    increaseExecutionFee,
     subaccountApproval: hashSubaccountApproval(subaccountApproval),
   };
 

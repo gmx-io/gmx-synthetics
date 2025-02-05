@@ -163,8 +163,7 @@ library ExecuteWithdrawalUtils {
             params.startingGas,
             cache.oraclePriceCount,
             params.keeper,
-            withdrawal.receiver(),
-            false
+            withdrawal.receiver()
         );
 
         return cache.result;
