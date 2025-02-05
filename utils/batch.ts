@@ -1,4 +1,4 @@
-export async function handleInBatches(list, batchSize, handler) {
+export async function handleInBatches<T>(list: T[], batchSize: number, handler: (batch: T[]) => Promise<void>) {
   let batch = [];
   let batchIndex = 0;
 
