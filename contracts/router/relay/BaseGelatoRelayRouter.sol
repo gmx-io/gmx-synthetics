@@ -45,6 +45,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         uint256 userNonce;
         uint256 deadline;
         bytes signature;
+        uint256 srcChainId;
     }
 
     struct UpdateOrderParams {
@@ -105,7 +106,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
     function _updateOrder(
         RelayParams calldata relayParams,
-        uint256 chainId,
+        uint256 srcChainId,
         address account,
         bytes32 key,
         UpdateOrderParams calldata params
@@ -126,7 +127,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             revert Errors.Unauthorized(account, "account for updateOrder");
         }
 
-        _handleRelay(contracts, relayParams.tokenPermits, relayParams.fee, chainId, account, key, account);
+        _handleRelay(contracts, relayParams.tokenPermits, relayParams.fee, srcChainId, account, key, account);
 
         orderHandler.updateOrder(
             key,
@@ -140,7 +141,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         );
     }
 
-    function _cancelOrder(RelayParams calldata relayParams, uint256 chainId, address account, bytes32 key) internal {
+    function _cancelOrder(RelayParams calldata relayParams, uint256 srcChainId, address account, bytes32 key) internal {
         Contracts memory contracts = Contracts({
             dataStore: dataStore,
             eventEmitter: eventEmitter,
@@ -156,14 +157,14 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             revert Errors.Unauthorized(account, "account for cancelOrder");
         }
 
-        _handleRelay(contracts, relayParams.tokenPermits, relayParams.fee, chainId, account, key, account);
+        _handleRelay(contracts, relayParams.tokenPermits, relayParams.fee, srcChainId, account, key, account);
 
         orderHandler.cancelOrder(key);
     }
 
     function _createOrder(
         RelayParams calldata relayParams,
-        uint256 chainId,
+        uint256 srcChainId,
         address account,
         uint256 collateralDeltaAmount,
         IBaseOrderUtils.CreateOrderParams memory params // can't use calldata because need to modify params.numbers.executionFee
@@ -178,7 +179,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             contracts,
             relayParams.tokenPermits,
             relayParams.fee,
-            chainId,
+            srcChainId,
             account,
             NonceUtils.getNextKey(contracts.dataStore), // order key
             address(contracts.orderVault)
@@ -244,13 +245,13 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         Contracts memory contracts,
         TokenPermit[] calldata tokenPermits,
         RelayFeeParams calldata fee,
-        uint256 chainId,
+        uint256 srcChainId,
         address account,
         bytes32 orderKey,
         address residualFeeReceiver
     ) internal returns (uint256) {
         _handleTokenPermits(tokenPermits);
-        return _handleRelayFee(contracts, fee, chainId, account, orderKey, residualFeeReceiver);
+        return _handleRelayFee(contracts, fee, srcChainId, account, orderKey, residualFeeReceiver);
     }
 
     function _handleTokenPermits(TokenPermit[] calldata tokenPermits) internal {
@@ -290,7 +291,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     function _handleRelayFee(
         Contracts memory contracts,
         RelayFeeParams calldata fee,
-        uint256 chainId,
+        uint256 srcChainId,
         address account,
         bytes32 orderKey,
         address residualFeeReceiver
@@ -316,7 +317,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         uint256 residualFee = outputAmount - requiredRelayFee;
         // for orders the residual fee is sent to the order vault
         // for other actions the residual fee is sent back to the user
-        _transferResidualFee(wnt, residualFeeReceiver, residualFee, chainId, account);
+        _transferResidualFee(wnt, residualFeeReceiver, residualFee, srcChainId, account);
 
         return residualFee;
     }
@@ -327,8 +328,8 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     }
 
     // for multichain actions, the residual fee is send back to MultichainVault and user's multichain balance is increased
-    function _transferResidualFee(address wnt, address residualFeeReceiver, uint256 residualFee, uint256 /*chainId*/, address /*account*/) internal virtual {
-        // account and chainId not used here, but necessary when overriding _transferResidualFee in MultichainRouter
+    function _transferResidualFee(address wnt, address residualFeeReceiver, uint256 residualFee, uint256 /*srcChainId*/, address /*account*/) internal virtual {
+        // account and srcChainId not used here, but necessary when overriding _transferResidualFee in MultichainRouter
         TokenUtils.transfer(dataStore, wnt, residualFeeReceiver, residualFee);
     }
 

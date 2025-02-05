@@ -31,7 +31,7 @@ library GlvWithdrawalUtils {
         bool shouldUnwrapNativeToken;
         uint256 executionFee;
         uint256 callbackGasLimit;
-        uint256 chainId;
+        uint256 srcChainId;
         bytes32[] dataList;
     }
 
@@ -111,7 +111,7 @@ library GlvWithdrawalUtils {
                 updatedAtTime: Chain.currentTimestamp(),
                 executionFee: params.executionFee,
                 callbackGasLimit: params.callbackGasLimit,
-                chainId: params.chainId
+                srcChainId: params.srcChainId
             }),
             GlvWithdrawal.Flags({shouldUnwrapNativeToken: params.shouldUnwrapNativeToken}),
             params.dataList
@@ -231,7 +231,7 @@ library GlvWithdrawalUtils {
                 updatedAtTime: glvWithdrawal.updatedAtTime(),
                 executionFee: 0,
                 callbackGasLimit: 0,
-                chainId: glvWithdrawal.chainId()
+                srcChainId: glvWithdrawal.srcChainId()
             }),
             Withdrawal.Flags({shouldUnwrapNativeToken: glvWithdrawal.shouldUnwrapNativeToken()}),
             glvWithdrawal.dataList()

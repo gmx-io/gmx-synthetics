@@ -58,7 +58,7 @@ library WithdrawalUtils {
         bool shouldUnwrapNativeToken;
         uint256 executionFee;
         uint256 callbackGasLimit;
-        uint256 chainId;
+        uint256 srcChainId;
         bytes32[] dataList;
     }
 
@@ -119,7 +119,7 @@ library WithdrawalUtils {
                 Chain.currentTimestamp(), // updatedAtTime
                 params.executionFee,
                 params.callbackGasLimit,
-                params.chainId
+                params.srcChainId
             ),
             Withdrawal.Flags(
                 params.shouldUnwrapNativeToken

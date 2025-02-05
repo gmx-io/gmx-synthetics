@@ -28,19 +28,19 @@ contract MultichainRouter is GelatoRelayRouter {
     bytes32 public constant CREATE_DEPOSIT_TYPEHASH =
         keccak256(
             bytes(
-                "CreateDeposit(CreateDepositParams params,bytes32 relayParams)CreateDepositParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minMarketTokens,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,uint256 chainId,bytes32[] dataList)"
+                "CreateDeposit(CreateDepositParams params,bytes32 relayParams)CreateDepositParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minMarketTokens,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)"
             )
         );
     bytes32 public constant CREATE_DEPOSIT_PARAMS_TYPEHASH =
         keccak256(
             bytes(
-                "CreateDepositParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minMarketTokens,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,uint256 chainId,bytes32[] dataList)"
+                "CreateDepositParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minMarketTokens,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)"
             )
         );
     bytes32 public constant GASLESS_CREATE_DEPOSIT_PARAMS_TYPEHASH =
         keccak256(
             bytes(
-                "GaslessCreateDepositParams(uint256 chainId,uint256 longTokenAmount,uint256 shortTokenAmount,CreateDepositParams params)CreateDepositParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minMarketTokens,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,uint256 chainId,bytes32[] dataList)"
+                "GaslessCreateDepositParams(uint256 destChainId,uint256 longTokenAmount,uint256 shortTokenAmount,CreateDepositParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minMarketTokens,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)"
             )
         );
 
@@ -116,7 +116,7 @@ contract MultichainRouter is GelatoRelayRouter {
             contracts,
             tokenPermits,
             fee, // feeAmount is relayFee + executionFee
-            params.createDepositParams.chainId,
+            params.createDepositParams.srcChainId,
             account,
             NonceUtils.getKey(contracts.dataStore, NonceUtils.getCurrentNonce(dataStore) + 1), // calculate next key without incrementing
             // if initialLongTokenAmount or initialShortTokenAmount is wnt then executionFee will be subracted (in DepositUtils.createDeposit) from one of them
@@ -204,7 +204,9 @@ contract MultichainRouter is GelatoRelayRouter {
                     params.minMarketTokens,
                     params.shouldUnwrapNativeToken,
                     params.executionFee,
-                    params.callbackGasLimit
+                    params.callbackGasLimit,
+                    // params.srcChainId, // TODO: adding another field throws with slot too deep error
+                    keccak256(abi.encodePacked(params.dataList))
                 )
             );
     }

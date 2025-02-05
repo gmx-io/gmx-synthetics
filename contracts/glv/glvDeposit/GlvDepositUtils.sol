@@ -32,7 +32,7 @@ library GlvDepositUtils {
         uint256 minGlvTokens;
         uint256 executionFee;
         uint256 callbackGasLimit;
-        uint256 chainId;
+        uint256 srcChainId;
         bool shouldUnwrapNativeToken;
         bool isMarketTokenDeposit;
         bytes32[] dataList;
@@ -179,7 +179,7 @@ library GlvDepositUtils {
                 updatedAtTime: Chain.currentTimestamp(),
                 executionFee: params.executionFee,
                 callbackGasLimit: params.callbackGasLimit,
-                chainId: params.chainId
+                srcChainId: params.srcChainId
             }),
             GlvDeposit.Flags({
                 shouldUnwrapNativeToken: params.shouldUnwrapNativeToken,
@@ -357,7 +357,7 @@ library GlvDepositUtils {
                 updatedAtTime: glvDeposit.updatedAtTime(),
                 executionFee: 0,
                 callbackGasLimit: 0,
-                chainId: 0
+                srcChainId: 0
             }),
             Deposit.Flags({shouldUnwrapNativeToken: false}),
             new bytes32[](0) // dataList
@@ -377,7 +377,7 @@ library GlvDepositUtils {
                 params.startingGas,
                 ISwapPricingUtils.SwapPricingType.Deposit,
                 true, // includeVirtualInventoryImpact
-                glvDeposit.chainId()
+                glvDeposit.srcChainId()
             );
 
         uint256 receivedMarketTokens = ExecuteDepositUtils.executeDeposit(executeDepositParams, deposit);

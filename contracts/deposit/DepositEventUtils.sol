@@ -49,7 +49,7 @@ library DepositEventUtils {
         eventData.uintItems.setItem(4, "executionFee", deposit.executionFee());
         eventData.uintItems.setItem(5, "callbackGasLimit", deposit.callbackGasLimit());
         eventData.uintItems.setItem(6, "depositType", uint256(depositType));
-        eventData.uintItems.setItem(7, "chainId", deposit.chainId());
+        eventData.uintItems.setItem(7, "srcChainId", deposit.srcChainId());
 
         eventData.boolItems.initItems(1);
         eventData.boolItems.setItem(0, "shouldUnwrapNativeToken", deposit.shouldUnwrapNativeToken());
@@ -71,7 +71,6 @@ library DepositEventUtils {
     function emitDepositExecuted(
         EventEmitter eventEmitter,
         bytes32 key,
-        // uint256 chainId, TODO: should chainId be added as param? Is it ok to change the event signature (for e.g. analytics)
         address account,
         uint256 longTokenAmount,
         uint256 shortTokenAmount,
