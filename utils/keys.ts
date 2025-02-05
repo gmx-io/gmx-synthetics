@@ -821,6 +821,6 @@ export function withdrawableBuybackTokenAmountKey(buybackToken: string) {
   return hashData(["bytes32", "address"], [WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT, buybackToken]);
 }
 
-export function multichainBalanceKey(multichainId: number, account: string, token: string) {
-  return hashData(["bytes32", "uint256", "address", "address"], [MULTICHAIN_BALANCE, multichainId, account, token]);
+export function multichainBalanceKey(account: string, token: string) {
+  return hashData(["bytes32", "address", "address"], [MULTICHAIN_BALANCE, account, token]);
 }
