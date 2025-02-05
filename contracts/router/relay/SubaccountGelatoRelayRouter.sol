@@ -156,7 +156,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             eventEmitter: eventEmitter,
             orderVault: orderVault
         });
-        _handleRelay(contracts, relayParams.tokenPermits, relayParams.fee, account, bytes32(0), account);
+        _handleRelay(contracts, relayParams.tokenPermits, relayParams.fee, account, account);
 
         SubaccountUtils.removeSubaccount(dataStore, eventEmitter, account, subaccount);
     }
