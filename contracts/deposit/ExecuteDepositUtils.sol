@@ -51,7 +51,7 @@ library ExecuteDepositUtils {
         uint256 startingGas;
         ISwapPricingUtils.SwapPricingType swapPricingType;
         bool includeVirtualInventoryImpact;
-        uint256 chainId;
+        uint256 srcChainId;
         // address multichainVault;
     }
 
@@ -511,7 +511,7 @@ library ExecuteDepositUtils {
             _params.tokenIn
         );
 
-        if (params.chainId == 0) {
+        if (params.srcChainId == 0) {
             // mint GM tokens to receiver
             MarketToken(payable(_params.market.marketToken)).mint(_params.receiver, mintAmount);
         } else {
