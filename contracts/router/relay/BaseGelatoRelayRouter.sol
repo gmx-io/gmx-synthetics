@@ -106,7 +106,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
     function _updateOrder(
         RelayParams calldata relayParams,
-        uint256 srcChainId,
         address account,
         bytes32 key,
         UpdateOrderParams calldata params
@@ -127,7 +126,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             revert Errors.Unauthorized(account, "account for updateOrder");
         }
 
-        _handleRelay(contracts, relayParams.tokenPermits, relayParams.fee, srcChainId, account, key, account);
+        _handleRelay(contracts, relayParams.tokenPermits, relayParams.fee, relayParams.srcChainId, account, key, account);
 
         orderHandler.updateOrder(
             key,
@@ -141,7 +140,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         );
     }
 
-    function _cancelOrder(RelayParams calldata relayParams, uint256 srcChainId, address account, bytes32 key) internal {
+    function _cancelOrder(RelayParams calldata relayParams, address account, bytes32 key) internal {
         Contracts memory contracts = Contracts({
             dataStore: dataStore,
             eventEmitter: eventEmitter,
@@ -157,14 +156,13 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             revert Errors.Unauthorized(account, "account for cancelOrder");
         }
 
-        _handleRelay(contracts, relayParams.tokenPermits, relayParams.fee, srcChainId, account, key, account);
+        _handleRelay(contracts, relayParams.tokenPermits, relayParams.fee, relayParams.srcChainId, account, key, account);
 
         orderHandler.cancelOrder(key);
     }
 
     function _createOrder(
         RelayParams calldata relayParams,
-        uint256 srcChainId,
         address account,
         uint256 collateralDeltaAmount,
         IBaseOrderUtils.CreateOrderParams memory params // can't use calldata because need to modify params.numbers.executionFee
@@ -179,7 +177,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             contracts,
             relayParams.tokenPermits,
             relayParams.fee,
-            srcChainId,
+            relayParams.srcChainId,
             account,
             NonceUtils.getNextKey(contracts.dataStore), // order key
             address(contracts.orderVault)

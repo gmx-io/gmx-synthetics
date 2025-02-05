@@ -12,7 +12,6 @@ import "./MultichainUtils.sol";
 
 contract MultichainRouter is GelatoRelayRouter {
     struct GaslessCreateDepositParams {
-        uint256 chainId;
         uint256 longTokenAmount;
         uint256 shortTokenAmount;
         DepositUtils.CreateDepositParams createDepositParams;
@@ -40,7 +39,7 @@ contract MultichainRouter is GelatoRelayRouter {
     bytes32 public constant GASLESS_CREATE_DEPOSIT_PARAMS_TYPEHASH =
         keccak256(
             bytes(
-                "GaslessCreateDepositParams(uint256 destChainId,uint256 longTokenAmount,uint256 shortTokenAmount,CreateDepositParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minMarketTokens,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)"
+                "GaslessCreateDepositParams(uint256 srcChainId,uint256 longTokenAmount,uint256 shortTokenAmount,CreateDepositParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minMarketTokens,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)"
             )
         );
 
@@ -165,20 +164,21 @@ contract MultichainRouter is GelatoRelayRouter {
             keccak256(
                 abi.encode(
                     CREATE_DEPOSIT_TYPEHASH,
-                    _getGaslessCreateDepositParamsStructHash(params),
+                    _getGaslessCreateDepositParamsStructHash(relayParams.srcChainId, params),
                     relayParamsHash
                 )
             );
     }
 
     function _getGaslessCreateDepositParamsStructHash(
+        uint256 srcChainId,
         GaslessCreateDepositParams memory params
     ) internal pure returns (bytes32) {
         return
             keccak256(
                 abi.encode(
                     GASLESS_CREATE_DEPOSIT_PARAMS_TYPEHASH,
-                    params.chainId,
+                    srcChainId,
                     params.longTokenAmount,
                     params.shortTokenAmount,
                     _getCreateDepositParamsStructHash(params.createDepositParams)
