@@ -429,5 +429,6 @@ library Errors {
     error DistributionThisWeekAlreadyCompleted(uint256 lastDistributionTime, uint256 startOfCurrentWeek);
     error OutdatedReadResponse(uint256 timestamp);
     error DistributionNotInitiated();
-    error BridgedFeesRequired(uint256 feeAmount, uint256 requiredFeeAmount);
+    error BridgedAmountNotSufficient(uint256 requiredFeeAmount, uint256 currentChainFeeAmount);
+    error BridgingTransactionFailed(bytes result);
 }

@@ -20,6 +20,9 @@ import "../router/IExchangeRouter.sol";
 contract FeeDistributor is ReentrancyGuard, RoleModule {
     using EventUtils for EventUtils.BoolItems;
 
+    uint256 public constant v1 = 1;
+    uint256 public constant v2 = 2;
+
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
     MultichainReader public immutable multichainReader;
@@ -149,6 +152,39 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         _validateReadResponseTimestamp(dataStore.getUint(Keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP));
         _validateDistributionNotCompleted();
 
+        address wnt = dataStore.getAddress(Keys.WNT);
+        uint256 nativeTokenPrice = vaultV1.getMaxPrice(wnt);
+
+        address feeKeeperCurrentChain = dataStore.getAddress(
+            Keys.feeDistributorStoredAddressesKey(block.chainid, keccak256(abi.encode("FEE_KEEPER")))
+        );
+
+        uint256 totalWntBalance = dataStore.getUint(Keys.withdrawableBuybackTokenAmountKey(wnt)) +
+            IERC20(wnt).balanceOf(feeKeeperCurrentChain);
+
+        uint256 feesV1Usd = dataStore.getUint(Keys.feeDistributorFeeAmountUsdKey(v1));
+        uint256 feesV2Usd = dataStore.getUint(Keys.feeDistributorFeeAmountUsdKey(v2));
+        uint256 totalFeesUsd = feesV1Usd + feesV2Usd;
+
+        uint256 keeperCosts; // logic to be added
+
+        uint256 treasuryChainlinkWntAmount = Precision.mulDiv(totalWntBalance, feesV2Usd, totalFeesUsd);
+        uint256 chainlinkWntAmount = Precision.mulDiv(treasuryChainlinkWntAmount, uint256(12), uint256(100));
+        uint256 treasuryWntAmount = Precision.mulDiv(treasuryChainlinkWntAmount, uint256(88), uint256(100));
+
+        uint256 remainingWnt = totalWntBalance - chainlinkWntAmount - keeperCosts + treasuryWntAmount;
+
+        bool feeDistributorFeeDeficit = dataStore.getBool(Keys.FEE_DISTRIBUTOR_FEE_DEFICIT);
+        if (feeDistributorFeeDeficit) {
+            address gmx = dataStore.getAddress(
+                Keys.feeDistributorStoredAddressesKey(block.chainid, keccak256(abi.encode("GMX")))
+            );
+
+            uint256 feeAmountCurrentChain = dataStore.getUint(Keys.withdrawableBuybackTokenAmountKey(gmx)) +
+                IERC20(gmx).balanceOf(feeKeeperCurrentChain);
+            dataStore.setUint(Keys.feeDistributorFeeAmountKey(block.chainid), feeAmountCurrentChain);
+        }
+
         uint256 chains = dataStore.getUint(Keys.FEE_DISTRIBUTOR_NUMBER_OF_CHAINS);
         uint256[] memory feeAmount = new uint256[](chains);
         uint256 totalFeeAmount;
@@ -170,10 +206,14 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         // Need to account for rounding errors and the cost of the bridging as the numbers won't be exact
         uint256 requiredFeeAmount = (totalFeeAmount * stakedGmx[currentChain]) / totalStakedGmx;
         if (requiredFeeAmount > feeAmount[currentChain]) {
+            if (feeDistributorFeeDeficit) {
+                revert Errors.BridgedAmountNotSufficient(requiredFeeAmount, feeAmount[currentChain]);
+            }
             dataStore.setBool(Keys.FEE_DISTRIBUTOR_FEE_DEFICIT, true);
             return;
         }
-        if (!dataStore.getBool(Keys.FEE_DISTRIBUTOR_FEE_DEFICIT)) {
+
+        if (!feeDistributorFeeDeficit) {
             uint256[] memory target = new uint256[](chains);
             for (uint256 i; i < chains; i++) {
                 if (totalStakedGmx == 0) {
@@ -223,8 +263,52 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
             uint256 amountToBridgeOut;
             for (uint256 i; i < chains; i++) {
                 uint256 sendAmount = bridging[currentChain][i];
+                // perhaps should be an amount greater than 0 to account for fees
                 if (sendAmount > 0) {
-                    // bridging transaction to be added
+                    uint256 chainId = dataStore.getUint(Keys.feeDistributorChainIdKey(i + 1));
+                    address synapseRouter = dataStore.getAddress(
+                        Keys.feeDistributorStoredAddressesKey(block.chainid, keccak256(abi.encode("SYNAPSE_ROUTER")))
+                    );
+                    address gmxCurrentChain = dataStore.getAddress(
+                        Keys.feeDistributorStoredAddressesKey(block.chainid, keccak256(abi.encode("GMX")))
+                    );
+                    address gmxDestChain = dataStore.getAddress(
+                        Keys.feeDistributorStoredAddressesKey(chainId, keccak256(abi.encode("GMX")))
+                    );
+                    address feeKeeper = dataStore.getAddress(
+                        Keys.feeDistributorStoredAddressesKey(chainId, keccak256(abi.encode("FEE_KEEPER")))
+                    );
+
+                    address nullAddress;
+                    uint256 slippageFactor = Precision.FLOAT_PRECISION -
+                        dataStore.getUint(Keys.feeDistributorMaxSlippageKey(chainId));
+                    uint256 minAmountOut = Precision.applyFactor(sendAmount, slippageFactor);
+                    // using the deadline logic that the synapse front-end seems to use
+                    uint256 originDeadline = block.timestamp + 600;
+                    uint256 destDeadline = block.timestamp + 604800;
+                    bytes memory rawParams = "";
+
+                    bytes memory callData = abi.encodeWithSignature(
+                        "bridge(address,uint256,address,uint256,(address,address,uint256,uint256,bytes),(address,address,uint256,uint256,bytes))",
+                        feeKeeper,
+                        chainId,
+                        gmxCurrentChain,
+                        sendAmount,
+                        nullAddress,
+                        gmxCurrentChain,
+                        sendAmount,
+                        originDeadline,
+                        rawParams,
+                        nullAddress,
+                        gmxDestChain,
+                        minAmountOut,
+                        destDeadline,
+                        rawParams
+                    );
+                    (bool success, bytes memory result) = synapseRouter.call(callData);
+                    if (!success) {
+                        revert Errors.BridgingTransactionFailed(result);
+                    }
                 }
                 amountToBridgeOut += sendAmount;
             }
@@ -236,6 +320,12 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         }
         dataStore.setUint(Keys.FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP, block.timestamp);
         dataStore.setBool(Keys.FEE_DISTRIBUTOR_DISTRIBUTION_INITIATED, false);
+
+        EventUtils.EventLogData memory eventData;
+        eventData.boolItems.initItems(1);
+        eventData.boolItems.setItem(0, "distributeReferralRewards", true);
+
+        eventEmitter.emitEventLog("TriggerReferralKeeper", eventData);
     }
 
     function _validateDistributionNotCompleted() internal view {

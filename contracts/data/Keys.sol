@@ -482,13 +482,13 @@ library Keys {
     bytes32 public constant FEE_DISTRIBUTOR_DISTRIBUTION_DAY = keccak256(abi.encode("FEE_DISTRIBUTOR_DISTRIBUTION_DAY"));
     // @dev key for FeeDistributor timestamp that the last distribution was completed
     bytes32 public constant FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP = keccak256(abi.encode("FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP"));
-    // @dev key for contract and keeper addresses used in FeeDistributor
+    // @dev key for whether the current week distribution has already been initiated
     bytes32 public constant FEE_DISTRIBUTOR_DISTRIBUTION_INITIATED = keccak256(abi.encode("FEE_DISTRIBUTOR_DISTRIBUTION_INITIATED"));
     // @dev key for FeeDistributor referral rewards for a given timestamp
     bytes32 public constant FEE_DISTRIBUTOR_REFERRAL_REWARDS_AMOUNT = keccak256(abi.encode("FEE_DISTRIBUTOR_REFERRAL_REWARDS_AMOUNT"));
     // @dev key for FeeDistributor max read response delay in seconds from MultichainReader
     bytes32 public constant FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY = keccak256(abi.encode("FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY"));
-    // @dev key for FeeDistributor gas limit used for MultichainReader read request
+    // @dev key for FeeDistributor gas limit used for the MultichainReader read request
     bytes32 public constant FEE_DISTRIBUTOR_GAS_LIMIT = keccak256(abi.encode("FEE_DISTRIBUTOR_GAS_LIMIT"));
     // @dev key for FeeDistributor number of chains with GMX deployments
     bytes32 public constant FEE_DISTRIBUTOR_NUMBER_OF_CHAINS = keccak256(abi.encode("FEE_DISTRIBUTOR_NUMBER_OF_CHAINS"));
@@ -496,8 +496,12 @@ library Keys {
     bytes32 public constant FEE_DISTRIBUTOR_CHAIN_ID = keccak256(abi.encode("FEE_DISTRIBUTOR_CHAIN_ID"));
     // @dev key for FeeDistributor fee amount
     bytes32 public constant FEE_DISTRIBUTOR_FEE_AMOUNT = keccak256(abi.encode("FEE_DISTRIBUTOR_FEE_AMOUNT"));
+    // @dev key for FeeDistributor total fee amount in USD by version
+    bytes32 public constant FEE_DISTRIBUTOR_FEE_AMOUNT_USD = keccak256(abi.encode("FEE_DISTRIBUTOR_FEE_AMOUNT_USD"));
     // @dev key for FeeDistributor staked gmx
     bytes32 public constant FEE_DISTRIBUTOR_STAKED_GMX = keccak256(abi.encode("FEE_DISTRIBUTOR_STAKED_GMX"));
+    // @dev key for FeeDistributor maximum bridging slippage
+    bytes32 public constant FEE_DISTRIBUTOR_MAX_SLIPPAGE = keccak256(abi.encode("FEE_DISTRIBUTOR_MAX_SLIPPAGE"));
     // @dev key for FeeDistributor read response timestamp
     bytes32 public constant FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP = keccak256(abi.encode("FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP"));
     // @dev key for FeeDistributor LayerZero version of chainId
@@ -2148,10 +2152,10 @@ library Keys {
     }
 
     // @dev key for the FeeDistributor referral rewards amount
-    // @param timestamp the timestamp for which to retrieve the referral rewards
+    // @param token the token the referral rewards are denominated in
     // @return key for FeeDistributor referral rewards amount
-    function feeDistributorReferralRewardsAmountKey(uint256 timestamp) internal pure returns (bytes32) {
-        return keccak256(abi.encode(FEE_DISTRIBUTOR_REFERRAL_REWARDS_AMOUNT, timestamp));
+    function feeDistributorReferralRewardsAmountKey(address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(FEE_DISTRIBUTOR_REFERRAL_REWARDS_AMOUNT, token));
     }
 
     // @dev key for the FeeDistributor chain ID
@@ -2168,11 +2172,25 @@ library Keys {
         return keccak256(abi.encode(FEE_DISTRIBUTOR_FEE_AMOUNT, chainId));
     }
 
+    // @dev key for the FeeDistributor fee amount in USD by version
+    // @param version the version for which to retrieve the fee amount USD
+    // @return key for FeeDistributor fee amount USD
+    function feeDistributorFeeAmountUsdKey(uint256 version) internal pure returns (bytes32) {
+        return keccak256(abi.encode(FEE_DISTRIBUTOR_FEE_AMOUNT_USD, version));
+    }
+
     // @dev key for the FeeDistributor staked gmx
     // @param chainId the chainId for which to retrieve total staked
     // @return key for FeeDistributor staked gmx
     function feeDistributorStakedGmxKey(uint256 chainId) internal pure returns (bytes32) {
         return keccak256(abi.encode(FEE_DISTRIBUTOR_STAKED_GMX, chainId));
+    }
+
+    // @dev key for the FeeDistributor maximum bridging slippage
+    // @param chainId the chainId for which to retrieve max slippage
+    // @return key for FeeDistributor max slippage
+    function feeDistributorMaxSlippageKey(uint256 chainId) internal pure returns (bytes32) {
+        return keccak256(abi.encode(FEE_DISTRIBUTOR_MAX_SLIPPAGE, chainId));
     }
 
     // @dev key for FeeDistributor LayerZero version of chainId
