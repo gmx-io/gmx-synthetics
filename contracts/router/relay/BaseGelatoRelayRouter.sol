@@ -350,8 +350,8 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     }
 
     function _validateCall(RelayParams calldata relayParams, address account, bytes32 structHash) internal {
-        uint256 srcChainId = relayParams.srcChainId == 0 ? block.chain : relayParams.srcChainId;
-        bytes32 domainSeparator = _getDomainSeparator(relayParams.srcChainId);
+        uint256 srcChainId = relayParams.srcChainId == 0 ? block.chainid : relayParams.srcChainId;
+        bytes32 domainSeparator = _getDomainSeparator(srcChainId);
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
         _validateSignature(digest, relayParams.signature, account, "call");
 

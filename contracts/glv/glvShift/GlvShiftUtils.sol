@@ -139,7 +139,7 @@ library GlvShiftUtils {
                 updatedAtTime: glvShift.updatedAtTime(),
                 executionFee: 0,
                 callbackGasLimit: 0,
-                srcChainId: 0 // TODO: should glvShift have the srcChainId as well?
+                srcChainId: 0
             }),
             new bytes32[](0)
         );
