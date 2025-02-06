@@ -52,6 +52,15 @@ contract SubaccountRouter is BaseRouter {
         SubaccountUtils.removeSubaccount(dataStore, eventEmitter, account, subaccount);
     }
 
+    function setSubaccountExpiresAt(
+        address subaccount,
+        bytes32 actionType,
+        uint256 expiresAt
+    ) external payable nonReentrant {
+        address account = msg.sender;
+        SubaccountUtils.setSubaccountExpiresAt(dataStore, eventEmitter, account, subaccount, actionType, expiresAt);
+    }
+
     function setMaxAllowedSubaccountActionCount(
         address subaccount,
         bytes32 actionType,
@@ -96,6 +105,10 @@ contract SubaccountRouter is BaseRouter {
             revert Errors.InvalidReceiverForSubaccountOrder(params.addresses.receiver, account);
         }
 
+        if (params.addresses.cancellationReceiver != address(0) && params.addresses.cancellationReceiver != account) {
+            revert Errors.InvalidCancellationReceiverForSubaccountOrder(params.addresses.cancellationReceiver, account);
+        }
+
         if (
             params.orderType == Order.OrderType.MarketSwap ||
             params.orderType == Order.OrderType.LimitSwap ||
@@ -113,7 +126,8 @@ contract SubaccountRouter is BaseRouter {
 
         bytes32 key = orderHandler.createOrder(
             account,
-            params
+            params,
+            true
         );
 
         _autoTopUpSubaccount(
@@ -187,9 +201,7 @@ contract SubaccountRouter is BaseRouter {
         FeatureUtils.validateFeature(dataStore, Keys.subaccountFeatureDisabledKey(address(this)));
 
         address subaccount = msg.sender;
-        SubaccountUtils.validateSubaccount(dataStore, account, subaccount);
-
-        SubaccountUtils.incrementSubaccountActionCount(
+        SubaccountUtils.handleSubaccountAction(
             dataStore,
             eventEmitter,
             account,

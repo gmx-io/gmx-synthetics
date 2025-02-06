@@ -301,7 +301,7 @@ describe("Glv Withdrawals", () => {
 
     await expect(glvRouter.connect(user1).cancelGlvWithdrawal(glvWithdrawalKey))
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
-      .withArgs(user1.address, "account for cancelGlvWithdrawal");
+      .withArgs(user1.address, "account cancelGlvWithdrawal");
 
     expect(await getGlvWithdrawalCount(dataStore)).eq(1);
 

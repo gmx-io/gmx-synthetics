@@ -11,9 +11,6 @@ import {
   getAccountOrderCount,
   getAccountOrderKeys,
 } from "../../utils/order";
-import { hashData } from "../../utils/hash";
-import * as keys from "../../utils/keys";
-import { expect } from "chai";
 
 describe("OrderStoreUtils", () => {
   let fixture;

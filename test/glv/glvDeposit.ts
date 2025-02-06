@@ -808,7 +808,7 @@ describe("Glv Deposits", () => {
 
     await expect(glvRouter.connect(user1).cancelGlvDeposit(glvDepositKeys[0]))
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
-      .withArgs(user1.address, "account for cancelGlvDeposit");
+      .withArgs(user1.address, "account cancelGlvDeposit");
 
     expect(await getGlvDepositCount(dataStore)).eq(1);
 
@@ -885,7 +885,7 @@ describe("Glv Deposits", () => {
 
     await expect(glvRouter.connect(user1).cancelGlvDeposit(glvDepositKeys[0]))
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
-      .withArgs(user1.address, "account for cancelGlvDeposit");
+      .withArgs(user1.address, "account cancelGlvDeposit");
 
     expect(await getGlvDepositCount(dataStore)).eq(1);
 
@@ -969,7 +969,7 @@ describe("Glv Deposits", () => {
 
     await expect(glvRouter.connect(user1).cancelGlvDeposit(glvDepositKeys[0]))
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
-      .withArgs(user1.address, "account for cancelGlvDeposit");
+      .withArgs(user1.address, "account cancelGlvDeposit");
 
     expect(await getGlvDepositCount(dataStore)).eq(1);
 

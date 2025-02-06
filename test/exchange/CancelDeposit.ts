@@ -65,7 +65,7 @@ describe("Exchange.CancelDeposit", () => {
 
     await expect(exchangeRouter.connect(user1).cancelDeposit(depositKeys[0]))
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
-      .withArgs(user1.address, "account for cancelDeposit");
+      .withArgs(user1.address, "account cancelDeposit");
 
     expect(await getDepositCount(dataStore)).eq(1);
 

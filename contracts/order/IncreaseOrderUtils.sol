@@ -30,7 +30,8 @@ library IncreaseOrderUtils {
             params.order.minOutputAmount(),
             params.order.market(),
             params.order.uiFeeReceiver(),
-            false
+            false,
+            ISwapPricingUtils.SwapPricingType.Swap
         ));
 
         MarketUtils.validateMarketCollateralToken(params.market, collateralToken);
