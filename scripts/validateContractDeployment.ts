@@ -113,10 +113,11 @@ async function compareContractBytecodes(provider: JsonRpcProvider, contractAddre
 
   await compileContract(AUDITED_COMMIT, contractName);
 
-  const Contract = await ethers.getContract(contractName);
+  const Contract = await ethers.getContractAt(contractName, contractAddress);
   if (!Contract) {
     throw new Error(`Could not find contract ${contractName}`);
   }
+  console.log("Obtained contract: " + contractName);
   const constructorArgs = extractDeploymentArgs(deployment);
   const encodedArgs = ethers.utils.defaultAbiCoder
     .encode(
