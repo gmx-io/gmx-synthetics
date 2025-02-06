@@ -48,7 +48,7 @@ export async function createGlvDeposit(fixture, overrides: any = {}) {
   const shouldUnwrapNativeToken = overrides.shouldUnwrapNativeToken || false;
   const executionFee = bigNumberify(overrides.executionFee ?? "1000000000000000");
   const callbackGasLimit = bigNumberify(overrides.callbackGasLimit ?? 0);
-  const chainId = bigNumberify(overrides.chainId ?? 0);
+  const srcChainId = bigNumberify(overrides.srcChainId ?? 0);
   const marketTokenAmount = bigNumberify(overrides.marketTokenAmount ?? 0);
   const longTokenAmount = bigNumberify(overrides.longTokenAmount ?? 0);
   const shortTokenAmount = bigNumberify(overrides.shortTokenAmount ?? 0);
@@ -96,7 +96,7 @@ export async function createGlvDeposit(fixture, overrides: any = {}) {
     shouldUnwrapNativeToken,
     executionFee,
     callbackGasLimit,
-    chainId,
+    srcChainId,
     isMarketTokenDeposit,
     gasUsageLabel,
     dataList,

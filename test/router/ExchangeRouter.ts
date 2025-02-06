@@ -74,7 +74,7 @@ describe("ExchangeRouter", () => {
             shouldUnwrapNativeToken: true,
             executionFee,
             callbackGasLimit: "200000",
-            chainId: 0,
+            srcChainId: 0,
             dataList,
           },
         ]),
@@ -98,7 +98,7 @@ describe("ExchangeRouter", () => {
     expect(deposit.numbers.minMarketTokens).eq(100);
     expect(deposit.numbers.executionFee).eq(expandDecimals(1, 18));
     expect(deposit.numbers.callbackGasLimit).eq("200000");
-    expect(deposit.numbers.chainId).eq(0);
+    expect(deposit.numbers.srcChainId).eq(0);
     expect(deposit.flags.shouldUnwrapNativeToken).eq(true);
     expect(deposit._dataList).deep.eq(dataList);
 
@@ -216,7 +216,7 @@ describe("ExchangeRouter", () => {
             shouldUnwrapNativeToken: true,
             executionFee,
             callbackGasLimit: "200000",
-            chainId: 1,
+            srcChainId: 1,
             dataList,
           },
         ]),
@@ -239,7 +239,7 @@ describe("ExchangeRouter", () => {
     expect(withdrawal.numbers.minShortTokenAmount).eq(900);
     expect(withdrawal.numbers.executionFee).eq(expandDecimals(1, 18));
     expect(withdrawal.numbers.callbackGasLimit).eq("200000");
-    expect(withdrawal.numbers.chainId).eq(1);
+    expect(withdrawal.numbers.srcChainId).eq(1);
     expect(withdrawal.flags.shouldUnwrapNativeToken).eq(true);
 
     expect(withdrawal._dataList).deep.eq(dataList);
@@ -281,7 +281,7 @@ describe("ExchangeRouter", () => {
               shouldUnwrapNativeToken: true,
               executionFee,
               callbackGasLimit: "200000",
-              chainId: 0,
+              srcChainId: 0,
               dataList: [],
             },
           ]),
