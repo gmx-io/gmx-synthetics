@@ -431,4 +431,6 @@ library Errors {
     error DistributionNotInitiated();
     error BridgedAmountNotSufficient(uint256 requiredFeeAmount, uint256 currentChainFeeAmount);
     error BridgingTransactionFailed(bytes result);
+    error ReferralRewardsWntThresholdBreached(uint256 referralRewardsWntAmount, uint256 referralRewardsWntShortFall);
+    error TreasuryFeeThresholdBreached(uint256 treasuryWntAmount, uint256 treasuryWntShortfall);
 }

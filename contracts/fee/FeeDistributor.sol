@@ -153,7 +153,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         _validateDistributionNotCompleted();
 
         address wnt = dataStore.getAddress(Keys.WNT);
-        uint256 nativeTokenPrice = vaultV1.getMaxPrice(wnt);
+        uint256 wntPrice = vaultV1.getMaxPrice(wnt);
 
         address feeKeeperCurrentChain = dataStore.getAddress(
             Keys.feeDistributorStoredAddressesKey(block.chainid, keccak256(abi.encode("FEE_KEEPER")))
@@ -172,7 +172,47 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         uint256 chainlinkWntAmount = Precision.mulDiv(treasuryChainlinkWntAmount, uint256(12), uint256(100));
         uint256 treasuryWntAmount = Precision.mulDiv(treasuryChainlinkWntAmount, uint256(88), uint256(100));
 
-        uint256 remainingWnt = totalWntBalance - chainlinkWntAmount - keeperCosts + treasuryWntAmount;
+        uint256 referralRewardsWntUsd = dataStore.getUint(Keys.feeDistributorReferralRewardsAmountKey(wnt));
+        uint256 referralRewardsWnt = Precision.mulDiv(referralRewardsWntUsd, Precision.FLOAT_PRECISION, wntPrice);
+        uint256 referralRewardsWntThreshold = dataStore.getUint(
+            Keys.feeDistributorAmountThresholdKey(keccak256(abi.encode("REFERRAL")))
+        );
+        uint256 maxReferralRewardsWntUSD = Precision.applyFactor(feesV1Usd, referralRewardsWntThreshold);
+        if (referralRewardsWntUsd > maxReferralRewardsWntUSD) {
+            revert Errors.ReferralRewardsWntThresholdBreached(
+                referralRewardsWnt,
+                referralRewardsWntUsd - maxReferralRewardsWntUSD
+            );
+        }
+
+        uint256 remainingWnt = totalWntBalance -
+            keeperCosts -
+            chainlinkWntAmount -
+            treasuryWntAmount -
+            referralRewardsWnt;
+
+        uint256 expectedGlpWntAmount = totalWntBalance - treasuryChainlinkWntAmount;
+        uint256 glpFeeThreshold = dataStore.getUint(
+            Keys.feeDistributorAmountThresholdKey(keccak256(abi.encode("GLP")))
+        );
+        uint256 minGlpWntAmount = Precision.applyFactor(expectedGlpWntAmount, glpFeeThreshold);
+        if (remainingWnt < minGlpWntAmount) {
+            uint256 treasuryFeeThreshold = dataStore.getUint(
+                Keys.feeDistributorAmountThresholdKey(keccak256(abi.encode("TREASURY")))
+            );
+            uint256 minTreasuryWntAmount = Precision.applyFactor(treasuryWntAmount, treasuryFeeThreshold);
+            uint256 wntGlpShortfall = minGlpWntAmount - remainingWnt;
+            uint256 maxTreasuryWntShortfall = treasuryWntAmount - minTreasuryWntAmount;
+            if (wntGlpShortfall > maxTreasuryWntShortfall) {
+                revert Errors.TreasuryFeeThresholdBreached(
+                    treasuryWntAmount,
+                    wntGlpShortfall - maxTreasuryWntShortfall
+                );
+            }
+
+            treasuryWntAmount = treasuryWntAmount - wntGlpShortfall;
+            remainingWnt = remainingWnt + wntGlpShortfall;
+        }
 
         bool feeDistributorFeeDeficit = dataStore.getBool(Keys.FEE_DISTRIBUTOR_FEE_DEFICIT);
         if (feeDistributorFeeDeficit) {

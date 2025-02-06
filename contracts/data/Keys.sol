@@ -512,6 +512,8 @@ library Keys {
     bytes32 public constant FEE_DISTRIBUTOR_FEE_DEFICIT = keccak256(abi.encode("FEE_DISTRIBUTOR_FEE_DEFICIT"));
     // @dev key for FeeDistributor esGMX rewards available for referral rewards distribution
     bytes32 public constant FEE_DISTRIBUTOR_ESGMX_REWARDS = keccak256(abi.encode("FEE_DISTRIBUTOR_ESGMX_REWARDS"));
+    // @dev key for FeeDistributor fee thresholds
+    bytes32 public constant FEE_DISTRIBUTOR_AMOUNT_THRESHOLD = keccak256(abi.encode("FEE_DISTRIBUTOR_AMOUNT_THRESHOLD"));
 
     // @dev constant for user initiated cancel reason
     string public constant USER_INITIATED_CANCEL = "USER_INITIATED_CANCEL";
@@ -2206,5 +2208,12 @@ library Keys {
     // @return key for contract and keeper addresses used in FeeDistributor
     function feeDistributorStoredAddressesKey(uint256 chainId, bytes32 addressName) internal pure returns (bytes32) {
         return keccak256(abi.encode(FEE_DISTRIBUTOR_STORED_ADDRESSES, chainId, addressName));
+    }
+
+    // @dev key for FeeDistributor amount threshold
+    // @param amountThreshold the amount threshold to retrieve
+    // @return key for FeeDistributor amount threshold
+    function feeDistributorAmountThresholdKey(bytes32 amountThreshold) internal pure returns (bytes32) {
+        return keccak256(abi.encode(FEE_DISTRIBUTOR_AMOUNT_THRESHOLD, amountThreshold));
     }
 }
