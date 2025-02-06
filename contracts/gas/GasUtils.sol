@@ -209,8 +209,8 @@ library GasUtils {
             return;
         }
         // a malicious subaccount could provide a large executionFee
-        // and receive most of it as a refund sent to callbackContract
-        // validating the max execution fee to 100 * gasLimit * basefee should limit the potential loss
+        // and receive most of it as a refund sent to a callbackContract
+        // validating that the max execution fee is less than 100 * gasLimit * basefee should limit the potential loss
 
         // some blockchains may not support EIP-1559 and will return 0 for block.basefee
         // also block.basefee is 0 inside eth_call and eth_estimateGas
