@@ -109,8 +109,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         RelayParams calldata relayParams,
         address account,
         uint256 collateralDeltaAmount,
-        IBaseOrderUtils.CreateOrderParams memory params, // can't use calldata because need to modify params.numbers.executionFee
-        bool isSubaccount
+        IBaseOrderUtils.CreateOrderParams memory params // can't use calldata because need to modify params.numbers.executionFee
     ) internal returns (bytes32) {
         Contracts memory contracts = Contracts({
             dataStore: dataStore,
@@ -142,7 +141,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             );
         }
 
-        return orderHandler.createOrder(account, params, isSubaccount);
+        return orderHandler.createOrder(account, params);
     }
 
     function _updateOrder(
@@ -165,7 +164,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         }
 
         if (order.account() != account) {
-            revert Errors.Unauthorized(account, "account updateOrder");
+            revert Errors.Unauthorized(account, "account for updateOrder");
         }
 
         address residualFeeReceiver = increaseExecutionFee ? address(contracts.orderVault) : account;
@@ -196,7 +195,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         }
 
         if (order.account() != account) {
-            revert Errors.Unauthorized(account, "account cancelOrder");
+            revert Errors.Unauthorized(account, "account for cancelOrder");
         }
 
         _handleRelay(contracts, relayParams.tokenPermits, relayParams.fee, relayParams.srcChainId, account, account);
@@ -209,18 +208,12 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         address wnt,
         RelayFeeParams calldata fee
     ) internal returns (uint256) {
-        if (fee.feeToken == wnt) {
-            contracts.orderVault.transferOut(wnt, address(this), fee.feeAmount);
-            return fee.feeAmount;
-        }
-
         // swap fee tokens to WNT
         MarketUtils.validateSwapPath(contracts.dataStore, fee.feeSwapPath);
         Market.Props[] memory swapPathMarkets = MarketUtils.getSwapPathMarkets(
             contracts.dataStore,
             fee.feeSwapPath
         );
-        MarketUtils.validateMarketTokenBalance(contracts.dataStore, swapPathMarkets);
 
         (address outputToken, uint256 outputAmount) = SwapUtils.swap(
             SwapUtils.SwapParams({
@@ -303,8 +296,14 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             revert Errors.UnsupportedRelayFeeToken(_getFeeToken(), wnt);
         }
 
-        _sendTokens(account, fee.feeToken, address(contracts.orderVault), fee.feeAmount);
-        uint256 outputAmount = _swapFeeTokens(contracts, wnt, fee);
+        uint256 outputAmount;
+        if (fee.feeToken == wnt) {
+            _sendTokens(account, fee.feeToken, address(this), fee.feeAmount);
+            outputAmount = fee.feeAmount;
+        } else {
+            _sendTokens(account, fee.feeToken, address(contracts.orderVault), fee.feeAmount);
+            outputAmount = _swapFeeTokens(contracts, wnt, fee);
+        }
 
         uint256 requiredRelayFee = _getFee();
         if (requiredRelayFee > outputAmount) {
@@ -316,7 +315,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         // TODO: should it be named remainingFee as it's intended to always include RelayFee + executionFee?
         // For createOrder it's the executionFee and goes into depositVault. For update/cancelOrder is goes back to account
         uint256 residualFee = outputAmount - requiredRelayFee;
-        // for create orders the residual fee is sent to the order vault as an execution fee
+        // for create orders the residual fee is sent to the order vault
         // for update orders the residual fee could be sent to the order vault if order's execution fee should be increased
         // otherwise the residual fee is sent back to the user
         // for other actions the residual fee is sent back to the user

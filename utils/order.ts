@@ -141,7 +141,7 @@ export async function createOrder(fixture, overrides) {
   };
 
   const txReceipt = await logGasUsage({
-    tx: orderHandler.connect(sender).createOrder(account.address, params, false),
+    tx: orderHandler.connect(sender).createOrder(account.address, params),
     label: gasUsageLabel,
   });
 

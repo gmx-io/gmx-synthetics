@@ -37,7 +37,7 @@ describe("Guardian.CancelOrder", () => {
     // User0 tries to cancel the order user1 just created
     await expect(exchangeRouter.connect(user0).cancelOrder(orderKeys[0]))
       .to.be.revertedWithCustomError(exchangeRouter, "Unauthorized")
-      .withArgs(user0.address, "account cancelOrder");
+      .withArgs(user0.address, "account for cancelOrder");
 
     // Check that the order haven't been cancelled
     expect(await getOrderCount(dataStore)).eq(1);
@@ -62,7 +62,7 @@ describe("Guardian.CancelOrder", () => {
     // User0 tries to cancel the order user1 just created
     await expect(exchangeRouter.connect(user0).cancelOrder(orderKeys[0]))
       .to.be.revertedWithCustomError(exchangeRouter, "Unauthorized")
-      .withArgs(user0.address, "account cancelOrder");
+      .withArgs(user0.address, "account for cancelOrder");
 
     // Check that the order haven't been cancelled
     expect(await getOrderCount(dataStore)).eq(1);
@@ -87,7 +87,7 @@ describe("Guardian.CancelOrder", () => {
     // User0 tries to cancel the order user1 just created
     await expect(exchangeRouter.connect(user0).cancelOrder(orderKeys[0]))
       .to.be.revertedWithCustomError(exchangeRouter, "Unauthorized")
-      .withArgs(user0.address, "account cancelOrder");
+      .withArgs(user0.address, "account for cancelOrder");
 
     // Check that the order haven't been cancelled
     expect(await getOrderCount(dataStore)).eq(1);
@@ -112,7 +112,7 @@ describe("Guardian.CancelOrder", () => {
     // User0 tries to cancel the order user1 just created
     await expect(exchangeRouter.connect(user0).cancelOrder(orderKeys[0]))
       .to.be.revertedWithCustomError(exchangeRouter, "Unauthorized")
-      .withArgs(user0.address, "account cancelOrder");
+      .withArgs(user0.address, "account for cancelOrder");
 
     // Check that the order haven't been cancelled
     expect(await getOrderCount(dataStore)).eq(1);
@@ -137,7 +137,7 @@ describe("Guardian.CancelOrder", () => {
     // User0 tries to cancel the order user1 just created
     await expect(exchangeRouter.connect(user0).cancelOrder(orderKeys[0]))
       .to.be.revertedWithCustomError(exchangeRouter, "Unauthorized")
-      .withArgs(user0.address, "account cancelOrder");
+      .withArgs(user0.address, "account for cancelOrder");
 
     // Check that the order haven't been cancelled
     expect(await getOrderCount(dataStore)).eq(1);
@@ -162,7 +162,7 @@ describe("Guardian.CancelOrder", () => {
     // User0 tries to cancel the order user1 just created
     await expect(exchangeRouter.connect(user0).cancelOrder(orderKeys[0]))
       .to.be.revertedWithCustomError(exchangeRouter, "Unauthorized")
-      .withArgs(user0.address, "account cancelOrder");
+      .withArgs(user0.address, "account for cancelOrder");
 
     // Check that the order haven't been cancelled
     expect(await getOrderCount(dataStore)).eq(1);

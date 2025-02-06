@@ -271,7 +271,6 @@ describe("GelatoRelayRouter", () => {
       expect(order.flags.isLong).eq(true);
       expect(order.flags.shouldUnwrapNativeToken).eq(true);
       expect(order.flags.isFrozen).eq(false);
-      expect(order.flags.isSubaccount).eq(false);
 
       await stopImpersonatingAccount(GELATO_RELAY_ADDRESS);
 
