@@ -113,11 +113,20 @@ async function compareContractBytecodes(provider: JsonRpcProvider, contractAddre
 
   await compileContract(AUDITED_COMMIT, contractName);
 
-  const Contract = await ethers.getContractAt(contractName, contractAddress);
+  const findContract = findFile(contractName + ".json");
+  const buildPath = path.join(__dirname, "../artifacts/contracts/");
+  const searchResult = await searchDirectory(buildPath, findContract);
+  if (!searchResult) {
+    throw new Error("Artifact not found");
+  }
+
+  const artifact = JSON.parse(fs.readFileSync(searchResult, "utf-8"));
+  console.log(artifact.bytecode);
+
+  const Contract = await ethers.getContract(contractName);
   if (!Contract) {
     throw new Error(`Could not find contract ${contractName}`);
   }
-  console.log("Obtained contract: " + contractName);
   const constructorArgs = extractDeploymentArgs(deployment);
   const encodedArgs = ethers.utils.defaultAbiCoder
     .encode(
@@ -126,7 +135,9 @@ async function compareContractBytecodes(provider: JsonRpcProvider, contractAddre
     )
     .slice(2); //remove 0x at start
 
-  const localBytecodeStripped = stripBytecodeIpfsHash(Contract.bytecode);
+  console.log("Encoded args: " + encodedArgs);
+
+  const localBytecodeStripped = stripBytecodeIpfsHash(artifact.bytecode);
 
   //0x2ceef2571ae68395a171d86084466690d736e480f74a0a51286148f74b6d7436
   console.log(`Fetching blockchain bytecode from ${contractAddress} for ${contractName}`);
