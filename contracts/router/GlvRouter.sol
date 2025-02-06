@@ -47,7 +47,7 @@ contract GlvRouter is BaseRouter {
         }
 
         if (glvDeposit.account() != msg.sender) {
-            revert Errors.Unauthorized(msg.sender, "account cancelGlvDeposit");
+            revert Errors.Unauthorized(msg.sender, "account for cancelGlvDeposit");
         }
 
         glvHandler.cancelGlvDeposit(key);
@@ -82,7 +82,7 @@ contract GlvRouter is BaseRouter {
         }
 
         if (glvWithdrawal.account() != msg.sender) {
-            revert Errors.Unauthorized(msg.sender, "account cancelGlvWithdrawal");
+            revert Errors.Unauthorized(msg.sender, "account for cancelGlvWithdrawal");
         }
 
         glvHandler.cancelGlvWithdrawal(key);

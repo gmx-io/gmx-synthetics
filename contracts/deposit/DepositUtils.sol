@@ -216,8 +216,7 @@ library DepositUtils {
             startingGas,
             GasUtils.estimateDepositOraclePriceCount(deposit.longTokenSwapPath().length + deposit.shortTokenSwapPath().length),
             keeper,
-            deposit.receiver(),
-            false
+            deposit.receiver()
         );
     }
 }

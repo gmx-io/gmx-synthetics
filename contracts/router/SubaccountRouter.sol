@@ -126,8 +126,7 @@ contract SubaccountRouter is BaseRouter {
 
         bytes32 key = orderHandler.createOrder(
             account,
-            params,
-            true
+            params
         );
 
         _autoTopUpSubaccount(

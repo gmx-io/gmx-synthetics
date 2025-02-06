@@ -533,7 +533,6 @@ describe("SubaccountGelatoRelayRouter", () => {
       expect(order.flags.isLong).eq(true);
       expect(order.flags.shouldUnwrapNativeToken).eq(true);
       expect(order.flags.isFrozen).eq(false);
-      expect(order.flags.isSubaccount).eq(true);
 
       await stopImpersonatingAccount(GELATO_RELAY_ADDRESS);
 
@@ -585,6 +584,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           deadline: 0,
           nonce: 0,
         },
+        increaseExecutionFee: false,
       };
     });
 

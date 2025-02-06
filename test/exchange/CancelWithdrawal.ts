@@ -63,7 +63,7 @@ describe("Exchange.Withdrawal", () => {
 
     await expect(exchangeRouter.connect(user1).cancelWithdrawal(withdrawalKeys[0]))
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
-      .withArgs(user1.address, "account cancelWithdrawal");
+      .withArgs(user1.address, "account for cancelWithdrawal");
 
     expect(await getWithdrawalCount(dataStore)).eq(1);
 

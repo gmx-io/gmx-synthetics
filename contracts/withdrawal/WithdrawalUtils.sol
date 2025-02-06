@@ -204,8 +204,7 @@ library WithdrawalUtils {
             startingGas,
             GasUtils.estimateWithdrawalOraclePriceCount(withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length),
             keeper,
-            withdrawal.receiver(),
-            false
+            withdrawal.receiver()
         );
     }
 }

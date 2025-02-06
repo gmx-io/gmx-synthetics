@@ -254,7 +254,6 @@ describe("SubaccountRouter", () => {
     const orderKeys = await getOrderKeys(dataStore, 0, 1);
     const order = await reader.getOrder(dataStore.address, orderKeys[0]);
     expect(order.addresses.account).eq(user0.address);
-    expect(order.flags.isSubaccount).eq(true);
     expect(order.addresses.receiver).eq(user0.address);
     expect(order.numbers.initialCollateralDeltaAmount).eq(expandDecimals(100, 6));
     expect(order._dataList).deep.eq(dataList);
@@ -664,7 +663,7 @@ describe("SubaccountRouter", () => {
 
     await subaccountRouter.connect(subaccount).cancelOrder(orderKey);
 
-    expect(initialWntBalance0.sub(await wnt.balanceOf(user0.address))).closeTo("1151401506140808", "10000000000000"); // 0.0011317725 ETH
+    expect(initialWntBalance0.sub(await wnt.balanceOf(user0.address))).closeTo("1131772506036120", "10000000000000"); // 0.0011317725 ETH
 
     expect(await usdc.balanceOf(user0.address)).eq(expandDecimals(101, 6));
 
