@@ -213,7 +213,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             contracts.dataStore,
             fee.feeSwapPath
         );
-        MarketUtils.validateMarketTokenBalance(contracts.dataStore, swapPathMarkets);
 
         (address outputToken, uint256 outputAmount) = SwapUtils.swap(
             SwapUtils.SwapParams({
