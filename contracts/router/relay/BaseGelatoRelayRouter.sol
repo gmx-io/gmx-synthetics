@@ -336,7 +336,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         TokenUtils.transfer(dataStore, wnt, residualFeeReceiver, residualFee);
     }
 
-    function _getDomainSeparator(uint256 sourceChainId) internal view returns (bytes32) { // TODO: why is this named sourceChainId if it's the block.chainid? It makes you think it refers to a source chain e.g. Base
+    function _getDomainSeparator(uint256 sourceChainId) internal view returns (bytes32) {
         return
             keccak256(
                 abi.encode(
@@ -350,7 +350,8 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     }
 
     function _validateCall(RelayParams calldata relayParams, address account, bytes32 structHash) internal {
-        bytes32 domainSeparator = _getDomainSeparator(block.chainid);
+        uint256 srcChainId = relayParams.srcChainId == 0 ? block.chain : relayParams.srcChainId;
+        bytes32 domainSeparator = _getDomainSeparator(relayParams.srcChainId);
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
         _validateSignature(digest, relayParams.signature, account, "call");
 
