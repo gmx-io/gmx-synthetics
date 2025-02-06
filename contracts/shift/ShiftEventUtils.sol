@@ -34,12 +34,13 @@ library ShiftEventUtils {
         eventData.addressItems.setItem(4, "toMarket", shift.toMarket());
         eventData.addressItems.setItem(5, "uiFeeReceiver", shift.uiFeeReceiver());
 
-        eventData.uintItems.initItems(5);
+        eventData.uintItems.initItems(6);
         eventData.uintItems.setItem(0, "marketTokenAmount", shift.marketTokenAmount());
         eventData.uintItems.setItem(1, "minMarketTokens", shift.minMarketTokens());
         eventData.uintItems.setItem(2, "updatedAtTime", shift.updatedAtTime());
         eventData.uintItems.setItem(3, "executionFee", shift.executionFee());
         eventData.uintItems.setItem(4, "callbackGasLimit", shift.callbackGasLimit());
+        eventData.uintItems.setItem(5, "srcChainId", shift.srcChainId());
 
         eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "key", key);
