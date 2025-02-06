@@ -304,14 +304,9 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             outputAmount = _swapFeeTokens(contracts, wnt, fee);
         }
 
-        uint256 requiredRelayFee = _getFee();
-        if (requiredRelayFee > outputAmount) {
-            revert Errors.InsufficientRelayFee(requiredRelayFee, outputAmount);
-        }
+        _transferRelayFeeCapped(outputAmount);
 
-        _transferRelayFee();
-
-        uint256 residualFee = outputAmount - requiredRelayFee;
+        uint256 residualFee = outputAmount - _getFee();
         // for create orders the residual fee is sent to the order vault
         // for update orders the residual fee could be sent to the order vault if order's execution fee should be increased
         // otherwise the residual fee is sent back to the user
