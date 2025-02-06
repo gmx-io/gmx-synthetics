@@ -200,8 +200,7 @@ library GlvWithdrawalUtils {
             params.startingGas,
             cache.oraclePriceCount,
             params.keeper,
-            glvWithdrawal.receiver(),
-            false
+            glvWithdrawal.receiver()
         );
     }
 
@@ -335,8 +334,7 @@ library GlvWithdrawalUtils {
                 glvWithdrawal.longTokenSwapPath().length + glvWithdrawal.shortTokenSwapPath().length
             ),
             params.keeper,
-            glvWithdrawal.receiver(),
-            false
+            glvWithdrawal.receiver()
         );
     }
 }

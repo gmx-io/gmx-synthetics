@@ -23,7 +23,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     bytes32 public constant UPDATE_ORDER_TYPEHASH =
         keccak256(
             bytes(
-                "UpdateOrder(address account,bytes32 key,UpdateOrderParams params,bytes32 relayParams,bytes32 subaccountApproval)UpdateOrderParams(uint256 sizeDeltaUsd,uint256 acceptablePrice,uint256 triggerPrice,uint256 minOutputAmount,uint256 validFromTime,bool autoCancel)"
+                "UpdateOrder(address account,bytes32 key,UpdateOrderParams params,bytes32 relayParams,bool increaseExecutionFee,bytes32 subaccountApproval)UpdateOrderParams(uint256 sizeDeltaUsd,uint256 acceptablePrice,uint256 triggerPrice,uint256 minOutputAmount,uint256 validFromTime,bool autoCancel)"
             )
         );
     bytes32 public constant UPDATE_ORDER_PARAMS_TYPEHASH =
@@ -109,7 +109,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             revert Errors.InvalidCancellationReceiverForSubaccountOrder(params.addresses.cancellationReceiver, account);
         }
 
-        return _createOrder(relayParams, account, collateralDeltaAmount, params, true);
+        return _createOrder(relayParams, account, collateralDeltaAmount, params);
     }
 
     function updateOrder(
@@ -122,7 +122,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         bool increaseExecutionFee
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelay {
         _validateGaslessFeature();
-        bytes32 structHash = _getUpdateOrderStructHash(relayParams, subaccountApproval, account, key, params);
+        bytes32 structHash = _getUpdateOrderStructHash(relayParams, subaccountApproval, account, key, params, increaseExecutionFee);
         _validateCall(relayParams, subaccount, structHash);
         _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, subaccountApproval);
         _updateOrder(relayParams, account, key, params, increaseExecutionFee);
@@ -322,7 +322,8 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         SubaccountApproval calldata subaccountApproval,
         address account,
         bytes32 key,
-        UpdateOrderParams calldata params
+        UpdateOrderParams calldata params,
+        bool increaseExecutionFee
     ) internal pure returns (bytes32) {
         return
             keccak256(
@@ -332,6 +333,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
                     key,
                     _getUpdateOrderParamsStructHash(params),
                     _getRelayParamsHash(relayParams),
+                    increaseExecutionFee,
                     keccak256(abi.encode(subaccountApproval))
                 )
             );
