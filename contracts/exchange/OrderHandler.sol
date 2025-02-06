@@ -38,7 +38,8 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
     // @param params BaseOrderUtils.CreateOrderParams
     function createOrder(
         address account,
-        IBaseOrderUtils.CreateOrderParams calldata params
+        IBaseOrderUtils.CreateOrderParams calldata params,
+        bool shouldValidateMaxExecutionFee
     ) external override globalNonReentrant onlyController returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createOrderFeatureDisabledKey(address(this), uint256(params.orderType)));
         validateDataListLength(params.dataList.length);
@@ -49,7 +50,8 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
             orderVault,
             referralStorage,
             account,
-            params
+            params,
+            shouldValidateMaxExecutionFee
         );
     }
 
@@ -84,7 +86,8 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         uint256 minOutputAmount,
         uint256 validFromTime,
         bool autoCancel,
-        Order.Props memory order
+        Order.Props memory order,
+        bool shouldValidateMaxExecutionFee
     ) external override globalNonReentrant onlyController {
         FeatureUtils.validateFeature(dataStore, Keys.updateOrderFeatureDisabledKey(address(this), uint256(order.orderType())));
 
@@ -106,7 +109,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
 
         uint256 estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(dataStore, order);
         uint256 oraclePriceCount = GasUtils.estimateOrderOraclePriceCount(order.swapPath().length);
-        GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, order.executionFee(), oraclePriceCount);
+        GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, order.executionFee(), oraclePriceCount, shouldValidateMaxExecutionFee);
 
         if (order.autoCancel() != autoCancel) {
             OrderUtils.updateAutoCancelList(dataStore, key, order, autoCancel);

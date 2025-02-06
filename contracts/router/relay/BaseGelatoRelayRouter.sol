@@ -108,7 +108,8 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         RelayParams calldata relayParams,
         address account,
         uint256 collateralDeltaAmount,
-        IBaseOrderUtils.CreateOrderParams memory params // can't use calldata because need to modify params.numbers.executionFee
+        IBaseOrderUtils.CreateOrderParams memory params, // can't use calldata because need to modify params.numbers.executionFee
+        bool isSubaccount
     ) internal returns (bytes32) {
         Contracts memory contracts = Contracts({
             dataStore: dataStore,
@@ -139,7 +140,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             );
         }
 
-        return orderHandler.createOrder(account, params);
+        return orderHandler.createOrder(account, params, isSubaccount && params.addresses.callbackContract != address(0));
     }
 
     function _updateOrder(
@@ -147,7 +148,8 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         address account,
         bytes32 key,
         UpdateOrderParams calldata params,
-        bool increaseExecutionFee
+        bool increaseExecutionFee,
+        bool isSubaccount
     ) internal {
         Contracts memory contracts = Contracts({
             dataStore: dataStore,
@@ -176,7 +178,8 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             params.minOutputAmount,
             params.validFromTime,
             params.autoCancel,
-            order
+            order,
+            isSubaccount && order.callbackContract() != address(0)
         );
     }
 
@@ -301,14 +304,9 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             outputAmount = _swapFeeTokens(contracts, wnt, fee);
         }
 
-        uint256 requiredRelayFee = _getFee();
-        if (requiredRelayFee > outputAmount) {
-            revert Errors.InsufficientRelayFee(requiredRelayFee, outputAmount);
-        }
+        _transferRelayFeeCapped(outputAmount);
 
-        _transferRelayFee();
-
-        uint256 residualFee = outputAmount - requiredRelayFee;
+        uint256 residualFee = outputAmount - _getFee();
         // for create orders the residual fee is sent to the order vault
         // for update orders the residual fee could be sent to the order vault if order's execution fee should be increased
         // otherwise the residual fee is sent back to the user

@@ -19,7 +19,6 @@ describe("Relay signatures", () => {
     orderVault,
     router,
     marketStoreUtils,
-    marketUtils,
     orderStoreUtils,
     swapUtils,
     mockContract;
@@ -35,7 +34,6 @@ describe("Relay signatures", () => {
       oracle,
       orderHandler,
       marketStoreUtils,
-      marketUtils,
       orderStoreUtils,
       swapUtils,
     } = fixture.contracts);
@@ -55,7 +53,6 @@ describe("Relay signatures", () => {
       {
         libraries: {
           MarketStoreUtils: marketStoreUtils.address,
-          MarketUtils: marketUtils.address,
           OrderStoreUtils: orderStoreUtils.address,
           SwapUtils: swapUtils.address,
         },

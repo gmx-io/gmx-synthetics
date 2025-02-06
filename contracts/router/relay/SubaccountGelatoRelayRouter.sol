@@ -109,7 +109,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             revert Errors.InvalidCancellationReceiverForSubaccountOrder(params.addresses.cancellationReceiver, account);
         }
 
-        return _createOrder(relayParams, account, collateralDeltaAmount, params);
+        return _createOrder(relayParams, account, collateralDeltaAmount, params, true);
     }
 
     function updateOrder(
@@ -125,7 +125,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         bytes32 structHash = _getUpdateOrderStructHash(relayParams, subaccountApproval, account, key, params, increaseExecutionFee);
         _validateCall(relayParams, subaccount, structHash);
         _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, subaccountApproval);
-        _updateOrder(relayParams, account, key, params, increaseExecutionFee);
+        _updateOrder(relayParams, account, key, params, increaseExecutionFee, true);
     }
 
     function cancelOrder(
