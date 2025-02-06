@@ -4,6 +4,7 @@ import {
   stopImpersonatingAccount,
   setBalance,
   time,
+  setNextBlockBaseFeePerGas,
 } from "@nomicfoundation/hardhat-network-helpers";
 
 import { deployFixture } from "../../../utils/fixture";
@@ -76,6 +77,9 @@ describe("SubaccountGelatoRelayRouter", () => {
 
     relaySigner = await hre.ethers.getSigner(GELATO_RELAY_ADDRESS);
     chainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
+
+    await dataStore.setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1));
+    await setNextBlockBaseFeePerGas(expandDecimals(1, 9));
   });
 
   describe("createOrder", () => {
