@@ -113,7 +113,7 @@ async function compareContractBytecodes(provider: JsonRpcProvider, contractAddre
 
   await compileContract(AUDITED_COMMIT, contractName);
 
-  const Contract = await ethers.getContractFactory(contractName);
+  const Contract = await ethers.getContract(contractName);
   if (!Contract) {
     throw new Error(`Could not find contract ${contractName}`);
   }
