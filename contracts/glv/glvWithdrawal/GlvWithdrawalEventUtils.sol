@@ -38,13 +38,14 @@ library GlvWithdrawalEventUtils {
         eventData.addressItems.setItem(0, "longTokenSwapPath", glvWithdrawal.longTokenSwapPath());
         eventData.addressItems.setItem(1, "shortTokenSwapPath", glvWithdrawal.shortTokenSwapPath());
 
-        eventData.uintItems.initItems(6);
+        eventData.uintItems.initItems(7);
         eventData.uintItems.setItem(0, "glvTokenAmount", glvWithdrawal.glvTokenAmount());
         eventData.uintItems.setItem(1, "minLongTokenAmount", glvWithdrawal.minLongTokenAmount());
         eventData.uintItems.setItem(2, "minShortTokenAmount", glvWithdrawal.minShortTokenAmount());
         eventData.uintItems.setItem(3, "updatedAtTime", glvWithdrawal.updatedAtTime());
         eventData.uintItems.setItem(4, "executionFee", glvWithdrawal.executionFee());
         eventData.uintItems.setItem(5, "callbackGasLimit", glvWithdrawal.callbackGasLimit());
+        eventData.uintItems.setItem(6, "srcChainId", glvWithdrawal.srcChainId());
 
         eventData.boolItems.initItems(1);
         eventData.boolItems.setItem(0, "shouldUnwrapNativeToken", glvWithdrawal.shouldUnwrapNativeToken());
