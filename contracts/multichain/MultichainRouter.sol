@@ -19,7 +19,6 @@ contract MultichainRouter is GelatoRelayRouter {
 
     // TODO: extract multichain part from GaslessCreateDepositParams struct
     // struct MultichainCreateDepositParams {
-    //     uint256 chainId;
     //     uint256 longTokenAmount;
     //     uint256 shortTokenAmount;
     // }
@@ -39,7 +38,7 @@ contract MultichainRouter is GelatoRelayRouter {
     bytes32 public constant GASLESS_CREATE_DEPOSIT_PARAMS_TYPEHASH =
         keccak256(
             bytes(
-                "GaslessCreateDepositParams(uint256 srcChainId,uint256 longTokenAmount,uint256 shortTokenAmount,CreateDepositParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minMarketTokens,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)"
+                "GaslessCreateDepositParams(uint256 desChainId,uint256 longTokenAmount,uint256 shortTokenAmount,CreateDepositParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minMarketTokens,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)"
             )
         );
 
@@ -157,28 +156,27 @@ contract MultichainRouter is GelatoRelayRouter {
     function _getGaslessCreateDepositStructHash(
         RelayParams calldata relayParams,
         GaslessCreateDepositParams memory params
-    ) internal pure returns (bytes32) {
+    ) internal view returns (bytes32) {
         bytes32 relayParamsHash = keccak256(abi.encode(relayParams));
 
         return
             keccak256(
                 abi.encode(
                     CREATE_DEPOSIT_TYPEHASH,
-                    _getGaslessCreateDepositParamsStructHash(relayParams.srcChainId, params),
+                    _getGaslessCreateDepositParamsStructHash(params),
                     relayParamsHash
                 )
             );
     }
 
     function _getGaslessCreateDepositParamsStructHash(
-        uint256 srcChainId,
         GaslessCreateDepositParams memory params
-    ) internal pure returns (bytes32) {
+    ) internal view returns (bytes32) {
         return
             keccak256(
                 abi.encode(
                     GASLESS_CREATE_DEPOSIT_PARAMS_TYPEHASH,
-                    srcChainId,
+                    block.chainid,
                     params.longTokenAmount,
                     params.shortTokenAmount,
                     _getCreateDepositParamsStructHash(params.createDepositParams)
