@@ -75,7 +75,7 @@ describe("Exchange.UpdateOrder", () => {
       )
     )
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
-      .withArgs(user1.address, "account for updateOrder");
+      .withArgs(user1.address, "account updateOrder");
 
     await expect(
       exchangeRouter.connect(user0).updateOrder(

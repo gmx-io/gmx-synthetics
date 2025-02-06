@@ -533,6 +533,7 @@ describe("SubaccountGelatoRelayRouter", () => {
       expect(order.flags.isLong).eq(true);
       expect(order.flags.shouldUnwrapNativeToken).eq(true);
       expect(order.flags.isFrozen).eq(false);
+      expect(order.flags.isSubaccount).eq(true);
 
       await stopImpersonatingAccount(GELATO_RELAY_ADDRESS);
 
@@ -541,6 +542,8 @@ describe("SubaccountGelatoRelayRouter", () => {
         label: "gelatoRelayRouter.createOrder",
       });
     });
+
+    it.skip("swap relay fee");
   });
 
   describe("updateOrder", () => {
@@ -681,6 +684,7 @@ describe("SubaccountGelatoRelayRouter", () => {
   });
 
   it("removeSubaccount", async () => {
+    await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
     await dataStore.addAddress(keys.subaccountListKey(user1.address), user0.address);
     expect(await dataStore.getAddressCount(keys.subaccountListKey(user1.address))).to.eq(1);
     const params = {

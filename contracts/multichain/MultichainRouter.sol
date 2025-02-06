@@ -117,7 +117,6 @@ contract MultichainRouter is GelatoRelayRouter {
             fee, // feeAmount is relayFee + executionFee
             params.createDepositParams.srcChainId,
             account,
-            NonceUtils.getKey(contracts.dataStore, NonceUtils.getCurrentNonce(dataStore) + 1), // calculate next key without incrementing
             // if initialLongTokenAmount or initialShortTokenAmount is wnt then executionFee will be subracted (in DepositUtils.createDeposit) from one of them
             // otherwise executionFee amount of wnt must be sent to DepositVault => it means the residualFeeReceiver should be the DepositVault
             address(depositVault) // residualFeeReceiver

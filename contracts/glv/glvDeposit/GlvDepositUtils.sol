@@ -305,7 +305,8 @@ library GlvDepositUtils {
             params.startingGas,
             cache.oraclePriceCount,
             params.keeper,
-            glvDeposit.receiver()
+            glvDeposit.receiver(),
+            false
         );
 
         return cache.mintAmount;
@@ -445,7 +446,8 @@ library GlvDepositUtils {
             params.startingGas,
             oraclePriceCount,
             params.keeper,
-            glvDeposit.receiver()
+            glvDeposit.receiver(),
+            false
         );
     }
 }

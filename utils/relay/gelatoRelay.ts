@@ -73,6 +73,7 @@ async function getCreateOrderSignature({
       { name: "addresses", type: "CreateOrderAddresses" },
       { name: "numbers", type: "CreateOrderNumbers" },
       { name: "orderType", type: "uint256" },
+      { name: "decreasePositionSwapType", type: "uint256" },
       { name: "isLong", type: "bool" },
       { name: "shouldUnwrapNativeToken", type: "bool" },
       { name: "autoCancel", type: "bool" },
@@ -110,6 +111,7 @@ async function getCreateOrderSignature({
     addresses: params.addresses,
     numbers: params.numbers,
     orderType: params.orderType,
+    decreasePositionSwapType: params.decreasePositionSwapType,
     isLong: params.isLong,
     shouldUnwrapNativeToken: params.shouldUnwrapNativeToken,
     autoCancel: false,
@@ -156,6 +158,7 @@ export async function sendUpdateOrder(p: {
   signature?: string;
   relayFeeToken: string;
   relayFeeAmount: BigNumberish;
+  increaseExecutionFee: boolean;
 }) {
   const relayParams = await getRelayParams(p);
 
@@ -167,6 +170,7 @@ export async function sendUpdateOrder(p: {
     p.account,
     p.key,
     p.params,
+    Boolean(p.increaseExecutionFee),
   ]);
   const calldata = ethers.utils.solidityPack(
     ["bytes", "address", "address", "uint256"],

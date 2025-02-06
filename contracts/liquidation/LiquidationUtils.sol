@@ -77,7 +77,8 @@ library LiquidationUtils {
             position.isLong(), // isLong
             true, // shouldUnwrapNativeToken
             false, // isFrozen
-            false // autoCancel
+            false, // autoCancel
+            false // isSubaccount
         );
 
         Order.Props memory order = Order.Props(

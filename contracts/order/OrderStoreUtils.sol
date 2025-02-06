@@ -39,6 +39,7 @@ library OrderStoreUtils {
     bytes32 public constant SHOULD_UNWRAP_NATIVE_TOKEN = keccak256(abi.encode("SHOULD_UNWRAP_NATIVE_TOKEN"));
     bytes32 public constant IS_FROZEN = keccak256(abi.encode("IS_FROZEN"));
     bytes32 public constant AUTO_CANCEL = keccak256(abi.encode("AUTO_CANCEL"));
+    bytes32 public constant IS_SUBACCOUNT = keccak256(abi.encode("IS_SUBACCOUNT"));
 
     bytes32 public constant DATA_LIST = keccak256(abi.encode("DATA_LIST"));
 
@@ -138,6 +139,10 @@ library OrderStoreUtils {
 
         order.setAutoCancel(dataStore.getBool(
             keccak256(abi.encode(key, AUTO_CANCEL))
+        ));
+
+        order.setIsSubaccount(dataStore.getBool(
+            keccak256(abi.encode(key, IS_SUBACCOUNT))
         ));
 
         order.setDataList(dataStore.getBytes32Array(
@@ -273,6 +278,15 @@ library OrderStoreUtils {
             order.autoCancel()
         );
 
+        // isSubaccount can't be updated after order is created
+        // store it if only it's true
+        if (order.isSubaccount()) {
+            dataStore.setBool(
+                keccak256(abi.encode(key, IS_SUBACCOUNT)),
+                order.isSubaccount()
+            );
+        }
+
         dataStore.setBytes32Array(
             keccak256(abi.encode(key, DATA_LIST)),
             order.dataList()
@@ -384,6 +398,10 @@ library OrderStoreUtils {
 
         dataStore.removeBool(
             keccak256(abi.encode(key, AUTO_CANCEL))
+        );
+
+        dataStore.removeBool(
+            keccak256(abi.encode(key, IS_SUBACCOUNT))
         );
 
         dataStore.removeBytes32Array(

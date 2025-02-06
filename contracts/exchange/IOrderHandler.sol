@@ -6,7 +6,7 @@ import "../order/IBaseOrderUtils.sol";
 import "../oracle/OracleUtils.sol";
 
 interface IOrderHandler {
-    function createOrder(address account, IBaseOrderUtils.CreateOrderParams calldata params) external returns (bytes32);
+    function createOrder(address account, IBaseOrderUtils.CreateOrderParams calldata params, bool isSubaccount) external returns (bytes32);
 
     function simulateExecuteOrder(bytes32 key, OracleUtils.SimulatePricesParams memory params) external;
 

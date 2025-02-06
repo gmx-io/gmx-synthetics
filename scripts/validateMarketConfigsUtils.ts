@@ -327,15 +327,31 @@ const recommendedMarketConfig = {
     TRUMP: {
       negativePositionImpactFactor: exponentToFloat("5e-7"),
       expectedSwapImpactRatio: 20_000,
-      expectedPositionImpactRatio: 20_000,
+      expectedPositionImpactRatio: 15_000,
     },
     MELANIA: {
       negativePositionImpactFactor: exponentToFloat("5e-7"),
       expectedSwapImpactRatio: 20_000,
-      expectedPositionImpactRatio: 20_000,
+      expectedPositionImpactRatio: 15_000,
     },
     ENA: {
       negativePositionImpactFactor: exponentToFloat("8e-7"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    FARTCOIN: {
+      negativePositionImpactFactor: exponentToFloat("5e-7"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    AI16Z: {
+      negativePositionImpactFactor: exponentToFloat("5e-7"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    ANIME: {
+      negativePositionImpactFactor: exponentToFloat("5e-7"),
+      negativeSwapImpactFactor: exponentToFloat("3e-8"),
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
     },
@@ -389,6 +405,16 @@ const recommendedMarketConfig = {
     XRP: {
       negativePositionImpactFactor: exponentToFloat("5e-9").div(2),
       negativeSwapImpactFactor: exponentToFloat("5e-9").div(2),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    TRUMP: {
+      negativePositionImpactFactor: exponentToFloat("5e-7"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    MELANIA: {
+      negativePositionImpactFactor: exponentToFloat("5e-7"),
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
     },

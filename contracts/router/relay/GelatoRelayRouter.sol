@@ -30,7 +30,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
     bytes32 public constant CREATE_ORDER_TYPEHASH =
         keccak256(
             bytes(
-                "CreateOrder(uint256 collateralDeltaAmount,CreateOrderAddresses addresses,CreateOrderNumbers numbers,uint256 orderType,bool isLong,bool shouldUnwrapNativeToken,bool autoCancel,bytes32 referralCode,bytes32 relayParams)CreateOrderAddresses(address receiver,address cancellationReceiver,address callbackContract,address uiFeeReceiver,address market,address initialCollateralToken,address[] swapPath)CreateOrderNumbers(uint256 sizeDeltaUsd,uint256 initialCollateralDeltaAmount,uint256 triggerPrice,uint256 acceptablePrice,uint256 executionFee,uint256 callbackGasLimit,uint256 minOutputAmount,uint256 validFromTime)"
+                "CreateOrder(uint256 collateralDeltaAmount,CreateOrderAddresses addresses,CreateOrderNumbers numbers,uint256 orderType,uint256 decreasePositionSwapType,bool isLong,bool shouldUnwrapNativeToken,bool autoCancel,bytes32 referralCode,bytes32 relayParams)CreateOrderAddresses(address receiver,address cancellationReceiver,address callbackContract,address uiFeeReceiver,address market,address initialCollateralToken,address[] swapPath)CreateOrderNumbers(uint256 sizeDeltaUsd,uint256 initialCollateralDeltaAmount,uint256 triggerPrice,uint256 acceptablePrice,uint256 executionFee,uint256 callbackGasLimit,uint256 minOutputAmount,uint256 validFromTime)"
             )
         );
     bytes32 public constant CREATE_ORDER_NUMBERS_TYPEHASH =
@@ -67,22 +67,25 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         onlyGelatoRelay
         returns (bytes32)
     {
+        _validateGaslessFeature();
         bytes32 structHash = _getCreateOrderStructHash(relayParams, collateralDeltaAmount, params);
         _validateCall(relayParams, account, structHash);
 
-        return _createOrder(relayParams, account, collateralDeltaAmount, params);
+        return _createOrder(relayParams, account, collateralDeltaAmount, params, false);
     }
 
     function updateOrder(
         RelayParams calldata relayParams,
         address account,
         bytes32 key,
-        UpdateOrderParams calldata params
+        UpdateOrderParams calldata params,
+        bool increaseExecutionFee
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelay {
+        _validateGaslessFeature();
         bytes32 structHash = _getUpdateOrderStructHash(relayParams, key, params);
         _validateCall(relayParams, account, structHash);
 
-        _updateOrder(relayParams, account, key, params);
+        _updateOrder(relayParams, account, key, params, increaseExecutionFee);
     }
 
     function cancelOrder(
@@ -90,6 +93,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         address account,
         bytes32 key
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelay {
+        _validateGaslessFeature();
         bytes32 structHash = _getCancelOrderStructHash(relayParams, key);
         _validateCall(relayParams, account, structHash);
 
@@ -144,6 +148,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
                     _getCreateOrderAddressesStructHash(params.addresses),
                     _getCreateOrderNumbersStructHash(params.numbers),
                     uint256(params.orderType),
+                    uint256(params.decreasePositionSwapType),
                     params.isLong,
                     params.shouldUnwrapNativeToken,
                     params.autoCancel,

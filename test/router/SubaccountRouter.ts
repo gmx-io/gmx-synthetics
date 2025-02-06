@@ -138,7 +138,7 @@ describe("SubaccountRouter", () => {
     const params = {
       addresses: {
         receiver: subaccount.address,
-        cancellationReceiver: subaccount.address,
+        cancellationReceiver: user0.address,
         callbackContract: user2.address,
         uiFeeReceiver: user1.address,
         market: ethUsdMarket.marketToken,
@@ -180,6 +180,13 @@ describe("SubaccountRouter", () => {
     await expect(subaccountRouter.connect(subaccount).createOrder(user0.address, params))
       .to.be.revertedWithCustomError(errorsContract, "InvalidReceiverForSubaccountOrder")
       .withArgs(subaccount.address, user0.address);
+
+    await expect(
+      subaccountRouter.connect(subaccount).createOrder(user0.address, {
+        ...params,
+        addresses: { ...params.addresses, receiver: user0.address, cancellationReceiver: subaccount.address },
+      })
+    ).to.be.revertedWithCustomError(errorsContract, "InvalidCancellationReceiverForSubaccountOrder");
 
     await expect(
       subaccountRouter.connect(subaccount).createOrder(user0.address, {
@@ -247,6 +254,7 @@ describe("SubaccountRouter", () => {
     const orderKeys = await getOrderKeys(dataStore, 0, 1);
     const order = await reader.getOrder(dataStore.address, orderKeys[0]);
     expect(order.addresses.account).eq(user0.address);
+    expect(order.flags.isSubaccount).eq(true);
     expect(order.addresses.receiver).eq(user0.address);
     expect(order.numbers.initialCollateralDeltaAmount).eq(expandDecimals(100, 6));
     expect(order._dataList).deep.eq(dataList);
@@ -656,7 +664,7 @@ describe("SubaccountRouter", () => {
 
     await subaccountRouter.connect(subaccount).cancelOrder(orderKey);
 
-    expect(initialWntBalance0.sub(await wnt.balanceOf(user0.address))).closeTo("1156293006166896", "10000000000000"); // 0.001156293006166896 ETH
+    expect(initialWntBalance0.sub(await wnt.balanceOf(user0.address))).closeTo("1151401506140808", "10000000000000"); // 0.0011317725 ETH
 
     expect(await usdc.balanceOf(user0.address)).eq(expandDecimals(101, 6));
 

@@ -6,6 +6,7 @@ import {GelatoRelayContext} from "@gelatonetwork/relay-context/contracts/GelatoR
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
+import "../../feature/FeatureUtils.sol";
 import "../../data/DataStore.sol";
 import "../../event/EventEmitter.sol";
 import "../../exchange/IOrderHandler.sol";
@@ -104,11 +105,52 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         }
     }
 
+    function _createOrder(
+        RelayParams calldata relayParams,
+        address account,
+        uint256 collateralDeltaAmount,
+        IBaseOrderUtils.CreateOrderParams memory params, // can't use calldata because need to modify params.numbers.executionFee
+        bool isSubaccount
+    ) internal returns (bytes32) {
+        Contracts memory contracts = Contracts({
+            dataStore: dataStore,
+            eventEmitter: eventEmitter,
+            orderVault: orderVault
+        });
+
+        params.numbers.executionFee = _handleRelay(
+            contracts,
+            relayParams.tokenPermits,
+            relayParams.fee,
+            relayParams.srcChainId,
+            account,
+            address(contracts.orderVault)
+        );
+
+        if (
+            params.orderType == Order.OrderType.MarketSwap ||
+            params.orderType == Order.OrderType.LimitSwap ||
+            params.orderType == Order.OrderType.MarketIncrease ||
+            params.orderType == Order.OrderType.LimitIncrease ||
+            params.orderType == Order.OrderType.StopIncrease
+        ) {
+            _sendTokens(
+                account,
+                params.addresses.initialCollateralToken,
+                address(contracts.orderVault),
+                collateralDeltaAmount
+            );
+        }
+
+        return orderHandler.createOrder(account, params, isSubaccount);
+    }
+
     function _updateOrder(
         RelayParams calldata relayParams,
         address account,
         bytes32 key,
-        UpdateOrderParams calldata params
+        UpdateOrderParams calldata params,
+        bool increaseExecutionFee
     ) internal {
         Contracts memory contracts = Contracts({
             dataStore: dataStore,
@@ -123,10 +165,11 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         }
 
         if (order.account() != account) {
-            revert Errors.Unauthorized(account, "account for updateOrder");
+            revert Errors.Unauthorized(account, "account updateOrder");
         }
 
-        _handleRelay(contracts, relayParams.tokenPermits, relayParams.fee, relayParams.srcChainId, account, key, account);
+        address residualFeeReceiver = increaseExecutionFee ? address(contracts.orderVault) : account;
+        _handleRelay(contracts, relayParams.tokenPermits, relayParams.fee, relayParams.srcChainId, account, residualFeeReceiver);
 
         orderHandler.updateOrder(
             key,
@@ -153,59 +196,18 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         }
 
         if (order.account() != account) {
-            revert Errors.Unauthorized(account, "account for cancelOrder");
+            revert Errors.Unauthorized(account, "account cancelOrder");
         }
 
-        _handleRelay(contracts, relayParams.tokenPermits, relayParams.fee, relayParams.srcChainId, account, key, account);
+        _handleRelay(contracts, relayParams.tokenPermits, relayParams.fee, relayParams.srcChainId, account, account);
 
         orderHandler.cancelOrder(key);
-    }
-
-    function _createOrder(
-        RelayParams calldata relayParams,
-        address account,
-        uint256 collateralDeltaAmount,
-        IBaseOrderUtils.CreateOrderParams memory params // can't use calldata because need to modify params.numbers.executionFee
-    ) internal returns (bytes32) {
-        Contracts memory contracts = Contracts({
-            dataStore: dataStore,
-            eventEmitter: eventEmitter,
-            orderVault: orderVault
-        });
-
-        params.numbers.executionFee = _handleRelay(
-            contracts,
-            relayParams.tokenPermits,
-            relayParams.fee,
-            relayParams.srcChainId,
-            account,
-            NonceUtils.getNextKey(contracts.dataStore), // order key
-            address(contracts.orderVault)
-        );
-
-        if (
-            params.orderType == Order.OrderType.MarketSwap ||
-            params.orderType == Order.OrderType.LimitSwap ||
-            params.orderType == Order.OrderType.MarketIncrease ||
-            params.orderType == Order.OrderType.LimitIncrease ||
-            params.orderType == Order.OrderType.StopIncrease
-        ) {
-            _sendTokens(
-                account,
-                params.addresses.initialCollateralToken,
-                address(contracts.orderVault),
-                collateralDeltaAmount
-            );
-        }
-
-        return orderHandler.createOrder(account, params); // TODO: key is incremented here, but also when passed as param to _handleRelay. Seems the relayFee is paid for prev key?
     }
 
     function _swapFeeTokens(
         Contracts memory contracts,
         address wnt,
-        RelayFeeParams calldata fee,
-        bytes32 orderKey
+        RelayFeeParams calldata fee
     ) internal returns (uint256) {
         if (fee.feeToken == wnt) {
             contracts.orderVault.transferOut(wnt, address(this), fee.feeAmount);
@@ -213,7 +215,12 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         }
 
         // swap fee tokens to WNT
-        Market.Props[] memory swapPathMarkets = MarketUtils.getSwapPathMarkets(contracts.dataStore, fee.feeSwapPath);
+        MarketUtils.validateSwapPath(contracts.dataStore, fee.feeSwapPath);
+        Market.Props[] memory swapPathMarkets = MarketUtils.getSwapPathMarkets(
+            contracts.dataStore,
+            fee.feeSwapPath
+        );
+        MarketUtils.validateMarketTokenBalance(contracts.dataStore, swapPathMarkets);
 
         (address outputToken, uint256 outputAmount) = SwapUtils.swap(
             SwapUtils.SwapParams({
@@ -221,14 +228,15 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
                 eventEmitter: contracts.eventEmitter,
                 oracle: oracle,
                 bank: contracts.orderVault,
-                key: orderKey,
+                key: bytes32(0),
                 tokenIn: fee.feeToken,
                 amountIn: fee.feeAmount,
                 swapPathMarkets: swapPathMarkets,
                 minOutputAmount: _getFee(),
                 receiver: address(this),
                 uiFeeReceiver: address(0),
-                shouldUnwrapNativeToken: false
+                shouldUnwrapNativeToken: false,
+                swapPricingType: ISwapPricingUtils.SwapPricingType.Atomic
             })
         );
 
@@ -245,11 +253,10 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         RelayFeeParams calldata fee,
         uint256 srcChainId,
         address account,
-        bytes32 orderKey,
         address residualFeeReceiver
     ) internal returns (uint256) {
         _handleTokenPermits(tokenPermits);
-        return _handleRelayFee(contracts, fee, srcChainId, account, orderKey, residualFeeReceiver);
+        return _handleRelayFee(contracts, fee, srcChainId, account, residualFeeReceiver);
     }
 
     function _handleTokenPermits(TokenPermit[] calldata tokenPermits) internal {
@@ -269,20 +276,17 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
                 revert Errors.InvalidPermitSpender(permit.spender, _router);
             }
 
-            if (ERC20(permit.token).allowance(permit.owner, permit.spender) >= permit.value) {
-                // allowance is sufficient already
-                continue;
-            }
-
-            IERC20Permit(permit.token).permit(
-                permit.owner,
-                permit.spender,
-                permit.value,
-                permit.deadline,
-                permit.v,
-                permit.r,
-                permit.s
-            );
+            try
+                IERC20Permit(permit.token).permit(
+                    permit.owner,
+                    permit.spender,
+                    permit.value,
+                    permit.deadline,
+                    permit.v,
+                    permit.r,
+                    permit.s
+                )
+            {} catch (bytes memory) {}
         }
     }
 
@@ -291,7 +295,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         RelayFeeParams calldata fee,
         uint256 srcChainId,
         address account,
-        bytes32 orderKey,
         address residualFeeReceiver
     ) internal returns (uint256) {
         address wnt = TokenUtils.wnt(contracts.dataStore);
@@ -301,7 +304,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         }
 
         _sendTokens(account, fee.feeToken, address(contracts.orderVault), fee.feeAmount);
-        uint256 outputAmount = _swapFeeTokens(contracts, wnt, fee, orderKey);
+        uint256 outputAmount = _swapFeeTokens(contracts, wnt, fee);
 
         uint256 requiredRelayFee = _getFee();
         if (requiredRelayFee > outputAmount) {
@@ -313,7 +316,9 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         // TODO: should it be named remainingFee as it's intended to always include RelayFee + executionFee?
         // For createOrder it's the executionFee and goes into depositVault. For update/cancelOrder is goes back to account
         uint256 residualFee = outputAmount - requiredRelayFee;
-        // for orders the residual fee is sent to the order vault
+        // for create orders the residual fee is sent to the order vault as an execution fee
+        // for update orders the residual fee could be sent to the order vault if order's execution fee should be increased
+        // otherwise the residual fee is sent back to the user
         // for other actions the residual fee is sent back to the user
         _transferResidualFee(wnt, residualFeeReceiver, residualFee, srcChainId, account);
 
@@ -377,5 +382,9 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
                     relayParams.deadline
                 )
             );
+    }
+
+    function _validateGaslessFeature() internal view {
+        FeatureUtils.validateFeature(dataStore, Keys.gaslessFeatureDisabledKey(address(this)));
     }
 }

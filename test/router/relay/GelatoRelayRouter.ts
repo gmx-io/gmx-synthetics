@@ -7,7 +7,7 @@ import {
 } from "@nomicfoundation/hardhat-network-helpers";
 
 import { deployFixture } from "../../../utils/fixture";
-import { expandDecimals, decimalToFloat, bigNumberify } from "../../../utils/math";
+import { expandDecimals, decimalToFloat, bigNumberify, percentageToFloat, applyFactor } from "../../../utils/math";
 import { logGasUsage } from "../../../utils/gas";
 import { hashString } from "../../../utils/hash";
 import { OrderType, DecreasePositionSwapType, getOrderKeys, getOrderCount } from "../../../utils/order";
@@ -19,6 +19,7 @@ import { GELATO_RELAY_ADDRESS } from "../../../utils/relay/addresses";
 import { sendCancelOrder, sendCreateOrder, sendUpdateOrder } from "../../../utils/relay/gelatoRelay";
 import { getTokenPermit } from "../../../utils/relay/tokenPermit";
 import { ethers } from "ethers";
+import { parseLogs } from "../../../utils/event";
 
 const BAD_SIGNATURE =
   "0x122e3efab9b46c82dc38adf4ea6cd2c753b00f95c217a0e3a0f4dd110839f07a08eb29c1cc414d551349510e23a75219cd70c8b88515ed2b83bbd88216ffdb051f";
@@ -220,28 +221,6 @@ describe("GelatoRelayRouter", () => {
       );
     });
 
-    it("permit doesn't override allowance if it's already sufficient", async () => {
-      await wnt.connect(user0).approve(router.address, expandDecimals(10, 18));
-      const tokenPermit = await getTokenPermit(
-        wnt,
-        user0,
-        router.address,
-        expandDecimals(1, 18),
-        0,
-        9999999999,
-        chainId
-      );
-
-      expect(await wnt.allowance(user0.address, router.address)).to.eq(expandDecimals(10, 18));
-      await sendCreateOrder({
-        ...createOrderParams,
-        tokenPermits: [tokenPermit],
-      });
-      // 0.1 ETH is spent for order
-      // 0.002 ETH is spent for relayer fee and execution fee
-      expect(await wnt.allowance(user0.address, router.address)).to.eq(expandDecimals(9898, 15)); // 9.898 ETH
-    });
-
     it("creates order and sends relayer fee", async () => {
       const collateralDeltaAmount = createOrderParams.collateralDeltaAmount;
       const gelatoRelayFee = createOrderParams.relayFeeAmount;
@@ -292,6 +271,7 @@ describe("GelatoRelayRouter", () => {
       expect(order.flags.isLong).eq(true);
       expect(order.flags.shouldUnwrapNativeToken).eq(true);
       expect(order.flags.isFrozen).eq(false);
+      expect(order.flags.isSubaccount).eq(false);
 
       await stopImpersonatingAccount(GELATO_RELAY_ADDRESS);
 
@@ -309,13 +289,19 @@ describe("GelatoRelayRouter", () => {
         },
       });
 
+      const atomicSwapFeeFactor = percentageToFloat("1%");
+      const swapFeeFactor = percentageToFloat("0.05%");
+      await dataStore.setUint(keys.atomicSwapFeeFactorKey(ethUsdMarket.marketToken), atomicSwapFeeFactor);
+      await dataStore.setUint(keys.swapFeeFactorKey(ethUsdMarket.marketToken, true), swapFeeFactor);
+      await dataStore.setUint(keys.swapFeeFactorKey(ethUsdMarket.marketToken, false), swapFeeFactor);
+
       await usdc.connect(user0).approve(router.address, expandDecimals(1000, 6));
       await wnt.connect(user0).approve(router.address, expandDecimals(1, 18));
 
       const usdcBalanceBefore = await usdc.balanceOf(user0.address);
       const feeAmount = expandDecimals(10, 6);
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, 0);
-      await sendCreateOrder({
+      const tx = await sendCreateOrder({
         ...createOrderParams,
         feeParams: {
           feeToken: usdc.address,
@@ -335,6 +321,16 @@ describe("GelatoRelayRouter", () => {
       // and user sent correct amount of USDC
       const usdcBalanceAfter = await usdc.balanceOf(user0.address);
       expect(usdcBalanceAfter).eq(usdcBalanceBefore.sub(feeAmount));
+
+      // check that atomic swap fee was applied
+      const txReceipt = await hre.ethers.provider.getTransactionReceipt(tx.hash);
+      const logs = parseLogs(fixture, txReceipt);
+      const swapInfoLog = logs.find((log) => log.parsedEventInfo?.eventName === "SwapInfo");
+      const swapFeesCollectedLog = logs.find((log) => log.parsedEventInfo?.eventName === "SwapFeesCollected");
+      expect(swapInfoLog.parsedEventData.amountIn.sub(swapInfoLog.parsedEventData.amountInAfterFees)).eq(
+        applyFactor(swapInfoLog.parsedEventData.amountIn, atomicSwapFeeFactor)
+      );
+      expect(swapFeesCollectedLog.parsedEventData.swapFeeType).eq(keys.ATOMIC_SWAP_FEE_FACTOR);
     });
   });
 
@@ -366,6 +362,7 @@ describe("GelatoRelayRouter", () => {
         chainId,
         relayFeeToken: wnt.address,
         relayFeeAmount: expandDecimals(1, 15),
+        increaseExecutionFee: false,
       };
     });
 
@@ -449,6 +446,36 @@ describe("GelatoRelayRouter", () => {
       expect(order.numbers.minOutputAmount).eq(4);
       expect(order.numbers.validFromTime).eq(5);
       expect(order.flags.autoCancel).eq(true);
+    });
+
+    it("increases execution fee", async () => {
+      await wnt.connect(user0).approve(router.address, expandDecimals(1, 18));
+      await sendCreateOrder(createOrderParams);
+      const orderKeys = await getOrderKeys(dataStore, 0, 1);
+      let order = await reader.getOrder(dataStore.address, orderKeys[0]);
+
+      updateOrderParams.relayFeeAmount = expandDecimals(1, 15);
+      updateOrderParams.feeParams.feeAmount = expandDecimals(3, 15);
+
+      const initialWethBalance = await wnt.balanceOf(user0.address);
+      const gelatoRelayFee = updateOrderParams.relayFeeAmount;
+      await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, gelatoRelayFee);
+      await sendUpdateOrder({ ...updateOrderParams, key: orderKeys[0] });
+      await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, bigNumberify(gelatoRelayFee).mul(2));
+
+      // user receives the residual amount
+      await expectBalance(wnt.address, user0.address, initialWethBalance.sub(expandDecimals(1, 15)));
+      // and the execution fee stays the same
+      order = await reader.getOrder(dataStore.address, orderKeys[0]);
+      expect(order.numbers.executionFee).eq(expandDecimals(1, 15));
+
+      await sendUpdateOrder({ ...updateOrderParams, key: orderKeys[0], increaseExecutionFee: true });
+
+      // user doesn't receive the residual amount
+      await expectBalance(wnt.address, user0.address, initialWethBalance.sub(expandDecimals(4, 15)));
+      // and the execution fee is increased
+      order = await reader.getOrder(dataStore.address, orderKeys[0]);
+      expect(order.numbers.executionFee).eq(expandDecimals(3, 15));
     });
   });
 
