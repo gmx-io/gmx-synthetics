@@ -128,6 +128,7 @@ async function compareContractBytecodes(provider: JsonRpcProvider, contractAddre
   const localBytecodeStripped = stripBytecodeIpfsHash(Contract.bytecode);
 
   //0x2ceef2571ae68395a171d86084466690d736e480f74a0a51286148f74b6d7436
+  console.log(`Fetching blockchain bytecode from ${contractAddress} for ${contractName}`);
   const blockchainBytecode = await provider.getCode(contractAddress);
   const blockchainBytecodeWithoutMetadata = stripBytecodeIpfsHash(blockchainBytecode);
   const blockchainDeployBytecode = blockchainBytecodeWithoutMetadata.slice(
@@ -175,6 +176,7 @@ async function compileContract(commit: string, contractName: string) {
   }
 
   execSync("npx hardhat compile", { stdio: "inherit" });
+  console.log(`${contractName} compiled successfully.`);
 }
 
 //Using streaming read cause file can be big
