@@ -20,7 +20,6 @@ async function main() {
   }
 
   const provider = hre.ethers.provider;
-  // 0x4808167612ed81195015927c5e7963c1dfbbc5c36499702583ecfb8a254c51f0 Tx with SignalRoleGranted from EventEmitter
   const tx = await provider.getTransactionReceipt(TRANSACTION_HASH);
   if (!tx) {
     console.error("Transaction not found.");
@@ -93,26 +92,29 @@ async function checkRole(signal: SignalRoleInfo): Promise<boolean> {
 }
 
 // Bytecode
+interface DeploymentInfo {
+  contractName: string;
+  constructorArgs: string[];
+}
 
-async function compareContractBytecodes(provider: JsonRpcProvider, contractAddress: string): Promise<void> {
-  console.log(`Checking deployment against commit: ${AUDITED_COMMIT}`);
-
-  //Find deployment by hash
+async function extractContractNameAndArgsFromDeployment(contractAddress: string): Promise<DeploymentInfo> {
   const deploymentsPath = path.join(__dirname, "../deployments/" + hre.network.name);
-
   const searchContractDeployment = checkAddressInFile(contractAddress);
   const deployment = await searchDirectory(deploymentsPath, searchContractDeployment);
   if (!deployment) {
     throw new Error(`Could not find deployment ${contractAddress}`);
   }
   console.log("Deployment: " + deployment);
-
-  //Extract contractName
   const contractName = path.basename(deployment, path.extname(deployment));
   console.log("ContractName: " + contractName);
+  const constructorArgs = extractDeploymentArgs(deployment);
+  return {
+    contractName: contractName,
+    constructorArgs: constructorArgs,
+  };
+}
 
-  await compileContract(AUDITED_COMMIT, contractName);
-
+async function getArtifactBytecode(contractName: string): Promise<string> {
   const findContract = findFile(contractName + ".json");
   const buildPath = path.join(__dirname, "../artifacts/contracts/");
   const searchResult = await searchDirectory(buildPath, findContract);
@@ -120,14 +122,22 @@ async function compareContractBytecodes(provider: JsonRpcProvider, contractAddre
     throw new Error("Artifact not found");
   }
 
-  const artifact = JSON.parse(fs.readFileSync(searchResult, "utf-8"));
-  console.log(artifact.bytecode);
+  return JSON.parse(fs.readFileSync(searchResult, "utf-8"));
+}
+
+async function compareContractBytecodes(provider: JsonRpcProvider, contractAddress: string): Promise<void> {
+  console.log(`Checking deployment against commit: ${AUDITED_COMMIT}`);
+
+  const { contractName, constructorArgs } = await extractContractNameAndArgsFromDeployment(contractAddress);
+
+  await compileContract(AUDITED_COMMIT, contractName);
+
+  const artifactBytecode = await getArtifactBytecode(contractName);
 
   const Contract = await ethers.getContract(contractName);
   if (!Contract) {
     throw new Error(`Could not find contract ${contractName}`);
   }
-  const constructorArgs = extractDeploymentArgs(deployment);
   const encodedArgs = ethers.utils.defaultAbiCoder
     .encode(
       Contract.interface.deploy.inputs.map((i) => i.type), // Get types from ABI
@@ -137,9 +147,8 @@ async function compareContractBytecodes(provider: JsonRpcProvider, contractAddre
 
   console.log("Encoded args: " + encodedArgs);
 
-  const localBytecodeStripped = stripBytecodeIpfsHash(artifact.bytecode);
+  const localBytecodeStripped = stripBytecodeIpfsHash(artifactBytecode);
 
-  //0x2ceef2571ae68395a171d86084466690d736e480f74a0a51286148f74b6d7436
   console.log(`Fetching blockchain bytecode from ${contractAddress} for ${contractName}`);
   const blockchainBytecode = await provider.getCode(contractAddress);
   const blockchainBytecodeWithoutMetadata = stripBytecodeIpfsHash(blockchainBytecode);
