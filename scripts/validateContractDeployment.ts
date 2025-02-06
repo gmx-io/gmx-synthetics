@@ -4,12 +4,14 @@ import * as fs from "fs";
 import * as path from "path";
 import dotenv from "dotenv";
 import * as readline from "node:readline";
+import { Result } from "@ethersproject/abi";
+import roles from "../config/roles";
+import { JsonRpcProvider, TransactionReceipt } from "@ethersproject/providers";
 
 dotenv.config();
 
 const AUDITED_COMMIT = process.env.AUDITED_COMMIT as string;
 const TRANSACTION_HASH = process.env.TRANSACTION_HASH as string;
-const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS as string;
 
 async function main() {
   if (!AUDITED_COMMIT || !TRANSACTION_HASH) {
@@ -17,23 +19,104 @@ async function main() {
     process.exit(1);
   }
 
+  const provider = hre.ethers.provider;
+  // 0x4808167612ed81195015927c5e7963c1dfbbc5c36499702583ecfb8a254c51f0 Tx with SignalRoleGranted from EventEmitter
+  const tx = await provider.getTransactionReceipt(TRANSACTION_HASH);
+  if (!tx) {
+    console.error("Transaction not found.");
+    process.exit(1);
+  }
+
+  try {
+    const contracts = await validateRoles(tx);
+    console.log("Found these contracts with changed roles: " + contracts);
+    for (const contract of contracts) {
+      await compareContractBytecodes(provider, contract);
+    }
+  } catch (error) {
+    console.error("❌ " + error);
+    process.exit(1);
+  }
+
+  console.log("✅ Verification completed.");
+}
+
+// Roles
+
+interface SignalRoleInfo {
+  account: string;
+  roleKey: string;
+}
+
+//
+async function validateRoles(txReceipt: TransactionReceipt): Promise<Set<string>> {
+  const contracts = new Set<string>();
+  const EventEmitter = await ethers.getContractFactory("EventEmitter");
+  const eventEmitterInterface = EventEmitter.interface;
+
+  for (const log of txReceipt.logs) {
+    const parsedLog = eventEmitterInterface.parseLog(log);
+
+    if (parsedLog.name == "EventLog1" && parsedLog.args[1] === "SignalGrantRole") {
+      const signal = parseSignalGrantRoleEvent(parsedLog.args);
+      contracts.add(signal.account);
+      if (!(await checkRole(signal))) {
+        throw new Error(`Role ${signal.roleKey} is not approved!`);
+      }
+    }
+  }
+  console.log("✅ Roles validated");
+  return contracts;
+}
+
+function parseSignalGrantRoleEvent(eventArg: Result): SignalRoleInfo {
+  const account = eventArg[4][0][0][0].value;
+  const roleKey = eventArg[4][4][0][0].value;
+  return {
+    account: account,
+    roleKey: roleKey,
+  };
+}
+
+async function checkRole(signal: SignalRoleInfo): Promise<boolean> {
+  const rolesConfig = await roles(hre);
+  for (const [role, addresses] of Object.entries(rolesConfig)) {
+    if (addresses[signal.account]) {
+      const encoded = ethers.utils.defaultAbiCoder.encode(["string"], [role]);
+      const keccak = ethers.utils.keccak256(encoded);
+      if (keccak === signal.roleKey) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+// Bytecode
+
+async function compareContractBytecodes(provider: JsonRpcProvider, contractAddress: string): Promise<void> {
   console.log(`Checking deployment against commit: ${AUDITED_COMMIT}`);
-  // compileContracts(AUDITED_COMMIT);
 
   //Find deployment by hash
   const deploymentsPath = path.join(__dirname, "../deployments/" + hre.network.name);
 
-  const searchContractCreationTx = checkTxHashInFile(TRANSACTION_HASH);
-  const deployment = await searchDirectory(deploymentsPath, searchContractCreationTx);
+  const searchContractDeployment = checkAddressInFile(contractAddress);
+  const deployment = await searchDirectory(deploymentsPath, searchContractDeployment);
+  if (!deployment) {
+    throw new Error(`Could not find deployment ${contractAddress}`);
+  }
   console.log("Deployment: " + deployment);
 
   //Extract contractName
   const contractName = path.basename(deployment, path.extname(deployment));
   console.log("ContractName: " + contractName);
 
-  // await compileContract(AUDITED_COMMIT, contractName);
+  await compileContract(AUDITED_COMMIT, contractName);
 
   const Contract = await ethers.getContractFactory(contractName);
+  if (!Contract) {
+    throw new Error(`Could not find contract ${contractName}`);
+  }
   const constructorArgs = extractDeploymentArgs(deployment);
   const encodedArgs = ethers.utils.defaultAbiCoder
     .encode(
@@ -42,18 +125,10 @@ async function main() {
     )
     .slice(2); //remove 0x at start
 
-  console.log("Deployment args: " + constructorArgs);
-  console.log("Encoded args: " + encodedArgs);
-
-  // console.log(Contract.bytecode);
-
   const localBytecodeStripped = stripBytecodeIpfsHash(Contract.bytecode);
-  // console.log(localBytecodeStripped);
 
-  const provider = hre.ethers.provider;
   //0x2ceef2571ae68395a171d86084466690d736e480f74a0a51286148f74b6d7436
-  const tx = await provider.getTransaction(TRANSACTION_HASH);
-  const blockchainBytecode = tx.data;
+  const blockchainBytecode = await provider.getCode(contractAddress);
   const blockchainBytecodeWithoutMetadata = stripBytecodeIpfsHash(blockchainBytecode);
   const blockchainDeployBytecode = blockchainBytecodeWithoutMetadata.slice(
     0,
@@ -61,8 +136,7 @@ async function main() {
   ); // bytecode without metadata and constructor args
 
   if (localBytecodeStripped !== blockchainDeployBytecode) {
-    console.error("Bytecodes does not match!");
-    return;
+    throw new Error("Bytecodes does not match!");
   }
 
   // Check deployment args are the same
@@ -70,17 +144,10 @@ async function main() {
     blockchainBytecodeWithoutMetadata.length - encodedArgs.length
   );
   if (encodedArgs !== blockchainArgs) {
-    console.error("Args does not match!");
-    return;
+    throw new Error("Args does not match!");
   }
 
-  //Check roles are correct
-
-  // 0xff1f9303e1524df59031c2ec85655de663ce8fec69e716d37a2802ea475d9b8e Tx with SignalRoleGranted from EventEmitter
-
-  // await validateRoleGrants(txReceipt);
-  //
-  // console.log("Verification completed.");
+  console.log("✅ Bytecodes match");
 }
 
 // contract metadata contains ipfs hash which can be different
@@ -103,7 +170,6 @@ async function compileContract(commit: string, contractName: string) {
   const findContract = findFile(contractName + ".sol");
   const buildPath = path.join(__dirname, "../artifacts/contracts/");
   const searchResult = await searchDirectory(buildPath, findContract);
-  console.log("Found to remove: " + searchResult);
   if (searchResult) {
     fs.rmSync(searchResult, { recursive: true, force: true });
   }
@@ -112,8 +178,8 @@ async function compileContract(commit: string, contractName: string) {
 }
 
 //Using streaming read cause file can be big
-const checkTxHashInFile =
-  (txHash: string) =>
+const checkAddressInFile =
+  (address: string) =>
   async (filename: string): Promise<boolean> => {
     if (fs.lstatSync(filename).isDirectory()) {
       return false;
@@ -124,7 +190,7 @@ const checkTxHashInFile =
       const rl = readline.createInterface({ input: fileStream, crlfDelay: Infinity });
 
       for await (const line of rl) {
-        if (line.includes(txHash)) {
+        if (line.includes(`"address": "${address}",`)) {
           return true;
         }
       }
@@ -141,11 +207,12 @@ const findFile =
     return Promise.resolve(filename.endsWith(searchFile));
   };
 
+// Search recursively through all files in the `dirPath` and test it with `condition`
+// Returns filename when condition is true
 async function searchDirectory(dirPath: string, condition: (filename: string) => Promise<boolean>): Promise<string> {
   const contractFiles = fs.readdirSync(dirPath);
   for (const file of contractFiles) {
     const name = path.join(dirPath, file);
-    // console.log("Hit: " + name);
 
     if (await condition(name)) {
       return name;
