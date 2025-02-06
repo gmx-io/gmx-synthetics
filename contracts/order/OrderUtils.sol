@@ -45,29 +45,37 @@ library OrderUtils {
         bytes reasonBytes;
     }
 
+    struct CreateOrderCache {
+        bool shouldRecordSeparateExecutionFeeTransfer;
+        address wnt;
+    }
+
     // @dev creates an order in the order store
     // @param dataStore DataStore
     // @param eventEmitter EventEmitter
     // @param orderVault OrderVault
     // @param account the order account
     // @param params IBaseOrderUtils.CreateOrderParams
+    // @param shouldValidateMaxExecutionFee whether to validate the max execution fee
     function createOrder(
         DataStore dataStore,
         EventEmitter eventEmitter,
         OrderVault orderVault,
         IReferralStorage referralStorage,
         address account,
-        IBaseOrderUtils.CreateOrderParams memory params
+        IBaseOrderUtils.CreateOrderParams memory params,
+        bool shouldValidateMaxExecutionFee
     ) external returns (bytes32) {
         AccountUtils.validateAccount(account);
 
         ReferralUtils.setTraderReferralCode(referralStorage, account, params.referralCode);
 
+        CreateOrderCache memory cache;
+
         uint256 initialCollateralDeltaAmount;
 
-        address wnt = TokenUtils.wnt(dataStore);
-
-        bool shouldRecordSeparateExecutionFeeTransfer = true;
+        cache.wnt = TokenUtils.wnt(dataStore);
+            cache.shouldRecordSeparateExecutionFeeTransfer = true;
 
         if (
             params.orderType == Order.OrderType.MarketSwap ||
@@ -79,12 +87,15 @@ library OrderUtils {
             // for swaps and increase orders, the initialCollateralDeltaAmount is set based on the amount of tokens
             // transferred to the orderVault
             initialCollateralDeltaAmount = orderVault.recordTransferIn(params.addresses.initialCollateralToken);
-            if (params.addresses.initialCollateralToken == wnt) {
+            if (params.addresses.initialCollateralToken == cache.wnt) {
                 if (initialCollateralDeltaAmount < params.numbers.executionFee) {
-                    revert Errors.InsufficientWntAmountForExecutionFee(initialCollateralDeltaAmount, params.numbers.executionFee);
+                    revert Errors.InsufficientWntAmountForExecutionFee(
+                        initialCollateralDeltaAmount,
+                        params.numbers.executionFee
+                    );
                 }
                 initialCollateralDeltaAmount -= params.numbers.executionFee;
-                shouldRecordSeparateExecutionFeeTransfer = false;
+                cache.shouldRecordSeparateExecutionFeeTransfer = false;
             }
         } else if (
             params.orderType == Order.OrderType.MarketDecrease ||
@@ -97,8 +108,8 @@ library OrderUtils {
             revert Errors.OrderTypeCannotBeCreated(uint256(params.orderType));
         }
 
-        if (shouldRecordSeparateExecutionFeeTransfer) {
-            uint256 wntAmount = orderVault.recordTransferIn(wnt);
+        if (cache.shouldRecordSeparateExecutionFeeTransfer) {
+            uint256 wntAmount = orderVault.recordTransferIn(cache.wnt);
             if (wntAmount < params.numbers.executionFee) {
                 revert Errors.InsufficientWntAmountForExecutionFee(wntAmount, params.numbers.executionFee);
             }
@@ -151,7 +162,13 @@ library OrderUtils {
 
         uint256 estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(dataStore, order);
         uint256 oraclePriceCount = GasUtils.estimateOrderOraclePriceCount(params.addresses.swapPath.length);
-        GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, order.executionFee(), oraclePriceCount);
+        GasUtils.validateExecutionFee(
+            dataStore,
+            estimatedGasLimit,
+            order.executionFee(),
+            oraclePriceCount,
+            shouldValidateMaxExecutionFee
+        );
 
         bytes32 key = NonceUtils.getNextKey(dataStore);
 
@@ -273,13 +290,7 @@ library OrderUtils {
         order.setIsFrozen(true);
         OrderStoreUtils.set(dataStore, key, order);
 
-        OrderEventUtils.emitOrderFrozen(
-            eventEmitter,
-            key,
-            order.account(),
-            reason,
-            reasonBytes
-        );
+        OrderEventUtils.emitOrderFrozen(eventEmitter, key, order.account(), reason, reasonBytes);
 
         EventUtils.EventLogData memory eventData;
         CallbackUtils.afterOrderFrozen(key, order, eventData);
@@ -324,10 +335,14 @@ library OrderUtils {
         }
     }
 
-    function updateAutoCancelList(DataStore dataStore, bytes32 orderKey, Order.Props memory order, bool shouldAdd) internal {
+    function updateAutoCancelList(
+        DataStore dataStore,
+        bytes32 orderKey,
+        Order.Props memory order,
+        bool shouldAdd
+    ) internal {
         if (
-            order.orderType() != Order.OrderType.LimitDecrease &&
-            order.orderType() != Order.OrderType.StopLossDecrease
+            order.orderType() != Order.OrderType.LimitDecrease && order.orderType() != Order.OrderType.StopLossDecrease
         ) {
             return;
         }
@@ -341,10 +356,12 @@ library OrderUtils {
         }
     }
 
-    function validateTotalCallbackGasLimitForAutoCancelOrders(DataStore dataStore, Order.Props memory order) internal view {
+    function validateTotalCallbackGasLimitForAutoCancelOrders(
+        DataStore dataStore,
+        Order.Props memory order
+    ) internal view {
         if (
-            order.orderType() != Order.OrderType.LimitDecrease &&
-            order.orderType() != Order.OrderType.StopLossDecrease
+            order.orderType() != Order.OrderType.LimitDecrease && order.orderType() != Order.OrderType.StopLossDecrease
         ) {
             return;
         }
@@ -358,15 +375,16 @@ library OrderUtils {
         }
     }
 
-    function getTotalCallbackGasLimitForAutoCancelOrders(DataStore dataStore, bytes32 positionKey) internal view returns (uint256) {
+    function getTotalCallbackGasLimitForAutoCancelOrders(
+        DataStore dataStore,
+        bytes32 positionKey
+    ) internal view returns (uint256) {
         bytes32[] memory orderKeys = AutoCancelUtils.getAutoCancelOrderKeys(dataStore, positionKey);
 
         uint256 total;
 
         for (uint256 i; i < orderKeys.length; i++) {
-            total += dataStore.getUint(
-                keccak256(abi.encode(orderKeys[i], OrderStoreUtils.CALLBACK_GAS_LIMIT))
-            );
+            total += dataStore.getUint(keccak256(abi.encode(orderKeys[i], OrderStoreUtils.CALLBACK_GAS_LIMIT)));
         }
 
         return total;

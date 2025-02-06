@@ -108,7 +108,8 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         RelayParams calldata relayParams,
         address account,
         uint256 collateralDeltaAmount,
-        IBaseOrderUtils.CreateOrderParams memory params // can't use calldata because need to modify params.numbers.executionFee
+        IBaseOrderUtils.CreateOrderParams memory params, // can't use calldata because need to modify params.numbers.executionFee
+        bool isSubaccount
     ) internal returns (bytes32) {
         Contracts memory contracts = Contracts({
             dataStore: dataStore,
@@ -139,7 +140,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             );
         }
 
-        return orderHandler.createOrder(account, params);
+        return orderHandler.createOrder(account, params, isSubaccount && params.addresses.callbackContract != address(0));
     }
 
     function _updateOrder(
@@ -147,7 +148,8 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         address account,
         bytes32 key,
         UpdateOrderParams calldata params,
-        bool increaseExecutionFee
+        bool increaseExecutionFee,
+        bool isSubaccount
     ) internal {
         Contracts memory contracts = Contracts({
             dataStore: dataStore,
@@ -176,7 +178,8 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             params.minOutputAmount,
             params.validFromTime,
             params.autoCancel,
-            order
+            order,
+            isSubaccount && order.callbackContract() != address(0)
         );
     }
 

@@ -126,7 +126,8 @@ contract SubaccountRouter is BaseRouter {
 
         bytes32 key = orderHandler.createOrder(
             account,
-            params
+            params,
+            params.addresses.callbackContract != address(0)
         );
 
         _autoTopUpSubaccount(
@@ -164,7 +165,8 @@ contract SubaccountRouter is BaseRouter {
             minOutputAmount,
             validFromTime,
             autoCancel,
-            order
+            order,
+            order.callbackContract() != address(0)
         );
 
         _autoTopUpSubaccount(
