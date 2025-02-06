@@ -45,7 +45,7 @@ export async function createDeposit(fixture, overrides: any = {}) {
   const callbackGasLimit = overrides.callbackGasLimit || bigNumberify(0);
   const longTokenAmount = overrides.longTokenAmount || bigNumberify(0);
   const shortTokenAmount = overrides.shortTokenAmount || bigNumberify(0);
-  const chainId = overrides.chainId || bigNumberify(0);
+  const srcChainId = overrides.srcChainId || bigNumberify(0);
   const dataList = overrides.dataList || [];
 
   await wnt.mint(depositVault.address, executionFeeToMint);
@@ -73,7 +73,7 @@ export async function createDeposit(fixture, overrides: any = {}) {
     shouldUnwrapNativeToken,
     executionFee,
     callbackGasLimit,
-    chainId,
+    srcChainId,
     dataList,
   };
 
