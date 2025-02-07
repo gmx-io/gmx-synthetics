@@ -13,12 +13,12 @@ library MultichainEventUtils {
     using EventUtils for EventUtils.AddressItems;
     using EventUtils for EventUtils.UintItems;
 
-    function emitMultichainDeposit(
+    function emitMultichainTransferIn(
         EventEmitter eventEmitter,
         address token,
         address account,
         uint256 amount,
-        uint256 multichainId
+        uint256 srcChainId
     ) internal {
         EventUtils.EventLogData memory eventData;
 
@@ -28,15 +28,15 @@ library MultichainEventUtils {
 
         eventData.uintItems.initItems(2);
         eventData.uintItems.setItem(0, "amount", amount);
-        eventData.uintItems.setItem(1, "multichainId", multichainId);
+        eventData.uintItems.setItem(1, "srcChainId", srcChainId);
 
-        eventEmitter.emitEventLog2("MultichainDeposit", bytes32(multichainId), Cast.toBytes32(account), eventData);
+        eventEmitter.emitEventLog2("MultichainTransferIn", bytes32(srcChainId), Cast.toBytes32(account), eventData);
     }
 
     function emitMultichainMessage(
         EventEmitter eventEmitter,
         address account,
-        uint256 multichainId
+        uint256 srcChainId
     ) internal {
         EventUtils.EventLogData memory eventData;
 
@@ -44,17 +44,17 @@ library MultichainEventUtils {
         eventData.addressItems.setItem(0, "account", account);
 
         eventData.uintItems.initItems(1);
-        eventData.uintItems.setItem(0, "multichainId", multichainId);
+        eventData.uintItems.setItem(0, "srcChainId", srcChainId);
 
         eventEmitter.emitEventLog1("MultichainMessage", Cast.toBytes32(account), eventData);
     }
 
-    function emitMultichainWithdrawal(
+    function emitMultichainTransferOut(
         EventEmitter eventEmitter,
         address token,
         address account,
         uint256 amount,
-        uint256 multichainId
+        uint256 srcChainId
     ) internal {
         EventUtils.EventLogData memory eventData;
 
@@ -64,8 +64,8 @@ library MultichainEventUtils {
 
         eventData.uintItems.initItems(2);
         eventData.uintItems.setItem(0, "amount", amount);
-        eventData.uintItems.setItem(1, "multichainId", multichainId);
+        eventData.uintItems.setItem(1, "srcChainId", srcChainId);
 
-        eventEmitter.emitEventLog2("MultichainWithdrawal", bytes32(multichainId), Cast.toBytes32(account), eventData);
+        eventEmitter.emitEventLog2("MultichainTransferOut", bytes32(srcChainId), Cast.toBytes32(account), eventData);
     }
 }

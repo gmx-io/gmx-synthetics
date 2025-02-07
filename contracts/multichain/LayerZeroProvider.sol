@@ -7,10 +7,11 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ILayerZeroComposer } from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/ILayerZeroComposer.sol";
 
 import { EventEmitter } from "../event/EventEmitter.sol";
+import { DataStore } from "../data/DataStore.sol";
 
 import { IMultichainProvider } from "./IMultichainProvider.sol";
 import { MultichainVault } from "./MultichainVault.sol";
-import { MultichainVaultHandler } from "./MultichainVaultHandler.sol";
+import { MultichainUtils } from "./MultichainUtils.sol";
 import { MultichainProviderUtils } from "./MultichainProviderUtils.sol";
 import { LayerZeroProviderEventUtils } from "./LayerZeroProviderEventUtils.sol";
 
@@ -19,22 +20,17 @@ import { LayerZeroProviderEventUtils } from "./LayerZeroProviderEventUtils.sol";
  * Receives tokens and messages from source chains.
  * Defines lzCompose function which:
  *  - is called by the Stargate executor after tokens are delivered to this contract
- *  - forwards the received tokens to MultichainVault and records the deposit in MultichainVaultHandler
+ *  - forwards the received tokens to MultichainVault and increases user's multichain balance
  */
 contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer {
+    DataStore public dataStore;
     EventEmitter public eventEmitter;
-
     MultichainVault public multichainVault;
-    MultichainVaultHandler public multichainVaultHandler;
 
-    /**
-     * @param _multichainVault MultichainVaultHandler address
-     * @param _multichainVaultHandler MultichainVault address
-     */
-    constructor(address _eventEmitter, address _multichainVault, address _multichainVaultHandler) {
-        eventEmitter = EventEmitter(_eventEmitter);
-        multichainVault = MultichainVault(payable(_multichainVault));
-        multichainVaultHandler = MultichainVaultHandler(_multichainVaultHandler);
+    constructor(DataStore _dataStore, EventEmitter _eventEmitter, MultichainVault _multichainVault) {
+        dataStore = _dataStore;
+        eventEmitter = _eventEmitter;
+        multichainVault = _multichainVault;
     }
 
     ///////////////////// Stargate //////////////////////
@@ -49,7 +45,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer {
      *      TBD if this will change
      * @param from The address of the sender (i.e. Stargate address, not user's address).
      * @param guid A global unique identifier for tracking the packet.
-     * @param message Encoded message. Contains the params needed to record the deposit (account, token, multichainId)
+     * @param message Encoded message. Contains the params needed to record the deposit (account, token, srcChainId)
      * @param executor The address of the Executor.
      * @param extraData Any extra data or options to trigger on receipt.
      */
@@ -60,15 +56,15 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer {
         address executor,
         bytes calldata extraData
     ) external payable {
-        (address account, address token, uint256 multichainId) = MultichainProviderUtils.decodeDeposit(message);
+        (address account, address token, uint256 srcChainId) = MultichainProviderUtils.decodeDeposit(message);
 
         _transferToVault(token, address(multichainVault));
 
-        multichainVaultHandler.recordDeposit(account, token, multichainId);
+        MultichainUtils.recordTransferIn(dataStore, eventEmitter, multichainVault, token, account, srcChainId);
 
         LayerZeroProviderEventUtils.emitComposedMessageReceived(
             eventEmitter,
-            multichainId,
+            srcChainId,
             account,
             from,
             guid,

@@ -1,7 +1,7 @@
 import { grantRoleIfNotGranted } from "../utils/role";
 import { createDeployFunction } from "../utils/deploy";
 
-const constructorContracts = ["EventEmitter", "MultichainVault", "MultichainVaultHandler"];
+const constructorContracts = ["DataStore", "EventEmitter", "MultichainVault"];
 
 const func = createDeployFunction({
   contractName: "LayerZeroProvider",

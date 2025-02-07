@@ -317,7 +317,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         // for update orders the residual fee could be sent to the order vault if order's execution fee should be increased
         // otherwise the residual fee is sent back to the user
         // for other actions the residual fee is sent back to the user
-        _transferResidualFee(wnt, residualFeeReceiver, residualFee, srcChainId, account);
+        _transferResidualFee(wnt, residualFeeReceiver, residualFee, account, srcChainId);
 
         return residualFee;
     }
@@ -328,7 +328,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     }
 
     // for multichain actions, the residual fee is send back to MultichainVault and user's multichain balance is increased
-    function _transferResidualFee(address wnt, address residualFeeReceiver, uint256 residualFee, uint256 /*srcChainId*/, address /*account*/) internal virtual {
+    function _transferResidualFee(address wnt, address residualFeeReceiver, uint256 residualFee, address /*account*/, uint256 /*srcChainId*/) internal virtual {
         // account and srcChainId not used here, but necessary when overriding _transferResidualFee in MultichainRouter
         TokenUtils.transfer(dataStore, wnt, residualFeeReceiver, residualFee);
     }

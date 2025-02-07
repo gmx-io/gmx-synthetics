@@ -430,8 +430,8 @@ library Errors {
     error EmptyMarketPrice(address market);
 
     // Multichain errors
-    error EmptyMultichainDepositAmount();
-    error EmptyMultichainWithdrawalAmount();
+    error EmptyMultichainTransferInAmount();
+    error EmptyMultichainTransferOutAmount();
     error InsufficientMultichainBalance();
 
     enum SignatureType {

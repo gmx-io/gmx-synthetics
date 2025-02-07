@@ -7,7 +7,6 @@ import "../deposit/DepositUtils.sol";
 import "../deposit/DepositVault.sol";
 import "../exchange/IDepositHandler.sol";
 
-import "./MultichainVaultHandler.sol";
 import "./MultichainUtils.sol";
 
 contract MultichainRouter is GelatoRelayRouter {
@@ -45,7 +44,6 @@ contract MultichainRouter is GelatoRelayRouter {
     DepositVault depositVault;
     IDepositHandler depositHandler;
     MultichainVault multichainVault;
-    MultichainVaultHandler multichainVaultHandler;
 
     constructor(
         Router _router,
@@ -56,13 +54,11 @@ contract MultichainRouter is GelatoRelayRouter {
         OrderVault _orderVault,
         IDepositHandler _depositHandler,
         DepositVault _depositVault,
-        MultichainVault _multichainVault,
-        MultichainVaultHandler _multichainVaultHandler
+        MultichainVault _multichainVault
     ) GelatoRelayRouter(_router, _dataStore, _eventEmitter, _oracle, _orderHandler, _orderVault) {
         depositVault = _depositVault;
         depositHandler = _depositHandler;
         multichainVault = _multichainVault;
-        multichainVaultHandler = _multichainVaultHandler;
     }
 
     function createDeposit(
@@ -121,34 +117,21 @@ contract MultichainRouter is GelatoRelayRouter {
             address(depositVault) // residualFeeReceiver
         );
 
-        // TODO: revisit and confirm this logic
-        // executionFee will be paid (in DepositUtils.createDeposit) from long or short token
-        // but _handleRelay has also transferred the executionFee to depositVault
-        // send back executionFee to MultichainVault and re-increase user's multichain balance by the executionFee amount
-        // by not doing this check, I think execution fee could get paid twice when initial long or short tokens are the wnt
-        // the alternative would be to have MultichainVault as the residualFeeReceiver, but then if none of the initial tokens are wnt, DepositUtils.createDeposit expects the fee to have already been transferred to depositVault and reverts otherwise
-        address wnt = TokenUtils.wnt(contracts.dataStore);
-        if (params.createDepositParams.initialLongToken == wnt || params.createDepositParams.initialShortToken == wnt) {
-            MultichainUtils.increaseBalance(dataStore, account, wnt, params.createDepositParams.executionFee);
-            multichainVaultHandler.pluginTransfer(wnt, address(depositVault), address(multichainVault), params.createDepositParams.executionFee);
-        }
-
         return depositHandler.createDeposit(account, params.createDepositParams);
     }
 
     function _sendTokens(address account, address token, address receiver, uint256 amount) internal override {
         AccountUtils.validateReceiver(receiver);
-        MultichainUtils.decreaseBalance(dataStore, account, token, amount);
-        multichainVaultHandler.pluginTransfer(token, address(multichainVault), receiver, amount);
+        MultichainUtils.transferOut(dataStore, eventEmitter, 0, token, account, receiver, amount); // TODO: add srcChainId
     }
 
-    function _transferResidualFee(address wnt, address residualFeeReceiver, uint256 residualFee, uint256 chainId, address account) internal override {
-        if (chainId == 0) {
-            // sent residualFee to residualFeeReceiver
+    function _transferResidualFee(address wnt, address residualFeeReceiver, uint256 residualFee, address account, uint256 srcChainId) internal override {
+        if (srcChainId == 0) {
+            // sent residualFee to residualFeeReceiver (i.e. DepositVault)
             TokenUtils.transfer(dataStore, wnt, residualFeeReceiver, residualFee);
         } else {
             // sent residualFee to MultichainVault and increase user's multichain balance
-            TokenUtils.multichainTransfer(dataStore, wnt, address(multichainVault), residualFee, account);
+            MultichainUtils.recordTransferIn(dataStore, eventEmitter, multichainVault, wnt, account, srcChainId);
         }
     }
 
