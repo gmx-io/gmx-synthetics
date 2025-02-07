@@ -53,6 +53,7 @@ library ShiftUtils {
     struct ExecuteShiftParams {
         DataStore dataStore;
         EventEmitter eventEmitter;
+        MultichainVault multichainVault;
         ShiftVault shiftVault;
         Oracle oracle;
         bytes32 key;
@@ -284,6 +285,7 @@ library ShiftUtils {
         cache.executeDepositParams = ExecuteDepositUtils.ExecuteDepositParams(
             params.dataStore,
             params.eventEmitter,
+            params.multichainVault,
             DepositVault(payable(params.shiftVault)),
             params.oracle,
             cache.depositKey,

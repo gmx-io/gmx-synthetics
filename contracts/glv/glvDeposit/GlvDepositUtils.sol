@@ -47,6 +47,7 @@ library GlvDepositUtils {
     struct ExecuteGlvDepositParams {
         DataStore dataStore;
         EventEmitter eventEmitter;
+        MultichainVault multichainVault;
         GlvVault glvVault;
         Oracle oracle;
         bytes32 key;
@@ -370,6 +371,7 @@ library GlvDepositUtils {
         ExecuteDepositUtils.ExecuteDepositParams memory executeDepositParams = ExecuteDepositUtils.ExecuteDepositParams(
                 params.dataStore,
                 params.eventEmitter,
+                params.multichainVault,
                 DepositVault(payable(params.glvVault)),
                 params.oracle,
                 depositKey,
