@@ -7,6 +7,8 @@ import * as readline from "node:readline";
 import { Result } from "@ethersproject/abi";
 import roles from "../config/roles";
 import { JsonRpcProvider, TransactionReceipt } from "@ethersproject/providers";
+import axios from "axios";
+import { match } from "node:assert";
 
 dotenv.config();
 
@@ -28,8 +30,10 @@ async function main() {
 
   try {
     const contracts = await validateRoles(tx);
-    console.log("Found these contracts with changed roles: " + contracts);
+    console.log("Found these contracts with changed roles: ", contracts);
     for (const contract of contracts) {
+      // await ValidateFromEtherscan(contract);
+      // process.exit(1);
       await compareContractBytecodes(provider, contract);
     }
   } catch (error) {
@@ -89,6 +93,22 @@ async function checkRole(signal: SignalRoleInfo): Promise<boolean> {
     }
   }
   return false;
+}
+
+// Verify sources
+
+async function ValidateFromEtherscan(contractAddress: string) {
+  console.log(`Trying to validate ${contractAddress} via etherscan`);
+  const apiKey = hre.network.verify.etherscan.apiKey;
+  const url = hre.network.verify.etherscan.apiUrl + "api";
+  try {
+    const response = await axios.get(
+      url + "?module=contract" + "&action=getsourcecode" + `&address=${contractAddress}` + `&apikey=${apiKey}`
+    );
+    console.log("API Response:", response.data);
+  } catch (error) {
+    console.error("Error:", error);
+  }
 }
 
 // Bytecode
