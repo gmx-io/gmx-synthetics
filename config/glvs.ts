@@ -1,6 +1,7 @@
 import { BigNumberish } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { percentageToFloat, expandDecimals, decimalToFloat, bigNumberify } from "../utils/math";
+import { isMarketDisabledKey } from "../utils/keys";
 
 type GlvConfig = {
   name: string;
@@ -88,6 +89,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
             indexToken: "AAVE",
             glvMaxMarketTokenBalanceAmount: bigNumberify(0),
             glvMaxMarketTokenBalanceUsd: bigNumberify(0),
+            isMarketDisabled: true,
           },
           {
             indexToken: "PEPE",
