@@ -356,12 +356,12 @@ const recommendedMarketConfig = {
       expectedPositionImpactRatio: 20_000,
     },
     LDO: {
-      negativePositionImpactFactor: exponentToFloat("7e-9"),
+      negativePositionImpactFactor: exponentToFloat("1.4e-8"),
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
     },
     BERA: {
-      negativePositionImpactFactor: exponentToFloat("5e-8"),
+      negativePositionImpactFactor: exponentToFloat("1e-7"),
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
     },

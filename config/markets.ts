@@ -2514,8 +2514,8 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_LowMax_WithHigherBase,
 
-      negativePositionImpactFactor: exponentToFloat("7e-9"), // TODO: confirm why isn't twice the positive
-      positivePositionImpactFactor: exponentToFloat("1.4e-8"),
+      negativePositionImpactFactor: exponentToFloat("1.4e-8"),
+      positivePositionImpactFactor: exponentToFloat("7e-9"),
       positionImpactExponentFactor: exponentToFloat("2e0"),
 
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
@@ -2531,7 +2531,7 @@ const config: {
       maxOpenInterest: decimalToFloat(1_000_000),
       maxPoolUsdForDeposit: decimalToFloat(1_500_000), // 1.5x the max open interest
 
-      maxLongTokenPoolAmount: expandDecimals(720, 18), // ~2M USD (2x the max open interest)
+      maxLongTokenPoolAmount: expandDecimals(740, 18), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
     },
     {
@@ -2543,8 +2543,8 @@ const config: {
       ...fundingRateConfig_High,
       ...borrowingRateConfig_HighMax_WithHigherBase,
 
-      negativePositionImpactFactor: exponentToFloat("5e-8"), // TODO: confirm why isn't twice the positive
-      positivePositionImpactFactor: exponentToFloat("1e-7"),
+      negativePositionImpactFactor: exponentToFloat("1e-7"),
+      positivePositionImpactFactor: exponentToFloat("5e-8"),
       positionImpactExponentFactor: exponentToFloat("1.7e0"),
 
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
@@ -2560,7 +2560,7 @@ const config: {
       maxOpenInterest: decimalToFloat(500_000),
       maxPoolUsdForDeposit: decimalToFloat(750_000), // 1.5x the max open interest
 
-      maxLongTokenPoolAmount: expandDecimals(360, 18), // ~1M USD (2x the max open interest)
+      maxLongTokenPoolAmount: expandDecimals(370, 18), // ~1M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x the max open interest)
     },
   ],
