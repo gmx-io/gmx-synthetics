@@ -138,7 +138,8 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
                 account,
                 params.addresses.initialCollateralToken,
                 address(contracts.orderVault),
-                collateralDeltaAmount
+                collateralDeltaAmount,
+                0 // TODO: add srcChainId to orders
             );
         }
 
@@ -301,10 +302,10 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
         uint256 outputAmount;
         if (fee.feeToken == wnt) {
-            _sendTokens(account, fee.feeToken, address(this), fee.feeAmount);
+            _sendTokens(account, fee.feeToken, address(this), fee.feeAmount, srcChainId);
             outputAmount = fee.feeAmount;
         } else {
-            _sendTokens(account, fee.feeToken, address(contracts.orderVault), fee.feeAmount);
+            _sendTokens(account, fee.feeToken, address(contracts.orderVault), fee.feeAmount, srcChainId);
             outputAmount = _swapFeeTokens(contracts, wnt, fee);
         }
 
@@ -322,7 +323,8 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         return residualFee;
     }
 
-    function _sendTokens(address account, address token, address receiver, uint256 amount) internal virtual {
+    function _sendTokens(address account, address token, address receiver, uint256 amount, uint256 /*srcChainId*/) internal virtual {
+        // srcChainId not used here, but necessary when overriding _sendTokens in MultichainRouter
         AccountUtils.validateReceiver(receiver);
         router.pluginTransfer(token, account, receiver, amount);
     }
