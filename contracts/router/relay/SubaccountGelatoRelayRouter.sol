@@ -154,7 +154,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         Contracts memory contracts = Contracts({
             dataStore: dataStore,
             eventEmitter: eventEmitter,
-            orderVault: orderVault
+            bank: orderVault
         });
         _handleRelay(contracts, relayParams.tokenPermits, relayParams.fee, relayParams.srcChainId, account, account);
 

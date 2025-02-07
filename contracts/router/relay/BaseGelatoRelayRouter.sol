@@ -61,7 +61,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     struct Contracts {
         DataStore dataStore;
         EventEmitter eventEmitter;
-        OrderVault orderVault;
+        StrictBank bank;
     }
 
     IOrderHandler public immutable orderHandler;
@@ -115,7 +115,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         Contracts memory contracts = Contracts({
             dataStore: dataStore,
             eventEmitter: eventEmitter,
-            orderVault: orderVault
+            bank: orderVault
         });
 
         params.numbers.executionFee = _handleRelay(
@@ -124,7 +124,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             relayParams.fee,
             relayParams.srcChainId,
             account,
-            address(contracts.orderVault)
+            address(contracts.bank)
         );
 
         if (
@@ -137,7 +137,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             _sendTokens(
                 account,
                 params.addresses.initialCollateralToken,
-                address(contracts.orderVault),
+                address(contracts.bank),
                 collateralDeltaAmount,
                 0 // TODO: add srcChainId to orders
             );
@@ -157,7 +157,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         Contracts memory contracts = Contracts({
             dataStore: dataStore,
             eventEmitter: eventEmitter,
-            orderVault: orderVault
+            bank: orderVault
         });
 
         Order.Props memory order = OrderStoreUtils.get(contracts.dataStore, key);
@@ -170,7 +170,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             revert Errors.Unauthorized(account, "account for updateOrder");
         }
 
-        address residualFeeReceiver = increaseExecutionFee ? address(contracts.orderVault) : account;
+        address residualFeeReceiver = increaseExecutionFee ? address(contracts.bank) : account;
         _handleRelay(contracts, relayParams.tokenPermits, relayParams.fee, relayParams.srcChainId, account, residualFeeReceiver);
 
         orderHandler.updateOrder(
@@ -190,7 +190,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         Contracts memory contracts = Contracts({
             dataStore: dataStore,
             eventEmitter: eventEmitter,
-            orderVault: orderVault
+            bank: orderVault
         });
 
         Order.Props memory order = OrderStoreUtils.get(contracts.dataStore, key);
@@ -224,7 +224,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
                 dataStore: contracts.dataStore,
                 eventEmitter: contracts.eventEmitter,
                 oracle: oracle,
-                bank: contracts.orderVault,
+                bank: contracts.bank,
                 key: bytes32(0),
                 tokenIn: fee.feeToken,
                 amountIn: fee.feeAmount,
@@ -305,7 +305,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             _sendTokens(account, fee.feeToken, address(this), fee.feeAmount, srcChainId);
             outputAmount = fee.feeAmount;
         } else {
-            _sendTokens(account, fee.feeToken, address(contracts.orderVault), fee.feeAmount, srcChainId);
+            _sendTokens(account, fee.feeToken, address(contracts.bank), fee.feeAmount, srcChainId);
             outputAmount = _swapFeeTokens(contracts, wnt, fee);
         }
 
