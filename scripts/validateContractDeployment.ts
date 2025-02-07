@@ -9,6 +9,7 @@ import roles from "../config/roles";
 import { JsonRpcProvider, TransactionReceipt } from "@ethersproject/providers";
 import axios from "axios";
 import { match } from "node:assert";
+import * as os from "node:os";
 
 dotenv.config();
 
@@ -28,13 +29,18 @@ async function main() {
     process.exit(1);
   }
 
+  console.log(`Checking deployment against commit: ${AUDITED_COMMIT}`);
+  execSync(`git checkout ${AUDITED_COMMIT}`, { stdio: "inherit" });
+
   try {
     const contracts = await validateRoles(tx);
     console.log("Found these contracts with changed roles: ", contracts);
     for (const contract of contracts) {
-      // await ValidateFromEtherscan(contract);
-      // process.exit(1);
-      await compareContractBytecodes(provider, contract);
+      const sourceCodeVerified = await ValidateFromEtherscan(contract);
+      // Proceed to bytecode compilation if sources are not verified on etherscan
+      if (!sourceCodeVerified) {
+        await compareContractBytecodes(provider, contract);
+      }
     }
   } catch (error) {
     console.error("❌ " + error);
@@ -97,17 +103,67 @@ async function checkRole(signal: SignalRoleInfo): Promise<boolean> {
 
 // Verify sources
 
-async function ValidateFromEtherscan(contractAddress: string) {
+async function ValidateFromEtherscan(contractAddress: string): Promise<boolean> {
   console.log(`Trying to validate ${contractAddress} via etherscan`);
   const apiKey = hre.network.verify.etherscan.apiKey;
   const url = hre.network.verify.etherscan.apiUrl + "api";
   try {
-    const response = await axios.get(
-      url + "?module=contract" + "&action=getsourcecode" + `&address=${contractAddress}` + `&apikey=${apiKey}`
-    );
-    console.log("API Response:", response.data);
+    const path =
+      url + "?module=contract" + "&action=getsourcecode" + `&address=${contractAddress}` + `&apikey=${apiKey}`;
+    const response = await axios.get(path);
+    const sources: string = response.data.result[0].SourceCode;
+    if (sources === "") {
+      //Source code not verified
+      return false;
+    }
+    // Remove extra brackets
+    const data = JSON.parse(sources.slice(1, sources.length - 1));
+
+    for (const source of Object.entries(data.sources)) {
+      const validation = await validateSourceFile(source[0], source[1]["content"]);
+      if (validation) {
+        console.log("✅ Match");
+      }
+    }
+    return true;
   } catch (error) {
     console.error("Error:", error);
+    return false;
+  }
+}
+
+async function validateSourceFile(fullContractName: string, sourceCode: string): Promise<boolean> {
+  console.log(`Comparing ${fullContractName} with etherscan version`);
+  try {
+    let filePath: string;
+    if (fullContractName.startsWith("@")) {
+      filePath = path.join(__dirname, "../node_modules/" + fullContractName);
+    } else {
+      filePath = path.join(__dirname, "../" + fullContractName);
+    }
+    const fileContent = fs.readFileSync(filePath, "utf-8");
+    if (fileContent === sourceCode) {
+      return true;
+    } else {
+      console.error(`❌ Sources mismatch for ${fullContractName}. Resolving diff`);
+      await showDiff(filePath, sourceCode);
+      return false;
+    }
+  } catch (error) {
+    throw new Error("Error reading file:" + error);
+  }
+}
+
+async function showDiff(localPath: string, sourceCode: string) {
+  const tempFilePath = path.join(__dirname, "temp_file.txt");
+  fs.writeFileSync(tempFilePath, sourceCode, "utf-8");
+
+  try {
+    execSync(`git diff --no-index ${localPath} ${tempFilePath}`, { stdio: "inherit", encoding: "utf-8" });
+  } catch (error) {
+    // git diff works but produce error for some reason
+  } finally {
+    fs.unlinkSync(tempFilePath);
   }
 }
 
@@ -146,11 +202,11 @@ async function getArtifactBytecode(contractName: string): Promise<string> {
 }
 
 async function compareContractBytecodes(provider: JsonRpcProvider, contractAddress: string): Promise<void> {
-  console.log(`Checking deployment against commit: ${AUDITED_COMMIT}`);
+  console.log("Comparing bytecodes with compilation artifact");
 
   const { contractName, constructorArgs } = await extractContractNameAndArgsFromDeployment(contractAddress);
 
-  await compileContract(AUDITED_COMMIT, contractName);
+  await compileContract(contractName);
 
   const artifactBytecode = await getArtifactBytecode(contractName);
 
@@ -204,10 +260,7 @@ function stripBytecodeIpfsHash(bytecode: string): string {
   return bytecode.slice(0, storageTagIndex + ipfsTag.length) + bytecode.slice(compilerTagIndex);
 }
 
-async function compileContract(commit: string, contractName: string) {
-  console.log("Compiling contract at commit:", commit);
-  execSync(`git checkout ${commit}`, { stdio: "inherit" });
-
+async function compileContract(contractName: string) {
   // Find artifact with our contract and remove it to force recompilation of this contract
   const findContract = findFile(contractName + ".sol");
   const buildPath = path.join(__dirname, "../artifacts/contracts/");
