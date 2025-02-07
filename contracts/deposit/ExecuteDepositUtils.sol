@@ -44,6 +44,7 @@ library ExecuteDepositUtils {
     struct ExecuteDepositParams {
         DataStore dataStore;
         EventEmitter eventEmitter;
+        MultichainVault multichainVault;
         DepositVault depositVault;
         Oracle oracle;
         bytes32 key;
@@ -52,7 +53,6 @@ library ExecuteDepositUtils {
         ISwapPricingUtils.SwapPricingType swapPricingType;
         bool includeVirtualInventoryImpact;
         uint256 srcChainId;
-        // address multichainVault;
     }
 
     // @dev _ExecuteDepositParams struct used in executeDeposit to avoid stack
@@ -515,9 +515,10 @@ library ExecuteDepositUtils {
             // mint GM tokens to receiver
             MarketToken(payable(_params.market.marketToken)).mint(_params.receiver, mintAmount);
         } else {
-            // mint GM tokens to MultichainVault and increase account's multichain GM balance
-            // MarketToken(payable(_params.market.marketToken)).mint(params.multichainVault, mintAmount); // TODO: add multichainVault address to ExecuteDepositParams, or is there a better approach?
-            MultichainUtils.increaseBalance(params.dataStore, _params.account, _params.market.marketToken, mintAmount);
+            // mint GM tokens to MultichainVault and increase receiver's multichain GM balance
+            MarketToken(payable(_params.market.marketToken)).mint(address(params.multichainVault), mintAmount);
+            // TODO: is it possible thet the receiver is a multisig? Can it be an issue if there are different owners on different chains for that address?
+            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, _params.receiver, _params.market.marketToken, 0); // srcChainId is the current block.chainId
         }
 
         return mintAmount;
