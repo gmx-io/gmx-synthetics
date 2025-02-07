@@ -44,39 +44,6 @@ contract MultichainVaultHandler is RoleModule, GlobalReentrancyGuard, OracleModu
     }
 
     /**
-     * Records a deposit from another chain. IMultichainProvider has CONTROLLER role
-     * @param account user address on the source chain
-     * @param token address of the token being deposited
-     * @param multichainId chain id of the destination chain
-     */
-    function recordDeposit(
-        address account,
-        address token,
-        uint256 multichainId
-    ) external onlyController {
-        // token should have been transferred to multichainVault by IMultichainProvider
-        uint256 amount = multichainVault.recordTransferIn(token);
-        if (amount == 0) {
-            revert Errors.EmptyMultichainDepositAmount();
-        }
-
-        dataStore.incrementUint(Keys.multichainBalanceKey(account, token), amount);
-
-        MultichainEventUtils.emitMultichainDeposit(eventEmitter, token, account, amount, multichainId);
-    }
-
-    /**
-     * @dev transfer the specified amount of tokens from account to receiver
-     * @param token the token to transfer
-     * @param account the account to transfer from
-     * @param receiver the account to transfer to
-     * @param amount the amount of tokens to transfer
-     */
-    function pluginTransfer(address token, address account, address receiver, uint256 amount) external onlyRouterPlugin { // TODO: confirm access control
-        IERC20(token).safeTransferFrom(account, receiver, amount);
-    }
-
-    /**
      * Executes the multicall for the given args
      * The multicall arguments contains the function calls to be executed (e.g. createDeposit, createOrder, createWithdrawal, etc)
      * @param account user address on the source chain
@@ -92,37 +59,5 @@ contract MultichainVaultHandler is RoleModule, GlobalReentrancyGuard, OracleModu
         exchangeRouter.multicall(multicallArgs);
 
         MultichainEventUtils.emitMultichainMessage(eventEmitter, account, multichainId);
-    }
-
-    /**
-     * Record a withdrawal to another chain. IMultichainProvider has CONTROLLER role
-     * @param account user address on the source chain
-     * @param token address of the token being withdrawn
-     * @param amount amount of token being withdrawn
-     */
-    function recordWithdrawal(
-        address account,
-        address token,
-        uint256 amount,
-        uint256 multichainId
-    ) external onlyController {
-        if (amount == 0) {
-            revert Errors.EmptyMultichainWithdrawalAmount();
-        }
-
-        bytes32 balanceKey = Keys.multichainBalanceKey(account, token);
-
-        uint256 balance = dataStore.getUint(balanceKey);
-        if (balance < amount) {
-            revert Errors.InsufficientMultichainBalance();
-            // TODO: should amount be capped instead of reverting? i.e. amount = balance;
-        }
-
-        dataStore.decrementUint(balanceKey, amount);
-
-        // transfer tokens to IMultichainProvider
-        multichainVault.transferOut(token, msg.sender, amount);
-
-        MultichainEventUtils.emitMultichainWithdrawal(eventEmitter, token, account, amount, multichainId);
     }
 }
