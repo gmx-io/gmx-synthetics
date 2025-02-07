@@ -116,14 +116,12 @@ async function ValidateFromEtherscan(contractAddress: string): Promise<boolean> 
       //Source code not verified
       return false;
     }
+    console.log(`Resolved as ${response.data.result[0].ContractName}`);
     // Remove extra brackets
     const data = JSON.parse(sources.slice(1, sources.length - 1));
 
     for (const source of Object.entries(data.sources)) {
-      const validation = await validateSourceFile(source[0], source[1]["content"]);
-      if (validation) {
-        console.log("✅ Match");
-      }
+      await validateSourceFile(source[0], source[1]["content"]);
     }
     return true;
   } catch (error) {
@@ -133,14 +131,13 @@ async function ValidateFromEtherscan(contractAddress: string): Promise<boolean> 
 }
 
 async function validateSourceFile(fullContractName: string, sourceCode: string): Promise<boolean> {
-  console.log(`Comparing ${fullContractName} with etherscan version`);
   try {
-    let filePath: string;
-    if (fullContractName.startsWith("@")) {
-      filePath = path.join(__dirname, "../node_modules/" + fullContractName);
-    } else {
+    let filePath = path.join(__dirname, "../node_modules/" + fullContractName);
+    if (!fs.existsSync(filePath)) {
+      // if it nos node_modules — consider it local
       filePath = path.join(__dirname, "../" + fullContractName);
     }
+
     const fileContent = fs.readFileSync(filePath, "utf-8");
     if (fileContent === sourceCode) {
       return true;
