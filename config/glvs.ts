@@ -86,12 +86,6 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
             glvMaxMarketTokenBalanceUsd: decimalToFloat(900_000),
           },
           {
-            indexToken: "AAVE",
-            glvMaxMarketTokenBalanceAmount: bigNumberify(0),
-            glvMaxMarketTokenBalanceUsd: bigNumberify(0),
-            isMarketDisabled: true,
-          },
-          {
             indexToken: "PEPE",
             glvMaxMarketTokenBalanceAmount: expandDecimals(900_000, 18),
             glvMaxMarketTokenBalanceUsd: decimalToFloat(1_000_000),
