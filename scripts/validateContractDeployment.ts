@@ -47,6 +47,8 @@ async function main() {
     process.exit(1);
   }
 
+  // Restore git to previous state
+  execSync(`git checkout -`, { stdio: "inherit" });
   console.log("✅ Verification completed.");
 }
 
