@@ -43,7 +43,7 @@ export async function main() {
     // },
     {
       baseKey: keys.CREATE_GLV_DEPOSIT_FEATURE_DISABLED,
-      data: encodeData(["address"], ["0x105b5afe50fbce7759051974fb1710ce331c77b3"]),
+      data: encodeData(["address"], ["0x3f6dF0c3A7221BA1375E87e7097885a601B41Afc"]),
     },
     // {
     //   baseKey: keys.CREATE_ORDER_FEATURE_DISABLED,
