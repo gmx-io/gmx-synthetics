@@ -10,7 +10,6 @@ import "../data/DataStore.sol";
 import "../data/Keys.sol";
 import "../error/ErrorUtils.sol";
 import "../utils/AccountUtils.sol";
-import "../multichain/MultichainUtils.sol";
 
 import "./IWNT.sol";
 
@@ -94,17 +93,6 @@ library TokenUtils {
         // this is necessary because contracts like DepositHandler, WithdrawalHandler, OrderHandler
         // do not cancel requests for specific errors
         revert Errors.TokenTransferError(token, receiver, amount);
-    }
-
-    function multichainTransfer(
-        DataStore dataStore,
-        address token,
-        address receiver,
-        uint256 amount,
-        address account
-    ) internal {
-        transfer(dataStore, token, receiver, amount);
-        MultichainUtils.decreaseBalance(dataStore, account, token, amount);
     }
 
     function sendNativeToken(
