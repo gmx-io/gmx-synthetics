@@ -17,31 +17,34 @@ export async function main() {
     //   baseKey: keys.CREATE_WITHDRAWAL_FEATURE_DISABLED,
     //   data: encodeData(["address"], ["0x9E32088F3c1a5EB38D32d1Ec6ba0bCBF499DC9ac"]),
     // },
-    {
-      baseKey: keys.CREATE_WITHDRAWAL_FEATURE_DISABLED,
-      data: encodeData(["address"], ["0xa19fa3f0d8e7b7a8963420de504b624167e709b2"]),
-    },
-    {
-      baseKey: keys.EXECUTE_WITHDRAWAL_FEATURE_DISABLED,
-      data: encodeData(["address"], ["0xa19fa3f0d8e7b7a8963420de504b624167e709b2"]),
-    },
-    {
-      baseKey: keys.EXECUTE_ATOMIC_WITHDRAWAL_FEATURE_DISABLED,
-      data: encodeData(["address"], ["0xa19fa3f0d8e7b7a8963420de504b624167e709b2"]),
-    },
+    // {
+    //   baseKey: keys.CREATE_WITHDRAWAL_FEATURE_DISABLED,
+    //   data: encodeData(["address"], ["0xa19fa3f0d8e7b7a8963420de504b624167e709b2"]),
+    // },
+    // {
+    //   baseKey: keys.EXECUTE_WITHDRAWAL_FEATURE_DISABLED,
+    //   data: encodeData(["address"], ["0xa19fa3f0d8e7b7a8963420de504b624167e709b2"]),
+    // },
+    // {
+    //   baseKey: keys.EXECUTE_ATOMIC_WITHDRAWAL_FEATURE_DISABLED,
+    //   data: encodeData(["address"], ["0xa19fa3f0d8e7b7a8963420de504b624167e709b2"]),
+    // },
+    // {
+    //   baseKey: keys.CREATE_GLV_DEPOSIT_FEATURE_DISABLED,
+    //   data: encodeData(["address"], ["0x26DdDaA629Bb35FC1853d051561f2200dD190588"]),
+    // },
+    // {
+    //   baseKey: keys.CREATE_SHIFT_FEATURE_DISABLED,
+    //   data: encodeData(["address"], ["0xEa90EC1228F7D1b3D47D84d1c9D46dBDFEfF7709"]),
+    // },
+    // {
+    //   baseKey: keys.EXECUTE_SHIFT_FEATURE_DISABLED,
+    //   data: encodeData(["address"], ["0xEa90EC1228F7D1b3D47D84d1c9D46dBDFEfF7709"]),
+    // },
     {
       baseKey: keys.CREATE_GLV_DEPOSIT_FEATURE_DISABLED,
-      data: encodeData(["address"], ["0x26DdDaA629Bb35FC1853d051561f2200dD190588"]),
+      data: encodeData(["address"], ["0x105b5afe50fbce7759051974fb1710ce331c77b3"]),
     },
-    {
-      baseKey: keys.CREATE_SHIFT_FEATURE_DISABLED,
-      data: encodeData(["address"], ["0xEa90EC1228F7D1b3D47D84d1c9D46dBDFEfF7709"]),
-    },
-    {
-      baseKey: keys.EXECUTE_SHIFT_FEATURE_DISABLED,
-      data: encodeData(["address"], ["0xEa90EC1228F7D1b3D47D84d1c9D46dBDFEfF7709"]),
-    },
-
     // {
     //   baseKey: keys.CREATE_ORDER_FEATURE_DISABLED,
     //   data: encodeData(["address", "uint256"], ["0x352f684ab9e97a6321a13CF03A61316B681D9fD2", OrderType.MarketSwap]),
