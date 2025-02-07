@@ -26,42 +26,32 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
     MultichainReader public immutable multichainReader;
-
     IVaultV1 public immutable vaultV1;
-    IRouterV1 public immutable routerV1;
-
-    address public immutable routerV2;
-    IExchangeRouter public immutable exchangeRouterV2;
 
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
         MultichainReader _multichainReader,
-        IVaultV1 _vaultV1,
-        IRouterV1 _routerV1,
-        address _routerV2,
-        IExchangeRouter _exchangeRouterV2
+        IVaultV1 _vaultV1
     ) RoleModule(_roleStore) {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
         multichainReader = _multichainReader;
-
         vaultV1 = _vaultV1;
-        routerV1 = _routerV1;
-
-        routerV2 = _routerV2;
-        exchangeRouterV2 = _exchangeRouterV2;
     }
 
     function initiateDistribute() external nonReentrant onlyFeeDistributionKeeper {
         _validateDistributionNotCompleted();
-        uint256 chains = dataStore.getUint(Keys.FEE_DISTRIBUTOR_NUMBER_OF_CHAINS);
+
+        uint256 chainCount = dataStore.getUintCount(Keys.FEE_DISTRIBUTOR_CHAIN_ID);
         MultichainReaderUtils.ReadRequestInputs[]
-            memory readRequestsInputs = new MultichainReaderUtils.ReadRequestInputs[]((chains - 1) * 3);
+            memory readRequestsInputs = new MultichainReaderUtils.ReadRequestInputs[]((chainCount - 1) * 3);
         bool skippedCurrentChain;
-        for (uint256 i; i < chains; i++) {
-            uint256 chainId = dataStore.getUint(Keys.feeDistributorChainIdKey(i + 1));
+        uint256[] memory chainIds = dataStore.getUintValuesAt(Keys.FEE_DISTRIBUTOR_CHAIN_ID, 0, chainCount);
+        for (uint256 i; i < chainCount; i++) {
+            uint256 chainId = chainIds[i];
+
             address gmx = dataStore.getAddress(
                 Keys.feeDistributorStoredAddressesKey(chainId, keccak256(abi.encode("GMX")))
             );
@@ -105,7 +95,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
 
         MultichainReaderUtils.ExtraOptionsInputs memory extraOptionsInputs;
         extraOptionsInputs.gasLimit = uint128(dataStore.getUint(Keys.FEE_DISTRIBUTOR_GAS_LIMIT));
-        extraOptionsInputs.returnDataSize = ((uint32(chains) - 1) * 96) + 8;
+        extraOptionsInputs.returnDataSize = ((uint32(chainCount) - 1) * 96) + 8;
 
         MessagingFee memory messagingFee = multichainReader.quoteReadFee(readRequestsInputs, extraOptionsInputs);
         multichainReader.sendReadRequests{value: messagingFee.nativeFee}(readRequestsInputs, extraOptionsInputs);
@@ -120,9 +110,10 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         _validateReadResponseTimestamp(receivedDataInput.timestamp);
         dataStore.setUint(Keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP, receivedDataInput.timestamp);
 
-        uint256 chains = dataStore.getUint(Keys.FEE_DISTRIBUTOR_NUMBER_OF_CHAINS);
-        for (uint256 i; i < chains; i++) {
-            uint256 chainId = dataStore.getUint(Keys.feeDistributorChainIdKey(i + 1));
+        uint256 chainCount = dataStore.getUintCount(Keys.FEE_DISTRIBUTOR_CHAIN_ID);
+        uint256[] memory chainIds = dataStore.getUintValuesAt(Keys.FEE_DISTRIBUTOR_CHAIN_ID, 0, chainCount);
+        for (uint256 i; i < chainCount; i++) {
+            uint256 chainId = chainIds[i];
             bool skippedCurrentChain;
             if (chainId == block.chainid) {
                 skippedCurrentChain = true;
@@ -166,7 +157,24 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         uint256 feesV2Usd = dataStore.getUint(Keys.feeDistributorFeeAmountUsdKey(v2));
         uint256 totalFeesUsd = feesV1Usd + feesV2Usd;
 
-        uint256 keeperCosts; // logic to be added
+        uint256 keeperCosts;
+        uint256 keeperAddressCount = dataStore.getAddressCount(Keys.FEE_DISTRIBUTOR_KEEPER_COSTS);
+        uint256 keeperUintCount = dataStore.getUintCount(Keys.FEE_DISTRIBUTOR_KEEPER_COSTS);
+        if (keeperAddressCount != keeperUintCount) {
+            revert Errors.KeeperArrayLengthMismatch(keeperAddressCount, keeperUintCount);
+        }
+
+        address[] memory keeperAddresses = new address[](keeperAddressCount);
+        uint256[] memory keeperUints = new uint256[](keeperUintCount);
+        uint256 keeperSendCount;
+        for (uint256 i; i < keeperAddressCount; i++) {
+            uint256 balance = keeperAddresses[i].balance;
+            uint256 targetBalance = keeperUints[i];
+            if (balance < targetBalance) {
+                keeperCosts = keeperCosts + (targetBalance - balance);
+                keeperSendCount++;
+            }
+        }
 
         uint256 treasuryChainlinkWntAmount = Precision.mulDiv(totalWntBalance, feesV2Usd, totalFeesUsd);
         uint256 chainlinkWntAmount = Precision.mulDiv(treasuryChainlinkWntAmount, uint256(12), uint256(100));
@@ -225,14 +233,15 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
             dataStore.setUint(Keys.feeDistributorFeeAmountKey(block.chainid), feeAmountCurrentChain);
         }
 
-        uint256 chains = dataStore.getUint(Keys.FEE_DISTRIBUTOR_NUMBER_OF_CHAINS);
-        uint256[] memory feeAmount = new uint256[](chains);
+        uint256 chainCount = dataStore.getUintCount(Keys.FEE_DISTRIBUTOR_CHAIN_ID);
+        uint256[] memory chainIds = dataStore.getUintValuesAt(Keys.FEE_DISTRIBUTOR_CHAIN_ID, 0, chainCount);
+        uint256[] memory feeAmount = new uint256[](chainCount);
         uint256 totalFeeAmount;
-        uint256[] memory stakedGmx = new uint256[](chains);
+        uint256[] memory stakedGmx = new uint256[](chainCount);
         uint256 totalStakedGmx;
         uint256 currentChain;
-        for (uint256 i; i < chains; i++) {
-            uint256 chainId = dataStore.getUint(Keys.feeDistributorChainIdKey(i + 1));
+        for (uint256 i; i < chainCount; i++) {
+            uint256 chainId = chainIds[i];
             if (chainId == block.chainid) {
                 currentChain = i;
             }
@@ -254,8 +263,8 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         }
 
         if (!feeDistributorFeeDeficit) {
-            uint256[] memory target = new uint256[](chains);
-            for (uint256 i; i < chains; i++) {
+            uint256[] memory target = new uint256[](chainCount);
+            for (uint256 i; i < chainCount; i++) {
                 if (totalStakedGmx == 0) {
                     target[i] = 0;
                 } else {
@@ -263,26 +272,26 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
                 }
             }
 
-            int256[] memory difference = new int256[](chains);
-            for (uint256 i; i < chains; i++) {
+            int256[] memory difference = new int256[](chainCount);
+            for (uint256 i; i < chainCount; i++) {
                 difference[i] = int256(feeAmount[i]) - int256(target[i]);
             }
 
-            uint256[][] memory bridging = new uint256[][](chains);
-            for (uint256 i; i < chains; i++) {
-                bridging[i] = new uint256[](chains);
+            uint256[][] memory bridging = new uint256[][](chainCount);
+            for (uint256 i; i < chainCount; i++) {
+                bridging[i] = new uint256[](chainCount);
             }
 
             uint256 deficit;
-            for (uint256 surplus; surplus < chains; surplus++) {
+            for (uint256 surplus; surplus < chainCount; surplus++) {
                 if (difference[surplus] <= 0) continue;
 
-                while (deficit < chains && difference[deficit] >= 0) {
+                while (deficit < chainCount && difference[deficit] >= 0) {
                     deficit++;
                 }
-                if (deficit == chains) break;
+                if (deficit == chainCount) break;
 
-                while (difference[surplus] > 0 && deficit < chains) {
+                while (difference[surplus] > 0 && deficit < chainCount) {
                     int256 needed = -difference[deficit];
                     if (needed > difference[surplus]) {
                         bridging[surplus][deficit] += uint256(difference[surplus]);
@@ -293,7 +302,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
                         difference[surplus] -= needed;
                         difference[deficit] = 0;
                         deficit++;
-                        while (deficit < chains && difference[deficit] >= 0) {
+                        while (deficit < chainCount && difference[deficit] >= 0) {
                             deficit++;
                         }
                     }
@@ -301,11 +310,11 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
             }
 
             uint256 amountToBridgeOut;
-            for (uint256 i; i < chains; i++) {
+            for (uint256 i; i < chainCount; i++) {
                 uint256 sendAmount = bridging[currentChain][i];
                 // perhaps should be an amount greater than 0 to account for fees
                 if (sendAmount > 0) {
-                    uint256 chainId = dataStore.getUint(Keys.feeDistributorChainIdKey(i + 1));
+                    uint256 chainId = chainIds[i];
                     address synapseRouter = dataStore.getAddress(
                         Keys.feeDistributorStoredAddressesKey(block.chainid, keccak256(abi.encode("SYNAPSE_ROUTER")))
                     );

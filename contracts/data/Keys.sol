@@ -490,8 +490,6 @@ library Keys {
     bytes32 public constant FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY = keccak256(abi.encode("FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY"));
     // @dev key for FeeDistributor gas limit used for the MultichainReader read request
     bytes32 public constant FEE_DISTRIBUTOR_GAS_LIMIT = keccak256(abi.encode("FEE_DISTRIBUTOR_GAS_LIMIT"));
-    // @dev key for FeeDistributor number of chains with GMX deployments
-    bytes32 public constant FEE_DISTRIBUTOR_NUMBER_OF_CHAINS = keccak256(abi.encode("FEE_DISTRIBUTOR_NUMBER_OF_CHAINS"));
     // @dev key for FeeDistributor chain ID
     bytes32 public constant FEE_DISTRIBUTOR_CHAIN_ID = keccak256(abi.encode("FEE_DISTRIBUTOR_CHAIN_ID"));
     // @dev key for FeeDistributor fee amount
@@ -514,6 +512,8 @@ library Keys {
     bytes32 public constant FEE_DISTRIBUTOR_ESGMX_REWARDS = keccak256(abi.encode("FEE_DISTRIBUTOR_ESGMX_REWARDS"));
     // @dev key for FeeDistributor fee thresholds
     bytes32 public constant FEE_DISTRIBUTOR_AMOUNT_THRESHOLD = keccak256(abi.encode("FEE_DISTRIBUTOR_AMOUNT_THRESHOLD"));
+    // @dev key for FeeDistributor keeper costs
+    bytes32 public constant FEE_DISTRIBUTOR_KEEPER_COSTS = keccak256(abi.encode("FEE_DISTRIBUTOR_KEEPER_COSTS"));
 
     // @dev constant for user initiated cancel reason
     string public constant USER_INITIATED_CANCEL = "USER_INITIATED_CANCEL";
@@ -2158,13 +2158,6 @@ library Keys {
     // @return key for FeeDistributor referral rewards amount
     function feeDistributorReferralRewardsAmountKey(address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(FEE_DISTRIBUTOR_REFERRAL_REWARDS_AMOUNT, token));
-    }
-
-    // @dev key for the FeeDistributor chain ID
-    // @param chain the number of the chain for which to retrieve chain ID
-    // @return key for FeeDistributor chain ID
-    function feeDistributorChainIdKey(uint256 chain) internal pure returns (bytes32) {
-        return keccak256(abi.encode(FEE_DISTRIBUTOR_CHAIN_ID, chain));
     }
 
     // @dev key for the FeeDistributor fee amount
