@@ -47,7 +47,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           {
             indexToken: "DOGE",
             glvMaxMarketTokenBalanceAmount: expandDecimals(5_600_000, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(11_000_000),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(2_000_000),
           },
           {
             indexToken: "LTC",
@@ -159,6 +159,16 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
             glvMaxMarketTokenBalanceAmount: expandDecimals(500_000, 18),
             glvMaxMarketTokenBalanceUsd: decimalToFloat(500_000),
           },
+          {
+            indexToken: "LDO",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(500_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(500_000),
+          },
+          {
+            indexToken: "BERA",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(250_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(250_000),
+          },
         ],
       },
       {
@@ -258,13 +268,13 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           },
           {
             indexToken: "FARTCOIN",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(288_461, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(300_000),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(343_249, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(360_000),
           },
           {
             indexToken: "AI16Z",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(300_000, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(300_000),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(382_978, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(360_000),
           },
         ],
       },
@@ -287,8 +297,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           },
           {
             indexToken: "XRP",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(694_744, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(1_114_509),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(1_037_288, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(1_604_892),
           },
           {
             indexToken: "DOGE",
