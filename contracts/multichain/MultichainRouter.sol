@@ -91,13 +91,15 @@ contract MultichainRouter is GelatoRelayRouter {
             params.createDepositParams.initialLongToken,
             account,
             address(depositVault), // receiver
-            params.longTokenAmount
+            params.longTokenAmount,
+            params.createDepositParams.srcChainId
         );
         _sendTokens(
             params.createDepositParams.initialShortToken,
             account,
             address(depositVault), // receiver
-            params.shortTokenAmount
+            params.shortTokenAmount,
+            params.createDepositParams.srcChainId
         );
 
         // On create step: can deduct relay fee fully or partially depending on user’s MultichainVault balance, save any excess pending relay fees and validate that the user has sufficient position collateral to pay for the remaining relay fee
@@ -120,9 +122,9 @@ contract MultichainRouter is GelatoRelayRouter {
         return depositHandler.createDeposit(account, params.createDepositParams);
     }
 
-    function _sendTokens(address account, address token, address receiver, uint256 amount) internal override {
+    function _sendTokens(address account, address token, address receiver, uint256 amount, uint256 srcChainId) internal override {
         AccountUtils.validateReceiver(receiver);
-        MultichainUtils.transferOut(dataStore, eventEmitter, 0, token, account, receiver, amount); // TODO: add srcChainId
+        MultichainUtils.transferOut(dataStore, eventEmitter, srcChainId, token, account, receiver, amount);
     }
 
     function _transferResidualFee(address wnt, address residualFeeReceiver, uint256 residualFee, address account, uint256 srcChainId) internal override {
