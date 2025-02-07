@@ -8,8 +8,6 @@ import { Result } from "@ethersproject/abi";
 import roles from "../config/roles";
 import { JsonRpcProvider, TransactionReceipt } from "@ethersproject/providers";
 import axios from "axios";
-import { match } from "node:assert";
-import * as os from "node:os";
 
 dotenv.config();
 
@@ -37,7 +35,7 @@ async function main() {
     console.log("Found these contracts with changed roles: ", contracts);
     for (const contract of contracts) {
       const sourceCodeVerified = await ValidateFromEtherscan(contract);
-      // Proceed to bytecode compilation if sources are not verified on etherscan
+      // Fallback to bytecode compilation if sources are not verified on etherscan
       if (!sourceCodeVerified) {
         await compareContractBytecodes(provider, contract);
       }
@@ -136,7 +134,7 @@ async function validateSourceFile(fullContractName: string, sourceCode: string):
   try {
     let filePath = path.join(__dirname, "../node_modules/" + fullContractName);
     if (!fs.existsSync(filePath)) {
-      // if it nos node_modules — consider it local
+      // if it is not a node_module — consider it local
       filePath = path.join(__dirname, "../" + fullContractName);
     }
 
@@ -167,6 +165,7 @@ async function showDiff(localPath: string, sourceCode: string) {
 }
 
 // Bytecode
+
 interface DeploymentInfo {
   contractName: string;
   constructorArgs: string[];
