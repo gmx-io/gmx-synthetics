@@ -80,10 +80,7 @@ contract MultichainRouter is GelatoRelayRouter {
         Contracts memory contracts = Contracts({
             dataStore: dataStore,
             eventEmitter: eventEmitter,
-            // TODO: confirm Contracts struct can be modified --> replace `OrderVault orderVault;` field with `StrictBank vault;`
-            // otherwise, should probably overridde _handleRelay
-            // A: yes, it can be modified
-            orderVault: OrderVault(payable(depositVault))
+            bank: depositVault
         });
 
         // transfer long & short tokens from MultichainVault to DepositVault and decrement user's multichain balance
