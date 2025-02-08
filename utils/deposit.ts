@@ -61,14 +61,16 @@ export async function createDeposit(fixture, overrides: any = {}) {
   }
 
   const params = {
-    receiver: receiver.address,
-    callbackContract: callbackContract.address,
-    uiFeeReceiver: uiFeeReceiver.address,
-    market: market.marketToken,
-    initialLongToken,
-    initialShortToken,
-    longTokenSwapPath,
-    shortTokenSwapPath,
+    addresses: {
+      receiver: receiver.address,
+      callbackContract: callbackContract.address,
+      uiFeeReceiver: uiFeeReceiver.address,
+      market: market.marketToken,
+      initialLongToken,
+      initialShortToken,
+      longTokenSwapPath,
+      shortTokenSwapPath,
+    },
     minMarketTokens,
     shouldUnwrapNativeToken,
     executionFee,

@@ -35,6 +35,12 @@ contract MultichainRouter is GelatoRelayRouter {
                 "MultichainCreateDepositParams(uint256 desChainId,uint256 longTokenAmount,uint256 shortTokenAmount,CreateDepositParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minMarketTokens,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)"
             )
         );
+    bytes32 public constant CREATE_DEPOSIT_PARAMS_ADDRESSES_TYPEHASH =
+        keccak256(
+            bytes(
+                "CreateDepositParamsAdresses(address receiver,address callbackContract,address uiFeeReceiver,address market,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath)"
+            )
+        );
 
     DepositVault depositVault;
     IDepositHandler depositHandler;
@@ -85,14 +91,14 @@ contract MultichainRouter is GelatoRelayRouter {
 
         // transfer long & short tokens from MultichainVault to DepositVault and decrement user's multichain balance
         _sendTokens(
-            params.createDepositParams.initialLongToken,
+            params.createDepositParams.addresses.initialLongToken,
             account,
             address(depositVault), // receiver
             params.longTokenAmount,
             params.createDepositParams.srcChainId
         );
         _sendTokens(
-            params.createDepositParams.initialShortToken,
+            params.createDepositParams.addresses.initialShortToken,
             account,
             address(depositVault), // receiver
             params.shortTokenAmount,
@@ -171,20 +177,32 @@ contract MultichainRouter is GelatoRelayRouter {
             keccak256(
                 abi.encode(
                     CREATE_DEPOSIT_PARAMS_TYPEHASH,
-                    params.receiver,
-                    params.callbackContract,
-                    params.uiFeeReceiver,
-                    params.market,
-                    params.initialLongToken,
-                    params.initialShortToken,
-                    keccak256(abi.encodePacked(params.longTokenSwapPath)),
-                    keccak256(abi.encodePacked(params.shortTokenSwapPath)),
+                    _getCreateDepositParamsAdressesStructHash(params.addresses),
                     params.minMarketTokens,
                     params.shouldUnwrapNativeToken,
                     params.executionFee,
                     params.callbackGasLimit,
-                    // params.srcChainId, // TODO: adding another field throws with slot too deep error
+                    params.srcChainId,
                     keccak256(abi.encodePacked(params.dataList))
+                )
+            );
+    }
+
+    function _getCreateDepositParamsAdressesStructHash(
+        DepositUtils.CreateDepositParamsAdresses memory addresses
+    ) internal pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    CREATE_DEPOSIT_PARAMS_ADDRESSES_TYPEHASH,
+                    addresses.receiver,
+                    addresses.callbackContract,
+                    addresses.uiFeeReceiver,
+                    addresses.market,
+                    addresses.initialLongToken,
+                    addresses.initialShortToken,
+                    keccak256(abi.encodePacked(addresses.longTokenSwapPath)),
+                    keccak256(abi.encodePacked(addresses.shortTokenSwapPath))
                 )
             );
     }
