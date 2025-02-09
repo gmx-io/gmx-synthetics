@@ -499,21 +499,23 @@ library Keys {
     // @dev key for FeeDistributor staked gmx
     bytes32 public constant FEE_DISTRIBUTOR_STAKED_GMX = keccak256(abi.encode("FEE_DISTRIBUTOR_STAKED_GMX"));
     // @dev key for FeeDistributor maximum bridging slippage
-    bytes32 public constant FEE_DISTRIBUTOR_MAX_SLIPPAGE = keccak256(abi.encode("FEE_DISTRIBUTOR_MAX_SLIPPAGE"));
+    bytes32 public constant FEE_DISTRIBUTOR_MAX_BRIDGE_SLIPPAGE = keccak256(abi.encode("FEE_DISTRIBUTOR_MAX_BRIDGE_SLIPPAGE"));
     // @dev key for FeeDistributor read response timestamp
     bytes32 public constant FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP = keccak256(abi.encode("FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP"));
     // @dev key for FeeDistributor LayerZero version of chainId
     bytes32 public constant FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID = keccak256(abi.encode("FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID"));
     // @dev key for contract and keeper addresses used in FeeDistributor
-    bytes32 public constant FEE_DISTRIBUTOR_STORED_ADDRESSES = keccak256(abi.encode("FEE_DISTRIBUTOR_STORED_ADDRESSES"));
+    bytes32 public constant FEE_DISTRIBUTOR_ADDRESS_INFO = keccak256(abi.encode("FEE_DISTRIBUTOR_ADDRESS_INFO"));
     // @dev key for identifying if FeeDistributor current chain has a fee deficit
-    bytes32 public constant FEE_DISTRIBUTOR_FEE_DEFICIT = keccak256(abi.encode("FEE_DISTRIBUTOR_FEE_DEFICIT"));
+    bytes32 public constant FEE_DISTRIBUTOR_HAS_FEE_DEFICIT = keccak256(abi.encode("FEE_DISTRIBUTOR_HAS_FEE_DEFICIT"));
     // @dev key for FeeDistributor esGMX rewards available for referral rewards distribution
     bytes32 public constant FEE_DISTRIBUTOR_ESGMX_REWARDS = keccak256(abi.encode("FEE_DISTRIBUTOR_ESGMX_REWARDS"));
     // @dev key for FeeDistributor fee thresholds
     bytes32 public constant FEE_DISTRIBUTOR_AMOUNT_THRESHOLD = keccak256(abi.encode("FEE_DISTRIBUTOR_AMOUNT_THRESHOLD"));
     // @dev key for FeeDistributor keeper costs
     bytes32 public constant FEE_DISTRIBUTOR_KEEPER_COSTS = keccak256(abi.encode("FEE_DISTRIBUTOR_KEEPER_COSTS"));
+    // @dev key for FeeDistributor fee buffer representing acceptable fee deficit after bridging slippage
+    bytes32 public constant FEE_DISTRIBUTOR_FEE_BUFFER = keccak256(abi.encode("FEE_DISTRIBUTOR_FEE_BUFFER"));
 
     // @dev constant for user initiated cancel reason
     string public constant USER_INITIATED_CANCEL = "USER_INITIATED_CANCEL";
@@ -2184,8 +2186,8 @@ library Keys {
     // @dev key for the FeeDistributor maximum bridging slippage
     // @param chainId the chainId for which to retrieve max slippage
     // @return key for FeeDistributor max slippage
-    function feeDistributorMaxSlippageKey(uint256 chainId) internal pure returns (bytes32) {
-        return keccak256(abi.encode(FEE_DISTRIBUTOR_MAX_SLIPPAGE, chainId));
+    function feeDistributorMaxBridgeSlippageKey(uint256 chainId) internal pure returns (bytes32) {
+        return keccak256(abi.encode(FEE_DISTRIBUTOR_MAX_BRIDGE_SLIPPAGE, chainId));
     }
 
     // @dev key for FeeDistributor LayerZero version of chainId
@@ -2199,8 +2201,8 @@ library Keys {
     // @param chainId the chainId for the chain
     // @param addressName bytes32 representing the address to be retrieved
     // @return key for contract and keeper addresses used in FeeDistributor
-    function feeDistributorStoredAddressesKey(uint256 chainId, bytes32 addressName) internal pure returns (bytes32) {
-        return keccak256(abi.encode(FEE_DISTRIBUTOR_STORED_ADDRESSES, chainId, addressName));
+    function feeDistributorAddressInfoKey(uint256 chainId, bytes32 addressName) internal pure returns (bytes32) {
+        return keccak256(abi.encode(FEE_DISTRIBUTOR_ADDRESS_INFO, chainId, addressName));
     }
 
     // @dev key for FeeDistributor amount threshold
