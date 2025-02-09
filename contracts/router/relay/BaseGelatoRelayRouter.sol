@@ -139,7 +139,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
                 params.addresses.initialCollateralToken,
                 address(contracts.bank),
                 collateralDeltaAmount,
-                0 // TODO: add srcChainId to orders
+                relayParams.srcChainId
             );
         }
 
@@ -312,7 +312,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         _transferRelayFeeCapped(outputAmount);
 
         // TODO: should it be named remainingFee as it's intended to always include RelayFee + executionFee?
-        // For createOrder it's the executionFee and goes into depositVault. For update/cancelOrder is goes back to account
         uint256 residualFee = outputAmount - _getFee();
         // for create orders the residual fee is sent to the order vault
         // for update orders the residual fee could be sent to the order vault if order's execution fee should be increased

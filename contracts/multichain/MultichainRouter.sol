@@ -108,6 +108,7 @@ contract MultichainRouter is GelatoRelayRouter {
         // On create step: can deduct relay fee fully or partially depending on user’s MultichainVault balance, save any excess pending relay fees and validate that the user has sufficient position collateral to pay for the remaining relay fee
         // On execute step: Deduct pending relay fees from user’s position collateral
         // TODO: confirm partial fee deduction logic
+        // A: this is in case of increase pos
 
         // pay relay fee tokens from MultichainVault to DepositVault and decrease user's multichain balance
         params.createDepositParams.executionFee = _handleRelay(
@@ -126,9 +127,13 @@ contract MultichainRouter is GelatoRelayRouter {
 
     function _sendTokens(address account, address token, address receiver, uint256 amount, uint256 srcChainId) internal override {
         AccountUtils.validateReceiver(receiver);
-        MultichainUtils.transferOut(dataStore, eventEmitter, srcChainId, token, account, receiver, amount);
+        if (srcChainId == 0) {
+            router.pluginTransfer(token, account, receiver, amount);
+        } else {
+            MultichainUtils.transferOut(dataStore, eventEmitter, srcChainId, token, account, receiver, amount);
+        }
     }
-
+    // TODO: double-check residualFee
     function _transferResidualFee(address wnt, address residualFeeReceiver, uint256 residualFee, address account, uint256 srcChainId) internal override {
         if (srcChainId == 0) {
             // sent residualFee to residualFeeReceiver (i.e. DepositVault)
