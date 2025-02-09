@@ -517,7 +517,6 @@ library ExecuteDepositUtils {
         } else {
             // mint GM tokens to MultichainVault and increase receiver's multichain GM balance
             MarketToken(payable(_params.market.marketToken)).mint(address(params.multichainVault), mintAmount);
-            // TODO: is it possible thet the receiver is a multisig? Can it be an issue if there are different owners on different chains for that address?
             MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, _params.receiver, _params.market.marketToken, 0); // srcChainId is the current block.chainId
         }
 
