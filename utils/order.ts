@@ -131,6 +131,7 @@ export async function createOrder(fixture, overrides) {
       callbackGasLimit,
       minOutputAmount,
       validFromTime,
+      srcChainId,
     },
     orderType,
     decreasePositionSwapType,
