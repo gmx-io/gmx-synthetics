@@ -53,11 +53,11 @@ library MultichainUtils {
     function transferOut(
         DataStore dataStore,
         EventEmitter eventEmitter,
-        uint256 srcChainId, // TODO: do we need to emit this?
         address token,
         address account,
         address receiver,
-        uint256 amount
+        uint256 amount,
+        uint256 srcChainId // TODO: do we need to emit this?
     ) internal {
         if (amount == 0) {
             revert Errors.EmptyMultichainTransferOutAmount();
