@@ -47,17 +47,17 @@ contract MultichainVaultHandler is RoleModule, GlobalReentrancyGuard, OracleModu
      * Executes the multicall for the given args
      * The multicall arguments contains the function calls to be executed (e.g. createDeposit, createOrder, createWithdrawal, etc)
      * @param account user address on the source chain
-     * @param multichainId chain id of the destination chain
+     * @param srcChainId chain id of the source chain
      * @param multicallArgs array of bytes containing the multicall arguments
      */
     function executeMulticall(
         address account,
-        uint256 multichainId,
+        uint256 srcChainId,
         bytes[] calldata multicallArgs
     ) external onlyController {
         // execute multicall
         exchangeRouter.multicall(multicallArgs);
 
-        MultichainEventUtils.emitMultichainMessage(eventEmitter, account, multichainId);
+        MultichainEventUtils.emitMultichainMessage(eventEmitter, account, srcChainId);
     }
 }

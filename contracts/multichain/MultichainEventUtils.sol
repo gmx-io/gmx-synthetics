@@ -30,7 +30,7 @@ library MultichainEventUtils {
         eventData.uintItems.setItem(0, "amount", amount);
         eventData.uintItems.setItem(1, "srcChainId", srcChainId);
 
-        eventEmitter.emitEventLog2("MultichainTransferIn", bytes32(srcChainId), Cast.toBytes32(account), eventData);
+        eventEmitter.emitEventLog1("MultichainTransferIn", Cast.toBytes32(account), eventData);
     }
 
     function emitMultichainMessage(
@@ -66,6 +66,6 @@ library MultichainEventUtils {
         eventData.uintItems.setItem(0, "amount", amount);
         eventData.uintItems.setItem(1, "srcChainId", srcChainId);
 
-        eventEmitter.emitEventLog2("MultichainTransferOut", bytes32(srcChainId), Cast.toBytes32(account), eventData);
+        eventEmitter.emitEventLog1("MultichainTransferOut", Cast.toBytes32(account), eventData);
     }
 }

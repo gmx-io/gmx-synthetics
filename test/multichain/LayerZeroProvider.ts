@@ -17,7 +17,7 @@ describe("LayerZeroProvider", () => {
   });
 
   it("lzCompose", async () => {
-    const multichainId = 1;
+    const srcChainId = 1;
     const amountUsdc = expandDecimals(50, 6);
 
     // mint usdc to users and approve StargatePool to spend it
@@ -25,7 +25,7 @@ describe("LayerZeroProvider", () => {
     await usdc.connect(user0).approve(mockStargatePool.address, amountUsdc);
 
     // encoded message must match the decoded message in MultichainProviderUtils.decodeDeposit(message)
-    const message0 = encodeData(["address", "address", "uint256"], [user0.address, usdc.address, multichainId]);
+    const message0 = encodeData(["address", "address", "uint256"], [user0.address, usdc.address, srcChainId]);
 
     // StargatePool would deliver usdc to LayerZeroProvider contract and call LayerZeroProvider.lzCompose
     await mockStargatePool.connect(user0).sendToken(usdc.address, layerZeroProvider.address, amountUsdc, message0);
