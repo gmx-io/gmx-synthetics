@@ -57,7 +57,7 @@ library MultichainUtils {
         address account,
         address receiver,
         uint256 amount,
-        uint256 srcChainId // TODO: do we need to emit this?
+        uint256 srcChainId
     ) internal {
         if (amount == 0) {
             revert Errors.EmptyMultichainTransferOutAmount();

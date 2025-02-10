@@ -311,7 +311,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
         _transferRelayFeeCapped(outputAmount);
 
-        // TODO: should it be named remainingFee as it's intended to always include RelayFee + executionFee?
         uint256 residualFee = outputAmount - _getFee();
         // for create orders the residual fee is sent to the order vault
         // for update orders the residual fee could be sent to the order vault if order's execution fee should be increased
