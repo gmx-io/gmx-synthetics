@@ -154,6 +154,7 @@ library OrderUtils {
         order.setCallbackGasLimit(params.numbers.callbackGasLimit);
         order.setMinOutputAmount(params.numbers.minOutputAmount);
         order.setValidFromTime(params.numbers.validFromTime);
+        order.setSrcChainId(params.numbers.srcChainId);
         order.setIsLong(params.isLong);
         order.setShouldUnwrapNativeToken(params.shouldUnwrapNativeToken);
         order.setAutoCancel(params.autoCancel);

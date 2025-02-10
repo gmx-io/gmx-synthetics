@@ -139,6 +139,7 @@ describe("ExchangeRouter", () => {
               callbackGasLimit: "200000",
               minOutputAmount: 700,
               validFromTime: 0,
+              srcChainId: 1,
             },
             orderType: OrderType.LimitIncrease,
             decreasePositionSwapType: DecreasePositionSwapType.SwapCollateralTokenToPnlToken,
@@ -170,6 +171,7 @@ describe("ExchangeRouter", () => {
     expect(order.numbers.executionFee).eq(expandDecimals(1, 18));
     expect(order.numbers.callbackGasLimit).eq("200000");
     expect(order.numbers.minOutputAmount).eq(700);
+    expect(order.numbers.srcChainId).eq(1);
 
     expect(order.flags.isLong).eq(true);
     expect(order.flags.shouldUnwrapNativeToken).eq(true);
