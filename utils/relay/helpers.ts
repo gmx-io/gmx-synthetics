@@ -11,6 +11,7 @@ function getDefaultOracleParams() {
 export async function getRelayParams(p: {
   oracleParams?: any;
   tokenPermits?: any;
+  externalCalls?: any;
   feeParams: any;
   userNonce?: BigNumberish;
   deadline: BigNumberish;
@@ -23,6 +24,12 @@ export async function getRelayParams(p: {
   return {
     oracleParams: p.oracleParams || getDefaultOracleParams(),
     tokenPermits: p.tokenPermits || [],
+    externalCalls: p.externalCalls || {
+      externalCallTargets: [],
+      externalCallDataList: [],
+      refundTokens: [],
+      refundReceivers: [],
+    },
     fee: p.feeParams,
     userNonce: p.userNonce,
     deadline: p.deadline,
@@ -42,6 +49,7 @@ export function hashRelayParams(relayParams: any) {
   const encoded = ethers.utils.defaultAbiCoder.encode(
     [
       "tuple(address[] tokens, address[] providers, bytes[] data)",
+      "tuple(address[] externalCallTargets, bytes[] externalCallDataList, address[] refundTokens, address[] refundReceivers)",
       "tuple(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s, address token)[]",
       "tuple(address feeToken, uint256 feeAmount, address[] feeSwapPath)",
       "uint256",
@@ -49,6 +57,12 @@ export function hashRelayParams(relayParams: any) {
     ],
     [
       [relayParams.oracleParams.tokens, relayParams.oracleParams.providers, relayParams.oracleParams.data],
+      [
+        relayParams.externalCalls.externalCallTargets,
+        relayParams.externalCalls.externalCallDataList,
+        relayParams.externalCalls.refundTokens,
+        relayParams.externalCalls.refundReceivers,
+      ],
       relayParams.tokenPermits.map((permit) => [
         permit.owner,
         permit.spender,

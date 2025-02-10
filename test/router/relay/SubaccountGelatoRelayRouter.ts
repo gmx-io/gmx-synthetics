@@ -24,6 +24,7 @@ import {
 import { GELATO_RELAY_ADDRESS } from "../../../utils/relay/addresses";
 import { getTokenPermit } from "../../../utils/relay/tokenPermit";
 import { ethers } from "ethers";
+import { handleDeposit } from "../../../utils/deposit";
 
 const BAD_SIGNATURE =
   "0x122e3efab9b46c82dc38adf4ea6cd2c753b00f95c217a0e3a0f4dd110839f07a08eb29c1cc414d551349510e23a75219cd70c8b88515ed2b83bbd88216ffdb051f";
@@ -31,7 +32,7 @@ const BAD_SIGNATURE =
 describe("SubaccountGelatoRelayRouter", () => {
   let fixture;
   let user0, user1, user2, user3;
-  let reader, dataStore, router, subaccountGelatoRelayRouter, ethUsdMarket, wnt, usdc;
+  let reader, dataStore, router, subaccountGelatoRelayRouter, ethUsdMarket, wnt, usdc, chainlinkPriceFeedProvider;
   let relaySigner;
   let chainId;
   const referralCode = hashString("referralCode");
@@ -41,7 +42,8 @@ describe("SubaccountGelatoRelayRouter", () => {
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1, user2, user3 } = fixture.accounts);
-    ({ reader, dataStore, router, subaccountGelatoRelayRouter, ethUsdMarket, wnt, usdc } = fixture.contracts);
+    ({ reader, dataStore, router, subaccountGelatoRelayRouter, ethUsdMarket, wnt, usdc, chainlinkPriceFeedProvider } =
+      fixture.contracts);
 
     defaultCreateOrderParams = {
       addresses: {
@@ -144,13 +146,12 @@ describe("SubaccountGelatoRelayRouter", () => {
       );
     });
 
-    it("InsufficientRelayFee", async () => {
+    it("GelatoRelayContext._transferRelayFeeCapped: maxFee", async () => {
       await enableSubaccount();
 
       createOrderParams.feeParams.feeAmount = 1;
-      await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(
-        errorsContract,
-        "InsufficientRelayFee"
+      await expect(sendCreateOrder(createOrderParams)).to.be.revertedWith(
+        "GelatoRelayContext._transferRelayFeeCapped: maxFee"
       );
     });
 
@@ -257,11 +258,32 @@ describe("SubaccountGelatoRelayRouter", () => {
       ).to.be.revertedWithCustomError(errorsContract, "InvalidPermitSpender");
     });
 
-    it("UnexpectedRelayFeeTokenAfterSwap", async () => {
+    it("UnexpectedRelayFeeToken", async () => {
       await enableSubaccount();
       await usdc.connect(user1).approve(router.address, expandDecimals(1000, 18));
       createOrderParams.feeParams.feeToken = usdc.address;
       createOrderParams.feeParams.feeAmount = expandDecimals(10, 18);
+      await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "UnexpectedRelayFeeToken"
+      );
+    });
+
+    it("UnexpectedRelayFeeTokenAfterSwap", async () => {
+      await enableSubaccount();
+      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
+      createOrderParams.feeParams.feeSwapPath = [ethUsdMarket.marketToken]; // swap WETH for USDC
+      createOrderParams.oracleParams = {
+        tokens: [usdc.address, wnt.address],
+        providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
+        data: ["0x", "0x"],
+      };
+      await handleDeposit(fixture, {
+        create: {
+          longTokenAmount: expandDecimals(10, 18),
+          shortTokenAmount: expandDecimals(10 * 5000, 6),
+        },
+      });
       await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(
         errorsContract,
         "UnexpectedRelayFeeTokenAfterSwap"
@@ -546,6 +568,7 @@ describe("SubaccountGelatoRelayRouter", () => {
       });
     });
 
+    it.skip("swap relay fee with external call");
     it.skip("swap relay fee");
   });
 

@@ -73,8 +73,9 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         EventEmitter _eventEmitter,
         Oracle _oracle,
         IOrderHandler _orderHandler,
-        OrderVault _orderVault
-    ) BaseGelatoRelayRouter(_router, _dataStore, _eventEmitter, _oracle, _orderHandler, _orderVault) {}
+        OrderVault _orderVault,
+        IExternalHandler _externalHandler
+    ) BaseGelatoRelayRouter(_router, _dataStore, _eventEmitter, _oracle, _orderHandler, _orderVault, _externalHandler) {}
 
     function createOrder(
         RelayParams calldata relayParams,
@@ -156,7 +157,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             eventEmitter: eventEmitter,
             orderVault: orderVault
         });
-        _handleRelay(contracts, relayParams.tokenPermits, relayParams.fee, account, account);
+        _handleRelay(contracts, relayParams, account, account);
 
         SubaccountUtils.removeSubaccount(dataStore, eventEmitter, account, subaccount);
     }

@@ -322,7 +322,7 @@ library MarketUtils {
         // using the inverse of maximize for the getPnl calls would help prevent
         // gaming of market token values by increasing the spread
         //
-        // liquidations could be triggerred by manipulating a large spread but
+        // liquidations could be triggered by manipulating a large spread but
         // that should be more difficult to execute
 
         result.longPnl = getPnl(

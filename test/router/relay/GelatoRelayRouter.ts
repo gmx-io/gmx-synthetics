@@ -20,6 +20,7 @@ import { sendCancelOrder, sendCreateOrder, sendUpdateOrder } from "../../../util
 import { getTokenPermit } from "../../../utils/relay/tokenPermit";
 import { ethers } from "ethers";
 import { parseLogs } from "../../../utils/event";
+import { deployContract } from "../../../utils/deploy";
 
 const BAD_SIGNATURE =
   "0x122e3efab9b46c82dc38adf4ea6cd2c753b00f95c217a0e3a0f4dd110839f07a08eb29c1cc414d551349510e23a75219cd70c8b88515ed2b83bbd88216ffdb051f";
@@ -99,12 +100,11 @@ describe("GelatoRelayRouter", () => {
   });
 
   describe("createOrder", () => {
-    it("InsufficientRelayFee", async () => {
+    it("GelatoRelayContext._transferRelayFeeCapped: maxFee", async () => {
       await wnt.connect(user0).approve(router.address, expandDecimals(1, 18));
       createOrderParams.feeParams.feeAmount = 1;
-      await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(
-        errorsContract,
-        "InsufficientRelayFee"
+      await expect(sendCreateOrder(createOrderParams)).to.be.revertedWith(
+        "GelatoRelayContext._transferRelayFeeCapped: maxFee"
       );
     });
 
@@ -211,10 +211,30 @@ describe("GelatoRelayRouter", () => {
       ).to.be.revertedWithCustomError(errorsContract, "InvalidPermitSpender");
     });
 
-    it("UnexpectedRelayFeeTokenAfterSwap", async () => {
+    it("UnexpectedRelayFeeToken", async () => {
       await usdc.connect(user0).approve(router.address, expandDecimals(1000, 18));
       createOrderParams.feeParams.feeToken = usdc.address;
       createOrderParams.feeParams.feeAmount = expandDecimals(10, 18);
+      await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "UnexpectedRelayFeeToken"
+      );
+    });
+
+    it("UnexpectedRelayFeeTokenAfterSwap", async () => {
+      await wnt.connect(user0).approve(router.address, expandDecimals(1, 18));
+      createOrderParams.feeParams.feeSwapPath = [ethUsdMarket.marketToken]; // swap WETH for USDC
+      createOrderParams.oracleParams = {
+        tokens: [usdc.address, wnt.address],
+        providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
+        data: ["0x", "0x"],
+      };
+      await handleDeposit(fixture, {
+        create: {
+          longTokenAmount: expandDecimals(10, 18),
+          shortTokenAmount: expandDecimals(10 * 5000, 6),
+        },
+      });
       await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(
         errorsContract,
         "UnexpectedRelayFeeTokenAfterSwap"
@@ -280,6 +300,50 @@ describe("GelatoRelayRouter", () => {
       });
     });
 
+    it("swap relay fee with external call", async () => {
+      const externalExchange = await deployContract("MockExternalExchange", []);
+      await wnt.connect(user0).transfer(externalExchange.address, expandDecimals(1, 17));
+
+      await usdc.connect(user0).approve(router.address, expandDecimals(1000, 6));
+      await wnt.connect(user0).approve(router.address, expandDecimals(1, 18));
+
+      const usdcBalanceBefore = await usdc.balanceOf(user0.address);
+      const feeAmount = expandDecimals(10, 6);
+      await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, 0);
+      const tx = await sendCreateOrder({
+        ...createOrderParams,
+        externalCalls: {
+          externalCallTargets: [externalExchange.address],
+          externalCallDataList: [
+            externalExchange.interface.encodeFunctionData("transfer", [
+              wnt.address,
+              gelatoRelayRouter.address,
+              expandDecimals(1, 17),
+            ]),
+          ],
+          refundTokens: [],
+          refundReceivers: [],
+        },
+        feeParams: {
+          feeToken: usdc.address,
+          feeAmount,
+          feeSwapPath: [],
+        },
+      });
+
+      // feeCollector received in WETH
+      await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, createOrderParams.relayFeeAmount);
+
+      // and user sent correct amount of USDC
+      const usdcBalanceAfter = await usdc.balanceOf(user0.address);
+      expect(usdcBalanceAfter).eq(usdcBalanceBefore.sub(feeAmount));
+
+      await logGasUsage({
+        tx,
+        label: "gelatoRelayRouter.createOrder with external call",
+      });
+    });
+
     it("swap relay fee", async () => {
       await handleDeposit(fixture, {
         create: {
@@ -326,10 +390,16 @@ describe("GelatoRelayRouter", () => {
       const logs = parseLogs(fixture, txReceipt);
       const swapInfoLog = logs.find((log) => log.parsedEventInfo?.eventName === "SwapInfo");
       const swapFeesCollectedLog = logs.find((log) => log.parsedEventInfo?.eventName === "SwapFeesCollected");
+      // TODO check fee based on received amounts
       expect(swapInfoLog.parsedEventData.amountIn.sub(swapInfoLog.parsedEventData.amountInAfterFees)).eq(
         applyFactor(swapInfoLog.parsedEventData.amountIn, atomicSwapFeeFactor)
       );
       expect(swapFeesCollectedLog.parsedEventData.swapFeeType).eq(keys.ATOMIC_SWAP_FEE_FACTOR);
+
+      await logGasUsage({
+        tx,
+        label: "gelatoRelayRouter.createOrder with swap",
+      });
     });
   });
 
@@ -365,15 +435,14 @@ describe("GelatoRelayRouter", () => {
       };
     });
 
-    it("InsufficientRelayFee", async () => {
+    it("GelatoRelayContext._transferRelayFeeCapped: maxFee", async () => {
       await wnt.connect(user0).approve(router.address, expandDecimals(1, 18));
       await sendCreateOrder(createOrderParams);
       const orderKeys = await getOrderKeys(dataStore, 0, 1);
 
       updateOrderParams.feeParams.feeAmount = 1;
-      await expect(sendUpdateOrder({ ...updateOrderParams, key: orderKeys[0] })).to.be.revertedWithCustomError(
-        errorsContract,
-        "InsufficientRelayFee"
+      await expect(sendUpdateOrder({ ...updateOrderParams, key: orderKeys[0] })).to.be.revertedWith(
+        "GelatoRelayContext._transferRelayFeeCapped: maxFee"
       );
     });
 
@@ -503,15 +572,14 @@ describe("GelatoRelayRouter", () => {
       };
     });
 
-    it("InsufficientRelayFee", async () => {
+    it("GelatoRelayContext._transferRelayFeeCapped: maxFee", async () => {
       await wnt.connect(user0).approve(router.address, expandDecimals(1, 18));
       await sendCreateOrder(createOrderParams);
       const orderKeys = await getOrderKeys(dataStore, 0, 1);
 
       cancelOrderParams.feeParams.feeAmount = 1;
-      await expect(sendCancelOrder({ ...cancelOrderParams, key: orderKeys[0] })).to.be.revertedWithCustomError(
-        errorsContract,
-        "InsufficientRelayFee"
+      await expect(sendCancelOrder({ ...cancelOrderParams, key: orderKeys[0] })).to.be.revertedWith(
+        "GelatoRelayContext._transferRelayFeeCapped: maxFee"
       );
     });
 
