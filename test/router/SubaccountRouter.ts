@@ -158,6 +158,7 @@ describe("SubaccountRouter", () => {
         callbackGasLimit: "200000",
         minOutputAmount: 700,
         validFromTime: 0,
+        srcChainId: 0,
       },
       orderType: OrderType.Liquidation,
       decreasePositionSwapType: DecreasePositionSwapType.SwapCollateralTokenToPnlToken,
@@ -332,6 +333,7 @@ describe("SubaccountRouter", () => {
         callbackGasLimit: "200000",
         minOutputAmount: 700,
         validFromTime: 0,
+        srcChainId: 0,
       },
       orderType: OrderType.MarketIncrease,
       decreasePositionSwapType: DecreasePositionSwapType.SwapCollateralTokenToPnlToken,
@@ -474,6 +476,7 @@ describe("SubaccountRouter", () => {
         callbackGasLimit: "200000",
         minOutputAmount: 700,
         validFromTime: 800,
+        srcChainId: 1,
       },
       orderType: OrderType.LimitIncrease,
       decreasePositionSwapType: DecreasePositionSwapType.SwapCollateralTokenToPnlToken,
@@ -510,6 +513,7 @@ describe("SubaccountRouter", () => {
       expect(order.numbers.triggerPrice).eq(expandDecimals(4800, 12));
       expect(order.numbers.minOutputAmount).eq(700);
       expect(order.numbers.validFromTime).eq(800);
+      expect(order.numbers.srcChainId).eq(1);
       expect(order._dataList).deep.eq(dataList);
     });
 
@@ -619,6 +623,7 @@ describe("SubaccountRouter", () => {
         callbackGasLimit: "200000",
         minOutputAmount: 700,
         validFromTime: 800,
+        srcChainId: 1,
       },
       orderType: OrderType.LimitIncrease,
       decreasePositionSwapType: DecreasePositionSwapType.SwapCollateralTokenToPnlToken,
@@ -655,6 +660,7 @@ describe("SubaccountRouter", () => {
       expect(order.numbers.triggerPrice).eq(expandDecimals(4800, 12));
       expect(order.numbers.minOutputAmount).eq(700);
       expect(order.numbers.validFromTime).eq(800);
+      expect(order.numbers.srcChainId).eq(1);
       expect(order._dataList).deep.eq(dataList);
     });
 
@@ -664,7 +670,7 @@ describe("SubaccountRouter", () => {
 
     await subaccountRouter.connect(subaccount).cancelOrder(orderKey);
 
-    expect(initialWntBalance0.sub(await wnt.balanceOf(user0.address))).closeTo("1579799104730528", "10000000000000"); // 0.001579799104730528 ETH
+    expect(initialWntBalance0.sub(await wnt.balanceOf(user0.address))).closeTo("1598971241887446", "10000000000000"); // 0.001598971241887446 ETH
 
     expect(await usdc.balanceOf(user0.address)).eq(expandDecimals(101, 6));
 

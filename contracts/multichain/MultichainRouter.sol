@@ -53,10 +53,11 @@ contract MultichainRouter is GelatoRelayRouter {
         Oracle _oracle,
         IOrderHandler _orderHandler,
         OrderVault _orderVault,
+        IExternalHandler _externalHandler,
         IDepositHandler _depositHandler,
         DepositVault _depositVault,
         MultichainVault _multichainVault
-    ) GelatoRelayRouter(_router, _dataStore, _eventEmitter, _oracle, _orderHandler, _orderVault) {
+    ) GelatoRelayRouter(_router, _dataStore, _eventEmitter, _oracle, _orderHandler, _orderVault, _externalHandler) {
         depositVault = _depositVault;
         depositHandler = _depositHandler;
         multichainVault = _multichainVault;
@@ -74,12 +75,11 @@ contract MultichainRouter is GelatoRelayRouter {
         bytes32 structHash = _getMultichainCreateDepositStructHash(relayParams, params);
         _validateCall(relayParams, account, structHash);
 
-        return _createDeposit(relayParams.tokenPermits, relayParams.fee, account, params);
+        return _createDeposit(relayParams, account, params);
     }
 
     function _createDeposit(
-        TokenPermit[] calldata tokenPermits,
-        RelayFeeParams calldata fee,
+        RelayParams calldata relayParams,
         address account,
         MultichainCreateDepositParams memory params // can't use calldata because need to modify params.numbers.executionFee
     ) internal returns (bytes32) {
@@ -108,12 +108,8 @@ contract MultichainRouter is GelatoRelayRouter {
         // pay relay fee tokens from MultichainVault to DepositVault and decrease user's multichain balance
         params.createDepositParams.executionFee = _handleRelay(
             contracts,
-            tokenPermits,
-            fee, // feeAmount is relayFee + executionFee
-            params.createDepositParams.srcChainId,
+            relayParams,
             account,
-            // if initialLongTokenAmount or initialShortTokenAmount is wnt then executionFee will be subracted (in DepositUtils.createDeposit) from one of them
-            // otherwise executionFee amount of wnt must be sent to DepositVault => it means the residualFeeReceiver should be the DepositVault
             address(depositVault) // residualFeeReceiver
         );
 
