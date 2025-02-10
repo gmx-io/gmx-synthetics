@@ -49,6 +49,7 @@ describe("Relay signatures", () => {
         oracle.address,
         orderHandler.address,
         orderVault.address,
+        ethers.constants.AddressZero,
       ],
       {
         libraries: {

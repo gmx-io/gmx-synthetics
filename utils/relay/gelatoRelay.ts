@@ -12,6 +12,12 @@ export async function sendCreateOrder(p: {
     providers: string[];
     data: string[];
   };
+  externalCalls?: {
+    externalCallTargets: string[];
+    externalCallDataList: string[];
+    refundTokens: string[];
+    refundReceivers: string[];
+  };
   tokenPermits?: {
     token: string;
     spender: string;

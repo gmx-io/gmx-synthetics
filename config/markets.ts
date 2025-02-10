@@ -635,8 +635,8 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_LowMax_WithHigherBase,
 
-      reserveFactor: percentageToFloat("165%"),
-      openInterestReserveFactor: percentageToFloat("160%"),
+      reserveFactor: percentageToFloat("185%"),
+      openInterestReserveFactor: percentageToFloat("180%"),
 
       maxLongTokenPoolAmount: expandDecimals(7_250, 18),
       maxShortTokenPoolAmount: expandDecimals(5_000_000, 6),
