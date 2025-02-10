@@ -3,6 +3,7 @@ import hre from "hardhat";
 import * as keys from "../utils/keys";
 import { toLoggableObject } from "../utils/print";
 import got from "got";
+import { expandDecimals } from "../utils/math";
 
 function getValues() {
   if (hre.network.name === "arbitrum") {
@@ -32,7 +33,10 @@ async function main() {
   const tickers = (await got(tickersUrl).json()) as any[];
   const tickerByToken = Object.fromEntries(tickers.map((t) => [t.tokenAddress, t]));
 
-  const indexTokenTicker = tickerByToken[market.indexToken];
+  const indexTokenTicker =
+    market.indexToken === hre.ethers.constants.AddressZero
+      ? { minPrice: 0, maxPrice: 0 }
+      : tickerByToken[market.indexToken];
   const longTokenTicker = tickerByToken[market.longToken];
   const shortTokenTicker = tickerByToken[market.shortToken];
 

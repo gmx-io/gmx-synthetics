@@ -3,7 +3,7 @@ import prompts from "prompts";
 import { encodeData } from "../utils/hash";
 import { bigNumberify } from "../utils/math";
 import { getMarketKey, getOnchainMarkets } from "../utils/market";
-import { getFullKey, appendUintConfigIfDifferent } from "../utils/config";
+import { getFullKey, appendUintConfigIfDifferent, appendBoolConfigIfDifferent } from "../utils/config";
 import { handleInBatches } from "../utils/batch";
 import * as keys from "../utils/keys";
 
@@ -64,12 +64,13 @@ const processGlvs = async ({ glvs, onchainMarketsByTokens, tokens, handleConfig,
       const marketAddress = onchainMarket.marketToken;
 
       if (!glvSupportedMarketList.includes(marketAddress)) {
+        console.log(`marketsToAdd: ${indexToken.symbol}`);
         marketsToAdd.push([glvAddress, marketAddress]);
       }
 
       if (glvMarketConfig.isMarketDisabled !== undefined) {
         await handleConfig(
-          "uint",
+          "bool",
           keys.IS_GLV_MARKET_DISABLED,
           encodeData(["address", "address"], [glvAddress, marketAddress]),
           glvMarketConfig.isMarketDisabled,
@@ -120,7 +121,7 @@ export async function updateGlvConfig({ write }) {
     tokens,
     dataStore,
     handleConfig: (type, baseKey, keyData) => {
-      if (type !== "uint") {
+      if (type !== "uint" && type !== "bool") {
         throw new Error("Unsupported type");
       }
 
@@ -130,7 +131,7 @@ export async function updateGlvConfig({ write }) {
       multicallReadParams.push({
         target: dataStore.address,
         allowFailure: false,
-        callData: dataStore.interface.encodeFunctionData("getUint", [key]),
+        callData: dataStore.interface.encodeFunctionData(type === "uint" ? "getUint" : "getBool", [key]),
       });
     },
   });
@@ -154,11 +155,15 @@ export async function updateGlvConfig({ write }) {
     tokens,
     dataStore,
     handleConfig: async (type, baseKey, keyData, value, label) => {
-      if (type !== "uint") {
+      if (type !== "uint" && type !== "bool") {
         throw new Error("Unsupported type");
       }
 
-      await appendUintConfigIfDifferent(multicallWriteParams, dataCache, baseKey, keyData, value, label);
+      if (type === "uint") {
+        await appendUintConfigIfDifferent(multicallWriteParams, dataCache, baseKey, keyData, value, label);
+      } else {
+        await appendBoolConfigIfDifferent(multicallWriteParams, dataCache, baseKey, keyData, value, label);
+      }
     },
   });
   console.log("done in %sms", Date.now() - prepareStart);
