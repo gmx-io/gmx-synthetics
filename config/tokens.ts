@@ -583,6 +583,28 @@ const config: {
       oracleTimestampAdjustment: 1,
       // Chainlink on-chain feed not available
     },
+    LDO: {
+      synthetic: true,
+      decimals: 18, // https://etherscan.io/address/0x5a98fcbea516cf06857215779fd812ca3bef1b32#readContract
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003fa5285b58655299e2bd92df12b3352209b3e460aea3c170eb9a96c8ceb1c",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0xA43A34030088E6510FecCFb77E88ee5e7ed0fE64",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+    },
+    BERA: {
+      synthetic: true,
+      decimals: 18, // https://docs.berachain.com/learn/pol/tokens/tokenomics#overview
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003c800d35ffd2dbac08e275530d56e254ef08aaacacaa8e84dfc4a615504db",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      // Chainlink on-chain feed not available
+    },
     AAVE: {
       address: "0xba5ddd1f9d7f570dc94a51479a000e3bce967196",
       decimals: 18,
