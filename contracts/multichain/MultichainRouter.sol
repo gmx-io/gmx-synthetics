@@ -130,7 +130,7 @@ contract MultichainRouter is GelatoRelayRouter {
         if (srcChainId == 0) {
             router.pluginTransfer(token, account, receiver, amount);
         } else {
-            MultichainUtils.transferOut(dataStore, eventEmitter, srcChainId, token, account, receiver, amount);
+            MultichainUtils.transferOut(dataStore, eventEmitter, token, account, receiver, amount, srcChainId);
         }
     }
     // TODO: double-check residualFee
