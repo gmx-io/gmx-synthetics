@@ -1,7 +1,15 @@
 import { grantRoleIfNotGranted } from "../utils/role";
 import { createDeployFunction } from "../utils/deploy";
 
-const constructorContracts = ["Router", "DataStore", "EventEmitter", "Oracle", "OrderHandler", "OrderVault"];
+const constructorContracts = [
+  "Router",
+  "DataStore",
+  "EventEmitter",
+  "Oracle",
+  "OrderHandler",
+  "OrderVault",
+  "ExternalHandler",
+];
 
 const func = createDeployFunction({
   contractName: "SubaccountGelatoRelayRouter",

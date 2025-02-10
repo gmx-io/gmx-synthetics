@@ -428,6 +428,7 @@ library Errors {
     error InvalidSignature(string signatureType);
     // User sent incorrect fee token or incorrect swap path
     error UnexpectedRelayFeeTokenAfterSwap(address feeToken, address expectedFeeToken);
+    error UnexpectedRelayFeeToken(address feeToken, address expectedFeeToken);
     // Contract received unsupported fee token from Gelato relay
     error UnsupportedRelayFeeToken(address feeToken, address expectedFeeToken);
     error InvalidPermitSpender(address spender, address expectedSpender);
@@ -437,4 +438,5 @@ library Errors {
     error DeadlinePassed(uint256 currentTimestamp, uint256 deadline);
     error InsufficientRelayFee(uint256 requiredRelayFee, uint256 feeAmount);
     error InvalidSubaccountApprovalSubaccount();
+    error InvalidRelayParams();
 }
