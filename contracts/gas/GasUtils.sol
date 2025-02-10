@@ -215,7 +215,11 @@ library GasUtils {
         // some blockchains may not support EIP-1559 and will return 0 for block.basefee
         // also block.basefee is 0 inside eth_call and eth_estimateGas
         uint256 basefee = block.basefee != 0 ? block.basefee : tx.gasprice;
-        uint256 maxExecutionFee = gasLimit * basefee * 100;
+        uint256 maxExecutionFeeMultiplier = dataStore.getUint(Keys.MAX_EXECUTION_FEE_MULTIPLIER);
+        if (maxExecutionFeeMultiplier == 0) {
+            maxExecutionFeeMultiplier = 100;
+        }
+        uint256 maxExecutionFee = gasLimit * basefee * maxExecutionFeeMultiplier;
         if (executionFee > maxExecutionFee) {
             revert Errors.ExecutionFeeTooHigh(maxExecutionFee, executionFee);
         }
