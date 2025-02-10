@@ -31,14 +31,15 @@ async function main() {
   execSync(`git checkout ${AUDITED_COMMIT}`, { stdio: "inherit" });
 
   try {
-    const contracts = await validateRoles(tx);
-    console.log("Found these contracts with changed roles: ", contracts);
-    for (const contract of contracts) {
-      const sourceCodeVerified = await validateFromEtherscan(contract);
+    const contractInfos = await extractRolesFromTx(tx);
+    for (const contractInfo of contractInfos) {
+      // also extracts contract name
+      const isCodeValidated = await validateFromEtherscan(contractInfo);
       // Fallback to bytecode compilation if sources are not verified on etherscan
-      if (!sourceCodeVerified) {
-        await compareContractBytecodes(provider, contract);
+      if (!isCodeValidated) {
+        await compareContractBytecodes(provider, contractInfo);
       }
+      await validateRoles(contractInfo);
     }
   } catch (error) {
     console.error("❌ " + error);
@@ -55,6 +56,13 @@ async function main() {
 interface SignalRoleInfo {
   account: string;
   roleKey: string;
+}
+
+interface ContractInfo {
+  address: string;
+  name: string | null;
+  isCodeValidated: boolean;
+  signalledRoles: string[];
 }
 
 const expectedRoles = {
@@ -83,8 +91,8 @@ const expectedRoles = {
   ],
 };
 
-async function validateRoles(txReceipt: TransactionReceipt): Promise<Set<string>> {
-  const contracts = new Set<string>();
+async function extractRolesFromTx(txReceipt: TransactionReceipt): Promise<IterableIterator<ContractInfo>> {
+  const contractInfos = new Map<string, ContractInfo>();
   const EventEmitter = await ethers.getContractFactory("EventEmitter");
   const eventEmitterInterface = EventEmitter.interface;
 
@@ -93,14 +101,28 @@ async function validateRoles(txReceipt: TransactionReceipt): Promise<Set<string>
 
     if (parsedLog.name == "EventLog1" && parsedLog.args[1] === "SignalGrantRole") {
       const signal = parseSignalGrantRoleEvent(parsedLog.args);
-      contracts.add(signal.account);
-      if (!(await checkRole(signal))) {
-        throw new Error(`Role ${signal.roleKey} is not approved!`);
+      if (contractInfos.has(signal.account)) {
+        contractInfos[signal.account].signalledRoles.push(signal.roleKey);
+      } else {
+        contractInfos[signal.account] = {
+          address: signal.account,
+          name: null,
+          validated: false,
+          signalledRoles: [signal.roleKey],
+        };
       }
     }
   }
-  console.log("✅ Roles validated");
-  return contracts;
+  return contractInfos.values();
+}
+
+async function validateRoles(contractInfo: ContractInfo) {
+  for (const signalledRole of contractInfo.signalledRoles) {
+    if (!(await checkRole(contractInfo.name, contractInfo.address, signalledRole))) {
+      throw new Error(`Role ${signalledRole} is not approved for ${contractInfo.name}!`);
+    }
+  }
+  console.log(`✅ Roles for ${contractInfo.name} validated`);
 }
 
 function parseSignalGrantRoleEvent(eventArg: Result): SignalRoleInfo {
@@ -112,13 +134,16 @@ function parseSignalGrantRoleEvent(eventArg: Result): SignalRoleInfo {
   };
 }
 
-async function checkRole(signal: SignalRoleInfo): Promise<boolean> {
+function encodeRole(roleKey: string): string {
+  const encoded = ethers.utils.defaultAbiCoder.encode(["string"], [roleKey]);
+  return ethers.utils.keccak256(encoded);
+}
+
+async function checkRole(contractName: string, contractAddress: string, signalledRole: string): Promise<boolean> {
   const rolesConfig = await roles(hre);
   for (const [role, addresses] of Object.entries(rolesConfig)) {
-    if (addresses[signal.account]) {
-      const encoded = ethers.utils.defaultAbiCoder.encode(["string"], [role]);
-      const keccak = ethers.utils.keccak256(encoded);
-      if (keccak === signal.roleKey) {
+    if (addresses[contractAddress]) {
+      if (encodeRole(role) === signalledRole && expectedRoles[role].includes(contractName)) {
         return true;
       }
     }
@@ -127,26 +152,28 @@ async function checkRole(signal: SignalRoleInfo): Promise<boolean> {
 }
 
 // Verify sources from etherscan
-async function validateFromEtherscan(contractAddress: string): Promise<boolean> {
-  console.log(`Trying to validate ${contractAddress} via etherscan`);
+async function validateFromEtherscan(contractInfo: ContractInfo): Promise<boolean> {
+  console.log(`Trying to validate ${contractInfo.address} via etherscan`);
   const apiKey = hre.network.verify.etherscan.apiKey;
   const url = hre.network.verify.etherscan.apiUrl + "api";
   try {
     const path =
-      url + "?module=contract" + "&action=getsourcecode" + `&address=${contractAddress}` + `&apikey=${apiKey}`;
+      url + "?module=contract" + "&action=getsourcecode" + `&address=${contractInfo.address}` + `&apikey=${apiKey}`;
     const response = await axios.get(path);
     const sources: string = response.data.result[0].SourceCode;
     if (sources === "") {
       //Source code not verified
       return false;
     }
-    console.log(`Resolved as ${response.data.result[0].ContractName}`);
+    contractInfo.name = response.data.result[0].ContractName;
+    console.log(`Resolved as ${contractInfo.name}`);
     // Remove extra brackets
     const data = JSON.parse(sources.slice(1, sources.length - 1));
 
     for (const source of Object.entries(data.sources)) {
       await validateSourceFile(source[0], source[1]["content"]);
     }
+    contractInfo.isCodeValidated = true;
     return true;
   } catch (error) {
     console.error("Error:", error);
@@ -223,10 +250,11 @@ async function getArtifactBytecode(contractName: string): Promise<string> {
   return JSON.parse(fs.readFileSync(searchResult, "utf-8"));
 }
 
-async function compareContractBytecodes(provider: JsonRpcProvider, contractAddress: string): Promise<void> {
+async function compareContractBytecodes(provider: JsonRpcProvider, contractInfo: ContractInfo): Promise<void> {
   console.log("Comparing bytecodes with compilation artifact");
 
-  const { contractName, constructorArgs } = await extractContractNameAndArgsFromDeployment(contractAddress);
+  const { contractName, constructorArgs } = await extractContractNameAndArgsFromDeployment(contractInfo.address);
+  contractInfo.name = contractName;
 
   await compileContract(contractName);
 
@@ -247,8 +275,8 @@ async function compareContractBytecodes(provider: JsonRpcProvider, contractAddre
 
   const localBytecodeStripped = stripBytecodeIpfsHash(artifactBytecode);
 
-  console.log(`Fetching blockchain bytecode from ${contractAddress} for ${contractName}`);
-  const blockchainBytecode = await provider.getCode(contractAddress);
+  console.log(`Fetching blockchain bytecode from ${contractInfo.address} for ${contractName}`);
+  const blockchainBytecode = await provider.getCode(contractInfo.address);
   const blockchainBytecodeWithoutMetadata = stripBytecodeIpfsHash(blockchainBytecode);
   const blockchainDeployBytecode = blockchainBytecodeWithoutMetadata.slice(
     0,
@@ -267,6 +295,7 @@ async function compareContractBytecodes(provider: JsonRpcProvider, contractAddre
     throw new Error("Args does not match!");
   }
 
+  contractInfo.isCodeValidated = true;
   console.log("✅ Bytecodes match");
 }
 
