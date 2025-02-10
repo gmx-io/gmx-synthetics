@@ -6,6 +6,9 @@ import "../router/relay/GelatoRelayRouter.sol";
 import "../deposit/DepositUtils.sol";
 import "../deposit/DepositVault.sol";
 import "../exchange/IDepositHandler.sol";
+import "../withdrawal/WithdrawalUtils.sol";
+import "../exchange/WithdrawalHandler.sol";
+import "../withdrawal/WithdrawalVault.sol";
 
 import "./MultichainUtils.sol";
 
@@ -15,6 +18,13 @@ contract MultichainRouter is GelatoRelayRouter {
         uint256 longTokenAmount;
         uint256 shortTokenAmount;
         DepositUtils.CreateDepositParams createDepositParams;
+    }
+
+    struct MultichainCreateWithdrawalParams {
+        uint256 desChainId;
+        uint256 longTokenAmount;
+        uint256 shortTokenAmount;
+        WithdrawalUtils.CreateWithdrawalParams createWithdrawalParams;
     }
 
     bytes32 public constant CREATE_DEPOSIT_TYPEHASH =
@@ -42,9 +52,32 @@ contract MultichainRouter is GelatoRelayRouter {
             )
         );
 
+    bytes32 public constant CREATE_WITHDRAWAL_TYPEHASH =
+        keccak256(
+            bytes(
+                "CreateWithdrawal(CreateWithdrawalParams params,bytes32 relayParams)CreateWithdrawalParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minLongTokenAmount,uint256 minShortTokenAmount,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)"
+            )
+        );
+
+    bytes32 public constant MULTICHAIN_CREATE_WITHDRAWAL_PARAMS_TYPEHASH =
+        keccak256(
+            bytes(
+                "MultichainCreateWithdrawalParams(uint256 desChainId,uint256 longTokenAmount,uint256 shortTokenAmount,CreateWithdrawalParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minLongTokenAmount,uint256 minShortTokenAmount,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)"
+            )
+        );
+
+    bytes32 public constant CREATE_WITHDRAWAL_PARAMS_TYPEHASH =
+        keccak256(
+            bytes(
+                "CreateWithdrawalParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minLongTokenAmount,uint256 minShortTokenAmount,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)"
+            )
+        );
+
     DepositVault depositVault;
     IDepositHandler depositHandler;
     MultichainVault multichainVault;
+    WithdrawalHandler withdrawalHandler;
+    WithdrawalVault withdrawalVault;
 
     constructor(
         Router _router,
@@ -56,11 +89,15 @@ contract MultichainRouter is GelatoRelayRouter {
         IExternalHandler _externalHandler,
         IDepositHandler _depositHandler,
         DepositVault _depositVault,
-        MultichainVault _multichainVault
+        MultichainVault _multichainVault,
+        WithdrawalHandler _withdrawalHandler,
+        WithdrawalVault _withdrawalVault
     ) GelatoRelayRouter(_router, _dataStore, _eventEmitter, _oracle, _orderHandler, _orderVault, _externalHandler) {
         depositVault = _depositVault;
         depositHandler = _depositHandler;
         multichainVault = _multichainVault;
+        withdrawalHandler = _withdrawalHandler;
+        withdrawalVault = _withdrawalVault;
     }
 
     function createDeposit(
@@ -91,15 +128,15 @@ contract MultichainRouter is GelatoRelayRouter {
 
         // transfer long & short tokens from MultichainVault to DepositVault and decrement user's multichain balance
         _sendTokens(
-            params.createDepositParams.addresses.initialLongToken,
             account,
+            params.createDepositParams.addresses.initialLongToken,
             address(depositVault), // receiver
             params.longTokenAmount,
             params.createDepositParams.srcChainId
         );
         _sendTokens(
-            params.createDepositParams.addresses.initialShortToken,
             account,
+            params.createDepositParams.addresses.initialShortToken,
             address(depositVault), // receiver
             params.shortTokenAmount,
             params.createDepositParams.srcChainId
@@ -114,6 +151,52 @@ contract MultichainRouter is GelatoRelayRouter {
         );
 
         return depositHandler.createDeposit(account, params.createDepositParams);
+    }
+
+    function createWithdrawal(
+        RelayParams calldata relayParams,
+        address account,
+        MultichainCreateWithdrawalParams memory params
+    ) external nonReentrant onlyGelatoRelay returns (bytes32) {
+        if (params.desChainId != block.chainid) {
+            revert Errors.InvalidDestinationChainId();
+        }
+
+        bytes32 structHash = _getMultichainCreateWithdrawalStructHash(relayParams, params);
+        _validateCall(relayParams, account, structHash);
+
+        return _createWithdrawal(relayParams, account, params);
+    }
+
+    function _createWithdrawal(
+        RelayParams calldata relayParams,
+        address account,
+        MultichainCreateWithdrawalParams memory params
+    ) internal returns (bytes32) {
+        Contracts memory contracts = Contracts({
+            dataStore: dataStore,
+            eventEmitter: eventEmitter,
+            bank: withdrawalVault
+        });
+
+        // user already bridged the GM / GLV tokens to the MultichainVault and balance was increased
+        // transfer the GM / GLV tokens from multichainVault to withdrawalVault
+        _sendTokens(
+            account,
+            params.createWithdrawalParams.market,
+            address(withdrawalVault), // receiver
+            params.longTokenAmount, // TODO: should amount be provided by the user, or everything should be withdrawn?
+            params.createWithdrawalParams.srcChainId
+        );
+
+        params.createWithdrawalParams.executionFee = _handleRelay(
+            contracts,
+            relayParams,
+            account,
+            address(withdrawalVault)
+        );
+
+        return withdrawalHandler.createWithdrawal(account, params.createWithdrawalParams);
     }
 
     function _sendTokens(address account, address token, address receiver, uint256 amount, uint256 srcChainId) internal override {
@@ -200,7 +283,59 @@ contract MultichainRouter is GelatoRelayRouter {
             );
     }
 
-    function createWithdrawal() external nonReentrant onlyGelatoRelay {}
+    function _getMultichainCreateWithdrawalStructHash(
+        RelayParams calldata relayParams,
+        MultichainCreateWithdrawalParams memory params
+    ) internal view returns (bytes32) {
+        bytes32 relayParamsHash = keccak256(abi.encode(relayParams));
+        return
+            keccak256(
+                abi.encode(
+                    CREATE_WITHDRAWAL_TYPEHASH,
+                    _getMultichainCreateWithdrawalParamsStructHash(params),
+                    relayParamsHash
+                )
+            );
+    }
+
+    function _getMultichainCreateWithdrawalParamsStructHash(
+        MultichainCreateWithdrawalParams memory params
+    ) internal view returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    MULTICHAIN_CREATE_WITHDRAWAL_PARAMS_TYPEHASH,
+                    block.chainid,
+                    params.longTokenAmount,
+                    params.shortTokenAmount,
+                    _getCreateWithdrawalParamsStructHash(params.createWithdrawalParams)
+                )
+            );
+    }
+
+    function _getCreateWithdrawalParamsStructHash(
+        WithdrawalUtils.CreateWithdrawalParams memory params
+    ) internal pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    CREATE_WITHDRAWAL_PARAMS_TYPEHASH,
+                    params.receiver,
+                    params.callbackContract,
+                    params.uiFeeReceiver,
+                    params.market,
+                    keccak256(abi.encodePacked(params.longTokenSwapPath)),
+                    keccak256(abi.encodePacked(params.shortTokenSwapPath)),
+                    params.minLongTokenAmount,
+                    params.minShortTokenAmount,
+                    params.shouldUnwrapNativeToken,
+                    params.executionFee,
+                    params.callbackGasLimit,
+                    params.srcChainId,
+                    keccak256(abi.encodePacked(params.dataList))
+                )
+            );
+    }
 
     function createGlvDeposit() external nonReentrant onlyGelatoRelay {}
 
