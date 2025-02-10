@@ -34,7 +34,7 @@ async function main() {
     const contracts = await validateRoles(tx);
     console.log("Found these contracts with changed roles: ", contracts);
     for (const contract of contracts) {
-      const sourceCodeVerified = await ValidateFromEtherscan(contract);
+      const sourceCodeVerified = await validateFromEtherscan(contract);
       // Fallback to bytecode compilation if sources are not verified on etherscan
       if (!sourceCodeVerified) {
         await compareContractBytecodes(provider, contract);
@@ -57,7 +57,32 @@ interface SignalRoleInfo {
   roleKey: string;
 }
 
-//
+const expectedRoles = {
+  CONFIG_KEEPER: ["ConfigSyncer"],
+  ROLE_ADMIN: ["Timelock"],
+  ROUTER_PLUGIN: ["ExchangeRouter", "SubaccountRouter", "GlvRouter"],
+  CONTROLLER: [
+    "OracleStore",
+    "MarketFactory",
+    "GlvFactory",
+    "Config",
+    "ConfigSyncer",
+    "Timelock",
+    "Oracle",
+    "SwapHandler",
+    "AdlHandler",
+    "DepositHandler",
+    "WithdrawalHandler",
+    "OrderHandler",
+    "ExchangeRouter",
+    "LiquidationHandler",
+    "SubaccountRouter",
+    "ShiftHandler",
+    "GlvHandler",
+    "GlvRouter",
+  ],
+};
+
 async function validateRoles(txReceipt: TransactionReceipt): Promise<Set<string>> {
   const contracts = new Set<string>();
   const EventEmitter = await ethers.getContractFactory("EventEmitter");
@@ -101,9 +126,8 @@ async function checkRole(signal: SignalRoleInfo): Promise<boolean> {
   return false;
 }
 
-// Verify sources
-
-async function ValidateFromEtherscan(contractAddress: string): Promise<boolean> {
+// Verify sources from etherscan
+async function validateFromEtherscan(contractAddress: string): Promise<boolean> {
   console.log(`Trying to validate ${contractAddress} via etherscan`);
   const apiKey = hre.network.verify.etherscan.apiKey;
   const url = hre.network.verify.etherscan.apiUrl + "api";
