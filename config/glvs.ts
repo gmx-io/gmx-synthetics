@@ -1,7 +1,6 @@
 import { BigNumberish } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { percentageToFloat, expandDecimals, decimalToFloat, bigNumberify } from "../utils/math";
-import { isMarketDisabledKey } from "../utils/keys";
+import { percentageToFloat, expandDecimals, decimalToFloat } from "../utils/math";
 
 type GlvConfig = {
   name: string;
