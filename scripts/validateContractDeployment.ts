@@ -32,6 +32,7 @@ async function main() {
 
   try {
     const contractInfos = await extractRolesFromTx(tx);
+    console.log("Contracts: ", contractInfos);
     for (const contractInfo of contractInfos) {
       // also extracts contract name
       const isCodeValidated = await validateFromEtherscan(contractInfo);
@@ -102,14 +103,14 @@ async function extractRolesFromTx(txReceipt: TransactionReceipt): Promise<Contra
     if (parsedLog.name == "EventLog1" && parsedLog.args[1] === "SignalGrantRole") {
       const signal = parseSignalGrantRoleEvent(parsedLog.args);
       if (contractInfos.has(signal.account)) {
-        contractInfos[signal.account].signalledRoles.push(signal.roleKey);
+        contractInfos.get(signal.account).signalledRoles.push(signal.roleKey);
       } else {
-        contractInfos[signal.account] = {
+        contractInfos.set(signal.account, {
           address: signal.account,
           name: null,
-          validated: false,
+          isCodeValidated: false,
           signalledRoles: [signal.roleKey],
-        };
+        });
       }
     }
   }
