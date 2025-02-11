@@ -35,6 +35,12 @@ contract MultichainRouter is GelatoRelayRouter {
         GlvDepositUtils.CreateGlvDepositParams createGlvDepositParams;
     }
 
+    struct MultichainCreateGlvWithdrawalParams {
+        uint256 desChainId;
+        uint256 glvTokenAmount;
+        GlvWithdrawalUtils.CreateGlvWithdrawalParams createGlvWithdrawalParams;
+    }
+
     bytes32 public constant CREATE_DEPOSIT_TYPEHASH =
         keccak256(
             bytes(
@@ -95,6 +101,29 @@ contract MultichainRouter is GelatoRelayRouter {
         keccak256(
             bytes(
                 "CreateGlvDepositParams(address glv,address market,address receiver,address callbackContract,address uiFeeReceiver,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minGlvTokens,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bool shouldUnwrapNativeToken,bool isMarketTokenDeposit,bytes32[] dataList)"
+            )
+        );
+
+    bytes32 public constant CREATE_GLV_WITHDRAWAL_TYPEHASH =
+        keccak256(
+            bytes(
+                "CreateGlvWithdrawal(CreateGlvWithdrawalParams params,bytes32 relayParams)"
+                "CreateGlvWithdrawalParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address glv,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minLongTokenAmount,uint256 minShortTokenAmount,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)"
+            )
+        );
+
+    bytes32 public constant MULTICHAIN_CREATE_GLV_WITHDRAWAL_PARAMS_TYPEHASH =
+        keccak256(
+            bytes(
+                "MultichainCreateGlvWithdrawalParams(uint256 desChainId,uint256 glvTokenAmount,CreateGlvWithdrawalParams params)"
+                "CreateGlvWithdrawalParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address glv,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minLongTokenAmount,uint256 minShortTokenAmount,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)"
+            )
+        );
+
+    bytes32 public constant CREATE_GLV_WITHDRAWAL_PARAMS_TYPEHASH =
+        keccak256(
+            bytes(
+                "CreateGlvWithdrawalParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address glv,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minLongTokenAmount,uint256 minShortTokenAmount,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)"
             )
         );
 
@@ -218,13 +247,13 @@ contract MultichainRouter is GelatoRelayRouter {
             params.createWithdrawalParams.receiver = address(multichainVault);
         }
 
-        // user already bridged the GM / GLV tokens to the MultichainVault and balance was increased
-        // transfer the GM / GLV tokens from multichainVault to withdrawalVault
+        // user already bridged the GM tokens to the MultichainVault and balance was increased
+        // transfer the GM tokens from MultichainVault to WithdrawalVault
         _sendTokens(
             account,
             params.createWithdrawalParams.market,
             address(withdrawalVault), // receiver
-            params.tokenAmount, // TODO: should remove MultichainCreateWithdrawalParams.tokenAmount and send everything instead? (i.e. sent entire GM/GLV multichain balance to WithdrawalVault)
+            params.tokenAmount, // TODO: should remove MultichainCreateWithdrawalParams.tokenAmount and send everything instead? (i.e. sent entire GM multichain balance to WithdrawalVault)
             params.createWithdrawalParams.srcChainId
         );
 
@@ -268,14 +297,14 @@ contract MultichainRouter is GelatoRelayRouter {
         _sendTokens(
             account,
             params.createGlvDepositParams.initialLongToken,
-            address(glvVault),
+            address(glvVault), // receiver
             params.longTokenAmount,
             params.createGlvDepositParams.srcChainId
         );
         _sendTokens(
             account,
             params.createGlvDepositParams.initialShortToken,
-            address(glvVault),
+            address(glvVault), // receiver
             params.shortTokenAmount,
             params.createGlvDepositParams.srcChainId
         );
@@ -289,6 +318,63 @@ contract MultichainRouter is GelatoRelayRouter {
         );
 
         return glvHandler.createGlvDeposit(account, params.createGlvDepositParams);
+    }
+
+    function createGlvWithdrawal(
+        RelayParams calldata relayParams,
+        address account,
+        MultichainCreateGlvWithdrawalParams memory params
+    ) external nonReentrant onlyGelatoRelay returns (bytes32) {
+        if (params.desChainId != block.chainid) {
+            revert Errors.InvalidDestinationChainId();
+        }
+
+        bytes32 structHash = _getMultichainCreateGlvWithdrawalStructHash(relayParams, params);
+        _validateCall(relayParams, account, structHash);
+
+        return _createGlvWithdrawal(relayParams, account, params);
+    }
+
+    function _createGlvWithdrawal(
+        RelayParams calldata relayParams,
+        address account,
+        MultichainCreateGlvWithdrawalParams memory params
+    ) internal returns (bytes32) {
+        Contracts memory contracts = Contracts({
+            dataStore: dataStore,
+            eventEmitter: eventEmitter,
+            bank: glvVault
+        });
+
+        // for multichain glv withdrawals, the output tokens are sent to multichainVault and user's multichain balance is increased
+        if (params.createGlvWithdrawalParams.srcChainId != 0) {
+            params.createGlvWithdrawalParams.receiver = address(multichainVault);
+        }
+
+        // transfer GLV tokens from MultichainVault to GlvVault
+        _sendTokens(
+            account,
+            params.createGlvWithdrawalParams.glv,
+            address(glvVault), // receiver
+            params.glvTokenAmount,
+            params.createGlvWithdrawalParams.srcChainId
+        );
+
+        // pay relay fee tokens from MultichainVault to GlvVault and decrease user's multichain balance
+        params.createGlvWithdrawalParams.executionFee = _handleRelay(
+            contracts,
+            relayParams,
+            account,
+            address(glvVault) // residualFeeReceiver
+        );
+
+        return GlvWithdrawalUtils.createGlvWithdrawal(
+            dataStore,
+            eventEmitter,
+            glvVault,
+            account,
+            params.createGlvWithdrawalParams
+        );
     }
 
     function _sendTokens(address account, address token, address receiver, uint256 amount, uint256 srcChainId) internal override {
@@ -480,6 +566,60 @@ contract MultichainRouter is GelatoRelayRouter {
                     params.srcChainId,
                     params.shouldUnwrapNativeToken,
                     params.isMarketTokenDeposit,
+                    keccak256(abi.encodePacked(params.dataList))
+                )
+            );
+    }
+
+    function _getMultichainCreateGlvWithdrawalStructHash(
+        RelayParams calldata relayParams,
+        MultichainCreateGlvWithdrawalParams memory params
+    ) internal view returns (bytes32) {
+        bytes32 relayParamsHash = keccak256(abi.encode(relayParams));
+        return
+            keccak256(
+                abi.encode(
+                    CREATE_GLV_WITHDRAWAL_TYPEHASH,
+                    _getMultichainCreateGlvWithdrawalParamsStructHash(params),
+                    relayParamsHash
+                )
+            );
+    }
+
+    function _getMultichainCreateGlvWithdrawalParamsStructHash(
+        MultichainCreateGlvWithdrawalParams memory params
+    ) internal view returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    MULTICHAIN_CREATE_GLV_WITHDRAWAL_PARAMS_TYPEHASH,
+                    block.chainid,
+                    params.glvTokenAmount,
+                    _getCreateGlvWithdrawalParamsStructHash(params.createGlvWithdrawalParams)
+                )
+            );
+    }
+
+    function _getCreateGlvWithdrawalParamsStructHash(
+        GlvWithdrawalUtils.CreateGlvWithdrawalParams memory params
+    ) internal pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    CREATE_GLV_WITHDRAWAL_PARAMS_TYPEHASH,
+                    params.receiver,
+                    params.callbackContract,
+                    params.uiFeeReceiver,
+                    params.market,
+                    params.glv,
+                    keccak256(abi.encodePacked(params.longTokenSwapPath)),
+                    keccak256(abi.encodePacked(params.shortTokenSwapPath)),
+                    params.minLongTokenAmount,
+                    params.minShortTokenAmount,
+                    // params.shouldUnwrapNativeToken, // TODO: split CreateGlvWithdrawalParams into groups to fix slot too deep error
+                    params.executionFee,
+                    params.callbackGasLimit,
+                    params.srcChainId,
                     keccak256(abi.encodePacked(params.dataList))
                 )
             );

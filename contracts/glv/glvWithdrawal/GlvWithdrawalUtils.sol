@@ -207,6 +207,11 @@ library GlvWithdrawalUtils {
             params.keeper,
             glvWithdrawal.receiver()
         );
+
+        if (glvWithdrawal.srcChainId() != 0) {
+            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, withdrawalResult.outputToken, glvWithdrawal.account(), glvWithdrawal.srcChainId());
+            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, withdrawalResult.secondaryOutputToken, glvWithdrawal.account(), glvWithdrawal.srcChainId());
+        }
     }
 
     function _processMarketWithdrawal(
