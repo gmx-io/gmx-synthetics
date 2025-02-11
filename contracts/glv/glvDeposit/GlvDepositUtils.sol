@@ -254,7 +254,7 @@ library GlvDepositUtils {
             GlvToken(payable(glvDeposit.glv())).mint(glvDeposit.receiver(), cache.mintAmount);
         } else {
             GlvToken(payable(glvDeposit.glv())).mint(address(params.multichainVault), cache.mintAmount);
-            // MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, glvDeposit.glv(), glvDeposit.receiver(), glvDeposit.srcChainId()); // TODO: fix GlvDepositUtils size (maybe make MultichainUtils functions external)
+            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, glvDeposit.glv(), glvDeposit.receiver(), glvDeposit.srcChainId());
         }
 
 
