@@ -98,6 +98,27 @@ export function hashSubaccountApproval(subaccountApproval: any) {
     )
   );
 }
+
 export async function getUserNonce(account: string, relayRouter: ethers.Contract) {
   return relayRouter.userNonces(account);
+}
+
+export async function signTypedData(
+  signer: ethers.Signer,
+  domain: Record<string, any>,
+  types: Record<string, any>,
+  typedData: Record<string, any>
+) {
+  for (const [key, value] of Object.entries(domain)) {
+    if (value === undefined) {
+      throw new Error(`signTypedData: domain.${key} is undefined`);
+    }
+  }
+  for (const [key, value] of Object.entries(typedData)) {
+    if (value === undefined) {
+      throw new Error(`signTypedData: typedData.${key} is undefined`);
+    }
+  }
+
+  return (signer as any)._signTypedData(domain, types, typedData);
 }

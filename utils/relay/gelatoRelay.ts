@@ -1,6 +1,6 @@
 import { BigNumberish, ethers } from "ethers";
 import { GELATO_RELAY_ADDRESS } from "./addresses";
-import { hashRelayParams } from "./helpers";
+import { hashRelayParams, signTypedData } from "./helpers";
 import { getDomain } from "./helpers";
 import { getRelayParams } from "./helpers";
 
@@ -126,7 +126,7 @@ async function getCreateOrderSignature({
     relayParams: hashRelayParams(relayParams),
   };
 
-  return signer._signTypedData(domain, types, typedData);
+  return signTypedData(signer, domain, types, typedData);
 }
 
 export async function sendUpdateOrder(p: {
@@ -231,7 +231,7 @@ async function getUpdateOrderSignature({
     relayParams: hashRelayParams(relayParams),
   };
 
-  return signer._signTypedData(domain, types, typedData);
+  return signTypedData(signer, domain, types, typedData);
 }
 
 export async function sendCancelOrder(p: {
@@ -298,5 +298,5 @@ async function getCancelOrderSignature({ signer, relayParams, verifyingContract,
     relayParams: hashRelayParams(relayParams),
   };
 
-  return signer._signTypedData(domain, types, typedData);
+  return signTypedData(signer, domain, types, typedData);
 }

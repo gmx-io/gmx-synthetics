@@ -1,7 +1,7 @@
 import { BigNumberish, ethers } from "ethers";
 import * as keys from "../keys";
 import { GELATO_RELAY_ADDRESS } from "./addresses";
-import { getDomain, hashSubaccountApproval, hashRelayParams, getRelayParams } from "./helpers";
+import { getDomain, hashSubaccountApproval, hashRelayParams, getRelayParams, signTypedData } from "./helpers";
 
 export async function sendCreateOrder(p: {
   subaccountApprovalSigner: ethers.Signer;
@@ -46,18 +46,7 @@ export async function sendCreateOrder(p: {
   relayFeeAmount: BigNumberish;
 }) {
   const relayParams = await getRelayParams(p);
-
-  if (!p.subaccountApproval) {
-    p.subaccountApproval = getEmptySubaccountApproval();
-  }
-  if (p.subaccountApproval && !p.subaccountApproval.signature) {
-    p.subaccountApproval.signature = await getSubaccountApprovalSignature({
-      signer: p.subaccountApprovalSigner,
-      chainId: p.chainId,
-      verifyingContract: p.relayRouter.address,
-      ...p.subaccountApproval,
-    });
-  }
+  const subaccountApproval = await getSubaccountApproval({ ...p, signer: p.subaccountApprovalSigner });
 
   let signature = p.signature;
   if (!signature) {
@@ -65,12 +54,12 @@ export async function sendCreateOrder(p: {
       ...p,
       relayParams,
       verifyingContract: p.relayRouter.address,
-      subaccountApproval: p.subaccountApproval,
+      subaccountApproval,
     });
   }
   const createOrderCalldata = p.relayRouter.interface.encodeFunctionData("createOrder", [
     { ...relayParams, signature },
-    p.subaccountApproval,
+    subaccountApproval,
     p.account,
     p.subaccount,
     p.collateralDeltaAmount,
@@ -93,9 +82,9 @@ function getEmptySubaccountApproval() {
     expiresAt: 0,
     maxAllowedCount: 0,
     actionType: keys.SUBACCOUNT_ORDER_ACTION,
-    deadline: 0,
     nonce: 0,
     signature: "0x",
+    deadline: 0,
   };
 }
 
@@ -161,7 +150,7 @@ async function getCreateOrderSignature({
     subaccountApproval: hashSubaccountApproval(subaccountApproval),
   };
 
-  return signer._signTypedData(domain, types, typedData);
+  return signTypedData(signer, domain, types, typedData);
 }
 
 export async function sendUpdateOrder(p: {
@@ -187,7 +176,16 @@ export async function sendUpdateOrder(p: {
   };
   subaccount: string;
   key: string;
-  subaccountApproval: any;
+  subaccountApproval: {
+    subaccount: string;
+    shouldAdd: boolean;
+    expiresAt: BigNumberish;
+    maxAllowedCount: BigNumberish;
+    actionType: string;
+    deadline: BigNumberish;
+    nonce?: BigNumberish;
+    signature?: string;
+  };
   subaccountApprovalSigner: ethers.Signer;
   chainId: BigNumberish;
   account: string;
@@ -208,30 +206,20 @@ export async function sendUpdateOrder(p: {
   increaseExecutionFee: boolean;
 }) {
   const relayParams = await getRelayParams(p);
-
-  if (!p.subaccountApproval) {
-    p.subaccountApproval = getEmptySubaccountApproval();
-  }
-  if (!p.subaccountApproval.signature) {
-    p.subaccountApproval.signature = await getSubaccountApprovalSignature({
-      signer: p.subaccountApprovalSigner,
-      chainId: p.chainId,
-      verifyingContract: p.relayRouter.address,
-      ...p.subaccountApproval,
-    });
-  }
+  const subaccountApproval = await getSubaccountApproval({ ...p, signer: p.subaccountApprovalSigner });
 
   let signature = p.signature;
   if (!signature) {
     signature = await getUpdateOrderSignature({
       ...p,
       relayParams,
+      subaccountApproval,
       verifyingContract: p.relayRouter.address,
     });
   }
   const updateOrderCalldata = p.relayRouter.interface.encodeFunctionData("updateOrder", [
     { ...relayParams, signature },
-    p.subaccountApproval,
+    subaccountApproval,
     p.account,
     p.subaccount,
     p.key,
@@ -246,6 +234,49 @@ export async function sendUpdateOrder(p: {
     to: p.relayRouter.address,
     data: calldata,
   });
+}
+
+async function getSubaccountApproval(p: {
+  subaccountApproval?: {
+    subaccount: string;
+    shouldAdd: boolean;
+    expiresAt: BigNumberish;
+    maxAllowedCount: BigNumberish;
+    actionType: string;
+    deadline: BigNumberish;
+    nonce?: BigNumberish;
+    signature?: string;
+  };
+  account: string;
+  relayRouter: ethers.Contract;
+  chainId: BigNumberish;
+  signer: ethers.Signer;
+}) {
+  if (!p.subaccountApproval) {
+    return getEmptySubaccountApproval();
+  }
+
+  let nonce = p.subaccountApproval.nonce;
+  if (!nonce) {
+    nonce = await p.relayRouter.subaccountApprovalNonces(p.account);
+  }
+
+  let signature = p.subaccountApproval.signature;
+  if (!signature) {
+    signature = await getSubaccountApprovalSignature({
+      ...p.subaccountApproval,
+      nonce,
+      signer: p.signer,
+      chainId: p.chainId,
+      verifyingContract: p.relayRouter.address,
+    });
+  }
+
+  return {
+    ...p.subaccountApproval,
+    nonce,
+    signature,
+  };
 }
 
 async function getUpdateOrderSignature({
@@ -288,7 +319,7 @@ async function getUpdateOrderSignature({
     subaccountApproval: hashSubaccountApproval(subaccountApproval),
   };
 
-  return signer._signTypedData(domain, types, typedData);
+  return signTypedData(signer, domain, types, typedData);
 }
 
 export async function sendCancelOrder(p: {
@@ -326,29 +357,20 @@ export async function sendCancelOrder(p: {
   relayFeeAmount: BigNumberish;
 }) {
   const relayParams = await getRelayParams(p);
-  if (!p.subaccountApproval) {
-    p.subaccountApproval = getEmptySubaccountApproval();
-  }
-  if (!p.subaccountApproval.signature) {
-    p.subaccountApproval.signature = await getSubaccountApprovalSignature({
-      signer: p.subaccountApprovalSigner,
-      chainId: p.chainId,
-      verifyingContract: p.relayRouter.address,
-      ...p.subaccountApproval,
-    });
-  }
+  const subaccountApproval = await getSubaccountApproval({ ...p, signer: p.subaccountApprovalSigner });
 
   let signature = p.signature;
   if (!signature) {
     signature = await getCancelOrderSignature({
       ...p,
       relayParams,
+      subaccountApproval,
       verifyingContract: p.relayRouter.address,
     });
   }
   const cancelOrderCalldata = p.relayRouter.interface.encodeFunctionData("cancelOrder", [
     { ...relayParams, signature },
-    p.subaccountApproval,
+    subaccountApproval,
     p.account,
     p.subaccount,
     p.key,
@@ -389,7 +411,7 @@ async function getCancelOrderSignature({
     subaccountApproval: hashSubaccountApproval(subaccountApproval),
   };
 
-  return signer._signTypedData(domain, types, typedData);
+  return signTypedData(signer, domain, types, typedData);
 }
 
 async function getSubaccountApprovalSignature(p: {
@@ -433,7 +455,7 @@ async function getSubaccountApprovalSignature(p: {
     nonce: p.nonce,
   };
 
-  return p.signer._signTypedData(domain, types, typedData);
+  return signTypedData(p.signer, domain, types, typedData);
 }
 
 export async function sendRemoveSubaccount(p: {
@@ -503,5 +525,5 @@ async function getRemoveSubaccountSignature({ signer, relayParams, subaccount, v
     relayParams: hashRelayParams(relayParams),
   };
 
-  return signer._signTypedData(domain, types, typedData);
+  return signTypedData(signer, domain, types, typedData);
 }

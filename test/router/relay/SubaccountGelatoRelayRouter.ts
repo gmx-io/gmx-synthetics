@@ -8,7 +8,7 @@ import {
 } from "@nomicfoundation/hardhat-network-helpers";
 
 import { deployFixture } from "../../../utils/fixture";
-import { expandDecimals, decimalToFloat } from "../../../utils/math";
+import { expandDecimals, decimalToFloat, bigNumberify } from "../../../utils/math";
 import { logGasUsage } from "../../../utils/gas";
 import { hashString } from "../../../utils/hash";
 import { OrderType, DecreasePositionSwapType, getOrderKeys } from "../../../utils/order";
@@ -727,6 +727,37 @@ describe("SubaccountGelatoRelayRouter", () => {
         },
         increaseExecutionFee: false,
       });
+    });
+
+    it("increases execution fee", async () => {
+      await enableSubaccount();
+      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
+      await sendCreateOrder(createOrderParams);
+      const orderKeys = await getOrderKeys(dataStore, 0, 1);
+      let order = await reader.getOrder(dataStore.address, orderKeys[0]);
+
+      updateOrderParams.relayFeeAmount = expandDecimals(1, 15);
+      updateOrderParams.feeParams.feeAmount = expandDecimals(3, 15);
+
+      const initialWethBalance = await wnt.balanceOf(user1.address);
+      const gelatoRelayFee = updateOrderParams.relayFeeAmount;
+      await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, gelatoRelayFee);
+      await sendUpdateOrder({ ...updateOrderParams, key: orderKeys[0] });
+      await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, bigNumberify(gelatoRelayFee).mul(2));
+
+      // user receives the residual amount
+      await expectBalance(wnt.address, user1.address, initialWethBalance.sub(expandDecimals(1, 15)));
+      // and the execution fee stays the same
+      order = await reader.getOrder(dataStore.address, orderKeys[0]);
+      expect(order.numbers.executionFee).eq(expandDecimals(1, 15));
+
+      await sendUpdateOrder({ ...updateOrderParams, key: orderKeys[0], increaseExecutionFee: true });
+
+      // user doesn't receive the residual amount
+      await expectBalance(wnt.address, user1.address, initialWethBalance.sub(expandDecimals(4, 15)));
+      // and the execution fee is increased
+      order = await reader.getOrder(dataStore.address, orderKeys[0]);
+      expect(order.numbers.executionFee).eq(expandDecimals(3, 15));
     });
   });
 
