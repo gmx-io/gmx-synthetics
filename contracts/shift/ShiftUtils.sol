@@ -225,6 +225,7 @@ library ShiftUtils {
         cache.executeWithdrawalParams = ExecuteWithdrawalUtils.ExecuteWithdrawalParams(
             params.dataStore,
             params.eventEmitter,
+            params.multichainVault,
             WithdrawalVault(payable(params.shiftVault)),
             params.oracle,
             cache.withdrawalKey,

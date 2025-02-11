@@ -38,6 +38,7 @@ library GlvWithdrawalUtils {
     struct ExecuteGlvWithdrawalParams {
         DataStore dataStore;
         EventEmitter eventEmitter;
+        MultichainVault multichainVault;
         GlvVault glvVault;
         Oracle oracle;
         bytes32 key;
@@ -257,6 +258,7 @@ library GlvWithdrawalUtils {
             .ExecuteWithdrawalParams({
                 dataStore: params.dataStore,
                 eventEmitter: params.eventEmitter,
+                multichainVault: params.multichainVault,
                 withdrawalVault: WithdrawalVault(payable(params.glvVault)),
                 oracle: params.oracle,
                 key: withdrawalKey,
