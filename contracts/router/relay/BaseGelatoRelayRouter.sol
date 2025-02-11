@@ -57,6 +57,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         bytes signature;
     }
 
+    // @note all params except account should be part of the corresponding struct hash
     struct UpdateOrderParams {
         uint256 sizeDeltaUsd;
         uint256 acceptablePrice;

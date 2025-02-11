@@ -56,6 +56,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         IExternalHandler _externalHandler
     ) BaseGelatoRelayRouter(_router, _dataStore, _eventEmitter, _oracle, _orderHandler, _orderVault, _externalHandler) {}
 
+    // @note all params except account should be part of the corresponding struct hash
     function createOrder(
         RelayParams calldata relayParams,
         address account,
@@ -75,6 +76,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         return _createOrder(relayParams, account, collateralDeltaAmount, params, false);
     }
 
+    // @note all params except account should be part of the corresponding struct hash
     function updateOrder(
         RelayParams calldata relayParams,
         address account,
@@ -89,6 +91,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         _updateOrder(relayParams, account, key, params, increaseExecutionFee, false);
     }
 
+    // @note all params except account should be part of the corresponding struct hash
     function cancelOrder(
         RelayParams calldata relayParams,
         address account,
