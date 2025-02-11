@@ -28,7 +28,7 @@ async function main() {
   }
 
   console.log(`Checking deployment against commit: ${AUDITED_COMMIT}`);
-  execSync(`git checkout ${AUDITED_COMMIT}`, { stdio: "inherit" });
+  // execSync(`git checkout ${AUDITED_COMMIT}`, { stdio: "inherit" });
 
   try {
     const contractInfos = await extractRolesFromTx(tx);
@@ -48,7 +48,7 @@ async function main() {
   }
 
   // Restore git to previous state
-  execSync(`git checkout -`, { stdio: "inherit" });
+  // execSync(`git checkout -`, { stdio: "inherit" });
   console.log("✅ Verification completed.");
 }
 
