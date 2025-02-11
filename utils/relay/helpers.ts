@@ -16,10 +16,10 @@ export async function getRelayParams(p: {
   userNonce?: BigNumberish;
   deadline: BigNumberish;
   relayRouter: ethers.Contract;
-  account: string;
+  signer: ethers.Signer;
 }) {
   if (p.userNonce === undefined) {
-    p.userNonce = await getUserNonce(p.account, p.relayRouter);
+    p.userNonce = await getUserNonce(await p.signer.getAddress(), p.relayRouter);
   }
   return {
     oracleParams: p.oracleParams || getDefaultOracleParams(),
@@ -37,6 +37,12 @@ export async function getRelayParams(p: {
 }
 
 export function getDomain(chainId: BigNumberish, verifyingContract: string) {
+  if (!chainId) {
+    throw new Error("chainId is required");
+  }
+  if (!verifyingContract) {
+    throw new Error("verifyingContract is required");
+  }
   return {
     name: "GmxBaseGelatoRelayRouter",
     version: "1",
@@ -92,6 +98,27 @@ export function hashSubaccountApproval(subaccountApproval: any) {
     )
   );
 }
+
 export async function getUserNonce(account: string, relayRouter: ethers.Contract) {
   return relayRouter.userNonces(account);
+}
+
+export async function signTypedData(
+  signer: ethers.Signer,
+  domain: Record<string, any>,
+  types: Record<string, any>,
+  typedData: Record<string, any>
+) {
+  for (const [key, value] of Object.entries(domain)) {
+    if (value === undefined) {
+      throw new Error(`signTypedData: domain.${key} is undefined`);
+    }
+  }
+  for (const [key, value] of Object.entries(typedData)) {
+    if (value === undefined) {
+      throw new Error(`signTypedData: typedData.${key} is undefined`);
+    }
+  }
+
+  return (signer as any)._signTypedData(domain, types, typedData);
 }

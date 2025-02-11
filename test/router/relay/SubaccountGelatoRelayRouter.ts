@@ -8,7 +8,7 @@ import {
 } from "@nomicfoundation/hardhat-network-helpers";
 
 import { deployFixture } from "../../../utils/fixture";
-import { expandDecimals, decimalToFloat } from "../../../utils/math";
+import { expandDecimals, decimalToFloat, bigNumberify } from "../../../utils/math";
 import { logGasUsage } from "../../../utils/gas";
 import { hashString } from "../../../utils/hash";
 import { OrderType, DecreasePositionSwapType, getOrderKeys } from "../../../utils/order";
@@ -38,6 +38,8 @@ describe("SubaccountGelatoRelayRouter", () => {
   const referralCode = hashString("referralCode");
 
   let defaultCreateOrderParams;
+  let createOrderParams: Parameters<typeof sendCreateOrder>[0];
+  let enableSubaccount: () => Promise<void>;
 
   beforeEach(async () => {
     fixture = await deployFixture();
@@ -72,6 +74,19 @@ describe("SubaccountGelatoRelayRouter", () => {
       referralCode,
     };
 
+    enableSubaccount = async () => {
+      await dataStore.addAddress(keys.subaccountListKey(user1.address), user0.address);
+      await dataStore.setUint(
+        keys.subaccountExpiresAtKey(user1.address, user0.address, keys.SUBACCOUNT_ORDER_ACTION),
+        9999999999
+      );
+      await dataStore.setUint(
+        keys.maxAllowedSubaccountActionCountKey(user1.address, user0.address, keys.SUBACCOUNT_ORDER_ACTION),
+        10
+      );
+      await wnt.connect(user1).approve(router.address, expandDecimals(100, 18));
+    };
+
     await impersonateAccount(GELATO_RELAY_ADDRESS);
     await setBalance(GELATO_RELAY_ADDRESS, expandDecimals(100, 18));
     await usdc.mint(user1.address, expandDecimals(1, 30)); // very large amount
@@ -82,52 +97,33 @@ describe("SubaccountGelatoRelayRouter", () => {
 
     await dataStore.setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1));
     await setNextBlockBaseFeePerGas(expandDecimals(1, 9));
+
+    createOrderParams = {
+      sender: relaySigner,
+      // signer is subaccount
+      signer: user0,
+      // subaccountApprovalSigner is the main account
+      subaccountApprovalSigner: user1,
+      feeParams: {
+        feeToken: wnt.address,
+        feeAmount: expandDecimals(2, 15), // 0.002 ETH
+        feeSwapPath: [],
+      },
+      tokenPermits: [],
+      collateralDeltaAmount: expandDecimals(1, 17),
+      account: user1.address,
+      // TODO use different subaccount wallet
+      subaccount: user0.address,
+      params: defaultCreateOrderParams,
+      deadline: 9999999999,
+      relayRouter: subaccountGelatoRelayRouter,
+      chainId,
+      relayFeeToken: wnt.address,
+      relayFeeAmount: expandDecimals(1, 15),
+    };
   });
 
   describe("createOrder", () => {
-    let createOrderParams: Parameters<typeof sendCreateOrder>[0];
-    let enableSubaccount: () => Promise<void>;
-
-    beforeEach(async () => {
-      createOrderParams = {
-        sender: relaySigner,
-        // signer is subaccount
-        signer: user0,
-        // subaccountApprovalSigner is the main account
-        subaccountApprovalSigner: user1,
-        feeParams: {
-          feeToken: wnt.address,
-          feeAmount: expandDecimals(2, 15), // 0.002 ETH
-          feeSwapPath: [],
-        },
-        tokenPermits: [],
-        collateralDeltaAmount: expandDecimals(1, 17),
-        account: user1.address,
-        // TODO use different subaccount wallet
-        subaccount: user0.address,
-        params: defaultCreateOrderParams,
-        userNonce: 0,
-        deadline: 9999999999,
-        relayRouter: subaccountGelatoRelayRouter,
-        chainId,
-        relayFeeToken: wnt.address,
-        relayFeeAmount: expandDecimals(1, 15),
-      };
-
-      enableSubaccount = async () => {
-        await dataStore.addAddress(keys.subaccountListKey(user1.address), user0.address);
-        await dataStore.setUint(
-          keys.subaccountExpiresAtKey(user1.address, user0.address, keys.SUBACCOUNT_ORDER_ACTION),
-          9999999999
-        );
-        await dataStore.setUint(
-          keys.maxAllowedSubaccountActionCountKey(user1.address, user0.address, keys.SUBACCOUNT_ORDER_ACTION),
-          10
-        );
-        await wnt.connect(user1).approve(router.address, expandDecimals(100, 18));
-      };
-    });
-
     it("InvalidReceiver", async () => {
       await enableSubaccount();
 
@@ -163,6 +159,17 @@ describe("SubaccountGelatoRelayRouter", () => {
       await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(
         errorsContract,
         "InsufficientExecutionFee"
+      );
+    });
+
+    it("ExecutionFeeTooHigh", async () => {
+      await enableSubaccount();
+
+      await dataStore.setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1));
+      createOrderParams.feeParams.feeAmount = expandDecimals(1, 17);
+      await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "ExecutionFeeTooHigh"
       );
     });
 
@@ -643,6 +650,115 @@ describe("SubaccountGelatoRelayRouter", () => {
         // should not fail with InvalidSignature
       ).to.be.revertedWithCustomError(errorsContract, "EmptyOrder");
     });
+
+    it("InsufficientExecutionFee", async () => {
+      await enableSubaccount();
+      createOrderParams.feeParams.feeAmount = expandDecimals(1, 15);
+      // set callback to 0 so estimation execution fee is 0
+      createOrderParams.params.numbers.callbackGasLimit = 0;
+      await sendCreateOrder(createOrderParams);
+
+      const orderKeys = await getOrderKeys(dataStore, 0, 1);
+
+      // now increase gas limit to 500k so estimated execution fee is not zero
+      await dataStore.setUint(keys.increaseOrderGasLimitKey(), 500_000);
+      // await dataStore.setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1));
+
+      await expect(
+        sendUpdateOrder({
+          ...updateOrderParams,
+          key: orderKeys[0],
+          feeParams: {
+            ...updateOrderParams.feeParams,
+            feeAmount: expandDecimals(1, 15),
+          },
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InsufficientExecutionFee");
+
+      // increaseExecutionFee is false, so executionFee won't be updated
+      await expect(
+        sendUpdateOrder({
+          ...updateOrderParams,
+          key: orderKeys[0],
+          feeParams: {
+            ...updateOrderParams.feeParams,
+            feeAmount: expandDecimals(2, 15),
+          },
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InsufficientExecutionFee");
+
+      await sendUpdateOrder({
+        ...updateOrderParams,
+        key: orderKeys[0],
+        feeParams: {
+          ...updateOrderParams.feeParams,
+          feeAmount: expandDecimals(2, 15),
+        },
+        increaseExecutionFee: true,
+      });
+    });
+
+    it("ExecutionFeeTooHigh", async () => {
+      await enableSubaccount();
+      createOrderParams.feeParams.feeAmount = expandDecimals(2, 15);
+      await sendCreateOrder(createOrderParams);
+
+      const orderKeys = await getOrderKeys(dataStore, 0, 1);
+      await expect(
+        sendUpdateOrder({
+          ...updateOrderParams,
+          key: orderKeys[0],
+          feeParams: {
+            ...updateOrderParams.feeParams,
+            feeAmount: expandDecimals(2, 17),
+          },
+          increaseExecutionFee: true,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "ExecutionFeeTooHigh");
+
+      // it should not fail with ExecutionFeeTooHigh if increaseExecutionFee is false
+      // because the residual relay fee is sent back to the user
+      await sendUpdateOrder({
+        ...updateOrderParams,
+        key: orderKeys[0],
+        feeParams: {
+          ...updateOrderParams.feeParams,
+          feeAmount: expandDecimals(2, 17),
+        },
+        increaseExecutionFee: false,
+      });
+    });
+
+    it("increases execution fee", async () => {
+      await enableSubaccount();
+      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
+      await sendCreateOrder(createOrderParams);
+      const orderKeys = await getOrderKeys(dataStore, 0, 1);
+      let order = await reader.getOrder(dataStore.address, orderKeys[0]);
+
+      updateOrderParams.relayFeeAmount = expandDecimals(1, 15);
+      updateOrderParams.feeParams.feeAmount = expandDecimals(3, 15);
+
+      const initialWethBalance = await wnt.balanceOf(user1.address);
+      const gelatoRelayFee = updateOrderParams.relayFeeAmount;
+      await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, gelatoRelayFee);
+      await sendUpdateOrder({ ...updateOrderParams, key: orderKeys[0] });
+      await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, bigNumberify(gelatoRelayFee).mul(2));
+
+      // user receives the residual amount
+      await expectBalance(wnt.address, user1.address, initialWethBalance.sub(expandDecimals(1, 15)));
+      // and the execution fee stays the same
+      order = await reader.getOrder(dataStore.address, orderKeys[0]);
+      expect(order.numbers.executionFee).eq(expandDecimals(1, 15));
+
+      await sendUpdateOrder({ ...updateOrderParams, key: orderKeys[0], increaseExecutionFee: true });
+
+      // user doesn't receive the residual amount
+      await expectBalance(wnt.address, user1.address, initialWethBalance.sub(expandDecimals(4, 15)));
+      // and the execution fee is increased
+      order = await reader.getOrder(dataStore.address, orderKeys[0]);
+      expect(order.numbers.executionFee).eq(expandDecimals(3, 15));
+    });
   });
 
   describe("cancelOrder", () => {
@@ -737,7 +853,12 @@ describe("SubaccountGelatoRelayRouter", () => {
       "InvalidSignature"
     );
 
+    await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, 0);
+
     await sendRemoveSubaccount(params);
     expect(await dataStore.getAddressCount(keys.subaccountListKey(user1.address))).to.eq(0);
+
+    expect(createOrderParams.relayFeeAmount).gt(0);
+    await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, createOrderParams.relayFeeAmount);
   });
 });

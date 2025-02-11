@@ -23,7 +23,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     bytes32 public constant UPDATE_ORDER_TYPEHASH =
         keccak256(
             bytes(
-                "UpdateOrder(address account,bytes32 key,UpdateOrderParams params,bytes32 relayParams,bool increaseExecutionFee,bytes32 subaccountApproval)UpdateOrderParams(uint256 sizeDeltaUsd,uint256 acceptablePrice,uint256 triggerPrice,uint256 minOutputAmount,uint256 validFromTime,bool autoCancel)"
+                "UpdateOrder(address account,bytes32 key,UpdateOrderParams params,bool increaseExecutionFee,bytes32 relayParams,bytes32 subaccountApproval)UpdateOrderParams(uint256 sizeDeltaUsd,uint256 acceptablePrice,uint256 triggerPrice,uint256 minOutputAmount,uint256 validFromTime,bool autoCancel)"
             )
         );
     bytes32 public constant UPDATE_ORDER_PARAMS_TYPEHASH =
@@ -77,6 +77,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         IExternalHandler _externalHandler
     ) BaseGelatoRelayRouter(_router, _dataStore, _eventEmitter, _oracle, _orderHandler, _orderVault, _externalHandler) {}
 
+    // @note all params except subaccount should be part of the corresponding struct hash
     function createOrder(
         RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
@@ -113,6 +114,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         return _createOrder(relayParams, account, collateralDeltaAmount, params, true);
     }
 
+    // @note all params except subaccount should be part of the corresponding struct hash
     function updateOrder(
         RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
@@ -129,6 +131,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         _updateOrder(relayParams, account, key, params, increaseExecutionFee, true);
     }
 
+    // @note all params except subaccount should be part of the corresponding struct hash
     function cancelOrder(
         RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
@@ -143,6 +146,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         _cancelOrder(relayParams, account, key);
     }
 
+    // @note all params except account should be part of the corresponding struct hash
     function removeSubaccount(
         RelayParams calldata relayParams,
         address account,
@@ -333,8 +337,8 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
                     account,
                     key,
                     _getUpdateOrderParamsStructHash(params),
-                    _getRelayParamsHash(relayParams),
                     increaseExecutionFee,
+                    _getRelayParamsHash(relayParams),
                     keccak256(abi.encode(subaccountApproval))
                 )
             );
