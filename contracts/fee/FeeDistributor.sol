@@ -8,10 +8,8 @@ import {MessagingFee, MessagingReceipt} from "@layerzerolabs/lz-evm-protocol-v2/
 
 import {MultichainReaderUtils} from "../external/MultichainReaderUtils.sol";
 
-import "../role/RoleModule.sol";
+import "./FeeDistributorVault.sol";
 import "./FeeHandler.sol";
-import "../data/DataStore.sol";
-import "../event/EventEmitter.sol";
 import "../external/MultichainReader.sol";
 import "../router/IExchangeRouter.sol";
 import "../v1/IVaultV1.sol";
@@ -25,7 +23,6 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
     uint256 public constant v2 = 2;
 
     bytes32 public constant gmxKey = keccak256(abi.encode("GMX"));
-    bytes32 public constant feeKeeperKey = keccak256(abi.encode("FEE_KEEPER"));
     bytes32 public constant extendedGmxTrackerKey = keccak256(abi.encode("EXTENDED_GMX_TRACKER"));
     bytes32 public constant dataStoreKey = keccak256(abi.encode("DATASTORE"));
     bytes32 public constant referralRewardsWntKey = keccak256(abi.encode("REFERRAL_REWARDS_WNT"));
@@ -34,7 +31,9 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
     bytes32 public constant synapseRouterKey = keccak256(abi.encode("SYNAPSE_ROUTER"));
     bytes32 public constant feeGlpTrackerKey = keccak256(abi.encode("FEE_GLP_TRACKER"));
     bytes32 public constant chainlinkKey = keccak256(abi.encode("CHAINLINK"));
+    bytes32 public constant feeDistributorVaultKey = keccak256(abi.encode("FEE_DISTRIBUTOR_VAULT"));
 
+    FeeDistributorVault public immutable feeDistributorVault;
     FeeHandler public immutable feeHandler;
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
@@ -43,12 +42,14 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
 
     constructor(
         RoleStore _roleStore,
+        FeeDistributorVault _feeDistributorVault,
         FeeHandler _feeHandler,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
         MultichainReader _multichainReader,
         IVaultV1 _vaultV1
     ) RoleModule(_roleStore) {
+        feeDistributorVault = _feeDistributorVault;
         feeHandler = _feeHandler;
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
@@ -63,18 +64,18 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         MultichainReaderUtils.ReadRequestInputs[]
             memory readRequestsInputs = new MultichainReaderUtils.ReadRequestInputs[]((chainCount - 1) * 3);
         bool skippedCurrentChain;
-        uint256[] memory chainIds = dataStore.getUintValuesAt(Keys.FEE_DISTRIBUTOR_CHAIN_ID, 0, chainCount);
+        uint256[] memory chainIds = dataStore.getUintArray(Keys.FEE_DISTRIBUTOR_CHAIN_ID);
         for (uint256 i; i < chainCount; i++) {
             uint256 chainId = chainIds[i];
             address gmx = dataStore.getAddress(Keys.feeDistributorAddressInfoKey(chainId, gmxKey));
-            address feeKeeper = dataStore.getAddress(Keys.feeDistributorAddressInfoKey(chainId, feeKeeperKey));
+            address feeReceiver = dataStore.getAddress(Keys.feeDistributorAddressInfoKey(chainId, Keys.FEE_RECEIVER));
             address extendedGmxTracker = dataStore.getAddress(
                 Keys.feeDistributorAddressInfoKey(chainId, extendedGmxTrackerKey)
             );
 
             if (chainId == block.chainid) {
                 uint256 feeAmount = dataStore.getUint(Keys.withdrawableBuybackTokenAmountKey(gmx)) +
-                    IERC20(gmx).balanceOf(feeKeeper);
+                    IERC20(gmx).balanceOf(feeReceiver);
                 uint256 stakedGmx = IERC20(extendedGmxTracker).totalSupply();
                 dataStore.setUint(Keys.feeDistributorFeeAmountKey(chainId), feeAmount);
                 dataStore.setUint(Keys.feeDistributorStakedGmxKey(chainId), stakedGmx);
@@ -98,7 +99,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
             readRequestsInputs[readRequestIndex].target = gmx;
             readRequestsInputs[readRequestIndex].callData = abi.encodeWithSelector(
                 IERC20.balanceOf.selector,
-                feeKeeper
+                feeReceiver
             );
             readRequestIndex++;
 
@@ -114,19 +115,18 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         MessagingFee memory messagingFee = multichainReader.quoteReadFee(readRequestsInputs, extraOptionsInputs);
         multichainReader.sendReadRequests{value: messagingFee.nativeFee}(readRequestsInputs, extraOptionsInputs);
 
-        dataStore.setBool(Keys.FEE_DISTRIBUTOR_DISTRIBUTION_INITIATED, true);
+        dataStore.setUint(Keys.FEE_DISTRIBUTION_STATE, 1);
     }
 
     function processLzReceive(
         bytes32 /*guid*/,
         MultichainReaderUtils.ReceivedData calldata receivedDataInput
-    ) external {
+    ) external nonReentrant onlyMultichainReader {
         _validateReadResponseTimestamp(receivedDataInput.timestamp);
         dataStore.setUint(Keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP, receivedDataInput.timestamp);
 
-        uint256 chainCount = dataStore.getUintCount(Keys.FEE_DISTRIBUTOR_CHAIN_ID);
-        uint256[] memory chainIds = dataStore.getUintValuesAt(Keys.FEE_DISTRIBUTOR_CHAIN_ID, 0, chainCount);
-        for (uint256 i; i < chainCount; i++) {
+        uint256[] memory chainIds = dataStore.getUintArray(Keys.FEE_DISTRIBUTOR_CHAIN_ID);
+        for (uint256 i; i < chainIds.length; i++) {
             uint256 chainId = chainIds[i];
             bool skippedCurrentChain;
             if (chainId == block.chainid) {
@@ -147,11 +147,11 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         eventData.boolItems.initItems(1);
         eventData.boolItems.setItem(0, "distributeReferralRewards", false);
 
-        eventEmitter.emitEventLog("TriggerReferralKeeper", eventData);
+        eventEmitter.emitEventLog("TriggerFeeDistributorKeeper", eventData);
     }
 
     function distribute() external nonReentrant onlyFeeDistributionKeeper {
-        if (!dataStore.getBool(Keys.FEE_DISTRIBUTOR_DISTRIBUTION_INITIATED)) {
+        if (dataStore.getUint(Keys.FEE_DISTRIBUTION_STATE) != 1) {
             revert Errors.DistributionNotInitiated();
         }
         _validateReadResponseTimestamp(dataStore.getUint(Keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP));
@@ -161,39 +161,44 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         uint256 wntPrice = vaultV1.getMaxPrice(wnt);
         address gmxCurrentChain = dataStore.getAddress(Keys.feeDistributorAddressInfoKey(block.chainid, gmxKey));
 
-        address feeKeeperCurrentChain = dataStore.getAddress(
-            Keys.feeDistributorAddressInfoKey(block.chainid, feeKeeperKey)
-        );
+        address feeReceiverCurrentChain = dataStore.getAddress(Keys.FEE_RECEIVER);
 
         feeHandler.withdrawFees(wnt);
         feeHandler.withdrawFees(gmxCurrentChain);
 
         // fee amount calculations for all chains
-        uint256 totalWntBalance = IERC20(wnt).balanceOf(feeKeeperCurrentChain);
+        uint256 totalWntBalance = IERC20(wnt).balanceOf(feeReceiverCurrentChain);
 
         uint256 feesV1Usd = dataStore.getUint(Keys.feeDistributorFeeAmountUsdKey(v1));
         uint256 feesV2Usd = dataStore.getUint(Keys.feeDistributorFeeAmountUsdKey(v2));
         uint256 totalFeesUsd = feesV1Usd + feesV2Usd;
 
-        uint256 keeperCosts;
-        uint256 keeperCount = dataStore.getAddressCount(Keys.FEE_DISTRIBUTOR_KEEPER_COSTS);
-        uint256 keeperTargetBalanceCount = dataStore.getUintCount(Keys.FEE_DISTRIBUTOR_KEEPER_COSTS);
-        if (keeperCount != keeperTargetBalanceCount) {
-            revert Errors.KeeperArrayLengthMismatch(keeperCount, keeperTargetBalanceCount);
+        address[] memory keepers = dataStore.getAddressArray(Keys.FEE_DISTRIBUTOR_KEEPER_COSTS);
+        uint256[] memory keepersTargetBalance = dataStore.getUintArray(Keys.FEE_DISTRIBUTOR_KEEPER_COSTS);
+        bool[] memory keepersV2 = dataStore.getBoolArray(Keys.FEE_DISTRIBUTOR_KEEPER_COSTS);
+        if (keepers.length != keepersTargetBalance.length || keepers.length != keepersV2.length) {
+            revert Errors.KeeperArrayLengthMismatch(keepers.length, keepersTargetBalance.length, keepersV2.length);
         }
 
-        address[] memory keepers = new address[](keeperCount);
-        uint256[] memory keeperTargetBalances = new uint256[](keeperTargetBalanceCount);
-        for (uint256 i; i < keeperCount; i++) {
-            uint256 balance = keepers[i].balance;
-            uint256 targetBalance = keeperTargetBalances[i];
-            if (balance < targetBalance) {
-                keeperCosts = keeperCosts + (targetBalance - balance);
+        uint256 keeperCostsTreasury;
+        uint256 keeperCostsGlp;
+        uint256 keeperGlpFactor = dataStore.getUint(Keys.FEE_DISTRIBUTOR_KEEPER_GLP_FACTOR);
+        for (uint256 i; i < keepers.length; i++) {
+            uint256 keeperCost = keepersTargetBalance[i] - keepers[i].balance;
+            if (keeperCost > 0) {
+                if (keepersV2[i]) {
+                    keeperCostsTreasury = keeperCostsTreasury + keeperCost;
+                } else {
+                    uint256 keeperCostGlp = Precision.applyFactor(keeperCost, keeperGlpFactor);
+                    keeperCostsGlp = keeperCostsGlp + keeperCostGlp;
+                    keeperCostsTreasury = keeperCostsTreasury + keeperCost - keeperCostGlp;
+                }
             }
         }
 
         uint256 treasuryChainlinkWntAmount = Precision.mulDiv(totalWntBalance, feesV2Usd, totalFeesUsd);
-        uint256 treasuryWntAmount = Precision.mulDiv(treasuryChainlinkWntAmount, uint256(88), uint256(100));
+        uint256 treasuryWntAmount = Precision.mulDiv(treasuryChainlinkWntAmount, uint256(88), uint256(100)) -
+            keeperCostsTreasury;
         uint256 chainlinkWntAmount = Precision.mulDiv(treasuryChainlinkWntAmount, uint256(12), uint256(100));
 
         uint256 referralRewardsWntUsd = dataStore.getUint(Keys.feeDistributorReferralRewardsAmountKey(wnt));
@@ -210,7 +215,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         }
 
         uint256 remainingWnt = totalWntBalance -
-            keeperCosts -
+            keeperCostsGlp -
             chainlinkWntAmount -
             treasuryWntAmount -
             referralRewardsWnt;
@@ -241,16 +246,19 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         bool feeDistributorFeeDeficit = dataStore.getBool(Keys.FEE_DISTRIBUTOR_HAS_FEE_DEFICIT);
         if (feeDistributorFeeDeficit) {
             address gmx = dataStore.getAddress(Keys.feeDistributorAddressInfoKey(block.chainid, gmxKey));
-            feeAmountCurrentChain = IERC20(gmx).balanceOf(feeKeeperCurrentChain);
+            feeAmountCurrentChain = IERC20(gmx).balanceOf(feeReceiverCurrentChain);
             dataStore.setUint(Keys.feeDistributorFeeAmountKey(block.chainid), feeAmountCurrentChain);
         }
 
-        uint256 chainCount = dataStore.getUintCount(Keys.FEE_DISTRIBUTOR_CHAIN_ID);
-        uint256[] memory chainIds = dataStore.getUintValuesAt(Keys.FEE_DISTRIBUTOR_CHAIN_ID, 0, chainCount);
+        uint256[] memory chainIds = dataStore.getUintArray(Keys.FEE_DISTRIBUTOR_CHAIN_ID);
+        uint256 chainCount = chainIds.length;
+
         uint256[] memory feeAmount = new uint256[](chainCount);
         uint256 totalFeeAmount;
+
         uint256[] memory stakedGmx = new uint256[](chainCount);
         uint256 totalStakedGmx;
+
         uint256 currentChain;
         for (uint256 i; i < chainCount; i++) {
             uint256 chainId = chainIds[i];
@@ -339,13 +347,16 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
                 uint256 sendAmount = bridging[currentChain][i];
                 // perhaps should be an amount greater than 0 to account for fees
                 if (sendAmount > 0) {
+                    feeDistributorVault.transferOut(gmxCurrentChain, address(this), sendAmount);
+
                     uint256 chainId = chainIds[i];
                     address synapseRouter = dataStore.getAddress(
                         Keys.feeDistributorAddressInfoKey(block.chainid, synapseRouterKey)
                     );
                     address gmxDestChain = dataStore.getAddress(Keys.feeDistributorAddressInfoKey(chainId, gmxKey));
-                    address feeKeeper = dataStore.getAddress(Keys.feeDistributorAddressInfoKey(chainId, feeKeeperKey));
-
+                    address feeReceiver = dataStore.getAddress(
+                        Keys.feeDistributorAddressInfoKey(chainId, Keys.FEE_RECEIVER)
+                    );
                     address nullAddress;
                     uint256 minAmountOut = Precision.applyFactor(sendAmount, slippageFactor);
                     // using the deadline logic that the synapse front-end seems to use
@@ -356,7 +367,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
                     // It appears on the synapse front-end a small slippage amount is used for the sending chain, here no slippage is assumed
                     bytes memory callData = abi.encodeWithSignature(
                         "bridge(address,uint256,address,uint256,(address,address,uint256,uint256,bytes),(address,address,uint256,uint256,bytes))",
-                        feeKeeper,
+                        feeReceiver,
                         chainId,
                         gmxCurrentChain,
                         sendAmount,
@@ -380,37 +391,31 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
             }
         }
 
-        // fee distribution
-        IWNT(wnt).withdraw(keeperCosts);
-
-        for (uint256 i; i < keeperCount; i++) {
+        for (uint256 i; i < keepers.length; i++) {
             address keeper = keepers[i];
-            uint256 balance = keeper.balance;
-            uint256 targetBalance = keeperTargetBalances[i];
-            if (balance < targetBalance) {
-                uint256 sendAmount = targetBalance - balance;
-                (bool success, bytes memory result) = keeper.call{value: sendAmount}("");
-                if (!success) {
-                    revert Errors.SendEthToKeeperFailed(keeper, sendAmount, result);
-                }
+            if (keeper.balance < keepersTargetBalance[i]) {
+                uint256 sendAmount = keepersTargetBalance[i] - keeper.balance;
+                feeDistributorVault.transferOutNativeToken(keeper, sendAmount);
             }
         }
 
         address extendedGmxTracker = dataStore.getAddress(
             Keys.feeDistributorAddressInfoKey(block.chainid, extendedGmxTrackerKey)
         );
-        IERC20(gmxCurrentChain).transfer(extendedGmxTracker, feeAmountCurrentChain);
+        feeDistributorVault.transferOut(gmxCurrentChain, extendedGmxTracker, feeAmountCurrentChain);
 
         address gmxRewardDistributor = IRewardTracker(extendedGmxTracker).distributor();
         IRewardDistributor(gmxRewardDistributor).updateLastDistributionTime();
         IRewardDistributor(gmxRewardDistributor).setTokensPerInterval(feeAmountCurrentChain / 604800);
 
-        IERC20(wnt).transfer(
+        feeDistributorVault.transferOut(
+            wnt,
             dataStore.getAddress(Keys.feeDistributorAddressInfoKey(block.chainid, treasuryKey)),
             treasuryWntAmount
         );
 
-        IERC20(wnt).transfer(
+        feeDistributorVault.transferOut(
+            wnt,
             dataStore.getAddress(Keys.feeDistributorAddressInfoKey(block.chainid, chainlinkKey)),
             chainlinkWntAmount
         );
@@ -418,7 +423,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         address feeGlpTracker = dataStore.getAddress(
             Keys.feeDistributorAddressInfoKey(block.chainid, feeGlpTrackerKey)
         );
-        IERC20(gmxCurrentChain).transfer(feeGlpTracker, remainingWnt);
+        feeDistributorVault.transferOut(wnt, feeGlpTracker, remainingWnt);
         address glpRewardDistributor = IRewardTracker(feeGlpTracker).distributor();
         IRewardDistributor(glpRewardDistributor).updateLastDistributionTime();
         IRewardDistributor(glpRewardDistributor).setTokensPerInterval(remainingWnt / 604800);
@@ -428,13 +433,22 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
             dataStore.setBool(Keys.FEE_DISTRIBUTOR_HAS_FEE_DEFICIT, false);
         }
         dataStore.setUint(Keys.FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP, block.timestamp);
-        dataStore.setBool(Keys.FEE_DISTRIBUTOR_DISTRIBUTION_INITIATED, false);
+        dataStore.setUint(Keys.FEE_DISTRIBUTION_STATE, 0);
 
         EventUtils.EventLogData memory eventData;
         eventData.boolItems.initItems(1);
         eventData.boolItems.setItem(0, "distributeReferralRewards", true);
 
-        eventEmitter.emitEventLog("TriggerReferralKeeper", eventData);
+        eventEmitter.emitEventLog("TriggerFeeDistributorKeeper", eventData);
+    }
+
+    function withdrawTokens(
+        address token,
+        address receiver,
+        uint256 amount,
+        bool shouldUnwrapNativeToken
+    ) external nonReentrant onlyController {
+        feeDistributorVault.transferOut(token, receiver, amount, shouldUnwrapNativeToken);
     }
 
     function _validateDistributionNotCompleted() internal view {

@@ -110,4 +110,9 @@ library Role {
      * Hash: 0xcdf6da7ad30d8b9afea66fb1cb11b1b7d0b50e9b30b69561a3ca52c39251360c
      */
     bytes32 public constant CONTRIBUTOR_DISTRIBUTOR = keccak256(abi.encode("CONTRIBUTOR_DISTRIBUTOR"));
+    /**
+     * @dev The MULTICHAIN_READER role.
+     * Hash: 0xdb34a94d601aa170c498f99c1628bd6182669f4ea4522eb87795649193ee93f8
+     */
+    bytes32 public constant MULTICHAIN_READER = keccak256(abi.encode("MULTICHAIN_READER"));
 }

@@ -433,6 +433,6 @@ library Errors {
     error BridgingTransactionFailed(bytes result);
     error ReferralRewardsWntThresholdBreached(uint256 referralRewardsWntAmount, uint256 referralRewardsWntShortFall);
     error TreasuryFeeThresholdBreached(uint256 treasuryWntAmount, uint256 treasuryWntShortfall);
-    error KeeperArrayLengthMismatch(uint256 keeperAddressCount, uint256 keeperUintCount);
+    error KeeperArrayLengthMismatch(uint256 keepersLength, uint256 keeperTargetBalancesLength, uint256 keeperVersionsLength);
     error SendEthToKeeperFailed(address keeper, uint256 sendAmount, bytes result);
 }

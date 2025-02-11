@@ -482,8 +482,8 @@ library Keys {
     bytes32 public constant FEE_DISTRIBUTOR_DISTRIBUTION_DAY = keccak256(abi.encode("FEE_DISTRIBUTOR_DISTRIBUTION_DAY"));
     // @dev key for FeeDistributor timestamp that the last distribution was completed
     bytes32 public constant FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP = keccak256(abi.encode("FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP"));
-    // @dev key for whether the current week distribution has already been initiated
-    bytes32 public constant FEE_DISTRIBUTOR_DISTRIBUTION_INITIATED = keccak256(abi.encode("FEE_DISTRIBUTOR_DISTRIBUTION_INITIATED"));
+    // @dev key for whether the fee distribution state
+    bytes32 public constant FEE_DISTRIBUTION_STATE = keccak256(abi.encode("FEE_DISTRIBUTION_STATE"));
     // @dev key for FeeDistributor referral rewards for a given timestamp
     bytes32 public constant FEE_DISTRIBUTOR_REFERRAL_REWARDS_AMOUNT = keccak256(abi.encode("FEE_DISTRIBUTOR_REFERRAL_REWARDS_AMOUNT"));
     // @dev key for FeeDistributor max read response delay in seconds from MultichainReader
@@ -516,6 +516,8 @@ library Keys {
     bytes32 public constant FEE_DISTRIBUTOR_KEEPER_COSTS = keccak256(abi.encode("FEE_DISTRIBUTOR_KEEPER_COSTS"));
     // @dev key for FeeDistributor fee buffer representing acceptable fee deficit after bridging slippage
     bytes32 public constant FEE_DISTRIBUTOR_FEE_BUFFER = keccak256(abi.encode("FEE_DISTRIBUTOR_FEE_BUFFER"));
+    // @dev key for FeeDistributor keeper glp factor used to determine costs paid from glp fees
+    bytes32 public constant FEE_DISTRIBUTOR_KEEPER_GLP_FACTOR = keccak256(abi.encode("FEE_DISTRIBUTOR_KEEPER_GLP_FACTOR"));
 
     // @dev constant for user initiated cancel reason
     string public constant USER_INITIATED_CANCEL = "USER_INITIATED_CANCEL";
