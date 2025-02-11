@@ -822,7 +822,11 @@ describe("SubaccountGelatoRelayRouter", () => {
       "InvalidSignature"
     );
 
+    await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, 0);
+
     await sendRemoveSubaccount(params);
     expect(await dataStore.getAddressCount(keys.subaccountListKey(user1.address))).to.eq(0);
+
+    await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, createOrderParams.relayFeeAmount);
   });
 });
