@@ -28,7 +28,7 @@ async function main() {
   }
 
   console.log(`Checking deployment against commit: ${AUDITED_COMMIT}`);
-  execSync(`git checkout ${AUDITED_COMMIT}`, { stdio: "inherit" });
+  // execSync(`git checkout ${AUDITED_COMMIT}`, { stdio: "inherit" });
 
   try {
     const contractInfos = await extractRolesFromTx(tx);
@@ -47,7 +47,7 @@ async function main() {
   }
 
   // Restore git to previous state
-  execSync(`git checkout -`, { stdio: "inherit" });
+  // execSync(`git checkout -`, { stdio: "inherit" });
   console.log("✅ Verification completed.");
 }
 
@@ -91,7 +91,7 @@ const expectedRoles = {
   ],
 };
 
-async function extractRolesFromTx(txReceipt: TransactionReceipt): Promise<IterableIterator<ContractInfo>> {
+async function extractRolesFromTx(txReceipt: TransactionReceipt): Promise<ContractInfo[]> {
   const contractInfos = new Map<string, ContractInfo>();
   const EventEmitter = await ethers.getContractFactory("EventEmitter");
   const eventEmitterInterface = EventEmitter.interface;
@@ -113,7 +113,7 @@ async function extractRolesFromTx(txReceipt: TransactionReceipt): Promise<Iterab
       }
     }
   }
-  return contractInfos.values();
+  return [...contractInfos].map(([, value]) => value);
 }
 
 async function validateRoles(contractInfo: ContractInfo) {
