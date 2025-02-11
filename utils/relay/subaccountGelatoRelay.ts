@@ -59,8 +59,9 @@ export async function sendCreateOrder(p: {
     });
   }
 
-  if (!p.signature) {
-    p.signature = await getCreateOrderSignature({
+  let signature = p.signature;
+  if (!signature) {
+    signature = await getCreateOrderSignature({
       ...p,
       relayParams,
       verifyingContract: p.relayRouter.address,
@@ -68,7 +69,7 @@ export async function sendCreateOrder(p: {
     });
   }
   const createOrderCalldata = p.relayRouter.interface.encodeFunctionData("createOrder", [
-    { ...relayParams, signature: p.signature },
+    { ...relayParams, signature },
     p.subaccountApproval,
     p.account,
     p.subaccount,
@@ -220,15 +221,16 @@ export async function sendUpdateOrder(p: {
     });
   }
 
-  if (!p.signature) {
-    p.signature = await getUpdateOrderSignature({
+  let signature = p.signature;
+  if (!signature) {
+    signature = await getUpdateOrderSignature({
       ...p,
       relayParams,
       verifyingContract: p.relayRouter.address,
     });
   }
   const updateOrderCalldata = p.relayRouter.interface.encodeFunctionData("updateOrder", [
-    { ...relayParams, signature: p.signature },
+    { ...relayParams, signature },
     p.subaccountApproval,
     p.account,
     p.subaccount,
@@ -262,8 +264,8 @@ async function getUpdateOrderSignature({
       { name: "account", type: "address" },
       { name: "key", type: "bytes32" },
       { name: "params", type: "UpdateOrderParams" },
-      { name: "relayParams", type: "bytes32" },
       { name: "increaseExecutionFee", type: "bool" },
+      { name: "relayParams", type: "bytes32" },
       { name: "subaccountApproval", type: "bytes32" },
     ],
     UpdateOrderParams: [
@@ -336,15 +338,16 @@ export async function sendCancelOrder(p: {
     });
   }
 
-  if (!p.signature) {
-    p.signature = await getCancelOrderSignature({
+  let signature = p.signature;
+  if (!signature) {
+    signature = await getCancelOrderSignature({
       ...p,
       relayParams,
       verifyingContract: p.relayRouter.address,
     });
   }
   const cancelOrderCalldata = p.relayRouter.interface.encodeFunctionData("cancelOrder", [
-    { ...relayParams, signature: p.signature },
+    { ...relayParams, signature },
     p.subaccountApproval,
     p.account,
     p.subaccount,
@@ -466,12 +469,13 @@ export async function sendRemoveSubaccount(p: {
 }) {
   const relayParams = await getRelayParams(p);
 
-  if (!p.signature) {
-    p.signature = await getRemoveSubaccountSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
+  let signature = p.signature;
+  if (!signature) {
+    signature = await getRemoveSubaccountSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
   }
 
   const createOrderCalldata = p.relayRouter.interface.encodeFunctionData("removeSubaccount", [
-    { ...relayParams, signature: p.signature },
+    { ...relayParams, signature },
     p.account,
     p.subaccount,
   ]);

@@ -16,10 +16,10 @@ export async function getRelayParams(p: {
   userNonce?: BigNumberish;
   deadline: BigNumberish;
   relayRouter: ethers.Contract;
-  account: string;
+  signer: ethers.Signer;
 }) {
   if (p.userNonce === undefined) {
-    p.userNonce = await getUserNonce(p.account, p.relayRouter);
+    p.userNonce = await getUserNonce(await p.signer.getAddress(), p.relayRouter);
   }
   return {
     oracleParams: p.oracleParams || getDefaultOracleParams(),
@@ -37,6 +37,12 @@ export async function getRelayParams(p: {
 }
 
 export function getDomain(chainId: BigNumberish, verifyingContract: string) {
+  if (!chainId) {
+    throw new Error("chainId is required");
+  }
+  if (!verifyingContract) {
+    throw new Error("verifyingContract is required");
+  }
   return {
     name: "GmxBaseGelatoRelayRouter",
     version: "1",

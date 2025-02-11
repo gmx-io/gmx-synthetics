@@ -323,6 +323,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             revert Errors.UnexpectedRelayFeeToken(_getFeeToken(), wnt);
         }
 
+
         _transferRelayFeeCapped(outputAmount);
 
         uint256 residualFee = outputAmount - _getFee();
@@ -331,6 +332,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         // otherwise the residual fee is sent back to the user
         // for other actions the residual fee is sent back to the user
         TokenUtils.transfer(contracts.dataStore, wnt, residualFeeReceiver, residualFee);
+
         return residualFee;
     }
 

@@ -42,12 +42,13 @@ export async function sendCreateOrder(p: {
 }) {
   const relayParams = await getRelayParams(p);
 
-  if (!p.signature) {
-    p.signature = await getCreateOrderSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
+  let signature = p.signature;
+  if (!signature) {
+    signature = await getCreateOrderSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
   }
 
   const createOrderCalldata = p.relayRouter.interface.encodeFunctionData("createOrder", [
-    { ...relayParams, signature: p.signature },
+    { ...relayParams, signature },
     p.account,
     p.collateralDeltaAmount,
     p.params,
@@ -168,11 +169,12 @@ export async function sendUpdateOrder(p: {
 }) {
   const relayParams = await getRelayParams(p);
 
-  if (!p.signature) {
-    p.signature = await getUpdateOrderSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
+  let signature = p.signature;
+  if (!signature) {
+    signature = await getUpdateOrderSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
   }
   const updateOrderCalldata = p.relayRouter.interface.encodeFunctionData("updateOrder", [
-    { ...relayParams, signature: p.signature },
+    { ...relayParams, signature },
     p.account,
     p.key,
     p.params,
@@ -197,6 +199,7 @@ async function getUpdateOrderSignature({
   deadline,
   userNonce = undefined,
   chainId,
+  increaseExecutionFee,
 }) {
   if (userNonce === undefined) {
     throw new Error("userNonce is required");
@@ -205,6 +208,7 @@ async function getUpdateOrderSignature({
     UpdateOrder: [
       { name: "key", type: "bytes32" },
       { name: "params", type: "UpdateOrderParams" },
+      { name: "increaseExecutionFee", type: "bool" },
       { name: "relayParams", type: "bytes32" },
     ],
     UpdateOrderParams: [
@@ -223,6 +227,7 @@ async function getUpdateOrderSignature({
     params,
     userNonce,
     deadline,
+    increaseExecutionFee,
     relayParams: hashRelayParams(relayParams),
   };
 
@@ -260,11 +265,12 @@ export async function sendCancelOrder(p: {
 }) {
   const relayParams = await getRelayParams(p);
 
-  if (!p.signature) {
-    p.signature = await getCancelOrderSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
+  let signature = p.signature;
+  if (!signature) {
+    signature = await getCancelOrderSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
   }
   const cancelOrderCalldata = p.relayRouter.interface.encodeFunctionData("cancelOrder", [
-    { ...relayParams, signature: p.signature },
+    { ...relayParams, signature },
     p.account,
     p.key,
   ]);

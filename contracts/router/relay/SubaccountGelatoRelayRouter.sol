@@ -23,7 +23,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     bytes32 public constant UPDATE_ORDER_TYPEHASH =
         keccak256(
             bytes(
-                "UpdateOrder(address account,bytes32 key,UpdateOrderParams params,bytes32 relayParams,bool increaseExecutionFee,bytes32 subaccountApproval)UpdateOrderParams(uint256 sizeDeltaUsd,uint256 acceptablePrice,uint256 triggerPrice,uint256 minOutputAmount,uint256 validFromTime,bool autoCancel)"
+                "UpdateOrder(address account,bytes32 key,UpdateOrderParams params,bool increaseExecutionFee,bytes32 relayParams,bytes32 subaccountApproval)UpdateOrderParams(uint256 sizeDeltaUsd,uint256 acceptablePrice,uint256 triggerPrice,uint256 minOutputAmount,uint256 validFromTime,bool autoCancel)"
             )
         );
     bytes32 public constant UPDATE_ORDER_PARAMS_TYPEHASH =
@@ -333,8 +333,8 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
                     account,
                     key,
                     _getUpdateOrderParamsStructHash(params),
-                    _getRelayParamsHash(relayParams),
                     increaseExecutionFee,
+                    _getRelayParamsHash(relayParams),
                     keccak256(abi.encode(subaccountApproval))
                 )
             );

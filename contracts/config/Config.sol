@@ -460,6 +460,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.EXECUTION_GAS_FEE_PER_ORACLE_PRICE] = true;
         allowedBaseKeys[Keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR] = true;
 
+        allowedBaseKeys[Keys.MAX_EXECUTION_FEE_MULTIPLIER_FACTOR] = true;
+
         allowedBaseKeys[Keys.DEPOSIT_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.WITHDRAWAL_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.GLV_DEPOSIT_GAS_LIMIT] = true;
@@ -744,6 +746,12 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         ) {
             // revert if value > 100%
             if (value > Precision.FLOAT_PRECISION) {
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
+            }
+        }
+
+        if (baseKey == Keys.MAX_EXECUTION_FEE_MULTIPLIER_FACTOR) {
+            if (value < Precision.FLOAT_PRECISION * 10) {
                 revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
             }
         }

@@ -14,7 +14,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
     bytes32 public constant UPDATE_ORDER_TYPEHASH =
         keccak256(
             bytes(
-                "UpdateOrder(bytes32 key,UpdateOrderParams params,bytes32 relayParams)UpdateOrderParams(uint256 sizeDeltaUsd,uint256 acceptablePrice,uint256 triggerPrice,uint256 minOutputAmount,uint256 validFromTime,bool autoCancel)"
+                "UpdateOrder(bytes32 key,UpdateOrderParams params,bool increaseExecutionFee,bytes32 relayParams)UpdateOrderParams(uint256 sizeDeltaUsd,uint256 acceptablePrice,uint256 triggerPrice,uint256 minOutputAmount,uint256 validFromTime,bool autoCancel)"
             )
         );
     bytes32 public constant UPDATE_ORDER_PARAMS_TYPEHASH =
@@ -83,7 +83,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         bool increaseExecutionFee
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelay {
         _validateGaslessFeature();
-        bytes32 structHash = _getUpdateOrderStructHash(relayParams, key, params);
+        bytes32 structHash = _getUpdateOrderStructHash(relayParams, key, params, increaseExecutionFee);
         _validateCall(relayParams, account, structHash);
 
         _updateOrder(relayParams, account, key, params, increaseExecutionFee, false);
@@ -104,7 +104,8 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
     function _getUpdateOrderStructHash(
         RelayParams calldata relayParams,
         bytes32 key,
-        UpdateOrderParams calldata params
+        UpdateOrderParams calldata params,
+        bool increaseExecutionFee
     ) internal pure returns (bytes32) {
         return
             keccak256(
@@ -112,6 +113,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
                     UPDATE_ORDER_TYPEHASH,
                     key,
                     _getUpdateOrderParamsStructHash(params),
+                    increaseExecutionFee,
                     _getRelayParamsHash(relayParams)
                 )
             );

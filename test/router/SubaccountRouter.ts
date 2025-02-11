@@ -232,6 +232,24 @@ describe("SubaccountRouter", () => {
 
     const initialWntBalance0 = await wnt.balanceOf(user0.address);
 
+    await expect(
+      subaccountRouter.connect(subaccount).multicall(
+        [
+          subaccountRouter.interface.encodeFunctionData("sendWnt", [orderVault.address, expandDecimals(1, 17)]),
+          subaccountRouter.interface.encodeFunctionData("createOrder", [
+            user0.address,
+            {
+              ...params,
+              addresses: { ...params.addresses, receiver: user0.address },
+              numbers: { ...params.numbers, executionFee: expandDecimals(1, 17) },
+              orderType: OrderType.MarketIncrease,
+            },
+          ]),
+        ],
+        { value: expandDecimals(1, 17) }
+      )
+    ).to.be.revertedWithCustomError(errorsContract, "ExecutionFeeTooHigh");
+
     await subaccountRouter.connect(subaccount).multicall(
       [
         subaccountRouter.interface.encodeFunctionData("sendWnt", [orderVault.address, expandDecimals(1, 15)]),

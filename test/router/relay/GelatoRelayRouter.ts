@@ -118,6 +118,13 @@ describe("GelatoRelayRouter", () => {
       );
     });
 
+    it("ExecutionFeeTooHigh is not applied", async () => {
+      await wnt.connect(user0).approve(router.address, expandDecimals(1, 18));
+      await dataStore.setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1));
+      await dataStore.setUint(keys.MAX_EXECUTION_FEE_MULTIPLIER_FACTOR, decimalToFloat(1, 10));
+      await expect(sendCreateOrder(createOrderParams)).to.not.be.reverted;
+    });
+
     it("InvalidSignature", async () => {
       await expect(
         sendCreateOrder({
