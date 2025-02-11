@@ -118,6 +118,13 @@ describe("GelatoRelayRouter", () => {
       );
     });
 
+    it("ExecutionFeeTooHigh is not applied", async () => {
+      await wnt.connect(user0).approve(router.address, expandDecimals(1, 18));
+      await dataStore.setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1));
+      await dataStore.setUint(keys.MAX_EXECUTION_FEE_MULTIPLIER_FACTOR, decimalToFloat(1, 10));
+      await expect(sendCreateOrder(createOrderParams)).to.not.be.reverted;
+    });
+
     it("InvalidSignature", async () => {
       await expect(
         sendCreateOrder({
@@ -377,6 +384,16 @@ describe("GelatoRelayRouter", () => {
           data: ["0x", "0x"],
         },
       });
+
+      const orderKeys = await getOrderKeys(dataStore, 0, 1);
+      const order = await reader.getOrder(dataStore.address, orderKeys[0]);
+
+      // WETH price is 5000, so 10 USDC will be 0.002 WETH before fees
+      expect(order.numbers.executionFee).eq(
+        expandDecimals(2, 15)
+          .sub(applyFactor(expandDecimals(2, 15), atomicSwapFeeFactor))
+          .sub(createOrderParams.relayFeeAmount)
+      );
 
       // feeCollector received in WETH
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, createOrderParams.relayFeeAmount);

@@ -58,6 +58,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         uint256 srcChainId;
     }
 
+    // @note all params except account should be part of the corresponding struct hash
     struct UpdateOrderParams {
         uint256 sizeDeltaUsd;
         uint256 acceptablePrice;
@@ -324,6 +325,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         } else {
             revert Errors.UnexpectedRelayFeeToken(_getFeeToken(), wnt);
         }
+
 
         _transferRelayFeeCapped(outputAmount);
 
