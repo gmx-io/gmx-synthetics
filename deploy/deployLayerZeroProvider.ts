@@ -5,6 +5,7 @@ const constructorContracts = ["DataStore", "EventEmitter", "MultichainVault"];
 
 const func = createDeployFunction({
   contractName: "LayerZeroProvider",
+  libraryNames: ["MultichainUtils"],
   dependencyNames: constructorContracts,
   getDeployArgs: async ({ dependencyContracts }) => {
     return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);

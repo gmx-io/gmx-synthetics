@@ -31,7 +31,7 @@ library MultichainUtils {
         address token,
         address account,
         uint256 srcChainId
-    ) internal {
+    ) external {
         // token should have been transferred to multichainVault by IMultichainProvider
         uint256 amount = multichainVault.recordTransferIn(token);
         if (amount == 0) {
@@ -58,7 +58,7 @@ library MultichainUtils {
         address receiver,
         uint256 amount,
         uint256 srcChainId
-    ) internal {
+    ) external {
         if (amount == 0) {
             revert Errors.EmptyMultichainTransferOutAmount();
         }
