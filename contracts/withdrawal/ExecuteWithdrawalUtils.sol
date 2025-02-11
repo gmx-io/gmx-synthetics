@@ -4,6 +4,8 @@ pragma solidity ^0.8.0;
 
 import "../data/DataStore.sol";
 
+import "../multichain/MultichainUtils.sol";
+
 import "./WithdrawalVault.sol";
 import "./WithdrawalStoreUtils.sol";
 import "./WithdrawalEventUtils.sol";
@@ -35,6 +37,7 @@ library ExecuteWithdrawalUtils {
     struct ExecuteWithdrawalParams {
         DataStore dataStore;
         EventEmitter eventEmitter;
+        MultichainVault multichainVault;
         WithdrawalVault withdrawalVault;
         Oracle oracle;
         bytes32 key;
@@ -165,6 +168,11 @@ library ExecuteWithdrawalUtils {
             params.keeper,
             withdrawal.receiver()
         );
+
+        if (withdrawal.srcChainId() != 0) {
+            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, cache.result.outputToken, withdrawal.account(), withdrawal.srcChainId());
+            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, cache.result.secondaryOutputToken, withdrawal.account(), withdrawal.srcChainId());
+        }
 
         return cache.result;
     }

@@ -22,8 +22,7 @@ contract MultichainRouter is GelatoRelayRouter {
 
     struct MultichainCreateWithdrawalParams {
         uint256 desChainId;
-        uint256 longTokenAmount;
-        uint256 shortTokenAmount;
+        uint256 tokenAmount;
         WithdrawalUtils.CreateWithdrawalParams createWithdrawalParams;
     }
 
@@ -62,7 +61,7 @@ contract MultichainRouter is GelatoRelayRouter {
     bytes32 public constant MULTICHAIN_CREATE_WITHDRAWAL_PARAMS_TYPEHASH =
         keccak256(
             bytes(
-                "MultichainCreateWithdrawalParams(uint256 desChainId,uint256 longTokenAmount,uint256 shortTokenAmount,CreateWithdrawalParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minLongTokenAmount,uint256 minShortTokenAmount,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)"
+                "MultichainCreateWithdrawalParams(uint256 desChainId,uint256 tokenAmount,CreateWithdrawalParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minLongTokenAmount,uint256 minShortTokenAmount,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)"
             )
         );
 
@@ -153,10 +152,13 @@ contract MultichainRouter is GelatoRelayRouter {
         return depositHandler.createDeposit(account, params.createDepositParams);
     }
 
+    // does a WithdrawalUtils.createWithdrawal (receiver is multichainVault if srcChainId != 0)
+    // keeper will do a ExecuteWithdrawalUtils.executeWithdrawal and outputToken + secondaryOutputToken will be sent to receiver (or multichainVault if srcChainId != 0)
+    // TODO: MultichainProvider should initiate the bridging (e.g. LayerZeroProvider.sendTokens()) or will there be another action triggering the bridging?
     function createWithdrawal(
         RelayParams calldata relayParams,
         address account,
-        MultichainCreateWithdrawalParams memory params
+        MultichainCreateWithdrawalParams memory params // can't use calldata because need to modify params.addresses.receiver & params.numbers.executionFee
     ) external nonReentrant onlyGelatoRelay returns (bytes32) {
         if (params.desChainId != block.chainid) {
             revert Errors.InvalidDestinationChainId();
@@ -171,7 +173,7 @@ contract MultichainRouter is GelatoRelayRouter {
     function _createWithdrawal(
         RelayParams calldata relayParams,
         address account,
-        MultichainCreateWithdrawalParams memory params
+        MultichainCreateWithdrawalParams memory params // can't use calldata because need to modify params.addresses.receiver & params.numbers.executionFee
     ) internal returns (bytes32) {
         Contracts memory contracts = Contracts({
             dataStore: dataStore,
@@ -179,13 +181,18 @@ contract MultichainRouter is GelatoRelayRouter {
             bank: withdrawalVault
         });
 
+        // for multichain withdrawals, the output tokens are sent to multichainVault and user's multichain balance is increased
+        if (params.createWithdrawalParams.srcChainId != 0) {
+            params.createWithdrawalParams.receiver = address(multichainVault);
+        }
+
         // user already bridged the GM / GLV tokens to the MultichainVault and balance was increased
         // transfer the GM / GLV tokens from multichainVault to withdrawalVault
         _sendTokens(
             account,
             params.createWithdrawalParams.market,
             address(withdrawalVault), // receiver
-            params.longTokenAmount, // TODO: should amount be provided by the user, or everything should be withdrawn?
+            params.tokenAmount, // TODO: should remove MultichainCreateWithdrawalParams.tokenAmount and send everything instead? (i.e. sent entire GM/GLV multichain balance to WithdrawalVault)
             params.createWithdrawalParams.srcChainId
         );
 
@@ -193,7 +200,7 @@ contract MultichainRouter is GelatoRelayRouter {
             contracts,
             relayParams,
             account,
-            address(withdrawalVault)
+            address(withdrawalVault) // residualFeeReceiver
         );
 
         return withdrawalHandler.createWithdrawal(account, params.createWithdrawalParams);
@@ -306,8 +313,7 @@ contract MultichainRouter is GelatoRelayRouter {
                 abi.encode(
                     MULTICHAIN_CREATE_WITHDRAWAL_PARAMS_TYPEHASH,
                     block.chainid,
-                    params.longTokenAmount,
-                    params.shortTokenAmount,
+                    params.tokenAmount,
                     _getCreateWithdrawalParamsStructHash(params.createWithdrawalParams)
                 )
             );

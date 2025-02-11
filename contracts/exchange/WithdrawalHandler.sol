@@ -20,6 +20,7 @@ import "./IWithdrawalHandler.sol";
 contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
     using Withdrawal for Withdrawal.Props;
 
+    MultichainVault public immutable multichainVault;
     WithdrawalVault public immutable withdrawalVault;
 
     constructor(
@@ -27,8 +28,10 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
         DataStore _dataStore,
         EventEmitter _eventEmitter,
         Oracle _oracle,
+        MultichainVault _multichainVault,
         WithdrawalVault _withdrawalVault
     ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {
+        multichainVault = _multichainVault;
         withdrawalVault = _withdrawalVault;
     }
 
@@ -206,6 +209,7 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
         ExecuteWithdrawalUtils.ExecuteWithdrawalParams memory params = ExecuteWithdrawalUtils.ExecuteWithdrawalParams(
             dataStore,
             eventEmitter,
+            multichainVault,
             withdrawalVault,
             oracle,
             key,
