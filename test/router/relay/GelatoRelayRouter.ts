@@ -385,6 +385,16 @@ describe("GelatoRelayRouter", () => {
         },
       });
 
+      const orderKeys = await getOrderKeys(dataStore, 0, 1);
+      const order = await reader.getOrder(dataStore.address, orderKeys[0]);
+
+      // WETH price is 5000, so 10 USDC will be 0.002 WETH before fees
+      expect(order.numbers.executionFee).eq(
+        expandDecimals(2, 15)
+          .sub(applyFactor(expandDecimals(2, 15), atomicSwapFeeFactor))
+          .sub(createOrderParams.relayFeeAmount)
+      );
+
       // feeCollector received in WETH
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, createOrderParams.relayFeeAmount);
 
