@@ -4,6 +4,8 @@ pragma solidity ^0.8.0;
 
 import "../../deposit/ExecuteDepositUtils.sol";
 
+import "../../multichain/MultichainUtils.sol";
+
 import "../../nonce/NonceUtils.sol";
 
 import "../GlvVault.sol";
@@ -248,7 +250,13 @@ library GlvDepositUtils {
             revert Errors.MinGlvTokens(cache.mintAmount, glvDeposit.minGlvTokens());
         }
 
-        GlvToken(payable(glvDeposit.glv())).mint(glvDeposit.receiver(), cache.mintAmount);
+        if (glvDeposit.srcChainId() == 0) {
+            GlvToken(payable(glvDeposit.glv())).mint(glvDeposit.receiver(), cache.mintAmount);
+        } else {
+            GlvToken(payable(glvDeposit.glv())).mint(address(params.multichainVault), cache.mintAmount);
+            // MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, glvDeposit.glv(), glvDeposit.receiver(), glvDeposit.srcChainId()); // TODO: fix GlvDepositUtils size (maybe make MultichainUtils functions external)
+        }
+
 
         cache.market = MarketUtils.getEnabledMarket(params.dataStore, glvDeposit.market());
         cache.marketPoolValueInfo = MarketUtils.getPoolValueInfo(
