@@ -324,8 +324,14 @@ library ShiftUtils {
             params.startingGas,
             GasUtils.estimateShiftOraclePriceCount(),
             params.keeper,
-            shift.receiver()
+            shift.srcChainId() == 0 ? shift.receiver() : address(params.multichainVault)
         );
+
+        // for multichain action, receiver is the multichainVault; increase user's multichain wnt balance for the fee refund
+        if (shift.srcChainId() != 0) {
+            address wnt = params.dataStore.getAddress(Keys.WNT);
+            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, wnt, shift.receiver(), 0); // srcChainId is the current block.chainId
+        }
 
         return cache.receivedMarketTokens;
     }
