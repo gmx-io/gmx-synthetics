@@ -294,8 +294,14 @@ library ExecuteDepositUtils {
             params.startingGas,
             GasUtils.estimateDepositOraclePriceCount(deposit.longTokenSwapPath().length + deposit.shortTokenSwapPath().length),
             params.keeper,
-            deposit.receiver()
+            deposit.srcChainId() == 0 ? deposit.receiver() : address(params.multichainVault)
         );
+
+        // for multichain action, receiver is the multichainVault; increase user's multichain wnt balance for the fee refund
+        if (deposit.srcChainId() != 0) {
+            address wnt = params.dataStore.getAddress(Keys.WNT);
+            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, wnt, deposit.receiver(), 0); // srcChainId is the current block.chainId
+        }
 
         return cache.receivedMarketTokens;
     }
