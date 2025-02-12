@@ -166,12 +166,13 @@ library ExecuteWithdrawalUtils {
             params.startingGas,
             cache.oraclePriceCount,
             params.keeper,
-            withdrawal.receiver()
+            withdrawal.srcChainId() == 0 ? withdrawal.receiver() : address(params.multichainVault)
         );
 
+        // for multichain action, receiver is the multichainVault; increase user's multichain wnt balance for the fee refund
         if (withdrawal.srcChainId() != 0) {
-            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, cache.result.outputToken, withdrawal.account(), withdrawal.srcChainId());
-            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, cache.result.secondaryOutputToken, withdrawal.account(), withdrawal.srcChainId());
+            address wnt = params.dataStore.getAddress(Keys.WNT);
+            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, wnt, withdrawal.receiver(), 0); // srcChainId is the current block.chainId
         }
 
         return cache.result;
@@ -302,7 +303,7 @@ library ExecuteWithdrawalUtils {
             cache.longTokenOutputAmount,
             withdrawal.longTokenSwapPath(),
             withdrawal.minLongTokenAmount(),
-            withdrawal.receiver(),
+            withdrawal.srcChainId() == 0 ? withdrawal.receiver() : address(params.multichainVault),
             withdrawal.uiFeeReceiver(),
             withdrawal.shouldUnwrapNativeToken()
         );
@@ -314,10 +315,16 @@ library ExecuteWithdrawalUtils {
             cache.shortTokenOutputAmount,
             withdrawal.shortTokenSwapPath(),
             withdrawal.minShortTokenAmount(),
-            withdrawal.receiver(),
+            withdrawal.srcChainId() == 0 ? withdrawal.receiver() : address(params.multichainVault),
             withdrawal.uiFeeReceiver(),
             withdrawal.shouldUnwrapNativeToken()
         );
+
+        // for multichain action, receiver is the multichainVault; increase user's multichain balances
+        if (withdrawal.srcChainId() != 0) {
+            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, result.outputToken, withdrawal.receiver(), 0); // srcChainId is the current block.chainId
+            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, result.secondaryOutputToken, withdrawal.receiver(), 0); // srcChainId is the current block.chainId
+        }
 
         SwapPricingUtils.emitSwapFeesCollected(
             params.eventEmitter,

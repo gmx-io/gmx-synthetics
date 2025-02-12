@@ -205,12 +205,13 @@ library GlvWithdrawalUtils {
             params.startingGas,
             cache.oraclePriceCount,
             params.keeper,
-            glvWithdrawal.receiver()
+            glvWithdrawal.srcChainId() == 0 ? glvWithdrawal.receiver() : address(params.multichainVault)//glvWithdrawal.receiver()
         );
 
+        // for multichain action, receiver is the multichainVault; increase user's multichain wnt balance for the fee refund
         if (glvWithdrawal.srcChainId() != 0) {
-            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, withdrawalResult.outputToken, glvWithdrawal.account(), glvWithdrawal.srcChainId());
-            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, withdrawalResult.secondaryOutputToken, glvWithdrawal.account(), glvWithdrawal.srcChainId());
+            address wnt = params.dataStore.getAddress(Keys.WNT);
+            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, wnt, glvWithdrawal.receiver(), 0); // srcChainId is the current block.chainId
         }
     }
 

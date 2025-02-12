@@ -234,9 +234,6 @@ contract MultichainRouter is GelatoRelayRouter {
         return depositHandler.createDeposit(account, params.createDepositParams);
     }
 
-    // does a WithdrawalUtils.createWithdrawal (receiver is multichainVault if srcChainId != 0)
-    // keeper will do a ExecuteWithdrawalUtils.executeWithdrawal and outputToken + secondaryOutputToken will be sent to receiver (or multichainVault if srcChainId != 0)
-    // TODO: MultichainProvider should initiate the bridging (e.g. LayerZeroProvider.sendTokens()) or will there be another action triggering the bridging?
     function createWithdrawal(
         RelayParams calldata relayParams,
         address account,
@@ -262,11 +259,6 @@ contract MultichainRouter is GelatoRelayRouter {
             eventEmitter: eventEmitter,
             bank: withdrawalVault
         });
-
-        // for multichain withdrawals, the output tokens should be sent to multichainVault and user's multichain balance should be increased
-        if (params.createWithdrawalParams.srcChainId != 0) {
-            params.createWithdrawalParams.receiver = address(multichainVault);
-        }
 
         // user already bridged the GM tokens to the MultichainVault and balance was increased
         // transfer the GM tokens from MultichainVault to WithdrawalVault
@@ -366,11 +358,6 @@ contract MultichainRouter is GelatoRelayRouter {
             eventEmitter: eventEmitter,
             bank: glvVault
         });
-
-        // for multichain glv withdrawals, the output tokens should be sent to multichainVault and user's multichain balance should be increased
-        if (params.createGlvWithdrawalParams.srcChainId != 0) {
-            params.createGlvWithdrawalParams.receiver = address(multichainVault);
-        }
 
         // transfer GLV tokens from MultichainVault to GlvVault
         _sendTokens(

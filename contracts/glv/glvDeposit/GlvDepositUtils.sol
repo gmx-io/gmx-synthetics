@@ -314,8 +314,14 @@ library GlvDepositUtils {
             params.startingGas,
             cache.oraclePriceCount,
             params.keeper,
-            glvDeposit.receiver()
+            glvDeposit.srcChainId() == 0 ? glvDeposit.receiver() : address(params.multichainVault)
         );
+
+        // for multichain action, receiver is the multichainVault; increase user's multichain wnt balance for the fee refund
+        if (glvDeposit.srcChainId() != 0) {
+            address wnt = params.dataStore.getAddress(Keys.WNT);
+            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, wnt, glvDeposit.receiver(), 0); // srcChainId is the current block.chainId
+        }
 
         return cache.mintAmount;
     }
