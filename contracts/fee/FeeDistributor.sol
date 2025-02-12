@@ -19,6 +19,13 @@ import "../v1/IRewardDistributor.sol";
 contract FeeDistributor is ReentrancyGuard, RoleModule {
     using EventUtils for EventUtils.BoolItems;
 
+    enum DistributionState {
+        None,
+        Initiated,
+        ReadDataReceived,
+        DistributePending
+    }
+
     uint256 public constant v1 = 1;
     uint256 public constant v2 = 2;
 
@@ -58,7 +65,8 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
     }
 
     function initiateDistribute() external nonReentrant onlyFeeDistributionKeeper {
-        _validateDistributionNotCompleted();
+        validateDistributionState(DistributionState.None);
+        validateDistributionNotCompleted();
 
         uint256 chainCount = dataStore.getUintCount(Keys.FEE_DISTRIBUTOR_CHAIN_ID);
         MultichainReaderUtils.ReadRequestInputs[]
@@ -115,14 +123,16 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         MessagingFee memory messagingFee = multichainReader.quoteReadFee(readRequestsInputs, extraOptionsInputs);
         multichainReader.sendReadRequests{value: messagingFee.nativeFee}(readRequestsInputs, extraOptionsInputs);
 
-        dataStore.setUint(Keys.FEE_DISTRIBUTION_STATE, 1);
+        dataStore.setUint(Keys.FEE_DISTRIBUTION_STATE, uint256(DistributionState.Initiated));
     }
 
     function processLzReceive(
         bytes32 /*guid*/,
         MultichainReaderUtils.ReceivedData calldata receivedDataInput
     ) external nonReentrant onlyMultichainReader {
-        _validateReadResponseTimestamp(receivedDataInput.timestamp);
+        validateDistributionState(DistributionState.Initiated);
+        validateReadResponseTimestamp(receivedDataInput.timestamp);
+
         dataStore.setUint(Keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP, receivedDataInput.timestamp);
 
         uint256[] memory chainIds = dataStore.getUintArray(Keys.FEE_DISTRIBUTOR_CHAIN_ID);
@@ -143,6 +153,8 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
             dataStore.setUint(Keys.feeDistributorStakedGmxKey(chainId), stakedGmx);
         }
 
+        dataStore.setUint(Keys.FEE_DISTRIBUTION_STATE, uint256(DistributionState.ReadDataReceived));
+
         EventUtils.EventLogData memory eventData;
         eventData.boolItems.initItems(1);
         eventData.boolItems.setItem(0, "distributeReferralRewards", false);
@@ -151,11 +163,12 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
     }
 
     function distribute() external nonReentrant onlyFeeDistributionKeeper {
-        if (dataStore.getUint(Keys.FEE_DISTRIBUTION_STATE) != 1) {
-            revert Errors.DistributionNotInitiated();
-        }
-        _validateReadResponseTimestamp(dataStore.getUint(Keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP));
-        _validateDistributionNotCompleted();
+        DistributionState[] memory allowedDistributionStates = new DistributionState[](2);
+        allowedDistributionStates[0] = DistributionState.ReadDataReceived;
+        allowedDistributionStates[1] = DistributionState.DistributePending;
+        validateDistributionStates(allowedDistributionStates);
+        validateReadResponseTimestamp(dataStore.getUint(Keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP));
+        validateDistributionNotCompleted();
 
         address wnt = dataStore.getAddress(Keys.WNT);
         uint256 wntPrice = vaultV1.getMaxPrice(wnt);
@@ -243,10 +256,9 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         // Need to add potential require checks on bridging calculation math
         uint256 feeAmountCurrentChainOrig = dataStore.getUint(Keys.feeDistributorFeeAmountKey(block.chainid));
         uint256 feeAmountCurrentChain = feeAmountCurrentChainOrig;
-        bool feeDistributorFeeDeficit = dataStore.getBool(Keys.FEE_DISTRIBUTOR_HAS_FEE_DEFICIT);
-        if (feeDistributorFeeDeficit) {
-            address gmx = dataStore.getAddress(Keys.feeDistributorAddressInfoKey(block.chainid, gmxKey));
-            feeAmountCurrentChain = IERC20(gmx).balanceOf(feeReceiverCurrentChain);
+        DistributionState distributionState = DistributionState(dataStore.getUint(Keys.FEE_DISTRIBUTION_STATE));
+        if (distributionState == DistributionState.DistributePending) {
+            feeAmountCurrentChain = IERC20(gmxCurrentChain).balanceOf(feeReceiverCurrentChain);
             dataStore.setUint(Keys.feeDistributorFeeAmountKey(block.chainid), feeAmountCurrentChain);
         }
 
@@ -288,14 +300,14 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         uint256 minRequiredFeeAmount = feeAmountCurrentChainOrig + minFeeReceived;
 
         if (minRequiredFeeAmount > feeAmountCurrentChain) {
-            if (feeDistributorFeeDeficit) {
+            if (distributionState == DistributionState.DistributePending) {
                 revert Errors.BridgedAmountNotSufficient(requiredFeeAmount, feeAmountCurrentChain);
             }
-            dataStore.setBool(Keys.FEE_DISTRIBUTOR_HAS_FEE_DEFICIT, true);
+            dataStore.setUint(Keys.FEE_DISTRIBUTION_STATE, uint256(DistributionState.DistributePending));
             return;
         }
 
-        if (!feeDistributorFeeDeficit) {
+        if (distributionState == DistributionState.ReadDataReceived) {
             uint256[] memory target = new uint256[](chainCount);
             for (uint256 i; i < chainCount; i++) {
                 if (totalStakedGmx == 0) {
@@ -315,28 +327,52 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
                 bridging[i] = new uint256[](chainCount);
             }
 
-            uint256 deficit;
-            for (uint256 surplus; surplus < chainCount; surplus++) {
-                if (difference[surplus] <= 0) continue;
+            // The outer loop iterates through each chain to see if it has surplus
+            uint256 deficitIndex;
+            for (uint256 surplusIndex; surplusIndex < chainCount; surplusIndex++) {
+                if (difference[surplusIndex] <= 0) continue;
 
-                while (deficit < chainCount && difference[deficit] >= 0) {
-                    deficit++;
+                // move deficitIndex forward until we find a chain that actually has a deficit
+                // (difference[deficitIndex] < 0)
+                while (deficitIndex < chainCount && difference[deficitIndex] >= 0) {
+                    deficitIndex++;
                 }
-                if (deficit == chainCount) break;
 
-                while (difference[surplus] > 0 && deficit < chainCount) {
-                    int256 needed = -difference[deficit];
-                    if (needed > difference[surplus]) {
-                        bridging[surplus][deficit] += uint256(difference[surplus]);
-                        difference[deficit] += difference[surplus];
-                        difference[surplus] = 0;
+                // if we've reached the end, there are no more deficits to fill; break out
+                if (deficitIndex == chainCount) break;
+
+                // now fill the deficit on chain `deficitIndex` using the surplus on chain `surplusIndex`
+                while (difference[surplusIndex] > 0 && deficitIndex < chainCount) {
+                    // the needed amount is the absolute value of the deficit
+                    // e.g. if difference[deficitIndex] == -100, needed == 100
+                    int256 needed = -difference[deficitIndex];
+
+                    if (needed > difference[surplusIndex]) {
+                        // if needed > difference[surplusIndex], then the deficit is larger than the surplus
+                        // so we send all that the surplus chain has
+                        bridging[surplusIndex][deficitIndex] += uint256(difference[surplusIndex]);
+
+                        // reduce the deficit by the surplus we just sent
+                        difference[deficitIndex] += difference[surplusIndex];
+
+                        // the surplus chain is now fully used up
+                        difference[surplusIndex] = 0;
                     } else {
-                        bridging[surplus][deficit] += uint256(needed);
-                        difference[surplus] -= needed;
-                        difference[deficit] = 0;
-                        deficit++;
-                        while (deficit < chainCount && difference[deficit] >= 0) {
-                            deficit++;
+                        // otherwise, we can fully cover the needed amount for the deficit chain
+                        bridging[surplusIndex][deficitIndex] += uint256(needed);
+
+                        // reduce the surplus by exactly the needed amount
+                        difference[surplusIndex] -= needed;
+
+                        // the deficit chain is now at zero difference (fully covered)
+                        difference[deficitIndex] = 0;
+
+                        // move on to the next deficit chain
+                        deficitIndex++;
+
+                        // skip any chain that doesn't have a deficit
+                        while (deficitIndex < chainCount && difference[deficitIndex] >= 0) {
+                            deficitIndex++;
                         }
                     }
                 }
@@ -402,11 +438,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         address extendedGmxTracker = dataStore.getAddress(
             Keys.feeDistributorAddressInfoKey(block.chainid, extendedGmxTrackerKey)
         );
-        feeDistributorVault.transferOut(gmxCurrentChain, extendedGmxTracker, feeAmountCurrentChain);
-
-        address gmxRewardDistributor = IRewardTracker(extendedGmxTracker).distributor();
-        IRewardDistributor(gmxRewardDistributor).updateLastDistributionTime();
-        IRewardDistributor(gmxRewardDistributor).setTokensPerInterval(feeAmountCurrentChain / 604800);
+        updateRewardDistribution(gmxCurrentChain, extendedGmxTracker, feeAmountCurrentChain);
 
         feeDistributorVault.transferOut(
             wnt,
@@ -423,17 +455,10 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         address feeGlpTracker = dataStore.getAddress(
             Keys.feeDistributorAddressInfoKey(block.chainid, feeGlpTrackerKey)
         );
-        feeDistributorVault.transferOut(wnt, feeGlpTracker, remainingWnt);
-        address glpRewardDistributor = IRewardTracker(feeGlpTracker).distributor();
-        IRewardDistributor(glpRewardDistributor).updateLastDistributionTime();
-        IRewardDistributor(glpRewardDistributor).setTokensPerInterval(remainingWnt / 604800);
+        updateRewardDistribution(wnt, feeGlpTracker, remainingWnt);
 
-        // after distribution completed
-        if (dataStore.getBool(Keys.FEE_DISTRIBUTOR_HAS_FEE_DEFICIT)) {
-            dataStore.setBool(Keys.FEE_DISTRIBUTOR_HAS_FEE_DEFICIT, false);
-        }
         dataStore.setUint(Keys.FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP, block.timestamp);
-        dataStore.setUint(Keys.FEE_DISTRIBUTION_STATE, 0);
+        dataStore.setUint(Keys.FEE_DISTRIBUTION_STATE, uint256(DistributionState.None));
 
         EventUtils.EventLogData memory eventData;
         eventData.boolItems.initItems(1);
@@ -451,18 +476,43 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         feeDistributorVault.transferOut(token, receiver, amount, shouldUnwrapNativeToken);
     }
 
-    function _validateDistributionNotCompleted() internal view {
+    function updateRewardDistribution(address rewardToken, address tracker, uint256 rewardAmount) internal {
+        feeDistributorVault.transferOut(rewardToken, tracker, rewardAmount);
+
+        address distributor = IRewardTracker(tracker).distributor();
+        IRewardDistributor(distributor).updateLastDistributionTime();
+        IRewardDistributor(distributor).setTokensPerInterval(rewardAmount / 1 weeks);
+    }
+
+    function validateDistributionState(DistributionState allowedDistributionState) internal view {
+        uint256 distributionStateUint = dataStore.getUint(Keys.FEE_DISTRIBUTION_STATE);
+        if (allowedDistributionState != DistributionState(distributionStateUint)) {
+            revert Errors.InvalidDistributionState(distributionStateUint);
+        }
+    }
+
+    function validateDistributionStates(DistributionState[] memory allowedDistributionStates) internal view {
+        uint256 distributionStateUint = dataStore.getUint(Keys.FEE_DISTRIBUTION_STATE);
+        for (uint256 i; i < allowedDistributionStates.length; i++) {
+            if (allowedDistributionStates[i] == DistributionState(distributionStateUint)) {
+                return;
+            }
+        }
+        revert Errors.InvalidDistributionState(distributionStateUint);
+    }
+
+    function validateDistributionNotCompleted() internal view {
         uint256 dayOfWeek = ((block.timestamp / 86400) + 4) % 7;
         uint256 daysSinceStartOfWeek = (dayOfWeek + 7 - dataStore.getUint(Keys.FEE_DISTRIBUTOR_DISTRIBUTION_DAY)) % 7;
         uint256 midnightToday = (block.timestamp - (block.timestamp % 86400));
         uint256 startOfWeek = midnightToday - (daysSinceStartOfWeek * 86400);
         uint256 lastDistributionTime = dataStore.getUint(Keys.FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP);
         if (lastDistributionTime > startOfWeek) {
-            revert Errors.DistributionThisWeekAlreadyCompleted(lastDistributionTime, startOfWeek);
+            revert Errors.FeeDistributionAlreadyCompleted(lastDistributionTime, startOfWeek);
         }
     }
 
-    function _validateReadResponseTimestamp(uint256 readResponseTimestamp) internal view {
+    function validateReadResponseTimestamp(uint256 readResponseTimestamp) internal view {
         if (block.timestamp - readResponseTimestamp > dataStore.getUint(Keys.FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY)) {
             revert Errors.OutdatedReadResponse(readResponseTimestamp);
         }

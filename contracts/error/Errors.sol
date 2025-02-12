@@ -426,9 +426,9 @@ library Errors {
     error EmptyPeer(uint32 eid);
 
     // FeeDistributor errors
-    error DistributionThisWeekAlreadyCompleted(uint256 lastDistributionTime, uint256 startOfCurrentWeek);
+    error FeeDistributionAlreadyCompleted(uint256 lastDistributionTime, uint256 startOfCurrentWeek);
     error OutdatedReadResponse(uint256 timestamp);
-    error DistributionNotInitiated();
+    error InvalidDistributionState(uint256 distributionStateUint);
     error BridgedAmountNotSufficient(uint256 requiredFeeAmount, uint256 currentChainFeeAmount);
     error BridgingTransactionFailed(bytes result);
     error ReferralRewardsWntThresholdBreached(uint256 referralRewardsWntAmount, uint256 referralRewardsWntShortFall);

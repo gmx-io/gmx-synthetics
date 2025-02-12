@@ -506,8 +506,6 @@ library Keys {
     bytes32 public constant FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID = keccak256(abi.encode("FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID"));
     // @dev key for contract and keeper addresses used in FeeDistributor
     bytes32 public constant FEE_DISTRIBUTOR_ADDRESS_INFO = keccak256(abi.encode("FEE_DISTRIBUTOR_ADDRESS_INFO"));
-    // @dev key for identifying if FeeDistributor current chain has a fee deficit
-    bytes32 public constant FEE_DISTRIBUTOR_HAS_FEE_DEFICIT = keccak256(abi.encode("FEE_DISTRIBUTOR_HAS_FEE_DEFICIT"));
     // @dev key for FeeDistributor esGMX rewards available for referral rewards distribution
     bytes32 public constant FEE_DISTRIBUTOR_ESGMX_REWARDS = keccak256(abi.encode("FEE_DISTRIBUTOR_ESGMX_REWARDS"));
     // @dev key for FeeDistributor fee thresholds
