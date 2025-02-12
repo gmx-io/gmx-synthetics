@@ -41,7 +41,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         address[] refundReceivers;
     }
 
-    struct RelayFeeParams {
+    struct FeeParams {
         address feeToken;
         uint256 feeAmount;
         address[] feeSwapPath;
@@ -51,7 +51,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         OracleUtils.SetPricesParams oracleParams;
         ExternalCalls externalCalls;
         TokenPermit[] tokenPermits;
-        RelayFeeParams fee;
+        FeeParams fee;
         uint256 userNonce;
         uint256 deadline;
         bytes signature;
@@ -215,7 +215,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     function _swapFeeTokens(
         Contracts memory contracts,
         address wnt,
-        RelayFeeParams calldata fee
+        FeeParams calldata fee
     ) internal returns (uint256) {
         // swap fee tokens to WNT
         MarketUtils.validateSwapPath(contracts.dataStore, fee.feeSwapPath);
