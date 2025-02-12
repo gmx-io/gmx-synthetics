@@ -517,7 +517,7 @@ library ExecuteDepositUtils {
         } else {
             // mint GM tokens to MultichainVault and increase receiver's multichain GM balance
             MarketToken(payable(_params.market.marketToken)).mint(address(params.multichainVault), mintAmount);
-            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, _params.receiver, _params.market.marketToken, 0); // srcChainId is the current block.chainId
+            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, _params.market.marketToken, _params.receiver, 0); // srcChainId is the current block.chainId
         }
 
         return mintAmount;
