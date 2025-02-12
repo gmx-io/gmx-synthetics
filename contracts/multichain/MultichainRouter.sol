@@ -41,6 +41,12 @@ contract MultichainRouter is GelatoRelayRouter {
         GlvWithdrawalUtils.CreateGlvWithdrawalParams createGlvWithdrawalParams;
     }
 
+    struct MultichainCreateShiftParams {
+        uint256 desChainId;
+        uint256 marketTokenAmount;
+        ShiftUtils.CreateShiftParams createShiftParams;
+    }
+
     bytes32 public constant CREATE_DEPOSIT_TYPEHASH =
         keccak256(
             bytes(
@@ -127,6 +133,18 @@ contract MultichainRouter is GelatoRelayRouter {
             )
         );
 
+    bytes32 public constant CREATE_SHIFT_TYPEHASH = keccak256(
+        "CreateShift(CreateShiftParams params,bytes32 relayParams)CreateShiftParams(address receiver,address callbackContract,address uiFeeReceiver,address fromMarket,address toMarket,uint256 minMarketTokens,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)"
+    );
+
+    bytes32 public constant MULTICHAIN_CREATE_SHIFT_PARAMS_TYPEHASH = keccak256(
+        "MultichainCreateShiftParams(uint256 desChainId,uint256 marketTokenAmount,CreateShiftParams params)CreateShiftParams(address receiver,address callbackContract,address uiFeeReceiver,address fromMarket,address toMarket,uint256 minMarketTokens,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)"
+    );
+
+    bytes32 public constant CREATE_SHIFT_PARAMS_TYPEHASH = keccak256(
+        "CreateShiftParams(address receiver,address callbackContract,address uiFeeReceiver,address fromMarket,address toMarket,uint256 minMarketTokens,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)"
+    );
+
     DepositVault depositVault;
     IDepositHandler depositHandler;
     MultichainVault multichainVault;
@@ -134,6 +152,7 @@ contract MultichainRouter is GelatoRelayRouter {
     WithdrawalVault withdrawalVault;
     GlvHandler public glvHandler;
     GlvVault public glvVault;
+    ShiftVault public shiftVault;
 
     constructor(
         Router _router,
@@ -150,6 +169,7 @@ contract MultichainRouter is GelatoRelayRouter {
         WithdrawalVault _withdrawalVault
         // GlvHandler _glvHandler, // TODO: place in a struct to fix stack to deep error
         // GlvVault _glvVault
+        // ShiftVault _shiftVault
     ) GelatoRelayRouter(_router, _dataStore, _eventEmitter, _oracle, _orderHandler, _orderVault, _externalHandler) {
         depositVault = _depositVault;
         depositHandler = _depositHandler;
@@ -158,6 +178,7 @@ contract MultichainRouter is GelatoRelayRouter {
         withdrawalVault = _withdrawalVault;
         // glvHandler = _glvHandler;
         // glvVault = _glvVault;
+        // shiftVault = _shiftVault;
     }
 
     function createDeposit(
@@ -242,7 +263,7 @@ contract MultichainRouter is GelatoRelayRouter {
             bank: withdrawalVault
         });
 
-        // for multichain withdrawals, the output tokens are sent to multichainVault and user's multichain balance is increased
+        // for multichain withdrawals, the output tokens should be sent to multichainVault and user's multichain balance should be increased
         if (params.createWithdrawalParams.srcChainId != 0) {
             params.createWithdrawalParams.receiver = address(multichainVault);
         }
@@ -346,7 +367,7 @@ contract MultichainRouter is GelatoRelayRouter {
             bank: glvVault
         });
 
-        // for multichain glv withdrawals, the output tokens are sent to multichainVault and user's multichain balance is increased
+        // for multichain glv withdrawals, the output tokens should be sent to multichainVault and user's multichain balance should be increased
         if (params.createGlvWithdrawalParams.srcChainId != 0) {
             params.createGlvWithdrawalParams.receiver = address(multichainVault);
         }
@@ -374,6 +395,56 @@ contract MultichainRouter is GelatoRelayRouter {
             glvVault,
             account,
             params.createGlvWithdrawalParams
+        );
+    }
+
+    function createShift(
+        RelayParams calldata relayParams,
+        address account,
+        MultichainCreateShiftParams memory params
+    ) external nonReentrant onlyGelatoRelay returns (bytes32) {
+        if (params.desChainId != block.chainid) {
+            revert Errors.InvalidDestinationChainId();
+        }
+
+        bytes32 structHash = _getMultichainCreateShiftStructHash(relayParams, params);
+        _validateCall(relayParams, account, structHash);
+
+        return _createShift(relayParams, account, params);
+    }
+
+    function _createShift(
+        RelayParams calldata relayParams,
+        address account,
+        MultichainCreateShiftParams memory params
+    ) internal returns (bytes32) {
+        Contracts memory contracts = Contracts({
+            dataStore: dataStore,
+            eventEmitter: eventEmitter,
+            bank: shiftVault
+        });
+
+        _sendTokens(
+            account,
+            params.createShiftParams.fromMarket,
+            address(shiftVault), // receiver
+            params.marketTokenAmount,
+            params.createShiftParams.srcChainId
+        );
+
+        params.createShiftParams.executionFee = _handleRelay(
+            contracts,
+            relayParams,
+            account,
+            address(shiftVault)
+        );
+
+        return ShiftUtils.createShift(
+            dataStore,
+            eventEmitter,
+            shiftVault,
+            account,
+            params.createShiftParams
         );
     }
 
@@ -623,6 +694,53 @@ contract MultichainRouter is GelatoRelayRouter {
                     keccak256(abi.encodePacked(params.dataList))
                 )
             );
+    }
+
+    function _getMultichainCreateShiftStructHash(
+        RelayParams calldata relayParams,
+        MultichainCreateShiftParams memory params
+    ) internal view returns (bytes32) {
+        bytes32 relayParamsHash = keccak256(abi.encode(relayParams));
+        return keccak256(
+            abi.encode(
+                CREATE_SHIFT_TYPEHASH,
+                _getMultichainCreateShiftParamsStructHash(params),
+                relayParamsHash
+            )
+        );
+    }
+
+    function _getMultichainCreateShiftParamsStructHash(
+        MultichainCreateShiftParams memory params
+    ) internal view returns (bytes32) {
+        return keccak256(
+            abi.encode(
+                MULTICHAIN_CREATE_SHIFT_PARAMS_TYPEHASH,
+                block.chainid,
+                params.marketTokenAmount,
+                _getCreateShiftParamsStructHash(params.createShiftParams)
+            )
+        );
+    }
+
+    function _getCreateShiftParamsStructHash(
+        ShiftUtils.CreateShiftParams memory params
+    ) internal pure returns (bytes32) {
+        return keccak256(
+            abi.encode(
+                CREATE_SHIFT_PARAMS_TYPEHASH,
+                params.receiver,
+                params.callbackContract,
+                params.uiFeeReceiver,
+                params.fromMarket,
+                params.toMarket,
+                params.minMarketTokens,
+                params.executionFee,
+                params.callbackGasLimit,
+                params.srcChainId,
+                keccak256(abi.encodePacked(params.dataList))
+            )
+        );
     }
 
     function createGlvWithdrawal() external nonReentrant onlyGelatoRelay {}
