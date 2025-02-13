@@ -20,6 +20,7 @@ const func = createDeployFunction({
   libraryNames: [
     "GlvDepositStoreUtils",
     "GlvDepositUtils",
+    "ExecuteGlvDepositUtils",
     "GlvShiftStoreUtils",
     "GlvShiftUtils",
     "GlvUtils",
