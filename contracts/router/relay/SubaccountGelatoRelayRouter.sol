@@ -79,7 +79,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
 
     // @note all params except subaccount should be part of the corresponding struct hash
     function createOrder(
-        RelayParams calldata relayParams,
+        RelayUtils.RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
         address account, // main account
         address subaccount,
@@ -116,12 +116,12 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
 
     // @note all params except subaccount should be part of the corresponding struct hash
     function updateOrder(
-        RelayParams calldata relayParams,
+        RelayUtils.RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
         address account, // main account
         address subaccount,
         bytes32 key,
-        UpdateOrderParams calldata params,
+        RelayUtils.UpdateOrderParams calldata params,
         bool increaseExecutionFee
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelay {
         _validateGaslessFeature();
@@ -133,7 +133,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
 
     // @note all params except subaccount should be part of the corresponding struct hash
     function cancelOrder(
-        RelayParams calldata relayParams,
+        RelayUtils.RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
         address account, // main account
         address subaccount,
@@ -148,7 +148,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
 
     // @note all params except account should be part of the corresponding struct hash
     function removeSubaccount(
-        RelayParams calldata relayParams,
+        RelayUtils.RelayParams calldata relayParams,
         address account,
         address subaccount
     ) external nonReentrant {
@@ -231,10 +231,10 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     }
 
     function _getRemoveSubaccountStructHash(
-        RelayParams calldata relayParams,
+        RelayUtils.RelayParams calldata relayParams,
         address subaccount
     ) internal pure returns (bytes32) {
-        return keccak256(abi.encode(REMOVE_SUBACCOUNT_TYPEHASH, subaccount, _getRelayParamsHash(relayParams)));
+        return keccak256(abi.encode(REMOVE_SUBACCOUNT_TYPEHASH, subaccount, RelayUtils._getRelayParamsHash(relayParams)));
     }
 
     function _getSubaccountApprovalStructHash(
@@ -256,13 +256,13 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     }
 
     function _getCreateOrderStructHash(
-        RelayParams calldata relayParams,
+        RelayUtils.RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
         address account,
         uint256 collateralDeltaAmount,
         IBaseOrderUtils.CreateOrderParams memory params
     ) internal pure returns (bytes32) {
-        bytes32 relayParamsHash = _getRelayParamsHash(relayParams);
+        bytes32 relayParamsHash = RelayUtils._getRelayParamsHash(relayParams);
         bytes32 subaccountApprovalHash = keccak256(abi.encode(subaccountApproval));
 
         return
@@ -324,11 +324,11 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     }
 
     function _getUpdateOrderStructHash(
-        RelayParams calldata relayParams,
+        RelayUtils.RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
         address account,
         bytes32 key,
-        UpdateOrderParams calldata params,
+        RelayUtils.UpdateOrderParams calldata params,
         bool increaseExecutionFee
     ) internal pure returns (bytes32) {
         return
@@ -339,13 +339,13 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
                     key,
                     _getUpdateOrderParamsStructHash(params),
                     increaseExecutionFee,
-                    _getRelayParamsHash(relayParams),
+                    RelayUtils._getRelayParamsHash(relayParams),
                     keccak256(abi.encode(subaccountApproval))
                 )
             );
     }
 
-    function _getUpdateOrderParamsStructHash(UpdateOrderParams calldata params) internal pure returns (bytes32) {
+    function _getUpdateOrderParamsStructHash(RelayUtils.UpdateOrderParams calldata params) internal pure returns (bytes32) {
         return
             keccak256(
                 abi.encode(
@@ -361,7 +361,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     }
 
     function _getCancelOrderStructHash(
-        RelayParams calldata relayParams,
+        RelayUtils.RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
         address account,
         bytes32 key
@@ -372,7 +372,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
                     CANCEL_ORDER_TYPEHASH,
                     account,
                     key,
-                    _getRelayParamsHash(relayParams),
+                    RelayUtils._getRelayParamsHash(relayParams),
                     keccak256(abi.encode(subaccountApproval))
                 )
             );

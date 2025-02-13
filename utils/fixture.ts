@@ -98,6 +98,7 @@ export async function deployFixture() {
   const gelatoRelayRouter = await hre.ethers.getContract("GelatoRelayRouter");
   const subaccountGelatoRelayRouter = await hre.ethers.getContract("SubaccountGelatoRelayRouter");
   const subaccountRouter = await hre.ethers.getContract("SubaccountRouter");
+  const relayUtils = await hre.ethers.getContract("RelayUtils");
   const oracle = await hre.ethers.getContract("Oracle");
   const gmOracleProvider = await hre.ethers.getContract("GmOracleProvider");
   const chainlinkPriceFeedProvider = await hre.ethers.getContract("ChainlinkPriceFeedProvider");
@@ -281,6 +282,7 @@ export async function deployFixture() {
       gelatoRelayRouter,
       subaccountGelatoRelayRouter,
       subaccountRouter,
+      relayUtils,
       oracle,
       gmOracleProvider,
       chainlinkPriceFeedProvider,

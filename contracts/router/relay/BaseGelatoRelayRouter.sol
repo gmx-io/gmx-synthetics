@@ -20,53 +20,10 @@ import "../../router/Router.sol";
 import "../../swap/SwapUtils.sol";
 import "../../token/TokenUtils.sol";
 
+import "./RelayUtils.sol";
+
 abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, OracleModule {
     using Order for Order.Props;
-
-    struct TokenPermit {
-        address owner;
-        address spender;
-        uint256 value;
-        uint256 deadline;
-        uint8 v;
-        bytes32 r;
-        bytes32 s;
-        address token;
-    }
-
-    struct ExternalCalls {
-        address[] externalCallTargets;
-        bytes[] externalCallDataList;
-        address[] refundTokens;
-        address[] refundReceivers;
-    }
-
-    struct FeeParams {
-        address feeToken;
-        uint256 feeAmount;
-        address[] feeSwapPath;
-    }
-
-    struct RelayParams {
-        OracleUtils.SetPricesParams oracleParams;
-        ExternalCalls externalCalls;
-        TokenPermit[] tokenPermits;
-        FeeParams fee;
-        uint256 userNonce;
-        uint256 deadline;
-        bytes signature;
-        uint256 srcChainId;
-    }
-
-    // @note all params except account should be part of the corresponding struct hash
-    struct UpdateOrderParams {
-        uint256 sizeDeltaUsd;
-        uint256 acceptablePrice;
-        uint256 triggerPrice;
-        uint256 minOutputAmount;
-        uint256 validFromTime;
-        bool autoCancel;
-    }
 
     struct Contracts {
         DataStore dataStore;
@@ -119,7 +76,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     }
 
     function _createOrder(
-        RelayParams calldata relayParams,
+        RelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 collateralDeltaAmount,
         IBaseOrderUtils.CreateOrderParams memory params, // can't use calldata because need to modify params.numbers.executionFee
@@ -154,10 +111,10 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     }
 
     function _updateOrder(
-        RelayParams calldata relayParams,
+        RelayUtils.RelayParams calldata relayParams,
         address account,
         bytes32 key,
-        UpdateOrderParams calldata params,
+        RelayUtils.UpdateOrderParams calldata params,
         bool increaseExecutionFee,
         bool isSubaccount
     ) internal {
@@ -193,7 +150,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         );
     }
 
-    function _cancelOrder(RelayParams calldata relayParams, address account, bytes32 key) internal {
+    function _cancelOrder(RelayUtils.RelayParams calldata relayParams, address account, bytes32 key) internal {
         Contracts memory contracts = Contracts({
             dataStore: dataStore,
             eventEmitter: eventEmitter,
@@ -217,7 +174,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     function _swapFeeTokens(
         Contracts memory contracts,
         address wnt,
-        FeeParams calldata fee
+        RelayUtils.FeeParams calldata fee
     ) internal returns (uint256) {
         // swap fee tokens to WNT
         MarketUtils.validateSwapPath(contracts.dataStore, fee.feeSwapPath);
@@ -250,7 +207,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
     function _handleRelay(
         Contracts memory contracts,
-        RelayParams calldata relayParams,
+        RelayUtils.RelayParams calldata relayParams,
         address account,
         address residualFeeReceiver
     ) internal returns (uint256) {
@@ -262,7 +219,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         return _handleRelayFee(contracts, relayParams, account, residualFeeReceiver);
     }
 
-    function _handleTokenPermits(TokenPermit[] calldata tokenPermits) internal {
+    function _handleTokenPermits(RelayUtils.TokenPermit[] calldata tokenPermits) internal {
         // not all tokens support ERC20Permit, for them separate transaction is needed
 
         if (tokenPermits.length == 0) {
@@ -272,7 +229,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         address _router = address(router);
 
         for (uint256 i; i < tokenPermits.length; i++) {
-            TokenPermit memory permit = tokenPermits[i];
+            RelayUtils.TokenPermit memory permit = tokenPermits[i];
 
             if (permit.spender != _router) {
                 // to avoid permitting spending by an incorrect spender for extra safety
@@ -295,7 +252,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
     function _handleRelayFee(
         Contracts memory contracts,
-        RelayParams calldata relayParams,
+        RelayUtils.RelayParams calldata relayParams,
         address account,
         address residualFeeReceiver
     ) internal returns (uint256) {
@@ -364,7 +321,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             );
     }
 
-    function _validateCall(RelayParams calldata relayParams, address account, bytes32 structHash) internal {
+    function _validateCall(RelayUtils.RelayParams calldata relayParams, address account, bytes32 structHash) internal {
         uint256 srcChainId = relayParams.srcChainId == 0 ? block.chainid : relayParams.srcChainId;
         bytes32 domainSeparator = _getDomainSeparator(srcChainId);
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
@@ -385,20 +342,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             revert Errors.InvalidUserNonce(userNonces[account], userNonce);
         }
         userNonces[account] = userNonce + 1;
-    }
-
-    function _getRelayParamsHash(RelayParams calldata relayParams) internal pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    relayParams.oracleParams,
-                    relayParams.externalCalls,
-                    relayParams.tokenPermits,
-                    relayParams.fee,
-                    relayParams.userNonce,
-                    relayParams.deadline
-                )
-            );
     }
 
     function _validateGaslessFeature() internal view {
