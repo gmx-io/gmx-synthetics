@@ -2588,8 +2588,7 @@ const config: {
       reserveFactor: percentageToFloat("75%"), // default is 95%
       openInterestReserveFactor: percentageToFloat("70%"), // default is 90%
 
-      // waiting for confirmation on this, use default for now
-      // maxPnlFactorForTraders: percentageToFloat("90%"), // default is 60%
+      maxPnlFactorForTraders: percentageToFloat("90%"), // default is 60%
 
       maxOpenInterest: decimalToFloat(1_000_000),
       maxPoolUsdForDeposit: decimalToFloat(1_500_000), // 1.5x the max open interest
@@ -2618,8 +2617,7 @@ const config: {
       reserveFactor: percentageToFloat("75%"), // default is 95%
       openInterestReserveFactor: percentageToFloat("70%"), // default is 90%
 
-      // waiting for confirmation on this, use default for now
-      // maxPnlFactorForTraders: percentageToFloat("90%"), // default is 60%
+      maxPnlFactorForTraders: percentageToFloat("90%"), // default is 60%
 
       maxOpenInterest: decimalToFloat(1_000_000),
       maxPoolUsdForDeposit: decimalToFloat(1_500_000), // 1.5x the max open interest
