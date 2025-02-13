@@ -82,15 +82,17 @@ export async function createGlvDeposit(fixture, overrides: any = {}) {
   }
 
   const params = {
-    glv,
-    receiver: receiver.address,
-    callbackContract: callbackContract.address,
-    uiFeeReceiver: uiFeeReceiver.address,
-    market: market.marketToken,
-    initialLongToken,
-    initialShortToken,
-    longTokenSwapPath,
-    shortTokenSwapPath,
+    addresses: {
+      glv,
+      receiver: receiver.address,
+      callbackContract: callbackContract.address,
+      uiFeeReceiver: uiFeeReceiver.address,
+      market: market.marketToken,
+      initialLongToken,
+      initialShortToken,
+      longTokenSwapPath,
+      shortTokenSwapPath,
+    },
     marketTokenAmount,
     minGlvTokens,
     shouldUnwrapNativeToken,
