@@ -19,13 +19,7 @@ library GlvWithdrawalUtils {
     using EventUtils for EventUtils.AddressItems;
 
     struct CreateGlvWithdrawalParams {
-        address receiver;
-        address callbackContract;
-        address uiFeeReceiver;
-        address market;
-        address glv;
-        address[] longTokenSwapPath;
-        address[] shortTokenSwapPath;
+        CreateGlvWithdrawalParamsAddresses addresses;
         uint256 minLongTokenAmount;
         uint256 minShortTokenAmount;
         bool shouldUnwrapNativeToken;
@@ -33,6 +27,16 @@ library GlvWithdrawalUtils {
         uint256 callbackGasLimit;
         uint256 srcChainId;
         bytes32[] dataList;
+    }
+
+    struct CreateGlvWithdrawalParamsAddresses {
+        address receiver;
+        address callbackContract;
+        address uiFeeReceiver;
+        address market;
+        address glv;
+        address[] longTokenSwapPath;
+        address[] shortTokenSwapPath;
     }
 
     struct ExecuteGlvWithdrawalParams {
@@ -72,12 +76,12 @@ library GlvWithdrawalUtils {
         CreateGlvWithdrawalParams memory params
     ) external returns (bytes32) {
         AccountUtils.validateAccount(account);
-        GlvUtils.validateGlv(dataStore, params.glv);
-        GlvUtils.validateGlvMarket(dataStore, params.glv, params.market, false);
+        GlvUtils.validateGlv(dataStore, params.addresses.glv);
+        GlvUtils.validateGlvMarket(dataStore, params.addresses.glv, params.addresses.market, false);
 
-        MarketUtils.validateEnabledMarket(dataStore, params.market);
-        MarketUtils.validateSwapPath(dataStore, params.longTokenSwapPath);
-        MarketUtils.validateSwapPath(dataStore, params.shortTokenSwapPath);
+        MarketUtils.validateEnabledMarket(dataStore, params.addresses.market);
+        MarketUtils.validateSwapPath(dataStore, params.addresses.longTokenSwapPath);
+        MarketUtils.validateSwapPath(dataStore, params.addresses.shortTokenSwapPath);
 
         address wnt = TokenUtils.wnt(dataStore);
         uint256 wntAmount = glvVault.recordTransferIn(wnt);
@@ -86,9 +90,9 @@ library GlvWithdrawalUtils {
         }
         params.executionFee = wntAmount;
 
-        AccountUtils.validateReceiver(params.receiver);
+        AccountUtils.validateReceiver(params.addresses.receiver);
 
-        uint256 glvTokenAmount = glvVault.recordTransferIn(params.glv);
+        uint256 glvTokenAmount = glvVault.recordTransferIn(params.addresses.glv);
 
         if (glvTokenAmount == 0) {
             revert Errors.EmptyGlvWithdrawalAmount();
@@ -97,13 +101,13 @@ library GlvWithdrawalUtils {
         GlvWithdrawal.Props memory glvWithdrawal = GlvWithdrawal.Props(
             GlvWithdrawal.Addresses({
                 account: account,
-                glv: params.glv,
-                receiver: params.receiver,
-                callbackContract: params.callbackContract,
-                uiFeeReceiver: params.uiFeeReceiver,
-                market: params.market,
-                longTokenSwapPath: params.longTokenSwapPath,
-                shortTokenSwapPath: params.shortTokenSwapPath
+                glv: params.addresses.glv,
+                receiver: params.addresses.receiver,
+                callbackContract: params.addresses.callbackContract,
+                uiFeeReceiver: params.addresses.uiFeeReceiver,
+                market: params.addresses.market,
+                longTokenSwapPath: params.addresses.longTokenSwapPath,
+                shortTokenSwapPath: params.addresses.shortTokenSwapPath
             }),
             GlvWithdrawal.Numbers({
                 glvTokenAmount: glvTokenAmount,
@@ -128,7 +132,7 @@ library GlvWithdrawalUtils {
         );
         uint256 oraclePriceCount = GasUtils.estimateGlvWithdrawalOraclePriceCount(
             marketCount,
-            params.longTokenSwapPath.length + params.shortTokenSwapPath.length
+            params.addresses.longTokenSwapPath.length + params.addresses.shortTokenSwapPath.length
         );
         GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, params.executionFee, oraclePriceCount);
 
