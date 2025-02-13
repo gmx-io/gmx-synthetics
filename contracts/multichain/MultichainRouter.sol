@@ -121,6 +121,13 @@ contract MultichainRouter is GelatoRelayRouter {
         return depositHandler.createDeposit(account, params.createDepositParams);
     }
 
+    function _processTransferRequests(address account, RelayUtils.TransferRequest[] calldata transferRequests, uint256 srcChainId) internal {
+        for (uint256 i = 0; i < transferRequests.length; i++) {
+            RelayUtils.TransferRequest calldata transferRequest = transferRequests[i];
+            _sendTokens(account, transferRequest.token, transferRequest.receiver, transferRequest.amount, srcChainId);
+        }
+    }
+
     function _sendTokens(address account, address token, address receiver, uint256 amount, uint256 srcChainId) internal override {
         AccountUtils.validateReceiver(receiver);
         if (srcChainId == 0) {

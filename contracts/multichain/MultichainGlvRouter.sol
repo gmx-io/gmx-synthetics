@@ -24,14 +24,17 @@ contract MultichainGlvRouter is MultichainRouter {
     function createGlvDeposit(
         RelayUtils.RelayParams calldata relayParams,
         address account,
+        RelayUtils.TransferRequest[] calldata transferRequests,
         RelayUtils.MultichainCreateGlvDepositParams memory params
     ) external nonReentrant onlyGelatoRelay returns (bytes32) {
         if (params.desChainId != block.chainid) {
             revert Errors.InvalidDestinationChainId();
         }
 
-        bytes32 structHash = RelayUtils.getMultichainCreateGlvDepositStructHash(relayParams, params);
+        bytes32 structHash = RelayUtils.getMultichainCreateGlvDepositStructHash(relayParams, transferRequests, params);
         _validateCall(relayParams, account, structHash);
+
+        _processTransferRequests(account, transferRequests, params.createGlvDepositParams.srcChainId);
 
         return _createGlvDeposit(relayParams, account, params);
     }
@@ -47,22 +50,6 @@ contract MultichainGlvRouter is MultichainRouter {
             bank: glvVault
         });
 
-        // transfer long & short tokens from MultichainVault to GlvVault and decrement user's multichain balance
-        _sendTokens(
-            account,
-            params.createGlvDepositParams.initialLongToken,
-            address(glvVault), // receiver
-            params.longTokenAmount,
-            params.createGlvDepositParams.srcChainId
-        );
-        _sendTokens(
-            account,
-            params.createGlvDepositParams.initialShortToken,
-            address(glvVault), // receiver
-            params.shortTokenAmount,
-            params.createGlvDepositParams.srcChainId
-        );
-
         // pay relay fee tokens from MultichainVault to GlvVault and decrease user's multichain balance
         params.createGlvDepositParams.executionFee = _handleRelay(
             contracts,
@@ -77,14 +64,17 @@ contract MultichainGlvRouter is MultichainRouter {
     function createGlvWithdrawal(
         RelayUtils.RelayParams calldata relayParams,
         address account,
+        RelayUtils.TransferRequest[] calldata transferRequests,
         RelayUtils.MultichainCreateGlvWithdrawalParams memory params
     ) external nonReentrant onlyGelatoRelay returns (bytes32) {
         if (params.desChainId != block.chainid) {
             revert Errors.InvalidDestinationChainId();
         }
 
-        bytes32 structHash = RelayUtils.getMultichainCreateGlvWithdrawalStructHash(relayParams, params);
+        bytes32 structHash = RelayUtils.getMultichainCreateGlvWithdrawalStructHash(relayParams, transferRequests, params);
         _validateCall(relayParams, account, structHash);
+
+        _processTransferRequests(account, transferRequests, params.createGlvWithdrawalParams.srcChainId);
 
         return _createGlvWithdrawal(relayParams, account, params);
     }
@@ -99,15 +89,6 @@ contract MultichainGlvRouter is MultichainRouter {
             eventEmitter: eventEmitter,
             bank: glvVault
         });
-
-        // transfer GLV tokens from MultichainVault to GlvVault
-        _sendTokens(
-            account,
-            params.createGlvWithdrawalParams.glv,
-            address(glvVault), // receiver
-            params.glvTokenAmount,
-            params.createGlvWithdrawalParams.srcChainId
-        );
 
         // pay relay fee tokens from MultichainVault to GlvVault and decrease user's multichain balance
         params.createGlvWithdrawalParams.executionFee = _handleRelay(
