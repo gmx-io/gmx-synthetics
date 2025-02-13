@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./BaseHandler.sol";
 
 import "../glv/glvDeposit/GlvDepositUtils.sol";
+import "../glv/glvDeposit/ExecuteGlvDepositUtils.sol";
 import "../glv/glvWithdrawal/GlvWithdrawalUtils.sol";
 import "../glv/glvShift/GlvShiftUtils.sol";
 
@@ -72,7 +73,7 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
 
         FeatureUtils.validateFeature(dataStore, Keys.executeGlvDepositFeatureDisabledKey(address(this)));
 
-        GlvDepositUtils.ExecuteGlvDepositParams memory params = GlvDepositUtils.ExecuteGlvDepositParams({
+        ExecuteGlvDepositUtils.ExecuteGlvDepositParams memory params = ExecuteGlvDepositUtils.ExecuteGlvDepositParams({
             key: key,
             dataStore: dataStore,
             eventEmitter: eventEmitter,
@@ -83,7 +84,7 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
             keeper: keeper
         });
 
-        GlvDepositUtils.executeGlvDeposit(params, glvDeposit);
+        ExecuteGlvDepositUtils.executeGlvDeposit(params, glvDeposit);
     }
 
     function _handleGlvDepositError(bytes32 key, uint256 startingGas, bytes memory reasonBytes) internal {
