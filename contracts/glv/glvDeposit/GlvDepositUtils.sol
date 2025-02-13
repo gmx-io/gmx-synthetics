@@ -15,6 +15,17 @@ library GlvDepositUtils {
     using GlvDeposit for GlvDeposit.Props;
 
     struct CreateGlvDepositParams {
+        CreateGlvDepositParamsAddresses addresses;
+        uint256 minGlvTokens;
+        uint256 executionFee;
+        uint256 callbackGasLimit;
+        uint256 srcChainId;
+        bool shouldUnwrapNativeToken;
+        bool isMarketTokenDeposit;
+        bytes32[] dataList;
+    }
+
+    struct CreateGlvDepositParamsAddresses {
         address glv;
         address market;
         address receiver;
@@ -24,13 +35,6 @@ library GlvDepositUtils {
         address initialShortToken;
         address[] longTokenSwapPath;
         address[] shortTokenSwapPath;
-        uint256 minGlvTokens;
-        uint256 executionFee;
-        uint256 callbackGasLimit;
-        uint256 srcChainId;
-        bool shouldUnwrapNativeToken;
-        bool isMarketTokenDeposit;
-        bytes32[] dataList;
     }
 
     struct CreateGlvDepositCache {
@@ -60,58 +64,58 @@ library GlvDepositUtils {
         CreateGlvDepositParams memory params
     ) external returns (bytes32) {
         AccountUtils.validateAccount(account);
-        GlvUtils.validateGlv(dataStore, params.glv);
-        GlvUtils.validateGlvMarket(dataStore, params.glv, params.market, true);
+        GlvUtils.validateGlv(dataStore, params.addresses.glv);
+        GlvUtils.validateGlvMarket(dataStore, params.addresses.glv, params.addresses.market, true);
 
-        MarketUtils.validateEnabledMarket(dataStore, params.market);
+        MarketUtils.validateEnabledMarket(dataStore, params.addresses.market);
 
         CreateGlvDepositCache memory cache;
 
         if (params.isMarketTokenDeposit) {
             // user deposited GM tokens
-            if (params.initialLongToken != address(0)) {
-                revert Errors.InvalidGlvDepositInitialLongToken(params.initialLongToken);
+            if (params.addresses.initialLongToken != address(0)) {
+                revert Errors.InvalidGlvDepositInitialLongToken(params.addresses.initialLongToken);
             }
-            if (params.initialShortToken != address(0)) {
-                revert Errors.InvalidGlvDepositInitialShortToken(params.initialShortToken);
+            if (params.addresses.initialShortToken != address(0)) {
+                revert Errors.InvalidGlvDepositInitialShortToken(params.addresses.initialShortToken);
             }
-            if (params.longTokenSwapPath.length > 0 || params.shortTokenSwapPath.length > 0) {
+            if (params.addresses.longTokenSwapPath.length > 0 || params.addresses.shortTokenSwapPath.length > 0) {
                 revert Errors.InvalidGlvDepositSwapPath(
-                    params.longTokenSwapPath.length,
-                    params.shortTokenSwapPath.length
+                    params.addresses.longTokenSwapPath.length,
+                    params.addresses.shortTokenSwapPath.length
                 );
             }
-            cache.marketTokenAmount = glvVault.recordTransferIn(params.market);
+            cache.marketTokenAmount = glvVault.recordTransferIn(params.addresses.market);
 
             if (cache.marketTokenAmount == 0) {
                 revert Errors.EmptyGlvMarketAmount();
             }
         } else {
-            MarketUtils.validateSwapPath(dataStore, params.longTokenSwapPath);
-            MarketUtils.validateSwapPath(dataStore, params.shortTokenSwapPath);
+            MarketUtils.validateSwapPath(dataStore, params.addresses.longTokenSwapPath);
+            MarketUtils.validateSwapPath(dataStore, params.addresses.shortTokenSwapPath);
 
-            if (params.initialLongToken == address(0)) {
-                revert Errors.InvalidGlvDepositInitialLongToken(params.initialLongToken);
+            if (params.addresses.initialLongToken == address(0)) {
+                revert Errors.InvalidGlvDepositInitialLongToken(params.addresses.initialLongToken);
             }
-            if (params.initialShortToken == address(0)) {
-                revert Errors.InvalidGlvDepositInitialShortToken(params.initialShortToken);
+            if (params.addresses.initialShortToken == address(0)) {
+                revert Errors.InvalidGlvDepositInitialShortToken(params.addresses.initialShortToken);
             }
 
             // if the initialLongToken and initialShortToken are the same, only the initialLongTokenAmount would
             // be non-zero, the initialShortTokenAmount would be zero
-            cache.initialLongTokenAmount = glvVault.recordTransferIn(params.initialLongToken);
-            if (params.initialShortToken != params.initialLongToken) {
-                cache.initialShortTokenAmount = glvVault.recordTransferIn(params.initialShortToken);
+            cache.initialLongTokenAmount = glvVault.recordTransferIn(params.addresses.initialLongToken);
+            if (params.addresses.initialShortToken != params.addresses.initialLongToken) {
+                cache.initialShortTokenAmount = glvVault.recordTransferIn(params.addresses.initialShortToken);
             }
         }
 
         address wnt = TokenUtils.wnt(dataStore);
-        if (params.initialLongToken == wnt) {
+        if (params.addresses.initialLongToken == wnt) {
             if (cache.initialLongTokenAmount < params.executionFee) {
                 revert Errors.InsufficientWntAmountForExecutionFee(cache.initialLongTokenAmount, params.executionFee);
             }
             cache.initialLongTokenAmount -= params.executionFee;
-        } else if (params.initialShortToken == wnt) {
+        } else if (params.addresses.initialShortToken == wnt) {
             if (cache.initialShortTokenAmount < params.executionFee) {
                 revert Errors.InsufficientWntAmountForExecutionFee(cache.initialShortTokenAmount, params.executionFee);
             }
@@ -129,20 +133,20 @@ library GlvDepositUtils {
             revert Errors.EmptyGlvDepositAmounts();
         }
 
-        AccountUtils.validateReceiver(params.receiver);
+        AccountUtils.validateReceiver(params.addresses.receiver);
 
         GlvDeposit.Props memory glvDeposit = GlvDeposit.Props(
             GlvDeposit.Addresses({
                 account: account,
-                glv: params.glv,
-                receiver: params.receiver,
-                callbackContract: params.callbackContract,
-                uiFeeReceiver: params.uiFeeReceiver,
-                market: params.market,
-                initialLongToken: params.initialLongToken,
-                initialShortToken: params.initialShortToken,
-                longTokenSwapPath: params.longTokenSwapPath,
-                shortTokenSwapPath: params.shortTokenSwapPath
+                glv: params.addresses.glv,
+                receiver: params.addresses.receiver,
+                callbackContract: params.addresses.callbackContract,
+                uiFeeReceiver: params.addresses.uiFeeReceiver,
+                market: params.addresses.market,
+                initialLongToken: params.addresses.initialLongToken,
+                initialShortToken: params.addresses.initialShortToken,
+                longTokenSwapPath: params.addresses.longTokenSwapPath,
+                shortTokenSwapPath: params.addresses.shortTokenSwapPath
             }),
             GlvDeposit.Numbers({
                 marketTokenAmount: cache.marketTokenAmount,
@@ -167,7 +171,7 @@ library GlvDepositUtils {
         uint256 estimatedGasLimit = GasUtils.estimateExecuteGlvDepositGasLimit(dataStore, glvDeposit, marketCount);
         uint256 oraclePriceCount = GasUtils.estimateGlvDepositOraclePriceCount(
             marketCount,
-            params.longTokenSwapPath.length + params.shortTokenSwapPath.length
+            params.addresses.longTokenSwapPath.length + params.addresses.shortTokenSwapPath.length
         );
         GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, params.executionFee, oraclePriceCount);
 

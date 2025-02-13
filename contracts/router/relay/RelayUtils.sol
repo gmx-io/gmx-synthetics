@@ -103,8 +103,7 @@ library RelayUtils {
             )
         );
 
-    bytes32 public constant CANCEL_ORDER_TYPEHASH =
-        keccak256(bytes("CancelOrder(bytes32 key,bytes32 relayParams)"));
+    bytes32 public constant CANCEL_ORDER_TYPEHASH = keccak256(bytes("CancelOrder(bytes32 key,bytes32 relayParams)"));
 
     bytes32 public constant CREATE_ORDER_TYPEHASH =
         keccak256(
@@ -183,10 +182,16 @@ library RelayUtils {
                 "MultichainCreateGlvDepositParams(uint256 desChainId,CreateGlvDepositParams params)CreateGlvDepositParams(address glv,address market,address receiver,address callbackContract,address uiFeeReceiver,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minGlvTokens,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bool shouldUnwrapNativeToken,bool isMarketTokenDeposit,bytes32[] dataList)"
             )
         );
+    bytes32 public constant CREATE_GLV_DEPOSIT_PARAMS_ADDRESSES_TYPEHASH =
+        keccak256(
+            bytes(
+                "CreateGlvDepositParamsAddresses(address glv,address market,address receiver,address callbackContract,address uiFeeReceiver,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath)"
+            )
+        );
     bytes32 public constant CREATE_GLV_DEPOSIT_PARAMS_TYPEHASH =
         keccak256(
             bytes(
-                "CreateGlvDepositParams(address glv,address market,address receiver,address callbackContract,address uiFeeReceiver,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minGlvTokens,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bool shouldUnwrapNativeToken,bool isMarketTokenDeposit,bytes32[] dataList)"
+                "CreateGlvDepositParams(CreateGlvDepositParamsAddresses addresses,uint256 minGlvTokens,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bool shouldUnwrapNativeToken,bool isMarketTokenDeposit,bytes32[] dataList)CreateGlvDepositParamsAddresses(address glv,address market,address receiver,address callbackContract,address uiFeeReceiver,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath)"
             )
         );
 
@@ -197,7 +202,6 @@ library RelayUtils {
                 "CreateGlvWithdrawalParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address glv,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minLongTokenAmount,uint256 minShortTokenAmount,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)"
             )
         );
-
     bytes32 public constant MULTICHAIN_CREATE_GLV_WITHDRAWAL_PARAMS_TYPEHASH =
         keccak256(
             bytes(
@@ -205,7 +209,6 @@ library RelayUtils {
                 "CreateGlvWithdrawalParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address glv,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minLongTokenAmount,uint256 minShortTokenAmount,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)"
             )
         );
-
     bytes32 public constant CREATE_GLV_WITHDRAWAL_PARAMS_TYPEHASH =
         keccak256(
             bytes(
@@ -213,20 +216,27 @@ library RelayUtils {
             )
         );
 
-    bytes32 public constant CREATE_SHIFT_TYPEHASH = keccak256(
-        "CreateShift(CreateShiftParams params,bytes32 relayParams)CreateShiftParams(address receiver,address callbackContract,address uiFeeReceiver,address fromMarket,address toMarket,uint256 minMarketTokens,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)"
-    );
-
-    bytes32 public constant MULTICHAIN_CREATE_SHIFT_PARAMS_TYPEHASH = keccak256(
-        "MultichainCreateShiftParams(uint256 desChainId,CreateShiftParams params)CreateShiftParams(address receiver,address callbackContract,address uiFeeReceiver,address fromMarket,address toMarket,uint256 minMarketTokens,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)"
-    );
-
-    bytes32 public constant CREATE_SHIFT_PARAMS_TYPEHASH = keccak256(
-        "CreateShiftParams(address receiver,address callbackContract,address uiFeeReceiver,address fromMarket,address toMarket,uint256 minMarketTokens,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)"
-    );
+    bytes32 public constant CREATE_SHIFT_TYPEHASH =
+        keccak256(
+            bytes(
+                "CreateShift(CreateShiftParams params,bytes32 relayParams)CreateShiftParams(address receiver,address callbackContract,address uiFeeReceiver,address fromMarket,address toMarket,uint256 minMarketTokens,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)"
+            )
+        );
+    bytes32 public constant MULTICHAIN_CREATE_SHIFT_PARAMS_TYPEHASH =
+        keccak256(
+            bytes(
+                "MultichainCreateShiftParams(uint256 desChainId,CreateShiftParams params)CreateShiftParams(address receiver,address callbackContract,address uiFeeReceiver,address fromMarket,address toMarket,uint256 minMarketTokens,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)"
+            )
+        );
+    bytes32 public constant CREATE_SHIFT_PARAMS_TYPEHASH =
+        keccak256(
+            bytes(
+                "CreateShiftParams(address receiver,address callbackContract,address uiFeeReceiver,address fromMarket,address toMarket,uint256 minMarketTokens,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)"
+            )
+        );
 
     bytes32 public constant TRANSFER_REQUEST_TYPEHASH =
-        keccak256("TransferRequest(address token,address receiver,uint256 amount)");
+        keccak256(bytes("TransferRequest(address token,address receiver,uint256 amount)"));
 
     //////////////////// ORDER ////////////////////
 
@@ -349,15 +359,15 @@ library RelayUtils {
         TransferRequest[] calldata transferRequests,
         MultichainCreateDepositParams memory params
     ) external view returns (bytes32) {
-        bytes32 relayParamsHash = _getRelayParamsHash(relayParams);
-        return keccak256(
-            abi.encode(
-                CREATE_DEPOSIT_TYPEHASH,
-                _getMultichainCreateDepositParamsStructHash(params),
-                _getTransferRequestsHash(transferRequests),
-                relayParamsHash
-            )
-        );
+        return
+            keccak256(
+                abi.encode(
+                    CREATE_DEPOSIT_TYPEHASH,
+                    _getMultichainCreateDepositParamsStructHash(params),
+                    _getTransferRequestsHash(transferRequests),
+                    _getRelayParamsHash(relayParams)
+                )
+            );
     }
 
     function _getMultichainCreateDepositParamsStructHash(
@@ -415,15 +425,15 @@ library RelayUtils {
         TransferRequest[] calldata transferRequests,
         MultichainCreateWithdrawalParams memory params
     ) external view returns (bytes32) {
-        bytes32 relayParamsHash = _getRelayParamsHash(relayParams);
-        return keccak256(
-            abi.encode(
-                CREATE_WITHDRAWAL_TYPEHASH,
-                _getMultichainCreateWithdrawalParamsStructHash(params),
-                _getTransferRequestsHash(transferRequests),
-                relayParamsHash
-            )
-        );
+        return
+            keccak256(
+                abi.encode(
+                    CREATE_WITHDRAWAL_TYPEHASH,
+                    _getMultichainCreateWithdrawalParamsStructHash(params),
+                    _getTransferRequestsHash(transferRequests),
+                    _getRelayParamsHash(relayParams)
+                )
+            );
     }
 
     function _getMultichainCreateWithdrawalParamsStructHash(
@@ -468,15 +478,15 @@ library RelayUtils {
         TransferRequest[] calldata transferRequests,
         MultichainCreateGlvDepositParams memory params
     ) external pure returns (bytes32) {
-        bytes32 relayParamsHash = _getRelayParamsHash(relayParams);
-        return keccak256(
-            abi.encode(
-                CREATE_GLV_DEPOSIT_TYPEHASH,
-                _getMultichainCreateGlvDepositParamsStructHash(params),
-                _getTransferRequestsHash(transferRequests),
-                relayParamsHash
-            )
-        );
+        return
+            keccak256(
+                abi.encode(
+                    CREATE_GLV_DEPOSIT_TYPEHASH,
+                    _getMultichainCreateGlvDepositParamsStructHash(params),
+                    _getTransferRequestsHash(transferRequests),
+                    _getRelayParamsHash(relayParams)
+                )
+            );
     }
 
     function _getMultichainCreateGlvDepositParamsStructHash(
@@ -499,15 +509,7 @@ library RelayUtils {
             keccak256(
                 abi.encode(
                     CREATE_GLV_DEPOSIT_PARAMS_TYPEHASH,
-                    params.glv,
-                    params.market,
-                    params.receiver,
-                    params.callbackContract,
-                    params.uiFeeReceiver,
-                    // params.initialLongToken,
-                    // params.initialShortToken,
-                    // keccak256(abi.encodePacked(params.longTokenSwapPath)),
-                    // keccak256(abi.encodePacked(params.shortTokenSwapPath)), // TODO: split CreateGlvDepositParams into groups to fix slot too deep error
+                    _getCreateGlvDepositParamsAddressesStructHash(params.addresses),
                     params.minGlvTokens,
                     params.executionFee,
                     params.callbackGasLimit,
@@ -519,20 +521,40 @@ library RelayUtils {
             );
     }
 
+    function _getCreateGlvDepositParamsAddressesStructHash(
+        GlvDepositUtils.CreateGlvDepositParamsAddresses memory addresses
+    ) internal pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    CREATE_GLV_DEPOSIT_PARAMS_ADDRESSES_TYPEHASH,
+                    addresses.glv,
+                    addresses.market,
+                    addresses.receiver,
+                    addresses.callbackContract,
+                    addresses.uiFeeReceiver,
+                    addresses.initialLongToken,
+                    addresses.initialShortToken,
+                    keccak256(abi.encodePacked(addresses.longTokenSwapPath)),
+                    keccak256(abi.encodePacked(addresses.shortTokenSwapPath))
+                )
+            );
+    }
+
     function getMultichainCreateGlvWithdrawalStructHash(
         RelayParams calldata relayParams,
         TransferRequest[] calldata transferRequests,
         MultichainCreateGlvWithdrawalParams memory params
     ) external view returns (bytes32) {
-        bytes32 relayParamsHash = _getRelayParamsHash(relayParams);
-        return keccak256(
-            abi.encode(
-                CREATE_GLV_WITHDRAWAL_TYPEHASH,
-                _getMultichainCreateGlvWithdrawalParamsStructHash(params),
-                _getTransferRequestsHash(transferRequests),
-                relayParamsHash
-            )
-        );
+        return
+            keccak256(
+                abi.encode(
+                    CREATE_GLV_WITHDRAWAL_TYPEHASH,
+                    _getMultichainCreateGlvWithdrawalParamsStructHash(params),
+                    _getTransferRequestsHash(transferRequests),
+                    _getRelayParamsHash(relayParams)
+                )
+            );
     }
 
     function _getMultichainCreateGlvWithdrawalParamsStructHash(
@@ -578,58 +600,53 @@ library RelayUtils {
         TransferRequest[] calldata transferRequests,
         MultichainCreateShiftParams memory params
     ) external view returns (bytes32) {
-        bytes32 relayParamsHash = _getRelayParamsHash(relayParams);
-        return keccak256(
-            abi.encode(
-                CREATE_SHIFT_TYPEHASH,
-                _getMultichainCreateShiftParamsStructHash(params),
-                _getTransferRequestsHash(transferRequests),
-                relayParamsHash
-            )
-        );
+        return
+            keccak256(
+                abi.encode(
+                    CREATE_SHIFT_TYPEHASH,
+                    _getMultichainCreateShiftParamsStructHash(params),
+                    _getTransferRequestsHash(transferRequests),
+                    _getRelayParamsHash(relayParams)
+                )
+            );
     }
 
     function _getMultichainCreateShiftParamsStructHash(
         MultichainCreateShiftParams memory params
     ) internal view returns (bytes32) {
-        return keccak256(
-            abi.encode(
-                MULTICHAIN_CREATE_SHIFT_PARAMS_TYPEHASH,
-                block.chainid,
-                _getCreateShiftParamsStructHash(params.createShiftParams)
-            )
-        );
+        return
+            keccak256(
+                abi.encode(
+                    MULTICHAIN_CREATE_SHIFT_PARAMS_TYPEHASH,
+                    block.chainid,
+                    _getCreateShiftParamsStructHash(params.createShiftParams)
+                )
+            );
     }
 
     function _getCreateShiftParamsStructHash(
         ShiftUtils.CreateShiftParams memory params
     ) internal pure returns (bytes32) {
-        return keccak256(
-            abi.encode(
-                CREATE_SHIFT_PARAMS_TYPEHASH,
-                params.receiver,
-                params.callbackContract,
-                params.uiFeeReceiver,
-                params.fromMarket,
-                params.toMarket,
-                params.minMarketTokens,
-                params.executionFee,
-                params.callbackGasLimit,
-                params.srcChainId,
-                keccak256(abi.encodePacked(params.dataList))
-            )
-        );
+        return
+            keccak256(
+                abi.encode(
+                    CREATE_SHIFT_PARAMS_TYPEHASH,
+                    params.receiver,
+                    params.callbackContract,
+                    params.uiFeeReceiver,
+                    params.fromMarket,
+                    params.toMarket,
+                    params.minMarketTokens,
+                    params.executionFee,
+                    params.callbackGasLimit,
+                    params.srcChainId,
+                    keccak256(abi.encodePacked(params.dataList))
+                )
+            );
     }
 
     function _getTransferRequestStructHash(TransferRequest memory request) internal pure returns (bytes32) {
-        return keccak256(
-            abi.encode(
-                TRANSFER_REQUEST_TYPEHASH,
-                request.token,
-                request.receiver,
-                request.amount
-            )
-        );
+        return keccak256(abi.encode(TRANSFER_REQUEST_TYPEHASH, request.token, request.receiver, request.amount));
     }
 
     // TODO: double-check typehash is correctly generated
