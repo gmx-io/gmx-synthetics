@@ -198,21 +198,25 @@ library RelayUtils {
     bytes32 public constant CREATE_GLV_WITHDRAWAL_TYPEHASH =
         keccak256(
             bytes(
-                "CreateGlvWithdrawal(CreateGlvWithdrawalParams params,bytes32 relayParams)"
-                "CreateGlvWithdrawalParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address glv,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minLongTokenAmount,uint256 minShortTokenAmount,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)"
+                "CreateGlvWithdrawal(CreateGlvWithdrawalParams params,bytes32 relayParams)CreateGlvWithdrawalParams(CreateGlvWithdrawalParamsAddresses addresses,uint256 minLongTokenAmount,uint256 minShortTokenAmount,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)CreateGlvWithdrawalParamsAddresses(address receiver,address callbackContract,address uiFeeReceiver,address market,address glv,address[] longTokenSwapPath,address[] shortTokenSwapPath)"
             )
         );
     bytes32 public constant MULTICHAIN_CREATE_GLV_WITHDRAWAL_PARAMS_TYPEHASH =
         keccak256(
             bytes(
-                "MultichainCreateGlvWithdrawalParams(uint256 desChainId,CreateGlvWithdrawalParams params)"
-                "CreateGlvWithdrawalParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address glv,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minLongTokenAmount,uint256 minShortTokenAmount,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)"
+                "MultichainCreateGlvWithdrawalParams(uint256 desChainId,CreateGlvWithdrawalParams params)CreateGlvWithdrawalParams(CreateGlvWithdrawalParamsAddresses addresses,uint256 minLongTokenAmount,uint256 minShortTokenAmount,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)"
             )
         );
     bytes32 public constant CREATE_GLV_WITHDRAWAL_PARAMS_TYPEHASH =
         keccak256(
             bytes(
-                "CreateGlvWithdrawalParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address glv,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minLongTokenAmount,uint256 minShortTokenAmount,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)"
+                "CreateGlvWithdrawalParams(CreateGlvWithdrawalParamsAddresses addresses,uint256 minLongTokenAmount,uint256 minShortTokenAmount,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)"
+            )
+        );
+    bytes32 public constant CREATE_GLV_WITHDRAWAL_PARAMS_ADDRESSES_TYPEHASH =
+        keccak256(
+            bytes(
+                "CreateGlvWithdrawalParamsAddresses(address receiver,address callbackContract,address uiFeeReceiver,address market,address glv,address[] longTokenSwapPath,address[] shortTokenSwapPath)"
             )
         );
 
@@ -577,20 +581,32 @@ library RelayUtils {
             keccak256(
                 abi.encode(
                     CREATE_GLV_WITHDRAWAL_PARAMS_TYPEHASH,
-                    params.receiver,
-                    params.callbackContract,
-                    params.uiFeeReceiver,
-                    params.market,
-                    params.glv,
-                    keccak256(abi.encodePacked(params.longTokenSwapPath)),
-                    keccak256(abi.encodePacked(params.shortTokenSwapPath)),
+                    _getCreateGlvWithdrawalParamsAddressesStructHash(params.addresses),
                     params.minLongTokenAmount,
                     params.minShortTokenAmount,
-                    // params.shouldUnwrapNativeToken, // TODO: split CreateGlvWithdrawalParams into groups to fix slot too deep error
+                    params.shouldUnwrapNativeToken,
                     params.executionFee,
                     params.callbackGasLimit,
                     params.srcChainId,
                     keccak256(abi.encodePacked(params.dataList))
+                )
+            );
+    }
+
+    function _getCreateGlvWithdrawalParamsAddressesStructHash(
+        GlvWithdrawalUtils.CreateGlvWithdrawalParamsAddresses memory addresses
+    ) internal pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    CREATE_GLV_WITHDRAWAL_PARAMS_ADDRESSES_TYPEHASH,
+                    addresses.receiver,
+                    addresses.callbackContract,
+                    addresses.uiFeeReceiver,
+                    addresses.market,
+                    addresses.glv,
+                    keccak256(abi.encodePacked(addresses.longTokenSwapPath)),
+                    keccak256(abi.encodePacked(addresses.shortTokenSwapPath))
                 )
             );
     }

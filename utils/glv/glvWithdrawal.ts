@@ -68,13 +68,15 @@ export async function createGlvWithdrawal(fixture, overrides: any = {}) {
   }
 
   const params = {
-    receiver: receiver.address,
-    callbackContract: callbackContract.address,
-    uiFeeReceiver: uiFeeReceiver.address,
-    glv,
-    market: market.marketToken,
-    longTokenSwapPath,
-    shortTokenSwapPath,
+    addresses: {
+      receiver: receiver.address,
+      callbackContract: callbackContract.address,
+      uiFeeReceiver: uiFeeReceiver.address,
+      glv,
+      market: market.marketToken,
+      longTokenSwapPath,
+      shortTokenSwapPath,
+    },
     minLongTokenAmount,
     minShortTokenAmount,
     shouldUnwrapNativeToken,
