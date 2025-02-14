@@ -217,6 +217,7 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
 
         return shiftHandler.createShift(
             account,
+            0, // srcChainId
             params
         );
     }
