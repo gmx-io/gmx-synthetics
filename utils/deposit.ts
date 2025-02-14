@@ -75,12 +75,11 @@ export async function createDeposit(fixture, overrides: any = {}) {
     shouldUnwrapNativeToken,
     executionFee,
     callbackGasLimit,
-    srcChainId,
     dataList,
   };
 
   const txReceipt = await logGasUsage({
-    tx: depositHandler.connect(sender).createDeposit(account.address, params),
+    tx: depositHandler.connect(sender).createDeposit(account.address, srcChainId, params),
     label: overrides.gasUsageLabel,
   });
 

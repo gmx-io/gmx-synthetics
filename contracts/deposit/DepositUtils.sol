@@ -43,7 +43,6 @@ library DepositUtils {
         bool shouldUnwrapNativeToken;
         uint256 executionFee;
         uint256 callbackGasLimit;
-        uint256 srcChainId;
         bytes32[] dataList;
     }
 
@@ -70,6 +69,7 @@ library DepositUtils {
         EventEmitter eventEmitter,
         DepositVault depositVault,
         address account,
+        uint256 srcChainId,
         CreateDepositParams memory params
     ) external returns (bytes32) {
         AccountUtils.validateAccount(account);
@@ -123,7 +123,7 @@ library DepositUtils {
                 Chain.currentTimestamp(), // updatedAtTime
                 params.executionFee,
                 params.callbackGasLimit,
-                params.srcChainId
+                srcChainId
             ),
             Deposit.Flags(
                 params.shouldUnwrapNativeToken
@@ -133,11 +133,12 @@ library DepositUtils {
 
         CallbackUtils.validateCallbackGasLimit(dataStore, deposit.callbackGasLimit());
 
-        uint256 estimatedGasLimit = GasUtils.estimateExecuteDepositGasLimit(dataStore, deposit);
-        uint256 oraclePriceCount = GasUtils.estimateDepositOraclePriceCount(
-            deposit.longTokenSwapPath().length + deposit.shortTokenSwapPath().length
+        GasUtils.validateExecutionFee(
+            dataStore,
+            GasUtils.estimateExecuteDepositGasLimit(dataStore, deposit), // estimatedGasLimit
+            params.executionFee,
+            GasUtils.estimateDepositOraclePriceCount(deposit.longTokenSwapPath().length + deposit.shortTokenSwapPath().length) // oraclePriceCount
         );
-        GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, params.executionFee, oraclePriceCount);
 
         bytes32 key = NonceUtils.getNextKey(dataStore);
 
