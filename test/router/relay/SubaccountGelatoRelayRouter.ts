@@ -826,39 +826,56 @@ describe("SubaccountGelatoRelayRouter", () => {
     });
   });
 
-  it("removeSubaccount", async () => {
-    await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
-    await dataStore.addAddress(keys.subaccountListKey(user1.address), user0.address);
-    expect(await dataStore.getAddressCount(keys.subaccountListKey(user1.address))).to.eq(1);
-    const params = {
-      sender: relaySigner,
-      signer: user1,
-      feeParams: {
-        feeToken: wnt.address,
-        feeAmount: expandDecimals(2, 15), // 0.002 ETH
-        feeSwapPath: [],
-      },
-      tokenPermits: [],
-      subaccount: user0.address,
-      account: user1.address,
-      relayRouter: subaccountGelatoRelayRouter,
-      chainId,
-      relayFeeToken: wnt.address,
-      relayFeeAmount: expandDecimals(1, 15),
-      userNonce: 0,
-      deadline: 9999999999,
-    };
-    await expect(sendRemoveSubaccount({ ...params, signature: "0x1234" })).to.be.revertedWithCustomError(
-      errorsContract,
-      "InvalidSignature"
-    );
+  describe("removeSubaccount", () => {
+    let params: Parameters<typeof sendRemoveSubaccount>[0];
+    beforeEach(() => {
+      params = {
+        sender: relaySigner,
+        signer: user1,
+        feeParams: {
+          feeToken: wnt.address,
+          feeAmount: expandDecimals(2, 15), // 0.002 ETH
+          feeSwapPath: [],
+        },
+        tokenPermits: [],
+        subaccount: user0.address,
+        account: user1.address,
+        relayRouter: subaccountGelatoRelayRouter,
+        chainId,
+        relayFeeToken: wnt.address,
+        relayFeeAmount: expandDecimals(1, 15),
+        userNonce: 0,
+        deadline: 9999999999,
+      };
+    });
 
-    await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, 0);
+    it("InvalidSignature", async () => {
+      await expect(sendRemoveSubaccount({ ...params, signature: BAD_SIGNATURE })).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidSignature"
+      );
+    });
 
-    await sendRemoveSubaccount(params);
-    expect(await dataStore.getAddressCount(keys.subaccountListKey(user1.address))).to.eq(0);
+    it("onlyGelatoRelay", async () => {
+      await expect(sendRemoveSubaccount({ ...params, sender: user0 })).to.be.revertedWith("onlyGelatoRelay");
+    });
 
-    expect(createOrderParams.relayFeeAmount).gt(0);
-    await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, createOrderParams.relayFeeAmount);
+    it("removes subaccount", async () => {
+      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
+      await dataStore.addAddress(keys.subaccountListKey(user1.address), user0.address);
+      expect(await dataStore.getAddressCount(keys.subaccountListKey(user1.address))).to.eq(1);
+      await expect(sendRemoveSubaccount({ ...params, signature: "0x1234" })).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidSignature"
+      );
+
+      await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, 0);
+
+      await sendRemoveSubaccount(params);
+      expect(await dataStore.getAddressCount(keys.subaccountListKey(user1.address))).to.eq(0);
+
+      expect(createOrderParams.relayFeeAmount).gt(0);
+      await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, createOrderParams.relayFeeAmount);
+    });
   });
 });

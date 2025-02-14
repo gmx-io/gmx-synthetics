@@ -151,7 +151,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         RelayParams calldata relayParams,
         address account,
         address subaccount
-    ) external nonReentrant {
+    ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelay {
         _validateGaslessFeature();
         bytes32 structHash = _getRemoveSubaccountStructHash(relayParams, subaccount);
         _validateCall(relayParams, account, structHash);
