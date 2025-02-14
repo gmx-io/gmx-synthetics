@@ -429,10 +429,11 @@ library Errors {
     error FeeDistributionAlreadyCompleted(uint256 lastDistributionTime, uint256 startOfCurrentWeek);
     error OutdatedReadResponse(uint256 timestamp);
     error InvalidDistributionState(uint256 distributionStateUint);
-    error BridgedAmountNotSufficient(uint256 requiredFeeAmount, uint256 currentChainFeeAmount);
+    error BridgedAmountNotSufficient(uint256 minRequiredFeeAmount, uint256 currentChainFeeAmount);
     error BridgingTransactionFailed(bytes result);
     error ReferralRewardsWntThresholdBreached(uint256 referralRewardsWntAmount, uint256 referralRewardsWntShortFall);
     error TreasuryFeeThresholdBreached(uint256 treasuryWntAmount, uint256 treasuryWntShortfall);
     error KeeperArrayLengthMismatch(uint256 keepersLength, uint256 keeperTargetBalancesLength, uint256 keeperVersionsLength);
     error SendEthToKeeperFailed(address keeper, uint256 sendAmount, bytes result);
+    error AttemptedBridgeAmountTooHigh(uint256 minRequiredFeeAmount, uint256 feeAmountCurrentChain, uint256 amountToBridgeOut);
 }

@@ -512,10 +512,12 @@ library Keys {
     bytes32 public constant FEE_DISTRIBUTOR_AMOUNT_THRESHOLD = keccak256(abi.encode("FEE_DISTRIBUTOR_AMOUNT_THRESHOLD"));
     // @dev key for FeeDistributor keeper costs
     bytes32 public constant FEE_DISTRIBUTOR_KEEPER_COSTS = keccak256(abi.encode("FEE_DISTRIBUTOR_KEEPER_COSTS"));
-    // @dev key for FeeDistributor fee buffer representing acceptable fee deficit after bridging slippage
-    bytes32 public constant FEE_DISTRIBUTOR_FEE_BUFFER = keccak256(abi.encode("FEE_DISTRIBUTOR_FEE_BUFFER"));
+    // @dev key for FeeDistributor fee buffer factor representing allowed slippage after bridging slippage
+    bytes32 public constant FEE_DISTRIBUTOR_FEE_BUFFER_FACTOR = keccak256(abi.encode("FEE_DISTRIBUTOR_FEE_BUFFER_FACTOR"));
     // @dev key for FeeDistributor keeper glp factor used to determine costs paid from glp fees
     bytes32 public constant FEE_DISTRIBUTOR_KEEPER_GLP_FACTOR = keccak256(abi.encode("FEE_DISTRIBUTOR_KEEPER_GLP_FACTOR"));
+    // @dev key for FeeDistributor chainlink factor used to determine total chainlink fees paid
+    bytes32 public constant FEE_DISTRIBUTOR_CHAINLINK_FACTOR = keccak256(abi.encode("FEE_DISTRIBUTOR_CHAINLINK_FACTOR"));
 
     // @dev constant for user initiated cancel reason
     string public constant USER_INITIATED_CANCEL = "USER_INITIATED_CANCEL";
