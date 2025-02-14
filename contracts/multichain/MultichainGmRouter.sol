@@ -36,22 +36,25 @@ contract MultichainGmRouter is MultichainRouter {
         RelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
-        RelayUtils.TransferRequests calldata transferRequests,
+        RelayUtils.TransferRequest[] calldata transferRequests,
         DepositUtils.CreateDepositParams memory params // can't use calldata because need to modify params.numbers.executionFee
     ) external nonReentrant onlyGelatoRelay returns (bytes32) {
-        _validateDesChainId(relayParams.desChainId);
+        if (relayParams.desChainId != block.chainid) {
+            revert Errors.InvalidDestinationChainId();
+        }
 
         bytes32 structHash = RelayUtils.getCreateDepositStructHash(relayParams, transferRequests, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
-        return _createDeposit(relayParams, account, srcChainId, transferRequests, params);
+        _processTransferRequests(account, transferRequests, srcChainId);
+
+        return _createDeposit(relayParams, account, srcChainId, params);
     }
 
     function _createDeposit(
         RelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
-        RelayUtils.TransferRequests calldata transferRequests,
         DepositUtils.CreateDepositParams memory params // can't use calldata because need to modify params.numbers.executionFee
     ) internal returns (bytes32) {
         Contracts memory contracts = Contracts({
@@ -66,12 +69,8 @@ contract MultichainGmRouter is MultichainRouter {
             relayParams,
             account,
             address(depositVault), // residualFeeReceiver
-            false, // isSubaccount
             srcChainId
         );
-
-        // process transfer requests after relay fee is paid, otherwise all wnt amount will be recorder as relay fee
-        _processTransferRequests(account, transferRequests, srcChainId);
 
         return depositHandler.createDeposit(account, srcChainId, params);
     }
@@ -80,10 +79,12 @@ contract MultichainGmRouter is MultichainRouter {
         RelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
-        RelayUtils.TransferRequests calldata transferRequests,
+        RelayUtils.TransferRequest[] calldata transferRequests,
         WithdrawalUtils.CreateWithdrawalParams memory params // can't use calldata because need to modify params.addresses.receiver & params.numbers.executionFee
     ) external nonReentrant onlyGelatoRelay returns (bytes32) {
-        _validateDesChainId(relayParams.desChainId);
+        if (relayParams.desChainId != block.chainid) {
+            revert Errors.InvalidDestinationChainId();
+        }
 
         bytes32 structHash = RelayUtils.getCreateWithdrawalStructHash(relayParams, transferRequests, params);
         _validateCall(relayParams, account, structHash, srcChainId);
@@ -110,7 +111,6 @@ contract MultichainGmRouter is MultichainRouter {
             relayParams,
             account,
             address(withdrawalVault), // residualFeeReceiver
-            false, // isSubaccount
             srcChainId
         );
 
@@ -120,24 +120,24 @@ contract MultichainGmRouter is MultichainRouter {
     function createShift(
         RelayUtils.RelayParams calldata relayParams,
         address account,
-        uint256 srcChainId,
-        RelayUtils.TransferRequests calldata transferRequests,
+        RelayUtils.TransferRequest[] calldata transferRequests,
         ShiftUtils.CreateShiftParams memory params
     ) external nonReentrant onlyGelatoRelay returns (bytes32) {
-        _validateDesChainId(relayParams.desChainId);
+        if (relayParams.desChainId != block.chainid) {
+            revert Errors.InvalidDestinationChainId();
+        }
 
         bytes32 structHash = RelayUtils.getCreateShiftStructHash(relayParams, transferRequests, params);
-        _validateCall(relayParams, account, structHash, srcChainId);
+        _validateCall(relayParams, account, structHash, params.srcChainId);
 
-        _processTransferRequests(account, transferRequests, srcChainId);
+        _processTransferRequests(account, transferRequests, params.srcChainId);
 
-        return _createShift(relayParams, account, srcChainId, params);
+        return _createShift(relayParams, account, params);
     }
 
     function _createShift(
         RelayUtils.RelayParams calldata relayParams,
         address account,
-        uint256 srcChainId,
         ShiftUtils.CreateShiftParams memory params
     ) internal returns (bytes32) {
         Contracts memory contracts = Contracts({
@@ -151,8 +151,7 @@ contract MultichainGmRouter is MultichainRouter {
             relayParams,
             account,
             address(shiftVault),
-            false, // isSubaccount
-            srcChainId
+            params.srcChainId
         );
 
         return ShiftUtils.createShift(
@@ -160,7 +159,6 @@ contract MultichainGmRouter is MultichainRouter {
             eventEmitter,
             shiftVault,
             account,
-            srcChainId,
             params
         );
     }
