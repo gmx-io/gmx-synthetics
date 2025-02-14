@@ -40,6 +40,7 @@ contract DepositHandler is IDepositHandler, BaseHandler {
     // @param params DepositUtils.CreateDepositParams
     function createDeposit(
         address account,
+        uint256 srcChainId,
         DepositUtils.CreateDepositParams calldata params
     ) external override globalNonReentrant onlyController returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createDepositFeatureDisabledKey(address(this)));
@@ -50,6 +51,7 @@ contract DepositHandler is IDepositHandler, BaseHandler {
             eventEmitter,
             depositVault,
             account,
+            srcChainId,
             params
         );
     }

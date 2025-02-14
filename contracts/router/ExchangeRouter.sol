@@ -128,6 +128,7 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
 
         return depositHandler.createDeposit(
             account,
+            0, // srcChainId
             params
         );
     }

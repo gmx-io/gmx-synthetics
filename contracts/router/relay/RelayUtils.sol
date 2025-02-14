@@ -332,7 +332,6 @@ library RelayUtils {
                     params.shouldUnwrapNativeToken,
                     params.executionFee,
                     params.callbackGasLimit,
-                    params.srcChainId,
                     keccak256(abi.encodePacked(params.dataList))
                 )
             );
