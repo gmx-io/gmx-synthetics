@@ -44,6 +44,7 @@ library RelayUtils {
         uint256 userNonce;
         uint256 deadline;
         bytes signature;
+        uint256 desChainId;
     }
 
     // @note all params except account should be part of the corresponding struct hash
@@ -60,31 +61,6 @@ library RelayUtils {
         address token;
         address receiver;
         uint256 amount;
-    }
-
-    struct MultichainCreateDepositParams {
-        uint256 desChainId;
-        DepositUtils.CreateDepositParams createDepositParams;
-    }
-
-    struct MultichainCreateWithdrawalParams {
-        uint256 desChainId;
-        WithdrawalUtils.CreateWithdrawalParams createWithdrawalParams;
-    }
-
-    struct MultichainCreateGlvDepositParams {
-        uint256 desChainId;
-        GlvDepositUtils.CreateGlvDepositParams createGlvDepositParams;
-    }
-
-    struct MultichainCreateGlvWithdrawalParams {
-        uint256 desChainId;
-        GlvWithdrawalUtils.CreateGlvWithdrawalParams createGlvWithdrawalParams;
-    }
-
-    struct MultichainCreateShiftParams {
-        uint256 desChainId;
-        ShiftUtils.CreateShiftParams createShiftParams;
     }
 
     //////////////////// ORDER ////////////////////
@@ -137,12 +113,6 @@ library RelayUtils {
                 "CreateDepositParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minMarketTokens,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)"
             )
         );
-    bytes32 public constant MULTICHAIN_CREATE_DEPOSIT_PARAMS_TYPEHASH =
-        keccak256(
-            bytes(
-                "MultichainCreateDepositParams(uint256 desChainId,CreateDepositParams params)CreateDepositParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minMarketTokens,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)"
-            )
-        );
     bytes32 public constant CREATE_DEPOSIT_PARAMS_ADDRESSES_TYPEHASH =
         keccak256(
             bytes(
@@ -156,12 +126,6 @@ library RelayUtils {
                 "CreateWithdrawal(CreateWithdrawalParams params,bytes32 relayParams)CreateWithdrawalParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minLongTokenAmount,uint256 minShortTokenAmount,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)"
             )
         );
-    bytes32 public constant MULTICHAIN_CREATE_WITHDRAWAL_PARAMS_TYPEHASH =
-        keccak256(
-            bytes(
-                "MultichainCreateWithdrawalParams(uint256 desChainId,CreateWithdrawalParams params)CreateWithdrawalParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minLongTokenAmount,uint256 minShortTokenAmount,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)"
-            )
-        );
     bytes32 public constant CREATE_WITHDRAWAL_PARAMS_TYPEHASH =
         keccak256(
             bytes(
@@ -173,12 +137,6 @@ library RelayUtils {
         keccak256(
             bytes(
                 "CreateGlvDeposit(CreateGlvDepositParams params,bytes32 relayParams)CreateGlvDepositParams(address account,address market,address initialLongToken,address initialShortToken,uint256 srcChainId,bytes32[] dataList)"
-            )
-        );
-    bytes32 public constant MULTICHAIN_CREATE_GLV_DEPOSIT_PARAMS_TYPEHASH =
-        keccak256(
-            bytes(
-                "MultichainCreateGlvDepositParams(uint256 desChainId,CreateGlvDepositParams params)CreateGlvDepositParams(address glv,address market,address receiver,address callbackContract,address uiFeeReceiver,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minGlvTokens,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bool shouldUnwrapNativeToken,bool isMarketTokenDeposit,bytes32[] dataList)"
             )
         );
     bytes32 public constant CREATE_GLV_DEPOSIT_PARAMS_ADDRESSES_TYPEHASH =
@@ -200,12 +158,6 @@ library RelayUtils {
                 "CreateGlvWithdrawal(CreateGlvWithdrawalParams params,bytes32 relayParams)CreateGlvWithdrawalParams(CreateGlvWithdrawalParamsAddresses addresses,uint256 minLongTokenAmount,uint256 minShortTokenAmount,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)CreateGlvWithdrawalParamsAddresses(address receiver,address callbackContract,address uiFeeReceiver,address market,address glv,address[] longTokenSwapPath,address[] shortTokenSwapPath)"
             )
         );
-    bytes32 public constant MULTICHAIN_CREATE_GLV_WITHDRAWAL_PARAMS_TYPEHASH =
-        keccak256(
-            bytes(
-                "MultichainCreateGlvWithdrawalParams(uint256 desChainId,CreateGlvWithdrawalParams params)CreateGlvWithdrawalParams(CreateGlvWithdrawalParamsAddresses addresses,uint256 minLongTokenAmount,uint256 minShortTokenAmount,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)"
-            )
-        );
     bytes32 public constant CREATE_GLV_WITHDRAWAL_PARAMS_TYPEHASH =
         keccak256(
             bytes(
@@ -223,12 +175,6 @@ library RelayUtils {
         keccak256(
             bytes(
                 "CreateShift(CreateShiftParams params,bytes32 relayParams)CreateShiftParams(address receiver,address callbackContract,address uiFeeReceiver,address fromMarket,address toMarket,uint256 minMarketTokens,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)"
-            )
-        );
-    bytes32 public constant MULTICHAIN_CREATE_SHIFT_PARAMS_TYPEHASH =
-        keccak256(
-            bytes(
-                "MultichainCreateShiftParams(uint256 desChainId,CreateShiftParams params)CreateShiftParams(address receiver,address callbackContract,address uiFeeReceiver,address fromMarket,address toMarket,uint256 minMarketTokens,uint256 executionFee,uint256 callbackGasLimit,uint256 srcChainId,bytes32[] dataList)"
             )
         );
     bytes32 public constant CREATE_SHIFT_PARAMS_TYPEHASH =
@@ -252,7 +198,8 @@ library RelayUtils {
                     relayParams.tokenPermits,
                     relayParams.fee,
                     relayParams.userNonce,
-                    relayParams.deadline
+                    relayParams.deadline,
+                    relayParams.desChainId
                 )
             );
     }
@@ -357,31 +304,18 @@ library RelayUtils {
 
     //////////////////// MULTICHAIN ////////////////////
 
-    function getMultichainCreateDepositStructHash(
+    function getCreateDepositStructHash(
         RelayParams calldata relayParams,
         TransferRequest[] calldata transferRequests,
-        MultichainCreateDepositParams memory params
-    ) external view returns (bytes32) {
+        DepositUtils.CreateDepositParams memory params
+    ) external pure returns (bytes32) {
         return
             keccak256(
                 abi.encode(
                     CREATE_DEPOSIT_TYPEHASH,
-                    _getMultichainCreateDepositParamsStructHash(params),
+                    _getCreateDepositParamsStructHash(params),
                     _getTransferRequestsHash(transferRequests),
                     _getRelayParamsHash(relayParams)
-                )
-            );
-    }
-
-    function _getMultichainCreateDepositParamsStructHash(
-        MultichainCreateDepositParams memory params
-    ) internal view returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    MULTICHAIN_CREATE_DEPOSIT_PARAMS_TYPEHASH,
-                    block.chainid,
-                    _getCreateDepositParamsStructHash(params.createDepositParams)
                 )
             );
     }
@@ -423,31 +357,18 @@ library RelayUtils {
             );
     }
 
-    function getMultichainCreateWithdrawalStructHash(
+    function getCreateWithdrawalStructHash(
         RelayParams calldata relayParams,
         TransferRequest[] calldata transferRequests,
-        MultichainCreateWithdrawalParams memory params
-    ) external view returns (bytes32) {
+        WithdrawalUtils.CreateWithdrawalParams memory params
+    ) external pure returns (bytes32) {
         return
             keccak256(
                 abi.encode(
                     CREATE_WITHDRAWAL_TYPEHASH,
-                    _getMultichainCreateWithdrawalParamsStructHash(params),
+                    _getCreateWithdrawalParamsStructHash(params),
                     _getTransferRequestsHash(transferRequests),
                     _getRelayParamsHash(relayParams)
-                )
-            );
-    }
-
-    function _getMultichainCreateWithdrawalParamsStructHash(
-        MultichainCreateWithdrawalParams memory params
-    ) internal view returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    MULTICHAIN_CREATE_WITHDRAWAL_PARAMS_TYPEHASH,
-                    block.chainid,
-                    _getCreateWithdrawalParamsStructHash(params.createWithdrawalParams)
                 )
             );
     }
@@ -476,31 +397,18 @@ library RelayUtils {
             );
     }
 
-    function getMultichainCreateGlvDepositStructHash(
+    function getCreateGlvDepositStructHash(
         RelayParams calldata relayParams,
         TransferRequest[] calldata transferRequests,
-        MultichainCreateGlvDepositParams memory params
+        GlvDepositUtils.CreateGlvDepositParams memory params
     ) external pure returns (bytes32) {
         return
             keccak256(
                 abi.encode(
                     CREATE_GLV_DEPOSIT_TYPEHASH,
-                    _getMultichainCreateGlvDepositParamsStructHash(params),
+                    _getCreateGlvDepositParamsStructHash(params),
                     _getTransferRequestsHash(transferRequests),
                     _getRelayParamsHash(relayParams)
-                )
-            );
-    }
-
-    function _getMultichainCreateGlvDepositParamsStructHash(
-        MultichainCreateGlvDepositParams memory params
-    ) internal pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    MULTICHAIN_CREATE_GLV_DEPOSIT_PARAMS_TYPEHASH,
-                    params.desChainId,
-                    _getCreateGlvDepositParamsStructHash(params.createGlvDepositParams)
                 )
             );
     }
@@ -544,31 +452,18 @@ library RelayUtils {
             );
     }
 
-    function getMultichainCreateGlvWithdrawalStructHash(
+    function getCreateGlvWithdrawalStructHash(
         RelayParams calldata relayParams,
         TransferRequest[] calldata transferRequests,
-        MultichainCreateGlvWithdrawalParams memory params
-    ) external view returns (bytes32) {
+        GlvWithdrawalUtils.CreateGlvWithdrawalParams memory params
+    ) external pure returns (bytes32) {
         return
             keccak256(
                 abi.encode(
                     CREATE_GLV_WITHDRAWAL_TYPEHASH,
-                    _getMultichainCreateGlvWithdrawalParamsStructHash(params),
+                    _getCreateGlvWithdrawalParamsStructHash(params),
                     _getTransferRequestsHash(transferRequests),
                     _getRelayParamsHash(relayParams)
-                )
-            );
-    }
-
-    function _getMultichainCreateGlvWithdrawalParamsStructHash(
-        MultichainCreateGlvWithdrawalParams memory params
-    ) internal view returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    MULTICHAIN_CREATE_GLV_WITHDRAWAL_PARAMS_TYPEHASH,
-                    block.chainid,
-                    _getCreateGlvWithdrawalParamsStructHash(params.createGlvWithdrawalParams)
                 )
             );
     }
@@ -610,31 +505,18 @@ library RelayUtils {
             );
     }
 
-    function getMultichainCreateShiftStructHash(
+    function getCreateShiftStructHash(
         RelayParams calldata relayParams,
         TransferRequest[] calldata transferRequests,
-        MultichainCreateShiftParams memory params
-    ) external view returns (bytes32) {
+        ShiftUtils.CreateShiftParams memory params
+    ) external pure returns (bytes32) {
         return
             keccak256(
                 abi.encode(
                     CREATE_SHIFT_TYPEHASH,
-                    _getMultichainCreateShiftParamsStructHash(params),
+                    _getCreateShiftParamsStructHash(params),
                     _getTransferRequestsHash(transferRequests),
                     _getRelayParamsHash(relayParams)
-                )
-            );
-    }
-
-    function _getMultichainCreateShiftParamsStructHash(
-        MultichainCreateShiftParams memory params
-    ) internal view returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    MULTICHAIN_CREATE_SHIFT_PARAMS_TYPEHASH,
-                    block.chainid,
-                    _getCreateShiftParamsStructHash(params.createShiftParams)
                 )
             );
     }
