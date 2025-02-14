@@ -58,7 +58,6 @@ library WithdrawalUtils {
         bool shouldUnwrapNativeToken;
         uint256 executionFee;
         uint256 callbackGasLimit;
-        uint256 srcChainId;
         bytes32[] dataList;
     }
 
@@ -77,6 +76,7 @@ library WithdrawalUtils {
         EventEmitter eventEmitter,
         WithdrawalVault withdrawalVault,
         address account,
+        uint256 srcChainId,
         CreateWithdrawalParams memory params,
         bool isAtomicWithdrawal
     ) external returns (bytes32) {
@@ -119,7 +119,7 @@ library WithdrawalUtils {
                 Chain.currentTimestamp(), // updatedAtTime
                 params.executionFee,
                 params.callbackGasLimit,
-                params.srcChainId
+                srcChainId
             ),
             Withdrawal.Flags(
                 params.shouldUnwrapNativeToken
@@ -129,9 +129,9 @@ library WithdrawalUtils {
 
         CallbackUtils.validateCallbackGasLimit(dataStore, withdrawal.callbackGasLimit());
 
-        uint256 estimatedGasLimit = GasUtils.estimateExecuteWithdrawalGasLimit(dataStore, withdrawal);
-        uint256 oraclePriceCount = GasUtils.estimateWithdrawalOraclePriceCount(withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length);
         if (!isAtomicWithdrawal) {
+            uint256 estimatedGasLimit = GasUtils.estimateExecuteWithdrawalGasLimit(dataStore, withdrawal);
+            uint256 oraclePriceCount = GasUtils.estimateWithdrawalOraclePriceCount(withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length);
             GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, params.executionFee, oraclePriceCount);
         }
 

@@ -40,6 +40,7 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
     // @param params WithdrawalUtils.CreateWithdrawalParams
     function createWithdrawal(
         address account,
+        uint256 srcChainId,
         WithdrawalUtils.CreateWithdrawalParams calldata params
     ) external override globalNonReentrant onlyController returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createWithdrawalFeatureDisabledKey(address(this)));
@@ -50,6 +51,7 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
             eventEmitter,
             withdrawalVault,
             account,
+            srcChainId,
             params,
             false // isAtomicWithdrawal
         );
@@ -153,6 +155,7 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
             eventEmitter,
             withdrawalVault,
             account,
+            0, // srcChainId
             params,
             true // isAtomicWithdrawal
         );
