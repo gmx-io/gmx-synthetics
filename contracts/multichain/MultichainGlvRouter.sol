@@ -32,7 +32,7 @@ contract MultichainGlvRouter is MultichainRouter {
         }
 
         bytes32 structHash = RelayUtils.getMultichainCreateGlvDepositStructHash(relayParams, transferRequests, params);
-        _validateCall(relayParams, account, structHash);
+        _validateCall(relayParams, account, structHash, params.createGlvDepositParams.srcChainId);
 
         _processTransferRequests(account, transferRequests, params.createGlvDepositParams.srcChainId);
 
@@ -55,7 +55,8 @@ contract MultichainGlvRouter is MultichainRouter {
             contracts,
             relayParams,
             account,
-            address(glvVault)
+            address(glvVault),
+            params.createGlvDepositParams.srcChainId
         );
 
         return glvHandler.createGlvDeposit(account, params.createGlvDepositParams);
@@ -72,7 +73,7 @@ contract MultichainGlvRouter is MultichainRouter {
         }
 
         bytes32 structHash = RelayUtils.getMultichainCreateGlvWithdrawalStructHash(relayParams, transferRequests, params);
-        _validateCall(relayParams, account, structHash);
+        _validateCall(relayParams, account, structHash, params.createGlvWithdrawalParams.srcChainId);
 
         _processTransferRequests(account, transferRequests, params.createGlvWithdrawalParams.srcChainId);
 
@@ -95,7 +96,8 @@ contract MultichainGlvRouter is MultichainRouter {
             contracts,
             relayParams,
             account,
-            address(glvVault) // residualFeeReceiver
+            address(glvVault), // residualFeeReceiver
+            params.createGlvWithdrawalParams.srcChainId
         );
 
         return GlvWithdrawalUtils.createGlvWithdrawal(
