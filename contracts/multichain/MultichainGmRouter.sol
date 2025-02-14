@@ -120,6 +120,7 @@ contract MultichainGmRouter is MultichainRouter {
     function createShift(
         RelayUtils.RelayParams calldata relayParams,
         address account,
+        uint256 srcChainId,
         RelayUtils.TransferRequest[] calldata transferRequests,
         ShiftUtils.CreateShiftParams memory params
     ) external nonReentrant onlyGelatoRelay returns (bytes32) {
@@ -128,16 +129,17 @@ contract MultichainGmRouter is MultichainRouter {
         }
 
         bytes32 structHash = RelayUtils.getCreateShiftStructHash(relayParams, transferRequests, params);
-        _validateCall(relayParams, account, structHash, params.srcChainId);
+        _validateCall(relayParams, account, structHash, srcChainId);
 
-        _processTransferRequests(account, transferRequests, params.srcChainId);
+        _processTransferRequests(account, transferRequests, srcChainId);
 
-        return _createShift(relayParams, account, params);
+        return _createShift(relayParams, account, srcChainId, params);
     }
 
     function _createShift(
         RelayUtils.RelayParams calldata relayParams,
         address account,
+        uint256 srcChainId,
         ShiftUtils.CreateShiftParams memory params
     ) internal returns (bytes32) {
         Contracts memory contracts = Contracts({
@@ -151,7 +153,7 @@ contract MultichainGmRouter is MultichainRouter {
             relayParams,
             account,
             address(shiftVault),
-            params.srcChainId
+            srcChainId
         );
 
         return ShiftUtils.createShift(
@@ -159,6 +161,7 @@ contract MultichainGmRouter is MultichainRouter {
             eventEmitter,
             shiftVault,
             account,
+            srcChainId,
             params
         );
     }
