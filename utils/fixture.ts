@@ -119,7 +119,6 @@ export async function deployFixture() {
   const feeHandler = await hre.ethers.getContract("FeeHandler");
   const mockVaultV1 = await hre.ethers.getContract("MockVaultV1");
   const multichainVault = await hre.ethers.getContract("MultichainVault");
-  const multichainVaultHandler = await hre.ethers.getContract("MultichainVaultHandler");
   const multichainUtils = await hre.ethers.getContract("MultichainUtils");
   const layerZeroProvider = await hre.ethers.getContract("LayerZeroProvider");
   const mockStargatePool = await hre.ethers.getContract("MockStargatePool");
@@ -331,7 +330,6 @@ export async function deployFixture() {
       glvReader,
       mockVaultV1,
       multichainVault,
-      multichainVaultHandler,
       multichainUtils,
       layerZeroProvider,
       mockStargatePool,
