@@ -40,7 +40,6 @@ library ShiftUtils {
         uint256 minMarketTokens;
         uint256 executionFee;
         uint256 callbackGasLimit;
-        uint256 srcChainId;
         bytes32[] dataList;
     }
 
@@ -79,6 +78,7 @@ library ShiftUtils {
         EventEmitter eventEmitter,
         ShiftVault shiftVault,
         address account,
+        uint256 srcChainId,
         CreateShiftParams memory params
     ) external returns (bytes32) {
         AccountUtils.validateAccount(account);
@@ -130,7 +130,7 @@ library ShiftUtils {
                 Chain.currentTimestamp(),
                 params.executionFee,
                 params.callbackGasLimit,
-                params.srcChainId
+                srcChainId
             ),
             params.dataList
         );

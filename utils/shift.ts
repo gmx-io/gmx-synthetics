@@ -56,12 +56,11 @@ export async function createShift(fixture, overrides: any = {}) {
     minMarketTokens,
     executionFee,
     callbackGasLimit,
-    srcChainId,
     dataList,
   };
 
   const txReceipt = await logGasUsage({
-    tx: shiftHandler.connect(sender).createShift(account.address, params),
+    tx: shiftHandler.connect(sender).createShift(account.address, srcChainId, params),
     label: overrides.gasUsageLabel,
   });
 
