@@ -7,7 +7,7 @@ import "../oracle/OracleUtils.sol";
 import "../pricing/ISwapPricingUtils.sol";
 
 interface IWithdrawalHandler {
-    function createWithdrawal(address account, WithdrawalUtils.CreateWithdrawalParams calldata params) external returns (bytes32);
+    function createWithdrawal(address account, uint256 srcChainId, WithdrawalUtils.CreateWithdrawalParams calldata params) external returns (bytes32);
     function cancelWithdrawal(bytes32 key) external;
     function executeAtomicWithdrawal(
         address account,

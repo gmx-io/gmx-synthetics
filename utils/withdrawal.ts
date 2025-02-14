@@ -62,12 +62,11 @@ export async function createWithdrawal(fixture, overrides: any = {}) {
     shouldUnwrapNativeToken,
     executionFee,
     callbackGasLimit,
-    srcChainId,
     dataList,
   };
 
   await logGasUsage({
-    tx: withdrawalHandler.connect(wallet).createWithdrawal(account.address, params),
+    tx: withdrawalHandler.connect(wallet).createWithdrawal(account.address, srcChainId, params),
     label: overrides.gasUsageLabel,
   });
 }
