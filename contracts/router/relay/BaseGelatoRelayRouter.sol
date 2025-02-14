@@ -88,7 +88,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             bank: orderVault
         });
 
-        params.numbers.executionFee = _handleRelay(contracts, relayParams, account, address(contracts.bank));
+        params.numbers.executionFee = _handleRelay(contracts, relayParams, account, address(contracts.bank), params.numbers.srcChainId);
 
         if (
             params.orderType == Order.OrderType.MarketSwap ||
@@ -102,7 +102,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
                 params.addresses.initialCollateralToken,
                 address(contracts.bank),
                 collateralDeltaAmount,
-                relayParams.srcChainId
+                params.numbers.srcChainId
             );
         }
 
@@ -135,7 +135,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         }
 
         address residualFeeReceiver = increaseExecutionFee ? address(contracts.bank) : account;
-        _handleRelay(contracts, relayParams, account, residualFeeReceiver);
+        _handleRelay(contracts, relayParams, account, residualFeeReceiver, order.srcChainId());
 
         orderHandler.updateOrder(
             key,
@@ -166,7 +166,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             revert Errors.Unauthorized(account, "account for cancelOrder");
         }
 
-        _handleRelay(contracts, relayParams, account, account);
+        _handleRelay(contracts, relayParams, account, account, order.srcChainId());
 
         orderHandler.cancelOrder(key);
     }
@@ -209,14 +209,15 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         Contracts memory contracts,
         RelayUtils.RelayParams calldata relayParams,
         address account,
-        address residualFeeReceiver
+        address residualFeeReceiver,
+        uint256 srcChainId
     ) internal returns (uint256) {
         if (relayParams.externalCalls.externalCallTargets.length != 0 && relayParams.fee.feeSwapPath.length != 0) {
             revert Errors.InvalidRelayParams();
         }
 
         _handleTokenPermits(relayParams.tokenPermits);
-        return _handleRelayFee(contracts, relayParams, account, residualFeeReceiver);
+        return _handleRelayFee(contracts, relayParams, account, residualFeeReceiver, srcChainId);
     }
 
     function _handleTokenPermits(RelayUtils.TokenPermit[] calldata tokenPermits) internal {
@@ -254,7 +255,8 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         Contracts memory contracts,
         RelayUtils.RelayParams calldata relayParams,
         address account,
-        address residualFeeReceiver
+        address residualFeeReceiver,
+        uint256 srcChainId
     ) internal returns (uint256) {
         address wnt = TokenUtils.wnt(contracts.dataStore);
 
@@ -265,7 +267,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         // if external calls => send to external handler
         uint256 outputAmount;
         if (relayParams.externalCalls.externalCallTargets.length > 0) {
-            _sendTokens(account, relayParams.fee.feeToken, address(externalHandler), relayParams.fee.feeAmount, relayParams.srcChainId);
+            _sendTokens(account, relayParams.fee.feeToken, address(externalHandler), relayParams.fee.feeAmount, srcChainId);
             externalHandler.makeExternalCalls(
                 relayParams.externalCalls.externalCallTargets,
                 relayParams.externalCalls.externalCallDataList,
@@ -274,10 +276,10 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             );
             outputAmount = ERC20(_getFeeToken()).balanceOf(address(this));
         } else if (relayParams.fee.feeSwapPath.length != 0) {
-            _sendTokens(account, relayParams.fee.feeToken, address(contracts.bank), relayParams.fee.feeAmount, relayParams.srcChainId);
+            _sendTokens(account, relayParams.fee.feeToken, address(contracts.bank), relayParams.fee.feeAmount, srcChainId);
             outputAmount = _swapFeeTokens(contracts, wnt, relayParams.fee);
         } else if (relayParams.fee.feeToken == wnt) {
-            _sendTokens(account, relayParams.fee.feeToken, address(this), relayParams.fee.feeAmount, relayParams.srcChainId);
+            _sendTokens(account, relayParams.fee.feeToken, address(this), relayParams.fee.feeAmount, srcChainId);
             outputAmount = relayParams.fee.feeAmount;
         } else {
             revert Errors.UnexpectedRelayFeeToken(_getFeeToken(), wnt);
@@ -291,7 +293,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         // for update orders the residual fee could be sent to the order vault if order's execution fee should be increased
         // otherwise the residual fee is sent back to the user
         // for other actions the residual fee is sent back to the user
-        _transferResidualFee(wnt, residualFeeReceiver, residualFee, account, relayParams.srcChainId);
+        _transferResidualFee(wnt, residualFeeReceiver, residualFee, account, srcChainId);
 
         return residualFee;
     }
@@ -321,9 +323,9 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             );
     }
 
-    function _validateCall(RelayUtils.RelayParams calldata relayParams, address account, bytes32 structHash) internal {
-        uint256 srcChainId = relayParams.srcChainId == 0 ? block.chainid : relayParams.srcChainId;
-        bytes32 domainSeparator = _getDomainSeparator(srcChainId);
+    function _validateCall(RelayUtils.RelayParams calldata relayParams, address account, bytes32 structHash, uint256 srcChainId) internal {
+        uint256 _srcChainId = srcChainId == 0 ? block.chainid : srcChainId;
+        bytes32 domainSeparator = _getDomainSeparator(_srcChainId);
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
         _validateSignature(digest, relayParams.signature, account, "call");
 
