@@ -11,6 +11,7 @@ import "../../router/Router.sol";
 import "./BaseGelatoRelayRouter.sol";
 
 contract GelatoRelayRouter is BaseGelatoRelayRouter {
+    using Order for Order.Props;
 
     constructor(
         Router _router,
@@ -37,7 +38,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
     {
         _validateGaslessFeature();
         bytes32 structHash = RelayUtils.getCreateOrderStructHash(relayParams, collateralDeltaAmount, params);
-        _validateCall(relayParams, account, structHash);
+        _validateCall(relayParams, account, structHash, params.numbers.srcChainId);
 
         return _createOrder(relayParams, account, collateralDeltaAmount, params, false);
     }
@@ -51,8 +52,10 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         bool increaseExecutionFee
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelay {
         _validateGaslessFeature();
+
         bytes32 structHash = RelayUtils.getUpdateOrderStructHash(relayParams, key, params, increaseExecutionFee);
-        _validateCall(relayParams, account, structHash);
+        Order.Props memory order = OrderStoreUtils.get(dataStore, key);
+        _validateCall(relayParams, account, structHash, order.srcChainId());
 
         _updateOrder(relayParams, account, key, params, increaseExecutionFee, false);
     }
@@ -64,8 +67,10 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         bytes32 key
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelay {
         _validateGaslessFeature();
+
         bytes32 structHash = RelayUtils.getCancelOrderStructHash(relayParams, key);
-        _validateCall(relayParams, account, structHash);
+        Order.Props memory order = OrderStoreUtils.get(dataStore, key);
+        _validateCall(relayParams, account, structHash, order.srcChainId());
 
         _cancelOrder(relayParams, account, key);
     }

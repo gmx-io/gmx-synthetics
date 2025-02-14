@@ -44,7 +44,6 @@ library RelayUtils {
         uint256 userNonce;
         uint256 deadline;
         bytes signature;
-        uint256 srcChainId;
     }
 
     // @note all params except account should be part of the corresponding struct hash

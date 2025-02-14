@@ -43,7 +43,7 @@ contract MultichainGmRouter is MultichainRouter {
         }
 
         bytes32 structHash = RelayUtils.getMultichainCreateDepositStructHash(relayParams, transferRequests, params);
-        _validateCall(relayParams, account, structHash);
+        _validateCall(relayParams, account, structHash, params.createDepositParams.srcChainId);
 
         _processTransferRequests(account, transferRequests, params.createDepositParams.srcChainId);
 
@@ -66,7 +66,8 @@ contract MultichainGmRouter is MultichainRouter {
             contracts,
             relayParams,
             account,
-            address(depositVault) // residualFeeReceiver
+            address(depositVault), // residualFeeReceiver
+            params.createDepositParams.srcChainId
         );
 
         return depositHandler.createDeposit(account, params.createDepositParams);
@@ -83,7 +84,7 @@ contract MultichainGmRouter is MultichainRouter {
         }
 
         bytes32 structHash = RelayUtils.getMultichainCreateWithdrawalStructHash(relayParams, transferRequests, params);
-        _validateCall(relayParams, account, structHash);
+        _validateCall(relayParams, account, structHash, params.createWithdrawalParams.srcChainId);
 
         _processTransferRequests(account, transferRequests, params.createWithdrawalParams.srcChainId);
 
@@ -105,7 +106,8 @@ contract MultichainGmRouter is MultichainRouter {
             contracts,
             relayParams,
             account,
-            address(withdrawalVault) // residualFeeReceiver
+            address(withdrawalVault), // residualFeeReceiver
+            params.createWithdrawalParams.srcChainId
         );
 
         return withdrawalHandler.createWithdrawal(account, params.createWithdrawalParams);
@@ -122,7 +124,7 @@ contract MultichainGmRouter is MultichainRouter {
         }
 
         bytes32 structHash = RelayUtils.getMultichainCreateShiftStructHash(relayParams, transferRequests, params);
-        _validateCall(relayParams, account, structHash);
+        _validateCall(relayParams, account, structHash, params.createShiftParams.srcChainId);
 
         _processTransferRequests(account, transferRequests, params.createShiftParams.srcChainId);
 
@@ -144,7 +146,8 @@ contract MultichainGmRouter is MultichainRouter {
             contracts,
             relayParams,
             account,
-            address(shiftVault)
+            address(shiftVault),
+            params.createShiftParams.srcChainId
         );
 
         return ShiftUtils.createShift(

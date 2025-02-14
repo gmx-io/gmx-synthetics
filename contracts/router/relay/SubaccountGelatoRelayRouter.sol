@@ -9,6 +9,8 @@ import "../../subaccount/SubaccountUtils.sol";
 import "./BaseGelatoRelayRouter.sol";
 
 contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
+    using Order for Order.Props;
+
     struct SubaccountApproval {
         address subaccount;
         bool shouldAdd;
@@ -63,7 +65,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         );
 
     bytes32 public constant REMOVE_SUBACCOUNT_TYPEHASH =
-        keccak256(bytes("RemoveSubaccount(address subaccount,bytes32 relayParams)"));
+        keccak256(bytes("RemoveSubaccount(address subaccount,uint256 srcChainId,bytes32 relayParams)"));
 
     mapping(address => uint256) public subaccountApprovalNonces;
 
@@ -100,7 +102,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             collateralDeltaAmount,
             params
         );
-        _validateCall(relayParams, subaccount, structHash);
+        _validateCall(relayParams, subaccount, structHash, params.numbers.srcChainId);
         _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, subaccountApproval);
 
         if (params.addresses.receiver != account) {
@@ -125,8 +127,11 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         bool increaseExecutionFee
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelay {
         _validateGaslessFeature();
+
         bytes32 structHash = _getUpdateOrderStructHash(relayParams, subaccountApproval, account, key, params, increaseExecutionFee);
-        _validateCall(relayParams, subaccount, structHash);
+        Order.Props memory order = OrderStoreUtils.get(dataStore, key);
+        _validateCall(relayParams, subaccount, structHash, order.srcChainId());
+
         _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, subaccountApproval);
         _updateOrder(relayParams, account, key, params, increaseExecutionFee, true);
     }
@@ -140,8 +145,11 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         bytes32 key
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelay {
         _validateGaslessFeature();
+
         bytes32 structHash = _getCancelOrderStructHash(relayParams, subaccountApproval, account, key);
-        _validateCall(relayParams, subaccount, structHash);
+        Order.Props memory order = OrderStoreUtils.get(dataStore, key);
+        _validateCall(relayParams, subaccount, structHash, order.srcChainId());
+
         _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, subaccountApproval);
         _cancelOrder(relayParams, account, key);
     }
@@ -150,18 +158,19 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     function removeSubaccount(
         RelayUtils.RelayParams calldata relayParams,
         address account,
-        address subaccount
+        address subaccount,
+        uint256 srcChainId
     ) external nonReentrant {
         _validateGaslessFeature();
-        bytes32 structHash = _getRemoveSubaccountStructHash(relayParams, subaccount);
-        _validateCall(relayParams, account, structHash);
+        bytes32 structHash = _getRemoveSubaccountStructHash(relayParams, subaccount, srcChainId);
+        _validateCall(relayParams, account, structHash, srcChainId);
 
         Contracts memory contracts = Contracts({
             dataStore: dataStore,
             eventEmitter: eventEmitter,
             bank: orderVault
         });
-        _handleRelay(contracts, relayParams, account, account);
+        _handleRelay(contracts, relayParams, account, account, srcChainId);
 
         SubaccountUtils.removeSubaccount(dataStore, eventEmitter, account, subaccount);
     }
@@ -232,9 +241,10 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
 
     function _getRemoveSubaccountStructHash(
         RelayUtils.RelayParams calldata relayParams,
-        address subaccount
+        address subaccount,
+        uint256 srcChainId
     ) internal pure returns (bytes32) {
-        return keccak256(abi.encode(REMOVE_SUBACCOUNT_TYPEHASH, subaccount, RelayUtils._getRelayParamsHash(relayParams)));
+        return keccak256(abi.encode(REMOVE_SUBACCOUNT_TYPEHASH, subaccount, srcChainId, RelayUtils._getRelayParamsHash(relayParams)));
     }
 
     function _getSubaccountApprovalStructHash(
