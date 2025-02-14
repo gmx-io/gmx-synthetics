@@ -210,7 +210,6 @@ contract GlpMigrator is ReentrancyGuard, RoleModule {
                 false, // shouldUnwrapNativeToken;
                 migrationItem.executionFee, // executionFee;
                 0, // callbackGasLimit;
-                0, // srcChainId
                 new bytes32[](0) // dataList;
             );
 
