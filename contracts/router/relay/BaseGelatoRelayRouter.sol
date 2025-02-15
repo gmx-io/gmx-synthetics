@@ -79,6 +79,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         RelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 collateralDeltaAmount,
+        uint256 srcChainId,
         IBaseOrderUtils.CreateOrderParams memory params, // can't use calldata because need to modify params.numbers.executionFee
         bool isSubaccount
     ) internal returns (bytes32) {
@@ -88,7 +89,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             bank: orderVault
         });
 
-        params.numbers.executionFee = _handleRelay(contracts, relayParams, account, address(contracts.bank), params.numbers.srcChainId);
+        params.numbers.executionFee = _handleRelay(contracts, relayParams, account, address(contracts.bank), srcChainId);
 
         if (
             params.orderType == Order.OrderType.MarketSwap ||
@@ -102,12 +103,12 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
                 params.addresses.initialCollateralToken,
                 address(contracts.bank),
                 collateralDeltaAmount,
-                params.numbers.srcChainId
+                srcChainId
             );
         }
 
         return
-            orderHandler.createOrder(account, params, isSubaccount && params.addresses.callbackContract != address(0));
+            orderHandler.createOrder(account, srcChainId, params, isSubaccount && params.addresses.callbackContract != address(0));
     }
 
     function _updateOrder(

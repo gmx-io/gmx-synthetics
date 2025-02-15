@@ -38,9 +38,9 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
     {
         _validateGaslessFeature();
         bytes32 structHash = RelayUtils.getCreateOrderStructHash(relayParams, collateralDeltaAmount, params);
-        _validateCall(relayParams, account, structHash, params.numbers.srcChainId);
+        _validateCall(relayParams, account, structHash, 0 /* srcChainId */);
 
-        return _createOrder(relayParams, account, collateralDeltaAmount, params, false);
+        return _createOrder(relayParams, account, 0 /* srcChainId */, collateralDeltaAmount, params, false);
     }
 
     // @note all params except account should be part of the corresponding struct hash

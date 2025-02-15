@@ -102,7 +102,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             collateralDeltaAmount,
             params
         );
-        _validateCall(relayParams, subaccount, structHash, params.numbers.srcChainId);
+        _validateCall(relayParams, subaccount, structHash, 0 /* srcChainId */);
         _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, subaccountApproval);
 
         if (params.addresses.receiver != account) {
@@ -113,7 +113,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             revert Errors.InvalidCancellationReceiverForSubaccountOrder(params.addresses.cancellationReceiver, account);
         }
 
-        return _createOrder(relayParams, account, collateralDeltaAmount, params, true);
+        return _createOrder(relayParams, account, 0 /* srcChainId */, collateralDeltaAmount, params, true);
     }
 
     // @note all params except subaccount should be part of the corresponding struct hash
@@ -327,8 +327,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
                     numbers.executionFee,
                     numbers.callbackGasLimit,
                     numbers.minOutputAmount,
-                    numbers.validFromTime,
-                    numbers.srcChainId
+                    numbers.validFromTime
                 )
             );
     }

@@ -38,6 +38,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
     // @param params BaseOrderUtils.CreateOrderParams
     function createOrder(
         address account,
+        uint256 srcChainId,
         IBaseOrderUtils.CreateOrderParams calldata params,
         bool shouldValidateMaxExecutionFee
     ) external override globalNonReentrant onlyController returns (bytes32) {
@@ -50,6 +51,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
             orderVault,
             referralStorage,
             account,
+            srcChainId,
             params,
             shouldValidateMaxExecutionFee
         );

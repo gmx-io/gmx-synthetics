@@ -64,6 +64,7 @@ library OrderUtils {
         OrderVault orderVault,
         IReferralStorage referralStorage,
         address account,
+        uint256 srcChainId,
         IBaseOrderUtils.CreateOrderParams memory params,
         bool shouldValidateMaxExecutionFee
     ) external returns (bytes32) {
@@ -153,7 +154,7 @@ library OrderUtils {
         order.setCallbackGasLimit(params.numbers.callbackGasLimit);
         order.setMinOutputAmount(params.numbers.minOutputAmount);
         order.setValidFromTime(params.numbers.validFromTime);
-        order.setSrcChainId(params.numbers.srcChainId);
+        order.setSrcChainId(srcChainId);
         order.setIsLong(params.isLong);
         order.setShouldUnwrapNativeToken(params.shouldUnwrapNativeToken);
         order.setAutoCancel(params.autoCancel);
@@ -167,13 +168,11 @@ library OrderUtils {
 
         CallbackUtils.validateCallbackGasLimit(dataStore, order.callbackGasLimit());
 
-        uint256 estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(dataStore, order);
-        uint256 oraclePriceCount = GasUtils.estimateOrderOraclePriceCount(params.addresses.swapPath.length);
         GasUtils.validateExecutionFee(
             dataStore,
-            estimatedGasLimit,
+            GasUtils.estimateExecuteOrderGasLimit(dataStore, order), // estimatedGasLimit
             order.executionFee(),
-            oraclePriceCount,
+            GasUtils.estimateOrderOraclePriceCount(params.addresses.swapPath.length), // oraclePriceCount
             shouldValidateMaxExecutionFee
         );
 
