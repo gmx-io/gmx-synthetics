@@ -98,7 +98,6 @@ export async function createGlvDeposit(fixture, overrides: any = {}) {
     shouldUnwrapNativeToken,
     executionFee,
     callbackGasLimit,
-    srcChainId,
     isMarketTokenDeposit,
     gasUsageLabel,
     dataList,
@@ -113,7 +112,7 @@ export async function createGlvDeposit(fixture, overrides: any = {}) {
 
   const txReceipt = await logGasUsage({
     tx: useGlvHandler
-      ? glvHandler.connect(sender).createGlvDeposit(account.address, params)
+      ? glvHandler.connect(sender).createGlvDeposit(account.address, srcChainId, params)
       : glvRouter.connect(account).createGlvDeposit(params),
     label: gasUsageLabel,
   });

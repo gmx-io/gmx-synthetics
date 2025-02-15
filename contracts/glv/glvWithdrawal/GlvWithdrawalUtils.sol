@@ -25,7 +25,6 @@ library GlvWithdrawalUtils {
         bool shouldUnwrapNativeToken;
         uint256 executionFee;
         uint256 callbackGasLimit;
-        uint256 srcChainId;
         bytes32[] dataList;
     }
 
@@ -73,6 +72,7 @@ library GlvWithdrawalUtils {
         EventEmitter eventEmitter,
         GlvVault glvVault,
         address account,
+        uint256 srcChainId,
         CreateGlvWithdrawalParams memory params
     ) external returns (bytes32) {
         AccountUtils.validateAccount(account);
@@ -116,7 +116,7 @@ library GlvWithdrawalUtils {
                 updatedAtTime: Chain.currentTimestamp(),
                 executionFee: params.executionFee,
                 callbackGasLimit: params.callbackGasLimit,
-                srcChainId: params.srcChainId
+                srcChainId: srcChainId
             }),
             GlvWithdrawal.Flags({shouldUnwrapNativeToken: params.shouldUnwrapNativeToken}),
             params.dataList
@@ -125,16 +125,12 @@ library GlvWithdrawalUtils {
         CallbackUtils.validateCallbackGasLimit(dataStore, params.callbackGasLimit);
 
         uint256 marketCount = GlvUtils.getGlvMarketCount(dataStore, glvWithdrawal.glv());
-        uint256 estimatedGasLimit = GasUtils.estimateExecuteGlvWithdrawalGasLimit(
+        GasUtils.validateExecutionFee(
             dataStore,
-            glvWithdrawal,
-            marketCount
+            GasUtils.estimateExecuteGlvWithdrawalGasLimit(dataStore, glvWithdrawal, marketCount), // estimatedGasLimit
+            params.executionFee,
+            GasUtils.estimateGlvWithdrawalOraclePriceCount(marketCount, params.addresses.longTokenSwapPath.length + params.addresses.shortTokenSwapPath.length) // oraclePriceCount
         );
-        uint256 oraclePriceCount = GasUtils.estimateGlvWithdrawalOraclePriceCount(
-            marketCount,
-            params.addresses.longTokenSwapPath.length + params.addresses.shortTokenSwapPath.length
-        );
-        GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, params.executionFee, oraclePriceCount);
 
         bytes32 key = NonceUtils.getNextKey(dataStore);
 

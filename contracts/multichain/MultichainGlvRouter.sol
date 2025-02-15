@@ -24,6 +24,7 @@ contract MultichainGlvRouter is MultichainRouter {
     function createGlvDeposit(
         RelayUtils.RelayParams calldata relayParams,
         address account,
+        uint256 srcChainId,
         RelayUtils.TransferRequest[] calldata transferRequests,
         GlvDepositUtils.CreateGlvDepositParams memory params
     ) external nonReentrant onlyGelatoRelay returns (bytes32) {
@@ -32,16 +33,17 @@ contract MultichainGlvRouter is MultichainRouter {
         }
 
         bytes32 structHash = RelayUtils.getCreateGlvDepositStructHash(relayParams, transferRequests, params);
-        _validateCall(relayParams, account, structHash, params.srcChainId);
+        _validateCall(relayParams, account, structHash, srcChainId);
 
-        _processTransferRequests(account, transferRequests, params.srcChainId);
+        _processTransferRequests(account, transferRequests, srcChainId);
 
-        return _createGlvDeposit(relayParams, account, params);
+        return _createGlvDeposit(relayParams, account, srcChainId, params);
     }
 
     function _createGlvDeposit(
         RelayUtils.RelayParams calldata relayParams,
         address account,
+        uint256 srcChainId,
         GlvDepositUtils.CreateGlvDepositParams memory params
     ) internal returns (bytes32) {
         Contracts memory contracts = Contracts({
@@ -56,15 +58,16 @@ contract MultichainGlvRouter is MultichainRouter {
             relayParams,
             account,
             address(glvVault),
-            params.srcChainId
+            srcChainId
         );
 
-        return glvHandler.createGlvDeposit(account, params);
+        return glvHandler.createGlvDeposit(account, srcChainId, params);
     }
 
     function createGlvWithdrawal(
         RelayUtils.RelayParams calldata relayParams,
         address account,
+        uint256 srcChainId,
         RelayUtils.TransferRequest[] calldata transferRequests,
         GlvWithdrawalUtils.CreateGlvWithdrawalParams memory params
     ) external nonReentrant onlyGelatoRelay returns (bytes32) {
@@ -73,16 +76,17 @@ contract MultichainGlvRouter is MultichainRouter {
         }
 
         bytes32 structHash = RelayUtils.getCreateGlvWithdrawalStructHash(relayParams, transferRequests, params);
-        _validateCall(relayParams, account, structHash, params.srcChainId);
+        _validateCall(relayParams, account, structHash, srcChainId);
 
-        _processTransferRequests(account, transferRequests, params.srcChainId);
+        _processTransferRequests(account, transferRequests, srcChainId);
 
-        return _createGlvWithdrawal(relayParams, account, params);
+        return _createGlvWithdrawal(relayParams, account, srcChainId, params);
     }
 
     function _createGlvWithdrawal(
         RelayUtils.RelayParams calldata relayParams,
         address account,
+        uint256 srcChainId,
         GlvWithdrawalUtils.CreateGlvWithdrawalParams memory params
     ) internal returns (bytes32) {
         Contracts memory contracts = Contracts({
@@ -97,7 +101,7 @@ contract MultichainGlvRouter is MultichainRouter {
             relayParams,
             account,
             address(glvVault), // residualFeeReceiver
-            params.srcChainId
+            srcChainId
         );
 
         return GlvWithdrawalUtils.createGlvWithdrawal(
@@ -105,6 +109,7 @@ contract MultichainGlvRouter is MultichainRouter {
             eventEmitter,
             glvVault,
             account,
+            srcChainId,
             params
         );
     }

@@ -82,7 +82,6 @@ export async function createGlvWithdrawal(fixture, overrides: any = {}) {
     shouldUnwrapNativeToken,
     executionFee,
     callbackGasLimit,
-    srcChainId,
     dataList,
   };
 
@@ -94,7 +93,7 @@ export async function createGlvWithdrawal(fixture, overrides: any = {}) {
 
   await logGasUsage({
     tx: useGlvHandler
-      ? glvHandler.connect(sender).createGlvWithdrawal(account.address, params)
+      ? glvHandler.connect(sender).createGlvWithdrawal(account.address, srcChainId, params)
       : glvRouter.connect(account).createGlvWithdrawal(params),
     label: gasUsageLabel,
   });
