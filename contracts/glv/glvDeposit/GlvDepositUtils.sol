@@ -19,7 +19,6 @@ library GlvDepositUtils {
         uint256 minGlvTokens;
         uint256 executionFee;
         uint256 callbackGasLimit;
-        uint256 srcChainId;
         bool shouldUnwrapNativeToken;
         bool isMarketTokenDeposit;
         bytes32[] dataList;
@@ -61,6 +60,7 @@ library GlvDepositUtils {
         EventEmitter eventEmitter,
         GlvVault glvVault,
         address account,
+        uint256 srcChainId,
         CreateGlvDepositParams memory params
     ) external returns (bytes32) {
         AccountUtils.validateAccount(account);
@@ -156,7 +156,7 @@ library GlvDepositUtils {
                 updatedAtTime: Chain.currentTimestamp(),
                 executionFee: params.executionFee,
                 callbackGasLimit: params.callbackGasLimit,
-                srcChainId: params.srcChainId
+                srcChainId: srcChainId
             }),
             GlvDeposit.Flags({
                 shouldUnwrapNativeToken: params.shouldUnwrapNativeToken,

@@ -36,12 +36,13 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
 
     function createGlvDeposit(
         address account,
+        uint256 srcChainId,
         GlvDepositUtils.CreateGlvDepositParams calldata params
     ) external globalNonReentrant onlyController returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createGlvDepositFeatureDisabledKey(address(this)));
         validateDataListLength(params.dataList.length);
 
-        return GlvDepositUtils.createGlvDeposit(dataStore, eventEmitter, glvVault, account, params);
+        return GlvDepositUtils.createGlvDeposit(dataStore, eventEmitter, glvVault, account, srcChainId, params);
     }
 
     // @key glvDeposit key
@@ -133,12 +134,13 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
 
     function createGlvWithdrawal(
         address account,
+        uint256 srcChainId,
         GlvWithdrawalUtils.CreateGlvWithdrawalParams calldata params
     ) external globalNonReentrant onlyController returns (bytes32) {
         DataStore _dataStore = dataStore;
         FeatureUtils.validateFeature(_dataStore, Keys.createGlvWithdrawalFeatureDisabledKey(address(this)));
 
-        return GlvWithdrawalUtils.createGlvWithdrawal(_dataStore, eventEmitter, glvVault, account, params);
+        return GlvWithdrawalUtils.createGlvWithdrawal(_dataStore, eventEmitter, glvVault, account, srcChainId, params);
     }
 
     // @key glvDeposit key
