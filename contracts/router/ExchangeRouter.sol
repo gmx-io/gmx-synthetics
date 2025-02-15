@@ -258,6 +258,7 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
 
         return orderHandler.createOrder(
             account,
+            0, // srcChainId
             params,
             false
         );

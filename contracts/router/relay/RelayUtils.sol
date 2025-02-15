@@ -278,8 +278,7 @@ library RelayUtils {
                     numbers.executionFee,
                     numbers.callbackGasLimit,
                     numbers.minOutputAmount,
-                    numbers.validFromTime,
-                    numbers.srcChainId
+                    numbers.validFromTime
                 )
             );
     }
