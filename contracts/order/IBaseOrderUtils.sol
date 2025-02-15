@@ -55,6 +55,5 @@ interface IBaseOrderUtils {
         uint256 callbackGasLimit;
         uint256 minOutputAmount;
         uint256 validFromTime;
-        uint256 srcChainId;
     }
 }

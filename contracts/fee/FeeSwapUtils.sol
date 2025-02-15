@@ -130,8 +130,7 @@ library FeeSwapUtils {
             executionFee, // executionFee
             maxCallbackGasLimit, // callbackGasLimit
             minOut, // minOutputAmount
-            0, // validFromTime
-            0 // srcChainId
+            0 // validFromTime
         );
 
         IBaseOrderUtils.CreateOrderParams memory params = IBaseOrderUtils.CreateOrderParams(
