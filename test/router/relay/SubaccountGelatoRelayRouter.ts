@@ -168,6 +168,22 @@ describe("SubaccountGelatoRelayRouter", () => {
       );
     });
 
+    it("NonEmptyExternalCallsForSubaccountOrder", async () => {
+      await enableSubaccount();
+
+      await expect(
+        sendCreateOrder({
+          ...createOrderParams,
+          externalCalls: {
+            externalCallTargets: [user0.address],
+            externalCallDataList: ["0x"],
+            refundTokens: [],
+            refundReceivers: [],
+          },
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "NonEmptyExternalCallsForSubaccountOrder");
+    });
+
     it("InsufficientExecutionFee", async () => {
       await enableSubaccount();
 
@@ -677,6 +693,29 @@ describe("SubaccountGelatoRelayRouter", () => {
       ).to.be.revertedWithCustomError(errorsContract, "SubaccountNotAuthorized");
     });
 
+    it("NonEmptyExternalCallsForSubaccountOrder", async () => {
+      await enableSubaccount();
+      createOrderParams.feeParams.feeAmount = expandDecimals(1, 15);
+      // set callback to 0 so estimation execution fee is 0
+      createOrderParams.params.numbers.callbackGasLimit = 0;
+      await sendCreateOrder(createOrderParams);
+
+      const orderKeys = await getOrderKeys(dataStore, 0, 1);
+
+      await expect(
+        sendUpdateOrder({
+          ...updateOrderParams,
+          externalCalls: {
+            externalCallTargets: [user0.address],
+            externalCallDataList: ["0x"],
+            refundTokens: [],
+            refundReceivers: [],
+          },
+          key: orderKeys[0],
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "NonEmptyExternalCallsForSubaccountOrder");
+    });
+
     it("signature is valid", async () => {
       await expect(
         sendUpdateOrder(updateOrderParams)
@@ -811,7 +850,6 @@ describe("SubaccountGelatoRelayRouter", () => {
         account: user1.address,
         subaccount: user0.address,
         key: ethers.constants.HashZero,
-        userNonce: 0,
         deadline: 9999999999,
         relayRouter: subaccountGelatoRelayRouter,
         chainId,
@@ -851,6 +889,29 @@ describe("SubaccountGelatoRelayRouter", () => {
       ).to.be.revertedWithCustomError(errorsContract, "SubaccountNotAuthorized");
     });
 
+    it("NonEmptyExternalCallsForSubaccountOrder", async () => {
+      await enableSubaccount();
+      createOrderParams.feeParams.feeAmount = expandDecimals(1, 15);
+      // set callback to 0 so estimation execution fee is 0
+      createOrderParams.params.numbers.callbackGasLimit = 0;
+      await sendCreateOrder(createOrderParams);
+
+      const orderKeys = await getOrderKeys(dataStore, 0, 1);
+
+      await expect(
+        sendCancelOrder({
+          ...cancelOrderParams,
+          externalCalls: {
+            externalCallTargets: [user0.address],
+            externalCallDataList: ["0x"],
+            refundTokens: [],
+            refundReceivers: [],
+          },
+          key: orderKeys[0],
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "NonEmptyExternalCallsForSubaccountOrder");
+    });
+
     it("signature is valid", async () => {
       await expect(
         sendCancelOrder(cancelOrderParams)
@@ -877,7 +938,6 @@ describe("SubaccountGelatoRelayRouter", () => {
         chainId,
         relayFeeToken: wnt.address,
         relayFeeAmount: expandDecimals(1, 15),
-        userNonce: 0,
         deadline: 9999999999,
       };
     });

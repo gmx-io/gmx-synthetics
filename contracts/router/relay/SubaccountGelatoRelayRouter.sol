@@ -75,7 +75,9 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         IOrderHandler _orderHandler,
         OrderVault _orderVault,
         IExternalHandler _externalHandler
-    ) BaseGelatoRelayRouter(_router, _dataStore, _eventEmitter, _oracle, _orderHandler, _orderVault, _externalHandler) {}
+    )
+        BaseGelatoRelayRouter(_router, _dataStore, _eventEmitter, _oracle, _orderHandler, _orderVault, _externalHandler)
+    {}
 
     // @note all params except subaccount should be part of the corresponding struct hash
     function createOrder(
@@ -125,7 +127,14 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         bool increaseExecutionFee
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelay {
         _validateGaslessFeature();
-        bytes32 structHash = _getUpdateOrderStructHash(relayParams, subaccountApproval, account, key, params, increaseExecutionFee);
+        bytes32 structHash = _getUpdateOrderStructHash(
+            relayParams,
+            subaccountApproval,
+            account,
+            key,
+            params,
+            increaseExecutionFee
+        );
         _validateCall(relayParams, subaccount, structHash);
         _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, subaccountApproval);
         _updateOrder(relayParams, account, key, params, increaseExecutionFee, true);
@@ -143,7 +152,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         bytes32 structHash = _getCancelOrderStructHash(relayParams, subaccountApproval, account, key);
         _validateCall(relayParams, subaccount, structHash);
         _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, subaccountApproval);
-        _cancelOrder(relayParams, account, key);
+        _cancelOrder(relayParams, account, key, true);
     }
 
     // @note all params except account should be part of the corresponding struct hash
@@ -161,7 +170,13 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             eventEmitter: eventEmitter,
             orderVault: orderVault
         });
-        _handleRelay(contracts, relayParams, account, account);
+        _handleRelay(
+            contracts,
+            relayParams,
+            account,
+            account,
+            false // isSubaccount is false because the `removeSubaccount` call is signed by the main account
+        );
 
         SubaccountUtils.removeSubaccount(dataStore, eventEmitter, account, subaccount);
     }
