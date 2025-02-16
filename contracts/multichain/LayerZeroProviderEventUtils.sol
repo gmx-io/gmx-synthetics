@@ -44,31 +44,4 @@ library LayerZeroProviderEventUtils {
 
         eventEmitter.emitEventLog1("MessageComposedReceived", Cast.toBytes32(account), eventData);
     }
-
-    function emitWithdrawalReceipt(
-        EventEmitter eventEmitter,
-        uint256 srcChainId,
-        address account,
-        bytes32 guid,
-        uint64 nonce,
-        uint256 nativeFee,
-        uint256 lzTokenFee,
-        uint256 amountSentLD,
-        uint256 amountReceivedLD
-    ) internal {
-        EventUtils.EventLogData memory eventData;
-        
-        eventData.uintItems.initItems(6);
-        eventData.uintItems.setItem(0, "nonce", uint256(nonce));
-        eventData.uintItems.setItem(1, "nativeFee", nativeFee);
-        eventData.uintItems.setItem(2, "lzTokenFee", lzTokenFee);
-        eventData.uintItems.setItem(3, "amountSentLD", amountSentLD);
-        eventData.uintItems.setItem(4, "amountReceivedLD", amountReceivedLD);
-        eventData.uintItems.setItem(5, "srcChainId", srcChainId);
-
-        eventData.bytes32Items.initItems(1);
-        eventData.bytes32Items.setItem(0, "guid", guid);
-        
-        eventEmitter.emitEventLog1("WithdrawalReceipt", Cast.toBytes32(account), eventData);
-    }
 }
