@@ -188,7 +188,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             revert Errors.InvalidSubaccountApprovalSubaccount();
         }
 
-        if (subaccountApproval.deadline > 0 && block.timestamp > subaccountApproval.deadline) {
+        if (block.timestamp > subaccountApproval.deadline) {
             revert Errors.SubaccountApprovalDeadlinePassed(block.timestamp, subaccountApproval.deadline);
         }
 
