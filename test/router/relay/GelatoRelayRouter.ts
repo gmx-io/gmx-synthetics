@@ -411,7 +411,7 @@ describe("GelatoRelayRouter", () => {
       expect(swapInfoLog.parsedEventData.amountIn.sub(swapInfoLog.parsedEventData.amountInAfterFees)).eq(
         applyFactor(swapInfoLog.parsedEventData.amountIn, atomicSwapFeeFactor)
       );
-      expect(swapFeesCollectedLog.parsedEventData.swapFeeType).eq(keys.ATOMIC_SWAP_FEE_FACTOR);
+      expect(swapFeesCollectedLog.parsedEventData.swapFeeType).eq(keys.ATOMIC_SWAP_FEE_TYPE);
 
       await logGasUsage({
         tx,
