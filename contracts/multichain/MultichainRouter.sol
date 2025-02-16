@@ -59,4 +59,10 @@ contract MultichainRouter is GelatoRelayRouter {
             MultichainUtils.recordTransferIn(dataStore, eventEmitter, multichainVault, wnt, account, srcChainId);
         }
     }
+
+    function _validateDesChainId(uint256 desChainId) internal view {
+        if (desChainId != block.chainid) {
+            revert Errors.InvalidDestinationChainId();
+        }
+    }
 }

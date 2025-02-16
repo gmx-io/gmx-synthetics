@@ -39,9 +39,7 @@ contract MultichainGmRouter is MultichainRouter {
         RelayUtils.TransferRequest[] calldata transferRequests,
         DepositUtils.CreateDepositParams memory params // can't use calldata because need to modify params.numbers.executionFee
     ) external nonReentrant onlyGelatoRelay returns (bytes32) {
-        if (relayParams.desChainId != block.chainid) {
-            revert Errors.InvalidDestinationChainId();
-        }
+        _validateDesChainId(relayParams.desChainId);
 
         bytes32 structHash = RelayUtils.getCreateDepositStructHash(relayParams, transferRequests, params);
         _validateCall(relayParams, account, structHash, srcChainId);
@@ -82,9 +80,7 @@ contract MultichainGmRouter is MultichainRouter {
         RelayUtils.TransferRequest[] calldata transferRequests,
         WithdrawalUtils.CreateWithdrawalParams memory params // can't use calldata because need to modify params.addresses.receiver & params.numbers.executionFee
     ) external nonReentrant onlyGelatoRelay returns (bytes32) {
-        if (relayParams.desChainId != block.chainid) {
-            revert Errors.InvalidDestinationChainId();
-        }
+        _validateDesChainId(relayParams.desChainId);
 
         bytes32 structHash = RelayUtils.getCreateWithdrawalStructHash(relayParams, transferRequests, params);
         _validateCall(relayParams, account, structHash, srcChainId);
@@ -124,9 +120,7 @@ contract MultichainGmRouter is MultichainRouter {
         RelayUtils.TransferRequest[] calldata transferRequests,
         ShiftUtils.CreateShiftParams memory params
     ) external nonReentrant onlyGelatoRelay returns (bytes32) {
-        if (relayParams.desChainId != block.chainid) {
-            revert Errors.InvalidDestinationChainId();
-        }
+        _validateDesChainId(relayParams.desChainId);
 
         bytes32 structHash = RelayUtils.getCreateShiftStructHash(relayParams, transferRequests, params);
         _validateCall(relayParams, account, structHash, srcChainId);
