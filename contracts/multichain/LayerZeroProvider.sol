@@ -6,26 +6,29 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { ILayerZeroComposer } from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/ILayerZeroComposer.sol";
 
-import { EventEmitter } from "../event/EventEmitter.sol";
-import { DataStore } from "../data/DataStore.sol";
+import "../event/EventEmitter.sol";
+import "../data/DataStore.sol";
 
-import { IMultichainProvider } from "./IMultichainProvider.sol";
-import { MultichainVault } from "./MultichainVault.sol";
-import { MultichainUtils } from "./MultichainUtils.sol";
-import { MultichainProviderUtils } from "./MultichainProviderUtils.sol";
-import { LayerZeroProviderEventUtils } from "./LayerZeroProviderEventUtils.sol";
+import "./IMultichainProvider.sol";
+import "./MultichainVault.sol";
+import "./MultichainUtils.sol";
+import "./MultichainEventUtils.sol";
+import "./MultichainProviderUtils.sol";
+import "./LayerZeroProviderEventUtils.sol";
 
 /**
  * @title LayerZeroProvider
- * Receives tokens and messages from source chains.
+ * Receives tokens + encoded message from a source chain and bridges tokens back to a source chain.
  * Defines lzCompose function which:
  *  - is called by the Stargate executor after tokens are delivered to this contract
  *  - forwards the received tokens to MultichainVault and increases user's multichain balance
+ * Defines bridgeOut function which:
+ * - sends tokens to the Stargate executor for bridging out to the source chain
  */
 contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer {
-    DataStore public dataStore;
-    EventEmitter public eventEmitter;
-    MultichainVault public multichainVault;
+    DataStore public immutable dataStore;
+    EventEmitter public immutable eventEmitter;
+    MultichainVault public immutable multichainVault;
 
     constructor(DataStore _dataStore, EventEmitter _eventEmitter, MultichainVault _multichainVault) {
         dataStore = _dataStore;
@@ -62,6 +65,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer {
 
         MultichainUtils.recordTransferIn(dataStore, eventEmitter, multichainVault, token, account, srcChainId);
 
+        // TODO: check what LZ contract already emits --> if it already emits the fields bellow, remove this event
         LayerZeroProviderEventUtils.emitComposedMessageReceived(
             eventEmitter,
             srcChainId,
@@ -72,10 +76,80 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer {
             executor,
             extraData
         );
+
+        MultichainEventUtils.emitBridgeIn(
+            eventEmitter,
+            token,
+            account,
+            srcChainId
+        );
     }
 
     function _transferToVault(address token, address to) private {
         uint256 amount = IERC20(token).balanceOf(address(this));
         IERC20(token).transfer(to, amount);
     }
+
+    function bridgeOut(
+        address _stargate,
+        uint32 _dstEid,
+        address account,
+        address token,
+        uint256 amount
+    ) external {
+        IERC20(token).approve(_stargate, amount);
+
+        // IStargate stargate = IStargate(_stargate);
+
+        // (uint256 valueToSend, SendParam memory sendParam, MessagingFee memory messagingFee) = prepareSend(
+        //     stargate,
+        //     amount,
+        //     account,
+        //     _dstEid,
+        //     new bytes(0), // _extraOptions
+        //     new bytes(0) // _composeMsg
+        // );
+
+        // (MessagingReceipt memory msgReceipt, OFTReceipt memory oftReceipt) = stargate.send{value: valueToSend}(
+        //     sendParam,
+        //     messagingFee,
+        //     account
+        // );
+
+        MultichainEventUtils.emitBridgeOut(
+            eventEmitter,
+            account,
+            token,
+            amount
+        );
+    }
+
+    // function prepareSend(
+    //     IStargate stargate,
+    //     uint256 amount,
+    //     address receiver,
+    //     uint32 _dstEid,
+    //     bytes memory _composeMsg,
+    //     bytes memory _extraOptions
+    // ) private view returns (uint256 valueToSend, SendParam memory sendParam, MessagingFee memory messagingFee) {
+    //     sendParam = SendParam({
+    //         dstEid: _dstEid,
+    //         to: addressToBytes32(receiver),
+    //         amountLD: amount,
+    //         minAmountLD: amount,
+    //         extraOptions: _extraOptions,
+    //         composeMsg: _composeMsg,
+    //         oftCmd: ""
+    //     });
+
+    //     (, , OFTReceipt memory receipt) = stargate.quoteOFT(sendParam);
+    //     sendParam.minAmountLD = receipt.amountReceivedLD;
+
+    //     messagingFee = stargate.quoteSend(sendParam, false);
+    //     valueToSend = messagingFee.nativeFee;
+
+    //     if (stargate.token() == address(0x0)) {
+    //         valueToSend += sendParam.amountLD;
+    //     }
+    // }
 }
