@@ -13,6 +13,24 @@ library MultichainEventUtils {
     using EventUtils for EventUtils.AddressItems;
     using EventUtils for EventUtils.UintItems;
 
+    function emitBridgeIn(
+        EventEmitter eventEmitter,
+        address token,
+        address account,
+        uint256 srcChainId
+    ) internal {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "token", token);
+        eventData.addressItems.setItem(1, "account", account);
+
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "srcChainId", srcChainId);
+
+        eventEmitter.emitEventLog1("BridgeIn", Cast.toBytes32(account), eventData);
+    }
+
     function emitMultichainTransferIn(
         EventEmitter eventEmitter,
         address token,
@@ -32,21 +50,23 @@ library MultichainEventUtils {
 
         eventEmitter.emitEventLog1("MultichainTransferIn", Cast.toBytes32(account), eventData);
     }
-
-    function emitMultichainMessage(
+   
+    function emitBridgeOut(
         EventEmitter eventEmitter,
         address account,
-        uint256 srcChainId
+        address token,
+        uint256 amount
     ) internal {
         EventUtils.EventLogData memory eventData;
 
-        eventData.addressItems.initItems(1);
+        eventData.addressItems.initItems(2);
         eventData.addressItems.setItem(0, "account", account);
+        eventData.addressItems.setItem(1, "token", token);
 
         eventData.uintItems.initItems(1);
-        eventData.uintItems.setItem(0, "srcChainId", srcChainId);
+        eventData.uintItems.setItem(0, "amount", amount);
 
-        eventEmitter.emitEventLog1("MultichainMessage", Cast.toBytes32(account), eventData);
+        eventEmitter.emitEventLog1("BridgeOut", Cast.toBytes32(account), eventData);
     }
 
     function emitMultichainTransferOut(

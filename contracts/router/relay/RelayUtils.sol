@@ -63,6 +63,12 @@ library RelayUtils {
         uint256 amount;
     }
 
+    struct BridgeOutParams {
+        address token;
+        address account;
+        uint256 amount;
+    }
+
     //////////////////// ORDER ////////////////////
 
     bytes32 public constant UPDATE_ORDER_TYPEHASH =
@@ -186,6 +192,20 @@ library RelayUtils {
 
     bytes32 public constant TRANSFER_REQUEST_TYPEHASH =
         keccak256(bytes("TransferRequest(address token,address receiver,uint256 amount)"));
+
+    bytes32 public constant BRIDGE_OUT_TYPEHASH =
+        keccak256(
+            bytes(
+                "BridgeOut(BridgeOutParams params,bytes32 relayParams)BridgeOutParams(address token,uint256 amount)"
+            )
+        );
+
+    bytes32 public constant BRIDGE_OUT_PARAMS_TYPEHASH =
+        keccak256(
+            bytes(
+                "BridgeOutParams(address token,uint256 amount)"
+            )
+        );
 
     //////////////////// ORDER ////////////////////
 
@@ -547,5 +567,32 @@ library RelayUtils {
             hashes[i] = _getTransferRequestStructHash(requests[i]);
         }
         return keccak256(abi.encodePacked(hashes));
+    }
+
+    function getBridgeOutStructHash(
+        RelayParams calldata relayParams,
+        BridgeOutParams memory params
+    ) external pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    BRIDGE_OUT_TYPEHASH,
+                    _getBridgeOutParamsStructHash(params),
+                    _getRelayParamsHash(relayParams)
+                )
+            );
+    }
+
+    function _getBridgeOutParamsStructHash(
+        BridgeOutParams memory params
+    ) internal pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    BRIDGE_OUT_PARAMS_TYPEHASH,
+                    params.token,
+                    params.amount
+                )
+            );
     }
 }

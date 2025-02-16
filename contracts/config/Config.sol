@@ -582,6 +582,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.DATA_STREAM_SPREAD_REDUCTION_FACTOR] = true;
 
         allowedBaseKeys[Keys.MULTICHAIN_BALANCE] = true;
+        allowedBaseKeys[Keys.IS_MULTICHAIN_PROVIDER_ENABLED] = true;
 
         allowedBaseKeys[Keys.MAX_DATA_LENGTH] = true;
     }

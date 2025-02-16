@@ -479,6 +479,8 @@ library Keys {
 
     // @dev key for user's multichain balance
     bytes32 public constant MULTICHAIN_BALANCE = keccak256(abi.encode("MULTICHAIN_BALANCE"));
+    // @dev key for user's multichain balance
+    bytes32 public constant IS_MULTICHAIN_PROVIDER_ENABLED = keccak256(abi.encode("IS_MULTICHAIN_PROVIDER_ENABLED"));
 
     // @dev key for the maximum length for data list array of bytes32
     bytes32 public constant MAX_DATA_LENGTH = keccak256(abi.encode("MAX_DATA_LENGTH"));
@@ -2132,6 +2134,16 @@ library Keys {
         return keccak256(abi.encode(
             BUYBACK_MAX_PRICE_IMPACT_FACTOR,
             token
+        ));
+    }
+
+    // @dev key for whether a multichain provider is enabled
+    // @param provider the multichain provider
+    // @return key for whether a multichain provider is enabled
+    function isMultichainProviderEnabledKey(address provider) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            IS_MULTICHAIN_PROVIDER_ENABLED,
+            provider
         ));
     }
 
