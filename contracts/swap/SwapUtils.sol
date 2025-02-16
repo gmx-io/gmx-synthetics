@@ -246,7 +246,7 @@ library SwapUtils {
         );
 
         bytes32 swapFeeType = params.swapPricingType == ISwapPricingUtils.SwapPricingType.Atomic
-            ? Keys.ATOMIC_SWAP_FEE_FACTOR
+            ? Keys.ATOMIC_SWAP_FEE_TYPE
             : Keys.SWAP_FEE_TYPE;
 
         FeeUtils.incrementClaimableFeeAmount(
