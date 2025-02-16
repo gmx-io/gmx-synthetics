@@ -38,7 +38,6 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
     bytes32 public constant synapseRouterKey = keccak256(abi.encode("SYNAPSE_ROUTER"));
     bytes32 public constant feeGlpTrackerKey = keccak256(abi.encode("FEE_GLP_TRACKER"));
     bytes32 public constant chainlinkKey = keccak256(abi.encode("CHAINLINK"));
-    bytes32 public constant feeDistributorVaultKey = keccak256(abi.encode("FEE_DISTRIBUTOR_VAULT"));
 
     FeeDistributorVault public immutable feeDistributorVault;
     FeeHandler public immutable feeHandler;
@@ -76,12 +75,11 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         for (uint256 i; i < chainCount; i++) {
             uint256 chainId = chainIds[i];
             address gmx = getAddress(Keys.feeDistributorAddressInfoKey(chainId, gmxKey));
-            address feeReceiver = getAddress(Keys.feeDistributorAddressInfoKey(chainId, Keys.FEE_RECEIVER));
             address extendedGmxTracker = getAddress(Keys.feeDistributorAddressInfoKey(chainId, extendedGmxTrackerKey));
 
             if (chainId == block.chainid) {
                 uint256 feeAmount = getUint(Keys.withdrawableBuybackTokenAmountKey(gmx)) +
-                    IERC20(gmx).balanceOf(feeReceiver);
+                    IERC20(gmx).balanceOf(address(feeDistributorVault));
                 uint256 stakedGmx = IERC20(extendedGmxTracker).totalSupply();
                 setUint(Keys.feeDistributorFeeAmountKey(chainId), feeAmount);
                 setUint(Keys.feeDistributorStakedGmxKey(chainId), stakedGmx);
@@ -105,7 +103,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
             readRequestsInputs[readRequestIndex].target = gmx;
             readRequestsInputs[readRequestIndex].callData = abi.encodeWithSelector(
                 IERC20.balanceOf.selector,
-                feeReceiver
+                getAddress(Keys.feeDistributorAddressInfoKey(chainId, Keys.FEE_RECEIVER))
             );
             readRequestIndex++;
 
@@ -285,12 +283,11 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         // buffer to determine the minimum acceptable fee amount that's allowed in case of any further deviations
         uint256 requiredFeeAmount = (totalFeeAmount * stakedGmx[currentChain]) / totalStakedGmx;
         uint256 pendingFeeBridgeAmount = requiredFeeAmount - feeAmountCurrentChainOrig;
-        uint256 slippageFactor = Precision.FLOAT_PRECISION -
-            getUint(Keys.feeDistributorMaxBridgeSlippageKey(currentChain));
-        uint256 pendingFeeBridgeMinAmount = Precision.applyFactor(pendingFeeBridgeAmount, slippageFactor);
+        uint256 slippageFactor = getUint(Keys.feeDistributorBridgeSlippageFactorKey(currentChain));
         uint256 minFeeReceived = pendingFeeBridgeAmount == 0
             ? 0
-            : Precision.applyFactor(pendingFeeBridgeMinAmount, getUint(Keys.FEE_DISTRIBUTOR_FEE_BUFFER_FACTOR));
+            : Precision.applyFactor(pendingFeeBridgeAmount, slippageFactor) -
+                getUint(Keys.FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_AMOUNT);
         uint256 minRequiredFeeAmount = feeAmountCurrentChainOrig + minFeeReceived;
 
         if (minRequiredFeeAmount > feeAmountCurrentChain) {
@@ -348,7 +345,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
                         // the surplus chain is now fully used up
                         difference[surplusIndex] = 0;
                     } else {
-                        // otherwise, the needed amount of GMX for the deficit chain can be fully covered
+                        // otherwise the needed amount of GMX for the deficit chain can be fully covered
                         bridging[surplusIndex][deficitIndex] += uint256(needed);
 
                         // reduce the surplus by exactly the needed amount
@@ -384,8 +381,9 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
                     uint256 minAmountOut = Precision.applyFactor(sendAmount, slippageFactor);
 
                     // using the origin and destination deadline delays that the synapse front-end seems to use
-                    uint256 originDeadline = block.timestamp + 600;
-                    uint256 destDeadline = block.timestamp + 604800;
+                    uint256 originDeadline = block.timestamp +
+                        getUint(Keys.feeDistributorBridgeOriginDeadline(block.chainid));
+                    uint256 destDeadline = block.timestamp + getUint(Keys.feeDistributorBridgeDestDeadline(chainId));
                     bytes memory rawParams = "";
 
                     // it seems on the synapse front-end a small slippage amount is used for the sending chain, here no slippage is assumed
@@ -499,10 +497,10 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
     }
 
     function validateDistributionNotCompleted() internal view {
-        uint256 dayOfWeek = ((block.timestamp / 86400) + 4) % 7;
+        uint256 dayOfWeek = ((block.timestamp / 1 weeks) + 4) % 7;
         uint256 daysSinceStartOfWeek = (dayOfWeek + 7 - getUint(Keys.FEE_DISTRIBUTOR_DISTRIBUTION_DAY)) % 7;
-        uint256 midnightToday = (block.timestamp - (block.timestamp % 86400));
-        uint256 startOfWeek = midnightToday - (daysSinceStartOfWeek * 86400);
+        uint256 midnightToday = (block.timestamp - (block.timestamp % 1 weeks));
+        uint256 startOfWeek = midnightToday - (daysSinceStartOfWeek * 1 weeks);
         uint256 lastDistributionTime = getUint(Keys.FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP);
         if (lastDistributionTime > startOfWeek) {
             revert Errors.FeeDistributionAlreadyCompleted(lastDistributionTime, startOfWeek);

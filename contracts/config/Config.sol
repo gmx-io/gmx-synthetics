@@ -549,6 +549,20 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.BUYBACK_MAX_PRICE_AGE] = true;
 
         allowedBaseKeys[Keys.DATA_STREAM_SPREAD_REDUCTION_FACTOR] = true;
+
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_DISTRIBUTION_DAY] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_CHAIN_ID] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_FACTOR] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_AMOUNT] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_ADDRESS_INFO] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_AMOUNT_THRESHOLD] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_KEEPER_COSTS] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_KEEPER_GLP_FACTOR] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_CHAINLINK_FACTOR] = true;
     }
 
     function _initAllowedLimitedBaseKeys() internal {
