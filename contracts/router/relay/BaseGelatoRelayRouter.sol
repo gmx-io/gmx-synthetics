@@ -187,7 +187,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             params.validFromTime,
             params.autoCancel,
             order,
-            isSubaccount && order.callbackContract() != address(0)
+            isSubaccount && order.callbackContract() != address(0) && increaseExecutionFee
         );
     }
 
