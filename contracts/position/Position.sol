@@ -198,7 +198,7 @@ library Position {
     // @param collateralToken the position's collateralToken
     // @param isLong whether the position is long or short
     // @return the position key
-    function getPositionKey(address _account, address _market, address _collateralToken, bool _isLong/*, uint256 _chainId*/) internal pure returns (bytes32) {
+    function getPositionKey(address _account, address _market, address _collateralToken, bool _isLong) internal pure returns (bytes32) {
         bytes32 _key = keccak256(abi.encode(_account, _market, _collateralToken, _isLong));
 
         return _key;
