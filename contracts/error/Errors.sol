@@ -434,6 +434,7 @@ library Errors {
     error EmptyMultichainTransferOutAmount();
     error InsufficientMultichainBalance();
     error InvalidDestinationChainId();
+    error InvalidMultichainProvider(address provider);
 
     enum SignatureType {
         Call,
