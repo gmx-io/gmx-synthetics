@@ -54,8 +54,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         _validateGaslessFeature();
 
         bytes32 structHash = RelayUtils.getUpdateOrderStructHash(relayParams, key, params, increaseExecutionFee);
-        Order.Props memory order = OrderStoreUtils.get(dataStore, key);
-        _validateCall(relayParams, account, structHash, order.srcChainId());
+        _validateCall(relayParams, account, structHash, 0 /* srcChainId */);
 
         _updateOrder(relayParams, account, key, params, increaseExecutionFee, false);
     }
@@ -69,8 +68,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         _validateGaslessFeature();
 
         bytes32 structHash = RelayUtils.getCancelOrderStructHash(relayParams, key);
-        Order.Props memory order = OrderStoreUtils.get(dataStore, key);
-        _validateCall(relayParams, account, structHash, order.srcChainId());
+        _validateCall(relayParams, account, structHash, 0 /* srcChainId */);
 
         _cancelOrder(relayParams, account, key);
     }

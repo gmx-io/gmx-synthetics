@@ -41,13 +41,13 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     bytes32 public constant CREATE_ORDER_TYPEHASH =
         keccak256(
             bytes(
-                "CreateOrder(uint256 collateralDeltaAmount,address account,CreateOrderAddresses addresses,CreateOrderNumbers numbers,uint256 orderType,uint256 decreasePositionSwapType,bool isLong,bool shouldUnwrapNativeToken,bool autoCancel,bytes32 referralCode,bytes32 relayParams,bytes32 subaccountApproval)CreateOrderAddresses(address receiver,address cancellationReceiver,address callbackContract,address uiFeeReceiver,address market,address initialCollateralToken,address[] swapPath)CreateOrderNumbers(uint256 sizeDeltaUsd,uint256 initialCollateralDeltaAmount,uint256 triggerPrice,uint256 acceptablePrice,uint256 executionFee,uint256 callbackGasLimit,uint256 minOutputAmount,uint256 validFromTime,uint256 srcChainId)"
+                "CreateOrder(uint256 collateralDeltaAmount,address account,CreateOrderAddresses addresses,CreateOrderNumbers numbers,uint256 orderType,uint256 decreasePositionSwapType,bool isLong,bool shouldUnwrapNativeToken,bool autoCancel,bytes32 referralCode,bytes32 relayParams,bytes32 subaccountApproval)CreateOrderAddresses(address receiver,address cancellationReceiver,address callbackContract,address uiFeeReceiver,address market,address initialCollateralToken,address[] swapPath)CreateOrderNumbers(uint256 sizeDeltaUsd,uint256 initialCollateralDeltaAmount,uint256 triggerPrice,uint256 acceptablePrice,uint256 executionFee,uint256 callbackGasLimit,uint256 minOutputAmount,uint256 validFromTime)"
             )
         );
     bytes32 public constant CREATE_ORDER_NUMBERS_TYPEHASH =
         keccak256(
             bytes(
-                "CreateOrderNumbers(uint256 sizeDeltaUsd,uint256 initialCollateralDeltaAmount,uint256 triggerPrice,uint256 acceptablePrice,uint256 executionFee,uint256 callbackGasLimit,uint256 minOutputAmount,uint256 validFromTime,uint256 srcChainId)"
+                "CreateOrderNumbers(uint256 sizeDeltaUsd,uint256 initialCollateralDeltaAmount,uint256 triggerPrice,uint256 acceptablePrice,uint256 executionFee,uint256 callbackGasLimit,uint256 minOutputAmount,uint256 validFromTime)"
             )
         );
     bytes32 public constant CREATE_ORDER_ADDRESSES_TYPEHASH =
@@ -65,7 +65,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         );
 
     bytes32 public constant REMOVE_SUBACCOUNT_TYPEHASH =
-        keccak256(bytes("RemoveSubaccount(address subaccount,uint256 srcChainId,bytes32 relayParams)"));
+        keccak256(bytes("RemoveSubaccount(address subaccount,bytes32 relayParams)"));
 
     mapping(address => uint256) public subaccountApprovalNonces;
 
@@ -129,8 +129,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         _validateGaslessFeature();
 
         bytes32 structHash = _getUpdateOrderStructHash(relayParams, subaccountApproval, account, key, params, increaseExecutionFee);
-        Order.Props memory order = OrderStoreUtils.get(dataStore, key);
-        _validateCall(relayParams, subaccount, structHash, order.srcChainId());
+        _validateCall(relayParams, subaccount, structHash, 0 /* srcChainId */);
 
         _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, subaccountApproval);
         _updateOrder(relayParams, account, key, params, increaseExecutionFee, true);
@@ -147,8 +146,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         _validateGaslessFeature();
 
         bytes32 structHash = _getCancelOrderStructHash(relayParams, subaccountApproval, account, key);
-        Order.Props memory order = OrderStoreUtils.get(dataStore, key);
-        _validateCall(relayParams, subaccount, structHash, order.srcChainId());
+        _validateCall(relayParams, subaccount, structHash, 0 /* srcChainId */);
 
         _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, subaccountApproval);
         _cancelOrder(relayParams, account, key);
@@ -158,19 +156,18 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     function removeSubaccount(
         RelayUtils.RelayParams calldata relayParams,
         address account,
-        address subaccount,
-        uint256 srcChainId
+        address subaccount
     ) external nonReentrant {
         _validateGaslessFeature();
-        bytes32 structHash = _getRemoveSubaccountStructHash(relayParams, subaccount, srcChainId);
-        _validateCall(relayParams, account, structHash, srcChainId);
+        bytes32 structHash = _getRemoveSubaccountStructHash(relayParams, subaccount);
+        _validateCall(relayParams, account, structHash, 0 /* srcChainId */);
 
         Contracts memory contracts = Contracts({
             dataStore: dataStore,
             eventEmitter: eventEmitter,
             bank: orderVault
         });
-        _handleRelay(contracts, relayParams, account, account, srcChainId);
+        _handleRelay(contracts, relayParams, account, account, 0 /* srcChainId */);
 
         SubaccountUtils.removeSubaccount(dataStore, eventEmitter, account, subaccount);
     }
@@ -241,10 +238,9 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
 
     function _getRemoveSubaccountStructHash(
         RelayUtils.RelayParams calldata relayParams,
-        address subaccount,
-        uint256 srcChainId
+        address subaccount
     ) internal pure returns (bytes32) {
-        return keccak256(abi.encode(REMOVE_SUBACCOUNT_TYPEHASH, subaccount, srcChainId, RelayUtils._getRelayParamsHash(relayParams)));
+        return keccak256(abi.encode(REMOVE_SUBACCOUNT_TYPEHASH, subaccount, RelayUtils._getRelayParamsHash(relayParams)));
     }
 
     function _getSubaccountApprovalStructHash(
