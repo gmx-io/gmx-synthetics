@@ -32,7 +32,15 @@ const BAD_SIGNATURE =
 describe("SubaccountGelatoRelayRouter", () => {
   let fixture;
   let user0, user1, user2, user3;
-  let reader, dataStore, router, subaccountGelatoRelayRouter, ethUsdMarket, wnt, usdc, chainlinkPriceFeedProvider;
+  let reader,
+    dataStore,
+    router,
+    subaccountGelatoRelayRouter,
+    ethUsdMarket,
+    wnt,
+    usdc,
+    chainlinkPriceFeedProvider,
+    orderVault;
   let relaySigner;
   let chainId;
   const referralCode = hashString("referralCode");
@@ -44,8 +52,17 @@ describe("SubaccountGelatoRelayRouter", () => {
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1, user2, user3 } = fixture.accounts);
-    ({ reader, dataStore, router, subaccountGelatoRelayRouter, ethUsdMarket, wnt, usdc, chainlinkPriceFeedProvider } =
-      fixture.contracts);
+    ({
+      reader,
+      dataStore,
+      router,
+      subaccountGelatoRelayRouter,
+      ethUsdMarket,
+      wnt,
+      usdc,
+      chainlinkPriceFeedProvider,
+      orderVault,
+    } = fixture.contracts);
 
     defaultCreateOrderParams = {
       addresses: {
@@ -171,6 +188,22 @@ describe("SubaccountGelatoRelayRouter", () => {
         errorsContract,
         "ExecutionFeeTooHigh"
       );
+    });
+
+    it("should not fail with ExecutionFeeTooHigh if someone frontruns and donates a lot of WNT to the order vault", async () => {
+      await enableSubaccount();
+      await dataStore.setAddress(keys.FEE_RECEIVER, user0.address);
+      await usdc.connect(user1).approve(router.address, expandDecimals(1000, 6));
+      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
+
+      // donate a lot of WNT to the order vault
+      await wnt.connect(user1).transfer(orderVault.address, expandDecimals(1, 18));
+
+      // should be different from WNT
+      createOrderParams.params.addresses.initialCollateralToken = usdc.address;
+      createOrderParams.collateralDeltaAmount = expandDecimals(1000, 6);
+
+      await sendCreateOrder(createOrderParams);
     });
 
     it("InvalidSignature", async () => {
