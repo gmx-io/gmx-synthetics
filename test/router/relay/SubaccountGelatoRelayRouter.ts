@@ -32,7 +32,15 @@ const BAD_SIGNATURE =
 describe("SubaccountGelatoRelayRouter", () => {
   let fixture;
   let user0, user1, user2, user3;
-  let reader, dataStore, router, subaccountGelatoRelayRouter, ethUsdMarket, wnt, usdc, chainlinkPriceFeedProvider;
+  let reader,
+    dataStore,
+    router,
+    subaccountGelatoRelayRouter,
+    ethUsdMarket,
+    wnt,
+    usdc,
+    chainlinkPriceFeedProvider,
+    orderVault;
   let relaySigner;
   let chainId;
   const referralCode = hashString("referralCode");
@@ -44,8 +52,17 @@ describe("SubaccountGelatoRelayRouter", () => {
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1, user2, user3 } = fixture.accounts);
-    ({ reader, dataStore, router, subaccountGelatoRelayRouter, ethUsdMarket, wnt, usdc, chainlinkPriceFeedProvider } =
-      fixture.contracts);
+    ({
+      reader,
+      dataStore,
+      router,
+      subaccountGelatoRelayRouter,
+      ethUsdMarket,
+      wnt,
+      usdc,
+      chainlinkPriceFeedProvider,
+      orderVault,
+    } = fixture.contracts);
 
     defaultCreateOrderParams = {
       addresses: {
@@ -171,6 +188,22 @@ describe("SubaccountGelatoRelayRouter", () => {
         errorsContract,
         "ExecutionFeeTooHigh"
       );
+    });
+
+    it("should not fail with ExecutionFeeTooHigh if someone frontruns and donates a lot of WNT to the order vault", async () => {
+      await enableSubaccount();
+      await dataStore.setAddress(keys.FEE_RECEIVER, user0.address);
+      await usdc.connect(user1).approve(router.address, expandDecimals(1000, 6));
+      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
+
+      // donate a lot of WNT to the order vault
+      await wnt.connect(user1).transfer(orderVault.address, expandDecimals(1, 18));
+
+      // should be different from WNT
+      createOrderParams.params.addresses.initialCollateralToken = usdc.address;
+      createOrderParams.collateralDeltaAmount = expandDecimals(1000, 6);
+
+      await sendCreateOrder(createOrderParams);
     });
 
     it("InvalidSignature", async () => {
@@ -386,7 +419,7 @@ describe("SubaccountGelatoRelayRouter", () => {
             expiresAt: 9999999999,
             maxAllowedCount: 10,
             actionType: keys.SUBACCOUNT_ORDER_ACTION,
-            deadline: 0,
+            deadline: 9999999999,
             nonce: 0,
             signature: "0x123123",
           },
@@ -407,7 +440,7 @@ describe("SubaccountGelatoRelayRouter", () => {
             expiresAt: 9999999999,
             maxAllowedCount: 10,
             actionType: keys.SUBACCOUNT_ORDER_ACTION,
-            deadline: 0,
+            deadline: 9999999999,
             nonce: 1,
           },
         })
@@ -421,7 +454,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           expiresAt: 9999999999,
           maxAllowedCount: 10,
           actionType: keys.SUBACCOUNT_ORDER_ACTION,
-          deadline: 0,
+          deadline: 9999999999,
           nonce: 0,
         },
       });
@@ -434,7 +467,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           expiresAt: 9999999999,
           maxAllowedCount: 10,
           actionType: keys.SUBACCOUNT_ORDER_ACTION,
-          deadline: 0,
+          deadline: 9999999999,
           nonce: 1,
         },
         userNonce: 1,
@@ -449,7 +482,7 @@ describe("SubaccountGelatoRelayRouter", () => {
             expiresAt: 9999999999,
             maxAllowedCount: 10,
             actionType: keys.SUBACCOUNT_ORDER_ACTION,
-            deadline: 0,
+            deadline: 9999999999,
             nonce: 1,
           },
           userNonce: 2,
@@ -487,7 +520,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           expiresAt: 9999999999,
           maxAllowedCount: 10,
           actionType: keys.SUBACCOUNT_ORDER_ACTION,
-          deadline: 0,
+          deadline: 9999999999,
           nonce: 0,
         },
       });
@@ -615,7 +648,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           expiresAt: 9999999999,
           maxAllowedCount: 10,
           actionType: keys.SUBACCOUNT_ORDER_ACTION,
-          deadline: 0,
+          deadline: 9999999999,
           nonce: 0,
         },
         increaseExecutionFee: false,
@@ -790,7 +823,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           expiresAt: 9999999999,
           maxAllowedCount: 10,
           actionType: keys.SUBACCOUNT_ORDER_ACTION,
-          deadline: 0,
+          deadline: 9999999999,
           nonce: 0,
         },
       };
@@ -826,39 +859,56 @@ describe("SubaccountGelatoRelayRouter", () => {
     });
   });
 
-  it("removeSubaccount", async () => {
-    await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
-    await dataStore.addAddress(keys.subaccountListKey(user1.address), user0.address);
-    expect(await dataStore.getAddressCount(keys.subaccountListKey(user1.address))).to.eq(1);
-    const params = {
-      sender: relaySigner,
-      signer: user1,
-      feeParams: {
-        feeToken: wnt.address,
-        feeAmount: expandDecimals(2, 15), // 0.002 ETH
-        feeSwapPath: [],
-      },
-      tokenPermits: [],
-      subaccount: user0.address,
-      account: user1.address,
-      relayRouter: subaccountGelatoRelayRouter,
-      chainId,
-      relayFeeToken: wnt.address,
-      relayFeeAmount: expandDecimals(1, 15),
-      userNonce: 0,
-      deadline: 9999999999,
-    };
-    await expect(sendRemoveSubaccount({ ...params, signature: "0x1234" })).to.be.revertedWithCustomError(
-      errorsContract,
-      "InvalidSignature"
-    );
+  describe("removeSubaccount", () => {
+    let params: Parameters<typeof sendRemoveSubaccount>[0];
+    beforeEach(() => {
+      params = {
+        sender: relaySigner,
+        signer: user1,
+        feeParams: {
+          feeToken: wnt.address,
+          feeAmount: expandDecimals(2, 15), // 0.002 ETH
+          feeSwapPath: [],
+        },
+        tokenPermits: [],
+        subaccount: user0.address,
+        account: user1.address,
+        relayRouter: subaccountGelatoRelayRouter,
+        chainId,
+        relayFeeToken: wnt.address,
+        relayFeeAmount: expandDecimals(1, 15),
+        userNonce: 0,
+        deadline: 9999999999,
+      };
+    });
 
-    await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, 0);
+    it("InvalidSignature", async () => {
+      await expect(sendRemoveSubaccount({ ...params, signature: BAD_SIGNATURE })).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidSignature"
+      );
+    });
 
-    await sendRemoveSubaccount(params);
-    expect(await dataStore.getAddressCount(keys.subaccountListKey(user1.address))).to.eq(0);
+    it("onlyGelatoRelay", async () => {
+      await expect(sendRemoveSubaccount({ ...params, sender: user0 })).to.be.revertedWith("onlyGelatoRelay");
+    });
 
-    expect(createOrderParams.relayFeeAmount).gt(0);
-    await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, createOrderParams.relayFeeAmount);
+    it("removes subaccount", async () => {
+      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
+      await dataStore.addAddress(keys.subaccountListKey(user1.address), user0.address);
+      expect(await dataStore.getAddressCount(keys.subaccountListKey(user1.address))).to.eq(1);
+      await expect(sendRemoveSubaccount({ ...params, signature: "0x1234" })).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidSignature"
+      );
+
+      await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, 0);
+
+      await sendRemoveSubaccount(params);
+      expect(await dataStore.getAddressCount(keys.subaccountListKey(user1.address))).to.eq(0);
+
+      expect(createOrderParams.relayFeeAmount).gt(0);
+      await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, createOrderParams.relayFeeAmount);
+    });
   });
 });

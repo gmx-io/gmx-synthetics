@@ -274,6 +274,14 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
       `requestExpirationTime`
     );
   }
+
+  await handleConfig(
+    "uint",
+    keys.MAX_EXECUTION_FEE_MULTIPLIER_FACTOR,
+    "0x",
+    generalConfig.maxExecutionFeeMultiplierFactor,
+    `maxExecutionFeeMultiplierFactor`
+  );
 };
 
 export async function updateGeneralConfig({ write }) {

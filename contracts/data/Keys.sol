@@ -34,6 +34,7 @@ library Keys {
     bytes32 public constant WITHDRAWAL_FEE_TYPE = keccak256(abi.encode("WITHDRAWAL_FEE_TYPE"));
     // @dev key for swap fees
     bytes32 public constant SWAP_FEE_TYPE = keccak256(abi.encode("SWAP_FEE_TYPE"));
+    bytes32 public constant ATOMIC_SWAP_FEE_TYPE = keccak256(abi.encode("ATOMIC_SWAP_FEE_TYPE"));
     // @dev key for position fees
     bytes32 public constant POSITION_FEE_TYPE = keccak256(abi.encode("POSITION_FEE_TYPE"));
     // @dev key for ui deposit fees

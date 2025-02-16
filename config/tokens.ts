@@ -1344,6 +1344,10 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<TokensCo
     if (token.oracleType === undefined) {
       token.oracleType = TOKEN_ORACLE_TYPES.DEFAULT;
     }
+
+    if (token.dataStreamSpreadReductionFactor === undefined) {
+      token.dataStreamSpreadReductionFactor = percentageToFloat("50%");
+    }
   }
 
   return tokens;

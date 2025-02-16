@@ -84,7 +84,7 @@ function getEmptySubaccountApproval() {
     actionType: keys.SUBACCOUNT_ORDER_ACTION,
     nonce: 0,
     signature: "0x",
-    deadline: 0,
+    deadline: 9999999999,
   };
 }
 

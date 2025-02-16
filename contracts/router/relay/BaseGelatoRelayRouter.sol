@@ -187,7 +187,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             params.validFromTime,
             params.autoCancel,
             order,
-            isSubaccount && order.callbackContract() != address(0)
+            isSubaccount && order.callbackContract() != address(0) && increaseExecutionFee
         );
     }
 
@@ -299,11 +299,18 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     ) internal returns (uint256) {
         address wnt = TokenUtils.wnt(contracts.dataStore);
 
+        // for subaccount orders there is max execution fee validation
+        // malicious actor could send a lot of WNT to the order vault to cause the subaccount order to fail
+        // then malicious actor could get back the WNT by creating an order
+        uint256 pendingWntAmount = contracts.orderVault.recordTransferIn(wnt);
+        if (pendingWntAmount > 0) {
+            contracts.orderVault.transferOut(wnt, contracts.dataStore.getAddress(Keys.FEE_RECEIVER), pendingWntAmount);
+        }
+
         if (_getFeeToken() != wnt) {
             revert Errors.UnsupportedRelayFeeToken(_getFeeToken(), wnt);
         }
 
-        // if external calls => send to external handler
         uint256 outputAmount;
         if (relayParams.externalCalls.externalCallTargets.length > 0) {
             _sendTokens(account, relayParams.fee.feeToken, address(externalHandler), relayParams.fee.feeAmount);
@@ -321,9 +328,8 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             _sendTokens(account, relayParams.fee.feeToken, address(this), relayParams.fee.feeAmount);
             outputAmount = relayParams.fee.feeAmount;
         } else {
-            revert Errors.UnexpectedRelayFeeToken(_getFeeToken(), wnt);
+            revert Errors.UnexpectedRelayFeeToken(relayParams.fee.feeToken, wnt);
         }
-
 
         _transferRelayFeeCapped(outputAmount);
 
