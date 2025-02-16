@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 
 import "./MultichainRouter.sol";
 
-contract MultichainGmRouter is MultichainRouter {
+contract MultichainOrderRouter is MultichainRouter {
     constructor(BaseConstructorParams memory params) MultichainRouter(params) {}
 
     // TODO: handle partial fee payment
@@ -15,7 +15,7 @@ contract MultichainGmRouter is MultichainRouter {
         uint256 srcChainId,
         uint256 collateralDeltaAmount,
         IBaseOrderUtils.CreateOrderParams memory params // can't use calldata because need to modify params.numbers.executionFee
-    ) external nonReentrant onlyGelatoRelay returns (bytes32) {
+    ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelay returns (bytes32) {
         bytes32 structHash = RelayUtils.getCreateOrderStructHash(relayParams, collateralDeltaAmount, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
