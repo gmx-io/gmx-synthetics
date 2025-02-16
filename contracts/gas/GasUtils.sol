@@ -217,9 +217,6 @@ library GasUtils {
         uint256 basefee = block.basefee != 0 ? block.basefee : tx.gasprice;
 
         uint256 maxExecutionFeeMultiplierFactor = dataStore.getUint(Keys.MAX_EXECUTION_FEE_MULTIPLIER_FACTOR);
-        if (maxExecutionFeeMultiplierFactor == 0) {
-            maxExecutionFeeMultiplierFactor = Precision.FLOAT_PRECISION * 100;
-        }
         uint256 maxExecutionFee = Precision.applyFactor(gasLimit * basefee, maxExecutionFeeMultiplierFactor);
         if (executionFee > maxExecutionFee) {
             revert Errors.ExecutionFeeTooHigh(maxExecutionFee, executionFee);

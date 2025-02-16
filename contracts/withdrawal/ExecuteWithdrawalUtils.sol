@@ -390,18 +390,21 @@ library ExecuteWithdrawalUtils {
 
         cache.swapPathMarkets = MarketUtils.getSwapPathMarkets(params.dataStore, swapPath);
 
-        cache.swapParams.dataStore = params.dataStore;
-        cache.swapParams.eventEmitter = params.eventEmitter;
-        cache.swapParams.oracle = params.oracle;
-        cache.swapParams.bank = Bank(payable(market.marketToken));
-        cache.swapParams.key = params.key;
-        cache.swapParams.tokenIn = tokenIn;
-        cache.swapParams.amountIn = amountIn;
-        cache.swapParams.swapPathMarkets = cache.swapPathMarkets;
-        cache.swapParams.minOutputAmount = minOutputAmount;
-        cache.swapParams.receiver = receiver;
-        cache.swapParams.uiFeeReceiver = uiFeeReceiver;
-        cache.swapParams.shouldUnwrapNativeToken = shouldUnwrapNativeToken;
+        cache.swapParams = SwapUtils.SwapParams({
+            dataStore: params.dataStore,
+            eventEmitter: params.eventEmitter,
+            oracle: params.oracle,
+            bank: Bank(payable(market.marketToken)),
+            key: params.key,
+            tokenIn: tokenIn,
+            amountIn: amountIn,
+            swapPathMarkets: cache.swapPathMarkets,
+            minOutputAmount: minOutputAmount,
+            receiver: receiver,
+            uiFeeReceiver: uiFeeReceiver,
+            shouldUnwrapNativeToken: shouldUnwrapNativeToken,
+            swapPricingType: params.swapPricingType
+        });
 
         (cache.outputToken, cache.outputAmount) = SwapUtils.swap(cache.swapParams);
 

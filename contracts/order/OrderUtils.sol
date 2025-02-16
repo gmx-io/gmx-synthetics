@@ -77,7 +77,7 @@ library OrderUtils {
         uint256 initialCollateralDeltaAmount;
 
         cache.wnt = TokenUtils.wnt(dataStore);
-            cache.shouldRecordSeparateExecutionFeeTransfer = true;
+        cache.shouldRecordSeparateExecutionFeeTransfer = true;
 
         if (
             params.orderType == Order.OrderType.MarketSwap ||
