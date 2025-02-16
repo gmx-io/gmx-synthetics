@@ -321,7 +321,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             _sendTokens(account, relayParams.fee.feeToken, address(this), relayParams.fee.feeAmount);
             outputAmount = relayParams.fee.feeAmount;
         } else {
-            revert Errors.UnexpectedRelayFeeToken(_getFeeToken(), wnt);
+            revert Errors.UnexpectedRelayFeeToken(relayParams.fee.feeToken, wnt);
         }
 
 
