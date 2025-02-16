@@ -287,7 +287,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
                     permit.r,
                     permit.s
                 )
-            {} catch (bytes memory) {}
+            {} catch {}
         }
     }
 
