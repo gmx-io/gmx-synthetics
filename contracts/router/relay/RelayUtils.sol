@@ -218,8 +218,8 @@ library RelayUtils {
                     relayParams.tokenPermits,
                     relayParams.fee,
                     relayParams.userNonce,
-                    relayParams.deadline
-                    // relayParams.desChainId // TOOD: should be block.chainid
+                    relayParams.deadline,
+                    relayParams.desChainId // TOOD: should be block.chainid
                 )
             );
     }

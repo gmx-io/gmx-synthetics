@@ -62,6 +62,7 @@ export function hashRelayParams(relayParams: any) {
       "tuple(address feeToken, uint256 feeAmount, address[] feeSwapPath)",
       "uint256",
       "uint256",
+      "uint256",
     ],
     [
       [relayParams.oracleParams.tokens, relayParams.oracleParams.providers, relayParams.oracleParams.data],
@@ -84,6 +85,7 @@ export function hashRelayParams(relayParams: any) {
       [relayParams.fee.feeToken, relayParams.fee.feeAmount, relayParams.fee.feeSwapPath],
       relayParams.userNonce,
       relayParams.deadline,
+      relayParams.desChainId,
     ]
   );
 
