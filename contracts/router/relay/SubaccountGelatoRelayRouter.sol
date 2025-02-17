@@ -77,7 +77,9 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         IOrderHandler _orderHandler,
         OrderVault _orderVault,
         IExternalHandler _externalHandler
-    ) BaseGelatoRelayRouter(_router, _dataStore, _eventEmitter, _oracle, _orderHandler, _orderVault, _externalHandler) {}
+    )
+        BaseGelatoRelayRouter(_router, _dataStore, _eventEmitter, _oracle, _orderHandler, _orderVault, _externalHandler)
+    {}
 
     // @note all params except subaccount should be part of the corresponding struct hash
     function createOrder(
@@ -128,9 +130,15 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelay {
         _validateGaslessFeature();
 
-        bytes32 structHash = _getUpdateOrderStructHash(relayParams, subaccountApproval, account, key, params, increaseExecutionFee);
+        bytes32 structHash = _getUpdateOrderStructHash(
+            relayParams,
+            subaccountApproval,
+            account,
+            key,
+            params,
+            increaseExecutionFee
+        );
         _validateCall(relayParams, subaccount, structHash, 0 /* srcChainId */);
-
         _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, subaccountApproval);
         _updateOrder(relayParams, account, key, params, increaseExecutionFee, true);
     }
@@ -149,7 +157,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         _validateCall(relayParams, subaccount, structHash, 0 /* srcChainId */);
 
         _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, subaccountApproval);
-        _cancelOrder(relayParams, account, key);
+        _cancelOrder(relayParams, account, key, true);
     }
 
     // @note all params except account should be part of the corresponding struct hash
@@ -167,7 +175,14 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             eventEmitter: eventEmitter,
             bank: orderVault
         });
-        _handleRelay(contracts, relayParams, account, account, 0 /* srcChainId */);
+        _handleRelay(
+            contracts,
+            relayParams,
+            account,
+            account,
+            false, // isSubaccount is false because the `removeSubaccount` call is signed by the main account
+            0 // srcChainId
+        );
 
         SubaccountUtils.removeSubaccount(dataStore, eventEmitter, account, subaccount);
     }

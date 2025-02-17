@@ -89,7 +89,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             bank: orderVault
         });
 
-        params.numbers.executionFee = _handleRelay(contracts, relayParams, account, address(contracts.bank), srcChainId);
+        params.numbers.executionFee = _handleRelay(contracts, relayParams, account, address(contracts.bank), isSubaccount, srcChainId);
 
         if (
             params.orderType == Order.OrderType.MarketSwap ||
@@ -136,7 +136,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         }
 
         address residualFeeReceiver = increaseExecutionFee ? address(contracts.bank) : account;
-        _handleRelay(contracts, relayParams, account, residualFeeReceiver, order.srcChainId());
+        _handleRelay(contracts, relayParams, account, residualFeeReceiver, isSubaccount, order.srcChainId());
 
         orderHandler.updateOrder(
             key,
@@ -151,7 +151,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         );
     }
 
-    function _cancelOrder(RelayUtils.RelayParams calldata relayParams, address account, bytes32 key) internal {
+    function _cancelOrder(RelayUtils.RelayParams calldata relayParams, address account, bytes32 key, bool isSubaccount) internal {
         Contracts memory contracts = Contracts({
             dataStore: dataStore,
             eventEmitter: eventEmitter,
@@ -167,7 +167,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             revert Errors.Unauthorized(account, "account for cancelOrder");
         }
 
-        _handleRelay(contracts, relayParams, account, account, order.srcChainId());
+        _handleRelay(contracts, relayParams, account, account, isSubaccount, order.srcChainId());
 
         orderHandler.cancelOrder(key);
     }
@@ -211,10 +211,16 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         RelayUtils.RelayParams calldata relayParams,
         address account,
         address residualFeeReceiver,
+        bool isSubaccount,
         uint256 srcChainId
     ) internal returns (uint256) {
         if (relayParams.externalCalls.externalCallTargets.length != 0 && relayParams.fee.feeSwapPath.length != 0) {
             revert Errors.InvalidRelayParams();
+        }
+
+        if (relayParams.externalCalls.externalCallTargets.length != 0 && isSubaccount) {
+            // malicious subaccount could steal main account funds through external calls
+            revert Errors.NonEmptyExternalCallsForSubaccountOrder();
         }
 
         _handleTokenPermits(relayParams.tokenPermits);
@@ -248,7 +254,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
                     permit.r,
                     permit.s
                 )
-            {} catch (bytes memory) {}
+            {} catch {}
         }
     }
 
