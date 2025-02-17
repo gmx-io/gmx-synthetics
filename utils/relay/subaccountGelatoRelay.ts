@@ -16,6 +16,12 @@ export async function sendCreateOrder(p: {
     nonce: BigNumberish;
     signature?: string;
   };
+  externalCalls?: {
+    externalCallTargets: string[];
+    externalCallDataList: string[];
+    refundTokens: string[];
+    refundReceivers: string[];
+  };
   signer: ethers.Signer;
   sender: ethers.Signer;
   oracleParams?: {
@@ -173,6 +179,12 @@ export async function sendUpdateOrder(p: {
     feeToken: string;
     feeAmount: BigNumberish;
     feeSwapPath: string[];
+  };
+  externalCalls?: {
+    externalCallTargets: string[];
+    externalCallDataList: string[];
+    refundTokens: string[];
+    refundReceivers: string[];
   };
   subaccount: string;
   key: string;
@@ -338,6 +350,12 @@ export async function sendCancelOrder(p: {
     deadline: BigNumberish;
     chainId: BigNumberish;
   }[];
+  externalCalls?: {
+    externalCallTargets: string[];
+    externalCallDataList: string[];
+    refundTokens: string[];
+    refundReceivers: string[];
+  };
   feeParams: {
     feeToken: string;
     feeAmount: BigNumberish;
@@ -471,6 +489,12 @@ export async function sendRemoveSubaccount(p: {
     feeAmount: BigNumberish;
     feeSwapPath: string[];
   };
+  externalCalls?: {
+    externalCallTargets: string[];
+    externalCallDataList: string[];
+    refundTokens: string[];
+    refundReceivers: string[];
+  };
   tokenPermits?: {
     token: string;
     spender: string;
@@ -483,7 +507,7 @@ export async function sendRemoveSubaccount(p: {
   chainId: BigNumberish;
   account: string;
   deadline: BigNumberish;
-  userNonce: BigNumberish;
+  userNonce?: BigNumberish;
   relayRouter: ethers.Contract;
   signature?: string;
   relayFeeToken: string;

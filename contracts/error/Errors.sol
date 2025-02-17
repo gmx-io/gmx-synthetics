@@ -448,5 +448,6 @@ library Errors {
     error DeadlinePassed(uint256 currentTimestamp, uint256 deadline);
     error InsufficientRelayFee(uint256 requiredRelayFee, uint256 feeAmount);
     error InvalidSubaccountApprovalSubaccount();
+    error NonEmptyExternalCallsForSubaccountOrder();
     error InvalidRelayParams();
 }

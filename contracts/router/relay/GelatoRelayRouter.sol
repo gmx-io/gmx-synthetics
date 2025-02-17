@@ -101,7 +101,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         bytes32 structHash = _getCancelOrderStructHash(relayParams, key);
         _validateCall(relayParams, account, structHash);
 
-        _cancelOrder(relayParams, account, key);
+        _cancelOrder(relayParams, account, key, false);
     }
 
     function _getUpdateOrderStructHash(
