@@ -67,6 +67,7 @@ contract MultichainGmRouter is MultichainRouter {
             relayParams,
             account,
             address(depositVault), // residualFeeReceiver
+            false, // isSubaccount
             srcChainId
         );
 
@@ -107,6 +108,7 @@ contract MultichainGmRouter is MultichainRouter {
             relayParams,
             account,
             address(withdrawalVault), // residualFeeReceiver
+            false, // isSubaccount
             srcChainId
         );
 
@@ -147,6 +149,7 @@ contract MultichainGmRouter is MultichainRouter {
             relayParams,
             account,
             address(shiftVault),
+            false, // isSubaccount
             srcChainId
         );
 
