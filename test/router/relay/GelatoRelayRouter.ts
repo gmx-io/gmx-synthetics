@@ -93,7 +93,7 @@ describe("GelatoRelayRouter", () => {
       account: user0.address,
       params: defaultParams,
       deadline: 9999999999,
-      desChainId: 0,
+      desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
       relayRouter: gelatoRelayRouter,
       chainId,
       relayFeeToken: wnt.address,
@@ -456,7 +456,7 @@ describe("GelatoRelayRouter", () => {
         },
         key: ethers.constants.HashZero,
         deadline: 9999999999,
-        desChainId: 0,
+        desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
         relayRouter: gelatoRelayRouter,
         chainId,
         relayFeeToken: wnt.address,
@@ -598,7 +598,7 @@ describe("GelatoRelayRouter", () => {
         key: ethers.constants.HashZero,
         account: user0.address,
         deadline: 9999999999,
-        desChainId: 0,
+        desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
         relayRouter: gelatoRelayRouter,
         chainId,
         relayFeeToken: wnt.address,
