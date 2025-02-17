@@ -86,6 +86,7 @@ async function getCreateOrderSignature({
       { name: "shouldUnwrapNativeToken", type: "bool" },
       { name: "autoCancel", type: "bool" },
       { name: "referralCode", type: "bytes32" },
+      { name: "dataList", type: "bytes32[]" },
       { name: "relayParams", type: "bytes32" },
     ],
     CreateOrderAddresses: [
@@ -124,6 +125,7 @@ async function getCreateOrderSignature({
     shouldUnwrapNativeToken: params.shouldUnwrapNativeToken,
     autoCancel: false,
     referralCode: params.referralCode,
+    dataList: params.dataList,
     relayParams: hashRelayParams(relayParams),
   };
 
