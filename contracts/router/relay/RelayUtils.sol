@@ -209,7 +209,7 @@ library RelayUtils {
 
     //////////////////// ORDER ////////////////////
 
-    function _getRelayParamsHash(RelayParams calldata relayParams) internal pure returns (bytes32) {
+    function _getRelayParamsHash(RelayParams calldata relayParams) internal view returns (bytes32) {
         return
             keccak256(
                 abi.encode(
@@ -219,7 +219,7 @@ library RelayUtils {
                     relayParams.fee,
                     relayParams.userNonce,
                     relayParams.deadline,
-                    relayParams.desChainId // TOOD: should be block.chainid
+                    block.chainid
                 )
             );
     }
@@ -229,7 +229,7 @@ library RelayUtils {
         bytes32 key,
         UpdateOrderParams calldata params,
         bool increaseExecutionFee
-    ) external pure returns (bytes32) {
+    ) external view returns (bytes32) {
         return
             keccak256(
                 abi.encode(
@@ -257,7 +257,7 @@ library RelayUtils {
             );
     }
 
-    function getCancelOrderStructHash(RelayParams calldata relayParams, bytes32 key) external pure returns (bytes32) {
+    function getCancelOrderStructHash(RelayParams calldata relayParams, bytes32 key) external view returns (bytes32) {
         return keccak256(abi.encode(CANCEL_ORDER_TYPEHASH, key, _getRelayParamsHash(relayParams)));
     }
 
@@ -265,7 +265,7 @@ library RelayUtils {
         RelayParams calldata relayParams,
         uint256 collateralDeltaAmount,
         IBaseOrderUtils.CreateOrderParams memory params
-    ) external pure returns (bytes32) {
+    ) external view returns (bytes32) {
         return
             keccak256(
                 abi.encode(
@@ -328,7 +328,7 @@ library RelayUtils {
         RelayParams calldata relayParams,
         TransferRequest[] calldata transferRequests,
         DepositUtils.CreateDepositParams memory params
-    ) external pure returns (bytes32) {
+    ) external view returns (bytes32) {
         return
             keccak256(
                 abi.encode(
@@ -380,7 +380,7 @@ library RelayUtils {
         RelayParams calldata relayParams,
         TransferRequest[] calldata transferRequests,
         WithdrawalUtils.CreateWithdrawalParams memory params
-    ) external pure returns (bytes32) {
+    ) external view returns (bytes32) {
         return
             keccak256(
                 abi.encode(
@@ -419,7 +419,7 @@ library RelayUtils {
         RelayParams calldata relayParams,
         TransferRequest[] calldata transferRequests,
         GlvDepositUtils.CreateGlvDepositParams memory params
-    ) external pure returns (bytes32) {
+    ) external view returns (bytes32) {
         return
             keccak256(
                 abi.encode(
@@ -473,7 +473,7 @@ library RelayUtils {
         RelayParams calldata relayParams,
         TransferRequest[] calldata transferRequests,
         GlvWithdrawalUtils.CreateGlvWithdrawalParams memory params
-    ) external pure returns (bytes32) {
+    ) external view returns (bytes32) {
         return
             keccak256(
                 abi.encode(
@@ -525,7 +525,7 @@ library RelayUtils {
         RelayParams calldata relayParams,
         TransferRequest[] calldata transferRequests,
         ShiftUtils.CreateShiftParams memory params
-    ) external pure returns (bytes32) {
+    ) external view returns (bytes32) {
         return
             keccak256(
                 abi.encode(
@@ -573,7 +573,7 @@ library RelayUtils {
     function getBridgeOutStructHash(
         RelayParams calldata relayParams,
         BridgeOutParams memory params
-    ) external pure returns (bytes32) {
+    ) external view returns (bytes32) {
         return
             keccak256(
                 abi.encode(
