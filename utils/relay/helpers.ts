@@ -15,6 +15,7 @@ export async function getRelayParams(p: {
   feeParams: any;
   userNonce?: BigNumberish;
   deadline: BigNumberish;
+  desChainId: BigNumberish;
   relayRouter: ethers.Contract;
   signer: ethers.Signer;
 }) {
@@ -33,6 +34,7 @@ export async function getRelayParams(p: {
     fee: p.feeParams,
     userNonce: p.userNonce,
     deadline: p.deadline,
+    desChainId: p.desChainId,
   };
 }
 

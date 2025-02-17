@@ -35,6 +35,7 @@ export async function sendCreateOrder(p: {
   signature?: string;
   userNonce?: BigNumberish;
   deadline: BigNumberish;
+  desChainId: BigNumberish;
   relayRouter: ethers.Contract;
   chainId: BigNumberish;
   relayFeeToken: string;
@@ -160,6 +161,7 @@ export async function sendUpdateOrder(p: {
     autoCancel: boolean;
   };
   deadline: BigNumberish;
+  desChainId: BigNumberish;
   userNonce?: BigNumberish;
   relayRouter: ethers.Contract;
   signature?: string;
@@ -257,6 +259,7 @@ export async function sendCancelOrder(p: {
   chainId: BigNumberish;
   account: string;
   deadline: BigNumberish;
+  desChainId: BigNumberish;
   userNonce?: BigNumberish;
   relayRouter: ethers.Contract;
   signature?: string;
