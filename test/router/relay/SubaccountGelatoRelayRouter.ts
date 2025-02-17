@@ -8,10 +8,10 @@ import {
 } from "@nomicfoundation/hardhat-network-helpers";
 
 import { deployFixture } from "../../../utils/fixture";
-import { expandDecimals, decimalToFloat, bigNumberify } from "../../../utils/math";
+import { expandDecimals, decimalToFloat, bigNumberify, percentageToFloat, applyFactor } from "../../../utils/math";
 import { logGasUsage } from "../../../utils/gas";
 import { hashString } from "../../../utils/hash";
-import { OrderType, DecreasePositionSwapType, getOrderKeys } from "../../../utils/order";
+import { OrderType, DecreasePositionSwapType, getOrderKeys, getOrderCount } from "../../../utils/order";
 import { errorsContract } from "../../../utils/error";
 import { expectBalance } from "../../../utils/validation";
 import * as keys from "../../../utils/keys";
@@ -25,6 +25,8 @@ import { GELATO_RELAY_ADDRESS } from "../../../utils/relay/addresses";
 import { getTokenPermit } from "../../../utils/relay/tokenPermit";
 import { ethers } from "ethers";
 import { handleDeposit } from "../../../utils/deposit";
+import { deployContract } from "../../../utils/deploy";
+import { parseLogs } from "../../../utils/event";
 
 const BAD_SIGNATURE =
   "0x122e3efab9b46c82dc38adf4ea6cd2c753b00f95c217a0e3a0f4dd110839f07a08eb29c1cc414d551349510e23a75219cd70c8b88515ed2b83bbd88216ffdb051f";
@@ -141,6 +143,11 @@ describe("SubaccountGelatoRelayRouter", () => {
   });
 
   describe("createOrder", () => {
+    it("DisabledFeature", async () => {
+      await dataStore.setBool(keys.gaslessFeatureDisabledKey(subaccountGelatoRelayRouter.address), true);
+      await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
+    });
+
     it("InvalidReceiver", async () => {
       await enableSubaccount();
 
@@ -348,6 +355,22 @@ describe("SubaccountGelatoRelayRouter", () => {
 
     it("SubaccountApprovalDeadlinePassed", async () => {
       await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
+
+      await expect(
+        sendCreateOrder({
+          ...createOrderParams,
+          subaccountApproval: {
+            subaccount: user0.address,
+            shouldAdd: true,
+            expiresAt: 9999999999,
+            maxAllowedCount: 10,
+            actionType: keys.SUBACCOUNT_ORDER_ACTION,
+            deadline: 0,
+            nonce: 0,
+          },
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "SubaccountApprovalDeadlinePassed");
+
       await time.setNextBlockTimestamp(9999999100);
       await expect(
         sendCreateOrder({
@@ -624,8 +647,74 @@ describe("SubaccountGelatoRelayRouter", () => {
       });
     });
 
-    it.skip("swap relay fee with external call");
-    it.skip("swap relay fee");
+    it("swap relay fee", async () => {
+      await enableSubaccount();
+      await handleDeposit(fixture, {
+        create: {
+          longTokenAmount: expandDecimals(10, 18),
+          shortTokenAmount: expandDecimals(10 * 5000, 6),
+        },
+      });
+
+      const atomicSwapFeeFactor = percentageToFloat("1%");
+      const swapFeeFactor = percentageToFloat("0.05%");
+      await dataStore.setUint(keys.atomicSwapFeeFactorKey(ethUsdMarket.marketToken), atomicSwapFeeFactor);
+      await dataStore.setUint(keys.swapFeeFactorKey(ethUsdMarket.marketToken, true), swapFeeFactor);
+      await dataStore.setUint(keys.swapFeeFactorKey(ethUsdMarket.marketToken, false), swapFeeFactor);
+
+      await usdc.connect(user1).approve(router.address, expandDecimals(1000, 6));
+      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
+
+      const usdcBalanceBefore = await usdc.balanceOf(user1.address);
+      const feeAmount = expandDecimals(10, 6);
+      await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, 0);
+      const tx = await sendCreateOrder({
+        ...createOrderParams,
+        feeParams: {
+          feeToken: usdc.address,
+          feeAmount,
+          feeSwapPath: [ethUsdMarket.marketToken],
+        },
+        oracleParams: {
+          tokens: [usdc.address, wnt.address],
+          providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
+          data: ["0x", "0x"],
+        },
+      });
+
+      const orderKeys = await getOrderKeys(dataStore, 0, 1);
+      const order = await reader.getOrder(dataStore.address, orderKeys[0]);
+
+      // WETH price is 5000, so 10 USDC will be 0.002 WETH before fees
+      expect(order.numbers.executionFee).eq(
+        expandDecimals(2, 15)
+          .sub(applyFactor(expandDecimals(2, 15), atomicSwapFeeFactor))
+          .sub(createOrderParams.relayFeeAmount)
+      );
+
+      // feeCollector received in WETH
+      await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, createOrderParams.relayFeeAmount);
+
+      // and user sent correct amount of USDC
+      const usdcBalanceAfter = await usdc.balanceOf(user1.address);
+      expect(usdcBalanceAfter).eq(usdcBalanceBefore.sub(feeAmount));
+
+      // check that atomic swap fee was applied
+      const txReceipt = await hre.ethers.provider.getTransactionReceipt(tx.hash);
+      const logs = parseLogs(fixture, txReceipt);
+      const swapInfoLog = logs.find((log) => log.parsedEventInfo?.eventName === "SwapInfo");
+      const swapFeesCollectedLog = logs.find((log) => log.parsedEventInfo?.eventName === "SwapFeesCollected");
+      // TODO check fee based on received amounts
+      expect(swapInfoLog.parsedEventData.amountIn.sub(swapInfoLog.parsedEventData.amountInAfterFees)).eq(
+        applyFactor(swapInfoLog.parsedEventData.amountIn, atomicSwapFeeFactor)
+      );
+      expect(swapFeesCollectedLog.parsedEventData.swapFeeType).eq(keys.ATOMIC_SWAP_FEE_TYPE);
+
+      await logGasUsage({
+        tx,
+        label: "gelatoRelayRouter.createOrder with swap",
+      });
+    });
   });
 
   describe("updateOrder", () => {
@@ -665,10 +754,14 @@ describe("SubaccountGelatoRelayRouter", () => {
           maxAllowedCount: 10,
           actionType: keys.SUBACCOUNT_ORDER_ACTION,
           deadline: 9999999999,
-          nonce: 0,
         },
         increaseExecutionFee: false,
       };
+    });
+
+    it("DisabledFeature", async () => {
+      await dataStore.setBool(keys.gaslessFeatureDisabledKey(subaccountGelatoRelayRouter.address), true);
+      await expect(sendUpdateOrder(updateOrderParams)).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
     });
 
     it("onlyGelatoRelay", async () => {
@@ -695,9 +788,6 @@ describe("SubaccountGelatoRelayRouter", () => {
 
     it("NonEmptyExternalCallsForSubaccountOrder", async () => {
       await enableSubaccount();
-      createOrderParams.feeParams.feeAmount = expandDecimals(1, 15);
-      // set callback to 0 so estimation execution fee is 0
-      createOrderParams.params.numbers.callbackGasLimit = 0;
       await sendCreateOrder(createOrderParams);
 
       const orderKeys = await getOrderKeys(dataStore, 0, 1);
@@ -716,17 +806,10 @@ describe("SubaccountGelatoRelayRouter", () => {
       ).to.be.revertedWithCustomError(errorsContract, "NonEmptyExternalCallsForSubaccountOrder");
     });
 
-    it("signature is valid", async () => {
-      await expect(
-        sendUpdateOrder(updateOrderParams)
-        // should not fail with InvalidSignature
-      ).to.be.revertedWithCustomError(errorsContract, "EmptyOrder");
-    });
-
     it("InsufficientExecutionFee", async () => {
       await enableSubaccount();
       createOrderParams.feeParams.feeAmount = expandDecimals(1, 15);
-      // set callback to 0 so estimation execution fee is 0
+      // set callback to 0 so estimated execution fee is 0
       createOrderParams.params.numbers.callbackGasLimit = 0;
       await sendCreateOrder(createOrderParams);
 
@@ -775,7 +858,7 @@ describe("SubaccountGelatoRelayRouter", () => {
       createOrderParams.feeParams.feeAmount = expandDecimals(2, 15);
       await sendCreateOrder(createOrderParams);
 
-      const orderKeys = await getOrderKeys(dataStore, 0, 1);
+      let orderKeys = await getOrderKeys(dataStore, 0, 1);
       await expect(
         sendUpdateOrder({
           ...updateOrderParams,
@@ -799,9 +882,29 @@ describe("SubaccountGelatoRelayRouter", () => {
         },
         increaseExecutionFee: false,
       });
+
+      await dataStore.setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1000));
+      createOrderParams.feeParams.feeAmount = expandDecimals(1, 18);
+      await sendCreateOrder(createOrderParams);
+
+      await dataStore.setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1));
+      orderKeys = await getOrderKeys(dataStore, 0, 1);
+      await sendUpdateOrder({
+        ...updateOrderParams,
+        key: orderKeys[0],
+        feeParams: {
+          ...updateOrderParams.feeParams,
+          feeAmount: expandDecimals(2, 17),
+        },
+        increaseExecutionFee: false,
+      });
     });
 
-    it("increases execution fee", async () => {
+    it("EmptyOrder", async () => {
+      await expect(sendUpdateOrder(updateOrderParams)).to.be.revertedWithCustomError(errorsContract, "EmptyOrder");
+    });
+
+    it("updates order, sends relay fee, increases execution fee", async () => {
       await enableSubaccount();
       await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
       await sendCreateOrder(createOrderParams);
@@ -810,6 +913,7 @@ describe("SubaccountGelatoRelayRouter", () => {
 
       updateOrderParams.relayFeeAmount = expandDecimals(1, 15);
       updateOrderParams.feeParams.feeAmount = expandDecimals(3, 15);
+      updateOrderParams.params.sizeDeltaUsd = expandDecimals(1000, 30);
 
       const initialWethBalance = await wnt.balanceOf(user1.address);
       const gelatoRelayFee = updateOrderParams.relayFeeAmount;
@@ -830,6 +934,7 @@ describe("SubaccountGelatoRelayRouter", () => {
       // and the execution fee is increased
       order = await reader.getOrder(dataStore.address, orderKeys[0]);
       expect(order.numbers.executionFee).eq(expandDecimals(3, 15));
+      expect(order.numbers.sizeDeltaUsd).eq(expandDecimals(1000, 30));
     });
   });
 
@@ -867,6 +972,11 @@ describe("SubaccountGelatoRelayRouter", () => {
       };
     });
 
+    it("DisabledFeature", async () => {
+      await dataStore.setBool(keys.gaslessFeatureDisabledKey(subaccountGelatoRelayRouter.address), true);
+      await expect(sendCancelOrder(cancelOrderParams)).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
+    });
+
     it("onlyGelatoRelay", async () => {
       await expect(
         sendCancelOrder({ ...cancelOrderParams, sender: user0 })
@@ -892,7 +1002,7 @@ describe("SubaccountGelatoRelayRouter", () => {
     it("NonEmptyExternalCallsForSubaccountOrder", async () => {
       await enableSubaccount();
       createOrderParams.feeParams.feeAmount = expandDecimals(1, 15);
-      // set callback to 0 so estimation execution fee is 0
+      // set callback to 0 so estimated execution fee is 0
       createOrderParams.params.numbers.callbackGasLimit = 0;
       await sendCreateOrder(createOrderParams);
 
@@ -912,11 +1022,19 @@ describe("SubaccountGelatoRelayRouter", () => {
       ).to.be.revertedWithCustomError(errorsContract, "NonEmptyExternalCallsForSubaccountOrder");
     });
 
-    it("signature is valid", async () => {
-      await expect(
-        sendCancelOrder(cancelOrderParams)
-        // should not fail with InvalidSignature
-      ).to.be.revertedWithCustomError(errorsContract, "EmptyOrder");
+    it("cancels order and sends relay fee", async () => {
+      await enableSubaccount();
+      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
+      await sendCreateOrder(createOrderParams);
+      const orderKeys = await getOrderKeys(dataStore, 0, 1);
+      const gelatoRelayFee = createOrderParams.relayFeeAmount;
+
+      await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, gelatoRelayFee);
+      await sendCancelOrder({ ...cancelOrderParams, key: orderKeys[0] });
+      await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, bigNumberify(gelatoRelayFee).mul(2));
+
+      const orderCount = await getOrderCount(dataStore);
+      expect(orderCount).eq(0);
     });
   });
 
@@ -940,6 +1058,11 @@ describe("SubaccountGelatoRelayRouter", () => {
         relayFeeAmount: expandDecimals(1, 15),
         deadline: 9999999999,
       };
+    });
+
+    it("DisabledFeature", async () => {
+      await dataStore.setBool(keys.gaslessFeatureDisabledKey(subaccountGelatoRelayRouter.address), true);
+      await expect(sendRemoveSubaccount(params)).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
     });
 
     it("InvalidSignature", async () => {
@@ -969,6 +1092,50 @@ describe("SubaccountGelatoRelayRouter", () => {
 
       expect(createOrderParams.relayFeeAmount).gt(0);
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, createOrderParams.relayFeeAmount);
+    });
+
+    it("swap relay fee with external call", async () => {
+      const externalExchange = await deployContract("MockExternalExchange", []);
+      await wnt.connect(user1).transfer(externalExchange.address, expandDecimals(1, 17));
+
+      await usdc.connect(user1).approve(router.address, expandDecimals(1000, 6));
+      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
+
+      const usdcBalanceBefore = await usdc.balanceOf(user1.address);
+      const feeAmount = expandDecimals(10, 6);
+      await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, 0);
+      const tx = await sendRemoveSubaccount({
+        ...params,
+        externalCalls: {
+          externalCallTargets: [externalExchange.address],
+          externalCallDataList: [
+            externalExchange.interface.encodeFunctionData("transfer", [
+              wnt.address,
+              subaccountGelatoRelayRouter.address,
+              expandDecimals(1, 17),
+            ]),
+          ],
+          refundTokens: [],
+          refundReceivers: [],
+        },
+        feeParams: {
+          feeToken: usdc.address,
+          feeAmount,
+          feeSwapPath: [],
+        },
+      });
+
+      // feeCollector received in WETH
+      await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, params.relayFeeAmount);
+
+      // and user sent correct amount of USDC
+      const usdcBalanceAfter = await usdc.balanceOf(user1.address);
+      expect(usdcBalanceAfter).eq(usdcBalanceBefore.sub(feeAmount));
+
+      await logGasUsage({
+        tx,
+        label: "subaccountGelatoRelayRouter.removeSubaccount with external call",
+      });
     });
   });
 });
