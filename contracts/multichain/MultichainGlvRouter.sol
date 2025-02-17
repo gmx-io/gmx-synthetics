@@ -56,6 +56,7 @@ contract MultichainGlvRouter is MultichainRouter {
             relayParams,
             account,
             address(glvVault),
+            false, // isSubaccount
             srcChainId
         );
 
@@ -97,6 +98,7 @@ contract MultichainGlvRouter is MultichainRouter {
             relayParams,
             account,
             address(glvVault), // residualFeeReceiver
+            false, // isSubaccount
             srcChainId
         );
 

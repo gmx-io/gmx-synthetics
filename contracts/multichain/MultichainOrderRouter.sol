@@ -58,7 +58,7 @@ contract MultichainOrderRouter is MultichainRouter {
         bytes32 structHash = RelayUtils.getCancelOrderStructHash(relayParams, key);
         _validateCall(relayParams, account, structHash, srcChainId);
 
-        _cancelOrder(relayParams, account, key);
+        _cancelOrder(relayParams, account, key, false /* isSubaccount */);
     }
 
     function bridgeOut(
