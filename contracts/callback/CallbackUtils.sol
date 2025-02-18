@@ -40,6 +40,10 @@ library CallbackUtils {
     using GlvDeposit for GlvDeposit.Props;
     using GlvWithdrawal for GlvWithdrawal.Props;
 
+    using EventUtils for EventUtils.AddressItems;
+    using EventUtils for EventUtils.UintItems;
+    using EventUtils for EventUtils.BoolItems;
+
     event AfterDepositExecutionError(bytes32 key, Deposit.Props deposit);
     event AfterDepositCancellationError(bytes32 key, Deposit.Props deposit);
 
@@ -242,17 +246,46 @@ library CallbackUtils {
     // @param order the order that was executed
     function afterOrderExecution(
         bytes32 key,
-        Order.Props memory order,
-        EventUtils.EventLogData memory eventData
+        Order.Props memory order
     ) internal {
         if (!isValidCallbackContract(order.callbackContract())) { return; }
 
         validateGasLeftForCallback(order.callbackGasLimit());
 
+        EventUtils.OrderData memory orderData;
+        orderData.addresses.initItems(7);
+        orderData.addresses.initArrayItems(1);
+        orderData.addresses.setItem(0, "account", order.addresses.account);
+        orderData.addresses.setItem(1, "receiver", order.addresses.receiver);
+        orderData.addresses.setItem(2, "cancellationReceiver", order.addresses.cancellationReceiver);
+        orderData.addresses.setItem(3, "callbackContract", order.addresses.callbackContract);
+        orderData.addresses.setItem(4, "uiFeeReceiver", order.addresses.uiFeeReceiver);
+        orderData.addresses.setItem(5, "market", order.addresses.market);
+        orderData.addresses.setItem(6, "initialCollateralToken", order.addresses.initialCollateralToken);
+        orderData.addresses.setItem(0, "swapPath", order.addresses.swapPath);
+
+        orderData.numbers.initItems(11);
+        orderData.numbers.setItem(0, "orderType", uint(order.numbers.orderType));
+        orderData.numbers.setItem(1, "decreasePositionSwapType", uint(order.numbers.decreasePositionSwapType));
+        orderData.numbers.setItem(2, "sizeDeltaUsd", order.numbers.sizeDeltaUsd);
+        orderData.numbers.setItem(3, "initialCollateralDeltaAmount", order.numbers.initialCollateralDeltaAmount);
+        orderData.numbers.setItem(4, "triggerPrice", order.numbers.triggerPrice);
+        orderData.numbers.setItem(5, "acceptablePrice", order.numbers.acceptablePrice);
+        orderData.numbers.setItem(6, "executionFee", order.numbers.executionFee);
+        orderData.numbers.setItem(7, "callbackGasLimit", order.numbers.callbackGasLimit);
+        orderData.numbers.setItem(8, "minOutputAmount", order.numbers.minOutputAmount);
+        orderData.numbers.setItem(9, "updatedAtTime", order.numbers.updatedAtTime);
+        orderData.numbers.setItem(10, "validFromTime", order.numbers.validFromTime);
+
+        orderData.flags.initItems(4);
+        orderData.flags.setItem(0, "isLong", order.flags.isLong);
+        orderData.flags.setItem(1, "shouldUnwrapNativeToken", order.flags.shouldUnwrapNativeToken);
+        orderData.flags.setItem(2, "isFrozen", order.flags.isFrozen);
+        orderData.flags.setItem(3, "autoCancel", order.flags.autoCancel);
+
         try IOrderCallbackReceiver(order.callbackContract()).afterOrderExecution{ gas: order.callbackGasLimit() }(
             key,
-            order,
-            eventData
+            orderData
         ) {
         } catch {
             emit AfterOrderExecutionError(key, order);
