@@ -110,19 +110,14 @@ library RelayUtils {
     bytes32 public constant CREATE_DEPOSIT_TYPEHASH =
         keccak256(
             bytes(
-                "CreateDeposit(CreateDepositParams params,bytes32 relayParams)CreateDepositParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minMarketTokens,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,bytes32[] dataList)"
+                "CreateDeposit(CreateDepositAddresses addresses,uint256 minMarketTokens,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,bytes32[] dataList,bytes32 relayParams)CreateDepositAddresses(address receiver,address callbackContract,address uiFeeReceiver,address market,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath)"
+                // TODO: "CreateDeposit(TransferRequest[] transferRequests, CreateDepositAddresses addresses,uint256 minMarketTokens,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,bytes32[] dataList,bytes32 relayParams)TransferRequest(address token,address receiver,uint256 amount)CreateDepositAddresses(address receiver,address callbackContract,address uiFeeReceiver,address market,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath)"
             )
         );
-    bytes32 public constant CREATE_DEPOSIT_PARAMS_TYPEHASH =
+    bytes32 public constant CREATE_DEPOSIT_ADDRESSES_TYPEHASH =
         keccak256(
             bytes(
-                "CreateDepositParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minMarketTokens,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,bytes32[] dataList)"
-            )
-        );
-    bytes32 public constant CREATE_DEPOSIT_PARAMS_ADDRESSES_TYPEHASH =
-        keccak256(
-            bytes(
-                "CreateDepositParamsAdresses(address receiver,address callbackContract,address uiFeeReceiver,address market,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath)"
+                "CreateDepositAddresses(address receiver,address callbackContract,address uiFeeReceiver,address market,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath)"
             )
         );
 
@@ -219,7 +214,7 @@ library RelayUtils {
                     relayParams.fee,
                     relayParams.userNonce,
                     relayParams.deadline,
-                    block.chainid
+                    block.chainid // TODO: could actually be relayParams.desChainId. desChainId is already checked against block.chainid in _validateDesChainId
                 )
             );
     }
@@ -333,26 +328,14 @@ library RelayUtils {
             keccak256(
                 abi.encode(
                     CREATE_DEPOSIT_TYPEHASH,
-                    _getCreateDepositParamsStructHash(params),
-                    _getTransferRequestsHash(transferRequests),
-                    _getRelayParamsHash(relayParams)
-                )
-            );
-    }
-
-    function _getCreateDepositParamsStructHash(
-        DepositUtils.CreateDepositParams memory params
-    ) internal pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    CREATE_DEPOSIT_PARAMS_TYPEHASH,
+                    // _getTransferRequestsHash(transferRequests), // TODO: fix transferRequests hashing
                     _getCreateDepositParamsAdressesStructHash(params.addresses),
                     params.minMarketTokens,
                     params.shouldUnwrapNativeToken,
                     params.executionFee,
                     params.callbackGasLimit,
-                    keccak256(abi.encodePacked(params.dataList))
+                    keccak256(abi.encodePacked(params.dataList)),
+                    _getRelayParamsHash(relayParams)
                 )
             );
     }
@@ -363,7 +346,7 @@ library RelayUtils {
         return
             keccak256(
                 abi.encode(
-                    CREATE_DEPOSIT_PARAMS_ADDRESSES_TYPEHASH,
+                    CREATE_DEPOSIT_ADDRESSES_TYPEHASH,
                     addresses.receiver,
                     addresses.callbackContract,
                     addresses.uiFeeReceiver,
@@ -557,7 +540,7 @@ library RelayUtils {
             );
     }
 
-    function _getTransferRequestStructHash(TransferRequest memory request) internal pure returns (bytes32) {
+    function _getTransferRequestStructHash(TransferRequest calldata request) internal pure returns (bytes32) {
         return keccak256(abi.encode(TRANSFER_REQUEST_TYPEHASH, request.token, request.receiver, request.amount));
     }
 
