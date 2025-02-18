@@ -493,7 +493,7 @@ library Keys {
     // @dev key for FeeDistributor chain ID
     bytes32 public constant FEE_DISTRIBUTOR_CHAIN_ID = keccak256(abi.encode("FEE_DISTRIBUTOR_CHAIN_ID"));
     // @dev key for FeeDistributor fee amount
-    bytes32 public constant FEE_DISTRIBUTOR_FEE_AMOUNT = keccak256(abi.encode("FEE_DISTRIBUTOR_FEE_AMOUNT"));
+    bytes32 public constant FEE_DISTRIBUTOR_FEE_AMOUNT_GMX = keccak256(abi.encode("FEE_DISTRIBUTOR_FEE_AMOUNT_GMX"));
     // @dev key for FeeDistributor total fee amount in USD by version
     bytes32 public constant FEE_DISTRIBUTOR_FEE_AMOUNT_USD = keccak256(abi.encode("FEE_DISTRIBUTOR_FEE_AMOUNT_USD"));
     // @dev key for FeeDistributor staked gmx
@@ -2168,11 +2168,11 @@ library Keys {
         return keccak256(abi.encode(FEE_DISTRIBUTOR_REFERRAL_REWARDS_AMOUNT, token));
     }
 
-    // @dev key for the FeeDistributor fee amount
-    // @param chainId the chainId for which to retrieve fee amount
-    // @return key for FeeDistributor fee amount
-    function feeDistributorFeeAmountKey(uint256 chainId) internal pure returns (bytes32) {
-        return keccak256(abi.encode(FEE_DISTRIBUTOR_FEE_AMOUNT, chainId));
+    // @dev key for the FeeDistributor fee amount gmx
+    // @param chainId the chainId for which to retrieve fee amount gmx
+    // @return key for FeeDistributor fee amount gmx
+    function feeDistributorFeeAmountGmxKey(uint256 chainId) internal pure returns (bytes32) {
+        return keccak256(abi.encode(FEE_DISTRIBUTOR_FEE_AMOUNT_GMX, chainId));
     }
 
     // @dev key for the FeeDistributor fee amount in USD by version
