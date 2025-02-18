@@ -11,7 +11,7 @@ interface IOrderCallbackReceiver {
     // @dev called after an order execution
     // @param key the key of the order
     // @param order the order that was executed
-    function afterOrderExecution(bytes32 key, Order.Props memory order, EventUtils.EventLogData memory eventData) external;
+    function afterOrderExecution(bytes32 key, EventUtils.OrderData memory orderData) external;
 
     // @dev called after an order cancellation
     // @param key the key of the order

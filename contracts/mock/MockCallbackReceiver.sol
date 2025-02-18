@@ -15,7 +15,7 @@ contract MockCallbackReceiver is IOrderCallbackReceiver, IGasFeeCallbackReceiver
     uint public glvWithdrawalExecutionCalled;
     uint public glvWithdrawalCancellationCalled;
 
-    function afterOrderExecution(bytes32 /* key */, Order.Props memory /* order */, EventUtils.EventLogData memory /* eventData */) external {
+    function afterOrderExecution(bytes32 /* key */, EventUtils.OrderData memory /* order */) external {
         ++called;
     }
 
