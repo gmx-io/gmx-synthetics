@@ -99,7 +99,7 @@ describe("MultichainGmRouter", () => {
       params: defaultParams,
       deadline: 9999999999,
       chainId,
-      srcChainId: 0,
+      srcChainId: chainId, // 0 would mean same chain action
       desChainId: chainId, // for non-multichain actions, desChainId and srcChainId are the same
       relayRouter: multichainGmRouter,
       relayFeeToken: wnt.address,
@@ -153,7 +153,7 @@ describe("MultichainGmRouter", () => {
           user0,
           multichainGmRouter.address, // reverts with InvalidPermitSpender if not Router
           createDepositParams.transferRequests[1].amount,
-          0,
+          1,
           9999999999,
           chainId
         ),
