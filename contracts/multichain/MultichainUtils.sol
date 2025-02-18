@@ -53,6 +53,7 @@ library MultichainUtils {
     function transferOut(
         DataStore dataStore,
         EventEmitter eventEmitter,
+        MultichainVault multichainVault,
         address token,
         address account,
         address receiver,
@@ -70,7 +71,7 @@ library MultichainUtils {
             revert Errors.InsufficientMultichainBalance();
         }
 
-        IERC20(token).safeTransferFrom(account, receiver, amount);
+        IERC20(token).safeTransferFrom(address(multichainVault), receiver, amount);
         dataStore.decrementUint(Keys.multichainBalanceKey(account, token), amount);
         MultichainEventUtils.emitMultichainTransferOut(eventEmitter, token, account, amount, srcChainId);
     }

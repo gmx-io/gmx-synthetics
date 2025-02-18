@@ -6,7 +6,7 @@ import "../router/relay/GelatoRelayRouter.sol";
 
 import "./MultichainUtils.sol";
 
-contract MultichainRouter is GelatoRelayRouter {
+abstract contract MultichainRouter is GelatoRelayRouter {
 
     struct BaseConstructorParams {
         Router router;
@@ -49,7 +49,7 @@ contract MultichainRouter is GelatoRelayRouter {
         if (srcChainId == 0) {
             router.pluginTransfer(token, account, receiver, amount);
         } else {
-            MultichainUtils.transferOut(dataStore, eventEmitter, token, account, receiver, amount, srcChainId);
+            MultichainUtils.transferOut(dataStore, eventEmitter, multichainVault, token, account, receiver, amount, srcChainId);
         }
     }
 
