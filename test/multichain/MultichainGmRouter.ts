@@ -83,18 +83,11 @@ describe("MultichainGmRouter", () => {
         feeSwapPath: [],
       },
       tokenPermits: [],
-      transferRequests: [
-        {
-          token: wnt.address,
-          receiver: depositVault.address,
-          amount: expandDecimals(1, 18),
-        },
-        {
-          token: usdc.address,
-          receiver: depositVault.address,
-          amount: expandDecimals(5000, 6),
-        },
-      ],
+      transferRequests: {
+        tokens: [wnt.address, usdc.address],
+        receivers: [multichainVault.address, multichainVault.address],
+        amounts: [expandDecimals(1, 18), expandDecimals(50000, 6)],
+      },
       account: user0.address,
       params: defaultParams,
       deadline: 9999999999,
@@ -138,33 +131,7 @@ describe("MultichainGmRouter", () => {
       console.log("multichainVault address: %s", multichainVault.address);
       console.log("depositVault address: %s", depositVault.address);
 
-      const tokenPermits = [
-        await getTokenPermit(
-          wnt,
-          user0,
-          multichainGmRouter.address, // reverts with InvalidPermitSpender if not Router
-          createDepositParams.transferRequests[0].amount,
-          0,
-          9999999999,
-          chainId
-        ),
-        await getTokenPermit(
-          usdc,
-          user0,
-          multichainGmRouter.address, // reverts with InvalidPermitSpender if not Router
-          createDepositParams.transferRequests[1].amount,
-          1,
-          9999999999,
-          chainId
-        ),
-      ];
-
-      // TODO: fix 'ERC20: insufficient allowance' error
-      // might be due to permits or the multichianGmRouter not being able to spend from multichainVault
-      await sendCreateDeposit({
-        ...createDepositParams,
-        tokenPermits,
-      });
+      await sendCreateDeposit(createDepositParams);
 
       expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, wnt.address))).to.eq(
         wntAmount.sub(createDepositParams.transferRequests[0].amount)
