@@ -71,7 +71,7 @@ library MultichainUtils {
             revert Errors.InsufficientMultichainBalance();
         }
 
-        IERC20(token).safeTransferFrom(address(multichainVault), receiver, amount);
+        multichainVault.transferOut(token, receiver, amount);
         dataStore.decrementUint(Keys.multichainBalanceKey(account, token), amount);
         MultichainEventUtils.emitMultichainTransferOut(eventEmitter, token, account, amount, srcChainId);
     }
