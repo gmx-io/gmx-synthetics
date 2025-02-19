@@ -30,10 +30,10 @@ export async function sendCreateDeposit(p: {
     feeSwapPath: string[];
   };
   transferRequests: {
-    token: string;
-    receiver: string;
-    amount: BigNumberish;
-  }[];
+    tokens: string[];
+    receivers: string[];
+    amounts: BigNumberish[];
+  };
   account: string;
   params: any;
   signature?: string;
@@ -83,7 +83,9 @@ async function getCreateDepositSignature({
   }
   const types = {
     CreateDeposit: [
-      // { name: "transferRequests", type: "TransferRequest[]" },
+      { name: "transferTokens", type: "address[]" },
+      { name: "transferReceivers", type: "address[]" },
+      { name: "transferAmounts", type: "uint256[]" },
       { name: "addresses", type: "CreateDepositAddresses" },
       { name: "minMarketTokens", type: "uint256" },
       { name: "shouldUnwrapNativeToken", type: "bool" },
@@ -102,17 +104,11 @@ async function getCreateDepositSignature({
       { name: "longTokenSwapPath", type: "address[]" },
       { name: "shortTokenSwapPath", type: "address[]" },
     ],
-    // TransferRequest: [
-    //   { name: "token", type: "address" },
-    //   { name: "receiver", type: "address" },
-    //   { name: "amount", type: "uint256" },
-    // ],
   };
-
-  const domain = getDomain(chainId, verifyingContract);
-
   const typedData = {
-    // transferRequests,
+    transferTokens: transferRequests.tokens,
+    transferReceivers: transferRequests.receivers,
+    transferAmounts: transferRequests.amounts,
     addresses: params.addresses,
     minMarketTokens: params.minMarketTokens,
     shouldUnwrapNativeToken: params.shouldUnwrapNativeToken,
@@ -121,6 +117,7 @@ async function getCreateDepositSignature({
     dataList: params.dataList,
     relayParams: hashRelayParams(relayParams),
   };
+  const domain = getDomain(chainId, verifyingContract);
 
   return signTypedData(signer, domain, types, typedData);
 }

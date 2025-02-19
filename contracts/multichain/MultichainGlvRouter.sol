@@ -25,7 +25,7 @@ contract MultichainGlvRouter is MultichainRouter {
         RelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
-        RelayUtils.TransferRequest[] calldata transferRequests,
+        RelayUtils.TransferRequests calldata transferRequests,
         GlvDepositUtils.CreateGlvDepositParams memory params
     ) external nonReentrant onlyGelatoRelay returns (bytes32) {
         _validateDesChainId(relayParams.desChainId);
@@ -67,7 +67,7 @@ contract MultichainGlvRouter is MultichainRouter {
         RelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
-        RelayUtils.TransferRequest[] calldata transferRequests,
+        RelayUtils.TransferRequests calldata transferRequests,
         GlvWithdrawalUtils.CreateGlvWithdrawalParams memory params
     ) external nonReentrant onlyGelatoRelay returns (bytes32) {
         _validateDesChainId(relayParams.desChainId);

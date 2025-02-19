@@ -57,10 +57,10 @@ library RelayUtils {
         bool autoCancel;
     }
 
-    struct TransferRequest {
-        address token;
-        address receiver;
-        uint256 amount;
+    struct TransferRequests {
+        address[] tokens;
+        address[] receivers;
+        uint256[] amounts;
     }
 
     struct BridgeOutParams {
@@ -110,8 +110,7 @@ library RelayUtils {
     bytes32 public constant CREATE_DEPOSIT_TYPEHASH =
         keccak256(
             bytes(
-                "CreateDeposit(CreateDepositAddresses addresses,uint256 minMarketTokens,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,bytes32[] dataList,bytes32 relayParams)CreateDepositAddresses(address receiver,address callbackContract,address uiFeeReceiver,address market,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath)"
-                // TODO: "CreateDeposit(TransferRequest[] transferRequests, CreateDepositAddresses addresses,uint256 minMarketTokens,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,bytes32[] dataList,bytes32 relayParams)TransferRequest(address token,address receiver,uint256 amount)CreateDepositAddresses(address receiver,address callbackContract,address uiFeeReceiver,address market,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath)"
+                "CreateDeposit(address[] transferTokens,address[] transferReceivers,uint256[] transferAmounts,CreateDepositAddresses addresses,uint256 minMarketTokens,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,bytes32[] dataList,bytes32 relayParams)CreateDepositAddresses(address receiver,address callbackContract,address uiFeeReceiver,address market,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath)"
             )
         );
     bytes32 public constant CREATE_DEPOSIT_ADDRESSES_TYPEHASH =
@@ -124,9 +123,10 @@ library RelayUtils {
     bytes32 public constant CREATE_WITHDRAWAL_TYPEHASH =
         keccak256(
             bytes(
-                "CreateWithdrawal(CreateWithdrawalParams params,bytes32 relayParams)CreateWithdrawalParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minLongTokenAmount,uint256 minShortTokenAmount,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,bytes32[] dataList)"
+                "CreateWithdrawal(address[] transferTokens,address[] transferReceivers,uint256[] transferAmounts,CreateWithdrawalParams params,bytes32 relayParams)CreateWithdrawalParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minLongTokenAmount,uint256 minShortTokenAmount,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,bytes32[] dataList)"
             )
         );
+
     bytes32 public constant CREATE_WITHDRAWAL_PARAMS_TYPEHASH =
         keccak256(
             bytes(
@@ -137,7 +137,7 @@ library RelayUtils {
     bytes32 public constant CREATE_GLV_DEPOSIT_TYPEHASH =
         keccak256(
             bytes(
-                "CreateGlvDeposit(CreateGlvDepositParams params,bytes32 relayParams)CreateGlvDepositParams(address account,address market,address initialLongToken,address initialShortToken,bytes32[] dataList)"
+                "CreateGlvDeposit(address[] transferTokens,address[] transferReceivers,uint256[] transferAmounts,CreateGlvDepositParams params,bytes32 relayParams)CreateGlvDepositParams(CreateGlvDepositParamsAddresses addresses,uint256 minGlvTokens,uint256 executionFee,uint256 callbackGasLimit,bool shouldUnwrapNativeToken,bool isMarketTokenDeposit,bytes32[] dataList)"
             )
         );
     bytes32 public constant CREATE_GLV_DEPOSIT_PARAMS_ADDRESSES_TYPEHASH =
@@ -156,7 +156,7 @@ library RelayUtils {
     bytes32 public constant CREATE_GLV_WITHDRAWAL_TYPEHASH =
         keccak256(
             bytes(
-                "CreateGlvWithdrawal(CreateGlvWithdrawalParams params,bytes32 relayParams)CreateGlvWithdrawalParams(CreateGlvWithdrawalParamsAddresses addresses,uint256 minLongTokenAmount,uint256 minShortTokenAmount,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,bytes32[] dataList)CreateGlvWithdrawalParamsAddresses(address receiver,address callbackContract,address uiFeeReceiver,address market,address glv,address[] longTokenSwapPath,address[] shortTokenSwapPath)"
+                "CreateGlvWithdrawal(address[] transferTokens,address[] transferReceivers,uint256[] transferAmounts,CreateGlvWithdrawalParams params,bytes32 relayParams)CreateGlvWithdrawalParams(CreateGlvWithdrawalParamsAddresses addresses,uint256 minLongTokenAmount,uint256 minShortTokenAmount,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,bytes32[] dataList)CreateGlvWithdrawalParamsAddresses(address receiver,address callbackContract,address uiFeeReceiver,address market,address glv,address[] longTokenSwapPath,address[] shortTokenSwapPath)"
             )
         );
     bytes32 public constant CREATE_GLV_WITHDRAWAL_PARAMS_TYPEHASH =
@@ -175,7 +175,7 @@ library RelayUtils {
     bytes32 public constant CREATE_SHIFT_TYPEHASH =
         keccak256(
             bytes(
-                "CreateShift(CreateShiftParams params,bytes32 relayParams)CreateShiftParams(address receiver,address callbackContract,address uiFeeReceiver,address fromMarket,address toMarket,uint256 minMarketTokens,uint256 executionFee,uint256 callbackGasLimit,bytes32[] dataList)"
+                "CreateShift(address[] transferTokens,address[] transferReceivers,uint256[] transferAmounts,CreateShiftParams params,bytes32 relayParams)CreateShiftParams(address receiver,address callbackContract,address uiFeeReceiver,address fromMarket,address toMarket,uint256 minMarketTokens,uint256 executionFee,uint256 callbackGasLimit,bytes32[] dataList)"
             )
         );
     bytes32 public constant CREATE_SHIFT_PARAMS_TYPEHASH =
@@ -185,8 +185,8 @@ library RelayUtils {
             )
         );
 
-    bytes32 public constant TRANSFER_REQUEST_TYPEHASH =
-        keccak256(bytes("TransferRequest(address token,address receiver,uint256 amount)"));
+    bytes32 public constant TRANSFER_REQUESTS_TYPEHASH =
+        keccak256(bytes("TransferRequests(address[] tokens,address[] receivers,uint256[] amounts)"));
 
     bytes32 public constant BRIDGE_OUT_TYPEHASH =
         keccak256(
@@ -321,14 +321,16 @@ library RelayUtils {
 
     function getCreateDepositStructHash(
         RelayParams calldata relayParams,
-        TransferRequest[] calldata transferRequests,
+        TransferRequests calldata transferRequests,
         DepositUtils.CreateDepositParams memory params
     ) external pure returns (bytes32) {
         return
             keccak256(
                 abi.encode(
                     CREATE_DEPOSIT_TYPEHASH,
-                    // _getTransferRequestsHash(transferRequests), // TODO: fix transferRequests hashing
+                    keccak256(abi.encodePacked(transferRequests.tokens)),
+                    keccak256(abi.encodePacked(transferRequests.receivers)),
+                    keccak256(abi.encodePacked(transferRequests.amounts)),
                     _getCreateDepositParamsAdressesStructHash(params.addresses),
                     params.minMarketTokens,
                     params.shouldUnwrapNativeToken,
@@ -361,15 +363,17 @@ library RelayUtils {
 
     function getCreateWithdrawalStructHash(
         RelayParams calldata relayParams,
-        TransferRequest[] calldata transferRequests,
+        TransferRequests calldata transferRequests,
         WithdrawalUtils.CreateWithdrawalParams memory params
     ) external pure returns (bytes32) {
         return
             keccak256(
                 abi.encode(
                     CREATE_WITHDRAWAL_TYPEHASH,
+                    keccak256(abi.encodePacked(transferRequests.tokens)),
+                    keccak256(abi.encodePacked(transferRequests.receivers)),
+                    keccak256(abi.encodePacked(transferRequests.amounts)),
                     _getCreateWithdrawalParamsStructHash(params),
-                    _getTransferRequestsHash(transferRequests),
                     _getRelayParamsHash(relayParams)
                 )
             );
@@ -400,15 +404,17 @@ library RelayUtils {
 
     function getCreateGlvDepositStructHash(
         RelayParams calldata relayParams,
-        TransferRequest[] calldata transferRequests,
+        TransferRequests calldata transferRequests,
         GlvDepositUtils.CreateGlvDepositParams memory params
     ) external pure returns (bytes32) {
         return
             keccak256(
                 abi.encode(
                     CREATE_GLV_DEPOSIT_TYPEHASH,
+                    keccak256(abi.encodePacked(transferRequests.tokens)),
+                    keccak256(abi.encodePacked(transferRequests.receivers)),
+                    keccak256(abi.encodePacked(transferRequests.amounts)),
                     _getCreateGlvDepositParamsStructHash(params),
-                    _getTransferRequestsHash(transferRequests),
                     _getRelayParamsHash(relayParams)
                 )
             );
@@ -454,15 +460,17 @@ library RelayUtils {
 
     function getCreateGlvWithdrawalStructHash(
         RelayParams calldata relayParams,
-        TransferRequest[] calldata transferRequests,
+        TransferRequests calldata transferRequests,
         GlvWithdrawalUtils.CreateGlvWithdrawalParams memory params
     ) external pure returns (bytes32) {
         return
             keccak256(
                 abi.encode(
                     CREATE_GLV_WITHDRAWAL_TYPEHASH,
+                    keccak256(abi.encodePacked(transferRequests.tokens)),
+                    keccak256(abi.encodePacked(transferRequests.receivers)),
+                    keccak256(abi.encodePacked(transferRequests.amounts)),
                     _getCreateGlvWithdrawalParamsStructHash(params),
-                    _getTransferRequestsHash(transferRequests),
                     _getRelayParamsHash(relayParams)
                 )
             );
@@ -506,15 +514,17 @@ library RelayUtils {
 
     function getCreateShiftStructHash(
         RelayParams calldata relayParams,
-        TransferRequest[] calldata transferRequests,
+        TransferRequests calldata transferRequests,
         ShiftUtils.CreateShiftParams memory params
     ) external pure returns (bytes32) {
         return
             keccak256(
                 abi.encode(
                     CREATE_SHIFT_TYPEHASH,
+                    keccak256(abi.encodePacked(transferRequests.tokens)),
+                    keccak256(abi.encodePacked(transferRequests.receivers)),
+                    keccak256(abi.encodePacked(transferRequests.amounts)),
                     _getCreateShiftParamsStructHash(params),
-                    _getTransferRequestsHash(transferRequests),
                     _getRelayParamsHash(relayParams)
                 )
             );
@@ -540,43 +550,17 @@ library RelayUtils {
             );
     }
 
-    function _getTransferRequestStructHash(TransferRequest calldata request) internal pure returns (bytes32) {
-        return keccak256(abi.encode(TRANSFER_REQUEST_TYPEHASH, request.token, request.receiver, request.amount));
-    }
-
-    // TODO: double-check typehash is correctly generated
-    function _getTransferRequestsHash(TransferRequest[] calldata requests) internal pure returns (bytes32) {
-        bytes32[] memory hashes = new bytes32[](requests.length);
-        for (uint256 i = 0; i < requests.length; i++) {
-            hashes[i] = _getTransferRequestStructHash(requests[i]);
-        }
-        return keccak256(abi.encodePacked(hashes));
-    }
-
     function getBridgeOutStructHash(
         RelayParams calldata relayParams,
         BridgeOutParams memory params
     ) external pure returns (bytes32) {
         return
             keccak256(
-                abi.encode(
-                    BRIDGE_OUT_TYPEHASH,
-                    _getBridgeOutParamsStructHash(params),
-                    _getRelayParamsHash(relayParams)
-                )
+                abi.encode(BRIDGE_OUT_TYPEHASH, _getBridgeOutParamsStructHash(params), _getRelayParamsHash(relayParams))
             );
     }
 
-    function _getBridgeOutParamsStructHash(
-        BridgeOutParams memory params
-    ) internal pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    BRIDGE_OUT_PARAMS_TYPEHASH,
-                    params.token,
-                    params.amount
-                )
-            );
+    function _getBridgeOutParamsStructHash(BridgeOutParams memory params) internal pure returns (bytes32) {
+        return keccak256(abi.encode(BRIDGE_OUT_PARAMS_TYPEHASH, params.token, params.amount));
     }
 }

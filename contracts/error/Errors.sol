@@ -430,6 +430,7 @@ library Errors {
     error EmptyMarketPrice(address market);
 
     // Multichain errors
+    error InvalidTransferRequestsLength();
     error EmptyMultichainTransferInAmount();
     error EmptyMultichainTransferOutAmount();
     error InsufficientMultichainBalance();
