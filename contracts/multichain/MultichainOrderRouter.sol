@@ -64,23 +64,23 @@ contract MultichainOrderRouter is MultichainRouter {
     function bridgeOut(
         RelayUtils.RelayParams calldata relayParams,
         address provider,
-        uint32 dstEid,
-        address account,
+        address receiver,
         uint256 srcChainId,
+        bytes calldata data, // encoded provider specific data e.g. dstEid
         RelayUtils.BridgeOutParams calldata params
     ) external nonReentrant onlyGelatoRelay {
         _validateDesChainId(relayParams.desChainId);
         _validateMultichainProvider(dataStore, provider);
 
         bytes32 structHash = RelayUtils.getBridgeOutStructHash(relayParams, params);
-        _validateCall(relayParams, account, structHash, srcChainId);
+        _validateCall(relayParams, receiver, structHash, srcChainId);
 
         multichainProvider.bridgeOut(
             provider,
-            dstEid,
-            account,
+            receiver,
             params.token,
-            params.amount
+            params.amount,
+            data
         );
     }
 

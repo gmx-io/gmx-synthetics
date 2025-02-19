@@ -26,6 +26,11 @@ import "./LayerZeroProviderEventUtils.sol";
  * - sends tokens to the Stargate executor for bridging out to the source chain
  */
 contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer {
+
+    struct LayerZeroBridgeOutParams {
+        bytes32 dstEid;
+    }
+
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
     MultichainVault public immutable multichainVault;
@@ -92,20 +97,21 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer {
 
     function bridgeOut(
         address _stargate,
-        uint32 _dstEid,
-        address account,
+        address receiver,
         address token,
-        uint256 amount
+        uint256 amount,
+        bytes calldata data
     ) external {
         IERC20(token).approve(_stargate, amount);
 
         // IStargate stargate = IStargate(_stargate);
+        // LayerZeroBridgeOutParams memory info = abi.decode(data, (LayerZeroBridgeOutParams));
 
         // (uint256 valueToSend, SendParam memory sendParam, MessagingFee memory messagingFee) = prepareSend(
         //     stargate,
         //     amount,
-        //     account,
-        //     _dstEid,
+        //     receiver,
+        //     info.dstEid,
         //     new bytes(0), // _extraOptions
         //     new bytes(0) // _composeMsg
         // );
@@ -113,12 +119,12 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer {
         // (MessagingReceipt memory msgReceipt, OFTReceipt memory oftReceipt) = stargate.send{value: valueToSend}(
         //     sendParam,
         //     messagingFee,
-        //     account
+        //     receiver
         // );
 
         MultichainEventUtils.emitBridgeOut(
             eventEmitter,
-            account,
+            receiver,
             token,
             amount
         );
