@@ -4,21 +4,14 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-import {MessagingFee, MessagingReceipt} from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/ILayerZeroEndpointV2.sol";
-
-import {MultichainReaderUtils} from "../external/MultichainReaderUtils.sol";
-
 import "./FeeDistributorVault.sol";
 import "./FeeHandler.sol";
 import "../external/MultichainReader.sol";
-import "../router/IExchangeRouter.sol";
-import "../v1/IVaultV1.sol";
 import "../v1/IRewardTracker.sol";
 import "../v1/IRewardDistributor.sol";
 
 contract FeeDistributor is ReentrancyGuard, RoleModule {
     using EventUtils for EventUtils.UintItems;
-    using EventUtils for EventUtils.BoolItems;
 
     enum DistributionState {
         None,
@@ -33,13 +26,15 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
     bytes32 public constant gmxKey = keccak256(abi.encode("GMX"));
     bytes32 public constant extendedGmxTrackerKey = keccak256(abi.encode("EXTENDED_GMX_TRACKER"));
     bytes32 public constant dataStoreKey = keccak256(abi.encode("DATASTORE"));
-    bytes32 public constant referralRewardsKey = keccak256(abi.encode("REFERRAL_REWARDS"));
+    bytes32 public constant referralRewardsWntKey = keccak256(abi.encode("REFERRAL_REWARDS_WNT"));
+    bytes32 public constant referralRewardsEsGmxKey = keccak256(abi.encode("REFERRAL_REWARDS_ESGMX"));
     bytes32 public constant glpKey = keccak256(abi.encode("GLP"));
     bytes32 public constant treasuryKey = keccak256(abi.encode("TREASURY"));
     bytes32 public constant synapseRouterKey = keccak256(abi.encode("SYNAPSE_ROUTER"));
     bytes32 public constant feeGlpTrackerKey = keccak256(abi.encode("FEE_GLP_TRACKER"));
     bytes32 public constant chainlinkKey = keccak256(abi.encode("CHAINLINK"));
     bytes32 public constant feeDistributionKeeperKey = keccak256(abi.encode("FEE_DISTRIBUTION_KEEPER"));
+    bytes32 public constant esGmxKey = keccak256(abi.encode("ESGMX"));
 
     FeeDistributorVault public immutable feeDistributorVault;
     FeeHandler public immutable feeHandler;
@@ -76,8 +71,8 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         uint256[] memory chainIds = dataStore.getUintArray(Keys.FEE_DISTRIBUTOR_CHAIN_ID);
         for (uint256 i; i < chainCount; i++) {
             uint256 chainId = chainIds[i];
-            address gmx = getAddress(Keys.feeDistributorAddressInfoKey(chainId, gmxKey));
-            address extendedGmxTracker = getAddress(Keys.feeDistributorAddressInfoKey(chainId, extendedGmxTrackerKey));
+            address gmx = getAddress(chainId, gmxKey);
+            address extendedGmxTracker = getAddress(chainId, extendedGmxTrackerKey);
 
             if (chainId == block.chainid) {
                 uint256 feeAmountGmx = getUint(Keys.withdrawableBuybackTokenAmountKey(gmx)) +
@@ -92,9 +87,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
             uint32 layerZeroChainId = uint32(getUint(Keys.feeDistributorLayerZeroChainIdKey(chainId)));
             uint256 readRequestIndex = skippedCurrentChain ? (i - 1) * 3 : i * 3;
             readRequestsInputs[readRequestIndex].chainId = layerZeroChainId;
-            readRequestsInputs[readRequestIndex].target = getAddress(
-                Keys.feeDistributorAddressInfoKey(chainId, dataStoreKey)
-            );
+            readRequestsInputs[readRequestIndex].target = getAddress(chainId, dataStoreKey);
             readRequestsInputs[readRequestIndex].callData = abi.encodeWithSelector(
                 DataStore.getUint.selector,
                 Keys.withdrawableBuybackTokenAmountKey(gmx)
@@ -105,7 +98,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
             readRequestsInputs[readRequestIndex].target = gmx;
             readRequestsInputs[readRequestIndex].callData = abi.encodeWithSelector(
                 IERC20.balanceOf.selector,
-                getAddress(Keys.feeDistributorAddressInfoKey(chainId, Keys.FEE_RECEIVER))
+                getAddress(chainId, Keys.FEE_RECEIVER)
             );
             readRequestIndex++;
 
@@ -170,10 +163,10 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         validateDistributionNotCompleted();
 
         address wnt = getAddress(Keys.WNT);
-        address gmxCurrentChain = getAddress(Keys.feeDistributorAddressInfoKey(block.chainid, gmxKey));
+        address gmx = getAddress(block.chainid, gmxKey);
 
         feeHandler.withdrawFees(wnt);
-        feeHandler.withdrawFees(gmxCurrentChain);
+        feeHandler.withdrawFees(gmx);
 
         // fee amount related calculations
         uint256 totalWntBalance = IERC20(wnt).balanceOf(address(feeDistributorVault));
@@ -211,19 +204,27 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         );
         uint256 wntForTreasury = chainlinkTreasuryWntAmount - wntForChainlink - keeperCostsTreasury;
 
-        uint256 referralRewardsUsd = getUint(Keys.feeDistributorReferralRewardsAmountKey(wnt));
-        uint256 wntForReferralRewards = Precision.toFactor(referralRewardsUsd, vaultV1.getMaxPrice(wnt));
-        uint256 wntForReferralRewardsThreshold = getUint(Keys.feeDistributorAmountThresholdKey(referralRewardsKey));
-        uint256 maxReferralRewardsUsd = Precision.applyFactor(feesV1Usd, wntForReferralRewardsThreshold);
-        if (referralRewardsUsd > maxReferralRewardsUsd) {
-            revert Errors.ReferralRewardsWntThresholdBreached(
-                wntForReferralRewards,
-                referralRewardsUsd - maxReferralRewardsUsd
-            );
+        uint256 wntReferralRewardsInUsd = getUint(Keys.feeDistributorReferralRewardsAmountKey(wnt));
+        uint256 wntForReferralRewards = Precision.toFactor(wntReferralRewardsInUsd, vaultV1.getMaxPrice(wnt));
+        uint256 wntForReferralRewardsThreshold = getUint(Keys.feeDistributorAmountThresholdKey(referralRewardsWntKey));
+        uint256 maxWntReferralRewardsInUsd = Precision.applyFactor(feesV1Usd, wntForReferralRewardsThreshold);
+        if (wntReferralRewardsInUsd > maxWntReferralRewardsInUsd) {
+            revert Errors.WntReferralRewardsInUsdThresholdBreached(wntReferralRewardsInUsd, maxWntReferralRewardsInUsd);
+        }
+
+        uint256 esGmxForReferralRewards = getUint(Keys.FEE_DISTRIBUTOR_ESGMX_REWARDS);
+        uint256 maxEsGmxReferralRewards = getUint(Keys.feeDistributorAmountThresholdKey(referralRewardsEsGmxKey));
+        if (esGmxForReferralRewards > maxEsGmxReferralRewards) {
+            revert Errors.EsGmxReferralRewardsThresholdBreached(esGmxForReferralRewards, maxEsGmxReferralRewards);
+        }
+
+        address esGmx = getAddress(block.chainid, esGmxKey);
+        uint256 vaultEsGmxBalance = IERC20(esGmx).balanceOf(address(feeDistributorVault));
+        if (esGmxForReferralRewards > vaultEsGmxBalance) {
+            revert Errors.InsufficientEsGmxInFeeDistributorVault(esGmxForReferralRewards, vaultEsGmxBalance);
         }
 
         uint256 wntForGlp = totalWntBalance - keeperCostsGlp - wntForChainlink - wntForTreasury - wntForReferralRewards;
-
         uint256 expectedWntForGlp = totalWntBalance - chainlinkTreasuryWntAmount;
         uint256 glpFeeThreshold = getUint(Keys.feeDistributorAmountThresholdKey(glpKey));
         uint256 minWntForGlp = Precision.applyFactor(expectedWntForGlp, glpFeeThreshold);
@@ -233,7 +234,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
             uint256 wntGlpShortfall = minWntForGlp - wntForGlp;
             uint256 maxTreasuryWntShortfall = wntForTreasury - minTreasuryWntAmount;
             if (wntGlpShortfall > maxTreasuryWntShortfall) {
-                revert Errors.TreasuryFeeThresholdBreached(wntForTreasury, wntGlpShortfall - maxTreasuryWntShortfall);
+                revert Errors.TreasuryFeeThresholdBreached(wntForTreasury, wntGlpShortfall, maxTreasuryWntShortfall);
             }
 
             wntForTreasury = wntForTreasury - wntGlpShortfall;
@@ -245,7 +246,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         uint256 feeAmountGmxCurrentChain = feeAmountGmxCurrentChainOrig;
         DistributionState distributionState = DistributionState(getUint(Keys.FEE_DISTRIBUTION_STATE));
         if (distributionState == DistributionState.DistributePending) {
-            feeAmountGmxCurrentChain = IERC20(gmxCurrentChain).balanceOf(address(feeDistributorVault));
+            feeAmountGmxCurrentChain = IERC20(gmx).balanceOf(address(feeDistributorVault));
             setUint(Keys.feeDistributorFeeAmountGmxKey(block.chainid), feeAmountGmxCurrentChain);
         }
 
@@ -365,14 +366,12 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
             for (uint256 i; i < chainCount; i++) {
                 uint256 sendAmount = bridging[currentChain][i];
                 if (sendAmount > 0) {
-                    feeDistributorVault.transferOut(gmxCurrentChain, address(this), sendAmount);
+                    feeDistributorVault.transferOut(gmx, address(this), sendAmount);
 
                     uint256 chainId = chainIds[i];
-                    address synapseRouter = getAddress(
-                        Keys.feeDistributorAddressInfoKey(block.chainid, synapseRouterKey)
-                    );
-                    address gmxDestChain = getAddress(Keys.feeDistributorAddressInfoKey(chainId, gmxKey));
-                    address feeReceiver = getAddress(Keys.feeDistributorAddressInfoKey(chainId, Keys.FEE_RECEIVER));
+                    address synapseRouter = getAddress(block.chainid, synapseRouterKey);
+                    address gmxDestChain = getAddress(chainId, gmxKey);
+                    address feeReceiver = getAddress(chainId, Keys.FEE_RECEIVER);
                     address nullAddress;
                     uint256 minAmountOut = Precision.applyFactor(sendAmount, slippageFactor);
 
@@ -387,10 +386,10 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
                         "bridge(address,uint256,address,uint256,(address,address,uint256,uint256,bytes),(address,address,uint256,uint256,bytes))",
                         feeReceiver,
                         chainId,
-                        gmxCurrentChain,
+                        gmx,
                         sendAmount,
                         nullAddress,
-                        gmxCurrentChain,
+                        gmx,
                         sendAmount,
                         originDeadline,
                         rawParams,
@@ -426,37 +425,21 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
             }
         }
 
-        address extendedGmxTracker = getAddress(
-            Keys.feeDistributorAddressInfoKey(block.chainid, extendedGmxTrackerKey)
-        );
-        updateRewardDistribution(gmxCurrentChain, extendedGmxTracker, feeAmountGmxCurrentChain);
+        feeDistributorVault.transferOut(wnt, getAddress(block.chainid, chainlinkKey), wntForChainlink);
+        feeDistributorVault.transferOut(wnt, getAddress(block.chainid, treasuryKey), wntForTreasury);
 
-        feeDistributorVault.transferOut(
-            wnt,
-            getAddress(Keys.feeDistributorAddressInfoKey(block.chainid, chainlinkKey)),
-            wntForChainlink
-        );
+        address feeDistributionKeeper = getAddress(block.chainid, feeDistributionKeeperKey);
+        feeDistributorVault.transferOut(wnt, feeDistributionKeeper, wntForReferralRewards);
+        feeDistributorVault.transferOut(esGmx, feeDistributionKeeper, esGmxForReferralRewards);
 
-        feeDistributorVault.transferOut(
-            wnt,
-            getAddress(Keys.feeDistributorAddressInfoKey(block.chainid, treasuryKey)),
-            wntForTreasury
-        );
-
-        feeDistributorVault.transferOut(
-            wnt,
-            getAddress(Keys.feeDistributorAddressInfoKey(block.chainid, feeDistributionKeeperKey)),
-            wntForReferralRewards
-        );
-
-        address feeGlpTracker = getAddress(Keys.feeDistributorAddressInfoKey(block.chainid, feeGlpTrackerKey));
-        updateRewardDistribution(wnt, feeGlpTracker, wntForGlp);
+        updateRewardDistribution(wnt, getAddress(block.chainid, feeGlpTrackerKey), wntForGlp);
+        updateRewardDistribution(gmx, getAddress(block.chainid, extendedGmxTrackerKey), feeAmountGmxCurrentChain);
 
         setUint(Keys.FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP, block.timestamp);
         setUint(Keys.FEE_DISTRIBUTION_STATE, uint256(DistributionState.None));
 
         EventUtils.EventLogData memory eventData;
-        eventData.uintItems.initItems(10);
+        eventData.uintItems.initItems(11);
         eventData.uintItems.setItem(0, "feesV1Usd", feesV1Usd);
         eventData.uintItems.setItem(1, "feesV2Usd", feesV2Usd);
         eventData.uintItems.setItem(2, "feeAmountGmxCurrentChain", feeAmountGmxCurrentChain);
@@ -467,6 +450,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         eventData.uintItems.setItem(7, "wntForTreasury", wntForTreasury);
         eventData.uintItems.setItem(8, "wntForReferralRewards", wntForReferralRewards);
         eventData.uintItems.setItem(9, "wntForGlp", wntForGlp);
+        eventData.uintItems.setItem(10, "esGmxForReferralRewards", esGmxForReferralRewards);
 
         eventEmitter.emitEventLog("FeeDistributionCompleted", eventData);
     }
@@ -482,7 +466,6 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
 
     function updateRewardDistribution(address rewardToken, address tracker, uint256 rewardAmount) internal {
         feeDistributorVault.transferOut(rewardToken, tracker, rewardAmount);
-
         address distributor = IRewardTracker(tracker).distributor();
         IRewardDistributor(distributor).updateLastDistributionTime();
         IRewardDistributor(distributor).setTokensPerInterval(rewardAmount / 1 weeks);
@@ -532,5 +515,9 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
 
     function getAddress(bytes32 fullKey) internal view returns (address) {
         return dataStore.getAddress(fullKey);
+    }
+
+    function getAddress(uint256 chainId, bytes32 addressKey) internal view returns (address) {
+        return getAddress(Keys.feeDistributorAddressInfoKey(chainId, addressKey));
     }
 }

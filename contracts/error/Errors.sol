@@ -431,8 +431,10 @@ library Errors {
     error InvalidDistributionState(uint256 distributionStateUint);
     error BridgedAmountNotSufficient(uint256 minRequiredFeeAmount, uint256 currentChainFeeAmount);
     error BridgingTransactionFailed(bytes result);
-    error ReferralRewardsWntThresholdBreached(uint256 referralRewardsWntAmount, uint256 referralRewardsWntShortFall);
-    error TreasuryFeeThresholdBreached(uint256 treasuryWntAmount, uint256 treasuryWntShortfall);
+    error WntReferralRewardsInUsdThresholdBreached(uint256 wntReferralRewardsInUsd, uint256 maxWntReferralRewardsInUsd);
+    error EsGmxReferralRewardsThresholdBreached(uint256 referralRewardsEsGmxAmount, uint256 maxEsGmxReferralRewards);
+    error InsufficientEsGmxInFeeDistributorVault(uint256 esGmxForReferralRewards, uint256 vaultEsGmxBalance);
+    error TreasuryFeeThresholdBreached(uint256 treasuryWntAmount, uint256 wntGlpShortfall, uint256 maxTreasuryWntShortfall);
     error KeeperArrayLengthMismatch(uint256 keepersLength, uint256 keeperTargetBalancesLength, uint256 keeperVersionsLength);
     error SendEthToKeeperFailed(address keeper, uint256 sendAmount, bytes result);
     error AttemptedBridgeAmountTooHigh(uint256 minRequiredFeeAmount, uint256 feeAmountCurrentChain, uint256 amountToBridgeOut);

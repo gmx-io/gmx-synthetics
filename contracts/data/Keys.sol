@@ -510,7 +510,7 @@ library Keys {
     bytes32 public constant FEE_DISTRIBUTOR_ADDRESS_INFO = keccak256(abi.encode("FEE_DISTRIBUTOR_ADDRESS_INFO"));
     // @dev key for FeeDistributor esGMX rewards available for referral rewards distribution
     bytes32 public constant FEE_DISTRIBUTOR_ESGMX_REWARDS = keccak256(abi.encode("FEE_DISTRIBUTOR_ESGMX_REWARDS"));
-    // @dev key for FeeDistributor fee thresholds
+    // @dev key for FeeDistributor amount thresholds
     bytes32 public constant FEE_DISTRIBUTOR_AMOUNT_THRESHOLD = keccak256(abi.encode("FEE_DISTRIBUTOR_AMOUNT_THRESHOLD"));
     // @dev key for FeeDistributor keeper costs
     bytes32 public constant FEE_DISTRIBUTOR_KEEPER_COSTS = keccak256(abi.encode("FEE_DISTRIBUTOR_KEEPER_COSTS"));
