@@ -54,6 +54,13 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         );
     }
 
+    struct UpdateOrderCache {
+        address wnt;
+        uint256 receivedWnt;
+        uint256 estimatedGasLimit;
+        uint256 oraclePriceCount;
+    }
+
     /**
      * @dev Updates the given order with the specified size delta, acceptable price, and trigger price.
      * The `updateOrder()` feature must be enabled for the given order type. The caller must be the owner
@@ -100,16 +107,6 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
             revert Errors.UnsupportedOrderType(uint256(order.orderType()));
         }
 
-        // allow topping up of executionFee as frozen orders
-        // will have their executionFee reduced
-        address wnt = TokenUtils.wnt(dataStore);
-        uint256 receivedWnt = orderVault.recordTransferIn(wnt);
-        order.setExecutionFee(order.executionFee() + receivedWnt);
-
-        uint256 estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(dataStore, order);
-        uint256 oraclePriceCount = GasUtils.estimateOrderOraclePriceCount(order.swapPath().length);
-        GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, order.executionFee(), oraclePriceCount, shouldValidateMaxExecutionFee);
-
         if (order.autoCancel() != autoCancel) {
             OrderUtils.updateAutoCancelList(dataStore, key, order, autoCancel);
             OrderUtils.validateTotalCallbackGasLimitForAutoCancelOrders(dataStore, order);
@@ -122,6 +119,27 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         order.setMinOutputAmount(minOutputAmount);
         order.setValidFromTime(validFromTime);
         order.setIsFrozen(false);
+
+        UpdateOrderCache memory cache;
+        // allow topping up of executionFee as frozen orders
+        // will have their executionFee reduced
+        cache.wnt = TokenUtils.wnt(dataStore);
+        cache.receivedWnt = orderVault.recordTransferIn(cache.wnt);
+
+        cache.estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(dataStore, order);
+        cache.oraclePriceCount = GasUtils.estimateOrderOraclePriceCount(order.swapPath().length);
+        (uint256 executionFee, uint256 executionFeeDiff) = GasUtils.validateAndCapExecutionFee(
+            dataStore,
+            cache.estimatedGasLimit,
+            order.executionFee() + cache.receivedWnt,
+            cache.oraclePriceCount,
+            shouldValidateMaxExecutionFee
+        );
+        order.setExecutionFee(executionFee);
+
+        if (executionFeeDiff != 0) {
+            GasUtils.sendExcessiveExecutionFee(dataStore, eventEmitter, orderVault, order.account(), executionFeeDiff);
+        }
 
         order.touch();
 

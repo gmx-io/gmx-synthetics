@@ -34,15 +34,7 @@ const BAD_SIGNATURE =
 describe("SubaccountGelatoRelayRouter", () => {
   let fixture;
   let user0, user1, user2, user3;
-  let reader,
-    dataStore,
-    router,
-    subaccountGelatoRelayRouter,
-    ethUsdMarket,
-    wnt,
-    usdc,
-    chainlinkPriceFeedProvider,
-    orderVault;
+  let reader, dataStore, router, subaccountGelatoRelayRouter, ethUsdMarket, wnt, usdc, chainlinkPriceFeedProvider;
   let relaySigner;
   let chainId;
   const referralCode = hashString("referralCode");
@@ -54,17 +46,8 @@ describe("SubaccountGelatoRelayRouter", () => {
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1, user2, user3 } = fixture.accounts);
-    ({
-      reader,
-      dataStore,
-      router,
-      subaccountGelatoRelayRouter,
-      ethUsdMarket,
-      wnt,
-      usdc,
-      chainlinkPriceFeedProvider,
-      orderVault,
-    } = fixture.contracts);
+    ({ reader, dataStore, router, subaccountGelatoRelayRouter, ethUsdMarket, wnt, usdc, chainlinkPriceFeedProvider } =
+      fixture.contracts);
 
     defaultCreateOrderParams = {
       addresses: {
@@ -202,31 +185,21 @@ describe("SubaccountGelatoRelayRouter", () => {
       );
     });
 
-    it("ExecutionFeeTooHigh", async () => {
+    it("execution fee should be capped", async () => {
       await enableSubaccount();
 
+      await dataStore.setAddress(keys.HOLDING_ADDRESS, user3.address);
       await dataStore.setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1));
       createOrderParams.feeParams.feeAmount = expandDecimals(1, 17);
-      await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(
-        errorsContract,
-        "ExecutionFeeTooHigh"
-      );
-    });
 
-    it("should not fail with ExecutionFeeTooHigh if someone frontruns and donates a lot of WNT to the order vault", async () => {
-      await enableSubaccount();
-      await dataStore.setAddress(keys.FEE_RECEIVER, user0.address);
-      await usdc.connect(user1).approve(router.address, expandDecimals(1000, 6));
-      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
-
-      // donate a lot of WNT to the order vault
-      await wnt.connect(user1).transfer(orderVault.address, expandDecimals(1, 18));
-
-      // should be different from WNT
-      createOrderParams.params.addresses.initialCollateralToken = usdc.address;
-      createOrderParams.collateralDeltaAmount = expandDecimals(1000, 6);
-
+      await expectBalance(wnt.address, user3.address, 0);
       await sendCreateOrder(createOrderParams);
+
+      const orderKeys = await getOrderKeys(dataStore, 0, 1);
+      const order = await reader.getOrder(dataStore.address, orderKeys[0]);
+      // 0.099 WETH (0.1 paid - 0.001 relay fee)
+      expect(order.numbers.executionFee).eq("9003720880000000");
+      await expectBalance(wnt.address, user3.address, "89996279120000000");
     });
 
     it("InvalidSignature", async () => {
@@ -853,26 +826,16 @@ describe("SubaccountGelatoRelayRouter", () => {
       });
     });
 
-    it("ExecutionFeeTooHigh", async () => {
+    it("execution fee should be capped if increased", async () => {
+      await dataStore.setAddress(keys.HOLDING_ADDRESS, user2.address);
       await enableSubaccount();
       createOrderParams.feeParams.feeAmount = expandDecimals(2, 15);
       await sendCreateOrder(createOrderParams);
+      const orderKeys = await getOrderKeys(dataStore, 0, 1);
+      let order = await reader.getOrder(dataStore.address, orderKeys[0]);
+      expect(order.numbers.executionFee).eq(expandDecimals(1, 15));
 
-      let orderKeys = await getOrderKeys(dataStore, 0, 1);
-      await expect(
-        sendUpdateOrder({
-          ...updateOrderParams,
-          key: orderKeys[0],
-          feeParams: {
-            ...updateOrderParams.feeParams,
-            feeAmount: expandDecimals(2, 17),
-          },
-          increaseExecutionFee: true,
-        })
-      ).to.be.revertedWithCustomError(errorsContract, "ExecutionFeeTooHigh");
-
-      // it should not fail with ExecutionFeeTooHigh if increaseExecutionFee is false
-      // because the residual relay fee is sent back to the user
+      // it should not be capped if increaseExecutionFee is false
       await sendUpdateOrder({
         ...updateOrderParams,
         key: orderKeys[0],
@@ -882,13 +845,10 @@ describe("SubaccountGelatoRelayRouter", () => {
         },
         increaseExecutionFee: false,
       });
+      order = await reader.getOrder(dataStore.address, orderKeys[0]);
+      expect(order.numbers.executionFee).eq(expandDecimals(1, 15));
 
-      await dataStore.setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1000));
-      createOrderParams.feeParams.feeAmount = expandDecimals(1, 18);
-      await sendCreateOrder(createOrderParams);
-
-      await dataStore.setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1));
-      orderKeys = await getOrderKeys(dataStore, 0, 1);
+      await expectBalance(wnt.address, user2.address, 0);
       await sendUpdateOrder({
         ...updateOrderParams,
         key: orderKeys[0],
@@ -896,8 +856,13 @@ describe("SubaccountGelatoRelayRouter", () => {
           ...updateOrderParams.feeParams,
           feeAmount: expandDecimals(2, 17),
         },
-        increaseExecutionFee: false,
+        increaseExecutionFee: true,
       });
+      order = await reader.getOrder(dataStore.address, orderKeys[0]);
+
+      // 0.2 WETH in total (initial 0.001 + 0.199 from update)
+      expect(order.numbers.executionFee).closeTo("8026788640000000", "10000000000000");
+      expect(await wnt.balanceOf(user2.address)).closeTo("191973211360000000", "10000000000000");
     });
 
     it("EmptyOrder", async () => {

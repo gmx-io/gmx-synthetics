@@ -123,13 +123,6 @@ describe("GelatoRelayRouter", () => {
       );
     });
 
-    it("ExecutionFeeTooHigh should not be applied", async () => {
-      await wnt.connect(user0).approve(router.address, expandDecimals(1, 18));
-      await dataStore.setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1));
-      await dataStore.setUint(keys.MAX_EXECUTION_FEE_MULTIPLIER_FACTOR, decimalToFloat(1, 10));
-      await expect(sendCreateOrder(createOrderParams)).to.not.be.reverted;
-    });
-
     it("InvalidSignature", async () => {
       await expect(
         sendCreateOrder({
@@ -251,6 +244,18 @@ describe("GelatoRelayRouter", () => {
         errorsContract,
         "UnexpectedRelayFeeTokenAfterSwap"
       );
+    });
+
+    it("execution fee should not be capped", async () => {
+      await wnt.connect(user0).approve(router.address, expandDecimals(1, 18));
+      await dataStore.setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1));
+      await dataStore.setUint(keys.MAX_EXECUTION_FEE_MULTIPLIER_FACTOR, decimalToFloat(1, 10));
+
+      createOrderParams.feeParams.feeAmount = expandDecimals(1, 17);
+      await sendCreateOrder(createOrderParams);
+      const orderKeys = await getOrderKeys(dataStore, 0, 1);
+      const order = await reader.getOrder(dataStore.address, orderKeys[0]);
+      expect(order.numbers.executionFee).eq("99000000000000000");
     });
 
     it("creates order and sends relayer fee", async () => {

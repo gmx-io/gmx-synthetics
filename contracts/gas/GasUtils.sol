@@ -182,8 +182,13 @@ library GasUtils {
         uint256 estimatedGasLimit,
         uint256 executionFee,
         uint256 oraclePriceCount
-    ) internal view {
-        validateExecutionFee(dataStore, estimatedGasLimit, executionFee, oraclePriceCount, false);
+    ) internal view returns (uint256) {
+        uint256 gasLimit = adjustGasLimitForEstimate(dataStore, estimatedGasLimit, oraclePriceCount);
+        uint256 minExecutionFee = gasLimit * tx.gasprice;
+        if (executionFee < minExecutionFee) {
+            revert Errors.InsufficientExecutionFee(minExecutionFee, executionFee);
+        }
+        return gasLimit;
     }
 
     // @dev validate that the provided executionFee is sufficient based on the estimatedGasLimit
@@ -192,21 +197,17 @@ library GasUtils {
     // @param executionFee the execution fee provided
     // @param oraclePriceCount
     // @param shouldValidateMaxExecutionFee whether to validate the max execution fee
-    function validateExecutionFee(
+    function validateAndCapExecutionFee(
         DataStore dataStore,
         uint256 estimatedGasLimit,
         uint256 executionFee,
         uint256 oraclePriceCount,
         bool shouldValidateMaxExecutionFee
-    ) internal view {
-        uint256 gasLimit = adjustGasLimitForEstimate(dataStore, estimatedGasLimit, oraclePriceCount);
-        uint256 minExecutionFee = gasLimit * tx.gasprice;
-        if (executionFee < minExecutionFee) {
-            revert Errors.InsufficientExecutionFee(minExecutionFee, executionFee);
-        }
+    ) internal view returns (uint256, uint256) {
+        uint256 gasLimit = validateExecutionFee(dataStore, estimatedGasLimit, executionFee, oraclePriceCount);
 
         if (!shouldValidateMaxExecutionFee) {
-            return;
+            return (executionFee, 0);
         }
         // a malicious subaccount could provide a large executionFee
         // and receive most of it as a refund sent to a callbackContract
@@ -221,9 +222,28 @@ library GasUtils {
 
         uint256 maxExecutionFeeMultiplierFactor = dataStore.getUint(Keys.MAX_EXECUTION_FEE_MULTIPLIER_FACTOR);
         uint256 maxExecutionFee = Precision.applyFactor(gasLimit * basefee, maxExecutionFeeMultiplierFactor);
-        if (executionFee > maxExecutionFee) {
-            revert Errors.ExecutionFeeTooHigh(maxExecutionFee, executionFee);
+        if (executionFee <= maxExecutionFee) {
+            return (executionFee, 0);
         }
+
+        uint256 executionFeeDiff = executionFee - maxExecutionFee;
+        return (maxExecutionFee, executionFeeDiff);
+    }
+
+    function sendExcessiveExecutionFee(DataStore dataStore, EventEmitter eventEmitter, Bank bank, address account, uint256 executionFeeDiff) external {
+        address wnt = TokenUtils.wnt(dataStore);
+        address holdingAddress = dataStore.getAddress(Keys.HOLDING_ADDRESS);
+        bank.transferOut(wnt, holdingAddress, executionFeeDiff);
+
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "account", account);
+
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "executionFeeDiff", executionFeeDiff);
+
+        eventEmitter.emitEventLog1("ExcessiveExecutionFee", Cast.toBytes32(account), eventData);
     }
 
     // @dev adjust the gas usage to pay a small amount to keepers
