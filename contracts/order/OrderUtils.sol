@@ -174,7 +174,7 @@ library OrderUtils {
         order.setExecutionFee(executionFee);
 
         if (cache.executionFeeDiff != 0) {
-            GasUtils.sendExcessiveExecutionFee(dataStore, eventEmitter, orderVault, order.account(), cache.executionFeeDiff);
+            GasUtils.transferExcessiveExecutionFee(dataStore, eventEmitter, orderVault, order.account(), cache.executionFeeDiff);
         }
 
         bytes32 key = NonceUtils.getNextKey(dataStore);

@@ -230,7 +230,7 @@ library GasUtils {
         return (maxExecutionFee, executionFeeDiff);
     }
 
-    function sendExcessiveExecutionFee(DataStore dataStore, EventEmitter eventEmitter, Bank bank, address account, uint256 executionFeeDiff) external {
+    function transferExcessiveExecutionFee(DataStore dataStore, EventEmitter eventEmitter, Bank bank, address account, uint256 executionFeeDiff) external {
         address wnt = TokenUtils.wnt(dataStore);
         address holdingAddress = dataStore.getAddress(Keys.HOLDING_ADDRESS);
         bank.transferOut(wnt, holdingAddress, executionFeeDiff);

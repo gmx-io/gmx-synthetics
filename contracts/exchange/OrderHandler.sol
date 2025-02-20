@@ -138,7 +138,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         order.setExecutionFee(executionFee);
 
         if (executionFeeDiff != 0) {
-            GasUtils.sendExcessiveExecutionFee(dataStore, eventEmitter, orderVault, order.account(), executionFeeDiff);
+            GasUtils.transferExcessiveExecutionFee(dataStore, eventEmitter, orderVault, order.account(), executionFeeDiff);
         }
 
         order.touch();
