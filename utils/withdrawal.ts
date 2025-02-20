@@ -50,12 +50,14 @@ export async function createWithdrawal(fixture, overrides: any = {}) {
   await marketToken.connect(account).transfer(withdrawalVault.address, marketTokenAmount);
 
   const params = {
-    receiver: receiver.address,
-    callbackContract: callbackContract.address,
-    uiFeeReceiver: uiFeeReceiver.address,
-    market: market.marketToken,
-    longTokenSwapPath,
-    shortTokenSwapPath,
+    addresses: {
+      receiver: receiver.address,
+      callbackContract: callbackContract.address,
+      uiFeeReceiver: uiFeeReceiver.address,
+      market: market.marketToken,
+      longTokenSwapPath,
+      shortTokenSwapPath,
+    },
     marketTokenAmount,
     minLongTokenAmount,
     minShortTokenAmount,
@@ -149,12 +151,14 @@ export async function executeAtomicWithdrawal(fixture, overrides: any = {}) {
   await marketToken.connect(account).transfer(withdrawalVault.address, marketTokenAmount);
 
   const params = {
-    receiver: receiver.address,
-    callbackContract: callbackContract.address,
-    uiFeeReceiver: uiFeeReceiver.address,
-    market: market.marketToken,
-    longTokenSwapPath,
-    shortTokenSwapPath,
+    addresses: {
+      receiver: receiver.address,
+      callbackContract: callbackContract.address,
+      uiFeeReceiver: uiFeeReceiver.address,
+      market: market.marketToken,
+      longTokenSwapPath,
+      shortTokenSwapPath,
+    },
     marketTokenAmount,
     minLongTokenAmount,
     minShortTokenAmount,

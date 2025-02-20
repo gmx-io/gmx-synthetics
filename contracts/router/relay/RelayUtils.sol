@@ -123,14 +123,13 @@ library RelayUtils {
     bytes32 public constant CREATE_WITHDRAWAL_TYPEHASH =
         keccak256(
             bytes(
-                "CreateWithdrawal(address[] transferTokens,address[] transferReceivers,uint256[] transferAmounts,CreateWithdrawalParams params,bytes32 relayParams)CreateWithdrawalParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minLongTokenAmount,uint256 minShortTokenAmount,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,bytes32[] dataList)"
+                "CreateWithdrawal(address[] transferTokens,address[] transferReceivers,uint256[] transferAmounts,CreateWithdrawalAddresses addresses,uint256 minLongTokenAmount,uint256 minShortTokenAmount,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,bytes32[] dataList,bytes32 relayParams)CreateWithdrawalAddresses(address receiver,address callbackContract,address uiFeeReceiver,address market,address[] longTokenSwapPath,address[] shortTokenSwapPath)"
             )
         );
-
-    bytes32 public constant CREATE_WITHDRAWAL_PARAMS_TYPEHASH =
+    bytes32 public constant CREATE_WITHDRAWAL_ADDRESSES_TYPEHASH =
         keccak256(
             bytes(
-                "CreateWithdrawalParams(address receiver,address callbackContract,address uiFeeReceiver,address market,address[] longTokenSwapPath,address[] shortTokenSwapPath,uint256 minLongTokenAmount,uint256 minShortTokenAmount,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,bytes32[] dataList)"
+                "CreateWithdrawalAddresses(address receiver,address callbackContract,address uiFeeReceiver,address market,address[] longTokenSwapPath,address[] shortTokenSwapPath)"
             )
         );
 
@@ -331,7 +330,7 @@ library RelayUtils {
                     keccak256(abi.encodePacked(transferRequests.tokens)),
                     keccak256(abi.encodePacked(transferRequests.receivers)),
                     keccak256(abi.encodePacked(transferRequests.amounts)),
-                    _getCreateDepositParamsAdressesStructHash(params.addresses),
+                    _getCreateDepositAdressesStructHash(params.addresses),
                     params.minMarketTokens,
                     params.shouldUnwrapNativeToken,
                     params.executionFee,
@@ -342,7 +341,7 @@ library RelayUtils {
             );
     }
 
-    function _getCreateDepositParamsAdressesStructHash(
+    function _getCreateDepositAdressesStructHash(
         DepositUtils.CreateDepositParamsAdresses memory addresses
     ) internal pure returns (bytes32) {
         return
@@ -373,31 +372,31 @@ library RelayUtils {
                     keccak256(abi.encodePacked(transferRequests.tokens)),
                     keccak256(abi.encodePacked(transferRequests.receivers)),
                     keccak256(abi.encodePacked(transferRequests.amounts)),
-                    _getCreateWithdrawalParamsStructHash(params),
-                    _getRelayParamsHash(relayParams)
-                )
-            );
-    }
-
-    function _getCreateWithdrawalParamsStructHash(
-        WithdrawalUtils.CreateWithdrawalParams memory params
-    ) internal pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    CREATE_WITHDRAWAL_PARAMS_TYPEHASH,
-                    params.receiver,
-                    params.callbackContract,
-                    params.uiFeeReceiver,
-                    params.market,
-                    keccak256(abi.encodePacked(params.longTokenSwapPath)),
-                    keccak256(abi.encodePacked(params.shortTokenSwapPath)),
+                    _getCreateWithdrawalAddressesStructHash(params.addresses),
                     params.minLongTokenAmount,
                     params.minShortTokenAmount,
                     params.shouldUnwrapNativeToken,
                     params.executionFee,
                     params.callbackGasLimit,
-                    keccak256(abi.encodePacked(params.dataList))
+                    keccak256(abi.encodePacked(params.dataList)),
+                    _getRelayParamsHash(relayParams)
+                )
+            );
+    }
+
+    function _getCreateWithdrawalAddressesStructHash(
+        WithdrawalUtils.CreateWithdrawalParamsAddresses memory addresses
+    ) internal pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    CREATE_WITHDRAWAL_ADDRESSES_TYPEHASH,
+                    addresses.receiver,
+                    addresses.callbackContract,
+                    addresses.uiFeeReceiver,
+                    addresses.market,
+                    keccak256(abi.encodePacked(addresses.longTokenSwapPath)),
+                    keccak256(abi.encodePacked(addresses.shortTokenSwapPath))
                 )
             );
     }

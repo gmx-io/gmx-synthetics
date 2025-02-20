@@ -141,12 +141,12 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
         oracle.validateSequencerUp();
 
         if (
-            params.longTokenSwapPath.length != 0 ||
-            params.shortTokenSwapPath.length != 0
+            params.addresses.longTokenSwapPath.length != 0 ||
+            params.addresses.shortTokenSwapPath.length != 0
         ) {
             revert Errors.SwapsNotAllowedForAtomicWithdrawal(
-                params.longTokenSwapPath.length,
-                params.shortTokenSwapPath.length
+                params.addresses.longTokenSwapPath.length,
+                params.addresses.shortTokenSwapPath.length
             );
         }
 
