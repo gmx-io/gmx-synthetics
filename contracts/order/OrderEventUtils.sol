@@ -23,36 +23,7 @@ library OrderEventUtils {
         bytes32 key,
         Order.Props memory order
     ) external {
-        EventUtils.EventLogData memory eventData;
-
-        eventData.addressItems.initItems(6);
-        eventData.addressItems.setItem(0, "account", order.account());
-        eventData.addressItems.setItem(1, "receiver", order.receiver());
-        eventData.addressItems.setItem(2, "callbackContract", order.callbackContract());
-        eventData.addressItems.setItem(3, "uiFeeReceiver", order.uiFeeReceiver());
-        eventData.addressItems.setItem(4, "market", order.market());
-        eventData.addressItems.setItem(5, "initialCollateralToken", order.initialCollateralToken());
-
-        eventData.addressItems.initArrayItems(1);
-        eventData.addressItems.setItem(0, "swapPath", order.swapPath());
-
-        eventData.uintItems.initItems(11);
-        eventData.uintItems.setItem(0, "orderType", uint256(order.orderType()));
-        eventData.uintItems.setItem(1, "decreasePositionSwapType", uint256(order.decreasePositionSwapType()));
-        eventData.uintItems.setItem(2, "sizeDeltaUsd", order.sizeDeltaUsd());
-        eventData.uintItems.setItem(3, "initialCollateralDeltaAmount", order.initialCollateralDeltaAmount());
-        eventData.uintItems.setItem(4, "triggerPrice", order.triggerPrice());
-        eventData.uintItems.setItem(5, "acceptablePrice", order.acceptablePrice());
-        eventData.uintItems.setItem(6, "executionFee", order.executionFee());
-        eventData.uintItems.setItem(7, "callbackGasLimit", order.callbackGasLimit());
-        eventData.uintItems.setItem(8, "minOutputAmount", order.minOutputAmount());
-        eventData.uintItems.setItem(9, "updatedAtTime", order.updatedAtTime());
-        eventData.uintItems.setItem(10, "validFromTime", order.validFromTime());
-
-        eventData.boolItems.initItems(3);
-        eventData.boolItems.setItem(0, "isLong", order.isLong());
-        eventData.boolItems.setItem(1, "shouldUnwrapNativeToken", order.shouldUnwrapNativeToken());
-        eventData.boolItems.setItem(2, "autoCancel", order.autoCancel());
+        EventUtils.EventLogData memory eventData = createEventData(order);
 
         eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "key", key);
@@ -222,5 +193,39 @@ library OrderEventUtils {
             Cast.toBytes32(account),
             eventData
         );
+    }
+
+    function createEventData(Order.Props memory order) public pure returns (EventUtils.EventLogData memory) {
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(7);
+        eventData.addressItems.setItem(0, "account", order.account());
+        eventData.addressItems.setItem(1, "receiver", order.receiver());
+        eventData.addressItems.setItem(2, "callbackContract", order.callbackContract());
+        eventData.addressItems.setItem(3, "uiFeeReceiver", order.uiFeeReceiver());
+        eventData.addressItems.setItem(4, "market", order.market());
+        eventData.addressItems.setItem(5, "initialCollateralToken", order.initialCollateralToken());
+        eventData.addressItems.setItem(6, "cancellationReceiver", order.cancellationReceiver());
+
+        eventData.addressItems.initArrayItems(1);
+        eventData.addressItems.setItem(0, "swapPath", order.swapPath());
+
+        eventData.uintItems.initItems(11);
+        eventData.uintItems.setItem(0, "orderType", uint256(order.orderType()));
+        eventData.uintItems.setItem(1, "decreasePositionSwapType", uint256(order.decreasePositionSwapType()));
+        eventData.uintItems.setItem(2, "sizeDeltaUsd", order.sizeDeltaUsd());
+        eventData.uintItems.setItem(3, "initialCollateralDeltaAmount", order.initialCollateralDeltaAmount());
+        eventData.uintItems.setItem(4, "triggerPrice", order.triggerPrice());
+        eventData.uintItems.setItem(5, "acceptablePrice", order.acceptablePrice());
+        eventData.uintItems.setItem(6, "executionFee", order.executionFee());
+        eventData.uintItems.setItem(7, "callbackGasLimit", order.callbackGasLimit());
+        eventData.uintItems.setItem(8, "minOutputAmount", order.minOutputAmount());
+        eventData.uintItems.setItem(9, "updatedAtTime", order.updatedAtTime());
+        eventData.uintItems.setItem(10, "validFromTime", order.validFromTime());
+
+        eventData.boolItems.initItems(3);
+        eventData.boolItems.setItem(0, "isLong", order.isLong());
+        eventData.boolItems.setItem(1, "shouldUnwrapNativeToken", order.shouldUnwrapNativeToken());
+        eventData.boolItems.setItem(2, "autoCancel", order.autoCancel());
+        return eventData;
     }
 }

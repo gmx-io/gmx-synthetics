@@ -24,34 +24,7 @@ library GlvDepositEventUtils {
         bytes32 key,
         GlvDeposit.Props memory glvDeposit
     ) external {
-        EventUtils.EventLogData memory eventData;
-
-        eventData.addressItems.initItems(8);
-        eventData.addressItems.setItem(0, "account", glvDeposit.account());
-        eventData.addressItems.setItem(1, "receiver", glvDeposit.receiver());
-        eventData.addressItems.setItem(2, "callbackContract", glvDeposit.callbackContract());
-        eventData.addressItems.setItem(3, "market", glvDeposit.market());
-        eventData.addressItems.setItem(4, "glv", glvDeposit.glv());
-        eventData.addressItems.setItem(5, "initialLongToken", glvDeposit.initialLongToken());
-        eventData.addressItems.setItem(6, "initialShortToken", glvDeposit.initialShortToken());
-        eventData.addressItems.setItem(7, "uiFeeReceiver", glvDeposit.uiFeeReceiver());
-
-        eventData.addressItems.initArrayItems(2);
-        eventData.addressItems.setItem(0, "longTokenSwapPath", glvDeposit.longTokenSwapPath());
-        eventData.addressItems.setItem(1, "shortTokenSwapPath", glvDeposit.shortTokenSwapPath());
-
-        eventData.uintItems.initItems(7);
-        eventData.uintItems.setItem(0, "initialLongTokenAmount", glvDeposit.initialLongTokenAmount());
-        eventData.uintItems.setItem(1, "initialShortTokenAmount", glvDeposit.initialShortTokenAmount());
-        eventData.uintItems.setItem(2, "minGlvTokens", glvDeposit.minGlvTokens());
-        eventData.uintItems.setItem(3, "updatedAtTime", glvDeposit.updatedAtTime());
-        eventData.uintItems.setItem(4, "executionFee", glvDeposit.executionFee());
-        eventData.uintItems.setItem(5, "callbackGasLimit", glvDeposit.callbackGasLimit());
-        eventData.uintItems.setItem(6, "marketTokenAmount", glvDeposit.marketTokenAmount());
-
-        eventData.boolItems.initItems(2);
-        eventData.boolItems.setItem(0, "shouldUnwrapNativeToken", glvDeposit.shouldUnwrapNativeToken());
-        eventData.boolItems.setItem(1, "isMarketTokenDeposit", glvDeposit.isMarketTokenDeposit());
+        EventUtils.EventLogData memory eventData = createEventData(glvDeposit);
 
         eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "key", key);
@@ -116,5 +89,37 @@ library GlvDepositEventUtils {
             Cast.toBytes32(account),
             eventData
         );
+    }
+
+    function createEventData(GlvDeposit.Props memory glvDeposit) public pure
+    returns (EventUtils.EventLogData memory) {
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(8);
+        eventData.addressItems.setItem(0, "account", glvDeposit.account());
+        eventData.addressItems.setItem(1, "receiver", glvDeposit.receiver());
+        eventData.addressItems.setItem(2, "callbackContract", glvDeposit.callbackContract());
+        eventData.addressItems.setItem(3, "market", glvDeposit.market());
+        eventData.addressItems.setItem(4, "glv", glvDeposit.glv());
+        eventData.addressItems.setItem(5, "initialLongToken", glvDeposit.initialLongToken());
+        eventData.addressItems.setItem(6, "initialShortToken", glvDeposit.initialShortToken());
+        eventData.addressItems.setItem(7, "uiFeeReceiver", glvDeposit.uiFeeReceiver());
+
+        eventData.addressItems.initArrayItems(2);
+        eventData.addressItems.setItem(0, "longTokenSwapPath", glvDeposit.longTokenSwapPath());
+        eventData.addressItems.setItem(1, "shortTokenSwapPath", glvDeposit.shortTokenSwapPath());
+
+        eventData.uintItems.initItems(7);
+        eventData.uintItems.setItem(0, "initialLongTokenAmount", glvDeposit.initialLongTokenAmount());
+        eventData.uintItems.setItem(1, "initialShortTokenAmount", glvDeposit.initialShortTokenAmount());
+        eventData.uintItems.setItem(2, "minGlvTokens", glvDeposit.minGlvTokens());
+        eventData.uintItems.setItem(3, "updatedAtTime", glvDeposit.updatedAtTime());
+        eventData.uintItems.setItem(4, "executionFee", glvDeposit.executionFee());
+        eventData.uintItems.setItem(5, "callbackGasLimit", glvDeposit.callbackGasLimit());
+        eventData.uintItems.setItem(6, "marketTokenAmount", glvDeposit.marketTokenAmount());
+
+        eventData.boolItems.initItems(2);
+        eventData.boolItems.setItem(0, "shouldUnwrapNativeToken", glvDeposit.shouldUnwrapNativeToken());
+        eventData.boolItems.setItem(1, "isMarketTokenDeposit", glvDeposit.isMarketTokenDeposit());
+        return eventData;
     }
 }

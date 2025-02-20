@@ -167,7 +167,7 @@ library MarketUtils {
     // @dev get the total supply of the marketToken
     // @param marketToken the marketToken
     // @return the total supply of the marketToken
-    function getMarketTokenSupply(MarketToken marketToken) internal view returns (uint256) {
+    function getMarketTokenSupply(MarketToken marketToken) public view returns (uint256) {
         return marketToken.totalSupply();
     }
 
@@ -2638,7 +2638,7 @@ library MarketUtils {
     // @dev validate that the specified market exists and is enabled
     // @param dataStore DataStore
     // @param marketAddress the address of the market
-    function validateEnabledMarket(DataStore dataStore, address marketAddress) internal view {
+    function validateEnabledMarket(DataStore dataStore, address marketAddress) external view {
         Market.Props memory market = MarketStoreUtils.get(dataStore, marketAddress);
         validateEnabledMarket(dataStore, market);
     }
@@ -2646,7 +2646,7 @@ library MarketUtils {
     // @dev validate that the specified market exists and is enabled
     // @param dataStore DataStore
     // @param market the market to check
-    function validateEnabledMarket(DataStore dataStore, Market.Props memory market) internal view {
+    function validateEnabledMarket(DataStore dataStore, Market.Props memory market) public view {
         if (market.marketToken == address(0)) {
             revert Errors.EmptyMarket();
         }
@@ -2697,7 +2697,7 @@ library MarketUtils {
     // @dev get the enabled market, revert if the market does not exist or is not enabled
     // @param dataStore DataStore
     // @param marketAddress the address of the market
-    function getEnabledMarket(DataStore dataStore, address marketAddress) internal view returns (Market.Props memory) {
+    function getEnabledMarket(DataStore dataStore, address marketAddress) public view returns (Market.Props memory) {
         Market.Props memory market = MarketStoreUtils.get(dataStore, marketAddress);
         validateEnabledMarket(dataStore, market);
         return market;
@@ -2722,7 +2722,7 @@ library MarketUtils {
         return markets;
     }
 
-    function validateSwapPath(DataStore dataStore, address[] memory swapPath) internal view {
+    function validateSwapPath(DataStore dataStore, address[] memory swapPath) external view {
         uint256 maxSwapPathLength = dataStore.getUint(Keys.MAX_SWAP_PATH_LENGTH);
         if (swapPath.length > maxSwapPathLength) {
             revert Errors.MaxSwapPathLengthExceeded(swapPath.length, maxSwapPathLength);

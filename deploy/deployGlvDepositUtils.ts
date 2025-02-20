@@ -11,6 +11,7 @@ const func = createDeployFunction({
     "GlvDepositEventUtils",
     "GlvDepositStoreUtils",
     "MarketStoreUtils",
+    "CallbackUtils",
   ],
 });
 
