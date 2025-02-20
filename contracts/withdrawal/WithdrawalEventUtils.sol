@@ -26,30 +26,7 @@ library WithdrawalEventUtils {
         Withdrawal.Props memory withdrawal,
         Withdrawal.WithdrawalType withdrawalType
     ) external {
-        EventUtils.EventLogData memory eventData;
-
-        eventData.addressItems.initItems(5);
-        eventData.addressItems.setItem(0, "account", withdrawal.account());
-        eventData.addressItems.setItem(1, "receiver", withdrawal.receiver());
-        eventData.addressItems.setItem(2, "callbackContract", withdrawal.callbackContract());
-        eventData.addressItems.setItem(3, "market", withdrawal.market());
-        eventData.addressItems.setItem(4, "uiFeeReceiver", withdrawal.uiFeeReceiver());
-
-        eventData.addressItems.initArrayItems(2);
-        eventData.addressItems.setItem(0, "longTokenSwapPath", withdrawal.longTokenSwapPath());
-        eventData.addressItems.setItem(1, "shortTokenSwapPath", withdrawal.shortTokenSwapPath());
-
-        eventData.uintItems.initItems(7);
-        eventData.uintItems.setItem(0, "marketTokenAmount", withdrawal.marketTokenAmount());
-        eventData.uintItems.setItem(1, "minLongTokenAmount", withdrawal.minLongTokenAmount());
-        eventData.uintItems.setItem(2, "minShortTokenAmount", withdrawal.minShortTokenAmount());
-        eventData.uintItems.setItem(3, "updatedAtTime", withdrawal.updatedAtTime());
-        eventData.uintItems.setItem(4, "executionFee", withdrawal.executionFee());
-        eventData.uintItems.setItem(5, "callbackGasLimit", withdrawal.callbackGasLimit());
-        eventData.uintItems.setItem(6, "withdrawalType", uint256(withdrawalType));
-
-        eventData.boolItems.initItems(1);
-        eventData.boolItems.setItem(0, "shouldUnwrapNativeToken", withdrawal.shouldUnwrapNativeToken());
+        EventUtils.EventLogData memory eventData = createEventData(withdrawal, withdrawalType);
 
         eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "key", key);
@@ -114,5 +91,34 @@ library WithdrawalEventUtils {
             Cast.toBytes32(account),
             eventData
         );
+    }
+
+    function createEventData(Withdrawal.Props memory withdrawal, Withdrawal.WithdrawalType withdrawalType)
+    public pure returns(EventUtils.EventLogData memory) {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(5);
+        eventData.addressItems.setItem(0, "account", withdrawal.account());
+        eventData.addressItems.setItem(1, "receiver", withdrawal.receiver());
+        eventData.addressItems.setItem(2, "callbackContract", withdrawal.callbackContract());
+        eventData.addressItems.setItem(3, "market", withdrawal.market());
+        eventData.addressItems.setItem(4, "uiFeeReceiver", withdrawal.uiFeeReceiver());
+
+        eventData.addressItems.initArrayItems(2);
+        eventData.addressItems.setItem(0, "longTokenSwapPath", withdrawal.longTokenSwapPath());
+        eventData.addressItems.setItem(1, "shortTokenSwapPath", withdrawal.shortTokenSwapPath());
+
+        eventData.uintItems.initItems(7);
+        eventData.uintItems.setItem(0, "marketTokenAmount", withdrawal.marketTokenAmount());
+        eventData.uintItems.setItem(1, "minLongTokenAmount", withdrawal.minLongTokenAmount());
+        eventData.uintItems.setItem(2, "minShortTokenAmount", withdrawal.minShortTokenAmount());
+        eventData.uintItems.setItem(3, "updatedAtTime", withdrawal.updatedAtTime());
+        eventData.uintItems.setItem(4, "executionFee", withdrawal.executionFee());
+        eventData.uintItems.setItem(5, "callbackGasLimit", withdrawal.callbackGasLimit());
+        eventData.uintItems.setItem(6, "withdrawalType", uint256(withdrawalType));
+
+        eventData.boolItems.initItems(1);
+        eventData.boolItems.setItem(0, "shouldUnwrapNativeToken", withdrawal.shouldUnwrapNativeToken());
+        return eventData;
     }
 }

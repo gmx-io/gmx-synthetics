@@ -15,15 +15,15 @@ contract MockCallbackReceiver is IOrderCallbackReceiver, IGasFeeCallbackReceiver
     uint public glvWithdrawalExecutionCalled;
     uint public glvWithdrawalCancellationCalled;
 
-    function afterOrderExecution(bytes32 /* key */, EventUtils.OrderData memory /* order */) external {
+    function afterOrderExecution(bytes32 /* key */, EventUtils.EventLogData memory /* order */, EventUtils.EventLogData memory /* eventData */) external {
         ++called;
     }
 
-    function afterOrderCancellation(bytes32 /* key */, Order.Props memory /* order */, EventUtils.EventLogData memory /* eventData */) external {
+    function afterOrderCancellation(bytes32 /* key */, EventUtils.EventLogData memory /* order */, EventUtils.EventLogData memory /* eventData */) external {
         ++called;
     }
 
-    function afterOrderFrozen(bytes32 /* key */, Order.Props memory /* order */, EventUtils.EventLogData memory /* eventData */) external {
+    function afterOrderFrozen(bytes32 /* key */, EventUtils.EventLogData memory /* order */, EventUtils.EventLogData memory /* eventData */) external {
         ++called;
     }
 
@@ -31,19 +31,19 @@ contract MockCallbackReceiver is IOrderCallbackReceiver, IGasFeeCallbackReceiver
         ++called;
     }
 
-    function afterGlvDepositExecution(bytes32 /* key */, GlvDeposit.Props memory /* glv deposit */, EventUtils.EventLogData memory /* eventData */) external {
+    function afterGlvDepositExecution(bytes32 /* key */, EventUtils.EventLogData memory /* glv deposit */, EventUtils.EventLogData memory /* eventData */) external {
         ++glvDepositExecutionCalled;
     }
 
-    function afterGlvDepositCancellation(bytes32 /* key */, GlvDeposit.Props memory /* glv deposit */, EventUtils.EventLogData memory /* eventData */) external {
+    function afterGlvDepositCancellation(bytes32 /* key */, EventUtils.EventLogData memory /* glv deposit */, EventUtils.EventLogData memory /* eventData */) external {
         ++glvDepositCancellationCalled;
     }
 
-    function afterGlvWithdrawalExecution(bytes32 /* key */, GlvWithdrawal.Props memory /* glv withdrawal */, EventUtils.EventLogData memory /* eventData */) external {
+    function afterGlvWithdrawalExecution(bytes32 /* key */, EventUtils.EventLogData memory /* glv withdrawal */, EventUtils.EventLogData memory /* eventData */) external {
         ++glvWithdrawalExecutionCalled;
     }
 
-    function afterGlvWithdrawalCancellation(bytes32 /* key */, GlvWithdrawal.Props memory /* glv withdrawal */, EventUtils.EventLogData memory /* eventData */) external {
+    function afterGlvWithdrawalCancellation(bytes32 /* key */, EventUtils.EventLogData memory /* glv withdrawal */, EventUtils.EventLogData memory /* eventData */) external {
         ++glvWithdrawalCancellationCalled;
     }
 }

@@ -91,7 +91,7 @@ library ExecuteOrderUtils {
             params.secondaryOrderType
         );
 
-        CallbackUtils.afterOrderExecution(params.key, params.order);
+        CallbackUtils.afterOrderExecution(params.key, params.order, eventData);
 
         // the order.executionFee for liquidation / adl orders is zero
         // gas costs for liquidations / adl is subsidised by the treasury
