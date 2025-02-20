@@ -69,7 +69,7 @@ describe("MultichainGmRouter", () => {
       transferRequests: {
         tokens: [wnt.address, usdc.address],
         receivers: [depositVault.address, depositVault.address],
-        amounts: [expandDecimals(1, 18), expandDecimals(5000, 6)],
+        amounts: [expandDecimals(1, 18), expandDecimals(5_000, 6)],
       },
       account: user0.address,
       params: defaultParams,
@@ -84,8 +84,8 @@ describe("MultichainGmRouter", () => {
 
     await dataStore.setAddress(keys.FEE_RECEIVER, user3.address);
 
-    const wntAmount = expandDecimals(10, 18);
-    const usdcAmount = expandDecimals(50000, 6);
+    const wntAmount = expandDecimals(10, 18); // 10 ETH
+    const usdcAmount = expandDecimals(50_000, 6); // 50,000 USDC
     await wnt.mint(user0.address, wntAmount);
     await usdc.mint(user0.address, usdcAmount);
 
@@ -116,7 +116,7 @@ describe("MultichainGmRouter", () => {
       ); // 10 ETH
       expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, usdc.address))).to.eq(
         expandDecimals(50_000, 6)
-      ); // 50.000 USDC
+      ); // 50,000 USDC
       expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(0);
       expect(await wnt.balanceOf(user3.address)).eq(0); // FEE_RECEIVER
 
@@ -128,10 +128,9 @@ describe("MultichainGmRouter", () => {
       ); // 10 - 1 - 0.005 = 8.995 ETH
       expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, usdc.address))).to.eq(
         expandDecimals(45_000, 6)
-      ); // 50.000 - 5.000 = 45.000 USDC
-      expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(expandDecimals(2, 15)); // 0.002 ETH (createDepositParams.relayFeeAmount)
-      // TODO: why is FEE_RECEIVER getting 1 WNT?
-      expect(await wnt.balanceOf(user3.address)).eq(expandDecimals(1, 18)); // FEE_RECEIVER
+      ); // 50,000 - 5,000 = 45,000 USDC
+      expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(createDepositParams.relayFeeAmount); // 0.002 ETH
+      expect(await wnt.balanceOf(user3.address)).eq(0); // FEE_RECEIVER
 
       const depositKeys = await getDepositKeys(dataStore, 0, 1);
       const deposit = await reader.getDeposit(dataStore.address, depositKeys[0]);
@@ -143,11 +142,12 @@ describe("MultichainGmRouter", () => {
       expect(deposit.addresses.initialShortToken).eq(defaultParams.addresses.initialShortToken);
       expect(deposit.addresses.longTokenSwapPath).deep.eq(defaultParams.addresses.longTokenSwapPath);
       expect(deposit.addresses.shortTokenSwapPath).deep.eq(defaultParams.addresses.shortTokenSwapPath);
-      // TODO: why initialLongTokenAmount is not 1 ETH?
-      expect(deposit.numbers.initialLongTokenAmount).eq(0);
-      expect(deposit.numbers.initialShortTokenAmount).eq(expandDecimals(5000, 6));
+      expect(deposit.numbers.initialLongTokenAmount).eq(createDepositParams.transferRequests.amounts[0]); // 1 ETH
+      expect(deposit.numbers.initialShortTokenAmount).eq(createDepositParams.transferRequests.amounts[1]); // 5,000 USDC
       expect(deposit.numbers.minMarketTokens).eq(defaultParams.minMarketTokens);
-      expect(deposit.numbers.executionFee).eq(expandDecimals(3, 15)); // 0.005 - 0.002 = 0.003 ETH (createDepositParams.feeParams.feeAmount - createDepositParams.relayFeeAmount)
+      expect(deposit.numbers.executionFee).eq(
+        createDepositParams.feeParams.feeAmount.sub(createDepositParams.relayFeeAmount)
+      ); // 0.005 - 0.002 = 0.003 ETH
       expect(deposit.numbers.callbackGasLimit).eq(defaultParams.callbackGasLimit);
       expect(deposit.flags.shouldUnwrapNativeToken).eq(defaultParams.shouldUnwrapNativeToken);
       expect(deposit._dataList).deep.eq(defaultParams.dataList);
