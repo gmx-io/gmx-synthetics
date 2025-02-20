@@ -47,18 +47,22 @@ library WithdrawalUtils {
      * @param callbackGasLimit The gas limit for calling the callback contract.
      */
     struct CreateWithdrawalParams {
-        address receiver;
-        address callbackContract;
-        address uiFeeReceiver;
-        address market;
-        address[] longTokenSwapPath;
-        address[] shortTokenSwapPath;
+        CreateWithdrawalParamsAddresses addresses;
         uint256 minLongTokenAmount;
         uint256 minShortTokenAmount;
         bool shouldUnwrapNativeToken;
         uint256 executionFee;
         uint256 callbackGasLimit;
         bytes32[] dataList;
+    }
+
+    struct CreateWithdrawalParamsAddresses {
+        address receiver;
+        address callbackContract;
+        address uiFeeReceiver;
+        address market;
+        address[] longTokenSwapPath;
+        address[] shortTokenSwapPath;
     }
 
     /**
@@ -89,28 +93,28 @@ library WithdrawalUtils {
             revert Errors.InsufficientWntAmountForExecutionFee(wntAmount, params.executionFee);
         }
 
-        AccountUtils.validateReceiver(params.receiver);
+        AccountUtils.validateReceiver(params.addresses.receiver);
 
-        uint256 marketTokenAmount = withdrawalVault.recordTransferIn(params.market);
+        uint256 marketTokenAmount = withdrawalVault.recordTransferIn(params.addresses.market);
 
         if (marketTokenAmount == 0) {
             revert Errors.EmptyWithdrawalAmount();
         }
         params.executionFee = wntAmount;
 
-        MarketUtils.validateEnabledMarket(dataStore, params.market);
-        MarketUtils.validateSwapPath(dataStore, params.longTokenSwapPath);
-        MarketUtils.validateSwapPath(dataStore, params.shortTokenSwapPath);
+        MarketUtils.validateEnabledMarket(dataStore, params.addresses.market);
+        MarketUtils.validateSwapPath(dataStore, params.addresses.longTokenSwapPath);
+        MarketUtils.validateSwapPath(dataStore, params.addresses.shortTokenSwapPath);
 
         Withdrawal.Props memory withdrawal = Withdrawal.Props(
             Withdrawal.Addresses(
                 account,
-                params.receiver,
-                params.callbackContract,
-                params.uiFeeReceiver,
-                params.market,
-                params.longTokenSwapPath,
-                params.shortTokenSwapPath
+                params.addresses.receiver,
+                params.addresses.callbackContract,
+                params.addresses.uiFeeReceiver,
+                params.addresses.market,
+                params.addresses.longTokenSwapPath,
+                params.addresses.shortTokenSwapPath
             ),
             Withdrawal.Numbers(
                 marketTokenAmount,
