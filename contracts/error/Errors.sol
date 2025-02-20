@@ -433,8 +433,8 @@ library Errors {
     error InvalidTransferRequestsLength();
     error EmptyMultichainTransferInAmount();
     error EmptyMultichainTransferOutAmount();
-    error InsufficientMultichainBalance();
-    error InvalidDestinationChainId();
+    error InsufficientMultichainBalance(address token, uint256 balance, uint256 amount);
+    error InvalidDestinationChainId(uint256 desChainId);
     error InvalidMultichainProvider(address provider);
 
     enum SignatureType {

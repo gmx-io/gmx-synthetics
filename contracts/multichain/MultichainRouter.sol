@@ -74,7 +74,7 @@ abstract contract MultichainRouter is GelatoRelayRouter {
 
     function _validateDesChainId(uint256 desChainId) internal view {
         if (desChainId != block.chainid) {
-            revert Errors.InvalidDestinationChainId();
+            revert Errors.InvalidDestinationChainId(desChainId);
         }
     }
 }
