@@ -211,10 +211,10 @@ library GasUtils {
         }
         // a malicious subaccount could provide a large executionFee
         // and receive most of it as a refund sent to a callbackContract
-        // validating that the max execution fee is less than multiplier * gasLimit * basefee should limit the potential loss
+        // capping that the max execution fee is less than multiplier * gasLimit * basefee should limit the potential loss
 
-        // this validation should be applied for subaccount orders with a callbackContract if execution fee is increased
-        // i.e. there is no need to validate the max execution fee for previously created orders even if it's high because it has already been validated
+        // this capping should be applied for subaccount orders with a callbackContract if execution fee is increased
+        // i.e. there is no need to cap the max execution fee for previously created orders even if it's high because it has already been capped
 
         // some blockchains may not support EIP-1559 and will return 0 for block.basefee
         // also block.basefee is 0 inside eth_call and eth_estimateGas
