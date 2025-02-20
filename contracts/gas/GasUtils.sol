@@ -182,13 +182,13 @@ library GasUtils {
         uint256 estimatedGasLimit,
         uint256 executionFee,
         uint256 oraclePriceCount
-    ) internal view returns (uint256) {
+    ) internal view returns (uint256, uint256) {
         uint256 gasLimit = adjustGasLimitForEstimate(dataStore, estimatedGasLimit, oraclePriceCount);
         uint256 minExecutionFee = gasLimit * tx.gasprice;
         if (executionFee < minExecutionFee) {
             revert Errors.InsufficientExecutionFee(minExecutionFee, executionFee);
         }
-        return gasLimit;
+        return (gasLimit, minExecutionFee);
     }
 
     // @dev validate that the provided executionFee is sufficient based on the estimatedGasLimit
@@ -204,7 +204,7 @@ library GasUtils {
         uint256 oraclePriceCount,
         bool shouldCapMaxExecutionFee
     ) internal view returns (uint256, uint256) {
-        uint256 gasLimit = validateExecutionFee(dataStore, estimatedGasLimit, executionFee, oraclePriceCount);
+        (uint256 gasLimit, uint256 minExecutionFee) = validateExecutionFee(dataStore, estimatedGasLimit, executionFee, oraclePriceCount);
 
         if (!shouldCapMaxExecutionFee) {
             return (executionFee, 0);
@@ -222,6 +222,11 @@ library GasUtils {
 
         uint256 maxExecutionFeeMultiplierFactor = dataStore.getUint(Keys.MAX_EXECUTION_FEE_MULTIPLIER_FACTOR);
         uint256 maxExecutionFee = Precision.applyFactor(gasLimit * basefee, maxExecutionFeeMultiplierFactor);
+
+        if (maxExecutionFee < minExecutionFee) {
+            revert Errors.InvalidExecutionFee(executionFee, minExecutionFee, maxExecutionFee);
+        }
+
         if (executionFee <= maxExecutionFee) {
             return (executionFee, 0);
         }
