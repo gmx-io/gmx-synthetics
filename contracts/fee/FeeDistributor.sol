@@ -363,25 +363,22 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
                 }
             }
 
+            address synapseRouter = getAddress(block.chainid, synapseRouterKey);
+            address nullAddress;
+            uint256 originDeadline = block.timestamp + getUint(Keys.feeDistributorBridgeOriginDeadline(block.chainid));
+            bytes memory rawParams = "";
             for (uint256 i; i < chainCount; i++) {
                 uint256 sendAmount = bridging[currentChain][i];
                 if (sendAmount > 0) {
                     feeDistributorVault.transferOut(gmx, address(this), sendAmount);
+                    IERC20(gmx).approve(synapseRouter, sendAmount);
 
                     uint256 chainId = chainIds[i];
-                    address synapseRouter = getAddress(block.chainid, synapseRouterKey);
                     address gmxDestChain = getAddress(chainId, gmxKey);
                     address feeReceiver = getAddress(chainId, Keys.FEE_RECEIVER);
-                    address nullAddress;
                     uint256 minAmountOut = Precision.applyFactor(sendAmount, slippageFactor);
-
-                    // using the origin and destination deadline delays that the synapse front-end seems to use
-                    uint256 originDeadline = block.timestamp +
-                        getUint(Keys.feeDistributorBridgeOriginDeadline(block.chainid));
                     uint256 destDeadline = block.timestamp + getUint(Keys.feeDistributorBridgeDestDeadline(chainId));
-                    bytes memory rawParams = "";
 
-                    // it seems on the synapse front-end a small slippage amount is used for the sending chain, here no slippage is assumed
                     bytes memory callData = abi.encodeWithSignature(
                         "bridge(address,uint256,address,uint256,(address,address,uint256,uint256,bytes),(address,address,uint256,uint256,bytes))",
                         feeReceiver,
@@ -403,8 +400,9 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
                     if (!success) {
                         revert Errors.BridgingTransactionFailed(result);
                     }
+
+                    totalGmxBridgedOut += sendAmount;
                 }
-                totalGmxBridgedOut += sendAmount;
             }
             if (minRequiredFeeAmount > feeAmountGmxCurrentChain - totalGmxBridgedOut) {
                 revert Errors.AttemptedBridgeAmountTooHigh(
