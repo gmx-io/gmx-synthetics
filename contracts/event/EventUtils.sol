@@ -21,12 +21,6 @@ library EventUtils {
         StringItems stringItems;
     }
 
-    struct OrderData {
-        AddressItems addresses;
-        UintItems numbers;
-        BoolItems flags;
-    }
-
     struct AddressItems {
         AddressKeyValue[] items;
         AddressArrayKeyValue[] arrayItems;
