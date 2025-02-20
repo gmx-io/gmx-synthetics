@@ -22,6 +22,7 @@ describe("GlpMigrator", () => {
     depositHandler,
     externalHandler,
     marketStoreUtils,
+    marketUtils,
     stakedGlp,
     glpVault,
     glpTimelock,
@@ -71,6 +72,7 @@ describe("GlpMigrator", () => {
       depositVault,
       depositHandler,
       marketStoreUtils,
+      marketUtils,
       ethUsdMarket,
       btcUsdMarket,
       wnt,
@@ -100,7 +102,7 @@ describe("GlpMigrator", () => {
       ],
       {
         libraries: {
-          MarketStoreUtils: marketStoreUtils.address,
+          MarketUtils: marketUtils.address,
         },
       }
     );
