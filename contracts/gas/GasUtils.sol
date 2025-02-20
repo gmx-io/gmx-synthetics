@@ -196,22 +196,22 @@ library GasUtils {
     // @param estimatedGasLimit the estimated gas limit
     // @param executionFee the execution fee provided
     // @param oraclePriceCount
-    // @param shouldValidateMaxExecutionFee whether to validate the max execution fee
+    // @param shouldCapMaxExecutionFee whether to cap the max execution fee
     function validateAndCapExecutionFee(
         DataStore dataStore,
         uint256 estimatedGasLimit,
         uint256 executionFee,
         uint256 oraclePriceCount,
-        bool shouldValidateMaxExecutionFee
+        bool shouldCapMaxExecutionFee
     ) internal view returns (uint256, uint256) {
         uint256 gasLimit = validateExecutionFee(dataStore, estimatedGasLimit, executionFee, oraclePriceCount);
 
-        if (!shouldValidateMaxExecutionFee) {
+        if (!shouldCapMaxExecutionFee) {
             return (executionFee, 0);
         }
         // a malicious subaccount could provide a large executionFee
         // and receive most of it as a refund sent to a callbackContract
-        // capping that the max execution fee is less than multiplier * gasLimit * basefee should limit the potential loss
+        // capping the max execution fee by multiplier * gasLimit * basefee should limit the potential loss
 
         // this capping should be applied for subaccount orders with a callbackContract if execution fee is increased
         // i.e. there is no need to cap the max execution fee for previously created orders even if it's high because it has already been capped

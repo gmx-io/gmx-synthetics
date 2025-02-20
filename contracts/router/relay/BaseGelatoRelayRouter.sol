@@ -188,7 +188,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             params.autoCancel,
             order,
 
-            // shouldValidateMaxExecutionFee
+            // shouldCapMaxExecutionFee
             // see GasUtils.validateExecutionFee
             isSubaccount && order.callbackContract() != address(0) && increaseExecutionFee
         );

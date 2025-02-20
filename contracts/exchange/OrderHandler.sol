@@ -39,7 +39,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
     function createOrder(
         address account,
         IBaseOrderUtils.CreateOrderParams calldata params,
-        bool shouldValidateMaxExecutionFee
+        bool shouldCapMaxExecutionFee
     ) external override globalNonReentrant onlyController returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createOrderFeatureDisabledKey(address(this), uint256(params.orderType)));
 
@@ -50,7 +50,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
             referralStorage,
             account,
             params,
-            shouldValidateMaxExecutionFee
+            shouldCapMaxExecutionFee
         );
     }
 
@@ -93,7 +93,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         uint256 validFromTime,
         bool autoCancel,
         Order.Props memory order,
-        bool shouldValidateMaxExecutionFee
+        bool shouldCapMaxExecutionFee
     ) external override globalNonReentrant onlyController {
         FeatureUtils.validateFeature(dataStore, Keys.updateOrderFeatureDisabledKey(address(this), uint256(order.orderType())));
 
@@ -133,7 +133,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
             cache.estimatedGasLimit,
             order.executionFee() + cache.receivedWnt,
             cache.oraclePriceCount,
-            shouldValidateMaxExecutionFee
+            shouldCapMaxExecutionFee
         );
         order.setExecutionFee(executionFee);
 

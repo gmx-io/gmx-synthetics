@@ -60,7 +60,7 @@ library OrderUtils {
     // @param orderVault OrderVault
     // @param account the order account
     // @param params IBaseOrderUtils.CreateOrderParams
-    // @param shouldValidateMaxExecutionFee whether to validate the max execution fee
+    // @param shouldCapMaxExecutionFee whether to cap the max execution fee
     function createOrder(
         DataStore dataStore,
         EventEmitter eventEmitter,
@@ -68,7 +68,7 @@ library OrderUtils {
         IReferralStorage referralStorage,
         address account,
         IBaseOrderUtils.CreateOrderParams memory params,
-        bool shouldValidateMaxExecutionFee
+        bool shouldCapMaxExecutionFee
     ) external returns (bytes32) {
         AccountUtils.validateAccount(account);
 
@@ -169,7 +169,7 @@ library OrderUtils {
             cache.estimatedGasLimit,
             params.numbers.executionFee,
             cache.oraclePriceCount,
-            shouldValidateMaxExecutionFee
+            shouldCapMaxExecutionFee
         );
         order.setExecutionFee(executionFee);
 
