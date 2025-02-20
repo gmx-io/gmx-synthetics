@@ -149,7 +149,6 @@ library Errors {
 
     // GasUtils errors
     error InsufficientExecutionFee(uint256 minExecutionFee, uint256 executionFee);
-    error ExecutionFeeTooHigh(uint256 maxExecutionFee, uint256 executionFee);
     error InsufficientWntAmountForExecutionFee(uint256 wntAmount, uint256 executionFee);
     error InsufficientExecutionGasForErrorHandling(uint256 startingGas, uint256 minHandleErrorGas);
     error InsufficientExecutionGas(uint256 startingGas, uint256 estimatedGasLimit, uint256 minAdditionalGasForExecution);
