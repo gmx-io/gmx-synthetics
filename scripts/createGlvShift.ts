@@ -2,7 +2,6 @@ import hre from "hardhat";
 
 import { GlvHandler } from "../typechain-types";
 import { expandDecimals } from "../utils/math";
-import { BigNumber } from "ethers";
 
 const { ethers } = hre;
 async function main() {
@@ -14,8 +13,8 @@ async function main() {
     throw new Error("GLV is required");
   }
 
-  const marketTokenAmountArg = process.env.MARKET_TOKEN_AMOUNT;
-  if (!marketTokenAmountArg) {
+  const marketTokenAmount = process.env.MARKET_TOKEN_AMOUNT;
+  if (!marketTokenAmount) {
     throw new Error("MARKET_TOKEN_AMOUNT is required");
   }
 
@@ -29,25 +28,17 @@ async function main() {
     throw new Error("TO_MARKET is required");
   }
 
-  let marketTokenAmount: BigNumber;
-  if (marketTokenAmountArg === "ALL") {
-    const marketToken = await ethers.getContractAt("MarketToken", fromMarket);
-    marketTokenAmount = await marketToken.balanceOf(glv);
-  } else {
-    marketTokenAmount = expandDecimals(marketTokenAmountArg, 18);
-  }
-
   const params = {
     glv,
     fromMarket,
     toMarket,
-    marketTokenAmount,
+    marketTokenAmount: expandDecimals(marketTokenAmount, 18),
     minMarketTokens: 0,
   };
   console.log("glv: %s", glv);
   console.log("fromMarket: %s", fromMarket);
   console.log("toMarket: %s", toMarket);
-  console.log("marketTokenAmount: %s (%s)", marketTokenAmountArg, params.marketTokenAmount);
+  console.log("marketTokenAmount: %s (%s)", marketTokenAmount, params.marketTokenAmount);
   console.log("glv handler %s", glvHandler.address);
 
   if (process.env.WRITE === "true") {
