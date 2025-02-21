@@ -431,6 +431,7 @@ library Errors {
     error InvalidDistributionState(uint256 distributionStateUint);
     error BridgedAmountNotSufficient(uint256 minRequiredFeeAmount, uint256 currentChainFeeAmount);
     error BridgingTransactionFailed(bytes result);
+    error WntReferralRewardsInUsdLimitExceeded(uint256 wntReferralRewardsInUsd, uint256 wntReferralRewardsInUsdLimit);
     error WntReferralRewardsInUsdThresholdBreached(uint256 wntReferralRewardsInUsd, uint256 maxWntReferralRewardsInUsd);
     error WntReferralRewardsThresholdBreached(uint256 wntReferralRewards, uint256 maxWntReferralRewards);
     error EsGmxReferralRewardsThresholdBreached(uint256 referralRewardsEsGmxAmount, uint256 maxEsGmxReferralRewards);

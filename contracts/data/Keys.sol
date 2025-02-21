@@ -486,6 +486,8 @@ library Keys {
     bytes32 public constant FEE_DISTRIBUTION_STATE = keccak256(abi.encode("FEE_DISTRIBUTION_STATE"));
     // @dev key for FeeDistributor referral rewards for a given token
     bytes32 public constant FEE_DISTRIBUTOR_REFERRAL_REWARDS_AMOUNT = keccak256(abi.encode("FEE_DISTRIBUTOR_REFERRAL_REWARDS_AMOUNT"));
+    // @dev key for FeeDistributor absolute limit in USD of WNT referral awards
+    bytes32 public constant FEE_DISTRIBUTOR_REFERRAL_REWARDS_WNT_USD_LIMIT = keccak256(abi.encode("FEE_DISTRIBUTOR_REFERRAL_REWARDS_WNT_USD_LIMIT"));
     // @dev key for FeeDistributor WNT price in USD for referral rewards calculations
     bytes32 public constant FEE_DISTRIBUTION_WNT_PRICE_IN_USD = keccak256(abi.encode("FEE_DISTRIBUTION_WNT_PRICE_IN_USD"));
     // @dev key for FeeDistributor max read response delay in seconds from MultichainReader
