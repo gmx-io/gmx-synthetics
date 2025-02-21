@@ -22,3 +22,5 @@ deployments/localhost
 deployments.txt
 *.log
 .cursorignore*
+
+.idea

@@ -12,6 +12,8 @@ const func = createDeployFunction({
     "ExecuteDepositUtils",
     "ExecuteWithdrawalUtils",
     "MultichainUtils",
+    "CallbackUtils",
+    "MarketUtils",
   ],
 });
 
