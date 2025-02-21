@@ -484,8 +484,10 @@ library Keys {
     bytes32 public constant FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP = keccak256(abi.encode("FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP"));
     // @dev key for whether the fee distribution state
     bytes32 public constant FEE_DISTRIBUTION_STATE = keccak256(abi.encode("FEE_DISTRIBUTION_STATE"));
-    // @dev key for FeeDistributor referral rewards for a given timestamp
+    // @dev key for FeeDistributor referral rewards for a given token
     bytes32 public constant FEE_DISTRIBUTOR_REFERRAL_REWARDS_AMOUNT = keccak256(abi.encode("FEE_DISTRIBUTOR_REFERRAL_REWARDS_AMOUNT"));
+    // @dev key for FeeDistributor WNT price in USD for referral rewards calculations
+    bytes32 public constant FEE_DISTRIBUTION_WNT_PRICE_IN_USD = keccak256(abi.encode("FEE_DISTRIBUTION_WNT_PRICE_IN_USD"));
     // @dev key for FeeDistributor max read response delay in seconds from MultichainReader
     bytes32 public constant FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY = keccak256(abi.encode("FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY"));
     // @dev key for FeeDistributor gas limit used for the MultichainReader read request
@@ -508,8 +510,6 @@ library Keys {
     bytes32 public constant FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID = keccak256(abi.encode("FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID"));
     // @dev key for contract and keeper addresses used in FeeDistributor
     bytes32 public constant FEE_DISTRIBUTOR_ADDRESS_INFO = keccak256(abi.encode("FEE_DISTRIBUTOR_ADDRESS_INFO"));
-    // @dev key for FeeDistributor esGMX rewards available for referral rewards distribution
-    bytes32 public constant FEE_DISTRIBUTOR_ESGMX_REWARDS = keccak256(abi.encode("FEE_DISTRIBUTOR_ESGMX_REWARDS"));
     // @dev key for FeeDistributor amount thresholds
     bytes32 public constant FEE_DISTRIBUTOR_AMOUNT_THRESHOLD = keccak256(abi.encode("FEE_DISTRIBUTOR_AMOUNT_THRESHOLD"));
     // @dev key for FeeDistributor keeper costs
@@ -522,6 +522,8 @@ library Keys {
     bytes32 public constant FEE_DISTRIBUTOR_BRIDGE_ORIGIN_DEADLINE = keccak256(abi.encode("FEE_DISTRIBUTOR_BRIDGE_ORIGIN_DEADLINE"));
     // @dev key for FeeDistributor bridging destination deadline in seconds
     bytes32 public constant FEE_DISTRIBUTOR_BRIDGE_DEST_DEADLINE = keccak256(abi.encode("FEE_DISTRIBUTOR_BRIDGE_DEST_DEADLINE"));
+    // @dev key for FeeDistributor total referral rewards sent in a given week
+    bytes32 public constant FEE_DISTRIBUTOR_REFERRAL_REWARDS_SENT = keccak256(abi.encode("FEE_DISTRIBUTOR_REFERRAL_REWARDS_SENT"));
 
     // @dev constant for user initiated cancel reason
     string public constant USER_INITIATED_CANCEL = "USER_INITIATED_CANCEL";
@@ -2221,14 +2223,21 @@ library Keys {
     // @dev key for FeeDistributor bridging origin deadline in seconds
     // @param chainId the chainId for the chain
     // @return key for FeeDistributor bridging origin deadline
-    function feeDistributorBridgeOriginDeadline(uint256 chainId) internal pure returns (bytes32) {
+    function feeDistributorBridgeOriginDeadlineKey(uint256 chainId) internal pure returns (bytes32) {
         return keccak256(abi.encode(FEE_DISTRIBUTOR_BRIDGE_ORIGIN_DEADLINE, chainId));
     }
 
     // @dev key for FeeDistributor bridging destination deadline in seconds
     // @param chainId the chainId for the chain
     // @return key for FeeDistributor bridging destination deadline
-    function feeDistributorBridgeDestDeadline(uint256 chainId) internal pure returns (bytes32) {
+    function feeDistributorBridgeDestDeadlineKey(uint256 chainId) internal pure returns (bytes32) {
         return keccak256(abi.encode(FEE_DISTRIBUTOR_BRIDGE_DEST_DEADLINE, chainId));
+    }
+
+    // @dev key for FeeDistributor referral rewards sent in a given week
+    // @param token the token for which to check the referral rewards sent
+    // @return key for FeeDistributor referral rewards sent in a given week
+    function feeDistributorReferralRewardsSentKey(address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(FEE_DISTRIBUTOR_REFERRAL_REWARDS_SENT, token));
     }
 }
