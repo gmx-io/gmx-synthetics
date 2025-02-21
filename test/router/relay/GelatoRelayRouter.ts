@@ -663,4 +663,6 @@ describe("GelatoRelayRouter", () => {
       expect(orderCount).eq(0);
     });
   });
+
+  it.skip("swaps should not work if sequencer is down");
 });

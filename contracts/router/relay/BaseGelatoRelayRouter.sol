@@ -220,6 +220,9 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         address wnt,
         FeeParams calldata fee
     ) internal returns (uint256) {
+        Oracle _oracle = oracle;
+        _oracle.validateSequencerUp();
+
         // swap fee tokens to WNT
         MarketUtils.validateSwapPath(contracts.dataStore, fee.feeSwapPath);
         Market.Props[] memory swapPathMarkets = MarketUtils.getSwapPathMarkets(contracts.dataStore, fee.feeSwapPath);
@@ -228,7 +231,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             SwapUtils.SwapParams({
                 dataStore: contracts.dataStore,
                 eventEmitter: contracts.eventEmitter,
-                oracle: oracle,
+                oracle: _oracle,
                 bank: contracts.orderVault,
                 key: bytes32(0),
                 tokenIn: fee.feeToken,
