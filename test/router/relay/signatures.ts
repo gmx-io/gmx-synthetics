@@ -22,7 +22,8 @@ describe("Relay signatures", () => {
     orderStoreUtils,
     swapUtils,
     relayUtils,
-    mockContract;
+    mockContract,
+    marketUtils;
 
   beforeEach(async () => {
     fixture = await deployFixture();
@@ -38,6 +39,7 @@ describe("Relay signatures", () => {
       orderStoreUtils,
       swapUtils,
       relayUtils,
+      marketUtils,
     } = fixture.contracts);
   });
 
@@ -55,10 +57,10 @@ describe("Relay signatures", () => {
       ],
       {
         libraries: {
-          MarketStoreUtils: marketStoreUtils.address,
           OrderStoreUtils: orderStoreUtils.address,
           SwapUtils: swapUtils.address,
           RelayUtils: relayUtils.address,
+          MarketUtils: marketUtils.address,
         },
       }
     );
