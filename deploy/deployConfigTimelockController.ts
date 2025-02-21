@@ -5,7 +5,7 @@ const constructorContracts = ["EventEmitter", "DataStore", "OracleStore", "RoleS
 const timelockDelay = 24 * 60 * 60;
 
 const func = createDeployFunction({
-  contractName: "Timelock",
+  contractName: "ConfigTimelockController",
   dependencyNames: constructorContracts,
   getDeployArgs: async ({ dependencyContracts }) => {
     return constructorContracts
