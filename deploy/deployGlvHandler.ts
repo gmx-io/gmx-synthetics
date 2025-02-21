@@ -17,6 +17,7 @@ const func = createDeployFunction({
     "GlvUtils",
     "GlvWithdrawalStoreUtils",
     "GlvWithdrawalUtils",
+    "GasUtils",
   ],
   afterDeploy: async ({ deployedContract }) => {
     await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
