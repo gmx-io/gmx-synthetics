@@ -420,4 +420,25 @@ library Errors {
 
     // Reader errors
     error EmptyMarketPrice(address market);
+
+    // MultichainReader errors
+    error InsufficientMultichainNativeFee(uint256 msgValue);
+    error EmptyPeer(uint32 eid);
+
+    // FeeDistributor errors
+    error FeeDistributionAlreadyCompleted(uint256 lastDistributionTime, uint256 startOfCurrentWeek);
+    error OutdatedReadResponse(uint256 timestamp);
+    error InvalidDistributionState(uint256 distributionStateUint);
+    error BridgedAmountNotSufficient(uint256 minRequiredFeeAmount, uint256 currentChainFeeAmount);
+    error BridgingTransactionFailed(bytes result);
+    error WntReferralRewardsInUsdLimitExceeded(uint256 wntReferralRewardsInUsd, uint256 wntReferralRewardsInUsdLimit);
+    error WntReferralRewardsInUsdThresholdBreached(uint256 wntReferralRewardsInUsd, uint256 maxWntReferralRewardsInUsd);
+    error WntReferralRewardsThresholdBreached(uint256 wntReferralRewards, uint256 maxWntReferralRewards);
+    error EsGmxReferralRewardsThresholdBreached(uint256 referralRewardsEsGmxAmount, uint256 maxEsGmxReferralRewards);
+    error TreasuryFeeThresholdBreached(uint256 treasuryWntAmount, uint256 wntGlpShortfall, uint256 maxTreasuryWntShortfall);
+    error KeeperArrayLengthMismatch(uint256 keepersLength, uint256 keeperTargetBalancesLength, uint256 keeperVersionsLength);
+    error SendEthToKeeperFailed(address keeper, uint256 sendAmount, bytes result);
+    error AttemptedBridgeAmountTooHigh(uint256 minRequiredFeeAmount, uint256 feeAmountCurrentChain, uint256 amountToBridgeOut);
+    error ReferralRewardsArrayMismatch(address token, uint256 addressArrayLength, uint256 amountArrayLength);
+    error ReferralRewardsAmountExceedsMaxBatchSize(address token, uint256 addressArrayLength, uint256 maxBatchSize);
 }
