@@ -14,6 +14,7 @@ const func = createDeployFunction({
     "SwapPricingUtils",
     "PositionUtils",
     "MultichainUtils",
+    "CallbackUtils",
   ],
 });
 

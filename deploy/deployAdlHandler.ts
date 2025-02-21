@@ -25,6 +25,7 @@ const func = createDeployFunction({
     "MarketStoreUtils",
     "PositionStoreUtils",
     "OrderStoreUtils",
+    "MarketUtils",
   ],
   afterDeploy: async ({ deployedContract }) => {
     await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");

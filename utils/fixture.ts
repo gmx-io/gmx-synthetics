@@ -78,6 +78,7 @@ export async function deployFixture() {
   const glvFactory = await hre.ethers.getContract("GlvFactory");
   const glvHandler = await hre.ethers.getContract("GlvHandler");
   const glvRouter = await hre.ethers.getContract("GlvRouter");
+  const callbackUtils = await hre.ethers.getContract("CallbackUtils");
   const glvDepositStoreUtils = await hre.ethers.getContract("GlvDepositStoreUtils");
   const GlvDepositCalc = await hre.ethers.getContract("GlvDepositCalc");
   const glvWithdrawalStoreUtils = await hre.ethers.getContract("GlvWithdrawalStoreUtils");
@@ -335,6 +336,7 @@ export async function deployFixture() {
       multichainUtils,
       layerZeroProvider,
       mockStargatePool,
+      callbackUtils,
     },
     props: { oracleSalt, signerIndexes: [0, 1, 2, 3, 4, 5, 6], executionFee: "1000000000000000" },
   };
