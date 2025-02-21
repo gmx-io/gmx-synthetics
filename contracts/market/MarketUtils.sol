@@ -2797,7 +2797,7 @@ library MarketUtils {
 
     // @dev get a list of market values based on an input array of market addresses
     // @param swapPath list of market addresses
-    function getSwapPathMarkets(DataStore dataStore, address[] memory swapPath) internal view returns (Market.Props[] memory) {
+    function getSwapPathMarkets(DataStore dataStore, address[] memory swapPath) external view returns (Market.Props[] memory) {
         Market.Props[] memory markets = new Market.Props[](swapPath.length);
 
         for (uint256 i; i < swapPath.length; i++) {
