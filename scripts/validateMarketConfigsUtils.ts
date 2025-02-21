@@ -375,6 +375,16 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
     },
+    ONDO: {
+      negativePositionImpactFactor: exponentToFloat("8e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    FET: {
+      negativePositionImpactFactor: exponentToFloat("1e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
     wstETH: {
       negativeSwapImpactFactor: exponentToFloat("1e-8"),
       expectedSwapImpactRatio: 20_000,
