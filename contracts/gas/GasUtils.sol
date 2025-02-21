@@ -317,7 +317,7 @@ library GasUtils {
     function estimateExecuteDepositGasLimit(
         DataStore dataStore,
         Deposit.Props memory deposit
-    ) internal view returns (uint256) {
+    ) external view returns (uint256) {
         uint256 gasPerSwap = dataStore.getUint(Keys.singleSwapGasLimitKey());
         uint256 swapCount = deposit.longTokenSwapPath().length + deposit.shortTokenSwapPath().length;
         uint256 gasForSwaps = swapCount * gasPerSwap;
@@ -451,7 +451,7 @@ library GasUtils {
         DataStore dataStore,
         GlvWithdrawal.Props memory glvWithdrawal,
         uint256 marketCount
-    ) internal view returns (uint256) {
+    ) external view returns (uint256) {
         // glv withdrawal execution gas consumption depends on the amount of markets
         uint256 gasPerGlvPerMarket = dataStore.getUint(Keys.glvPerMarketGasLimitKey());
         uint256 gasForGlvMarkets = gasPerGlvPerMarket * marketCount;
