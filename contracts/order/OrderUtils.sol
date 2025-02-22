@@ -49,6 +49,10 @@ library OrderUtils {
     struct CreateOrderCache {
         bool shouldRecordSeparateExecutionFeeTransfer;
         address wnt;
+        uint256 initialCollateralDeltaAmount;
+        uint256 estimatedGasLimit;
+        uint256 oraclePriceCount;
+        uint256 executionFeeDiff;
     }
 
     // @dev creates an order in the order store
@@ -57,7 +61,7 @@ library OrderUtils {
     // @param orderVault OrderVault
     // @param account the order account
     // @param params IBaseOrderUtils.CreateOrderParams
-    // @param shouldValidateMaxExecutionFee whether to validate the max execution fee
+    // @param shouldCapMaxExecutionFee whether to cap the max execution fee
     function createOrder(
         DataStore dataStore,
         EventEmitter eventEmitter,
@@ -66,15 +70,13 @@ library OrderUtils {
         address account,
         uint256 srcChainId,
         IBaseOrderUtils.CreateOrderParams memory params,
-        bool shouldValidateMaxExecutionFee
+        bool shouldCapMaxExecutionFee
     ) external returns (bytes32) {
         AccountUtils.validateAccount(account);
 
         ReferralUtils.setTraderReferralCode(referralStorage, account, params.referralCode);
 
         CreateOrderCache memory cache;
-
-        uint256 initialCollateralDeltaAmount;
 
         cache.wnt = TokenUtils.wnt(dataStore);
         cache.shouldRecordSeparateExecutionFeeTransfer = true;
@@ -88,15 +90,15 @@ library OrderUtils {
         ) {
             // for swaps and increase orders, the initialCollateralDeltaAmount is set based on the amount of tokens
             // transferred to the orderVault
-            initialCollateralDeltaAmount = orderVault.recordTransferIn(params.addresses.initialCollateralToken);
+            cache.initialCollateralDeltaAmount = orderVault.recordTransferIn(params.addresses.initialCollateralToken);
             if (params.addresses.initialCollateralToken == cache.wnt) {
-                if (initialCollateralDeltaAmount < params.numbers.executionFee) {
+                if (cache.initialCollateralDeltaAmount < params.numbers.executionFee) {
                     revert Errors.InsufficientWntAmountForExecutionFee(
-                        initialCollateralDeltaAmount,
+                        cache.initialCollateralDeltaAmount,
                         params.numbers.executionFee
                     );
                 }
-                initialCollateralDeltaAmount -= params.numbers.executionFee;
+                cache.initialCollateralDeltaAmount -= params.numbers.executionFee;
                 cache.shouldRecordSeparateExecutionFeeTransfer = false;
             }
         } else if (
@@ -105,7 +107,7 @@ library OrderUtils {
             params.orderType == Order.OrderType.StopLossDecrease
         ) {
             // for decrease orders, the initialCollateralDeltaAmount is based on the passed in value
-            initialCollateralDeltaAmount = params.numbers.initialCollateralDeltaAmount;
+            cache.initialCollateralDeltaAmount = params.numbers.initialCollateralDeltaAmount;
         } else {
             revert Errors.OrderTypeCannotBeCreated(uint256(params.orderType));
         }
@@ -147,10 +149,9 @@ library OrderUtils {
         order.setOrderType(params.orderType);
         order.setDecreasePositionSwapType(params.decreasePositionSwapType);
         order.setSizeDeltaUsd(params.numbers.sizeDeltaUsd);
-        order.setInitialCollateralDeltaAmount(initialCollateralDeltaAmount);
+        order.setInitialCollateralDeltaAmount(cache.initialCollateralDeltaAmount);
         order.setTriggerPrice(params.numbers.triggerPrice);
         order.setAcceptablePrice(params.numbers.acceptablePrice);
-        order.setExecutionFee(params.numbers.executionFee);
         order.setCallbackGasLimit(params.numbers.callbackGasLimit);
         order.setMinOutputAmount(params.numbers.minOutputAmount);
         order.setValidFromTime(params.numbers.validFromTime);
@@ -168,13 +169,21 @@ library OrderUtils {
 
         CallbackUtils.validateCallbackGasLimit(dataStore, order.callbackGasLimit());
 
-        GasUtils.validateExecutionFee(
+        cache.estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(dataStore, order);
+        cache.oraclePriceCount = GasUtils.estimateOrderOraclePriceCount(params.addresses.swapPath.length);
+        uint256 executionFee;
+        (executionFee, cache.executionFeeDiff) = GasUtils.validateAndCapExecutionFee(
             dataStore,
             GasUtils.estimateExecuteOrderGasLimit(dataStore, order), // estimatedGasLimit
-            order.executionFee(),
+            params.numbers.executionFee,
             GasUtils.estimateOrderOraclePriceCount(params.addresses.swapPath.length), // oraclePriceCount
-            shouldValidateMaxExecutionFee
+            shouldCapMaxExecutionFee
         );
+        order.setExecutionFee(executionFee);
+
+        if (cache.executionFeeDiff != 0) {
+            GasUtils.transferExcessiveExecutionFee(dataStore, eventEmitter, orderVault, order.account(), cache.executionFeeDiff);
+        }
 
         bytes32 key = NonceUtils.getNextKey(dataStore);
 

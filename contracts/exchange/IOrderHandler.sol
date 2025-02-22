@@ -10,7 +10,7 @@ interface IOrderHandler {
         address account,
         uint256 srcChainId,
         IBaseOrderUtils.CreateOrderParams calldata params,
-        bool shouldValidateMaxExecutionFee
+        bool shouldCapMaxExecutionFee
     ) external returns (bytes32);
 
     function simulateExecuteOrder(bytes32 key, OracleUtils.SimulatePricesParams memory params) external;
@@ -24,7 +24,7 @@ interface IOrderHandler {
         uint256 validFromTime,
         bool autoCancel,
         Order.Props memory order,
-        bool shouldValidateMaxExecutionFee
+        bool shouldCapMaxExecutionFee
     ) external;
 
     function cancelOrder(bytes32 key) external;

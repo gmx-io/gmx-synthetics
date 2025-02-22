@@ -13,6 +13,7 @@ import { createAccount } from "../../utils/account";
 import { prices } from "../../utils/prices";
 import * as keys from "../../utils/keys";
 import { setNextBlockBaseFeePerGas } from "@nomicfoundation/hardhat-network-helpers";
+import { expectBalance } from "../../utils/validation";
 
 describe("SubaccountRouter", () => {
   let fixture;
@@ -235,40 +236,28 @@ describe("SubaccountRouter", () => {
 
     const initialWntBalance0 = await wnt.balanceOf(user0.address);
 
-    await expect(
-      subaccountRouter.connect(subaccount).multicall(
-        [
-          subaccountRouter.interface.encodeFunctionData("sendWnt", [orderVault.address, expandDecimals(1, 17)]),
-          subaccountRouter.interface.encodeFunctionData("createOrder", [
-            user0.address,
-            {
-              ...params,
-              addresses: { ...params.addresses, receiver: user0.address },
-              numbers: { ...params.numbers, executionFee: expandDecimals(1, 17) },
-              orderType: OrderType.MarketIncrease,
-            },
-          ]),
-        ],
-        { value: expandDecimals(1, 17) }
-      )
-    ).to.be.revertedWithCustomError(errorsContract, "ExecutionFeeTooHigh");
-
+    await dataStore.setAddress(keys.HOLDING_ADDRESS, user2.address);
+    await expectBalance(wnt.address, user2.address, 0);
     await subaccountRouter.connect(subaccount).multicall(
       [
-        subaccountRouter.interface.encodeFunctionData("sendWnt", [orderVault.address, expandDecimals(1, 15)]),
+        subaccountRouter.interface.encodeFunctionData("sendWnt", [orderVault.address, expandDecimals(1, 17)]),
         subaccountRouter.interface.encodeFunctionData("createOrder", [
           user0.address,
           {
             ...params,
             addresses: { ...params.addresses, receiver: user0.address },
+            numbers: { ...params.numbers, executionFee: expandDecimals(1, 17) },
             orderType: OrderType.MarketIncrease,
           },
         ]),
       ],
-      { value: expandDecimals(1, 15) }
+      { value: expandDecimals(1, 17) }
     );
 
-    expect(initialWntBalance0.sub(await wnt.balanceOf(user0.address))).closeTo("2928192385211326", "1000000000000000"); // 0.002928192385211326 ETH
+    expect(initialWntBalance0.sub(await wnt.balanceOf(user0.address))).closeTo(
+      "102039651620421712",
+      "1000000000000000"
+    ); // 0.102039 ETH
 
     const orderKeys = await getOrderKeys(dataStore, 0, 1);
     const order = await reader.getOrder(dataStore.address, orderKeys[0]);
@@ -276,6 +265,10 @@ describe("SubaccountRouter", () => {
     expect(order.addresses.receiver).eq(user0.address);
     expect(order.numbers.initialCollateralDeltaAmount).eq(expandDecimals(100, 6));
     expect(order._dataList).deep.eq(dataList);
+
+    // 0.1 WETH in total
+    expect(order.numbers.executionFee).eq("2411100480000000");
+    await expectBalance(wnt.address, user2.address, "97588899520000000");
 
     expect(
       await dataStore.getUint(

@@ -19,8 +19,9 @@ export async function getRelayParams(p: {
   relayRouter: ethers.Contract;
   signer: ethers.Signer;
 }) {
-  if (p.userNonce === undefined) {
-    p.userNonce = await getUserNonce(await p.signer.getAddress(), p.relayRouter);
+  let userNonce = p.userNonce;
+  if (userNonce === undefined) {
+    userNonce = await getUserNonce(await p.signer.getAddress(), p.relayRouter);
   }
   return {
     oracleParams: p.oracleParams || getDefaultOracleParams(),
@@ -32,7 +33,7 @@ export async function getRelayParams(p: {
       refundReceivers: [],
     },
     fee: p.feeParams,
-    userNonce: p.userNonce,
+    userNonce,
     deadline: p.deadline,
     desChainId: p.desChainId,
   };

@@ -201,11 +201,10 @@ async function getUpdateOrderSignature({
   params,
   key,
   deadline,
-  userNonce = undefined,
   chainId,
   increaseExecutionFee,
 }) {
-  if (userNonce === undefined) {
+  if (relayParams.userNonce === undefined) {
     throw new Error("userNonce is required");
   }
   const types = {
@@ -229,7 +228,6 @@ async function getUpdateOrderSignature({
   const typedData = {
     key,
     params,
-    userNonce,
     deadline,
     increaseExecutionFee,
     relayParams: hashRelayParams(relayParams),
@@ -290,6 +288,10 @@ export async function sendCancelOrder(p: {
 }
 
 async function getCancelOrderSignature({ signer, relayParams, verifyingContract, key, chainId }) {
+  if (relayParams.userNonce === undefined) {
+    throw new Error("userNonce is required");
+  }
+
   const types = {
     CancelOrder: [
       { name: "key", type: "bytes32" },

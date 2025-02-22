@@ -49,6 +49,7 @@ export const AUTO_CANCEL_ORDER_LIST = hashString("AUTO_CANCEL_ORDER_LIST");
 export const CREATE_DEPOSIT_FEATURE_DISABLED = hashString("CREATE_DEPOSIT_FEATURE_DISABLED");
 export const CANCEL_DEPOSIT_FEATURE_DISABLED = hashString("CANCEL_DEPOSIT_FEATURE_DISABLED");
 export const EXECUTE_DEPOSIT_FEATURE_DISABLED = hashString("EXECUTE_DEPOSIT_FEATURE_DISABLED");
+export const GASLESS_FEATURE_DISABLED = hashString("GASLESS_FEATURE_DISABLED");
 
 export const CREATE_ORDER_FEATURE_DISABLED = hashString("CREATE_ORDER_FEATURE_DISABLED");
 export const EXECUTE_ORDER_FEATURE_DISABLED = hashString("EXECUTE_ORDER_FEATURE_DISABLED");
@@ -306,6 +307,10 @@ export function createDepositFeatureDisabledKey(contract) {
 
 export function cancelDepositFeatureDisabledKey(contract) {
   return hashData(["bytes32", "address"], [CANCEL_DEPOSIT_FEATURE_DISABLED, contract]);
+}
+
+export function gaslessFeatureDisabledKey(module: string) {
+  return hashData(["bytes32", "address"], [GASLESS_FEATURE_DISABLED, module]);
 }
 
 export function executeDepositFeatureDisabledKey(contract) {

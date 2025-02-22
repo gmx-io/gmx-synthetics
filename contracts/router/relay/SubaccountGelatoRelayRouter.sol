@@ -115,7 +115,15 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             revert Errors.InvalidCancellationReceiverForSubaccountOrder(params.addresses.cancellationReceiver, account);
         }
 
-        return _createOrder(relayParams, account, 0 /* srcChainId */, collateralDeltaAmount, params, true);
+        return
+            _createOrder(
+                relayParams,
+                account,
+                0, // srcChainId
+                collateralDeltaAmount,
+                params,
+                true // isSubaccount
+            );
     }
 
     // @note all params except subaccount should be part of the corresponding struct hash
@@ -140,7 +148,14 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         );
         _validateCall(relayParams, subaccount, structHash, 0 /* srcChainId */);
         _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, subaccountApproval);
-        _updateOrder(relayParams, account, key, params, increaseExecutionFee, true);
+        _updateOrder(
+            relayParams,
+            account,
+            key,
+            params,
+            increaseExecutionFee,
+            true // isSubaccount
+        );
     }
 
     // @note all params except subaccount should be part of the corresponding struct hash
@@ -157,7 +172,12 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         _validateCall(relayParams, subaccount, structHash, 0 /* srcChainId */);
 
         _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, subaccountApproval);
-        _cancelOrder(relayParams, account, key, true);
+        _cancelOrder(
+            relayParams,
+            account,
+            key,
+            true // isSubaccount
+        );
     }
 
     // @note all params except account should be part of the corresponding struct hash
