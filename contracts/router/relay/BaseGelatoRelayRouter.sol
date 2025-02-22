@@ -187,6 +187,9 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             params.validFromTime,
             params.autoCancel,
             order,
+
+            // shouldCapMaxExecutionFee
+            // see GasUtils.validateExecutionFee
             isSubaccount && order.callbackContract() != address(0) && increaseExecutionFee
         );
     }
@@ -217,6 +220,9 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         address wnt,
         FeeParams calldata fee
     ) internal returns (uint256) {
+        Oracle _oracle = oracle;
+        _oracle.validateSequencerUp();
+
         // swap fee tokens to WNT
         MarketUtils.validateSwapPath(contracts.dataStore, fee.feeSwapPath);
         Market.Props[] memory swapPathMarkets = MarketUtils.getSwapPathMarkets(contracts.dataStore, fee.feeSwapPath);
@@ -225,7 +231,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             SwapUtils.SwapParams({
                 dataStore: contracts.dataStore,
                 eventEmitter: contracts.eventEmitter,
-                oracle: oracle,
+                oracle: _oracle,
                 bank: contracts.orderVault,
                 key: bytes32(0),
                 tokenIn: fee.feeToken,
@@ -304,14 +310,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         address residualFeeReceiver
     ) internal returns (uint256) {
         address wnt = TokenUtils.wnt(contracts.dataStore);
-
-        // for subaccount orders there is max execution fee validation
-        // malicious actor could send a lot of WNT to the order vault to cause the subaccount order to fail
-        // then malicious actor could get back the WNT by creating an order
-        uint256 pendingWntAmount = contracts.orderVault.recordTransferIn(wnt);
-        if (pendingWntAmount > 0) {
-            contracts.orderVault.transferOut(wnt, contracts.dataStore.getAddress(Keys.FEE_RECEIVER), pendingWntAmount);
-        }
 
         if (_getFeeToken() != wnt) {
             revert Errors.UnsupportedRelayFeeToken(_getFeeToken(), wnt);

@@ -100,6 +100,11 @@ describe("GelatoRelayRouter", () => {
   });
 
   describe("createOrder", () => {
+    it("DisabledFeature", async () => {
+      await dataStore.setBool(keys.gaslessFeatureDisabledKey(gelatoRelayRouter.address), true);
+      await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
+    });
+
     it("GelatoRelayContext._transferRelayFeeCapped: maxFee", async () => {
       await wnt.connect(user0).approve(router.address, expandDecimals(1, 18));
       createOrderParams.feeParams.feeAmount = 1;
@@ -116,13 +121,6 @@ describe("GelatoRelayRouter", () => {
         errorsContract,
         "InsufficientExecutionFee"
       );
-    });
-
-    it("ExecutionFeeTooHigh is not applied", async () => {
-      await wnt.connect(user0).approve(router.address, expandDecimals(1, 18));
-      await dataStore.setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1));
-      await dataStore.setUint(keys.MAX_EXECUTION_FEE_MULTIPLIER_FACTOR, decimalToFloat(1, 10));
-      await expect(sendCreateOrder(createOrderParams)).to.not.be.reverted;
     });
 
     it("InvalidSignature", async () => {
@@ -246,6 +244,18 @@ describe("GelatoRelayRouter", () => {
         errorsContract,
         "UnexpectedRelayFeeTokenAfterSwap"
       );
+    });
+
+    it("execution fee should not be capped", async () => {
+      await wnt.connect(user0).approve(router.address, expandDecimals(1, 18));
+      await dataStore.setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1));
+      await dataStore.setUint(keys.MAX_EXECUTION_FEE_MULTIPLIER_FACTOR, decimalToFloat(1, 10));
+
+      createOrderParams.feeParams.feeAmount = expandDecimals(1, 17);
+      await sendCreateOrder(createOrderParams);
+      const orderKeys = await getOrderKeys(dataStore, 0, 1);
+      const order = await reader.getOrder(dataStore.address, orderKeys[0]);
+      expect(order.numbers.executionFee).eq("99000000000000000");
     });
 
     it("creates order and sends relayer fee", async () => {
@@ -452,6 +462,11 @@ describe("GelatoRelayRouter", () => {
       };
     });
 
+    it("DisabledFeature", async () => {
+      await dataStore.setBool(keys.gaslessFeatureDisabledKey(gelatoRelayRouter.address), true);
+      await expect(sendUpdateOrder(updateOrderParams)).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
+    });
+
     it("GelatoRelayContext._transferRelayFeeCapped: maxFee", async () => {
       await wnt.connect(user0).approve(router.address, expandDecimals(1, 18));
       await sendCreateOrder(createOrderParams);
@@ -567,8 +582,6 @@ describe("GelatoRelayRouter", () => {
   describe("cancelOrder", () => {
     let cancelOrderParams: Parameters<typeof sendCancelOrder>[0];
 
-    it.skip("SubaccountNotAuthorized");
-
     beforeEach(() => {
       cancelOrderParams = {
         sender: relaySigner,
@@ -587,6 +600,11 @@ describe("GelatoRelayRouter", () => {
         relayFeeToken: wnt.address,
         relayFeeAmount: expandDecimals(1, 15),
       };
+    });
+
+    it("DisabledFeature", async () => {
+      await dataStore.setBool(keys.gaslessFeatureDisabledKey(gelatoRelayRouter.address), true);
+      await expect(sendCancelOrder(cancelOrderParams)).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
     });
 
     it("GelatoRelayContext._transferRelayFeeCapped: maxFee", async () => {
@@ -645,4 +663,6 @@ describe("GelatoRelayRouter", () => {
       expect(orderCount).eq(0);
     });
   });
+
+  it.skip("swaps should not work if sequencer is down");
 });

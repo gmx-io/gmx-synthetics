@@ -152,13 +152,13 @@ library Errors {
 
     // GasUtils errors
     error InsufficientExecutionFee(uint256 minExecutionFee, uint256 executionFee);
-    error ExecutionFeeTooHigh(uint256 maxExecutionFee, uint256 executionFee);
     error InsufficientWntAmountForExecutionFee(uint256 wntAmount, uint256 executionFee);
     error InsufficientExecutionGasForErrorHandling(uint256 startingGas, uint256 minHandleErrorGas);
     error InsufficientExecutionGas(uint256 startingGas, uint256 estimatedGasLimit, uint256 minAdditionalGasForExecution);
     error InsufficientHandleExecutionErrorGas(uint256 gas, uint256 minHandleExecutionErrorGas);
     error InsufficientGasForCancellation(uint256 gas, uint256 minHandleExecutionErrorGas);
     error InsufficientGasForAutoCancellation(uint256 gas, uint256 minHandleExecutionErrorGas);
+    error InvalidExecutionFee(uint256 executionFee, uint256 minExecutionFee, uint256 maxExecutionFee);
 
     // MarketFactory errors
     error MarketAlreadyExists(bytes32 salt, address existingMarketAddress);
