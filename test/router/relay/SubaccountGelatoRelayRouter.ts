@@ -74,6 +74,7 @@ describe("SubaccountGelatoRelayRouter", () => {
       isLong: true,
       shouldUnwrapNativeToken: true,
       referralCode,
+      dataList: [],
     };
 
     enableSubaccount = async () => {

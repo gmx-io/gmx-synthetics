@@ -267,8 +267,8 @@ describe("SubaccountRouter", () => {
     expect(order._dataList).deep.eq(dataList);
 
     // 0.1 WETH in total
-    expect(order.numbers.executionFee).eq("2411100480000000");
-    await expectBalance(wnt.address, user2.address, "97588899520000000");
+    expect(order.numbers.executionFee).eq("2111023560000000");
+    await expectBalance(wnt.address, user2.address, "97888976440000000");
 
     expect(
       await dataStore.getUint(
