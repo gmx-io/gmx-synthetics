@@ -433,7 +433,7 @@ library Errors {
     error InvalidTransferRequestsLength();
     error EmptyMultichainTransferInAmount();
     error EmptyMultichainTransferOutAmount();
-    error InsufficientMultichainBalance(address token, uint256 balance, uint256 amount);
+    error InsufficientMultichainBalance(address account, address token, uint256 balance, uint256 amount);
     error InvalidDestinationChainId(uint256 desChainId);
     error InvalidMultichainProvider(address provider);
 

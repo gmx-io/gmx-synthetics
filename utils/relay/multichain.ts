@@ -3,9 +3,8 @@ import { GELATO_RELAY_ADDRESS } from "./addresses";
 import { hashRelayParams, signTypedData } from "./helpers";
 import { getDomain } from "./helpers";
 import { getRelayParams } from "./helpers";
-import { contractAt } from "../deploy";
 
-export async function sendCreateDeposit(p: {
+interface SendCreate {
   signer: ethers.Signer;
   sender: ethers.Signer;
   oracleParams?: {
@@ -40,7 +39,9 @@ export async function sendCreateDeposit(p: {
   relayRouter: ethers.Contract;
   relayFeeToken: string;
   relayFeeAmount: BigNumberish;
-}) {
+}
+
+export async function sendCreateDeposit(p: SendCreate) {
   const relayParams = await getRelayParams(p);
 
   let signature = p.signature;
@@ -65,27 +66,7 @@ export async function sendCreateDeposit(p: {
   });
 }
 
-export async function sendCreateWithdrawal(p: {
-  signer: ethers.Signer;
-  sender: ethers.Signer;
-  transferRequests: {
-    tokens: string[];
-    receivers: string[];
-    amounts: BigNumberish[];
-  };
-  account: string;
-  params: any;
-  signature?: string;
-  userNonce?: BigNumberish;
-  chainId: BigNumberish;
-  srcChainId: BigNumberish;
-  desChainId: BigNumberish;
-  feeParams: any;
-  deadline: BigNumberish;
-  relayRouter: ethers.Contract;
-  relayFeeToken: string;
-  relayFeeAmount: BigNumberish;
-}) {
+export async function sendCreateWithdrawal(p: SendCreate) {
   const relayParams = await getRelayParams(p);
   let signature = p.signature;
   if (!signature) {

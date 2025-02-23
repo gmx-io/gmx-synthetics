@@ -68,7 +68,7 @@ library MultichainUtils {
 
         uint256 balance = dataStore.getUint(balanceKey);
         if (balance < amount) {
-            revert Errors.InsufficientMultichainBalance(token, balance, amount);
+            revert Errors.InsufficientMultichainBalance(account, token, balance, amount);
         }
 
         multichainVault.transferOut(token, receiver, amount);
