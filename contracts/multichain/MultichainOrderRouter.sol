@@ -3,14 +3,10 @@
 pragma solidity ^0.8.0;
 
 import "./MultichainRouter.sol";
-import "./IMultichainProvider.sol";
 
 contract MultichainOrderRouter is MultichainRouter {
-    IMultichainProvider multichainProvider;
 
-    constructor(BaseConstructorParams memory params, IMultichainProvider _multichainProvider) MultichainRouter(params) {
-        multichainProvider = _multichainProvider;
-    }
+    constructor(BaseConstructorParams memory params) MultichainRouter(params) {}
 
     // TODO: handle partial fee payment
 
@@ -59,35 +55,5 @@ contract MultichainOrderRouter is MultichainRouter {
         _validateCall(relayParams, account, structHash, srcChainId);
 
         _cancelOrder(relayParams, account, key, false /* isSubaccount */);
-    }
-
-    function bridgeOut(
-        RelayUtils.RelayParams calldata relayParams,
-        address provider,
-        address receiver,
-        uint256 srcChainId,
-        bytes calldata data, // encoded provider specific data e.g. dstEid
-        RelayUtils.BridgeOutParams calldata params
-    ) external nonReentrant onlyGelatoRelay {
-        _validateDesChainId(relayParams.desChainId);
-        _validateMultichainProvider(dataStore, provider);
-
-        bytes32 structHash = RelayUtils.getBridgeOutStructHash(relayParams, params);
-        _validateCall(relayParams, receiver, structHash, srcChainId);
-
-        multichainProvider.bridgeOut(
-            provider,
-            receiver,
-            params.token,
-            params.amount,
-            data
-        );
-    }
-
-    function _validateMultichainProvider(DataStore dataStore, address provider) internal view {
-        bytes32 providerKey = Keys.isMultichainProviderEnabledKey(provider);
-        if (!dataStore.getBool(providerKey)) {
-            revert Errors.InvalidMultichainProvider(provider);
-        }
     }
 }

@@ -63,6 +63,10 @@ library RelayUtils {
         uint256[] amounts;
     }
 
+    struct BridgeInParams {
+        address token;
+    }
+
     struct BridgeOutParams {
         address token;
         address receiver;
@@ -188,17 +192,16 @@ library RelayUtils {
     bytes32 public constant TRANSFER_REQUESTS_TYPEHASH =
         keccak256(bytes("TransferRequests(address[] tokens,address[] receivers,uint256[] amounts)"));
 
+    bytes32 public constant BRIDGE_IN_TYPEHASH =
+        keccak256(
+            bytes(
+                "BridgeIn(address token,bytes32 relayParams)"
+            )
+        );
     bytes32 public constant BRIDGE_OUT_TYPEHASH =
         keccak256(
             bytes(
-                "BridgeOut(BridgeOutParams params,bytes32 relayParams)BridgeOutParams(address token,uint256 amount)"
-            )
-        );
-
-    bytes32 public constant BRIDGE_OUT_PARAMS_TYPEHASH =
-        keccak256(
-            bytes(
-                "BridgeOutParams(address token,uint256 amount)"
+                "BridgeOut(address token,uint256 amount,bytes32 relayParams)"
             )
         );
 
@@ -550,17 +553,32 @@ library RelayUtils {
             );
     }
 
+    function getBridgeInStructHash(
+        RelayParams calldata relayParams,
+        BridgeInParams memory params
+    ) external pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    BRIDGE_IN_TYPEHASH,
+                    params.token,
+                    _getRelayParamsHash(relayParams)
+                )
+            );
+    }
+
     function getBridgeOutStructHash(
         RelayParams calldata relayParams,
         BridgeOutParams memory params
     ) external pure returns (bytes32) {
         return
             keccak256(
-                abi.encode(BRIDGE_OUT_TYPEHASH, _getBridgeOutParamsStructHash(params), _getRelayParamsHash(relayParams))
+                abi.encode(
+                    BRIDGE_OUT_TYPEHASH,
+                    params.token,
+                    params.amount,
+                    _getRelayParamsHash(relayParams)
+                )
             );
-    }
-
-    function _getBridgeOutParamsStructHash(BridgeOutParams memory params) internal pure returns (bytes32) {
-        return keccak256(abi.encode(BRIDGE_OUT_PARAMS_TYPEHASH, params.token, params.amount));
     }
 }
