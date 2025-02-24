@@ -96,6 +96,36 @@ export async function sendCreateWithdrawal(p: SendCreate) {
   });
 }
 
+export async function sendCreateShift(p: SendCreate) {
+  const relayParams = await getRelayParams(p);
+  let signature = p.signature;
+  if (!signature) {
+    signature = await getCreateShiftSignature({
+      signer: p.signer,
+      relayParams,
+      transferRequests: p.transferRequests,
+      verifyingContract: p.relayRouter.address,
+      params: p.params,
+      chainId: p.chainId,
+    });
+  }
+  const createShiftCalldata = p.relayRouter.interface.encodeFunctionData("createShift", [
+    { ...relayParams, signature },
+    p.account,
+    p.srcChainId,
+    p.transferRequests,
+    p.params,
+  ]);
+  const calldata = ethers.utils.solidityPack(
+    ["bytes", "address", "address", "uint256"],
+    [createShiftCalldata, GELATO_RELAY_ADDRESS, p.relayFeeToken, p.relayFeeAmount]
+  );
+  return p.sender.sendTransaction({
+    to: p.relayRouter.address,
+    data: calldata,
+  });
+}
+
 async function getCreateDepositSignature({
   signer,
   relayParams,
@@ -209,6 +239,74 @@ async function getCreateWithdrawalSignature({
     dataList: params.dataList,
     relayParams: hashRelayParams(relayParams),
   };
+  const domain = getDomain(chainId, verifyingContract);
+  return signTypedData(signer, domain, types, typedData);
+}
+
+async function getCreateShiftSignature({
+  signer,
+  relayParams,
+  transferRequests,
+  verifyingContract,
+  params,
+  chainId,
+}: {
+  signer: ethers.Signer;
+  relayParams: any;
+  transferRequests: { tokens: string[]; receivers: string[]; amounts: BigNumberish[] };
+  verifyingContract: string;
+  params: {
+    addresses: {
+      receiver: string;
+      callbackContract: string;
+      uiFeeReceiver: string;
+      fromMarket: string;
+      toMarket: string;
+    };
+    minMarketTokens: BigNumberish;
+    executionFee: BigNumberish;
+    callbackGasLimit: BigNumberish;
+    dataList: string[];
+  };
+  chainId: BigNumberish;
+}) {
+  if (relayParams.userNonce === undefined) {
+    throw new Error("userNonce is required");
+  }
+
+  const types = {
+    CreateShift: [
+      { name: "transferTokens", type: "address[]" },
+      { name: "transferReceivers", type: "address[]" },
+      { name: "transferAmounts", type: "uint256[]" },
+      { name: "addresses", type: "CreateShiftAddresses" },
+      { name: "minMarketTokens", type: "uint256" },
+      { name: "executionFee", type: "uint256" },
+      { name: "callbackGasLimit", type: "uint256" },
+      { name: "dataList", type: "bytes32[]" },
+      { name: "relayParams", type: "bytes32" },
+    ],
+    CreateShiftAddresses: [
+      { name: "receiver", type: "address" },
+      { name: "callbackContract", type: "address" },
+      { name: "uiFeeReceiver", type: "address" },
+      { name: "fromMarket", type: "address" },
+      { name: "toMarket", type: "address" },
+    ],
+  };
+
+  const typedData = {
+    transferTokens: transferRequests.tokens,
+    transferReceivers: transferRequests.receivers,
+    transferAmounts: transferRequests.amounts,
+    addresses: params.addresses,
+    minMarketTokens: params.minMarketTokens,
+    executionFee: params.executionFee,
+    callbackGasLimit: params.callbackGasLimit,
+    dataList: params.dataList,
+    relayParams: hashRelayParams(relayParams),
+  };
+
   const domain = getDomain(chainId, verifyingContract);
   return signTypedData(signer, domain, types, typedData);
 }

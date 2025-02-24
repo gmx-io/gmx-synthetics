@@ -4,17 +4,28 @@ import { impersonateAccount, setBalance } from "@nomicfoundation/hardhat-network
 import { expandDecimals } from "../../utils/math";
 import { deployFixture } from "../../utils/fixture";
 import { GELATO_RELAY_ADDRESS } from "../../utils/relay/addresses";
-import { sendCreateDeposit, sendCreateWithdrawal } from "../../utils/relay/multichain";
+import { sendCreateDeposit, sendCreateWithdrawal, sendCreateShift } from "../../utils/relay/multichain";
 import * as keys from "../../utils/keys";
 import { executeDeposit, getDepositCount, getDepositKeys } from "../../utils/deposit";
 import { executeWithdrawal, getWithdrawalCount, getWithdrawalKeys } from "../../utils/withdrawal";
 import { getBalanceOf } from "../../utils/token";
 import { BigNumberish, Contract } from "ethers";
+import { executeShift, getShiftCount, getShiftKeys } from "../../utils/shift";
 
 describe("MultichainGmRouter", () => {
   let fixture;
   let user0, user1, user2, user3;
-  let reader, dataStore, multichainGmRouter, multichainVault, depositVault, withdrawalVault, ethUsdMarket, wnt, usdc;
+  let reader,
+    dataStore,
+    multichainGmRouter,
+    multichainVault,
+    depositVault,
+    withdrawalVault,
+    shiftVault,
+    ethUsdMarket,
+    solUsdMarket,
+    wnt,
+    usdc;
   let relaySigner;
   let chainId;
 
@@ -62,7 +73,9 @@ describe("MultichainGmRouter", () => {
       multichainVault,
       depositVault,
       withdrawalVault,
+      shiftVault,
       ethUsdMarket,
+      solUsdMarket,
       wnt,
       usdc,
     } = fixture.contracts);
@@ -320,6 +333,72 @@ describe("MultichainGmRouter", () => {
       expect(await usdc.balanceOf(withdrawalVault.address)).eq(0); // all usdc was sent to multichainVault
       expect(await getBalanceOf(ethUsdMarket.marketToken, multichainVault.address)).eq(0); // all GM tokens were burned
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdMarket.marketToken))).to.eq(0); // all user's GM tokens were burned
+    });
+  });
+
+  describe("createShift", () => {
+    let defaultShiftParams;
+    let createShiftParams: Parameters<typeof sendCreateShift>[0];
+    const feeAmount = expandDecimals(4, 15);
+
+    beforeEach(async () => {
+      defaultShiftParams = {
+        addresses: {
+          receiver: user1.address,
+          callbackContract: user2.address,
+          uiFeeReceiver: user3.address,
+          fromMarket: ethUsdMarket.marketToken,
+          toMarket: solUsdMarket.marketToken,
+        },
+        minMarketTokens: 50,
+        executionFee: expandDecimals(1, 15),
+        callbackGasLimit: "200000",
+        dataList: [],
+      };
+
+      createShiftParams = {
+        sender: relaySigner,
+        signer: user1,
+        feeParams: {
+          feeToken: wnt.address,
+          feeAmount: feeAmount,
+          feeSwapPath: [],
+        },
+        transferRequests: {
+          tokens: [ethUsdMarket.marketToken],
+          receivers: [shiftVault.address],
+          amounts: [expandDecimals(50_000, 18)],
+        },
+        account: user1.address,
+        params: defaultShiftParams,
+        deadline: 9999999999,
+        chainId,
+        srcChainId: chainId,
+        desChainId: chainId,
+        relayRouter: multichainGmRouter,
+        relayFeeToken: wnt.address,
+        relayFeeAmount: expandDecimals(2, 15),
+      };
+    });
+
+    it("creates shift and sends relayer fee", async () => {
+      await sendCreateDeposit(createDepositParams);
+      await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
+
+      expect(await getBalanceOf(ethUsdMarket.marketToken, multichainVault.address)).eq(expandDecimals(95_000, 18));
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdMarket.marketToken))).to.eq(
+        expandDecimals(95_000, 18)
+      );
+      await sendCreateShift(createShiftParams);
+
+      const shiftKeys = await getShiftKeys(dataStore, 0, 1);
+      const shift = await reader.getShift(dataStore.address, shiftKeys[0]);
+      expect(shift.addresses.account).eq(user1.address);
+      expect(await getShiftCount(dataStore)).eq(1);
+
+      // await executeShift(fixture, { gasUsageLabel: "executeShift" });
+      // shift = await reader.getShift(dataStore.address, shiftKeys[0]);
+      // expect(shift.addresses.account).eq(ethers.constants.AddressZero);
     });
   });
 });

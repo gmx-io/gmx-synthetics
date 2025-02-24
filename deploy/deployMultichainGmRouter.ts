@@ -38,15 +38,7 @@ const func = createDeployFunction({
       dependencyContracts.ShiftVault.address,
     ];
   },
-  libraryNames: [
-    "MarketStoreUtils",
-    "MultichainUtils",
-    "OrderStoreUtils",
-    "RelayUtils",
-    "ShiftUtils",
-    "SwapUtils",
-    "MarketUtils",
-  ],
+  libraryNames: ["MultichainUtils", "OrderStoreUtils", "RelayUtils", "ShiftUtils", "SwapUtils", "MarketUtils"],
 
   afterDeploy: async ({ deployedContract }) => {
     await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");

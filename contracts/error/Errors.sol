@@ -431,8 +431,8 @@ library Errors {
 
     // Multichain errors
     error InvalidTransferRequestsLength();
-    error EmptyMultichainTransferInAmount();
-    error EmptyMultichainTransferOutAmount();
+    error EmptyMultichainTransferInAmount(address account, address token);
+    error EmptyMultichainTransferOutAmount(address account, address token);
     error InsufficientMultichainBalance(address account, address token, uint256 balance, uint256 amount);
     error InvalidDestinationChainId(uint256 desChainId);
     error InvalidMultichainProvider(address provider);

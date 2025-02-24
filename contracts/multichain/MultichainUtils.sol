@@ -35,7 +35,7 @@ library MultichainUtils {
         // token should have been transferred to multichainVault by IMultichainProvider
         uint256 amount = multichainVault.recordTransferIn(token);
         if (amount == 0) {
-            revert Errors.EmptyMultichainTransferInAmount();
+            revert Errors.EmptyMultichainTransferInAmount(account, token);
         }
 
         dataStore.incrementUint(Keys.multichainBalanceKey(account, token), amount);
@@ -61,7 +61,7 @@ library MultichainUtils {
         uint256 srcChainId
     ) external {
         if (amount == 0) {
-            revert Errors.EmptyMultichainTransferOutAmount();
+            revert Errors.EmptyMultichainTransferOutAmount(account, token);
         }
 
         bytes32 balanceKey = Keys.multichainBalanceKey(account, token);
