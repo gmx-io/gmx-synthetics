@@ -229,6 +229,10 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x48486CaF8851ed0085432789D28A8820bEcbfd45": true, // GlvHandler_4
         "0x6BE75346C0262015E45c6fC0e3268BBa73e87D1a": true, // GlvRouter_4
         "0x16500C1d8fFE2F695D8DCADf753F664993287ae4": true, // GlvRouter_4a
+
+        "0xBD219aADaFe3AD8c8F570b204B99cb4aDbe9983E": true, // GelatoRelayRouter_4
+        "0xE971b9D5eA8Ab28bF3639069CF7a91E5dA7b7015": true, // SubaccountGelatoRelayRouter_4
+        "0x7D9E403F82b59e7fF5F7A37a9bf4A8df914352A1": true, // SubaccountRouter_4a
       },
       GOV_TOKEN_CONTROLLER: {
         "0x091eD806490Cc58Fd514441499e58984cCce0630": true, // RewardRouterV2_2
