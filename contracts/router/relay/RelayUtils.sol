@@ -152,21 +152,11 @@ library RelayUtils {
 
     bytes32 public constant CREATE_GLV_DEPOSIT_TYPEHASH =
         keccak256(
-            bytes(
-                "CreateGlvDeposit(address[] transferTokens,address[] transferReceivers,uint256[] transferAmounts,CreateGlvDepositParams params,bytes32 relayParams)CreateGlvDepositParams(CreateGlvDepositParamsAddresses addresses,uint256 minGlvTokens,uint256 executionFee,uint256 callbackGasLimit,bool shouldUnwrapNativeToken,bool isMarketTokenDeposit,bytes32[] dataList)"
-            )
+            "CreateGlvDeposit(address[] transferTokens,address[] transferReceivers,uint256[] transferAmounts,CreateGlvDepositAddresses addresses,uint256 minGlvTokens,uint256 executionFee,uint256 callbackGasLimit,bool shouldUnwrapNativeToken,bool isMarketTokenDeposit,bytes32[] dataList,bytes32 relayParams)CreateGlvDepositAddresses(address glv,address market,address receiver,address callbackContract,address uiFeeReceiver,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath)"
         );
-    bytes32 public constant CREATE_GLV_DEPOSIT_PARAMS_ADDRESSES_TYPEHASH =
+    bytes32 public constant CREATE_GLV_DEPOSIT_ADDRESSES_TYPEHASH =
         keccak256(
-            bytes(
-                "CreateGlvDepositParamsAddresses(address glv,address market,address receiver,address callbackContract,address uiFeeReceiver,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath)"
-            )
-        );
-    bytes32 public constant CREATE_GLV_DEPOSIT_PARAMS_TYPEHASH =
-        keccak256(
-            bytes(
-                "CreateGlvDepositParams(CreateGlvDepositParamsAddresses addresses,uint256 minGlvTokens,uint256 executionFee,uint256 callbackGasLimit,bool shouldUnwrapNativeToken,bool isMarketTokenDeposit,bytes32[] dataList)CreateGlvDepositParamsAddresses(address glv,address market,address receiver,address callbackContract,address uiFeeReceiver,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath)"
-            )
+            "CreateGlvDepositAddresses(address glv,address market,address receiver,address callbackContract,address uiFeeReceiver,address initialLongToken,address initialShortToken,address[] longTokenSwapPath,address[] shortTokenSwapPath)"
         );
 
     bytes32 public constant CREATE_GLV_WITHDRAWAL_TYPEHASH =
@@ -455,37 +445,25 @@ library RelayUtils {
                     keccak256(abi.encodePacked(transferRequests.tokens)),
                     keccak256(abi.encodePacked(transferRequests.receivers)),
                     keccak256(abi.encodePacked(transferRequests.amounts)),
-                    _getCreateGlvDepositParamsStructHash(params),
-                    _getRelayParamsHash(relayParams)
-                )
-            );
-    }
-
-    function _getCreateGlvDepositParamsStructHash(
-        GlvDepositUtils.CreateGlvDepositParams memory params
-    ) internal pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    CREATE_GLV_DEPOSIT_PARAMS_TYPEHASH,
-                    _getCreateGlvDepositParamsAddressesStructHash(params.addresses),
+                    _getCreateGlvDepositAddressesStructHash(params.addresses),
                     params.minGlvTokens,
                     params.executionFee,
                     params.callbackGasLimit,
                     params.shouldUnwrapNativeToken,
                     params.isMarketTokenDeposit,
-                    keccak256(abi.encodePacked(params.dataList))
+                    keccak256(abi.encodePacked(params.dataList)),
+                    _getRelayParamsHash(relayParams)
                 )
             );
     }
 
-    function _getCreateGlvDepositParamsAddressesStructHash(
+    function _getCreateGlvDepositAddressesStructHash(
         GlvDepositUtils.CreateGlvDepositParamsAddresses memory addresses
     ) internal pure returns (bytes32) {
         return
             keccak256(
                 abi.encode(
-                    CREATE_GLV_DEPOSIT_PARAMS_ADDRESSES_TYPEHASH,
+                    CREATE_GLV_DEPOSIT_ADDRESSES_TYPEHASH,
                     addresses.glv,
                     addresses.market,
                     addresses.receiver,

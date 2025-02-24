@@ -4,13 +4,19 @@ import { impersonateAccount, setBalance } from "@nomicfoundation/hardhat-network
 import { expandDecimals } from "../../utils/math";
 import { deployFixture } from "../../utils/fixture";
 import { GELATO_RELAY_ADDRESS } from "../../utils/relay/addresses";
-import { sendCreateDeposit, sendCreateWithdrawal, sendCreateShift } from "../../utils/relay/multichain";
+import {
+  sendCreateDeposit,
+  sendCreateWithdrawal,
+  sendCreateShift,
+  sendCreateGlvDeposit,
+} from "../../utils/relay/multichain";
 import * as keys from "../../utils/keys";
 import { executeDeposit, getDepositCount, getDepositKeys } from "../../utils/deposit";
 import { executeWithdrawal, getWithdrawalCount, getWithdrawalKeys } from "../../utils/withdrawal";
 import { getBalanceOf } from "../../utils/token";
 import { BigNumberish, Contract } from "ethers";
 import { executeShift, getShiftCount, getShiftKeys } from "../../utils/shift";
+import { executeGlvDeposit, getGlvDepositCount } from "../../utils/glv";
 
 describe("MultichainGmRouter", () => {
   let fixture;
@@ -18,12 +24,15 @@ describe("MultichainGmRouter", () => {
   let reader,
     dataStore,
     multichainGmRouter,
+    multichainGlvRouter,
     multichainVault,
     depositVault,
     withdrawalVault,
     shiftVault,
+    glvVault,
     ethUsdMarket,
     solUsdMarket,
+    ethUsdGlvAddress,
     wnt,
     usdc;
   let relaySigner;
@@ -70,12 +79,15 @@ describe("MultichainGmRouter", () => {
       reader,
       dataStore,
       multichainGmRouter,
+      multichainGlvRouter,
       multichainVault,
       depositVault,
       withdrawalVault,
       shiftVault,
+      glvVault,
       ethUsdMarket,
       solUsdMarket,
+      ethUsdGlvAddress,
       wnt,
       usdc,
     } = fixture.contracts);
@@ -399,6 +411,69 @@ describe("MultichainGmRouter", () => {
       // await executeShift(fixture, { gasUsageLabel: "executeShift" });
       // shift = await reader.getShift(dataStore.address, shiftKeys[0]);
       // expect(shift.addresses.account).eq(ethers.constants.AddressZero);
+    });
+  });
+
+  describe("createGlvDeposit", () => {
+    let defaultGlvDepositParams;
+    let createGlvDepositParams: Parameters<typeof sendCreateGlvDeposit>[0];
+    beforeEach(async () => {
+      defaultGlvDepositParams = {
+        addresses: {
+          glv: ethUsdGlvAddress,
+          receiver: user1.address,
+          callbackContract: user2.address,
+          uiFeeReceiver: user3.address,
+          market: ethUsdMarket.marketToken,
+          initialLongToken: ethers.constants.AddressZero,
+          initialShortToken: ethers.constants.AddressZero,
+          longTokenSwapPath: [],
+          shortTokenSwapPath: [],
+        },
+        minGlvTokens: 100,
+        executionFee: 0,
+        callbackGasLimit: "200000",
+        shouldUnwrapNativeToken: true,
+        isMarketTokenDeposit: true,
+        dataList: [],
+      };
+
+      createGlvDepositParams = {
+        sender: relaySigner,
+        signer: user1,
+        feeParams: {
+          feeToken: wnt.address,
+          feeAmount: expandDecimals(7, 15), // 0.007 ETH
+          feeSwapPath: [],
+        },
+        transferRequests: {
+          tokens: [ethUsdMarket.marketToken],
+          receivers: [glvVault.address],
+          amounts: [expandDecimals(95_000, 18)],
+        },
+        account: user1.address,
+        params: defaultGlvDepositParams,
+        deadline: 9999999999,
+        chainId,
+        srcChainId: chainId,
+        desChainId: chainId,
+        relayRouter: multichainGlvRouter,
+        relayFeeToken: wnt.address,
+        relayFeeAmount: expandDecimals(3, 15), // 0.003 ETH
+      };
+    });
+
+    it("creates glvDeposit and sends relayer fee", async () => {
+      await sendCreateDeposit(createDepositParams); // leaves the residualFee (i.e. executionfee) of 0.004 ETH fee in multichainVault/user's multichain balance
+      await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: expandDecimals(3, 15) }); // add additional fee to user1's multichain balance
+      await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
+
+      expect(await getGlvDepositCount(dataStore)).eq(0);
+      await sendCreateGlvDeposit(createGlvDepositParams);
+      expect(await getGlvDepositCount(dataStore)).eq(1);
+
+      await executeGlvDeposit(fixture, { gasUsageLabel: "executeGlvDeposit" });
+      expect(await getGlvDepositCount(dataStore)).eq(0);
     });
   });
 });

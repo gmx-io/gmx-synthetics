@@ -126,6 +126,31 @@ export async function sendCreateShift(p: SendCreate) {
   });
 }
 
+export async function sendCreateGlvDeposit(p: SendCreate) {
+  const relayParams = await getRelayParams(p);
+
+  let signature = p.signature;
+  if (!signature) {
+    signature = await getCreateGlvDepositSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
+  }
+
+  const createGlvDepositCalldata = p.relayRouter.interface.encodeFunctionData("createGlvDeposit", [
+    { ...relayParams, signature },
+    p.account,
+    p.srcChainId,
+    p.transferRequests,
+    p.params,
+  ]);
+  const calldata = ethers.utils.solidityPack(
+    ["bytes", "address", "address", "uint256"],
+    [createGlvDepositCalldata, GELATO_RELAY_ADDRESS, p.relayFeeToken, p.relayFeeAmount]
+  );
+  return p.sender.sendTransaction({
+    to: p.relayRouter.address,
+    data: calldata,
+  });
+}
+
 async function getCreateDepositSignature({
   signer,
   relayParams,
@@ -308,5 +333,67 @@ async function getCreateShiftSignature({
   };
 
   const domain = getDomain(chainId, verifyingContract);
+  return signTypedData(signer, domain, types, typedData);
+}
+
+async function getCreateGlvDepositSignature({
+  signer,
+  relayParams,
+  transferRequests,
+  verifyingContract,
+  params,
+  chainId,
+}: {
+  signer: ethers.Signer;
+  relayParams: any;
+  transferRequests: { tokens: string[]; receivers: string[]; amounts: BigNumberish[] };
+  verifyingContract: string;
+  params: any;
+  chainId: BigNumberish;
+}) {
+  if (relayParams.userNonce === undefined) {
+    throw new Error("userNonce is required");
+  }
+  const types = {
+    CreateGlvDeposit: [
+      { name: "transferTokens", type: "address[]" },
+      { name: "transferReceivers", type: "address[]" },
+      { name: "transferAmounts", type: "uint256[]" },
+      { name: "addresses", type: "CreateGlvDepositAddresses" },
+      { name: "minGlvTokens", type: "uint256" },
+      { name: "executionFee", type: "uint256" },
+      { name: "callbackGasLimit", type: "uint256" },
+      { name: "shouldUnwrapNativeToken", type: "bool" },
+      { name: "isMarketTokenDeposit", type: "bool" },
+      { name: "dataList", type: "bytes32[]" },
+      { name: "relayParams", type: "bytes32" },
+    ],
+    CreateGlvDepositAddresses: [
+      { name: "glv", type: "address" },
+      { name: "market", type: "address" },
+      { name: "receiver", type: "address" },
+      { name: "callbackContract", type: "address" },
+      { name: "uiFeeReceiver", type: "address" },
+      { name: "initialLongToken", type: "address" },
+      { name: "initialShortToken", type: "address" },
+      { name: "longTokenSwapPath", type: "address[]" },
+      { name: "shortTokenSwapPath", type: "address[]" },
+    ],
+  };
+  const typedData = {
+    transferTokens: transferRequests.tokens,
+    transferReceivers: transferRequests.receivers,
+    transferAmounts: transferRequests.amounts,
+    addresses: params.addresses,
+    minGlvTokens: params.minGlvTokens,
+    executionFee: params.executionFee,
+    callbackGasLimit: params.callbackGasLimit,
+    shouldUnwrapNativeToken: params.shouldUnwrapNativeToken,
+    isMarketTokenDeposit: params.isMarketTokenDeposit,
+    dataList: params.dataList,
+    relayParams: hashRelayParams(relayParams),
+  };
+  const domain = getDomain(chainId, verifyingContract);
+
   return signTypedData(signer, domain, types, typedData);
 }
