@@ -1,7 +1,7 @@
 name: CI
 on:
   pull_request:
-    branches: [main, multichain, updates, v2.2-branch]
+    types: [opened, synchronize, edited, ready_for_review]
 
 jobs:
   tests:
