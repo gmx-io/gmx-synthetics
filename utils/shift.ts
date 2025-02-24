@@ -48,11 +48,13 @@ export async function createShift(fixture, overrides: any = {}) {
   await marketToken.connect(account).transfer(shiftVault.address, marketTokenAmount);
 
   const params = {
-    receiver: receiver.address,
-    callbackContract: callbackContract.address,
-    uiFeeReceiver: uiFeeReceiver.address,
-    fromMarket: fromMarket.marketToken,
-    toMarket: toMarket.marketToken,
+    addresses: {
+      receiver: receiver.address,
+      callbackContract: callbackContract.address,
+      uiFeeReceiver: uiFeeReceiver.address,
+      fromMarket: fromMarket.marketToken,
+      toMarket: toMarket.marketToken,
+    },
     minMarketTokens,
     executionFee,
     callbackGasLimit,

@@ -32,15 +32,19 @@ library ShiftUtils {
     using EventUtils for EventUtils.StringItems;
 
     struct CreateShiftParams {
+        CreateShiftParamsAddresses addresses;
+        uint256 minMarketTokens;
+        uint256 executionFee;
+        uint256 callbackGasLimit;
+        bytes32[] dataList;
+    }
+
+    struct CreateShiftParamsAddresses {
         address receiver;
         address callbackContract;
         address uiFeeReceiver;
         address fromMarket;
         address toMarket;
-        uint256 minMarketTokens;
-        uint256 executionFee;
-        uint256 callbackGasLimit;
-        bytes32[] dataList;
     }
 
     struct CreateShiftCache {
@@ -83,8 +87,8 @@ library ShiftUtils {
     ) external returns (bytes32) {
         AccountUtils.validateAccount(account);
 
-        if (params.fromMarket == params.toMarket) {
-            revert Errors.ShiftFromAndToMarketAreEqual(params.fromMarket);
+        if (params.addresses.fromMarket == params.addresses.toMarket) {
+            revert Errors.ShiftFromAndToMarketAreEqual(params.addresses.fromMarket);
         }
 
         address wnt = TokenUtils.wnt(dataStore);
@@ -94,9 +98,9 @@ library ShiftUtils {
             revert Errors.InsufficientWntAmountForExecutionFee(wntAmount, params.executionFee);
         }
 
-        AccountUtils.validateReceiver(params.receiver);
+        AccountUtils.validateReceiver(params.addresses.receiver);
 
-        uint256 marketTokenAmount = shiftVault.recordTransferIn(params.fromMarket);
+        uint256 marketTokenAmount = shiftVault.recordTransferIn(params.addresses.fromMarket);
 
         if (marketTokenAmount == 0) {
             revert Errors.EmptyShiftAmount();
@@ -104,8 +108,8 @@ library ShiftUtils {
 
         params.executionFee = wntAmount;
 
-        Market.Props memory fromMarket = MarketUtils.getEnabledMarket(dataStore, params.fromMarket);
-        Market.Props memory toMarket = MarketUtils.getEnabledMarket(dataStore, params.toMarket);
+        Market.Props memory fromMarket = MarketUtils.getEnabledMarket(dataStore, params.addresses.fromMarket);
+        Market.Props memory toMarket = MarketUtils.getEnabledMarket(dataStore, params.addresses.toMarket);
 
         if (fromMarket.longToken != toMarket.longToken) {
             revert Errors.LongTokensAreNotEqual(fromMarket.longToken, toMarket.longToken);
@@ -118,11 +122,11 @@ library ShiftUtils {
         Shift.Props memory shift = Shift.Props(
             Shift.Addresses(
                 account,
-                params.receiver,
-                params.callbackContract,
-                params.uiFeeReceiver,
-                params.fromMarket,
-                params.toMarket
+                params.addresses.receiver,
+                params.addresses.callbackContract,
+                params.addresses.uiFeeReceiver,
+                params.addresses.fromMarket,
+                params.addresses.toMarket
             ),
             Shift.Numbers(
                 marketTokenAmount,

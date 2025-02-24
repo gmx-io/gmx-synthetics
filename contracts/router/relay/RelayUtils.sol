@@ -133,6 +133,19 @@ library RelayUtils {
             )
         );
 
+    bytes32 public constant CREATE_SHIFT_TYPEHASH =
+        keccak256(
+            bytes(
+                "CreateShift(address[] transferTokens,address[] transferReceivers,uint256[] transferAmounts,CreateShiftAddresses addresses,uint256 minMarketTokens,uint256 executionFee,uint256 callbackGasLimit,bytes32[] dataList,bytes32 relayParams)CreateShiftAddresses(address receiver,address callbackContract,address uiFeeReceiver,address fromMarket,address toMarket)"
+            )
+        );
+    bytes32 public constant CREATE_SHIFT_ADDRESSES_TYPEHASH =
+        keccak256(
+            bytes(
+                "CreateShiftAddresses(address receiver,address callbackContract,address uiFeeReceiver,address fromMarket,address toMarket)"
+            )
+        );
+
     bytes32 public constant CREATE_GLV_DEPOSIT_TYPEHASH =
         keccak256(
             bytes(
@@ -171,18 +184,6 @@ library RelayUtils {
             )
         );
 
-    bytes32 public constant CREATE_SHIFT_TYPEHASH =
-        keccak256(
-            bytes(
-                "CreateShift(address[] transferTokens,address[] transferReceivers,uint256[] transferAmounts,CreateShiftParams params,bytes32 relayParams)CreateShiftParams(address receiver,address callbackContract,address uiFeeReceiver,address fromMarket,address toMarket,uint256 minMarketTokens,uint256 executionFee,uint256 callbackGasLimit,bytes32[] dataList)"
-            )
-        );
-    bytes32 public constant CREATE_SHIFT_PARAMS_TYPEHASH =
-        keccak256(
-            bytes(
-                "CreateShiftParams(address receiver,address callbackContract,address uiFeeReceiver,address fromMarket,address toMarket,uint256 minMarketTokens,uint256 executionFee,uint256 callbackGasLimit,bytes32[] dataList)"
-            )
-        );
 
     bytes32 public constant TRANSFER_REQUESTS_TYPEHASH =
         keccak256(bytes("TransferRequests(address[] tokens,address[] receivers,uint256[] amounts)"));
@@ -401,6 +402,44 @@ library RelayUtils {
             );
     }
 
+    function getCreateShiftStructHash(
+        RelayParams calldata relayParams,
+        TransferRequests calldata transferRequests,
+        ShiftUtils.CreateShiftParams memory params
+    ) external pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    CREATE_SHIFT_TYPEHASH,
+                    keccak256(abi.encodePacked(transferRequests.tokens)),
+                    keccak256(abi.encodePacked(transferRequests.receivers)),
+                    keccak256(abi.encodePacked(transferRequests.amounts)),
+                    _getCreateShiftAddressesStructHash(params.addresses),
+                    params.minMarketTokens,
+                    params.executionFee,
+                    params.callbackGasLimit,
+                    keccak256(abi.encodePacked(params.dataList)),
+                    _getRelayParamsHash(relayParams)
+                )
+            );
+    }
+
+    function _getCreateShiftAddressesStructHash(
+        ShiftUtils.CreateShiftParamsAddresses memory addresses
+    ) internal pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    CREATE_SHIFT_ADDRESSES_TYPEHASH,
+                    addresses.receiver,
+                    addresses.callbackContract,
+                    addresses.uiFeeReceiver,
+                    addresses.fromMarket,
+                    addresses.toMarket
+                )
+            );
+    }
+
     function getCreateGlvDepositStructHash(
         RelayParams calldata relayParams,
         TransferRequests calldata transferRequests,
@@ -507,44 +546,6 @@ library RelayUtils {
                     addresses.glv,
                     keccak256(abi.encodePacked(addresses.longTokenSwapPath)),
                     keccak256(abi.encodePacked(addresses.shortTokenSwapPath))
-                )
-            );
-    }
-
-    function getCreateShiftStructHash(
-        RelayParams calldata relayParams,
-        TransferRequests calldata transferRequests,
-        ShiftUtils.CreateShiftParams memory params
-    ) external pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    CREATE_SHIFT_TYPEHASH,
-                    keccak256(abi.encodePacked(transferRequests.tokens)),
-                    keccak256(abi.encodePacked(transferRequests.receivers)),
-                    keccak256(abi.encodePacked(transferRequests.amounts)),
-                    _getCreateShiftParamsStructHash(params),
-                    _getRelayParamsHash(relayParams)
-                )
-            );
-    }
-
-    function _getCreateShiftParamsStructHash(
-        ShiftUtils.CreateShiftParams memory params
-    ) internal pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    CREATE_SHIFT_PARAMS_TYPEHASH,
-                    params.receiver,
-                    params.callbackContract,
-                    params.uiFeeReceiver,
-                    params.fromMarket,
-                    params.toMarket,
-                    params.minMarketTokens,
-                    params.executionFee,
-                    params.callbackGasLimit,
-                    keccak256(abi.encodePacked(params.dataList))
                 )
             );
     }
