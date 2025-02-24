@@ -38,7 +38,8 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
     // @param params BaseOrderUtils.CreateOrderParams
     function createOrder(
         address account,
-        IBaseOrderUtils.CreateOrderParams calldata params
+        IBaseOrderUtils.CreateOrderParams calldata params,
+        bool shouldCapMaxExecutionFee
     ) external override globalNonReentrant onlyController returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createOrderFeatureDisabledKey(address(this), uint256(params.orderType)));
 
@@ -48,8 +49,16 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
             orderVault,
             referralStorage,
             account,
-            params
+            params,
+            shouldCapMaxExecutionFee
         );
+    }
+
+    struct UpdateOrderCache {
+        address wnt;
+        uint256 receivedWnt;
+        uint256 estimatedGasLimit;
+        uint256 oraclePriceCount;
     }
 
     /**
@@ -83,7 +92,8 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         uint256 minOutputAmount,
         uint256 validFromTime,
         bool autoCancel,
-        Order.Props memory order
+        Order.Props memory order,
+        bool shouldCapMaxExecutionFee
     ) external override globalNonReentrant onlyController {
         FeatureUtils.validateFeature(dataStore, Keys.updateOrderFeatureDisabledKey(address(this), uint256(order.orderType())));
 
@@ -97,16 +107,6 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
             revert Errors.UnsupportedOrderType(uint256(order.orderType()));
         }
 
-        // allow topping up of executionFee as frozen orders
-        // will have their executionFee reduced
-        address wnt = TokenUtils.wnt(dataStore);
-        uint256 receivedWnt = orderVault.recordTransferIn(wnt);
-        order.setExecutionFee(order.executionFee() + receivedWnt);
-
-        uint256 estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(dataStore, order);
-        uint256 oraclePriceCount = GasUtils.estimateOrderOraclePriceCount(order.swapPath().length);
-        GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, order.executionFee(), oraclePriceCount);
-
         if (order.autoCancel() != autoCancel) {
             OrderUtils.updateAutoCancelList(dataStore, key, order, autoCancel);
             OrderUtils.validateTotalCallbackGasLimitForAutoCancelOrders(dataStore, order);
@@ -119,6 +119,27 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         order.setMinOutputAmount(minOutputAmount);
         order.setValidFromTime(validFromTime);
         order.setIsFrozen(false);
+
+        UpdateOrderCache memory cache;
+        // allow topping up of executionFee as frozen orders
+        // will have their executionFee reduced
+        cache.wnt = TokenUtils.wnt(dataStore);
+        cache.receivedWnt = orderVault.recordTransferIn(cache.wnt);
+
+        cache.estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(dataStore, order);
+        cache.oraclePriceCount = GasUtils.estimateOrderOraclePriceCount(order.swapPath().length);
+        (uint256 executionFee, uint256 executionFeeDiff) = GasUtils.validateAndCapExecutionFee(
+            dataStore,
+            cache.estimatedGasLimit,
+            order.executionFee() + cache.receivedWnt,
+            cache.oraclePriceCount,
+            shouldCapMaxExecutionFee
+        );
+        order.setExecutionFee(executionFee);
+
+        if (executionFeeDiff != 0) {
+            GasUtils.transferExcessiveExecutionFee(dataStore, eventEmitter, orderVault, order.account(), executionFeeDiff);
+        }
 
         order.touch();
 

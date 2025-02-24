@@ -61,6 +61,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       skipBorrowingFeeForSmallerSide: false,
 
       ignoreOpenInterestForUsageFactor: false,
+
+      maxExecutionFeeMultiplierFactor: decimalToFloat(100),
     };
   }
 
@@ -119,6 +121,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     skipBorrowingFeeForSmallerSide: true,
 
     ignoreOpenInterestForUsageFactor: false,
+
+    maxExecutionFeeMultiplierFactor: decimalToFloat(100),
   };
 
   const networkConfig = {

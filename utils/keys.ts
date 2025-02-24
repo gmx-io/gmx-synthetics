@@ -49,6 +49,7 @@ export const AUTO_CANCEL_ORDER_LIST = hashString("AUTO_CANCEL_ORDER_LIST");
 export const CREATE_DEPOSIT_FEATURE_DISABLED = hashString("CREATE_DEPOSIT_FEATURE_DISABLED");
 export const CANCEL_DEPOSIT_FEATURE_DISABLED = hashString("CANCEL_DEPOSIT_FEATURE_DISABLED");
 export const EXECUTE_DEPOSIT_FEATURE_DISABLED = hashString("EXECUTE_DEPOSIT_FEATURE_DISABLED");
+export const GASLESS_FEATURE_DISABLED = hashString("GASLESS_FEATURE_DISABLED");
 
 export const CREATE_ORDER_FEATURE_DISABLED = hashString("CREATE_ORDER_FEATURE_DISABLED");
 export const EXECUTE_ORDER_FEATURE_DISABLED = hashString("EXECUTE_ORDER_FEATURE_DISABLED");
@@ -104,7 +105,7 @@ export const MIN_COLLATERAL_USD = hashString("MIN_COLLATERAL_USD");
 export const MIN_POSITION_SIZE_USD = hashString("MIN_POSITION_SIZE_USD");
 
 export const SWAP_FEE_RECEIVER_FACTOR = hashString("SWAP_FEE_RECEIVER_FACTOR");
-
+export const ATOMIC_SWAP_FEE_TYPE = hashString("ATOMIC_SWAP_FEE_TYPE");
 export const TOKEN_TRANSFER_GAS_LIMIT = hashString("TOKEN_TRANSFER_GAS_LIMIT");
 export const NATIVE_TOKEN_TRANSFER_GAS_LIMIT = hashString("NATIVE_TOKEN_TRANSFER_GAS_LIMIT");
 
@@ -201,6 +202,7 @@ export const SKIP_BORROWING_FEE_FOR_SMALLER_SIDE = hashString("SKIP_BORROWING_FE
 export const ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1 = hashString("ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1");
 export const ESTIMATED_GAS_FEE_PER_ORACLE_PRICE = hashString("ESTIMATED_GAS_FEE_PER_ORACLE_PRICE");
 export const ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR = hashString("ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR");
+export const MAX_EXECUTION_FEE_MULTIPLIER_FACTOR = hashString("MAX_EXECUTION_FEE_MULTIPLIER_FACTOR");
 
 export const EXECUTION_GAS_FEE_BASE_AMOUNT_V2_1 = hashString("EXECUTION_GAS_FEE_BASE_AMOUNT_V2_1");
 export const EXECUTION_GAS_FEE_PER_ORACLE_PRICE = hashString("EXECUTION_GAS_FEE_PER_ORACLE_PRICE");
@@ -231,7 +233,7 @@ export const MAX_ALLOWED_SUBACCOUNT_ACTION_COUNT = hashString("MAX_ALLOWED_SUBAC
 export const SUBACCOUNT_ACTION_COUNT = hashString("SUBACCOUNT_ACTION_COUNT");
 export const SUBACCOUNT_AUTO_TOP_UP_AMOUNT = hashString("SUBACCOUNT_AUTO_TOP_UP_AMOUNT");
 export const SUBACCOUNT_ORDER_ACTION = hashString("SUBACCOUNT_ORDER_ACTION");
-
+export const SUBACCOUNT_EXPIRES_AT = hashString("SUBACCOUNT_EXPIRES_AT");
 export const GLV_SUPPORTED_MARKET_LIST = hashString("GLV_SUPPORTED_MARKET_LIST");
 export const MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT = hashString("MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT");
 
@@ -300,6 +302,10 @@ export function createDepositFeatureDisabledKey(contract) {
 
 export function cancelDepositFeatureDisabledKey(contract) {
   return hashData(["bytes32", "address"], [CANCEL_DEPOSIT_FEATURE_DISABLED, contract]);
+}
+
+export function gaslessFeatureDisabledKey(module: string) {
+  return hashData(["bytes32", "address"], [GASLESS_FEATURE_DISABLED, module]);
 }
 
 export function executeDepositFeatureDisabledKey(contract) {
@@ -697,6 +703,13 @@ export function maxAllowedSubaccountActionCountKey(account: string, subaccount: 
   return hashData(
     ["bytes32", "address", "address", "bytes32"],
     [MAX_ALLOWED_SUBACCOUNT_ACTION_COUNT, account, subaccount, actionType]
+  );
+}
+
+export function subaccountExpiresAtKey(account: string, subaccount: string, actionType: string) {
+  return hashData(
+    ["bytes32", "address", "address", "bytes32"],
+    [SUBACCOUNT_EXPIRES_AT, account, subaccount, actionType]
   );
 }
 

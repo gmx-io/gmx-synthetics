@@ -154,6 +154,7 @@ library Errors {
     error InsufficientExecutionGas(uint256 startingGas, uint256 estimatedGasLimit, uint256 minAdditionalGasForExecution);
     error InsufficientHandleExecutionErrorGas(uint256 gas, uint256 minHandleExecutionErrorGas);
     error InsufficientGasForCancellation(uint256 gas, uint256 minHandleExecutionErrorGas);
+    error InvalidExecutionFee(uint256 executionFee, uint256 minExecutionFee, uint256 maxExecutionFee);
 
     // MarketFactory errors
     error MarketAlreadyExists(bytes32 salt, address existingMarketAddress);
@@ -195,7 +196,7 @@ library Errors {
     // Oracle errors
     error SequencerDown();
     error SequencerGraceDurationNotYetPassed(uint256 timeSinceUp, uint256 sequencerGraceDuration);
-    error EmptyValidatedPrices();
+    error EmptyValidatedPrices(); // not used, kept for compatibility
     error InvalidOracleProvider(address provider);
     error InvalidOracleProviderForToken(address provider, address expectedProvider);
     error GmEmptySigner(uint256 signerIndex);
@@ -353,10 +354,12 @@ library Errors {
 
     // SubaccountRouter errors
     error InvalidReceiverForSubaccountOrder(address receiver, address expectedReceiver);
+    error InvalidCancellationReceiverForSubaccountOrder(address cancellationReceiver, address expectedCancellationReceiver);
 
     // SubaccountUtils errors
     error SubaccountNotAuthorized(address account, address subaccount);
     error MaxSubaccountActionCountExceeded(address account, address subaccount, uint256 count, uint256 maxCount);
+    error SubaccountApprovalExpired(address account, address subaccount, uint256 deadline, uint256 currentTimestamp);
 
     // TokenUtils errors
     error TokenTransferError(address token, address receiver, uint256 amount);
@@ -420,4 +423,21 @@ library Errors {
 
     // Reader errors
     error EmptyMarketPrice(address market);
+
+    // Gelato relay errors
+    error InvalidSignature(string signatureType);
+    // User sent incorrect fee token or incorrect swap path
+    error UnexpectedRelayFeeTokenAfterSwap(address feeToken, address expectedFeeToken);
+    error UnexpectedRelayFeeToken(address feeToken, address expectedFeeToken);
+    // Contract received unsupported fee token from Gelato relay
+    error UnsupportedRelayFeeToken(address feeToken, address expectedFeeToken);
+    error InvalidPermitSpender(address spender, address expectedSpender);
+    error InvalidUserNonce(uint256 storedUserNonce, uint256 userNonce);
+    error SubaccountApprovalDeadlinePassed(uint256 currentTimestamp, uint256 deadline);
+    error InvalidSubaccountApprovalNonce(uint256 storedNonce, uint256 nonce);
+    error DeadlinePassed(uint256 currentTimestamp, uint256 deadline);
+    error InsufficientRelayFee(uint256 requiredRelayFee, uint256 feeAmount);
+    error InvalidSubaccountApprovalSubaccount();
+    error NonEmptyExternalCallsForSubaccountOrder();
+    error InvalidRelayParams();
 }
