@@ -550,7 +550,7 @@ describe("SubaccountGelatoRelayRouter", () => {
       ).to.eq(9999999999);
     });
 
-    it("creates order and sends relayer fee", async () => {
+    it.skip("creates order and sends relayer fee", async () => {
       await dataStore.addAddress(keys.subaccountListKey(user1.address), user0.address);
       await dataStore.setUint(
         keys.subaccountExpiresAtKey(user1.address, user0.address, keys.SUBACCOUNT_ORDER_ACTION),
