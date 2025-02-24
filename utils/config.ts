@@ -1,4 +1,3 @@
-import hre from "hardhat";
 import { BigNumber } from "ethers";
 
 export const EXCLUDED_CONFIG_KEYS = {
@@ -46,6 +45,7 @@ export const EXCLUDED_CONFIG_KEYS = {
   LATEST_ADL_AT: true,
   MARKET_LIST: true,
   MAX_ALLOWED_SUBACCOUNT_ACTION_COUNT: true,
+  SUBACCOUNT_EXPIRES_AT: true,
   MAX_PNL_FACTOR_FOR_TRADERS: true,
   MAX_PNL_FACTOR_FOR_ADL: true,
   MAX_PNL_FACTOR_FOR_DEPOSITS: true,
@@ -78,6 +78,7 @@ export const EXCLUDED_CONFIG_KEYS = {
   SUBACCOUNT_ORDER_ACTION: true,
   SUBACCOUNT_LIST: true,
   SWAP_FEE_TYPE: true,
+  ATOMIC_SWAP_FEE_TYPE: true,
   SWAP_IMPACT_POOL_AMOUNT: true,
   SWAP_PATH_MARKET_FLAG: true,
   TOTAL_BORROWING: true,
@@ -101,8 +102,8 @@ export const EXCLUDED_CONFIG_KEYS = {
 };
 
 export async function appendUintConfigIfDifferent(
-  list: Array,
-  dataCache: Map,
+  list: string[],
+  dataCache: Record<string, any>,
   baseKey: string,
   keyData: string,
   value: BigNumber | string | number,
@@ -115,8 +116,8 @@ export async function appendUintConfigIfDifferent(
 }
 
 export async function appendIntConfigIfDifferent(
-  list: Array,
-  dataCache: Map,
+  list: string[],
+  dataCache: Record<string, any>,
   baseKey: string,
   keyData: string,
   value: BigNumber | string | number,
@@ -129,8 +130,8 @@ export async function appendIntConfigIfDifferent(
 }
 
 export async function appendAddressConfigIfDifferent(
-  list: Array,
-  dataCache: Map,
+  list: string[],
+  dataCache: Record<string, any>,
   baseKey: string,
   keyData: string,
   value: string,
@@ -145,8 +146,8 @@ export async function appendAddressConfigIfDifferent(
 }
 
 export async function appendBytes32ConfigIfDifferent(
-  list: Array,
-  dataCache: Map,
+  list: string[],
+  dataCache: Record<string, any>,
   baseKey: string,
   keyData: string,
   value: string,
@@ -156,8 +157,8 @@ export async function appendBytes32ConfigIfDifferent(
 }
 
 export async function appendBoolConfigIfDifferent(
-  list: Array,
-  dataCache: Map,
+  list: string[],
+  dataCache: Record<string, any>,
   baseKey: string,
   keyData: string,
   value: boolean,
@@ -167,8 +168,8 @@ export async function appendBoolConfigIfDifferent(
 }
 
 async function appendConfigIfDifferent(
-  list: Array,
-  dataCache: Map,
+  list: string[],
+  dataCache: Record<string, any>,
   type: "uint" | "int" | "address" | "data" | "bool" | "bytes32",
   baseKey: string,
   keyData: string,
@@ -176,7 +177,7 @@ async function appendConfigIfDifferent(
   { compare, label }: { compare?: (a: any, b: any) => boolean; label?: string } = {}
 ) {
   if (value === undefined) {
-    throw new Error(`Value for ${label || key} of type ${type} is undefined`);
+    throw new Error(`Value for ${label || baseKey} of type ${type} is undefined`);
   }
 
   const config = await hre.ethers.getContract("Config");
@@ -191,14 +192,19 @@ async function appendConfigIfDifferent(
   }
 
   if (compare ? !compare(currentValue, value) : currentValue != value) {
+    let changeStr = "";
+    if (type === "uint" || type === "int") {
+      changeStr = `(change ${(Number(value.toString()) / Number(currentValue.toString())).toFixed(4)}x)`;
+    }
+
     console.info(
-      "appending config %s %s (%s) to %s, prev: %s (change %sx)",
+      "appending config %s %s (%s) to %s, prev: %s %s",
       type,
       label,
       key,
       value.toString(),
       currentValue.toString(),
-      (Number(value.toString()) / Number(currentValue.toString())).toFixed(4)
+      changeStr
     );
     list.push(config.interface.encodeFunctionData(setMethod, [baseKey, keyData, value]));
   } else {

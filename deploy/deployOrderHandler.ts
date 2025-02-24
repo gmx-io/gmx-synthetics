@@ -17,7 +17,14 @@ const func = createDeployFunction({
   getDeployArgs: async ({ dependencyContracts }) => {
     return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
   },
-  libraryNames: ["MarketStoreUtils", "OrderUtils", "ExecuteOrderUtils", "OrderStoreUtils", "OrderEventUtils"],
+  libraryNames: [
+    "MarketStoreUtils",
+    "OrderUtils",
+    "ExecuteOrderUtils",
+    "OrderStoreUtils",
+    "OrderEventUtils",
+    "GasUtils",
+  ],
   afterDeploy: async ({ deployedContract, getNamedAccounts, deployments, network }) => {
     const { deployer } = await getNamedAccounts();
     const { execute } = deployments;
@@ -29,5 +36,9 @@ const func = createDeployFunction({
     await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
   },
 });
+
+func.skip = async () => {
+  return process.env.SKIP_HANDLER_DEPLOYMENTS ? true : false;
+};
 
 export default func;

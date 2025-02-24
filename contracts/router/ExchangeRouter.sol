@@ -105,7 +105,7 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         bytes[] memory externalCallDataList,
         address[] memory refundTokens,
         address[] memory refundReceivers
-    ) external nonReentrant {
+    ) external payable nonReentrant {
         externalHandler.makeExternalCalls(
             externalCallTargets,
             externalCallDataList,
@@ -257,7 +257,8 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
 
         return orderHandler.createOrder(
             account,
-            params
+            params,
+            false
         );
     }
 
@@ -310,7 +311,8 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
             minOutputAmount,
             validFromTime,
             autoCancel,
-            order
+            order,
+            false
         );
     }
 

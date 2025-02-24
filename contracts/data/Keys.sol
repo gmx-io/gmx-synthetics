@@ -34,6 +34,7 @@ library Keys {
     bytes32 public constant WITHDRAWAL_FEE_TYPE = keccak256(abi.encode("WITHDRAWAL_FEE_TYPE"));
     // @dev key for swap fees
     bytes32 public constant SWAP_FEE_TYPE = keccak256(abi.encode("SWAP_FEE_TYPE"));
+    bytes32 public constant ATOMIC_SWAP_FEE_TYPE = keccak256(abi.encode("ATOMIC_SWAP_FEE_TYPE"));
     // @dev key for position fees
     bytes32 public constant POSITION_FEE_TYPE = keccak256(abi.encode("POSITION_FEE_TYPE"));
     // @dev key for ui deposit fees
@@ -171,6 +172,8 @@ library Keys {
     bytes32 public constant CLAIM_UI_FEES_FEATURE_DISABLED = keccak256(abi.encode("CLAIM_UI_FEES_FEATURE_DISABLED"));
     // @dev key for whether the subaccount feature is disabled
     bytes32 public constant SUBACCOUNT_FEATURE_DISABLED = keccak256(abi.encode("SUBACCOUNT_FEATURE_DISABLED"));
+    // @dev key for whether the gasless feature is disabled
+    bytes32 public constant GASLESS_FEATURE_DISABLED = keccak256(abi.encode("GASLESS_FEATURE_DISABLED"));
 
     // @dev key for the minimum required oracle signers for an oracle observation
     bytes32 public constant MIN_ORACLE_SIGNERS = keccak256(abi.encode("MIN_ORACLE_SIGNERS"));
@@ -217,6 +220,9 @@ library Keys {
     bytes32 public constant EXECUTION_GAS_FEE_PER_ORACLE_PRICE = keccak256(abi.encode("EXECUTION_GAS_FEE_PER_ORACLE_PRICE"));
     // @dev key for the multiplier used when calculating execution fee
     bytes32 public constant EXECUTION_GAS_FEE_MULTIPLIER_FACTOR = keccak256(abi.encode("EXECUTION_GAS_FEE_MULTIPLIER_FACTOR"));
+
+    // @dev key for the max execution fee multiplier
+    bytes32 public constant MAX_EXECUTION_FEE_MULTIPLIER_FACTOR = keccak256(abi.encode("MAX_EXECUTION_FEE_MULTIPLIER_FACTOR"));
 
     // @dev key for the estimated gas limit for deposits
     bytes32 public constant DEPOSIT_GAS_LIMIT = keccak256(abi.encode("DEPOSIT_GAS_LIMIT"));
@@ -323,8 +329,9 @@ library Keys {
     bytes32 public constant PRICE_FEED_HEARTBEAT_DURATION = keccak256(abi.encode("PRICE_FEED_HEARTBEAT_DURATION"));
     // @dev key for data stream feed id
     bytes32 public constant DATA_STREAM_ID = keccak256(abi.encode("DATA_STREAM_ID"));
-    // @dev key for data stream feed multipler
+    // @dev key for data stream feed multiplier
     bytes32 public constant DATA_STREAM_MULTIPLIER = keccak256(abi.encode("DATA_STREAM_MULTIPLIER"));
+    bytes32 public constant DATA_STREAM_SPREAD_REDUCTION_FACTOR = keccak256(abi.encode("DATA_STREAM_SPREAD_REDUCTION_FACTOR"));
     // @dev key for stable price
     bytes32 public constant STABLE_PRICE = keccak256(abi.encode("STABLE_PRICE"));
     // @dev key for reserve factor
@@ -405,6 +412,7 @@ library Keys {
     bytes32 public constant AFFILIATE_REWARD = keccak256(abi.encode("AFFILIATE_REWARD"));
     // @dev key for max allowed subaccount action count
     bytes32 public constant MAX_ALLOWED_SUBACCOUNT_ACTION_COUNT = keccak256(abi.encode("MAX_ALLOWED_SUBACCOUNT_ACTION_COUNT"));
+    bytes32 public constant SUBACCOUNT_EXPIRES_AT = keccak256(abi.encode("SUBACCOUNT_EXPIRES_AT"));
     // @dev key for subaccount action count
     bytes32 public constant SUBACCOUNT_ACTION_COUNT = keccak256(abi.encode("SUBACCOUNT_ACTION_COUNT"));
     // @dev key for subaccount auto top up amount
@@ -900,6 +908,15 @@ library Keys {
     function subaccountFeatureDisabledKey(address module) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             SUBACCOUNT_FEATURE_DISABLED,
+            module
+        ));
+    }
+
+    // @dev key for whether subaccounts are disabled
+    // @param the gasless module
+    function gaslessFeatureDisabledKey(address module) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            GASLESS_FEATURE_DISABLED,
             module
         ));
     }
@@ -1745,6 +1762,15 @@ library Keys {
         ));
     }
 
+    function subaccountExpiresAtKey(address account, address subaccount, bytes32 actionType) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            SUBACCOUNT_EXPIRES_AT,
+            account,
+            subaccount,
+            actionType
+        ));
+    }
+
     function subaccountActionCountKey(address account, address subaccount, bytes32 actionType) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             SUBACCOUNT_ACTION_COUNT,
@@ -1822,6 +1848,13 @@ library Keys {
     function dataStreamMultiplierKey(address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             DATA_STREAM_MULTIPLIER,
+            token
+        ));
+    }
+
+    function dataStreamSpreadReductionFactorKey(address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            DATA_STREAM_SPREAD_REDUCTION_FACTOR,
             token
         ));
     }
