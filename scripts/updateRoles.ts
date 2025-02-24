@@ -80,62 +80,60 @@ async function main() {
     arbitrum: [
       {
         role: "CONTROLLER",
-        member: "0x5ac4e27341e4cccb3e5fd62f9e62db2adf43dd57",
+        member: "0xf64c8469e5b566251301904f4f77a911438c775f",
       },
       {
         role: "CONTROLLER",
-        member: "0x994c598e3b0661bb805d53c6fa6b4504b23b68dd",
+        member: "0x871a0caa75dea231fa290ee26f1955b29a7f8a86",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x26410a3121bcab865b9ceae50dffa04df9e783b1",
       },
       {
         role: "ROUTER_PLUGIN",
-        member: "0x5ac4e27341e4cccb3e5fd62f9e62db2adf43dd57",
+        member: "0xf64c8469e5b566251301904f4f77a911438c775f",
       },
       {
         role: "ROUTER_PLUGIN",
-        member: "0x994c598e3b0661bb805d53c6fa6b4504b23b68dd",
+        member: "0x871a0caa75dea231fa290ee26f1955b29a7f8a86",
+      },
+      {
+        role: "ROUTER_PLUGIN",
+        member: "0x26410a3121bcab865b9ceae50dffa04df9e783b1",
       },
     ],
     avalanche: [
       {
         role: "CONTROLLER",
-        member: "0xe37d052e1deb99901de205e7186e31a36e4ef70c",
+        member: "0xbd219aadafe3ad8c8f570b204b99cb4adbe9983e",
       },
       {
         role: "CONTROLLER",
-        member: "0x16500c1d8ffe2f695d8dcadf753f664993287ae4",
+        member: "0xe971b9d5ea8ab28bf3639069cf7a91e5da7b7015",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x7d9e403f82b59e7ff5f7a37a9bf4a8df914352a1",
       },
       {
         role: "ROUTER_PLUGIN",
-        member: "0xe37d052e1deb99901de205e7186e31a36e4ef70c",
+        member: "0xbd219aadafe3ad8c8f570b204b99cb4adbe9983e",
       },
       {
         role: "ROUTER_PLUGIN",
-        member: "0x16500c1d8ffe2f695d8dcadf753f664993287ae4",
+        member: "0xe971b9d5ea8ab28bf3639069cf7a91e5da7b7015",
+      },
+      {
+        role: "ROUTER_PLUGIN",
+        member: "0x7d9e403f82b59e7ff5f7a37a9bf4a8df914352a1",
       },
     ],
   };
 
   const rolesToRemove = {
-    arbitrum: [
-      {
-        role: "CONTROLLER",
-        member: "0xf32b417A93Acc039B236F1eCC86B56bd3cB8E698",
-      },
-      {
-        role: "ROLE_ADMIN",
-        member: "0xf32b417A93Acc039B236F1eCC86B56bd3cB8E698",
-      },
-    ],
-    avalanche: [
-      {
-        role: "CONTROLLER",
-        member: "0x9Dd6EB1069385D85Ae204543BabB7333181ec8A5",
-      },
-      {
-        role: "ROLE_ADMIN",
-        member: "0x9Dd6EB1069385D85Ae204543BabB7333181ec8A5",
-      },
-    ],
+    arbitrum: [],
+    avalanche: [],
   };
 
   const multicallWriteParams = [];

@@ -14,6 +14,40 @@ dotenv.config();
 const AUDITED_COMMIT = process.env.AUDITED_COMMIT as string;
 const TRANSACTION_HASH = process.env.TRANSACTION_HASH as string;
 
+const expectedRoles = {
+  CONFIG_KEEPER: ["ConfigSyncer"],
+  ROLE_ADMIN: ["Timelock"],
+  ROUTER_PLUGIN: [
+    "ExchangeRouter",
+    "SubaccountRouter",
+    "GlvRouter",
+    "GelatoRelayRouter",
+    "SubaccountGelatoRelayRouter",
+  ],
+  CONTROLLER: [
+    "OracleStore",
+    "MarketFactory",
+    "GlvFactory",
+    "Config",
+    "ConfigSyncer",
+    "Timelock",
+    "Oracle",
+    "SwapHandler",
+    "AdlHandler",
+    "DepositHandler",
+    "WithdrawalHandler",
+    "OrderHandler",
+    "ExchangeRouter",
+    "LiquidationHandler",
+    "SubaccountRouter",
+    "ShiftHandler",
+    "GlvHandler",
+    "GlvRouter",
+    "GelatoRelayRouter",
+    "SubaccountGelatoRelayRouter",
+  ],
+};
+
 async function main() {
   if (!AUDITED_COMMIT || !TRANSACTION_HASH) {
     console.error("Error: Missing AUDITED_COMMIT or TRANSACTION_HASH in environment variables.");
@@ -65,32 +99,6 @@ interface ContractInfo {
   isCodeValidated: boolean;
   signalledRoles: string[];
 }
-
-const expectedRoles = {
-  CONFIG_KEEPER: ["ConfigSyncer"],
-  ROLE_ADMIN: ["Timelock"],
-  ROUTER_PLUGIN: ["ExchangeRouter", "SubaccountRouter", "GlvRouter"],
-  CONTROLLER: [
-    "OracleStore",
-    "MarketFactory",
-    "GlvFactory",
-    "Config",
-    "ConfigSyncer",
-    "Timelock",
-    "Oracle",
-    "SwapHandler",
-    "AdlHandler",
-    "DepositHandler",
-    "WithdrawalHandler",
-    "OrderHandler",
-    "ExchangeRouter",
-    "LiquidationHandler",
-    "SubaccountRouter",
-    "ShiftHandler",
-    "GlvHandler",
-    "GlvRouter",
-  ],
-};
 
 async function extractRolesFromTx(txReceipt: TransactionReceipt): Promise<ContractInfo[]> {
   const contractInfos = new Map<string, ContractInfo>();
@@ -204,7 +212,7 @@ async function validateSourceFile(fullContractName: string, sourceCode: string):
 }
 
 async function showDiff(localPath: string, sourceCode: string) {
-  const tempFilePath = path.join(__dirname, "temp_file.txt");
+  const tempFilePath = path.join(__dirname, "../out", "temp_file.txt");
   fs.writeFileSync(tempFilePath, sourceCode, "utf-8");
 
   try {
