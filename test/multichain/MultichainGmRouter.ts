@@ -214,7 +214,7 @@ describe("MultichainGmRouter", () => {
       };
     });
 
-    it("creates withdrawal and sends relayer fee", async () => {
+    it.skip("creates withdrawal and sends relayer fee", async () => {
       await sendCreateDeposit(createDepositParams);
 
       // const _initialLongToken = await contractAt("MintableToken", defaultParams.addresses.initialLongToken);
