@@ -101,8 +101,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           },
           {
             indexToken: "APT",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(680_000, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(720_000),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(822_857, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(864_000),
           },
           {
             indexToken: "TIA",
@@ -156,8 +156,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           },
           {
             indexToken: "BERA",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(1_020_000, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(1_020_000),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(1_224_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(1_224_000),
           },
           {
             indexToken: "ONDO",
