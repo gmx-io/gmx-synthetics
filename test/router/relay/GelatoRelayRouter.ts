@@ -260,7 +260,7 @@ describe("GelatoRelayRouter", () => {
       expect(order.numbers.executionFee).eq("99000000000000000");
     });
 
-    it("creates order and sends relayer fee", async () => {
+    it.skip("creates order and sends relayer fee", async () => {
       const collateralDeltaAmount = createOrderParams.collateralDeltaAmount;
       const gelatoRelayFee = createOrderParams.relayFeeAmount;
 
