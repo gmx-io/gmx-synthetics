@@ -13,8 +13,8 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '18.x'
-      - run: npm install
+      - run: yarn --ignore-scripts
         shell: bash
       - name: Run Tests
-        run: npx hardhat test
+        run: yarn hardhat test
         shell: bash
