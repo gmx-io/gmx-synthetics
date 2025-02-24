@@ -136,8 +136,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           },
           {
             indexToken: "TRUMP",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(4_000_000, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(4_000_000),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(4_600_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(4_600_000),
           },
           {
             indexToken: "MELANIA",
