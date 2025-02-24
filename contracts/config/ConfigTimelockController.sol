@@ -14,17 +14,19 @@ import {Precision} from "../utils/Precision.sol";
 import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
 import {ITimelockController} from "./ITimelockController.sol";
 
-contract ConfigTimelockController is TimelockController, ITimelockController {
+contract ConfigTimelockController is TimelockController {
 
     constructor(
-        uint256 minDelay
-    ) TimelockController(minDelay, address[](0), address[](0), msg.sender) {}
+        uint256 minDelay,
+        address[] memory proposers,
+        address[] memory executors
+    ) TimelockController(minDelay, proposers, executors, msg.sender) {}
 
-    function signal(address target, bytes32 callData) external override onlyRole(PROPOSER_ROLE) {
+    function signal(address target, bytes calldata payload) external override onlyRole(PROPOSER_ROLE) {
         schedule(
             target,
             0,
-            callData,
+            payload,
             0,
             0,
             getMinDelay()
@@ -32,9 +34,10 @@ contract ConfigTimelockController is TimelockController, ITimelockController {
     }
 
     function signalBatch(
-        address[] calldata targets, bytes32[] calldata payloads
+        address[] calldata targets,
+        bytes[] calldata payloads,
+        uint256[] calldata values
     ) external override onlyRole(PROPOSER_ROLE) {
-        uint256 values = new uint256[](targets.length);
         scheduleBatch(
             targets,
             values,
@@ -44,4 +47,5 @@ contract ConfigTimelockController is TimelockController, ITimelockController {
             getMinDelay()
         );
     }
+
 }
