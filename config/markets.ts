@@ -1353,8 +1353,8 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:GMX/USD"),
 
       ...singleTokenMarketConfig,
-      reserveFactor: percentageToFloat("85%"),
-      openInterestReserveFactor: percentageToFloat("80%"),
+      reserveFactor: percentageToFloat("105%"),
+      openInterestReserveFactor: percentageToFloat("100%"),
       maxPnlFactorForTraders: percentageToFloat("50%"),
 
       ...fundingRateConfig_High,
