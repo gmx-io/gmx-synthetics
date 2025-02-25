@@ -66,6 +66,7 @@ describe("GelatoRelayRouter", () => {
       isLong: true,
       shouldUnwrapNativeToken: true,
       referralCode,
+      dataList: [],
     };
 
     await impersonateAccount(GELATO_RELAY_ADDRESS);

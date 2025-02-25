@@ -60,8 +60,6 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
 
       skipBorrowingFeeForSmallerSide: false,
 
-      ignoreOpenInterestForUsageFactor: false,
-
       maxExecutionFeeMultiplierFactor: decimalToFloat(100),
     };
   }
@@ -120,8 +118,6 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
 
     skipBorrowingFeeForSmallerSide: true,
 
-    ignoreOpenInterestForUsageFactor: false,
-
     maxExecutionFeeMultiplierFactor: decimalToFloat(100),
   };
 
@@ -145,12 +141,10 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       increaseOrderGasLimit: 3_000_000,
       decreaseOrderGasLimit: 3_000_000,
       swapOrderGasLimit: 2_500_000,
-      ignoreOpenInterestForUsageFactor: true,
     },
     avalanche: {
       increaseOrderGasLimit: 3_500_000,
       decreaseOrderGasLimit: 3_500_000,
-      ignoreOpenInterestForUsageFactor: true,
     },
   }[network.name];
 
