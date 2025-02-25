@@ -89,17 +89,22 @@ async function main() {
   console.log("market %s", syntheticMarketAddress);
 
   const params: DepositUtils.CreateDepositParamsStruct = {
-    receiver: wallet.address,
-    callbackContract: ethers.constants.AddressZero,
-    market: syntheticMarketAddress,
+    addresses: {
+      receiver: wallet.address,
+      callbackContract: ethers.constants.AddressZero,
+      uiFeeReceiver: ethers.constants.AddressZero,
+      market: syntheticMarketAddress,
+      initialLongToken: weth.address,
+      initialShortToken: usdc.address,
+      longTokenSwapPath: [],
+      shortTokenSwapPath: [],
+    },
     minMarketTokens: 0,
     shouldUnwrapNativeToken: false,
     executionFee: executionFee,
     callbackGasLimit: 0,
-    initialLongToken: weth.address,
-    initialShortToken: usdc.address,
-    longTokenSwapPath: [],
-    shortTokenSwapPath: [],
+    srcChainId: 0,
+    dataList: [],
   };
   console.log("exchange router %s", exchangeRouter.address);
   console.log("deposit vault %s", depositVault.address);

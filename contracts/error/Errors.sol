@@ -430,9 +430,17 @@ library Errors {
     error EmptyMarketPrice(address market);
 
     // Multichain errors
-    error EmptyMultichainDepositAmount();
-    error EmptyMultichainWithdrawalAmount();
-    error InsufficientMultichainBalance();
+    error InvalidTransferRequestsLength();
+    error EmptyMultichainTransferInAmount(address account, address token);
+    error EmptyMultichainTransferOutAmount(address account, address token);
+    error InsufficientMultichainBalance(address account, address token, uint256 balance, uint256 amount);
+    error InvalidDestinationChainId(uint256 desChainId);
+    error InvalidMultichainProvider(address provider);
+
+    enum SignatureType {
+        Call,
+        SubaccountApproval
+    }
 
     // Gelato relay errors
     error InvalidSignature(string signatureType);

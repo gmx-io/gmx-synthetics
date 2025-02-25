@@ -177,7 +177,7 @@ library SwapUtils {
         address[] memory swapPath,
         address inputToken,
         address expectedOutputToken
-    ) internal view {
+    ) external view {
         address outputToken = getOutputToken(dataStore, swapPath, inputToken);
         if (outputToken != expectedOutputToken) {
             revert Errors.InvalidSwapOutputToken(outputToken, expectedOutputToken);
@@ -188,7 +188,7 @@ library SwapUtils {
         DataStore dataStore,
         address[] memory swapPath,
         address inputToken
-    ) internal view returns (address) {
+    ) public view returns (address) {
         address outputToken = inputToken;
         Market.Props[] memory markets = MarketUtils.getSwapPathMarkets(dataStore, swapPath);
         uint256 marketCount = markets.length;

@@ -17,7 +17,8 @@ library LayerZeroProviderEventUtils {
 
     function emitComposedMessageReceived(
         EventEmitter eventEmitter,
-        address virtualAccount,
+        uint256 srcChainId,
+        address account,
         address from,
         bytes32 guid,
         bytes calldata message,
@@ -27,9 +28,12 @@ library LayerZeroProviderEventUtils {
         EventUtils.EventLogData memory eventData;
 
         eventData.addressItems.initItems(3);
-        eventData.addressItems.setItem(0, "virtualAccount", virtualAccount);
+        eventData.addressItems.setItem(0, "account", account);
         eventData.addressItems.setItem(1, "from", from);
         eventData.addressItems.setItem(2, "executor", executor);
+
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "srcChainId", srcChainId);
         
         eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "guid", guid);
@@ -38,31 +42,6 @@ library LayerZeroProviderEventUtils {
         eventData.bytesItems.setItem(0, "message", message);
         eventData.bytesItems.setItem(1, "extraData", extraData);
 
-        eventEmitter.emitEventLog1("MessageComposedReceived", Cast.toBytes32(virtualAccount), eventData);
-    }
-
-    function emitWithdrawalReceipt(
-        EventEmitter eventEmitter,
-        address virtualAccount,
-        bytes32 guid,
-        uint64 nonce,
-        uint256 nativeFee,
-        uint256 lzTokenFee,
-        uint256 amountSentLD,
-        uint256 amountReceivedLD
-    ) internal {
-        EventUtils.EventLogData memory eventData;
-        
-        eventData.uintItems.initItems(5);
-        eventData.uintItems.setItem(0, "nonce", uint256(nonce));
-        eventData.uintItems.setItem(1, "nativeFee", nativeFee);
-        eventData.uintItems.setItem(2, "lzTokenFee", lzTokenFee);
-        eventData.uintItems.setItem(3, "amountSentLD", amountSentLD);
-        eventData.uintItems.setItem(4, "amountReceivedLD", amountReceivedLD);
-
-        eventData.bytes32Items.initItems(1);
-        eventData.bytes32Items.setItem(0, "guid", guid);
-        
-        eventEmitter.emitEventLog1("WithdrawalReceipt", Cast.toBytes32(virtualAccount), eventData);
+        eventEmitter.emitEventLog1("MessageComposedReceived", Cast.toBytes32(account), eventData);
     }
 }

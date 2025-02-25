@@ -12,6 +12,7 @@ const func = createDeployFunction({
     "SwapOrderUtils",
     "GasUtils",
     "PositionUtils",
+    "CallbackUtils",
   ],
 });
 
