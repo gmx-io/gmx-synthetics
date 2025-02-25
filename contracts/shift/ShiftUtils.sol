@@ -40,6 +40,7 @@ library ShiftUtils {
         uint256 minMarketTokens;
         uint256 executionFee;
         uint256 callbackGasLimit;
+        bytes32[] dataList;
     }
 
     struct CreateShiftCache {
@@ -51,6 +52,7 @@ library ShiftUtils {
     struct ExecuteShiftParams {
         DataStore dataStore;
         EventEmitter eventEmitter;
+        MultichainVault multichainVault;
         ShiftVault shiftVault;
         Oracle oracle;
         bytes32 key;
@@ -76,6 +78,7 @@ library ShiftUtils {
         EventEmitter eventEmitter,
         ShiftVault shiftVault,
         address account,
+        uint256 srcChainId,
         CreateShiftParams memory params
     ) external returns (bytes32) {
         AccountUtils.validateAccount(account);
@@ -88,7 +91,7 @@ library ShiftUtils {
         uint256 wntAmount = shiftVault.recordTransferIn(wnt);
 
         if (wntAmount < params.executionFee) {
-            revert Errors.InsufficientWntAmount(wntAmount, params.executionFee);
+            revert Errors.InsufficientWntAmountForExecutionFee(wntAmount, params.executionFee);
         }
 
         AccountUtils.validateReceiver(params.receiver);
@@ -126,8 +129,10 @@ library ShiftUtils {
                 params.minMarketTokens,
                 Chain.currentTimestamp(),
                 params.executionFee,
-                params.callbackGasLimit
-            )
+                params.callbackGasLimit,
+                srcChainId
+            ),
+            params.dataList
         );
 
         CallbackUtils.validateCallbackGasLimit(dataStore, shift.callbackGasLimit());
@@ -196,11 +201,13 @@ library ShiftUtils {
                 0, // minShortTokenAmount
                 shift.updatedAtTime(),
                 0, // executionFee
-                0 // callbackGasLimit
+                0, // callbackGasLimit
+                shift.srcChainId()
             ),
             Withdrawal.Flags(
                 false
-            )
+            ),
+            shift.dataList()
         );
 
         cache.withdrawalKey = NonceUtils.getNextKey(params.dataStore);
@@ -218,6 +225,7 @@ library ShiftUtils {
         cache.executeWithdrawalParams = ExecuteWithdrawalUtils.ExecuteWithdrawalParams(
             params.dataStore,
             params.eventEmitter,
+            params.multichainVault,
             WithdrawalVault(payable(params.shiftVault)),
             params.oracle,
             cache.withdrawalKey,
@@ -256,11 +264,13 @@ library ShiftUtils {
                 shift.minMarketTokens(),
                 shift.updatedAtTime(),
                 0, // executionFee
-                0 // callbackGasLimit
+                0, // callbackGasLimit
+                shift.srcChainId()
             ),
             Deposit.Flags(
                 false // shouldUnwrapNativeToken
-            )
+            ),
+            shift.dataList()
         );
 
         cache.depositKey = NonceUtils.getNextKey(params.dataStore);
@@ -276,13 +286,15 @@ library ShiftUtils {
         cache.executeDepositParams = ExecuteDepositUtils.ExecuteDepositParams(
             params.dataStore,
             params.eventEmitter,
+            params.multichainVault,
             DepositVault(payable(params.shiftVault)),
             params.oracle,
             cache.depositKey,
             params.keeper,
             params.startingGas,
             ISwapPricingUtils.SwapPricingType.Shift,
-            false // includeVirtualInventoryImpact
+            false, // includeVirtualInventoryImpact
+            shift.srcChainId()
         );
 
         cache.receivedMarketTokens = ExecuteDepositUtils.executeDeposit(
@@ -312,8 +324,14 @@ library ShiftUtils {
             params.startingGas,
             GasUtils.estimateShiftOraclePriceCount(),
             params.keeper,
-            shift.receiver()
+            shift.srcChainId() == 0 ? shift.receiver() : address(params.multichainVault)
         );
+
+        // for multichain action, receiver is the multichainVault; increase user's multichain wnt balance for the fee refund
+        if (shift.srcChainId() != 0) {
+            address wnt = params.dataStore.getAddress(Keys.WNT);
+            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, wnt, shift.receiver(), 0); // srcChainId is the current block.chainId
+        }
 
         return cache.receivedMarketTokens;
     }
