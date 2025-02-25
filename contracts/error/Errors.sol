@@ -157,6 +157,7 @@ library Errors {
     error InsufficientExecutionGas(uint256 startingGas, uint256 estimatedGasLimit, uint256 minAdditionalGasForExecution);
     error InsufficientHandleExecutionErrorGas(uint256 gas, uint256 minHandleExecutionErrorGas);
     error InsufficientGasForCancellation(uint256 gas, uint256 minHandleExecutionErrorGas);
+    error InsufficientGasForAutoCancellation(uint256 gas, uint256 minHandleExecutionErrorGas);
     error InvalidExecutionFee(uint256 executionFee, uint256 minExecutionFee, uint256 maxExecutionFee);
 
     // MarketFactory errors
@@ -256,6 +257,7 @@ library Errors {
     // BaseOrderUtils errors
     error EmptyOrder();
     error UnsupportedOrderType(uint256 orderType);
+    error UnsupportedOrderTypeForAutoCancellation(uint256 orderType);
     error InvalidOrderPrices(
         uint256 primaryPriceMin,
         uint256 primaryPriceMax,
@@ -426,6 +428,19 @@ library Errors {
 
     // Reader errors
     error EmptyMarketPrice(address market);
+
+    // Multichain errors
+    error InvalidTransferRequestsLength();
+    error EmptyMultichainTransferInAmount();
+    error EmptyMultichainTransferOutAmount();
+    error InsufficientMultichainBalance(address token, uint256 balance, uint256 amount);
+    error InvalidDestinationChainId(uint256 desChainId);
+    error InvalidMultichainProvider(address provider);
+
+    enum SignatureType {
+        Call,
+        SubaccountApproval
+    }
 
     // Gelato relay errors
     error InvalidSignature(string signatureType);

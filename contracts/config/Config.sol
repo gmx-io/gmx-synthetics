@@ -13,6 +13,8 @@ import "../utils/Precision.sol";
 import "../utils/Cast.sol";
 import "../market/MarketUtils.sol";
 
+import "./ConfigUtils.sol";
+
 // @title Config
 contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     using EventUtils for EventUtils.AddressItems;
@@ -90,27 +92,14 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         uint256 priceFeedHeartbeatDuration,
         uint256 stablePrice
     ) external onlyConfigKeeper nonReentrant {
-        if (dataStore.getAddress(Keys.priceFeedKey(token)) != address(0)) {
-            revert Errors.PriceFeedAlreadyExistsForToken(token);
-        }
-
-        dataStore.setAddress(Keys.priceFeedKey(token), priceFeed);
-        dataStore.setUint(Keys.priceFeedMultiplierKey(token), priceFeedMultiplier);
-        dataStore.setUint(Keys.priceFeedHeartbeatDurationKey(token), priceFeedHeartbeatDuration);
-        dataStore.setUint(Keys.stablePriceKey(token), stablePrice);
-
-        EventUtils.EventLogData memory eventData;
-        eventData.addressItems.initItems(2);
-        eventData.addressItems.setItem(0, "token", token);
-        eventData.addressItems.setItem(1, "priceFeed", priceFeed);
-        eventData.uintItems.initItems(3);
-        eventData.uintItems.setItem(0, "priceFeedMultiplier", priceFeedMultiplier);
-        eventData.uintItems.setItem(1, "priceFeedHeartbeatDuration", priceFeedHeartbeatDuration);
-        eventData.uintItems.setItem(2, "stablePrice", stablePrice);
-        eventEmitter.emitEventLog1(
-            "ConfigSetPriceFeed",
-            Cast.toBytes32(token),
-            eventData
+        ConfigUtils.setPriceFeed(
+            dataStore,
+            eventEmitter,
+            token,
+            priceFeed,
+            priceFeedMultiplier,
+            priceFeedHeartbeatDuration,
+            stablePrice
         );
     }
 
@@ -120,28 +109,17 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         uint256 dataStreamMultiplier,
         uint256 dataStreamSpreadReductionFactor
     ) external onlyConfigKeeper nonReentrant {
-        if (dataStore.getBytes32(Keys.dataStreamIdKey(token)) != bytes32(0)) {
-            revert Errors.DataStreamIdAlreadyExistsForToken(token);
-        }
 
-        _validateRange(Keys.DATA_STREAM_SPREAD_REDUCTION_FACTOR, abi.encode(token), dataStreamSpreadReductionFactor);
-
-        dataStore.setBytes32(Keys.dataStreamIdKey(token), feedId);
-        dataStore.setUint(Keys.dataStreamMultiplierKey(token), dataStreamMultiplier);
-        dataStore.setUint(Keys.dataStreamSpreadReductionFactorKey(token), dataStreamSpreadReductionFactor);
-
-        EventUtils.EventLogData memory eventData;
-        eventData.addressItems.initItems(1);
-        eventData.addressItems.setItem(0, "token", token);
-        eventData.bytes32Items.initItems(1);
-        eventData.bytes32Items.setItem(0, "feedId", feedId);
-        eventData.uintItems.initItems(2);
-        eventData.uintItems.setItem(0, "dataStreamMultiplier", dataStreamMultiplier);
-        eventData.uintItems.setItem(1, "dataStreamSpreadReductionFactor", dataStreamSpreadReductionFactor);
-        eventEmitter.emitEventLog1(
-            "ConfigSetDataStream",
-            Cast.toBytes32(token),
-            eventData
+        ConfigUtils.setDataStream(
+            dataStore,
+            eventEmitter,
+            token,
+            feedId,
+            dataStreamMultiplier,
+            dataStreamSpreadReductionFactor,
+            MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND,
+            MAX_ALLOWED_FUNDING_INCREASE_FACTOR_PER_SECOND,
+            MAX_ALLOWED_FUNDING_DECREASE_FACTOR_PER_SECOND
         );
     }
 
@@ -151,26 +129,13 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         uint256 timeKey,
         uint256 factor
     ) external onlyConfigKeeper nonReentrant {
-        if (factor > Precision.FLOAT_PRECISION) { revert Errors.InvalidClaimableFactor(factor); }
-
-        bytes32 key = Keys.claimableCollateralFactorKey(market, token, timeKey);
-        dataStore.setUint(key, factor);
-
-        EventUtils.EventLogData memory eventData;
-
-        eventData.addressItems.initItems(2);
-        eventData.addressItems.setItem(0, "market", market);
-        eventData.addressItems.setItem(1, "token", token);
-
-        eventData.uintItems.initItems(2);
-        eventData.uintItems.setItem(0, "timeKey", timeKey);
-        eventData.uintItems.setItem(1, "factor", factor);
-
-        eventEmitter.emitEventLog2(
-            "SetClaimableCollateralFactorForTime",
-            Cast.toBytes32(market),
-            Cast.toBytes32(token),
-            eventData
+        ConfigUtils.setClaimableCollateralFactorForTime(
+            dataStore,
+            eventEmitter,
+            market,
+            token,
+            timeKey,
+            factor
         );
     }
 
@@ -181,27 +146,14 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         address account,
         uint256 factor
     ) external onlyConfigKeeper nonReentrant {
-        if (factor > Precision.FLOAT_PRECISION) { revert Errors.InvalidClaimableFactor(factor); }
-
-        bytes32 key = Keys.claimableCollateralFactorKey(market, token, timeKey, account);
-        dataStore.setUint(key, factor);
-
-        EventUtils.EventLogData memory eventData;
-
-        eventData.addressItems.initItems(3);
-        eventData.addressItems.setItem(0, "market", market);
-        eventData.addressItems.setItem(1, "token", token);
-        eventData.addressItems.setItem(2, "account", account);
-
-        eventData.uintItems.initItems(2);
-        eventData.uintItems.setItem(0, "timeKey", timeKey);
-        eventData.uintItems.setItem(1, "factor", factor);
-
-        eventEmitter.emitEventLog2(
-            "SetClaimableCollateralFactorForAccount",
-            Cast.toBytes32(market),
-            Cast.toBytes32(token),
-            eventData
+        ConfigUtils.setClaimableCollateralFactorForAccount(
+            dataStore,
+            eventEmitter,
+            market,
+            token,
+            timeKey,
+            account,
+            factor
         );
     }
 
@@ -228,36 +180,13 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         uint256 minPositionImpactPoolAmount,
         uint256 positionImpactPoolDistributionRate
     ) external onlyConfigKeeper nonReentrant {
-        MarketUtils.distributePositionImpactPool(dataStore, eventEmitter, market);
-
-        // Ensure the full positionImpactPoolAmount cannot be distributed in less then the minimum required time
-        uint256 positionImpactPoolAmount = MarketUtils.getPositionImpactPoolAmount(dataStore, market);
-        // positionImpactPoolDistributionRate has FLOAT_PRECISION, distributionAmount has WEI_PRECISION
-        uint256 distributionAmount = Precision.applyFactor(MIN_POSITION_IMPACT_POOL_DISTRIBUTION_TIME, positionImpactPoolDistributionRate);
-        if (positionImpactPoolAmount > 0) {
-            if (distributionAmount >= positionImpactPoolAmount) {
-                revert Errors.InvalidPositionImpactPoolDistributionRate(distributionAmount, positionImpactPoolAmount);
-            }
-        }
-
-        dataStore.setUint(Keys.minPositionImpactPoolAmountKey(market), minPositionImpactPoolAmount);
-        dataStore.setUint(Keys.positionImpactPoolDistributionRateKey(market), positionImpactPoolDistributionRate);
-
-        dataStore.setUint(Keys.positionImpactPoolDistributedAtKey(market), Chain.currentTimestamp());
-
-        EventUtils.EventLogData memory eventData;
-
-        eventData.addressItems.initItems(1);
-        eventData.addressItems.setItem(0, "market", market);
-
-        eventData.uintItems.initItems(2);
-        eventData.uintItems.setItem(0, "minPositionImpactPoolAmount", minPositionImpactPoolAmount);
-        eventData.uintItems.setItem(1, "positionImpactPoolDistributionRate", positionImpactPoolDistributionRate);
-
-        eventEmitter.emitEventLog1(
-            "SetPositionImpactPoolDistributionRate",
-            Cast.toBytes32(market),
-            eventData
+        ConfigUtils.setPositionImpactDistributionRate(
+            dataStore,
+            eventEmitter,
+            market,
+            minPositionImpactPoolAmount,
+            positionImpactPoolDistributionRate,
+            MIN_POSITION_IMPACT_POOL_DISTRIBUTION_TIME
         );
     }
 
@@ -355,7 +284,15 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
         bytes32 fullKey = Keys.getFullKey(baseKey, data);
 
-        _validateRange(baseKey, data, value);
+        ConfigUtils.validateRange(
+            dataStore,
+            baseKey,
+            data,
+            value,
+            MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND,
+            MAX_ALLOWED_FUNDING_INCREASE_FACTOR_PER_SECOND,
+            MAX_ALLOWED_FUNDING_DECREASE_FACTOR_PER_SECOND
+        );
 
         dataStore.setUint(fullKey, value);
 
@@ -585,6 +522,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.IS_MULTICHAIN_PROVIDER_ENABLED] = true;
 
         allowedBaseKeys[Keys.MAX_DATA_LENGTH] = true;
+
+        allowedBaseKeys[Keys.CLAIMABLE_COLLATERAL_DELAY] = true;
     }
 
     function _initAllowedLimitedBaseKeys() internal {
