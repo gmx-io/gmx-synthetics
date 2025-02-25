@@ -74,6 +74,7 @@ describe("SubaccountGelatoRelayRouter", () => {
       isLong: true,
       shouldUnwrapNativeToken: true,
       referralCode,
+      dataList: [],
     };
 
     enableSubaccount = async () => {
@@ -118,6 +119,7 @@ describe("SubaccountGelatoRelayRouter", () => {
       subaccount: user0.address,
       params: defaultCreateOrderParams,
       deadline: 9999999999,
+      desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
       relayRouter: subaccountGelatoRelayRouter,
       chainId,
       relayFeeToken: wnt.address,
@@ -583,7 +585,7 @@ describe("SubaccountGelatoRelayRouter", () => {
 
       // allowance was set
       expect(await wnt.allowance(user1.address, router.address)).to.eq(
-        expandDecimals(1, 18).sub(collateralDeltaAmount).sub(gelatoRelayFee).sub(expandDecimals(1, 15))
+        expandDecimals(1, 18).sub(collateralDeltaAmount).sub(gelatoRelayFee).sub(expandDecimals(1, 15)) // TODO: fails --> collateralDeltaAmount is 0 instead of 0.1
       );
       // relay fee was sent
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, gelatoRelayFee);
@@ -601,7 +603,7 @@ describe("SubaccountGelatoRelayRouter", () => {
       expect(order.numbers.orderType).eq(OrderType.LimitIncrease);
       expect(order.numbers.decreasePositionSwapType).eq(DecreasePositionSwapType.SwapCollateralTokenToPnlToken);
       expect(order.numbers.sizeDeltaUsd).eq(decimalToFloat(1000));
-      expect(order.numbers.initialCollateralDeltaAmount).eq(collateralDeltaAmount);
+      expect(order.numbers.initialCollateralDeltaAmount).eq(collateralDeltaAmount); // TODO: fails --> collateralDeltaAmount is 0 instead of 0.1
       expect(order.numbers.triggerPrice).eq(decimalToFloat(4800));
       expect(order.numbers.acceptablePrice).eq(decimalToFloat(4900));
       expect(order.numbers.executionFee).eq(expandDecimals(1, 15));
@@ -716,6 +718,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           autoCancel: false,
         },
         deadline: 9999999999,
+        desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
         relayRouter: subaccountGelatoRelayRouter,
         chainId,
         relayFeeToken: wnt.address,
@@ -921,6 +924,7 @@ describe("SubaccountGelatoRelayRouter", () => {
         subaccount: user0.address,
         key: ethers.constants.HashZero,
         deadline: 9999999999,
+        desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
         relayRouter: subaccountGelatoRelayRouter,
         chainId,
         relayFeeToken: wnt.address,
@@ -1022,6 +1026,7 @@ describe("SubaccountGelatoRelayRouter", () => {
         relayFeeToken: wnt.address,
         relayFeeAmount: expandDecimals(1, 15),
         deadline: 9999999999,
+        desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
       };
     });
 

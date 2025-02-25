@@ -54,8 +54,8 @@ library GasUtils {
         return dataStore.getUint(Keys.MIN_ADDITIONAL_GAS_FOR_EXECUTION);
     }
 
-    function getExecutionGas(DataStore dataStore, uint256 startingGas) internal view returns (uint256) {
-        uint256 minHandleExecutionErrorGasToForward = GasUtils.getMinHandleExecutionErrorGasToForward(dataStore);
+    function getExecutionGas(DataStore dataStore, uint256 startingGas) external view returns (uint256) {
+        uint256 minHandleExecutionErrorGasToForward = getMinHandleExecutionErrorGasToForward(dataStore);
         if (startingGas < minHandleExecutionErrorGasToForward) {
             revert Errors.InsufficientExecutionGasForErrorHandling(startingGas, minHandleExecutionErrorGasToForward);
         }
@@ -63,7 +63,7 @@ library GasUtils {
         return startingGas - minHandleExecutionErrorGasToForward;
     }
 
-    function validateExecutionGas(DataStore dataStore, uint256 startingGas, uint256 estimatedGasLimit) internal view {
+    function validateExecutionGas(DataStore dataStore, uint256 startingGas, uint256 estimatedGasLimit) external view {
         uint256 minAdditionalGasForExecution = getMinAdditionalGasForExecution(dataStore);
         if (startingGas < estimatedGasLimit + minAdditionalGasForExecution) {
             revert Errors.InsufficientExecutionGas(startingGas, estimatedGasLimit, minAdditionalGasForExecution);
@@ -81,7 +81,7 @@ library GasUtils {
     //
     // a malicious user could cause the estimateGas call of a keeper to fail, in which case the keeper could
     // still attempt to execute the transaction with a reasonable gas limit
-    function validateExecutionErrorGas(DataStore dataStore, bytes memory reasonBytes) internal view {
+    function validateExecutionErrorGas(DataStore dataStore, bytes memory reasonBytes) external view {
         // skip the validation if the execution did not fail due to an out of gas error
         // also skip the validation if this is not invoked in an estimateGas call (tx.origin != address(0))
         if (reasonBytes.length != 0 || tx.origin != address(0)) {
@@ -204,7 +204,7 @@ library GasUtils {
         uint256 oraclePriceCount,
         bool shouldCapMaxExecutionFee
     ) internal view returns (uint256, uint256) {
-        (uint256 gasLimit, uint256 minExecutionFee) = validateExecutionFee(dataStore, estimatedGasLimit, executionFee, oraclePriceCount);
+        (uint256 gasLimit, uint256 minExecutionFee) = GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, executionFee, oraclePriceCount);
 
         if (!shouldCapMaxExecutionFee) {
             return (executionFee, 0);
@@ -301,18 +301,18 @@ library GasUtils {
 
     // @dev get estimated number of oracle prices for withdrawal
     // @param swapsCount number of swaps in the withdrawal
-    function estimateWithdrawalOraclePriceCount(uint256 swapsCount) internal pure returns (uint256) {
+    function estimateWithdrawalOraclePriceCount(uint256 swapsCount) external pure returns (uint256) {
         return 3 + swapsCount;
     }
 
     // @dev get estimated number of oracle prices for order
     // @param swapsCount number of swaps in the order
-    function estimateOrderOraclePriceCount(uint256 swapsCount) internal pure returns (uint256) {
+    function estimateOrderOraclePriceCount(uint256 swapsCount) external pure returns (uint256) {
         return 3 + swapsCount;
     }
 
     // @dev get estimated number of oracle prices for shift
-    function estimateShiftOraclePriceCount() internal pure returns (uint256) {
+    function estimateShiftOraclePriceCount() external pure returns (uint256) {
         // for single asset markets only 3 prices will be required
         // and keeper will slightly overpay
         // it should not be an issue because execution fee goes back to keeper
@@ -322,7 +322,7 @@ library GasUtils {
     function estimateGlvDepositOraclePriceCount(
         uint256 marketCount,
         uint256 swapsCount
-    ) internal pure returns (uint256) {
+    ) external pure returns (uint256) {
         // for single asset markets oracle price count will be overestimated by 1
         // it should not be an issue for GLV with multiple markets
         // because relative difference would be insignificant
@@ -359,7 +359,7 @@ library GasUtils {
     function estimateExecuteWithdrawalGasLimit(
         DataStore dataStore,
         Withdrawal.Props memory withdrawal
-    ) internal view returns (uint256) {
+    ) external view returns (uint256) {
         uint256 gasPerSwap = dataStore.getUint(Keys.singleSwapGasLimitKey());
         uint256 swapCount = withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length;
         uint256 gasForSwaps = swapCount * gasPerSwap;
@@ -373,7 +373,7 @@ library GasUtils {
     function estimateExecuteShiftGasLimit(
         DataStore dataStore,
         Shift.Props memory shift
-    ) internal view returns (uint256) {
+    ) external view returns (uint256) {
         return dataStore.getUint(Keys.shiftGasLimitKey()) + shift.callbackGasLimit();
     }
 
@@ -383,7 +383,7 @@ library GasUtils {
     function estimateExecuteOrderGasLimit(
         DataStore dataStore,
         Order.Props memory order
-    ) internal view returns (uint256) {
+    ) external view returns (uint256) {
         if (BaseOrderUtils.isIncreaseOrder(order.orderType())) {
             return estimateExecuteIncreaseOrderGasLimit(dataStore, order);
         }
@@ -452,7 +452,7 @@ library GasUtils {
         DataStore dataStore,
         GlvDeposit.Props memory glvDeposit,
         uint256 marketCount
-    ) internal view returns (uint256) {
+    ) external view returns (uint256) {
         // glv deposit execution gas consumption depends on the amount of markets
         uint256 gasPerGlvPerMarket = dataStore.getUint(Keys.glvPerMarketGasLimitKey());
         uint256 gasForGlvMarkets = gasPerGlvPerMarket * marketCount;
@@ -494,7 +494,7 @@ library GasUtils {
         return gasLimit + dataStore.getUint(Keys.withdrawalGasLimitKey()) + gasForSwaps;
     }
 
-    function estimateExecuteGlvShiftGasLimit(DataStore dataStore) internal view returns (uint256) {
+    function estimateExecuteGlvShiftGasLimit(DataStore dataStore) external view returns (uint256) {
         return dataStore.getUint(Keys.glvShiftGasLimitKey());
     }
 

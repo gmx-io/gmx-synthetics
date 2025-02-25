@@ -138,6 +138,8 @@ describe("SubaccountRouter", () => {
       .setMaxAllowedSubaccountActionCount(subaccount.address, keys.SUBACCOUNT_ORDER_ACTION, 0);
 
     const referralCode = hashString("referralCode");
+    await dataStore.setUint(keys.MAX_DATA_LENGTH, 256);
+    const dataList = [ethers.utils.formatBytes32String("customData")];
     const params = {
       addresses: {
         receiver: subaccount.address,
@@ -163,6 +165,7 @@ describe("SubaccountRouter", () => {
       isLong: true,
       shouldUnwrapNativeToken: true,
       referralCode,
+      dataList,
     };
 
     await expect(subaccountRouter.connect(subaccount).createOrder(user0.address, { ...params }))
@@ -261,10 +264,11 @@ describe("SubaccountRouter", () => {
     expect(order.addresses.account).eq(user0.address);
     expect(order.addresses.receiver).eq(user0.address);
     expect(order.numbers.initialCollateralDeltaAmount).eq(expandDecimals(100, 6));
+    expect(order._dataList).deep.eq(dataList);
 
     // 0.1 WETH in total
-    expect(order.numbers.executionFee).eq("2411100480000000");
-    await expectBalance(wnt.address, user2.address, "97588899520000000");
+    expect(order.numbers.executionFee).eq("2111032140000000");
+    await expectBalance(wnt.address, user2.address, "97888967860000000");
 
     expect(
       await dataStore.getUint(
@@ -345,6 +349,7 @@ describe("SubaccountRouter", () => {
       isLong: true,
       shouldUnwrapNativeToken: true,
       referralCode,
+      dataList: [],
     };
 
     await subaccountRouter
@@ -459,6 +464,8 @@ describe("SubaccountRouter", () => {
     await usdc.connect(user0).approve(router.address, expandDecimals(200, 6));
 
     const referralCode = hashString("referralCode");
+    await dataStore.setUint(keys.MAX_DATA_LENGTH, 256);
+    const dataList = [ethers.utils.formatBytes32String("customData")];
     const params = {
       addresses: {
         receiver: user0.address,
@@ -484,6 +491,7 @@ describe("SubaccountRouter", () => {
       isLong: true,
       shouldUnwrapNativeToken: true,
       referralCode,
+      dataList,
     };
 
     await subaccountRouter
@@ -513,6 +521,8 @@ describe("SubaccountRouter", () => {
       expect(order.numbers.triggerPrice).eq(expandDecimals(4800, 12));
       expect(order.numbers.minOutputAmount).eq(700);
       expect(order.numbers.validFromTime).eq(800);
+      expect(order.numbers.srcChainId).eq(0);
+      expect(order._dataList).deep.eq(dataList);
     });
 
     const initialWntBalance0 = await wnt.balanceOf(user0.address);
@@ -600,6 +610,8 @@ describe("SubaccountRouter", () => {
     await usdc.connect(user0).approve(router.address, expandDecimals(200, 6));
 
     const referralCode = hashString("referralCode");
+    await dataStore.setUint(keys.MAX_DATA_LENGTH, 256);
+    const dataList = [ethers.utils.formatBytes32String("customData")];
     const params = {
       addresses: {
         receiver: user0.address,
@@ -625,6 +637,7 @@ describe("SubaccountRouter", () => {
       isLong: true,
       shouldUnwrapNativeToken: true,
       referralCode,
+      dataList,
     };
 
     await subaccountRouter
@@ -654,6 +667,8 @@ describe("SubaccountRouter", () => {
       expect(order.numbers.triggerPrice).eq(expandDecimals(4800, 12));
       expect(order.numbers.minOutputAmount).eq(700);
       expect(order.numbers.validFromTime).eq(800);
+      expect(order.numbers.srcChainId).eq(0);
+      expect(order._dataList).deep.eq(dataList);
     });
 
     expect(await usdc.balanceOf(user0.address)).eq(expandDecimals(1, 6));
@@ -662,7 +677,7 @@ describe("SubaccountRouter", () => {
 
     await subaccountRouter.connect(subaccount).cancelOrder(orderKey);
 
-    expect(initialWntBalance0.sub(await wnt.balanceOf(user0.address))).closeTo("1579799104730528", "10000000000000"); // 0.001579799104730528 ETH
+    expect(initialWntBalance0.sub(await wnt.balanceOf(user0.address))).closeTo("1635869004900372", "10000000000000"); // 0.001635869004900372 ETH
 
     expect(await usdc.balanceOf(user0.address)).eq(expandDecimals(101, 6));
 

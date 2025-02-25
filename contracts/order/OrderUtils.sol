@@ -41,6 +41,7 @@ library OrderUtils {
         address keeper;
         uint256 startingGas;
         bool isExternalCall;
+        bool isAutoCancel;
         string reason;
         bytes reasonBytes;
     }
@@ -67,6 +68,7 @@ library OrderUtils {
         OrderVault orderVault,
         IReferralStorage referralStorage,
         address account,
+        uint256 srcChainId,
         IBaseOrderUtils.CreateOrderParams memory params,
         bool shouldCapMaxExecutionFee
     ) external returns (bytes32) {
@@ -121,6 +123,10 @@ library OrderUtils {
 
         if (BaseOrderUtils.isPositionOrder(params.orderType)) {
             MarketUtils.validatePositionMarket(dataStore, params.addresses.market);
+        } else {
+            if (params.addresses.market != address(0)) {
+                revert Errors.UnexpectedMarket();
+            }
         }
 
         if (BaseOrderUtils.isMarketOrder(params.orderType) && params.numbers.validFromTime != 0) {
@@ -149,9 +155,11 @@ library OrderUtils {
         order.setCallbackGasLimit(params.numbers.callbackGasLimit);
         order.setMinOutputAmount(params.numbers.minOutputAmount);
         order.setValidFromTime(params.numbers.validFromTime);
+        order.setSrcChainId(srcChainId);
         order.setIsLong(params.isLong);
         order.setShouldUnwrapNativeToken(params.shouldUnwrapNativeToken);
         order.setAutoCancel(params.autoCancel);
+        order.setDataList(params.dataList);
 
         AccountUtils.validateReceiver(order.receiver());
         if (order.cancellationReceiver() == address(orderVault)) {
@@ -166,9 +174,9 @@ library OrderUtils {
         uint256 executionFee;
         (executionFee, cache.executionFeeDiff) = GasUtils.validateAndCapExecutionFee(
             dataStore,
-            cache.estimatedGasLimit,
+            GasUtils.estimateExecuteOrderGasLimit(dataStore, order), // estimatedGasLimit
             params.numbers.executionFee,
-            cache.oraclePriceCount,
+            GasUtils.estimateOrderOraclePriceCount(params.addresses.swapPath.length), // oraclePriceCount
             shouldCapMaxExecutionFee
         );
         order.setExecutionFee(executionFee);
@@ -202,7 +210,11 @@ library OrderUtils {
         uint256 minHandleExecutionErrorGas = GasUtils.getMinHandleExecutionErrorGas(params.dataStore);
 
         if (gas < minHandleExecutionErrorGas) {
-            revert Errors.InsufficientGasForCancellation(gas, minHandleExecutionErrorGas);
+            if (params.isAutoCancel) {
+                revert Errors.InsufficientGasForAutoCancellation(gas, minHandleExecutionErrorGas);
+            } else {
+                revert Errors.InsufficientGasForCancellation(gas, minHandleExecutionErrorGas);
+            }
         }
 
         Order.Props memory order = OrderStoreUtils.get(params.dataStore, params.key);
@@ -211,7 +223,11 @@ library OrderUtils {
         // this could happen if the order was created in new contracts that support new order types
         // but the order is being cancelled in old contracts
         if (!BaseOrderUtils.isSupportedOrder(order.orderType())) {
-            revert Errors.UnsupportedOrderType(uint256(order.orderType()));
+            if (params.isAutoCancel) {
+                revert Errors.UnsupportedOrderTypeForAutoCancellation(uint256(order.orderType()));
+            } else {
+                revert Errors.UnsupportedOrderType(uint256(order.orderType()));
+            }
         }
 
         OrderStoreUtils.remove(params.dataStore, params.key, order.account());
@@ -335,6 +351,7 @@ library OrderUtils {
                     keeper, // keeper
                     gasleft(), // startingGas
                     false, // isExternalCall
+                    true, // isAutoCancel
                     "AUTO_CANCEL", // reason
                     "" // reasonBytes
                 )

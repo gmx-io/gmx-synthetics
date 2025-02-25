@@ -59,6 +59,7 @@ export async function deployFixture() {
   const oracleSalt = hashData(["uint256", "string"], [chainId, "xget-oracle-v1"]);
 
   const config = await hre.ethers.getContract("Config");
+  const configUtils = await hre.ethers.getContract("ConfigUtils");
   const configSyncer = await hre.ethers.getContract("ConfigSyncer");
   const mockRiskOracle = await hre.ethers.getContract("MockRiskOracle");
   const timelock = await hre.ethers.getContract("Timelock");
@@ -77,7 +78,9 @@ export async function deployFixture() {
   const glvFactory = await hre.ethers.getContract("GlvFactory");
   const glvHandler = await hre.ethers.getContract("GlvHandler");
   const glvRouter = await hre.ethers.getContract("GlvRouter");
+  const callbackUtils = await hre.ethers.getContract("CallbackUtils");
   const glvDepositStoreUtils = await hre.ethers.getContract("GlvDepositStoreUtils");
+  const GlvDepositCalc = await hre.ethers.getContract("GlvDepositCalc");
   const glvWithdrawalStoreUtils = await hre.ethers.getContract("GlvWithdrawalStoreUtils");
   const glvShiftStoreUtils = await hre.ethers.getContract("GlvShiftStoreUtils");
   const glvStoreUtils = await hre.ethers.getContract("GlvStoreUtils");
@@ -96,6 +99,8 @@ export async function deployFixture() {
   const gelatoRelayRouter = await hre.ethers.getContract("GelatoRelayRouter");
   const subaccountGelatoRelayRouter = await hre.ethers.getContract("SubaccountGelatoRelayRouter");
   const subaccountRouter = await hre.ethers.getContract("SubaccountRouter");
+  const multichainGmRouter = await hre.ethers.getContract("MultichainGmRouter");
+  const relayUtils = await hre.ethers.getContract("RelayUtils");
   const oracle = await hre.ethers.getContract("Oracle");
   const gmOracleProvider = await hre.ethers.getContract("GmOracleProvider");
   const chainlinkPriceFeedProvider = await hre.ethers.getContract("ChainlinkPriceFeedProvider");
@@ -115,6 +120,10 @@ export async function deployFixture() {
   const referralStorage = await hre.ethers.getContract("ReferralStorage");
   const feeHandler = await hre.ethers.getContract("FeeHandler");
   const mockVaultV1 = await hre.ethers.getContract("MockVaultV1");
+  const multichainVault = await hre.ethers.getContract("MultichainVault");
+  const multichainUtils = await hre.ethers.getContract("MultichainUtils");
+  const layerZeroProvider = await hre.ethers.getContract("LayerZeroProvider");
+  const mockStargatePool = await hre.ethers.getContract("MockStargatePool");
 
   const ethUsdMarketAddress = getMarketTokenAddress(
     wnt.address,
@@ -245,6 +254,7 @@ export async function deployFixture() {
     },
     contracts: {
       config,
+      configUtils,
       configSyncer,
       mockRiskOracle,
       timelock,
@@ -273,6 +283,8 @@ export async function deployFixture() {
       gelatoRelayRouter,
       subaccountGelatoRelayRouter,
       subaccountRouter,
+      multichainGmRouter,
+      relayUtils,
       oracle,
       gmOracleProvider,
       chainlinkPriceFeedProvider,
@@ -314,11 +326,17 @@ export async function deployFixture() {
       glvRouter,
       ethUsdGlvAddress,
       glvDepositStoreUtils,
+      GlvDepositCalc,
       glvWithdrawalStoreUtils,
       glvShiftStoreUtils,
       glvStoreUtils,
       glvReader,
       mockVaultV1,
+      multichainVault,
+      multichainUtils,
+      layerZeroProvider,
+      mockStargatePool,
+      callbackUtils,
     },
     props: { oracleSalt, signerIndexes: [0, 1, 2, 3, 4, 5, 6], executionFee: "1000000000000000" },
   };

@@ -276,14 +276,6 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
   }
 
   await handleConfig(
-    "bool",
-    keys.IGNORE_OPEN_INTEREST_FOR_USAGE_FACTOR,
-    "0x",
-    generalConfig.ignoreOpenInterestForUsageFactor,
-    `ignoreOpenInterestForUsageFactor`
-  );
-
-  await handleConfig(
     "uint",
     keys.MAX_EXECUTION_FEE_MULTIPLIER_FACTOR,
     "0x",

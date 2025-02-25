@@ -6,7 +6,7 @@ import "../shift/ShiftUtils.sol";
 import "../oracle/OracleUtils.sol";
 
 interface IShiftHandler {
-    function createShift(address account, ShiftUtils.CreateShiftParams calldata params) external returns (bytes32);
+    function createShift(address account, uint256 srcChainId, ShiftUtils.CreateShiftParams calldata params) external returns (bytes32);
     function cancelShift(bytes32 key) external;
     function simulateExecuteShift(bytes32 key, OracleUtils.SimulatePricesParams memory params) external;
 }
