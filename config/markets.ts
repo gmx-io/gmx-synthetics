@@ -626,7 +626,7 @@ const config: {
       swapFeeFactorForPositiveImpact: percentageToFloat("0.25%"),
       swapFeeFactorForNegativeImpact: percentageToFloat("0.25%"),
 
-      isDisabled: true,
+      isDisabled: false,
     },
     {
       tokens: { indexToken: "BNB", longToken: "BNB", shortToken: "USDC" },
@@ -1937,7 +1937,7 @@ const config: {
       swapFeeFactorForPositiveImpact: decimalToFloat(5, 5), // 0.005%,
       swapFeeFactorForNegativeImpact: decimalToFloat(2, 4), // 0.02%,
 
-      isDisabled: true,
+      isDisabled: false,
     },
     {
       tokens: { longToken: "USDC", shortToken: "USDC.e" },
