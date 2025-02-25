@@ -56,25 +56,6 @@ abstract contract MultichainRouter is GelatoRelayRouter {
         }
     }
 
-    function _processTransferRequests(address account, RelayUtils.TransferRequests calldata transferRequests, uint256 srcChainId) internal {
-        if (
-            transferRequests.tokens.length != transferRequests.receivers.length ||
-            transferRequests.tokens.length != transferRequests.amounts.length
-        ) {
-            revert Errors.InvalidTransferRequestsLength();
-        }
-
-        for (uint256 i = 0; i < transferRequests.tokens.length; i++) {
-            _sendTokens(
-                account,
-                transferRequests.tokens[i],
-                transferRequests.receivers[i],
-                transferRequests.amounts[i],
-                srcChainId
-            );
-        }
-    }
-
     function _sendTokens(address account, address token, address receiver, uint256 amount, uint256 srcChainId) internal override {
         AccountUtils.validateReceiver(receiver);
         if (srcChainId == 0) {

@@ -165,6 +165,36 @@ library FeeUtils {
         return feeAmount;
     }
 
+    function batchClaimUiFees(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address[] memory markets,
+        address[] memory tokens,
+        address receiver,
+        address uiFeeReceiver
+    ) external returns (uint256[] memory) {
+        if (markets.length != tokens.length) {
+            revert Errors.InvalidClaimUiFeesInput(markets.length, tokens.length);
+        }
+
+        FeatureUtils.validateFeature(dataStore, Keys.claimUiFeesFeatureDisabledKey(address(this)));
+
+        uint256[] memory claimedAmounts = new uint256[](markets.length);
+
+        for (uint256 i; i < markets.length; i++) {
+            claimedAmounts[i] = claimUiFees(
+                dataStore,
+                eventEmitter,
+                uiFeeReceiver,
+                markets[i],
+                tokens[i],
+                receiver
+            );
+        }
+
+        return claimedAmounts;
+    }
+
     function claimUiFees(
         DataStore dataStore,
         EventEmitter eventEmitter,
