@@ -3,6 +3,7 @@ import { GELATO_RELAY_ADDRESS } from "./addresses";
 import { hashRelayParams, signTypedData } from "./helpers";
 import { getDomain } from "./helpers";
 import { getRelayParams } from "./helpers";
+import { exec } from "child_process";
 
 interface SendCreate {
   signer: ethers.Signer;
@@ -144,6 +145,31 @@ export async function sendCreateGlvDeposit(p: SendCreate) {
   const calldata = ethers.utils.solidityPack(
     ["bytes", "address", "address", "uint256"],
     [createGlvDepositCalldata, GELATO_RELAY_ADDRESS, p.relayFeeToken, p.relayFeeAmount]
+  );
+  return p.sender.sendTransaction({
+    to: p.relayRouter.address,
+    data: calldata,
+  });
+}
+
+export async function sendCreateGlvWithdrawal(p: SendCreate) {
+  const relayParams = await getRelayParams(p);
+
+  let signature = p.signature;
+  if (!signature) {
+    signature = await getCreateGlvWithdrawalSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
+  }
+
+  const createGlvWithdrawalCalldata = p.relayRouter.interface.encodeFunctionData("createGlvWithdrawal", [
+    { ...relayParams, signature },
+    p.account,
+    p.srcChainId,
+    p.transferRequests,
+    p.params,
+  ]);
+  const calldata = ethers.utils.solidityPack(
+    ["bytes", "address", "address", "uint256"],
+    [createGlvWithdrawalCalldata, GELATO_RELAY_ADDRESS, p.relayFeeToken, p.relayFeeAmount]
   );
   return p.sender.sendTransaction({
     to: p.relayRouter.address,
@@ -390,6 +416,66 @@ async function getCreateGlvDepositSignature({
     callbackGasLimit: params.callbackGasLimit,
     shouldUnwrapNativeToken: params.shouldUnwrapNativeToken,
     isMarketTokenDeposit: params.isMarketTokenDeposit,
+    dataList: params.dataList,
+    relayParams: hashRelayParams(relayParams),
+  };
+  const domain = getDomain(chainId, verifyingContract);
+
+  return signTypedData(signer, domain, types, typedData);
+}
+
+async function getCreateGlvWithdrawalSignature({
+  signer,
+  relayParams,
+  transferRequests,
+  verifyingContract,
+  params,
+  chainId,
+}: {
+  signer: ethers.Signer;
+  relayParams: any;
+  transferRequests: { tokens: string[]; receivers: string[]; amounts: BigNumberish[] };
+  verifyingContract: string;
+  params: any;
+  chainId: BigNumberish;
+}) {
+  if (relayParams.userNonce === undefined) {
+    throw new Error("userNonce is required");
+  }
+  const types = {
+    CreateGlvWithdrawal: [
+      { name: "transferTokens", type: "address[]" },
+      { name: "transferReceivers", type: "address[]" },
+      { name: "transferAmounts", type: "uint256[]" },
+      { name: "addresses", type: "CreateGlvWithdrawalAddresses" },
+      { name: "minLongTokenAmount", type: "uint256" },
+      { name: "minShortTokenAmount", type: "uint256" },
+      { name: "shouldUnwrapNativeToken", type: "bool" },
+      { name: "executionFee", type: "uint256" },
+      { name: "callbackGasLimit", type: "uint256" },
+      { name: "dataList", type: "bytes32[]" },
+      { name: "relayParams", type: "bytes32" },
+    ],
+    CreateGlvWithdrawalAddresses: [
+      { name: "receiver", type: "address" },
+      { name: "callbackContract", type: "address" },
+      { name: "uiFeeReceiver", type: "address" },
+      { name: "market", type: "address" },
+      { name: "glv", type: "address" },
+      { name: "longTokenSwapPath", type: "address[]" },
+      { name: "shortTokenSwapPath", type: "address[]" },
+    ],
+  };
+  const typedData = {
+    transferTokens: transferRequests.tokens,
+    transferReceivers: transferRequests.receivers,
+    transferAmounts: transferRequests.amounts,
+    addresses: params.addresses,
+    minLongTokenAmount: params.minLongTokenAmount,
+    minShortTokenAmount: params.minShortTokenAmount,
+    shouldUnwrapNativeToken: params.shouldUnwrapNativeToken,
+    executionFee: params.executionFee,
+    callbackGasLimit: params.callbackGasLimit,
     dataList: params.dataList,
     relayParams: hashRelayParams(relayParams),
   };
