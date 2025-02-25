@@ -99,6 +99,7 @@ library GasUtils {
     struct PayExecutionFeeCache {
         uint256 refundFeeAmount;
         bool refundWasSent;
+        address wnt;
     }
 
     // @dev pay the keeper the execution fee and refund any excess amount
@@ -122,9 +123,9 @@ library GasUtils {
         uint256 oraclePriceCount,
         address keeper,
         address refundReceiver
-    ) external {
+    ) external returns (uint256) {
         if (executionFee == 0) {
-            return;
+            return 0;
         }
 
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
@@ -146,13 +147,13 @@ library GasUtils {
 
         cache.refundFeeAmount = executionFee - executionFeeForKeeper;
         if (cache.refundFeeAmount == 0) {
-            return;
+            return 0;
         }
 
-        address _wnt = dataStore.getAddress(Keys.WNT);
-        bank.transferOut(_wnt, address(this), cache.refundFeeAmount);
+        cache.wnt = dataStore.getAddress(Keys.WNT);
+        bank.transferOut(cache.wnt, address(this), cache.refundFeeAmount);
 
-        IWNT(_wnt).withdraw(cache.refundFeeAmount);
+        IWNT(cache.wnt).withdraw(cache.refundFeeAmount);
 
         EventUtils.EventLogData memory eventData;
 
@@ -166,9 +167,11 @@ library GasUtils {
 
         if (cache.refundWasSent) {
             emitExecutionFeeRefundCallback(eventEmitter, callbackContract, cache.refundFeeAmount);
+            return 0;
         } else {
             TokenUtils.sendNativeToken(dataStore, refundReceiver, cache.refundFeeAmount);
             emitExecutionFeeRefund(eventEmitter, refundReceiver, cache.refundFeeAmount);
+            return cache.refundFeeAmount;
         }
     }
 

@@ -54,6 +54,7 @@ library GlvWithdrawalUtils {
         uint256 marketCount;
         uint256 oraclePriceCount;
         uint256 marketTokenAmount;
+        uint256 refundFeeAmount;
     }
 
     struct CancelGlvWithdrawalParams {
@@ -195,7 +196,7 @@ library GlvWithdrawalUtils {
             glvWithdrawal.longTokenSwapPath().length + glvWithdrawal.shortTokenSwapPath().length
         );
 
-        GasUtils.payExecutionFee(
+        cache.refundFeeAmount = GasUtils.payExecutionFee(
             params.dataStore,
             params.eventEmitter,
             params.glvVault,
@@ -209,7 +210,7 @@ library GlvWithdrawalUtils {
         );
 
         // for multichain action, receiver is the multichainVault; increase user's multichain wnt balance for the fee refund
-        if (glvWithdrawal.srcChainId() != 0) {
+        if (glvWithdrawal.srcChainId() != 0 && cache.refundFeeAmount > 0) {
             address wnt = params.dataStore.getAddress(Keys.WNT);
             MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, wnt, glvWithdrawal.receiver(), 0); // srcChainId is the current block.chainId
         }
