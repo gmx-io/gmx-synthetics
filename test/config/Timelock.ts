@@ -11,11 +11,12 @@ import * as keys from "../../utils/keys";
 describe("Timelock", () => {
   let fixture;
   let timelockAdmin, timelockMultisig, user2, user3, signer0, signer9;
-  let timelock, dataStore, roleStore, oracleStore, wnt;
+  let timelock, timelockConfig, configTimelockController, dataStore, roleStore, oracleStore, wnt;
 
   beforeEach(async () => {
     fixture = await deployFixture();
-    ({ timelock, dataStore, roleStore, oracleStore, wnt } = fixture.contracts);
+    ({ timelock, timelockConfig, configTimelockController, dataStore, roleStore, oracleStore, wnt } =
+      fixture.contracts);
     ({ user2, user3, signer0, signer9 } = fixture.accounts);
 
     timelockAdmin = fixture.accounts.user0;
@@ -28,9 +29,9 @@ describe("Timelock", () => {
   it("multisig revokeRole", async () => {
     const orderKeeperRole = hashString("ORDER_KEEPER");
 
-    await timelock.connect(timelockAdmin).signalGrantRole(user3.address, orderKeeperRole);
+    await timelockConfig.connect(timelockAdmin).signalGrantRole(user3.address, orderKeeperRole);
     await time.increase(1 * 24 * 60 * 60 + 10);
-    await timelock.connect(timelockAdmin).grantRoleAfterSignal(user3.address, orderKeeperRole);
+    await timelockConfig.connect(timelockAdmin).grantRoleAfterSignal(user3.address, orderKeeperRole);
 
     expect(await roleStore.hasRole(user3.address, orderKeeperRole)).eq(true);
 
