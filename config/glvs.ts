@@ -156,7 +156,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           },
           {
             indexToken: "BERA",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(1_800_000, 18),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(2_000_000, 18),
             glvMaxMarketTokenBalanceUsd: decimalToFloat(1_800_000),
           },
           {
