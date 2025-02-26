@@ -626,7 +626,7 @@ const config: {
       swapFeeFactorForPositiveImpact: percentageToFloat("0.25%"),
       swapFeeFactorForNegativeImpact: percentageToFloat("0.25%"),
 
-      isDisabled: true,
+      isDisabled: false,
     },
     {
       tokens: { indexToken: "BNB", longToken: "BNB", shortToken: "USDC" },
@@ -1353,8 +1353,8 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:GMX/USD"),
 
       ...singleTokenMarketConfig,
-      reserveFactor: percentageToFloat("85%"),
-      openInterestReserveFactor: percentageToFloat("80%"),
+      reserveFactor: percentageToFloat("105%"),
+      openInterestReserveFactor: percentageToFloat("100%"),
       maxPnlFactorForTraders: percentageToFloat("50%"),
 
       ...fundingRateConfig_High,
@@ -1906,7 +1906,7 @@ const config: {
 
       swapOnly: true,
 
-      isDisabled: false,
+      // isDisabled: false,
 
       maxLongTokenPoolAmount: expandDecimals(3300, 18),
       maxShortTokenPoolAmount: expandDecimals(2800, 18),
@@ -1937,7 +1937,7 @@ const config: {
       swapFeeFactorForPositiveImpact: decimalToFloat(5, 5), // 0.005%,
       swapFeeFactorForNegativeImpact: decimalToFloat(2, 4), // 0.02%,
 
-      isDisabled: true,
+      isDisabled: false,
     },
     {
       tokens: { longToken: "USDC", shortToken: "USDC.e" },
@@ -2353,8 +2353,8 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2e-8"),
 
-      reserveFactor: percentageToFloat("40%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("35%"), // default is 90%
+      reserveFactor: percentageToFloat("55%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("50%"), // default is 90%
 
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
@@ -2556,8 +2556,8 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2e-10"),
 
-      reserveFactor: percentageToFloat("40%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("35%"), // default is 90%
+      reserveFactor: percentageToFloat("75%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("70%"), // default is 90%
 
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
