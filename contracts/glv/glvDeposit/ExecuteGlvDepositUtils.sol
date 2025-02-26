@@ -138,7 +138,7 @@ library ExecuteGlvDepositUtils {
             cache.marketCount,
             glvDeposit.longTokenSwapPath().length + glvDeposit.shortTokenSwapPath().length
         );
-        cache.refundFeeAmount =GasUtils.payExecutionFee(
+        cache.refundFeeAmount = GasUtils.payExecutionFee(
             params.dataStore,
             params.eventEmitter,
             params.glvVault,
