@@ -116,6 +116,10 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0xa329221a77BE08485f59310b873b14815c82E10D": true, // SubaccountRouter_4
         "0x105b5aFe50FBCe7759051974fB1710ce331C77B3": true, // GlvRouter_4
         "0x994C598e3b0661bb805d53c6fa6B4504b23b68dD": true, // GlvRouter_4a
+
+        "0xf64c8469e5B566251301904f4F77A911438C775F": true, // GelatoRelayRouter_4
+        "0x871a0CAa75dea231FA290ee26F1955B29a7F8a86": true, // SubaccountGelatoRelayRouter_4
+        "0x26410a3121BCAB865b9ceae50dFfA04DF9E783B1": true, // SubaccountRouter_4a
       },
       TIMELOCK_ADMIN: {
         "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // timelock_admin_1
@@ -149,6 +153,10 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x3f6dF0c3A7221BA1375E87e7097885a601B41Afc": true, // GlvHandler_4
         "0x105b5aFe50FBCe7759051974fB1710ce331C77B3": true, // GlvRouter_4
         "0x994C598e3b0661bb805d53c6fa6B4504b23b68dD": true, // GlvRouter_4a
+
+        "0xf64c8469e5B566251301904f4F77A911438C775F": true, // GelatoRelayRouter_4
+        "0x871a0CAa75dea231FA290ee26F1955B29a7F8a86": true, // SubaccountGelatoRelayRouter_4
+        "0x26410a3121BCAB865b9ceae50dFfA04DF9E783B1": true, // SubaccountRouter_4a
       },
       GOV_TOKEN_CONTROLLER: {
         "0x5E4766F932ce00aA4a1A82d3Da85adf15C5694A1": true, // RewardRouterV2_2
@@ -184,6 +192,10 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x5aEb6AD978f59e220aA9099e09574e1c5E03AafD": true, // SubaccountRouter_4
         "0x6BE75346C0262015E45c6fC0e3268BBa73e87D1a": true, // GlvRouter_4
         "0x16500C1d8fFE2F695D8DCADf753F664993287ae4": true, // GlvRouter_4a
+
+        "0xBD219aADaFe3AD8c8F570b204B99cb4aDbe9983E": true, // GelatoRelayRouter_4
+        "0xE971b9D5eA8Ab28bF3639069CF7a91E5dA7b7015": true, // SubaccountGelatoRelayRouter_4
+        "0x7D9E403F82b59e7fF5F7A37a9bf4A8df914352A1": true, // SubaccountRouter_4a
       },
       TIMELOCK_ADMIN: {
         "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // timelock_admin_1
@@ -217,6 +229,10 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x48486CaF8851ed0085432789D28A8820bEcbfd45": true, // GlvHandler_4
         "0x6BE75346C0262015E45c6fC0e3268BBa73e87D1a": true, // GlvRouter_4
         "0x16500C1d8fFE2F695D8DCADf753F664993287ae4": true, // GlvRouter_4a
+
+        "0xBD219aADaFe3AD8c8F570b204B99cb4aDbe9983E": true, // GelatoRelayRouter_4
+        "0xE971b9D5eA8Ab28bF3639069CF7a91E5dA7b7015": true, // SubaccountGelatoRelayRouter_4
+        "0x7D9E403F82b59e7fF5F7A37a9bf4A8df914352A1": true, // SubaccountRouter_4a
       },
       GOV_TOKEN_CONTROLLER: {
         "0x091eD806490Cc58Fd514441499e58984cCce0630": true, // RewardRouterV2_2
