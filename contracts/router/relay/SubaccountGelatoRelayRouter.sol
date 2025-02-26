@@ -119,8 +119,8 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             _createOrder(
                 relayParams,
                 account,
-                0, // srcChainId
                 collateralDeltaAmount,
+                0, // srcChainId
                 params,
                 true // isSubaccount
             );

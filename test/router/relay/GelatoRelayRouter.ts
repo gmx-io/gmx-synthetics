@@ -283,7 +283,7 @@ describe("GelatoRelayRouter", () => {
 
       // allowance was set
       expect(await wnt.allowance(user0.address, router.address)).to.eq(
-        expandDecimals(1, 18).sub(collateralDeltaAmount).sub(gelatoRelayFee).sub(expandDecimals(1, 15)) // TODO: fails --> collateralDeltaAmount is 0 instead of 0.1
+        expandDecimals(1, 18).sub(collateralDeltaAmount).sub(gelatoRelayFee).sub(expandDecimals(1, 15))
       );
       // relay fee was sent
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, gelatoRelayFee);
@@ -300,7 +300,7 @@ describe("GelatoRelayRouter", () => {
       expect(order.numbers.orderType).eq(OrderType.LimitIncrease);
       expect(order.numbers.decreasePositionSwapType).eq(DecreasePositionSwapType.SwapCollateralTokenToPnlToken);
       expect(order.numbers.sizeDeltaUsd).eq(decimalToFloat(1000));
-      expect(order.numbers.initialCollateralDeltaAmount).eq(collateralDeltaAmount); // TODO: fails --> collateralDeltaAmount is 0 instead of 0.1
+      expect(order.numbers.initialCollateralDeltaAmount).eq(collateralDeltaAmount);
       expect(order.numbers.triggerPrice).eq(decimalToFloat(4800));
       expect(order.numbers.acceptablePrice).eq(decimalToFloat(4900));
       expect(order.numbers.executionFee).eq(expandDecimals(1, 15));
