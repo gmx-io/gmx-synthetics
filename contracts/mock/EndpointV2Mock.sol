@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.20;
 
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {ILayerZeroEndpointV2, MessagingParams, MessagingReceipt, MessagingFee, Origin} from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/ILayerZeroEndpointV2.sol";
@@ -209,7 +209,7 @@ contract EndpointV2Mock is ILayerZeroEndpointV2, MessagingContext {
         MessagingParams calldata _params,
         address /*_sender*/
     ) internal view returns (MessagingFee memory messagingFee) {
-        (bytes memory executorOptions, bytes memory dvnOptions) = UlnOptions.decode(_params.options);
+        (bytes memory executorOptions, ) = UlnOptions.decode(_params.options);
 
         // 2) get Executor fee
         uint256 executorFee = this.getExecutorFee(_params.message.length, executorOptions);
@@ -672,10 +672,10 @@ contract EndpointV2Mock is ILayerZeroEndpointV2, MessagingContext {
     /// @dev this check provides the ability for Oapp to lock in a trusted msgLib
     /// @dev it will fist check if the msgLib is the currently configured one. then check if the msgLib is the one in grace period of msgLib versioning upgrade
     function isValidReceiveLibrary(
-        address _receiver,
-        uint32 _srcEid,
-        address _actualReceiveLib
-    ) public view returns (bool) {
+        address /*_receiver*/,
+        uint32 /*_srcEid*/,
+        address /*_actualReceiveLib*/
+    ) public pure returns (bool) {
         return true;
     }
 }
