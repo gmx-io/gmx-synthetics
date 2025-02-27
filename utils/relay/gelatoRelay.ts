@@ -194,7 +194,7 @@ export async function sendUpdateOrder(p: {
   });
 }
 
-async function getUpdateOrderSignature({
+export async function getUpdateOrderSignature({
   signer,
   relayParams,
   verifyingContract,
@@ -287,7 +287,7 @@ export async function sendCancelOrder(p: {
   });
 }
 
-async function getCancelOrderSignature({ signer, relayParams, verifyingContract, key, chainId }) {
+export async function getCancelOrderSignature({ signer, relayParams, verifyingContract, key, chainId }) {
   if (relayParams.userNonce === undefined) {
     throw new Error("userNonce is required");
   }

@@ -25,7 +25,7 @@ contract MultichainOrderRouter is MultichainRouter {
         return _createOrder(relayParams, account, collateralDeltaAmount, srcChainId, params, false);
     }
 
-    function updateOrder(
+    function updateMultichainOrder(
         RelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,

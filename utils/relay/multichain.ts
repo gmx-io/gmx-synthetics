@@ -4,7 +4,7 @@ import { hashRelayParams, signTypedData } from "./helpers";
 import { getDomain } from "./helpers";
 import { getRelayParams } from "./helpers";
 import { exec } from "child_process";
-import { getCreateOrderSignature } from "./gelatoRelay";
+import { getCreateOrderSignature, getUpdateOrderSignature } from "./gelatoRelay";
 
 interface SendCreate {
   signer: ethers.Signer;
@@ -167,21 +167,10 @@ export async function sendCreateOrder(p: {
     refundTokens: string[];
     refundReceivers: string[];
   };
-  tokenPermits?: {
-    token: string;
-    spender: string;
-    value: BigNumberish;
-    deadline: BigNumberish;
-  }[];
   feeParams: {
     feeToken: string;
     feeAmount: BigNumberish;
     feeSwapPath: string[];
-  };
-  transferRequests: {
-    tokens: string[];
-    receivers: string[];
-    amounts: BigNumberish[];
   };
   collateralDeltaAmount: BigNumberish;
   account: string;
@@ -213,6 +202,65 @@ export async function sendCreateOrder(p: {
   const calldata = ethers.utils.solidityPack(
     ["bytes", "address", "address", "uint256"],
     [createOrderCalldata, GELATO_RELAY_ADDRESS, p.relayFeeToken, p.relayFeeAmount]
+  );
+  return p.sender.sendTransaction({
+    to: p.relayRouter.address,
+    data: calldata,
+  });
+}
+
+export async function sendUpdateOrder(p: {
+  sender: ethers.Signer;
+  signer: ethers.Signer;
+  oracleParams?: {
+    tokens: string[];
+    providers: string[];
+    data: string[];
+  };
+  feeParams: {
+    feeToken: string;
+    feeAmount: BigNumberish;
+    feeSwapPath: string[];
+  };
+  key: string;
+  chainId: BigNumberish;
+  account: string;
+  params: {
+    sizeDeltaUsd: BigNumberish;
+    acceptablePrice: BigNumberish;
+    triggerPrice: BigNumberish;
+    minOutputAmount: BigNumberish;
+    validFromTime: BigNumberish;
+    autoCancel: boolean;
+  };
+  deadline: BigNumberish;
+  srcChainId: BigNumberish;
+  desChainId: BigNumberish;
+  userNonce?: BigNumberish;
+  relayRouter: ethers.Contract;
+  signature?: string;
+  relayFeeToken: string;
+  relayFeeAmount: BigNumberish;
+  increaseExecutionFee: boolean;
+}) {
+  const relayParams = await getRelayParams(p);
+
+  let signature = p.signature;
+  if (!signature) {
+    signature = await getUpdateOrderSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
+  }
+
+  const UpdateOrderCalldata = p.relayRouter.interface.encodeFunctionData("updateMultichainOrder", [
+    { ...relayParams, signature },
+    p.account,
+    p.srcChainId,
+    p.key,
+    p.params,
+    p.increaseExecutionFee,
+  ]);
+  const calldata = ethers.utils.solidityPack(
+    ["bytes", "address", "address", "uint256"],
+    [UpdateOrderCalldata, GELATO_RELAY_ADDRESS, p.relayFeeToken, p.relayFeeAmount]
   );
   return p.sender.sendTransaction({
     to: p.relayRouter.address,
