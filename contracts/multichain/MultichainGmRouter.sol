@@ -11,11 +11,11 @@ import "./MultichainRouter.sol";
 
 contract MultichainGmRouter is MultichainRouter {
 
-    DepositVault public depositVault;
-    IDepositHandler public depositHandler;
-    WithdrawalVault public withdrawalVault;
-    WithdrawalHandler public withdrawalHandler;
-    ShiftVault public shiftVault;
+    DepositVault public immutable depositVault;
+    IDepositHandler public immutable depositHandler;
+    WithdrawalVault public immutable withdrawalVault;
+    WithdrawalHandler public immutable withdrawalHandler;
+    ShiftVault public immutable shiftVault;
 
     constructor(
         BaseConstructorParams memory params,
