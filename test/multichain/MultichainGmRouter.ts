@@ -12,6 +12,7 @@ import {
   sendCreateGlvWithdrawal,
   sendCreateOrder,
   sendUpdateOrder,
+  sendCancelOrder,
 } from "../../utils/relay/multichain";
 import * as keys from "../../utils/keys";
 import { executeDeposit, getDepositCount, getDepositKeys } from "../../utils/deposit";
@@ -702,7 +703,6 @@ describe("MultichainRouter", () => {
             feeAmount: expandDecimals(2, 15), // 0.002 ETH
             feeSwapPath: [],
           },
-          tokenPermits: [],
           account: user1.address,
           params: {
             sizeDeltaUsd: decimalToFloat(1),
@@ -753,6 +753,51 @@ describe("MultichainRouter", () => {
           wnt.address,
           GELATO_RELAY_ADDRESS,
           initialFeeReceiverBalance.add(updateOrderParams.relayFeeAmount)
+        );
+      });
+    });
+
+    describe("cancelOrder", () => {
+      let cancelOrderParams: Parameters<typeof sendCancelOrder>[0];
+
+      beforeEach(() => {
+        cancelOrderParams = {
+          sender: relaySigner,
+          signer: user1,
+          feeParams: {
+            feeToken: wnt.address,
+            feeAmount: expandDecimals(2, 15), // 0.002 ETH
+            feeSwapPath: [],
+          },
+          account: user1.address,
+          key: ethers.constants.HashZero,
+          deadline: 9999999999,
+          srcChainId: chainId, // 0 means non-multichain action
+          desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
+          relayRouter: multichainOrderRouter,
+          chainId,
+          relayFeeToken: wnt.address,
+          relayFeeAmount: expandDecimals(1, 15),
+        };
+      });
+
+      it("cancels multichain order and sends relayer fee", async () => {
+        await sendCreateDeposit(createDepositParams);
+        await executeDeposit(fixture, { gasUsageLabel: "executeMultichainDeposit" });
+        await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: collateralDeltaAmount.add(feeAmount) });
+        await sendCreateOrder(createOrderParams);
+        const initialFeeReceiverBalance = await wnt.balanceOf(GELATO_RELAY_ADDRESS);
+
+        const orderKeys = await getOrderKeys(dataStore, 0, 1);
+        expect(await getOrderCount(dataStore)).to.eq(1);
+
+        await sendCancelOrder({ ...cancelOrderParams, key: orderKeys[0] });
+
+        expect(await getOrderCount(dataStore)).to.eq(0);
+        await expectBalance(
+          wnt.address,
+          GELATO_RELAY_ADDRESS,
+          initialFeeReceiverBalance.add(cancelOrderParams.relayFeeAmount)
         );
       });
     });

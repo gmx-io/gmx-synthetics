@@ -42,7 +42,7 @@ contract MultichainOrderRouter is MultichainRouter {
         _updateOrder(relayParams, account, key, params, increaseExecutionFee, false);
     }
 
-    function cancelOrder(
+    function cancelMultichainOrder(
         RelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,

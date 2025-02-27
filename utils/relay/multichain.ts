@@ -4,7 +4,7 @@ import { hashRelayParams, signTypedData } from "./helpers";
 import { getDomain } from "./helpers";
 import { getRelayParams } from "./helpers";
 import { exec } from "child_process";
-import { getCreateOrderSignature, getUpdateOrderSignature } from "./gelatoRelay";
+import { getCancelOrderSignature, getCreateOrderSignature, getUpdateOrderSignature } from "./gelatoRelay";
 
 interface SendCreate {
   signer: ethers.Signer;
@@ -261,6 +261,53 @@ export async function sendUpdateOrder(p: {
   const calldata = ethers.utils.solidityPack(
     ["bytes", "address", "address", "uint256"],
     [UpdateOrderCalldata, GELATO_RELAY_ADDRESS, p.relayFeeToken, p.relayFeeAmount]
+  );
+  return p.sender.sendTransaction({
+    to: p.relayRouter.address,
+    data: calldata,
+  });
+}
+export async function sendCancelOrder(p: {
+  sender: ethers.Signer;
+  signer: ethers.Signer;
+  oracleParams?: {
+    tokens: string[];
+    providers: string[];
+    data: string[];
+  };
+  feeParams: {
+    feeToken: string;
+    feeAmount: BigNumberish;
+    feeSwapPath: string[];
+  };
+  key: string;
+  chainId: BigNumberish;
+  account: string;
+  deadline: BigNumberish;
+  srcChainId: BigNumberish;
+  desChainId: BigNumberish;
+  userNonce?: BigNumberish;
+  relayRouter: ethers.Contract;
+  signature?: string;
+  relayFeeToken: string;
+  relayFeeAmount: BigNumberish;
+}) {
+  const relayParams = await getRelayParams(p);
+
+  let signature = p.signature;
+  if (!signature) {
+    signature = await getCancelOrderSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
+  }
+
+  const CancelOrderCalldata = p.relayRouter.interface.encodeFunctionData("cancelMultichainOrder", [
+    { ...relayParams, signature },
+    p.account,
+    p.srcChainId,
+    p.key,
+  ]);
+  const calldata = ethers.utils.solidityPack(
+    ["bytes", "address", "address", "uint256"],
+    [CancelOrderCalldata, GELATO_RELAY_ADDRESS, p.relayFeeToken, p.relayFeeAmount]
   );
   return p.sender.sendTransaction({
     to: p.relayRouter.address,
