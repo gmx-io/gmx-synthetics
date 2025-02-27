@@ -7,6 +7,7 @@ import "../error/ErrorUtils.sol";
 import "./IOrderHandler.sol";
 import "../order/OrderUtils.sol";
 import "../order/ExecuteOrderUtils.sol";
+import "../multichain/MultichainVault.sol";
 
 // @title OrderHandler
 // @dev Contract to handle creation, execution and cancellation of orders
@@ -20,6 +21,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         DataStore _dataStore,
         EventEmitter _eventEmitter,
         Oracle _oracle,
+        MultichainVault _multichainVault,
         OrderVault _orderVault,
         SwapHandler _swapHandler,
         IReferralStorage _referralStorage
@@ -28,6 +30,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         _dataStore,
         _eventEmitter,
         _oracle,
+        _multichainVault,
         _orderVault,
         _swapHandler,
         _referralStorage

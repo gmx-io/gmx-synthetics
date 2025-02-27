@@ -39,6 +39,7 @@ contract AdlHandler is BaseOrderHandler {
         _dataStore,
         _eventEmitter,
         _oracle,
+        MultichainVault(payable(0)), // TODO: confirm no possibility of multichain ADL
         _orderVault,
         _swapHandler,
         _referralStorage
