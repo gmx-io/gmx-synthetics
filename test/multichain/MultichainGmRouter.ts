@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { impersonateAccount, setBalance } from "@nomicfoundation/hardhat-network-helpers";
 
-import { expandDecimals } from "../../utils/math";
+import { decimalToFloat, expandDecimals } from "../../utils/math";
 import { deployFixture } from "../../utils/fixture";
 import { GELATO_RELAY_ADDRESS } from "../../utils/relay/addresses";
 import {
@@ -10,6 +10,7 @@ import {
   sendCreateShift,
   sendCreateGlvDeposit,
   sendCreateGlvWithdrawal,
+  sendCreateOrder,
 } from "../../utils/relay/multichain";
 import * as keys from "../../utils/keys";
 import { executeDeposit, getDepositCount, getDepositKeys } from "../../utils/deposit";
@@ -17,14 +18,10 @@ import { executeWithdrawal, getWithdrawalCount, getWithdrawalKeys } from "../../
 import { getBalanceOf } from "../../utils/token";
 import { BigNumberish, Contract } from "ethers";
 import { executeShift, getShiftCount, getShiftKeys } from "../../utils/shift";
-import {
-  executeGlvDeposit,
-  executeGlvWithdrawal,
-  expectGlvWithdrawal,
-  getGlvDepositCount,
-  getGlvWithdrawalCount,
-  getGlvWithdrawalKeys,
-} from "../../utils/glv";
+import { executeGlvDeposit, executeGlvWithdrawal, getGlvDepositCount, getGlvWithdrawalCount } from "../../utils/glv";
+import { DecreasePositionSwapType, executeOrder, getOrderCount, OrderType } from "../../utils/order";
+import { hashString } from "../../utils/hash";
+import { getPositionCount } from "../../utils/position";
 
 describe("MultichainRouter", () => {
   let fixture;
@@ -32,12 +29,14 @@ describe("MultichainRouter", () => {
   let reader,
     dataStore,
     multichainGmRouter,
+    multichainOrderRouter,
     multichainGlvRouter,
     multichainVault,
     depositVault,
     withdrawalVault,
     shiftVault,
     glvVault,
+    orderVault,
     ethUsdMarket,
     solUsdMarket,
     ethUsdGlvAddress,
@@ -87,12 +86,14 @@ describe("MultichainRouter", () => {
       reader,
       dataStore,
       multichainGmRouter,
+      multichainOrderRouter,
       multichainGlvRouter,
       multichainVault,
       depositVault,
       withdrawalVault,
       shiftVault,
       glvVault,
+      orderVault,
       ethUsdMarket,
       solUsdMarket,
       ethUsdGlvAddress,
@@ -159,7 +160,7 @@ describe("MultichainRouter", () => {
 
   describe("createDeposit", () => {
     it("creates deposit and sends relayer fee", async () => {
-      // funds have already been bridged to multichainVault and recorder under user's multichain balance
+      // funds have already been bridged to multichainVault and recorded under user's multichain balance
       expect(await wnt.balanceOf(multichainVault.address)).eq(expandDecimals(10_006, 15)); // 10 + 0.006 = 10.006 ETH
       expect(await usdc.balanceOf(multichainVault.address)).eq(expandDecimals(45_000, 6));
       expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, wnt.address))).to.eq(
@@ -422,7 +423,7 @@ describe("MultichainRouter", () => {
     });
   });
 
-  describe("multichain glv", () => {
+  describe("MultichainGlvRouter", () => {
     let defaultGlvDepositParams;
     let createGlvDepositParams: Parameters<typeof sendCreateGlvDeposit>[0];
     const feeAmount = expandDecimals(4, 15);
@@ -599,6 +600,96 @@ describe("MultichainRouter", () => {
           expandDecimals(45_000, 6)
         ); // 45,000 USDC
       });
+    });
+  });
+
+  describe("MultichainOrderRouter", () => {
+    let defaultOrderParams;
+    const collateralDeltaAmount = expandDecimals(1, 18); // 1 ETH
+    beforeEach(async () => {
+      defaultOrderParams = {
+        addresses: {
+          receiver: user1.address,
+          cancellationReceiver: user1.address,
+          callbackContract: user1.address,
+          uiFeeReceiver: user2.address,
+          market: ethUsdMarket.marketToken,
+          initialCollateralToken: wnt.address,
+          swapPath: [],
+        },
+        numbers: {
+          sizeDeltaUsd: decimalToFloat(25_000), // 5x leverage
+          initialCollateralDeltaAmount: 0,
+          triggerPrice: decimalToFloat(5000),
+          acceptablePrice: decimalToFloat(4800),
+          executionFee: 0,
+          callbackGasLimit: "200000",
+          minOutputAmount: 0,
+          validFromTime: 0,
+        },
+        orderType: OrderType.MarketIncrease,
+        decreasePositionSwapType: DecreasePositionSwapType.SwapCollateralTokenToPnlToken,
+        isLong: true,
+        shouldUnwrapNativeToken: true,
+        referralCode: hashString("referralCode"),
+        dataList: [],
+      };
+    });
+    const feeAmount = expandDecimals(6, 15);
+
+    let createOrderParams: Parameters<typeof sendCreateOrder>[0];
+    beforeEach(async () => {
+      createOrderParams = {
+        sender: relaySigner,
+        signer: user1,
+        feeParams: {
+          feeToken: wnt.address,
+          feeAmount: feeAmount, // 0.004 ETH
+          feeSwapPath: [],
+        },
+        tokenPermits: [],
+        transferRequests: {
+          tokens: [ethUsdMarket.longToken],
+          receivers: [orderVault.address],
+          amounts: [collateralDeltaAmount],
+        },
+        collateralDeltaAmount: collateralDeltaAmount, // 1.23 ETH
+        account: user1.address,
+        params: defaultOrderParams,
+        deadline: 9999999999,
+        srcChainId: chainId, // 0 means non-multichain action
+        desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
+        relayRouter: multichainOrderRouter,
+        chainId,
+        relayFeeToken: wnt.address,
+        relayFeeAmount: feeAmount,
+      };
+    });
+
+    it("creates multichain order and sends relayer fee", async () => {
+      await sendCreateDeposit(createDepositParams);
+      await executeDeposit(fixture, { gasUsageLabel: "executeMultichainDeposit" });
+      const initialUser1Balance = await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address)); // user1 has some residual fee from deposit (i.e. the diff between feeAmount and relayFeeAmount)
+      const initialFeeReceiverBalance = await wnt.balanceOf(GELATO_RELAY_ADDRESS);
+
+      await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: collateralDeltaAmount.add(feeAmount) });
+
+      expect(await getOrderCount(dataStore)).to.eq(0);
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(
+        initialUser1Balance.add(collateralDeltaAmount).add(feeAmount)
+      );
+
+      await sendCreateOrder(createOrderParams);
+
+      expect(await getOrderCount(dataStore)).to.eq(1);
+      expect(await getPositionCount(dataStore)).to.eq(0);
+      expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(initialFeeReceiverBalance.add(feeAmount));
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(initialUser1Balance);
+
+      await executeOrder(fixture, { gasUsageLabel: "executeOrder" });
+
+      expect(await getOrderCount(dataStore)).to.eq(0);
+      expect(await getPositionCount(dataStore)).to.eq(1);
     });
   });
 });

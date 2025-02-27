@@ -64,7 +64,7 @@ export async function sendCreateOrder(p: {
   });
 }
 
-async function getCreateOrderSignature({
+export async function getCreateOrderSignature({
   signer,
   relayParams,
   collateralDeltaAmount,
