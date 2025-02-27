@@ -679,8 +679,8 @@ const config: {
       positivePositionImpactFactor: exponentToFloat("7e-9"),
 
       // the swap impact factor is for WETH-stablecoin swaps
-      negativeSwapImpactFactor: exponentToFloat("2.5e-9"),
-      positiveSwapImpactFactor: exponentToFloat("2.5e-9"),
+      negativeSwapImpactFactor: exponentToFloat("4.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("3e-9"),
 
       minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
       // minCollateralFactor of 0.005 (0.5%) when open interest is 2,000,000 USD
@@ -713,8 +713,8 @@ const config: {
       positivePositionImpactFactor: exponentToFloat("1.06e-7"),
 
       // the swap impact factor is for WETH-stablecoin swaps
-      negativeSwapImpactFactor: exponentToFloat("2e-9"),
-      positiveSwapImpactFactor: exponentToFloat("2e-9"),
+      negativeSwapImpactFactor: exponentToFloat("4.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("3e-9"),
 
       minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
 
@@ -1483,8 +1483,8 @@ const config: {
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
       positionImpactExponentFactor: exponentToFloat("2.2e0"),
 
-      negativeSwapImpactFactor: exponentToFloat("5e-9"),
-      positiveSwapImpactFactor: exponentToFloat("2.5e-9"),
+      negativeSwapImpactFactor: exponentToFloat("4.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("3e-9"),
 
       // minCollateralFactor of 0.01 (1%) when open interest is 4,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
@@ -1516,8 +1516,8 @@ const config: {
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
       positionImpactExponentFactor: exponentToFloat("2.2e0"),
 
-      negativeSwapImpactFactor: exponentToFloat("5e-9"),
-      positiveSwapImpactFactor: exponentToFloat("2.5e-9"),
+      negativeSwapImpactFactor: exponentToFloat("4.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("3e-9"),
 
       // minCollateralFactor of 0.01 (1%) when open interest is 4,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
@@ -1549,8 +1549,8 @@ const config: {
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
       positionImpactExponentFactor: exponentToFloat("2.2e0"),
 
-      negativeSwapImpactFactor: exponentToFloat("5e-9"),
-      positiveSwapImpactFactor: exponentToFloat("2.5e-9"),
+      negativeSwapImpactFactor: exponentToFloat("4.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("3e-9"),
 
       // minCollateralFactor of 0.01 (1%) when open interest is 4,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
@@ -1582,8 +1582,8 @@ const config: {
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
       positionImpactExponentFactor: exponentToFloat("2.2e0"),
 
-      negativeSwapImpactFactor: exponentToFloat("5e-9"),
-      positiveSwapImpactFactor: exponentToFloat("2.5e-9"),
+      negativeSwapImpactFactor: exponentToFloat("4.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("3e-9"),
 
       // minCollateralFactor of 0.01 (1%) when open interest is 4,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
@@ -2346,8 +2346,8 @@ const config: {
       positivePositionImpactFactor: exponentToFloat("6.26e-7"),
       positionImpactExponentFactor: exponentToFloat("1.7e0"),
 
-      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
-      positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
+      negativeSwapImpactFactor: exponentToFloat("4.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("3e-9"),
 
       liquidationFeeFactor: percentageToFloat("0.45%"),
 
@@ -2408,8 +2408,8 @@ const config: {
       positivePositionImpactFactor: exponentToFloat("4e-7"),
       positionImpactExponentFactor: exponentToFloat("1.6e0"),
 
-      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
-      positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
+      negativeSwapImpactFactor: exponentToFloat("4.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("3e-9"),
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2e-10"),
 
@@ -2551,8 +2551,8 @@ const config: {
       positivePositionImpactFactor: exponentToFloat("5e-8"),
       positionImpactExponentFactor: exponentToFloat("1.7e0"),
 
-      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
-      positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
+      negativeSwapImpactFactor: exponentToFloat("4.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("3e-9"),
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2e-10"),
 
@@ -3070,8 +3070,8 @@ const config: {
       positivePositionImpactFactor: exponentToFloat("2.5e-7"),
       positionImpactExponentFactor: exponentToFloat("1.7e0"),
 
-      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
-      positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
+      negativeSwapImpactFactor: exponentToFloat("4.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("3e-9"),
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2e-10"),
 
