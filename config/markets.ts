@@ -2561,7 +2561,7 @@ const config: {
 
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
-      maxOpenInterest: decimalToFloat(750_000),
+      maxOpenInterest: decimalToFloat(900_000),
       maxPoolUsdForDeposit: decimalToFloat(1_400_000),
 
       maxLongTokenPoolAmount: expandDecimals(750, 18),
