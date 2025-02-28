@@ -185,6 +185,7 @@ export async function getBlockByTimestamp(timestamp: number) {
   let nextBlockNumber = guessBlockNumberByTimestamp(latestBlock, timestamp);
 
   const i = 0;
+  const seenDiffs = new Set<number>();
   while (i < 15) {
     console.log("requesting next block %s", nextBlockNumber);
     const block = await hre.ethers.provider.getBlock(nextBlockNumber);
@@ -200,7 +201,14 @@ export async function getBlockByTimestamp(timestamp: number) {
       return block;
     }
 
-    console.log("%s seconds away", block.timestamp - timestamp);
+    const diff = block.timestamp - timestamp;
+    if (seenDiffs.has(diff)) {
+      console.log("seen block %s diff %s. break", block.number, diff);
+      return block;
+    }
+
+    seenDiffs.add(diff);
+    console.log("%s seconds away", diff);
 
     nextBlockNumber = guessBlockNumberByTimestamp(block, timestamp);
 

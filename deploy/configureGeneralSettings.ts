@@ -27,6 +27,12 @@ const func = async ({ gmx }: HardhatRuntimeEnvironment) => {
     "claimable collateral time divisor"
   );
 
+  await setUintIfDifferent(
+    keys.MAX_EXECUTION_FEE_MULTIPLIER_FACTOR,
+    generalConfig.maxExecutionFeeMultiplierFactor,
+    "max execution fee multiplier factor"
+  );
+
   const write = process.env.FOR_EXISTING_MAINNET_DEPLOYMENT ? false : true;
   if (write) {
     await updateGeneralConfig({ write: true });

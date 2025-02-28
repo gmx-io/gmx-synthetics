@@ -339,6 +339,52 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
     },
+    FARTCOIN: {
+      negativePositionImpactFactor: exponentToFloat("5e-7"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    AI16Z: {
+      negativePositionImpactFactor: exponentToFloat("5e-7"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    ANIME: {
+      negativePositionImpactFactor: exponentToFloat("5e-7"),
+      negativeSwapImpactFactor: exponentToFloat("3e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    LDO: {
+      negativePositionImpactFactor: exponentToFloat("1.4e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    BERA: {
+      negativePositionImpactFactor: exponentToFloat("1e-7"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    VIRTUAL: {
+      negativePositionImpactFactor: exponentToFloat("2e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    PENGU: {
+      negativePositionImpactFactor: exponentToFloat("1.6e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    ONDO: {
+      negativePositionImpactFactor: exponentToFloat("8e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    FET: {
+      negativePositionImpactFactor: exponentToFloat("1e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
     wstETH: {
       negativeSwapImpactFactor: exponentToFloat("1e-8"),
       expectedSwapImpactRatio: 20_000,
@@ -389,6 +435,16 @@ const recommendedMarketConfig = {
     XRP: {
       negativePositionImpactFactor: exponentToFloat("5e-9").div(2),
       negativeSwapImpactFactor: exponentToFloat("5e-9").div(2),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    TRUMP: {
+      negativePositionImpactFactor: exponentToFloat("5e-7"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    MELANIA: {
+      negativePositionImpactFactor: exponentToFloat("5e-7"),
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
     },

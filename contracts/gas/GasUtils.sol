@@ -84,7 +84,9 @@ library GasUtils {
     function validateExecutionErrorGas(DataStore dataStore, bytes memory reasonBytes) internal view {
         // skip the validation if the execution did not fail due to an out of gas error
         // also skip the validation if this is not invoked in an estimateGas call (tx.origin != address(0))
-        if (reasonBytes.length != 0 || tx.origin != address(0)) { return; }
+        if (reasonBytes.length != 0 || tx.origin != address(0)) {
+            return;
+        }
 
         uint256 gas = gasleft();
         uint256 minHandleExecutionErrorGas = getMinHandleExecutionErrorGas(dataStore);
@@ -108,6 +110,7 @@ library GasUtils {
     // @param oraclePriceCount number of oracle prices
     // @param keeper the keeper to pay
     // @param refundReceiver the account that should receive any excess gas refunds
+    // @param isSubaccount whether the order is a subaccount order
     function payExecutionFee(
         DataStore dataStore,
         EventEmitter eventEmitter,
@@ -135,10 +138,7 @@ library GasUtils {
             executionFeeForKeeper = executionFee;
         }
 
-        bank.transferOutNativeToken(
-            keeper,
-            executionFeeForKeeper
-        );
+        bank.transferOutNativeToken(keeper, executionFeeForKeeper);
 
         emitKeeperExecutionFee(eventEmitter, keeper, executionFeeForKeeper);
 
@@ -150,17 +150,19 @@ library GasUtils {
         }
 
         address _wnt = dataStore.getAddress(Keys.WNT);
-        bank.transferOut(
-            _wnt,
-            address(this),
-            cache.refundFeeAmount
-        );
+        bank.transferOut(_wnt, address(this), cache.refundFeeAmount);
 
         IWNT(_wnt).withdraw(cache.refundFeeAmount);
 
         EventUtils.EventLogData memory eventData;
 
-        cache.refundWasSent = CallbackUtils.refundExecutionFee(dataStore, key, callbackContract, cache.refundFeeAmount, eventData);
+        cache.refundWasSent = CallbackUtils.refundExecutionFee(
+            dataStore,
+            key,
+            callbackContract,
+            cache.refundFeeAmount,
+            eventData
+        );
 
         if (cache.refundWasSent) {
             emitExecutionFeeRefundCallback(eventEmitter, callbackContract, cache.refundFeeAmount);
@@ -175,19 +177,89 @@ library GasUtils {
     // @param estimatedGasLimit the estimated gas limit
     // @param executionFee the execution fee provided
     // @param oraclePriceCount
-    function validateExecutionFee(DataStore dataStore, uint256 estimatedGasLimit, uint256 executionFee, uint256 oraclePriceCount) internal view {
+    function validateExecutionFee(
+        DataStore dataStore,
+        uint256 estimatedGasLimit,
+        uint256 executionFee,
+        uint256 oraclePriceCount
+    ) internal view returns (uint256, uint256) {
         uint256 gasLimit = adjustGasLimitForEstimate(dataStore, estimatedGasLimit, oraclePriceCount);
         uint256 minExecutionFee = gasLimit * tx.gasprice;
         if (executionFee < minExecutionFee) {
             revert Errors.InsufficientExecutionFee(minExecutionFee, executionFee);
         }
+        return (gasLimit, minExecutionFee);
+    }
+
+    // @dev validate that the provided executionFee is sufficient based on the estimatedGasLimit
+    // @param dataStore DataStore
+    // @param estimatedGasLimit the estimated gas limit
+    // @param executionFee the execution fee provided
+    // @param oraclePriceCount
+    // @param shouldCapMaxExecutionFee whether to cap the max execution fee
+    function validateAndCapExecutionFee(
+        DataStore dataStore,
+        uint256 estimatedGasLimit,
+        uint256 executionFee,
+        uint256 oraclePriceCount,
+        bool shouldCapMaxExecutionFee
+    ) internal view returns (uint256, uint256) {
+        (uint256 gasLimit, uint256 minExecutionFee) = validateExecutionFee(dataStore, estimatedGasLimit, executionFee, oraclePriceCount);
+
+        if (!shouldCapMaxExecutionFee) {
+            return (executionFee, 0);
+        }
+        // a malicious subaccount could provide a large executionFee
+        // and receive most of it as a refund sent to a callbackContract
+        // capping the max execution fee by multiplier * gasLimit * basefee should limit the potential loss
+
+        // this capping should be applied for subaccount orders with a callbackContract if execution fee is increased
+        // i.e. there is no need to cap the max execution fee for previously created orders even if it's high because it has already been capped
+
+        // some blockchains may not support EIP-1559 and will return 0 for block.basefee
+        // also block.basefee is 0 inside eth_call and eth_estimateGas
+        uint256 basefee = block.basefee != 0 ? block.basefee : tx.gasprice;
+
+        uint256 maxExecutionFeeMultiplierFactor = dataStore.getUint(Keys.MAX_EXECUTION_FEE_MULTIPLIER_FACTOR);
+        uint256 maxExecutionFee = Precision.applyFactor(gasLimit * basefee, maxExecutionFeeMultiplierFactor);
+
+        if (maxExecutionFee < minExecutionFee) {
+            revert Errors.InvalidExecutionFee(executionFee, minExecutionFee, maxExecutionFee);
+        }
+
+        if (executionFee <= maxExecutionFee) {
+            return (executionFee, 0);
+        }
+
+        uint256 executionFeeDiff = executionFee - maxExecutionFee;
+        return (maxExecutionFee, executionFeeDiff);
+    }
+
+    function transferExcessiveExecutionFee(DataStore dataStore, EventEmitter eventEmitter, Bank bank, address account, uint256 executionFeeDiff) external {
+        address wnt = TokenUtils.wnt(dataStore);
+        address holdingAddress = dataStore.getAddress(Keys.HOLDING_ADDRESS);
+        bank.transferOut(wnt, holdingAddress, executionFeeDiff);
+
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "account", account);
+
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "executionFeeDiff", executionFeeDiff);
+
+        eventEmitter.emitEventLog1("ExcessiveExecutionFee", Cast.toBytes32(account), eventData);
     }
 
     // @dev adjust the gas usage to pay a small amount to keepers
     // @param dataStore DataStore
     // @param gasUsed the amount of gas used
     // @param oraclePriceCount number of oracle prices
-    function adjustGasUsage(DataStore dataStore, uint256 gasUsed, uint256 oraclePriceCount) internal view returns (uint256) {
+    function adjustGasUsage(
+        DataStore dataStore,
+        uint256 gasUsed,
+        uint256 oraclePriceCount
+    ) internal view returns (uint256) {
         // gas measurements are done after the call to withOraclePrices
         // withOraclePrices may consume a significant amount of gas
         // the baseGasLimit used to calculate the execution cost
@@ -209,7 +281,11 @@ library GasUtils {
     // the actual execution
     // @param dataStore DataStore
     // @param estimatedGasLimit the estimated gas limit
-    function adjustGasLimitForEstimate(DataStore dataStore, uint256 estimatedGasLimit, uint256 oraclePriceCount) internal view returns (uint256) {
+    function adjustGasLimitForEstimate(
+        DataStore dataStore,
+        uint256 estimatedGasLimit,
+        uint256 oraclePriceCount
+    ) internal view returns (uint256) {
         uint256 baseGasLimit = dataStore.getUint(Keys.ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1);
         baseGasLimit += dataStore.getUint(Keys.ESTIMATED_GAS_FEE_PER_ORACLE_PRICE) * oraclePriceCount;
         uint256 multiplierFactor = dataStore.getUint(Keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR);
@@ -266,7 +342,10 @@ library GasUtils {
     // @dev the estimated gas limit for deposits
     // @param dataStore DataStore
     // @param deposit the deposit to estimate the gas limit for
-    function estimateExecuteDepositGasLimit(DataStore dataStore, Deposit.Props memory deposit) internal view returns (uint256) {
+    function estimateExecuteDepositGasLimit(
+        DataStore dataStore,
+        Deposit.Props memory deposit
+    ) internal view returns (uint256) {
         uint256 gasPerSwap = dataStore.getUint(Keys.singleSwapGasLimitKey());
         uint256 swapCount = deposit.longTokenSwapPath().length + deposit.shortTokenSwapPath().length;
         uint256 gasForSwaps = swapCount * gasPerSwap;
@@ -277,7 +356,10 @@ library GasUtils {
     // @dev the estimated gas limit for withdrawals
     // @param dataStore DataStore
     // @param withdrawal the withdrawal to estimate the gas limit for
-    function estimateExecuteWithdrawalGasLimit(DataStore dataStore, Withdrawal.Props memory withdrawal) internal view returns (uint256) {
+    function estimateExecuteWithdrawalGasLimit(
+        DataStore dataStore,
+        Withdrawal.Props memory withdrawal
+    ) internal view returns (uint256) {
         uint256 gasPerSwap = dataStore.getUint(Keys.singleSwapGasLimitKey());
         uint256 swapCount = withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length;
         uint256 gasForSwaps = swapCount * gasPerSwap;
@@ -288,14 +370,20 @@ library GasUtils {
     // @dev the estimated gas limit for shifts
     // @param dataStore DataStore
     // @param shift the shift to estimate the gas limit for
-    function estimateExecuteShiftGasLimit(DataStore dataStore, Shift.Props memory shift) internal view returns (uint256) {
+    function estimateExecuteShiftGasLimit(
+        DataStore dataStore,
+        Shift.Props memory shift
+    ) internal view returns (uint256) {
         return dataStore.getUint(Keys.shiftGasLimitKey()) + shift.callbackGasLimit();
     }
 
     // @dev the estimated gas limit for orders
     // @param dataStore DataStore
     // @param order the order to estimate the gas limit for
-    function estimateExecuteOrderGasLimit(DataStore dataStore, Order.Props memory order) internal view returns (uint256) {
+    function estimateExecuteOrderGasLimit(
+        DataStore dataStore,
+        Order.Props memory order
+    ) internal view returns (uint256) {
         if (BaseOrderUtils.isIncreaseOrder(order.orderType())) {
             return estimateExecuteIncreaseOrderGasLimit(dataStore, order);
         }
@@ -314,15 +402,25 @@ library GasUtils {
     // @dev the estimated gas limit for increase orders
     // @param dataStore DataStore
     // @param order the order to estimate the gas limit for
-    function estimateExecuteIncreaseOrderGasLimit(DataStore dataStore, Order.Props memory order) internal view returns (uint256) {
+    function estimateExecuteIncreaseOrderGasLimit(
+        DataStore dataStore,
+        Order.Props memory order
+    ) internal view returns (uint256) {
         uint256 gasPerSwap = dataStore.getUint(Keys.singleSwapGasLimitKey());
-        return dataStore.getUint(Keys.increaseOrderGasLimitKey()) + gasPerSwap * order.swapPath().length + order.callbackGasLimit();
+        return
+            dataStore.getUint(Keys.increaseOrderGasLimitKey()) +
+            gasPerSwap *
+            order.swapPath().length +
+            order.callbackGasLimit();
     }
 
     // @dev the estimated gas limit for decrease orders
     // @param dataStore DataStore
     // @param order the order to estimate the gas limit for
-    function estimateExecuteDecreaseOrderGasLimit(DataStore dataStore, Order.Props memory order) internal view returns (uint256) {
+    function estimateExecuteDecreaseOrderGasLimit(
+        DataStore dataStore,
+        Order.Props memory order
+    ) internal view returns (uint256) {
         uint256 gasPerSwap = dataStore.getUint(Keys.singleSwapGasLimitKey());
         uint256 swapCount = order.swapPath().length;
         if (order.decreasePositionSwapType() != Order.DecreasePositionSwapType.NoSwap) {
@@ -335,15 +433,26 @@ library GasUtils {
     // @dev the estimated gas limit for swap orders
     // @param dataStore DataStore
     // @param order the order to estimate the gas limit for
-    function estimateExecuteSwapOrderGasLimit(DataStore dataStore, Order.Props memory order) internal view returns (uint256) {
+    function estimateExecuteSwapOrderGasLimit(
+        DataStore dataStore,
+        Order.Props memory order
+    ) internal view returns (uint256) {
         uint256 gasPerSwap = dataStore.getUint(Keys.singleSwapGasLimitKey());
-        return dataStore.getUint(Keys.swapOrderGasLimitKey()) + gasPerSwap * order.swapPath().length + order.callbackGasLimit();
+        return
+            dataStore.getUint(Keys.swapOrderGasLimitKey()) +
+            gasPerSwap *
+            order.swapPath().length +
+            order.callbackGasLimit();
     }
 
     // @dev the estimated gas limit for glv deposits
     // @param dataStore DataStore
     // @param deposit the deposit to estimate the gas limit for
-    function estimateExecuteGlvDepositGasLimit(DataStore dataStore, GlvDeposit.Props memory glvDeposit, uint256 marketCount) internal view returns (uint256) {
+    function estimateExecuteGlvDepositGasLimit(
+        DataStore dataStore,
+        GlvDeposit.Props memory glvDeposit,
+        uint256 marketCount
+    ) internal view returns (uint256) {
         // glv deposit execution gas consumption depends on the amount of markets
         uint256 gasPerGlvPerMarket = dataStore.getUint(Keys.glvPerMarketGasLimitKey());
         uint256 gasForGlvMarkets = gasPerGlvPerMarket * marketCount;
@@ -366,7 +475,11 @@ library GasUtils {
     // @dev the estimated gas limit for glv withdrawals
     // @param dataStore DataStore
     // @param withdrawal the withdrawal to estimate the gas limit for
-    function estimateExecuteGlvWithdrawalGasLimit(DataStore dataStore, GlvWithdrawal.Props memory glvWithdrawal, uint256 marketCount) internal view returns (uint256) {
+    function estimateExecuteGlvWithdrawalGasLimit(
+        DataStore dataStore,
+        GlvWithdrawal.Props memory glvWithdrawal,
+        uint256 marketCount
+    ) internal view returns (uint256) {
         // glv withdrawal execution gas consumption depends on the amount of markets
         uint256 gasPerGlvPerMarket = dataStore.getUint(Keys.glvPerMarketGasLimitKey());
         uint256 gasForGlvMarkets = gasPerGlvPerMarket * marketCount;
@@ -381,16 +494,11 @@ library GasUtils {
         return gasLimit + dataStore.getUint(Keys.withdrawalGasLimitKey()) + gasForSwaps;
     }
 
-
     function estimateExecuteGlvShiftGasLimit(DataStore dataStore) internal view returns (uint256) {
         return dataStore.getUint(Keys.glvShiftGasLimitKey());
     }
 
-    function emitKeeperExecutionFee(
-        EventEmitter eventEmitter,
-        address keeper,
-        uint256 executionFeeAmount
-    ) internal {
+    function emitKeeperExecutionFee(EventEmitter eventEmitter, address keeper, uint256 executionFeeAmount) internal {
         EventUtils.EventLogData memory eventData;
 
         eventData.addressItems.initItems(1);
@@ -399,18 +507,10 @@ library GasUtils {
         eventData.uintItems.initItems(1);
         eventData.uintItems.setItem(0, "executionFeeAmount", executionFeeAmount);
 
-        eventEmitter.emitEventLog1(
-            "KeeperExecutionFee",
-            Cast.toBytes32(keeper),
-            eventData
-        );
+        eventEmitter.emitEventLog1("KeeperExecutionFee", Cast.toBytes32(keeper), eventData);
     }
 
-    function emitExecutionFeeRefund(
-        EventEmitter eventEmitter,
-        address receiver,
-        uint256 refundFeeAmount
-    ) internal {
+    function emitExecutionFeeRefund(EventEmitter eventEmitter, address receiver, uint256 refundFeeAmount) internal {
         EventUtils.EventLogData memory eventData;
 
         eventData.addressItems.initItems(1);
@@ -419,11 +519,7 @@ library GasUtils {
         eventData.uintItems.initItems(1);
         eventData.uintItems.setItem(0, "refundFeeAmount", refundFeeAmount);
 
-        eventEmitter.emitEventLog1(
-            "ExecutionFeeRefund",
-            Cast.toBytes32(receiver),
-            eventData
-        );
+        eventEmitter.emitEventLog1("ExecutionFeeRefund", Cast.toBytes32(receiver), eventData);
     }
 
     function emitExecutionFeeRefundCallback(
@@ -439,10 +535,6 @@ library GasUtils {
         eventData.uintItems.initItems(1);
         eventData.uintItems.setItem(0, "refundFeeAmount", refundFeeAmount);
 
-        eventEmitter.emitEventLog1(
-            "ExecutionFeeRefundCallback",
-            Cast.toBytes32(callbackContract),
-            eventData
-        );
+        eventEmitter.emitEventLog1("ExecutionFeeRefundCallback", Cast.toBytes32(callbackContract), eventData);
     }
 }

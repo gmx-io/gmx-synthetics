@@ -30,10 +30,13 @@ library Errors {
     error InvalidBaseKey(bytes32 baseKey);
     error ConfigValueExceedsAllowedRange(bytes32 baseKey, uint256 value);
     error InvalidClaimableFactor(uint256 value);
+    error InvalidClaimableReductionFactor(uint256 value);
     error OracleProviderAlreadyExistsForToken(address token);
     error PriceFeedAlreadyExistsForToken(address token);
     error DataStreamIdAlreadyExistsForToken(address token);
     error MaxFundingFactorPerSecondLimitExceeded(uint256 maxFundingFactorPerSecond, uint256 limit);
+    error InvalidPositionImpactPoolDistributionRate(uint256 distributionAmount, uint256 positionImpactPoolAmount);
+    error MaxDataListLengthExceeded(uint256 dataLength, uint256 maxDataLength);
 
     // ContributorHandler errors
     error InvalidSetContributorPaymentInput(uint256 tokensLength, uint256 amountsLength);
@@ -76,15 +79,34 @@ library Errors {
     error GlvEnabledMarket(address glv, address market);
     error GlvNonZeroMarketBalance(address glv, address market);
     error GlvMaxMarketCountExceeded(address glv, uint256 glvMaxMarketCount);
-    error GlvMaxMarketTokenBalanceUsdExceeded(address glv, address market, uint256 maxMarketTokenBalanceUsd, uint256 marketTokenBalanceUsd);
-    error GlvMaxMarketTokenBalanceAmountExceeded(address glv, address market, uint256 maxMarketTokenBalanceAmount, uint256 marketTokenBalanceAmount);
-    error GlvInsufficientMarketTokenBalance(address glv, address market, uint256 marketTokenBalance, uint256 marketTokenAmount);
+    error GlvMaxMarketTokenBalanceUsdExceeded(
+        address glv,
+        address market,
+        uint256 maxMarketTokenBalanceUsd,
+        uint256 marketTokenBalanceUsd
+    );
+    error GlvMaxMarketTokenBalanceAmountExceeded(
+        address glv,
+        address market,
+        uint256 maxMarketTokenBalanceAmount,
+        uint256 marketTokenBalanceAmount
+    );
+    error GlvInsufficientMarketTokenBalance(
+        address glv,
+        address market,
+        uint256 marketTokenBalance,
+        uint256 marketTokenAmount
+    );
     error GlvMarketAlreadyExists(address glv, address market);
     error GlvInvalidLongToken(address glv, address provided, address expected);
     error GlvInvalidShortToken(address glv, address provided, address expected);
     // GlvShiftUtils
     error GlvShiftMaxPriceImpactExceeded(uint256 effectivePriceImpactFactor, uint256 glvMaxShiftPriceImpactFactor);
-    error GlvShiftIntervalNotYetPassed(uint256 currentTimestamp, uint256 lastGlvShiftExecutedAt, uint256 glvShiftMinInterval);
+    error GlvShiftIntervalNotYetPassed(
+        uint256 currentTimestamp,
+        uint256 lastGlvShiftExecutedAt,
+        uint256 glvShiftMinInterval
+    );
     // GlvFactory
     error GlvAlreadyExists(bytes32 salt, address glv);
     error GlvSymbolTooLong();
@@ -141,7 +163,12 @@ library Errors {
     // FeeHandler errors
     error InvalidBuybackToken(address buybackToken);
     error InvalidVersion(uint256 version);
-    error InsufficientBuybackOutputAmount(address feeToken, address buybackToken, uint256 outputAmount, uint256 minOutputAmount);
+    error InsufficientBuybackOutputAmount(
+        address feeToken,
+        address buybackToken,
+        uint256 outputAmount,
+        uint256 minOutputAmount
+    );
     error BuybackAndFeeTokenAreEqual(address feeToken, address buybackToken);
     error AvailableFeeAmountIsZero(address feeToken, address buybackToken, uint256 availableFeeAmount);
     error MaxBuybackPriceAgeExceeded(uint256 priceTimestamp, uint256 buybackMaxPriceAge, uint256 currentTimestamp);
@@ -151,9 +178,15 @@ library Errors {
     error InsufficientExecutionFee(uint256 minExecutionFee, uint256 executionFee);
     error InsufficientWntAmountForExecutionFee(uint256 wntAmount, uint256 executionFee);
     error InsufficientExecutionGasForErrorHandling(uint256 startingGas, uint256 minHandleErrorGas);
-    error InsufficientExecutionGas(uint256 startingGas, uint256 estimatedGasLimit, uint256 minAdditionalGasForExecution);
+    error InsufficientExecutionGas(
+        uint256 startingGas,
+        uint256 estimatedGasLimit,
+        uint256 minAdditionalGasForExecution
+    );
     error InsufficientHandleExecutionErrorGas(uint256 gas, uint256 minHandleExecutionErrorGas);
     error InsufficientGasForCancellation(uint256 gas, uint256 minHandleExecutionErrorGas);
+    error InsufficientGasForAutoCancellation(uint256 gas, uint256 minHandleExecutionErrorGas);
+    error InvalidExecutionFee(uint256 executionFee, uint256 minExecutionFee, uint256 maxExecutionFee);
 
     // MarketFactory errors
     error MarketAlreadyExists(bytes32 salt, address existingMarketAddress);
@@ -188,14 +221,24 @@ library Errors {
     error InvalidUiFeeFactor(uint256 uiFeeFactor, uint256 maxUiFeeFactor);
     error EmptyAddressInMarketTokenBalanceValidation(address market, address token);
     error InvalidMarketTokenBalance(address market, address token, uint256 balance, uint256 expectedMinBalance);
-    error InvalidMarketTokenBalanceForCollateralAmount(address market, address token, uint256 balance, uint256 collateralAmount);
-    error InvalidMarketTokenBalanceForClaimableFunding(address market, address token, uint256 balance, uint256 claimableFundingFeeAmount);
+    error InvalidMarketTokenBalanceForCollateralAmount(
+        address market,
+        address token,
+        uint256 balance,
+        uint256 collateralAmount
+    );
+    error InvalidMarketTokenBalanceForClaimableFunding(
+        address market,
+        address token,
+        uint256 balance,
+        uint256 claimableFundingFeeAmount
+    );
     error UnexpectedPoolValue(int256 poolValue);
 
     // Oracle errors
     error SequencerDown();
     error SequencerGraceDurationNotYetPassed(uint256 timeSinceUp, uint256 sequencerGraceDuration);
-    error EmptyValidatedPrices();
+    error EmptyValidatedPrices(); // not used, kept for compatibility
     error InvalidOracleProvider(address provider);
     error InvalidOracleProviderForToken(address provider, address expectedProvider);
     error GmEmptySigner(uint256 signerIndex);
@@ -247,20 +290,26 @@ library Errors {
     error EmptyPrimaryPrice(address token);
 
     error OracleTimestampsAreSmallerThanRequired(uint256 minOracleTimestamp, uint256 expectedTimestamp);
-    error OracleTimestampsAreLargerThanRequestExpirationTime(uint256 maxOracleTimestamp, uint256 requestTimestamp, uint256 requestExpirationTime);
+    error OracleTimestampsAreLargerThanRequestExpirationTime(
+        uint256 maxOracleTimestamp,
+        uint256 requestTimestamp,
+        uint256 requestExpirationTime
+    );
 
     // BaseOrderUtils errors
     error EmptyOrder();
     error UnsupportedOrderType(uint256 orderType);
-    error InvalidOrderPrices(
-        uint256 primaryPriceMin,
-        uint256 primaryPriceMax,
-        uint256 triggerPrice,
-        uint256 orderType
-    );
+    error UnsupportedOrderTypeForAutoCancellation(uint256 orderType);
+    error InvalidOrderPrices(uint256 primaryPriceMin, uint256 primaryPriceMax, uint256 triggerPrice, uint256 orderType);
     error EmptySizeDeltaInTokens();
     error PriceImpactLargerThanOrderSize(int256 priceImpactUsd, uint256 sizeDeltaUsd);
-    error NegativeExecutionPrice(int256 executionPrice, uint256 price, uint256 positionSizeInUsd, int256 priceImpactUsd, uint256 sizeDeltaUsd);
+    error NegativeExecutionPrice(
+        int256 executionPrice,
+        uint256 price,
+        uint256 positionSizeInUsd,
+        int256 priceImpactUsd,
+        uint256 sizeDeltaUsd
+    );
     error OrderNotFulfillableAtAcceptablePrice(uint256 price, uint256 acceptablePrice);
     error OrderValidFromTimeNotReached(uint256 validFromTime, uint256 currentTimestamp);
 
@@ -270,7 +319,10 @@ library Errors {
     // OrderUtils errors
     error OrderTypeCannotBeCreated(uint256 orderType);
     error OrderAlreadyFrozen();
-    error MaxTotalCallbackGasLimitForAutoCancelOrdersExceeded(uint256 totalCallbackGasLimit, uint256 maxTotalCallbackGasLimit);
+    error MaxTotalCallbackGasLimitForAutoCancelOrdersExceeded(
+        uint256 totalCallbackGasLimit,
+        uint256 maxTotalCallbackGasLimit
+    );
     error InvalidReceiver(address receiver);
     error UnexpectedValidFromTime(uint256 orderType);
 
@@ -353,10 +405,15 @@ library Errors {
 
     // SubaccountRouter errors
     error InvalidReceiverForSubaccountOrder(address receiver, address expectedReceiver);
+    error InvalidCancellationReceiverForSubaccountOrder(
+        address cancellationReceiver,
+        address expectedCancellationReceiver
+    );
 
     // SubaccountUtils errors
     error SubaccountNotAuthorized(address account, address subaccount);
     error MaxSubaccountActionCountExceeded(address account, address subaccount, uint256 count, uint256 maxCount);
+    error SubaccountApprovalExpired(address account, address subaccount, uint256 deadline, uint256 currentTimestamp);
 
     // TokenUtils errors
     error TokenTransferError(address token, address receiver, uint256 amount);
@@ -368,26 +425,14 @@ library Errors {
     // AccountUtils errors
     error EmptyAccount();
     error EmptyReceiver();
+    error DataListLengthExceeded();
 
     // Array errors
-    error CompactedArrayOutOfBounds(
-        uint256[] compactedValues,
-        uint256 index,
-        uint256 slotIndex,
-        string label
-    );
+    error CompactedArrayOutOfBounds(uint256[] compactedValues, uint256 index, uint256 slotIndex, string label);
 
-    error ArrayOutOfBoundsUint256(
-        uint256[] values,
-        uint256 index,
-        string label
-    );
+    error ArrayOutOfBoundsUint256(uint256[] values, uint256 index, string label);
 
-    error ArrayOutOfBoundsBytes(
-        bytes[] values,
-        uint256 index,
-        string label
-    );
+    error ArrayOutOfBoundsBytes(bytes[] values, uint256 index, string label);
 
     // WithdrawalHandler errors
     error SwapsNotAllowedForAtomicWithdrawal(uint256 longTokenSwapPathLength, uint256 shortTokenSwapPathLength);
@@ -401,7 +446,6 @@ library Errors {
     error MinLongTokens(uint256 received, uint256 expected);
     error MinShortTokens(uint256 received, uint256 expected);
     error InsufficientMarketTokens(uint256 balance, uint256 expected);
-    error InsufficientWntAmount(uint256 wntAmount, uint256 executionFee);
     error InvalidPoolValueForWithdrawal(int256 poolValue);
 
     // Uint256Mask errors
@@ -421,6 +465,28 @@ library Errors {
     // Reader errors
     error EmptyMarketPrice(address market);
 
+    // Multichain errors
+    error EmptyMultichainDepositAmount();
+    error EmptyMultichainWithdrawalAmount();
+    error InsufficientMultichainBalance();
+
+    // Gelato relay errors
+    error InvalidSignature(string signatureType);
+    // User sent incorrect fee token or incorrect swap path
+    error UnexpectedRelayFeeTokenAfterSwap(address feeToken, address expectedFeeToken);
+    error UnexpectedRelayFeeToken(address feeToken, address expectedFeeToken);
+    // Contract received unsupported fee token from Gelato relay
+    error UnsupportedRelayFeeToken(address feeToken, address expectedFeeToken);
+    error InvalidPermitSpender(address spender, address expectedSpender);
+    error InvalidUserNonce(uint256 storedUserNonce, uint256 userNonce);
+    error SubaccountApprovalDeadlinePassed(uint256 currentTimestamp, uint256 deadline);
+    error InvalidSubaccountApprovalNonce(uint256 storedNonce, uint256 nonce);
+    error DeadlinePassed(uint256 currentTimestamp, uint256 deadline);
+    error InsufficientRelayFee(uint256 requiredRelayFee, uint256 feeAmount);
+    error InvalidSubaccountApprovalSubaccount();
+    error NonEmptyExternalCallsForSubaccountOrder();
+    error InvalidRelayParams();
+
     // MultichainReader errors
     error InsufficientMultichainNativeFee(uint256 msgValue);
     error EmptyPeer(uint32 eid);
@@ -435,10 +501,22 @@ library Errors {
     error WntReferralRewardsInUsdThresholdBreached(uint256 wntReferralRewardsInUsd, uint256 maxWntReferralRewardsInUsd);
     error WntReferralRewardsThresholdBreached(uint256 wntReferralRewards, uint256 maxWntReferralRewards);
     error EsGmxReferralRewardsThresholdBreached(uint256 referralRewardsEsGmxAmount, uint256 maxEsGmxReferralRewards);
-    error TreasuryFeeThresholdBreached(uint256 treasuryWntAmount, uint256 wntGlpShortfall, uint256 maxTreasuryWntShortfall);
-    error KeeperArrayLengthMismatch(uint256 keepersLength, uint256 keeperTargetBalancesLength, uint256 keeperVersionsLength);
+    error TreasuryFeeThresholdBreached(
+        uint256 treasuryWntAmount,
+        uint256 wntGlpShortfall,
+        uint256 maxTreasuryWntShortfall
+    );
+    error KeeperArrayLengthMismatch(
+        uint256 keepersLength,
+        uint256 keeperTargetBalancesLength,
+        uint256 keeperVersionsLength
+    );
     error SendEthToKeeperFailed(address keeper, uint256 sendAmount, bytes result);
-    error AttemptedBridgeAmountTooHigh(uint256 minRequiredFeeAmount, uint256 feeAmountCurrentChain, uint256 amountToBridgeOut);
+    error AttemptedBridgeAmountTooHigh(
+        uint256 minRequiredFeeAmount,
+        uint256 feeAmountCurrentChain,
+        uint256 amountToBridgeOut
+    );
     error ReferralRewardsArrayMismatch(address token, uint256 addressArrayLength, uint256 amountArrayLength);
     error ReferralRewardsAmountExceedsMaxBatchSize(address token, uint256 addressArrayLength, uint256 maxBatchSize);
 }

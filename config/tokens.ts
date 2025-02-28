@@ -565,6 +565,82 @@ const config: {
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
     },
+    FARTCOIN: {
+      synthetic: true,
+      decimals: 6, // https://solscan.io/token/9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x00030e00d1ce95c5749cb258e583b96d072ca103d4552cda2593c96fca954c16",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      // Chainlink on-chain feed not available
+    },
+    AI16Z: {
+      synthetic: true,
+      decimals: 9, // https://solscan.io/token/HeLp6NuQkmYB4pYWo2zYs22mESHXPQYzXbB8n4V98jwC
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003aa72a9b718ab413209e03abb04233846991294336169fc6a7a03081adb70",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      // Chainlink on-chain feed not available
+    },
+    LDO: {
+      synthetic: true,
+      decimals: 18, // https://etherscan.io/address/0x5a98fcbea516cf06857215779fd812ca3bef1b32#readContract
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003fa5285b58655299e2bd92df12b3352209b3e460aea3c170eb9a96c8ceb1c",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0xA43A34030088E6510FecCFb77E88ee5e7ed0fE64",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+    },
+    BERA: {
+      synthetic: true,
+      decimals: 18, // https://docs.berachain.com/learn/pol/tokens/tokenomics#overview
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003c800d35ffd2dbac08e275530d56e254ef08aaacacaa8e84dfc4a615504db",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      // Chainlink on-chain feed not available
+    },
+    VIRTUAL: {
+      synthetic: true,
+      decimals: 18, // 18 decimals on Etherscan --> https://etherscan.io/address/0x44ff8620b8ca30902395a7bd3f2407e1a091bf73#readContract, 9 decimals on Solscan --> https://solscan.io/token/3iQL8BFS2vE7mww4ehAqQHAsbmRNCrPxizWAT2Zfyr9y
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x000385c20fe1d88dfbf4629f188bf03ee004a034c844ec31dbf57d197adade89",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      // Chainlink on-chain feed not available
+    },
+    PENGU: {
+      synthetic: true,
+      decimals: 6, // https://solscan.io/token/2zMMhcVQEXDtdE6vsFS7S7D5oUodfJHE8vd1gnBouauv
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003558c1d478ac27b1acf078f7acf3a69bba77af948db5dd2499286e566a2f8",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      // Chainlink on-chain feed not available
+    },
+    ONDO: {
+      synthetic: true,
+      decimals: 18, // https://etherscan.io/address/0xfaba6f8e4a5e8ab82f62fe7c39859fa577269be3#readContract
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x000380ec05b354a41eddf993234e7fb62bb1a39b1d63ada55a43bb2ef210de4a",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      // Chainlink on-chain feed not available
+    },
+    FET: {
+      synthetic: true,
+      decimals: 18, // https://etherscan.io/token/0xaea46a60368a7bd060eec7df8cba43b7ef41ad85#readContract
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x000358ef51a7e155fda776c7bd79145631fa32d2b5285bb43c9f32dafed0a527",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      // Chainlink on-chain feed not available
+    },
     AAVE: {
       address: "0xba5ddd1f9d7f570dc94a51479a000e3bce967196",
       decimals: 18,
@@ -655,6 +731,15 @@ const config: {
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
       buybackMaxPriceImpactFactor: MID_BUYBACK_IMPACT,
+    },
+    ANIME: {
+      address: "0x37a645648df29205c6261289983fb04ecd70b4b3",
+      decimals: 18, // https://arbiscan.io/address/0x37a645648df29205c6261289983fb04ecd70b4b3#readContract
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003f41975760eb180ad9f92ea069bbee557c655d6606884a5d810f42b22ee08",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      // Chainlink on-chain feed not available
     },
     USDC: {
       address: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
@@ -787,6 +872,32 @@ const config: {
       dataStreamFeedId: "0x00033a4f1021830ac0e7b7a03f70ed56fecb0ac2a10c8ea5328c240c847b71f3",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
+    },
+    TRUMP: {
+      synthetic: true,
+      decimals: 6, // https://solscan.io/token/6p6xgHyF7AeE6TZkSmFsko444wqoP15icUSqi2jfGiPN
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003eae10f93ab9aeb6d1aa757b07938eed75a0d09cbe15df8521dc3d6bfb633",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x0000000000000000000000000000000000000000",
+        decimals: 0,
+        heartbeatDuration: 0,
+      },
+    },
+    MELANIA: {
+      synthetic: true,
+      decimals: 6, // https://solscan.io/token/FUAfBo2jgks6gB4Z4LfZkqSZgzNucisEHqnNebaRxM1P
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x000334e8e9fd64bd9068f44e7779f9b6437c86b1c148549d026c00b3a642caeb",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x0000000000000000000000000000000000000000",
+        decimals: 0,
+        heartbeatDuration: 0,
+      },
     },
     WAVAX: {
       address: "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",
@@ -1268,6 +1379,10 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<TokensCo
 
     if (token.oracleType === undefined) {
       token.oracleType = TOKEN_ORACLE_TYPES.DEFAULT;
+    }
+
+    if (token.dataStreamSpreadReductionFactor === undefined) {
+      token.dataStreamSpreadReductionFactor = percentageToFloat("50%");
     }
   }
 

@@ -117,6 +117,7 @@ const config: HardhatUserConfig = {
   networks: {
     hardhat: {
       saveDeployments: true,
+      // allowUnlimitedContractSize: true,
       // forking: {
       //   url: `https://rpc.ankr.com/avalanche`,
       //   blockNumber: 33963320,

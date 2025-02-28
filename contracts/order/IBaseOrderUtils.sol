@@ -14,6 +14,7 @@ interface IBaseOrderUtils {
     // @param decreasePositionSwapType for order.decreasePositionSwapType
     // @param isLong for order.isLong
     // @param shouldUnwrapNativeToken for order.shouldUnwrapNativeToken
+    // @note all params except should be part of the corresponding struct hash in all relay contracts
     struct CreateOrderParams {
         CreateOrderParamsAddresses addresses;
         CreateOrderParamsNumbers numbers;
@@ -23,8 +24,10 @@ interface IBaseOrderUtils {
         bool shouldUnwrapNativeToken;
         bool autoCancel;
         bytes32 referralCode;
+        bytes32[] dataList;
     }
 
+    // @note all params except should be part of the corresponding struct hash in all relay contracts
     struct CreateOrderParamsAddresses {
         address receiver;
         address cancellationReceiver;
@@ -42,6 +45,7 @@ interface IBaseOrderUtils {
     // @param callbackGasLimit for order.callbackGasLimit
     // @param minOutputAmount for order.minOutputAmount
     // @param validFromTime for order.validFromTime
+    // @note all params except should be part of the corresponding struct hash in all relay contracts
     struct CreateOrderParamsNumbers {
         uint256 sizeDeltaUsd;
         uint256 initialCollateralDeltaAmount;

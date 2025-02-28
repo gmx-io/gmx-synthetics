@@ -6,7 +6,11 @@ import "../order/IBaseOrderUtils.sol";
 import "../oracle/OracleUtils.sol";
 
 interface IOrderHandler {
-    function createOrder(address account, IBaseOrderUtils.CreateOrderParams calldata params) external returns (bytes32);
+    function createOrder(
+        address account,
+        IBaseOrderUtils.CreateOrderParams calldata params,
+        bool shouldCapMaxExecutionFee
+    ) external returns (bytes32);
 
     function simulateExecuteOrder(bytes32 key, OracleUtils.SimulatePricesParams memory params) external;
 
@@ -18,7 +22,8 @@ interface IOrderHandler {
         uint256 minOutputAmount,
         uint256 validFromTime,
         bool autoCancel,
-        Order.Props memory order
+        Order.Props memory order,
+        bool shouldCapMaxExecutionFee
     ) external;
 
     function cancelOrder(bytes32 key) external;

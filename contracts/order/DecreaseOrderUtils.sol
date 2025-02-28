@@ -109,7 +109,8 @@ library DecreaseOrderUtils {
                 0,
                 order.receiver(),
                 order.uiFeeReceiver(),
-                order.shouldUnwrapNativeToken()
+                order.shouldUnwrapNativeToken(),
+                ISwapPricingUtils.SwapPricingType.Swap
             )
         ) returns (address tokenOut, uint256 swapOutputAmount) {
             _validateOutputAmount(

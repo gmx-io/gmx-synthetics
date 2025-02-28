@@ -68,7 +68,8 @@ library SwapOrderUtils {
             params.order.minOutputAmount(),
             params.order.receiver(),
             params.order.uiFeeReceiver(),
-            params.order.shouldUnwrapNativeToken()
+            params.order.shouldUnwrapNativeToken(),
+            ISwapPricingUtils.SwapPricingType.Swap
         ));
 
         EventUtils.EventLogData memory eventData;
