@@ -3,12 +3,13 @@
 pragma solidity ^0.8.0;
 
 import "./MultichainRouter.sol";
+import "../position/PositionStoreUtils.sol";
 
 contract MultichainOrderRouter is MultichainRouter {
+    using Order for Order.Props;
+    using Position for Position.Props;
 
     constructor(BaseConstructorParams memory params) MultichainRouter(params) {}
-
-    // TODO: handle partial fee payment
 
     function createOrder(
         RelayUtils.RelayParams calldata relayParams,
@@ -40,6 +41,8 @@ contract MultichainOrderRouter is MultichainRouter {
         bytes32 structHash = RelayUtils.getUpdateOrderStructHash(relayParams, key, params, increaseExecutionFee);
         _validateCall(relayParams, account, structHash, srcChainId);
 
+        _handleFeePayment(relayParams, account, srcChainId, key);
+
         _updateOrder(relayParams, account, key, params, increaseExecutionFee, false);
     }
 
@@ -55,6 +58,74 @@ contract MultichainOrderRouter is MultichainRouter {
         bytes32 structHash = RelayUtils.getCancelOrderStructHash(relayParams, key);
         _validateCall(relayParams, account, structHash, srcChainId);
 
+        _handleFeePayment(relayParams, account, srcChainId, key);
+
         _cancelOrder(relayParams, account, key, false /* isSubaccount */);
+    }
+
+    function _handleFeePayment(
+        RelayUtils.RelayParams calldata relayParams,
+        address account,
+        uint256 srcChainId,
+        bytes32 key
+    ) internal {
+        // check if user has sufficient Multichain balance to pay for fee
+        uint256 balance = MultichainUtils.getMultichainBalanceAmount(dataStore, account, relayParams.fee.feeToken);
+        if (balance >= relayParams.fee.feeAmount) {
+            return;
+        }
+
+        Order.Props memory order = OrderStoreUtils.get(dataStore, key);
+        bytes32 positionKey = Position.getPositionKey(
+            order.account(),
+            order.market(),
+            order.initialCollateralToken(),
+            order.isLong()
+        );
+        Position.Props memory position = PositionStoreUtils.get(dataStore, positionKey);
+
+        if (relayParams.fee.feeToken != position.collateralToken()) {
+            revert Errors.UnableToPayOrderFee();
+        }
+
+        if (BaseOrderUtils.isSwapOrder(order.orderType())) {
+            revert Errors.UnableToPayOrderFee();
+        }
+
+        uint256 unpaidAmount = relayParams.fee.feeAmount - balance;
+
+        // First try to deduct from order collateral
+        uint256 initialCollateralDeltaAmount = order.initialCollateralDeltaAmount();
+        if (initialCollateralDeltaAmount > 0) {
+            uint256 deductFromOrder = initialCollateralDeltaAmount > unpaidAmount
+                ? unpaidAmount
+                : initialCollateralDeltaAmount;
+
+            unpaidAmount -= deductFromOrder;
+            dataStore.setUint(
+                keccak256(abi.encode(key, OrderStoreUtils.INITIAL_COLLATERAL_DELTA_AMOUNT)),
+                initialCollateralDeltaAmount - deductFromOrder
+            );
+            orderVault.transferOut(relayParams.fee.feeToken, address(multichainVault), deductFromOrder);
+            MultichainUtils.recordTransferIn(dataStore, eventEmitter, multichainVault, relayParams.fee.feeToken, account, srcChainId);
+
+            if (unpaidAmount == 0) {
+                return;
+            }
+        }
+
+        // Second try to deduct from position collateral
+        uint256 positionCollateralAmount = position.collateralAmount();
+        if (positionCollateralAmount < unpaidAmount) {
+            revert Errors.UnableToPayOrderFeeFromCollateral();
+        }
+
+        position.setCollateralAmount(positionCollateralAmount - unpaidAmount);
+            dataStore.setUint(
+            keccak256(abi.encode(key, PositionStoreUtils.COLLATERAL_AMOUNT)),
+            positionCollateralAmount
+        );
+        orderVault.transferOut(relayParams.fee.feeToken, address(multichainVault), unpaidAmount);
+        MultichainUtils.recordTransferIn(dataStore, eventEmitter, multichainVault, relayParams.fee.feeToken, account, srcChainId);
     }
 }
