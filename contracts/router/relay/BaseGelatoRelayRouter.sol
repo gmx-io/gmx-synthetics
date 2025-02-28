@@ -16,13 +16,14 @@ import "../../oracle/OracleModule.sol";
 import "../../order/IBaseOrderUtils.sol";
 import "../../order/OrderStoreUtils.sol";
 import "../../order/OrderVault.sol";
+import "../../router/BaseRouter.sol";
 import "../../router/Router.sol";
 import "../../swap/SwapUtils.sol";
 import "../../token/TokenUtils.sol";
 
 import "./RelayUtils.sol";
 
-abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, OracleModule {
+abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, OracleModule, BaseRouter {
     using Order for Order.Props;
 
     struct Contracts {
@@ -33,9 +34,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
     IOrderHandler public immutable orderHandler;
     OrderVault public immutable orderVault;
-    Router public immutable router;
-    DataStore public immutable dataStore;
-    EventEmitter public immutable eventEmitter;
     IExternalHandler public immutable externalHandler;
 
     bytes32 public constant DOMAIN_SEPARATOR_TYPEHASH =
@@ -47,9 +45,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     mapping(address => uint256) public userNonces;
 
     constructor(
-        Router _router,
-        DataStore _dataStore,
-        EventEmitter _eventEmitter,
         Oracle _oracle,
         IOrderHandler _orderHandler,
         OrderVault _orderVault,
@@ -57,9 +52,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     ) OracleModule(_oracle) {
         orderHandler = _orderHandler;
         orderVault = _orderVault;
-        router = _router;
-        dataStore = _dataStore;
-        eventEmitter = _eventEmitter;
         externalHandler = _externalHandler;
     }
 

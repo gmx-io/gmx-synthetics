@@ -24,7 +24,7 @@ contract MultichainGmRouter is MultichainRouter {
         WithdrawalVault _withdrawalVault,
         WithdrawalHandler _withdrawalHandler,
         ShiftVault _shiftVault
-    ) MultichainRouter(params) {
+    ) MultichainRouter(params) BaseRouter(params.router, params.roleStore, params.dataStore, params.eventEmitter) {
         depositVault = _depositVault;
         depositHandler = _depositHandler;
         withdrawalVault = _withdrawalVault;

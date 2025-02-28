@@ -3,6 +3,7 @@ import { createDeployFunction } from "../utils/deploy";
 
 const baseConstructorContracts = [
   "Router",
+  "RoleStore",
   "DataStore",
   "EventEmitter",
   "Oracle",
@@ -20,6 +21,7 @@ const func = createDeployFunction({
   getDeployArgs: async ({ dependencyContracts }) => {
     const baseParams = {
       router: dependencyContracts.Router.address,
+      roleStore: dependencyContracts.RoleStore.address,
       dataStore: dependencyContracts.DataStore.address,
       eventEmitter: dependencyContracts.EventEmitter.address,
       oracle: dependencyContracts.Oracle.address,

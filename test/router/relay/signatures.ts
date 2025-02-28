@@ -18,6 +18,7 @@ describe("Relay signatures", () => {
     orderHandler,
     orderVault,
     router,
+    roleStore,
     marketStoreUtils,
     orderStoreUtils,
     swapUtils,
@@ -32,6 +33,7 @@ describe("Relay signatures", () => {
       dataStore,
       orderVault,
       router,
+      roleStore,
       eventEmitter,
       oracle,
       orderHandler,
@@ -48,6 +50,7 @@ describe("Relay signatures", () => {
       "MockGelatoRelayRouter",
       [
         router.address,
+        roleStore.address,
         dataStore.address,
         eventEmitter.address,
         oracle.address,

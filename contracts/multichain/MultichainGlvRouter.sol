@@ -16,7 +16,7 @@ contract MultichainGlvRouter is MultichainRouter {
         BaseConstructorParams memory params,
         GlvHandler _glvHandler,
         GlvVault _glvVault
-    ) MultichainRouter(params) {
+    ) MultichainRouter(params) BaseRouter(params.router, params.roleStore, params.dataStore, params.eventEmitter) {
         glvHandler = _glvHandler;
         glvVault = _glvVault;
     }

@@ -10,6 +10,7 @@ abstract contract MultichainRouter is BaseGelatoRelayRouter {
 
     struct BaseConstructorParams {
         Router router;
+        RoleStore roleStore;
         DataStore dataStore;
         EventEmitter eventEmitter;
         Oracle oracle;
@@ -25,9 +26,6 @@ abstract contract MultichainRouter is BaseGelatoRelayRouter {
         BaseConstructorParams memory params
     )
         BaseGelatoRelayRouter(
-            params.router,
-            params.dataStore,
-            params.eventEmitter,
             params.oracle,
             params.orderHandler,
             params.orderVault,

@@ -9,7 +9,9 @@ contract MultichainOrderRouter is MultichainRouter {
     using Order for Order.Props;
     using Position for Position.Props;
 
-    constructor(BaseConstructorParams memory params) MultichainRouter(params) {}
+    constructor(
+        BaseConstructorParams memory params
+    ) MultichainRouter(params) BaseRouter(params.router, params.roleStore, params.dataStore, params.eventEmitter) {}
 
     function createOrder(
         RelayUtils.RelayParams calldata relayParams,

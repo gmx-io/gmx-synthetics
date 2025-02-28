@@ -6,10 +6,13 @@ import "./MultichainRouter.sol";
 import "./MultichainUtils.sol";
 import "./IMultichainProvider.sol";
 
-contract MultichainTransferRouter is MultichainRouter { // TODO: inherit BaseRouter for bridgeIn multicall
+contract MultichainTransferRouter is MultichainRouter {
     IMultichainProvider multichainProvider;
 
-    constructor(BaseConstructorParams memory params, IMultichainProvider _multichainProvider) MultichainRouter(params) {
+    constructor(
+        BaseConstructorParams memory params,
+        IMultichainProvider _multichainProvider
+    ) MultichainRouter(params) BaseRouter(params.router, params.roleStore, params.dataStore, params.eventEmitter) {
         multichainProvider = _multichainProvider;
     }
 
