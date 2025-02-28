@@ -12,7 +12,6 @@ import {OracleStore} from "../oracle/OracleStore.sol";
 import {RoleStore} from "../role/RoleStore.sol";
 import {Precision} from "../utils/Precision.sol";
 import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
-import {ITimelockController} from "./ITimelockController.sol";
 
 contract ConfigTimelockController is TimelockController {
 
@@ -21,31 +20,5 @@ contract ConfigTimelockController is TimelockController {
         address[] memory proposers,
         address[] memory executors
     ) TimelockController(minDelay, proposers, executors, msg.sender) {}
-
-    function signal(address target, bytes calldata payload) external override onlyRole(PROPOSER_ROLE) {
-        schedule(
-            target,
-            0,
-            payload,
-            0,
-            0,
-            getMinDelay()
-        );
-    }
-
-    function signalBatch(
-        address[] calldata targets,
-        bytes[] calldata payloads,
-        uint256[] calldata values
-    ) external override onlyRole(PROPOSER_ROLE) {
-        scheduleBatch(
-            targets,
-            values,
-            payloads,
-            0,
-            0,
-            getMinDelay()
-        );
-    }
 
 }

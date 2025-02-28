@@ -157,7 +157,7 @@ library ReferralUtils {
         address token,
         address account,
         address receiver
-    ) external returns (uint256) {
+    ) public returns (uint256) {
         bytes32 key = Keys.affiliateRewardKey(market, token, account);
 
         uint256 rewardAmount = dataStore.getUint(key);

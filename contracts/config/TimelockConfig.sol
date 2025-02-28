@@ -2,18 +2,15 @@
 
 pragma solidity ^0.8.0;
 
-import {DataStore} from "../data/DataStore.sol";
 import {Keys} from "../data/Keys.sol";
 import {Errors} from "../error/Errors.sol";
 import {EventEmitter} from "../event/EventEmitter.sol";
 import {EventUtils} from "../event/EventUtils.sol";
-import {OracleStore} from "../oracle/OracleStore.sol";
+import {RoleModule} from "../role/RoleModule.sol";
 import {RoleStore} from "../role/RoleStore.sol";
+import {BasicMulticall} from "../utils/BasicMulticall.sol";
 import {Precision} from "../utils/Precision.sol";
 import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
-import "../utils/BasicMulticall.sol";
-import "./ITimelockController.sol";
-import "../role/RoleModule.sol";
 
 contract TimelockConfig is RoleModule, BasicMulticall {
     using EventUtils for EventUtils.AddressItems;
@@ -27,7 +24,7 @@ contract TimelockConfig is RoleModule, BasicMulticall {
     uint256 public constant MAX_TIMELOCK_DELAY = 5 days;
 
     EventEmitter public immutable eventEmitter;
-    ITimelockController public immutable timelockController;
+    TimelockController public immutable timelockController;
 
     address public immutable dataStore;
     address public immutable oracleStore;
@@ -37,7 +34,7 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         address _dataStore,
         address _oracleStore,
         RoleStore _roleStore,
-        ITimelockController _timelockController
+        TimelockController _timelockController
     ) RoleModule(_roleStore) {
         eventEmitter = _eventEmitter;
         dataStore = _dataStore;
@@ -49,8 +46,8 @@ contract TimelockConfig is RoleModule, BasicMulticall {
     // @param account the account to grant the role
     // @param roleKey the role to grant
     function signalGrantRole(address account, bytes32 roleKey) external onlyTimelockAdmin {
-        bytes memory callData = abi.encodeWithSignature("grantRole(address,bytes32)", account, roleKey);
-        timelockController.signal(address(roleStore), callData);
+        bytes memory payload = abi.encodeWithSignature("grantRole(address,bytes32)", account, roleKey);
+        timelockController.schedule(address(roleStore), 0, payload, 0, 0, timelockController.getMinDelay());
 
         EventUtils.EventLogData memory eventData;
         eventData.addressItems.initItems(1);
@@ -63,18 +60,47 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         );
     }
 
-    // @dev signal granting of a role
-    // @param account the account to grant the role
-    // @param roleKey the role to grant
-    function grantRole(address account, bytes32 roleKey) external onlyTimelockAdmin {
-        bytes memory callData = abi.encodeWithSignature("grantRole(address,bytes32)", account, roleKey);
-        timelockController.execute(address(roleStore), 0, callData, 0, 0);
+    // @dev signal revoking of a role
+    // @param account the account to revoke the role for
+    // @param roleKey the role to revoke
+    function signalRevokeRole(address account, bytes32 roleKey) external onlyTimelockAdmin {
+
+        bytes memory payload = abi.encodeWithSignature("revokeRole(address,bytes32)",
+            account, roleKey);
+        timelockController.schedule(address(roleStore), 0, payload, 0, 0, timelockController.getMinDelay());
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "account", account);
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "roleKey", roleKey);
+        eventEmitter.emitEventLog(
+            "SignalRevokeRole",
+            eventData
+        );
+    }
+
+    // @dev immediately revoke the role of an account
+    // @param account the account to revoke the role for
+    // @param roleKey the role to revoke
+    function revokeRole(address account, bytes32 roleKey) external onlyTimelockMultisig {
+        roleStore.revokeRole(account, roleKey);
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "account", account);
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "roleKey", roleKey);
+        eventEmitter.emitEventLog(
+            "RevokeRole",
+            eventData
+        );
     }
 
     function signalSetOracleProviderEnabled(address provider, bool value) external onlyTimelockAdmin {
-        bytes memory callData = abi.encodeWithSignature("setBool(bytes32,bool)",
+        bytes memory payload = abi.encodeWithSignature("setBool(bytes32,bool)",
             Keys.isOracleProviderEnabledKey(provider), value);
-        timelockController.signal(dataStore, callData);
+        timelockController.schedule(dataStore, 0, payload, 0, 0, timelockController.getMinDelay());
 
         EventUtils.EventLogData memory eventData;
         eventData.addressItems.initItems(1);
@@ -88,9 +114,9 @@ contract TimelockConfig is RoleModule, BasicMulticall {
     }
 
     function signalSetOracleProviderForToken(address token, address provider) external onlyTimelockAdmin {
-        bytes memory callData = abi.encodeWithSignature("setAddress(bytes32,address)",
+        bytes memory payload = abi.encodeWithSignature("setAddress(bytes32,address)",
             Keys.oracleProviderForTokenKey(token), provider);
-        timelockController.signal(dataStore, callData);
+        timelockController.schedule(dataStore, 0, payload, 0, 0, timelockController.getMinDelay());
 
         EventUtils.EventLogData memory eventData;
         eventData.addressItems.initItems(2);
@@ -103,9 +129,9 @@ contract TimelockConfig is RoleModule, BasicMulticall {
     }
 
     function signalSetAtomicOracleProvider(address provider, bool value) external onlyTimelockAdmin {
-        bytes memory callData = abi.encodeWithSignature("setBool(bytes32,bool)",
+        bytes memory payload = abi.encodeWithSignature("setBool(bytes32,bool)",
             Keys.isAtomicOracleProviderKey(provider), value);
-        timelockController.signal(dataStore, callData);
+        timelockController.schedule(dataStore, 0, payload, 0, 0, timelockController.getMinDelay());
 
         EventUtils.EventLogData memory eventData;
         eventData.addressItems.initItems(1);
@@ -123,8 +149,8 @@ contract TimelockConfig is RoleModule, BasicMulticall {
             revert Errors.InvalidOracleSigner(account);
         }
 
-        bytes memory callData = abi.encodeWithSignature("addSigner(address)", account);
-        timelockController.signal(oracleStore, callData);
+        bytes memory payload = abi.encodeWithSignature("addSigner(address)", account);
+        timelockController.schedule(oracleStore, 0, payload, 0, 0, timelockController.getMinDelay());
 
         EventUtils.EventLogData memory eventData;
         eventData.addressItems.initItems(1);
@@ -140,8 +166,8 @@ contract TimelockConfig is RoleModule, BasicMulticall {
             revert Errors.InvalidOracleSigner(account);
         }
 
-        bytes memory callData = abi.encodeWithSignature("removeSigner(address)", account);
-        timelockController.signal(oracleStore, callData);
+        bytes memory payload = abi.encodeWithSignature("removeSigner(address)", account);
+        timelockController.schedule(oracleStore, 0, payload, 0, 0, timelockController.getMinDelay());
 
         EventUtils.EventLogData memory eventData;
         eventData.addressItems.initItems(1);
@@ -159,35 +185,15 @@ contract TimelockConfig is RoleModule, BasicMulticall {
             revert Errors.InvalidFeeReceiver(account);
         }
 
-        bytes memory callData = abi.encodeWithSignature("setAddress(bytes32,address)",
+        bytes memory payload = abi.encodeWithSignature("setAddress(bytes32,address)",
             Keys.FEE_RECEIVER, account);
-        timelockController.signal(dataStore, callData);
+        timelockController.schedule(dataStore, 0, payload, 0, 0, timelockController.getMinDelay());
 
         EventUtils.EventLogData memory eventData;
         eventData.addressItems.initItems(1);
         eventData.addressItems.setItem(0, "account", account);
         eventEmitter.emitEventLog(
             "SignalSetFeeReceiver",
-            eventData
-        );
-    }
-
-    // @dev signal revoking of a role
-    // @param account the account to revoke the role for
-    // @param roleKey the role to revoke
-    function signalRevokeRole(address account, bytes32 roleKey) external onlyTimelockAdmin {
-
-        bytes memory callData = abi.encodeWithSignature("revokeRole(address,bytes32)",
-            account, roleKey);
-        timelockController.signal(address(roleStore), callData);
-
-        EventUtils.EventLogData memory eventData;
-        eventData.addressItems.initItems(1);
-        eventData.addressItems.setItem(0, "account", account);
-        eventData.bytes32Items.initItems(1);
-        eventData.bytes32Items.setItem(0, "roleKey", roleKey);
-        eventEmitter.emitEventLog(
-            "SignalRevokeRole",
             eventData
         );
     }
@@ -214,15 +220,15 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         bytes[] memory payloads = new bytes[](4);
         payloads[0] = abi.encodeWithSignature("setAddress(bytes32,address)",
             Keys.priceFeedKey(token), priceFeed);
-        payloads[1] = abi.encodeWithSignature("setUint(bytes32,uint)",
+        payloads[1] = abi.encodeWithSignature("setUint(bytes32,uint256)",
             Keys.priceFeedMultiplierKey(token), priceFeedMultiplier);
-        payloads[2] = abi.encodeWithSignature("setUint(bytes32,uint)",
+        payloads[2] = abi.encodeWithSignature("setUint(bytes32,uint256)",
             Keys.priceFeedHeartbeatDurationKey(token), priceFeedHeartbeatDuration);
-        payloads[3] = abi.encodeWithSignature("setUint(bytes32,uint)",
+        payloads[3] = abi.encodeWithSignature("setUint(bytes32,uint256)",
             Keys.stablePriceKey(token), stablePrice);
 
         uint256[] memory values = new uint256[](4);
-        timelockController.signalBatch(targets, payloads, values);
+        timelockController.scheduleBatch(targets, values, payloads, 0, 0, timelockController.getMinDelay());
 
         EventUtils.EventLogData memory eventData;
         eventData.addressItems.initItems(2);
@@ -261,13 +267,13 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         bytes[] memory payloads = new bytes[](3);
         payloads[0] = abi.encodeWithSignature("setBytes32(bytes32,bytes32)",
             Keys.dataStreamIdKey(token), feedId);
-        payloads[1] = abi.encodeWithSignature("setUint(bytes32,uint)",
+        payloads[1] = abi.encodeWithSignature("setUint(bytes32,uint256)",
             Keys.dataStreamMultiplierKey(token), dataStreamMultiplier);
-        payloads[2] = abi.encodeWithSignature("setUint(bytes32,uint)",
+        payloads[2] = abi.encodeWithSignature("setUint(bytes32,uint256)",
             Keys.dataStreamSpreadReductionFactorKey(token), dataStreamSpreadReductionFactor);
 
         uint256[] memory values = new uint256[](3);
-        timelockController.signalBatch(targets, payloads, values);
+        timelockController.scheduleBatch(targets, values, payloads, 0, 0, timelockController.getMinDelay());
 
         EventUtils.EventLogData memory eventData;
         eventData.addressItems.initItems(1);
@@ -286,14 +292,16 @@ contract TimelockConfig is RoleModule, BasicMulticall {
     // @dev increase the timelock delay
     // @param the new timelock delay
     function increaseTimelockDelay(uint256 _timelockDelay) external onlyTimelockAdmin {
-        if (_timelockDelay <= timelockController.getMinimumDelay()) {
+        if (_timelockDelay <= timelockController.getMinDelay()) {
             revert Errors.InvalidTimelockDelay(_timelockDelay);
         }
 
-        _validateTimelockDelay(_timelockDelay);
+        if (_timelockDelay > MAX_TIMELOCK_DELAY) {
+            revert Errors.MaxTimelockDelayExceeded(_timelockDelay);
+        }
 
-        bytes memory callData = abi.encodeWithSignature("updateDelay(uint256)", _timelockDelay);
-        timelockController.signal(address(timelockController), callData);
+        bytes memory payload = abi.encodeWithSignature("updateDelay(uint256)", _timelockDelay);
+        timelockController.schedule(address(timelockController), 0, payload, 0, 0, timelockController.getMinDelay());
 
         EventUtils.EventLogData memory eventData;
         eventData.uintItems.initItems(1);
@@ -308,9 +316,7 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         timelockController.execute(target, 0, payload, 0, 0);
     }
 
-    function _validateTimelockDelay(uint256 delay) internal pure {
-        if (delay > MAX_TIMELOCK_DELAY) {
-            revert Errors.MaxTimelockDelayExceeded(delay);
-        }
+    function executeBatch(address[] calldata targets, uint256[] calldata values, bytes[] calldata payloads) external onlyTimelockAdmin {
+        timelockController.executeBatch(targets, values, payloads, 0, 0);
     }
 }

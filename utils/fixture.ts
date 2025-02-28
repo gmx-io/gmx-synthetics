@@ -62,7 +62,6 @@ export async function deployFixture() {
   const configUtils = await hre.ethers.getContract("ConfigUtils");
   const configSyncer = await hre.ethers.getContract("ConfigSyncer");
   const mockRiskOracle = await hre.ethers.getContract("MockRiskOracle");
-  const timelock = await hre.ethers.getContract("Timelock");
   const timelockConfig = await hre.ethers.getContract("TimelockConfig");
   const configTimelockController = await hre.ethers.getContract("ConfigTimelockController");
   const reader = await hre.ethers.getContract("Reader");
@@ -260,7 +259,6 @@ export async function deployFixture() {
       configUtils,
       configSyncer,
       mockRiskOracle,
-      timelock,
       timelockConfig,
       configTimelockController,
       reader,

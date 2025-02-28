@@ -14,7 +14,7 @@ export async function updateOracleConfigForTokens() {
 
   const dataStore = await hre.ethers.getContract("DataStore");
   const multicall = await hre.ethers.getContract("Multicall3");
-  const timelock = await hre.ethers.getContract("Timelock");
+  const timelock = await hre.ethers.getContract("TimelockConfig");
 
   const multicallReadParams = [];
 
