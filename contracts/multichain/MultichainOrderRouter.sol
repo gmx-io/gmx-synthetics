@@ -10,7 +10,7 @@ contract MultichainOrderRouter is MultichainRouter {
 
     // TODO: handle partial fee payment
 
-    function createMultichainOrder(
+    function createOrder(
         RelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
@@ -26,7 +26,7 @@ contract MultichainOrderRouter is MultichainRouter {
         return _createOrder(relayParams, account, collateralDeltaAmount, srcChainId, params, false);
     }
 
-    function updateMultichainOrder(
+    function updateOrder(
         RelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
@@ -43,7 +43,7 @@ contract MultichainOrderRouter is MultichainRouter {
         _updateOrder(relayParams, account, key, params, increaseExecutionFee, false);
     }
 
-    function cancelMultichainOrder(
+    function cancelOrder(
         RelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,

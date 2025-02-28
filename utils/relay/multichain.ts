@@ -192,7 +192,7 @@ export async function sendCreateOrder(p: {
     signature = await getCreateOrderSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
   }
 
-  const createOrderCalldata = p.relayRouter.interface.encodeFunctionData("createMultichainOrder", [
+  const createOrderCalldata = p.relayRouter.interface.encodeFunctionData("createOrder", [
     { ...relayParams, signature },
     p.account,
     p.srcChainId,
@@ -250,7 +250,7 @@ export async function sendUpdateOrder(p: {
     signature = await getUpdateOrderSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
   }
 
-  const UpdateOrderCalldata = p.relayRouter.interface.encodeFunctionData("updateMultichainOrder", [
+  const UpdateOrderCalldata = p.relayRouter.interface.encodeFunctionData("updateOrder", [
     { ...relayParams, signature },
     p.account,
     p.srcChainId,
@@ -299,7 +299,7 @@ export async function sendCancelOrder(p: {
     signature = await getCancelOrderSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
   }
 
-  const CancelOrderCalldata = p.relayRouter.interface.encodeFunctionData("cancelMultichainOrder", [
+  const CancelOrderCalldata = p.relayRouter.interface.encodeFunctionData("cancelOrder", [
     { ...relayParams, signature },
     p.account,
     p.srcChainId,

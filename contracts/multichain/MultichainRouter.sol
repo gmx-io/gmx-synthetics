@@ -2,11 +2,11 @@
 
 pragma solidity ^0.8.0;
 
-import "../router/relay/GelatoRelayRouter.sol";
+import "../router/relay/BaseGelatoRelayRouter.sol";
 
 import "./MultichainUtils.sol";
 
-abstract contract MultichainRouter is GelatoRelayRouter {
+abstract contract MultichainRouter is BaseGelatoRelayRouter {
 
     struct BaseConstructorParams {
         Router router;
@@ -24,7 +24,7 @@ abstract contract MultichainRouter is GelatoRelayRouter {
     constructor(
         BaseConstructorParams memory params
     )
-        GelatoRelayRouter(
+        BaseGelatoRelayRouter(
             params.router,
             params.dataStore,
             params.eventEmitter,
