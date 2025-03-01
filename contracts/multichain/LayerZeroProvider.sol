@@ -12,9 +12,7 @@ import "../data/DataStore.sol";
 import "./IMultichainProvider.sol";
 import "./MultichainVault.sol";
 import "./MultichainUtils.sol";
-import "./MultichainEventUtils.sol";
 import "./MultichainProviderUtils.sol";
-import "./LayerZeroProviderEventUtils.sol";
 
 /**
  * @title LayerZeroProvider
@@ -51,43 +49,22 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer {
      * @dev Non-guarded token address (i.e. require token == USDC)
      *      Any token can be deposited (not just USDC), but current implementation intended to USDC only
      *      TBD if this will change
-     * @param from The address of the sender (i.e. Stargate address, not user's address).
-     * @param guid A global unique identifier for tracking the packet.
-     * @param message Encoded message. Contains the params needed to record the deposit (account, token, srcChainId)
-     * @param executor The address of the Executor.
-     * @param extraData Any extra data or options to trigger on receipt.
+     * param from The address of the sender (i.e. Stargate address, not user's address).
+     * param guid A global unique identifier for tracking the packet.
+     * param message Encoded message. Contains the params needed to record the deposit (account, token, srcChainId)
+     * param executor The address of the Executor.
+     * param extraData Any extra data or options to trigger on receipt.
      */
     function lzCompose(
-        address from,
-        bytes32 guid,
+        address /*from*/,
+        bytes32 /*guid*/,
         bytes calldata message,
-        address executor,
-        bytes calldata extraData
+        address /*executor*/,
+        bytes calldata /*extraData*/
     ) external payable {
         (address account, address token, uint256 srcChainId) = MultichainProviderUtils.decodeDeposit(message);
-
         _transferToVault(token, address(multichainVault));
-
-        MultichainUtils.recordTransferIn(dataStore, eventEmitter, multichainVault, token, account, srcChainId);
-
-        // TODO: check what LZ contract already emits --> if it already emits the fields bellow, remove this event
-        LayerZeroProviderEventUtils.emitComposedMessageReceived(
-            eventEmitter,
-            srcChainId,
-            account,
-            from,
-            guid,
-            message,
-            executor,
-            extraData
-        );
-
-        MultichainEventUtils.emitBridgeIn(
-            eventEmitter,
-            token,
-            account,
-            srcChainId
-        );
+        MultichainUtils.recordBridgeIn(dataStore, eventEmitter, multichainVault, this, token, account, srcChainId);
     }
 
     function _transferToVault(address token, address to) private {
@@ -95,6 +72,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer {
         IERC20(token).transfer(to, amount);
     }
 
+    // TODO: enable bridging out (re-check LZ docs)
     function bridgeOut(
         address _stargate,
         address receiver,
@@ -121,13 +99,6 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer {
         //     messagingFee,
         //     receiver
         // );
-
-        MultichainEventUtils.emitBridgeOut(
-            eventEmitter,
-            receiver,
-            token,
-            amount
-        );
     }
 
     // function prepareSend(

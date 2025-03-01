@@ -69,7 +69,6 @@ library RelayUtils {
 
     struct BridgeOutParams {
         address token;
-        address receiver;
         uint256 amount;
     }
 

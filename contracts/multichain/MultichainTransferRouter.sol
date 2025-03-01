@@ -28,6 +28,7 @@ contract MultichainTransferRouter is MultichainRouter {
         RelayUtils.BridgeInParams calldata params
     ) external payable nonReentrant onlyGelatoRelay {
         _validateDesChainId(relayParams.desChainId);
+        _validateGaslessFeature();
 
         bytes32 structHash = RelayUtils.getBridgeInStructHash(relayParams, params);
         _validateCall(relayParams, account, structHash, srcChainId);
@@ -51,6 +52,7 @@ contract MultichainTransferRouter is MultichainRouter {
         RelayUtils.BridgeOutParams calldata params
     ) external nonReentrant onlyGelatoRelay {
         _validateDesChainId(relayParams.desChainId);
+        _validateGaslessFeature();
         _validateMultichainProvider(dataStore, provider);
 
         bytes32 structHash = RelayUtils.getBridgeOutStructHash(relayParams, params);
@@ -63,6 +65,7 @@ contract MultichainTransferRouter is MultichainRouter {
             params.amount,
             data
         );
+        MultichainEventUtils.emitMultichainBridgeOut(eventEmitter, provider, params.token, receiver, params.amount, srcChainId);
     }
 
     function _validateMultichainProvider(DataStore dataStore, address provider) internal view {

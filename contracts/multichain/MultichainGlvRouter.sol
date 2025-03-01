@@ -29,6 +29,7 @@ contract MultichainGlvRouter is MultichainRouter {
         GlvDepositUtils.CreateGlvDepositParams memory params
     ) external nonReentrant onlyGelatoRelay returns (bytes32) {
         _validateDesChainId(relayParams.desChainId);
+        _validateGaslessFeature();
 
         bytes32 structHash = RelayUtils.getCreateGlvDepositStructHash(relayParams, transferRequests, params);
         _validateCall(relayParams, account, structHash, srcChainId);
@@ -71,6 +72,7 @@ contract MultichainGlvRouter is MultichainRouter {
         GlvWithdrawalUtils.CreateGlvWithdrawalParams memory params
     ) external nonReentrant onlyGelatoRelay returns (bytes32) {
         _validateDesChainId(relayParams.desChainId);
+        _validateGaslessFeature();
 
         bytes32 structHash = RelayUtils.getCreateGlvWithdrawalStructHash(relayParams, transferRequests, params);
         _validateCall(relayParams, account, structHash, srcChainId);
