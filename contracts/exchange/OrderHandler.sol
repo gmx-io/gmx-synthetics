@@ -187,6 +187,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
             OrderUtils.CancelOrderParams(
                 dataStore,
                 eventEmitter,
+                multichainVault,
                 orderVault,
                 key,
                 order.account(),
@@ -350,6 +351,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
                 OrderUtils.CancelOrderParams(
                     dataStore,
                     eventEmitter,
+                    multichainVault,
                     orderVault,
                     key,
                     msg.sender,
@@ -378,6 +380,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         OrderUtils.freezeOrder(
             dataStore,
             eventEmitter,
+            multichainVault,
             orderVault,
             key,
             msg.sender,

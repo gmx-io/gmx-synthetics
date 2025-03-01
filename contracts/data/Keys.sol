@@ -481,6 +481,8 @@ library Keys {
     bytes32 public constant MULTICHAIN_BALANCE = keccak256(abi.encode("MULTICHAIN_BALANCE"));
     // @dev key for user's multichain balance
     bytes32 public constant IS_MULTICHAIN_PROVIDER_ENABLED = keccak256(abi.encode("IS_MULTICHAIN_PROVIDER_ENABLED"));
+    // @dev key for the flag if user's position collateral was used for execution fee
+    bytes32 public constant WAS_POSITION_COLLATERAL_USED_FOR_EXECUTION_FEE = keccak256(abi.encode("WAS_POSITION_COLLATERAL_USED_FOR_EXECUTION_FEE"));
 
     // @dev key for the maximum length for data list array of bytes32
     bytes32 public constant MAX_DATA_LENGTH = keccak256(abi.encode("MAX_DATA_LENGTH"));
@@ -2144,6 +2146,15 @@ library Keys {
         return keccak256(abi.encode(
             IS_MULTICHAIN_PROVIDER_ENABLED,
             provider
+        ));
+    }
+
+    // @dev key for the flag if position collateral was used for execution fee
+    // @return key for the flag if position collateral was used for execution fee
+    function wasPositionCollateralUsedForExecutionFeeKey(bytes32 orderKey) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            WAS_POSITION_COLLATERAL_USED_FOR_EXECUTION_FEE,
+            orderKey
         ));
     }
 

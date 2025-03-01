@@ -134,6 +134,7 @@ library ExecuteOrderUtils {
                 OrderUtils.clearAutoCancelOrders(
                     params.contracts.dataStore,
                     params.contracts.eventEmitter,
+                    params.contracts.multichainVault,
                     params.contracts.orderVault,
                     positionKey,
                     params.keeper

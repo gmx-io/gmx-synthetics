@@ -90,10 +90,6 @@ contract MultichainOrderRouter is MultichainRouter {
             revert Errors.UnableToPayOrderFee();
         }
 
-        if (BaseOrderUtils.isSwapOrder(order.orderType())) {
-            revert Errors.UnableToPayOrderFee();
-        }
-
         uint256 unpaidAmount = relayParams.fee.feeAmount - balance;
 
         // First try to deduct from order collateral
@@ -116,11 +112,22 @@ contract MultichainOrderRouter is MultichainRouter {
             }
         }
 
+        // position collateral cannot be used for a swap order, since there is no position
+        if (BaseOrderUtils.isSwapOrder(order.orderType())) {
+            revert Errors.UnableToPayOrderFee();
+        }
+
         // Second try to deduct from position collateral
         uint256 positionCollateralAmount = position.collateralAmount();
         if (positionCollateralAmount < unpaidAmount) {
             revert Errors.UnableToPayOrderFeeFromCollateral();
         }
+
+        // if wasPositionCollateralUsedForExecutionFee is true, during order execution, and
+        // if the order is cancelled or frozen, excess fees will be sent to the HOLDING_ADDRESS
+        // instead of being refunded to the user, to prevent gaming by using the execution fee
+        // to reduce collateral and such that negative pnl or other costs cannot be fully paid
+        dataStore.setBool(Keys.wasPositionCollateralUsedForExecutionFeeKey(key), true);
 
         position.setCollateralAmount(positionCollateralAmount - unpaidAmount);
             dataStore.setUint(
