@@ -128,6 +128,7 @@ contract MultichainOrderRouter is MultichainRouter {
         // instead of being refunded to the user, to prevent gaming by using the execution fee
         // to reduce collateral and such that negative pnl or other costs cannot be fully paid
         dataStore.setBool(Keys.wasPositionCollateralUsedForExecutionFeeKey(key), true);
+        OrderEventUtils.emitPositionCollateralUsedForExecutionFee(eventEmitter, key, relayParams.fee.feeToken, unpaidAmount);
 
         position.setCollateralAmount(positionCollateralAmount - unpaidAmount);
             dataStore.setUint(
