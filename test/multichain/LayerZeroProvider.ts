@@ -3,7 +3,7 @@ import { expect } from "chai";
 import * as keys from "../../utils/keys";
 import { deployFixture } from "../../utils/fixture";
 import { expandDecimals } from "../../utils/math";
-import { mintAndBridge } from "./MultichainGmRouter";
+import { mintAndBridge } from "./MultichainRouter";
 
 describe("LayerZeroProvider", () => {
   let fixture;
