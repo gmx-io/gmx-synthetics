@@ -8,9 +8,10 @@ pragma solidity ^0.8.0;
 interface IMultichainProvider {
     function bridgeOut(
         address provider,
-        address receiver,
+        address account,
         address token,
         uint256 amount,
+        uint256 srcChainId,
         bytes calldata data
     ) external;
 }

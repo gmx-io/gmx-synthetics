@@ -46,7 +46,7 @@ contract MultichainTransferRouter is MultichainRouter {
     function bridgeOut(
         RelayUtils.RelayParams calldata relayParams,
         address provider,
-        address receiver,
+        address account,
         uint256 srcChainId,
         bytes calldata data, // encoded provider specific data e.g. dstEid
         RelayUtils.BridgeOutParams calldata params
@@ -56,16 +56,17 @@ contract MultichainTransferRouter is MultichainRouter {
         _validateMultichainProvider(dataStore, provider);
 
         bytes32 structHash = RelayUtils.getBridgeOutStructHash(relayParams, params);
-        _validateCall(relayParams, receiver, structHash, srcChainId);
+        _validateCall(relayParams, account, structHash, srcChainId);
 
         multichainProvider.bridgeOut(
             provider,
-            receiver,
+            account,
             params.token,
             params.amount,
+            srcChainId,
             data
         );
-        MultichainEventUtils.emitMultichainBridgeOut(eventEmitter, provider, params.token, receiver, params.amount, srcChainId);
+        MultichainEventUtils.emitMultichainBridgeOut(eventEmitter, provider, params.token, account, params.amount, srcChainId);
     }
 
     function _validateMultichainProvider(DataStore dataStore, address provider) internal view {

@@ -65,7 +65,7 @@ library MultichainEventUtils {
     ) internal {
         EventUtils.EventLogData memory eventData;
 
-        eventData.addressItems.initItems(2);
+        eventData.addressItems.initItems(3);
         eventData.addressItems.setItem(0, "provider", provider);
         eventData.addressItems.setItem(1, "token", token);
         eventData.addressItems.setItem(2, "receiver", receiver);

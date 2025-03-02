@@ -103,6 +103,7 @@ export async function deployFixture() {
   const multichainGmRouter = await hre.ethers.getContract("MultichainGmRouter");
   const multichainOrderRouter = await hre.ethers.getContract("MultichainOrderRouter");
   const multichainGlvRouter = await hre.ethers.getContract("MultichainGlvRouter");
+  const multichainTransferRouter = await hre.ethers.getContract("MultichainTransferRouter");
   const relayUtils = await hre.ethers.getContract("RelayUtils");
   const oracle = await hre.ethers.getContract("Oracle");
   const gmOracleProvider = await hre.ethers.getContract("GmOracleProvider");
@@ -290,6 +291,7 @@ export async function deployFixture() {
       multichainGmRouter,
       multichainOrderRouter,
       multichainGlvRouter,
+      multichainTransferRouter,
       relayUtils,
       oracle,
       gmOracleProvider,

@@ -340,6 +340,85 @@ export async function sendCreateGlvWithdrawal(p: SendCreate) {
   });
 }
 
+export async function sendBridgeOut(p: {
+  signer: ethers.Signer;
+  sender: ethers.Signer;
+  feeParams: {
+    feeToken: string;
+    feeAmount: BigNumberish;
+    feeSwapPath: string[];
+  };
+  provider: string;
+  account: string;
+  data: string;
+  params: any;
+  signature?: string;
+  userNonce?: BigNumberish;
+  deadline: BigNumberish;
+  chainId: BigNumberish;
+  srcChainId: BigNumberish;
+  desChainId: BigNumberish;
+  relayRouter: ethers.Contract;
+  relayFeeToken: string;
+  relayFeeAmount: BigNumberish;
+}) {
+  const relayParams = await getRelayParams(p);
+  let signature = p.signature;
+  if (!signature) {
+    signature = await getBridgeOutSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
+  }
+
+  const bridgeOutCalldata = p.relayRouter.interface.encodeFunctionData("bridgeOut", [
+    { ...relayParams, signature },
+    p.provider,
+    p.account,
+    p.srcChainId,
+    p.data,
+    p.params,
+  ]);
+  const calldata = ethers.utils.solidityPack(
+    ["bytes", "address", "address", "uint256"],
+    [bridgeOutCalldata, GELATO_RELAY_ADDRESS, p.relayFeeToken, p.relayFeeAmount]
+  );
+  return p.sender.sendTransaction({
+    to: p.relayRouter.address,
+    data: calldata,
+  });
+}
+
+async function getBridgeOutSignature({
+  signer,
+  relayParams,
+  verifyingContract,
+  params,
+  chainId,
+}: {
+  signer: ethers.Signer;
+  relayParams: any;
+  verifyingContract: string;
+  params: any;
+  chainId: BigNumberish;
+}) {
+  if (relayParams.userNonce === undefined) {
+    throw new Error("userNonce is required");
+  }
+  const types = {
+    BridgeOut: [
+      { name: "token", type: "address" },
+      { name: "amount", type: "uint256" },
+      { name: "relayParams", type: "bytes32" },
+    ],
+  };
+  const typedData = {
+    token: params.token,
+    amount: params.amount,
+    relayParams: hashRelayParams(relayParams),
+  };
+  const domain = getDomain(chainId, verifyingContract);
+
+  return signTypedData(signer, domain, types, typedData);
+}
+
 async function getCreateDepositSignature({
   signer,
   relayParams,

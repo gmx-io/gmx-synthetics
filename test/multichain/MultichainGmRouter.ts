@@ -13,6 +13,7 @@ import {
   sendCreateOrder,
   sendUpdateOrder,
   sendCancelOrder,
+  sendBridgeOut,
 } from "../../utils/relay/multichain";
 import * as keys from "../../utils/keys";
 import { executeDeposit, getDepositCount, getDepositKeys } from "../../utils/deposit";
@@ -26,6 +27,37 @@ import { hashString } from "../../utils/hash";
 import { getPositionCount } from "../../utils/position";
 import { expectBalance } from "../../utils/validation";
 
+export async function mintAndBridge(
+  fixture,
+  overrides: {
+    account?: string;
+    token: Contract;
+    tokenAmount: BigNumberish;
+    srcChainId?: BigNumberish;
+  }
+) {
+  const { mockStargatePool, layerZeroProvider } = fixture.contracts;
+  const { user0 } = fixture.accounts;
+
+  const account = overrides.account || user0;
+  const token = overrides.token;
+  const tokenAmount = overrides.tokenAmount;
+  const srcChainId =
+    overrides.srcChainId || (await hre.ethers.provider.getNetwork().then((network) => network.chainId));
+
+  await token.mint(account.address, tokenAmount);
+
+  // mock token bridging (increase user's multichain balance)
+  const encodedMessageEth = ethers.utils.defaultAbiCoder.encode(
+    ["address", "address", "uint256"],
+    [account.address, token.address, srcChainId]
+  );
+  await token.connect(account).approve(mockStargatePool.address, tokenAmount);
+  await mockStargatePool
+    .connect(account)
+    .sendToken(token.address, layerZeroProvider.address, tokenAmount, encodedMessageEth);
+}
+
 describe("MultichainRouter", () => {
   let fixture;
   let user0, user1, user2, user3;
@@ -34,6 +66,8 @@ describe("MultichainRouter", () => {
     multichainGmRouter,
     multichainOrderRouter,
     multichainGlvRouter,
+    multichainTransferRouter,
+    mockStargatePool,
     multichainVault,
     depositVault,
     withdrawalVault,
@@ -50,37 +84,6 @@ describe("MultichainRouter", () => {
   let defaultDepositParams;
   let createDepositParams: Parameters<typeof sendCreateDeposit>[0];
 
-  async function mintAndBridge(
-    fixture,
-    overrides: {
-      account?: string;
-      token: Contract;
-      tokenAmount: BigNumberish;
-      srcChainId?: BigNumberish;
-    }
-  ) {
-    const { mockStargatePool, layerZeroProvider } = fixture.contracts;
-    const { user0 } = fixture.accounts;
-
-    const account = overrides.account || user0;
-    const token = overrides.token;
-    const tokenAmount = overrides.tokenAmount;
-    const srcChainId =
-      overrides.srcChainId || (await hre.ethers.provider.getNetwork().then((network) => network.chainId));
-
-    await token.mint(account.address, tokenAmount);
-
-    // mock token bridging (increase user's multichain balance)
-    const encodedMessageEth = ethers.utils.defaultAbiCoder.encode(
-      ["address", "address", "uint256"],
-      [account.address, token.address, srcChainId]
-    );
-    await token.connect(account).approve(mockStargatePool.address, tokenAmount);
-    await mockStargatePool
-      .connect(account)
-      .sendToken(token.address, layerZeroProvider.address, tokenAmount, encodedMessageEth);
-  }
-
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1, user2, user3 } = fixture.accounts);
@@ -90,6 +93,8 @@ describe("MultichainRouter", () => {
       multichainGmRouter,
       multichainOrderRouter,
       multichainGlvRouter,
+      multichainTransferRouter,
+      mockStargatePool,
       multichainVault,
       depositVault,
       withdrawalVault,
@@ -807,6 +812,56 @@ describe("MultichainRouter", () => {
           initialFeeReceiverBalance.add(cancelOrderParams.relayFeeAmount)
         );
       });
+    });
+  });
+
+  describe("MultichainTransferRouter", () => {
+    const feeAmount = expandDecimals(6, 15);
+    const bridgeAmount = expandDecimals(1000, 6);
+    let defaultBridgeOutParams;
+    beforeEach(async () => {
+      defaultBridgeOutParams = {
+        token: usdc.address,
+        amount: bridgeAmount,
+      };
+    });
+
+    let bridgeOutParams: Parameters<typeof sendBridgeOut>[0];
+    beforeEach(async () => {
+      bridgeOutParams = {
+        sender: relaySigner,
+        signer: user1,
+        feeParams: {
+          feeToken: wnt.address,
+          feeAmount: feeAmount,
+          feeSwapPath: [],
+        },
+        provider: mockStargatePool.address,
+        account: user1.address,
+        data: "0x", // e.g. Eid
+        params: defaultBridgeOutParams,
+        deadline: 9999999999,
+        srcChainId: chainId, // 0 means non-multichain action
+        desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
+        relayRouter: multichainTransferRouter,
+        chainId,
+        relayFeeToken: wnt.address,
+        relayFeeAmount: feeAmount,
+      };
+    });
+
+    // TODO: mock StargatePool and enable bridging out test
+    it.skip("bridgeOut", async () => {
+      await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePool.address), true);
+      await mintAndBridge(fixture, { account: user1, token: usdc, tokenAmount: bridgeAmount });
+
+      expect(await usdc.balanceOf(user1.address)).eq(0);
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(bridgeAmount);
+
+      await sendBridgeOut(bridgeOutParams);
+
+      expect(await usdc.balanceOf(user1.address)).eq(bridgeAmount);
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0);
     });
   });
 });

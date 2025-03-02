@@ -260,6 +260,7 @@ export const BUYBACK_MAX_PRICE_IMPACT_FACTOR = hashString("BUYBACK_MAX_PRICE_IMP
 export const BUYBACK_MAX_PRICE_AGE = hashString("BUYBACK_MAX_PRICE_AGE");
 export const WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT = hashString("WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT");
 export const MULTICHAIN_BALANCE = hashString("MULTICHAIN_BALANCE");
+export const IS_MULTICHAIN_PROVIDER_ENABLED = hashString("IS_MULTICHAIN_PROVIDER_ENABLED");
 
 export const VALID_FROM_TIME = hashString("VALID_FROM_TIME");
 
@@ -823,4 +824,8 @@ export function withdrawableBuybackTokenAmountKey(buybackToken: string) {
 
 export function multichainBalanceKey(account: string, token: string) {
   return hashData(["bytes32", "address", "address"], [MULTICHAIN_BALANCE, account, token]);
+}
+
+export function isMultichainProviderEnabledKey(contract: string) {
+  return hashData(["bytes32", "address"], [IS_MULTICHAIN_PROVIDER_ENABLED, contract]);
 }
