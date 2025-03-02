@@ -19,7 +19,13 @@ contract MultichainOrderRouter is MultichainRouter {
         uint256 srcChainId,
         uint256 collateralDeltaAmount,
         IBaseOrderUtils.CreateOrderParams memory params // can't use calldata because need to modify params.numbers.executionFee
-    ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelay returns (bytes32) {
+    )
+        external
+        nonReentrant
+        withOraclePricesForAtomicAction(relayParams.oracleParams)
+        onlyGelatoRelay
+        returns (bytes32)
+    {
         _validateDesChainId(relayParams.desChainId);
         _validateGaslessFeature();
 
@@ -105,7 +111,14 @@ contract MultichainOrderRouter is MultichainRouter {
                 initialCollateralDeltaAmount - deductFromOrder
             );
             orderVault.transferOut(relayParams.fee.feeToken, address(multichainVault), deductFromOrder);
-            MultichainUtils.recordTransferIn(dataStore, eventEmitter, multichainVault, relayParams.fee.feeToken, account, srcChainId);
+            MultichainUtils.recordTransferIn(
+                dataStore,
+                eventEmitter,
+                multichainVault,
+                relayParams.fee.feeToken,
+                account,
+                srcChainId
+            );
 
             if (unpaidAmount == 0) {
                 return;
@@ -128,14 +141,23 @@ contract MultichainOrderRouter is MultichainRouter {
         // instead of being refunded to the user, to prevent gaming by using the execution fee
         // to reduce collateral and such that negative pnl or other costs cannot be fully paid
         dataStore.setBool(Keys.wasPositionCollateralUsedForExecutionFeeKey(key), true);
-        OrderEventUtils.emitPositionCollateralUsedForExecutionFee(eventEmitter, key, relayParams.fee.feeToken, unpaidAmount);
+        OrderEventUtils.emitPositionCollateralUsedForExecutionFee(
+            eventEmitter,
+            key,
+            relayParams.fee.feeToken,
+            unpaidAmount
+        );
 
         position.setCollateralAmount(positionCollateralAmount - unpaidAmount);
-            dataStore.setUint(
-            keccak256(abi.encode(key, PositionStoreUtils.COLLATERAL_AMOUNT)),
-            positionCollateralAmount
-        );
+        dataStore.setUint(keccak256(abi.encode(key, PositionStoreUtils.COLLATERAL_AMOUNT)), positionCollateralAmount);
         orderVault.transferOut(relayParams.fee.feeToken, address(multichainVault), unpaidAmount);
-        MultichainUtils.recordTransferIn(dataStore, eventEmitter, multichainVault, relayParams.fee.feeToken, account, srcChainId);
+        MultichainUtils.recordTransferIn(
+            dataStore,
+            eventEmitter,
+            multichainVault,
+            relayParams.fee.feeToken,
+            account,
+            srcChainId
+        );
     }
 }

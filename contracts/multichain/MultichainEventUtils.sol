@@ -54,7 +54,7 @@ library MultichainEventUtils {
 
         eventEmitter.emitEventLog1("MultichainTransferIn", Cast.toBytes32(account), eventData);
     }
-   
+
     function emitMultichainBridgeOut(
         EventEmitter eventEmitter,
         address provider,

@@ -29,7 +29,14 @@ library MultichainUtils {
         uint256 srcChainId
     ) external {
         uint256 amount = recordTransferIn(dataStore, eventEmitter, multichainVault, token, account, srcChainId);
-        MultichainEventUtils.emitMultichainBridgeIn(eventEmitter, address(provider), token, account, amount, srcChainId);
+        MultichainEventUtils.emitMultichainBridgeIn(
+            eventEmitter,
+            address(provider),
+            token,
+            account,
+            amount,
+            srcChainId
+        );
     }
 
     /**

@@ -10,7 +10,6 @@ import "../withdrawal/WithdrawalVault.sol";
 import "./MultichainRouter.sol";
 
 contract MultichainGmRouter is MultichainRouter {
-
     DepositVault public immutable depositVault;
     IDepositHandler public immutable depositHandler;
     WithdrawalVault public immutable withdrawalVault;
@@ -143,11 +142,7 @@ contract MultichainGmRouter is MultichainRouter {
         uint256 srcChainId,
         ShiftUtils.CreateShiftParams memory params
     ) internal returns (bytes32) {
-        Contracts memory contracts = Contracts({
-            dataStore: dataStore,
-            eventEmitter: eventEmitter,
-            bank: shiftVault
-        });
+        Contracts memory contracts = Contracts({ dataStore: dataStore, eventEmitter: eventEmitter, bank: shiftVault });
 
         params.executionFee = _handleRelay(
             contracts,
@@ -158,13 +153,6 @@ contract MultichainGmRouter is MultichainRouter {
             srcChainId
         );
 
-        return ShiftUtils.createShift(
-            dataStore,
-            eventEmitter,
-            shiftVault,
-            account,
-            srcChainId,
-            params
-        );
+        return ShiftUtils.createShift(dataStore, eventEmitter, shiftVault, account, srcChainId, params);
     }
 }

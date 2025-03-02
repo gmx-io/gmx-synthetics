@@ -8,7 +8,6 @@ import "../glv/GlvVault.sol";
 import "./MultichainRouter.sol";
 
 contract MultichainGlvRouter is MultichainRouter {
-
     GlvVault public immutable glvVault;
     GlvHandler public immutable glvHandler;
 
@@ -45,11 +44,7 @@ contract MultichainGlvRouter is MultichainRouter {
         uint256 srcChainId,
         GlvDepositUtils.CreateGlvDepositParams memory params
     ) internal returns (bytes32) {
-        Contracts memory contracts = Contracts({
-            dataStore: dataStore,
-            eventEmitter: eventEmitter,
-            bank: glvVault
-        });
+        Contracts memory contracts = Contracts({ dataStore: dataStore, eventEmitter: eventEmitter, bank: glvVault });
 
         // pay relay fee tokens from MultichainVault to GlvVault and decrease user's multichain balance
         params.executionFee = _handleRelay(
@@ -88,11 +83,7 @@ contract MultichainGlvRouter is MultichainRouter {
         uint256 srcChainId,
         GlvWithdrawalUtils.CreateGlvWithdrawalParams memory params
     ) internal returns (bytes32) {
-        Contracts memory contracts = Contracts({
-            dataStore: dataStore,
-            eventEmitter: eventEmitter,
-            bank: glvVault
-        });
+        Contracts memory contracts = Contracts({ dataStore: dataStore, eventEmitter: eventEmitter, bank: glvVault });
 
         // pay relay fee tokens from MultichainVault to GlvVault and decrease user's multichain balance
         params.executionFee = _handleRelay(
@@ -104,13 +95,6 @@ contract MultichainGlvRouter is MultichainRouter {
             srcChainId
         );
 
-        return GlvWithdrawalUtils.createGlvWithdrawal(
-            dataStore,
-            eventEmitter,
-            glvVault,
-            account,
-            srcChainId,
-            params
-        );
+        return GlvWithdrawalUtils.createGlvWithdrawal(dataStore, eventEmitter, glvVault, account, srcChainId, params);
     }
 }

@@ -33,14 +33,7 @@ contract MultichainTransferRouter is MultichainRouter {
         bytes32 structHash = RelayUtils.getBridgeInStructHash(relayParams, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
-        MultichainUtils.recordTransferIn(
-            dataStore,
-            eventEmitter,
-            multichainVault,
-            params.token,
-            account,
-            srcChainId
-        );
+        MultichainUtils.recordTransferIn(dataStore, eventEmitter, multichainVault, params.token, account, srcChainId);
     }
 
     function bridgeOut(
@@ -58,15 +51,15 @@ contract MultichainTransferRouter is MultichainRouter {
         bytes32 structHash = RelayUtils.getBridgeOutStructHash(relayParams, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
-        multichainProvider.bridgeOut(
+        multichainProvider.bridgeOut(provider, account, params.token, params.amount, srcChainId, data);
+        MultichainEventUtils.emitMultichainBridgeOut(
+            eventEmitter,
             provider,
-            account,
             params.token,
+            account,
             params.amount,
-            srcChainId,
-            data
+            srcChainId
         );
-        MultichainEventUtils.emitMultichainBridgeOut(eventEmitter, provider, params.token, account, params.amount, srcChainId);
     }
 
     function _validateMultichainProvider(DataStore dataStore, address provider) internal view {
