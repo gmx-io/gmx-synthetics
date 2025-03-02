@@ -115,7 +115,7 @@ describe("MultichainRouter", () => {
       },
       minMarketTokens: 100,
       shouldUnwrapNativeToken: false,
-      executionFee: expandDecimals(123, 15), // TODO: Why executionFee is not deducted and sent to FEE_RECEIVER when depsoit is executed?
+      executionFee: 0, // execution fee is subtracted from initialLongTokenAmount
       callbackGasLimit: "200000",
       dataList: [],
     };
@@ -161,6 +161,9 @@ describe("MultichainRouter", () => {
 
   describe("createDeposit", () => {
     it("creates deposit and sends relayer fee", async () => {
+      // enable keeper fee payment
+      await dataStore.setUint(keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1));
+
       // funds have already been bridged to multichainVault and recorded under user's multichain balance
       expect(await wnt.balanceOf(multichainVault.address)).eq(expandDecimals(10_006, 15)); // 10 + 0.006 = 10.006 ETH
       expect(await usdc.balanceOf(multichainVault.address)).eq(expandDecimals(45_000, 6));
@@ -203,7 +206,7 @@ describe("MultichainRouter", () => {
       expect(deposit.numbers.initialLongTokenAmount).eq(createDepositParams.transferRequests.amounts[0]); // 10.006 ETH
       expect(deposit.numbers.initialShortTokenAmount).eq(createDepositParams.transferRequests.amounts[1]); // 45,000.00 USDC
       expect(deposit.numbers.minMarketTokens).eq(defaultDepositParams.minMarketTokens);
-      expect(deposit.numbers.executionFee).eq(expandDecimals(4, 15)); // 0.006 - 0.002 = 0.004 ETH
+      expect(deposit.numbers.executionFee).eq(expandDecimals(4, 15)); // feeAmount - relayFeeAmount = 0.006 - 0.002 = 0.004 ETH
       expect(deposit.numbers.callbackGasLimit).eq(defaultDepositParams.callbackGasLimit);
       expect(deposit.flags.shouldUnwrapNativeToken).eq(defaultDepositParams.shouldUnwrapNativeToken);
       expect(deposit._dataList).deep.eq(defaultDepositParams.dataList);
@@ -223,10 +226,14 @@ describe("MultichainRouter", () => {
 
       // state after executing deposit
       expect(await getDepositCount(dataStore)).eq(0);
-      expect(await wnt.balanceOf(multichainVault.address)).eq(expandDecimals(4, 15));
-      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(
-        expandDecimals(4, 15)
-      ); // TODO: Why was executionFee returned to multichainVault/user1's multichain balance?
+      expect(await wnt.balanceOf(multichainVault.address)).to.approximately(
+        expandDecimals(2133, 12), // feeAmount - keeperFee = 0.004 - 0.001867... = 0.002133... (e.g. 2133076985064616)
+        expandDecimals(1, 12)
+      );
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.approximately(
+        expandDecimals(2133, 12), // feeAmount - keeperFee = 0.004 - 0.001867... = 0.002133... (e.g. 2133076985064616)
+        expandDecimals(1, 12)
+      );
       expect(await usdc.balanceOf(multichainVault.address)).eq(0);
       expect(await wnt.balanceOf(depositVault.address)).eq(0);
       expect(await usdc.balanceOf(depositVault.address)).eq(0);
