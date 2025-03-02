@@ -319,4 +319,16 @@ contract TimelockConfig is RoleModule, BasicMulticall {
     function executeBatch(address[] calldata targets, uint256[] calldata values, bytes[] calldata payloads) external onlyTimelockAdmin {
         timelockController.executeBatch(targets, values, payloads, 0, 0);
     }
+
+    function getHash(address target, bytes calldata payload) external view returns (bytes32) {
+        return timelockController.hashOperation(target, 0, payload, 0, 0);
+    }
+
+    function getHashBatch(address[] calldata targets, bytes[] calldata payloads, uint256[] calldata values) external view returns (bytes32) {
+        return timelockController.hashOperationBatch(targets, values, payloads, 0, 0);
+    }
+
+    function cancelAction(bytes32 id) external onlyTimelockAdmin {
+        timelockController.cancel(id);
+    }
 }

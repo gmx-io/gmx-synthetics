@@ -1,10 +1,10 @@
 import hre from "hardhat";
-import { timelockWriteMulticall } from "../utils/timelock";
+import { setOracleProviderEnabledPayload, timelockWriteMulticall } from "../utils/timelock";
 
 const expectedTimelockMethods = ["signalSetOracleProviderEnabled", "setOracleProviderEnabledAfterSignal"];
 
 async function main() {
-  const timelock = await hre.ethers.getContract("Timelock");
+  const timelock = await hre.ethers.getContract("TimelockConfig");
 
   const providersToAdd = {
     arbitrum: [
@@ -31,7 +31,12 @@ async function main() {
   }
 
   for (const provider of providersToAdd[hre.network.name]) {
-    multicallWriteParams.push(timelock.interface.encodeFunctionData(timelockMethod, [provider, true]));
+    if (timelockMethod === "signalSetOracleProviderEnabled") {
+      multicallWriteParams.push(timelock.interface.encodeFunctionData(timelockMethod, [provider, true]));
+    } else {
+      const { target, payload } = await setOracleProviderEnabledPayload(provider, true);
+      multicallWriteParams.push(timelock.interface.encodeFunctionData("execute", [target, payload]));
+    }
   }
 
   console.log(`updating ${multicallWriteParams.length} providers`);

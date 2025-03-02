@@ -7,6 +7,15 @@ import { hashString } from "../../utils/hash";
 import { decimalToFloat, expandDecimals, percentageToFloat } from "../../utils/math";
 import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
+import {
+  getGrantRolePayload,
+  getRevokeRolePayload,
+  setPriceFeedPayload,
+  setDataStreamPayload,
+  setOracleProviderEnabledPayload,
+  setOracleProviderForTokenPayload,
+  setAtomicOracleProviderPayload,
+} from "../../utils/timelock";
 
 describe("Timelock", () => {
   let fixture;
@@ -32,8 +41,8 @@ describe("Timelock", () => {
 
     await timelockConfig.connect(timelockAdmin).signalGrantRole(user3.address, orderKeeperRole);
     await time.increase(1 * 24 * 60 * 60 + 10);
-    const grantRolePayload = roleStore.interface.encodeFunctionData("grantRole", [user3.address, orderKeeperRole]);
-    await timelockConfig.connect(timelockAdmin).execute(roleStore.address, grantRolePayload);
+    const { target, payload } = await getGrantRolePayload(user3.address, orderKeeperRole);
+    await timelockConfig.connect(timelockAdmin).execute(target, payload);
 
     expect(await roleStore.hasRole(user3.address, orderKeeperRole)).eq(true);
 
@@ -157,12 +166,12 @@ describe("Timelock", () => {
 
     await timelockConfig.connect(timelockAdmin).signalGrantRole(user3.address, orderKeeperRole);
 
-    const payload = roleStore.interface.encodeFunctionData("grantRole", [user3.address, orderKeeperRole]);
-    await expect(timelockConfig.connect(user2).execute(roleStore.address, payload))
+    const { target, payload } = await getGrantRolePayload(user3.address, orderKeeperRole);
+    await expect(timelockConfig.connect(user2).execute(target, payload))
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
       .withArgs(user2.address, "TIMELOCK_ADMIN");
 
-    await expect(timelockConfig.connect(timelockAdmin).execute(roleStore.address, payload)).to.be.revertedWith(
+    await expect(timelockConfig.connect(timelockAdmin).execute(target, payload)).to.be.revertedWith(
       "TimelockController: operation is not ready"
     );
 
@@ -170,7 +179,7 @@ describe("Timelock", () => {
 
     expect(await roleStore.hasRole(user3.address, orderKeeperRole)).eq(false);
 
-    await timelockConfig.connect(timelockAdmin).execute(roleStore.address, payload);
+    await timelockConfig.connect(timelockAdmin).execute(target, payload);
 
     expect(await roleStore.hasRole(user3.address, orderKeeperRole)).eq(true);
   });
@@ -179,12 +188,18 @@ describe("Timelock", () => {
     const orderKeeperRole = hashString("ORDER_KEEPER");
 
     expect(await roleStore.hasRole(user3.address, orderKeeperRole)).eq(false);
-    const payloadGrantRole = roleStore.interface.encodeFunctionData("grantRole", [user3.address, orderKeeperRole]);
-    const payloadRevokeRole = roleStore.interface.encodeFunctionData("revokeRole", [user3.address, orderKeeperRole]);
+    const { target: grantTarget, payload: payloadGrantRole } = await getGrantRolePayload(
+      user3.address,
+      orderKeeperRole
+    );
+    const { target: revokeTarget, payload: payloadRevokeRole } = await getRevokeRolePayload(
+      user3.address,
+      orderKeeperRole
+    );
 
     await timelockConfig.connect(timelockAdmin).signalGrantRole(user3.address, orderKeeperRole);
     await time.increase(1 * 24 * 60 * 60 + 10);
-    await timelockConfig.connect(timelockAdmin).execute(roleStore.address, payloadGrantRole);
+    await timelockConfig.connect(timelockAdmin).execute(grantTarget, payloadGrantRole);
 
     expect(await roleStore.hasRole(user3.address, orderKeeperRole)).eq(true);
 
@@ -194,19 +209,19 @@ describe("Timelock", () => {
 
     await timelockConfig.connect(timelockAdmin).signalRevokeRole(user3.address, orderKeeperRole);
 
-    await expect(timelockConfig.connect(user2).execute(roleStore.address, payloadRevokeRole))
+    await expect(timelockConfig.connect(user2).execute(revokeTarget, payloadRevokeRole))
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
       .withArgs(user2.address, "TIMELOCK_ADMIN");
 
-    await expect(
-      timelockConfig.connect(timelockAdmin).execute(roleStore.address, payloadRevokeRole)
-    ).to.be.revertedWith("TimelockController: operation is not ready");
+    await expect(timelockConfig.connect(timelockAdmin).execute(revokeTarget, payloadRevokeRole)).to.be.revertedWith(
+      "TimelockController: operation is not ready"
+    );
 
     await time.increase(1 * 24 * 60 * 60 + 10);
 
     expect(await roleStore.hasRole(user3.address, orderKeeperRole)).eq(true);
 
-    await timelockConfig.connect(timelockAdmin).execute(roleStore.address, payloadRevokeRole);
+    await timelockConfig.connect(timelockAdmin).execute(revokeTarget, payloadRevokeRole);
 
     expect(await roleStore.hasRole(user3.address, orderKeeperRole)).eq(false);
   });
@@ -218,15 +233,12 @@ describe("Timelock", () => {
 
     await timelockConfig.connect(timelockAdmin).signalSetOracleProviderForToken(wnt.address, user3.address);
 
-    const payload = dataStore.interface.encodeFunctionData("setAddress", [
-      keys.oracleProviderForTokenKey(wnt.address),
-      user3.address,
-    ]);
-    await expect(timelockConfig.connect(user2).execute(dataStore.address, payload))
+    const { target, payload } = await setOracleProviderForTokenPayload(wnt.address, user3.address);
+    await expect(timelockConfig.connect(user2).execute(target, payload))
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
       .withArgs(user2.address, "TIMELOCK_ADMIN");
 
-    await expect(timelockConfig.connect(timelockAdmin).execute(dataStore.address, payload)).to.be.revertedWith(
+    await expect(timelockConfig.connect(timelockAdmin).execute(target, payload)).to.be.revertedWith(
       "TimelockController: operation is not ready"
     );
 
@@ -236,9 +248,63 @@ describe("Timelock", () => {
       fixture.contracts.gmOracleProvider.address
     );
 
-    await timelockConfig.connect(timelockAdmin).execute(dataStore.address, payload);
+    await timelockConfig.connect(timelockAdmin).execute(target, payload);
 
     expect(await dataStore.getAddress(keys.oracleProviderForTokenKey(wnt.address))).eq(user3.address);
+  });
+
+  it("setOracleProviderEnabled", async () => {
+    expect(await dataStore.getBool(keys.isOracleProviderEnabledKey(user3.address))).eq(false);
+
+    await expect(timelockConfig.connect(user2).signalSetOracleProviderEnabled(user3.address, true))
+      .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
+      .withArgs(user2.address, "TIMELOCK_ADMIN");
+
+    await timelockConfig.connect(timelockAdmin).signalSetOracleProviderEnabled(user3.address, true);
+
+    const { target, payload } = await setOracleProviderEnabledPayload(user3.address, true);
+    await expect(timelockConfig.connect(user2).execute(target, payload))
+      .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
+      .withArgs(user2.address, "TIMELOCK_ADMIN");
+
+    await expect(timelockConfig.connect(timelockAdmin).execute(dataStore.address, payload)).to.be.revertedWith(
+      "TimelockController: operation is not ready"
+    );
+
+    await time.increase(1 * 24 * 60 * 60 + 10);
+
+    expect(await dataStore.getBool(keys.isOracleProviderEnabledKey(user3.address))).eq(false);
+
+    await timelockConfig.connect(timelockAdmin).execute(target, payload);
+
+    expect(await dataStore.getBool(keys.isOracleProviderEnabledKey(user3.address))).eq(true);
+  });
+
+  it("SetAtomicOracleProvider", async () => {
+    expect(await dataStore.getBool(keys.isAtomicOracleProviderKey(user3.address))).eq(false);
+
+    await expect(timelockConfig.connect(user2).signalSetAtomicOracleProvider(user3.address, true))
+      .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
+      .withArgs(user2.address, "TIMELOCK_ADMIN");
+
+    await timelockConfig.connect(timelockAdmin).signalSetAtomicOracleProvider(user3.address, true);
+
+    const { target, payload } = await setAtomicOracleProviderPayload(user3.address, true);
+    await expect(timelockConfig.connect(user2).execute(target, payload))
+      .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
+      .withArgs(user2.address, "TIMELOCK_ADMIN");
+
+    await expect(timelockConfig.connect(timelockAdmin).execute(dataStore.address, payload)).to.be.revertedWith(
+      "TimelockController: operation is not ready"
+    );
+
+    await time.increase(1 * 24 * 60 * 60 + 10);
+
+    expect(await dataStore.getBool(keys.isAtomicOracleProviderKey(user3.address))).eq(false);
+
+    await timelockConfig.connect(timelockAdmin).execute(target, payload);
+
+    expect(await dataStore.getBool(keys.isAtomicOracleProviderKey(user3.address))).eq(true);
   });
 
   it("setPriceFeed", async () => {
@@ -257,17 +323,13 @@ describe("Timelock", () => {
       .connect(timelockAdmin)
       .signalSetPriceFeed(wnt.address, user3.address, 1000, 24 * 60 * 60, decimalToFloat(5000));
 
-    const targets = [dataStore.address, dataStore.address, dataStore.address, dataStore.address];
-    const values = [0, 0, 0, 0];
-    const payloads = [
-      dataStore.interface.encodeFunctionData("setAddress", [keys.priceFeedKey(wnt.address), user3.address]),
-      dataStore.interface.encodeFunctionData("setUint", [keys.priceFeedMultiplierKey(wnt.address), 1000]),
-      dataStore.interface.encodeFunctionData("setUint", [
-        keys.priceFeedHeartbeatDurationKey(wnt.address),
-        24 * 60 * 60,
-      ]),
-      dataStore.interface.encodeFunctionData("setUint", [keys.stablePriceKey(wnt.address), decimalToFloat(5000)]),
-    ];
+    const { targets, values, payloads } = await setPriceFeedPayload(
+      wnt.address,
+      user3.address,
+      1000,
+      24 * 60 * 60,
+      decimalToFloat(5000)
+    );
 
     await expect(timelockConfig.connect(user2).executeBatch(targets, values, payloads))
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
@@ -310,17 +372,7 @@ describe("Timelock", () => {
       .connect(timelockAdmin)
       .signalSetDataStream(wnt.address, hashString("WNT"), expandDecimals(1, 34), p99);
 
-    const targets = [dataStore.address, dataStore.address, dataStore.address];
-    const values = [0, 0, 0];
-    const payloads = [
-      dataStore.interface.encodeFunctionData("setBytes32", [keys.dataStreamIdKey(wnt.address), hashString("WNT")]),
-      dataStore.interface.encodeFunctionData("setUint", [
-        keys.dataStreamMultiplierKey(wnt.address),
-        expandDecimals(1, 34),
-      ]),
-      dataStore.interface.encodeFunctionData("setUint", [keys.dataStreamSpreadReductionFactorKey(wnt.address), p99]),
-    ];
-
+    const { targets, values, payloads } = await setDataStreamPayload(wnt.address, "WNT", expandDecimals(1, 34), p99);
     await expect(timelockConfig.connect(user2).executeBatch(targets, values, payloads))
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
       .withArgs(user2.address, "TIMELOCK_ADMIN");

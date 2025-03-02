@@ -1,7 +1,12 @@
 import { getFullKey } from "../utils/config";
 import { encodeData } from "../utils/hash";
 import { bigNumberify, expandDecimals } from "../utils/math";
-import { timelockWriteMulticall } from "../utils/timelock";
+import {
+  setDataStreamPayload,
+  setOracleProviderForTokenPayload,
+  setPriceFeedPayload,
+  timelockWriteMulticall,
+} from "../utils/timelock";
 
 import * as keys from "../utils/keys";
 import { getOracleProviderAddress, getOracleProviderKey } from "../utils/oracle";
@@ -147,17 +152,26 @@ export async function updateOracleConfigForTokens() {
         }, ${stablePrice.toString()})`
       );
 
-      const method = phase === "signal" ? "signalSetPriceFeed" : "setPriceFeedAfterSignal";
-
-      multicallWriteParams.push(
-        timelock.interface.encodeFunctionData(method, [
+      if (phase === "signal") {
+        multicallWriteParams.push(
+          timelock.interface.encodeFunctionData("signalSetPriceFeed", [
+            token.address,
+            priceFeed.address,
+            priceFeedMultiplier,
+            priceFeed.heartbeatDuration,
+            stablePrice,
+          ])
+        );
+      } else {
+        const { targets, values, payloads } = await setPriceFeedPayload(
           token.address,
           priceFeed.address,
           priceFeedMultiplier,
           priceFeed.heartbeatDuration,
-          stablePrice,
-        ])
-      );
+          stablePrice
+        );
+        multicallWriteParams.push(timelock.interface.encodeFunctionData("executeBatch", [targets, values, payloads]));
+      }
     }
 
     if (token.dataStreamFeedId && onchainConfig.dataStreamId !== token.dataStreamFeedId) {
@@ -176,16 +190,24 @@ export async function updateOracleConfigForTokens() {
         }, ${dataStreamMultiplier.toString()}, ${dataStreamSpreadReductionFactor.toString()})`
       );
 
-      const method = phase === "signal" ? "signalSetDataStream" : "setDataStreamAfterSignal";
-
-      multicallWriteParams.push(
-        timelock.interface.encodeFunctionData(method, [
+      if (phase === "signal") {
+        multicallWriteParams.push(
+          timelock.interface.encodeFunctionData("signalSetDataStream", [
+            token.address,
+            token.dataStreamFeedId,
+            dataStreamMultiplier,
+            dataStreamSpreadReductionFactor,
+          ])
+        );
+      } else {
+        const { targets, values, payloads } = await setDataStreamPayload(
           token.address,
           token.dataStreamFeedId,
           dataStreamMultiplier,
-          dataStreamSpreadReductionFactor,
-        ])
-      );
+          dataStreamSpreadReductionFactor
+        );
+        multicallWriteParams.push(timelock.interface.encodeFunctionData("executeBatch", [targets, values, payloads]));
+      }
     }
 
     const oracleProviderAddress = await getOracleProviderAddress(token.oracleProvider);
@@ -193,20 +215,25 @@ export async function updateOracleConfigForTokens() {
       const oracleProviderKey = await getOracleProviderKey(oracleProviderAddress);
       console.log(`setOracleProviderForToken(${tokenSymbol} ${oracleProviderKey} ${oracleProviderAddress})`);
 
-      const method = phase === "signal" ? "signalSetOracleProviderForToken" : "setOracleProviderForTokenAfterSignal";
-
       // signalSetOracleProviderForToken back to the current oracle provider in case
       // the oracle provider change needs to be rolled back
-      if (method === "signalSetOracleProviderForToken") {
+      if (phase === "signal") {
         multicallWriteParams.push(
           timelock.interface.encodeFunctionData("signalSetOracleProviderForToken", [
             token.address,
             onchainConfig.oracleProviderForToken,
           ])
         );
+        multicallWriteParams.push(
+          timelock.interface.encodeFunctionData("signalSetOracleProviderForToken", [
+            token.address,
+            oracleProviderAddress,
+          ])
+        );
+      } else {
+        const { target, payload } = await setOracleProviderForTokenPayload(token.address, oracleProviderAddress);
+        multicallWriteParams.push(timelock.interface.encodeFunctionData("execute", [target, payload]));
       }
-
-      multicallWriteParams.push(timelock.interface.encodeFunctionData(method, [token.address, oracleProviderAddress]));
     }
   }
 
