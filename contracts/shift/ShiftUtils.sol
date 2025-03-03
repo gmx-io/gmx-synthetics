@@ -207,7 +207,7 @@ library ShiftUtils {
                 shift.updatedAtTime(),
                 0, // executionFee
                 0, // callbackGasLimit
-                shift.srcChainId()
+                0 // srcChainId
             ),
             Withdrawal.Flags(
                 false

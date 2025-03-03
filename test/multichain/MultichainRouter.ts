@@ -420,19 +420,35 @@ describe("MultichainRouter", () => {
       await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
 
       expect(await getBalanceOf(ethUsdMarket.marketToken, multichainVault.address)).eq(expandDecimals(95_000, 18));
+      expect(await getBalanceOf(solUsdMarket.marketToken, multichainVault.address)).eq(0);
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdMarket.marketToken))).to.eq(
         expandDecimals(95_000, 18)
       );
+
       await sendCreateShift(createShiftParams);
 
       const shiftKeys = await getShiftKeys(dataStore, 0, 1);
-      const shift = await reader.getShift(dataStore.address, shiftKeys[0]);
+      let shift = await reader.getShift(dataStore.address, shiftKeys[0]);
       expect(shift.addresses.account).eq(user1.address);
       expect(await getShiftCount(dataStore)).eq(1);
 
-      // await executeShift(fixture, { gasUsageLabel: "executeShift" });
-      // shift = await reader.getShift(dataStore.address, shiftKeys[0]);
-      // expect(shift.addresses.account).eq(ethers.constants.AddressZero);
+      await executeShift(fixture, { gasUsageLabel: "executeShift" });
+
+      expect(await getShiftCount(dataStore)).eq(0);
+      shift = await reader.getShift(dataStore.address, shiftKeys[0]);
+      expect(shift.addresses.account).eq(ethers.constants.AddressZero);
+
+      expect(await getBalanceOf(ethUsdMarket.marketToken, multichainVault.address)).eq(expandDecimals(45_000, 18)); // 95k - 50k
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdMarket.marketToken))).to.eq(
+        expandDecimals(45_000, 18)
+      ); // 95k - 50k
+      expect(await getBalanceOf(solUsdMarket.marketToken, multichainVault.address)).to.approximately(
+        expandDecimals(50_000, 18),
+        expandDecimals(1, 12)
+      ); // ~50k
+      expect(
+        await dataStore.getUint(keys.multichainBalanceKey(user1.address, solUsdMarket.marketToken))
+      ).to.approximately(expandDecimals(50_000, 18), expandDecimals(1, 12)); // ~50k
     });
   });
 
