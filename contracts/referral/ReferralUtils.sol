@@ -14,8 +14,6 @@ import "./ReferralEventUtils.sol";
 
 import "../utils/Precision.sol";
 
-import "../feature/FeatureUtils.sol";
-
 // @title ReferralUtils
 // @dev Library for referral functions
 library ReferralUtils {
@@ -159,7 +157,7 @@ library ReferralUtils {
         address token,
         address account,
         address receiver
-    ) internal returns (uint256) {
+    ) public returns (uint256) {
         bytes32 key = Keys.affiliateRewardKey(market, token, account);
 
         uint256 rewardAmount = dataStore.getUint(key);
