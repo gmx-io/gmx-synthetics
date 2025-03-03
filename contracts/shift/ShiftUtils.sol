@@ -32,15 +32,19 @@ library ShiftUtils {
     using EventUtils for EventUtils.StringItems;
 
     struct CreateShiftParams {
+        CreateShiftParamsAddresses addresses;
+        uint256 minMarketTokens;
+        uint256 executionFee;
+        uint256 callbackGasLimit;
+        bytes32[] dataList;
+    }
+
+    struct CreateShiftParamsAddresses {
         address receiver;
         address callbackContract;
         address uiFeeReceiver;
         address fromMarket;
         address toMarket;
-        uint256 minMarketTokens;
-        uint256 executionFee;
-        uint256 callbackGasLimit;
-        bytes32[] dataList;
     }
 
     struct CreateShiftCache {
@@ -52,6 +56,7 @@ library ShiftUtils {
     struct ExecuteShiftParams {
         DataStore dataStore;
         EventEmitter eventEmitter;
+        MultichainVault multichainVault;
         ShiftVault shiftVault;
         Oracle oracle;
         bytes32 key;
@@ -70,6 +75,7 @@ library ShiftUtils {
         bytes32 depositKey;
         ExecuteDepositUtils.ExecuteDepositParams executeDepositParams;
         uint256 receivedMarketTokens;
+        uint256 refundFeeAmount;
     }
 
     function createShift(
@@ -77,12 +83,13 @@ library ShiftUtils {
         EventEmitter eventEmitter,
         ShiftVault shiftVault,
         address account,
+        uint256 srcChainId,
         CreateShiftParams memory params
     ) external returns (bytes32) {
         AccountUtils.validateAccount(account);
 
-        if (params.fromMarket == params.toMarket) {
-            revert Errors.ShiftFromAndToMarketAreEqual(params.fromMarket);
+        if (params.addresses.fromMarket == params.addresses.toMarket) {
+            revert Errors.ShiftFromAndToMarketAreEqual(params.addresses.fromMarket);
         }
 
         address wnt = TokenUtils.wnt(dataStore);
@@ -92,9 +99,9 @@ library ShiftUtils {
             revert Errors.InsufficientWntAmountForExecutionFee(wntAmount, params.executionFee);
         }
 
-        AccountUtils.validateReceiver(params.receiver);
+        AccountUtils.validateReceiver(params.addresses.receiver);
 
-        uint256 marketTokenAmount = shiftVault.recordTransferIn(params.fromMarket);
+        uint256 marketTokenAmount = shiftVault.recordTransferIn(params.addresses.fromMarket);
 
         if (marketTokenAmount == 0) {
             revert Errors.EmptyShiftAmount();
@@ -102,8 +109,8 @@ library ShiftUtils {
 
         params.executionFee = wntAmount;
 
-        Market.Props memory fromMarket = MarketUtils.getEnabledMarket(dataStore, params.fromMarket);
-        Market.Props memory toMarket = MarketUtils.getEnabledMarket(dataStore, params.toMarket);
+        Market.Props memory fromMarket = MarketUtils.getEnabledMarket(dataStore, params.addresses.fromMarket);
+        Market.Props memory toMarket = MarketUtils.getEnabledMarket(dataStore, params.addresses.toMarket);
 
         if (fromMarket.longToken != toMarket.longToken) {
             revert Errors.LongTokensAreNotEqual(fromMarket.longToken, toMarket.longToken);
@@ -116,18 +123,19 @@ library ShiftUtils {
         Shift.Props memory shift = Shift.Props(
             Shift.Addresses(
                 account,
-                params.receiver,
-                params.callbackContract,
-                params.uiFeeReceiver,
-                params.fromMarket,
-                params.toMarket
+                params.addresses.receiver,
+                params.addresses.callbackContract,
+                params.addresses.uiFeeReceiver,
+                params.addresses.fromMarket,
+                params.addresses.toMarket
             ),
             Shift.Numbers(
                 marketTokenAmount,
                 params.minMarketTokens,
                 Chain.currentTimestamp(),
                 params.executionFee,
-                params.callbackGasLimit
+                params.callbackGasLimit,
+                srcChainId
             ),
             params.dataList
         );
@@ -198,7 +206,8 @@ library ShiftUtils {
                 0, // minShortTokenAmount
                 shift.updatedAtTime(),
                 0, // executionFee
-                0 // callbackGasLimit
+                0, // callbackGasLimit
+                0 // srcChainId
             ),
             Withdrawal.Flags(
                 false
@@ -221,6 +230,7 @@ library ShiftUtils {
         cache.executeWithdrawalParams = ExecuteWithdrawalUtils.ExecuteWithdrawalParams(
             params.dataStore,
             params.eventEmitter,
+            params.multichainVault,
             WithdrawalVault(payable(params.shiftVault)),
             params.oracle,
             cache.withdrawalKey,
@@ -259,7 +269,8 @@ library ShiftUtils {
                 shift.minMarketTokens(),
                 shift.updatedAtTime(),
                 0, // executionFee
-                0 // callbackGasLimit
+                0, // callbackGasLimit
+                shift.srcChainId()
             ),
             Deposit.Flags(
                 false // shouldUnwrapNativeToken
@@ -280,13 +291,15 @@ library ShiftUtils {
         cache.executeDepositParams = ExecuteDepositUtils.ExecuteDepositParams(
             params.dataStore,
             params.eventEmitter,
+            params.multichainVault,
             DepositVault(payable(params.shiftVault)),
             params.oracle,
             cache.depositKey,
             params.keeper,
             params.startingGas,
             ISwapPricingUtils.SwapPricingType.Shift,
-            false // includeVirtualInventoryImpact
+            false, // includeVirtualInventoryImpact
+            shift.srcChainId()
         );
 
         cache.receivedMarketTokens = ExecuteDepositUtils.executeDeposit(
@@ -306,7 +319,7 @@ library ShiftUtils {
         eventData.uintItems.setItem(0, "receivedMarketTokens", cache.receivedMarketTokens);
         CallbackUtils.afterShiftExecution(params.key, shift, eventData);
 
-        GasUtils.payExecutionFee(
+        cache.refundFeeAmount = GasUtils.payExecutionFee(
             params.dataStore,
             params.eventEmitter,
             params.shiftVault,
@@ -316,8 +329,14 @@ library ShiftUtils {
             params.startingGas,
             GasUtils.estimateShiftOraclePriceCount(),
             params.keeper,
-            shift.receiver()
+            shift.srcChainId() == 0 ? shift.receiver() : address(params.multichainVault)
         );
+
+        // for multichain action, receiver is the multichainVault; increase user's multichain wnt balance for the fee refund
+        if (shift.srcChainId() != 0 && cache.refundFeeAmount > 0) {
+            address wnt = params.dataStore.getAddress(Keys.WNT);
+            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, wnt, shift.receiver(), 0); // srcChainId is the current block.chainId
+        }
 
         return cache.receivedMarketTokens;
     }

@@ -48,6 +48,7 @@ export async function createGlvDeposit(fixture, overrides: any = {}) {
   const shouldUnwrapNativeToken = overrides.shouldUnwrapNativeToken || false;
   const executionFee = bigNumberify(overrides.executionFee ?? "1000000000000000");
   const callbackGasLimit = bigNumberify(overrides.callbackGasLimit ?? 0);
+  const srcChainId = bigNumberify(overrides.srcChainId ?? 0);
   const marketTokenAmount = bigNumberify(overrides.marketTokenAmount ?? 0);
   const longTokenAmount = bigNumberify(overrides.longTokenAmount ?? 0);
   const shortTokenAmount = bigNumberify(overrides.shortTokenAmount ?? 0);
@@ -81,15 +82,17 @@ export async function createGlvDeposit(fixture, overrides: any = {}) {
   }
 
   const params = {
-    glv,
-    receiver: receiver.address,
-    callbackContract: callbackContract.address,
-    uiFeeReceiver: uiFeeReceiver.address,
-    market: market.marketToken,
-    initialLongToken,
-    initialShortToken,
-    longTokenSwapPath,
-    shortTokenSwapPath,
+    addresses: {
+      glv,
+      receiver: receiver.address,
+      callbackContract: callbackContract.address,
+      uiFeeReceiver: uiFeeReceiver.address,
+      market: market.marketToken,
+      initialLongToken,
+      initialShortToken,
+      longTokenSwapPath,
+      shortTokenSwapPath,
+    },
     marketTokenAmount,
     minGlvTokens,
     shouldUnwrapNativeToken,
@@ -109,7 +112,7 @@ export async function createGlvDeposit(fixture, overrides: any = {}) {
 
   const txReceipt = await logGasUsage({
     tx: useGlvHandler
-      ? glvHandler.connect(sender).createGlvDeposit(account.address, params)
+      ? glvHandler.connect(sender).createGlvDeposit(account.address, srcChainId, params)
       : glvRouter.connect(account).createGlvDeposit(params),
     label: gasUsageLabel,
   });

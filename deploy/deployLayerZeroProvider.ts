@@ -1,10 +1,11 @@
 import { grantRoleIfNotGranted } from "../utils/role";
 import { createDeployFunction } from "../utils/deploy";
 
-const constructorContracts = ["EventEmitter", "MultichainVault", "MultichainHandler"];
+const constructorContracts = ["DataStore", "RoleStore", "EventEmitter", "MultichainVault"];
 
 const func = createDeployFunction({
   contractName: "LayerZeroProvider",
+  libraryNames: ["MultichainUtils"],
   dependencyNames: constructorContracts,
   getDeployArgs: async ({ dependencyContracts }) => {
     return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);

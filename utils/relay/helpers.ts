@@ -15,6 +15,7 @@ export async function getRelayParams(p: {
   feeParams: any;
   userNonce?: BigNumberish;
   deadline: BigNumberish;
+  desChainId: BigNumberish;
   relayRouter: ethers.Contract;
   signer: ethers.Signer;
 }) {
@@ -34,6 +35,7 @@ export async function getRelayParams(p: {
     fee: p.feeParams,
     userNonce,
     deadline: p.deadline,
+    desChainId: p.desChainId,
   };
 }
 
@@ -61,6 +63,7 @@ export function hashRelayParams(relayParams: any) {
       "tuple(address feeToken, uint256 feeAmount, address[] feeSwapPath)",
       "uint256",
       "uint256",
+      "uint256",
     ],
     [
       [relayParams.oracleParams.tokens, relayParams.oracleParams.providers, relayParams.oracleParams.data],
@@ -83,6 +86,7 @@ export function hashRelayParams(relayParams: any) {
       [relayParams.fee.feeToken, relayParams.fee.feeAmount, relayParams.fee.feeSwapPath],
       relayParams.userNonce,
       relayParams.deadline,
+      relayParams.desChainId,
     ]
   );
 

@@ -259,7 +259,8 @@ export const BUYBACK_GMX_FACTOR = hashString("BUYBACK_GMX_FACTOR");
 export const BUYBACK_MAX_PRICE_IMPACT_FACTOR = hashString("BUYBACK_MAX_PRICE_IMPACT_FACTOR");
 export const BUYBACK_MAX_PRICE_AGE = hashString("BUYBACK_MAX_PRICE_AGE");
 export const WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT = hashString("WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT");
-export const SOURCE_CHAIN_BALANCE = hashString("SOURCE_CHAIN_BALANCE");
+export const MULTICHAIN_BALANCE = hashString("MULTICHAIN_BALANCE");
+export const IS_MULTICHAIN_PROVIDER_ENABLED = hashString("IS_MULTICHAIN_PROVIDER_ENABLED");
 
 export const VALID_FROM_TIME = hashString("VALID_FROM_TIME");
 
@@ -821,6 +822,10 @@ export function withdrawableBuybackTokenAmountKey(buybackToken: string) {
   return hashData(["bytes32", "address"], [WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT, buybackToken]);
 }
 
-export function sourceChainBalanceKey(virtualAccount: string, token: string) {
-  return hashData(["bytes32", "address", "address"], [SOURCE_CHAIN_BALANCE, virtualAccount, token]);
+export function multichainBalanceKey(account: string, token: string) {
+  return hashData(["bytes32", "address", "address"], [MULTICHAIN_BALANCE, account, token]);
+}
+
+export function isMultichainProviderEnabledKey(contract: string) {
+  return hashData(["bytes32", "address"], [IS_MULTICHAIN_PROVIDER_ENABLED, contract]);
 }

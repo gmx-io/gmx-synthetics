@@ -26,32 +26,7 @@ library DepositEventUtils {
         Deposit.Props memory deposit,
         Deposit.DepositType depositType
     ) external {
-        EventUtils.EventLogData memory eventData;
-
-        eventData.addressItems.initItems(7);
-        eventData.addressItems.setItem(0, "account", deposit.account());
-        eventData.addressItems.setItem(1, "receiver", deposit.receiver());
-        eventData.addressItems.setItem(2, "callbackContract", deposit.callbackContract());
-        eventData.addressItems.setItem(3, "market", deposit.market());
-        eventData.addressItems.setItem(4, "initialLongToken", deposit.initialLongToken());
-        eventData.addressItems.setItem(5, "initialShortToken", deposit.initialShortToken());
-        eventData.addressItems.setItem(6, "uiFeeReceiver", deposit.uiFeeReceiver());
-
-        eventData.addressItems.initArrayItems(2);
-        eventData.addressItems.setItem(0, "longTokenSwapPath", deposit.longTokenSwapPath());
-        eventData.addressItems.setItem(1, "shortTokenSwapPath", deposit.shortTokenSwapPath());
-
-        eventData.uintItems.initItems(7);
-        eventData.uintItems.setItem(0, "initialLongTokenAmount", deposit.initialLongTokenAmount());
-        eventData.uintItems.setItem(1, "initialShortTokenAmount", deposit.initialShortTokenAmount());
-        eventData.uintItems.setItem(2, "minMarketTokens", deposit.minMarketTokens());
-        eventData.uintItems.setItem(3, "updatedAtTime", deposit.updatedAtTime());
-        eventData.uintItems.setItem(4, "executionFee", deposit.executionFee());
-        eventData.uintItems.setItem(5, "callbackGasLimit", deposit.callbackGasLimit());
-        eventData.uintItems.setItem(6, "depositType", uint256(depositType));
-
-        eventData.boolItems.initItems(1);
-        eventData.boolItems.setItem(0, "shouldUnwrapNativeToken", deposit.shouldUnwrapNativeToken());
+        EventUtils.EventLogData memory eventData = createEventData(deposit, depositType);
 
         eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "key", key);
@@ -122,5 +97,39 @@ library DepositEventUtils {
             Cast.toBytes32(account),
             eventData
         );
+    }
+
+    function createEventData(Deposit.Props memory deposit, Deposit.DepositType depositType)
+    public pure returns (EventUtils.EventLogData memory) {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(7);
+        eventData.addressItems.setItem(0, "account", deposit.account());
+        eventData.addressItems.setItem(1, "receiver", deposit.receiver());
+        eventData.addressItems.setItem(2, "callbackContract", deposit.callbackContract());
+        eventData.addressItems.setItem(3, "market", deposit.market());
+        eventData.addressItems.setItem(4, "initialLongToken", deposit.initialLongToken());
+        eventData.addressItems.setItem(5, "initialShortToken", deposit.initialShortToken());
+        eventData.addressItems.setItem(6, "uiFeeReceiver", deposit.uiFeeReceiver());
+
+        eventData.addressItems.initArrayItems(2);
+        eventData.addressItems.setItem(0, "longTokenSwapPath", deposit.longTokenSwapPath());
+        eventData.addressItems.setItem(1, "shortTokenSwapPath", deposit.shortTokenSwapPath());
+
+        eventData.uintItems.initItems(7);
+        eventData.uintItems.setItem(0, "initialLongTokenAmount", deposit.initialLongTokenAmount());
+        eventData.uintItems.setItem(1, "initialShortTokenAmount", deposit.initialShortTokenAmount());
+        eventData.uintItems.setItem(2, "minMarketTokens", deposit.minMarketTokens());
+        eventData.uintItems.setItem(3, "updatedAtTime", deposit.updatedAtTime());
+        eventData.uintItems.setItem(4, "executionFee", deposit.executionFee());
+        eventData.uintItems.setItem(5, "callbackGasLimit", deposit.callbackGasLimit());
+        eventData.uintItems.setItem(6, "depositType", uint256(depositType));
+
+        eventData.boolItems.initItems(1);
+        eventData.boolItems.setItem(0, "shouldUnwrapNativeToken", deposit.shouldUnwrapNativeToken());
+
+        eventData.bytes32Items.initArrayItems(1);
+        eventData.bytes32Items.setItem(0, "dataList", deposit.dataList());
+        return eventData;
     }
 }

@@ -2,9 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import { StrictBank } from "../bank/StrictBank.sol";
-import { RoleStore } from "../role/RoleStore.sol";
-import { DataStore } from "../data/DataStore.sol";
+import "../bank/StrictBank.sol";
 
 /**
  * @title MultichainVault

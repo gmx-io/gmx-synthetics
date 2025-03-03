@@ -48,6 +48,7 @@ export async function createGlvWithdrawal(fixture, overrides: any = {}) {
   const shouldUnwrapNativeToken = overrides.shouldUnwrapNativeToken || false;
   const executionFee = bigNumberify(overrides.executionFee ?? "1000000000000000");
   const callbackGasLimit = bigNumberify(overrides.callbackGasLimit ?? 0);
+  const srcChainId = bigNumberify(overrides.srcChainId ?? 0);
   const useGlvHandler = Boolean(overrides.useGlvHandler) || false;
   const dataList = overrides.dataList || [];
 
@@ -67,13 +68,15 @@ export async function createGlvWithdrawal(fixture, overrides: any = {}) {
   }
 
   const params = {
-    receiver: receiver.address,
-    callbackContract: callbackContract.address,
-    uiFeeReceiver: uiFeeReceiver.address,
-    glv,
-    market: market.marketToken,
-    longTokenSwapPath,
-    shortTokenSwapPath,
+    addresses: {
+      receiver: receiver.address,
+      callbackContract: callbackContract.address,
+      uiFeeReceiver: uiFeeReceiver.address,
+      glv,
+      market: market.marketToken,
+      longTokenSwapPath,
+      shortTokenSwapPath,
+    },
     minLongTokenAmount,
     minShortTokenAmount,
     shouldUnwrapNativeToken,
@@ -90,7 +93,7 @@ export async function createGlvWithdrawal(fixture, overrides: any = {}) {
 
   await logGasUsage({
     tx: useGlvHandler
-      ? glvHandler.connect(sender).createGlvWithdrawal(account.address, params)
+      ? glvHandler.connect(sender).createGlvWithdrawal(account.address, srcChainId, params)
       : glvRouter.connect(account).createGlvWithdrawal(params),
     label: gasUsageLabel,
   });
@@ -190,6 +193,7 @@ export function expectEmptyGlvWithdrawal(glvWithdrawal: any) {
   expect(glvWithdrawal.numbers.updatedAtTime).eq(0);
   expect(glvWithdrawal.numbers.executionFee).eq(0);
   expect(glvWithdrawal.numbers.callbackGasLimit).eq(0);
+  expect(glvWithdrawal.numbers.srcChainId).eq(0);
 
   expect(glvWithdrawal.flags.shouldUnwrapNativeToken).eq(false);
 }

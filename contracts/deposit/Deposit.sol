@@ -54,6 +54,7 @@ library Deposit {
         uint256 updatedAtTime;
         uint256 executionFee;
         uint256 callbackGasLimit;
+        uint256 srcChainId;
     }
 
     // @param shouldUnwrapNativeToken whether to unwrap the native token when
@@ -179,6 +180,14 @@ library Deposit {
 
     function setCallbackGasLimit(Props memory props, uint256 value) internal pure {
         props.numbers.callbackGasLimit = value;
+    }
+
+    function srcChainId(Props memory props) internal pure returns (uint256) {
+        return props.numbers.srcChainId;
+    }
+
+    function setSrcChainId(Props memory props, uint256 value) internal pure {
+        props.numbers.srcChainId = value;
     }
 
     function shouldUnwrapNativeToken(Props memory props) internal pure returns (bool) {

@@ -11,6 +11,7 @@ import "./IShiftHandler.sol";
 contract ShiftHandler is IShiftHandler, BaseHandler {
     using Shift for Shift.Props;
 
+    MultichainVault public immutable multichainVault;
     ShiftVault public immutable shiftVault;
 
     constructor(
@@ -18,13 +19,16 @@ contract ShiftHandler is IShiftHandler, BaseHandler {
         DataStore _dataStore,
         EventEmitter _eventEmitter,
         Oracle _oracle,
+        MultichainVault _multichainVault,
         ShiftVault _shiftVault
     ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {
+        multichainVault = _multichainVault;
         shiftVault = _shiftVault;
     }
 
     function createShift(
         address account,
+        uint256 srcChainId,
         ShiftUtils.CreateShiftParams calldata params
     ) external override globalNonReentrant onlyController returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createShiftFeatureDisabledKey(address(this)));
@@ -35,6 +39,7 @@ contract ShiftHandler is IShiftHandler, BaseHandler {
             eventEmitter,
             shiftVault,
             account,
+            srcChainId,
             params
         );
     }
@@ -124,6 +129,7 @@ contract ShiftHandler is IShiftHandler, BaseHandler {
         ShiftUtils.ExecuteShiftParams memory params = ShiftUtils.ExecuteShiftParams(
             dataStore,
             eventEmitter,
+            multichainVault,
             shiftVault,
             oracle,
             key,
