@@ -651,15 +651,13 @@ library PositionUtils {
             )
         );
 
-        // cap positive priceImpactUsd based on the amount available in the position impact pool
-        cache.priceImpactUsd = MarketUtils.capPositiveImpactUsdByPositionImpactPool(
-            params.contracts.dataStore,
-            params.market.marketToken,
-            indexTokenPrice,
-            cache.priceImpactUsd
-        );
-
         // cap positive priceImpactUsd based on the max positive position impact factor
+        // note that the positive priceImpactUsd is not capped by the position impact pool here
+        // this is to prevent cases where for new markets, user A opens a position with negative
+        // price impact and user B does not have any incentive to open a position to balance the pool
+        // because the price impact pool is empty until user A closes
+        // the positive price impact will still be capped during position decrease when the positive
+        // price impact is actually paid out
         cache.priceImpactUsd = MarketUtils.capPositiveImpactUsdByMaxPositionImpact(
             params.contracts.dataStore,
             params.market.marketToken,
