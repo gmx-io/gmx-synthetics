@@ -10,12 +10,11 @@ import "../withdrawal/WithdrawalVault.sol";
 import "./MultichainRouter.sol";
 
 contract MultichainGmRouter is MultichainRouter {
-
-    DepositVault public depositVault;
-    IDepositHandler public depositHandler;
-    WithdrawalVault public withdrawalVault;
-    WithdrawalHandler public withdrawalHandler;
-    ShiftVault public shiftVault;
+    DepositVault public immutable depositVault;
+    IDepositHandler public immutable depositHandler;
+    WithdrawalVault public immutable withdrawalVault;
+    WithdrawalHandler public immutable withdrawalHandler;
+    ShiftVault public immutable shiftVault;
 
     constructor(
         BaseConstructorParams memory params,
@@ -24,7 +23,7 @@ contract MultichainGmRouter is MultichainRouter {
         WithdrawalVault _withdrawalVault,
         WithdrawalHandler _withdrawalHandler,
         ShiftVault _shiftVault
-    ) MultichainRouter(params) {
+    ) MultichainRouter(params) BaseRouter(params.router, params.roleStore, params.dataStore, params.eventEmitter) {
         depositVault = _depositVault;
         depositHandler = _depositHandler;
         withdrawalVault = _withdrawalVault;
@@ -40,6 +39,7 @@ contract MultichainGmRouter is MultichainRouter {
         DepositUtils.CreateDepositParams memory params // can't use calldata because need to modify params.numbers.executionFee
     ) external nonReentrant onlyGelatoRelay returns (bytes32) {
         _validateDesChainId(relayParams.desChainId);
+        _validateGaslessFeature();
 
         bytes32 structHash = RelayUtils.getCreateDepositStructHash(relayParams, transferRequests, params);
         _validateCall(relayParams, account, structHash, srcChainId);
@@ -84,6 +84,7 @@ contract MultichainGmRouter is MultichainRouter {
         WithdrawalUtils.CreateWithdrawalParams memory params // can't use calldata because need to modify params.addresses.receiver & params.numbers.executionFee
     ) external nonReentrant onlyGelatoRelay returns (bytes32) {
         _validateDesChainId(relayParams.desChainId);
+        _validateGaslessFeature();
 
         bytes32 structHash = RelayUtils.getCreateWithdrawalStructHash(relayParams, transferRequests, params);
         _validateCall(relayParams, account, structHash, srcChainId);
@@ -125,6 +126,7 @@ contract MultichainGmRouter is MultichainRouter {
         ShiftUtils.CreateShiftParams memory params
     ) external nonReentrant onlyGelatoRelay returns (bytes32) {
         _validateDesChainId(relayParams.desChainId);
+        _validateGaslessFeature();
 
         bytes32 structHash = RelayUtils.getCreateShiftStructHash(relayParams, transferRequests, params);
         _validateCall(relayParams, account, structHash, srcChainId);
@@ -140,11 +142,7 @@ contract MultichainGmRouter is MultichainRouter {
         uint256 srcChainId,
         ShiftUtils.CreateShiftParams memory params
     ) internal returns (bytes32) {
-        Contracts memory contracts = Contracts({
-            dataStore: dataStore,
-            eventEmitter: eventEmitter,
-            bank: shiftVault
-        });
+        Contracts memory contracts = Contracts({ dataStore: dataStore, eventEmitter: eventEmitter, bank: shiftVault });
 
         params.executionFee = _handleRelay(
             contracts,
@@ -155,13 +153,6 @@ contract MultichainGmRouter is MultichainRouter {
             srcChainId
         );
 
-        return ShiftUtils.createShift(
-            dataStore,
-            eventEmitter,
-            shiftVault,
-            account,
-            srcChainId,
-            params
-        );
+        return ShiftUtils.createShift(dataStore, eventEmitter, shiftVault, account, srcChainId, params);
     }
 }

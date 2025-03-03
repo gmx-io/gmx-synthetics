@@ -86,12 +86,6 @@ library DecreasePositionCollateralUtils {
                 params.secondaryOrderType == Order.SecondaryOrderType.Adl
             );
 
-        // in case price impact is too high it is capped and the difference is made to be claimable
-        // the execution price is based on the capped price impact so it may be a better price than what it should be
-        // priceImpactDiffUsd is the difference between the maximum price impact and the originally calculated price impact
-        // e.g. if the originally calculated price impact is -$100, but the capped price impact is -$80
-        // then priceImpactDiffUsd would be $20
-        // priceImpactUsd amount charged upfront, capped by impact pool and max positive factor; priceImpactDiffUsd amount claimable later
         (values.priceImpactUsd, values.executionPrice, collateralCache.balanceWasImproved) = PositionUtils.getExecutionPriceForDecrease(params, cache.prices.indexTokenPrice);
 
         // the totalPositionPnl is calculated based on the current indexTokenPrice instead of the executionPrice

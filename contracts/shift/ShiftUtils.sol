@@ -75,6 +75,7 @@ library ShiftUtils {
         bytes32 depositKey;
         ExecuteDepositUtils.ExecuteDepositParams executeDepositParams;
         uint256 receivedMarketTokens;
+        uint256 refundFeeAmount;
     }
 
     function createShift(
@@ -318,7 +319,7 @@ library ShiftUtils {
         eventData.uintItems.setItem(0, "receivedMarketTokens", cache.receivedMarketTokens);
         CallbackUtils.afterShiftExecution(params.key, shift, eventData);
 
-        GasUtils.payExecutionFee(
+        cache.refundFeeAmount = GasUtils.payExecutionFee(
             params.dataStore,
             params.eventEmitter,
             params.shiftVault,
@@ -332,7 +333,7 @@ library ShiftUtils {
         );
 
         // for multichain action, receiver is the multichainVault; increase user's multichain wnt balance for the fee refund
-        if (shift.srcChainId() != 0) {
+        if (shift.srcChainId() != 0 && cache.refundFeeAmount > 0) {
             address wnt = params.dataStore.getAddress(Keys.WNT);
             MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, wnt, shift.receiver(), 0); // srcChainId is the current block.chainId
         }

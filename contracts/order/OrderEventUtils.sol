@@ -235,4 +235,28 @@ library OrderEventUtils {
         eventData.bytes32Items.setItem(0, "dataList", order.dataList());
         return eventData;
     }
+
+    function emitPositionCollateralUsedForExecutionFee(
+        EventEmitter eventEmitter,
+        bytes32 orderKey,
+        address feeToken,
+        uint256 positionCollateralAmountUsed
+    ) external {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "key", orderKey);
+
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "feeToken", feeToken);
+
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "positionCollateralAmountUsed", positionCollateralAmountUsed);
+
+        eventEmitter.emitEventLog1(
+            "PositionCollateralUsedForExecutionFee",
+            orderKey,
+            eventData
+        );
+    }
 }

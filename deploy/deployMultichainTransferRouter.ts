@@ -13,11 +13,11 @@ const baseConstructorContracts = [
   "MultichainVault",
 ];
 
-const glvConstructorContracts = ["GlvHandler", "GlvVault"];
+const transferConstructorContracts = ["LayerZeroProvider"];
 
 const func = createDeployFunction({
-  contractName: "MultichainGlvRouter",
-  dependencyNames: [...baseConstructorContracts, ...glvConstructorContracts],
+  contractName: "MultichainTransferRouter",
+  dependencyNames: [...baseConstructorContracts, ...transferConstructorContracts],
   getDeployArgs: async ({ dependencyContracts }) => {
     const baseParams = {
       router: dependencyContracts.Router.address,
@@ -31,7 +31,7 @@ const func = createDeployFunction({
       multichainVault: dependencyContracts.MultichainVault.address,
     };
 
-    return [baseParams, dependencyContracts.GlvHandler.address, dependencyContracts.GlvVault.address];
+    return [baseParams, dependencyContracts.LayerZeroProvider.address];
   },
   libraryNames: ["MultichainUtils", "RelayUtils", "SwapUtils", "MarketUtils", "GlvWithdrawalUtils"],
 

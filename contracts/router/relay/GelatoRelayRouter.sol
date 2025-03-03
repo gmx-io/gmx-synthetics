@@ -15,6 +15,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
 
     constructor(
         Router _router,
+        RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
         Oracle _oracle,
@@ -22,7 +23,8 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         OrderVault _orderVault,
         IExternalHandler _externalHandler
     )
-        BaseGelatoRelayRouter(_router, _dataStore, _eventEmitter, _oracle, _orderHandler, _orderVault, _externalHandler)
+        BaseGelatoRelayRouter(_oracle, _orderHandler, _orderVault, _externalHandler)
+        BaseRouter(_router, _roleStore, _dataStore, _eventEmitter)
     {}
 
     // @note all params except account should be part of the corresponding struct hash
@@ -46,9 +48,8 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
             _createOrder(
                 relayParams,
                 account,
-
-                0, // srcChainId
                 collateralDeltaAmount,
+                0, // srcChainId
                 params,
                 false // isSubaccount
             );

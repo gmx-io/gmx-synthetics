@@ -436,6 +436,8 @@ library Errors {
     error InsufficientMultichainBalance(address account, address token, uint256 balance, uint256 amount);
     error InvalidDestinationChainId(uint256 desChainId);
     error InvalidMultichainProvider(address provider);
+    error UnableToPayOrderFee();
+    error UnableToPayOrderFeeFromCollateral();
 
     enum SignatureType {
         Call,

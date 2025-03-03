@@ -54,6 +54,7 @@ library ExecuteWithdrawalUtils {
         Market.Props market;
         MarketUtils.MarketPrices prices;
         ExecuteWithdrawalResult result;
+        uint256 refundFeeAmount;
     }
 
     struct _ExecuteWithdrawalCache {
@@ -156,7 +157,7 @@ library ExecuteWithdrawalUtils {
             withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length
         );
 
-        GasUtils.payExecutionFee(
+        cache.refundFeeAmount = GasUtils.payExecutionFee(
             params.dataStore,
             params.eventEmitter,
             params.withdrawalVault,
@@ -170,7 +171,7 @@ library ExecuteWithdrawalUtils {
         );
 
         // for multichain action, receiver is the multichainVault; increase user's multichain wnt balance for the fee refund
-        if (withdrawal.srcChainId() != 0) {
+        if (withdrawal.srcChainId() != 0 && cache.refundFeeAmount > 0) {
             address wnt = params.dataStore.getAddress(Keys.WNT);
             MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, wnt, withdrawal.receiver(), 0); // srcChainId is the current block.chainId
         }

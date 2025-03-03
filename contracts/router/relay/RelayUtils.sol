@@ -69,7 +69,6 @@ library RelayUtils {
 
     struct BridgeOutParams {
         address token;
-        address receiver;
         uint256 amount;
     }
 
@@ -161,21 +160,11 @@ library RelayUtils {
 
     bytes32 public constant CREATE_GLV_WITHDRAWAL_TYPEHASH =
         keccak256(
-            bytes(
-                "CreateGlvWithdrawal(address[] transferTokens,address[] transferReceivers,uint256[] transferAmounts,CreateGlvWithdrawalParams params,bytes32 relayParams)CreateGlvWithdrawalParams(CreateGlvWithdrawalParamsAddresses addresses,uint256 minLongTokenAmount,uint256 minShortTokenAmount,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,bytes32[] dataList)CreateGlvWithdrawalParamsAddresses(address receiver,address callbackContract,address uiFeeReceiver,address market,address glv,address[] longTokenSwapPath,address[] shortTokenSwapPath)"
-            )
+            "CreateGlvWithdrawal(address[] transferTokens,address[] transferReceivers,uint256[] transferAmounts,CreateGlvWithdrawalAddresses addresses,uint256 minLongTokenAmount,uint256 minShortTokenAmount,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,bytes32[] dataList,bytes32 relayParams)CreateGlvWithdrawalAddresses(address receiver,address callbackContract,address uiFeeReceiver,address market,address glv,address[] longTokenSwapPath,address[] shortTokenSwapPath)"
         );
-    bytes32 public constant CREATE_GLV_WITHDRAWAL_PARAMS_TYPEHASH =
+    bytes32 public constant CREATE_GLV_WITHDRAWAL_ADDRESSES_TYPEHASH =
         keccak256(
-            bytes(
-                "CreateGlvWithdrawalParams(CreateGlvWithdrawalParamsAddresses addresses,uint256 minLongTokenAmount,uint256 minShortTokenAmount,bool shouldUnwrapNativeToken,uint256 executionFee,uint256 callbackGasLimit,bytes32[] dataList)"
-            )
-        );
-    bytes32 public constant CREATE_GLV_WITHDRAWAL_PARAMS_ADDRESSES_TYPEHASH =
-        keccak256(
-            bytes(
-                "CreateGlvWithdrawalParamsAddresses(address receiver,address callbackContract,address uiFeeReceiver,address market,address glv,address[] longTokenSwapPath,address[] shortTokenSwapPath)"
-            )
+            "CreateGlvWithdrawalAddresses(address receiver,address callbackContract,address uiFeeReceiver,address market,address glv,address[] longTokenSwapPath,address[] shortTokenSwapPath)"
         );
 
 
@@ -489,37 +478,25 @@ library RelayUtils {
                     keccak256(abi.encodePacked(transferRequests.tokens)),
                     keccak256(abi.encodePacked(transferRequests.receivers)),
                     keccak256(abi.encodePacked(transferRequests.amounts)),
-                    _getCreateGlvWithdrawalParamsStructHash(params),
-                    _getRelayParamsHash(relayParams)
-                )
-            );
-    }
-
-    function _getCreateGlvWithdrawalParamsStructHash(
-        GlvWithdrawalUtils.CreateGlvWithdrawalParams memory params
-    ) internal pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    CREATE_GLV_WITHDRAWAL_PARAMS_TYPEHASH,
-                    _getCreateGlvWithdrawalParamsAddressesStructHash(params.addresses),
+                    _getCreateGlvWithdrawalAddressesStructHash(params.addresses),
                     params.minLongTokenAmount,
                     params.minShortTokenAmount,
                     params.shouldUnwrapNativeToken,
                     params.executionFee,
                     params.callbackGasLimit,
-                    keccak256(abi.encodePacked(params.dataList))
+                    keccak256(abi.encodePacked(params.dataList)),
+                    _getRelayParamsHash(relayParams)
                 )
             );
     }
 
-    function _getCreateGlvWithdrawalParamsAddressesStructHash(
+    function _getCreateGlvWithdrawalAddressesStructHash(
         GlvWithdrawalUtils.CreateGlvWithdrawalParamsAddresses memory addresses
     ) internal pure returns (bytes32) {
         return
             keccak256(
                 abi.encode(
-                    CREATE_GLV_WITHDRAWAL_PARAMS_ADDRESSES_TYPEHASH,
+                    CREATE_GLV_WITHDRAWAL_ADDRESSES_TYPEHASH,
                     addresses.receiver,
                     addresses.callbackContract,
                     addresses.uiFeeReceiver,

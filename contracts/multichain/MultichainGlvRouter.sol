@@ -8,7 +8,6 @@ import "../glv/GlvVault.sol";
 import "./MultichainRouter.sol";
 
 contract MultichainGlvRouter is MultichainRouter {
-
     GlvVault public immutable glvVault;
     GlvHandler public immutable glvHandler;
 
@@ -16,7 +15,7 @@ contract MultichainGlvRouter is MultichainRouter {
         BaseConstructorParams memory params,
         GlvHandler _glvHandler,
         GlvVault _glvVault
-    ) MultichainRouter(params) {
+    ) MultichainRouter(params) BaseRouter(params.router, params.roleStore, params.dataStore, params.eventEmitter) {
         glvHandler = _glvHandler;
         glvVault = _glvVault;
     }
@@ -29,6 +28,7 @@ contract MultichainGlvRouter is MultichainRouter {
         GlvDepositUtils.CreateGlvDepositParams memory params
     ) external nonReentrant onlyGelatoRelay returns (bytes32) {
         _validateDesChainId(relayParams.desChainId);
+        _validateGaslessFeature();
 
         bytes32 structHash = RelayUtils.getCreateGlvDepositStructHash(relayParams, transferRequests, params);
         _validateCall(relayParams, account, structHash, srcChainId);
@@ -44,11 +44,7 @@ contract MultichainGlvRouter is MultichainRouter {
         uint256 srcChainId,
         GlvDepositUtils.CreateGlvDepositParams memory params
     ) internal returns (bytes32) {
-        Contracts memory contracts = Contracts({
-            dataStore: dataStore,
-            eventEmitter: eventEmitter,
-            bank: glvVault
-        });
+        Contracts memory contracts = Contracts({ dataStore: dataStore, eventEmitter: eventEmitter, bank: glvVault });
 
         // pay relay fee tokens from MultichainVault to GlvVault and decrease user's multichain balance
         params.executionFee = _handleRelay(
@@ -71,6 +67,7 @@ contract MultichainGlvRouter is MultichainRouter {
         GlvWithdrawalUtils.CreateGlvWithdrawalParams memory params
     ) external nonReentrant onlyGelatoRelay returns (bytes32) {
         _validateDesChainId(relayParams.desChainId);
+        _validateGaslessFeature();
 
         bytes32 structHash = RelayUtils.getCreateGlvWithdrawalStructHash(relayParams, transferRequests, params);
         _validateCall(relayParams, account, structHash, srcChainId);
@@ -86,11 +83,7 @@ contract MultichainGlvRouter is MultichainRouter {
         uint256 srcChainId,
         GlvWithdrawalUtils.CreateGlvWithdrawalParams memory params
     ) internal returns (bytes32) {
-        Contracts memory contracts = Contracts({
-            dataStore: dataStore,
-            eventEmitter: eventEmitter,
-            bank: glvVault
-        });
+        Contracts memory contracts = Contracts({ dataStore: dataStore, eventEmitter: eventEmitter, bank: glvVault });
 
         // pay relay fee tokens from MultichainVault to GlvVault and decrease user's multichain balance
         params.executionFee = _handleRelay(
@@ -102,13 +95,6 @@ contract MultichainGlvRouter is MultichainRouter {
             srcChainId
         );
 
-        return GlvWithdrawalUtils.createGlvWithdrawal(
-            dataStore,
-            eventEmitter,
-            glvVault,
-            account,
-            srcChainId,
-            params
-        );
+        return GlvWithdrawalUtils.createGlvWithdrawal(dataStore, eventEmitter, glvVault, account, srcChainId, params);
     }
 }

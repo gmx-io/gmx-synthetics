@@ -6,6 +6,7 @@ import "./BaseOrderUtils.sol";
 import "../swap/SwapUtils.sol";
 import "../position/DecreasePositionUtils.sol";
 import "../error/ErrorUtils.sol";
+import "../multichain/MultichainUtils.sol";
 
 // @title DecreaseOrderUtils
 // @dev Library for functions to help with processing a decrease order
@@ -74,17 +75,36 @@ library DecreaseOrderUtils {
 
             MarketToken(payable(order.market())).transferOut(
                 result.outputToken,
-                order.receiver(),
+                order.srcChainId() == 0 ? order.receiver(): address(params.contracts.multichainVault),
                 result.outputAmount,
                 order.shouldUnwrapNativeToken()
             );
 
             MarketToken(payable(order.market())).transferOut(
                 result.secondaryOutputToken,
-                order.receiver(),
+                order.srcChainId() == 0 ? order.receiver(): address(params.contracts.multichainVault),
                 result.secondaryOutputAmount,
                 order.shouldUnwrapNativeToken()
             );
+
+            if (order.srcChainId() != 0) {
+                MultichainUtils.recordTransferIn(
+                    params.contracts.dataStore,
+                    params.contracts.eventEmitter,
+                    params.contracts.multichainVault,
+                    result.outputToken,
+                    order.receiver(),
+                    order.srcChainId()
+                );
+                MultichainUtils.recordTransferIn(
+                    params.contracts.dataStore,
+                    params.contracts.eventEmitter,
+                    params.contracts.multichainVault,
+                    result.secondaryOutputToken,
+                    order.receiver(),
+                    order.srcChainId()
+                );
+            }
 
             return getOutputEventData(
                 result.outputToken,
@@ -107,7 +127,7 @@ library DecreaseOrderUtils {
                 result.outputAmount,
                 params.swapPathMarkets,
                 0,
-                order.receiver(),
+                order.srcChainId() == 0 ? order.receiver(): address(params.contracts.multichainVault),
                 order.uiFeeReceiver(),
                 order.shouldUnwrapNativeToken(),
                 ISwapPricingUtils.SwapPricingType.Swap
@@ -119,6 +139,17 @@ library DecreaseOrderUtils {
                 swapOutputAmount,
                 order.minOutputAmount()
             );
+
+            if (order.srcChainId() != 0 && swapOutputAmount > 0) {
+                MultichainUtils.recordTransferIn(
+                    params.contracts.dataStore,
+                    params.contracts.eventEmitter,
+                    params.contracts.multichainVault,
+                    tokenOut,
+                    order.receiver(),
+                    order.srcChainId()
+                );
+            }
 
             return getOutputEventData(
                 tokenOut,

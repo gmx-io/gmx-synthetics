@@ -6,6 +6,7 @@ const constructorContracts = [
   "DataStore",
   "EventEmitter",
   "Oracle",
+  "MultichainVault",
   "OrderVault",
   "SwapHandler",
   "ReferralStorage",
@@ -17,15 +18,7 @@ const func = createDeployFunction({
   getDeployArgs: async ({ dependencyContracts }) => {
     return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
   },
-  libraryNames: [
-    "MarketStoreUtils",
-    "OrderUtils",
-    "ExecuteOrderUtils",
-    "OrderStoreUtils",
-    "OrderEventUtils",
-    "GasUtils",
-    "MarketUtils",
-  ],
+  libraryNames: ["OrderUtils", "ExecuteOrderUtils", "OrderStoreUtils", "OrderEventUtils", "GasUtils", "MarketUtils"],
   afterDeploy: async ({ deployedContract, getNamedAccounts, deployments, network }) => {
     const { deployer } = await getNamedAccounts();
     const { execute } = deployments;
