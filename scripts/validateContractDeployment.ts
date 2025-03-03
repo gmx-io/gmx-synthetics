@@ -68,7 +68,7 @@ interface ContractInfo {
 
 const expectedRoles = {
   CONFIG_KEEPER: ["ConfigSyncer"],
-  ROLE_ADMIN: ["Timelock"],
+  ROLE_ADMIN: ["ConfigTimelockController", "TimelockConfig"],
   ROUTER_PLUGIN: ["ExchangeRouter", "SubaccountRouter", "GlvRouter"],
   CONTROLLER: [
     "OracleStore",
@@ -76,7 +76,8 @@ const expectedRoles = {
     "GlvFactory",
     "Config",
     "ConfigSyncer",
-    "Timelock",
+    "TimelockConfig",
+    "ConfigTimelockController",
     "Oracle",
     "SwapHandler",
     "AdlHandler",
