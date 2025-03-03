@@ -156,6 +156,10 @@ async function checkRole(contractName: string, contractAddress: string, signalle
 async function validateFromEtherscan(contractInfo: ContractInfo): Promise<boolean> {
   console.log(`Trying to validate ${contractInfo.address} via etherscan`);
   const apiKey = hre.network.verify.etherscan.apiKey;
+  if (!apiKey) {
+    console.warn("No API key for etherscan is provided. Fallback");
+    return false;
+  }
   const url = hre.network.verify.etherscan.apiUrl + "api";
   try {
     const path =
@@ -163,6 +167,7 @@ async function validateFromEtherscan(contractInfo: ContractInfo): Promise<boolea
     const response = await axios.get(path);
     const sources: string = response.data.result[0].SourceCode;
     if (sources === "") {
+      console.warn("Sources are not verified on etherscan. Fallback");
       //Source code not verified
       return false;
     }
