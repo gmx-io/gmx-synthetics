@@ -71,7 +71,7 @@ library LiquidationUtils {
             0, // minOutputAmount
             Chain.currentTimestamp(), // updatedAtTime
             0, // validFromTime
-            0 // srcChainId
+            dataStore.getUint(Keys.positionLastSrcChainId(positionKey)) // srcChainId
         );
 
         Order.Flags memory flags = Order.Flags(

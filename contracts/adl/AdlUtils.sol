@@ -177,7 +177,7 @@ library AdlUtils {
             0, // minOutputAmount
             params.updatedAtTime, // updatedAtTime
             0, // validFromTime
-            0 // srcChainId
+            params.dataStore.getUint(Keys.positionLastSrcChainId(positionKey)) // srcChainId
         );
 
         Order.Flags memory flags = Order.Flags(

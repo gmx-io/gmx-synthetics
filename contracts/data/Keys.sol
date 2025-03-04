@@ -483,6 +483,8 @@ library Keys {
     bytes32 public constant IS_MULTICHAIN_PROVIDER_ENABLED = keccak256(abi.encode("IS_MULTICHAIN_PROVIDER_ENABLED"));
     // @dev key for the flag if user's position collateral was used for execution fee
     bytes32 public constant WAS_POSITION_COLLATERAL_USED_FOR_EXECUTION_FEE = keccak256(abi.encode("WAS_POSITION_COLLATERAL_USED_FOR_EXECUTION_FEE"));
+    // @dev key for the last src chain id from which the user last managed his position
+    bytes32 public constant POSITION_LAST_SRC_CHAIN_ID = keccak256(abi.encode("POSITION_LAST_SRC_CHAIN_ID"));
 
     // @dev key for the maximum length for data list array of bytes32
     bytes32 public constant MAX_DATA_LENGTH = keccak256(abi.encode("MAX_DATA_LENGTH"));
@@ -2155,6 +2157,16 @@ library Keys {
         return keccak256(abi.encode(
             WAS_POSITION_COLLATERAL_USED_FOR_EXECUTION_FEE,
             orderKey
+        ));
+    }
+
+    // @dev key for the last src chain id from which the user last managed his position
+    // @param positionKey the position key for which to retreive the last src chain id
+    // @return key for the last src chain id from which the user last managed his position
+    function positionLastSrcChainId(bytes32 positionKey) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            POSITION_LAST_SRC_CHAIN_ID,
+            positionKey
         ));
     }
 
