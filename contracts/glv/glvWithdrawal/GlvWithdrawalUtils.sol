@@ -162,11 +162,14 @@ library GlvWithdrawalUtils {
 
         GlvWithdrawalEventUtils.emitGlvWithdrawalExecuted(params.eventEmitter, params.key, glvWithdrawal.account());
 
+        // glvValue can be calculated with GLV oracle price which is slightly increased after the withdrawal due to paid fees
+        // so the glvValue might be slightly inaccurate, but it should not be an issue for emitting GlvValueUpdated event
         cache.glvValue = GlvUtils.getGlvValue(
             params.dataStore,
             params.oracle,
             glvWithdrawal.glv(),
-            true
+            true, // maximize
+            false // forceCalculation
         );
         GlvEventUtils.emitGlvValueUpdated(
             params.eventEmitter,
@@ -271,7 +274,8 @@ library GlvWithdrawalUtils {
             dataStore,
             oracle,
             glvWithdrawal.glv(),
-            false // maximize
+            false, // maximize
+            false // forceCalculation
         );
         uint256 glvSupply = GlvToken(payable(glvWithdrawal.glv())).totalSupply();
         uint256 glvTokenUsd = GlvUtils.glvTokenAmountToUsd(glvWithdrawal.glvTokenAmount(), glvValue, glvSupply);

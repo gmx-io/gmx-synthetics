@@ -211,11 +211,15 @@ library GlvShiftUtils {
 
         GlvShiftEventUtils.emitGlvShiftExecuted(params.eventEmitter, params.key, cache.receivedMarketTokens);
 
+        // glvValue can be calculated with GLV oracle price which can be changed slightly after the shift due to paid fees
+        // so the glvValue might be slightly inaccurate
+        // should not be an issue for emitting GlvValueUpdated event
         cache.glvValue = GlvUtils.getGlvValue(
             params.dataStore,
             params.oracle,
             glvShift.glv(),
-            true // maximize
+            true, // maximize
+            false // forceCalculation
         );
         cache.glvSupply = GlvToken(payable(glvShift.glv())).totalSupply();
         GlvEventUtils.emitGlvValueUpdated(params.eventEmitter, glvShift.glv(), cache.glvValue, cache.glvSupply);

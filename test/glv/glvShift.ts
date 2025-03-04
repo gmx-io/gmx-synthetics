@@ -17,6 +17,8 @@ import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
 import { expectBalances } from "../../utils/validation";
 import { DEFAULT_MARKET_TYPE, getMarketTokenAddress } from "../../utils/market";
+import { setBytes32IfDifferent } from "../../utils/dataStore";
+import { TOKEN_ORACLE_TYPES } from "../../utils/oracle";
 
 describe("Glv Shifts", () => {
   const { provider } = ethers;
@@ -35,7 +37,9 @@ describe("Glv Shifts", () => {
     glvHandler,
     ethUsdSingleTokenMarket2,
     wnt,
-    sol;
+    sol,
+    usdc,
+    gmOracleProvider;
 
   beforeEach(async () => {
     fixture = await deployFixture();
@@ -55,6 +59,8 @@ describe("Glv Shifts", () => {
       ethUsdSingleTokenMarket2,
       sol,
       wnt,
+      usdc,
+      gmOracleProvider,
     } = fixture.contracts);
   });
 
@@ -178,6 +184,57 @@ describe("Glv Shifts", () => {
         minMarketTokens: expandDecimals(1000, 18),
       },
     });
+
+    await expectBalances({
+      [ethUsdGlvAddress]: {
+        [ethUsdMarket.marketToken]: expandDecimals(9000, 18),
+        [solUsdMarket.marketToken]: expandDecimals(1000, 18),
+      },
+    });
+  });
+
+  it("execute glv shift with oracle GLV price", async () => {
+    const oracleTypeKey = keys.oracleTypeKey(ethUsdGlvAddress);
+    await setBytes32IfDifferent(oracleTypeKey, TOKEN_ORACLE_TYPES.DEFAULT, "oracle type");
+    await dataStore.setAddress(keys.oracleProviderForTokenKey(ethUsdGlvAddress), gmOracleProvider.address);
+
+    await expectBalances({
+      [ethUsdGlvAddress]: {
+        [ethUsdMarket.marketToken]: 0,
+      },
+    });
+
+    await handleGlvDeposit(fixture, {
+      create: {
+        longTokenAmount: expandDecimals(1, 18),
+        shortTokenAmount: expandDecimals(5000, 6),
+      },
+    });
+
+    await expectBalances({
+      [ethUsdGlvAddress]: {
+        [ethUsdMarket.marketToken]: expandDecimals(10000, 18),
+        [solUsdMarket.marketToken]: 0,
+      },
+    });
+
+    const { executeResult } = await handleGlvShift(fixture, {
+      create: {
+        fromMarket: ethUsdMarket,
+        toMarket: solUsdMarket,
+        marketTokenAmount: expandDecimals(1000, 18),
+        minMarketTokens: expandDecimals(1000, 18),
+      },
+      execute: {
+        tokens: [wnt.address, usdc.address, sol.address, ethUsdGlvAddress],
+        precisions: [8, 18, 8, 8],
+        minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(600, 4), expandDecimals(1, 4)],
+        maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(600, 4), expandDecimals(1, 4)],
+      },
+    });
+
+    const glvValueUpdatedLog = executeResult.logs.find((log) => log.parsedEventInfo?.eventName === "GlvValueUpdated");
+    expect(glvValueUpdatedLog.parsedEventData.value).eq(expandDecimals(10000, 30));
 
     await expectBalances({
       [ethUsdGlvAddress]: {

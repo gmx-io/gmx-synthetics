@@ -225,7 +225,8 @@ library GlvDepositUtils {
             params.dataStore,
             params.oracle,
             glvDeposit.glv(),
-            true // maximize
+            true, // maximize
+            false // forceCalculation
         );
         GlvToken(payable(glvDeposit.glv())).syncTokenBalance(glvDeposit.market());
 
@@ -271,11 +272,14 @@ library GlvDepositUtils {
             cache.mintAmount
         );
 
+        // glvValue can be calculated with GLV oracle price which is slightly increased after the deposit due to paid fees
+        // so the glvValue might be slightly inaccurate, but it should not be an issue for emitting GlvValueUpdated event
         cache.glvValue = GlvUtils.getGlvValue(
             params.dataStore,
             params.oracle,
             glvDeposit.glv(),
-            true // maximize
+            true, // maximize
+            false // forceCalculation
         );
         cache.glvSupply = GlvToken(payable(glvDeposit.glv())).totalSupply();
         GlvEventUtils.emitGlvValueUpdated(params.eventEmitter, glvDeposit.glv(), cache.glvValue, cache.glvSupply);
