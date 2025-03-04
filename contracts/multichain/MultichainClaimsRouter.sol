@@ -29,17 +29,29 @@ contract MultichainClaimsRouter is MultichainRouter {
         bytes32 structHash = RelayUtils.getClaimFundingFeesStructHash(relayParams, markets, tokens, receiver);
         _validateCall(relayParams, account, structHash, srcChainId);
 
-        return
-            FeeUtils.batchClaimFundingFees(
-                dataStore,
-                eventEmitter,
-                multichainVault,
-                markets,
-                tokens,
-                receiver,
-                account,
-                srcChainId
-            );
+        uint256[] memory claimedAmounts = FeeUtils.batchClaimFundingFees(
+            dataStore,
+            eventEmitter,
+            markets,
+            tokens,
+            receiver,
+            account
+        );
+
+        if (srcChainId != 0) {
+            for (uint256 i; i < markets.length; i++) {
+                MultichainUtils.recordTransferIn(
+                    dataStore,
+                    eventEmitter,
+                    multichainVault,
+                    tokens[i],
+                    receiver,
+                    srcChainId
+                );
+            }
+        }
+
+        return claimedAmounts;
     }
 
     function claimCollateral(
@@ -71,18 +83,30 @@ contract MultichainClaimsRouter is MultichainRouter {
             _validateCall(relayParams, account, structHash, srcChainId);
         }
 
-        return
-            MarketUtils.batchClaimCollateral(
-                dataStore,
-                eventEmitter,
-                multichainVault,
-                markets,
-                tokens,
-                timeKeys,
-                receiver,
-                account,
-                srcChainId
-            );
+        uint256[] memory claimedAmounts = MarketUtils.batchClaimCollateral(
+            dataStore,
+            eventEmitter,
+            markets,
+            tokens,
+            timeKeys,
+            receiver,
+            account
+        );
+
+        if (srcChainId != 0) {
+            for (uint256 i; i < markets.length; i++) {
+                MultichainUtils.recordTransferIn(
+                    dataStore,
+                    eventEmitter,
+                    multichainVault,
+                    tokens[i],
+                    receiver,
+                    srcChainId
+                );
+            }
+        }
+
+        return claimedAmounts;
     }
 
     function claimAffiliateRewards(
@@ -105,16 +129,28 @@ contract MultichainClaimsRouter is MultichainRouter {
         bytes32 structHash = RelayUtils.getClaimAffiliateRewardsStructHash(relayParams, markets, tokens, receiver);
         _validateCall(relayParams, account, structHash, srcChainId);
 
-        return
-            ReferralUtils.batchClaimAffiliateRewards(
-                dataStore,
-                eventEmitter,
-                multichainVault,
-                markets,
-                tokens,
-                receiver,
-                account,
-                srcChainId
-            );
+        uint256[] memory claimedAmounts = ReferralUtils.batchClaimAffiliateRewards(
+            dataStore,
+            eventEmitter,
+            markets,
+            tokens,
+            receiver,
+            account
+        );
+
+        if (srcChainId != 0) {
+            for (uint256 i; i < markets.length; i++) {
+                MultichainUtils.recordTransferIn(
+                    dataStore,
+                    eventEmitter,
+                    multichainVault,
+                    tokens[i],
+                    receiver,
+                    srcChainId
+                );
+            }
+        }
+
+        return claimedAmounts;
     }
 }

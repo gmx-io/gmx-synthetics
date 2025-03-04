@@ -13,8 +13,6 @@ import "../market/MarketUtils.sol";
 
 import "../market/MarketToken.sol";
 
-import "../multichain/MultichainUtils.sol";
-
 // @title FeeUtils
 // @dev Library for fee actions
 library FeeUtils {
@@ -100,12 +98,10 @@ library FeeUtils {
     function batchClaimFundingFees(
         DataStore dataStore,
         EventEmitter eventEmitter,
-        MultichainVault multichainVault,
         address[] memory markets,
         address[] memory tokens,
         address receiver,
-        address account,
-        uint256 srcChainId
+        address account
     ) external returns (uint256[] memory) {
         if (markets.length != tokens.length) {
             revert Errors.InvalidClaimFundingFeesInput(markets.length, tokens.length);
@@ -124,18 +120,8 @@ library FeeUtils {
                 markets[i],
                 tokens[i],
                 account,
-                srcChainId == 0 ? receiver : address(multichainVault)
+                receiver
             );
-            if (srcChainId != 0) {
-                MultichainUtils.recordTransferIn(
-                    dataStore,
-                    eventEmitter,
-                    multichainVault,
-                    tokens[i],
-                    receiver,
-                    srcChainId
-                );
-            }
         }
 
         return claimedAmounts;

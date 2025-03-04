@@ -63,8 +63,8 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
     IDepositHandler public immutable depositHandler;
     IWithdrawalHandler public immutable withdrawalHandler;
     IShiftHandler public immutable shiftHandler;
-    IOrderHandler public orderHandler; // TODO: temporarily fix the stack too deep error
-    IExternalHandler public externalHandler; // TODO: temporarily fix the stack too deep error
+    IOrderHandler public immutable orderHandler;
+    IExternalHandler public immutable externalHandler;
 
     // @dev Constructor that initializes the contract with the provided Router, RoleStore, DataStore,
     // EventEmitter, IDepositHandler, IWithdrawalHandler, IOrderHandler, and OrderStore instances
@@ -374,12 +374,10 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
             FeeUtils.batchClaimFundingFees(
                 dataStore,
                 eventEmitter,
-                MultichainVault(payable(0)),
                 markets,
                 tokens,
                 receiver,
-                account,
-                0 // srcChainId
+                account
             );
     }
 
@@ -394,13 +392,11 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
             MarketUtils.batchClaimCollateral(
                 dataStore,
                 eventEmitter,
-                MultichainVault(payable(0)),
                 markets,
                 tokens,
                 timeKeys,
                 receiver,
-                account,
-                0 // srcChainId
+                account
             );
     }
 
@@ -424,12 +420,10 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
             ReferralUtils.batchClaimAffiliateRewards(
                 dataStore,
                 eventEmitter,
-                MultichainVault(payable(0)),
                 markets,
                 tokens,
                 receiver,
-                account,
-                0 // srcChainId
+                account
             );
     }
 
