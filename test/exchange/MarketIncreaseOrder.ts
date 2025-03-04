@@ -568,4 +568,138 @@ describe("Exchange.MarketIncreaseOrder", () => {
       }
     );
   });
+
+  describe("Max Leverage", async () => {
+    it("Should increase order if under max leverage", async () => {
+      await dataStore.setUint(keys.MAX_LEVERAGE_FOR_INCREASE_POSITION, decimalToFloat(20));
+
+      const params = {
+        account: user0,
+        market: ethUsdMarket,
+        initialCollateralToken: usdc,
+        initialCollateralDeltaAmount: expandDecimals(50_000, 6), // 50,000 USDC
+        swapPath: [],
+        sizeDeltaUsd: decimalToFloat(1_000_000), // 20x leverage
+        acceptablePrice: expandDecimals(5001, 12),
+        executionFee: expandDecimals(1, 15),
+        minOutputAmount: 0,
+        orderType: OrderType.MarketIncrease,
+        isLong: true,
+        shouldUnwrapNativeToken: false,
+      };
+
+      // Test successful case with 20x leverage
+      await handleOrder(fixture, {
+        create: params,
+        execute: {
+          tokens: [wnt.address, usdc.address],
+          minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+          maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+          precisions: [8, 18],
+          prices: {
+            indexTokenPrice: { min: expandDecimals(5000, 4), max: expandDecimals(5000, 4) },
+            longTokenPrice: { min: expandDecimals(1, 6), max: expandDecimals(1, 6) },
+            shortTokenPrice: { min: expandDecimals(1, 6), max: expandDecimals(1, 6) },
+          },
+        },
+      });
+
+      // Test with different collateral amount
+      await handleOrder(fixture, {
+        create: {
+          ...params,
+          initialCollateralDeltaAmount: expandDecimals(10_000, 6), // 10,000 USDC
+          sizeDeltaUsd: decimalToFloat(200_000), // Still 20x leverage
+        },
+        execute: {
+          tokens: [wnt.address, usdc.address],
+          minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+          maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+          precisions: [8, 18],
+          prices: {
+            indexTokenPrice: { min: expandDecimals(5000, 4), max: expandDecimals(5000, 4) },
+            longTokenPrice: { min: expandDecimals(1, 6), max: expandDecimals(1, 6) },
+            shortTokenPrice: { min: expandDecimals(1, 6), max: expandDecimals(1, 6) },
+          },
+        },
+      });
+    });
+
+    it("Should revert if above max leverage", async () => {
+      await dataStore.setUint(keys.MAX_LEVERAGE_FOR_INCREASE_POSITION, decimalToFloat(20));
+
+      const params = {
+        account: user0,
+        market: ethUsdMarket,
+        initialCollateralToken: usdc,
+        initialCollateralDeltaAmount: expandDecimals(50_000, 6), // 50,000 USDC
+        swapPath: [],
+        sizeDeltaUsd: decimalToFloat(1_000_000), // 20x leverage
+        acceptablePrice: expandDecimals(5001, 12),
+        executionFee: expandDecimals(1, 15),
+        minOutputAmount: 0,
+        orderType: OrderType.MarketIncrease,
+        isLong: true,
+        shouldUnwrapNativeToken: false,
+      };
+
+      // Test failed case with 21x leverage
+      await handleOrder(fixture, {
+        create: {
+          ...params,
+          sizeDeltaUsd: decimalToFloat(1_050_000),
+        },
+        execute: {
+          tokens: [wnt.address, usdc.address],
+          minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+          maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+          precisions: [8, 18],
+          prices: {
+            indexTokenPrice: { min: expandDecimals(5000, 4), max: expandDecimals(5000, 4) },
+            longTokenPrice: { min: expandDecimals(1, 6), max: expandDecimals(1, 6) },
+            shortTokenPrice: { min: expandDecimals(1, 6), max: expandDecimals(1, 6) },
+          },
+          expectedCancellationReason: "InsufficientCollateralUsd",
+        },
+      });
+    });
+
+    it("Should allow any leverage if max not set", async () => {
+      await dataStore.setUint(keys.MAX_LEVERAGE, 0);
+
+      const params = {
+        account: user0,
+        market: ethUsdMarket,
+        initialCollateralToken: usdc,
+        initialCollateralDeltaAmount: expandDecimals(50_000, 6), // 50,000 USDC
+        swapPath: [],
+        sizeDeltaUsd: decimalToFloat(1_500_000), // 30x leverage
+        acceptablePrice: expandDecimals(5001, 12),
+        executionFee: expandDecimals(1, 15),
+        minOutputAmount: 0,
+        orderType: OrderType.MarketIncrease,
+        isLong: true,
+        shouldUnwrapNativeToken: false,
+      };
+
+      await handleOrder(fixture, {
+        create: {
+          ...params,
+          initialCollateralDeltaAmount: expandDecimals(50_000, 6),
+          sizeDeltaUsd: decimalToFloat(2_000_000), // 40x leverage
+        },
+        execute: {
+          tokens: [wnt.address, usdc.address],
+          minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+          maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+          precisions: [8, 18],
+          prices: {
+            indexTokenPrice: { min: expandDecimals(5000, 4), max: expandDecimals(5000, 4) },
+            longTokenPrice: { min: expandDecimals(1, 6), max: expandDecimals(1, 6) },
+            shortTokenPrice: { min: expandDecimals(1, 6), max: expandDecimals(1, 6) },
+          },
+        },
+      });
+    });
+  });
 });
