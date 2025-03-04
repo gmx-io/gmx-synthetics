@@ -1,4 +1,4 @@
-import { hashString, hashData } from "./hash";
+import { hashString, hashData, solidityKeccak256 } from "./hash";
 
 export const WNT = hashString("WNT");
 export const NONCE = hashString("NONCE");
@@ -14,6 +14,7 @@ export const MIN_HANDLE_EXECUTION_ERROR_GAS_TO_FORWARD = hashString("MIN_HANDLE_
 export const REFUND_EXECUTION_FEE_GAS_LIMIT = hashString("REFUND_EXECUTION_FEE_GAS_LIMIT");
 
 export const MAX_LEVERAGE = hashString("MAX_LEVERAGE");
+export const MAX_LEVERAGE_FOR_INCREASE_POSITION = solidityKeccak256("MAX_LEVERAGE_FOR_INCREASE_POSITION");
 
 export const MARKET_LIST = hashString("MARKET_LIST");
 

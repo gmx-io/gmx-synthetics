@@ -24,3 +24,7 @@ export function hashString(string) {
 export function keccakString(string) {
   return keccak256(toUtf8Bytes(string));
 }
+
+export function solidityKeccak256(string) {
+  return ethers.utils.solidityKeccak256(["string"], [string]);
+}
