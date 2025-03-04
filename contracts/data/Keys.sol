@@ -262,7 +262,7 @@ library Keys {
     // @dev key for the min allowed position size in USD
     bytes32 public constant MIN_POSITION_SIZE_USD = keccak256(abi.encode("MIN_POSITION_SIZE_USD"));
     // @dev key for max leverage check when user increases position
-    bytes32 public constant MAX_LEVERAGE_FOR_INCREASE_POSITION = keccak256(abi.encodePacked("MAX_LEVERAGE_FOR_INCREASE_POSITION"));
+    bytes32 public constant MAX_LEVERAGE_FOR_INCREASE_POSITION = keccak256(abi.encode("MAX_LEVERAGE_FOR_INCREASE_POSITION"));
 
     // @dev key for the virtual id of tokens
     bytes32 public constant VIRTUAL_TOKEN_ID = keccak256(abi.encode("VIRTUAL_TOKEN_ID"));
