@@ -24,6 +24,8 @@ import "../utils/Precision.sol";
 
 import "../feature/FeatureUtils.sol";
 
+import "../multichain/MultichainUtils.sol";
+
 // @title MarketUtils
 // @dev Library for market functions
 library MarketUtils {
@@ -645,11 +647,13 @@ library MarketUtils {
     function batchClaimCollateral(
         DataStore dataStore,
         EventEmitter eventEmitter,
+        MultichainVault multichainVault,
         address[] memory markets,
         address[] memory tokens,
         uint256[] memory timeKeys,
         address receiver,
-        address account
+        address account,
+        uint256 srcChainId
     ) internal returns (uint256[] memory) {
         if (markets.length != tokens.length || tokens.length != timeKeys.length) {
             revert Errors.InvalidClaimCollateralInput(markets.length, tokens.length, timeKeys.length);
@@ -669,8 +673,18 @@ library MarketUtils {
                 tokens[i],
                 timeKeys[i],
                 account,
-                receiver
+                receiver // srcChainId == 0 ? receiver : address(multichainVault) // TODO: fix stack too deep error
             );
+            if (srcChainId != 0) {
+                MultichainUtils.recordTransferIn(
+                    dataStore,
+                    eventEmitter,
+                    multichainVault,
+                    tokens[i],
+                    receiver,
+                    srcChainId
+                );
+            }
         }
 
         return claimedAmounts;

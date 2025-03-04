@@ -63,8 +63,8 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
     IDepositHandler public immutable depositHandler;
     IWithdrawalHandler public immutable withdrawalHandler;
     IShiftHandler public immutable shiftHandler;
-    IOrderHandler public immutable orderHandler;
-    IExternalHandler public immutable externalHandler;
+    IOrderHandler public orderHandler; // TODO: temporarily fix the stack too deep error
+    IExternalHandler public externalHandler; // TODO: temporarily fix the stack too deep error
 
     // @dev Constructor that initializes the contract with the provided Router, RoleStore, DataStore,
     // EventEmitter, IDepositHandler, IWithdrawalHandler, IOrderHandler, and OrderStore instances
@@ -370,7 +370,17 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         address receiver
     ) external payable nonReentrant returns (uint256[] memory) {
         address account = msg.sender;
-        return FeeUtils.batchClaimFundingFees(dataStore, eventEmitter, markets, tokens, receiver, account);
+        return
+            FeeUtils.batchClaimFundingFees(
+                dataStore,
+                eventEmitter,
+                MultichainVault(payable(0)),
+                markets,
+                tokens,
+                receiver,
+                account,
+                0 // srcChainId
+            );
     }
 
     function claimCollateral(
@@ -380,7 +390,18 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         address receiver
     ) external payable nonReentrant returns (uint256[] memory) {
         address account = msg.sender;
-        return MarketUtils.batchClaimCollateral(dataStore, eventEmitter, markets, tokens, timeKeys, receiver, account);
+        return
+            MarketUtils.batchClaimCollateral(
+                dataStore,
+                eventEmitter,
+                MultichainVault(payable(0)),
+                markets,
+                tokens,
+                timeKeys,
+                receiver,
+                account,
+                0 // srcChainId
+            );
     }
 
     /**
@@ -399,9 +420,17 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         address receiver
     ) external payable nonReentrant returns (uint256[] memory) {
         address account = msg.sender;
-        return ReferralUtils.batchClaimAffiliateRewards(
-            dataStore, eventEmitter, markets, tokens, receiver, account
-        );
+        return
+            ReferralUtils.batchClaimAffiliateRewards(
+                dataStore,
+                eventEmitter,
+                MultichainVault(payable(0)),
+                markets,
+                tokens,
+                receiver,
+                account,
+                0 // srcChainId
+            );
     }
 
     function setUiFeeFactor(uint256 uiFeeFactor) external payable nonReentrant {

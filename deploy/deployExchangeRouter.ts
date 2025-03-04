@@ -29,6 +29,7 @@ const func = createDeployFunction({
     "ReferralUtils",
     "ShiftStoreUtils",
     "WithdrawalStoreUtils",
+    "MultichainUtils",
   ],
   afterDeploy: async ({ deployedContract }) => {
     await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");

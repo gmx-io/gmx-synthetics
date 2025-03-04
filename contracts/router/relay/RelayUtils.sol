@@ -184,6 +184,26 @@ library RelayUtils {
             )
         );
 
+    
+    bytes32 public constant CLAIM_FUNDING_FEES_TYPEHASH =
+        keccak256(
+            bytes(
+                "ClaimFundingFees(address[] markets,address[] tokens,address receiver,bytes32 relayParams)"
+            )
+        );
+    bytes32 public constant CLAIM_COLLATERAL_TYPEHASH =
+        keccak256(
+            bytes(
+                "ClaimCollateral(address[] markets,address[] tokens,uint256[] timeKeys,address receiver,bytes32 relayParams)"
+            )
+        );
+    bytes32 public constant CLAIM_AFFILIATE_REWARDS_TYPEHASH =
+        keccak256(
+            bytes(
+                "ClaimAffiliateRewards(address[] markets,address[] tokens,address receiver,bytes32 relayParams)"
+            )
+        );
+
     //////////////////// ORDER ////////////////////
 
     function _getRelayParamsHash(RelayParams calldata relayParams) internal pure returns (bytes32) {
@@ -532,6 +552,62 @@ library RelayUtils {
                     BRIDGE_OUT_TYPEHASH,
                     params.token,
                     params.amount,
+                    _getRelayParamsHash(relayParams)
+                )
+            );
+    }
+
+    function getClaimFundingFeesStructHash(
+        RelayParams calldata relayParams,
+        address[] memory markets,
+        address[] memory tokens,
+        address receiver
+    ) external pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    CLAIM_FUNDING_FEES_TYPEHASH,
+                    keccak256(abi.encodePacked(markets)),
+                    keccak256(abi.encodePacked(tokens)),
+                    receiver,
+                    _getRelayParamsHash(relayParams)
+                )
+            );
+    }
+
+    function getClaimCollateralStructHash(
+        RelayParams calldata relayParams,
+        address[] memory markets,
+        address[] memory tokens,
+        uint256[] memory timeKeys,
+        address receiver
+    ) external pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    CLAIM_COLLATERAL_TYPEHASH,
+                    keccak256(abi.encodePacked(markets)),
+                    keccak256(abi.encodePacked(tokens)),
+                    keccak256(abi.encodePacked(timeKeys)),
+                    receiver,
+                    _getRelayParamsHash(relayParams)
+                )
+            );
+    }
+
+    function getClaimAffiliateRewardsStructHash(
+        RelayParams calldata relayParams,
+        address[] memory markets,
+        address[] memory tokens,
+        address receiver
+    ) external pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    CLAIM_AFFILIATE_REWARDS_TYPEHASH,
+                    keccak256(abi.encodePacked(markets)),
+                    keccak256(abi.encodePacked(tokens)),
+                    receiver,
                     _getRelayParamsHash(relayParams)
                 )
             );

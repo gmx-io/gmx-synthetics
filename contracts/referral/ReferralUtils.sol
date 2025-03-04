@@ -116,10 +116,12 @@ library ReferralUtils {
     function batchClaimAffiliateRewards(
         DataStore dataStore,
         EventEmitter eventEmitter,
+        MultichainVault multichainVault,
         address[] memory markets,
         address[] memory tokens,
         address receiver,
-        address account
+        address account,
+        uint256 srcChainId
     ) external returns (uint256[] memory) {
         if (markets.length != tokens.length) {
             revert Errors.InvalidClaimAffiliateRewardsInput(markets.length, tokens.length);
@@ -136,8 +138,18 @@ library ReferralUtils {
                 markets[i],
                 tokens[i],
                 account,
-                receiver
+                srcChainId == 0 ? receiver : address(multichainVault)
             );
+            if (srcChainId != 0) {
+                MultichainUtils.recordTransferIn(
+                    dataStore,
+                    eventEmitter,
+                    multichainVault,
+                    tokens[i],
+                    receiver,
+                    srcChainId
+                );
+            }
         }
 
         return claimedAmounts;
