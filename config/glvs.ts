@@ -273,8 +273,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           },
           {
             indexToken: "FARTCOIN",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(1_200_000, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(1_200_000),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(1_353_892, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(1_440_000),
           },
           {
             indexToken: "AI16Z",
