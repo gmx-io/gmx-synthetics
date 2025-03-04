@@ -440,4 +440,7 @@ library Errors {
     error InvalidSubaccountApprovalSubaccount();
     error NonEmptyExternalCallsForSubaccountOrder();
     error InvalidRelayParams();
+
+    // EventUtils error
+    error NotFound(string key);
 }
