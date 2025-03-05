@@ -460,6 +460,15 @@ library PositionUtils {
 
         int256 remainingCollateralUsd = values.positionCollateralAmount.toInt256() * collateralTokenPrice.min.toInt256();
 
+        // Check maximum leverage before any PnL deductions
+        uint256 maxLeverage = dataStore.getUint(Keys.MAX_LEVERAGE_FOR_INCREASE_POSITION);
+        if (maxLeverage > 0) {
+            uint256 currentLeverage = Precision.toFactor(values.positionSizeInUsd, remainingCollateralUsd.toUint256());
+            if (currentLeverage > maxLeverage) {
+                return (false, -int256(currentLeverage - maxLeverage));
+            }
+        }
+
         // deduct realized pnl if it is negative since this would be paid from
         // the position's collateral
         if (values.realizedPnlUsd < 0) {
