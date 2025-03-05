@@ -7,8 +7,9 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./FeeDistributorVault.sol";
 import "./FeeHandler.sol";
 import "../external/MultichainReader.sol";
-import "../v1/IRewardTracker.sol";
-import "../v1/IRewardDistributor.sol";
+import "../v1/IRewardTrackerV1.sol";
+import "../v1/IRewardDistributorV1.sol";
+import "../v1/IVesterV1.sol";
 import "../v1/IMintable.sol";
 
 contract FeeDistributor is ReentrancyGuard, RoleModule {
@@ -39,6 +40,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
     bytes32 public constant feeGlpTrackerKey = keccak256(abi.encode("FEE_GLP_TRACKER"));
     bytes32 public constant chainlinkKey = keccak256(abi.encode("CHAINLINK"));
     bytes32 public constant esGmxKey = keccak256(abi.encode("ESGMX"));
+    bytes32 public constant esGmxVesterKey = keccak256(abi.encode("ESGMX_VESTER"));
 
     FeeDistributorVault public immutable feeDistributorVault;
     FeeHandler public immutable feeHandler;
@@ -303,11 +305,11 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         setUint(Keys.feeDistributorReferralRewardsSentKey(wnt), totalWntSent);
     }
 
-    // @dev distribute the calculated esGMX referral rewards to the specified accounts
+    // @dev distribute the calculated esGMX referral rewards to the specified accounts and increase bonus rewards
     // @param accounts the accounts to which esGMX referral rewards will be sent
     // @param amounts the amounts of esGMX referral rewards that will be sent to each account
     // @param maxBatchSize the maximum number of accounts that will be sent in one transaction
-    function sendEsGmx(
+    function sendEsGmxAndIncreaseBonusRewards(
         address[] calldata accounts,
         uint256[] calldata amounts,
         uint256 maxBatchSize
@@ -342,6 +344,11 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
             uint256 esGmxAmount = amounts[i];
             transferOut(esGmx, account, esGmxAmount);
             totalEsGmxSent = totalEsGmxSent + esGmxAmount;
+
+            address vester = getAddress(block.chainid, esGmxVesterKey);
+            uint256 bonusReward = IVester(vester).bonusRewards(account);
+            uint256 updatedBonusReward = bonusReward + esGmxAmount;
+            IVester(vester).setBonusRewards(account, updatedBonusReward);
 
             EventUtils.EventLogData memory eventData;
             eventData.uintItems.initItems(1);
