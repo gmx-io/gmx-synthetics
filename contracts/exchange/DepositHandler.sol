@@ -154,7 +154,7 @@ contract DepositHandler is IDepositHandler, BaseHandler {
             true // includeVirtualInventoryImpact
         );
 
-        ExecuteDepositUtils.executeDeposit(params, deposit);
+        ExecuteDepositUtils.executeDeposit(params, deposit, false);
     }
 
     // @dev handle errors from deposits

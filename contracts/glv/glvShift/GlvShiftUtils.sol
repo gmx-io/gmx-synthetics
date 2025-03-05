@@ -142,8 +142,7 @@ library GlvShiftUtils {
             })
         );
 
-        cache.shiftKey = NonceUtils.getNextKey(params.dataStore);
-        params.dataStore.addBytes32(Keys.SHIFT_LIST, cache.shiftKey);
+        cache.shiftKey = keccak256(abi.encode(params.key, "shift"));
         ShiftEventUtils.emitShiftCreated(params.eventEmitter, cache.shiftKey, cache.shift);
 
         ShiftUtils.ExecuteShiftParams memory executeShiftParams = ShiftUtils.ExecuteShiftParams({
@@ -159,7 +158,7 @@ library GlvShiftUtils {
             startingGas: gasleft()
         });
 
-        cache.receivedMarketTokens = ShiftUtils.executeShift(executeShiftParams, cache.shift);
+        cache.receivedMarketTokens = ShiftUtils.executeShift(executeShiftParams, cache.shift, true);
 
         GlvToken(payable(glvShift.glv())).syncTokenBalance(glvShift.toMarket());
 
@@ -211,11 +210,15 @@ library GlvShiftUtils {
 
         GlvShiftEventUtils.emitGlvShiftExecuted(params.eventEmitter, params.key, cache.receivedMarketTokens);
 
+        // glvValue can be calculated with GLV oracle price which can be changed slightly after the shift due to paid fees
+        // so the glvValue might be slightly inaccurate
+        // should not be an issue for emitting GlvValueUpdated event
         cache.glvValue = GlvUtils.getGlvValue(
             params.dataStore,
             params.oracle,
             glvShift.glv(),
-            true // maximize
+            true, // maximize
+            false // forceCalculation
         );
         cache.glvSupply = GlvToken(payable(glvShift.glv())).totalSupply();
         GlvEventUtils.emitGlvValueUpdated(params.eventEmitter, glvShift.glv(), cache.glvValue, cache.glvSupply);

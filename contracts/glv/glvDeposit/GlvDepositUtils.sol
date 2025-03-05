@@ -225,7 +225,8 @@ library GlvDepositUtils {
             params.dataStore,
             params.oracle,
             glvDeposit.glv(),
-            true // maximize
+            true, // maximize
+            false // forceCalculation
         );
         GlvToken(payable(glvDeposit.glv())).syncTokenBalance(glvDeposit.market());
 
@@ -271,11 +272,14 @@ library GlvDepositUtils {
             cache.mintAmount
         );
 
+        // glvValue can be calculated with GLV oracle price which is slightly increased after the deposit due to paid fees
+        // so the glvValue might be slightly inaccurate, but it should not be an issue for emitting GlvValueUpdated event
         cache.glvValue = GlvUtils.getGlvValue(
             params.dataStore,
             params.oracle,
             glvDeposit.glv(),
-            true // maximize
+            true, // maximize
+            false // forceCalculation
         );
         cache.glvSupply = GlvToken(payable(glvDeposit.glv())).totalSupply();
         GlvEventUtils.emitGlvValueUpdated(params.eventEmitter, glvDeposit.glv(), cache.glvValue, cache.glvSupply);
@@ -410,8 +414,7 @@ library GlvDepositUtils {
             Deposit.Flags({shouldUnwrapNativeToken: false})
         );
 
-        bytes32 depositKey = NonceUtils.getNextKey(params.dataStore);
-        params.dataStore.addBytes32(Keys.DEPOSIT_LIST, depositKey);
+        bytes32 depositKey = keccak256(abi.encode(params.key, "deposit"));
         DepositEventUtils.emitDepositCreated(params.eventEmitter, depositKey, deposit, Deposit.DepositType.Glv);
 
         ExecuteDepositUtils.ExecuteDepositParams memory executeDepositParams = ExecuteDepositUtils.ExecuteDepositParams(
@@ -426,7 +429,7 @@ library GlvDepositUtils {
                 true // includeVirtualInventoryImpact
             );
 
-        uint256 receivedMarketTokens = ExecuteDepositUtils.executeDeposit(executeDepositParams, deposit);
+        uint256 receivedMarketTokens = ExecuteDepositUtils.executeDeposit(executeDepositParams, deposit, true);
         return receivedMarketTokens;
     }
 

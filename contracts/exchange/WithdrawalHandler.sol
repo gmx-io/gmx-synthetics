@@ -211,7 +211,7 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
             swapPricingType
         );
 
-        ExecuteWithdrawalUtils.executeWithdrawal(params, withdrawal);
+        ExecuteWithdrawalUtils.executeWithdrawal(params, withdrawal, false);
     }
 
     function _handleWithdrawalError(

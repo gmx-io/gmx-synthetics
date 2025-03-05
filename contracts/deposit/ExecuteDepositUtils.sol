@@ -92,18 +92,23 @@ library ExecuteDepositUtils {
         int256 priceImpactUsd;
         uint256 marketTokensSupply;
         EventUtils.EventLogData callbackEventData;
+        MarketPoolValueInfo.Props poolValueInfo;
     }
 
     address public constant RECEIVER_FOR_FIRST_DEPOSIT = address(1);
 
     // @dev executes a deposit
     // @param params ExecuteDepositParams
-    function executeDeposit(ExecuteDepositParams memory params, Deposit.Props memory deposit) external returns (uint256 receivedMarketTokens) {
+    // @param deposit
+    // @param skipRemoval if true, the deposit will not be removed from the data store.
+    // This is used when executing a deposit as part of a shift or a glv deposit and the deposit is not stored in the data store
+    function executeDeposit(ExecuteDepositParams memory params, Deposit.Props memory deposit, bool skipRemoval) external returns (uint256 receivedMarketTokens) {
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
         params.startingGas -= gasleft() / 63;
 
-        DepositStoreUtils.remove(params.dataStore, params.key, deposit.account());
-
+        if (!skipRemoval) {
+            DepositStoreUtils.remove(params.dataStore, params.key, deposit.account());
+        }
 
         if (deposit.account() == address(0)) {
             revert Errors.EmptyDeposit();
@@ -254,7 +259,7 @@ library ExecuteDepositUtils {
             params.swapPricingType
         );
 
-        MarketPoolValueInfo.Props memory poolValueInfo = MarketUtils.getPoolValueInfo(
+        cache.poolValueInfo = MarketUtils.getPoolValueInfo(
             params.dataStore,
             cache.market,
             cache.prices.indexTokenPrice,
@@ -271,7 +276,7 @@ library ExecuteDepositUtils {
             keccak256(abi.encode("DEPOSIT")),
             params.key,
             cache.market.marketToken,
-            poolValueInfo,
+            cache.poolValueInfo,
             cache.marketTokensSupply
         );
 
