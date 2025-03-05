@@ -80,18 +80,22 @@ async function main() {
   console.log("market %s", wntUsdMarketAddress);
 
   const params: DepositUtils.CreateDepositParamsStruct = {
-    receiver: wallet.address,
-    callbackContract: ethers.constants.AddressZero,
-    market: wntUsdMarketAddress,
+    addresses: {
+      receiver: wallet.address,
+      callbackContract: ethers.constants.AddressZero,
+      market: wntUsdMarketAddress,
+      initialLongToken: wnt.address,
+      longTokenSwapPath: [],
+      initialShortToken: usdc.address,
+      shortTokenSwapPath: [],
+      uiFeeReceiver: ethers.constants.AddressZero,
+    },
     minMarketTokens: 0,
     shouldUnwrapNativeToken: false,
     executionFee: executionFee,
     callbackGasLimit: 0,
-    initialLongToken: wnt.address,
-    longTokenSwapPath: [],
-    initialShortToken: usdc.address,
-    shortTokenSwapPath: [],
-    uiFeeReceiver: ethers.constants.AddressZero,
+    srcChainId: 0,
+    dataList: [],
   };
   console.log("exchange router %s", exchangeRouter.address);
   console.log("creating deposit %s", JSON.stringify(params));

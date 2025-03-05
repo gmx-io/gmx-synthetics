@@ -55,6 +55,7 @@ library Order {
         Addresses addresses;
         Numbers numbers;
         Flags flags;
+        bytes32[] _dataList;
     }
 
     // @param account the account of the order
@@ -114,6 +115,7 @@ library Order {
         uint256 minOutputAmount;
         uint256 updatedAtTime;
         uint256 validFromTime;
+        uint256 srcChainId;
     }
 
     // @param isLong whether the order is for a long or short
@@ -374,6 +376,13 @@ library Order {
         props.numbers.validFromTime = value;
     }
 
+    function srcChainId(Props memory props) internal pure returns (uint256) {
+        return props.numbers.srcChainId;
+    }
+    function setSrcChainId(Props memory props, uint256 value) internal pure {
+        props.numbers.srcChainId = value;
+    }
+
     // @dev whether the order is for a long or short
     // @param props Props
     // @return whether the order is for a long or short
@@ -424,6 +433,14 @@ library Order {
 
     function setAutoCancel(Props memory props, bool value) internal pure {
         props.flags.autoCancel = value;
+    }
+
+    function dataList(Props memory props) internal pure returns (bytes32[] memory) {
+        return props._dataList;
+    }
+
+    function setDataList(Props memory props, bytes32[] memory value) internal pure {
+        props._dataList = value;
     }
 
     // @param props Props

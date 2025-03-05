@@ -19,6 +19,7 @@ contract BaseOrderHandler is BaseHandler {
     using Order for Order.Props;
     using Array for uint256[];
 
+    MultichainVault public immutable multichainVault;
     OrderVault public immutable orderVault;
     SwapHandler public immutable swapHandler;
     IReferralStorage public immutable referralStorage;
@@ -28,10 +29,12 @@ contract BaseOrderHandler is BaseHandler {
         DataStore _dataStore,
         EventEmitter _eventEmitter,
         Oracle _oracle,
+        MultichainVault _multichainVault,
         OrderVault _orderVault,
         SwapHandler _swapHandler,
         IReferralStorage _referralStorage
     ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {
+        multichainVault = _multichainVault;
         orderVault = _orderVault;
         swapHandler = _swapHandler;
         referralStorage = _referralStorage;
@@ -57,6 +60,7 @@ contract BaseOrderHandler is BaseHandler {
 
         params.contracts.dataStore = dataStore;
         params.contracts.eventEmitter = eventEmitter;
+        params.contracts.multichainVault = multichainVault;
         params.contracts.orderVault = orderVault;
         params.contracts.oracle = oracle;
         params.contracts.swapHandler = swapHandler;
