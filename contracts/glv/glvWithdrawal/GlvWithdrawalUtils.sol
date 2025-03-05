@@ -234,8 +234,7 @@ library GlvWithdrawalUtils {
             Withdrawal.Flags({shouldUnwrapNativeToken: glvWithdrawal.shouldUnwrapNativeToken()})
         );
 
-        bytes32 withdrawalKey = NonceUtils.getNextKey(params.dataStore);
-        params.dataStore.addBytes32(Keys.WITHDRAWAL_LIST, withdrawalKey);
+        bytes32 withdrawalKey = keccak256(abi.encode(params.key, "withdrawal"));
         WithdrawalEventUtils.emitWithdrawalCreated(
             params.eventEmitter,
             withdrawalKey,
@@ -262,7 +261,7 @@ library GlvWithdrawalUtils {
                 swapPricingType: ISwapPricingUtils.SwapPricingType.Withdrawal
             });
 
-        return ExecuteWithdrawalUtils.executeWithdrawal(executeWithdrawalParams, withdrawal);
+        return ExecuteWithdrawalUtils.executeWithdrawal(executeWithdrawalParams, withdrawal, true);
     }
 
     function _getMarketTokenAmount(

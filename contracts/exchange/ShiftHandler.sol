@@ -130,7 +130,7 @@ contract ShiftHandler is IShiftHandler, BaseHandler {
             startingGas
         );
 
-        ShiftUtils.executeShift(params, shift);
+        ShiftUtils.executeShift(params, shift, false);
     }
 
     function _handleShiftError(

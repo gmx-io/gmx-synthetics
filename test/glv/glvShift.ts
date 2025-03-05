@@ -183,6 +183,9 @@ describe("Glv Shifts", () => {
         marketTokenAmount: expandDecimals(1000, 18),
         minMarketTokens: expandDecimals(1000, 18),
       },
+      execute: {
+        gasUsageLabel: "executeGlvShift",
+      },
     });
 
     await expectBalances({

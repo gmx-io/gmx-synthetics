@@ -142,8 +142,7 @@ library GlvShiftUtils {
             })
         );
 
-        cache.shiftKey = NonceUtils.getNextKey(params.dataStore);
-        params.dataStore.addBytes32(Keys.SHIFT_LIST, cache.shiftKey);
+        cache.shiftKey = keccak256(abi.encode(params.key, "shift"));
         ShiftEventUtils.emitShiftCreated(params.eventEmitter, cache.shiftKey, cache.shift);
 
         ShiftUtils.ExecuteShiftParams memory executeShiftParams = ShiftUtils.ExecuteShiftParams({
@@ -159,7 +158,7 @@ library GlvShiftUtils {
             startingGas: gasleft()
         });
 
-        cache.receivedMarketTokens = ShiftUtils.executeShift(executeShiftParams, cache.shift);
+        cache.receivedMarketTokens = ShiftUtils.executeShift(executeShiftParams, cache.shift, true);
 
         GlvToken(payable(glvShift.glv())).syncTokenBalance(glvShift.toMarket());
 

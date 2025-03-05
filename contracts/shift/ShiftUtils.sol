@@ -69,6 +69,7 @@ library ShiftUtils {
         bytes32 depositKey;
         ExecuteDepositUtils.ExecuteDepositParams executeDepositParams;
         uint256 receivedMarketTokens;
+        EventUtils.EventLogData eventData;
     }
 
     function createShift(
@@ -147,14 +148,21 @@ library ShiftUtils {
         return cache.key;
     }
 
+    // @param params
+    // @param shift
+    // @param skipRemoval if true, the shift will not be removed from the data store.
+    // This is used when executing a shift as part of a glv shift and the shift is not stored in the data store
     function executeShift(
         ExecuteShiftParams memory params,
-        Shift.Props memory shift
+        Shift.Props memory shift,
+        bool skipRemoval
     ) external returns (uint256) {
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
         params.startingGas -= gasleft() / 63;
 
-        ShiftStoreUtils.remove(params.dataStore, params.key, shift.account());
+        if (!skipRemoval) {
+            ShiftStoreUtils.remove(params.dataStore, params.key, shift.account());
+        }
 
         if (shift.account() == address(0)) {
             revert Errors.EmptyShift();
@@ -203,11 +211,7 @@ library ShiftUtils {
             )
         );
 
-        cache.withdrawalKey = NonceUtils.getNextKey(params.dataStore);
-        params.dataStore.addBytes32(
-            Keys.WITHDRAWAL_LIST,
-            cache.withdrawalKey
-        );
+        cache.withdrawalKey = keccak256(abi.encode(params.key, "withdrawal"));
         WithdrawalEventUtils.emitWithdrawalCreated(
             params.eventEmitter,
             cache.withdrawalKey,
@@ -228,7 +232,8 @@ library ShiftUtils {
 
         ExecuteWithdrawalUtils.executeWithdrawal(
             cache.executeWithdrawalParams,
-            cache.withdrawal
+            cache.withdrawal,
+            true
         );
 
         // if the initialLongToken and initialShortToken are the same, only the initialLongTokenAmount would
@@ -263,11 +268,7 @@ library ShiftUtils {
             )
         );
 
-        cache.depositKey = NonceUtils.getNextKey(params.dataStore);
-        params.dataStore.addBytes32(
-            Keys.DEPOSIT_LIST,
-            cache.depositKey
-        );
+        cache.depositKey = keccak256(abi.encode(params.key, "deposit"));
         DepositEventUtils.emitDepositCreated(params.eventEmitter, cache.depositKey, cache.deposit, Deposit.DepositType.Shift);
 
         // price impact from changes in virtual inventory should be excluded
@@ -287,7 +288,8 @@ library ShiftUtils {
 
         cache.receivedMarketTokens = ExecuteDepositUtils.executeDeposit(
             cache.executeDepositParams,
-            cache.deposit
+            cache.deposit,
+            true
         );
 
         ShiftEventUtils.emitShiftExecuted(
@@ -297,10 +299,9 @@ library ShiftUtils {
             cache.receivedMarketTokens
         );
 
-        EventUtils.EventLogData memory eventData;
-        eventData.uintItems.initItems(1);
-        eventData.uintItems.setItem(0, "receivedMarketTokens", cache.receivedMarketTokens);
-        CallbackUtils.afterShiftExecution(params.key, shift, eventData);
+        cache.eventData.uintItems.initItems(1);
+        cache.eventData.uintItems.setItem(0, "receivedMarketTokens", cache.receivedMarketTokens);
+        CallbackUtils.afterShiftExecution(params.key, shift, cache.eventData);
 
         GasUtils.payExecutionFee(
             params.dataStore,

@@ -414,8 +414,7 @@ library GlvDepositUtils {
             Deposit.Flags({shouldUnwrapNativeToken: false})
         );
 
-        bytes32 depositKey = NonceUtils.getNextKey(params.dataStore);
-        params.dataStore.addBytes32(Keys.DEPOSIT_LIST, depositKey);
+        bytes32 depositKey = keccak256(abi.encode(params.key, "deposit"));
         DepositEventUtils.emitDepositCreated(params.eventEmitter, depositKey, deposit, Deposit.DepositType.Glv);
 
         ExecuteDepositUtils.ExecuteDepositParams memory executeDepositParams = ExecuteDepositUtils.ExecuteDepositParams(
@@ -430,7 +429,7 @@ library GlvDepositUtils {
                 true // includeVirtualInventoryImpact
             );
 
-        uint256 receivedMarketTokens = ExecuteDepositUtils.executeDeposit(executeDepositParams, deposit);
+        uint256 receivedMarketTokens = ExecuteDepositUtils.executeDeposit(executeDepositParams, deposit, true);
         return receivedMarketTokens;
     }
 

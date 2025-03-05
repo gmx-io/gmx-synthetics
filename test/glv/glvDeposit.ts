@@ -320,6 +320,9 @@ describe("Glv Deposits", () => {
         longTokenAmount: expandDecimals(1, 18),
         shortTokenAmount: expandDecimals(5_000, 6),
       },
+      execute: {
+        gasUsageLabel: "executeGlvDeposit",
+      },
     });
 
     await expectBalances({
@@ -374,6 +377,7 @@ describe("Glv Deposits", () => {
         precisions: [8, 18, 8],
         minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(1, 4)],
         maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(1, 4)],
+        gasUsageLabel: "executeGlvDeposit",
       },
     });
 
