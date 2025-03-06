@@ -320,7 +320,7 @@
   dependencies:
     "@noble/curves" "^1.7.0"
 
-"@chainlink/contracts@^1.1.0":
+"@chainlink/contracts@1.1.0":
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/@chainlink/contracts/-/contracts-1.1.0.tgz#7158db5771b9504d32d2235a5378ef56601a3e6c"
   integrity sha512-J+gDUCnEOJ2ofCvy5L2VLrQ7DVs0NXK31w8MQrW6U1GpjzU1j+it7FOJHZMxZKGg7wDdWI06aWmCgFeiD1H+bA==
@@ -1293,10 +1293,10 @@
   resolved "https://registry.yarnpkg.com/@layerzerolabs/lz-evm-protocol-v2/-/lz-evm-protocol-v2-2.0.11.tgz#4f341e7716f24653bff68c5451ddb3b369df265b"
   integrity sha512-hkcNheUjTOYNxoAnBTSatLLzLe71Y7kcmw1+56aazezyUb6SCu330V4sJg+jsp8Ag6Sb7y1tLLYn1Sa5EWgCxg==
 
-"@layerzerolabs/lz-evm-protocol-v2@^3.0.30":
-  version "3.0.30"
-  resolved "https://registry.yarnpkg.com/@layerzerolabs/lz-evm-protocol-v2/-/lz-evm-protocol-v2-3.0.30.tgz#a4319117042c14a29e38420fbfeffcb0dae30de5"
-  integrity sha512-N0eTiMCF4+JFn2tP3CfatingRkdmwgJqJWMhKgCJjsavG+ADwLlFSZ9RgpIWpt3gt6/DCEE4mdWe0qvF63chTA==
+"@layerzerolabs/lz-evm-protocol-v2@3.0.74":
+  version "3.0.74"
+  resolved "https://registry.yarnpkg.com/@layerzerolabs/lz-evm-protocol-v2/-/lz-evm-protocol-v2-3.0.74.tgz#a2124b9731b5fda489e357dee1f2ea1b47463620"
+  integrity sha512-iICrEM4im1Nh2bGalee0Z0h5wEINPB+fS9pjbyIoN2jFhOVjjoML2mbidwptFeyg6A6P+AhZ4o5P6nCEC5glqA==
 
 "@layerzerolabs/lz-evm-sdk-v2@3.0.30":
   version "3.0.30"
@@ -2394,7 +2394,7 @@
   dependencies:
     exponential-backoff "^3.1.1"
 
-"@stargatefinance/stg-evm-v2@^1.5.1":
+"@stargatefinance/stg-evm-v2@1.5.1":
   version "1.5.1"
   resolved "https://registry.yarnpkg.com/@stargatefinance/stg-evm-v2/-/stg-evm-v2-1.5.1.tgz#a122ec11e95dad4ad88e06d8996a1dd29e1cfcfd"
   integrity sha512-oo02yv4foy9be7lnGZ4t+cD3BOY1E+WT3p3bV8Twrikx9RrkIRE4qe98lpPzbPxXuLg8ufC9XR5q+jUp4DJXPw==
