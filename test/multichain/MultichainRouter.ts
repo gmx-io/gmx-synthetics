@@ -26,6 +26,8 @@ import { DecreasePositionSwapType, executeOrder, getOrderCount, getOrderKeys, Or
 import { hashString } from "../../utils/hash";
 import { getPositionCount } from "../../utils/position";
 import { expectBalance } from "../../utils/validation";
+import { executeLiquidation } from "../../utils/liquidation";
+const { provider } = ethers;
 
 export async function mintAndBridge(
   fixture,
@@ -659,7 +661,7 @@ describe("MultichainRouter", () => {
         orderType: OrderType.LimitIncrease,
         decreasePositionSwapType: DecreasePositionSwapType.SwapCollateralTokenToPnlToken,
         isLong: true,
-        shouldUnwrapNativeToken: true,
+        shouldUnwrapNativeToken: false,
         referralCode: hashString("referralCode"),
         dataList: [],
       };
@@ -782,6 +784,36 @@ describe("MultichainRouter", () => {
           GELATO_RELAY_ADDRESS,
           initialFeeReceiverBalance.add(updateOrderParams.relayFeeAmount)
         );
+      });
+
+      it("liquidation is sending funds to user's multichain balance", async () => {
+        // order is created from a source chain
+        await sendCreateDeposit(createDepositParams);
+        await executeDeposit(fixture, { gasUsageLabel: "executeMultichainDeposit" });
+        await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: collateralDeltaAmount.add(feeAmount) });
+        await sendCreateOrder(createOrderParams);
+        await executeOrder(fixture, { gasUsageLabel: "executeOrder" });
+
+        console.log("user eth before:", ethers.utils.formatEther(await provider.getBalance(user1.address)));
+        console.log("user wnt before", ethers.utils.formatUnits(await wnt.balanceOf(user1.address)));
+        console.log("user usdc before", ethers.utils.formatUnits(await usdc.balanceOf(user1.address)));
+
+        // forcing liquidation
+        await dataStore.setUint(keys.minCollateralFactorKey(ethUsdMarket.marketToken), expandDecimals(1, 30));
+
+        await executeLiquidation(fixture, {
+          account: user1.address,
+          market: ethUsdMarket,
+          collateralToken: wnt,
+          isLong: true,
+          minPrices: [expandDecimals(5000, 4), expandDecimals(8, 5)],
+          maxPrices: [expandDecimals(5000, 4), expandDecimals(8, 5)],
+          gasUsageLabel: "liquidationHandler.executeLiquidation",
+        });
+
+        console.log("user eth after:", ethers.utils.formatEther(await provider.getBalance(user1.address))); // TODO: why is it unwapped?
+        console.log("user wnt after", ethers.utils.formatUnits(await wnt.balanceOf(user1.address)));
+        console.log("user usdc after", ethers.utils.formatUnits(await usdc.balanceOf(user1.address)));
       });
     });
 
