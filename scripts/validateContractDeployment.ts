@@ -69,7 +69,13 @@ interface ContractInfo {
 const expectedRoles = {
   CONFIG_KEEPER: ["ConfigSyncer"],
   ROLE_ADMIN: ["Timelock"],
-  ROUTER_PLUGIN: ["ExchangeRouter", "SubaccountRouter", "GlvRouter"],
+  ROUTER_PLUGIN: [
+    "ExchangeRouter",
+    "SubaccountRouter",
+    "GlvRouter",
+    "GelatoRelayRouter",
+    "SubaccountGelatoRelayRouter",
+  ],
   CONTROLLER: [
     "OracleStore",
     "MarketFactory",
@@ -89,6 +95,8 @@ const expectedRoles = {
     "ShiftHandler",
     "GlvHandler",
     "GlvRouter",
+    "GelatoRelayRouter",
+    "SubaccountGelatoRelayRouter",
   ],
 };
 
