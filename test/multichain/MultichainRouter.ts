@@ -14,16 +14,24 @@ import {
   sendUpdateOrder,
   sendCancelOrder,
   sendBridgeOut,
+  sendClaimAffiliateRewards,
 } from "../../utils/relay/multichain";
 import * as keys from "../../utils/keys";
-import { executeDeposit, getDepositCount, getDepositKeys } from "../../utils/deposit";
+import { executeDeposit, getDepositCount, getDepositKeys, handleDeposit } from "../../utils/deposit";
 import { executeWithdrawal, getWithdrawalCount, getWithdrawalKeys } from "../../utils/withdrawal";
 import { getBalanceOf } from "../../utils/token";
 import { BigNumberish, Contract } from "ethers";
 import { executeShift, getShiftCount, getShiftKeys } from "../../utils/shift";
 import { executeGlvDeposit, executeGlvWithdrawal, getGlvDepositCount, getGlvWithdrawalCount } from "../../utils/glv";
-import { DecreasePositionSwapType, executeOrder, getOrderCount, getOrderKeys, OrderType } from "../../utils/order";
-import { hashString } from "../../utils/hash";
+import {
+  DecreasePositionSwapType,
+  executeOrder,
+  getOrderCount,
+  getOrderKeys,
+  handleOrder,
+  OrderType,
+} from "../../utils/order";
+import { hashData, hashString } from "../../utils/hash";
 import { getPositionCount } from "../../utils/position";
 import { expectBalance } from "../../utils/validation";
 
@@ -77,7 +85,10 @@ describe("MultichainRouter", () => {
     solUsdMarket,
     ethUsdGlvAddress,
     wnt,
-    usdc;
+    usdc,
+    chainlinkPriceFeedProvider,
+    multichainClaimsRouter,
+    referralStorage;
   let relaySigner;
   let chainId;
 
@@ -105,6 +116,9 @@ describe("MultichainRouter", () => {
       ethUsdGlvAddress,
       wnt,
       usdc,
+      chainlinkPriceFeedProvider,
+      multichainClaimsRouter,
+      referralStorage,
     } = fixture.contracts);
 
     defaultDepositParams = {
@@ -828,6 +842,153 @@ describe("MultichainRouter", () => {
           initialFeeReceiverBalance.add(cancelOrderParams.relayFeeAmount)
         );
       });
+    });
+  });
+
+  describe("MultichainClaimsRouter", () => {
+    beforeEach(async () => {
+      // create a same-chain deposit
+      await handleDeposit(fixture, {
+        create: {
+          market: ethUsdMarket,
+          longTokenAmount: expandDecimals(1000, 18),
+          shortTokenAmount: expandDecimals(1000 * 5_000, 6),
+        },
+        execute: {
+          precisions: [8, 18],
+          tokens: [wnt.address, usdc.address],
+          minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+          maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+        },
+      });
+    });
+
+    beforeEach(async () => {
+      // Register referral code
+      const code = hashData(["bytes32"], [hashString("CODE4")]);
+      await referralStorage.connect(user1).registerCode(code);
+      await referralStorage.setTier(1, 2000, 10000); // 20% discount code
+      await referralStorage.connect(user1).setReferrerDiscountShare(5000); // 50% discount share
+      await referralStorage.setReferrerTier(user1.address, 1);
+
+      // Set 50 BIPs position fee
+      await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 3));
+
+      // User creates an order with this referral code
+      await handleOrder(fixture, {
+        create: {
+          account: user0,
+          market: ethUsdMarket,
+          initialCollateralToken: usdc,
+          initialCollateralDeltaAmount: expandDecimals(50_000, 6),
+          swapPath: [],
+          sizeDeltaUsd: decimalToFloat(50 * 1000), // Open $50,000 size
+          acceptablePrice: expandDecimals(5000, 12),
+          executionFee: expandDecimals(1, 15),
+          minOutputAmount: 0,
+          orderType: OrderType.MarketIncrease,
+          isLong: true,
+          shouldUnwrapNativeToken: false,
+          referralCode: code,
+        },
+      });
+    });
+
+    it("Affiliate receives rewards in his multichain balance, pays relay fee from existing multichain balance", async () => {
+      const feeAmount = expandDecimals(6, 15);
+      const relayFeeAmount = expandDecimals(5, 15);
+      expect(
+        await dataStore.getUint(keys.affiliateRewardKey(ethUsdMarket.marketToken, usdc.address, user1.address))
+      ).to.eq(expandDecimals(25, 6)); // $25
+      // increase affiliate's wnt multichain balance to pay for fees
+      await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: feeAmount });
+
+      // affiliate will pay the relay fee from his existing wnt multichain balance
+      const createClaimParams: Parameters<typeof sendClaimAffiliateRewards>[0] = {
+        sender: relaySigner,
+        signer: user1,
+        feeParams: {
+          feeToken: wnt.address, // user's multichain balance must have enough wnt to pay for fees
+          feeAmount: feeAmount,
+          feeSwapPath: [],
+        },
+        account: user1.address,
+        params: {
+          markets: [ethUsdMarket.marketToken],
+          tokens: [usdc.address],
+          receiver: user1.address,
+        },
+        deadline: 9999999999,
+        srcChainId: chainId, // 0 means non-multichain action
+        desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
+        relayRouter: multichainClaimsRouter,
+        chainId,
+        relayFeeToken: wnt.address,
+        relayFeeAmount: relayFeeAmount,
+      };
+
+      expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(0);
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(feeAmount);
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0); // $0
+
+      await sendClaimAffiliateRewards(createClaimParams);
+
+      expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(relayFeeAmount);
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(
+        feeAmount.sub(relayFeeAmount)
+      );
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(
+        expandDecimals(25, 6)
+      ); // $25
+    });
+
+    it("Affiliate receives rewards and residual fee in his multichain balance, pays relay fee from claimed tokens", async () => {
+      expect(
+        await dataStore.getUint(keys.affiliateRewardKey(ethUsdMarket.marketToken, usdc.address, user1.address))
+      ).to.eq(expandDecimals(25, 6)); // $25
+
+      // the user will pay the relay fee from his newly claimed tokens
+      const createClaimParams: Parameters<typeof sendClaimAffiliateRewards>[0] = {
+        sender: relaySigner,
+        signer: user1,
+        feeParams: {
+          feeToken: usdc.address, // user will use his newly claimed usdc to pay for fees
+          feeAmount: expandDecimals(15, 6), // 15 USD = 0.003 ETH (feeAmount must be gt relayFeeAmount)
+          feeSwapPath: [ethUsdMarket.marketToken],
+        },
+        oracleParams: {
+          tokens: [wnt.address, usdc.address],
+          providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
+          data: ["0x", "0x"],
+        },
+        account: user1.address,
+        params: {
+          markets: [ethUsdMarket.marketToken],
+          tokens: [usdc.address],
+          receiver: user1.address,
+        },
+        deadline: 9999999999,
+        srcChainId: chainId, // 0 means non-multichain action
+        desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
+        relayRouter: multichainClaimsRouter,
+        chainId,
+        relayFeeToken: wnt.address,
+        relayFeeAmount: expandDecimals(2, 15), // 0.002 ETH
+      };
+
+      expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(0);
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0); // 0 ETH
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0); // 0 USD
+
+      await sendClaimAffiliateRewards(createClaimParams);
+
+      expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(expandDecimals(2, 15)); // 0.002 ETH relayFeeAmount
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(
+        expandDecimals(1, 15)
+      ); // 0.003 - 0.002 = 0.001 ETH (received as residualFee)
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(
+        expandDecimals(10, 6)
+      ); // 25 - 15 = 10 USD (received from claiming)
     });
   });
 
