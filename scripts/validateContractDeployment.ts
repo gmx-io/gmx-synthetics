@@ -14,6 +14,33 @@ dotenv.config();
 const AUDITED_COMMIT = process.env.AUDITED_COMMIT as string;
 const TRANSACTION_HASH = process.env.TRANSACTION_HASH as string;
 
+const expectedRoles = {
+  CONFIG_KEEPER: ["ConfigSyncer"],
+  ROLE_ADMIN: ["ConfigTimelockController", "TimelockConfig"],
+  ROUTER_PLUGIN: ["ExchangeRouter", "SubaccountRouter", "GlvRouter"],
+  CONTROLLER: [
+    "OracleStore",
+    "MarketFactory",
+    "GlvFactory",
+    "Config",
+    "ConfigSyncer",
+    "TimelockConfig",
+    "ConfigTimelockController",
+    "Oracle",
+    "SwapHandler",
+    "AdlHandler",
+    "DepositHandler",
+    "WithdrawalHandler",
+    "OrderHandler",
+    "ExchangeRouter",
+    "LiquidationHandler",
+    "SubaccountRouter",
+    "ShiftHandler",
+    "GlvHandler",
+    "GlvRouter",
+  ],
+};
+
 async function main() {
   if (!AUDITED_COMMIT || !TRANSACTION_HASH) {
     console.error("Error: Missing AUDITED_COMMIT or TRANSACTION_HASH in environment variables.");
@@ -65,33 +92,6 @@ interface ContractInfo {
   isCodeValidated: boolean;
   signalledRoles: string[];
 }
-
-const expectedRoles = {
-  CONFIG_KEEPER: ["ConfigSyncer"],
-  ROLE_ADMIN: ["ConfigTimelockController", "TimelockConfig"],
-  ROUTER_PLUGIN: ["ExchangeRouter", "SubaccountRouter", "GlvRouter"],
-  CONTROLLER: [
-    "OracleStore",
-    "MarketFactory",
-    "GlvFactory",
-    "Config",
-    "ConfigSyncer",
-    "TimelockConfig",
-    "ConfigTimelockController",
-    "Oracle",
-    "SwapHandler",
-    "AdlHandler",
-    "DepositHandler",
-    "WithdrawalHandler",
-    "OrderHandler",
-    "ExchangeRouter",
-    "LiquidationHandler",
-    "SubaccountRouter",
-    "ShiftHandler",
-    "GlvHandler",
-    "GlvRouter",
-  ],
-};
 
 async function extractRolesFromTx(txReceipt: TransactionReceipt): Promise<ContractInfo[]> {
   const contractInfos = new Map<string, ContractInfo>();
