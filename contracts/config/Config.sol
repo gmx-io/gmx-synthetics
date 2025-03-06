@@ -25,14 +25,16 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
 
-    uint256 public constant MAX_FEE_FACTOR = 5 * Precision.FLOAT_PRECISION / 100; // 5%
+    uint256 public constant MAX_FEE_FACTOR = (5 * Precision.FLOAT_PRECISION) / 100; // 5%
 
     // 0.00001% per second, ~315% per year
     uint256 public constant MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND = 100000000000000000000000;
     // at this rate max allowed funding rate will be reached in 1 hour at 100% imbalance if max funding rate is 315%
-    uint256 public constant MAX_ALLOWED_FUNDING_INCREASE_FACTOR_PER_SECOND = MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND / 1 hours;
+    uint256 public constant MAX_ALLOWED_FUNDING_INCREASE_FACTOR_PER_SECOND =
+        MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND / 1 hours;
     // at this rate zero funding rate will be reached in 24 hours if max funding rate is 315%
-    uint256 public constant MAX_ALLOWED_FUNDING_DECREASE_FACTOR_PER_SECOND = MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND / 24 hours;
+    uint256 public constant MAX_ALLOWED_FUNDING_DECREASE_FACTOR_PER_SECOND =
+        MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND / 24 hours;
     // minimum duration required to fully distribute the position impact pool amount
     uint256 public constant MIN_POSITION_IMPACT_POOL_DISTRIBUTION_TIME = 7 days;
 
@@ -40,15 +42,11 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     EventEmitter public immutable eventEmitter;
 
     // @dev the base keys that can be set
-    mapping (bytes32 => bool) public allowedBaseKeys;
+    mapping(bytes32 => bool) public allowedBaseKeys;
     // @dev the limited base keys that can be set
-    mapping (bytes32 => bool) public allowedLimitedBaseKeys;
+    mapping(bytes32 => bool) public allowedLimitedBaseKeys;
 
-    constructor(
-        RoleStore _roleStore,
-        DataStore _dataStore,
-        EventEmitter _eventEmitter
-    ) RoleModule(_roleStore) {
+    constructor(RoleStore _roleStore, DataStore _dataStore, EventEmitter _eventEmitter) RoleModule(_roleStore) {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
 
@@ -78,12 +76,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         eventData.addressItems.initItems(2);
         eventData.addressItems.setItem(0, "token", token);
         eventData.addressItems.setItem(1, "provider", provider);
-        eventEmitter.emitEventLog(
-            "InitOracleProviderForToken",
-            eventData
-        );
+        eventEmitter.emitEventLog("InitOracleProviderForToken", eventData);
     }
-
 
     function setPriceFeed(
         address token,
@@ -109,7 +103,6 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         uint256 dataStreamMultiplier,
         uint256 dataStreamSpreadReductionFactor
     ) external onlyConfigKeeper nonReentrant {
-
         ConfigUtils.setDataStream(
             dataStore,
             eventEmitter,
@@ -129,14 +122,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         uint256 timeKey,
         uint256 factor
     ) external onlyConfigKeeper nonReentrant {
-        ConfigUtils.setClaimableCollateralFactorForTime(
-            dataStore,
-            eventEmitter,
-            market,
-            token,
-            timeKey,
-            factor
-        );
+        ConfigUtils.setClaimableCollateralFactorForTime(dataStore, eventEmitter, market, token, timeKey, factor);
     }
 
     function setClaimableCollateralFactorForAccount(
@@ -212,11 +198,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         eventData.boolItems.initItems(1);
         eventData.boolItems.setItem(0, "value", value);
 
-        eventEmitter.emitEventLog1(
-            "SetBool",
-            baseKey,
-            eventData
-        );
+        eventEmitter.emitEventLog1("SetBool", baseKey, eventData);
     }
 
     // @dev set an address value
@@ -241,11 +223,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         eventData.addressItems.initItems(1);
         eventData.addressItems.setItem(0, "value", value);
 
-        eventEmitter.emitEventLog1(
-            "SetAddress",
-            baseKey,
-            eventData
-        );
+        eventEmitter.emitEventLog1("SetAddress", baseKey, eventData);
     }
 
     // @dev set a bytes32 value
@@ -268,11 +246,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         eventData.bytesItems.initItems(1);
         eventData.bytesItems.setItem(0, "data", data);
 
-        eventEmitter.emitEventLog1(
-            "SetBytes32",
-            baseKey,
-            eventData
-        );
+        eventEmitter.emitEventLog1("SetBytes32", baseKey, eventData);
     }
 
     // @dev set a uint256 value
@@ -307,11 +281,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         eventData.uintItems.initItems(1);
         eventData.uintItems.setItem(0, "value", value);
 
-        eventEmitter.emitEventLog1(
-            "SetUint",
-            baseKey,
-            eventData
-        );
+        eventEmitter.emitEventLog1("SetUint", baseKey, eventData);
     }
 
     // @dev set an int256 value
@@ -336,11 +306,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         eventData.intItems.initItems(1);
         eventData.intItems.setItem(0, "value", value);
 
-        eventEmitter.emitEventLog1(
-            "SetInt",
-            baseKey,
-            eventData
-        );
+        eventEmitter.emitEventLog1("SetInt", baseKey, eventData);
     }
 
     // @dev initialize the allowed base keys
@@ -525,6 +491,20 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.MAX_DATA_LENGTH] = true;
 
         allowedBaseKeys[Keys.CLAIMABLE_COLLATERAL_DELAY] = true;
+
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_DISTRIBUTION_DAY] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_CHAIN_ID] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_FACTOR] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_AMOUNT] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_ADDRESS_INFO] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_AMOUNT_THRESHOLD] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_KEEPER_COSTS] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_KEEPER_GLP_FACTOR] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_CHAINLINK_FACTOR] = true;
     }
 
     function _initAllowedLimitedBaseKeys() internal {
@@ -577,18 +557,14 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     // @param baseKey the base key for the value
     // @param value the value to be set
     function _validateRange(bytes32 baseKey, bytes memory data, uint256 value) internal view {
-        if (
-            baseKey == Keys.SEQUENCER_GRACE_DURATION
-        ) {
+        if (baseKey == Keys.SEQUENCER_GRACE_DURATION) {
             // 2 hours
             if (value > 7200) {
                 revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
             }
         }
 
-        if (
-            baseKey == Keys.MAX_FUNDING_FACTOR_PER_SECOND
-        ) {
+        if (baseKey == Keys.MAX_FUNDING_FACTOR_PER_SECOND) {
             if (value > MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND) {
                 revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
             }
@@ -600,9 +576,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             }
         }
 
-        if (
-            baseKey == Keys.MIN_FUNDING_FACTOR_PER_SECOND
-        ) {
+        if (baseKey == Keys.MIN_FUNDING_FACTOR_PER_SECOND) {
             bytes32 maxFundingFactorPerSecondKey = Keys.getFullKey(Keys.MAX_FUNDING_FACTOR_PER_SECOND, data);
             uint256 maxFundingFactorPerSecond = dataStore.getUint(maxFundingFactorPerSecondKey);
             if (value > maxFundingFactorPerSecond) {
@@ -610,26 +584,19 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             }
         }
 
-        if (
-            baseKey == Keys.FUNDING_INCREASE_FACTOR_PER_SECOND
-        ) {
+        if (baseKey == Keys.FUNDING_INCREASE_FACTOR_PER_SECOND) {
             if (value > MAX_ALLOWED_FUNDING_INCREASE_FACTOR_PER_SECOND) {
                 revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
             }
         }
 
-        if (
-            baseKey == Keys.FUNDING_DECREASE_FACTOR_PER_SECOND
-        ) {
+        if (baseKey == Keys.FUNDING_DECREASE_FACTOR_PER_SECOND) {
             if (value > MAX_ALLOWED_FUNDING_DECREASE_FACTOR_PER_SECOND) {
                 revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
             }
         }
 
-        if (
-            baseKey == Keys.BORROWING_FACTOR ||
-            baseKey == Keys.BASE_BORROWING_FACTOR
-        ) {
+        if (baseKey == Keys.BORROWING_FACTOR || baseKey == Keys.BASE_BORROWING_FACTOR) {
             // 0.000005% per second, ~157% per year at 100% utilization
             if (value > 50000000000000000000000) {
                 revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
@@ -643,20 +610,14 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             }
         }
 
-        if (
-            baseKey == Keys.FUNDING_EXPONENT_FACTOR ||
-            baseKey == Keys.BORROWING_EXPONENT_FACTOR
-        ) {
+        if (baseKey == Keys.FUNDING_EXPONENT_FACTOR || baseKey == Keys.BORROWING_EXPONENT_FACTOR) {
             // revert if value > 2
             if (value > 2 * Precision.FLOAT_PRECISION) {
                 revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
             }
         }
 
-        if (
-            baseKey == Keys.POSITION_IMPACT_EXPONENT_FACTOR ||
-            baseKey == Keys.SWAP_IMPACT_EXPONENT_FACTOR
-        ) {
+        if (baseKey == Keys.POSITION_IMPACT_EXPONENT_FACTOR || baseKey == Keys.SWAP_IMPACT_EXPONENT_FACTOR) {
             // revert if value > 3
             if (value > 3 * Precision.FLOAT_PRECISION) {
                 revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
@@ -671,7 +632,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             baseKey == Keys.MIN_COLLATERAL_FACTOR
         ) {
             // revert if value > 1%
-            if (value > 1 * Precision.FLOAT_PRECISION / 100) {
+            if (value > (1 * Precision.FLOAT_PRECISION) / 100) {
                 revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
             }
         }
@@ -686,7 +647,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             baseKey == Keys.BUYBACK_MAX_PRICE_IMPACT_FACTOR
         ) {
             // revert if value > 5%
-            if (value > 5 * Precision.FLOAT_PRECISION / 100) {
+            if (value > (5 * Precision.FLOAT_PRECISION) / 100) {
                 revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
             }
         }
