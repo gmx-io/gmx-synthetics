@@ -34,7 +34,7 @@ contract MultichainClaimsRouter is MultichainRouter {
             eventEmitter,
             markets,
             tokens,
-            srcChainId == 0 ? receiver : address(multichainVault),
+            srcChainId == 0 ? receiver : address(multichainVault), // receiver
             account
         );
 
@@ -104,7 +104,7 @@ contract MultichainClaimsRouter is MultichainRouter {
             markets,
             tokens,
             timeKeys,
-            receiver,
+            srcChainId == 0 ? receiver : address(multichainVault), // receiver
             account
         );
 
@@ -115,7 +115,7 @@ contract MultichainClaimsRouter is MultichainRouter {
                     eventEmitter,
                     multichainVault,
                     tokens[i],
-                    srcChainId == 0 ? receiver : address(multichainVault),
+                    receiver,
                     srcChainId
                 );
             }
@@ -164,7 +164,7 @@ contract MultichainClaimsRouter is MultichainRouter {
             eventEmitter,
             markets,
             tokens,
-            srcChainId == 0 ? receiver : address(multichainVault),
+            srcChainId == 0 ? receiver : address(multichainVault), // receiver
             account
         );
 
