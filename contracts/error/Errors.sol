@@ -462,5 +462,5 @@ library Errors {
     error InvalidRelayParams();
 
     // EventUtils error
-    error NotFound(string key);
+    error EventItemNotFound(string key);
 }
