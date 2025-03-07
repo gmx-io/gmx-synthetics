@@ -212,7 +212,7 @@ async function validateSourceFile(fullContractName: string, sourceCode: string):
 }
 
 async function showDiff(localPath: string, sourceCode: string) {
-  const tempFilePath = path.join(__dirname, "out", "temp_file.txt");
+  const tempFilePath = path.join(__dirname, "../out", "temp_file.txt");
   fs.writeFileSync(tempFilePath, sourceCode, "utf-8");
 
   try {
