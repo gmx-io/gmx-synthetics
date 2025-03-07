@@ -641,6 +641,55 @@ const config: {
       oracleTimestampAdjustment: 1,
       // Chainlink on-chain feed not available
     },
+    S: {
+      synthetic: true,
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003bda9e85d7d4eccc82d4a5d5f074ce25ff7ba23892ca3abf2ea0d2250ad11",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      // Chainlink on-chain feed not available
+    },
+    CAKE: {
+      synthetic: true,
+      decimals: 18, // https://bscscan.com/token/0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82#readContract
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003e9006db3ad7b39f342fc0bf0124b7600a6e5710f32ce659f6500216ba121",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x256654437f1ADA8057684b18d742eFD14034C400",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+    },
+    AIXBT: {
+      synthetic: true,
+      decimals: 18, // https://basescan.org/token/0x4f9fd6be4a90f2620860d680c0d4d5fb53d1a825#readContract
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003234f809f57b656e7e76e9b640cded0625b08dade77d800579da1526ee543",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      // Chainlink on-chain feed not available
+    },
+    HYPE: {
+      synthetic: true,
+      decimals: 8, // https://app.hyperliquid.xyz/explorer/token/0x0d01dc56dcaaca66ad901c959b4011ec
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003d34539af562867c3cb309b59efccf40e74b404fb415eeb7699d61322aed9",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      // Chainlink on-chain feed not available
+    },
+    JUP: {
+      synthetic: true,
+      decimals: 6, // https://solscan.io/token/JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x00031f0d2c5bd731a7e29b653af1958fe6328db094651396f1631560b9da14dc",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      // Chainlink on-chain feed not available
+    },
     AAVE: {
       address: "0xba5ddd1f9d7f570dc94a51479a000e3bce967196",
       decimals: 18,

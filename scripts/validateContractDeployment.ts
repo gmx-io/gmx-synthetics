@@ -17,7 +17,13 @@ const TRANSACTION_HASH = process.env.TRANSACTION_HASH as string;
 const expectedRoles = {
   CONFIG_KEEPER: ["ConfigSyncer"],
   ROLE_ADMIN: ["ConfigTimelockController", "TimelockConfig"],
-  ROUTER_PLUGIN: ["ExchangeRouter", "SubaccountRouter", "GlvRouter"],
+  ROUTER_PLUGIN: [
+    "ExchangeRouter",
+    "SubaccountRouter",
+    "GlvRouter",
+    "GelatoRelayRouter",
+    "SubaccountGelatoRelayRouter",
+  ],
   CONTROLLER: [
     "OracleStore",
     "MarketFactory",
@@ -38,6 +44,8 @@ const expectedRoles = {
     "ShiftHandler",
     "GlvHandler",
     "GlvRouter",
+    "GelatoRelayRouter",
+    "SubaccountGelatoRelayRouter",
   ],
 };
 
