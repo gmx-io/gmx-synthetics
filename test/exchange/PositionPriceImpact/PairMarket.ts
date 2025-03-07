@@ -411,7 +411,7 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
         .add(position0Short.numbers.pendingImpactAmount)
     ).eq("-195999999999999998"); // -0.036 - 0.24 + 0.08 = -0.196 ETH, 980 USD
 
-    expect(position0Long.numbers.pendingImpactAmount).eq("-36000000000000000"); // -0.036 ETH, 180 USD
+    expect(position0Long.numbers.pendingImpactAmount).eq("-36000000000000000"); // -0.048 + 0.013 = -0.036 ETH, 180 USD
     expect(position0Short.numbers.pendingImpactAmount).eq("79999999999999998"); // 0.08 ETH, 400 USD
     expect(position1Long.numbers.pendingImpactAmount).eq("-239999999999999996"); // -0.24 ETH, 1200 USD
 
@@ -448,7 +448,8 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
     ).eq("-209333333333333331"); // -0.036 - 0.24 + 0.06667 = -0.20933 ETH, 1046.67 USD
 
     expect(position0Long.numbers.pendingImpactAmount).eq("-36000000000000000"); // -0.036 ETH, 180 USD
-    expect(position0Short.numbers.pendingImpactAmount).eq("66666666666666665"); // 0.06667 ETH, 333.33 USD
+    expect(position0Short.numbers.pendingImpactAmount).eq("66666666666666665"); // 0.08 - 0.013334 = 0.06667 ETH, 333.33 USD
+
     expect(position1Long.numbers.pendingImpactAmount).eq("-239999999999999996"); // -0.24 ETH, 1200 USD
   });
 
