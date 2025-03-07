@@ -732,7 +732,10 @@ describe("MultichainRouter", () => {
         await executeOrder(fixture, { gasUsageLabel: "executeOrder" });
 
         // forcing liquidation
-        await dataStore.setUint(keys.minCollateralFactorKey(ethUsdMarket.marketToken), expandDecimals(1, 30));
+        await dataStore.setUint(
+          keys.minCollateralFactorForLiquidationKey(ethUsdMarket.marketToken),
+          expandDecimals(1, 30)
+        );
 
         const user1WntBalanceBefore = await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address));
 
