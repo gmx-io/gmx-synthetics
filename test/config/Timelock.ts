@@ -280,7 +280,7 @@ describe("Timelock", () => {
     expect(await dataStore.getBool(keys.isOracleProviderEnabledKey(user3.address))).eq(true);
   });
 
-  it("setAtomicOracleProvider", async () => {
+  it("SetAtomicOracleProvider", async () => {
     expect(await dataStore.getBool(keys.isAtomicOracleProviderKey(user3.address))).eq(false);
 
     await expect(timelockConfig.connect(user2).signalSetAtomicOracleProvider(user3.address, true))

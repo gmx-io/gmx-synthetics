@@ -460,7 +460,4 @@ library Errors {
     error InvalidSubaccountApprovalSubaccount();
     error NonEmptyExternalCallsForSubaccountOrder();
     error InvalidRelayParams();
-
-    error InvalidMinCollateralFactor(uint256 value);
-    error InvalidMinCollateralFactorForLiquidation(uint256 value);
 }

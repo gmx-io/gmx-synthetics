@@ -11,12 +11,39 @@ import axios from "axios";
 
 dotenv.config();
 
-const AUDITED_COMMIT = process.env.AUDITED_COMMIT as string;
+const COMMIT_HASH = process.env.COMMIT_HASH as string;
 const TRANSACTION_HASH = process.env.TRANSACTION_HASH as string;
 
+const expectedRoles = {
+  CONFIG_KEEPER: ["ConfigSyncer"],
+  ROLE_ADMIN: ["ConfigTimelockController", "TimelockConfig"],
+  ROUTER_PLUGIN: ["ExchangeRouter", "SubaccountRouter", "GlvRouter"],
+  CONTROLLER: [
+    "OracleStore",
+    "MarketFactory",
+    "GlvFactory",
+    "Config",
+    "ConfigSyncer",
+    "TimelockConfig",
+    "ConfigTimelockController",
+    "Oracle",
+    "SwapHandler",
+    "AdlHandler",
+    "DepositHandler",
+    "WithdrawalHandler",
+    "OrderHandler",
+    "ExchangeRouter",
+    "LiquidationHandler",
+    "SubaccountRouter",
+    "ShiftHandler",
+    "GlvHandler",
+    "GlvRouter",
+  ],
+};
+
 async function main() {
-  if (!AUDITED_COMMIT || !TRANSACTION_HASH) {
-    console.error("Error: Missing AUDITED_COMMIT or TRANSACTION_HASH in environment variables.");
+  if (!COMMIT_HASH || !TRANSACTION_HASH) {
+    console.error("Error: Missing COMMIT_HASH or TRANSACTION_HASH in environment variables.");
     process.exit(1);
   }
 
@@ -27,8 +54,8 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`Checking deployment against commit: ${AUDITED_COMMIT}`);
-  execSync(`git checkout ${AUDITED_COMMIT}`, { stdio: "inherit" });
+  console.log(`Checking deployment against commit: ${COMMIT_HASH}`);
+  execSync(`git checkout ${COMMIT_HASH}`, { stdio: "inherit" });
 
   try {
     const contractInfos = await extractRolesFromTx(tx);
@@ -65,33 +92,6 @@ interface ContractInfo {
   isCodeValidated: boolean;
   signalledRoles: string[];
 }
-
-const expectedRoles = {
-  CONFIG_KEEPER: ["ConfigSyncer"],
-  ROLE_ADMIN: ["ConfigTimelockController", "TimelockConfig"],
-  ROUTER_PLUGIN: ["ExchangeRouter", "SubaccountRouter", "GlvRouter"],
-  CONTROLLER: [
-    "OracleStore",
-    "MarketFactory",
-    "GlvFactory",
-    "Config",
-    "ConfigSyncer",
-    "TimelockConfig",
-    "ConfigTimelockController",
-    "Oracle",
-    "SwapHandler",
-    "AdlHandler",
-    "DepositHandler",
-    "WithdrawalHandler",
-    "OrderHandler",
-    "ExchangeRouter",
-    "LiquidationHandler",
-    "SubaccountRouter",
-    "ShiftHandler",
-    "GlvHandler",
-    "GlvRouter",
-  ],
-};
 
 async function extractRolesFromTx(txReceipt: TransactionReceipt): Promise<ContractInfo[]> {
   const contractInfos = new Map<string, ContractInfo>();
