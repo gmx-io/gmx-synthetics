@@ -76,7 +76,7 @@ library LiquidationUtils {
 
         Order.Flags memory flags = Order.Flags(
             position.isLong(), // isLong
-            true, // shouldUnwrapNativeToken
+            dataStore.getUint(Keys.positionLastSrcChainId(positionKey)) == 0 ? true : false, // shouldUnwrapNativeToken
             false, // isFrozen
             false // autoCancel
         );
