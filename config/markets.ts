@@ -1678,6 +1678,7 @@ const config: {
       positiveSwapImpactFactor: exponentToFloat("2.5e-9"),
 
       minCollateralFactor: percentageToFloat("0.667%"), // 150x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("0.667%"), // 150 leverage
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
 
       reserveFactor: percentageToFloat("165%"), // default is 95%
@@ -1810,6 +1811,7 @@ const config: {
       positiveSwapImpactFactor: exponentToFloat("2.5e-9"),
 
       minCollateralFactor: percentageToFloat("1%"), // 100x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("1%"), // 100x leverage
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
 
       reserveFactor: percentageToFloat("105%"), // default is 95%
@@ -1843,6 +1845,7 @@ const config: {
       positiveSwapImpactFactor: exponentToFloat("2.5e-9"),
 
       minCollateralFactor: percentageToFloat("1%"), // 100x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("1%"), // 100x leverage
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
 
       reserveFactor: percentageToFloat("105%"), // default is 95%
@@ -2077,6 +2080,7 @@ const config: {
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
       minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6.0e-11"),
 
       maxOpenInterest: decimalToFloat(4_000_000),
@@ -3322,6 +3326,7 @@ const config: {
       virtualTokenIdForIndexToken: "0x04533137e2e8ae1c11111111a0dd36e023e0d6217198f889f9eb9c2a6727481d",
 
       minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
       positiveSwapImpactFactor: percentageToFloat("0.0000005%"),
@@ -3348,6 +3353,7 @@ const config: {
       maxOpenInterest: decimalToFloat(250_000),
 
       minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
       liquidationFeeFactor: percentageToFloat("0.20%"),
     },
     {
