@@ -70,7 +70,8 @@ library LiquidationUtils {
             dataStore.getUint(Keys.MAX_CALLBACK_GAS_LIMIT), // callbackGasLimit
             0, // minOutputAmount
             Chain.currentTimestamp(), // updatedAtTime
-            0 // validFromTime
+            0, // validFromTime
+            0 // srcChainId
         );
 
         Order.Flags memory flags = Order.Flags(
@@ -83,7 +84,8 @@ library LiquidationUtils {
         Order.Props memory order = Order.Props(
             addresses,
             numbers,
-            flags
+            flags,
+            new bytes32[](0)
         );
 
         bytes32 key = NonceUtils.getNextKey(dataStore);

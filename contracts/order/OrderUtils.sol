@@ -24,6 +24,7 @@ import "../callback/CallbackUtils.sol";
 import "../utils/Array.sol";
 import "../utils/AccountUtils.sol";
 import "../referral/ReferralUtils.sol";
+import "../multichain/MultichainUtils.sol";
 
 // @title OrderUtils
 // @dev Library for order functions
@@ -36,11 +37,13 @@ library OrderUtils {
     struct CancelOrderParams {
         DataStore dataStore;
         EventEmitter eventEmitter;
+        MultichainVault multichainVault;
         OrderVault orderVault;
         bytes32 key;
         address keeper;
         uint256 startingGas;
         bool isExternalCall;
+        bool isAutoCancel;
         string reason;
         bytes reasonBytes;
     }
@@ -52,6 +55,11 @@ library OrderUtils {
         uint256 estimatedGasLimit;
         uint256 oraclePriceCount;
         uint256 executionFeeDiff;
+    }
+
+    struct FreezeOrderCache {
+        address executionFeeReceiver;
+        uint256 refundFeeAmount;
     }
 
     // @dev creates an order in the order store
@@ -67,6 +75,7 @@ library OrderUtils {
         OrderVault orderVault,
         IReferralStorage referralStorage,
         address account,
+        uint256 srcChainId,
         IBaseOrderUtils.CreateOrderParams memory params,
         bool shouldCapMaxExecutionFee
     ) external returns (bytes32) {
@@ -121,6 +130,10 @@ library OrderUtils {
 
         if (BaseOrderUtils.isPositionOrder(params.orderType)) {
             MarketUtils.validatePositionMarket(dataStore, params.addresses.market);
+        } else {
+            if (params.addresses.market != address(0)) {
+                revert Errors.UnexpectedMarket();
+            }
         }
 
         if (BaseOrderUtils.isMarketOrder(params.orderType) && params.numbers.validFromTime != 0) {
@@ -149,9 +162,11 @@ library OrderUtils {
         order.setCallbackGasLimit(params.numbers.callbackGasLimit);
         order.setMinOutputAmount(params.numbers.minOutputAmount);
         order.setValidFromTime(params.numbers.validFromTime);
+        order.setSrcChainId(srcChainId);
         order.setIsLong(params.isLong);
         order.setShouldUnwrapNativeToken(params.shouldUnwrapNativeToken);
         order.setAutoCancel(params.autoCancel);
+        order.setDataList(params.dataList);
 
         AccountUtils.validateReceiver(order.receiver());
         if (order.cancellationReceiver() == address(orderVault)) {
@@ -166,9 +181,9 @@ library OrderUtils {
         uint256 executionFee;
         (executionFee, cache.executionFeeDiff) = GasUtils.validateAndCapExecutionFee(
             dataStore,
-            cache.estimatedGasLimit,
+            GasUtils.estimateExecuteOrderGasLimit(dataStore, order), // estimatedGasLimit
             params.numbers.executionFee,
-            cache.oraclePriceCount,
+            GasUtils.estimateOrderOraclePriceCount(params.addresses.swapPath.length), // oraclePriceCount
             shouldCapMaxExecutionFee
         );
         order.setExecutionFee(executionFee);
@@ -202,7 +217,11 @@ library OrderUtils {
         uint256 minHandleExecutionErrorGas = GasUtils.getMinHandleExecutionErrorGas(params.dataStore);
 
         if (gas < minHandleExecutionErrorGas) {
-            revert Errors.InsufficientGasForCancellation(gas, minHandleExecutionErrorGas);
+            if (params.isAutoCancel) {
+                revert Errors.InsufficientGasForAutoCancellation(gas, minHandleExecutionErrorGas);
+            } else {
+                revert Errors.InsufficientGasForCancellation(gas, minHandleExecutionErrorGas);
+            }
         }
 
         Order.Props memory order = OrderStoreUtils.get(params.dataStore, params.key);
@@ -211,7 +230,11 @@ library OrderUtils {
         // this could happen if the order was created in new contracts that support new order types
         // but the order is being cancelled in old contracts
         if (!BaseOrderUtils.isSupportedOrder(order.orderType())) {
-            revert Errors.UnsupportedOrderType(uint256(order.orderType()));
+            if (params.isAutoCancel) {
+                revert Errors.UnsupportedOrderTypeForAutoCancellation(uint256(order.orderType()));
+            } else {
+                revert Errors.UnsupportedOrderType(uint256(order.orderType()));
+            }
         }
 
         OrderStoreUtils.remove(params.dataStore, params.key, order.account());
@@ -248,10 +271,19 @@ library OrderUtils {
             executionFeeReceiver = order.receiver();
         }
 
-        EventUtils.EventLogData memory eventData;
-        CallbackUtils.afterOrderCancellation(params.key, order, eventData);
+        {
+            EventUtils.EventLogData memory eventData;
+            CallbackUtils.afterOrderCancellation(params.key, order, eventData);
+        }
 
-        GasUtils.payExecutionFee(
+        if (order.srcChainId() != 0) {
+            executionFeeReceiver = address(params.multichainVault);
+        }
+        if (params.dataStore.getBool(Keys.wasPositionCollateralUsedForExecutionFeeKey(params.key))) {
+            executionFeeReceiver = params.dataStore.getAddress(Keys.HOLDING_ADDRESS);
+        }
+
+        uint256 refundFeeAmount = GasUtils.payExecutionFee(
             params.dataStore,
             params.eventEmitter,
             params.orderVault,
@@ -263,6 +295,10 @@ library OrderUtils {
             params.keeper,
             executionFeeReceiver
         );
+        if (refundFeeAmount > 0 && executionFeeReceiver == address(params.multichainVault)) {
+            address wnt = params.dataStore.getAddress(Keys.WNT);
+            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, wnt, order.receiver(), 0); // srcChainId is the current block.chainId
+        }
     }
 
     // @dev freezes an order
@@ -276,6 +312,7 @@ library OrderUtils {
     function freezeOrder(
         DataStore dataStore,
         EventEmitter eventEmitter,
+        MultichainVault multichainVault,
         OrderVault orderVault,
         bytes32 key,
         address keeper,
@@ -299,10 +336,22 @@ library OrderUtils {
 
         OrderEventUtils.emitOrderFrozen(eventEmitter, key, order.account(), reason, reasonBytes);
 
-        EventUtils.EventLogData memory eventData;
-        CallbackUtils.afterOrderFrozen(key, order, eventData);
+        {
+            EventUtils.EventLogData memory eventData;
+            CallbackUtils.afterOrderFrozen(key, order, eventData);
+        }
 
-        GasUtils.payExecutionFee(
+        FreezeOrderCache memory cache;
+
+        cache.executionFeeReceiver = order.receiver();
+        if (order.srcChainId() != 0) {
+            cache.executionFeeReceiver = address(multichainVault);
+        }
+        if (dataStore.getBool(Keys.wasPositionCollateralUsedForExecutionFeeKey(key))) {
+            cache.executionFeeReceiver = dataStore.getAddress(Keys.HOLDING_ADDRESS);
+        }
+
+        cache.refundFeeAmount = GasUtils.payExecutionFee(
             dataStore,
             eventEmitter,
             orderVault,
@@ -312,13 +361,18 @@ library OrderUtils {
             startingGas,
             GasUtils.estimateOrderOraclePriceCount(order.swapPath().length),
             keeper,
-            order.receiver()
+            cache.executionFeeReceiver
         );
+        if (cache.refundFeeAmount > 0 && cache.executionFeeReceiver == address(multichainVault)) {
+            address wnt = dataStore.getAddress(Keys.WNT);
+            MultichainUtils.recordTransferIn(dataStore, eventEmitter, multichainVault, wnt, order.receiver(), 0); // srcChainId is the current block.chainId
+        }
     }
 
     function clearAutoCancelOrders(
         DataStore dataStore,
         EventEmitter eventEmitter,
+        MultichainVault multichainVault,
         OrderVault orderVault,
         bytes32 positionKey,
         address keeper
@@ -330,11 +384,13 @@ library OrderUtils {
                 CancelOrderParams(
                     dataStore,
                     eventEmitter,
+                    multichainVault,
                     orderVault,
                     orderKeys[i],
                     keeper, // keeper
                     gasleft(), // startingGas
                     false, // isExternalCall
+                    true, // isAutoCancel
                     "AUTO_CANCEL", // reason
                     "" // reasonBytes
                 )

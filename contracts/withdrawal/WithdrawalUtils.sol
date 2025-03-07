@@ -47,17 +47,22 @@ library WithdrawalUtils {
      * @param callbackGasLimit The gas limit for calling the callback contract.
      */
     struct CreateWithdrawalParams {
+        CreateWithdrawalParamsAddresses addresses;
+        uint256 minLongTokenAmount;
+        uint256 minShortTokenAmount;
+        bool shouldUnwrapNativeToken;
+        uint256 executionFee;
+        uint256 callbackGasLimit;
+        bytes32[] dataList;
+    }
+
+    struct CreateWithdrawalParamsAddresses {
         address receiver;
         address callbackContract;
         address uiFeeReceiver;
         address market;
         address[] longTokenSwapPath;
         address[] shortTokenSwapPath;
-        uint256 minLongTokenAmount;
-        uint256 minShortTokenAmount;
-        bool shouldUnwrapNativeToken;
-        uint256 executionFee;
-        uint256 callbackGasLimit;
     }
 
     /**
@@ -75,7 +80,9 @@ library WithdrawalUtils {
         EventEmitter eventEmitter,
         WithdrawalVault withdrawalVault,
         address account,
-        CreateWithdrawalParams memory params
+        uint256 srcChainId,
+        CreateWithdrawalParams memory params,
+        bool isAtomicWithdrawal
     ) external returns (bytes32) {
         AccountUtils.validateAccount(account);
 
@@ -83,31 +90,31 @@ library WithdrawalUtils {
         uint256 wntAmount = withdrawalVault.recordTransferIn(wnt);
 
         if (wntAmount < params.executionFee) {
-            revert Errors.InsufficientWntAmount(wntAmount, params.executionFee);
+            revert Errors.InsufficientWntAmountForExecutionFee(wntAmount, params.executionFee);
         }
 
-        AccountUtils.validateReceiver(params.receiver);
+        AccountUtils.validateReceiver(params.addresses.receiver);
 
-        uint256 marketTokenAmount = withdrawalVault.recordTransferIn(params.market);
+        uint256 marketTokenAmount = withdrawalVault.recordTransferIn(params.addresses.market);
 
         if (marketTokenAmount == 0) {
             revert Errors.EmptyWithdrawalAmount();
         }
         params.executionFee = wntAmount;
 
-        MarketUtils.validateEnabledMarket(dataStore, params.market);
-        MarketUtils.validateSwapPath(dataStore, params.longTokenSwapPath);
-        MarketUtils.validateSwapPath(dataStore, params.shortTokenSwapPath);
+        MarketUtils.validateEnabledMarket(dataStore, params.addresses.market);
+        MarketUtils.validateSwapPath(dataStore, params.addresses.longTokenSwapPath);
+        MarketUtils.validateSwapPath(dataStore, params.addresses.shortTokenSwapPath);
 
         Withdrawal.Props memory withdrawal = Withdrawal.Props(
             Withdrawal.Addresses(
                 account,
-                params.receiver,
-                params.callbackContract,
-                params.uiFeeReceiver,
-                params.market,
-                params.longTokenSwapPath,
-                params.shortTokenSwapPath
+                params.addresses.receiver,
+                params.addresses.callbackContract,
+                params.addresses.uiFeeReceiver,
+                params.addresses.market,
+                params.addresses.longTokenSwapPath,
+                params.addresses.shortTokenSwapPath
             ),
             Withdrawal.Numbers(
                 marketTokenAmount,
@@ -115,18 +122,22 @@ library WithdrawalUtils {
                 params.minShortTokenAmount,
                 Chain.currentTimestamp(), // updatedAtTime
                 params.executionFee,
-                params.callbackGasLimit
+                params.callbackGasLimit,
+                srcChainId
             ),
             Withdrawal.Flags(
                 params.shouldUnwrapNativeToken
-            )
+            ),
+            params.dataList
         );
 
         CallbackUtils.validateCallbackGasLimit(dataStore, withdrawal.callbackGasLimit());
 
-        uint256 estimatedGasLimit = GasUtils.estimateExecuteWithdrawalGasLimit(dataStore, withdrawal);
-        uint256 oraclePriceCount = GasUtils.estimateWithdrawalOraclePriceCount(withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length);
-        GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, params.executionFee, oraclePriceCount);
+        if (!isAtomicWithdrawal) {
+            uint256 estimatedGasLimit = GasUtils.estimateExecuteWithdrawalGasLimit(dataStore, withdrawal);
+            uint256 oraclePriceCount = GasUtils.estimateWithdrawalOraclePriceCount(withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length);
+            GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, params.executionFee, oraclePriceCount);
+        }
 
         bytes32 key = NonceUtils.getNextKey(dataStore);
 

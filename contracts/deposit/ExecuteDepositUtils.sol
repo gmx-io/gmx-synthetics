@@ -13,6 +13,8 @@ import "../pricing/SwapPricingUtils.sol";
 import "../oracle/Oracle.sol";
 import "../position/PositionUtils.sol";
 
+import "../multichain/MultichainUtils.sol";
+
 import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
 
@@ -42,6 +44,7 @@ library ExecuteDepositUtils {
     struct ExecuteDepositParams {
         DataStore dataStore;
         EventEmitter eventEmitter;
+        MultichainVault multichainVault;
         DepositVault depositVault;
         Oracle oracle;
         bytes32 key;
@@ -49,6 +52,7 @@ library ExecuteDepositUtils {
         uint256 startingGas;
         ISwapPricingUtils.SwapPricingType swapPricingType;
         bool includeVirtualInventoryImpact;
+        uint256 srcChainId;
     }
 
     // @dev _ExecuteDepositParams struct used in executeDeposit to avoid stack
@@ -90,8 +94,10 @@ library ExecuteDepositUtils {
         uint256 shortTokenUsd;
         uint256 receivedMarketTokens;
         int256 priceImpactUsd;
+        bool balanceWasImproved;
         uint256 marketTokensSupply;
         EventUtils.EventLogData callbackEventData;
+        uint256 refundFeeAmount;
     }
 
     address public constant RECEIVER_FOR_FIRST_DEPOSIT = address(1);
@@ -188,7 +194,7 @@ library ExecuteDepositUtils {
         cache.longTokenUsd = cache.longTokenAmount * cache.prices.longTokenPrice.midPrice();
         cache.shortTokenUsd = cache.shortTokenAmount * cache.prices.shortTokenPrice.midPrice();
 
-        cache.priceImpactUsd = SwapPricingUtils.getPriceImpactUsd(
+        (cache.priceImpactUsd, cache.balanceWasImproved) = SwapPricingUtils.getPriceImpactUsd(
             SwapPricingUtils.GetPriceImpactUsdParams(
                 params.dataStore,
                 cache.market,
@@ -216,7 +222,7 @@ library ExecuteDepositUtils {
                 Precision.mulDiv(cache.priceImpactUsd, cache.longTokenUsd, cache.longTokenUsd + cache.shortTokenUsd)
             );
 
-            cache.receivedMarketTokens += _executeDeposit(params, _params);
+            cache.receivedMarketTokens += _executeDeposit(params, _params, cache.balanceWasImproved);
         }
 
         if (cache.shortTokenAmount > 0) {
@@ -233,7 +239,7 @@ library ExecuteDepositUtils {
                 Precision.mulDiv(cache.priceImpactUsd, cache.shortTokenUsd, cache.longTokenUsd + cache.shortTokenUsd)
             );
 
-            cache.receivedMarketTokens += _executeDeposit(params, _params);
+            cache.receivedMarketTokens += _executeDeposit(params, _params, cache.balanceWasImproved);
         }
 
         if (cache.receivedMarketTokens < deposit.minMarketTokens()) {
@@ -279,7 +285,7 @@ library ExecuteDepositUtils {
         cache.callbackEventData.uintItems.setItem(0, "receivedMarketTokens", cache.receivedMarketTokens);
         CallbackUtils.afterDepositExecution(params.key, deposit, cache.callbackEventData);
 
-        GasUtils.payExecutionFee(
+        cache.refundFeeAmount = GasUtils.payExecutionFee(
             params.dataStore,
             params.eventEmitter,
             params.depositVault,
@@ -289,8 +295,14 @@ library ExecuteDepositUtils {
             params.startingGas,
             GasUtils.estimateDepositOraclePriceCount(deposit.longTokenSwapPath().length + deposit.shortTokenSwapPath().length),
             params.keeper,
-            deposit.receiver()
+            deposit.srcChainId() == 0 ? deposit.receiver() : address(params.multichainVault)
         );
+
+        // for multichain action, receiver is the multichainVault; increase user's multichain wnt balance for the fee refund
+        if (deposit.srcChainId() != 0 && cache.refundFeeAmount > 0) {
+            address wnt = params.dataStore.getAddress(Keys.WNT);
+            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, wnt, deposit.receiver(), 0); // srcChainId is the current block.chainId
+        }
 
         return cache.receivedMarketTokens;
     }
@@ -298,14 +310,14 @@ library ExecuteDepositUtils {
     // @dev executes a deposit
     // @param params ExecuteDepositParams
     // @param _params _ExecuteDepositParams
-    function _executeDeposit(ExecuteDepositParams memory params, _ExecuteDepositParams memory _params) internal returns (uint256) {
+    function _executeDeposit(ExecuteDepositParams memory params, _ExecuteDepositParams memory _params, bool balanceWasImproved) internal returns (uint256) {
         // for markets where longToken == shortToken, the price impact factor should be set to zero
         // in which case, the priceImpactUsd would always equal zero
         SwapPricingUtils.SwapFees memory fees = SwapPricingUtils.getSwapFees(
             params.dataStore,
             _params.market.marketToken,
             _params.amount,
-            _params.priceImpactUsd > 0, // forPositiveImpact
+            balanceWasImproved,
             _params.uiFeeReceiver,
             params.swapPricingType
         );
@@ -506,7 +518,14 @@ library ExecuteDepositUtils {
             _params.tokenIn
         );
 
-        MarketToken(payable(_params.market.marketToken)).mint(_params.receiver, mintAmount);
+        if (params.srcChainId == 0) {
+            // mint GM tokens to receiver
+            MarketToken(payable(_params.market.marketToken)).mint(_params.receiver, mintAmount);
+        } else {
+            // mint GM tokens to MultichainVault and increase receiver's multichain GM balance
+            MarketToken(payable(_params.market.marketToken)).mint(address(params.multichainVault), mintAmount);
+            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, _params.market.marketToken, _params.receiver, 0); // srcChainId is the current block.chainId
+        }
 
         return mintAmount;
     }

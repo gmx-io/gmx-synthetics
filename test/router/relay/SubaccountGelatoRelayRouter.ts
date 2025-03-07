@@ -74,6 +74,7 @@ describe("SubaccountGelatoRelayRouter", () => {
       isLong: true,
       shouldUnwrapNativeToken: true,
       referralCode,
+      dataList: [],
     };
 
     enableSubaccount = async () => {
@@ -118,6 +119,7 @@ describe("SubaccountGelatoRelayRouter", () => {
       subaccount: user0.address,
       params: defaultCreateOrderParams,
       deadline: 9999999999,
+      desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
       relayRouter: subaccountGelatoRelayRouter,
       chainId,
       relayFeeToken: wnt.address,
@@ -716,6 +718,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           autoCancel: false,
         },
         deadline: 9999999999,
+        desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
         relayRouter: subaccountGelatoRelayRouter,
         chainId,
         relayFeeToken: wnt.address,
@@ -921,6 +924,7 @@ describe("SubaccountGelatoRelayRouter", () => {
         subaccount: user0.address,
         key: ethers.constants.HashZero,
         deadline: 9999999999,
+        desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
         relayRouter: subaccountGelatoRelayRouter,
         chainId,
         relayFeeToken: wnt.address,
@@ -1022,6 +1026,7 @@ describe("SubaccountGelatoRelayRouter", () => {
         relayFeeToken: wnt.address,
         relayFeeAmount: expandDecimals(1, 15),
         deadline: 9999999999,
+        desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
       };
     });
 

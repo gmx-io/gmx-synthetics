@@ -1,5 +1,5 @@
 import hre from "hardhat";
-import { timelockWriteMulticall } from "../utils/timelock";
+import { setAtomicOracleProviderPayload, timelockWriteMulticall } from "../utils/timelock";
 
 const expectedTimelockMethods = ["signalSetAtomicOracleProvider", "setAtomicOracleProviderAfterSignal"];
 
@@ -27,9 +27,11 @@ async function main() {
     //  in case a revert is needed
     if (timelockMethod === "signalSetAtomicOracleProvider") {
       multicallWriteParams.push(timelock.interface.encodeFunctionData(timelockMethod, [provider, false]));
+      multicallWriteParams.push(timelock.interface.encodeFunctionData(timelockMethod, [provider, true]));
+    } else {
+      const { target, payload } = await setAtomicOracleProviderPayload(provider, true);
+      multicallWriteParams.push(timelock.interface.encodeFunctionData("execute", [target, payload]));
     }
-
-    multicallWriteParams.push(timelock.interface.encodeFunctionData(timelockMethod, [provider, true]));
   }
 
   console.log(`sending ${multicallWriteParams.length} updates`);
