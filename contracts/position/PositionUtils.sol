@@ -411,10 +411,6 @@ library PositionUtils {
 
         if (forLiquidation) {
             cache.minCollateralFactor = MarketUtils.getMinCollateralFactorForLiquidation(dataStore, market.marketToken);
-            if (cache.minCollateralFactor == 0) {
-                // Fallback to min collateral factor if minCollateralFactorForLiquidation is not set
-                cache.minCollateralFactor = MarketUtils.getMinCollateralFactor(dataStore, market.marketToken);
-            }
         } else {
             cache.minCollateralFactor = MarketUtils.getMinCollateralFactor(dataStore, market.marketToken);
         }
