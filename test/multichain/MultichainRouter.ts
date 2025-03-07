@@ -36,7 +36,6 @@ import {
 import { hashData, hashString } from "../../utils/hash";
 import { getPositionCount } from "../../utils/position";
 import { expectBalance } from "../../utils/validation";
-import { scenes } from "../scenes";
 import { getClaimableCollateralTimeKey } from "../../utils/collateral";
 
 export async function mintAndBridge(
@@ -990,7 +989,7 @@ describe("MultichainRouter", () => {
           params: {
             markets: [ethUsdMarket.marketToken],
             tokens: [usdc.address],
-            receiver: user1.address,
+            receiver: user1.address, // receiver must be the same as account to pay from the newly claimed tokens
           },
           deadline: 9999999999,
           srcChainId: chainId, // 0 means non-multichain action
@@ -1017,13 +1016,95 @@ describe("MultichainRouter", () => {
 
     describe("claimCollateral", () => {
       beforeEach(async () => {
-        // await scenes.deposit(fixture);
         await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 7));
         await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
         await dataStore.setUint(keys.maxPositionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 3));
 
-        await scenes.increasePosition.long(fixture);
-        await scenes.decreasePosition.long(fixture);
+        await handleOrder(fixture, {
+          create: {
+            account: user1,
+            market: ethUsdMarket,
+            initialCollateralToken: usdc,
+            initialCollateralDeltaAmount: expandDecimals(50 * 1000, 6), // $50,000
+            swapPath: [],
+            sizeDeltaUsd: decimalToFloat(200 * 1000),
+            acceptablePrice: expandDecimals(5200, 12),
+            executionFee: expandDecimals(1, 15),
+            minOutputAmount: 0,
+            orderType: OrderType.MarketIncrease,
+            isLong: true,
+            shouldUnwrapNativeToken: false,
+          },
+        });
+        await handleOrder(fixture, {
+          create: {
+            account: user1,
+            market: ethUsdMarket,
+            initialCollateralToken: usdc,
+            initialCollateralDeltaAmount: expandDecimals(5 * 1000, 6), // $5,000
+            swapPath: [],
+            sizeDeltaUsd: decimalToFloat(20 * 1000),
+            acceptablePrice: expandDecimals(4800, 12),
+            executionFee: expandDecimals(1, 15),
+            minOutputAmount: 0,
+            orderType: OrderType.MarketDecrease,
+            isLong: true,
+            shouldUnwrapNativeToken: false,
+          },
+        });
+      });
+
+      it("User receives collateral in his multichain balance, pays relay fee from his existing multicahin balance", async () => {
+        // allow 80% of collateral to be claimed
+        const timeKey = await getClaimableCollateralTimeKey();
+        await dataStore.setUint(
+          keys.claimableCollateralFactorKey(ethUsdMarket.marketToken, usdc.address, timeKey),
+          decimalToFloat(8, 1)
+        );
+
+        const feeAmount = expandDecimals(6, 15);
+        const relayFeeAmount = expandDecimals(5, 15);
+        // increase user's wnt multichain balance to pay for fees
+        await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: feeAmount });
+
+        // the user will pay the relay fee from his newly claimed tokens
+        const createClaimParams: Parameters<typeof sendClaimCollateral>[0] = {
+          sender: relaySigner,
+          signer: user1,
+          feeParams: {
+            feeToken: wnt.address, // user will use his existing wnt multichain balance to pay for fees
+            feeAmount: feeAmount, // 15 USD = 0.003 ETH (feeAmount must be gt relayFeeAmount)
+            feeSwapPath: [],
+          },
+          account: user1.address,
+          params: {
+            markets: [ethUsdMarket.marketToken],
+            tokens: [usdc.address],
+            timeKeys: [timeKey],
+            receiver: user1.address,
+          },
+          deadline: 9999999999,
+          srcChainId: chainId, // 0 means non-multichain action
+          desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
+          relayRouter: multichainClaimsRouter,
+          chainId,
+          relayFeeToken: wnt.address,
+          relayFeeAmount: relayFeeAmount, // 0.002 ETH
+        };
+
+        expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(0);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(feeAmount); // 0.006 ETH
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0); // 0 USD
+
+        await sendClaimCollateral(createClaimParams);
+
+        expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(relayFeeAmount); // 0.005 ETH
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(
+          feeAmount.sub(relayFeeAmount)
+        ); // 0.003 - 0.002 = 0.001 ETH (received as residualFee)
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(
+          expandDecimals(304, 6)
+        ); // 304 USD (received from claiming, relay fee was paid from existing wnt multichain balance)
       });
 
       it("User receives collateral in his multichain balance, pays relay fee from newly claimed tokens", async () => {
@@ -1037,10 +1118,10 @@ describe("MultichainRouter", () => {
         // the user will pay the relay fee from his newly claimed usdc tokens
         const createClaimParams: Parameters<typeof sendClaimCollateral>[0] = {
           sender: relaySigner,
-          signer: user0,
+          signer: user1,
           feeParams: {
             feeToken: usdc.address, // user will use his newly claimed usdc to pay for fees
-            feeAmount: expandDecimals(16, 6), // 15 USD = 0.003 ETH (feeAmount must be gt relayFeeAmount)
+            feeAmount: expandDecimals(15, 6), // 15 USD = 0.003 ETH (feeAmount must be gt relayFeeAmount)
             feeSwapPath: [ethUsdMarket.marketToken],
           },
           oracleParams: {
@@ -1048,12 +1129,12 @@ describe("MultichainRouter", () => {
             providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
             data: ["0x", "0x"],
           },
-          account: user0.address,
+          account: user1.address,
           params: {
             markets: [ethUsdMarket.marketToken],
             tokens: [usdc.address],
             timeKeys: [timeKey],
-            receiver: user1.address,
+            receiver: user1.address, // receiver must be the same as account to pay from the newly claimed tokens
           },
           deadline: 9999999999,
           srcChainId: chainId, // 0 means non-multichain action
@@ -1065,18 +1146,18 @@ describe("MultichainRouter", () => {
         };
 
         expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(0);
-        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0); // 0 ETH
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0); // 0 USD
         expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0); // 0 USD
 
         await sendClaimCollateral(createClaimParams);
 
         expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(expandDecimals(2, 15)); // 0.002 ETH relayFeeAmount
         expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(
-          0 // TODO: why no residual fee? e.g. expandDecimals(1, 15)
-        ); // 0.003 (equivalent of $15) - 0.002 = 0.001 ETH (received as residualFee)
+          expandDecimals(1, 15)
+        ); // user1 receives the refundFee
         expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(
-          expandDecimals(304, 6)
-        ); // 304 USD (received from claiming, after paying relay fee)
+          expandDecimals(304, 6).sub(expandDecimals(15, 6))
+        ); // claimable collateral is 304 USD, 15 USD is paid as relay fee from the newly claimed tokens
       });
     });
 
@@ -1160,7 +1241,7 @@ describe("MultichainRouter", () => {
         ); // $25
       });
 
-      it("Affiliate receives rewards and residual fee in his multichain balance, pays relay fee from claimed tokens", async () => {
+      it("Affiliate receives rewards and residual fee in his multichain balance, pays relay fee from newly claimed tokens", async () => {
         expect(
           await dataStore.getUint(keys.affiliateRewardKey(ethUsdMarket.marketToken, usdc.address, user1.address))
         ).to.eq(expandDecimals(25, 6)); // $25
@@ -1183,7 +1264,7 @@ describe("MultichainRouter", () => {
           params: {
             markets: [ethUsdMarket.marketToken],
             tokens: [usdc.address],
-            receiver: user1.address,
+            receiver: user1.address, // receiver must be the same as account to pay from the newly claimed tokens
           },
           deadline: 9999999999,
           srcChainId: chainId, // 0 means non-multichain action
