@@ -11,6 +11,7 @@ import { getSyntheticTokenAddress } from "../../utils/token";
 import { TOKEN_ORACLE_TYPES } from "../../utils/oracle";
 import { getPoolAmount } from "../../utils/market";
 import { errorsContract } from "../../utils/error";
+import * as keys from "../../utils/keys";
 import hre from "hardhat";
 
 describe("Guardian.Liquidation", () => {
@@ -751,6 +752,68 @@ describe("Guardian.Liquidation", () => {
       maxPrices: [expandDecimals(5000, 4), expandDecimals(15, 4), expandDecimals(5, 5)],
     });
 
+    expect(await getPositionCount(dataStore)).to.eq(0);
+  });
+
+  it("uses minCollateralFactorForLiquidation for liquidation check", async () => {
+    const initialUSDCBalance = expandDecimals(50 * 1000, 6); // 50,000 USDC
+    expect(await getOrderCount(dataStore)).eq(0);
+
+    // Set a higher min collateral factor for liquidation (10%) compared to regular min collateral factor (1%)
+    await dataStore.setUint(keys.minCollateralFactorKey(ethUsdMarket.marketToken), decimalToFloat(1, 2)); // 1%
+    await dataStore.setUint(keys.MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION, decimalToFloat(10, 2)); // 10%
+
+    const params = {
+      account: user1,
+      market: ethUsdMarket,
+      minOutputAmount: 0,
+      initialCollateralToken: usdc,
+      initialCollateralDeltaAmount: initialUSDCBalance,
+      swapPath: [],
+      sizeDeltaUsd: decimalToFloat(200 * 1000), // 4x leverage -- position size is 40 ETH @ $5,000/ETH
+      acceptablePrice: expandDecimals(5001, 12),
+      orderType: OrderType.MarketIncrease,
+      isLong: true,
+      shouldUnwrapNativeToken: false,
+    };
+
+    await handleOrder(fixture, {
+      create: params,
+      execute: {
+        tokens: [wnt.address, usdc.address],
+        prices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+        precisions: [8, 18],
+      },
+    });
+
+    expect(await getOrderCount(dataStore)).to.eq(0);
+    expect(await getPositionCount(dataStore)).to.eq(1);
+
+    await mine();
+
+    // Position should not be liquidatable with regular min collateral factor check
+    await expect(
+      executeLiquidation(fixture, {
+        account: user1.address,
+        market: ethUsdMarket,
+        collateralToken: usdc,
+        isLong: true,
+        minPrices: [expandDecimals(4800, 4), expandDecimals(1, 6)],
+        maxPrices: [expandDecimals(4800, 4), expandDecimals(1, 6)],
+      })
+    ).to.be.revertedWithCustomError(errorsContract, "PositionShouldNotBeLiquidated");
+
+    // Position should be liquidatable with minCollateralFactorForLiquidation check
+    await executeLiquidation(fixture, {
+      account: user1.address,
+      market: ethUsdMarket,
+      collateralToken: usdc,
+      isLong: true,
+      minPrices: [expandDecimals(4500, 4), expandDecimals(1, 6)],
+      maxPrices: [expandDecimals(4500, 4), expandDecimals(1, 6)],
+    });
+
+    expect(await getOrderCount(dataStore)).to.eq(0);
     expect(await getPositionCount(dataStore)).to.eq(0);
   });
 });

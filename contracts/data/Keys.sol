@@ -259,6 +259,8 @@ library Keys {
     bytes32 public constant MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER = keccak256(abi.encode("MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER"));
     // @dev key for the min allowed collateral in USD
     bytes32 public constant MIN_COLLATERAL_USD = keccak256(abi.encode("MIN_COLLATERAL_USD"));
+    // @dev key for the min allowed collateral factor which is using for some new markets to limit allowed leverage
+    bytes32 public constant MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION = keccak256(abi.encode("MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION"));
     // @dev key for the min allowed position size in USD
     bytes32 public constant MIN_POSITION_SIZE_USD = keccak256(abi.encode("MIN_POSITION_SIZE_USD"));
 
@@ -1026,6 +1028,16 @@ library Keys {
            isLong
        ));
    }
+
+    // @dev the min collateral factor for open interest multiplier key
+    // @param the market for the factor
+    function minCollateralFactorForLiquidationKey(address market, bool isLong) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION,
+            market,
+            isLong
+        ));
+    }
 
    // @dev the key for the virtual token id
    // @param the token to get the virtual id for

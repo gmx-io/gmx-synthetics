@@ -715,7 +715,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             baseKey == Keys.OPTIMAL_USAGE_FACTOR ||
             baseKey == Keys.PRO_DISCOUNT_FACTOR ||
             baseKey == Keys.BUYBACK_GMX_FACTOR ||
-            baseKey == Keys.DATA_STREAM_SPREAD_REDUCTION_FACTOR
+            baseKey == Keys.DATA_STREAM_SPREAD_REDUCTION_FACTOR ||
+            baseKey == Keys.MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION
         ) {
             // revert if value > 100%
             if (value > Precision.FLOAT_PRECISION) {
