@@ -51,8 +51,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           },
           {
             indexToken: "LTC",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(1_654_468, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(2_239_488),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(1_031_071, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(1_866_240),
           },
           {
             indexToken: "XRP",
@@ -131,8 +131,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           },
           {
             indexToken: "RENDER",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(2_485_921, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(2_115_072),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(1_846_385, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(1_762_560),
           },
           {
             indexToken: "TRUMP",
@@ -146,18 +146,18 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           },
           {
             indexToken: "ENA",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(864_760, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(720_000),
-          },
-          {
-            indexToken: "LDO",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(685_314, 18),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(648_417, 18),
             glvMaxMarketTokenBalanceUsd: decimalToFloat(600_000),
           },
           {
+            indexToken: "LDO",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(500_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(500_000),
+          },
+          {
             indexToken: "BERA",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(2_957_283, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(2_592_000),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(1_800_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(1_800_000),
           },
           {
             indexToken: "ONDO",
@@ -168,11 +168,6 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
             indexToken: "FET",
             glvMaxMarketTokenBalanceAmount: expandDecimals(500_000, 18),
             glvMaxMarketTokenBalanceUsd: decimalToFloat(500_000),
-          },
-          {
-            indexToken: "AIXBT",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(250_000, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(250_000),
           },
         ],
       },
@@ -273,8 +268,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           },
           {
             indexToken: "FARTCOIN",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(1_200_000, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(1_200_000),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(996_923, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(1_036_800),
           },
           {
             indexToken: "AI16Z",
@@ -283,21 +278,11 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           },
           {
             indexToken: "VIRTUAL",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(793_974, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(720_000),
-          },
-          {
-            indexToken: "PENGU",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(666_665, 18),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(600_000, 18),
             glvMaxMarketTokenBalanceUsd: decimalToFloat(600_000),
           },
           {
-            indexToken: "S",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(500_000, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(500_000),
-          },
-          {
-            indexToken: "CAKE",
+            indexToken: "PENGU",
             glvMaxMarketTokenBalanceAmount: expandDecimals(500_000, 18),
             glvMaxMarketTokenBalanceUsd: decimalToFloat(500_000),
           },
