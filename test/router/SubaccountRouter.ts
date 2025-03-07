@@ -268,7 +268,7 @@ describe("SubaccountRouter", () => {
 
     // 0.1 WETH in total
     expect(order.numbers.executionFee).eq("2111028760000000");
-    await expectBalance(wnt.address, user2.address, "97888967400000000");
+    await expectBalance(wnt.address, user2.address, "97888971240000000");
 
     expect(
       await dataStore.getUint(
