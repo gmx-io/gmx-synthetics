@@ -28,26 +28,18 @@ async function main() {
   }
 
   console.log(`Checking deployment against commit: ${AUDITED_COMMIT}`);
-  // execSync(`git checkout ${AUDITED_COMMIT}`, { stdio: "inherit" });
+  execSync(`git checkout ${AUDITED_COMMIT}`, { stdio: "inherit" });
 
   try {
-    // const contractInfos = await extractRolesFromTx(tx);
-    const contractInfos = [
-      {
-        address: "0x393053B58f9678C9c28c2cE941fF6cac49C3F8f9",
-        name: "GlvVault",
-        isCodeValidated: false,
-        signalledRoles: [],
-      },
-    ];
+    const contractInfos = await extractRolesFromTx(tx);
     console.log("Contracts: ", contractInfos);
     for (const contractInfo of contractInfos) {
       // also extracts contract name
-      // const isCodeValidated = await validateFromEtherscan(contractInfo);
+      const isCodeValidated = await validateFromEtherscan(contractInfo);
       // Fallback to bytecode compilation if sources are not verified on etherscan
-      // if (!isCodeValidated) {
-      await compareContractBytecodes(provider, contractInfo);
-      // }
+      if (!isCodeValidated) {
+        await compareContractBytecodes(provider, contractInfo);
+      }
       await validateRoles(contractInfo);
     }
   } catch (error) {
@@ -229,6 +221,7 @@ async function showDiff(localPath: string, sourceCode: string) {
 interface DeploymentInfo {
   contractName: string;
   constructorArgs: string[];
+  deploymentTxHash: string;
 }
 
 async function extractContractNameAndArgsFromDeployment(contractAddress: string): Promise<DeploymentInfo> {
@@ -241,10 +234,11 @@ async function extractContractNameAndArgsFromDeployment(contractAddress: string)
   console.log("Deployment: " + deployment);
   const contractName = path.basename(deployment, path.extname(deployment));
   console.log("ContractName: " + contractName);
-  const constructorArgs = extractDeploymentArgs(deployment);
+  const deploymentJson = JSON.parse(fs.readFileSync(deployment, "utf-8"));
   return {
     contractName: contractName,
-    constructorArgs: constructorArgs,
+    constructorArgs: deploymentJson.args,
+    deploymentTxHash: deploymentJson.transactionHash,
   };
 }
 
@@ -262,7 +256,9 @@ async function getArtifactBytecode(contractName: string): Promise<string> {
 async function compareContractBytecodes(provider: JsonRpcProvider, contractInfo: ContractInfo): Promise<void> {
   console.log("Comparing bytecodes with compilation artifact");
 
-  const { contractName, constructorArgs } = await extractContractNameAndArgsFromDeployment(contractInfo.address);
+  const { contractName, constructorArgs, deploymentTxHash } = await extractContractNameAndArgsFromDeployment(
+    contractInfo.address
+  );
   contractInfo.name = contractName;
 
   await compileContract(contractName);
@@ -285,15 +281,14 @@ async function compareContractBytecodes(provider: JsonRpcProvider, contractInfo:
   const localBytecodeStripped = stripBytecodeIpfsHash(artifactBytecode);
 
   console.log(`Fetching blockchain bytecode from ${contractInfo.address} for ${contractName}`);
-  const blockchainBytecode = await provider.getCode(contractInfo.address);
+  const deploymentTx = await provider.getTransaction(deploymentTxHash);
+  const blockchainBytecode = deploymentTx.data;
   const blockchainBytecodeWithoutMetadata = stripBytecodeIpfsHash(blockchainBytecode);
   const blockchainDeployBytecode = blockchainBytecodeWithoutMetadata.slice(
     0,
     blockchainBytecodeWithoutMetadata.length - encodedArgs.length
   ); // bytecode without metadata and constructor args
 
-  console.log("Local: ", localBytecodeStripped);
-  console.log("External: ", blockchainDeployBytecode);
   if (localBytecodeStripped !== blockchainDeployBytecode) {
     throw new Error("Bytecodes does not match!");
   }
@@ -384,11 +379,6 @@ async function searchDirectory(dirPath: string, condition: (filename: string) =>
     }
   }
   return null;
-}
-
-function extractDeploymentArgs(deploymentFile: string): string[] {
-  const js = JSON.parse(fs.readFileSync(deploymentFile, "utf-8"));
-  return js.args;
 }
 
 main().catch((error) => {
