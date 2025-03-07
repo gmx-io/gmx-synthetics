@@ -446,6 +446,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.REQUEST_EXPIRATION_TIME] = true;
         allowedBaseKeys[Keys.MIN_COLLATERAL_FACTOR] = true;
         allowedBaseKeys[Keys.MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER] = true;
+        allowedBaseKeys[Keys.MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION] = true;
         allowedBaseKeys[Keys.MIN_COLLATERAL_USD] = true;
 
         allowedBaseKeys[Keys.VIRTUAL_TOKEN_ID] = true;
@@ -716,7 +717,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             baseKey == Keys.OPTIMAL_USAGE_FACTOR ||
             baseKey == Keys.PRO_DISCOUNT_FACTOR ||
             baseKey == Keys.BUYBACK_GMX_FACTOR ||
-            baseKey == Keys.DATA_STREAM_SPREAD_REDUCTION_FACTOR
+            baseKey == Keys.DATA_STREAM_SPREAD_REDUCTION_FACTOR ||
+            baseKey == Keys.MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION
         ) {
             // revert if value > 100%
             if (value > Precision.FLOAT_PRECISION) {

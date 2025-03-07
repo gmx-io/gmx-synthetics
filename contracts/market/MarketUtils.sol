@@ -2090,6 +2090,13 @@ library MarketUtils {
         return dataStore.getUint(Keys.minCollateralFactorKey(market));
     }
 
+    // @dev get the min collateral factor for liquidation
+    // @param dataStore DataStore
+    // @param market the market to check
+    function getMinCollateralFactorForLiquidation(DataStore dataStore, address market) internal view returns (uint256) {
+        return dataStore.getUint(Keys.minCollateralFactorForLiquidationKey(market));
+    }
+
     // @dev get the min collateral factor for open interest multiplier
     // @param dataStore DataStore
     // @param market the market to check

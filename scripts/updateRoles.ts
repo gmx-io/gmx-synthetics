@@ -83,37 +83,109 @@ async function main() {
     arbitrum: [
       {
         role: "CONTROLLER",
-        member: "0x5ac4e27341e4cccb3e5fd62f9e62db2adf43dd57",
+        member: "0x17de9ad7c5eca85e50381f9c51e32e859d5f2086",
       },
       {
         role: "CONTROLLER",
-        member: "0x994c598e3b0661bb805d53c6fa6b4504b23b68dd",
+        member: "0x6dbe12529a9d039a6af20be488d5e46f22901eec",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x1037c3b54b3109a495b8d0cce6c32f819284f0cf",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x331da018c1ddf565ae081f267174689940a8490e",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x03a6e8af1685099470019de39b1573d415856879",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x470d512de68665a33416d30f0d7580781aaa2748",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x8d5ba31b20725c10b9fb60b8a3e5c9bc6aa7c74c",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x98723bd186581c461e8f77d8b17e7fac2d141a48",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x2fb22eab0f84557dac6fc9d800cae11602662f78",
       },
       {
         role: "ROUTER_PLUGIN",
-        member: "0x5ac4e27341e4cccb3e5fd62f9e62db2adf43dd57",
+        member: "0x470d512de68665a33416d30f0d7580781aaa2748",
       },
       {
         role: "ROUTER_PLUGIN",
-        member: "0x994c598e3b0661bb805d53c6fa6b4504b23b68dd",
+        member: "0x8d5ba31b20725c10b9fb60b8a3e5c9bc6aa7c74c",
+      },
+      {
+        role: "ROUTER_PLUGIN",
+        member: "0x98723bd186581c461e8f77d8b17e7fac2d141a48",
+      },
+      {
+        role: "ROUTER_PLUGIN",
+        member: "0x2fb22eab0f84557dac6fc9d800cae11602662f78",
       },
     ],
     avalanche: [
       {
         role: "CONTROLLER",
-        member: "0xe37d052e1deb99901de205e7186e31a36e4ef70c",
+        member: "0x2921bad580cef4b03b5461d184a4c7ab637028d6",
       },
       {
         role: "CONTROLLER",
-        member: "0x16500c1d8ffe2f695d8dcadf753f664993287ae4",
+        member: "0x45277bad220bb6b350973b61c9cc9f7ec536b5a1",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0xf1998f8202f9707ffb6953826d4db97fbc6acc08",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x29fa2de428b251d7d7c5b0b0fac7b970e113650e",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x900173a66dbd345006c51fa35fa3ab760fcd843b",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0xcc090e92824d0f75faeb2287eeca8d91aa6f06bb",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0xa9c8bc4f151da37753576114fcedfb3572333c6b",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x82a792457f9af42d10fcde829708bd80b156c6f9",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x0c4d69369982f7e8002089387a95ff059deff6b3",
       },
       {
         role: "ROUTER_PLUGIN",
-        member: "0xe37d052e1deb99901de205e7186e31a36e4ef70c",
+        member: "0xcc090e92824d0f75faeb2287eeca8d91aa6f06bb",
       },
       {
         role: "ROUTER_PLUGIN",
-        member: "0x16500c1d8ffe2f695d8dcadf753f664993287ae4",
+        member: "0xa9c8bc4f151da37753576114fcedfb3572333c6b",
+      },
+      {
+        role: "ROUTER_PLUGIN",
+        member: "0x82a792457f9af42d10fcde829708bd80b156c6f9",
+      },
+      {
+        role: "ROUTER_PLUGIN",
+        member: "0x0c4d69369982f7e8002089387a95ff059deff6b3",
       },
     ],
   };
@@ -122,21 +194,53 @@ async function main() {
     arbitrum: [
       {
         role: "CONTROLLER",
-        member: "0xf32b417A93Acc039B236F1eCC86B56bd3cB8E698",
+        member: "0xf64c8469e5B566251301904f4F77A911438C775F",
       },
       {
-        role: "ROLE_ADMIN",
-        member: "0xf32b417A93Acc039B236F1eCC86B56bd3cB8E698",
+        role: "CONTROLLER",
+        member: "0x871a0CAa75dea231FA290ee26F1955B29a7F8a86",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x26410a3121BCAB865b9ceae50dFfA04DF9E783B1",
+      },
+      {
+        role: "ROUTER_PLUGIN",
+        member: "0xf64c8469e5B566251301904f4F77A911438C775F",
+      },
+      {
+        role: "ROUTER_PLUGIN",
+        member: "0x871a0CAa75dea231FA290ee26F1955B29a7F8a86",
+      },
+      {
+        role: "ROUTER_PLUGIN",
+        member: "0x26410a3121BCAB865b9ceae50dFfA04DF9E783B1",
       },
     ],
     avalanche: [
       {
         role: "CONTROLLER",
-        member: "0x9Dd6EB1069385D85Ae204543BabB7333181ec8A5",
+        member: "0xBD219aADaFe3AD8c8F570b204B99cb4aDbe9983E",
       },
       {
-        role: "ROLE_ADMIN",
-        member: "0x9Dd6EB1069385D85Ae204543BabB7333181ec8A5",
+        role: "CONTROLLER",
+        member: "0xE971b9D5eA8Ab28bF3639069CF7a91E5dA7b7015",
+      },
+      {
+        role: "CONTROLLER",
+        member: "0x7D9E403F82b59e7fF5F7A37a9bf4A8df914352A1",
+      },
+      {
+        role: "ROUTER_PLUGIN",
+        member: "0xBD219aADaFe3AD8c8F570b204B99cb4aDbe9983E",
+      },
+      {
+        role: "ROUTER_PLUGIN",
+        member: "0xE971b9D5eA8Ab28bF3639069CF7a91E5dA7b7015",
+      },
+      {
+        role: "ROUTER_PLUGIN",
+        member: "0x7D9E403F82b59e7fF5F7A37a9bf4A8df914352A1",
       },
     ],
   };

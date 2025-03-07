@@ -296,7 +296,8 @@ library PositionUtils {
             position,
             market,
             prices,
-            shouldValidateMinCollateralUsd
+            shouldValidateMinCollateralUsd,
+            false // forLiquidation
         );
 
         if (isLiquidatable) {
@@ -321,7 +322,8 @@ library PositionUtils {
         Position.Props memory position,
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices,
-        bool shouldValidateMinCollateralUsd
+        bool shouldValidateMinCollateralUsd,
+        bool forLiquidation
     ) public view returns (bool, string memory, IsPositionLiquidatableInfo memory) {
         IsPositionLiquidatableCache memory cache;
         IsPositionLiquidatableInfo memory info;
@@ -407,7 +409,11 @@ library PositionUtils {
             + cache.priceImpactUsd
             - collateralCostUsd.toInt256();
 
-        cache.minCollateralFactor = MarketUtils.getMinCollateralFactor(dataStore, market.marketToken);
+        if (forLiquidation) {
+            cache.minCollateralFactor = MarketUtils.getMinCollateralFactorForLiquidation(dataStore, market.marketToken);
+        } else {
+            cache.minCollateralFactor = MarketUtils.getMinCollateralFactor(dataStore, market.marketToken);
+        }
 
         // validate if (remaining collateral) / position.size is less than the min collateral factor (max leverage exceeded)
         // this validation includes the position fee to be paid when closing the position
