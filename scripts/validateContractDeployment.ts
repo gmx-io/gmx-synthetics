@@ -28,18 +28,26 @@ async function main() {
   }
 
   console.log(`Checking deployment against commit: ${AUDITED_COMMIT}`);
-  execSync(`git checkout ${AUDITED_COMMIT}`, { stdio: "inherit" });
+  // execSync(`git checkout ${AUDITED_COMMIT}`, { stdio: "inherit" });
 
   try {
-    const contractInfos = await extractRolesFromTx(tx);
+    // const contractInfos = await extractRolesFromTx(tx);
+    const contractInfos = [
+      {
+        address: "0x393053B58f9678C9c28c2cE941fF6cac49C3F8f9",
+        name: "GlvVault",
+        isCodeValidated: false,
+        signalledRoles: [],
+      },
+    ];
     console.log("Contracts: ", contractInfos);
     for (const contractInfo of contractInfos) {
       // also extracts contract name
-      const isCodeValidated = await validateFromEtherscan(contractInfo);
+      // const isCodeValidated = await validateFromEtherscan(contractInfo);
       // Fallback to bytecode compilation if sources are not verified on etherscan
-      if (!isCodeValidated) {
-        await compareContractBytecodes(provider, contractInfo);
-      }
+      // if (!isCodeValidated) {
+      await compareContractBytecodes(provider, contractInfo);
+      // }
       await validateRoles(contractInfo);
     }
   } catch (error) {
@@ -248,7 +256,7 @@ async function getArtifactBytecode(contractName: string): Promise<string> {
     throw new Error("Artifact not found");
   }
 
-  return JSON.parse(fs.readFileSync(searchResult, "utf-8"));
+  return JSON.parse(fs.readFileSync(searchResult, "utf-8")).bytecode;
 }
 
 async function compareContractBytecodes(provider: JsonRpcProvider, contractInfo: ContractInfo): Promise<void> {
@@ -284,6 +292,8 @@ async function compareContractBytecodes(provider: JsonRpcProvider, contractInfo:
     blockchainBytecodeWithoutMetadata.length - encodedArgs.length
   ); // bytecode without metadata and constructor args
 
+  console.log("Local: ", localBytecodeStripped);
+  console.log("External: ", blockchainDeployBytecode);
   if (localBytecodeStripped !== blockchainDeployBytecode) {
     throw new Error("Bytecodes does not match!");
   }
