@@ -1031,11 +1031,10 @@ library Keys {
 
     // @dev the min collateral factor for open interest multiplier key
     // @param the market for the factor
-    function minCollateralFactorForLiquidationKey(address market, bool isLong) internal pure returns (bytes32) {
+    function minCollateralFactorForLiquidationKey(address market) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION,
-            market,
-            isLong
+            market
         ));
     }
 
