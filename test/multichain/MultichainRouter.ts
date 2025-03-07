@@ -27,7 +27,6 @@ import { hashString } from "../../utils/hash";
 import { getPositionCount } from "../../utils/position";
 import { expectBalance } from "../../utils/validation";
 import { executeLiquidation } from "../../utils/liquidation";
-const { provider } = ethers;
 
 export async function mintAndBridge(
   fixture,
@@ -719,6 +718,39 @@ describe("MultichainRouter", () => {
         expect(await getOrderCount(dataStore)).to.eq(0);
         expect(await getPositionCount(dataStore)).to.eq(1);
       });
+
+      it("liquidation increases user's multichain balance", async () => {
+        // order is created from a source chain
+        await sendCreateDeposit(createDepositParams);
+        await executeDeposit(fixture, { gasUsageLabel: "executeMultichainDeposit" });
+        await mintAndBridge(fixture, {
+          account: user1,
+          token: wnt,
+          tokenAmount: collateralDeltaAmount.add(expandDecimals(2, 15)),
+        });
+        await sendCreateOrder(createOrderParams);
+        await executeOrder(fixture, { gasUsageLabel: "executeOrder" });
+
+        // forcing liquidation
+        await dataStore.setUint(keys.minCollateralFactorKey(ethUsdMarket.marketToken), expandDecimals(1, 30));
+
+        const user1WntBalanceBefore = await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address));
+
+        await executeLiquidation(fixture, {
+          account: user1.address,
+          market: ethUsdMarket,
+          collateralToken: wnt,
+          isLong: true,
+          minPrices: [expandDecimals(5000, 4), expandDecimals(8, 5)],
+          maxPrices: [expandDecimals(5000, 4), expandDecimals(8, 5)],
+          gasUsageLabel: "liquidationHandler.executeLiquidation",
+        });
+
+        // user's multichain balances increased by the collateral amount after liquidation
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(
+          user1WntBalanceBefore.add(collateralDeltaAmount)
+        );
+      });
     });
 
     describe("updateOrder", () => {
@@ -784,36 +816,6 @@ describe("MultichainRouter", () => {
           GELATO_RELAY_ADDRESS,
           initialFeeReceiverBalance.add(updateOrderParams.relayFeeAmount)
         );
-      });
-
-      it("liquidation is sending funds to user's multichain balance", async () => {
-        // order is created from a source chain
-        await sendCreateDeposit(createDepositParams);
-        await executeDeposit(fixture, { gasUsageLabel: "executeMultichainDeposit" });
-        await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: collateralDeltaAmount.add(feeAmount) });
-        await sendCreateOrder(createOrderParams);
-        await executeOrder(fixture, { gasUsageLabel: "executeOrder" });
-
-        console.log("user eth before:", ethers.utils.formatEther(await provider.getBalance(user1.address)));
-        console.log("user wnt before", ethers.utils.formatUnits(await wnt.balanceOf(user1.address)));
-        console.log("user usdc before", ethers.utils.formatUnits(await usdc.balanceOf(user1.address)));
-
-        // forcing liquidation
-        await dataStore.setUint(keys.minCollateralFactorKey(ethUsdMarket.marketToken), expandDecimals(1, 30));
-
-        await executeLiquidation(fixture, {
-          account: user1.address,
-          market: ethUsdMarket,
-          collateralToken: wnt,
-          isLong: true,
-          minPrices: [expandDecimals(5000, 4), expandDecimals(8, 5)],
-          maxPrices: [expandDecimals(5000, 4), expandDecimals(8, 5)],
-          gasUsageLabel: "liquidationHandler.executeLiquidation",
-        });
-
-        console.log("user eth after:", ethers.utils.formatEther(await provider.getBalance(user1.address))); // TODO: why is it unwapped?
-        console.log("user wnt after", ethers.utils.formatUnits(await wnt.balanceOf(user1.address)));
-        console.log("user usdc after", ethers.utils.formatUnits(await usdc.balanceOf(user1.address)));
       });
     });
 
