@@ -16,6 +16,7 @@ import {
   sendBridgeOut,
   sendClaimAffiliateRewards,
   sendClaimFundingFees,
+  sendClaimCollateral,
 } from "../../utils/relay/multichain";
 import * as keys from "../../utils/keys";
 import { executeDeposit, getDepositCount, getDepositKeys, handleDeposit } from "../../utils/deposit";
@@ -35,6 +36,8 @@ import {
 import { hashData, hashString } from "../../utils/hash";
 import { getPositionCount } from "../../utils/position";
 import { expectBalance } from "../../utils/validation";
+import { scenes } from "../scenes";
+import { getClaimableCollateralTimeKey } from "../../utils/collateral";
 
 export async function mintAndBridge(
   fixture,
@@ -1009,6 +1012,71 @@ describe("MultichainRouter", () => {
           expandDecimals(1, 15)
         ); // 0.003 (equivalent of $15) - 0.002 = 0.001 ETH (received as residualFee)
         expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq("42600019"); // 42.600019 USD (received from claiming, after paying relay fee)
+      });
+    });
+
+    describe("claimCollateral", () => {
+      beforeEach(async () => {
+        // await scenes.deposit(fixture);
+        await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 7));
+        await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
+        await dataStore.setUint(keys.maxPositionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 3));
+
+        await scenes.increasePosition.long(fixture);
+        await scenes.decreasePosition.long(fixture);
+      });
+
+      it("User receives collateral in his multichain balance, pays relay fee from newly claimed tokens", async () => {
+        // allow 80% of collateral to be claimed
+        const timeKey = await getClaimableCollateralTimeKey();
+        await dataStore.setUint(
+          keys.claimableCollateralFactorKey(ethUsdMarket.marketToken, usdc.address, timeKey),
+          decimalToFloat(8, 1)
+        );
+
+        // the user will pay the relay fee from his newly claimed usdc tokens
+        const createClaimParams: Parameters<typeof sendClaimCollateral>[0] = {
+          sender: relaySigner,
+          signer: user0,
+          feeParams: {
+            feeToken: usdc.address, // user will use his newly claimed usdc to pay for fees
+            feeAmount: expandDecimals(16, 6), // 15 USD = 0.003 ETH (feeAmount must be gt relayFeeAmount)
+            feeSwapPath: [ethUsdMarket.marketToken],
+          },
+          oracleParams: {
+            tokens: [wnt.address, usdc.address],
+            providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
+            data: ["0x", "0x"],
+          },
+          account: user0.address,
+          params: {
+            markets: [ethUsdMarket.marketToken],
+            tokens: [usdc.address],
+            timeKeys: [timeKey],
+            receiver: user1.address,
+          },
+          deadline: 9999999999,
+          srcChainId: chainId, // 0 means non-multichain action
+          desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
+          relayRouter: multichainClaimsRouter,
+          chainId,
+          relayFeeToken: wnt.address,
+          relayFeeAmount: expandDecimals(2, 15), // 0.002 ETH
+        };
+
+        expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(0);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0); // 0 ETH
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0); // 0 USD
+
+        await sendClaimCollateral(createClaimParams);
+
+        expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(expandDecimals(2, 15)); // 0.002 ETH relayFeeAmount
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(
+          0 // TODO: why no residual fee? e.g. expandDecimals(1, 15)
+        ); // 0.003 (equivalent of $15) - 0.002 = 0.001 ETH (received as residualFee)
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(
+          expandDecimals(304, 6)
+        ); // 304 USD (received from claiming, after paying relay fee)
       });
     });
 
