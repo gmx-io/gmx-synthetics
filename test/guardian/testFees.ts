@@ -715,7 +715,7 @@ describe("Guardian.Fees", () => {
 
     // Now there is an offset of $25 worth of ETH that is being subtracted from the poolvalue, this way the trader's
     // immediate net pnl of -$25 does not affect the pool value above.
-    impactPoolAmount = impactPoolAmount.add(expandDecimals(2, 8)); // 0.00000002 ETH TODO: confirm value
+    impactPoolAmount = impactPoolAmount.add(expandDecimals(2, 8)); // 0.00000002 ETH
     expect(poolValueInfo.impactPoolAmount).to.eq(impactPoolAmount);
     impactPendingAmountShort = impactPendingAmountShort.sub(expandDecimals(125, 13).sub(1)); // 0.0025 - 0.00125 = 0.00125 ETH from short
     expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey2))).to.eq(impactPendingAmountShort);
@@ -1052,7 +1052,7 @@ describe("Guardian.Fees", () => {
     // PI is positive
     // PI: +$3.125
     // remaining collateral should be: 253.8012 - 12.5 + 3.125 ~= 244.4262
-    expect(user0UsdcBalAfter.sub(user0UsdcBalBefore)).to.eq("244426248"); // TODO: confirm value / update comments above
+    expect(user0UsdcBalAfter.sub(user0UsdcBalBefore)).to.eq("244426248");
 
     // Nothing paid out in ETH, no positive PnL or positive impact
     expect(user0WntBalAfter.sub(user0WntBalAfter)).to.eq(0);
@@ -1110,7 +1110,7 @@ describe("Guardian.Fees", () => {
     // Impact pool increase:
     // ~$3.125 in positive impact => impact pool pays out $3.125
     // Denominated in ETH: $3.125 / $7,041 = 0.000443829002 ETH
-    impactPoolAmount = impactPoolAmount.sub(BigNumber.from("1693829001562279")); // TODO: confirm value / update comments above
+    impactPoolAmount = impactPoolAmount.sub(BigNumber.from("1693829001562279"));
     expect(poolValueInfo.impactPoolAmount).to.eq(impactPoolAmount);
 
     const depositedValue = poolValueInfo.shortTokenAmount.mul(expandDecimals(1, 24)).add(expandDecimals(5_000_000, 30));
