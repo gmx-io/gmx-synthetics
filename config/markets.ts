@@ -15,6 +15,7 @@ export type BaseMarketConfig = {
   openInterestReserveFactorShorts?: BigNumberish;
 
   minCollateralFactor: BigNumberish;
+  minCollateralFactorForLiquidation: BigNumberish;
   minCollateralFactorForOpenInterestMultiplier?: BigNumberish;
   minCollateralFactorForOpenInterestMultiplierLong?: BigNumberish;
   minCollateralFactorForOpenInterestMultiplierShort?: BigNumberish;
@@ -251,6 +252,7 @@ const borrowingRateConfig_HighMax_WithHigherBase: BorrowingRateConfig = {
 
 const baseMarketConfig: Partial<BaseMarketConfig> = {
   minCollateralFactor: percentageToFloat("1%"), // 1%
+  minCollateralFactorForLiquidation: percentageToFloat("1%"), // 1%
 
   minCollateralFactorForOpenInterestMultiplier: 0,
 
@@ -378,6 +380,7 @@ const hardhatBaseMarketConfig: Partial<BaseMarketConfig> = {
   openInterestReserveFactor: decimalToFloat(5, 1), // 50%,
 
   minCollateralFactor: percentageToFloat("1%"), // 1%
+  minCollateralFactorForLiquidation: percentageToFloat("1%"), // 1%
   minCollateralFactorForOpenInterestMultiplier: 0,
 
   maxLongTokenPoolAmount: expandDecimals(1_000_000_000, 18),
@@ -421,6 +424,7 @@ const config: {
       negativeSwapImpactFactor: exponentToFloat("3e-8"),
 
       minCollateralFactor: percentageToFloat("1%"), // 1%
+      minCollateralFactorForLiquidation: percentageToFloat("1%"), // 1%
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"), // 2.5e-9
 
@@ -461,6 +465,7 @@ const config: {
       positiveSwapImpactFactor: exponentToFloat("2e-10"), // 0.05% for 2,500,000 USD of imbalance
 
       minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
 
       // minCollateralFactor of 0.005 (0.5%) when open interest is 83,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6e-11"),
@@ -491,6 +496,7 @@ const config: {
       minPositionImpactPoolAmount: expandDecimals(5, 6), // 0.05 BTC
 
       minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
 
       // minCollateralFactor of 0.005 (0.5%) when open interest is 83,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6e-11"),
@@ -520,6 +526,7 @@ const config: {
       minPositionImpactPoolAmount: bigNumberify(0),
 
       minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
 
       // minCollateralFactor of 0.005 (0.5%) when open interest is 83,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6e-11"),
@@ -553,6 +560,7 @@ const config: {
       positiveSwapImpactFactor: exponentToFloat("2e-10"), // 0.05% for 2,500,000 USD of imbalance
 
       minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
 
       // minCollateralFactor of 0.005 (0.5%) when open interest is 83,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6e-11"),
@@ -583,6 +591,7 @@ const config: {
       minPositionImpactPoolAmount: expandDecimals(5, 17), // 0.5 ETH
 
       minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
 
       // minCollateralFactor of 0.005 (0.5%) when open interest is 83,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6e-11"),
@@ -617,6 +626,7 @@ const config: {
       positiveSwapImpactFactor: exponentToFloat("5e-9"),
 
       minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
 
       // minCollateralFactor of 0.005 (0.5%) when open interest is 83,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: decimalToFloat(6, 11),
@@ -653,6 +663,7 @@ const config: {
       positiveSwapImpactFactor: exponentToFloat("2e-8"),
 
       minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
       // minCollateralFactor of 0.005 (0.5%) when open interest is 6,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: decimalToFloat(8, 10),
 
@@ -683,6 +694,7 @@ const config: {
       positiveSwapImpactFactor: exponentToFloat("2.5e-9"),
 
       minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
       // minCollateralFactor of 0.005 (0.5%) when open interest is 2,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
 
@@ -717,6 +729,7 @@ const config: {
       positiveSwapImpactFactor: exponentToFloat("2e-9"),
 
       minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
 
       // minCollateralFactor of 0.005 (0.5%) when open interest is 5,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("1e-9"),
@@ -751,6 +764,7 @@ const config: {
       negativeSwapImpactFactor: exponentToFloat("5e-9"), // 5e-9
 
       minCollateralFactor: percentageToFloat("1%"),
+      minCollateralFactorForLiquidation: percentageToFloat("1%"),
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.8e-9"), // 38e-10
 
@@ -840,6 +854,7 @@ const config: {
       negativeSwapImpactFactor: exponentToFloat("2e-10"),
 
       minCollateralFactor: percentageToFloat("0.833%"), // max leverage 120x
+      minCollateralFactorForLiquidation: percentageToFloat("0.833%"),
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.5e-9"),
 
       maxOpenInterest: decimalToFloat(2_000_000),
@@ -921,6 +936,7 @@ const config: {
       positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
 
       minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
       // minCollateralFactor of 0.005 (0.5%) when open interest is 25,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2e-10"),
 
@@ -949,6 +965,7 @@ const config: {
       negativeSwapImpactFactor: exponentToFloat("2.5e-9"), // 2.5e-9
 
       minCollateralFactor: percentageToFloat("1%"), // 1%
+      minCollateralFactorForLiquidation: percentageToFloat("1%"),
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"), // 2.5e-9
 
@@ -979,6 +996,7 @@ const config: {
       negativeSwapImpactFactor: exponentToFloat("2.5e-9"), // 2.5e-9
 
       minCollateralFactor: percentageToFloat("1%"), // 1%
+      minCollateralFactorForLiquidation: percentageToFloat("1%"),
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"), // 2.5e-9
 
@@ -1013,6 +1031,7 @@ const config: {
       positiveSwapImpactFactor: exponentToFloat("2.5e-9"),
 
       minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
       // minCollateralFactor of 0.005 (0.5%) when open interest is 1,500,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.5e-9"),
 
@@ -1047,6 +1066,7 @@ const config: {
       positiveSwapImpactFactor: exponentToFloat("1.5e-8"), // 0.05% for 33,333 USD of imbalance
 
       minCollateralFactor: percentageToFloat("0.833%"), // 120x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("0.833%"), // 120x leverage
       // minCollateralFactor of 0.00833 (0.833%) when open interest is 2,400,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.5e-9"),
 
@@ -1083,6 +1103,7 @@ const config: {
       positiveSwapImpactFactor: exponentToFloat("3e-9"),
 
       minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
       // minCollateralFactor of 0.005 (0.5%) when open interest is 8,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: decimalToFloat(64, 11),
 
@@ -1113,6 +1134,7 @@ const config: {
       positiveSwapImpactFactor: exponentToFloat("2.5e-9"),
 
       minCollateralFactor: percentageToFloat("0.667%"), // 150x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("0.667%"), // 150x leverage
       // minCollateralFactor of 0.00667 (0.667%) when open interest is 13,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("5e-10"),
 
@@ -1177,6 +1199,7 @@ const config: {
       positiveSwapImpactFactor: exponentToFloat("1.5e-8"),
 
       minCollateralFactor: percentageToFloat("0.833%"), // 120x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("0.833%"), // 120x leverage
       // minCollateralFactor of 0.00833 (0.833%) when open interest is 3,300,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
 
@@ -1210,6 +1233,7 @@ const config: {
       positiveSwapImpactFactor: exponentToFloat("2.5e-9"),
 
       minCollateralFactor: percentageToFloat("0.833%"), // 120x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("0.833%"),
       // minCollateralFactor of 0.00833 (0.833%) when open interest is 1,700,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("5e-9"),
 
@@ -1303,6 +1327,7 @@ const config: {
       borrowingFactor: exponentToFloat("1.6e-8"), // 1.60E-08, ~50% if 100% utilized
 
       minCollateralFactor: percentageToFloat("1%"), // 1%
+      minCollateralFactorForLiquidation: percentageToFloat("1%"), // 200x leverage
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"), // 2.5e-9
 
@@ -1369,6 +1394,7 @@ const config: {
       maxPositionImpactFactorForLiquidations: bigNumberify(0), // 0%
 
       minCollateralFactor: percentageToFloat("1%"), // 100x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("1%"), // 200x leverage
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
 
       maxOpenInterest: decimalToFloat(750_000),

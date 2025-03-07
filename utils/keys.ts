@@ -464,6 +464,10 @@ export function minCollateralFactorKey(market: string) {
   return hashData(["bytes32", "address"], [MIN_COLLATERAL_FACTOR, market]);
 }
 
+export function minCollateralFactorForLiquidationKey(market: string) {
+  return hashData(["bytes32", "address"], [MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION, market]);
+}
+
 export function minCollateralFactorForOpenInterestMultiplierKey(market: string, isLong: boolean) {
   return hashData(["bytes32", "address", "bool"], [MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER, market, isLong]);
 }

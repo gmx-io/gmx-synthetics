@@ -761,7 +761,7 @@ describe("Guardian.Liquidation", () => {
 
     // Set a higher min collateral factor for liquidation (10%) compared to regular min collateral factor (1%)
     await dataStore.setUint(keys.minCollateralFactorKey(ethUsdMarket.marketToken), decimalToFloat(1, 2)); // 1%
-    await dataStore.setUint(keys.MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION, decimalToFloat(10, 2)); // 10%
+    await dataStore.setUint(keys.minCollateralFactorForLiquidationKey(ethUsdMarket.marketToken), decimalToFloat(10, 2)); // 10%
 
     const params = {
       account: user1,
