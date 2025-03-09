@@ -545,6 +545,9 @@ describe("Config", () => {
 
     await config.setUint(keys.RESERVE_FACTOR, encodeData(["address", "bool"], [ethUsdMarket.marketToken, false]), ten);
 
+    const reserveFactorKey = keys.reserveFactorKey(ethUsdMarket.marketToken, false);
+    expect(await dataStore.getUint(reserveFactorKey)).eq(ten);
+
     await expect(
       config.setUint(
         keys.OPEN_INTEREST_RESERVE_FACTOR,
@@ -558,5 +561,7 @@ describe("Config", () => {
       encodeData(["address", "bool"], [ethUsdMarket.marketToken, false]),
       ten
     );
+    const oiReserveFactorKey = keys.openInterestReserveFactorKey(ethUsdMarket.marketToken, false);
+    expect(await dataStore.getUint(oiReserveFactorKey)).eq(ten);
   });
 });

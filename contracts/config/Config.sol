@@ -730,15 +730,5 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
                 revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
             }
         }
-
-        if (
-            baseKey == Keys.RESERVE_FACTOR ||
-            baseKey == Keys.OPEN_INTEREST_RESERVE_FACTOR
-        ) {
-            // revert if value > 10
-            if (value > 10 * Precision.FLOAT_PRECISION) {
-                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
-            }
-        }
     }
 }
