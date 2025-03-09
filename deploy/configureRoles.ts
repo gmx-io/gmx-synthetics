@@ -20,9 +20,9 @@ const rolesToRemove = {
 };
 
 const func = async ({ gmx, network }) => {
-  const rolesConfig = await gmx.getRoles().roles;
-  for (const role in rolesConfig) {
-    const accounts = rolesConfig[role];
+  const { roles } = await gmx.getRoles();
+  for (const role in roles) {
+    const accounts = roles[role];
     for (const account in accounts) {
       await grantRoleIfNotGranted(account, role);
     }
