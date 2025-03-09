@@ -1,3 +1,4 @@
+import axios from "axios";
 import hre from "hardhat";
 import Role from "../artifacts/contracts/role/Role.sol/Role.json";
 import { hashString } from "../utils/hash";
@@ -40,9 +41,6 @@ function getValues(): { referralStorageAddress?: string; dataStreamVerifierAddre
 export async function validateRoles() {
   const roles = Role.abi.map((i) => i.name) as string[];
   const deployments = await hre.deployments.all();
-  const deploymentByAddress = Object.fromEntries(
-    Object.values(deployments).map((deployment) => [deployment.address, deployment])
-  );
   const contractNameByAddress = Object.fromEntries(
     Object.entries(deployments).map(([contractName, deployment]) => [deployment.address, contractName])
   );
@@ -122,17 +120,25 @@ export async function validateRoles() {
     }
 
     for (const member in expectedRoles[role]) {
-      const deployment = deploymentByAddress[ethers.utils.getAddress(member)];
-
-      if (deployment) {
-        const contractName = contractNameByAddress[ethers.utils.getAddress(member)];
-        const ok = requiredRolesForContracts[role]?.some((c) => c.toLowerCase() === contractName.toLowerCase());
-        if (!ok) {
-          errors.push(`contract ${contractName} ${member} does not require role ${role} but it is configured`);
-        }
-      }
-
       if (!memberIsInStore[member.toLowerCase()]) {
+        const contractName = contractNameByAddress[ethers.utils.getAddress(member)];
+        if (!contractName) {
+          const code = await hre.ethers.provider.getCode(member);
+          if (code !== "0x") {
+            const contractName = await getContractNameFromEtherscan(member);
+            if (!contractName) {
+              errors.push(`contract ${member} with role ${role} source code is not verified`);
+            }
+          }
+        }
+
+        if (contractName) {
+          const ok = requiredRolesForContracts[role]?.some((c) => c.toLowerCase() === contractName.toLowerCase());
+          if (!ok) {
+            errors.push(`contract ${contractName} ${member} should not have role ${role}`);
+          }
+        }
+
         rolesToAdd.push({
           role,
           member,
@@ -207,5 +213,23 @@ async function validateIsReferralStorageHandler() {
         referralStorageAddress
       );
     }
+  }
+}
+
+async function getContractNameFromEtherscan(contractAddress: string): Promise<any> {
+  const apiKey = hre.network.verify.etherscan.apiKey;
+  const baseUrl = hre.network.verify.etherscan.apiUrl + "api";
+  try {
+    const url =
+      baseUrl + "?module=contract" + "&action=getsourcecode" + `&address=${contractAddress}` + `&apikey=${apiKey}`;
+    const response = await axios.get(url);
+    const sources: string = response.data.result[0].SourceCode;
+    if (sources === "") {
+      //Source code not verified
+      return;
+    }
+    return response.data.result[0].ContractName;
+  } catch (error) {
+    console.error("Error:", error);
   }
 }
