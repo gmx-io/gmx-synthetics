@@ -20,7 +20,7 @@ const rolesToRemove = {
 };
 
 const func = async ({ gmx, network }) => {
-  const rolesConfig = await gmx.getRoles();
+  const rolesConfig = await gmx.getRoles().roles;
   for (const role in rolesConfig) {
     const accounts = rolesConfig[role];
     for (const account in accounts) {

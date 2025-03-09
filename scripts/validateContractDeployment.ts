@@ -66,40 +66,6 @@ interface ContractInfo {
   signalledRoles: string[];
 }
 
-const expectedRoles = {
-  CONFIG_KEEPER: ["ConfigSyncer"],
-  ROLE_ADMIN: ["Timelock"],
-  ROUTER_PLUGIN: [
-    "ExchangeRouter",
-    "SubaccountRouter",
-    "GlvRouter",
-    "GelatoRelayRouter",
-    "SubaccountGelatoRelayRouter",
-  ],
-  CONTROLLER: [
-    "OracleStore",
-    "MarketFactory",
-    "GlvFactory",
-    "Config",
-    "ConfigSyncer",
-    "Timelock",
-    "Oracle",
-    "SwapHandler",
-    "AdlHandler",
-    "DepositHandler",
-    "WithdrawalHandler",
-    "OrderHandler",
-    "ExchangeRouter",
-    "LiquidationHandler",
-    "SubaccountRouter",
-    "ShiftHandler",
-    "GlvHandler",
-    "GlvRouter",
-    "GelatoRelayRouter",
-    "SubaccountGelatoRelayRouter",
-  ],
-};
-
 async function extractRolesFromTx(txReceipt: TransactionReceipt): Promise<ContractInfo[]> {
   const contractInfos = new Map<string, ContractInfo>();
   const EventEmitter = await ethers.getContractFactory("EventEmitter");
@@ -126,8 +92,9 @@ async function extractRolesFromTx(txReceipt: TransactionReceipt): Promise<Contra
 }
 
 async function validateRoles(contractInfo: ContractInfo) {
+  const { requiredRolesForContracts } = await hre.gmx.getRoles();
   for (const signalledRole of contractInfo.signalledRoles) {
-    if (!(await checkRole(contractInfo.name, contractInfo.address, signalledRole))) {
+    if (!(await checkRole(contractInfo.name, contractInfo.address, signalledRole, requiredRolesForContracts))) {
       throw new Error(`Role ${signalledRole} is not approved for ${contractInfo.name}!`);
     }
   }
@@ -148,11 +115,16 @@ function encodeRole(roleKey: string): string {
   return ethers.utils.keccak256(encoded);
 }
 
-async function checkRole(contractName: string, contractAddress: string, signalledRole: string): Promise<boolean> {
+async function checkRole(
+  contractName: string,
+  contractAddress: string,
+  signalledRole: string,
+  requiredRolesForContracts: Record<string, string[]>
+): Promise<boolean> {
   const rolesConfig = await roles(hre);
   for (const [role, addresses] of Object.entries(rolesConfig)) {
     if (addresses[contractAddress]) {
-      if (encodeRole(role) === signalledRole && expectedRoles[role].includes(contractName)) {
+      if (encodeRole(role) === signalledRole && requiredRolesForContracts[role].includes(contractName)) {
         return true;
       }
     }
