@@ -1,5 +1,6 @@
 import hre from "hardhat";
 import { BigNumber } from "ethers";
+import { signalHoldingAddressIfDifferent } from "./timelock";
 
 export async function setUintIfDifferent(key: string, value: BigNumber | string | number, label?: string) {
   await setIfDifferent("uint", key, value, {
@@ -58,4 +59,10 @@ async function setIfDifferent(
   } else {
     log("skipping %s %s (%s) as it is already set to %s", type, label, key, value.toString());
   }
+}
+
+export async function signalHoldingAddress(address: string) {
+  const { getNamedAccounts } = hre;
+  const { deployer } = await getNamedAccounts();
+  await signalHoldingAddressIfDifferent(deployer, address);
 }

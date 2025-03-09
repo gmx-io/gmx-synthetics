@@ -4,6 +4,7 @@ import { signExternally } from "./signer";
 import { hashString } from "./hash";
 import { TimelockConfig } from "../typechain-types";
 import * as keys from "./keys";
+import { time } from "@nomicfoundation/hardhat-network-helpers";
 
 export async function timelockWriteMulticall({ timelock, multicallWriteParams }) {
   console.info("multicallWriteParams", multicallWriteParams);
@@ -142,4 +143,29 @@ export async function setAtomicOracleProviderPayload(providerAddress: string, va
       value,
     ]),
   };
+}
+
+export async function signalHoldingAddressIfDifferent(executor: any, holdingAddress: string) {
+  const dataStore = await hre.ethers.getContract("DataStore");
+  const existing = await dataStore.getAddress(keys.HOLDING_ADDRESS);
+  if (existing.toLowerCase() == holdingAddress.toLowerCase()) {
+    return;
+  }
+  const timelockConfig = await hre.ethers.getContract("TimelockConfig");
+  await timelockConfig.connect(executor).signalSetHoldingAddress(holdingAddress);
+  return {
+    target: dataStore.address,
+    payload: dataStore.interface.encodeFunctionData("setAddress", [keys.HOLDING_ADDRESS, holdingAddress]),
+  };
+}
+
+export async function executeTimelock(executor: any, target: string, payload: any) {
+  const timelockConfig = await hre.ethers.getContract("TimelockConfig");
+  await timelockConfig.connect(executor).execute(target, payload);
+}
+
+export async function setHoldingAddressForTimelockTest(executor: any, holdingAddress: string) {
+  const { target, payload } = await signalHoldingAddressIfDifferent(executor, holdingAddress);
+  await time.increase(1 * 24 * 60 * 60 + 10);
+  await executeTimelock(executor, target, payload);
 }

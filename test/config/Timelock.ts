@@ -15,6 +15,8 @@ import {
   setOracleProviderEnabledPayload,
   setOracleProviderForTokenPayload,
   setAtomicOracleProviderPayload,
+  signalHoldingAddressIfDifferent,
+  executeTimelock,
 } from "../../utils/timelock";
 
 describe("Timelock", () => {
@@ -138,8 +140,7 @@ describe("Timelock", () => {
 
     await timelockConfig.connect(timelockAdmin).signalSetFeeReceiver(user3.address);
 
-    const feeReceiverKey = hashString("FEE_RECEIVER");
-    const payload = dataStore.interface.encodeFunctionData("setAddress", [feeReceiverKey, user3.address]);
+    const payload = dataStore.interface.encodeFunctionData("setAddress", [keys.FEE_RECEIVER, user3.address]);
     await expect(timelockConfig.connect(user2).execute(dataStore.address, payload))
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
       .withArgs(user2.address, "TIMELOCK_ADMIN");
@@ -155,6 +156,29 @@ describe("Timelock", () => {
     await timelockConfig.connect(timelockAdmin).execute(dataStore.address, payload);
 
     expect(await dataStore.getAddress(keys.FEE_RECEIVER)).eq(user3.address);
+  });
+
+  it("setHoldingAddress", async () => {
+    await expect(timelockConfig.connect(user2).signalSetHoldingAddress(user3.address))
+      .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
+      .withArgs(user2.address, "TIMELOCK_ADMIN");
+
+    const { target, payload } = await signalHoldingAddressIfDifferent(timelockAdmin, user3.address);
+    await expect(executeTimelock(user2, target, payload))
+      .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
+      .withArgs(user2.address, "TIMELOCK_ADMIN");
+
+    await expect(executeTimelock(timelockAdmin, target, payload)).to.be.revertedWith(
+      "TimelockController: operation is not ready"
+    );
+
+    await time.increase(1 * 24 * 60 * 60 + 10);
+
+    expect(await dataStore.getAddress(keys.HOLDING_ADDRESS)).eq(ethers.constants.AddressZero);
+
+    await executeTimelock(timelockAdmin, target, payload);
+
+    expect(await dataStore.getAddress(keys.HOLDING_ADDRESS)).eq(user3.address);
   });
 
   it("grantRole", async () => {
