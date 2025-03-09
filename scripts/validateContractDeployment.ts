@@ -5,7 +5,6 @@ import * as path from "path";
 import dotenv from "dotenv";
 import * as readline from "node:readline";
 import { Result } from "@ethersproject/abi";
-import roles from "../config/roles";
 import { JsonRpcProvider, TransactionReceipt } from "@ethersproject/providers";
 import axios from "axios";
 
@@ -121,8 +120,8 @@ async function checkRole(
   signalledRole: string,
   requiredRolesForContracts: Record<string, string[]>
 ): Promise<boolean> {
-  const rolesConfig = await roles(hre);
-  for (const [role, addresses] of Object.entries(rolesConfig)) {
+  const rolesConfig = await hre.gmx.getRoles();
+  for (const [role, addresses] of Object.entries(rolesConfig.roles)) {
     if (addresses[contractAddress]) {
       if (encodeRole(role) === signalledRole && requiredRolesForContracts[role].includes(contractName)) {
         return true;
