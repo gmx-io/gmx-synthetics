@@ -531,4 +531,32 @@ describe("Config", () => {
       )
     ).eq(expandDecimals(1, 30));
   });
+
+  it("validates reserve factors", async () => {
+    const ten = expandDecimals(10, 30);
+
+    await expect(
+      config.setUint(
+        keys.RESERVE_FACTOR,
+        encodeData(["address", "bool"], [ethUsdMarket.marketToken, false]),
+        ten.add("1")
+      )
+    ).to.be.revertedWithCustomError(errorsContract, "ConfigValueExceedsAllowedRange");
+
+    await config.setUint(keys.RESERVE_FACTOR, encodeData(["address", "bool"], [ethUsdMarket.marketToken, false]), ten);
+
+    await expect(
+      config.setUint(
+        keys.OPEN_INTEREST_RESERVE_FACTOR,
+        encodeData(["address", "bool"], [ethUsdMarket.marketToken, false]),
+        ten.add("1")
+      )
+    ).to.be.revertedWithCustomError(errorsContract, "ConfigValueExceedsAllowedRange");
+
+    await config.setUint(
+      keys.OPEN_INTEREST_RESERVE_FACTOR,
+      encodeData(["address", "bool"], [ethUsdMarket.marketToken, false]),
+      ten
+    );
+  });
 });
