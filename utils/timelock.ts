@@ -52,6 +52,11 @@ export async function cancelActionById(timelock: TimelockConfig, id: string) {
   await timelock.cancelAction(id);
 }
 
+export async function executeTimelock(executor: any, target: string, payload: any) {
+  const timelockConfig = await hre.ethers.getContract("TimelockConfig");
+  await timelockConfig.connect(executor).execute(target, payload);
+}
+
 export async function setPriceFeedPayload(
   token: string,
   priceFeedAddress: string,
@@ -157,11 +162,6 @@ export async function signalHoldingAddressIfDifferent(executor: any, holdingAddr
     target: dataStore.address,
     payload: dataStore.interface.encodeFunctionData("setAddress", [keys.HOLDING_ADDRESS, holdingAddress]),
   };
-}
-
-export async function executeTimelock(executor: any, target: string, payload: any) {
-  const timelockConfig = await hre.ethers.getContract("TimelockConfig");
-  await timelockConfig.connect(executor).execute(target, payload);
 }
 
 export async function setHoldingAddressForTimelockTest(executor: any, holdingAddress: string) {

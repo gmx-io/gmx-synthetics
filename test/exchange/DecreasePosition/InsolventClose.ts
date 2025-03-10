@@ -356,7 +356,7 @@ describe("Exchange.DecreasePosition.InsolventClose", () => {
       },
     });
 
-    await setHoldingAddressForTimelockTest(user0, user2.address);
+    await dataStore.setAddress(keys.HOLDING_ADDRESS, user2.address);
 
     await scenes.decreasePosition.long.positivePnl(fixture, {
       create: {
