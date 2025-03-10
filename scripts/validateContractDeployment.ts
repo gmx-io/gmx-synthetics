@@ -5,7 +5,6 @@ import * as path from "path";
 import dotenv from "dotenv";
 import * as readline from "node:readline";
 import { Result } from "@ethersproject/abi";
-import roles from "../config/roles";
 import { JsonRpcProvider, TransactionReceipt } from "@ethersproject/providers";
 import axios from "axios";
 
@@ -126,8 +125,9 @@ async function extractRolesFromTx(txReceipt: TransactionReceipt): Promise<Contra
 }
 
 async function validateRoles(contractInfo: ContractInfo) {
+  const { requiredRolesForContracts } = await hre.gmx.getRoles();
   for (const signalledRole of contractInfo.signalledRoles) {
-    if (!(await checkRole(contractInfo.name, contractInfo.address, signalledRole))) {
+    if (!(await checkRole(contractInfo.name, contractInfo.address, signalledRole, requiredRolesForContracts))) {
       throw new Error(`Role ${signalledRole} is not approved for ${contractInfo.name}!`);
     }
   }
@@ -148,11 +148,16 @@ function encodeRole(roleKey: string): string {
   return ethers.utils.keccak256(encoded);
 }
 
-async function checkRole(contractName: string, contractAddress: string, signalledRole: string): Promise<boolean> {
-  const rolesConfig = await roles(hre);
-  for (const [role, addresses] of Object.entries(rolesConfig)) {
+async function checkRole(
+  contractName: string,
+  contractAddress: string,
+  signalledRole: string,
+  requiredRolesForContracts: Record<string, string[]>
+): Promise<boolean> {
+  const rolesConfig = await hre.gmx.getRoles();
+  for (const [role, addresses] of Object.entries(rolesConfig.roles)) {
     if (addresses[contractAddress]) {
-      if (encodeRole(role) === signalledRole && expectedRoles[role].includes(contractName)) {
+      if (encodeRole(role) === signalledRole && requiredRolesForContracts[role].includes(contractName)) {
         return true;
       }
     }
