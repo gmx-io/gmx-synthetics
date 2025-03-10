@@ -244,6 +244,16 @@ const processMarkets = async ({
       );
     }
 
+    if (marketConfig.atomicWithdrawalFeeFactor) {
+      await handleConfig(
+        "uint",
+        keys.ATOMIC_WITHDRAWAL_FEE_FACTOR,
+        encodeData(["address"], [marketToken]),
+        marketConfig.atomicWithdrawalFeeFactor,
+        `atomicWithdrawalFeeFactor ${marketToken}`
+      );
+    }
+
     if (marketConfig.positiveSwapImpactFactor) {
       await handleConfig(
         "uint",

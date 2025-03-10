@@ -6,8 +6,9 @@ interface ISwapPricingUtils {
     enum SwapPricingType {
         Swap,
         Shift,
-        Atomic,
+        AtomicWithdrawal,
         Deposit,
-        Withdrawal
+        Withdrawal,
+        AtomicSwap
     }
 }
