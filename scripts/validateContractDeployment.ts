@@ -5,18 +5,17 @@ import * as path from "path";
 import dotenv from "dotenv";
 import * as readline from "node:readline";
 import { Result } from "@ethersproject/abi";
-import roles from "../config/roles";
 import { JsonRpcProvider, TransactionReceipt } from "@ethersproject/providers";
 import axios from "axios";
 
 dotenv.config();
 
-const AUDITED_COMMIT = process.env.AUDITED_COMMIT as string;
+const COMMIT_HASH = process.env.COMMIT_HASH as string;
 const TRANSACTION_HASH = process.env.TRANSACTION_HASH as string;
 
 async function main() {
-  if (!AUDITED_COMMIT || !TRANSACTION_HASH) {
-    console.error("Error: Missing AUDITED_COMMIT or TRANSACTION_HASH in environment variables.");
+  if (!COMMIT_HASH || !TRANSACTION_HASH) {
+    console.error("Error: Missing COMMIT_HASH or TRANSACTION_HASH in environment variables.");
     process.exit(1);
   }
 
@@ -27,8 +26,8 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`Checking deployment against commit: ${AUDITED_COMMIT}`);
-  execSync(`git checkout ${AUDITED_COMMIT}`, { stdio: "inherit" });
+  console.log(`Checking deployment against commit: ${COMMIT_HASH}`);
+  execSync(`git checkout ${COMMIT_HASH}`, { stdio: "inherit" });
 
   try {
     const contractInfos = await extractRolesFromTx(tx);
@@ -66,40 +65,6 @@ interface ContractInfo {
   signalledRoles: string[];
 }
 
-const expectedRoles = {
-  CONFIG_KEEPER: ["ConfigSyncer"],
-  ROLE_ADMIN: ["Timelock"],
-  ROUTER_PLUGIN: [
-    "ExchangeRouter",
-    "SubaccountRouter",
-    "GlvRouter",
-    "GelatoRelayRouter",
-    "SubaccountGelatoRelayRouter",
-  ],
-  CONTROLLER: [
-    "OracleStore",
-    "MarketFactory",
-    "GlvFactory",
-    "Config",
-    "ConfigSyncer",
-    "Timelock",
-    "Oracle",
-    "SwapHandler",
-    "AdlHandler",
-    "DepositHandler",
-    "WithdrawalHandler",
-    "OrderHandler",
-    "ExchangeRouter",
-    "LiquidationHandler",
-    "SubaccountRouter",
-    "ShiftHandler",
-    "GlvHandler",
-    "GlvRouter",
-    "GelatoRelayRouter",
-    "SubaccountGelatoRelayRouter",
-  ],
-};
-
 async function extractRolesFromTx(txReceipt: TransactionReceipt): Promise<ContractInfo[]> {
   const contractInfos = new Map<string, ContractInfo>();
   const EventEmitter = await ethers.getContractFactory("EventEmitter");
@@ -126,8 +91,9 @@ async function extractRolesFromTx(txReceipt: TransactionReceipt): Promise<Contra
 }
 
 async function validateRoles(contractInfo: ContractInfo) {
+  const { requiredRolesForContracts } = await hre.gmx.getRoles();
   for (const signalledRole of contractInfo.signalledRoles) {
-    if (!(await checkRole(contractInfo.name, contractInfo.address, signalledRole))) {
+    if (!(await checkRole(contractInfo.name, contractInfo.address, signalledRole, requiredRolesForContracts))) {
       throw new Error(`Role ${signalledRole} is not approved for ${contractInfo.name}!`);
     }
   }
@@ -148,11 +114,16 @@ function encodeRole(roleKey: string): string {
   return ethers.utils.keccak256(encoded);
 }
 
-async function checkRole(contractName: string, contractAddress: string, signalledRole: string): Promise<boolean> {
-  const rolesConfig = await roles(hre);
-  for (const [role, addresses] of Object.entries(rolesConfig)) {
+async function checkRole(
+  contractName: string,
+  contractAddress: string,
+  signalledRole: string,
+  requiredRolesForContracts: Record<string, string[]>
+): Promise<boolean> {
+  const rolesConfig = await hre.gmx.getRoles();
+  for (const [role, addresses] of Object.entries(rolesConfig.roles)) {
     if (addresses[contractAddress]) {
-      if (encodeRole(role) === signalledRole && expectedRoles[role].includes(contractName)) {
+      if (encodeRole(role) === signalledRole && requiredRolesForContracts[role].includes(contractName)) {
         return true;
       }
     }
@@ -212,7 +183,7 @@ async function validateSourceFile(fullContractName: string, sourceCode: string):
 }
 
 async function showDiff(localPath: string, sourceCode: string) {
-  const tempFilePath = path.join(__dirname, "temp_file.txt");
+  const tempFilePath = path.join(__dirname, "../out", "temp_file.txt");
   fs.writeFileSync(tempFilePath, sourceCode, "utf-8");
 
   try {

@@ -1,10 +1,52 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 export type RolesConfig = {
-  [role: string]: {
-    [account: string]: boolean;
+  roles: {
+    [role: string]: {
+      [account: string]: boolean;
+    };
   };
-}[];
+  requiredRolesForContracts: {
+    [role: string]: string[];
+  };
+};
+
+const requiredRolesForContracts = {
+  CONTROLLER: [
+    "Config",
+    "MarketFactory",
+    "GlvFactory",
+    "Timelock",
+    "OracleStore",
+    "Oracle",
+    "ConfigSyncer",
+
+    "ExchangeRouter",
+    "SubaccountRouter",
+    "GlvRouter",
+    "GelatoRelayRouter",
+    "SubaccountGelatoRelayRouter",
+
+    "OrderHandler",
+    "DepositHandler",
+    "WithdrawalHandler",
+    "AdlHandler",
+    "LiquidationHandler",
+    "ShiftHandler",
+    "GlvHandler",
+    "FeeHandler",
+    "SwapHandler",
+  ],
+  ROUTER_PLUGIN: [
+    "ExchangeRouter",
+    "SubaccountRouter",
+    "GlvRouter",
+    "GelatoRelayRouter",
+    "SubaccountGelatoRelayRouter",
+  ],
+  ROLE_ADMIN: ["Timelock"],
+  CONFIG_KEEPER: ["ConfigSyncer"],
+};
 
 // roles are granted in deploy/configureRoles.ts
 // to add / remove roles after deployment, scripts/updateRoles.ts can be used
@@ -73,8 +115,12 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
     },
   };
 
-  const config: {
-    [network: string]: RolesConfig;
+  const roles: {
+    [network: string]: {
+      [role: string]: {
+        [account: string]: boolean;
+      };
+    };
   } = {
     hardhat: {
       CONTROLLER: { [deployer]: true },
@@ -165,6 +211,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x8D5Ba31b20725c10B9FB60B8A3e5C9BC6aA7c74c": true, // SubaccountRouter_5
         "0x98723BD186581C461e8F77D8B17E7Fac2D141a48": true, // GelatoRelayRouter
         "0x2FB22eab0f84557dac6fc9D800CAe11602662F78": true, // SubaccountGelatoRelayRouter
+        "0xa1e8ee77a44616924cc235d1f8e0175c85e3f37d": true, // Config_5
       },
       GOV_TOKEN_CONTROLLER: {
         "0x5E4766F932ce00aA4a1A82d3Da85adf15C5694A1": true, // RewardRouterV2_2
@@ -280,5 +327,8 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
     },
   };
 
-  return config[hre.network.name];
+  return {
+    roles: roles[hre.network.name],
+    requiredRolesForContracts,
+  };
 }
