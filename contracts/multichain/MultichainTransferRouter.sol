@@ -18,37 +18,14 @@ contract MultichainTransferRouter is MultichainRouter {
 
     /**
      * payable function so that it can be called as a multicall
-     * if a user is liquidated or ADLed, the funds would be sent to the user's account on Arbitrum
-     * this would be used to move those funds into their multichain balance
+     * this would be used to move user's funds from their Arbitrum account into their multichain balance
      */
     function bridgeIn(
-        RelayUtils.RelayParams calldata relayParams,
         address account,
-        uint256 srcChainId,
-        RelayUtils.BridgeInParams calldata params
-    ) external payable nonReentrant onlyGelatoRelay {
-        _validateDesChainId(relayParams.desChainId);
-        _validateGaslessFeature();
-
-        bytes32 structHash = RelayUtils.getBridgeInStructHash(relayParams, params);
-        _validateCall(relayParams, account, structHash, srcChainId);
-
-        MultichainUtils.recordTransferIn(dataStore, eventEmitter, multichainVault, params.token, account, srcChainId);
-        
-        // orderVault is used to transfer funds into it and do a swap from feeToken to wnt when using the feeSwapPath
-        Contracts memory contracts = Contracts({
-            dataStore: dataStore,
-            eventEmitter: eventEmitter,
-            bank: orderVault
-        });
-        _handleRelay(
-            contracts,
-            relayParams,
-            account,
-            srcChainId == 0 ? account : address(multichainVault), // residualFeeReceiver
-            false, // isSubaccount
-            srcChainId
-        );
+        address token,
+        uint256 srcChainId
+    ) external payable nonReentrant {
+        MultichainUtils.recordTransferIn(dataStore, eventEmitter, multichainVault, token, account, srcChainId);
     }
 
     function bridgeOut(
