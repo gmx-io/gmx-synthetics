@@ -195,17 +195,26 @@ async function getContractName(
   if (_cache[contractAddress]) {
     return _cache[contractAddress];
   }
+
   let contractName = contractNameByAddress[ethers.utils.getAddress(contractAddress)];
   let isContract = true;
+  let shouldCache = true;
+
   if (!contractName) {
     const code = await hre.ethers.provider.getCode(contractAddress);
     if (code !== "0x") {
-      contractName = await getContractNameFromEtherscan(contractAddress);
+      let isVerified: boolean;
+      ({ contractName, isVerified } = await getContractNameFromEtherscan(contractAddress));
+      shouldCache = isVerified;
     } else {
       isContract = false;
     }
   }
-  _cache[contractAddress] = { isContract, contractName };
+
+  if (shouldCache) {
+    // should not cache data for unverified contracts
+    _cache[contractAddress] = { isContract, contractName };
+  }
   return { isContract, contractName };
 }
 
@@ -263,7 +272,9 @@ async function validateIsReferralStorageHandler() {
   }
 }
 
-async function getContractNameFromEtherscan(contractAddress: string): Promise<string> {
+async function getContractNameFromEtherscan(
+  contractAddress: string
+): Promise<{ contractName: string; isVerified: true } | { contractName?: string; isVerified: false }> {
   const apiKey = hre.network.verify.etherscan.apiKey;
   const baseUrl = hre.network.verify.etherscan.apiUrl + "api";
   try {
@@ -273,9 +284,9 @@ async function getContractNameFromEtherscan(contractAddress: string): Promise<st
     const sources: string = response.data.result[0].SourceCode;
     if (sources === "") {
       //Source code not verified
-      return;
+      return { isVerified: false };
     }
-    return response.data.result[0].ContractName;
+    return { contractName: response.data.result[0].ContractName, isVerified: true };
   } catch (error) {
     console.error("Error:", error);
   }
