@@ -345,8 +345,6 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
     // @dev initialize the allowed base keys
     function _initAllowedBaseKeys() internal {
-        allowedBaseKeys[Keys.HOLDING_ADDRESS] = true;
-
         allowedBaseKeys[Keys.MIN_HANDLE_EXECUTION_ERROR_GAS] = true;
         allowedBaseKeys[Keys.MIN_HANDLE_EXECUTION_ERROR_GAS_TO_FORWARD] = true;
         allowedBaseKeys[Keys.MIN_ADDITIONAL_GAS_FOR_EXECUTION] = true;

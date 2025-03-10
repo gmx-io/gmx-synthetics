@@ -198,6 +198,26 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         );
     }
 
+    // @dev signal setting of the holding address
+    // @param account of the new holding address
+    function signalSetHoldingAddress(address account) external onlyTimelockAdmin {
+        if (account == address(0)) {
+            revert Errors.InvalidHoldingAddress(account);
+        }
+
+        bytes memory payload = abi.encodeWithSignature("setAddress(bytes32,address)",
+            Keys.HOLDING_ADDRESS, account);
+        timelockController.schedule(dataStore, 0, payload, 0, 0, timelockController.getMinDelay());
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "account", account);
+        eventEmitter.emitEventLog(
+            "SignalSetHoldingAddress",
+            eventData
+        );
+    }
+
     // @dev signal setting of a price feed
     // @param token the token to set the price feed for
     // @param priceFeed the address of the price feed

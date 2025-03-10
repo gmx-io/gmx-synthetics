@@ -100,6 +100,7 @@ export const EXCLUDED_CONFIG_KEYS = {
   SYNC_CONFIG_LATEST_UPDATE_ID: true,
   BUYBACK_AVAILABLE_FEE_AMOUNT: true,
   WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT: true,
+  HOLDING_ADDRESS: true,
 };
 
 export async function appendUintConfigIfDifferent(

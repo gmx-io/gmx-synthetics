@@ -53,7 +53,8 @@ library Errors {
     error InvalidTimelockDelay(uint256 timelockDelay);
     error MaxTimelockDelayExceeded(uint256 timelockDelay);
     error InvalidFeeReceiver(address receiver);
-    error InvalidOracleSigner(address receiver);
+    error InvalidOracleSigner(address signer);
+    error InvalidHoldingAddress(address account);
 
     // GlvDepositStoreUtils errors
     error GlvDepositNotFound(bytes32 key);
