@@ -72,6 +72,7 @@ export type BaseMarketConfig = {
   swapFeeFactorForPositiveImpact: BigNumberish;
   swapFeeFactorForNegativeImpact: BigNumberish;
   atomicSwapFeeFactor: BigNumberish;
+  atomicWithdrawalFeeFactor: BigNumberish;
 
   negativeSwapImpactFactor: BigNumberish;
   positiveSwapImpactFactor: BigNumberish;
@@ -278,6 +279,7 @@ const baseMarketConfig: Partial<BaseMarketConfig> = {
   swapFeeFactorForPositiveImpact: percentageToFloat("0.05%"),
   swapFeeFactorForNegativeImpact: percentageToFloat("0.07%"),
   atomicSwapFeeFactor: percentageToFloat("0.5%"),
+  atomicWithdrawalFeeFactor: percentageToFloat("0.5%"),
 
   negativeSwapImpactFactor: percentageToFloat("0.001%"),
   positiveSwapImpactFactor: percentageToFloat("0.0005%"),
