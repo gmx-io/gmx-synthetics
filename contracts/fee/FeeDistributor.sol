@@ -12,7 +12,7 @@ import "../v1/IRewardDistributorV1.sol";
 import "../v1/IVesterV1.sol";
 import "../v1/IMintable.sol";
 
-contract FeeDistributor is ReentrancyGuard, RoleModule {
+contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
     using EventUtils for EventUtils.UintItems;
     using EventUtils for EventUtils.BytesItems;
 
@@ -21,12 +21,6 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         Initiated,
         ReadDataReceived,
         DistributePending
-    }
-
-    struct HandleGmxFeeBridgingParams {
-        uint256 feeAmountGmxCurrentChain;
-        uint256 totalFeeAmountGmx;
-        uint256 totalGmxBridgedOut;
     }
 
     bytes32 public constant gmxKey = keccak256(abi.encode("GMX"));
@@ -39,7 +33,6 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
     bytes32 public constant synapseRouterKey = keccak256(abi.encode("SYNAPSE_ROUTER"));
     bytes32 public constant feeGlpTrackerKey = keccak256(abi.encode("FEE_GLP_TRACKER"));
     bytes32 public constant chainlinkKey = keccak256(abi.encode("CHAINLINK"));
-    bytes32 public constant esGmxKey = keccak256(abi.encode("ESGMX"));
     bytes32 public constant esGmxVesterKey = keccak256(abi.encode("ESGMX_VESTER"));
 
     FeeDistributorVault public immutable feeDistributorVault;
@@ -50,10 +43,12 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
     IVaultV1 public immutable vaultV1;
 
     address public immutable gmx;
+    address public immutable esGmx;
     address public immutable wnt;
 
     constructor(
         RoleStore _roleStore,
+        Oracle _oracle,
         FeeDistributorVault _feeDistributorVault,
         FeeHandler _feeHandler,
         DataStore _dataStore,
@@ -61,8 +56,9 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         MultichainReader _multichainReader,
         IVaultV1 _vaultV1,
         address _gmx,
+        address _esGmx,
         address _wnt
-    ) RoleModule(_roleStore) {
+    ) RoleModule(_roleStore) OracleModule(_oracle) {
         feeDistributorVault = _feeDistributorVault;
         feeHandler = _feeHandler;
         dataStore = _dataStore;
@@ -70,6 +66,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         multichainReader = _multichainReader;
         vaultV1 = _vaultV1;
         gmx = _gmx;
+        esGmx = _esGmx;
         wnt = _wnt;
     }
 
@@ -80,8 +77,8 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         validateDistributionNotCompleted();
 
         // reset referral rewards sent for WNT and esGMX to 0 for the current week's distribution
-        setUint(Keys.feeDistributorReferralRewardsSentKey(getAddress(Keys.WNT)), 0);
-        setUint(Keys.feeDistributorReferralRewardsSentKey(getAddress(block.chainid, esGmxKey)), 0);
+        setUint(Keys.feeDistributorReferralRewardsSentKey(wnt), 0);
+        setUint(Keys.feeDistributorReferralRewardsSentKey(esGmx), 0);
 
         // populate readRequestInputs and extraOptionsInputs param used for cross chain LZRead request
         uint256[] memory chainIds = getUintArray(Keys.FEE_DISTRIBUTOR_CHAIN_ID);
@@ -105,25 +102,25 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
             address gmxOnChainId = getAddress(chainId, gmxKey);
             uint32 layerZeroChainId = uint32(getUint(Keys.feeDistributorLayerZeroChainIdKey(chainId)));
             uint256 readRequestIndex = skippedCurrentChain ? (i - 1) * 3 : i * 3;
-            readRequestInputs[readRequestIndex].chainId = layerZeroChainId;
-            readRequestInputs[readRequestIndex].target = getAddress(chainId, dataStoreKey);
-            readRequestInputs[readRequestIndex].callData = abi.encodeWithSelector(
-                DataStore.getUint.selector,
-                Keys.withdrawableBuybackTokenAmountKey(gmxOnChainId)
+            readRequestInputs[readRequestIndex] = setReadRequestInput(
+                layerZeroChainId,
+                getAddress(chainId, dataStoreKey),
+                abi.encodeWithSelector(DataStore.getUint.selector, Keys.withdrawableBuybackTokenAmountKey(gmxOnChainId))
             );
             readRequestIndex++;
 
-            readRequestInputs[readRequestIndex].chainId = layerZeroChainId;
-            readRequestInputs[readRequestIndex].target = gmxOnChainId;
-            readRequestInputs[readRequestIndex].callData = abi.encodeWithSelector(
-                IERC20.balanceOf.selector,
-                getAddress(chainId, Keys.FEE_RECEIVER)
+            readRequestInputs[readRequestIndex] = setReadRequestInput(
+                layerZeroChainId,
+                gmxOnChainId,
+                abi.encodeWithSelector(IERC20.balanceOf.selector, getAddress(chainId, Keys.FEE_RECEIVER))
             );
             readRequestIndex++;
 
-            readRequestInputs[readRequestIndex].chainId = layerZeroChainId;
-            readRequestInputs[readRequestIndex].target = extendedGmxTracker;
-            readRequestInputs[readRequestIndex].callData = abi.encodeWithSelector(IERC20.totalSupply.selector);
+            readRequestInputs[readRequestIndex] = setReadRequestInput(
+                layerZeroChainId,
+                extendedGmxTracker,
+                abi.encodeWithSelector(IERC20.totalSupply.selector)
+            );
         }
 
         MultichainReaderUtils.ExtraOptionsInputs memory extraOptionsInputs;
@@ -138,9 +135,8 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
 
         EventUtils.EventLogData memory eventData;
         eventData.uintItems.initItems(2);
-        eventData.uintItems.setItem(0, "numberOfChainsReadRequests", chainIds.length - 1);
-        eventData.uintItems.setItem(1, "messagingFee.nativeFee", messagingFee.nativeFee);
-
+        eventData = setUintItem(eventData, 0, "numberOfChainsReadRequests", chainIds.length - 1);
+        eventData = setUintItem(eventData, 1, "messagingFee.nativeFee", messagingFee.nativeFee);
         emitEventLog("FeeDistributionInitiated", eventData);
     }
 
@@ -174,20 +170,27 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
             setUint(Keys.feeDistributorStakedGmxKey(chainId), stakedGmx);
         }
 
-        uint256 wntPriceInUsd = vaultV1.getMaxPrice(getAddress(Keys.WNT));
-        setUint(Keys.FEE_DISTRIBUTION_WNT_PRICE_IN_USD, wntPriceInUsd);
+        address[] memory tokens = createAddressArray(1);
+        tokens[0] = gmx;
+        address[] memory providers = createAddressArray(1);
+        providers[0] = getAddress(Keys.oracleProviderForTokenKey(gmx));
+        bytes[] memory data = new bytes[](1);
+        data[0] = "";
+        uint256 gmxPrice = retrieveGmxPrice(OracleUtils.SetPricesParams(tokens, providers, data));
+        uint256 wntPrice = vaultV1.getMaxPrice(wnt);
+        setUint(Keys.FEE_DISTRIBUTION_GMX_PRICE, gmxPrice);
+        setUint(Keys.FEE_DISTRIBUTION_WNT_PRICE, wntPrice);
         setUint(Keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP, receivedData.timestamp);
         setUint(Keys.FEE_DISTRIBUTION_STATE, uint256(DistributionState.ReadDataReceived));
 
         EventUtils.EventLogData memory eventData;
-        eventData.uintItems.initItems(3);
-        eventData.uintItems.setItem(0, "numberOfChainsReceivedData", chainIds.length - 1);
-        eventData.uintItems.setItem(1, "receivedData.timestamp", receivedData.timestamp);
-        eventData.uintItems.setItem(2, "wntPriceInUsd", wntPriceInUsd);
-
+        eventData.uintItems.initItems(4);
+        eventData = setUintItem(eventData, 0, "numberOfChainsReceivedData", chainIds.length - 1);
+        eventData = setUintItem(eventData, 1, "receivedData.timestamp", receivedData.timestamp);
+        eventData = setUintItem(eventData, 2, "gmxPrice", gmxPrice);
+        eventData = setUintItem(eventData, 3, "wntPrice", wntPrice);
         eventData.bytesItems.initItems(1);
         eventData.bytesItems.setItem(0, "receivedData.ReadData", receivedData.readData);
-
         emitEventLog("FeeDistributionDataReceived", eventData);
     }
 
@@ -203,10 +206,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         uint256 feesV2Usd
     ) external nonReentrant onlyFeeDistributionKeeper {
         // validate the distribution states, LZRead response timestamp and distribution has not yet been completed
-        DistributionState[] memory allowedDistributionStates = new DistributionState[](2);
-        allowedDistributionStates[0] = DistributionState.ReadDataReceived;
-        allowedDistributionStates[1] = DistributionState.DistributePending;
-        validateDistributionStates(allowedDistributionStates);
+        validateDistributionState();
         validateReadResponseTimestamp(getUint(Keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP));
         validateDistributionNotCompleted();
 
@@ -223,146 +223,116 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         ) = calculateWntFeesAndCosts(wntReferralRewardsInUsd, feesV1Usd, feesV2Usd);
 
         // determine if GMX fees need to be bridged and execute GMX bridge transactions
-        HandleGmxFeeBridgingParams memory params = handleGmxFeeBridging();
+        (uint256 feeAmountGmxCurrentChain, uint256 totalFeeAmountGmx) = handleGmxFeeBridging();
 
         // transfer calculated fees and costs to the appropriate addresses
         uint256 wntForKeepers = transferFeesAndCosts(
             wntForChainlink,
             wntForTreasury,
             wntForGlp,
-            params.feeAmountGmxCurrentChain
+            feeAmountGmxCurrentChain
         );
 
         // set the total fees in USD and referral reward amounts
         setUint(Keys.feeDistributorFeeAmountUsdKey(1), feesV1Usd);
         setUint(Keys.feeDistributorFeeAmountUsdKey(2), feesV2Usd);
         setUint(Keys.feeDistributorReferralRewardsAmountKey(wnt), wntForReferralRewards);
-        setUint(
-            Keys.feeDistributorReferralRewardsAmountKey(getAddress(block.chainid, esGmxKey)),
-            esGmxForReferralRewards
-        );
+        setUint(Keys.feeDistributorReferralRewardsAmountKey(esGmx), esGmxForReferralRewards);
         setUint(Keys.FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP, block.timestamp);
         setUint(Keys.FEE_DISTRIBUTION_STATE, uint256(DistributionState.None));
 
         EventUtils.EventLogData memory eventData;
-        eventData.uintItems.initItems(11);
-        eventData.uintItems.setItem(0, "feesV1Usd", feesV1Usd);
-        eventData.uintItems.setItem(1, "feesV2Usd", feesV2Usd);
-        eventData.uintItems.setItem(2, "feeAmountGmxCurrentChain", params.feeAmountGmxCurrentChain);
-        eventData.uintItems.setItem(3, "totalFeeAmountGmx", params.totalFeeAmountGmx);
-        eventData.uintItems.setItem(4, "totalGmxBridgedOut", params.totalGmxBridgedOut);
-        eventData.uintItems.setItem(5, "wntForKeepers", wntForKeepers);
-        eventData.uintItems.setItem(6, "wntForChainlink", wntForChainlink);
-        eventData.uintItems.setItem(7, "wntForTreasury", wntForTreasury);
-        eventData.uintItems.setItem(8, "wntForGlp", wntForGlp);
-        eventData.uintItems.setItem(9, "wntForReferralRewards", wntForReferralRewards);
-        eventData.uintItems.setItem(10, "esGmxForReferralRewards", esGmxForReferralRewards);
-
+        eventData.uintItems.initItems(10);
+        eventData = setUintItem(eventData, 0, "feesV1Usd", feesV1Usd);
+        eventData = setUintItem(eventData, 1, "feesV2Usd", feesV2Usd);
+        eventData = setUintItem(eventData, 2, "feeAmountGmxCurrentChain", feeAmountGmxCurrentChain);
+        eventData = setUintItem(eventData, 3, "totalFeeAmountGmx", totalFeeAmountGmx);
+        eventData = setUintItem(eventData, 4, "wntForKeepers", wntForKeepers);
+        eventData = setUintItem(eventData, 5, "wntForChainlink", wntForChainlink);
+        eventData = setUintItem(eventData, 6, "wntForTreasury", wntForTreasury);
+        eventData = setUintItem(eventData, 7, "wntForGlp", wntForGlp);
+        eventData = setUintItem(eventData, 8, "wntForReferralRewards", wntForReferralRewards);
+        eventData = setUintItem(eventData, 9, "esGmxForReferralRewards", esGmxForReferralRewards);
         emitEventLog("FeeDistributionCompleted", eventData);
     }
 
-    // @dev distribute the calculated WNT referral rewards to the specified accounts
-    // @param accounts the accounts to which WNT referral rewards will be sent
-    // @param amounts the amounts of WNT referral rewards that will be sent to each account
+    // @dev distribute the calculated referral rewards to the specified accounts
+    // @param token the token in which the referral rewards will be sent
     // @param maxBatchSize the maximum number of accounts that will be sent in one transaction
-    function sendWnt(
+    // @param accounts the accounts to which referral rewards will be sent
+    // @param amounts the amounts of referral rewards that will be sent to each account
+    function sendReferralRewards(
+        address token,
+        uint256 maxBatchSize,
         address[] calldata accounts,
-        uint256[] calldata amounts,
-        uint256 maxBatchSize
+        uint256[] calldata amounts
     ) external nonReentrant onlyFeeDistributionKeeper {
         // validate the distribution state and that the accounts and amounts arrays are valid lengths
         validateDistributionState(DistributionState.None);
 
         if (accounts.length != amounts.length) {
-            revert Errors.ReferralRewardsArrayMismatch(wnt, accounts.length, amounts.length);
+            revert Errors.ReferralRewardsArrayMismatch(token, accounts.length, amounts.length);
         }
 
         if (accounts.length > maxBatchSize) {
-            revert Errors.ReferralRewardsAmountExceedsMaxBatchSize(wnt, accounts.length, maxBatchSize);
+            revert Errors.ReferralRewardsAmountExceedsMaxBatchSize(token, accounts.length, maxBatchSize);
         }
 
-        // send the WNT referral rewards to the specified accounts
-        uint256 totalWntSent = getUint(Keys.feeDistributorReferralRewardsSentKey(wnt));
-        for (uint256 i; i < accounts.length; i++) {
-            address account = accounts[i];
-            uint256 wntAmount = amounts[i];
-            transferOut(wnt, account, wntAmount);
-            totalWntSent = totalWntSent + wntAmount;
+        uint256 totalTokensSent = getUint(Keys.feeDistributorReferralRewardsSentKey(token));
+        if (token == esGmx) {
+            // validate the esGMX amount is valid and that there are sufficient esGMX in the feeDistributorVault
+            uint256 esGmxForReferralRewards = getUint(Keys.feeDistributorReferralRewardsAmountKey(esGmx));
+            uint256 maxEsGmxReferralRewards = getUint(Keys.feeDistributorAmountThresholdKey(referralRewardsEsGmxKey));
+            if (esGmxForReferralRewards > maxEsGmxReferralRewards) {
+                revert Errors.ReferralRewardsThresholdBreached(esGmx, esGmxForReferralRewards, maxEsGmxReferralRewards);
+            }
 
-            EventUtils.EventLogData memory eventData;
-            eventData.uintItems.initItems(1);
-            eventData.uintItems.setItem(0, "wntAmount", wntAmount);
+            uint256 vaultEsGmxBalance = IERC20(esGmx).balanceOf(address(feeDistributorVault));
+            if (esGmxForReferralRewards > vaultEsGmxBalance) {
+                IMintable(esGmx).mint(address(feeDistributorVault), esGmxForReferralRewards - vaultEsGmxBalance);
+            }
 
-            emitEventLog("WntReferralRewardsSent", eventData);
+            // send the esGMX referral rewards to the specified accounts and update bonus reward amounts
+            for (uint256 i; i < accounts.length; i++) {
+                address account = accounts[i];
+                uint256 esGmxAmount = amounts[i];
+                transferOut(token, account, esGmxAmount);
+                totalTokensSent = totalTokensSent + esGmxAmount;
+
+                address vester = getAddress(block.chainid, esGmxVesterKey);
+                uint256 bonusReward = IVester(vester).bonusRewards(account);
+                uint256 updatedBonusReward = bonusReward + esGmxAmount;
+                IVester(vester).setBonusRewards(account, updatedBonusReward);
+
+                EventUtils.EventLogData memory eventData;
+                eventData.uintItems.initItems(1);
+                eventData = setUintItem(eventData, 0, "esGmxAmount", esGmxAmount);
+                emitEventLog("EsGmxReferralRewardsSent", eventData);
+            }
+        } else if (token == wnt) {
+            // send the WNT referral rewards to the specified accounts
+            for (uint256 i; i < accounts.length; i++) {
+                address account = accounts[i];
+                uint256 wntAmount = amounts[i];
+                transferOut(token, account, wntAmount);
+                totalTokensSent = totalTokensSent + wntAmount;
+
+                EventUtils.EventLogData memory eventData;
+                eventData.uintItems.initItems(1);
+                eventData = setUintItem(eventData, 0, "wntAmount", wntAmount);
+                emitEventLog("WntReferralRewardsSent", eventData);
+            }
+        } else {
+            revert Errors.InvalidReferralRewardToken(token);
         }
 
-        // validate that the total WNT referral rewards sent out is not greater than the total calculated amount
-        uint256 wntForReferralRewards = getUint(Keys.feeDistributorReferralRewardsAmountKey(wnt));
-        if (totalWntSent > wntForReferralRewards) {
-            revert Errors.WntReferralRewardsThresholdBreached(totalWntSent, wntForReferralRewards);
+        // validate that the total referral rewards sent out is not greater than the total calculated amount
+        uint256 tokensForReferralRewards = getUint(Keys.feeDistributorReferralRewardsAmountKey(token));
+        if (totalTokensSent > tokensForReferralRewards) {
+            revert Errors.ReferralRewardsThresholdBreached(token, totalTokensSent, tokensForReferralRewards);
         }
 
-        setUint(Keys.feeDistributorReferralRewardsSentKey(wnt), totalWntSent);
-    }
-
-    // @dev distribute the calculated esGMX referral rewards to the specified accounts and increase bonus rewards
-    // @param accounts the accounts to which esGMX referral rewards will be sent
-    // @param amounts the amounts of esGMX referral rewards that will be sent to each account
-    // @param maxBatchSize the maximum number of accounts that will be sent in one transaction
-    function sendEsGmxAndIncreaseBonusRewards(
-        address[] calldata accounts,
-        uint256[] calldata amounts,
-        uint256 maxBatchSize
-    ) external nonReentrant onlyFeeDistributionKeeper {
-        // validate the distribution state and that the accounts and amounts arrays are valid lengths
-        validateDistributionState(DistributionState.None);
-
-        address esGmx = getAddress(block.chainid, esGmxKey);
-        if (accounts.length != amounts.length) {
-            revert Errors.ReferralRewardsArrayMismatch(esGmx, accounts.length, amounts.length);
-        }
-
-        if (accounts.length > maxBatchSize) {
-            revert Errors.ReferralRewardsAmountExceedsMaxBatchSize(esGmx, accounts.length, maxBatchSize);
-        }
-
-        // send the WNT referral rewards to the specified accounts
-        uint256 esGmxForReferralRewards = getUint(Keys.feeDistributorReferralRewardsAmountKey(esGmx));
-        uint256 maxEsGmxReferralRewards = getUint(Keys.feeDistributorAmountThresholdKey(referralRewardsEsGmxKey));
-        if (esGmxForReferralRewards > maxEsGmxReferralRewards) {
-            revert Errors.EsGmxReferralRewardsThresholdBreached(esGmxForReferralRewards, maxEsGmxReferralRewards);
-        }
-
-        uint256 vaultEsGmxBalance = IERC20(esGmx).balanceOf(address(feeDistributorVault));
-        if (esGmxForReferralRewards > vaultEsGmxBalance) {
-            IMintable(esGmx).mint(address(feeDistributorVault), esGmxForReferralRewards - vaultEsGmxBalance);
-        }
-
-        uint256 totalEsGmxSent = getUint(Keys.feeDistributorReferralRewardsSentKey(esGmx));
-        for (uint256 i; i < accounts.length; i++) {
-            address account = accounts[i];
-            uint256 esGmxAmount = amounts[i];
-            transferOut(esGmx, account, esGmxAmount);
-            totalEsGmxSent = totalEsGmxSent + esGmxAmount;
-
-            address vester = getAddress(block.chainid, esGmxVesterKey);
-            uint256 bonusReward = IVester(vester).bonusRewards(account);
-            uint256 updatedBonusReward = bonusReward + esGmxAmount;
-            IVester(vester).setBonusRewards(account, updatedBonusReward);
-
-            EventUtils.EventLogData memory eventData;
-            eventData.uintItems.initItems(1);
-            eventData.uintItems.setItem(0, "esGmxAmount", esGmxAmount);
-
-            emitEventLog("EsGmxReferralRewardsSent", eventData);
-        }
-
-        // validate that the total esGMX referral rewards sent out is not greater than the total calculated amount
-        if (totalEsGmxSent > esGmxForReferralRewards) {
-            revert Errors.EsGmxReferralRewardsThresholdBreached(totalEsGmxSent, esGmxForReferralRewards);
-        }
-
-        setUint(Keys.feeDistributorReferralRewardsSentKey(esGmx), totalEsGmxSent);
+        setUint(Keys.feeDistributorReferralRewardsSentKey(token), totalTokensSent);
     }
 
     // @dev allows for the withdrawal of tokens from the feeDistributorVault
@@ -379,6 +349,102 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         feeDistributorVault.transferOut(token, receiver, amount, shouldUnwrapNativeToken);
     }
 
+    function retrieveGmxPrice(
+        OracleUtils.SetPricesParams memory params
+    ) internal withOraclePrices(params) returns (uint256) {
+        return oracle.getPrimaryPrice(gmx).max;
+    }
+
+    function handleGmxFeeBridging() internal returns (uint256, uint256) {
+        // 1. Read distribution state from storage
+        DistributionState distributionState = DistributionState(getUint(Keys.FEE_DISTRIBUTION_STATE));
+
+        // 2. Load current chain’s original GMX fee amount from storage
+        uint256 originalFeeAmountCurrentChain = getUint(Keys.feeDistributorFeeAmountGmxKey(block.chainid));
+        uint256 feeAmountGmxCurrentChain = originalFeeAmountCurrentChain;
+
+        // If distribution is pending, we update the GMX fee amount to the vault’s current GMX balance
+        if (distributionState == DistributionState.DistributePending) {
+            feeAmountGmxCurrentChain = IERC20(gmx).balanceOf(address(feeDistributorVault));
+            setUint(Keys.feeDistributorFeeAmountGmxKey(block.chainid), feeAmountGmxCurrentChain);
+        }
+
+        // 3. Get the list of chain IDs to consider
+        uint256[] memory chainIds = getUintArray(Keys.FEE_DISTRIBUTOR_CHAIN_ID);
+
+        // Prepare parallel arrays to track each chain’s feeAmounts and stakedAmounts
+        uint256[] memory feeAmounts = createUintArray(chainIds.length);
+        uint256[] memory stakedAmounts = createUintArray(chainIds.length);
+
+        // 4. Sum up all chain fees and staked amounts; override the current chain’s fee with the new value
+        uint256 currentChainIndex;
+        uint256 totalFeeAmountGmx;
+        uint256 totalStakedGmx;
+        for (uint256 i; i < chainIds.length; i++) {
+            if (chainIds[i] == block.chainid) {
+                feeAmounts[i] = feeAmountGmxCurrentChain;
+                currentChainIndex = i;
+            } else {
+                feeAmounts[i] = getUint(Keys.feeDistributorFeeAmountGmxKey(chainIds[i]));
+            }
+
+            stakedAmounts[i] = getUint(Keys.feeDistributorStakedGmxKey(chainIds[i]));
+
+            totalFeeAmountGmx += feeAmounts[i];
+            totalStakedGmx += stakedAmounts[i];
+        }
+
+        // 5. Compute how much GMX the current chain is supposed to have, based on its stake share
+        uint256 requiredFeeAmount = (totalFeeAmountGmx * stakedAmounts[currentChainIndex]) / totalStakedGmx;
+
+        // Calculate the difference between required and original
+        int256 pendingFeeBridge = int256(requiredFeeAmount) - int256(originalFeeAmountCurrentChain);
+
+        // 6. Slippage logic
+        uint256 minFeeReceived;
+        uint256 slippageFactor = getUint(Keys.feeDistributorBridgeSlippageFactorKey(currentChainIndex));
+        if (pendingFeeBridge > 0) {
+            minFeeReceived =
+                Precision.applyFactor(uint256(pendingFeeBridge), slippageFactor) -
+                getUint(Keys.FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_AMOUNT);
+        }
+        uint256 minRequiredFeeAmount = originalFeeAmountCurrentChain + minFeeReceived;
+
+        // 7. If we don’t meet the min bridging requirement, revert or set distribution pending
+        if (minRequiredFeeAmount > feeAmountGmxCurrentChain) {
+            if (distributionState == DistributionState.DistributePending) {
+                revert Errors.BridgedAmountNotSufficient(minRequiredFeeAmount, feeAmountGmxCurrentChain);
+            }
+            setUint(Keys.FEE_DISTRIBUTION_STATE, uint256(DistributionState.DistributePending));
+            return (feeAmountGmxCurrentChain, totalFeeAmountGmx);
+        }
+
+        // 8. Attempt to bridge GMX to other chains if DistributionState = ReadDataReceived
+        if (distributionState == DistributionState.ReadDataReceived) {
+            // Call our internal bridging function
+            uint256 totalGmxBridgedOut = calculateAndBridgeGmx(
+                chainIds,
+                totalFeeAmountGmx,
+                stakedAmounts,
+                totalStakedGmx,
+                feeAmounts,
+                currentChainIndex,
+                slippageFactor
+            );
+
+            // validate that the amount bridged does not exceed the calculated amount to be sent
+            if (minRequiredFeeAmount > feeAmountGmxCurrentChain - totalGmxBridgedOut) {
+                revert Errors.AttemptedBridgeAmountTooHigh(
+                    minRequiredFeeAmount,
+                    feeAmountGmxCurrentChain,
+                    totalGmxBridgedOut
+                );
+            }
+        }
+
+        return (feeAmountGmxCurrentChain, totalFeeAmountGmx);
+    }
+
     // This internal function handles the surplus-deficit bridging logic
     function calculateAndBridgeGmx(
         uint256[] memory chainIds,
@@ -390,7 +456,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         uint256 slippageFactor
     ) internal returns (uint256) {
         // Prepare arrays
-        uint256[] memory targetFeeAmounts = new uint256[](chainIds.length);
+        uint256[] memory targetFeeAmounts = createUintArray(chainIds.length);
         int256[] memory differences = new int256[](chainIds.length);
         uint256[][] memory bridging = new uint256[][](chainIds.length);
 
@@ -403,7 +469,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         for (uint256 i; i < chainIds.length; i++) {
             differences[i] = int256(feeAmounts[i]) - int256(targetFeeAmounts[i]);
             // Initialize bridging array for each chain
-            bridging[i] = new uint256[](chainIds.length);
+            bridging[i] = createUintArray(chainIds.length);
         }
 
         // 3. Match surpluses to deficits
@@ -498,6 +564,11 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
             totalGmxBridgedOut += sendAmount;
         }
 
+        EventUtils.EventLogData memory eventData;
+        eventData.uintItems.initItems(1);
+        eventData = setUintItem(eventData, 0, "totalGmxBridgedOut", totalGmxBridgedOut);
+        emitEventLog("GmxBridgedOut", eventData);
+
         return totalGmxBridgedOut;
     }
 
@@ -535,96 +606,6 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         address distributor = IRewardTracker(tracker).distributor();
         IRewardDistributor(distributor).updateLastDistributionTime();
         IRewardDistributor(distributor).setTokensPerInterval(rewardAmount / 1 weeks);
-    }
-
-    function handleGmxFeeBridging() internal returns (HandleGmxFeeBridgingParams memory) {
-        HandleGmxFeeBridgingParams memory params;
-
-        // 1. Read distribution state from storage
-        DistributionState distributionState = DistributionState(getUint(Keys.FEE_DISTRIBUTION_STATE));
-
-        // 2. Load current chain’s original GMX fee amount from storage
-        uint256 originalFeeAmountCurrentChain = getUint(Keys.feeDistributorFeeAmountGmxKey(block.chainid));
-        params.feeAmountGmxCurrentChain = originalFeeAmountCurrentChain;
-
-        // If distribution is pending, we update the GMX fee amount to the vault’s current GMX balance
-        if (distributionState == DistributionState.DistributePending) {
-            params.feeAmountGmxCurrentChain = IERC20(gmx).balanceOf(address(feeDistributorVault));
-            setUint(Keys.feeDistributorFeeAmountGmxKey(block.chainid), params.feeAmountGmxCurrentChain);
-        }
-
-        // 3. Get the list of chain IDs to consider
-        uint256[] memory chainIds = getUintArray(Keys.FEE_DISTRIBUTOR_CHAIN_ID);
-
-        // Prepare parallel arrays to track each chain’s feeAmounts and stakedAmounts
-        uint256[] memory feeAmounts = new uint256[](chainIds.length);
-        uint256[] memory stakedAmounts = new uint256[](chainIds.length);
-
-        // 4. Sum up all chain fees and staked amounts; override the current chain’s fee with the new value
-        uint256 currentChainIndex;
-        uint256 totalStakedGmx;
-        for (uint256 i; i < chainIds.length; i++) {
-            if (chainIds[i] == block.chainid) {
-                feeAmounts[i] = params.feeAmountGmxCurrentChain;
-                currentChainIndex = i;
-            } else {
-                feeAmounts[i] = getUint(Keys.feeDistributorFeeAmountGmxKey(chainIds[i]));
-            }
-
-            stakedAmounts[i] = getUint(Keys.feeDistributorStakedGmxKey(chainIds[i]));
-
-            params.totalFeeAmountGmx += feeAmounts[i];
-            totalStakedGmx += stakedAmounts[i];
-        }
-
-        // 5. Compute how much GMX the current chain is supposed to have, based on its stake share
-        uint256 requiredFeeAmount = (params.totalFeeAmountGmx * stakedAmounts[currentChainIndex]) / totalStakedGmx;
-
-        // Calculate the difference between required and original
-        int256 pendingFeeBridge = int256(requiredFeeAmount) - int256(originalFeeAmountCurrentChain);
-
-        // 6. Slippage logic
-        uint256 minFeeReceived;
-        uint256 slippageFactor = getUint(Keys.feeDistributorBridgeSlippageFactorKey(currentChainIndex));
-        if (pendingFeeBridge > 0) {
-            minFeeReceived =
-                Precision.applyFactor(uint256(pendingFeeBridge), slippageFactor) -
-                getUint(Keys.FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_AMOUNT);
-        }
-        uint256 minRequiredFeeAmount = originalFeeAmountCurrentChain + minFeeReceived;
-
-        // 7. If we don’t meet the min bridging requirement, revert or set distribution pending
-        if (minRequiredFeeAmount > params.feeAmountGmxCurrentChain) {
-            if (distributionState == DistributionState.DistributePending) {
-                revert Errors.BridgedAmountNotSufficient(minRequiredFeeAmount, params.feeAmountGmxCurrentChain);
-            }
-            setUint(Keys.FEE_DISTRIBUTION_STATE, uint256(DistributionState.DistributePending));
-            return params;
-        }
-
-        // 8. If cross-chain data has been read, we can proceed with bridging surpluses to deficits
-        if (distributionState == DistributionState.ReadDataReceived) {
-            // Call our internal bridging function
-            params.totalGmxBridgedOut = calculateAndBridgeGmx(
-                chainIds,
-                params.totalFeeAmountGmx,
-                stakedAmounts,
-                totalStakedGmx,
-                feeAmounts,
-                currentChainIndex,
-                slippageFactor
-            );
-        }
-
-        // 9. validate that the amount bridged does not exceed the calculated amount to be sent
-        if (minRequiredFeeAmount > params.feeAmountGmxCurrentChain - params.totalGmxBridgedOut) {
-            revert Errors.AttemptedBridgeAmountTooHigh(
-                minRequiredFeeAmount,
-                params.feeAmountGmxCurrentChain,
-                params.totalGmxBridgedOut
-            );
-        }
-        return params;
     }
 
     function setUint(bytes32 fullKey, uint256 value) internal {
@@ -745,11 +726,11 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
 
         uint256 wntForReferralRewards = Precision.toFactor(
             wntReferralRewardsInUsd,
-            getUint(Keys.FEE_DISTRIBUTION_WNT_PRICE_IN_USD)
+            getUint(Keys.FEE_DISTRIBUTION_WNT_PRICE)
         );
         uint256 maxWntReferralRewards = Precision.applyFactor(totalWntBalance, wntForReferralRewardsThreshold);
         if (wntForReferralRewards > maxWntReferralRewards) {
-            revert Errors.WntReferralRewardsThresholdBreached(wntForReferralRewards, maxWntReferralRewards);
+            revert Errors.ReferralRewardsThresholdBreached(wnt, wntForReferralRewards, maxWntReferralRewards);
         }
 
         return wntForReferralRewards;
@@ -804,14 +785,14 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         }
     }
 
-    function validateDistributionStates(DistributionState[] memory allowedDistributionStates) internal view {
+    function validateDistributionState() internal view {
         uint256 distributionStateUint = getUint(Keys.FEE_DISTRIBUTION_STATE);
-        for (uint256 i; i < allowedDistributionStates.length; i++) {
-            if (allowedDistributionStates[i] == DistributionState(distributionStateUint)) {
-                return;
-            }
+        if (
+            DistributionState(distributionStateUint) != DistributionState.ReadDataReceived ||
+            DistributionState(distributionStateUint) != DistributionState.DistributePending
+        ) {
+            revert Errors.InvalidDistributionState(distributionStateUint);
         }
-        revert Errors.InvalidDistributionState(distributionStateUint);
     }
 
     function validateDistributionNotCompleted() internal view {
@@ -829,5 +810,33 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         if (block.timestamp - readResponseTimestamp > getUint(Keys.FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY)) {
             revert Errors.OutdatedReadResponse(readResponseTimestamp);
         }
+    }
+
+    function setUintItem(
+        EventUtils.EventLogData memory eventData,
+        uint256 itemNumber,
+        string memory itemName,
+        uint256 uintItem
+    ) internal pure returns (EventUtils.EventLogData memory) {
+        eventData.uintItems.setItem(itemNumber, itemName, uintItem);
+        return eventData;
+    }
+
+    function createUintArray(uint256 arrayLength) internal pure returns (uint256[] memory) {
+        uint256[] memory uintArray = new uint256[](arrayLength);
+        return uintArray;
+    }
+
+    function createAddressArray(uint256 arrayLength) internal pure returns (address[] memory) {
+        address[] memory addressArray = new address[](arrayLength);
+        return addressArray;
+    }
+
+    function setReadRequestInput(
+        uint32 chainId,
+        address target,
+        bytes memory callData
+    ) internal pure returns (MultichainReaderUtils.ReadRequestInputs memory) {
+        return MultichainReaderUtils.ReadRequestInputs(chainId, target, callData);
     }
 }

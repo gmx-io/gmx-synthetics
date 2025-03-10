@@ -504,8 +504,10 @@ library Keys {
     bytes32 public constant FEE_DISTRIBUTOR_REFERRAL_REWARDS_AMOUNT = keccak256(abi.encode("FEE_DISTRIBUTOR_REFERRAL_REWARDS_AMOUNT"));
     // @dev key for FeeDistributor absolute limit in USD of WNT referral awards
     bytes32 public constant FEE_DISTRIBUTOR_REFERRAL_REWARDS_WNT_USD_LIMIT = keccak256(abi.encode("FEE_DISTRIBUTOR_REFERRAL_REWARDS_WNT_USD_LIMIT"));
-    // @dev key for FeeDistributor WNT price in USD for referral rewards calculations
-    bytes32 public constant FEE_DISTRIBUTION_WNT_PRICE_IN_USD = keccak256(abi.encode("FEE_DISTRIBUTION_WNT_PRICE_IN_USD"));
+    // @dev key for FeeDistributor GMX price for referral rewards calculations
+    bytes32 public constant FEE_DISTRIBUTION_GMX_PRICE = keccak256(abi.encode("FEE_DISTRIBUTION_GMX_PRICE"));
+    // @dev key for FeeDistributor WNT price for referral rewards calculations
+    bytes32 public constant FEE_DISTRIBUTION_WNT_PRICE = keccak256(abi.encode("FEE_DISTRIBUTION_WNT_PRICE"));
     // @dev key for FeeDistributor max read response delay in seconds from MultichainReader
     bytes32 public constant FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY = keccak256(abi.encode("FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY"));
     // @dev key for FeeDistributor gas limit used for the MultichainReader read request
@@ -2286,10 +2288,10 @@ library Keys {
     }
 
     // @dev key for FeeDistributor amount threshold
-    // @param amountThreshold the amount threshold to retrieve
-    // @return key for FeeDistributor amount threshold
-    function feeDistributorAmountThresholdKey(bytes32 amountThreshold) internal pure returns (bytes32) {
-        return keccak256(abi.encode(FEE_DISTRIBUTOR_AMOUNT_THRESHOLD, amountThreshold));
+    // @param amountThresholdType the type of amount threshold to retrieve
+    // @return key for FeeDistributor amount threshold for the specified type
+    function feeDistributorAmountThresholdKey(bytes32 amountThresholdType) internal pure returns (bytes32) {
+        return keccak256(abi.encode(FEE_DISTRIBUTOR_AMOUNT_THRESHOLD, amountThresholdType));
     }
 
     // @dev key for FeeDistributor bridging origin deadline in seconds
