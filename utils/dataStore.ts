@@ -60,9 +60,3 @@ async function setIfDifferent(
     log("skipping %s %s (%s) as it is already set to %s", type, label, key, value.toString());
   }
 }
-
-export async function signalHoldingAddress(address: string) {
-  const { getNamedAccounts } = hre;
-  const { deployer } = await getNamedAccounts();
-  await signalHoldingAddressIfDifferent(deployer, address);
-}
