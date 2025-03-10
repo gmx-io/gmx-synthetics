@@ -4,7 +4,14 @@ import { hashRelayParams, signTypedData } from "./helpers";
 import { getDomain } from "./helpers";
 import { getRelayParams } from "./helpers";
 import { exec } from "child_process";
-import { getCancelOrderSignature, getCreateOrderSignature, getUpdateOrderSignature } from "./gelatoRelay";
+import {
+  getCancelOrderSignature,
+  getClaimAffiliateRewardsSignature,
+  getClaimCollateralSignature,
+  getClaimFundingFeesSignature,
+  getCreateOrderSignature,
+  getUpdateOrderSignature,
+} from "./gelatoRelay";
 
 interface SendCreate {
   signer: ethers.Signer;
@@ -202,6 +209,187 @@ export async function sendCreateOrder(p: {
   const calldata = ethers.utils.solidityPack(
     ["bytes", "address", "address", "uint256"],
     [createOrderCalldata, GELATO_RELAY_ADDRESS, p.relayFeeToken, p.relayFeeAmount]
+  );
+  return p.sender.sendTransaction({
+    to: p.relayRouter.address,
+    data: calldata,
+  });
+}
+
+export async function sendClaimFundingFees(p: {
+  signer: ethers.Signer;
+  sender: ethers.Signer;
+  oracleParams?: {
+    tokens: string[];
+    providers: string[];
+    data: string[];
+  };
+  externalCalls?: {
+    externalCallTargets: string[];
+    externalCallDataList: string[];
+    refundTokens: string[];
+    refundReceivers: string[];
+  };
+  feeParams: {
+    feeToken: string;
+    feeAmount: BigNumberish;
+    feeSwapPath: string[];
+  };
+  account: string;
+  params: any;
+  signature?: string;
+  userNonce?: BigNumberish;
+  srcChainId: BigNumberish;
+  deadline: BigNumberish;
+  desChainId: BigNumberish;
+  relayRouter: ethers.Contract;
+  chainId: BigNumberish;
+  relayFeeToken: string;
+  relayFeeAmount: BigNumberish;
+}) {
+  const relayParams = await getRelayParams(p);
+
+  let signature = p.signature;
+  if (!signature) {
+    signature = await getClaimFundingFeesSignature({
+      ...p,
+      relayParams,
+      verifyingContract: p.relayRouter.address,
+    });
+  }
+
+  const claimFundingFeesCalldata = p.relayRouter.interface.encodeFunctionData("claimFundingFees", [
+    { ...relayParams, signature },
+    p.account,
+    p.srcChainId,
+    p.params.markets,
+    p.params.tokens,
+    p.params.receiver,
+  ]);
+  const calldata = ethers.utils.solidityPack(
+    ["bytes", "address", "address", "uint256"],
+    [claimFundingFeesCalldata, GELATO_RELAY_ADDRESS, p.relayFeeToken, p.relayFeeAmount]
+  );
+  return p.sender.sendTransaction({
+    to: p.relayRouter.address,
+    data: calldata,
+  });
+}
+
+export async function sendClaimCollateral(p: {
+  signer: ethers.Signer;
+  sender: ethers.Signer;
+  oracleParams?: {
+    tokens: string[];
+    providers: string[];
+    data: string[];
+  };
+  externalCalls?: {
+    externalCallTargets: string[];
+    externalCallDataList: string[];
+    refundTokens: string[];
+    refundReceivers: string[];
+  };
+  feeParams: {
+    feeToken: string;
+    feeAmount: BigNumberish;
+    feeSwapPath: string[];
+  };
+  account: string;
+  params: any;
+  signature?: string;
+  userNonce?: BigNumberish;
+  srcChainId: BigNumberish;
+  deadline: BigNumberish;
+  desChainId: BigNumberish;
+  relayRouter: ethers.Contract;
+  chainId: BigNumberish;
+  relayFeeToken: string;
+  relayFeeAmount: BigNumberish;
+}) {
+  const relayParams = await getRelayParams(p);
+
+  let signature = p.signature;
+  if (!signature) {
+    signature = await getClaimCollateralSignature({
+      ...p,
+      relayParams,
+      verifyingContract: p.relayRouter.address,
+    });
+  }
+
+  const claimCollateralCalldata = p.relayRouter.interface.encodeFunctionData("claimCollateral", [
+    { ...relayParams, signature },
+    p.account,
+    p.srcChainId,
+    p.params.markets,
+    p.params.tokens,
+    p.params.timeKeys,
+    p.params.receiver,
+  ]);
+  const calldata = ethers.utils.solidityPack(
+    ["bytes", "address", "address", "uint256"],
+    [claimCollateralCalldata, GELATO_RELAY_ADDRESS, p.relayFeeToken, p.relayFeeAmount]
+  );
+  return p.sender.sendTransaction({
+    to: p.relayRouter.address,
+    data: calldata,
+  });
+}
+
+export async function sendClaimAffiliateRewards(p: {
+  signer: ethers.Signer;
+  sender: ethers.Signer;
+  oracleParams?: {
+    tokens: string[];
+    providers: string[];
+    data: string[];
+  };
+  externalCalls?: {
+    externalCallTargets: string[];
+    externalCallDataList: string[];
+    refundTokens: string[];
+    refundReceivers: string[];
+  };
+  feeParams: {
+    feeToken: string;
+    feeAmount: BigNumberish;
+    feeSwapPath: string[];
+  };
+  account: string;
+  params: any;
+  signature?: string;
+  userNonce?: BigNumberish;
+  srcChainId: BigNumberish;
+  deadline: BigNumberish;
+  desChainId: BigNumberish;
+  relayRouter: ethers.Contract;
+  chainId: BigNumberish;
+  relayFeeToken: string;
+  relayFeeAmount: BigNumberish;
+}) {
+  const relayParams = await getRelayParams(p);
+
+  let signature = p.signature;
+  if (!signature) {
+    signature = await getClaimAffiliateRewardsSignature({
+      ...p,
+      relayParams,
+      verifyingContract: p.relayRouter.address,
+    });
+  }
+
+  const claimAffiliateRewardsCalldata = p.relayRouter.interface.encodeFunctionData("claimAffiliateRewards", [
+    { ...relayParams, signature },
+    p.account,
+    p.srcChainId,
+    p.params.markets,
+    p.params.tokens,
+    p.params.receiver,
+  ]);
+  const calldata = ethers.utils.solidityPack(
+    ["bytes", "address", "address", "uint256"],
+    [claimAffiliateRewardsCalldata, GELATO_RELAY_ADDRESS, p.relayFeeToken, p.relayFeeAmount]
   );
   return p.sender.sendTransaction({
     to: p.relayRouter.address,
