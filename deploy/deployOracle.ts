@@ -41,7 +41,7 @@ const func = createDeployFunction({
     // the Oracle contract requires the CONTROLLER to emit events
     await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER", "oracle");
   },
-  id: "Oracle_4",
+  id: "Oracle-new",
 });
 
 func.dependencies = func.dependencies.concat(["Tokens", "MockDataStreamVerifier", "ChainlinkPriceFeedProvider"]);

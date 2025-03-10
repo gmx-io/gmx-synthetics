@@ -35,10 +35,7 @@ const func = createDeployFunction({
 
     await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
   },
+  id: "OrderHandler-new",
 });
-
-func.skip = async () => {
-  return process.env.SKIP_HANDLER_DEPLOYMENTS ? true : false;
-};
 
 export default func;
