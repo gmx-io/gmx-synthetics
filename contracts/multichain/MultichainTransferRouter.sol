@@ -34,6 +34,21 @@ contract MultichainTransferRouter is MultichainRouter {
         _validateCall(relayParams, account, structHash, srcChainId);
 
         MultichainUtils.recordTransferIn(dataStore, eventEmitter, multichainVault, params.token, account, srcChainId);
+        
+        // orderVault is used to transfer funds into it and do a swap from feeToken to wnt when using the feeSwapPath
+        Contracts memory contracts = Contracts({
+            dataStore: dataStore,
+            eventEmitter: eventEmitter,
+            bank: orderVault
+        });
+        _handleRelay(
+            contracts,
+            relayParams,
+            account,
+            srcChainId == 0 ? account : address(multichainVault), // residualFeeReceiver
+            false, // isSubaccount
+            srcChainId
+        );
     }
 
     function bridgeOut(
@@ -50,6 +65,21 @@ contract MultichainTransferRouter is MultichainRouter {
 
         bytes32 structHash = RelayUtils.getBridgeOutStructHash(relayParams, params);
         _validateCall(relayParams, account, structHash, srcChainId);
+        
+        // orderVault is used to transfer funds into it and do a swap from feeToken to wnt when using the feeSwapPath
+        Contracts memory contracts = Contracts({
+            dataStore: dataStore,
+            eventEmitter: eventEmitter,
+            bank: orderVault
+        });
+        _handleRelay(
+            contracts,
+            relayParams,
+            account,
+            srcChainId == 0 ? account : address(multichainVault), // residualFeeReceiver
+            false, // isSubaccount
+            srcChainId
+        );
 
         multichainProvider.bridgeOut(provider, account, params.token, params.amount, srcChainId, data);
         MultichainEventUtils.emitMultichainBridgeOut(
