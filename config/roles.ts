@@ -163,10 +163,9 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x105b5aFe50FBCe7759051974fB1710ce331C77B3": true, // GlvRouter_4
         "0x994C598e3b0661bb805d53c6fa6B4504b23b68dD": true, // GlvRouter_4a
 
-        "0x470d512De68665A33416D30f0d7580781AAa2748": true, // ExchangeRouter_5
-        "0x8D5Ba31b20725c10B9FB60B8A3e5C9BC6aA7c74c": true, // SubaccountRouter_5
-        "0x98723BD186581C461e8F77D8B17E7Fac2D141a48": true, // GelatoRelayRouter
-        "0x2FB22eab0f84557dac6fc9D800CAe11602662F78": true, // SubaccountGelatoRelayRouter
+        "0xa145346c17ea8a56c97fac0bd810225257ab96e1": true, // SubaccountRouter_5
+        "0x63dafb2ca71767129ab8d0a0909383023c4aff6e": true, // GelatoRelayRouter_1
+        "0x8964c82e1878d35bed66d377f97e4f518b7a024f": true, // SubaccountGelatoRelayRouter_1
       },
       TIMELOCK_ADMIN: {
         "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // timelock_admin_1
@@ -201,17 +200,15 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x105b5aFe50FBCe7759051974fB1710ce331C77B3": true, // GlvRouter_4
         "0x994C598e3b0661bb805d53c6fa6B4504b23b68dD": true, // GlvRouter_4a
 
-        "0x17dE9Ad7c5ECA85E50381f9C51e32E859d5f2086": true, // OrderHandler_5
-        "0x6DbE12529a9d039a6aF20bE488D5E46f22901Eec": true, // DepositHandler_5
-        "0x1037C3b54b3109A495b8D0cce6c32F819284F0CF": true, // WithdrawalHandler_5
-        "0x331da018c1DdF565ae081F267174689940a8490E": true, // ShiftHandler_5
-        "0x03A6e8AF1685099470019de39b1573D415856879": true, // SwapHandler_5
-
-        "0x470d512De68665A33416D30f0d7580781AAa2748": true, // ExchangeRouter_5
-        "0x8D5Ba31b20725c10B9FB60B8A3e5C9BC6aA7c74c": true, // SubaccountRouter_5
-        "0x98723BD186581C461e8F77D8B17E7Fac2D141a48": true, // GelatoRelayRouter
-        "0x2FB22eab0f84557dac6fc9D800CAe11602662F78": true, // SubaccountGelatoRelayRouter
-        "0xa1e8ee77a44616924cc235d1f8e0175c85e3f37d": true, // Config_5
+        // gasless deployment
+        "0x492f2511ec89e425125e494bd8385e055b2f752a": true, // Config_5
+        "0x918b60ba71badfada72ef3a6c6f71d0c41d4785c": true, // Oracle_5
+        "0xa145346c17ea8a56c97fac0bd810225257ab96e1": true, // SubaccountRouter_5
+        "0x63dafb2ca71767129ab8d0a0909383023c4aff6e": true, // GelatoRelayRouter_1
+        "0x8964c82e1878d35bed66d377f97e4f518b7a024f": true, // SubaccountGelatoRelayRouter_1
+        "0xfc9bc118fddb89ff6ff720840446d73478de4153": true, // OrderHandler_5
+        "0xedb5cd878871f074371e816ac67cbe010c31f00b": true, // WithdrawalHandler_5
+        "0x266c6b192952c743de5541d642dc847d064c182c": true, // SwapHandler_5
       },
       GOV_TOKEN_CONTROLLER: {
         "0x5E4766F932ce00aA4a1A82d3Da85adf15C5694A1": true, // RewardRouterV2_2
