@@ -3,6 +3,23 @@ import hre from "hardhat";
 import Role from "../artifacts/contracts/role/Role.sol/Role.json";
 import { hashString } from "../utils/hash";
 import { expandDecimals } from "../utils/math";
+import * as fs from "fs";
+import * as path from "path";
+
+const _cachePath = path.join(__dirname, "../cache/contractInfoCache.json");
+let _cache: Record<
+  string,
+  {
+    isContract: boolean;
+    contractName: string;
+  }
+>;
+if (fs.existsSync(_cachePath)) {
+  const _cacheFileContent = fs.readFileSync(_cachePath, "utf8").toString();
+  _cache = JSON.parse(_cacheFileContent);
+} else {
+  _cache = {};
+}
 
 async function validateMember({ role, member }) {
   if (["ROLE_ADMIN", "TIMELOCK_MULTISIG", "CONTROLLER"].includes(role)) {
@@ -39,6 +56,14 @@ function getValues(): { referralStorageAddress?: string; dataStreamVerifierAddre
 }
 
 export async function validateRoles() {
+  try {
+    await validateRolesImpl();
+  } finally {
+    fs.writeFileSync(path.join(__dirname, "../cache/contractInfoCache.json"), JSON.stringify(_cache, null, 2));
+  }
+}
+
+async function validateRolesImpl() {
   const roles = Role.abi.map((i) => i.name) as string[];
   const deployments = await hre.deployments.all();
   const contractNameByAddress = Object.fromEntries(
@@ -108,11 +133,17 @@ export async function validateRoles() {
     );
 
     for (const member of members) {
-      console.log(`   ${member} ${contractNameByAddress[ethers.utils.getAddress(member)] ?? ""}`);
+      const { isContract, contractName } = await getContractName(contractNameByAddress, member);
+      console.log(`   ${member} ${isContract ? "contract" : "EOA"} ${contractName ?? ""}`);
       if (!expectedRoles[role][member.toLowerCase()]) {
+        const { isContract, contractName } = await getContractName(contractNameByAddress, member);
+        if (isContract && !contractName) {
+          errors.push(`contract ${member} with role ${role} source code is not verified`);
+        }
         rolesToRemove.push({
           role,
           member,
+          contractName,
         });
       }
 
@@ -121,15 +152,9 @@ export async function validateRoles() {
 
     for (const member in expectedRoles[role]) {
       if (!memberIsInStore[member.toLowerCase()]) {
-        const contractName = contractNameByAddress[ethers.utils.getAddress(member)];
-        if (!contractName) {
-          const code = await hre.ethers.provider.getCode(member);
-          if (code !== "0x") {
-            const contractName = await getContractNameFromEtherscan(member);
-            if (!contractName) {
-              errors.push(`contract ${member} with role ${role} source code is not verified`);
-            }
-          }
+        const { isContract, contractName } = await getContractName(contractNameByAddress, member);
+        if (isContract && !contractName) {
+          errors.push(`contract ${member} with role ${role} source code is not verified`);
         }
 
         if (contractName) {
@@ -142,6 +167,7 @@ export async function validateRoles() {
         rolesToAdd.push({
           role,
           member,
+          contractName,
         });
       }
     }
@@ -160,6 +186,27 @@ export async function validateRoles() {
   await validateIsReferralStorageHandler();
 
   return { rolesToAdd, rolesToRemove };
+}
+
+async function getContractName(
+  contractNameByAddress: Record<string, string>,
+  contractAddress: string
+): Promise<{ isContract: boolean; contractName: string }> {
+  if (_cache[contractAddress]) {
+    return _cache[contractAddress];
+  }
+  let contractName = contractNameByAddress[ethers.utils.getAddress(contractAddress)];
+  let isContract = true;
+  if (!contractName) {
+    const code = await hre.ethers.provider.getCode(contractAddress);
+    if (code !== "0x") {
+      contractName = await getContractNameFromEtherscan(contractAddress);
+    } else {
+      isContract = false;
+    }
+  }
+  _cache[contractAddress] = { isContract, contractName };
+  return { isContract, contractName };
 }
 
 async function validateDataStreamProviderHasDiscount() {
@@ -216,7 +263,7 @@ async function validateIsReferralStorageHandler() {
   }
 }
 
-async function getContractNameFromEtherscan(contractAddress: string): Promise<any> {
+async function getContractNameFromEtherscan(contractAddress: string): Promise<string> {
   const apiKey = hre.network.verify.etherscan.apiKey;
   const baseUrl = hre.network.verify.etherscan.apiUrl + "api";
   try {
