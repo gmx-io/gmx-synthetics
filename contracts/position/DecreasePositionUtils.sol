@@ -274,6 +274,12 @@ library DecreasePositionUtils {
             PositionStoreUtils.set(params.contracts.dataStore, params.positionKey, params.position);
         }
 
+        PositionUtils.updatePositionLastSrcChainId(
+            params.contracts.dataStore,
+            params.positionKey,
+            params.order.srcChainId()
+        );
+
         MarketUtils.applyDeltaToCollateralSum(
             params.contracts.dataStore,
             params.contracts.eventEmitter,

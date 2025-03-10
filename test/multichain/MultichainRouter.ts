@@ -36,6 +36,8 @@ import {
 import { hashData, hashString } from "../../utils/hash";
 import { getPositionCount } from "../../utils/position";
 import { expectBalance } from "../../utils/validation";
+import { executeLiquidation } from "../../utils/liquidation";
+import { executeAdl, updateAdlState } from "../../utils/adl";
 import { getClaimableCollateralTimeKey } from "../../utils/collateral";
 
 export async function mintAndBridge(
@@ -87,6 +89,7 @@ describe("MultichainRouter", () => {
     ethUsdMarket,
     solUsdMarket,
     ethUsdGlvAddress,
+    wethPriceFeed,
     wnt,
     usdc,
     chainlinkPriceFeedProvider,
@@ -117,6 +120,7 @@ describe("MultichainRouter", () => {
       ethUsdMarket,
       solUsdMarket,
       ethUsdGlvAddress,
+      wethPriceFeed,
       wnt,
       usdc,
       chainlinkPriceFeedProvider,
@@ -676,7 +680,7 @@ describe("MultichainRouter", () => {
         orderType: OrderType.LimitIncrease,
         decreasePositionSwapType: DecreasePositionSwapType.SwapCollateralTokenToPnlToken,
         isLong: true,
-        shouldUnwrapNativeToken: true,
+        shouldUnwrapNativeToken: false,
         referralCode: hashString("referralCode"),
         dataList: [],
       };
@@ -733,6 +737,89 @@ describe("MultichainRouter", () => {
 
         expect(await getOrderCount(dataStore)).to.eq(0);
         expect(await getPositionCount(dataStore)).to.eq(1);
+      });
+
+      it("liquidation increases user's multichain balance", async () => {
+        // order is created from a source chain
+        await sendCreateDeposit(createDepositParams);
+        await executeDeposit(fixture, { gasUsageLabel: "executeMultichainDeposit" });
+        await mintAndBridge(fixture, {
+          account: user1,
+          token: wnt,
+          tokenAmount: collateralDeltaAmount.add(expandDecimals(2, 15)),
+        });
+        await sendCreateOrder(createOrderParams);
+        await executeOrder(fixture, { gasUsageLabel: "executeOrder" });
+
+        // forcing liquidation
+        await dataStore.setUint(
+          keys.minCollateralFactorForLiquidationKey(ethUsdMarket.marketToken),
+          expandDecimals(1, 30)
+        );
+
+        const user1WntBalanceBefore = await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address));
+
+        await executeLiquidation(fixture, {
+          account: user1.address,
+          market: ethUsdMarket,
+          collateralToken: wnt,
+          isLong: true,
+          minPrices: [expandDecimals(5000, 4), expandDecimals(8, 5)],
+          maxPrices: [expandDecimals(5000, 4), expandDecimals(8, 5)],
+          gasUsageLabel: "liquidationHandler.executeLiquidation",
+        });
+
+        // user's multichain balances increased by the collateral amount after liquidation
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(
+          user1WntBalanceBefore.add(collateralDeltaAmount)
+        );
+      });
+
+      it("adl increases user's multichain balance", async () => {
+        // order is created from a source chain
+        await sendCreateDeposit(createDepositParams);
+        await executeDeposit(fixture, { gasUsageLabel: "executeMultichainDeposit" });
+        await mintAndBridge(fixture, {
+          account: user1,
+          token: wnt,
+          tokenAmount: collateralDeltaAmount.add(expandDecimals(2, 15)),
+        });
+        await sendCreateOrder(createOrderParams);
+        await executeOrder(fixture, { gasUsageLabel: "executeOrder" });
+
+        const maxPnlFactorForAdlKey = keys.maxPnlFactorKey(keys.MAX_PNL_FACTOR_FOR_ADL, ethUsdMarket.marketToken, true);
+        const minPnlFactorAfterAdlKey = keys.minPnlFactorAfterAdl(ethUsdMarket.marketToken, true);
+        await dataStore.setUint(maxPnlFactorForAdlKey, decimalToFloat(10, 2)); // 10%
+        await dataStore.setUint(minPnlFactorAfterAdlKey, decimalToFloat(2, 2)); // 2%
+        await wethPriceFeed.setAnswer(expandDecimals(10000, 8));
+
+        await updateAdlState(fixture, {
+          market: ethUsdMarket,
+          isLong: true,
+          tokens: [wnt.address, usdc.address],
+          minPrices: [expandDecimals(10000, 4), expandDecimals(1, 6)],
+          maxPrices: [expandDecimals(10000, 4), expandDecimals(1, 6)],
+          gasUsageLabel: "updateAdlState",
+        });
+
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0);
+
+        await executeAdl(fixture, {
+          account: user1.address,
+          market: ethUsdMarket,
+          collateralToken: wnt,
+          isLong: true,
+          sizeDeltaUsd: decimalToFloat(10 * 1000), // 10k USD --> 1 ETH will be added to user's multichain balance
+          tokens: [wnt.address, usdc.address],
+          minPrices: [expandDecimals(10000, 4), expandDecimals(1, 6)],
+          maxPrices: [expandDecimals(10000, 4), expandDecimals(1, 6)],
+          gasUsageLabel: "executeAdl",
+        });
+
+        // user's multichain balances increased by 1 ETH after adl (adl was executed at 1 ETH = 10k USD)
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(
+          expandDecimals(1, 18)
+        );
       });
     });
 

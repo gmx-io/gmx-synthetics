@@ -789,4 +789,7 @@ library PositionUtils {
         return (cache.priceImpactUsd, cache.executionPrice, cache.balanceWasImproved);
     }
 
+    function updatePositionLastSrcChainId(DataStore dataStore, bytes32 positionKey, uint256 srcChainId) internal {
+        dataStore.setUint(Keys.positionLastSrcChainId(positionKey), srcChainId);
+    }
 }

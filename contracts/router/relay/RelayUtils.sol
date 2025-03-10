@@ -63,10 +63,6 @@ library RelayUtils {
         uint256[] amounts;
     }
 
-    struct BridgeInParams {
-        address token;
-    }
-
     struct BridgeOutParams {
         address token;
         uint256 amount;
@@ -171,12 +167,6 @@ library RelayUtils {
     bytes32 public constant TRANSFER_REQUESTS_TYPEHASH =
         keccak256(bytes("TransferRequests(address[] tokens,address[] receivers,uint256[] amounts)"));
 
-    bytes32 public constant BRIDGE_IN_TYPEHASH =
-        keccak256(
-            bytes(
-                "BridgeIn(address token,bytes32 relayParams)"
-            )
-        );
     bytes32 public constant BRIDGE_OUT_TYPEHASH =
         keccak256(
             bytes(
@@ -524,20 +514,6 @@ library RelayUtils {
                     addresses.glv,
                     keccak256(abi.encodePacked(addresses.longTokenSwapPath)),
                     keccak256(abi.encodePacked(addresses.shortTokenSwapPath))
-                )
-            );
-    }
-
-    function getBridgeInStructHash(
-        RelayParams calldata relayParams,
-        BridgeInParams memory params
-    ) external pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    BRIDGE_IN_TYPEHASH,
-                    params.token,
-                    _getRelayParamsHash(relayParams)
                 )
             );
     }
