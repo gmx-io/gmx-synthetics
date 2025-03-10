@@ -1,3 +1,4 @@
+import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { createDeployFunction } from "../utils/deploy";
 import { setBoolIfDifferent } from "../utils/dataStore";
 import * as keys from "../utils/keys";
@@ -17,7 +18,12 @@ const func = createDeployFunction({
       "isOracleProviderEnabledKey"
     );
   },
-  id: "GmOracleProvider_2",
+  id: "GmOracleProvider",
 });
+
+func.skip = async ({ network }: HardhatRuntimeEnvironment) => {
+  const shouldDeployForNetwork = ["avalancheFuji", "arbitrumSepolia", "hardhat"];
+  return !shouldDeployForNetwork.includes(network.name);
+};
 
 export default func;

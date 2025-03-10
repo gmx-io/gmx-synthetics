@@ -2,7 +2,7 @@ import { createDeployFunction } from "../utils/deploy";
 
 const func = createDeployFunction({
   contractName: "GovToken",
-  id: "GovToken_1",
+  id: "GovToken",
   dependencyNames: ["RoleStore"],
   getDeployArgs: async ({ dependencyContracts }) => {
     return [

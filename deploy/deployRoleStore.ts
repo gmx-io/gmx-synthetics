@@ -2,7 +2,7 @@ import { createDeployFunction } from "../utils/deploy";
 
 const func = createDeployFunction({
   contractName: "RoleStore",
-  id: "RoleStore_3",
+  id: "RoleStore",
 });
 
 func.dependencies = func.dependencies.concat(["FundAccounts"]);

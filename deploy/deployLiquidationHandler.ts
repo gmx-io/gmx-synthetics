@@ -28,10 +28,7 @@ const func = createDeployFunction({
   afterDeploy: async ({ deployedContract }) => {
     await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
   },
+  id: "LiquidationHandler-new",
 });
-
-func.skip = async () => {
-  return process.env.SKIP_HANDLER_DEPLOYMENTS ? true : false;
-};
 
 export default func;

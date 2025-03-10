@@ -34,7 +34,7 @@ const func = createDeployFunction({
   // buybacks and withdrawal of fees as the amounts in the DataStore would
   // not match the contract balance
   // The migration of funds must be explicitly handled if a re-deploy is required
-  id: "FeeHandler_1",
+  id: "FeeHandler",
 });
 
 func.dependencies = func.dependencies.concat(["MockVaultV1"]);
@@ -43,7 +43,7 @@ func.skip = async (hre: HardhatRuntimeEnvironment) => {
     return true;
   }
 
-  return process.env.SKIP_HANDLER_DEPLOYMENTS ? true : false;
+  return false;
 };
 
 export default func;
