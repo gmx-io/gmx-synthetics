@@ -13,6 +13,26 @@ dotenv.config();
 const COMMIT_HASH = process.env.COMMIT_HASH as string;
 const TRANSACTION_HASH = process.env.TRANSACTION_HASH as string;
 
+const roleLabels = {
+  [encodeRole("ROLE_ADMIN")]: "ROLE_ADMIN",
+  [encodeRole("TIMELOCK_ADMIN")]: "TIMELOCK_ADMIN",
+  [encodeRole("TIMELOCK_MULTISIG")]: "TIMELOCK_MULTISIG",
+  [encodeRole("CONFIG_KEEPER")]: "CONFIG_KEEPER",
+  [encodeRole("LIMITED_CONFIG_KEEPER")]: "LIMITED_CONFIG_KEEPER",
+  [encodeRole("CONTROLLER")]: "CONTROLLER",
+  [encodeRole("GOV_TOKEN_CONTROLLER")]: "GOV_TOKEN_CONTROLLER",
+  [encodeRole("ROUTER_PLUGIN")]: "ROUTER_PLUGIN",
+  [encodeRole("MARKET_KEEPER")]: "MARKET_KEEPER",
+  [encodeRole("FEE_KEEPER")]: "FEE_KEEPER",
+  [encodeRole("FEE_DISTRIBUTION_KEEPER")]: "FEE_DISTRIBUTION_KEEPER",
+  [encodeRole("ORDER_KEEPER")]: "ORDER_KEEPER",
+  [encodeRole("FROZEN_ORDER_KEEPER")]: "FROZEN_ORDER_KEEPER",
+  [encodeRole("PRICING_KEEPER")]: "PRICING_KEEPER",
+  [encodeRole("LIQUIDATION_KEEPER")]: "LIQUIDATION_KEEPER",
+  [encodeRole("ADL_KEEPER")]: "ADL_KEEPER",
+  [encodeRole("CONTRIBUTOR_KEEPER")]: "CONTRIBUTOR_KEEPER",
+};
+
 async function main() {
   if (!COMMIT_HASH || !TRANSACTION_HASH) {
     console.error("Error: Missing COMMIT_HASH or TRANSACTION_HASH in environment variables.");
@@ -94,7 +114,9 @@ async function validateRoles(contractInfo: ContractInfo) {
   const { requiredRolesForContracts } = await hre.gmx.getRoles();
   for (const signalledRole of contractInfo.signalledRoles) {
     if (!(await checkRole(contractInfo.name, contractInfo.address, signalledRole, requiredRolesForContracts))) {
-      throw new Error(`Role ${signalledRole} is not approved for ${contractInfo.name}!`);
+      throw new Error(
+        `Role ${signalledRole} ${roleLabels[signalledRole]} is not approved for ${contractInfo.name} ${contractInfo.address}!`
+      );
     }
   }
   console.log(`✅ Roles for ${contractInfo.name} validated`);
