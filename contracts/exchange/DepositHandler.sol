@@ -11,6 +11,8 @@ import "../deposit/DepositVault.sol";
 import "../deposit/DepositUtils.sol";
 import "../deposit/ExecuteDepositUtils.sol";
 
+import "../multichain/MultichainVault.sol";
+
 import "./IDepositHandler.sol";
 
 // @title DepositHandler
@@ -19,14 +21,17 @@ contract DepositHandler is IDepositHandler, BaseHandler {
     using Deposit for Deposit.Props;
 
     DepositVault public immutable depositVault;
+    MultichainVault public immutable multichainVault;
 
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
         Oracle _oracle,
+        MultichainVault _multichainVault,
         DepositVault _depositVault
     ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {
+        multichainVault = _multichainVault;
         depositVault = _depositVault;
     }
 
@@ -35,6 +40,7 @@ contract DepositHandler is IDepositHandler, BaseHandler {
     // @param params DepositUtils.CreateDepositParams
     function createDeposit(
         address account,
+        uint256 srcChainId,
         DepositUtils.CreateDepositParams calldata params
     ) external override globalNonReentrant onlyController returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createDepositFeatureDisabledKey(address(this)));
@@ -45,6 +51,7 @@ contract DepositHandler is IDepositHandler, BaseHandler {
             eventEmitter,
             depositVault,
             account,
+            srcChainId,
             params
         );
     }
@@ -146,13 +153,15 @@ contract DepositHandler is IDepositHandler, BaseHandler {
         ExecuteDepositUtils.ExecuteDepositParams memory params = ExecuteDepositUtils.ExecuteDepositParams(
             dataStore,
             eventEmitter,
+            multichainVault,
             depositVault,
             oracle,
             key,
             keeper,
             startingGas,
             ISwapPricingUtils.SwapPricingType.Deposit,
-            true // includeVirtualInventoryImpact
+            true, // includeVirtualInventoryImpact
+            deposit.srcChainId()
         );
 
         ExecuteDepositUtils.executeDeposit(params, deposit);

@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 
 import "./BaseOrderUtils.sol";
 import "../swap/SwapUtils.sol";
+import "../multichain/MultichainUtils.sol";
 
 // @title SwapOrderUtils
 // @dev Library for functions to help with processing a swap order
@@ -66,11 +67,22 @@ library SwapOrderUtils {
             params.order.initialCollateralDeltaAmount(),
             params.swapPathMarkets,
             params.order.minOutputAmount(),
-            params.order.receiver(),
+            params.order.srcChainId() == 0 ? params.order.receiver(): address(params.contracts.multichainVault),
             params.order.uiFeeReceiver(),
             params.order.shouldUnwrapNativeToken(),
             ISwapPricingUtils.SwapPricingType.Swap
         ));
+
+        if (params.order.srcChainId() != 0) {
+            MultichainUtils.recordTransferIn(
+                params.contracts.dataStore,
+                params.contracts.eventEmitter,
+                params.contracts.multichainVault,
+                outputToken,
+                params.order.receiver(),
+                params.order.srcChainId()
+            );
+        }
 
         EventUtils.EventLogData memory eventData;
         eventData.addressItems.initItems(1);

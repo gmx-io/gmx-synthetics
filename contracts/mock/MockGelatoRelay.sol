@@ -17,21 +17,22 @@ contract MockGelatoRelayRouter is GelatoRelayRouter {
 
     constructor(
         Router _router,
+        RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
         Oracle _oracle,
         IOrderHandler _orderHandler,
         OrderVault _orderVault,
         IExternalHandler _externalHandler
-    ) GelatoRelayRouter(_router, _dataStore, _eventEmitter, _oracle, _orderHandler, _orderVault, _externalHandler) {}
+    ) GelatoRelayRouter(_router, _roleStore, _dataStore, _eventEmitter, _oracle, _orderHandler, _orderVault, _externalHandler) {}
 
     function testCancelOrderSignature(
-        RelayParams calldata relayParams,
+        RelayUtils.RelayParams calldata relayParams,
         bytes32 key,
         address account,
         uint256 chainId
     ) external view {
-        bytes32 structHash = _getCancelOrderStructHash(relayParams, key);
+        bytes32 structHash = RelayUtils.getCancelOrderStructHash(relayParams, key);
         _handleSignature(structHash, relayParams.signature, account, chainId);
     }
 

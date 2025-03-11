@@ -6,7 +6,7 @@ import "../deposit/DepositUtils.sol";
 import "../oracle/OracleUtils.sol";
 
 interface IDepositHandler {
-    function createDeposit(address account, DepositUtils.CreateDepositParams calldata params) external returns (bytes32);
+    function createDeposit(address account, uint256 srcChainId, DepositUtils.CreateDepositParams calldata params) external returns (bytes32);
     function cancelDeposit(bytes32 key) external;
     function simulateExecuteDeposit(
         bytes32 key,

@@ -266,7 +266,7 @@ library SwapPricingUtils {
         bool balanceWasImproved,
         address uiFeeReceiver,
         ISwapPricingUtils.SwapPricingType swapPricingType
-    ) internal view returns (SwapFees memory) {
+    ) external view returns (SwapFees memory) {
         SwapFees memory fees;
 
         // note that since it is possible to incur both positive and negative price impact values
@@ -310,7 +310,7 @@ library SwapPricingUtils {
     function emitSwapInfo(
         EventEmitter eventEmitter,
         EmitSwapInfoParams memory params
-    ) internal {
+    ) external {
         EventUtils.EventLogData memory eventData;
 
         eventData.bytes32Items.initItems(1);

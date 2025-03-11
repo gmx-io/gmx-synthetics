@@ -143,7 +143,8 @@ contract Reader {
         bytes32 positionKey,
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices,
-        bool shouldValidateMinCollateralUsd
+        bool shouldValidateMinCollateralUsd,
+        bool forLiquidation
     ) public view returns (bool, string memory, PositionUtils.IsPositionLiquidatableInfo memory) {
         Position.Props memory position = PositionStoreUtils.get(dataStore, positionKey);
 
@@ -154,7 +155,8 @@ contract Reader {
                 position,
                 market,
                 prices,
-                shouldValidateMinCollateralUsd
+                shouldValidateMinCollateralUsd,
+                forLiquidation
             );
     }
 

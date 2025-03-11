@@ -11,19 +11,27 @@ import { executeLiquidation } from "../../../utils/liquidation";
 import { getClaimableCollateralTimeKey } from "../../../utils/collateral";
 import { increaseTime } from "../../../utils/time";
 import * as keys from "../../../utils/keys";
+import {
+  executeTimelock,
+  setHoldingAddressForTimelockTest,
+  signalHoldingAddressIfDifferent,
+} from "../../../utils/timelock";
+import { time } from "@nomicfoundation/hardhat-network-helpers";
+import { grantRole } from "../../../utils/role";
 
 describe("Exchange.DecreasePosition.InsolventClose", () => {
   let fixture;
   let user0, user1, user2;
-  let reader, dataStore, referralStorage, ethUsdMarket, wnt, usdc;
+  let reader, dataStore, roleStore, referralStorage, ethUsdMarket, wnt, usdc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
 
     ({ user0, user1, user2 } = fixture.accounts);
-    ({ reader, dataStore, referralStorage, ethUsdMarket, wnt, usdc } = fixture.contracts);
+    ({ reader, dataStore, roleStore, referralStorage, ethUsdMarket, wnt, usdc } = fixture.contracts);
 
     await scenes.deposit(fixture);
+    await grantRole(roleStore, user0.address, "TIMELOCK_ADMIN");
   });
 
   it("funding fees > collateral", async () => {
@@ -156,7 +164,7 @@ describe("Exchange.DecreasePosition.InsolventClose", () => {
       },
     });
 
-    await dataStore.setAddress(keys.HOLDING_ADDRESS, user2.address);
+    await setHoldingAddressForTimelockTest(user0, user2.address);
 
     await scenes.decreasePosition.long.positivePnl(fixture, {
       create: {

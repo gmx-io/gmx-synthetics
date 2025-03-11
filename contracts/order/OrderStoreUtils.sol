@@ -34,6 +34,7 @@ library OrderStoreUtils {
     bytes32 public constant MIN_OUTPUT_AMOUNT = keccak256(abi.encode("MIN_OUTPUT_AMOUNT"));
     bytes32 public constant VALID_FROM_TIME = keccak256(abi.encode("VALID_FROM_TIME"));
     bytes32 public constant UPDATED_AT_TIME = keccak256(abi.encode("UPDATED_AT_TIME"));
+    bytes32 public constant SRC_CHAIN_ID = keccak256(abi.encode("SRC_CHAIN_ID"));
 
     bytes32 public constant IS_LONG = keccak256(abi.encode("IS_LONG"));
     bytes32 public constant SHOULD_UNWRAP_NATIVE_TOKEN = keccak256(abi.encode("SHOULD_UNWRAP_NATIVE_TOKEN"));
@@ -122,6 +123,10 @@ library OrderStoreUtils {
 
         order.setUpdatedAtTime(dataStore.getUint(
             keccak256(abi.encode(key, UPDATED_AT_TIME))
+        ));
+
+        order.setSrcChainId(dataStore.getUint(
+            keccak256(abi.encode(key, SRC_CHAIN_ID))
         ));
 
         order.setIsLong(dataStore.getBool(
@@ -253,6 +258,11 @@ library OrderStoreUtils {
             order.updatedAtTime()
         );
 
+        dataStore.setUint(
+            keccak256(abi.encode(key, SRC_CHAIN_ID)),
+            order.srcChainId()
+        );
+
         dataStore.setBool(
             keccak256(abi.encode(key, IS_LONG)),
             order.isLong()
@@ -368,6 +378,10 @@ library OrderStoreUtils {
 
         dataStore.removeUint(
             keccak256(abi.encode(key, UPDATED_AT_TIME))
+        );
+
+        dataStore.removeUint(
+            keccak256(abi.encode(key, SRC_CHAIN_ID))
         );
 
         dataStore.removeBool(

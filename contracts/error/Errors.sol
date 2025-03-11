@@ -53,7 +53,8 @@ library Errors {
     error InvalidTimelockDelay(uint256 timelockDelay);
     error MaxTimelockDelayExceeded(uint256 timelockDelay);
     error InvalidFeeReceiver(address receiver);
-    error InvalidOracleSigner(address receiver);
+    error InvalidOracleSigner(address signer);
+    error InvalidHoldingAddress(address account);
 
     // GlvDepositStoreUtils errors
     error GlvDepositNotFound(bytes32 key);
@@ -430,9 +431,19 @@ library Errors {
     error EmptyMarketPrice(address market);
 
     // Multichain errors
-    error EmptyMultichainDepositAmount();
-    error EmptyMultichainWithdrawalAmount();
-    error InsufficientMultichainBalance();
+    error InvalidTransferRequestsLength();
+    error EmptyMultichainTransferInAmount(address account, address token);
+    error EmptyMultichainTransferOutAmount(address account, address token);
+    error InsufficientMultichainBalance(address account, address token, uint256 balance, uint256 amount);
+    error InvalidDestinationChainId(uint256 desChainId);
+    error InvalidMultichainProvider(address provider);
+    error UnableToPayOrderFee();
+    error UnableToPayOrderFeeFromCollateral();
+
+    enum SignatureType {
+        Call,
+        SubaccountApproval
+    }
 
     // Gelato relay errors
     error InvalidSignature(string signatureType);
@@ -450,6 +461,9 @@ library Errors {
     error InvalidSubaccountApprovalSubaccount();
     error NonEmptyExternalCallsForSubaccountOrder();
     error InvalidRelayParams();
+
+    // EventUtils error
+    error EventItemNotFound(string key);
 
     // MultichainReader errors
     error InsufficientMultichainNativeFee(uint256 msgValue);

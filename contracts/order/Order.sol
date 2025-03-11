@@ -115,6 +115,7 @@ library Order {
         uint256 minOutputAmount;
         uint256 updatedAtTime;
         uint256 validFromTime;
+        uint256 srcChainId;
     }
 
     // @param isLong whether the order is for a long or short
@@ -373,6 +374,13 @@ library Order {
     }
     function setValidFromTime(Props memory props, uint256 value) internal pure {
         props.numbers.validFromTime = value;
+    }
+
+    function srcChainId(Props memory props) internal pure returns (uint256) {
+        return props.numbers.srcChainId;
+    }
+    function setSrcChainId(Props memory props, uint256 value) internal pure {
+        props.numbers.srcChainId = value;
     }
 
     // @dev whether the order is for a long or short

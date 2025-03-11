@@ -13,8 +13,6 @@ import "../market/MarketUtils.sol";
 
 import "../market/MarketToken.sol";
 
-import "../feature/FeatureUtils.sol";
-
 // @title FeeUtils
 // @dev Library for fee actions
 library FeeUtils {
@@ -204,7 +202,7 @@ library FeeUtils {
         address market,
         address token,
         address receiver
-    ) internal returns (uint256) {
+    ) public returns (uint256) {
         AccountUtils.validateReceiver(receiver);
 
         bytes32 key = Keys.claimableUiFeeAmountKey(market, token, uiFeeReceiver);

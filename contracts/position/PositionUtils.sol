@@ -296,7 +296,8 @@ library PositionUtils {
             position,
             market,
             prices,
-            shouldValidateMinCollateralUsd
+            shouldValidateMinCollateralUsd,
+            false // forLiquidation
         );
 
         if (isLiquidatable) {
@@ -321,7 +322,8 @@ library PositionUtils {
         Position.Props memory position,
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices,
-        bool shouldValidateMinCollateralUsd
+        bool shouldValidateMinCollateralUsd,
+        bool forLiquidation
     ) public view returns (bool, string memory, IsPositionLiquidatableInfo memory) {
         IsPositionLiquidatableCache memory cache;
         IsPositionLiquidatableInfo memory info;
@@ -407,7 +409,11 @@ library PositionUtils {
             + cache.priceImpactUsd
             - collateralCostUsd.toInt256();
 
-        cache.minCollateralFactor = MarketUtils.getMinCollateralFactor(dataStore, market.marketToken);
+        if (forLiquidation) {
+            cache.minCollateralFactor = MarketUtils.getMinCollateralFactorForLiquidation(dataStore, market.marketToken);
+        } else {
+            cache.minCollateralFactor = MarketUtils.getMinCollateralFactor(dataStore, market.marketToken);
+        }
 
         // validate if (remaining collateral) / position.size is less than the min collateral factor (max leverage exceeded)
         // this validation includes the position fee to be paid when closing the position
@@ -651,15 +657,13 @@ library PositionUtils {
             )
         );
 
-        // cap positive priceImpactUsd based on the amount available in the position impact pool
-        cache.priceImpactUsd = MarketUtils.capPositiveImpactUsdByPositionImpactPool(
-            params.contracts.dataStore,
-            params.market.marketToken,
-            indexTokenPrice,
-            cache.priceImpactUsd
-        );
-
         // cap positive priceImpactUsd based on the max positive position impact factor
+        // note that the positive priceImpactUsd is not capped by the position impact pool here
+        // this is to prevent cases where for new markets, user A opens a position with negative
+        // price impact and user B does not have any incentive to open a position to balance the pool
+        // because the price impact pool is empty until user A closes
+        // the positive price impact will still be capped during position decrease when the positive
+        // price impact is actually paid out
         cache.priceImpactUsd = MarketUtils.capPositiveImpactUsdByMaxPositionImpact(
             params.contracts.dataStore,
             params.market.marketToken,
@@ -785,4 +789,7 @@ library PositionUtils {
         return (cache.priceImpactUsd, cache.executionPrice, cache.balanceWasImproved);
     }
 
+    function updatePositionLastSrcChainId(DataStore dataStore, bytes32 positionKey, uint256 srcChainId) internal {
+        dataStore.setUint(Keys.positionLastSrcChainId(positionKey), srcChainId);
+    }
 }

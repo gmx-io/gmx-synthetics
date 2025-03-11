@@ -196,14 +196,16 @@ contract GlpMigrator is ReentrancyGuard, RoleModule {
             // any arbitrage / benefit of doing this should be minimal
             // glp mint fees should also help to discourage this
             DepositUtils.CreateDepositParams memory depositParams =  DepositUtils.CreateDepositParams(
-                account, // receiver;
-                address(0), // callbackContract;
-                address(0), // uiFeeReceiver;
-                migrationItem.market, // market;
-                cache.market.longToken, // initialLongToken;
-                cache.market.shortToken, // initialShortToken;
-                new address[](0), // longTokenSwapPath;
-                new address[](0), // shortTokenSwapPath;
+                DepositUtils.CreateDepositParamsAdresses(
+                    account, // receiver;
+                    address(0), // callbackContract;
+                    address(0), // uiFeeReceiver;
+                    migrationItem.market, // market;
+                    cache.market.longToken, // initialLongToken;
+                    cache.market.shortToken, // initialShortToken;
+                    new address[](0), // longTokenSwapPath;
+                    new address[](0) // shortTokenSwapPath;
+                ),
                 migrationItem.minMarketTokens, // minMarketTokens;
                 false, // shouldUnwrapNativeToken;
                 migrationItem.executionFee, // executionFee;
@@ -213,6 +215,7 @@ contract GlpMigrator is ReentrancyGuard, RoleModule {
 
             cache.depositKey = depositHandler.createDeposit(
                 account,
+                0, // srcChainId
                 depositParams
             );
 

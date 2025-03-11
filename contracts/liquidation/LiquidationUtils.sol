@@ -70,12 +70,13 @@ library LiquidationUtils {
             dataStore.getUint(Keys.MAX_CALLBACK_GAS_LIMIT), // callbackGasLimit
             0, // minOutputAmount
             Chain.currentTimestamp(), // updatedAtTime
-            0 // validFromTime
+            0, // validFromTime
+            dataStore.getUint(Keys.positionLastSrcChainId(positionKey)) // srcChainId
         );
 
         Order.Flags memory flags = Order.Flags(
             position.isLong(), // isLong
-            true, // shouldUnwrapNativeToken
+            dataStore.getUint(Keys.positionLastSrcChainId(positionKey)) == 0 ? true : false, // shouldUnwrapNativeToken
             false, // isFrozen
             false // autoCancel
         );

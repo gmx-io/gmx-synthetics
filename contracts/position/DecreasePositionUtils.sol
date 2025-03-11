@@ -215,7 +215,8 @@ library DecreasePositionUtils {
                 params.position,
                 params.market,
                 cache.prices,
-                true // shouldValidateMinCollateralUsd
+                true, // shouldValidateMinCollateralUsd
+                true // forLiquidation
             );
 
             if (!isLiquidatable) {
@@ -272,6 +273,12 @@ library DecreasePositionUtils {
 
             PositionStoreUtils.set(params.contracts.dataStore, params.positionKey, params.position);
         }
+
+        PositionUtils.updatePositionLastSrcChainId(
+            params.contracts.dataStore,
+            params.positionKey,
+            params.order.srcChainId()
+        );
 
         MarketUtils.applyDeltaToCollateralSum(
             params.contracts.dataStore,

@@ -128,6 +128,7 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
 
         return depositHandler.createDeposit(
             account,
+            0, // srcChainId
             params
         );
     }
@@ -166,6 +167,7 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
 
         return withdrawalHandler.createWithdrawal(
             account,
+            0, // srcChainId
             params
         );
     }
@@ -215,6 +217,7 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
 
         return shiftHandler.createShift(
             account,
+            0, // srcChainId
             params
         );
     }
@@ -255,6 +258,7 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
 
         return orderHandler.createOrder(
             account,
+            0, // srcChainId
             params,
             false
         );
@@ -366,7 +370,15 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         address receiver
     ) external payable nonReentrant returns (uint256[] memory) {
         address account = msg.sender;
-        return FeeUtils.batchClaimFundingFees(dataStore, eventEmitter, markets, tokens, receiver, account);
+        return
+            FeeUtils.batchClaimFundingFees(
+                dataStore,
+                eventEmitter,
+                markets,
+                tokens,
+                receiver,
+                account
+            );
     }
 
     function claimCollateral(
@@ -376,7 +388,16 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         address receiver
     ) external payable nonReentrant returns (uint256[] memory) {
         address account = msg.sender;
-        return MarketUtils.batchClaimCollateral(dataStore, eventEmitter, markets, tokens, timeKeys, receiver, account);
+        return
+            MarketUtils.batchClaimCollateral(
+                dataStore,
+                eventEmitter,
+                markets,
+                tokens,
+                timeKeys,
+                receiver,
+                account
+            );
     }
 
     /**
@@ -395,9 +416,15 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         address receiver
     ) external payable nonReentrant returns (uint256[] memory) {
         address account = msg.sender;
-        return ReferralUtils.batchClaimAffiliateRewards(
-            dataStore, eventEmitter, markets, tokens, receiver, account
-        );
+        return
+            ReferralUtils.batchClaimAffiliateRewards(
+                dataStore,
+                eventEmitter,
+                markets,
+                tokens,
+                receiver,
+                account
+            );
     }
 
     function setUiFeeFactor(uint256 uiFeeFactor) external payable nonReentrant {

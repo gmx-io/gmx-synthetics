@@ -38,6 +38,8 @@ library GlvDepositStoreUtils {
 
     bytes32 public constant DATA_LIST = keccak256(abi.encode("DATA_LIST"));
 
+    bytes32 public constant SRC_CHAIN_ID = keccak256(abi.encode("SRC_CHAIN_ID"));
+
     function get(DataStore dataStore, bytes32 key) external view returns (GlvDeposit.Props memory) {
         GlvDeposit.Props memory glvDeposit;
         if (!dataStore.containsBytes32(Keys.GLV_DEPOSIT_LIST, key)) {
@@ -110,6 +112,10 @@ library GlvDepositStoreUtils {
 
         glvDeposit.setCallbackGasLimit(dataStore.getUint(
             keccak256(abi.encode(key, CALLBACK_GAS_LIMIT))
+        ));
+
+        glvDeposit.setSrcChainId(dataStore.getUint(
+            keccak256(abi.encode(key, SRC_CHAIN_ID))
         ));
 
         glvDeposit.setShouldUnwrapNativeToken(dataStore.getBool(
@@ -223,6 +229,11 @@ library GlvDepositStoreUtils {
             glvDeposit.callbackGasLimit()
         );
 
+        dataStore.setUint(
+            keccak256(abi.encode(key, SRC_CHAIN_ID)),
+            glvDeposit.srcChainId()
+        );
+
         dataStore.setBool(
             keccak256(abi.encode(key, SHOULD_UNWRAP_NATIVE_TOKEN)),
             glvDeposit.shouldUnwrapNativeToken()
@@ -320,6 +331,10 @@ library GlvDepositStoreUtils {
 
         dataStore.removeUint(
             keccak256(abi.encode(key, CALLBACK_GAS_LIMIT))
+        );
+
+        dataStore.removeUint(
+            keccak256(abi.encode(key, SRC_CHAIN_ID))
         );
 
         dataStore.removeBool(

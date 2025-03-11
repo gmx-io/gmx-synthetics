@@ -129,7 +129,14 @@ async function main() {
       }
     }
   } else {
-    console.log("NOTE: executed in read-only mode, no transactions were sent");
+    const { marketToken } = await marketFactory.callStatic.createMarket(
+      indexTokenAddress,
+      longTokenAddress,
+      shortTokenAddress,
+      DEFAULT_MARKET_TYPE
+    );
+
+    console.log("NOTE: executed in read-only mode, no transactions were sent, marketToken would be %s", marketToken);
   }
 }
 

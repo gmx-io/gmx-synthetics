@@ -28,6 +28,7 @@ library WithdrawalStoreUtils {
     bytes32 public constant UPDATED_AT_TIME = keccak256(abi.encode("UPDATED_AT_TIME"));
     bytes32 public constant EXECUTION_FEE = keccak256(abi.encode("EXECUTION_FEE"));
     bytes32 public constant CALLBACK_GAS_LIMIT = keccak256(abi.encode("CALLBACK_GAS_LIMIT"));
+    bytes32 public constant SRC_CHAIN_ID = keccak256(abi.encode("SRC_CHAIN_ID"));
 
     bytes32 public constant SHOULD_UNWRAP_NATIVE_TOKEN = keccak256(abi.encode("SHOULD_UNWRAP_NATIVE_TOKEN"));
 
@@ -89,6 +90,10 @@ library WithdrawalStoreUtils {
 
         withdrawal.setCallbackGasLimit(dataStore.getUint(
             keccak256(abi.encode(key, CALLBACK_GAS_LIMIT))
+        ));
+
+        withdrawal.setSrcChainId(dataStore.getUint(
+            keccak256(abi.encode(key, SRC_CHAIN_ID))
         ));
 
         withdrawal.setShouldUnwrapNativeToken(dataStore.getBool(
@@ -178,6 +183,11 @@ library WithdrawalStoreUtils {
             withdrawal.callbackGasLimit()
         );
 
+        dataStore.setUint(
+            keccak256(abi.encode(key, SRC_CHAIN_ID)),
+            withdrawal.srcChainId()
+        );
+
         dataStore.setBool(
             keccak256(abi.encode(key, SHOULD_UNWRAP_NATIVE_TOKEN)),
             withdrawal.shouldUnwrapNativeToken()
@@ -250,6 +260,10 @@ library WithdrawalStoreUtils {
 
         dataStore.removeUint(
             keccak256(abi.encode(key, EXECUTION_FEE))
+        );
+
+        dataStore.removeUint(
+            keccak256(abi.encode(key, SRC_CHAIN_ID))
         );
 
         dataStore.removeUint(

@@ -259,6 +259,8 @@ library Keys {
     bytes32 public constant MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER = keccak256(abi.encode("MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER"));
     // @dev key for the min allowed collateral in USD
     bytes32 public constant MIN_COLLATERAL_USD = keccak256(abi.encode("MIN_COLLATERAL_USD"));
+    // @dev key for the min allowed collateral factor which is using for some new markets to limit allowed leverage
+    bytes32 public constant MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION = keccak256(abi.encode("MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION"));
     // @dev key for the min allowed position size in USD
     bytes32 public constant MIN_POSITION_SIZE_USD = keccak256(abi.encode("MIN_POSITION_SIZE_USD"));
 
@@ -477,8 +479,14 @@ library Keys {
     // @dev key for the buyback withdrawable fees
     bytes32 public constant WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT = keccak256(abi.encode("WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT"));
 
-    // @dev key for user's balance for a source chain, recorded under the user's virtual account
-    bytes32 public constant SOURCE_CHAIN_BALANCE = keccak256(abi.encode("SOURCE_CHAIN_BALANCE"));
+    // @dev key for user's multichain balance
+    bytes32 public constant MULTICHAIN_BALANCE = keccak256(abi.encode("MULTICHAIN_BALANCE"));
+    // @dev key for user's multichain balance
+    bytes32 public constant IS_MULTICHAIN_PROVIDER_ENABLED = keccak256(abi.encode("IS_MULTICHAIN_PROVIDER_ENABLED"));
+    // @dev key for the flag if user's position collateral was used for execution fee
+    bytes32 public constant WAS_POSITION_COLLATERAL_USED_FOR_EXECUTION_FEE = keccak256(abi.encode("WAS_POSITION_COLLATERAL_USED_FOR_EXECUTION_FEE"));
+    // @dev key for the last src chain id from which the user last managed his position
+    bytes32 public constant POSITION_LAST_SRC_CHAIN_ID = keccak256(abi.encode("POSITION_LAST_SRC_CHAIN_ID"));
 
     // @dev key for the maximum length for data list array of bytes32
     bytes32 public constant MAX_DATA_LENGTH = keccak256(abi.encode("MAX_DATA_LENGTH"));
@@ -1084,6 +1092,15 @@ library Keys {
            isLong
        ));
    }
+
+    // @dev the min collateral factor for open interest multiplier key
+    // @param the market for the factor
+    function minCollateralFactorForLiquidationKey(address market) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION,
+            market
+        ));
+    }
 
    // @dev the key for the virtual token id
    // @param the token to get the virtual id for
@@ -2197,14 +2214,43 @@ library Keys {
         ));
     }
 
-    // @dev key for user's balance for a source chain, recorded under the user's virtual account
-    // @param virtualAccount the virtual account for which to retreive the user balance key
-    // @param token the token for which to retreive the user balance key
-    // @return key for a source chain balance for a given user and token
-    function sourceChainBalanceKey(address virtualAccount, address token) internal pure returns (bytes32) {
+    // @dev key for whether a multichain provider is enabled
+    // @param provider the multichain provider
+    // @return key for whether a multichain provider is enabled
+    function isMultichainProviderEnabledKey(address provider) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            SOURCE_CHAIN_BALANCE,
-            virtualAccount,
+            IS_MULTICHAIN_PROVIDER_ENABLED,
+            provider
+        ));
+    }
+
+    // @dev key for the flag if position collateral was used for execution fee
+    // @return key for the flag if position collateral was used for execution fee
+    function wasPositionCollateralUsedForExecutionFeeKey(bytes32 orderKey) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            WAS_POSITION_COLLATERAL_USED_FOR_EXECUTION_FEE,
+            orderKey
+        ));
+    }
+
+    // @dev key for the last src chain id from which the user last managed his position
+    // @param positionKey the position key for which to retreive the last src chain id
+    // @return key for the last src chain id from which the user last managed his position
+    function positionLastSrcChainId(bytes32 positionKey) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            POSITION_LAST_SRC_CHAIN_ID,
+            positionKey
+        ));
+    }
+
+    // @dev key for user's multichain balance
+    // @param account the account for which to retreive the user balance key
+    // @param token the token for which to retreive the user balance key
+    // @return key for multichain balance for a given user and token
+    function multichainBalanceKey(address account, address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            MULTICHAIN_BALANCE,
+            account,
             token
         ));
     }

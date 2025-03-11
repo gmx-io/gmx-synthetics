@@ -149,6 +149,8 @@ library AdlUtils {
             new address[](0) // swapPath
         );
 
+        uint256 lastSrcChainId = params.dataStore.getUint(Keys.positionLastSrcChainId(positionKey));
+
         // no slippage is set for this order, it may be preferrable for ADL orders
         // to be executed, in case of large price impact, the user could be refunded
         // through a protocol fund if required, this amount could later be claimed
@@ -176,12 +178,13 @@ library AdlUtils {
             params.dataStore.getUint(Keys.MAX_CALLBACK_GAS_LIMIT), // callbackGasLimit
             0, // minOutputAmount
             params.updatedAtTime, // updatedAtTime
-            0 // validFromTime
+            0, // validFromTime
+            lastSrcChainId // srcChainId
         );
 
         Order.Flags memory flags = Order.Flags(
             position.isLong(), // isLong
-            true, // shouldUnwrapNativeToken
+            lastSrcChainId == 0 ? true : false, // shouldUnwrapNativeToken
             false, // isFrozen
             false // autoCancel
         );

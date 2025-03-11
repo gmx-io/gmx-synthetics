@@ -18,10 +18,13 @@ describe("Relay signatures", () => {
     orderHandler,
     orderVault,
     router,
+    roleStore,
     marketStoreUtils,
     orderStoreUtils,
     swapUtils,
-    mockContract;
+    relayUtils,
+    mockContract,
+    marketUtils;
 
   beforeEach(async () => {
     fixture = await deployFixture();
@@ -30,12 +33,15 @@ describe("Relay signatures", () => {
       dataStore,
       orderVault,
       router,
+      roleStore,
       eventEmitter,
       oracle,
       orderHandler,
       marketStoreUtils,
       orderStoreUtils,
       swapUtils,
+      relayUtils,
+      marketUtils,
     } = fixture.contracts);
   });
 
@@ -44,6 +50,7 @@ describe("Relay signatures", () => {
       "MockGelatoRelayRouter",
       [
         router.address,
+        roleStore.address,
         dataStore.address,
         eventEmitter.address,
         oracle.address,
@@ -53,9 +60,10 @@ describe("Relay signatures", () => {
       ],
       {
         libraries: {
-          MarketStoreUtils: marketStoreUtils.address,
           OrderStoreUtils: orderStoreUtils.address,
           SwapUtils: swapUtils.address,
+          RelayUtils: relayUtils.address,
+          MarketUtils: marketUtils.address,
         },
       }
     );

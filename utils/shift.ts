@@ -39,6 +39,7 @@ export async function createShift(fixture, overrides: any = {}) {
   const minMarketTokens = overrides.minMarketTokens || bigNumberify(0);
   const executionFee = overrides.executionFee || "1000000000000000";
   const callbackGasLimit = overrides.callbackGasLimit || bigNumberify(0);
+  const srcChainId = overrides.srcChainId || bigNumberify(0);
   const dataList = overrides.dataList || [];
 
   await wnt.mint(shiftVault.address, executionFee);
@@ -47,11 +48,13 @@ export async function createShift(fixture, overrides: any = {}) {
   await marketToken.connect(account).transfer(shiftVault.address, marketTokenAmount);
 
   const params = {
-    receiver: receiver.address,
-    callbackContract: callbackContract.address,
-    uiFeeReceiver: uiFeeReceiver.address,
-    fromMarket: fromMarket.marketToken,
-    toMarket: toMarket.marketToken,
+    addresses: {
+      receiver: receiver.address,
+      callbackContract: callbackContract.address,
+      uiFeeReceiver: uiFeeReceiver.address,
+      fromMarket: fromMarket.marketToken,
+      toMarket: toMarket.marketToken,
+    },
     minMarketTokens,
     executionFee,
     callbackGasLimit,
@@ -59,7 +62,7 @@ export async function createShift(fixture, overrides: any = {}) {
   };
 
   const txReceipt = await logGasUsage({
-    tx: shiftHandler.connect(sender).createShift(account.address, params),
+    tx: shiftHandler.connect(sender).createShift(account.address, srcChainId, params),
     label: overrides.gasUsageLabel,
   });
 

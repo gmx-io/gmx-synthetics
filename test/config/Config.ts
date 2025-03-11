@@ -70,10 +70,6 @@ describe("Config", () => {
   });
 
   it("allows LIMITED_CONFIG_KEEPER to set allowedLimitedBaseKeys", async () => {
-    expect(await dataStore.getAddress(keys.HOLDING_ADDRESS)).eq(AddressZero);
-    await config.connect(user0).setAddress(keys.HOLDING_ADDRESS, "0x", user1.address);
-    expect(await dataStore.getAddress(keys.HOLDING_ADDRESS)).eq(user1.address);
-
     await expect(config.connect(user2).setAddress(keys.HOLDING_ADDRESS, "0x", user2.address))
       .to.be.revertedWithCustomError(errorsContract, "InvalidBaseKey")
       .withArgs(keys.HOLDING_ADDRESS);
@@ -191,11 +187,6 @@ describe("Config", () => {
     };
 
     const list = [
-      {
-        key: keys.HOLDING_ADDRESS,
-        initial: AddressZero,
-        type: "Address",
-      },
       {
         key: keys.MIN_HANDLE_EXECUTION_ERROR_GAS,
         initial: 1_200_000,
@@ -530,5 +521,38 @@ describe("Config", () => {
         keys.claimableCollateralFactorForAccountKey(ethUsdMarket.marketToken, wnt.address, 100, user1.address)
       )
     ).eq(expandDecimals(1, 30));
+  });
+
+  it("validates reserve factors", async () => {
+    const ten = expandDecimals(10, 30);
+
+    await expect(
+      config.setUint(
+        keys.RESERVE_FACTOR,
+        encodeData(["address", "bool"], [ethUsdMarket.marketToken, false]),
+        ten.add("1")
+      )
+    ).to.be.revertedWithCustomError(errorsContract, "ConfigValueExceedsAllowedRange");
+
+    await config.setUint(keys.RESERVE_FACTOR, encodeData(["address", "bool"], [ethUsdMarket.marketToken, false]), ten);
+
+    const reserveFactorKey = keys.reserveFactorKey(ethUsdMarket.marketToken, false);
+    expect(await dataStore.getUint(reserveFactorKey)).eq(ten);
+
+    await expect(
+      config.setUint(
+        keys.OPEN_INTEREST_RESERVE_FACTOR,
+        encodeData(["address", "bool"], [ethUsdMarket.marketToken, false]),
+        ten.add("1")
+      )
+    ).to.be.revertedWithCustomError(errorsContract, "ConfigValueExceedsAllowedRange");
+
+    await config.setUint(
+      keys.OPEN_INTEREST_RESERVE_FACTOR,
+      encodeData(["address", "bool"], [ethUsdMarket.marketToken, false]),
+      ten
+    );
+    const oiReserveFactorKey = keys.openInterestReserveFactorKey(ethUsdMarket.marketToken, false);
+    expect(await dataStore.getUint(oiReserveFactorKey)).eq(ten);
   });
 });

@@ -24,6 +24,7 @@ import "../callback/CallbackUtils.sol";
 import "../utils/Array.sol";
 import "../utils/AccountUtils.sol";
 import "../referral/ReferralUtils.sol";
+import "../multichain/MultichainUtils.sol";
 
 // @title OrderUtils
 // @dev Library for order functions
@@ -36,6 +37,7 @@ library OrderUtils {
     struct CancelOrderParams {
         DataStore dataStore;
         EventEmitter eventEmitter;
+        MultichainVault multichainVault;
         OrderVault orderVault;
         bytes32 key;
         address keeper;
@@ -55,6 +57,11 @@ library OrderUtils {
         uint256 executionFeeDiff;
     }
 
+    struct FreezeOrderCache {
+        address executionFeeReceiver;
+        uint256 refundFeeAmount;
+    }
+
     // @dev creates an order in the order store
     // @param dataStore DataStore
     // @param eventEmitter EventEmitter
@@ -68,6 +75,7 @@ library OrderUtils {
         OrderVault orderVault,
         IReferralStorage referralStorage,
         address account,
+        uint256 srcChainId,
         IBaseOrderUtils.CreateOrderParams memory params,
         bool shouldCapMaxExecutionFee
     ) external returns (bytes32) {
@@ -154,6 +162,7 @@ library OrderUtils {
         order.setCallbackGasLimit(params.numbers.callbackGasLimit);
         order.setMinOutputAmount(params.numbers.minOutputAmount);
         order.setValidFromTime(params.numbers.validFromTime);
+        order.setSrcChainId(srcChainId);
         order.setIsLong(params.isLong);
         order.setShouldUnwrapNativeToken(params.shouldUnwrapNativeToken);
         order.setAutoCancel(params.autoCancel);
@@ -172,9 +181,9 @@ library OrderUtils {
         uint256 executionFee;
         (executionFee, cache.executionFeeDiff) = GasUtils.validateAndCapExecutionFee(
             dataStore,
-            cache.estimatedGasLimit,
+            GasUtils.estimateExecuteOrderGasLimit(dataStore, order), // estimatedGasLimit
             params.numbers.executionFee,
-            cache.oraclePriceCount,
+            GasUtils.estimateOrderOraclePriceCount(params.addresses.swapPath.length), // oraclePriceCount
             shouldCapMaxExecutionFee
         );
         order.setExecutionFee(executionFee);
@@ -262,10 +271,19 @@ library OrderUtils {
             executionFeeReceiver = order.receiver();
         }
 
-        EventUtils.EventLogData memory eventData;
-        CallbackUtils.afterOrderCancellation(params.key, order, eventData);
+        {
+            EventUtils.EventLogData memory eventData;
+            CallbackUtils.afterOrderCancellation(params.key, order, eventData);
+        }
 
-        GasUtils.payExecutionFee(
+        if (order.srcChainId() != 0) {
+            executionFeeReceiver = address(params.multichainVault);
+        }
+        if (params.dataStore.getBool(Keys.wasPositionCollateralUsedForExecutionFeeKey(params.key))) {
+            executionFeeReceiver = params.dataStore.getAddress(Keys.HOLDING_ADDRESS);
+        }
+
+        uint256 refundFeeAmount = GasUtils.payExecutionFee(
             params.dataStore,
             params.eventEmitter,
             params.orderVault,
@@ -277,6 +295,10 @@ library OrderUtils {
             params.keeper,
             executionFeeReceiver
         );
+        if (refundFeeAmount > 0 && executionFeeReceiver == address(params.multichainVault)) {
+            address wnt = params.dataStore.getAddress(Keys.WNT);
+            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, wnt, order.receiver(), 0); // srcChainId is the current block.chainId
+        }
     }
 
     // @dev freezes an order
@@ -290,6 +312,7 @@ library OrderUtils {
     function freezeOrder(
         DataStore dataStore,
         EventEmitter eventEmitter,
+        MultichainVault multichainVault,
         OrderVault orderVault,
         bytes32 key,
         address keeper,
@@ -313,10 +336,22 @@ library OrderUtils {
 
         OrderEventUtils.emitOrderFrozen(eventEmitter, key, order.account(), reason, reasonBytes);
 
-        EventUtils.EventLogData memory eventData;
-        CallbackUtils.afterOrderFrozen(key, order, eventData);
+        {
+            EventUtils.EventLogData memory eventData;
+            CallbackUtils.afterOrderFrozen(key, order, eventData);
+        }
 
-        GasUtils.payExecutionFee(
+        FreezeOrderCache memory cache;
+
+        cache.executionFeeReceiver = order.receiver();
+        if (order.srcChainId() != 0) {
+            cache.executionFeeReceiver = address(multichainVault);
+        }
+        if (dataStore.getBool(Keys.wasPositionCollateralUsedForExecutionFeeKey(key))) {
+            cache.executionFeeReceiver = dataStore.getAddress(Keys.HOLDING_ADDRESS);
+        }
+
+        cache.refundFeeAmount = GasUtils.payExecutionFee(
             dataStore,
             eventEmitter,
             orderVault,
@@ -326,13 +361,18 @@ library OrderUtils {
             startingGas,
             GasUtils.estimateOrderOraclePriceCount(order.swapPath().length),
             keeper,
-            order.receiver()
+            cache.executionFeeReceiver
         );
+        if (cache.refundFeeAmount > 0 && cache.executionFeeReceiver == address(multichainVault)) {
+            address wnt = dataStore.getAddress(Keys.WNT);
+            MultichainUtils.recordTransferIn(dataStore, eventEmitter, multichainVault, wnt, order.receiver(), 0); // srcChainId is the current block.chainId
+        }
     }
 
     function clearAutoCancelOrders(
         DataStore dataStore,
         EventEmitter eventEmitter,
+        MultichainVault multichainVault,
         OrderVault orderVault,
         bytes32 positionKey,
         address keeper
@@ -344,6 +384,7 @@ library OrderUtils {
                 CancelOrderParams(
                     dataStore,
                     eventEmitter,
+                    multichainVault,
                     orderVault,
                     orderKeys[i],
                     keeper, // keeper

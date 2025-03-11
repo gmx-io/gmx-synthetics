@@ -15,6 +15,13 @@ import "./IGasFeeCallbackReceiver.sol";
 import "./IGlvDepositCallbackReceiver.sol";
 import "./IGlvWithdrawalCallbackReceiver.sol";
 
+import "../order/OrderEventUtils.sol";
+import "../withdrawal/WithdrawalEventUtils.sol";
+import "../deposit/DepositEventUtils.sol";
+import "../shift/ShiftEventUtils.sol";
+import "../glv/glvDeposit/GlvDepositEventUtils.sol";
+import "../glv/glvWithdrawal/GlvWithdrawalEventUtils.sol";
+
 // @title CallbackUtils
 // @dev most features require a two step process to complete
 // the user first sends a request transaction, then a second transaction is sent
@@ -64,7 +71,7 @@ library CallbackUtils {
     // executions to fail
     // @param dataStore DataStore
     // @param callbackGasLimit the callback gas limit
-    function validateCallbackGasLimit(DataStore dataStore, uint256 callbackGasLimit) internal view {
+    function validateCallbackGasLimit(DataStore dataStore, uint256 callbackGasLimit) external view {
         uint256 maxCallbackGasLimit = dataStore.getUint(Keys.MAX_CALLBACK_GAS_LIMIT);
         if (callbackGasLimit > maxCallbackGasLimit) {
             revert Errors.MaxCallbackGasLimitExceeded(callbackGasLimit, maxCallbackGasLimit);
@@ -82,7 +89,7 @@ library CallbackUtils {
         dataStore.setAddress(Keys.savedCallbackContract(account, market), callbackContract);
     }
 
-    function getSavedCallbackContract(DataStore dataStore, address account, address market) internal view returns (address) {
+    function getSavedCallbackContract(DataStore dataStore, address account, address market) external view returns (address) {
         return dataStore.getAddress(Keys.savedCallbackContract(account, market));
     }
 
@@ -116,14 +123,16 @@ library CallbackUtils {
         bytes32 key,
         Deposit.Props memory deposit,
         EventUtils.EventLogData memory eventData
-    ) internal {
+    ) external {
         if (!isValidCallbackContract(deposit.callbackContract())) { return; }
 
         validateGasLeftForCallback(deposit.callbackGasLimit());
 
+        EventUtils.EventLogData memory depositData = DepositEventUtils.createEventData(deposit, Deposit.DepositType.Normal);
+
         try IDepositCallbackReceiver(deposit.callbackContract()).afterDepositExecution{ gas: deposit.callbackGasLimit() }(
             key,
-            deposit,
+            depositData,
             eventData
         ) {
         } catch {
@@ -138,14 +147,16 @@ library CallbackUtils {
         bytes32 key,
         Deposit.Props memory deposit,
         EventUtils.EventLogData memory eventData
-    ) internal {
+    ) external {
         if (!isValidCallbackContract(deposit.callbackContract())) { return; }
 
         validateGasLeftForCallback(deposit.callbackGasLimit());
 
+        EventUtils.EventLogData memory depositData = DepositEventUtils.createEventData(deposit, Deposit.DepositType.Normal);
+
         try IDepositCallbackReceiver(deposit.callbackContract()).afterDepositCancellation{ gas: deposit.callbackGasLimit() }(
             key,
-            deposit,
+            depositData,
             eventData
         ) {
         } catch {
@@ -160,14 +171,16 @@ library CallbackUtils {
         bytes32 key,
         Withdrawal.Props memory withdrawal,
         EventUtils.EventLogData memory eventData
-    ) internal {
+    ) external {
         if (!isValidCallbackContract(withdrawal.callbackContract())) { return; }
 
         validateGasLeftForCallback(withdrawal.callbackGasLimit());
 
+        EventUtils.EventLogData memory withdrawalData = WithdrawalEventUtils.createEventData(withdrawal, Withdrawal.WithdrawalType.Normal);
+
         try IWithdrawalCallbackReceiver(withdrawal.callbackContract()).afterWithdrawalExecution{ gas: withdrawal.callbackGasLimit() }(
             key,
-            withdrawal,
+            withdrawalData,
             eventData
         ) {
         } catch {
@@ -182,14 +195,16 @@ library CallbackUtils {
         bytes32 key,
         Withdrawal.Props memory withdrawal,
         EventUtils.EventLogData memory eventData
-    ) internal {
+    ) external {
         if (!isValidCallbackContract(withdrawal.callbackContract())) { return; }
 
         validateGasLeftForCallback(withdrawal.callbackGasLimit());
 
+        EventUtils.EventLogData memory withdrawalData = WithdrawalEventUtils.createEventData(withdrawal, Withdrawal.WithdrawalType.Normal);
+
         try IWithdrawalCallbackReceiver(withdrawal.callbackContract()).afterWithdrawalCancellation{ gas: withdrawal.callbackGasLimit() }(
             key,
-            withdrawal,
+            withdrawalData,
             eventData
         ) {
         } catch {
@@ -201,14 +216,16 @@ library CallbackUtils {
         bytes32 key,
         Shift.Props memory shift,
         EventUtils.EventLogData memory eventData
-    ) internal {
+    ) external {
         if (!isValidCallbackContract(shift.callbackContract())) { return; }
 
         validateGasLeftForCallback(shift.callbackGasLimit());
 
+        EventUtils.EventLogData memory shiftData = ShiftEventUtils.createEventData(shift);
+
         try IShiftCallbackReceiver(shift.callbackContract()).afterShiftExecution{ gas: shift.callbackGasLimit() }(
             key,
-            shift,
+            shiftData,
             eventData
         ) {
         } catch {
@@ -219,14 +236,16 @@ library CallbackUtils {
         bytes32 key,
         Shift.Props memory shift,
         EventUtils.EventLogData memory eventData
-    ) internal {
+    ) external {
         if (!isValidCallbackContract(shift.callbackContract())) { return; }
 
         validateGasLeftForCallback(shift.callbackGasLimit());
 
+        EventUtils.EventLogData memory shiftData = ShiftEventUtils.createEventData(shift);
+
         try IShiftCallbackReceiver(shift.callbackContract()).afterShiftCancellation{ gas: shift.callbackGasLimit() }(
             key,
-            shift,
+            shiftData,
             eventData
         ) {
         } catch {
@@ -244,14 +263,16 @@ library CallbackUtils {
         bytes32 key,
         Order.Props memory order,
         EventUtils.EventLogData memory eventData
-    ) internal {
+    ) external {
         if (!isValidCallbackContract(order.callbackContract())) { return; }
 
         validateGasLeftForCallback(order.callbackGasLimit());
 
+        EventUtils.EventLogData memory orderData = OrderEventUtils.createEventData(order);
+
         try IOrderCallbackReceiver(order.callbackContract()).afterOrderExecution{ gas: order.callbackGasLimit() }(
             key,
-            order,
+            orderData,
             eventData
         ) {
         } catch {
@@ -266,14 +287,16 @@ library CallbackUtils {
         bytes32 key,
         Order.Props memory order,
         EventUtils.EventLogData memory eventData
-    ) internal {
+    ) external {
         if (!isValidCallbackContract(order.callbackContract())) { return; }
 
         validateGasLeftForCallback(order.callbackGasLimit());
 
+        EventUtils.EventLogData memory orderData = OrderEventUtils.createEventData(order);
+
         try IOrderCallbackReceiver(order.callbackContract()).afterOrderCancellation{ gas: order.callbackGasLimit() }(
             key,
-            order,
+            orderData,
             eventData
         ) {
         } catch {
@@ -288,14 +311,16 @@ library CallbackUtils {
         bytes32 key,
         Order.Props memory order,
         EventUtils.EventLogData memory eventData
-    ) internal {
+    ) external {
         if (!isValidCallbackContract(order.callbackContract())) { return; }
 
         validateGasLeftForCallback(order.callbackGasLimit());
 
+        EventUtils.EventLogData memory orderData = OrderEventUtils.createEventData(order);
+
         try IOrderCallbackReceiver(order.callbackContract()).afterOrderFrozen{ gas: order.callbackGasLimit() }(
             key,
-            order,
+            orderData,
             eventData
         ) {
         } catch {
@@ -310,16 +335,18 @@ library CallbackUtils {
         bytes32 key,
         GlvDeposit.Props memory glvDeposit,
         EventUtils.EventLogData memory eventData
-    ) internal {
+    ) external {
         if (!isValidCallbackContract(glvDeposit.callbackContract())) {
             return;
         }
 
         validateGasLeftForCallback(glvDeposit.callbackGasLimit());
 
+        EventUtils.EventLogData memory glvData = GlvDepositEventUtils.createEventData(glvDeposit);
+
         try IGlvDepositCallbackReceiver(glvDeposit.callbackContract()).afterGlvDepositExecution{ gas: glvDeposit.callbackGasLimit() }(
             key,
-            glvDeposit,
+            glvData,
             eventData
         ) {
         } catch {
@@ -334,14 +361,16 @@ library CallbackUtils {
         bytes32 key,
         GlvDeposit.Props memory glvDeposit,
         EventUtils.EventLogData memory eventData
-    ) internal {
+    ) external {
         if (!isValidCallbackContract(glvDeposit.callbackContract())) { return; }
 
         validateGasLeftForCallback(glvDeposit.callbackGasLimit());
 
+        EventUtils.EventLogData memory glvData = GlvDepositEventUtils.createEventData(glvDeposit);
+
         try IGlvDepositCallbackReceiver(glvDeposit.callbackContract()).afterGlvDepositCancellation{ gas: glvDeposit.callbackGasLimit() }(
             key,
-            glvDeposit,
+            glvData,
             eventData
         ) {
         } catch {
@@ -356,14 +385,16 @@ library CallbackUtils {
         bytes32 key,
         GlvWithdrawal.Props memory glvWithdrawal,
         EventUtils.EventLogData memory eventData
-    ) internal {
+    ) external {
         if (!isValidCallbackContract(glvWithdrawal.callbackContract())) { return; }
 
         validateGasLeftForCallback(glvWithdrawal.callbackGasLimit());
 
+        EventUtils.EventLogData memory glvData = GlvWithdrawalEventUtils.createEventData(glvWithdrawal);
+
         try IGlvWithdrawalCallbackReceiver(glvWithdrawal.callbackContract()).afterGlvWithdrawalExecution{ gas: glvWithdrawal.callbackGasLimit() }(
             key,
-            glvWithdrawal,
+            glvData,
             eventData
         ) {
         } catch {
@@ -378,14 +409,16 @@ library CallbackUtils {
         bytes32 key,
         GlvWithdrawal.Props memory glvWithdrawal,
         EventUtils.EventLogData memory eventData
-    ) internal {
+    ) external {
         if (!isValidCallbackContract(glvWithdrawal.callbackContract())) { return; }
 
         validateGasLeftForCallback(glvWithdrawal.callbackGasLimit());
 
+        EventUtils.EventLogData memory glvData = GlvWithdrawalEventUtils.createEventData(glvWithdrawal);
+
         try IGlvWithdrawalCallbackReceiver(glvWithdrawal.callbackContract()).afterGlvWithdrawalCancellation{ gas: glvWithdrawal.callbackGasLimit() }(
             key,
-            glvWithdrawal,
+            glvData,
             eventData
         ) {
         } catch {
@@ -395,7 +428,7 @@ library CallbackUtils {
 
     // @dev validates that the given address is a contract
     // @param callbackContract the contract to call
-    function isValidCallbackContract(address callbackContract) internal view returns (bool) {
+    function isValidCallbackContract(address callbackContract) public view returns (bool) {
         if (callbackContract == address(0)) { return false; }
         if (!callbackContract.isContract()) { return false; }
 

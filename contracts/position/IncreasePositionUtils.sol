@@ -151,6 +151,12 @@ library IncreasePositionUtils {
 
         PositionStoreUtils.set(params.contracts.dataStore, params.positionKey, params.position);
 
+        PositionUtils.updatePositionLastSrcChainId(
+            params.contracts.dataStore,
+            params.positionKey,
+            params.order.srcChainId()
+        );
+
         PositionUtils.updateOpenInterest(
             params,
             params.order.sizeDeltaUsd().toInt256(),
