@@ -114,7 +114,9 @@ async function validateRoles(contractInfo: ContractInfo) {
   const { requiredRolesForContracts } = await hre.gmx.getRoles();
   for (const signalledRole of contractInfo.signalledRoles) {
     if (!(await checkRole(contractInfo.name, contractInfo.address, signalledRole, requiredRolesForContracts))) {
-      throw new Error(`Role ${signalledRole} ${roleLabels[signalledRole]} is not approved for ${contractInfo.name}!`);
+      throw new Error(
+        `Role ${signalledRole} ${roleLabels[signalledRole]} is not approved for ${contractInfo.name} ${contractInfo.address}!`
+      );
     }
   }
   console.log(`✅ Roles for ${contractInfo.name} validated`);
