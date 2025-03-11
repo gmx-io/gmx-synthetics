@@ -115,7 +115,7 @@ async function extractRolesFromTx(txReceipt: TransactionReceipt): Promise<Contra
         contractInfos.get(signal.account).signalledRoles.push(signal.roleKey);
       } else {
         contractInfos.set(signal.account, {
-          address: signal.account,
+          address: signal.account.toLowerCase(),
           name: null,
           isCodeValidated: false,
           signalledRoles: [signal.roleKey],
