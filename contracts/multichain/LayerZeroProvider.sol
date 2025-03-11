@@ -75,43 +75,58 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         IERC20(token).transfer(to, amount);
     }
 
-    function bridgeOut(
-        address _stargate,
-        address account,
-        address token,
-        uint256 amount,
-        uint256 srcChainId,
-        bytes calldata data
-    ) external onlyController {
-        IERC20(token).approve(_stargate, amount);
+    function bridgeOut(IMultichainProvider.BridgeOutParams memory params) external onlyController {
+        IERC20(params.token).approve(params.provider, params.amount);
 
-        IStargate stargate = IStargate(_stargate);
+        IStargate stargate = IStargate(params.provider);
 
         (uint256 valueToSend, SendParam memory sendParam, MessagingFee memory messagingFee) = prepareSend(
             stargate,
-            amount,
-            account,
-            abi.decode(data, (uint32)), // dstEid
+            params.amount,
+            params.account,
+            abi.decode(params.data, (uint32)), // dstEid
             new bytes(0), // _extraOptions
             new bytes(0) // _composeMsg
         );
 
-        // transfer amount + bridging fee from user's multichain balance into this contract
+        address wnt = dataStore.getAddress(Keys.WNT);
+
+        // transferOut bridging fee amount of wnt from user's multichain balance into this contract
         MultichainUtils.transferOut(
             dataStore,
             eventEmitter,
             multichainVault,
-            token,
-            account,
+            wnt, // token
+            params.account,
             address(this), // receiver
-            valueToSend, // amount + bridging fee
-            srcChainId
+            valueToSend, // bridging fee amount
+            params.srcChainId
+        );
+
+        // unwrap wnt to native token and send it into this contract (to pay the bridging fee)
+        TokenUtils.withdrawAndSendNativeToken(
+            dataStore,
+            wnt,
+            address(this), // receiver
+            valueToSend // amount
+        );
+
+        // transferOut amount of tokens from user's multichain balance into this contract
+        MultichainUtils.transferOut(
+            dataStore,
+            eventEmitter,
+            multichainVault,
+            params.token, // token
+            params.account,
+            address(this), // receiver
+            params.amount, // amount
+            params.srcChainId
         );
 
         /*(MessagingReceipt memory msgReceipt, OFTReceipt memory oftReceipt) =*/ stargate.send{ value: valueToSend }(
             sendParam,
             messagingFee,
-            account
+            params.account
         );
     }
 
@@ -143,4 +158,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             valueToSend += sendParam.amountLD;
         }
     }
+
+    /// Used to accept ETH when unwrapping WNT
+    receive() external payable {}
 }
