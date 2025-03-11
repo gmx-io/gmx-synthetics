@@ -111,6 +111,13 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             valueToSend // amount
         );
 
+        // if the above native token transfer failed, it re-wraps the token and sends it to the receiver (i.e. this contract)
+        // check if there are any remaining wnt tokens in this contract and transfer them to user's multichain balance
+        if (IERC20(wnt).balanceOf(address(this)) > 0) {
+            _transferToVault(wnt, address(multichainVault));
+            MultichainUtils.recordBridgeIn(dataStore, eventEmitter, multichainVault, this, wnt, params.account, 0 /*srcChainId*/);
+        }
+
         // transferOut amount of tokens from user's multichain balance into this contract
         MultichainUtils.transferOut(
             dataStore,
