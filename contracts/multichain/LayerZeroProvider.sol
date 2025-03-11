@@ -117,7 +117,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             wnt, // token
             params.account,
             address(this), // receiver
-            valueToSend, // bridging fee amount
+            valueToSend, // bridge out fee
             params.srcChainId
         );
 
@@ -132,7 +132,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         );
 
         // if the above native token transfer failed, it re-wraps the token and sends it to the receiver (i.e. this contract)
-        // check if there are any remaining wnt tokens in this contract and transfer them to user's multichain balance
+        // check if wnt was send to this contract due to un-wrapping and transfer it to user's multichain balance
         if (IERC20(wnt).balanceOf(address(this)) > initialWntBalance) {
             _transferToVault(wnt, address(multichainVault));
             MultichainUtils.recordBridgeIn(dataStore, eventEmitter, multichainVault, this, wnt, params.account, 0 /*srcChainId*/);
@@ -144,10 +144,10 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             dataStore,
             eventEmitter,
             multichainVault,
-            params.token, // token
+            params.token,
             params.account,
             address(this), // receiver
-            params.amount, // amount
+            params.amount,
             params.srcChainId
         );
 
@@ -187,6 +187,6 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         }
     }
 
-    /// Used to accept ETH when unwrapping WNT
+    /// @dev Accept ETH when unwrapping WNT
     receive() external payable {}
 }
