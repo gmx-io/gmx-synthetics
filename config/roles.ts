@@ -324,6 +324,19 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
     },
   };
 
+  // normalize addresses
+  for (const rolesForNetwork of Object.values(roles)) {
+    for (const accounts of Object.values(rolesForNetwork)) {
+      for (const account of Object.keys(accounts)) {
+        const checksumAccount = ethers.utils.getAddress(account);
+        if (account !== checksumAccount) {
+          accounts[checksumAccount] = accounts[account];
+          delete accounts[account];
+        }
+      }
+    }
+  }
+
   return {
     roles: roles[hre.network.name],
     requiredRolesForContracts,
