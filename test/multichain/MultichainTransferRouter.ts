@@ -7,6 +7,7 @@ import * as keys from "../../utils/keys";
 import { sendBridgeOut } from "../../utils/relay/multichain";
 import { GELATO_RELAY_ADDRESS } from "../../utils/relay/addresses";
 import { mintAndBridge } from "./MultichainRouter";
+import { impersonateAccount, setBalance } from "@nomicfoundation/hardhat-network-helpers";
 
 describe("MultichainTransferRouter", () => {
   let fixture;
@@ -85,19 +86,22 @@ describe("MultichainTransferRouter", () => {
   describe("bridgeOut", () => {
     let relaySigner;
 
-    const feeAmount = expandDecimals(6, 15);
-    const bridgeAmount = expandDecimals(1000, 6);
+    const feeAmount = expandDecimals(3, 15);
+    const relayFeeAmount = expandDecimals(2, 15);
+    const bridgeOutAmount = expandDecimals(1000, 6);
 
     let defaultBridgeOutParams;
     beforeEach(async () => {
       defaultBridgeOutParams = {
         token: usdc.address,
-        amount: bridgeAmount,
+        amount: bridgeOutAmount,
       };
     });
 
     let bridgeOutParams: Parameters<typeof sendBridgeOut>[0];
     beforeEach(async () => {
+      await impersonateAccount(GELATO_RELAY_ADDRESS);
+      await setBalance(GELATO_RELAY_ADDRESS, expandDecimals(1, 16)); // ETH to pay tx fees
       relaySigner = await hre.ethers.getSigner(GELATO_RELAY_ADDRESS);
 
       bridgeOutParams = {
@@ -110,7 +114,7 @@ describe("MultichainTransferRouter", () => {
         },
         provider: mockStargatePool.address,
         account: user1.address,
-        data: "0x", // e.g. Eid
+        data: ethers.utils.defaultAbiCoder.encode(["uint32"], [1]), // dstEid = 1 (destination endpoint ID)
         params: defaultBridgeOutParams,
         deadline: 9999999999,
         srcChainId: chainId, // 0 means non-multichain action
@@ -118,22 +122,40 @@ describe("MultichainTransferRouter", () => {
         relayRouter: multichainTransferRouter,
         chainId,
         relayFeeToken: wnt.address,
-        relayFeeAmount: feeAmount,
+        relayFeeAmount: relayFeeAmount,
       };
     });
 
-    // TODO: mock StargatePool and enable bridging out test
-    it.skip("bridgeOut", async () => {
+    it("bridgeOut", async () => {
       await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePool.address), true);
-      await mintAndBridge(fixture, { account: user1, token: usdc, tokenAmount: bridgeAmount });
+      await mintAndBridge(fixture, { account: user1, token: usdc, tokenAmount: bridgeOutAmount });
+      const bridgeOutFee = await mockStargatePool.BRIDGE_OUT_FEE();
+      await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: feeAmount.add(bridgeOutFee) });
 
-      expect(await usdc.balanceOf(user1.address)).eq(0);
-      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(bridgeAmount);
+      expect(await usdc.balanceOf(multichainVault.address)).eq(bridgeOutAmount);
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(bridgeOutAmount); // 1000 USDC
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(
+        feeAmount.add(bridgeOutFee)
+      );
+      expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).eq(0);
 
       await sendBridgeOut(bridgeOutParams);
 
-      expect(await usdc.balanceOf(user1.address)).eq(bridgeAmount);
-      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0);
+      // After bridging out:
+      // 1. The relay fee was sent to the relayer
+      expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).eq(relayFeeAmount);
+
+      // 2. User's multichain balance was decreased
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0); // 0 USDC
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(
+        feeAmount.sub(relayFeeAmount)
+      ); // residualFee
+
+      // 3. MultichainVault no longer has the tokens
+      expect(await usdc.balanceOf(multichainVault.address)).eq(0);
+
+      // 4. The tokens were sent to the user on the destination chain (mocked by sending to user1)
+      expect(await usdc.balanceOf(user1.address)).eq(bridgeOutAmount);
     });
   });
 });
