@@ -2563,11 +2563,11 @@ const config: {
 
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
-      maxOpenInterest: decimalToFloat(900_000),
-      maxPoolUsdForDeposit: decimalToFloat(1_500_000),
+      maxOpenInterest: decimalToFloat(1_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(2_000_000),
 
-      maxLongTokenPoolAmount: expandDecimals(780, 18),
-      maxShortTokenPoolAmount: expandDecimals(1_800_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(1250, 18),
+      maxShortTokenPoolAmount: expandDecimals(2_500_000, 6),
     },
     {
       tokens: { indexToken: "VIRTUAL", longToken: "WBTC.e", shortToken: "USDC" },
