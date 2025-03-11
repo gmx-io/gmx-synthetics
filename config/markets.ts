@@ -2391,11 +2391,11 @@ const config: {
 
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
-      maxOpenInterest: decimalToFloat(500_000),
-      maxPoolUsdForDeposit: decimalToFloat(750_000), // 1.5x the max open interest
+      maxOpenInterest: decimalToFloat(750_000),
+      maxPoolUsdForDeposit: decimalToFloat(1_000_000),
 
-      maxLongTokenPoolAmount: expandDecimals(300, 18), // ~1M USD (2x the max open interest)
-      maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x the max open interest)
+      maxLongTokenPoolAmount: expandDecimals(850, 18),
+      maxShortTokenPoolAmount: expandDecimals(1_300_000, 6),
     },
     {
       tokens: { indexToken: "ENA", longToken: "WETH", shortToken: "USDC" },
@@ -2563,11 +2563,11 @@ const config: {
 
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
-      maxOpenInterest: decimalToFloat(1_000_000),
-      maxPoolUsdForDeposit: decimalToFloat(2_000_000),
+      maxOpenInterest: decimalToFloat(1_500_000),
+      maxPoolUsdForDeposit: decimalToFloat(2_500_000),
 
-      maxLongTokenPoolAmount: expandDecimals(1250, 18),
-      maxShortTokenPoolAmount: expandDecimals(2_500_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(2000, 18),
+      maxShortTokenPoolAmount: expandDecimals(3_000_000, 6),
     },
     {
       tokens: { indexToken: "VIRTUAL", longToken: "WBTC.e", shortToken: "USDC" },
@@ -3156,7 +3156,7 @@ const config: {
       reserveFactor: percentageToFloat("155%"),
       openInterestReserveFactor: percentageToFloat("150%"),
 
-      maxLongTokenPoolAmount: expandDecimals(320_000, 18),
+      maxLongTokenPoolAmount: expandDecimals(775_000, 18),
       maxShortTokenPoolAmount: expandDecimals(14_000_000, 6),
 
       maxPoolUsdForDeposit: decimalToFloat(13_000_000),
