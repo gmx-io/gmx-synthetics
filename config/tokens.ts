@@ -690,6 +690,28 @@ const config: {
       oracleTimestampAdjustment: 1,
       // Chainlink on-chain feed not available
     },
+    MKR: {
+      synthetic: true,
+      decimals: 18, // https://etherscan.io/token/0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2#readContract
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x00038fde9456e8c1cc561816878c804d9e9965748c960deeac9ec2829d468ed3",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0xdE9f0894670c4EFcacF370426F10C3AD2Cdf147e",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+    },
+    OM: {
+      synthetic: true,
+      decimals: 18, // https://etherscan.io/token/0x3593d125a4f7849a1b059e64f4517a86dd60c95d#readContract
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x00035edb821fff52719b8bfe732608168fa685ed32556d82b1c944d1f1cc15e2",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      // Chainlink on-chain feed not available
+    },
     AAVE: {
       address: "0xba5ddd1f9d7f570dc94a51479a000e3bce967196",
       decimals: 18,
