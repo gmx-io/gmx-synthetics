@@ -87,13 +87,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         address subaccount,
         uint256 collateralDeltaAmount,
         IBaseOrderUtils.CreateOrderParams memory params // can't use calldata because need to modify params.numbers.executionFee
-    )
-        external
-        nonReentrant
-        withOraclePricesForAtomicAction(relayParams.oracleParams)
-        onlyGelatoRelay
-        returns (bytes32)
-    {
+    ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) returns (bytes32) {
         _validateGaslessFeature();
         bytes32 structHash = _getCreateOrderStructHash(
             relayParams,
@@ -132,7 +126,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         bytes32 key,
         UpdateOrderParams calldata params,
         bool increaseExecutionFee
-    ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelay {
+    ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) {
         _validateGaslessFeature();
         bytes32 structHash = _getUpdateOrderStructHash(
             relayParams,
@@ -161,7 +155,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         address account, // main account
         address subaccount,
         bytes32 key
-    ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelay {
+    ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) {
         _validateGaslessFeature();
         bytes32 structHash = _getCancelOrderStructHash(relayParams, subaccountApproval, account, key);
         _validateCall(relayParams, subaccount, structHash);
@@ -179,7 +173,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         RelayParams calldata relayParams,
         address account,
         address subaccount
-    ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelay {
+    ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) {
         _validateGaslessFeature();
         bytes32 structHash = _getRemoveSubaccountStructHash(relayParams, subaccount);
         _validateCall(relayParams, account, structHash);

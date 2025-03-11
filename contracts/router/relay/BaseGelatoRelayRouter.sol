@@ -7,11 +7,9 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "../../data/DataStore.sol";
-import "../../event/EventEmitter.sol";
 import "../../exchange/IOrderHandler.sol";
 import "../../external/IExternalHandler.sol";
 import "../../feature/FeatureUtils.sol";
-import "../../nonce/NonceUtils.sol";
 import "../../oracle/OracleModule.sol";
 import "../../order/IBaseOrderUtils.sol";
 import "../../order/OrderStoreUtils.sol";
@@ -130,7 +128,13 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             orderVault: orderVault
         });
 
-        params.numbers.executionFee = _handleRelay(contracts, relayParams, account, address(contracts.orderVault), isSubaccount);
+        params.numbers.executionFee = _handleRelay(
+            contracts,
+            relayParams,
+            account,
+            address(contracts.orderVault),
+            isSubaccount
+        );
 
         if (
             params.orderType == Order.OrderType.MarketSwap ||
@@ -194,7 +198,12 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         );
     }
 
-    function _cancelOrder(RelayParams calldata relayParams, address account, bytes32 key, bool isSubaccount) internal {
+    function _cancelOrder(
+        RelayParams calldata relayParams,
+        address account,
+        bytes32 key,
+        bool isSubaccount
+    ) internal {
         Contracts memory contracts = Contracts({
             dataStore: dataStore,
             eventEmitter: eventEmitter,
@@ -210,8 +219,8 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             revert Errors.Unauthorized(account, "account for cancelOrder");
         }
 
-        _handleRelay(contracts, relayParams, account, account, isSubaccount);
 
+        _handleRelay(contracts, relayParams, account, account, isSubaccount);
         orderHandler.cancelOrder(key);
     }
 
@@ -335,9 +344,8 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             revert Errors.UnexpectedRelayFeeToken(relayParams.fee.feeToken, wnt);
         }
 
-        _transferRelayFeeCapped(outputAmount);
+        uint256 residualFee = _payRelayFee(outputAmount, contracts.dataStore, wnt);
 
-        uint256 residualFee = outputAmount - _getFee();
         // for create orders the residual fee is sent to the order vault
         // for update orders the residual fee could be sent to the order vault if order's execution fee should be increased
         // otherwise the residual fee is sent back to the user
@@ -345,6 +353,20 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         TokenUtils.transfer(contracts.dataStore, wnt, residualFeeReceiver, residualFee);
 
         return residualFee;
+    }
+
+    function _payRelayFee(uint256 totalFeeAmount, DataStore _dataStore, address wnt) internal returns (uint256) {
+        bool isSponsoredCall = !_isGelatoRelay(msg.sender);
+        if (isSponsoredCall) {
+            uint256 relayFeeAmount = totalFeeAmount / 2; // TODO
+            address relayFeeAddress = _dataStore.getAddress(Keys.RELAY_FEE_ADDRESS);
+            TokenUtils.transfer(_dataStore, wnt, relayFeeAddress, relayFeeAmount);
+            return totalFeeAmount - relayFeeAmount;
+        } else {
+            _transferRelayFeeCapped(totalFeeAmount);
+
+            return totalFeeAmount - _getFee();
+        }
     }
 
     function _sendTokens(address account, address token, address receiver, uint256 amount) internal {
