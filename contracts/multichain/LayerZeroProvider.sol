@@ -46,8 +46,6 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         multichainVault = _multichainVault;
     }
 
-    ///////////////////// Stargate //////////////////////
-
     /**
      * Called by Stargate after tokens have been delivered to this contract.
      * @dev Non-guarded function caller (i.e. require from == stargatePool AND msg.sender == lzEndpoint)
@@ -75,6 +73,26 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         IERC20(token).transfer(to, amount);
     }
 
+    /**
+     * Bridges tokens from the current chain to a source chain using Stargate protocol
+     * @dev Processes a cross-chain transfer of tokens from user's multichain balance
+     * @dev Called by MultichainTransferRouter
+     * This function:
+     * 1. Approves tokens to be spent by Stargate
+     * 2. Prepares the necessary parameters and quotes fees
+     * 3. Transfers the bridging fee (in WNT) from user's multichain balance
+     * 4. Unwraps WNT to ETH to pay for the cross-chain fee
+     * 5. Transfers the tokens to be bridged from user's multichain balance
+     * 6. Calls Stargate to initiate the cross-chain transfer
+     *
+     * @param params A struct containing:
+     *        - provider: Address of the Stargate pool
+     *        - account: User account bridging tokens
+     *        - token: Address of token being bridged
+     *        - amount: Amount of tokens to bridge
+     *        - srcChainId: Source chain ID (for multichain balance accounting)
+     *        - data: ABI-encoded destination endpoint ID (dstEid)
+     */
     function bridgeOut(IMultichainProvider.BridgeOutParams memory params) external onlyController {
         IERC20(params.token).approve(params.provider, params.amount);
 
@@ -103,6 +121,8 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             params.srcChainId
         );
 
+        uint256 initialWntBalance = IERC20(wnt).balanceOf(address(this));
+
         // unwrap wnt to native token and send it into this contract (to pay the bridging fee)
         TokenUtils.withdrawAndSendNativeToken(
             dataStore,
@@ -113,9 +133,10 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
 
         // if the above native token transfer failed, it re-wraps the token and sends it to the receiver (i.e. this contract)
         // check if there are any remaining wnt tokens in this contract and transfer them to user's multichain balance
-        if (IERC20(wnt).balanceOf(address(this)) > 0) {
+        if (IERC20(wnt).balanceOf(address(this)) > initialWntBalance) {
             _transferToVault(wnt, address(multichainVault));
             MultichainUtils.recordBridgeIn(dataStore, eventEmitter, multichainVault, this, wnt, params.account, 0 /*srcChainId*/);
+            return;
         }
 
         // transferOut amount of tokens from user's multichain balance into this contract
