@@ -506,11 +506,11 @@ library Keys {
     bytes32 public constant FEE_DISTRIBUTOR_DISTRIBUTION_DAY = keccak256(abi.encode("FEE_DISTRIBUTOR_DISTRIBUTION_DAY"));
     // @dev key for FeeDistributor timestamp that the last distribution was completed
     bytes32 public constant FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP = keccak256(abi.encode("FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP"));
-    // @dev key for whether the fee distribution state
+    // @dev key for the fee distribution state
     bytes32 public constant FEE_DISTRIBUTION_STATE = keccak256(abi.encode("FEE_DISTRIBUTION_STATE"));
     // @dev key for FeeDistributor referral rewards for a given token
     bytes32 public constant FEE_DISTRIBUTOR_REFERRAL_REWARDS_AMOUNT = keccak256(abi.encode("FEE_DISTRIBUTOR_REFERRAL_REWARDS_AMOUNT"));
-    // @dev key for FeeDistributor absolute limit in USD of WNT referral awards
+    // @dev key for FeeDistributor WNT referral awards absolute limit in USD 
     bytes32 public constant FEE_DISTRIBUTOR_REFERRAL_REWARDS_WNT_USD_LIMIT = keccak256(abi.encode("FEE_DISTRIBUTOR_REFERRAL_REWARDS_WNT_USD_LIMIT"));
     // @dev key for FeeDistributor GMX price for referral rewards calculations
     bytes32 public constant FEE_DISTRIBUTION_GMX_PRICE = keccak256(abi.encode("FEE_DISTRIBUTION_GMX_PRICE"));

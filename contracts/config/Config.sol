@@ -526,8 +526,13 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
         allowedBaseKeys[Keys.CLAIMABLE_COLLATERAL_DELAY] = true;
 
+        allowedBaseKeys[Keys.MULTICHAIN_READ_CHANNEL] = true;
+        allowedBaseKeys[Keys.MULTICHAIN_PEERS] = true;
+        allowedBaseKeys[Keys.MULTICHAIN_CONFIRMATIONS] = true;
+        allowedBaseKeys[Keys.MULTICHAIN_AUTHORIZED_ORIGINATORS] = true;
+
         allowedBaseKeys[Keys.FEE_DISTRIBUTOR_DISTRIBUTION_DAY] = true;
-        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_REFERRAL_REWARDS_WNT_USD_LIMIT] = true;
         allowedBaseKeys[Keys.FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY] = true;
         allowedBaseKeys[Keys.FEE_DISTRIBUTOR_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.FEE_DISTRIBUTOR_CHAIN_ID] = true;
@@ -539,6 +544,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.FEE_DISTRIBUTOR_KEEPER_COSTS] = true;
         allowedBaseKeys[Keys.FEE_DISTRIBUTOR_KEEPER_GLP_FACTOR] = true;
         allowedBaseKeys[Keys.FEE_DISTRIBUTOR_CHAINLINK_FACTOR] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_BRIDGE_ORIGIN_DEADLINE] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_BRIDGE_DEST_DEADLINE] = true;
     }
 
     function _initAllowedLimitedBaseKeys() internal {
