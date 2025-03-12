@@ -137,13 +137,14 @@ describe("MultichainTransferRouter", () => {
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(
         feeAmount.add(bridgeOutFee)
       );
-      expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).eq(0);
+      expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).eq(0); // 0 WNT
+      expect(await hre.ethers.provider.getBalance(mockStargatePool.address)).eq(0); // 0 ETH
 
       await sendBridgeOut(bridgeOutParams);
 
       // After bridging out:
       // 1. The relay fee was sent to the relayer
-      expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).eq(relayFeeAmount);
+      expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).eq(relayFeeAmount); // 0.002 WNT
 
       // 2. User's multichain balance was decreased
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0); // 0 USDC
@@ -156,6 +157,9 @@ describe("MultichainTransferRouter", () => {
 
       // 4. The tokens were sent to the user on the destination chain (mocked by sending to user1)
       expect(await usdc.balanceOf(user1.address)).eq(bridgeOutAmount);
+
+      // 5. The bridge out fee (in native tokens) was sent to the provider
+      expect(await hre.ethers.provider.getBalance(mockStargatePool.address)).eq(bridgeOutFee); // 0.001 ETH
     });
   });
 });
