@@ -110,7 +110,6 @@ async function main() {
     shouldUnwrapNativeToken: false,
     executionFee: executionFee,
     callbackGasLimit: 0,
-    srcChainId: 0,
     dataList: [],
   };
   console.log("exchange router %s", exchangeRouter.address);
