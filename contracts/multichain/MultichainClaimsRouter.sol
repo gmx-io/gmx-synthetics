@@ -4,6 +4,10 @@ pragma solidity ^0.8.0;
 
 import "./MultichainRouter.sol";
 
+/*
+ * Fees can be paid from the newly claimed tokens if the recipient is the account.
+ * Otherwise, the account must have enough funds to pay fees first.
+ */
 contract MultichainClaimsRouter is MultichainRouter {
     constructor(
         BaseConstructorParams memory params

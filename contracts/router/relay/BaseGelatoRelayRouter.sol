@@ -23,6 +23,10 @@ import "../../token/TokenUtils.sol";
 
 import "./RelayUtils.sol";
 
+/*
+ * For gasless actions the funds are deducted from account.
+ * Account must have enough funds to pay fees, regardless of the recipient's balance.
+ */
 abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, OracleModule, BaseRouter {
     using Order for Order.Props;
 
