@@ -81,85 +81,90 @@ async function main() {
       rolesToAdd: [
         {
           role: "CONTROLLER",
-          member: "0x17de9ad7c5eca85e50381f9c51e32e859d5f2086",
+          member: "0x492f2511ec89e425125e494bd8385e055b2f752a",
+          contractName: "Config",
         },
         {
           role: "CONTROLLER",
-          member: "0x6dbe12529a9d039a6af20be488d5e46f22901eec",
+          member: "0x918b60ba71badfada72ef3a6c6f71d0c41d4785c",
+          contractName: "Oracle",
         },
         {
           role: "CONTROLLER",
-          member: "0x1037c3b54b3109a495b8d0cce6c32f819284f0cf",
+          member: "0xa145346c17ea8a56c97fac0bd810225257ab96e1",
+          contractName: "SubaccountRouter",
         },
         {
           role: "CONTROLLER",
-          member: "0x331da018c1ddf565ae081f267174689940a8490e",
+          member: "0x63dafb2ca71767129ab8d0a0909383023c4aff6e",
+          contractName: "GelatoRelayRouter",
         },
         {
           role: "CONTROLLER",
-          member: "0x03a6e8af1685099470019de39b1573d415856879",
+          member: "0x8964c82e1878d35bed66d377f97e4f518b7a024f",
+          contractName: "SubaccountGelatoRelayRouter",
         },
         {
           role: "CONTROLLER",
-          member: "0x470d512de68665a33416d30f0d7580781aaa2748",
+          member: "0xfc9bc118fddb89ff6ff720840446d73478de4153",
+          contractName: "OrderHandler",
         },
         {
           role: "CONTROLLER",
-          member: "0x8d5ba31b20725c10b9fb60b8a3e5c9bc6aa7c74c",
+          member: "0xedb5cd878871f074371e816ac67cbe010c31f00b",
+          contractName: "WithdrawalHandler",
         },
         {
           role: "CONTROLLER",
-          member: "0x98723bd186581c461e8f77d8b17e7fac2d141a48",
-        },
-        {
-          role: "CONTROLLER",
-          member: "0x2fb22eab0f84557dac6fc9d800cae11602662f78",
-        },
-        {
-          role: "CONTROLLER",
-          member: "0xa1e8ee77a44616924cc235d1f8e0175c85e3f37d",
+          member: "0x266c6b192952c743de5541d642dc847d064c182c",
+          contractName: "SwapHandler",
         },
         {
           role: "ROUTER_PLUGIN",
-          member: "0x470d512de68665a33416d30f0d7580781aaa2748",
+          member: "0xa145346c17ea8a56c97fac0bd810225257ab96e1",
+          contractName: "SubaccountRouter",
         },
         {
           role: "ROUTER_PLUGIN",
-          member: "0x8d5ba31b20725c10b9fb60b8a3e5c9bc6aa7c74c",
+          member: "0x63dafb2ca71767129ab8d0a0909383023c4aff6e",
+          contractName: "GelatoRelayRouter",
         },
         {
           role: "ROUTER_PLUGIN",
-          member: "0x98723bd186581c461e8f77d8b17e7fac2d141a48",
-        },
-        {
-          role: "ROUTER_PLUGIN",
-          member: "0x2fb22eab0f84557dac6fc9d800cae11602662f78",
+          member: "0x8964c82e1878d35bed66d377f97e4f518b7a024f",
+          contractName: "SubaccountGelatoRelayRouter",
         },
       ],
       rolesToRemove: [
         {
           role: "CONTROLLER",
           member: "0xf64c8469e5B566251301904f4F77A911438C775F",
+          contractName: "GelatoRelayRouter",
         },
         {
           role: "CONTROLLER",
           member: "0x871a0CAa75dea231FA290ee26F1955B29a7F8a86",
+          contractName: "SubaccountGelatoRelayRouter",
         },
         {
           role: "CONTROLLER",
           member: "0x26410a3121BCAB865b9ceae50dFfA04DF9E783B1",
+          contractName: "SubaccountRouter",
         },
         {
           role: "ROUTER_PLUGIN",
           member: "0xf64c8469e5B566251301904f4F77A911438C775F",
+          contractName: "GelatoRelayRouter",
         },
         {
           role: "ROUTER_PLUGIN",
           member: "0x871a0CAa75dea231FA290ee26F1955B29a7F8a86",
+          contractName: "SubaccountGelatoRelayRouter",
         },
         {
           role: "ROUTER_PLUGIN",
           member: "0x26410a3121BCAB865b9ceae50dFfA04DF9E783B1",
+          contractName: "SubaccountRouter",
         },
       ],
     },

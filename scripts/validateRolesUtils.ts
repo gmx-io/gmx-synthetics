@@ -6,20 +6,45 @@ import { expandDecimals } from "../utils/math";
 import * as fs from "fs";
 import * as path from "path";
 
+// bump this when the cache format changes
+const CACHE_VERSION = 2;
 const _cachePath = path.join(__dirname, "../cache/contractInfoCache.json");
-let _cache: Record<
-  string,
-  {
-    isContract: boolean;
-    contractName: string;
-  }
->;
+let _cache: {
+  version: number;
+  contractInfo: Record<
+    string,
+    {
+      isContract: boolean;
+      contractName: string;
+      isGmxDeployer: boolean;
+    }
+  >;
+};
 if (fs.existsSync(_cachePath)) {
   const _cacheFileContent = fs.readFileSync(_cachePath, "utf8").toString();
   _cache = JSON.parse(_cacheFileContent);
+  if (_cache.version !== CACHE_VERSION) {
+    console.warn("Cache version mismatch, resetting cache");
+    _cache = {
+      version: CACHE_VERSION,
+      contractInfo: {},
+    };
+  }
 } else {
-  _cache = {};
+  _cache = {
+    version: CACHE_VERSION,
+    contractInfo: {},
+  };
 }
+
+const GMX_V2_DEPLOYER_ADDRESS = "0xe7bfff2ab721264887230037940490351700a068";
+const GMX_V1_DEPLOYER_ADDRESS = "0x5f799f365fa8a2b60ac0429c48b153ca5a6f0cf8";
+
+const trustedExternalContracts = new Set(
+  [
+    "0x4b6ACC5b2db1757bD49408FeE92e32D39608B5d9", // Gnosis Safe
+  ].map((address) => address.toLowerCase())
+);
 
 async function validateMember({ role, member }) {
   if (["ROLE_ADMIN", "TIMELOCK_MULTISIG", "CONTROLLER"].includes(role)) {
@@ -92,6 +117,7 @@ async function validateRolesImpl() {
 
   const { roles: _expectedRoles, requiredRolesForContracts } = await hre.gmx.getRoles();
   const errors = [];
+  const warns = [];
 
   for (const [requiredRole, contracts] of Object.entries(requiredRolesForContracts)) {
     for (const contractName of contracts) {
@@ -133,10 +159,20 @@ async function validateRolesImpl() {
     );
 
     for (const member of members) {
-      const { isContract, contractName } = await getContractName(contractNameByAddress, member);
-      console.log(`   ${member} ${isContract ? "contract" : "EOA"} ${contractName ?? ""}`);
+      const { isContract, contractName, isGmxDeployer } = await getContractInfo(contractNameByAddress, member);
+      const unexpectedDeployer = isContract && !isGmxDeployer && !trustedExternalContracts.has(member.toLowerCase());
+      console.info(
+        "    %s %s %s%s",
+        member,
+        isContract ? "contract" : "EOA",
+        contractName ?? "",
+        unexpectedDeployer ? " NOT GMX DEPLOYER" : ""
+      );
+      if (unexpectedDeployer) {
+        warns.push(`contract ${contractName} ${member} with role ${role} was not deployed by GMX deployer`);
+      }
       if (!expectedRoles[role][member.toLowerCase()]) {
-        const { isContract, contractName } = await getContractName(contractNameByAddress, member);
+        const { isContract, contractName } = await getContractInfo(contractNameByAddress, member);
         if (isContract && !contractName) {
           errors.push(`contract ${member} with role ${role} source code is not verified`);
         }
@@ -152,7 +188,7 @@ async function validateRolesImpl() {
 
     for (const member in expectedRoles[role]) {
       if (!memberIsInStore[member.toLowerCase()]) {
-        const { isContract, contractName } = await getContractName(contractNameByAddress, member);
+        const { isContract, contractName } = await getContractInfo(contractNameByAddress, member);
         if (isContract && !contractName) {
           errors.push(`contract ${member} with role ${role} source code is not verified`);
         }
@@ -173,6 +209,17 @@ async function validateRolesImpl() {
     }
   }
 
+  console.log("diff:\n%s", JSON.stringify({ rolesToAdd, rolesToRemove }, null, 2));
+
+  await validateDataStreamProviderHasDiscount();
+  await validateIsReferralStorageHandler();
+
+  if (warns.length > 0) {
+    for (const warn of warns) {
+      console.warn("🟠", warn);
+    }
+  }
+
   if (errors.length > 0) {
     for (const error of errors) {
       console.error("❌", error);
@@ -180,25 +227,21 @@ async function validateRolesImpl() {
     throw new Error("Roles are not valid");
   }
 
-  console.log("diff:\n%s", JSON.stringify({ rolesToAdd, rolesToRemove }, null, 2));
-
-  await validateDataStreamProviderHasDiscount();
-  await validateIsReferralStorageHandler();
-
   return { rolesToAdd, rolesToRemove };
 }
 
-async function getContractName(
+async function getContractInfo(
   contractNameByAddress: Record<string, string>,
   contractAddress: string
-): Promise<{ isContract: boolean; contractName: string }> {
-  if (_cache[contractAddress]) {
-    return _cache[contractAddress];
+): Promise<{ isContract: boolean; contractName: string; isGmxDeployer: boolean }> {
+  if (_cache.contractInfo[contractAddress]) {
+    return _cache.contractInfo[contractAddress];
   }
 
   let contractName = contractNameByAddress[ethers.utils.getAddress(contractAddress)];
   let isContract = true;
   let shouldCache = true;
+  let isGmxDeployer = true;
 
   if (!contractName) {
     const code = await hre.ethers.provider.getCode(contractAddress);
@@ -206,6 +249,9 @@ async function getContractName(
       let isVerified: boolean;
       ({ contractName, isVerified } = await getContractNameFromEtherscan(contractAddress));
       shouldCache = isVerified;
+
+      const contractCreation = await getContractCreationFromEtherscan(contractAddress);
+      isGmxDeployer = getIsGmxDeployer(contractCreation.contractCreator);
     } else {
       isContract = false;
     }
@@ -213,12 +259,20 @@ async function getContractName(
 
   if (shouldCache) {
     // should not cache data for unverified contracts
-    _cache[contractAddress] = { isContract, contractName };
+    _cache.contractInfo[contractAddress] = { isContract, contractName, isGmxDeployer };
   }
-  return { isContract, contractName };
+  return { isContract, contractName, isGmxDeployer };
+}
+
+function getIsGmxDeployer(contractAddress: string) {
+  return (
+    contractAddress.toLowerCase() === GMX_V1_DEPLOYER_ADDRESS.toLowerCase() ||
+    contractAddress.toLowerCase() === GMX_V2_DEPLOYER_ADDRESS.toLowerCase()
+  );
 }
 
 async function validateDataStreamProviderHasDiscount() {
+  console.log("validating data stream provider has discount");
   const { dataStreamVerifierAddress } = getValues();
   const tokens = await hre.gmx.getTokens();
   if (!dataStreamVerifierAddress) {
@@ -246,13 +300,14 @@ async function validateDataStreamProviderHasDiscount() {
   );
   if (!discount.eq(expandDecimals(1, 18))) {
     console.warn(
-      "🚨 ChainlinkDataStreamProvider %s does not have a 100% discount. Check on this with Chainlink",
+      "🟠 ChainlinkDataStreamProvider %s does not have a 100% discount. Check on this with Chainlink",
       dataStreamProviderDeployment.address
     );
   }
 }
 
 async function validateIsReferralStorageHandler() {
+  console.log("validating is referral storage handler");
   const { referralStorageAddress } = getValues();
   if (referralStorageAddress) {
     const referralStorage = new hre.ethers.Contract(
@@ -264,7 +319,7 @@ async function validateIsReferralStorageHandler() {
     const isHandler = await referralStorage.isHandler(orderHandlerDeployment.address);
     if (!isHandler) {
       console.warn(
-        "🚨 OrderHandler %s is not a handler of ReferralStorage %s",
+        "🟠 OrderHandler %s is not a handler of ReferralStorage %s",
         orderHandlerDeployment.address,
         referralStorageAddress
       );
@@ -275,19 +330,45 @@ async function validateIsReferralStorageHandler() {
 async function getContractNameFromEtherscan(
   contractAddress: string
 ): Promise<{ contractName: string; isVerified: true } | { contractName?: string; isVerified: false }> {
+  const response = await _requestEtherscan({
+    action: "getsourcecode",
+    address: contractAddress,
+  });
+  const sources: string = response.result[0].SourceCode;
+  if (sources === "") {
+    // source code not verified
+    return { isVerified: false };
+  }
+  return { contractName: response.result[0].ContractName, isVerified: true };
+}
+
+async function getContractCreationFromEtherscan(contractAddress: string) {
+  const response = await _requestEtherscan({
+    action: "getcontractcreation",
+    contractaddresses: contractAddress,
+  });
+  const data = response.result[0];
+
+  return {
+    contractAddress: data.contractAddress,
+    contractCreator: data.contractCreator,
+    txHash: data.txHash,
+    blockNumber: Number(data.blockNumber),
+    timestamp: Number(data.timestamp),
+    contractFactory: data.contractFactory,
+    creationBytecode: data.creationBytecode,
+  };
+}
+
+async function _requestEtherscan(params: Record<string, any>) {
   const apiKey = hre.network.verify.etherscan.apiKey;
   const baseUrl = hre.network.verify.etherscan.apiUrl + "api";
-  try {
-    const url =
-      baseUrl + "?module=contract" + "&action=getsourcecode" + `&address=${contractAddress}` + `&apikey=${apiKey}`;
-    const response = await axios.get(url);
-    const sources: string = response.data.result[0].SourceCode;
-    if (sources === "") {
-      //Source code not verified
-      return { isVerified: false };
-    }
-    return { contractName: response.data.result[0].ContractName, isVerified: true };
-  } catch (error) {
-    console.error("Error:", error);
-  }
+  const response = await axios.get(baseUrl, {
+    params: {
+      ...params,
+      apikey: apiKey,
+      module: "contract",
+    },
+  });
+  return response.data;
 }
