@@ -290,6 +290,19 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
     generalConfig.maxExecutionFeeMultiplierFactor,
     `maxExecutionFeeMultiplierFactor`
   );
+
+  if (generalConfig.gelatoRelayFeeBaseAmount) {
+    await handleConfig("uint", keys.GELATO_RELAY_FEE_BASE_AMOUNT, "0x", generalConfig.gelatoRelayFeeBaseAmount);
+  }
+
+  if (generalConfig.gelatoRelayFeeMultiplierFactor) {
+    await handleConfig(
+      "uint",
+      keys.GELATO_RELAY_FEE_MULTIPLIER_FACTOR,
+      "0x",
+      generalConfig.gelatoRelayFeeMultiplierFactor
+    );
+  }
 };
 
 export async function updateGeneralConfig({ write }) {

@@ -146,6 +146,9 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       decreaseOrderGasLimit: 3_000_000,
       swapOrderGasLimit: 2_500_000,
       ignoreOpenInterestForUsageFactor: true,
+
+      gelatoRelayFeeMultiplierFactor: expandDecimals(1, 30), // 1x
+      gelatoRelayFeeBaseAmount: 31000, // 21000 is base gas and GelatoRelay gas
     },
     avalanche: {
       increaseOrderGasLimit: 3_500_000,

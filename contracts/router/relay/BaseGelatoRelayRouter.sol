@@ -17,6 +17,7 @@ import "../../order/OrderVault.sol";
 import "../../router/Router.sol";
 import "../../swap/SwapUtils.sol";
 import "../../token/TokenUtils.sol";
+import "../../gas/GasUtils.sol";
 
 abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, OracleModule {
     using Order for Order.Props;
@@ -69,6 +70,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         DataStore dataStore;
         EventEmitter eventEmitter;
         OrderVault orderVault;
+        address wnt;
     }
 
     IOrderHandler public immutable orderHandler;
@@ -115,24 +117,26 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         }
     }
 
+    function _getContracts() internal view returns (Contracts memory contracts) {
+        DataStore _dataStore = dataStore;
+        address wnt = TokenUtils.wnt(_dataStore);
+        contracts = Contracts({dataStore: _dataStore, eventEmitter: eventEmitter, orderVault: orderVault, wnt: wnt});
+    }
+
     function _createOrder(
         RelayParams calldata relayParams,
         address account,
         uint256 collateralDeltaAmount,
         IBaseOrderUtils.CreateOrderParams memory params, // can't use calldata because need to modify params.numbers.executionFee
-        bool isSubaccount
+        bool isSubaccount,
+        uint256 startingGas
     ) internal returns (bytes32) {
-        Contracts memory contracts = Contracts({
-            dataStore: dataStore,
-            eventEmitter: eventEmitter,
-            orderVault: orderVault
-        });
-
-        params.numbers.executionFee = _handleRelay(
+        Contracts memory contracts = _getContracts();
+        uint256 residualFeeAmount = _handleRelayBeforeAction(
             contracts,
             relayParams,
             account,
-            address(contracts.orderVault),
+            params.numbers.executionFee,
             isSubaccount
         );
 
@@ -151,8 +155,13 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             );
         }
 
-        return
-            orderHandler.createOrder(account, params, isSubaccount && params.addresses.callbackContract != address(0));
+        bytes32 key = orderHandler.createOrder(
+            account,
+            params,
+            isSubaccount && params.addresses.callbackContract != address(0)
+        );
+        _handleRelayAfterAction(contracts, startingGas, residualFeeAmount, account);
+        return key;
     }
 
     function _updateOrder(
@@ -160,15 +169,11 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         address account,
         bytes32 key,
         UpdateOrderParams calldata params,
-        bool increaseExecutionFee,
-        bool isSubaccount
+        uint256 executionFee,
+        bool isSubaccount,
+        uint256 startingGas
     ) internal {
-        Contracts memory contracts = Contracts({
-            dataStore: dataStore,
-            eventEmitter: eventEmitter,
-            orderVault: orderVault
-        });
-
+        Contracts memory contracts = _getContracts();
         Order.Props memory order = OrderStoreUtils.get(contracts.dataStore, key);
 
         if (order.account() == address(0)) {
@@ -179,8 +184,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             revert Errors.Unauthorized(account, "account for updateOrder");
         }
 
-        address residualFeeReceiver = increaseExecutionFee ? address(contracts.orderVault) : account;
-        _handleRelay(contracts, relayParams, account, residualFeeReceiver, isSubaccount);
+        uint256 residualFeeAmount = _handleRelayBeforeAction(contracts, relayParams, account, executionFee, isSubaccount);
 
         orderHandler.updateOrder(
             key,
@@ -191,25 +195,21 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             params.validFromTime,
             params.autoCancel,
             order,
-
             // shouldCapMaxExecutionFee
             // see GasUtils.validateExecutionFee
-            isSubaccount && order.callbackContract() != address(0) && increaseExecutionFee
+            isSubaccount && order.callbackContract() != address(0) && executionFee != 0
         );
+        _handleRelayAfterAction(contracts, startingGas, residualFeeAmount, account);
     }
 
     function _cancelOrder(
         RelayParams calldata relayParams,
         address account,
         bytes32 key,
-        bool isSubaccount
+        bool isSubaccount,
+        uint256 startingGas
     ) internal {
-        Contracts memory contracts = Contracts({
-            dataStore: dataStore,
-            eventEmitter: eventEmitter,
-            orderVault: orderVault
-        });
-
+        Contracts memory contracts = _getContracts();
         Order.Props memory order = OrderStoreUtils.get(contracts.dataStore, key);
         if (order.account() == address(0)) {
             revert Errors.EmptyOrder();
@@ -219,16 +219,12 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             revert Errors.Unauthorized(account, "account for cancelOrder");
         }
 
-
-        _handleRelay(contracts, relayParams, account, account, isSubaccount);
+        uint256 residualFeeAmount = _handleRelayBeforeAction(contracts, relayParams, account, 0, isSubaccount);
         orderHandler.cancelOrder(key);
+        _handleRelayAfterAction(contracts, startingGas, residualFeeAmount, account);
     }
 
-    function _swapFeeTokens(
-        Contracts memory contracts,
-        address wnt,
-        FeeParams calldata fee
-    ) internal returns (uint256) {
+    function _swapFeeTokens(Contracts memory contracts, FeeParams calldata fee) internal returns (uint256) {
         Oracle _oracle = oracle;
         _oracle.validateSequencerUp();
 
@@ -254,18 +250,18 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             })
         );
 
-        if (outputToken != wnt) {
-            revert Errors.UnexpectedRelayFeeTokenAfterSwap(outputToken, wnt);
+        if (outputToken != contracts.wnt) {
+            revert Errors.UnexpectedRelayFeeTokenAfterSwap(outputToken, contracts.wnt);
         }
 
         return outputAmount;
     }
 
-    function _handleRelay(
+    function _handleRelayBeforeAction(
         Contracts memory contracts,
         RelayParams calldata relayParams,
         address account,
-        address residualFeeReceiver,
+        uint256 executionFee,
         bool isSubaccount
     ) internal returns (uint256) {
         if (relayParams.externalCalls.externalCallTargets.length != 0 && relayParams.fee.feeSwapPath.length != 0) {
@@ -278,7 +274,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         }
 
         _handleTokenPermits(relayParams.tokenPermits);
-        return _handleRelayFee(contracts, relayParams, account, residualFeeReceiver);
+        return _handleRelayFee(contracts, relayParams, account, executionFee);
     }
 
     function _handleTokenPermits(TokenPermit[] calldata tokenPermits) internal {
@@ -316,12 +312,10 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         Contracts memory contracts,
         RelayParams calldata relayParams,
         address account,
-        address residualFeeReceiver
+        uint256 executionFee
     ) internal returns (uint256) {
-        address wnt = TokenUtils.wnt(contracts.dataStore);
-
-        if (_getFeeToken() != wnt) {
-            revert Errors.UnsupportedRelayFeeToken(_getFeeToken(), wnt);
+        if (_getFeeToken() != contracts.wnt) {
+            revert Errors.UnsupportedRelayFeeToken(_getFeeToken(), contracts.wnt);
         }
 
         uint256 outputAmount;
@@ -336,36 +330,40 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             outputAmount = ERC20(_getFeeToken()).balanceOf(address(this));
         } else if (relayParams.fee.feeSwapPath.length != 0) {
             _sendTokens(account, relayParams.fee.feeToken, address(contracts.orderVault), relayParams.fee.feeAmount);
-            outputAmount = _swapFeeTokens(contracts, wnt, relayParams.fee);
-        } else if (relayParams.fee.feeToken == wnt) {
+            outputAmount = _swapFeeTokens(contracts, relayParams.fee);
+        } else if (relayParams.fee.feeToken == contracts.wnt) {
             _sendTokens(account, relayParams.fee.feeToken, address(this), relayParams.fee.feeAmount);
             outputAmount = relayParams.fee.feeAmount;
         } else {
-            revert Errors.UnexpectedRelayFeeToken(relayParams.fee.feeToken, wnt);
+            revert Errors.UnexpectedRelayFeeToken(relayParams.fee.feeToken, contracts.wnt);
         }
 
-        uint256 residualFee = _payRelayFee(outputAmount, contracts.dataStore, wnt);
+        if (executionFee != 0) {
+            // TODO could send outputAmount - _getFee() for synced call to avoid extra transfer for the residual fee at the end of transaction
+            TokenUtils.transfer(contracts.dataStore, contracts.wnt, address(contracts.orderVault), executionFee);
+        }
 
-        // for create orders the residual fee is sent to the order vault
-        // for update orders the residual fee could be sent to the order vault if order's execution fee should be increased
-        // otherwise the residual fee is sent back to the user
-        // for other actions the residual fee is sent back to the user
-        TokenUtils.transfer(contracts.dataStore, wnt, residualFeeReceiver, residualFee);
-
-        return residualFee;
+        return outputAmount - executionFee;
     }
 
-    function _payRelayFee(uint256 totalFeeAmount, DataStore _dataStore, address wnt) internal returns (uint256) {
+    function _handleRelayAfterAction(
+        Contracts memory contracts,
+        uint256 startingGas,
+        uint256 residualFeeAmount,
+        address residualFeeReceiver
+    ) internal {
         bool isSponsoredCall = !_isGelatoRelay(msg.sender);
+        uint256 relayFee;
         if (isSponsoredCall) {
-            uint256 relayFeeAmount = totalFeeAmount / 2; // TODO
-            address relayFeeAddress = _dataStore.getAddress(Keys.RELAY_FEE_ADDRESS);
-            TokenUtils.transfer(_dataStore, wnt, relayFeeAddress, relayFeeAmount);
-            return totalFeeAmount - relayFeeAmount;
+            relayFee = GasUtils.payGelatoRelayFee(contracts.dataStore, startingGas, contracts.wnt);
         } else {
-            _transferRelayFeeCapped(totalFeeAmount);
+            relayFee = _getFee();
+            _transferRelayFeeCapped(relayFee);
+        }
 
-            return totalFeeAmount - _getFee();
+        residualFeeAmount -= relayFee;
+        if (residualFeeAmount > 0) {
+            TokenUtils.transfer(contracts.dataStore, contracts.wnt, residualFeeReceiver, residualFeeAmount);
         }
     }
 

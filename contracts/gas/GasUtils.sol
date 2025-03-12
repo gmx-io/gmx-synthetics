@@ -537,4 +537,29 @@ library GasUtils {
 
         eventEmitter.emitEventLog1("ExecutionFeeRefundCallback", Cast.toBytes32(callbackContract), eventData);
     }
+
+
+    function payGelatoRelayFee(
+        DataStore dataStore,
+        uint256 startingGas,
+        address wnt
+    ) internal returns (uint256) {
+        uint256 relayFeeMultiplierFactor = dataStore.getUint(Keys.GELATO_RELAY_FEE_MULTIPLIER_FACTOR);
+        uint256 relayFeeBaseAmount = dataStore.getUint(Keys.GELATO_RELAY_FEE_BASE_AMOUNT);
+
+        // would be non-zero for Arbitrum only
+        uint256 l1Fee = Chain.getCurrentTxL1GasFees();
+
+        // relayFeeBaseAmount should include 21000 is base gas and GelatoRelay gas
+        // zero byte in call data is 4 bytes, non-zero byte is 16 bytes, use 12 as a conservative estimate
+        // it is also multiplied by 2 because the calldata is first sent to the Relay contract, and then to GMX contract
+        uint256 l2Fee = (relayFeeBaseAmount + msg.data.length * 2 * 12 + startingGas - gasleft()) * tx.gasprice;
+
+        uint256 relayFee = Precision.toFactor(l1Fee + l2Fee, relayFeeMultiplierFactor);
+
+        address relayFeeAddress = dataStore.getAddress(Keys.RELAY_FEE_ADDRESS);
+        TokenUtils.transfer(dataStore, wnt, relayFeeAddress, relayFee);
+
+        return relayFee;
+    }
 }

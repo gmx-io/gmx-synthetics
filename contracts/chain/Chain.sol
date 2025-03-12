@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "./ArbSys.sol";
+import "./ArbGasInfo.sol";
 
 // @title Chain
 // @dev Wrap the calls to retrieve chain variables to handle differences
@@ -14,6 +15,7 @@ library Chain {
     uint256 public constant ARBITRUM_SEPOLIA_CHAIN_ID = 421614;
 
     ArbSys public constant arbSys = ArbSys(address(100));
+    ArbGasInfo public constant arbGasInfo = ArbGasInfo(address(108));
 
     // @dev return the current block's timestamp
     // @return the current block's timestamp
@@ -24,7 +26,7 @@ library Chain {
     // @dev return the current block's number
     // @return the current block's number
     function currentBlockNumber() internal view returns (uint256) {
-        if (shouldUseArbSysValues()) {
+        if (shouldUseArbPrecompiles()) {
             return arbSys.arbBlockNumber();
         }
 
@@ -34,14 +36,21 @@ library Chain {
     // @dev return the current block's hash
     // @return the current block's hash
     function getBlockHash(uint256 blockNumber) internal view returns (bytes32) {
-        if (shouldUseArbSysValues()) {
+        if (shouldUseArbPrecompiles()) {
             return arbSys.arbBlockHash(blockNumber);
         }
 
         return blockhash(blockNumber);
     }
 
-    function shouldUseArbSysValues() internal view returns (bool) {
+    function shouldUseArbPrecompiles() internal view returns (bool) {
         return block.chainid == ARBITRUM_CHAIN_ID || block.chainid == ARBITRUM_SEPOLIA_CHAIN_ID;
+    }
+
+    function getCurrentTxL1GasFees() internal view returns (uint256) {
+        if (!shouldUseArbPrecompiles()) {
+            return 0;
+        }
+        return arbGasInfo.getCurrentTxL1GasFees();
     }
 }

@@ -14,7 +14,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
     bytes32 public constant UPDATE_ORDER_TYPEHASH =
         keccak256(
             bytes(
-                "UpdateOrder(bytes32 key,UpdateOrderParams params,bool increaseExecutionFee,bytes32 relayParams)UpdateOrderParams(uint256 sizeDeltaUsd,uint256 acceptablePrice,uint256 triggerPrice,uint256 minOutputAmount,uint256 validFromTime,bool autoCancel)"
+                "UpdateOrder(bytes32 key,UpdateOrderParams params,uint256 executionFee,bytes32 relayParams)UpdateOrderParams(uint256 sizeDeltaUsd,uint256 acceptablePrice,uint256 triggerPrice,uint256 minOutputAmount,uint256 validFromTime,bool autoCancel)"
             )
         );
     bytes32 public constant UPDATE_ORDER_PARAMS_TYPEHASH =
@@ -70,6 +70,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
 
         returns (bytes32)
     {
+        uint256 startingGas = gasleft();
         _validateGaslessFeature();
         bytes32 structHash = _getCreateOrderStructHash(relayParams, collateralDeltaAmount, params);
         _validateCall(relayParams, account, structHash);
@@ -80,7 +81,8 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
                 account,
                 collateralDeltaAmount,
                 params,
-                false // isSubaccount
+                false, // isSubaccount
+                startingGas
             );
     }
 
@@ -90,10 +92,11 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         address account,
         bytes32 key,
         UpdateOrderParams calldata params,
-        bool increaseExecutionFee
+        uint256 executionFee
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) {
+        uint256 startingGas = gasleft();
         _validateGaslessFeature();
-        bytes32 structHash = _getUpdateOrderStructHash(relayParams, key, params, increaseExecutionFee);
+        bytes32 structHash = _getUpdateOrderStructHash(relayParams, key, params, executionFee);
         _validateCall(relayParams, account, structHash);
 
         _updateOrder(
@@ -101,8 +104,9 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
             account,
             key,
             params,
-            increaseExecutionFee,
-            false // isSubaccount
+            executionFee,
+            false, // isSubaccount
+            startingGas
         );
     }
 
@@ -112,6 +116,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         address account,
         bytes32 key
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) {
+        uint256 startingGas = gasleft();
         _validateGaslessFeature();
         bytes32 structHash = _getCancelOrderStructHash(relayParams, key);
         _validateCall(relayParams, account, structHash);
@@ -120,7 +125,8 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
             relayParams,
             account,
             key,
-            false // isSubaccount
+            false, // isSubaccount
+            startingGas
         );
     }
 
@@ -128,7 +134,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         RelayParams calldata relayParams,
         bytes32 key,
         UpdateOrderParams calldata params,
-        bool increaseExecutionFee
+        uint256 executionFee
     ) internal pure returns (bytes32) {
         return
             keccak256(
@@ -136,7 +142,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
                     UPDATE_ORDER_TYPEHASH,
                     key,
                     _getUpdateOrderParamsStructHash(params),
-                    increaseExecutionFee,
+                    executionFee,
                     _getRelayParamsHash(relayParams)
                 )
             );

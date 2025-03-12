@@ -23,7 +23,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     bytes32 public constant UPDATE_ORDER_TYPEHASH =
         keccak256(
             bytes(
-                "UpdateOrder(address account,bytes32 key,UpdateOrderParams params,bool increaseExecutionFee,bytes32 relayParams,bytes32 subaccountApproval)UpdateOrderParams(uint256 sizeDeltaUsd,uint256 acceptablePrice,uint256 triggerPrice,uint256 minOutputAmount,uint256 validFromTime,bool autoCancel)"
+                "UpdateOrder(address account,bytes32 key,UpdateOrderParams params,uint256 executionFee,bytes32 relayParams,bytes32 subaccountApproval)UpdateOrderParams(uint256 sizeDeltaUsd,uint256 acceptablePrice,uint256 triggerPrice,uint256 minOutputAmount,uint256 validFromTime,bool autoCancel)"
             )
         );
     bytes32 public constant UPDATE_ORDER_PARAMS_TYPEHASH =
@@ -88,6 +88,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         uint256 collateralDeltaAmount,
         IBaseOrderUtils.CreateOrderParams memory params // can't use calldata because need to modify params.numbers.executionFee
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) returns (bytes32) {
+        uint256 startingGas = gasleft();
         _validateGaslessFeature();
         bytes32 structHash = _getCreateOrderStructHash(
             relayParams,
@@ -113,7 +114,8 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
                 account,
                 collateralDeltaAmount,
                 params,
-                true // isSubaccount
+                true, // isSubaccount
+                startingGas
             );
     }
 
@@ -125,8 +127,9 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         address subaccount,
         bytes32 key,
         UpdateOrderParams calldata params,
-        bool increaseExecutionFee
+        uint256 executionFee
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) {
+        uint256 startingGas = gasleft();
         _validateGaslessFeature();
         bytes32 structHash = _getUpdateOrderStructHash(
             relayParams,
@@ -134,7 +137,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             account,
             key,
             params,
-            increaseExecutionFee
+            executionFee
         );
         _validateCall(relayParams, subaccount, structHash);
         _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, subaccountApproval);
@@ -143,8 +146,9 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             account,
             key,
             params,
-            increaseExecutionFee,
-            true // isSubaccount
+            executionFee,
+            true, // isSubaccount
+            startingGas
         );
     }
 
@@ -156,6 +160,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         address subaccount,
         bytes32 key
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) {
+        uint256 startingGas = gasleft();
         _validateGaslessFeature();
         bytes32 structHash = _getCancelOrderStructHash(relayParams, subaccountApproval, account, key);
         _validateCall(relayParams, subaccount, structHash);
@@ -164,7 +169,8 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             relayParams,
             account,
             key,
-            true // isSubaccount
+            true, // isSubaccount
+            startingGas
         );
     }
 
@@ -174,24 +180,23 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         address account,
         address subaccount
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) {
+        uint256 startingGas = gasleft();
         _validateGaslessFeature();
         bytes32 structHash = _getRemoveSubaccountStructHash(relayParams, subaccount);
         _validateCall(relayParams, account, structHash);
 
-        Contracts memory contracts = Contracts({
-            dataStore: dataStore,
-            eventEmitter: eventEmitter,
-            orderVault: orderVault
-        });
-        _handleRelay(
+        Contracts memory contracts = _getContracts();
+        _handleRelayBeforeAction(
             contracts,
             relayParams,
             account,
-            account,
+            0,
             false // isSubaccount is false because the `removeSubaccount` call is signed by the main account
         );
 
         SubaccountUtils.removeSubaccount(dataStore, eventEmitter, account, subaccount);
+
+        _handleRelayAfterAction(contracts, startingGas, 0, account);
     }
 
     function _handleSubaccountAction(
@@ -356,7 +361,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         address account,
         bytes32 key,
         UpdateOrderParams calldata params,
-        bool increaseExecutionFee
+        uint256 executionFee
     ) internal pure returns (bytes32) {
         return
             keccak256(
@@ -365,7 +370,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
                     account,
                     key,
                     _getUpdateOrderParamsStructHash(params),
-                    increaseExecutionFee,
+                    executionFee,
                     _getRelayParamsHash(relayParams),
                     keccak256(abi.encode(subaccountApproval))
                 )
