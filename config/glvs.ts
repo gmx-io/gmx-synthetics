@@ -174,11 +174,11 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
             glvMaxMarketTokenBalanceAmount: expandDecimals(473_051, 18),
             glvMaxMarketTokenBalanceUsd: decimalToFloat(432_000),
           },
-          // {
-          //   indexToken: "MKR",
-          //   glvMaxMarketTokenBalanceAmount: expandDecimals(500_000, 18),
-          //   glvMaxMarketTokenBalanceUsd: decimalToFloat(500_000),
-          // },
+          {
+            indexToken: "MKR",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(500_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(500_000),
+          },
         ],
       },
       {
@@ -316,11 +316,11 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
             glvMaxMarketTokenBalanceAmount: expandDecimals(500_000, 18),
             glvMaxMarketTokenBalanceUsd: decimalToFloat(500_000),
           },
-          // {
-          //   indexToken: "OM",
-          //   glvMaxMarketTokenBalanceAmount: expandDecimals(500_000, 18),
-          //   glvMaxMarketTokenBalanceUsd: decimalToFloat(500_000),
-          // },
+          {
+            indexToken: "OM",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(500_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(500_000),
+          },
         ],
       },
     ],
