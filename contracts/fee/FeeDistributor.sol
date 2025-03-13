@@ -356,27 +356,27 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
     }
 
     function handleGmxFeeBridging() internal returns (uint256, uint256) {
-        // 1. Read distribution state from storage
+        // Read distribution state from storage
         DistributionState distributionState = DistributionState(getUint(Keys.FEE_DISTRIBUTION_STATE));
 
-        // 2. Load current chain’s original GMX fee amount from storage
+        // Load current chain’s original GMX fee amount from storage
         uint256 originalFeeAmountCurrentChain = getUint(Keys.feeDistributorFeeAmountGmxKey(block.chainid));
         uint256 feeAmountGmxCurrentChain = originalFeeAmountCurrentChain;
 
-        // If distribution is pending, we update the GMX fee amount to the vault’s current GMX balance
+        // If distribution is pending, update the GMX fee amount to the vault’s current GMX balance
         if (distributionState == DistributionState.DistributePending) {
             feeAmountGmxCurrentChain = IERC20(gmx).balanceOf(address(feeDistributorVault));
             setUint(Keys.feeDistributorFeeAmountGmxKey(block.chainid), feeAmountGmxCurrentChain);
         }
 
-        // 3. Get the list of chain IDs to consider
+        // Get the list of chain IDs to consider
         uint256[] memory chainIds = getUintArray(Keys.FEE_DISTRIBUTOR_CHAIN_ID);
 
         // Prepare parallel arrays to track each chain’s feeAmounts and stakedAmounts
         uint256[] memory feeAmounts = createUintArray(chainIds.length);
         uint256[] memory stakedAmounts = createUintArray(chainIds.length);
 
-        // 4. Sum up all chain fees and staked amounts; override the current chain’s fee with the new value
+        // Sum up all chain fees and staked amounts; override the current chain’s fee with the new value
         uint256 currentChainIndex;
         uint256 totalFeeAmountGmx;
         uint256 totalStakedGmx;
@@ -394,13 +394,13 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
             totalStakedGmx += stakedAmounts[i];
         }
 
-        // 5. Compute how much GMX the current chain is supposed to have, based on its stake share
+        // Compute how much GMX the current chain is supposed to have, based on its stake share
         uint256 requiredFeeAmount = (totalFeeAmountGmx * stakedAmounts[currentChainIndex]) / totalStakedGmx;
 
         // Calculate the difference between required and original
         int256 pendingFeeBridge = int256(requiredFeeAmount) - int256(originalFeeAmountCurrentChain);
 
-        // 6. Slippage logic
+        // Slippage logic
         uint256 minFeeReceived;
         uint256 slippageFactor = getUint(Keys.feeDistributorBridgeSlippageFactorKey(currentChainIndex));
         if (pendingFeeBridge > 0) {
@@ -410,7 +410,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         }
         uint256 minRequiredFeeAmount = originalFeeAmountCurrentChain + minFeeReceived;
 
-        // 7. If we don’t meet the min bridging requirement, revert or set distribution pending
+        // If the calculated amount doesn't meet the min bridging requirement, revert or set distribution pending
         if (minRequiredFeeAmount > feeAmountGmxCurrentChain) {
             if (distributionState == DistributionState.DistributePending) {
                 revert Errors.BridgedAmountNotSufficient(minRequiredFeeAmount, feeAmountGmxCurrentChain);
@@ -419,9 +419,9 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
             return (feeAmountGmxCurrentChain, totalFeeAmountGmx);
         }
 
-        // 8. Attempt to bridge GMX to other chains if DistributionState = ReadDataReceived
+        // Attempt to bridge GMX to other chains if DistributionState = ReadDataReceived
         if (distributionState == DistributionState.ReadDataReceived) {
-            // Call our internal bridging function
+            // Call the internal bridging function
             uint256 totalGmxBridgedOut = calculateAndBridgeGmx(
                 chainIds,
                 totalFeeAmountGmx,
@@ -445,7 +445,6 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         return (feeAmountGmxCurrentChain, totalFeeAmountGmx);
     }
 
-    // This internal function handles the surplus-deficit bridging logic
     function calculateAndBridgeGmx(
         uint256[] memory chainIds,
         uint256 totalFeeAmountGmx,
@@ -460,19 +459,19 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         int256[] memory differences = new int256[](chainIds.length);
         uint256[][] memory bridging = new uint256[][](chainIds.length);
 
-        // 1. Compute each chain’s “ideal” fee amount = totalFee * chain_stake / totalStaked
+        // Compute each chain’s “ideal” fee amount = totalFee * chain_stake / totalStaked
         for (uint256 i; i < chainIds.length; i++) {
             targetFeeAmounts[i] = (totalFeeAmountGmx * stakedAmounts[i]) / totalStakedGmx;
         }
 
-        // 2. Determine surplus/deficit on each chain
+        // Determine surplus/deficit on each chain
         for (uint256 i; i < chainIds.length; i++) {
             differences[i] = int256(feeAmounts[i]) - int256(targetFeeAmounts[i]);
             // Initialize bridging array for each chain
             bridging[i] = createUintArray(chainIds.length);
         }
 
-        // 3. Match surpluses to deficits
+        // Match surpluses to deficits
         uint256 deficitIndex;
         for (uint256 surplusIndex; surplusIndex < chainIds.length; surplusIndex++) {
             if (differences[surplusIndex] <= 0) continue;
@@ -515,7 +514,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         uint256[] memory bridging,
         uint256 slippageFactor
     ) internal returns (uint256) {
-        // 4. Execute bridging transactions only for bridging from current chain
+        // Execute bridging transactions from current chain
         address synapseRouter = getAddress(block.chainid, synapseRouterKey);
         uint256 originDeadline = block.timestamp + getUint(Keys.feeDistributorBridgeOriginDeadlineKey(block.chainid));
         uint256 totalGmxBridgedOut;
@@ -523,7 +522,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
             uint256 sendAmount = bridging[i];
             if (sendAmount == 0) continue;
 
-            // Move GMX to this contract, then approve router
+            // Move GMX needed for bridging to this contract from FeeDistributorVault, then approve router
             transferOut(gmx, address(this), sendAmount);
             IERC20(gmx).approve(synapseRouter, sendAmount);
 
@@ -560,7 +559,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
                 revert Errors.BridgingTransactionFailed(result);
             }
 
-            // Add to our total bridged out
+            // Add to the total bridged out
             totalGmxBridgedOut += sendAmount;
         }
 
