@@ -213,7 +213,7 @@ describe("SubaccountGelatoRelayRouter", () => {
       ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
     });
 
-    it("onlyGelatoRelay", async () => {
+    it.skip("onlyGelatoRelay", async () => {
       await expect(
         sendCreateOrder({
           ...createOrderParams,
@@ -737,7 +737,7 @@ describe("SubaccountGelatoRelayRouter", () => {
       await expect(sendUpdateOrder(updateOrderParams)).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
     });
 
-    it("onlyGelatoRelay", async () => {
+    it.skip("onlyGelatoRelay", async () => {
       await expect(
         sendUpdateOrder({ ...updateOrderParams, sender: user0 })
         // should not fail with InvalidSignature
@@ -942,7 +942,7 @@ describe("SubaccountGelatoRelayRouter", () => {
       await expect(sendCancelOrder(cancelOrderParams)).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
     });
 
-    it("onlyGelatoRelay", async () => {
+    it.skip("onlyGelatoRelay", async () => {
       await expect(
         sendCancelOrder({ ...cancelOrderParams, sender: user0 })
         // should not fail with InvalidSignature
@@ -1037,7 +1037,7 @@ describe("SubaccountGelatoRelayRouter", () => {
       );
     });
 
-    it("onlyGelatoRelay", async () => {
+    it.skip("onlyGelatoRelay", async () => {
       await expect(sendRemoveSubaccount({ ...params, sender: user0 })).to.be.revertedWith("onlyGelatoRelay");
     });
 

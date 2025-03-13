@@ -1,6 +1,5 @@
 import { BigNumberish, ethers } from "ethers";
-import { GELATO_RELAY_ADDRESS } from "./addresses";
-import { hashRelayParams, signTypedData } from "./helpers";
+import { hashRelayParams, sendRelayTransaction, signTypedData } from "./helpers";
 import { getDomain } from "./helpers";
 import { getRelayParams } from "./helpers";
 
@@ -53,13 +52,9 @@ export async function sendCreateOrder(p: {
     p.collateralDeltaAmount,
     p.params,
   ]);
-  const calldata = ethers.utils.solidityPack(
-    ["bytes", "address", "address", "uint256"],
-    [createOrderCalldata, GELATO_RELAY_ADDRESS, p.relayFeeToken, p.relayFeeAmount]
-  );
-  return p.sender.sendTransaction({
-    to: p.relayRouter.address,
-    data: calldata,
+  return sendRelayTransaction({
+    calldata: createOrderCalldata,
+    ...p,
   });
 }
 
@@ -180,13 +175,9 @@ export async function sendUpdateOrder(p: {
     p.params,
     Boolean(p.increaseExecutionFee),
   ]);
-  const calldata = ethers.utils.solidityPack(
-    ["bytes", "address", "address", "uint256"],
-    [updateOrderCalldata, GELATO_RELAY_ADDRESS, p.relayFeeToken, p.relayFeeAmount]
-  );
-  return p.sender.sendTransaction({
-    to: p.relayRouter.address,
-    data: calldata,
+  return sendRelayTransaction({
+    calldata: updateOrderCalldata,
+    ...p,
   });
 }
 
@@ -272,13 +263,9 @@ export async function sendCancelOrder(p: {
     p.account,
     p.key,
   ]);
-  const calldata = ethers.utils.solidityPack(
-    ["bytes", "address", "address", "uint256"],
-    [cancelOrderCalldata, GELATO_RELAY_ADDRESS, p.relayFeeToken, p.relayFeeAmount]
-  );
-  return p.sender.sendTransaction({
-    to: p.relayRouter.address,
-    data: calldata,
+  return sendRelayTransaction({
+    calldata: cancelOrderCalldata,
+    ...p,
   });
 }
 

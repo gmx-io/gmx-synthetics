@@ -15,12 +15,14 @@ import "../../order/IBaseOrderUtils.sol";
 import "../../order/OrderStoreUtils.sol";
 import "../../order/OrderVault.sol";
 import "../../router/Router.sol";
-import "../../swap/SwapUtils.sol";
 import "../../token/TokenUtils.sol";
 import "../../gas/GasUtils.sol";
 
+import "./RelayUtils.sol";
+
 abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, OracleModule {
     using Order for Order.Props;
+    using SafeERC20 for IERC20;
 
     struct TokenPermit {
         address owner;
@@ -38,12 +40,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         bytes[] externalCallDataList;
         address[] refundTokens;
         address[] refundReceivers;
-    }
-
-    struct FeeParams {
-        address feeToken;
-        uint256 feeAmount;
-        address[] feeSwapPath;
     }
 
     struct RelayParams {
@@ -64,13 +60,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         uint256 minOutputAmount;
         uint256 validFromTime;
         bool autoCancel;
-    }
-
-    struct Contracts {
-        DataStore dataStore;
-        EventEmitter eventEmitter;
-        OrderVault orderVault;
-        address wnt;
     }
 
     IOrderHandler public immutable orderHandler;
@@ -224,39 +213,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         _handleRelayAfterAction(contracts, startingGas, residualFeeAmount, account);
     }
 
-    function _swapFeeTokens(Contracts memory contracts, FeeParams calldata fee) internal returns (uint256) {
-        Oracle _oracle = oracle;
-        _oracle.validateSequencerUp();
-
-        // swap fee tokens to WNT
-        MarketUtils.validateSwapPath(contracts.dataStore, fee.feeSwapPath);
-        Market.Props[] memory swapPathMarkets = MarketUtils.getSwapPathMarkets(contracts.dataStore, fee.feeSwapPath);
-
-        (address outputToken, uint256 outputAmount) = SwapUtils.swap(
-            SwapUtils.SwapParams({
-                dataStore: contracts.dataStore,
-                eventEmitter: contracts.eventEmitter,
-                oracle: _oracle,
-                bank: contracts.orderVault,
-                key: bytes32(0),
-                tokenIn: fee.feeToken,
-                amountIn: fee.feeAmount,
-                swapPathMarkets: swapPathMarkets,
-                minOutputAmount: 0,
-                receiver: address(this),
-                uiFeeReceiver: address(0),
-                shouldUnwrapNativeToken: false,
-                swapPricingType: ISwapPricingUtils.SwapPricingType.AtomicSwap
-            })
-        );
-
-        if (outputToken != contracts.wnt) {
-            revert Errors.UnexpectedRelayFeeTokenAfterSwap(outputToken, contracts.wnt);
-        }
-
-        return outputAmount;
-    }
-
     function _handleRelayBeforeAction(
         Contracts memory contracts,
         RelayParams calldata relayParams,
@@ -330,7 +286,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             outputAmount = ERC20(_getFeeToken()).balanceOf(address(this));
         } else if (relayParams.fee.feeSwapPath.length != 0) {
             _sendTokens(account, relayParams.fee.feeToken, address(contracts.orderVault), relayParams.fee.feeAmount);
-            outputAmount = _swapFeeTokens(contracts, relayParams.fee);
+            outputAmount = RelayUtils.swapFeeTokens(contracts, oracle, relayParams.fee);
         } else if (relayParams.fee.feeToken == contracts.wnt) {
             _sendTokens(account, relayParams.fee.feeToken, address(this), relayParams.fee.feeAmount);
             outputAmount = relayParams.fee.feeAmount;
@@ -339,8 +295,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         }
 
         if (executionFee != 0) {
-            // TODO could send outputAmount - _getFee() for synced call to avoid extra transfer for the residual fee at the end of transaction
-            TokenUtils.transfer(contracts.dataStore, contracts.wnt, address(contracts.orderVault), executionFee);
+            IERC20(contracts.wnt).safeTransfer(address(contracts.orderVault), executionFee);
         }
 
         return outputAmount - executionFee;
@@ -355,7 +310,8 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         bool isSponsoredCall = !_isGelatoRelay(msg.sender);
         uint256 relayFee;
         if (isSponsoredCall) {
-            relayFee = GasUtils.payGelatoRelayFee(contracts.dataStore, startingGas, contracts.wnt);
+            // multiply by 2 because the calldata is first sent to the Relay contract, and then to GMX contract
+            relayFee = GasUtils.payGelatoRelayFee(contracts.dataStore, startingGas, contracts.wnt, msg.data.length * 2);
         } else {
             relayFee = _getFee();
             _transferRelayFeeCapped(relayFee);
@@ -363,7 +319,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
         residualFeeAmount -= relayFee;
         if (residualFeeAmount > 0) {
-            TokenUtils.transfer(contracts.dataStore, contracts.wnt, residualFeeReceiver, residualFeeAmount);
+            IERC20(contracts.wnt).safeTransfer(residualFeeReceiver, residualFeeAmount);
         }
     }
 

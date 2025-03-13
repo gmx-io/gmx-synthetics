@@ -1,4 +1,5 @@
 import { BigNumberish, ethers } from "ethers";
+import { GELATO_RELAY_ADDRESS } from "./addresses";
 
 function getDefaultOracleParams() {
   return {
@@ -122,4 +123,26 @@ export async function signTypedData(
   }
 
   return (signer as any)._signTypedData(domain, types, typedData);
+}
+
+export function sendRelayTransaction({
+  calldata,
+  relayFeeToken,
+  relayFeeAmount,
+  sender,
+  relayRouter,
+}: {
+  calldata: string;
+  relayFeeToken: string;
+  relayFeeAmount: BigNumberish;
+  sender: ethers.Signer;
+  relayRouter: ethers.Contract;
+}) {
+  return sender.sendTransaction({
+    to: relayRouter.address,
+    data: ethers.utils.solidityPack(
+      ["bytes", "address", "address", "uint256"],
+      [calldata, GELATO_RELAY_ADDRESS, relayFeeToken, relayFeeAmount]
+    ),
+  });
 }

@@ -20,6 +20,8 @@ import "../bank/StrictBank.sol";
 // @title GasUtils
 // @dev Library for execution fee estimation and payments
 library GasUtils {
+    using SafeERC20 for IERC20;
+
     using Deposit for Deposit.Props;
     using Withdrawal for Withdrawal.Props;
     using Shift for Shift.Props;
@@ -542,23 +544,34 @@ library GasUtils {
     function payGelatoRelayFee(
         DataStore dataStore,
         uint256 startingGas,
-        address wnt
+        address wnt,
+        uint256 calldataLength
     ) internal returns (uint256) {
         uint256 relayFeeMultiplierFactor = dataStore.getUint(Keys.GELATO_RELAY_FEE_MULTIPLIER_FACTOR);
+        if (relayFeeMultiplierFactor == 0) {
+            relayFeeMultiplierFactor = Precision.FLOAT_PRECISION;
+        }
+
+        address relayFeeAddress = dataStore.getAddress(Keys.RELAY_FEE_ADDRESS);
+        if (relayFeeAddress == address(0)) {
+            revert Errors.EmptyRelayFeeAddress();
+        }
+
+        // relayFeeBaseAmount should include:
+        // - 21000 base gas
+        // - GelatoRelay contract gas
+        // - gas for 2 token transfers: to relay fee address and residual fee to the user
         uint256 relayFeeBaseAmount = dataStore.getUint(Keys.GELATO_RELAY_FEE_BASE_AMOUNT);
 
         // would be non-zero for Arbitrum only
         uint256 l1Fee = Chain.getCurrentTxL1GasFees();
 
-        // relayFeeBaseAmount should include 21000 is base gas and GelatoRelay gas
-        // zero byte in call data is 4 bytes, non-zero byte is 16 bytes, use 12 as a conservative estimate
-        // it is also multiplied by 2 because the calldata is first sent to the Relay contract, and then to GMX contract
-        uint256 l2Fee = (relayFeeBaseAmount + msg.data.length * 2 * 12 + startingGas - gasleft()) * tx.gasprice;
+        // zero byte in call data costs 4 bytes, non-zero byte costs 16 bytes, use 12 as a conservative estimate
+        uint256 l2Fee = (relayFeeBaseAmount + calldataLength * 12 + startingGas - gasleft()) * tx.gasprice;
 
         uint256 relayFee = Precision.toFactor(l1Fee + l2Fee, relayFeeMultiplierFactor);
 
-        address relayFeeAddress = dataStore.getAddress(Keys.RELAY_FEE_ADDRESS);
-        TokenUtils.transfer(dataStore, wnt, relayFeeAddress, relayFee);
+        IERC20(wnt).safeTransfer(relayFeeAddress, relayFee);
 
         return relayFee;
     }

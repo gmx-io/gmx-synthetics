@@ -155,6 +155,7 @@ library Errors {
     error InsufficientHandleExecutionErrorGas(uint256 gas, uint256 minHandleExecutionErrorGas);
     error InsufficientGasForCancellation(uint256 gas, uint256 minHandleExecutionErrorGas);
     error InvalidExecutionFee(uint256 executionFee, uint256 minExecutionFee, uint256 maxExecutionFee);
+    error EmptyRelayFeeAddress();
 
     // MarketFactory errors
     error MarketAlreadyExists(bytes32 salt, address existingMarketAddress);

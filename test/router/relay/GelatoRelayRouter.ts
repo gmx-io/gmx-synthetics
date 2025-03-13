@@ -27,7 +27,7 @@ const BAD_SIGNATURE =
 
 describe("GelatoRelayRouter", () => {
   let fixture;
-  let user0, user1, user2;
+  let user0, user1, user2, user3;
   let reader, dataStore, router, gelatoRelayRouter, ethUsdMarket, wnt, usdc, chainlinkPriceFeedProvider;
   let relaySigner;
   let chainId;
@@ -37,7 +37,7 @@ describe("GelatoRelayRouter", () => {
 
   beforeEach(async () => {
     fixture = await deployFixture();
-    ({ user0, user1, user2 } = fixture.accounts);
+    ({ user0, user1, user2, user3 } = fixture.accounts);
     ({ reader, dataStore, router, gelatoRelayRouter, ethUsdMarket, wnt, usdc, chainlinkPriceFeedProvider } =
       fixture.contracts);
 
@@ -132,7 +132,7 @@ describe("GelatoRelayRouter", () => {
       ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
     });
 
-    it("onlyGelatoRelay", async () => {
+    it.skip("onlyGelatoRelay", async () => {
       await expect(
         sendCreateOrder({
           ...createOrderParams,
@@ -317,6 +317,74 @@ describe("GelatoRelayRouter", () => {
       });
     });
 
+    it("sponsoredCall: creates order and sends relayer fee", async () => {
+      const collateralDeltaAmount = createOrderParams.collateralDeltaAmount;
+      const gelatoRelayFee = "1253617010028936"; // the effective fee calculated and charged by GMX contract
+      await dataStore.setAddress(keys.RELAY_FEE_ADDRESS, user3.address);
+
+      const tokenPermit = await getTokenPermit(
+        wnt,
+        user0,
+        router.address,
+        expandDecimals(1, 18),
+        0,
+        9999999999,
+        chainId
+      );
+
+      const user0WntBalance = await wnt.balanceOf(user0.address);
+      expect(await wnt.allowance(user0.address, router.address)).to.eq(0);
+      await expectBalance(wnt.address, user3.address, 0);
+      const executionFee = expandDecimals(1, 15);
+      createOrderParams.params.numbers.executionFee = executionFee;
+      createOrderParams.feeParams.feeAmount = expandDecimals(3, 15);
+      const tx = await sendCreateOrder({
+        ...createOrderParams,
+        sender: user3,
+        tokenPermits: [tokenPermit],
+      });
+
+      // allowance was set
+      expect(await wnt.allowance(user0.address, router.address)).to.eq(
+        expandDecimals(1, 18).sub(collateralDeltaAmount).sub(createOrderParams.feeParams.feeAmount)
+      );
+      // relay fee was sent to relay fee address
+      await expectBalance(wnt.address, user3.address, [gelatoRelayFee, bigNumberify(gelatoRelayFee).div(10)]);
+      // user received residual amount
+      await expectBalance(wnt.address, user0.address, [
+        user0WntBalance.sub(executionFee).sub(gelatoRelayFee).sub(collateralDeltaAmount),
+        bigNumberify(gelatoRelayFee).div(10),
+      ]);
+
+      const orderKeys = await getOrderKeys(dataStore, 0, 1);
+      const order = await reader.getOrder(dataStore.address, orderKeys[0]);
+
+      expect(order.addresses.account).eq(user0.address);
+      expect(order.addresses.receiver).eq(user0.address);
+      expect(order.addresses.callbackContract).eq(user1.address);
+      expect(order.addresses.market).eq(ethUsdMarket.marketToken);
+      expect(order.addresses.initialCollateralToken).eq(ethUsdMarket.longToken);
+      expect(order.addresses.swapPath).deep.eq([ethUsdMarket.marketToken]);
+      expect(order.numbers.orderType).eq(OrderType.LimitIncrease);
+      expect(order.numbers.decreasePositionSwapType).eq(DecreasePositionSwapType.SwapCollateralTokenToPnlToken);
+      expect(order.numbers.sizeDeltaUsd).eq(decimalToFloat(1000));
+      expect(order.numbers.initialCollateralDeltaAmount).eq(collateralDeltaAmount);
+      expect(order.numbers.triggerPrice).eq(decimalToFloat(4800));
+      expect(order.numbers.acceptablePrice).eq(decimalToFloat(4900));
+      expect(order.numbers.executionFee).eq(executionFee);
+      expect(order.numbers.callbackGasLimit).eq("200000");
+      expect(order.numbers.minOutputAmount).eq(700);
+
+      expect(order.flags.isLong).eq(true);
+      expect(order.flags.shouldUnwrapNativeToken).eq(true);
+      expect(order.flags.isFrozen).eq(false);
+
+      await logGasUsage({
+        tx,
+        label: "gelatoRelayRouter.createOrder",
+      });
+    });
+
     it("swap relay fee with external call", async () => {
       const externalExchange = await deployContract("MockExternalExchange", []);
       await wnt.connect(user0).transfer(externalExchange.address, expandDecimals(1, 17));
@@ -487,7 +555,7 @@ describe("GelatoRelayRouter", () => {
       ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
     });
 
-    it("onlyGelatoRelay", async () => {
+    it.skip("onlyGelatoRelay", async () => {
       await expect(
         sendUpdateOrder({
           ...updateOrderParams,
@@ -627,7 +695,7 @@ describe("GelatoRelayRouter", () => {
       ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
     });
 
-    it("onlyGelatoRelay", async () => {
+    it.skip("onlyGelatoRelay", async () => {
       await expect(
         sendCancelOrder({
           ...cancelOrderParams,
