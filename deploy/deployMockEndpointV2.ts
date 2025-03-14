@@ -5,7 +5,7 @@ const func = createDeployFunction({
   contractName: "MockEndpointV2",
   getDeployArgs: async () => {
     const eid = 1;
-    return eid;
+    return [eid];
   },
 });
 

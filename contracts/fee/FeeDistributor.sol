@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "./FeeDistributorVault.sol";
 import "./FeeHandler.sol";
-import "../external/MultichainReader.sol";
+import "../multichain/MultichainReader.sol";
 import "../v1/IRewardTrackerV1.sol";
 import "../v1/IRewardDistributorV1.sol";
 import "../v1/IVesterV1.sol";
@@ -82,10 +82,11 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
 
         // populate readRequestInputs and extraOptionsInputs param used for cross chain LZRead request
         uint256[] memory chainIds = getUintArray(Keys.FEE_DISTRIBUTOR_CHAIN_ID);
+        uint256 chainIdsLength = chainIds.length;
         MultichainReaderUtils.ReadRequestInputs[]
-            memory readRequestInputs = new MultichainReaderUtils.ReadRequestInputs[]((chainIds.length - 1) * 3);
+            memory readRequestInputs = new MultichainReaderUtils.ReadRequestInputs[]((chainIdsLength - 1) * 3);
         bool skippedCurrentChain;
-        for (uint256 i; i < chainIds.length; i++) {
+        for (uint256 i; i < chainIdsLength; i++) {
             uint256 chainId = chainIds[i];
             address extendedGmxTracker = getAddress(chainId, extendedGmxTrackerKey);
 
@@ -125,7 +126,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
 
         MultichainReaderUtils.ExtraOptionsInputs memory extraOptionsInputs;
         extraOptionsInputs.gasLimit = uint128(getUint(Keys.FEE_DISTRIBUTOR_GAS_LIMIT));
-        extraOptionsInputs.returnDataSize = ((uint32(chainIds.length) - 1) * 96) + 8;
+        extraOptionsInputs.returnDataSize = ((uint32(chainIdsLength) - 1) * 96) + 8;
 
         // calculate native token fee required and execute multichainReader.sendReadRequests LZRead request
         MessagingFee memory messagingFee = multichainReader.quoteReadFee(readRequestInputs, extraOptionsInputs);
@@ -135,7 +136,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
 
         EventUtils.EventLogData memory eventData;
         eventData.uintItems.initItems(2);
-        eventData = setUintItem(eventData, 0, "numberOfChainsReadRequests", chainIds.length - 1);
+        eventData = setUintItem(eventData, 0, "numberOfChainsReadRequests", chainIdsLength - 1);
         eventData = setUintItem(eventData, 1, "messagingFee.nativeFee", messagingFee.nativeFee);
         emitEventLog("FeeDistributionInitiated", eventData);
     }
@@ -176,7 +177,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         providers[0] = getAddress(Keys.oracleProviderForTokenKey(gmx));
         bytes[] memory data = new bytes[](1);
         data[0] = "";
-        uint256 gmxPrice = retrieveGmxPrice(OracleUtils.SetPricesParams(tokens, providers, data));
+        uint256 gmxPrice = getGmxPrice(OracleUtils.SetPricesParams(tokens, providers, data));
         uint256 wntPrice = vaultV1.getMaxPrice(wnt);
         setUint(Keys.FEE_DISTRIBUTION_GMX_PRICE, gmxPrice);
         setUint(Keys.FEE_DISTRIBUTION_WNT_PRICE, wntPrice);
@@ -297,16 +298,16 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
                 address account = accounts[i];
                 uint256 esGmxAmount = amounts[i];
                 transferOut(token, account, esGmxAmount);
-                totalTokensSent = totalTokensSent + esGmxAmount;
+                totalTokensSent += esGmxAmount;
 
                 address vester = getAddress(block.chainid, esGmxVesterKey);
-                uint256 bonusReward = IVester(vester).bonusRewards(account);
-                uint256 updatedBonusReward = bonusReward + esGmxAmount;
-                IVester(vester).setBonusRewards(account, updatedBonusReward);
+                uint256 updatedBonusRewards = IVester(vester).bonusRewards(account) + esGmxAmount;
+                IVester(vester).setBonusRewards(account, updatedBonusRewards);
 
                 EventUtils.EventLogData memory eventData;
-                eventData.uintItems.initItems(1);
+                eventData.uintItems.initItems(2);
                 eventData = setUintItem(eventData, 0, "esGmxAmount", esGmxAmount);
+                eventData = setUintItem(eventData, 1, "updatedBonusRewards", updatedBonusRewards);
                 emitEventLog("EsGmxReferralRewardsSent", eventData);
             }
         } else if (token == wnt) {
@@ -315,7 +316,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
                 address account = accounts[i];
                 uint256 wntAmount = amounts[i];
                 transferOut(token, account, wntAmount);
-                totalTokensSent = totalTokensSent + wntAmount;
+                totalTokensSent += wntAmount;
 
                 EventUtils.EventLogData memory eventData;
                 eventData.uintItems.initItems(1);
@@ -335,21 +336,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         setUint(Keys.feeDistributorReferralRewardsSentKey(token), totalTokensSent);
     }
 
-    // @dev allows for the withdrawal of tokens from the feeDistributorVault
-    // @param token the token to be withdrawn
-    // @param receiver the address to which the tokens are sent
-    // @param amount the amount of token to be withdrawn
-    // @param shouldUnwrapNativeToken whether a WNT should be unwrapped when withdrawing
-    function withdrawTokens(
-        address token,
-        address receiver,
-        uint256 amount,
-        bool shouldUnwrapNativeToken
-    ) external nonReentrant onlyController {
-        feeDistributorVault.transferOut(token, receiver, amount, shouldUnwrapNativeToken);
-    }
-
-    function retrieveGmxPrice(
+    function getGmxPrice(
         OracleUtils.SetPricesParams memory params
     ) internal withOraclePrices(params) returns (uint256) {
         return oracle.getPrimaryPrice(gmx).max;
@@ -381,21 +368,26 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         uint256 totalFeeAmountGmx;
         uint256 totalStakedGmx;
         for (uint256 i; i < chainIds.length; i++) {
-            if (chainIds[i] == block.chainid) {
+            uint256 chainId = chainIds[i];
+            if (chainId == block.chainid) {
                 feeAmounts[i] = feeAmountGmxCurrentChain;
                 currentChainIndex = i;
             } else {
-                feeAmounts[i] = getUint(Keys.feeDistributorFeeAmountGmxKey(chainIds[i]));
+                feeAmounts[i] = getUint(Keys.feeDistributorFeeAmountGmxKey(chainId));
             }
 
-            stakedAmounts[i] = getUint(Keys.feeDistributorStakedGmxKey(chainIds[i]));
+            stakedAmounts[i] = getUint(Keys.feeDistributorStakedGmxKey(chainId));
 
             totalFeeAmountGmx += feeAmounts[i];
             totalStakedGmx += stakedAmounts[i];
         }
 
         // Compute how much GMX the current chain is supposed to have, based on its stake share
-        uint256 requiredFeeAmount = (totalFeeAmountGmx * stakedAmounts[currentChainIndex]) / totalStakedGmx;
+        uint256 requiredFeeAmount = Precision.mulDiv(
+            totalFeeAmountGmx,
+            stakedAmounts[currentChainIndex],
+            totalStakedGmx
+        );
 
         // Calculate the difference between required and original
         int256 pendingFeeBridge = int256(requiredFeeAmount) - int256(originalFeeAmountCurrentChain);
@@ -454,34 +446,36 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         uint256 currentChainIndex,
         uint256 slippageFactor
     ) internal returns (uint256) {
+        uint256 chainIdsLength = chainIds.length;
+
         // Prepare arrays
-        uint256[] memory targetFeeAmounts = createUintArray(chainIds.length);
-        int256[] memory differences = new int256[](chainIds.length);
-        uint256[][] memory bridging = new uint256[][](chainIds.length);
+        uint256[] memory targetFeeAmounts = createUintArray(chainIdsLength);
+        int256[] memory differences = new int256[](chainIdsLength);
+        uint256[][] memory bridging = new uint256[][](chainIdsLength);
 
         // Compute each chain’s “ideal” fee amount = totalFee * chain_stake / totalStaked
-        for (uint256 i; i < chainIds.length; i++) {
-            targetFeeAmounts[i] = (totalFeeAmountGmx * stakedAmounts[i]) / totalStakedGmx;
+        for (uint256 i; i < chainIdsLength; i++) {
+            targetFeeAmounts[i] = Precision.mulDiv(stakedAmounts[i], totalFeeAmountGmx, totalStakedGmx);
         }
 
         // Determine surplus/deficit on each chain
-        for (uint256 i; i < chainIds.length; i++) {
+        for (uint256 i; i < chainIdsLength; i++) {
             differences[i] = int256(feeAmounts[i]) - int256(targetFeeAmounts[i]);
             // Initialize bridging array for each chain
-            bridging[i] = createUintArray(chainIds.length);
+            bridging[i] = createUintArray(chainIdsLength);
         }
 
         // Match surpluses to deficits
         uint256 deficitIndex;
-        for (uint256 surplusIndex; surplusIndex < chainIds.length; surplusIndex++) {
+        for (uint256 surplusIndex; surplusIndex < chainIdsLength; surplusIndex++) {
             if (differences[surplusIndex] <= 0) continue;
 
-            while (differences[surplusIndex] > 0 && deficitIndex < chainIds.length) {
+            while (differences[surplusIndex] > 0 && deficitIndex < chainIdsLength) {
                 // Move deficitIndex to a chain that actually needs GMX
-                while (deficitIndex < chainIds.length && differences[deficitIndex] >= 0) {
+                while (deficitIndex < chainIdsLength && differences[deficitIndex] >= 0) {
                     deficitIndex++;
                 }
-                if (deficitIndex == chainIds.length) break;
+                if (deficitIndex == chainIdsLength) break;
 
                 // The amount needed by the deficit chain
                 uint256 needed = uint256(-differences[deficitIndex]);
@@ -582,9 +576,13 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         uint256[] memory keepersTargetBalance = getUintArray(Keys.FEE_DISTRIBUTOR_KEEPER_COSTS);
         uint256 wntForKeepers;
         for (uint256 i; i < keepers.length; i++) {
-            if (keepers[i].balance < keepersTargetBalance[i]) {
-                feeDistributorVault.transferOutNativeToken(keepers[i], keepersTargetBalance[i] - keepers[i].balance);
-                wntForKeepers = wntForKeepers + keepersTargetBalance[i] - keepers[i].balance;
+            address keeper = keepers[i];
+            uint256 keeperBalance = keeper.balance;
+            uint256 keeperTargetBalance = keepersTargetBalance[i];
+            if (keeperBalance < keeperTargetBalance) {
+                uint256 wntForKeeper = keeperTargetBalance - keeperBalance;
+                feeDistributorVault.transferOutNativeToken(keeper, wntForKeeper);
+                wntForKeepers += wntForKeeper;
             }
         }
 
@@ -679,11 +677,11 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
             uint256 keeperCost = keepersTargetBalance[i] - keepers[i].balance;
             if (keeperCost > 0) {
                 if (keepersV2[i]) {
-                    keeperCostsTreasury = keeperCostsTreasury + keeperCost;
+                    keeperCostsTreasury += keeperCost;
                 } else {
                     uint256 keeperCostGlp = Precision.applyFactor(keeperCost, keeperGlpFactor);
-                    keeperCostsGlp = keeperCostsGlp + keeperCostGlp;
-                    keeperCostsTreasury = keeperCostsTreasury + keeperCost - keeperCostGlp;
+                    keeperCostsGlp += keeperCostGlp;
+                    keeperCostsTreasury += (keeperCost - keeperCostGlp);
                 }
             }
         }
@@ -754,8 +752,8 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
                 revert Errors.TreasuryFeeThresholdBreached(wntForTreasury, wntGlpShortfall, maxTreasuryWntShortfall);
             }
 
-            wntForTreasury = wntForTreasury - wntGlpShortfall;
-            wntForGlp = wntForGlp + wntGlpShortfall;
+            wntForTreasury -= wntGlpShortfall;
+            wntForGlp += wntGlpShortfall;
         }
 
         return (wntForTreasury, wntForGlp);
