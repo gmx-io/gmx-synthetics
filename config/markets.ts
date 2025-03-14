@@ -2449,11 +2449,11 @@ const config: {
 
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
-      maxOpenInterest: decimalToFloat(500_000),
-      maxPoolUsdForDeposit: decimalToFloat(750_000), // 1.5x the max open interest
+      maxOpenInterest: decimalToFloat(750_000),
+      maxPoolUsdForDeposit: decimalToFloat(1_000_000),
 
-      maxLongTokenPoolAmount: expandDecimals(10, 8), // ~1M USD (2x the max open interest)
-      maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x the max open interest)
+      maxLongTokenPoolAmount: expandDecimals(15, 8),
+      maxShortTokenPoolAmount: expandDecimals(1_300_000, 6),
     },
     {
       tokens: { indexToken: "AI16Z", longToken: "WBTC.e", shortToken: "USDC" },
@@ -2563,11 +2563,11 @@ const config: {
 
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
-      maxOpenInterest: decimalToFloat(1_500_000),
-      maxPoolUsdForDeposit: decimalToFloat(2_500_000),
+      maxOpenInterest: decimalToFloat(1_800_000),
+      maxPoolUsdForDeposit: decimalToFloat(3_000_000),
 
-      maxLongTokenPoolAmount: expandDecimals(2000, 18),
-      maxShortTokenPoolAmount: expandDecimals(3_000_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(1850, 18),
+      maxShortTokenPoolAmount: expandDecimals(3_500_000, 6),
     },
     {
       tokens: { indexToken: "VIRTUAL", longToken: "WBTC.e", shortToken: "USDC" },
