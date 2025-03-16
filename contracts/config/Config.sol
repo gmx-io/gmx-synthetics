@@ -84,6 +84,32 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         );
     }
 
+    function setOracleProviderForToken(address token, address provider) external onlyConfigKeeper nonReentrant {
+        if (token == address(0)) {
+            revert Errors.EmptyToken();
+        }
+
+        if (!dataStore.getBool(Keys.isOracleProviderEnabledKey(provider))) {
+            revert Errors.InvalidOracleProvider(provider);
+        }
+
+        if (Chain.currentTimestamp() - dataStore.getUint(Keys.oracleProviderUpdatedAt(token, provider))
+            < dataStore.getUint(Keys.ORACLE_PROVIDER_SAME_VALUE_DELAY)) {
+            revert Errors.OracleProviderDelay(token, provider);
+        }
+
+        dataStore.setUint(Keys.oracleProviderUpdatedAt(token, provider), Chain.currentTimestamp());
+        dataStore.setAddress(Keys.oracleProviderForTokenKey(token), provider);
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "token", token);
+        eventData.addressItems.setItem(1, "provider", provider);
+        eventEmitter.emitEventLog(
+            "SetOracleProviderForToken",
+            eventData
+        );
+    }
 
     function setPriceFeed(
         address token,

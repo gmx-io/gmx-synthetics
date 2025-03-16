@@ -193,6 +193,10 @@ library Keys {
     bytes32 public constant ORACLE_TIMESTAMP_ADJUSTMENT = keccak256(abi.encode("ORACLE_TIMESTAMP_ADJUSTMENT"));
     // @dev key for oracle provider for token
     bytes32 public constant ORACLE_PROVIDER_FOR_TOKEN = keccak256(abi.encode("ORACLE_PROVIDER_FOR_TOKEN"));
+    // @dev key for oracle provider updated time
+    bytes32 public constant ORACLE_PROVIDER_UPDATED_AT = keccak256(abi.encode("ORACLE_PROVIDER_UPDATED_AT"));
+    // @dev key for oracle provider same value delay
+    bytes32 public constant ORACLE_PROVIDER_SAME_VALUE_DELAY = keccak256(abi.encode("ORACLE_PROVIDER_SAME_VALUE_DELAY"));
     // @dev key for the chainlink payment token
     bytes32 public constant CHAINLINK_PAYMENT_TOKEN = keccak256(abi.encode("CHAINLINK_PAYMENT_TOKEN"));
     // @dev key for the sequencer grace duration
@@ -987,6 +991,18 @@ library Keys {
         return keccak256(abi.encode(
             ORACLE_PROVIDER_FOR_TOKEN,
             token
+        ));
+    }
+
+    // @dev key for oracle provider update time
+    // @param token the token
+    // @param provider address
+    // @return key for oracle provider updated time
+    function oracleProviderUpdatedAt(address token, address provider) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            ORACLE_PROVIDER_UPDATED_AT,
+            token,
+            provider
         ));
     }
 

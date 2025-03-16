@@ -32,11 +32,13 @@ library Errors {
     error InvalidClaimableFactor(uint256 value);
     error InvalidClaimableReductionFactor(uint256 value);
     error OracleProviderAlreadyExistsForToken(address token);
+    error OracleProviderDelay(address token, address provider);
     error PriceFeedAlreadyExistsForToken(address token);
     error DataStreamIdAlreadyExistsForToken(address token);
     error MaxFundingFactorPerSecondLimitExceeded(uint256 maxFundingFactorPerSecond, uint256 limit);
     error InvalidPositionImpactPoolDistributionRate(uint256 distributionAmount, uint256 positionImpactPoolAmount);
     error MaxDataListLengthExceeded(uint256 dataLength, uint256 maxDataLength);
+    error EmptyToken();
 
     // ContributorHandler errors
     error InvalidSetContributorPaymentInput(uint256 tokensLength, uint256 amountsLength);
