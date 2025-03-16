@@ -837,6 +837,6 @@ export function isMultichainProviderEnabledKey(contract: string) {
   return hashData(["bytes32", "address"], [IS_MULTICHAIN_PROVIDER_ENABLED, contract]);
 }
 
-export function isMultichainProviderEnabledKey(originator: string) {
+export function multichainAuthorizedOriginatorsKey(originator: string) {
   return hashData(["bytes32", "address"], [MULTICHAIN_AUTHORIZED_ORIGINATORS, originator]);
 }
