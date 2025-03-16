@@ -23,6 +23,9 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         DistributePending
     }
 
+    string public constant bridgeFunctionSignature =
+        "bridge(address,uint256,address,uint256,(address,address,uint256,uint256,bytes),(address,address,uint256,uint256,bytes))";
+
     bytes32 public constant gmxKey = keccak256(abi.encode("GMX"));
     bytes32 public constant extendedGmxTrackerKey = keccak256(abi.encode("EXTENDED_GMX_TRACKER"));
     bytes32 public constant dataStoreKey = keccak256(abi.encode("DATASTORE"));
@@ -92,7 +95,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
 
             if (chainId == block.chainid) {
                 uint256 feeAmountGmx = getUint(Keys.withdrawableBuybackTokenAmountKey(gmx)) +
-                    IERC20(gmx).balanceOf(address(feeDistributorVault));
+                    getFeeDistributorVaultBalance(gmx);
                 uint256 stakedGmx = IERC20(extendedGmxTracker).totalSupply();
                 setUint(Keys.feeDistributorFeeAmountGmxKey(chainId), feeAmountGmx);
                 setUint(Keys.feeDistributorStakedGmxKey(chainId), stakedGmx);
@@ -132,7 +135,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         MessagingFee memory messagingFee = multichainReader.quoteReadFee(readRequestInputs, extraOptionsInputs);
         multichainReader.sendReadRequests{ value: messagingFee.nativeFee }(readRequestInputs, extraOptionsInputs);
 
-        setUint(Keys.FEE_DISTRIBUTION_STATE, uint256(DistributionState.Initiated));
+        setDistributionState(uint256(DistributionState.Initiated));
 
         EventUtils.EventLogData memory eventData;
         eventData.uintItems.initItems(2);
@@ -182,7 +185,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         setUint(Keys.FEE_DISTRIBUTION_GMX_PRICE, gmxPrice);
         setUint(Keys.FEE_DISTRIBUTION_WNT_PRICE, wntPrice);
         setUint(Keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP, receivedData.timestamp);
-        setUint(Keys.FEE_DISTRIBUTION_STATE, uint256(DistributionState.ReadDataReceived));
+        setDistributionState(uint256(DistributionState.ReadDataReceived));
 
         EventUtils.EventLogData memory eventData;
         eventData.uintItems.initItems(4);
@@ -240,7 +243,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         setUint(Keys.feeDistributorReferralRewardsAmountKey(wnt), wntForReferralRewards);
         setUint(Keys.feeDistributorReferralRewardsAmountKey(esGmx), esGmxForReferralRewards);
         setUint(Keys.FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP, block.timestamp);
-        setUint(Keys.FEE_DISTRIBUTION_STATE, uint256(DistributionState.None));
+        setDistributionState(uint256(DistributionState.None));
 
         EventUtils.EventLogData memory eventData;
         eventData.uintItems.initItems(10);
@@ -288,7 +291,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
                 revert Errors.ReferralRewardsThresholdBreached(esGmx, esGmxForReferralRewards, maxEsGmxReferralRewards);
             }
 
-            uint256 vaultEsGmxBalance = IERC20(esGmx).balanceOf(address(feeDistributorVault));
+            uint256 vaultEsGmxBalance = getFeeDistributorVaultBalance(esGmx);
             if (esGmxForReferralRewards > vaultEsGmxBalance) {
                 IMintable(esGmx).mint(address(feeDistributorVault), esGmxForReferralRewards - vaultEsGmxBalance);
             }
@@ -352,7 +355,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
 
         // If distribution is pending, update the GMX fee amount to the vault’s current GMX balance
         if (distributionState == DistributionState.DistributePending) {
-            feeAmountGmxCurrentChain = IERC20(gmx).balanceOf(address(feeDistributorVault));
+            feeAmountGmxCurrentChain = getFeeDistributorVaultBalance(gmx);
             setUint(Keys.feeDistributorFeeAmountGmxKey(block.chainid), feeAmountGmxCurrentChain);
         }
 
@@ -407,7 +410,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
             if (distributionState == DistributionState.DistributePending) {
                 revert Errors.BridgedAmountNotSufficient(minRequiredFeeAmount, feeAmountGmxCurrentChain);
             }
-            setUint(Keys.FEE_DISTRIBUTION_STATE, uint256(DistributionState.DistributePending));
+            setDistributionState(uint256(DistributionState.DistributePending));
             return (feeAmountGmxCurrentChain, totalFeeAmountGmx);
         }
 
@@ -498,9 +501,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
             }
         }
 
-        uint256 totalGmxBridgedOut = bridgeGmx(chainIds, bridging[currentChainIndex], slippageFactor);
-
-        return totalGmxBridgedOut;
+        return bridgeGmx(chainIds, bridging[currentChainIndex], slippageFactor);
     }
 
     function bridgeGmx(
@@ -521,27 +522,25 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
             IERC20(gmx).approve(synapseRouter, sendAmount);
 
             // Build bridging data
-            address feeReceiver = getAddress(chainIds[i], Keys.FEE_RECEIVER);
-            address gmxDestChain = getAddress(chainIds[i], gmxKey);
+            uint256 chainId = chainIds[i];
             uint256 minAmountOut = Precision.applyFactor(sendAmount, slippageFactor);
-            uint256 destDeadline = block.timestamp + getUint(Keys.feeDistributorBridgeDestDeadlineKey(chainIds[i]));
-
+            uint256 destDeadline = block.timestamp + getUint(Keys.feeDistributorBridgeDestDeadlineKey(chainId));
             bytes memory callData = abi.encodeWithSignature(
-                "bridge(address,uint256,address,uint256,(address,address,uint256,uint256,bytes),(address,address,uint256,uint256,bytes))",
+                bridgeFunctionSignature,
                 // (feeReceiver, chainId, token, amount) for the “Origin” call
-                feeReceiver,
-                chainIds[i],
+                getAddress(chainId, Keys.FEE_RECEIVER),
+                chainId,
                 gmx,
                 sendAmount,
-                // extra bridging params on origin
+                // additional bridging params for the origin chain
                 address(0),
                 gmx,
                 sendAmount,
                 originDeadline,
                 "",
-                // bridging params on the destination
+                // additional bridging params for the destination chain
                 address(0),
-                gmxDestChain,
+                getAddress(chainId, gmxKey),
                 minAmountOut,
                 destDeadline,
                 ""
@@ -572,7 +571,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         uint256 feeAmountGmxCurrentChain
     ) internal returns (uint256) {
         // transfer the WNT that needs to be sent to each keeper
-        address[] memory keepers = dataStore.getAddressArray(Keys.FEE_DISTRIBUTOR_KEEPER_COSTS);
+        address[] memory keepers = getAddressArray(Keys.FEE_DISTRIBUTOR_KEEPER_COSTS);
         uint256[] memory keepersTargetBalance = getUintArray(Keys.FEE_DISTRIBUTOR_KEEPER_COSTS);
         uint256 wntForKeepers;
         for (uint256 i; i < keepers.length; i++) {
@@ -609,6 +608,10 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         dataStore.setUint(fullKey, value);
     }
 
+    function setDistributionState(uint256 value) internal {
+        setUint(Keys.FEE_DISTRIBUTION_STATE, value);
+    }
+
     function transferOut(address token, address receiver, uint256 amount) internal {
         feeDistributorVault.transferOut(token, receiver, amount);
     }
@@ -623,7 +626,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         uint256 feesV2Usd
     ) internal view returns (uint256, uint256, uint256, uint256) {
         // the WNT fee amount related calculations
-        uint256 totalWntBalance = IERC20(wnt).balanceOf(address(feeDistributorVault));
+        uint256 totalWntBalance = getFeeDistributorVaultBalance(wnt);
 
         // calculate the WNT that needs to be sent to each keeper
         (uint256 keeperCostsTreasury, uint256 keeperCostsGlp) = calculateKeeperCosts();
@@ -663,7 +666,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
     }
 
     function calculateKeeperCosts() internal view returns (uint256, uint256) {
-        address[] memory keepers = dataStore.getAddressArray(Keys.FEE_DISTRIBUTOR_KEEPER_COSTS);
+        address[] memory keepers = getAddressArray(Keys.FEE_DISTRIBUTOR_KEEPER_COSTS);
         uint256[] memory keepersTargetBalance = getUintArray(Keys.FEE_DISTRIBUTOR_KEEPER_COSTS);
         bool[] memory keepersV2 = dataStore.getBoolArray(Keys.FEE_DISTRIBUTOR_KEEPER_COSTS);
         if (keepers.length != keepersTargetBalance.length || keepers.length != keepersV2.length) {
@@ -771,8 +774,22 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         return getAddress(Keys.feeDistributorAddressInfoKey(chainId, addressKey));
     }
 
+    function getFeeDistributorVaultBalance(address token) internal view returns (uint256) {
+        return IERC20(token).balanceOf(address(feeDistributorVault));
+    }
+
     function getUintArray(bytes32 key) internal view returns (uint256[] memory) {
         return dataStore.getUintArray(key);
+    }
+
+    function getAddressArray(bytes32 key) internal view returns (address[] memory) {
+        return dataStore.getAddressArray(key);
+    }
+
+    function validateReadResponseTimestamp(uint256 readResponseTimestamp) internal view {
+        if (block.timestamp - readResponseTimestamp > getUint(Keys.FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY)) {
+            revert Errors.OutdatedReadResponse(readResponseTimestamp);
+        }
     }
 
     function validateDistributionState(DistributionState allowedDistributionState) internal view {
@@ -803,12 +820,6 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         }
     }
 
-    function validateReadResponseTimestamp(uint256 readResponseTimestamp) internal view {
-        if (block.timestamp - readResponseTimestamp > getUint(Keys.FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY)) {
-            revert Errors.OutdatedReadResponse(readResponseTimestamp);
-        }
-    }
-
     function setUintItem(
         EventUtils.EventLogData memory eventData,
         uint256 itemNumber,
@@ -819,21 +830,19 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         return eventData;
     }
 
-    function createUintArray(uint256 arrayLength) internal pure returns (uint256[] memory) {
-        uint256[] memory uintArray = new uint256[](arrayLength);
-        return uintArray;
-    }
-
-    function createAddressArray(uint256 arrayLength) internal pure returns (address[] memory) {
-        address[] memory addressArray = new address[](arrayLength);
-        return addressArray;
-    }
-
     function setReadRequestInput(
         uint32 chainId,
         address target,
         bytes memory callData
     ) internal pure returns (MultichainReaderUtils.ReadRequestInputs memory) {
         return MultichainReaderUtils.ReadRequestInputs(chainId, target, callData);
+    }
+
+    function createUintArray(uint256 arrayLength) internal pure returns (uint256[] memory) {
+        return new uint256[](arrayLength);
+    }
+
+    function createAddressArray(uint256 arrayLength) internal pure returns (address[] memory) {
+        return new address[](arrayLength);
     }
 }

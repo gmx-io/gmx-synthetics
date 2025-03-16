@@ -1,6 +1,5 @@
 import { grantRoleIfNotGranted } from "../utils/role";
 import { createDeployFunction } from "../utils/deploy";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 const constructorContracts = ["RoleStore", "DataStore", "EventEmitter"];
 
@@ -21,19 +20,11 @@ const func = createDeployFunction({
       .map((dependencyName) => dependencyContracts[dependencyName].address)
       .concat(endpointAddress);
   },
-  libraryNames: ["MultichainReaderUtils"],
   afterDeploy: async ({ deployedContract }) => {
     await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
   },
 });
 
 func.dependencies = func.dependencies.concat(["MockEndpointV2"]);
-func.skip = async (hre: HardhatRuntimeEnvironment) => {
-  if (hre.network.name === "avalancheFuji") {
-    return true;
-  }
-
-  return process.env.SKIP_HANDLER_DEPLOYMENTS ? true : false;
-};
 
 export default func;

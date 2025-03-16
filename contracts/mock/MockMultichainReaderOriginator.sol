@@ -8,7 +8,9 @@ contract MockMultichainReaderOriginator {
 
     MultichainReaderUtils.ReceivedData public latestReceivedData;
 
-    uint256 public latestTimeStamp;
+    uint256 public latestTimestamp;
+
+    bytes public latestReadData;
 
     MultichainReader public multichainReader;
 
@@ -18,8 +20,11 @@ contract MockMultichainReaderOriginator {
 
     receive() external payable {}
 
-    function processLzReceive(bytes32 guid, MultichainReaderUtils.ReceivedData memory receivedDataInput) external {
-        receivedData[guid] = receivedDataInput;
+    function processLzReceive(bytes32 guid, MultichainReaderUtils.ReceivedData memory receivedDataParam) external {
+        receivedData[guid] = receivedDataParam;
+        latestReceivedData = receivedDataParam;
+        latestTimestamp = receivedDataParam.timestamp;
+        latestReadData = receivedDataParam.readData;
     }
 
     function setmultichainReader(MultichainReader _multichainReader) external {
@@ -44,5 +49,9 @@ contract MockMultichainReaderOriginator {
     ) external view returns (uint256) {
         MessagingFee memory messagingFee = multichainReader.quoteReadFee(readRequestInputs, extraOptionsInputs);
         return (messagingFee.nativeFee);
+    }
+
+    function testRead() external pure returns (uint256) {
+        return 12345;
     }
 }
