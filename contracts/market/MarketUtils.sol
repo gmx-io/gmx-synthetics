@@ -142,7 +142,7 @@ library MarketUtils {
         Price.Props memory shortTokenPrice,
         bytes32 pnlFactorType,
         bool maximize
-    ) external view returns (int256, MarketPoolValueInfo.Props memory) {
+    ) public view returns (int256, MarketPoolValueInfo.Props memory) {
         uint256 supply = getMarketTokenSupply(MarketToken(payable(market.marketToken)));
 
         MarketPoolValueInfo.Props memory poolValueInfo = getPoolValueInfo(
@@ -160,7 +160,7 @@ library MarketUtils {
             return (Precision.FLOAT_PRECISION.toInt256(), poolValueInfo);
         }
 
-        if (poolValueInfo.poolValue == 0) { return (0, poolValueInfo); }
+        if (poolValueInfo.poolValue == 0) {return (0, poolValueInfo);}
 
         int256 marketTokenPrice = Precision.mulDiv(Precision.WEI_PRECISION, poolValueInfo.poolValue, supply);
         return (marketTokenPrice, poolValueInfo);
@@ -406,7 +406,7 @@ library MarketUtils {
         uint256 poolUsd,
         bytes32 pnlFactorType
     ) internal view returns (int256) {
-        if (pnl < 0) { return pnl; }
+        if (pnl < 0) {return pnl;}
 
         uint256 maxPnlFactor = getMaxPnlFactor(dataStore, pnlFactorType, market, isLong);
         int256 maxPnl = Precision.applyFactor(poolUsd, maxPnlFactor).toInt256();
@@ -999,7 +999,7 @@ library MarketUtils {
             dataStore,
             eventEmitter,
             market.indexToken,
-            isLong ? -delta : delta
+            isLong ? - delta : delta
         );
 
         if (delta > 0) {
@@ -1422,7 +1422,7 @@ library MarketUtils {
             // if there are more longs than shorts, then the savedFundingFactorPerSecond should increase
             // otherwise the savedFundingFactorPerSecond should increase in the opposite direction / decrease
             if (longOpenInterest < shortOpenInterest) {
-                increaseValue = -increaseValue;
+                increaseValue = - increaseValue;
             }
 
             cache.nextSavedFundingFactorPerSecond = cache.savedFundingFactorPerSecond + increaseValue;
@@ -1471,7 +1471,7 @@ library MarketUtils {
         uint256 tokenPrice,
         bool roundUpMagnitude
     ) internal pure returns (uint256) {
-        if (fundingUsd == 0 || openInterest == 0) { return 0; }
+        if (fundingUsd == 0 || openInterest == 0) {return 0;}
 
         uint256 fundingUsdPerSize = Precision.mulDiv(
             fundingUsd,
@@ -1716,7 +1716,7 @@ library MarketUtils {
             eventEmitter,
             market,
             token,
-            -impactAmount
+            - impactAmount
         );
 
         return (impactAmount, cappedDiffUsd);
@@ -1807,7 +1807,7 @@ library MarketUtils {
     // @param prices the prices of the market tokens
     // @return the borrowing fees for a position
     function getNextBorrowingFees(DataStore dataStore, Position.Props memory position, Market.Props memory market, MarketPrices memory prices) internal view returns (uint256) {
-        (uint256 nextCumulativeBorrowingFactor, /* uint256 delta */, ) = getNextCumulativeBorrowingFactor(
+        (uint256 nextCumulativeBorrowingFactor, /* uint256 delta */,) = getNextCumulativeBorrowingFactor(
             dataStore,
             market,
             prices,
@@ -2235,7 +2235,7 @@ library MarketUtils {
         bool isLong,
         uint256 delta
     ) internal {
-        if (delta == 0) { return; }
+        if (delta == 0) {return;}
 
         uint256 nextValue = dataStore.applyDeltaToUint(
             Keys.fundingFeeAmountPerSizeKey(market, collateralToken, isLong),
@@ -2266,7 +2266,7 @@ library MarketUtils {
         bool isLong,
         uint256 delta
     ) internal {
-        if (delta == 0) { return; }
+        if (delta == 0) {return;}
 
         uint256 nextValue = dataStore.applyDeltaToUint(
             Keys.claimableFundingAmountPerSizeKey(market, collateralToken, isLong),
@@ -2288,7 +2288,7 @@ library MarketUtils {
     // @return the number of seconds since funding was updated for a market
     function getSecondsSinceFundingUpdated(DataStore dataStore, address market) internal view returns (uint256) {
         uint256 updatedAt = dataStore.getUint(Keys.fundingUpdatedAtKey(market));
-        if (updatedAt == 0) { return 0; }
+        if (updatedAt == 0) {return 0;}
         return Chain.currentTimestamp() - updatedAt;
     }
 
@@ -2366,7 +2366,7 @@ library MarketUtils {
     // @return the number of seconds since the cumulative borrowing factor was last updated
     function getSecondsSinceCumulativeBorrowingFactorUpdated(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
         uint256 updatedAt = getCumulativeBorrowingFactorUpdatedAt(dataStore, market, isLong);
-        if (updatedAt == 0) { return 0; }
+        if (updatedAt == 0) {return 0;}
         return Chain.currentTimestamp() - updatedAt;
     }
 
@@ -2471,7 +2471,7 @@ library MarketUtils {
             isLong
         );
 
-        if (reservedUsd == 0) { return 0; }
+        if (reservedUsd == 0) {return 0;}
 
         // check if the borrowing fee for the smaller side should be skipped
         // if skipBorrowingFeeForSmallerSide is true, and the longOpenInterest is exactly the same as the shortOpenInterest
@@ -2575,7 +2575,7 @@ library MarketUtils {
                 dataStore,
                 eventEmitter,
                 market,
-                -distributionAmount.toInt256()
+                - distributionAmount.toInt256()
             );
 
             MarketEventUtils.emitPositionImpactPoolDistributed(
@@ -2604,13 +2604,13 @@ library MarketUtils {
         address market
     ) internal view returns (uint256, uint256) {
         uint256 positionImpactPoolAmount = getPositionImpactPoolAmount(dataStore, market);
-        if (positionImpactPoolAmount == 0) { return (0, positionImpactPoolAmount); }
+        if (positionImpactPoolAmount == 0) {return (0, positionImpactPoolAmount);}
 
         uint256 distributionRate = dataStore.getUint(Keys.positionImpactPoolDistributionRateKey(market));
-        if (distributionRate == 0) { return (0, positionImpactPoolAmount); }
+        if (distributionRate == 0) {return (0, positionImpactPoolAmount);}
 
         uint256 minPositionImpactPoolAmount = dataStore.getUint(Keys.minPositionImpactPoolAmountKey(market));
-        if (positionImpactPoolAmount <= minPositionImpactPoolAmount) { return (0, positionImpactPoolAmount); }
+        if (positionImpactPoolAmount <= minPositionImpactPoolAmount) {return (0, positionImpactPoolAmount);}
 
         uint256 maxDistributionAmount = positionImpactPoolAmount - minPositionImpactPoolAmount;
 
@@ -2629,7 +2629,7 @@ library MarketUtils {
         address market
     ) internal view returns (uint256) {
         uint256 distributedAt = dataStore.getUint(Keys.positionImpactPoolDistributedAtKey(market));
-        if (distributedAt == 0) { return 0; }
+        if (distributedAt == 0) {return 0;}
         return Chain.currentTimestamp() - distributedAt;
     }
 
@@ -2651,7 +2651,7 @@ library MarketUtils {
             isLong
         );
 
-        (uint256 nextCumulativeBorrowingFactor, /* uint256 delta */, ) = getNextCumulativeBorrowingFactor(
+        (uint256 nextCumulativeBorrowingFactor, /* uint256 delta */,) = getNextCumulativeBorrowingFactor(
             dataStore,
             market,
             prices,
@@ -2723,7 +2723,7 @@ library MarketUtils {
         uint256 poolValue,
         uint256 supply
     ) internal pure returns (uint256) {
-        if (supply == 0) { revert Errors.EmptyMarketTokenSupply(); }
+        if (supply == 0) {revert Errors.EmptyMarketTokenSupply();}
 
         return Precision.mulDiv(poolValue, marketTokenAmount, supply);
     }
@@ -3033,5 +3033,79 @@ library MarketUtils {
             + cache.claimableFeeAmount
             + cache.claimableUiFeeAmount
             + cache.affiliateRewardAmount;
+    }
+
+    // @dev withdraw funds from the position impact pool while maintaining GM token price
+    // @param dataStore DataStore
+    // @param eventEmitter EventEmitter
+    // @param market the trading market
+    // @param amount the amount to withdraw
+    // @param receiver the address to receive the withdrawn funds
+    function withdrawFromPositionImpactPool(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address market,
+        address receiver,
+        uint256 amount
+    ) public {
+        require(amount > 0, "Amount must be greater than 0");
+
+        // Get current impact pool amount
+        uint256 currentAmount = getPositionImpactPoolAmount(dataStore, market);
+        require(amount <= currentAmount, "Insufficient funds in impact pool");
+
+        // Get market token and pool info
+        Market.Props memory marketProps = MarketStoreUtils.get(dataStore, market);
+//        MarketPrices memory marketPrices = getMarketPrices(oracle, market);
+//        (int256 marketTokenPrice, MarketPoolValueInfo.Props memory poolValueInfo) = getMarketTokenPrice(
+//                dataStore,
+//                market,
+//                marketPrices.indexTokenPrice,
+//                marketPrices.longTokenPrice,
+//                marketPrices.shortTokenPrice,
+//                Keys.MAX_PNL_FACTOR,
+//                true
+//        );
+
+//        uint256 marketTokensSupply = IERC20(marketToken).totalSupply();
+//
+//        // Get current pool value and token price
+//        (uint256 poolValue, uint256 marketTokenPrice) = getPoolValueAndMarketTokenPrice(
+//            dataStore,
+//            market,
+//            marketTokensSupply
+//        );
+//
+//        // Calculate new pool value after withdrawal
+//        uint256 newPoolValue = poolValue - (amount * marketTokenPrice);
+//
+//        // Ensure the withdrawal won't affect the GM token price
+//        require(newPoolValue > 0, "Pool value would be zero after withdrawal");
+
+        // Apply the withdrawal
+        applyDeltaToPositionImpactPool(
+            dataStore,
+            eventEmitter,
+            market,
+            - amount.toInt256()
+        );
+
+        applyDeltaToPoolAmount(
+            dataStore,
+            eventEmitter,
+            marketProps,
+            marketProps.indexToken,
+            - amount.toInt256()
+        );
+        // Transfer the withdrawn amount to the receiver
+//        IERC20(market.marketToken).transfer(receiver, amount);
+
+        // Emit event
+        MarketEventUtils.emitPositionImpactPoolWithdrawal(
+            eventEmitter,
+            market,
+            receiver,
+            amount
+        );
     }
 }

@@ -4,6 +4,8 @@ import hre, { getNamedAccounts } from "hardhat";
 import { CANCELLER_ROLE, EXECUTOR_ROLE, PROPOSER_ROLE, TIMELOCK_ADMIN_ROLE } from "../utils/gov";
 import { TimelockConfig } from "../typechain-types";
 
+const libraries = ["MarketUtils"];
+
 const constructorContracts = ["EventEmitter", "DataStore", "OracleStore", "RoleStore", "ConfigTimelockController"];
 
 async function grantProposerRole(timelockConfig: string) {
@@ -24,6 +26,7 @@ async function grantProposerRole(timelockConfig: string) {
 const func = createDeployFunction({
   contractName: "TimelockConfig",
   dependencyNames: constructorContracts,
+  libraryNames: libraries,
   getDeployArgs: async ({ dependencyContracts }) => {
     return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
   },

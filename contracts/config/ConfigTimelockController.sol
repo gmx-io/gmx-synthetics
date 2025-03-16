@@ -12,8 +12,9 @@ import {OracleStore} from "../oracle/OracleStore.sol";
 import {RoleStore} from "../role/RoleStore.sol";
 import {Precision} from "../utils/Precision.sol";
 import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
+import {OracleModule} from "../oracle/OracleModule.sol";
 
-contract ConfigTimelockController is TimelockController {
+contract ConfigTimelockController is TimelockController, OracleModule {
 
     constructor(
         uint256 minDelay,
@@ -21,4 +22,16 @@ contract ConfigTimelockController is TimelockController {
         address[] memory executors
     ) TimelockController(minDelay, proposers, executors, msg.sender) {}
 
+    function executeAtomicWithOraclePrices(
+        address target,
+        uint256 value,
+        bytes calldata payload
+    ) external onlyRoleOrOpenRole(EXECUTOR_ROLE) withOraclePricesForAtomicAction {
+        execute(target, value, payload, 0, 0);
+    }
+
+    function withdrawFromPositionImpactPool(
+    ) internal {
+
+    }
 }
