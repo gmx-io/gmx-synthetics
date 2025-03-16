@@ -434,6 +434,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.MAX_ORACLE_PRICE_AGE] = true;
         allowedBaseKeys[Keys.MAX_ORACLE_TIMESTAMP_RANGE] = true;
         allowedBaseKeys[Keys.ORACLE_TIMESTAMP_ADJUSTMENT] = true;
+        allowedBaseKeys[Keys.ORACLE_PROVIDER_SAME_VALUE_DELAY] = true;
         allowedBaseKeys[Keys.CHAINLINK_PAYMENT_TOKEN] = true;
         allowedBaseKeys[Keys.SEQUENCER_GRACE_DURATION] = true;
         allowedBaseKeys[Keys.MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR] = true;
