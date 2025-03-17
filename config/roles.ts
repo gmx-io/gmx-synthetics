@@ -292,16 +292,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x6BE75346C0262015E45c6fC0e3268BBa73e87D1a": true, // GlvRouter_4
         "0x16500C1d8fFE2F695D8DCADf753F664993287ae4": true, // GlvRouter_4a
 
-        "0x2921BAd580Cef4B03B5461D184A4c7aB637028D6": true, // OrderHandler_5
-        "0x45277BAd220bb6b350973B61C9cc9F7EC536b5a1": true, // DepositHandler_5
-        "0xf1998F8202F9707fFb6953826D4dB97fBC6AcC08": true, // WithdrawalHandler_5
-        "0x29Fa2de428B251d7d7c5b0b0fAC7b970E113650E": true, // ShiftHandler_5
         "0x900173A66dbD345006C51fA35fA3aB760FcD843b": true, // SwapHandler_5
-
-        "0xcC090E92824d0f75FAEB2287eEcA8d91aa6F06bB": true, // ExchangeRouter_5
-        "0xa9c8BC4f151DA37753576114fCedFb3572333c6B": true, // SubaccountRouter_5
-        "0x82A792457F9Af42d10fcDE829708bd80b156C6F9": true, // GelatoRelayRouter
-        "0x0c4d69369982F7E8002089387a95Ff059DeFF6b3": true, // SubaccountGelatoRelayRouter
 
         // gasless
         "0xC2D6cC2B5444b2d3611d812A9EA47648cfFc05c1": true, // Config_5
@@ -314,7 +305,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0xE78C15c818ebAAd31BaC58167157522B4d01ee2f": true, // DepositHandler_5
         "0x6FA5D5a3377790CF646efDB67Fc53d3cE5b345bc": true, // WithdrawalHandler_5
         "0xE270E904B3b52Fe952F00e797f5daC4a1e058DdA": true, // ShiftHandler_5
-        "0x1B31d1774270c46dFc3e1E0d2459A1b94CF9373F": true, // SwapHandler_5
+        "0x1B31d1774270c46dFc3e1E0d2459A1b94CF9373F": true, // SwapHandler_6
       },
       GOV_TOKEN_CONTROLLER: {
         "0x091eD806490Cc58Fd514441499e58984cCce0630": true, // RewardRouterV2_2
