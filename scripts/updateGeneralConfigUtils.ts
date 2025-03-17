@@ -285,10 +285,10 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
 
   await handleConfig(
     "uint",
-    keys.ORACLE_PROVIDER_SAME_VALUE_DELAY,
+    keys.ORACLE_PROVIDER_MIN_CHANGE_DELAY,
     "0x",
-    generalConfig.oracleProviderSameValueDelay,
-    `oracleProviderSameValueDelay`
+    generalConfig.oracleProviderMinChangeDelay,
+    `oracleProviderMinChangeDelay`
   );
 };
 

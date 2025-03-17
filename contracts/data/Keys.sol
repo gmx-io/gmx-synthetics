@@ -196,7 +196,7 @@ library Keys {
     // @dev key for oracle provider updated time
     bytes32 public constant ORACLE_PROVIDER_UPDATED_AT = keccak256(abi.encode("ORACLE_PROVIDER_UPDATED_AT"));
     // @dev key for oracle provider same value delay
-    bytes32 public constant ORACLE_PROVIDER_SAME_VALUE_DELAY = keccak256(abi.encode("ORACLE_PROVIDER_SAME_VALUE_DELAY"));
+    bytes32 public constant ORACLE_PROVIDER_MIN_CHANGE_DELAY = keccak256(abi.encode("ORACLE_PROVIDER_MIN_CHANGE_DELAY"));
     // @dev key for the chainlink payment token
     bytes32 public constant CHAINLINK_PAYMENT_TOKEN = keccak256(abi.encode("CHAINLINK_PAYMENT_TOKEN"));
     // @dev key for the sequencer grace duration

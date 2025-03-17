@@ -7,7 +7,7 @@ import "../../contracts/oracle/IOracleProvider.sol";
 contract MockOracleProvider is IOracleProvider {
     function getOraclePrice(
         address token,
-        bytes memory data
+        bytes memory /* data */
     ) external override returns (OracleUtils.ValidatedPrice memory) {
         // Return a dummy price for testing
         return OracleUtils.ValidatedPrice({
@@ -18,4 +18,4 @@ contract MockOracleProvider is IOracleProvider {
             provider: address(this)
         });
     }
-} 
+}

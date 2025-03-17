@@ -127,7 +127,7 @@ export const STABLE_PRICE = hashString("STABLE_PRICE");
 export const ORACLE_TYPE = hashString("ORACLE_TYPE");
 export const ORACLE_PROVIDER_FOR_TOKEN = hashString("ORACLE_PROVIDER_FOR_TOKEN");
 export const ORACLE_PROVIDER_UPDATED_AT = hashString("ORACLE_PROVIDER_UPDATED_AT");
-export const ORACLE_PROVIDER_SAME_VALUE_DELAY = hashString("ORACLE_PROVIDER_SAME_VALUE_DELAY");
+export const ORACLE_PROVIDER_MIN_CHANGE_DELAY = hashString("ORACLE_PROVIDER_MIN_CHANGE_DELAY");
 export const ORACLE_TIMESTAMP_ADJUSTMENT = hashString("ORACLE_TIMESTAMP_ADJUSTMENT");
 
 export const OPEN_INTEREST = hashString("OPEN_INTEREST");
@@ -448,7 +448,7 @@ export function oracleProviderUpdatedAtKey(token: string, provider: string) {
 }
 
 export function oracleProviderSameValueDelayKey(token: string, provider: string) {
-  return hashData(["bytes32", "address", "address"], [ORACLE_PROVIDER_SAME_VALUE_DELAY, token, provider]);
+  return hashData(["bytes32", "address", "address"], [ORACLE_PROVIDER_MIN_CHANGE_DELAY, token, provider]);
 }
 
 export function openInterestKey(market: string, collateralToken: string, isLong: boolean) {

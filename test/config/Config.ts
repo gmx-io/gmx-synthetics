@@ -600,9 +600,9 @@ describe("Config", () => {
       // Try to set the same provider again immediately
       await expect(
         config.connect(user0).setOracleProviderForToken(wnt.address, oracleProvider1.address)
-      ).to.be.revertedWithCustomError(errorsContract, "OracleProviderDelay");
+      ).to.be.revertedWithCustomError(errorsContract, "OracleProviderMinChangeDelayNotYetPassed");
 
-      const delay = await dataStore.getUint(keys.ORACLE_PROVIDER_SAME_VALUE_DELAY);
+      const delay = await dataStore.getUint(keys.ORACLE_PROVIDER_MIN_CHANGE_DELAY);
       await mine(delay.toNumber());
 
       // Should succeed after delay
