@@ -1074,6 +1074,7 @@ const config: {
     LINK: {
       address: "0x5947BB275c521040051D82396192181b413227A3",
       decimals: 18,
+      transferGasLimit: 200 * 1000,
     },
   },
   arbitrumSepolia: {
