@@ -250,9 +250,6 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x6BE75346C0262015E45c6fC0e3268BBa73e87D1a": true, // GlvRouter_4
         "0x16500C1d8fFE2F695D8DCADf753F664993287ae4": true, // GlvRouter_4a
 
-        "0xcC090E92824d0f75FAEB2287eEcA8d91aa6F06bB": true, // ExchangeRouter_5
-        "0xa9c8BC4f151DA37753576114fCedFb3572333c6B": true, // SubaccountRouter_5
-
         // gasless
         "0xFa843af557824Be5127eaCB3c4B5D86EADEB73A1": true, // ExchangeRouter_6
         "0x233397357bB4cC6B951aa423D7cEadBC610499e2": true, // SubaccountRouter_6

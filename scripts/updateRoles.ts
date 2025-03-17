@@ -166,11 +166,6 @@ async function main() {
         },
         {
           role: "ROUTER_PLUGIN",
-          member: "0xa9c8bc4f151da37753576114fcedfb3572333c6b",
-          contractName: "SubaccountRouter",
-        },
-        {
-          role: "ROUTER_PLUGIN",
           member: "0xfa843af557824be5127eacb3c4b5d86eadeb73a1",
           contractName: "ExchangeRouter",
         },
