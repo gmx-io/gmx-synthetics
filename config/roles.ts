@@ -292,8 +292,6 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x6BE75346C0262015E45c6fC0e3268BBa73e87D1a": true, // GlvRouter_4
         "0x16500C1d8fFE2F695D8DCADf753F664993287ae4": true, // GlvRouter_4a
 
-        "0x900173A66dbD345006C51fA35fA3aB760FcD843b": true, // SwapHandler_5
-
         // gasless
         "0xC2D6cC2B5444b2d3611d812A9EA47648cfFc05c1": true, // Config_5
         "0x13c986424DeD8D78d9313dD90cD847E4DeBA5cb3": true, // Oracle_5

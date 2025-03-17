@@ -106,11 +106,6 @@ async function main() {
       rolesToAdd: [
         {
           role: "CONTROLLER",
-          member: "0x900173a66dbd345006c51fa35fa3ab760fcd843b",
-          contractName: "SwapHandler",
-        },
-        {
-          role: "CONTROLLER",
           member: "0xc2d6cc2b5444b2d3611d812a9ea47648cffc05c1",
           contractName: "Config",
         },
