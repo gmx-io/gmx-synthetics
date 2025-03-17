@@ -292,6 +292,10 @@ async function validateDataStreamProviderHasDiscount() {
     hre.ethers.provider
   );
 
+  if (!tokens.LINK) {
+    throw new Error("LINK token not found");
+  }
+
   const dataStreamProviderDeployment = await hre.deployments.get("ChainlinkDataStreamProvider");
   const discount = await feeManager.s_subscriberDiscounts(
     dataStreamProviderDeployment.address,
