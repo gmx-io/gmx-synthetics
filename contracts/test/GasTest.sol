@@ -5,11 +5,18 @@ interface ArbGasInfo {
     function getCurrentTxL1GasFees() external view returns (uint256);
 }
 
-contract ArbGasInfoTest {
+contract GasTest {
     address constant ARB_GAS_INFO_ADDRESS = 0x000000000000000000000000000000000000006C;
     string public data;
 
     event CurrentTxL1GasFees(uint256 a, uint256 b);
+
+    function revertIfTxOriginIsZero() public view returns (uint256) {
+        if (tx.origin == address(0)) {
+            revert("TX_ORIGIN_IS_ZERO");
+        }
+        return 1;
+    }
 
     function getCurrentTxL1GasFees(string calldata _data) public view returns (uint256, uint256) {
         uint256 a = ArbGasInfo(ARB_GAS_INFO_ADDRESS).getCurrentTxL1GasFees();
