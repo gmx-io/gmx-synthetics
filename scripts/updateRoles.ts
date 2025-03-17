@@ -81,12 +81,22 @@ async function main() {
       rolesToAdd: [
         {
           role: "CONTROLLER",
-          member: "0xa4649e835aa9cbe72bde7a6c108b7bb8a3b7860f",
+          member: "0x602b805eedddbbd9ddff44a7dcbd46cb07849685",
           contractName: "ExchangeRouter",
         },
         {
+          role: "CONTROLLER",
+          member: "0x089f51aab35e854d2b65c9396622361a1854bc3d",
+          contractName: "DepositHandler",
+        },
+        {
+          role: "CONTROLLER",
+          member: "0x94889b5d664eaff4c249d43206705a70a22e37b4",
+          contractName: "ShiftHandler",
+        },
+        {
           role: "ROUTER_PLUGIN",
-          member: "0xa4649e835aa9cbe72bde7a6c108b7bb8a3b7860f",
+          member: "0x602b805eedddbbd9ddff44a7dcbd46cb07849685",
           contractName: "ExchangeRouter",
         },
       ],
@@ -151,7 +161,7 @@ async function main() {
         },
         {
           role: "CONTROLLER",
-          member: "0x2b3d83c715b7d0ab2ac229c72108de948c54426c",
+          member: "0xfa843af557824be5127eacb3c4b5d86eadeb73a1",
           contractName: "ExchangeRouter",
         },
         {
@@ -176,8 +186,18 @@ async function main() {
         },
         {
           role: "CONTROLLER",
+          member: "0xe78c15c818ebaad31bac58167157522b4d01ee2f",
+          contractName: "DepositHandler",
+        },
+        {
+          role: "CONTROLLER",
           member: "0x6fa5d5a3377790cf646efdb67fc53d3ce5b345bc",
           contractName: "WithdrawalHandler",
+        },
+        {
+          role: "CONTROLLER",
+          member: "0xe270e904b3b52fe952f00e797f5dac4a1e058dda",
+          contractName: "ShiftHandler",
         },
         {
           role: "CONTROLLER",
@@ -196,17 +216,7 @@ async function main() {
         },
         {
           role: "ROUTER_PLUGIN",
-          member: "0x82a792457f9af42d10fcde829708bd80b156c6f9",
-          contractName: "GelatoRelayRouter",
-        },
-        {
-          role: "ROUTER_PLUGIN",
-          member: "0x0c4d69369982f7e8002089387a95ff059deff6b3",
-          contractName: "SubaccountGelatoRelayRouter",
-        },
-        {
-          role: "ROUTER_PLUGIN",
-          member: "0x2b3d83c715b7d0ab2ac229c72108de948c54426c",
+          member: "0xfa843af557824be5127eacb3c4b5d86eadeb73a1",
           contractName: "ExchangeRouter",
         },
         {
