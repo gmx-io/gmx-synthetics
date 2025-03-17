@@ -6,6 +6,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { ILayerZeroComposer } from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/ILayerZeroComposer.sol";
 import { MessagingFee, OFTReceipt, SendParam, MessagingReceipt } from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
+import { OFTComposeMsgCodec } from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTComposeMsgCodec.sol";
 
 import { IStargate } from "@stargatefinance/stg-evm-v2/src/interfaces/IStargate.sol";
 
@@ -63,7 +64,9 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         address /*executor*/,
         bytes calldata /*extraData*/
     ) external payable {
-        (address account, address token, uint256 srcChainId) = MultichainProviderUtils.decodeDeposit(message);
+        bytes memory composeMessage = OFTComposeMsgCodec.composeMsg(message);
+        (address account, address token, uint256 srcChainId) = MultichainProviderUtils.decodeDeposit(composeMessage);
+
         _transferToVault(token, address(multichainVault));
         MultichainUtils.recordBridgeIn(dataStore, eventEmitter, multichainVault, this, token, account, srcChainId);
     }
