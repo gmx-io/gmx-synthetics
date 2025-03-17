@@ -34,7 +34,7 @@ contract MultichainTransferRouter is MultichainRouter {
     ) external nonReentrant onlyGelatoRelay {
         _validateDesChainId(relayParams.desChainId);
         _validateGaslessFeature();
-        _validateMultichainProvider(dataStore, provider);
+        MultichainUtils.validateMultichainProvider(dataStore, provider);
 
         bytes32 structHash = RelayUtils.getBridgeOutStructHash(relayParams, params);
         _validateCall(relayParams, account, structHash, srcChainId);
@@ -70,12 +70,5 @@ contract MultichainTransferRouter is MultichainRouter {
             params.amount,
             srcChainId
         );
-    }
-
-    function _validateMultichainProvider(DataStore dataStore, address provider) internal view {
-        bytes32 providerKey = Keys.isMultichainProviderEnabledKey(provider);
-        if (!dataStore.getBool(providerKey)) {
-            revert Errors.InvalidMultichainProvider(provider);
-        }
     }
 }

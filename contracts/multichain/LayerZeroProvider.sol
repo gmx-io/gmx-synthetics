@@ -49,21 +49,22 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
 
     /**
      * Called by Stargate after tokens have been delivered to this contract.
-     * @dev Non-guarded function caller (i.e. require from == stargatePool AND msg.sender == lzEndpoint)
-     *      Anyone (and on behalf of anyone) can call this function to deposit tokens
-     * param from The address of the sender (i.e. Stargate address, not user's address).
+     * @param from The address of the sender (i.e. Stargate address, not user's address).
      * param guid A global unique identifier for tracking the packet.
      * @param message Encoded message. Contains the params needed to record the deposit (account, token, srcChainId)
      * param executor The address of the Executor.
      * param extraData Any extra data or options to trigger on receipt.
      */
     function lzCompose(
-        address /*from*/,
+        address from,
         bytes32 /*guid*/,
         bytes calldata message,
         address /*executor*/,
         bytes calldata /*extraData*/
     ) external payable {
+        MultichainUtils.validateMultichainProvider(dataStore, from);
+        MultichainUtils.validateMultichainEndpoint(dataStore, msg.sender);
+
         bytes memory composeMessage = OFTComposeMsgCodec.composeMsg(message);
         (address account, address token, uint256 srcChainId) = MultichainProviderUtils.decodeDeposit(composeMessage);
 

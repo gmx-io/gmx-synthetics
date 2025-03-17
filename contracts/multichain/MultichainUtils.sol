@@ -103,4 +103,18 @@ library MultichainUtils {
     ) public view returns (uint256) {
         return dataStore.getUint(Keys.multichainBalanceKey(account, token));
     }
+
+    function validateMultichainProvider(DataStore dataStore, address provider) external view {
+        bytes32 providerKey = Keys.isMultichainProviderEnabledKey(provider);
+        if (!dataStore.getBool(providerKey)) {
+            revert Errors.InvalidMultichainProvider(provider);
+        }
+    }
+
+    function validateMultichainEndpoint(DataStore dataStore, address endpoint) external view {
+        bytes32 endpointKey = Keys.isMultichainEndpointEnabledKey(endpoint);
+        if (!dataStore.getBool(endpointKey)) {
+            revert Errors.InvalidMultichainEndpoint(endpoint);
+        }
+    }
 }

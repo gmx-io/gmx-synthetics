@@ -128,6 +128,7 @@ describe("MultichainTransferRouter", () => {
 
     it("bridgeOut", async () => {
       await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePool.address), true);
+      await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePool.address), true);
       await mintAndBridge(fixture, { account: user1, token: usdc, tokenAmount: bridgeOutAmount });
       const bridgeOutFee = await mockStargatePool.BRIDGE_OUT_FEE();
       await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: feeAmount.add(bridgeOutFee) });

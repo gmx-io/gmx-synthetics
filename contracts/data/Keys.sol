@@ -481,8 +481,10 @@ library Keys {
 
     // @dev key for user's multichain balance
     bytes32 public constant MULTICHAIN_BALANCE = keccak256(abi.encode("MULTICHAIN_BALANCE"));
-    // @dev key for user's multichain balance
+    // @dev key for the flag if a multichain provider is enabled
     bytes32 public constant IS_MULTICHAIN_PROVIDER_ENABLED = keccak256(abi.encode("IS_MULTICHAIN_PROVIDER_ENABLED"));
+    // @dev key for the flag if a multichain endpoint is enabled
+    bytes32 public constant IS_MULTICHAIN_ENDPOINT_ENABLED = keccak256(abi.encode("IS_MULTICHAIN_ENDPOINT_ENABLED"));
     // @dev key for the flag if user's position collateral was used for execution fee
     bytes32 public constant WAS_POSITION_COLLATERAL_USED_FOR_EXECUTION_FEE = keccak256(abi.encode("WAS_POSITION_COLLATERAL_USED_FOR_EXECUTION_FEE"));
     // @dev key for the last src chain id from which the user last managed his position
@@ -2159,6 +2161,16 @@ library Keys {
         return keccak256(abi.encode(
             IS_MULTICHAIN_PROVIDER_ENABLED,
             provider
+        ));
+    }
+
+    // @dev key for whether a multichain endpoint is enabled
+    // @param endpoint the multichain endpoint
+    // @return key for whether a multichain endpoint is enabled
+    function isMultichainEndpointEnabledKey(address endpoint) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            IS_MULTICHAIN_ENDPOINT_ENABLED,
+            endpoint
         ));
     }
 

@@ -91,6 +91,7 @@ describe("MultichainRouter", () => {
     usdc,
     chainlinkPriceFeedProvider,
     multichainClaimsRouter,
+    mockStargatePool,
     referralStorage;
   let relaySigner;
   let chainId;
@@ -120,6 +121,7 @@ describe("MultichainRouter", () => {
       usdc,
       chainlinkPriceFeedProvider,
       multichainClaimsRouter,
+      mockStargatePool,
       referralStorage,
     } = fixture.contracts);
 
@@ -176,6 +178,8 @@ describe("MultichainRouter", () => {
     };
 
     await dataStore.setAddress(keys.FEE_RECEIVER, user3.address);
+    await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePool.address), true);
+    await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePool.address), true);
     await mintAndBridge(fixture, { token: wnt, tokenAmount: wntAmount.add(feeAmount) });
     await mintAndBridge(fixture, { token: usdc, tokenAmount: usdcAmount });
   });
