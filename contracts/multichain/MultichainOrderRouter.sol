@@ -149,8 +149,13 @@ contract MultichainOrderRouter is MultichainRouter {
         );
 
         position.setCollateralAmount(positionCollateralAmount - unpaidAmount);
-        dataStore.setUint(keccak256(abi.encode(key, PositionStoreUtils.COLLATERAL_AMOUNT)), positionCollateralAmount);
-        orderVault.transferOut(relayParams.fee.feeToken, address(multichainVault), unpaidAmount);
+        dataStore.setUint(keccak256(abi.encode(positionKey, PositionStoreUtils.COLLATERAL_AMOUNT)), positionCollateralAmount - unpaidAmount);
+        MarketToken(payable(order.market())).transferOut(
+            relayParams.fee.feeToken,
+            order.srcChainId() == 0 ? order.receiver() : address(multichainVault),
+            unpaidAmount,
+            order.shouldUnwrapNativeToken()
+        );
         MultichainUtils.recordTransferIn(
             dataStore,
             eventEmitter,
