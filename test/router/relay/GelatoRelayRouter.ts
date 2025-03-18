@@ -518,6 +518,8 @@ describe("GelatoRelayRouter", () => {
       );
     });
 
+    it.skip("sponsoredCall: relay fee configuration with swaps");
+
     it("swap relay fee with external call", async () => {
       const externalExchange = await deployContract("MockExternalExchange", []);
       await wnt.connect(user0).transfer(externalExchange.address, expandDecimals(1, 17));
