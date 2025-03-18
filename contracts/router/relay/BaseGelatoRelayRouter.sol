@@ -155,7 +155,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             params,
             isSubaccount && params.addresses.callbackContract != address(0)
         );
-        _handleRelayAfterAction(contracts, startingGas, residualFeeAmount, account);
+        _handleRelayAfterAction(contracts, startingGas, residualFeeAmount, account, relayParams.oracleParams.tokens.length);
         return key;
     }
 
@@ -200,7 +200,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             // see GasUtils.validateExecutionFee
             isSubaccount && order.callbackContract() != address(0) && executionFee != 0
         );
-        _handleRelayAfterAction(contracts, startingGas, residualFeeAmount, account);
+        _handleRelayAfterAction(contracts, startingGas, residualFeeAmount, account, relayParams.oracleParams.tokens.length);
     }
 
     function _cancelOrder(
@@ -222,7 +222,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
         uint256 residualFeeAmount = _handleRelayBeforeAction(contracts, relayParams, account, 0, isSubaccount);
         orderHandler.cancelOrder(key);
-        _handleRelayAfterAction(contracts, startingGas, residualFeeAmount, account);
+        _handleRelayAfterAction(contracts, startingGas, residualFeeAmount, account, relayParams.oracleParams.tokens.length);
     }
 
     function _handleRelayBeforeAction(
@@ -317,7 +317,8 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         Contracts memory contracts,
         uint256 startingGas,
         uint256 residualFeeAmount,
-        address residualFeeReceiver
+        address residualFeeReceiver,
+        uint256 oraclePriceCount
     ) internal {
         bool isSponsoredCall = !_isGelatoRelay(msg.sender);
         uint256 relayFee;
@@ -327,6 +328,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
                 contracts.wnt,
                 startingGas,
                 msg.data.length,
+                oraclePriceCount,
                 residualFeeAmount
             );
         } else {

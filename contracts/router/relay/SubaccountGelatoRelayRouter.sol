@@ -196,7 +196,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
 
         SubaccountUtils.removeSubaccount(dataStore, eventEmitter, account, subaccount);
 
-        _handleRelayAfterAction(contracts, startingGas, residualFeeAmount, account);
+        _handleRelayAfterAction(contracts, startingGas, residualFeeAmount, account, relayParams.oracleParams.tokens.length);
     }
 
     function _handleSubaccountAction(

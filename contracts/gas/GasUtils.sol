@@ -561,6 +561,7 @@ library GasUtils {
         address wnt,
         uint256 startingGas,
         uint256 calldataLength,
+        uint256 oraclePriceCount,
         uint256 availableFeeAmount
     ) internal returns (uint256) {
         uint256 relayFeeMultiplierFactor = dataStore.getUint(Keys.GELATO_RELAY_FEE_MULTIPLIER_FACTOR);
@@ -582,9 +583,11 @@ library GasUtils {
         // would be non-zero for Arbitrum only
         uint256 l1Fee = Chain.getCurrentTxL1GasFees();
 
+        uint256 oraclePriceGas = dataStore.getUint(Keys.EXECUTION_GAS_FEE_PER_ORACLE_PRICE) * oraclePriceCount;
         // multiply calldataLength by 2 because the calldata is first sent to the Relay contract, and then to GMX contract
         // zero byte in call data costs 4 bytes, non-zero byte costs 16 bytes, use 12 as a conservative estimate
-        uint256 l2Fee = (relayFeeBaseAmount + calldataLength * 2 * 12 + startingGas - gasleft()) * tx.gasprice;
+        uint256 l2Fee = (oraclePriceGas + relayFeeBaseAmount + calldataLength * 2 * 12 + startingGas - gasleft()) *
+            tx.gasprice;
 
         uint256 relayFee = Precision.applyFactor(l1Fee + l2Fee, relayFeeMultiplierFactor);
 
