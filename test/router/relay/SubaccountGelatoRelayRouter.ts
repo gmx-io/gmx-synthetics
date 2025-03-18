@@ -125,6 +125,7 @@ describe("SubaccountGelatoRelayRouter", () => {
     };
   });
 
+  //#region createOrder
   describe("createOrder", () => {
     it("DisabledFeature", async () => {
       await dataStore.setBool(keys.gaslessFeatureDisabledKey(subaccountGelatoRelayRouter.address), true);
@@ -694,6 +695,7 @@ describe("SubaccountGelatoRelayRouter", () => {
     });
   });
 
+  //#region updateOrder
   describe("updateOrder", () => {
     let updateOrderParams: Parameters<typeof sendUpdateOrder>[0];
 
@@ -909,6 +911,7 @@ describe("SubaccountGelatoRelayRouter", () => {
     });
   });
 
+  //#region cancelOrder
   describe("cancelOrder", () => {
     let cancelOrderParams: Parameters<typeof sendCancelOrder>[0];
 
@@ -1009,6 +1012,7 @@ describe("SubaccountGelatoRelayRouter", () => {
     });
   });
 
+  //#region removeSubaccount
   describe("removeSubaccount", () => {
     let params: Parameters<typeof sendRemoveSubaccount>[0];
     beforeEach(() => {

@@ -100,6 +100,7 @@ describe("GelatoRelayRouter", () => {
     };
   });
 
+  //#region createOrder
   describe("createOrder", () => {
     it("DisabledFeature", async () => {
       await dataStore.setBool(keys.gaslessFeatureDisabledKey(gelatoRelayRouter.address), true);
@@ -541,9 +542,6 @@ describe("GelatoRelayRouter", () => {
 
       // WETH price is 5000, so 10 USDC will be 0.002 WETH before fees
       expect(order.numbers.executionFee).eq(expandDecimals(98, 13));
-      // expandDecimals(2, 15)
-      //   .sub(applyFactor(expandDecimals(2, 15), atomicSwapFeeFactor))
-      //   .sub(createOrderParams.gelatoRelayFeeAmount)
 
       // feeCollector received in WETH
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, createOrderParams.gelatoRelayFeeAmount);
@@ -570,6 +568,7 @@ describe("GelatoRelayRouter", () => {
     });
   });
 
+  //#region updateOrder
   describe("updateOrder", () => {
     let updateOrderParams: Parameters<typeof sendUpdateOrder>[0];
 
@@ -721,6 +720,7 @@ describe("GelatoRelayRouter", () => {
     });
   });
 
+  //#region cancelOrder
   describe("cancelOrder", () => {
     let cancelOrderParams: Parameters<typeof sendCancelOrder>[0];
 
