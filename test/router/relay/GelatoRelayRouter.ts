@@ -128,6 +128,30 @@ describe("GelatoRelayRouter", () => {
       );
     });
 
+    it("InvalidRelayParams", async () => {
+      createOrderParams.feeParams.feeSwapPath = [ethUsdMarket.marketToken];
+      createOrderParams.externalCalls = {
+        externalCallTargets: [user0.address],
+        externalCallDataList: ["0x"],
+        refundTokens: [wnt.address],
+        refundReceivers: [user0.address],
+      };
+      await expect(
+        sendCreateOrder({
+          ...createOrderParams,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidRelayParams");
+    });
+
+    it("UnsupportedRelayFeeToken", async () => {
+      createOrderParams.gelatoRelayFeeToken = usdc.address;
+      await expect(
+        sendCreateOrder({
+          ...createOrderParams,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "UnsupportedRelayFeeToken");
+    });
+
     it("InvalidSignature", async () => {
       await expect(
         sendCreateOrder({
@@ -278,7 +302,6 @@ describe("GelatoRelayRouter", () => {
       const userWntBalanceBefore = await wnt.balanceOf(user0.address);
       const tx = await sendCreateOrder({
         ...createOrderParams,
-        // tokenPermits: [tokenPermit],
       });
 
       // allowance was set
