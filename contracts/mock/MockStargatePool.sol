@@ -20,12 +20,11 @@ contract MockStargatePool {
 
     /**
      * @dev Mock function to simulate receiving tokens from source chain and delivering to target chain (bridgeIn flow)
-     * @param _token The token to send
      * @param _to The recipient contract (LayerZeroProvider)
      * @param _amount The amount of tokens to send
      * @param _message The encoded message containing account, token, srcChainId
      */
-    function sendToken(address _token, address _to, uint256 _amount, bytes calldata _message) external {
+    function sendToken(address _to, uint256 _amount, bytes calldata _message) external {
         // prepend composeFrom (msg.sender) to the user payload
         bytes memory encodedMsg = abi.encodePacked(
             OFTComposeMsgCodec.addressToBytes32(msg.sender),
@@ -39,7 +38,7 @@ contract MockStargatePool {
             encodedMsg
         );
 
-        IERC20(_token).transferFrom(msg.sender, _to, _amount);
+        IERC20(token).transferFrom(msg.sender, _to, _amount);
 
         // Simulate cross-chain message delivery by directly calling lzCompose on the LayerZeroProvider contract
         (bool success, ) = _to.call(

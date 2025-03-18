@@ -63,11 +63,12 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         MultichainUtils.validateMultichainProvider(dataStore, from);
         MultichainUtils.validateMultichainEndpoint(dataStore, msg.sender);
 
-        bytes memory composeMessage = OFTComposeMsgCodec.composeMsg(message);
-        (address account, address token, uint256 srcChainId) = MultichainProviderUtils.decodeDeposit(composeMessage);
-
+        address token = IStargate(from).token();
         uint256 amountLD = OFTComposeMsgCodec.amountLD(message);
         IERC20(token).safeTransfer(address(multichainVault), amountLD);
+
+        bytes memory composeMessage = OFTComposeMsgCodec.composeMsg(message);
+        (address account, uint256 srcChainId) = MultichainProviderUtils.decodeDeposit(composeMessage);
 
         MultichainUtils.recordBridgeIn(dataStore, eventEmitter, multichainVault, this, token, account, amountLD, srcChainId);
     }

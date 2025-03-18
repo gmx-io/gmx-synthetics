@@ -48,7 +48,7 @@ export async function mintAndBridge(
     srcChainId?: BigNumberish;
   }
 ) {
-  const { mockStargatePool, layerZeroProvider } = fixture.contracts;
+  const { usdc, wnt, mockStargatePoolUsdc, mockStargatePoolWnt, layerZeroProvider } = fixture.contracts;
   const { user0 } = fixture.accounts;
 
   const account = overrides.account || user0;
@@ -60,14 +60,17 @@ export async function mintAndBridge(
   await token.mint(account.address, tokenAmount);
 
   // mock token bridging (increase user's multichain balance)
-  const encodedMessageEth = ethers.utils.defaultAbiCoder.encode(
-    ["address", "address", "uint256"],
-    [account.address, token.address, srcChainId]
-  );
-  await token.connect(account).approve(mockStargatePool.address, tokenAmount);
-  await mockStargatePool
-    .connect(account)
-    .sendToken(token.address, layerZeroProvider.address, tokenAmount, encodedMessageEth);
+  const encodedMessageEth = ethers.utils.defaultAbiCoder.encode(["address", "uint256"], [account.address, srcChainId]);
+
+  if (token.address == usdc.address) {
+    await token.connect(account).approve(mockStargatePoolUsdc.address, tokenAmount);
+    await mockStargatePoolUsdc.connect(account).sendToken(layerZeroProvider.address, tokenAmount, encodedMessageEth);
+  } else if (token.address == wnt.address) {
+    await token.connect(account).approve(mockStargatePoolWnt.address, tokenAmount);
+    await mockStargatePoolWnt.connect(account).sendToken(layerZeroProvider.address, tokenAmount, encodedMessageEth);
+  } else {
+    throw new Error("Unsupported Stargate");
+  }
 }
 
 describe("MultichainRouter", () => {
@@ -91,7 +94,8 @@ describe("MultichainRouter", () => {
     usdc,
     chainlinkPriceFeedProvider,
     multichainClaimsRouter,
-    mockStargatePool,
+    mockStargatePoolUsdc,
+    mockStargatePoolWnt,
     referralStorage;
   let relaySigner;
   let chainId;
@@ -121,7 +125,8 @@ describe("MultichainRouter", () => {
       usdc,
       chainlinkPriceFeedProvider,
       multichainClaimsRouter,
-      mockStargatePool,
+      mockStargatePoolUsdc,
+      mockStargatePoolWnt,
       referralStorage,
     } = fixture.contracts);
 
@@ -178,9 +183,13 @@ describe("MultichainRouter", () => {
     };
 
     await dataStore.setAddress(keys.FEE_RECEIVER, user3.address);
-    await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePool.address), true);
-    await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePool.address), true);
+
+    await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolWnt.address), true);
+    await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolWnt.address), true);
     await mintAndBridge(fixture, { token: wnt, tokenAmount: wntAmount.add(feeAmount) });
+
+    await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolUsdc.address), true);
+    await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolUsdc.address), true);
     await mintAndBridge(fixture, { token: usdc, tokenAmount: usdcAmount });
   });
 
