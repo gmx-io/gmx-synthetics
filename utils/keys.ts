@@ -263,6 +263,9 @@ export const WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT = hashString("WITHDRAWABLE_BUYBAC
 export const MULTICHAIN_BALANCE = hashString("MULTICHAIN_BALANCE");
 export const IS_MULTICHAIN_PROVIDER_ENABLED = hashString("IS_MULTICHAIN_PROVIDER_ENABLED");
 
+export const MULTICHAIN_READ_CHANNEL = hashString("MULTICHAIN_READ_CHANNEL");
+export const MULTICHAIN_PEERS = hashString("MULTICHAIN_PEERS");
+export const MULTICHAIN_CONFIRMATIONS = hashString("MULTICHAIN_CONFIRMATIONS");
 export const MULTICHAIN_AUTHORIZED_ORIGINATORS = hashString("MULTICHAIN_AUTHORIZED_ORIGINATORS");
 
 export const VALID_FROM_TIME = hashString("VALID_FROM_TIME");
@@ -835,6 +838,14 @@ export function multichainBalanceKey(account: string, token: string) {
 
 export function isMultichainProviderEnabledKey(contract: string) {
   return hashData(["bytes32", "address"], [IS_MULTICHAIN_PROVIDER_ENABLED, contract]);
+}
+
+export function multichainPeersKey(readChannel: string) {
+  return hashData(["bytes32", "uint32"], [MULTICHAIN_PEERS, readChannel]);
+}
+
+export function multichainConfirmationsKey(eid: string) {
+  return hashData(["bytes32", "uint32"], [MULTICHAIN_CONFIRMATIONS, eid]);
 }
 
 export function multichainAuthorizedOriginatorsKey(originator: string) {

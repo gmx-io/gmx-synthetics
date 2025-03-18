@@ -6,11 +6,10 @@ import "../multichain/MultichainReader.sol";
 contract MockMultichainReaderOriginator {
     mapping(bytes32 guid => MultichainReaderUtils.ReceivedData) public receivedData;
 
-    MultichainReaderUtils.ReceivedData public latestReceivedData;
+    MultichainReaderUtils.ReceivedData public latestReceivedData =
+        MultichainReaderUtils.ReceivedData(0, abi.encode("Nothing received yet."));
 
-    uint256 public latestTimestamp;
-
-    bytes public latestReadData;
+    bytes32 public latestGuid;
 
     MultichainReader public multichainReader;
 
@@ -22,9 +21,8 @@ contract MockMultichainReaderOriginator {
 
     function processLzReceive(bytes32 guid, MultichainReaderUtils.ReceivedData memory receivedDataParam) external {
         receivedData[guid] = receivedDataParam;
+        latestGuid = guid;
         latestReceivedData = receivedDataParam;
-        latestTimestamp = receivedDataParam.timestamp;
-        latestReadData = receivedDataParam.readData;
     }
 
     function setmultichainReader(MultichainReader _multichainReader) external {
@@ -43,7 +41,7 @@ contract MockMultichainReaderOriginator {
         return (messagingReceipt);
     }
 
-    function callquoteReadFee(
+    function callQuoteReadFee(
         MultichainReaderUtils.ReadRequestInputs[] calldata readRequestInputs,
         MultichainReaderUtils.ExtraOptionsInputs calldata extraOptionsInputs
     ) external view returns (uint256) {

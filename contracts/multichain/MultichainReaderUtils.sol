@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 library MultichainReaderUtils {
     struct ReadRequestInputs {
-        uint32 chainId;
+        uint32 targetChainEid;
         address target;
         bytes callData;
     }

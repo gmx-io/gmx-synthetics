@@ -2263,10 +2263,10 @@ library Keys {
     }
 
     // @dev key for the multichain number of confirmations
-    // @param chainId the chainId for which to retrieve the number of confirmations
+    // @param eid the endpoint id for which to retrieve the number of confirmations
     // @return key for multichain confirmations
-    function multichainConfirmationsKey(uint32 chainId) internal pure returns (bytes32) {
-        return keccak256(abi.encode(MULTICHAIN_PEERS, chainId));
+    function multichainConfirmationsKey(uint32 eid) internal pure returns (bytes32) {
+        return keccak256(abi.encode(MULTICHAIN_CONFIRMATIONS, eid));
     }
 
     // @dev key for the multichain guid to originator mapping

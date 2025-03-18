@@ -1,24 +1,24 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import {ILayerZeroEndpointV2, MessagingParams, MessagingReceipt, MessagingFee, Origin} from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/ILayerZeroEndpointV2.sol";
-import {ExecutionState} from "@layerzerolabs/lz-evm-protocol-v2/contracts/EndpointV2ViewUpgradeable.sol";
-import {ILayerZeroReceiver} from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/ILayerZeroReceiver.sol";
-import {SetConfigParam} from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/IMessageLibManager.sol";
-import {MessagingContext} from "@layerzerolabs/lz-evm-protocol-v2/contracts/MessagingContext.sol";
-import {Packet} from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/ISendLib.sol";
-import {OFTMsgCodec} from "@layerzerolabs/oft-evm/contracts/libs/OFTMsgCodec.sol";
-import {Origin} from "@layerzerolabs/oapp-evm/contracts/oapp/OAppReceiver.sol";
-import {Errors} from "@layerzerolabs/lz-evm-protocol-v2/contracts/libs/Errors.sol";
-import {GUID} from "@layerzerolabs/lz-evm-protocol-v2/contracts/libs/GUID.sol";
-import {PacketV1Codec} from "@layerzerolabs/lz-evm-protocol-v2/contracts/messagelib/libs/PacketV1Codec.sol";
-import {ExecutorOptions} from "@layerzerolabs/lz-evm-messagelib-v2/contracts/libs/ExecutorOptions.sol";
-import {WorkerOptions} from "@layerzerolabs/lz-evm-messagelib-v2/contracts/SendLibBase.sol";
-import {IExecutorFeeLib} from "@layerzerolabs/lz-evm-messagelib-v2/contracts/interfaces/IExecutorFeeLib.sol";
-import {DVNOptions} from "@layerzerolabs/lz-evm-messagelib-v2/contracts/uln/libs/DVNOptions.sol";
-import {UlnOptions} from "@layerzerolabs/lz-evm-messagelib-v2/contracts/uln/libs/UlnOptions.sol";
-import {CalldataBytesLib} from "@layerzerolabs/lz-evm-protocol-v2/contracts/libs/CalldataBytesLib.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { ILayerZeroEndpointV2, MessagingParams, MessagingReceipt, MessagingFee, Origin } from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/ILayerZeroEndpointV2.sol";
+import { ExecutionState } from "@layerzerolabs/lz-evm-protocol-v2/contracts/EndpointV2ViewUpgradeable.sol";
+import { ILayerZeroReceiver } from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/ILayerZeroReceiver.sol";
+import { SetConfigParam } from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/IMessageLibManager.sol";
+import { MessagingContext } from "@layerzerolabs/lz-evm-protocol-v2/contracts/MessagingContext.sol";
+import { Packet } from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/ISendLib.sol";
+import { OFTMsgCodec } from "@layerzerolabs/oft-evm/contracts/libs/OFTMsgCodec.sol";
+import { Origin } from "@layerzerolabs/oapp-evm/contracts/oapp/OAppReceiver.sol";
+import { Errors } from "@layerzerolabs/lz-evm-protocol-v2/contracts/libs/Errors.sol";
+import { GUID } from "@layerzerolabs/lz-evm-protocol-v2/contracts/libs/GUID.sol";
+import { PacketV1Codec } from "@layerzerolabs/lz-evm-protocol-v2/contracts/messagelib/libs/PacketV1Codec.sol";
+import { ExecutorOptions } from "@layerzerolabs/lz-evm-messagelib-v2/contracts/libs/ExecutorOptions.sol";
+import { WorkerOptions } from "@layerzerolabs/lz-evm-messagelib-v2/contracts/SendLibBase.sol";
+import { IExecutorFeeLib } from "@layerzerolabs/lz-evm-messagelib-v2/contracts/interfaces/IExecutorFeeLib.sol";
+import { DVNOptions } from "@layerzerolabs/lz-evm-messagelib-v2/contracts/uln/libs/DVNOptions.sol";
+import { UlnOptions } from "@layerzerolabs/lz-evm-messagelib-v2/contracts/uln/libs/UlnOptions.sol";
+import { CalldataBytesLib } from "@layerzerolabs/lz-evm-protocol-v2/contracts/libs/CalldataBytesLib.sol";
 
 contract MockEndpointV2 is ILayerZeroEndpointV2, MessagingContext {
     using ExecutorOptions for bytes;
@@ -80,7 +80,7 @@ contract MockEndpointV2 is ILayerZeroEndpointV2, MessagingContext {
             baseGas: 100,
             gasPerByte: 1
         });
-        protocolFeeConfig = ProtocolFeeConfig({zroFee: 1e18, nativeBP: 1000}); // BP 0.1
+        protocolFeeConfig = ProtocolFeeConfig({ zroFee: 1e18, nativeBP: 1000 }); // BP 0.1
         verifierFee = 1e16;
     }
 
@@ -114,7 +114,7 @@ contract MockEndpointV2 is ILayerZeroEndpointV2, MessagingContext {
         // refund if they send too much
         uint256 amount = msg.value - receipt.fee.nativeFee;
         if (amount > 0) {
-            (bool success, ) = _refundAddress.call{value: amount}("");
+            (bool success, ) = _refundAddress.call{ value: amount }("");
             require(success, "LayerZeroMock: failed to refund");
         }
 
@@ -145,7 +145,7 @@ contract MockEndpointV2 is ILayerZeroEndpointV2, MessagingContext {
             receiveMessage = packet.message;
         }
 
-        MockEndpointV2(lzEndpoint).receivePayload{value: dstAmount}(
+        MockEndpointV2(lzEndpoint).receivePayload{ value: dstAmount }(
             origin,
             packet.receiver.bytes32ToAddress(),
             payloadHash,
@@ -168,7 +168,7 @@ contract MockEndpointV2 is ILayerZeroEndpointV2, MessagingContext {
         inboundPayloadHash[_receiver][_origin.srcEid][_origin.sender][_origin.nonce] = _payloadHash;
         if (_msgValue > 0) {
             try
-                ILayerZeroReceiver(_receiver).lzReceive{value: _msgValue, gas: _gas}(
+                ILayerZeroReceiver(_receiver).lzReceive{ value: _msgValue, gas: _gas }(
                     _origin,
                     _guid,
                     _message,
@@ -177,9 +177,9 @@ contract MockEndpointV2 is ILayerZeroEndpointV2, MessagingContext {
                 )
             {} catch (bytes memory /*reason*/) {}
         } else {
-            try ILayerZeroReceiver(_receiver).lzReceive{gas: _gas}(_origin, _guid, _message, address(0), "") {} catch (
-                bytes memory /*reason*/
-            ) {}
+            try
+                ILayerZeroReceiver(_receiver).lzReceive{ gas: _gas }(_origin, _guid, _message, address(0), "")
+            {} catch (bytes memory /*reason*/) {}
         }
     }
 
@@ -620,7 +620,7 @@ contract MockEndpointV2 is ILayerZeroEndpointV2, MessagingContext {
                 dstAmount += value;
             } else if (optionType == ExecutorOptions.OPTION_TYPE_NATIVE_DROP) {
                 (uint128 nativeDropAmount, bytes32 receiver) = ExecutorOptions.decodeNativeDropOption(option);
-                (bool success, ) = receiver.bytes32ToAddress().call{value: nativeDropAmount}("");
+                (bool success, ) = receiver.bytes32ToAddress().call{ value: nativeDropAmount }("");
                 if (!success) {
                     emit ValueTransferFailed(receiver.bytes32ToAddress(), nativeDropAmount);
                 }
