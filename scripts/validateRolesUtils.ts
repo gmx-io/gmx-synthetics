@@ -125,7 +125,9 @@ async function validateRolesImpl() {
       const lowercaseAddress = deployment.address.toLowerCase();
       const ok = Object.keys(_expectedRoles[requiredRole]).some((member) => member.toLowerCase() === lowercaseAddress);
       if (!ok) {
-        errors.push(`role ${requiredRole} is not configured for contract ${contractName} ${lowercaseAddress}`);
+        errors.push(
+          `role ${requiredRole} is not configured for contract ${contractName} ${deployment.address} ${lowercaseAddress}`
+        );
       }
     }
   }
@@ -291,6 +293,10 @@ async function validateDataStreamProviderHasDiscount() {
     ["function s_subscriberDiscounts(address,bytes32,address) view returns (uint256)"],
     hre.ethers.provider
   );
+
+  if (!tokens.LINK) {
+    throw new Error("LINK token not found");
+  }
 
   const dataStreamProviderDeployment = await hre.deployments.get("ChainlinkDataStreamProvider");
   const discount = await feeManager.s_subscriberDiscounts(
