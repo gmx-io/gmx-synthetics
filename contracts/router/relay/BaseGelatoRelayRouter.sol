@@ -99,8 +99,14 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         bytes calldata signature,
         address expectedSigner,
         string memory signatureType
-    ) internal pure {
+    ) internal view {
         (address recovered, ECDSA.RecoverError error) = ECDSA.tryRecover(digest, signature);
+
+        // allow to optionally skip signature validation for eth_estimateGas / eth_call if tx.origin is zero
+        if (tx.origin == address(0)) {
+            return;
+        }
+
         if (error != ECDSA.RecoverError.NoError || recovered != expectedSigner) {
             revert Errors.InvalidSignature(signatureType);
         }
@@ -173,7 +179,13 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             revert Errors.Unauthorized(account, "account for updateOrder");
         }
 
-        uint256 residualFeeAmount = _handleRelayBeforeAction(contracts, relayParams, account, executionFee, isSubaccount);
+        uint256 residualFeeAmount = _handleRelayBeforeAction(
+            contracts,
+            relayParams,
+            account,
+            executionFee,
+            isSubaccount
+        );
 
         orderHandler.updateOrder(
             key,
@@ -270,7 +282,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         address account,
         uint256 executionFee
     ) internal returns (uint256) {
-        if (_getFeeToken() != contracts.wnt) {
+        if (_isGelatoRelay(msg.sender) && _getFeeToken() != contracts.wnt) {
             revert Errors.UnsupportedRelayFeeToken(_getFeeToken(), contracts.wnt);
         }
 
@@ -283,7 +295,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
                 relayParams.externalCalls.refundTokens,
                 relayParams.externalCalls.refundReceivers
             );
-            outputAmount = ERC20(_getFeeToken()).balanceOf(address(this));
+            outputAmount = ERC20(contracts.wnt).balanceOf(address(this));
         } else if (relayParams.fee.feeSwapPath.length != 0) {
             _sendTokens(account, relayParams.fee.feeToken, address(contracts.orderVault), relayParams.fee.feeAmount);
             outputAmount = RelayUtils.swapFeeTokens(contracts, oracle, relayParams.fee);
@@ -310,11 +322,21 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         bool isSponsoredCall = !_isGelatoRelay(msg.sender);
         uint256 relayFee;
         if (isSponsoredCall) {
-            // multiply by 2 because the calldata is first sent to the Relay contract, and then to GMX contract
-            relayFee = GasUtils.payGelatoRelayFee(contracts.dataStore, startingGas, contracts.wnt, msg.data.length * 2);
+            relayFee = GasUtils.payGelatoRelayFee(
+                contracts.dataStore,
+                contracts.wnt,
+                startingGas,
+                msg.data.length,
+                residualFeeAmount
+            );
         } else {
             relayFee = _getFee();
-            _transferRelayFeeCapped(relayFee);
+
+            if (relayFee > residualFeeAmount) {
+                revert Errors.InsufficientRelayFee(relayFee, residualFeeAmount);
+            }
+
+            _transferRelayFee();
         }
 
         residualFeeAmount -= relayFee;

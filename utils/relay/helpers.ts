@@ -125,24 +125,32 @@ export async function signTypedData(
   return (signer as any)._signTypedData(domain, types, typedData);
 }
 
-export function sendRelayTransaction({
+export async function sendRelayTransaction({
   calldata,
-  relayFeeToken,
-  relayFeeAmount,
+  gelatoRelayFeeToken,
+  gelatoRelayFeeAmount,
   sender,
   relayRouter,
 }: {
   calldata: string;
-  relayFeeToken: string;
-  relayFeeAmount: BigNumberish;
+  gelatoRelayFeeToken: string;
+  gelatoRelayFeeAmount: BigNumberish;
   sender: ethers.Signer;
   relayRouter: ethers.Contract;
 }) {
-  return sender.sendTransaction({
-    to: relayRouter.address,
-    data: ethers.utils.solidityPack(
-      ["bytes", "address", "address", "uint256"],
-      [calldata, GELATO_RELAY_ADDRESS, relayFeeToken, relayFeeAmount]
-    ),
-  });
+  try {
+    return await sender.sendTransaction({
+      to: relayRouter.address,
+      data: ethers.utils.solidityPack(
+        ["bytes", "address", "address", "uint256"],
+        [calldata, GELATO_RELAY_ADDRESS, gelatoRelayFeeToken, gelatoRelayFeeAmount]
+      ),
+    });
+  } catch (ex) {
+    if (ex.error) {
+      // this gives much more readable error in the console with a stacktrace
+      throw ex.error;
+    }
+    throw ex;
+  }
 }

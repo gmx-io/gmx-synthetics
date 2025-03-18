@@ -186,7 +186,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         _validateCall(relayParams, account, structHash);
 
         Contracts memory contracts = _getContracts();
-        _handleRelayBeforeAction(
+        uint256 residualFeeAmount = _handleRelayBeforeAction(
             contracts,
             relayParams,
             account,
@@ -196,7 +196,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
 
         SubaccountUtils.removeSubaccount(dataStore, eventEmitter, account, subaccount);
 
-        _handleRelayAfterAction(contracts, startingGas, 0, account);
+        _handleRelayAfterAction(contracts, startingGas, residualFeeAmount, account);
     }
 
     function _handleSubaccountAction(

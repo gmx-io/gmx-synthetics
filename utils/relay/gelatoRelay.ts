@@ -36,8 +36,8 @@ export async function sendCreateOrder(p: {
   deadline: BigNumberish;
   relayRouter: ethers.Contract;
   chainId: BigNumberish;
-  relayFeeToken: string;
-  relayFeeAmount: BigNumberish;
+  gelatoRelayFeeToken: string;
+  gelatoRelayFeeAmount: BigNumberish;
 }) {
   const relayParams = await getRelayParams(p);
 
@@ -158,9 +158,9 @@ export async function sendUpdateOrder(p: {
   userNonce?: BigNumberish;
   relayRouter: ethers.Contract;
   signature?: string;
-  relayFeeToken: string;
-  relayFeeAmount: BigNumberish;
-  increaseExecutionFee: boolean;
+  gelatoRelayFeeToken: string;
+  gelatoRelayFeeAmount: BigNumberish;
+  executionFee: BigNumberish;
 }) {
   const relayParams = await getRelayParams(p);
 
@@ -168,12 +168,13 @@ export async function sendUpdateOrder(p: {
   if (!signature) {
     signature = await getUpdateOrderSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
   }
+
   const updateOrderCalldata = p.relayRouter.interface.encodeFunctionData("updateOrder", [
     { ...relayParams, signature },
     p.account,
     p.key,
     p.params,
-    Boolean(p.increaseExecutionFee),
+    p.executionFee,
   ]);
   return sendRelayTransaction({
     calldata: updateOrderCalldata,
@@ -189,7 +190,7 @@ async function getUpdateOrderSignature({
   key,
   deadline,
   chainId,
-  increaseExecutionFee,
+  executionFee,
 }) {
   if (relayParams.userNonce === undefined) {
     throw new Error("userNonce is required");
@@ -198,7 +199,7 @@ async function getUpdateOrderSignature({
     UpdateOrder: [
       { name: "key", type: "bytes32" },
       { name: "params", type: "UpdateOrderParams" },
-      { name: "increaseExecutionFee", type: "bool" },
+      { name: "executionFee", type: "uint256" },
       { name: "relayParams", type: "bytes32" },
     ],
     UpdateOrderParams: [
@@ -216,7 +217,7 @@ async function getUpdateOrderSignature({
     key,
     params,
     deadline,
-    increaseExecutionFee,
+    executionFee,
     relayParams: hashRelayParams(relayParams),
   };
 
@@ -249,8 +250,8 @@ export async function sendCancelOrder(p: {
   userNonce?: BigNumberish;
   relayRouter: ethers.Contract;
   signature?: string;
-  relayFeeToken: string;
-  relayFeeAmount: BigNumberish;
+  gelatoRelayFeeToken: string;
+  gelatoRelayFeeAmount: BigNumberish;
 }) {
   const relayParams = await getRelayParams(p);
 

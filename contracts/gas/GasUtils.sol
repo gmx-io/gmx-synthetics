@@ -240,6 +240,11 @@ library GasUtils {
     function transferExcessiveExecutionFee(DataStore dataStore, EventEmitter eventEmitter, Bank bank, address account, uint256 executionFeeDiff) external {
         address wnt = TokenUtils.wnt(dataStore);
         address holdingAddress = dataStore.getAddress(Keys.HOLDING_ADDRESS);
+
+        if (holdingAddress == address(0)) {
+            revert Errors.EmptyHoldingAddress();
+        }
+
         bank.transferOut(wnt, holdingAddress, executionFeeDiff);
 
         EventUtils.EventLogData memory eventData;
@@ -543,9 +548,10 @@ library GasUtils {
 
     function payGelatoRelayFee(
         DataStore dataStore,
-        uint256 startingGas,
         address wnt,
-        uint256 calldataLength
+        uint256 startingGas,
+        uint256 calldataLength,
+        uint256 availableFeeAmount
     ) internal returns (uint256) {
         uint256 relayFeeMultiplierFactor = dataStore.getUint(Keys.GELATO_RELAY_FEE_MULTIPLIER_FACTOR);
         if (relayFeeMultiplierFactor == 0) {
@@ -566,10 +572,15 @@ library GasUtils {
         // would be non-zero for Arbitrum only
         uint256 l1Fee = Chain.getCurrentTxL1GasFees();
 
+        // multiply calldataLength by 2 because the calldata is first sent to the Relay contract, and then to GMX contract
         // zero byte in call data costs 4 bytes, non-zero byte costs 16 bytes, use 12 as a conservative estimate
-        uint256 l2Fee = (relayFeeBaseAmount + calldataLength * 12 + startingGas - gasleft()) * tx.gasprice;
+        uint256 l2Fee = (relayFeeBaseAmount + calldataLength * 2 * 12 + startingGas - gasleft()) * tx.gasprice;
 
         uint256 relayFee = Precision.toFactor(l1Fee + l2Fee, relayFeeMultiplierFactor);
+
+        if (relayFee > availableFeeAmount) {
+            revert Errors.InsufficientRelayFee(relayFee, availableFeeAmount);
+        }
 
         IERC20(wnt).safeTransfer(relayFeeAddress, relayFee);
 

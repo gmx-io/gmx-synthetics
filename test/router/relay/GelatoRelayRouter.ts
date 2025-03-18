@@ -21,6 +21,7 @@ import { getTokenPermit } from "../../../utils/relay/tokenPermit";
 import { ethers } from "ethers";
 import { parseLogs } from "../../../utils/event";
 import { deployContract } from "../../../utils/deploy";
+import { getRelayParams } from "../../../utils/relay/helpers";
 
 const BAD_SIGNATURE =
   "0x122e3efab9b46c82dc38adf4ea6cd2c753b00f95c217a0e3a0f4dd110839f07a08eb29c1cc414d551349510e23a75219cd70c8b88515ed2b83bbd88216ffdb051f";
@@ -94,8 +95,8 @@ describe("GelatoRelayRouter", () => {
       deadline: 9999999999,
       relayRouter: gelatoRelayRouter,
       chainId,
-      relayFeeToken: wnt.address,
-      relayFeeAmount: expandDecimals(1, 15),
+      gelatoRelayFeeToken: wnt.address,
+      gelatoRelayFeeAmount: expandDecimals(1, 15),
     };
   });
 
@@ -105,11 +106,12 @@ describe("GelatoRelayRouter", () => {
       await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
     });
 
-    it("GelatoRelayContext._transferRelayFeeCapped: maxFee", async () => {
+    it("InsufficientRelayFee", async () => {
       await wnt.connect(user0).approve(router.address, expandDecimals(1, 18));
       createOrderParams.feeParams.feeAmount = 1;
-      await expect(sendCreateOrder(createOrderParams)).to.be.revertedWith(
-        "GelatoRelayContext._transferRelayFeeCapped: maxFee"
+      await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InsufficientRelayFee"
       );
     });
 
@@ -252,6 +254,7 @@ describe("GelatoRelayRouter", () => {
       await dataStore.setUint(keys.MAX_EXECUTION_FEE_MULTIPLIER_FACTOR, decimalToFloat(1, 10));
 
       createOrderParams.feeParams.feeAmount = expandDecimals(1, 17);
+      createOrderParams.params.numbers.executionFee = "99000000000000000";
       await sendCreateOrder(createOrderParams);
       const orderKeys = await getOrderKeys(dataStore, 0, 1);
       const order = await reader.getOrder(dataStore.address, orderKeys[0]);
@@ -260,7 +263,7 @@ describe("GelatoRelayRouter", () => {
 
     it("creates order and sends relayer fee", async () => {
       const collateralDeltaAmount = createOrderParams.collateralDeltaAmount;
-      const gelatoRelayFee = createOrderParams.relayFeeAmount;
+      const gelatoRelayFeeAmount = createOrderParams.gelatoRelayFeeAmount;
 
       const tokenPermit = await getTokenPermit(
         wnt,
@@ -274,6 +277,10 @@ describe("GelatoRelayRouter", () => {
 
       expect(await wnt.allowance(user0.address, router.address)).to.eq(0);
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, 0);
+      const executionFee = expandDecimals(2, 15);
+      createOrderParams.params.numbers.executionFee = executionFee;
+      createOrderParams.feeParams.feeAmount = expandDecimals(6, 15); // relay fee is 0.001, execution fee is 0.002, 0.003 should be sent back
+      const userWntBalanceBefore = await wnt.balanceOf(user0.address);
       const tx = await sendCreateOrder({
         ...createOrderParams,
         tokenPermits: [tokenPermit],
@@ -281,10 +288,14 @@ describe("GelatoRelayRouter", () => {
 
       // allowance was set
       expect(await wnt.allowance(user0.address, router.address)).to.eq(
-        expandDecimals(1, 18).sub(collateralDeltaAmount).sub(gelatoRelayFee).sub(expandDecimals(1, 15))
+        expandDecimals(1, 18)
+          .sub(collateralDeltaAmount)
+          .sub(gelatoRelayFeeAmount)
+          .sub(executionFee)
+          .sub(expandDecimals(3, 15)) // 0.003 should be sent back
       );
       // relay fee was sent
-      await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, gelatoRelayFee);
+      await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, gelatoRelayFeeAmount);
 
       const orderKeys = await getOrderKeys(dataStore, 0, 1);
       const order = await reader.getOrder(dataStore.address, orderKeys[0]);
@@ -301,7 +312,7 @@ describe("GelatoRelayRouter", () => {
       expect(order.numbers.initialCollateralDeltaAmount).eq(collateralDeltaAmount);
       expect(order.numbers.triggerPrice).eq(decimalToFloat(4800));
       expect(order.numbers.acceptablePrice).eq(decimalToFloat(4900));
-      expect(order.numbers.executionFee).eq(expandDecimals(1, 15));
+      expect(order.numbers.executionFee).eq(executionFee);
       expect(order.numbers.callbackGasLimit).eq("200000");
       expect(order.numbers.minOutputAmount).eq(700);
 
@@ -309,12 +320,72 @@ describe("GelatoRelayRouter", () => {
       expect(order.flags.shouldUnwrapNativeToken).eq(true);
       expect(order.flags.isFrozen).eq(false);
 
+      const userWntBalanceAfter = await wnt.balanceOf(user0.address);
+      // 0.003 ETH was sent back
+      expect(userWntBalanceAfter).eq(userWntBalanceBefore.sub(expandDecimals(3, 15)).sub(collateralDeltaAmount));
+
       await stopImpersonatingAccount(GELATO_RELAY_ADDRESS);
 
       await logGasUsage({
         tx,
         label: "gelatoRelayRouter.createOrder",
       });
+    });
+
+    it("sponsoredCall: skips signature validation in gas estimation if tx.origin is zero", async () => {
+      await dataStore.setAddress(keys.RELAY_FEE_ADDRESS, user3.address);
+      const tokenPermit = await getTokenPermit(
+        wnt,
+        user0,
+        router.address,
+        expandDecimals(1, 18),
+        0,
+        9999999999,
+        chainId
+      );
+      const p = { ...createOrderParams, tokenPermits: [tokenPermit] };
+      const relayParams = await getRelayParams(p);
+      const calldata = p.relayRouter.interface.encodeFunctionData("createOrder", [
+        { ...relayParams, signature: ethers.constants.HashZero },
+        p.account,
+        p.collateralDeltaAmount,
+        p.params,
+      ]);
+
+      // by default eth_estimateGas should fail if invalid signature is passed
+      await expect(
+        hre.ethers.provider.estimateGas({
+          to: p.relayRouter.address,
+          data: calldata,
+          from: user3.address,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
+
+      // but if tx.origin is zero, it should succeed, allowing gas estimation
+      await hre.ethers.provider.estimateGas({
+        to: p.relayRouter.address,
+        data: calldata,
+        from: ethers.constants.AddressZero,
+      });
+
+      // eth_call just returns the revert message
+      const badResult = await hre.ethers.provider.call({
+        to: p.relayRouter.address,
+        data: calldata,
+      });
+      const error = errorsContract.interface.parseError(badResult);
+      expect(error.name).eq("InvalidSignature");
+
+      const goodResult = await hre.ethers.provider.call({
+        to: p.relayRouter.address,
+        data: calldata,
+        from: ethers.constants.AddressZero,
+      });
+      expect(goodResult.length).eq(66);
+      expect(() => {
+        // parseError throws if the revert message is not an error
+        errorsContract.interface.parseError(goodResult);
+      }).to.throw();
     });
 
     it("sponsoredCall: creates order and sends relayer fee", async () => {
@@ -417,7 +488,7 @@ describe("GelatoRelayRouter", () => {
       });
 
       // feeCollector received in WETH
-      await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, createOrderParams.relayFeeAmount);
+      await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, createOrderParams.gelatoRelayFeeAmount);
 
       // and user sent correct amount of USDC
       const usdcBalanceAfter = await usdc.balanceOf(user0.address);
@@ -446,6 +517,8 @@ describe("GelatoRelayRouter", () => {
       await usdc.connect(user0).approve(router.address, expandDecimals(1000, 6));
       await wnt.connect(user0).approve(router.address, expandDecimals(1, 18));
 
+      createOrderParams.params.numbers.executionFee = expandDecimals(98, 13); // 0.00098 WETH
+
       const usdcBalanceBefore = await usdc.balanceOf(user0.address);
       const feeAmount = expandDecimals(10, 6);
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, 0);
@@ -467,14 +540,13 @@ describe("GelatoRelayRouter", () => {
       const order = await reader.getOrder(dataStore.address, orderKeys[0]);
 
       // WETH price is 5000, so 10 USDC will be 0.002 WETH before fees
-      expect(order.numbers.executionFee).eq(
-        expandDecimals(2, 15)
-          .sub(applyFactor(expandDecimals(2, 15), atomicSwapFeeFactor))
-          .sub(createOrderParams.relayFeeAmount)
-      );
+      expect(order.numbers.executionFee).eq(expandDecimals(98, 13));
+      // expandDecimals(2, 15)
+      //   .sub(applyFactor(expandDecimals(2, 15), atomicSwapFeeFactor))
+      //   .sub(createOrderParams.gelatoRelayFeeAmount)
 
       // feeCollector received in WETH
-      await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, createOrderParams.relayFeeAmount);
+      await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, createOrderParams.gelatoRelayFeeAmount);
 
       // and user sent correct amount of USDC
       const usdcBalanceAfter = await usdc.balanceOf(user0.address);
@@ -524,9 +596,9 @@ describe("GelatoRelayRouter", () => {
         deadline: 9999999999,
         relayRouter: gelatoRelayRouter,
         chainId,
-        relayFeeToken: wnt.address,
-        relayFeeAmount: expandDecimals(1, 15),
-        increaseExecutionFee: false,
+        gelatoRelayFeeToken: wnt.address,
+        gelatoRelayFeeAmount: expandDecimals(1, 15),
+        executionFee: 0,
       };
     });
 
@@ -535,14 +607,15 @@ describe("GelatoRelayRouter", () => {
       await expect(sendUpdateOrder(updateOrderParams)).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
     });
 
-    it("GelatoRelayContext._transferRelayFeeCapped: maxFee", async () => {
+    it("InsufficientRelayFee", async () => {
       await wnt.connect(user0).approve(router.address, expandDecimals(1, 18));
       await sendCreateOrder(createOrderParams);
       const orderKeys = await getOrderKeys(dataStore, 0, 1);
 
       updateOrderParams.feeParams.feeAmount = 1;
-      await expect(sendUpdateOrder({ ...updateOrderParams, key: orderKeys[0] })).to.be.revertedWith(
-        "GelatoRelayContext._transferRelayFeeCapped: maxFee"
+      await expect(sendUpdateOrder({ ...updateOrderParams, key: orderKeys[0] })).to.be.revertedWithCustomError(
+        errorsContract,
+        "InsufficientRelayFee"
       );
     });
 
@@ -601,7 +674,7 @@ describe("GelatoRelayRouter", () => {
       expect(order.numbers.validFromTime).eq(0);
       expect(order.flags.autoCancel).eq(false);
 
-      const gelatoRelayFee = updateOrderParams.relayFeeAmount;
+      const gelatoRelayFee = updateOrderParams.gelatoRelayFeeAmount;
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, gelatoRelayFee);
       await sendUpdateOrder({ ...updateOrderParams, key: orderKeys[0] });
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, bigNumberify(gelatoRelayFee).mul(2));
@@ -618,15 +691,16 @@ describe("GelatoRelayRouter", () => {
 
     it("increases execution fee", async () => {
       await wnt.connect(user0).approve(router.address, expandDecimals(1, 18));
+      createOrderParams.params.numbers.executionFee = expandDecimals(1, 15);
       await sendCreateOrder(createOrderParams);
       const orderKeys = await getOrderKeys(dataStore, 0, 1);
       let order = await reader.getOrder(dataStore.address, orderKeys[0]);
 
-      updateOrderParams.relayFeeAmount = expandDecimals(1, 15);
+      updateOrderParams.gelatoRelayFeeAmount = expandDecimals(1, 15);
       updateOrderParams.feeParams.feeAmount = expandDecimals(3, 15);
 
       const initialWethBalance = await wnt.balanceOf(user0.address);
-      const gelatoRelayFee = updateOrderParams.relayFeeAmount;
+      const gelatoRelayFee = updateOrderParams.gelatoRelayFeeAmount;
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, gelatoRelayFee);
       await sendUpdateOrder({ ...updateOrderParams, key: orderKeys[0] });
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, bigNumberify(gelatoRelayFee).mul(2));
@@ -637,7 +711,7 @@ describe("GelatoRelayRouter", () => {
       order = await reader.getOrder(dataStore.address, orderKeys[0]);
       expect(order.numbers.executionFee).eq(expandDecimals(1, 15));
 
-      await sendUpdateOrder({ ...updateOrderParams, key: orderKeys[0], increaseExecutionFee: true });
+      await sendUpdateOrder({ ...updateOrderParams, key: orderKeys[0], executionFee: expandDecimals(2, 15) });
 
       // user doesn't receive the residual amount
       await expectBalance(wnt.address, user0.address, initialWethBalance.sub(expandDecimals(4, 15)));
@@ -665,8 +739,8 @@ describe("GelatoRelayRouter", () => {
         deadline: 9999999999,
         relayRouter: gelatoRelayRouter,
         chainId,
-        relayFeeToken: wnt.address,
-        relayFeeAmount: expandDecimals(1, 15),
+        gelatoRelayFeeToken: wnt.address,
+        gelatoRelayFeeAmount: expandDecimals(1, 15),
       };
     });
 
@@ -675,14 +749,15 @@ describe("GelatoRelayRouter", () => {
       await expect(sendCancelOrder(cancelOrderParams)).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
     });
 
-    it("GelatoRelayContext._transferRelayFeeCapped: maxFee", async () => {
+    it("InsufficientRelayFee", async () => {
       await wnt.connect(user0).approve(router.address, expandDecimals(1, 18));
       await sendCreateOrder(createOrderParams);
       const orderKeys = await getOrderKeys(dataStore, 0, 1);
 
       cancelOrderParams.feeParams.feeAmount = 1;
-      await expect(sendCancelOrder({ ...cancelOrderParams, key: orderKeys[0] })).to.be.revertedWith(
-        "GelatoRelayContext._transferRelayFeeCapped: maxFee"
+      await expect(sendCancelOrder({ ...cancelOrderParams, key: orderKeys[0] })).to.be.revertedWithCustomError(
+        errorsContract,
+        "InsufficientRelayFee"
       );
     });
 
@@ -721,7 +796,7 @@ describe("GelatoRelayRouter", () => {
       await wnt.connect(user0).approve(router.address, expandDecimals(1, 18));
       await sendCreateOrder(createOrderParams);
       const orderKeys = await getOrderKeys(dataStore, 0, 1);
-      const gelatoRelayFee = createOrderParams.relayFeeAmount;
+      const gelatoRelayFee = createOrderParams.gelatoRelayFeeAmount;
 
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, gelatoRelayFee);
       await sendCancelOrder({ ...cancelOrderParams, key: orderKeys[0] });

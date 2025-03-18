@@ -54,8 +54,8 @@ export async function sendCreateOrder(p: {
   deadline: BigNumberish;
   relayRouter: ethers.Contract;
   chainId: BigNumberish;
-  relayFeeToken: string;
-  relayFeeAmount: BigNumberish;
+  gelatoRelayFeeToken: string;
+  gelatoRelayFeeAmount: BigNumberish;
 }) {
   const relayParams = await getRelayParams(p);
   const subaccountApproval = await getSubaccountApproval({ ...p, signer: p.subaccountApprovalSigner });
@@ -69,6 +69,7 @@ export async function sendCreateOrder(p: {
       subaccountApproval,
     });
   }
+
   const createOrderCalldata = p.relayRouter.interface.encodeFunctionData("createOrder", [
     { ...relayParams, signature },
     subaccountApproval,
@@ -215,9 +216,9 @@ export async function sendUpdateOrder(p: {
   userNonce?: BigNumberish;
   relayRouter: ethers.Contract;
   signature?: string;
-  relayFeeToken: string;
-  relayFeeAmount: BigNumberish;
-  increaseExecutionFee: boolean;
+  gelatoRelayFeeToken: string;
+  gelatoRelayFeeAmount: BigNumberish;
+  executionFee: BigNumberish;
 }) {
   const relayParams = await getRelayParams(p);
   const subaccountApproval = await getSubaccountApproval({ ...p, signer: p.subaccountApprovalSigner });
@@ -238,7 +239,7 @@ export async function sendUpdateOrder(p: {
     p.subaccount,
     p.key,
     p.params,
-    p.increaseExecutionFee,
+    p.executionFee,
   ]);
   return sendRelayTransaction({
     calldata: updateOrderCalldata,
@@ -296,7 +297,7 @@ async function getUpdateOrderSignature({
   account,
   verifyingContract,
   params,
-  increaseExecutionFee,
+  executionFee,
   key,
   chainId,
 }) {
@@ -305,7 +306,7 @@ async function getUpdateOrderSignature({
       { name: "account", type: "address" },
       { name: "key", type: "bytes32" },
       { name: "params", type: "UpdateOrderParams" },
-      { name: "increaseExecutionFee", type: "bool" },
+      { name: "executionFee", type: "uint256" },
       { name: "relayParams", type: "bytes32" },
       { name: "subaccountApproval", type: "bytes32" },
     ],
@@ -325,7 +326,7 @@ async function getUpdateOrderSignature({
     key,
     params,
     relayParams: hashRelayParams(relayParams),
-    increaseExecutionFee,
+    executionFee,
     subaccountApproval: hashSubaccountApproval(subaccountApproval),
   };
 
@@ -369,8 +370,8 @@ export async function sendCancelOrder(p: {
   userNonce?: BigNumberish;
   relayRouter: ethers.Contract;
   signature?: string;
-  relayFeeToken: string;
-  relayFeeAmount: BigNumberish;
+  gelatoRelayFeeToken: string;
+  gelatoRelayFeeAmount: BigNumberish;
 }) {
   const relayParams = await getRelayParams(p);
   const subaccountApproval = await getSubaccountApproval({ ...p, signer: p.subaccountApprovalSigner });
@@ -504,8 +505,8 @@ export async function sendRemoveSubaccount(p: {
   userNonce?: BigNumberish;
   relayRouter: ethers.Contract;
   signature?: string;
-  relayFeeToken: string;
-  relayFeeAmount: BigNumberish;
+  gelatoRelayFeeToken: string;
+  gelatoRelayFeeAmount: BigNumberish;
 }) {
   const relayParams = await getRelayParams(p);
 
