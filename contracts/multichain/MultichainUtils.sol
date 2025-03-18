@@ -19,6 +19,14 @@ import "./IMultichainProvider.sol";
 library MultichainUtils {
     using SafeERC20 for IERC20;
 
+    /**
+     * Records a deposit from another chain. IMultichainProvider has CONTROLLER role
+     * @param provider the multichain provider contract
+     * @param token address of the token being deposited
+     * @param account user address on the source chain
+     * @param amount the amount of tokens being deposited
+     * @param srcChainId id of the source chain
+     */
     function recordBridgeIn(
         DataStore dataStore,
         EventEmitter eventEmitter,
@@ -26,9 +34,18 @@ library MultichainUtils {
         IMultichainProvider provider,
         address token,
         address account,
+        uint256 amount,
         uint256 srcChainId
     ) external {
-        uint256 amount = recordTransferIn(dataStore, eventEmitter, multichainVault, token, account, srcChainId);
+        if (amount == 0) {
+            revert Errors.EmptyMultichainTransferInAmount(account, token);
+        }
+
+        // token should have been transferred to multichainVault by IMultichainProvider
+        multichainVault.recordTransferIn(token, amount);
+
+        _increaseMultichainBalance(dataStore, eventEmitter, account, token, amount, srcChainId);
+
         MultichainEventUtils.emitMultichainBridgeIn(
             eventEmitter,
             address(provider),
@@ -40,9 +57,9 @@ library MultichainUtils {
     }
 
     /**
-     * Records a deposit from another chain. IMultichainProvider has CONTROLLER role
+     * Records a transfer of tokens into the multichain vault
      * @param account user address on the source chain
-     * @param token address of the token being deposited
+     * @param token address of the token being transferred
      * @param srcChainId id of the source chain
      */
     function recordTransferIn(
@@ -52,17 +69,28 @@ library MultichainUtils {
         address token,
         address account,
         uint256 srcChainId
-    ) public returns (uint256) {
-        // token should have been transferred to multichainVault by IMultichainProvider
+    ) external returns (uint256) {
+        // token should have been transferred to multichainVault
         uint256 amount = multichainVault.recordTransferIn(token);
         if (amount == 0) {
             revert Errors.EmptyMultichainTransferInAmount(account, token);
         }
 
-        dataStore.incrementUint(Keys.multichainBalanceKey(account, token), amount);
-        MultichainEventUtils.emitMultichainTransferIn(eventEmitter, token, account, amount, srcChainId);
+        _increaseMultichainBalance(dataStore, eventEmitter, account, token, amount, srcChainId);
 
         return amount;
+    }
+
+    function _increaseMultichainBalance(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address account,
+        address token,
+        uint256 amount,
+        uint256 srcChainId
+    ) private {
+        dataStore.incrementUint(Keys.multichainBalanceKey(account, token), amount);
+        MultichainEventUtils.emitMultichainTransferIn(eventEmitter, token, account, amount, srcChainId);
     }
 
     /**

@@ -28,9 +28,7 @@ import "./MultichainProviderUtils.sol";
  * - sends tokens to the Stargate executor for bridging out to the source chain
  */
 contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModule {
-    struct LayerZeroBridgeOutParams {
-        uint32 dstEid;
-    }
+    using SafeERC20 for IERC20;
 
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
@@ -68,13 +66,10 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         bytes memory composeMessage = OFTComposeMsgCodec.composeMsg(message);
         (address account, address token, uint256 srcChainId) = MultichainProviderUtils.decodeDeposit(composeMessage);
 
-        _transferToVault(token, address(multichainVault));
-        MultichainUtils.recordBridgeIn(dataStore, eventEmitter, multichainVault, this, token, account, srcChainId);
-    }
+        uint256 amountLD = OFTComposeMsgCodec.amountLD(message);
+        IERC20(token).safeTransfer(address(multichainVault), amountLD);
 
-    function _transferToVault(address token, address to) private {
-        uint256 amount = IERC20(token).balanceOf(address(this));
-        IERC20(token).transfer(to, amount);
+        MultichainUtils.recordBridgeIn(dataStore, eventEmitter, multichainVault, this, token, account, amountLD, srcChainId);
     }
 
     /**
@@ -111,36 +106,42 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             new bytes(0) // _composeMsg
         );
 
-        address wnt = dataStore.getAddress(Keys.WNT);
+        {
+            address wnt = dataStore.getAddress(Keys.WNT);
 
-        // transferOut bridging fee amount of wnt from user's multichain balance into this contract
-        MultichainUtils.transferOut(
-            dataStore,
-            eventEmitter,
-            multichainVault,
-            wnt, // token
-            params.account,
-            address(this), // receiver
-            valueToSend, // bridge out fee
-            params.srcChainId
-        );
+            // transferOut bridging fee amount of wnt from user's multichain balance into this contract
+            MultichainUtils.transferOut(
+                dataStore,
+                eventEmitter,
+                multichainVault,
+                wnt, // token
+                params.account,
+                address(this), // receiver
+                valueToSend, // bridge out fee
+                params.srcChainId
+            );
 
-        uint256 initialWntBalance = IERC20(wnt).balanceOf(address(this));
+            uint256 wntBalanceBefore = IERC20(wnt).balanceOf(address(this));
 
-        // unwrap wnt to native token and send it into this contract (to pay the bridging fee)
-        TokenUtils.withdrawAndSendNativeToken(
-            dataStore,
-            wnt,
-            address(this), // receiver
-            valueToSend // amount
-        );
+            // unwrap wnt to native token and send it into this contract (to pay the bridging fee)
+            TokenUtils.withdrawAndSendNativeToken(
+                dataStore,
+                wnt,
+                address(this), // receiver
+                valueToSend // amount
+            );
 
-        // if the above native token transfer failed, it re-wraps the token and sends it to the receiver (i.e. this contract)
-        // check if wnt was send to this contract due to un-wrapping and transfer it to user's multichain balance
-        if (IERC20(wnt).balanceOf(address(this)) > initialWntBalance) {
-            _transferToVault(wnt, address(multichainVault));
-            MultichainUtils.recordBridgeIn(dataStore, eventEmitter, multichainVault, this, wnt, params.account, 0 /*srcChainId*/);
-            return;
+            uint256 wntBalanceAfter = IERC20(wnt).balanceOf(address(this));
+
+            // if the above native token transfer failed, it re-wraps the token and sends it to the receiver (i.e. this contract)
+            // check if wnt was send to this contract due to un-wrapping and transfer it back to user's multichain balance
+            if (wntBalanceAfter > wntBalanceBefore) {
+                uint256 amount = wntBalanceAfter - wntBalanceBefore;
+                IERC20(wnt).safeTransfer(address(multichainVault), amount);
+
+                MultichainUtils.recordBridgeIn(dataStore, eventEmitter, multichainVault, this, wnt, params.account, amount, 0 /*srcChainId*/);
+                return;
+            }
         }
 
         // transferOut amount of tokens from user's multichain balance into this contract
