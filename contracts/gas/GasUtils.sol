@@ -206,7 +206,12 @@ library GasUtils {
         uint256 oraclePriceCount,
         bool shouldCapMaxExecutionFee
     ) internal view returns (uint256, uint256) {
-        (uint256 gasLimit, uint256 minExecutionFee) = validateExecutionFee(dataStore, estimatedGasLimit, executionFee, oraclePriceCount);
+        (uint256 gasLimit, uint256 minExecutionFee) = validateExecutionFee(
+            dataStore,
+            estimatedGasLimit,
+            executionFee,
+            oraclePriceCount
+        );
 
         if (!shouldCapMaxExecutionFee) {
             return (executionFee, 0);
@@ -237,7 +242,13 @@ library GasUtils {
         return (maxExecutionFee, executionFeeDiff);
     }
 
-    function transferExcessiveExecutionFee(DataStore dataStore, EventEmitter eventEmitter, Bank bank, address account, uint256 executionFeeDiff) external {
+    function transferExcessiveExecutionFee(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        Bank bank,
+        address account,
+        uint256 executionFeeDiff
+    ) external {
         address wnt = TokenUtils.wnt(dataStore);
         address holdingAddress = dataStore.getAddress(Keys.HOLDING_ADDRESS);
 
@@ -545,7 +556,6 @@ library GasUtils {
         eventEmitter.emitEventLog1("ExecutionFeeRefundCallback", Cast.toBytes32(callbackContract), eventData);
     }
 
-
     function payGelatoRelayFee(
         DataStore dataStore,
         address wnt,
@@ -576,7 +586,7 @@ library GasUtils {
         // zero byte in call data costs 4 bytes, non-zero byte costs 16 bytes, use 12 as a conservative estimate
         uint256 l2Fee = (relayFeeBaseAmount + calldataLength * 2 * 12 + startingGas - gasleft()) * tx.gasprice;
 
-        uint256 relayFee = Precision.toFactor(l1Fee + l2Fee, relayFeeMultiplierFactor);
+        uint256 relayFee = Precision.applyFactor(l1Fee + l2Fee, relayFeeMultiplierFactor);
 
         if (relayFee > availableFeeAmount) {
             revert Errors.InsufficientRelayFee(relayFee, availableFeeAmount);

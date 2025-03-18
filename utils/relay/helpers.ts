@@ -145,6 +145,7 @@ export async function sendRelayTransaction({
         ["bytes", "address", "address", "uint256"],
         [calldata, GELATO_RELAY_ADDRESS, gelatoRelayFeeToken, gelatoRelayFeeAmount]
       ),
+      gasLimit: 5000000,
     });
   } catch (ex) {
     if (ex.error) {
