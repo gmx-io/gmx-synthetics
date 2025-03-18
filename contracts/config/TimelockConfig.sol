@@ -11,8 +11,9 @@ import {RoleStore} from "../role/RoleStore.sol";
 import {DataStore} from "../data/DataStore.sol";
 import {BasicMulticall} from "../utils/BasicMulticall.sol";
 import {Precision} from "../utils/Precision.sol";
-import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
-import { OracleModule } from "../oracle/OracleModule.sol";
+import {ConfigTimelockController} from "./ConfigTimelockController.sol";
+import {OracleModule} from "../oracle/OracleModule.sol";
+import {OracleUtils} from "../oracle/OracleUtils.sol";
 import {MarketUtils} from "../market/MarketUtils.sol";
 
 contract TimelockConfig is RoleModule, BasicMulticall {
@@ -27,7 +28,7 @@ contract TimelockConfig is RoleModule, BasicMulticall {
     uint256 public constant MAX_TIMELOCK_DELAY = 5 days;
 
     EventEmitter public immutable eventEmitter;
-    TimelockController public immutable timelockController;
+    ConfigTimelockController public immutable timelockController;
 
     address public immutable dataStore;
     address public immutable oracleStore;
@@ -37,7 +38,7 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         address _dataStore,
         address _oracleStore,
         RoleStore _roleStore,
-        TimelockController _timelockController
+        ConfigTimelockController _timelockController
     ) RoleModule(_roleStore) {
         eventEmitter = _eventEmitter;
         dataStore = _dataStore;
@@ -337,12 +338,12 @@ contract TimelockConfig is RoleModule, BasicMulticall {
 
     // @dev Withdraw funds from position impact pool(negative price impacts) and send them to `receiver`
     // @param market Market from withdraw
-    // @param amount Amount of tokens to withdraw
     // @param receiver Account to send funds from pool
+    // @param amount Amount of tokens to withdraw
     function signalWithdrawFromPositionImpactPool(
         address market,
-        uint256 amount,
-        address receiver
+        address receiver,
+        uint256 amount
     ) external onlyTimelockAdmin {
         if (market == address(0)) {
             revert Errors.EmptyMarket();
@@ -350,11 +351,14 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         if (receiver == address(0)) {
             revert Errors.EmptyReceiver();
         }
+        if (amount == 0) {
+            revert Errors.InvalidWithdrawalAmount(amount);
+        }
 
         bytes memory payload = abi.encodeWithSignature(
-            "withdrawFromPositionImpactPool(address,address,address,uint256,address)",
-            address(dataStore), address(eventEmitter), market, amount, receiver);
-        timelockController.schedule(address(this), 0, payload, 0, 0, timelockController.getMinDelay());
+            "withdrawFromPositionImpactPool(address,address,uint256)",
+            market, receiver, amount);
+        timelockController.schedule(address(timelockController), 0, payload, 0, 0, timelockController.getMinDelay());
 
         EventUtils.EventLogData memory eventData;
         eventData.addressItems.initItems(2);
@@ -368,26 +372,18 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         );
     }
 
-    function withdrawFromPositionImpactPool(
-        address market,
-        address receiver,
-        uint256 amount
-    ) external {
-        MarketUtils.withdrawFromPositionImpactPool(
-            DataStore(dataStore),
-            EventEmitter(eventEmitter),
-            market,
-            receiver,
-            amount
-        );
-    }
-
     function execute(address target, bytes calldata payload) external onlyTimelockAdmin {
         timelockController.execute(target, 0, payload, 0, 0);
     }
 
-    function executeWithAtomicSwap(address target, bytes calldata payload) external onlyTimelockAdmin {
-        timelockController.execute(target, 0, payload, 0, 0);
+    function executeAtomicWithOraclePrice(
+        address target,
+        bytes calldata payload,
+        OracleUtils.SetPricesParams calldata oracleParams
+    ) external onlyTimelockAdmin {
+        timelockController.executeAtomicWithOraclePrices(
+            target, 0, payload, oracleParams
+        );
     }
 
     function executeBatch(address[] calldata targets, uint256[] calldata values, bytes[] calldata payloads) external onlyTimelockAdmin {
