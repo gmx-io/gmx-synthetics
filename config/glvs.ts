@@ -141,8 +141,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           },
           {
             indexToken: "MELANIA",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(2_186_599, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(1_791_590),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(2_631_208, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(2_149_908),
           },
           {
             indexToken: "ENA",
@@ -278,8 +278,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           },
           {
             indexToken: "FARTCOIN",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(1_984_876, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(2_073_600),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(2_397_918, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(2_488_320),
           },
           {
             indexToken: "AI16Z",
@@ -298,8 +298,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           },
           {
             indexToken: "S",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(500_000, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(500_000),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(565_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(600_000),
           },
           {
             indexToken: "CAKE",
