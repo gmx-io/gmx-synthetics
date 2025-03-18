@@ -557,6 +557,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.RELAY_FEE_ADDRESS] = true;
         allowedBaseKeys[Keys.GELATO_RELAY_FEE_BASE_AMOUNT] = true;
         allowedBaseKeys[Keys.GELATO_RELAY_FEE_MULTIPLIER_FACTOR] = true;
+        allowedBaseKeys[Keys.RELAY_EXECUTION_GAS_FEE_PER_ORACLE_PRICE] = true;
     }
 
     function _initAllowedLimitedBaseKeys() internal {

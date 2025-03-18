@@ -589,7 +589,7 @@ library GasUtils {
 
         if (oraclePriceCount > 0) {
             // oracle prices are set before startingGas is defined
-            l2Fee += dataStore.getUint(Keys.EXECUTION_GAS_FEE_PER_ORACLE_PRICE) * oraclePriceCount * tx.gasprice;
+            l2Fee += dataStore.getUint(Keys.RELAY_EXECUTION_GAS_FEE_PER_ORACLE_PRICE) * oraclePriceCount * tx.gasprice;
         }
 
         uint256 relayFee = Precision.applyFactor(l1Fee + l2Fee, relayFeeMultiplierFactor);
