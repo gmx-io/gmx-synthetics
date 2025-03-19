@@ -40,7 +40,7 @@ library MarketPositionImpactPoolUtils {
         address receiver,
         uint256 amount,
         Oracle oracle
-    ) public {
+    ) external {
         require(amount > 0, "Amount must be greater than 0");
 
         Market.Props memory marketProps = MarketStoreUtils.get(dataStore, market);
