@@ -282,6 +282,14 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
     generalConfig.maxExecutionFeeMultiplierFactor,
     `maxExecutionFeeMultiplierFactor`
   );
+
+  await handleConfig(
+    "uint",
+    keys.ORACLE_PROVIDER_MIN_CHANGE_DELAY,
+    "0x",
+    generalConfig.oracleProviderMinChangeDelay,
+    `oracleProviderMinChangeDelay`
+  );
 };
 
 export async function updateGeneralConfig({ write }) {
