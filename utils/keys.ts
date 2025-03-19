@@ -447,10 +447,6 @@ export function oracleProviderUpdatedAtKey(token: string, provider: string) {
   return hashData(["bytes32", "address", "address"], [ORACLE_PROVIDER_UPDATED_AT, token, provider]);
 }
 
-export function oracleProviderSameValueDelayKey(token: string, provider: string) {
-  return hashData(["bytes32", "address", "address"], [ORACLE_PROVIDER_MIN_CHANGE_DELAY, token, provider]);
-}
-
 export function openInterestKey(market: string, collateralToken: string, isLong: boolean) {
   return hashData(["bytes32", "address", "address", "bool"], [OPEN_INTEREST, market, collateralToken, isLong]);
 }
