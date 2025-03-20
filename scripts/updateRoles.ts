@@ -79,170 +79,143 @@ async function main() {
   // NOTE: the existing Timelock needs to be used to grant roles to new contracts including new Timelocks
   const timelock = await getTimelock();
 
-  const rolesToAdd = {
-    arbitrum: [
-      {
-        role: "CONTROLLER",
-        member: "0x17de9ad7c5eca85e50381f9c51e32e859d5f2086",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x6dbe12529a9d039a6af20be488d5e46f22901eec",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x1037c3b54b3109a495b8d0cce6c32f819284f0cf",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x331da018c1ddf565ae081f267174689940a8490e",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x03a6e8af1685099470019de39b1573d415856879",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x470d512de68665a33416d30f0d7580781aaa2748",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x8d5ba31b20725c10b9fb60b8a3e5c9bc6aa7c74c",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x98723bd186581c461e8f77d8b17e7fac2d141a48",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x2fb22eab0f84557dac6fc9d800cae11602662f78",
-      },
-      {
-        role: "ROUTER_PLUGIN",
-        member: "0x470d512de68665a33416d30f0d7580781aaa2748",
-      },
-      {
-        role: "ROUTER_PLUGIN",
-        member: "0x8d5ba31b20725c10b9fb60b8a3e5c9bc6aa7c74c",
-      },
-      {
-        role: "ROUTER_PLUGIN",
-        member: "0x98723bd186581c461e8f77d8b17e7fac2d141a48",
-      },
-      {
-        role: "ROUTER_PLUGIN",
-        member: "0x2fb22eab0f84557dac6fc9d800cae11602662f78",
-      },
-    ],
-    avalanche: [
-      {
-        role: "CONTROLLER",
-        member: "0x2921bad580cef4b03b5461d184a4c7ab637028d6",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x45277bad220bb6b350973b61c9cc9f7ec536b5a1",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0xf1998f8202f9707ffb6953826d4db97fbc6acc08",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x29fa2de428b251d7d7c5b0b0fac7b970e113650e",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x900173a66dbd345006c51fa35fa3ab760fcd843b",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0xcc090e92824d0f75faeb2287eeca8d91aa6f06bb",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0xa9c8bc4f151da37753576114fcedfb3572333c6b",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x82a792457f9af42d10fcde829708bd80b156c6f9",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x0c4d69369982f7e8002089387a95ff059deff6b3",
-      },
-      {
-        role: "ROUTER_PLUGIN",
-        member: "0xcc090e92824d0f75faeb2287eeca8d91aa6f06bb",
-      },
-      {
-        role: "ROUTER_PLUGIN",
-        member: "0xa9c8bc4f151da37753576114fcedfb3572333c6b",
-      },
-      {
-        role: "ROUTER_PLUGIN",
-        member: "0x82a792457f9af42d10fcde829708bd80b156c6f9",
-      },
-      {
-        role: "ROUTER_PLUGIN",
-        member: "0x0c4d69369982f7e8002089387a95ff059deff6b3",
-      },
-    ],
-  };
-
-  const rolesToRemove = {
-    arbitrum: [
-      {
-        role: "CONTROLLER",
-        member: "0xf64c8469e5B566251301904f4F77A911438C775F",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x871a0CAa75dea231FA290ee26F1955B29a7F8a86",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x26410a3121BCAB865b9ceae50dFfA04DF9E783B1",
-      },
-      {
-        role: "ROUTER_PLUGIN",
-        member: "0xf64c8469e5B566251301904f4F77A911438C775F",
-      },
-      {
-        role: "ROUTER_PLUGIN",
-        member: "0x871a0CAa75dea231FA290ee26F1955B29a7F8a86",
-      },
-      {
-        role: "ROUTER_PLUGIN",
-        member: "0x26410a3121BCAB865b9ceae50dFfA04DF9E783B1",
-      },
-    ],
-    avalanche: [
-      {
-        role: "CONTROLLER",
-        member: "0xBD219aADaFe3AD8c8F570b204B99cb4aDbe9983E",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0xE971b9D5eA8Ab28bF3639069CF7a91E5dA7b7015",
-      },
-      {
-        role: "CONTROLLER",
-        member: "0x7D9E403F82b59e7fF5F7A37a9bf4A8df914352A1",
-      },
-      {
-        role: "ROUTER_PLUGIN",
-        member: "0xBD219aADaFe3AD8c8F570b204B99cb4aDbe9983E",
-      },
-      {
-        role: "ROUTER_PLUGIN",
-        member: "0xE971b9D5eA8Ab28bF3639069CF7a91E5dA7b7015",
-      },
-      {
-        role: "ROUTER_PLUGIN",
-        member: "0x7D9E403F82b59e7fF5F7A37a9bf4A8df914352A1",
-      },
-    ],
+  const config = {
+    arbitrum: {
+      rolesToAdd: [
+        {
+          role: "CONTROLLER",
+          member: "0x602b805eedddbbd9ddff44a7dcbd46cb07849685",
+          contractName: "ExchangeRouter",
+        },
+        {
+          role: "CONTROLLER",
+          member: "0x089f51aab35e854d2b65c9396622361a1854bc3d",
+          contractName: "DepositHandler",
+        },
+        {
+          role: "CONTROLLER",
+          member: "0x94889b5d664eaff4c249d43206705a70a22e37b4",
+          contractName: "ShiftHandler",
+        },
+        {
+          role: "ROUTER_PLUGIN",
+          member: "0x602b805eedddbbd9ddff44a7dcbd46cb07849685",
+          contractName: "ExchangeRouter",
+        },
+      ],
+      rolesToRemove: [],
+    },
+    avalanche: {
+      rolesToAdd: [
+        {
+          role: "CONTROLLER",
+          member: "0xc2d6cc2b5444b2d3611d812a9ea47648cffc05c1",
+          contractName: "Config",
+        },
+        {
+          role: "CONTROLLER",
+          member: "0x13c986424ded8d78d9313dd90cd847e4deba5cb3",
+          contractName: "Oracle",
+        },
+        {
+          role: "CONTROLLER",
+          member: "0xfa843af557824be5127eacb3c4b5d86eadeb73a1",
+          contractName: "ExchangeRouter",
+        },
+        {
+          role: "CONTROLLER",
+          member: "0x233397357bb4cc6b951aa423d7ceadbc610499e2",
+          contractName: "SubaccountRouter",
+        },
+        {
+          role: "CONTROLLER",
+          member: "0xb33d87b6be2a6772eebd38c3222f5872a62cca2a",
+          contractName: "GelatoRelayRouter",
+        },
+        {
+          role: "CONTROLLER",
+          member: "0xe26052e5676e636230a9b05652acd3aca23fc35f",
+          contractName: "SubaccountGelatoRelayRouter",
+        },
+        {
+          role: "CONTROLLER",
+          member: "0x00db21077c63fff542c017cc4cdcc84229bfb373",
+          contractName: "OrderHandler",
+        },
+        {
+          role: "CONTROLLER",
+          member: "0xe78c15c818ebaad31bac58167157522b4d01ee2f",
+          contractName: "DepositHandler",
+        },
+        {
+          role: "CONTROLLER",
+          member: "0x6fa5d5a3377790cf646efdb67fc53d3ce5b345bc",
+          contractName: "WithdrawalHandler",
+        },
+        {
+          role: "CONTROLLER",
+          member: "0xe270e904b3b52fe952f00e797f5dac4a1e058dda",
+          contractName: "ShiftHandler",
+        },
+        {
+          role: "CONTROLLER",
+          member: "0x1b31d1774270c46dfc3e1e0d2459a1b94cf9373f",
+          contractName: "SwapHandler",
+        },
+        {
+          role: "ROUTER_PLUGIN",
+          member: "0xfa843af557824be5127eacb3c4b5d86eadeb73a1",
+          contractName: "ExchangeRouter",
+        },
+        {
+          role: "ROUTER_PLUGIN",
+          member: "0x233397357bb4cc6b951aa423d7ceadbc610499e2",
+          contractName: "SubaccountRouter",
+        },
+        {
+          role: "ROUTER_PLUGIN",
+          member: "0xb33d87b6be2a6772eebd38c3222f5872a62cca2a",
+          contractName: "GelatoRelayRouter",
+        },
+        {
+          role: "ROUTER_PLUGIN",
+          member: "0xe26052e5676e636230a9b05652acd3aca23fc35f",
+          contractName: "SubaccountGelatoRelayRouter",
+        },
+      ],
+      rolesToRemove: [
+        {
+          role: "CONTROLLER",
+          member: "0xBD219aADaFe3AD8c8F570b204B99cb4aDbe9983E",
+          contractName: "GelatoRelayRouter",
+        },
+        {
+          role: "CONTROLLER",
+          member: "0xE971b9D5eA8Ab28bF3639069CF7a91E5dA7b7015",
+          contractName: "SubaccountGelatoRelayRouter",
+        },
+        {
+          role: "CONTROLLER",
+          member: "0x7D9E403F82b59e7fF5F7A37a9bf4A8df914352A1",
+          contractName: "SubaccountRouter",
+        },
+        {
+          role: "ROUTER_PLUGIN",
+          member: "0xBD219aADaFe3AD8c8F570b204B99cb4aDbe9983E",
+          contractName: "GelatoRelayRouter",
+        },
+        {
+          role: "ROUTER_PLUGIN",
+          member: "0xE971b9D5eA8Ab28bF3639069CF7a91E5dA7b7015",
+          contractName: "SubaccountGelatoRelayRouter",
+        },
+        {
+          role: "ROUTER_PLUGIN",
+          member: "0x7D9E403F82b59e7fF5F7A37a9bf4A8df914352A1",
+          contractName: "SubaccountRouter",
+        },
+      ],
+    },
   };
 
   const multicallWriteParams = [];
@@ -252,21 +225,23 @@ async function main() {
     throw new Error(`Unexpected TIMELOCK_METHOD: ${timelockMethod}`);
   }
 
+  const networkConfig = config[hre.network.name];
+
   if (timelockMethod === "signalGrantRole") {
-    for (const { member, role } of rolesToAdd[hre.network.name]) {
+    for (const { member, role } of networkConfig.rolesToAdd) {
       multicallWriteParams.push(timelock.interface.encodeFunctionData(timelockMethod, [member, hashString(role)]));
     }
   }
 
   if (timelockMethod === "grantRoleAfterSignal") {
-    for (const { member, role } of rolesToAdd[hre.network.name]) {
+    for (const { member, role } of networkConfig.rolesToAdd) {
       const { target, payload } = await getGrantRolePayload(member, hashString(role));
       multicallWriteParams.push(timelock.interface.encodeFunctionData("execute", [target, payload]));
     }
   }
 
   if (timelockMethod === "signalRevokeRole") {
-    for (const { member, role } of rolesToRemove[hre.network.name]) {
+    for (const { member, role } of networkConfig.rolesToRemove) {
       multicallWriteParams.push(timelock.interface.encodeFunctionData(timelockMethod, [member, hashString(role)]));
       // signalGrantRole in case the revocation of the role needs to be reverted
       multicallWriteParams.push(timelock.interface.encodeFunctionData("signalGrantRole", [member, hashString(role)]));
@@ -274,7 +249,7 @@ async function main() {
   }
 
   if (timelockMethod === "revokeRoleAfterSignal") {
-    for (const { member, role } of rolesToRemove[hre.network.name]) {
+    for (const { member, role } of networkConfig.rolesToRemove) {
       const { target, payload } = await getRevokeRolePayload(member, hashString(role));
       multicallWriteParams.push(timelock.interface.encodeFunctionData("execute", [target, payload]));
     }
