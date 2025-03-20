@@ -222,6 +222,7 @@ async function showDiff(localPath: string, sourceCode: string) {
 interface DeploymentInfo {
   contractName: string;
   constructorArgs: string[];
+  deploymentTxHash: string;
 }
 
 async function extractContractNameAndArgsFromDeployment(contractAddress: string): Promise<DeploymentInfo> {
@@ -234,10 +235,11 @@ async function extractContractNameAndArgsFromDeployment(contractAddress: string)
   console.log("Deployment: " + deployment);
   const contractName = path.basename(deployment, path.extname(deployment));
   console.log("ContractName: " + contractName);
-  const constructorArgs = extractDeploymentArgs(deployment);
+  const deploymentJson = JSON.parse(fs.readFileSync(deployment, "utf-8"));
   return {
     contractName: contractName,
-    constructorArgs: constructorArgs,
+    constructorArgs: deploymentJson.args,
+    deploymentTxHash: deploymentJson.transactionHash,
   };
 }
 
@@ -249,13 +251,15 @@ async function getArtifactBytecode(contractName: string): Promise<string> {
     throw new Error("Artifact not found");
   }
 
-  return JSON.parse(fs.readFileSync(searchResult, "utf-8"));
+  return JSON.parse(fs.readFileSync(searchResult, "utf-8")).bytecode;
 }
 
 async function compareContractBytecodes(provider: JsonRpcProvider, contractInfo: ContractInfo): Promise<void> {
   console.log("Comparing bytecodes with compilation artifact");
 
-  const { contractName, constructorArgs } = await extractContractNameAndArgsFromDeployment(contractInfo.address);
+  const { contractName, constructorArgs, deploymentTxHash } = await extractContractNameAndArgsFromDeployment(
+    contractInfo.address
+  );
   contractInfo.name = contractName;
 
   await compileContract(contractName);
@@ -278,7 +282,8 @@ async function compareContractBytecodes(provider: JsonRpcProvider, contractInfo:
   const localBytecodeStripped = stripBytecodeIpfsHash(artifactBytecode);
 
   console.log(`Fetching blockchain bytecode from ${contractInfo.address} for ${contractName}`);
-  const blockchainBytecode = await provider.getCode(contractInfo.address);
+  const deploymentTx = await provider.getTransaction(deploymentTxHash);
+  const blockchainBytecode = deploymentTx.data;
   const blockchainBytecodeWithoutMetadata = stripBytecodeIpfsHash(blockchainBytecode);
   const blockchainDeployBytecode = blockchainBytecodeWithoutMetadata.slice(
     0,
@@ -375,11 +380,6 @@ async function searchDirectory(dirPath: string, condition: (filename: string) =>
     }
   }
   return null;
-}
-
-function extractDeploymentArgs(deploymentFile: string): string[] {
-  const js = JSON.parse(fs.readFileSync(deploymentFile, "utf-8"));
-  return js.args;
 }
 
 main().catch((error) => {
