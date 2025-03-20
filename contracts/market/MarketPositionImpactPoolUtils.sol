@@ -61,7 +61,7 @@ library MarketPositionImpactPoolUtils {
         }
 
         if (poolValueInfo.impactPoolAmount <= amount) {
-            revert Errors.InvalidImpactPoolValueForWithdrawal(poolValueInfo.impactPoolAmount);
+            revert Errors.InsufficientImpactPoolValueForWithdrawal(amount, poolValueInfo.impactPoolAmount);
         }
 
         MarketUtils.applyDeltaToPositionImpactPool(

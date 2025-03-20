@@ -55,7 +55,7 @@ library Errors {
     error InvalidFeeReceiver(address receiver);
     error InvalidOracleSigner(address signer);
     error InvalidHoldingAddress(address account);
-    error InvalidWithdrawalAmount(uint256 amount);
+    error EmptyPositionImpactWithdrawalAmount();
 
     // GlvDepositStoreUtils errors
     error GlvDepositNotFound(bytes32 key);
@@ -200,7 +200,7 @@ library Errors {
     error UnexpectedPoolValue(int256 poolValue);
 
     // MarketPositionImpactUtils errors
-    error InvalidImpactPoolValueForWithdrawal(uint256 poolValue);
+    error InsufficientImpactPoolValueForWithdrawal(uint256 withdrawalAmount, uint256 poolValue);
 
     // Oracle errors
     error SequencerDown();

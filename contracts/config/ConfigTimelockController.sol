@@ -35,12 +35,23 @@ contract ConfigTimelockController is TimelockController, OracleModule {
         execute(target, value, payload, 0, 0);
     }
 
+    function executeWithOraclePrices(
+        address target,
+        uint256 value,
+        bytes calldata payload,
+        OracleUtils.SetPricesParams calldata oracleParams
+    ) external onlyRoleOrOpenRole(EXECUTOR_ROLE) withOraclePrices(oracleParams) {
+        execute(target, value, payload, 0, 0);
+    }
+
     function withdrawFromPositionImpactPool(
         address market,
         address receiver,
         uint256 amount
     ) external  {
-        require(msg.sender == address(this), "TimelockController: caller must be timelock");
+        if (msg.sender != address(this)) {
+            revert Errors.Unauthorized(msg.sender, "self");
+        }
         MarketPositionImpactPoolUtils.withdrawFromPositionImpactPool(
             oracle.dataStore(),
             oracle.eventEmitter(),

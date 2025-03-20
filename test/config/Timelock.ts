@@ -17,7 +17,11 @@ import {
   setAtomicOracleProviderPayload,
   signalHoldingAddressIfDifferent,
   executeTimelock,
+  getPositionImpactPoolWithdrawalPayload,
 } from "../../utils/timelock";
+import { handleDeposit } from "../../utils/deposit";
+import { usingResult } from "../../utils/use";
+import { getMarketTokenPriceWithPoolValue } from "../../utils/market";
 
 describe("Timelock", () => {
   let fixture;
@@ -416,5 +420,119 @@ describe("Timelock", () => {
     expect(await dataStore.getBytes32(keys.dataStreamIdKey(wnt.address))).eq(hashString("WNT"));
     expect(await dataStore.getUint(keys.dataStreamMultiplierKey(wnt.address))).eq(expandDecimals(1, 34));
     expect(await dataStore.getUint(keys.dataStreamSpreadReductionFactorKey(wnt.address))).eq(p99);
+  });
+
+  describe("PositionImpactPool", () => {
+    let ethUsdMarket, usdc, chainlinkPriceFeedProvider;
+
+    beforeEach(async () => {
+      ({ ethUsdMarket, usdc, chainlinkPriceFeedProvider } = fixture.contracts);
+
+      await handleDeposit(fixture, {
+        create: {
+          account: user2,
+          market: ethUsdMarket,
+          longTokenAmount: expandDecimals(1000, 18),
+          shortTokenAmount: expandDecimals(1000 * 5000, 6),
+        },
+        execute: {
+          precisions: [8, 18],
+          tokens: [wnt.address, usdc.address],
+          minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+          maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+        },
+      });
+    });
+
+    it("Position impact pool withdrawal", async () => {
+      const usdcStartingBalance = await usdc.balanceOf(user2.address);
+      const wntStartingBalance = await wnt.balanceOf(user2.address);
+      expect(usdcStartingBalance).to.eq(0);
+      expect(wntStartingBalance).to.eq(0);
+
+      await usingResult(getMarketTokenPriceWithPoolValue(fixture), ([marketTokenPrice, poolValueInfo]) => {
+        expect(marketTokenPrice).eq(decimalToFloat(1));
+        expect(poolValueInfo.poolValue).eq(decimalToFloat(10_000_000)); // $10,000,000
+      });
+
+      await dataStore.setUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken), expandDecimals(400, 18)); // $2,000,000
+
+      // Pool value should be decremented by impact pool value
+      await usingResult(getMarketTokenPriceWithPoolValue(fixture), ([marketTokenPrice, poolValueInfo]) => {
+        expect(marketTokenPrice).eq(decimalToFloat(8, 1));
+        expect(poolValueInfo.poolValue).eq(decimalToFloat(8_000_000)); // $8,000,000
+      });
+
+      const oracleParams = {
+        tokens: [usdc.address, wnt.address],
+        providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
+        data: ["0x", "0x"],
+      };
+
+      const withdrawalAmount = expandDecimals(1, 18);
+
+      await expect(
+        timelockConfig
+          .connect(user2)
+          .signalWithdrawFromPositionImpactPool(ethUsdMarket.marketToken, user2.address, withdrawalAmount)
+      )
+        .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
+        .withArgs(user2.address, "TIMELOCK_ADMIN");
+
+      await timelockConfig
+        .connect(timelockAdmin)
+        .signalWithdrawFromPositionImpactPool(ethUsdMarket.marketToken, user2.address, withdrawalAmount);
+
+      await time.increase(1 * 24 * 60 * 60 + 10);
+      const { target, payload } = await getPositionImpactPoolWithdrawalPayload(
+        ethUsdMarket.marketToken,
+        user2.address,
+        withdrawalAmount
+      );
+      await timelockConfig.connect(timelockAdmin).executeWithOraclePrice(target, payload, oracleParams);
+
+      // Market token price should be unchanged
+      await usingResult(getMarketTokenPriceWithPoolValue(fixture), ([marketTokenPrice, poolValueInfo]) => {
+        expect(marketTokenPrice).eq(decimalToFloat(8, 1));
+        expect(poolValueInfo.poolValue).eq(decimalToFloat(8_000_000)); // $8,000,000
+      });
+
+      // user should receive funds
+      const usdcFinishBalance = await usdc.balanceOf(user2.address);
+      const wntFinishBalance = await wnt.balanceOf(user2.address);
+      expect(usdcFinishBalance).to.eq(decimalToFloat(25, 22)); // 2.5 USDC
+      expect(wntFinishBalance).to.eq(decimalToFloat(5, 13)); // 0.5 ETH
+    });
+
+    it("should fail when withdrawing zero amount", async function () {
+      await expect(
+        timelockConfig
+          .connect(timelockAdmin)
+          .signalWithdrawFromPositionImpactPool(ethUsdMarket.marketToken, user2.address, 0)
+      ).to.be.revertedWithCustomError(errorsContract, "EmptyPositionImpactWithdrawalAmount");
+    });
+
+    it("should fail when withdrawing more than available", async function () {
+      const largeAmount = expandDecimals(1000, 18); // 1000 ETH
+
+      await timelockConfig
+        .connect(timelockAdmin)
+        .signalWithdrawFromPositionImpactPool(ethUsdMarket.marketToken, user2.address, largeAmount);
+
+      await time.increase(1 * 24 * 60 * 60 + 10);
+      const { target, payload } = await getPositionImpactPoolWithdrawalPayload(
+        ethUsdMarket.marketToken,
+        user2.address,
+        largeAmount
+      );
+      const oracleParams = {
+        tokens: [usdc.address, wnt.address],
+        providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
+        data: ["0x", "0x"],
+      };
+      await expect(
+        timelockConfig.connect(timelockAdmin).executeWithOraclePrice(target, payload, oracleParams)
+      ).to.be.revertedWith("TimelockController: underlying transaction reverted");
+    });
   });
 });

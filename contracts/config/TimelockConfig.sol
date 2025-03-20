@@ -352,7 +352,7 @@ contract TimelockConfig is RoleModule, BasicMulticall {
             revert Errors.EmptyReceiver();
         }
         if (amount == 0) {
-            revert Errors.InvalidWithdrawalAmount(amount);
+            revert Errors.EmptyPositionImpactWithdrawalAmount();
         }
 
         bytes memory payload = abi.encodeWithSignature(
@@ -374,6 +374,16 @@ contract TimelockConfig is RoleModule, BasicMulticall {
 
     function execute(address target, bytes calldata payload) external onlyTimelockAdmin {
         timelockController.execute(target, 0, payload, 0, 0);
+    }
+
+    function executeWithOraclePrice(
+        address target,
+        bytes calldata payload,
+        OracleUtils.SetPricesParams calldata oracleParams
+    ) external onlyTimelockAdmin {
+        timelockController.executeAtomicWithOraclePrices(
+            target, 0, payload, oracleParams
+        );
     }
 
     function executeAtomicWithOraclePrice(
