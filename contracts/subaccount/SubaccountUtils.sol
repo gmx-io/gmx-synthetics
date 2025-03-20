@@ -67,12 +67,13 @@ library SubaccountUtils {
         EventEmitter eventEmitter,
         address account,
         address subaccount,
-        bytes32 actionType
+        bytes32 actionType,
+        uint256 actionsCount
     ) external {
         validateSubaccount(dataStore, account, subaccount);
 
         bytes32 key = Keys.subaccountActionCountKey(account, subaccount, actionType);
-        uint256 nextValue = dataStore.incrementUint(key, 1);
+        uint256 nextValue = dataStore.incrementUint(key, actionsCount);
         validateSubaccountActionCountAndExpiresAt(dataStore, account, subaccount, actionType, nextValue);
 
         EventUtils.EventLogData memory eventData;

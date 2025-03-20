@@ -54,12 +54,24 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
     // @note all params except account should be part of the corresponding struct hash
     struct UpdateOrderParams {
+        bytes32 key;
         uint256 sizeDeltaUsd;
         uint256 acceptablePrice;
         uint256 triggerPrice;
         uint256 minOutputAmount;
         uint256 validFromTime;
         bool autoCancel;
+        uint256 executionFeeIncrease;
+    }
+
+    struct BatchCreateOrderParams {
+        uint256 collateralDeltaAmount;
+        IBaseOrderUtils.CreateOrderParams params;
+    }
+
+    struct Vars {
+        Contracts contracts;
+        uint256 residualFeeAmount;
     }
 
     IOrderHandler public immutable orderHandler;
@@ -118,6 +130,47 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         contracts = Contracts({dataStore: _dataStore, eventEmitter: eventEmitter, orderVault: orderVault, wnt: wnt});
     }
 
+    function _batch(
+        RelayParams calldata relayParams,
+        address account,
+        BatchCreateOrderParams[] calldata batchCreateOrderParams,
+        UpdateOrderParams[] calldata updateOrderParamsList,
+        bytes32[] calldata cancelOrderKeys,
+        bool isSubaccount,
+        uint256 startingGas
+    ) internal {
+        Vars memory vars;
+        vars.contracts = _getContracts();
+        vars.residualFeeAmount = _handleRelayBeforeAction(vars.contracts, relayParams, account, isSubaccount);
+
+        for (uint256 i = 0; i < batchCreateOrderParams.length; i++) {
+            vars.residualFeeAmount -= batchCreateOrderParams[i].params.numbers.executionFee;
+            _createOrderImpl(
+                vars.contracts,
+                account,
+                batchCreateOrderParams[i].params,
+                isSubaccount,
+                batchCreateOrderParams[i].collateralDeltaAmount
+            );
+        }
+
+        for (uint256 i = 0; i < updateOrderParamsList.length; i++) {
+            _updateOrderImpl(vars.contracts, account, updateOrderParamsList[i], isSubaccount);
+        }
+
+        for (uint256 i = 0; i < cancelOrderKeys.length; i++) {
+            _cancelOrderImpl(vars.contracts, account, cancelOrderKeys[i]);
+        }
+
+        _handleRelayAfterAction(
+            vars.contracts,
+            startingGas,
+            vars.residualFeeAmount,
+            account,
+            relayParams.oracleParams.tokens.length
+        );
+    }
+
     function _createOrder(
         RelayParams calldata relayParams,
         address account,
@@ -127,13 +180,33 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         uint256 startingGas
     ) internal returns (bytes32) {
         Contracts memory contracts = _getContracts();
-        uint256 residualFeeAmount = _handleRelayBeforeAction(
+        uint256 feeAmount = _handleRelayBeforeAction(
             contracts,
             relayParams,
             account,
-            params.numbers.executionFee,
+            // params.numbers.executionFee,
             isSubaccount
         );
+
+        bytes32 key = _createOrderImpl(contracts, account, params, isSubaccount, collateralDeltaAmount);
+        _handleRelayAfterAction(
+            contracts,
+            startingGas,
+            feeAmount - params.numbers.executionFee,
+            account,
+            relayParams.oracleParams.tokens.length
+        );
+        return key;
+    }
+
+    function _createOrderImpl(
+        Contracts memory contracts,
+        address account,
+        IBaseOrderUtils.CreateOrderParams memory params,
+        bool isSubaccount,
+        uint256 collateralDeltaAmount
+    ) internal returns (bytes32) {
+        IERC20(contracts.wnt).safeTransfer(address(contracts.orderVault), params.numbers.executionFee);
 
         if (
             params.orderType == Order.OrderType.MarketSwap ||
@@ -150,26 +223,39 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             );
         }
 
-        bytes32 key = orderHandler.createOrder(
-            account,
-            params,
-            isSubaccount && params.addresses.callbackContract != address(0)
-        );
-        _handleRelayAfterAction(contracts, startingGas, residualFeeAmount, account, relayParams.oracleParams.tokens.length);
-        return key;
+        return
+            orderHandler.createOrder(account, params, isSubaccount && params.addresses.callbackContract != address(0));
     }
 
     function _updateOrder(
         RelayParams calldata relayParams,
         address account,
-        bytes32 key,
         UpdateOrderParams calldata params,
-        uint256 executionFee,
         bool isSubaccount,
         uint256 startingGas
     ) internal {
         Contracts memory contracts = _getContracts();
-        Order.Props memory order = OrderStoreUtils.get(contracts.dataStore, key);
+
+        uint256 feeAmount = _handleRelayBeforeAction(contracts, relayParams, account, isSubaccount);
+
+        _updateOrderImpl(contracts, account, params, isSubaccount);
+
+        _handleRelayAfterAction(
+            contracts,
+            startingGas,
+            feeAmount - params.executionFeeIncrease,
+            account,
+            relayParams.oracleParams.tokens.length
+        );
+    }
+
+    function _updateOrderImpl(
+        Contracts memory contracts,
+        address account,
+        UpdateOrderParams calldata params,
+        bool isSubaccount
+    ) internal {
+        Order.Props memory order = OrderStoreUtils.get(contracts.dataStore, params.key);
 
         if (order.account() == address(0)) {
             revert Errors.EmptyOrder();
@@ -179,16 +265,12 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             revert Errors.Unauthorized(account, "account for updateOrder");
         }
 
-        uint256 residualFeeAmount = _handleRelayBeforeAction(
-            contracts,
-            relayParams,
-            account,
-            executionFee,
-            isSubaccount
-        );
+        if (params.executionFeeIncrease != 0) {
+            IERC20(contracts.wnt).safeTransfer(address(contracts.orderVault), params.executionFeeIncrease);
+        }
 
         orderHandler.updateOrder(
-            key,
+            params.key,
             params.sizeDeltaUsd,
             params.acceptablePrice,
             params.triggerPrice,
@@ -198,10 +280,10 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             order,
             // shouldCapMaxExecutionFee
             // see GasUtils.validateExecutionFee
-            isSubaccount && order.callbackContract() != address(0) && executionFee != 0
+            isSubaccount && order.callbackContract() != address(0) && params.executionFeeIncrease != 0
         );
-        _handleRelayAfterAction(contracts, startingGas, residualFeeAmount, account, relayParams.oracleParams.tokens.length);
     }
+
 
     function _cancelOrder(
         RelayParams calldata relayParams,
@@ -211,6 +293,21 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         uint256 startingGas
     ) internal {
         Contracts memory contracts = _getContracts();
+
+        uint256 residualFeeAmount = _handleRelayBeforeAction(contracts, relayParams, account, isSubaccount);
+
+        _cancelOrderImpl(contracts, account, key);
+
+        _handleRelayAfterAction(
+            contracts,
+            startingGas,
+            residualFeeAmount,
+            account,
+            relayParams.oracleParams.tokens.length
+        );
+    }
+
+    function _cancelOrderImpl(Contracts memory contracts, address account, bytes32 key) internal {
         Order.Props memory order = OrderStoreUtils.get(contracts.dataStore, key);
         if (order.account() == address(0)) {
             revert Errors.EmptyOrder();
@@ -219,17 +316,13 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         if (order.account() != account) {
             revert Errors.Unauthorized(account, "account for cancelOrder");
         }
-
-        uint256 residualFeeAmount = _handleRelayBeforeAction(contracts, relayParams, account, 0, isSubaccount);
         orderHandler.cancelOrder(key);
-        _handleRelayAfterAction(contracts, startingGas, residualFeeAmount, account, relayParams.oracleParams.tokens.length);
     }
 
     function _handleRelayBeforeAction(
         Contracts memory contracts,
         RelayParams calldata relayParams,
         address account,
-        uint256 executionFee,
         bool isSubaccount
     ) internal returns (uint256) {
         if (relayParams.externalCalls.externalCallTargets.length != 0 && relayParams.fee.feeSwapPath.length != 0) {
@@ -242,7 +335,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         }
 
         _handleTokenPermits(relayParams.tokenPermits);
-        return _handleRelayFee(contracts, relayParams, account, executionFee);
+        return _handleRelayFee(contracts, relayParams, account);
     }
 
     function _handleTokenPermits(TokenPermit[] calldata tokenPermits) internal {
@@ -279,8 +372,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     function _handleRelayFee(
         Contracts memory contracts,
         RelayParams calldata relayParams,
-        address account,
-        uint256 executionFee
+        address account
     ) internal returns (uint256) {
         if (_isGelatoRelay(msg.sender) && _getFeeToken() != contracts.wnt) {
             revert Errors.UnsupportedRelayFeeToken(_getFeeToken(), contracts.wnt);
@@ -306,11 +398,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             revert Errors.UnexpectedRelayFeeToken(relayParams.fee.feeToken, contracts.wnt);
         }
 
-        if (executionFee != 0) {
-            IERC20(contracts.wnt).safeTransfer(address(contracts.orderVault), executionFee);
-        }
-
-        return outputAmount - executionFee;
+        return outputAmount;
     }
 
     function _handleRelayAfterAction(

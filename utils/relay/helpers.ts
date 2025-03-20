@@ -90,7 +90,29 @@ export function hashRelayParams(relayParams: any) {
   return ethers.utils.keccak256(encoded);
 }
 
-export function hashSubaccountApproval(subaccountApproval: any) {
+export type SubaccountApproval = {
+  subaccount: string;
+  shouldAdd: boolean;
+  expiresAt: BigNumberish;
+  maxAllowedCount: BigNumberish;
+  actionType: string;
+  nonce: BigNumberish;
+  deadline: BigNumberish;
+  signature: string;
+};
+
+export function hashSubaccountApproval(subaccountApproval: SubaccountApproval) {
+  assertFields(subaccountApproval, [
+    "subaccount",
+    "shouldAdd",
+    "expiresAt",
+    "maxAllowedCount",
+    "actionType",
+    "nonce",
+    "deadline",
+    "signature",
+  ]);
+
   return ethers.utils.keccak256(
     ethers.utils.defaultAbiCoder.encode(
       [
@@ -99,6 +121,14 @@ export function hashSubaccountApproval(subaccountApproval: any) {
       [subaccountApproval]
     )
   );
+}
+
+export function assertFields(obj: any, fields: string[]) {
+  for (const field of fields) {
+    if (obj[field] === undefined) {
+      throw new Error(`Field ${field} is undefined`);
+    }
+  }
 }
 
 export async function getUserNonce(account: string, relayRouter: ethers.Contract) {

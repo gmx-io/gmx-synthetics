@@ -143,16 +143,17 @@ export async function sendUpdateOrder(p: {
     feeAmount: BigNumberish;
     feeSwapPath: string[];
   };
-  key: string;
   chainId: BigNumberish;
   account: string;
   params: {
+    key: string;
     sizeDeltaUsd: BigNumberish;
     acceptablePrice: BigNumberish;
     triggerPrice: BigNumberish;
     minOutputAmount: BigNumberish;
     validFromTime: BigNumberish;
     autoCancel: boolean;
+    executionFeeIncrease: BigNumberish;
   };
   deadline: BigNumberish;
   userNonce?: BigNumberish;
@@ -160,7 +161,6 @@ export async function sendUpdateOrder(p: {
   signature?: string;
   gelatoRelayFeeToken: string;
   gelatoRelayFeeAmount: BigNumberish;
-  executionFee: BigNumberish;
 }) {
   const relayParams = await getRelayParams(p);
 
@@ -172,9 +172,7 @@ export async function sendUpdateOrder(p: {
   const updateOrderCalldata = p.relayRouter.interface.encodeFunctionData("updateOrder", [
     { ...relayParams, signature },
     p.account,
-    p.key,
     p.params,
-    p.executionFee,
   ]);
   return sendRelayTransaction({
     calldata: updateOrderCalldata,
@@ -182,42 +180,31 @@ export async function sendUpdateOrder(p: {
   });
 }
 
-async function getUpdateOrderSignature({
-  signer,
-  relayParams,
-  verifyingContract,
-  params,
-  key,
-  deadline,
-  chainId,
-  executionFee,
-}) {
+async function getUpdateOrderSignature({ signer, relayParams, verifyingContract, params, deadline, chainId }) {
   if (relayParams.userNonce === undefined) {
     throw new Error("userNonce is required");
   }
   const types = {
     UpdateOrder: [
-      { name: "key", type: "bytes32" },
       { name: "params", type: "UpdateOrderParams" },
-      { name: "executionFee", type: "uint256" },
       { name: "relayParams", type: "bytes32" },
     ],
     UpdateOrderParams: [
+      { name: "key", type: "bytes32" },
       { name: "sizeDeltaUsd", type: "uint256" },
       { name: "acceptablePrice", type: "uint256" },
       { name: "triggerPrice", type: "uint256" },
       { name: "minOutputAmount", type: "uint256" },
       { name: "validFromTime", type: "uint256" },
       { name: "autoCancel", type: "bool" },
+      { name: "executionFeeIncrease", type: "uint256" },
     ],
   };
 
   const domain = getDomain(chainId, verifyingContract);
   const typedData = {
-    key,
     params,
     deadline,
-    executionFee,
     relayParams: hashRelayParams(relayParams),
   };
 
@@ -285,6 +272,163 @@ async function getCancelOrderSignature({ signer, relayParams, verifyingContract,
   const domain = getDomain(chainId, verifyingContract);
   const typedData = {
     key,
+    relayParams: hashRelayParams(relayParams),
+  };
+
+  return signTypedData(signer, domain, types, typedData);
+}
+
+export async function sendBatch(p: {
+  sender: ethers.Signer;
+  signer: ethers.Signer;
+  oracleParams?: {
+    tokens: string[];
+    providers: string[];
+    data: string[];
+  };
+  tokenPermits?: {
+    token: string;
+    spender: string;
+    value: BigNumberish;
+    deadline: BigNumberish;
+  }[];
+  feeParams: {
+    feeToken: string;
+    feeAmount: BigNumberish;
+    feeSwapPath: string[];
+  };
+  cancelOrderKeys: string[];
+  batchCreateOrderParamsList: {
+    collateralDeltaAmount: BigNumberish;
+    params: any;
+  }[];
+  updateOrderParamsList: {
+    key: string;
+    sizeDeltaUsd: BigNumberish;
+    acceptablePrice: BigNumberish;
+    triggerPrice: BigNumberish;
+    minOutputAmount: BigNumberish;
+    validFromTime: BigNumberish;
+    autoCancel: boolean;
+    executionFeeIncrease: BigNumberish;
+  }[];
+  chainId: BigNumberish;
+  account: string;
+  deadline: BigNumberish;
+  userNonce?: BigNumberish;
+  relayRouter: ethers.Contract;
+  signature?: string;
+  gelatoRelayFeeToken: string;
+  gelatoRelayFeeAmount: BigNumberish;
+}) {
+  const relayParams = await getRelayParams(p);
+
+  let signature = p.signature;
+  if (!signature) {
+    signature = await getBatchSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
+  }
+  const batchCalldata = p.relayRouter.interface.encodeFunctionData("batch", [
+    { ...relayParams, signature },
+    p.account,
+    p.batchCreateOrderParamsList,
+    p.updateOrderParamsList,
+    p.cancelOrderKeys,
+  ]);
+  return sendRelayTransaction({
+    calldata: batchCalldata,
+    ...p,
+  });
+}
+
+async function getBatchSignature({
+  signer,
+  relayParams,
+  batchCreateOrderParamsList,
+  updateOrderParamsList,
+  cancelOrderKeys,
+  verifyingContract,
+  chainId,
+}) {
+  if (relayParams.userNonce === undefined) {
+    throw new Error("userNonce is required");
+  }
+  const types = {
+    Batch: [
+      { name: "batchCreateOrderParamsList", type: "BatchCreateOrderParams[]" },
+      { name: "updateOrderParamsList", type: "UpdateOrderParams[]" },
+      { name: "cancelOrderKeys", type: "bytes32[]" },
+      { name: "relayParams", type: "bytes32" },
+    ],
+    BatchCreateOrderParams: [
+      { name: "collateralDeltaAmount", type: "uint256" },
+      { name: "addresses", type: "CreateOrderAddresses" },
+      { name: "numbers", type: "CreateOrderNumbers" },
+      { name: "orderType", type: "uint256" },
+      { name: "decreasePositionSwapType", type: "uint256" },
+      { name: "isLong", type: "bool" },
+      { name: "shouldUnwrapNativeToken", type: "bool" },
+      { name: "autoCancel", type: "bool" },
+      { name: "referralCode", type: "bytes32" },
+    ],
+    CreateOrderAddresses: [
+      { name: "receiver", type: "address" },
+      { name: "cancellationReceiver", type: "address" },
+      { name: "callbackContract", type: "address" },
+      { name: "uiFeeReceiver", type: "address" },
+      { name: "market", type: "address" },
+      { name: "initialCollateralToken", type: "address" },
+      { name: "swapPath", type: "address[]" },
+    ],
+    CreateOrderNumbers: [
+      { name: "sizeDeltaUsd", type: "uint256" },
+      { name: "initialCollateralDeltaAmount", type: "uint256" },
+      { name: "triggerPrice", type: "uint256" },
+      { name: "acceptablePrice", type: "uint256" },
+      { name: "executionFee", type: "uint256" },
+      { name: "callbackGasLimit", type: "uint256" },
+      { name: "minOutputAmount", type: "uint256" },
+      { name: "validFromTime", type: "uint256" },
+    ],
+    UpdateOrderParams: [
+      { name: "key", type: "bytes32" },
+      { name: "sizeDeltaUsd", type: "uint256" },
+      { name: "acceptablePrice", type: "uint256" },
+      { name: "triggerPrice", type: "uint256" },
+      { name: "minOutputAmount", type: "uint256" },
+      { name: "validFromTime", type: "uint256" },
+      { name: "autoCancel", type: "bool" },
+      { name: "executionFeeIncrease", type: "uint256" },
+    ],
+  };
+  const domain = {
+    name: "GmxBaseGelatoRelayRouter",
+    version: "1",
+    chainId,
+    verifyingContract,
+  };
+  const typedData = {
+    batchCreateOrderParamsList: batchCreateOrderParamsList.map((p) => ({
+      collateralDeltaAmount: p.collateralDeltaAmount,
+      addresses: p.params.addresses,
+      numbers: p.params.numbers,
+      orderType: p.params.orderType,
+      decreasePositionSwapType: p.params.decreasePositionSwapType,
+      isLong: p.params.isLong,
+      shouldUnwrapNativeToken: p.params.shouldUnwrapNativeToken,
+      autoCancel: false,
+      referralCode: p.params.referralCode,
+    })),
+    updateOrderParamsList: updateOrderParamsList.map((p) => ({
+      key: p.key,
+      sizeDeltaUsd: p.sizeDeltaUsd,
+      acceptablePrice: p.acceptablePrice,
+      triggerPrice: p.triggerPrice,
+      minOutputAmount: p.minOutputAmount,
+      validFromTime: p.validFromTime,
+      autoCancel: p.autoCancel,
+      executionFeeIncrease: p.executionFeeIncrease,
+    })),
+    cancelOrderKeys,
     relayParams: hashRelayParams(relayParams),
   };
 

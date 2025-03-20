@@ -17,7 +17,7 @@ import { expectBalance } from "../../../utils/validation";
 import { handleDeposit } from "../../../utils/deposit";
 import * as keys from "../../../utils/keys";
 import { GELATO_RELAY_ADDRESS } from "../../../utils/relay/addresses";
-import { sendCancelOrder, sendCreateOrder, sendUpdateOrder } from "../../../utils/relay/gelatoRelay";
+import { sendBatch, sendCancelOrder, sendCreateOrder, sendUpdateOrder } from "../../../utils/relay/gelatoRelay";
 import { getTokenPermit } from "../../../utils/relay/tokenPermit";
 import { ethers } from "ethers";
 import { parseLogs } from "../../../utils/event";
@@ -80,6 +80,8 @@ describe("GelatoRelayRouter", () => {
   });
 
   let createOrderParams: Parameters<typeof sendCreateOrder>[0];
+  let batchParams: Parameters<typeof sendBatch>[0];
+
   beforeEach(async () => {
     const tokenPermit = await getTokenPermit(wnt, user0, router.address, expandDecimals(1, 18), 0, 9999999999, chainId);
     createOrderParams = {
@@ -94,6 +96,26 @@ describe("GelatoRelayRouter", () => {
       collateralDeltaAmount: expandDecimals(1, 17),
       account: user0.address,
       params: defaultParams,
+      deadline: 9999999999,
+      relayRouter: gelatoRelayRouter,
+      chainId,
+      gelatoRelayFeeToken: wnt.address,
+      gelatoRelayFeeAmount: expandDecimals(1, 15),
+    };
+
+    batchParams = {
+      sender: relaySigner,
+      signer: user0,
+      feeParams: {
+        feeToken: wnt.address,
+        feeAmount: expandDecimals(2, 15), // 0.002 ETH
+        feeSwapPath: [],
+      },
+      tokenPermits: [tokenPermit],
+      account: user0.address,
+      batchCreateOrderParamsList: [],
+      updateOrderParamsList: [],
+      cancelOrderKeys: [],
       deadline: 9999999999,
       relayRouter: gelatoRelayRouter,
       chainId,
@@ -647,20 +669,20 @@ describe("GelatoRelayRouter", () => {
         tokenPermits: [],
         account: user0.address,
         params: {
+          key: ethers.constants.HashZero,
           sizeDeltaUsd: decimalToFloat(1),
           acceptablePrice: decimalToFloat(2),
           triggerPrice: decimalToFloat(3),
           minOutputAmount: 4,
           validFromTime: 5,
           autoCancel: true,
+          executionFeeIncrease: 0,
         },
-        key: ethers.constants.HashZero,
         deadline: 9999999999,
         relayRouter: gelatoRelayRouter,
         chainId,
         gelatoRelayFeeToken: wnt.address,
         gelatoRelayFeeAmount: expandDecimals(1, 15),
-        executionFee: 0,
       };
     });
 
@@ -675,7 +697,8 @@ describe("GelatoRelayRouter", () => {
       const orderKeys = await getOrderKeys(dataStore, 0, 1);
 
       updateOrderParams.feeParams.feeAmount = 1;
-      await expect(sendUpdateOrder({ ...updateOrderParams, key: orderKeys[0] })).to.be.revertedWithCustomError(
+      updateOrderParams.params.key = orderKeys[0];
+      await expect(sendUpdateOrder({ ...updateOrderParams })).to.be.revertedWithCustomError(
         errorsContract,
         "InsufficientRelayFee"
       );
@@ -706,7 +729,8 @@ describe("GelatoRelayRouter", () => {
       const orderKeys = await getOrderKeys(dataStore, 0, 1);
 
       await wnt.connect(user0).approve(router.address, expandDecimals(1, 18));
-      await expect(sendUpdateOrder({ ...updateOrderParams, key: orderKeys[0] })).to.be.revertedWithCustomError(
+      updateOrderParams.params.key = orderKeys[0];
+      await expect(sendUpdateOrder({ ...updateOrderParams })).to.be.revertedWithCustomError(
         errorsContract,
         "Unauthorized"
       );
@@ -718,9 +742,8 @@ describe("GelatoRelayRouter", () => {
       const orderKeys = await getOrderKeys(dataStore, 0, 1);
       await wnt.connect(user0).approve(router.address, 0);
 
-      await expect(sendUpdateOrder({ ...updateOrderParams, key: orderKeys[0] })).to.be.revertedWith(
-        "ERC20: insufficient allowance"
-      );
+      updateOrderParams.params.key = orderKeys[0];
+      await expect(sendUpdateOrder({ ...updateOrderParams })).to.be.revertedWith("ERC20: insufficient allowance");
     });
 
     it("updates order and sends relay fee", async () => {
@@ -738,7 +761,8 @@ describe("GelatoRelayRouter", () => {
 
       const gelatoRelayFee = updateOrderParams.gelatoRelayFeeAmount;
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, gelatoRelayFee);
-      await sendUpdateOrder({ ...updateOrderParams, key: orderKeys[0] });
+      updateOrderParams.params.key = orderKeys[0];
+      await sendUpdateOrder({ ...updateOrderParams });
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, bigNumberify(gelatoRelayFee).mul(2));
 
       order = await reader.getOrder(dataStore.address, orderKeys[0]);
@@ -764,7 +788,8 @@ describe("GelatoRelayRouter", () => {
       const initialWethBalance = await wnt.balanceOf(user0.address);
       const gelatoRelayFee = updateOrderParams.gelatoRelayFeeAmount;
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, gelatoRelayFee);
-      await sendUpdateOrder({ ...updateOrderParams, key: orderKeys[0] });
+      updateOrderParams.params.key = orderKeys[0];
+      await sendUpdateOrder({ ...updateOrderParams });
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, bigNumberify(gelatoRelayFee).mul(2));
 
       // user receives the residual amount
@@ -773,7 +798,9 @@ describe("GelatoRelayRouter", () => {
       order = await reader.getOrder(dataStore.address, orderKeys[0]);
       expect(order.numbers.executionFee).eq(expandDecimals(1, 15));
 
-      await sendUpdateOrder({ ...updateOrderParams, key: orderKeys[0], executionFee: expandDecimals(2, 15) });
+      updateOrderParams.params.executionFeeIncrease = expandDecimals(2, 15);
+      updateOrderParams.params.key = orderKeys[0];
+      await sendUpdateOrder(updateOrderParams);
 
       // user doesn't receive the residual amount
       await expectBalance(wnt.address, user0.address, initialWethBalance.sub(expandDecimals(4, 15)));
@@ -867,6 +894,109 @@ describe("GelatoRelayRouter", () => {
 
       const orderCount = await getOrderCount(dataStore);
       expect(orderCount).eq(0);
+    });
+  });
+
+  //#region batch
+  describe("batch", () => {
+    it("DisabledFeature", async () => {
+      await dataStore.setBool(keys.gaslessFeatureDisabledKey(gelatoRelayRouter.address), true);
+      await expect(sendBatch({ ...batchParams })).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
+    });
+
+    it("InvalidSignature", async () => {
+      await expect(sendBatch({ ...batchParams, signature: BAD_SIGNATURE })).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidSignature"
+      );
+    });
+
+    it("batch: creates order", async () => {
+      expect(await wnt.allowance(user0.address, router.address)).to.eq(0);
+      await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, 0);
+      const executionFee = expandDecimals(2, 15);
+      batchParams.feeParams.feeAmount = expandDecimals(6, 15); // relay fee is 0.001, execution fee is 0.002, 0.003 should be sent back
+      batchParams.batchCreateOrderParamsList = [
+        {
+          collateralDeltaAmount: expandDecimals(1, 17),
+          params: defaultParams,
+        },
+        {
+          collateralDeltaAmount: expandDecimals(1, 17),
+          params: defaultParams,
+        },
+      ];
+      batchParams.batchCreateOrderParamsList[0].params.numbers.executionFee = executionFee;
+      batchParams.batchCreateOrderParamsList[1].params.numbers.executionFee = executionFee;
+      expect(await getOrderCount(dataStore)).eq(0);
+      const tx = await sendBatch({
+        ...batchParams,
+      });
+
+      await logGasUsage({
+        tx,
+        label: "gelatoRelayRouter batch 2 create orders",
+      });
+
+      expect(await getOrderCount(dataStore)).eq(2);
+      const orderKeys = await getOrderKeys(dataStore, 0, 2);
+      const order = await reader.getOrder(dataStore.address, orderKeys[0]);
+      const order2 = await reader.getOrder(dataStore.address, orderKeys[1]);
+
+      expect(order.addresses.account).eq(user0.address);
+
+      expect(order2.addresses.account).eq(user0.address);
+      expect(order2.numbers.sizeDeltaUsd).eq(decimalToFloat(1000));
+      expect(order2.numbers.acceptablePrice).eq(decimalToFloat(4900));
+      expect(order2.numbers.triggerPrice).eq(decimalToFloat(4800));
+      expect(order2.numbers.minOutputAmount).eq(700);
+      expect(order2.flags.autoCancel).eq(false);
+
+      batchParams.batchCreateOrderParamsList = [
+        {
+          collateralDeltaAmount: 500600,
+          params: defaultParams,
+        },
+      ];
+      batchParams.cancelOrderKeys = [orderKeys[0]];
+      batchParams.updateOrderParamsList = [
+        {
+          key: orderKeys[1],
+          sizeDeltaUsd: 301,
+          acceptablePrice: 302,
+          triggerPrice: 303,
+          minOutputAmount: 304,
+          validFromTime: 305,
+          autoCancel: true,
+          executionFeeIncrease: 0,
+        },
+      ];
+      const tx2 = await sendBatch({
+        ...batchParams,
+      });
+
+      expect(await getOrderCount(dataStore)).eq(2);
+
+      const orderAfter = await reader.getOrder(dataStore.address, orderKeys[0]);
+      expect(orderAfter.addresses.account).eq(ethers.constants.AddressZero);
+
+      const order2After = await reader.getOrder(dataStore.address, orderKeys[1]);
+      expect(order2After.numbers.sizeDeltaUsd).eq(301);
+      expect(order2After.numbers.acceptablePrice).eq(302);
+      expect(order2After.numbers.triggerPrice).eq(303);
+      expect(order2After.numbers.minOutputAmount).eq(304);
+      expect(order2After.numbers.validFromTime).eq(305);
+      expect(order2After.flags.autoCancel).eq(true);
+
+      const orderKeysAfter = await getOrderKeys(dataStore, 0, 2);
+      const order3After = await reader.getOrder(dataStore.address, orderKeysAfter[0]);
+      expect(order3After.addresses.account).eq(user0.address);
+      expect(order3After.numbers.initialCollateralDeltaAmount).eq(500600);
+
+      await logGasUsage({
+        tx: tx2,
+        label: "gelatoRelayRouter batch 1 cancel order, 1 update order",
+      });
     });
   });
 

@@ -441,4 +441,5 @@ library Errors {
     error InvalidSubaccountApprovalSubaccount();
     error NonEmptyExternalCallsForSubaccountOrder();
     error InvalidRelayParams();
+    error RelayEmptyBatch();
 }
