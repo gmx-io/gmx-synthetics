@@ -56,6 +56,7 @@ library Errors {
     error InvalidOracleSigner(address signer);
     error InvalidHoldingAddress(address account);
     error EmptyPositionImpactWithdrawalAmount();
+    error OraclePriceOutdated();
 
     // GlvDepositStoreUtils errors
     error GlvDepositNotFound(bytes32 key);

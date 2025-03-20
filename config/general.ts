@@ -1,6 +1,7 @@
 import { ethers } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { decimalToFloat, percentageToFloat, expandDecimals } from "../utils/math";
+import { CONFIG_MAX_PRICE_AGE } from "../utils/keys";
 
 export default async function ({ network }: HardhatRuntimeEnvironment) {
   if (network.name === "hardhat") {
@@ -61,6 +62,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       skipBorrowingFeeForSmallerSide: false,
 
       maxExecutionFeeMultiplierFactor: decimalToFloat(100),
+      configMaxPriceAge: 180,
     };
   }
 
@@ -119,6 +121,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     skipBorrowingFeeForSmallerSide: true,
 
     maxExecutionFeeMultiplierFactor: decimalToFloat(100),
+    configMaxPriceAge: 180,
   };
 
   const networkConfig = {

@@ -15,16 +15,22 @@ import {TimelockController} from "@openzeppelin/contracts/governance/TimelockCon
 import {OracleModule} from "../oracle/OracleModule.sol";
 import {OracleUtils} from "../oracle/OracleUtils.sol";
 import {Oracle} from "../oracle/Oracle.sol";
-import { MarketPositionImpactPoolUtils } from "../market/MarketPositionImpactPoolUtils.sol";
+import {MarketPositionImpactPoolUtils} from "../market/MarketPositionImpactPoolUtils.sol";
+import {Chain} from "../chain/Chain.sol";
 
 contract ConfigTimelockController is TimelockController, OracleModule {
+
+    DataStore public immutable dataStore;
 
     constructor(
         uint256 minDelay,
         address[] memory proposers,
         address[] memory executors,
-        Oracle oracle
-    ) TimelockController(minDelay, proposers, executors, msg.sender) OracleModule(oracle) {}
+        Oracle oracle,
+        DataStore _dataStore
+    ) TimelockController(minDelay, proposers, executors, msg.sender) OracleModule(oracle) {
+        dataStore = _dataStore;
+    }
 
     function executeAtomicWithOraclePrices(
         address target,
@@ -41,6 +47,9 @@ contract ConfigTimelockController is TimelockController, OracleModule {
         bytes calldata payload,
         OracleUtils.SetPricesParams calldata oracleParams
     ) external onlyRoleOrOpenRole(EXECUTOR_ROLE) withOraclePrices(oracleParams) {
+        if (oracle.minTimestamp() <= Chain.currentTimestamp() - dataStore.getUint(Keys.CONFIG_MAX_PRICE_AGE)) {
+            revert Errors.OraclePriceOutdated();
+        }
         execute(target, value, payload, 0, 0);
     }
 
