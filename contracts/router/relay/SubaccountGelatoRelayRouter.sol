@@ -22,17 +22,6 @@ string constant BATCH_CREATE_ORDER_PARAMS = string(
 );
 
 contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
-    struct SubaccountApproval {
-        address subaccount;
-        bool shouldAdd;
-        uint256 expiresAt;
-        uint256 maxAllowedCount;
-        bytes32 actionType;
-        uint256 nonce; // for replay attack protection
-        uint256 deadline;
-        bytes signature;
-    }
-
     bytes32 public constant UPDATE_ORDER_PARAMS_TYPEHASH = keccak256(bytes(UPDATE_ORDER_PARAMS));
     bytes32 public constant UPDATE_ORDER_TYPEHASH =
         keccak256(
@@ -119,6 +108,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             cancelOrderKeys
         );
         _validateCall(relayParams, subaccount, vars.structHash);
+
         for (uint256 i = 0; i < batchCreateOrderParamsList.length; i++) {
             _validateCreateOrderParams(account, batchCreateOrderParamsList[i].params);
         }
@@ -300,31 +290,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
         _validateSignature(digest, subaccountApproval.signature, account, "subaccount approval");
 
-        if (subaccountApproval.maxAllowedCount > 0) {
-            SubaccountUtils.setMaxAllowedSubaccountActionCount(
-                dataStore,
-                eventEmitter,
-                account,
-                subaccountApproval.subaccount,
-                subaccountApproval.actionType,
-                subaccountApproval.maxAllowedCount
-            );
-        }
-
-        if (subaccountApproval.expiresAt > 0) {
-            SubaccountUtils.setSubaccountExpiresAt(
-                dataStore,
-                eventEmitter,
-                account,
-                subaccountApproval.subaccount,
-                subaccountApproval.actionType,
-                subaccountApproval.expiresAt
-            );
-        }
-
-        if (subaccountApproval.shouldAdd) {
-            SubaccountUtils.addSubaccount(dataStore, eventEmitter, account, subaccountApproval.subaccount);
-        }
+        SubaccountUtils.handleSubaccountApproval(dataStore, eventEmitter, account, subaccountApproval);
     }
 
     function _getRemoveSubaccountStructHash(
