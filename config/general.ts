@@ -44,6 +44,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       executionGasPerOraclePrice: 0,
       executionGasFeeMultiplierFactor: 0,
 
+      relayExecutionGasFeePerOraclePrice: 0,
+
       requestExpirationTime: 300,
 
       maxSwapPathLength: 5,
@@ -102,6 +104,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
 
     executionGasFeeBaseAmount: 600_000,
     executionGasPerOraclePrice: 250_000,
+    relayExecutionGasFeePerOraclePrice: 300_000,
     executionGasFeeMultiplierFactor: expandDecimals(1, 30), // 1x
 
     requestExpirationTime: 300,
@@ -147,8 +150,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       swapOrderGasLimit: 2_500_000,
       ignoreOpenInterestForUsageFactor: true,
 
-      gelatoRelayFeeMultiplierFactor: expandDecimals(1, 30), // 1x
-      gelatoRelayFeeBaseAmount: 31000, // 21000 is base gas and GelatoRelay gas
+      gelatoRelayFeeMultiplierFactor: percentageToFloat("106"), // Relay premium 6%
+      gelatoRelayFeeBaseAmount: 40000, // 21000 is base gas, ~10k GelatoRelay gas, some logic after the relay fee is calculated
     },
     avalanche: {
       increaseOrderGasLimit: 3_500_000,
