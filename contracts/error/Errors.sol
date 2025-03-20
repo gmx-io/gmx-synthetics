@@ -466,4 +466,8 @@ library Errors {
 
     // EventUtils error
     error EventItemNotFound(string key);
+
+    // EdgeOracle verifier errors
+    error InvalidTrustedSignerAddress();
+    error InvalidSignatureLength(uint256 length);
 }
