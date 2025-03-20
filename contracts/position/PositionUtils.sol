@@ -356,6 +356,8 @@ library PositionUtils {
             )
         );
 
+        cache.priceImpactUsd += position.pendingImpactUsd();
+
         // even if there is a large positive price impact, positions that would be liquidated
         // if the positive price impact is reduced should not be allowed to be created
         // as they would be easily liquidated if the price impact changes
