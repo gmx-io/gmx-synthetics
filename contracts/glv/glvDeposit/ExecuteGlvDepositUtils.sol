@@ -227,7 +227,7 @@ library ExecuteGlvDepositUtils {
                 params.startingGas,
                 ISwapPricingUtils.SwapPricingType.Deposit,
                 true, // includeVirtualInventoryImpact
-                glvDeposit.srcChainId()
+                0 // srcChainId
             );
 
         uint256 receivedMarketTokens = ExecuteDepositUtils.executeDeposit(executeDepositParams, deposit);
