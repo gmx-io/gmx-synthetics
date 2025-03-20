@@ -73,7 +73,7 @@ library MultichainUtils {
         // token should have been transferred to multichainVault
         uint256 amount = multichainVault.recordTransferIn(token);
         if (amount == 0) {
-            revert Errors.EmptyMultichainTransferInAmount(account, token);
+            return 0;
         }
 
         _increaseMultichainBalance(dataStore, eventEmitter, account, token, amount, srcChainId);
