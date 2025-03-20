@@ -66,6 +66,8 @@ library RelayUtils {
     struct BridgeOutParams {
         address token;
         uint256 amount;
+        address provider;
+        bytes data; // provider specific data e.g. dstEid
     }
 
     //////////////////// ORDER ////////////////////
@@ -170,7 +172,7 @@ library RelayUtils {
     bytes32 public constant BRIDGE_OUT_TYPEHASH =
         keccak256(
             bytes(
-                "BridgeOut(address token,uint256 amount,bytes32 relayParams)"
+                "BridgeOut(address token,uint256 amount,address provider,bytes data,bytes32 relayParams)"
             )
         );
 
@@ -528,6 +530,8 @@ library RelayUtils {
                     BRIDGE_OUT_TYPEHASH,
                     params.token,
                     params.amount,
+                    params.provider,
+                    keccak256(abi.encodePacked(params.data)),
                     _getRelayParamsHash(relayParams)
                 )
             );

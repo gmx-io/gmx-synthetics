@@ -111,6 +111,8 @@ describe("MultichainTransferRouter", () => {
       defaultBridgeOutParams = {
         token: usdc.address,
         amount: bridgeOutAmount,
+        provider: mockStargatePoolUsdc.address,
+        data: ethers.utils.defaultAbiCoder.encode(["uint32"], [1]), // dstEid = 1 (destination endpoint ID)
       };
     });
 
@@ -128,9 +130,7 @@ describe("MultichainTransferRouter", () => {
           feeAmount: feeAmount,
           feeSwapPath: [],
         },
-        provider: mockStargatePoolUsdc.address,
         account: user1.address,
-        data: ethers.utils.defaultAbiCoder.encode(["uint32"], [1]), // dstEid = 1 (destination endpoint ID)
         params: defaultBridgeOutParams,
         deadline: 9999999999,
         srcChainId: chainId, // 0 means non-multichain action
