@@ -9,7 +9,7 @@ contract EdgeDataStreamVerifier {
     address public immutable TRUSTED_SIGNER;
 
     /**
-     * @dev Constructor to set the trusted signer address
+    * @dev Constructor to set the trusted signer address
     * @param trustedSigner The address of the trusted signer
     */
     constructor(address trustedSigner) {
@@ -27,7 +27,7 @@ contract EdgeDataStreamVerifier {
         uint256 bid,
         uint256 ask,
         bytes memory signature
-    ) public pure returns (bool) {
+    ) public view returns (bool) {
         return extractSigner(
             feedId,
             price,

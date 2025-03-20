@@ -1,10 +1,9 @@
 import { createDeployFunction } from "../utils/deploy";
 
-const oracleConfig = hre.gmx.getOracle();
-
 const func = createDeployFunction({
   contractName: "EdgeDataStreamVerifier",
   getDeployArgs: async () => {
+    const oracleConfig = await hre.gmx.getOracle();
     return [oracleConfig.edgeOracleSigner];
   },
 });
