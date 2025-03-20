@@ -493,6 +493,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.DEPOSIT_FEE_FACTOR] = true;
         allowedBaseKeys[Keys.WITHDRAWAL_FEE_FACTOR] = true;
         allowedBaseKeys[Keys.ATOMIC_SWAP_FEE_FACTOR] = true;
+        allowedBaseKeys[Keys.ATOMIC_WITHDRAWAL_FEE_FACTOR] = true;
 
         allowedBaseKeys[Keys.MAX_UI_FEE_FACTOR] = true;
         allowedBaseKeys[Keys.MAX_AUTO_CANCEL_ORDERS] = true;
