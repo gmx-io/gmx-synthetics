@@ -58,7 +58,7 @@ contract EdgeDataStreamProvider is IOracleProvider {
         }
         // Edge oracle precision is negative. Which means that values are like: value * 10^abs(expo)
         // converting bid&ask to FLOAT_PRECISION
-        int256 floatMultiplier = int256(Precision.FLOAT_PRECISION) + report.expo;
+        int256 floatMultiplier = int256(30) + report.expo;
         if (floatMultiplier < 0) {
             revert Errors.InvalidEdgeDataStreamExpo(report.expo);
         }

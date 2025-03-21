@@ -41,6 +41,9 @@ contract EdgeDataStreamVerifier {
             int32 expo
         ) = abi.decode(data, (string, uint192, uint32, uint32, uint256, uint256, bytes, int32));
 
+        if (!verifySignature(feedId, price, roundId, timestamp, bid, ask, signature)) {
+            revert Errors.InvalidEdgeSignature();
+        }
         return Report(
             Cast.toBytes32(feedId),
             bid,

@@ -120,6 +120,7 @@ export const PRICE_FEED = hashString("PRICE_FEED");
 export const PRICE_FEED_MULTIPLIER = hashString("PRICE_FEED_MULTIPLIER");
 export const PRICE_FEED_HEARTBEAT_DURATION = hashString("PRICE_FEED_HEARTBEAT_DURATION");
 export const DATA_STREAM_ID = hashString("DATA_STREAM_ID");
+export const EDGE_DATA_STREAM_ID = hashString("EDGE_DATA_STREAM_ID");
 export const DATA_STREAM_MULTIPLIER = hashString("DATA_STREAM_MULTIPLIER");
 export const DATA_STREAM_SPREAD_REDUCTION_FACTOR = hashString("DATA_STREAM_SPREAD_REDUCTION_FACTOR");
 export const STABLE_PRICE = hashString("STABLE_PRICE");
@@ -418,6 +419,10 @@ export function priceFeedHeartbeatDurationKey(token: string) {
 
 export function dataStreamIdKey(token: string) {
   return hashData(["bytes32", "address"], [DATA_STREAM_ID, token]);
+}
+
+export function edgeDataStreamIdKey(token: string) {
+  return hashData(["bytes32", "address"], [EDGE_DATA_STREAM_ID, token]);
 }
 
 export function dataStreamMultiplierKey(token: string) {
