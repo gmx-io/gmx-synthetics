@@ -39,9 +39,9 @@ describe("EdgeDataStreamVerifier", function () {
     const invalidSignature =
       "0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
 
-    const isValid = await verifier.verifySignature(feedId, price, roundId, timestamp, bid, ask, invalidSignature);
-
-    expect(isValid).to.be.false;
+    await expect(
+      verifier.verifySignature(feedId, price, roundId, timestamp, bid, ask, invalidSignature)
+    ).to.be.revertedWithCustomError(verifier, "InvalidEdgeSignature");
   });
 
   it("should reject signature with wrong price", async function () {
@@ -55,7 +55,6 @@ describe("EdgeDataStreamVerifier", function () {
       "0x001fc991ea2d28a74f24f7ab90c23dd4188afba53c4bafdb91f588af230c00ed1f4c1930e7ae2d025874e8380598eb851987d197cf39c7edba1f0992f9d440a300";
 
     const isValid = await verifier.verifySignature(feedId, wrongPrice, roundId, timestamp, bid, ask, signature);
-
     expect(isValid).to.be.false;
   });
 
@@ -85,6 +84,6 @@ describe("EdgeDataStreamVerifier", function () {
 
     await expect(
       verifier.extractSigner(feedId, price, roundId, timestamp, bid, ask, invalidSignature)
-    ).to.be.revertedWithCustomError(verifier, "InvalidSignatureLength");
+    ).to.be.revertedWithCustomError(verifier, "InvalidEdgeSignatureLength");
   });
 });

@@ -2,9 +2,18 @@
 
 pragma solidity ^0.8.0;
 
-import {Errors} from "../error/Errors.sol";
+import "../utils/Cast.sol";
+import "../error/Errors.sol";
 
 contract EdgeDataStreamVerifier {
+
+    struct Report {
+        bytes32 feedId;
+        uint256 bid; // bid: min price, highest buy price
+        uint256 ask; // ask: max price, lowest sell price
+        uint32 timestamp;
+        int32 expo; // precision of bid&ask (negative value)
+    }
 
     address public immutable TRUSTED_SIGNER;
 
@@ -19,11 +28,33 @@ contract EdgeDataStreamVerifier {
         TRUSTED_SIGNER = trustedSigner;
     }
 
+
+    function verifyData(bytes calldata data) public view returns (Report memory) {
+        (
+            string memory feedId,
+            uint192 price,
+            uint32 roundId,
+            uint32 timestamp,
+            uint256 bid,
+            uint256 ask,
+            bytes memory signature,
+            int32 expo
+        ) = abi.decode(data, (string, uint192, uint32, uint32, uint256, uint256, bytes, int32));
+
+        return Report(
+            Cast.toBytes32(feedId),
+            bid,
+            ask,
+            timestamp,
+            expo
+        );
+    }
+
     function verifySignature(
         string memory feedId,
-        uint256 price,
-        uint256 roundId,
-        uint256 timestamp,
+        uint192 price,
+        uint32 roundId,
+        uint32 timestamp,
         uint256 bid,
         uint256 ask,
         bytes memory signature
@@ -52,9 +83,9 @@ contract EdgeDataStreamVerifier {
      */
     function extractSigner(
         string memory feedId,
-        uint256 price,
-        uint256 roundId,
-        uint256 timestamp,
+        uint192 price,
+        uint32 roundId,
+        uint32 timestamp,
         uint256 bid,
         uint256 ask,
         bytes memory signature
@@ -69,8 +100,12 @@ contract EdgeDataStreamVerifier {
             ask
         );
 
-        // Recover the signer's address from the signature
-        return recoverSigner(messageHash, signature);
+        address recovered = recoverSigner(messageHash, signature);
+        if (recovered == address(0)) {
+            revert Errors.InvalidEdgeSignature();
+        }
+
+        return recovered;
     }
 
     /**
@@ -78,26 +113,26 @@ contract EdgeDataStreamVerifier {
      */
     function getMessageHash(
         string memory feedId,
-        uint256 price,
-        uint256 roundId,
-        uint256 timestamp,
+        uint192 price,
+        uint32 roundId,
+        uint32 timestamp,
         uint256 bid,
         uint256 ask
     ) public pure returns (bytes32) {
         bytes memory message = abi.encodePacked(
             leftPadBytes(bytes(feedId), 32),
-            leftPadBytes(toBytes(price), 32),
-            leftPadBytes(toBytes(roundId), 32),
-            leftPadBytes(toBytes(timestamp), 32),
-            leftPadBytes(toBytes(bid), 32),
-            leftPadBytes(toBytes(ask), 32)
+            Cast.uint192ToBytes(price),
+            Cast.uint32ToBytes(roundId),
+            Cast.uint32ToBytes(timestamp),
+            Cast.uint256ToBytes(bid),
+            Cast.uint256ToBytes(ask)
         );
 
         return keccak256(message);
     }
 
     /**
-     * @dev Recovers the signer's address from a signature
+     * @dev Recovers the signer's address from a signature. Supports v value offset, such as Go library generates.
      * @param messageHash The hash of the original message
      * @param signature The signature bytes
      * @return The address of the signer
@@ -107,7 +142,7 @@ contract EdgeDataStreamVerifier {
         bytes memory signature
     ) public pure returns (address) {
         if (signature.length != 65) {
-            revert Errors.InvalidSignatureLength(signature.length);
+            revert Errors.InvalidEdgeSignatureLength(signature.length);
         }
 
         bytes32 r;
@@ -128,40 +163,6 @@ contract EdgeDataStreamVerifier {
 
         // Recover the signer's address
         return ecrecover(messageHash, v, r, s);
-    }
-
-    /**
-     * @dev Converts a uint256 to bytes
-     */
-    function toBytes(uint256 x) internal pure returns (bytes memory) {
-        if (x == 0) {
-            return new bytes(0);
-        }
-
-        uint256 j = x;
-        uint256 length = 0;
-
-        while (j != 0) {
-            length++;
-            j >>= 8;
-        }
-
-        bytes memory result = new bytes(length);
-
-        uint256 i = length - 1;
-        j = x;
-
-        while (j != 0) {
-            result[i] = bytes1(uint8(j & 0xFF));
-            j >>= 8;
-            if (i > 0) {
-                i--;
-            } else {
-                break;
-            }
-        }
-
-        return result;
     }
 
     /**
