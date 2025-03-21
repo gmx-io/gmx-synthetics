@@ -443,6 +443,7 @@ library Errors {
     error InvalidMultichainEndpoint(address endpoint);
     error UnableToPayOrderFee();
     error UnableToPayOrderFeeFromCollateral();
+    error RelayPriceOutdated();
 
     enum SignatureType {
         Call,

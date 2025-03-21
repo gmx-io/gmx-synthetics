@@ -279,9 +279,6 @@ library OrderUtils {
         if (order.srcChainId() != 0) {
             executionFeeReceiver = address(params.multichainVault);
         }
-        if (params.dataStore.getBool(Keys.wasPositionCollateralUsedForExecutionFeeKey(params.key))) {
-            executionFeeReceiver = params.dataStore.getAddress(Keys.HOLDING_ADDRESS);
-        }
 
         uint256 refundFeeAmount = GasUtils.payExecutionFee(
             params.dataStore,
@@ -346,9 +343,6 @@ library OrderUtils {
         cache.executionFeeReceiver = order.receiver();
         if (order.srcChainId() != 0) {
             cache.executionFeeReceiver = address(multichainVault);
-        }
-        if (dataStore.getBool(Keys.wasPositionCollateralUsedForExecutionFeeKey(key))) {
-            cache.executionFeeReceiver = dataStore.getAddress(Keys.HOLDING_ADDRESS);
         }
 
         cache.refundFeeAmount = GasUtils.payExecutionFee(
