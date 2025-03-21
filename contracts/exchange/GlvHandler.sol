@@ -100,6 +100,7 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
         GlvDepositUtils.CancelGlvDepositParams memory params = GlvDepositUtils.CancelGlvDepositParams({
             dataStore: dataStore,
             eventEmitter: eventEmitter,
+            multichainVault: multichainVault,
             glvVault: glvVault,
             key: key,
             keeper: msg.sender,
@@ -122,6 +123,7 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
         GlvDepositUtils.CancelGlvDepositParams memory params = GlvDepositUtils.CancelGlvDepositParams({
             dataStore: dataStore,
             eventEmitter: eventEmitter,
+            multichainVault: multichainVault,
             glvVault: glvVault,
             key: key,
             keeper: glvDeposit.account(),
@@ -206,6 +208,7 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
         GlvWithdrawalUtils.CancelGlvWithdrawalParams memory params = GlvWithdrawalUtils.CancelGlvWithdrawalParams({
             dataStore: dataStore,
             eventEmitter: eventEmitter,
+            multichainVault: multichainVault,
             glvVault: glvVault,
             key: key,
             keeper: msg.sender,
@@ -228,6 +231,7 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
         GlvWithdrawalUtils.CancelGlvWithdrawalParams memory params = GlvWithdrawalUtils.CancelGlvWithdrawalParams({
             dataStore: dataStore,
             eventEmitter: eventEmitter,
+            multichainVault: multichainVault,
             glvVault: glvVault,
             key: key,
             keeper: glvWithdrawal.account(),

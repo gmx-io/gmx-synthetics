@@ -36,7 +36,11 @@ library MultichainOrderRouterUtils {
         bytes32 key
     ) external {
         // check if user has sufficient Multichain balance to pay for fee
-        uint256 balance = MultichainUtils.getMultichainBalanceAmount(contracts.dataStore, account, relayParams.fee.feeToken);
+        uint256 balance = MultichainUtils.getMultichainBalanceAmount(
+            contracts.dataStore,
+            account,
+            relayParams.fee.feeToken
+        );
         if (balance >= relayParams.fee.feeAmount) {
             return;
         }
@@ -61,7 +65,11 @@ library MultichainOrderRouterUtils {
                     keccak256(abi.encode(key, OrderStoreUtils.INITIAL_COLLATERAL_DELTA_AMOUNT)),
                     initialCollateralDeltaAmount - deductFromOrder
                 );
-                contracts.orderVault.transferOut(relayParams.fee.feeToken, address(contracts.multichainVault), deductFromOrder);
+                contracts.orderVault.transferOut(
+                    relayParams.fee.feeToken,
+                    address(contracts.multichainVault),
+                    deductFromOrder
+                );
                 MultichainUtils.recordTransferIn(
                     contracts.dataStore,
                     contracts.eventEmitter,
@@ -101,13 +109,22 @@ library MultichainOrderRouterUtils {
         }
 
         position.setCollateralAmount(cache.positionCollateralAmount - cache.unpaidAmount);
-        contracts.dataStore.setUint(keccak256(abi.encode(positionKey, PositionStoreUtils.COLLATERAL_AMOUNT)), cache.positionCollateralAmount - cache.unpaidAmount);
+        contracts.dataStore.setUint(
+            keccak256(abi.encode(positionKey, PositionStoreUtils.COLLATERAL_AMOUNT)),
+            cache.positionCollateralAmount - cache.unpaidAmount
+        );
 
-        if (contracts.oracle.minTimestamp() + contracts.dataStore.getUint(Keys.RELAY_MAX_PRICE_AGE) < Chain.currentTimestamp()) {
+        if (
+            contracts.oracle.minTimestamp() + contracts.dataStore.getUint(Keys.RELAY_MAX_PRICE_AGE) <
+            Chain.currentTimestamp()
+        ) {
             revert Errors.RelayPriceOutdated();
         }
         cache.market = MarketStoreUtils.get(contracts.dataStore, order.market());
-        cache.prices = MarketUtils.getMarketPrices(contracts.oracle, MarketStoreUtils.get(contracts.dataStore, order.market()));
+        cache.prices = MarketUtils.getMarketPrices(
+            contracts.oracle,
+            MarketStoreUtils.get(contracts.dataStore, order.market())
+        );
 
         PositionUtils.validatePosition(
             contracts.dataStore,
@@ -121,9 +138,9 @@ library MultichainOrderRouterUtils {
 
         MarketToken(payable(order.market())).transferOut(
             relayParams.fee.feeToken,
-            order.srcChainId() == 0 ? order.receiver() : address(contracts.multichainVault),
+            address(contracts.multichainVault),
             cache.unpaidAmount,
-            order.shouldUnwrapNativeToken()
+            false // shouldUnwrapNativeToken
         );
         MultichainUtils.recordTransferIn(
             contracts.dataStore,

@@ -140,7 +140,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
                 uint256 amount = wntBalanceAfter - wntBalanceBefore;
                 IERC20(wnt).safeTransfer(address(multichainVault), amount);
 
-                MultichainUtils.recordBridgeIn(dataStore, eventEmitter, multichainVault, this, wnt, params.account, amount, 0 /*srcChainId*/);
+                MultichainUtils.recordBridgeIn(dataStore, eventEmitter, multichainVault, this, wnt, params.account, amount, 0 /*srcChainId*/); // srcChainId is the current block.chainId
                 return;
             }
         }

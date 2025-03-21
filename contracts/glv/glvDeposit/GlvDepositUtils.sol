@@ -45,6 +45,7 @@ library GlvDepositUtils {
     struct CancelGlvDepositParams {
         DataStore dataStore;
         EventEmitter eventEmitter;
+        MultichainVault multichainVault;
         GlvVault glvVault;
         bytes32 key;
         address keeper;
@@ -236,16 +237,20 @@ library GlvDepositUtils {
             glvDeposit.longTokenSwapPath().length + glvDeposit.shortTokenSwapPath().length
         );
         GasUtils.payExecutionFee(
-            params.dataStore,
-            params.eventEmitter,
-            params.glvVault,
+            GasUtils.PayExecutionFeeContracts(
+                params.dataStore,
+                params.eventEmitter,
+                params.multichainVault,
+                params.glvVault
+            ),
             params.key,
             glvDeposit.callbackContract(),
             glvDeposit.executionFee(),
             params.startingGas,
             oraclePriceCount,
             params.keeper,
-            glvDeposit.receiver()
+            glvDeposit.receiver(),
+            glvDeposit.srcChainId()
         );
     }
 }
