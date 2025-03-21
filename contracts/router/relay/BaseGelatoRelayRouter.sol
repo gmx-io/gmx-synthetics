@@ -24,51 +24,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     using Order for Order.Props;
     using SafeERC20 for IERC20;
 
-    struct TokenPermit {
-        address owner;
-        address spender;
-        uint256 value;
-        uint256 deadline;
-        uint8 v;
-        bytes32 r;
-        bytes32 s;
-        address token;
-    }
-
-    struct ExternalCalls {
-        address[] externalCallTargets;
-        bytes[] externalCallDataList;
-        address[] refundTokens;
-        address[] refundReceivers;
-    }
-
-    struct RelayParams {
-        OracleUtils.SetPricesParams oracleParams;
-        ExternalCalls externalCalls;
-        TokenPermit[] tokenPermits;
-        FeeParams fee;
-        uint256 userNonce;
-        uint256 deadline;
-        bytes signature;
-    }
-
-    // @note all params except account should be part of the corresponding struct hash
-    struct UpdateOrderParams {
-        bytes32 key;
-        uint256 sizeDeltaUsd;
-        uint256 acceptablePrice;
-        uint256 triggerPrice;
-        uint256 minOutputAmount;
-        uint256 validFromTime;
-        bool autoCancel;
-        uint256 executionFeeIncrease;
-    }
-
-    struct BatchCreateOrderParams {
-        uint256 collateralDeltaAmount;
-        IBaseOrderUtils.CreateOrderParams params;
-    }
-
     struct Vars {
         Contracts contracts;
         uint256 residualFeeAmount;
@@ -473,20 +428,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             revert Errors.InvalidUserNonce(userNonces[account], userNonce);
         }
         userNonces[account] = userNonce + 1;
-    }
-
-    function _getRelayParamsHash(RelayParams calldata relayParams) internal pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    relayParams.oracleParams,
-                    relayParams.externalCalls,
-                    relayParams.tokenPermits,
-                    relayParams.fee,
-                    relayParams.userNonce,
-                    relayParams.deadline
-                )
-            );
     }
 
     function _validateGaslessFeature() internal view {

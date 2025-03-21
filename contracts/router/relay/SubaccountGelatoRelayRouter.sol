@@ -8,63 +8,9 @@ import "../../feature/FeatureUtils.sol";
 import "../../subaccount/SubaccountUtils.sol";
 import "./BaseGelatoRelayRouter.sol";
 
-string constant UPDATE_ORDER_PARAMS = "UpdateOrderParams(bytes32 key,uint256 sizeDeltaUsd,uint256 acceptablePrice,uint256 triggerPrice,uint256 minOutputAmount,uint256 validFromTime,bool autoCancel,uint256 executionFeeIncrease)";
-
-string constant CREATE_ORDER_ADDRESSES = "CreateOrderAddresses(address receiver,address cancellationReceiver,address callbackContract,address uiFeeReceiver,address market,address initialCollateralToken,address[] swapPath)";
-string constant CREATE_ORDER_NUMBERS = "CreateOrderNumbers(uint256 sizeDeltaUsd,uint256 initialCollateralDeltaAmount,uint256 triggerPrice,uint256 acceptablePrice,uint256 executionFee,uint256 callbackGasLimit,uint256 minOutputAmount,uint256 validFromTime)";
-
-string constant BATCH_CREATE_ORDER_PARAMS = string(
-    abi.encodePacked(
-        "BatchCreateOrderParams(uint256 collateralDeltaAmount,CreateOrderAddresses addresses,CreateOrderNumbers numbers,uint256 orderType,uint256 decreasePositionSwapType,bool isLong,bool shouldUnwrapNativeToken,bool autoCancel,bytes32 referralCode)",
-        CREATE_ORDER_ADDRESSES,
-        CREATE_ORDER_NUMBERS
-    )
-);
+import "hardhat/console.sol";
 
 contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
-    bytes32 public constant UPDATE_ORDER_PARAMS_TYPEHASH = keccak256(bytes(UPDATE_ORDER_PARAMS));
-    bytes32 public constant UPDATE_ORDER_TYPEHASH =
-        keccak256(
-            abi.encodePacked(
-                "UpdateOrder(address account,UpdateOrderParams params,bytes32 relayParams,bytes32 subaccountApproval)",
-                UPDATE_ORDER_PARAMS
-            )
-        );
-
-    bytes32 public constant CANCEL_ORDER_TYPEHASH =
-        keccak256(bytes("CancelOrder(address account,bytes32 key,bytes32 relayParams,bytes32 subaccountApproval)"));
-
-    bytes32 public constant CREATE_ORDER_NUMBERS_TYPEHASH = keccak256(bytes(CREATE_ORDER_NUMBERS));
-    bytes32 public constant CREATE_ORDER_ADDRESSES_TYPEHASH = keccak256(bytes(CREATE_ORDER_ADDRESSES));
-    bytes32 public constant CREATE_ORDER_TYPEHASH =
-        keccak256(
-            abi.encodePacked(
-                "CreateOrder(uint256 collateralDeltaAmount,address account,CreateOrderAddresses addresses,CreateOrderNumbers numbers,uint256 orderType,uint256 decreasePositionSwapType,bool isLong,bool shouldUnwrapNativeToken,bool autoCancel,bytes32 referralCode,bytes32 relayParams,bytes32 subaccountApproval)",
-                CREATE_ORDER_ADDRESSES,
-                CREATE_ORDER_NUMBERS
-            )
-        );
-
-    bytes32 public constant SUBACCOUNT_APPROVAL_TYPEHASH =
-        keccak256(
-            bytes(
-                "SubaccountApproval(address subaccount,bool shouldAdd,uint256 expiresAt,uint256 maxAllowedCount,bytes32 actionType,uint256 nonce,uint256 deadline)"
-            )
-        );
-
-    bytes32 public constant REMOVE_SUBACCOUNT_TYPEHASH =
-        keccak256(bytes("RemoveSubaccount(address subaccount,bytes32 relayParams)"));
-
-    bytes32 public constant BATCH_CREATE_ORDER_PARAMS_TYPEHASH = keccak256(bytes(BATCH_CREATE_ORDER_PARAMS));
-    bytes32 public constant BATCH_TYPEHASH =
-        keccak256(
-            abi.encodePacked(
-                "Batch(address account,BatchCreateOrderParams[] batchCreateOrderParamsList,UpdateOrderParams[] updateOrderParamsList,bytes32[] cancelOrderKeys,bytes32 relayParams,bytes32 subaccountApproval)",
-                BATCH_CREATE_ORDER_PARAMS,
-                UPDATE_ORDER_PARAMS
-            )
-        );
-
     mapping(address => uint256) public subaccountApprovalNonces;
 
     constructor(
@@ -99,7 +45,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         vars.startingGas = gasleft();
 
         _validateGaslessFeature();
-        vars.structHash = _getBatchStructHash(
+        vars.structHash = RelayUtils.getBatchStructHash(
             relayParams,
             subaccountApproval,
             account,
@@ -118,7 +64,13 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             revert Errors.RelayEmptyBatch();
         }
 
-        _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, vars.actionsCount, subaccountApproval);
+        _handleSubaccountAction(
+            account,
+            subaccount,
+            Keys.SUBACCOUNT_ORDER_ACTION,
+            vars.actionsCount,
+            subaccountApproval
+        );
 
         _batch(
             relayParams,
@@ -129,6 +81,40 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             false, // isSubaccount
             vars.startingGas
         );
+    }
+
+    function _test(
+        RelayParams calldata relayParams,
+        BatchCreateOrderParams[] calldata batchCreateOrderParamsList,
+        UpdateOrderParams[] calldata updateOrderParamsList,
+        bytes32[] calldata cancelOrderKeys
+    ) internal view {
+        uint256 gas0 = gasleft();
+        bytes32 foo = keccak256(
+            abi.encode(
+                RelayUtils.BATCH_TYPEHASH,
+                address(0),
+                RelayUtils.getBatchCreateOrderParamsListStructHash(batchCreateOrderParamsList),
+                RelayUtils.getUpdateOrderParamsListStructHash(updateOrderParamsList),
+                keccak256(abi.encodePacked(cancelOrderKeys)),
+                RelayUtils.getRelayParamsHash(relayParams),
+                bytes32(0)
+            )
+        );
+        console.log("gas 0", gas0 - gasleft());
+        uint256 gas1 = gasleft();
+        bytes32 bar = keccak256(
+            abi.encode(
+                RelayUtils.BATCH_TYPEHASH,
+                RelayUtils.getBatchCreateOrderParamsListStructHash(batchCreateOrderParamsList),
+                RelayUtils.getUpdateOrderParamsListStructHash(updateOrderParamsList),
+                keccak256(abi.encodePacked(cancelOrderKeys)),
+                RelayUtils.getRelayParamsHash(relayParams)
+            )
+        );
+        console.log("gas 1", gas1 - gasleft());
+        console.logBytes32(foo);
+        console.logBytes32(bar);
     }
 
     function _validateCreateOrderParams(
@@ -155,7 +141,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) returns (bytes32) {
         uint256 startingGas = gasleft();
         _validateGaslessFeature();
-        bytes32 structHash = _getCreateOrderStructHash(
+        bytes32 structHash = RelayUtils.getCreateOrderStructHash(
             relayParams,
             subaccountApproval,
             account,
@@ -188,7 +174,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) {
         uint256 startingGas = gasleft();
         _validateGaslessFeature();
-        bytes32 structHash = _getUpdateOrderStructHash(relayParams, subaccountApproval, account, params);
+        bytes32 structHash = RelayUtils.getUpdateOrderStructHash(relayParams, subaccountApproval, account, params);
         _validateCall(relayParams, subaccount, structHash);
         _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, 1, subaccountApproval);
         _updateOrder(
@@ -210,7 +196,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) {
         uint256 startingGas = gasleft();
         _validateGaslessFeature();
-        bytes32 structHash = _getCancelOrderStructHash(relayParams, subaccountApproval, account, key);
+        bytes32 structHash = RelayUtils.getCancelOrderStructHash(relayParams, subaccountApproval, account, key);
         _validateCall(relayParams, subaccount, structHash);
         _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, 1, subaccountApproval);
         _cancelOrder(
@@ -230,7 +216,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) {
         uint256 startingGas = gasleft();
         _validateGaslessFeature();
-        bytes32 structHash = _getRemoveSubaccountStructHash(relayParams, subaccount);
+        bytes32 structHash = RelayUtils.getRemoveSubaccountStructHash(relayParams, subaccount);
         _validateCall(relayParams, account, structHash);
 
         Contracts memory contracts = _getContracts();
@@ -286,215 +272,10 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         subaccountApprovalNonces[account] = storedNonce + 1;
 
         bytes32 domainSeparator = _getDomainSeparator(block.chainid);
-        bytes32 structHash = _getSubaccountApprovalStructHash(subaccountApproval);
+        bytes32 structHash = RelayUtils.getSubaccountApprovalStructHash(subaccountApproval);
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
         _validateSignature(digest, subaccountApproval.signature, account, "subaccount approval");
 
         SubaccountUtils.handleSubaccountApproval(dataStore, eventEmitter, account, subaccountApproval);
-    }
-
-    function _getRemoveSubaccountStructHash(
-        RelayParams calldata relayParams,
-        address subaccount
-    ) internal pure returns (bytes32) {
-        return keccak256(abi.encode(REMOVE_SUBACCOUNT_TYPEHASH, subaccount, _getRelayParamsHash(relayParams)));
-    }
-
-    function _getSubaccountApprovalStructHash(
-        SubaccountApproval calldata subaccountApproval
-    ) internal pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    SUBACCOUNT_APPROVAL_TYPEHASH,
-                    subaccountApproval.subaccount,
-                    subaccountApproval.shouldAdd,
-                    subaccountApproval.expiresAt,
-                    subaccountApproval.maxAllowedCount,
-                    subaccountApproval.actionType,
-                    subaccountApproval.nonce,
-                    subaccountApproval.deadline
-                )
-            );
-    }
-
-    function _getCreateOrderStructHash(
-        RelayParams calldata relayParams,
-        SubaccountApproval calldata subaccountApproval,
-        address account,
-        uint256 collateralDeltaAmount,
-        IBaseOrderUtils.CreateOrderParams memory params
-    ) internal pure returns (bytes32) {
-        bytes32 relayParamsHash = _getRelayParamsHash(relayParams);
-        bytes32 subaccountApprovalHash = keccak256(abi.encode(subaccountApproval));
-
-        return
-            keccak256(
-                abi.encode(
-                    CREATE_ORDER_TYPEHASH,
-                    collateralDeltaAmount,
-                    account,
-                    _getCreateOrderAddressesStructHash(params.addresses),
-                    _getCreateOrderNumbersStructHash(params.numbers),
-                    uint256(params.orderType),
-                    uint256(params.decreasePositionSwapType),
-                    params.isLong,
-                    params.shouldUnwrapNativeToken,
-                    params.autoCancel,
-                    params.referralCode,
-                    relayParamsHash,
-                    subaccountApprovalHash
-                )
-            );
-    }
-
-    function _getCreateOrderAddressesStructHash(
-        IBaseOrderUtils.CreateOrderParamsAddresses memory addresses
-    ) internal pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    CREATE_ORDER_ADDRESSES_TYPEHASH,
-                    addresses.receiver,
-                    addresses.cancellationReceiver,
-                    addresses.callbackContract,
-                    addresses.uiFeeReceiver,
-                    addresses.market,
-                    addresses.initialCollateralToken,
-                    keccak256(abi.encodePacked(addresses.swapPath))
-                )
-            );
-    }
-
-    function _getCreateOrderNumbersStructHash(
-        IBaseOrderUtils.CreateOrderParamsNumbers memory numbers
-    ) internal pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    CREATE_ORDER_NUMBERS_TYPEHASH,
-                    numbers.sizeDeltaUsd,
-                    numbers.initialCollateralDeltaAmount,
-                    numbers.triggerPrice,
-                    numbers.acceptablePrice,
-                    numbers.executionFee,
-                    numbers.callbackGasLimit,
-                    numbers.minOutputAmount,
-                    numbers.validFromTime
-                )
-            );
-    }
-
-    function _getUpdateOrderStructHash(
-        RelayParams calldata relayParams,
-        SubaccountApproval calldata subaccountApproval,
-        address account,
-        UpdateOrderParams calldata params
-    ) internal pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    UPDATE_ORDER_TYPEHASH,
-                    account,
-                    _getUpdateOrderParamsStructHash(params),
-                    _getRelayParamsHash(relayParams),
-                    keccak256(abi.encode(subaccountApproval))
-                )
-            );
-    }
-
-    function _getUpdateOrderParamsStructHash(UpdateOrderParams calldata params) internal pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    UPDATE_ORDER_PARAMS_TYPEHASH,
-                    params.key,
-                    params.sizeDeltaUsd,
-                    params.acceptablePrice,
-                    params.triggerPrice,
-                    params.minOutputAmount,
-                    params.validFromTime,
-                    params.autoCancel,
-                    params.executionFeeIncrease
-                )
-            );
-    }
-
-    function _getCancelOrderStructHash(
-        RelayParams calldata relayParams,
-        SubaccountApproval calldata subaccountApproval,
-        address account,
-        bytes32 key
-    ) internal pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    CANCEL_ORDER_TYPEHASH,
-                    account,
-                    key,
-                    _getRelayParamsHash(relayParams),
-                    keccak256(abi.encode(subaccountApproval))
-                )
-            );
-    }
-
-    function _getBatchCreateOrderStructHash(BatchCreateOrderParams calldata params) internal pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    BATCH_CREATE_ORDER_PARAMS_TYPEHASH,
-                    params.collateralDeltaAmount,
-                    _getCreateOrderAddressesStructHash(params.params.addresses),
-                    _getCreateOrderNumbersStructHash(params.params.numbers),
-                    uint256(params.params.orderType),
-                    uint256(params.params.decreasePositionSwapType),
-                    params.params.isLong,
-                    params.params.shouldUnwrapNativeToken,
-                    params.params.autoCancel,
-                    params.params.referralCode
-                )
-            );
-    }
-
-    function _getBatchStructHash(
-        RelayParams calldata relayParams,
-        SubaccountApproval calldata subaccountApproval,
-        address account,
-        BatchCreateOrderParams[] calldata batchCreateOrderParamsList,
-        UpdateOrderParams[] calldata updateOrderParamsList,
-        bytes32[] calldata cancelOrderKeys
-    ) internal pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    BATCH_TYPEHASH,
-                    account,
-                    _getBatchCreateOrderParamsListStructHash(batchCreateOrderParamsList),
-                    _getUpdateOrderParamsListStructHash(updateOrderParamsList),
-                    keccak256(abi.encodePacked(cancelOrderKeys)),
-                    _getRelayParamsHash(relayParams),
-                    keccak256(abi.encode(subaccountApproval))
-                )
-            );
-    }
-
-    function _getBatchCreateOrderParamsListStructHash(
-        BatchCreateOrderParams[] calldata batchCreateOrderParamsList
-    ) internal pure returns (bytes32) {
-        bytes32[] memory batchCreateOrderStructHashes = new bytes32[](batchCreateOrderParamsList.length);
-        for (uint256 i = 0; i < batchCreateOrderParamsList.length; i++) {
-            batchCreateOrderStructHashes[i] = _getBatchCreateOrderStructHash(batchCreateOrderParamsList[i]);
-        }
-        return keccak256(abi.encodePacked(batchCreateOrderStructHashes));
-    }
-
-    function _getUpdateOrderParamsListStructHash(
-        UpdateOrderParams[] calldata updateOrderParamsList
-    ) internal pure returns (bytes32) {
-        bytes32[] memory updateOrderParamsStructHashes = new bytes32[](updateOrderParamsList.length);
-        for (uint256 i = 0; i < updateOrderParamsList.length; i++) {
-            updateOrderParamsStructHashes[i] = _getUpdateOrderParamsStructHash(updateOrderParamsList[i]);
-        }
-        return keccak256(abi.encodePacked(updateOrderParamsStructHashes));
     }
 }
