@@ -64,23 +64,20 @@ describe("MultichainReader", function () {
       msgValue: 0,
     };
 
-    const latestBlock = await ethers.provider.getBlock("latest");
-    const timestamp = latestBlock.timestamp;
-    const readData = 123;
-    const readResponse = ethers.utils.solidityPack(["uint64", "uint256"], [timestamp, readData]);
-    await mockEndpointV2.setReadResponse(multichainReader.address, readResponse);
-
     // Define native fee and quote for the message send operation
     const nativeFee = await mockMultichainReaderOriginator.callQuoteReadFee([readRequestInputs], extraOptionsInputs);
 
     // Execute send operation from multichainReader with expected response
-    await mockMultichainReaderOriginator.callSendReadRequests([readRequestInputs], extraOptionsInputs, {
+    const tx = await mockMultichainReaderOriginator.callSendReadRequests([readRequestInputs], extraOptionsInputs, {
       value: nativeFee.toString(),
     });
+    const receipt = await tx.wait();
+    const block = await ethers.provider.getBlock(receipt.blockNumber);
+    const timestamp = block.timestamp;
 
     // Assert the resulting state of data in mockMultichainReaderOriginator
     latestReceivedData = await mockMultichainReaderOriginator.latestReceivedData();
     expect(latestReceivedData.timestamp).to.equal(encodeData(["uint256"], [timestamp]));
-    expect(latestReceivedData.readData).to.equal(encodeData(["uint256"], [123]));
+    expect(latestReceivedData.readData).to.equal(encodeData(["uint256"], [12345]));
   });
 });

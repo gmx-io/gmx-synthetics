@@ -19,6 +19,8 @@ import { IExecutorFeeLib } from "@layerzerolabs/lz-evm-messagelib-v2/contracts/i
 import { DVNOptions } from "@layerzerolabs/lz-evm-messagelib-v2/contracts/uln/libs/DVNOptions.sol";
 import { UlnOptions } from "@layerzerolabs/lz-evm-messagelib-v2/contracts/uln/libs/UlnOptions.sol";
 import { CalldataBytesLib } from "@layerzerolabs/lz-evm-protocol-v2/contracts/libs/CalldataBytesLib.sol";
+import { EVMCallRequestV1, EVMCallComputeV1, ReadCodecV1 } from "@layerzerolabs/oapp-evm/contracts/oapp/libs/ReadCodecV1.sol";
+import { MultichainReader } from "../multichain/MultichainReader.sol";
 
 contract MockEndpointV2 is ILayerZeroEndpointV2, MessagingContext {
     using ExecutorOptions for bytes;
@@ -32,7 +34,6 @@ contract MockEndpointV2 is ILayerZeroEndpointV2, MessagingContext {
 
     uint32 public immutable eid;
     mapping(address => address) public lzEndpointLookup;
-    mapping(address => bytes) public readResponseLookup;
     uint32 public readChannelId;
 
     mapping(address receiver => mapping(uint32 srcEid => mapping(bytes32 sender => uint64 nonce)))
@@ -140,7 +141,7 @@ contract MockEndpointV2 is ILayerZeroEndpointV2, MessagingContext {
 
         bytes memory receiveMessage;
         if (isReadMessage) {
-            receiveMessage = readResponseLookup[packet.receiver.bytes32ToAddress()];
+            receiveMessage = processLzReduce(_params.message);
         } else {
             receiveMessage = packet.message;
         }
@@ -205,6 +206,16 @@ contract MockEndpointV2 is ILayerZeroEndpointV2, MessagingContext {
         return basePrice + pricePerByte;
     }
 
+    function processLzReduce(bytes calldata message) internal view returns (bytes memory) {
+        (, EVMCallRequestV1[] memory evmCallRequests, ) = ReadCodecV1.decode(message);
+        uint256 numberOfRequests = evmCallRequests.length;
+        bytes[] memory responses = new bytes[](numberOfRequests);
+        for (uint256 i = 0; i < numberOfRequests; i++) {
+            (, responses[i]) = evmCallRequests[i].to.staticcall(evmCallRequests[i].callData);
+        }
+        return MultichainReader(msg.sender).lzReduce(message, responses);
+    }
+
     function _quote(
         MessagingParams calldata _params,
         address /*_sender*/
@@ -234,10 +245,6 @@ contract MockEndpointV2 is ILayerZeroEndpointV2, MessagingContext {
 
     function setDestLzEndpoint(address destAddr, address lzEndpointAddr) external {
         lzEndpointLookup[destAddr] = lzEndpointAddr;
-    }
-
-    function setReadResponse(address destAddr, bytes memory resolvedPayload) external {
-        readResponseLookup[destAddr] = resolvedPayload;
     }
 
     function setReadChannelId(uint32 _readChannelId) external {

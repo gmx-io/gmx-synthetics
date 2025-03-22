@@ -507,27 +507,31 @@ library Keys {
     // @dev key for FeeDistributor timestamp that the last distribution was completed
     bytes32 public constant FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP = keccak256(abi.encode("FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP"));
     // @dev key for the fee distribution state
-    bytes32 public constant FEE_DISTRIBUTION_STATE = keccak256(abi.encode("FEE_DISTRIBUTION_STATE"));
+    bytes32 public constant FEE_DISTRIBUTOR_STATE = keccak256(abi.encode("FEE_DISTRIBUTOR_STATE"));
     // @dev key for FeeDistributor referral rewards for a given token
     bytes32 public constant FEE_DISTRIBUTOR_REFERRAL_REWARDS_AMOUNT = keccak256(abi.encode("FEE_DISTRIBUTOR_REFERRAL_REWARDS_AMOUNT"));
     // @dev key for FeeDistributor WNT referral awards absolute limit in USD 
     bytes32 public constant FEE_DISTRIBUTOR_REFERRAL_REWARDS_WNT_USD_LIMIT = keccak256(abi.encode("FEE_DISTRIBUTOR_REFERRAL_REWARDS_WNT_USD_LIMIT"));
     // @dev key for FeeDistributor GMX price for referral rewards calculations
-    bytes32 public constant FEE_DISTRIBUTION_GMX_PRICE = keccak256(abi.encode("FEE_DISTRIBUTION_GMX_PRICE"));
+    bytes32 public constant FEE_DISTRIBUTOR_GMX_PRICE = keccak256(abi.encode("FEE_DISTRIBUTOR_GMX_PRICE"));
     // @dev key for FeeDistributor WNT price for referral rewards calculations
-    bytes32 public constant FEE_DISTRIBUTION_WNT_PRICE = keccak256(abi.encode("FEE_DISTRIBUTION_WNT_PRICE"));
+    bytes32 public constant FEE_DISTRIBUTOR_WNT_PRICE = keccak256(abi.encode("FEE_DISTRIBUTOR_WNT_PRICE"));
     // @dev key for FeeDistributor max read response delay in seconds from MultichainReader
     bytes32 public constant FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY = keccak256(abi.encode("FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY"));
     // @dev key for FeeDistributor gas limit used for the MultichainReader read request
     bytes32 public constant FEE_DISTRIBUTOR_GAS_LIMIT = keccak256(abi.encode("FEE_DISTRIBUTOR_GAS_LIMIT"));
     // @dev key for FeeDistributor chain ID
     bytes32 public constant FEE_DISTRIBUTOR_CHAIN_ID = keccak256(abi.encode("FEE_DISTRIBUTOR_CHAIN_ID"));
-    // @dev key for FeeDistributor fee amount
+    // @dev key for FeeDistributor GMX fee amount for a given chain
     bytes32 public constant FEE_DISTRIBUTOR_FEE_AMOUNT_GMX = keccak256(abi.encode("FEE_DISTRIBUTOR_FEE_AMOUNT_GMX"));
+    // @dev key FeeDistributor total GMX fee amount for all chains combined
+    bytes32 public constant FEE_DISTRIBUTOR_TOTAL_FEE_AMOUNT_GMX = keccak256(abi.encode("FEE_DISTRIBUTOR_TOTAL_FEE_AMOUNT_GMX"));
     // @dev key for FeeDistributor total fee amount in USD by version
     bytes32 public constant FEE_DISTRIBUTOR_FEE_AMOUNT_USD = keccak256(abi.encode("FEE_DISTRIBUTOR_FEE_AMOUNT_USD"));
-    // @dev key for FeeDistributor staked gmx
+    // @dev key for FeeDistributor staked gmx for a given chain
     bytes32 public constant FEE_DISTRIBUTOR_STAKED_GMX = keccak256(abi.encode("FEE_DISTRIBUTOR_STAKED_GMX"));
+    // @dev key FeeDistributor total staked GMX for all chains combined
+    bytes32 public constant FEE_DISTRIBUTOR_TOTAL_STAKED_GMX = keccak256(abi.encode("FEE_DISTRIBUTOR_TOTAL_STAKED_GMX"));
     // @dev key for FeeDistributor bridging slippage factor
     bytes32 public constant FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_FACTOR = keccak256(abi.encode("FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_FACTOR"));
     // @dev key for FeeDistributor fee slippage amount representing allowed slippage after bridging slippage
