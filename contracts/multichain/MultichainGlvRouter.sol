@@ -95,6 +95,6 @@ contract MultichainGlvRouter is MultichainRouter {
             srcChainId
         );
 
-        return GlvWithdrawalUtils.createGlvWithdrawal(dataStore, eventEmitter, glvVault, account, srcChainId, params);
+        return glvHandler.createGlvWithdrawal(account, srcChainId, params);
     }
 }
