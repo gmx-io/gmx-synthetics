@@ -9,6 +9,8 @@ import { TOKEN_ORACLE_TYPES } from "../../utils/oracle";
 import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
 import Keys from "../../artifacts/contracts/data/Keys.sol/Keys.json";
+import { ethers } from "hardhat";
+import { mine } from "@nomicfoundation/hardhat-network-helpers";
 
 describe("Config", () => {
   let fixture;
@@ -554,5 +556,67 @@ describe("Config", () => {
     );
     const oiReserveFactorKey = keys.openInterestReserveFactorKey(ethUsdMarket.marketToken, false);
     expect(await dataStore.getUint(oiReserveFactorKey)).eq(ten);
+  });
+
+  describe("setOracleProviderForToken", async () => {
+    let oracleProvider1, oracleProvider2;
+
+    beforeEach(async () => {
+      const mockOracleProviderFactory = await ethers.getContractFactory("MockOracleProvider");
+      oracleProvider1 = await mockOracleProviderFactory.deploy();
+      oracleProvider2 = await mockOracleProviderFactory.deploy();
+
+      await dataStore.setBool(keys.isOracleProviderEnabledKey(oracleProvider1.address), true);
+      await dataStore.setBool(keys.isOracleProviderEnabledKey(oracleProvider2.address), true);
+    });
+
+    it("only allows config keeper to set oracle provider", async () => {
+      await expect(
+        config.connect(user1).setOracleProviderForToken(wnt.address, oracleProvider1.address)
+      ).to.be.revertedWithCustomError(errorsContract, "Unauthorized");
+    });
+
+    it("validates token address is not zero", async () => {
+      await expect(
+        config.connect(user0).setOracleProviderForToken(ethers.constants.AddressZero, oracleProvider1.address)
+      ).to.be.revertedWithCustomError(errorsContract, "EmptyToken");
+    });
+
+    it("validates oracle provider is enabled", async () => {
+      const disabledProvider = await (await ethers.getContractFactory("MockOracleProvider")).deploy();
+      await expect(
+        config.connect(user0).setOracleProviderForToken(wnt.address, disabledProvider.address)
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidOracleProvider");
+    });
+
+    it("allows changing to different provider without delay", async () => {
+      await config.connect(user0).setOracleProviderForToken(wnt.address, oracleProvider1.address);
+      await config.connect(user0).setOracleProviderForToken(wnt.address, oracleProvider2.address);
+    });
+
+    it("enforces delay between updates for same provider", async () => {
+      await config.connect(user0).setOracleProviderForToken(wnt.address, oracleProvider1.address);
+      await config.connect(user0).setOracleProviderForToken(wnt.address, oracleProvider2.address);
+      // Try to set the same provider again immediately
+      await expect(
+        config.connect(user0).setOracleProviderForToken(wnt.address, oracleProvider1.address)
+      ).to.be.revertedWithCustomError(errorsContract, "OracleProviderMinChangeDelayNotYetPassed");
+
+      const delay = await dataStore.getUint(keys.ORACLE_PROVIDER_MIN_CHANGE_DELAY);
+      await mine(delay.toNumber());
+
+      // Should succeed after delay
+      await config.connect(user0).setOracleProviderForToken(wnt.address, oracleProvider1.address);
+    });
+
+    it("updates provider and timestamp correctly", async () => {
+      const tx = await config.connect(user0).setOracleProviderForToken(wnt.address, oracleProvider1.address);
+      const timestamp = (await ethers.provider.getBlock(tx.blockNumber)).timestamp;
+
+      expect(await dataStore.getAddress(keys.oracleProviderForTokenKey(wnt.address))).to.equal(oracleProvider1.address);
+      expect(await dataStore.getUint(keys.oracleProviderUpdatedAtKey(wnt.address, oracleProvider1.address))).to.equal(
+        timestamp
+      );
+    });
   });
 });

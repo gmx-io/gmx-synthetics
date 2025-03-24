@@ -195,6 +195,10 @@ library Keys {
     bytes32 public constant ORACLE_TIMESTAMP_ADJUSTMENT = keccak256(abi.encode("ORACLE_TIMESTAMP_ADJUSTMENT"));
     // @dev key for oracle provider for token
     bytes32 public constant ORACLE_PROVIDER_FOR_TOKEN = keccak256(abi.encode("ORACLE_PROVIDER_FOR_TOKEN"));
+    // @dev key for oracle provider updated time
+    bytes32 public constant ORACLE_PROVIDER_UPDATED_AT = keccak256(abi.encode("ORACLE_PROVIDER_UPDATED_AT"));
+    // @dev key for oracle provider same value delay
+    bytes32 public constant ORACLE_PROVIDER_MIN_CHANGE_DELAY = keccak256(abi.encode("ORACLE_PROVIDER_MIN_CHANGE_DELAY"));
     // @dev key for the chainlink payment token
     bytes32 public constant CHAINLINK_PAYMENT_TOKEN = keccak256(abi.encode("CHAINLINK_PAYMENT_TOKEN"));
     // @dev key for the sequencer grace duration
@@ -297,6 +301,7 @@ library Keys {
     bytes32 public constant SWAP_FEE_FACTOR = keccak256(abi.encode("SWAP_FEE_FACTOR"));
     // @dev key for the atomic swap fee factor
     bytes32 public constant ATOMIC_SWAP_FEE_FACTOR = keccak256(abi.encode("ATOMIC_SWAP_FEE_FACTOR"));
+    bytes32 public constant ATOMIC_WITHDRAWAL_FEE_FACTOR = keccak256(abi.encode("ATOMIC_WITHDRAWAL_FEE_FACTOR"));
     bytes32 public constant DEPOSIT_FEE_FACTOR = keccak256(abi.encode("DEPOSIT_FEE_FACTOR"));
     bytes32 public constant WITHDRAWAL_FEE_FACTOR = keccak256(abi.encode("WITHDRAWAL_FEE_FACTOR"));
     // @dev key for the oracle type
@@ -992,6 +997,18 @@ library Keys {
         ));
     }
 
+    // @dev key for oracle provider update time
+    // @param token the token
+    // @param provider address
+    // @return key for oracle provider updated time
+    function oracleProviderUpdatedAt(address token, address provider) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            ORACLE_PROVIDER_UPDATED_AT,
+            token,
+            provider
+        ));
+    }
+
     // @dev key for gas to forward for token transfer
     // @param the token to check
     // @return key for gas to forward for token transfer
@@ -1207,8 +1224,17 @@ library Keys {
         ));
     }
 
-    // @dev key for deposit fee factor
+    // @dev key for atomic withdrawal fee factor
     // @param market the market address to check
+    // @return key for atomic withdrawal fee factor
+    function atomicWithdrawalFeeFactorKey(address market) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            ATOMIC_WITHDRAWAL_FEE_FACTOR,
+            market
+        ));
+    }
+
+    // @dev key for deposit fee factor
     // @param balanceWasImproved whether the fee is for an action that has improved the balance
     // @return key for deposit fee factor
     function depositFeeFactorKey(address market, bool balanceWasImproved) internal pure returns (bytes32) {

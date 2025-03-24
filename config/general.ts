@@ -62,6 +62,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       skipBorrowingFeeForSmallerSide: false,
 
       maxExecutionFeeMultiplierFactor: decimalToFloat(100),
+      oracleProviderMinChangeDelay: 3600,
       configMaxPriceAge: 180,
     };
   }
@@ -121,6 +122,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     skipBorrowingFeeForSmallerSide: true,
 
     maxExecutionFeeMultiplierFactor: decimalToFloat(100),
+    oracleProviderMinChangeDelay: 3600,
     configMaxPriceAge: 180,
   };
 
