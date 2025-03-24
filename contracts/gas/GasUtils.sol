@@ -584,7 +584,7 @@ library GasUtils {
         uint256 l1Fee = Chain.getCurrentTxL1GasFees();
 
         // multiply calldataLength by 2 because the calldata is first sent to the Relay contract, and then to GMX contract
-        // zero byte in call data costs 4 bytes, non-zero byte costs 16 bytes, use 12 as a conservative estimate
+        // zero byte in call data costs 4 gas, non-zero byte costs 16 gas, use 12 as a conservative estimate
         uint256 l2Fee = (relayFeeBaseAmount + calldataLength * 2 * 12 + startingGas - gasleft()) * tx.gasprice;
 
         if (oraclePriceCount > 0) {
