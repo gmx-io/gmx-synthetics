@@ -583,14 +583,15 @@ library GasUtils {
         // would be non-zero for Arbitrum only
         uint256 l1Fee = Chain.getCurrentTxL1GasFees();
 
-        // multiply calldataLength by 2 because the calldata is first sent to the Relay contract, and then to GMX contract
-        // zero byte in call data costs 4 gas, non-zero byte costs 16 gas, use 12 as a conservative estimate
-        uint256 l2Fee = (relayFeeBaseAmount + calldataLength * 2 * 12 + startingGas - gasleft()) * tx.gasprice;
-
+        uint256 l2Fee;
         if (oraclePriceCount > 0) {
             // oracle prices are set before startingGas is defined
             l2Fee += dataStore.getUint(Keys.RELAY_EXECUTION_GAS_FEE_PER_ORACLE_PRICE) * oraclePriceCount * tx.gasprice;
         }
+
+        // multiply calldataLength by 2 because the calldata is first sent to the Relay contract, and then to GMX contract
+        // zero byte in call data costs 4 gas, non-zero byte costs 16 gas, use 12 as a conservative estimate
+        l2Fee += (relayFeeBaseAmount + calldataLength * 2 * 12 + startingGas - gasleft()) * tx.gasprice;
 
         uint256 relayFee = Precision.applyFactor(l1Fee + l2Fee, relayFeeMultiplierFactor);
 
