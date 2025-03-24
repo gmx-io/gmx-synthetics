@@ -32,15 +32,6 @@ contract ConfigTimelockController is TimelockController, OracleModule {
         dataStore = _dataStore;
     }
 
-    function executeAtomicWithOraclePrices(
-        address target,
-        uint256 value,
-        bytes calldata payload,
-        OracleUtils.SetPricesParams calldata oracleParams
-    ) external onlyRoleOrOpenRole(EXECUTOR_ROLE) withOraclePricesForAtomicAction(oracleParams) {
-        execute(target, value, payload, 0, 0);
-    }
-
     function executeWithOraclePrices(
         address target,
         uint256 value,

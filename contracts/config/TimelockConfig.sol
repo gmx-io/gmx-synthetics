@@ -386,16 +386,6 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         );
     }
 
-    function executeAtomicWithOraclePrice(
-        address target,
-        bytes calldata payload,
-        OracleUtils.SetPricesParams calldata oracleParams
-    ) external onlyTimelockAdmin {
-        timelockController.executeAtomicWithOraclePrices(
-            target, 0, payload, oracleParams
-        );
-    }
-
     function executeBatch(address[] calldata targets, uint256[] calldata values, bytes[] calldata payloads) external onlyTimelockAdmin {
         timelockController.executeBatch(targets, values, payloads, 0, 0);
     }
