@@ -2386,8 +2386,8 @@ const config: {
 
       liquidationFeeFactor: percentageToFloat("0.45%"),
 
-      reserveFactor: percentageToFloat("40%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("35%"), // default is 90%
+      reserveFactor: percentageToFloat("75%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("70%"), // default is 90%
 
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
