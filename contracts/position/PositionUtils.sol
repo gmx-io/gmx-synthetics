@@ -162,6 +162,8 @@ library PositionUtils {
 
     struct GetExecutionPriceForDecreaseCache {
         int256 priceImpactUsd;
+        int256 totalImpactUsd;
+        int256 proportionalImpactPendingUsd;
         bool balanceWasImproved;
         uint256 executionPrice;
     }
@@ -734,11 +736,11 @@ library PositionUtils {
         return (cache.priceImpactUsd, cache.priceImpactAmount, cache.baseSizeDeltaInTokens, cache.executionPrice, cache.balanceWasImproved);
     }
 
-    // returns priceImpactUsd, executionPrice, balanceWasImproved
+    // returns priceImpactUsd, totalImpactUsd, executionPrice, balanceWasImproved
     function getExecutionPriceForDecrease(
         UpdatePositionParams memory params,
         Price.Props memory indexTokenPrice
-    ) external view returns (int256, uint256, bool) {
+    ) external view returns (int256, int256, uint256, bool) {
         uint256 sizeDeltaUsd = params.order.sizeDeltaUsd();
 
         // note that the executionPrice is not validated against the order.acceptablePrice value
@@ -748,7 +750,7 @@ library PositionUtils {
             // decrease order:
             //     - long: use the smaller price
             //     - short: use the larger price
-            return (0, indexTokenPrice.pickPrice(!params.position.isLong()), false);
+            return (0, 0, indexTokenPrice.pickPrice(!params.position.isLong()), false);
         }
 
         GetExecutionPriceForDecreaseCache memory cache;
@@ -762,14 +764,6 @@ library PositionUtils {
             )
         );
 
-        // cap positive priceImpactUsd based on the amount available in the position impact pool
-        cache.priceImpactUsd = MarketUtils.capPositiveImpactUsdByPositionImpactPool(
-            params.contracts.dataStore,
-            params.market.marketToken,
-            indexTokenPrice,
-            cache.priceImpactUsd
-        );
-
         // cap positive priceImpactUsd based on the max positive position impact factor
         cache.priceImpactUsd = MarketUtils.capPositiveImpactUsdByMaxPositionImpact(
             params.contracts.dataStore,
@@ -778,17 +772,51 @@ library PositionUtils {
             params.order.sizeDeltaUsd()
         );
 
+        // order size has been enforced to be less or equal than position size (i.e. sizeDeltaUsd <= sizeInUsd)
+        (/* proportionalPendingImpactAmount */, cache.proportionalImpactPendingUsd) = getProportionalImpactPendingValues(
+            params.position.sizeInUsd(),
+            params.position.pendingImpactAmount(),
+            sizeDeltaUsd,
+            indexTokenPrice
+        );
+
+        cache.totalImpactUsd = cache.proportionalImpactPendingUsd + cache.priceImpactUsd;
+
+        // cap the positive totalImpactUsd by the available amount in the position impact pool
+        cache.totalImpactUsd = MarketUtils.capPositiveImpactUsdByPositionImpactPool(
+            params.contracts.dataStore,
+            params.market.marketToken,
+            indexTokenPrice,
+            cache.totalImpactUsd
+        );
+
         cache.executionPrice = BaseOrderUtils.getExecutionPriceForDecrease(
             indexTokenPrice,
             params.position.sizeInUsd(),
             params.position.sizeInTokens(),
             sizeDeltaUsd,
-            cache.priceImpactUsd,
+            cache.totalImpactUsd - cache.proportionalImpactPendingUsd, // decreaseOrderImpactUsd
             params.order.acceptablePrice(),
             params.position.isLong()
         );
 
-        return (cache.priceImpactUsd, cache.executionPrice, cache.balanceWasImproved);
+        return (cache.priceImpactUsd, cache.totalImpactUsd, cache.executionPrice, cache.balanceWasImproved);
+    }
+
+    function getProportionalImpactPendingValues(
+        uint256 sizeInUsd,
+        int256 positionImpactPendingAmount,
+        uint256 sizeDeltaUsd,
+        Price.Props memory indexTokenPrice
+    ) internal pure returns (int256, int256) {
+        int256 proportionalPendingImpactAmount = Precision.mulDiv(positionImpactPendingAmount, sizeDeltaUsd, sizeInUsd);
+
+        // minimize the positive impact, maximize the negative impact
+        int256 proportionalImpactPendingUsd = proportionalPendingImpactAmount > 0
+            ? proportionalPendingImpactAmount * indexTokenPrice.min.toInt256()
+            : proportionalPendingImpactAmount * indexTokenPrice.max.toInt256();
+
+        return (proportionalPendingImpactAmount, proportionalImpactPendingUsd);
     }
 
     function updatePositionLastSrcChainId(DataStore dataStore, bytes32 positionKey, uint256 srcChainId) internal {
