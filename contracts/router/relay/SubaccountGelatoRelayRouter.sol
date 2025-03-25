@@ -8,8 +8,6 @@ import "../../feature/FeatureUtils.sol";
 import "../../subaccount/SubaccountUtils.sol";
 import "./BaseGelatoRelayRouter.sol";
 
-import "hardhat/console.sol";
-
 contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     mapping(address => uint256) public subaccountApprovalNonces;
 
@@ -37,7 +35,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         SubaccountApproval calldata subaccountApproval,
         address account,
         address subaccount,
-        BatchCreateOrderParams[] calldata batchCreateOrderParamsList,
+        IBaseOrderUtils.CreateOrderParams[] calldata createOrderParamsList,
         UpdateOrderParams[] calldata updateOrderParamsList,
         bytes32[] calldata cancelOrderKeys
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) {
@@ -49,17 +47,17 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             relayParams,
             subaccountApproval,
             account,
-            batchCreateOrderParamsList,
+            createOrderParamsList,
             updateOrderParamsList,
             cancelOrderKeys
         );
         _validateCall(relayParams, subaccount, vars.structHash);
 
-        for (uint256 i = 0; i < batchCreateOrderParamsList.length; i++) {
-            _validateCreateOrderParams(account, batchCreateOrderParamsList[i].params);
+        for (uint256 i = 0; i < createOrderParamsList.length; i++) {
+            _validateCreateOrderParams(account, createOrderParamsList[i]);
         }
 
-        vars.actionsCount = batchCreateOrderParamsList.length + updateOrderParamsList.length + cancelOrderKeys.length;
+        vars.actionsCount = createOrderParamsList.length + updateOrderParamsList.length + cancelOrderKeys.length;
         if (vars.actionsCount == 0) {
             revert Errors.RelayEmptyBatch();
         }
@@ -75,46 +73,12 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         _batch(
             relayParams,
             account,
-            batchCreateOrderParamsList,
+            createOrderParamsList,
             updateOrderParamsList,
             cancelOrderKeys,
             false, // isSubaccount
             vars.startingGas
         );
-    }
-
-    function _test(
-        RelayParams calldata relayParams,
-        BatchCreateOrderParams[] calldata batchCreateOrderParamsList,
-        UpdateOrderParams[] calldata updateOrderParamsList,
-        bytes32[] calldata cancelOrderKeys
-    ) internal view {
-        uint256 gas0 = gasleft();
-        bytes32 foo = keccak256(
-            abi.encode(
-                RelayUtils.BATCH_TYPEHASH,
-                address(0),
-                RelayUtils.getBatchCreateOrderParamsListStructHash(batchCreateOrderParamsList),
-                RelayUtils.getUpdateOrderParamsListStructHash(updateOrderParamsList),
-                keccak256(abi.encodePacked(cancelOrderKeys)),
-                RelayUtils.getRelayParamsHash(relayParams),
-                bytes32(0)
-            )
-        );
-        console.log("gas 0", gas0 - gasleft());
-        uint256 gas1 = gasleft();
-        bytes32 bar = keccak256(
-            abi.encode(
-                RelayUtils.BATCH_TYPEHASH,
-                RelayUtils.getBatchCreateOrderParamsListStructHash(batchCreateOrderParamsList),
-                RelayUtils.getUpdateOrderParamsListStructHash(updateOrderParamsList),
-                keccak256(abi.encodePacked(cancelOrderKeys)),
-                RelayUtils.getRelayParamsHash(relayParams)
-            )
-        );
-        console.log("gas 1", gas1 - gasleft());
-        console.logBytes32(foo);
-        console.logBytes32(bar);
     }
 
     function _validateCreateOrderParams(
@@ -136,7 +100,6 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         SubaccountApproval calldata subaccountApproval,
         address account, // main account
         address subaccount,
-        uint256 collateralDeltaAmount,
         IBaseOrderUtils.CreateOrderParams memory params // can't use calldata because need to modify params.numbers.executionFee
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) returns (bytes32) {
         uint256 startingGas = gasleft();
@@ -145,7 +108,6 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             relayParams,
             subaccountApproval,
             account,
-            collateralDeltaAmount,
             params
         );
         _validateCall(relayParams, subaccount, structHash);
@@ -157,7 +119,6 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             _createOrder(
                 relayParams,
                 account,
-                collateralDeltaAmount,
                 params,
                 true, // isSubaccount
                 startingGas

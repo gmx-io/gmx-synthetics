@@ -311,7 +311,7 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
   if (generalConfig.relayExecutionGasFeePerOraclePrice) {
     await handleConfig(
       "uint",
-      keys.RELAY_EXECUTION_GAS_FEE_PER_ORACLE_PRICE,
+      keys.RELAY_EXECUTION_GAS_FEE_PER_ATOMIC_ORACLE_PRICE,
       "0x",
       generalConfig.relayExecutionGasFeePerOraclePrice
     );

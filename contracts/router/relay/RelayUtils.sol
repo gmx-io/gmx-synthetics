@@ -36,6 +36,8 @@ struct TokenPermit {
 }
 
 struct ExternalCalls {
+    address token;
+    uint256 amount;
     address[] externalCallTargets;
     bytes[] externalCallDataList;
     address[] refundTokens;
@@ -44,7 +46,7 @@ struct ExternalCalls {
 
 struct RelayParams {
     OracleUtils.SetPricesParams oracleParams;
-    ExternalCalls externalCalls;
+    ExternalCalls[] externalCallsList;
     TokenPermit[] tokenPermits;
     FeeParams fee;
     uint256 userNonce;
@@ -64,19 +66,15 @@ struct UpdateOrderParams {
     uint256 executionFeeIncrease;
 }
 
-struct BatchCreateOrderParams {
-    uint256 collateralDeltaAmount;
-    IBaseOrderUtils.CreateOrderParams params;
-}
-
 string constant UPDATE_ORDER_PARAMS = "UpdateOrderParams(bytes32 key,uint256 sizeDeltaUsd,uint256 acceptablePrice,uint256 triggerPrice,uint256 minOutputAmount,uint256 validFromTime,bool autoCancel,uint256 executionFeeIncrease)";
 
 string constant CREATE_ORDER_ADDRESSES = "CreateOrderAddresses(address receiver,address cancellationReceiver,address callbackContract,address uiFeeReceiver,address market,address initialCollateralToken,address[] swapPath)";
 string constant CREATE_ORDER_NUMBERS = "CreateOrderNumbers(uint256 sizeDeltaUsd,uint256 initialCollateralDeltaAmount,uint256 triggerPrice,uint256 acceptablePrice,uint256 executionFee,uint256 callbackGasLimit,uint256 minOutputAmount,uint256 validFromTime)";
 
-string constant BATCH_CREATE_ORDER_PARAMS = string(
+string constant CREATE_ORDER_PARAMS_ROOT  = "CreateOrderParams(CreateOrderAddresses addresses,CreateOrderNumbers numbers,uint256 orderType,uint256 decreasePositionSwapType,bool isLong,bool shouldUnwrapNativeToken,bool autoCancel,bytes32 referralCode)";
+string constant CREATE_ORDER_PARAMS = string(
     abi.encodePacked(
-        "BatchCreateOrderParams(uint256 collateralDeltaAmount,CreateOrderAddresses addresses,CreateOrderNumbers numbers,uint256 orderType,uint256 decreasePositionSwapType,bool isLong,bool shouldUnwrapNativeToken,bool autoCancel,bytes32 referralCode)",
+        "CreateOrderParams(CreateOrderAddresses addresses,CreateOrderNumbers numbers,uint256 orderType,uint256 decreasePositionSwapType,bool isLong,bool shouldUnwrapNativeToken,bool autoCancel,bytes32 referralCode)",
         CREATE_ORDER_ADDRESSES,
         CREATE_ORDER_NUMBERS
     )
@@ -97,10 +95,11 @@ library RelayUtils {
 
     bytes32 public constant CREATE_ORDER_NUMBERS_TYPEHASH = keccak256(bytes(CREATE_ORDER_NUMBERS));
     bytes32 public constant CREATE_ORDER_ADDRESSES_TYPEHASH = keccak256(bytes(CREATE_ORDER_ADDRESSES));
+    bytes32 public constant CREATE_ORDER_PARAMS_TYPEHASH = keccak256(bytes(CREATE_ORDER_PARAMS));
     bytes32 public constant CREATE_ORDER_TYPEHASH =
         keccak256(
             abi.encodePacked(
-                "CreateOrder(address account,uint256 collateralDeltaAmount,CreateOrderAddresses addresses,CreateOrderNumbers numbers,uint256 orderType,uint256 decreasePositionSwapType,bool isLong,bool shouldUnwrapNativeToken,bool autoCancel,bytes32 referralCode,bytes32 relayParams,bytes32 subaccountApproval)",
+                "CreateOrder(address account,CreateOrderAddresses addresses,CreateOrderNumbers numbers,uint256 orderType,uint256 decreasePositionSwapType,bool isLong,bool shouldUnwrapNativeToken,bool autoCancel,bytes32 referralCode,bytes32 relayParams,bytes32 subaccountApproval)",
                 CREATE_ORDER_ADDRESSES,
                 CREATE_ORDER_NUMBERS
             )
@@ -116,28 +115,28 @@ library RelayUtils {
     bytes32 public constant REMOVE_SUBACCOUNT_TYPEHASH =
         keccak256(bytes("RemoveSubaccount(address subaccount,bytes32 relayParams)"));
 
-    bytes32 public constant BATCH_CREATE_ORDER_PARAMS_TYPEHASH = keccak256(bytes(BATCH_CREATE_ORDER_PARAMS));
     bytes32 public constant BATCH_TYPEHASH =
         keccak256(
             abi.encodePacked(
-                "Batch(address account,BatchCreateOrderParams[] batchCreateOrderParamsList,UpdateOrderParams[] updateOrderParamsList,bytes32[] cancelOrderKeys,bytes32 relayParams,bytes32 subaccountApproval)",
-                BATCH_CREATE_ORDER_PARAMS,
+                "Batch(address account,CreateOrderParams[] createOrderParamsList,UpdateOrderParams[] updateOrderParamsList,bytes32[] cancelOrderKeys,bytes32 relayParams,bytes32 subaccountApproval)",
+                // according to EIP-712 all types following the root type should be in alphabetical order
+                // can't use CREATE_ORDER_PARAMS because the resulting order would be incorrect: CreateOrderParams, CreateOrderAddresses, CreateOrderNumbers
+                // it should be CreateOrderAddresses, CreateOrderNumbers, CreateOrderParams
+                CREATE_ORDER_ADDRESSES,
+                CREATE_ORDER_NUMBERS,
+                CREATE_ORDER_PARAMS_ROOT,
                 UPDATE_ORDER_PARAMS
             )
         );
 
-    function swapFeeTokens(
-        Contracts memory contracts,
-        Oracle oracle,
-        FeeParams calldata fee
-    ) external returns (uint256) {
+    function swapFeeTokens(Contracts memory contracts, Oracle oracle, FeeParams calldata fee) external {
         oracle.validateSequencerUp();
 
         // swap fee tokens to WNT
         MarketUtils.validateSwapPath(contracts.dataStore, fee.feeSwapPath);
         Market.Props[] memory swapPathMarkets = MarketUtils.getSwapPathMarkets(contracts.dataStore, fee.feeSwapPath);
 
-        (address outputToken, uint256 outputAmount) = SwapUtils.swap(
+        (address outputToken, ) = SwapUtils.swap(
             SwapUtils.SwapParams({
                 dataStore: contracts.dataStore,
                 eventEmitter: contracts.eventEmitter,
@@ -158,8 +157,6 @@ library RelayUtils {
         if (outputToken != contracts.wnt) {
             revert Errors.UnexpectedRelayFeeTokenAfterSwap(outputToken, contracts.wnt);
         }
-
-        return outputAmount;
     }
 
     function getRelayParamsHash(RelayParams calldata relayParams) internal pure returns (bytes32) {
@@ -167,7 +164,7 @@ library RelayUtils {
             keccak256(
                 abi.encode(
                     relayParams.oracleParams,
-                    relayParams.externalCalls,
+                    relayParams.externalCallsList,
                     relayParams.tokenPermits,
                     relayParams.fee,
                     relayParams.userNonce,
@@ -205,7 +202,6 @@ library RelayUtils {
         RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
         address account,
-        uint256 collateralDeltaAmount,
         IBaseOrderUtils.CreateOrderParams memory params
     ) internal pure returns (bytes32) {
         bytes32 relayParamsHash = getRelayParamsHash(relayParams);
@@ -216,7 +212,6 @@ library RelayUtils {
                 abi.encode(
                     CREATE_ORDER_TYPEHASH,
                     account,
-                    collateralDeltaAmount,
                     getCreateOrderAddressesStructHash(params.addresses),
                     getCreateOrderNumbersStructHash(params.numbers),
                     uint256(params.orderType),
@@ -233,7 +228,6 @@ library RelayUtils {
 
     function getCreateOrderStructHash(
         RelayParams calldata relayParams,
-        uint256 collateralDeltaAmount,
         IBaseOrderUtils.CreateOrderParams memory params
     ) internal pure returns (bytes32) {
         bytes32 relayParamsHash = getRelayParamsHash(relayParams);
@@ -243,7 +237,6 @@ library RelayUtils {
                 abi.encode(
                     CREATE_ORDER_TYPEHASH,
                     address(0),
-                    collateralDeltaAmount,
                     getCreateOrderAddressesStructHash(params.addresses),
                     getCreateOrderNumbersStructHash(params.numbers),
                     uint256(params.orderType),
@@ -355,10 +348,7 @@ library RelayUtils {
         return _getCancelOrderStructHash(relayParams, keccak256(abi.encode(subaccountApproval)), account, key);
     }
 
-    function getCancelOrderStructHash(
-        RelayParams calldata relayParams,
-        bytes32 key
-    ) internal pure returns (bytes32) {
+    function getCancelOrderStructHash(RelayParams calldata relayParams, bytes32 key) internal pure returns (bytes32) {
         return _getCancelOrderStructHash(relayParams, bytes32(0), address(0), key);
     }
 
@@ -370,30 +360,25 @@ library RelayUtils {
     ) internal pure returns (bytes32) {
         return
             keccak256(
-                abi.encode(
-                    CANCEL_ORDER_TYPEHASH,
-                    account,
-                    key,
-                    getRelayParamsHash(relayParams),
-                    subaccountApprovalHash
-                )
+                abi.encode(CANCEL_ORDER_TYPEHASH, account, key, getRelayParamsHash(relayParams), subaccountApprovalHash)
             );
     }
 
-    function getBatchCreateOrderStructHash(BatchCreateOrderParams calldata params) internal pure returns (bytes32) {
+    function getCreateOrderParamsStructHash(
+        IBaseOrderUtils.CreateOrderParams calldata params
+    ) internal pure returns (bytes32) {
         return
             keccak256(
                 abi.encode(
-                    BATCH_CREATE_ORDER_PARAMS_TYPEHASH,
-                    params.collateralDeltaAmount,
-                    getCreateOrderAddressesStructHash(params.params.addresses),
-                    getCreateOrderNumbersStructHash(params.params.numbers),
-                    uint256(params.params.orderType),
-                    uint256(params.params.decreasePositionSwapType),
-                    params.params.isLong,
-                    params.params.shouldUnwrapNativeToken,
-                    params.params.autoCancel,
-                    params.params.referralCode
+                    CREATE_ORDER_PARAMS_TYPEHASH,
+                    getCreateOrderAddressesStructHash(params.addresses),
+                    getCreateOrderNumbersStructHash(params.numbers),
+                    uint256(params.orderType),
+                    uint256(params.decreasePositionSwapType),
+                    params.isLong,
+                    params.shouldUnwrapNativeToken,
+                    params.autoCancel,
+                    params.referralCode
                 )
             );
     }
@@ -402,27 +387,43 @@ library RelayUtils {
         RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
         address account,
-        BatchCreateOrderParams[] calldata batchCreateOrderParamsList,
+        IBaseOrderUtils.CreateOrderParams[] calldata createOrderParamsList,
         UpdateOrderParams[] calldata updateOrderParamsList,
         bytes32[] calldata cancelOrderKeys
     ) public pure returns (bytes32) {
-        return _getBatchStructHash(relayParams, keccak256(abi.encode(subaccountApproval)), account, batchCreateOrderParamsList, updateOrderParamsList, cancelOrderKeys);
+        return
+            _getBatchStructHash(
+                relayParams,
+                keccak256(abi.encode(subaccountApproval)),
+                account,
+                createOrderParamsList,
+                updateOrderParamsList,
+                cancelOrderKeys
+            );
     }
 
     function getBatchStructHash(
         RelayParams calldata relayParams,
-        BatchCreateOrderParams[] calldata batchCreateOrderParamsList,
+        IBaseOrderUtils.CreateOrderParams[] calldata createOrderParamsList,
         UpdateOrderParams[] calldata updateOrderParamsList,
         bytes32[] calldata cancelOrderKeys
     ) internal pure returns (bytes32) {
-        return _getBatchStructHash(relayParams, bytes32(0), address(0), batchCreateOrderParamsList, updateOrderParamsList, cancelOrderKeys);
+        return
+            _getBatchStructHash(
+                relayParams,
+                bytes32(0),
+                address(0),
+                createOrderParamsList,
+                updateOrderParamsList,
+                cancelOrderKeys
+            );
     }
 
     function _getBatchStructHash(
         RelayParams calldata relayParams,
         bytes32 subaccountApprovalHash,
         address account,
-        BatchCreateOrderParams[] calldata batchCreateOrderParamsList,
+        IBaseOrderUtils.CreateOrderParams[] calldata createOrderParamsList,
         UpdateOrderParams[] calldata updateOrderParamsList,
         bytes32[] calldata cancelOrderKeys
     ) internal pure returns (bytes32) {
@@ -431,7 +432,7 @@ library RelayUtils {
                 abi.encode(
                     BATCH_TYPEHASH,
                     account,
-                    getBatchCreateOrderParamsListStructHash(batchCreateOrderParamsList),
+                    getCreateOrderParamsListStructHash(createOrderParamsList),
                     getUpdateOrderParamsListStructHash(updateOrderParamsList),
                     keccak256(abi.encodePacked(cancelOrderKeys)),
                     getRelayParamsHash(relayParams),
@@ -440,14 +441,14 @@ library RelayUtils {
             );
     }
 
-    function getBatchCreateOrderParamsListStructHash(
-        BatchCreateOrderParams[] calldata batchCreateOrderParamsList
+    function getCreateOrderParamsListStructHash(
+        IBaseOrderUtils.CreateOrderParams[] calldata createOrderParamsList
     ) internal pure returns (bytes32) {
-        bytes32[] memory batchCreateOrderStructHashes = new bytes32[](batchCreateOrderParamsList.length);
-        for (uint256 i = 0; i < batchCreateOrderParamsList.length; i++) {
-            batchCreateOrderStructHashes[i] = getBatchCreateOrderStructHash(batchCreateOrderParamsList[i]);
+        bytes32[] memory createOrderParamsStructHashes = new bytes32[](createOrderParamsList.length);
+        for (uint256 i = 0; i < createOrderParamsList.length; i++) {
+            createOrderParamsStructHashes[i] = getCreateOrderParamsStructHash(createOrderParamsList[i]);
         }
-        return keccak256(abi.encodePacked(batchCreateOrderStructHashes));
+        return keccak256(abi.encodePacked(createOrderParamsStructHashes));
     }
 
     function getUpdateOrderParamsListStructHash(

@@ -88,7 +88,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     function _batch(
         RelayParams calldata relayParams,
         address account,
-        BatchCreateOrderParams[] calldata batchCreateOrderParams,
+        IBaseOrderUtils.CreateOrderParams[] calldata createOrderParams,
         UpdateOrderParams[] calldata updateOrderParamsList,
         bytes32[] calldata cancelOrderKeys,
         bool isSubaccount,
@@ -98,15 +98,9 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         vars.contracts = _getContracts();
         vars.residualFeeAmount = _handleRelayBeforeAction(vars.contracts, relayParams, account, isSubaccount);
 
-        for (uint256 i = 0; i < batchCreateOrderParams.length; i++) {
-            vars.residualFeeAmount -= batchCreateOrderParams[i].params.numbers.executionFee;
-            _createOrderImpl(
-                vars.contracts,
-                account,
-                batchCreateOrderParams[i].params,
-                isSubaccount,
-                batchCreateOrderParams[i].collateralDeltaAmount
-            );
+        for (uint256 i = 0; i < createOrderParams.length; i++) {
+            vars.residualFeeAmount -= createOrderParams[i].numbers.executionFee;
+            _createOrderImpl(vars.contracts, account, createOrderParams[i], isSubaccount);
         }
 
         for (uint256 i = 0; i < updateOrderParamsList.length; i++) {
@@ -129,21 +123,14 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     function _createOrder(
         RelayParams calldata relayParams,
         address account,
-        uint256 collateralDeltaAmount,
         IBaseOrderUtils.CreateOrderParams memory params, // can't use calldata because need to modify params.numbers.executionFee
         bool isSubaccount,
         uint256 startingGas
     ) internal returns (bytes32) {
         Contracts memory contracts = _getContracts();
-        uint256 feeAmount = _handleRelayBeforeAction(
-            contracts,
-            relayParams,
-            account,
-            // params.numbers.executionFee,
-            isSubaccount
-        );
+        uint256 feeAmount = _handleRelayBeforeAction(contracts, relayParams, account, isSubaccount);
 
-        bytes32 key = _createOrderImpl(contracts, account, params, isSubaccount, collateralDeltaAmount);
+        bytes32 key = _createOrderImpl(contracts, account, params, isSubaccount);
         _handleRelayAfterAction(
             contracts,
             startingGas,
@@ -158,23 +145,25 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         Contracts memory contracts,
         address account,
         IBaseOrderUtils.CreateOrderParams memory params,
-        bool isSubaccount,
-        uint256 collateralDeltaAmount
+        bool isSubaccount
     ) internal returns (bytes32) {
         IERC20(contracts.wnt).safeTransfer(address(contracts.orderVault), params.numbers.executionFee);
 
         if (
-            params.orderType == Order.OrderType.MarketSwap ||
-            params.orderType == Order.OrderType.LimitSwap ||
-            params.orderType == Order.OrderType.MarketIncrease ||
-            params.orderType == Order.OrderType.LimitIncrease ||
-            params.orderType == Order.OrderType.StopIncrease
+            (params.orderType == Order.OrderType.MarketSwap ||
+                params.orderType == Order.OrderType.LimitSwap ||
+                params.orderType == Order.OrderType.MarketIncrease ||
+                params.orderType == Order.OrderType.LimitIncrease ||
+                params.orderType == Order.OrderType.StopIncrease) && params.numbers.initialCollateralDeltaAmount != 0
         ) {
+            // OrderUtils set initialCollateralDeltaAmount based on the amount of received initialCollateralToken
+            // instead of using initialCollateralDeltaAmount from params
+            // so it is possible to pass initialCollateralDeltaAmount=0 and send tokens to orderVault through external calls
             _sendTokens(
                 account,
                 params.addresses.initialCollateralToken,
                 address(contracts.orderVault),
-                collateralDeltaAmount
+                params.numbers.initialCollateralDeltaAmount
             );
         }
 
@@ -239,7 +228,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         );
     }
 
-
     function _cancelOrder(
         RelayParams calldata relayParams,
         address account,
@@ -280,17 +268,45 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         address account,
         bool isSubaccount
     ) internal returns (uint256) {
-        if (relayParams.externalCalls.externalCallTargets.length != 0 && relayParams.fee.feeSwapPath.length != 0) {
-            revert Errors.InvalidRelayParams();
-        }
-
-        if (relayParams.externalCalls.externalCallTargets.length != 0 && isSubaccount) {
+        if (relayParams.externalCallsList.length != 0 && isSubaccount) {
             // malicious subaccount could steal main account funds through external calls
             revert Errors.NonEmptyExternalCallsForSubaccountOrder();
         }
 
         _handleTokenPermits(relayParams.tokenPermits);
+        _handleExternalCalls(account, relayParams.externalCallsList);
+
         return _handleRelayFee(contracts, relayParams, account);
+    }
+
+    function _handleExternalCalls(address account, ExternalCalls[] calldata externalCallsList) internal {
+        if (externalCallsList.length == 0) {
+            return;
+        }
+
+        for (uint256 i = 0; i < externalCallsList.length; i++) {
+            ExternalCalls calldata externalCalls = externalCallsList[i];
+            if (
+                externalCalls.externalCallTargets.length == 0 ||
+                externalCalls.token == address(0) ||
+                externalCalls.amount == 0
+            ) {
+                revert Errors.InvalidExternalCalls(
+                    externalCalls.token,
+                    externalCalls.amount,
+                    externalCalls.externalCallTargets.length
+                );
+            }
+
+            _sendTokens(account, externalCalls.token, address(externalHandler), externalCalls.amount);
+
+            externalHandler.makeExternalCalls(
+                externalCalls.externalCallTargets,
+                externalCalls.externalCallDataList,
+                externalCalls.refundTokens,
+                externalCalls.refundReceivers
+            );
+        }
     }
 
     function _handleTokenPermits(TokenPermit[] calldata tokenPermits) internal {
@@ -333,27 +349,19 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             revert Errors.UnsupportedRelayFeeToken(_getFeeToken(), contracts.wnt);
         }
 
-        uint256 outputAmount;
-        if (relayParams.externalCalls.externalCallTargets.length > 0) {
-            _sendTokens(account, relayParams.fee.feeToken, address(externalHandler), relayParams.fee.feeAmount);
-            externalHandler.makeExternalCalls(
-                relayParams.externalCalls.externalCallTargets,
-                relayParams.externalCalls.externalCallDataList,
-                relayParams.externalCalls.refundTokens,
-                relayParams.externalCalls.refundReceivers
-            );
-            outputAmount = ERC20(contracts.wnt).balanceOf(address(this));
-        } else if (relayParams.fee.feeSwapPath.length != 0) {
+        if (relayParams.fee.feeSwapPath.length != 0) {
             _sendTokens(account, relayParams.fee.feeToken, address(contracts.orderVault), relayParams.fee.feeAmount);
-            outputAmount = RelayUtils.swapFeeTokens(contracts, oracle, relayParams.fee);
+            RelayUtils.swapFeeTokens(contracts, oracle, relayParams.fee);
         } else if (relayParams.fee.feeToken == contracts.wnt) {
-            _sendTokens(account, relayParams.fee.feeToken, address(this), relayParams.fee.feeAmount);
-            outputAmount = relayParams.fee.feeAmount;
+            // fee tokens could be sent through external calls
+            // in this case feeAmount could be 0 and there is no need to call _sendTokens
+            if (relayParams.fee.feeAmount != 0) {
+                _sendTokens(account, relayParams.fee.feeToken, address(this), relayParams.fee.feeAmount);
+            }
         } else {
             revert Errors.UnexpectedRelayFeeToken(relayParams.fee.feeToken, contracts.wnt);
         }
-
-        return outputAmount;
+        return ERC20(contracts.wnt).balanceOf(address(this));
     }
 
     function _handleRelayAfterAction(

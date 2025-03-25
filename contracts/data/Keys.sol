@@ -222,7 +222,7 @@ library Keys {
     // @dev key for the multiplier used when calculating execution fee
     bytes32 public constant EXECUTION_GAS_FEE_MULTIPLIER_FACTOR = keccak256(abi.encode("EXECUTION_GAS_FEE_MULTIPLIER_FACTOR"));
 
-    bytes32 public constant RELAY_EXECUTION_GAS_FEE_PER_ORACLE_PRICE = keccak256(abi.encode("RELAY_EXECUTION_GAS_FEE_PER_ORACLE_PRICE"));
+    bytes32 public constant RELAY_EXECUTION_GAS_FEE_PER_ATOMIC_ORACLE_PRICE = keccak256(abi.encode("RELAY_EXECUTION_GAS_FEE_PER_ATOMIC_ORACLE_PRICE"));
 
     // @dev key for the max execution fee multiplier
     bytes32 public constant MAX_EXECUTION_FEE_MULTIPLIER_FACTOR = keccak256(abi.encode("MAX_EXECUTION_FEE_MULTIPLIER_FACTOR"));

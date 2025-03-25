@@ -1,12 +1,12 @@
 import { BigNumberish, ethers } from "ethers";
-import { sendRelayTransaction } from "./helpers";
-import { getRelayParams } from "./helpers";
+import { sendRelayTransaction, UpdateOrderParams } from "./helpers";
+import { getRelayParams, CreateOrderParams } from "./helpers";
 import { getBatchSignature } from "./signatures";
 import { getCancelOrderSignature } from "./signatures";
 import { getUpdateOrderSignature } from "./signatures";
 import { getCreateOrderSignature } from "./signatures";
 
-export async function sendCreateOrder(p: {
+export async function getSendCreateOrderCalldata(p: {
   signer: ethers.Signer;
   sender: ethers.Signer;
   oracleParams?: {
@@ -14,12 +14,14 @@ export async function sendCreateOrder(p: {
     providers: string[];
     data: string[];
   };
-  externalCalls?: {
+  externalCallsList?: {
+    token: string;
+    amount: BigNumberish;
     externalCallTargets: string[];
     externalCallDataList: string[];
     refundTokens: string[];
     refundReceivers: string[];
-  };
+  }[];
   tokenPermits?: {
     token: string;
     spender: string;
@@ -31,7 +33,6 @@ export async function sendCreateOrder(p: {
     feeAmount: BigNumberish;
     feeSwapPath: string[];
   };
-  collateralDeltaAmount: BigNumberish;
   account: string;
   params: any;
   signature?: string;
@@ -49,14 +50,17 @@ export async function sendCreateOrder(p: {
     signature = await getCreateOrderSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
   }
 
-  const createOrderCalldata = p.relayRouter.interface.encodeFunctionData("createOrder", [
+  return p.relayRouter.interface.encodeFunctionData("createOrder", [
     { ...relayParams, signature },
     p.account,
-    p.collateralDeltaAmount,
     p.params,
   ]);
+}
+
+export async function sendCreateOrder(p: Parameters<typeof getSendCreateOrderCalldata>[0]) {
+  const calldata = await getSendCreateOrderCalldata(p);
   return sendRelayTransaction({
-    calldata: createOrderCalldata,
+    calldata,
     ...p,
   });
 }
@@ -183,20 +187,8 @@ export async function sendBatch(p: {
     feeSwapPath: string[];
   };
   cancelOrderKeys: string[];
-  batchCreateOrderParamsList: {
-    collateralDeltaAmount: BigNumberish;
-    params: any;
-  }[];
-  updateOrderParamsList: {
-    key: string;
-    sizeDeltaUsd: BigNumberish;
-    acceptablePrice: BigNumberish;
-    triggerPrice: BigNumberish;
-    minOutputAmount: BigNumberish;
-    validFromTime: BigNumberish;
-    autoCancel: boolean;
-    executionFeeIncrease: BigNumberish;
-  }[];
+  createOrderParamsList: CreateOrderParams[];
+  updateOrderParamsList: UpdateOrderParams[];
   chainId: BigNumberish;
   account: string;
   deadline: BigNumberish;
@@ -215,7 +207,7 @@ export async function sendBatch(p: {
   const batchCalldata = p.relayRouter.interface.encodeFunctionData("batch", [
     { ...relayParams, signature },
     p.account,
-    p.batchCreateOrderParamsList,
+    p.createOrderParamsList,
     p.updateOrderParamsList,
     p.cancelOrderKeys,
   ]);

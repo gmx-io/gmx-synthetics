@@ -62,7 +62,7 @@ describe("SubaccountGelatoRelayRouter", () => {
       },
       numbers: {
         sizeDeltaUsd: decimalToFloat(1000),
-        initialCollateralDeltaAmount: 0,
+        initialCollateralDeltaAmount: expandDecimals(1, 17),
         triggerPrice: decimalToFloat(4800),
         acceptablePrice: decimalToFloat(4900),
         executionFee: expandDecimals(1, 15),
@@ -112,7 +112,6 @@ describe("SubaccountGelatoRelayRouter", () => {
         feeSwapPath: [],
       },
       tokenPermits: [],
-      collateralDeltaAmount: expandDecimals(1, 17),
       account: user1.address,
       subaccountApprovalSigner: user1,
       // TODO use different subaccount wallet
@@ -167,12 +166,16 @@ describe("SubaccountGelatoRelayRouter", () => {
       await expect(
         sendCreateOrder({
           ...createOrderParams,
-          externalCalls: {
-            externalCallTargets: [user0.address],
-            externalCallDataList: ["0x"],
-            refundTokens: [],
-            refundReceivers: [],
-          },
+          externalCallsList: [
+            {
+              token: ethers.constants.AddressZero,
+              amount: 0,
+              externalCallTargets: [user0.address],
+              externalCallDataList: ["0x"],
+              refundTokens: [],
+              refundReceivers: [],
+            },
+          ],
         })
       ).to.be.revertedWithCustomError(errorsContract, "NonEmptyExternalCallsForSubaccountOrder");
     });
@@ -566,7 +569,7 @@ describe("SubaccountGelatoRelayRouter", () => {
         10
       );
 
-      const collateralDeltaAmount = createOrderParams.collateralDeltaAmount;
+      const collateralDeltaAmount = createOrderParams.params.numbers.initialCollateralDeltaAmount;
       const gelatoRelayFee = createOrderParams.gelatoRelayFeeAmount;
 
       const tokenPermit = await getTokenPermit(
@@ -776,12 +779,16 @@ describe("SubaccountGelatoRelayRouter", () => {
       await expect(
         sendUpdateOrder({
           ...updateOrderParams,
-          externalCalls: {
-            externalCallTargets: [user0.address],
-            externalCallDataList: ["0x"],
-            refundTokens: [],
-            refundReceivers: [],
-          },
+          externalCallsList: [
+            {
+              token: ethers.constants.AddressZero,
+              amount: 0,
+              externalCallTargets: [user0.address],
+              externalCallDataList: ["0x"],
+              refundTokens: [],
+              refundReceivers: [],
+            },
+          ],
         })
       ).to.be.revertedWithCustomError(errorsContract, "NonEmptyExternalCallsForSubaccountOrder");
     });
@@ -987,12 +994,16 @@ describe("SubaccountGelatoRelayRouter", () => {
       await expect(
         sendCancelOrder({
           ...cancelOrderParams,
-          externalCalls: {
-            externalCallTargets: [user0.address],
-            externalCallDataList: ["0x"],
-            refundTokens: [],
-            refundReceivers: [],
-          },
+          externalCallsList: [
+            {
+              token: ethers.constants.AddressZero,
+              amount: 0,
+              externalCallTargets: [user0.address],
+              externalCallDataList: ["0x"],
+              refundTokens: [],
+              refundReceivers: [],
+            },
+          ],
           key: orderKeys[0],
         })
       ).to.be.revertedWithCustomError(errorsContract, "NonEmptyExternalCallsForSubaccountOrder");
@@ -1083,21 +1094,25 @@ describe("SubaccountGelatoRelayRouter", () => {
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, 0);
       const tx = await sendRemoveSubaccount({
         ...params,
-        externalCalls: {
-          externalCallTargets: [externalExchange.address],
-          externalCallDataList: [
-            externalExchange.interface.encodeFunctionData("transfer", [
-              wnt.address,
-              subaccountGelatoRelayRouter.address,
-              expandDecimals(1, 17),
-            ]),
-          ],
-          refundTokens: [],
-          refundReceivers: [],
-        },
+        externalCallsList: [
+          {
+            token: usdc.address,
+            amount: feeAmount,
+            externalCallTargets: [externalExchange.address],
+            externalCallDataList: [
+              externalExchange.interface.encodeFunctionData("transfer", [
+                wnt.address,
+                subaccountGelatoRelayRouter.address,
+                expandDecimals(1, 17),
+              ]),
+            ],
+            refundTokens: [],
+            refundReceivers: [],
+          },
+        ],
         feeParams: {
-          feeToken: usdc.address,
-          feeAmount,
+          feeToken: wnt.address,
+          feeAmount: 0,
           feeSwapPath: [],
         },
       });
@@ -1141,7 +1156,7 @@ describe("SubaccountGelatoRelayRouter", () => {
         },
         tokenPermits: [tokenPermit],
         account: user1.address,
-        batchCreateOrderParamsList: [],
+        createOrderParamsList: [],
         updateOrderParamsList: [],
         cancelOrderKeys: [],
         deadline: 9999999999,
@@ -1178,17 +1193,8 @@ describe("SubaccountGelatoRelayRouter", () => {
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, 0);
       const executionFee = expandDecimals(2, 15);
       batchParams.feeParams.feeAmount = expandDecimals(6, 15); // relay fee is 0.001, execution fee is 0.002, 0.003 should be sent back
-      batchParams.batchCreateOrderParamsList = [
-        {
-          collateralDeltaAmount: expandDecimals(1, 17),
-          params: defaultCreateOrderParams,
-        },
-        {
-          collateralDeltaAmount: expandDecimals(1, 17),
-          params: defaultCreateOrderParams,
-        },
-      ];
-      batchParams.batchCreateOrderParamsList[0].params.numbers.executionFee = executionFee;
+      batchParams.createOrderParamsList = [defaultCreateOrderParams, defaultCreateOrderParams];
+      batchParams.createOrderParamsList[0].numbers.executionFee = executionFee;
       expect(await getOrderCount(dataStore)).eq(0);
 
       const tx = await sendBatch({
@@ -1214,12 +1220,8 @@ describe("SubaccountGelatoRelayRouter", () => {
       expect(order2.numbers.minOutputAmount).eq(700);
       expect(order2.flags.autoCancel).eq(false);
 
-      batchParams.batchCreateOrderParamsList = [
-        {
-          collateralDeltaAmount: 500600,
-          params: defaultCreateOrderParams,
-        },
-      ];
+      defaultCreateOrderParams.numbers.initialCollateralDeltaAmount = 500600;
+      batchParams.createOrderParamsList = [defaultCreateOrderParams];
       batchParams.cancelOrderKeys = [orderKeys[0]];
       batchParams.updateOrderParamsList = [
         {

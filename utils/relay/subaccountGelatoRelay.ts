@@ -7,6 +7,8 @@ import {
   signTypedData,
   sendRelayTransaction,
   SubaccountApproval,
+  CreateOrderParams,
+  UpdateOrderParams,
 } from "./helpers";
 import {
   getBatchSignature,
@@ -28,12 +30,14 @@ export async function sendCreateOrder(p: {
     nonce: BigNumberish;
     signature?: string;
   };
-  externalCalls?: {
+  externalCallsList?: {
+    token: string;
+    amount: BigNumberish;
     externalCallTargets: string[];
     externalCallDataList: string[];
     refundTokens: string[];
     refundReceivers: string[];
-  };
+  }[];
   signer: ethers.Signer;
   sender: ethers.Signer;
   oracleParams?: {
@@ -52,7 +56,6 @@ export async function sendCreateOrder(p: {
     feeAmount: BigNumberish;
     feeSwapPath: string[];
   };
-  collateralDeltaAmount: BigNumberish;
   account: string;
   params: any;
   signature?: string;
@@ -81,7 +84,6 @@ export async function sendCreateOrder(p: {
     subaccountApproval,
     p.account,
     p.subaccount,
-    p.collateralDeltaAmount,
     p.params,
   ]);
   return sendRelayTransaction({
@@ -111,12 +113,14 @@ export async function sendUpdateOrder(p: {
     feeAmount: BigNumberish;
     feeSwapPath: string[];
   };
-  externalCalls?: {
+  externalCallsList?: {
+    token: string;
+    amount: BigNumberish;
     externalCallTargets: string[];
     externalCallDataList: string[];
     refundTokens: string[];
     refundReceivers: string[];
-  };
+  }[];
   subaccount: string;
   subaccountApproval: {
     subaccount: string;
@@ -239,12 +243,14 @@ export async function sendCancelOrder(p: {
     deadline: BigNumberish;
     chainId: BigNumberish;
   }[];
-  externalCalls?: {
+  externalCallsList?: {
+    token: string;
+    amount: BigNumberish;
     externalCallTargets: string[];
     externalCallDataList: string[];
     refundTokens: string[];
     refundReceivers: string[];
-  };
+  }[];
   feeParams: {
     feeToken: string;
     feeAmount: BigNumberish;
@@ -345,12 +351,14 @@ export async function sendRemoveSubaccount(p: {
     feeAmount: BigNumberish;
     feeSwapPath: string[];
   };
-  externalCalls?: {
+  externalCallsList?: {
+    token: string;
+    amount: BigNumberish;
     externalCallTargets: string[];
     externalCallDataList: string[];
     refundTokens: string[];
     refundReceivers: string[];
-  };
+  }[];
   tokenPermits?: {
     token: string;
     spender: string;
@@ -424,20 +432,8 @@ export async function sendBatch(p: {
     feeSwapPath: string[];
   };
   cancelOrderKeys: string[];
-  batchCreateOrderParamsList: {
-    collateralDeltaAmount: BigNumberish;
-    params: any;
-  }[];
-  updateOrderParamsList: {
-    key: string;
-    sizeDeltaUsd: BigNumberish;
-    acceptablePrice: BigNumberish;
-    triggerPrice: BigNumberish;
-    minOutputAmount: BigNumberish;
-    validFromTime: BigNumberish;
-    autoCancel: boolean;
-    executionFeeIncrease: BigNumberish;
-  }[];
+  createOrderParamsList: CreateOrderParams[];
+  updateOrderParamsList: UpdateOrderParams[];
   chainId: BigNumberish;
   account: string;
   deadline: BigNumberish;
@@ -470,7 +466,7 @@ export async function sendBatch(p: {
     subaccountApproval,
     p.account,
     p.subaccount,
-    p.batchCreateOrderParamsList,
+    p.createOrderParamsList,
     p.updateOrderParamsList,
     p.cancelOrderKeys,
   ]);

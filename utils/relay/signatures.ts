@@ -1,20 +1,35 @@
 import { ethers, BigNumberish } from "ethers";
-import { getDomain, hashRelayParams, hashSubaccountApproval, signTypedData, SubaccountApproval } from "./helpers";
+import {
+  getDomain,
+  hashRelayParams,
+  hashSubaccountApproval,
+  RelayParams,
+  signTypedData,
+  SubaccountApproval,
+  UpdateOrderParams,
+  CreateOrderParams,
+} from "./helpers";
 
 export async function getCreateOrderSignature({
   signer,
   relayParams,
   subaccountApproval = undefined,
-  collateralDeltaAmount,
   account,
   verifyingContract,
   params,
   chainId,
+}: {
+  signer: ethers.Signer;
+  relayParams: RelayParams;
+  subaccountApproval?: SubaccountApproval;
+  account?: string;
+  verifyingContract: string;
+  params: any;
+  chainId: BigNumberish;
 }) {
   const types = {
     CreateOrder: [
       { name: "account", type: "address" },
-      { name: "collateralDeltaAmount", type: "uint256" },
       { name: "addresses", type: "CreateOrderAddresses" },
       { name: "numbers", type: "CreateOrderNumbers" },
       { name: "orderType", type: "uint256" },
@@ -50,7 +65,6 @@ export async function getCreateOrderSignature({
   const domain = getDomain(chainId, verifyingContract);
   const typedData = {
     account: subaccountApproval ? account : ethers.constants.AddressZero,
-    collateralDeltaAmount,
     addresses: params.addresses,
     numbers: params.numbers,
     orderType: params.orderType,
@@ -69,7 +83,7 @@ export async function getCreateOrderSignature({
 export async function getBatchSignature({
   signer,
   relayParams,
-  batchCreateOrderParamsList,
+  createOrderParamsList,
   updateOrderParamsList,
   cancelOrderKeys,
   verifyingContract,
@@ -78,9 +92,9 @@ export async function getBatchSignature({
   subaccountApproval,
 }: {
   signer: ethers.Signer;
-  relayParams: any;
-  batchCreateOrderParamsList: any[];
-  updateOrderParamsList: any[];
+  relayParams: RelayParams;
+  createOrderParamsList: CreateOrderParams[];
+  updateOrderParamsList: UpdateOrderParams[];
   cancelOrderKeys: string[];
   verifyingContract: string;
   chainId: BigNumberish;
@@ -93,14 +107,13 @@ export async function getBatchSignature({
   const types = {
     Batch: [
       { name: "account", type: "address" },
-      { name: "batchCreateOrderParamsList", type: "BatchCreateOrderParams[]" },
+      { name: "createOrderParamsList", type: "CreateOrderParams[]" },
       { name: "updateOrderParamsList", type: "UpdateOrderParams[]" },
       { name: "cancelOrderKeys", type: "bytes32[]" },
       { name: "relayParams", type: "bytes32" },
       { name: "subaccountApproval", type: "bytes32" },
     ],
-    BatchCreateOrderParams: [
-      { name: "collateralDeltaAmount", type: "uint256" },
+    CreateOrderParams: [
       { name: "addresses", type: "CreateOrderAddresses" },
       { name: "numbers", type: "CreateOrderNumbers" },
       { name: "orderType", type: "uint256" },
@@ -148,16 +161,15 @@ export async function getBatchSignature({
   };
   const typedData = {
     account: subaccountApproval ? account : ethers.constants.AddressZero,
-    batchCreateOrderParamsList: batchCreateOrderParamsList.map((p) => ({
-      collateralDeltaAmount: p.collateralDeltaAmount,
-      addresses: p.params.addresses,
-      numbers: p.params.numbers,
-      orderType: p.params.orderType,
-      decreasePositionSwapType: p.params.decreasePositionSwapType,
-      isLong: p.params.isLong,
-      shouldUnwrapNativeToken: p.params.shouldUnwrapNativeToken,
+    createOrderParamsList: createOrderParamsList.map((p) => ({
+      addresses: p.addresses,
+      numbers: p.numbers,
+      orderType: p.orderType,
+      decreasePositionSwapType: p.decreasePositionSwapType,
+      isLong: p.isLong,
+      shouldUnwrapNativeToken: p.shouldUnwrapNativeToken,
       autoCancel: false,
-      referralCode: p.params.referralCode,
+      referralCode: p.referralCode,
     })),
     updateOrderParamsList: updateOrderParamsList.map((p) => ({
       key: p.key,

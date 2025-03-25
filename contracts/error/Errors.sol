@@ -442,4 +442,6 @@ library Errors {
     error NonEmptyExternalCallsForSubaccountOrder();
     error InvalidRelayParams();
     error RelayEmptyBatch();
+    error RelayCalldataTooLong(uint256 calldataLength);
+    error InvalidExternalCalls(address token, uint256 amount, uint256 targetsLength);
 }

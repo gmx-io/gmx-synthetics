@@ -27,7 +27,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
     function batch(
         RelayParams calldata relayParams,
         address account,
-        BatchCreateOrderParams[] calldata batchCreateOrderParamsList,
+        IBaseOrderUtils.CreateOrderParams[] calldata createOrderParamsList,
         UpdateOrderParams[] calldata updateOrderParamsList,
         bytes32[] calldata cancelOrderKeys
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) {
@@ -35,7 +35,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         _validateGaslessFeature();
         bytes32 structHash = RelayUtils.getBatchStructHash(
             relayParams,
-            batchCreateOrderParamsList,
+            createOrderParamsList,
             updateOrderParamsList,
             cancelOrderKeys
         );
@@ -44,7 +44,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         _batch(
             relayParams,
             account,
-            batchCreateOrderParamsList,
+            createOrderParamsList,
             updateOrderParamsList,
             cancelOrderKeys,
             false, // isSubaccount
@@ -56,19 +56,17 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
     function createOrder(
         RelayParams calldata relayParams,
         address account,
-        uint256 collateralDeltaAmount,
         IBaseOrderUtils.CreateOrderParams memory params // can't use calldata because need to modify params.numbers.executionFee
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) returns (bytes32) {
         uint256 startingGas = gasleft();
         _validateGaslessFeature();
-        bytes32 structHash = RelayUtils.getCreateOrderStructHash(relayParams, collateralDeltaAmount, params);
+        bytes32 structHash = RelayUtils.getCreateOrderStructHash(relayParams, params);
         _validateCall(relayParams, account, structHash);
 
         return
             _createOrder(
                 relayParams,
                 account,
-                collateralDeltaAmount,
                 params,
                 false, // isSubaccount
                 startingGas

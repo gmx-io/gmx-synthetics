@@ -578,20 +578,20 @@ library GasUtils {
         // - 21000 base gas
         // - GelatoRelay contract gas
         // - gas for 2 token transfers: to relay fee address and residual fee to the user
+        // - any other fixed gas costs before gasleft() and after the relay fee is calculated
         uint256 relayFeeBaseAmount = dataStore.getUint(Keys.GELATO_RELAY_FEE_BASE_AMOUNT);
 
         // would be non-zero for Arbitrum only
         uint256 l1Fee = Chain.getCurrentTxL1GasFees();
 
-        uint256 l2Fee;
+        uint256 l2Gas;
         if (oraclePriceCount > 0) {
             // oracle prices are set before startingGas is defined
-            l2Fee += dataStore.getUint(Keys.RELAY_EXECUTION_GAS_FEE_PER_ORACLE_PRICE) * oraclePriceCount * tx.gasprice;
+            l2Gas += dataStore.getUint(Keys.RELAY_EXECUTION_GAS_FEE_PER_ATOMIC_ORACLE_PRICE) * oraclePriceCount;
         }
 
-        // multiply calldataLength by 2 because the calldata is first sent to the Relay contract, and then to GMX contract
-        // zero byte in call data costs 4 gas, non-zero byte costs 16 gas, use 12 as a conservative estimate
-        l2Fee += (relayFeeBaseAmount + calldataLength * 2 * 12 + startingGas - gasleft()) * tx.gasprice;
+        l2Gas += (relayFeeBaseAmount + _getCalldataGas(calldataLength) + startingGas - gasleft());
+        uint256 l2Fee = l2Gas * tx.gasprice;
 
         uint256 relayFee = Precision.applyFactor(l1Fee + l2Fee, relayFeeMultiplierFactor);
 
@@ -602,5 +602,34 @@ library GasUtils {
         IERC20(wnt).safeTransfer(relayFeeAddress, relayFee);
 
         return relayFee;
+    }
+
+    function _getCalldataGas(uint256 calldataLength) internal pure returns (uint256) {
+        if (calldataLength > 50000) {
+            // we use 10 gas cost per byte for simplicity
+            // a malicious actor could send large calldata with non-zero bytes to force relay pay more
+            // this is unlikely to happen because the malicious actor would have to pay for the rest and wouldn't extra any profit
+            // but to reduce the risk we limit the calldata length
+            revert Errors.RelayCalldataTooLong(calldataLength);
+        }
+
+        // zero byte in call data costs 4 gas, non-zero byte costs 16 gas
+        // there are more zero bytes in transactions on average, we take 10 as a relatively safe estimate
+        // GelatoRelay contract receives calldata with a Call with fields like to, gasLimit, data, etc.
+        // the GMX contract receives only data.call
+        // in practice call fields are small compared to the call.data, so we only use msg.data received by GMX contract for simplicity
+        uint256 txCalldataGasUsed = calldataLength * 10;
+
+        // calculate words, apply ceiling
+        uint256 memoryWords = (calldataLength + 31) / 32;
+
+        // GelatoRelay contract calls GMX contract, CALL's gas depends on the calldata length
+        // approximate formula for CALL gas consumption (excluding fixed costs e.g. 700 gas for the CALL opcode):
+        //     memory_cost(n) = (n_words^2) / 512 + (3 * n_words)
+        //     memory_expansion_cost = memory_cost(new) - memory_cost(previous)
+        // we assume that previous memory_cost is 0 for simplicity
+        uint256 gmxCallGasUsed = memoryWords ** 2 / 512 + memoryWords * 3;
+
+        return txCalldataGasUsed + gmxCallGasUsed;
     }
 }
