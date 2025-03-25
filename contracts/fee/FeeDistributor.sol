@@ -198,11 +198,11 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         setUint(Keys.FEE_DISTRIBUTOR_GMX_PRICE, getGmxPrice());
         setUint(Keys.FEE_DISTRIBUTOR_WNT_PRICE, vaultV1.getMaxPrice(wnt));
         setUint(Keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP, receivedData.timestamp);
-        // Compute how much GMX the current chain is supposed to have, based on its stake share
+
+        uint256 slippageFactor = getUint(Keys.feeDistributorBridgeSlippageFactorKey(block.chainid));
         uint256 requiredFeeAmount = Precision.mulDiv(totalFeeAmountGmx, stakedAmountGmxCurrentChain, totalStakedGmx);
         uint256 totalGmxBridgedOut;
-        bool feeAmountGmxSurplus = validateFeeAmountGmx(requiredFeeAmount, feeAmountGmxCurrentChain);
-        if (feeAmountGmxSurplus) {
+        if (validateFeeAmountGmx(slippageFactor, requiredFeeAmount, feeAmountGmxCurrentChain)) {
             // Call the internal bridging function
             totalGmxBridgedOut = calculateAndBridgeGmx(
                 chainIds,
@@ -211,7 +211,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
                 totalStakedGmx,
                 feeAmounts,
                 currentChainIndex,
-                getUint(Keys.feeDistributorBridgeSlippageFactorKey(block.chainid))
+                slippageFactor
             );
 
             // validate that the amount bridged does not result in a GMX fee amount deficit on the current chain
@@ -223,25 +223,14 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
                 );
             }
             setDistributionState(uint256(DistributionState.BridgingCompleted));
+            emitFeeDistributionDataReceived(chainIds.length, receivedData, true);
         } else {
             setDistributionState(uint256(DistributionState.ReadDataReceived));
+            emitFeeDistributionDataReceived(chainIds.length, receivedData, false);
         }
-
-        EventUtils.EventLogData memory eventData;
-        eventData.uintItems.initItems(1);
-        eventData = setUintItem(eventData, 0, "numberOfChainsReceivedData", chainIds.length - 1);
-        eventData.bytesItems.initItems(1);
-        eventData.bytesItems.setItem(0, "receivedData", abi.encode(receivedData));
-        eventEmitter.emitEventLog1(
-            "FeeDistributionDataReceived",
-            feeAmountGmxSurplus
-                ? bytes32(uint256(DistributionState.BridgingCompleted))
-                : bytes32(uint256(DistributionState.ReadDataReceived)),
-            eventData
-        );
     }
 
-    function bridgingCompleted() external nonReentrant onlyFeeDistributionKeeper {
+    function bridgedGmxReceived(uint256 gmxReceived) external nonReentrant onlyFeeDistributionKeeper {
         validateDistributionState(DistributionState.ReadDataReceived);
         validateReadResponseTimestamp(getUint(Keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP));
         validateDistributionNotCompleted();
@@ -250,13 +239,20 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         uint256 totalFeeAmountGmx = getUint(Keys.FEE_DISTRIBUTOR_TOTAL_FEE_AMOUNT_GMX);
         uint256 stakedAmountGmxCurrentChain = getUint(Keys.feeDistributorStakedGmxKey(block.chainid));
         uint256 totalStakedGmx = getUint(Keys.FEE_DISTRIBUTOR_TOTAL_STAKED_GMX);
-        // Compute how much GMX the current chain is supposed to have, based on its stake share
+
+        uint256 slippageFactor = getUint(Keys.feeDistributorBridgeSlippageFactorKey(block.chainid));
         uint256 requiredFeeAmount = Precision.mulDiv(totalFeeAmountGmx, stakedAmountGmxCurrentChain, totalStakedGmx);
         uint256 feeAmountGmxCurrentChain = getUint(Keys.withdrawableBuybackTokenAmountKey(gmx)) +
             getFeeDistributorVaultBalance(gmx);
-        validateFeeAmountGmx(requiredFeeAmount, feeAmountGmxCurrentChain);
+        validateFeeAmountGmx(slippageFactor, requiredFeeAmount, feeAmountGmxCurrentChain);
 
         setUint(Keys.feeDistributorFeeAmountGmxKey(block.chainid), feeAmountGmxCurrentChain);
+
+        EventUtils.EventLogData memory eventData;
+        eventData.uintItems.initItems(2);
+        eventData = setUintItem(eventData, 0, "gmxReceived", gmxReceived);
+        eventData = setUintItem(eventData, 1, "feeAmountCurrentChain", feeAmountGmxCurrentChain);
+        emitEventLog("FeeDistributionBridgedGmxReceived", eventData);
     }
 
     // @dev complete the fee distribution calculations, token transfers and if necessary bridge GMX cross-chain
@@ -413,58 +409,31 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         uint256 slippageFactor
     ) internal returns (uint256) {
         uint256 chainIdsLength = chainIds.length;
-
-        // Prepare arrays
-        uint256[] memory targetFeeAmounts = createUintArray(chainIdsLength);
-        int256[] memory differences = new int256[](chainIdsLength);
-        uint256[][] memory bridging = new uint256[][](chainIdsLength);
-
-        // Compute each chain’s “ideal” fee amount = totalFee * chain_stake / totalStaked
+        uint256[] memory bridgingAmounts = createUintArray(chainIdsLength);
+        uint256 targetGmxAmountCurrentChain = Precision.mulDiv(
+            totalFeeAmountGmx,
+            stakedAmounts[currentChainIndex],
+            totalStakedGmx
+        );
+        uint256 currentChainSurplus = feeAmounts[currentChainIndex] - targetGmxAmountCurrentChain;
         for (uint256 i; i < chainIdsLength; i++) {
-            targetFeeAmounts[i] = Precision.mulDiv(stakedAmounts[i], totalFeeAmountGmx, totalStakedGmx);
-        }
+            if (i == currentChainIndex) continue;
 
-        // Determine surplus/deficit on each chain
-        for (uint256 i; i < chainIdsLength; i++) {
-            differences[i] = int256(feeAmounts[i]) - int256(targetFeeAmounts[i]);
-            // Initialize bridging array for each chain
-            bridging[i] = createUintArray(chainIdsLength);
-        }
+            uint256 targetGmxAmount = Precision.mulDiv(totalFeeAmountGmx, stakedAmounts[i], totalStakedGmx);
 
-        // Match surpluses to deficits
-        uint256 deficitIndex;
-        for (uint256 surplusIndex; surplusIndex < chainIdsLength; surplusIndex++) {
-            if (differences[surplusIndex] <= 0) continue;
+            // If the other chain has a deficit (feeAmounts[i] < targetAmount), bridge GMX to it
+            if (feeAmounts[i] < targetGmxAmount) {
+                uint256 deficit = targetGmxAmount - feeAmounts[i];
+                uint256 bridgeAmount = currentChainSurplus > deficit ? deficit : currentChainSurplus;
 
-            while (differences[surplusIndex] > 0 && deficitIndex < chainIdsLength) {
-                // Move deficitIndex to a chain that actually needs GMX
-                while (deficitIndex < chainIdsLength && differences[deficitIndex] >= 0) {
-                    deficitIndex++;
-                }
-                if (deficitIndex == chainIdsLength) break;
+                bridgingAmounts[i] = bridgeAmount;
+                currentChainSurplus -= bridgeAmount;
 
-                // The amount needed by the deficit chain
-                uint256 needed = uint256(-differences[deficitIndex]);
-                // The surplus available on the surplus chain
-                uint256 surplus = uint256(differences[surplusIndex]);
-
-                if (needed > surplus) {
-                    // Surplus doesn't fully fix the deficit
-                    bridging[surplusIndex][deficitIndex] += surplus;
-                    differences[deficitIndex] += int256(surplus);
-                    differences[surplusIndex] = 0;
-                } else {
-                    // Surplus fully (or exactly) covers the needed
-                    bridging[surplusIndex][deficitIndex] += needed;
-                    differences[surplusIndex] -= int256(needed);
-                    differences[deficitIndex] = 0;
-                    // Move on to the next deficit
-                    deficitIndex++;
-                }
+                if (currentChainSurplus == 0) break;
             }
         }
 
-        return bridgeGmx(chainIds, bridging[currentChainIndex], slippageFactor);
+        return bridgeGmx(chainIds, bridgingAmounts, slippageFactor);
     }
 
     function bridgeGmx(
@@ -581,6 +550,25 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
 
     function emitEventLog(string memory eventName, EventUtils.EventLogData memory eventData) internal {
         eventEmitter.emitEventLog(eventName, eventData);
+    }
+
+    function emitFeeDistributionDataReceived(
+        uint256 chainIdsLength,
+        MultichainReaderUtils.ReceivedData calldata receivedData,
+        bool isBridgingCompleted
+    ) internal {
+        EventUtils.EventLogData memory eventData;
+        eventData.uintItems.initItems(1);
+        eventData = setUintItem(eventData, 0, "numberOfChainsReceivedData", chainIdsLength - 1);
+        eventData.bytesItems.initItems(1);
+        eventData.bytesItems.setItem(0, "receivedData", abi.encode(receivedData));
+        eventEmitter.emitEventLog1(
+            "FeeDistributionDataReceived",
+            isBridgingCompleted
+                ? bytes32(uint256(DistributionState.BridgingCompleted))
+                : bytes32(uint256(DistributionState.ReadDataReceived)),
+            eventData
+        );
     }
 
     function setPricesParams() internal view returns (OracleUtils.SetPricesParams memory) {
@@ -760,11 +748,12 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
     }
 
     function validateFeeAmountGmx(
+        uint256 slippageFactor,
         uint256 requiredFeeAmount,
         uint256 feeAmountGmxCurrentChain
     ) internal view returns (bool) {
-        uint256 slippageFactor = getUint(Keys.feeDistributorBridgeSlippageFactorKey(block.chainid));
         uint256 origFeeAmountGmxCurrentChain = getFeeDistributorVaultBalance(gmx);
+
         // Calculate the difference between required and original
         uint256 pendingFeeBridge = requiredFeeAmount - origFeeAmountGmxCurrentChain;
 
@@ -778,12 +767,13 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         uint256 minRequiredFeeAmount = origFeeAmountGmxCurrentChain + minFeeReceived;
 
         // If the calculated amount doesn't meet the min bridging requirement and bridging already completed, revert
-        if (minRequiredFeeAmount > feeAmountGmxCurrentChain) {
+        if (feeAmountGmxCurrentChain < minRequiredFeeAmount) {
             if (DistributionState(getUint(Keys.FEE_DISTRIBUTOR_STATE)) == DistributionState.BridgingCompleted) {
                 revert Errors.BridgedAmountNotSufficient(minRequiredFeeAmount, feeAmountGmxCurrentChain);
             }
             return false;
-        } else if (minRequiredFeeAmount == feeAmountGmxCurrentChain) {
+        }
+        if (feeAmountGmxCurrentChain == minRequiredFeeAmount) {
             return false;
         }
         return true;
