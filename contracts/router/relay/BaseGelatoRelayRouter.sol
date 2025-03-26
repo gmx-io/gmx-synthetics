@@ -142,15 +142,13 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         IERC20(contracts.wnt).safeTransfer(address(contracts.orderVault), params.numbers.executionFee);
 
         if (
-            (params.orderType == Order.OrderType.MarketSwap ||
-                params.orderType == Order.OrderType.LimitSwap ||
-                params.orderType == Order.OrderType.MarketIncrease ||
-                params.orderType == Order.OrderType.LimitIncrease ||
-                params.orderType == Order.OrderType.StopIncrease) && params.numbers.initialCollateralDeltaAmount != 0
+            params.numbers.initialCollateralDeltaAmount != 0 &&
+            (BaseOrderUtils.isSwapOrder(params.orderType) || BaseOrderUtils.isIncreaseOrder(params.orderType))
         ) {
-            // OrderUtils set initialCollateralDeltaAmount based on the amount of received initialCollateralToken
+            // for increase and swap orders OrderUtils sets initialCollateralDeltaAmount based on the amount of received initialCollateralToken
             // instead of using initialCollateralDeltaAmount from params
-            // so it is possible to pass initialCollateralDeltaAmount=0 and send tokens to orderVault through external calls
+            // it is possible to use external calls to send tokens to OrderVault, in this case initialCollateralDeltaAmount could be zero
+            // and there is no need to call _sendTokens here
             _sendTokens(
                 account,
                 params.addresses.initialCollateralToken,
