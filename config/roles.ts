@@ -329,6 +329,9 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0xb38302e27bAe8932536A84ab362c3d1013420Cb4": true,
         [deployer]: true,
       },
+      ROLE_ADMIN: {
+        "0xCD9706B6B71fdC4351091B5b1D910cEe7Fde28D0": true,
+      },
       ...testnetConfig,
     },
   };
