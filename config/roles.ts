@@ -92,6 +92,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
     "0xb38302e27bAe8932536A84ab362c3d1013420Cb4": true,
     "0xc9e1CE91d3f782499cFe787b6F1d2AF0Ca76C049": true,
     "0x9f7198eb1b9Ccc0Eb7A07eD228d8FbC12963ea33": true,
+    "0xCD9706B6B71fdC4351091B5b1D910cEe7Fde28D0": true,
   };
 
   const testnetConfig = {
