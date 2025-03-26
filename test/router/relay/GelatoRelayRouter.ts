@@ -713,8 +713,8 @@ describe("GelatoRelayRouter", () => {
             : "";
           createOrderParams.externalCallsList = [
             {
-              token: ethers.constants.AddressZero,
-              amount: 0,
+              token: wnt.address,
+              amount: expandDecimals(1, 15),
               externalCallTargets: [externalExchange.address],
               externalCallDataList: [
                 externalExchange.interface.encodeFunctionData("transfer", [
