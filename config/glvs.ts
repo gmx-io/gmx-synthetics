@@ -51,8 +51,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           },
           {
             indexToken: "LTC",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(3_434_255, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(4_643_800),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(4_107_739, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(5_572_560),
           },
           {
             indexToken: "XRP",
@@ -283,8 +283,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           },
           {
             indexToken: "AI16Z",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(905_774, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(864_000),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(1_075_106, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(1_036_800),
           },
           {
             indexToken: "VIRTUAL",
@@ -298,8 +298,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           },
           {
             indexToken: "S",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(795_140, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(864_000),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(953_028, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(1_036_800),
           },
           {
             indexToken: "CAKE",
@@ -308,8 +308,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           },
           {
             indexToken: "HYPE",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(370_799, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(864_000),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(444_234, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(1_036_800),
           },
           {
             indexToken: "JUP",
