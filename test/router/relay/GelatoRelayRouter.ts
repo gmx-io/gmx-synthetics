@@ -13,7 +13,7 @@ import { logGasUsage } from "../../../utils/gas";
 import { hashString } from "../../../utils/hash";
 import { OrderType, DecreasePositionSwapType, getOrderKeys, getOrderCount } from "../../../utils/order";
 import { errorsContract } from "../../../utils/error";
-import { expectBalance } from "../../../utils/validation";
+import { expectBalance, expectBalances } from "../../../utils/validation";
 import { handleDeposit } from "../../../utils/deposit";
 import * as keys from "../../../utils/keys";
 import { GELATO_RELAY_ADDRESS } from "../../../utils/relay/addresses";
@@ -44,6 +44,7 @@ describe("GelatoRelayRouter", () => {
     ethUsdMarket,
     wnt,
     usdc,
+    wbtc,
     chainlinkPriceFeedProvider,
     externalHandler;
   let relaySigner;
@@ -64,6 +65,7 @@ describe("GelatoRelayRouter", () => {
       ethUsdMarket,
       wnt,
       usdc,
+      wbtc,
       chainlinkPriceFeedProvider,
       externalHandler,
     } = fixture.contracts);
@@ -612,33 +614,55 @@ describe("GelatoRelayRouter", () => {
       });
     });
 
-    it("swap collateral with external call", async () => {
+    it("swap collateral and relay fee with external call", async () => {
       const externalExchange = await deployContract("MockExternalExchange", []);
       await usdc.mint(externalExchange.address, expandDecimals(1000, 6));
+      await wbtc.mint(user0.address, expandDecimals(1, 8));
+      await wnt.connect(user0).transfer(externalExchange.address, expandDecimals(1, 18));
 
-      await usdc.connect(user0).approve(router.address, expandDecimals(1000, 6));
       await wnt.connect(user0).approve(router.address, expandDecimals(10, 18));
+      await wbtc.connect(user0).approve(router.address, expandDecimals(1, 8));
+      expect(await usdc.allowance(user0.address, router.address)).eq(0);
 
       const usdcBalanceBefore = await usdc.balanceOf(user0.address);
+      const wbtcBalanceBefore = await wbtc.balanceOf(user0.address);
+      expect(wbtcBalanceBefore).eq(expandDecimals(1, 8));
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, 0);
       createOrderParams.params.addresses.initialCollateralToken = usdc.address;
       createOrderParams.params.addresses.swapPath = [];
       createOrderParams.params.numbers.initialCollateralDeltaAmount = 0;
       createOrderParams.tokenPermits = [];
-      await sendCreateOrder(createOrderParams);
+      const tx0 = await sendCreateOrder(createOrderParams);
+      await logGasUsage({
+        tx: tx0,
+        label: "create order, no swaps or external calls",
+      });
 
       let orderKeys = await getOrderKeys(dataStore, 0, 1);
       const order = await reader.getOrder(dataStore.address, orderKeys[0]);
       expect(order.addresses.initialCollateralToken).eq(usdc.address);
       expect(order.numbers.initialCollateralDeltaAmount).eq(0);
-      await expectBalance(usdc.address, user0.address, usdcBalanceBefore);
-      await expectBalance(wnt.address, externalHandler.address, 0);
+
+      await expectBalances({
+        [user0.address]: {
+          [usdc.address]: usdcBalanceBefore,
+          [wbtc.address]: wbtcBalanceBefore,
+        },
+        [externalHandler.address]: {
+          [wnt.address]: 0,
+          [wbtc.address]: 0,
+        },
+      });
 
       const wntBalanceBefore = await wnt.balanceOf(user0.address);
 
-      await sendCreateOrder({
+      // do not send WNT, use WBTC from external call
+      createOrderParams.feeParams.feeAmount = 0;
+
+      const tx = await sendCreateOrder({
         ...createOrderParams,
         externalCallsList: [
+          // swap ETH for USDC collateral
           {
             token: wnt.address,
             amount: expandDecimals(1, 18),
@@ -653,25 +677,51 @@ describe("GelatoRelayRouter", () => {
             refundTokens: [],
             refundReceivers: [],
           },
+          // relay fee
+          {
+            token: wbtc.address,
+            amount: expandDecimals(1, 4),
+            externalCallTargets: [externalExchange.address],
+            externalCallDataList: [
+              externalExchange.interface.encodeFunctionData("transfer", [
+                wnt.address,
+                gelatoRelayRouter.address,
+                expandDecimals(1, 15),
+              ]),
+            ],
+            refundTokens: [],
+            refundReceivers: [],
+          },
         ],
       });
 
-      // 1 ETH was transferred from user0
-      await expectBalance(
-        wnt.address,
-        user0.address,
-        wntBalanceBefore.sub(expandDecimals(1, 18).add(expandDecimals(1, 15))) // account for 0.001 WNT relay fee
-      );
-      // 1 WNT was transferred to external handler
-      await expectBalance(wnt.address, externalHandler.address, expandDecimals(1, 18));
-      // user's USDC balance didn't changed
-      await expectBalance(usdc.address, user0.address, usdcBalanceBefore);
+      await expectBalances({
+        [user0.address]: {
+          // 1 ETH was transferred from user0
+          [wnt.address]: wntBalanceBefore.sub(expandDecimals(1, 18)),
+          // 0.0001 BTC was transferred from user0 to external handler
+          [wbtc.address]: wbtcBalanceBefore.sub(expandDecimals(1, 4)),
+          // user's USDC balance didn't change
+          [usdc.address]: usdcBalanceBefore,
+        },
+        [externalHandler.address]: {
+          // 1 WNT was transferred to external handler
+          [wnt.address]: expandDecimals(1, 18),
+          // and 0.0001 BTC was transferred to external handler
+          [wbtc.address]: expandDecimals(1, 4),
+        },
+      });
 
       orderKeys = await getOrderKeys(dataStore, 0, 2);
       const order2 = await reader.getOrder(dataStore.address, orderKeys[1]);
       expect(order2.addresses.initialCollateralToken).eq(usdc.address);
       // order was created with 100 USDC received from external handler
       expect(order2.numbers.initialCollateralDeltaAmount).eq(expandDecimals(100, 6));
+
+      await logGasUsage({
+        tx,
+        label: "create order, swap collateral and relay fee with external call",
+      });
     });
 
     for (const c of [
