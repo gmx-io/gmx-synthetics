@@ -11,7 +11,7 @@ import { deployFixture } from "../../../utils/fixture";
 import { expandDecimals, decimalToFloat, bigNumberify, percentageToFloat, applyFactor } from "../../../utils/math";
 import { logGasUsage } from "../../../utils/gas";
 import { hashString } from "../../../utils/hash";
-import { OrderType, DecreasePositionSwapType, getOrderKeys, getOrderCount } from "../../../utils/order";
+import { OrderType, DecreasePositionSwapType, getOrderKeys, getOrderCount, orderTypeNames } from "../../../utils/order";
 import { errorsContract } from "../../../utils/error";
 import { expectBalance, expectBalances } from "../../../utils/validation";
 import { handleDeposit } from "../../../utils/deposit";
@@ -342,65 +342,83 @@ describe("GelatoRelayRouter", () => {
       expect(order.numbers.executionFee).eq("99000000000000000");
     });
 
-    it("creates order and sends relayer fee", async () => {
-      const collateralDeltaAmount = createOrderParams.params.numbers.initialCollateralDeltaAmount;
-      const gelatoRelayFeeAmount = createOrderParams.gelatoRelayFeeAmount;
+    for (const c of [
+      { orderType: OrderType.LimitDecrease, shouldSendCollateral: false },
+      { orderType: OrderType.StopLossDecrease, shouldSendCollateral: false },
+      { orderType: OrderType.MarketDecrease, shouldSendCollateral: false },
+      { orderType: OrderType.LimitIncrease, shouldSendCollateral: true },
+      { orderType: OrderType.MarketIncrease, shouldSendCollateral: true },
+      { orderType: OrderType.LimitSwap, shouldSendCollateral: true },
+      { orderType: OrderType.MarketSwap, shouldSendCollateral: true },
+      { orderType: OrderType.StopIncrease, shouldSendCollateral: true },
+    ]) {
+      it.only(`creates ${orderTypeNames[c.orderType]} order and sends relayer fee`, async () => {
+        const collateralDeltaAmount = createOrderParams.params.numbers.initialCollateralDeltaAmount;
+        const gelatoRelayFeeAmount = createOrderParams.gelatoRelayFeeAmount;
 
-      expect(await wnt.allowance(user0.address, router.address)).to.eq(0);
-      await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, 0);
-      const executionFee = expandDecimals(2, 15);
-      createOrderParams.params.numbers.executionFee = executionFee;
-      createOrderParams.feeParams.feeAmount = expandDecimals(6, 15); // relay fee is 0.001, execution fee is 0.002, 0.003 should be sent back
-      const userWntBalanceBefore = await wnt.balanceOf(user0.address);
-      const tx = await sendCreateOrder({
-        ...createOrderParams,
-      });
+        expect(await wnt.allowance(user0.address, router.address)).to.eq(0);
+        await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, 0);
+        const executionFee = expandDecimals(2, 15);
+        createOrderParams.params.numbers.executionFee = executionFee;
+        createOrderParams.params.orderType = c.orderType;
+        createOrderParams.feeParams.feeAmount = expandDecimals(6, 15); // relay fee is 0.001, execution fee is 0.002, 0.003 should be sent back
+        const userWntBalanceBefore = await wnt.balanceOf(user0.address);
+        const tx = await sendCreateOrder({
+          ...createOrderParams,
+        });
 
-      // allowance was set
-      expect(await wnt.allowance(user0.address, router.address)).to.eq(
-        expandDecimals(1, 18)
-          .sub(collateralDeltaAmount)
+        // allowance was set
+        let expectedAllowance = expandDecimals(1, 18)
           .sub(gelatoRelayFeeAmount)
           .sub(executionFee)
-          .sub(expandDecimals(3, 15)) // 0.003 should be sent back
-      );
-      // relay fee was sent
-      await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, gelatoRelayFeeAmount);
+          .sub(expandDecimals(3, 15)); // 0.003 should be sent back
+        if (c.shouldSendCollateral) {
+          expectedAllowance = expectedAllowance.sub(collateralDeltaAmount);
+        }
+        expect(await wnt.allowance(user0.address, router.address)).to.eq(expectedAllowance);
+        // relay fee was sent
+        // relay fee was sent
+        await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, gelatoRelayFeeAmount);
 
-      const orderKeys = await getOrderKeys(dataStore, 0, 1);
-      const order = await reader.getOrder(dataStore.address, orderKeys[0]);
+        const orderKeys = await getOrderKeys(dataStore, 0, 1);
+        const order = await reader.getOrder(dataStore.address, orderKeys[0]);
 
-      expect(order.addresses.account).eq(user0.address);
-      expect(order.addresses.receiver).eq(user0.address);
-      expect(order.addresses.callbackContract).eq(user1.address);
-      expect(order.addresses.market).eq(ethUsdMarket.marketToken);
-      expect(order.addresses.initialCollateralToken).eq(ethUsdMarket.longToken);
-      expect(order.addresses.swapPath).deep.eq([ethUsdMarket.marketToken]);
-      expect(order.numbers.orderType).eq(OrderType.LimitIncrease);
-      expect(order.numbers.decreasePositionSwapType).eq(DecreasePositionSwapType.SwapCollateralTokenToPnlToken);
-      expect(order.numbers.sizeDeltaUsd).eq(decimalToFloat(1000));
-      expect(order.numbers.initialCollateralDeltaAmount).eq(collateralDeltaAmount);
-      expect(order.numbers.triggerPrice).eq(decimalToFloat(4800));
-      expect(order.numbers.acceptablePrice).eq(decimalToFloat(4900));
-      expect(order.numbers.executionFee).eq(executionFee);
-      expect(order.numbers.callbackGasLimit).eq("200000");
-      expect(order.numbers.minOutputAmount).eq(700);
+        expect(order.addresses.account).eq(user0.address);
+        expect(order.addresses.receiver).eq(user0.address);
+        expect(order.addresses.callbackContract).eq(user1.address);
+        expect(order.addresses.market).eq(ethUsdMarket.marketToken);
+        expect(order.addresses.initialCollateralToken).eq(ethUsdMarket.longToken);
+        expect(order.addresses.swapPath).deep.eq([ethUsdMarket.marketToken]);
+        expect(order.numbers.orderType).eq(c.orderType);
+        expect(order.numbers.decreasePositionSwapType).eq(DecreasePositionSwapType.SwapCollateralTokenToPnlToken);
+        expect(order.numbers.sizeDeltaUsd).eq(decimalToFloat(1000));
+        expect(order.numbers.initialCollateralDeltaAmount).eq(collateralDeltaAmount);
+        expect(order.numbers.triggerPrice).eq(decimalToFloat(4800));
+        expect(order.numbers.acceptablePrice).eq(decimalToFloat(4900));
+        expect(order.numbers.executionFee).eq(executionFee);
+        expect(order.numbers.callbackGasLimit).eq("200000");
+        expect(order.numbers.minOutputAmount).eq(700);
 
-      expect(order.flags.isLong).eq(true);
-      expect(order.flags.shouldUnwrapNativeToken).eq(true);
-      expect(order.flags.isFrozen).eq(false);
+        expect(order.flags.isLong).eq(true);
+        expect(order.flags.shouldUnwrapNativeToken).eq(true);
+        expect(order.flags.isFrozen).eq(false);
 
-      const userWntBalanceAfter = await wnt.balanceOf(user0.address);
-      // 0.003 ETH was sent back
-      expect(userWntBalanceAfter).eq(userWntBalanceBefore.sub(expandDecimals(3, 15)).sub(collateralDeltaAmount));
+        const userWntBalanceAfter = await wnt.balanceOf(user0.address);
+        // 0.003 ETH relay fee was sent back
+        if (c.shouldSendCollateral) {
+          expect(userWntBalanceAfter).eq(userWntBalanceBefore.sub(expandDecimals(3, 15)).sub(collateralDeltaAmount));
+        } else {
+          expect(userWntBalanceAfter).eq(userWntBalanceBefore.sub(expandDecimals(3, 15)));
+        }
 
-      await stopImpersonatingAccount(GELATO_RELAY_ADDRESS);
+        await stopImpersonatingAccount(GELATO_RELAY_ADDRESS);
 
-      await logGasUsage({
-        tx,
-        label: "gelatoRelayRouter.createOrder",
+        await logGasUsage({
+          tx,
+          label: "gelatoRelayRouter.createOrder",
+        });
       });
-    });
+    }
 
     it("sponsoredCall: skips signature validation in gas estimation if tx.origin is zero", async () => {
       await dataStore.setAddress(keys.RELAY_FEE_ADDRESS, user3.address);
