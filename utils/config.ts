@@ -102,6 +102,7 @@ export const EXCLUDED_CONFIG_KEYS = {
   BUYBACK_AVAILABLE_FEE_AMOUNT: true,
   WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT: true,
   HOLDING_ADDRESS: true,
+  CONFIG_MAX_PRICE_AGE: true,
 };
 
 export async function appendUintConfigIfDifferent(

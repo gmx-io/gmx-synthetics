@@ -442,6 +442,9 @@ describe("Timelock", () => {
           maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
         },
       });
+
+      await dataStore.setAddress(keys.oracleProviderForTokenKey(wnt.address), chainlinkPriceFeedProvider.address);
+      await dataStore.setAddress(keys.oracleProviderForTokenKey(usdc.address), chainlinkPriceFeedProvider.address);
     });
 
     it("Position impact pool withdrawal", async () => {
