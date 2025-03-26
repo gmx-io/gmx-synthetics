@@ -561,7 +561,6 @@ library GasUtils {
         address wnt,
         uint256 startingGas,
         uint256 calldataLength,
-        uint256 oraclePriceCount,
         uint256 availableFeeAmount
     ) internal returns (uint256) {
         address relayFeeAddress = dataStore.getAddress(Keys.RELAY_FEE_ADDRESS);
@@ -584,14 +583,7 @@ library GasUtils {
         // would be non-zero for Arbitrum only
         uint256 l1Fee = Chain.getCurrentTxL1GasFees();
 
-        uint256 l2Gas;
-        if (oraclePriceCount > 0) {
-            // oracle prices are set before startingGas is defined
-            l2Gas += dataStore.getUint(Keys.RELAY_EXECUTION_GAS_FEE_PER_ATOMIC_ORACLE_PRICE) * oraclePriceCount;
-        }
-
-        l2Gas += (relayFeeBaseAmount + _getCalldataGas(calldataLength) + startingGas - gasleft());
-        uint256 l2Fee = l2Gas * tx.gasprice;
+        uint256 l2Fee = (relayFeeBaseAmount + _getCalldataGas(calldataLength) + startingGas - gasleft()) * tx.gasprice;
 
         uint256 relayFee = Precision.applyFactor(l1Fee + l2Fee, relayFeeMultiplierFactor);
 

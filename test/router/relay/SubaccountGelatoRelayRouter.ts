@@ -221,15 +221,6 @@ describe("SubaccountGelatoRelayRouter", () => {
       ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
     });
 
-    it.skip("onlyGelatoRelay", async () => {
-      await expect(
-        sendCreateOrder({
-          ...createOrderParams,
-          sender: user0,
-        })
-      ).to.be.revertedWith("onlyGelatoRelay");
-    });
-
     it("InvalidUserNonce", async () => {
       await enableSubaccount();
 
@@ -747,13 +738,6 @@ describe("SubaccountGelatoRelayRouter", () => {
       await expect(sendUpdateOrder(updateOrderParams)).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
     });
 
-    it.skip("onlyGelatoRelay", async () => {
-      await expect(
-        sendUpdateOrder({ ...updateOrderParams, sender: user0 })
-        // should not fail with InvalidSignature
-      ).to.be.revertedWith("onlyGelatoRelay");
-    });
-
     it("InvalidSignature", async () => {
       await expect(
         sendUpdateOrder({ ...updateOrderParams, signature: BAD_SIGNATURE })
@@ -960,13 +944,6 @@ describe("SubaccountGelatoRelayRouter", () => {
       await expect(sendCancelOrder(cancelOrderParams)).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
     });
 
-    it.skip("onlyGelatoRelay", async () => {
-      await expect(
-        sendCancelOrder({ ...cancelOrderParams, sender: user0 })
-        // should not fail with InvalidSignature
-      ).to.be.revertedWith("onlyGelatoRelay");
-    });
-
     it("InvalidSignature", async () => {
       await expect(
         sendCancelOrder({ ...cancelOrderParams, signature: BAD_SIGNATURE })
@@ -1060,12 +1037,16 @@ describe("SubaccountGelatoRelayRouter", () => {
       );
     });
 
-    it.skip("onlyGelatoRelay", async () => {
-      await expect(sendRemoveSubaccount({ ...params, sender: user0 })).to.be.revertedWith("onlyGelatoRelay");
-    });
+    it("removes subaccount with relay fee swap", async () => {
+      await handleDeposit(fixture, {
+        create: {
+          longTokenAmount: expandDecimals(10, 18),
+          shortTokenAmount: expandDecimals(10 * 5000, 6),
+        },
+      });
 
-    it("removes subaccount", async () => {
-      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
+      await usdc.connect(user1).approve(router.address, expandDecimals(1000, 6));
+      const wntBalanceBefore = await wnt.balanceOf(user1.address);
       await dataStore.addAddress(keys.subaccountListKey(user1.address), user0.address);
       expect(await dataStore.getAddressCount(keys.subaccountListKey(user1.address))).to.eq(1);
       await expect(sendRemoveSubaccount({ ...params, signature: "0x1234" })).to.be.revertedWithCustomError(
@@ -1074,8 +1055,22 @@ describe("SubaccountGelatoRelayRouter", () => {
       );
 
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, 0);
+      const feeAmount = expandDecimals(5, 6);
 
-      await sendRemoveSubaccount(params);
+      await sendRemoveSubaccount({
+        ...params,
+        feeParams: {
+          feeToken: usdc.address,
+          feeAmount,
+          feeSwapPath: [ethUsdMarket.marketToken],
+        },
+        oracleParams: {
+          tokens: [usdc.address, wnt.address],
+          providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
+          data: ["0x", "0x"],
+        },
+      });
+      await expectBalance(wnt.address, user1.address, wntBalanceBefore);
       expect(await dataStore.getAddressCount(keys.subaccountListKey(user1.address))).to.eq(0);
 
       expect(createOrderParams.gelatoRelayFeeAmount).gt(0);

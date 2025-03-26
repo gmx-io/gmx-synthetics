@@ -38,7 +38,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         IBaseOrderUtils.CreateOrderParams[] calldata createOrderParamsList,
         UpdateOrderParams[] calldata updateOrderParamsList,
         bytes32[] calldata cancelOrderKeys
-    ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) {
+    ) external nonReentrant {
         BatchVars memory vars;
         vars.startingGas = gasleft();
 
@@ -101,7 +101,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         address account, // main account
         address subaccount,
         IBaseOrderUtils.CreateOrderParams memory params // can't use calldata because need to modify params.numbers.executionFee
-    ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) returns (bytes32) {
+    ) external nonReentrant returns (bytes32) {
         uint256 startingGas = gasleft();
         _validateGaslessFeature();
         bytes32 structHash = RelayUtils.getCreateOrderStructHash(
@@ -132,7 +132,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         address account, // main account
         address subaccount,
         UpdateOrderParams calldata params
-    ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) {
+    ) external nonReentrant {
         uint256 startingGas = gasleft();
         _validateGaslessFeature();
         bytes32 structHash = RelayUtils.getUpdateOrderStructHash(relayParams, subaccountApproval, account, params);
@@ -154,7 +154,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         address account, // main account
         address subaccount,
         bytes32 key
-    ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) {
+    ) external nonReentrant {
         uint256 startingGas = gasleft();
         _validateGaslessFeature();
         bytes32 structHash = RelayUtils.getCancelOrderStructHash(relayParams, subaccountApproval, account, key);
@@ -174,7 +174,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         RelayParams calldata relayParams,
         address account,
         address subaccount
-    ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) {
+    ) external nonReentrant {
         uint256 startingGas = gasleft();
         _validateGaslessFeature();
         bytes32 structHash = RelayUtils.getRemoveSubaccountStructHash(relayParams, subaccount);
@@ -194,8 +194,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             contracts,
             startingGas,
             residualFeeAmount,
-            account,
-            relayParams.oracleParams.tokens.length
+            account
         );
     }
 

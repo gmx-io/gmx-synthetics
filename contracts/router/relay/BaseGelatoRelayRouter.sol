@@ -99,11 +99,12 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         vars.residualFeeAmount = _handleRelayBeforeAction(vars.contracts, relayParams, account, isSubaccount);
 
         for (uint256 i = 0; i < createOrderParams.length; i++) {
-            vars.residualFeeAmount -= createOrderParams[i].numbers.executionFee;
+            vars.residualFeeAmount -= createOrderParams[i].numbers.executionFee; // executionFee is sent to orderVault inside _createOrderImpl
             _createOrderImpl(vars.contracts, account, createOrderParams[i], isSubaccount);
         }
 
         for (uint256 i = 0; i < updateOrderParamsList.length; i++) {
+            vars.residualFeeAmount -= updateOrderParamsList[i].executionFeeIncrease; // executionFeeIncrease is sent to orderVault inside _updateOrderImpl
             _updateOrderImpl(vars.contracts, account, updateOrderParamsList[i], isSubaccount);
         }
 
@@ -111,13 +112,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             _cancelOrderImpl(vars.contracts, account, cancelOrderKeys[i]);
         }
 
-        _handleRelayAfterAction(
-            vars.contracts,
-            startingGas,
-            vars.residualFeeAmount,
-            account,
-            relayParams.oracleParams.tokens.length
-        );
+        _handleRelayAfterAction(vars.contracts, startingGas, vars.residualFeeAmount, account);
     }
 
     function _createOrder(
@@ -128,16 +123,13 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         uint256 startingGas
     ) internal returns (bytes32) {
         Contracts memory contracts = _getContracts();
-        uint256 feeAmount = _handleRelayBeforeAction(contracts, relayParams, account, isSubaccount);
+        uint256 residualFeeAmount = _handleRelayBeforeAction(contracts, relayParams, account, isSubaccount);
 
         bytes32 key = _createOrderImpl(contracts, account, params, isSubaccount);
-        _handleRelayAfterAction(
-            contracts,
-            startingGas,
-            feeAmount - params.numbers.executionFee,
-            account,
-            relayParams.oracleParams.tokens.length
-        );
+
+        residualFeeAmount -= params.numbers.executionFee; // executionFee is sent to orderVault inside _createOrderImpl
+        _handleRelayAfterAction(contracts, startingGas, residualFeeAmount, account);
+
         return key;
     }
 
@@ -180,17 +172,12 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     ) internal {
         Contracts memory contracts = _getContracts();
 
-        uint256 feeAmount = _handleRelayBeforeAction(contracts, relayParams, account, isSubaccount);
+        uint256 residualFeeAmount = _handleRelayBeforeAction(contracts, relayParams, account, isSubaccount);
 
         _updateOrderImpl(contracts, account, params, isSubaccount);
 
-        _handleRelayAfterAction(
-            contracts,
-            startingGas,
-            feeAmount - params.executionFeeIncrease,
-            account,
-            relayParams.oracleParams.tokens.length
-        );
+        residualFeeAmount -= params.executionFeeIncrease; // executionFeeIncrease is sent to orderVault inside _updateOrderImpl
+        _handleRelayAfterAction(contracts, startingGas, residualFeeAmount, account);
     }
 
     function _updateOrderImpl(
@@ -241,13 +228,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
         _cancelOrderImpl(contracts, account, key);
 
-        _handleRelayAfterAction(
-            contracts,
-            startingGas,
-            residualFeeAmount,
-            account,
-            relayParams.oracleParams.tokens.length
-        );
+        _handleRelayAfterAction(contracts, startingGas, residualFeeAmount, account);
     }
 
     function _cancelOrderImpl(Contracts memory contracts, address account, bytes32 key) internal {
@@ -267,21 +248,25 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         RelayParams calldata relayParams,
         address account,
         bool isSubaccount
-    ) internal returns (uint256) {
-        if (relayParams.externalCallsList.length != 0 && isSubaccount) {
-            // malicious subaccount could steal main account funds through external calls
-            revert Errors.NonEmptyExternalCallsForSubaccountOrder();
-        }
-
+    ) internal withOraclePricesForAtomicAction(relayParams.oracleParams) returns (uint256) {
         _handleTokenPermits(relayParams.tokenPermits);
-        _handleExternalCalls(account, relayParams.externalCallsList);
+        _handleExternalCalls(account, relayParams.externalCallsList, isSubaccount);
 
         return _handleRelayFee(contracts, relayParams, account);
     }
 
-    function _handleExternalCalls(address account, ExternalCalls[] calldata externalCallsList) internal {
+    function _handleExternalCalls(
+        address account,
+        ExternalCalls[] calldata externalCallsList,
+        bool isSubaccount
+    ) internal {
         if (externalCallsList.length == 0) {
             return;
+        }
+
+        if (isSubaccount) {
+            // malicious subaccount could steal main account funds through external calls
+            revert Errors.NonEmptyExternalCallsForSubaccountOrder();
         }
 
         for (uint256 i = 0; i < externalCallsList.length; i++) {
@@ -368,8 +353,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         Contracts memory contracts,
         uint256 startingGas,
         uint256 residualFeeAmount,
-        address residualFeeReceiver,
-        uint256 oraclePriceCount
+        address residualFeeReceiver
     ) internal {
         bool isSponsoredCall = !_isGelatoRelay(msg.sender);
         uint256 relayFee;
@@ -379,7 +363,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
                 contracts.wnt,
                 startingGas,
                 msg.data.length,
-                oraclePriceCount,
                 residualFeeAmount
             );
         } else {

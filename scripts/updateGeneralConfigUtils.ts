@@ -307,15 +307,6 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
   if (generalConfig.relayFeeAddress) {
     await handleConfig("address", keys.RELAY_FEE_ADDRESS, "0x", generalConfig.relayFeeAddress, `relayFeeAddress`);
   }
-
-  if (generalConfig.relayExecutionGasFeePerOraclePrice) {
-    await handleConfig(
-      "uint",
-      keys.RELAY_EXECUTION_GAS_FEE_PER_ATOMIC_ORACLE_PRICE,
-      "0x",
-      generalConfig.relayExecutionGasFeePerOraclePrice
-    );
-  }
 };
 
 export async function updateGeneralConfig({ write }) {

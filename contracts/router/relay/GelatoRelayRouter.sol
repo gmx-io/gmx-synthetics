@@ -30,7 +30,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         IBaseOrderUtils.CreateOrderParams[] calldata createOrderParamsList,
         UpdateOrderParams[] calldata updateOrderParamsList,
         bytes32[] calldata cancelOrderKeys
-    ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) {
+    ) external nonReentrant {
         uint256 startingGas = gasleft();
         _validateGaslessFeature();
         bytes32 structHash = RelayUtils.getBatchStructHash(
@@ -57,7 +57,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         RelayParams calldata relayParams,
         address account,
         IBaseOrderUtils.CreateOrderParams memory params // can't use calldata because need to modify params.numbers.executionFee
-    ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) returns (bytes32) {
+    ) external nonReentrant returns (bytes32) {
         uint256 startingGas = gasleft();
         _validateGaslessFeature();
         bytes32 structHash = RelayUtils.getCreateOrderStructHash(relayParams, params);
@@ -78,7 +78,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         RelayParams calldata relayParams,
         address account,
         UpdateOrderParams calldata params
-    ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) {
+    ) external nonReentrant {
         uint256 startingGas = gasleft();
         _validateGaslessFeature();
         bytes32 structHash = RelayUtils.getUpdateOrderStructHash(relayParams, params);
@@ -98,7 +98,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         RelayParams calldata relayParams,
         address account,
         bytes32 key
-    ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) {
+    ) external nonReentrant {
         uint256 startingGas = gasleft();
         _validateGaslessFeature();
         bytes32 structHash = RelayUtils.getCancelOrderStructHash(relayParams, key);

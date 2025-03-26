@@ -512,12 +512,11 @@ describe("GelatoRelayRouter", () => {
       expect(await dataStore.getUint(keys.GELATO_RELAY_FEE_BASE_AMOUNT)).to.eq(0);
       await expectBalance(wnt.address, user3.address, 0);
 
-      // const user0WntBalance = await wnt.balanceOf(user0.address);
-      // expect(await wnt.allowance(user0.address, router.address)).to.eq(0);
-      // await expectBalance(wnt.address, user3.address, 0);
-      // const executionFee = expandDecimals(1, 15);
-      // createOrderParams.params.numbers.executionFee = executionFee;
+      createOrderParams.gelatoRelayFeeAmount = expandDecimals(100, 18);
+      createOrderParams.gelatoRelayFeeToken = usdc.address;
+
       createOrderParams.feeParams.feeAmount = expandDecimals(5, 15);
+
       await setNextBlockBaseFeePerGas(8);
       // looks like on the first run gas consumption is not optimal, but following runs consume almost the same gas
       await sendCreateOrder({
@@ -557,7 +556,7 @@ describe("GelatoRelayRouter", () => {
 
       await dataStore.setUint(keys.GELATO_RELAY_FEE_BASE_AMOUNT, 100_000);
       await setNextBlockBaseFeePerGas(8);
-      await sendCreateOrder({
+      const tx = await sendCreateOrder({
         ...createOrderParams,
         sender: user3,
       });
@@ -567,6 +566,23 @@ describe("GelatoRelayRouter", () => {
         effectiveRelayFee.add(bigNumberify(1000000008).mul(100_000)),
         effectiveRelayFee.div(1000)
       );
+
+      // gelato params should be ignored for sponsoredCalls
+      // validate that they were indeed passed
+      const bytes = ethers.utils.arrayify(tx.data);
+      const [feeReceiverFromCalldata, feeTokenFromCalldata, feeAmountFromCalldata] = [
+        ethers.utils.getAddress(ethers.utils.hexlify(bytes.slice(-72, -52))),
+        ethers.utils.getAddress(ethers.utils.hexlify(bytes.slice(-52, -32))),
+        bigNumberify(ethers.utils.hexlify(bytes.slice(-32))),
+      ];
+
+      expect(feeReceiverFromCalldata).eq(GELATO_RELAY_ADDRESS);
+      // usdc is not a valid Gelato relay fee token, but it should be ignored for sponsoredCalls
+      expect(feeTokenFromCalldata).eq(usdc.address);
+      expect(feeAmountFromCalldata).eq(createOrderParams.gelatoRelayFeeAmount);
+
+      // gelato relay address is passed but should be ignored
+      await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, 0);
     });
 
     it.skip("sponsoredCall: relay fee configuration with swaps");
@@ -743,7 +759,6 @@ describe("GelatoRelayRouter", () => {
       } useExternalCalls=${!!c.useExternalCalls} useSwaps=${!!c.useSwaps}`, async () => {
         await dataStore.setAddress(keys.RELAY_FEE_ADDRESS, user3.address);
         await dataStore.setUint(keys.GELATO_RELAY_FEE_BASE_AMOUNT, 40_000);
-        await dataStore.setUint(keys.RELAY_EXECUTION_GAS_FEE_PER_ATOMIC_ORACLE_PRICE, 175_000);
         const gelatoRelay = await deployContract("GelatoRelay", []);
 
         const externalExchange = await deployContract("MockExternalExchange", []);
@@ -969,15 +984,6 @@ describe("GelatoRelayRouter", () => {
       ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
     });
 
-    it.skip("onlyGelatoRelay", async () => {
-      await expect(
-        sendUpdateOrder({
-          ...updateOrderParams,
-          sender: user0,
-        })
-      ).to.be.revertedWith("onlyGelatoRelay");
-    });
-
     it("Unauthorized", async () => {
       await wnt.connect(user1).deposit({ value: expandDecimals(1000, 18) });
       await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
@@ -1116,15 +1122,6 @@ describe("GelatoRelayRouter", () => {
       ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
     });
 
-    it.skip("onlyGelatoRelay", async () => {
-      await expect(
-        sendCancelOrder({
-          ...cancelOrderParams,
-          sender: user0,
-        })
-      ).to.be.revertedWith("onlyGelatoRelay");
-    });
-
     it("Unauthorized", async () => {
       await wnt.connect(user1).deposit({ value: expandDecimals(1000, 18) });
       await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
@@ -1167,7 +1164,7 @@ describe("GelatoRelayRouter", () => {
       );
     });
 
-    it("batch: creates order", async () => {
+    it("batch: creates, updates and cancels order", async () => {
       expect(await wnt.allowance(user0.address, router.address)).to.eq(0);
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, 0);
       const executionFee = expandDecimals(2, 15);
@@ -1211,7 +1208,7 @@ describe("GelatoRelayRouter", () => {
           minOutputAmount: 304,
           validFromTime: 305,
           autoCancel: true,
-          executionFeeIncrease: 0,
+          executionFeeIncrease: expandDecimals(1, 15),
         },
       ];
       const tx2 = await sendBatch({
