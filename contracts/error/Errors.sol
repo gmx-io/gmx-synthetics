@@ -481,6 +481,7 @@ library Errors {
     error TreasuryFeeThresholdBreached(uint256 treasuryWntAmount, uint256 wntGlpShortfall, uint256 maxTreasuryWntShortfall);
     error KeeperArrayLengthMismatch(uint256 keepersLength, uint256 keeperTargetBalancesLength, uint256 keeperVersionsLength);
     error SendEthToKeeperFailed(address keeper, uint256 sendAmount, bytes result);
+    error KeeperAmountMismatch(uint256 wntForKeepers, uint256 wntToKeepers);
     error AttemptedBridgeAmountTooHigh(uint256 minRequiredFeeAmount, uint256 feeAmountCurrentChain, uint256 amountToBridgeOut);
     error ReferralRewardsArrayMismatch(address token, uint256 addressArrayLength, uint256 amountArrayLength);
     error ReferralRewardsAmountExceedsMaxBatchSize(address token, uint256 addressArrayLength, uint256 maxBatchSize);
