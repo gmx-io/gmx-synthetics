@@ -94,6 +94,7 @@ describe("SubaccountGelatoRelayRouter", () => {
     await setBalance(GELATO_RELAY_ADDRESS, expandDecimals(100, 18));
     await usdc.mint(user1.address, expandDecimals(1, 30)); // very large amount
     await wnt.connect(user1).deposit({ value: expandDecimals(1000, 18) });
+    await dataStore.setUint(keys.MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT, decimalToFloat(100));
 
     relaySigner = await hre.ethers.getSigner(GELATO_RELAY_ADDRESS);
     chainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
@@ -616,6 +617,72 @@ describe("SubaccountGelatoRelayRouter", () => {
       await logGasUsage({
         tx,
         label: "gelatoRelayRouter.createOrder",
+      });
+    });
+
+    it("MaxRelayFeeSwapForSubaccountExceeded", async () => {
+      await enableSubaccount();
+      await handleDeposit(fixture, {
+        create: {
+          longTokenAmount: expandDecimals(10, 18),
+          shortTokenAmount: expandDecimals(10 * 5000, 6),
+        },
+      });
+
+      await usdc.connect(user1).approve(router.address, expandDecimals(1000, 6));
+      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
+
+      await dataStore.setUint(keys.MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT, 0);
+      await expect(
+        sendCreateOrder({
+          ...createOrderParams,
+          feeParams: {
+            feeToken: usdc.address,
+            feeAmount: expandDecimals(1, 6),
+            feeSwapPath: [ethUsdMarket.marketToken],
+          },
+          oracleParams: {
+            tokens: [usdc.address, wnt.address],
+            providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
+            data: ["0x", "0x"],
+          },
+        })
+      )
+        .to.be.revertedWithCustomError(errorsContract, "MaxRelayFeeSwapForSubaccountExceeded")
+        .withArgs(decimalToFloat(1), decimalToFloat(0));
+
+      await dataStore.setUint(keys.MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT, decimalToFloat(100));
+      await expect(
+        sendCreateOrder({
+          ...createOrderParams,
+          feeParams: {
+            feeToken: usdc.address,
+            feeAmount: expandDecimals(101, 6),
+            feeSwapPath: [ethUsdMarket.marketToken],
+          },
+          oracleParams: {
+            tokens: [usdc.address, wnt.address],
+            providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
+            data: ["0x", "0x"],
+          },
+        })
+      )
+        .to.be.revertedWithCustomError(errorsContract, "MaxRelayFeeSwapForSubaccountExceeded")
+        .withArgs(decimalToFloat(101), decimalToFloat(100));
+
+      await dataStore.setUint(keys.MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT, decimalToFloat(102));
+      sendCreateOrder({
+        ...createOrderParams,
+        feeParams: {
+          feeToken: usdc.address,
+          feeAmount: expandDecimals(101, 6),
+          feeSwapPath: [ethUsdMarket.marketToken],
+        },
+        oracleParams: {
+          tokens: [usdc.address, wnt.address],
+          providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
+          data: ["0x", "0x"],
+        },
       });
     });
 

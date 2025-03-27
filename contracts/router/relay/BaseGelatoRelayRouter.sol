@@ -250,7 +250,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         _handleTokenPermits(relayParams.tokenPermits);
         _handleExternalCalls(account, relayParams.externalCallsList, isSubaccount);
 
-        return _handleRelayFee(contracts, relayParams, account);
+        return _handleRelayFee(contracts, relayParams, account, isSubaccount);
     }
 
     function _handleExternalCalls(
@@ -326,13 +326,22 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     function _handleRelayFee(
         Contracts memory contracts,
         RelayParams calldata relayParams,
-        address account
+        address account,
+        bool isSubaccount
     ) internal returns (uint256) {
         if (_isGelatoRelay(msg.sender) && _getFeeToken() != contracts.wnt) {
             revert Errors.UnsupportedRelayFeeToken(_getFeeToken(), contracts.wnt);
         }
 
         if (relayParams.fee.feeSwapPath.length != 0) {
+            if (isSubaccount) {
+                uint256 maxRelayFeeUsd = contracts.dataStore.getUint(Keys.MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT);
+                uint256 relayFeeUsd = relayParams.fee.feeAmount * oracle.getPrimaryPrice(relayParams.fee.feeToken).min;
+                if (relayFeeUsd > maxRelayFeeUsd) {
+                    revert Errors.MaxRelayFeeSwapForSubaccountExceeded(relayFeeUsd, maxRelayFeeUsd);
+                }
+            }
+
             _sendTokens(account, relayParams.fee.feeToken, address(contracts.orderVault), relayParams.fee.feeAmount);
             RelayUtils.swapFeeTokens(contracts, oracle, relayParams.fee);
         } else if (relayParams.fee.feeToken == contracts.wnt) {

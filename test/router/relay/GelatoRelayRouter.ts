@@ -352,7 +352,7 @@ describe("GelatoRelayRouter", () => {
       { orderType: OrderType.MarketSwap, shouldSendCollateral: true },
       { orderType: OrderType.StopIncrease, shouldSendCollateral: true },
     ]) {
-      it.only(`creates ${orderTypeNames[c.orderType]} order and sends relayer fee`, async () => {
+      it(`creates ${orderTypeNames[c.orderType]} order and sends relayer fee`, async () => {
         const collateralDeltaAmount = createOrderParams.params.numbers.initialCollateralDeltaAmount;
         const gelatoRelayFeeAmount = createOrderParams.gelatoRelayFeeAmount;
 
@@ -876,6 +876,10 @@ describe("GelatoRelayRouter", () => {
     }
 
     it("swap relay fee", async () => {
+      // relay fee swap size should not be validated for non-subaccount orders
+      // so set the threshold to 0 to make sure swaps work correctly
+      expect(await dataStore.getUint(keys.MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT)).eq(0);
+
       await handleDeposit(fixture, {
         create: {
           longTokenAmount: expandDecimals(10, 18),

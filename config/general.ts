@@ -63,6 +63,11 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       ignoreOpenInterestForUsageFactor: false,
 
       maxExecutionFeeMultiplierFactor: decimalToFloat(100),
+
+      gelatoRelayFeeMultiplierFactor: 0,
+      gelatoRelayFeeBaseAmount: 0,
+      relayFeeAddress: ethers.constants.AddressZero,
+      maxRelayFeeUsdForSubaccount: 0,
     };
   }
 
@@ -123,6 +128,11 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     ignoreOpenInterestForUsageFactor: false,
 
     maxExecutionFeeMultiplierFactor: decimalToFloat(100),
+
+    gelatoRelayFeeMultiplierFactor: percentageToFloat("106"), // Relay premium 6%
+    gelatoRelayFeeBaseAmount: 40000, // 21000 is base gas, ~10k GelatoRelay gas, some logic after the relay fee is calculated
+    relayFeeAddress: "0x3f59203ea1c66527422998b54287e1efcacbe2c5", // same as holding address. better to have a separate address for the relay fee
+    maxRelayFeeUsdForSubaccount: decimalToFloat(100),
   };
 
   const networkConfig = {
@@ -146,9 +156,6 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       decreaseOrderGasLimit: 3_000_000,
       swapOrderGasLimit: 2_500_000,
       ignoreOpenInterestForUsageFactor: true,
-
-      gelatoRelayFeeMultiplierFactor: percentageToFloat("106"), // Relay premium 6%
-      gelatoRelayFeeBaseAmount: 40000, // 21000 is base gas, ~10k GelatoRelay gas, some logic after the relay fee is calculated
     },
     avalanche: {
       increaseOrderGasLimit: 3_500_000,
