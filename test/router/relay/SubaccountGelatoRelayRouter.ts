@@ -92,7 +92,7 @@ describe("SubaccountGelatoRelayRouter", () => {
 
     await impersonateAccount(GELATO_RELAY_ADDRESS);
     await setBalance(GELATO_RELAY_ADDRESS, expandDecimals(100, 18));
-    await usdc.mint(user1.address, expandDecimals(1, 30)); // very large amount
+    await usdc.mint(user1.address, expandDecimals(10000, 6));
     await wnt.connect(user1).deposit({ value: expandDecimals(1000, 18) });
     await dataStore.setUint(keys.MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT, decimalToFloat(100));
 
