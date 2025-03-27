@@ -180,16 +180,15 @@ describe("GelatoRelayRouter", () => {
 
     it.skip("InvalidRelayParams", async () => {
       createOrderParams.feeParams.feeSwapPath = [ethUsdMarket.marketToken];
-      createOrderParams.externalCallsList = [
-        {
-          token: wnt.address,
-          amount: expandDecimals(1, 17),
-          externalCallTargets: [user0.address],
-          externalCallDataList: ["0x"],
-          refundTokens: [wnt.address],
-          refundReceivers: [user0.address],
-        },
-      ];
+      createOrderParams.externalCalls = {
+        sendTokens: [wnt.address],
+        sendAmounts: [expandDecimals(1, 17)],
+        externalCallTargets: [user0.address],
+        externalCallDataList: ["0x"],
+        refundTokens: [wnt.address],
+        refundReceivers: [user0.address],
+      };
+
       await expect(
         sendCreateOrder({
           ...createOrderParams,
@@ -617,12 +616,14 @@ describe("GelatoRelayRouter", () => {
       const usdcBalanceBefore = await usdc.balanceOf(user0.address);
       const feeAmount = expandDecimals(10, 6);
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, 0);
-      const tx = await sendCreateOrder({
-        ...createOrderParams,
-        externalCallsList: [
-          {
-            token: usdc.address,
-            amount: feeAmount,
+
+      // should send at least some tokens
+      await expect(
+        sendCreateOrder({
+          ...createOrderParams,
+          externalCalls: {
+            sendTokens: [],
+            sendAmounts: [],
             externalCallTargets: [externalExchange.address],
             externalCallDataList: [
               externalExchange.interface.encodeFunctionData("transfer", [
@@ -634,7 +635,50 @@ describe("GelatoRelayRouter", () => {
             refundTokens: [],
             refundReceivers: [],
           },
-        ],
+        })
+      )
+        .to.be.revertedWithCustomError(errorsContract, "InvalidExternalCalls")
+        .withArgs(0, 0);
+
+      // sendTokens should match sendAmounts
+      await expect(
+        sendCreateOrder({
+          ...createOrderParams,
+          externalCalls: {
+            sendTokens: [wnt.address],
+            sendAmounts: [2, 3],
+            externalCallTargets: [externalExchange.address],
+            externalCallDataList: [
+              externalExchange.interface.encodeFunctionData("transfer", [
+                wnt.address,
+                gelatoRelayRouter.address,
+                expandDecimals(1, 17),
+              ]),
+            ],
+            refundTokens: [],
+            refundReceivers: [],
+          },
+        })
+      )
+        .to.be.revertedWithCustomError(errorsContract, "InvalidExternalCalls")
+        .withArgs(1, 2);
+
+      const tx = await sendCreateOrder({
+        ...createOrderParams,
+        externalCalls: {
+          sendTokens: [usdc.address],
+          sendAmounts: [feeAmount],
+          externalCallTargets: [externalExchange.address],
+          externalCallDataList: [
+            externalExchange.interface.encodeFunctionData("transfer", [
+              wnt.address,
+              gelatoRelayRouter.address,
+              expandDecimals(1, 17),
+            ]),
+          ],
+          refundTokens: [],
+          refundReceivers: [],
+        },
       });
 
       // feeCollector received in WETH
@@ -697,38 +741,25 @@ describe("GelatoRelayRouter", () => {
 
       const tx = await sendCreateOrder({
         ...createOrderParams,
-        externalCallsList: [
-          // swap ETH for USDC collateral
-          {
-            token: wnt.address,
-            amount: expandDecimals(1, 18),
-            externalCallTargets: [externalExchange.address],
-            externalCallDataList: [
-              externalExchange.interface.encodeFunctionData("transfer", [
-                usdc.address,
-                orderVault.address,
-                expandDecimals(100, 6),
-              ]),
-            ],
-            refundTokens: [],
-            refundReceivers: [],
-          },
-          // relay fee
-          {
-            token: wbtc.address,
-            amount: expandDecimals(1, 4),
-            externalCallTargets: [externalExchange.address],
-            externalCallDataList: [
-              externalExchange.interface.encodeFunctionData("transfer", [
-                wnt.address,
-                gelatoRelayRouter.address,
-                expandDecimals(1, 15),
-              ]),
-            ],
-            refundTokens: [],
-            refundReceivers: [],
-          },
-        ],
+        externalCalls: {
+          sendTokens: [wnt.address, wbtc.address],
+          sendAmounts: [expandDecimals(1, 18), expandDecimals(1, 4)],
+          externalCallTargets: [externalExchange.address, externalExchange.address],
+          externalCallDataList: [
+            externalExchange.interface.encodeFunctionData("transfer", [
+              usdc.address,
+              orderVault.address,
+              expandDecimals(100, 6),
+            ]),
+            externalExchange.interface.encodeFunctionData("transfer", [
+              wnt.address,
+              gelatoRelayRouter.address,
+              expandDecimals(1, 15),
+            ]),
+          ],
+          refundTokens: [],
+          refundReceivers: [],
+        },
       });
 
       await expectBalances({
@@ -796,22 +827,20 @@ describe("GelatoRelayRouter", () => {
                 })
                 .join("")
             : "";
-          createOrderParams.externalCallsList = [
-            {
-              token: wnt.address,
-              amount: expandDecimals(1, 15),
-              externalCallTargets: [externalExchange.address],
-              externalCallDataList: [
-                externalExchange.interface.encodeFunctionData("transfer", [
-                  wnt.address,
-                  gelatoRelayRouter.address,
-                  expandDecimals(1, 17),
-                ]) + extraCalldata,
-              ],
-              refundTokens: [],
-              refundReceivers: [],
-            },
-          ];
+          createOrderParams.externalCalls = {
+            sendTokens: [wnt.address],
+            sendAmounts: [expandDecimals(1, 15)],
+            externalCallTargets: [externalExchange.address],
+            externalCallDataList: [
+              externalExchange.interface.encodeFunctionData("transfer", [
+                wnt.address,
+                gelatoRelayRouter.address,
+                expandDecimals(1, 17),
+              ]) + extraCalldata,
+            ],
+            refundTokens: [],
+            refundReceivers: [],
+          };
         }
 
         if (c.useSwaps) {

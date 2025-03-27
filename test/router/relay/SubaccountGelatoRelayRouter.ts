@@ -167,16 +167,14 @@ describe("SubaccountGelatoRelayRouter", () => {
       await expect(
         sendCreateOrder({
           ...createOrderParams,
-          externalCallsList: [
-            {
-              token: ethers.constants.AddressZero,
-              amount: 0,
-              externalCallTargets: [user0.address],
-              externalCallDataList: ["0x"],
-              refundTokens: [],
-              refundReceivers: [],
-            },
-          ],
+          externalCalls: {
+            sendTokens: [ethers.constants.AddressZero],
+            sendAmounts: [0],
+            externalCallTargets: [user0.address],
+            externalCallDataList: ["0x"],
+            refundTokens: [],
+            refundReceivers: [],
+          },
         })
       ).to.be.revertedWithCustomError(errorsContract, "NonEmptyExternalCallsForSubaccountOrder");
     });
@@ -830,16 +828,14 @@ describe("SubaccountGelatoRelayRouter", () => {
       await expect(
         sendUpdateOrder({
           ...updateOrderParams,
-          externalCallsList: [
-            {
-              token: ethers.constants.AddressZero,
-              amount: 0,
-              externalCallTargets: [user0.address],
-              externalCallDataList: ["0x"],
-              refundTokens: [],
-              refundReceivers: [],
-            },
-          ],
+          externalCalls: {
+            sendTokens: [ethers.constants.AddressZero],
+            sendAmounts: [0],
+            externalCallTargets: [user0.address],
+            externalCallDataList: ["0x"],
+            refundTokens: [],
+            refundReceivers: [],
+          },
         })
       ).to.be.revertedWithCustomError(errorsContract, "NonEmptyExternalCallsForSubaccountOrder");
     });
@@ -1038,16 +1034,14 @@ describe("SubaccountGelatoRelayRouter", () => {
       await expect(
         sendCancelOrder({
           ...cancelOrderParams,
-          externalCallsList: [
-            {
-              token: ethers.constants.AddressZero,
-              amount: 0,
-              externalCallTargets: [user0.address],
-              externalCallDataList: ["0x"],
-              refundTokens: [],
-              refundReceivers: [],
-            },
-          ],
+          externalCalls: {
+            sendTokens: [ethers.constants.AddressZero],
+            sendAmounts: [0],
+            externalCallTargets: [user0.address],
+            externalCallDataList: ["0x"],
+            refundTokens: [],
+            refundReceivers: [],
+          },
           key: orderKeys[0],
         })
       ).to.be.revertedWithCustomError(errorsContract, "NonEmptyExternalCallsForSubaccountOrder");
@@ -1156,22 +1150,20 @@ describe("SubaccountGelatoRelayRouter", () => {
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, 0);
       const tx = await sendRemoveSubaccount({
         ...params,
-        externalCallsList: [
-          {
-            token: usdc.address,
-            amount: feeAmount,
-            externalCallTargets: [externalExchange.address],
-            externalCallDataList: [
-              externalExchange.interface.encodeFunctionData("transfer", [
-                wnt.address,
-                subaccountGelatoRelayRouter.address,
-                expandDecimals(1, 17),
-              ]),
-            ],
-            refundTokens: [],
-            refundReceivers: [],
-          },
-        ],
+        externalCalls: {
+          sendTokens: [usdc.address],
+          sendAmounts: [feeAmount],
+          externalCallTargets: [externalExchange.address],
+          externalCallDataList: [
+            externalExchange.interface.encodeFunctionData("transfer", [
+              wnt.address,
+              subaccountGelatoRelayRouter.address,
+              expandDecimals(1, 17),
+            ]),
+          ],
+          refundTokens: [],
+          refundReceivers: [],
+        },
         feeParams: {
           feeToken: wnt.address,
           feeAmount: 0,

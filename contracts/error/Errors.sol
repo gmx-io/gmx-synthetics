@@ -443,6 +443,6 @@ library Errors {
     error InvalidRelayParams();
     error RelayEmptyBatch();
     error RelayCalldataTooLong(uint256 calldataLength);
-    error InvalidExternalCalls(address token, uint256 amount, uint256 targetsLength);
+    error InvalidExternalCalls(uint256 sendTokensLength, uint256 sendAmountsLength);
     error MaxRelayFeeSwapForSubaccountExceeded(uint256 feeUsd, uint256 maxFeeUsd);
 }

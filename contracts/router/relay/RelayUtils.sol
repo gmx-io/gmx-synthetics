@@ -36,8 +36,8 @@ struct TokenPermit {
 }
 
 struct ExternalCalls {
-    address token;
-    uint256 amount;
+    address[] sendTokens;
+    uint256[] sendAmounts;
     address[] externalCallTargets;
     bytes[] externalCallDataList;
     address[] refundTokens;
@@ -46,7 +46,7 @@ struct ExternalCalls {
 
 struct RelayParams {
     OracleUtils.SetPricesParams oracleParams;
-    ExternalCalls[] externalCallsList;
+    ExternalCalls externalCalls;
     TokenPermit[] tokenPermits;
     FeeParams fee;
     uint256 userNonce;
@@ -71,7 +71,7 @@ string constant UPDATE_ORDER_PARAMS = "UpdateOrderParams(bytes32 key,uint256 siz
 string constant CREATE_ORDER_ADDRESSES = "CreateOrderAddresses(address receiver,address cancellationReceiver,address callbackContract,address uiFeeReceiver,address market,address initialCollateralToken,address[] swapPath)";
 string constant CREATE_ORDER_NUMBERS = "CreateOrderNumbers(uint256 sizeDeltaUsd,uint256 initialCollateralDeltaAmount,uint256 triggerPrice,uint256 acceptablePrice,uint256 executionFee,uint256 callbackGasLimit,uint256 minOutputAmount,uint256 validFromTime)";
 
-string constant CREATE_ORDER_PARAMS_ROOT  = "CreateOrderParams(CreateOrderAddresses addresses,CreateOrderNumbers numbers,uint256 orderType,uint256 decreasePositionSwapType,bool isLong,bool shouldUnwrapNativeToken,bool autoCancel,bytes32 referralCode)";
+string constant CREATE_ORDER_PARAMS_ROOT = "CreateOrderParams(CreateOrderAddresses addresses,CreateOrderNumbers numbers,uint256 orderType,uint256 decreasePositionSwapType,bool isLong,bool shouldUnwrapNativeToken,bool autoCancel,bytes32 referralCode)";
 string constant CREATE_ORDER_PARAMS = string(
     abi.encodePacked(
         "CreateOrderParams(CreateOrderAddresses addresses,CreateOrderNumbers numbers,uint256 orderType,uint256 decreasePositionSwapType,bool isLong,bool shouldUnwrapNativeToken,bool autoCancel,bytes32 referralCode)",
@@ -164,7 +164,7 @@ library RelayUtils {
             keccak256(
                 abi.encode(
                     relayParams.oracleParams,
-                    relayParams.externalCallsList,
+                    relayParams.externalCalls,
                     relayParams.tokenPermits,
                     relayParams.fee,
                     relayParams.userNonce,

@@ -30,14 +30,14 @@ export async function sendCreateOrder(p: {
     nonce: BigNumberish;
     signature?: string;
   };
-  externalCallsList?: {
-    token: string;
-    amount: BigNumberish;
+  externalCalls?: {
+    sendTokens: string[];
+    sendAmounts: BigNumberish[];
     externalCallTargets: string[];
     externalCallDataList: string[];
     refundTokens: string[];
     refundReceivers: string[];
-  }[];
+  };
   signer: ethers.Signer;
   sender: ethers.Signer;
   oracleParams?: {
@@ -113,14 +113,14 @@ export async function sendUpdateOrder(p: {
     feeAmount: BigNumberish;
     feeSwapPath: string[];
   };
-  externalCallsList?: {
-    token: string;
-    amount: BigNumberish;
+  externalCalls?: {
+    sendTokens: string[];
+    sendAmounts: BigNumberish[];
     externalCallTargets: string[];
     externalCallDataList: string[];
     refundTokens: string[];
     refundReceivers: string[];
-  }[];
+  };
   subaccount: string;
   subaccountApproval: {
     subaccount: string;
@@ -243,14 +243,14 @@ export async function sendCancelOrder(p: {
     deadline: BigNumberish;
     chainId: BigNumberish;
   }[];
-  externalCallsList?: {
-    token: string;
-    amount: BigNumberish;
+  externalCalls?: {
+    sendTokens: string[];
+    sendAmounts: BigNumberish[];
     externalCallTargets: string[];
     externalCallDataList: string[];
     refundTokens: string[];
     refundReceivers: string[];
-  }[];
+  };
   feeParams: {
     feeToken: string;
     feeAmount: BigNumberish;
@@ -351,14 +351,14 @@ export async function sendRemoveSubaccount(p: {
     feeAmount: BigNumberish;
     feeSwapPath: string[];
   };
-  externalCallsList?: {
-    token: string;
-    amount: BigNumberish;
+  externalCalls?: {
+    sendTokens: string[];
+    sendAmounts: BigNumberish[];
     externalCallTargets: string[];
     externalCallDataList: string[];
     refundTokens: string[];
     refundReceivers: string[];
-  }[];
+  };
   tokenPermits?: {
     token: string;
     spender: string;

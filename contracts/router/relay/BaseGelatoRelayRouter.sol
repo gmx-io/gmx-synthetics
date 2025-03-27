@@ -251,17 +251,13 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         bool isSubaccount
     ) internal withOraclePricesForAtomicAction(relayParams.oracleParams) returns (uint256) {
         _handleTokenPermits(relayParams.tokenPermits);
-        _handleExternalCalls(account, relayParams.externalCallsList, isSubaccount);
+        _handleExternalCalls(account, relayParams.externalCalls, isSubaccount);
 
         return _handleRelayFee(contracts, relayParams, account, isSubaccount);
     }
 
-    function _handleExternalCalls(
-        address account,
-        ExternalCalls[] calldata externalCallsList,
-        bool isSubaccount
-    ) internal {
-        if (externalCallsList.length == 0) {
+    function _handleExternalCalls(address account, ExternalCalls calldata externalCalls, bool isSubaccount) internal {
+        if (externalCalls.externalCallTargets.length == 0) {
             return;
         }
 
@@ -270,29 +266,22 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             revert Errors.NonEmptyExternalCallsForSubaccountOrder();
         }
 
-        for (uint256 i = 0; i < externalCallsList.length; i++) {
-            ExternalCalls calldata externalCalls = externalCallsList[i];
-            if (
-                externalCalls.externalCallTargets.length == 0 ||
-                externalCalls.token == address(0) ||
-                externalCalls.amount == 0
-            ) {
-                revert Errors.InvalidExternalCalls(
-                    externalCalls.token,
-                    externalCalls.amount,
-                    externalCalls.externalCallTargets.length
-                );
-            }
-
-            _sendTokens(account, externalCalls.token, address(externalHandler), externalCalls.amount);
-
-            externalHandler.makeExternalCalls(
-                externalCalls.externalCallTargets,
-                externalCalls.externalCallDataList,
-                externalCalls.refundTokens,
-                externalCalls.refundReceivers
-            );
+        if (
+            externalCalls.sendTokens.length == 0 || externalCalls.sendTokens.length != externalCalls.sendAmounts.length
+        ) {
+            revert Errors.InvalidExternalCalls(externalCalls.sendTokens.length, externalCalls.sendAmounts.length);
         }
+
+        for (uint256 i = 0; i < externalCalls.sendTokens.length; i++) {
+            _sendTokens(account, externalCalls.sendTokens[i], address(externalHandler), externalCalls.sendAmounts[i]);
+        }
+
+        externalHandler.makeExternalCalls(
+            externalCalls.externalCallTargets,
+            externalCalls.externalCallDataList,
+            externalCalls.refundTokens,
+            externalCalls.refundReceivers
+        );
     }
 
     function _handleTokenPermits(TokenPermit[] calldata tokenPermits) internal {

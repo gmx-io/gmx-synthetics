@@ -13,8 +13,8 @@ export type SubaccountApproval = {
 };
 
 export type ExternalCalls = {
-  token: string;
-  amount: BigNumberish;
+  sendTokens: string[];
+  sendAmounts: BigNumberish[];
   externalCallTargets: string[];
   externalCallDataList: string[];
   refundTokens: string[];
@@ -47,7 +47,7 @@ export type FeeParams = {
 export type RelayParams = {
   oracleParams: OracleParams;
   tokenPermits: TokenPermit[];
-  externalCallsList: ExternalCalls[];
+  externalCalls: ExternalCalls;
   fee: FeeParams;
   userNonce: BigNumberish;
   deadline: BigNumberish;
@@ -102,7 +102,7 @@ function getDefaultOracleParams() {
 export async function getRelayParams(p: {
   oracleParams?: any;
   tokenPermits?: any;
-  externalCallsList?: any;
+  externalCalls?: any;
   feeParams: any;
   userNonce?: BigNumberish;
   deadline: BigNumberish;
@@ -116,7 +116,14 @@ export async function getRelayParams(p: {
   return {
     oracleParams: p.oracleParams || getDefaultOracleParams(),
     tokenPermits: p.tokenPermits || [],
-    externalCallsList: p.externalCallsList || [],
+    externalCalls: p.externalCalls || {
+      sendTokens: [],
+      sendAmounts: [],
+      externalCallTargets: [],
+      externalCallDataList: [],
+      refundTokens: [],
+      refundReceivers: [],
+    },
     fee: p.feeParams,
     userNonce,
     deadline: p.deadline,
@@ -142,7 +149,7 @@ export function hashRelayParams(relayParams: RelayParams) {
   const encoded = ethers.utils.defaultAbiCoder.encode(
     [
       "tuple(address[] tokens, address[] providers, bytes[] data)",
-      "tuple(address token,uint256 amount,address[] externalCallTargets, bytes[] externalCallDataList, address[] refundTokens, address[] refundReceivers)[]",
+      "tuple(address[] sendTokens,uint256[] sendAmounts,address[] externalCallTargets, bytes[] externalCallDataList, address[] refundTokens, address[] refundReceivers)",
       "tuple(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s, address token)[]",
       "tuple(address feeToken, uint256 feeAmount, address[] feeSwapPath)",
       "uint256",
@@ -150,14 +157,7 @@ export function hashRelayParams(relayParams: RelayParams) {
     ],
     [
       [relayParams.oracleParams.tokens, relayParams.oracleParams.providers, relayParams.oracleParams.data],
-      relayParams.externalCallsList.map((externalCalls) => [
-        externalCalls.token,
-        externalCalls.amount,
-        externalCalls.externalCallTargets,
-        externalCalls.externalCallDataList,
-        externalCalls.refundTokens,
-        externalCalls.refundReceivers,
-      ]),
+      relayParams.externalCalls,
       relayParams.tokenPermits.map((permit) => [
         permit.owner,
         permit.spender,

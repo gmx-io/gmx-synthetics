@@ -14,14 +14,14 @@ export async function getSendCreateOrderCalldata(p: {
     providers: string[];
     data: string[];
   };
-  externalCallsList?: {
-    token: string;
-    amount: BigNumberish;
+  externalCalls?: {
+    sendTokens: string[];
+    sendAmounts: BigNumberish[];
     externalCallTargets: string[];
     externalCallDataList: string[];
     refundTokens: string[];
     refundReceivers: string[];
-  }[];
+  };
   tokenPermits?: {
     token: string;
     spender: string;
