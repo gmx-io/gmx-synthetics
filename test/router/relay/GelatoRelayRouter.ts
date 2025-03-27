@@ -681,12 +681,70 @@ describe("GelatoRelayRouter", () => {
         },
       });
 
+      await expectBalance(usdc.address, externalHandler.address, feeAmount);
       // feeCollector received in WETH
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, createOrderParams.gelatoRelayFeeAmount);
 
       // and user sent correct amount of USDC
       const usdcBalanceAfter = await usdc.balanceOf(user0.address);
       expect(usdcBalanceAfter).eq(usdcBalanceBefore.sub(feeAmount));
+
+      await logGasUsage({
+        tx,
+        label: "gelatoRelayRouter.createOrder with external call",
+      });
+    });
+
+    it("swap partial relay fee: external calls and direct transfer", async () => {
+      const externalExchange = await deployContract("MockExternalExchange", []);
+      await wnt.connect(user0).transfer(externalExchange.address, expandDecimals(1, 17));
+
+      await usdc.connect(user0).approve(router.address, expandDecimals(1000, 6));
+      await wnt.connect(user0).approve(router.address, expandDecimals(1, 18));
+
+      const externalCallUsdcFeeAmount = expandDecimals(5, 6); // 0.001 ETH at $5000 per ETH
+      const directTransferWntFeeAmount = expandDecimals(1, 15); // 0.001 ETH
+      await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, 0);
+      createOrderParams.feeParams.feeAmount = directTransferWntFeeAmount;
+      createOrderParams.params.orderType = OrderType.MarketDecrease;
+
+      const usdcBalanceBefore = await usdc.balanceOf(user0.address);
+      const wntBalanceBefore = await wnt.balanceOf(user0.address);
+
+      // Gelato expects to receive 0.002 ETH
+      // send 5 USDC and swap through external call for 0.001 ETH
+      // and send 0.001 WETH directly to Relay Router
+      const tx = await sendCreateOrder({
+        ...createOrderParams,
+        externalCalls: {
+          sendTokens: [usdc.address],
+          sendAmounts: [externalCallUsdcFeeAmount],
+          externalCallTargets: [externalExchange.address],
+          externalCallDataList: [
+            externalExchange.interface.encodeFunctionData("transfer", [
+              wnt.address,
+              gelatoRelayRouter.address,
+              expandDecimals(1, 15),
+            ]),
+          ],
+          refundTokens: [],
+          refundReceivers: [],
+        },
+        gelatoRelayFeeAmount: expandDecimals(2, 15), // should use sum of externalCallFeeAmount and directTransferFeeAmount
+      });
+
+      await expectBalances({
+        [user0.address]: {
+          [usdc.address]: usdcBalanceBefore.sub(externalCallUsdcFeeAmount), // user sent 5 USDC to external handler
+          [wnt.address]: wntBalanceBefore.sub(directTransferWntFeeAmount), // user sent 0.001 WETH to Relay Router
+        },
+        [GELATO_RELAY_ADDRESS]: {
+          [wnt.address]: expandDecimals(2, 15), // total of 0.002 WETH was sent to Gelato Relay
+        },
+        [externalHandler.address]: {
+          [usdc.address]: externalCallUsdcFeeAmount, // 5 USDC was received by external handler
+        },
+      });
 
       await logGasUsage({
         tx,
