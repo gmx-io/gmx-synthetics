@@ -71,7 +71,8 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     ) internal view {
         (address recovered, ECDSA.RecoverError error) = ECDSA.tryRecover(digest, signature);
 
-        // allow to optionally skip signature validation for eth_estimateGas / eth_call if tx.origin is zero
+        // allow to optionally skip signature validation for eth_estimateGas / eth_call if tx.origin is GMX_SIMULATION_ORIGIN
+        // do not use address(0) to avoid relays accidentally skipping signature validation if they use address(0) as the origin
         if (tx.origin == GMX_SIMULATION_ORIGIN) {
             return;
         }
