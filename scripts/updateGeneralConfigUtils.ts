@@ -19,6 +19,27 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
     `chainlinkPaymentToken`
   );
 
+  if (network.name != "hardhat") {
+    for (const [multichainProvider, enabled] of Object.entries(generalConfig.multichainProviders)) {
+      await handleConfig(
+        "bool",
+        keys.isMultichainProviderEnabledKey(multichainProvider),
+        "0x",
+        enabled,
+        `multichainProvider ${multichainProvider}`
+      );
+    }
+    for (const [multichainEndpoint, enabled] of Object.entries(generalConfig.multichainEndpoints)) {
+      await handleConfig(
+        "bool",
+        keys.isMultichainEndpointEnabledKey(multichainEndpoint),
+        "0x",
+        enabled,
+        `multichainEndpoint ${multichainEndpoint}`
+      );
+    }
+  }
+
   await handleConfig(
     "uint",
     keys.SEQUENCER_GRACE_DURATION,
