@@ -20,6 +20,8 @@ import "../../gas/GasUtils.sol";
 
 import "./RelayUtils.sol";
 
+address constant GMX_SIMULATION_ORIGIN = address(uint160(uint256(keccak256("GMX SIMULATION ORIGIN"))));
+
 abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, OracleModule {
     using Order for Order.Props;
     using SafeERC20 for IERC20;
@@ -70,7 +72,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         (address recovered, ECDSA.RecoverError error) = ECDSA.tryRecover(digest, signature);
 
         // allow to optionally skip signature validation for eth_estimateGas / eth_call if tx.origin is zero
-        if (tx.origin == address(0)) {
+        if (tx.origin == GMX_SIMULATION_ORIGIN) {
             return;
         }
 

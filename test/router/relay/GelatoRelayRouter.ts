@@ -10,7 +10,7 @@ import {
 import { deployFixture } from "../../../utils/fixture";
 import { expandDecimals, decimalToFloat, bigNumberify, percentageToFloat, applyFactor } from "../../../utils/math";
 import { logGasUsage } from "../../../utils/gas";
-import { hashString } from "../../../utils/hash";
+import { hashString, keccakString } from "../../../utils/hash";
 import { OrderType, DecreasePositionSwapType, getOrderKeys, getOrderCount, orderTypeNames } from "../../../utils/order";
 import { errorsContract } from "../../../utils/error";
 import { expectBalance, expectBalances } from "../../../utils/validation";
@@ -32,6 +32,8 @@ import { getRelayParams } from "../../../utils/relay/helpers";
 
 const BAD_SIGNATURE =
   "0x122e3efab9b46c82dc38adf4ea6cd2c753b00f95c217a0e3a0f4dd110839f07a08eb29c1cc414d551349510e23a75219cd70c8b88515ed2b83bbd88216ffdb051f";
+
+const GMX_SIMULATION_ORIGIN = "0x" + keccakString("GMX SIMULATION ORIGIN").slice(-40);
 
 describe("GelatoRelayRouter", () => {
   let fixture;
@@ -420,7 +422,7 @@ describe("GelatoRelayRouter", () => {
       });
     }
 
-    it("sponsoredCall: skips signature validation in gas estimation if tx.origin is zero", async () => {
+    it("sponsoredCall: skips signature validation in gas estimation if tx.origin is GMX_SIMULATION_ORIGIN", async () => {
       await dataStore.setAddress(keys.RELAY_FEE_ADDRESS, user3.address);
       const p = createOrderParams;
       const relayParams = await getRelayParams(p);
@@ -443,7 +445,7 @@ describe("GelatoRelayRouter", () => {
       await hre.ethers.provider.estimateGas({
         to: p.relayRouter.address,
         data: calldata,
-        from: ethers.constants.AddressZero,
+        from: GMX_SIMULATION_ORIGIN,
       });
 
       // eth_call just returns the revert message
@@ -457,7 +459,7 @@ describe("GelatoRelayRouter", () => {
       const goodResult = await hre.ethers.provider.call({
         to: p.relayRouter.address,
         data: calldata,
-        from: ethers.constants.AddressZero,
+        from: GMX_SIMULATION_ORIGIN,
       });
       expect(goodResult.length).eq(66);
       expect(() => {
