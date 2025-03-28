@@ -893,7 +893,7 @@ describe("MultichainRouter", () => {
           signer: user1,
           feeParams: {
             feeToken: wnt.address,
-            feeAmount: expandDecimals(2, 15), // 0.002 ETH
+            feeAmount: feeAmount, // 0.006 ETH
             feeSwapPath: [],
           },
           account: user1.address,
@@ -948,6 +948,27 @@ describe("MultichainRouter", () => {
           initialFeeReceiverBalance.add(updateOrderParams.relayFeeAmount)
         );
       });
+
+      it("order collateral can be used to pay for fees for increase orders", async () => {
+        await sendCreateDeposit({ ...createDepositParams, relayFeeAmount: feeAmount });
+        await executeDeposit(fixture, { gasUsageLabel: "executeMultichainDeposit" });
+        await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: collateralDeltaAmount.add(feeAmount) });
+        await sendCreateOrder(createOrderParams);
+
+        // Verify order was created and has the expected collateral amount
+        const orderKeys = await getOrderKeys(dataStore, 0, 1);
+        let order = await reader.getOrder(dataStore.address, orderKeys[0]);
+        expect(order.numbers.initialCollateralDeltaAmount).eq(collateralDeltaAmount);
+
+        // Verify user's multichain balance is insufficient for the update operation (should be zero after paying for deposit and order creation)
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0);
+
+        // Try to update order - should use the order's collateral to pay for fees
+        await sendUpdateOrder({ ...updateOrderParams, key: orderKeys[0] });
+
+        order = await reader.getOrder(dataStore.address, orderKeys[0]);
+        expect(order.numbers.initialCollateralDeltaAmount).eq(collateralDeltaAmount.sub(feeAmount));
+      });
     });
 
     describe("cancelOrder", () => {
@@ -959,7 +980,7 @@ describe("MultichainRouter", () => {
           signer: user1,
           feeParams: {
             feeToken: wnt.address,
-            feeAmount: expandDecimals(2, 15), // 0.002 ETH
+            feeAmount: feeAmount, // 0.006 ETH
             feeSwapPath: [],
           },
           account: user1.address,
@@ -970,7 +991,7 @@ describe("MultichainRouter", () => {
           relayRouter: multichainOrderRouter,
           chainId,
           relayFeeToken: wnt.address,
-          relayFeeAmount: expandDecimals(1, 15),
+          relayFeeAmount: feeAmount,
         };
       });
 
@@ -991,6 +1012,29 @@ describe("MultichainRouter", () => {
           wnt.address,
           GELATO_RELAY_ADDRESS,
           initialFeeReceiverBalance.add(cancelOrderParams.relayFeeAmount)
+        );
+      });
+
+      it("order collateral can be used to pay for fees for swap orders", async () => {
+        await sendCreateDeposit({ ...createDepositParams, relayFeeAmount: feeAmount });
+        await executeDeposit(fixture, { gasUsageLabel: "executeMultichainDeposit" });
+        await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: collateralDeltaAmount.add(feeAmount) });
+        await sendCreateOrder(createOrderParams);
+
+        // Verify order was created and has the expected collateral amount
+        const orderKeys = await getOrderKeys(dataStore, 0, 1);
+        const order = await reader.getOrder(dataStore.address, orderKeys[0]);
+        expect(order.numbers.initialCollateralDeltaAmount).eq(collateralDeltaAmount);
+
+        // Verify user's multichain balance is insufficient for the update operation (should be zero after paying for deposit and order creation)
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0);
+
+        // Try to cancel order - should use the order's collateral to pay for fees
+        await sendCancelOrder({ ...cancelOrderParams, key: orderKeys[0] });
+
+        expect(await getOrderCount(dataStore)).to.eq(0);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(
+          collateralDeltaAmount.sub(feeAmount)
         );
       });
     });
