@@ -13,7 +13,6 @@ import {SubaccountApproval} from "../../subaccount/SubaccountUtils.sol";
 
 struct Contracts {
     DataStore dataStore;
-    EventEmitter eventEmitter;
     OrderVault orderVault;
     address wnt;
 }
@@ -129,7 +128,7 @@ library RelayUtils {
             )
         );
 
-    function swapFeeTokens(Contracts memory contracts, Oracle oracle, FeeParams calldata fee) external {
+    function swapFeeTokens(Contracts memory contracts, EventEmitter eventEmitter, Oracle oracle, FeeParams calldata fee) external {
         oracle.validateSequencerUp();
 
         // swap fee tokens to WNT
@@ -139,7 +138,7 @@ library RelayUtils {
         (address outputToken, ) = SwapUtils.swap(
             SwapUtils.SwapParams({
                 dataStore: contracts.dataStore,
-                eventEmitter: contracts.eventEmitter,
+                eventEmitter: eventEmitter,
                 oracle: oracle,
                 bank: contracts.orderVault,
                 key: bytes32(0),

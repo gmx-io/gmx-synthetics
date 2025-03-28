@@ -104,12 +104,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     ) external nonReentrant returns (bytes32) {
         uint256 startingGas = gasleft();
         _validateGaslessFeature();
-        bytes32 structHash = RelayUtils.getCreateOrderStructHash(
-            relayParams,
-            subaccountApproval,
-            account,
-            params
-        );
+        bytes32 structHash = RelayUtils.getCreateOrderStructHash(relayParams, subaccountApproval, account, params);
         _validateCall(relayParams, subaccount, structHash);
         _validateCreateOrderParams(account, params);
 
@@ -181,7 +176,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         _validateCall(relayParams, account, structHash);
 
         Contracts memory contracts = _getContracts();
-        uint256 residualFeeAmount = _handleRelayBeforeAction(
+        _handleRelayBeforeAction(
             contracts,
             relayParams,
             account,
@@ -190,12 +185,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
 
         SubaccountUtils.removeSubaccount(dataStore, eventEmitter, account, subaccount);
 
-        _handleRelayAfterAction(
-            contracts,
-            startingGas,
-            residualFeeAmount,
-            account
-        );
+        _handleRelayAfterAction(contracts, startingGas, account);
     }
 
     function _handleSubaccountAction(
