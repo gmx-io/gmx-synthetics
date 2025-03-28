@@ -16,6 +16,7 @@ import { errorsContract } from "../../../utils/error";
 import { expectBalance } from "../../../utils/validation";
 import * as keys from "../../../utils/keys";
 import {
+  getSubaccountApproval,
   sendBatch,
   sendCancelOrder,
   sendCreateOrder,
@@ -324,6 +325,32 @@ describe("SubaccountGelatoRelayRouter", () => {
         errorsContract,
         "UnexpectedRelayFeeTokenAfterSwap"
       );
+    });
+
+    it("InvalidSubaccountApprovalSubaccount", async () => {
+      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
+
+      const subaccountApproval = await getSubaccountApproval({
+        subaccountApproval: {
+          subaccount: ethers.constants.AddressZero,
+          shouldAdd: true,
+          expiresAt: 9999999999,
+          maxAllowedCount: 10,
+          actionType: keys.SUBACCOUNT_ORDER_ACTION,
+          deadline: 0,
+          nonce: 0,
+        },
+        account: user1.address,
+        relayRouter: subaccountGelatoRelayRouter,
+        chainId,
+        signer: user1,
+      });
+      await expect(
+        sendCreateOrder({
+          ...createOrderParams,
+          subaccountApproval,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidSubaccountApprovalSubaccount");
     });
 
     it("SubaccountApprovalDeadlinePassed", async () => {

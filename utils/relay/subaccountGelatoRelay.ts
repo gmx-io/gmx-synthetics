@@ -188,7 +188,7 @@ export function getEmptySubaccountApproval() {
   };
 }
 
-async function getSubaccountApproval(p: {
+export async function getSubaccountApproval(p: {
   subaccountApproval?: Omit<SubaccountApproval, "nonce" | "signature"> & {
     nonce?: BigNumberish;
     signature?: string;
@@ -460,11 +460,9 @@ export async function sendBatch(p: {
     subaccountApproval,
     p.account,
     p.subaccount,
-    {
-      createOrderParamsList: p.createOrderParamsList,
-      updateOrderParamsList: p.updateOrderParamsList,
-      cancelOrderKeys: p.cancelOrderKeys,
-    },
+    p.createOrderParamsList,
+    p.updateOrderParamsList,
+    p.cancelOrderKeys,
   ]);
   return sendRelayTransaction({
     calldata: batchCalldata,
