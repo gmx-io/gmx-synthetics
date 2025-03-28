@@ -829,6 +829,59 @@ describe("MultichainRouter", () => {
           expandDecimals(1, 18)
         );
       });
+
+      it("refunds multichain execution fee", async () => {
+        const executionFee = expandDecimals(25, 14); // 0.0025 ETH
+
+        await handleDeposit(fixture, {
+          create: {
+            market: ethUsdMarket,
+            longTokenAmount: expandDecimals(1000, 18),
+            shortTokenAmount: expandDecimals(1000 * 1000, 6),
+          },
+        });
+
+        await dataStore.setUint(keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1));
+
+        const params = {
+          addresses: {
+            receiver: user1.address,
+            cancellationReceiver: user1.address,
+            callbackContract: user1.address,
+            uiFeeReceiver: user2.address,
+            market: ethUsdMarket.marketToken,
+            initialCollateralToken: usdc.address,
+            swapPath: [],
+          },
+          numbers: {
+            sizeDeltaUsd: decimalToFloat(100 * 1000),
+            initialCollateralDeltaAmount: 0, // relevant for MarketDecrease | LimitDecrease | StopLossDecrease
+            triggerPrice: decimalToFloat(4800),
+            acceptablePrice: expandDecimals(4990, 12),
+            executionFee: 0, // execution fee is calcualted in handleRelay as feeAmount - relayFeeAmount = 0.006 - 0.0025 = 0.0035
+            callbackGasLimit: "200001",
+            minOutputAmount: expandDecimals(50000, 6),
+            validFromTime: 0,
+          },
+          orderType: OrderType.MarketIncrease,
+          decreasePositionSwapType: DecreasePositionSwapType.SwapCollateralTokenToPnlToken,
+          isLong: false,
+          shouldUnwrapNativeToken: false,
+          referralCode: hashString("referralCode"),
+          dataList: [],
+        };
+
+        const initialBalance = await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address));
+
+        await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: feeAmount });
+        await mintAndBridge(fixture, { account: user1, token: usdc, tokenAmount: collateralDeltaAmount });
+        await sendCreateOrder({ ...createOrderParams, relayFeeAmount: feeAmount.sub(executionFee), params });
+        await executeOrder(fixture, { gasUsageLabel: "executeOrder" });
+
+        expect(
+          (await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).sub(initialBalance)
+        ).closeTo("486281983890256", "10000000000000");
+      });
     });
 
     describe("updateOrder", () => {
