@@ -243,7 +243,7 @@ async function extractContractNameAndArgsFromDeployment(contractAddress: string)
   };
 }
 
-async function getArtifactBytecode(contractName: string): Promise<string> {
+async function getArtifact(contractName: string): Promise<any> {
   const findContract = findFile(contractName + ".json");
   const buildPath = path.join(__dirname, "../artifacts/contracts/");
   const searchResult = await searchDirectory(buildPath, findContract);
@@ -251,7 +251,31 @@ async function getArtifactBytecode(contractName: string): Promise<string> {
     throw new Error("Artifact not found");
   }
 
-  return JSON.parse(fs.readFileSync(searchResult, "utf-8")).bytecode;
+  return JSON.parse(fs.readFileSync(searchResult, "utf-8"));
+}
+
+async function getBytecodeWithLinks(contractName: string): Promise<string> {
+  const artifact = await getArtifact(contractName);
+
+  // convert string to array for inplace replacement
+  const arrayBytecode = artifact.bytecode.split("");
+
+  for (const dependency of Object.values(artifact.linkReferences)) {
+    const dependencyName = Object.keys(dependency)[0];
+    const dependencyPositions = dependency[dependencyName];
+
+    const deploymentFilename = "./deployments/" + hre.network.name + "/" + dependencyName + ".json";
+    // extract deployed dependency address and trim 0x
+    const addr = (await getAddressFromDeployment(deploymentFilename)).substring(2);
+
+    for (const position of dependencyPositions) {
+      // calculate link index. Each byte is 2 symbols + 0x at the start.
+      const idx = 2 + position.start * 2;
+      arrayBytecode.splice(idx, 40, addr);
+    }
+  }
+
+  return arrayBytecode.join("");
 }
 
 async function compareContractBytecodes(provider: JsonRpcProvider, contractInfo: ContractInfo): Promise<void> {
@@ -264,7 +288,7 @@ async function compareContractBytecodes(provider: JsonRpcProvider, contractInfo:
 
   await compileContract(contractName);
 
-  const artifactBytecode = await getArtifactBytecode(contractName);
+  const artifactBytecode = await getBytecodeWithLinks(contractName);
 
   const Contract = await ethers.getContract(contractName);
   if (!Contract) {
@@ -332,27 +356,33 @@ async function compileContract(contractName: string) {
 }
 
 //Using streaming read cause file can be big
+const getAddressFromDeployment = async (filename: string): Promise<string | null> => {
+  if (fs.lstatSync(filename).isDirectory()) {
+    return null;
+  }
+
+  try {
+    const fileStream = fs.createReadStream(filename);
+    const rl = readline.createInterface({ input: fileStream, crlfDelay: Infinity });
+
+    for await (const line of rl) {
+      const match = line.match(/"address":\s*"(0x[^"]+)"/);
+      if (match) {
+        return match[1];
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error("Error reading file:", error);
+    return null;
+  }
+};
+
 const checkAddressInFile =
   (address: string) =>
   async (filename: string): Promise<boolean> => {
-    if (fs.lstatSync(filename).isDirectory()) {
-      return false;
-    }
-
-    try {
-      const fileStream = fs.createReadStream(filename);
-      const rl = readline.createInterface({ input: fileStream, crlfDelay: Infinity });
-
-      for await (const line of rl) {
-        if (line.includes(`"address": "${address}",`)) {
-          return true;
-        }
-      }
-      return false;
-    } catch (error) {
-      console.error("Error reading file:", error);
-      return false;
-    }
+    const deploymentAddress = await getAddressFromDeployment(filename);
+    return deploymentAddress === address;
   };
 
 const findFile =
