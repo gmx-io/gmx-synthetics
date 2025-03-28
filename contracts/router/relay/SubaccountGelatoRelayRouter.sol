@@ -11,6 +11,13 @@ import "./BaseGelatoRelayRouter.sol";
 contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     mapping(address => uint256) public subaccountApprovalNonces;
 
+    struct BatchVars {
+        uint256 startingGas;
+        uint256 actionsCount;
+        bytes32 structHash;
+        uint256 i;
+    }
+
     constructor(
         Router _router,
         DataStore _dataStore,
@@ -22,13 +29,6 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     )
         BaseGelatoRelayRouter(_router, _dataStore, _eventEmitter, _oracle, _orderHandler, _orderVault, _externalHandler)
     {}
-
-    struct BatchVars {
-        uint256 startingGas;
-        uint256 actionsCount;
-        bytes32 structHash;
-        uint256 i;
-    }
 
     // @note all params except subaccount should be part of the corresponding struct hash
     function batch(
