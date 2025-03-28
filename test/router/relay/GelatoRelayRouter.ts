@@ -1073,7 +1073,16 @@ describe("GelatoRelayRouter", () => {
   describe("updateOrder", () => {
     let updateOrderParams: Parameters<typeof sendUpdateOrder>[0];
 
-    beforeEach(() => {
+    beforeEach(async () => {
+      const tokenPermit = await getTokenPermit(
+        wnt,
+        user0,
+        router.address,
+        expandDecimals(1, 18),
+        0,
+        9999999999,
+        chainId
+      );
       updateOrderParams = {
         sender: relaySigner,
         signer: user0,
@@ -1082,7 +1091,7 @@ describe("GelatoRelayRouter", () => {
           feeAmount: expandDecimals(2, 15), // 0.002 ETH
           feeSwapPath: [],
         },
-        tokenPermits: [],
+        tokenPermits: [tokenPermit],
         account: user0.address,
         params: {
           key: ethers.constants.HashZero,
@@ -1221,7 +1230,16 @@ describe("GelatoRelayRouter", () => {
   describe("cancelOrder", () => {
     let cancelOrderParams: Parameters<typeof sendCancelOrder>[0];
 
-    beforeEach(() => {
+    beforeEach(async () => {
+      const tokenPermit = await getTokenPermit(
+        wnt,
+        user0,
+        router.address,
+        expandDecimals(1, 18),
+        0,
+        9999999999,
+        chainId
+      );
       cancelOrderParams = {
         sender: relaySigner,
         signer: user0,
@@ -1230,7 +1248,7 @@ describe("GelatoRelayRouter", () => {
           feeAmount: expandDecimals(2, 15), // 0.002 ETH
           feeSwapPath: [],
         },
-        tokenPermits: [],
+        tokenPermits: [tokenPermit],
         key: ethers.constants.HashZero,
         account: user0.address,
         deadline: 9999999999,
@@ -1307,6 +1325,10 @@ describe("GelatoRelayRouter", () => {
         errorsContract,
         "InvalidSignature"
       );
+    });
+
+    it("RelayEmptyBatch", async () => {
+      await expect(sendBatch(batchParams)).to.be.revertedWithCustomError(errorsContract, "RelayEmptyBatch");
     });
 
     it("batch: creates, updates and cancels order", async () => {

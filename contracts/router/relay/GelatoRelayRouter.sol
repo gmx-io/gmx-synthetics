@@ -27,28 +27,17 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
     function batch(
         RelayParams calldata relayParams,
         address account,
-        IBaseOrderUtils.CreateOrderParams[] calldata createOrderParamsList,
-        UpdateOrderParams[] calldata updateOrderParamsList,
-        bytes32[] calldata cancelOrderKeys
-    ) external nonReentrant {
-        uint256 startingGas = gasleft();
-        _validateGaslessFeature();
-        bytes32 structHash = RelayUtils.getBatchStructHash(
-            relayParams,
-            createOrderParamsList,
-            updateOrderParamsList,
-            cancelOrderKeys
-        );
+        BatchParams calldata params
+    ) external withRelay(relayParams, account, false) nonReentrant {
+        bytes32 structHash = RelayUtils.getBatchStructHash(relayParams, params);
         _validateCall(relayParams, account, structHash);
 
         _batch(
-            relayParams,
             account,
-            createOrderParamsList,
-            updateOrderParamsList,
-            cancelOrderKeys,
-            false, // isSubaccount
-            startingGas
+            params.createOrderParamsList,
+            params.updateOrderParamsList,
+            params.cancelOrderKeys,
+            false // isSubaccount
         );
     }
 
@@ -56,20 +45,16 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
     function createOrder(
         RelayParams calldata relayParams,
         address account,
-        IBaseOrderUtils.CreateOrderParams memory params // can't use calldata because need to modify params.numbers.executionFee
-    ) external nonReentrant returns (bytes32) {
-        uint256 startingGas = gasleft();
-        _validateGaslessFeature();
+        IBaseOrderUtils.CreateOrderParams calldata params
+    ) external withRelay(relayParams, account, false) nonReentrant returns (bytes32) {
         bytes32 structHash = RelayUtils.getCreateOrderStructHash(relayParams, params);
         _validateCall(relayParams, account, structHash);
 
         return
             _createOrder(
-                relayParams,
                 account,
                 params,
-                false, // isSubaccount
-                startingGas
+                false // isSubaccount
             );
     }
 
@@ -78,18 +63,14 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         RelayParams calldata relayParams,
         address account,
         UpdateOrderParams calldata params
-    ) external nonReentrant {
-        uint256 startingGas = gasleft();
-        _validateGaslessFeature();
+    ) external withRelay(relayParams, account, false) nonReentrant {
         bytes32 structHash = RelayUtils.getUpdateOrderStructHash(relayParams, params);
         _validateCall(relayParams, account, structHash);
 
         _updateOrder(
-            relayParams,
             account,
             params,
-            false, // isSubaccount
-            startingGas
+            false // isSubaccount
         );
     }
 
@@ -98,18 +79,10 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         RelayParams calldata relayParams,
         address account,
         bytes32 key
-    ) external nonReentrant {
-        uint256 startingGas = gasleft();
-        _validateGaslessFeature();
+    ) external withRelay(relayParams, account, false) nonReentrant {
         bytes32 structHash = RelayUtils.getCancelOrderStructHash(relayParams, key);
         _validateCall(relayParams, account, structHash);
 
-        _cancelOrder(
-            relayParams,
-            account,
-            key,
-            false, // isSubaccount
-            startingGas
-        );
+        _cancelOrder(account, key);
     }
 }

@@ -104,9 +104,7 @@ export async function sendUpdateOrder(p: {
     token: string;
     spender: string;
     value: BigNumberish;
-    nonce: BigNumberish;
     deadline: BigNumberish;
-    chainId: BigNumberish;
   }[];
   feeParams: {
     feeToken: string;
@@ -239,9 +237,7 @@ export async function sendCancelOrder(p: {
     token: string;
     spender: string;
     value: BigNumberish;
-    nonce: BigNumberish;
     deadline: BigNumberish;
-    chainId: BigNumberish;
   }[];
   externalCalls?: {
     sendTokens: string[];
@@ -363,9 +359,7 @@ export async function sendRemoveSubaccount(p: {
     token: string;
     spender: string;
     value: BigNumberish;
-    nonce: BigNumberish;
     deadline: BigNumberish;
-    chainId: BigNumberish;
   }[];
   subaccount: string;
   chainId: BigNumberish;
@@ -466,9 +460,11 @@ export async function sendBatch(p: {
     subaccountApproval,
     p.account,
     p.subaccount,
-    p.createOrderParamsList,
-    p.updateOrderParamsList,
-    p.cancelOrderKeys,
+    {
+      createOrderParamsList: p.createOrderParamsList,
+      updateOrderParamsList: p.updateOrderParamsList,
+      cancelOrderKeys: p.cancelOrderKeys,
+    },
   ]);
   return sendRelayTransaction({
     calldata: batchCalldata,

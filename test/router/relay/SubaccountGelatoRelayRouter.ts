@@ -102,6 +102,8 @@ describe("SubaccountGelatoRelayRouter", () => {
     await dataStore.setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1));
     await setNextBlockBaseFeePerGas(expandDecimals(1, 9));
 
+    const tokenPermit = await getTokenPermit(wnt, user1, router.address, expandDecimals(1, 18), 0, 9999999999, chainId);
+
     createOrderParams = {
       sender: relaySigner,
       // signer is subaccount
@@ -112,7 +114,7 @@ describe("SubaccountGelatoRelayRouter", () => {
         feeAmount: expandDecimals(2, 15), // 0.002 ETH
         feeSwapPath: [],
       },
-      tokenPermits: [],
+      tokenPermits: [tokenPermit],
       account: user1.address,
       subaccountApprovalSigner: user1,
       // TODO use different subaccount wallet
@@ -759,7 +761,16 @@ describe("SubaccountGelatoRelayRouter", () => {
   describe("updateOrder", () => {
     let updateOrderParams: Parameters<typeof sendUpdateOrder>[0];
 
-    beforeEach(() => {
+    beforeEach(async () => {
+      const tokenPermit = await getTokenPermit(
+        wnt,
+        user1,
+        router.address,
+        expandDecimals(1, 18),
+        0,
+        9999999999,
+        chainId
+      );
       updateOrderParams = {
         sender: relaySigner,
         signer: user0,
@@ -769,7 +780,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           feeAmount: expandDecimals(2, 15), // 0.002 ETH
           feeSwapPath: [],
         },
-        tokenPermits: [],
+        tokenPermits: [tokenPermit],
         account: user1.address,
         subaccount: user0.address,
         params: {
@@ -971,7 +982,16 @@ describe("SubaccountGelatoRelayRouter", () => {
   describe("cancelOrder", () => {
     let cancelOrderParams: Parameters<typeof sendCancelOrder>[0];
 
-    beforeEach(() => {
+    beforeEach(async () => {
+      const tokenPermit = await getTokenPermit(
+        wnt,
+        user1,
+        router.address,
+        expandDecimals(1, 18),
+        0,
+        9999999999,
+        chainId
+      );
       cancelOrderParams = {
         sender: relaySigner,
         signer: user0,
@@ -981,7 +1001,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           feeAmount: expandDecimals(2, 15), // 0.002 ETH
           feeSwapPath: [],
         },
-        tokenPermits: [],
+        tokenPermits: [tokenPermit],
         account: user1.address,
         subaccount: user0.address,
         key: ethers.constants.HashZero,
@@ -1066,7 +1086,16 @@ describe("SubaccountGelatoRelayRouter", () => {
   //#region removeSubaccount
   describe("removeSubaccount", () => {
     let params: Parameters<typeof sendRemoveSubaccount>[0];
-    beforeEach(() => {
+    beforeEach(async () => {
+      const tokenPermit = await getTokenPermit(
+        wnt,
+        user1,
+        router.address,
+        expandDecimals(1, 18),
+        0,
+        9999999999,
+        chainId
+      );
       params = {
         sender: relaySigner,
         signer: user1,
@@ -1075,7 +1104,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           feeAmount: expandDecimals(2, 15), // 0.002 ETH
           feeSwapPath: [],
         },
-        tokenPermits: [],
+        tokenPermits: [tokenPermit],
         subaccount: user0.address,
         account: user1.address,
         relayRouter: subaccountGelatoRelayRouter,
@@ -1240,6 +1269,10 @@ describe("SubaccountGelatoRelayRouter", () => {
         errorsContract,
         "InvalidSignature"
       );
+    });
+
+    it("RelayEmptyBatch", async () => {
+      await expect(sendBatch(batchParams)).to.be.revertedWithCustomError(errorsContract, "RelayEmptyBatch");
     });
 
     it("batch: creates order", async () => {

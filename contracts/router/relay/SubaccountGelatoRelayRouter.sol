@@ -27,6 +27,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         uint256 startingGas;
         uint256 actionsCount;
         bytes32 structHash;
+        uint256 i;
     }
 
     // @note all params except subaccount should be part of the corresponding struct hash
@@ -35,31 +36,14 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         SubaccountApproval calldata subaccountApproval,
         address account,
         address subaccount,
-        IBaseOrderUtils.CreateOrderParams[] calldata createOrderParamsList,
-        UpdateOrderParams[] calldata updateOrderParamsList,
-        bytes32[] calldata cancelOrderKeys
-    ) external nonReentrant {
+        BatchParams calldata params
+    ) external withRelay(relayParams, account, true) nonReentrant {
         BatchVars memory vars;
-        vars.startingGas = gasleft();
-
-        _validateGaslessFeature();
-        vars.structHash = RelayUtils.getBatchStructHash(
-            relayParams,
-            subaccountApproval,
-            account,
-            createOrderParamsList,
-            updateOrderParamsList,
-            cancelOrderKeys
-        );
+        vars.structHash = RelayUtils.getBatchStructHash(relayParams, subaccountApproval, account, params);
         _validateCall(relayParams, subaccount, vars.structHash);
 
-        for (uint256 i = 0; i < createOrderParamsList.length; i++) {
-            _validateCreateOrderParams(account, createOrderParamsList[i]);
-        }
-
-        vars.actionsCount = createOrderParamsList.length + updateOrderParamsList.length + cancelOrderKeys.length;
-        if (vars.actionsCount == 0) {
-            revert Errors.RelayEmptyBatch();
+        for (vars.i = 0; vars.i < params.createOrderParamsList.length; vars.i++) {
+            _validateCreateOrderParams(account, params.createOrderParamsList[vars.i]);
         }
 
         _handleSubaccountAction(
@@ -71,19 +55,17 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         );
 
         _batch(
-            relayParams,
             account,
-            createOrderParamsList,
-            updateOrderParamsList,
-            cancelOrderKeys,
-            false, // isSubaccount
-            vars.startingGas
+            params.createOrderParamsList,
+            params.updateOrderParamsList,
+            params.cancelOrderKeys,
+            true // isSubaccount
         );
     }
 
     function _validateCreateOrderParams(
         address account,
-        IBaseOrderUtils.CreateOrderParams memory params
+        IBaseOrderUtils.CreateOrderParams calldata params
     ) internal pure {
         if (params.addresses.receiver != account) {
             revert Errors.InvalidReceiver(params.addresses.receiver);
@@ -100,23 +82,18 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         SubaccountApproval calldata subaccountApproval,
         address account, // main account
         address subaccount,
-        IBaseOrderUtils.CreateOrderParams memory params // can't use calldata because need to modify params.numbers.executionFee
-    ) external nonReentrant returns (bytes32) {
-        uint256 startingGas = gasleft();
-        _validateGaslessFeature();
+        IBaseOrderUtils.CreateOrderParams calldata params
+    ) external nonReentrant withRelay(relayParams, account, true) returns (bytes32) {
         bytes32 structHash = RelayUtils.getCreateOrderStructHash(relayParams, subaccountApproval, account, params);
         _validateCall(relayParams, subaccount, structHash);
         _validateCreateOrderParams(account, params);
-
         _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, 1, subaccountApproval);
 
         return
             _createOrder(
-                relayParams,
                 account,
                 params,
-                true, // isSubaccount
-                startingGas
+                true // isSubaccount
             );
     }
 
@@ -127,18 +104,15 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         address account, // main account
         address subaccount,
         UpdateOrderParams calldata params
-    ) external nonReentrant {
-        uint256 startingGas = gasleft();
-        _validateGaslessFeature();
+    ) external withRelay(relayParams, account, true) nonReentrant {
         bytes32 structHash = RelayUtils.getUpdateOrderStructHash(relayParams, subaccountApproval, account, params);
         _validateCall(relayParams, subaccount, structHash);
         _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, 1, subaccountApproval);
+
         _updateOrder(
-            relayParams,
             account,
             params,
-            true, // isSubaccount
-            startingGas
+            true // isSubaccount
         );
     }
 
@@ -149,19 +123,11 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         address account, // main account
         address subaccount,
         bytes32 key
-    ) external nonReentrant {
-        uint256 startingGas = gasleft();
-        _validateGaslessFeature();
+    ) external withRelay(relayParams, account, true) nonReentrant {
         bytes32 structHash = RelayUtils.getCancelOrderStructHash(relayParams, subaccountApproval, account, key);
         _validateCall(relayParams, subaccount, structHash);
         _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, 1, subaccountApproval);
-        _cancelOrder(
-            relayParams,
-            account,
-            key,
-            true, // isSubaccount
-            startingGas
-        );
+        _cancelOrder(account, key);
     }
 
     // @note all params except account should be part of the corresponding struct hash
@@ -169,23 +135,12 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         RelayParams calldata relayParams,
         address account,
         address subaccount
-    ) external nonReentrant {
-        uint256 startingGas = gasleft();
-        _validateGaslessFeature();
+    ) external withRelay(relayParams, account, false) nonReentrant {
+        // isSubaccount=false is passed to `withRelay` modifier because this action is signed by the main account
         bytes32 structHash = RelayUtils.getRemoveSubaccountStructHash(relayParams, subaccount);
         _validateCall(relayParams, account, structHash);
 
-        Contracts memory contracts = _getContracts();
-        _handleRelayBeforeAction(
-            contracts,
-            relayParams,
-            account,
-            false // isSubaccount is false because the `removeSubaccount` call is signed by the main account
-        );
-
         SubaccountUtils.removeSubaccount(dataStore, eventEmitter, account, subaccount);
-
-        _handleRelayAfterAction(contracts, startingGas, account);
     }
 
     function _handleSubaccountAction(

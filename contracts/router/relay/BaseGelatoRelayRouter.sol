@@ -41,6 +41,19 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
     mapping(address => uint256) public userNonces;
 
+    modifier withRelay(
+        RelayParams calldata relayParams,
+        address account,
+        bool isSubaccount
+    ) {
+        uint256 startingGas = gasleft();
+        _validateGaslessFeature();
+        Contracts memory contracts = _getContracts();
+        _handleRelayBeforeAction(contracts, relayParams, account, isSubaccount);
+        _;
+        _handleRelayAfterAction(contracts, startingGas, account);
+    }
+
     constructor(
         Router _router,
         DataStore _dataStore,
@@ -84,19 +97,21 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     }
 
     function _batch(
-        RelayParams calldata relayParams,
         address account,
-        IBaseOrderUtils.CreateOrderParams[] calldata createOrderParams,
+        IBaseOrderUtils.CreateOrderParams[] calldata createOrderParamsList,
         UpdateOrderParams[] calldata updateOrderParamsList,
         bytes32[] calldata cancelOrderKeys,
-        bool isSubaccount,
-        uint256 startingGas
+        bool isSubaccount
     ) internal {
         Contracts memory contracts = _getContracts();
-        _handleRelayBeforeAction(contracts, relayParams, account, isSubaccount);
 
-        for (uint256 i = 0; i < createOrderParams.length; i++) {
-            _createOrderImpl(contracts, account, createOrderParams[i], isSubaccount);
+        uint256 actionsCount = createOrderParamsList.length + updateOrderParamsList.length + cancelOrderKeys.length;
+        if (actionsCount == 0) {
+            revert Errors.RelayEmptyBatch();
+        }
+
+        for (uint256 i = 0; i < createOrderParamsList.length; i++) {
+            _createOrderImpl(contracts, account, createOrderParamsList[i], isSubaccount);
         }
 
         for (uint256 i = 0; i < updateOrderParamsList.length; i++) {
@@ -106,31 +121,22 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         for (uint256 i = 0; i < cancelOrderKeys.length; i++) {
             _cancelOrderImpl(contracts, account, cancelOrderKeys[i]);
         }
-
-        _handleRelayAfterAction(contracts, startingGas, account);
     }
 
     function _createOrder(
-        RelayParams calldata relayParams,
         address account,
-        IBaseOrderUtils.CreateOrderParams memory params, // can't use calldata because need to modify params.numbers.executionFee
-        bool isSubaccount,
-        uint256 startingGas
+        IBaseOrderUtils.CreateOrderParams calldata params,
+        bool isSubaccount
     ) internal returns (bytes32) {
         Contracts memory contracts = _getContracts();
-        _handleRelayBeforeAction(contracts, relayParams, account, isSubaccount);
 
-        bytes32 key = _createOrderImpl(contracts, account, params, isSubaccount);
-
-        _handleRelayAfterAction(contracts, startingGas, account);
-
-        return key;
+        return _createOrderImpl(contracts, account, params, isSubaccount);
     }
 
     function _createOrderImpl(
         Contracts memory contracts,
         address account,
-        IBaseOrderUtils.CreateOrderParams memory params,
+        IBaseOrderUtils.CreateOrderParams calldata params,
         bool isSubaccount
     ) internal returns (bytes32) {
         IERC20(contracts.wnt).safeTransfer(address(contracts.orderVault), params.numbers.executionFee);
@@ -155,18 +161,9 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             orderHandler.createOrder(account, params, isSubaccount && params.addresses.callbackContract != address(0));
     }
 
-    function _updateOrder(
-        RelayParams calldata relayParams,
-        address account,
-        UpdateOrderParams calldata params,
-        bool isSubaccount,
-        uint256 startingGas
-    ) internal {
+    function _updateOrder(address account, UpdateOrderParams calldata params, bool isSubaccount) internal {
         Contracts memory contracts = _getContracts();
-
-        _handleRelayBeforeAction(contracts, relayParams, account, isSubaccount);
         _updateOrderImpl(contracts, account, params, isSubaccount);
-        _handleRelayAfterAction(contracts, startingGas, account);
     }
 
     function _updateOrderImpl(
@@ -204,20 +201,9 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         );
     }
 
-    function _cancelOrder(
-        RelayParams calldata relayParams,
-        address account,
-        bytes32 key,
-        bool isSubaccount,
-        uint256 startingGas
-    ) internal {
+    function _cancelOrder(address account, bytes32 key) internal {
         Contracts memory contracts = _getContracts();
-
-        _handleRelayBeforeAction(contracts, relayParams, account, isSubaccount);
-
         _cancelOrderImpl(contracts, account, key);
-
-        _handleRelayAfterAction(contracts, startingGas, account);
     }
 
     function _cancelOrderImpl(Contracts memory contracts, address account, bytes32 key) internal {

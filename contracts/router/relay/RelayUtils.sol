@@ -65,6 +65,12 @@ struct UpdateOrderParams {
     uint256 executionFeeIncrease;
 }
 
+struct BatchParams {
+    IBaseOrderUtils.CreateOrderParams[] createOrderParamsList;
+    UpdateOrderParams[] updateOrderParamsList;
+    bytes32[] cancelOrderKeys;
+}
+
 string constant UPDATE_ORDER_PARAMS = "UpdateOrderParams(bytes32 key,uint256 sizeDeltaUsd,uint256 acceptablePrice,uint256 triggerPrice,uint256 minOutputAmount,uint256 validFromTime,bool autoCancel,uint256 executionFeeIncrease)";
 
 string constant CREATE_ORDER_ADDRESSES = "CreateOrderAddresses(address receiver,address cancellationReceiver,address callbackContract,address uiFeeReceiver,address market,address initialCollateralToken,address[] swapPath)";
@@ -386,35 +392,31 @@ library RelayUtils {
         RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
         address account,
-        IBaseOrderUtils.CreateOrderParams[] calldata createOrderParamsList,
-        UpdateOrderParams[] calldata updateOrderParamsList,
-        bytes32[] calldata cancelOrderKeys
+        BatchParams calldata params
     ) public pure returns (bytes32) {
         return
             _getBatchStructHash(
                 relayParams,
                 keccak256(abi.encode(subaccountApproval)),
                 account,
-                createOrderParamsList,
-                updateOrderParamsList,
-                cancelOrderKeys
+                params.createOrderParamsList,
+                params.updateOrderParamsList,
+                params.cancelOrderKeys
             );
     }
 
     function getBatchStructHash(
         RelayParams calldata relayParams,
-        IBaseOrderUtils.CreateOrderParams[] calldata createOrderParamsList,
-        UpdateOrderParams[] calldata updateOrderParamsList,
-        bytes32[] calldata cancelOrderKeys
+        BatchParams calldata params
     ) internal pure returns (bytes32) {
         return
             _getBatchStructHash(
                 relayParams,
                 bytes32(0),
                 address(0),
-                createOrderParamsList,
-                updateOrderParamsList,
-                cancelOrderKeys
+                params.createOrderParamsList,
+                params.updateOrderParamsList,
+                params.cancelOrderKeys
             );
     }
 

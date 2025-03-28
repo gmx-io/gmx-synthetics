@@ -207,9 +207,11 @@ export async function sendBatch(p: {
   const batchCalldata = p.relayRouter.interface.encodeFunctionData("batch", [
     { ...relayParams, signature },
     p.account,
-    p.createOrderParamsList,
-    p.updateOrderParamsList,
-    p.cancelOrderKeys,
+    {
+      createOrderParamsList: p.createOrderParamsList,
+      updateOrderParamsList: p.updateOrderParamsList,
+      cancelOrderKeys: p.cancelOrderKeys,
+    },
   ]);
   return sendRelayTransaction({
     calldata: batchCalldata,
