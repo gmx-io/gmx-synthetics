@@ -33,7 +33,19 @@ const roleLabels = {
   [encodeRole("CONTRIBUTOR_KEEPER")]: "CONTRIBUTOR_KEEPER",
 };
 
+const SOURCIFY_API_ENDPOINT = "https://sourcify.dev/server/v2/contract";
+
+const validationResult = {};
+
 async function main() {
+  await validateWithSourcify({
+    address: "0xC8ee91A54287DB53897056e12D9819156D3822Fb",
+    name: null,
+    isCodeValidated: false,
+    signalledRoles: [],
+  });
+  return;
+
   if (!COMMIT_HASH || !TRANSACTION_HASH) {
     console.error("Error: Missing COMMIT_HASH or TRANSACTION_HASH in environment variables.");
     process.exit(1);
@@ -183,6 +195,34 @@ async function validateFromEtherscan(contractInfo: ContractInfo): Promise<boolea
   }
 }
 
+async function validateWithSourcify(contractInfo: ContractInfo): Promise<boolean> {
+  console.log(`Trying to validate ${contractInfo.address} via sourcify`);
+  const chainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
+  const url = `${SOURCIFY_API_ENDPOINT}/${chainId}/${contractInfo.address}`;
+  try {
+    const path = url + "?fields=sources,compilation";
+    const response = await axios.get(path);
+    if (response.status != 200) {
+      //Source code not verified
+      return false;
+    }
+
+    contractInfo.name = response.data.compilation.name;
+    console.log(`Resolved as ${contractInfo.name}`);
+
+    for (const [filename, data] of Object.entries(response.data.sources)) {
+      const r = await validateSourceFile(filename, data["content"]);
+      console.log(r);
+      break;
+    }
+    contractInfo.isCodeValidated = true;
+    return true;
+  } catch (error) {
+    console.error("Error:", error);
+    return false;
+  }
+}
+
 async function validateSourceFile(fullContractName: string, sourceCode: string): Promise<boolean> {
   try {
     let filePath = path.join(__dirname, "../node_modules/" + fullContractName);
@@ -196,7 +236,7 @@ async function validateSourceFile(fullContractName: string, sourceCode: string):
       return true;
     } else {
       console.error(`❌ Sources mismatch for ${fullContractName}. Resolving diff`);
-      await showDiff(filePath, sourceCode);
+      await showDiff(filePath, sourceCode, fullContractName.replaceAll("/", "-"));
       return false;
     }
   } catch (error) {
@@ -204,12 +244,17 @@ async function validateSourceFile(fullContractName: string, sourceCode: string):
   }
 }
 
-async function showDiff(localPath: string, sourceCode: string) {
-  const tempFilePath = path.join(__dirname, "../out", "temp_file.txt");
+async function showDiff(localPath: string, sourceCode: string, contractName: string) {
+  const outDir = path.join(__dirname, "../validation");
+  if (!fs.existsSync(outDir)) {
+    fs.mkdirSync(outDir);
+  }
+  const tempFilePath = path.join(outDir, "temp.txt");
+  const output = path.join(outDir, contractName + ".txt");
   fs.writeFileSync(tempFilePath, sourceCode, "utf-8");
 
   try {
-    execSync(`git diff --no-index ${localPath} ${tempFilePath}`, { stdio: "inherit", encoding: "utf-8" });
+    execSync(`git diff --no-index ${localPath} ${tempFilePath} > ${output}`, { stdio: "inherit", encoding: "utf-8" });
   } catch (error) {
     // git diff works but produce error for some reason
   } finally {
