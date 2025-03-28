@@ -1432,7 +1432,7 @@ describe("GelatoRelayRouter", () => {
 
       await logGasUsage({
         tx: tx2,
-        label: "gelatoRelayRouter batch 1 cancel order, 1 update order",
+        label: "gelatoRelayRouter batch 1 create order, 1 cancel order, 1 update order",
       });
     });
   });

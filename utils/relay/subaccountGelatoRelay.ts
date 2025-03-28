@@ -460,9 +460,11 @@ export async function sendBatch(p: {
     subaccountApproval,
     p.account,
     p.subaccount,
-    p.createOrderParamsList,
-    p.updateOrderParamsList,
-    p.cancelOrderKeys,
+    {
+      createOrderParamsList: p.createOrderParamsList,
+      updateOrderParamsList: p.updateOrderParamsList,
+      cancelOrderKeys: p.cancelOrderKeys,
+    },
   ]);
   return sendRelayTransaction({
     calldata: batchCalldata,

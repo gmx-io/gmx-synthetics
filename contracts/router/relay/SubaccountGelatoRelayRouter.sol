@@ -11,13 +11,6 @@ import "./BaseGelatoRelayRouter.sol";
 contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     mapping(address => uint256) public subaccountApprovalNonces;
 
-    struct BatchVars {
-        uint256 startingGas;
-        uint256 actionsCount;
-        bytes32 structHash;
-        uint256 i;
-    }
-
     constructor(
         Router _router,
         DataStore _dataStore,
@@ -38,21 +31,18 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         address subaccount,
         BatchParams calldata params
     ) external withRelay(relayParams, account, true) nonReentrant {
-        BatchVars memory vars;
-        vars.structHash = RelayUtils.getBatchStructHash(relayParams, subaccountApproval, account, params);
-        _validateCall(relayParams, subaccount, vars.structHash);
+        bytes32 structHash = RelayUtils.getBatchStructHash(relayParams, subaccountApproval, account, params);
+        _validateCall(relayParams, subaccount, structHash);
 
-        for (vars.i = 0; vars.i < params.createOrderParamsList.length; vars.i++) {
-            _validateCreateOrderParams(account, params.createOrderParamsList[vars.i]);
+        for (uint256 i = 0; i < params.createOrderParamsList.length; i++) {
+            _validateCreateOrderParams(account, params.createOrderParamsList[i]);
         }
 
-        _handleSubaccountAction(
-            account,
-            subaccount,
-            Keys.SUBACCOUNT_ORDER_ACTION,
-            vars.actionsCount,
-            subaccountApproval
-        );
+        uint256 actionsCount = params.createOrderParamsList.length +
+            params.updateOrderParamsList.length +
+            params.cancelOrderKeys.length;
+
+        _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, actionsCount, subaccountApproval);
 
         _batch(
             account,

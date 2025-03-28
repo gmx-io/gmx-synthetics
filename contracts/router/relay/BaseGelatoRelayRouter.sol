@@ -103,23 +103,21 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         bytes32[] calldata cancelOrderKeys,
         bool isSubaccount
     ) internal {
-        Contracts memory contracts = _getContracts();
-
         uint256 actionsCount = createOrderParamsList.length + updateOrderParamsList.length + cancelOrderKeys.length;
         if (actionsCount == 0) {
             revert Errors.RelayEmptyBatch();
         }
 
         for (uint256 i = 0; i < createOrderParamsList.length; i++) {
-            _createOrderImpl(contracts, account, createOrderParamsList[i], isSubaccount);
+            _createOrder(account, createOrderParamsList[i], isSubaccount);
         }
 
         for (uint256 i = 0; i < updateOrderParamsList.length; i++) {
-            _updateOrderImpl(contracts, account, updateOrderParamsList[i], isSubaccount);
+            _updateOrder(account, updateOrderParamsList[i], isSubaccount);
         }
 
         for (uint256 i = 0; i < cancelOrderKeys.length; i++) {
-            _cancelOrderImpl(contracts, account, cancelOrderKeys[i]);
+            _cancelOrder(account, cancelOrderKeys[i]);
         }
     }
 
@@ -129,16 +127,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         bool isSubaccount
     ) internal returns (bytes32) {
         Contracts memory contracts = _getContracts();
-
-        return _createOrderImpl(contracts, account, params, isSubaccount);
-    }
-
-    function _createOrderImpl(
-        Contracts memory contracts,
-        address account,
-        IBaseOrderUtils.CreateOrderParams calldata params,
-        bool isSubaccount
-    ) internal returns (bytes32) {
         IERC20(contracts.wnt).safeTransfer(address(contracts.orderVault), params.numbers.executionFee);
 
         if (
@@ -163,15 +151,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
     function _updateOrder(address account, UpdateOrderParams calldata params, bool isSubaccount) internal {
         Contracts memory contracts = _getContracts();
-        _updateOrderImpl(contracts, account, params, isSubaccount);
-    }
-
-    function _updateOrderImpl(
-        Contracts memory contracts,
-        address account,
-        UpdateOrderParams calldata params,
-        bool isSubaccount
-    ) internal {
         Order.Props memory order = OrderStoreUtils.get(contracts.dataStore, params.key);
 
         if (order.account() == address(0)) {
@@ -203,10 +182,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
     function _cancelOrder(address account, bytes32 key) internal {
         Contracts memory contracts = _getContracts();
-        _cancelOrderImpl(contracts, account, key);
-    }
-
-    function _cancelOrderImpl(Contracts memory contracts, address account, bytes32 key) internal {
         Order.Props memory order = OrderStoreUtils.get(contracts.dataStore, key);
         if (order.account() == address(0)) {
             revert Errors.EmptyOrder();
