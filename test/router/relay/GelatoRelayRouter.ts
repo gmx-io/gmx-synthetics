@@ -316,6 +316,36 @@ describe("GelatoRelayRouter", () => {
       expect(order.numbers.executionFee).eq("99000000000000000");
     });
 
+    it("RelayCalldataTooLong", async () => {
+      await dataStore.setAddress(keys.RELAY_FEE_ADDRESS, user3.address);
+
+      const _send = (extraCalldataLength) => {
+        return sendCreateOrder({
+          ...createOrderParams,
+          externalCalls: {
+            sendTokens: [wnt.address],
+            sendAmounts: [1],
+            externalCallTargets: [wnt.address],
+            externalCallDataList: [
+              wnt.interface.encodeFunctionData("allowance", [GELATO_RELAY_ADDRESS, ethers.constants.AddressZero]) +
+                new Array(extraCalldataLength)
+                  .fill(null)
+                  .map(() => {
+                    return Math.random() > 0.5 ? "00" : "ff";
+                  })
+                  .join(""),
+            ],
+            refundTokens: [],
+            refundReceivers: [],
+          },
+          sender: user3,
+        });
+      };
+
+      await expect(_send(50000)).to.be.revertedWithCustomError(errorsContract, "RelayCalldataTooLong");
+      await _send(45000);
+    });
+
     describe("creates order and sends relayer fee", () => {
       for (const c of [
         { orderType: OrderType.LimitDecrease, shouldSendCollateral: false },
