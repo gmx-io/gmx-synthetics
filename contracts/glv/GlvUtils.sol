@@ -29,13 +29,23 @@ library GlvUtils {
     // @param oracle Oracle
     // @param glv Glv
     // @param maximize
+    // @param forceCalculation. do not use GLV oracle price even if it's available
     // @return the USD value of the Glv
     function getGlvValue(
         DataStore dataStore,
         Oracle oracle,
         address glv,
-        bool maximize
+        bool maximize,
+        bool forceCalculation
     ) public view returns (uint256) {
+        if (!forceCalculation) {
+            (Price.Props memory glvTokenPrice, bool isEmpty) = oracle.getPrimaryPriceIfNotEmpty(glv);
+            if (!isEmpty) {
+                uint256 supply = ERC20(glv).totalSupply();
+                return (maximize ? glvTokenPrice.max : glvTokenPrice.min) * supply;
+            }
+        }
+
         GetGlvValueCache memory cache;
         cache.marketListKey = Keys.glvSupportedMarketListKey(glv);
         cache.marketCount = dataStore.getAddressCount(cache.marketListKey);
@@ -131,9 +141,10 @@ library GlvUtils {
         DataStore dataStore,
         Oracle oracle,
         address glv,
-        bool maximize
+        bool maximize,
+        bool forceCalculation
     ) internal view returns (uint256, uint256, uint256) {
-        uint256 value = getGlvValue(dataStore, oracle, glv, maximize);
+        uint256 value = getGlvValue(dataStore, oracle, glv, maximize, forceCalculation);
         uint256 supply = ERC20(glv).totalSupply();
 
         return _getGlvTokenPrice(value, supply);

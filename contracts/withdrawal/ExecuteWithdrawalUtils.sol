@@ -51,6 +51,7 @@ library ExecuteWithdrawalUtils {
         Market.Props market;
         MarketUtils.MarketPrices prices;
         ExecuteWithdrawalResult result;
+        EventUtils.EventLogData eventData;
     }
 
     struct _ExecuteWithdrawalCache {
@@ -80,15 +81,21 @@ library ExecuteWithdrawalUtils {
      * Executes a withdrawal on the market.
      *
      * @param params The parameters for executing the withdrawal.
+     * @param withdrawal The withdrawal to execute.
+     * @param skipRemoval if true, the withdrawal will not be removed from the data store.
+     * This is used when executing a withdrawal as part of a shift or a glv withdrawal and the withdrawal is not stored in the data store
      */
     function executeWithdrawal(
         ExecuteWithdrawalParams memory params,
-        Withdrawal.Props memory withdrawal
+        Withdrawal.Props memory withdrawal,
+        bool skipRemoval
     ) external returns (ExecuteWithdrawalResult memory) {
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
         params.startingGas -= gasleft() / 63;
 
-        WithdrawalStoreUtils.remove(params.dataStore, params.key, withdrawal.account());
+        if (!skipRemoval) {
+            WithdrawalStoreUtils.remove(params.dataStore, params.key, withdrawal.account());
+        }
 
         if (withdrawal.account() == address(0)) {
             revert Errors.EmptyWithdrawal();
@@ -140,14 +147,13 @@ library ExecuteWithdrawalUtils {
             params.swapPricingType
         );
 
-        EventUtils.EventLogData memory eventData;
-        eventData.addressItems.initItems(2);
-        eventData.addressItems.setItem(0, "outputToken", cache.result.outputToken);
-        eventData.addressItems.setItem(1, "secondaryOutputToken", cache.result.secondaryOutputToken);
-        eventData.uintItems.initItems(2);
-        eventData.uintItems.setItem(0, "outputAmount", cache.result.outputAmount);
-        eventData.uintItems.setItem(1, "secondaryOutputAmount", cache.result.secondaryOutputAmount);
-        CallbackUtils.afterWithdrawalExecution(params.key, withdrawal, eventData);
+        cache.eventData.addressItems.initItems(2);
+        cache.eventData.addressItems.setItem(0, "outputToken", cache.result.outputToken);
+        cache.eventData.addressItems.setItem(1, "secondaryOutputToken", cache.result.secondaryOutputToken);
+        cache.eventData.uintItems.initItems(2);
+        cache.eventData.uintItems.setItem(0, "outputAmount", cache.result.outputAmount);
+        cache.eventData.uintItems.setItem(1, "secondaryOutputAmount", cache.result.secondaryOutputAmount);
+        CallbackUtils.afterWithdrawalExecution(params.key, withdrawal, cache.eventData);
 
         cache.oraclePriceCount = GasUtils.estimateWithdrawalOraclePriceCount(
             withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length

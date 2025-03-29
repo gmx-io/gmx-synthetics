@@ -162,11 +162,14 @@ library GlvWithdrawalUtils {
 
         GlvWithdrawalEventUtils.emitGlvWithdrawalExecuted(params.eventEmitter, params.key, glvWithdrawal.account());
 
+        // glvValue can be calculated with GLV oracle price which is slightly increased after the withdrawal due to paid fees
+        // so the glvValue might be slightly inaccurate, but it should not be an issue for emitting GlvValueUpdated event
         cache.glvValue = GlvUtils.getGlvValue(
             params.dataStore,
             params.oracle,
             glvWithdrawal.glv(),
-            true
+            true, // maximize
+            false // forceCalculation
         );
         GlvEventUtils.emitGlvValueUpdated(
             params.eventEmitter,
@@ -231,8 +234,7 @@ library GlvWithdrawalUtils {
             Withdrawal.Flags({shouldUnwrapNativeToken: glvWithdrawal.shouldUnwrapNativeToken()})
         );
 
-        bytes32 withdrawalKey = NonceUtils.getNextKey(params.dataStore);
-        params.dataStore.addBytes32(Keys.WITHDRAWAL_LIST, withdrawalKey);
+        bytes32 withdrawalKey = keccak256(abi.encode(params.key, "withdrawal"));
         WithdrawalEventUtils.emitWithdrawalCreated(
             params.eventEmitter,
             withdrawalKey,
@@ -259,7 +261,7 @@ library GlvWithdrawalUtils {
                 swapPricingType: ISwapPricingUtils.SwapPricingType.Withdrawal
             });
 
-        return ExecuteWithdrawalUtils.executeWithdrawal(executeWithdrawalParams, withdrawal);
+        return ExecuteWithdrawalUtils.executeWithdrawal(executeWithdrawalParams, withdrawal, true);
     }
 
     function _getMarketTokenAmount(
@@ -271,7 +273,8 @@ library GlvWithdrawalUtils {
             dataStore,
             oracle,
             glvWithdrawal.glv(),
-            false // maximize
+            false, // maximize
+            false // forceCalculation
         );
         uint256 glvSupply = GlvToken(payable(glvWithdrawal.glv())).totalSupply();
         uint256 glvTokenUsd = GlvUtils.glvTokenAmountToUsd(glvWithdrawal.glvTokenAmount(), glvValue, glvSupply);
