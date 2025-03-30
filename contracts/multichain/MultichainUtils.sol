@@ -111,7 +111,7 @@ library MultichainUtils {
         uint256 srcChainId
     ) external {
         if (amount == 0) {
-            revert Errors.EmptyMultichainTransferOutAmount(account, token);
+            return;
         }
 
         uint256 balance = getMultichainBalanceAmount(dataStore, account, token);
