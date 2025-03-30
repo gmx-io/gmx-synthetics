@@ -5,7 +5,6 @@ import * as path from "path";
 import dotenv from "dotenv";
 import * as readline from "node:readline";
 import { Result } from "@ethersproject/abi";
-import roles from "../config/roles";
 import { JsonRpcProvider, TransactionReceipt } from "@ethersproject/providers";
 import axios from "axios";
 
@@ -14,39 +13,24 @@ dotenv.config();
 const COMMIT_HASH = process.env.COMMIT_HASH as string;
 const TRANSACTION_HASH = process.env.TRANSACTION_HASH as string;
 
-const expectedRoles = {
-  CONFIG_KEEPER: ["ConfigSyncer"],
-  ROLE_ADMIN: ["ConfigTimelockController", "TimelockConfig"],
-  ROUTER_PLUGIN: [
-    "ExchangeRouter",
-    "SubaccountRouter",
-    "GlvRouter",
-    "GelatoRelayRouter",
-    "SubaccountGelatoRelayRouter",
-  ],
-  CONTROLLER: [
-    "OracleStore",
-    "MarketFactory",
-    "GlvFactory",
-    "Config",
-    "ConfigSyncer",
-    "TimelockConfig",
-    "ConfigTimelockController",
-    "Oracle",
-    "SwapHandler",
-    "AdlHandler",
-    "DepositHandler",
-    "WithdrawalHandler",
-    "OrderHandler",
-    "ExchangeRouter",
-    "LiquidationHandler",
-    "SubaccountRouter",
-    "ShiftHandler",
-    "GlvHandler",
-    "GlvRouter",
-    "GelatoRelayRouter",
-    "SubaccountGelatoRelayRouter",
-  ],
+const roleLabels = {
+  [encodeRole("ROLE_ADMIN")]: "ROLE_ADMIN",
+  [encodeRole("TIMELOCK_ADMIN")]: "TIMELOCK_ADMIN",
+  [encodeRole("TIMELOCK_MULTISIG")]: "TIMELOCK_MULTISIG",
+  [encodeRole("CONFIG_KEEPER")]: "CONFIG_KEEPER",
+  [encodeRole("LIMITED_CONFIG_KEEPER")]: "LIMITED_CONFIG_KEEPER",
+  [encodeRole("CONTROLLER")]: "CONTROLLER",
+  [encodeRole("GOV_TOKEN_CONTROLLER")]: "GOV_TOKEN_CONTROLLER",
+  [encodeRole("ROUTER_PLUGIN")]: "ROUTER_PLUGIN",
+  [encodeRole("MARKET_KEEPER")]: "MARKET_KEEPER",
+  [encodeRole("FEE_KEEPER")]: "FEE_KEEPER",
+  [encodeRole("FEE_DISTRIBUTION_KEEPER")]: "FEE_DISTRIBUTION_KEEPER",
+  [encodeRole("ORDER_KEEPER")]: "ORDER_KEEPER",
+  [encodeRole("FROZEN_ORDER_KEEPER")]: "FROZEN_ORDER_KEEPER",
+  [encodeRole("PRICING_KEEPER")]: "PRICING_KEEPER",
+  [encodeRole("LIQUIDATION_KEEPER")]: "LIQUIDATION_KEEPER",
+  [encodeRole("ADL_KEEPER")]: "ADL_KEEPER",
+  [encodeRole("CONTRIBUTOR_KEEPER")]: "CONTRIBUTOR_KEEPER",
 };
 
 async function main() {
@@ -115,7 +99,7 @@ async function extractRolesFromTx(txReceipt: TransactionReceipt): Promise<Contra
         contractInfos.get(signal.account).signalledRoles.push(signal.roleKey);
       } else {
         contractInfos.set(signal.account, {
-          address: signal.account,
+          address: signal.account.toLowerCase(),
           name: null,
           isCodeValidated: false,
           signalledRoles: [signal.roleKey],
@@ -127,9 +111,12 @@ async function extractRolesFromTx(txReceipt: TransactionReceipt): Promise<Contra
 }
 
 async function validateRoles(contractInfo: ContractInfo) {
+  const { requiredRolesForContracts } = await hre.gmx.getRoles();
   for (const signalledRole of contractInfo.signalledRoles) {
-    if (!(await checkRole(contractInfo.name, contractInfo.address, signalledRole))) {
-      throw new Error(`Role ${signalledRole} is not approved for ${contractInfo.name}!`);
+    if (!(await checkRole(contractInfo.name, contractInfo.address, signalledRole, requiredRolesForContracts))) {
+      throw new Error(
+        `Role ${signalledRole} ${roleLabels[signalledRole]} is not approved for ${contractInfo.name} ${contractInfo.address}!`
+      );
     }
   }
   console.log(`✅ Roles for ${contractInfo.name} validated`);
@@ -149,11 +136,16 @@ function encodeRole(roleKey: string): string {
   return ethers.utils.keccak256(encoded);
 }
 
-async function checkRole(contractName: string, contractAddress: string, signalledRole: string): Promise<boolean> {
-  const rolesConfig = await roles(hre);
-  for (const [role, addresses] of Object.entries(rolesConfig)) {
+async function checkRole(
+  contractName: string,
+  contractAddress: string,
+  signalledRole: string,
+  requiredRolesForContracts: Record<string, string[]>
+): Promise<boolean> {
+  const rolesConfig = await hre.gmx.getRoles();
+  for (const [role, addresses] of Object.entries(rolesConfig.roles)) {
     if (addresses[contractAddress]) {
-      if (encodeRole(role) === signalledRole && expectedRoles[role].includes(contractName)) {
+      if (encodeRole(role) === signalledRole && requiredRolesForContracts[role].includes(contractName)) {
         return true;
       }
     }
@@ -230,6 +222,7 @@ async function showDiff(localPath: string, sourceCode: string) {
 interface DeploymentInfo {
   contractName: string;
   constructorArgs: string[];
+  deploymentTxHash: string;
 }
 
 async function extractContractNameAndArgsFromDeployment(contractAddress: string): Promise<DeploymentInfo> {
@@ -242,10 +235,11 @@ async function extractContractNameAndArgsFromDeployment(contractAddress: string)
   console.log("Deployment: " + deployment);
   const contractName = path.basename(deployment, path.extname(deployment));
   console.log("ContractName: " + contractName);
-  const constructorArgs = extractDeploymentArgs(deployment);
+  const deploymentJson = JSON.parse(fs.readFileSync(deployment, "utf-8"));
   return {
     contractName: contractName,
-    constructorArgs: constructorArgs,
+    constructorArgs: deploymentJson.args,
+    deploymentTxHash: deploymentJson.transactionHash,
   };
 }
 
@@ -257,13 +251,15 @@ async function getArtifactBytecode(contractName: string): Promise<string> {
     throw new Error("Artifact not found");
   }
 
-  return JSON.parse(fs.readFileSync(searchResult, "utf-8"));
+  return JSON.parse(fs.readFileSync(searchResult, "utf-8")).bytecode;
 }
 
 async function compareContractBytecodes(provider: JsonRpcProvider, contractInfo: ContractInfo): Promise<void> {
   console.log("Comparing bytecodes with compilation artifact");
 
-  const { contractName, constructorArgs } = await extractContractNameAndArgsFromDeployment(contractInfo.address);
+  const { contractName, constructorArgs, deploymentTxHash } = await extractContractNameAndArgsFromDeployment(
+    contractInfo.address
+  );
   contractInfo.name = contractName;
 
   await compileContract(contractName);
@@ -286,7 +282,8 @@ async function compareContractBytecodes(provider: JsonRpcProvider, contractInfo:
   const localBytecodeStripped = stripBytecodeIpfsHash(artifactBytecode);
 
   console.log(`Fetching blockchain bytecode from ${contractInfo.address} for ${contractName}`);
-  const blockchainBytecode = await provider.getCode(contractInfo.address);
+  const deploymentTx = await provider.getTransaction(deploymentTxHash);
+  const blockchainBytecode = deploymentTx.data;
   const blockchainBytecodeWithoutMetadata = stripBytecodeIpfsHash(blockchainBytecode);
   const blockchainDeployBytecode = blockchainBytecodeWithoutMetadata.slice(
     0,
@@ -383,11 +380,6 @@ async function searchDirectory(dirPath: string, condition: (filename: string) =>
     }
   }
   return null;
-}
-
-function extractDeploymentArgs(deploymentFile: string): string[] {
-  const js = JSON.parse(fs.readFileSync(deploymentFile, "utf-8"));
-  return js.args;
 }
 
 main().catch((error) => {

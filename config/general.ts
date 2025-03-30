@@ -61,6 +61,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       skipBorrowingFeeForSmallerSide: false,
 
       maxExecutionFeeMultiplierFactor: decimalToFloat(100),
+      oracleProviderMinChangeDelay: 3600,
     };
   }
 
@@ -119,6 +120,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     skipBorrowingFeeForSmallerSide: true,
 
     maxExecutionFeeMultiplierFactor: decimalToFloat(100),
+    oracleProviderMinChangeDelay: 3600,
   };
 
   const networkConfig = {

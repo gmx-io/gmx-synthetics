@@ -130,6 +130,7 @@ export async function deployFixture() {
   const multichainUtils = await hre.ethers.getContract("MultichainUtils");
   const layerZeroProvider = await hre.ethers.getContract("LayerZeroProvider");
   const mockStargatePool = await hre.ethers.getContract("MockStargatePool");
+  const mockOracleProvider = await hre.ethers.getContract("MockOracleProvider");
   const multichainReader = await hre.ethers.getContract("MultichainReader");
   const mockEndpointV2 = await hre.ethers.getContract("MockEndpointV2");
   const mockMultichainReaderOriginator = await hre.ethers.getContract("MockMultichainReaderOriginator");
@@ -352,6 +353,7 @@ export async function deployFixture() {
       layerZeroProvider,
       mockStargatePool,
       callbackUtils,
+      mockOracleProvider,
       multichainReader,
       mockEndpointV2,
       mockMultichainReaderOriginator,

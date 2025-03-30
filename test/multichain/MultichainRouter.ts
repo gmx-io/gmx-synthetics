@@ -13,7 +13,6 @@ import {
   sendCreateOrder,
   sendUpdateOrder,
   sendCancelOrder,
-  sendBridgeOut,
   sendClaimAffiliateRewards,
   sendClaimFundingFees,
   sendClaimCollateral,
@@ -79,8 +78,6 @@ describe("MultichainRouter", () => {
     multichainGmRouter,
     multichainOrderRouter,
     multichainGlvRouter,
-    multichainTransferRouter,
-    mockStargatePool,
     multichainVault,
     depositVault,
     withdrawalVault,
@@ -110,8 +107,6 @@ describe("MultichainRouter", () => {
       multichainGmRouter,
       multichainOrderRouter,
       multichainGlvRouter,
-      multichainTransferRouter,
-      mockStargatePool,
       multichainVault,
       depositVault,
       withdrawalVault,
@@ -1365,56 +1360,6 @@ describe("MultichainRouter", () => {
           expandDecimals(10, 6)
         ); // 25 - 15 = 10 USD (received from claiming, after paying relay fee)
       });
-    });
-  });
-
-  describe("MultichainTransferRouter", () => {
-    const feeAmount = expandDecimals(6, 15);
-    const bridgeAmount = expandDecimals(1000, 6);
-    let defaultBridgeOutParams;
-    beforeEach(async () => {
-      defaultBridgeOutParams = {
-        token: usdc.address,
-        amount: bridgeAmount,
-      };
-    });
-
-    let bridgeOutParams: Parameters<typeof sendBridgeOut>[0];
-    beforeEach(async () => {
-      bridgeOutParams = {
-        sender: relaySigner,
-        signer: user1,
-        feeParams: {
-          feeToken: wnt.address,
-          feeAmount: feeAmount,
-          feeSwapPath: [],
-        },
-        provider: mockStargatePool.address,
-        account: user1.address,
-        data: "0x", // e.g. Eid
-        params: defaultBridgeOutParams,
-        deadline: 9999999999,
-        srcChainId: chainId, // 0 means non-multichain action
-        desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
-        relayRouter: multichainTransferRouter,
-        chainId,
-        relayFeeToken: wnt.address,
-        relayFeeAmount: feeAmount,
-      };
-    });
-
-    // TODO: mock StargatePool and enable bridging out test
-    it.skip("bridgeOut", async () => {
-      await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePool.address), true);
-      await mintAndBridge(fixture, { account: user1, token: usdc, tokenAmount: bridgeAmount });
-
-      expect(await usdc.balanceOf(user1.address)).eq(0);
-      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(bridgeAmount);
-
-      await sendBridgeOut(bridgeOutParams);
-
-      expect(await usdc.balanceOf(user1.address)).eq(bridgeAmount);
-      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0);
     });
   });
 });

@@ -280,12 +280,14 @@ library SwapPricingUtils {
             feeFactor = dataStore.getUint(Keys.swapFeeFactorKey(marketToken, balanceWasImproved));
         } else if (swapPricingType == ISwapPricingUtils.SwapPricingType.Shift) {
             // empty branch as feeFactor is already zero
-        } else if (swapPricingType == ISwapPricingUtils.SwapPricingType.Atomic) {
+        } else if (swapPricingType == ISwapPricingUtils.SwapPricingType.AtomicSwap) {
             feeFactor = dataStore.getUint(Keys.atomicSwapFeeFactorKey(marketToken));
         } else if (swapPricingType == ISwapPricingUtils.SwapPricingType.Deposit) {
             feeFactor = dataStore.getUint(Keys.depositFeeFactorKey(marketToken, balanceWasImproved));
         } else if (swapPricingType == ISwapPricingUtils.SwapPricingType.Withdrawal) {
             feeFactor = dataStore.getUint(Keys.withdrawalFeeFactorKey(marketToken, balanceWasImproved));
+        } else if (swapPricingType == ISwapPricingUtils.SwapPricingType.AtomicWithdrawal) {
+            feeFactor = dataStore.getUint(Keys.atomicWithdrawalFeeFactorKey(marketToken));
         }
 
         uint256 swapFeeReceiverFactor = dataStore.getUint(Keys.SWAP_FEE_RECEIVER_FACTOR);

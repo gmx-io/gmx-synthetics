@@ -166,7 +166,7 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
             key,
             withdrawal,
             account,
-            ISwapPricingUtils.SwapPricingType.Atomic
+            ISwapPricingUtils.SwapPricingType.AtomicWithdrawal
         );
     }
 
