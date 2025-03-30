@@ -266,7 +266,7 @@ async function getContractInfo(
   return { isContract, contractName, isGmxDeployer };
 }
 
-function getIsGmxDeployer(contractAddress: string) {
+export function getIsGmxDeployer(contractAddress: string) {
   return (
     contractAddress.toLowerCase() === GMX_V1_DEPLOYER_ADDRESS.toLowerCase() ||
     contractAddress.toLowerCase() === GMX_V2_DEPLOYER_ADDRESS.toLowerCase()
@@ -348,7 +348,7 @@ async function getContractNameFromEtherscan(
   return { contractName: response.result[0].ContractName, isVerified: true };
 }
 
-async function getContractCreationFromEtherscan(contractAddress: string) {
+export async function getContractCreationFromEtherscan(contractAddress: string) {
   const response = await _requestEtherscan({
     action: "getcontractcreation",
     contractaddresses: contractAddress,

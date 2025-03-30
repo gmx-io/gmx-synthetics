@@ -2,6 +2,7 @@ import hre from "hardhat";
 import { hashString } from "../utils/hash";
 import { cancelActionById, getGrantRolePayload, getRevokeRolePayload, timelockWriteMulticall } from "../utils/timelock";
 import { TimelockConfig } from "../typechain-types";
+import { validateSourceCode } from "./validateDeploymentUtils";
 
 const expectedTimelockMethods = [
   "signalGrantRole",
@@ -226,6 +227,25 @@ async function main() {
   }
 
   const networkConfig = config[hre.network.name];
+  const provider = hre.ethers.provider;
+
+  // Check that deployed contracts are matching with local sources
+  for (const { member, role, contractName } of networkConfig.rolesToAdd) {
+    const contractInfo = {
+      address: member,
+      name: contractName,
+      isCodeValidated: false,
+      signalledRoles: [role],
+      unapprovedRoles: [],
+    };
+
+    await validateSourceCode(provider, contractInfo);
+    if (!contractInfo.isCodeValidated) {
+      console.log(`❌${contractInfo.name} is not valid. Sources not match. See diff in validation folder`);
+    } else {
+      console.log(`✅${contractInfo.name} is valid`);
+    }
+  }
 
   if (timelockMethod === "signalGrantRole") {
     for (const { member, role } of networkConfig.rolesToAdd) {
