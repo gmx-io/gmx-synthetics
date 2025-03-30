@@ -33,11 +33,13 @@ import {
   OrderType,
 } from "../../utils/order";
 import { hashData, hashString } from "../../utils/hash";
-import { getPositionCount } from "../../utils/position";
+import { getPositionCount, getPositionKeys } from "../../utils/position";
 import { expectBalance } from "../../utils/validation";
 import { executeLiquidation } from "../../utils/liquidation";
 import { executeAdl, updateAdlState } from "../../utils/adl";
 import { getClaimableCollateralTimeKey } from "../../utils/collateral";
+import { prices } from "../../utils/prices";
+import { errorsContract } from "../../utils/error";
 
 export async function mintAndBridge(
   fixture,
@@ -96,6 +98,7 @@ describe("MultichainRouter", () => {
     multichainClaimsRouter,
     mockStargatePoolUsdc,
     mockStargatePoolWnt,
+    oracle,
     referralStorage;
   let relaySigner;
   let chainId;
@@ -127,6 +130,7 @@ describe("MultichainRouter", () => {
       multichainClaimsRouter,
       mockStargatePoolUsdc,
       mockStargatePoolWnt,
+      oracle,
       referralStorage,
     } = fixture.contracts);
 
@@ -969,6 +973,47 @@ describe("MultichainRouter", () => {
         order = await reader.getOrder(dataStore.address, orderKeys[0]);
         expect(order.numbers.initialCollateralDeltaAmount).eq(collateralDeltaAmount.sub(feeAmount));
       });
+
+      it("position collateral can NOT be used to pay for fees if position becomes liquidatable", async () => {
+        await sendCreateDeposit({ ...createDepositParams, relayFeeAmount: feeAmount });
+        await executeDeposit(fixture, { gasUsageLabel: "executeMultichainDeposit" });
+        await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: collateralDeltaAmount.add(feeAmount) });
+        await sendCreateOrder(createOrderParams);
+        await executeOrder(fixture, { gasUsageLabel: "executeOrder" });
+
+        // Verify order was created and has the expected collateral amount
+        const positionKeys = await getPositionKeys(dataStore, 0, 1);
+        const position = await reader.getPosition(dataStore.address, positionKeys[0]);
+        expect(position.numbers.collateralAmount).eq(collateralDeltaAmount);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0);
+
+        await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: collateralDeltaAmount.add(feeAmount) });
+        await sendCreateOrder(createOrderParams);
+
+        // Verify order was created and has the expected collateral amount
+        const orderKeys = await getOrderKeys(dataStore, 0, 1);
+        const order = await reader.getOrder(dataStore.address, orderKeys[0]);
+        expect(order.numbers.initialCollateralDeltaAmount).eq(collateralDeltaAmount);
+
+        // Verify user's multichain balance is insufficient for the update operation (should be zero after paying for deposit and order creation)
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0);
+
+        // set RELAY_MAX_PRICE_AGE and primary prices
+        await dataStore.setUint(keys.RELAY_MAX_PRICE_AGE, ethers.constants.MaxUint256);
+        await oracle.setPrimaryPrice(wnt.address, { min: prices.wnt.min, max: prices.wnt.max });
+        await oracle.setPrimaryPrice(usdc.address, { min: prices.usdc.min, max: prices.usdc.max });
+
+        // position has 1 ETH collateral, order oppened with 1 ETH collateral and 1.1 ETH fee
+        const highFeeAmount = collateralDeltaAmount.add(expandDecimals(1, 17)); // 1.0 + 0.1 = 1.1 ETH
+        await expect(
+          sendUpdateOrder({
+            ...updateOrderParams,
+            key: orderKeys[0],
+            feeParams: { ...updateOrderParams.feeParams, feeAmount: highFeeAmount },
+            relayFeeAmount: highFeeAmount,
+          })
+        ).to.be.revertedWithCustomError(errorsContract, "LiquidatablePosition");
+      });
     });
 
     describe("cancelOrder", () => {
@@ -1036,6 +1081,43 @@ describe("MultichainRouter", () => {
         expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(
           collateralDeltaAmount.sub(feeAmount)
         );
+      });
+
+      it("position collateral can be used to pay for fees for increase orders", async () => {
+        await sendCreateDeposit({ ...createDepositParams, relayFeeAmount: feeAmount });
+        await executeDeposit(fixture, { gasUsageLabel: "executeMultichainDeposit" });
+        await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: collateralDeltaAmount.add(feeAmount) });
+        await sendCreateOrder(createOrderParams);
+        await executeOrder(fixture, { gasUsageLabel: "executeOrder" });
+
+        await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: feeAmount });
+        await sendCreateOrder({ ...createOrderParams, collateralDeltaAmount: 0 });
+
+        // Verify order/position were created and have the expected collateral amount
+        const positionKeys = await getPositionKeys(dataStore, 0, 1);
+        let position = await reader.getPosition(dataStore.address, positionKeys[0]);
+        expect(position.numbers.collateralAmount).eq(collateralDeltaAmount); // 1 ETH
+
+        const orderKeys = await getOrderKeys(dataStore, 0, 1);
+        const order = await reader.getOrder(dataStore.address, orderKeys[0]);
+        expect(order.numbers.initialCollateralDeltaAmount).eq(0); // 0 ETH
+
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0); // 0 ETH
+
+        // set relay price age and primary prices
+        await dataStore.setUint(keys.RELAY_MAX_PRICE_AGE, ethers.constants.MaxUint256);
+        await oracle.setPrimaryPrice(wnt.address, { min: expandDecimals(4800, 18), max: expandDecimals(5200, 18) });
+        await oracle.setPrimaryPrice(usdc.address, { min: expandDecimals(1, 6), max: expandDecimals(1, 6) });
+
+        await sendCancelOrder({ ...cancelOrderParams, key: orderKeys[0] });
+
+        // order is cancelled
+        expect(await getOrderCount(dataStore)).to.eq(0);
+
+        // position collateral is used to pay the order fee
+        position = await reader.getPosition(dataStore.address, positionKeys[0]);
+        expect(position.numbers.collateralAmount).eq(collateralDeltaAmount.sub(feeAmount)); // 1.0 - 0.006 = 0.994 ETH position collateral after fee payment
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0);
       });
     });
   });
