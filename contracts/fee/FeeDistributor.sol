@@ -15,6 +15,7 @@ import "../v1/IMintable.sol";
 contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
     using EventUtils for EventUtils.UintItems;
     using EventUtils for EventUtils.BytesItems;
+    using EventUtils for EventUtils.BoolItems;
 
     enum DistributionState {
         None,
@@ -187,10 +188,8 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         }
         setUint(Keys.FEE_DISTRIBUTOR_TOTAL_FEE_AMOUNT_GMX, totalFeeAmountGmx);
         setUint(Keys.FEE_DISTRIBUTOR_TOTAL_STAKED_GMX, totalStakedGmx);
-
-        setUint(Keys.FEE_DISTRIBUTOR_GMX_PRICE, getGmxPrice());
-        setUint(Keys.FEE_DISTRIBUTOR_WNT_PRICE, vaultV1.getMaxPrice(wnt));
         setUint(Keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP, receivedData.timestamp);
+        setTokenPrices();
 
         uint256 slippageFactor = getUint(Keys.feeDistributorBridgeSlippageFactorKey(block.chainid));
         uint256 requiredFeeAmount = Precision.mulDiv(totalFeeAmountGmx, stakedGmxCurrentChain, totalStakedGmx);
@@ -380,10 +379,6 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         setUint(Keys.feeDistributorReferralRewardsSentKey(token), totalTokensSent);
     }
 
-    function getGmxPrice() internal withOraclePrices(setPricesParams()) returns (uint256) {
-        return oracle.getPrimaryPrice(gmx).max;
-    }
-
     function calculateAndBridgeGmx(
         uint256[] memory chainIds,
         uint256 totalFeeAmountGmx,
@@ -554,22 +549,26 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         eventData = setUintItem(eventData, 1, "feeAmountGmxCurrentChain", feeAmountGmxCurrentChain);
         eventData.bytesItems.initItems(1);
         eventData.bytesItems.setItem(0, "receivedData", abi.encode(receivedData));
-        eventEmitter.emitEventLog1(
-            "FeeDistributionDataReceived",
-            isBridgingCompleted
-                ? bytes32(uint256(DistributionState.BridgingCompleted))
-                : bytes32(uint256(DistributionState.ReadDataReceived)),
-            eventData
-        );
+        eventData.boolItems.initItems(1);
+        eventData.boolItems.setItem(0, "isBridgingCompleted", isBridgingCompleted);
+        emitEventLog("FeeDistributionDataReceived", eventData);
     }
 
-    function setPricesParams() internal view returns (OracleUtils.SetPricesParams memory) {
-        address[] memory tokens = createAddressArray(1);
+    function setTokenPrices() internal withOraclePrices(retrieveSetPricesParams()) {
+        setUint(Keys.FEE_DISTRIBUTOR_GMX_PRICE, oracle.getPrimaryPrice(gmx).max);
+        setUint(Keys.FEE_DISTRIBUTOR_WNT_PRICE, oracle.getPrimaryPrice(wnt).max);
+    }
+
+    function retrieveSetPricesParams() internal view returns (OracleUtils.SetPricesParams memory) {
+        address[] memory tokens = createAddressArray(2);
         tokens[0] = gmx;
-        address[] memory providers = createAddressArray(1);
+        tokens[1] = wnt;
+        address[] memory providers = createAddressArray(2);
         providers[0] = getAddress(Keys.oracleProviderForTokenKey(gmx));
-        bytes[] memory data = new bytes[](1);
+        providers[1] = getAddress(Keys.oracleProviderForTokenKey(wnt));
+        bytes[] memory data = new bytes[](2);
         data[0] = "";
+        data[1] = "";
         return (OracleUtils.SetPricesParams(tokens, providers, data));
     }
 
