@@ -2,6 +2,8 @@
 
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+
 import "../utils/Cast.sol";
 import "../error/Errors.sol";
 
@@ -15,17 +17,17 @@ contract EdgeDataStreamVerifier {
         int32 expo; // precision of bid&ask (negative value)
     }
 
-    address public immutable TRUSTED_SIGNER;
+    address public immutable trustedSigner;
 
     /**
     * @dev Constructor to set the trusted signer address
     * @param trustedSigner The address of the trusted signer
     */
-    constructor(address trustedSigner) {
-        if (trustedSigner == address(0)) {
+    constructor(address _trustedSigner) {
+        if (_trustedSigner == address(0)) {
             revert Errors.InvalidTrustedSignerAddress();
         }
-        TRUSTED_SIGNER = trustedSigner;
+        trustedSigner = _trustedSigner;
     }
 
 
@@ -70,7 +72,7 @@ contract EdgeDataStreamVerifier {
             bid,
             ask,
             signature
-        ) == TRUSTED_SIGNER;
+        ) == trustedSigner;
     }
 
     /**
@@ -164,8 +166,11 @@ contract EdgeDataStreamVerifier {
             v += 27;
         }
 
-        // Recover the signer's address
-        return ecrecover(messageHash, v, r, s);
+        (address signer, ECDSA.RecoverError error) = ECDSA.tryRecover(messageHash, v, r, s);
+        if (error != ECDSA.RecoverError.NoError) {
+            revert Errors.InvalidEdgeSignature();
+        }
+        return signer;
     }
 
     /**
