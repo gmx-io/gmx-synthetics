@@ -141,6 +141,7 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
     ) external globalNonReentrant onlyController returns (bytes32) {
         DataStore _dataStore = dataStore;
         FeatureUtils.validateFeature(_dataStore, Keys.createGlvWithdrawalFeatureDisabledKey(address(this)));
+        validateDataListLength(params.dataList.length);
 
         return GlvWithdrawalUtils.createGlvWithdrawal(_dataStore, eventEmitter, glvVault, account, srcChainId, params);
     }
