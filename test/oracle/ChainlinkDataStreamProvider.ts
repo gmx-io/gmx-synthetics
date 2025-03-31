@@ -1,28 +1,12 @@
 import { expect } from "chai";
 import { deployFixture } from "../../utils/fixture";
 
-import { decodeData, encodeData } from "../../utils/hash";
+import { encodeData } from "../../utils/hash";
 import { expandDecimals, percentageToFloat } from "../../utils/math";
 import * as keys from "../../utils/keys";
 import { ethers } from "hardhat";
 import { BigNumberish } from "ethers";
-import { parseError } from "../../utils/error";
-
-function decodeValidatedPrice(data: string) {
-  try {
-    const decoded = decodeData(["address", "uint256", "uint256", "uint256", "address"], data);
-    return {
-      token: decoded[0],
-      min: decoded[1],
-      max: decoded[2],
-      timestamp: decoded[3],
-      provider: decoded[4],
-    };
-  } catch (ex) {
-    const error = parseError(data);
-    throw error;
-  }
-}
+import { decodeValidatedPrice } from "../../utils/oracle-provider";
 
 function encodeReport(feedId: string, bid: BigNumberish, ask: BigNumberish) {
   return encodeData(
