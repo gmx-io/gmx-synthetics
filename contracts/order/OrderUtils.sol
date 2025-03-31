@@ -343,6 +343,8 @@ library OrderUtils {
             revert Errors.OrderAlreadyFrozen();
         }
 
+        uint256 executionFee = order.executionFee();
+
         order.setExecutionFee(0);
         order.setIsFrozen(true);
         OrderStoreUtils.set(dataStore, key, order);
@@ -363,7 +365,7 @@ library OrderUtils {
             ),
             key,
             order.callbackContract(),
-            order.executionFee(),
+            executionFee,
             startingGas,
             GasUtils.estimateOrderOraclePriceCount(order.swapPath().length),
             keeper,
