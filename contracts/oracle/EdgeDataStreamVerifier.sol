@@ -21,7 +21,7 @@ contract EdgeDataStreamVerifier {
 
     /**
     * @dev Constructor to set the trusted signer address
-    * @param trustedSigner The address of the trusted signer
+    * @param _trustedSigner The address of the trusted signer
     */
     constructor(address _trustedSigner) {
         if (_trustedSigner == address(0)) {
