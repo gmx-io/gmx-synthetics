@@ -241,7 +241,7 @@ async function main() {
 
     await validateSourceCode(provider, contractInfo);
     if (!contractInfo.isCodeValidated) {
-      console.log(`❌${contractInfo.name} is not valid. Sources not match. See diff in validation folder`);
+      console.log(`❌${contractInfo.name} is not valid. Sources do not match. See diff in validation folder`);
     } else {
       console.log(`✅${contractInfo.name} is valid`);
     }

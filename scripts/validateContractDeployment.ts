@@ -31,14 +31,6 @@ const roleLabels = {
 };
 
 async function main() {
-  // await validateWithSourcify({
-  //   address: "0xC8ee91A54287DB53897056e12D9819156D3822Fb",
-  //   name: null,
-  //   isCodeValidated: false,
-  //   signalledRoles: [],
-  // });
-  // return;
-
   if (!COMMIT_HASH || !TRANSACTION_HASH) {
     console.error("Error: Missing COMMIT_HASH or TRANSACTION_HASH in environment variables.");
     process.exit(1);
@@ -79,7 +71,7 @@ function printResults(contractInfos: ContractInfo[]) {
     if (contractInfo.isCodeValidated) {
       console.log(`✅${contractInfo.name} is valid`);
     } else {
-      console.log(`❌${contractInfo.name} is not valid. Sources not match. See diff in validation folder`);
+      console.log(`❌${contractInfo.name} is not valid. Sources do not match. See diff in validation folder`);
     }
     console.log(`Following roles signalled:`);
     for (const signalledRole of contractInfo.signalledRoles) {
