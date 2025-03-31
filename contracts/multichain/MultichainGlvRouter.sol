@@ -26,7 +26,13 @@ contract MultichainGlvRouter is MultichainRouter {
         uint256 srcChainId,
         RelayUtils.TransferRequests calldata transferRequests,
         GlvDepositUtils.CreateGlvDepositParams memory params
-    ) external nonReentrant onlyGelatoRelay returns (bytes32) {
+    )
+        external
+        nonReentrant
+        withOraclePricesForAtomicAction(relayParams.oracleParams)
+        onlyGelatoRelay
+        returns (bytes32)
+    {
         _validateDesChainId(relayParams.desChainId);
         _validateGaslessFeature();
 
@@ -65,7 +71,13 @@ contract MultichainGlvRouter is MultichainRouter {
         uint256 srcChainId,
         RelayUtils.TransferRequests calldata transferRequests,
         GlvWithdrawalUtils.CreateGlvWithdrawalParams memory params
-    ) external nonReentrant onlyGelatoRelay returns (bytes32) {
+    )
+        external
+        nonReentrant
+        withOraclePricesForAtomicAction(relayParams.oracleParams)
+        onlyGelatoRelay
+        returns (bytes32)
+    {
         _validateDesChainId(relayParams.desChainId);
         _validateGaslessFeature();
 

@@ -41,7 +41,13 @@ contract MultichainGmRouter is MultichainRouter {
         uint256 srcChainId,
         RelayUtils.TransferRequests calldata transferRequests,
         DepositUtils.CreateDepositParams memory params // can't use calldata because need to modify params.numbers.executionFee
-    ) external nonReentrant onlyGelatoRelay returns (bytes32) {
+    )
+        external
+        nonReentrant
+        withOraclePricesForAtomicAction(relayParams.oracleParams)
+        onlyGelatoRelay
+        returns (bytes32)
+    {
         _validateDesChainId(relayParams.desChainId);
         _validateGaslessFeature();
 
@@ -86,7 +92,13 @@ contract MultichainGmRouter is MultichainRouter {
         uint256 srcChainId,
         RelayUtils.TransferRequests calldata transferRequests,
         WithdrawalUtils.CreateWithdrawalParams memory params // can't use calldata because need to modify params.addresses.receiver & params.numbers.executionFee
-    ) external nonReentrant onlyGelatoRelay returns (bytes32) {
+    )
+        external
+        nonReentrant
+        withOraclePricesForAtomicAction(relayParams.oracleParams)
+        onlyGelatoRelay
+        returns (bytes32)
+    {
         _validateDesChainId(relayParams.desChainId);
         _validateGaslessFeature();
 
@@ -128,7 +140,13 @@ contract MultichainGmRouter is MultichainRouter {
         uint256 srcChainId,
         RelayUtils.TransferRequests calldata transferRequests,
         ShiftUtils.CreateShiftParams memory params
-    ) external nonReentrant onlyGelatoRelay returns (bytes32) {
+    )
+        external
+        nonReentrant
+        withOraclePricesForAtomicAction(relayParams.oracleParams)
+        onlyGelatoRelay
+        returns (bytes32)
+    {
         _validateDesChainId(relayParams.desChainId);
         _validateGaslessFeature();
 
