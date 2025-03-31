@@ -8,9 +8,13 @@ import {EventEmitter} from "../event/EventEmitter.sol";
 import {EventUtils} from "../event/EventUtils.sol";
 import {RoleModule} from "../role/RoleModule.sol";
 import {RoleStore} from "../role/RoleStore.sol";
+import {DataStore} from "../data/DataStore.sol";
 import {BasicMulticall} from "../utils/BasicMulticall.sol";
 import {Precision} from "../utils/Precision.sol";
-import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
+import {ConfigTimelockController} from "./ConfigTimelockController.sol";
+import {OracleModule} from "../oracle/OracleModule.sol";
+import {OracleUtils} from "../oracle/OracleUtils.sol";
+import {MarketUtils} from "../market/MarketUtils.sol";
 
 contract TimelockConfig is RoleModule, BasicMulticall {
     using EventUtils for EventUtils.AddressItems;
@@ -24,7 +28,7 @@ contract TimelockConfig is RoleModule, BasicMulticall {
     uint256 public constant MAX_TIMELOCK_DELAY = 5 days;
 
     EventEmitter public immutable eventEmitter;
-    TimelockController public immutable timelockController;
+    ConfigTimelockController public immutable timelockController;
 
     address public immutable dataStore;
     address public immutable oracleStore;
@@ -34,7 +38,7 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         address _dataStore,
         address _oracleStore,
         RoleStore _roleStore,
-        TimelockController _timelockController
+        ConfigTimelockController _timelockController
     ) RoleModule(_roleStore) {
         eventEmitter = _eventEmitter;
         dataStore = _dataStore;
@@ -332,8 +336,54 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         );
     }
 
+    // @dev Withdraw funds from position impact pool(negative price impacts) and send them to `receiver`
+    // @param market Market from withdraw
+    // @param receiver Account to send funds from pool
+    // @param amount Amount of tokens to withdraw
+    function signalWithdrawFromPositionImpactPool(
+        address market,
+        address receiver,
+        uint256 amount
+    ) external onlyTimelockAdmin {
+        if (market == address(0)) {
+            revert Errors.EmptyMarket();
+        }
+        if (receiver == address(0)) {
+            revert Errors.EmptyReceiver();
+        }
+        if (amount == 0) {
+            revert Errors.EmptyPositionImpactWithdrawalAmount();
+        }
+
+        bytes memory payload = abi.encodeWithSignature(
+            "withdrawFromPositionImpactPool(address,address,uint256)",
+            market, receiver, amount);
+        timelockController.schedule(address(timelockController), 0, payload, 0, 0, timelockController.getMinDelay());
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "market", market);
+        eventData.addressItems.setItem(1, "receiver", receiver);
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "amount", amount);
+        eventEmitter.emitEventLog(
+            "SignalWithdrawFromPositionImpactPool",
+            eventData
+        );
+    }
+
     function execute(address target, bytes calldata payload) external onlyTimelockAdmin {
         timelockController.execute(target, 0, payload, 0, 0);
+    }
+
+    function executeWithOraclePrice(
+        address target,
+        bytes calldata payload,
+        OracleUtils.SetPricesParams calldata oracleParams
+    ) external onlyTimelockAdmin {
+        timelockController.executeWithOraclePrices(
+            target, 0, payload, oracleParams
+        );
     }
 
     function executeBatch(address[] calldata targets, uint256[] calldata values, bytes[] calldata payloads) external onlyTimelockAdmin {

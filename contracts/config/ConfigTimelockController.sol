@@ -12,13 +12,54 @@ import {OracleStore} from "../oracle/OracleStore.sol";
 import {RoleStore} from "../role/RoleStore.sol";
 import {Precision} from "../utils/Precision.sol";
 import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
+import {OracleModule} from "../oracle/OracleModule.sol";
+import {OracleUtils} from "../oracle/OracleUtils.sol";
+import {Oracle} from "../oracle/Oracle.sol";
+import {MarketPositionImpactPoolUtils} from "../market/MarketPositionImpactPoolUtils.sol";
+import {Chain} from "../chain/Chain.sol";
 
-contract ConfigTimelockController is TimelockController {
+contract ConfigTimelockController is TimelockController, OracleModule {
+
+    DataStore public immutable dataStore;
 
     constructor(
         uint256 minDelay,
         address[] memory proposers,
-        address[] memory executors
-    ) TimelockController(minDelay, proposers, executors, msg.sender) {}
+        address[] memory executors,
+        Oracle oracle,
+        DataStore _dataStore
+    ) TimelockController(minDelay, proposers, executors, msg.sender) OracleModule(oracle) {
+        dataStore = _dataStore;
+    }
 
+    function executeWithOraclePrices(
+        address target,
+        uint256 value,
+        bytes calldata payload,
+        OracleUtils.SetPricesParams calldata oracleParams
+    ) external onlyRoleOrOpenRole(EXECUTOR_ROLE) withOraclePrices(oracleParams) {
+        if (oracle.minTimestamp() <= Chain.currentTimestamp() - dataStore.getUint(Keys.CONFIG_MAX_PRICE_AGE)) {
+            revert Errors.OraclePriceOutdated();
+        }
+        execute(target, value, payload, 0, 0);
+    }
+
+    function withdrawFromPositionImpactPool(
+        address market,
+        address receiver,
+        uint256 amount
+    ) external  {
+        if (msg.sender != address(this)) {
+            revert Errors.Unauthorized(msg.sender, "self");
+        }
+        MarketPositionImpactPoolUtils.withdrawFromPositionImpactPool(
+            oracle.dataStore(),
+            oracle.eventEmitter(),
+            market,
+            receiver,
+            amount,
+            oracle
+        );
+
+    }
 }
