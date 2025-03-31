@@ -672,11 +672,6 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_HighMax_WithLowerBase,
 
-      maxLongTokenPoolAmount: expandDecimals(1930, 18),
-      maxShortTokenPoolAmount: expandDecimals(6_300_000, 6),
-
-      maxPoolUsdForDeposit: decimalToFloat(5_500_000),
-
       negativePositionImpactFactor: exponentToFloat("21e-9"),
       positivePositionImpactFactor: exponentToFloat("7e-9"),
 
@@ -695,6 +690,11 @@ const config: {
       minPositionImpactPoolAmount: expandDecimals(4169, 6), // 4169.846154 XRP
 
       maxOpenInterest: decimalToFloat(2_000_000),
+
+      maxPoolUsdForDeposit: decimalToFloat(5_500_000),
+
+      maxLongTokenPoolAmount: expandDecimals(3470, 18),
+      maxShortTokenPoolAmount: expandDecimals(6_300_000, 6),
     },
     {
       tokens: { indexToken: "DOGE", longToken: "WETH", shortToken: "USDC" },
@@ -740,11 +740,6 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_HighMax_WithHigherBase,
 
-      maxLongTokenPoolAmount: expandDecimals(1249, 18), // ~$3m
-      maxShortTokenPoolAmount: expandDecimals(3_000_000, 6),
-
-      maxPoolUsdForDeposit: decimalToFloat(2_000_000),
-
       positionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
       positivePositionImpactFactor: exponentToFloat("2.5e-10"), // 2.5e-10,
       negativePositionImpactFactor: exponentToFloat("5e-10"), // 5e-10
@@ -757,6 +752,11 @@ const config: {
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.8e-9"), // 38e-10
 
       maxOpenInterest: decimalToFloat(1_000_000),
+
+      maxPoolUsdForDeposit: decimalToFloat(2_000_000),
+
+      maxLongTokenPoolAmount: expandDecimals(1655, 18),
+      maxShortTokenPoolAmount: expandDecimals(3_000_000, 6),
 
       reserveFactor: percentageToFloat("165%"),
       openInterestReserveFactor: percentageToFloat("160%"),
@@ -1003,11 +1003,6 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_HighMax_WithHigherBase,
 
-      maxLongTokenPoolAmount: expandDecimals(1150, 18),
-      maxShortTokenPoolAmount: expandDecimals(2_500_000, 6),
-
-      maxPoolUsdForDeposit: decimalToFloat(2_000_000),
-
       negativePositionImpactFactor: exponentToFloat("2.7e-8"),
       positivePositionImpactFactor: exponentToFloat("9e-9"),
 
@@ -1025,6 +1020,11 @@ const config: {
       minPositionImpactPoolAmount: expandDecimals(28, 8), // 28 LTC
 
       maxOpenInterest: decimalToFloat(1_000_000),
+
+      maxPoolUsdForDeposit: decimalToFloat(2_400_000),
+
+      maxLongTokenPoolAmount: expandDecimals(1720, 18),
+      maxShortTokenPoolAmount: expandDecimals(3_120_000, 6),
     },
     {
       tokens: { indexToken: "UNI", longToken: "UNI", shortToken: "USDC" },
@@ -1327,11 +1327,6 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_LowMax_WithHigherBase,
 
-      maxLongTokenPoolAmount: expandDecimals(160_000, 18),
-      maxShortTokenPoolAmount: expandDecimals(4_000_000, 6),
-
-      maxPoolUsdForDeposit: decimalToFloat(3_500_000),
-
       negativePositionImpactFactor: exponentToFloat("0.795469e-6"),
       positivePositionImpactFactor: exponentToFloat("2.65156e-07"),
       positionImpactExponentFactor: exponentToFloat("1.76045e0"),
@@ -1349,6 +1344,11 @@ const config: {
       minPositionImpactPoolAmount: expandDecimals(50, 18), // 50 GMX
 
       maxOpenInterest: decimalToFloat(1_800_000),
+
+      maxPoolUsdForDeposit: decimalToFloat(3_500_000),
+
+      maxLongTokenPoolAmount: expandDecimals(340_000, 18),
+      maxShortTokenPoolAmount: expandDecimals(4_000_000, 6),
     },
     {
       tokens: { indexToken: "GMX", longToken: "GMX", shortToken: "GMX" },
@@ -1419,11 +1419,6 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_LowMax_WithHigherBase,
 
-      maxLongTokenPoolAmount: expandDecimals(1_135_000, 6),
-      maxShortTokenPoolAmount: expandDecimals(4_800_000, 6),
-
-      maxPoolUsdForDeposit: decimalToFloat(4_400_000),
-
       negativePositionImpactFactor: exponentToFloat("5e-10"), // 0.05% for ~100,000 USD of imbalance
       positivePositionImpactFactor: exponentToFloat("2.5e-10"), // 0.05% for ~178,180 USD of imbalance
       positionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
@@ -1440,6 +1435,11 @@ const config: {
       minPositionImpactPoolAmount: 0,
 
       maxOpenInterest: decimalToFloat(500_000),
+
+      maxPoolUsdForDeposit: decimalToFloat(4_400_000),
+
+      maxLongTokenPoolAmount: expandDecimals(11_000_000, 6),
+      maxShortTokenPoolAmount: expandDecimals(4_800_000, 6),
     },
     {
       tokens: { indexToken: "POL", longToken: "WETH", shortToken: "USDC" },
@@ -2450,10 +2450,11 @@ const config: {
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
       maxOpenInterest: decimalToFloat(750_000),
-      maxPoolUsdForDeposit: decimalToFloat(1_000_000),
 
-      maxLongTokenPoolAmount: expandDecimals(15, 8),
-      maxShortTokenPoolAmount: expandDecimals(1_300_000, 6),
+      maxPoolUsdForDeposit: decimalToFloat(1_200_000),
+
+      maxLongTokenPoolAmount: expandDecimals(19, 8),
+      maxShortTokenPoolAmount: expandDecimals(1_560_000, 6),
     },
     {
       tokens: { indexToken: "AI16Z", longToken: "WBTC.e", shortToken: "USDC" },
