@@ -30,6 +30,12 @@ import "./MultichainProviderUtils.sol";
 contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModule {
     using SafeERC20 for IERC20;
 
+    struct BridgeOutCache {
+        address wnt;
+        uint256 wntBalanceBefore;
+        uint256 wntBalanceAfter;
+    }
+
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
     MultichainVault public immutable multichainVault;
@@ -94,11 +100,9 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
      *        - data: ABI-encoded destination endpoint ID (dstEid)
      */
     function bridgeOut(IMultichainProvider.BridgeOutParams memory params) external onlyController {
-        IERC20(params.token).approve(params.provider, params.amount);
-
         IStargate stargate = IStargate(params.provider);
 
-        (uint256 valueToSend, SendParam memory sendParam, MessagingFee memory messagingFee) = prepareSend(
+        (uint256 valueToSend, SendParam memory sendParam, MessagingFee memory messagingFee, OFTReceipt memory receipt) = prepareSend(
             stargate,
             params.amount,
             params.account,
@@ -107,40 +111,46 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             new bytes(0) // _composeMsg
         );
 
+        // LZ/Stargate would round down the `amount` to 6 decimals precision / apply path limits
+        params.amount = receipt.amountSentLD;
+
+        IERC20(params.token).approve(params.provider, params.amount);
+
         {
-            address wnt = dataStore.getAddress(Keys.WNT);
+            BridgeOutCache memory cache;
+            cache.wnt = dataStore.getAddress(Keys.WNT);
 
             // transferOut bridging fee amount of wnt from user's multichain balance into this contract
             MultichainUtils.transferOut(
                 dataStore,
                 eventEmitter,
                 multichainVault,
-                wnt, // token
+                cache.wnt, // token
                 params.account,
                 address(this), // receiver
                 valueToSend, // bridge out fee
                 params.srcChainId
             );
 
-            uint256 wntBalanceBefore = IERC20(wnt).balanceOf(address(this));
+            cache.wntBalanceBefore = IERC20(cache.wnt).balanceOf(address(this));
 
             // unwrap wnt to native token and send it into this contract (to pay the bridging fee)
             TokenUtils.withdrawAndSendNativeToken(
                 dataStore,
-                wnt,
+                cache.wnt,
                 address(this), // receiver
                 valueToSend // amount
             );
 
-            uint256 wntBalanceAfter = IERC20(wnt).balanceOf(address(this));
+            cache.wntBalanceAfter = IERC20(cache.wnt).balanceOf(address(this));
 
             // if the above native token transfer failed, it re-wraps the token and sends it to the receiver (i.e. this contract)
             // check if wnt was send to this contract due to un-wrapping and transfer it back to user's multichain balance
-            if (wntBalanceAfter > wntBalanceBefore) {
-                uint256 amount = wntBalanceAfter - wntBalanceBefore;
-                IERC20(wnt).safeTransfer(address(multichainVault), amount);
+            if (cache.wntBalanceAfter > cache.wntBalanceBefore) {
+                uint256 amount = cache.wntBalanceAfter - cache.wntBalanceBefore;
+                IERC20(cache.wnt).safeTransfer(address(multichainVault), amount);
 
-                MultichainUtils.recordBridgeIn(dataStore, eventEmitter, multichainVault, this, wnt, params.account, amount, 0 /*srcChainId*/); // srcChainId is the current block.chainId
+                MultichainUtils.recordBridgeIn(dataStore, eventEmitter, multichainVault, this, cache.wnt, params.account, amount, 0 /*srcChainId*/); // srcChainId is the current block.chainId
                 return;
             }
         }
@@ -171,7 +181,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         uint32 _dstEid,
         bytes memory _composeMsg,
         bytes memory _extraOptions
-    ) private view returns (uint256 valueToSend, SendParam memory sendParam, MessagingFee memory messagingFee) {
+    ) private view returns (uint256 valueToSend, SendParam memory sendParam, MessagingFee memory messagingFee, OFTReceipt memory receipt) {
         sendParam = SendParam({
             dstEid: _dstEid,
             to: MultichainProviderUtils.addressToBytes32(receiver),
@@ -182,7 +192,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             oftCmd: ""
         });
 
-        (, , OFTReceipt memory receipt) = stargate.quoteOFT(sendParam);
+        (, , receipt) = stargate.quoteOFT(sendParam);
         sendParam.minAmountLD = receipt.amountReceivedLD;
 
         messagingFee = stargate.quoteSend(sendParam, false);
