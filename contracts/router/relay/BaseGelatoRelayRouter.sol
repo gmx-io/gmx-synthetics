@@ -299,6 +299,26 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         }
     }
 
+    // Gelato Relay Router contracts support 2 types of calls which have different logic for paying the relay fee:
+    // 1. callWithSyncFee
+    // 2. sponsoredCall
+    //
+    // callWithSyncFee:
+    // - GMX contracts pay relay fee to the Gelato Relay within the same transaction
+    // - the fee amount is calculated on Gelato Relay side, it depends on the gas used, gas price and conversion rate
+    // - UI should retrieve the fee amount from the Gelato API
+    //
+    // sponsoredCall:
+    // - GMX contracts do not pay Gelato Relay directly, instead Gelato 1Balance is used to cover the cost
+    // - GMX contracts charge users for the call and deposit funds to `RELAY_FEE_ADDRESS`;
+    //   these funds will later be used to top up Gelato 1Balance
+    // - the fee amount is calculated on GMX side based on the gas used (contracts use an approximation
+    //   because it's impossible to calculate the exact amount), gas price and `GELATO_RELAY_FEE_MULTIPLIER_FACTOR`.
+    //   note the fee amount doesn't necessarily match gas limit * gas price.
+    //   for example, GELATO_RELAY_FEE_MULTIPLIER_FACTOR can be set lower to subsidize the fee
+    // - UI should calculate the fee amount as:
+    //   gas limit * gas price * GELATO_RELAY_FEE_MULTIPLIER_FACTOR * some buffer to account for gas price variance
+    // - the calculation logic could be found in GasUtils.payGelatoRelayFee
     function _handleRelayAfterAction(
         Contracts memory contracts,
         uint256 startingGas,

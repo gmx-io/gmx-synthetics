@@ -47,7 +47,7 @@ struct TokenPermit {
 // for relay fee the funds should be sent to the RelayRouter contract
 // for position collateral the funds should be sent to the OrderVault contract
 struct ExternalCalls {
-    // Relay contracts do not support `multicall` and `sendTokens` methods
+    // Gelato Relay Router contracts do not support `multicall` and `sendTokens` methods
     // so all tokens and amounts should be specified here
     address[] sendTokens; // tokens to send to ExternalHandler
     uint256[] sendAmounts; // tokens amounts to send to ExternalHandler
