@@ -53,7 +53,10 @@ library MultichainOrderRouterUtils {
 
         // First try to deduct from order collateral
         // only increase and swap orders have collateral deposited at creation time and can use initialCollateralAmount to pay for the fee
-        if (BaseOrderUtils.isIncreaseOrder(order.orderType()) || BaseOrderUtils.isSwapOrder(order.orderType())) {
+        if (
+            order.initialCollateralToken() == relayParams.fee.feeToken &&
+            (BaseOrderUtils.isIncreaseOrder(order.orderType()) || BaseOrderUtils.isSwapOrder(order.orderType()))
+        ) {
             uint256 initialCollateralDeltaAmount = order.initialCollateralDeltaAmount();
             if (initialCollateralDeltaAmount > 0) {
                 uint256 deductFromOrder = initialCollateralDeltaAmount > cache.unpaidAmount
