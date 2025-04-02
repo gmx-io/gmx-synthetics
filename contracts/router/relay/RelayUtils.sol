@@ -46,6 +46,10 @@ struct TokenPermit {
 // GMX v2 swaps consume relatively a lot of gas, so using external calls could reduce txn fee
 // for relay fee the funds should be sent to the RelayRouter contract
 // for position collateral the funds should be sent to the OrderVault contract
+//
+// @note when using external calls for position collateral and creating multiple orders via `batch()`
+// then the funds will be allocated to the first increase order because all external calls are processed first
+// and only then OrderVault's balance is used for order's initialCollateralDeltaAmount
 struct ExternalCalls {
     // Gelato Relay Router contracts do not support `multicall` and `sendTokens` methods
     // so all tokens and amounts should be specified here
