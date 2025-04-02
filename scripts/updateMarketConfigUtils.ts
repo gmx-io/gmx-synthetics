@@ -49,11 +49,36 @@ const processMarkets = async ({
   handleConfig: handleConfigArg,
   includeRiskOracleBaseKeys,
   includeKeeperBaseKeys,
+  includeMaxOpenInterest,
+  includePositionImpact,
+  includeFunding,
 }) => {
   const shouldIgnoreBaseKey = (
     baseKey: string,
     isSupportedByRiskOracle: boolean
   ): [true, "riskOracle" | "keeper"] | [false] => {
+    if (baseKey === keys.MAX_OPEN_INTEREST && includeMaxOpenInterest) {
+      return [false];
+    }
+
+    if (
+      [keys.POSITION_IMPACT_FACTOR, keys.POSITION_IMPACT_EXPONENT_FACTOR].includes(baseKey) &&
+      includePositionImpact
+    ) {
+      return [false];
+    }
+
+    if (
+      [
+        keys.MAX_FUNDING_FACTOR_PER_SECOND,
+        keys.FUNDING_INCREASE_FACTOR_PER_SECOND,
+        keys.FUNDING_DECREASE_FACTOR_PER_SECOND,
+      ].includes(baseKey) &&
+      includeFunding
+    ) {
+      return [false];
+    }
+
     if (getRiskOracleManagedBaseKeys().includes(baseKey) && isSupportedByRiskOracle && !includeRiskOracleBaseKeys) {
       return [true, "riskOracle"];
     }
@@ -80,15 +105,6 @@ const processMarkets = async ({
 
     const marketToken = onchainMarket.marketToken;
     if (includeMarket && marketToken !== includeMarket) {
-      console.info(
-        "skip market %s:%s:%s:%s, market token %s does not match %s",
-        marketKey,
-        indexToken,
-        longToken,
-        shortToken,
-        marketToken,
-        includeMarket
-      );
       continue;
     }
 
@@ -225,6 +241,16 @@ const processMarkets = async ({
         encodeData(["address"], [marketToken]),
         marketConfig.atomicSwapFeeFactor,
         `atomicSwapFeeFactor ${marketToken}`
+      );
+    }
+
+    if (marketConfig.atomicWithdrawalFeeFactor) {
+      await handleConfig(
+        "uint",
+        keys.ATOMIC_WITHDRAWAL_FEE_FACTOR,
+        encodeData(["address"], [marketToken]),
+        marketConfig.atomicWithdrawalFeeFactor,
+        `atomicWithdrawalFeeFactor ${marketToken}`
       );
     }
 
@@ -696,6 +722,9 @@ export async function updateMarketConfig({
   market = undefined,
   includeRiskOracleBaseKeys = false,
   includeKeeperBaseKeys = false,
+  includeFunding = false,
+  includePositionImpact = false,
+  includeMaxOpenInterest = false,
 }) {
   if (!["arbitrumGoerli", "avalancheFuji", "hardhat"].includes(hre.network.name)) {
     const { errors } = await validateMarketConfigs();
@@ -730,6 +759,9 @@ export async function updateMarketConfig({
     generalConfig,
     includeRiskOracleBaseKeys,
     includeKeeperBaseKeys,
+    includeMaxOpenInterest,
+    includePositionImpact,
+    includeFunding,
     handleConfig: async (type, baseKey, keyData) => {
       if (type !== "uint") {
         throw new Error("Unsupported type");
@@ -765,6 +797,9 @@ export async function updateMarketConfig({
     generalConfig,
     includeRiskOracleBaseKeys,
     includeKeeperBaseKeys,
+    includeMaxOpenInterest,
+    includePositionImpact,
+    includeFunding,
     handleConfig: async (type, baseKey, keyData, value, label) => {
       if (type !== "uint") {
         throw new Error("Unsupported type");

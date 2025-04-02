@@ -245,7 +245,7 @@ library SwapUtils {
             params.swapPricingType
         );
 
-        bytes32 swapFeeType = params.swapPricingType == ISwapPricingUtils.SwapPricingType.Atomic
+        bytes32 swapFeeType = params.swapPricingType == ISwapPricingUtils.SwapPricingType.AtomicSwap
             ? Keys.ATOMIC_SWAP_FEE_TYPE
             : Keys.SWAP_FEE_TYPE;
 

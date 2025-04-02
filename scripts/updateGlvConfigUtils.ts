@@ -64,8 +64,14 @@ const processGlvs = async ({ glvs, onchainMarketsByTokens, tokens, handleConfig,
       const marketAddress = onchainMarket.marketToken;
 
       if (!glvSupportedMarketList.includes(marketAddress)) {
-        console.log(`marketsToAdd: ${indexToken.symbol}`);
-        marketsToAdd.push([glvAddress, marketAddress]);
+        if (glvMarketConfig.isMarketDisabled) {
+          console.log(
+            `WARN: market ${indexToken.symbol}/USD [${longToken.symbol}-${shortToken.symbol}] is disabled in config, skipping`
+          );
+        } else {
+          console.log(`marketsToAdd: ${indexToken.symbol}/USD [${longToken.symbol}-${shortToken.symbol}]`);
+          marketsToAdd.push([glvAddress, marketAddress]);
+        }
       }
 
       if (glvMarketConfig.isMarketDisabled !== undefined) {

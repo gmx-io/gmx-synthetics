@@ -1,10 +1,52 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 export type RolesConfig = {
-  [role: string]: {
-    [account: string]: boolean;
+  roles: {
+    [role: string]: {
+      [account: string]: boolean;
+    };
   };
-}[];
+  requiredRolesForContracts: {
+    [role: string]: string[];
+  };
+};
+
+const requiredRolesForContracts = {
+  CONTROLLER: [
+    "Config",
+    "MarketFactory",
+    "GlvFactory",
+    "Timelock",
+    "OracleStore",
+    "Oracle",
+    "ConfigSyncer",
+
+    "ExchangeRouter",
+    "SubaccountRouter",
+    "GlvRouter",
+    "GelatoRelayRouter",
+    "SubaccountGelatoRelayRouter",
+
+    "OrderHandler",
+    "DepositHandler",
+    "WithdrawalHandler",
+    "AdlHandler",
+    "LiquidationHandler",
+    "ShiftHandler",
+    "GlvHandler",
+    "FeeHandler",
+    "SwapHandler",
+  ],
+  ROUTER_PLUGIN: [
+    "ExchangeRouter",
+    "SubaccountRouter",
+    "GlvRouter",
+    "GelatoRelayRouter",
+    "SubaccountGelatoRelayRouter",
+  ],
+  ROLE_ADMIN: ["Timelock"],
+  CONFIG_KEEPER: ["ConfigSyncer"],
+};
 
 // roles are granted in deploy/configureRoles.ts
 // to add / remove roles after deployment, scripts/updateRoles.ts can be used
@@ -50,6 +92,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
     "0xb38302e27bAe8932536A84ab362c3d1013420Cb4": true,
     "0xc9e1CE91d3f782499cFe787b6F1d2AF0Ca76C049": true,
     "0x9f7198eb1b9Ccc0Eb7A07eD228d8FbC12963ea33": true,
+    "0xCD9706B6B71fdC4351091B5b1D910cEe7Fde28D0": true,
   };
 
   const testnetConfig = {
@@ -73,8 +116,12 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
     },
   };
 
-  const config: {
-    [network: string]: RolesConfig;
+  const roles: {
+    [network: string]: {
+      [role: string]: {
+        [account: string]: boolean;
+      };
+    };
   } = {
     hardhat: {
       CONTROLLER: { [deployer]: true },
@@ -117,9 +164,11 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x105b5aFe50FBCe7759051974fB1710ce331C77B3": true, // GlvRouter_4
         "0x994C598e3b0661bb805d53c6fa6B4504b23b68dD": true, // GlvRouter_4a
 
-        "0xf64c8469e5B566251301904f4F77A911438C775F": true, // GelatoRelayRouter_4
-        "0x871a0CAa75dea231FA290ee26F1955B29a7F8a86": true, // SubaccountGelatoRelayRouter_4
-        "0x26410a3121BCAB865b9ceae50dFfA04DF9E783B1": true, // SubaccountRouter_4a
+        // gasless
+        "0x602b805EedddBbD9ddff44A7dcBD46cb07849685": true, // ExchangeRouter
+        "0xA145346c17EA8a56c97fAc0bd810225257AB96E1": true, // SubaccountRouter
+        "0x63daFB2CA71767129AB8D0a0909383023C4AfF6E": true, // GelatoRelayRouter
+        "0x8964c82e1878d35bEd66d377f97e4F518b7A024F": true, // SubaccountGelatoRelayRouter
       },
       TIMELOCK_ADMIN: {
         "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // timelock_admin_1
@@ -154,9 +203,18 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x105b5aFe50FBCe7759051974fB1710ce331C77B3": true, // GlvRouter_4
         "0x994C598e3b0661bb805d53c6fa6B4504b23b68dD": true, // GlvRouter_4a
 
-        "0xf64c8469e5B566251301904f4F77A911438C775F": true, // GelatoRelayRouter_4
-        "0x871a0CAa75dea231FA290ee26F1955B29a7F8a86": true, // SubaccountGelatoRelayRouter_4
-        "0x26410a3121BCAB865b9ceae50dFfA04DF9E783B1": true, // SubaccountRouter_4a
+        // gasless
+        "0x492f2511eC89e425125e494bd8385E055B2f752A": true, // Config
+        "0x918b60bA71bAdfaDA72EF3A6C6F71d0C41D4785C": true, // Oracle
+        "0x602b805EedddBbD9ddff44A7dcBD46cb07849685": true, // ExchangeRouter
+        "0xA145346c17EA8a56c97fAc0bd810225257AB96E1": true, // SubaccountRouter
+        "0x63daFB2CA71767129AB8D0a0909383023C4AfF6E": true, // GelatoRelayRouter
+        "0x8964c82e1878d35bEd66d377f97e4F518b7A024F": true, // SubaccountGelatoRelayRouter
+        "0xfc9Bc118fdDb89FF6fF720840446D73478dE4153": true, // OrderHandler
+        "0x089f51AAb35e854D2B65C9396622361a1854Bc3D": true, // DepositHandler
+        "0xedB5cD878871F074371e816AC67CbE010c31f00b": true, // WithdrawalHandler
+        "0x94889b5d664eaFf4C249d43206705a70A22E37B4": true, // ShiftHandler
+        "0x266C6b192952c743De5541D642DC847d064c182C": true, // SwapHandler
       },
       GOV_TOKEN_CONTROLLER: {
         "0x5E4766F932ce00aA4a1A82d3Da85adf15C5694A1": true, // RewardRouterV2_2
@@ -193,9 +251,11 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x6BE75346C0262015E45c6fC0e3268BBa73e87D1a": true, // GlvRouter_4
         "0x16500C1d8fFE2F695D8DCADf753F664993287ae4": true, // GlvRouter_4a
 
-        "0xBD219aADaFe3AD8c8F570b204B99cb4aDbe9983E": true, // GelatoRelayRouter_4
-        "0xE971b9D5eA8Ab28bF3639069CF7a91E5dA7b7015": true, // SubaccountGelatoRelayRouter_4
-        "0x7D9E403F82b59e7fF5F7A37a9bf4A8df914352A1": true, // SubaccountRouter_4a
+        // gasless
+        "0xFa843af557824Be5127eaCB3c4B5D86EADEB73A1": true, // ExchangeRouter_6
+        "0x233397357bB4cC6B951aa423D7cEadBC610499e2": true, // SubaccountRouter_6
+        "0xb33D87b6Be2a6772eebD38C3222F5872A62Cca2A": true, // GelatoRelayRouter
+        "0xE26052e5676E636230A9B05652acD3ACA23fc35f": true, // SubaccountGelatoRelayRouter
       },
       TIMELOCK_ADMIN: {
         "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // timelock_admin_1
@@ -230,9 +290,18 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x6BE75346C0262015E45c6fC0e3268BBa73e87D1a": true, // GlvRouter_4
         "0x16500C1d8fFE2F695D8DCADf753F664993287ae4": true, // GlvRouter_4a
 
-        "0xBD219aADaFe3AD8c8F570b204B99cb4aDbe9983E": true, // GelatoRelayRouter_4
-        "0xE971b9D5eA8Ab28bF3639069CF7a91E5dA7b7015": true, // SubaccountGelatoRelayRouter_4
-        "0x7D9E403F82b59e7fF5F7A37a9bf4A8df914352A1": true, // SubaccountRouter_4a
+        // gasless
+        "0xC2D6cC2B5444b2d3611d812A9EA47648cfFc05c1": true, // Config_5
+        "0x13c986424DeD8D78d9313dD90cD847E4DeBA5cb3": true, // Oracle_5
+        "0xFa843af557824Be5127eaCB3c4B5D86EADEB73A1": true, // ExchangeRouter_6
+        "0x233397357bB4cC6B951aa423D7cEadBC610499e2": true, // SubaccountRouter_6
+        "0xb33D87b6Be2a6772eebD38C3222F5872A62Cca2A": true, // GelatoRelayRouter
+        "0xE26052e5676E636230A9B05652acD3ACA23fc35f": true, // SubaccountGelatoRelayRouter
+        "0x00db21077c63FFf542c017Cc4cDCC84229BFb373": true, // OrderHandler_5
+        "0xE78C15c818ebAAd31BaC58167157522B4d01ee2f": true, // DepositHandler_5
+        "0x6FA5D5a3377790CF646efDB67Fc53d3cE5b345bc": true, // WithdrawalHandler_5
+        "0xE270E904B3b52Fe952F00e797f5daC4a1e058DdA": true, // ShiftHandler_5
+        "0x1B31d1774270c46dFc3e1E0d2459A1b94CF9373F": true, // SwapHandler_6
       },
       GOV_TOKEN_CONTROLLER: {
         "0x091eD806490Cc58Fd514441499e58984cCce0630": true, // RewardRouterV2_2
@@ -260,9 +329,28 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0xb38302e27bAe8932536A84ab362c3d1013420Cb4": true,
         [deployer]: true,
       },
+      ROLE_ADMIN: {
+        "0xCD9706B6B71fdC4351091B5b1D910cEe7Fde28D0": true,
+      },
       ...testnetConfig,
     },
   };
 
-  return config[hre.network.name];
+  // normalize addresses
+  for (const rolesForNetwork of Object.values(roles)) {
+    for (const accounts of Object.values(rolesForNetwork)) {
+      for (const account of Object.keys(accounts)) {
+        const checksumAccount = ethers.utils.getAddress(account);
+        if (account !== checksumAccount) {
+          accounts[checksumAccount] = accounts[account];
+          delete accounts[account];
+        }
+      }
+    }
+  }
+
+  return {
+    roles: roles[hre.network.name],
+    requiredRolesForContracts,
+  };
 }
