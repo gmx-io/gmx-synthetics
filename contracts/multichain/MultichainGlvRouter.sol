@@ -33,7 +33,6 @@ contract MultichainGlvRouter is MultichainRouter {
         onlyGelatoRelay
         returns (bytes32)
     {
-        _validateDesChainId(relayParams.desChainId);
         _validateGaslessFeature();
 
         bytes32 structHash = RelayUtils.getCreateGlvDepositStructHash(relayParams, transferRequests, params);
@@ -78,7 +77,6 @@ contract MultichainGlvRouter is MultichainRouter {
         onlyGelatoRelay
         returns (bytes32)
     {
-        _validateDesChainId(relayParams.desChainId);
         _validateGaslessFeature();
 
         bytes32 structHash = RelayUtils.getCreateGlvWithdrawalStructHash(relayParams, transferRequests, params);

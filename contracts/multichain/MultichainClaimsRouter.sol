@@ -27,7 +27,6 @@ contract MultichainClaimsRouter is MultichainRouter {
         onlyGelatoRelay
         returns (uint256[] memory)
     {
-        _validateDesChainId(relayParams.desChainId);
         _validateGaslessFeature();
 
         bytes32 structHash = RelayUtils.getClaimFundingFeesStructHash(relayParams, markets, tokens, receiver);
@@ -87,7 +86,6 @@ contract MultichainClaimsRouter is MultichainRouter {
         returns (uint256[] memory)
     {
         {
-            _validateDesChainId(relayParams.desChainId);
             _validateGaslessFeature();
 
             bytes32 structHash = RelayUtils.getClaimCollateralStructHash(
@@ -153,7 +151,6 @@ contract MultichainClaimsRouter is MultichainRouter {
         onlyGelatoRelay
         returns (uint256[] memory)
     {
-        _validateDesChainId(relayParams.desChainId);
         _validateGaslessFeature();
 
         bytes32 structHash = RelayUtils.getClaimAffiliateRewardsStructHash(relayParams, markets, tokens, receiver);

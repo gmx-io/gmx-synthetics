@@ -22,7 +22,6 @@ contract MultichainOrderRouter is MultichainRouter {
         uint256 collateralDeltaAmount,
         IBaseOrderUtils.CreateOrderParams memory params // can't use calldata because need to modify params.numbers.executionFee
     ) external nonReentrant withOraclePrices(relayParams.oracleParams) onlyGelatoRelay returns (bytes32) {
-        _validateDesChainId(relayParams.desChainId);
         _validateGaslessFeature();
 
         bytes32 structHash = RelayUtils.getCreateOrderStructHash(relayParams, collateralDeltaAmount, params);
@@ -39,7 +38,6 @@ contract MultichainOrderRouter is MultichainRouter {
         RelayUtils.UpdateOrderParams calldata params,
         bool increaseExecutionFee
     ) external nonReentrant withOraclePrices(relayParams.oracleParams) onlyGelatoRelay {
-        _validateDesChainId(relayParams.desChainId);
         _validateGaslessFeature();
 
         bytes32 structHash = RelayUtils.getUpdateOrderStructHash(relayParams, key, params, increaseExecutionFee);
@@ -70,7 +68,6 @@ contract MultichainOrderRouter is MultichainRouter {
         uint256 srcChainId,
         bytes32 key
     ) external nonReentrant withOraclePrices(relayParams.oracleParams) onlyGelatoRelay {
-        _validateDesChainId(relayParams.desChainId);
         _validateGaslessFeature();
 
         bytes32 structHash = RelayUtils.getCancelOrderStructHash(relayParams, key);

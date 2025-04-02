@@ -48,7 +48,6 @@ contract MultichainGmRouter is MultichainRouter {
         onlyGelatoRelay
         returns (bytes32)
     {
-        _validateDesChainId(relayParams.desChainId);
         _validateGaslessFeature();
 
         bytes32 structHash = RelayUtils.getCreateDepositStructHash(relayParams, transferRequests, params);
@@ -99,7 +98,6 @@ contract MultichainGmRouter is MultichainRouter {
         onlyGelatoRelay
         returns (bytes32)
     {
-        _validateDesChainId(relayParams.desChainId);
         _validateGaslessFeature();
 
         bytes32 structHash = RelayUtils.getCreateWithdrawalStructHash(relayParams, transferRequests, params);
@@ -147,7 +145,6 @@ contract MultichainGmRouter is MultichainRouter {
         onlyGelatoRelay
         returns (bytes32)
     {
-        _validateDesChainId(relayParams.desChainId);
         _validateGaslessFeature();
 
         bytes32 structHash = RelayUtils.getCreateShiftStructHash(relayParams, transferRequests, params);

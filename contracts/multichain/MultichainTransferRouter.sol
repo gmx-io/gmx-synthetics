@@ -30,7 +30,6 @@ contract MultichainTransferRouter is MultichainRouter {
         uint256 srcChainId,
         RelayUtils.BridgeOutParams calldata params
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelay {
-        _validateDesChainId(relayParams.desChainId);
         _validateGaslessFeature();
         MultichainUtils.validateMultichainProvider(dataStore, params.provider);
 

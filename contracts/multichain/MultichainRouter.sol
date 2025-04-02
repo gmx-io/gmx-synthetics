@@ -85,12 +85,6 @@ abstract contract MultichainRouter is BaseGelatoRelayRouter {
         }
     }
 
-    function _validateDesChainId(uint256 desChainId) internal view {
-        if (desChainId != block.chainid) {
-            revert Errors.InvalidDestinationChainId(desChainId);
-        }
-    }
-
     function _validateCall(
         RelayUtils.RelayParams calldata relayParams,
         address account,
