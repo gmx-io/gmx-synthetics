@@ -58,20 +58,16 @@ abstract contract MultichainRouter is BaseGelatoRelayRouter {
         uint256 srcChainId
     ) internal override {
         AccountUtils.validateReceiver(receiver);
-        if (srcChainId == 0) {
-            router.pluginTransfer(token, account, receiver, amount);
-        } else {
-            MultichainUtils.transferOut(
-                dataStore,
-                eventEmitter,
-                multichainVault,
-                token,
-                account,
-                receiver,
-                amount,
-                srcChainId
-            );
-        }
+        MultichainUtils.transferOut(
+            dataStore,
+            eventEmitter,
+            multichainVault,
+            token,
+            account,
+            receiver,
+            amount,
+            srcChainId
+        );
     }
 
     function _transferResidualFee(
@@ -81,7 +77,7 @@ abstract contract MultichainRouter is BaseGelatoRelayRouter {
         address account,
         uint256 srcChainId
     ) internal override {
-        if (srcChainId != 0 && (residualFeeReceiver == account || residualFeeReceiver == address(multichainVault))) {
+        if (residualFeeReceiver == account || residualFeeReceiver == address(multichainVault)) {
             TokenUtils.transfer(dataStore, wnt, address(multichainVault), residualFee);
             MultichainUtils.recordTransferIn(dataStore, eventEmitter, multichainVault, wnt, account, srcChainId);
         } else {
@@ -93,5 +89,17 @@ abstract contract MultichainRouter is BaseGelatoRelayRouter {
         if (desChainId != block.chainid) {
             revert Errors.InvalidDestinationChainId(desChainId);
         }
+    }
+
+    function _validateCall(
+        RelayUtils.RelayParams calldata relayParams,
+        address account,
+        bytes32 structHash,
+        uint256 srcChainId
+    ) internal override {
+        if (srcChainId == 0) {
+            revert Errors.NonMultichainAction();
+        }
+        super._validateCall(relayParams, account, structHash, srcChainId);
     }
 }

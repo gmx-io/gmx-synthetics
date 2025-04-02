@@ -45,23 +45,21 @@ contract MultichainOrderRouter is MultichainRouter {
         bytes32 structHash = RelayUtils.getUpdateOrderStructHash(relayParams, key, params, increaseExecutionFee);
         _validateCall(relayParams, account, structHash, srcChainId);
 
-        // allow fee payment from order/position collateral if user's multichian balance is insufficient
-        if (srcChainId != 0) {
-            MultichainOrderRouterUtils.handleFeePayment(
-                MultichainOrderRouterUtils.HandleFeePaymentContracts({
-                    dataStore: dataStore,
-                    eventEmitter: eventEmitter,
-                    multichainVault: multichainVault,
-                    oracle: oracle,
-                    referralStorage: referralStorage,
-                    orderVault: orderVault
-                }),
-                relayParams,
-                account,
-                srcChainId,
-                key
-            );
-        }
+        // top-up user's multichain balance from order/position collateral if user's multichain balance is insufficient to pay fees
+        MultichainOrderRouterUtils.handleFeePayment(
+            MultichainOrderRouterUtils.HandleFeePaymentContracts({
+                dataStore: dataStore,
+                eventEmitter: eventEmitter,
+                multichainVault: multichainVault,
+                oracle: oracle,
+                referralStorage: referralStorage,
+                orderVault: orderVault
+            }),
+            relayParams,
+            account,
+            srcChainId,
+            key
+        );
 
         _updateOrder(relayParams, account, key, params, increaseExecutionFee, false);
     }
@@ -78,23 +76,21 @@ contract MultichainOrderRouter is MultichainRouter {
         bytes32 structHash = RelayUtils.getCancelOrderStructHash(relayParams, key);
         _validateCall(relayParams, account, structHash, srcChainId);
 
-        // allow fee payment from order/position collateral if user's multichian balance is insufficient
-        if (srcChainId != 0) {
-            MultichainOrderRouterUtils.handleFeePayment(
-                MultichainOrderRouterUtils.HandleFeePaymentContracts({
-                    dataStore: dataStore,
-                    eventEmitter: eventEmitter,
-                    multichainVault: multichainVault,
-                    oracle: oracle,
-                    referralStorage: referralStorage,
-                    orderVault: orderVault
-                }),
-                relayParams,
-                account,
-                srcChainId,
-                key
-            );
-        }
+        // top-up user's multichain balance from order/position collateral if user's multichain balance is insufficient to pay fees
+        MultichainOrderRouterUtils.handleFeePayment(
+            MultichainOrderRouterUtils.HandleFeePaymentContracts({
+                dataStore: dataStore,
+                eventEmitter: eventEmitter,
+                multichainVault: multichainVault,
+                oracle: oracle,
+                referralStorage: referralStorage,
+                orderVault: orderVault
+            }),
+            relayParams,
+            account,
+            srcChainId,
+            key
+        );
 
         _cancelOrder(relayParams, account, key, false /* isSubaccount */);
     }

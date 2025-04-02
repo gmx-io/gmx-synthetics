@@ -43,7 +43,7 @@ contract MultichainTransferRouter is MultichainRouter {
             contracts,
             relayParams,
             account,
-            srcChainId == 0 ? account : address(multichainVault), // residualFeeReceiver
+            address(multichainVault), // residualFeeReceiver
             false, // isSubaccount
             srcChainId
         );

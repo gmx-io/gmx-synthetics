@@ -444,6 +444,7 @@ library Errors {
     error UnableToPayOrderFee();
     error UnableToPayOrderFeeFromCollateral();
     error RelayPriceOutdated();
+    error NonMultichainAction();
 
     enum SignatureType {
         Call,

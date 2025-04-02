@@ -38,21 +38,19 @@ contract MultichainClaimsRouter is MultichainRouter {
             eventEmitter,
             markets,
             tokens,
-            srcChainId == 0 ? receiver : address(multichainVault), // receiver
+            address(multichainVault), // receiver
             account
         );
 
-        if (srcChainId != 0) {
-            for (uint256 i; i < markets.length; i++) {
-                MultichainUtils.recordTransferIn(
-                    dataStore,
-                    eventEmitter,
-                    multichainVault,
-                    tokens[i],
-                    receiver,
-                    srcChainId
-                );
-            }
+        for (uint256 i; i < markets.length; i++) {
+            MultichainUtils.recordTransferIn(
+                dataStore,
+                eventEmitter,
+                multichainVault,
+                tokens[i],
+                receiver,
+                srcChainId
+            );
         }
 
         // orderVault is used to transfer funds into it and do a swap from feeToken to wnt when using the feeSwapPath
@@ -65,7 +63,7 @@ contract MultichainClaimsRouter is MultichainRouter {
             contracts,
             relayParams,
             account,
-            srcChainId == 0 ? receiver : address(multichainVault), // residualFeeReceiver
+            address(multichainVault), // residualFeeReceiver
             false, // isSubaccount
             srcChainId
         );
@@ -108,21 +106,19 @@ contract MultichainClaimsRouter is MultichainRouter {
             markets,
             tokens,
             timeKeys,
-            srcChainId == 0 ? receiver : address(multichainVault), // receiver
+            address(multichainVault), // receiver
             account
         );
 
-        if (srcChainId != 0) {
-            for (uint256 i; i < markets.length; i++) {
-                MultichainUtils.recordTransferIn(
-                    dataStore,
-                    eventEmitter,
-                    multichainVault,
-                    tokens[i],
-                    receiver,
-                    srcChainId
-                );
-            }
+        for (uint256 i; i < markets.length; i++) {
+            MultichainUtils.recordTransferIn(
+                dataStore,
+                eventEmitter,
+                multichainVault,
+                tokens[i],
+                receiver,
+                srcChainId
+            );
         }
 
         // orderVault is used to transfer funds into it and do a swap from feeToken to wnt when using the feeSwapPath
@@ -135,7 +131,7 @@ contract MultichainClaimsRouter is MultichainRouter {
             contracts,
             relayParams,
             account,
-            srcChainId == 0 ? receiver : address(multichainVault), // residualFeeReceiver
+            address(multichainVault), // residualFeeReceiver
             false, // isSubaccount
             srcChainId
         );
@@ -168,21 +164,19 @@ contract MultichainClaimsRouter is MultichainRouter {
             eventEmitter,
             markets,
             tokens,
-            srcChainId == 0 ? receiver : address(multichainVault), // receiver
+            address(multichainVault), // receiver
             account
         );
 
-        if (srcChainId != 0) {
-            for (uint256 i; i < markets.length; i++) {
-                MultichainUtils.recordTransferIn(
-                    dataStore,
-                    eventEmitter,
-                    multichainVault,
-                    tokens[i],
-                    receiver,
-                    srcChainId
-                );
-            }
+        for (uint256 i; i < markets.length; i++) {
+            MultichainUtils.recordTransferIn(
+                dataStore,
+                eventEmitter,
+                multichainVault,
+                tokens[i],
+                receiver,
+                srcChainId
+            );
         }
 
         // orderVault is used to transfer funds into it and do a swap from feeToken to wnt when using the feeSwapPath
@@ -195,7 +189,7 @@ contract MultichainClaimsRouter is MultichainRouter {
             contracts,
             relayParams,
             account,
-            srcChainId == 0 ? receiver : address(multichainVault), // residualFeeReceiver
+            address(multichainVault), // residualFeeReceiver
             false, // isSubaccount
             srcChainId
         );
