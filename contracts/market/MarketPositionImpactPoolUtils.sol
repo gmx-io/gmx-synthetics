@@ -43,6 +43,12 @@ library MarketPositionImpactPoolUtils {
     ) external {
         require(amount > 0, "Amount must be greater than 0");
 
+        MarketUtils.distributePositionImpactPool(
+            dataStore,
+            eventEmitter,
+            market
+        );
+
         Market.Props memory marketProps = MarketStoreUtils.get(dataStore, market);
         MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(oracle, marketProps);
 
