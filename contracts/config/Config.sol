@@ -550,6 +550,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.IS_MULTICHAIN_ENDPOINT_ENABLED] = true;
         allowedBaseKeys[Keys.RELAY_MAX_PRICE_AGE] = true;
         allowedBaseKeys[Keys.POSITION_LAST_SRC_CHAIN_ID] = true;
+        allowedBaseKeys[Keys.IS_VALID_SRC_CHAIN_ID] = true;
 
         allowedBaseKeys[Keys.MAX_DATA_LENGTH] = true;
 

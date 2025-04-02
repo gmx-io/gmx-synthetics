@@ -267,6 +267,7 @@ export const MULTICHAIN_BALANCE = hashString("MULTICHAIN_BALANCE");
 export const IS_MULTICHAIN_PROVIDER_ENABLED = hashString("IS_MULTICHAIN_PROVIDER_ENABLED");
 export const IS_MULTICHAIN_ENDPOINT_ENABLED = hashString("IS_MULTICHAIN_ENDPOINT_ENABLED");
 export const RELAY_MAX_PRICE_AGE = hashString("RELAY_MAX_PRICE_AGE");
+export const IS_VALID_SRC_CHAIN_ID = hashString("IS_VALID_SRC_CHAIN_ID");
 
 export const VALID_FROM_TIME = hashString("VALID_FROM_TIME");
 
@@ -846,4 +847,8 @@ export function isMultichainProviderEnabledKey(contract: string) {
 
 export function isMultichainEndpointEnabledKey(contract: string) {
   return hashData(["bytes32", "address"], [IS_MULTICHAIN_ENDPOINT_ENABLED, contract]);
+}
+
+export function isValidSrcChainIdKey(srcChainId: number) {
+  return hashData(["bytes32", "uint256"], [IS_VALID_SRC_CHAIN_ID, srcChainId]);
 }

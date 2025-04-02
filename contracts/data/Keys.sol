@@ -494,6 +494,8 @@ library Keys {
     bytes32 public constant RELAY_MAX_PRICE_AGE = keccak256(abi.encode("RELAY_MAX_PRICE_AGE"));
     // @dev key for the last src chain id from which the user last managed his position
     bytes32 public constant POSITION_LAST_SRC_CHAIN_ID = keccak256(abi.encode("POSITION_LAST_SRC_CHAIN_ID"));
+    // @dev key for the flag if a src chain is enabled
+    bytes32 public constant IS_VALID_SRC_CHAIN_ID = keccak256(abi.encode("IS_VALID_SRC_CHAIN_ID"));
 
     // @dev key for the maximum length for data list array of bytes32
     bytes32 public constant MAX_DATA_LENGTH = keccak256(abi.encode("MAX_DATA_LENGTH"));
@@ -2197,6 +2199,16 @@ library Keys {
         return keccak256(abi.encode(
             IS_MULTICHAIN_ENDPOINT_ENABLED,
             endpoint
+        ));
+    }
+
+    // @dev key for whether a multichain endpoint is enabled
+    // @param endpoint the multichain endpoint
+    // @return key for whether a multichain endpoint is enabled
+    function isValidSrcChainIdKey(uint256 srcChainId) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            IS_VALID_SRC_CHAIN_ID,
+            srcChainId
         ));
     }
 

@@ -188,6 +188,8 @@ describe("MultichainRouter", () => {
 
     await dataStore.setAddress(keys.FEE_RECEIVER, user3.address);
 
+    await dataStore.setBool(keys.isValidSrcChainIdKey(chainId), true);
+
     await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolWnt.address), true);
     await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolWnt.address), true);
     await mintAndBridge(fixture, { token: wnt, tokenAmount: wntAmount.add(feeAmount) });
