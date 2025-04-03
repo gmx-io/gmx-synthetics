@@ -91,7 +91,7 @@ abstract contract MultichainRouter is BaseGelatoRelayRouter {
         bytes32 structHash,
         uint256 srcChainId
     ) internal override {
-        if (!dataStore.getBool(Keys.isValidSrcChainIdKey(srcChainId))) {
+        if (!dataStore.getBool(Keys.isSrcChainIdEnabledKey(srcChainId))) {
             revert Errors.NonMultichainAction();
         }
         super._validateCall(relayParams, account, structHash, srcChainId);

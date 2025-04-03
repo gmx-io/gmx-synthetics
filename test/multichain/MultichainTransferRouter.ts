@@ -38,7 +38,7 @@ describe("MultichainTransferRouter", () => {
 
     chainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
 
-    await dataStore.setBool(keys.isValidSrcChainIdKey(chainId), true);
+    await dataStore.setBool(keys.isSrcChainIdEnabledKey(chainId), true);
   });
 
   it("bridgeIn wnt", async () => {

@@ -495,7 +495,7 @@ library Keys {
     // @dev key for the last src chain id from which the user last managed his position
     bytes32 public constant POSITION_LAST_SRC_CHAIN_ID = keccak256(abi.encode("POSITION_LAST_SRC_CHAIN_ID"));
     // @dev key for the flag if a src chain is enabled
-    bytes32 public constant IS_VALID_SRC_CHAIN_ID = keccak256(abi.encode("IS_VALID_SRC_CHAIN_ID"));
+    bytes32 public constant IS_SRC_CHAIN_ID_ENABLED = keccak256(abi.encode("IS_SRC_CHAIN_ID_ENABLED"));
 
     // @dev key for the maximum length for data list array of bytes32
     bytes32 public constant MAX_DATA_LENGTH = keccak256(abi.encode("MAX_DATA_LENGTH"));
@@ -2205,9 +2205,9 @@ library Keys {
     // @dev key for whether a multichain endpoint is enabled
     // @param endpoint the multichain endpoint
     // @return key for whether a multichain endpoint is enabled
-    function isValidSrcChainIdKey(uint256 srcChainId) internal pure returns (bytes32) {
+    function isSrcChainIdEnabledKey(uint256 srcChainId) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            IS_VALID_SRC_CHAIN_ID,
+            IS_SRC_CHAIN_ID_ENABLED,
             srcChainId
         ));
     }

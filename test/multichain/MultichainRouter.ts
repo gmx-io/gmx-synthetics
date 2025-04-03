@@ -188,7 +188,7 @@ describe("MultichainRouter", () => {
 
     await dataStore.setAddress(keys.FEE_RECEIVER, user3.address);
 
-    await dataStore.setBool(keys.isValidSrcChainIdKey(chainId), true);
+    await dataStore.setBool(keys.isSrcChainIdEnabledKey(chainId), true);
 
     await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolWnt.address), true);
     await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolWnt.address), true);
