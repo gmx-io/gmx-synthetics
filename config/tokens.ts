@@ -1095,7 +1095,7 @@ const config: {
       priceFeed: {
         address: "0x56a43EB56Da12C0dc1D972ACb089c06a5dEF8e69",
         decimals: 8,
-        heartbeatDuration: 120 + 60 * 60, // 120s + 1h
+        heartbeatDuration: (24 + 1) * 60 * 60,
         stablePrice: decimalToFloat(44000),
       },
     },
