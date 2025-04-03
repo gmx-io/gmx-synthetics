@@ -23,6 +23,11 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         BaseGelatoRelayRouter(_router, _dataStore, _eventEmitter, _oracle, _orderHandler, _orderVault, _externalHandler)
     {}
 
+    struct BatchVars {
+        bytes32 structHash;
+        uint256 actionsCount;
+    }
+
     // @note all params except subaccount should be part of the corresponding struct hash
     function batch(
         RelayParams calldata relayParams,
@@ -30,21 +35,22 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         address account,
         address subaccount,
         BatchParams calldata params
-    ) external withRelay(relayParams, account, true) nonReentrant {
-        bytes32 structHash = RelayUtils.getBatchStructHash(relayParams, subaccountApproval, account, params);
-        _validateCall(relayParams, subaccount, structHash);
+    ) external withRelay(relayParams, account, true) nonReentrant returns (bytes32[] memory) {
+        BatchVars memory vars;
+        vars.structHash = RelayUtils.getBatchStructHash(relayParams, subaccountApproval, account, params);
+        _validateCall(relayParams, subaccount, vars.structHash);
 
         for (uint256 i = 0; i < params.createOrderParamsList.length; i++) {
             _validateCreateOrderParams(account, params.createOrderParamsList[i]);
         }
 
-        uint256 actionsCount = params.createOrderParamsList.length +
+        vars.actionsCount = params.createOrderParamsList.length +
             params.updateOrderParamsList.length +
             params.cancelOrderKeys.length;
 
-        _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, actionsCount, subaccountApproval);
+        _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, vars.actionsCount, subaccountApproval);
 
-        _batch(
+        return _batch(
             account,
             params.createOrderParamsList,
             params.updateOrderParamsList,

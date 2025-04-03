@@ -28,11 +28,11 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         RelayParams calldata relayParams,
         address account,
         BatchParams calldata params
-    ) external withRelay(relayParams, account, false) nonReentrant {
+    ) external withRelay(relayParams, account, false) nonReentrant returns (bytes32[] memory) {
         bytes32 structHash = RelayUtils.getBatchStructHash(relayParams, params);
         _validateCall(relayParams, account, structHash);
 
-        _batch(
+        return _batch(
             account,
             params.createOrderParamsList,
             params.updateOrderParamsList,

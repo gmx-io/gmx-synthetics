@@ -102,14 +102,15 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         UpdateOrderParams[] calldata updateOrderParamsList,
         bytes32[] calldata cancelOrderKeys,
         bool isSubaccount
-    ) internal {
+    ) internal returns (bytes32[] memory) {
         uint256 actionsCount = createOrderParamsList.length + updateOrderParamsList.length + cancelOrderKeys.length;
         if (actionsCount == 0) {
             revert Errors.RelayEmptyBatch();
         }
 
+        bytes32[] memory orderKeys = new bytes32[](createOrderParamsList.length);
         for (uint256 i = 0; i < createOrderParamsList.length; i++) {
-            _createOrder(account, createOrderParamsList[i], isSubaccount);
+            orderKeys[i] = _createOrder(account, createOrderParamsList[i], isSubaccount);
         }
 
         for (uint256 i = 0; i < updateOrderParamsList.length; i++) {
@@ -119,6 +120,8 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         for (uint256 i = 0; i < cancelOrderKeys.length; i++) {
             _cancelOrder(account, cancelOrderKeys[i]);
         }
+
+        return orderKeys;
     }
 
     function _createOrder(
@@ -280,7 +283,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
                 // and then execute a personal swap with a positive price impact
                 // to mitigate this, we limit the max relay fee swap size for subaccounts
                 uint256 maxRelayFeeSwapUsd = contracts.dataStore.getUint(Keys.MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT);
-                uint256 relayFeeUsd = relayParams.fee.feeAmount * oracle.getPrimaryPrice(relayParams.fee.feeToken).min;
+                uint256 relayFeeUsd = relayParams.fee.feeAmount * oracle.getPrimaryPrice(relayParams.fee.feeToken).max;
                 if (relayFeeUsd > maxRelayFeeSwapUsd) {
                     revert Errors.MaxRelayFeeSwapForSubaccountExceeded(relayFeeUsd, maxRelayFeeSwapUsd);
                 }
