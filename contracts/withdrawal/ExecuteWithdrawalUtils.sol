@@ -303,7 +303,7 @@ library ExecuteWithdrawalUtils {
             withdrawal.minLongTokenAmount(),
             withdrawal.srcChainId() == 0 ? withdrawal.receiver() : address(params.multichainVault),
             withdrawal.uiFeeReceiver(),
-            withdrawal.shouldUnwrapNativeToken()
+            withdrawal.srcChainId() == 0 ? withdrawal.shouldUnwrapNativeToken() : false
         );
 
         (result.secondaryOutputToken, result.secondaryOutputAmount) = _swap(
@@ -315,7 +315,7 @@ library ExecuteWithdrawalUtils {
             withdrawal.minShortTokenAmount(),
             withdrawal.srcChainId() == 0 ? withdrawal.receiver() : address(params.multichainVault),
             withdrawal.uiFeeReceiver(),
-            withdrawal.shouldUnwrapNativeToken()
+            withdrawal.srcChainId() == 0 ? withdrawal.shouldUnwrapNativeToken() : false
         );
 
         // for multichain action, receiver is the multichainVault; increase user's multichain balances
