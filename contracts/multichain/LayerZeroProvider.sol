@@ -20,7 +20,8 @@ import "./MultichainProviderUtils.sol";
 
 /**
  * @title LayerZeroProvider
- * Receives tokens + encoded message from a source chain and bridges tokens back to a source chain.
+ * Bridging In is done throught lzCompose (receives tokens + encoded message from a source chain)
+ * Bridging Out is done through bridgeOut (sends tokens to a source chain)
  * Defines lzCompose function which:
  *  - is called by the Stargate executor after tokens are delivered to this contract
  *  - forwards the received tokens to MultichainVault and increases user's multichain balance
@@ -28,8 +29,6 @@ import "./MultichainProviderUtils.sol";
  * - sends tokens to the Stargate executor for bridging out to the source chain
  */
 contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModule {
-    using SafeERC20 for IERC20;
-
     struct BridgeOutCache {
         address wnt;
         uint256 wntBalanceBefore;
@@ -80,7 +79,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             TokenUtils.depositAndSendWrappedNativeToken(dataStore, address(multichainVault), amountLD);
         } else {
             // `from` is e.g. StargatePoolUSDC
-            IERC20(token).safeTransfer(address(multichainVault), amountLD);
+            TokenUtils.transfer(dataStore, token, address(multichainVault), amountLD);
         }
         MultichainUtils.recordBridgeIn(dataStore, eventEmitter, multichainVault, this, token, account, amountLD, srcChainId);
     }
@@ -112,9 +111,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             stargate,
             params.amount,
             params.account,
-            abi.decode(params.data, (uint32)), // dstEid
-            new bytes(0), // _extraOptions
-            new bytes(0) // _composeMsg
+            abi.decode(params.data, (uint32)) // dstEid
         );
 
         // LZ/Stargate would round down the `amount` to 6 decimals precision / apply path limits
@@ -151,8 +148,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         // check if wnt was send to this contract due to un-wrapping and transfer it back to user's multichain balance
         if (cache.wntBalanceAfter > cache.wntBalanceBefore) {
             uint256 amount = cache.wntBalanceAfter - cache.wntBalanceBefore;
-            IERC20(cache.wnt).safeTransfer(address(multichainVault), amount);
-
+            TokenUtils.transfer(dataStore, cache.wnt, address(multichainVault), amount);
             MultichainUtils.recordBridgeIn(dataStore, eventEmitter, multichainVault, this, cache.wnt, params.account, amount, 0 /*srcChainId*/); // srcChainId is the current block.chainId
             return;
         }
@@ -184,17 +180,15 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         IStargate stargate,
         uint256 amount,
         address receiver,
-        uint32 _dstEid,
-        bytes memory _composeMsg,
-        bytes memory _extraOptions
+        uint32 _dstEid
     ) private view returns (uint256 valueToSend, SendParam memory sendParam, MessagingFee memory messagingFee, OFTReceipt memory receipt) {
         sendParam = SendParam({
             dstEid: _dstEid,
             to: MultichainProviderUtils.addressToBytes32(receiver),
             amountLD: amount,
             minAmountLD: amount,
-            extraOptions: _extraOptions,
-            composeMsg: _composeMsg,
+            extraOptions: bytes(""),
+            composeMsg: bytes(""),
             oftCmd: ""
         });
 
