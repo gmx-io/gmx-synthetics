@@ -162,10 +162,22 @@ export async function updateOracleConfigForTokens() {
 
       if (isTestnet) {
         testnetTasks.push(async () => {
-          await dataStore.setAddress(keys.priceFeedKey(token.address), priceFeed.address);
-          await dataStore.setUint(keys.priceFeedMultiplierKey(token.address), priceFeedMultiplier);
-          await dataStore.setUint(keys.priceFeedHeartbeatDurationKey(token.address), priceFeed.heartbeatDuration);
-          await dataStore.setUint(keys.stablePriceKey(token.address), stablePrice);
+          printTxHash(
+            `set price feed ${token.address}`,
+            await dataStore.setAddress(keys.priceFeedKey(token.address), priceFeed.address)
+          );
+          printTxHash(
+            `set price feed multiplier ${token.address}`,
+            await dataStore.setUint(keys.priceFeedMultiplierKey(token.address), priceFeedMultiplier)
+          );
+          printTxHash(
+            `set price feed heartbeat duration ${token.address}`,
+            await dataStore.setUint(keys.priceFeedHeartbeatDurationKey(token.address), priceFeed.heartbeatDuration)
+          );
+          printTxHash(
+            `set stable price ${token.address}`,
+            await dataStore.setUint(keys.stablePriceKey(token.address), stablePrice)
+          );
         });
       } else if (phase === "signal") {
         multicallWriteParams.push(
@@ -207,15 +219,21 @@ export async function updateOracleConfigForTokens() {
 
       if (isTestnet) {
         testnetTasks.push(async () => {
-          const tx = await dataStore.setBytes32(keys.dataStreamIdKey(token.address), token.dataStreamFeedId, {
-            gasLimit: 1000000,
-          });
-          console.log("tx sent", tx.hash);
-          // await dataStore.setUint(keys.dataStreamMultiplierKey(token.address), dataStreamMultiplier);
-          // await dataStore.setUint(
-          //   keys.dataStreamSpreadReductionFactorKey(token.address),
-          //   dataStreamSpreadReductionFactor
-          // );
+          printTxHash(
+            `set data stream id ${token.address}`,
+            await dataStore.setBytes32(keys.dataStreamIdKey(token.address), token.dataStreamFeedId)
+          );
+          printTxHash(
+            `set data stream multiplier ${token.address}`,
+            await dataStore.setUint(keys.dataStreamMultiplierKey(token.address), dataStreamMultiplier)
+          );
+          printTxHash(
+            `set data stream spread reduction factor ${token.address}`,
+            await dataStore.setUint(
+              keys.dataStreamSpreadReductionFactorKey(token.address),
+              dataStreamSpreadReductionFactor
+            )
+          );
         });
       } else if (phase === "signal") {
         multicallWriteParams.push(
@@ -244,7 +262,10 @@ export async function updateOracleConfigForTokens() {
 
       if (isTestnet) {
         testnetTasks.push(async () => {
-          await dataStore.setAddress(keys.oracleProviderForTokenKey(token.address), oracleProviderAddress);
+          printTxHash(
+            `set oracle provider for token ${token.address}`,
+            await dataStore.setAddress(keys.oracleProviderForTokenKey(token.address), oracleProviderAddress)
+          );
         });
       }
       // signalSetOracleProviderForToken back to the current oracle provider in case
@@ -271,7 +292,7 @@ export async function updateOracleConfigForTokens() {
 
   console.log(`updating ${multicallWriteParams.length} params`);
 
-  if (isTestnet) {
+  if (isTestnet && testnetTasks.length > 0) {
     const { write } = await prompts({
       type: "confirm",
       name: "write",
@@ -281,9 +302,13 @@ export async function updateOracleConfigForTokens() {
     if (write) {
       await handleInBatches(testnetTasks, 1, (tasks) => Promise.all(tasks.map((task) => task())));
     }
-  } else {
+  } else if (!isTestnet) {
     await timelockWriteMulticall({ timelock, multicallWriteParams });
   }
+}
+
+function printTxHash(label: string, tx: any) {
+  console.log(`${label} tx sent`, tx.hash);
 }
 
 async function main() {
