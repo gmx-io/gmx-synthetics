@@ -98,6 +98,8 @@ describe("SubaccountGelatoRelayRouter", () => {
     relaySigner = await hre.ethers.getSigner(GELATO_RELAY_ADDRESS);
     chainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
 
+    await dataStore.setBool(keys.isSrcChainIdEnabledKey(chainId), true);
+
     await dataStore.setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1));
     await setNextBlockBaseFeePerGas(expandDecimals(1, 9));
 
