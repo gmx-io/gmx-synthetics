@@ -132,10 +132,10 @@ async function main() {
   const markets = await reader.getMarkets(dataStore.address, 0, 100);
 
   // a list of markets can be printed using scripts/printMarkets.ts
-  const ETH_USD_MARKET = ethers.utils.getAddress("0x482Df3D320C964808579b585a8AC7Dd5D144eFaF");
+  const BTC_USD_MARKET = ethers.utils.getAddress("0xBb532Ab4923C23c2bfA455151B14fec177a34C0D");
 
-  if (!markets.some((m) => m.marketToken === ETH_USD_MARKET)) {
-    throw new Error(`${ETH_USD_MARKET} is not a valid market`);
+  if (!markets.some((m) => m.marketToken === BTC_USD_MARKET)) {
+    throw new Error(`${BTC_USD_MARKET} is not a valid market`);
   }
 
   // list of tokens can be found in config/tokens.ts
@@ -145,11 +145,11 @@ async function main() {
     throw new Error(`${USDC} is not a valid token`);
   }
 
-  const market = ETH_USD_MARKET;
+  const market = BTC_USD_MARKET;
 
   // allow 30bps (0.3%) slippage
   // divide by 10^18 to get the price per unit of token
-  const acceptablePrice = expandDecimals(1_000_000_000, 30);
+  const acceptablePrice = expandDecimals(82273, 22);
 
   const tx = await createOrder({
     router,
@@ -158,8 +158,8 @@ async function main() {
     referralCode,
     market,
     initialCollateralToken: USDC,
-    initialCollateralDeltaAmount: 1e4, // 0.01 USDC
-    sizeDeltaUsd: decimalToFloat(100), // 100 USD
+    initialCollateralDeltaAmount: 2500000, // 2.5 USDC
+    sizeDeltaUsd: decimalToFloat(10), // 10 USD
     triggerPrice: 0, // not needed for market order
     acceptablePrice,
     isLong: false,
