@@ -351,7 +351,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
         uint256 _srcChainId = srcChainId == 0 ? block.chainid : srcChainId;
 
-        if (!dataStore.getBool(Keys.isSrcChainIdEnabledKey(_srcChainId))) {
+        if (srcChainId != 0 && !dataStore.getBool(Keys.isSrcChainIdEnabledKey(_srcChainId))) {
             revert Errors.NonMultichainAction();
         }
 
