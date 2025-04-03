@@ -28,7 +28,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         RelayParams calldata relayParams,
         address account,
         BatchParams calldata params
-    ) external withRelay(relayParams, account, false) nonReentrant returns (bytes32[] memory) {
+    ) external nonReentrant withRelay(relayParams, account, false) returns (bytes32[] memory) {
         bytes32 structHash = RelayUtils.getBatchStructHash(relayParams, params);
         _validateCall(relayParams, account, structHash);
 
@@ -46,7 +46,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         RelayParams calldata relayParams,
         address account,
         IBaseOrderUtils.CreateOrderParams calldata params
-    ) external withRelay(relayParams, account, false) nonReentrant returns (bytes32) {
+    ) external nonReentrant withRelay(relayParams, account, false) returns (bytes32) {
         bytes32 structHash = RelayUtils.getCreateOrderStructHash(relayParams, params);
         _validateCall(relayParams, account, structHash);
 
@@ -63,7 +63,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         RelayParams calldata relayParams,
         address account,
         UpdateOrderParams calldata params
-    ) external withRelay(relayParams, account, false) nonReentrant {
+    ) external nonReentrant withRelay(relayParams, account, false) {
         bytes32 structHash = RelayUtils.getUpdateOrderStructHash(relayParams, params);
         _validateCall(relayParams, account, structHash);
 
@@ -79,7 +79,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         RelayParams calldata relayParams,
         address account,
         bytes32 key
-    ) external withRelay(relayParams, account, false) nonReentrant {
+    ) external nonReentrant withRelay(relayParams, account, false) {
         bytes32 structHash = RelayUtils.getCancelOrderStructHash(relayParams, key);
         _validateCall(relayParams, account, structHash);
 

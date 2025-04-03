@@ -35,7 +35,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         address account,
         address subaccount,
         BatchParams calldata params
-    ) external withRelay(relayParams, account, true) nonReentrant returns (bytes32[] memory) {
+    ) external nonReentrant withRelay(relayParams, account, true) returns (bytes32[] memory) {
         BatchVars memory vars;
         vars.structHash = RelayUtils.getBatchStructHash(relayParams, subaccountApproval, account, params);
         _validateCall(relayParams, subaccount, vars.structHash);
@@ -100,7 +100,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         address account, // main account
         address subaccount,
         UpdateOrderParams calldata params
-    ) external withRelay(relayParams, account, true) nonReentrant {
+    ) external nonReentrant withRelay(relayParams, account, true) {
         bytes32 structHash = RelayUtils.getUpdateOrderStructHash(relayParams, subaccountApproval, account, params);
         _validateCall(relayParams, subaccount, structHash);
         _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, 1, subaccountApproval);
@@ -119,7 +119,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         address account, // main account
         address subaccount,
         bytes32 key
-    ) external withRelay(relayParams, account, true) nonReentrant {
+    ) external nonReentrant withRelay(relayParams, account, true) {
         bytes32 structHash = RelayUtils.getCancelOrderStructHash(relayParams, subaccountApproval, account, key);
         _validateCall(relayParams, subaccount, structHash);
         _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, 1, subaccountApproval);
@@ -131,7 +131,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         RelayParams calldata relayParams,
         address account,
         address subaccount
-    ) external withRelay(relayParams, account, false) nonReentrant {
+    ) external nonReentrant withRelay(relayParams, account, false) {
         // isSubaccount=false is passed to `withRelay` modifier because this action is signed by the main account
         bytes32 structHash = RelayUtils.getRemoveSubaccountStructHash(relayParams, subaccount);
         _validateCall(relayParams, account, structHash);
