@@ -207,12 +207,15 @@ export async function updateOracleConfigForTokens() {
 
       if (isTestnet) {
         testnetTasks.push(async () => {
-          await dataStore.setBytes32(keys.dataStreamIdKey(token.address), token.dataStreamFeedId);
-          await dataStore.setUint(keys.dataStreamMultiplierKey(token.address), dataStreamMultiplier);
-          await dataStore.setUint(
-            keys.dataStreamSpreadReductionFactorKey(token.address),
-            dataStreamSpreadReductionFactor
-          );
+          const tx = await dataStore.setBytes32(keys.dataStreamIdKey(token.address), token.dataStreamFeedId, {
+            gasLimit: 1000000,
+          });
+          console.log("tx sent", tx.hash);
+          // await dataStore.setUint(keys.dataStreamMultiplierKey(token.address), dataStreamMultiplier);
+          // await dataStore.setUint(
+          //   keys.dataStreamSpreadReductionFactorKey(token.address),
+          //   dataStreamSpreadReductionFactor
+          // );
         });
       } else if (phase === "signal") {
         multicallWriteParams.push(
