@@ -158,7 +158,7 @@ async function main() {
     referralCode,
     market,
     initialCollateralToken: USDC,
-    initialCollateralDeltaAmount: expandDecimals(10, 6), // 10 USDC
+    initialCollateralDeltaAmount: 1e4, // 0.01 USDC
     sizeDeltaUsd: decimalToFloat(100), // 100 USD
     triggerPrice: 0, // not needed for market order
     acceptablePrice,
