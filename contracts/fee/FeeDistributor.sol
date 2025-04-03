@@ -44,7 +44,6 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
     MultichainReader public immutable multichainReader;
-    IVaultV1 public immutable vaultV1;
 
     address public immutable gmx;
     address public immutable esGmx;
@@ -58,7 +57,6 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         DataStore _dataStore,
         EventEmitter _eventEmitter,
         MultichainReader _multichainReader,
-        IVaultV1 _vaultV1,
         address _gmx,
         address _esGmx,
         address _wnt
@@ -68,7 +66,6 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
         multichainReader = _multichainReader;
-        vaultV1 = _vaultV1;
         gmx = _gmx;
         esGmx = _esGmx;
         wnt = _wnt;

@@ -12,6 +12,7 @@ import rolesConfig from "./roles";
 import riskOracleConfig from "./riskOracle";
 import vaultV1Config from "./vaultV1";
 import layerZeroEndpointConfig from "./layerZero";
+import feeDistributorConfig from "./feeDistributor";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 extendEnvironment(async (hre: HardhatRuntimeEnvironment) => {
@@ -28,5 +29,6 @@ extendEnvironment(async (hre: HardhatRuntimeEnvironment) => {
     getRiskOracle: _.memoize(async () => riskOracleConfig(hre)),
     getVaultV1: _.memoize(async () => vaultV1Config(hre)),
     getLayerZeroEndpoint: _.memoize(async () => layerZeroEndpointConfig(hre)),
+    getFeeDistributor: _.memoize(async () => feeDistributorConfig(hre)),
   };
 });
