@@ -3,6 +3,10 @@ import { createDeployFunction } from "../utils/deploy";
 import hre, { getNamedAccounts } from "hardhat";
 import { CANCELLER_ROLE, EXECUTOR_ROLE, PROPOSER_ROLE, TIMELOCK_ADMIN_ROLE } from "../utils/gov";
 import { TimelockConfig } from "../typechain-types";
+import { setUintIfDifferent } from "../utils/dataStore";
+import * as keys from "../utils/keys";
+
+const libraries = ["MarketUtils"];
 
 const constructorContracts = ["EventEmitter", "DataStore", "OracleStore", "RoleStore", "ConfigTimelockController"];
 
@@ -24,6 +28,7 @@ async function grantProposerRole(timelockConfig: string) {
 const func = createDeployFunction({
   contractName: "TimelockConfig",
   dependencyNames: constructorContracts,
+  libraryNames: libraries,
   getDeployArgs: async ({ dependencyContracts }) => {
     return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
   },
@@ -31,6 +36,9 @@ const func = createDeployFunction({
     await grantProposerRole(deployedContract.address);
     await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
     await grantRoleIfNotGranted(deployedContract.address, "ROLE_ADMIN");
+
+    const generalConfig = await hre.gmx.getGeneral();
+    await setUintIfDifferent(keys.CONFIG_MAX_PRICE_AGE, generalConfig.configMaxPriceAge, "max oracle config price age");
   },
 });
 

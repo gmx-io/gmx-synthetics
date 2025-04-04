@@ -5,6 +5,7 @@ import { hashString } from "./hash";
 import { TimelockConfig } from "../typechain-types";
 import * as keys from "./keys";
 import { time } from "@nomicfoundation/hardhat-network-helpers";
+import { BigNumber } from "ethers";
 
 export async function timelockWriteMulticall({ timelock, multicallWriteParams }) {
   console.info("multicallWriteParams", multicallWriteParams);
@@ -168,4 +169,16 @@ export async function setHoldingAddressForTimelockTest(executor: any, holdingAdd
   const { target, payload } = await signalHoldingAddressIfDifferent(executor, holdingAddress);
   await time.increase(1 * 24 * 60 * 60 + 10);
   await executeTimelock(executor, target, payload);
+}
+
+export async function getPositionImpactPoolWithdrawalPayload(market: string, receiver: string, amount: BigNumber) {
+  const timelockController = await hre.ethers.getContract("ConfigTimelockController");
+  return {
+    target: timelockController.address,
+    payload: timelockController.interface.encodeFunctionData("withdrawFromPositionImpactPool", [
+      market,
+      receiver,
+      amount,
+    ]),
+  };
 }
