@@ -13,6 +13,7 @@ library ConfigUtils {
     using EventUtils for EventUtils.AddressItems;
     using EventUtils for EventUtils.UintItems;
     using EventUtils for EventUtils.Bytes32Items;
+    using EventUtils for EventUtils.BoolItems;
 
     function setPriceFeed(
         DataStore dataStore,
@@ -228,6 +229,29 @@ library ConfigUtils {
         eventEmitter.emitEventLog1(
             "SetPositionImpactPoolDistributionRate",
             Cast.toBytes32(market),
+            eventData
+        );
+    }
+
+    function setSubaccountIntegrationDisabled(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        bytes32 integrationId,
+        bool disabled
+    ) external {
+        dataStore.setBool(Keys.subaccountIntegrationDisabledKey(integrationId), disabled);
+
+        EventUtils.EventLogData memory eventData;
+
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "integrationId", integrationId);
+
+        eventData.boolItems.initItems(1);
+        eventData.boolItems.setItem(0, "disabled", disabled);
+
+        eventEmitter.emitEventLog1(
+            "SetSubaccountIntegrationDisabled",
+            integrationId,
             eventData
         );
     }
