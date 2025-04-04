@@ -16,6 +16,7 @@ import "@nomicfoundation/hardhat-chai-matchers";
 import "@typechain/hardhat";
 import "@nomiclabs/hardhat-ethers";
 import "@nomicfoundation/hardhat-chai-matchers";
+import "hardhat-abi-exporter";
 
 // extends hre with gmx domain data
 import "./config";
@@ -283,6 +284,9 @@ const config: HardhatUserConfig = {
   },
   mocha: {
     timeout: 100000000,
+  },
+  abiExporter: {
+    flat: true,
   },
 };
 

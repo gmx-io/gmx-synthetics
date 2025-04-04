@@ -3353,9 +3353,17 @@ const config: {
   arbitrumSepolia: [
     {
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC" },
+      maxLongTokenPoolAmount: expandDecimals(20_000, 18),
+      maxShortTokenPoolAmount: expandDecimals(100_000_000, 6),
+      maxPoolUsdForDeposit: decimalToFloat(50_000_000),
+      maxOpenInterest: decimalToFloat(50_000_000),
     },
     {
       tokens: { indexToken: "BTC", longToken: "BTC", shortToken: "USDC" },
+      maxLongTokenPoolAmount: expandDecimals(1000, 8),
+      maxShortTokenPoolAmount: expandDecimals(100_000_000, 6),
+      maxPoolUsdForDeposit: decimalToFloat(50_000_000),
+      maxOpenInterest: decimalToFloat(50_000_000),
     },
   ],
   arbitrumGoerli: [
