@@ -282,6 +282,21 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
                 relayParams.externalCalls.refundReceivers
             );
             outputAmount = ERC20(_getFeeToken()).balanceOf(address(this));
+
+            // It's possible to have leftover tokens if e.g. "swapExactOut" or other partial usage occurs during external calls
+            // Send such leftover fee tokens (not converted to WNT) to the residualFeeReceiver
+            if (relayParams.fee.feeToken != wnt) {
+                uint256 leftoverFeeTokenBalance = ERC20(relayParams.fee.feeToken).balanceOf(address(this));
+                if (leftoverFeeTokenBalance > 0) {
+                    _transferResidualFee(
+                        relayParams.fee.feeToken,
+                        residualFeeReceiver,
+                        leftoverFeeTokenBalance,
+                        account,
+                        srcChainId
+                    );
+                }
+            }
         } else if (relayParams.fee.feeSwapPath.length != 0) {
             _sendTokens(account, relayParams.fee.feeToken, address(contracts.bank), relayParams.fee.feeAmount, srcChainId);
             outputAmount = _swapFeeTokens(contracts, wnt, relayParams.fee);
@@ -329,8 +344,17 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             );
     }
 
-    function _validateCall(RelayUtils.RelayParams calldata relayParams, address account, bytes32 structHash, uint256 srcChainId) internal {
+    function _validateCall(RelayUtils.RelayParams calldata relayParams, address account, bytes32 structHash, uint256 srcChainId) internal virtual {
+        if (relayParams.desChainId != block.chainid) {
+            revert Errors.InvalidDestinationChainId(relayParams.desChainId);
+        }
+
         uint256 _srcChainId = srcChainId == 0 ? block.chainid : srcChainId;
+
+        if (srcChainId != 0 && !dataStore.getBool(Keys.isSrcChainIdEnabledKey(_srcChainId))) {
+            revert Errors.NonMultichainAction();
+        }
+
         bytes32 domainSeparator = _getDomainSeparator(_srcChainId);
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
         _validateSignature(digest, relayParams.signature, account, "call");

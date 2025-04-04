@@ -18,6 +18,7 @@ library Errors {
     // Bank errors
     error SelfTransferNotSupported(address receiver);
     error InvalidNativeTokenSender(address msgSender);
+    error InvalidTransferInAmount(address token, uint256 amount);
 
     // BaseHandler errors
     error RequestNotYetCancellable(uint256 requestAge, uint256 requestExpirationAge, string requestType);
@@ -445,8 +446,11 @@ library Errors {
     error InsufficientMultichainBalance(address account, address token, uint256 balance, uint256 amount);
     error InvalidDestinationChainId(uint256 desChainId);
     error InvalidMultichainProvider(address provider);
+    error InvalidMultichainEndpoint(address endpoint);
     error UnableToPayOrderFee();
     error UnableToPayOrderFeeFromCollateral();
+    error RelayPriceOutdated();
+    error NonMultichainAction();
 
     enum SignatureType {
         Call,

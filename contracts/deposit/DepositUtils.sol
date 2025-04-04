@@ -14,6 +14,7 @@ import "../nonce/NonceUtils.sol";
 import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
 import "../utils/AccountUtils.sol";
+import "../multichain/MultichainUtils.sol";
 
 // @title DepositUtils
 // @dev Library for deposit functions, to help with the depositing of liquidity
@@ -160,6 +161,7 @@ library DepositUtils {
     function cancelDeposit(
         DataStore dataStore,
         EventEmitter eventEmitter,
+        MultichainVault multichainVault,
         DepositVault depositVault,
         bytes32 key,
         address keeper,
@@ -214,16 +216,20 @@ library DepositUtils {
         CallbackUtils.afterDepositCancellation(key, deposit, eventData);
 
         GasUtils.payExecutionFee(
-            dataStore,
-            eventEmitter,
-            depositVault,
+            GasUtils.PayExecutionFeeContracts(
+                dataStore,
+                eventEmitter,
+                multichainVault,
+                depositVault
+            ),
             key,
             deposit.callbackContract(),
             deposit.executionFee(),
             startingGas,
             GasUtils.estimateDepositOraclePriceCount(deposit.longTokenSwapPath().length + deposit.shortTokenSwapPath().length),
             keeper,
-            deposit.receiver()
+            deposit.receiver(),
+            deposit.srcChainId()
         );
     }
 }

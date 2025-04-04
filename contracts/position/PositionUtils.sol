@@ -356,6 +356,8 @@ library PositionUtils {
             )
         );
 
+        cache.priceImpactUsd += position.pendingImpactUsd();
+
         // even if there is a large positive price impact, positions that would be liquidated
         // if the positive price impact is reduced should not be allowed to be created
         // as they would be easily liquidated if the price impact changes
@@ -758,14 +760,6 @@ library PositionUtils {
                 -sizeDeltaUsd.toInt256(),
                 params.order.isLong()
             )
-        );
-
-        // cap positive priceImpactUsd based on the amount available in the position impact pool
-        cache.priceImpactUsd = MarketUtils.capPositiveImpactUsdByPositionImpactPool(
-            params.contracts.dataStore,
-            params.market.marketToken,
-            indexTokenPrice,
-            cache.priceImpactUsd
         );
 
         // cap positive priceImpactUsd based on the max positive position impact factor

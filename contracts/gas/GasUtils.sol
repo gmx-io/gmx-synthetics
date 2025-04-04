@@ -16,6 +16,7 @@ import "../order/BaseOrderUtils.sol";
 import "../glv/glvWithdrawal/GlvWithdrawal.sol";
 
 import "../bank/StrictBank.sol";
+import "../multichain/MultichainUtils.sol";
 
 // @title GasUtils
 // @dev Library for execution fee estimation and payments
@@ -96,7 +97,16 @@ library GasUtils {
         }
     }
 
+    struct PayExecutionFeeContracts {
+        DataStore dataStore;
+        EventEmitter eventEmitter;
+        MultichainVault multichainVault;
+        StrictBank bank;
+    }
+
     struct PayExecutionFeeCache {
+        uint256 gasUsed;
+        uint256 executionFeeForKeeper;
         uint256 refundFeeAmount;
         bool refundWasSent;
         address wnt;
@@ -113,52 +123,51 @@ library GasUtils {
     // @param refundReceiver the account that should receive any excess gas refunds
     // @param isSubaccount whether the order is a subaccount order
     function payExecutionFee(
-        DataStore dataStore,
-        EventEmitter eventEmitter,
-        StrictBank bank,
+        PayExecutionFeeContracts memory contracts,
         bytes32 key,
         address callbackContract,
         uint256 executionFee,
         uint256 startingGas,
         uint256 oraclePriceCount,
         address keeper,
-        address refundReceiver
+        address refundReceiver,
+        uint256 srcChainId
     ) external returns (uint256) {
         if (executionFee == 0) {
             return 0;
         }
 
-        // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
-        startingGas -= gasleft() / 63;
-        uint256 gasUsed = startingGas - gasleft();
-
-        // each external call forwards 63/64 of the remaining gas
-        uint256 executionFeeForKeeper = adjustGasUsage(dataStore, gasUsed, oraclePriceCount) * tx.gasprice;
-
-        if (executionFeeForKeeper > executionFee) {
-            executionFeeForKeeper = executionFee;
-        }
-
-        bank.transferOutNativeToken(keeper, executionFeeForKeeper);
-
-        emitKeeperExecutionFee(eventEmitter, keeper, executionFeeForKeeper);
-
         PayExecutionFeeCache memory cache;
 
-        cache.refundFeeAmount = executionFee - executionFeeForKeeper;
+        // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
+        startingGas -= gasleft() / 63;
+        cache.gasUsed = startingGas - gasleft();
+
+        // each external call forwards 63/64 of the remaining gas
+        cache.executionFeeForKeeper = adjustGasUsage(contracts.dataStore, cache.gasUsed, oraclePriceCount) * tx.gasprice;
+
+        if (cache.executionFeeForKeeper > executionFee) {
+            cache.executionFeeForKeeper = executionFee;
+        }
+
+        contracts.bank.transferOutNativeToken(keeper, cache.executionFeeForKeeper);
+
+        emitKeeperExecutionFee(contracts.eventEmitter, keeper, cache.executionFeeForKeeper);
+
+        cache.refundFeeAmount = executionFee - cache.executionFeeForKeeper;
         if (cache.refundFeeAmount == 0) {
             return 0;
         }
 
-        cache.wnt = dataStore.getAddress(Keys.WNT);
-        bank.transferOut(cache.wnt, address(this), cache.refundFeeAmount);
+        cache.wnt = contracts.dataStore.getAddress(Keys.WNT);
+        contracts.bank.transferOut(cache.wnt, address(this), cache.refundFeeAmount);
 
         IWNT(cache.wnt).withdraw(cache.refundFeeAmount);
 
         EventUtils.EventLogData memory eventData;
 
         cache.refundWasSent = CallbackUtils.refundExecutionFee(
-            dataStore,
+            contracts.dataStore,
             key,
             callbackContract,
             cache.refundFeeAmount,
@@ -166,11 +175,16 @@ library GasUtils {
         );
 
         if (cache.refundWasSent) {
-            emitExecutionFeeRefundCallback(eventEmitter, callbackContract, cache.refundFeeAmount);
+            emitExecutionFeeRefundCallback(contracts.eventEmitter, callbackContract, cache.refundFeeAmount);
             return 0;
         } else {
-            TokenUtils.sendNativeToken(dataStore, refundReceiver, cache.refundFeeAmount);
-            emitExecutionFeeRefund(eventEmitter, refundReceiver, cache.refundFeeAmount);
+            if (srcChainId == 0) {
+                TokenUtils.sendNativeToken(contracts.dataStore, refundReceiver, cache.refundFeeAmount);
+            } else {
+                TokenUtils.depositAndSendWrappedNativeToken(contracts.dataStore, address(contracts.multichainVault), cache.refundFeeAmount);
+                MultichainUtils.recordTransferIn(contracts.dataStore, contracts.eventEmitter, contracts.multichainVault, cache.wnt, refundReceiver, 0); // srcChainId is the current block.chainId
+            }
+            emitExecutionFeeRefund(contracts.eventEmitter, refundReceiver, cache.refundFeeAmount);
             return cache.refundFeeAmount;
         }
     }

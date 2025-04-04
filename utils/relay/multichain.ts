@@ -536,9 +536,7 @@ export async function sendBridgeOut(p: {
     feeAmount: BigNumberish;
     feeSwapPath: string[];
   };
-  provider: string;
   account: string;
-  data: string;
   params: any;
   signature?: string;
   userNonce?: BigNumberish;
@@ -558,10 +556,8 @@ export async function sendBridgeOut(p: {
 
   const bridgeOutCalldata = p.relayRouter.interface.encodeFunctionData("bridgeOut", [
     { ...relayParams, signature },
-    p.provider,
     p.account,
     p.srcChainId,
-    p.data,
     p.params,
   ]);
   const calldata = ethers.utils.solidityPack(
@@ -594,12 +590,16 @@ async function getBridgeOutSignature({
     BridgeOut: [
       { name: "token", type: "address" },
       { name: "amount", type: "uint256" },
+      { name: "provider", type: "address" },
+      { name: "data", type: "bytes" },
       { name: "relayParams", type: "bytes32" },
     ],
   };
   const typedData = {
     token: params.token,
     amount: params.amount,
+    provider: params.provider,
+    data: params.data,
     relayParams: hashRelayParams(relayParams),
   };
   const domain = getDomain(chainId, verifyingContract);

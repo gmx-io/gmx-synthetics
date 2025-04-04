@@ -33,11 +33,13 @@ import {
   OrderType,
 } from "../../utils/order";
 import { hashData, hashString } from "../../utils/hash";
-import { getPositionCount } from "../../utils/position";
+import { getPositionCount, getPositionKeys } from "../../utils/position";
 import { expectBalance } from "../../utils/validation";
 import { executeLiquidation } from "../../utils/liquidation";
 import { executeAdl, updateAdlState } from "../../utils/adl";
 import { getClaimableCollateralTimeKey } from "../../utils/collateral";
+import { prices } from "../../utils/prices";
+import { errorsContract } from "../../utils/error";
 
 export async function mintAndBridge(
   fixture,
@@ -48,7 +50,7 @@ export async function mintAndBridge(
     srcChainId?: BigNumberish;
   }
 ) {
-  const { mockStargatePool, layerZeroProvider } = fixture.contracts;
+  const { usdc, wnt, mockStargatePoolUsdc, mockStargatePoolWnt, layerZeroProvider } = fixture.contracts;
   const { user0 } = fixture.accounts;
 
   const account = overrides.account || user0;
@@ -60,14 +62,17 @@ export async function mintAndBridge(
   await token.mint(account.address, tokenAmount);
 
   // mock token bridging (increase user's multichain balance)
-  const encodedMessageEth = ethers.utils.defaultAbiCoder.encode(
-    ["address", "address", "uint256"],
-    [account.address, token.address, srcChainId]
-  );
-  await token.connect(account).approve(mockStargatePool.address, tokenAmount);
-  await mockStargatePool
-    .connect(account)
-    .sendToken(token.address, layerZeroProvider.address, tokenAmount, encodedMessageEth);
+  const encodedMessageEth = ethers.utils.defaultAbiCoder.encode(["address", "uint256"], [account.address, srcChainId]);
+
+  if (token.address == usdc.address) {
+    await token.connect(account).approve(mockStargatePoolUsdc.address, tokenAmount);
+    await mockStargatePoolUsdc.connect(account).sendToken(layerZeroProvider.address, tokenAmount, encodedMessageEth);
+  } else if (token.address == wnt.address) {
+    await token.connect(account).approve(mockStargatePoolWnt.address, tokenAmount);
+    await mockStargatePoolWnt.connect(account).sendToken(layerZeroProvider.address, tokenAmount, encodedMessageEth);
+  } else {
+    throw new Error("Unsupported Stargate");
+  }
 }
 
 describe("MultichainRouter", () => {
@@ -91,6 +96,9 @@ describe("MultichainRouter", () => {
     usdc,
     chainlinkPriceFeedProvider,
     multichainClaimsRouter,
+    mockStargatePoolUsdc,
+    mockStargatePoolWnt,
+    oracle,
     referralStorage;
   let relaySigner;
   let chainId;
@@ -120,6 +128,9 @@ describe("MultichainRouter", () => {
       usdc,
       chainlinkPriceFeedProvider,
       multichainClaimsRouter,
+      mockStargatePoolUsdc,
+      mockStargatePoolWnt,
+      oracle,
       referralStorage,
     } = fixture.contracts);
 
@@ -176,7 +187,15 @@ describe("MultichainRouter", () => {
     };
 
     await dataStore.setAddress(keys.FEE_RECEIVER, user3.address);
+
+    await dataStore.setBool(keys.isSrcChainIdEnabledKey(chainId), true);
+
+    await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolWnt.address), true);
+    await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolWnt.address), true);
     await mintAndBridge(fixture, { token: wnt, tokenAmount: wntAmount.add(feeAmount) });
+
+    await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolUsdc.address), true);
+    await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolUsdc.address), true);
     await mintAndBridge(fixture, { token: usdc, tokenAmount: usdcAmount });
   });
 
@@ -248,11 +267,11 @@ describe("MultichainRouter", () => {
       // state after executing deposit
       expect(await getDepositCount(dataStore)).eq(0);
       expect(await wnt.balanceOf(multichainVault.address)).to.approximately(
-        expandDecimals(2133, 12), // feeAmount - keeperFee = 0.004 - 0.001867... = 0.002133... (e.g. 2133076985064616)
+        expandDecimals(2131, 12), // feeAmount - keeperFee = 0.004 - 0.001867... = 0.002131... (e.g. 2131880985055048)
         expandDecimals(1, 12)
       );
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.approximately(
-        expandDecimals(2133, 12), // feeAmount - keeperFee = 0.004 - 0.001867... = 0.002133... (e.g. 2133076985064616)
+        expandDecimals(2131, 12), // feeAmount - keeperFee = 0.004 - 0.001867... = 0.002131... (e.g. 2131880985055048)
         expandDecimals(1, 12)
       );
       expect(await usdc.balanceOf(multichainVault.address)).eq(0);
@@ -816,6 +835,59 @@ describe("MultichainRouter", () => {
           expandDecimals(1, 18)
         );
       });
+
+      it("refunds multichain execution fee", async () => {
+        const executionFee = expandDecimals(25, 14); // 0.0025 ETH
+
+        await handleDeposit(fixture, {
+          create: {
+            market: ethUsdMarket,
+            longTokenAmount: expandDecimals(1000, 18),
+            shortTokenAmount: expandDecimals(1000 * 1000, 6),
+          },
+        });
+
+        await dataStore.setUint(keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1));
+
+        const params = {
+          addresses: {
+            receiver: user1.address,
+            cancellationReceiver: user1.address,
+            callbackContract: user1.address,
+            uiFeeReceiver: user2.address,
+            market: ethUsdMarket.marketToken,
+            initialCollateralToken: usdc.address,
+            swapPath: [],
+          },
+          numbers: {
+            sizeDeltaUsd: decimalToFloat(100 * 1000),
+            initialCollateralDeltaAmount: 0, // relevant for MarketDecrease | LimitDecrease | StopLossDecrease
+            triggerPrice: decimalToFloat(4800),
+            acceptablePrice: expandDecimals(4990, 12),
+            executionFee: 0, // execution fee is calcualted in handleRelay as feeAmount - relayFeeAmount = 0.006 - 0.0025 = 0.0035
+            callbackGasLimit: "200001",
+            minOutputAmount: expandDecimals(50000, 6),
+            validFromTime: 0,
+          },
+          orderType: OrderType.MarketIncrease,
+          decreasePositionSwapType: DecreasePositionSwapType.SwapCollateralTokenToPnlToken,
+          isLong: false,
+          shouldUnwrapNativeToken: false,
+          referralCode: hashString("referralCode"),
+          dataList: [],
+        };
+
+        const initialBalance = await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address));
+
+        await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: feeAmount });
+        await mintAndBridge(fixture, { account: user1, token: usdc, tokenAmount: collateralDeltaAmount });
+        await sendCreateOrder({ ...createOrderParams, relayFeeAmount: feeAmount.sub(executionFee), params });
+        await executeOrder(fixture, { gasUsageLabel: "executeOrder" });
+
+        expect(
+          (await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).sub(initialBalance)
+        ).closeTo("486281983890256", "10000000000000");
+      });
     });
 
     describe("updateOrder", () => {
@@ -827,7 +899,7 @@ describe("MultichainRouter", () => {
           signer: user1,
           feeParams: {
             feeToken: wnt.address,
-            feeAmount: expandDecimals(2, 15), // 0.002 ETH
+            feeAmount: feeAmount, // 0.006 ETH
             feeSwapPath: [],
           },
           account: user1.address,
@@ -882,6 +954,68 @@ describe("MultichainRouter", () => {
           initialFeeReceiverBalance.add(updateOrderParams.relayFeeAmount)
         );
       });
+
+      it("order collateral can be used to pay for fees for increase orders", async () => {
+        await sendCreateDeposit({ ...createDepositParams, relayFeeAmount: feeAmount });
+        await executeDeposit(fixture, { gasUsageLabel: "executeMultichainDeposit" });
+        await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: collateralDeltaAmount.add(feeAmount) });
+        await sendCreateOrder(createOrderParams);
+
+        // Verify order was created and has the expected collateral amount
+        const orderKeys = await getOrderKeys(dataStore, 0, 1);
+        let order = await reader.getOrder(dataStore.address, orderKeys[0]);
+        expect(order.numbers.initialCollateralDeltaAmount).eq(collateralDeltaAmount);
+
+        // Verify user's multichain balance is insufficient for the update operation (should be zero after paying for deposit and order creation)
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0);
+
+        // Try to update order - should use the order's collateral to pay for fees
+        await sendUpdateOrder({ ...updateOrderParams, key: orderKeys[0] });
+
+        order = await reader.getOrder(dataStore.address, orderKeys[0]);
+        expect(order.numbers.initialCollateralDeltaAmount).eq(collateralDeltaAmount.sub(feeAmount));
+      });
+
+      it("position collateral can NOT be used to pay for fees if position becomes liquidatable", async () => {
+        await sendCreateDeposit({ ...createDepositParams, relayFeeAmount: feeAmount });
+        await executeDeposit(fixture, { gasUsageLabel: "executeMultichainDeposit" });
+        await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: collateralDeltaAmount.add(feeAmount) });
+        await sendCreateOrder(createOrderParams);
+        await executeOrder(fixture, { gasUsageLabel: "executeOrder" });
+
+        // Verify order was created and has the expected collateral amount
+        const positionKeys = await getPositionKeys(dataStore, 0, 1);
+        const position = await reader.getPosition(dataStore.address, positionKeys[0]);
+        expect(position.numbers.collateralAmount).eq(collateralDeltaAmount);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0);
+
+        await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: collateralDeltaAmount.add(feeAmount) });
+        await sendCreateOrder(createOrderParams);
+
+        // Verify order was created and has the expected collateral amount
+        const orderKeys = await getOrderKeys(dataStore, 0, 1);
+        const order = await reader.getOrder(dataStore.address, orderKeys[0]);
+        expect(order.numbers.initialCollateralDeltaAmount).eq(collateralDeltaAmount);
+
+        // Verify user's multichain balance is insufficient for the update operation (should be zero after paying for deposit and order creation)
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0);
+
+        // set RELAY_MAX_PRICE_AGE and primary prices
+        await dataStore.setUint(keys.RELAY_MAX_PRICE_AGE, ethers.constants.MaxUint256);
+        await oracle.setPrimaryPrice(wnt.address, { min: prices.wnt.min, max: prices.wnt.max });
+        await oracle.setPrimaryPrice(usdc.address, { min: prices.usdc.min, max: prices.usdc.max });
+
+        // position has 1 ETH collateral, order oppened with 1 ETH collateral and 1.1 ETH fee
+        const highFeeAmount = collateralDeltaAmount.add(expandDecimals(1, 17)); // 1.0 + 0.1 = 1.1 ETH
+        await expect(
+          sendUpdateOrder({
+            ...updateOrderParams,
+            key: orderKeys[0],
+            feeParams: { ...updateOrderParams.feeParams, feeAmount: highFeeAmount },
+            relayFeeAmount: highFeeAmount,
+          })
+        ).to.be.revertedWithCustomError(errorsContract, "LiquidatablePosition");
+      });
     });
 
     describe("cancelOrder", () => {
@@ -893,7 +1027,7 @@ describe("MultichainRouter", () => {
           signer: user1,
           feeParams: {
             feeToken: wnt.address,
-            feeAmount: expandDecimals(2, 15), // 0.002 ETH
+            feeAmount: feeAmount, // 0.006 ETH
             feeSwapPath: [],
           },
           account: user1.address,
@@ -904,7 +1038,7 @@ describe("MultichainRouter", () => {
           relayRouter: multichainOrderRouter,
           chainId,
           relayFeeToken: wnt.address,
-          relayFeeAmount: expandDecimals(1, 15),
+          relayFeeAmount: feeAmount,
         };
       });
 
@@ -926,6 +1060,66 @@ describe("MultichainRouter", () => {
           GELATO_RELAY_ADDRESS,
           initialFeeReceiverBalance.add(cancelOrderParams.relayFeeAmount)
         );
+      });
+
+      it("order collateral can be used to pay for fees for swap orders", async () => {
+        await sendCreateDeposit({ ...createDepositParams, relayFeeAmount: feeAmount });
+        await executeDeposit(fixture, { gasUsageLabel: "executeMultichainDeposit" });
+        await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: collateralDeltaAmount.add(feeAmount) });
+        await sendCreateOrder(createOrderParams);
+
+        // Verify order was created and has the expected collateral amount
+        const orderKeys = await getOrderKeys(dataStore, 0, 1);
+        const order = await reader.getOrder(dataStore.address, orderKeys[0]);
+        expect(order.numbers.initialCollateralDeltaAmount).eq(collateralDeltaAmount);
+
+        // Verify user's multichain balance is insufficient for the update operation (should be zero after paying for deposit and order creation)
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0);
+
+        // Try to cancel order - should use the order's collateral to pay for fees
+        await sendCancelOrder({ ...cancelOrderParams, key: orderKeys[0] });
+
+        expect(await getOrderCount(dataStore)).to.eq(0);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(
+          collateralDeltaAmount.sub(feeAmount)
+        );
+      });
+
+      it("position collateral can be used to pay for fees for increase orders", async () => {
+        await sendCreateDeposit({ ...createDepositParams, relayFeeAmount: feeAmount });
+        await executeDeposit(fixture, { gasUsageLabel: "executeMultichainDeposit" });
+        await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: collateralDeltaAmount.add(feeAmount) });
+        await sendCreateOrder(createOrderParams);
+        await executeOrder(fixture, { gasUsageLabel: "executeOrder" });
+
+        await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: feeAmount });
+        await sendCreateOrder({ ...createOrderParams, collateralDeltaAmount: 0 });
+
+        // Verify order/position were created and have the expected collateral amount
+        const positionKeys = await getPositionKeys(dataStore, 0, 1);
+        let position = await reader.getPosition(dataStore.address, positionKeys[0]);
+        expect(position.numbers.collateralAmount).eq(collateralDeltaAmount); // 1 ETH
+
+        const orderKeys = await getOrderKeys(dataStore, 0, 1);
+        const order = await reader.getOrder(dataStore.address, orderKeys[0]);
+        expect(order.numbers.initialCollateralDeltaAmount).eq(0); // 0 ETH
+
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0); // 0 ETH
+
+        // set relay price age and primary prices
+        await dataStore.setUint(keys.RELAY_MAX_PRICE_AGE, ethers.constants.MaxUint256);
+        await oracle.setPrimaryPrice(wnt.address, { min: expandDecimals(4800, 18), max: expandDecimals(5200, 18) });
+        await oracle.setPrimaryPrice(usdc.address, { min: expandDecimals(1, 6), max: expandDecimals(1, 6) });
+
+        await sendCancelOrder({ ...cancelOrderParams, key: orderKeys[0] });
+
+        // order is cancelled
+        expect(await getOrderCount(dataStore)).to.eq(0);
+
+        // position collateral is used to pay the order fee
+        position = await reader.getPosition(dataStore.address, positionKeys[0]);
+        expect(position.numbers.collateralAmount).eq(collateralDeltaAmount.sub(feeAmount)); // 1.0 - 0.006 = 0.994 ETH position collateral after fee payment
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0);
       });
     });
   });

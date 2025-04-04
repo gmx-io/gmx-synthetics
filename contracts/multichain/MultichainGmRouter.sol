@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "../deposit/DepositVault.sol";
 import "../exchange/IDepositHandler.sol";
 import "../exchange/WithdrawalHandler.sol";
+import "../exchange/ShiftHandler.sol";
 import "../withdrawal/WithdrawalVault.sol";
 
 import "./MultichainRouter.sol";
@@ -15,6 +16,7 @@ contract MultichainGmRouter is MultichainRouter {
     WithdrawalVault public immutable withdrawalVault;
     WithdrawalHandler public immutable withdrawalHandler;
     ShiftVault public immutable shiftVault;
+    ShiftHandler public immutable shiftHandler;
 
     constructor(
         BaseConstructorParams memory params,
@@ -22,13 +24,15 @@ contract MultichainGmRouter is MultichainRouter {
         IDepositHandler _depositHandler,
         WithdrawalVault _withdrawalVault,
         WithdrawalHandler _withdrawalHandler,
-        ShiftVault _shiftVault
+        ShiftVault _shiftVault,
+        ShiftHandler _shiftHandler
     ) MultichainRouter(params) BaseRouter(params.router, params.roleStore, params.dataStore, params.eventEmitter) {
         depositVault = _depositVault;
         depositHandler = _depositHandler;
         withdrawalVault = _withdrawalVault;
         withdrawalHandler = _withdrawalHandler;
         shiftVault = _shiftVault;
+        shiftHandler = _shiftHandler;
     }
 
     function createDeposit(
@@ -37,8 +41,13 @@ contract MultichainGmRouter is MultichainRouter {
         uint256 srcChainId,
         RelayUtils.TransferRequests calldata transferRequests,
         DepositUtils.CreateDepositParams memory params // can't use calldata because need to modify params.numbers.executionFee
-    ) external nonReentrant onlyGelatoRelay returns (bytes32) {
-        _validateDesChainId(relayParams.desChainId);
+    )
+        external
+        nonReentrant
+        withOraclePricesForAtomicAction(relayParams.oracleParams)
+        onlyGelatoRelay
+        returns (bytes32)
+    {
         _validateGaslessFeature();
 
         bytes32 structHash = RelayUtils.getCreateDepositStructHash(relayParams, transferRequests, params);
@@ -82,8 +91,13 @@ contract MultichainGmRouter is MultichainRouter {
         uint256 srcChainId,
         RelayUtils.TransferRequests calldata transferRequests,
         WithdrawalUtils.CreateWithdrawalParams memory params // can't use calldata because need to modify params.addresses.receiver & params.numbers.executionFee
-    ) external nonReentrant onlyGelatoRelay returns (bytes32) {
-        _validateDesChainId(relayParams.desChainId);
+    )
+        external
+        nonReentrant
+        withOraclePricesForAtomicAction(relayParams.oracleParams)
+        onlyGelatoRelay
+        returns (bytes32)
+    {
         _validateGaslessFeature();
 
         bytes32 structHash = RelayUtils.getCreateWithdrawalStructHash(relayParams, transferRequests, params);
@@ -124,8 +138,13 @@ contract MultichainGmRouter is MultichainRouter {
         uint256 srcChainId,
         RelayUtils.TransferRequests calldata transferRequests,
         ShiftUtils.CreateShiftParams memory params
-    ) external nonReentrant onlyGelatoRelay returns (bytes32) {
-        _validateDesChainId(relayParams.desChainId);
+    )
+        external
+        nonReentrant
+        withOraclePricesForAtomicAction(relayParams.oracleParams)
+        onlyGelatoRelay
+        returns (bytes32)
+    {
         _validateGaslessFeature();
 
         bytes32 structHash = RelayUtils.getCreateShiftStructHash(relayParams, transferRequests, params);
@@ -153,6 +172,6 @@ contract MultichainGmRouter is MultichainRouter {
             srcChainId
         );
 
-        return ShiftUtils.createShift(dataStore, eventEmitter, shiftVault, account, srcChainId, params);
+        return shiftHandler.createShift(account, srcChainId, params);
     }
 }

@@ -73,21 +73,27 @@ library DecreaseOrderUtils {
                 order.minOutputAmount()
             );
 
-            MarketToken(payable(order.market())).transferOut(
-                result.outputToken,
-                order.srcChainId() == 0 ? order.receiver(): address(params.contracts.multichainVault),
-                result.outputAmount,
-                order.shouldUnwrapNativeToken()
-            );
+            if (order.srcChainId() == 0) {
+                MarketToken(payable(order.market())).transferOut(
+                    result.outputToken,
+                    order.receiver(),
+                    result.outputAmount,
+                    order.shouldUnwrapNativeToken()
+                );
 
-            MarketToken(payable(order.market())).transferOut(
-                result.secondaryOutputToken,
-                order.srcChainId() == 0 ? order.receiver(): address(params.contracts.multichainVault),
-                result.secondaryOutputAmount,
-                order.shouldUnwrapNativeToken()
-            );
-
-            if (order.srcChainId() != 0) {
+                MarketToken(payable(order.market())).transferOut(
+                    result.secondaryOutputToken,
+                    order.receiver(),
+                    result.secondaryOutputAmount,
+                    order.shouldUnwrapNativeToken()
+                );
+            } else {
+                MarketToken(payable(order.market())).transferOut(
+                    result.outputToken,
+                    address(params.contracts.multichainVault), // receiver
+                    result.outputAmount,
+                    false // shouldUnwrapNativeToken
+                );
                 MultichainUtils.recordTransferIn(
                     params.contracts.dataStore,
                     params.contracts.eventEmitter,
@@ -95,6 +101,13 @@ library DecreaseOrderUtils {
                     result.outputToken,
                     order.receiver(),
                     order.srcChainId()
+                );
+
+                MarketToken(payable(order.market())).transferOut(
+                    result.secondaryOutputToken,
+                    address(params.contracts.multichainVault), // receiver
+                    result.secondaryOutputAmount,
+                    false // shouldUnwrapNativeToken
                 );
                 MultichainUtils.recordTransferIn(
                     params.contracts.dataStore,
@@ -129,7 +142,7 @@ library DecreaseOrderUtils {
                 0,
                 order.srcChainId() == 0 ? order.receiver(): address(params.contracts.multichainVault),
                 order.uiFeeReceiver(),
-                order.shouldUnwrapNativeToken(),
+                order.srcChainId() == 0 ? order.shouldUnwrapNativeToken() : false,
                 ISwapPricingUtils.SwapPricingType.Swap
             )
         ) returns (address tokenOut, uint256 swapOutputAmount) {
@@ -140,7 +153,7 @@ library DecreaseOrderUtils {
                 order.minOutputAmount()
             );
 
-            if (order.srcChainId() != 0 && swapOutputAmount > 0) {
+            if (order.srcChainId() != 0) {
                 MultichainUtils.recordTransferIn(
                     params.contracts.dataStore,
                     params.contracts.eventEmitter,
@@ -163,6 +176,9 @@ library DecreaseOrderUtils {
             (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
 
             _handleSwapError(
+                params.contracts.dataStore,
+                params.contracts.eventEmitter,
+                params.contracts.multichainVault,
                 params.contracts.oracle,
                 order,
                 result,
@@ -291,6 +307,9 @@ library DecreaseOrderUtils {
     }
 
     function _handleSwapError(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        MultichainVault multichainVault,
         Oracle oracle,
         Order.Props memory order,
         DecreasePositionUtils.DecreasePositionResult memory result,
@@ -306,12 +325,29 @@ library DecreaseOrderUtils {
             order.minOutputAmount()
         );
 
-        MarketToken(payable(order.market())).transferOut(
-            result.outputToken,
-            order.receiver(),
-            result.outputAmount,
-            order.shouldUnwrapNativeToken()
-        );
+        if (order.srcChainId() == 0) {
+            MarketToken(payable(order.market())).transferOut(
+                result.outputToken,
+                order.receiver(),
+                result.outputAmount,
+                order.shouldUnwrapNativeToken()
+            );
+        } else {
+            MarketToken(payable(order.market())).transferOut(
+                result.outputToken,
+                address(multichainVault),
+                result.outputAmount,
+                false // shouldUnwrapNativeToken
+            );
+            MultichainUtils.recordTransferIn(
+                dataStore,
+                eventEmitter,
+                multichainVault,
+                result.outputToken,
+                order.receiver(),
+                0 // srcChainId is the current block.chainId
+            );
+        }
     }
 
     function getOutputEventData(

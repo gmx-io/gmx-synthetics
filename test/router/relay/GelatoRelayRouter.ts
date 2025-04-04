@@ -76,6 +76,8 @@ describe("GelatoRelayRouter", () => {
 
     relaySigner = await hre.ethers.getSigner(GELATO_RELAY_ADDRESS);
     chainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
+
+    await dataStore.setBool(keys.isSrcChainIdEnabledKey(chainId), true);
   });
 
   let createOrderParams: Parameters<typeof sendCreateOrder>[0];
