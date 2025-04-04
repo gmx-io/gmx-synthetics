@@ -233,29 +233,6 @@ library ConfigUtils {
         );
     }
 
-    function setSubaccountIntegrationDisabled(
-        DataStore dataStore,
-        EventEmitter eventEmitter,
-        bytes32 integrationId,
-        bool disabled
-    ) external {
-        dataStore.setBool(Keys.subaccountIntegrationDisabledKey(integrationId), disabled);
-
-        EventUtils.EventLogData memory eventData;
-
-        eventData.bytes32Items.initItems(1);
-        eventData.bytes32Items.setItem(0, "integrationId", integrationId);
-
-        eventData.boolItems.initItems(1);
-        eventData.boolItems.setItem(0, "disabled", disabled);
-
-        eventEmitter.emitEventLog1(
-            "SetSubaccountIntegrationDisabled",
-            integrationId,
-            eventData
-        );
-    }
-
     // @dev validate that the value is within the allowed range
     // @param baseKey the base key for the value
     // @param value the value to be set
