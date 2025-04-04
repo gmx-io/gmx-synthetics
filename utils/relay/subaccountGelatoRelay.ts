@@ -13,6 +13,7 @@ export async function sendCreateOrder(p: {
     maxAllowedCount: BigNumberish;
     actionType: string;
     deadline: BigNumberish;
+    integrationId: string;
     nonce: BigNumberish;
     signature?: string;
   };
@@ -92,6 +93,7 @@ function getEmptySubaccountApproval() {
     nonce: 0,
     signature: "0x",
     deadline: 9999999999,
+    integrationId: ethers.constants.HashZero,
   };
 }
 
@@ -199,6 +201,7 @@ export async function sendUpdateOrder(p: {
     actionType: string;
     deadline: BigNumberish;
     nonce?: BigNumberish;
+    integrationId: string;
     signature?: string;
   };
   subaccountApprovalSigner: ethers.Signer;
@@ -260,6 +263,7 @@ async function getSubaccountApproval(p: {
     maxAllowedCount: BigNumberish;
     actionType: string;
     deadline: BigNumberish;
+    integrationId: string;
     nonce?: BigNumberish;
     signature?: string;
   };
@@ -447,6 +451,7 @@ async function getSubaccountApprovalSignature(p: {
   maxAllowedCount: BigNumberish;
   actionType: string;
   deadline: BigNumberish;
+  integrationId: string;
   nonce: BigNumberish;
 }) {
   const domain = {
@@ -465,6 +470,7 @@ async function getSubaccountApprovalSignature(p: {
       { name: "actionType", type: "bytes32" },
       { name: "nonce", type: "uint256" },
       { name: "deadline", type: "uint256" },
+      { name: "integrationId", type: "bytes32" },
     ],
   };
 
@@ -476,6 +482,7 @@ async function getSubaccountApprovalSignature(p: {
     actionType: p.actionType,
     deadline: p.deadline,
     nonce: p.nonce,
+    integrationId: p.integrationId,
   };
 
   return signTypedData(p.signer, domain, types, typedData);

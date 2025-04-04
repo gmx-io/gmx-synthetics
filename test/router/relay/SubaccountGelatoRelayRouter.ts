@@ -38,6 +38,7 @@ describe("SubaccountGelatoRelayRouter", () => {
   let relaySigner;
   let chainId;
   const referralCode = hashString("referralCode");
+  const integrationId = hashString("integrationId");
 
   let defaultCreateOrderParams;
   let createOrderParams: Parameters<typeof sendCreateOrder>[0];
@@ -341,6 +342,7 @@ describe("SubaccountGelatoRelayRouter", () => {
             maxAllowedCount: 10,
             actionType: keys.SUBACCOUNT_ORDER_ACTION,
             deadline: 0,
+            integrationId: integrationId,
             nonce: 0,
           },
         })
@@ -357,6 +359,7 @@ describe("SubaccountGelatoRelayRouter", () => {
             maxAllowedCount: 10,
             actionType: keys.SUBACCOUNT_ORDER_ACTION,
             deadline: 9999999099,
+            integrationId: integrationId,
             nonce: 0,
           },
         })
@@ -372,6 +375,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           maxAllowedCount: 10,
           actionType: keys.SUBACCOUNT_ORDER_ACTION,
           deadline: 9999999201,
+          integrationId: integrationId,
           nonce: 0,
         },
       });
@@ -434,6 +438,7 @@ describe("SubaccountGelatoRelayRouter", () => {
             maxAllowedCount: 10,
             actionType: keys.SUBACCOUNT_ORDER_ACTION,
             deadline: 9999999999,
+            integrationId: integrationId,
             nonce: 0,
             signature: "0x123123",
           },
@@ -455,6 +460,7 @@ describe("SubaccountGelatoRelayRouter", () => {
             maxAllowedCount: 10,
             actionType: keys.SUBACCOUNT_ORDER_ACTION,
             deadline: 9999999999,
+            integrationId: integrationId,
             nonce: 1,
           },
         })
@@ -469,6 +475,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           maxAllowedCount: 10,
           actionType: keys.SUBACCOUNT_ORDER_ACTION,
           deadline: 9999999999,
+          integrationId: integrationId,
           nonce: 0,
         },
       });
@@ -482,6 +489,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           maxAllowedCount: 10,
           actionType: keys.SUBACCOUNT_ORDER_ACTION,
           deadline: 9999999999,
+          integrationId: integrationId,
           nonce: 1,
         },
         userNonce: 1,
@@ -497,6 +505,7 @@ describe("SubaccountGelatoRelayRouter", () => {
             maxAllowedCount: 10,
             actionType: keys.SUBACCOUNT_ORDER_ACTION,
             deadline: 9999999999,
+            integrationId: integrationId,
             nonce: 1,
           },
           userNonce: 2,
@@ -535,6 +544,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           maxAllowedCount: 10,
           actionType: keys.SUBACCOUNT_ORDER_ACTION,
           deadline: 9999999999,
+          integrationId: integrationId,
           nonce: 0,
         },
       });
@@ -730,6 +740,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           maxAllowedCount: 10,
           actionType: keys.SUBACCOUNT_ORDER_ACTION,
           deadline: 9999999999,
+          integrationId: integrationId,
         },
         increaseExecutionFee: false,
       };
@@ -936,6 +947,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           maxAllowedCount: 10,
           actionType: keys.SUBACCOUNT_ORDER_ACTION,
           deadline: 9999999999,
+          integrationId: ethers.constants.HashZero,
           nonce: 0,
         },
       };

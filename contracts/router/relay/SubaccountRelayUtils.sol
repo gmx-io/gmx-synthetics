@@ -19,6 +19,7 @@ library SubaccountRelayUtils {
         bytes32 actionType;
         uint256 nonce; // for replay attack protection
         uint256 deadline;
+        bytes32 integrationId;
         bytes signature;
     }
 
@@ -60,7 +61,7 @@ library SubaccountRelayUtils {
     bytes32 public constant SUBACCOUNT_APPROVAL_TYPEHASH =
         keccak256(
             bytes(
-                "SubaccountApproval(address subaccount,bool shouldAdd,uint256 expiresAt,uint256 maxAllowedCount,bytes32 actionType,uint256 nonce,uint256 deadline)"
+                "SubaccountApproval(address subaccount,bool shouldAdd,uint256 expiresAt,uint256 maxAllowedCount,bytes32 actionType,uint256 nonce,uint256 deadline,bytes32 integrationId)"
             )
         );
 
@@ -88,7 +89,8 @@ library SubaccountRelayUtils {
                     subaccountApproval.maxAllowedCount,
                     subaccountApproval.actionType,
                     subaccountApproval.nonce,
-                    subaccountApproval.deadline
+                    subaccountApproval.deadline,
+                    subaccountApproval.integrationId
                 )
             );
     }
