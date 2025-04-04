@@ -762,14 +762,6 @@ library PositionUtils {
             )
         );
 
-        // // cap positive priceImpactUsd based on the amount available in the position impact pool
-        // cache.priceImpactUsd = MarketUtils.capPositiveImpactUsdByPositionImpactPool(
-        //     params.contracts.dataStore,
-        //     params.market.marketToken,
-        //     indexTokenPrice,
-        //     cache.priceImpactUsd
-        // );
-
         // cap positive priceImpactUsd based on the max positive position impact factor
         cache.priceImpactUsd = MarketUtils.capPositiveImpactUsdByMaxPositionImpact(
             params.contracts.dataStore,
