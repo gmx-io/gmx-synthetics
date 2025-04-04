@@ -323,6 +323,9 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x03d717E27aF1B566C3efb729F1151E775B411f2B": true,
         "0xC84f3398eDf6336E1Ef55b50Ca3F9f9f96B8b504": true,
       },
+      ROLE_ADMIN: {
+        "0x508cbC56Ab57A9b0221cf1810a483f8013c92Ff3": true, // An
+      },
       ...testnetConfig,
     },
     arbitrumSepolia: {
