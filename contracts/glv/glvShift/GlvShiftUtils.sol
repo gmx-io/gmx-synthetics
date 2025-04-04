@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "../../event/EventEmitter.sol";
+import "../../multichain/MultichainVault.sol";
 import "../../shift/ShiftUtils.sol";
 import "../GlvUtils.sol";
 import "../GlvVault.sol";
@@ -27,6 +28,7 @@ library GlvShiftUtils {
         DataStore dataStore;
         EventEmitter eventEmitter;
         Oracle oracle;
+        MultichainVault multichainVault;
         ShiftVault shiftVault;
         GlvVault glvVault;
         bytes32 key;
@@ -138,8 +140,10 @@ library GlvShiftUtils {
                 marketTokenAmount: glvShift.marketTokenAmount(),
                 updatedAtTime: glvShift.updatedAtTime(),
                 executionFee: 0,
-                callbackGasLimit: 0
-            })
+                callbackGasLimit: 0,
+                srcChainId: 0
+            }),
+            new bytes32[](0)
         );
 
         cache.shiftKey = NonceUtils.getNextKey(params.dataStore);
@@ -149,6 +153,7 @@ library GlvShiftUtils {
         ShiftUtils.ExecuteShiftParams memory executeShiftParams = ShiftUtils.ExecuteShiftParams({
             dataStore: params.dataStore,
             eventEmitter: params.eventEmitter,
+            multichainVault: params.multichainVault,
             shiftVault: params.shiftVault,
             oracle: params.oracle,
             key: cache.shiftKey,

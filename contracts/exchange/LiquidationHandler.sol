@@ -18,6 +18,7 @@ contract LiquidationHandler is BaseOrderHandler {
         DataStore _dataStore,
         EventEmitter _eventEmitter,
         Oracle _oracle,
+        MultichainVault _multichainVault,
         OrderVault _orderVault,
         SwapHandler _swapHandler,
         IReferralStorage _referralStorage
@@ -26,6 +27,7 @@ contract LiquidationHandler is BaseOrderHandler {
         _dataStore,
         _eventEmitter,
         _oracle,
+        _multichainVault,
         _orderVault,
         _swapHandler,
         _referralStorage

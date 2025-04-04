@@ -1,6 +1,7 @@
 import { ethers } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { decimalToFloat, percentageToFloat, expandDecimals } from "../utils/math";
+import { CONFIG_MAX_PRICE_AGE } from "../utils/keys";
 
 export default async function ({ network }: HardhatRuntimeEnvironment) {
   if (network.name === "hardhat") {
@@ -60,9 +61,9 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
 
       skipBorrowingFeeForSmallerSide: false,
 
-      ignoreOpenInterestForUsageFactor: false,
-
       maxExecutionFeeMultiplierFactor: decimalToFloat(100),
+      oracleProviderMinChangeDelay: 3600,
+      configMaxPriceAge: 180,
     };
   }
 
@@ -120,9 +121,9 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
 
     skipBorrowingFeeForSmallerSide: true,
 
-    ignoreOpenInterestForUsageFactor: false,
-
     maxExecutionFeeMultiplierFactor: decimalToFloat(100),
+    oracleProviderMinChangeDelay: 3600,
+    configMaxPriceAge: 180,
   };
 
   const networkConfig = {
@@ -145,12 +146,10 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       increaseOrderGasLimit: 3_000_000,
       decreaseOrderGasLimit: 3_000_000,
       swapOrderGasLimit: 2_500_000,
-      ignoreOpenInterestForUsageFactor: true,
     },
     avalanche: {
       increaseOrderGasLimit: 3_500_000,
       decreaseOrderGasLimit: 3_500_000,
-      ignoreOpenInterestForUsageFactor: true,
     },
   }[network.name];
 

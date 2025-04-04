@@ -35,6 +35,7 @@ export async function sendCreateOrder(p: {
   signature?: string;
   userNonce?: BigNumberish;
   deadline: BigNumberish;
+  desChainId: BigNumberish;
   relayRouter: ethers.Contract;
   chainId: BigNumberish;
   relayFeeToken: string;
@@ -63,7 +64,7 @@ export async function sendCreateOrder(p: {
   });
 }
 
-async function getCreateOrderSignature({
+export async function getCreateOrderSignature({
   signer,
   relayParams,
   collateralDeltaAmount,
@@ -85,6 +86,7 @@ async function getCreateOrderSignature({
       { name: "shouldUnwrapNativeToken", type: "bool" },
       { name: "autoCancel", type: "bool" },
       { name: "referralCode", type: "bytes32" },
+      { name: "dataList", type: "bytes32[]" },
       { name: "relayParams", type: "bytes32" },
     ],
     CreateOrderAddresses: [
@@ -123,6 +125,93 @@ async function getCreateOrderSignature({
     shouldUnwrapNativeToken: params.shouldUnwrapNativeToken,
     autoCancel: false,
     referralCode: params.referralCode,
+    dataList: params.dataList,
+    relayParams: hashRelayParams(relayParams),
+  };
+
+  return signTypedData(signer, domain, types, typedData);
+}
+
+export async function getClaimFundingFeesSignature({ signer, relayParams, verifyingContract, params, chainId }) {
+  if (relayParams.userNonce === undefined) {
+    throw new Error("userNonce is required");
+  }
+  const types = {
+    ClaimFundingFees: [
+      { name: "markets", type: "address[]" },
+      { name: "tokens", type: "address[]" },
+      { name: "receiver", type: "address" },
+      { name: "relayParams", type: "bytes32" },
+    ],
+  };
+  const domain = {
+    name: "GmxBaseGelatoRelayRouter",
+    version: "1",
+    chainId,
+    verifyingContract,
+  };
+  const typedData = {
+    markets: params.markets,
+    tokens: params.tokens,
+    receiver: params.receiver,
+    relayParams: hashRelayParams(relayParams),
+  };
+
+  return signTypedData(signer, domain, types, typedData);
+}
+
+export async function getClaimCollateralSignature({ signer, relayParams, verifyingContract, params, chainId }) {
+  if (relayParams.userNonce === undefined) {
+    throw new Error("userNonce is required");
+  }
+  const types = {
+    ClaimCollateral: [
+      { name: "markets", type: "address[]" },
+      { name: "tokens", type: "address[]" },
+      { name: "timeKeys", type: "uint256[]" },
+      { name: "receiver", type: "address" },
+      { name: "relayParams", type: "bytes32" },
+    ],
+  };
+  const domain = {
+    name: "GmxBaseGelatoRelayRouter",
+    version: "1",
+    chainId,
+    verifyingContract,
+  };
+  const typedData = {
+    markets: params.markets,
+    tokens: params.tokens,
+    timeKeys: params.timeKeys,
+    receiver: params.receiver,
+    relayParams: hashRelayParams(relayParams),
+  };
+
+  return signTypedData(signer, domain, types, typedData);
+}
+
+export async function getClaimAffiliateRewardsSignature({ signer, relayParams, verifyingContract, params, chainId }) {
+  if (relayParams.userNonce === undefined) {
+    throw new Error("userNonce is required");
+  }
+  const types = {
+    ClaimAffiliateRewards: [
+      { name: "markets", type: "address[]" },
+      { name: "tokens", type: "address[]" },
+      { name: "receiver", type: "address" },
+      { name: "relayParams", type: "bytes32" },
+    ],
+  };
+  const domain = {
+    name: "GmxBaseGelatoRelayRouter",
+    version: "1",
+    chainId,
+    verifyingContract,
+  };
+  const typedData = {
+    markets: params.markets,
+    tokens: params.tokens,
+    receiver: params.receiver,
     relayParams: hashRelayParams(relayParams),
   };
 
@@ -160,6 +249,7 @@ export async function sendUpdateOrder(p: {
     autoCancel: boolean;
   };
   deadline: BigNumberish;
+  desChainId: BigNumberish;
   userNonce?: BigNumberish;
   relayRouter: ethers.Contract;
   signature?: string;
@@ -190,7 +280,7 @@ export async function sendUpdateOrder(p: {
   });
 }
 
-async function getUpdateOrderSignature({
+export async function getUpdateOrderSignature({
   signer,
   relayParams,
   verifyingContract,
@@ -255,6 +345,7 @@ export async function sendCancelOrder(p: {
   chainId: BigNumberish;
   account: string;
   deadline: BigNumberish;
+  desChainId: BigNumberish;
   userNonce?: BigNumberish;
   relayRouter: ethers.Contract;
   signature?: string;
@@ -282,7 +373,7 @@ export async function sendCancelOrder(p: {
   });
 }
 
-async function getCancelOrderSignature({ signer, relayParams, verifyingContract, key, chainId }) {
+export async function getCancelOrderSignature({ signer, relayParams, verifyingContract, key, chainId }) {
   if (relayParams.userNonce === undefined) {
     throw new Error("userNonce is required");
   }
