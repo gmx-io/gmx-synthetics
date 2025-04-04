@@ -691,10 +691,10 @@ const config: {
 
       maxOpenInterest: decimalToFloat(2_000_000),
 
-      maxPoolUsdForDeposit: decimalToFloat(5_500_000),
+      maxPoolUsdForDeposit: decimalToFloat(6_500_000),
 
-      maxLongTokenPoolAmount: expandDecimals(3470, 18),
-      maxShortTokenPoolAmount: expandDecimals(6_300_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(3840, 18),
+      maxShortTokenPoolAmount: expandDecimals(7_300_000, 6),
     },
     {
       tokens: { indexToken: "DOGE", longToken: "WETH", shortToken: "USDC" },
