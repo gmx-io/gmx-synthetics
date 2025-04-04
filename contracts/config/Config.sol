@@ -555,6 +555,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.MAX_DATA_LENGTH] = true;
 
         allowedBaseKeys[Keys.CLAIMABLE_COLLATERAL_DELAY] = true;
+
+        allowedBaseKeys[Keys.SUBACCOUNT_INTEGRATION_DISABLED] = true;
     }
 
     function _initAllowedLimitedBaseKeys() internal {

@@ -13,6 +13,7 @@ library ConfigUtils {
     using EventUtils for EventUtils.AddressItems;
     using EventUtils for EventUtils.UintItems;
     using EventUtils for EventUtils.Bytes32Items;
+    using EventUtils for EventUtils.BoolItems;
 
     function setPriceFeed(
         DataStore dataStore,

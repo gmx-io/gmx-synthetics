@@ -431,6 +431,10 @@ library Keys {
     bytes32 public constant SUBACCOUNT_AUTO_TOP_UP_AMOUNT = keccak256(abi.encode("SUBACCOUNT_AUTO_TOP_UP_AMOUNT"));
     // @dev key for subaccount order action
     bytes32 public constant SUBACCOUNT_ORDER_ACTION = keccak256(abi.encode("SUBACCOUNT_ORDER_ACTION"));
+    // @dev key for subaccount integration id
+    bytes32 public constant SUBACCOUNT_INTEGRATION_ID = keccak256(abi.encode("SUBACCOUNT_INTEGRATION_ID"));
+    // @dev key for subaccount integration id disabled status
+    bytes32 public constant SUBACCOUNT_INTEGRATION_DISABLED = keccak256(abi.encode("SUBACCOUNT_INTEGRATION_DISABLED"));
     // @dev key for fee distributor swap order token index
     bytes32 public constant FEE_DISTRIBUTOR_SWAP_TOKEN_INDEX = keccak256(abi.encode("FEE_DISTRIBUTOR_SWAP_TOKEN_INDEX"));
     // @dev key for fee distributor swap fee batch
@@ -1867,6 +1871,21 @@ library Keys {
             SUBACCOUNT_AUTO_TOP_UP_AMOUNT,
             account,
             subaccount
+        ));
+    }
+
+    function subaccountIntegrationIdKey(address account, address subaccount) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            SUBACCOUNT_INTEGRATION_ID,
+            account,
+            subaccount
+        ));
+    }
+
+    function subaccountIntegrationDisabledKey(bytes32 integrationId) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            SUBACCOUNT_INTEGRATION_DISABLED,
+            integrationId
         ));
     }
 
