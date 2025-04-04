@@ -7,6 +7,17 @@ import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
 import "../utils/Cast.sol";
 
+struct SubaccountApproval {
+    address subaccount;
+    bool shouldAdd;
+    uint256 expiresAt;
+    uint256 maxAllowedCount;
+    bytes32 actionType;
+    uint256 nonce; // for replay attack protection
+    uint256 deadline;
+    bytes signature;
+}
+
 library SubaccountUtils {
     using EventUtils for EventUtils.AddressItems;
     using EventUtils for EventUtils.UintItems;
@@ -16,12 +27,7 @@ library SubaccountUtils {
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
 
-    function addSubaccount(
-        DataStore dataStore,
-        EventEmitter eventEmitter,
-        address account,
-        address subaccount
-    ) external {
+    function addSubaccount(DataStore dataStore, EventEmitter eventEmitter, address account, address subaccount) public {
         bytes32 setKey = Keys.subaccountListKey(account);
         dataStore.addAddress(setKey, subaccount);
 
@@ -31,12 +37,7 @@ library SubaccountUtils {
         eventData.addressItems.setItem(0, "account", account);
         eventData.addressItems.setItem(1, "subaccount", subaccount);
 
-        eventEmitter.emitEventLog2(
-            "AddSubaccount",
-            Cast.toBytes32(account),
-            Cast.toBytes32(subaccount),
-            eventData
-        );
+        eventEmitter.emitEventLog2("AddSubaccount", Cast.toBytes32(account), Cast.toBytes32(subaccount), eventData);
     }
 
     function removeSubaccount(
@@ -54,12 +55,40 @@ library SubaccountUtils {
         eventData.addressItems.setItem(0, "account", account);
         eventData.addressItems.setItem(1, "subaccount", subaccount);
 
-        eventEmitter.emitEventLog2(
-            "RemoveSubaccount",
-            Cast.toBytes32(account),
-            Cast.toBytes32(subaccount),
-            eventData
-        );
+        eventEmitter.emitEventLog2("RemoveSubaccount", Cast.toBytes32(account), Cast.toBytes32(subaccount), eventData);
+    }
+
+    function handleSubaccountApproval(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address account,
+        SubaccountApproval calldata subaccountApproval
+    ) external {
+        if (subaccountApproval.maxAllowedCount > 0) {
+            setMaxAllowedSubaccountActionCount(
+                dataStore,
+                eventEmitter,
+                account,
+                subaccountApproval.subaccount,
+                subaccountApproval.actionType,
+                subaccountApproval.maxAllowedCount
+            );
+        }
+
+        if (subaccountApproval.expiresAt > 0) {
+            setSubaccountExpiresAt(
+                dataStore,
+                eventEmitter,
+                account,
+                subaccountApproval.subaccount,
+                subaccountApproval.actionType,
+                subaccountApproval.expiresAt
+            );
+        }
+
+        if (subaccountApproval.shouldAdd) {
+            addSubaccount(dataStore, eventEmitter, account, subaccountApproval.subaccount);
+        }
     }
 
     function handleSubaccountAction(
@@ -67,12 +96,13 @@ library SubaccountUtils {
         EventEmitter eventEmitter,
         address account,
         address subaccount,
-        bytes32 actionType
+        bytes32 actionType,
+        uint256 actionsCount
     ) external {
         validateSubaccount(dataStore, account, subaccount);
 
         bytes32 key = Keys.subaccountActionCountKey(account, subaccount, actionType);
-        uint256 nextValue = dataStore.incrementUint(key, 1);
+        uint256 nextValue = dataStore.incrementUint(key, actionsCount);
         validateSubaccountActionCountAndExpiresAt(dataStore, account, subaccount, actionType, nextValue);
 
         EventUtils.EventLogData memory eventData;
@@ -102,7 +132,7 @@ library SubaccountUtils {
         address subaccount,
         bytes32 actionType,
         uint256 expiresAt
-    ) external {
+    ) public {
         bytes32 key = Keys.subaccountExpiresAtKey(account, subaccount, actionType);
         dataStore.setUint(key, expiresAt);
 
@@ -133,7 +163,7 @@ library SubaccountUtils {
         address subaccount,
         bytes32 actionType,
         uint256 maxAllowedCount
-    ) external {
+    ) public {
         bytes32 key = Keys.maxAllowedSubaccountActionCountKey(account, subaccount, actionType);
         dataStore.setUint(key, maxAllowedCount);
 
@@ -179,11 +209,7 @@ library SubaccountUtils {
         }
     }
 
-    function validateSubaccount(
-        DataStore dataStore,
-        address account,
-        address subaccount
-    ) internal view {
+    function validateSubaccount(DataStore dataStore, address account, address subaccount) internal view {
         bytes32 setKey = Keys.subaccountListKey(account);
         if (!dataStore.containsAddress(setKey, subaccount)) {
             revert Errors.SubaccountNotAuthorized(account, subaccount);
