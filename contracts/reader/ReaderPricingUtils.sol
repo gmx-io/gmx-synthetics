@@ -180,7 +180,7 @@ library ReaderPricingUtils {
                 indexTokenPrice
             );
         } else {
-             (result.priceImpactUsd, /* totalImpactAmount */, result.executionPrice, result.balanceWasImproved) = PositionUtils.getExecutionPriceForDecrease(
+             (result.priceImpactUsd, result.executionPrice, result.balanceWasImproved) = PositionUtils.getExecutionPriceForDecrease(
                 params,
                 indexTokenPrice
             );
