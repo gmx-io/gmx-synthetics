@@ -60,6 +60,5 @@ contract ConfigTimelockController is TimelockController, OracleModule {
             amount,
             oracle
         );
-
     }
 }
