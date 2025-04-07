@@ -1070,6 +1070,7 @@ const config: {
         decimals: 8,
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
+      buybackMaxPriceImpactFactor: percentageToFloat("0.10%"),
     },
     LINK: {
       address: "0x5947BB275c521040051D82396192181b413227A3",
