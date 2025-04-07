@@ -23,7 +23,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         BaseGelatoRelayRouter(_router, _dataStore, _eventEmitter, _oracle, _orderHandler, _orderVault, _externalHandler)
     {}
 
-    // @note all params except subaccount should be part of the corresponding struct hash
+    // @note all params except account should be part of the corresponding struct hash
     function batch(
         RelayParams calldata relayParams,
         address account,
