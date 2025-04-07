@@ -73,8 +73,8 @@ function printResults(contractInfos: ContractInfo[]) {
     } else {
       console.log(`❌${contractInfo.name} is not valid. Sources do not match. See diff in validation folder`);
     }
-    console.log(`Following roles signalled:`);
-    for (const signalledRole of contractInfo.signalledRoles) {
+    console.log(`Following roles approved:`);
+    for (const signalledRole of contractInfo.approvedRoles) {
       `- ${roleLabels[signalledRole]}`;
     }
     for (const unapprovedRole of contractInfo.unapprovedRoles) {
@@ -104,6 +104,7 @@ async function extractRolesFromTx(txReceipt: TransactionReceipt): Promise<Contra
           isCodeValidated: false,
           signalledRoles: [signal.roleKey],
           unapprovedRoles: [],
+          approvedRoles: [],
         });
       }
     }
@@ -114,10 +115,14 @@ async function extractRolesFromTx(txReceipt: TransactionReceipt): Promise<Contra
 async function validateRoles(contractInfo: ContractInfo) {
   const { requiredRolesForContracts } = await hre.gmx.getRoles();
   for (const signalledRole of contractInfo.signalledRoles) {
-    if (!(await checkRole(contractInfo.name, contractInfo.address, signalledRole, requiredRolesForContracts))) {
+    if (await checkRole(contractInfo.name, contractInfo.address, signalledRole, requiredRolesForContracts)) {
+      contractInfo.approvedRoles.push(signalledRole);
+    } else {
       contractInfo.unapprovedRoles.push(signalledRole);
     }
   }
+  // clear signalled roles to avoid double validation
+  contractInfo.signalledRoles = [];
   console.log(`✅ Roles for ${contractInfo.name} validated`);
 }
 

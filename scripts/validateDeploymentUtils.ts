@@ -3,9 +3,10 @@ import hre, { ethers } from "hardhat";
 import * as fs from "fs";
 import * as path from "path";
 import { JsonRpcProvider } from "@ethersproject/providers";
-import { getContractCreationFromEtherscan, getIsGmxDeployer } from "./validateRolesUtils";
+import { getIsGmxDeployer } from "./validateRolesUtils";
 import { execSync } from "child_process";
-import readline from "node:readline";
+import { getContractCreationFromEtherscan } from "./etherscanUtils";
+import { FileCache } from "./cacheUtils";
 
 export interface SignalRoleInfo {
   account: string;
@@ -18,6 +19,7 @@ export interface ContractInfo {
   isCodeValidated: boolean;
   signalledRoles: string[];
   unapprovedRoles: string[];
+  approvedRoles: string[];
 }
 
 export interface DeploymentInfo {
@@ -26,7 +28,47 @@ export interface DeploymentInfo {
   deploymentTxHash: string;
 }
 
+export interface Artifact {
+  contractName: string;
+  sourceName: string;
+  abi: string;
+  bytecode: string;
+  deployedBytecode: string;
+  linkReferences: Record<
+    string,
+    Record<
+      string,
+      {
+        length: number;
+        start: number;
+      }[]
+    >
+  >;
+}
+
+export interface SourcifyResponse {
+  compilation: {
+    name: string;
+  };
+  // keys are contract names and values are source codes
+  sources: Record<
+    string,
+    {
+      content: string;
+    }
+  >;
+  verifiedAt: string;
+  creationMatch: string;
+  match: string;
+  address: string;
+  chainId: number;
+}
+
 export async function validateSourceCode(provider: JsonRpcProvider, contractInfo: ContractInfo) {
+  if (contractInfo.isCodeValidated) {
+    console.log(`${contractInfo.name} already validated`);
+    return;
+  }
   const { contractCreator } = await getContractCreationFromEtherscan(contractInfo.address);
   if (!getIsGmxDeployer(contractCreator)) {
     throw new Error(`❌ Contract creator for ${contractInfo.address} is not GMX!`);
@@ -44,23 +86,39 @@ export async function validateSourceCode(provider: JsonRpcProvider, contractInfo
 // Validate contract using sourcify verified one as reference.
 const SOURCIFY_API_ENDPOINT = "https://sourcify.dev/server/v2/contract";
 
+const SOURCIFY_CACHE_VERSION = 1;
+const sourcifyCache = new FileCache<SourcifyResponse>("sourcifyInfo.json", SOURCIFY_CACHE_VERSION);
+
+async function getSourcifyData(contractAddress: string): Promise<SourcifyResponse> {
+  const chainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
+  if (sourcifyCache.has(`${contractAddress}-${chainId}`)) {
+    return sourcifyCache.get(`${contractAddress}-${chainId}`);
+  }
+  const url = `${SOURCIFY_API_ENDPOINT}/${chainId}/${contractAddress}`;
+
+  const fields = "sources,compilation";
+  const response = await axios.get(url, {
+    params: {
+      fields,
+    },
+  });
+  if (response.status != 200) {
+    throw new Error("sources are not validated");
+  }
+  sourcifyCache.set(`${contractAddress}-${chainId}`, response.data);
+  return response.data;
+}
+
 async function validateWithSourcify(contractInfo: ContractInfo): Promise<boolean> {
   console.log(`Trying to validate ${contractInfo.address} via sourcify`);
-  const chainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
-  const url = `${SOURCIFY_API_ENDPOINT}/${chainId}/${contractInfo.address}`;
   try {
-    const path = url + "?fields=sources,compilation";
-    const response = await axios.get(path);
-    if (response.status != 200) {
-      //Source code not verified
-      return false;
-    }
+    const sourcifyData: SourcifyResponse = await getSourcifyData(contractInfo.address);
 
-    contractInfo.name = response.data.compilation.name;
+    contractInfo.name = sourcifyData.compilation.name;
     console.log(`Resolved as ${contractInfo.name}`);
 
-    for (const [filename, data] of Object.entries(response.data.sources)) {
-      const result = await validateSourceFile(filename, data["content"]);
+    for (const [filename, data] of Object.entries(sourcifyData.sources)) {
+      const result = validateSourceFile(filename, data["content"]);
       if (!result) {
         return false;
       }
@@ -73,7 +131,7 @@ async function validateWithSourcify(contractInfo: ContractInfo): Promise<boolean
   }
 }
 
-async function validateSourceFile(fullContractName: string, sourceCode: string): Promise<boolean> {
+function validateSourceFile(fullContractName: string, sourceCode: string): boolean {
   try {
     let filePath = path.join(__dirname, "../node_modules/" + fullContractName);
     if (!fs.existsSync(filePath)) {
@@ -86,7 +144,7 @@ async function validateSourceFile(fullContractName: string, sourceCode: string):
       return true;
     } else {
       console.error(`❌ Sources mismatch for ${fullContractName}. Resolving diff`);
-      await showDiff(filePath, sourceCode, fullContractName.replaceAll("/", "-"));
+      showDiff(filePath, sourceCode, fullContractName.replaceAll("/", "-"));
       return false;
     }
   } catch (error) {
@@ -94,7 +152,7 @@ async function validateSourceFile(fullContractName: string, sourceCode: string):
   }
 }
 
-async function showDiff(localPath: string, sourceCode: string, contractName: string) {
+function showDiff(localPath: string, sourceCode: string, contractName: string) {
   const outDir = path.join(__dirname, "../validation");
   if (!fs.existsSync(outDir)) {
     fs.mkdirSync(outDir);
@@ -115,14 +173,14 @@ async function showDiff(localPath: string, sourceCode: string, contractName: str
 async function compareContractBytecodes(provider: JsonRpcProvider, contractInfo: ContractInfo): Promise<void> {
   console.log("Comparing bytecodes with compilation artifact");
 
-  const { contractName, constructorArgs, deploymentTxHash } = await extractContractNameAndArgsFromDeployment(
+  const { contractName, constructorArgs, deploymentTxHash } = extractContractNameAndArgsFromDeployment(
     contractInfo.address
   );
   contractInfo.name = contractName;
 
-  await compileContract(contractName);
+  compileContract(contractName);
 
-  const artifactBytecode = await getBytecodeWithLinks(contractName);
+  const artifactBytecode = getBytecodeWithLinks(contractName);
 
   const Contract = await ethers.getContract(contractName);
   if (!Contract) {
@@ -176,10 +234,10 @@ function stripBytecodeIpfsHash(bytecode: string): string {
   return bytecode.slice(0, storageTagIndex + ipfsTag.length) + bytecode.slice(compilerTagIndex);
 }
 
-async function extractContractNameAndArgsFromDeployment(contractAddress: string): Promise<DeploymentInfo> {
+function extractContractNameAndArgsFromDeployment(contractAddress: string): DeploymentInfo {
   const deploymentsPath = path.join(__dirname, "../deployments/" + hre.network.name);
   const searchContractDeployment = checkAddressInFile(contractAddress);
-  const deployment = await searchDirectory(deploymentsPath, searchContractDeployment);
+  const deployment = searchDirectory(deploymentsPath, searchContractDeployment);
   if (!deployment) {
     throw new Error(`Could not find deployment ${contractAddress}`);
   }
@@ -194,10 +252,10 @@ async function extractContractNameAndArgsFromDeployment(contractAddress: string)
   };
 }
 
-async function getArtifact(contractName: string): Promise<any> {
+function getArtifact(contractName: string): Artifact {
   const findContract = findFile(contractName + ".json");
   const buildPath = path.join(__dirname, "../artifacts/contracts/");
-  const searchResult = await searchDirectory(buildPath, findContract);
+  const searchResult = searchDirectory(buildPath, findContract);
   if (!searchResult) {
     throw new Error("Artifact not found");
   }
@@ -205,8 +263,8 @@ async function getArtifact(contractName: string): Promise<any> {
   return JSON.parse(fs.readFileSync(searchResult, "utf-8"));
 }
 
-async function getBytecodeWithLinks(contractName: string): Promise<string> {
-  const artifact = await getArtifact(contractName);
+function getBytecodeWithLinks(contractName: string): string {
+  const artifact = getArtifact(contractName);
 
   // convert string to array for inplace replacement
   const arrayBytecode = artifact.bytecode.split("");
@@ -217,7 +275,7 @@ async function getBytecodeWithLinks(contractName: string): Promise<string> {
 
     const deploymentFilename = "./deployments/" + hre.network.name + "/" + dependencyName + ".json";
     // extract deployed dependency address and trim 0x
-    const addr = (await getAddressFromDeployment(deploymentFilename)).substring(2);
+    const addr = getAddressFromDeployment(deploymentFilename).substring(2);
 
     for (const position of dependencyPositions) {
       // calculate link index. Each byte is 2 symbols + 0x at the start.
@@ -229,11 +287,11 @@ async function getBytecodeWithLinks(contractName: string): Promise<string> {
   return arrayBytecode.join("");
 }
 
-async function compileContract(contractName: string) {
+function compileContract(contractName: string) {
   // Find artifact with our contract and remove it to force recompilation of this contract
   const findContract = findFile(contractName + ".sol");
   const buildPath = path.join(__dirname, "../artifacts/contracts/");
-  const searchResult = await searchDirectory(buildPath, findContract);
+  const searchResult = searchDirectory(buildPath, findContract);
   if (searchResult) {
     fs.rmSync(searchResult, { recursive: true, force: true });
   }
@@ -243,22 +301,13 @@ async function compileContract(contractName: string) {
 }
 
 //Using streaming read cause file can be big
-const getAddressFromDeployment = async (filename: string): Promise<string | null> => {
+const getAddressFromDeployment = (filename: string): string | null => {
   if (fs.lstatSync(filename).isDirectory()) {
     return null;
   }
 
   try {
-    const fileStream = fs.createReadStream(filename);
-    const rl = readline.createInterface({ input: fileStream, crlfDelay: Infinity });
-
-    for await (const line of rl) {
-      const match = line.match(/"address":\s*"(0x[^"]+)"/);
-      if (match) {
-        return match[1];
-      }
-    }
-    return null;
+    return JSON.parse(fs.readFileSync(filename, "utf-8")).address ?? null;
   } catch (error) {
     console.error("Error reading file:", error);
     return null;
@@ -267,30 +316,30 @@ const getAddressFromDeployment = async (filename: string): Promise<string | null
 
 const checkAddressInFile =
   (address: string) =>
-  async (filename: string): Promise<boolean> => {
-    const deploymentAddress = await getAddressFromDeployment(filename);
+  (filename: string): boolean => {
+    const deploymentAddress = getAddressFromDeployment(filename);
     return deploymentAddress === address;
   };
 
 const findFile =
   (searchFile: string) =>
-  (filename: string): Promise<boolean> => {
-    return Promise.resolve(filename.endsWith(searchFile));
+  (filename: string): boolean => {
+    return filename.endsWith(searchFile);
   };
 
 // Search recursively through all files in the `dirPath` and test it with `condition`
 // Returns filename when condition is true
-async function searchDirectory(dirPath: string, condition: (filename: string) => Promise<boolean>): Promise<string> {
+function searchDirectory(dirPath: string, condition: (filename: string) => boolean): string {
   const contractFiles = fs.readdirSync(dirPath);
   for (const file of contractFiles) {
     const name = path.join(dirPath, file);
 
-    if (await condition(name)) {
+    if (condition(name)) {
       return name;
     }
 
     if (fs.lstatSync(name).isDirectory()) {
-      const result = await searchDirectory(name, condition);
+      const result = searchDirectory(name, condition);
       if (result) {
         return result;
       }
