@@ -271,6 +271,27 @@ export const MULTICHAIN_PEERS = hashString("MULTICHAIN_PEERS");
 export const MULTICHAIN_CONFIRMATIONS = hashString("MULTICHAIN_CONFIRMATIONS");
 export const MULTICHAIN_AUTHORIZED_ORIGINATORS = hashString("MULTICHAIN_AUTHORIZED_ORIGINATORS");
 
+export const FEE_DISTRIBUTOR_DISTRIBUTION_DAY = hashString("FEE_DISTRIBUTOR_DISTRIBUTION_DAY");
+export const FEE_DISTRIBUTOR_REFERRAL_REWARDS_WNT_USD_LIMIT = hashString("FEE_DISTRIBUTOR_REFERRAL_REWARDS_WNT_USD_LIMIT");
+export const FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY = hashString("FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY");
+export const FEE_DISTRIBUTOR_GAS_LIMIT = hashString("FEE_DISTRIBUTOR_GAS_LIMIT");
+export const FEE_DISTRIBUTOR_CHAIN_ID = hashString("FEE_DISTRIBUTOR_CHAIN_ID");
+export const FEE_DISTRIBUTOR_FEE_AMOUNT_GMX = hashString("FEE_DISTRIBUTOR_FEE_AMOUNT_GMX");
+export const FEE_DISTRIBUTOR_TOTAL_FEE_AMOUNT_GMX = hashString("FEE_DISTRIBUTOR_TOTAL_FEE_AMOUNT_GMX");
+export const FEE_DISTRIBUTOR_STAKED_GMX = hashString("FEE_DISTRIBUTOR_STAKED_GMX");
+export const FEE_DISTRIBUTOR_TOTAL_STAKED_GMX = hashString("FEE_DISTRIBUTOR_TOTAL_STAKED_GMX");
+export const FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_FACTOR = hashString("FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_FACTOR");
+export const FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_AMOUNT = hashString("FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_AMOUNT");
+export const FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP = hashString("FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP");
+export const FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID = hashString("FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID");
+export const FEE_DISTRIBUTOR_ADDRESS_INFO = hashString("FEE_DISTRIBUTOR_ADDRESS_INFO");
+export const FEE_DISTRIBUTOR_AMOUNT_THRESHOLD = hashString("FEE_DISTRIBUTOR_AMOUNT_THRESHOLD");
+export const FEE_DISTRIBUTOR_KEEPER_COSTS = hashString("FEE_DISTRIBUTOR_KEEPER_COSTS");
+export const FEE_DISTRIBUTOR_KEEPER_GLP_FACTOR = hashString("FEE_DISTRIBUTOR_KEEPER_GLP_FACTOR");
+export const FEE_DISTRIBUTOR_CHAINLINK_FACTOR = hashString("FEE_DISTRIBUTOR_CHAINLINK_FACTOR");
+export const FEE_DISTRIBUTOR_BRIDGE_ORIGIN_DEADLINE = hashString("FEE_DISTRIBUTOR_BRIDGE_ORIGIN_DEADLINE");
+export const FEE_DISTRIBUTOR_BRIDGE_DEST_DEADLINE = hashString("FEE_DISTRIBUTOR_BRIDGE_DEST_DEADLINE");
+
 export const VALID_FROM_TIME = hashString("VALID_FROM_TIME");
 
 export const MAX_DATA_LENGTH = hashString("MAX_DATA_LENGTH");
@@ -857,4 +878,32 @@ export function multichainConfirmationsKey(eid: string) {
 
 export function multichainAuthorizedOriginatorsKey(originator: string) {
   return hashData(["bytes32", "address"], [MULTICHAIN_AUTHORIZED_ORIGINATORS, originator]);
+}
+
+export function feeDistributorFeeAmountGmxKey(chainId: number) {
+  return hashData(["bytes32", "uint256"], [FEE_DISTRIBUTOR_FEE_AMOUNT_GMX, chainId]);
+}
+
+export function feeDistributorStakedGmxKey(chainId: number) {
+  return hashData(["bytes32", "uint256"], [FEE_DISTRIBUTOR_STAKED_GMX, chainId]);
+}
+
+export function feeDistributorBridgeSlippageFactorKey(chainId: number) {
+  return hashData(["bytes32", "uint256"], [FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_FACTOR, chainId]);
+}
+
+export function feeDistributorLayerZeroChainIdKey(chainId: number) {
+  return hashData(["bytes32", "uint256"], [FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID, chainId]);
+}
+
+export function feeDistributorAddressInfoKey(chainId: number, addressName: string) {
+  return hashData(["bytes32", "uint256", "bytes32"], [FEE_DISTRIBUTOR_ADDRESS_INFO, chainId, addressName]);
+}
+
+export function feeDistributorAmountThresholdKey(amountThresholdType: string) {
+  return hashData(["bytes32", "bytes32"], [FEE_DISTRIBUTOR_AMOUNT_THRESHOLD, amountThresholdType]);
+}
+
+export function feeDistributorBridgeOriginDeadlineKey(chainId: number) {
+  return hashData(["bytes32", "uint256"], [FEE_DISTRIBUTOR_BRIDGE_ORIGIN_DEADLINE, chainId]);
 }
