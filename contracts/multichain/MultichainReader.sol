@@ -15,12 +15,6 @@ import "../role/RoleModule.sol";
 import "../event/EventEmitter.sol";
 
 contract MultichainReader is RoleModule {
-    uint256 public testTimestamp;
-    uint256 public testData;
-    bytes32 public testGuid;
-    address public testOriginator;
-    address public initialtestOriginator;
-
     using EventUtils for EventUtils.AddressItems;
     using EventUtils for EventUtils.Bytes32Items;
     using EventUtils for EventUtils.BytesItems;
@@ -77,8 +71,6 @@ contract MultichainReader is RoleModule {
             MessagingFee(msg.value, 0),
             payable(originator)
         );
-
-        initialtestOriginator = dataStore.getAddress(Keys.multichainGuidToOriginatorKey(guid));
 
         EventUtils.EventLogData memory eventData;
 
@@ -191,11 +183,6 @@ contract MultichainReader is RoleModule {
         address originator = dataStore.getAddress(Keys.multichainGuidToOriginatorKey(_guid));
         MultichainReaderUtils.ReceivedData memory receivedData = MultichainReaderUtils.ReceivedData(timestamp, message);
         IOriginator(originator).processLzReceive(_guid, receivedData);
-
-        testTimestamp = receivedData.timestamp;
-        testData = abi.decode(receivedData.readData, (uint256));
-        testGuid = _guid;
-        testOriginator = originator;
 
         EventUtils.EventLogData memory eventData;
 

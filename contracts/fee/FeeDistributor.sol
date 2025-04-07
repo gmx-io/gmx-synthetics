@@ -49,6 +49,8 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
     address public immutable esGmx;
     address public immutable wnt;
 
+    receive() external payable {}
+
     constructor(
         RoleStore _roleStore,
         Oracle _oracle,
@@ -86,7 +88,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         uint256 chainIdsLength = chainIds.length;
         MultichainReaderUtils.ReadRequestInputs[]
             memory readRequestInputs = new MultichainReaderUtils.ReadRequestInputs[]((chainIdsLength - 1) * 3);
-        bool skippedCurrentChain;
+        uint256 remoteChainIndex;
         for (uint256 i; i < chainIdsLength; i++) {
             uint256 chainId = chainIds[i];
             address extendedGmxTracker = getAddress(chainId, extendedGmxTrackerKey);
@@ -97,13 +99,12 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
                 uint256 stakedGmx = IERC20(extendedGmxTracker).totalSupply();
                 setUint(Keys.feeDistributorFeeAmountGmxKey(chainId), feeAmountGmxCurrentChain);
                 setUint(Keys.feeDistributorStakedGmxKey(chainId), stakedGmx);
-                skippedCurrentChain = true;
                 continue;
             }
 
             address gmxOnChainId = getAddress(chainId, gmxKey);
             uint32 layerZeroChainId = uint32(getUint(Keys.feeDistributorLayerZeroChainIdKey(chainId)));
-            uint256 readRequestIndex = skippedCurrentChain ? (i - 1) * 3 : i * 3;
+            uint256 readRequestIndex = remoteChainIndex * 3;
             readRequestInputs[readRequestIndex] = setReadRequestInput(
                 layerZeroChainId,
                 getAddress(chainId, dataStoreKey),
@@ -123,17 +124,18 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
                 extendedGmxTracker,
                 abi.encodeWithSelector(IERC20.totalSupply.selector)
             );
+            remoteChainIndex++;
         }
 
         MultichainReaderUtils.ExtraOptionsInputs memory extraOptionsInputs;
         extraOptionsInputs.gasLimit = uint128(getUint(Keys.FEE_DISTRIBUTOR_GAS_LIMIT));
         extraOptionsInputs.returnDataSize = ((uint32(chainIdsLength) - 1) * 96) + 8;
 
+        setDistributionState(uint256(DistributionState.Initiated));
+
         // calculate native token fee required and execute multichainReader.sendReadRequests LZRead request
         MessagingFee memory messagingFee = multichainReader.quoteReadFee(readRequestInputs, extraOptionsInputs);
         multichainReader.sendReadRequests{ value: messagingFee.nativeFee }(readRequestInputs, extraOptionsInputs);
-
-        setDistributionState(uint256(DistributionState.Initiated));
 
         EventUtils.EventLogData memory eventData;
         eventData.uintItems.initItems(2);
@@ -148,40 +150,43 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
     function processLzReceive(
         bytes32 /*guid*/,
         MultichainReaderUtils.ReceivedData calldata receivedData
-    ) external nonReentrant onlyMultichainReader {
+    ) external onlyMultichainReader {
         // validate the distribution state and that the LZRead response is within the acceptable time limit
         validateDistributionState(DistributionState.Initiated);
         validateReadResponseTimestamp(receivedData.timestamp);
 
+        // withdraw any GMX fees remaining in the feeHandler
+        feeHandler.withdrawFees(gmx);
+
         // set the current chain and LZRead response fee amounts, staked GMX amounts, timestamp and current chain WNT price
         uint256[] memory chainIds = getUintArray(Keys.FEE_DISTRIBUTOR_CHAIN_ID);
-        uint256 chainIdsLength = chainIds.length;
-        uint256[] memory feeAmountsGmx = createUintArray(chainIdsLength);
-        uint256[] memory stakedAmountsGmx = createUintArray(chainIdsLength);
+        uint256[] memory feeAmountsGmx = createUintArray(chainIds.length);
+        uint256[] memory stakedAmountsGmx = createUintArray(chainIds.length);
         uint256 feeAmountGmxCurrentChain = getUint(Keys.feeDistributorFeeAmountGmxKey(block.chainid));
         uint256 stakedGmxCurrentChain = getUint(Keys.feeDistributorStakedGmxKey(block.chainid));
-        uint256 currentChainIndex;
         uint256 totalFeeAmountGmx;
         uint256 totalStakedGmx;
-        for (uint256 i; i < chainIdsLength; i++) {
+        uint256 currentChainIndex;
+        uint256 remoteChainIndex;
+        for (uint256 i; i < chainIds.length; i++) {
             uint256 chainId = chainIds[i];
-            bool skippedCurrentChain;
+
             if (chainId == block.chainid) {
                 feeAmountsGmx[i] = feeAmountGmxCurrentChain;
                 stakedAmountsGmx[i] = stakedGmxCurrentChain;
                 totalFeeAmountGmx += feeAmountGmxCurrentChain;
                 totalStakedGmx += stakedGmxCurrentChain;
                 currentChainIndex = i;
-                skippedCurrentChain = true;
                 continue;
             }
-            (uint256 feeAmountGmx, uint256 stakedGmx) = decodeReadData(receivedData.readData, skippedCurrentChain, i);
+            (uint256 feeAmountGmx, uint256 stakedGmx) = decodeReadData(receivedData.readData, remoteChainIndex);
             feeAmountsGmx[i] = feeAmountGmx;
             stakedAmountsGmx[i] = stakedGmx;
             totalFeeAmountGmx += feeAmountGmx;
             totalStakedGmx += stakedGmx;
             setUint(Keys.feeDistributorFeeAmountGmxKey(chainId), feeAmountGmx);
             setUint(Keys.feeDistributorStakedGmxKey(chainId), stakedGmx);
+            remoteChainIndex++;
         }
         setUint(Keys.FEE_DISTRIBUTOR_TOTAL_FEE_AMOUNT_GMX, totalFeeAmountGmx);
         setUint(Keys.FEE_DISTRIBUTOR_TOTAL_STAKED_GMX, totalStakedGmx);
@@ -221,9 +226,8 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         }
 
         EventUtils.EventLogData memory eventData;
-        eventData.uintItems.initItems(2);
-        eventData = setUintItem(eventData, 0, "numberOfChainsReceivedData", chainIdsLength - 1);
-        eventData = setUintItem(eventData, 1, "feeAmountGmxCurrentChain", feeAmountGmxCurrentChain);
+        eventData.uintItems.initItems(1);
+        eventData = setUintItem(eventData, 0, "feeAmountGmxCurrentChain", feeAmountGmxCurrentChain);
         eventData.bytesItems.initItems(1);
         eventData.bytesItems.setItem(0, "receivedData", abi.encode(receivedData));
         eventData.boolItems.initItems(1);
@@ -294,9 +298,8 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         validateReadResponseTimestamp(getUint(Keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP));
         validateDistributionNotCompleted();
 
-        //withdraw any WNT and GMX fees remaining in the feeHandler
+        // withdraw any WNT fees remaining in the feeHandler
         feeHandler.withdrawFees(wnt);
-        feeHandler.withdrawFees(gmx);
 
         // calculate the WNT GLP fees and other costs
         (
@@ -803,12 +806,11 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
 
     function decodeReadData(
         bytes calldata readData,
-        bool skippedCurrentChain,
-        uint256 i
+        uint256 remoteChainIndex
     ) internal pure returns (uint256, uint256) {
-        uint256 offset = skippedCurrentChain ? (i - 1) * 96 : i * 96;
+        uint256 offset = remoteChainIndex * 96;
         (uint256 feeAmountGmx1, uint256 feeAmountGmx2, uint256 stakedGmx) = abi.decode(
-            readData[offset:offset + 96],
+            readData[offset:(offset + 96)],
             (uint256, uint256, uint256)
         );
         uint256 feeAmount = feeAmountGmx1 + feeAmountGmx2;

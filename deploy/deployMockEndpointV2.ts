@@ -4,7 +4,7 @@ import { createDeployFunction } from "../utils/deploy";
 const func = createDeployFunction({
   contractName: "MockEndpointV2",
   getDeployArgs: async () => {
-    const eid = 1;
+    const eid = 1000;
     return [eid];
   },
 });

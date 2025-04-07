@@ -3,14 +3,14 @@ import { defaultAbiCoder, toUtf8Bytes } from "ethers/lib/utils";
 import { expandDecimals } from "../../utils/math";
 import { deployFixture } from "../../utils/fixture";
 import { encodeData } from "../../utils/hash";
-// import { bigNumberify } from "../../utils/math";
+import { deployContract } from "../../utils/deploy";
 import * as keys from "../../utils/keys";
 
 describe("MultichainReader", function () {
-  let user0, user1;
-
   // Constant representing a mock Endpoint ID for testing purposes
-  const eid = 1;
+  const eid1 = 1000;
+  const eid2 = 2000;
+  const eid3 = 3000;
 
   // Constant representing a channel ID for testing purposes
   const channelId = 1001;
@@ -18,29 +18,26 @@ describe("MultichainReader", function () {
   // Number of confirmations used for test
   const numberOfConfirmations = 1;
 
-  let fixture;
-  let multichainReader,
+  let fixture,
+    multichainReader,
     mockEndpointV2,
     mockMultichainReaderOriginator,
-    dataStore,
+    gmx,
+    config,
+    user0,
+    user1,
     mockLzReadResponse1,
-    mockLzReadResponse2,
-    gmx;
+    mockLzReadResponse2;
 
   // beforeEach hook for setup that runs before each test in the block
   beforeEach(async function () {
     fixture = await deployFixture();
-    ({
-      multichainReader,
-      mockEndpointV2,
-      mockMultichainReaderOriginator,
-      dataStore,
-      mockLzReadResponse1,
-      mockLzReadResponse2,
-      gmx,
-    } = fixture.contracts);
+    ({ multichainReader, mockEndpointV2, mockMultichainReaderOriginator, gmx, config } = fixture.contracts);
 
     ({ user0, user1 } = fixture.accounts);
+
+    mockLzReadResponse1 = await deployContract("MockLzReadResponse", []);
+    mockLzReadResponse2 = await deployContract("MockLzReadResponse", []);
 
     // Setting destination endpoint in mockEndpointV2
     await mockEndpointV2.setDestLzEndpoint(multichainReader.address, mockEndpointV2.address);
@@ -51,13 +48,18 @@ describe("MultichainReader", function () {
     const originator = mockMultichainReaderOriginator.address;
 
     // Setting LZRead configuration in dataStore for multichainReader and mockMultichainReaderOriginator
-    await dataStore.setBool(keys.multichainAuthorizedOriginatorsKey(originator), "true");
-    await dataStore.setUint(keys.MULTICHAIN_READ_CHANNEL, channelId);
-    await dataStore.setBytes32(
-      keys.multichainPeersKey(channelId),
+    await config.setBool(keys.MULTICHAIN_AUTHORIZED_ORIGINATORS, encodeData(["address"], [originator]), "true");
+    await config.setUint(keys.MULTICHAIN_READ_CHANNEL, "0x", channelId);
+    await config.setBytes32(
+      keys.MULTICHAIN_PEERS,
+      encodeData(["uint256"], [channelId]),
       ethers.utils.hexZeroPad(multichainReader.address, 32)
     );
-    await dataStore.setUint(keys.multichainConfirmationsKey(eid), numberOfConfirmations);
+    await config.setUint(
+      keys.MULTICHAIN_AUTHORIZED_ORIGINATORS,
+      encodeData(["uint256"], [eid1]),
+      numberOfConfirmations
+    );
   });
 
   // Validate LZRead with one read request with no input params to one contract
@@ -81,7 +83,7 @@ describe("MultichainReader", function () {
     ]);
     const readRequestInputs = [
       {
-        targetChainEid: eid,
+        targetChainEid: eid1,
         target: mockLzReadResponse1.address,
         callData: callData,
       },
@@ -111,6 +113,16 @@ describe("MultichainReader", function () {
 
   // Validate LZRead with three read request with no input params to one contract
   it("should read 3 test messages", async function () {
+    await config.setUint(
+      keys.MULTICHAIN_AUTHORIZED_ORIGINATORS,
+      encodeData(["uint256"], [eid2]),
+      numberOfConfirmations
+    );
+    await config.setUint(
+      keys.MULTICHAIN_AUTHORIZED_ORIGINATORS,
+      encodeData(["uint256"], [eid3]),
+      numberOfConfirmations
+    );
     // Assert initial state of data in mockMultichainReaderOriginator
     let latestReceivedData = await mockMultichainReaderOriginator.latestReceivedData();
     expect(latestReceivedData.timestamp).to.equal(encodeData(["uint256"], [0]));
@@ -140,17 +152,17 @@ describe("MultichainReader", function () {
     const callData3 = functionSignature3.encodeFunctionData("totalSupply");
     const readRequestInputs = [
       {
-        targetChainEid: eid,
+        targetChainEid: eid1,
         target: mockLzReadResponse1.address,
         callData: callData1,
       },
       {
-        targetChainEid: eid,
+        targetChainEid: eid2,
         target: gmx.address,
         callData: callData2,
       },
       {
-        targetChainEid: eid,
+        targetChainEid: eid3,
         target: mockLzReadResponse2.address,
         callData: callData3,
       },
