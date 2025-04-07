@@ -50,6 +50,15 @@ struct TokenPermit {
 // @note when using external calls for position collateral and creating multiple orders via `batch()`
 // then the funds will be allocated to the first increase order because all external calls are processed first
 // and only then OrderVault's balance is used for order's initialCollateralDeltaAmount
+//
+// @note using external calls for position collateral and atomic swaps for relay fee at the same time should be done with caution
+// if position collateral and initial relay fee token are the same then the collateral will be lost
+// for example, a user wants to pay ARB to open a position with USDC as collateral and pay USDC as a relay fee
+// 1. external calls swap ARB for USDC and sends USDC to the OrderVault to use as position collateral
+// 2. USDC is sent to the OrderVault before the swap
+// 3. on swap OrderVault.tokenBalances are synced
+// 4. on order creation OrderVault.recordTransferInt returns 0
+// 5. the collateral is lost
 struct ExternalCalls {
     // Gelato Relay Router contracts do not support `multicall` and `sendTokens` methods
     // so all tokens and amounts should be specified here
