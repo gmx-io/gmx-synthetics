@@ -57,6 +57,8 @@ library Errors {
     error InvalidFeeReceiver(address receiver);
     error InvalidOracleSigner(address signer);
     error InvalidHoldingAddress(address account);
+    error EmptyPositionImpactWithdrawalAmount();
+    error OraclePriceOutdated();
 
     // GlvDepositStoreUtils errors
     error GlvDepositNotFound(bytes32 key);
@@ -199,6 +201,9 @@ library Errors {
     error InvalidMarketTokenBalanceForCollateralAmount(address market, address token, uint256 balance, uint256 collateralAmount);
     error InvalidMarketTokenBalanceForClaimableFunding(address market, address token, uint256 balance, uint256 claimableFundingFeeAmount);
     error UnexpectedPoolValue(int256 poolValue);
+
+    // MarketPositionImpactUtils errors
+    error InsufficientImpactPoolValueForWithdrawal(uint256 withdrawalAmount, uint256 poolValue);
 
     // Oracle errors
     error SequencerDown();
@@ -368,6 +373,7 @@ library Errors {
     error SubaccountNotAuthorized(address account, address subaccount);
     error MaxSubaccountActionCountExceeded(address account, address subaccount, uint256 count, uint256 maxCount);
     error SubaccountApprovalExpired(address account, address subaccount, uint256 deadline, uint256 currentTimestamp);
+    error SubaccountIntegrationIdDisabled(bytes32 integrationId);
 
     // TokenUtils errors
     error TokenTransferError(address token, address receiver, uint256 amount);

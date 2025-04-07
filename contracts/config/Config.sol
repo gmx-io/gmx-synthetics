@@ -554,6 +554,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
         allowedBaseKeys[Keys.CLAIMABLE_COLLATERAL_DELAY] = true;
 
+        allowedBaseKeys[Keys.SUBACCOUNT_INTEGRATION_DISABLED] = true;
+
         allowedBaseKeys[Keys.MULTICHAIN_READ_CHANNEL] = true;
         allowedBaseKeys[Keys.MULTICHAIN_PEERS] = true;
         allowedBaseKeys[Keys.MULTICHAIN_CONFIRMATIONS] = true;

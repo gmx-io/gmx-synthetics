@@ -637,4 +637,26 @@ library MarketEventUtils {
             eventData
         );
     }
+
+    function emitPositionImpactPoolWithdrawal(
+        EventEmitter eventEmitter,
+        address market,
+        address receiver,
+        uint256 amount
+    ) external {
+
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "market", market);
+
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "amount", amount);
+
+        eventEmitter.emitEventLog1(
+            "PositionImpactPoolWithdrawal",
+            Cast.toBytes32(receiver),
+            eventData
+        );
+    }
 }
