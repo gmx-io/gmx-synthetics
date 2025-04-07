@@ -205,7 +205,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         _handleTokenPermits(relayParams.tokenPermits);
         _handleExternalCalls(account, relayParams.externalCalls, isSubaccount);
 
-        return _handleRelayFee(contracts, relayParams, account, isSubaccount);
+        _handleRelayFee(contracts, relayParams, account, isSubaccount);
     }
 
     function _handleExternalCalls(address account, ExternalCalls calldata externalCalls, bool isSubaccount) internal {
