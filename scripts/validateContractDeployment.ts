@@ -59,11 +59,11 @@ async function main() {
     await validateRoles(contractInfo);
   }
 
+  console.log("\n------- Verification completed -------\n");
   printResults(contractInfos);
 
   // Restore git to previous state
   execSync(`git checkout -`, { stdio: "inherit" });
-  console.log("Verification completed.");
 }
 
 function printResults(contractInfos: ContractInfo[]) {
@@ -71,14 +71,15 @@ function printResults(contractInfos: ContractInfo[]) {
     if (contractInfo.isCodeValidated) {
       console.log(`✅${contractInfo.name} is valid`);
     } else {
-      console.log(`❌${contractInfo.name} is not valid. Sources do not match. See diff in validation folder`);
+      console.log(`❌${contractInfo.name} is not valid. Sources do not match. See diff in the validation folder`);
     }
-    console.log(`Following roles approved:`);
     for (const signalledRole of contractInfo.approvedRoles) {
-      `- ${roleLabels[signalledRole]}`;
+      console.log(`✅ ${roleLabels[signalledRole]} approved`);
     }
     for (const unapprovedRole of contractInfo.unapprovedRoles) {
-      `❌ ${unapprovedRole} ${roleLabels[unapprovedRole]} is not approved for ${contractInfo.name} ${contractInfo.address}!`;
+      console.log(
+        `❌ ${unapprovedRole} ${roleLabels[unapprovedRole]} is not approved for ${contractInfo.name} ${contractInfo.address}!`
+      );
     }
   }
 }
@@ -99,7 +100,7 @@ async function extractRolesFromTx(txReceipt: TransactionReceipt): Promise<Contra
         contractInfos.get(signal.account).signalledRoles.push(signal.roleKey);
       } else {
         contractInfos.set(signal.account, {
-          address: signal.account.toLowerCase(),
+          address: ethers.utils.getAddress(signal.account),
           name: null,
           isCodeValidated: false,
           signalledRoles: [signal.roleKey],
