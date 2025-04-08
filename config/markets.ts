@@ -2451,10 +2451,10 @@ const config: {
 
       maxOpenInterest: decimalToFloat(750_000),
 
-      maxPoolUsdForDeposit: decimalToFloat(1_200_000),
+      maxPoolUsdForDeposit: decimalToFloat(1_600_000),
 
-      maxLongTokenPoolAmount: expandDecimals(19, 8),
-      maxShortTokenPoolAmount: expandDecimals(1_560_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(26, 8),
+      maxShortTokenPoolAmount: expandDecimals(2_000_000, 6),
     },
     {
       tokens: { indexToken: "AI16Z", longToken: "WBTC.e", shortToken: "USDC" },
