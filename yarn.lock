@@ -1509,6 +1509,20 @@
     picocolors "1.0.0"
     pino "^8.16.2"
 
+"@layerzerolabs/lz-v2-utilities@^3.0.85":
+  version "3.0.85"
+  resolved "https://registry.yarnpkg.com/@layerzerolabs/lz-v2-utilities/-/lz-v2-utilities-3.0.85.tgz#be131426fffd09509144d81ba285eedd9379eb30"
+  integrity sha512-3j2ewjMxdJlXSNWz/ZQEaLWStbA9LgviCYjhPwb60lN1G8yqcBhOOqwWJmoRcgP/PNokWMaRwEZJHov558ZrFg==
+  dependencies:
+    "@ethersproject/abi" "^5.7.0"
+    "@ethersproject/address" "^5.7.0"
+    "@ethersproject/bignumber" "^5.7.0"
+    "@ethersproject/bytes" "^5.7.0"
+    "@ethersproject/keccak256" "^5.7.0"
+    "@ethersproject/solidity" "^5.7.0"
+    bs58 "^5.0.0"
+    tiny-invariant "^1.3.1"
+
 "@layerzerolabs/lz-v2-utilities@~3.0.30":
   version "3.0.74"
   resolved "https://registry.yarnpkg.com/@layerzerolabs/lz-v2-utilities/-/lz-v2-utilities-3.0.74.tgz#20162e6867e629824a2d514c2ab22ca68cea02a9"
