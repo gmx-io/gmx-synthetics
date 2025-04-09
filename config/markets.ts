@@ -2782,8 +2782,8 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_LowMax_WithHigherBase,
 
-      negativePositionImpactFactor: exponentToFloat("3e-7"),
-      positivePositionImpactFactor: exponentToFloat("1.5e-7"),
+      negativePositionImpactFactor: exponentToFloat("4e-7"),
+      positivePositionImpactFactor: exponentToFloat("2e-7"),
       positionImpactExponentFactor: exponentToFloat("1.75e0"),
 
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
