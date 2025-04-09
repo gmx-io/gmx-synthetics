@@ -316,6 +316,7 @@ library SwapPricingUtils {
         EventUtils.EventLogData memory eventData;
 
         eventData.bytes32Items.initItems(1);
+        // orderKey is zero bytes32 for Gelato Relay fee swaps
         eventData.bytes32Items.setItem(0, "orderKey", params.orderKey);
 
         eventData.addressItems.initItems(4);

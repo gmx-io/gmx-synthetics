@@ -64,6 +64,11 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       maxExecutionFeeMultiplierFactor: decimalToFloat(100),
       oracleProviderMinChangeDelay: 3600,
       configMaxPriceAge: 180,
+
+      gelatoRelayFeeMultiplierFactor: 0,
+      gelatoRelayFeeBaseAmount: 0,
+      relayFeeAddress: ethers.constants.AddressZero,
+      maxRelayFeeUsdForSubaccount: 0,
     };
   }
 
@@ -124,6 +129,11 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     maxExecutionFeeMultiplierFactor: decimalToFloat(100),
     oracleProviderMinChangeDelay: 3600,
     configMaxPriceAge: 180,
+
+    gelatoRelayFeeMultiplierFactor: percentageToFloat("107%"), // Relay premium 6% + 1% for swapping collected fees and bridging to Polygon
+    gelatoRelayFeeBaseAmount: 40000, // 21000 is base gas, ~10k GelatoRelay gas, some logic after the relay fee is calculated
+    relayFeeAddress: "0x3f59203ea1c66527422998b54287e1efcacbe2c5", // same as holding address. better to have a separate address for the relay fee
+    maxRelayFeeUsdForSubaccount: decimalToFloat(100),
   };
 
   const networkConfig = {

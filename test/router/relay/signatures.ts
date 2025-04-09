@@ -13,36 +13,21 @@ describe("Relay signatures", () => {
   let user0;
   let domain;
   let dataStore,
+    roleStore,
     eventEmitter,
     oracle,
     orderHandler,
     orderVault,
     router,
-    roleStore,
-    marketStoreUtils,
-    orderStoreUtils,
-    swapUtils,
     relayUtils,
-    mockContract,
-    marketUtils;
+    orderStoreUtils,
+    mockContract;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0 } = fixture.accounts);
-    ({
-      dataStore,
-      orderVault,
-      router,
-      roleStore,
-      eventEmitter,
-      oracle,
-      orderHandler,
-      marketStoreUtils,
-      orderStoreUtils,
-      swapUtils,
-      relayUtils,
-      marketUtils,
-    } = fixture.contracts);
+    ({ dataStore, roleStore, orderVault, router, eventEmitter, oracle, orderHandler, relayUtils, orderStoreUtils } =
+      fixture.contracts);
   });
 
   beforeEach(async () => {
@@ -61,9 +46,7 @@ describe("Relay signatures", () => {
       {
         libraries: {
           OrderStoreUtils: orderStoreUtils.address,
-          SwapUtils: swapUtils.address,
           RelayUtils: relayUtils.address,
-          MarketUtils: marketUtils.address,
         },
       }
     );
