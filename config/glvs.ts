@@ -41,8 +41,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         markets: [
           {
             indexToken: "WETH",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(9_600_000, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(12_000_000),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(11_708_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(14_400_000),
           },
           {
             indexToken: "DOGE",
@@ -278,8 +278,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           },
           {
             indexToken: "FARTCOIN",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(2_842_440, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(2_985_984),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(3_530_226, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(3_583_180),
           },
           {
             indexToken: "AI16Z",
