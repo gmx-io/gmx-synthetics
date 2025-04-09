@@ -1,9 +1,10 @@
 import hre from "hardhat";
 
-import { FLOAT_PRECISION, expandDecimals, decimalToFloat, formatAmount } from "../utils/math";
+import { expandDecimals, decimalToFloat } from "../utils/math";
 import { OrderType, DecreasePositionSwapType } from "../utils/order";
-import { fetchRealtimeFeedReport } from "../utils/realtimeFeed";
 import { contractAt } from "../utils/deploy";
+import { DataStore, ExchangeRouter, Reader, Router } from "../typechain-types";
+import { BigNumberish } from "ethers";
 
 // INSTRUCTIONS TO RUN
 //
@@ -39,6 +40,20 @@ async function createOrder({
   isLong, // whether to open a long or short position
   orderType, // whether this is a market, limit, increase, decrease, swap order
   decreasePositionSwapType, // the swap type for output tokens when decreasing a position
+}: {
+  router: Router;
+  exchangeRouter: ExchangeRouter;
+  receiver: string;
+  referralCode: string;
+  market: string;
+  initialCollateralToken: string;
+  initialCollateralDeltaAmount: BigNumberish;
+  sizeDeltaUsd: BigNumberish;
+  triggerPrice: BigNumberish;
+  acceptablePrice: BigNumberish;
+  isLong: boolean;
+  orderType: number;
+  decreasePositionSwapType: number;
 }) {
   const { AddressZero } = ethers.constants;
   const orderVault = await hre.ethers.getContract("OrderVault");
@@ -46,18 +61,19 @@ async function createOrder({
   const signer = exchangeRouter.signer;
 
   const collateralToken = await contractAt("MintableToken", initialCollateralToken, signer);
-  const approvedAmount = await collateralToken.allowance(signer.address, router.address);
+  const approvedAmount = await collateralToken.allowance(await signer.getAddress(), router.address);
   if (approvedAmount.lt(initialCollateralDeltaAmount)) {
     await collateralToken.approve(router.address, initialCollateralDeltaAmount);
   }
 
-  const estimatedGasLimit = 5_000_000;
+  const estimatedGasLimit = 10_000_000;
   const gasPrice = await signer.getGasPrice();
   const executionFee = gasPrice.mul(estimatedGasLimit);
 
-  const orderParams = {
+  const orderParams: Parameters<typeof exchangeRouter.createOrder>[0] = {
     addresses: {
       receiver,
+      cancellationReceiver: AddressZero,
       callbackContract: AddressZero,
       uiFeeReceiver: AddressZero,
       market,
@@ -72,13 +88,35 @@ async function createOrder({
       executionFee,
       callbackGasLimit: 0,
       minOutputAmount: initialCollateralDeltaAmount,
+      validFromTime: 0,
     },
     orderType,
     decreasePositionSwapType,
     isLong,
     shouldUnwrapNativeToken: true,
     referralCode,
+    dataList: [],
+    autoCancel: false,
   };
+
+  const gasLimit = await exchangeRouter.estimateGas.multicall(
+    [
+      // send WETH to the orderVault pay for the execution fee
+      exchangeRouter.interface.encodeFunctionData("sendWnt", [orderVault.address, executionFee]),
+      // send the collateral to the orderVault
+      exchangeRouter.interface.encodeFunctionData("sendTokens", [
+        initialCollateralToken,
+        orderVault.address,
+        initialCollateralDeltaAmount,
+      ]),
+      exchangeRouter.interface.encodeFunctionData("createOrder", [orderParams]),
+    ],
+    { value: executionFee }
+  );
+
+  console.log("gasLimit %s", gasLimit);
+
+  exchangeRouter.sendTokens(initialCollateralToken, orderVault.address, initialCollateralDeltaAmount);
 
   const tx = await exchangeRouter.multicall(
     [
@@ -99,26 +137,33 @@ async function createOrder({
 }
 
 async function main() {
-  if (hre.network.config.accounts.length === 0) {
-    throw new Error("Empty account");
-  }
-
-  const router = await hre.ethers.getContract("Router");
-  const exchangeRouter = await hre.ethers.getContract("ExchangeRouter");
-  const receiver = exchangeRouter.signer.address;
+  const router = await hre.ethers.getContract<Router>("Router");
+  const reader = await hre.ethers.getContract<Reader>("Reader");
+  const dataStore = await hre.ethers.getContract<DataStore>("DataStore");
+  const exchangeRouter = await hre.ethers.getContract<ExchangeRouter>("ExchangeRouter");
+  const receiver = await exchangeRouter.signer.getAddress();
   const referralCode = ethers.constants.HashZero;
+  const markets = await reader.getMarkets(dataStore.address, 0, 100);
 
   // a list of markets can be printed using scripts/printMarkets.ts
-  const ETH_USD_MARKET = "0x95237E65Bb82B9d8Cd710C15AEf8d9a653bC54a8";
+  const BTC_USD_MARKET = ethers.utils.getAddress("0xBb532Ab4923C23c2bfA455151B14fec177a34C0D");
+
+  if (!markets.some((m) => m.marketToken === BTC_USD_MARKET)) {
+    throw new Error(`${BTC_USD_MARKET} is not a valid market`);
+  }
 
   // list of tokens can be found in config/tokens.ts
-  const USDC = "0x3321Fd36aEaB0d5CdfD26f4A3A93E2D2aAcCB99f";
+  const USDC = ethers.utils.getAddress("0x3321Fd36aEaB0d5CdfD26f4A3A93E2D2aAcCB99f");
+  const tokens = await hre.gmx.getTokens();
+  if (!Object.values(tokens).some((t) => t.address === USDC)) {
+    throw new Error(`${USDC} is not a valid token`);
+  }
 
-  const market = ETH_USD_MARKET;
+  const market = BTC_USD_MARKET;
 
   // allow 30bps (0.3%) slippage
   // divide by 10^18 to get the price per unit of token
-  const acceptablePrice = expandDecimals(1_000_000_000, 30);
+  const acceptablePrice = expandDecimals(82273, 22);
 
   const tx = await createOrder({
     router,
@@ -127,8 +172,8 @@ async function main() {
     referralCode,
     market,
     initialCollateralToken: USDC,
-    initialCollateralDeltaAmount: expandDecimals(10, 6), // 10 USDC
-    sizeDeltaUsd: decimalToFloat(100), // 100 USD
+    initialCollateralDeltaAmount: 2500000, // 2.5 USDC
+    sizeDeltaUsd: decimalToFloat(10), // 10 USD
     triggerPrice: 0, // not needed for market order
     acceptablePrice,
     isLong: false,

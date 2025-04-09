@@ -94,8 +94,32 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
     "0x9f7198eb1b9Ccc0Eb7A07eD228d8FbC12963ea33": true,
   };
 
-  const testnetConfig = {
+  const avalancheFujiConfig = {
     CONTROLLER: testnetAdmins,
+    ORDER_KEEPER: {
+      "0x3053c7edC20aa08d225CdeC9688136c4ab9F9963": true,
+      "0x508cbC56Ab57A9b0221cf1810a483f8013c92Ff3": true, // An
+      ...testnetAdmins,
+    },
+    ADL_KEEPER: testnetAdmins,
+    LIQUIDATION_KEEPER: {
+      "0x3053c7edC20aa08d225CdeC9688136c4ab9F9963": true,
+      "0x508cbC56Ab57A9b0221cf1810a483f8013c92Ff3": true, // An
+      ...testnetAdmins,
+    },
+    MARKET_KEEPER: testnetAdmins,
+    FROZEN_ORDER_KEEPER: {
+      "0x3053c7edC20aa08d225CdeC9688136c4ab9F9963": true,
+      "0x508cbC56Ab57A9b0221cf1810a483f8013c92Ff3": true, // An
+      ...testnetAdmins,
+    },
+  };
+
+  const arbitrumSepoliaConfig = {
+    CONTROLLER: {
+      "0xCD9706B6B71fdC4351091B5b1D910cEe7Fde28D0": true, // Max
+      ...testnetAdmins,
+    },
     ORDER_KEEPER: {
       "0x3053c7edC20aa08d225CdeC9688136c4ab9F9963": true,
       "0x508cbC56Ab57A9b0221cf1810a483f8013c92Ff3": true, // An
@@ -312,6 +336,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0xc9e1CE91d3f782499cFe787b6F1d2AF0Ca76C049": true,
         "0x03d717E27aF1B566C3efb729F1151E775B411f2B": true,
         "0x9f7198eb1b9Ccc0Eb7A07eD228d8FbC12963ea33": true,
+        "0xCD9706B6B71fdC4351091B5b1D910cEe7Fde28D0": true, // Max
         [deployer]: true,
       },
       LIMITED_CONFIG_KEEPER: {
@@ -321,14 +346,18 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x03d717E27aF1B566C3efb729F1151E775B411f2B": true,
         "0xC84f3398eDf6336E1Ef55b50Ca3F9f9f96B8b504": true,
       },
-      ...testnetConfig,
+      ...avalancheFujiConfig,
     },
     arbitrumSepolia: {
       CONFIG_KEEPER: {
         "0xb38302e27bAe8932536A84ab362c3d1013420Cb4": true,
+        "0xCD9706B6B71fdC4351091B5b1D910cEe7Fde28D0": true, // Max
         [deployer]: true,
       },
-      ...testnetConfig,
+      ROLE_ADMIN: {
+        "0xCD9706B6B71fdC4351091B5b1D910cEe7Fde28D0": true, // Max
+      },
+      ...arbitrumSepoliaConfig,
     },
   };
 
