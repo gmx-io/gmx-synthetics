@@ -25,28 +25,17 @@ contract MultichainTransferRouter is MultichainRouter {
     }
 
     function bridgeOut(
-        RelayUtils.RelayParams calldata relayParams,
+        RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
-        RelayUtils.BridgeOutParams calldata params
-    ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelay {
-        _validateGaslessFeature();
+        BridgeOutParams calldata params
+    ) external nonReentrant withRelay(relayParams, account, srcChainId, false) {
         MultichainUtils.validateMultichainProvider(dataStore, params.provider);
 
         bytes32 structHash = RelayUtils.getBridgeOutStructHash(relayParams, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
         // orderVault is used to transfer funds into it and do a swap from feeToken to wnt when using the feeSwapPath
-        Contracts memory contracts = Contracts({ dataStore: dataStore, eventEmitter: eventEmitter, bank: orderVault });
-        _handleRelay(
-            contracts,
-            relayParams,
-            account,
-            address(multichainVault), // residualFeeReceiver
-            false, // isSubaccount
-            srcChainId
-        );
-
         // moves user's funds (amount + bridging fee) from their multichain balance into multichainProvider
         multichainProvider.bridgeOut(
             IMultichainProvider.BridgeOutParams({

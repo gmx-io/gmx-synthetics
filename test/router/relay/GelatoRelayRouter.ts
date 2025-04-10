@@ -375,7 +375,6 @@ describe("GelatoRelayRouter", () => {
           const userWntBalanceBefore = await wnt.balanceOf(user0.address);
           const tx = await sendCreateOrder({
             ...createOrderParams,
-            // TODO: Why is reverting with UnexpectedMarket, but before merge it didn't? (i.e. why there is a makert address, but before it was zero?
             params: {
               ...defaultParams,
               addresses: {

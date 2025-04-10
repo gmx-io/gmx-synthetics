@@ -11,6 +11,8 @@ import "../withdrawal/WithdrawalVault.sol";
 import "./MultichainRouter.sol";
 
 contract MultichainGmRouter is MultichainRouter {
+    using SafeERC20 for IERC20;
+
     DepositVault public immutable depositVault;
     IDepositHandler public immutable depositHandler;
     WithdrawalVault public immutable withdrawalVault;
@@ -36,141 +38,55 @@ contract MultichainGmRouter is MultichainRouter {
     }
 
     function createDeposit(
-        RelayUtils.RelayParams calldata relayParams,
+        RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
-        RelayUtils.TransferRequests calldata transferRequests,
-        DepositUtils.CreateDepositParams memory params // can't use calldata because need to modify params.numbers.executionFee
-    )
-        external
-        nonReentrant
-        withOraclePricesForAtomicAction(relayParams.oracleParams)
-        onlyGelatoRelay
-        returns (bytes32)
-    {
-        _validateGaslessFeature();
-
+        TransferRequests calldata transferRequests,
+        DepositUtils.CreateDepositParams calldata params
+    ) external nonReentrant withRelay(relayParams, account, srcChainId, false) returns (bytes32) {
         bytes32 structHash = RelayUtils.getCreateDepositStructHash(relayParams, transferRequests, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
-        return _createDeposit(relayParams, account, srcChainId, transferRequests, params);
-    }
+        address wnt = TokenUtils.wnt(dataStore);
+        IERC20(wnt).safeTransfer(address(depositVault), params.executionFee);
 
-    function _createDeposit(
-        RelayUtils.RelayParams calldata relayParams,
-        address account,
-        uint256 srcChainId,
-        RelayUtils.TransferRequests calldata transferRequests,
-        DepositUtils.CreateDepositParams memory params // can't use calldata because need to modify params.numbers.executionFee
-    ) internal returns (bytes32) {
-        Contracts memory contracts = Contracts({
-            dataStore: dataStore,
-            eventEmitter: eventEmitter,
-            bank: depositVault
-        });
-
-        // pay relay fee tokens from MultichainVault to DepositVault and decrease user's multichain balance
-        params.executionFee = _handleRelay(
-            contracts,
-            relayParams,
-            account,
-            address(depositVault), // residualFeeReceiver
-            false, // isSubaccount
-            srcChainId
-        );
-
-        // process transfer requests after relay fee is paid, otherwise all wnt amount will be recorder as relay fee
         _processTransferRequests(account, transferRequests, srcChainId);
 
         return depositHandler.createDeposit(account, srcChainId, params);
     }
 
     function createWithdrawal(
-        RelayUtils.RelayParams calldata relayParams,
+        RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
-        RelayUtils.TransferRequests calldata transferRequests,
-        WithdrawalUtils.CreateWithdrawalParams memory params // can't use calldata because need to modify params.addresses.receiver & params.numbers.executionFee
-    )
-        external
-        nonReentrant
-        withOraclePricesForAtomicAction(relayParams.oracleParams)
-        onlyGelatoRelay
-        returns (bytes32)
-    {
-        _validateGaslessFeature();
-
+        TransferRequests calldata transferRequests,
+        WithdrawalUtils.CreateWithdrawalParams calldata params
+    ) external nonReentrant withRelay(relayParams, account, srcChainId, false) returns (bytes32) {
         bytes32 structHash = RelayUtils.getCreateWithdrawalStructHash(relayParams, transferRequests, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
+        address wnt = TokenUtils.wnt(dataStore);
+        IERC20(wnt).safeTransfer(address(withdrawalVault), params.executionFee);
+
         _processTransferRequests(account, transferRequests, srcChainId);
-
-        return _createWithdrawal(relayParams, account, srcChainId, params);
-    }
-
-    function _createWithdrawal(
-        RelayUtils.RelayParams calldata relayParams,
-        address account,
-        uint256 srcChainId,
-        WithdrawalUtils.CreateWithdrawalParams memory params // can't use calldata because need to modify params.addresses.receiver & params.numbers.executionFee
-    ) internal returns (bytes32) {
-        Contracts memory contracts = Contracts({
-            dataStore: dataStore,
-            eventEmitter: eventEmitter,
-            bank: withdrawalVault
-        });
-
-        params.executionFee = _handleRelay(
-            contracts,
-            relayParams,
-            account,
-            address(withdrawalVault), // residualFeeReceiver
-            false, // isSubaccount
-            srcChainId
-        );
 
         return withdrawalHandler.createWithdrawal(account, srcChainId, params);
     }
 
     function createShift(
-        RelayUtils.RelayParams calldata relayParams,
+        RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
-        RelayUtils.TransferRequests calldata transferRequests,
-        ShiftUtils.CreateShiftParams memory params
-    )
-        external
-        nonReentrant
-        withOraclePricesForAtomicAction(relayParams.oracleParams)
-        onlyGelatoRelay
-        returns (bytes32)
-    {
-        _validateGaslessFeature();
-
+        TransferRequests calldata transferRequests,
+        ShiftUtils.CreateShiftParams calldata params
+    ) external nonReentrant withRelay(relayParams, account, srcChainId, false) returns (bytes32) {
         bytes32 structHash = RelayUtils.getCreateShiftStructHash(relayParams, transferRequests, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
+        address wnt = TokenUtils.wnt(dataStore);
+        IERC20(wnt).safeTransfer(address(shiftVault), params.executionFee);
+
         _processTransferRequests(account, transferRequests, srcChainId);
-
-        return _createShift(relayParams, account, srcChainId, params);
-    }
-
-    function _createShift(
-        RelayUtils.RelayParams calldata relayParams,
-        address account,
-        uint256 srcChainId,
-        ShiftUtils.CreateShiftParams memory params
-    ) internal returns (bytes32) {
-        Contracts memory contracts = Contracts({ dataStore: dataStore, eventEmitter: eventEmitter, bank: shiftVault });
-
-        params.executionFee = _handleRelay(
-            contracts,
-            relayParams,
-            account,
-            address(shiftVault),
-            false, // isSubaccount
-            srcChainId
-        );
 
         return shiftHandler.createShift(account, srcChainId, params);
     }

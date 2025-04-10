@@ -3,15 +3,14 @@ import { GELATO_RELAY_ADDRESS } from "./addresses";
 import { hashRelayParams, signTypedData } from "./helpers";
 import { getDomain } from "./helpers";
 import { getRelayParams } from "./helpers";
-import { exec } from "child_process";
 import {
   getCancelOrderSignature,
-  getClaimAffiliateRewardsSignature,
-  getClaimCollateralSignature,
-  getClaimFundingFeesSignature,
   getCreateOrderSignature,
   getUpdateOrderSignature,
-} from "./gelatoRelay";
+  getClaimFundingFeesSignature,
+  getClaimCollateralSignature,
+  getClaimAffiliateRewardsSignature,
+} from "./signatures";
 
 interface SendCreate {
   signer: ethers.Signer;
@@ -179,7 +178,6 @@ export async function sendCreateOrder(p: {
     feeAmount: BigNumberish;
     feeSwapPath: string[];
   };
-  collateralDeltaAmount: BigNumberish;
   account: string;
   params: any;
   signature?: string;
@@ -203,7 +201,6 @@ export async function sendCreateOrder(p: {
     { ...relayParams, signature },
     p.account,
     p.srcChainId,
-    p.collateralDeltaAmount,
     p.params,
   ]);
   const calldata = ethers.utils.solidityPack(
@@ -414,12 +411,14 @@ export async function sendUpdateOrder(p: {
   chainId: BigNumberish;
   account: string;
   params: {
+    key: string;
     sizeDeltaUsd: BigNumberish;
     acceptablePrice: BigNumberish;
     triggerPrice: BigNumberish;
     minOutputAmount: BigNumberish;
     validFromTime: BigNumberish;
     autoCancel: boolean;
+    executionFeeIncrease: BigNumberish;
   };
   deadline: BigNumberish;
   srcChainId: BigNumberish;
@@ -429,7 +428,6 @@ export async function sendUpdateOrder(p: {
   signature?: string;
   relayFeeToken: string;
   relayFeeAmount: BigNumberish;
-  increaseExecutionFee: boolean;
 }) {
   const relayParams = await getRelayParams(p);
 
@@ -444,7 +442,6 @@ export async function sendUpdateOrder(p: {
     p.srcChainId,
     p.key,
     p.params,
-    p.increaseExecutionFee,
   ]);
   const calldata = ethers.utils.solidityPack(
     ["bytes", "address", "address", "uint256"],

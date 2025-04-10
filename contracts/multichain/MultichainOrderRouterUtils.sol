@@ -3,8 +3,14 @@
 pragma solidity ^0.8.0;
 
 import "../order/OrderStoreUtils.sol";
+import "../order/BaseOrderUtils.sol";
+import "../position/PositionUtils.sol";
 import "../position/PositionStoreUtils.sol";
+import "../referral/IReferralStorage.sol";
 import "../router/relay/RelayUtils.sol";
+
+import "./MultichainVault.sol";
+import "./MultichainUtils.sol";
 
 library MultichainOrderRouterUtils {
     using Order for Order.Props;
@@ -30,7 +36,7 @@ library MultichainOrderRouterUtils {
 
     function handleFeePayment(
         HandleFeePaymentContracts memory contracts,
-        RelayUtils.RelayParams calldata relayParams,
+        RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         bytes32 key

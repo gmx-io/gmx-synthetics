@@ -29,7 +29,7 @@ abstract contract MultichainRouter is BaseGelatoRelayRouter {
 
     function _processTransferRequests(
         address account,
-        RelayUtils.TransferRequests calldata transferRequests,
+        TransferRequests calldata transferRequests,
         uint256 srcChainId
     ) internal {
         if (

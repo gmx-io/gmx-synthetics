@@ -8,6 +8,32 @@ import "./MultichainOrderRouterUtils.sol";
 contract MultichainOrderRouter is MultichainRouter {
     IReferralStorage public immutable referralStorage;
 
+    // @dev must be placed before withRelay modifier because
+    // user's multichain balance must be topped-up before _handleRelayFee transfers the feeAmount
+    modifier handleFeePayment(
+        RelayParams calldata relayParams,
+        address account,
+        uint256 srcChainId,
+        bytes32 orderKey
+    ) {
+        // top-up user's multichain balance from order/position collateral if user's multichain balance is insufficient to pay fees
+        MultichainOrderRouterUtils.handleFeePayment(
+            MultichainOrderRouterUtils.HandleFeePaymentContracts({
+                dataStore: dataStore,
+                eventEmitter: eventEmitter,
+                multichainVault: multichainVault,
+                oracle: oracle,
+                referralStorage: referralStorage,
+                orderVault: orderVault
+            }),
+            relayParams,
+            account,
+            srcChainId,
+            orderKey
+        );
+        _;
+    }
+
     constructor(
         BaseConstructorParams memory params,
         IReferralStorage _referralStorage
@@ -16,79 +42,48 @@ contract MultichainOrderRouter is MultichainRouter {
     }
 
     function createOrder(
-        RelayUtils.RelayParams calldata relayParams,
+        RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
-        uint256 collateralDeltaAmount,
-        IBaseOrderUtils.CreateOrderParams memory params // can't use calldata because need to modify params.numbers.executionFee
-    ) external nonReentrant withOraclePrices(relayParams.oracleParams) onlyGelatoRelay returns (bytes32) {
-        _validateGaslessFeature();
-
-        bytes32 structHash = RelayUtils.getCreateOrderStructHash(relayParams, collateralDeltaAmount, params);
+        IBaseOrderUtils.CreateOrderParams calldata params
+    ) external nonReentrant withRelay(relayParams, account, srcChainId, false) returns (bytes32) {
+        bytes32 structHash = RelayUtils.getCreateOrderStructHash(relayParams, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
-        return _createOrder(relayParams, account, collateralDeltaAmount, srcChainId, params, false);
+        return _createOrder(account, srcChainId, params, false);
     }
 
     function updateOrder(
-        RelayUtils.RelayParams calldata relayParams,
+        RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
-        bytes32 key,
-        RelayUtils.UpdateOrderParams calldata params,
-        bool increaseExecutionFee
-    ) external nonReentrant withOraclePrices(relayParams.oracleParams) onlyGelatoRelay {
-        _validateGaslessFeature();
-
-        bytes32 structHash = RelayUtils.getUpdateOrderStructHash(relayParams, key, params, increaseExecutionFee);
+        UpdateOrderParams calldata params
+    )
+        external
+        nonReentrant
+        handleFeePayment(relayParams, account, srcChainId, params.key)
+        withRelay(relayParams, account, srcChainId, false)
+    {
+        bytes32 structHash = RelayUtils.getUpdateOrderStructHash(relayParams, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
-        // top-up user's multichain balance from order/position collateral if user's multichain balance is insufficient to pay fees
-        MultichainOrderRouterUtils.handleFeePayment(
-            MultichainOrderRouterUtils.HandleFeePaymentContracts({
-                dataStore: dataStore,
-                eventEmitter: eventEmitter,
-                multichainVault: multichainVault,
-                oracle: oracle,
-                referralStorage: referralStorage,
-                orderVault: orderVault
-            }),
-            relayParams,
-            account,
-            srcChainId,
-            key
-        );
-
-        _updateOrder(relayParams, account, key, params, increaseExecutionFee, false);
+        _updateOrder(account, params, false);
     }
 
     function cancelOrder(
-        RelayUtils.RelayParams calldata relayParams,
+        RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         bytes32 key
-    ) external nonReentrant withOraclePrices(relayParams.oracleParams) onlyGelatoRelay {
-        _validateGaslessFeature();
-
+    )
+        external
+        nonReentrant
+        handleFeePayment(relayParams, account, srcChainId, key)
+        withRelay(relayParams, account, srcChainId, false)
+    {
         bytes32 structHash = RelayUtils.getCancelOrderStructHash(relayParams, key);
         _validateCall(relayParams, account, structHash, srcChainId);
 
-        // top-up user's multichain balance from order/position collateral if user's multichain balance is insufficient to pay fees
-        MultichainOrderRouterUtils.handleFeePayment(
-            MultichainOrderRouterUtils.HandleFeePaymentContracts({
-                dataStore: dataStore,
-                eventEmitter: eventEmitter,
-                multichainVault: multichainVault,
-                oracle: oracle,
-                referralStorage: referralStorage,
-                orderVault: orderVault
-            }),
-            relayParams,
-            account,
-            srcChainId,
-            key
-        );
-
-        _cancelOrder(relayParams, account, key, false /* isSubaccount */);
+        _cancelOrder(account, key);
     }
 }
