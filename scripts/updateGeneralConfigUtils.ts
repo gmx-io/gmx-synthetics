@@ -291,13 +291,20 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
     `maxExecutionFeeMultiplierFactor`
   );
 
-  await handleConfig("uint", keys.GELATO_RELAY_FEE_BASE_AMOUNT, "0x", generalConfig.gelatoRelayFeeBaseAmount);
+  await handleConfig(
+    "uint",
+    keys.GELATO_RELAY_FEE_BASE_AMOUNT,
+    "0x",
+    generalConfig.gelatoRelayFeeBaseAmount,
+    "gelatoRelayFeeBaseAmount"
+  );
 
   await handleConfig(
     "uint",
     keys.GELATO_RELAY_FEE_MULTIPLIER_FACTOR,
     "0x",
-    generalConfig.gelatoRelayFeeMultiplierFactor
+    generalConfig.gelatoRelayFeeMultiplierFactor,
+    "gelatoRelayFeeMultiplierFactor"
   );
 
   await handleConfig("address", keys.RELAY_FEE_ADDRESS, "0x", generalConfig.relayFeeAddress, `relayFeeAddress`);
@@ -399,35 +406,22 @@ export async function updateGeneralConfig({ write }) {
     return;
   }
 
-  try {
-    if (!write) {
-      ({ write } = await prompts({
-        type: "confirm",
-        name: "write",
-        message: "Do you want to execute the transactions?",
-      }));
-    }
+  await config.callStatic.multicall(multicallWriteParams, {
+    from: "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745",
+  });
 
-    if (write) {
-      const tx = await config.multicall(multicallWriteParams);
-      console.log(`tx sent: ${tx.hash}`);
-    } else {
-      await config.callStatic.multicall(multicallWriteParams, {
-        from: "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745",
-      });
-      console.log("NOTE: executed in read-only mode, no transactions were sent");
-    }
-  } catch (ex) {
-    if (
-      ex.errorName === "InvalidBaseKey" &&
-      hre.network.name === "avalanche" &&
-      process.env.SKIP_GLV_LIMITS_AVALANCHE !== "true"
-    ) {
-      console.error(ex);
-      console.log("Use SKIP_GLV_LIMITS_AVALANCHE=true to skip updating GLV gas limits on Avalanche");
-      return;
-    }
+  if (!write) {
+    ({ write } = await prompts({
+      type: "confirm",
+      name: "write",
+      message: "Do you want to execute the transactions?",
+    }));
+  }
 
-    throw ex;
+  if (write) {
+    const tx = await config.multicall(multicallWriteParams);
+    console.log(`tx sent: ${tx.hash}`);
+  } else {
+    console.log("NOTE: executed in read-only mode, no transactions were sent");
   }
 }
