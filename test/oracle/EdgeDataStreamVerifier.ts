@@ -16,16 +16,15 @@ describe("EdgeDataStreamVerifier", function () {
 
   it("should verify a valid signature", async function () {
     const feedId = "BTCUSD";
-    const price = 8365522590590n;
-    const roundId = 52271251n;
-    const timestamp = 1742151449n;
-    const bid = 8365522090596n;
-    const ask = 8365522590590n;
+    const price = 8194362396466n;
+    const roundId = 56490146n;
+    const timestamp = 1744260903n;
+    const bid = 8194357398389n;
+    const ask = 8194362396466n;
     const signature =
-      "0x001fc991ea2d28a74f24f7ab90c23dd4188afba53c4bafdb91f588af230c00ed1f4c1930e7ae2d025874e8380598eb851987d197cf39c7edba1f0992f9d440a300";
+      "0x74f634fce6ae2bf6d6b3d93b36276253f15037e12ad5a4c240d823166983d5100c5a21209f3369760d3bd5f55b278e98d9d1875485fd12114d9c1dcdbcbf9c951c";
 
     const isValid = await verifier.verifySignature(feedId, price, roundId, timestamp, bid, ask, signature);
-
     expect(isValid).to.be.true;
   });
 
@@ -47,12 +46,12 @@ describe("EdgeDataStreamVerifier", function () {
   it("should reject signature with wrong price", async function () {
     const feedId = "BTCUSD";
     const wrongPrice = 8365522590591n;
-    const roundId = 52271251n;
-    const timestamp = 1742151449n;
-    const bid = 8365522090596n;
-    const ask = 8365522590590n;
+    const roundId = 56490146n;
+    const timestamp = 1744260903n;
+    const bid = 8194357398389n;
+    const ask = 8194362396466n;
     const signature =
-      "0x001fc991ea2d28a74f24f7ab90c23dd4188afba53c4bafdb91f588af230c00ed1f4c1930e7ae2d025874e8380598eb851987d197cf39c7edba1f0992f9d440a300";
+      "0x74f634fce6ae2bf6d6b3d93b36276253f15037e12ad5a4c240d823166983d5100c5a21209f3369760d3bd5f55b278e98d9d1875485fd12114d9c1dcdbcbf9c951c";
 
     const isValid = await verifier.verifySignature(feedId, wrongPrice, roundId, timestamp, bid, ask, signature);
     expect(isValid).to.be.false;
@@ -60,13 +59,13 @@ describe("EdgeDataStreamVerifier", function () {
 
   it("should extract the correct signer address", async function () {
     const feedId = "BTCUSD";
-    const price = 8365522590590n;
-    const roundId = 52271251n;
-    const timestamp = 1742151449n;
-    const bid = 8365522090596n;
-    const ask = 8365522590590n;
+    const price = 8194362396466n;
+    const roundId = 56490146n;
+    const timestamp = 1744260903n;
+    const bid = 8194357398389n;
+    const ask = 8194362396466n;
     const signature =
-      "0x001fc991ea2d28a74f24f7ab90c23dd4188afba53c4bafdb91f588af230c00ed1f4c1930e7ae2d025874e8380598eb851987d197cf39c7edba1f0992f9d440a300";
+      "0x74f634fce6ae2bf6d6b3d93b36276253f15037e12ad5a4c240d823166983d5100c5a21209f3369760d3bd5f55b278e98d9d1875485fd12114d9c1dcdbcbf9c951c";
 
     const signer = await verifier.extractSigner(feedId, price, roundId, timestamp, bid, ask, signature);
 
@@ -82,8 +81,8 @@ describe("EdgeDataStreamVerifier", function () {
     const ask = 8365522590590n;
     const invalidSignature = "0x00"; // Too short signature
 
-    await expect(
-      verifier.extractSigner(feedId, price, roundId, timestamp, bid, ask, invalidSignature)
-    ).to.be.revertedWithCustomError(verifier, "InvalidEdgeSignatureLength");
+    await expect(verifier.extractSigner(feedId, price, roundId, timestamp, bid, ask, invalidSignature))
+      .to.be.revertedWithCustomError(verifier, "InvalidEdgeSignature")
+      .withArgs(2); // ECDSA.RecoverError.InvalidSignatureLength
   });
 });

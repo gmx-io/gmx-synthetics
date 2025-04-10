@@ -469,8 +469,8 @@ library Errors {
 
     // EdgeOracle verifier errors
     error InvalidTrustedSignerAddress();
-    error InvalidEdgeSignature();
-    error InvalidEdgeSignatureLength(uint256 length);
+    error InvalidEdgeSigner();
+    error InvalidEdgeSignature(uint256 recoverError);
     error InvalidEdgeDataStreamBidAsk(address token, uint256 bid, uint256 ask);
     error InvalidEdgeDataStreamPrices(address token, uint256 bid, uint256 ask);
     error InvalidEdgeDataStreamExpo(int256 expo);

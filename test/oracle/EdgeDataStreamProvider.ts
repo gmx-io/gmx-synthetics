@@ -11,14 +11,14 @@ describe("EdgeDataStreamProvider", function () {
   let fixture;
   let edgeDataStreamProvider, dataStore, oracle, token;
   const BTC_USD_FEED_ID = "BTCUSD";
-  const TIMESTAMP = 1742151449n;
-  const BID = 8365522090596n;
-  const ASK = 8365522590590n;
+  const TIMESTAMP = 1744260903n;
+  const BID = 8194357398389n;
+  const ASK = 8194362396466n;
 
   function encodeReport(feedId: string, bid: BigNumberish, ask: BigNumberish, signature: string, expo: BigNumberish) {
     return encodeData(
       ["string", "uint192", "uint32", "uint32", "uint256", "uint256", "bytes", "int32"],
-      [feedId, 8365522590590n, 52271251n, TIMESTAMP, bid, ask, signature, expo]
+      [feedId, 8194362396466n, 56490146n, TIMESTAMP, bid, ask, signature, expo]
     );
   }
 
@@ -28,7 +28,7 @@ describe("EdgeDataStreamProvider", function () {
     const ask = ASK;
     const expo = overrides?.expoOverride || -8n;
     const signature =
-      "0x001fc991ea2d28a74f24f7ab90c23dd4188afba53c4bafdb91f588af230c00ed1f4c1930e7ae2d025874e8380598eb851987d197cf39c7edba1f0992f9d440a300";
+      "0x74f634fce6ae2bf6d6b3d93b36276253f15037e12ad5a4c240d823166983d5100c5a21209f3369760d3bd5f55b278e98d9d1875485fd12114d9c1dcdbcbf9c951c";
     const data = encodeReport(feedId, bid, ask, signature, expo);
 
     const callData = edgeDataStreamProvider.interface.encodeFunctionData("getOraclePrice", [token.address, data]);

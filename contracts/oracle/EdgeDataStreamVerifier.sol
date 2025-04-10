@@ -44,7 +44,7 @@ contract EdgeDataStreamVerifier {
         ) = abi.decode(data, (string, uint192, uint32, uint32, uint256, uint256, bytes, int32));
 
         if (!verifySignature(feedId, price, roundId, timestamp, bid, ask, signature)) {
-            revert Errors.InvalidEdgeSignature();
+            revert Errors.InvalidEdgeSigner();
         }
         return Report(
             Cast.toBytes32(feedId),
@@ -105,9 +105,9 @@ contract EdgeDataStreamVerifier {
             ask
         );
 
-        address recovered = recoverSigner(messageHash, signature);
-        if (recovered == address(0)) {
-            revert Errors.InvalidEdgeSignature();
+        (address recovered, ECDSA.RecoverError recoverError) = ECDSA.tryRecover(messageHash, signature);
+        if (recoverError != ECDSA.RecoverError.NoError) {
+            revert Errors.InvalidEdgeSignature(uint(recoverError));
         }
 
         return recovered;
@@ -134,43 +134,6 @@ contract EdgeDataStreamVerifier {
         );
 
         return keccak256(message);
-    }
-
-    /**
-     * @dev Recovers the signer's address from a signature. Supports v value offset, such as Go library generates.
-     * @param messageHash The hash of the original message
-     * @param signature The signature bytes
-     * @return The address of the signer
-     */
-    function recoverSigner(
-        bytes32 messageHash,
-        bytes memory signature
-    ) public pure returns (address) {
-        if (signature.length != 65) {
-            revert Errors.InvalidEdgeSignatureLength(signature.length);
-        }
-
-        bytes32 r;
-        bytes32 s;
-        uint8 v;
-
-        // Extract r, s, v from the signature
-        assembly {
-            r := mload(add(signature, 32))
-            s := mload(add(signature, 64))
-            v := byte(0, mload(add(signature, 96)))
-        }
-
-        // Ethereum signatures use v = 27 or v = 28
-        if (v < 27) {
-            v += 27;
-        }
-
-        (address signer, ECDSA.RecoverError error) = ECDSA.tryRecover(messageHash, v, r, s);
-        if (error != ECDSA.RecoverError.NoError) {
-            revert Errors.InvalidEdgeSignature();
-        }
-        return signer;
     }
 
     /**
