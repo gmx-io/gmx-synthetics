@@ -102,7 +102,7 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
     }
   }
 
-  if (hre.network.name === "arbitrum") {
+  if (hre.network.name != "arbitrum") {
     await updateMarketConfig({ write: true });
   }
 };

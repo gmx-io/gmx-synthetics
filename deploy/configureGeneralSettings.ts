@@ -33,7 +33,7 @@ const func = async ({ gmx }: HardhatRuntimeEnvironment) => {
     "max execution fee multiplier factor"
   );
 
-  if (hre.network.name === "arbitrum") {
+  if (hre.network.name != "arbitrum") {
     await updateGeneralConfig({ write: true });
   }
 };
