@@ -131,6 +131,11 @@ export async function deployFixture() {
   const layerZeroProvider = await hre.ethers.getContract("LayerZeroProvider");
   const mockStargatePool = await hre.ethers.getContract("MockStargatePool");
   const mockOracleProvider = await hre.ethers.getContract("MockOracleProvider");
+  const multichainReader = await hre.ethers.getContract("MultichainReader");
+  const mockEndpointV2 = await hre.ethers.getContract("MockEndpointV2");
+  const mockMultichainReaderOriginator = await hre.ethers.getContract("MockMultichainReaderOriginator");
+  const feeDistributorVault = await hre.ethers.getContract("FeeDistributorVault");
+  const feeDistributor = await hre.ethers.getContract("FeeDistributor");
 
   const ethUsdMarketAddress = getMarketTokenAddress(
     wnt.address,
@@ -351,6 +356,11 @@ export async function deployFixture() {
       mockStargatePool,
       callbackUtils,
       mockOracleProvider,
+      multichainReader,
+      mockEndpointV2,
+      mockMultichainReaderOriginator,
+      feeDistributorVault,
+      feeDistributor,
     },
     props: { oracleSalt, signerIndexes: [0, 1, 2, 3, 4, 5, 6], executionFee: "1000000000000000" },
   };

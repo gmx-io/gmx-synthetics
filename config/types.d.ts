@@ -7,6 +7,8 @@ import { RiskOracleConfig } from "./riskOracle";
 import { VaultV1Config } from "./vaultV1";
 import { GlvConfig } from "./glvs";
 import { BuybackConfig } from "./buyback";
+import { LayerZeroEndpointConfig } from "./layerZero";
+import { FeeDistributorConfig } from "./feeDistributor";
 
 export type OracleProvider = "gmOracle" | "chainlinkDataStream" | "chainlinkPriceFeed";
 
@@ -23,6 +25,8 @@ declare module "hardhat/types/runtime" {
       getRiskOracle: () => Promise<RiskOracleConfig>;
       getVaultV1: () => Promise<VaultV1Config>;
       getBuyback: () => Promise<BuybackConfig>;
+      getLayerZeroEndpoint: () => Promise<LayerZeroEndpointConfig>;
+      getFeeDistributor: () => Promise<FeeDistributorConfig>;
     };
   }
 }
