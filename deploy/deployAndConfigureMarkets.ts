@@ -102,8 +102,7 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
     }
   }
 
-  const write = process.env.FOR_EXISTING_MAINNET_DEPLOYMENT ? false : true;
-  if (write) {
+  if (hre.network.name === "arbitrum") {
     await updateMarketConfig({ write: true });
   }
 };

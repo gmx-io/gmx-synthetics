@@ -33,8 +33,7 @@ const func = async ({ gmx }: HardhatRuntimeEnvironment) => {
     "max execution fee multiplier factor"
   );
 
-  const write = process.env.FOR_EXISTING_MAINNET_DEPLOYMENT ? false : true;
-  if (write) {
+  if (hre.network.name === "arbitrum") {
     await updateGeneralConfig({ write: true });
   }
 };

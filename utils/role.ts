@@ -10,7 +10,7 @@ export async function revokeRole(roleStore, account, role) {
 }
 
 export async function grantRoleIfNotGranted(address: string, role: string, addressLabel = "") {
-  if (process.env.FOR_EXISTING_MAINNET_DEPLOYMENT) {
+  if (hre.network.name === "arbitrum") {
     return;
   }
 
@@ -30,7 +30,7 @@ export async function grantRoleIfNotGranted(address: string, role: string, addre
 }
 
 export async function revokeRoleIfGranted(address: string, role: string, addressLabel = "") {
-  if (process.env.FOR_EXISTING_MAINNET_DEPLOYMENT) {
+  if (hre.network.name === "arbitrum") {
     return;
   }
 
