@@ -168,19 +168,15 @@ contract MockEndpointV2 is ILayerZeroEndpointV2, MessagingContext {
     ) external payable receiveNonReentrant {
         inboundPayloadHash[_receiver][_origin.srcEid][_origin.sender][_origin.nonce] = _payloadHash;
         if (_msgValue > 0) {
-            try
-                ILayerZeroReceiver(_receiver).lzReceive{ value: _msgValue, gas: _gas }(
-                    _origin,
-                    _guid,
-                    _message,
-                    address(0),
-                    ""
-                )
-            {} catch (bytes memory /*reason*/) {}
+            ILayerZeroReceiver(_receiver).lzReceive{ value: _msgValue, gas: _gas }(
+                _origin,
+                _guid,
+                _message,
+                address(0),
+                ""
+            );
         } else {
-            try
-                ILayerZeroReceiver(_receiver).lzReceive{ gas: _gas }(_origin, _guid, _message, address(0), "")
-            {} catch (bytes memory /*reason*/) {}
+            ILayerZeroReceiver(_receiver).lzReceive{ gas: _gas }(_origin, _guid, _message, address(0), "");
         }
     }
 

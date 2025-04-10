@@ -4,8 +4,10 @@ import { expandDecimals } from "../../utils/math";
 import { deployFixture } from "../../utils/fixture";
 import { encodeData } from "../../utils/hash";
 import { deployContract } from "../../utils/deploy";
+import { errorsContract } from "../../utils/error";
+import { parseLogs } from "../../utils/event";
 import * as keys from "../../utils/keys";
-import * as feeDistKeys from "../../utils/feeDistributor";
+import * as feeDistributorConfig from "../../utils/feeDistributor";
 
 describe("FeeDistributor", function () {
   let fixture,
@@ -16,9 +18,15 @@ describe("FeeDistributor", function () {
     dataStore,
     config,
     gmx,
+    esGmx,
     wnt,
     roleStore,
     feeHandler,
+    mockLzReadResponse1,
+    mockLzReadResponse2,
+    mockLzReadResponse3,
+    mockSynapseRouter,
+    initialTimestamp,
     chainlinkPriceFeedProvider,
     wethPriceFeed,
     gmxPriceFeed,
@@ -27,7 +35,8 @@ describe("FeeDistributor", function () {
     user1,
     user2,
     user3,
-    user4;
+    user4,
+    user5;
 
   // Constants representing mock Endpoint IDs for testing purposes
   const eid1 = 1000;
@@ -40,13 +49,14 @@ describe("FeeDistributor", function () {
   const chainId3 = 20000;
   const chainIds = [chainId1, chainId2, chainId3];
 
+  const distributionDay = 3;
+
   // Constant representing a channel ID for testing purposes
   const channelId = 1001;
 
   // Number of confirmations used for test
   const numberOfConfirmations = 1;
 
-  // beforeEach hook for setup that runs before each test in the block
   beforeEach(async function () {
     fixture = await deployFixture();
     ({
@@ -65,19 +75,20 @@ describe("FeeDistributor", function () {
       gmxPriceFeed,
     } = fixture.contracts);
 
-    const mockLzReadResponse1 = await deployContract("MockLzReadResponse", []);
-    const mockLzReadResponse2 = await deployContract("MockLzReadResponse", []);
-    const mockLzReadResponse3 = await deployContract("MockLzReadResponse", []);
+    mockLzReadResponse1 = await deployContract("MockLzReadResponse", []);
+    mockLzReadResponse2 = await deployContract("MockLzReadResponse", []);
+    mockLzReadResponse3 = await deployContract("MockLzReadResponse", []);
+    mockSynapseRouter = await deployContract("MockSynapseRouter", []);
+    esGmx = await deployContract("MintableToken", ["Escrowed GMX", "esGMX", 18]);
 
-    ({ wallet, user0, user1, user2, user3, user4 } = fixture.accounts);
+    ({ wallet, user0, user1, user2, user3, user4, user5 } = fixture.accounts);
 
     await grantRole(roleStore, wallet.address, "FEE_DISTRIBUTION_KEEPER");
 
-    // Setting destination endpoint in mockEndpointV2
+    // set mock contract values
     await mockEndpointV2.setDestLzEndpoint(multichainReader.address, mockEndpointV2.address);
-
-    // Setting read channel for mockEndpointV2
     await mockEndpointV2.setReadChannelId(channelId);
+    await mockSynapseRouter.setBridgeSlippageFactor(encodeData(["uint256"], [expandDecimals(99, 28)]));
 
     const originator = feeDistributor.address;
 
@@ -105,23 +116,14 @@ describe("FeeDistributor", function () {
       numberOfConfirmations
     );
 
-    await mockLzReadResponse1.setMockSupply(expandDecimals(2000000, 18));
-    await mockLzReadResponse2.setMockSupply(expandDecimals(5000000, 18));
-    await mockLzReadResponse3.setMockSupply(expandDecimals(3000000, 18));
-
-    await mockLzReadResponse1.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(20000, 18));
-    await mockLzReadResponse3.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(30000, 18));
-
-    await gmx.mint(user0.address, expandDecimals(40000, 18));
-    await gmx.mint(feeDistributorVault.address, expandDecimals(20000, 18));
-    await gmx.mint(user1.address, expandDecimals(10000, 18));
-
-    await gmx.mint(feeHandler.address, expandDecimals(10000, 18));
-
     // Setting feeDistributor configuration in config and dataStore
-    await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(10000, 18));
-    await config.setUint(keys.FEE_DISTRIBUTOR_DISTRIBUTION_DAY, "0x", 3);
-    await config.setUint(keys.FEE_DISTRIBUTOR_REFERRAL_REWARDS_WNT_USD_LIMIT, "0x", 3);
+    await config.setUint(keys.FEE_DISTRIBUTOR_DISTRIBUTION_DAY, "0x", distributionDay);
+    await feeDistributorConfig.moveToNextDistributionDay(distributionDay);
+    const block = await ethers.provider.getBlock("latest");
+    initialTimestamp = block.timestamp;
+    await dataStore.setUint(keys.FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP, initialTimestamp);
+
+    await config.setUint(keys.FEE_DISTRIBUTOR_REFERRAL_REWARDS_WNT_USD_LIMIT, "0x", expandDecimals(1000000, 18));
     await config.setUint(keys.FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY, "0x", 600);
     await config.setUint(keys.FEE_DISTRIBUTOR_GAS_LIMIT, "0x", 5000000);
     await dataStore.setUintArray(keys.FEE_DISTRIBUTOR_CHAIN_ID, chainIds);
@@ -132,42 +134,42 @@ describe("FeeDistributor", function () {
     await config.setUint(keys.FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID, encodeData(["uint256"], [chainId3]), eid3);
     await config.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
-      encodeData(["uint256", "bytes32"], [chainId1, feeDistKeys.gmxKey]),
+      encodeData(["uint256", "bytes32"], [chainId1, feeDistributorConfig.gmxKey]),
       gmx.address
     );
     await config.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
-      encodeData(["uint256", "bytes32"], [chainId2, feeDistKeys.gmxKey]),
+      encodeData(["uint256", "bytes32"], [chainId2, feeDistributorConfig.gmxKey]),
       gmx.address
     );
     await config.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
-      encodeData(["uint256", "bytes32"], [chainId3, feeDistKeys.gmxKey]),
+      encodeData(["uint256", "bytes32"], [chainId3, feeDistributorConfig.gmxKey]),
       gmx.address
     );
     await config.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
-      encodeData(["uint256", "bytes32"], [chainId1, feeDistKeys.extendedGmxTrackerKey]),
+      encodeData(["uint256", "bytes32"], [chainId1, feeDistributorConfig.extendedGmxTrackerKey]),
       mockLzReadResponse1.address
     );
     await config.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
-      encodeData(["uint256", "bytes32"], [chainId2, feeDistKeys.extendedGmxTrackerKey]),
+      encodeData(["uint256", "bytes32"], [chainId2, feeDistributorConfig.extendedGmxTrackerKey]),
       mockLzReadResponse2.address
     );
     await config.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
-      encodeData(["uint256", "bytes32"], [chainId3, feeDistKeys.extendedGmxTrackerKey]),
+      encodeData(["uint256", "bytes32"], [chainId3, feeDistributorConfig.extendedGmxTrackerKey]),
       mockLzReadResponse3.address
     );
     await config.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
-      encodeData(["uint256", "bytes32"], [chainId1, feeDistKeys.dataStoreKey]),
+      encodeData(["uint256", "bytes32"], [chainId1, feeDistributorConfig.dataStoreKey]),
       mockLzReadResponse1.address
     );
     await config.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
-      encodeData(["uint256", "bytes32"], [chainId3, feeDistKeys.dataStoreKey]),
+      encodeData(["uint256", "bytes32"], [chainId3, feeDistributorConfig.dataStoreKey]),
       mockLzReadResponse3.address
     );
     await config.setAddress(
@@ -181,6 +183,27 @@ describe("FeeDistributor", function () {
       encodeData(["uint256", "bytes32"], [chainId3, keys.FEE_RECEIVER]),
       user1.address
     );
+    await config.setAddress(
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
+      encodeData(["uint256", "bytes32"], [chainId2, feeDistributorConfig.synapseRouterKey]),
+      mockSynapseRouter.address
+    );
+    await config.setUint(
+      keys.FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_FACTOR,
+      encodeData(["uint256"], [chainId1]),
+      expandDecimals(99, 28)
+    );
+    await config.setUint(
+      keys.FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_FACTOR,
+      encodeData(["uint256"], [chainId2]),
+      expandDecimals(99, 28)
+    );
+    await config.setUint(
+      keys.FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_FACTOR,
+      encodeData(["uint256"], [chainId3]),
+      expandDecimals(99, 28)
+    );
+    await config.setUint(keys.FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_FACTOR, "0x", expandDecimals(1, 14));
     // await config.setUint(keys.FEE_DISTRIBUTOR_AMOUNT_THRESHOLD, encodeData(["bytes32"], [3]), 5);
     await dataStore.setAddressArray(keys.FEE_DISTRIBUTOR_KEEPER_COSTS, [user2.address, user3.address, user4.address]);
     await dataStore.setUintArray(keys.FEE_DISTRIBUTOR_KEEPER_COSTS, [1, 2, 3]);
@@ -194,18 +217,47 @@ describe("FeeDistributor", function () {
     await dataStore.setAddress(keys.oracleProviderForTokenKey(gmx.address), chainlinkPriceFeedProvider.address);
   });
 
-  // Validate initiateDistribute() and processLzReceive() functions when current chain has a fee deficit
+  it("validate initiateDistribute() can only be executed by FEE_DISTRIBUTION_KEEPER", async function () {
+    await expect(feeDistributor.connect(user5).initiateDistribute()).to.be.revertedWithCustomError(
+      errorsContract,
+      "Unauthorized",
+      "FEE_DISTRIBUTION_KEEPER"
+    );
+  });
+
+  it("validate initiateDistribute() cannot be executed if current week distribution is already completed", async function () {
+    await expect(feeDistributor.initiateDistribute()).to.be.revertedWithCustomError(
+      errorsContract,
+      "FeeDistributionAlreadyCompleted",
+      initialTimestamp,
+      initialTimestamp - 60
+    );
+  });
+
   it("validate initiateDistribute() and processLzReceive() for fee deficit", async function () {
+    await feeDistributorConfig.moveToNextDistributionDay(distributionDay);
+
+    await mockLzReadResponse1.setMockSupply(expandDecimals(2000000, 18));
+    await mockLzReadResponse2.setMockSupply(expandDecimals(5000000, 18));
+    await mockLzReadResponse3.setMockSupply(expandDecimals(3000000, 18));
+
+    await mockLzReadResponse1.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(20000, 18));
+    await mockLzReadResponse3.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(30000, 18));
+    await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(10000, 18));
+    await gmx.mint(feeHandler.address, expandDecimals(10000, 18));
+
+    await gmx.mint(user0.address, expandDecimals(40000, 18));
+    await gmx.mint(feeDistributorVault.address, expandDecimals(20000, 18));
+    await gmx.mint(user1.address, expandDecimals(10000, 18));
+
     await wallet.sendTransaction({
       to: feeDistributor.address,
       value: ethers.utils.parseEther("1.0"),
     });
 
-    // Retreive WETH price
     const wethPrice = await wethPriceFeed.latestAnswer();
     expect(wethPrice).to.eq(expandDecimals(5000, 8));
 
-    // Retreive GMX price
     const gmxPrice = await gmxPriceFeed.latestAnswer();
     expect(gmxPrice).to.eq(expandDecimals(20, 8));
 
@@ -214,8 +266,10 @@ describe("FeeDistributor", function () {
     const block = await ethers.provider.getBlock(receipt.blockNumber);
     const timestamp = block.timestamp;
 
-    // Assert the resulting state of data in mockMultichainReaderOriginator
     const distributeTimestamp = await dataStore.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
+
+    const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[6].parsedEventData;
+    const feeDistributionDataReceived = parseLogs(fixture, receipt)[3].parsedEventData;
 
     const feeAmountGmx1 = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainId1));
     const feeAmountGmx2 = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainId2));
@@ -229,6 +283,9 @@ describe("FeeDistributor", function () {
 
     expect(distributeTimestamp).to.equal(encodeData(["uint256"], [timestamp]));
 
+    expect(feeDistributionInitiatedEventData.numberOfChainsReadRequests).to.equal(encodeData(["uint256"], [2]));
+    expect(feeDistributionDataReceived.isBridgingCompleted).is.false;
+
     expect(feeAmountGmx1).to.equal(encodeData(["uint256"], [expandDecimals(60000, 18)]));
     expect(feeAmountGmx2).to.equal(encodeData(["uint256"], [expandDecimals(30000, 18)]));
     expect(feeAmountGmx3).to.equal(encodeData(["uint256"], [expandDecimals(40000, 18)]));
@@ -238,5 +295,157 @@ describe("FeeDistributor", function () {
     expect(stakedGmx2).to.equal(encodeData(["uint256"], [expandDecimals(5000000, 18)]));
     expect(stakedGmx3).to.equal(encodeData(["uint256"], [expandDecimals(3000000, 18)]));
     expect(totalStakedGmx).to.equal(encodeData(["uint256"], [expandDecimals(10000000, 18)]));
+  });
+
+  it("validate initiateDistribute() and processLzReceive() for fee surplus", async function () {
+    await feeDistributorConfig.moveToNextDistributionDay(distributionDay);
+
+    await mockLzReadResponse1.setMockSupply(expandDecimals(3000000, 18));
+    await mockLzReadResponse2.setMockSupply(expandDecimals(6000000, 18));
+    await mockLzReadResponse3.setMockSupply(expandDecimals(3000000, 18));
+
+    await mockLzReadResponse1.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(10000, 18));
+    await mockLzReadResponse3.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(20000, 18));
+    await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(40000, 18));
+    await gmx.mint(feeHandler.address, expandDecimals(40000, 18));
+
+    await gmx.mint(user0.address, expandDecimals(40000, 18));
+    await gmx.mint(feeDistributorVault.address, expandDecimals(120000, 18));
+    await gmx.mint(user1.address, expandDecimals(10000, 18));
+
+    await wallet.sendTransaction({
+      to: feeDistributor.address,
+      value: ethers.utils.parseEther("1.0"),
+    });
+
+    const wethPrice = await wethPriceFeed.latestAnswer();
+    expect(wethPrice).to.eq(expandDecimals(5000, 8));
+
+    const gmxPrice = await gmxPriceFeed.latestAnswer();
+    expect(gmxPrice).to.eq(expandDecimals(20, 8));
+
+    const tx = await feeDistributor.initiateDistribute();
+    const receipt = await tx.wait();
+    const block = await ethers.provider.getBlock(receipt.blockNumber);
+    const timestamp = block.timestamp;
+
+    const distributeTimestamp = await dataStore.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
+
+    const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[15].parsedEventData;
+    const feeDistributionDataReceived = parseLogs(fixture, receipt)[12].parsedEventData;
+    const feeDistributionGmxBridgedOut = parseLogs(fixture, receipt)[11].parsedEventData;
+
+    const feeAmountGmx1 = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainId1));
+    const feeAmountGmx2 = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainId2));
+    const feeAmountGmx3 = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainId3));
+    const totalFeeAmountGmx = await dataStore.getUint(keys.FEE_DISTRIBUTOR_TOTAL_FEE_AMOUNT_GMX);
+
+    const stakedGmx1 = await dataStore.getUint(keys.feeDistributorStakedGmxKey(chainId1));
+    const stakedGmx2 = await dataStore.getUint(keys.feeDistributorStakedGmxKey(chainId2));
+    const stakedGmx3 = await dataStore.getUint(keys.feeDistributorStakedGmxKey(chainId3));
+    const totalStakedGmx = await dataStore.getUint(keys.FEE_DISTRIBUTOR_TOTAL_STAKED_GMX);
+
+    const feeAmountAfterBridging1 = await gmx.balanceOf(user0.address);
+    const feeAmountAfterBridging2 = await gmx.balanceOf(feeDistributorVault.address);
+    const feeAmountAfterBridging3 = await gmx.balanceOf(user1.address);
+
+    expect(distributeTimestamp).to.equal(encodeData(["uint256"], [timestamp]));
+
+    expect(feeDistributionInitiatedEventData.numberOfChainsReadRequests).to.equal(encodeData(["uint256"], [2]));
+    expect(feeDistributionDataReceived.isBridgingCompleted).is.true;
+    expect(feeDistributionGmxBridgedOut.totalGmxBridgedOut).to.equal(
+      encodeData(["uint256"], [expandDecimals(40000, 18)])
+    );
+
+    expect(feeAmountGmx1).to.equal(encodeData(["uint256"], [expandDecimals(50000, 18)]));
+    expect(feeAmountGmx2).to.equal(encodeData(["uint256"], [expandDecimals(160000, 18)]));
+    expect(feeAmountGmx3).to.equal(encodeData(["uint256"], [expandDecimals(30000, 18)]));
+    expect(totalFeeAmountGmx).to.equal(encodeData(["uint256"], [expandDecimals(240000, 18)]));
+
+    expect(stakedGmx1).to.equal(encodeData(["uint256"], [expandDecimals(3000000, 18)]));
+    expect(stakedGmx2).to.equal(encodeData(["uint256"], [expandDecimals(6000000, 18)]));
+    expect(stakedGmx3).to.equal(encodeData(["uint256"], [expandDecimals(3000000, 18)]));
+    expect(totalStakedGmx).to.equal(encodeData(["uint256"], [expandDecimals(12000000, 18)]));
+
+    expect(feeAmountAfterBridging1).to.equal(encodeData(["uint256"], [expandDecimals(49900, 18)]));
+    expect(feeAmountAfterBridging2).to.equal(encodeData(["uint256"], [expandDecimals(120000, 18)]));
+    expect(feeAmountAfterBridging3).to.equal(encodeData(["uint256"], [expandDecimals(39700, 18)]));
+  });
+
+  it("validate distribute() for fee surplus", async function () {
+    await feeDistributorConfig.moveToNextDistributionDay(distributionDay);
+
+    await mockLzReadResponse1.setMockSupply(expandDecimals(3000000, 18));
+    await mockLzReadResponse2.setMockSupply(expandDecimals(6000000, 18));
+    await mockLzReadResponse3.setMockSupply(expandDecimals(3000000, 18));
+
+    await mockLzReadResponse1.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(10000, 18));
+    await mockLzReadResponse3.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(20000, 18));
+    await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(40000, 18));
+    await gmx.mint(feeHandler.address, expandDecimals(40000, 18));
+
+    await gmx.mint(user0.address, expandDecimals(40000, 18));
+    await gmx.mint(feeDistributorVault.address, expandDecimals(120000, 18));
+    await gmx.mint(user1.address, expandDecimals(10000, 18));
+
+    await wallet.sendTransaction({
+      to: feeDistributor.address,
+      value: ethers.utils.parseEther("1.0"),
+    });
+
+    const wethPrice = await wethPriceFeed.latestAnswer();
+    expect(wethPrice).to.eq(expandDecimals(5000, 8));
+
+    const gmxPrice = await gmxPriceFeed.latestAnswer();
+    expect(gmxPrice).to.eq(expandDecimals(20, 8));
+
+    const tx = await feeDistributor.initiateDistribute();
+    const receipt = await tx.wait();
+    const block = await ethers.provider.getBlock(receipt.blockNumber);
+    const timestamp = block.timestamp;
+
+    const distributeTimestamp = await dataStore.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
+
+    const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[15].parsedEventData;
+    const feeDistributionDataReceived = parseLogs(fixture, receipt)[12].parsedEventData;
+    const feeDistributionGmxBridgedOut = parseLogs(fixture, receipt)[11].parsedEventData;
+
+    const feeAmountGmx1 = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainId1));
+    const feeAmountGmx2 = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainId2));
+    const feeAmountGmx3 = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainId3));
+    const totalFeeAmountGmx = await dataStore.getUint(keys.FEE_DISTRIBUTOR_TOTAL_FEE_AMOUNT_GMX);
+
+    const stakedGmx1 = await dataStore.getUint(keys.feeDistributorStakedGmxKey(chainId1));
+    const stakedGmx2 = await dataStore.getUint(keys.feeDistributorStakedGmxKey(chainId2));
+    const stakedGmx3 = await dataStore.getUint(keys.feeDistributorStakedGmxKey(chainId3));
+    const totalStakedGmx = await dataStore.getUint(keys.FEE_DISTRIBUTOR_TOTAL_STAKED_GMX);
+
+    const feeAmountAfterBridging1 = await gmx.balanceOf(user0.address);
+    const feeAmountAfterBridging2 = await gmx.balanceOf(feeDistributorVault.address);
+    const feeAmountAfterBridging3 = await gmx.balanceOf(user1.address);
+
+    expect(distributeTimestamp).to.equal(encodeData(["uint256"], [timestamp]));
+
+    expect(feeDistributionInitiatedEventData.numberOfChainsReadRequests).to.equal(encodeData(["uint256"], [2]));
+    expect(feeDistributionDataReceived.isBridgingCompleted).is.true;
+    expect(feeDistributionGmxBridgedOut.totalGmxBridgedOut).to.equal(
+      encodeData(["uint256"], [expandDecimals(40000, 18)])
+    );
+
+    expect(feeAmountGmx1).to.equal(encodeData(["uint256"], [expandDecimals(50000, 18)]));
+    expect(feeAmountGmx2).to.equal(encodeData(["uint256"], [expandDecimals(160000, 18)]));
+    expect(feeAmountGmx3).to.equal(encodeData(["uint256"], [expandDecimals(30000, 18)]));
+    expect(totalFeeAmountGmx).to.equal(encodeData(["uint256"], [expandDecimals(240000, 18)]));
+
+    expect(stakedGmx1).to.equal(encodeData(["uint256"], [expandDecimals(3000000, 18)]));
+    expect(stakedGmx2).to.equal(encodeData(["uint256"], [expandDecimals(6000000, 18)]));
+    expect(stakedGmx3).to.equal(encodeData(["uint256"], [expandDecimals(3000000, 18)]));
+    expect(totalStakedGmx).to.equal(encodeData(["uint256"], [expandDecimals(12000000, 18)]));
+
+    expect(feeAmountAfterBridging1).to.equal(encodeData(["uint256"], [expandDecimals(49900, 18)]));
+    expect(feeAmountAfterBridging2).to.equal(encodeData(["uint256"], [expandDecimals(120000, 18)]));
+    expect(feeAmountAfterBridging3).to.equal(encodeData(["uint256"], [expandDecimals(39700, 18)]));
+
+    await esGmx.mint(feeDistributorVault.address, expandDecimals(100, 18));
   });
 });

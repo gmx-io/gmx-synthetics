@@ -37,7 +37,6 @@ export async function deployFixture() {
   await wnt.deposit({ value: expandDecimals(50, 18) });
 
   const gmx = await hre.ethers.getContract("GMX");
-  const esGmx = await hre.ethers.getContract("GMX");
 
   const wbtc = await hre.ethers.getContract("WBTC");
   const sol = { address: getSyntheticTokenAddress(hre.network.config.chainId, "SOL") };
@@ -326,7 +325,6 @@ export async function deployFixture() {
       gmxPriceFeed,
       wnt,
       gmx,
-      esGmx,
       wbtc,
       sol,
       usdc,

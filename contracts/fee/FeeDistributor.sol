@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "./FeeDistributorVault.sol";
 import "./FeeHandler.sol";
+import "./ISynapseRouter.sol";
 import "../multichain/MultichainReader.sol";
 import "../v1/IRewardTrackerV1.sol";
 import "../v1/IRewardDistributorV1.sol";
@@ -23,9 +24,6 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         ReadDataReceived,
         BridgingCompleted
     }
-
-    string public constant bridgeFunctionSignature =
-        "bridge(address,uint256,address,uint256,(address,address,uint256,uint256,bytes),(address,address,uint256,uint256,bytes))";
 
     bytes32 public constant gmxKey = keccak256(abi.encode("GMX"));
     bytes32 public constant extendedGmxTrackerKey = keccak256(abi.encode("EXTENDED_GMX_TRACKER"));
@@ -449,13 +447,13 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         return bridgeGmx(chainIds, bridgingAmounts);
     }
 
-    function bridgeGmx(uint256[] memory chainIds, uint256[] memory bridging) internal returns (uint256) {
+    function bridgeGmx(uint256[] memory chainIds, uint256[] memory bridgingAmounts) internal returns (uint256) {
         // Execute bridging transactions from current chain
         address synapseRouter = getAddress(block.chainid, synapseRouterKey);
         uint256 originDeadline = block.timestamp + getUint(Keys.feeDistributorBridgeOriginDeadlineKey(block.chainid));
         uint256 totalGmxBridgedOut;
         for (uint256 i; i < chainIds.length; i++) {
-            uint256 sendAmount = bridging[i];
+            uint256 sendAmount = bridgingAmounts[i];
             if (sendAmount == 0) continue;
 
             // Move GMX needed for bridging to this contract from FeeDistributorVault, then approve router
@@ -466,32 +464,21 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
             uint256 chainId = chainIds[i];
             uint256 minAmountOut = Precision.applyFactor(
                 sendAmount,
-                getUint(Keys.feeDistributorBridgeSlippageFactorKey(block.chainid))
+                getUint(Keys.feeDistributorBridgeSlippageFactorKey(chainId))
             );
             uint256 destDeadline = block.timestamp + getUint(Keys.feeDistributorBridgeDestDeadlineKey(chainId));
-            bytes memory callData = abi.encodeWithSignature(
-                bridgeFunctionSignature,
-                // (feeReceiver, chainId, token, amount) for the “Origin” call
+            bytes memory callData = abi.encodeWithSelector(
+                ISynapseRouter.bridge.selector,
                 getAddress(chainId, Keys.FEE_RECEIVER),
                 chainId,
                 gmx,
                 sendAmount,
-                // additional bridging params for the origin chain
-                address(0),
-                gmx,
-                sendAmount,
-                originDeadline,
-                "",
-                // additional bridging params for the destination chain
-                address(0),
-                getAddress(chainId, gmxKey),
-                minAmountOut,
-                destDeadline,
-                ""
+                SwapQuery(address(0), gmx, sendAmount, originDeadline, bytes("")),
+                SwapQuery(address(0), getAddress(chainId, gmxKey), minAmountOut, destDeadline, bytes(""))
             );
 
             // Make the call
-            (bool success, bytes memory result) = synapseRouter.call(callData);
+            (bool success, bytes memory result) = synapseRouter.call{ value: 0 }(callData);
             if (!success) {
                 revert Errors.BridgingTransactionFailed(result);
             }
@@ -503,7 +490,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         EventUtils.EventLogData memory eventData;
         eventData.uintItems.initItems(1);
         eventData = setUintItem(eventData, 0, "totalGmxBridgedOut", totalGmxBridgedOut);
-        emitEventLog("GmxBridgedOut", eventData);
+        emitEventLog("FeeDistributionGmxBridgedOut", eventData);
 
         return totalGmxBridgedOut;
     }
@@ -768,13 +755,13 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
     }
 
     function validateDistributionNotCompleted() internal view {
-        uint256 dayOfWeek = ((block.timestamp / 1 weeks) + 4) % 7;
-        uint256 daysSinceStartOfWeek = (dayOfWeek + 7 - getUint(Keys.FEE_DISTRIBUTOR_DISTRIBUTION_DAY)) % 7;
-        uint256 midnightToday = (block.timestamp - (block.timestamp % 1 weeks));
-        uint256 startOfWeek = midnightToday - (daysSinceStartOfWeek * 1 weeks);
+        uint256 dayOfWeek = ((block.timestamp / 1 days) + 4) % 7;
+        uint256 daysSinceDistributionDay = (dayOfWeek + 7 - getUint(Keys.FEE_DISTRIBUTOR_DISTRIBUTION_DAY)) % 7;
+        uint256 midnightToday = block.timestamp - (block.timestamp % 1 days);
+        uint256 startOfDistributionWeek = midnightToday - (daysSinceDistributionDay * 1 days);
         uint256 lastDistributionTime = getUint(Keys.FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP);
-        if (lastDistributionTime > startOfWeek) {
-            revert Errors.FeeDistributionAlreadyCompleted(lastDistributionTime, startOfWeek);
+        if (lastDistributionTime > startOfDistributionWeek) {
+            revert Errors.FeeDistributionAlreadyCompleted(lastDistributionTime, startOfDistributionWeek);
         }
     }
 
