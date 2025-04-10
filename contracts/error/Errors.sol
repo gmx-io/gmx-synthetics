@@ -472,4 +472,12 @@ library Errors {
 
     // EventUtils error
     error EventItemNotFound(string key);
+
+    // EdgeOracle verifier errors
+    error InvalidTrustedSignerAddress();
+    error InvalidEdgeSigner();
+    error InvalidEdgeSignature(uint256 recoverError);
+    error InvalidEdgeDataStreamBidAsk(address token, uint256 bid, uint256 ask);
+    error InvalidEdgeDataStreamPrices(address token, uint256 bid, uint256 ask);
+    error InvalidEdgeDataStreamExpo(int256 expo);
 }

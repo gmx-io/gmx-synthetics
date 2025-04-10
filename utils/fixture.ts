@@ -131,6 +131,8 @@ export async function deployFixture() {
   const layerZeroProvider = await hre.ethers.getContract("LayerZeroProvider");
   const mockStargatePool = await hre.ethers.getContract("MockStargatePool");
   const mockOracleProvider = await hre.ethers.getContract("MockOracleProvider");
+  const edgeDataStreamVerifier = await hre.ethers.getContract("EdgeDataStreamVerifier");
+  const edgeDataStreamProvider = await hre.ethers.getContract("EdgeDataStreamProvider");
 
   const ethUsdMarketAddress = getMarketTokenAddress(
     wnt.address,
@@ -351,6 +353,8 @@ export async function deployFixture() {
       mockStargatePool,
       callbackUtils,
       mockOracleProvider,
+      edgeDataStreamVerifier,
+      edgeDataStreamProvider,
     },
     props: { oracleSalt, signerIndexes: [0, 1, 2, 3, 4, 5, 6], executionFee: "1000000000000000" },
   };
