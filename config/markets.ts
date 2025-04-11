@@ -2332,8 +2332,8 @@ const config: {
       maxOpenInterest: decimalToFloat(1_000_000),
       maxPoolUsdForDeposit: decimalToFloat(1_500_000), // 1.5x the max open interest
 
-      maxLongTokenPoolAmount: expandDecimals(600, 18), // ~2M USD (2x the max open interest)
-      maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+      maxLongTokenPoolAmount: expandDecimals(1250, 18),
+      maxShortTokenPoolAmount: expandDecimals(2_000_000, 6),
     },
     {
       tokens: { indexToken: "TRUMP", longToken: "WETH", shortToken: "USDC" },
