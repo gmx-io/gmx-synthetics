@@ -11,6 +11,7 @@ export type OracleConfig = {
   maxOracleTimestampRange: number;
   maxRefPriceDeviationFactor: BigNumberish;
   chainlinkPaymentToken?: string;
+  edgeOracleSigner?: string;
 };
 
 export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleConfig> {
@@ -29,6 +30,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
       maxOraclePriceAge: 60 * 60 * 24,
       maxOracleTimestampRange: 60,
       maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
+      edgeOracleSigner: "0x1C498E2FE362e489A5Aac71690f9121914e0d55e",
     },
 
     hardhat: {
@@ -39,6 +41,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
       maxOracleTimestampRange: 60,
       chainlinkPaymentToken: "0x99bbA657f2BbC93c02D617f8bA121cB8Fc104Acf",
       maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
+      edgeOracleSigner: "0x1C498E2FE362e489A5Aac71690f9121914e0d55e",
     },
 
     arbitrum: {
@@ -50,6 +53,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
       minOracleSigners: 1,
       dataStreamFeedVerifier: "0x478Aa2aC9F6D65F84e09D9185d126c3a17c2a93C",
       chainlinkPaymentToken: "0xf97f4df75117a78c1A5a0DBb814Af92458539FB4",
+      edgeOracleSigner: "0x1C498E2FE362e489A5Aac71690f9121914e0d55e",
     },
 
     avalanche: {

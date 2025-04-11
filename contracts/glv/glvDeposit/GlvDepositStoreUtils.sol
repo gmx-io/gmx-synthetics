@@ -36,6 +36,10 @@ library GlvDepositStoreUtils {
     bytes32 public constant SHOULD_UNWRAP_NATIVE_TOKEN = keccak256(abi.encode("SHOULD_UNWRAP_NATIVE_TOKEN"));
     bytes32 public constant IS_MARKET_TOKEN_DEPOSIT = keccak256(abi.encode("IS_MARKET_TOKEN_DEPOSIT"));
 
+    bytes32 public constant DATA_LIST = keccak256(abi.encode("DATA_LIST"));
+
+    bytes32 public constant SRC_CHAIN_ID = keccak256(abi.encode("SRC_CHAIN_ID"));
+
     function get(DataStore dataStore, bytes32 key) external view returns (GlvDeposit.Props memory) {
         GlvDeposit.Props memory glvDeposit;
         if (!dataStore.containsBytes32(Keys.GLV_DEPOSIT_LIST, key)) {
@@ -110,12 +114,20 @@ library GlvDepositStoreUtils {
             keccak256(abi.encode(key, CALLBACK_GAS_LIMIT))
         ));
 
+        glvDeposit.setSrcChainId(dataStore.getUint(
+            keccak256(abi.encode(key, SRC_CHAIN_ID))
+        ));
+
         glvDeposit.setShouldUnwrapNativeToken(dataStore.getBool(
             keccak256(abi.encode(key, SHOULD_UNWRAP_NATIVE_TOKEN))
         ));
 
         glvDeposit.setIsMarketTokenDeposit(dataStore.getBool(
             keccak256(abi.encode(key, IS_MARKET_TOKEN_DEPOSIT))
+        ));
+
+        glvDeposit.setDataList(dataStore.getBytes32Array(
+            keccak256(abi.encode(key, DATA_LIST))
         ));
 
         return glvDeposit;
@@ -217,6 +229,11 @@ library GlvDepositStoreUtils {
             glvDeposit.callbackGasLimit()
         );
 
+        dataStore.setUint(
+            keccak256(abi.encode(key, SRC_CHAIN_ID)),
+            glvDeposit.srcChainId()
+        );
+
         dataStore.setBool(
             keccak256(abi.encode(key, SHOULD_UNWRAP_NATIVE_TOKEN)),
             glvDeposit.shouldUnwrapNativeToken()
@@ -225,6 +242,11 @@ library GlvDepositStoreUtils {
         dataStore.setBool(
             keccak256(abi.encode(key, IS_MARKET_TOKEN_DEPOSIT)),
             glvDeposit.isMarketTokenDeposit()
+        );
+
+        dataStore.setBytes32Array(
+            keccak256(abi.encode(key, DATA_LIST)),
+            glvDeposit.dataList()
         );
     }
 
@@ -311,12 +333,20 @@ library GlvDepositStoreUtils {
             keccak256(abi.encode(key, CALLBACK_GAS_LIMIT))
         );
 
+        dataStore.removeUint(
+            keccak256(abi.encode(key, SRC_CHAIN_ID))
+        );
+
         dataStore.removeBool(
             keccak256(abi.encode(key, SHOULD_UNWRAP_NATIVE_TOKEN))
         );
 
         dataStore.removeBool(
             keccak256(abi.encode(key, IS_MARKET_TOKEN_DEPOSIT))
+        );
+
+        dataStore.removeBytes32Array(
+            keccak256(abi.encode(key, DATA_LIST))
         );
     }
 

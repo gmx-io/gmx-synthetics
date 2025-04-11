@@ -19,6 +19,16 @@ library GlvWithdrawalUtils {
     using EventUtils for EventUtils.AddressItems;
 
     struct CreateGlvWithdrawalParams {
+        CreateGlvWithdrawalParamsAddresses addresses;
+        uint256 minLongTokenAmount;
+        uint256 minShortTokenAmount;
+        bool shouldUnwrapNativeToken;
+        uint256 executionFee;
+        uint256 callbackGasLimit;
+        bytes32[] dataList;
+    }
+
+    struct CreateGlvWithdrawalParamsAddresses {
         address receiver;
         address callbackContract;
         address uiFeeReceiver;
@@ -26,16 +36,12 @@ library GlvWithdrawalUtils {
         address glv;
         address[] longTokenSwapPath;
         address[] shortTokenSwapPath;
-        uint256 minLongTokenAmount;
-        uint256 minShortTokenAmount;
-        bool shouldUnwrapNativeToken;
-        uint256 executionFee;
-        uint256 callbackGasLimit;
     }
 
     struct ExecuteGlvWithdrawalParams {
         DataStore dataStore;
         EventEmitter eventEmitter;
+        MultichainVault multichainVault;
         GlvVault glvVault;
         Oracle oracle;
         bytes32 key;
@@ -48,6 +54,7 @@ library GlvWithdrawalUtils {
         uint256 marketCount;
         uint256 oraclePriceCount;
         uint256 marketTokenAmount;
+        uint256 refundFeeAmount;
     }
 
     struct CancelGlvWithdrawalParams {
@@ -66,15 +73,16 @@ library GlvWithdrawalUtils {
         EventEmitter eventEmitter,
         GlvVault glvVault,
         address account,
+        uint256 srcChainId,
         CreateGlvWithdrawalParams memory params
     ) external returns (bytes32) {
         AccountUtils.validateAccount(account);
-        GlvUtils.validateGlv(dataStore, params.glv);
-        GlvUtils.validateGlvMarket(dataStore, params.glv, params.market, false);
+        GlvUtils.validateGlv(dataStore, params.addresses.glv);
+        GlvUtils.validateGlvMarket(dataStore, params.addresses.glv, params.addresses.market, false);
 
-        MarketUtils.validateEnabledMarket(dataStore, params.market);
-        MarketUtils.validateSwapPath(dataStore, params.longTokenSwapPath);
-        MarketUtils.validateSwapPath(dataStore, params.shortTokenSwapPath);
+        MarketUtils.validateEnabledMarket(dataStore, params.addresses.market);
+        MarketUtils.validateSwapPath(dataStore, params.addresses.longTokenSwapPath);
+        MarketUtils.validateSwapPath(dataStore, params.addresses.shortTokenSwapPath);
 
         address wnt = TokenUtils.wnt(dataStore);
         uint256 wntAmount = glvVault.recordTransferIn(wnt);
@@ -83,9 +91,9 @@ library GlvWithdrawalUtils {
         }
         params.executionFee = wntAmount;
 
-        AccountUtils.validateReceiver(params.receiver);
+        AccountUtils.validateReceiver(params.addresses.receiver);
 
-        uint256 glvTokenAmount = glvVault.recordTransferIn(params.glv);
+        uint256 glvTokenAmount = glvVault.recordTransferIn(params.addresses.glv);
 
         if (glvTokenAmount == 0) {
             revert Errors.EmptyGlvWithdrawalAmount();
@@ -94,13 +102,13 @@ library GlvWithdrawalUtils {
         GlvWithdrawal.Props memory glvWithdrawal = GlvWithdrawal.Props(
             GlvWithdrawal.Addresses({
                 account: account,
-                glv: params.glv,
-                receiver: params.receiver,
-                callbackContract: params.callbackContract,
-                uiFeeReceiver: params.uiFeeReceiver,
-                market: params.market,
-                longTokenSwapPath: params.longTokenSwapPath,
-                shortTokenSwapPath: params.shortTokenSwapPath
+                glv: params.addresses.glv,
+                receiver: params.addresses.receiver,
+                callbackContract: params.addresses.callbackContract,
+                uiFeeReceiver: params.addresses.uiFeeReceiver,
+                market: params.addresses.market,
+                longTokenSwapPath: params.addresses.longTokenSwapPath,
+                shortTokenSwapPath: params.addresses.shortTokenSwapPath
             }),
             GlvWithdrawal.Numbers({
                 glvTokenAmount: glvTokenAmount,
@@ -108,24 +116,22 @@ library GlvWithdrawalUtils {
                 minShortTokenAmount: params.minShortTokenAmount,
                 updatedAtTime: Chain.currentTimestamp(),
                 executionFee: params.executionFee,
-                callbackGasLimit: params.callbackGasLimit
+                callbackGasLimit: params.callbackGasLimit,
+                srcChainId: srcChainId
             }),
-            GlvWithdrawal.Flags({shouldUnwrapNativeToken: params.shouldUnwrapNativeToken})
+            GlvWithdrawal.Flags({shouldUnwrapNativeToken: params.shouldUnwrapNativeToken}),
+            params.dataList
         );
 
         CallbackUtils.validateCallbackGasLimit(dataStore, params.callbackGasLimit);
 
         uint256 marketCount = GlvUtils.getGlvMarketCount(dataStore, glvWithdrawal.glv());
-        uint256 estimatedGasLimit = GasUtils.estimateExecuteGlvWithdrawalGasLimit(
+        GasUtils.validateExecutionFee(
             dataStore,
-            glvWithdrawal,
-            marketCount
+            GasUtils.estimateExecuteGlvWithdrawalGasLimit(dataStore, glvWithdrawal, marketCount), // estimatedGasLimit
+            params.executionFee,
+            GasUtils.estimateGlvWithdrawalOraclePriceCount(marketCount, params.addresses.longTokenSwapPath.length + params.addresses.shortTokenSwapPath.length) // oraclePriceCount
         );
-        uint256 oraclePriceCount = GasUtils.estimateGlvWithdrawalOraclePriceCount(
-            marketCount,
-            params.longTokenSwapPath.length + params.shortTokenSwapPath.length
-        );
-        GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, params.executionFee, oraclePriceCount);
 
         bytes32 key = NonceUtils.getNextKey(dataStore);
 
@@ -190,7 +196,7 @@ library GlvWithdrawalUtils {
             glvWithdrawal.longTokenSwapPath().length + glvWithdrawal.shortTokenSwapPath().length
         );
 
-        GasUtils.payExecutionFee(
+        cache.refundFeeAmount = GasUtils.payExecutionFee(
             params.dataStore,
             params.eventEmitter,
             params.glvVault,
@@ -200,8 +206,14 @@ library GlvWithdrawalUtils {
             params.startingGas,
             cache.oraclePriceCount,
             params.keeper,
-            glvWithdrawal.receiver()
+            glvWithdrawal.srcChainId() == 0 ? glvWithdrawal.receiver() : address(params.multichainVault)//glvWithdrawal.receiver()
         );
+
+        // for multichain action, receiver is the multichainVault; increase user's multichain wnt balance for the fee refund
+        if (glvWithdrawal.srcChainId() != 0 && cache.refundFeeAmount > 0) {
+            address wnt = params.dataStore.getAddress(Keys.WNT);
+            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, wnt, glvWithdrawal.receiver(), 0); // srcChainId is the current block.chainId
+        }
     }
 
     function _processMarketWithdrawal(
@@ -226,9 +238,11 @@ library GlvWithdrawalUtils {
                 marketTokenAmount: marketTokenAmount,
                 updatedAtTime: glvWithdrawal.updatedAtTime(),
                 executionFee: 0,
-                callbackGasLimit: 0
+                callbackGasLimit: 0,
+                srcChainId: glvWithdrawal.srcChainId()
             }),
-            Withdrawal.Flags({shouldUnwrapNativeToken: glvWithdrawal.shouldUnwrapNativeToken()})
+            Withdrawal.Flags({shouldUnwrapNativeToken: glvWithdrawal.shouldUnwrapNativeToken()}),
+            glvWithdrawal.dataList()
         );
 
         bytes32 withdrawalKey = NonceUtils.getNextKey(params.dataStore);
@@ -251,6 +265,7 @@ library GlvWithdrawalUtils {
             .ExecuteWithdrawalParams({
                 dataStore: params.dataStore,
                 eventEmitter: params.eventEmitter,
+                multichainVault: params.multichainVault,
                 withdrawalVault: WithdrawalVault(payable(params.glvVault)),
                 oracle: params.oracle,
                 key: withdrawalKey,

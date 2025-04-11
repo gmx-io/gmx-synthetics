@@ -9,6 +9,7 @@ import "../oracle/OracleUtils.sol";
 interface IGlvHandler {
     function createGlvDeposit(
         address account,
+        uint256 srcChainId,
         GlvDepositUtils.CreateGlvDepositParams calldata params
     ) external payable returns (bytes32);
 
@@ -18,6 +19,7 @@ interface IGlvHandler {
 
     function createGlvWithdrawal(
         address account,
+        uint256 srcChainId,
         GlvWithdrawalUtils.CreateGlvWithdrawalParams calldata params
     ) external payable returns (bytes32);
 

@@ -24,6 +24,7 @@ interface IBaseOrderUtils {
         bool shouldUnwrapNativeToken;
         bool autoCancel;
         bytes32 referralCode;
+        bytes32[] dataList;
     }
 
     // @note all params except should be part of the corresponding struct hash in all relay contracts

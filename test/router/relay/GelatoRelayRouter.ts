@@ -97,6 +97,7 @@ describe("GelatoRelayRouter", () => {
       isLong: true,
       shouldUnwrapNativeToken: true,
       referralCode,
+      dataList: [],
     };
 
     await impersonateAccount(GELATO_RELAY_ADDRESS);
@@ -125,6 +126,7 @@ describe("GelatoRelayRouter", () => {
       account: user0.address,
       params: defaultParams,
       deadline: 9999999999,
+      desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
       relayRouter: gelatoRelayRouter,
       chainId,
       gelatoRelayFeeToken: wnt.address,
@@ -1134,6 +1136,7 @@ describe("GelatoRelayRouter", () => {
           executionFeeIncrease: 0,
         },
         deadline: 9999999999,
+        desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
         relayRouter: gelatoRelayRouter,
         chainId,
         gelatoRelayFeeToken: wnt.address,
@@ -1282,6 +1285,7 @@ describe("GelatoRelayRouter", () => {
         key: ethers.constants.HashZero,
         account: user0.address,
         deadline: 9999999999,
+        desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
         relayRouter: gelatoRelayRouter,
         chainId,
         gelatoRelayFeeToken: wnt.address,
