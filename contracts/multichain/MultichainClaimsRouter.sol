@@ -14,7 +14,7 @@ contract MultichainClaimsRouter is MultichainRouter {
     ) MultichainRouter(params) BaseRouter(params.router, params.roleStore, params.dataStore, params.eventEmitter) {}
 
     function claimFundingFees(
-        RelayUtils.RelayParams calldata relayParams,
+        RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         address[] memory markets,
@@ -55,26 +55,11 @@ contract MultichainClaimsRouter is MultichainRouter {
             }
         }
 
-        // orderVault is used to transfer funds into it and do a swap from feeToken to wnt when using the feeSwapPath
-        Contracts memory contracts = Contracts({
-            dataStore: dataStore,
-            eventEmitter: eventEmitter,
-            bank: orderVault
-        });
-        _handleRelay(
-            contracts,
-            relayParams,
-            account,
-            srcChainId == 0 ? receiver : address(multichainVault), // residualFeeReceiver
-            false, // isSubaccount
-            srcChainId
-        );
-
         return claimedAmounts;
     }
 
     function claimCollateral(
-        RelayUtils.RelayParams calldata relayParams,
+        RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         address[] memory markets,
@@ -125,26 +110,11 @@ contract MultichainClaimsRouter is MultichainRouter {
             }
         }
 
-        // orderVault is used to transfer funds into it and do a swap from feeToken to wnt when using the feeSwapPath
-        Contracts memory contracts = Contracts({
-            dataStore: dataStore,
-            eventEmitter: eventEmitter,
-            bank: orderVault
-        });
-        _handleRelay(
-            contracts,
-            relayParams,
-            account,
-            srcChainId == 0 ? receiver : address(multichainVault), // residualFeeReceiver
-            false, // isSubaccount
-            srcChainId
-        );
-
         return claimedAmounts;
     }
 
     function claimAffiliateRewards(
-        RelayUtils.RelayParams calldata relayParams,
+        RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         address[] memory markets,
@@ -184,21 +154,6 @@ contract MultichainClaimsRouter is MultichainRouter {
                 );
             }
         }
-
-        // orderVault is used to transfer funds into it and do a swap from feeToken to wnt when using the feeSwapPath
-        Contracts memory contracts = Contracts({
-            dataStore: dataStore,
-            eventEmitter: eventEmitter,
-            bank: orderVault
-        });
-        _handleRelay(
-            contracts,
-            relayParams,
-            account,
-            srcChainId == 0 ? receiver : address(multichainVault), // residualFeeReceiver
-            false, // isSubaccount
-            srcChainId
-        );
 
         return claimedAmounts;
     }

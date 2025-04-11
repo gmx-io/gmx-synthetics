@@ -32,7 +32,7 @@ contract MultichainGmRouter is MultichainRouter {
     }
 
     function createDeposit(
-        RelayUtils.RelayParams calldata relayParams,
+        RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         RelayUtils.TransferRequests calldata transferRequests,
@@ -48,36 +48,19 @@ contract MultichainGmRouter is MultichainRouter {
     }
 
     function _createDeposit(
-        RelayUtils.RelayParams calldata relayParams,
+        RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         RelayUtils.TransferRequests calldata transferRequests,
         DepositUtils.CreateDepositParams memory params // can't use calldata because need to modify params.numbers.executionFee
     ) internal returns (bytes32) {
-        Contracts memory contracts = Contracts({
-            dataStore: dataStore,
-            eventEmitter: eventEmitter,
-            bank: depositVault
-        });
-
-        // pay relay fee tokens from MultichainVault to DepositVault and decrease user's multichain balance
-        params.executionFee = _handleRelay(
-            contracts,
-            relayParams,
-            account,
-            address(depositVault), // residualFeeReceiver
-            false, // isSubaccount
-            srcChainId
-        );
-
-        // process transfer requests after relay fee is paid, otherwise all wnt amount will be recorder as relay fee
         _processTransferRequests(account, transferRequests, srcChainId);
 
         return depositHandler.createDeposit(account, srcChainId, params);
     }
 
     function createWithdrawal(
-        RelayUtils.RelayParams calldata relayParams,
+        RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         RelayUtils.TransferRequests calldata transferRequests,
@@ -95,31 +78,17 @@ contract MultichainGmRouter is MultichainRouter {
     }
 
     function _createWithdrawal(
-        RelayUtils.RelayParams calldata relayParams,
+        RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         WithdrawalUtils.CreateWithdrawalParams memory params // can't use calldata because need to modify params.addresses.receiver & params.numbers.executionFee
     ) internal returns (bytes32) {
-        Contracts memory contracts = Contracts({
-            dataStore: dataStore,
-            eventEmitter: eventEmitter,
-            bank: withdrawalVault
-        });
-
-        params.executionFee = _handleRelay(
-            contracts,
-            relayParams,
-            account,
-            address(withdrawalVault), // residualFeeReceiver
-            false, // isSubaccount
-            srcChainId
-        );
 
         return withdrawalHandler.createWithdrawal(account, srcChainId, params);
     }
 
     function createShift(
-        RelayUtils.RelayParams calldata relayParams,
+        RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         RelayUtils.TransferRequests calldata transferRequests,
@@ -137,21 +106,11 @@ contract MultichainGmRouter is MultichainRouter {
     }
 
     function _createShift(
-        RelayUtils.RelayParams calldata relayParams,
+        RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         ShiftUtils.CreateShiftParams memory params
     ) internal returns (bytes32) {
-        Contracts memory contracts = Contracts({ dataStore: dataStore, eventEmitter: eventEmitter, bank: shiftVault });
-
-        params.executionFee = _handleRelay(
-            contracts,
-            relayParams,
-            account,
-            address(shiftVault),
-            false, // isSubaccount
-            srcChainId
-        );
 
         return ShiftUtils.createShift(dataStore, eventEmitter, shiftVault, account, srcChainId, params);
     }
