@@ -80,92 +80,6 @@ export async function getCreateOrderSignature({
   return signTypedData(signer, domain, types, typedData);
 }
 
-export async function getClaimFundingFeesSignature({ signer, relayParams, verifyingContract, params, chainId }) {
-  if (relayParams.userNonce === undefined) {
-    throw new Error("userNonce is required");
-  }
-  const types = {
-    ClaimFundingFees: [
-      { name: "markets", type: "address[]" },
-      { name: "tokens", type: "address[]" },
-      { name: "receiver", type: "address" },
-      { name: "relayParams", type: "bytes32" },
-    ],
-  };
-  const domain = {
-    name: "GmxBaseGelatoRelayRouter",
-    version: "1",
-    chainId,
-    verifyingContract,
-  };
-  const typedData = {
-    markets: params.markets,
-    tokens: params.tokens,
-    receiver: params.receiver,
-    relayParams: hashRelayParams(relayParams),
-  };
-
-  return signTypedData(signer, domain, types, typedData);
-}
-
-export async function getClaimCollateralSignature({ signer, relayParams, verifyingContract, params, chainId }) {
-  if (relayParams.userNonce === undefined) {
-    throw new Error("userNonce is required");
-  }
-  const types = {
-    ClaimCollateral: [
-      { name: "markets", type: "address[]" },
-      { name: "tokens", type: "address[]" },
-      { name: "timeKeys", type: "uint256[]" },
-      { name: "receiver", type: "address" },
-      { name: "relayParams", type: "bytes32" },
-    ],
-  };
-  const domain = {
-    name: "GmxBaseGelatoRelayRouter",
-    version: "1",
-    chainId,
-    verifyingContract,
-  };
-  const typedData = {
-    markets: params.markets,
-    tokens: params.tokens,
-    timeKeys: params.timeKeys,
-    receiver: params.receiver,
-    relayParams: hashRelayParams(relayParams),
-  };
-
-  return signTypedData(signer, domain, types, typedData);
-}
-
-export async function getClaimAffiliateRewardsSignature({ signer, relayParams, verifyingContract, params, chainId }) {
-  if (relayParams.userNonce === undefined) {
-    throw new Error("userNonce is required");
-  }
-  const types = {
-    ClaimAffiliateRewards: [
-      { name: "markets", type: "address[]" },
-      { name: "tokens", type: "address[]" },
-      { name: "receiver", type: "address" },
-      { name: "relayParams", type: "bytes32" },
-    ],
-  };
-  const domain = {
-    name: "GmxBaseGelatoRelayRouter",
-    version: "1",
-    chainId,
-    verifyingContract,
-  };
-  const typedData = {
-    markets: params.markets,
-    tokens: params.tokens,
-    receiver: params.receiver,
-    relayParams: hashRelayParams(relayParams),
-  };
-
-  return signTypedData(signer, domain, types, typedData);
-}
-
 export async function getBatchSignature({
   signer,
   relayParams,
@@ -338,6 +252,92 @@ export async function getCancelOrderSignature({
     key,
     relayParams: hashRelayParams(relayParams),
     subaccountApproval: subaccountApproval ? hashSubaccountApproval(subaccountApproval) : ethers.constants.HashZero,
+  };
+
+  return signTypedData(signer, domain, types, typedData);
+}
+
+export async function getClaimFundingFeesSignature({ signer, relayParams, verifyingContract, params, chainId }) {
+  if (relayParams.userNonce === undefined) {
+    throw new Error("userNonce is required");
+  }
+  const types = {
+    ClaimFundingFees: [
+      { name: "markets", type: "address[]" },
+      { name: "tokens", type: "address[]" },
+      { name: "receiver", type: "address" },
+      { name: "relayParams", type: "bytes32" },
+    ],
+  };
+  const domain = {
+    name: "GmxBaseGelatoRelayRouter",
+    version: "1",
+    chainId,
+    verifyingContract,
+  };
+  const typedData = {
+    markets: params.markets,
+    tokens: params.tokens,
+    receiver: params.receiver,
+    relayParams: hashRelayParams(relayParams),
+  };
+
+  return signTypedData(signer, domain, types, typedData);
+}
+
+export async function getClaimCollateralSignature({ signer, relayParams, verifyingContract, params, chainId }) {
+  if (relayParams.userNonce === undefined) {
+    throw new Error("userNonce is required");
+  }
+  const types = {
+    ClaimCollateral: [
+      { name: "markets", type: "address[]" },
+      { name: "tokens", type: "address[]" },
+      { name: "timeKeys", type: "uint256[]" },
+      { name: "receiver", type: "address" },
+      { name: "relayParams", type: "bytes32" },
+    ],
+  };
+  const domain = {
+    name: "GmxBaseGelatoRelayRouter",
+    version: "1",
+    chainId,
+    verifyingContract,
+  };
+  const typedData = {
+    markets: params.markets,
+    tokens: params.tokens,
+    timeKeys: params.timeKeys,
+    receiver: params.receiver,
+    relayParams: hashRelayParams(relayParams),
+  };
+
+  return signTypedData(signer, domain, types, typedData);
+}
+
+export async function getClaimAffiliateRewardsSignature({ signer, relayParams, verifyingContract, params, chainId }) {
+  if (relayParams.userNonce === undefined) {
+    throw new Error("userNonce is required");
+  }
+  const types = {
+    ClaimAffiliateRewards: [
+      { name: "markets", type: "address[]" },
+      { name: "tokens", type: "address[]" },
+      { name: "receiver", type: "address" },
+      { name: "relayParams", type: "bytes32" },
+    ],
+  };
+  const domain = {
+    name: "GmxBaseGelatoRelayRouter",
+    version: "1",
+    chainId,
+    verifyingContract,
+  };
+  const typedData = {
+    markets: params.markets,
+    tokens: params.tokens,
+    receiver: params.receiver,
+    relayParams: hashRelayParams(relayParams),
   };
 
   return signTypedData(signer, domain, types, typedData);

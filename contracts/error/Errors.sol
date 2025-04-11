@@ -473,10 +473,17 @@ library Errors {
     error InsufficientRelayFee(uint256 requiredRelayFee, uint256 availableFeeAmount);
     error InvalidSubaccountApprovalSubaccount();
     error NonEmptyExternalCallsForSubaccountOrder();
-    error InvalidRelayParams();
 
     // EventUtils error
     error EventItemNotFound(string key);
+
+    // EdgeOracle verifier errors
+    error InvalidTrustedSignerAddress();
+    error InvalidEdgeSigner();
+    error InvalidEdgeSignature(uint256 recoverError);
+    error InvalidEdgeDataStreamBidAsk(address token, uint256 bid, uint256 ask);
+    error InvalidEdgeDataStreamPrices(address token, uint256 bid, uint256 ask);
+    error InvalidEdgeDataStreamExpo(int256 expo);
     error RelayEmptyBatch();
     error RelayCalldataTooLong(uint256 calldataLength);
     error InvalidExternalCalls(uint256 sendTokensLength, uint256 sendAmountsLength);

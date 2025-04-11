@@ -975,8 +975,8 @@ describe("SubaccountGelatoRelayRouter", () => {
       order = await reader.getOrder(dataStore.address, orderKeys[0]);
 
       // 0.2 WETH in total (initial 0.001 + 0.199 from update)
-      expect(order.numbers.executionFee).closeTo("8037110460000000", "10000000000000");
-      expect(await wnt.balanceOf(holdingAddress)).closeTo("92962889540000000", "10000000000000");
+      expect(order.numbers.executionFee).closeTo("8039135020000000", "10000000000000");
+      expect(await wnt.balanceOf(holdingAddress)).closeTo("92960864980000000", "10000000000000");
     });
 
     it("EmptyOrder", async () => {

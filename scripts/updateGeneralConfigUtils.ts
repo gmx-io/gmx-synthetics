@@ -305,12 +305,14 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
     `maxExecutionFeeMultiplierFactor`
   );
 
-  // await handleConfig(
-  //   "uint",
-  //   keys.ORACLE_PROVIDER_MIN_CHANGE_DELAY,
-  //   "0x",
-  //   generalConfig.oracleProviderMinChangeDelay,
-  //   `oracleProviderMinChangeDelay`
+  await handleConfig(
+    "uint",
+    keys.ORACLE_PROVIDER_MIN_CHANGE_DELAY,
+    "0x",
+    generalConfig.oracleProviderMinChangeDelay,
+    `oracleProviderMinChangeDelay`
+  );
+
   await handleConfig("uint", keys.GELATO_RELAY_FEE_BASE_AMOUNT, "0x", generalConfig.gelatoRelayFeeBaseAmount);
 
   await handleConfig(

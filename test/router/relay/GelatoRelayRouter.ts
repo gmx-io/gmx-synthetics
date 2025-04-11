@@ -373,18 +373,13 @@ describe("GelatoRelayRouter", () => {
           createOrderParams.params.orderType = c.orderType;
           createOrderParams.feeParams.feeAmount = expandDecimals(6, 15); // relay fee is 0.001, execution fee is 0.002, 0.003 should be sent back
           const userWntBalanceBefore = await wnt.balanceOf(user0.address);
+          const marketToken =
+            c.orderType == OrderType.MarketSwap || c.orderType == OrderType.LimitSwap
+              ? ethers.constants.AddressZero
+              : defaultParams.addresses.market;
+          createOrderParams.params.addresses.market = marketToken;
           const tx = await sendCreateOrder({
             ...createOrderParams,
-            params: {
-              ...defaultParams,
-              addresses: {
-                ...defaultParams.addresses,
-                market:
-                  c.orderType == OrderType.MarketSwap || c.orderType == OrderType.LimitSwap
-                    ? ethers.constants.AddressZero
-                    : defaultParams.addresses.market,
-              },
-            },
           });
 
           // allowance was set
@@ -397,7 +392,6 @@ describe("GelatoRelayRouter", () => {
           }
           expect(await wnt.allowance(user0.address, router.address)).to.eq(expectedAllowance);
           // relay fee was sent
-          // relay fee was sent
           await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, gelatoRelayFeeAmount);
 
           const orderKeys = await getOrderKeys(dataStore, 0, 1);
@@ -406,10 +400,6 @@ describe("GelatoRelayRouter", () => {
           expect(order.addresses.account).eq(user0.address);
           expect(order.addresses.receiver).eq(user0.address);
           expect(order.addresses.callbackContract).eq(user1.address);
-          const marketToken =
-            c.orderType == OrderType.MarketSwap || c.orderType == OrderType.LimitSwap
-              ? ethers.constants.AddressZero
-              : ethUsdMarket.marketToken;
           expect(order.addresses.market).eq(marketToken);
           expect(order.addresses.initialCollateralToken).eq(ethUsdMarket.longToken);
           expect(order.addresses.swapPath).deep.eq([ethUsdMarket.marketToken]);
@@ -1371,7 +1361,7 @@ describe("GelatoRelayRouter", () => {
       await expect(sendBatch({ ...batchParams })).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
     });
 
-    it("InvalidSignature  ", async () => {
+    it("InvalidSignature", async () => {
       await expect(sendBatch({ ...batchParams, signature: BAD_SIGNATURE })).to.be.revertedWithCustomError(
         errorsContract,
         "InvalidSignature"

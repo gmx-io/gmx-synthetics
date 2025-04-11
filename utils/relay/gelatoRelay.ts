@@ -235,7 +235,6 @@ export async function sendBatch(p: {
       cancelOrderKeys: p.cancelOrderKeys,
     },
   ]);
-  console.log("batchCalldata: ", batchCalldata);
   return sendRelayTransaction({
     calldata: batchCalldata,
     ...p,

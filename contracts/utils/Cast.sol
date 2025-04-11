@@ -13,6 +13,17 @@ library Cast {
         return bytes32(uint256(uint160(value)));
     }
 
+    function toBytes32(string memory value) internal pure returns (bytes32 result) {
+        bytes memory tempEmptyString = bytes(value);
+        if (tempEmptyString.length == 0) {
+            return 0x0;
+        }
+
+        assembly {
+            result := mload(add(value, 32))
+        }
+    }
+
     /**
      * @dev Converts a bytes array to a uint256.
      * Handles cases where the uint256 stored in bytes is stored with or without padding.
@@ -21,7 +32,7 @@ library Cast {
      */
     function bytesToUint256(bytes memory uint256AsBytes) internal pure returns (uint256) {
         uint256 length = uint256AsBytes.length;
-        
+
         if(length > 32) {
             revert Errors.Uint256AsBytesLengthExceeds32Bytes(length);
         }
@@ -31,11 +42,29 @@ library Cast {
         }
 
         uint256 value;
-        
+
         assembly {
             value := mload(add(uint256AsBytes, 32))
         }
 
         return value = value >> (8 * (32 - length));
+    }
+
+    function uint256ToBytes(uint256 x) internal pure returns (bytes memory b) {
+        b = new bytes(32);
+        assembly { mstore(add(b, 32), x) }
+        return b;
+    }
+
+    function uint192ToBytes(uint192 x) internal pure returns (bytes memory b) {
+        b = new bytes(32);
+        assembly { mstore(add(b, 32), x) }
+        return b;
+    }
+
+    function uint32ToBytes(uint32 x) internal pure returns (bytes memory b) {
+        b = new bytes(32);
+        assembly { mstore(add(b, 32), x) }
+        return b;
     }
 }

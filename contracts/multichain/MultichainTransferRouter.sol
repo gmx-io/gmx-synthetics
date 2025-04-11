@@ -35,7 +35,6 @@ contract MultichainTransferRouter is MultichainRouter {
         bytes32 structHash = RelayUtils.getBridgeOutStructHash(relayParams, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
-        // orderVault is used to transfer funds into it and do a swap from feeToken to wnt when using the feeSwapPath
         // moves user's funds (amount + bridging fee) from their multichain balance into multichainProvider
         multichainProvider.bridgeOut(
             IMultichainProvider.BridgeOutParams({

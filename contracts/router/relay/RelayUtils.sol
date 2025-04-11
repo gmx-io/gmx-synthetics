@@ -6,12 +6,12 @@ import "../../data/DataStore.sol";
 import "../../event/EventEmitter.sol";
 import "../../order/OrderVault.sol";
 import "../../oracle/Oracle.sol";
+import "../../oracle/OracleUtils.sol";
 import "../../market/Market.sol";
 import "../../swap/SwapUtils.sol";
 import "../../order/IBaseOrderUtils.sol";
 import { SubaccountApproval } from "../../subaccount/SubaccountUtils.sol";
 
-// Multichain
 import "../../deposit/DepositUtils.sol";
 import "../../glv/glvDeposit/GlvDepositUtils.sol";
 import "../../withdrawal/WithdrawalUtils.sol";
@@ -57,6 +57,15 @@ struct TokenPermit {
 // @note when using external calls for position collateral and creating multiple orders via `batch()`
 // then the funds will be allocated to the first increase order because all external calls are processed first
 // and only then OrderVault's balance is used for order's initialCollateralDeltaAmount
+//
+// @note using external calls for position collateral and atomic swaps for relay fee at the same time should be done with caution
+// if position collateral and initial relay fee token are the same then the collateral will be lost
+// for example, a user wants to pay ARB to open a position with USDC as collateral and pay USDC as a relay fee
+// 1. external calls swap ARB for USDC and sends USDC to the OrderVault to use as position collateral
+// 2. USDC is sent to the OrderVault before the swap
+// 3. on swap OrderVault.tokenBalances are synced
+// 4. on order creation OrderVault.recordTransferInt returns 0
+// 5. the collateral is lost
 struct ExternalCalls {
     // Gelato Relay Router contracts do not support `multicall` and `sendTokens` methods
     // so all tokens and amounts should be specified here
@@ -448,7 +457,7 @@ library RelayUtils {
         bytes32 subaccountApprovalHash,
         address account,
         UpdateOrderParams calldata params
-    ) internal pure returns (bytes32) {
+    ) private pure returns (bytes32) {
         return
             keccak256(
                 abi.encode(
@@ -496,7 +505,7 @@ library RelayUtils {
         bytes32 subaccountApprovalHash,
         address account,
         bytes32 key
-    ) internal pure returns (bytes32) {
+    ) private pure returns (bytes32) {
         return
             keccak256(
                 abi.encode(
@@ -602,7 +611,7 @@ library RelayUtils {
         return keccak256(abi.encodePacked(updateOrderParamsStructHashes));
     }
 
-    // Multichain
+    //////////////////// MULTICHAIN ////////////////////
 
     function getClaimFundingFeesStructHash(
         RelayParams calldata relayParams,
