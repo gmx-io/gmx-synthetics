@@ -13,7 +13,7 @@ const baseConstructorContracts = [
   "MultichainVault",
 ];
 
-const orderConstructorContracts = [];
+const orderConstructorContracts = ["ReferralStorage"];
 
 const func = createDeployFunction({
   contractName: "MultichainOrderRouter",
@@ -31,14 +31,13 @@ const func = createDeployFunction({
       multichainVault: dependencyContracts.MultichainVault.address,
     };
 
-    return [baseParams];
+    return [baseParams, dependencyContracts.ReferralStorage.address];
   },
   libraryNames: [
     "MarketUtils",
+    "MultichainOrderRouterUtils",
     "MultichainUtils",
     "OrderStoreUtils",
-    "OrderEventUtils",
-    "PositionStoreUtils",
     "RelayUtils",
     "SwapUtils",
   ],

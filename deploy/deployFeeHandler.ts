@@ -39,7 +39,7 @@ const func = createDeployFunction({
 
 func.dependencies = func.dependencies.concat(["MockVaultV1"]);
 func.skip = async (hre: HardhatRuntimeEnvironment) => {
-  if (hre.network.name === "avalancheFuji") {
+  if (hre.network.name === "avalancheFuji" || hre.network.name === "arbitrumSepolia") {
     return true;
   }
 

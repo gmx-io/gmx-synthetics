@@ -54,12 +54,12 @@ library GlvWithdrawalUtils {
         uint256 marketCount;
         uint256 oraclePriceCount;
         uint256 marketTokenAmount;
-        uint256 refundFeeAmount;
     }
 
     struct CancelGlvWithdrawalParams {
         DataStore dataStore;
         EventEmitter eventEmitter;
+        MultichainVault multichainVault;
         GlvVault glvVault;
         bytes32 key;
         address keeper;
@@ -196,24 +196,22 @@ library GlvWithdrawalUtils {
             glvWithdrawal.longTokenSwapPath().length + glvWithdrawal.shortTokenSwapPath().length
         );
 
-        cache.refundFeeAmount = GasUtils.payExecutionFee(
-            params.dataStore,
-            params.eventEmitter,
-            params.glvVault,
+        GasUtils.payExecutionFee(
+            GasUtils.PayExecutionFeeContracts(
+                params.dataStore,
+                params.eventEmitter,
+                params.multichainVault,
+                params.glvVault
+            ),
             params.key,
             glvWithdrawal.callbackContract(),
             glvWithdrawal.executionFee(),
             params.startingGas,
             cache.oraclePriceCount,
             params.keeper,
-            glvWithdrawal.srcChainId() == 0 ? glvWithdrawal.receiver() : address(params.multichainVault)//glvWithdrawal.receiver()
+            glvWithdrawal.receiver(),
+            glvWithdrawal.srcChainId()
         );
-
-        // for multichain action, receiver is the multichainVault; increase user's multichain wnt balance for the fee refund
-        if (glvWithdrawal.srcChainId() != 0 && cache.refundFeeAmount > 0) {
-            address wnt = params.dataStore.getAddress(Keys.WNT);
-            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, wnt, glvWithdrawal.receiver(), 0); // srcChainId is the current block.chainId
-        }
     }
 
     function _processMarketWithdrawal(
@@ -337,9 +335,12 @@ library GlvWithdrawalUtils {
 
         uint256 marketCount = GlvUtils.getGlvMarketCount(params.dataStore, glvWithdrawal.glv());
         GasUtils.payExecutionFee(
-            params.dataStore,
-            params.eventEmitter,
-            params.glvVault,
+            GasUtils.PayExecutionFeeContracts(
+                params.dataStore,
+                params.eventEmitter,
+                params.multichainVault,
+                params.glvVault
+            ),
             params.key,
             glvWithdrawal.callbackContract(),
             glvWithdrawal.executionFee(),
@@ -349,7 +350,8 @@ library GlvWithdrawalUtils {
                 glvWithdrawal.longTokenSwapPath().length + glvWithdrawal.shortTokenSwapPath().length
             ),
             params.keeper,
-            glvWithdrawal.receiver()
+            glvWithdrawal.receiver(),
+            glvWithdrawal.srcChainId()
         );
     }
 }

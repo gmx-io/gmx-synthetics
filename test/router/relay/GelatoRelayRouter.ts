@@ -107,6 +107,8 @@ describe("GelatoRelayRouter", () => {
 
     relaySigner = await hre.ethers.getSigner(GELATO_RELAY_ADDRESS);
     chainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
+
+    await dataStore.setBool(keys.isSrcChainIdEnabledKey(chainId), true);
   });
 
   let createOrderParams: Parameters<typeof sendCreateOrder>[0];
@@ -149,6 +151,7 @@ describe("GelatoRelayRouter", () => {
       deadline: 9999999999,
       relayRouter: gelatoRelayRouter,
       chainId,
+      desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
       gelatoRelayFeeToken: wnt.address,
       gelatoRelayFeeAmount: expandDecimals(1, 15),
     };
@@ -370,6 +373,11 @@ describe("GelatoRelayRouter", () => {
           createOrderParams.params.orderType = c.orderType;
           createOrderParams.feeParams.feeAmount = expandDecimals(6, 15); // relay fee is 0.001, execution fee is 0.002, 0.003 should be sent back
           const userWntBalanceBefore = await wnt.balanceOf(user0.address);
+          const marketToken =
+            c.orderType == OrderType.MarketSwap || c.orderType == OrderType.LimitSwap
+              ? ethers.constants.AddressZero
+              : defaultParams.addresses.market;
+          createOrderParams.params.addresses.market = marketToken;
           const tx = await sendCreateOrder({
             ...createOrderParams,
           });
@@ -384,7 +392,6 @@ describe("GelatoRelayRouter", () => {
           }
           expect(await wnt.allowance(user0.address, router.address)).to.eq(expectedAllowance);
           // relay fee was sent
-          // relay fee was sent
           await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, gelatoRelayFeeAmount);
 
           const orderKeys = await getOrderKeys(dataStore, 0, 1);
@@ -393,7 +400,7 @@ describe("GelatoRelayRouter", () => {
           expect(order.addresses.account).eq(user0.address);
           expect(order.addresses.receiver).eq(user0.address);
           expect(order.addresses.callbackContract).eq(user1.address);
-          expect(order.addresses.market).eq(ethUsdMarket.marketToken);
+          expect(order.addresses.market).eq(marketToken);
           expect(order.addresses.initialCollateralToken).eq(ethUsdMarket.longToken);
           expect(order.addresses.swapPath).deep.eq([ethUsdMarket.marketToken]);
           expect(order.numbers.orderType).eq(c.orderType);

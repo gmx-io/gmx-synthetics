@@ -6,15 +6,15 @@ import "../../data/DataStore.sol";
 import "../../event/EventEmitter.sol";
 import "../../order/OrderVault.sol";
 import "../../oracle/Oracle.sol";
+import "../../oracle/OracleUtils.sol";
 import "../../market/Market.sol";
 import "../../swap/SwapUtils.sol";
 import "../../order/IBaseOrderUtils.sol";
-import {SubaccountApproval} from "../../subaccount/SubaccountUtils.sol";
+import { SubaccountApproval } from "../../subaccount/SubaccountUtils.sol";
 
-import "../../oracle/OracleUtils.sol";
 import "../../deposit/DepositUtils.sol";
-import "../../withdrawal/WithdrawalUtils.sol";
 import "../../glv/glvDeposit/GlvDepositUtils.sol";
+import "../../withdrawal/WithdrawalUtils.sol";
 import "../../glv/glvWithdrawal/GlvWithdrawalUtils.sol";
 import "../../shift/ShiftUtils.sol";
 
@@ -71,11 +71,9 @@ struct ExternalCalls {
     // so all tokens and amounts should be specified here
     address[] sendTokens; // tokens to send to ExternalHandler
     uint256[] sendAmounts; // tokens amounts to send to ExternalHandler
-
     // lists of external calls to be made
     address[] externalCallTargets; // external targets to call
     bytes[] externalCallDataList; // external call data list
-
     // refundTokens and refundReceivers are used to send residual funds left in the ExchangeHandler
     // for example, if "swapExactOut" is used some amount of "tokenIn" could be lefts
     address[] refundTokens; // tokens to refund to user
@@ -86,24 +84,17 @@ struct RelayParams {
     // oracle params are used for relay fee swap through GMX v2 pools
     // if swap is not needed then `oracleParams` values should be empty
     OracleUtils.SetPricesParams oracleParams;
-
     ExternalCalls externalCalls;
-
     // token permits could be used to approve spending of tokens by the Router contract
     // instead of sending separate approval transactions
     TokenPermit[] tokenPermits;
-
     FeeParams fee;
-
     // should be retrieved from userNonces(account)
     uint256 userNonce;
-
     // deadline for the transaction. should be used for extra safety so signed message
     // can't be used in future if a user signs and forgets about it
     uint256 deadline;
-
     bytes signature;
-
     uint256 desChainId;
 }
 
@@ -116,7 +107,6 @@ struct UpdateOrderParams {
     uint256 minOutputAmount;
     uint256 validFromTime;
     bool autoCancel;
-
     // should be non zero if order's execution fee should be increased
     // otherwise should be 0
     uint256 executionFeeIncrease;
@@ -126,6 +116,19 @@ struct BatchParams {
     IBaseOrderUtils.CreateOrderParams[] createOrderParamsList;
     UpdateOrderParams[] updateOrderParamsList;
     bytes32[] cancelOrderKeys;
+}
+
+struct TransferRequests {
+    address[] tokens;
+    address[] receivers;
+    uint256[] amounts;
+}
+
+struct BridgeOutParams {
+    address token;
+    uint256 amount;
+    address provider;
+    bytes data; // provider specific data e.g. dstEid
 }
 
 string constant UPDATE_ORDER_PARAMS = "UpdateOrderParams(bytes32 key,uint256 sizeDeltaUsd,uint256 acceptablePrice,uint256 triggerPrice,uint256 minOutputAmount,uint256 validFromTime,bool autoCancel,uint256 executionFeeIncrease)";
@@ -143,17 +146,6 @@ string constant CREATE_ORDER_PARAMS = string(
 );
 
 library RelayUtils {
-    struct TransferRequests {
-        address[] tokens;
-        address[] receivers;
-        uint256[] amounts;
-    }
-
-    struct BridgeOutParams {
-        address token;
-        uint256 amount;
-    }
-
     bytes32 public constant UPDATE_ORDER_PARAMS_TYPEHASH = keccak256(bytes(UPDATE_ORDER_PARAMS));
     bytes32 public constant UPDATE_ORDER_TYPEHASH =
         keccak256(
@@ -202,8 +194,7 @@ library RelayUtils {
             )
         );
 
-    //////////////////// MULTICHAIN ////////////////////
-
+    // Multichain
     bytes32 public constant CREATE_DEPOSIT_TYPEHASH =
         keccak256(
             bytes(
@@ -261,24 +252,14 @@ library RelayUtils {
             "CreateGlvWithdrawalAddresses(address receiver,address callbackContract,address uiFeeReceiver,address market,address glv,address[] longTokenSwapPath,address[] shortTokenSwapPath)"
         );
 
-
     bytes32 public constant TRANSFER_REQUESTS_TYPEHASH =
         keccak256(bytes("TransferRequests(address[] tokens,address[] receivers,uint256[] amounts)"));
 
     bytes32 public constant BRIDGE_OUT_TYPEHASH =
-        keccak256(
-            bytes(
-                "BridgeOut(address token,uint256 amount,bytes32 relayParams)"
-            )
-        );
+        keccak256(bytes("BridgeOut(address token,uint256 amount,address provider,bytes data,bytes32 relayParams)"));
 
-    
     bytes32 public constant CLAIM_FUNDING_FEES_TYPEHASH =
-        keccak256(
-            bytes(
-                "ClaimFundingFees(address[] markets,address[] tokens,address receiver,bytes32 relayParams)"
-            )
-        );
+        keccak256(bytes("ClaimFundingFees(address[] markets,address[] tokens,address receiver,bytes32 relayParams)"));
     bytes32 public constant CLAIM_COLLATERAL_TYPEHASH =
         keccak256(
             bytes(
@@ -287,9 +268,7 @@ library RelayUtils {
         );
     bytes32 public constant CLAIM_AFFILIATE_REWARDS_TYPEHASH =
         keccak256(
-            bytes(
-                "ClaimAffiliateRewards(address[] markets,address[] tokens,address receiver,bytes32 relayParams)"
-            )
+            bytes("ClaimAffiliateRewards(address[] markets,address[] tokens,address receiver,bytes32 relayParams)")
         );
 
     function swapFeeTokens(
@@ -327,7 +306,7 @@ library RelayUtils {
         }
     }
 
-    function getRelayParamsHash(RelayParams calldata relayParams) internal pure returns (bytes32) {
+    function _getRelayParamsHash(RelayParams calldata relayParams) private pure returns (bytes32) {
         return
             keccak256(
                 abi.encode(
@@ -345,13 +324,13 @@ library RelayUtils {
     function getRemoveSubaccountStructHash(
         RelayParams calldata relayParams,
         address subaccount
-    ) internal pure returns (bytes32) {
-        return keccak256(abi.encode(REMOVE_SUBACCOUNT_TYPEHASH, subaccount, getRelayParamsHash(relayParams)));
+    ) external pure returns (bytes32) {
+        return keccak256(abi.encode(REMOVE_SUBACCOUNT_TYPEHASH, subaccount, _getRelayParamsHash(relayParams)));
     }
 
     function getSubaccountApprovalStructHash(
         SubaccountApproval calldata subaccountApproval
-    ) internal pure returns (bytes32) {
+    ) external pure returns (bytes32) {
         return
             keccak256(
                 abi.encode(
@@ -372,8 +351,8 @@ library RelayUtils {
         SubaccountApproval calldata subaccountApproval,
         address account,
         IBaseOrderUtils.CreateOrderParams memory params
-    ) internal pure returns (bytes32) {
-        bytes32 relayParamsHash = getRelayParamsHash(relayParams);
+    ) external pure returns (bytes32) {
+        bytes32 relayParamsHash = _getRelayParamsHash(relayParams);
         bytes32 subaccountApprovalHash = keccak256(abi.encode(subaccountApproval));
 
         return
@@ -381,15 +360,14 @@ library RelayUtils {
                 abi.encode(
                     CREATE_ORDER_TYPEHASH,
                     account,
-                    getCreateOrderAddressesStructHash(params.addresses),
-                    getCreateOrderNumbersStructHash(params.numbers),
+                    _getCreateOrderAddressesStructHash(params.addresses),
+                    _getCreateOrderNumbersStructHash(params.numbers),
                     uint256(params.orderType),
                     uint256(params.decreasePositionSwapType),
                     params.isLong,
                     params.shouldUnwrapNativeToken,
                     params.autoCancel,
                     params.referralCode,
-                    // keccak256(abi.encodePacked(params.dataList)),
                     relayParamsHash,
                     subaccountApprovalHash
                 )
@@ -399,16 +377,16 @@ library RelayUtils {
     function getCreateOrderStructHash(
         RelayParams calldata relayParams,
         IBaseOrderUtils.CreateOrderParams memory params
-    ) internal pure returns (bytes32) {
-        bytes32 relayParamsHash = getRelayParamsHash(relayParams);
+    ) external pure returns (bytes32) {
+        bytes32 relayParamsHash = _getRelayParamsHash(relayParams);
 
         return
             keccak256(
                 abi.encode(
                     CREATE_ORDER_TYPEHASH,
                     address(0),
-                    getCreateOrderAddressesStructHash(params.addresses),
-                    getCreateOrderNumbersStructHash(params.numbers),
+                    _getCreateOrderAddressesStructHash(params.addresses),
+                    _getCreateOrderNumbersStructHash(params.numbers),
                     uint256(params.orderType),
                     uint256(params.decreasePositionSwapType),
                     params.isLong,
@@ -421,9 +399,9 @@ library RelayUtils {
             );
     }
 
-    function getCreateOrderAddressesStructHash(
+    function _getCreateOrderAddressesStructHash(
         IBaseOrderUtils.CreateOrderParamsAddresses memory addresses
-    ) internal pure returns (bytes32) {
+    ) private pure returns (bytes32) {
         return
             keccak256(
                 abi.encode(
@@ -439,9 +417,9 @@ library RelayUtils {
             );
     }
 
-    function getCreateOrderNumbersStructHash(
+    function _getCreateOrderNumbersStructHash(
         IBaseOrderUtils.CreateOrderParamsNumbers memory numbers
-    ) internal pure returns (bytes32) {
+    ) private pure returns (bytes32) {
         return
             keccak256(
                 abi.encode(
@@ -461,7 +439,7 @@ library RelayUtils {
     function getUpdateOrderStructHash(
         RelayParams calldata relayParams,
         UpdateOrderParams calldata params
-    ) internal pure returns (bytes32) {
+    ) external pure returns (bytes32) {
         return _getUpdateOrderStructHash(relayParams, bytes32(0), address(0), params);
     }
 
@@ -470,7 +448,7 @@ library RelayUtils {
         SubaccountApproval calldata subaccountApproval,
         address account,
         UpdateOrderParams calldata params
-    ) internal pure returns (bytes32) {
+    ) external pure returns (bytes32) {
         return _getUpdateOrderStructHash(relayParams, keccak256(abi.encode(subaccountApproval)), account, params);
     }
 
@@ -479,20 +457,20 @@ library RelayUtils {
         bytes32 subaccountApprovalHash,
         address account,
         UpdateOrderParams calldata params
-    ) internal pure returns (bytes32) {
+    ) private pure returns (bytes32) {
         return
             keccak256(
                 abi.encode(
                     UPDATE_ORDER_TYPEHASH,
                     account,
-                    getUpdateOrderParamsStructHash(params),
-                    getRelayParamsHash(relayParams),
+                    _getUpdateOrderParamsStructHash(params),
+                    _getRelayParamsHash(relayParams),
                     subaccountApprovalHash
                 )
             );
     }
 
-    function getUpdateOrderParamsStructHash(UpdateOrderParams calldata params) internal pure returns (bytes32) {
+    function _getUpdateOrderParamsStructHash(UpdateOrderParams calldata params) private pure returns (bytes32) {
         return
             keccak256(
                 abi.encode(
@@ -514,11 +492,11 @@ library RelayUtils {
         SubaccountApproval calldata subaccountApproval,
         address account,
         bytes32 key
-    ) internal pure returns (bytes32) {
+    ) external pure returns (bytes32) {
         return _getCancelOrderStructHash(relayParams, keccak256(abi.encode(subaccountApproval)), account, key);
     }
 
-    function getCancelOrderStructHash(RelayParams calldata relayParams, bytes32 key) internal pure returns (bytes32) {
+    function getCancelOrderStructHash(RelayParams calldata relayParams, bytes32 key) external pure returns (bytes32) {
         return _getCancelOrderStructHash(relayParams, bytes32(0), address(0), key);
     }
 
@@ -527,28 +505,189 @@ library RelayUtils {
         bytes32 subaccountApprovalHash,
         address account,
         bytes32 key
-    ) internal pure returns (bytes32) {
+    ) private pure returns (bytes32) {
         return
             keccak256(
-                abi.encode(CANCEL_ORDER_TYPEHASH, account, key, getRelayParamsHash(relayParams), subaccountApprovalHash)
+                abi.encode(
+                    CANCEL_ORDER_TYPEHASH,
+                    account,
+                    key,
+                    _getRelayParamsHash(relayParams),
+                    subaccountApprovalHash
+                )
             );
     }
 
-    function getCreateOrderParamsStructHash(
+    function _getCreateOrderParamsStructHash(
         IBaseOrderUtils.CreateOrderParams calldata params
-    ) internal pure returns (bytes32) {
+    ) private pure returns (bytes32) {
         return
             keccak256(
                 abi.encode(
                     CREATE_ORDER_PARAMS_TYPEHASH,
-                    getCreateOrderAddressesStructHash(params.addresses),
-                    getCreateOrderNumbersStructHash(params.numbers),
+                    _getCreateOrderAddressesStructHash(params.addresses),
+                    _getCreateOrderNumbersStructHash(params.numbers),
                     uint256(params.orderType),
                     uint256(params.decreasePositionSwapType),
                     params.isLong,
                     params.shouldUnwrapNativeToken,
                     params.autoCancel,
                     params.referralCode
+                )
+            );
+    }
+
+    function getBatchStructHash(
+        RelayParams calldata relayParams,
+        SubaccountApproval calldata subaccountApproval,
+        address account,
+        BatchParams calldata params
+    ) external pure returns (bytes32) {
+        return
+            _getBatchStructHash(
+                relayParams,
+                keccak256(abi.encode(subaccountApproval)),
+                account,
+                params.createOrderParamsList,
+                params.updateOrderParamsList,
+                params.cancelOrderKeys
+            );
+    }
+
+    function getBatchStructHash(
+        RelayParams calldata relayParams,
+        BatchParams calldata params
+    ) external pure returns (bytes32) {
+        return
+            _getBatchStructHash(
+                relayParams,
+                bytes32(0),
+                address(0),
+                params.createOrderParamsList,
+                params.updateOrderParamsList,
+                params.cancelOrderKeys
+            );
+    }
+
+    function _getBatchStructHash(
+        RelayParams calldata relayParams,
+        bytes32 subaccountApprovalHash,
+        address account,
+        IBaseOrderUtils.CreateOrderParams[] calldata createOrderParamsList,
+        UpdateOrderParams[] calldata updateOrderParamsList,
+        bytes32[] calldata cancelOrderKeys
+    ) private pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    BATCH_TYPEHASH,
+                    account,
+                    _getCreateOrderParamsListStructHash(createOrderParamsList),
+                    _getUpdateOrderParamsListStructHash(updateOrderParamsList),
+                    keccak256(abi.encodePacked(cancelOrderKeys)),
+                    _getRelayParamsHash(relayParams),
+                    subaccountApprovalHash
+                )
+            );
+    }
+
+    function _getCreateOrderParamsListStructHash(
+        IBaseOrderUtils.CreateOrderParams[] calldata createOrderParamsList
+    ) private pure returns (bytes32) {
+        bytes32[] memory createOrderParamsStructHashes = new bytes32[](createOrderParamsList.length);
+        for (uint256 i = 0; i < createOrderParamsList.length; i++) {
+            createOrderParamsStructHashes[i] = _getCreateOrderParamsStructHash(createOrderParamsList[i]);
+        }
+        return keccak256(abi.encodePacked(createOrderParamsStructHashes));
+    }
+
+    function _getUpdateOrderParamsListStructHash(
+        UpdateOrderParams[] calldata updateOrderParamsList
+    ) private pure returns (bytes32) {
+        bytes32[] memory updateOrderParamsStructHashes = new bytes32[](updateOrderParamsList.length);
+        for (uint256 i = 0; i < updateOrderParamsList.length; i++) {
+            updateOrderParamsStructHashes[i] = _getUpdateOrderParamsStructHash(updateOrderParamsList[i]);
+        }
+        return keccak256(abi.encodePacked(updateOrderParamsStructHashes));
+    }
+
+    //////////////////// MULTICHAIN ////////////////////
+
+    function getClaimFundingFeesStructHash(
+        RelayParams calldata relayParams,
+        address[] memory markets,
+        address[] memory tokens,
+        address receiver
+    ) external pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    CLAIM_FUNDING_FEES_TYPEHASH,
+                    keccak256(abi.encodePacked(markets)),
+                    keccak256(abi.encodePacked(tokens)),
+                    receiver,
+                    _getRelayParamsHash(relayParams)
+                )
+            );
+    }
+
+    function getClaimCollateralStructHash(
+        RelayParams calldata relayParams,
+        address[] memory markets,
+        address[] memory tokens,
+        uint256[] memory timeKeys,
+        address receiver
+    ) external pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    CLAIM_COLLATERAL_TYPEHASH,
+                    keccak256(abi.encodePacked(markets)),
+                    keccak256(abi.encodePacked(tokens)),
+                    keccak256(abi.encodePacked(timeKeys)),
+                    receiver,
+                    _getRelayParamsHash(relayParams)
+                )
+            );
+    }
+
+    function getClaimAffiliateRewardsStructHash(
+        RelayParams calldata relayParams,
+        address[] memory markets,
+        address[] memory tokens,
+        address receiver
+    ) external pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    CLAIM_AFFILIATE_REWARDS_TYPEHASH,
+                    keccak256(abi.encodePacked(markets)),
+                    keccak256(abi.encodePacked(tokens)),
+                    receiver,
+                    _getRelayParamsHash(relayParams)
+                )
+            );
+    }
+
+    function getCreateDepositStructHash(
+        RelayParams calldata relayParams,
+        TransferRequests calldata transferRequests,
+        DepositUtils.CreateDepositParams memory params
+    ) external pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    CREATE_DEPOSIT_TYPEHASH,
+                    keccak256(abi.encodePacked(transferRequests.tokens)),
+                    keccak256(abi.encodePacked(transferRequests.receivers)),
+                    keccak256(abi.encodePacked(transferRequests.amounts)),
+                    _getCreateDepositAdressesStructHash(params.addresses),
+                    params.minMarketTokens,
+                    params.shouldUnwrapNativeToken,
+                    params.executionFee,
+                    params.callbackGasLimit,
+                    keccak256(abi.encodePacked(params.dataList)),
+                    _getRelayParamsHash(relayParams)
                 )
             );
     }
@@ -572,101 +711,46 @@ library RelayUtils {
             );
     }
 
-    function getBatchStructHash(
-        RelayParams calldata relayParams,
-        SubaccountApproval calldata subaccountApproval,
-        address account,
-        BatchParams calldata params
-    ) public pure returns (bytes32) {
-        return
-            _getBatchStructHash(
-                relayParams,
-                keccak256(abi.encode(subaccountApproval)),
-                account,
-                params.createOrderParamsList,
-                params.updateOrderParamsList,
-                params.cancelOrderKeys
-            );
-    }
-
-    function getBatchStructHash(
-        RelayParams calldata relayParams,
-        BatchParams calldata params
-    ) internal pure returns (bytes32) {
-        return
-            _getBatchStructHash(
-                relayParams,
-                bytes32(0),
-                address(0),
-                params.createOrderParamsList,
-                params.updateOrderParamsList,
-                params.cancelOrderKeys
-            );
-    }
-
-    function _getBatchStructHash(
-        RelayParams calldata relayParams,
-        bytes32 subaccountApprovalHash,
-        address account,
-        IBaseOrderUtils.CreateOrderParams[] calldata createOrderParamsList,
-        UpdateOrderParams[] calldata updateOrderParamsList,
-        bytes32[] calldata cancelOrderKeys
-    ) internal pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    BATCH_TYPEHASH,
-                    account,
-                    getCreateOrderParamsListStructHash(createOrderParamsList),
-                    getUpdateOrderParamsListStructHash(updateOrderParamsList),
-                    keccak256(abi.encodePacked(cancelOrderKeys)),
-                    getRelayParamsHash(relayParams),
-                    subaccountApprovalHash
-                )
-            );
-    }
-
-    function getCreateOrderParamsListStructHash(
-        IBaseOrderUtils.CreateOrderParams[] calldata createOrderParamsList
-    ) internal pure returns (bytes32) {
-        bytes32[] memory createOrderParamsStructHashes = new bytes32[](createOrderParamsList.length);
-        for (uint256 i = 0; i < createOrderParamsList.length; i++) {
-            createOrderParamsStructHashes[i] = getCreateOrderParamsStructHash(createOrderParamsList[i]);
-        }
-        return keccak256(abi.encodePacked(createOrderParamsStructHashes));
-    }
-
-    function getUpdateOrderParamsListStructHash(
-        UpdateOrderParams[] calldata updateOrderParamsList
-    ) internal pure returns (bytes32) {
-        bytes32[] memory updateOrderParamsStructHashes = new bytes32[](updateOrderParamsList.length);
-        for (uint256 i = 0; i < updateOrderParamsList.length; i++) {
-            updateOrderParamsStructHashes[i] = getUpdateOrderParamsStructHash(updateOrderParamsList[i]);
-        }
-        return keccak256(abi.encodePacked(updateOrderParamsStructHashes));
-    }
-
-    //////////////////// MULTICHAIN ////////////////////
-
-    function getCreateDepositStructHash(
+    function getCreateGlvDepositStructHash(
         RelayParams calldata relayParams,
         TransferRequests calldata transferRequests,
-        DepositUtils.CreateDepositParams memory params
+        GlvDepositUtils.CreateGlvDepositParams memory params
     ) external pure returns (bytes32) {
         return
             keccak256(
                 abi.encode(
-                    CREATE_DEPOSIT_TYPEHASH,
+                    CREATE_GLV_DEPOSIT_TYPEHASH,
                     keccak256(abi.encodePacked(transferRequests.tokens)),
                     keccak256(abi.encodePacked(transferRequests.receivers)),
                     keccak256(abi.encodePacked(transferRequests.amounts)),
-                    _getCreateDepositAdressesStructHash(params.addresses),
-                    params.minMarketTokens,
-                    params.shouldUnwrapNativeToken,
+                    _getCreateGlvDepositAddressesStructHash(params.addresses),
+                    params.minGlvTokens,
                     params.executionFee,
                     params.callbackGasLimit,
+                    params.shouldUnwrapNativeToken,
+                    params.isMarketTokenDeposit,
                     keccak256(abi.encodePacked(params.dataList)),
-                    getRelayParamsHash(relayParams)
+                    _getRelayParamsHash(relayParams)
+                )
+            );
+    }
+
+    function _getCreateGlvDepositAddressesStructHash(
+        GlvDepositUtils.CreateGlvDepositParamsAddresses memory addresses
+    ) private pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    CREATE_GLV_DEPOSIT_ADDRESSES_TYPEHASH,
+                    addresses.glv,
+                    addresses.market,
+                    addresses.receiver,
+                    addresses.callbackContract,
+                    addresses.uiFeeReceiver,
+                    addresses.initialLongToken,
+                    addresses.initialShortToken,
+                    keccak256(abi.encodePacked(addresses.longTokenSwapPath)),
+                    keccak256(abi.encodePacked(addresses.shortTokenSwapPath))
                 )
             );
     }
@@ -690,14 +774,14 @@ library RelayUtils {
                     params.executionFee,
                     params.callbackGasLimit,
                     keccak256(abi.encodePacked(params.dataList)),
-                    getRelayParamsHash(relayParams)
+                    _getRelayParamsHash(relayParams)
                 )
             );
     }
 
     function _getCreateWithdrawalAddressesStructHash(
         WithdrawalUtils.CreateWithdrawalParamsAddresses memory addresses
-    ) internal pure returns (bytes32) {
+    ) private pure returns (bytes32) {
         return
             keccak256(
                 abi.encode(
@@ -729,14 +813,14 @@ library RelayUtils {
                     params.executionFee,
                     params.callbackGasLimit,
                     keccak256(abi.encodePacked(params.dataList)),
-                    getRelayParamsHash(relayParams)
+                    _getRelayParamsHash(relayParams)
                 )
             );
     }
 
     function _getCreateShiftAddressesStructHash(
         ShiftUtils.CreateShiftParamsAddresses memory addresses
-    ) internal pure returns (bytes32) {
+    ) private pure returns (bytes32) {
         return
             keccak256(
                 abi.encode(
@@ -746,50 +830,6 @@ library RelayUtils {
                     addresses.uiFeeReceiver,
                     addresses.fromMarket,
                     addresses.toMarket
-                )
-            );
-    }
-
-    function getCreateGlvDepositStructHash(
-        RelayParams calldata relayParams,
-        TransferRequests calldata transferRequests,
-        GlvDepositUtils.CreateGlvDepositParams memory params
-    ) external pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    CREATE_GLV_DEPOSIT_TYPEHASH,
-                    keccak256(abi.encodePacked(transferRequests.tokens)),
-                    keccak256(abi.encodePacked(transferRequests.receivers)),
-                    keccak256(abi.encodePacked(transferRequests.amounts)),
-                    _getCreateGlvDepositAddressesStructHash(params.addresses),
-                    params.minGlvTokens,
-                    params.executionFee,
-                    params.callbackGasLimit,
-                    params.shouldUnwrapNativeToken,
-                    params.isMarketTokenDeposit,
-                    keccak256(abi.encodePacked(params.dataList)),
-                    getRelayParamsHash(relayParams)
-                )
-            );
-    }
-
-    function _getCreateGlvDepositAddressesStructHash(
-        GlvDepositUtils.CreateGlvDepositParamsAddresses memory addresses
-    ) internal pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    CREATE_GLV_DEPOSIT_ADDRESSES_TYPEHASH,
-                    addresses.glv,
-                    addresses.market,
-                    addresses.receiver,
-                    addresses.callbackContract,
-                    addresses.uiFeeReceiver,
-                    addresses.initialLongToken,
-                    addresses.initialShortToken,
-                    keccak256(abi.encodePacked(addresses.longTokenSwapPath)),
-                    keccak256(abi.encodePacked(addresses.shortTokenSwapPath))
                 )
             );
     }
@@ -813,14 +853,14 @@ library RelayUtils {
                     params.executionFee,
                     params.callbackGasLimit,
                     keccak256(abi.encodePacked(params.dataList)),
-                    getRelayParamsHash(relayParams)
+                    _getRelayParamsHash(relayParams)
                 )
             );
     }
 
     function _getCreateGlvWithdrawalAddressesStructHash(
         GlvWithdrawalUtils.CreateGlvWithdrawalParamsAddresses memory addresses
-    ) internal pure returns (bytes32) {
+    ) private pure returns (bytes32) {
         return
             keccak256(
                 abi.encode(
@@ -846,63 +886,9 @@ library RelayUtils {
                     BRIDGE_OUT_TYPEHASH,
                     params.token,
                     params.amount,
-                    getRelayParamsHash(relayParams)
-                )
-            );
-    }
-
-    function getClaimFundingFeesStructHash(
-        RelayParams calldata relayParams,
-        address[] memory markets,
-        address[] memory tokens,
-        address receiver
-    ) external pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    CLAIM_FUNDING_FEES_TYPEHASH,
-                    keccak256(abi.encodePacked(markets)),
-                    keccak256(abi.encodePacked(tokens)),
-                    receiver,
-                    getRelayParamsHash(relayParams)
-                )
-            );
-    }
-
-    function getClaimCollateralStructHash(
-        RelayParams calldata relayParams,
-        address[] memory markets,
-        address[] memory tokens,
-        uint256[] memory timeKeys,
-        address receiver
-    ) external pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    CLAIM_COLLATERAL_TYPEHASH,
-                    keccak256(abi.encodePacked(markets)),
-                    keccak256(abi.encodePacked(tokens)),
-                    keccak256(abi.encodePacked(timeKeys)),
-                    receiver,
-                    getRelayParamsHash(relayParams)
-                )
-            );
-    }
-
-    function getClaimAffiliateRewardsStructHash(
-        RelayParams calldata relayParams,
-        address[] memory markets,
-        address[] memory tokens,
-        address receiver
-    ) external pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    CLAIM_AFFILIATE_REWARDS_TYPEHASH,
-                    keccak256(abi.encodePacked(markets)),
-                    keccak256(abi.encodePacked(tokens)),
-                    receiver,
-                    getRelayParamsHash(relayParams)
+                    params.provider,
+                    keccak256(abi.encodePacked(params.data)),
+                    _getRelayParamsHash(relayParams)
                 )
             );
     }

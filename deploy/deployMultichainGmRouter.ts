@@ -13,7 +13,14 @@ const baseConstructorContracts = [
   "MultichainVault",
 ];
 
-const gmConstructorContracts = ["DepositVault", "DepositHandler", "WithdrawalVault", "WithdrawalHandler", "ShiftVault"];
+const gmConstructorContracts = [
+  "DepositVault",
+  "DepositHandler",
+  "WithdrawalVault",
+  "WithdrawalHandler",
+  "ShiftVault",
+  "ShiftHandler",
+];
 
 const func = createDeployFunction({
   contractName: "MultichainGmRouter",
@@ -38,9 +45,10 @@ const func = createDeployFunction({
       dependencyContracts.WithdrawalVault.address,
       dependencyContracts.WithdrawalHandler.address,
       dependencyContracts.ShiftVault.address,
+      dependencyContracts.ShiftHandler.address,
     ];
   },
-  libraryNames: ["MultichainUtils", "RelayUtils", "ShiftUtils", "SwapUtils", "MarketUtils"],
+  libraryNames: ["MarketUtils", "MultichainUtils", "RelayUtils", "SwapUtils"],
 
   afterDeploy: async ({ deployedContract }) => {
     await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");

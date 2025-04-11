@@ -498,12 +498,16 @@ library Keys {
 
     // @dev key for user's multichain balance
     bytes32 public constant MULTICHAIN_BALANCE = keccak256(abi.encode("MULTICHAIN_BALANCE"));
-    // @dev key for user's multichain balance
+    // @dev key for the flag if a multichain provider is enabled
     bytes32 public constant IS_MULTICHAIN_PROVIDER_ENABLED = keccak256(abi.encode("IS_MULTICHAIN_PROVIDER_ENABLED"));
-    // @dev key for the flag if user's position collateral was used for execution fee
-    bytes32 public constant WAS_POSITION_COLLATERAL_USED_FOR_EXECUTION_FEE = keccak256(abi.encode("WAS_POSITION_COLLATERAL_USED_FOR_EXECUTION_FEE"));
+    // @dev key for the flag if a multichain endpoint is enabled
+    bytes32 public constant IS_MULTICHAIN_ENDPOINT_ENABLED = keccak256(abi.encode("IS_MULTICHAIN_ENDPOINT_ENABLED"));
+    // @dev key for the relay max price age
+    bytes32 public constant RELAY_MAX_PRICE_AGE = keccak256(abi.encode("RELAY_MAX_PRICE_AGE"));
     // @dev key for the last src chain id from which the user last managed his position
     bytes32 public constant POSITION_LAST_SRC_CHAIN_ID = keccak256(abi.encode("POSITION_LAST_SRC_CHAIN_ID"));
+    // @dev key for the flag if a src chain is enabled
+    bytes32 public constant IS_SRC_CHAIN_ID_ENABLED = keccak256(abi.encode("IS_SRC_CHAIN_ID_ENABLED"));
 
     // @dev key for the maximum length for data list array of bytes32
     bytes32 public constant MAX_DATA_LENGTH = keccak256(abi.encode("MAX_DATA_LENGTH"));
@@ -2225,12 +2229,23 @@ library Keys {
         ));
     }
 
-    // @dev key for the flag if position collateral was used for execution fee
-    // @return key for the flag if position collateral was used for execution fee
-    function wasPositionCollateralUsedForExecutionFeeKey(bytes32 orderKey) internal pure returns (bytes32) {
+    // @dev key for whether a multichain endpoint is enabled
+    // @param endpoint the multichain endpoint
+    // @return key for whether a multichain endpoint is enabled
+    function isMultichainEndpointEnabledKey(address endpoint) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            WAS_POSITION_COLLATERAL_USED_FOR_EXECUTION_FEE,
-            orderKey
+            IS_MULTICHAIN_ENDPOINT_ENABLED,
+            endpoint
+        ));
+    }
+
+    // @dev key for whether a multichain endpoint is enabled
+    // @param endpoint the multichain endpoint
+    // @return key for whether a multichain endpoint is enabled
+    function isSrcChainIdEnabledKey(uint256 srcChainId) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            IS_SRC_CHAIN_ID_ENABLED,
+            srcChainId
         ));
     }
 

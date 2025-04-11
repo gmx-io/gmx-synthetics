@@ -75,6 +75,7 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
         WithdrawalUtils.cancelWithdrawal(
             _dataStore,
             eventEmitter,
+            multichainVault,
             withdrawalVault,
             key,
             withdrawal.account(),
@@ -137,6 +138,7 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
         withOraclePricesForAtomicAction(oracleParams)
     {
         FeatureUtils.validateFeature(dataStore, Keys.executeAtomicWithdrawalFeatureDisabledKey(address(this)));
+        validateDataListLength(params.dataList.length);
 
         oracle.validateSequencerUp();
 
@@ -240,6 +242,7 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
         WithdrawalUtils.cancelWithdrawal(
             dataStore,
             eventEmitter,
+            multichainVault,
             withdrawalVault,
             key,
             msg.sender,

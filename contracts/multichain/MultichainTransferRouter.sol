@@ -26,15 +26,11 @@ contract MultichainTransferRouter is MultichainRouter {
 
     function bridgeOut(
         RelayParams calldata relayParams,
-        address provider,
         address account,
         uint256 srcChainId,
-        bytes calldata data, // encoded provider specific data e.g. dstEid
-        RelayUtils.BridgeOutParams calldata params
-    ) external nonReentrant onlyGelatoRelay {
-        _validateDesChainId(relayParams.desChainId);
-        _validateGaslessFeature();
-        _validateMultichainProvider(dataStore, provider);
+        BridgeOutParams calldata params
+    ) external nonReentrant withRelay(relayParams, account, srcChainId, false) {
+        MultichainUtils.validateMultichainProvider(dataStore, params.provider);
 
         bytes32 structHash = RelayUtils.getBridgeOutStructHash(relayParams, params);
         _validateCall(relayParams, account, structHash, srcChainId);
@@ -42,29 +38,22 @@ contract MultichainTransferRouter is MultichainRouter {
         // moves user's funds (amount + bridging fee) from their multichain balance into multichainProvider
         multichainProvider.bridgeOut(
             IMultichainProvider.BridgeOutParams({
-                provider: provider,
+                provider: params.provider,
                 account: account,
                 token: params.token,
                 amount: params.amount,
                 srcChainId: srcChainId,
-                data: data
+                data: params.data
             })
         );
 
         MultichainEventUtils.emitMultichainBridgeOut(
             eventEmitter,
-            provider,
+            params.provider,
             params.token,
             account,
             params.amount,
             srcChainId
         );
-    }
-
-    function _validateMultichainProvider(DataStore dataStore, address provider) internal view {
-        bytes32 providerKey = Keys.isMultichainProviderEnabledKey(provider);
-        if (!dataStore.getBool(providerKey)) {
-            revert Errors.InvalidMultichainProvider(provider);
-        }
     }
 }
