@@ -102,7 +102,7 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
     }
   }
 
-  if (gmx.isExistingMainnetDeployment) {
+  if (!gmx.isExistingMainnetDeployment) {
     await updateMarketConfig({ write: true });
   }
 };

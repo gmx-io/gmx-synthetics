@@ -33,7 +33,7 @@ const func = async ({ gmx }: HardhatRuntimeEnvironment) => {
     "max execution fee multiplier factor"
   );
 
-  if (gmx.isExistingMainnetDeployment) {
+  if (!gmx.isExistingMainnetDeployment) {
     await updateGeneralConfig({ write: true });
   }
 };
