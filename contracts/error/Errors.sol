@@ -164,6 +164,7 @@ library Errors {
     error InsufficientGasForCancellation(uint256 gas, uint256 minHandleExecutionErrorGas);
     error InsufficientGasForAutoCancellation(uint256 gas, uint256 minHandleExecutionErrorGas);
     error InvalidExecutionFee(uint256 executionFee, uint256 minExecutionFee, uint256 maxExecutionFee);
+    error EmptyRelayFeeAddress();
 
     // MarketFactory errors
     error MarketAlreadyExists(bytes32 salt, address existingMarketAddress);
@@ -465,10 +466,9 @@ library Errors {
     error SubaccountApprovalDeadlinePassed(uint256 currentTimestamp, uint256 deadline);
     error InvalidSubaccountApprovalNonce(uint256 storedNonce, uint256 nonce);
     error DeadlinePassed(uint256 currentTimestamp, uint256 deadline);
-    error InsufficientRelayFee(uint256 requiredRelayFee, uint256 feeAmount);
+    error InsufficientRelayFee(uint256 requiredRelayFee, uint256 availableFeeAmount);
     error InvalidSubaccountApprovalSubaccount();
     error NonEmptyExternalCallsForSubaccountOrder();
-    error InvalidRelayParams();
 
     // EventUtils error
     error EventItemNotFound(string key);
@@ -480,4 +480,8 @@ library Errors {
     error InvalidEdgeDataStreamBidAsk(address token, uint256 bid, uint256 ask);
     error InvalidEdgeDataStreamPrices(address token, uint256 bid, uint256 ask);
     error InvalidEdgeDataStreamExpo(int256 expo);
+    error RelayEmptyBatch();
+    error RelayCalldataTooLong(uint256 calldataLength);
+    error InvalidExternalCalls(uint256 sendTokensLength, uint256 sendAmountsLength);
+    error MaxRelayFeeSwapForSubaccountExceeded(uint256 feeUsd, uint256 maxFeeUsd);
 }

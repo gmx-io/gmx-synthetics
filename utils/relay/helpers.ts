@@ -1,4 +1,95 @@
 import { BigNumberish, ethers } from "ethers";
+import { GELATO_RELAY_ADDRESS } from "./addresses";
+
+export type SubaccountApproval = {
+  subaccount: string;
+  shouldAdd: boolean;
+  expiresAt: BigNumberish;
+  maxAllowedCount: BigNumberish;
+  actionType: string;
+  nonce: BigNumberish;
+  deadline: BigNumberish;
+  signature: string;
+};
+
+export type ExternalCalls = {
+  sendTokens: string[];
+  sendAmounts: BigNumberish[];
+  externalCallTargets: string[];
+  externalCallDataList: string[];
+  refundTokens: string[];
+  refundReceivers: string[];
+};
+
+export type TokenPermit = {
+  owner: string;
+  spender: string;
+  value: BigNumberish;
+  deadline: BigNumberish;
+  v: BigNumberish;
+  r: BigNumberish;
+  s: BigNumberish;
+  token: string;
+};
+
+export type OracleParams = {
+  tokens: string[];
+  providers: string[];
+  data: string[];
+};
+
+export type FeeParams = {
+  feeToken: string;
+  feeAmount: BigNumberish;
+  feeSwapPath: string[];
+};
+
+export type RelayParams = {
+  oracleParams: OracleParams;
+  tokenPermits: TokenPermit[];
+  externalCalls: ExternalCalls;
+  fee: FeeParams;
+  userNonce: BigNumberish;
+  deadline: BigNumberish;
+};
+
+export type CreateOrderParams = {
+  addresses: {
+    receiver: string;
+    cancellationReceiver: string;
+    callbackContract: string;
+    uiFeeReceiver: string;
+    market: string;
+    initialCollateralToken: string;
+    swapPath: string[];
+  };
+  numbers: {
+    sizeDeltaUsd: BigNumberish;
+    initialCollateralDeltaAmount: BigNumberish;
+    triggerPrice: BigNumberish;
+    acceptablePrice: BigNumberish;
+    executionFee: BigNumberish;
+    callbackGasLimit: BigNumberish;
+    minOutputAmount: BigNumberish;
+    validFromTime: BigNumberish;
+  };
+  orderType: BigNumberish;
+  decreasePositionSwapType: BigNumberish;
+  isLong: boolean;
+  shouldUnwrapNativeToken: boolean;
+  referralCode: string;
+};
+
+export type UpdateOrderParams = {
+  key: string;
+  sizeDeltaUsd: BigNumberish;
+  acceptablePrice: BigNumberish;
+  triggerPrice: BigNumberish;
+  minOutputAmount: BigNumberish;
+  validFromTime: BigNumberish;
+  autoCancel: boolean;
+  executionFeeIncrease: BigNumberish;
+};
 
 function getDefaultOracleParams() {
   return {
@@ -27,6 +118,8 @@ export async function getRelayParams(p: {
     oracleParams: p.oracleParams || getDefaultOracleParams(),
     tokenPermits: p.tokenPermits || [],
     externalCalls: p.externalCalls || {
+      sendTokens: [],
+      sendAmounts: [],
       externalCallTargets: [],
       externalCallDataList: [],
       refundTokens: [],
@@ -54,11 +147,11 @@ export function getDomain(chainId: BigNumberish, verifyingContract: string) {
   };
 }
 
-export function hashRelayParams(relayParams: any) {
+export function hashRelayParams(relayParams: RelayParams) {
   const encoded = ethers.utils.defaultAbiCoder.encode(
     [
       "tuple(address[] tokens, address[] providers, bytes[] data)",
-      "tuple(address[] externalCallTargets, bytes[] externalCallDataList, address[] refundTokens, address[] refundReceivers)",
+      "tuple(address[] sendTokens,uint256[] sendAmounts,address[] externalCallTargets, bytes[] externalCallDataList, address[] refundTokens, address[] refundReceivers)",
       "tuple(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s, address token)[]",
       "tuple(address feeToken, uint256 feeAmount, address[] feeSwapPath)",
       "uint256",
@@ -67,12 +160,7 @@ export function hashRelayParams(relayParams: any) {
     ],
     [
       [relayParams.oracleParams.tokens, relayParams.oracleParams.providers, relayParams.oracleParams.data],
-      [
-        relayParams.externalCalls.externalCallTargets,
-        relayParams.externalCalls.externalCallDataList,
-        relayParams.externalCalls.refundTokens,
-        relayParams.externalCalls.refundReceivers,
-      ],
+      relayParams.externalCalls,
       relayParams.tokenPermits.map((permit) => [
         permit.owner,
         permit.spender,
@@ -93,7 +181,18 @@ export function hashRelayParams(relayParams: any) {
   return ethers.utils.keccak256(encoded);
 }
 
-export function hashSubaccountApproval(subaccountApproval: any) {
+export function hashSubaccountApproval(subaccountApproval: SubaccountApproval) {
+  assertFields(subaccountApproval, [
+    "subaccount",
+    "shouldAdd",
+    "expiresAt",
+    "maxAllowedCount",
+    "actionType",
+    "nonce",
+    "deadline",
+    "signature",
+  ]);
+
   return ethers.utils.keccak256(
     ethers.utils.defaultAbiCoder.encode(
       [
@@ -102,6 +201,14 @@ export function hashSubaccountApproval(subaccountApproval: any) {
       [subaccountApproval]
     )
   );
+}
+
+export function assertFields(obj: any, fields: string[]) {
+  for (const field of fields) {
+    if (obj[field] === undefined) {
+      throw new Error(`Field ${field} is undefined`);
+    }
+  }
 }
 
 export async function getUserNonce(account: string, relayRouter: ethers.Contract) {
@@ -126,4 +233,35 @@ export async function signTypedData(
   }
 
   return (signer as any)._signTypedData(domain, types, typedData);
+}
+
+export async function sendRelayTransaction({
+  calldata,
+  gelatoRelayFeeToken,
+  gelatoRelayFeeAmount,
+  sender,
+  relayRouter,
+}: {
+  calldata: string;
+  gelatoRelayFeeToken: string;
+  gelatoRelayFeeAmount: BigNumberish;
+  sender: ethers.Signer;
+  relayRouter: ethers.Contract;
+}) {
+  try {
+    return await sender.sendTransaction({
+      to: relayRouter.address,
+      data: ethers.utils.solidityPack(
+        ["bytes", "address", "address", "uint256"],
+        [calldata, GELATO_RELAY_ADDRESS, gelatoRelayFeeToken, gelatoRelayFeeAmount]
+      ),
+      gasLimit: 5000000,
+    });
+  } catch (ex) {
+    if (ex.error) {
+      // this gives much more readable error in the console with a stacktrace
+      throw ex.error;
+    }
+    throw ex;
+  }
 }
