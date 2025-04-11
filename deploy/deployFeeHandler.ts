@@ -1,11 +1,12 @@
 import { grantRoleIfNotGranted } from "../utils/role";
-import { createDeployFunction } from "../utils/deploy";
+import { createDeployFunction, skipHandlerFunction } from "../utils/deploy";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 const constructorContracts = ["RoleStore", "Oracle", "DataStore", "EventEmitter"];
+const contractName = "FeeHandler";
 
 const func = createDeployFunction({
-  contractName: "FeeHandler",
+  contractName: contractName,
   dependencyNames: constructorContracts,
   getDeployArgs: async ({ dependencyContracts, gmx, network, get }) => {
     const vaultV1Config = await gmx.getVaultV1();
@@ -43,7 +44,7 @@ func.skip = async (hre: HardhatRuntimeEnvironment) => {
     return true;
   }
 
-  return process.env.SKIP_HANDLER_DEPLOYMENTS ? true : false;
+  return skipHandlerFunction(contractName)(hre);
 };
 
 export default func;
