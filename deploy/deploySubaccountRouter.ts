@@ -7,7 +7,7 @@ const func = createDeployFunction({
   contractName: "SubaccountRouter",
   dependencyNames: constructorContracts,
   getDependencies: () => {
-    if (hre.network.name === "arbitrum") {
+    if (hre.gmx.isExistingMainnetDeployment) {
       return ["OrderStoreUtils", "SubaccountUtils"];
     }
 
