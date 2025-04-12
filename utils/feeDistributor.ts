@@ -3,20 +3,18 @@ import { hashString } from "./hash";
 export const gmxKey = hashString("GMX");
 export const extendedGmxTrackerKey = hashString("EXTENDED_GMX_TRACKER");
 export const dataStoreKey = hashString("DATASTORE");
+export const referralRewardsEsGmxKey = hashString("REFERRAL_REWARDS_ESGMX");
+export const referralRewardsWntKey = hashString("REFERRAL_REWARDS_WNT");
+export const glpKey = hashString("GLP");
+export const treasuryKey = hashString("TREASURY");
 export const synapseRouterKey = hashString("SYNAPSE_ROUTER");
+export const feeGlpTrackerKey = hashString("FEE_GLP_TRACKER");
+export const chainlinkKey = hashString("CHAINLINK");
+export const esGmxVesterKey = hashString("ESGMX_VESTER");
 
-// Constants
 const SECONDS_IN_DAY = 86400;
-const TARGET_OFFSET_SECONDS = 60; // 60 seconds after midnight (12:01 AM)
+const TARGET_OFFSET_SECONDS = 60;
 
-/**
- * Calculates the timestamp for the next occurrence of a given distribution day,
- * with the time set to midnight plus a fixed offset (e.g. 60 seconds for 12:01 AM).
- *
- * @param currentTimestamp - the current timestamp (seconds)
- * @param distributionDay - target day as an integer (0 = Sunday, 1 = Monday, …, 6 = Saturday)
- * @returns The timestamp for the next occurrence of distributionDay at ~12:01 AM.
- */
 function getNextDistributionTimestampFixed(currentTimestamp: number, distributionDay: number): number {
   // Calculate the day number (number of whole days since epoch)
   const currentDayNumber = Math.floor(currentTimestamp / SECONDS_IN_DAY);
@@ -36,12 +34,6 @@ function getNextDistributionTimestampFixed(currentTimestamp: number, distributio
   return nextDayNumber * SECONDS_IN_DAY + TARGET_OFFSET_SECONDS;
 }
 
-/**
- * Moves the blockchain time to the next occurrence of the target distribution day,
- * with the time set to ~12:01 AM.
- *
- * @param distributionDay - target day (0 = Sunday, 1 = Monday, …, 6 = Saturday)
- */
 export async function moveToNextDistributionDay(distributionDay: number) {
   const block = await ethers.provider.getBlock("latest");
   const currentTimestamp = block.timestamp;

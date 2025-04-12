@@ -28,8 +28,8 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
     bytes32 public constant gmxKey = keccak256(abi.encode("GMX"));
     bytes32 public constant extendedGmxTrackerKey = keccak256(abi.encode("EXTENDED_GMX_TRACKER"));
     bytes32 public constant dataStoreKey = keccak256(abi.encode("DATASTORE"));
-    bytes32 public constant referralRewardsWntKey = keccak256(abi.encode("REFERRAL_REWARDS_WNT"));
     bytes32 public constant referralRewardsEsGmxKey = keccak256(abi.encode("REFERRAL_REWARDS_ESGMX"));
+    bytes32 public constant referralRewardsWntKey = keccak256(abi.encode("REFERRAL_REWARDS_WNT"));
     bytes32 public constant glpKey = keccak256(abi.encode("GLP"));
     bytes32 public constant treasuryKey = keccak256(abi.encode("TREASURY"));
     bytes32 public constant synapseRouterKey = keccak256(abi.encode("SYNAPSE_ROUTER"));
@@ -207,14 +207,16 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
                     currentChainIndex
                 );
 
+                uint256 newFeeAmountGmxCurrentChain = feeAmountGmxCurrentChain - totalGmxBridgedOut;
                 // validate that the amount bridged does not result in a GMX fee amount deficit on the current chain
-                if (requiredGmxAmount > feeAmountGmxCurrentChain - totalGmxBridgedOut) {
+                if (requiredGmxAmount > newFeeAmountGmxCurrentChain) {
                     revert Errors.AttemptedBridgeAmountTooHigh(
                         requiredGmxAmount,
                         feeAmountGmxCurrentChain,
                         totalGmxBridgedOut
                     );
                 }
+                setUint(Keys.feeDistributorFeeAmountGmxKey(block.chainid), newFeeAmountGmxCurrentChain);
             }
             isBridgingCompleted = true;
             setDistributionState(uint256(DistributionState.BridgingCompleted));
@@ -256,8 +258,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         // the minimum allowed GMX amount after bridging, taking into account slippage
         uint256 minRequiredGmxAmount = origFeeAmountGmxCurrentChain + minGmxReceived;
         // retrieve the current GMX available to distribute now that bridging has been completed
-        uint256 feeAmountGmxCurrentChain = getUint(Keys.withdrawableBuybackTokenAmountKey(gmx)) +
-            getFeeDistributorVaultBalance(gmx);
+        uint256 feeAmountGmxCurrentChain = getFeeDistributorVaultBalance(gmx);
 
         // if the calculated amount doesn't meet the min bridging requirement, revert
         if (feeAmountGmxCurrentChain < minRequiredGmxAmount) {
@@ -632,8 +633,10 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         uint256 keeperCostsGlp;
         uint256 keeperGlpFactor = getUint(Keys.FEE_DISTRIBUTOR_KEEPER_GLP_FACTOR);
         for (uint256 i; i < keepers.length; i++) {
-            uint256 keeperCost = keepersTargetBalance[i] - keepers[i].balance;
-            if (keeperCost > 0) {
+            uint256 keeperTargetBalance = keepersTargetBalance[i];
+            uint256 keeperBalance = keepers[i].balance;
+            if (keeperTargetBalance > keeperBalance) {
+                uint256 keeperCost = keeperTargetBalance - keeperBalance;
                 if (keepersV2[i]) {
                     keeperCostsTreasury += keeperCost;
                 } else {
@@ -681,7 +684,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
 
         uint256 wntForReferralRewards = Precision.toFactor(
             wntReferralRewardsInUsd,
-            getUint(Keys.FEE_DISTRIBUTOR_WNT_PRICE)
+            (getUint(Keys.FEE_DISTRIBUTOR_WNT_PRICE) * Precision.WEI_PRECISION)
         );
         uint256 maxWntReferralRewards = Precision.applyFactor(totalWntBalance, wntForReferralRewardsThreshold);
         if (wntForReferralRewards > maxWntReferralRewards) {

@@ -135,7 +135,7 @@ describe("MultichainReader", function () {
       expandDecimals(200000, 18)
     );
     await gmx.mint(user1.address, expandDecimals(300000, 18));
-    await mockLzReadResponse2.setMockSupply(expandDecimals(1000000, 18));
+    await mockLzReadResponse2.setTotalSupply(expandDecimals(1000000, 18));
 
     // Initialize command options
     const functionSignature1 = new ethers.utils.Interface([

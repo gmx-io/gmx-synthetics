@@ -4,4 +4,6 @@ pragma solidity ^0.8.0;
 
 interface IRewardTracker {
     function distributor() external view returns (address);
+
+    function updateRewards() external;
 }
