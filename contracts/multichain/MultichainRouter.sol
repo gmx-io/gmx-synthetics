@@ -84,4 +84,25 @@ abstract contract MultichainRouter is BaseGelatoRelayRouter {
             TokenUtils.transfer(dataStore, wnt, residualFeeReceiver, residualFee);
         }
     }
+
+    function _recordRefundedAmounts(
+        address account,
+        uint256 srcChainId,
+        address[] calldata refundTokens,
+        address[] calldata refundReceivers
+    ) internal override {
+        // equality length for refundTokens and refundReceivers is validated in the external handler
+        for (uint256 i; i < refundReceivers.length; i++) {
+            if (refundReceivers[i] == address(multichainVault)) {
+                MultichainUtils.recordTransferIn(
+                    dataStore,
+                    eventEmitter,
+                    multichainVault,
+                    refundTokens[i],
+                    account,
+                    srcChainId
+                );
+            }
+        }
+    }
 }

@@ -242,6 +242,24 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             externalCalls.refundTokens,
             externalCalls.refundReceivers
         );
+
+        _recordRefundedAmounts(
+            account,
+            srcChainId,
+            externalCalls.refundTokens,
+            externalCalls.refundReceivers
+        );
+    }
+
+    function _recordRefundedAmounts(
+        address account,
+        uint256 srcChainId,
+        address[] calldata refundTokens,
+        address[] calldata refundReceivers
+    ) internal virtual {
+        // intended to be overridden for multichain actions
+        // where the refundReceiver is always the multichainVault
+        // and user's `account` multichain balance is increased by the refunded amount
     }
 
     function _handleTokenPermits(TokenPermit[] calldata tokenPermits) internal {
@@ -282,21 +300,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         uint256 srcChainId,
         bool isSubaccount
     ) internal {
-        // TODO: update M-08 fix
-        // // It's possible to have leftover tokens if e.g. "swapExactOut" or other partial usage occurs during external calls
-        //     // Send such leftover fee tokens (not converted to WNT) to the residualFeeReceiver
-        //     if (relayParams.fee.feeToken != wnt) {
-        //         uint256 leftoverFeeTokenBalance = ERC20(relayParams.fee.feeToken).balanceOf(address(this));
-        //         if (leftoverFeeTokenBalance > 0) {
-        //             _transferResidualFee(
-        //                 relayParams.fee.feeToken,
-        //                 residualFeeReceiver,
-        //                 leftoverFeeTokenBalance,
-        //                 account,
-        //                 srcChainId
-        //             );
-        //         }
-        //     }
         if (_isGelatoRelay(msg.sender) && _getFeeToken() != contracts.wnt) {
             revert Errors.UnsupportedRelayFeeToken(_getFeeToken(), contracts.wnt);
         }
