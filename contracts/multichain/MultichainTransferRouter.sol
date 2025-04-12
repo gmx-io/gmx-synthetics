@@ -25,7 +25,7 @@ contract MultichainTransferRouter is MultichainRouter {
     }
 
     function bridgeOut(
-        RelayUtils.RelayParams calldata relayParams,
+        RelayParams calldata relayParams,
         address provider,
         address account,
         uint256 srcChainId,
@@ -38,17 +38,6 @@ contract MultichainTransferRouter is MultichainRouter {
 
         bytes32 structHash = RelayUtils.getBridgeOutStructHash(relayParams, params);
         _validateCall(relayParams, account, structHash, srcChainId);
-
-        // orderVault is used to transfer funds into it and do a swap from feeToken to wnt when using the feeSwapPath
-        Contracts memory contracts = Contracts({ dataStore: dataStore, eventEmitter: eventEmitter, bank: orderVault });
-        _handleRelay(
-            contracts,
-            relayParams,
-            account,
-            srcChainId == 0 ? account : address(multichainVault), // residualFeeReceiver
-            false, // isSubaccount
-            srcChainId
-        );
 
         // moves user's funds (amount + bridging fee) from their multichain balance into multichainProvider
         multichainProvider.bridgeOut(

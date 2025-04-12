@@ -5,9 +5,10 @@ const timelockDelay = 24 * 60 * 60;
 
 const func = createDeployFunction({
   contractName: "ConfigTimelockController",
-  dependencyNames: [],
+  dependencyNames: ["Oracle", "DataStore"],
+  libraryNames: ["MarketPositionImpactPoolUtils"],
   getDeployArgs: async ({ dependencyContracts }) => {
-    return [timelockDelay, [], []];
+    return [timelockDelay, [], [], dependencyContracts["Oracle"].address, dependencyContracts["DataStore"].address];
   },
   afterDeploy: async ({ deployedContract }) => {
     await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");

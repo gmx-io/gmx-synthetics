@@ -91,6 +91,7 @@ export async function deployFixture() {
   const withdrawalHandler = await hre.ethers.getContract("WithdrawalHandler");
   const shiftHandler = await hre.ethers.getContract("ShiftHandler");
   const orderHandler = await hre.ethers.getContract("OrderHandler");
+  const externalHandler = await hre.ethers.getContract("ExternalHandler");
   const baseOrderUtils = await hre.ethers.getContract("BaseOrderUtils");
   const orderUtils = await hre.ethers.getContract("OrderUtils");
   const liquidationHandler = await hre.ethers.getContract("LiquidationHandler");
@@ -100,7 +101,6 @@ export async function deployFixture() {
   const gelatoRelayRouter = await hre.ethers.getContract("GelatoRelayRouter");
   const subaccountGelatoRelayRouter = await hre.ethers.getContract("SubaccountGelatoRelayRouter");
   const subaccountRouter = await hre.ethers.getContract("SubaccountRouter");
-  const subaccountRelayUtils = await hre.ethers.getContract("SubaccountRelayUtils");
   const multichainGmRouter = await hre.ethers.getContract("MultichainGmRouter");
   const multichainOrderRouter = await hre.ethers.getContract("MultichainOrderRouter");
   const multichainGlvRouter = await hre.ethers.getContract("MultichainGlvRouter");
@@ -131,6 +131,8 @@ export async function deployFixture() {
   const layerZeroProvider = await hre.ethers.getContract("LayerZeroProvider");
   const mockStargatePool = await hre.ethers.getContract("MockStargatePool");
   const mockOracleProvider = await hre.ethers.getContract("MockOracleProvider");
+  const edgeDataStreamVerifier = await hre.ethers.getContract("EdgeDataStreamVerifier");
+  const edgeDataStreamProvider = await hre.ethers.getContract("EdgeDataStreamProvider");
 
   const ethUsdMarketAddress = getMarketTokenAddress(
     wnt.address,
@@ -282,6 +284,7 @@ export async function deployFixture() {
       withdrawalHandler,
       shiftHandler,
       orderHandler,
+      externalHandler,
       baseOrderUtils,
       orderUtils,
       liquidationHandler,
@@ -291,7 +294,6 @@ export async function deployFixture() {
       gelatoRelayRouter,
       subaccountGelatoRelayRouter,
       subaccountRouter,
-      subaccountRelayUtils,
       multichainGmRouter,
       multichainOrderRouter,
       multichainGlvRouter,
@@ -351,6 +353,8 @@ export async function deployFixture() {
       mockStargatePool,
       callbackUtils,
       mockOracleProvider,
+      edgeDataStreamVerifier,
+      edgeDataStreamProvider,
     },
     props: { oracleSalt, signerIndexes: [0, 1, 2, 3, 4, 5, 6], executionFee: "1000000000000000" },
   };

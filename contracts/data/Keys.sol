@@ -15,6 +15,7 @@ library Keys {
 
     // @dev for holding tokens that could not be sent out
     bytes32 public constant HOLDING_ADDRESS = keccak256(abi.encode("HOLDING_ADDRESS"));
+    bytes32 public constant RELAY_FEE_ADDRESS = keccak256(abi.encode("RELAY_FEE_ADDRESS"));
 
     // @dev key for the minimum gas for execution error
     bytes32 public constant MIN_HANDLE_EXECUTION_ERROR_GAS = keccak256(abi.encode("MIN_HANDLE_EXECUTION_ERROR_GAS"));
@@ -181,6 +182,8 @@ library Keys {
     bytes32 public constant MIN_ORACLE_BLOCK_CONFIRMATIONS = keccak256(abi.encode("MIN_ORACLE_BLOCK_CONFIRMATIONS"));
     // @dev key for the maximum usable oracle price age in seconds
     bytes32 public constant MAX_ORACLE_PRICE_AGE = keccak256(abi.encode("MAX_ORACLE_PRICE_AGE"));
+    // @dev key for the maximum oracle price for sensible operations age in seconds
+    bytes32 public constant CONFIG_MAX_PRICE_AGE = keccak256(abi.encode("CONFIG_MAX_PRICE_AGE"));
     // @dev key for the maximum oracle timestamp range
     bytes32 public constant MAX_ORACLE_TIMESTAMP_RANGE = keccak256(abi.encode("MAX_ORACLE_TIMESTAMP_RANGE"));
     // @dev key for the maximum oracle price deviation factor from the ref price
@@ -228,6 +231,9 @@ library Keys {
     // @dev key for the max execution fee multiplier
     bytes32 public constant MAX_EXECUTION_FEE_MULTIPLIER_FACTOR = keccak256(abi.encode("MAX_EXECUTION_FEE_MULTIPLIER_FACTOR"));
 
+    bytes32 public constant MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT = keccak256(abi.encode("MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT"));
+    bytes32 public constant GELATO_RELAY_FEE_MULTIPLIER_FACTOR = keccak256(abi.encode("GELATO_RELAY_FEE_MULTIPLIER_FACTOR"));
+    bytes32 public constant GELATO_RELAY_FEE_BASE_AMOUNT = keccak256(abi.encode("GELATO_RELAY_FEE_BASE_AMOUNT"));
     // @dev key for the estimated gas limit for deposits
     bytes32 public constant DEPOSIT_GAS_LIMIT = keccak256(abi.encode("DEPOSIT_GAS_LIMIT"));
     // @dev key for the estimated gas limit for withdrawals
@@ -336,6 +342,8 @@ library Keys {
     bytes32 public constant PRICE_FEED_HEARTBEAT_DURATION = keccak256(abi.encode("PRICE_FEED_HEARTBEAT_DURATION"));
     // @dev key for data stream feed id
     bytes32 public constant DATA_STREAM_ID = keccak256(abi.encode("DATA_STREAM_ID"));
+    // @dev key for edge oracle data stream feed id
+    bytes32 public constant EDGE_DATA_STREAM_ID = keccak256(abi.encode("EDGE_DATA_STREAM_ID"));
     // @dev key for data stream feed multiplier
     bytes32 public constant DATA_STREAM_MULTIPLIER = keccak256(abi.encode("DATA_STREAM_MULTIPLIER"));
     bytes32 public constant DATA_STREAM_SPREAD_REDUCTION_FACTOR = keccak256(abi.encode("DATA_STREAM_SPREAD_REDUCTION_FACTOR"));
@@ -429,6 +437,10 @@ library Keys {
     bytes32 public constant SUBACCOUNT_AUTO_TOP_UP_AMOUNT = keccak256(abi.encode("SUBACCOUNT_AUTO_TOP_UP_AMOUNT"));
     // @dev key for subaccount order action
     bytes32 public constant SUBACCOUNT_ORDER_ACTION = keccak256(abi.encode("SUBACCOUNT_ORDER_ACTION"));
+    // @dev key for subaccount integration id
+    bytes32 public constant SUBACCOUNT_INTEGRATION_ID = keccak256(abi.encode("SUBACCOUNT_INTEGRATION_ID"));
+    // @dev key for subaccount integration id disabled status
+    bytes32 public constant SUBACCOUNT_INTEGRATION_DISABLED = keccak256(abi.encode("SUBACCOUNT_INTEGRATION_DISABLED"));
     // @dev key for fee distributor swap order token index
     bytes32 public constant FEE_DISTRIBUTOR_SWAP_TOKEN_INDEX = keccak256(abi.encode("FEE_DISTRIBUTOR_SWAP_TOKEN_INDEX"));
     // @dev key for fee distributor swap fee batch
@@ -1864,6 +1876,21 @@ library Keys {
         ));
     }
 
+    function subaccountIntegrationIdKey(address account, address subaccount) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            SUBACCOUNT_INTEGRATION_ID,
+            account,
+            subaccount
+        ));
+    }
+
+    function subaccountIntegrationDisabledKey(bytes32 integrationId) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            SUBACCOUNT_INTEGRATION_DISABLED,
+            integrationId
+        ));
+    }
+
     // @dev key for affiliate reward amount for an account
     // @param market the market to check
     // @param token the token to get the key for
@@ -1914,6 +1941,16 @@ library Keys {
     function dataStreamIdKey(address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             DATA_STREAM_ID,
+            token
+        ));
+    }
+
+    // @dev key for edge oracle data stream feed ID
+    // @param token the token to get the key for
+    // @return key for data stream feed ID
+    function edgeDataStreamIdKey(address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            EDGE_DATA_STREAM_ID,
             token
         ));
     }

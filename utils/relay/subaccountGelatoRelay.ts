@@ -1,7 +1,21 @@
-import { BigNumberish, ethers } from "ethers";
 import * as keys from "../keys";
-import { GELATO_RELAY_ADDRESS } from "./addresses";
-import { getDomain, hashSubaccountApproval, hashRelayParams, getRelayParams, signTypedData } from "./helpers";
+import { BigNumberish, ethers } from "ethers";
+import {
+  getDomain,
+  hashRelayParams,
+  getRelayParams,
+  signTypedData,
+  sendRelayTransaction,
+  SubaccountApproval,
+  CreateOrderParams,
+  UpdateOrderParams,
+} from "./helpers";
+import {
+  getBatchSignature,
+  getCancelOrderSignature,
+  getCreateOrderSignature,
+  getUpdateOrderSignature,
+} from "./signatures";
 
 export async function sendCreateOrder(p: {
   subaccountApprovalSigner: ethers.Signer;
@@ -17,6 +31,8 @@ export async function sendCreateOrder(p: {
     signature?: string;
   };
   externalCalls?: {
+    sendTokens: string[];
+    sendAmounts: BigNumberish[];
     externalCallTargets: string[];
     externalCallDataList: string[];
     refundTokens: string[];
@@ -40,7 +56,6 @@ export async function sendCreateOrder(p: {
     feeAmount: BigNumberish;
     feeSwapPath: string[];
   };
-  collateralDeltaAmount: BigNumberish;
   account: string;
   params: any;
   signature?: string;
@@ -49,8 +64,8 @@ export async function sendCreateOrder(p: {
   desChainId: BigNumberish;
   relayRouter: ethers.Contract;
   chainId: BigNumberish;
-  relayFeeToken: string;
-  relayFeeAmount: BigNumberish;
+  gelatoRelayFeeToken: string;
+  gelatoRelayFeeAmount: BigNumberish;
 }) {
   const relayParams = await getRelayParams(p);
   const subaccountApproval = await getSubaccountApproval({ ...p, signer: p.subaccountApprovalSigner });
@@ -64,102 +79,18 @@ export async function sendCreateOrder(p: {
       subaccountApproval,
     });
   }
+
   const createOrderCalldata = p.relayRouter.interface.encodeFunctionData("createOrder", [
     { ...relayParams, signature },
     subaccountApproval,
     p.account,
     p.subaccount,
-    p.collateralDeltaAmount,
     p.params,
   ]);
-  const calldata = ethers.utils.solidityPack(
-    ["bytes", "address", "address", "uint256"],
-    [createOrderCalldata, GELATO_RELAY_ADDRESS, p.relayFeeToken, p.relayFeeAmount]
-  );
-  return p.sender.sendTransaction({
-    to: p.relayRouter.address,
-    data: calldata,
+  return sendRelayTransaction({
+    calldata: createOrderCalldata,
+    ...p,
   });
-}
-
-function getEmptySubaccountApproval() {
-  return {
-    subaccount: ethers.constants.AddressZero,
-    shouldAdd: false,
-    expiresAt: 0,
-    maxAllowedCount: 0,
-    actionType: keys.SUBACCOUNT_ORDER_ACTION,
-    nonce: 0,
-    signature: "0x",
-    deadline: 9999999999,
-  };
-}
-
-async function getCreateOrderSignature({
-  signer,
-  relayParams,
-  subaccountApproval,
-  collateralDeltaAmount,
-  account,
-  verifyingContract,
-  params,
-  chainId,
-}) {
-  const types = {
-    CreateOrder: [
-      { name: "collateralDeltaAmount", type: "uint256" },
-      { name: "account", type: "address" },
-      { name: "addresses", type: "CreateOrderAddresses" },
-      { name: "numbers", type: "CreateOrderNumbers" },
-      { name: "orderType", type: "uint256" },
-      { name: "decreasePositionSwapType", type: "uint256" },
-      { name: "isLong", type: "bool" },
-      { name: "shouldUnwrapNativeToken", type: "bool" },
-      { name: "autoCancel", type: "bool" },
-      { name: "referralCode", type: "bytes32" },
-      { name: "dataList", type: "bytes32[]" },
-      { name: "relayParams", type: "bytes32" },
-      { name: "subaccountApproval", type: "bytes32" },
-    ],
-    CreateOrderAddresses: [
-      { name: "receiver", type: "address" },
-      { name: "cancellationReceiver", type: "address" },
-      { name: "callbackContract", type: "address" },
-      { name: "uiFeeReceiver", type: "address" },
-      { name: "market", type: "address" },
-      { name: "initialCollateralToken", type: "address" },
-      { name: "swapPath", type: "address[]" },
-    ],
-    CreateOrderNumbers: [
-      { name: "sizeDeltaUsd", type: "uint256" },
-      { name: "initialCollateralDeltaAmount", type: "uint256" },
-      { name: "triggerPrice", type: "uint256" },
-      { name: "acceptablePrice", type: "uint256" },
-      { name: "executionFee", type: "uint256" },
-      { name: "callbackGasLimit", type: "uint256" },
-      { name: "minOutputAmount", type: "uint256" },
-      { name: "validFromTime", type: "uint256" },
-    ],
-  };
-
-  const domain = getDomain(chainId, verifyingContract);
-  const typedData = {
-    collateralDeltaAmount,
-    account,
-    addresses: params.addresses,
-    numbers: params.numbers,
-    orderType: params.orderType,
-    decreasePositionSwapType: params.decreasePositionSwapType,
-    isLong: params.isLong,
-    shouldUnwrapNativeToken: params.shouldUnwrapNativeToken,
-    autoCancel: false,
-    referralCode: params.referralCode,
-    dataList: params.dataList,
-    relayParams: hashRelayParams(relayParams),
-    subaccountApproval: hashSubaccountApproval(subaccountApproval),
-  };
-
-  return signTypedData(signer, domain, types, typedData);
 }
 
 export async function sendUpdateOrder(p: {
@@ -174,9 +105,7 @@ export async function sendUpdateOrder(p: {
     token: string;
     spender: string;
     value: BigNumberish;
-    nonce: BigNumberish;
     deadline: BigNumberish;
-    chainId: BigNumberish;
   }[];
   feeParams: {
     feeToken: string;
@@ -184,13 +113,14 @@ export async function sendUpdateOrder(p: {
     feeSwapPath: string[];
   };
   externalCalls?: {
+    sendTokens: string[];
+    sendAmounts: BigNumberish[];
     externalCallTargets: string[];
     externalCallDataList: string[];
     refundTokens: string[];
     refundReceivers: string[];
   };
   subaccount: string;
-  key: string;
   subaccountApproval: {
     subaccount: string;
     shouldAdd: boolean;
@@ -205,21 +135,22 @@ export async function sendUpdateOrder(p: {
   chainId: BigNumberish;
   account: string;
   params: {
+    key: string;
     sizeDeltaUsd: BigNumberish;
     acceptablePrice: BigNumberish;
     triggerPrice: BigNumberish;
     minOutputAmount: BigNumberish;
     validFromTime: BigNumberish;
     autoCancel: boolean;
+    executionFeeIncrease: BigNumberish;
   };
   deadline: BigNumberish;
   desChainId: BigNumberish;
   userNonce?: BigNumberish;
   relayRouter: ethers.Contract;
   signature?: string;
-  relayFeeToken: string;
-  relayFeeAmount: BigNumberish;
-  increaseExecutionFee: boolean;
+  gelatoRelayFeeToken: string;
+  gelatoRelayFeeAmount: BigNumberish;
 }) {
   const relayParams = await getRelayParams(p);
   const subaccountApproval = await getSubaccountApproval({ ...p, signer: p.subaccountApprovalSigner });
@@ -238,28 +169,29 @@ export async function sendUpdateOrder(p: {
     subaccountApproval,
     p.account,
     p.subaccount,
-    p.key,
     p.params,
-    p.increaseExecutionFee,
   ]);
-  const calldata = ethers.utils.solidityPack(
-    ["bytes", "address", "address", "uint256"],
-    [updateOrderCalldata, GELATO_RELAY_ADDRESS, p.relayFeeToken, p.relayFeeAmount]
-  );
-  return p.sender.sendTransaction({
-    to: p.relayRouter.address,
-    data: calldata,
+  return sendRelayTransaction({
+    calldata: updateOrderCalldata,
+    ...p,
   });
 }
 
-async function getSubaccountApproval(p: {
-  subaccountApproval?: {
-    subaccount: string;
-    shouldAdd: boolean;
-    expiresAt: BigNumberish;
-    maxAllowedCount: BigNumberish;
-    actionType: string;
-    deadline: BigNumberish;
+export function getEmptySubaccountApproval() {
+  return {
+    subaccount: ethers.constants.AddressZero,
+    shouldAdd: false,
+    expiresAt: 0,
+    maxAllowedCount: 0,
+    actionType: keys.SUBACCOUNT_ORDER_ACTION,
+    nonce: 0,
+    signature: "0x",
+    deadline: 9999999999,
+  };
+}
+
+export async function getSubaccountApproval(p: {
+  subaccountApproval?: Omit<SubaccountApproval, "nonce" | "signature"> & {
     nonce?: BigNumberish;
     signature?: string;
   };
@@ -267,7 +199,7 @@ async function getSubaccountApproval(p: {
   relayRouter: ethers.Contract;
   chainId: BigNumberish;
   signer: ethers.Signer;
-}) {
+}): Promise<SubaccountApproval> {
   if (!p.subaccountApproval) {
     return getEmptySubaccountApproval();
   }
@@ -295,49 +227,6 @@ async function getSubaccountApproval(p: {
   };
 }
 
-async function getUpdateOrderSignature({
-  signer,
-  relayParams,
-  subaccountApproval,
-  account,
-  verifyingContract,
-  params,
-  increaseExecutionFee,
-  key,
-  chainId,
-}) {
-  const types = {
-    UpdateOrder: [
-      { name: "account", type: "address" },
-      { name: "key", type: "bytes32" },
-      { name: "params", type: "UpdateOrderParams" },
-      { name: "increaseExecutionFee", type: "bool" },
-      { name: "relayParams", type: "bytes32" },
-      { name: "subaccountApproval", type: "bytes32" },
-    ],
-    UpdateOrderParams: [
-      { name: "sizeDeltaUsd", type: "uint256" },
-      { name: "acceptablePrice", type: "uint256" },
-      { name: "triggerPrice", type: "uint256" },
-      { name: "minOutputAmount", type: "uint256" },
-      { name: "validFromTime", type: "uint256" },
-      { name: "autoCancel", type: "bool" },
-    ],
-  };
-
-  const domain = getDomain(chainId, verifyingContract);
-  const typedData = {
-    account,
-    key,
-    params,
-    relayParams: hashRelayParams(relayParams),
-    increaseExecutionFee,
-    subaccountApproval: hashSubaccountApproval(subaccountApproval),
-  };
-
-  return signTypedData(signer, domain, types, typedData);
-}
-
 export async function sendCancelOrder(p: {
   sender: ethers.Signer;
   signer: ethers.Signer;
@@ -350,11 +239,11 @@ export async function sendCancelOrder(p: {
     token: string;
     spender: string;
     value: BigNumberish;
-    nonce: BigNumberish;
     deadline: BigNumberish;
-    chainId: BigNumberish;
   }[];
   externalCalls?: {
+    sendTokens: string[];
+    sendAmounts: BigNumberish[];
     externalCallTargets: string[];
     externalCallDataList: string[];
     refundTokens: string[];
@@ -376,8 +265,8 @@ export async function sendCancelOrder(p: {
   userNonce?: BigNumberish;
   relayRouter: ethers.Contract;
   signature?: string;
-  relayFeeToken: string;
-  relayFeeAmount: BigNumberish;
+  gelatoRelayFeeToken: string;
+  gelatoRelayFeeAmount: BigNumberish;
 }) {
   const relayParams = await getRelayParams(p);
   const subaccountApproval = await getSubaccountApproval({ ...p, signer: p.subaccountApprovalSigner });
@@ -398,43 +287,10 @@ export async function sendCancelOrder(p: {
     p.subaccount,
     p.key,
   ]);
-  const calldata = ethers.utils.solidityPack(
-    ["bytes", "address", "address", "uint256"],
-    [cancelOrderCalldata, GELATO_RELAY_ADDRESS, p.relayFeeToken, p.relayFeeAmount]
-  );
-  return p.sender.sendTransaction({
-    to: p.relayRouter.address,
-    data: calldata,
+  return sendRelayTransaction({
+    calldata: cancelOrderCalldata,
+    ...p,
   });
-}
-
-async function getCancelOrderSignature({
-  signer,
-  relayParams,
-  subaccountApproval,
-  account,
-  verifyingContract,
-  key,
-  chainId,
-}) {
-  const types = {
-    CancelOrder: [
-      { name: "account", type: "address" },
-      { name: "key", type: "bytes32" },
-      { name: "relayParams", type: "bytes32" },
-      { name: "subaccountApproval", type: "bytes32" },
-    ],
-  };
-
-  const domain = getDomain(chainId, verifyingContract);
-  const typedData = {
-    account,
-    key,
-    relayParams: hashRelayParams(relayParams),
-    subaccountApproval: hashSubaccountApproval(subaccountApproval),
-  };
-
-  return signTypedData(signer, domain, types, typedData);
 }
 
 async function getSubaccountApprovalSignature(p: {
@@ -495,6 +351,8 @@ export async function sendRemoveSubaccount(p: {
     feeSwapPath: string[];
   };
   externalCalls?: {
+    sendTokens: string[];
+    sendAmounts: BigNumberish[];
     externalCallTargets: string[];
     externalCallDataList: string[];
     refundTokens: string[];
@@ -504,9 +362,7 @@ export async function sendRemoveSubaccount(p: {
     token: string;
     spender: string;
     value: BigNumberish;
-    nonce: BigNumberish;
     deadline: BigNumberish;
-    chainId: BigNumberish;
   }[];
   subaccount: string;
   chainId: BigNumberish;
@@ -516,8 +372,8 @@ export async function sendRemoveSubaccount(p: {
   userNonce?: BigNumberish;
   relayRouter: ethers.Contract;
   signature?: string;
-  relayFeeToken: string;
-  relayFeeAmount: BigNumberish;
+  gelatoRelayFeeToken: string;
+  gelatoRelayFeeAmount: BigNumberish;
 }) {
   const relayParams = await getRelayParams(p);
 
@@ -531,13 +387,9 @@ export async function sendRemoveSubaccount(p: {
     p.account,
     p.subaccount,
   ]);
-  const calldata = ethers.utils.solidityPack(
-    ["bytes", "address", "address", "uint256"],
-    [createOrderCalldata, GELATO_RELAY_ADDRESS, p.relayFeeToken, p.relayFeeAmount]
-  );
-  return p.sender.sendTransaction({
-    to: p.relayRouter.address,
-    data: calldata,
+  return sendRelayTransaction({
+    calldata: createOrderCalldata,
+    ...p,
   });
 }
 
@@ -556,4 +408,70 @@ async function getRemoveSubaccountSignature({ signer, relayParams, subaccount, v
   };
 
   return signTypedData(signer, domain, types, typedData);
+}
+
+export async function sendBatch(p: {
+  sender: ethers.Signer;
+  signer: ethers.Signer;
+  oracleParams?: {
+    tokens: string[];
+    providers: string[];
+    data: string[];
+  };
+  tokenPermits?: {
+    token: string;
+    spender: string;
+    value: BigNumberish;
+    deadline: BigNumberish;
+  }[];
+  feeParams: {
+    feeToken: string;
+    feeAmount: BigNumberish;
+    feeSwapPath: string[];
+  };
+  cancelOrderKeys: string[];
+  createOrderParamsList: CreateOrderParams[];
+  updateOrderParamsList: UpdateOrderParams[];
+  chainId: BigNumberish;
+  account: string;
+  deadline: BigNumberish;
+  userNonce?: BigNumberish;
+  relayRouter: ethers.Contract;
+  signature?: string;
+  gelatoRelayFeeToken: string;
+  gelatoRelayFeeAmount: BigNumberish;
+  subaccountApproval: Omit<SubaccountApproval, "nonce" | "signature"> & {
+    nonce?: BigNumberish;
+    signature?: string;
+  };
+  subaccountApprovalSigner: ethers.Signer;
+  subaccount: string;
+}) {
+  const relayParams = await getRelayParams(p);
+  const subaccountApproval = await getSubaccountApproval({ ...p, signer: p.subaccountApprovalSigner });
+
+  let signature = p.signature;
+  if (!signature) {
+    signature = await getBatchSignature({
+      ...p,
+      relayParams,
+      subaccountApproval,
+      verifyingContract: p.relayRouter.address,
+    });
+  }
+  const batchCalldata = p.relayRouter.interface.encodeFunctionData("batch", [
+    { ...relayParams, signature },
+    subaccountApproval,
+    p.account,
+    p.subaccount,
+    {
+      createOrderParamsList: p.createOrderParamsList,
+      updateOrderParamsList: p.updateOrderParamsList,
+      cancelOrderKeys: p.cancelOrderKeys,
+    },
+  ]);
+  return sendRelayTransaction({
+    calldata: batchCalldata,
+    ...p,
+  });
 }

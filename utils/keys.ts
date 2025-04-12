@@ -92,6 +92,7 @@ export const MIN_MARKET_TOKENS_FOR_FIRST_DEPOSIT = hashString("MIN_MARKET_TOKENS
 
 export const MIN_ORACLE_BLOCK_CONFIRMATIONS = hashString("MIN_ORACLE_BLOCK_CONFIRMATIONS");
 export const MAX_ORACLE_PRICE_AGE = hashString("MAX_ORACLE_PRICE_AGE");
+export const CONFIG_MAX_PRICE_AGE = hashString("CONFIG_MAX_PRICE_AGE");
 export const MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR = hashString("MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR");
 export const MIN_ORACLE_SIGNERS = hashString("MIN_ORACLE_SIGNERS");
 export const MAX_ORACLE_TIMESTAMP_RANGE = hashString("MAX_ORACLE_TIMESTAMP_RANGE");
@@ -114,12 +115,19 @@ export const NATIVE_TOKEN_TRANSFER_GAS_LIMIT = hashString("NATIVE_TOKEN_TRANSFER
 
 export const MAX_CALLBACK_GAS_LIMIT = hashString("MAX_CALLBACK_GAS_LIMIT");
 
+export const MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT = hashString("MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT");
+export const GELATO_RELAY_FEE_BASE_AMOUNT = hashString("GELATO_RELAY_FEE_BASE_AMOUNT");
+export const GELATO_RELAY_FEE_MULTIPLIER_FACTOR = hashString("GELATO_RELAY_FEE_MULTIPLIER_FACTOR");
+
+export const RELAY_FEE_ADDRESS = hashString("RELAY_FEE_ADDRESS");
+
 export const REQUEST_EXPIRATION_TIME = hashString("REQUEST_EXPIRATION_TIME");
 
 export const PRICE_FEED = hashString("PRICE_FEED");
 export const PRICE_FEED_MULTIPLIER = hashString("PRICE_FEED_MULTIPLIER");
 export const PRICE_FEED_HEARTBEAT_DURATION = hashString("PRICE_FEED_HEARTBEAT_DURATION");
 export const DATA_STREAM_ID = hashString("DATA_STREAM_ID");
+export const EDGE_DATA_STREAM_ID = hashString("EDGE_DATA_STREAM_ID");
 export const DATA_STREAM_MULTIPLIER = hashString("DATA_STREAM_MULTIPLIER");
 export const DATA_STREAM_SPREAD_REDUCTION_FACTOR = hashString("DATA_STREAM_SPREAD_REDUCTION_FACTOR");
 export const STABLE_PRICE = hashString("STABLE_PRICE");
@@ -240,6 +248,8 @@ export const SUBACCOUNT_ACTION_COUNT = hashString("SUBACCOUNT_ACTION_COUNT");
 export const SUBACCOUNT_AUTO_TOP_UP_AMOUNT = hashString("SUBACCOUNT_AUTO_TOP_UP_AMOUNT");
 export const SUBACCOUNT_ORDER_ACTION = hashString("SUBACCOUNT_ORDER_ACTION");
 export const SUBACCOUNT_EXPIRES_AT = hashString("SUBACCOUNT_EXPIRES_AT");
+export const SUBACCOUNT_INTEGRATION_ID = hashString("SUBACCOUNT_INTEGRATION_ID");
+export const SUBACCOUNT_INTEGRATION_DISABLED = hashString("SUBACCOUNT_INTEGRATION_DISABLED");
 export const GLV_SUPPORTED_MARKET_LIST = hashString("GLV_SUPPORTED_MARKET_LIST");
 export const MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT = hashString("MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT");
 
@@ -418,6 +428,10 @@ export function priceFeedHeartbeatDurationKey(token: string) {
 
 export function dataStreamIdKey(token: string) {
   return hashData(["bytes32", "address"], [DATA_STREAM_ID, token]);
+}
+
+export function edgeDataStreamIdKey(token: string) {
+  return hashData(["bytes32", "address"], [EDGE_DATA_STREAM_ID, token]);
 }
 
 export function dataStreamMultiplierKey(token: string) {

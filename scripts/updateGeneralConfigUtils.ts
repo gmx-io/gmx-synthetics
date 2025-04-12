@@ -283,12 +283,23 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
     `maxExecutionFeeMultiplierFactor`
   );
 
+  await handleConfig("uint", keys.GELATO_RELAY_FEE_BASE_AMOUNT, "0x", generalConfig.gelatoRelayFeeBaseAmount);
+
   await handleConfig(
     "uint",
-    keys.ORACLE_PROVIDER_MIN_CHANGE_DELAY,
+    keys.GELATO_RELAY_FEE_MULTIPLIER_FACTOR,
     "0x",
-    generalConfig.oracleProviderMinChangeDelay,
-    `oracleProviderMinChangeDelay`
+    generalConfig.gelatoRelayFeeMultiplierFactor
+  );
+
+  await handleConfig("address", keys.RELAY_FEE_ADDRESS, "0x", generalConfig.relayFeeAddress, `relayFeeAddress`);
+
+  await handleConfig(
+    "uint",
+    keys.MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT,
+    "0x",
+    generalConfig.maxRelayFeeUsdForSubaccount,
+    `maxRelayFeeUsdForSubaccount`
   );
 };
 

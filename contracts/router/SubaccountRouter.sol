@@ -93,6 +93,23 @@ contract SubaccountRouter is BaseRouter {
         );
     }
 
+    function setIntegrationId(
+        address subaccount,
+        bytes32 integrationId
+    ) external payable nonReentrant {
+        address account = msg.sender;
+
+        SubaccountUtils.validateSubaccount(dataStore, account, subaccount);
+
+        SubaccountUtils.setSubaccountIntegrationId(
+            dataStore,
+            eventEmitter,
+            account,
+            subaccount,
+            integrationId
+        );
+    }
+
     function createOrder(
         address account,
         IBaseOrderUtils.CreateOrderParams calldata params
@@ -203,12 +220,16 @@ contract SubaccountRouter is BaseRouter {
         FeatureUtils.validateFeature(dataStore, Keys.subaccountFeatureDisabledKey(address(this)));
 
         address subaccount = msg.sender;
+
+        SubaccountUtils.validateIntegrationId(dataStore, account, subaccount);
+
         SubaccountUtils.handleSubaccountAction(
             dataStore,
             eventEmitter,
             account,
             subaccount,
-            actionType
+            actionType,
+            1
         );
     }
 

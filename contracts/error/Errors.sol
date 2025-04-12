@@ -57,6 +57,8 @@ library Errors {
     error InvalidFeeReceiver(address receiver);
     error InvalidOracleSigner(address signer);
     error InvalidHoldingAddress(address account);
+    error EmptyPositionImpactWithdrawalAmount();
+    error OraclePriceOutdated();
 
     // GlvDepositStoreUtils errors
     error GlvDepositNotFound(bytes32 key);
@@ -162,6 +164,7 @@ library Errors {
     error InsufficientGasForCancellation(uint256 gas, uint256 minHandleExecutionErrorGas);
     error InsufficientGasForAutoCancellation(uint256 gas, uint256 minHandleExecutionErrorGas);
     error InvalidExecutionFee(uint256 executionFee, uint256 minExecutionFee, uint256 maxExecutionFee);
+    error EmptyRelayFeeAddress();
 
     // MarketFactory errors
     error MarketAlreadyExists(bytes32 salt, address existingMarketAddress);
@@ -199,6 +202,9 @@ library Errors {
     error InvalidMarketTokenBalanceForCollateralAmount(address market, address token, uint256 balance, uint256 collateralAmount);
     error InvalidMarketTokenBalanceForClaimableFunding(address market, address token, uint256 balance, uint256 claimableFundingFeeAmount);
     error UnexpectedPoolValue(int256 poolValue);
+
+    // MarketPositionImpactUtils errors
+    error InsufficientImpactPoolValueForWithdrawal(uint256 withdrawalAmount, uint256 poolValue);
 
     // Oracle errors
     error SequencerDown();
@@ -368,6 +374,7 @@ library Errors {
     error SubaccountNotAuthorized(address account, address subaccount);
     error MaxSubaccountActionCountExceeded(address account, address subaccount, uint256 count, uint256 maxCount);
     error SubaccountApprovalExpired(address account, address subaccount, uint256 deadline, uint256 currentTimestamp);
+    error SubaccountIntegrationIdDisabled(bytes32 integrationId);
 
     // TokenUtils errors
     error TokenTransferError(address token, address receiver, uint256 amount);
@@ -459,11 +466,22 @@ library Errors {
     error SubaccountApprovalDeadlinePassed(uint256 currentTimestamp, uint256 deadline);
     error InvalidSubaccountApprovalNonce(uint256 storedNonce, uint256 nonce);
     error DeadlinePassed(uint256 currentTimestamp, uint256 deadline);
-    error InsufficientRelayFee(uint256 requiredRelayFee, uint256 feeAmount);
+    error InsufficientRelayFee(uint256 requiredRelayFee, uint256 availableFeeAmount);
     error InvalidSubaccountApprovalSubaccount();
     error NonEmptyExternalCallsForSubaccountOrder();
-    error InvalidRelayParams();
 
     // EventUtils error
     error EventItemNotFound(string key);
+
+    // EdgeOracle verifier errors
+    error InvalidTrustedSignerAddress();
+    error InvalidEdgeSigner();
+    error InvalidEdgeSignature(uint256 recoverError);
+    error InvalidEdgeDataStreamBidAsk(address token, uint256 bid, uint256 ask);
+    error InvalidEdgeDataStreamPrices(address token, uint256 bid, uint256 ask);
+    error InvalidEdgeDataStreamExpo(int256 expo);
+    error RelayEmptyBatch();
+    error RelayCalldataTooLong(uint256 calldataLength);
+    error InvalidExternalCalls(uint256 sendTokensLength, uint256 sendAmountsLength);
+    error MaxRelayFeeSwapForSubaccountExceeded(uint256 feeUsd, uint256 maxFeeUsd);
 }

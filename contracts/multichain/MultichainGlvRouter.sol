@@ -21,7 +21,7 @@ contract MultichainGlvRouter is MultichainRouter {
     }
 
     function createGlvDeposit(
-        RelayUtils.RelayParams calldata relayParams,
+        RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         RelayUtils.TransferRequests calldata transferRequests,
@@ -39,28 +39,17 @@ contract MultichainGlvRouter is MultichainRouter {
     }
 
     function _createGlvDeposit(
-        RelayUtils.RelayParams calldata relayParams,
+        RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         GlvDepositUtils.CreateGlvDepositParams memory params
     ) internal returns (bytes32) {
-        Contracts memory contracts = Contracts({ dataStore: dataStore, eventEmitter: eventEmitter, bank: glvVault });
-
-        // pay relay fee tokens from MultichainVault to GlvVault and decrease user's multichain balance
-        params.executionFee = _handleRelay(
-            contracts,
-            relayParams,
-            account,
-            address(glvVault),
-            false, // isSubaccount
-            srcChainId
-        );
 
         return glvHandler.createGlvDeposit(account, srcChainId, params);
     }
 
     function createGlvWithdrawal(
-        RelayUtils.RelayParams calldata relayParams,
+        RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         RelayUtils.TransferRequests calldata transferRequests,
@@ -78,22 +67,11 @@ contract MultichainGlvRouter is MultichainRouter {
     }
 
     function _createGlvWithdrawal(
-        RelayUtils.RelayParams calldata relayParams,
+        RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         GlvWithdrawalUtils.CreateGlvWithdrawalParams memory params
     ) internal returns (bytes32) {
-        Contracts memory contracts = Contracts({ dataStore: dataStore, eventEmitter: eventEmitter, bank: glvVault });
-
-        // pay relay fee tokens from MultichainVault to GlvVault and decrease user's multichain balance
-        params.executionFee = _handleRelay(
-            contracts,
-            relayParams,
-            account,
-            address(glvVault), // residualFeeReceiver
-            false, // isSubaccount
-            srcChainId
-        );
 
         return GlvWithdrawalUtils.createGlvWithdrawal(dataStore, eventEmitter, glvVault, account, srcChainId, params);
     }

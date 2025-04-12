@@ -16,15 +16,17 @@ async function main() {
     const oracleProvider = await dataStore.getAddress(oracleProviderKey);
     const oracleTimestampAdjustmentKey = keys.oracleTimestampAdjustmentKey(oracleProvider, address);
     const oracleTimestampAdjustment = await dataStore.getUint(oracleTimestampAdjustmentKey);
+    const buybackMaxPriceImpactFactor = await dataStore.getUint(keys.buybackMaxPriceImpactFactorKey(address));
 
     console.log(
-      "%s %s, decimals: %s%s, oracleProvider: %s, oracleTimestampAdjustment: %s",
+      "%s %s, decimals: %s%s, oracleProvider: %s, oracleTimestampAdjustment: %s, buybackMaxPriceImpactFactor: %s",
       symbol.padEnd(5),
       address,
       String(tokenConfig.decimals).padEnd(2),
       tokenConfig.synthetic ? ", synthetic" : "",
       oracleProvider,
-      oracleTimestampAdjustment
+      oracleTimestampAdjustment,
+      buybackMaxPriceImpactFactor
     );
   }
 }

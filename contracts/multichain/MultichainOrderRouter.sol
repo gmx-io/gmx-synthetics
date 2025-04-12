@@ -14,11 +14,10 @@ contract MultichainOrderRouter is MultichainRouter {
     ) MultichainRouter(params) BaseRouter(params.router, params.roleStore, params.dataStore, params.eventEmitter) {}
 
     function createOrder(
-        RelayUtils.RelayParams calldata relayParams,
+        RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
-        uint256 collateralDeltaAmount,
-        IBaseOrderUtils.CreateOrderParams memory params // can't use calldata because need to modify params.numbers.executionFee
+        IBaseOrderUtils.CreateOrderParams calldata params
     )
         external
         nonReentrant
@@ -29,33 +28,33 @@ contract MultichainOrderRouter is MultichainRouter {
         _validateDesChainId(relayParams.desChainId);
         _validateGaslessFeature();
 
-        bytes32 structHash = RelayUtils.getCreateOrderStructHash(relayParams, collateralDeltaAmount, params);
+        bytes32 structHash = RelayUtils.getCreateOrderStructHash(relayParams, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
-        return _createOrder(relayParams, account, collateralDeltaAmount, srcChainId, params, false);
+        return _createOrder(account, srcChainId, params, false);
     }
 
     function updateOrder(
-        RelayUtils.RelayParams calldata relayParams,
+        RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         bytes32 key,
-        RelayUtils.UpdateOrderParams calldata params,
+        UpdateOrderParams calldata params,
         bool increaseExecutionFee
     ) external nonReentrant withOraclePricesForAtomicAction(relayParams.oracleParams) onlyGelatoRelay {
         _validateDesChainId(relayParams.desChainId);
         _validateGaslessFeature();
 
-        bytes32 structHash = RelayUtils.getUpdateOrderStructHash(relayParams, key, params, increaseExecutionFee);
+        bytes32 structHash = RelayUtils.getUpdateOrderStructHash(relayParams, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
         _handleFeePayment(relayParams, account, srcChainId, key);
 
-        _updateOrder(relayParams, account, key, params, increaseExecutionFee, false);
+        _updateOrder(account, params, false);
     }
 
     function cancelOrder(
-        RelayUtils.RelayParams calldata relayParams,
+        RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         bytes32 key
@@ -68,11 +67,11 @@ contract MultichainOrderRouter is MultichainRouter {
 
         _handleFeePayment(relayParams, account, srcChainId, key);
 
-        _cancelOrder(relayParams, account, key, false /* isSubaccount */);
+        _cancelOrder(account, key);
     }
 
     function _handleFeePayment(
-        RelayUtils.RelayParams calldata relayParams,
+        RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         bytes32 key

@@ -1,3 +1,5 @@
+import prompts from "prompts";
+
 import hre, { network } from "hardhat";
 
 import { validateMarketConfigs } from "./validateMarketConfigsUtils";
@@ -102,7 +104,27 @@ async function main() {
   console.log(`updating ${multicallWriteParams.length} params`);
   console.log("multicallWriteParams", multicallWriteParams);
 
-  if (process.env.WRITE === "true") {
+  await hre.deployments.read(
+    "Config",
+    {
+      from: "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745",
+    },
+    "multicall",
+    multicallWriteParams
+  );
+  console.log("simulation done");
+
+  let write = process.env.WRITE === "true";
+  if (!write) {
+    ({ write } = await prompts({
+      type: "confirm",
+      name: "write",
+      message: "Do you want to execute the transactions?",
+    }));
+  }
+
+  if (write) {
+    console.log("sending transaction");
     const tx = await config.multicall(multicallWriteParams);
     console.log(`tx sent: ${tx.hash}`);
   } else {
