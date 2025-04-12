@@ -538,7 +538,6 @@ export async function sendBridgeOut(p: {
   signature?: string;
   userNonce?: BigNumberish;
   deadline: BigNumberish;
-  chainId: BigNumberish;
   srcChainId: BigNumberish;
   desChainId: BigNumberish;
   relayRouter: ethers.Contract;
@@ -572,13 +571,13 @@ async function getBridgeOutSignature({
   relayParams,
   verifyingContract,
   params,
-  chainId,
+  srcChainId,
 }: {
   signer: ethers.Signer;
   relayParams: any;
   verifyingContract: string;
   params: any;
-  chainId: BigNumberish;
+  srcChainId: BigNumberish;
 }) {
   if (relayParams.userNonce === undefined) {
     throw new Error("userNonce is required");
@@ -599,7 +598,7 @@ async function getBridgeOutSignature({
     data: params.data,
     relayParams: hashRelayParams(relayParams),
   };
-  const domain = getDomain(chainId, verifyingContract);
+  const domain = getDomain(srcChainId, verifyingContract);
 
   return signTypedData(signer, domain, types, typedData);
 }

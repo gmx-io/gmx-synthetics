@@ -30,22 +30,45 @@ contract MultichainTransferRouter is MultichainRouter {
         uint256 srcChainId,
         BridgeOutParams calldata params
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) {
-        MultichainUtils.validateMultichainProvider(dataStore, params.provider);
-
         bytes32 structHash = RelayUtils.getBridgeOutStructHash(relayParams, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
-        // moves user's funds (amount + bridging fee) from their multichain balance into multichainProvider
-        multichainProvider.bridgeOut(
-            IMultichainProvider.BridgeOutParams({
-                provider: params.provider,
-                account: account,
-                token: params.token,
-                amount: params.amount,
-                srcChainId: srcChainId,
-                data: params.data
-            })
-        );
+        _bridgeOut(account, srcChainId, params);
+    }
+
+    function _bridgeOut(
+        address account,
+        uint256 srcChainId,
+        BridgeOutParams calldata params
+    ) internal {
+        if (srcChainId == block.chainid) {
+            // same-chain withdrawal: funds are sent directly to the user's wallet
+            MultichainUtils.transferOut(
+                dataStore,
+                eventEmitter,
+                multichainVault,
+                params.token,
+                account,
+                address(this), // receiver
+                params.amount,
+                srcChainId
+            );
+            TokenUtils.transfer(dataStore, params.token, account, params.amount);
+        } else {
+            // cross-chain withdrawal: using the multichain provider, funds are bridged to the src chain
+            MultichainUtils.validateMultichainProvider(dataStore, params.provider);
+            // moves user's funds (amount + bridging fee) from their multichain balance into multichainProvider
+            multichainProvider.bridgeOut(
+                IMultichainProvider.BridgeOutParams({
+                    provider: params.provider,
+                    account: account,
+                    token: params.token,
+                    amount: params.amount,
+                    srcChainId: srcChainId,
+                    data: params.data
+                })
+            );
+        }
 
         MultichainEventUtils.emitMultichainBridgeOut(
             eventEmitter,
