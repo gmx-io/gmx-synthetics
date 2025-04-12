@@ -336,6 +336,9 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
   for (const rolesForNetwork of Object.values(roles)) {
     for (const accounts of Object.values(rolesForNetwork)) {
       for (const account of Object.keys(accounts)) {
+        if (account === "undefined") {
+          continue;
+        }
         const checksumAccount = ethers.utils.getAddress(account);
         if (account !== checksumAccount) {
           accounts[checksumAccount] = accounts[account];
