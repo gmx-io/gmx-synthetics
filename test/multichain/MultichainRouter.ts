@@ -14,12 +14,7 @@ import {
   sendClaimFundingFees,
   sendClaimCollateral,
 } from "../../utils/relay/multichain";
-import {
-  // sendBatch,
-  sendCancelOrder,
-  sendCreateOrder,
-  sendUpdateOrder,
-} from "../../utils/relay/gelatoRelay";
+import { sendBatch, sendCancelOrder, sendCreateOrder, sendUpdateOrder } from "../../utils/relay/gelatoRelay";
 import * as keys from "../../utils/keys";
 import { executeDeposit, getDepositCount, getDepositKeys, handleDeposit } from "../../utils/deposit";
 import { executeWithdrawal, getWithdrawalCount, getWithdrawalKeys } from "../../utils/withdrawal";
@@ -83,6 +78,7 @@ describe("MultichainRouter", () => {
   let user0, user1, user2, user3;
   let reader,
     dataStore,
+    router,
     multichainGmRouter,
     multichainOrderRouter,
     multichainGlvRouter,
@@ -115,6 +111,7 @@ describe("MultichainRouter", () => {
     ({
       reader,
       dataStore,
+      router,
       multichainGmRouter,
       multichainOrderRouter,
       multichainGlvRouter,
@@ -1173,6 +1170,127 @@ describe("MultichainRouter", () => {
           GELATO_RELAY_ADDRESS,
           initialFeeReceiverBalance.add(cancelOrderParams.gelatoRelayFeeAmount)
         );
+      });
+    });
+
+    describe("batch", () => {
+      let defaultParams;
+      let createOrderParams: Parameters<typeof sendCreateOrder>[0];
+      let batchParams: Parameters<typeof sendBatch>[0];
+
+      beforeEach(async () => {
+        defaultParams = {
+          addresses: {
+            receiver: user1.address,
+            cancellationReceiver: user1.address,
+            callbackContract: user1.address,
+            uiFeeReceiver: user2.address,
+            market: ethUsdMarket.marketToken,
+            initialCollateralToken: ethUsdMarket.longToken,
+            swapPath: [ethUsdMarket.marketToken],
+          },
+          numbers: {
+            sizeDeltaUsd: decimalToFloat(1000),
+            initialCollateralDeltaAmount: expandDecimals(1, 17),
+            triggerPrice: decimalToFloat(4800),
+            acceptablePrice: decimalToFloat(4900),
+            executionFee: 0,
+            callbackGasLimit: "200000",
+            minOutputAmount: 700,
+            validFromTime: 0,
+          },
+          orderType: OrderType.LimitIncrease,
+          decreasePositionSwapType: DecreasePositionSwapType.SwapCollateralTokenToPnlToken,
+          isLong: true,
+          shouldUnwrapNativeToken: true,
+          referralCode: hashString("referralCode"),
+          dataList: [],
+        };
+
+        createOrderParams = {
+          sender: relaySigner,
+          signer: user1,
+          feeParams: {
+            feeToken: wnt.address,
+            feeAmount: expandDecimals(2, 15), // 0.002 ETH
+            feeSwapPath: [],
+          },
+          tokenPermits: [],
+          account: user1.address,
+          params: defaultParams,
+          deadline: 9999999999,
+          desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
+          relayRouter: multichainOrderRouter,
+          chainId,
+          gelatoRelayFeeToken: wnt.address,
+          gelatoRelayFeeAmount: expandDecimals(1, 15),
+        };
+
+        batchParams = {
+          sender: relaySigner,
+          signer: user1,
+          feeParams: {
+            feeToken: wnt.address,
+            feeAmount: expandDecimals(2, 15), // 0.002 ETH
+            feeSwapPath: [],
+          },
+          tokenPermits: [],
+          account: user1.address,
+          createOrderParamsList: [],
+          updateOrderParamsList: [],
+          cancelOrderKeys: [],
+          deadline: 9999999999,
+          relayRouter: multichainOrderRouter,
+          chainId,
+          srcChainId: chainId, // 0 means non-multichain action
+          desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
+          gelatoRelayFeeToken: wnt.address,
+          gelatoRelayFeeAmount: expandDecimals(1, 15),
+        };
+      });
+
+      it("batch: creates multichain orders", async () => {
+        await sendCreateDeposit(createDepositParams);
+        await executeDeposit(fixture, { gasUsageLabel: "executeMultichainDeposit" });
+        const collateralAmount = createOrderParams.params.numbers.initialCollateralDeltaAmount;
+        await mintAndBridge(fixture, {
+          account: user1,
+          token: wnt,
+          tokenAmount: collateralAmount.mul(2).add(expandDecimals(2, 15)),
+        });
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(
+          collateralAmount.mul(2).add(expandDecimals(6, 15))
+        );
+
+        const executionFee = expandDecimals(2, 15);
+        const initialFeeReceiverBalance = await wnt.balanceOf(GELATO_RELAY_ADDRESS);
+        batchParams.feeParams.feeAmount = expandDecimals(6, 15); // relay fee is 0.001, execution fee is 2 * 0.002, 0.001 should be sent back
+        batchParams.createOrderParamsList = [defaultParams, defaultParams];
+        batchParams.createOrderParamsList[0].numbers.executionFee = executionFee;
+        batchParams.createOrderParamsList[1].numbers.executionFee = executionFee;
+        expect(await getOrderCount(dataStore)).eq(0);
+
+        await sendBatch({
+          ...batchParams,
+        });
+
+        expect(await getOrderCount(dataStore)).eq(2);
+        const orderKeys = await getOrderKeys(dataStore, 0, 2);
+        const order = await reader.getOrder(dataStore.address, orderKeys[0]);
+        const order2 = await reader.getOrder(dataStore.address, orderKeys[1]);
+        expect(order.addresses.account).eq(user1.address);
+        expect(order2.addresses.account).eq(user1.address);
+
+        // user's initial balance: 0.006 ETH
+        // keepers receive 2 * executionFee: 0.004 ETH
+        // relayer receives 1 * relayFee: 0.001 ETH
+        // user receives 0.001 ETH back
+        expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).eq(
+          initialFeeReceiverBalance.add(createOrderParams.gelatoRelayFeeAmount)
+        );
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(
+          expandDecimals(1, 15)
+        ); // 0.001 ETH
       });
     });
   });

@@ -41,6 +41,26 @@ contract MultichainOrderRouter is MultichainRouter {
         referralStorage = _referralStorage;
     }
 
+    function batch(
+        RelayParams calldata relayParams,
+        address account,
+        uint256 srcChainId,
+        BatchParams calldata params
+    ) external withRelay(relayParams, account, srcChainId, false) nonReentrant returns (bytes32[] memory) {
+        bytes32 structHash = RelayUtils.getBatchStructHash(relayParams, params);
+        _validateCall(relayParams, account, structHash, srcChainId);
+
+        return
+            _batch(
+                account,
+                srcChainId,
+                params.createOrderParamsList,
+                params.updateOrderParamsList,
+                params.cancelOrderKeys,
+                false // isSubaccount
+            );
+    }
+
     function createOrder(
         RelayParams calldata relayParams,
         address account,

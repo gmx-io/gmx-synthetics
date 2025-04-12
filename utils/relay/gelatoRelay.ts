@@ -211,6 +211,7 @@ export async function sendBatch(p: {
   createOrderParamsList: CreateOrderParams[];
   updateOrderParamsList: UpdateOrderParams[];
   chainId: BigNumberish;
+  srcChainId?: BigNumberish;
   desChainId: BigNumberish;
   account: string;
   deadline: BigNumberish;
@@ -226,15 +227,26 @@ export async function sendBatch(p: {
   if (!signature) {
     signature = await getBatchSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
   }
-  const batchCalldata = p.relayRouter.interface.encodeFunctionData("batch", [
-    { ...relayParams, signature },
-    p.account,
-    {
-      createOrderParamsList: p.createOrderParamsList,
-      updateOrderParamsList: p.updateOrderParamsList,
-      cancelOrderKeys: p.cancelOrderKeys,
-    },
-  ]);
+  const batchCalldata = p.srcChainId
+    ? p.relayRouter.interface.encodeFunctionData("batch", [
+        { ...relayParams, signature },
+        p.account,
+        p.srcChainId,
+        {
+          createOrderParamsList: p.createOrderParamsList,
+          updateOrderParamsList: p.updateOrderParamsList,
+          cancelOrderKeys: p.cancelOrderKeys,
+        },
+      ])
+    : p.relayRouter.interface.encodeFunctionData("batch", [
+        { ...relayParams, signature },
+        p.account,
+        {
+          createOrderParamsList: p.createOrderParamsList,
+          updateOrderParamsList: p.updateOrderParamsList,
+          cancelOrderKeys: p.cancelOrderKeys,
+        },
+      ]);
   return sendRelayTransaction({
     calldata: batchCalldata,
     ...p,
