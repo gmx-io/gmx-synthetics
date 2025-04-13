@@ -1,9 +1,11 @@
 import hre, { ethers } from "hardhat";
-import { execSync } from "child_process";
 import dotenv from "dotenv";
 import { Result } from "@ethersproject/abi";
 import { TransactionReceipt } from "@ethersproject/providers";
 import { ContractInfo, SignalRoleInfo, validateSourceCode } from "./validateDeploymentUtils";
+import path from "path";
+import { RolesConfig } from "../config/roles";
+import { execSync } from "child_process";
 
 dotenv.config();
 
@@ -46,6 +48,15 @@ async function main() {
   console.log(`Checking deployment against commit: ${COMMIT_HASH}`);
   execSync(`git checkout ${COMMIT_HASH}`, { stdio: "inherit" });
 
+  // load roles file which was checkout with git
+  // local files are using upon execution, so we need to reload file from git
+  // but dynamic import load files from cache, so as a workaround we copy/paste roles file and load it again
+  const rolesFilePath = path.join(__dirname, "../config/roles.ts");
+  const roleCopyPath = path.join(__dirname, "../config/roles-copy.ts");
+  execSync(`cp ${rolesFilePath} ${roleCopyPath}`, { stdio: "inherit" });
+  const rolesFile = await import(roleCopyPath);
+  const rolesConfig = await rolesFile["default"](hre);
+
   const contractInfos = await extractRolesFromTx(tx);
   console.log("Contracts: ", contractInfos);
   for (const contractInfo of contractInfos) {
@@ -56,12 +67,13 @@ async function main() {
       process.exit(1);
     }
 
-    await validateRoles(contractInfo);
+    await validateRoles(contractInfo, rolesConfig);
   }
 
   console.log("\n------- Verification completed -------\n");
   printResults(contractInfos);
 
+  execSync(`rm ${roleCopyPath}`, { stdio: "inherit" });
   // Restore git to previous state
   execSync(`git checkout -`, { stdio: "inherit" });
 }
@@ -113,10 +125,9 @@ async function extractRolesFromTx(txReceipt: TransactionReceipt): Promise<Contra
   return [...contractInfos].map(([, value]) => value);
 }
 
-async function validateRoles(contractInfo: ContractInfo) {
-  const { requiredRolesForContracts } = await hre.gmx.getRoles();
+async function validateRoles(contractInfo: ContractInfo, rolesConfig: RolesConfig) {
   for (const signalledRole of contractInfo.signalledRoles) {
-    if (await checkRole(contractInfo.name, contractInfo.address, signalledRole, requiredRolesForContracts)) {
+    if (await checkRole(contractInfo.name, contractInfo.address, signalledRole, rolesConfig)) {
       contractInfo.approvedRoles.push(signalledRole);
     } else {
       contractInfo.unapprovedRoles.push(signalledRole);
@@ -145,12 +156,11 @@ async function checkRole(
   contractName: string,
   contractAddress: string,
   signalledRole: string,
-  requiredRolesForContracts: Record<string, string[]>
+  rolesConfig: RolesConfig
 ): Promise<boolean> {
-  const rolesConfig = await hre.gmx.getRoles();
   for (const [role, addresses] of Object.entries(rolesConfig.roles)) {
     if (addresses[contractAddress]) {
-      if (encodeRole(role) === signalledRole && requiredRolesForContracts[role].includes(contractName)) {
+      if (encodeRole(role) === signalledRole && rolesConfig.requiredRolesForContracts[role].includes(contractName)) {
         return true;
       }
     }
