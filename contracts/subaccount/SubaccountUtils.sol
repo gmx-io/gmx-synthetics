@@ -15,6 +15,7 @@ struct SubaccountApproval {
     bytes32 actionType;
     uint256 nonce; // for replay attack protection
     uint256 deadline;
+    bytes32 integrationId;
     bytes signature;
 }
 
@@ -72,7 +73,7 @@ library SubaccountUtils {
                 subaccountApproval.subaccount,
                 subaccountApproval.actionType,
                 subaccountApproval.maxAllowedCount
-            );
+        );
         }
 
         if (subaccountApproval.expiresAt > 0) {

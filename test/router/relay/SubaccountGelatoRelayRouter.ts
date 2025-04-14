@@ -340,6 +340,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           expiresAt: 9999999999,
           maxAllowedCount: 10,
           actionType: keys.SUBACCOUNT_ORDER_ACTION,
+          integrationId: ethers.constants.HashZero,
           deadline: 0,
           nonce: 0,
         },
@@ -973,7 +974,7 @@ describe("SubaccountGelatoRelayRouter", () => {
       order = await reader.getOrder(dataStore.address, orderKeys[0]);
 
       // 0.2 WETH in total (initial 0.001 + 0.199 from update)
-      expect(order.numbers.executionFee).closeTo("8026788640000000", "10000000000000");
+      expect(order.numbers.executionFee).closeTo("8037124040000000", "10000000000000");
       expect(await wnt.balanceOf(holdingAddress)).closeTo("92973738060000000", "10000000000000");
     });
 
@@ -1289,6 +1290,7 @@ describe("SubaccountGelatoRelayRouter", () => {
         deadline: 9999999999,
         relayRouter: subaccountGelatoRelayRouter,
         chainId,
+        desChainId: chainId,
         gelatoRelayFeeToken: wnt.address,
         gelatoRelayFeeAmount: expandDecimals(1, 15),
         subaccountApprovalSigner: user1,
@@ -1300,6 +1302,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           maxAllowedCount: 10,
           actionType: keys.SUBACCOUNT_ORDER_ACTION,
           deadline: 9999999999,
+          integrationId: integrationId,
         },
       };
     });

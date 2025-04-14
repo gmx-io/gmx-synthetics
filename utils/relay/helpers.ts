@@ -8,6 +8,7 @@ export type SubaccountApproval = {
   maxAllowedCount: BigNumberish;
   actionType: string;
   nonce: BigNumberish;
+  integrationId: string;
   deadline: BigNumberish;
   signature: string;
 };
