@@ -143,12 +143,13 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       maxTotalCallbackGasLimitForAutoCancelOrders: 10_000_000,
       multichainProviders: {
         "0x6fddB6270F6c71f31B62AE0260cfa8E2e2d186E0": true, // StargatePoolNative
-        "0xa31dCc5C71E25146b598bADA33E303627D7fC97e": false, // StargatePoolNative Optimism
         "0x543BdA7c6cA4384FE90B1F5929bb851F52888983": true, // StargatePoolUSDC
-        "0x314B753272a3C79646b92A87dbFDEE643237033a": false, // StargatePoolUSDC Optimism
       },
       multichainEndpoints: {
         "0x6EDCE65403992e310A62460808c4b910D972f10f": true, // LZ Endpoint
+      },
+      supportedTokens: {
+        "0x3253a335E7bFfB4790Aa4C25C4250d206E9b9773": true, // USDC.SG
       },
     },
     avalancheFuji: {},
