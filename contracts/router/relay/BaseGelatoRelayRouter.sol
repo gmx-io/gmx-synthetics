@@ -36,12 +36,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     OrderVault public immutable orderVault;
     IExternalHandler public immutable externalHandler;
 
-    bytes32 public constant DOMAIN_SEPARATOR_TYPEHASH =
-        keccak256(bytes("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"));
-
-    bytes32 public constant DOMAIN_SEPARATOR_NAME_HASH = keccak256(bytes("GmxBaseGelatoRelayRouter"));
-    bytes32 public constant DOMAIN_SEPARATOR_VERSION_HASH = keccak256(bytes("1"));
-
     mapping(address => uint256) public userNonces;
 
     struct WithRelayCache {
@@ -394,19 +388,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         IERC20(wnt).safeTransfer(residualFeeReceiver, residualFee);
     }
 
-    function _getDomainSeparator(uint256 sourceChainId) internal view returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    DOMAIN_SEPARATOR_TYPEHASH,
-                    DOMAIN_SEPARATOR_NAME_HASH,
-                    DOMAIN_SEPARATOR_VERSION_HASH,
-                    sourceChainId,
-                    address(this)
-                )
-            );
-    }
-
     function _validateCall(RelayParams calldata relayParams, address account, bytes32 structHash, uint256 srcChainId) internal {
         if (relayParams.desChainId != block.chainid) {
             revert Errors.InvalidDestinationChainId(relayParams.desChainId);
@@ -418,7 +399,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             revert Errors.InvalidSrcChainId(_srcChainId);
         }
 
-        bytes32 domainSeparator = _getDomainSeparator(_srcChainId);
+        bytes32 domainSeparator = RelayUtils.getDomainSeparator(_srcChainId);
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
         _validateSignature(digest, relayParams.signature, account, "call");
 
