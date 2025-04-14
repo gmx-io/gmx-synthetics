@@ -81,16 +81,16 @@ async function main() {
 function printResults(contractInfos: ContractInfo[]) {
   for (const contractInfo of contractInfos) {
     if (contractInfo.isCodeValidated) {
-      console.log(`✅${contractInfo.name} is valid`);
+      console.log(`\n✅${contractInfo.name} is valid`);
     } else {
-      console.log(`❌${contractInfo.name} is not valid. Sources do not match. See diff in the validation folder`);
+      console.log(`\n❌${contractInfo.name} is not valid. Sources do not match. See diff in the validation folder`);
     }
     for (const signalledRole of contractInfo.approvedRoles) {
-      console.log(`✅ ${roleLabels[signalledRole]} approved`);
+      console.log(`✅ ${roleLabels[signalledRole]} role approved`);
     }
     for (const unapprovedRole of contractInfo.unapprovedRoles) {
       console.log(
-        `❌ ${unapprovedRole} ${roleLabels[unapprovedRole]} is not approved for ${contractInfo.name} ${contractInfo.address}!`
+        `❌ ${unapprovedRole} ${roleLabels[unapprovedRole]} role is not approved for ${contractInfo.name} ${contractInfo.address}!`
       );
     }
   }
