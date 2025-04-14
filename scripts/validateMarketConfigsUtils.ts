@@ -484,6 +484,20 @@ const recommendedMarketConfig = {
       expectedPositionImpactRatio: 20_000,
     },
   },
+  arbitrumSepolia: {
+    BTC: {
+      negativePositionImpactFactor: exponentToFloat("5e-11"),
+      negativeSwapImpactFactor: exponentToFloat("5e-11"),
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    WETH: {
+      negativePositionImpactFactor: exponentToFloat("5e-11"),
+      negativeSwapImpactFactor: exponentToFloat("5e-11"),
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+  },
 };
 
 const configTokenMapping = {

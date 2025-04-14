@@ -52,6 +52,7 @@ export type RelayParams = {
   fee: FeeParams;
   userNonce: BigNumberish;
   deadline: BigNumberish;
+  desChainId: BigNumberish;
 };
 
 export type CreateOrderParams = {
@@ -197,7 +198,7 @@ export function hashSubaccountApproval(subaccountApproval: SubaccountApproval) {
   return ethers.utils.keccak256(
     ethers.utils.defaultAbiCoder.encode(
       [
-        "tuple(address subaccount,bool shouldAdd,uint256 expiresAt,uint256 maxAllowedCount,bytes32 actionType,uint256 nonce,uint256 deadline,bytes32 integrationId,bytes signature)",
+        "tuple(address subaccount,bool shouldAdd,uint256 expiresAt,uint256 maxAllowedCount,bytes32 actionType,uint256 nonce,uint256 deadline,bytes signature)",
       ],
       [subaccountApproval]
     )

@@ -95,30 +95,22 @@ library ExecuteOrderUtils {
 
         // the order.executionFee for liquidation / adl orders is zero
         // gas costs for liquidations / adl is subsidised by the treasury
-        uint256 refundFeeAmount = GasUtils.payExecutionFee(
-            params.contracts.dataStore,
-            params.contracts.eventEmitter,
-            params.contracts.orderVault,
+        GasUtils.payExecutionFee(
+            GasUtils.PayExecutionFeeContracts(
+                params.contracts.dataStore,
+                params.contracts.eventEmitter,
+                params.contracts.multichainVault,
+                params.contracts.orderVault
+            ),
             params.key,
             params.order.callbackContract(),
             params.order.executionFee(),
             params.startingGas,
             GasUtils.estimateOrderOraclePriceCount(params.order.swapPath().length),
             params.keeper,
-            params.order.srcChainId() == 0 ? params.order.receiver(): address(params.contracts.multichainVault)
+            params.order.receiver(),
+            params.order.srcChainId()
         );
-
-        if (params.order.srcChainId() != 0 && refundFeeAmount > 0) {
-            address wnt = params.contracts.dataStore.getAddress(Keys.WNT);
-            MultichainUtils.recordTransferIn(
-                params.contracts.dataStore,
-                params.contracts.eventEmitter,
-                params.contracts.multichainVault,
-                wnt,
-                params.order.receiver(),
-                0
-            );
-        }
 
         // clearAutoCancelOrders should be called after the main execution fee
         // is called

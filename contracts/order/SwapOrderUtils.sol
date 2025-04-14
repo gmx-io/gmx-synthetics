@@ -69,7 +69,7 @@ library SwapOrderUtils {
             params.order.minOutputAmount(),
             params.order.srcChainId() == 0 ? params.order.receiver(): address(params.contracts.multichainVault),
             params.order.uiFeeReceiver(),
-            params.order.shouldUnwrapNativeToken(),
+            params.order.srcChainId() == 0 ? params.order.shouldUnwrapNativeToken() : false,
             ISwapPricingUtils.SwapPricingType.Swap
         ));
 

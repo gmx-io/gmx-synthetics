@@ -11,16 +11,34 @@ import { impersonateAccount, setBalance } from "@nomicfoundation/hardhat-network
 
 describe("MultichainTransferRouter", () => {
   let fixture;
-  let user1;
-  let dataStore, multichainVault, router, multichainTransferRouter, wnt, usdc, mockStargatePool;
+  let user1, user2;
+  let dataStore,
+    multichainVault,
+    router,
+    multichainTransferRouter,
+    wnt,
+    usdc,
+    mockStargatePoolWnt,
+    mockStargatePoolUsdc;
   let chainId;
 
   beforeEach(async () => {
     fixture = await deployFixture();
-    ({ user1 } = fixture.accounts);
-    ({ dataStore, multichainVault, router, multichainTransferRouter, wnt, usdc, mockStargatePool } = fixture.contracts);
+    ({ user1, user2 } = fixture.accounts);
+    ({
+      dataStore,
+      multichainVault,
+      router,
+      multichainTransferRouter,
+      wnt,
+      usdc,
+      mockStargatePoolWnt,
+      mockStargatePoolUsdc,
+    } = fixture.contracts);
 
     chainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
+
+    await dataStore.setBool(keys.isSrcChainIdEnabledKey(chainId), true);
   });
 
   it("bridgeIn wnt", async () => {
@@ -95,6 +113,8 @@ describe("MultichainTransferRouter", () => {
       defaultBridgeOutParams = {
         token: usdc.address,
         amount: bridgeOutAmount,
+        provider: mockStargatePoolUsdc.address,
+        data: ethers.utils.defaultAbiCoder.encode(["uint32"], [1]), // dstEid = 1 (destination endpoint ID)
       };
     });
 
@@ -112,24 +132,70 @@ describe("MultichainTransferRouter", () => {
           feeAmount: feeAmount,
           feeSwapPath: [],
         },
-        provider: mockStargatePool.address,
         account: user1.address,
-        data: ethers.utils.defaultAbiCoder.encode(["uint32"], [1]), // dstEid = 1 (destination endpoint ID)
         params: defaultBridgeOutParams,
         deadline: 9999999999,
         srcChainId: chainId, // 0 means non-multichain action
         desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
         relayRouter: multichainTransferRouter,
-        chainId,
         relayFeeToken: wnt.address,
         relayFeeAmount: relayFeeAmount,
       };
     });
 
-    it("bridgeOut", async () => {
-      await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePool.address), true);
+    it("same-chain withdrawal", async () => {
+      await dataStore.setAddress(keys.HOLDING_ADDRESS, user2.address);
+      // add usdc to user's multichain balance
+      await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolUsdc.address), true);
+      await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolUsdc.address), true);
       await mintAndBridge(fixture, { account: user1, token: usdc, tokenAmount: bridgeOutAmount });
-      const bridgeOutFee = await mockStargatePool.BRIDGE_OUT_FEE();
+      // add wnt to user's multichain balance
+      await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolWnt.address), true);
+      await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolWnt.address), true);
+      await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: feeAmount });
+
+      // user's wallet balance
+      expect(await usdc.balanceOf(user1.address)).eq(0);
+      expect(await wnt.balanceOf(user1.address)).eq(0);
+      // user's multicahin balance
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(bridgeOutAmount); // 1000 USDC
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(feeAmount); // 0.003 ETH
+      // relayer and multichain vault balances
+      expect(await usdc.balanceOf(multichainVault.address)).eq(bridgeOutAmount);
+      expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).eq(0); // 0 WNT
+
+      // provider and data are not used for same-chain withdrawals
+      bridgeOutParams.params.provider = ethers.constants.AddressZero;
+      bridgeOutParams.params.data = "0x";
+
+      await sendBridgeOut(bridgeOutParams);
+
+      // After bridging out:
+      // 1. The relay fee was sent to the relayer
+      expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).eq(relayFeeAmount); // 0.002 WNT
+
+      // 2. User's multichain balance was decreased
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0); // 0 USDC
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(
+        feeAmount.sub(relayFeeAmount)
+      ); // residualFee
+
+      // 3. MultichainVault no longer has the tokens
+      expect(await usdc.balanceOf(multichainVault.address)).eq(0);
+
+      // 4. The tokens were sent to the user's wallet (same-chain transfer)
+      expect(await usdc.balanceOf(user1.address)).eq(bridgeOutAmount);
+      expect(await wnt.balanceOf(user1.address)).eq(0);
+    });
+
+    it("cross-chain withdrawal", async () => {
+      await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolUsdc.address), true);
+      await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolUsdc.address), true);
+      await mintAndBridge(fixture, { account: user1, token: usdc, tokenAmount: bridgeOutAmount });
+
+      const bridgeOutFee = await mockStargatePoolWnt.BRIDGE_OUT_FEE();
+      await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolWnt.address), true);
+      await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolWnt.address), true);
       await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: feeAmount.add(bridgeOutFee) });
 
       expect(await usdc.balanceOf(multichainVault.address)).eq(bridgeOutAmount);
@@ -138,7 +204,12 @@ describe("MultichainTransferRouter", () => {
         feeAmount.add(bridgeOutFee)
       );
       expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).eq(0); // 0 WNT
-      expect(await hre.ethers.provider.getBalance(mockStargatePool.address)).eq(0); // 0 ETH
+      expect(await hre.ethers.provider.getBalance(mockStargatePoolUsdc.address)).eq(0); // 0 ETH
+
+      // mock signing from a src chain (srcChainId != desChainId)
+      const srcChainId = 1;
+      bridgeOutParams.srcChainId = srcChainId;
+      await dataStore.setBool(keys.isSrcChainIdEnabledKey(srcChainId), true);
 
       await sendBridgeOut(bridgeOutParams);
 
@@ -159,7 +230,7 @@ describe("MultichainTransferRouter", () => {
       expect(await usdc.balanceOf(user1.address)).eq(bridgeOutAmount);
 
       // 5. The bridge out fee (in native tokens) was sent to the provider
-      expect(await hre.ethers.provider.getBalance(mockStargatePool.address)).eq(bridgeOutFee); // 0.001 ETH
+      expect(await hre.ethers.provider.getBalance(mockStargatePoolUsdc.address)).eq(bridgeOutFee); // 0.001 ETH
     });
   });
 });
