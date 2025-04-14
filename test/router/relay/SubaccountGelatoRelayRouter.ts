@@ -342,6 +342,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           expiresAt: 9999999999,
           maxAllowedCount: 10,
           actionType: keys.SUBACCOUNT_ORDER_ACTION,
+          integrationId: ethers.constants.HashZero,
           deadline: 0,
           nonce: 0,
         },
@@ -1303,6 +1304,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           maxAllowedCount: 10,
           actionType: keys.SUBACCOUNT_ORDER_ACTION,
           deadline: 9999999999,
+          integrationId: integrationId,
         },
       };
     });
