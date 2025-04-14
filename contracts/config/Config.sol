@@ -547,15 +547,16 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
         allowedBaseKeys[Keys.MULTICHAIN_BALANCE] = true;
         allowedBaseKeys[Keys.IS_MULTICHAIN_PROVIDER_ENABLED] = true;
-        allowedBaseKeys[Keys.WAS_POSITION_COLLATERAL_USED_FOR_EXECUTION_FEE] = true;
+        allowedBaseKeys[Keys.IS_MULTICHAIN_ENDPOINT_ENABLED] = true;
+        allowedBaseKeys[Keys.RELAY_MAX_PRICE_AGE] = true;
         allowedBaseKeys[Keys.POSITION_LAST_SRC_CHAIN_ID] = true;
+        allowedBaseKeys[Keys.IS_SRC_CHAIN_ID_ENABLED] = true;
 
         allowedBaseKeys[Keys.MAX_DATA_LENGTH] = true;
 
         allowedBaseKeys[Keys.CLAIMABLE_COLLATERAL_DELAY] = true;
 
         allowedBaseKeys[Keys.SUBACCOUNT_INTEGRATION_DISABLED] = true;
-
         allowedBaseKeys[Keys.RELAY_FEE_ADDRESS] = true;
         allowedBaseKeys[Keys.GELATO_RELAY_FEE_BASE_AMOUNT] = true;
         allowedBaseKeys[Keys.GELATO_RELAY_FEE_MULTIPLIER_FACTOR] = true;

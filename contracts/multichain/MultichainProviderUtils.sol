@@ -7,9 +7,9 @@ pragma solidity ^0.8.0;
  */
 library MultichainProviderUtils {
     function decodeDeposit(
-        bytes calldata message
-    ) internal pure returns (address account, address token, uint256 srcChainId) {
-        return abi.decode(message, (address, address, uint256));
+        bytes memory message
+    ) internal pure returns (address account, uint256 srcChainId) {
+        return abi.decode(message, (address, uint256));
     }
 
     function decodeWithdrawal(

@@ -23,7 +23,6 @@ import "./RelayUtils.sol";
 
 address constant GMX_SIMULATION_ORIGIN = address(uint160(uint256(keccak256("GMX SIMULATION ORIGIN"))));
 
-import "./RelayUtils.sol";
 
 /*
  * For gasless actions the funds are deducted from account.
@@ -45,17 +44,24 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
     mapping(address => uint256) public userNonces;
 
+    struct WithRelayCache {
+        uint256 startingGas;
+        Contracts contracts;
+    }
+
     modifier withRelay(
         RelayParams calldata relayParams,
         address account,
+        uint256 srcChainId,
         bool isSubaccount
     ) {
-        uint256 startingGas = gasleft();
+        WithRelayCache memory cache;
+        cache.startingGas = gasleft();
         _validateGaslessFeature();
-        Contracts memory contracts = _getContracts();
-        _handleRelayBeforeAction(contracts, relayParams, account, 0 /* srcChainId */, isSubaccount);
+        cache.contracts = _getContracts();
+        _handleRelayBeforeAction(cache.contracts, relayParams, account, srcChainId, isSubaccount);
         _;
-        _handleRelayAfterAction(contracts, startingGas, account);
+        _handleRelayAfterAction(cache.contracts, cache.startingGas, account /* residualFeeReceiver */, srcChainId);
     }
 
     constructor(
@@ -203,7 +209,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         address account,
         uint256 srcChainId,
         bool isSubaccount
-    ) internal withOraclePricesForAtomicAction(relayParams.oracleParams) {
+    ) internal withFlexibleOraclePrices(relayParams.oracleParams, srcChainId == 0 /* forAtomicAction */) {
         _handleTokenPermits(relayParams.tokenPermits);
         _handleExternalCalls(account, srcChainId, relayParams.externalCalls, isSubaccount);
 
@@ -236,6 +242,24 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             externalCalls.refundTokens,
             externalCalls.refundReceivers
         );
+
+        _recordRefundedAmounts(
+            account,
+            srcChainId,
+            externalCalls.refundTokens,
+            externalCalls.refundReceivers
+        );
+    }
+
+    function _recordRefundedAmounts(
+        address account,
+        uint256 srcChainId,
+        address[] calldata refundTokens,
+        address[] calldata refundReceivers
+    ) internal virtual {
+        // intended to be overridden for multichain actions
+        // where the refundReceiver is always the multichainVault
+        // and user's `account` multichain balance is increased by the refunded amount
     }
 
     function _handleTokenPermits(TokenPermit[] calldata tokenPermits) internal {
@@ -328,7 +352,8 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     function _handleRelayAfterAction(
         Contracts memory contracts,
         uint256 startingGas,
-        address residualFeeReceiver
+        address residualFeeReceiver,
+        uint256 srcChainId
     ) internal {
         bool isSponsoredCall = !_isGelatoRelay(msg.sender);
         uint256 residualFeeAmount = ERC20(contracts.wnt).balanceOf(address(this));
@@ -353,7 +378,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
         residualFeeAmount -= relayFee;
         if (residualFeeAmount > 0) {
-            _transferResidualFee(contracts.wnt, residualFeeReceiver, residualFeeAmount, residualFeeReceiver, 0 /* srcChainId */);
+            _transferResidualFee(contracts.wnt, residualFeeReceiver, residualFeeAmount, residualFeeReceiver /* account */, srcChainId);
         }
     }
 
@@ -383,7 +408,16 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     }
 
     function _validateCall(RelayParams calldata relayParams, address account, bytes32 structHash, uint256 srcChainId) internal {
+        if (relayParams.desChainId != block.chainid) {
+            revert Errors.InvalidDestinationChainId(relayParams.desChainId);
+        }
+
         uint256 _srcChainId = srcChainId == 0 ? block.chainid : srcChainId;
+
+        if (srcChainId != 0 && !dataStore.getBool(Keys.isSrcChainIdEnabledKey(_srcChainId))) {
+            revert Errors.InvalidSrcChainId(_srcChainId);
+        }
+
         bytes32 domainSeparator = _getDomainSeparator(_srcChainId);
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
         _validateSignature(digest, relayParams.signature, account, "call");

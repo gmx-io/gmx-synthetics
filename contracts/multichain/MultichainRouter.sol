@@ -29,7 +29,7 @@ abstract contract MultichainRouter is BaseGelatoRelayRouter {
 
     function _processTransferRequests(
         address account,
-        RelayUtils.TransferRequests calldata transferRequests,
+        TransferRequests calldata transferRequests,
         uint256 srcChainId
     ) internal {
         if (
@@ -58,20 +58,16 @@ abstract contract MultichainRouter is BaseGelatoRelayRouter {
         uint256 srcChainId
     ) internal override {
         AccountUtils.validateReceiver(receiver);
-        if (srcChainId == 0) {
-            router.pluginTransfer(token, account, receiver, amount);
-        } else {
-            MultichainUtils.transferOut(
-                dataStore,
-                eventEmitter,
-                multichainVault,
-                token,
-                account,
-                receiver,
-                amount,
-                srcChainId
-            );
-        }
+        MultichainUtils.transferOut(
+            dataStore,
+            eventEmitter,
+            multichainVault,
+            token,
+            account,
+            receiver,
+            amount,
+            srcChainId
+        );
     }
 
     function _transferResidualFee(
@@ -81,15 +77,32 @@ abstract contract MultichainRouter is BaseGelatoRelayRouter {
         address account,
         uint256 srcChainId
     ) internal override {
-        TokenUtils.transfer(dataStore, wnt, residualFeeReceiver, residualFee);
-        if (residualFeeReceiver == address(multichainVault)) {
+        if (residualFeeReceiver == account || residualFeeReceiver == address(multichainVault)) {
+            TokenUtils.transfer(dataStore, wnt, address(multichainVault), residualFee);
             MultichainUtils.recordTransferIn(dataStore, eventEmitter, multichainVault, wnt, account, srcChainId);
+        } else {
+            TokenUtils.transfer(dataStore, wnt, residualFeeReceiver, residualFee);
         }
     }
 
-    function _validateDesChainId(uint256 desChainId) internal view {
-        if (desChainId != block.chainid) {
-            revert Errors.InvalidDestinationChainId(desChainId);
+    function _recordRefundedAmounts(
+        address account,
+        uint256 srcChainId,
+        address[] calldata refundTokens,
+        address[] calldata refundReceivers
+    ) internal override {
+        // equality length for refundTokens and refundReceivers is validated in the external handler
+        for (uint256 i; i < refundReceivers.length; i++) {
+            if (refundReceivers[i] == address(multichainVault)) {
+                MultichainUtils.recordTransferIn(
+                    dataStore,
+                    eventEmitter,
+                    multichainVault,
+                    refundTokens[i],
+                    account,
+                    srcChainId
+                );
+            }
         }
     }
 }

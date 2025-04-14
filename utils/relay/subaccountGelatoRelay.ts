@@ -433,6 +433,7 @@ export async function sendBatch(p: {
   createOrderParamsList: CreateOrderParams[];
   updateOrderParamsList: UpdateOrderParams[];
   chainId: BigNumberish;
+  desChainId: BigNumberish;
   account: string;
   deadline: BigNumberish;
   userNonce?: BigNumberish;

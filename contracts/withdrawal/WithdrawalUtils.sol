@@ -17,6 +17,8 @@ import "../callback/CallbackUtils.sol";
 import "../utils/Array.sol";
 import "../utils/AccountUtils.sol";
 
+import "../multichain/MultichainVault.sol";
+
 /**
  * @title WithdrawalUtils
  * @dev Library for withdrawal functions
@@ -160,6 +162,7 @@ library WithdrawalUtils {
     function cancelWithdrawal(
         DataStore dataStore,
         EventEmitter eventEmitter,
+        MultichainVault multichainVault,
         WithdrawalVault withdrawalVault,
         bytes32 key,
         address keeper,
@@ -201,16 +204,20 @@ library WithdrawalUtils {
         CallbackUtils.afterWithdrawalCancellation(key, withdrawal, eventData);
 
         GasUtils.payExecutionFee(
-            dataStore,
-            eventEmitter,
-            withdrawalVault,
+            GasUtils.PayExecutionFeeContracts(
+                dataStore,
+                eventEmitter,
+                multichainVault,
+                withdrawalVault
+            ),
             key,
             withdrawal.callbackContract(),
             withdrawal.executionFee(),
             startingGas,
             GasUtils.estimateWithdrawalOraclePriceCount(withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length),
             keeper,
-            withdrawal.receiver()
+            withdrawal.receiver(),
+            withdrawal.srcChainId()
         );
     }
 }

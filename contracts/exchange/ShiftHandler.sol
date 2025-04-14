@@ -60,6 +60,7 @@ contract ShiftHandler is IShiftHandler, BaseHandler {
         ShiftUtils.cancelShift(
             _dataStore,
             eventEmitter,
+            multichainVault,
             shiftVault,
             key,
             shift.account(),
@@ -156,6 +157,7 @@ contract ShiftHandler is IShiftHandler, BaseHandler {
         ShiftUtils.cancelShift(
             dataStore,
             eventEmitter,
+            multichainVault,
             shiftVault,
             key,
             msg.sender,

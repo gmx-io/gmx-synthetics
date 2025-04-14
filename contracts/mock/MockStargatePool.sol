@@ -6,6 +6,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { MessagingFee, OFTReceipt, SendParam, MessagingReceipt, OFTLimit, OFTFeeDetail } from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
+import { OFTComposeMsgCodec } from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTComposeMsgCodec.sol";
 
 contract MockStargatePool {
     using SafeERC20 for IERC20;
@@ -19,13 +20,25 @@ contract MockStargatePool {
 
     /**
      * @dev Mock function to simulate receiving tokens from source chain and delivering to target chain (bridgeIn flow)
-     * @param _token The token to send
      * @param _to The recipient contract (LayerZeroProvider)
      * @param _amount The amount of tokens to send
      * @param _message The encoded message containing account, token, srcChainId
      */
-    function sendToken(address _token, address _to, uint256 _amount, bytes calldata _message) external {
-        IERC20(_token).transferFrom(msg.sender, _to, _amount);
+    function sendToken(address _to, uint256 _amount, bytes calldata _message) external {
+        // prepend composeFrom (msg.sender) to the user payload
+        bytes memory encodedMsg = abi.encodePacked(
+            OFTComposeMsgCodec.addressToBytes32(msg.sender),
+            _message
+        );
+
+        bytes memory composedMsg = OFTComposeMsgCodec.encode(
+            uint64(block.timestamp), // mock nonce
+            1, // mock srcEid
+            _amount,
+            encodedMsg
+        );
+
+        IERC20(token).transferFrom(msg.sender, _to, _amount);
 
         // Simulate cross-chain message delivery by directly calling lzCompose on the LayerZeroProvider contract
         (bool success, ) = _to.call(
@@ -33,7 +46,7 @@ contract MockStargatePool {
                 "lzCompose(address,bytes32,bytes,address,bytes)",
                 address(this),
                 bytes32(uint256(1)), // guid
-                _message,
+                composedMsg,
                 address(this),
                 "" // extraData
             )

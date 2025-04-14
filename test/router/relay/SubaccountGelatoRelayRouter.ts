@@ -102,6 +102,8 @@ describe("SubaccountGelatoRelayRouter", () => {
     relaySigner = await hre.ethers.getSigner(GELATO_RELAY_ADDRESS);
     chainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
 
+    await dataStore.setBool(keys.isSrcChainIdEnabledKey(chainId), true);
+
     await dataStore.setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1));
     await setNextBlockBaseFeePerGas(expandDecimals(1, 9));
 
@@ -215,7 +217,7 @@ describe("SubaccountGelatoRelayRouter", () => {
       await expectBalance(wnt.address, user3.address, "90996279120000000");
     });
 
-    it("InvalidSignature", async () => {
+    it("InvalidSignature  ", async () => {
       await enableSubaccount();
 
       await expect(
@@ -973,8 +975,8 @@ describe("SubaccountGelatoRelayRouter", () => {
       order = await reader.getOrder(dataStore.address, orderKeys[0]);
 
       // 0.2 WETH in total (initial 0.001 + 0.199 from update)
-      expect(order.numbers.executionFee).closeTo("8026788640000000", "10000000000000");
-      expect(await wnt.balanceOf(holdingAddress)).closeTo("92973738060000000", "10000000000000");
+      expect(order.numbers.executionFee).closeTo("8039135020000000", "10000000000000");
+      expect(await wnt.balanceOf(holdingAddress)).closeTo("92960864980000000", "10000000000000");
     });
 
     it("EmptyOrder", async () => {
@@ -1289,6 +1291,7 @@ describe("SubaccountGelatoRelayRouter", () => {
         deadline: 9999999999,
         relayRouter: subaccountGelatoRelayRouter,
         chainId,
+        desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
         gelatoRelayFeeToken: wnt.address,
         gelatoRelayFeeAmount: expandDecimals(1, 15),
         subaccountApprovalSigner: user1,
