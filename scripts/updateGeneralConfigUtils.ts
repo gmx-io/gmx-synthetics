@@ -39,6 +39,15 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
         `multichainEndpoint ${multichainEndpoint}`
       );
     }
+    for (const [supportedToken, enabled] of Object.entries(generalConfig.supportedTokens)) {
+      await handleConfig(
+        "uint",
+        keys.TOKEN_TRANSFER_GAS_LIMIT,
+        encodeData(["address"], [supportedToken]),
+        enabled ? generalConfig.tokenTransferGasLimit : 0,
+        `tokenTransferGasLimit (${supportedToken})`
+      );
+    }
   }
 
   await handleConfig(
