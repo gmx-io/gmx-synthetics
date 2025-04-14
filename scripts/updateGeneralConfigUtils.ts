@@ -44,8 +44,8 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
         "uint",
         keys.TOKEN_TRANSFER_GAS_LIMIT,
         encodeData(["address"], [supportedToken]),
-        enabled,
-        `tokenTransferGasLimit ${supportedToken}`
+        enabled ? generalConfig.tokenTransferGasLimit : 0,
+        `tokenTransferGasLimit (${supportedToken})`
       );
     }
   }
