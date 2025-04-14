@@ -216,18 +216,6 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         );
     }
 
-    function setSubaccountIntegrationDisabled(
-        bytes32 integrationId,
-        bool disabled
-    ) external onlyConfigKeeper nonReentrant {
-        ConfigUtils.setSubaccountIntegrationDisabled(
-            dataStore,
-            eventEmitter,
-            integrationId,
-            disabled
-        );
-    }
-
     // @dev set a bool value
     // @param baseKey the base key of the value to set
     // @param data the additional data to be combined with the base key
