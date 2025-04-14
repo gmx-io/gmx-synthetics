@@ -271,6 +271,24 @@ library RelayUtils {
             bytes("ClaimAffiliateRewards(address[] markets,address[] tokens,address receiver,bytes32 relayParams)")
         );
 
+    bytes32 public constant DOMAIN_SEPARATOR_TYPEHASH =
+        keccak256(bytes("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"));
+    bytes32 public constant DOMAIN_SEPARATOR_NAME_HASH = keccak256(bytes("GmxBaseGelatoRelayRouter"));
+    bytes32 public constant DOMAIN_SEPARATOR_VERSION_HASH = keccak256(bytes("1"));
+
+    function getDomainSeparator(uint256 sourceChainId) external view returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    DOMAIN_SEPARATOR_TYPEHASH,
+                    DOMAIN_SEPARATOR_NAME_HASH,
+                    DOMAIN_SEPARATOR_VERSION_HASH,
+                    sourceChainId,
+                    address(this)
+                )
+            );
+    }
+
     function swapFeeTokens(
         Contracts memory contracts,
         EventEmitter eventEmitter,
