@@ -73,7 +73,7 @@ library SubaccountUtils {
                 subaccountApproval.subaccount,
                 subaccountApproval.actionType,
                 subaccountApproval.maxAllowedCount
-        );
+            );
         }
 
         if (subaccountApproval.expiresAt > 0) {

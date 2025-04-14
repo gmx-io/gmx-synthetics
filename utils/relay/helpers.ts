@@ -192,13 +192,14 @@ export function hashSubaccountApproval(subaccountApproval: SubaccountApproval) {
     "actionType",
     "nonce",
     "deadline",
+    "integrationId",
     "signature",
   ]);
 
   return ethers.utils.keccak256(
     ethers.utils.defaultAbiCoder.encode(
       [
-        "tuple(address subaccount,bool shouldAdd,uint256 expiresAt,uint256 maxAllowedCount,bytes32 actionType,uint256 nonce,uint256 deadline,bytes signature)",
+        "tuple(address subaccount,bool shouldAdd,uint256 expiresAt,uint256 maxAllowedCount,bytes32 actionType,uint256 nonce,uint256 deadline,bytes32 integrationId,bytes signature)",
       ],
       [subaccountApproval]
     )
