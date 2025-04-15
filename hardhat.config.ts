@@ -16,6 +16,7 @@ import "@nomicfoundation/hardhat-chai-matchers";
 import "@typechain/hardhat";
 import "@nomiclabs/hardhat-ethers";
 import "@nomicfoundation/hardhat-chai-matchers";
+import "hardhat-abi-exporter";
 
 // extends hre with gmx domain data
 import "./config";
@@ -31,6 +32,7 @@ const getRpcUrl = (network) => {
     avalanche: "https://api.avax.network/ext/bc/C/rpc",
     arbitrumGoerli: "https://goerli-rollup.arbitrum.io/rpc",
     arbitrumSepolia: "https://sepolia-rollup.arbitrum.io/rpc",
+    sepolia: "https://ethereum-sepolia-rpc.publicnode.com",
     avalancheFuji: "https://api.avax-test.network/ext/bc/C/rpc",
     snowtrace: "https://api.avax.network/ext/bc/C/rpc",
     arbitrumBlockscout: "https://arb1.arbitrum.io/rpc",
@@ -56,6 +58,7 @@ export const getExplorerUrl = (network) => {
     snowscan: "https://api.snowscan.xyz/",
     arbitrumGoerli: "https://api-goerli.arbiscan.io/",
     arbitrumSepolia: "https://api-sepolia.arbiscan.io/",
+    sepolia: "https://sepolia.etherscan.io/",
     avalancheFuji: "https://api-testnet.snowtrace.io/",
     arbitrumBlockscout: "https://arbitrum.blockscout.com/api",
   };
@@ -133,7 +136,7 @@ const config: HardhatUserConfig = {
   networks: {
     hardhat: {
       saveDeployments: true,
-      // allowUnlimitedContractSize: true,
+      allowUnlimitedContractSize: true,
       // forking: {
       //   url: `https://rpc.ankr.com/avalanche`,
       //   blockNumber: 33963320,
@@ -218,6 +221,18 @@ const config: HardhatUserConfig = {
       },
       blockGasLimit: 10000000,
     },
+    sepolia: {
+      url: getRpcUrl("sepolia"),
+      chainId: 11155111,
+      accounts: getEnvAccounts("sepolia"),
+      verify: {
+        etherscan: {
+          apiUrl: getExplorerUrl("sepolia"),
+          apiKey: process.env.ETHERSCAN_API_KEY,
+        },
+      },
+      blockGasLimit: 10000000,
+    },
     avalancheFuji: {
       url: getRpcUrl("avalancheFuji"),
       chainId: 43113,
@@ -283,6 +298,9 @@ const config: HardhatUserConfig = {
   },
   mocha: {
     timeout: 100000000,
+  },
+  abiExporter: {
+    flat: true,
   },
 };
 

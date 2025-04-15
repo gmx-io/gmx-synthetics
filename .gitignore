@@ -3,6 +3,7 @@ dist
 .env
 .yarn
 .yarnrc.yml
+yarn-error.log
 coverage
 coverage.json
 contracts/Test*.sol
@@ -24,3 +25,6 @@ deployments.txt
 .cursorignore*
 
 .idea
+abi
+
+validation

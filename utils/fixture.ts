@@ -92,6 +92,7 @@ export async function deployFixture() {
   const withdrawalHandler = await hre.ethers.getContract("WithdrawalHandler");
   const shiftHandler = await hre.ethers.getContract("ShiftHandler");
   const orderHandler = await hre.ethers.getContract("OrderHandler");
+  const externalHandler = await hre.ethers.getContract("ExternalHandler");
   const baseOrderUtils = await hre.ethers.getContract("BaseOrderUtils");
   const orderUtils = await hre.ethers.getContract("OrderUtils");
   const liquidationHandler = await hre.ethers.getContract("LiquidationHandler");
@@ -101,7 +102,6 @@ export async function deployFixture() {
   const gelatoRelayRouter = await hre.ethers.getContract("GelatoRelayRouter");
   const subaccountGelatoRelayRouter = await hre.ethers.getContract("SubaccountGelatoRelayRouter");
   const subaccountRouter = await hre.ethers.getContract("SubaccountRouter");
-  const subaccountRelayUtils = await hre.ethers.getContract("SubaccountRelayUtils");
   const multichainGmRouter = await hre.ethers.getContract("MultichainGmRouter");
   const multichainOrderRouter = await hre.ethers.getContract("MultichainOrderRouter");
   const multichainGlvRouter = await hre.ethers.getContract("MultichainGlvRouter");
@@ -129,9 +129,13 @@ export async function deployFixture() {
   const mockVaultV1 = await hre.ethers.getContract("MockVaultV1");
   const multichainVault = await hre.ethers.getContract("MultichainVault");
   const multichainUtils = await hre.ethers.getContract("MultichainUtils");
+  const multichainOrderRouterUtils = await hre.ethers.getContract("MultichainOrderRouterUtils");
   const layerZeroProvider = await hre.ethers.getContract("LayerZeroProvider");
-  const mockStargatePool = await hre.ethers.getContract("MockStargatePool");
+  const mockStargatePoolUsdc = await hre.ethers.getContract("MockStargatePoolUsdc");
+  const mockStargatePoolWnt = await hre.ethers.getContract("MockStargatePoolWnt");
   const mockOracleProvider = await hre.ethers.getContract("MockOracleProvider");
+  const edgeDataStreamVerifier = await hre.ethers.getContract("EdgeDataStreamVerifier");
+  const edgeDataStreamProvider = await hre.ethers.getContract("EdgeDataStreamProvider");
   const multichainReader = await hre.ethers.getContract("MultichainReader");
   const mockEndpointV2 = await hre.ethers.getContract("MockEndpointV2");
   const mockMultichainReaderOriginator = await hre.ethers.getContract("MockMultichainReaderOriginator");
@@ -288,6 +292,7 @@ export async function deployFixture() {
       withdrawalHandler,
       shiftHandler,
       orderHandler,
+      externalHandler,
       baseOrderUtils,
       orderUtils,
       liquidationHandler,
@@ -297,7 +302,6 @@ export async function deployFixture() {
       gelatoRelayRouter,
       subaccountGelatoRelayRouter,
       subaccountRouter,
-      subaccountRelayUtils,
       multichainGmRouter,
       multichainOrderRouter,
       multichainGlvRouter,
@@ -354,10 +358,14 @@ export async function deployFixture() {
       mockVaultV1,
       multichainVault,
       multichainUtils,
+      multichainOrderRouterUtils,
       layerZeroProvider,
-      mockStargatePool,
+      mockStargatePoolUsdc,
+      mockStargatePoolWnt,
       callbackUtils,
       mockOracleProvider,
+      edgeDataStreamVerifier,
+      edgeDataStreamProvider,
       multichainReader,
       mockEndpointV2,
       mockMultichainReaderOriginator,

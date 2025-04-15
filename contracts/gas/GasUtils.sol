@@ -16,10 +16,13 @@ import "../order/BaseOrderUtils.sol";
 import "../glv/glvWithdrawal/GlvWithdrawal.sol";
 
 import "../bank/StrictBank.sol";
+import "../multichain/MultichainUtils.sol";
 
 // @title GasUtils
 // @dev Library for execution fee estimation and payments
 library GasUtils {
+    using SafeERC20 for IERC20;
+
     using Deposit for Deposit.Props;
     using Withdrawal for Withdrawal.Props;
     using Shift for Shift.Props;
@@ -96,7 +99,16 @@ library GasUtils {
         }
     }
 
+    struct PayExecutionFeeContracts {
+        DataStore dataStore;
+        EventEmitter eventEmitter;
+        MultichainVault multichainVault;
+        StrictBank bank;
+    }
+
     struct PayExecutionFeeCache {
+        uint256 gasUsed;
+        uint256 executionFeeForKeeper;
         uint256 refundFeeAmount;
         bool refundWasSent;
         address wnt;
@@ -113,52 +125,51 @@ library GasUtils {
     // @param refundReceiver the account that should receive any excess gas refunds
     // @param isSubaccount whether the order is a subaccount order
     function payExecutionFee(
-        DataStore dataStore,
-        EventEmitter eventEmitter,
-        StrictBank bank,
+        PayExecutionFeeContracts memory contracts,
         bytes32 key,
         address callbackContract,
         uint256 executionFee,
         uint256 startingGas,
         uint256 oraclePriceCount,
         address keeper,
-        address refundReceiver
+        address refundReceiver,
+        uint256 srcChainId
     ) external returns (uint256) {
         if (executionFee == 0) {
             return 0;
         }
 
-        // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
-        startingGas -= gasleft() / 63;
-        uint256 gasUsed = startingGas - gasleft();
-
-        // each external call forwards 63/64 of the remaining gas
-        uint256 executionFeeForKeeper = adjustGasUsage(dataStore, gasUsed, oraclePriceCount) * tx.gasprice;
-
-        if (executionFeeForKeeper > executionFee) {
-            executionFeeForKeeper = executionFee;
-        }
-
-        bank.transferOutNativeToken(keeper, executionFeeForKeeper);
-
-        emitKeeperExecutionFee(eventEmitter, keeper, executionFeeForKeeper);
-
         PayExecutionFeeCache memory cache;
 
-        cache.refundFeeAmount = executionFee - executionFeeForKeeper;
+        // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
+        startingGas -= gasleft() / 63;
+        cache.gasUsed = startingGas - gasleft();
+
+        // each external call forwards 63/64 of the remaining gas
+        cache.executionFeeForKeeper = adjustGasUsage(contracts.dataStore, cache.gasUsed, oraclePriceCount) * tx.gasprice;
+
+        if (cache.executionFeeForKeeper > executionFee) {
+            cache.executionFeeForKeeper = executionFee;
+        }
+
+        contracts.bank.transferOutNativeToken(keeper, cache.executionFeeForKeeper);
+
+        emitKeeperExecutionFee(contracts.eventEmitter, keeper, cache.executionFeeForKeeper);
+
+        cache.refundFeeAmount = executionFee - cache.executionFeeForKeeper;
         if (cache.refundFeeAmount == 0) {
             return 0;
         }
 
-        cache.wnt = dataStore.getAddress(Keys.WNT);
-        bank.transferOut(cache.wnt, address(this), cache.refundFeeAmount);
+        cache.wnt = contracts.dataStore.getAddress(Keys.WNT);
+        contracts.bank.transferOut(cache.wnt, address(this), cache.refundFeeAmount);
 
         IWNT(cache.wnt).withdraw(cache.refundFeeAmount);
 
         EventUtils.EventLogData memory eventData;
 
         cache.refundWasSent = CallbackUtils.refundExecutionFee(
-            dataStore,
+            contracts.dataStore,
             key,
             callbackContract,
             cache.refundFeeAmount,
@@ -166,11 +177,16 @@ library GasUtils {
         );
 
         if (cache.refundWasSent) {
-            emitExecutionFeeRefundCallback(eventEmitter, callbackContract, cache.refundFeeAmount);
+            emitExecutionFeeRefundCallback(contracts.eventEmitter, callbackContract, cache.refundFeeAmount);
             return 0;
         } else {
-            TokenUtils.sendNativeToken(dataStore, refundReceiver, cache.refundFeeAmount);
-            emitExecutionFeeRefund(eventEmitter, refundReceiver, cache.refundFeeAmount);
+            if (srcChainId == 0) {
+                TokenUtils.sendNativeToken(contracts.dataStore, refundReceiver, cache.refundFeeAmount);
+            } else {
+                TokenUtils.depositAndSendWrappedNativeToken(contracts.dataStore, address(contracts.multichainVault), cache.refundFeeAmount);
+                MultichainUtils.recordTransferIn(contracts.dataStore, contracts.eventEmitter, contracts.multichainVault, cache.wnt, refundReceiver, 0); // srcChainId is the current block.chainId
+            }
+            emitExecutionFeeRefund(contracts.eventEmitter, refundReceiver, cache.refundFeeAmount);
             return cache.refundFeeAmount;
         }
     }
@@ -207,7 +223,12 @@ library GasUtils {
         uint256 oraclePriceCount,
         bool shouldCapMaxExecutionFee
     ) internal view returns (uint256, uint256) {
-        (uint256 gasLimit, uint256 minExecutionFee) = GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, executionFee, oraclePriceCount);
+        (uint256 gasLimit, uint256 minExecutionFee) = validateExecutionFee(
+            dataStore,
+            estimatedGasLimit,
+            executionFee,
+            oraclePriceCount
+        );
 
         if (!shouldCapMaxExecutionFee) {
             return (executionFee, 0);
@@ -238,9 +259,20 @@ library GasUtils {
         return (maxExecutionFee, executionFeeDiff);
     }
 
-    function transferExcessiveExecutionFee(DataStore dataStore, EventEmitter eventEmitter, Bank bank, address account, uint256 executionFeeDiff) external {
+    function transferExcessiveExecutionFee(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        Bank bank,
+        address account,
+        uint256 executionFeeDiff
+    ) external {
         address wnt = TokenUtils.wnt(dataStore);
         address holdingAddress = dataStore.getAddress(Keys.HOLDING_ADDRESS);
+
+        if (holdingAddress == address(0)) {
+            revert Errors.EmptyHoldingAddress();
+        }
+
         bank.transferOut(wnt, holdingAddress, executionFeeDiff);
 
         EventUtils.EventLogData memory eventData;
@@ -539,5 +571,74 @@ library GasUtils {
         eventData.uintItems.setItem(0, "refundFeeAmount", refundFeeAmount);
 
         eventEmitter.emitEventLog1("ExecutionFeeRefundCallback", Cast.toBytes32(callbackContract), eventData);
+    }
+
+    function payGelatoRelayFee(
+        DataStore dataStore,
+        address wnt,
+        uint256 startingGas,
+        uint256 calldataLength,
+        uint256 availableFeeAmount
+    ) internal returns (uint256) {
+        address relayFeeAddress = dataStore.getAddress(Keys.RELAY_FEE_ADDRESS);
+        if (relayFeeAddress == address(0)) {
+            revert Errors.EmptyRelayFeeAddress();
+        }
+
+        uint256 relayFeeMultiplierFactor = dataStore.getUint(Keys.GELATO_RELAY_FEE_MULTIPLIER_FACTOR);
+        if (relayFeeMultiplierFactor == 0) {
+            relayFeeMultiplierFactor = Precision.FLOAT_PRECISION;
+        }
+
+        // relayFeeBaseAmount should include:
+        // - 21000 base gas
+        // - GelatoRelay contract gas
+        // - gas for 2 token transfers: to relay fee address and residual fee to the user
+        // - any other fixed gas costs before gasleft() and after the relay fee is calculated
+        uint256 relayFeeBaseAmount = dataStore.getUint(Keys.GELATO_RELAY_FEE_BASE_AMOUNT);
+
+        // would be non-zero for Arbitrum only
+        uint256 l1Fee = Chain.getCurrentTxL1GasFees();
+
+        uint256 l2Fee = (relayFeeBaseAmount + _getCalldataGas(calldataLength) + startingGas - gasleft()) * tx.gasprice;
+
+        uint256 relayFee = Precision.applyFactor(l1Fee + l2Fee, relayFeeMultiplierFactor);
+
+        if (relayFee > availableFeeAmount) {
+            revert Errors.InsufficientRelayFee(relayFee, availableFeeAmount);
+        }
+
+        IERC20(wnt).safeTransfer(relayFeeAddress, relayFee);
+
+        return relayFee;
+    }
+
+    function _getCalldataGas(uint256 calldataLength) internal pure returns (uint256) {
+        if (calldataLength > 50000) {
+            // we use 10 gas cost per byte for simplicity
+            // a malicious actor could send large calldata with non-zero bytes to force relay pay more
+            // this is unlikely to happen because the malicious actor would have to pay for the rest and wouldn't extra any profit
+            // but to reduce the risk we limit the calldata length
+            revert Errors.RelayCalldataTooLong(calldataLength);
+        }
+
+        // zero byte in call data costs 4 gas, non-zero byte costs 16 gas
+        // there are more zero bytes in transactions on average, we take 10 as a relatively safe estimate
+        // GelatoRelay contract receives calldata with a Call with fields like to, gasLimit, data, etc.
+        // the GMX contract receives only data.call
+        // in practice call fields are small compared to the call.data, so we only use msg.data received by GMX contract for simplicity
+        uint256 txCalldataGasUsed = calldataLength * 10;
+
+        // calculate words, apply ceiling
+        uint256 memoryWords = (calldataLength + 31) / 32;
+
+        // GelatoRelay contract calls GMX contract, CALL's gas depends on the calldata length
+        // approximate formula for CALL gas consumption (excluding fixed costs e.g. 700 gas for the CALL opcode):
+        //     memory_cost(n) = (n_words^2) / 512 + (3 * n_words)
+        //     memory_expansion_cost = memory_cost(new) - memory_cost(previous)
+        // we assume that previous memory_cost is 0 for simplicity
+        uint256 gmxCallGasUsed = memoryWords ** 2 / 512 + memoryWords * 3;
+
+        return txCalldataGasUsed + gmxCallGasUsed;
     }
 }

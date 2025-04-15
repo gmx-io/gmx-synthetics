@@ -544,8 +544,8 @@ const config: {
       ...fundingRateConfig_Low,
       ...borrowingRateConfig_LowMax_WithLowerBase,
 
-      reserveFactor: percentageToFloat("250%"),
-      openInterestReserveFactor: percentageToFloat("245%"),
+      reserveFactor: percentageToFloat("275%"),
+      openInterestReserveFactor: percentageToFloat("270%"),
 
       maxLongTokenPoolAmount: expandDecimals(32_000, 18),
       maxShortTokenPoolAmount: expandDecimals(100_000_000, 6),
@@ -683,11 +683,6 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_HighMax_WithLowerBase,
 
-      maxLongTokenPoolAmount: expandDecimals(1930, 18),
-      maxShortTokenPoolAmount: expandDecimals(6_300_000, 6),
-
-      maxPoolUsdForDeposit: decimalToFloat(5_500_000),
-
       negativePositionImpactFactor: exponentToFloat("21e-9"),
       positivePositionImpactFactor: exponentToFloat("7e-9"),
 
@@ -707,6 +702,11 @@ const config: {
       minPositionImpactPoolAmount: expandDecimals(4169, 6), // 4169.846154 XRP
 
       maxOpenInterest: decimalToFloat(2_000_000),
+
+      maxPoolUsdForDeposit: decimalToFloat(6_500_000),
+
+      maxLongTokenPoolAmount: expandDecimals(3840, 18),
+      maxShortTokenPoolAmount: expandDecimals(7_300_000, 6),
     },
     {
       tokens: { indexToken: "DOGE", longToken: "WETH", shortToken: "USDC" },
@@ -753,11 +753,6 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_HighMax_WithHigherBase,
 
-      maxLongTokenPoolAmount: expandDecimals(1249, 18), // ~$3m
-      maxShortTokenPoolAmount: expandDecimals(3_000_000, 6),
-
-      maxPoolUsdForDeposit: decimalToFloat(2_000_000),
-
       positionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
       positivePositionImpactFactor: exponentToFloat("2.5e-10"), // 2.5e-10,
       negativePositionImpactFactor: exponentToFloat("5e-10"), // 5e-10
@@ -771,6 +766,11 @@ const config: {
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.8e-9"), // 38e-10
 
       maxOpenInterest: decimalToFloat(1_000_000),
+
+      maxPoolUsdForDeposit: decimalToFloat(2_000_000),
+
+      maxLongTokenPoolAmount: expandDecimals(1655, 18),
+      maxShortTokenPoolAmount: expandDecimals(3_000_000, 6),
 
       reserveFactor: percentageToFloat("165%"),
       openInterestReserveFactor: percentageToFloat("160%"),
@@ -1021,11 +1021,6 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_HighMax_WithHigherBase,
 
-      maxLongTokenPoolAmount: expandDecimals(1150, 18),
-      maxShortTokenPoolAmount: expandDecimals(2_500_000, 6),
-
-      maxPoolUsdForDeposit: decimalToFloat(2_000_000),
-
       negativePositionImpactFactor: exponentToFloat("2.7e-8"),
       positivePositionImpactFactor: exponentToFloat("9e-9"),
 
@@ -1044,6 +1039,11 @@ const config: {
       minPositionImpactPoolAmount: expandDecimals(28, 8), // 28 LTC
 
       maxOpenInterest: decimalToFloat(1_000_000),
+
+      maxPoolUsdForDeposit: decimalToFloat(2_400_000),
+
+      maxLongTokenPoolAmount: expandDecimals(1720, 18),
+      maxShortTokenPoolAmount: expandDecimals(3_120_000, 6),
     },
     {
       tokens: { indexToken: "UNI", longToken: "UNI", shortToken: "USDC" },
@@ -1352,11 +1352,6 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_LowMax_WithHigherBase,
 
-      maxLongTokenPoolAmount: expandDecimals(160_000, 18),
-      maxShortTokenPoolAmount: expandDecimals(4_000_000, 6),
-
-      maxPoolUsdForDeposit: decimalToFloat(3_500_000),
-
       negativePositionImpactFactor: exponentToFloat("0.795469e-6"),
       positivePositionImpactFactor: exponentToFloat("2.65156e-07"),
       positionImpactExponentFactor: exponentToFloat("1.76045e0"),
@@ -1374,6 +1369,11 @@ const config: {
       minPositionImpactPoolAmount: expandDecimals(50, 18), // 50 GMX
 
       maxOpenInterest: decimalToFloat(1_800_000),
+
+      maxPoolUsdForDeposit: decimalToFloat(3_500_000),
+
+      maxLongTokenPoolAmount: expandDecimals(340_000, 18),
+      maxShortTokenPoolAmount: expandDecimals(4_000_000, 6),
     },
     {
       tokens: { indexToken: "GMX", longToken: "GMX", shortToken: "GMX" },
@@ -1445,11 +1445,6 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_LowMax_WithHigherBase,
 
-      maxLongTokenPoolAmount: expandDecimals(1_135_000, 6),
-      maxShortTokenPoolAmount: expandDecimals(4_800_000, 6),
-
-      maxPoolUsdForDeposit: decimalToFloat(4_400_000),
-
       negativePositionImpactFactor: exponentToFloat("5e-10"), // 0.05% for ~100,000 USD of imbalance
       positivePositionImpactFactor: exponentToFloat("2.5e-10"), // 0.05% for ~178,180 USD of imbalance
       positionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
@@ -1466,6 +1461,11 @@ const config: {
       minPositionImpactPoolAmount: 0,
 
       maxOpenInterest: decimalToFloat(500_000),
+
+      maxPoolUsdForDeposit: decimalToFloat(4_400_000),
+
+      maxLongTokenPoolAmount: expandDecimals(11_000_000, 6),
+      maxShortTokenPoolAmount: expandDecimals(4_800_000, 6),
     },
     {
       tokens: { indexToken: "POL", longToken: "WETH", shortToken: "USDC" },
@@ -2416,8 +2416,8 @@ const config: {
 
       liquidationFeeFactor: percentageToFloat("0.45%"),
 
-      reserveFactor: percentageToFloat("40%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("35%"), // default is 90%
+      reserveFactor: percentageToFloat("75%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("70%"), // default is 90%
 
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
@@ -2480,10 +2480,11 @@ const config: {
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
       maxOpenInterest: decimalToFloat(750_000),
-      maxPoolUsdForDeposit: decimalToFloat(1_000_000),
 
-      maxLongTokenPoolAmount: expandDecimals(15, 8),
-      maxShortTokenPoolAmount: expandDecimals(1_300_000, 6),
+      maxPoolUsdForDeposit: decimalToFloat(1_600_000),
+
+      maxLongTokenPoolAmount: expandDecimals(26, 8),
+      maxShortTokenPoolAmount: expandDecimals(2_000_000, 6),
     },
     {
       tokens: { indexToken: "AI16Z", longToken: "WBTC.e", shortToken: "USDC" },
@@ -2811,9 +2812,9 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_LowMax_WithHigherBase,
 
-      negativePositionImpactFactor: exponentToFloat("2e-8"),
-      positivePositionImpactFactor: exponentToFloat("1e-8"),
-      positionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactFactor: exponentToFloat("4e-7"),
+      positivePositionImpactFactor: exponentToFloat("2e-7"),
+      positionImpactExponentFactor: exponentToFloat("1.75e0"),
 
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
@@ -3353,9 +3354,41 @@ const config: {
   arbitrumSepolia: [
     {
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC" },
+      maxLongTokenPoolAmount: expandDecimals(20_000, 18),
+      maxShortTokenPoolAmount: expandDecimals(100_000_000, 6),
+      maxPoolUsdForDeposit: decimalToFloat(50_000_000),
+      maxOpenInterest: decimalToFloat(50_000_000),
+    },
+    {
+      tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC.SG" },
+      virtualTokenIdForIndexToken: hashString("PERP:ETH/USD"),
+      virtualMarketId: hashString("SPOT:ETH/USD"),
+      ...baseMarketConfig,
+      ...fundingRateConfig_Low,
+      ...borrowingRateConfig_LowMax_WithLowerBase,
+      maxLongTokenPoolAmount: expandDecimals(20_000, 18),
+      maxShortTokenPoolAmount: expandDecimals(100_000_000, 6),
+      maxPoolUsdForDeposit: decimalToFloat(50_000_000),
+      maxOpenInterest: decimalToFloat(50_000_000),
     },
     {
       tokens: { indexToken: "BTC", longToken: "BTC", shortToken: "USDC" },
+      maxLongTokenPoolAmount: expandDecimals(1000, 8),
+      maxShortTokenPoolAmount: expandDecimals(100_000_000, 6),
+      maxPoolUsdForDeposit: decimalToFloat(50_000_000),
+      maxOpenInterest: decimalToFloat(50_000_000),
+    },
+    {
+      tokens: { indexToken: "BTC", longToken: "BTC", shortToken: "USDC.SG" },
+      virtualTokenIdForIndexToken: hashString("PERP:BTC/USD"),
+      virtualMarketId: hashString("SPOT:BTC/USD"),
+      ...baseMarketConfig,
+      ...fundingRateConfig_Low,
+      ...borrowingRateConfig_LowMax_WithLowerBase,
+      maxLongTokenPoolAmount: expandDecimals(1000, 8),
+      maxShortTokenPoolAmount: expandDecimals(100_000_000, 6),
+      maxPoolUsdForDeposit: decimalToFloat(50_000_000),
+      maxOpenInterest: decimalToFloat(50_000_000),
     },
   ],
   arbitrumGoerli: [

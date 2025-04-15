@@ -1569,6 +1569,8 @@ library MarketUtils {
             return 0;
         }
 
+        // note that this PnL does not factor in the PnL from
+        // the pending price impact of positions
         int256 pnl = getPnl(
             dataStore,
             market,

@@ -115,12 +115,19 @@ export const NATIVE_TOKEN_TRANSFER_GAS_LIMIT = hashString("NATIVE_TOKEN_TRANSFER
 
 export const MAX_CALLBACK_GAS_LIMIT = hashString("MAX_CALLBACK_GAS_LIMIT");
 
+export const MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT = hashString("MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT");
+export const GELATO_RELAY_FEE_BASE_AMOUNT = hashString("GELATO_RELAY_FEE_BASE_AMOUNT");
+export const GELATO_RELAY_FEE_MULTIPLIER_FACTOR = hashString("GELATO_RELAY_FEE_MULTIPLIER_FACTOR");
+
+export const RELAY_FEE_ADDRESS = hashString("RELAY_FEE_ADDRESS");
+
 export const REQUEST_EXPIRATION_TIME = hashString("REQUEST_EXPIRATION_TIME");
 
 export const PRICE_FEED = hashString("PRICE_FEED");
 export const PRICE_FEED_MULTIPLIER = hashString("PRICE_FEED_MULTIPLIER");
 export const PRICE_FEED_HEARTBEAT_DURATION = hashString("PRICE_FEED_HEARTBEAT_DURATION");
 export const DATA_STREAM_ID = hashString("DATA_STREAM_ID");
+export const EDGE_DATA_STREAM_ID = hashString("EDGE_DATA_STREAM_ID");
 export const DATA_STREAM_MULTIPLIER = hashString("DATA_STREAM_MULTIPLIER");
 export const DATA_STREAM_SPREAD_REDUCTION_FACTOR = hashString("DATA_STREAM_SPREAD_REDUCTION_FACTOR");
 export const STABLE_PRICE = hashString("STABLE_PRICE");
@@ -268,6 +275,9 @@ export const BUYBACK_MAX_PRICE_AGE = hashString("BUYBACK_MAX_PRICE_AGE");
 export const WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT = hashString("WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT");
 export const MULTICHAIN_BALANCE = hashString("MULTICHAIN_BALANCE");
 export const IS_MULTICHAIN_PROVIDER_ENABLED = hashString("IS_MULTICHAIN_PROVIDER_ENABLED");
+export const IS_MULTICHAIN_ENDPOINT_ENABLED = hashString("IS_MULTICHAIN_ENDPOINT_ENABLED");
+export const RELAY_MAX_PRICE_AGE = hashString("RELAY_MAX_PRICE_AGE");
+export const IS_SRC_CHAIN_ID_ENABLED = hashString("IS_SRC_CHAIN_ID_ENABLED");
 
 export const MULTICHAIN_READ_CHANNEL = hashString("MULTICHAIN_READ_CHANNEL");
 export const MULTICHAIN_PEERS = hashString("MULTICHAIN_PEERS");
@@ -451,6 +461,10 @@ export function priceFeedHeartbeatDurationKey(token: string) {
 
 export function dataStreamIdKey(token: string) {
   return hashData(["bytes32", "address"], [DATA_STREAM_ID, token]);
+}
+
+export function edgeDataStreamIdKey(token: string) {
+  return hashData(["bytes32", "address"], [EDGE_DATA_STREAM_ID, token]);
 }
 
 export function dataStreamMultiplierKey(token: string) {
@@ -867,12 +881,20 @@ export function withdrawableBuybackTokenAmountKey(buybackToken: string) {
   return hashData(["bytes32", "address"], [WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT, buybackToken]);
 }
 
-export function multichainBalanceKey(account: string, token: string) {
-  return hashData(["bytes32", "address", "address"], [MULTICHAIN_BALANCE, account, token]);
-}
-
 export function isMultichainProviderEnabledKey(contract: string) {
   return hashData(["bytes32", "address"], [IS_MULTICHAIN_PROVIDER_ENABLED, contract]);
+}
+
+export function isMultichainEndpointEnabledKey(contract: string) {
+  return hashData(["bytes32", "address"], [IS_MULTICHAIN_ENDPOINT_ENABLED, contract]);
+}
+
+export function isSrcChainIdEnabledKey(srcChainId: number) {
+  return hashData(["bytes32", "uint256"], [IS_SRC_CHAIN_ID_ENABLED, srcChainId]);
+}
+
+export function multichainBalanceKey(account: string, token: string) {
+  return hashData(["bytes32", "address", "address"], [MULTICHAIN_BALANCE, account, token]);
 }
 
 export function multichainPeersKey(readChannel: string) {

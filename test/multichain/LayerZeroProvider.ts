@@ -8,15 +8,18 @@ import { mintAndBridge } from "./MultichainRouter";
 describe("LayerZeroProvider", () => {
   let fixture;
   let user0;
-  let dataStore, usdc, multichainVault, layerZeroProvider;
+  let dataStore, usdc, multichainVault, layerZeroProvider, mockStargatePoolUsdc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0 } = fixture.accounts);
-    ({ dataStore, usdc, multichainVault, layerZeroProvider } = fixture.contracts);
+    ({ dataStore, usdc, multichainVault, layerZeroProvider, mockStargatePoolUsdc } = fixture.contracts);
   });
 
   it("lzCompose", async () => {
+    await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolUsdc.address), true);
+    await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolUsdc.address), true);
+
     const amount = expandDecimals(1000, 6);
 
     await mintAndBridge(fixture, {

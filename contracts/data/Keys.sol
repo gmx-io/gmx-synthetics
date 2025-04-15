@@ -15,6 +15,7 @@ library Keys {
 
     // @dev for holding tokens that could not be sent out
     bytes32 public constant HOLDING_ADDRESS = keccak256(abi.encode("HOLDING_ADDRESS"));
+    bytes32 public constant RELAY_FEE_ADDRESS = keccak256(abi.encode("RELAY_FEE_ADDRESS"));
 
     // @dev key for the minimum gas for execution error
     bytes32 public constant MIN_HANDLE_EXECUTION_ERROR_GAS = keccak256(abi.encode("MIN_HANDLE_EXECUTION_ERROR_GAS"));
@@ -230,6 +231,9 @@ library Keys {
     // @dev key for the max execution fee multiplier
     bytes32 public constant MAX_EXECUTION_FEE_MULTIPLIER_FACTOR = keccak256(abi.encode("MAX_EXECUTION_FEE_MULTIPLIER_FACTOR"));
 
+    bytes32 public constant MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT = keccak256(abi.encode("MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT"));
+    bytes32 public constant GELATO_RELAY_FEE_MULTIPLIER_FACTOR = keccak256(abi.encode("GELATO_RELAY_FEE_MULTIPLIER_FACTOR"));
+    bytes32 public constant GELATO_RELAY_FEE_BASE_AMOUNT = keccak256(abi.encode("GELATO_RELAY_FEE_BASE_AMOUNT"));
     // @dev key for the estimated gas limit for deposits
     bytes32 public constant DEPOSIT_GAS_LIMIT = keccak256(abi.encode("DEPOSIT_GAS_LIMIT"));
     // @dev key for the estimated gas limit for withdrawals
@@ -338,6 +342,8 @@ library Keys {
     bytes32 public constant PRICE_FEED_HEARTBEAT_DURATION = keccak256(abi.encode("PRICE_FEED_HEARTBEAT_DURATION"));
     // @dev key for data stream feed id
     bytes32 public constant DATA_STREAM_ID = keccak256(abi.encode("DATA_STREAM_ID"));
+    // @dev key for edge oracle data stream feed id
+    bytes32 public constant EDGE_DATA_STREAM_ID = keccak256(abi.encode("EDGE_DATA_STREAM_ID"));
     // @dev key for data stream feed multiplier
     bytes32 public constant DATA_STREAM_MULTIPLIER = keccak256(abi.encode("DATA_STREAM_MULTIPLIER"));
     bytes32 public constant DATA_STREAM_SPREAD_REDUCTION_FACTOR = keccak256(abi.encode("DATA_STREAM_SPREAD_REDUCTION_FACTOR"));
@@ -492,12 +498,16 @@ library Keys {
 
     // @dev key for user's multichain balance
     bytes32 public constant MULTICHAIN_BALANCE = keccak256(abi.encode("MULTICHAIN_BALANCE"));
-    // @dev key for user's multichain balance
+    // @dev key for the flag if a multichain provider is enabled
     bytes32 public constant IS_MULTICHAIN_PROVIDER_ENABLED = keccak256(abi.encode("IS_MULTICHAIN_PROVIDER_ENABLED"));
-    // @dev key for the flag if user's position collateral was used for execution fee
-    bytes32 public constant WAS_POSITION_COLLATERAL_USED_FOR_EXECUTION_FEE = keccak256(abi.encode("WAS_POSITION_COLLATERAL_USED_FOR_EXECUTION_FEE"));
+    // @dev key for the flag if a multichain endpoint is enabled
+    bytes32 public constant IS_MULTICHAIN_ENDPOINT_ENABLED = keccak256(abi.encode("IS_MULTICHAIN_ENDPOINT_ENABLED"));
+    // @dev key for the relay max price age
+    bytes32 public constant RELAY_MAX_PRICE_AGE = keccak256(abi.encode("RELAY_MAX_PRICE_AGE"));
     // @dev key for the last src chain id from which the user last managed his position
     bytes32 public constant POSITION_LAST_SRC_CHAIN_ID = keccak256(abi.encode("POSITION_LAST_SRC_CHAIN_ID"));
+    // @dev key for the flag if a src chain is enabled
+    bytes32 public constant IS_SRC_CHAIN_ID_ENABLED = keccak256(abi.encode("IS_SRC_CHAIN_ID_ENABLED"));
 
     // @dev key for the maximum length for data list array of bytes32
     bytes32 public constant MAX_DATA_LENGTH = keccak256(abi.encode("MAX_DATA_LENGTH"));
@@ -2005,6 +2015,16 @@ library Keys {
         ));
     }
 
+    // @dev key for edge oracle data stream feed ID
+    // @param token the token to get the key for
+    // @return key for data stream feed ID
+    function edgeDataStreamIdKey(address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            EDGE_DATA_STREAM_ID,
+            token
+        ));
+    }
+
     // @dev key for data stream feed multiplier
     // @param token the token to get the key for
     // @return key for data stream feed multiplier
@@ -2275,12 +2295,23 @@ library Keys {
         ));
     }
 
-    // @dev key for the flag if position collateral was used for execution fee
-    // @return key for the flag if position collateral was used for execution fee
-    function wasPositionCollateralUsedForExecutionFeeKey(bytes32 orderKey) internal pure returns (bytes32) {
+    // @dev key for whether a multichain endpoint is enabled
+    // @param endpoint the multichain endpoint
+    // @return key for whether a multichain endpoint is enabled
+    function isMultichainEndpointEnabledKey(address endpoint) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            WAS_POSITION_COLLATERAL_USED_FOR_EXECUTION_FEE,
-            orderKey
+            IS_MULTICHAIN_ENDPOINT_ENABLED,
+            endpoint
+        ));
+    }
+
+    // @dev key for whether a multichain endpoint is enabled
+    // @param endpoint the multichain endpoint
+    // @return key for whether a multichain endpoint is enabled
+    function isSrcChainIdEnabledKey(uint256 srcChainId) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            IS_SRC_CHAIN_ID_ENABLED,
+            srcChainId
         ));
     }
 

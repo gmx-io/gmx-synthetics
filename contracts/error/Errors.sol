@@ -18,6 +18,7 @@ library Errors {
     // Bank errors
     error SelfTransferNotSupported(address receiver);
     error InvalidNativeTokenSender(address msgSender);
+    error InvalidTransferInAmount(address token, uint256 amount);
 
     // BaseHandler errors
     error RequestNotYetCancellable(uint256 requestAge, uint256 requestExpirationAge, string requestType);
@@ -164,6 +165,7 @@ library Errors {
     error InsufficientGasForCancellation(uint256 gas, uint256 minHandleExecutionErrorGas);
     error InsufficientGasForAutoCancellation(uint256 gas, uint256 minHandleExecutionErrorGas);
     error InvalidExecutionFee(uint256 executionFee, uint256 minExecutionFee, uint256 maxExecutionFee);
+    error EmptyRelayFeeAddress();
 
     // MarketFactory errors
     error MarketAlreadyExists(bytes32 salt, address existingMarketAddress);
@@ -443,10 +445,13 @@ library Errors {
     error EmptyMultichainTransferInAmount(address account, address token);
     error EmptyMultichainTransferOutAmount(address account, address token);
     error InsufficientMultichainBalance(address account, address token, uint256 balance, uint256 amount);
+    error InvalidSrcChainId(uint256 srcChainId);
     error InvalidDestinationChainId(uint256 desChainId);
     error InvalidMultichainProvider(address provider);
+    error InvalidMultichainEndpoint(address endpoint);
     error UnableToPayOrderFee();
     error UnableToPayOrderFeeFromCollateral();
+    error RelayPriceOutdated();
 
     enum SignatureType {
         Call,
@@ -465,13 +470,24 @@ library Errors {
     error SubaccountApprovalDeadlinePassed(uint256 currentTimestamp, uint256 deadline);
     error InvalidSubaccountApprovalNonce(uint256 storedNonce, uint256 nonce);
     error DeadlinePassed(uint256 currentTimestamp, uint256 deadline);
-    error InsufficientRelayFee(uint256 requiredRelayFee, uint256 feeAmount);
+    error InsufficientRelayFee(uint256 requiredRelayFee, uint256 availableFeeAmount);
     error InvalidSubaccountApprovalSubaccount();
     error NonEmptyExternalCallsForSubaccountOrder();
-    error InvalidRelayParams();
 
     // EventUtils error
     error EventItemNotFound(string key);
+
+    // EdgeOracle verifier errors
+    error InvalidTrustedSignerAddress();
+    error InvalidEdgeSigner();
+    error InvalidEdgeSignature(uint256 recoverError);
+    error InvalidEdgeDataStreamBidAsk(address token, uint256 bid, uint256 ask);
+    error InvalidEdgeDataStreamPrices(address token, uint256 bid, uint256 ask);
+    error InvalidEdgeDataStreamExpo(int256 expo);
+    error RelayEmptyBatch();
+    error RelayCalldataTooLong(uint256 calldataLength);
+    error InvalidExternalCalls(uint256 sendTokensLength, uint256 sendAmountsLength);
+    error MaxRelayFeeSwapForSubaccountExceeded(uint256 feeUsd, uint256 maxFeeUsd);
 
     // MultichainReader errors
     error InsufficientMultichainNativeFee(uint256 msgValue);

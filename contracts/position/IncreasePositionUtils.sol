@@ -123,6 +123,7 @@ library IncreasePositionUtils {
         // Instead of applying the delta to the pool, store it using the positionKey
         // No need to flip the priceImpactAmount sign since it isn't applied to the pool, it's just stored
         params.position.setPendingImpactAmount(params.position.pendingImpactAmount() + cache.priceImpactAmount);
+        params.position.setPendingImpactUsd(params.position.pendingImpactUsd() + cache.priceImpactUsd);
 
         cache.nextPositionSizeInUsd = params.position.sizeInUsd() + params.order.sizeDeltaUsd();
         cache.nextPositionBorrowingFactor = MarketUtils.getCumulativeBorrowingFactor(

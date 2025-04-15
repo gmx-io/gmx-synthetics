@@ -25,57 +25,58 @@ contract MultichainTransferRouter is MultichainRouter {
     }
 
     function bridgeOut(
-        RelayUtils.RelayParams calldata relayParams,
-        address provider,
+        RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
-        bytes calldata data, // encoded provider specific data e.g. dstEid
-        RelayUtils.BridgeOutParams calldata params
-    ) external nonReentrant onlyGelatoRelay {
-        _validateDesChainId(relayParams.desChainId);
-        _validateGaslessFeature();
-        _validateMultichainProvider(dataStore, provider);
-
+        BridgeOutParams calldata params
+    ) external nonReentrant withRelay(relayParams, account, srcChainId, false) {
         bytes32 structHash = RelayUtils.getBridgeOutStructHash(relayParams, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
-        // orderVault is used to transfer funds into it and do a swap from feeToken to wnt when using the feeSwapPath
-        Contracts memory contracts = Contracts({ dataStore: dataStore, eventEmitter: eventEmitter, bank: orderVault });
-        _handleRelay(
-            contracts,
-            relayParams,
-            account,
-            srcChainId == 0 ? account : address(multichainVault), // residualFeeReceiver
-            false, // isSubaccount
-            srcChainId
-        );
+        _bridgeOut(account, srcChainId, params);
+    }
 
-        // moves user's funds (amount + bridging fee) from their multichain balance into multichainProvider
-        multichainProvider.bridgeOut(
-            IMultichainProvider.BridgeOutParams({
-                provider: provider,
-                account: account,
-                token: params.token,
-                amount: params.amount,
-                srcChainId: srcChainId,
-                data: data
-            })
-        );
+    function _bridgeOut(
+        address account,
+        uint256 srcChainId,
+        BridgeOutParams calldata params
+    ) internal {
+        if (srcChainId == block.chainid) {
+            // same-chain withdrawal: funds are sent directly to the user's wallet
+            MultichainUtils.transferOut(
+                dataStore,
+                eventEmitter,
+                multichainVault,
+                params.token,
+                account,
+                address(this), // receiver
+                params.amount,
+                srcChainId
+            );
+            TokenUtils.transfer(dataStore, params.token, account, params.amount);
+        } else {
+            // cross-chain withdrawal: using the multichain provider, funds are bridged to the src chain
+            MultichainUtils.validateMultichainProvider(dataStore, params.provider);
+            // moves user's funds (amount + bridging fee) from their multichain balance into multichainProvider
+            multichainProvider.bridgeOut(
+                IMultichainProvider.BridgeOutParams({
+                    provider: params.provider,
+                    account: account,
+                    token: params.token,
+                    amount: params.amount,
+                    srcChainId: srcChainId,
+                    data: params.data
+                })
+            );
+        }
 
         MultichainEventUtils.emitMultichainBridgeOut(
             eventEmitter,
-            provider,
+            params.provider,
             params.token,
             account,
             params.amount,
             srcChainId
         );
-    }
-
-    function _validateMultichainProvider(DataStore dataStore, address provider) internal view {
-        bytes32 providerKey = Keys.isMultichainProviderEnabledKey(provider);
-        if (!dataStore.getBool(providerKey)) {
-            revert Errors.InvalidMultichainProvider(provider);
-        }
     }
 }
