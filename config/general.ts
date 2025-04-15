@@ -148,9 +148,6 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       multichainEndpoints: {
         "0x6EDCE65403992e310A62460808c4b910D972f10f": true, // LZ Endpoint
       },
-      supportedTokens: {
-        "0x3253a335E7bFfB4790Aa4C25C4250d206E9b9773": true, // USDC.SG
-      },
     },
     avalancheFuji: {},
     arbitrum: {
