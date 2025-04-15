@@ -75,7 +75,6 @@ library ShiftUtils {
         bytes32 depositKey;
         ExecuteDepositUtils.ExecuteDepositParams executeDepositParams;
         uint256 receivedMarketTokens;
-        uint256 refundFeeAmount;
     }
 
     function createShift(
@@ -319,24 +318,22 @@ library ShiftUtils {
         eventData.uintItems.setItem(0, "receivedMarketTokens", cache.receivedMarketTokens);
         CallbackUtils.afterShiftExecution(params.key, shift, eventData);
 
-        cache.refundFeeAmount = GasUtils.payExecutionFee(
-            params.dataStore,
-            params.eventEmitter,
-            params.shiftVault,
+        GasUtils.payExecutionFee(
+            GasUtils.PayExecutionFeeContracts(
+                params.dataStore,
+                params.eventEmitter,
+                params.multichainVault,
+                params.shiftVault
+            ),
             params.key,
             shift.callbackContract(),
             shift.executionFee(),
             params.startingGas,
             GasUtils.estimateShiftOraclePriceCount(),
             params.keeper,
-            shift.srcChainId() == 0 ? shift.receiver() : address(params.multichainVault)
+            shift.receiver(),
+            shift.srcChainId()
         );
-
-        // for multichain action, receiver is the multichainVault; increase user's multichain wnt balance for the fee refund
-        if (shift.srcChainId() != 0 && cache.refundFeeAmount > 0) {
-            address wnt = params.dataStore.getAddress(Keys.WNT);
-            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, wnt, shift.receiver(), 0); // srcChainId is the current block.chainId
-        }
 
         return cache.receivedMarketTokens;
     }
@@ -344,6 +341,7 @@ library ShiftUtils {
     function cancelShift(
         DataStore dataStore,
         EventEmitter eventEmitter,
+        MultichainVault multichainVault,
         ShiftVault shiftVault,
         bytes32 key,
         address keeper,
@@ -385,16 +383,20 @@ library ShiftUtils {
         CallbackUtils.afterShiftCancellation(key, shift, eventData);
 
         GasUtils.payExecutionFee(
-            dataStore,
-            eventEmitter,
-            shiftVault,
+            GasUtils.PayExecutionFeeContracts(
+                dataStore,
+                eventEmitter,
+                multichainVault,
+                shiftVault
+            ),
             key,
             shift.callbackContract(),
             shift.executionFee(),
             startingGas,
             GasUtils.estimateShiftOraclePriceCount(),
             keeper,
-            shift.receiver()
+            shift.receiver(),
+            shift.srcChainId()
         );
     }
 }

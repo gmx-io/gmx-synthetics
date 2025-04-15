@@ -57,11 +57,6 @@ library OrderUtils {
         uint256 executionFeeDiff;
     }
 
-    struct FreezeOrderCache {
-        address executionFeeReceiver;
-        uint256 refundFeeAmount;
-    }
-
     // @dev creates an order in the order store
     // @param dataStore DataStore
     // @param eventEmitter EventEmitter
@@ -207,20 +202,28 @@ library OrderUtils {
         return key;
     }
 
+    struct CancelOrderCache {
+        uint256 gas;
+        uint256 minHandleExecutionErrorGas;
+        address executionFeeReceiver;
+    }
+
     function cancelOrder(CancelOrderParams memory params) public {
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
         if (params.isExternalCall) {
             params.startingGas -= gasleft() / 63;
         }
 
-        uint256 gas = gasleft();
-        uint256 minHandleExecutionErrorGas = GasUtils.getMinHandleExecutionErrorGas(params.dataStore);
+        CancelOrderCache memory cache;
 
-        if (gas < minHandleExecutionErrorGas) {
+        cache.gas = gasleft();
+        cache.minHandleExecutionErrorGas = GasUtils.getMinHandleExecutionErrorGas(params.dataStore);
+
+        if (cache.gas < cache.minHandleExecutionErrorGas) {
             if (params.isAutoCancel) {
-                revert Errors.InsufficientGasForAutoCancellation(gas, minHandleExecutionErrorGas);
+                revert Errors.InsufficientGasForAutoCancellation(cache.gas, cache.minHandleExecutionErrorGas);
             } else {
-                revert Errors.InsufficientGasForCancellation(gas, minHandleExecutionErrorGas);
+                revert Errors.InsufficientGasForCancellation(cache.gas, cache.minHandleExecutionErrorGas);
             }
         }
 
@@ -246,12 +249,29 @@ library OrderUtils {
                     cancellationReceiver = order.account();
                 }
 
-                params.orderVault.transferOut(
-                    order.initialCollateralToken(),
-                    cancellationReceiver,
-                    order.initialCollateralDeltaAmount(),
-                    order.shouldUnwrapNativeToken()
-                );
+                if (order.srcChainId() == 0) {
+                    params.orderVault.transferOut(
+                        order.initialCollateralToken(),
+                        cancellationReceiver,
+                        order.initialCollateralDeltaAmount(),
+                        order.shouldUnwrapNativeToken()
+                    );
+                } else {
+                    params.orderVault.transferOut(
+                        order.initialCollateralToken(),
+                        address(params.multichainVault), // receiver
+                        order.initialCollateralDeltaAmount(),
+                        false // shouldUnwrapNativeToken
+                    );
+                    MultichainUtils.recordTransferIn(
+                        params.dataStore,
+                        params.eventEmitter,
+                        params.multichainVault,
+                        order.initialCollateralToken(),
+                        cancellationReceiver,
+                        0 // srcChainId is the current block.chainId
+                    );
+                }
             }
         }
 
@@ -276,29 +296,22 @@ library OrderUtils {
             CallbackUtils.afterOrderCancellation(params.key, order, eventData);
         }
 
-        if (order.srcChainId() != 0) {
-            executionFeeReceiver = address(params.multichainVault);
-        }
-        if (params.dataStore.getBool(Keys.wasPositionCollateralUsedForExecutionFeeKey(params.key))) {
-            executionFeeReceiver = params.dataStore.getAddress(Keys.HOLDING_ADDRESS);
-        }
-
-        uint256 refundFeeAmount = GasUtils.payExecutionFee(
-            params.dataStore,
-            params.eventEmitter,
-            params.orderVault,
+        GasUtils.payExecutionFee(
+            GasUtils.PayExecutionFeeContracts(
+                params.dataStore,
+                params.eventEmitter,
+                params.multichainVault,
+                params.orderVault
+            ),
             params.key,
             order.callbackContract(),
             order.executionFee(),
             params.startingGas,
             GasUtils.estimateOrderOraclePriceCount(order.swapPath().length),
             params.keeper,
-            executionFeeReceiver
+            executionFeeReceiver,
+            order.srcChainId()
         );
-        if (refundFeeAmount > 0 && executionFeeReceiver == address(params.multichainVault)) {
-            address wnt = params.dataStore.getAddress(Keys.WNT);
-            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, wnt, order.receiver(), 0); // srcChainId is the current block.chainId
-        }
     }
 
     // @dev freezes an order
@@ -330,6 +343,8 @@ library OrderUtils {
             revert Errors.OrderAlreadyFrozen();
         }
 
+        uint256 executionFee = order.executionFee();
+
         order.setExecutionFee(0);
         order.setIsFrozen(true);
         OrderStoreUtils.set(dataStore, key, order);
@@ -341,32 +356,22 @@ library OrderUtils {
             CallbackUtils.afterOrderFrozen(key, order, eventData);
         }
 
-        FreezeOrderCache memory cache;
-
-        cache.executionFeeReceiver = order.receiver();
-        if (order.srcChainId() != 0) {
-            cache.executionFeeReceiver = address(multichainVault);
-        }
-        if (dataStore.getBool(Keys.wasPositionCollateralUsedForExecutionFeeKey(key))) {
-            cache.executionFeeReceiver = dataStore.getAddress(Keys.HOLDING_ADDRESS);
-        }
-
-        cache.refundFeeAmount = GasUtils.payExecutionFee(
-            dataStore,
-            eventEmitter,
-            orderVault,
+        GasUtils.payExecutionFee(
+            GasUtils.PayExecutionFeeContracts(
+                dataStore,
+                eventEmitter,
+                multichainVault,
+                orderVault
+            ),
             key,
             order.callbackContract(),
-            order.executionFee(),
+            executionFee,
             startingGas,
             GasUtils.estimateOrderOraclePriceCount(order.swapPath().length),
             keeper,
-            cache.executionFeeReceiver
+            order.receiver(),
+            order.srcChainId()
         );
-        if (cache.refundFeeAmount > 0 && cache.executionFeeReceiver == address(multichainVault)) {
-            address wnt = dataStore.getAddress(Keys.WNT);
-            MultichainUtils.recordTransferIn(dataStore, eventEmitter, multichainVault, wnt, order.receiver(), 0); // srcChainId is the current block.chainId
-        }
     }
 
     function clearAutoCancelOrders(

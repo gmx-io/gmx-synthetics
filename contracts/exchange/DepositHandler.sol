@@ -74,6 +74,7 @@ contract DepositHandler is IDepositHandler, BaseHandler {
         DepositUtils.cancelDeposit(
             _dataStore,
             eventEmitter,
+            multichainVault,
             depositVault,
             key,
             deposit.account(),
@@ -187,6 +188,7 @@ contract DepositHandler is IDepositHandler, BaseHandler {
         DepositUtils.cancelDeposit(
             dataStore,
             eventEmitter,
+            multichainVault,
             depositVault,
             key,
             msg.sender,

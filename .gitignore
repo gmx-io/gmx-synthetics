@@ -25,5 +25,6 @@ deployments.txt
 .cursorignore*
 
 .idea
+abi
 
 validation

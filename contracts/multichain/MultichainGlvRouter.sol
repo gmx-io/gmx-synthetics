@@ -8,6 +8,8 @@ import "../glv/GlvVault.sol";
 import "./MultichainRouter.sol";
 
 contract MultichainGlvRouter is MultichainRouter {
+    using SafeERC20 for IERC20;
+
     GlvVault public immutable glvVault;
     GlvHandler public immutable glvHandler;
 
@@ -24,26 +26,16 @@ contract MultichainGlvRouter is MultichainRouter {
         RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
-        RelayUtils.TransferRequests calldata transferRequests,
+        TransferRequests calldata transferRequests,
         GlvDepositUtils.CreateGlvDepositParams memory params
-    ) external nonReentrant onlyGelatoRelay returns (bytes32) {
-        _validateDesChainId(relayParams.desChainId);
-        _validateGaslessFeature();
-
+    ) external nonReentrant withRelay(relayParams, account, srcChainId, false) returns (bytes32) {
         bytes32 structHash = RelayUtils.getCreateGlvDepositStructHash(relayParams, transferRequests, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
+        address wnt = TokenUtils.wnt(dataStore);
+        IERC20(wnt).safeTransfer(address(glvVault), params.executionFee);
+
         _processTransferRequests(account, transferRequests, srcChainId);
-
-        return _createGlvDeposit(relayParams, account, srcChainId, params);
-    }
-
-    function _createGlvDeposit(
-        RelayParams calldata relayParams,
-        address account,
-        uint256 srcChainId,
-        GlvDepositUtils.CreateGlvDepositParams memory params
-    ) internal returns (bytes32) {
 
         return glvHandler.createGlvDeposit(account, srcChainId, params);
     }
@@ -52,27 +44,17 @@ contract MultichainGlvRouter is MultichainRouter {
         RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
-        RelayUtils.TransferRequests calldata transferRequests,
+        TransferRequests calldata transferRequests,
         GlvWithdrawalUtils.CreateGlvWithdrawalParams memory params
-    ) external nonReentrant onlyGelatoRelay returns (bytes32) {
-        _validateDesChainId(relayParams.desChainId);
-        _validateGaslessFeature();
-
+    ) external nonReentrant withRelay(relayParams, account, srcChainId, false) returns (bytes32) {
         bytes32 structHash = RelayUtils.getCreateGlvWithdrawalStructHash(relayParams, transferRequests, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
+        address wnt = TokenUtils.wnt(dataStore);
+        IERC20(wnt).safeTransfer(address(glvVault), params.executionFee);
+
         _processTransferRequests(account, transferRequests, srcChainId);
 
-        return _createGlvWithdrawal(relayParams, account, srcChainId, params);
-    }
-
-    function _createGlvWithdrawal(
-        RelayParams calldata relayParams,
-        address account,
-        uint256 srcChainId,
-        GlvWithdrawalUtils.CreateGlvWithdrawalParams memory params
-    ) internal returns (bytes32) {
-
-        return GlvWithdrawalUtils.createGlvWithdrawal(dataStore, eventEmitter, glvVault, account, srcChainId, params);
+        return glvHandler.createGlvWithdrawal(account, srcChainId, params);
     }
 }

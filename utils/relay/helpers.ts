@@ -8,6 +8,7 @@ export type SubaccountApproval = {
   maxAllowedCount: BigNumberish;
   actionType: string;
   nonce: BigNumberish;
+  integrationId: string;
   deadline: BigNumberish;
   signature: string;
 };
@@ -51,6 +52,7 @@ export type RelayParams = {
   fee: FeeParams;
   userNonce: BigNumberish;
   deadline: BigNumberish;
+  desChainId: BigNumberish;
 };
 
 export type CreateOrderParams = {
@@ -190,6 +192,7 @@ export function hashSubaccountApproval(subaccountApproval: SubaccountApproval) {
     "actionType",
     "nonce",
     "deadline",
+    "integrationId",
     "signature",
   ]);
 

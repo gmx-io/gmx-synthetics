@@ -97,7 +97,6 @@ library ExecuteDepositUtils {
         bool balanceWasImproved;
         uint256 marketTokensSupply;
         EventUtils.EventLogData callbackEventData;
-        uint256 refundFeeAmount;
     }
 
     address public constant RECEIVER_FOR_FIRST_DEPOSIT = address(1);
@@ -285,24 +284,22 @@ library ExecuteDepositUtils {
         cache.callbackEventData.uintItems.setItem(0, "receivedMarketTokens", cache.receivedMarketTokens);
         CallbackUtils.afterDepositExecution(params.key, deposit, cache.callbackEventData);
 
-        cache.refundFeeAmount = GasUtils.payExecutionFee(
-            params.dataStore,
-            params.eventEmitter,
-            params.depositVault,
+        GasUtils.payExecutionFee(
+            GasUtils.PayExecutionFeeContracts(
+                params.dataStore,
+                params.eventEmitter,
+                params.multichainVault,
+                params.depositVault
+            ),
             params.key,
             deposit.callbackContract(),
             deposit.executionFee(),
             params.startingGas,
             GasUtils.estimateDepositOraclePriceCount(deposit.longTokenSwapPath().length + deposit.shortTokenSwapPath().length),
             params.keeper,
-            deposit.srcChainId() == 0 ? deposit.receiver() : address(params.multichainVault)
+            deposit.receiver(),
+            deposit.srcChainId()
         );
-
-        // for multichain action, receiver is the multichainVault; increase user's multichain wnt balance for the fee refund
-        if (deposit.srcChainId() != 0 && cache.refundFeeAmount > 0) {
-            address wnt = params.dataStore.getAddress(Keys.WNT);
-            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, wnt, deposit.receiver(), 0); // srcChainId is the current block.chainId
-        }
 
         return cache.receivedMarketTokens;
     }
