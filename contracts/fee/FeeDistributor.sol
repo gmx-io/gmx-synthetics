@@ -610,7 +610,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
             wntForTreasury -
             wntForReferralRewards;
 
-        (wntForGlp, wntForTreasury) = finalizeWntForGlpAndTreasury(
+        (wntForTreasury, wntForGlp) = finalizeWntForTreasuryAndGlp(
             totalWntBalance,
             wntForChainlink,
             wntForTreasury,
@@ -681,11 +681,8 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         if (wntReferralRewardsInUsd > maxWntReferralRewardsInUsd) {
             revert Errors.WntReferralRewardsInUsdThresholdBreached(wntReferralRewardsInUsd, maxWntReferralRewardsInUsd);
         }
-
-        uint256 wntForReferralRewards = Precision.toFactor(
-            wntReferralRewardsInUsd,
-            (getUint(Keys.FEE_DISTRIBUTOR_WNT_PRICE) * Precision.WEI_PRECISION)
-        );
+        uint256 scaledWntPrice = getUint(Keys.FEE_DISTRIBUTOR_WNT_PRICE) * Precision.FLOAT_PRECISION;
+        uint256 wntForReferralRewards = Precision.toFactor(wntReferralRewardsInUsd, scaledWntPrice);
         uint256 maxWntReferralRewards = Precision.applyFactor(totalWntBalance, wntForReferralRewardsThreshold);
         if (wntForReferralRewards > maxWntReferralRewards) {
             revert Errors.ReferralRewardsThresholdBreached(wnt, wntForReferralRewards, maxWntReferralRewards);
@@ -694,7 +691,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         return wntForReferralRewards;
     }
 
-    function finalizeWntForGlpAndTreasury(
+    function finalizeWntForTreasuryAndGlp(
         uint256 totalWntBalance,
         uint256 wntForChainlink,
         uint256 wntForTreasury,
