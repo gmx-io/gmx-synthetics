@@ -3,7 +3,6 @@
 pragma solidity ^0.8.0;
 
 import {GelatoRelayContext} from "@gelatonetwork/relay-context/contracts/GelatoRelayContext.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "../../data/DataStore.sol";
@@ -20,8 +19,6 @@ import "../../token/TokenUtils.sol";
 import "../../gas/GasUtils.sol";
 
 import "./RelayUtils.sol";
-
-address constant GMX_SIMULATION_ORIGIN = address(uint160(uint256(keccak256("GMX SIMULATION ORIGIN"))));
 
 
 /*
@@ -67,25 +64,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         orderHandler = _orderHandler;
         orderVault = _orderVault;
         externalHandler = _externalHandler;
-    }
-
-    function _validateSignature(
-        bytes32 digest,
-        bytes calldata signature,
-        address expectedSigner,
-        string memory signatureType
-    ) internal view {
-        (address recovered, ECDSA.RecoverError error) = ECDSA.tryRecover(digest, signature);
-
-        // allow to optionally skip signature validation for eth_estimateGas / eth_call if tx.origin is GMX_SIMULATION_ORIGIN
-        // do not use address(0) to avoid relays accidentally skipping signature validation if they use address(0) as the origin
-        if (tx.origin == GMX_SIMULATION_ORIGIN) {
-            return;
-        }
-
-        if (error != ECDSA.RecoverError.NoError || recovered != expectedSigner) {
-            revert Errors.InvalidSignature(signatureType);
-        }
     }
 
     function _getContracts() internal view returns (Contracts memory contracts) {
@@ -401,7 +379,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
         bytes32 domainSeparator = RelayUtils.getDomainSeparator(_srcChainId);
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
-        _validateSignature(digest, relayParams.signature, account, "call");
+        RelayUtils.validateSignature(digest, relayParams.signature, account, "call");
 
         _validateNonce(account, relayParams.userNonce);
         _validateDeadline(relayParams.deadline);

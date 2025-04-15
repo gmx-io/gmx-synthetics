@@ -19,7 +19,7 @@ abstract contract MultichainRouter is BaseGelatoRelayRouter {
         MultichainVault multichainVault;
     }
 
-    MultichainVault public multichainVault; // TODO: make immutable (removed temporarily to fix bytecode size issue)
+    MultichainVault public immutable multichainVault;
 
     constructor(
         BaseConstructorParams memory params
