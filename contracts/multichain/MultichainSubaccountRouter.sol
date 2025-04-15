@@ -41,6 +41,7 @@ contract MultichainSubaccountRouter is MultichainRouter {
         );
     }
 
+    // @dev needed to keep `batch` under the stack limit
     function _handleBatch(
         RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
@@ -90,6 +91,7 @@ contract MultichainSubaccountRouter is MultichainRouter {
             );
     }
 
+    // @dev needed to keep `createOrder` under the stack limit
     function _handleCreateOrder(
         RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
