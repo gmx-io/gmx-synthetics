@@ -148,6 +148,11 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       multichainEndpoints: {
         "0x6EDCE65403992e310A62460808c4b910D972f10f": true, // LZ Endpoint
       },
+      srcChainIds: {
+        11155111: true, // Sepolia
+        421614: true, // Arbitrum Sepolia
+        11155420: true, // Optimism Sepolia
+      },
     },
     avalancheFuji: {},
     arbitrum: {
