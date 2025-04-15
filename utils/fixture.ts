@@ -101,6 +101,7 @@ export async function deployFixture() {
   const gelatoRelayRouter = await hre.ethers.getContract("GelatoRelayRouter");
   const subaccountGelatoRelayRouter = await hre.ethers.getContract("SubaccountGelatoRelayRouter");
   const subaccountRouter = await hre.ethers.getContract("SubaccountRouter");
+  const subaccountRouterUtils = await hre.ethers.getContract("SubaccountRouterUtils");
   const multichainSubaccountRouter = await hre.ethers.getContract("MultichainSubaccountRouter");
   const multichainGmRouter = await hre.ethers.getContract("MultichainGmRouter");
   const multichainOrderRouter = await hre.ethers.getContract("MultichainOrderRouter");
@@ -297,6 +298,7 @@ export async function deployFixture() {
       gelatoRelayRouter,
       subaccountGelatoRelayRouter,
       subaccountRouter,
+      subaccountRouterUtils,
       multichainSubaccountRouter,
       multichainGmRouter,
       multichainOrderRouter,
