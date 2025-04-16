@@ -1415,9 +1415,7 @@ describe("MultichainRouter", () => {
         expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq("57600019"); // 57.600019 USD (received from claiming)
       });
 
-      // TODO: withRelay modifier tries to transfer relayFeeAmount from user's multichain balance in the beginning through _handleRelayBeforeAction/_handleRelayFee
-      // => user can't pay fees anymore using the newly claimed tokens
-      it.skip("User receives funding fees in his multichain balance, pays relay fee from newly claimed tokens", async () => {
+      it("User receives funding fees in his multichain balance, pays relay fee from newly claimed tokens", async () => {
         // the user will pay the relay fee from his newly claimed usdc tokens
         const createClaimParams: Parameters<typeof sendClaimFundingFees>[0] = {
           sender: relaySigner,
@@ -1554,8 +1552,7 @@ describe("MultichainRouter", () => {
         ); // 304 USD (received from claiming, relay fee was paid from existing wnt multichain balance)
       });
 
-      // TODO: fix as above
-      it.skip("User receives collateral in his multichain balance, pays relay fee from newly claimed tokens", async () => {
+      it("User receives collateral in his multichain balance, pays relay fee from newly claimed tokens", async () => {
         // the user will pay the relay fee from his newly claimed usdc tokens
         const createClaimParams: Parameters<typeof sendClaimCollateral>[0] = {
           sender: relaySigner,
@@ -1680,8 +1677,7 @@ describe("MultichainRouter", () => {
         ); // $25
       });
 
-      // TODO: fix as above
-      it.skip("Affiliate receives rewards and residual fee in his multichain balance, pays relay fee from newly claimed tokens", async () => {
+      it("Affiliate receives rewards and residual fee in his multichain balance, pays relay fee from newly claimed tokens", async () => {
         expect(
           await dataStore.getUint(keys.affiliateRewardKey(ethUsdMarket.marketToken, usdc.address, user1.address))
         ).to.eq(expandDecimals(25, 6)); // $25
