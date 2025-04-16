@@ -44,14 +44,23 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
+        bool delaySendingTokens,
         bool isSubaccount
     ) {
         WithRelayCache memory cache;
         cache.startingGas = gasleft();
         _validateGaslessFeature();
         cache.contracts = _getContracts();
-        _handleRelayBeforeAction(cache.contracts, relayParams, account, srcChainId, isSubaccount);
+        _handleRelayBeforeAction(relayParams, account, srcChainId, isSubaccount);
+
+        if (!delaySendingTokens) {
+            _handleRelayFee(cache.contracts, relayParams, account, srcChainId, isSubaccount);
+        }
         _;
+        if (delaySendingTokens) {
+            _handleRelayFee(cache.contracts, relayParams, account, srcChainId, isSubaccount);
+        }
+
         _handleRelayAfterAction(cache.contracts, cache.startingGas, account /* residualFeeReceiver */, srcChainId);
     }
 
@@ -176,7 +185,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     }
 
     function _handleRelayBeforeAction(
-        Contracts memory contracts,
         RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
@@ -184,8 +192,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     ) internal withFlexibleOraclePrices(relayParams.oracleParams, srcChainId == 0 /* forAtomicAction */) {
         _handleTokenPermits(relayParams.tokenPermits);
         _handleExternalCalls(account, srcChainId, relayParams.externalCalls, isSubaccount);
-
-        _handleRelayFee(contracts, relayParams, account, srcChainId, isSubaccount);
     }
 
     function _handleExternalCalls(address account, uint256 srcChainId, ExternalCalls calldata externalCalls, bool isSubaccount) internal {
@@ -271,7 +277,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         address account,
         uint256 srcChainId,
         bool isSubaccount
-    ) internal {
+    ) internal withFlexibleOraclePrices(relayParams.oracleParams, srcChainId == 0 /* forAtomicAction */) {
         if (_isGelatoRelay(msg.sender) && _getFeeToken() != contracts.wnt) {
             revert Errors.UnsupportedRelayFeeToken(_getFeeToken(), contracts.wnt);
         }

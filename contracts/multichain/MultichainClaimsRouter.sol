@@ -21,7 +21,7 @@ contract MultichainClaimsRouter is MultichainRouter {
         address[] memory markets,
         address[] memory tokens,
         address receiver
-    ) external nonReentrant withRelay(relayParams, account, srcChainId, false) returns (uint256[] memory) {
+    ) external nonReentrant withRelay(relayParams, account, srcChainId, false, false) returns (uint256[] memory) {
         bytes32 structHash = RelayUtils.getClaimFundingFeesStructHash(relayParams, markets, tokens, receiver);
         _validateCall(relayParams, account, structHash, srcChainId);
         return _claimFundingFees(account, srcChainId, markets, tokens, receiver);
@@ -56,13 +56,13 @@ contract MultichainClaimsRouter is MultichainRouter {
         address[] memory tokens,
         uint256[] memory timeKeys,
         address receiver
-    ) external nonReentrant withRelay(relayParams, account, srcChainId, false) returns (uint256[] memory) {
-        bytes32 structHash = RelayUtils.getClaimCollateralStructHash(relayParams, markets, tokens, timeKeys, receiver);
-        _validateCall(relayParams, account, structHash, srcChainId);
-        return _claimCollateral(account, srcChainId, markets, tokens, timeKeys, receiver);
+    ) external nonReentrant withRelay(relayParams, account, srcChainId, false, false) returns (uint256[] memory) {
+        return _claimCollateral(relayParams, account, srcChainId, markets, tokens, timeKeys, receiver);
     }
 
+    // @dev needed to keep `claimCollateral` under the stack limit
     function _claimCollateral(
+        RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         address[] memory markets,
@@ -70,6 +70,9 @@ contract MultichainClaimsRouter is MultichainRouter {
         uint256[] memory timeKeys,
         address receiver
     ) private returns (uint256[] memory claimedAmounts) {
+        bytes32 structHash = RelayUtils.getClaimCollateralStructHash(relayParams, markets, tokens, timeKeys, receiver);
+        _validateCall(relayParams, account, structHash, srcChainId);
+
         claimedAmounts = MarketUtils.batchClaimCollateral(
             dataStore,
             eventEmitter,
@@ -92,7 +95,7 @@ contract MultichainClaimsRouter is MultichainRouter {
         address[] memory markets,
         address[] memory tokens,
         address receiver
-    ) external nonReentrant withRelay(relayParams, account, srcChainId, false) returns (uint256[] memory) {
+    ) external nonReentrant withRelay(relayParams, account, srcChainId, false, false) returns (uint256[] memory) {
         bytes32 structHash = RelayUtils.getClaimAffiliateRewardsStructHash(relayParams, markets, tokens, receiver);
         _validateCall(relayParams, account, structHash, srcChainId);
         return _claimAffiliateRewards(account, srcChainId, markets, tokens, receiver);

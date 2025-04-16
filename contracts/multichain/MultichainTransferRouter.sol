@@ -29,7 +29,7 @@ contract MultichainTransferRouter is MultichainRouter {
         address account,
         uint256 srcChainId,
         BridgeOutParams calldata params
-    ) external nonReentrant withRelay(relayParams, account, srcChainId, false) {
+    ) external nonReentrant withRelay(relayParams, account, srcChainId, false, false) {
         bytes32 structHash = RelayUtils.getBridgeOutStructHash(relayParams, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 

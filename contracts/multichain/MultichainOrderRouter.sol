@@ -46,7 +46,7 @@ contract MultichainOrderRouter is MultichainRouter {
         address account,
         uint256 srcChainId,
         BatchParams calldata params
-    ) external withRelay(relayParams, account, srcChainId, false) nonReentrant returns (bytes32[] memory) {
+    ) external nonReentrant withRelay(relayParams, account, srcChainId, false, false) returns (bytes32[] memory) {
         bytes32 structHash = RelayUtils.getBatchStructHash(relayParams, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
@@ -66,7 +66,7 @@ contract MultichainOrderRouter is MultichainRouter {
         address account,
         uint256 srcChainId,
         IBaseOrderUtils.CreateOrderParams calldata params
-    ) external nonReentrant withRelay(relayParams, account, srcChainId, false) returns (bytes32) {
+    ) external nonReentrant withRelay(relayParams, account, srcChainId, false, false) returns (bytes32) {
         bytes32 structHash = RelayUtils.getCreateOrderStructHash(relayParams, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
@@ -82,12 +82,22 @@ contract MultichainOrderRouter is MultichainRouter {
         external
         nonReentrant
         handleFeePayment(relayParams, account, srcChainId, params.key)
-        withRelay(relayParams, account, srcChainId, false)
+        withRelay(relayParams, account, srcChainId, false, false)
     {
-        bytes32 structHash = RelayUtils.getUpdateOrderStructHash(relayParams, params);
-        _validateCall(relayParams, account, structHash, srcChainId);
+        _handleUpdateOrder(relayParams, account, srcChainId, params);
 
         _updateOrder(account, params, false);
+    }
+
+    // @dev needed to keep `updateOrder` under the stack limit
+    function _handleUpdateOrder(
+        RelayParams calldata relayParams,
+        address account,
+        uint256 srcChainId,
+        UpdateOrderParams calldata params
+    ) private {
+        bytes32 structHash = RelayUtils.getUpdateOrderStructHash(relayParams, params);
+        _validateCall(relayParams, account, structHash, srcChainId);
     }
 
     function cancelOrder(
@@ -99,11 +109,20 @@ contract MultichainOrderRouter is MultichainRouter {
         external
         nonReentrant
         handleFeePayment(relayParams, account, srcChainId, key)
-        withRelay(relayParams, account, srcChainId, false)
+        withRelay(relayParams, account, srcChainId, false, false)
     {
-        bytes32 structHash = RelayUtils.getCancelOrderStructHash(relayParams, key);
-        _validateCall(relayParams, account, structHash, srcChainId);
+        _handleCancelOrder(relayParams, account, srcChainId, key);
 
         _cancelOrder(account, key);
+    }
+
+    function _handleCancelOrder(
+        RelayParams calldata relayParams,
+        address account,
+        uint256 srcChainId,
+        bytes32 key
+    ) private {
+        bytes32 structHash = RelayUtils.getCancelOrderStructHash(relayParams, key);
+        _validateCall(relayParams, account, structHash, srcChainId);
     }
 }

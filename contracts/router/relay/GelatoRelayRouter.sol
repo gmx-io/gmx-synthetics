@@ -30,7 +30,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         RelayParams calldata relayParams,
         address account,
         BatchParams calldata params
-    ) external nonReentrant withRelay(relayParams, account, 0 /* srcChainId */, false) returns (bytes32[] memory) {
+    ) external nonReentrant withRelay(relayParams, account, 0 /* srcChainId */, false, false) returns (bytes32[] memory) {
         bytes32 structHash = RelayUtils.getBatchStructHash(relayParams, params);
         _validateCall(relayParams, account, structHash, 0 /* srcChainId */);
 
@@ -49,7 +49,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         RelayParams calldata relayParams,
         address account,
         IBaseOrderUtils.CreateOrderParams calldata params
-    ) external nonReentrant withRelay(relayParams, account, 0 /* srcChainId */, false) returns (bytes32) {
+    ) external nonReentrant withRelay(relayParams, account, 0 /* srcChainId */, false, false) returns (bytes32) {
         bytes32 structHash = RelayUtils.getCreateOrderStructHash(relayParams, params);
         _validateCall(relayParams, account, structHash, 0 /* srcChainId */);
 
@@ -67,7 +67,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         RelayParams calldata relayParams,
         address account,
         UpdateOrderParams calldata params
-    ) external nonReentrant withRelay(relayParams, account, 0 /* srcChainId */, false) {
+    ) external nonReentrant withRelay(relayParams, account, 0 /* srcChainId */, false, false) {
         bytes32 structHash = RelayUtils.getUpdateOrderStructHash(relayParams, params);
         _validateCall(relayParams, account, structHash, 0 /* srcChainId */);
 
@@ -83,7 +83,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         RelayParams calldata relayParams,
         address account,
         bytes32 key
-    ) external nonReentrant withRelay(relayParams, account, 0 /* srcChainId */, false) {
+    ) external nonReentrant withRelay(relayParams, account, 0 /* srcChainId */, false, false) {
         bytes32 structHash = RelayUtils.getCancelOrderStructHash(relayParams, key);
         _validateCall(relayParams, account, structHash, 0 /* srcChainId */);
 

@@ -43,7 +43,7 @@ contract MultichainGmRouter is MultichainRouter {
         uint256 srcChainId,
         TransferRequests calldata transferRequests,
         DepositUtils.CreateDepositParams calldata params
-    ) external nonReentrant withRelay(relayParams, account, srcChainId, false) returns (bytes32) {
+    ) external nonReentrant withRelay(relayParams, account, srcChainId, false, false) returns (bytes32) {
         bytes32 structHash = RelayUtils.getCreateDepositStructHash(relayParams, transferRequests, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
@@ -61,7 +61,7 @@ contract MultichainGmRouter is MultichainRouter {
         uint256 srcChainId,
         TransferRequests calldata transferRequests,
         WithdrawalUtils.CreateWithdrawalParams calldata params
-    ) external nonReentrant withRelay(relayParams, account, srcChainId, false) returns (bytes32) {
+    ) external nonReentrant withRelay(relayParams, account, srcChainId, false, false) returns (bytes32) {
         bytes32 structHash = RelayUtils.getCreateWithdrawalStructHash(relayParams, transferRequests, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
@@ -79,7 +79,7 @@ contract MultichainGmRouter is MultichainRouter {
         uint256 srcChainId,
         TransferRequests calldata transferRequests,
         ShiftUtils.CreateShiftParams calldata params
-    ) external nonReentrant withRelay(relayParams, account, srcChainId, false) returns (bytes32) {
+    ) external nonReentrant withRelay(relayParams, account, srcChainId, false, false) returns (bytes32) {
         bytes32 structHash = RelayUtils.getCreateShiftStructHash(relayParams, transferRequests, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
