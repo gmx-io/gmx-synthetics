@@ -37,7 +37,10 @@ contract ConfigTimelockController is TimelockController, OracleModule {
         uint256 value,
         bytes calldata payload,
         OracleUtils.SetPricesParams calldata oracleParams
-    ) external onlyRoleOrOpenRole(EXECUTOR_ROLE) withOraclePricesForAtomicAction(oracleParams) {
+    ) external onlyRoleOrOpenRole(EXECUTOR_ROLE) withOraclePrices(oracleParams) {
+        if (oracle.minTimestamp() <= Chain.currentTimestamp() - dataStore.getUint(Keys.CONFIG_MAX_PRICE_AGE)) {
+            revert Errors.OraclePriceOutdated();
+        }
         execute(target, value, payload, 0, 0);
     }
 
