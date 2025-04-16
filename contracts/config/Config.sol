@@ -561,6 +561,27 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.GELATO_RELAY_FEE_BASE_AMOUNT] = true;
         allowedBaseKeys[Keys.GELATO_RELAY_FEE_MULTIPLIER_FACTOR] = true;
         allowedBaseKeys[Keys.MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT] = true;
+
+        allowedBaseKeys[Keys.MULTICHAIN_READ_CHANNEL] = true;
+        allowedBaseKeys[Keys.MULTICHAIN_PEERS] = true;
+        allowedBaseKeys[Keys.MULTICHAIN_CONFIRMATIONS] = true;
+        allowedBaseKeys[Keys.MULTICHAIN_AUTHORIZED_ORIGINATORS] = true;
+
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_DISTRIBUTION_DAY] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_REFERRAL_REWARDS_WNT_USD_LIMIT] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_CHAIN_ID] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_FACTOR] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_AMOUNT] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_ADDRESS_INFO] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_AMOUNT_THRESHOLD] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_KEEPER_COSTS] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_KEEPER_GLP_FACTOR] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_CHAINLINK_FACTOR] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_BRIDGE_ORIGIN_DEADLINE] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_BRIDGE_DEST_DEADLINE] = true;
     }
 
     function _initAllowedLimitedBaseKeys() internal {
