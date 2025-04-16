@@ -177,10 +177,10 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         }
         subaccountApprovalNonces[account] = storedNonce + 1;
 
-        bytes32 domainSeparator = _getDomainSeparator(block.chainid);
+        bytes32 domainSeparator = RelayUtils.getDomainSeparator(block.chainid);
         bytes32 structHash = RelayUtils.getSubaccountApprovalStructHash(subaccountApproval);
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
-        _validateSignature(digest, subaccountApproval.signature, account, "subaccount approval");
+        RelayUtils.validateSignature(digest, subaccountApproval.signature, account, "subaccount approval");
 
         SubaccountUtils.handleSubaccountApproval(dataStore, eventEmitter, account, subaccountApproval);
     }
