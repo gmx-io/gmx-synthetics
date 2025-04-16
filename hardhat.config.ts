@@ -25,6 +25,8 @@ import "./config";
 import "./utils/test";
 import { updateGlvConfig } from "./scripts/updateGlvConfigUtils";
 import { updateMarketConfig } from "./scripts/updateMarketConfigUtils";
+import { TASK_FLATTEN_GET_DEPENDENCY_GRAPH } from "hardhat/builtin-tasks/task-names";
+import { DependencyGraph } from "hardhat/types";
 
 const getRpcUrl = (network) => {
   const defaultRpcs = {
@@ -312,5 +314,16 @@ task("update-market-config", "Update market config")
   .addParam("write", "Write to the config", false, types.boolean)
   .addOptionalParam("market", "Market address", undefined, types.string)
   .setAction(updateMarketConfig);
+
+task("dependencies", "Print dependencies for a contract")
+  .addPositionalParam("file", "Contract", undefined, types.string)
+  .setAction(async ({ file }: { file: string }, { run }) => {
+    const graph: DependencyGraph = await run(TASK_FLATTEN_GET_DEPENDENCY_GRAPH, { files: [file] });
+    const dependencies = graph.getResolvedFiles().map((value) => {
+      return value.sourceName;
+    });
+    console.log(dependencies);
+    return graph;
+  });
 
 export default config;
