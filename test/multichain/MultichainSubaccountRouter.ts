@@ -182,7 +182,6 @@ describe("MultichainSubaccountRouter", () => {
       await enableSubaccount();
 
       createOrderParams.params.addresses.cancellationReceiver = user2.address;
-      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
       await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(
         errorsContract,
         "InvalidCancellationReceiverForSubaccountOrder"
@@ -332,7 +331,6 @@ describe("MultichainSubaccountRouter", () => {
 
     it("UnexpectedRelayFeeToken", async () => {
       await enableSubaccount();
-      await usdc.connect(user1).approve(router.address, wntAmountBridged);
       createOrderParams.feeParams.feeToken = usdc.address;
       createOrderParams.feeParams.feeAmount = expandDecimals(10, 18);
       await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(
@@ -343,7 +341,6 @@ describe("MultichainSubaccountRouter", () => {
 
     it("UnexpectedRelayFeeTokenAfterSwap", async () => {
       await enableSubaccount();
-      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
       createOrderParams.feeParams.feeSwapPath = [ethUsdMarket.marketToken]; // swap WETH for USDC
       createOrderParams.oracleParams = {
         tokens: [usdc.address, wnt.address],
@@ -363,8 +360,6 @@ describe("MultichainSubaccountRouter", () => {
     });
 
     it("InvalidSubaccountApprovalSubaccount", async () => {
-      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
-
       const subaccountApproval = await getSubaccountApproval({
         subaccountApproval: {
           subaccount: ethers.constants.AddressZero,
@@ -390,8 +385,6 @@ describe("MultichainSubaccountRouter", () => {
     });
 
     it("SubaccountApprovalDeadlinePassed", async () => {
-      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
-
       await expect(
         sendCreateOrder({
           ...createOrderParams,
@@ -442,7 +435,6 @@ describe("MultichainSubaccountRouter", () => {
     });
 
     it("SubaccountNotAuthorized", async () => {
-      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
       await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(
         errorsContract,
         "SubaccountNotAuthorized"
@@ -450,7 +442,6 @@ describe("MultichainSubaccountRouter", () => {
     });
 
     it("MaxSubaccountActionCountExceeded", async () => {
-      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
       await dataStore.addAddress(keys.subaccountListKey(user1.address), user0.address);
       await dataStore.setUint(
         keys.subaccountExpiresAtKey(user1.address, user0.address, keys.SUBACCOUNT_ORDER_ACTION),
@@ -471,7 +462,6 @@ describe("MultichainSubaccountRouter", () => {
     });
 
     it("SubaccountApprovalExpired", async () => {
-      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
       await dataStore.addAddress(keys.subaccountListKey(user1.address), user0.address);
       await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(
         errorsContract,
@@ -509,7 +499,6 @@ describe("MultichainSubaccountRouter", () => {
     });
 
     it("InvalidSubaccountApprovalNonce", async () => {
-      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
       await expect(
         sendCreateOrder({
           ...createOrderParams,
@@ -574,8 +563,6 @@ describe("MultichainSubaccountRouter", () => {
     });
 
     it("updates subaccount approval, max allowed count, and expires at", async () => {
-      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
-
       const subaccountListKey = keys.subaccountListKey(user1.address);
       expect(await dataStore.getAddressCount(subaccountListKey)).to.eq(0);
 
@@ -703,9 +690,6 @@ describe("MultichainSubaccountRouter", () => {
           shortTokenAmount: expandDecimals(10 * 5000, 6),
         },
       });
-
-      await usdc.connect(user1).approve(router.address, expandDecimals(1000, 6));
-      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
 
       await dataStore.setUint(keys.MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT, 0);
       await expect(
@@ -938,7 +922,6 @@ describe("MultichainSubaccountRouter", () => {
 
       // now increase gas limit to 500k so estimated execution fee is not zero
       await dataStore.setUint(keys.increaseOrderGasLimitKey(), 500_000);
-      // await dataStore.setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1));
 
       updateOrderParams.params.key = orderKeys[0];
       await expect(
@@ -1013,13 +996,11 @@ describe("MultichainSubaccountRouter", () => {
 
     it("EmptyOrder", async () => {
       await enableSubaccount();
-      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
       await expect(sendUpdateOrder(updateOrderParams)).to.be.revertedWithCustomError(errorsContract, "EmptyOrder");
     });
 
     it("updates order, sends relay fee, increases execution fee", async () => {
       await enableSubaccount();
-      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
       await sendCreateOrder(createOrderParams);
       const orderKeys = await getOrderKeys(dataStore, 0, 1);
       let order = await reader.getOrder(dataStore.address, orderKeys[0]);
@@ -1156,7 +1137,6 @@ describe("MultichainSubaccountRouter", () => {
 
     it("cancels order and sends relay fee", async () => {
       await enableSubaccount();
-      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
       await sendCreateOrder(createOrderParams);
       const orderKeys = await getOrderKeys(dataStore, 0, 1);
       const gelatoRelayFee = createOrderParams.gelatoRelayFeeAmount;
@@ -1224,7 +1204,6 @@ describe("MultichainSubaccountRouter", () => {
         },
       });
 
-      await usdc.connect(user1).approve(router.address, expandDecimals(1000, 6));
       const wntBalanceBefore = await wnt.balanceOf(user1.address);
       await dataStore.addAddress(keys.subaccountListKey(user1.address), user0.address);
       expect(await dataStore.getAddressCount(keys.subaccountListKey(user1.address))).to.eq(1);
@@ -1260,9 +1239,6 @@ describe("MultichainSubaccountRouter", () => {
       const externalExchange = await deployContract("MockExternalExchange", []);
       await wnt.connect(user1).mint(user1.address, expandDecimals(1, 17));
       await wnt.connect(user1).transfer(externalExchange.address, expandDecimals(1, 17));
-
-      await usdc.connect(user1).approve(router.address, expandDecimals(1000, 6));
-      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
 
       const usdcBalanceBefore = await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address));
       const feeAmount = expandDecimals(10, 6);
