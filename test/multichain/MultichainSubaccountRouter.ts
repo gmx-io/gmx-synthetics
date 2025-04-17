@@ -40,6 +40,7 @@ describe("MultichainSubaccountRouter", () => {
   let reader,
     dataStore,
     router,
+    multichainVault,
     multichainSubaccountRouter,
     ethUsdMarket,
     wnt,
@@ -56,6 +57,9 @@ describe("MultichainSubaccountRouter", () => {
   let createOrderParams: Parameters<typeof sendCreateOrder>[0];
   let enableSubaccount: () => Promise<void>;
 
+  const wntAmountBridged = expandDecimals(1000, 18);
+  const usdcAmountBridged = expandDecimals(10000, 6);
+
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1, user2, user3 } = fixture.accounts);
@@ -63,6 +67,7 @@ describe("MultichainSubaccountRouter", () => {
       reader,
       dataStore,
       router,
+      multichainVault,
       multichainSubaccountRouter,
       ethUsdMarket,
       wnt,
@@ -125,10 +130,10 @@ describe("MultichainSubaccountRouter", () => {
     await dataStore.setBool(keys.isSrcChainIdEnabledKey(chainId), true);
     await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolWnt.address), true);
     await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolWnt.address), true);
-    await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: expandDecimals(1000, 18) });
+    await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: wntAmountBridged });
     await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolUsdc.address), true);
     await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolUsdc.address), true);
-    await mintAndBridge(fixture, { account: user1, token: usdc, tokenAmount: expandDecimals(10000, 6) });
+    await mintAndBridge(fixture, { account: user1, token: usdc, tokenAmount: usdcAmountBridged });
 
     await dataStore.setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1));
     await setNextBlockBaseFeePerGas(expandDecimals(1, 9));
@@ -327,7 +332,7 @@ describe("MultichainSubaccountRouter", () => {
 
     it("UnexpectedRelayFeeToken", async () => {
       await enableSubaccount();
-      await usdc.connect(user1).approve(router.address, expandDecimals(1000, 18));
+      await usdc.connect(user1).approve(router.address, wntAmountBridged);
       createOrderParams.feeParams.feeToken = usdc.address;
       createOrderParams.feeParams.feeAmount = expandDecimals(10, 18);
       await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(
@@ -336,8 +341,7 @@ describe("MultichainSubaccountRouter", () => {
       );
     });
 
-    // TODO: fix for 'InvalidOracleProviderForToken' (SubaccountGelatoRelayRouter is using setPricesForAtomicAction and MultichainSubaccountRouter is using setPrices)
-    it.skip("UnexpectedRelayFeeTokenAfterSwap", async () => {
+    it("UnexpectedRelayFeeTokenAfterSwap", async () => {
       await enableSubaccount();
       await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
       createOrderParams.feeParams.feeSwapPath = [ethUsdMarket.marketToken]; // swap WETH for USDC
@@ -643,6 +647,8 @@ describe("MultichainSubaccountRouter", () => {
       );
 
       expect(await wnt.allowance(user1.address, router.address)).to.eq(0);
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(wntAmountBridged);
+
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, 0);
       const tx = await sendCreateOrder({
         ...createOrderParams,
@@ -650,9 +656,9 @@ describe("MultichainSubaccountRouter", () => {
       });
 
       // allowance was set
-      // TODO: for multichain orders, allowance is not decreased
-      expect(await wnt.allowance(user1.address, router.address)).to.eq(
-        expandDecimals(1, 18) //.sub(collateralDeltaAmount).sub(gelatoRelayFee).sub(expandDecimals(1, 15))
+      expect(await wnt.allowance(user1.address, router.address)).to.eq(expandDecimals(1, 18));
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(
+        wntAmountBridged.sub(collateralDeltaAmount).sub(gelatoRelayFee).sub(expandDecimals(1, 15))
       );
       // relay fee was sent
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, gelatoRelayFee);
@@ -689,8 +695,7 @@ describe("MultichainSubaccountRouter", () => {
       });
     });
 
-    // TODO: fix for 'InvalidOracleProviderForToken'
-    it.skip("MaxRelayFeeSwapForSubaccountExceeded", async () => {
+    it("MaxRelayFeeSwapForSubaccountExceeded", async () => {
       await enableSubaccount();
       await handleDeposit(fixture, {
         create: {
@@ -756,8 +761,7 @@ describe("MultichainSubaccountRouter", () => {
       });
     });
 
-    // TODO: fix for 'InvalidOracleProviderForToken("0xf4B146FbA71F41E0592668ffbF264F1D186b2Ca8", "0x8198f5d8F8CfFE8f9C413d98a0A55aEB8ab9FbB7")'
-    it.skip("swap relay fee", async () => {
+    it("swap relay fee", async () => {
       await enableSubaccount();
       await handleDeposit(fixture, {
         create: {
@@ -772,10 +776,7 @@ describe("MultichainSubaccountRouter", () => {
       await dataStore.setUint(keys.swapFeeFactorKey(ethUsdMarket.marketToken, true), swapFeeFactor);
       await dataStore.setUint(keys.swapFeeFactorKey(ethUsdMarket.marketToken, false), swapFeeFactor);
 
-      await usdc.connect(user1).approve(router.address, expandDecimals(1000, 6));
-      await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
-
-      const usdcBalanceBefore = await usdc.balanceOf(user1.address);
+      const usdcBalanceBefore = await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address));
       const feeAmount = expandDecimals(10, 6);
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, 0);
       createOrderParams.gelatoRelayFeeAmount = expandDecimals(98, 13);
@@ -807,9 +808,8 @@ describe("MultichainSubaccountRouter", () => {
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, createOrderParams.gelatoRelayFeeAmount);
 
       // and user sent correct amount of USDC
-      const usdcBalanceAfter = await usdc.balanceOf(user1.address);
-      // TODO: for multichain user balance is not decreased, instead his multichain balance should
-      // expect(usdcBalanceAfter).eq(usdcBalanceBefore.sub(feeAmount));
+      const usdcBalanceAfter = await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address));
+      expect(usdcBalanceAfter).eq(usdcBalanceBefore.sub(feeAmount));
 
       // check that atomic swap fee was applied
       const txReceipt = await hre.ethers.provider.getTransactionReceipt(tx.hash);
@@ -1028,16 +1028,20 @@ describe("MultichainSubaccountRouter", () => {
       updateOrderParams.feeParams.feeAmount = expandDecimals(3, 15);
       updateOrderParams.params.sizeDeltaUsd = expandDecimals(1000, 30);
 
-      const initialWethBalance = await wnt.balanceOf(user1.address);
+      const initialWethBalanceVault = await wnt.balanceOf(multichainVault.address);
+      const initialWethBalanceUser = await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address));
       const gelatoRelayFee = updateOrderParams.gelatoRelayFeeAmount;
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, gelatoRelayFee);
       updateOrderParams.params.key = orderKeys[0];
       await sendUpdateOrder({ ...updateOrderParams });
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, bigNumberify(gelatoRelayFee).mul(2));
 
+      // multichainVault receives the residual amount
+      await expectBalance(wnt.address, multichainVault.address, initialWethBalanceVault.sub(expandDecimals(1, 15)));
       // user receives the residual amount
-      // TODO: for multichain check user's multichain balance
-      // await expectBalance(wnt.address, user1.address, initialWethBalance.sub(expandDecimals(1, 15)));
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).eq(
+        initialWethBalanceUser.sub(expandDecimals(1, 15))
+      );
       // and the execution fee stays the same
       order = await reader.getOrder(dataStore.address, orderKeys[0]);
       expect(order.numbers.executionFee).eq(expandDecimals(1, 15));
@@ -1045,9 +1049,12 @@ describe("MultichainSubaccountRouter", () => {
       updateOrderParams.params.executionFeeIncrease = expandDecimals(2, 15);
       await sendUpdateOrder({ ...updateOrderParams });
 
+      // multichainVault doesn't receive the residual amount
+      await expectBalance(wnt.address, multichainVault.address, initialWethBalanceVault.sub(expandDecimals(4, 15)));
       // user doesn't receive the residual amount
-      // TODO: for multichain check user's multichain balance
-      // await expectBalance(wnt.address, user1.address, initialWethBalance.sub(expandDecimals(4, 15)));
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).eq(
+        initialWethBalanceUser.sub(expandDecimals(4, 15))
+      );
       // and the execution fee is increased
       order = await reader.getOrder(dataStore.address, orderKeys[0]);
       expect(order.numbers.executionFee).eq(expandDecimals(3, 15));
@@ -1209,8 +1216,7 @@ describe("MultichainSubaccountRouter", () => {
       );
     });
 
-    // TODO: fix for 'InvalidOracleProviderForToken("0xf4B146FbA71F41E0592668ffbF264F1D186b2Ca8", "0x8198f5d8F8CfFE8f9C413d98a0A55aEB8ab9FbB7")'
-    it.skip("removes subaccount with relay fee swap", async () => {
+    it("removes subaccount with relay fee swap", async () => {
       await handleDeposit(fixture, {
         create: {
           longTokenAmount: expandDecimals(10, 18),
@@ -1250,15 +1256,15 @@ describe("MultichainSubaccountRouter", () => {
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, createOrderParams.gelatoRelayFeeAmount);
     });
 
-    // TOOD: confirm externalCalls for multichain
-    it.skip("swap relay fee with external call", async () => {
+    it("swap relay fee with external call", async () => {
       const externalExchange = await deployContract("MockExternalExchange", []);
+      await wnt.connect(user1).mint(user1.address, expandDecimals(1, 17));
       await wnt.connect(user1).transfer(externalExchange.address, expandDecimals(1, 17));
 
       await usdc.connect(user1).approve(router.address, expandDecimals(1000, 6));
       await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
 
-      const usdcBalanceBefore = await usdc.balanceOf(user1.address);
+      const usdcBalanceBefore = await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address));
       const feeAmount = expandDecimals(10, 6);
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, 0);
       const tx = await sendRemoveSubaccount({
@@ -1274,8 +1280,8 @@ describe("MultichainSubaccountRouter", () => {
               expandDecimals(1, 17),
             ]),
           ],
-          refundTokens: [],
-          refundReceivers: [],
+          refundTokens: [wnt.address],
+          refundReceivers: [multichainVault.address],
         },
         feeParams: {
           feeToken: wnt.address,
@@ -1288,7 +1294,7 @@ describe("MultichainSubaccountRouter", () => {
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, params.gelatoRelayFeeAmount);
 
       // and user sent correct amount of USDC
-      const usdcBalanceAfter = await usdc.balanceOf(user1.address);
+      const usdcBalanceAfter = await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address));
       expect(usdcBalanceAfter).eq(usdcBalanceBefore.sub(feeAmount));
 
       await logGasUsage({
