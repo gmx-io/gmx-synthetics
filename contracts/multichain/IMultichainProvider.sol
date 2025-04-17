@@ -15,5 +15,5 @@ interface IMultichainProvider {
         bytes data;
     }
 
-    function bridgeOut(BridgeOutParams memory params) external;
+    function bridgeOut(BridgeOutParams memory params) external returns (uint256);
 }

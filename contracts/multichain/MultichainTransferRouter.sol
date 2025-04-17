@@ -53,12 +53,24 @@ contract MultichainTransferRouter is MultichainRouter {
                 params.amount,
                 srcChainId
             );
+
             TokenUtils.transfer(dataStore, params.token, account, params.amount);
+
+            MultichainEventUtils.emitMultichainBridgeOut(
+                eventEmitter,
+                address(0), // provider
+                params.token,
+                account,
+                params.amount, // amount
+                0 // srcChainId
+            );
         } else {
             // cross-chain withdrawal: using the multichain provider, funds are bridged to the src chain
             MultichainUtils.validateMultichainProvider(dataStore, params.provider);
-            // moves user's funds (amount + bridging fee) from their multichain balance into multichainProvider
-            multichainProvider.bridgeOut(
+
+            // transfer funds (amount + bridging fee) from user's multichain balance to multichainProvider
+            // and execute the bridge out to srcChain
+            uint256 amountOut = multichainProvider.bridgeOut(
                 IMultichainProvider.BridgeOutParams({
                     provider: params.provider,
                     account: account,
@@ -68,15 +80,15 @@ contract MultichainTransferRouter is MultichainRouter {
                     data: params.data
                 })
             );
-        }
 
-        MultichainEventUtils.emitMultichainBridgeOut(
-            eventEmitter,
-            params.provider,
-            params.token,
-            account,
-            params.amount,
-            srcChainId
-        );
+            MultichainEventUtils.emitMultichainBridgeOut(
+                eventEmitter,
+                params.provider,
+                params.token,
+                account,
+                amountOut, // amount
+                srcChainId
+            );
+        }
     }
 }

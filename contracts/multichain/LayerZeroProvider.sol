@@ -107,7 +107,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
      *        - srcChainId: Source chain ID (for multichain balance accounting)
      *        - data: ABI-encoded destination endpoint ID (dstEid)
      */
-    function bridgeOut(IMultichainProvider.BridgeOutParams memory params) external onlyController {
+    function bridgeOut(IMultichainProvider.BridgeOutParams memory params) external onlyController returns (uint256) {
         IStargate stargate = IStargate(params.provider);
 
         (uint256 valueToSend, SendParam memory sendParam, MessagingFee memory messagingFee, OFTReceipt memory receipt) = prepareSend(
@@ -153,7 +153,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             uint256 amount = cache.wntBalanceAfter - cache.wntBalanceBefore;
             TokenUtils.transfer(dataStore, cache.wnt, address(multichainVault), amount);
             MultichainUtils.recordBridgeIn(dataStore, eventEmitter, multichainVault, this, cache.wnt, params.account, amount, 0 /*srcChainId*/); // srcChainId is the current block.chainId
-            return;
+            return 0;
         }
 
         // if Stagrate.token() is the ZeroAddress, amountSentLD was already added to valueToSend and transferred/unwrapped with the bridging fee
@@ -195,6 +195,8 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
                 0 // srcChainId
             );
         }
+
+        return params.amount;
     }
 
     function prepareSend(
