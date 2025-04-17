@@ -369,16 +369,12 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         IERC20(wnt).safeTransfer(residualFeeReceiver, residualFee);
     }
 
-    function _validateCall(RelayParams calldata relayParams, address account, bytes32 structHash, uint256 srcChainId) internal {
+    function _validateCall(RelayParams calldata relayParams, address account, bytes32 structHash, uint256 srcChainId) internal virtual {
         if (relayParams.desChainId != block.chainid) {
             revert Errors.InvalidDestinationChainId(relayParams.desChainId);
         }
 
         uint256 _srcChainId = srcChainId == 0 ? block.chainid : srcChainId;
-
-        if (srcChainId != 0 && !dataStore.getBool(Keys.isSrcChainIdEnabledKey(_srcChainId))) {
-            revert Errors.InvalidSrcChainId(_srcChainId);
-        }
 
         bytes32 domainSeparator = RelayUtils.getDomainSeparator(_srcChainId);
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);

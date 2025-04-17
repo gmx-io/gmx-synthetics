@@ -50,6 +50,18 @@ abstract contract MultichainRouter is BaseGelatoRelayRouter {
         }
     }
 
+    function _validateCall(RelayParams calldata relayParams, address account, bytes32 structHash, uint256 srcChainId) internal override {
+        if (relayParams.tokenPermits.length != 0) {
+            revert Errors.TokenPermitsNotAllowedForMultichain();
+        }
+
+        if (!dataStore.getBool(Keys.isSrcChainIdEnabledKey(srcChainId))) {
+            revert Errors.InvalidSrcChainId(srcChainId);
+        }
+
+        super._validateCall(relayParams, account, structHash, srcChainId);
+    }
+
     function _sendTokens(
         address account,
         address token,
