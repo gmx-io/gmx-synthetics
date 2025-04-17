@@ -172,11 +172,29 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             );
         }
 
-        /*(MessagingReceipt memory msgReceipt, OFTReceipt memory oftReceipt) =*/ stargate.send{ value: valueToSend }(
+        (MessagingReceipt memory msgReceipt, /* OFTReceipt memory oftReceipt */) = stargate.send{ value: valueToSend }(
             sendParam,
             messagingFee,
-            params.account
+            address(this) // refundAddress
         );
+
+        // fee refunds are send back to this contract, converted to wrapped native token,
+        // sent to multichainVault and user's multichain balance is increased
+        if (msgReceipt.fee.nativeFee < messagingFee.nativeFee) {
+            TokenUtils.depositAndSendWrappedNativeToken(
+                dataStore,
+                address(multichainVault), // receiver
+                messagingFee.nativeFee - msgReceipt.fee.nativeFee // refund amount
+            );
+            MultichainUtils.recordTransferIn(
+                dataStore,
+                eventEmitter,
+                multichainVault,
+                cache.wnt, // token
+                params.account,
+                0 // srcChainId
+            );
+        }
     }
 
     function prepareSend(
