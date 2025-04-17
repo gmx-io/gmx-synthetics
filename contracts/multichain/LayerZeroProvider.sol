@@ -33,6 +33,11 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         address wnt;
         uint256 wntBalanceBefore;
         uint256 wntBalanceAfter;
+        uint256 valueToSend;
+        MessagingReceipt msgReceipt;
+        SendParam sendParam;
+        MessagingFee messagingFee;
+        OFTReceipt receipt;
     }
 
     DataStore public immutable dataStore;
@@ -110,7 +115,9 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
     function bridgeOut(IMultichainProvider.BridgeOutParams memory params) external onlyController returns (uint256) {
         IStargate stargate = IStargate(params.provider);
 
-        (uint256 valueToSend, SendParam memory sendParam, MessagingFee memory messagingFee, OFTReceipt memory receipt) = prepareSend(
+        BridgeOutCache memory cache;
+
+        (cache.valueToSend, cache.sendParam, cache.messagingFee, cache.receipt) = prepareSend(
             stargate,
             params.amount,
             params.account,
@@ -118,11 +125,10 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         );
 
         // LZ/Stargate would round down the `amount` to 6 decimals precision / apply path limits
-        params.amount = receipt.amountSentLD;
+        params.amount = cache.receipt.amountSentLD;
 
         IERC20(params.token).approve(params.provider, params.amount);
 
-        BridgeOutCache memory cache;
         cache.wnt = dataStore.getAddress(Keys.WNT);
 
         // transferOut bridging fee amount of wnt from user's multichain balance into this contract
@@ -133,7 +139,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             cache.wnt, // token
             params.account,
             address(this), // receiver
-            valueToSend, // bridge out fee
+            cache.valueToSend, // bridge out fee
             params.srcChainId
         );
 
@@ -143,7 +149,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             dataStore,
             cache.wnt,
             address(this), // receiver
-            valueToSend // amount
+            cache.valueToSend // amount
         );
         cache.wntBalanceAfter = IERC20(cache.wnt).balanceOf(address(this));
 
@@ -172,19 +178,19 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             );
         }
 
-        (MessagingReceipt memory msgReceipt, /* OFTReceipt memory oftReceipt */) = stargate.send{ value: valueToSend }(
-            sendParam,
-            messagingFee,
+        (cache.msgReceipt, /* OFTReceipt memory oftReceipt */) = stargate.send{ value: cache.valueToSend }(
+            cache.sendParam,
+            cache.messagingFee,
             address(this) // refundAddress
         );
 
         // fee refunds are send back to this contract, converted to wrapped native token,
         // sent to multichainVault and user's multichain balance is increased
-        if (msgReceipt.fee.nativeFee < messagingFee.nativeFee) {
+        if (cache.msgReceipt.fee.nativeFee < cache.messagingFee.nativeFee) {
             TokenUtils.depositAndSendWrappedNativeToken(
                 dataStore,
                 address(multichainVault), // receiver
-                messagingFee.nativeFee - msgReceipt.fee.nativeFee // refund amount
+                cache.messagingFee.nativeFee - cache.msgReceipt.fee.nativeFee // refund amount
             );
             MultichainUtils.recordTransferIn(
                 dataStore,
