@@ -119,8 +119,8 @@ library MultichainUtils {
             revert Errors.InsufficientMultichainBalance(account, token, balance, amount);
         }
 
-        multichainVault.transferOut(token, receiver, amount);
         dataStore.decrementUint(Keys.multichainBalanceKey(account, token), amount);
+        multichainVault.transferOut(token, receiver, amount);
         MultichainEventUtils.emitMultichainTransferOut(eventEmitter, token, account, receiver, amount, srcChainId);
     }
 
