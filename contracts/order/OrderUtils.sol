@@ -176,9 +176,9 @@ library OrderUtils {
         uint256 executionFee;
         (executionFee, cache.executionFeeDiff) = GasUtils.validateAndCapExecutionFee(
             dataStore,
-            GasUtils.estimateExecuteOrderGasLimit(dataStore, order), // estimatedGasLimit
+            cache.estimatedGasLimit,
             params.numbers.executionFee,
-            GasUtils.estimateOrderOraclePriceCount(params.addresses.swapPath.length), // oraclePriceCount
+            cache.oraclePriceCount,
             shouldCapMaxExecutionFee
         );
         order.setExecutionFee(executionFee);
