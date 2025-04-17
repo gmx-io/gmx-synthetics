@@ -290,6 +290,9 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
             _sendTokens(account, relayParams.fee.feeToken, address(contracts.orderVault), relayParams.fee.feeAmount, srcChainId);
             RelayUtils.swapFeeTokens(contracts, eventEmitter, oracle, relayParams.fee);
+            for (uint256 i = 0; i < relayParams.fee.feeSwapPath.length - 1; i++) {
+                MarketUtils.validateMarketTokenBalance(contracts.dataStore, relayParams.fee.feeSwapPath[i]);
+            }
         } else if (relayParams.fee.feeToken == contracts.wnt) {
             // fee tokens could be sent through external calls
             // in this case feeAmount could be 0 and there is no need to call _sendTokens
