@@ -181,7 +181,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         address account,
         uint256 srcChainId,
         bool isSubaccount
-    ) internal withFlexibleOraclePrices(relayParams.oracleParams, srcChainId == 0 /* forAtomicAction */) {
+    ) internal withOraclePricesForAtomicAction(relayParams.oracleParams) {
         _handleTokenPermits(relayParams.tokenPermits);
         _handleExternalCalls(account, srcChainId, relayParams.externalCalls, isSubaccount);
 
