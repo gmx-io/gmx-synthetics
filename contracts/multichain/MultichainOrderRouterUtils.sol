@@ -123,12 +123,6 @@ library MultichainOrderRouterUtils {
             cache.positionCollateralAmount - cache.unpaidAmount
         );
 
-        if (
-            contracts.oracle.minTimestamp() + contracts.dataStore.getUint(Keys.RELAY_MAX_PRICE_AGE) <
-            Chain.currentTimestamp()
-        ) {
-            revert Errors.RelayPriceOutdated();
-        }
         cache.market = MarketStoreUtils.get(contracts.dataStore, order.market());
         cache.prices = MarketUtils.getMarketPrices(
             contracts.oracle,
