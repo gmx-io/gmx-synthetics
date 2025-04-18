@@ -24,5 +24,6 @@ declare module "hardhat/types/runtime" {
       getVaultV1: () => Promise<VaultV1Config>;
       getBuyback: () => Promise<BuybackConfig>;
     };
+    deployTags: string;
   }
 }
