@@ -4,6 +4,8 @@ pragma solidity ^0.8.0;
 
 import "../data/DataStore.sol";
 
+import "../multichain/MultichainUtils.sol";
+
 import "./WithdrawalVault.sol";
 import "./WithdrawalStoreUtils.sol";
 import "./WithdrawalEventUtils.sol";
@@ -35,6 +37,7 @@ library ExecuteWithdrawalUtils {
     struct ExecuteWithdrawalParams {
         DataStore dataStore;
         EventEmitter eventEmitter;
+        MultichainVault multichainVault;
         WithdrawalVault withdrawalVault;
         Oracle oracle;
         bytes32 key;
@@ -154,16 +157,20 @@ library ExecuteWithdrawalUtils {
         );
 
         GasUtils.payExecutionFee(
-            params.dataStore,
-            params.eventEmitter,
-            params.withdrawalVault,
+            GasUtils.PayExecutionFeeContracts(
+                params.dataStore,
+                params.eventEmitter,
+                params.multichainVault,
+                params.withdrawalVault
+            ),
             params.key,
             withdrawal.callbackContract(),
             withdrawal.executionFee(),
             params.startingGas,
             cache.oraclePriceCount,
             params.keeper,
-            withdrawal.receiver()
+            withdrawal.receiver(),
+            withdrawal.srcChainId()
         );
 
         return cache.result;
@@ -193,7 +200,7 @@ library ExecuteWithdrawalUtils {
             params.dataStore,
             market.marketToken,
             cache.longTokenOutputAmount,
-            false, // forPositiveImpact
+            false, // balanceWasImproved
             withdrawal.uiFeeReceiver(),
             params.swapPricingType
         );
@@ -221,7 +228,7 @@ library ExecuteWithdrawalUtils {
             params.dataStore,
             market.marketToken,
             cache.shortTokenOutputAmount,
-            false, // forPositiveImpact
+            false, // balanceWasImproved
             withdrawal.uiFeeReceiver(),
             params.swapPricingType
         );
@@ -294,9 +301,9 @@ library ExecuteWithdrawalUtils {
             cache.longTokenOutputAmount,
             withdrawal.longTokenSwapPath(),
             withdrawal.minLongTokenAmount(),
-            withdrawal.receiver(),
+            withdrawal.srcChainId() == 0 ? withdrawal.receiver() : address(params.multichainVault),
             withdrawal.uiFeeReceiver(),
-            withdrawal.shouldUnwrapNativeToken()
+            withdrawal.srcChainId() == 0 ? withdrawal.shouldUnwrapNativeToken() : false
         );
 
         (result.secondaryOutputToken, result.secondaryOutputAmount) = _swap(
@@ -306,10 +313,16 @@ library ExecuteWithdrawalUtils {
             cache.shortTokenOutputAmount,
             withdrawal.shortTokenSwapPath(),
             withdrawal.minShortTokenAmount(),
-            withdrawal.receiver(),
+            withdrawal.srcChainId() == 0 ? withdrawal.receiver() : address(params.multichainVault),
             withdrawal.uiFeeReceiver(),
-            withdrawal.shouldUnwrapNativeToken()
+            withdrawal.srcChainId() == 0 ? withdrawal.shouldUnwrapNativeToken() : false
         );
+
+        // for multichain action, receiver is the multichainVault; increase user's multichain balances
+        if (withdrawal.srcChainId() != 0) {
+            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, result.outputToken, withdrawal.receiver(), 0); // srcChainId is the current block.chainId
+            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, result.secondaryOutputToken, withdrawal.receiver(), 0); // srcChainId is the current block.chainId
+        }
 
         SwapPricingUtils.emitSwapFeesCollected(
             params.eventEmitter,

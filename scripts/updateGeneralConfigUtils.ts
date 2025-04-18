@@ -9,6 +9,7 @@ import {
   appendBoolConfigIfDifferent,
 } from "../utils/config";
 import * as keys from "../utils/keys";
+import { encodeData } from "../utils/hash";
 
 const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig }) => {
   await handleConfig(
@@ -18,6 +19,36 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
     oracleConfig.chainlinkPaymentToken,
     `chainlinkPaymentToken`
   );
+
+  if (network.name != "hardhat") {
+    for (const [multichainProvider, enabled] of Object.entries(generalConfig.multichainProviders)) {
+      await handleConfig(
+        "bool",
+        keys.IS_MULTICHAIN_PROVIDER_ENABLED,
+        encodeData(["address"], [multichainProvider]),
+        enabled,
+        `multichainProvider ${multichainProvider}`
+      );
+    }
+    for (const [multichainEndpoint, enabled] of Object.entries(generalConfig.multichainEndpoints)) {
+      await handleConfig(
+        "bool",
+        keys.IS_MULTICHAIN_ENDPOINT_ENABLED,
+        encodeData(["address"], [multichainEndpoint]),
+        enabled,
+        `multichainEndpoint ${multichainEndpoint}`
+      );
+    }
+    for (const [srcChainId, enabled] of Object.entries(generalConfig.srcChainIds)) {
+      await handleConfig(
+        "bool",
+        keys.IS_SRC_CHAIN_ID_ENABLED,
+        encodeData(["uint"], [srcChainId]),
+        enabled,
+        `srcChainId ${srcChainId}`
+      );
+    }
+  }
 
   await handleConfig(
     "uint",
@@ -276,19 +307,19 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
   }
 
   await handleConfig(
-    "bool",
-    keys.IGNORE_OPEN_INTEREST_FOR_USAGE_FACTOR,
-    "0x",
-    generalConfig.ignoreOpenInterestForUsageFactor,
-    `ignoreOpenInterestForUsageFactor`
-  );
-
-  await handleConfig(
     "uint",
     keys.MAX_EXECUTION_FEE_MULTIPLIER_FACTOR,
     "0x",
     generalConfig.maxExecutionFeeMultiplierFactor,
     `maxExecutionFeeMultiplierFactor`
+  );
+
+  await handleConfig(
+    "uint",
+    keys.ORACLE_PROVIDER_MIN_CHANGE_DELAY,
+    "0x",
+    generalConfig.oracleProviderMinChangeDelay,
+    `oracleProviderMinChangeDelay`
   );
 
   await handleConfig("uint", keys.GELATO_RELAY_FEE_BASE_AMOUNT, "0x", generalConfig.gelatoRelayFeeBaseAmount);
@@ -400,6 +431,22 @@ export async function updateGeneralConfig({ write }) {
   }
 
   try {
+    if (!["hardhat"].includes(hre.network.name)) {
+      const { roles } = await hre.gmx.getRoles();
+      const configKeeper = Object.keys(roles.CONFIG_KEEPER)[0];
+      if (!configKeeper) {
+        throw new Error("No config keeper found");
+      }
+      await hre.deployments.read(
+        "Config",
+        {
+          from: configKeeper,
+        },
+        "multicall",
+        multicallWriteParams
+      );
+    }
+
     if (!write) {
       ({ write } = await prompts({
         type: "confirm",
@@ -412,9 +459,6 @@ export async function updateGeneralConfig({ write }) {
       const tx = await config.multicall(multicallWriteParams);
       console.log(`tx sent: ${tx.hash}`);
     } else {
-      await config.callStatic.multicall(multicallWriteParams, {
-        from: "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745",
-      });
       console.log("NOTE: executed in read-only mode, no transactions were sent");
     }
   } catch (ex) {

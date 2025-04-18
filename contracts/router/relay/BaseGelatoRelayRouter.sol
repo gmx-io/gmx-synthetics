@@ -3,7 +3,6 @@
 pragma solidity ^0.8.0;
 
 import {GelatoRelayContext} from "@gelatonetwork/relay-context/contracts/GelatoRelayContext.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "../../data/DataStore.sol";
@@ -14,50 +13,49 @@ import "../../oracle/OracleModule.sol";
 import "../../order/IBaseOrderUtils.sol";
 import "../../order/OrderStoreUtils.sol";
 import "../../order/OrderVault.sol";
+import "../../router/BaseRouter.sol";
 import "../../router/Router.sol";
 import "../../token/TokenUtils.sol";
 import "../../gas/GasUtils.sol";
 
 import "./RelayUtils.sol";
 
-address constant GMX_SIMULATION_ORIGIN = address(uint160(uint256(keccak256("GMX SIMULATION ORIGIN"))));
 
-abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, OracleModule {
+/*
+ * For gasless actions the funds are deducted from account.
+ * Account must have enough funds to pay fees, regardless of the recipient's balance.
+ */
+abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, OracleModule, BaseRouter {
     using Order for Order.Props;
     using SafeERC20 for IERC20;
 
     IOrderHandler public immutable orderHandler;
     OrderVault public immutable orderVault;
-    Router public immutable router;
-    DataStore public immutable dataStore;
-    EventEmitter public immutable eventEmitter;
     IExternalHandler public immutable externalHandler;
 
-    bytes32 public constant DOMAIN_SEPARATOR_TYPEHASH =
-        keccak256(bytes("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"));
-
-    bytes32 public constant DOMAIN_SEPARATOR_NAME_HASH = keccak256(bytes("GmxBaseGelatoRelayRouter"));
-    bytes32 public constant DOMAIN_SEPARATOR_VERSION_HASH = keccak256(bytes("1"));
-
     mapping(address => uint256) public userNonces;
+
+    struct WithRelayCache {
+        uint256 startingGas;
+        Contracts contracts;
+    }
 
     modifier withRelay(
         RelayParams calldata relayParams,
         address account,
+        uint256 srcChainId,
         bool isSubaccount
     ) {
-        uint256 startingGas = gasleft();
+        WithRelayCache memory cache;
+        cache.startingGas = gasleft();
         _validateGaslessFeature();
-        Contracts memory contracts = _getContracts();
-        _handleRelayBeforeAction(contracts, relayParams, account, isSubaccount);
+        cache.contracts = _getContracts();
+        _handleRelayBeforeAction(cache.contracts, relayParams, account, srcChainId, isSubaccount);
         _;
-        _handleRelayAfterAction(contracts, startingGas, account);
+        _handleRelayAfterAction(cache.contracts, cache.startingGas, account /* residualFeeReceiver */, srcChainId);
     }
 
     constructor(
-        Router _router,
-        DataStore _dataStore,
-        EventEmitter _eventEmitter,
         Oracle _oracle,
         IOrderHandler _orderHandler,
         OrderVault _orderVault,
@@ -65,29 +63,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     ) OracleModule(_oracle) {
         orderHandler = _orderHandler;
         orderVault = _orderVault;
-        router = _router;
-        dataStore = _dataStore;
-        eventEmitter = _eventEmitter;
         externalHandler = _externalHandler;
-    }
-
-    function _validateSignature(
-        bytes32 digest,
-        bytes calldata signature,
-        address expectedSigner,
-        string memory signatureType
-    ) internal view {
-        (address recovered, ECDSA.RecoverError error) = ECDSA.tryRecover(digest, signature);
-
-        // allow to optionally skip signature validation for eth_estimateGas / eth_call if tx.origin is GMX_SIMULATION_ORIGIN
-        // do not use address(0) to avoid relays accidentally skipping signature validation if they use address(0) as the origin
-        if (tx.origin == GMX_SIMULATION_ORIGIN) {
-            return;
-        }
-
-        if (error != ECDSA.RecoverError.NoError || recovered != expectedSigner) {
-            revert Errors.InvalidSignature(signatureType);
-        }
     }
 
     function _getContracts() internal view returns (Contracts memory contracts) {
@@ -98,6 +74,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
     function _batch(
         address account,
+        uint256 srcChainId,
         IBaseOrderUtils.CreateOrderParams[] calldata createOrderParamsList,
         UpdateOrderParams[] calldata updateOrderParamsList,
         bytes32[] calldata cancelOrderKeys,
@@ -110,7 +87,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
         bytes32[] memory orderKeys = new bytes32[](createOrderParamsList.length);
         for (uint256 i = 0; i < createOrderParamsList.length; i++) {
-            orderKeys[i] = _createOrder(account, createOrderParamsList[i], isSubaccount);
+            orderKeys[i] = _createOrder(account, srcChainId, createOrderParamsList[i], isSubaccount);
         }
 
         for (uint256 i = 0; i < updateOrderParamsList.length; i++) {
@@ -126,6 +103,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
     function _createOrder(
         address account,
+        uint256 srcChainId,
         IBaseOrderUtils.CreateOrderParams calldata params,
         bool isSubaccount
     ) internal returns (bytes32) {
@@ -144,12 +122,13 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
                 account,
                 params.addresses.initialCollateralToken,
                 address(contracts.orderVault),
-                params.numbers.initialCollateralDeltaAmount
+                params.numbers.initialCollateralDeltaAmount,
+                srcChainId
             );
         }
 
         return
-            orderHandler.createOrder(account, params, isSubaccount && params.addresses.callbackContract != address(0));
+            orderHandler.createOrder(account, srcChainId, params, isSubaccount && params.addresses.callbackContract != address(0));
     }
 
     function _updateOrder(address account, UpdateOrderParams calldata params, bool isSubaccount) internal {
@@ -200,15 +179,16 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         Contracts memory contracts,
         RelayParams calldata relayParams,
         address account,
+        uint256 srcChainId,
         bool isSubaccount
     ) internal withOraclePricesForAtomicAction(relayParams.oracleParams) {
         _handleTokenPermits(relayParams.tokenPermits);
-        _handleExternalCalls(account, relayParams.externalCalls, isSubaccount);
+        _handleExternalCalls(account, srcChainId, relayParams.externalCalls, isSubaccount);
 
-        _handleRelayFee(contracts, relayParams, account, isSubaccount);
+        _handleRelayFee(contracts, relayParams, account, srcChainId, isSubaccount);
     }
 
-    function _handleExternalCalls(address account, ExternalCalls calldata externalCalls, bool isSubaccount) internal {
+    function _handleExternalCalls(address account, uint256 srcChainId, ExternalCalls calldata externalCalls, bool isSubaccount) internal {
         if (externalCalls.externalCallTargets.length == 0) {
             return;
         }
@@ -225,7 +205,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         }
 
         for (uint256 i = 0; i < externalCalls.sendTokens.length; i++) {
-            _sendTokens(account, externalCalls.sendTokens[i], address(externalHandler), externalCalls.sendAmounts[i]);
+            _sendTokens(account, externalCalls.sendTokens[i], address(externalHandler), externalCalls.sendAmounts[i], srcChainId);
         }
 
         externalHandler.makeExternalCalls(
@@ -234,6 +214,24 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             externalCalls.refundTokens,
             externalCalls.refundReceivers
         );
+
+        _recordRefundedAmounts(
+            account,
+            srcChainId,
+            externalCalls.refundTokens,
+            externalCalls.refundReceivers
+        );
+    }
+
+    function _recordRefundedAmounts(
+        address account,
+        uint256 srcChainId,
+        address[] calldata refundTokens,
+        address[] calldata refundReceivers
+    ) internal virtual {
+        // intended to be overridden for multichain actions
+        // where the refundReceiver is always the multichainVault
+        // and user's `account` multichain balance is increased by the refunded amount
     }
 
     function _handleTokenPermits(TokenPermit[] calldata tokenPermits) internal {
@@ -271,6 +269,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         Contracts memory contracts,
         RelayParams calldata relayParams,
         address account,
+        uint256 srcChainId,
         bool isSubaccount
     ) internal {
         if (_isGelatoRelay(msg.sender) && _getFeeToken() != contracts.wnt) {
@@ -289,13 +288,13 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
                 }
             }
 
-            _sendTokens(account, relayParams.fee.feeToken, address(contracts.orderVault), relayParams.fee.feeAmount);
+            _sendTokens(account, relayParams.fee.feeToken, address(contracts.orderVault), relayParams.fee.feeAmount, srcChainId);
             RelayUtils.swapFeeTokens(contracts, eventEmitter, oracle, relayParams.fee);
         } else if (relayParams.fee.feeToken == contracts.wnt) {
             // fee tokens could be sent through external calls
             // in this case feeAmount could be 0 and there is no need to call _sendTokens
             if (relayParams.fee.feeAmount != 0) {
-                _sendTokens(account, relayParams.fee.feeToken, address(this), relayParams.fee.feeAmount);
+                _sendTokens(account, relayParams.fee.feeToken, address(this), relayParams.fee.feeAmount, srcChainId);
             }
         } else {
             revert Errors.UnexpectedRelayFeeToken(relayParams.fee.feeToken, contracts.wnt);
@@ -325,7 +324,8 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     function _handleRelayAfterAction(
         Contracts memory contracts,
         uint256 startingGas,
-        address residualFeeReceiver
+        address residualFeeReceiver,
+        uint256 srcChainId
     ) internal {
         bool isSponsoredCall = !_isGelatoRelay(msg.sender);
         uint256 residualFeeAmount = ERC20(contracts.wnt).balanceOf(address(this));
@@ -350,32 +350,36 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
         residualFeeAmount -= relayFee;
         if (residualFeeAmount > 0) {
-            IERC20(contracts.wnt).safeTransfer(residualFeeReceiver, residualFeeAmount);
+            _transferResidualFee(contracts.wnt, residualFeeReceiver, residualFeeAmount, residualFeeReceiver /* account */, srcChainId);
         }
     }
 
-    function _sendTokens(address account, address token, address receiver, uint256 amount) internal {
+    function _sendTokens(address account, address token, address receiver, uint256 amount, uint256 /*srcChainId*/) internal virtual {
+        // srcChainId not used here, but necessary when overriding _sendTokens in MultichainRouter
         AccountUtils.validateReceiver(receiver);
         router.pluginTransfer(token, account, receiver, amount);
     }
 
-    function _getDomainSeparator(uint256 sourceChainId) internal view returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    DOMAIN_SEPARATOR_TYPEHASH,
-                    DOMAIN_SEPARATOR_NAME_HASH,
-                    DOMAIN_SEPARATOR_VERSION_HASH,
-                    sourceChainId,
-                    address(this)
-                )
-            );
+    // for multichain actions, the residual fee is send back to MultichainVault and user's multichain balance is increased
+    function _transferResidualFee(address wnt, address residualFeeReceiver, uint256 residualFee, address /*account*/, uint256 /*srcChainId*/) internal virtual {
+        // account and srcChainId not used here, but necessary when overriding _transferResidualFee in MultichainRouter
+        IERC20(wnt).safeTransfer(residualFeeReceiver, residualFee);
     }
 
-    function _validateCall(RelayParams calldata relayParams, address account, bytes32 structHash) internal {
-        bytes32 domainSeparator = _getDomainSeparator(block.chainid);
+    function _validateCall(RelayParams calldata relayParams, address account, bytes32 structHash, uint256 srcChainId) internal {
+        if (relayParams.desChainId != block.chainid) {
+            revert Errors.InvalidDestinationChainId(relayParams.desChainId);
+        }
+
+        uint256 _srcChainId = srcChainId == 0 ? block.chainid : srcChainId;
+
+        if (srcChainId != 0 && !dataStore.getBool(Keys.isSrcChainIdEnabledKey(_srcChainId))) {
+            revert Errors.InvalidSrcChainId(_srcChainId);
+        }
+
+        bytes32 domainSeparator = RelayUtils.getDomainSeparator(_srcChainId);
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
-        _validateSignature(digest, relayParams.signature, account, "call");
+        RelayUtils.validateSignature(digest, relayParams.signature, account, "call");
 
         _validateNonce(account, relayParams.userNonce);
         _validateDeadline(relayParams.deadline);
