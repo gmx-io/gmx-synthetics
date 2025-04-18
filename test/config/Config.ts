@@ -220,6 +220,11 @@ describe("Config", () => {
         type: "Uint",
       },
       {
+        key: keys.MAX_ATOMIC_ORACLE_PRICE_AGE,
+        initial: 3600,
+        type: "Uint",
+      },
+      {
         key: keys.MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR,
         initial: decimalToFloat(5, 1),
         type: "Uint",
