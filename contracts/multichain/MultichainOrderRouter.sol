@@ -10,15 +10,15 @@ contract MultichainOrderRouter is MultichainRouter {
 
     // @dev must be placed before withRelay modifier because
     // user's multichain balance must be topped-up before _handleRelayFee transfers the feeAmount
-    modifier handleFeePayment(
+    modifier transferFeeFromOrderOrPosition(
         RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         bytes32 orderKey
     ) {
         // top-up user's multichain balance from order/position collateral if user's multichain balance is insufficient to pay fees
-        MultichainOrderRouterUtils.handleFeePayment(
-            MultichainOrderRouterUtils.HandleFeePaymentContracts({
+        MultichainOrderRouterUtils.transferFeeFromOrderOrPosition(
+            MultichainOrderRouterUtils.TransferFeeFromOrderOrPositionContracts({
                 dataStore: dataStore,
                 eventEmitter: eventEmitter,
                 multichainVault: multichainVault,
@@ -81,7 +81,7 @@ contract MultichainOrderRouter is MultichainRouter {
     )
         external
         nonReentrant
-        handleFeePayment(relayParams, account, srcChainId, params.key)
+        transferFeeFromOrderOrPosition(relayParams, account, srcChainId, params.key)
         withRelay(relayParams, account, srcChainId, false)
     {
         bytes32 structHash = RelayUtils.getUpdateOrderStructHash(relayParams, params);
@@ -98,7 +98,7 @@ contract MultichainOrderRouter is MultichainRouter {
     )
         external
         nonReentrant
-        handleFeePayment(relayParams, account, srcChainId, key)
+        transferFeeFromOrderOrPosition(relayParams, account, srcChainId, key)
         withRelay(relayParams, account, srcChainId, false)
     {
         bytes32 structHash = RelayUtils.getCancelOrderStructHash(relayParams, key);

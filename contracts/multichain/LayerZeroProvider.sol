@@ -77,6 +77,9 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         if (token == address(0x0)) {
             // `from` is StargatePoolNative
             TokenUtils.depositAndSendWrappedNativeToken(dataStore, address(multichainVault), amountLD);
+
+            // if token is ETH then we need to use WNT
+            token = TokenUtils.wnt(dataStore);
         } else {
             // `from` is e.g. StargatePoolUSDC
             TokenUtils.transfer(dataStore, token, address(multichainVault), amountLD);

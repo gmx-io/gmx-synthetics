@@ -13,7 +13,7 @@ const STARGATE_USDC = "0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590"; // Sepolia
 const STARGATE_POOL_USDC = "0x4985b8fcEA3659FD801a5b857dA1D00e985863F0"; // Sepolia
 // ArbitrumSepolia
 const DST_EID = 40231; // ArbitrumSepolia
-const LAYERZERO_PROVIDER = "0xa132826C0D28f6626534b1Ca6fD7b2c32dd289e5"; // ArbitrumSepolia
+const LAYERZERO_PROVIDER = "0x66734a4b4aA1F99beF007a4C6d0B86BA3e24d5f3"; // ArbitrumSepolia
 
 async function prepareSend(
   amount: number | string | BigNumber,
