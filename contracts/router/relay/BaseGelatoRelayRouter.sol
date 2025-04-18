@@ -369,19 +369,36 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         IERC20(wnt).safeTransfer(residualFeeReceiver, residualFee);
     }
 
-    function _validateCall(RelayParams calldata relayParams, address account, bytes32 structHash, uint256 srcChainId) internal virtual {
+    function _validateCall(RelayParams calldata relayParams, address account, bytes32 structHash, uint256 srcChainId) internal {
         if (relayParams.desChainId != block.chainid) {
             revert Errors.InvalidDestinationChainId(relayParams.desChainId);
         }
 
-        uint256 _srcChainId = srcChainId == 0 ? block.chainid : srcChainId;
+        if (_isMultichain()) {
+            // multichain
+            if (relayParams.tokenPermits.length != 0) {
+                revert Errors.TokenPermitsNotAllowedForMultichain();
+            }
+            if (!dataStore.getBool(Keys.isSrcChainIdEnabledKey(srcChainId))) {
+                revert Errors.InvalidSrcChainId(srcChainId);
+            }
+        } else {
+            // gasless
+            if (srcChainId != block.chainid) {
+                revert Errors.InvalidSrcChainId(srcChainId);
+            }
+        }
 
-        bytes32 domainSeparator = RelayUtils.getDomainSeparator(_srcChainId);
+        bytes32 domainSeparator = RelayUtils.getDomainSeparator(srcChainId);
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
         RelayUtils.validateSignature(digest, relayParams.signature, account, "call");
 
         _validateNonce(account, relayParams.userNonce);
         _validateDeadline(relayParams.deadline);
+    }
+
+    function _isMultichain() internal pure virtual returns (bool) {
+        return false;
     }
 
     function _validateDeadline(uint256 deadline) internal view {

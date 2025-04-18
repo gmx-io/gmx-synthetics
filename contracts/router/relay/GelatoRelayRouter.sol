@@ -32,7 +32,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         BatchParams calldata params
     ) external nonReentrant withRelay(relayParams, account, 0 /* srcChainId */, false) returns (bytes32[] memory) {
         bytes32 structHash = RelayUtils.getBatchStructHash(relayParams, params);
-        _validateCall(relayParams, account, structHash, 0 /* srcChainId */);
+        _validateCall(relayParams, account, structHash, block.chainid /* srcChainId */);
 
         return _batch(
             account,
@@ -51,7 +51,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         IBaseOrderUtils.CreateOrderParams calldata params
     ) external nonReentrant withRelay(relayParams, account, 0 /* srcChainId */, false) returns (bytes32) {
         bytes32 structHash = RelayUtils.getCreateOrderStructHash(relayParams, params);
-        _validateCall(relayParams, account, structHash, 0 /* srcChainId */);
+        _validateCall(relayParams, account, structHash, block.chainid /* srcChainId */);
 
         return
             _createOrder(
@@ -69,7 +69,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         UpdateOrderParams calldata params
     ) external nonReentrant withRelay(relayParams, account, 0 /* srcChainId */, false) {
         bytes32 structHash = RelayUtils.getUpdateOrderStructHash(relayParams, params);
-        _validateCall(relayParams, account, structHash, 0 /* srcChainId */);
+        _validateCall(relayParams, account, structHash, block.chainid /* srcChainId */);
 
         _updateOrder(
             account,
@@ -85,7 +85,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         bytes32 key
     ) external nonReentrant withRelay(relayParams, account, 0 /* srcChainId */, false) {
         bytes32 structHash = RelayUtils.getCancelOrderStructHash(relayParams, key);
-        _validateCall(relayParams, account, structHash, 0 /* srcChainId */);
+        _validateCall(relayParams, account, structHash, block.chainid /* srcChainId */);
 
         _cancelOrder(account, key);
     }
