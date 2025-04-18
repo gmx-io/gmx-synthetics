@@ -32,6 +32,10 @@ contract MultichainTransferRouter is MultichainRouter {
         );
     }
 
+    /*
+     * Bridge out funds recorded under the account
+     * Can be used for same-chain or cross-chain withdrawals
+     */
     function bridgeOut(
         RelayParams calldata relayParams,
         address account,
@@ -42,6 +46,18 @@ contract MultichainTransferRouter is MultichainRouter {
         _validateCall(relayParams, account, structHash, srcChainId);
 
         _bridgeOut(account, srcChainId, params);
+    }
+
+    /*
+     * Bridge out funds recorded under the account OR the smart wallet
+     * Can be used for same-chain withdrawals only
+     * This would be used by the smart wallets to withdraw funds from the multichain vault
+     */
+    function transferOut(
+        BridgeOutParams calldata params
+    ) external nonReentrant {
+        address account = msg.sender;
+        _bridgeOut(account, block.chainid, params);
     }
 
     function _bridgeOut(
