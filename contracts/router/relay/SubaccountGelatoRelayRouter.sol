@@ -2,11 +2,9 @@
 
 pragma solidity ^0.8.0;
 
-import "../../order/IBaseOrderUtils.sol";
 import "../../router/Router.sol";
-import "../../feature/FeatureUtils.sol";
-import "../../subaccount/SubaccountUtils.sol";
 import "./BaseGelatoRelayRouter.sol";
+import "./SubaccountRouterUtils.sol";
 
 contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     mapping(address => uint256) public subaccountApprovalNonces;
@@ -44,7 +42,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         _validateCall(relayParams, subaccount, vars.structHash, 0 /* srcChainId */);
 
         for (uint256 i = 0; i < params.createOrderParamsList.length; i++) {
-            _validateCreateOrderParams(account, params.createOrderParamsList[i]);
+            SubaccountRouterUtils.validateCreateOrderParams(account, params.createOrderParamsList[i]);
         }
 
         vars.actionsCount = params.createOrderParamsList.length +
@@ -63,19 +61,6 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         );
     }
 
-    function _validateCreateOrderParams(
-        address account,
-        IBaseOrderUtils.CreateOrderParams calldata params
-    ) internal pure {
-        if (params.addresses.receiver != account) {
-            revert Errors.InvalidReceiver(params.addresses.receiver);
-        }
-
-        if (params.addresses.cancellationReceiver != address(0) && params.addresses.cancellationReceiver != account) {
-            revert Errors.InvalidCancellationReceiverForSubaccountOrder(params.addresses.cancellationReceiver, account);
-        }
-    }
-
     // @note all params except subaccount should be part of the corresponding struct hash
     function createOrder(
         RelayParams calldata relayParams,
@@ -86,7 +71,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     ) external nonReentrant withRelay(relayParams, account, 0 /* srcChainId */, true) returns (bytes32) {
         bytes32 structHash = RelayUtils.getCreateOrderStructHash(relayParams, subaccountApproval, account, params);
         _validateCall(relayParams, subaccount, structHash, 0 /* srcChainId */);
-        _validateCreateOrderParams(account, params);
+        SubaccountRouterUtils.validateCreateOrderParams(account, params);
         _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, 1, subaccountApproval);
 
         return
@@ -150,38 +135,18 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         bytes32 actionType,
         uint256 actionsCount,
         SubaccountApproval calldata subaccountApproval
-    ) internal {
-        FeatureUtils.validateFeature(dataStore, Keys.subaccountFeatureDisabledKey(address(this)));
-
-        _handleSubaccountApproval(account, subaccountApproval);
-
-        SubaccountUtils.handleSubaccountAction(dataStore, eventEmitter, account, subaccount, actionType, actionsCount);
-    }
-
-    function _handleSubaccountApproval(address account, SubaccountApproval calldata subaccountApproval) internal {
-        if (subaccountApproval.signature.length == 0) {
-            return;
-        }
-
-        if (subaccountApproval.subaccount == address(0)) {
-            revert Errors.InvalidSubaccountApprovalSubaccount();
-        }
-
-        if (block.timestamp > subaccountApproval.deadline) {
-            revert Errors.SubaccountApprovalDeadlinePassed(block.timestamp, subaccountApproval.deadline);
-        }
-
+    ) private {
         uint256 storedNonce = subaccountApprovalNonces[account];
-        if (storedNonce != subaccountApproval.nonce) {
-            revert Errors.InvalidSubaccountApprovalNonce(storedNonce, subaccountApproval.nonce);
-        }
+        SubaccountRouterUtils.handleSubaccountAction(
+            dataStore,
+            eventEmitter,
+            account,
+            subaccount,
+            actionType,
+            actionsCount,
+            subaccountApproval,
+            storedNonce
+        );
         subaccountApprovalNonces[account] = storedNonce + 1;
-
-        bytes32 domainSeparator = RelayUtils.getDomainSeparator(block.chainid);
-        bytes32 structHash = RelayUtils.getSubaccountApprovalStructHash(subaccountApproval);
-        bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
-        RelayUtils.validateSignature(digest, subaccountApproval.signature, account, "subaccount approval");
-
-        SubaccountUtils.handleSubaccountApproval(dataStore, eventEmitter, account, subaccountApproval);
     }
 }

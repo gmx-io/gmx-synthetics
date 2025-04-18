@@ -62,6 +62,7 @@ export async function sendCreateOrder(p: {
   signature?: string;
   userNonce?: BigNumberish;
   deadline: BigNumberish;
+  srcChainId?: BigNumberish; // for non-multichain actions, srcChainId is 0
   desChainId: BigNumberish;
   relayRouter: ethers.Contract;
   chainId: BigNumberish;
@@ -81,13 +82,22 @@ export async function sendCreateOrder(p: {
     });
   }
 
-  const createOrderCalldata = p.relayRouter.interface.encodeFunctionData("createOrder", [
-    { ...relayParams, signature },
-    subaccountApproval,
-    p.account,
-    p.subaccount,
-    p.params,
-  ]);
+  const createOrderCalldata = p.srcChainId
+    ? p.relayRouter.interface.encodeFunctionData("createOrder", [
+        { ...relayParams, signature },
+        subaccountApproval,
+        p.account,
+        p.srcChainId,
+        p.subaccount,
+        p.params,
+      ])
+    : p.relayRouter.interface.encodeFunctionData("createOrder", [
+        { ...relayParams, signature },
+        subaccountApproval,
+        p.account,
+        p.subaccount,
+        p.params,
+      ]);
   return sendRelayTransaction({
     calldata: createOrderCalldata,
     ...p,
@@ -147,6 +157,7 @@ export async function sendUpdateOrder(p: {
     executionFeeIncrease: BigNumberish;
   };
   deadline: BigNumberish;
+  srcChainId?: BigNumberish; // for non-multichain actions, srcChainId is 0
   desChainId: BigNumberish;
   userNonce?: BigNumberish;
   relayRouter: ethers.Contract;
@@ -166,13 +177,22 @@ export async function sendUpdateOrder(p: {
       verifyingContract: p.relayRouter.address,
     });
   }
-  const updateOrderCalldata = p.relayRouter.interface.encodeFunctionData("updateOrder", [
-    { ...relayParams, signature },
-    subaccountApproval,
-    p.account,
-    p.subaccount,
-    p.params,
-  ]);
+  const updateOrderCalldata = p.srcChainId
+    ? p.relayRouter.interface.encodeFunctionData("updateOrder", [
+        { ...relayParams, signature },
+        subaccountApproval,
+        p.account,
+        p.srcChainId,
+        p.subaccount,
+        p.params,
+      ])
+    : p.relayRouter.interface.encodeFunctionData("updateOrder", [
+        { ...relayParams, signature },
+        subaccountApproval,
+        p.account,
+        p.subaccount,
+        p.params,
+      ]);
   return sendRelayTransaction({
     calldata: updateOrderCalldata,
     ...p,
@@ -264,6 +284,7 @@ export async function sendCancelOrder(p: {
   chainId: BigNumberish;
   account: string;
   deadline: BigNumberish;
+  srcChainId?: BigNumberish; // for non-multichain actions, srcChainId is 0
   desChainId: BigNumberish;
   userNonce?: BigNumberish;
   relayRouter: ethers.Contract;
@@ -283,13 +304,22 @@ export async function sendCancelOrder(p: {
       verifyingContract: p.relayRouter.address,
     });
   }
-  const cancelOrderCalldata = p.relayRouter.interface.encodeFunctionData("cancelOrder", [
-    { ...relayParams, signature },
-    subaccountApproval,
-    p.account,
-    p.subaccount,
-    p.key,
-  ]);
+  const cancelOrderCalldata = p.srcChainId
+    ? p.relayRouter.interface.encodeFunctionData("cancelOrder", [
+        { ...relayParams, signature },
+        subaccountApproval,
+        p.account,
+        p.srcChainId,
+        p.subaccount,
+        p.key,
+      ])
+    : p.relayRouter.interface.encodeFunctionData("cancelOrder", [
+        { ...relayParams, signature },
+        subaccountApproval,
+        p.account,
+        p.subaccount,
+        p.key,
+      ]);
   return sendRelayTransaction({
     calldata: cancelOrderCalldata,
     ...p,
@@ -374,6 +404,7 @@ export async function sendRemoveSubaccount(p: {
   chainId: BigNumberish;
   account: string;
   deadline: BigNumberish;
+  srcChainId?: BigNumberish; // for non-multichain actions, srcChainId is 0
   desChainId: BigNumberish;
   userNonce?: BigNumberish;
   relayRouter: ethers.Contract;
@@ -388,11 +419,18 @@ export async function sendRemoveSubaccount(p: {
     signature = await getRemoveSubaccountSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
   }
 
-  const createOrderCalldata = p.relayRouter.interface.encodeFunctionData("removeSubaccount", [
-    { ...relayParams, signature },
-    p.account,
-    p.subaccount,
-  ]);
+  const createOrderCalldata = p.srcChainId
+    ? p.relayRouter.interface.encodeFunctionData("removeSubaccount", [
+        { ...relayParams, signature },
+        p.account,
+        p.srcChainId,
+        p.subaccount,
+      ])
+    : p.relayRouter.interface.encodeFunctionData("removeSubaccount", [
+        { ...relayParams, signature },
+        p.account,
+        p.subaccount,
+      ]);
   return sendRelayTransaction({
     calldata: createOrderCalldata,
     ...p,
@@ -439,6 +477,7 @@ export async function sendBatch(p: {
   createOrderParamsList: CreateOrderParams[];
   updateOrderParamsList: UpdateOrderParams[];
   chainId: BigNumberish;
+  srcChainId?: BigNumberish; // for non-multichain actions, srcChainId is 0
   desChainId: BigNumberish;
   account: string;
   deadline: BigNumberish;
@@ -466,17 +505,30 @@ export async function sendBatch(p: {
       verifyingContract: p.relayRouter.address,
     });
   }
-  const batchCalldata = p.relayRouter.interface.encodeFunctionData("batch", [
-    { ...relayParams, signature },
-    subaccountApproval,
-    p.account,
-    p.subaccount,
-    {
-      createOrderParamsList: p.createOrderParamsList,
-      updateOrderParamsList: p.updateOrderParamsList,
-      cancelOrderKeys: p.cancelOrderKeys,
-    },
-  ]);
+  const batchCalldata = p.srcChainId
+    ? p.relayRouter.interface.encodeFunctionData("batch", [
+        { ...relayParams, signature },
+        subaccountApproval,
+        p.account,
+        p.srcChainId,
+        p.subaccount,
+        {
+          createOrderParamsList: p.createOrderParamsList,
+          updateOrderParamsList: p.updateOrderParamsList,
+          cancelOrderKeys: p.cancelOrderKeys,
+        },
+      ])
+    : p.relayRouter.interface.encodeFunctionData("batch", [
+        { ...relayParams, signature },
+        subaccountApproval,
+        p.account,
+        p.subaccount,
+        {
+          createOrderParamsList: p.createOrderParamsList,
+          updateOrderParamsList: p.updateOrderParamsList,
+          cancelOrderKeys: p.cancelOrderKeys,
+        },
+      ]);
   return sendRelayTransaction({
     calldata: batchCalldata,
     ...p,
