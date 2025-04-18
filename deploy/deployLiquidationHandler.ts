@@ -1,5 +1,5 @@
 import { grantRoleIfNotGranted } from "../utils/role";
-import { createDeployFunction } from "../utils/deploy";
+import { createDeployFunction, skipHandlerFunction } from "../utils/deploy";
 
 const constructorContracts = [
   "RoleStore",
@@ -11,9 +11,10 @@ const constructorContracts = [
   "SwapHandler",
   "ReferralStorage",
 ];
+const contractName = "LiquidationHandler";
 
 const func = createDeployFunction({
-  contractName: "LiquidationHandler",
+  contractName: contractName,
   dependencyNames: constructorContracts,
   getDeployArgs: async ({ dependencyContracts }) => {
     return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
@@ -24,8 +25,6 @@ const func = createDeployFunction({
   },
 });
 
-func.skip = async () => {
-  return process.env.SKIP_HANDLER_DEPLOYMENTS ? true : false;
-};
+func.skip = skipHandlerFunction(contractName);
 
 export default func;
