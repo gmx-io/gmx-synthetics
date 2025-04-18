@@ -21,7 +21,15 @@ contract MultichainTransferRouter is MultichainRouter {
      * this would be used to move user's funds from their Arbitrum account into their multichain balance
      */
     function bridgeIn(address account, address token, uint256 srcChainId) external payable nonReentrant {
-        MultichainUtils.recordTransferIn(dataStore, eventEmitter, multichainVault, token, account, srcChainId);
+        uint256 amount = MultichainUtils.recordTransferIn(dataStore, eventEmitter, multichainVault, token, account, srcChainId);
+        MultichainEventUtils.emitMultichainBridgeIn(
+            eventEmitter,
+            address(0),
+            token,
+            account,
+            amount,
+            0 // srcChainId
+        );
     }
 
     function bridgeOut(
