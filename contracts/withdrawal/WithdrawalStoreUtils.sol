@@ -273,6 +273,10 @@ library WithdrawalStoreUtils {
         dataStore.removeBool(
             keccak256(abi.encode(key, SHOULD_UNWRAP_NATIVE_TOKEN))
         );
+
+        dataStore.removeBytes32Array(
+            keccak256(abi.encode(key, DATA_LIST))
+        );
     }
 
     function getWithdrawalCount(DataStore dataStore) internal view returns (uint256) {

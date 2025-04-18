@@ -50,6 +50,10 @@ abstract contract MultichainRouter is BaseGelatoRelayRouter {
         }
     }
 
+    function _isMultichain() internal pure override returns (bool) {
+        return true;
+    }
+
     function _sendTokens(
         address account,
         address token,

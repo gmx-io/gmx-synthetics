@@ -697,8 +697,6 @@ library PositionUtils {
             cache.priceImpactAmount = Calc.roundUpMagnitudeDivision(cache.priceImpactUsd, indexTokenPrice.min);
         }
 
-        cache.baseSizeDeltaInTokens;
-
         if (params.position.isLong()) {
             // round the number of tokens for long positions down
             cache.baseSizeDeltaInTokens = params.order.sizeDeltaUsd() / indexTokenPrice.max;

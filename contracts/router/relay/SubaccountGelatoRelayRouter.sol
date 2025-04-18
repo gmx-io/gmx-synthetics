@@ -39,7 +39,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     ) external nonReentrant withRelay(relayParams, account, 0 /* srcChainId */, true) returns (bytes32[] memory) {
         BatchVars memory vars;
         vars.structHash = RelayUtils.getBatchStructHash(relayParams, subaccountApproval, account, params);
-        _validateCall(relayParams, subaccount, vars.structHash, 0 /* srcChainId */);
+        _validateCall(relayParams, subaccount, vars.structHash, block.chainid /* srcChainId */);
 
         for (uint256 i = 0; i < params.createOrderParamsList.length; i++) {
             SubaccountRouterUtils.validateCreateOrderParams(account, params.createOrderParamsList[i]);
@@ -70,7 +70,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         IBaseOrderUtils.CreateOrderParams calldata params
     ) external nonReentrant withRelay(relayParams, account, 0 /* srcChainId */, true) returns (bytes32) {
         bytes32 structHash = RelayUtils.getCreateOrderStructHash(relayParams, subaccountApproval, account, params);
-        _validateCall(relayParams, subaccount, structHash, 0 /* srcChainId */);
+        _validateCall(relayParams, subaccount, structHash, block.chainid /* srcChainId */);
         SubaccountRouterUtils.validateCreateOrderParams(account, params);
         _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, 1, subaccountApproval);
 
@@ -92,7 +92,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         UpdateOrderParams calldata params
     ) external nonReentrant withRelay(relayParams, account, 0 /* srcChainId */, true) {
         bytes32 structHash = RelayUtils.getUpdateOrderStructHash(relayParams, subaccountApproval, account, params);
-        _validateCall(relayParams, subaccount, structHash, 0 /* srcChainId */);
+        _validateCall(relayParams, subaccount, structHash, block.chainid /* srcChainId */);
         _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, 1, subaccountApproval);
 
         _updateOrder(
@@ -111,7 +111,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         bytes32 key
     ) external nonReentrant withRelay(relayParams, account, 0 /* srcChainId */, true) {
         bytes32 structHash = RelayUtils.getCancelOrderStructHash(relayParams, subaccountApproval, account, key);
-        _validateCall(relayParams, subaccount, structHash, 0 /* srcChainId */);
+        _validateCall(relayParams, subaccount, structHash, block.chainid /* srcChainId */);
         _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, 1, subaccountApproval);
         _cancelOrder(account, key);
     }
@@ -124,7 +124,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     ) external nonReentrant withRelay(relayParams, account, 0 /* srcChainId */, false) {
         // isSubaccount=false is passed to `withRelay` modifier because this action is signed by the main account
         bytes32 structHash = RelayUtils.getRemoveSubaccountStructHash(relayParams, subaccount);
-        _validateCall(relayParams, account, structHash, 0 /* srcChainId */);
+        _validateCall(relayParams, account, structHash, block.chainid /* srcChainId */);
 
         SubaccountUtils.removeSubaccount(dataStore, eventEmitter, account, subaccount);
     }

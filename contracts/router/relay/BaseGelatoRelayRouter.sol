@@ -290,6 +290,9 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
             _sendTokens(account, relayParams.fee.feeToken, address(contracts.orderVault), relayParams.fee.feeAmount, srcChainId);
             RelayUtils.swapFeeTokens(contracts, eventEmitter, oracle, relayParams.fee);
+            for (uint256 i = 0; i < relayParams.fee.feeSwapPath.length - 1; i++) {
+                MarketUtils.validateMarketTokenBalance(contracts.dataStore, relayParams.fee.feeSwapPath[i]);
+            }
         } else if (relayParams.fee.feeToken == contracts.wnt) {
             // fee tokens could be sent through external calls
             // in this case feeAmount could be 0 and there is no need to call _sendTokens
@@ -371,18 +374,31 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             revert Errors.InvalidDestinationChainId(relayParams.desChainId);
         }
 
-        uint256 _srcChainId = srcChainId == 0 ? block.chainid : srcChainId;
-
-        if (srcChainId != 0 && !dataStore.getBool(Keys.isSrcChainIdEnabledKey(_srcChainId))) {
-            revert Errors.InvalidSrcChainId(_srcChainId);
+        if (_isMultichain()) {
+            // multichain
+            if (relayParams.tokenPermits.length != 0) {
+                revert Errors.TokenPermitsNotAllowedForMultichain();
+            }
+            if (!dataStore.getBool(Keys.isSrcChainIdEnabledKey(srcChainId))) {
+                revert Errors.InvalidSrcChainId(srcChainId);
+            }
+        } else {
+            // gasless
+            if (srcChainId != block.chainid) {
+                revert Errors.InvalidSrcChainId(srcChainId);
+            }
         }
 
-        bytes32 domainSeparator = RelayUtils.getDomainSeparator(_srcChainId);
+        bytes32 domainSeparator = RelayUtils.getDomainSeparator(srcChainId);
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
         RelayUtils.validateSignature(digest, relayParams.signature, account, "call");
 
         _validateNonce(account, relayParams.userNonce);
         _validateDeadline(relayParams.deadline);
+    }
+
+    function _isMultichain() internal pure virtual returns (bool) {
+        return false;
     }
 
     function _validateDeadline(uint256 deadline) internal view {
