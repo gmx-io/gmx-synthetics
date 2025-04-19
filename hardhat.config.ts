@@ -24,6 +24,7 @@ import "./config";
 import "./utils/test";
 import { updateGlvConfig } from "./scripts/updateGlvConfigUtils";
 import { updateMarketConfig } from "./scripts/updateMarketConfigUtils";
+import { collectDeployments } from "./scripts/collectDeployments";
 
 const getRpcUrl = (network) => {
   const defaultRpcs = {
@@ -286,5 +287,7 @@ task("deploy", "Deploy contracts", async (taskArgs, env, runSuper) => {
   }
   await runSuper();
 });
+
+task("collect-deployments", "Collect current deployments into the docs folder").setAction(collectDeployments);
 
 export default config;
