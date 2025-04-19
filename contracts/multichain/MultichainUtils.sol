@@ -99,6 +99,7 @@ library MultichainUtils {
      * @param account the account for which the multichain balance is decreased
      * @param receiver the account to transfer to
      * @param amount the amount of tokens to transfer
+     * @param srcChainId the source chain id
      */
     function transferOut(
         DataStore dataStore,

@@ -13,6 +13,7 @@ library GlvWithdrawal {
     // @param addresses address values
     // @param numbers number values
     // @param flags boolean values
+    // @param _dataList a list of bytes32 values that can be used for additional data
     struct Props {
         Addresses addresses;
         Numbers numbers;
@@ -20,12 +21,12 @@ library GlvWithdrawal {
         bytes32[] _dataList;
     }
 
-     // @param account The account to withdraw for.
-     // @param receiver The address that will receive the withdrawn tokens.
-     // @param callbackContract The contract that will be called back.
-     // @param uiFeeReceiver The ui fee receiver.
-     // @param market The market on which the withdrawal will be executed.
-     // @param glv
+    // @param account The account to withdraw for.
+    // @param receiver The address that will receive the withdrawn tokens.
+    // @param callbackContract The contract that will be called back.
+    // @param uiFeeReceiver The ui fee receiver.
+    // @param market The market on which the withdrawal will be executed.
+    // @param glv
     struct Addresses {
         address glv;
         address market;
@@ -37,11 +38,12 @@ library GlvWithdrawal {
         address[] shortTokenSwapPath;
     }
 
-     // @param glvTokenAmount The amount of market tokens that will be withdrawn.
-     // @param minLongTokenAmount The minimum amount of long tokens that must be withdrawn.
-     // @param minShortTokenAmount The minimum amount of short tokens that must be withdrawn.
-     // @param executionFee The execution fee for the withdrawal.
-     // @param callbackGasLimit The gas limit for calling the callback contract.
+    // @param glvTokenAmount The amount of market tokens that will be withdrawn.
+    // @param minLongTokenAmount The minimum amount of long tokens that must be withdrawn.
+    // @param minShortTokenAmount The minimum amount of short tokens that must be withdrawn.
+    // @param executionFee The execution fee for the withdrawal.
+    // @param callbackGasLimit The gas limit for calling the callback contract.
+    // @param srcChainId The source chain id.
     struct Numbers {
         uint256 glvTokenAmount;
         uint256 minLongTokenAmount;
