@@ -215,7 +215,7 @@ contract GlpMigrator is ReentrancyGuard, RoleModule {
 
             cache.depositKey = depositHandler.createDeposit(
                 account,
-                0, // srcChainId
+                0, // srcChainId is the current block.chainId
                 depositParams
             );
 

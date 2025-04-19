@@ -87,7 +87,7 @@ library ExecuteGlvDepositUtils {
             GlvToken(payable(glvDeposit.glv())).mint(glvDeposit.receiver(), cache.mintAmount);
         } else {
             GlvToken(payable(glvDeposit.glv())).mint(address(params.multichainVault), cache.mintAmount);
-            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, glvDeposit.glv(), glvDeposit.receiver(), glvDeposit.srcChainId());
+            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, glvDeposit.glv(), glvDeposit.receiver(), 0); // srcChainId is the current block.chainId
         }
 
 
@@ -203,7 +203,7 @@ library ExecuteGlvDepositUtils {
                 updatedAtTime: glvDeposit.updatedAtTime(),
                 executionFee: 0,
                 callbackGasLimit: 0,
-                srcChainId: 0
+                srcChainId: 0 // srcChainId is the current block.chainId
             }),
             Deposit.Flags({shouldUnwrapNativeToken: false}),
             new bytes32[](0) // dataList
@@ -224,7 +224,7 @@ library ExecuteGlvDepositUtils {
                 params.startingGas,
                 ISwapPricingUtils.SwapPricingType.Deposit,
                 true, // includeVirtualInventoryImpact
-                0 // srcChainId
+                0 // srcChainId is the current block.chainId
             );
 
         uint256 receivedMarketTokens = ExecuteDepositUtils.executeDeposit(executeDepositParams, deposit);

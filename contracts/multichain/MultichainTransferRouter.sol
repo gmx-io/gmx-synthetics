@@ -28,7 +28,7 @@ contract MultichainTransferRouter is MultichainRouter {
             token,
             account,
             amount,
-            0 // srcChainId
+            0 // srcChainId is the current block.chainId
         );
     }
 
@@ -86,7 +86,7 @@ contract MultichainTransferRouter is MultichainRouter {
                 params.token,
                 account,
                 params.amount, // amount
-                0 // srcChainId
+                0 // srcChainId is the current block.chainId
             );
         } else {
             // cross-chain withdrawal: using the multichain provider, funds are bridged to the src chain
