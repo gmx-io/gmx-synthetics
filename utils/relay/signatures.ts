@@ -38,6 +38,7 @@ export async function getCreateOrderSignature({
       { name: "shouldUnwrapNativeToken", type: "bool" },
       { name: "autoCancel", type: "bool" },
       { name: "referralCode", type: "bytes32" },
+      { name: "dataList", type: "bytes32[]" },
       { name: "relayParams", type: "bytes32" },
       { name: "subaccountApproval", type: "bytes32" },
     ],
@@ -73,6 +74,7 @@ export async function getCreateOrderSignature({
     shouldUnwrapNativeToken: params.shouldUnwrapNativeToken,
     autoCancel: false,
     referralCode: params.referralCode,
+    dataList: params.dataList,
     relayParams: hashRelayParams(relayParams),
     subaccountApproval: subaccountApproval ? hashSubaccountApproval(subaccountApproval) : ethers.constants.HashZero,
   };
@@ -122,6 +124,7 @@ export async function getBatchSignature({
       { name: "shouldUnwrapNativeToken", type: "bool" },
       { name: "autoCancel", type: "bool" },
       { name: "referralCode", type: "bytes32" },
+      { name: "dataList", type: "bytes32[]" },
     ],
     CreateOrderAddresses: [
       { name: "receiver", type: "address" },
@@ -170,6 +173,7 @@ export async function getBatchSignature({
       shouldUnwrapNativeToken: p.shouldUnwrapNativeToken,
       autoCancel: false,
       referralCode: p.referralCode,
+      dataList: p.dataList,
     })),
     updateOrderParamsList: updateOrderParamsList.map((p) => ({
       key: p.key,
