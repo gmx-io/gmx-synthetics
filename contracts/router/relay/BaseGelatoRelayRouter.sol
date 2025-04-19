@@ -52,7 +52,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         cache.contracts = _getContracts();
         _handleRelayBeforeAction(cache.contracts, relayParams, account, srcChainId, isSubaccount);
         _;
-        _handleRelayAfterAction(cache.contracts, cache.startingGas, account /* residualFeeReceiver */, srcChainId);
+        _handleRelayAfterAction(cache.contracts, cache.startingGas, account, srcChainId);
     }
 
     constructor(
@@ -327,7 +327,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     function _handleRelayAfterAction(
         Contracts memory contracts,
         uint256 startingGas,
-        address residualFeeReceiver,
+        address account,
         uint256 srcChainId
     ) internal {
         bool isSponsoredCall = !_isGelatoRelay(msg.sender);
@@ -353,7 +353,8 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
         residualFeeAmount -= relayFee;
         if (residualFeeAmount > 0) {
-            _transferResidualFee(contracts.wnt, residualFeeReceiver, residualFeeAmount, residualFeeReceiver /* account */, srcChainId);
+            // residual fee is sent back to the account
+            _transferResidualFee(contracts.wnt, account, residualFeeAmount, srcChainId);
         }
     }
 
@@ -364,9 +365,9 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     }
 
     // for multichain actions, the residual fee is send back to MultichainVault and user's multichain balance is increased
-    function _transferResidualFee(address wnt, address residualFeeReceiver, uint256 residualFee, address /*account*/, uint256 /*srcChainId*/) internal virtual {
-        // account and srcChainId not used here, but necessary when overriding _transferResidualFee in MultichainRouter
-        IERC20(wnt).safeTransfer(residualFeeReceiver, residualFee);
+    function _transferResidualFee(address wnt, address account, uint256 residualFee, uint256 /*srcChainId*/) internal virtual {
+        // srcChainId is used when overriding _transferResidualFee in MultichainRouter
+        IERC20(wnt).safeTransfer(account, residualFee);
     }
 
     function _validateCall(RelayParams calldata relayParams, address account, bytes32 structHash, uint256 srcChainId) internal {
