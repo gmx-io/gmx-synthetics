@@ -539,7 +539,7 @@ describe("MultichainRouter", () => {
     });
 
     describe("createGlvDeposit", () => {
-      it("creates glvDeposit and sends relayer fee", async () => {
+      it("creates glvDeposit with GM tokens and sends relayer fee", async () => {
         await sendCreateDeposit(createDepositParams); // leaves the residualFee (i.e. executionfee) of 0.004 ETH fee in multichainVault/user's multichain balance
         await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: feeAmount }); // add additional fee to user1's multichain balance
         await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
@@ -572,6 +572,37 @@ describe("MultichainRouter", () => {
         expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdGlvAddress))).eq(
           expandDecimals(95_000, 18)
         ); // GLV
+      });
+
+      it("creates glvDeposit with long/short tokens and sends relayer fee", async () => {
+        const wntAmount = expandDecimals(10, 18);
+        const usdcAmount = expandDecimals(40_000, 6);
+        await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: wntAmount.add(feeAmount) });
+        await mintAndBridge(fixture, { account: user1, token: usdc, tokenAmount: usdcAmount });
+
+        createGlvDepositParams.params.isMarketTokenDeposit = false;
+        createGlvDepositParams.params.addresses.initialLongToken = ethUsdMarket.longToken;
+        createGlvDepositParams.params.addresses.initialShortToken = ethUsdMarket.shortToken;
+        createGlvDepositParams.transferRequests = {
+          tokens: [wnt.address, usdc.address],
+          receivers: [glvVault.address, glvVault.address],
+          amounts: [wntAmount, usdcAmount],
+        };
+
+        expect(await getGlvDepositCount(dataStore)).eq(0);
+
+        await sendCreateGlvDeposit(createGlvDepositParams);
+
+        expect(await getGlvDepositCount(dataStore)).eq(1);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdGlvAddress))).eq(0); // 0 GLV
+
+        await executeGlvDeposit(fixture, { gasUsageLabel: "executeGlvDeposit" });
+
+        expect(await getGlvDepositCount(dataStore)).eq(0);
+        expect(await getBalanceOf(ethUsdGlvAddress, multichainVault.address)).eq(expandDecimals(90_000, 18)); // 90k GLV
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdGlvAddress))).eq(
+          expandDecimals(90_000, 18)
+        ); // 90k GLV
       });
     });
 
