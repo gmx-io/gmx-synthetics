@@ -73,11 +73,11 @@ describe("Exchange.DecreasePosition", () => {
     const positionKey0Short = getPositionKey(user0.address, ethUsdMarket.marketToken, wnt.address, false);
 
     expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(0);
-    const positionImpactPendingAmount0Long = await dataStore.getInt(getPendingImpactAmountKey(positionKey0Long));
-    const positionImpactPendingAmount0Short = await dataStore.getInt(getPendingImpactAmountKey(positionKey0Short));
-    expect(positionImpactPendingAmount0Long).eq("-79999999999999999"); // -0.079999999999999999
-    expect(positionImpactPendingAmount0Short).eq("39999999999999999"); // 0.039999999999999999
-    expect(positionImpactPendingAmount0Long.add(positionImpactPendingAmount0Short).toString()).eq("-40000000000000000"); // -0.04
+    const positionPendingImpactAmount0Long = await dataStore.getInt(getPendingImpactAmountKey(positionKey0Long));
+    const positionPendingImpactAmount0Short = await dataStore.getInt(getPendingImpactAmountKey(positionKey0Short));
+    expect(positionPendingImpactAmount0Long).eq("-79999999999999999"); // -0.079999999999999999
+    expect(positionPendingImpactAmount0Short).eq("39999999999999999"); // 0.039999999999999999
+    expect(positionPendingImpactAmount0Long.add(positionPendingImpactAmount0Short).toString()).eq("-40000000000000000"); // -0.04
 
     expect(await wnt.balanceOf(user1.address)).eq(0);
     expect(await usdc.balanceOf(user1.address)).eq(0);

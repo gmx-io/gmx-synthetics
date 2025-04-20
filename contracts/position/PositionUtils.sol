@@ -85,7 +85,7 @@ library PositionUtils {
         uint256 sizeDeltaInTokens;
         int256 priceImpactUsd;
         int256 proportionalPendingImpactAmount;
-        int256 proportionalImpactPendingUsd;
+        int256 proportionalPendingImpactUsd;
         uint256 priceImpactDiffUsd;
         DecreasePositionCollateralValuesOutput output;
     }

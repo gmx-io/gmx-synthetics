@@ -135,14 +135,14 @@ library DecreasePositionCollateralUtils {
         }
 
         // order size has been enforced to be less or equal than position size (i.e. sizeDeltaUsd <= sizeInUsd)
-        (values.proportionalPendingImpactAmount, values.proportionalImpactPendingUsd) = _getProportionalImpactPendingValues(
+        (values.proportionalPendingImpactAmount, values.proportionalPendingImpactUsd) = _getProportionalPendingImpactValues(
             params.position.sizeInUsd(),
             params.position.pendingImpactAmount(),
             params.order.sizeDeltaUsd(),
             cache.prices.indexTokenPrice
         );
 
-        collateralCache.totalImpactUsd = values.proportionalImpactPendingUsd + values.priceImpactUsd;
+        collateralCache.totalImpactUsd = values.proportionalPendingImpactUsd + values.priceImpactUsd;
 
         if (collateralCache.totalImpactUsd < 0) {
             uint256 maxPriceImpactFactor = MarketUtils.getMaxPositionImpactFactor(
@@ -731,19 +731,19 @@ library DecreasePositionCollateralUtils {
         return _fees;
     }
 
-    function _getProportionalImpactPendingValues(
+    function _getProportionalPendingImpactValues(
         uint256 sizeInUsd,
-        int256 positionImpactPendingAmount,
+        int256 positionPendingImpactAmount,
         uint256 sizeDeltaUsd,
         Price.Props memory indexTokenPrice
     ) private pure returns (int256, int256) {
-        int256 proportionalPendingImpactAmount = Precision.mulDiv(positionImpactPendingAmount, sizeDeltaUsd, sizeInUsd);
+        int256 proportionalPendingImpactAmount = Precision.mulDiv(positionPendingImpactAmount, sizeDeltaUsd, sizeInUsd);
 
         // minimize the positive impact, maximize the negative impact
-        int256 proportionalImpactPendingUsd = proportionalPendingImpactAmount > 0
+        int256 proportionalPendingImpactUsd = proportionalPendingImpactAmount > 0
             ? proportionalPendingImpactAmount * indexTokenPrice.min.toInt256()
             : proportionalPendingImpactAmount * indexTokenPrice.max.toInt256();
 
-        return (proportionalPendingImpactAmount, proportionalImpactPendingUsd);
+        return (proportionalPendingImpactAmount, proportionalPendingImpactUsd);
     }
 }
