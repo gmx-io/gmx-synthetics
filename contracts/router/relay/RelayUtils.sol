@@ -739,7 +739,7 @@ library RelayUtils {
     }
 
     function _getCreateDepositAdressesStructHash(
-        DepositUtils.CreateDepositParamsAdresses memory addresses
+        DepositUtils.CreateDepositParamsAddresses memory addresses
     ) private pure returns (bytes32) {
         return
             keccak256(
