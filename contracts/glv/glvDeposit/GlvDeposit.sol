@@ -12,6 +12,7 @@ library GlvDeposit {
     // @param addresses address values
     // @param numbers number values
     // @param flags boolean values
+    // @param _dataList a list of bytes32 values that can be used for additional data
     struct Props {
         Addresses addresses;
         Numbers numbers;
@@ -44,6 +45,7 @@ library GlvDeposit {
     // sending funds back to the user in case the deposit gets cancelled
     // @param executionFee the execution fee for keepers
     // @param callbackGasLimit the gas limit for the callbackContract
+    // @param srcChainId the source chain id
     struct Numbers {
         uint256 marketTokenAmount;
         uint256 initialLongTokenAmount;

@@ -37,6 +37,7 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
 
     // @dev creates a withdrawal in the withdrawal store
     // @param account the withdrawing account
+    // @param srcChainId the source chain id
     // @param params WithdrawalUtils.CreateWithdrawalParams
     function createWithdrawal(
         address account,
@@ -157,7 +158,7 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
             eventEmitter,
             withdrawalVault,
             account,
-            0, // srcChainId
+            0, // srcChainId is the current block.chainId
             params,
             true // isAtomicWithdrawal
         );

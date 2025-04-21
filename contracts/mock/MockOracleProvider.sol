@@ -8,7 +8,7 @@ contract MockOracleProvider is IOracleProvider {
     function getOraclePrice(
         address token,
         bytes memory /* data */
-    ) external override returns (OracleUtils.ValidatedPrice memory) {
+    ) external view override returns (OracleUtils.ValidatedPrice memory) {
         // Return a dummy price for testing
         return OracleUtils.ValidatedPrice({
             token: token,

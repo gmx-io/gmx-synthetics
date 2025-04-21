@@ -138,10 +138,10 @@ string constant UPDATE_ORDER_PARAMS = "UpdateOrderParams(bytes32 key,uint256 siz
 string constant CREATE_ORDER_ADDRESSES = "CreateOrderAddresses(address receiver,address cancellationReceiver,address callbackContract,address uiFeeReceiver,address market,address initialCollateralToken,address[] swapPath)";
 string constant CREATE_ORDER_NUMBERS = "CreateOrderNumbers(uint256 sizeDeltaUsd,uint256 initialCollateralDeltaAmount,uint256 triggerPrice,uint256 acceptablePrice,uint256 executionFee,uint256 callbackGasLimit,uint256 minOutputAmount,uint256 validFromTime)";
 
-string constant CREATE_ORDER_PARAMS_ROOT = "CreateOrderParams(CreateOrderAddresses addresses,CreateOrderNumbers numbers,uint256 orderType,uint256 decreasePositionSwapType,bool isLong,bool shouldUnwrapNativeToken,bool autoCancel,bytes32 referralCode)";
+string constant CREATE_ORDER_PARAMS_ROOT = "CreateOrderParams(CreateOrderAddresses addresses,CreateOrderNumbers numbers,uint256 orderType,uint256 decreasePositionSwapType,bool isLong,bool shouldUnwrapNativeToken,bool autoCancel,bytes32 referralCode,bytes32[] dataList)";
 string constant CREATE_ORDER_PARAMS = string(
     abi.encodePacked(
-        "CreateOrderParams(CreateOrderAddresses addresses,CreateOrderNumbers numbers,uint256 orderType,uint256 decreasePositionSwapType,bool isLong,bool shouldUnwrapNativeToken,bool autoCancel,bytes32 referralCode)",
+        "CreateOrderParams(CreateOrderAddresses addresses,CreateOrderNumbers numbers,uint256 orderType,uint256 decreasePositionSwapType,bool isLong,bool shouldUnwrapNativeToken,bool autoCancel,bytes32 referralCode,bytes32[] dataList)",
         CREATE_ORDER_ADDRESSES,
         CREATE_ORDER_NUMBERS
     )
@@ -166,7 +166,7 @@ library RelayUtils {
     bytes32 public constant CREATE_ORDER_TYPEHASH =
         keccak256(
             abi.encodePacked(
-                "CreateOrder(address account,CreateOrderAddresses addresses,CreateOrderNumbers numbers,uint256 orderType,uint256 decreasePositionSwapType,bool isLong,bool shouldUnwrapNativeToken,bool autoCancel,bytes32 referralCode,bytes32 relayParams,bytes32 subaccountApproval)",
+                "CreateOrder(address account,CreateOrderAddresses addresses,CreateOrderNumbers numbers,uint256 orderType,uint256 decreasePositionSwapType,bool isLong,bool shouldUnwrapNativeToken,bool autoCancel,bytes32 referralCode,bytes32[] dataList,bytes32 relayParams,bytes32 subaccountApproval)",
                 CREATE_ORDER_ADDRESSES,
                 CREATE_ORDER_NUMBERS
             )
@@ -411,6 +411,7 @@ library RelayUtils {
                     params.shouldUnwrapNativeToken,
                     params.autoCancel,
                     params.referralCode,
+                    keccak256(abi.encodePacked(params.dataList)),
                     relayParamsHash,
                     subaccountApprovalHash
                 )
@@ -436,6 +437,7 @@ library RelayUtils {
                     params.shouldUnwrapNativeToken,
                     params.autoCancel,
                     params.referralCode,
+                    keccak256(abi.encodePacked(params.dataList)),
                     relayParamsHash,
                     bytes32(0)
                 )
@@ -575,7 +577,8 @@ library RelayUtils {
                     params.isLong,
                     params.shouldUnwrapNativeToken,
                     params.autoCancel,
-                    params.referralCode
+                    params.referralCode,
+                    keccak256(abi.encodePacked(params.dataList))
                 )
             );
     }
@@ -736,7 +739,7 @@ library RelayUtils {
     }
 
     function _getCreateDepositAdressesStructHash(
-        DepositUtils.CreateDepositParamsAdresses memory addresses
+        DepositUtils.CreateDepositParamsAddresses memory addresses
     ) private pure returns (bytes32) {
         return
             keccak256(

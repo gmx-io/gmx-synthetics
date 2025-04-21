@@ -80,6 +80,7 @@ export type CreateOrderParams = {
   isLong: boolean;
   shouldUnwrapNativeToken: boolean;
   referralCode: string;
+  dataList: string[];
 };
 
 export type UpdateOrderParams = {

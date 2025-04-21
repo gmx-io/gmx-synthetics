@@ -30,7 +30,7 @@ contract MultichainClaimsRouter is MultichainRouter {
         _;
         // beforeAction "delayed" after tokens have been claimed
         _handleRelayBeforeAction(cache.contracts, relayParams, account, srcChainId, isSubaccount);
-        _handleRelayAfterAction(cache.contracts, cache.startingGas, account /* residualFeeReceiver */, srcChainId);
+        _handleRelayAfterAction(cache.contracts, cache.startingGas, account, srcChainId);
     }
 
     function claimFundingFees(

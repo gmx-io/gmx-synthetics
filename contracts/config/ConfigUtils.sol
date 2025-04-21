@@ -392,6 +392,12 @@ library ConfigUtils {
             }
         }
 
+        if (baseKey == Keys.MAX_EXECUTION_FEE_MULTIPLIER_FACTOR) {
+            if (value < Precision.FLOAT_PRECISION * 10 || value > Precision.FLOAT_PRECISION * 100_000) {
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
+            }
+        }
+
         if (
             baseKey == Keys.RESERVE_FACTOR ||
             baseKey == Keys.OPEN_INTEREST_RESERVE_FACTOR

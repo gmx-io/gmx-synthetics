@@ -60,9 +60,10 @@ contract MockStargatePool {
     function send(
         SendParam memory _sendParam,
         MessagingFee memory,
-        address _receiver
+        address // _refundReceiver
     ) external payable returns (MessagingReceipt memory, OFTReceipt memory) {
-        IERC20(token).transferFrom(msg.sender, _receiver, _sendParam.amountLD);
+        address receiver = address(uint160(uint256(_sendParam.to)));
+        IERC20(token).transferFrom(msg.sender, receiver, _sendParam.amountLD);
 
         MessagingReceipt memory msgReceipt = MessagingReceipt({
             guid: bytes32(uint256(block.timestamp)),

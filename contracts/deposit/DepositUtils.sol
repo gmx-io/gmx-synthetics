@@ -38,8 +38,9 @@ library DepositUtils {
     // sending funds back to the user in case the deposit gets cancelled
     // @param executionFee the execution fee for keepers
     // @param callbackGasLimit the gas limit for the callbackContract
+    // @param dataList a list of bytes32 values that can be used for additional data
     struct CreateDepositParams {
-        CreateDepositParamsAdresses addresses;
+        CreateDepositParamsAddresses addresses;
         uint256 minMarketTokens;
         bool shouldUnwrapNativeToken;
         uint256 executionFee;
@@ -47,7 +48,7 @@ library DepositUtils {
         bytes32[] dataList;
     }
 
-    struct CreateDepositParamsAdresses {
+    struct CreateDepositParamsAddresses {
         address receiver;
         address callbackContract;
         address uiFeeReceiver;
@@ -64,6 +65,7 @@ library DepositUtils {
     // @param eventEmitter EventEmitter
     // @param depositVault DepositVault
     // @param account the depositing account
+    // @param srcChainId the source chain id
     // @param params CreateDepositParams
     function createDeposit(
         DataStore dataStore,

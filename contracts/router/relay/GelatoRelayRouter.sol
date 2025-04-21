@@ -30,18 +30,24 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         RelayParams calldata relayParams,
         address account,
         BatchParams calldata params
-    ) external nonReentrant withRelay(relayParams, account, 0 /* srcChainId */, false) returns (bytes32[] memory) {
+    )
+        external
+        nonReentrant
+        withRelay(relayParams, account, 0, false) // srcChainId is the current block.chainId
+        returns (bytes32[] memory)
+    {
         bytes32 structHash = RelayUtils.getBatchStructHash(relayParams, params);
-        _validateCall(relayParams, account, structHash, 0 /* srcChainId */);
+        _validateCall(relayParams, account, structHash, block.chainid /* srcChainId */);
 
-        return _batch(
-            account,
-            0, // srcChainId
-            params.createOrderParamsList,
-            params.updateOrderParamsList,
-            params.cancelOrderKeys,
-            false // isSubaccount
-        );
+        return
+            _batch(
+                account,
+                0, // srcChainId is the current block.chainId
+                params.createOrderParamsList,
+                params.updateOrderParamsList,
+                params.cancelOrderKeys,
+                false // isSubaccount
+            );
     }
 
     // @note all params except account should be part of the corresponding struct hash
@@ -49,14 +55,19 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         RelayParams calldata relayParams,
         address account,
         IBaseOrderUtils.CreateOrderParams calldata params
-    ) external nonReentrant withRelay(relayParams, account, 0 /* srcChainId */, false) returns (bytes32) {
+    )
+        external
+        nonReentrant
+        withRelay(relayParams, account, 0, false) // srcChainId is the current block.chainId
+        returns (bytes32)
+    {
         bytes32 structHash = RelayUtils.getCreateOrderStructHash(relayParams, params);
-        _validateCall(relayParams, account, structHash, 0 /* srcChainId */);
+        _validateCall(relayParams, account, structHash, block.chainid /* srcChainId */);
 
         return
             _createOrder(
                 account,
-                0, // srcChainId
+                0, // srcChainId is the current block.chainId
                 params,
                 false // isSubaccount
             );
@@ -67,9 +78,9 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         RelayParams calldata relayParams,
         address account,
         UpdateOrderParams calldata params
-    ) external nonReentrant withRelay(relayParams, account, 0 /* srcChainId */, false) {
+    ) external nonReentrant withRelay(relayParams, account, 0 /* srcChainId is the current block.chainId */, false) {
         bytes32 structHash = RelayUtils.getUpdateOrderStructHash(relayParams, params);
-        _validateCall(relayParams, account, structHash, 0 /* srcChainId */);
+        _validateCall(relayParams, account, structHash, block.chainid /* srcChainId */);
 
         _updateOrder(
             account,
@@ -83,9 +94,9 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         RelayParams calldata relayParams,
         address account,
         bytes32 key
-    ) external nonReentrant withRelay(relayParams, account, 0 /* srcChainId */, false) {
+    ) external nonReentrant withRelay(relayParams, account, 0 /* srcChainId is the current block.chainId */, false) {
         bytes32 structHash = RelayUtils.getCancelOrderStructHash(relayParams, key);
-        _validateCall(relayParams, account, structHash, 0 /* srcChainId */);
+        _validateCall(relayParams, account, structHash, block.chainid /* srcChainId */);
 
         _cancelOrder(account, key);
     }

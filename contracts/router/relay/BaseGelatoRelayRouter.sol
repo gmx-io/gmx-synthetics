@@ -52,7 +52,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         cache.contracts = _getContracts();
         _handleRelayBeforeAction(cache.contracts, relayParams, account, srcChainId, isSubaccount);
         _;
-        _handleRelayAfterAction(cache.contracts, cache.startingGas, account /* residualFeeReceiver */, srcChainId);
+        _handleRelayAfterAction(cache.contracts, cache.startingGas, account, srcChainId);
     }
 
     constructor(
@@ -290,6 +290,9 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
             _sendTokens(account, relayParams.fee.feeToken, address(contracts.orderVault), relayParams.fee.feeAmount, srcChainId);
             RelayUtils.swapFeeTokens(contracts, eventEmitter, oracle, relayParams.fee);
+            for (uint256 i = 0; i < relayParams.fee.feeSwapPath.length - 1; i++) {
+                MarketUtils.validateMarketTokenBalance(contracts.dataStore, relayParams.fee.feeSwapPath[i]);
+            }
         } else if (relayParams.fee.feeToken == contracts.wnt) {
             // fee tokens could be sent through external calls
             // in this case feeAmount could be 0 and there is no need to call _sendTokens
@@ -324,7 +327,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     function _handleRelayAfterAction(
         Contracts memory contracts,
         uint256 startingGas,
-        address residualFeeReceiver,
+        address account,
         uint256 srcChainId
     ) internal {
         bool isSponsoredCall = !_isGelatoRelay(msg.sender);
@@ -350,20 +353,21 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
         residualFeeAmount -= relayFee;
         if (residualFeeAmount > 0) {
-            _transferResidualFee(contracts.wnt, residualFeeReceiver, residualFeeAmount, residualFeeReceiver /* account */, srcChainId);
+            // residual fee is sent back to the account
+            _transferResidualFee(contracts.wnt, account, residualFeeAmount, srcChainId);
         }
     }
 
-    function _sendTokens(address account, address token, address receiver, uint256 amount, uint256 /*srcChainId*/) internal virtual {
+    function _sendTokens(address account, address token, address receiver, uint256 amount, uint256 /* srcChainId */) internal virtual {
         // srcChainId not used here, but necessary when overriding _sendTokens in MultichainRouter
         AccountUtils.validateReceiver(receiver);
         router.pluginTransfer(token, account, receiver, amount);
     }
 
     // for multichain actions, the residual fee is send back to MultichainVault and user's multichain balance is increased
-    function _transferResidualFee(address wnt, address residualFeeReceiver, uint256 residualFee, address /*account*/, uint256 /*srcChainId*/) internal virtual {
-        // account and srcChainId not used here, but necessary when overriding _transferResidualFee in MultichainRouter
-        IERC20(wnt).safeTransfer(residualFeeReceiver, residualFee);
+    function _transferResidualFee(address wnt, address account, uint256 residualFee, uint256 /* srcChainId */) internal virtual {
+        // srcChainId is used when overriding _transferResidualFee in MultichainRouter
+        IERC20(wnt).safeTransfer(account, residualFee);
     }
 
     function _validateCall(RelayParams calldata relayParams, address account, bytes32 structHash, uint256 srcChainId) internal {
@@ -371,18 +375,31 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             revert Errors.InvalidDestinationChainId(relayParams.desChainId);
         }
 
-        uint256 _srcChainId = srcChainId == 0 ? block.chainid : srcChainId;
-
-        if (srcChainId != 0 && !dataStore.getBool(Keys.isSrcChainIdEnabledKey(_srcChainId))) {
-            revert Errors.InvalidSrcChainId(_srcChainId);
+        if (_isMultichain()) {
+            // multichain
+            if (relayParams.tokenPermits.length != 0) {
+                revert Errors.TokenPermitsNotAllowedForMultichain();
+            }
+            if (!dataStore.getBool(Keys.isSrcChainIdEnabledKey(srcChainId))) {
+                revert Errors.InvalidSrcChainId(srcChainId);
+            }
+        } else {
+            // gasless
+            if (srcChainId != block.chainid) {
+                revert Errors.InvalidSrcChainId(srcChainId);
+            }
         }
 
-        bytes32 domainSeparator = RelayUtils.getDomainSeparator(_srcChainId);
+        bytes32 domainSeparator = RelayUtils.getDomainSeparator(srcChainId);
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
         RelayUtils.validateSignature(digest, relayParams.signature, account, "call");
 
         _validateNonce(account, relayParams.userNonce);
         _validateDeadline(relayParams.deadline);
+    }
+
+    function _isMultichain() internal pure virtual returns (bool) {
+        return false;
     }
 
     function _validateDeadline(uint256 deadline) internal view {

@@ -447,10 +447,12 @@ library Errors {
     error InsufficientMultichainBalance(address account, address token, uint256 balance, uint256 amount);
     error InvalidSrcChainId(uint256 srcChainId);
     error InvalidDestinationChainId(uint256 desChainId);
+    error TokenPermitsNotAllowedForMultichain();
     error InvalidMultichainProvider(address provider);
     error InvalidMultichainEndpoint(address endpoint);
     error UnableToPayOrderFee();
     error UnableToPayOrderFeeFromCollateral();
+    error InvalidBridgeOutToken(address token);
 
     enum SignatureType {
         Call,

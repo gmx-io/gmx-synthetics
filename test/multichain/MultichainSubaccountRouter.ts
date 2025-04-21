@@ -313,12 +313,11 @@ describe("MultichainSubaccountRouter", () => {
       });
     });
 
-    it("InvalidPermitSpender", async () => {
-      await enableSubaccount();
+    it("TokenPermitsNotAllowedForMultichain", async () => {
       const tokenPermit = await getTokenPermit(
         wnt,
-        user0,
-        user2.address,
+        user1,
+        router.address,
         expandDecimals(1, 18),
         0,
         9999999999,
@@ -326,7 +325,7 @@ describe("MultichainSubaccountRouter", () => {
       );
       await expect(
         sendCreateOrder({ ...createOrderParams, tokenPermits: [tokenPermit] })
-      ).to.be.revertedWithCustomError(errorsContract, "InvalidPermitSpender");
+      ).to.be.revertedWithCustomError(errorsContract, "TokenPermitsNotAllowedForMultichain");
     });
 
     it("UnexpectedRelayFeeToken", async () => {
@@ -623,27 +622,12 @@ describe("MultichainSubaccountRouter", () => {
       const collateralDeltaAmount = createOrderParams.params.numbers.initialCollateralDeltaAmount;
       const gelatoRelayFee = createOrderParams.gelatoRelayFeeAmount;
 
-      const tokenPermit = await getTokenPermit(
-        wnt,
-        user1,
-        router.address,
-        expandDecimals(1, 18),
-        0,
-        9999999999,
-        chainId
-      );
-
-      expect(await wnt.allowance(user1.address, router.address)).to.eq(0);
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(wntAmountBridged);
 
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, 0);
-      const tx = await sendCreateOrder({
-        ...createOrderParams,
-        tokenPermits: [tokenPermit],
-      });
+      const tx = await sendCreateOrder(createOrderParams);
 
-      // allowance was set
-      expect(await wnt.allowance(user1.address, router.address)).to.eq(expandDecimals(1, 18));
+      // user's multichain balance is updated
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(
         wntAmountBridged.sub(collateralDeltaAmount).sub(gelatoRelayFee).sub(expandDecimals(1, 15))
       );
@@ -818,15 +802,6 @@ describe("MultichainSubaccountRouter", () => {
     let updateOrderParams: Parameters<typeof sendUpdateOrder>[0];
 
     beforeEach(async () => {
-      const tokenPermit = await getTokenPermit(
-        wnt,
-        user1,
-        router.address,
-        expandDecimals(1, 18),
-        0,
-        9999999999,
-        chainId
-      );
       updateOrderParams = {
         sender: relaySigner,
         signer: user0,
@@ -836,7 +811,7 @@ describe("MultichainSubaccountRouter", () => {
           feeAmount: expandDecimals(2, 15), // 0.002 ETH
           feeSwapPath: [],
         },
-        tokenPermits: [tokenPermit],
+        tokenPermits: [],
         account: user1.address,
         subaccount: user0.address,
         params: {
@@ -1048,15 +1023,6 @@ describe("MultichainSubaccountRouter", () => {
     let cancelOrderParams: Parameters<typeof sendCancelOrder>[0];
 
     beforeEach(async () => {
-      const tokenPermit = await getTokenPermit(
-        wnt,
-        user1,
-        router.address,
-        expandDecimals(1, 18),
-        0,
-        9999999999,
-        chainId
-      );
       cancelOrderParams = {
         sender: relaySigner,
         signer: user0,
@@ -1066,7 +1032,7 @@ describe("MultichainSubaccountRouter", () => {
           feeAmount: expandDecimals(2, 15), // 0.002 ETH
           feeSwapPath: [],
         },
-        tokenPermits: [tokenPermit],
+        tokenPermits: [],
         account: user1.address,
         subaccount: user0.address,
         key: ethers.constants.HashZero,
@@ -1154,15 +1120,6 @@ describe("MultichainSubaccountRouter", () => {
   describe("removeSubaccount", () => {
     let params: Parameters<typeof sendRemoveSubaccount>[0];
     beforeEach(async () => {
-      const tokenPermit = await getTokenPermit(
-        wnt,
-        user1,
-        router.address,
-        expandDecimals(1, 18),
-        0,
-        9999999999,
-        chainId
-      );
       params = {
         sender: relaySigner,
         signer: user1,
@@ -1171,7 +1128,7 @@ describe("MultichainSubaccountRouter", () => {
           feeAmount: expandDecimals(2, 15), // 0.002 ETH
           feeSwapPath: [],
         },
-        tokenPermits: [tokenPermit],
+        tokenPermits: [],
         subaccount: user0.address,
         account: user1.address,
         relayRouter: multichainSubaccountRouter,
@@ -1285,16 +1242,6 @@ describe("MultichainSubaccountRouter", () => {
     let batchParams: Parameters<typeof sendBatch>[0];
 
     beforeEach(async () => {
-      const tokenPermit = await getTokenPermit(
-        wnt,
-        user1,
-        router.address,
-        expandDecimals(1, 18),
-        0,
-        9999999999,
-        chainId
-      );
-
       batchParams = {
         sender: relaySigner,
         signer: user0,
@@ -1303,7 +1250,7 @@ describe("MultichainSubaccountRouter", () => {
           feeAmount: expandDecimals(2, 15), // 0.002 ETH
           feeSwapPath: [],
         },
-        tokenPermits: [tokenPermit],
+        tokenPermits: [],
         account: user1.address,
         createOrderParamsList: [],
         updateOrderParamsList: [],
@@ -1345,7 +1292,6 @@ describe("MultichainSubaccountRouter", () => {
     });
 
     it("batch: creates order", async () => {
-      expect(await wnt.allowance(user1.address, router.address)).to.eq(0);
       await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, 0);
       const executionFee = expandDecimals(2, 15);
       batchParams.feeParams.feeAmount = expandDecimals(6, 15); // relay fee is 0.001, execution fee is 0.002, 0.003 should be sent back
