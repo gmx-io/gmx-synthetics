@@ -111,24 +111,19 @@ async function getSourcifyData(contractAddress: string): Promise<SourcifyRespons
 
 async function validateWithSourcify(contractInfo: ContractInfo): Promise<boolean> {
   console.log(`Trying to validate ${contractInfo.address} via sourcify`);
-  try {
-    const sourcifyData: SourcifyResponse = await getSourcifyData(contractInfo.address);
+  const sourcifyData: SourcifyResponse = await getSourcifyData(contractInfo.address);
 
-    contractInfo.name = sourcifyData.compilation.name;
-    console.log(`Resolved as ${contractInfo.name}`);
+  contractInfo.name = sourcifyData.compilation.name;
+  console.log(`Resolved as ${contractInfo.name}`);
 
-    for (const [filename, data] of Object.entries(sourcifyData.sources)) {
-      const result = validateSourceFile(filename, data["content"]);
-      if (!result) {
-        return false;
-      }
+  for (const [filename, data] of Object.entries(sourcifyData.sources)) {
+    const result = validateSourceFile(filename, data["content"]);
+    if (!result) {
+      return false;
     }
-    contractInfo.isCodeValidated = true;
-    return true;
-  } catch (error) {
-    console.error("Error:", error);
-    return false;
   }
+  contractInfo.isCodeValidated = true;
+  return true;
 }
 
 function validateSourceFile(fullContractName: string, sourceCode: string): boolean {
