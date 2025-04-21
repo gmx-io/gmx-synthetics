@@ -244,7 +244,7 @@ contract Oracle is RoleModule {
             return prices;
         }
 
-        uint256 maxPriceAge = dataStore.getUint(Keys.MAX_ORACLE_PRICE_AGE);
+        uint256 maxPriceAge = forAtomicAction ? dataStore.getUint(Keys.MAX_ATOMIC_ORACLE_PRICE_AGE) : dataStore.getUint(Keys.MAX_ORACLE_PRICE_AGE);
         uint256 maxRefPriceDeviationFactor = dataStore.getUint(Keys.MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR);
 
         for (uint256 i; i < params.tokens.length; i++) {

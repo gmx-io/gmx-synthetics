@@ -1046,8 +1046,7 @@ describe("MultichainRouter", () => {
         // Verify user's multichain balance is insufficient for the update operation (should be zero after paying for deposit and order creation)
         expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0);
 
-        // set RELAY_MAX_PRICE_AGE and primary prices
-        await dataStore.setUint(keys.RELAY_MAX_PRICE_AGE, ethers.constants.MaxUint256);
+        // set primary prices
         await oracle.setPrimaryPrice(wnt.address, { min: prices.wnt.min, max: prices.wnt.max });
         await oracle.setPrimaryPrice(usdc.address, { min: prices.usdc.min, max: prices.usdc.max });
 
@@ -1180,8 +1179,7 @@ describe("MultichainRouter", () => {
 
         expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0); // 0 ETH
 
-        // set relay price age and primary prices
-        await dataStore.setUint(keys.RELAY_MAX_PRICE_AGE, ethers.constants.MaxUint256);
+        // set primary prices
         await oracle.setPrimaryPrice(wnt.address, { min: expandDecimals(4800, 18), max: expandDecimals(5200, 18) });
         await oracle.setPrimaryPrice(usdc.address, { min: expandDecimals(1, 6), max: expandDecimals(1, 6) });
 

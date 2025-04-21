@@ -452,7 +452,6 @@ library Errors {
     error InvalidMultichainEndpoint(address endpoint);
     error UnableToPayOrderFee();
     error UnableToPayOrderFeeFromCollateral();
-    error RelayPriceOutdated();
     error InvalidBridgeOutToken(address token);
 
     enum SignatureType {
