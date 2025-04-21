@@ -1,7 +1,6 @@
 import { ethers } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { decimalToFloat, percentageToFloat, expandDecimals } from "../utils/math";
-import { CONFIG_MAX_PRICE_AGE } from "../utils/keys";
 
 export default async function ({ network }: HardhatRuntimeEnvironment) {
   if (network.name === "hardhat") {
