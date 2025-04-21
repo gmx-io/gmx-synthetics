@@ -36,7 +36,7 @@ contract EdgeDataStreamProvider is IOracleProvider {
     function getOraclePrice(
         address token,
         bytes memory data
-    ) external onlyOracle returns (OracleUtils.ValidatedPrice memory) {
+    ) external view onlyOracle returns (OracleUtils.ValidatedPrice memory) {
 
         bytes32 feedId = dataStore.getBytes32(Keys.edgeDataStreamIdKey(token));
         if (feedId == bytes32(0)) {
