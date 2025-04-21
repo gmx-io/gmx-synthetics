@@ -406,8 +406,10 @@ export async function updateGeneralConfig({ write }) {
     return;
   }
 
+  const { roles } = await hre.gmx.getRoles();
+  const from = Object.keys(roles.CONFIG_KEEPER)[0];
   await config.callStatic.multicall(multicallWriteParams, {
-    from: "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745",
+    from,
   });
 
   if (!write) {
