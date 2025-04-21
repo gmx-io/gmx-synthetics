@@ -859,3 +859,22 @@ To print test coverage:
 ```
 npx hardhat coverage
 ```
+
+
+1) uncapped price impact
+2) capped price impact
+3) negative price impact, negative pnl
+4) negative price impact, positive pnl
+5) positive price impact, negative pnl
+6) positive price impact, positive pnl
+7) positive price impact, DecreasePositionSwapType: SwapPnlTokenToCollateralToken
+8) price impact pair market
+9) difference in pnl should be equal to price impact amount
+10) price impact synthetic market
+11) Positive & negative impact fees for positions
+12) Position receiving positive price impact with distribution
+13) claimCollateral applies claimableReductionFactor correctly before timeDelay
+14) claimCollateral applies claimableReductionFactor correctly after timeDelay
+15) User receives collateral in his multichain balance, pays relay fee from his existing multicahin balance
+16) User receives collateral in his multichain balance, pays relay fee from newly claimed tokens
+
