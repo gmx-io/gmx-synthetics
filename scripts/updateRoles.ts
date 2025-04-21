@@ -81,23 +81,28 @@ async function main() {
       rolesToAdd: [
         {
           role: "CONTROLLER",
-          member: "0x602b805eedddbbd9ddff44a7dcbd46cb07849685",
-          contractName: "ExchangeRouter",
+          member: "0x9eb239edf4c6f4c4fc9d30ea2017f8716d049c8d",
+          contractName: "GelatoRelayRouter",
         },
         {
           role: "CONTROLLER",
-          member: "0x089f51aab35e854d2b65c9396622361a1854bc3d",
-          contractName: "DepositHandler",
+          member: "0x5f345b765d5856bc0843cee8be234b575ec77dbc",
+          contractName: "SubaccountGelatoRelayRouter",
         },
         {
           role: "CONTROLLER",
-          member: "0x94889b5d664eaff4c249d43206705a70a22e37b4",
-          contractName: "ShiftHandler",
+          member: "0x65b46057c1948064a89aa56ba2bd1c411c007346",
+          contractName: "Config",
         },
         {
           role: "ROUTER_PLUGIN",
-          member: "0x602b805eedddbbd9ddff44a7dcbd46cb07849685",
-          contractName: "ExchangeRouter",
+          member: "0x9eb239edf4c6f4c4fc9d30ea2017f8716d049c8d",
+          contractName: "GelatoRelayRouter",
+        },
+        {
+          role: "ROUTER_PLUGIN",
+          member: "0x5f345b765d5856bc0843cee8be234b575ec77dbc",
+          contractName: "SubaccountGelatoRelayRouter",
         },
       ],
       rolesToRemove: [],
