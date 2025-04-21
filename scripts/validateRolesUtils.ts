@@ -126,7 +126,7 @@ async function validateRolesImpl() {
       const ok = Object.keys(_expectedRoles[requiredRole]).some((member) => member.toLowerCase() === lowercaseAddress);
       if (!ok) {
         errors.push(
-          `role ${requiredRole} is not configured for contract ${contractName} ${deployment.address} ${lowercaseAddress}`
+          `role ${requiredRole} is not configured for contract ${contractName}. "${deployment.address}": true, // ${contractName}`
         );
       }
     }

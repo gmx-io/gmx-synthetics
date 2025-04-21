@@ -163,7 +163,7 @@ async function validateFromEtherscan(contractInfo: ContractInfo): Promise<boolea
       url + "?module=contract" + "&action=getsourcecode" + `&address=${contractInfo.address}` + `&apikey=${apiKey}`;
     const response = await axios.get(path);
     const sources: string = response.data.result[0].SourceCode;
-    if (sources === "") {
+    if (!sources) {
       //Source code not verified
       return false;
     }

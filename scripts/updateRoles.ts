@@ -106,112 +106,31 @@ async function main() {
       rolesToAdd: [
         {
           role: "CONTROLLER",
-          member: "0xc2d6cc2b5444b2d3611d812a9ea47648cffc05c1",
+          member: "0x9eb239edf4c6f4c4fc9d30ea2017f8716d049c8d",
           contractName: "Config",
         },
         {
           role: "CONTROLLER",
-          member: "0x13c986424ded8d78d9313dd90cd847e4deba5cb3",
-          contractName: "Oracle",
-        },
-        {
-          role: "CONTROLLER",
-          member: "0xfa843af557824be5127eacb3c4b5d86eadeb73a1",
-          contractName: "ExchangeRouter",
-        },
-        {
-          role: "CONTROLLER",
-          member: "0x233397357bb4cc6b951aa423d7ceadbc610499e2",
-          contractName: "SubaccountRouter",
-        },
-        {
-          role: "CONTROLLER",
-          member: "0xb33d87b6be2a6772eebd38c3222f5872a62cca2a",
+          member: "0x035a9a047d20a486e14a613b04d5a95d7a617c5d",
           contractName: "GelatoRelayRouter",
         },
         {
           role: "CONTROLLER",
-          member: "0xe26052e5676e636230a9b05652acd3aca23fc35f",
+          member: "0x3b753c0d0ae55530f24532b8bb9d0bacd5b675c0",
           contractName: "SubaccountGelatoRelayRouter",
         },
         {
-          role: "CONTROLLER",
-          member: "0x00db21077c63fff542c017cc4cdcc84229bfb373",
-          contractName: "OrderHandler",
-        },
-        {
-          role: "CONTROLLER",
-          member: "0xe78c15c818ebaad31bac58167157522b4d01ee2f",
-          contractName: "DepositHandler",
-        },
-        {
-          role: "CONTROLLER",
-          member: "0x6fa5d5a3377790cf646efdb67fc53d3ce5b345bc",
-          contractName: "WithdrawalHandler",
-        },
-        {
-          role: "CONTROLLER",
-          member: "0xe270e904b3b52fe952f00e797f5dac4a1e058dda",
-          contractName: "ShiftHandler",
-        },
-        {
-          role: "CONTROLLER",
-          member: "0x1b31d1774270c46dfc3e1e0d2459a1b94cf9373f",
-          contractName: "SwapHandler",
-        },
-        {
           role: "ROUTER_PLUGIN",
-          member: "0xfa843af557824be5127eacb3c4b5d86eadeb73a1",
-          contractName: "ExchangeRouter",
-        },
-        {
-          role: "ROUTER_PLUGIN",
-          member: "0x233397357bb4cc6b951aa423d7ceadbc610499e2",
-          contractName: "SubaccountRouter",
-        },
-        {
-          role: "ROUTER_PLUGIN",
-          member: "0xb33d87b6be2a6772eebd38c3222f5872a62cca2a",
+          member: "0x035a9a047d20a486e14a613b04d5a95d7a617c5d",
           contractName: "GelatoRelayRouter",
         },
         {
           role: "ROUTER_PLUGIN",
-          member: "0xe26052e5676e636230a9b05652acd3aca23fc35f",
+          member: "0x3b753c0d0ae55530f24532b8bb9d0bacd5b675c0",
           contractName: "SubaccountGelatoRelayRouter",
         },
       ],
-      rolesToRemove: [
-        {
-          role: "CONTROLLER",
-          member: "0xBD219aADaFe3AD8c8F570b204B99cb4aDbe9983E",
-          contractName: "GelatoRelayRouter",
-        },
-        {
-          role: "CONTROLLER",
-          member: "0xE971b9D5eA8Ab28bF3639069CF7a91E5dA7b7015",
-          contractName: "SubaccountGelatoRelayRouter",
-        },
-        {
-          role: "CONTROLLER",
-          member: "0x7D9E403F82b59e7fF5F7A37a9bf4A8df914352A1",
-          contractName: "SubaccountRouter",
-        },
-        {
-          role: "ROUTER_PLUGIN",
-          member: "0xBD219aADaFe3AD8c8F570b204B99cb4aDbe9983E",
-          contractName: "GelatoRelayRouter",
-        },
-        {
-          role: "ROUTER_PLUGIN",
-          member: "0xE971b9D5eA8Ab28bF3639069CF7a91E5dA7b7015",
-          contractName: "SubaccountGelatoRelayRouter",
-        },
-        {
-          role: "ROUTER_PLUGIN",
-          member: "0x7D9E403F82b59e7fF5F7A37a9bf4A8df914352A1",
-          contractName: "SubaccountRouter",
-        },
-      ],
+      rolesToRemove: [],
     },
   };
 
@@ -225,13 +144,15 @@ async function main() {
   const networkConfig = config[hre.network.name];
 
   if (["signalGrantRole", "grantRoleAfterSignal"].includes(timelockMethod)) {
-    for (const { member, role } of networkConfig.rolesToAdd) {
+    for (const { member, role, contractName } of networkConfig.rolesToAdd) {
+      console.log("%s %s %s %s", timelockMethod, member, role, contractName);
       multicallWriteParams.push(timelock.interface.encodeFunctionData(timelockMethod, [member, hashString(role)]));
     }
   }
 
   if (timelockMethod === "signalRevokeRole") {
-    for (const { member, role } of networkConfig.rolesToRemove) {
+    for (const { member, role, contractName } of networkConfig.rolesToRemove) {
+      console.log("%s %s %s %s", timelockMethod, member, role, contractName);
       multicallWriteParams.push(timelock.interface.encodeFunctionData(timelockMethod, [member, hashString(role)]));
       // signalGrantRole in case the revocation of the role needs to be reverted
       multicallWriteParams.push(timelock.interface.encodeFunctionData("signalGrantRole", [member, hashString(role)]));
@@ -239,7 +160,8 @@ async function main() {
   }
 
   if (timelockMethod === "revokeRoleAfterSignal") {
-    for (const { member, role } of networkConfig.rolesToRemove) {
+    for (const { member, role, contractName } of networkConfig.rolesToRemove) {
+      console.log("%s %s %s %s", timelockMethod, member, role, contractName);
       multicallWriteParams.push(timelock.interface.encodeFunctionData(timelockMethod, [member, hashString(role)]));
     }
   }
@@ -247,6 +169,7 @@ async function main() {
   if (timelockMethod === "cancelGrantRole") {
     const actionKeys = await getGrantRoleActionKeysToCancel({ timelock });
     for (const actionKey of actionKeys) {
+      console.log("%s %s", timelockMethod, actionKey);
       multicallWriteParams.push(timelock.interface.encodeFunctionData("cancelAction", [actionKey]));
     }
   }
