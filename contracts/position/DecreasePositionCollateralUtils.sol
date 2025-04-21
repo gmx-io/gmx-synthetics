@@ -737,7 +737,7 @@ library DecreasePositionCollateralUtils {
         uint256 sizeDeltaUsd,
         Price.Props memory indexTokenPrice
     ) private pure returns (int256, int256) {
-        int256 proportionalPendingImpactAmount = Precision.mulDiv(positionPendingImpactAmount, sizeDeltaUsd, sizeInUsd);
+        int256 proportionalPendingImpactAmount = Precision.mulDiv(positionPendingImpactAmount, sizeDeltaUsd, sizeInUsd, positionPendingImpactAmount < 0);
 
         // minimize the positive impact, maximize the negative impact
         int256 proportionalPendingImpactUsd = proportionalPendingImpactAmount > 0
