@@ -131,8 +131,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           },
           {
             indexToken: "RENDER",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(3_361_000, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(2_538_000),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(4_008_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(3_045_000),
           },
           {
             indexToken: "TRUMP",
@@ -146,8 +146,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           },
           {
             indexToken: "ENA",
-            glvMaxMarketTokenBalanceAmount: expandDecimals(1_782_698, 18),
-            glvMaxMarketTokenBalanceUsd: decimalToFloat(1_492_992),
+            glvMaxMarketTokenBalanceAmount: expandDecimals(2_415_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(1_791_000),
           },
           {
             indexToken: "LDO",
