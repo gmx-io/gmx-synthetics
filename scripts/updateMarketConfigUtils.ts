@@ -108,7 +108,9 @@ const processMarkets = async ({
       continue;
     }
 
-    const marketLabel = `${marketConfig.tokens.indexToken} [${marketConfig.tokens.longToken}-${marketConfig.tokens.shortToken}]`;
+    const marketLabel = `${marketConfig.tokens.indexToken ?? "SPOT-ONLY"} [${marketConfig.tokens.longToken}-${
+      marketConfig.tokens.shortToken
+    }]`;
 
     const handleConfig = async (type, baseKey, keyData, value, label) => {
       const [skip, skipReason] = shouldIgnoreBaseKey(baseKey, supportedRiskOracleMarkets.has(marketConfig));
@@ -240,7 +242,7 @@ const processMarkets = async ({
         keys.ATOMIC_SWAP_FEE_FACTOR,
         encodeData(["address"], [marketToken]),
         marketConfig.atomicSwapFeeFactor,
-        `atomicSwapFeeFactor ${marketToken}`
+        `atomicSwapFeeFactor ${marketLabel} (${marketToken})`
       );
     }
 
@@ -250,7 +252,7 @@ const processMarkets = async ({
         keys.ATOMIC_WITHDRAWAL_FEE_FACTOR,
         encodeData(["address"], [marketToken]),
         marketConfig.atomicWithdrawalFeeFactor,
-        `atomicWithdrawalFeeFactor ${marketToken}`
+        `atomicWithdrawalFeeFactor ${marketLabel} (${marketToken})`
       );
     }
 
