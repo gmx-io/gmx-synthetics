@@ -4,6 +4,8 @@ import { expandDecimals } from "../../utils/math";
 import { deployFixture } from "../../utils/fixture";
 import { encodeData } from "../../utils/hash";
 import { deployContract } from "../../utils/deploy";
+import { revokeRoleIfGranted } from "../../utils/role";
+import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
 
 describe("MultichainReader", function () {
@@ -62,7 +64,51 @@ describe("MultichainReader", function () {
     );
   });
 
-  // Validate LZRead with one read request with no input params to one contract
+  it("sendReadRequests() can only be executed by CONTROLLER role", async function () {
+    // Assert initial state of data in mockMultichainReaderOriginator
+    const latestReceivedData = await mockMultichainReaderOriginator.latestReceivedData();
+    expect(latestReceivedData.timestamp).to.equal(encodeData(["uint256"], [0]));
+    expect(latestReceivedData.readData).to.equal(
+      defaultAbiCoder.encode(["bytes"], [toUtf8Bytes("Nothing received yet.")])
+    );
+
+    await mockLzReadResponse1.setUint(
+      keys.withdrawableBuybackTokenAmountKey(user0.address),
+      expandDecimals(200000, 18)
+    );
+
+    // Initialize command options
+    const functionSignature = new ethers.utils.Interface(["function getUint(bytes32) external view returns (uint256)"]);
+    const callData = functionSignature.encodeFunctionData("getUint", [
+      keys.withdrawableBuybackTokenAmountKey(user0.address),
+    ]);
+    const readRequestInputs = [
+      {
+        targetChainEid: eid1,
+        target: mockLzReadResponse1.address,
+        callData: callData,
+      },
+    ];
+    const extraOptionsInputs = {
+      gasLimit: 500000,
+      returnDataSize: 40,
+      msgValue: 0,
+    };
+
+    // Define native fee and quote for the message send operation
+    const nativeFee = await mockMultichainReaderOriginator.callQuoteReadFee(readRequestInputs, extraOptionsInputs);
+
+    // revoke CONTROLLER role from the mockMultichainReaderOriginator contract
+    await revokeRoleIfGranted(mockMultichainReaderOriginator.address, "CONTROLLER");
+
+    // Execute send operation from multichainReader with expected response
+    await expect(
+      mockMultichainReaderOriginator.callSendReadRequests(readRequestInputs, extraOptionsInputs, {
+        value: nativeFee.toString(),
+      })
+    ).to.be.revertedWithCustomError(errorsContract, "Unauthorized", "CONTROLLER");
+  });
+
   it("should read a test message", async function () {
     // Assert initial state of data in mockMultichainReaderOriginator
     let latestReceivedData = await mockMultichainReaderOriginator.latestReceivedData();
@@ -111,7 +157,6 @@ describe("MultichainReader", function () {
     expect(latestReceivedData.readData).to.equal(encodeData(["uint256"], [expandDecimals(200000, 18)]));
   });
 
-  // Validate LZRead with three read request with no input params to one contract
   it("should read 3 test messages", async function () {
     await config.setUint(
       keys.MULTICHAIN_AUTHORIZED_ORIGINATORS,
