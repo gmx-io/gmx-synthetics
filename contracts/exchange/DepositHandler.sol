@@ -37,6 +37,7 @@ contract DepositHandler is IDepositHandler, BaseHandler {
 
     // @dev creates a deposit in the deposit store
     // @param account the depositing account
+    // @param srcChainId the source chain id
     // @param params DepositUtils.CreateDepositParams
     function createDeposit(
         address account,

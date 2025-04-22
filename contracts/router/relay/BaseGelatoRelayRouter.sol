@@ -3,7 +3,6 @@
 pragma solidity ^0.8.0;
 
 import {GelatoRelayContext} from "@gelatonetwork/relay-context/contracts/GelatoRelayContext.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "../../data/DataStore.sol";
@@ -21,8 +20,6 @@ import "../../gas/GasUtils.sol";
 
 import "./RelayUtils.sol";
 
-address constant GMX_SIMULATION_ORIGIN = address(uint160(uint256(keccak256("GMX SIMULATION ORIGIN"))));
-
 
 /*
  * For gasless actions the funds are deducted from account.
@@ -35,12 +32,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     IOrderHandler public immutable orderHandler;
     OrderVault public immutable orderVault;
     IExternalHandler public immutable externalHandler;
-
-    bytes32 public constant DOMAIN_SEPARATOR_TYPEHASH =
-        keccak256(bytes("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"));
-
-    bytes32 public constant DOMAIN_SEPARATOR_NAME_HASH = keccak256(bytes("GmxBaseGelatoRelayRouter"));
-    bytes32 public constant DOMAIN_SEPARATOR_VERSION_HASH = keccak256(bytes("1"));
 
     mapping(address => uint256) public userNonces;
 
@@ -61,7 +52,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         cache.contracts = _getContracts();
         _handleRelayBeforeAction(cache.contracts, relayParams, account, srcChainId, isSubaccount);
         _;
-        _handleRelayAfterAction(cache.contracts, cache.startingGas, account /* residualFeeReceiver */, srcChainId);
+        _handleRelayAfterAction(cache.contracts, cache.startingGas, account, srcChainId);
     }
 
     constructor(
@@ -73,25 +64,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         orderHandler = _orderHandler;
         orderVault = _orderVault;
         externalHandler = _externalHandler;
-    }
-
-    function _validateSignature(
-        bytes32 digest,
-        bytes calldata signature,
-        address expectedSigner,
-        string memory signatureType
-    ) internal view {
-        (address recovered, ECDSA.RecoverError error) = ECDSA.tryRecover(digest, signature);
-
-        // allow to optionally skip signature validation for eth_estimateGas / eth_call if tx.origin is GMX_SIMULATION_ORIGIN
-        // do not use address(0) to avoid relays accidentally skipping signature validation if they use address(0) as the origin
-        if (tx.origin == GMX_SIMULATION_ORIGIN) {
-            return;
-        }
-
-        if (error != ECDSA.RecoverError.NoError || recovered != expectedSigner) {
-            revert Errors.InvalidSignature(signatureType);
-        }
     }
 
     function _getContracts() internal view returns (Contracts memory contracts) {
@@ -209,7 +181,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         address account,
         uint256 srcChainId,
         bool isSubaccount
-    ) internal withFlexibleOraclePrices(relayParams.oracleParams, srcChainId == 0 /* forAtomicAction */) {
+    ) internal withOraclePricesForAtomicAction(relayParams.oracleParams) {
         _handleTokenPermits(relayParams.tokenPermits);
         _handleExternalCalls(account, srcChainId, relayParams.externalCalls, isSubaccount);
 
@@ -318,6 +290,9 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
             _sendTokens(account, relayParams.fee.feeToken, address(contracts.orderVault), relayParams.fee.feeAmount, srcChainId);
             RelayUtils.swapFeeTokens(contracts, eventEmitter, oracle, relayParams.fee);
+            for (uint256 i = 0; i < relayParams.fee.feeSwapPath.length - 1; i++) {
+                MarketUtils.validateMarketTokenBalance(contracts.dataStore, relayParams.fee.feeSwapPath[i]);
+            }
         } else if (relayParams.fee.feeToken == contracts.wnt) {
             // fee tokens could be sent through external calls
             // in this case feeAmount could be 0 and there is no need to call _sendTokens
@@ -352,7 +327,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     function _handleRelayAfterAction(
         Contracts memory contracts,
         uint256 startingGas,
-        address residualFeeReceiver,
+        address account,
         uint256 srcChainId
     ) internal {
         bool isSponsoredCall = !_isGelatoRelay(msg.sender);
@@ -378,33 +353,21 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
         residualFeeAmount -= relayFee;
         if (residualFeeAmount > 0) {
-            _transferResidualFee(contracts.wnt, residualFeeReceiver, residualFeeAmount, residualFeeReceiver /* account */, srcChainId);
+            // residual fee is sent back to the account
+            _transferResidualFee(contracts.wnt, account, residualFeeAmount, srcChainId);
         }
     }
 
-    function _sendTokens(address account, address token, address receiver, uint256 amount, uint256 /*srcChainId*/) internal virtual {
+    function _sendTokens(address account, address token, address receiver, uint256 amount, uint256 /* srcChainId */) internal virtual {
         // srcChainId not used here, but necessary when overriding _sendTokens in MultichainRouter
         AccountUtils.validateReceiver(receiver);
         router.pluginTransfer(token, account, receiver, amount);
     }
 
     // for multichain actions, the residual fee is send back to MultichainVault and user's multichain balance is increased
-    function _transferResidualFee(address wnt, address residualFeeReceiver, uint256 residualFee, address /*account*/, uint256 /*srcChainId*/) internal virtual {
-        // account and srcChainId not used here, but necessary when overriding _transferResidualFee in MultichainRouter
-        IERC20(wnt).safeTransfer(residualFeeReceiver, residualFee);
-    }
-
-    function _getDomainSeparator(uint256 sourceChainId) internal view returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    DOMAIN_SEPARATOR_TYPEHASH,
-                    DOMAIN_SEPARATOR_NAME_HASH,
-                    DOMAIN_SEPARATOR_VERSION_HASH,
-                    sourceChainId,
-                    address(this)
-                )
-            );
+    function _transferResidualFee(address wnt, address account, uint256 residualFee, uint256 /* srcChainId */) internal virtual {
+        // srcChainId is used when overriding _transferResidualFee in MultichainRouter
+        IERC20(wnt).safeTransfer(account, residualFee);
     }
 
     function _validateCall(RelayParams calldata relayParams, address account, bytes32 structHash, uint256 srcChainId) internal {
@@ -412,18 +375,31 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             revert Errors.InvalidDestinationChainId(relayParams.desChainId);
         }
 
-        uint256 _srcChainId = srcChainId == 0 ? block.chainid : srcChainId;
-
-        if (srcChainId != 0 && !dataStore.getBool(Keys.isSrcChainIdEnabledKey(_srcChainId))) {
-            revert Errors.InvalidSrcChainId(_srcChainId);
+        if (_isMultichain()) {
+            // multichain
+            if (relayParams.tokenPermits.length != 0) {
+                revert Errors.TokenPermitsNotAllowedForMultichain();
+            }
+            if (!dataStore.getBool(Keys.isSrcChainIdEnabledKey(srcChainId))) {
+                revert Errors.InvalidSrcChainId(srcChainId);
+            }
+        } else {
+            // gasless
+            if (srcChainId != block.chainid) {
+                revert Errors.InvalidSrcChainId(srcChainId);
+            }
         }
 
-        bytes32 domainSeparator = _getDomainSeparator(_srcChainId);
+        bytes32 domainSeparator = RelayUtils.getDomainSeparator(srcChainId);
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
-        _validateSignature(digest, relayParams.signature, account, "call");
+        RelayUtils.validateSignature(digest, relayParams.signature, account, "call");
 
         _validateNonce(account, relayParams.userNonce);
         _validateDeadline(relayParams.deadline);
+    }
+
+    function _isMultichain() internal pure virtual returns (bool) {
+        return false;
     }
 
     function _validateDeadline(uint256 deadline) internal view {

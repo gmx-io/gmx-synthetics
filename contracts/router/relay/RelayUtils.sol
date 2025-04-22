@@ -2,6 +2,8 @@
 
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+
 import "../../data/DataStore.sol";
 import "../../event/EventEmitter.sol";
 import "../../order/OrderVault.sol";
@@ -136,10 +138,10 @@ string constant UPDATE_ORDER_PARAMS = "UpdateOrderParams(bytes32 key,uint256 siz
 string constant CREATE_ORDER_ADDRESSES = "CreateOrderAddresses(address receiver,address cancellationReceiver,address callbackContract,address uiFeeReceiver,address market,address initialCollateralToken,address[] swapPath)";
 string constant CREATE_ORDER_NUMBERS = "CreateOrderNumbers(uint256 sizeDeltaUsd,uint256 initialCollateralDeltaAmount,uint256 triggerPrice,uint256 acceptablePrice,uint256 executionFee,uint256 callbackGasLimit,uint256 minOutputAmount,uint256 validFromTime)";
 
-string constant CREATE_ORDER_PARAMS_ROOT = "CreateOrderParams(CreateOrderAddresses addresses,CreateOrderNumbers numbers,uint256 orderType,uint256 decreasePositionSwapType,bool isLong,bool shouldUnwrapNativeToken,bool autoCancel,bytes32 referralCode)";
+string constant CREATE_ORDER_PARAMS_ROOT = "CreateOrderParams(CreateOrderAddresses addresses,CreateOrderNumbers numbers,uint256 orderType,uint256 decreasePositionSwapType,bool isLong,bool shouldUnwrapNativeToken,bool autoCancel,bytes32 referralCode,bytes32[] dataList)";
 string constant CREATE_ORDER_PARAMS = string(
     abi.encodePacked(
-        "CreateOrderParams(CreateOrderAddresses addresses,CreateOrderNumbers numbers,uint256 orderType,uint256 decreasePositionSwapType,bool isLong,bool shouldUnwrapNativeToken,bool autoCancel,bytes32 referralCode)",
+        "CreateOrderParams(CreateOrderAddresses addresses,CreateOrderNumbers numbers,uint256 orderType,uint256 decreasePositionSwapType,bool isLong,bool shouldUnwrapNativeToken,bool autoCancel,bytes32 referralCode,bytes32[] dataList)",
         CREATE_ORDER_ADDRESSES,
         CREATE_ORDER_NUMBERS
     )
@@ -164,7 +166,7 @@ library RelayUtils {
     bytes32 public constant CREATE_ORDER_TYPEHASH =
         keccak256(
             abi.encodePacked(
-                "CreateOrder(address account,CreateOrderAddresses addresses,CreateOrderNumbers numbers,uint256 orderType,uint256 decreasePositionSwapType,bool isLong,bool shouldUnwrapNativeToken,bool autoCancel,bytes32 referralCode,bytes32 relayParams,bytes32 subaccountApproval)",
+                "CreateOrder(address account,CreateOrderAddresses addresses,CreateOrderNumbers numbers,uint256 orderType,uint256 decreasePositionSwapType,bool isLong,bool shouldUnwrapNativeToken,bool autoCancel,bytes32 referralCode,bytes32[] dataList,bytes32 relayParams,bytes32 subaccountApproval)",
                 CREATE_ORDER_ADDRESSES,
                 CREATE_ORDER_NUMBERS
             )
@@ -271,6 +273,46 @@ library RelayUtils {
             bytes("ClaimAffiliateRewards(address[] markets,address[] tokens,address receiver,bytes32 relayParams)")
         );
 
+    bytes32 public constant DOMAIN_SEPARATOR_TYPEHASH =
+        keccak256(bytes("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"));
+    bytes32 public constant DOMAIN_SEPARATOR_NAME_HASH = keccak256(bytes("GmxBaseGelatoRelayRouter"));
+    bytes32 public constant DOMAIN_SEPARATOR_VERSION_HASH = keccak256(bytes("1"));
+
+    address constant GMX_SIMULATION_ORIGIN = address(uint160(uint256(keccak256("GMX SIMULATION ORIGIN"))));
+
+
+    function getDomainSeparator(uint256 sourceChainId) external view returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    DOMAIN_SEPARATOR_TYPEHASH,
+                    DOMAIN_SEPARATOR_NAME_HASH,
+                    DOMAIN_SEPARATOR_VERSION_HASH,
+                    sourceChainId,
+                    address(this)
+                )
+            );
+    }
+
+    function validateSignature(
+        bytes32 digest,
+        bytes calldata signature,
+        address expectedSigner,
+        string memory signatureType
+    ) external view {
+        (address recovered, ECDSA.RecoverError error) = ECDSA.tryRecover(digest, signature);
+
+        // allow to optionally skip signature validation for eth_estimateGas / eth_call if tx.origin is GMX_SIMULATION_ORIGIN
+        // do not use address(0) to avoid relays accidentally skipping signature validation if they use address(0) as the origin
+        if (tx.origin == GMX_SIMULATION_ORIGIN) {
+            return;
+        }
+
+        if (error != ECDSA.RecoverError.NoError || recovered != expectedSigner) {
+            revert Errors.InvalidSignature(signatureType);
+        }
+    }
+
     function swapFeeTokens(
         Contracts memory contracts,
         EventEmitter eventEmitter,
@@ -369,6 +411,7 @@ library RelayUtils {
                     params.shouldUnwrapNativeToken,
                     params.autoCancel,
                     params.referralCode,
+                    keccak256(abi.encodePacked(params.dataList)),
                     relayParamsHash,
                     subaccountApprovalHash
                 )
@@ -394,6 +437,7 @@ library RelayUtils {
                     params.shouldUnwrapNativeToken,
                     params.autoCancel,
                     params.referralCode,
+                    keccak256(abi.encodePacked(params.dataList)),
                     relayParamsHash,
                     bytes32(0)
                 )
@@ -533,7 +577,8 @@ library RelayUtils {
                     params.isLong,
                     params.shouldUnwrapNativeToken,
                     params.autoCancel,
-                    params.referralCode
+                    params.referralCode,
+                    keccak256(abi.encodePacked(params.dataList))
                 )
             );
     }
@@ -694,7 +739,7 @@ library RelayUtils {
     }
 
     function _getCreateDepositAdressesStructHash(
-        DepositUtils.CreateDepositParamsAdresses memory addresses
+        DepositUtils.CreateDepositParamsAddresses memory addresses
     ) private pure returns (bytes32) {
         return
             keccak256(

@@ -187,7 +187,7 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
           expect(positionDecreaseEvent.executionPrice).eq("5039500000000000"); // 5039.5
           expect(positionDecreaseEvent.basePnlUsd).eq(0);
           expect(positionDecreaseEvent.priceImpactUsd).eq("-79000000000000000652818973670000"); // -79
-          expect(positionDecreaseEvent.proportionalImpactPendingUsd).eq("39500000000000000000000000000000"); // 39.5
+          expect(positionDecreaseEvent.proportionalPendingImpactUsd).eq("39500000000000000000000000000000"); // 39.5
         },
       },
     });
@@ -359,7 +359,7 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
           const positionDecreaseEvent = getEventData(logs, "PositionDecrease");
           expect(positionDecreaseEvent.executionPrice).eq("5002499999999999"); // ~5002
           expect(positionDecreaseEvent.priceImpactUsd).eq("49999999999999999073502339165000"); // ~50 usd
-          expect(positionDecreaseEvent.proportionalImpactPendingUsd).eq("-60000000000000000000000000000000"); // -60 usd
+          expect(positionDecreaseEvent.proportionalPendingImpactUsd).eq("-60000000000000000000000000000000"); // -60 usd
           // totalImpactUsd = (50 - 60) / 5000 = -10 / 5000 = -0.002
         },
       },
@@ -394,7 +394,7 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
           const positionDecreaseEvent = getEventData(logs, "PositionDecrease");
           expect(positionDecreaseEvent.executionPrice).eq("4995000000000001"); // ~4995
           expect(positionDecreaseEvent.priceImpactUsd).eq("-99999999999999998147004678330000"); // -100
-          expect(positionDecreaseEvent.proportionalImpactPendingUsd).eq("-60000000000000000000000000000000"); // -60 usd
+          expect(positionDecreaseEvent.proportionalPendingImpactUsd).eq("-60000000000000000000000000000000"); // -60 usd
           // totalImpactUsd = (-100 - 60) / 5000 = -160 / 5000 = -0.032
         },
       },
@@ -430,7 +430,7 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
           const positionDecreaseEvent = getEventData(logs, "PositionDecrease");
           expect(positionDecreaseEvent.executionPrice).eq("4997500000000001"); // ~4995
           expect(positionDecreaseEvent.priceImpactUsd).eq("49999999999999999073502339165000"); // 50
-          expect(positionDecreaseEvent.proportionalImpactPendingUsd).eq("66666666666666665000000000000000"); // 66.67 usd
+          expect(positionDecreaseEvent.proportionalPendingImpactUsd).eq("66666666666666665000000000000000"); // 66.67 usd
           // totalImpactUsd = (50 + 66.67) / 5000 = 116.67 / 5000 = -0.023334
         },
       },

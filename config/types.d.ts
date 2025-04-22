@@ -28,5 +28,6 @@ declare module "hardhat/types/runtime" {
       getLayerZeroEndpoint: () => Promise<LayerZeroEndpointConfig>;
       getFeeDistributor: () => Promise<FeeDistributorConfig>;
     };
+    deployTags: string;
   }
 }

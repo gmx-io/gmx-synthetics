@@ -482,8 +482,8 @@ describe("Guardian.Fees", () => {
 
     let impactPoolAmount = bigNumberify(0);
     expect(poolValueInfo.impactPoolAmount).to.eq(impactPoolAmount); // 0
-    let impactPendingAmountLong = expandDecimals(5, 15).mul(-1);
-    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey))).to.eq(impactPendingAmountLong); // -0.005 ETH
+    let pendingImpactAmountLong = expandDecimals(5, 15).mul(-1);
+    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey))).to.eq(pendingImpactAmountLong); // -0.005 ETH
 
     // Open a position and get positively impacted, pay a 0.05% positionFeeFactor rate
     await handleOrder(fixture, {
@@ -526,8 +526,8 @@ describe("Guardian.Fees", () => {
     expect(position2.numbers.collateralAmount).to.eq(expandDecimals(25_000, 6).sub(expandDecimals(25, 6)));
     expect(position2.numbers.sizeInUsd).to.eq(expandDecimals(50_000, 30));
     expect(position2.numbers.sizeInTokens).to.eq(expandDecimals(10, 18)); // 10 ETH
-    let impactPendingAmountShort = bigNumberify("2499999999999999"); // 0.0025 ETH
-    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey2))).to.eq(impactPendingAmountShort);
+    let pendingImpactAmountShort = bigNumberify("2499999999999999"); // 0.0025 ETH
+    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey2))).to.eq(pendingImpactAmountShort);
 
     // value of the pool has a net 0 change (other than fees) because the pnl doesn't change due to the price impact
     poolPnl = await reader.getNetPnl(dataStore.address, ethUsdMarket, prices.ethUsdMarket.indexTokenPrice, false);
@@ -577,8 +577,8 @@ describe("Guardian.Fees", () => {
     expect(poolValueInfo.longTokenAmount).to.eq(expandDecimals(1_000, 18));
 
     expect(poolValueInfo.impactPoolAmount).to.eq(0);
-    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey2))).to.eq(impactPendingAmountShort); // 0.0025 ETH from short
-    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey))).to.eq(impactPendingAmountLong); // -0.005 ETH from long
+    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey2))).to.eq(pendingImpactAmountShort); // 0.0025 ETH from short
+    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey))).to.eq(pendingImpactAmountLong); // -0.005 ETH from long
 
     // Test min collateral multiplier
     // goal min collateral factor of 0.15
@@ -717,8 +717,8 @@ describe("Guardian.Fees", () => {
     // immediate net pnl of -$25 does not affect the pool value above.
     impactPoolAmount = impactPoolAmount.add(expandDecimals(2, 8)); // 0.00000002 ETH
     expect(poolValueInfo.impactPoolAmount).to.closeTo(0, expandDecimals(2, 8)); // $0.0001 rounding error
-    impactPendingAmountShort = impactPendingAmountShort.sub(expandDecimals(125, 13).sub(1)); // 0.0025 - 0.00125 = 0.00125 ETH from short
-    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey2))).to.eq(impactPendingAmountShort);
+    pendingImpactAmountShort = pendingImpactAmountShort.sub(expandDecimals(125, 13).sub(1)); // 0.0025 - 0.00125 = 0.00125 ETH from short
+    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey2))).to.eq(pendingImpactAmountShort);
 
     user0WntBalBefore = await wnt.balanceOf(user0.address);
     user0UsdcBalBefore = await usdc.balanceOf(user0.address);
@@ -764,7 +764,7 @@ describe("Guardian.Fees", () => {
             expandDecimals(3125, 27).mul(-1),
             expandDecimals(1, 17)
           ); // ~$3.125 in negative impact
-          expect(positionDecreasedEvent.proportionalImpactPendingUsd).to.eq(expandDecimals(25, 30).mul(-1));
+          expect(positionDecreasedEvent.proportionalPendingImpactUsd).to.eq(expandDecimals(25, 30).mul(-1));
         },
       },
     });
@@ -980,9 +980,9 @@ describe("Guardian.Fees", () => {
     // impact pool amount has not changed
     // 0.005 ETH from proportional increase long + 0.000625 ETH from calculated decrease long
     expect(poolValueInfo.impactPoolAmount).to.eq(impactPoolAmount); // 0.005625 ETH
-    impactPendingAmountLong = bigNumberify(0); // position has been decreased entirely => no impact pending
-    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey))).to.eq(impactPendingAmountLong); // 0
-    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey2))).to.eq(impactPendingAmountShort); // 0.00125 ETH
+    pendingImpactAmountLong = bigNumberify(0); // position has been decreased entirely => no impact pending
+    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey))).to.eq(pendingImpactAmountLong); // 0
+    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey2))).to.eq(pendingImpactAmountShort); // 0.00125 ETH
 
     user0WntBalBefore = await wnt.balanceOf(user0.address);
     user0UsdcBalBefore = await usdc.balanceOf(user0.address);
@@ -1039,8 +1039,8 @@ describe("Guardian.Fees", () => {
 
     expect(await getOrderCount(dataStore)).to.eq(0);
     expect(await getPositionCount(dataStore)).to.eq(0);
-    impactPendingAmountShort = bigNumberify(0); // short position has been liqudated => no impact pending
-    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey2))).to.eq(impactPendingAmountShort); // 0
+    pendingImpactAmountShort = bigNumberify(0); // short position has been liqudated => no impact pending
+    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey2))).to.eq(pendingImpactAmountShort); // 0
 
     user0WntBalAfter = await wnt.balanceOf(user0.address);
     user0UsdcBalAfter = await usdc.balanceOf(user0.address);

@@ -196,7 +196,7 @@ contract GlpMigrator is ReentrancyGuard, RoleModule {
             // any arbitrage / benefit of doing this should be minimal
             // glp mint fees should also help to discourage this
             DepositUtils.CreateDepositParams memory depositParams =  DepositUtils.CreateDepositParams(
-                DepositUtils.CreateDepositParamsAdresses(
+                DepositUtils.CreateDepositParamsAddresses(
                     account, // receiver;
                     address(0), // callbackContract;
                     address(0), // uiFeeReceiver;
@@ -215,7 +215,7 @@ contract GlpMigrator is ReentrancyGuard, RoleModule {
 
             cache.depositKey = depositHandler.createDeposit(
                 account,
-                0, // srcChainId
+                0, // srcChainId is the current block.chainId
                 depositParams
             );
 

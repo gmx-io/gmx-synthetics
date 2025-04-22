@@ -143,7 +143,7 @@ contract SubaccountRouter is BaseRouter {
 
         bytes32 key = orderHandler.createOrder(
             account,
-            0, // srcChainId
+            0, // srcChainId is the current block.chainId
             params,
             params.addresses.callbackContract != address(0)
         );

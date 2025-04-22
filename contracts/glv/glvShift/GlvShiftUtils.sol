@@ -141,7 +141,7 @@ library GlvShiftUtils {
                 updatedAtTime: glvShift.updatedAtTime(),
                 executionFee: 0,
                 callbackGasLimit: 0,
-                srcChainId: 0
+                srcChainId: 0 // srcChainId is the current block.chainId
             }),
             new bytes32[](0)
         );

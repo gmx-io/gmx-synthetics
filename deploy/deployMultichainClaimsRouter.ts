@@ -37,11 +37,10 @@ const func = createDeployFunction({
     "FeeUtils",
     "MarketEventUtils",
     "MarketStoreUtils",
-    "MarketUtils",
     "MultichainUtils",
     "ReferralUtils",
     "RelayUtils",
-    "SwapUtils",
+    "MarketUtils",
   ],
 
   afterDeploy: async ({ deployedContract }) => {

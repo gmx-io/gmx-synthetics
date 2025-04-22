@@ -39,6 +39,15 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
         `multichainEndpoint ${multichainEndpoint}`
       );
     }
+    for (const [srcChainId, enabled] of Object.entries(generalConfig.srcChainIds)) {
+      await handleConfig(
+        "bool",
+        keys.IS_SRC_CHAIN_ID_ENABLED,
+        encodeData(["uint"], [srcChainId]),
+        enabled,
+        `srcChainId ${srcChainId}`
+      );
+    }
   }
 
   await handleConfig(

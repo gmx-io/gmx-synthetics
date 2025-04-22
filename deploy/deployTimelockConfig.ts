@@ -38,7 +38,6 @@ const func = createDeployFunction({
     await grantRoleIfNotGranted(deployedContract.address, "ROLE_ADMIN");
 
     const generalConfig = await hre.gmx.getGeneral();
-    await setUintIfDifferent(keys.CONFIG_MAX_PRICE_AGE, generalConfig.configMaxPriceAge, "max oracle config price age");
   },
 });
 

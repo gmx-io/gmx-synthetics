@@ -21,9 +21,21 @@ contract MultichainTransferRouter is MultichainRouter {
      * this would be used to move user's funds from their Arbitrum account into their multichain balance
      */
     function bridgeIn(address account, address token, uint256 srcChainId) external payable nonReentrant {
-        MultichainUtils.recordTransferIn(dataStore, eventEmitter, multichainVault, token, account, srcChainId);
+        uint256 amount = MultichainUtils.recordTransferIn(dataStore, eventEmitter, multichainVault, token, account, srcChainId);
+        MultichainEventUtils.emitMultichainBridgeIn(
+            eventEmitter,
+            address(0),
+            token,
+            account,
+            amount,
+            0 // srcChainId is the current block.chainId
+        );
     }
 
+    /*
+     * Bridge out funds recorded under the account
+     * Can be used for same-chain or cross-chain withdrawals
+     */
     function bridgeOut(
         RelayParams calldata relayParams,
         address account,
@@ -34,6 +46,18 @@ contract MultichainTransferRouter is MultichainRouter {
         _validateCall(relayParams, account, structHash, srcChainId);
 
         _bridgeOut(account, srcChainId, params);
+    }
+
+    /*
+     * Bridge out funds recorded under the account OR the smart wallet
+     * Can be used for same-chain withdrawals only
+     * This would be used by the smart wallets to withdraw funds from the multichain vault
+     */
+    function transferOut(
+        BridgeOutParams calldata params
+    ) external nonReentrant {
+        address account = msg.sender;
+        _bridgeOut(account, block.chainid, params);
     }
 
     function _bridgeOut(
@@ -53,12 +77,24 @@ contract MultichainTransferRouter is MultichainRouter {
                 params.amount,
                 srcChainId
             );
+
             TokenUtils.transfer(dataStore, params.token, account, params.amount);
+
+            MultichainEventUtils.emitMultichainBridgeOut(
+                eventEmitter,
+                address(0), // provider
+                params.token,
+                account,
+                params.amount, // amount
+                0 // srcChainId is the current block.chainId
+            );
         } else {
             // cross-chain withdrawal: using the multichain provider, funds are bridged to the src chain
             MultichainUtils.validateMultichainProvider(dataStore, params.provider);
-            // moves user's funds (amount + bridging fee) from their multichain balance into multichainProvider
-            multichainProvider.bridgeOut(
+
+            // transfer funds (amount + bridging fee) from user's multichain balance to multichainProvider
+            // and execute the bridge out to srcChain
+            uint256 amountOut = multichainProvider.bridgeOut(
                 IMultichainProvider.BridgeOutParams({
                     provider: params.provider,
                     account: account,
@@ -68,15 +104,15 @@ contract MultichainTransferRouter is MultichainRouter {
                     data: params.data
                 })
             );
-        }
 
-        MultichainEventUtils.emitMultichainBridgeOut(
-            eventEmitter,
-            params.provider,
-            params.token,
-            account,
-            params.amount,
-            srcChainId
-        );
+            MultichainEventUtils.emitMultichainBridgeOut(
+                eventEmitter,
+                params.provider,
+                params.token,
+                account,
+                amountOut, // amount
+                srcChainId
+            );
+        }
     }
 }

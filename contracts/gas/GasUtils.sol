@@ -116,14 +116,15 @@ library GasUtils {
 
     // @dev pay the keeper the execution fee and refund any excess amount
     //
-    // @param dataStore DataStore
-    // @param bank the StrictBank contract holding the execution fee
+    // @param contracts the contracts to use for fee payment
+    // @param key the key of the request
+    // @param callbackContract the callback contract to use
     // @param executionFee the executionFee amount
     // @param startingGas the starting gas
     // @param oraclePriceCount number of oracle prices
     // @param keeper the keeper to pay
     // @param refundReceiver the account that should receive any excess gas refunds
-    // @param isSubaccount whether the order is a subaccount order
+    // @param srcChainId the source chain id
     function payExecutionFee(
         PayExecutionFeeContracts memory contracts,
         bytes32 key,

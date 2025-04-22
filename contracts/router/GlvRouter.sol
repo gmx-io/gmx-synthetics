@@ -37,7 +37,7 @@ contract GlvRouter is BaseRouter {
     ) external payable nonReentrant returns (bytes32) {
         address account = msg.sender;
 
-        return glvHandler.createGlvDeposit(account, 0 /* srcChainId */, params);
+        return glvHandler.createGlvDeposit(account, 0, params); // srcChainId is the current block.chainId
     }
 
     function cancelGlvDeposit(bytes32 key) external nonReentrant {
@@ -72,7 +72,7 @@ contract GlvRouter is BaseRouter {
     ) external payable nonReentrant returns (bytes32) {
         address account = msg.sender;
 
-        return glvHandler.createGlvWithdrawal(account, 0 /* srcChainId */, params);
+        return glvHandler.createGlvWithdrawal(account, 0, params); // srcChainId is the current block.chainId
     }
 
     function cancelGlvWithdrawal(bytes32 key) external nonReentrant {

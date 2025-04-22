@@ -47,6 +47,7 @@ library WithdrawalUtils {
      * @param shouldUnwrapNativeToken Whether the native token should be unwrapped when executing the withdrawal.
      * @param executionFee The execution fee for the withdrawal.
      * @param callbackGasLimit The gas limit for calling the callback contract.
+     * @param dataList a list of bytes32 values that can be used for additional data.
      */
     struct CreateWithdrawalParams {
         CreateWithdrawalParamsAddresses addresses;
@@ -74,7 +75,9 @@ library WithdrawalUtils {
      * @param eventEmitter The event emitter that is used to emit events.
      * @param withdrawalVault WithdrawalVault.
      * @param account The account that initiated the withdrawal.
+     * @param srcChainId The source chain id for the withdrawal.
      * @param params The parameters for creating the withdrawal.
+     * @param isAtomicWithdrawal Whether the withdrawal is atomic.
      * @return The unique identifier of the created withdrawal.
      */
     function createWithdrawal(
