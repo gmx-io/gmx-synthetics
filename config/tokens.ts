@@ -712,6 +712,15 @@ const config: {
       oracleTimestampAdjustment: 1,
       // Chainlink on-chain feed not available
     },
+    DOLO: {
+      synthetic: true,
+      decimals: 18, // https://berascan.com/token/0x0F81001eF0A83ecCE5ccebf63EB302c70a39a654#readContract
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x000355d06b40dff314c9a283f9fd647690f5ebdce666453af72e3fbf08fdce5e",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      // Chainlink on-chain feed not available
+    },
     AAVE: {
       address: "0xba5ddd1f9d7f570dc94a51479a000e3bce967196",
       decimals: 18,
