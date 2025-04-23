@@ -1033,6 +1033,7 @@ const config: {
 
       ...baseMarketConfig,
       ...fundingRateConfig_Default,
+      ...borrowingRateConfig_LowMax_WithHigherBase,
 
       reserveFactor: percentageToFloat("165%"),
       openInterestReserveFactor: percentageToFloat("160%"),
@@ -1051,9 +1052,6 @@ const config: {
       minCollateralFactor: percentageToFloat("0.833%"), // 120x leverage
       // minCollateralFactor of 0.00833 (0.833%) when open interest is 2,400,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.5e-9"),
-
-      // factor in open interest reserve factor 100%
-      borrowingFactor: exponentToFloat("1.6e-8"), // 1.60E-08, ~50% if 100% utilized
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(7166, 41), // 0.716642E+45, 61.91 UNI / day
       minPositionImpactPoolAmount: expandDecimals(170, 18),
