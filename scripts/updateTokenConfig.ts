@@ -104,10 +104,12 @@ async function main() {
   console.log(`updating ${multicallWriteParams.length} params`);
   console.log("multicallWriteParams", multicallWriteParams);
 
+  const { roles } = await hre.gmx.getRoles();
+  const from = Object.keys(roles.CONFIG_KEEPER)[0];
   await hre.deployments.read(
     "Config",
     {
-      from: "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745",
+      from,
     },
     "multicall",
     multicallWriteParams

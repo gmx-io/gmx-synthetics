@@ -126,3 +126,7 @@ export function formatAmount(
   }
   return amountStr;
 }
+
+export function formatPercent(amount: BigNumberish, displayDecimals?: number) {
+  return `${formatAmount(amount, 28, displayDecimals)}%`;
+}
