@@ -371,31 +371,13 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     }
 
     function _validateCall(RelayParams calldata relayParams, address account, bytes32 structHash, uint256 srcChainId) internal {
-        if (relayParams.desChainId != block.chainid) {
-            revert Errors.InvalidDestinationChainId(relayParams.desChainId);
-        }
-
-        if (_isMultichain()) {
-            // multichain
-            if (relayParams.tokenPermits.length != 0) {
-                revert Errors.TokenPermitsNotAllowedForMultichain();
-            }
-            if (!dataStore.getBool(Keys.isSrcChainIdEnabledKey(srcChainId))) {
-                revert Errors.InvalidSrcChainId(srcChainId);
-            }
-        } else {
-            // gasless
-            if (srcChainId != block.chainid) {
-                revert Errors.InvalidSrcChainId(srcChainId);
-            }
-        }
+        _validateCallWithoutSignature(relayParams, srcChainId);
 
         bytes32 domainSeparator = RelayUtils.getDomainSeparator(srcChainId);
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
         RelayUtils.validateSignature(digest, relayParams.signature, account, "call");
 
         _validateNonce(account, relayParams.userNonce);
-        _validateDeadline(relayParams.deadline);
     }
 
     function _isMultichain() internal pure virtual returns (bool) {
@@ -417,5 +399,28 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
     function _validateGaslessFeature() internal view {
         FeatureUtils.validateFeature(dataStore, Keys.gaslessFeatureDisabledKey(address(this)));
+    }
+
+    function _validateCallWithoutSignature(RelayParams calldata relayParams, uint256 srcChainId) internal view {
+        if (relayParams.desChainId != block.chainid) {
+            revert Errors.InvalidDestinationChainId(relayParams.desChainId);
+        }
+
+        if (_isMultichain()) {
+            // multichain
+            if (relayParams.tokenPermits.length != 0) {
+                revert Errors.TokenPermitsNotAllowedForMultichain();
+            }
+            if (!dataStore.getBool(Keys.isSrcChainIdEnabledKey(srcChainId))) {
+                revert Errors.InvalidSrcChainId(srcChainId);
+            }
+        } else {
+            // gasless
+            if (srcChainId != block.chainid) {
+                revert Errors.InvalidSrcChainId(srcChainId);
+            }
+        }
+
+        _validateDeadline(relayParams.deadline);
     }
 }

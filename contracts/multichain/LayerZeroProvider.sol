@@ -12,11 +12,16 @@ import { IStargate } from "@stargatefinance/stg-evm-v2/src/interfaces/IStargate.
 
 import "../event/EventEmitter.sol";
 import "../data/DataStore.sol";
+import "../deposit/DepositUtils.sol";
+import "../utils/Cast.sol";
 
 import "./MultichainVault.sol";
 import "./MultichainUtils.sol";
+import "./MultichainGmRouter.sol";
+import "./MultichainGlvRouter.sol";
 import "./IMultichainProvider.sol";
-import "./MultichainProviderUtils.sol";
+
+import { RelayParams, TransferRequests } from "../router/relay/RelayUtils.sol";
 
 /**
  * @title LayerZeroProvider
@@ -40,16 +45,22 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
     MultichainVault public immutable multichainVault;
+    MultichainGmRouter public immutable multichainGmRouter;
+    MultichainGlvRouter public immutable multichainGlvRouter;
 
     constructor(
         DataStore _dataStore,
         RoleStore _roleStore,
         EventEmitter _eventEmitter,
-        MultichainVault _multichainVault
+        MultichainVault _multichainVault,
+        MultichainGmRouter _multichainGmRouter,
+        MultichainGlvRouter _multichainGlvRouter
     ) RoleModule(_roleStore) {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
         multichainVault = _multichainVault;
+        multichainGmRouter = _multichainGmRouter;
+        multichainGlvRouter = _multichainGlvRouter;
     }
 
     /**
@@ -73,7 +84,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         uint256 amountLD = OFTComposeMsgCodec.amountLD(message);
 
         bytes memory composeMessage = OFTComposeMsgCodec.composeMsg(message);
-        (address account, uint256 srcChainId) = MultichainProviderUtils.decodeDeposit(composeMessage);
+        (address account, uint256 srcChainId, bytes memory data) = _decodeLzComposeMsg(composeMessage);
 
         address token = IStargate(from).token();
         if (token == address(0x0)) {
@@ -96,6 +107,15 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             amountLD,
             srcChainId
         );
+
+        if (data.length != 0) {
+            (ActionType actionType, bytes memory actionData) = _decodeLzComposeMsgData(data);
+            if (actionType == ActionType.Deposit) {
+                _handleDepositFromBridge(from, account, srcChainId, actionType, actionData);
+            } else if (actionType == ActionType.GlvDeposit) {
+                _handleGlvDepositFromBridge(from, account, srcChainId, actionType, actionData);
+            }
+        }
     }
 
     /**
@@ -250,7 +270,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
     {
         sendParam = SendParam({
             dstEid: _dstEid,
-            to: MultichainProviderUtils.addressToBytes32(receiver),
+            to: Cast.addressToBytes32(receiver),
             amountLD: amount,
             minAmountLD: amount,
             extraOptions: bytes(""),
@@ -266,6 +286,95 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
 
         if (stargate.token() == address(0x0)) {
             valueToSend += receipt.amountSentLD;
+        }
+    }
+
+    function _decodeLzComposeMsg(bytes memory message) private pure returns (address, uint256, bytes memory) {
+        return abi.decode(message, (address, uint256, bytes));
+    }
+
+    function _decodeLzComposeMsgData(bytes memory data) private pure returns (ActionType, bytes memory) {
+        return abi.decode(data, (ActionType, bytes));
+    }
+
+    function _areValidTransferRequests(TransferRequests memory transferRequests) private pure returns (bool) {
+        if (
+            transferRequests.tokens.length != transferRequests.receivers.length ||
+            transferRequests.tokens.length != transferRequests.amounts.length
+        ) {
+            return false;
+        }
+        for (uint256 i = 0; i < transferRequests.tokens.length; i++) {
+            if (
+                transferRequests.tokens[i] == address(0) ||
+                transferRequests.receivers[i] == address(0) ||
+                transferRequests.amounts[i] == 0
+            ) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function _handleDepositFromBridge(
+        address from,
+        address account,
+        uint256 srcChainId,
+        ActionType actionType,
+        bytes memory actionData
+    ) private {
+        (
+            RelayParams memory relayParams,
+            TransferRequests memory transferRequests,
+            DepositUtils.CreateDepositParams memory depositParams
+        ) = abi.decode(actionData, (RelayParams, TransferRequests, DepositUtils.CreateDepositParams));
+        
+        if (_areValidTransferRequests(transferRequests)) {
+            try multichainGmRouter.createDepositFromBridge(
+                relayParams,
+                account,
+                srcChainId,
+                transferRequests,
+                depositParams
+            ) returns (bytes32 key) {
+                MultichainEventUtils.emitDepositFromBridge(eventEmitter, from, account, srcChainId, actionType, key);
+            } catch Error(string memory reason) {
+                MultichainEventUtils.emitDepositFromBridgeFailed(eventEmitter, from, account, srcChainId, actionType, reason);
+            } catch (bytes memory reasonBytes) {
+                (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
+                MultichainEventUtils.emitDepositFromBridgeFailed(eventEmitter, from, account, srcChainId, actionType, reason);
+            }
+        }
+    }
+
+    function _handleGlvDepositFromBridge(
+        address from,
+        address account,
+        uint256 srcChainId,
+        ActionType actionType,
+        bytes memory actionData
+    ) private {
+        (
+            RelayParams memory relayParams,
+            TransferRequests memory transferRequests,
+            GlvDepositUtils.CreateGlvDepositParams memory glvDepositParams
+        ) = abi.decode(actionData, (RelayParams, TransferRequests, GlvDepositUtils.CreateGlvDepositParams));
+        
+        if (_areValidTransferRequests(transferRequests)) {
+            try multichainGlvRouter.createGlvDepositFromBridge(
+                relayParams,
+                account,
+                srcChainId,
+                transferRequests,
+                glvDepositParams
+            ) returns (bytes32 key) {
+                MultichainEventUtils.emitDepositFromBridge(eventEmitter, from, account, srcChainId, actionType, key);
+            } catch Error(string memory reason) {
+                MultichainEventUtils.emitDepositFromBridgeFailed(eventEmitter, from, account, srcChainId, actionType, reason);
+            } catch (bytes memory reasonBytes) {
+                (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
+                MultichainEventUtils.emitDepositFromBridgeFailed(eventEmitter, from, account, srcChainId, actionType, reason);
+            }
         }
     }
 

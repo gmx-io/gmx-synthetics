@@ -47,6 +47,27 @@ contract MultichainGmRouter is MultichainRouter {
         bytes32 structHash = RelayUtils.getCreateDepositStructHash(relayParams, transferRequests, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
+        return _createDeposit(account, srcChainId, transferRequests, params);
+    }
+
+    function createDepositFromBridge(
+        RelayParams calldata relayParams,
+        address account,
+        uint256 srcChainId,
+        TransferRequests calldata transferRequests,
+        DepositUtils.CreateDepositParams calldata params
+    ) external nonReentrant onlyController withRelay(relayParams, account, srcChainId, false) returns (bytes32) {
+        _validateCallWithoutSignature(relayParams, srcChainId);
+
+        return _createDeposit(account, srcChainId, transferRequests, params);
+    }
+
+    function _createDeposit(
+        address account,
+        uint256 srcChainId,
+        TransferRequests calldata transferRequests,
+        DepositUtils.CreateDepositParams calldata params
+    ) private returns (bytes32) {
         address wnt = TokenUtils.wnt(dataStore);
         IERC20(wnt).safeTransfer(address(depositVault), params.executionFee);
 
