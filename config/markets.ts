@@ -278,7 +278,7 @@ const baseMarketConfig: Partial<BaseMarketConfig> = {
 
   swapFeeFactorForPositiveImpact: percentageToFloat("0.05%"),
   swapFeeFactorForNegativeImpact: percentageToFloat("0.07%"),
-  atomicSwapFeeFactor: percentageToFloat("0.5%"),
+  atomicSwapFeeFactor: percentageToFloat("3.75%"),
   atomicWithdrawalFeeFactor: percentageToFloat("0.5%"),
 
   negativeSwapImpactFactor: percentageToFloat("0.001%"),
@@ -326,7 +326,7 @@ const singleTokenMarketConfig: Partial<BaseMarketConfig> = {
 
   swapFeeFactorForPositiveImpact: bigNumberify(0),
   swapFeeFactorForNegativeImpact: bigNumberify(0),
-  atomicSwapFeeFactor: percentageToFloat("0.5%"),
+  atomicSwapFeeFactor: bigNumberify(0),
 
   negativeSwapImpactFactor: bigNumberify(0),
   positiveSwapImpactFactor: bigNumberify(0),
@@ -435,6 +435,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(1_800_000, 18), // ~2M USD (x2 of max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (x2 of max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("3%"),
     },
     {
       tokens: { indexToken: "BTC", longToken: "WBTC.e", shortToken: "USDC" },
@@ -468,6 +470,8 @@ const config: {
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6e-11"),
 
       maxOpenInterest: decimalToFloat(60_000_000),
+
+      atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },
     {
       tokens: { indexToken: "BTC", longToken: "WBTC.e", shortToken: "WBTC.e" },
@@ -560,6 +564,8 @@ const config: {
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6e-11"),
 
       maxOpenInterest: decimalToFloat(70_000_000),
+
+      atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "WETH" },
@@ -629,6 +635,8 @@ const config: {
       swapFeeFactorForNegativeImpact: percentageToFloat("0.25%"),
 
       isDisabled: false,
+
+      atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
       tokens: { indexToken: "BNB", longToken: "BNB", shortToken: "USDC" },
@@ -662,6 +670,8 @@ const config: {
       minPositionImpactPoolAmount: expandDecimals(53, 16), // 0.53 BNB
 
       maxOpenInterest: decimalToFloat(5_000_000),
+
+      atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
       tokens: { indexToken: "XRP", longToken: "WETH", shortToken: "USDC" },
@@ -695,6 +705,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(3840, 18),
       maxShortTokenPoolAmount: expandDecimals(7_300_000, 6),
+
+      atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
       tokens: { indexToken: "DOGE", longToken: "WETH", shortToken: "USDC" },
@@ -730,6 +742,8 @@ const config: {
       minPositionImpactPoolAmount: expandDecimals(26000, 8), // 26000 DOGE
 
       maxOpenInterest: decimalToFloat(6_000_000),
+
+      atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
       tokens: { indexToken: "EIGEN", longToken: "WETH", shortToken: "USDC" },
@@ -760,6 +774,8 @@ const config: {
 
       reserveFactor: percentageToFloat("165%"),
       openInterestReserveFactor: percentageToFloat("160%"),
+
+      atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
       tokens: { indexToken: "SHIB", longToken: "WETH", shortToken: "USDC" },
@@ -789,6 +805,8 @@ const config: {
 
       reserveFactor: percentageToFloat("105%"),
       openInterestReserveFactor: percentageToFloat("100%"),
+
+      atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
       tokens: { indexToken: "AAVE", longToken: "WETH", shortToken: "USDC" },
@@ -823,6 +841,8 @@ const config: {
       maxPnlFactorForAdl: percentageToFloat("70%"),
       minPnlFactorAfterAdl: percentageToFloat("65%"),
       maxPnlFactorForWithdrawals: percentageToFloat("60%"),
+
+      atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
       tokens: { indexToken: "UNI", longToken: "WETH", shortToken: "USDC" },
@@ -858,6 +878,8 @@ const config: {
       maxPnlFactorForAdl: percentageToFloat("70%"),
       minPnlFactorAfterAdl: percentageToFloat("65%"),
       maxPnlFactorForWithdrawals: percentageToFloat("60%"),
+
+      atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
       tokens: { indexToken: "PEPE", longToken: "WETH", shortToken: "USDC" },
@@ -900,6 +922,8 @@ const config: {
         .div(SECONDS_PER_YEAR)
         .div(SECONDS_PER_HOUR * 48),
       maxFundingFactorPerSecond: percentageToFloat("125%").div(SECONDS_PER_YEAR),
+
+      atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
       tokens: { indexToken: "SOL", longToken: "SOL", shortToken: "USDC" },
@@ -933,6 +957,8 @@ const config: {
       minPositionImpactPoolAmount: expandDecimals(219, 9), // 219 SOL
 
       maxOpenInterest: decimalToFloat(17_500_000),
+
+      atomicSwapFeeFactor: percentageToFloat("1.5%"),
     },
     {
       tokens: { indexToken: "STX", longToken: "WBTC.e", shortToken: "USDC" },
@@ -963,6 +989,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(25, 8), // ~1,5M USD (x3 of max open interest)
       maxShortTokenPoolAmount: expandDecimals(1_500_000, 6), // ~1,5M USD (x3 of max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },
     {
       tokens: { indexToken: "SATS", longToken: "WBTC.e", shortToken: "USDC" },
@@ -993,6 +1021,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(25, 8), // ~1,5M USD (x3 of max open interest)
       maxShortTokenPoolAmount: expandDecimals(1_500_000, 6), // ~1,5M USD (x3 of max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },
     {
       tokens: { indexToken: "LTC", longToken: "WETH", shortToken: "USDC" },
@@ -1025,6 +1055,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(1720, 18),
       maxShortTokenPoolAmount: expandDecimals(3_120_000, 6),
+
+      atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
       tokens: { indexToken: "UNI", longToken: "UNI", shortToken: "USDC" },
@@ -1057,6 +1089,8 @@ const config: {
       minPositionImpactPoolAmount: expandDecimals(170, 18),
 
       maxOpenInterest: decimalToFloat(1_000_000),
+
+      atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
       tokens: { indexToken: "LINK", longToken: "LINK", shortToken: "USDC" },
@@ -1090,6 +1124,8 @@ const config: {
       minPositionImpactPoolAmount: expandDecimals(638, 18), // 638 LINK
 
       maxOpenInterest: decimalToFloat(10_000_000),
+
+      atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
       tokens: { indexToken: "ARB", longToken: "ARB", shortToken: "USDC" },
@@ -1123,6 +1159,8 @@ const config: {
       minPositionImpactPoolAmount: expandDecimals(27598, 18), // 27598 ARB
 
       maxOpenInterest: decimalToFloat(5_000_000),
+
+      atomicSwapFeeFactor: percentageToFloat("3%"),
     },
     {
       tokens: { indexToken: "AAVE", longToken: "AAVE", shortToken: "USDC" },
@@ -1155,6 +1193,8 @@ const config: {
       minPositionImpactPoolAmount: expandDecimals(723, 16), // 7.23 AAVE
 
       maxOpenInterest: decimalToFloat(1_500_000),
+
+      atomicSwapFeeFactor: percentageToFloat("3%"),
     },
     {
       tokens: { indexToken: "AVAX", longToken: "AVAX", shortToken: "USDC" },
@@ -1187,6 +1227,8 @@ const config: {
       minPositionImpactPoolAmount: expandDecimals(79, 18), // 79.18 AVAX
 
       maxOpenInterest: decimalToFloat(1_000_000),
+
+      atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
       tokens: { indexToken: "ATOM", longToken: "WETH", shortToken: "USDC" },
@@ -1220,6 +1262,8 @@ const config: {
       minPositionImpactPoolAmount: expandDecimals(611, 6), // 611 ATOM
 
       maxOpenInterest: decimalToFloat(1_000_000),
+
+      atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
       tokens: { indexToken: "NEAR", longToken: "WETH", shortToken: "USDC" },
@@ -1251,6 +1295,8 @@ const config: {
       minPositionImpactPoolAmount: expandDecimals(4361, 24), // 4361 NEAR
 
       maxOpenInterest: decimalToFloat(1_000_000),
+
+      atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
       tokens: { indexToken: "OP", longToken: "OP", shortToken: "USDC" },
@@ -1283,6 +1329,8 @@ const config: {
       minPositionImpactPoolAmount: expandDecimals(311, 18), // 311 OP
 
       maxOpenInterest: decimalToFloat(1_000_000),
+
+      atomicSwapFeeFactor: percentageToFloat("3%"),
     },
     {
       tokens: { indexToken: "ORDI", longToken: "WBTC.e", shortToken: "USDC" },
@@ -1315,6 +1363,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(16, 8), // ~1,5M USD (x3 of max open interest)
       maxShortTokenPoolAmount: expandDecimals(1_500_000, 6), // ~1,5M USD (x3 of max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },
     {
       tokens: { indexToken: "GMX", longToken: "GMX", shortToken: "USDC" },
@@ -1347,6 +1397,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(340_000, 18),
       maxShortTokenPoolAmount: expandDecimals(4_000_000, 6),
+
+      atomicSwapFeeFactor: percentageToFloat("3%"),
     },
     {
       tokens: { indexToken: "GMX", longToken: "GMX", shortToken: "GMX" },
@@ -1407,6 +1459,8 @@ const config: {
       minPositionImpactPoolAmount: 0,
 
       maxOpenInterest: decimalToFloat(1_500_000),
+
+      atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
       tokens: { indexToken: "WIF", longToken: "WIF", shortToken: "USDC" },
@@ -1438,6 +1492,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(11_000_000, 6),
       maxShortTokenPoolAmount: expandDecimals(4_800_000, 6),
+
+      atomicSwapFeeFactor: percentageToFloat("3%"),
     },
     {
       tokens: { indexToken: "POL", longToken: "WETH", shortToken: "USDC" },
@@ -1469,6 +1525,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(400, 18),
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
+
+      atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
       tokens: { indexToken: "SUI", longToken: "WETH", shortToken: "USDC" },
@@ -1502,6 +1560,8 @@ const config: {
       maxPoolUsdForDeposit: decimalToFloat(9_000_000),
       maxLongTokenPoolAmount: expandDecimals(2960, 18),
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
+
+      atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
       tokens: { indexToken: "SEI", longToken: "WETH", shortToken: "USDC" },
@@ -1535,6 +1595,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(763, 18), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
       tokens: { indexToken: "APT", longToken: "WETH", shortToken: "USDC" },
@@ -1568,6 +1630,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(380, 18), // ~1M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x the max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
       tokens: { indexToken: "TIA", longToken: "WETH", shortToken: "USDC" },
@@ -1601,6 +1665,8 @@ const config: {
       maxPoolUsdForDeposit: decimalToFloat(750_000),
       maxLongTokenPoolAmount: expandDecimals(380, 18), // ~1M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x the max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
       tokens: { indexToken: "TRX", longToken: "WETH", shortToken: "USDC" },
@@ -1634,6 +1700,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(400, 18), // ~1M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x the max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
       tokens: { indexToken: "TON", longToken: "WETH", shortToken: "USDC" },
@@ -1667,6 +1735,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(800, 18), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
       tokens: { indexToken: "TAO", longToken: "WBTC.e", shortToken: "USDC" },
@@ -1700,6 +1770,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(23, 8), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },
     {
       tokens: { indexToken: "BONK", longToken: "WETH", shortToken: "USDC" },
@@ -1733,6 +1805,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(630, 18), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
       tokens: { indexToken: "WLD", longToken: "WETH", shortToken: "USDC" },
@@ -1766,6 +1840,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(630, 18), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
       tokens: { indexToken: "BOME", longToken: "WBTC.e", shortToken: "USDC" },
@@ -1799,6 +1875,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(11, 8), // ~1M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x the max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },
     {
       tokens: { indexToken: "MEME", longToken: "WBTC.e", shortToken: "USDC" },
@@ -1832,6 +1910,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(11, 8), // ~1M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x the max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },
     {
       tokens: { indexToken: "FLOKI", longToken: "WBTC.e", shortToken: "USDC" },
@@ -1865,6 +1945,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(21, 8), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },
     {
       tokens: { indexToken: "MEW", longToken: "WBTC.e", shortToken: "USDC" },
@@ -1898,6 +1980,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(21, 8), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },
     {
       tokens: { longToken: "wstETH", shortToken: "WETH" },
@@ -1918,6 +2002,8 @@ const config: {
 
       swapFeeFactorForPositiveImpact: percentageToFloat("0.3%"),
       swapFeeFactorForNegativeImpact: percentageToFloat("0.3%"),
+
+      atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
       tokens: { longToken: "USDe", shortToken: "USDC" },
@@ -1938,6 +2024,8 @@ const config: {
       swapFeeFactorForNegativeImpact: decimalToFloat(2, 4), // 0.02%,
 
       isDisabled: false,
+
+      atomicSwapFeeFactor: percentageToFloat("0.50%"),
     },
     {
       tokens: { longToken: "USDC", shortToken: "USDC.e" },
@@ -1957,6 +2045,8 @@ const config: {
 
       swapFeeFactorForPositiveImpact: decimalToFloat(5, 5), // 0.005%,
       swapFeeFactorForNegativeImpact: decimalToFloat(2, 4), // 0.02%,
+
+      atomicSwapFeeFactor: percentageToFloat("0.50%"),
     },
     {
       tokens: { longToken: "USDC", shortToken: "USDT" },
@@ -1976,6 +2066,8 @@ const config: {
 
       swapFeeFactorForPositiveImpact: decimalToFloat(5, 5), // 0.005%,
       swapFeeFactorForNegativeImpact: decimalToFloat(2, 4), // 0.02%,
+
+      atomicSwapFeeFactor: percentageToFloat("0.50%"),
     },
     {
       tokens: { longToken: "USDC", shortToken: "DAI" },
@@ -1995,6 +2087,8 @@ const config: {
 
       swapFeeFactorForPositiveImpact: decimalToFloat(5, 5), // 0.005%,
       swapFeeFactorForNegativeImpact: decimalToFloat(2, 4), // 0.02%,
+
+      atomicSwapFeeFactor: percentageToFloat("0.50%"),
     },
     {
       tokens: { indexToken: "PENDLE", longToken: "PENDLE", shortToken: "USDC" },
@@ -2025,6 +2119,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(375_000, 18), // ~2M USD (x2 of max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (x2 of max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("3%"),
     },
     {
       tokens: { indexToken: "SOL", longToken: "SOL", shortToken: "SOL" },
@@ -2088,6 +2184,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(44, 8), // ~4M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(4_000_000, 6), // ~4M USD (2x the max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },
     {
       tokens: { indexToken: "XLM", longToken: "WBTC.e", shortToken: "USDC" },
@@ -2118,6 +2216,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(44, 8), // ~4M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(4_000_000, 6), // ~4M USD (2x the max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },
     {
       tokens: { indexToken: "BCH", longToken: "WBTC.e", shortToken: "USDC" },
@@ -2148,6 +2248,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(22, 8), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },
     {
       tokens: { indexToken: "DOT", longToken: "WBTC.e", shortToken: "USDC" },
@@ -2178,6 +2280,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(22, 8), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },
     {
       tokens: { indexToken: "ICP", longToken: "WBTC.e", shortToken: "USDC" },
@@ -2208,6 +2312,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(22, 8), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },
     {
       tokens: { indexToken: "FIL", longToken: "WBTC.e", shortToken: "USDC" },
@@ -2238,6 +2344,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(10, 8), // ~1M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x the max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },
     {
       tokens: { indexToken: "INJ", longToken: "WBTC.e", shortToken: "USDC" },
@@ -2270,6 +2378,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(21, 8), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },
     {
       tokens: { indexToken: "DYDX", longToken: "WBTC.e", shortToken: "USDC" },
@@ -2302,6 +2412,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(10, 8), // ~1M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x the max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },
     {
       tokens: { indexToken: "RENDER", longToken: "WETH", shortToken: "USDC" },
@@ -2332,6 +2444,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(1390, 18),
       maxShortTokenPoolAmount: expandDecimals(2_500_000, 6),
+
+      atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
       tokens: { indexToken: "TRUMP", longToken: "WETH", shortToken: "USDC" },
@@ -2363,6 +2477,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(1100, 18),
       maxShortTokenPoolAmount: expandDecimals(3_600_000, 6),
+
+      atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
       tokens: { indexToken: "MELANIA", longToken: "WETH", shortToken: "USDC" },
@@ -2394,6 +2510,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(850, 18),
       maxShortTokenPoolAmount: expandDecimals(1_300_000, 6),
+
+      atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
       tokens: { indexToken: "ENA", longToken: "WETH", shortToken: "USDC" },
@@ -2423,6 +2541,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(600, 18), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
       tokens: { indexToken: "FARTCOIN", longToken: "WBTC.e", shortToken: "USDC" },
@@ -2453,6 +2573,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(26, 8),
       maxShortTokenPoolAmount: expandDecimals(2_500_000, 6),
+
+      atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },
     {
       tokens: { indexToken: "AI16Z", longToken: "WBTC.e", shortToken: "USDC" },
@@ -2482,6 +2604,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(10, 8), // ~1M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x the max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },
     {
       tokens: { indexToken: "ANIME", longToken: "ANIME", shortToken: "USDC" },
@@ -2509,6 +2633,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(22_000_000, 18), // ~1M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x the max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("3%"),
     },
     {
       tokens: { indexToken: "LDO", longToken: "WETH", shortToken: "USDC" },
@@ -2538,6 +2664,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(740, 18), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
       tokens: { indexToken: "BERA", longToken: "WETH", shortToken: "USDC" },
@@ -2567,6 +2695,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(1850, 18),
       maxShortTokenPoolAmount: expandDecimals(3_500_000, 6),
+
+      atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
       tokens: { indexToken: "VIRTUAL", longToken: "WBTC.e", shortToken: "USDC" },
@@ -2596,6 +2726,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(21, 8), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },
     {
       tokens: { indexToken: "PENGU", longToken: "WBTC.e", shortToken: "USDC" },
@@ -2625,6 +2757,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(21, 8), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },
     {
       tokens: { indexToken: "ONDO", longToken: "WETH", shortToken: "USDC" },
@@ -2654,6 +2788,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(740, 18), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
       tokens: { indexToken: "FET", longToken: "WETH", shortToken: "USDC" },
@@ -2683,6 +2819,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(740, 18), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
       tokens: { indexToken: "S", longToken: "WBTC.e", shortToken: "USDC" },
@@ -2712,6 +2850,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(23, 8), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },
     {
       tokens: { indexToken: "CAKE", longToken: "WBTC.e", shortToken: "USDC" },
@@ -2741,6 +2881,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(23, 8), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },
     {
       tokens: { indexToken: "AIXBT", longToken: "WETH", shortToken: "USDC" },
@@ -2770,6 +2912,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(410, 18), // ~1M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x the max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
       tokens: { indexToken: "HYPE", longToken: "WBTC.e", shortToken: "USDC" },
@@ -2799,6 +2943,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(22, 8), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },
     {
       tokens: { indexToken: "JUP", longToken: "WBTC.e", shortToken: "USDC" },
@@ -2828,6 +2974,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(22, 8), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },
     {
       tokens: { indexToken: "MKR", longToken: "WETH", shortToken: "USDC" },
@@ -2857,6 +3005,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(1000, 18), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
       tokens: { indexToken: "OM", longToken: "WBTC.e", shortToken: "USDC" },
@@ -2886,6 +3036,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(24, 8), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },
   ],
   avalanche: [
@@ -2922,6 +3074,8 @@ const config: {
 
       // for OI reserve factor = 100%
       borrowingFactor: decimalToFloat(1900, 11), // 0.000000019 * 100% max reserve, 60% per year
+
+      atomicSwapFeeFactor: percentageToFloat("1.25%"),
     },
     {
       tokens: { indexToken: "BTC.b", longToken: "BTC.b", shortToken: "BTC.b" },
@@ -2985,6 +3139,8 @@ const config: {
 
       // for OI reserve factor = 100%
       borrowingFactor: decimalToFloat(1900, 11), // 0.000000019 * 100% max reserve, 60% per year
+
+      atomicSwapFeeFactor: percentageToFloat("3%"),
     },
     {
       tokens: { indexToken: "WETH.e", longToken: "WETH.e", shortToken: "WETH.e" },
@@ -3047,6 +3203,8 @@ const config: {
 
       // for OI reserve factor = 75%
       borrowingFactor: exponentToFloat("2.95e-8"), // 0.0000000295 * 75% max reserve, ~70%
+
+      atomicSwapFeeFactor: percentageToFloat("2%"),
     },
     {
       tokens: { indexToken: "DOGE", longToken: "WAVAX", shortToken: "USDC" },
@@ -3080,6 +3238,8 @@ const config: {
 
       // for OI reserve factor = 75%
       borrowingFactor: exponentToFloat("2.95e-8"), // 0.0000000295 * 75% max reserve, ~70%
+
+      atomicSwapFeeFactor: percentageToFloat("2%"),
     },
     {
       tokens: { indexToken: "SOL", longToken: "SOL", shortToken: "USDC" },
@@ -3112,6 +3272,8 @@ const config: {
 
       // for OI reserve factor = 100%
       borrowingFactor: exponentToFloat("2.22e-8"), // 0.0000000222 * 100% max reserve, 70% per year
+
+      atomicSwapFeeFactor: percentageToFloat("2%"),
     },
     {
       tokens: { indexToken: "LTC", longToken: "WAVAX", shortToken: "USDC" },
@@ -3144,6 +3306,8 @@ const config: {
 
       // for OI reserve factor = 75%
       borrowingFactor: exponentToFloat("2.95e-8"), // 0.0000000295 * 75% max reserve, ~70%
+
+      atomicSwapFeeFactor: percentageToFloat("2%"),
     },
     {
       tokens: { indexToken: "TRUMP", longToken: "WAVAX", shortToken: "USDC" },
@@ -3173,6 +3337,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(60_000, 18), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("2%"),
     },
     {
       tokens: { indexToken: "MELANIA", longToken: "WAVAX", shortToken: "USDC" },
@@ -3187,8 +3353,8 @@ const config: {
       positivePositionImpactFactor: exponentToFloat("2.5e-7"),
       positionImpactExponentFactor: exponentToFloat("1.7e0"),
 
-      negativeSwapImpactFactor: exponentToFloat("4.5e-9"),
-      positiveSwapImpactFactor: exponentToFloat("3e-9"),
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2e-10"),
 
@@ -3202,6 +3368,8 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(30_000, 18), // ~1M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x the max open interest)
+
+      atomicSwapFeeFactor: percentageToFloat("2%"),
     },
     {
       tokens: { indexToken: "WAVAX", longToken: "WAVAX", shortToken: "USDC" },
@@ -3237,6 +3405,8 @@ const config: {
 
       // for OI reserve factor = 150%
       borrowingFactor: exponentToFloat("2e-8"), // 0.00000002 * 150% max reserve, 94.6% per year
+
+      atomicSwapFeeFactor: percentageToFloat("2%"),
     },
     {
       tokens: { indexToken: "WAVAX", longToken: "WAVAX", shortToken: "WAVAX" },
@@ -3278,6 +3448,8 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
 
       maxPoolUsdForDeposit: decimalToFloat(10_000_000),
+
+      atomicSwapFeeFactor: percentageToFloat("0.5%"),
     },
     {
       tokens: { longToken: "USDC", shortToken: "USDC.e" },
@@ -3291,6 +3463,8 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
 
       maxPoolUsdForDeposit: decimalToFloat(10_000_000),
+
+      atomicSwapFeeFactor: percentageToFloat("0.5%"),
     },
     {
       tokens: { longToken: "USDT", shortToken: "USDT.e" },
@@ -3304,6 +3478,8 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
 
       maxPoolUsdForDeposit: decimalToFloat(10_000_000),
+
+      atomicSwapFeeFactor: percentageToFloat("0.5%"),
     },
     {
       tokens: { longToken: "USDC", shortToken: "DAI.e" },
@@ -3317,6 +3493,8 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 18),
 
       maxPoolUsdForDeposit: decimalToFloat(10_000_000),
+
+      atomicSwapFeeFactor: percentageToFloat("0.5%"),
     },
   ],
   arbitrumSepolia: [

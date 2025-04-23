@@ -108,7 +108,9 @@ const processMarkets = async ({
       continue;
     }
 
-    const marketLabel = `${marketConfig.tokens.indexToken} [${marketConfig.tokens.longToken}-${marketConfig.tokens.shortToken}]`;
+    const marketLabel = `${marketConfig.tokens.indexToken ?? "SPOT-ONLY"} [${marketConfig.tokens.longToken}-${
+      marketConfig.tokens.shortToken
+    }]`;
 
     const handleConfig = async (type, baseKey, keyData, value, label) => {
       const [skip, skipReason] = shouldIgnoreBaseKey(baseKey, supportedRiskOracleMarkets.has(marketConfig));
@@ -240,7 +242,7 @@ const processMarkets = async ({
         keys.ATOMIC_SWAP_FEE_FACTOR,
         encodeData(["address"], [marketToken]),
         marketConfig.atomicSwapFeeFactor,
-        `atomicSwapFeeFactor ${marketToken}`
+        `atomicSwapFeeFactor ${marketLabel} (${marketToken})`
       );
     }
 
@@ -250,7 +252,7 @@ const processMarkets = async ({
         keys.ATOMIC_WITHDRAWAL_FEE_FACTOR,
         encodeData(["address"], [marketToken]),
         marketConfig.atomicWithdrawalFeeFactor,
-        `atomicWithdrawalFeeFactor ${marketToken}`
+        `atomicWithdrawalFeeFactor ${marketLabel} (${marketToken})`
       );
     }
 
@@ -835,12 +837,14 @@ export async function updateMarketConfig({
   console.info("multicallWriteParams", multicallWriteParams);
 
   console.log("running simulation");
+  const { roles } = await hre.gmx.getRoles();
+  const from = Object.keys(roles.CONFIG_KEEPER)[0];
   if (!["hardhat"].includes(hre.network.name)) {
     await handleInBatches(multicallWriteParams, 100, async (batch) => {
       await read(
         "Config",
         {
-          from: "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745",
+          from,
         },
         "multicall",
         batch
