@@ -3,11 +3,9 @@
 pragma solidity ^0.8.0;
 
 import "./MultichainRouter.sol";
-import "./MultichainUtils.sol";
-import "./IMultichainProvider.sol";
 
 contract MultichainTransferRouter is MultichainRouter {
-    IMultichainProvider multichainProvider;
+    IMultichainProvider public immutable multichainProvider;
 
     constructor(
         BaseConstructorParams memory params,
@@ -44,6 +42,21 @@ contract MultichainTransferRouter is MultichainRouter {
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) {
         bytes32 structHash = RelayUtils.getBridgeOutStructHash(relayParams, params);
         _validateCall(relayParams, account, structHash, srcChainId);
+
+        _bridgeOut(account, srcChainId, params);
+    }
+
+    /*
+     * Bridge out funds recorded under the account
+     * Used to automatically bridge out GM/GLV token after executeDeposit/executeGlvDeposit
+     */
+    function bridgeOutFromController(
+        RelayParams calldata relayParams,
+        address account,
+        uint256 srcChainId,
+        BridgeOutParams calldata params
+    ) external nonReentrant onlyController withRelay(relayParams, account, srcChainId, false) {
+        _validateCallWithoutSignature(relayParams, srcChainId);
 
         _bridgeOut(account, srcChainId, params);
     }

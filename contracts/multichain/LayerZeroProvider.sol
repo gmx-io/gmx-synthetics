@@ -15,11 +15,8 @@ import "../data/DataStore.sol";
 import "../deposit/DepositUtils.sol";
 import "../utils/Cast.sol";
 
-import "./MultichainVault.sol";
-import "./MultichainUtils.sol";
 import "./MultichainGmRouter.sol";
 import "./MultichainGlvRouter.sol";
-import "./IMultichainProvider.sol";
 
 
 /**
@@ -113,6 +110,8 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
                 _handleDepositFromBridge(from, account, srcChainId, actionType, actionData);
             } else if (actionType == ActionType.GlvDeposit) {
                 _handleGlvDepositFromBridge(from, account, srcChainId, actionType, actionData);
+            } else {
+                // TODO: confirm None case + else revert
             }
         }
     }

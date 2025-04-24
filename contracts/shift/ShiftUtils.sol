@@ -15,6 +15,7 @@ import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
 import "../utils/AccountUtils.sol";
 
+import "../deposit/DepositVault.sol";
 import "../deposit/ExecuteDepositUtils.sol";
 import "../withdrawal/ExecuteWithdrawalUtils.sol";
 
