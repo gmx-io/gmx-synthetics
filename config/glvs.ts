@@ -179,6 +179,11 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
             glvMaxMarketTokenBalanceAmount: expandDecimals(500_000, 18),
             glvMaxMarketTokenBalanceUsd: decimalToFloat(500_000),
           },
+          {
+            indexToken: "DOLO",
+            glvMaxMarketTokenBalanceAmount: expandDecimals(250_000, 18),
+            glvMaxMarketTokenBalanceUsd: decimalToFloat(250_000),
+          },
         ],
       },
       {
