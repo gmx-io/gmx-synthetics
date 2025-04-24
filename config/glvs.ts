@@ -55,15 +55,15 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         shiftMinInterval: 30 * 60, // 30 minutes
         minTokensForFirstGlvDeposit: expandDecimals(1, 18),
         markets: [
-          createGlvMarketConfig("WETH", 14_400_000, 1.3309),
-          createGlvMarketConfig("XRP", 10_368_000, 1.2033),
-          createGlvMarketConfig("SUI", 10_368_000, 0.98039),
+          createGlvMarketConfig("WETH", 15_000_000, 1.3309),
+          createGlvMarketConfig("XRP", 10_000_000, 1.2033),
+          createGlvMarketConfig("SUI", 7_500_000, 0.98039),
           createGlvMarketConfig("DOGE", 7_500_000, 1.6338),
           createGlvMarketConfig("LTC", 7_500_000, 1.286),
-          createGlvMarketConfig("BERA", 6_449_725, 0.76405),
+          createGlvMarketConfig("BERA", 6_500_000, 0.76405),
           createGlvMarketConfig("TRUMP", 4_600_000, 0.84268),
           createGlvMarketConfig("RENDER", 3_654_000, 0.8016),
-          createGlvMarketConfig("MELANIA", 3_095_866, 0.78007),
+          createGlvMarketConfig("MELANIA", arbitrum_ethUsdcDefaultCap, 0.78007),
           createGlvMarketConfig("ATOM", arbitrum_ethUsdcDefaultCap, 0.98972),
           createGlvMarketConfig("NEAR", arbitrum_ethUsdcDefaultCap, 0.97498),
           createGlvMarketConfig("SHIB", arbitrum_ethUsdcDefaultCap, 0.97582),
@@ -95,7 +95,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         shiftMinInterval: 30 * 60, // 30 minutes
         minTokensForFirstGlvDeposit: expandDecimals(1, 18),
         markets: [
-          createGlvMarketConfig("BTC", 22_000_000, 2.2846),
+          createGlvMarketConfig("BTC", 10_000_000, 2.2846),
           createGlvMarketConfig("FARTCOIN", 4_300_000, 1.1257),
           createGlvMarketConfig("ORDI", arbitrum_btcUsdcDefaultCap, 1.3308),
           createGlvMarketConfig("STX", arbitrum_btcUsdcDefaultCap, 1.3731),
@@ -135,9 +135,9 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         shiftMinInterval: 60 * 60, // 1 hour
         minTokensForFirstGlvDeposit: expandDecimals(1, 18),
         markets: [
-          createGlvMarketConfig("WAVAX", 7_800_000, 2.145),
-          createGlvMarketConfig("XRP", 2_311_044, 1.5695),
-          createGlvMarketConfig("DOGE", 414_000, 2.2393),
+          createGlvMarketConfig("WAVAX", 1_800_000, 2.145),
+          createGlvMarketConfig("XRP", 800_000, 1.5695),
+          createGlvMarketConfig("DOGE", avalanche_avaxUsdcDefaultCap, 2.2393),
           createGlvMarketConfig("LTC", avalanche_avaxUsdcDefaultCap, 2.9631),
           createGlvMarketConfig("TRUMP", avalanche_avaxUsdcDefaultCap, 0.98854),
           createGlvMarketConfig("MELANIA", avalanche_avaxUsdcDefaultCap, 0.95133),
