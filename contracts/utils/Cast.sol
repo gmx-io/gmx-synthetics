@@ -67,8 +67,4 @@ library Cast {
         assembly { mstore(add(b, 32), x) }
         return b;
     }
-
-    function addressToBytes32(address _addr) internal pure returns (bytes32) {
-        return bytes32(uint256(uint160(_addr)));
-    }
 }

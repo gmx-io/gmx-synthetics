@@ -21,7 +21,6 @@ import "./MultichainGmRouter.sol";
 import "./MultichainGlvRouter.sol";
 import "./IMultichainProvider.sol";
 
-import { RelayParams, TransferRequests } from "../router/relay/RelayUtils.sol";
 
 /**
  * @title LayerZeroProvider
@@ -270,7 +269,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
     {
         sendParam = SendParam({
             dstEid: _dstEid,
-            to: Cast.addressToBytes32(receiver),
+            to: Cast.toBytes32(receiver),
             amountLD: amount,
             minAmountLD: amount,
             extraOptions: bytes(""),
