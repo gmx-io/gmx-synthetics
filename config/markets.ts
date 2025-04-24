@@ -3057,8 +3057,8 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("1.78e-7"),
 
-      reserveFactor: percentageToFloat("30%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("25%"), // default is 90%
+      reserveFactor: percentageToFloat("75%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("70%"), // default is 90%
 
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
