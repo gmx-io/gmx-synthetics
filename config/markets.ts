@@ -2440,10 +2440,10 @@ const config: {
       maxPnlFactorForTraders: percentageToFloat("75%"), // default is 60%
 
       maxOpenInterest: decimalToFloat(1_000_000),
-      maxPoolUsdForDeposit: decimalToFloat(1_500_000), // 1.5x the max open interest
+      maxPoolUsdForDeposit: decimalToFloat(1_875_000),
 
-      maxLongTokenPoolAmount: expandDecimals(1250, 18),
-      maxShortTokenPoolAmount: expandDecimals(2_000_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(1390, 18),
+      maxShortTokenPoolAmount: expandDecimals(2_500_000, 6),
 
       atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
@@ -2569,10 +2569,10 @@ const config: {
 
       maxOpenInterest: decimalToFloat(750_000),
 
-      maxPoolUsdForDeposit: decimalToFloat(1_600_000),
+      maxPoolUsdForDeposit: decimalToFloat(2_000_000),
 
       maxLongTokenPoolAmount: expandDecimals(26, 8),
-      maxShortTokenPoolAmount: expandDecimals(2_000_000, 6),
+      maxShortTokenPoolAmount: expandDecimals(2_500_000, 6),
 
       atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },
@@ -3038,6 +3038,35 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
 
       atomicSwapFeeFactor: percentageToFloat("0.75%"),
+    },
+    {
+      tokens: { indexToken: "DOLO", longToken: "WETH", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:DOLO/USD"),
+      virtualMarketId: hashString("SPOT:ETH/USD"),
+
+      ...syntheticMarketConfig,
+      ...fundingRateConfig_High,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
+
+      negativePositionImpactFactor: exponentToFloat("1e-7"),
+      positivePositionImpactFactor: exponentToFloat("5e-8"),
+      positionImpactExponentFactor: exponentToFloat("2e0"),
+
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
+
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("1.78e-7"),
+
+      reserveFactor: percentageToFloat("30%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("25%"), // default is 90%
+
+      maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
+
+      maxOpenInterest: decimalToFloat(250_000),
+      maxPoolUsdForDeposit: decimalToFloat(375_000), // 1.5x the max open interest
+
+      maxLongTokenPoolAmount: expandDecimals(280, 18), // ~500k USD (2x the max open interest)
+      maxShortTokenPoolAmount: expandDecimals(500_000, 6), // ~500k USD (2x the max open interest)
     },
   ],
   avalanche: [
