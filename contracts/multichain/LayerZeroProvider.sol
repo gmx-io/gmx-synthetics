@@ -60,7 +60,17 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
     }
 
     /**
-     * Called by Stargate after tokens have been delivered to this contract.
+     * @notice Called by Stargate after tokens have been delivered to this contract.
+     * @dev Handles the receipt of bridged tokens and optionally executes a deposit action.
+     *
+     * @dev If a user bridges tokens with deposit data, and already has sufficient funds in their multichain balance,
+     * it is possible for multiple bridge transactions to result in multiple deposits (i.e. double mints).
+     * For example, if a user bridges 10 WETH and 20,000 USDC, both with deposit data, and already has enough funds,
+     * both bridge transactions could result in a deposit.
+     * 
+     * @dev It is recommended that the interface or frontend enforces that users only bridge amounts that would not
+     * result in double deposits.
+     *
      * @param from The address of the sender (i.e. Stargate address, not user's address).
      * param guid A global unique identifier for tracking the packet.
      * @param message Encoded message. Contains the params needed to record the deposit (account, srcChainId)

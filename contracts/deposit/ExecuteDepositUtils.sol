@@ -316,6 +316,7 @@ library ExecuteDepositUtils {
         return cache.receivedMarketTokens;
     }
 
+    /// @dev abi.decode can fail if dataList is not properly formed, which would cause the deposit to be cancelled
     function bridgeOutFromController(
         MultichainTransferRouter multichainTransferRouter,
         address account,
