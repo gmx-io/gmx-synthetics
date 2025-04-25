@@ -133,7 +133,7 @@ export function formatPercent(amount: BigNumberish, displayDecimals?: number) {
 
 export function numberToBigNumber(value: number | string, decimals: number) {
   const [mantissa, exponentStr] = value.toString().split(/e\+?/);
-  let ret = ethers.utils.parseUnits(mantissa, FLOAT_PRECISION);
+  let ret = ethers.utils.parseUnits(mantissa, 30);
 
   let exponent = decimals;
 
