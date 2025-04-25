@@ -57,11 +57,9 @@ describe("MultichainReader", function () {
       encodeData(["uint256"], [channelId]),
       ethers.utils.hexZeroPad(multichainReader.address, 32)
     );
-    await config.setUint(
-      keys.MULTICHAIN_AUTHORIZED_ORIGINATORS,
-      encodeData(["uint256"], [eid1]),
-      numberOfConfirmations
-    );
+    for (const eid of [eid1, eid2, eid3]) {
+      await config.setUint(keys.MULTICHAIN_CONFIRMATIONS, encodeData(["uint256"], [eid]), numberOfConfirmations);
+    }
   });
 
   it("sendReadRequests() can only be executed by CONTROLLER role", async function () {
@@ -158,16 +156,6 @@ describe("MultichainReader", function () {
   });
 
   it("should read 3 test messages", async function () {
-    await config.setUint(
-      keys.MULTICHAIN_AUTHORIZED_ORIGINATORS,
-      encodeData(["uint256"], [eid2]),
-      numberOfConfirmations
-    );
-    await config.setUint(
-      keys.MULTICHAIN_AUTHORIZED_ORIGINATORS,
-      encodeData(["uint256"], [eid3]),
-      numberOfConfirmations
-    );
     // Assert initial state of data in mockMultichainReaderOriginator
     let latestReceivedData = await mockMultichainReaderOriginator.latestReceivedData();
     expect(latestReceivedData.timestamp).to.equal(encodeData(["uint256"], [0]));

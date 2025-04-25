@@ -3,10 +3,10 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import { SendParam, MessagingFee, IOFT } from "@layerzerolabs/oft-evm/contracts/interfaces/IOFT.sol";
 
 import "./FeeDistributorVault.sol";
 import "./FeeHandler.sol";
-import "./ISynapseRouter.sol";
 import "../multichain/MultichainReader.sol";
 import "../v1/IRewardTrackerV1.sol";
 import "../v1/IRewardDistributorV1.sol";
@@ -32,7 +32,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
     bytes32 public constant referralRewardsWntKey = keccak256(abi.encode("REFERRAL_REWARDS_WNT"));
     bytes32 public constant glpKey = keccak256(abi.encode("GLP"));
     bytes32 public constant treasuryKey = keccak256(abi.encode("TREASURY"));
-    bytes32 public constant synapseRouterKey = keccak256(abi.encode("SYNAPSE_ROUTER"));
+    bytes32 public constant layerzeroOftKey = keccak256(abi.encode("LAYERZERO_OFT"));
     bytes32 public constant feeGlpTrackerKey = keccak256(abi.encode("FEE_GLP_TRACKER"));
     bytes32 public constant chainlinkKey = keccak256(abi.encode("CHAINLINK"));
     bytes32 public constant esGmxVesterKey = keccak256(abi.encode("ESGMX_VESTER"));
@@ -73,6 +73,12 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
 
     // @dev initiate the weekly fee distribution process
     function initiateDistribute() external nonReentrant onlyFeeDistributionKeeper {
+        // validate that the FEE_RECEIVER address stored in dataStore = FeeDistributorVault
+        address feeReceiver = dataStore.getAddress(Keys.FEE_RECEIVER);
+        if (feeReceiver != address(feeDistributorVault)) {
+            revert Errors.InvalidFeeReceiver(feeReceiver);
+        }
+
         // validate distribution state and that distribution is not yet completed for the current week
         validateDistributionState(DistributionState.None);
         validateDistributionNotCompleted();
@@ -450,39 +456,49 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
 
     function bridgeGmx(uint256[] memory chainIds, uint256[] memory bridgingAmounts) internal returns (uint256) {
         // Execute bridging transactions from current chain
-        address synapseRouter = getAddress(block.chainid, synapseRouterKey);
-        uint256 originDeadline = block.timestamp + getUint(Keys.feeDistributorBridgeOriginDeadlineKey(block.chainid));
+        address layerzeroOft = getAddress(block.chainid, layerzeroOftKey);
+        uint256 sharedDecimals = IOFT(layerzeroOft).sharedDecimals();
+        uint256 decimalConversionRate = 10 ** (18 - sharedDecimals);
         uint256 totalGmxBridgedOut;
         for (uint256 i; i < chainIds.length; i++) {
-            uint256 sendAmount = bridgingAmounts[i];
-            if (sendAmount == 0) continue;
+            uint256 bridgingAmount = bridgingAmounts[i];
+            if (bridgingAmount == 0) continue;
 
-            // Move GMX needed for bridging to this contract from FeeDistributorVault, then approve router
+            uint256 sendAmount = removeDust(bridgingAmount, decimalConversionRate);
+
+            // Move GMX needed for bridging to this contract from FeeDistributorVault
             transferOut(gmx, address(this), sendAmount);
-            IERC20(gmx).approve(synapseRouter, sendAmount);
 
-            // Build bridging data
-            uint256 chainId = chainIds[i];
-            uint256 minAmountOut = Precision.applyFactor(
-                sendAmount,
-                getUint(Keys.feeDistributorBridgeSlippageFactorKey(chainId))
-            );
-            uint256 destDeadline = block.timestamp + getUint(Keys.feeDistributorBridgeDestDeadlineKey(chainId));
-            bytes memory callData = abi.encodeWithSelector(
-                ISynapseRouter.bridge.selector,
-                getAddress(chainId, Keys.FEE_RECEIVER),
-                chainId,
-                gmx,
-                sendAmount,
-                SwapQuery(address(0), gmx, sendAmount, originDeadline, bytes("")),
-                SwapQuery(address(0), getAddress(chainId, gmxKey), minAmountOut, destDeadline, bytes(""))
-            );
-
-            // Make the call
-            (bool success, bytes memory result) = synapseRouter.call{ value: 0 }(callData);
-            if (!success) {
-                revert Errors.BridgingTransactionFailed(result);
+            // If the Layerzero OFT contract on this chain is not also the GMX token, approve the sendAmount
+            if (layerzeroOft != gmx) {
+                IERC20(gmx).approve(layerzeroOft, sendAmount);
             }
+
+            // Prepare remaining params needed for the bridging transaction
+            uint256 chainId = chainIds[i];
+            uint32 layerzeroChainId = uint32(getUint(Keys.feeDistributorLayerZeroChainIdKey(chainId)));
+            bytes32 to = Cast.toBytes32(getAddress(chainId, Keys.FEE_RECEIVER));
+            uint256 minAmountOut = removeDust(
+                Precision.applyFactor(sendAmount, getUint(Keys.feeDistributorBridgeSlippageFactorKey(chainId))),
+                decimalConversionRate
+            );
+            SendParam memory sendParam = SendParam(
+                layerzeroChainId,
+                to,
+                sendAmount,
+                minAmountOut,
+                bytes(""),
+                bytes(""),
+                bytes("")
+            );
+            MessagingFee memory messagingFee = IOFT(layerzeroOft).quoteSend(sendParam, false);
+
+            // Make the bridge call to the OFT contract
+            IOFT(layerzeroOft).send{ value: messagingFee.nativeFee }(
+                sendParam,
+                messagingFee,
+                address(feeDistributorVault)
+            );
 
             // Add to the total bridged out
             totalGmxBridgedOut += sendAmount;
@@ -802,5 +818,9 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         );
         uint256 feeAmount = feeAmountGmx1 + feeAmountGmx2;
         return (feeAmount, stakedGmx);
+    }
+
+    function removeDust(uint256 amount, uint256 decimalConversionRate) internal pure returns (uint256) {
+        return (amount / decimalConversionRate) * decimalConversionRate;
     }
 }
