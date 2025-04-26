@@ -13,7 +13,7 @@ const baseConstructorContracts = [
   "MultichainVault",
 ];
 
-const transferConstructorContracts = ["LayerZeroProvider"];
+const transferConstructorContracts = [];
 
 const func = createDeployFunction({
   contractName: "MultichainTransferRouter",
@@ -31,7 +31,7 @@ const func = createDeployFunction({
       multichainVault: dependencyContracts.MultichainVault.address,
     };
 
-    return [baseParams, dependencyContracts.LayerZeroProvider.address];
+    return [baseParams];
   },
   libraryNames: ["MarketUtils", "MultichainUtils", "RelayUtils"],
 

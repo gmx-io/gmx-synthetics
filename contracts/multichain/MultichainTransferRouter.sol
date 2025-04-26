@@ -2,16 +2,27 @@
 
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
 import "./MultichainRouter.sol";
 
-contract MultichainTransferRouter is MultichainRouter {
-    IMultichainProvider public immutable multichainProvider;
+contract MultichainTransferRouter is Initializable, MultichainRouter {
+    IMultichainProvider public multichainProvider;
 
     constructor(
-        BaseConstructorParams memory params,
-        IMultichainProvider _multichainProvider
-    ) MultichainRouter(params) BaseRouter(params.router, params.roleStore, params.dataStore, params.eventEmitter) {
-        multichainProvider = _multichainProvider;
+        BaseConstructorParams memory params
+    )
+        MultichainRouter(params)
+        BaseRouter(params.router, params.roleStore, params.dataStore, params.eventEmitter)
+    {
+        // leave empty, use initialize instead
+    }
+
+    function initialize(address _multichainProvider) external initializer {
+        if (_multichainProvider == address(0)) {
+            revert Errors.InvalidMultichainProvider(address(0));
+        }
+        multichainProvider = IMultichainProvider(_multichainProvider);
     }
 
     /**
