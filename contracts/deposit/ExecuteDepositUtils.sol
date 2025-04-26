@@ -46,6 +46,7 @@ library ExecuteDepositUtils {
         DataStore dataStore;
         EventEmitter eventEmitter;
         MultichainVault multichainVault;
+        MultichainTransferRouter multichainTransferRouter;
         DepositVault depositVault;
         Oracle oracle;
         bytes32 key;
@@ -285,16 +286,15 @@ library ExecuteDepositUtils {
         cache.callbackEventData.uintItems.setItem(0, "receivedMarketTokens", cache.receivedMarketTokens);
         CallbackUtils.afterDepositExecution(params.key, deposit, cache.callbackEventData);
 
-        // TODO: fix 'RangeError: Maximum call stack size exceeded' error. MultichainTransferRouter deploy script seems to cause a circular dependency
         // use deposit.dataList to determine if the GM tokens minted should be bridged out to src chain
-        // bridgeOutFromController(
-        //     params.multichainTransferRouter,
-        //     deposit.receiver(), // account
-        //     deposit.srcChainId(),
-        //     cache.market.marketToken, // token
-        //     cache.receivedMarketTokens, // amount
-        //     deposit.dataList()
-        // );
+        bridgeOutFromController(
+            params.multichainTransferRouter,
+            deposit.receiver(), // account
+            deposit.srcChainId(),
+            cache.market.marketToken, // token
+            cache.receivedMarketTokens, // amount
+            deposit.dataList()
+        );
 
         GasUtils.payExecutionFee(
             GasUtils.PayExecutionFeeContracts(

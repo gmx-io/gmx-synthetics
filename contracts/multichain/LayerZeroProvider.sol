@@ -120,8 +120,6 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
                 _handleDepositFromBridge(from, account, srcChainId, actionType, actionData);
             } else if (actionType == ActionType.GlvDeposit) {
                 _handleGlvDepositFromBridge(from, account, srcChainId, actionType, actionData);
-            } else {
-                // TODO: confirm None case + else revert
             }
         }
     }

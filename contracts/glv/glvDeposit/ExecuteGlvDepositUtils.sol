@@ -24,6 +24,7 @@ library ExecuteGlvDepositUtils {
         DataStore dataStore;
         EventEmitter eventEmitter;
         MultichainVault multichainVault;
+        MultichainTransferRouter multichainTransferRouter;
         GlvVault glvVault;
         Oracle oracle;
         bytes32 key;
@@ -133,14 +134,14 @@ library ExecuteGlvDepositUtils {
         CallbackUtils.afterGlvDepositExecution(params.key, glvDeposit, eventData);
 
         // use glvDeposit.dataList to determine if the GLV tokens minted should be bridged out to src chain
-        // ExecuteDepositUtils.bridgeOutFromController(
-        //     params.multichainTransferRouter,
-        //     glvDeposit.receiver(), // account
-        //     glvDeposit.srcChainId(),
-        //     cache.market.marketToken, // token
-        //     cache.receivedMarketTokens, // amount
-        //     glvDeposit.dataList()
-        // );
+        ExecuteDepositUtils.bridgeOutFromController(
+            params.multichainTransferRouter,
+            glvDeposit.receiver(), // account
+            glvDeposit.srcChainId(),
+            cache.market.marketToken, // token
+            cache.receivedMarketTokens, // amount
+            glvDeposit.dataList()
+        );
 
         cache.marketCount = GlvUtils.getGlvMarketCount(params.dataStore, glvDeposit.glv());
         cache.oraclePriceCount = GasUtils.estimateGlvDepositOraclePriceCount(
@@ -227,6 +228,7 @@ library ExecuteGlvDepositUtils {
                 params.dataStore,
                 params.eventEmitter,
                 params.multichainVault,
+                params.multichainTransferRouter,
                 DepositVault(payable(params.glvVault)),
                 params.oracle,
                 depositKey,

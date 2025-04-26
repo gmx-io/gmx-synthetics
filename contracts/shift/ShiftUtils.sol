@@ -19,6 +19,8 @@ import "../deposit/DepositVault.sol";
 import "../deposit/ExecuteDepositUtils.sol";
 import "../withdrawal/ExecuteWithdrawalUtils.sol";
 
+import "../multichain/MultichainTransferRouter.sol";
+
 library ShiftUtils {
     using Deposit for Deposit.Props;
     using Withdrawal for Withdrawal.Props;
@@ -292,6 +294,7 @@ library ShiftUtils {
             params.dataStore,
             params.eventEmitter,
             params.multichainVault,
+            MultichainTransferRouter(payable(0)),
             DepositVault(payable(params.shiftVault)),
             params.oracle,
             cache.depositKey,
