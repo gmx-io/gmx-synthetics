@@ -338,12 +338,12 @@ library ExecuteDepositUtils {
         );
 
         if (actionType == IMultichainProvider.ActionType.BridgeOut) {
-            (RelayParams memory relayParams, address provider, bytes memory providerData /* e.g. dstEid */) = abi.decode(
+            (IRelayUtils.RelayParams memory relayParams, address provider, bytes memory providerData /* e.g. dstEid */) = abi.decode(
                 actionData,
-                (RelayParams, address, bytes)
+                (IRelayUtils.RelayParams, address, bytes)
             );
 
-            BridgeOutParams memory bridgeOutParams = BridgeOutParams({
+            IRelayUtils.BridgeOutParams memory bridgeOutParams = IRelayUtils.BridgeOutParams({
                 token: token,
                 amount: amount,
                 provider: provider,

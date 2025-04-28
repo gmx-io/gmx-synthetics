@@ -8,20 +8,20 @@ interface IMultichainTransferRouter {
     function bridgeIn(address account, address token, uint256 srcChainId) external payable;
 
     function bridgeOut(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
-        BridgeOutParams calldata params
+        IRelayUtils.BridgeOutParams calldata params
     ) external;
 
     function bridgeOutFromController(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
-        BridgeOutParams calldata params
+        IRelayUtils.BridgeOutParams calldata params
     ) external;
 
     function transferOut(
-        BridgeOutParams calldata params
+        IRelayUtils.BridgeOutParams calldata params
     ) external;
 }

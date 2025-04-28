@@ -48,12 +48,6 @@ struct BatchParams {
     bytes32[] cancelOrderKeys;
 }
 
-struct TransferRequests {
-    address[] tokens;
-    address[] receivers;
-    uint256[] amounts;
-}
-
 string constant UPDATE_ORDER_PARAMS = "UpdateOrderParams(bytes32 key,uint256 sizeDeltaUsd,uint256 acceptablePrice,uint256 triggerPrice,uint256 minOutputAmount,uint256 validFromTime,bool autoCancel,uint256 executionFeeIncrease)";
 
 string constant CREATE_ORDER_ADDRESSES = "CreateOrderAddresses(address receiver,address cancellationReceiver,address callbackContract,address uiFeeReceiver,address market,address initialCollateralToken,address[] swapPath)";
@@ -238,7 +232,7 @@ library RelayUtils {
         Contracts memory contracts,
         EventEmitter eventEmitter,
         Oracle oracle,
-        FeeParams calldata fee
+        IRelayUtils.FeeParams calldata fee
     ) external {
         oracle.validateSequencerUp();
 
@@ -269,7 +263,7 @@ library RelayUtils {
         }
     }
 
-    function _getRelayParamsHash(RelayParams calldata relayParams) private pure returns (bytes32) {
+    function _getRelayParamsHash(IRelayUtils.RelayParams calldata relayParams) private pure returns (bytes32) {
         return
             keccak256(
                 abi.encode(
@@ -285,7 +279,7 @@ library RelayUtils {
     }
 
     function getRemoveSubaccountStructHash(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address subaccount
     ) external pure returns (bytes32) {
         return keccak256(abi.encode(REMOVE_SUBACCOUNT_TYPEHASH, subaccount, _getRelayParamsHash(relayParams)));
@@ -311,7 +305,7 @@ library RelayUtils {
     }
 
     function getCreateOrderStructHash(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
         address account,
         IBaseOrderUtils.CreateOrderParams memory params
@@ -340,7 +334,7 @@ library RelayUtils {
     }
 
     function getCreateOrderStructHash(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         IBaseOrderUtils.CreateOrderParams memory params
     ) external pure returns (bytes32) {
         bytes32 relayParamsHash = _getRelayParamsHash(relayParams);
@@ -403,14 +397,14 @@ library RelayUtils {
     }
 
     function getUpdateOrderStructHash(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         UpdateOrderParams calldata params
     ) external pure returns (bytes32) {
         return _getUpdateOrderStructHash(relayParams, bytes32(0), address(0), params);
     }
 
     function getUpdateOrderStructHash(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
         address account,
         UpdateOrderParams calldata params
@@ -419,7 +413,7 @@ library RelayUtils {
     }
 
     function _getUpdateOrderStructHash(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         bytes32 subaccountApprovalHash,
         address account,
         UpdateOrderParams calldata params
@@ -454,7 +448,7 @@ library RelayUtils {
     }
 
     function getCancelOrderStructHash(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
         address account,
         bytes32 key
@@ -462,12 +456,12 @@ library RelayUtils {
         return _getCancelOrderStructHash(relayParams, keccak256(abi.encode(subaccountApproval)), account, key);
     }
 
-    function getCancelOrderStructHash(RelayParams calldata relayParams, bytes32 key) external pure returns (bytes32) {
+    function getCancelOrderStructHash(IRelayUtils.RelayParams calldata relayParams, bytes32 key) external pure returns (bytes32) {
         return _getCancelOrderStructHash(relayParams, bytes32(0), address(0), key);
     }
 
     function _getCancelOrderStructHash(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         bytes32 subaccountApprovalHash,
         address account,
         bytes32 key
@@ -505,7 +499,7 @@ library RelayUtils {
     }
 
     function getBatchStructHash(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
         address account,
         BatchParams calldata params
@@ -522,7 +516,7 @@ library RelayUtils {
     }
 
     function getBatchStructHash(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         BatchParams calldata params
     ) external pure returns (bytes32) {
         return
@@ -537,7 +531,7 @@ library RelayUtils {
     }
 
     function _getBatchStructHash(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         bytes32 subaccountApprovalHash,
         address account,
         IBaseOrderUtils.CreateOrderParams[] calldata createOrderParamsList,
@@ -581,7 +575,7 @@ library RelayUtils {
     //////////////////// MULTICHAIN ////////////////////
 
     function getClaimFundingFeesStructHash(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address[] memory markets,
         address[] memory tokens,
         address receiver
@@ -599,7 +593,7 @@ library RelayUtils {
     }
 
     function getClaimCollateralStructHash(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address[] memory markets,
         address[] memory tokens,
         uint256[] memory timeKeys,
@@ -619,7 +613,7 @@ library RelayUtils {
     }
 
     function getClaimAffiliateRewardsStructHash(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address[] memory markets,
         address[] memory tokens,
         address receiver
@@ -637,8 +631,8 @@ library RelayUtils {
     }
 
     function getCreateDepositStructHash(
-        RelayParams calldata relayParams,
-        TransferRequests calldata transferRequests,
+        IRelayUtils.RelayParams calldata relayParams,
+        IRelayUtils.TransferRequests calldata transferRequests,
         DepositUtils.CreateDepositParams memory params
     ) external pure returns (bytes32) {
         return
@@ -679,8 +673,8 @@ library RelayUtils {
     }
 
     function getCreateGlvDepositStructHash(
-        RelayParams calldata relayParams,
-        TransferRequests calldata transferRequests,
+        IRelayUtils.RelayParams calldata relayParams,
+        IRelayUtils.TransferRequests calldata transferRequests,
         GlvDepositUtils.CreateGlvDepositParams memory params
     ) external pure returns (bytes32) {
         return
@@ -723,8 +717,8 @@ library RelayUtils {
     }
 
     function getCreateWithdrawalStructHash(
-        RelayParams calldata relayParams,
-        TransferRequests calldata transferRequests,
+        IRelayUtils.RelayParams calldata relayParams,
+        IRelayUtils.TransferRequests calldata transferRequests,
         WithdrawalUtils.CreateWithdrawalParams memory params
     ) external pure returns (bytes32) {
         return
@@ -764,8 +758,8 @@ library RelayUtils {
     }
 
     function getCreateShiftStructHash(
-        RelayParams calldata relayParams,
-        TransferRequests calldata transferRequests,
+        IRelayUtils.RelayParams calldata relayParams,
+        IRelayUtils.TransferRequests calldata transferRequests,
         ShiftUtils.CreateShiftParams memory params
     ) external pure returns (bytes32) {
         return
@@ -802,8 +796,8 @@ library RelayUtils {
     }
 
     function getCreateGlvWithdrawalStructHash(
-        RelayParams calldata relayParams,
-        TransferRequests calldata transferRequests,
+        IRelayUtils.RelayParams calldata relayParams,
+        IRelayUtils.TransferRequests calldata transferRequests,
         GlvWithdrawalUtils.CreateGlvWithdrawalParams memory params
     ) external pure returns (bytes32) {
         return
@@ -844,8 +838,8 @@ library RelayUtils {
     }
 
     function getBridgeOutStructHash(
-        RelayParams calldata relayParams,
-        BridgeOutParams memory params
+        IRelayUtils.RelayParams calldata relayParams,
+        IRelayUtils.BridgeOutParams memory params
     ) external pure returns (bytes32) {
         return
             keccak256(

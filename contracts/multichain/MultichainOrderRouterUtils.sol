@@ -7,7 +7,7 @@ import "../order/BaseOrderUtils.sol";
 import "../position/PositionUtils.sol";
 import "../position/PositionStoreUtils.sol";
 import "../referral/IReferralStorage.sol";
-import "../router/relay/RelayUtils.sol";
+import "../router/relay/IRelayUtils.sol";
 
 import "./MultichainVault.sol";
 import "./MultichainUtils.sol";
@@ -36,7 +36,7 @@ library MultichainOrderRouterUtils {
 
     function transferFeeFromOrderOrPosition(
         TransferFeeFromOrderOrPositionContracts memory contracts,
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         bytes32 key
