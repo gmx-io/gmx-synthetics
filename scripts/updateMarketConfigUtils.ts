@@ -106,6 +106,9 @@ const processMarkets = async ({
     const marketLabel = `${marketConfig.tokens.indexToken} [${marketConfig.tokens.longToken}-${marketConfig.tokens.shortToken}]`;
 
     const addConfigItem = (type: string, baseKey: string, keyData: string, value: any, label: string) => {
+      if (!value) {
+        return;
+      }
       const [skip, skipReason] = shouldIgnoreBaseKey(baseKey, supportedRiskOracleMarkets.has(marketConfig));
 
       if (skip) {
@@ -125,155 +128,125 @@ const processMarkets = async ({
       }
     };
 
-    if (marketConfig.maxLongTokenPoolAmount) {
-      addConfigItem(
-        "uint",
-        keys.MAX_POOL_AMOUNT,
-        encodeData(["address", "address"], [marketToken, longToken]),
-        marketConfig.maxLongTokenPoolAmount,
-        `maxLongTokenPoolAmount ${marketLabel} (${marketToken}), ${longToken}`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.MAX_POOL_AMOUNT,
+      encodeData(["address", "address"], [marketToken, longToken]),
+      marketConfig.maxLongTokenPoolAmount,
+      `maxLongTokenPoolAmount ${marketLabel} (${marketToken}), ${longToken}`
+    );
 
-    if (marketConfig.maxShortTokenPoolAmount) {
-      addConfigItem(
-        "uint",
-        keys.MAX_POOL_AMOUNT,
-        encodeData(["address", "address"], [marketToken, shortToken]),
-        marketConfig.maxShortTokenPoolAmount,
-        `maxShortTokenPoolAmount ${marketLabel} (${marketToken}), ${shortToken}`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.MAX_POOL_AMOUNT,
+      encodeData(["address", "address"], [marketToken, shortToken]),
+      marketConfig.maxShortTokenPoolAmount,
+      `maxShortTokenPoolAmount ${marketLabel} (${marketToken}), ${shortToken}`
+    );
 
-    if (marketConfig.maxLongTokenPoolUsdForDeposit) {
-      addConfigItem(
-        "uint",
-        keys.MAX_POOL_USD_FOR_DEPOSIT,
-        encodeData(["address", "address"], [marketToken, longToken]),
-        marketConfig.maxLongTokenPoolUsdForDeposit,
-        `maxLongTokenPoolUsdForDeposit ${marketLabel} (${marketToken}), ${longToken}`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.MAX_POOL_USD_FOR_DEPOSIT,
+      encodeData(["address", "address"], [marketToken, longToken]),
+      marketConfig.maxLongTokenPoolUsdForDeposit,
+      `maxLongTokenPoolUsdForDeposit ${marketLabel} (${marketToken}), ${longToken}`
+    );
 
-    if (marketConfig.maxShortTokenPoolUsdForDeposit) {
-      addConfigItem(
-        "uint",
-        keys.MAX_POOL_USD_FOR_DEPOSIT,
-        encodeData(["address", "address"], [marketToken, shortToken]),
-        marketConfig.maxShortTokenPoolUsdForDeposit,
-        `maxShortTokenPoolUsdForDeposit ${marketLabel} (${marketToken}), ${shortToken}`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.MAX_POOL_USD_FOR_DEPOSIT,
+      encodeData(["address", "address"], [marketToken, shortToken]),
+      marketConfig.maxShortTokenPoolUsdForDeposit,
+      `maxShortTokenPoolUsdForDeposit ${marketLabel} (${marketToken}), ${shortToken}`
+    );
 
-    if (marketConfig.swapImpactExponentFactor) {
-      addConfigItem(
-        "uint",
-        keys.SWAP_IMPACT_EXPONENT_FACTOR,
-        encodeData(["address"], [marketToken]),
-        marketConfig.swapImpactExponentFactor,
-        `swapImpactExponentFactor ${marketLabel} (${marketToken})`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.SWAP_IMPACT_EXPONENT_FACTOR,
+      encodeData(["address"], [marketToken]),
+      marketConfig.swapImpactExponentFactor,
+      `swapImpactExponentFactor ${marketLabel} (${marketToken})`
+    );
 
-    if (marketConfig.swapFeeFactorForPositiveImpact) {
-      addConfigItem(
-        "uint",
-        keys.SWAP_FEE_FACTOR,
-        encodeData(["address", "bool"], [marketToken, true]),
-        marketConfig.swapFeeFactorForPositiveImpact,
-        `swapFeeFactorForPositiveImpact ${marketLabel} (${marketToken})`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.SWAP_FEE_FACTOR,
+      encodeData(["address", "bool"], [marketToken, true]),
+      marketConfig.swapFeeFactorForPositiveImpact,
+      `swapFeeFactorForPositiveImpact ${marketLabel} (${marketToken})`
+    );
 
-    if (marketConfig.swapFeeFactorForNegativeImpact) {
-      addConfigItem(
-        "uint",
-        keys.SWAP_FEE_FACTOR,
-        encodeData(["address", "bool"], [marketToken, false]),
-        marketConfig.swapFeeFactorForNegativeImpact,
-        `swapFeeFactorForNegativeImpact ${marketLabel} (${marketToken})`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.SWAP_FEE_FACTOR,
+      encodeData(["address", "bool"], [marketToken, false]),
+      marketConfig.swapFeeFactorForNegativeImpact,
+      `swapFeeFactorForNegativeImpact ${marketLabel} (${marketToken})`
+    );
 
-    if (marketConfig.depositFeeFactorForPositiveImpact || marketConfig.swapFeeFactorForPositiveImpact) {
-      addConfigItem(
-        "uint",
-        keys.DEPOSIT_FEE_FACTOR,
-        encodeData(["address", "bool"], [marketToken, true]),
-        marketConfig.depositFeeFactorForPositiveImpact ?? marketConfig.swapFeeFactorForPositiveImpact,
-        `depositFeeFactorForPositiveImpact ${marketLabel} (${marketToken})`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.DEPOSIT_FEE_FACTOR,
+      encodeData(["address", "bool"], [marketToken, true]),
+      marketConfig.depositFeeFactorForPositiveImpact ?? marketConfig.swapFeeFactorForPositiveImpact,
+      `depositFeeFactorForPositiveImpact ${marketLabel} (${marketToken})`
+    );
 
-    if (marketConfig.depositFeeFactorForNegativeImpact || marketConfig.swapFeeFactorForNegativeImpact) {
-      addConfigItem(
-        "uint",
-        keys.DEPOSIT_FEE_FACTOR,
-        encodeData(["address", "bool"], [marketToken, false]),
-        marketConfig.depositFeeFactorForNegativeImpact ?? marketConfig.swapFeeFactorForNegativeImpact,
-        `depositFeeFactorForNegativeImpact ${marketLabel} (${marketToken})`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.DEPOSIT_FEE_FACTOR,
+      encodeData(["address", "bool"], [marketToken, false]),
+      marketConfig.depositFeeFactorForNegativeImpact ?? marketConfig.swapFeeFactorForNegativeImpact,
+      `depositFeeFactorForNegativeImpact ${marketLabel} (${marketToken})`
+    );
 
-    if (marketConfig.withdrawalFeeFactorForPositiveImpact || marketConfig.swapFeeFactorForPositiveImpact) {
-      addConfigItem(
-        "uint",
-        keys.WITHDRAWAL_FEE_FACTOR,
-        encodeData(["address", "bool"], [marketToken, true]),
-        marketConfig.withdrawalFeeFactorForPositiveImpact ?? marketConfig.swapFeeFactorForPositiveImpact,
-        `withdrawalFeeFactorForPositiveImpact ${marketLabel} (${marketToken})`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.WITHDRAWAL_FEE_FACTOR,
+      encodeData(["address", "bool"], [marketToken, true]),
+      marketConfig.withdrawalFeeFactorForPositiveImpact ?? marketConfig.swapFeeFactorForPositiveImpact,
+      `withdrawalFeeFactorForPositiveImpact ${marketLabel} (${marketToken})`
+    );
 
-    if (marketConfig.withdrawalFeeFactorForNegativeImpact || marketConfig.swapFeeFactorForNegativeImpact) {
-      addConfigItem(
-        "uint",
-        keys.WITHDRAWAL_FEE_FACTOR,
-        encodeData(["address", "bool"], [marketToken, false]),
-        marketConfig.withdrawalFeeFactorForNegativeImpact ?? marketConfig.swapFeeFactorForNegativeImpact,
-        `withdrawalFeeFactorForNegativeImpact ${marketLabel} (${marketToken})`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.WITHDRAWAL_FEE_FACTOR,
+      encodeData(["address", "bool"], [marketToken, false]),
+      marketConfig.withdrawalFeeFactorForNegativeImpact ?? marketConfig.swapFeeFactorForNegativeImpact,
+      `withdrawalFeeFactorForNegativeImpact ${marketLabel} (${marketToken})`
+    );
 
-    if (marketConfig.atomicSwapFeeFactor) {
-      addConfigItem(
-        "uint",
-        keys.ATOMIC_SWAP_FEE_FACTOR,
-        encodeData(["address"], [marketToken]),
-        marketConfig.atomicSwapFeeFactor,
-        `atomicSwapFeeFactor ${marketToken}`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.ATOMIC_SWAP_FEE_FACTOR,
+      encodeData(["address"], [marketToken]),
+      marketConfig.atomicSwapFeeFactor,
+      `atomicSwapFeeFactor ${marketToken}`
+    );
 
-    if (marketConfig.atomicWithdrawalFeeFactor) {
-      addConfigItem(
-        "uint",
-        keys.ATOMIC_WITHDRAWAL_FEE_FACTOR,
-        encodeData(["address"], [marketToken]),
-        marketConfig.atomicWithdrawalFeeFactor,
-        `atomicWithdrawalFeeFactor ${marketToken}`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.ATOMIC_WITHDRAWAL_FEE_FACTOR,
+      encodeData(["address"], [marketToken]),
+      marketConfig.atomicWithdrawalFeeFactor,
+      `atomicWithdrawalFeeFactor ${marketToken}`
+    );
 
-    if (marketConfig.positiveSwapImpactFactor) {
-      addConfigItem(
-        "uint",
-        keys.SWAP_IMPACT_FACTOR,
-        encodeData(["address", "bool"], [marketToken, true]),
-        marketConfig.positiveSwapImpactFactor,
-        `positiveSwapImpactFactor ${marketLabel} (${marketToken})`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.SWAP_IMPACT_FACTOR,
+      encodeData(["address", "bool"], [marketToken, true]),
+      marketConfig.positiveSwapImpactFactor,
+      `positiveSwapImpactFactor ${marketLabel} (${marketToken})`
+    );
 
-    if (marketConfig.negativeSwapImpactFactor) {
-      addConfigItem(
-        "uint",
-        keys.SWAP_IMPACT_FACTOR,
-        encodeData(["address", "bool"], [marketToken, false]),
-        marketConfig.negativeSwapImpactFactor,
-        `negativeSwapImpactFactor ${marketLabel} (${marketToken})`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.SWAP_IMPACT_FACTOR,
+      encodeData(["address", "bool"], [marketToken, false]),
+      marketConfig.negativeSwapImpactFactor,
+      `negativeSwapImpactFactor ${marketLabel} (${marketToken})`
+    );
 
     addConfigItem(
       "uint",
@@ -312,25 +285,21 @@ const processMarkets = async ({
       `minCollateralFactorForOpenInterestMultiplierShort ${marketLabel} (${marketToken})`
     );
 
-    if (marketConfig.maxOpenInterestForLongs) {
-      addConfigItem(
-        "uint",
-        keys.MAX_OPEN_INTEREST,
-        encodeData(["address", "bool"], [marketToken, true]),
-        marketConfig.maxOpenInterestForLongs,
-        `maxOpenInterestForLongs ${marketLabel} (${marketToken})`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.MAX_OPEN_INTEREST,
+      encodeData(["address", "bool"], [marketToken, true]),
+      marketConfig.maxOpenInterestForLongs,
+      `maxOpenInterestForLongs ${marketLabel} (${marketToken})`
+    );
 
-    if (marketConfig.maxOpenInterestForShorts) {
-      addConfigItem(
-        "uint",
-        keys.MAX_OPEN_INTEREST,
-        encodeData(["address", "bool"], [marketToken, false]),
-        marketConfig.maxOpenInterestForShorts,
-        `maxOpenInterestForShorts ${marketLabel} (${marketToken})`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.MAX_OPEN_INTEREST,
+      encodeData(["address", "bool"], [marketToken, false]),
+      marketConfig.maxOpenInterestForShorts,
+      `maxOpenInterestForShorts ${marketLabel} (${marketToken})`
+    );
 
     addConfigItem(
       "uint",
@@ -444,275 +413,222 @@ const processMarkets = async ({
       `maxPnlFactorForWithdrawalsShorts ${marketLabel} (${marketToken})`
     );
 
-    if (marketConfig.positionImpactExponentFactor) {
-      addConfigItem(
-        "uint",
-        keys.POSITION_IMPACT_EXPONENT_FACTOR,
-        encodeData(["address"], [marketToken]),
-        marketConfig.positionImpactExponentFactor,
-        `positionImpactExponentFactor ${marketLabel} (${marketToken})`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.POSITION_IMPACT_EXPONENT_FACTOR,
+      encodeData(["address"], [marketToken]),
+      marketConfig.positionImpactExponentFactor,
+      `positionImpactExponentFactor ${marketLabel} (${marketToken})`
+    );
 
-    if (marketConfig.fundingFactor) {
-      addConfigItem(
-        "uint",
-        keys.FUNDING_FACTOR,
-        encodeData(["address"], [marketToken]),
-        marketConfig.fundingFactor,
-        `fundingFactor ${marketLabel} (${marketToken})`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.FUNDING_FACTOR,
+      encodeData(["address"], [marketToken]),
+      marketConfig.fundingFactor,
+      `fundingFactor ${marketLabel} (${marketToken})`
+    );
 
-    if (marketConfig.fundingExponentFactor) {
-      addConfigItem(
-        "uint",
-        keys.FUNDING_EXPONENT_FACTOR,
-        encodeData(["address"], [marketToken]),
-        marketConfig.fundingExponentFactor,
-        `fundingFactor ${marketLabel} (${marketToken})`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.FUNDING_EXPONENT_FACTOR,
+      encodeData(["address"], [marketToken]),
+      marketConfig.fundingExponentFactor,
+      `fundingFactor ${marketLabel} (${marketToken})`
+    );
 
-    if (marketConfig.fundingIncreaseFactorPerSecond !== undefined) {
-      addConfigItem(
-        "uint",
-        keys.FUNDING_INCREASE_FACTOR_PER_SECOND,
-        encodeData(["address"], [marketToken]),
-        marketConfig.fundingIncreaseFactorPerSecond,
-        `fundingIncreaseFactorPerSecond ${marketLabel} (${marketToken})`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.FUNDING_INCREASE_FACTOR_PER_SECOND,
+      encodeData(["address"], [marketToken]),
+      marketConfig.fundingIncreaseFactorPerSecond,
+      `fundingIncreaseFactorPerSecond ${marketLabel} (${marketToken})`
+    );
 
-    if (marketConfig.fundingDecreaseFactorPerSecond !== undefined) {
-      addConfigItem(
-        "uint",
-        keys.FUNDING_DECREASE_FACTOR_PER_SECOND,
-        encodeData(["address"], [marketToken]),
-        marketConfig.fundingDecreaseFactorPerSecond,
-        `fundingDecreaseFactorPerSecond ${marketLabel} (${marketToken})`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.FUNDING_DECREASE_FACTOR_PER_SECOND,
+      encodeData(["address"], [marketToken]),
+      marketConfig.fundingDecreaseFactorPerSecond,
+      `fundingDecreaseFactorPerSecond ${marketLabel} (${marketToken})`
+    );
 
-    if (marketConfig.maxFundingFactorPerSecond !== undefined) {
-      addConfigItem(
-        "uint",
-        keys.MAX_FUNDING_FACTOR_PER_SECOND,
-        encodeData(["address"], [marketToken]),
-        marketConfig.maxFundingFactorPerSecond,
-        `maxFundingFactorPerSecond ${marketLabel} (${marketToken})`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.MAX_FUNDING_FACTOR_PER_SECOND,
+      encodeData(["address"], [marketToken]),
+      marketConfig.maxFundingFactorPerSecond,
+      `maxFundingFactorPerSecond ${marketLabel} (${marketToken})`
+    );
 
-    if (marketConfig.minFundingFactorPerSecond !== undefined) {
-      addConfigItem(
-        "uint",
-        keys.MIN_FUNDING_FACTOR_PER_SECOND,
-        encodeData(["address"], [marketToken]),
-        marketConfig.minFundingFactorPerSecond,
-        `minFundingFactorPerSecond ${marketLabel} (${marketToken})`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.MIN_FUNDING_FACTOR_PER_SECOND,
+      encodeData(["address"], [marketToken]),
+      marketConfig.minFundingFactorPerSecond,
+      `minFundingFactorPerSecond ${marketLabel} (${marketToken})`
+    );
 
-    if (marketConfig.thresholdForStableFunding !== undefined) {
-      addConfigItem(
-        "uint",
-        keys.THRESHOLD_FOR_STABLE_FUNDING,
-        encodeData(["address"], [marketToken]),
-        marketConfig.thresholdForStableFunding,
-        `thresholdForStableFunding ${marketLabel} (${marketToken})`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.THRESHOLD_FOR_STABLE_FUNDING,
+      encodeData(["address"], [marketToken]),
+      marketConfig.thresholdForStableFunding,
+      `thresholdForStableFunding ${marketLabel} (${marketToken})`
+    );
 
-    if (marketConfig.thresholdForDecreaseFunding !== undefined) {
-      addConfigItem(
-        "uint",
-        keys.THRESHOLD_FOR_DECREASE_FUNDING,
-        encodeData(["address"], [marketToken]),
-        marketConfig.thresholdForDecreaseFunding,
-        `thresholdForDecreaseFunding ${marketLabel} (${marketToken})`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.THRESHOLD_FOR_DECREASE_FUNDING,
+      encodeData(["address"], [marketToken]),
+      marketConfig.thresholdForDecreaseFunding,
+      `thresholdForDecreaseFunding ${marketLabel} (${marketToken})`
+    );
 
-    if (marketConfig.liquidationFeeFactor !== undefined) {
-      addConfigItem(
-        "uint",
-        keys.LIQUIDATION_FEE_FACTOR,
-        encodeData(["address"], [marketToken]),
-        marketConfig.liquidationFeeFactor,
-        `liquidationFeeFactor ${marketLabel} (${marketToken})`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.LIQUIDATION_FEE_FACTOR,
+      encodeData(["address"], [marketToken]),
+      marketConfig.liquidationFeeFactor,
+      `liquidationFeeFactor ${marketLabel} (${marketToken})`
+    );
 
-    if (marketConfig.positionFeeFactorForPositiveImpact !== undefined) {
-      addConfigItem(
-        "uint",
-        keys.POSITION_FEE_FACTOR,
-        encodeData(["address", "bool"], [marketToken, true]),
-        marketConfig.positionFeeFactorForPositiveImpact,
-        `positionFeeFactorForPositiveImpact ${marketLabel} (${marketToken})`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.POSITION_FEE_FACTOR,
+      encodeData(["address", "bool"], [marketToken, true]),
+      marketConfig.positionFeeFactorForPositiveImpact,
+      `positionFeeFactorForPositiveImpact ${marketLabel} (${marketToken})`
+    );
 
-    if (marketConfig.positionFeeFactorForNegativeImpact !== undefined) {
-      addConfigItem(
-        "uint",
-        keys.POSITION_FEE_FACTOR,
-        encodeData(["address", "bool"], [marketToken, false]),
-        marketConfig.positionFeeFactorForNegativeImpact,
-        `positionFeeFactorForNegativeImpact ${marketLabel} (${marketToken})`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.POSITION_FEE_FACTOR,
+      encodeData(["address", "bool"], [marketToken, false]),
+      marketConfig.positionFeeFactorForNegativeImpact,
+      `positionFeeFactorForNegativeImpact ${marketLabel} (${marketToken})`
+    );
 
-    if (marketConfig.optimalUsageFactorForLongs !== undefined) {
-      addConfigItem(
-        "uint",
-        keys.OPTIMAL_USAGE_FACTOR,
-        encodeData(["address", "bool"], [marketToken, true]),
-        marketConfig.optimalUsageFactorForLongs,
-        `optimalUsageFactorForLongs ${marketLabel} (${marketToken})`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.OPTIMAL_USAGE_FACTOR,
+      encodeData(["address", "bool"], [marketToken, true]),
+      marketConfig.optimalUsageFactorForLongs,
+      `optimalUsageFactorForLongs ${marketLabel} (${marketToken})`
+    );
 
-    if (marketConfig.optimalUsageFactorForShorts !== undefined) {
-      addConfigItem(
-        "uint",
-        keys.OPTIMAL_USAGE_FACTOR,
-        encodeData(["address", "bool"], [marketToken, false]),
-        marketConfig.optimalUsageFactorForShorts,
-        `optimalUsageFactorForShorts ${marketLabel} (${marketToken})`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.OPTIMAL_USAGE_FACTOR,
+      encodeData(["address", "bool"], [marketToken, false]),
+      marketConfig.optimalUsageFactorForShorts,
+      `optimalUsageFactorForShorts ${marketLabel} (${marketToken})`
+    );
 
-    if (marketConfig.baseBorrowingFactorForLongs !== undefined) {
-      addConfigItem(
-        "uint",
-        keys.BASE_BORROWING_FACTOR,
-        encodeData(["address", "bool"], [marketToken, true]),
-        marketConfig.baseBorrowingFactorForLongs,
-        `baseBorrowingFactorForLongs ${marketLabel} (${marketToken})`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.BASE_BORROWING_FACTOR,
+      encodeData(["address", "bool"], [marketToken, true]),
+      marketConfig.baseBorrowingFactorForLongs,
+      `baseBorrowingFactorForLongs ${marketLabel} (${marketToken})`
+    );
 
-    if (marketConfig.baseBorrowingFactorForShorts !== undefined) {
-      addConfigItem(
-        "uint",
-        keys.BASE_BORROWING_FACTOR,
-        encodeData(["address", "bool"], [marketToken, false]),
-        marketConfig.baseBorrowingFactorForShorts,
-        `baseBorrowingFactorForShorts ${marketLabel} (${marketToken})`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.BASE_BORROWING_FACTOR,
+      encodeData(["address", "bool"], [marketToken, false]),
+      marketConfig.baseBorrowingFactorForShorts,
+      `baseBorrowingFactorForShorts ${marketLabel} (${marketToken})`
+    );
 
-    if (marketConfig.aboveOptimalUsageBorrowingFactorForLongs !== undefined) {
-      addConfigItem(
-        "uint",
-        keys.ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR,
-        encodeData(["address", "bool"], [marketToken, true]),
-        marketConfig.aboveOptimalUsageBorrowingFactorForLongs,
-        `aboveOptimalUsageBorrowingFactorForLongs ${marketLabel} (${marketToken})`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR,
+      encodeData(["address", "bool"], [marketToken, true]),
+      marketConfig.aboveOptimalUsageBorrowingFactorForLongs,
+      `aboveOptimalUsageBorrowingFactorForLongs ${marketLabel} (${marketToken})`
+    );
 
-    if (marketConfig.aboveOptimalUsageBorrowingFactorForShorts !== undefined) {
-      addConfigItem(
-        "uint",
-        keys.ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR,
-        encodeData(["address", "bool"], [marketToken, false]),
-        marketConfig.aboveOptimalUsageBorrowingFactorForShorts,
-        `aboveOptimalUsageBorrowingFactorForShorts ${marketLabel} (${marketToken})`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR,
+      encodeData(["address", "bool"], [marketToken, false]),
+      marketConfig.aboveOptimalUsageBorrowingFactorForShorts,
+      `aboveOptimalUsageBorrowingFactorForShorts ${marketLabel} (${marketToken})`
+    );
 
-    if (marketConfig.borrowingFactorForLongs !== undefined) {
-      addConfigItem(
-        "uint",
-        keys.BORROWING_FACTOR,
-        encodeData(["address", "bool"], [marketToken, true]),
-        marketConfig.borrowingFactorForLongs,
-        `borrowingFactorForLongs ${marketLabel} (${marketToken})`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.BORROWING_FACTOR,
+      encodeData(["address", "bool"], [marketToken, true]),
+      marketConfig.borrowingFactorForLongs,
+      `borrowingFactorForLongs ${marketLabel} (${marketToken})`
+    );
 
-    if (marketConfig.borrowingFactorForShorts !== undefined) {
-      addConfigItem(
-        "uint",
-        keys.BORROWING_FACTOR,
-        encodeData(["address", "bool"], [marketToken, false]),
-        marketConfig.borrowingFactorForShorts,
-        `borrowingFactorForShorts ${marketLabel} (${marketToken})`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.BORROWING_FACTOR,
+      encodeData(["address", "bool"], [marketToken, false]),
+      marketConfig.borrowingFactorForShorts,
+      `borrowingFactorForShorts ${marketLabel} (${marketToken})`
+    );
 
-    if (marketConfig.borrowingExponentFactorForLongs !== undefined) {
-      addConfigItem(
-        "uint",
-        keys.BORROWING_EXPONENT_FACTOR,
-        encodeData(["address", "bool"], [marketToken, true]),
-        marketConfig.borrowingExponentFactorForLongs,
-        `borrowingExponentFactorForLongs ${marketLabel} (${marketToken})`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.BORROWING_EXPONENT_FACTOR,
+      encodeData(["address", "bool"], [marketToken, true]),
+      marketConfig.borrowingExponentFactorForLongs,
+      `borrowingExponentFactorForLongs ${marketLabel} (${marketToken})`
+    );
 
-    if (marketConfig.borrowingExponentFactorForShorts !== undefined) {
-      addConfigItem(
-        "uint",
-        keys.BORROWING_EXPONENT_FACTOR,
-        encodeData(["address", "bool"], [marketToken, false]),
-        marketConfig.borrowingExponentFactorForShorts,
-        `borrowingExponentFactorForShorts ${marketLabel} (${marketToken})`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.BORROWING_EXPONENT_FACTOR,
+      encodeData(["address", "bool"], [marketToken, false]),
+      marketConfig.borrowingExponentFactorForShorts,
+      `borrowingExponentFactorForShorts ${marketLabel} (${marketToken})`
+    );
 
-    if (marketConfig.positivePositionImpactFactor !== undefined) {
-      addConfigItem(
-        "uint",
-        keys.POSITION_IMPACT_FACTOR,
-        encodeData(["address", "bool"], [marketToken, true]),
-        marketConfig.positivePositionImpactFactor,
-        `positivePositionImpactFactor ${marketLabel} (${marketToken})`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.POSITION_IMPACT_FACTOR,
+      encodeData(["address", "bool"], [marketToken, true]),
+      marketConfig.positivePositionImpactFactor,
+      `positivePositionImpactFactor ${marketLabel} (${marketToken})`
+    );
 
-    if (marketConfig.negativePositionImpactFactor !== undefined) {
-      addConfigItem(
-        "uint",
-        keys.POSITION_IMPACT_FACTOR,
-        encodeData(["address", "bool"], [marketToken, false]),
-        marketConfig.negativePositionImpactFactor,
-        `negativePositionImpactFactor ${marketLabel} (${marketToken})`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.POSITION_IMPACT_FACTOR,
+      encodeData(["address", "bool"], [marketToken, false]),
+      marketConfig.negativePositionImpactFactor,
+      `negativePositionImpactFactor ${marketLabel} (${marketToken})`
+    );
 
-    if (marketConfig.maxPositionImpactFactorForLiquidations) {
-      addConfigItem(
-        "uint",
-        keys.MAX_POSITION_IMPACT_FACTOR_FOR_LIQUIDATIONS,
-        encodeData(["address"], [marketToken]),
-        marketConfig.maxPositionImpactFactorForLiquidations,
-        `maxPositionImpactFactorForLiquidations ${marketLabel} (${marketToken})`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.MAX_POSITION_IMPACT_FACTOR_FOR_LIQUIDATIONS,
+      encodeData(["address"], [marketToken]),
+      marketConfig.maxPositionImpactFactorForLiquidations,
+      `maxPositionImpactFactorForLiquidations ${marketLabel} (${marketToken})`
+    );
 
-    if (marketConfig.positiveMaxPositionImpactFactor) {
-      addConfigItem(
-        "uint",
-        keys.MAX_POSITION_IMPACT_FACTOR,
-        encodeData(["address", "bool"], [marketToken, true]),
-        marketConfig.positiveMaxPositionImpactFactor,
-        `positiveMaxPositionImpactFactor ${marketLabel} (${marketToken})`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.MAX_POSITION_IMPACT_FACTOR,
+      encodeData(["address", "bool"], [marketToken, true]),
+      marketConfig.positiveMaxPositionImpactFactor,
+      `positiveMaxPositionImpactFactor ${marketLabel} (${marketToken})`
+    );
 
-    if (marketConfig.negativeMaxPositionImpactFactor) {
-      addConfigItem(
-        "uint",
-        keys.MAX_POSITION_IMPACT_FACTOR,
-        encodeData(["address", "bool"], [marketToken, false]),
-        marketConfig.negativeMaxPositionImpactFactor,
-        `negativeMaxPositionImpactFactor ${marketLabel} (${marketToken})`
-      );
-    }
+    addConfigItem(
+      "uint",
+      keys.MAX_POSITION_IMPACT_FACTOR,
+      encodeData(["address", "bool"], [marketToken, false]),
+      marketConfig.negativeMaxPositionImpactFactor,
+      `negativeMaxPositionImpactFactor ${marketLabel} (${marketToken})`
+    );
+    ("");
   }
 
   return [configItems, ignoredRiskOracleParams, ignoredKeeperParams];
@@ -741,8 +657,6 @@ export async function updateMarketConfig({
   const markets = await hre.gmx.getMarkets();
 
   const dataStore = await hre.ethers.getContract("DataStore");
-  const multicall = await hre.ethers.getContract("Multicall3");
-  const config = await hre.ethers.getContract("Config");
 
   const onchainMarketsByTokens = await getOnchainMarkets(read, dataStore.address);
   const supportedRiskOracleMarkets = await getSupportedRiskOracleMarkets(markets, tokens, onchainMarketsByTokens);
