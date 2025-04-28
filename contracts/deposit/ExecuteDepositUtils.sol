@@ -14,7 +14,7 @@ import "../oracle/Oracle.sol";
 import "../position/PositionUtils.sol";
 
 import "../multichain/MultichainUtils.sol";
-import "../multichain/MultichainTransferRouter.sol";
+import "../multichain/IMultichainTransferRouter.sol";
 
 import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
@@ -46,7 +46,7 @@ library ExecuteDepositUtils {
         DataStore dataStore;
         EventEmitter eventEmitter;
         MultichainVault multichainVault;
-        MultichainTransferRouter multichainTransferRouter;
+        IMultichainTransferRouter multichainTransferRouter;
         DepositVault depositVault;
         Oracle oracle;
         bytes32 key;
@@ -319,7 +319,7 @@ library ExecuteDepositUtils {
     /// @dev abi.decode can fail if dataList is not properly formed, which would cause the deposit to be cancelled
     /// @dev first item of dataList should be the GMX_DATA_ACTION hash if dataList is intended to be used for bridging out tokens
     function bridgeOutFromController(
-        MultichainTransferRouter multichainTransferRouter,
+        IMultichainTransferRouter multichainTransferRouter,
         address account,
         uint256 srcChainId,
         address token,

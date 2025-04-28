@@ -5,8 +5,9 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import "./MultichainRouter.sol";
+import "./IMultichainTransferRouter.sol";
 
-contract MultichainTransferRouter is Initializable, MultichainRouter {
+contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, MultichainRouter {
     IMultichainProvider public multichainProvider;
 
     constructor(

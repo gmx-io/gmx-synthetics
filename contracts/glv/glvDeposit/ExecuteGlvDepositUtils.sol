@@ -24,7 +24,7 @@ library ExecuteGlvDepositUtils {
         DataStore dataStore;
         EventEmitter eventEmitter;
         MultichainVault multichainVault;
-        MultichainTransferRouter multichainTransferRouter;
+        IMultichainTransferRouter multichainTransferRouter;
         GlvVault glvVault;
         Oracle oracle;
         bytes32 key;
