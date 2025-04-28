@@ -204,13 +204,13 @@ async function appendConfigIfDifferent(
     }
 
     console.info(
-      "appending config %s %s (%s) to %s, prev: %s %s",
+      "appending config %s %s to %s, prev: %s %s, key: %s",
       type,
       label,
-      key,
       value.toString(),
       currentValue.toString(),
-      changeStr
+      changeStr,
+      key
     );
     list.push(config.interface.encodeFunctionData(setMethod, [baseKey, keyData, value]));
   } else {
