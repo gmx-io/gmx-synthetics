@@ -32,8 +32,8 @@ function buildImportGraph(dir: string): ImportGraph {
         imports.push(path.normalize(importedPath));
       }
 
-      const relativePath = path.relative(CONTRACTS_DIR, filePath);
-      graph[relativePath] = imports;
+      const fileName = path.basename(filePath);
+      graph[fileName] = imports;
     }
   });
 
