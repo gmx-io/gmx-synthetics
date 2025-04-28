@@ -317,6 +317,7 @@ library ExecuteDepositUtils {
     }
 
     /// @dev abi.decode can fail if dataList is not properly formed, which would cause the deposit to be cancelled
+    /// @dev first item of dataList should be the GMX_DATA_ACTION hash if dataList is intended to be used for bridging out tokens
     function bridgeOutFromController(
         MultichainTransferRouter multichainTransferRouter,
         address account,
@@ -325,14 +326,11 @@ library ExecuteDepositUtils {
         uint256 amount,
         bytes32[] memory dataList
     ) public {
-        if (dataList.length == 0) {
+        if (dataList.length == 0 || dataList[0] != Keys.GMX_DATA_ACTION) {
             return;
         }
 
-        bytes memory data;
-        for (uint256 i = 0; i < dataList.length; i++) {
-            data = bytes.concat(data, bytes32(dataList[i]));
-        }
+        bytes memory data = Array.dataArrayToBytes(dataList);
 
         (IMultichainProvider.ActionType actionType, bytes memory actionData) = abi.decode(
             data,
