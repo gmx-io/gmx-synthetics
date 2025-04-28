@@ -331,22 +331,25 @@ export async function handleConfigChanges(items: ConfigChangeItem[], write: bool
     return;
   }
 
-  try {
-    if (!write) {
-      ({ write } = await prompts({
-        type: "confirm",
-        name: "write",
-        message: "Do you want to execute the transactions?",
-      }));
-    }
+  const { roles } = await hre.gmx.getRoles();
+  const from = Object.keys(roles.CONFIG_KEEPER)[0];
+  await config.callStatic.multicall(multicallWriteParams, {
+    from,
+  });
 
+  if (!write) {
+    ({ write } = await prompts({
+      type: "confirm",
+      name: "write",
+      message: "Do you want to execute the transactions?",
+    }));
+  }
+
+  try {
     if (write) {
       const tx = await config.multicall(multicallWriteParams);
       console.log(`tx sent: ${tx.hash}`);
     } else {
-      await config.callStatic.multicall(multicallWriteParams, {
-        from: "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745",
-      });
       console.log("NOTE: executed in read-only mode, no transactions were sent");
     }
   } catch (ex) {

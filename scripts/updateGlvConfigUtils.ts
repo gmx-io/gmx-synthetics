@@ -1,6 +1,7 @@
 import { encodeData } from "../utils/hash";
 import { getMarketKey, getOnchainMarkets } from "../utils/market";
 import { ConfigChangeItem, handleConfigChanges } from "../utils/config";
+import { handleInBatches } from "../utils/batch";
 import * as keys from "../utils/keys";
 
 const processGlvs = async ({
