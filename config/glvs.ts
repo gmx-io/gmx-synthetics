@@ -62,7 +62,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("LTC", 7_500_000, 1.286),
           createGlvMarketConfig("BERA", 6_500_000, 0.76405),
           createGlvMarketConfig("TRUMP", 4_600_000, 0.84268),
-          createGlvMarketConfig("RENDER", 3_654_000, 0.8016),
+          createGlvMarketConfig("RENDER", 4_620_000, 0.81567),
           createGlvMarketConfig("MELANIA", arbitrum_ethUsdcDefaultCap, 0.78007),
           createGlvMarketConfig("ATOM", arbitrum_ethUsdcDefaultCap, 0.98972),
           createGlvMarketConfig("NEAR", arbitrum_ethUsdcDefaultCap, 0.97498),
@@ -83,7 +83,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("FET", arbitrum_ethUsdcDefaultCap, 0.82503),
           createGlvMarketConfig("AIXBT", arbitrum_ethUsdcDefaultCap, 0.88856),
           createGlvMarketConfig("MKR", arbitrum_ethUsdcDefaultCap, 0.97207),
-          createGlvMarketConfig("DOLO", 500_000, 1),
+          createGlvMarketConfig("DOLO", 600_000, 0.94571),
         ],
       },
       {
