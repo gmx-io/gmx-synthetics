@@ -80,17 +80,30 @@ function detectCycles(graph: ImportGraph): string[][] {
   return cycles;
 }
 
+function normalizeCycle(cycle: string[]): string {
+  const idx = cycle.reduce((minIdx, val, i, arr) => (val < arr[minIdx] ? i : minIdx), 0);
+  const rotated = [...cycle.slice(idx), ...cycle.slice(0, idx)];
+  return rotated.join(" -> ");
+}
+
 // Main
 function main(): void {
   const graph = buildImportGraph(CONTRACTS_DIR);
   const cycles = detectCycles(graph);
 
-  if (cycles.length === 0) {
+  const uniqueCycles = new Set<string>();
+
+  cycles.forEach((cycle) => {
+    const normalized = normalizeCycle(cycle);
+    uniqueCycles.add(normalized);
+  });
+
+  if (uniqueCycles.size === 0) {
     console.log("✅ No cyclic dependencies found.");
   } else {
     console.log("⚠️ Cyclic dependencies detected:");
-    cycles.forEach((cycle, idx) => {
-      console.log(`${idx + 1}. ${cycle.join(" -> ")}`);
+    Array.from(uniqueCycles).forEach((cycle, idx) => {
+      console.log(`${idx + 1}. ${cycle}`);
     });
   }
 }
