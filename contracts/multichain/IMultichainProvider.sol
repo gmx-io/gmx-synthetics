@@ -6,6 +6,13 @@ pragma solidity ^0.8.0;
  * @title IMultichainProvider
  */
 interface IMultichainProvider {
+    enum ActionType {
+        None,
+        Deposit,
+        GlvDeposit,
+        BridgeOut
+    }
+
     struct BridgeOutParams {
         address provider;
         address account;

@@ -32,6 +32,27 @@ contract MultichainGlvRouter is MultichainRouter {
         bytes32 structHash = RelayUtils.getCreateGlvDepositStructHash(relayParams, transferRequests, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
+        return _createGlvDeposit(account, srcChainId, transferRequests, params);
+    }
+
+    function createGlvDepositFromBridge(
+        RelayParams calldata relayParams,
+        address account,
+        uint256 srcChainId,
+        TransferRequests calldata transferRequests,
+        GlvDepositUtils.CreateGlvDepositParams memory params
+    ) external nonReentrant withRelay(relayParams, account, srcChainId, false) returns (bytes32) {
+        _validateCallWithoutSignature(relayParams, srcChainId);
+
+        return _createGlvDeposit(account, srcChainId, transferRequests, params);
+    }
+
+    function _createGlvDeposit(
+        address account,
+        uint256 srcChainId,
+        TransferRequests calldata transferRequests,
+        GlvDepositUtils.CreateGlvDepositParams memory params
+    ) private returns (bytes32) {
         address wnt = TokenUtils.wnt(dataStore);
         IERC20(wnt).safeTransfer(address(glvVault), params.executionFee);
 

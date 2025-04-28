@@ -2,18 +2,27 @@
 
 pragma solidity ^0.8.0;
 
-import "./MultichainRouter.sol";
-import "./MultichainUtils.sol";
-import "./IMultichainProvider.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-contract MultichainTransferRouter is MultichainRouter {
-    IMultichainProvider multichainProvider;
+import "./MultichainRouter.sol";
+
+contract MultichainTransferRouter is Initializable, MultichainRouter {
+    IMultichainProvider public multichainProvider;
 
     constructor(
-        BaseConstructorParams memory params,
-        IMultichainProvider _multichainProvider
-    ) MultichainRouter(params) BaseRouter(params.router, params.roleStore, params.dataStore, params.eventEmitter) {
-        multichainProvider = _multichainProvider;
+        BaseConstructorParams memory params
+    )
+        MultichainRouter(params)
+        BaseRouter(params.router, params.roleStore, params.dataStore, params.eventEmitter)
+    {
+        // leave empty, use initialize instead
+    }
+
+    function initialize(address _multichainProvider) external initializer {
+        if (_multichainProvider == address(0)) {
+            revert Errors.InvalidMultichainProvider(address(0));
+        }
+        multichainProvider = IMultichainProvider(_multichainProvider);
     }
 
     /**
@@ -44,6 +53,21 @@ contract MultichainTransferRouter is MultichainRouter {
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) {
         bytes32 structHash = RelayUtils.getBridgeOutStructHash(relayParams, params);
         _validateCall(relayParams, account, structHash, srcChainId);
+
+        _bridgeOut(account, srcChainId, params);
+    }
+
+    /*
+     * Bridge out funds recorded under the account
+     * Used to automatically bridge out GM/GLV token after executeDeposit/executeGlvDeposit
+     */
+    function bridgeOutFromController(
+        RelayParams calldata relayParams,
+        address account,
+        uint256 srcChainId,
+        BridgeOutParams calldata params
+    ) external nonReentrant onlyController withRelay(relayParams, account, srcChainId, false) {
+        _validateCallWithoutSignature(relayParams, srcChainId);
 
         _bridgeOut(account, srcChainId, params);
     }

@@ -5,6 +5,8 @@ pragma solidity ^0.8.0;
 import "../../deposit/ExecuteDepositUtils.sol";
 
 import "../../nonce/NonceUtils.sol";
+import "../../gas/GasUtils.sol";
+import "../../multichain/MultichainVault.sol";
 
 import "../GlvVault.sol";
 import "../GlvUtils.sol";

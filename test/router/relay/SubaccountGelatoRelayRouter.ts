@@ -213,8 +213,8 @@ describe("SubaccountGelatoRelayRouter", () => {
       const orderKeys = await getOrderKeys(dataStore, 0, 1);
       const order = await reader.getOrder(dataStore.address, orderKeys[0]);
       // 0.099 WETH (0.1 paid - 0.001 relay fee)
-      expect(order.numbers.executionFee).eq("9003720880000000");
-      await expectBalance(wnt.address, user3.address, "90996279120000000");
+      expect(order.numbers.executionFee).eq("9003719840000000");
+      await expectBalance(wnt.address, user3.address, "90996280160000000");
     });
 
     it("InvalidSignature  ", async () => {
