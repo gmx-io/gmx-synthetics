@@ -103,7 +103,9 @@ const processMarkets = async ({
       continue;
     }
 
-    const marketLabel = `${marketConfig.tokens.indexToken} [${marketConfig.tokens.longToken}-${marketConfig.tokens.shortToken}]`;
+    const marketLabel = `${marketConfig.tokens.indexToken ?? "SPOT-ONLY"} [${marketConfig.tokens.longToken}-${
+      marketConfig.tokens.shortToken
+    }]`;
 
     const addConfigItem = (type: string, baseKey: string, keyData: string, value: any, label: string) => {
       if (!value) {
@@ -221,7 +223,7 @@ const processMarkets = async ({
       keys.ATOMIC_SWAP_FEE_FACTOR,
       encodeData(["address"], [marketToken]),
       marketConfig.atomicSwapFeeFactor,
-      `atomicSwapFeeFactor ${marketToken}`
+      `atomicSwapFeeFactor ${marketLabel} (${marketToken})`
     );
 
     addConfigItem(
@@ -229,7 +231,7 @@ const processMarkets = async ({
       keys.ATOMIC_WITHDRAWAL_FEE_FACTOR,
       encodeData(["address"], [marketToken]),
       marketConfig.atomicWithdrawalFeeFactor,
-      `atomicWithdrawalFeeFactor ${marketToken}`
+      `atomicWithdrawalFeeFactor ${marketLabel} (${marketToken})`
     );
 
     addConfigItem(
