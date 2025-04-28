@@ -1,12 +1,8 @@
-import prompts from "prompts";
-
 import fetch from "node-fetch";
-import { handleInBatches } from "../utils/batch";
-import { appendUintConfigIfDifferent, getFullKey } from "../utils/config";
+import { ConfigChangeItem, handleConfigChanges } from "../utils/config";
 import { encodeData } from "../utils/hash";
 import * as keys from "../utils/keys";
 import { getMarketKey, getMarketTokenAddresses, getOnchainMarkets } from "../utils/market";
-import { bigNumberify } from "../utils/math";
 import { validateMarketConfigs } from "./validateMarketConfigsUtils";
 
 const RISK_ORACLE_MANAGED_BASE_KEYS = [
@@ -21,7 +17,6 @@ function getRiskOracleManagedBaseKeys() {
   if (RISK_ORACLE_SUPPORTED_NETWORKS.includes(hre.network.name)) {
     return RISK_ORACLE_MANAGED_BASE_KEYS;
   }
-
   return [];
 }
 
@@ -46,13 +41,16 @@ const processMarkets = async ({
   supportedRiskOracleMarkets,
   tokens,
   generalConfig,
-  handleConfig: handleConfigArg,
   includeRiskOracleBaseKeys,
   includeKeeperBaseKeys,
   includeMaxOpenInterest,
   includePositionImpact,
   includeFunding,
-}) => {
+}): Promise<[ConfigChangeItem[], string[], string[]]> => {
+  const configItems: ConfigChangeItem[] = [];
+  const ignoredRiskOracleParams: string[] = [];
+  const ignoredKeeperParams: string[] = [];
+
   const shouldIgnoreBaseKey = (
     baseKey: string,
     isSupportedByRiskOracle: boolean
@@ -90,9 +88,6 @@ const processMarkets = async ({
     return [false];
   };
 
-  const ignoredRiskOracleParams: string[] = [];
-  const ignoredKeeperParams: string[] = [];
-
   for (const marketConfig of markets) {
     const [indexToken, longToken, shortToken] = getMarketTokenAddresses(marketConfig, tokens);
     const marketKey = getMarketKey(indexToken, longToken, shortToken);
@@ -110,7 +105,7 @@ const processMarkets = async ({
 
     const marketLabel = `${marketConfig.tokens.indexToken} [${marketConfig.tokens.longToken}-${marketConfig.tokens.shortToken}]`;
 
-    const handleConfig = async (type, baseKey, keyData, value, label) => {
+    const addConfigItem = (type: string, baseKey: string, keyData: string, value: any, label: string) => {
       const [skip, skipReason] = shouldIgnoreBaseKey(baseKey, supportedRiskOracleMarkets.has(marketConfig));
 
       if (skip) {
@@ -120,12 +115,18 @@ const processMarkets = async ({
           ignoredKeeperParams.push(label);
         }
       } else {
-        await handleConfigArg(type, baseKey, keyData, value, label);
+        configItems.push({
+          type,
+          baseKey,
+          keyData,
+          value,
+          label,
+        });
       }
     };
 
     if (marketConfig.maxLongTokenPoolAmount) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.MAX_POOL_AMOUNT,
         encodeData(["address", "address"], [marketToken, longToken]),
@@ -135,7 +136,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.maxShortTokenPoolAmount) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.MAX_POOL_AMOUNT,
         encodeData(["address", "address"], [marketToken, shortToken]),
@@ -145,7 +146,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.maxLongTokenPoolUsdForDeposit) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.MAX_POOL_USD_FOR_DEPOSIT,
         encodeData(["address", "address"], [marketToken, longToken]),
@@ -155,7 +156,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.maxShortTokenPoolUsdForDeposit) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.MAX_POOL_USD_FOR_DEPOSIT,
         encodeData(["address", "address"], [marketToken, shortToken]),
@@ -165,7 +166,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.swapImpactExponentFactor) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.SWAP_IMPACT_EXPONENT_FACTOR,
         encodeData(["address"], [marketToken]),
@@ -175,7 +176,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.swapFeeFactorForPositiveImpact) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.SWAP_FEE_FACTOR,
         encodeData(["address", "bool"], [marketToken, true]),
@@ -185,7 +186,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.swapFeeFactorForNegativeImpact) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.SWAP_FEE_FACTOR,
         encodeData(["address", "bool"], [marketToken, false]),
@@ -195,7 +196,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.depositFeeFactorForPositiveImpact || marketConfig.swapFeeFactorForPositiveImpact) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.DEPOSIT_FEE_FACTOR,
         encodeData(["address", "bool"], [marketToken, true]),
@@ -205,7 +206,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.depositFeeFactorForNegativeImpact || marketConfig.swapFeeFactorForNegativeImpact) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.DEPOSIT_FEE_FACTOR,
         encodeData(["address", "bool"], [marketToken, false]),
@@ -215,7 +216,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.withdrawalFeeFactorForPositiveImpact || marketConfig.swapFeeFactorForPositiveImpact) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.WITHDRAWAL_FEE_FACTOR,
         encodeData(["address", "bool"], [marketToken, true]),
@@ -225,7 +226,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.withdrawalFeeFactorForNegativeImpact || marketConfig.swapFeeFactorForNegativeImpact) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.WITHDRAWAL_FEE_FACTOR,
         encodeData(["address", "bool"], [marketToken, false]),
@@ -235,7 +236,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.atomicSwapFeeFactor) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.ATOMIC_SWAP_FEE_FACTOR,
         encodeData(["address"], [marketToken]),
@@ -245,7 +246,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.atomicWithdrawalFeeFactor) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.ATOMIC_WITHDRAWAL_FEE_FACTOR,
         encodeData(["address"], [marketToken]),
@@ -255,7 +256,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.positiveSwapImpactFactor) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.SWAP_IMPACT_FACTOR,
         encodeData(["address", "bool"], [marketToken, true]),
@@ -265,7 +266,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.negativeSwapImpactFactor) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.SWAP_IMPACT_FACTOR,
         encodeData(["address", "bool"], [marketToken, false]),
@@ -274,7 +275,7 @@ const processMarkets = async ({
       );
     }
 
-    await handleConfig(
+    addConfigItem(
       "uint",
       keys.TOKEN_TRANSFER_GAS_LIMIT,
       encodeData(["address"], [marketToken]),
@@ -287,7 +288,7 @@ const processMarkets = async ({
       continue;
     }
 
-    await handleConfig(
+    addConfigItem(
       "uint",
       keys.MIN_COLLATERAL_FACTOR,
       encodeData(["address"], [marketToken]),
@@ -295,7 +296,7 @@ const processMarkets = async ({
       `minCollateralFactor ${marketLabel} (${marketToken})`
     );
 
-    await handleConfig(
+    addConfigItem(
       "uint",
       keys.MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER,
       encodeData(["address", "bool"], [marketToken, true]),
@@ -303,7 +304,7 @@ const processMarkets = async ({
       `minCollateralFactorForOpenInterestMultiplierLong ${marketLabel} (${marketToken})`
     );
 
-    await handleConfig(
+    addConfigItem(
       "uint",
       keys.MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER,
       encodeData(["address", "bool"], [marketToken, false]),
@@ -312,7 +313,7 @@ const processMarkets = async ({
     );
 
     if (marketConfig.maxOpenInterestForLongs) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.MAX_OPEN_INTEREST,
         encodeData(["address", "bool"], [marketToken, true]),
@@ -322,7 +323,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.maxOpenInterestForShorts) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.MAX_OPEN_INTEREST,
         encodeData(["address", "bool"], [marketToken, false]),
@@ -331,7 +332,7 @@ const processMarkets = async ({
       );
     }
 
-    await handleConfig(
+    addConfigItem(
       "uint",
       keys.RESERVE_FACTOR,
       encodeData(["address", "bool"], [marketToken, true]),
@@ -339,7 +340,7 @@ const processMarkets = async ({
       `reserveFactorLongs ${marketLabel} (${marketToken})`
     );
 
-    await handleConfig(
+    addConfigItem(
       "uint",
       keys.RESERVE_FACTOR,
       encodeData(["address", "bool"], [marketToken, false]),
@@ -347,7 +348,7 @@ const processMarkets = async ({
       `reserveFactorShorts ${marketLabel} (${marketToken})`
     );
 
-    await handleConfig(
+    addConfigItem(
       "uint",
       keys.OPEN_INTEREST_RESERVE_FACTOR,
       encodeData(["address", "bool"], [marketToken, true]),
@@ -355,7 +356,7 @@ const processMarkets = async ({
       `openInterestReserveFactorLongs ${marketLabel} (${marketToken})`
     );
 
-    await handleConfig(
+    addConfigItem(
       "uint",
       keys.OPEN_INTEREST_RESERVE_FACTOR,
       encodeData(["address", "bool"], [marketToken, false]),
@@ -363,7 +364,7 @@ const processMarkets = async ({
       `openInterestReserveFactorShorts ${marketLabel} (${marketToken})`
     );
 
-    await handleConfig(
+    addConfigItem(
       "uint",
       keys.MAX_PNL_FACTOR,
       encodeData(["bytes32", "address", "bool"], [keys.MAX_PNL_FACTOR_FOR_TRADERS, marketToken, true]),
@@ -371,7 +372,7 @@ const processMarkets = async ({
       `maxPnlFactorForTradersLongs ${marketLabel} (${marketToken})`
     );
 
-    await handleConfig(
+    addConfigItem(
       "uint",
       keys.MAX_PNL_FACTOR,
       encodeData(["bytes32", "address", "bool"], [keys.MAX_PNL_FACTOR_FOR_TRADERS, marketToken, false]),
@@ -379,7 +380,7 @@ const processMarkets = async ({
       `maxPnlFactorForTradersShorts ${marketLabel} (${marketToken})`
     );
 
-    await handleConfig(
+    addConfigItem(
       "uint",
       keys.MAX_PNL_FACTOR,
       encodeData(["bytes32", "address", "bool"], [keys.MAX_PNL_FACTOR_FOR_ADL, marketToken, true]),
@@ -387,7 +388,7 @@ const processMarkets = async ({
       `maxPnlFactorForAdlLongs ${marketLabel} (${marketToken})`
     );
 
-    await handleConfig(
+    addConfigItem(
       "uint",
       keys.MAX_PNL_FACTOR,
       encodeData(["bytes32", "address", "bool"], [keys.MAX_PNL_FACTOR_FOR_ADL, marketToken, false]),
@@ -395,7 +396,7 @@ const processMarkets = async ({
       `maxPnlFactorForAdlShorts ${marketLabel} (${marketToken})`
     );
 
-    await handleConfig(
+    addConfigItem(
       "uint",
       keys.MIN_PNL_FACTOR_AFTER_ADL,
       encodeData(["address", "bool"], [marketToken, true]),
@@ -403,7 +404,7 @@ const processMarkets = async ({
       `minPnlFactorAfterAdlLongs ${marketLabel} (${marketToken})`
     );
 
-    await handleConfig(
+    addConfigItem(
       "uint",
       keys.MIN_PNL_FACTOR_AFTER_ADL,
       encodeData(["address", "bool"], [marketToken, false]),
@@ -411,7 +412,7 @@ const processMarkets = async ({
       `minPnlFactorAfterAdlShorts ${marketLabel} (${marketToken})`
     );
 
-    await handleConfig(
+    addConfigItem(
       "uint",
       keys.MAX_PNL_FACTOR,
       encodeData(["bytes32", "address", "bool"], [keys.MAX_PNL_FACTOR_FOR_DEPOSITS, marketToken, true]),
@@ -419,7 +420,7 @@ const processMarkets = async ({
       `maxPnlFactorForDepositsLongs ${marketLabel} (${marketToken})`
     );
 
-    await handleConfig(
+    addConfigItem(
       "uint",
       keys.MAX_PNL_FACTOR,
       encodeData(["bytes32", "address", "bool"], [keys.MAX_PNL_FACTOR_FOR_DEPOSITS, marketToken, false]),
@@ -427,7 +428,7 @@ const processMarkets = async ({
       `maxPnlFactorForDepositsShorts ${marketLabel} (${marketToken})`
     );
 
-    await handleConfig(
+    addConfigItem(
       "uint",
       keys.MAX_PNL_FACTOR,
       encodeData(["bytes32", "address", "bool"], [keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS, marketToken, true]),
@@ -435,7 +436,7 @@ const processMarkets = async ({
       `maxPnlFactorForWithdrawalsLongs ${marketLabel} (${marketToken})`
     );
 
-    await handleConfig(
+    addConfigItem(
       "uint",
       keys.MAX_PNL_FACTOR,
       encodeData(["bytes32", "address", "bool"], [keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS, marketToken, false]),
@@ -444,7 +445,7 @@ const processMarkets = async ({
     );
 
     if (marketConfig.positionImpactExponentFactor) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.POSITION_IMPACT_EXPONENT_FACTOR,
         encodeData(["address"], [marketToken]),
@@ -454,7 +455,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.fundingFactor) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.FUNDING_FACTOR,
         encodeData(["address"], [marketToken]),
@@ -464,7 +465,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.fundingExponentFactor) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.FUNDING_EXPONENT_FACTOR,
         encodeData(["address"], [marketToken]),
@@ -474,7 +475,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.fundingIncreaseFactorPerSecond !== undefined) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.FUNDING_INCREASE_FACTOR_PER_SECOND,
         encodeData(["address"], [marketToken]),
@@ -484,7 +485,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.fundingDecreaseFactorPerSecond !== undefined) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.FUNDING_DECREASE_FACTOR_PER_SECOND,
         encodeData(["address"], [marketToken]),
@@ -494,7 +495,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.maxFundingFactorPerSecond !== undefined) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.MAX_FUNDING_FACTOR_PER_SECOND,
         encodeData(["address"], [marketToken]),
@@ -504,7 +505,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.minFundingFactorPerSecond !== undefined) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.MIN_FUNDING_FACTOR_PER_SECOND,
         encodeData(["address"], [marketToken]),
@@ -514,7 +515,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.thresholdForStableFunding !== undefined) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.THRESHOLD_FOR_STABLE_FUNDING,
         encodeData(["address"], [marketToken]),
@@ -524,7 +525,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.thresholdForDecreaseFunding !== undefined) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.THRESHOLD_FOR_DECREASE_FUNDING,
         encodeData(["address"], [marketToken]),
@@ -534,7 +535,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.liquidationFeeFactor !== undefined) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.LIQUIDATION_FEE_FACTOR,
         encodeData(["address"], [marketToken]),
@@ -544,7 +545,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.positionFeeFactorForPositiveImpact !== undefined) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.POSITION_FEE_FACTOR,
         encodeData(["address", "bool"], [marketToken, true]),
@@ -554,7 +555,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.positionFeeFactorForNegativeImpact !== undefined) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.POSITION_FEE_FACTOR,
         encodeData(["address", "bool"], [marketToken, false]),
@@ -564,7 +565,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.optimalUsageFactorForLongs !== undefined) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.OPTIMAL_USAGE_FACTOR,
         encodeData(["address", "bool"], [marketToken, true]),
@@ -574,7 +575,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.optimalUsageFactorForShorts !== undefined) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.OPTIMAL_USAGE_FACTOR,
         encodeData(["address", "bool"], [marketToken, false]),
@@ -584,7 +585,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.baseBorrowingFactorForLongs !== undefined) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.BASE_BORROWING_FACTOR,
         encodeData(["address", "bool"], [marketToken, true]),
@@ -594,7 +595,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.baseBorrowingFactorForShorts !== undefined) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.BASE_BORROWING_FACTOR,
         encodeData(["address", "bool"], [marketToken, false]),
@@ -604,7 +605,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.aboveOptimalUsageBorrowingFactorForLongs !== undefined) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR,
         encodeData(["address", "bool"], [marketToken, true]),
@@ -614,7 +615,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.aboveOptimalUsageBorrowingFactorForShorts !== undefined) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR,
         encodeData(["address", "bool"], [marketToken, false]),
@@ -624,7 +625,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.borrowingFactorForLongs !== undefined) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.BORROWING_FACTOR,
         encodeData(["address", "bool"], [marketToken, true]),
@@ -634,7 +635,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.borrowingFactorForShorts !== undefined) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.BORROWING_FACTOR,
         encodeData(["address", "bool"], [marketToken, false]),
@@ -644,7 +645,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.borrowingExponentFactorForLongs !== undefined) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.BORROWING_EXPONENT_FACTOR,
         encodeData(["address", "bool"], [marketToken, true]),
@@ -654,7 +655,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.borrowingExponentFactorForShorts !== undefined) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.BORROWING_EXPONENT_FACTOR,
         encodeData(["address", "bool"], [marketToken, false]),
@@ -664,7 +665,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.positivePositionImpactFactor !== undefined) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.POSITION_IMPACT_FACTOR,
         encodeData(["address", "bool"], [marketToken, true]),
@@ -674,7 +675,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.negativePositionImpactFactor !== undefined) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.POSITION_IMPACT_FACTOR,
         encodeData(["address", "bool"], [marketToken, false]),
@@ -684,7 +685,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.maxPositionImpactFactorForLiquidations) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.MAX_POSITION_IMPACT_FACTOR_FOR_LIQUIDATIONS,
         encodeData(["address"], [marketToken]),
@@ -694,7 +695,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.positiveMaxPositionImpactFactor) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.MAX_POSITION_IMPACT_FACTOR,
         encodeData(["address", "bool"], [marketToken, true]),
@@ -704,7 +705,7 @@ const processMarkets = async ({
     }
 
     if (marketConfig.negativeMaxPositionImpactFactor) {
-      await handleConfig(
+      addConfigItem(
         "uint",
         keys.MAX_POSITION_IMPACT_FACTOR,
         encodeData(["address", "bool"], [marketToken, false]),
@@ -714,7 +715,7 @@ const processMarkets = async ({
     }
   }
 
-  return [ignoredRiskOracleParams, ignoredKeeperParams];
+  return [configItems, ignoredRiskOracleParams, ignoredKeeperParams];
 };
 
 export async function updateMarketConfig({
@@ -744,13 +745,9 @@ export async function updateMarketConfig({
   const config = await hre.ethers.getContract("Config");
 
   const onchainMarketsByTokens = await getOnchainMarkets(read, dataStore.address);
-
-  const configKeys = [];
-  const multicallReadParams = [];
-
   const supportedRiskOracleMarkets = await getSupportedRiskOracleMarkets(markets, tokens, onchainMarketsByTokens);
 
-  await processMarkets({
+  const [configItems, ignoredRiskOracleParams, ignoredKeeperParams] = await processMarkets({
     markets,
     includeMarket: market,
     onchainMarketsByTokens,
@@ -762,51 +759,6 @@ export async function updateMarketConfig({
     includeMaxOpenInterest,
     includePositionImpact,
     includeFunding,
-    handleConfig: async (type, baseKey, keyData) => {
-      if (type !== "uint") {
-        throw new Error("Unsupported type");
-      }
-
-      const key = getFullKey(baseKey, keyData);
-
-      configKeys.push(key);
-      multicallReadParams.push({
-        target: dataStore.address,
-        allowFailure: false,
-        callData: dataStore.interface.encodeFunctionData("getUint", [key]),
-      });
-    },
-  });
-
-  const result = await multicall.callStatic.aggregate3(multicallReadParams);
-  const dataCache = {};
-  for (let i = 0; i < configKeys.length; i++) {
-    const key = configKeys[i];
-    const value = result[i].returnData;
-    dataCache[key] = bigNumberify(value);
-  }
-
-  const multicallWriteParams = [];
-
-  const [ignoredRiskOracleParams, ignoredKeeperParams] = await processMarkets({
-    markets,
-    includeMarket: market,
-    onchainMarketsByTokens,
-    supportedRiskOracleMarkets,
-    tokens,
-    generalConfig,
-    includeRiskOracleBaseKeys,
-    includeKeeperBaseKeys,
-    includeMaxOpenInterest,
-    includePositionImpact,
-    includeFunding,
-    handleConfig: async (type, baseKey, keyData, value, label) => {
-      if (type !== "uint") {
-        throw new Error("Unsupported type");
-      }
-
-      await appendUintConfigIfDifferent(multicallWriteParams, dataCache, baseKey, keyData, value, label);
-    },
   });
 
   if (ignoredRiskOracleParams.length > 0) {
@@ -826,44 +778,7 @@ export async function updateMarketConfig({
     console.info("Add INCLUDE_KEEPER_BASE_KEYS=true to include them\n");
   }
 
-  if (multicallWriteParams.length === 0) {
-    console.log("no changes to apply");
-    return;
-  }
-
-  console.info(`updating ${multicallWriteParams.length} params`);
-  console.info("multicallWriteParams", multicallWriteParams);
-
-  console.log("running simulation");
-  if (!["hardhat"].includes(hre.network.name)) {
-    await handleInBatches(multicallWriteParams, 100, async (batch) => {
-      await read(
-        "Config",
-        {
-          from: "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745",
-        },
-        "multicall",
-        batch
-      );
-    });
-  }
-
-  if (!write) {
-    ({ write } = await prompts({
-      type: "confirm",
-      name: "write",
-      message: "Do you want to execute the transactions?",
-    }));
-  }
-
-  if (!write) {
-    console.info("NOTE: executed in read-only mode, no transactions were sent");
-  } else {
-    await handleInBatches(multicallWriteParams, 100, async (batch) => {
-      const tx = await config.multicall(batch);
-      console.info(`tx sent: ${tx.hash}`);
-    });
-  }
+  await handleConfigChanges(configItems, write);
 }
 
 function getIgnoredParameterNames(ignoredParams) {
