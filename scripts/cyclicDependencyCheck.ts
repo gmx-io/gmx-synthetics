@@ -29,10 +29,11 @@ function buildImportGraph(dir: string): ImportGraph {
       let match: RegExpExecArray | null;
       while ((match = importRegex.exec(content)) !== null) {
         const importedPath = match[1];
-        imports.push(path.normalize(importedPath));
+        imports.push(path.basename(importedPath));
       }
 
       const fileName = path.basename(filePath);
+      console.log(fileName, imports);
       graph[fileName] = imports;
     }
   });
