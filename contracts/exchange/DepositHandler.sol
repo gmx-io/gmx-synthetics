@@ -12,7 +12,7 @@ import "../deposit/DepositUtils.sol";
 import "../deposit/ExecuteDepositUtils.sol";
 
 import "../multichain/MultichainVault.sol";
-import "../multichain/MultichainTransferRouter.sol";
+import "../multichain/IMultichainTransferRouter.sol";
 
 import "./IDepositHandler.sol";
 
@@ -23,7 +23,7 @@ contract DepositHandler is IDepositHandler, BaseHandler {
 
     DepositVault public immutable depositVault;
     MultichainVault public immutable multichainVault;
-    MultichainTransferRouter public immutable multichainTransferRouter;
+    IMultichainTransferRouter public immutable multichainTransferRouter;
 
     constructor(
         RoleStore _roleStore,
@@ -31,7 +31,7 @@ contract DepositHandler is IDepositHandler, BaseHandler {
         EventEmitter _eventEmitter,
         Oracle _oracle,
         MultichainVault _multichainVault,
-        MultichainTransferRouter _multichainTransferRouter,
+        IMultichainTransferRouter _multichainTransferRouter,
         DepositVault _depositVault
     ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {
         multichainVault = _multichainVault;

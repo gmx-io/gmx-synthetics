@@ -18,7 +18,7 @@ contract MultichainClaimsRouter is MultichainRouter {
     // to allow paying the relayFee from newly claimed tokens
     // i.e. _handleRelayBeforeAction is "delayed" and executed at the same time as _handleRelayAfterAction
     modifier withRelayForClaims(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         bool isSubaccount
@@ -34,7 +34,7 @@ contract MultichainClaimsRouter is MultichainRouter {
     }
 
     function claimFundingFees(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         address[] memory markets,
@@ -68,7 +68,7 @@ contract MultichainClaimsRouter is MultichainRouter {
     }
 
     function claimCollateral(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         address[] memory markets,
@@ -105,7 +105,7 @@ contract MultichainClaimsRouter is MultichainRouter {
     }
 
     function claimAffiliateRewards(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         address[] memory markets,

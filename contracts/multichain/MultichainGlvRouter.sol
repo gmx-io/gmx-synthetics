@@ -23,10 +23,10 @@ contract MultichainGlvRouter is MultichainRouter {
     }
 
     function createGlvDeposit(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
-        TransferRequests calldata transferRequests,
+        IRelayUtils.TransferRequests calldata transferRequests,
         GlvDepositUtils.CreateGlvDepositParams memory params
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) returns (bytes32) {
         bytes32 structHash = RelayUtils.getCreateGlvDepositStructHash(relayParams, transferRequests, params);
@@ -36,10 +36,10 @@ contract MultichainGlvRouter is MultichainRouter {
     }
 
     function createGlvDepositFromBridge(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
-        TransferRequests calldata transferRequests,
+        IRelayUtils.TransferRequests calldata transferRequests,
         GlvDepositUtils.CreateGlvDepositParams memory params
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) returns (bytes32) {
         _validateCallWithoutSignature(relayParams, srcChainId);
@@ -50,7 +50,7 @@ contract MultichainGlvRouter is MultichainRouter {
     function _createGlvDeposit(
         address account,
         uint256 srcChainId,
-        TransferRequests calldata transferRequests,
+        IRelayUtils.TransferRequests calldata transferRequests,
         GlvDepositUtils.CreateGlvDepositParams memory params
     ) private returns (bytes32) {
         address wnt = TokenUtils.wnt(dataStore);
@@ -62,10 +62,10 @@ contract MultichainGlvRouter is MultichainRouter {
     }
 
     function createGlvWithdrawal(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
-        TransferRequests calldata transferRequests,
+        IRelayUtils.TransferRequests calldata transferRequests,
         GlvWithdrawalUtils.CreateGlvWithdrawalParams memory params
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) returns (bytes32) {
         bytes32 structHash = RelayUtils.getCreateGlvWithdrawalStructHash(relayParams, transferRequests, params);

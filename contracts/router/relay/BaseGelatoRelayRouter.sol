@@ -41,7 +41,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     }
 
     modifier withRelay(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         bool isSubaccount
@@ -177,7 +177,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
     function _handleRelayBeforeAction(
         Contracts memory contracts,
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         bool isSubaccount
@@ -188,7 +188,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         _handleRelayFee(contracts, relayParams, account, srcChainId, isSubaccount);
     }
 
-    function _handleExternalCalls(address account, uint256 srcChainId, ExternalCalls calldata externalCalls, bool isSubaccount) internal {
+    function _handleExternalCalls(address account, uint256 srcChainId, IRelayUtils.ExternalCalls calldata externalCalls, bool isSubaccount) internal {
         if (externalCalls.externalCallTargets.length == 0) {
             return;
         }
@@ -234,7 +234,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         // and user's `account` multichain balance is increased by the refunded amount
     }
 
-    function _handleTokenPermits(TokenPermit[] calldata tokenPermits) internal {
+    function _handleTokenPermits(IRelayUtils.TokenPermit[] calldata tokenPermits) internal {
         // not all tokens support ERC20Permit, for them separate transaction is needed
 
         if (tokenPermits.length == 0) {
@@ -244,7 +244,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         address _router = address(router);
 
         for (uint256 i; i < tokenPermits.length; i++) {
-            TokenPermit memory permit = tokenPermits[i];
+            IRelayUtils.TokenPermit memory permit = tokenPermits[i];
 
             if (permit.spender != _router) {
                 // to avoid permitting spending by an incorrect spender for extra safety
@@ -267,7 +267,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
     function _handleRelayFee(
         Contracts memory contracts,
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         bool isSubaccount
@@ -290,9 +290,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
             _sendTokens(account, relayParams.fee.feeToken, address(contracts.orderVault), relayParams.fee.feeAmount, srcChainId);
             RelayUtils.swapFeeTokens(contracts, eventEmitter, oracle, relayParams.fee);
-            for (uint256 i = 0; i < relayParams.fee.feeSwapPath.length - 1; i++) {
-                MarketUtils.validateMarketTokenBalance(contracts.dataStore, relayParams.fee.feeSwapPath[i]);
-            }
         } else if (relayParams.fee.feeToken == contracts.wnt) {
             // fee tokens could be sent through external calls
             // in this case feeAmount could be 0 and there is no need to call _sendTokens
@@ -370,7 +367,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         IERC20(wnt).safeTransfer(account, residualFee);
     }
 
-    function _validateCall(RelayParams calldata relayParams, address account, bytes32 structHash, uint256 srcChainId) internal {
+    function _validateCall(IRelayUtils.RelayParams calldata relayParams, address account, bytes32 structHash, uint256 srcChainId) internal {
         _validateCallWithoutSignature(relayParams, srcChainId);
 
         bytes32 domainSeparator = RelayUtils.getDomainSeparator(srcChainId);
@@ -401,7 +398,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         FeatureUtils.validateFeature(dataStore, Keys.gaslessFeatureDisabledKey(address(this)));
     }
 
-    function _validateCallWithoutSignature(RelayParams calldata relayParams, uint256 srcChainId) internal view {
+    function _validateCallWithoutSignature(IRelayUtils.RelayParams calldata relayParams, uint256 srcChainId) internal view {
         if (relayParams.desChainId != block.chainid) {
             revert Errors.InvalidDestinationChainId(relayParams.desChainId);
         }

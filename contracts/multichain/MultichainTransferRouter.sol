@@ -5,8 +5,9 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import "./MultichainRouter.sol";
+import "./IMultichainTransferRouter.sol";
 
-contract MultichainTransferRouter is Initializable, MultichainRouter {
+contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, MultichainRouter {
     IMultichainProvider public multichainProvider;
 
     constructor(
@@ -46,10 +47,10 @@ contract MultichainTransferRouter is Initializable, MultichainRouter {
      * Can be used for same-chain or cross-chain withdrawals
      */
     function bridgeOut(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
-        BridgeOutParams calldata params
+        IRelayUtils.BridgeOutParams calldata params
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) {
         bytes32 structHash = RelayUtils.getBridgeOutStructHash(relayParams, params);
         _validateCall(relayParams, account, structHash, srcChainId);
@@ -62,10 +63,10 @@ contract MultichainTransferRouter is Initializable, MultichainRouter {
      * Used to automatically bridge out GM/GLV token after executeDeposit/executeGlvDeposit
      */
     function bridgeOutFromController(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
-        BridgeOutParams calldata params
+        IRelayUtils.BridgeOutParams calldata params
     ) external nonReentrant onlyController withRelay(relayParams, account, srcChainId, false) {
         _validateCallWithoutSignature(relayParams, srcChainId);
 
@@ -78,7 +79,7 @@ contract MultichainTransferRouter is Initializable, MultichainRouter {
      * This would be used by the smart wallets to withdraw funds from the multichain vault
      */
     function transferOut(
-        BridgeOutParams calldata params
+        IRelayUtils.BridgeOutParams calldata params
     ) external nonReentrant {
         address account = msg.sender;
         _bridgeOut(account, block.chainid, params);
@@ -87,7 +88,7 @@ contract MultichainTransferRouter is Initializable, MultichainRouter {
     function _bridgeOut(
         address account,
         uint256 srcChainId,
-        BridgeOutParams calldata params
+        IRelayUtils.BridgeOutParams calldata params
     ) internal {
         if (srcChainId == block.chainid) {
             // same-chain withdrawal: funds are sent directly to the user's wallet

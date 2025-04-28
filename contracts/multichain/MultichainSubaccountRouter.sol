@@ -15,7 +15,7 @@ contract MultichainSubaccountRouter is MultichainRouter {
 
     // @note all params except subaccount/srcChainId should be part of the corresponding struct hash
     function batch(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
         address account,
         uint256 srcChainId,
@@ -43,7 +43,7 @@ contract MultichainSubaccountRouter is MultichainRouter {
 
     // @dev needed to keep `batch` under the stack limit
     function _handleBatch(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
         address account,
         uint256 srcChainId,
@@ -66,7 +66,7 @@ contract MultichainSubaccountRouter is MultichainRouter {
 
     // @note all params except subaccount/srcChainId should be part of the corresponding struct hash
     function createOrder(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
         address account, // main account
         uint256 srcChainId,
@@ -93,7 +93,7 @@ contract MultichainSubaccountRouter is MultichainRouter {
 
     // @dev needed to keep `createOrder` under the stack limit
     function _handleCreateOrder(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
         address account, // main account
         uint256 srcChainId,
@@ -108,7 +108,7 @@ contract MultichainSubaccountRouter is MultichainRouter {
 
     // @note all params except subaccount/srcChainId should be part of the corresponding struct hash
     function updateOrder(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
         address account, // main account
         uint256 srcChainId,
@@ -128,7 +128,7 @@ contract MultichainSubaccountRouter is MultichainRouter {
 
     // @note all params except subaccount/srcChainId should be part of the corresponding struct hash
     function cancelOrder(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
         address account, // main account
         uint256 srcChainId,
@@ -143,7 +143,7 @@ contract MultichainSubaccountRouter is MultichainRouter {
 
     // @note all params except account/srcChainId should be part of the corresponding struct hash
     function removeSubaccount(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         address subaccount

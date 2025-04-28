@@ -303,7 +303,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         return abi.decode(data, (ActionType, bytes));
     }
 
-    function _areValidTransferRequests(TransferRequests memory transferRequests) private pure returns (bool) {
+    function _areValidTransferRequests(IRelayUtils.TransferRequests memory transferRequests) private pure returns (bool) {
         if (
             transferRequests.tokens.length != transferRequests.receivers.length ||
             transferRequests.tokens.length != transferRequests.amounts.length
@@ -330,10 +330,10 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         bytes memory actionData
     ) private {
         (
-            RelayParams memory relayParams,
-            TransferRequests memory transferRequests,
+            IRelayUtils.RelayParams memory relayParams,
+            IRelayUtils.TransferRequests memory transferRequests,
             DepositUtils.CreateDepositParams memory depositParams
-        ) = abi.decode(actionData, (RelayParams, TransferRequests, DepositUtils.CreateDepositParams));
+        ) = abi.decode(actionData, (IRelayUtils.RelayParams, IRelayUtils.TransferRequests, DepositUtils.CreateDepositParams));
         
         if (_areValidTransferRequests(transferRequests)) {
             try multichainGmRouter.createDepositFromBridge(
@@ -361,10 +361,10 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         bytes memory actionData
     ) private {
         (
-            RelayParams memory relayParams,
-            TransferRequests memory transferRequests,
+            IRelayUtils.RelayParams memory relayParams,
+            IRelayUtils.TransferRequests memory transferRequests,
             GlvDepositUtils.CreateGlvDepositParams memory glvDepositParams
-        ) = abi.decode(actionData, (RelayParams, TransferRequests, GlvDepositUtils.CreateGlvDepositParams));
+        ) = abi.decode(actionData, (IRelayUtils.RelayParams, IRelayUtils.TransferRequests, GlvDepositUtils.CreateGlvDepositParams));
         
         if (_areValidTransferRequests(transferRequests)) {
             try multichainGlvRouter.createGlvDepositFromBridge(

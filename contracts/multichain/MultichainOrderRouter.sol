@@ -12,7 +12,7 @@ contract MultichainOrderRouter is MultichainRouter {
     // and uses _handleRelayBeforeActionForOrders instead of _handleRelayBeforeAction
     // to allow paying the relayFee from order/position collateral
     modifier withRelayForOrders(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         bytes32 orderKey,
@@ -35,7 +35,7 @@ contract MultichainOrderRouter is MultichainRouter {
     }
 
     function batch(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         BatchParams calldata params
@@ -55,7 +55,7 @@ contract MultichainOrderRouter is MultichainRouter {
     }
 
     function createOrder(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         IBaseOrderUtils.CreateOrderParams calldata params
@@ -67,7 +67,7 @@ contract MultichainOrderRouter is MultichainRouter {
     }
 
     function updateOrder(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         UpdateOrderParams calldata params
@@ -83,7 +83,7 @@ contract MultichainOrderRouter is MultichainRouter {
     }
 
     function cancelOrder(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         bytes32 key
@@ -102,7 +102,7 @@ contract MultichainOrderRouter is MultichainRouter {
     // to allow paying the relayFee from order/position collateral
     function _handleRelayBeforeActionForOrders(
         Contracts memory contracts,
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         bytes32 orderKey,
