@@ -63,7 +63,7 @@ describe("Exchange.PositionPriceImpact.SyntheticMarket", () => {
         afterExecution: ({ logs }) => {
           const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
           expect(positionIncreaseEvent.executionPrice).eq("50100200400801603206412"); // 50.1002004008
-          expect(positionIncreaseEvent.priceImpactUsd).eq("-399999999999999992588018713340000"); // -400
+          expect(positionIncreaseEvent.pendingPriceImpactUsd).eq("-399999999999999992588018713340000"); // -400
         },
       },
     });
