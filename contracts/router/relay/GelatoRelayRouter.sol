@@ -27,7 +27,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
 
     // @note all params except account should be part of the corresponding struct hash
     function batch(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         BatchParams calldata params
     )
@@ -52,7 +52,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
 
     // @note all params except account should be part of the corresponding struct hash
     function createOrder(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         IBaseOrderUtils.CreateOrderParams calldata params
     )
@@ -75,7 +75,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
 
     // @note all params except account should be part of the corresponding struct hash
     function updateOrder(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         UpdateOrderParams calldata params
     ) external nonReentrant withRelay(relayParams, account, 0 /* srcChainId is the current block.chainId */, false) {
@@ -91,7 +91,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
 
     // @note all params except account should be part of the corresponding struct hash
     function cancelOrder(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         bytes32 key
     ) external nonReentrant withRelay(relayParams, account, 0 /* srcChainId is the current block.chainId */, false) {

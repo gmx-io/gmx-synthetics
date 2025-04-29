@@ -1,6 +1,6 @@
 const fetch = (...args) => import("node-fetch").then(({ default: fetch }) => fetch(...args));
 import hre from "hardhat";
-import { FLOAT_PRECISION, bigNumberify, expandDecimals, formatAmount } from "../utils/math";
+import { FLOAT_PRECISION, bigNumberify, expandDecimals, formatAmount, formatPercent } from "../utils/math";
 import * as keys from "../utils/keys";
 
 const stablecoinPrices = {
@@ -146,6 +146,9 @@ async function main() {
       ["openInterest_collateralLong_isShort", keys.openInterestKey(market.marketToken, market.longToken, false)],
       ["openInterest_collateralShort_isLong", keys.openInterestKey(market.marketToken, market.shortToken, true)],
       ["openInterest_collateralShort_isShort", keys.openInterestKey(market.marketToken, market.shortToken, false)],
+
+      ["atomicSwapFeeFactor", keys.atomicSwapFeeFactorKey(market.marketToken)],
+      ["atomicWithdrawalFeeFactor", keys.atomicWithdrawalFeeFactorKey(market.marketToken)],
     ] as const) {
       props.push(prop);
       multicallReadParams.push({
@@ -168,6 +171,7 @@ async function main() {
   const consoleData: any[] = [];
   const consoleMaxPnlData: any[] = [];
   const consoleCollateralSumData: any[] = [];
+  const consoleAtomicFactorsData: any[] = [];
   let globalCollateralSumLongTotal = bigNumberify(0);
   let globalCollateralSumShortTotal = bigNumberify(0);
 
@@ -191,6 +195,12 @@ async function main() {
     }
 
     const marketLabel = `${indexTokenSymbol || "spot"} ${longTokenSymbol}-${shortTokenSymbol}`;
+
+    consoleAtomicFactorsData.push({
+      market: marketLabel,
+      "atomic swap fee factor, %": formatPercent(marketValues.atomicSwapFeeFactor, 2),
+      "atomic withdrawal fee factor, %": formatPercent(marketValues.atomicWithdrawalFeeFactor, 2),
+    });
 
     let data: any = {
       market: marketLabel,
@@ -358,6 +368,9 @@ async function main() {
     formatAmount(globalCollateralSumLongTotal.add(globalCollateralSumShortTotal), 30, 0, true)
   );
   console.table(consoleCollateralSumData);
+
+  console.log("Atomic factors");
+  console.table(consoleAtomicFactorsData);
 }
 
 main()

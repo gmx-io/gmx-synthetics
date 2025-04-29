@@ -17,6 +17,7 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
     using GlvWithdrawal for GlvWithdrawal.Props;
 
     MultichainVault public immutable multichainVault;
+    IMultichainTransferRouter public immutable multichainTransferRouter;
     GlvVault public immutable glvVault;
     ShiftVault public immutable shiftVault;
 
@@ -26,10 +27,12 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
         EventEmitter _eventEmitter,
         Oracle _oracle,
         MultichainVault _multichainVault,
+        IMultichainTransferRouter _multichainTransferRouter,
         GlvVault _glvVault,
         ShiftVault _shiftVault
     ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {
         multichainVault = _multichainVault;
+        multichainTransferRouter = _multichainTransferRouter;
         glvVault = _glvVault;
         shiftVault = _shiftVault;
     }
@@ -79,6 +82,7 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
             dataStore: dataStore,
             eventEmitter: eventEmitter,
             multichainVault: multichainVault,
+            multichainTransferRouter: multichainTransferRouter,
             glvVault: glvVault,
             oracle: oracle,
             startingGas: startingGas,

@@ -38,15 +38,36 @@ contract MultichainGmRouter is MultichainRouter {
     }
 
     function createDeposit(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
-        TransferRequests calldata transferRequests,
+        IRelayUtils.TransferRequests calldata transferRequests,
         DepositUtils.CreateDepositParams calldata params
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) returns (bytes32) {
         bytes32 structHash = RelayUtils.getCreateDepositStructHash(relayParams, transferRequests, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
+        return _createDeposit(account, srcChainId, transferRequests, params);
+    }
+
+    function createDepositFromBridge(
+        IRelayUtils.RelayParams calldata relayParams,
+        address account,
+        uint256 srcChainId,
+        IRelayUtils.TransferRequests calldata transferRequests,
+        DepositUtils.CreateDepositParams calldata params
+    ) external nonReentrant onlyController withRelay(relayParams, account, srcChainId, false) returns (bytes32) {
+        _validateCallWithoutSignature(relayParams, srcChainId);
+
+        return _createDeposit(account, srcChainId, transferRequests, params);
+    }
+
+    function _createDeposit(
+        address account,
+        uint256 srcChainId,
+        IRelayUtils.TransferRequests calldata transferRequests,
+        DepositUtils.CreateDepositParams calldata params
+    ) private returns (bytes32) {
         address wnt = TokenUtils.wnt(dataStore);
         IERC20(wnt).safeTransfer(address(depositVault), params.executionFee);
 
@@ -56,10 +77,10 @@ contract MultichainGmRouter is MultichainRouter {
     }
 
     function createWithdrawal(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
-        TransferRequests calldata transferRequests,
+        IRelayUtils.TransferRequests calldata transferRequests,
         WithdrawalUtils.CreateWithdrawalParams calldata params
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) returns (bytes32) {
         bytes32 structHash = RelayUtils.getCreateWithdrawalStructHash(relayParams, transferRequests, params);
@@ -74,10 +95,10 @@ contract MultichainGmRouter is MultichainRouter {
     }
 
     function createShift(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
-        TransferRequests calldata transferRequests,
+        IRelayUtils.TransferRequests calldata transferRequests,
         ShiftUtils.CreateShiftParams calldata params
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) returns (bytes32) {
         bytes32 structHash = RelayUtils.getCreateShiftStructHash(relayParams, transferRequests, params);

@@ -15,8 +15,11 @@ import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
 import "../utils/AccountUtils.sol";
 
+import "../deposit/DepositVault.sol";
 import "../deposit/ExecuteDepositUtils.sol";
 import "../withdrawal/ExecuteWithdrawalUtils.sol";
+
+import "../multichain/IMultichainTransferRouter.sol";
 
 library ShiftUtils {
     using Deposit for Deposit.Props;
@@ -291,6 +294,7 @@ library ShiftUtils {
             params.dataStore,
             params.eventEmitter,
             params.multichainVault,
+            IMultichainTransferRouter(payable(0)),
             DepositVault(payable(params.shiftVault)),
             params.oracle,
             cache.depositKey,

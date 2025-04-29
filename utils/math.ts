@@ -126,3 +126,25 @@ export function formatAmount(
   }
   return amountStr;
 }
+
+export function formatPercent(amount: BigNumberish, displayDecimals?: number) {
+  return `${formatAmount(amount, 28, displayDecimals)}%`;
+}
+
+export function numberToBigNumber(value: number | string, decimals: number) {
+  const [mantissa, exponentStr] = value.toString().split(/e\+?/);
+  let ret = ethers.utils.parseUnits(mantissa, 30);
+
+  let exponent = decimals;
+
+  if (exponentStr) {
+    exponent += Number(exponentStr);
+  }
+  if (exponent > 0) {
+    ret = ret.mul(bigNumberify(10).pow(exponent));
+  } else {
+    ret = ret.div(bigNumberify(10).pow(-exponent));
+  }
+
+  return ret.div(expandDecimals(1, 30));
+}

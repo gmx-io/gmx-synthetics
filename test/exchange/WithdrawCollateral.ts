@@ -50,7 +50,7 @@ describe("Exchange.WithdrawCollateral", () => {
         afterExecution: ({ logs }) => {
           const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
           expect(positionIncreaseEvent.executionPrice).eq("4989999999999999");
-          expect(positionIncreaseEvent.priceImpactUsd).eq("0");
+          expect(positionIncreaseEvent.pendingPriceImpactUsd).eq("0");
         },
       },
     });

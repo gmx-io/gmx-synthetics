@@ -45,6 +45,7 @@ export async function mintAndBridge(
     account?: string;
     token: Contract;
     tokenAmount: BigNumberish;
+    data?: string;
     srcChainId?: BigNumberish;
   }
 ) {
@@ -60,7 +61,10 @@ export async function mintAndBridge(
   await token.mint(account.address, tokenAmount);
 
   // mock token bridging (increase user's multichain balance)
-  const encodedMessageEth = ethers.utils.defaultAbiCoder.encode(["address", "uint256"], [account.address, srcChainId]);
+  const encodedMessageEth = ethers.utils.defaultAbiCoder.encode(
+    ["address", "uint256", "bytes"],
+    [account.address, srcChainId, overrides.data || "0x"]
+  );
 
   if (token.address == usdc.address) {
     await token.connect(account).approve(mockStargatePoolUsdc.address, tokenAmount);

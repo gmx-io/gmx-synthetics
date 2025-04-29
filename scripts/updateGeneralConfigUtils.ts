@@ -3,10 +3,10 @@ import hre, { network } from "hardhat";
 import prompts from "prompts";
 import { bigNumberify } from "../utils/math";
 import {
-  getFullKey,
-  appendUintConfigIfDifferent,
   appendAddressConfigIfDifferent,
   appendBoolConfigIfDifferent,
+  appendUintConfigIfDifferent,
+  getFullKey,
 } from "../utils/config";
 import * as keys from "../utils/keys";
 import { encodeData } from "../utils/hash";
@@ -323,12 +323,20 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
   );
 
   await handleConfig("uint", keys.GELATO_RELAY_FEE_BASE_AMOUNT, "0x", generalConfig.gelatoRelayFeeBaseAmount);
+  await handleConfig(
+    "uint",
+    keys.GELATO_RELAY_FEE_BASE_AMOUNT,
+    "0x",
+    generalConfig.gelatoRelayFeeBaseAmount,
+    "gelatoRelayFeeBaseAmount"
+  );
 
   await handleConfig(
     "uint",
     keys.GELATO_RELAY_FEE_MULTIPLIER_FACTOR,
     "0x",
-    generalConfig.gelatoRelayFeeMultiplierFactor
+    generalConfig.gelatoRelayFeeMultiplierFactor,
+    "gelatoRelayFeeMultiplierFactor"
   );
 
   await handleConfig("address", keys.RELAY_FEE_ADDRESS, "0x", generalConfig.relayFeeAddress, `relayFeeAddress`);
