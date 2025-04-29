@@ -31,6 +31,8 @@ import "./MultichainGlvRouter.sol";
  */
 contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModule {
     struct BridgeOutCache {
+        uint32 dstEid;
+        uint256 srcChainId;
         uint256 valueToSend;
         MessagingReceipt msgReceipt;
         SendParam sendParam;
@@ -163,12 +165,14 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         }
 
         BridgeOutCache memory cache;
+        cache.dstEid = abi.decode(params.data, (uint32));
+        cache.srcChainId = dataStore.getUint(Keys.eidToSrcChainId(cache.dstEid));
 
         (cache.valueToSend, cache.sendParam, cache.messagingFee, cache.receipt) = prepareSend(
             stargate,
             params.amount,
             params.account,
-            abi.decode(params.data, (uint32)) // dstEid
+            cache.dstEid
         );
 
         // LZ/Stargate would round down the `amount` to 6 decimals precision / apply path limits
@@ -185,7 +189,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             params.account,
             address(this), // receiver
             cache.valueToSend, // bridge out fee
-            params.srcChainId
+            cache.srcChainId
         );
 
         uint256 wntBalanceBefore = IERC20(wnt).balanceOf(address(this));
@@ -228,7 +232,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
                 params.account,
                 address(this), // receiver
                 params.amount,
-                params.srcChainId
+                cache.srcChainId
             );
         }
 

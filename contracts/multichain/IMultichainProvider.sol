@@ -18,7 +18,6 @@ interface IMultichainProvider {
         address account;
         address token;
         uint256 amount;
-        uint256 srcChainId;
         bytes data;
     }
 

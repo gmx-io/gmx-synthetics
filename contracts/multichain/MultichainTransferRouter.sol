@@ -125,7 +125,6 @@ contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, M
                     account: account,
                     token: params.token,
                     amount: params.amount,
-                    srcChainId: srcChainId,
                     data: params.data
                 })
             );
