@@ -129,6 +129,8 @@ library MultichainOrderRouterUtils {
             MarketStoreUtils.get(contracts.dataStore, order.market())
         );
 
+        contracts.oracle.validateSequencerUp();
+
         PositionUtils.validatePosition(
             contracts.dataStore,
             contracts.referralStorage,
