@@ -98,12 +98,10 @@ contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, M
                 multichainVault,
                 params.token,
                 account,
-                address(this), // receiver
+                account, // receiver
                 params.amount,
                 srcChainId
             );
-
-            TokenUtils.transfer(dataStore, params.token, account, params.amount);
 
             MultichainEventUtils.emitMultichainBridgeOut(
                 eventEmitter,
