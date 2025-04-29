@@ -18,7 +18,6 @@ library Errors {
     // Bank errors
     error SelfTransferNotSupported(address receiver);
     error InvalidNativeTokenSender(address msgSender);
-    error InvalidTransferInAmount(address token, uint256 amount);
 
     // BaseHandler errors
     error RequestNotYetCancellable(uint256 requestAge, uint256 requestExpirationAge, string requestType);
