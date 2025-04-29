@@ -178,8 +178,6 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         // LZ/Stargate would round down the `amount` to 6 decimals precision / apply path limits
         params.amount = cache.receipt.amountSentLD;
 
-        IERC20(params.token).approve(params.provider, params.amount);
-
         // transferOut bridging fee amount of wnt from user's multichain balance into this contract
         // for StargatePoolNative, amountSentLD is added on top of the bridging fee
         MultichainUtils.transferOut(
@@ -221,7 +219,9 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             return 0;
         }
 
-        // if Stagrate.token() is the ZeroAddress, amountSentLD was already added to valueToSend and transferred/unwrapped with the bridging fee
+        // if Stagrate.token() is the ZeroAddress:
+        //   - amountSentLD was already added to valueToSend and transferred/unwrapped with the bridging fee
+        //   - approval is not needed (since native tokens are being bridged)
         if (stargate.token() != address(0x0)) {
             // `stargate` is e.g. StargatePoolUSDC
             // transferOut amount of tokens from user's multichain balance into this contract
@@ -235,6 +235,8 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
                 params.amount,
                 cache.srcChainId
             );
+
+            IERC20(params.token).approve(params.provider, params.amount);
         }
 
         (cache.msgReceipt, /* OFTReceipt memory oftReceipt */) = stargate.send{ value: cache.valueToSend }(
