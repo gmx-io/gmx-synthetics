@@ -181,6 +181,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         IERC20(params.token).approve(params.provider, params.amount);
 
         // transferOut bridging fee amount of wnt from user's multichain balance into this contract
+        // for StargatePoolNative, amountSentLD is added on top of the bridging fee
         MultichainUtils.transferOut(
             dataStore,
             eventEmitter,
@@ -188,7 +189,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             wnt, // token
             params.account,
             address(this), // receiver
-            cache.valueToSend, // bridge out fee
+            cache.valueToSend, // bridge out fee (+ amountSentLD for native token transfers)
             cache.srcChainId
         );
 
