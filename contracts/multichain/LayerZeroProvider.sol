@@ -391,6 +391,25 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         }
     }
 
+    /**
+     * @notice Withdraws tokens which have been locked in this contract due to potential errors in lzCompose (e.g. incorrect message format).
+     * @dev Callable through the timelock contract.
+     * @param token The address of the token to withdraw.
+     * @param receiver The address receiving the withdrawn tokens.
+     * @param amount The amount of tokens to withdraw.
+     */
+    function withdrawTokens(address token, address receiver, uint256 amount) external onlyController {
+        if (amount == 0) {
+            revert Errors.EmptyWithdrawalAmount();
+        }
+
+        if (token == address(0)) {
+            TokenUtils.sendNativeToken(dataStore, receiver, amount);
+        } else {
+            TokenUtils.transfer(dataStore, token, receiver, amount);
+        }
+    }
+
     /// @dev Accept ETH from StargatePoolNative and when unwrapping WNT
     receive() external payable {}
 }

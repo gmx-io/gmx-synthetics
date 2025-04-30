@@ -59,6 +59,7 @@ library Errors {
     error InvalidHoldingAddress(address account);
     error EmptyPositionImpactWithdrawalAmount();
     error OraclePriceOutdated();
+    error EmptyTarget();
 
     // GlvDepositStoreUtils errors
     error GlvDepositNotFound(bytes32 key);

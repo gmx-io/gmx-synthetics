@@ -22,4 +22,6 @@ interface IMultichainProvider {
     }
 
     function bridgeOut(BridgeOutParams memory params) external returns (uint256);
+
+    function withdrawTokens(address token, address receiver, uint256 amount) external;
 }
