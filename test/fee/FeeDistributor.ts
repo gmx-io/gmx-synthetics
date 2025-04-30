@@ -370,9 +370,39 @@ describe("FeeDistributor", function () {
     await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(10_000, 18));
     await gmx.mint(feeHandler.address, expandDecimals(10_000, 18));
 
-    await mockOftA.mint(user0.address, expandDecimals(120_000, 18));
-    await gmx.mint(feeDistributorVault.address, expandDecimals(40_000, 18));
-    await mockOftC.mint(user1.address, expandDecimals(10_000, 18));
+    await gmx.mint(wallet.address, expandDecimals(170_000, 18));
+    await gmx.approve(mockOftAdapterB.address, expandDecimals(130_000, 18));
+    let sendParam = {
+      dstEid: eid1,
+      to: addressToBytes32(user0.address),
+      amountLD: expandDecimals(120_000, 18),
+      minAmountLD: expandDecimals(120_000, 18),
+      extraOptions: ethers.utils.arrayify("0x"),
+      composeMsg: ethers.utils.arrayify("0x"),
+      oftCmd: ethers.utils.arrayify("0x"),
+    };
+    let feeQuote = await mockOftAdapterB.quoteSend(sendParam, false);
+    let nativeFee = feeQuote.nativeFee;
+    await mockOftAdapterB.send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, wallet.address, {
+      value: nativeFee,
+    });
+
+    await gmx.transfer(feeDistributorVault.address, expandDecimals(40_000, 18));
+
+    sendParam = {
+      dstEid: eid3,
+      to: addressToBytes32(user1.address),
+      amountLD: expandDecimals(10_000, 18),
+      minAmountLD: expandDecimals(10_000, 18),
+      extraOptions: ethers.utils.arrayify("0x"),
+      composeMsg: ethers.utils.arrayify("0x"),
+      oftCmd: ethers.utils.arrayify("0x"),
+    };
+    feeQuote = await mockOftAdapterB.quoteSend(sendParam, false);
+    nativeFee = feeQuote.nativeFee;
+    await mockOftAdapterB.send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, wallet.address, {
+      value: nativeFee,
+    });
 
     await wallet.sendTransaction({
       to: feeDistributor.address,
@@ -448,9 +478,39 @@ describe("FeeDistributor", function () {
     await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(40_000, 18));
     await gmx.mint(feeHandler.address, expandDecimals(40_000, 18));
 
-    await mockOftA.mint(user0.address, expandDecimals(40_000, 18));
-    await gmx.mint(feeDistributorVault.address, expandDecimals(120_000, 18));
-    await mockOftC.mint(user1.address, expandDecimals(10_000, 18));
+    await gmx.mint(wallet.address, expandDecimals(170_000, 18));
+    await gmx.approve(mockOftAdapterB.address, expandDecimals(50_000, 18));
+    let sendParam = {
+      dstEid: eid1,
+      to: addressToBytes32(user0.address),
+      amountLD: expandDecimals(40_000, 18),
+      minAmountLD: expandDecimals(40_000, 18),
+      extraOptions: ethers.utils.arrayify("0x"),
+      composeMsg: ethers.utils.arrayify("0x"),
+      oftCmd: ethers.utils.arrayify("0x"),
+    };
+    let feeQuote = await mockOftAdapterB.quoteSend(sendParam, false);
+    let nativeFee = feeQuote.nativeFee;
+    await mockOftAdapterB.send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, wallet.address, {
+      value: nativeFee,
+    });
+
+    await gmx.transfer(feeDistributorVault.address, expandDecimals(120_000, 18));
+
+    sendParam = {
+      dstEid: eid3,
+      to: addressToBytes32(user1.address),
+      amountLD: expandDecimals(10_000, 18),
+      minAmountLD: expandDecimals(10_000, 18),
+      extraOptions: ethers.utils.arrayify("0x"),
+      composeMsg: ethers.utils.arrayify("0x"),
+      oftCmd: ethers.utils.arrayify("0x"),
+    };
+    feeQuote = await mockOftAdapterB.quoteSend(sendParam, false);
+    nativeFee = feeQuote.nativeFee;
+    await mockOftAdapterB.send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, wallet.address, {
+      value: nativeFee,
+    });
 
     await wallet.sendTransaction({
       to: feeDistributor.address,
@@ -762,9 +822,39 @@ describe("FeeDistributor", function () {
     await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(40_000, 18));
     await gmx.mint(feeHandler.address, expandDecimals(40_000, 18));
 
-    await mockOftA.mint(user0.address, expandDecimals(40_000, 18));
-    await gmx.mint(feeDistributorVault.address, expandDecimals(120_000, 18));
-    await mockOftC.mint(user1.address, expandDecimals(10_000, 18));
+    await gmx.mint(wallet.address, expandDecimals(170_000, 18));
+    await gmx.approve(mockOftAdapterB.address, expandDecimals(50_000, 18));
+    let sendParam = {
+      dstEid: eid1,
+      to: addressToBytes32(user0.address),
+      amountLD: expandDecimals(40_000, 18),
+      minAmountLD: expandDecimals(40_000, 18),
+      extraOptions: ethers.utils.arrayify("0x"),
+      composeMsg: ethers.utils.arrayify("0x"),
+      oftCmd: ethers.utils.arrayify("0x"),
+    };
+    let feeQuote = await mockOftAdapterB.quoteSend(sendParam, false);
+    let nativeFee = feeQuote.nativeFee;
+    await mockOftAdapterB.send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, wallet.address, {
+      value: nativeFee,
+    });
+
+    await gmx.transfer(feeDistributorVault.address, expandDecimals(120_000, 18));
+
+    sendParam = {
+      dstEid: eid3,
+      to: addressToBytes32(user1.address),
+      amountLD: expandDecimals(10_000, 18),
+      minAmountLD: expandDecimals(10_000, 18),
+      extraOptions: ethers.utils.arrayify("0x"),
+      composeMsg: ethers.utils.arrayify("0x"),
+      oftCmd: ethers.utils.arrayify("0x"),
+    };
+    feeQuote = await mockOftAdapterB.quoteSend(sendParam, false);
+    nativeFee = feeQuote.nativeFee;
+    await mockOftAdapterB.send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, wallet.address, {
+      value: nativeFee,
+    });
 
     await wallet.sendTransaction({
       to: feeDistributor.address,

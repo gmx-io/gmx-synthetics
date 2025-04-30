@@ -1,3 +1,5 @@
+import { Options } from "@layerzerolabs/lz-v2-utilities";
+import { addressToBytes32 } from "@layerzerolabs/lz-v2-utilities";
 import { expandDecimals } from "../utils/math";
 import { encodeData } from "../utils/hash";
 import { deployContract } from "../utils/deploy";
@@ -6,6 +8,18 @@ import * as feeDistributorConfig from "../utils/feeDistributor";
 import * as keys from "../utils/keys";
 
 async function main() {
+  const options = Options.newOptions().addExecutorLzReceiveOption(65000, 0).toHex().toString();
+  const eid1 = 1000,
+    eid2 = 2000,
+    eid3 = 3000;
+  const chainId1 = 10000,
+    chainId2 = 31337,
+    chainId3 = 20000;
+  const chainIds = [chainId1, chainId2, chainId3];
+  const channelId = 1001;
+  const numberOfConfirmations = 1;
+  const distributionDay = 3;
+
   const snap = await ethers.provider.send("evm_snapshot", []);
   console.log(snap);
 
@@ -29,28 +43,50 @@ async function main() {
   const mockExtendedGmxTracker = await deployContract("MockRewardTrackerV1", [mockExtendedGmxDistributor.address]);
   const mockLzReadResponseChain3 = await deployContract("MockLzReadResponse", []);
   const mockFeeGlpTracker = await deployContract("MockRewardTrackerV1", [mockFeeGlpDistributor.address]);
-  const mockSynapseRouter = await deployContract("MockSynapseRouter", []);
   const mockVester = await deployContract("MockVesterV1", [
     [accounts[6].address, accounts[7].address, accounts[8].address],
     [expandDecimals(10, 18), expandDecimals(30, 18), expandDecimals(20, 18)],
   ]);
+  const mockEndpointV2A = await deployContract("MockEndpointV2", [eid1]);
+  // use separate mockEndpointV2B endpoint to avoid reentrancy issues when using mockEndpointV2
+  const mockEndpointV2B = await deployContract("MockEndpointV2", [eid2]);
+  const mockEndpointV2C = await deployContract("MockEndpointV2", [eid3]);
+  const mockOftA = await deployContract("MockOFT", ["GMX", "GMX", mockEndpointV2A.address, accounts[0].address]);
+  const mockOftAdapterB = await deployContract("MockOFTAdapter", [
+    gmx.address,
+    mockEndpointV2B.address,
+    accounts[0].address,
+  ]);
+  const mockOftC = await deployContract("MockOFT", ["GMX", "GMX", mockEndpointV2C.address, accounts[0].address]);
 
   await grantRole(roleStore, accounts[0].address, "FEE_DISTRIBUTION_KEEPER");
 
-  const eid1 = 1000,
-    eid2 = 2000,
-    eid3 = 3000;
-  const chainId1 = 10000,
-    chainId2 = 31337,
-    chainId3 = 20000;
-  const chainIds = [chainId1, chainId2, chainId3];
-  const channelId = 1001;
-  const numberOfConfirmations = 1;
-  const distributionDay = 3;
-
   await mockEndpointV2.setDestLzEndpoint(multichainReader.address, mockEndpointV2.address);
   await mockEndpointV2.setReadChannelId(channelId);
-  await mockSynapseRouter.setBridgeSlippageFactor(encodeData(["uint256"], [expandDecimals(99, 28)]));
+
+  await mockEndpointV2A.setDestLzEndpoint(mockOftAdapterB.address, mockEndpointV2B.address);
+  await mockEndpointV2A.setDestLzEndpoint(mockOftC.address, mockEndpointV2C.address);
+
+  await mockEndpointV2B.setDestLzEndpoint(mockOftA.address, mockEndpointV2A.address);
+  await mockEndpointV2B.setDestLzEndpoint(mockOftC.address, mockEndpointV2C.address);
+
+  await mockEndpointV2C.setDestLzEndpoint(mockOftA.address, mockEndpointV2A.address);
+  await mockEndpointV2C.setDestLzEndpoint(mockOftAdapterB.address, mockEndpointV2B.address);
+
+  await mockOftA.setPeer(eid2, ethers.utils.zeroPad(mockOftAdapterB.address, 32));
+  await mockOftA.setPeer(eid3, ethers.utils.zeroPad(mockOftC.address, 32));
+  await mockOftA.setEnforcedOptions([{ eid: eid2, msgType: 1, options: options }]);
+  await mockOftA.setEnforcedOptions([{ eid: eid3, msgType: 1, options: options }]);
+
+  await mockOftAdapterB.setPeer(eid1, ethers.utils.zeroPad(mockOftA.address, 32));
+  await mockOftAdapterB.setPeer(eid3, ethers.utils.zeroPad(mockOftC.address, 32));
+  await mockOftAdapterB.setEnforcedOptions([{ eid: eid1, msgType: 1, options: options }]);
+  await mockOftAdapterB.setEnforcedOptions([{ eid: eid3, msgType: 1, options: options }]);
+
+  await mockOftC.setPeer(eid1, ethers.utils.zeroPad(mockOftA.address, 32));
+  await mockOftC.setPeer(eid2, ethers.utils.zeroPad(mockOftAdapterB.address, 32));
+  await mockOftC.setEnforcedOptions([{ eid: eid1, msgType: 1, options: options }]);
+  await mockOftC.setEnforcedOptions([{ eid: eid2, msgType: 1, options: options }]);
 
   const originator = feeDistributor.address;
   await config.setBool(keys.MULTICHAIN_AUTHORIZED_ORIGINATORS, encodeData(["address"], [originator]), "true");
@@ -61,7 +97,7 @@ async function main() {
     ethers.utils.hexZeroPad(multichainReader.address, 32)
   );
   for (const eid of [eid1, eid2, eid3]) {
-    await config.setUint(keys.MULTICHAIN_AUTHORIZED_ORIGINATORS, encodeData(["uint256"], [eid]), numberOfConfirmations);
+    await config.setUint(keys.MULTICHAIN_CONFIRMATIONS, encodeData(["uint256"], [eid]), numberOfConfirmations);
   }
 
   await config.setUint(keys.FEE_DISTRIBUTOR_DISTRIBUTION_DAY, "0x", distributionDay);
@@ -82,7 +118,7 @@ async function main() {
   await config.setAddress(
     keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
     encodeData(["uint256", "bytes32"], [chainId1, feeDistributorConfig.gmxKey]),
-    gmx.address
+    mockOftA.address
   );
   await config.setAddress(
     keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
@@ -92,7 +128,7 @@ async function main() {
   await config.setAddress(
     keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
     encodeData(["uint256", "bytes32"], [chainId3, feeDistributorConfig.gmxKey]),
-    gmx.address
+    mockOftC.address
   );
   await config.setAddress(
     keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
@@ -137,8 +173,8 @@ async function main() {
   );
   await config.setAddress(
     keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
-    encodeData(["uint256", "bytes32"], [chainId2, feeDistributorConfig.synapseRouterKey]),
-    mockSynapseRouter.address
+    encodeData(["uint256", "bytes32"], [chainId2, feeDistributorConfig.layerzeroOftKey]),
+    mockOftAdapterB.address
   );
   await config.setAddress(
     keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
@@ -229,9 +265,40 @@ async function main() {
 
   await wnt.mint(feeDistributorVault.address, expandDecimals(1000, 18));
   await gmx.mint(feeHandler.address, expandDecimals(10_000, 18));
-  await gmx.mint(accounts[1].address, expandDecimals(120_000, 18));
-  await gmx.mint(feeDistributorVault.address, expandDecimals(40_000, 18));
-  await gmx.mint(accounts[2].address, expandDecimals(10_000, 18));
+
+  await gmx.mint(accounts[0].address, expandDecimals(170_000, 18));
+  await gmx.approve(mockOftAdapterB.address, expandDecimals(130_000, 18));
+  let sendParam = {
+    dstEid: eid1,
+    to: addressToBytes32(accounts[1].address),
+    amountLD: expandDecimals(120_000, 18),
+    minAmountLD: expandDecimals(120_000, 18),
+    extraOptions: ethers.utils.arrayify("0x"),
+    composeMsg: ethers.utils.arrayify("0x"),
+    oftCmd: ethers.utils.arrayify("0x"),
+  };
+  let feeQuote = await mockOftAdapterB.quoteSend(sendParam, false);
+  let nativeFee = feeQuote.nativeFee;
+  await mockOftAdapterB.send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, accounts[0].address, {
+    value: nativeFee,
+  });
+
+  await gmx.transfer(feeDistributorVault.address, expandDecimals(40_000, 18));
+
+  sendParam = {
+    dstEid: eid3,
+    to: addressToBytes32(accounts[2].address),
+    amountLD: expandDecimals(10_000, 18),
+    minAmountLD: expandDecimals(10_000, 18),
+    extraOptions: ethers.utils.arrayify("0x"),
+    composeMsg: ethers.utils.arrayify("0x"),
+    oftCmd: ethers.utils.arrayify("0x"),
+  };
+  feeQuote = await mockOftAdapterB.quoteSend(sendParam, false);
+  nativeFee = feeQuote.nativeFee;
+  await mockOftAdapterB.send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, accounts[0].address, {
+    value: nativeFee,
+  });
 
   await accounts[0].sendTransaction({
     to: feeDistributor.address,
@@ -243,11 +310,11 @@ async function main() {
   await mockLzReadResponseChain3.setTotalSupply(expandDecimals(3_000_000, 18));
 
   await mockLzReadResponseChain1.setUint(
-    keys.withdrawableBuybackTokenAmountKey(gmx.address),
+    keys.withdrawableBuybackTokenAmountKey(mockOftA.address),
     expandDecimals(40_000, 18)
   );
   await mockLzReadResponseChain3.setUint(
-    keys.withdrawableBuybackTokenAmountKey(gmx.address),
+    keys.withdrawableBuybackTokenAmountKey(mockOftC.address),
     expandDecimals(20_000, 18)
   );
   await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(10_000, 18));
@@ -257,8 +324,35 @@ async function main() {
   const rc1 = await tx1.wait();
   console.log("initiateDistribute tx mined @ block", rc1.blockNumber, "hash:", rc1.transactionHash);
 
-  await gmx.connect(accounts[1]).transfer(feeDistributorVault.address, expandDecimals(10_000, 18));
-  await gmx.connect(accounts[1]).transfer(accounts[2].address, expandDecimals(30_000, 18));
+  sendParam = {
+    dstEid: eid2,
+    to: addressToBytes32(feeDistributorVault.address),
+    amountLD: expandDecimals(10_000, 18),
+    minAmountLD: expandDecimals(10_000, 18),
+    extraOptions: ethers.utils.arrayify("0x"),
+    composeMsg: ethers.utils.arrayify("0x"),
+    oftCmd: ethers.utils.arrayify("0x"),
+  };
+  feeQuote = await mockOftA.quoteSend(sendParam, false);
+  nativeFee = feeQuote.nativeFee;
+  await mockOftA.connect(accounts[1]).send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, accounts[1].address, {
+    value: nativeFee,
+  });
+
+  sendParam = {
+    dstEid: eid3,
+    to: addressToBytes32(accounts[2].address),
+    amountLD: expandDecimals(30_000, 18),
+    minAmountLD: expandDecimals(30_000, 18),
+    extraOptions: ethers.utils.arrayify("0x"),
+    composeMsg: ethers.utils.arrayify("0x"),
+    oftCmd: ethers.utils.arrayify("0x"),
+  };
+  feeQuote = await mockOftA.quoteSend(sendParam, false);
+  nativeFee = feeQuote.nativeFee;
+  await mockOftA.connect(accounts[1]).send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, accounts[1].address, {
+    value: nativeFee,
+  });
 
   console.log("Calling feeDistributor.bridgedGmxReceived()");
   const tx2 = await feeDistributor.bridgedGmxReceived();
