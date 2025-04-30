@@ -5,6 +5,8 @@ pragma solidity ^0.8.0;
 import "./ArbSys.sol";
 import "./ArbGasInfo.sol";
 
+import "../callback/CallbackUtils.sol";
+
 // @title Chain
 // @dev Wrap the calls to retrieve chain variables to handle differences
 // between chain implementations
