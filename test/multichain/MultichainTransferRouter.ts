@@ -54,7 +54,6 @@ describe("MultichainTransferRouter", () => {
         multichainTransferRouter.interface.encodeFunctionData("bridgeIn", [
           user1.address, // account
           wnt.address, // token
-          chainId, // srcChainId
         ]),
       ],
       { value: amount }
@@ -88,7 +87,6 @@ describe("MultichainTransferRouter", () => {
       multichainTransferRouter.interface.encodeFunctionData("bridgeIn", [
         user1.address, // account
         usdc.address, // token
-        chainId, // srcChainId
       ]),
     ]);
 

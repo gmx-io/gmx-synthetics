@@ -12,10 +12,7 @@ contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, M
 
     constructor(
         BaseConstructorParams memory params
-    )
-        MultichainRouter(params)
-        BaseRouter(params.router, params.roleStore, params.dataStore, params.eventEmitter)
-    {
+    ) MultichainRouter(params) BaseRouter(params.router, params.roleStore, params.dataStore, params.eventEmitter) {
         // leave empty, use initialize instead
     }
 
@@ -30,8 +27,15 @@ contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, M
      * payable function so that it can be called as a multicall
      * this would be used to move user's funds from their Arbitrum account into their multichain balance
      */
-    function bridgeIn(address account, address token, uint256 srcChainId) external payable nonReentrant {
-        uint256 amount = MultichainUtils.recordTransferIn(dataStore, eventEmitter, multichainVault, token, account, srcChainId);
+    function bridgeIn(address account, address token) external payable nonReentrant {
+        uint256 amount = MultichainUtils.recordTransferIn(
+            dataStore,
+            eventEmitter,
+            multichainVault,
+            token,
+            account,
+            0 // srcChainId is the current block.chainId
+        );
         MultichainEventUtils.emitMultichainBridgeIn(
             eventEmitter,
             address(0),
@@ -78,18 +82,12 @@ contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, M
      * Can be used for same-chain withdrawals only
      * This would be used by the smart wallets to withdraw funds from the multichain vault
      */
-    function transferOut(
-        IRelayUtils.BridgeOutParams calldata params
-    ) external nonReentrant {
+    function transferOut(IRelayUtils.BridgeOutParams calldata params) external nonReentrant {
         address account = msg.sender;
         _bridgeOut(account, block.chainid, params);
     }
 
-    function _bridgeOut(
-        address account,
-        uint256 srcChainId,
-        IRelayUtils.BridgeOutParams calldata params
-    ) internal {
+    function _bridgeOut(address account, uint256 srcChainId, IRelayUtils.BridgeOutParams calldata params) internal {
         if (srcChainId == block.chainid) {
             // same-chain withdrawal: funds are sent directly to the user's wallet
             MultichainUtils.transferOut(
