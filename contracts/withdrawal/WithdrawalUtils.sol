@@ -7,6 +7,7 @@ import "../data/DataStore.sol";
 import "./WithdrawalVault.sol";
 import "./WithdrawalStoreUtils.sol";
 import "./WithdrawalEventUtils.sol";
+import "./IWithdrawalUtils.sol";
 
 import "../nonce/NonceUtils.sol";
 import "../oracle/Oracle.sol";
@@ -39,36 +40,6 @@ library WithdrawalUtils {
     using EventUtils for EventUtils.StringItems;
 
     /**
-     * @param receiver The address that will receive the withdrawal tokens.
-     * @param callbackContract The contract that will be called back.
-     * @param market The market on which the withdrawal will be executed.
-     * @param minLongTokenAmount The minimum amount of long tokens that must be withdrawn.
-     * @param minShortTokenAmount The minimum amount of short tokens that must be withdrawn.
-     * @param shouldUnwrapNativeToken Whether the native token should be unwrapped when executing the withdrawal.
-     * @param executionFee The execution fee for the withdrawal.
-     * @param callbackGasLimit The gas limit for calling the callback contract.
-     * @param dataList a list of bytes32 values that can be used for additional data.
-     */
-    struct CreateWithdrawalParams {
-        CreateWithdrawalParamsAddresses addresses;
-        uint256 minLongTokenAmount;
-        uint256 minShortTokenAmount;
-        bool shouldUnwrapNativeToken;
-        uint256 executionFee;
-        uint256 callbackGasLimit;
-        bytes32[] dataList;
-    }
-
-    struct CreateWithdrawalParamsAddresses {
-        address receiver;
-        address callbackContract;
-        address uiFeeReceiver;
-        address market;
-        address[] longTokenSwapPath;
-        address[] shortTokenSwapPath;
-    }
-
-    /**
      * @dev Creates a withdrawal in the withdrawal store.
      *
      * @param dataStore The data store where withdrawal data is stored.
@@ -86,7 +57,7 @@ library WithdrawalUtils {
         WithdrawalVault withdrawalVault,
         address account,
         uint256 srcChainId,
-        CreateWithdrawalParams memory params,
+        IWithdrawalUtils.CreateWithdrawalParams memory params,
         bool isAtomicWithdrawal
     ) external returns (bytes32) {
         AccountUtils.validateAccount(account);

@@ -8,6 +8,7 @@ import "../event/EventEmitter.sol";
 import "./ShiftVault.sol";
 import "./ShiftStoreUtils.sol";
 import "./ShiftEventUtils.sol";
+import "./IShiftUtils.sol";
 
 import "../nonce/NonceUtils.sol";
 
@@ -33,22 +34,6 @@ library ShiftUtils {
     using EventUtils for EventUtils.Bytes32Items;
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
-
-    struct CreateShiftParams {
-        CreateShiftParamsAddresses addresses;
-        uint256 minMarketTokens;
-        uint256 executionFee;
-        uint256 callbackGasLimit;
-        bytes32[] dataList;
-    }
-
-    struct CreateShiftParamsAddresses {
-        address receiver;
-        address callbackContract;
-        address uiFeeReceiver;
-        address fromMarket;
-        address toMarket;
-    }
 
     struct CreateShiftCache {
         uint256 estimatedGasLimit;
@@ -86,7 +71,7 @@ library ShiftUtils {
         ShiftVault shiftVault,
         address account,
         uint256 srcChainId,
-        CreateShiftParams memory params
+        IShiftUtils.CreateShiftParams memory params
     ) external returns (bytes32) {
         AccountUtils.validateAccount(account);
 
