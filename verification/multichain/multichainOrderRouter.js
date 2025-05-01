@@ -1,7 +1,6 @@
-// a custom argument file may be needed for complex arguments
-// https://hardhat.org/hardhat-runner/plugins/nomicfoundation-hardhat-verify#complex-arguments
-
-// ARBISCAN_API_KEY=<api key> npx hardhat --network arbitrumSepolia verify --constructor-args ./verification/multichain/multichainClaimsRouter.js --contract contracts/multichain/MultichainClaimsRouter.sol:MultichainClaimsRouter 0xd0F1da70b539649DB510cbEd4EA139e0744dC771
+// Verification arguments for MultichainOrderRouter
+// Usage example:
+// npx hardhat verify --network arbitrumSepolia --constructor-args ./verification/multichain/multichainOrderRouter.js --contract contracts/multichain/MultichainOrderRouter.sol:MultichainOrderRouter 0xcFaD75ea6Cd2200fc39F557f8530ac27E47b1DAf
 
 module.exports = [
   {
@@ -14,6 +13,6 @@ module.exports = [
     orderHandler: "0x9D16Ec2BEB7A9D242330C37F5E0360cAf792F81c",
     externalHandler: "0xfd056C9432F9f1d1AD7835Ae7d021c8ba27A19DC",
     multichainVault: "0x924Bb6a9FA7aA0b96697AD8Fd934C782E45DF52f"
-  }
+  },
+  "0x0d7dc71C86916FdeE09dE34c68139Eb5a233610c" // ReferralStorage
 ];
-
