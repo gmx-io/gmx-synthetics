@@ -42,11 +42,11 @@ contract DepositHandler is IDepositHandler, BaseHandler {
     // @dev creates a deposit in the deposit store
     // @param account the depositing account
     // @param srcChainId the source chain id
-    // @param params DepositUtils.CreateDepositParams
+    // @param params IDepositUtils.CreateDepositParams
     function createDeposit(
         address account,
         uint256 srcChainId,
-        DepositUtils.CreateDepositParams calldata params
+        IDepositUtils.CreateDepositParams calldata params
     ) external override globalNonReentrant onlyController returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createDepositFeatureDisabledKey(address(this)));
         validateDataListLength(params.dataList.length);

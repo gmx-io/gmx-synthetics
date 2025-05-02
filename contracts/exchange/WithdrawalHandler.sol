@@ -38,11 +38,11 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
     // @dev creates a withdrawal in the withdrawal store
     // @param account the withdrawing account
     // @param srcChainId the source chain id
-    // @param params WithdrawalUtils.CreateWithdrawalParams
+    // @param params IWithdrawalUtils.CreateWithdrawalParams
     function createWithdrawal(
         address account,
         uint256 srcChainId,
-        WithdrawalUtils.CreateWithdrawalParams calldata params
+        IWithdrawalUtils.CreateWithdrawalParams calldata params
     ) external override globalNonReentrant onlyController returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createWithdrawalFeatureDisabledKey(address(this)));
         validateDataListLength(params.dataList.length);
@@ -130,7 +130,7 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
     // for DOGE, WETH, USDC for this method to be callable for the market
     function executeAtomicWithdrawal(
         address account,
-        WithdrawalUtils.CreateWithdrawalParams calldata params,
+        IWithdrawalUtils.CreateWithdrawalParams calldata params,
         OracleUtils.SetPricesParams calldata oracleParams
     )
         external
