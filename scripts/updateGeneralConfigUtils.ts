@@ -211,13 +211,15 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
     }
   }
 
-  await handleConfig(
-    "uint",
-    keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR,
-    "0x",
-    generalConfig.estimatedGasFeeMultiplierFactor,
-    `estimatedGasFeeMultiplierFactor`
-  );
+  if (generalConfig.estimatedGasFeeMultiplierFactor) {
+    await handleConfig(
+      "uint",
+      keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR,
+      "0x",
+      generalConfig.estimatedGasFeeMultiplierFactor,
+      `estimatedGasFeeMultiplierFactor`
+    );
+  }
 
   if (generalConfig.executionGasFeeBaseAmount) {
     await handleConfig(
@@ -247,13 +249,15 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
     }
   }
 
-  await handleConfig(
-    "uint",
-    keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR,
-    "0x",
-    generalConfig.executionGasFeeMultiplierFactor,
-    `executionGasFeeMultiplierFactor`
-  );
+  if (generalConfig.executionGasFeeMultiplierFactor) {
+    await handleConfig(
+      "uint",
+      keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR,
+      "0x",
+      generalConfig.executionGasFeeMultiplierFactor,
+      `executionGasFeeMultiplierFactor`
+    );
+  }
 
   if (generalConfig.requestExpirationTime !== undefined) {
     await handleConfig(
@@ -408,9 +412,7 @@ export async function updateGeneralConfig({ write }) {
 
   const { roles } = await hre.gmx.getRoles();
   const from = Object.keys(roles.CONFIG_KEEPER)[0];
-  await config.callStatic.multicall(multicallWriteParams, {
-    from,
-  });
+  await config.connect(from).callStatic.multicall(multicallWriteParams);
 
   if (!write) {
     ({ write } = await prompts({
