@@ -76,7 +76,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     holdingAddress: "0x3f59203ea1c66527422998b54287e1efcacbe2c5",
     sequencerUptimeFeed: ethers.constants.AddressZero,
     sequencerGraceDuration: 300,
-    maxUiFeeFactor: percentageToFloat("0.05%"),
+    maxUiFeeFactor: percentageToFloat("0.1%"),
     maxAutoCancelOrders: 6,
     maxTotalCallbackGasLimitForAutoCancelOrders: 5_000_000,
     minHandleExecutionErrorGas: 1_200_000,
@@ -150,6 +150,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       executionGasPerOraclePrice: false,
       estimatedGasFeeBaseAmount: false,
       executionGasFeeBaseAmount: false,
+      estimatedGasFeeMultiplierFactor: false,
+      executionGasFeeMultiplierFactor: false,
       sequencerUptimeFeed: "0xFdB631F5EE196F0ed6FAa767959853A9F217697D",
 
       increaseOrderGasLimit: 3_000_000,

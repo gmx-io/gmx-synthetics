@@ -2475,7 +2475,7 @@ const config: {
       maxOpenInterest: decimalToFloat(750_000),
       maxPoolUsdForDeposit: decimalToFloat(3_300_000),
 
-      maxLongTokenPoolAmount: expandDecimals(1100, 18),
+      maxLongTokenPoolAmount: expandDecimals(1818, 18),
       maxShortTokenPoolAmount: expandDecimals(3_600_000, 6),
 
       atomicSwapFeeFactor: percentageToFloat("2.25%"),
@@ -2569,10 +2569,10 @@ const config: {
 
       maxOpenInterest: decimalToFloat(750_000),
 
-      maxPoolUsdForDeposit: decimalToFloat(2_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(3_200_000),
 
-      maxLongTokenPoolAmount: expandDecimals(26, 8),
-      maxShortTokenPoolAmount: expandDecimals(2_500_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(33, 8),
+      maxShortTokenPoolAmount: expandDecimals(3_200_000, 6),
 
       atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },

@@ -157,12 +157,6 @@ const getConfigItems = (generalConfig, oracleConfig) => {
     },
     {
       type: "uint",
-      baseKey: keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR,
-      value: generalConfig.estimatedGasFeeMultiplierFactor,
-      label: `estimatedGasFeeMultiplierFactor`,
-    },
-    {
-      type: "uint",
       baseKey: keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR,
       value: generalConfig.executionGasFeeMultiplierFactor,
       label: `executionGasFeeMultiplierFactor`,
@@ -258,6 +252,15 @@ const getConfigItems = (generalConfig, oracleConfig) => {
     });
   }
 
+  if (generalConfig.estimatedGasFeeMultiplierFactor) {
+    configItems.push({
+      type: "uint",
+      baseKey: keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR,
+      value: generalConfig.estimatedGasFeeMultiplierFactor,
+      label: `estimatedGasFeeMultiplierFactor`,
+    });
+  }
+
   if (generalConfig.executionGasFeeBaseAmount) {
     if (network.name === "arbitrum") {
       throw new Error("executionGasFeeBaseAmount should be updated in a separate keeper");
@@ -281,6 +284,15 @@ const getConfigItems = (generalConfig, oracleConfig) => {
       baseKey: keys.EXECUTION_GAS_FEE_PER_ORACLE_PRICE,
       value: generalConfig.executionGasPerOraclePrice,
       label: `executionGasPerOraclePrice`,
+    });
+  }
+
+  if (generalConfig.executionGasFeeMultiplierFactor) {
+    configItems.push({
+      type: "uint",
+      baseKey: keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR,
+      value: generalConfig.executionGasFeeMultiplierFactor,
+      label: `executionGasFeeMultiplierFactor`,
     });
   }
 
