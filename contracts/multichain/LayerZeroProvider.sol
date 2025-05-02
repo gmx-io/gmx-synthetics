@@ -12,7 +12,7 @@ import { IStargate } from "@stargatefinance/stg-evm-v2/src/interfaces/IStargate.
 
 import "../event/EventEmitter.sol";
 import "../data/DataStore.sol";
-import "../deposit/DepositUtils.sol";
+import "../deposit/IDepositUtils.sol";
 import "../utils/Cast.sol";
 
 import "./MultichainGmRouter.sol";
@@ -339,8 +339,8 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         (
             IRelayUtils.RelayParams memory relayParams,
             IRelayUtils.TransferRequests memory transferRequests,
-            DepositUtils.CreateDepositParams memory depositParams
-        ) = abi.decode(actionData, (IRelayUtils.RelayParams, IRelayUtils.TransferRequests, DepositUtils.CreateDepositParams));
+            IDepositUtils.CreateDepositParams memory depositParams
+        ) = abi.decode(actionData, (IRelayUtils.RelayParams, IRelayUtils.TransferRequests, IDepositUtils.CreateDepositParams));
         
         if (_areValidTransferRequests(transferRequests)) {
             try multichainGmRouter.createDepositFromBridge(
@@ -370,8 +370,8 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         (
             IRelayUtils.RelayParams memory relayParams,
             IRelayUtils.TransferRequests memory transferRequests,
-            GlvDepositUtils.CreateGlvDepositParams memory glvDepositParams
-        ) = abi.decode(actionData, (IRelayUtils.RelayParams, IRelayUtils.TransferRequests, GlvDepositUtils.CreateGlvDepositParams));
+            IGlvDepositUtils.CreateGlvDepositParams memory glvDepositParams
+        ) = abi.decode(actionData, (IRelayUtils.RelayParams, IRelayUtils.TransferRequests, IGlvDepositUtils.CreateGlvDepositParams));
         
         if (_areValidTransferRequests(transferRequests)) {
             try multichainGlvRouter.createGlvDepositFromBridge(

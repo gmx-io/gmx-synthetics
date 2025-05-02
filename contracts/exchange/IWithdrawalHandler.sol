@@ -2,16 +2,16 @@
 
 pragma solidity ^0.8.0;
 
-import "../withdrawal/WithdrawalUtils.sol";
+import "../withdrawal/IWithdrawalUtils.sol";
 import "../oracle/OracleUtils.sol";
 import "../pricing/ISwapPricingUtils.sol";
 
 interface IWithdrawalHandler {
-    function createWithdrawal(address account, uint256 srcChainId, WithdrawalUtils.CreateWithdrawalParams calldata params) external returns (bytes32);
+    function createWithdrawal(address account, uint256 srcChainId, IWithdrawalUtils.CreateWithdrawalParams calldata params) external returns (bytes32);
     function cancelWithdrawal(bytes32 key) external;
     function executeAtomicWithdrawal(
         address account,
-        WithdrawalUtils.CreateWithdrawalParams calldata params,
+        IWithdrawalUtils.CreateWithdrawalParams calldata params,
         OracleUtils.SetPricesParams calldata oracleParams
     ) external;
     function simulateExecuteWithdrawal(

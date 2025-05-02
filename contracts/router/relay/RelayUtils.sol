@@ -14,11 +14,11 @@ import "../../swap/SwapUtils.sol";
 import "../../order/IBaseOrderUtils.sol";
 import { SubaccountApproval } from "../../subaccount/SubaccountUtils.sol";
 
-import "../../deposit/DepositUtils.sol";
-import "../../glv/glvDeposit/GlvDepositUtils.sol";
-import "../../withdrawal/WithdrawalUtils.sol";
-import "../../glv/glvWithdrawal/GlvWithdrawalUtils.sol";
-import "../../shift/ShiftUtils.sol";
+import "../../deposit/IDepositUtils.sol";
+import "../../glv/glvDeposit/IGlvDepositUtils.sol";
+import "../../withdrawal/IWithdrawalUtils.sol";
+import "../../glv/glvWithdrawal/IGlvWithdrawalUtils.sol";
+import "../../shift/IShiftUtils.sol";
 
 import "./IRelayUtils.sol";
 
@@ -633,7 +633,7 @@ library RelayUtils {
     function getCreateDepositStructHash(
         IRelayUtils.RelayParams calldata relayParams,
         IRelayUtils.TransferRequests calldata transferRequests,
-        DepositUtils.CreateDepositParams memory params
+        IDepositUtils.CreateDepositParams memory params
     ) external pure returns (bytes32) {
         return
             keccak256(
@@ -654,7 +654,7 @@ library RelayUtils {
     }
 
     function _getCreateDepositAdressesStructHash(
-        DepositUtils.CreateDepositParamsAddresses memory addresses
+        IDepositUtils.CreateDepositParamsAddresses memory addresses
     ) private pure returns (bytes32) {
         return
             keccak256(
@@ -675,7 +675,7 @@ library RelayUtils {
     function getCreateGlvDepositStructHash(
         IRelayUtils.RelayParams calldata relayParams,
         IRelayUtils.TransferRequests calldata transferRequests,
-        GlvDepositUtils.CreateGlvDepositParams memory params
+        IGlvDepositUtils.CreateGlvDepositParams memory params
     ) external pure returns (bytes32) {
         return
             keccak256(
@@ -697,7 +697,7 @@ library RelayUtils {
     }
 
     function _getCreateGlvDepositAddressesStructHash(
-        GlvDepositUtils.CreateGlvDepositParamsAddresses memory addresses
+        IGlvDepositUtils.CreateGlvDepositParamsAddresses memory addresses
     ) private pure returns (bytes32) {
         return
             keccak256(
@@ -719,7 +719,7 @@ library RelayUtils {
     function getCreateWithdrawalStructHash(
         IRelayUtils.RelayParams calldata relayParams,
         IRelayUtils.TransferRequests calldata transferRequests,
-        WithdrawalUtils.CreateWithdrawalParams memory params
+        IWithdrawalUtils.CreateWithdrawalParams memory params
     ) external pure returns (bytes32) {
         return
             keccak256(
@@ -741,7 +741,7 @@ library RelayUtils {
     }
 
     function _getCreateWithdrawalAddressesStructHash(
-        WithdrawalUtils.CreateWithdrawalParamsAddresses memory addresses
+        IWithdrawalUtils.CreateWithdrawalParamsAddresses memory addresses
     ) private pure returns (bytes32) {
         return
             keccak256(
@@ -760,7 +760,7 @@ library RelayUtils {
     function getCreateShiftStructHash(
         IRelayUtils.RelayParams calldata relayParams,
         IRelayUtils.TransferRequests calldata transferRequests,
-        ShiftUtils.CreateShiftParams memory params
+        IShiftUtils.CreateShiftParams memory params
     ) external pure returns (bytes32) {
         return
             keccak256(
@@ -780,7 +780,7 @@ library RelayUtils {
     }
 
     function _getCreateShiftAddressesStructHash(
-        ShiftUtils.CreateShiftParamsAddresses memory addresses
+        IShiftUtils.CreateShiftParamsAddresses memory addresses
     ) private pure returns (bytes32) {
         return
             keccak256(
@@ -798,7 +798,7 @@ library RelayUtils {
     function getCreateGlvWithdrawalStructHash(
         IRelayUtils.RelayParams calldata relayParams,
         IRelayUtils.TransferRequests calldata transferRequests,
-        GlvWithdrawalUtils.CreateGlvWithdrawalParams memory params
+        IGlvWithdrawalUtils.CreateGlvWithdrawalParams memory params
     ) external pure returns (bytes32) {
         return
             keccak256(
@@ -820,7 +820,7 @@ library RelayUtils {
     }
 
     function _getCreateGlvWithdrawalAddressesStructHash(
-        GlvWithdrawalUtils.CreateGlvWithdrawalParamsAddresses memory addresses
+        IGlvWithdrawalUtils.CreateGlvWithdrawalParamsAddresses memory addresses
     ) private pure returns (bytes32) {
         return
             keccak256(

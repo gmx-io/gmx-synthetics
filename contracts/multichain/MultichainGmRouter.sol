@@ -2,11 +2,12 @@
 
 pragma solidity ^0.8.0;
 
-import "../deposit/DepositVault.sol";
 import "../exchange/IDepositHandler.sol";
-import "../exchange/WithdrawalHandler.sol";
-import "../exchange/ShiftHandler.sol";
+import "../exchange/IWithdrawalHandler.sol";
+import "../exchange/IShiftHandler.sol";
+import "../deposit/DepositVault.sol";
 import "../withdrawal/WithdrawalVault.sol";
+import "../shift/ShiftVault.sol";
 
 import "./MultichainRouter.sol";
 
@@ -16,18 +17,18 @@ contract MultichainGmRouter is MultichainRouter {
     DepositVault public immutable depositVault;
     IDepositHandler public immutable depositHandler;
     WithdrawalVault public immutable withdrawalVault;
-    WithdrawalHandler public immutable withdrawalHandler;
+    IWithdrawalHandler public immutable withdrawalHandler;
     ShiftVault public immutable shiftVault;
-    ShiftHandler public immutable shiftHandler;
+    IShiftHandler public immutable shiftHandler;
 
     constructor(
         BaseConstructorParams memory params,
         DepositVault _depositVault,
         IDepositHandler _depositHandler,
         WithdrawalVault _withdrawalVault,
-        WithdrawalHandler _withdrawalHandler,
+        IWithdrawalHandler _withdrawalHandler,
         ShiftVault _shiftVault,
-        ShiftHandler _shiftHandler
+        IShiftHandler _shiftHandler
     ) MultichainRouter(params) BaseRouter(params.router, params.roleStore, params.dataStore, params.eventEmitter) {
         depositVault = _depositVault;
         depositHandler = _depositHandler;
@@ -42,7 +43,7 @@ contract MultichainGmRouter is MultichainRouter {
         address account,
         uint256 srcChainId,
         IRelayUtils.TransferRequests calldata transferRequests,
-        DepositUtils.CreateDepositParams calldata params
+        IDepositUtils.CreateDepositParams calldata params
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) returns (bytes32) {
         bytes32 structHash = RelayUtils.getCreateDepositStructHash(relayParams, transferRequests, params);
         _validateCall(relayParams, account, structHash, srcChainId);
@@ -55,7 +56,7 @@ contract MultichainGmRouter is MultichainRouter {
         address account,
         uint256 srcChainId,
         IRelayUtils.TransferRequests calldata transferRequests,
-        DepositUtils.CreateDepositParams calldata params
+        IDepositUtils.CreateDepositParams calldata params
     ) external nonReentrant onlyController withRelay(relayParams, account, srcChainId, false) returns (bytes32) {
         _validateCallWithoutSignature(relayParams, srcChainId);
 
@@ -66,7 +67,7 @@ contract MultichainGmRouter is MultichainRouter {
         address account,
         uint256 srcChainId,
         IRelayUtils.TransferRequests calldata transferRequests,
-        DepositUtils.CreateDepositParams calldata params
+        IDepositUtils.CreateDepositParams calldata params
     ) private returns (bytes32) {
         address wnt = TokenUtils.wnt(dataStore);
         IERC20(wnt).safeTransfer(address(depositVault), params.executionFee);
@@ -81,7 +82,7 @@ contract MultichainGmRouter is MultichainRouter {
         address account,
         uint256 srcChainId,
         IRelayUtils.TransferRequests calldata transferRequests,
-        WithdrawalUtils.CreateWithdrawalParams calldata params
+        IWithdrawalUtils.CreateWithdrawalParams calldata params
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) returns (bytes32) {
         bytes32 structHash = RelayUtils.getCreateWithdrawalStructHash(relayParams, transferRequests, params);
         _validateCall(relayParams, account, structHash, srcChainId);
@@ -99,7 +100,7 @@ contract MultichainGmRouter is MultichainRouter {
         address account,
         uint256 srcChainId,
         IRelayUtils.TransferRequests calldata transferRequests,
-        ShiftUtils.CreateShiftParams calldata params
+        IShiftUtils.CreateShiftParams calldata params
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) returns (bytes32) {
         bytes32 structHash = RelayUtils.getCreateShiftStructHash(relayParams, transferRequests, params);
         _validateCall(relayParams, account, structHash, srcChainId);

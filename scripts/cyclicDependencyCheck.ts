@@ -100,11 +100,13 @@ function main(): void {
 
   if (uniqueCycles.size === 0) {
     console.log("✅ No cyclic dependencies found.");
+    process.exit(0);
   } else {
     console.log("⚠️ Cyclic dependencies detected:");
     Array.from(uniqueCycles).forEach((cycle, idx) => {
       console.log(`${idx + 1}. ${cycle}`);
     });
+    process.exit(1);
   }
 }
 

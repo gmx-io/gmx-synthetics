@@ -8,6 +8,7 @@ import "../event/EventEmitter.sol";
 import "./DepositVault.sol";
 import "./DepositStoreUtils.sol";
 import "./DepositEventUtils.sol";
+import "./IDepositUtils.sol";
 
 import "../nonce/NonceUtils.sol";
 
@@ -26,39 +27,6 @@ library DepositUtils {
     using Price for Price.Props;
     using Deposit for Deposit.Props;
 
-    // @dev CreateDepositParams struct used in createDeposit to avoid stack
-    // too deep errors
-    //
-    // @param receiver the address to send the market tokens to
-    // @param callbackContract the callback contract
-    // @param uiFeeReceiver the ui fee receiver
-    // @param market the market to deposit into
-    // @param minMarketTokens the minimum acceptable number of liquidity tokens
-    // @param shouldUnwrapNativeToken whether to unwrap the native token when
-    // sending funds back to the user in case the deposit gets cancelled
-    // @param executionFee the execution fee for keepers
-    // @param callbackGasLimit the gas limit for the callbackContract
-    // @param dataList a list of bytes32 values that can be used for additional data
-    struct CreateDepositParams {
-        CreateDepositParamsAddresses addresses;
-        uint256 minMarketTokens;
-        bool shouldUnwrapNativeToken;
-        uint256 executionFee;
-        uint256 callbackGasLimit;
-        bytes32[] dataList;
-    }
-
-    struct CreateDepositParamsAddresses {
-        address receiver;
-        address callbackContract;
-        address uiFeeReceiver;
-        address market;
-        address initialLongToken;
-        address initialShortToken;
-        address[] longTokenSwapPath;
-        address[] shortTokenSwapPath;
-    }
-
     // @dev creates a deposit
     //
     // @param dataStore DataStore
@@ -73,7 +41,7 @@ library DepositUtils {
         DepositVault depositVault,
         address account,
         uint256 srcChainId,
-        CreateDepositParams memory params
+        IDepositUtils.CreateDepositParams memory params
     ) external returns (bytes32) {
         AccountUtils.validateAccount(account);
 
