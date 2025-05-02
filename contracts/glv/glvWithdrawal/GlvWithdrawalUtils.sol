@@ -296,12 +296,30 @@ library GlvWithdrawalUtils {
         GlvWithdrawal.Props memory glvWithdrawal = GlvWithdrawalStoreUtils.get(params.dataStore, params.key);
         GlvWithdrawalStoreUtils.remove(params.dataStore, params.key, glvWithdrawal.account());
 
-        params.glvVault.transferOut(
-            glvWithdrawal.glv(),
-            glvWithdrawal.account(),
-            glvWithdrawal.glvTokenAmount(),
-            false // shouldUnwrapNativeToken
-        );
+        if (glvWithdrawal.srcChainId() == 0) {
+            params.glvVault.transferOut(
+                glvWithdrawal.glv(),
+                glvWithdrawal.account(),
+                glvWithdrawal.glvTokenAmount(),
+                false // shouldUnwrapNativeToken
+            );
+        } else {
+            params.glvVault.transferOut(
+                glvWithdrawal.glv(),
+                address(params.multichainVault),
+                glvWithdrawal.glvTokenAmount(),
+                false // shouldUnwrapNativeToken
+            );
+            MultichainUtils.recordTransferIn(
+                params.dataStore,
+                params.eventEmitter,
+                params.multichainVault,
+                glvWithdrawal.glv(),
+                glvWithdrawal.account(),
+                0 // srcChainId is the current block.chainId
+            );
+        }
+
 
         GlvWithdrawalEventUtils.emitGlvWithdrawalCancelled(
             params.eventEmitter,

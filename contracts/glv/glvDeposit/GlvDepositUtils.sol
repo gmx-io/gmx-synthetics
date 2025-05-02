@@ -176,29 +176,80 @@ library GlvDepositUtils {
 
         if (glvDeposit.isMarketTokenDeposit()) {
             // in this case marketTokenAmount > 0
-            params.glvVault.transferOut(
-                glvDeposit.market(),
-                glvDeposit.account(),
-                glvDeposit.marketTokenAmount(),
-                glvDeposit.shouldUnwrapNativeToken()
-            );
-        } else {
-            if (glvDeposit.initialLongTokenAmount() > 0) {
+            if (glvDeposit.srcChainId() == 0) {
                 params.glvVault.transferOut(
-                    glvDeposit.initialLongToken(),
+                    glvDeposit.market(),
                     glvDeposit.account(),
-                    glvDeposit.initialLongTokenAmount(),
+                    glvDeposit.marketTokenAmount(),
                     glvDeposit.shouldUnwrapNativeToken()
                 );
+            } else {
+                params.glvVault.transferOut(
+                    glvDeposit.market(),
+                    address(params.multichainVault),
+                    glvDeposit.marketTokenAmount(),
+                    false // shouldUnwrapNativeToken
+                );
+                MultichainUtils.recordTransferIn(
+                    params.dataStore,
+                    params.eventEmitter,
+                    params.multichainVault,
+                    glvDeposit.market(),
+                    glvDeposit.account(),
+                    0 // srcChainId is the current block.chainId
+                );
+            }
+        } else {
+            if (glvDeposit.initialLongTokenAmount() > 0) {
+                if (glvDeposit.srcChainId() == 0) {
+                    params.glvVault.transferOut(
+                        glvDeposit.initialLongToken(),
+                        glvDeposit.account(),
+                        glvDeposit.initialLongTokenAmount(),
+                        glvDeposit.shouldUnwrapNativeToken()
+                    );
+                } else {
+                    params.glvVault.transferOut(
+                        glvDeposit.initialLongToken(),
+                        address(params.multichainVault),
+                        glvDeposit.initialLongTokenAmount(),
+                        false // shouldUnwrapNativeToken
+                    );
+                    MultichainUtils.recordTransferIn(
+                        params.dataStore,
+                        params.eventEmitter,
+                        params.multichainVault,
+                        glvDeposit.initialLongToken(),
+                        glvDeposit.account(),
+                        0 // srcChainId is the current block.chainId
+                    );
+                }
             }
 
             if (glvDeposit.initialShortTokenAmount() > 0) {
-                params.glvVault.transferOut(
-                    glvDeposit.initialShortToken(),
-                    glvDeposit.account(),
-                    glvDeposit.initialShortTokenAmount(),
-                    glvDeposit.shouldUnwrapNativeToken()
-                );
+                if (glvDeposit.srcChainId() == 0) {
+                    params.glvVault.transferOut(
+                        glvDeposit.initialShortToken(),
+                        glvDeposit.account(),
+                        glvDeposit.initialShortTokenAmount(),
+                        glvDeposit.shouldUnwrapNativeToken()
+                    );
+                } else {
+                    params.glvVault.transferOut(
+                        glvDeposit.initialShortToken(),
+                        address(params.multichainVault),
+                        glvDeposit.initialShortTokenAmount(),
+                        false // shouldUnwrapNativeToken
+                    );
+                    MultichainUtils.recordTransferIn(
+                        params.dataStore,
+                        params.eventEmitter,
+                        params.multichainVault,
+                        glvDeposit.initialShortToken(),
+                        glvDeposit.account(),
+                        0 // srcChainId is the current block.chainId
+                    );
+                }
             }
         }
 

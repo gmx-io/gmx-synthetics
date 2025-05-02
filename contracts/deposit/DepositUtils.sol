@@ -157,21 +157,55 @@ library DepositUtils {
         DepositStoreUtils.remove(dataStore, key, deposit.account());
 
         if (deposit.initialLongTokenAmount() > 0) {
-            depositVault.transferOut(
-                deposit.initialLongToken(),
-                deposit.account(),
-                deposit.initialLongTokenAmount(),
-                deposit.shouldUnwrapNativeToken()
-            );
+            if (deposit.srcChainId() == 0) {
+                depositVault.transferOut(
+                    deposit.initialLongToken(),
+                    deposit.account(),
+                    deposit.initialLongTokenAmount(),
+                    deposit.shouldUnwrapNativeToken()
+                );
+            } else {
+                depositVault.transferOut(
+                    deposit.initialLongToken(),
+                    address(multichainVault),
+                    deposit.initialLongTokenAmount(),
+                    false // shouldUnwrapNativeToken
+                );
+                MultichainUtils.recordTransferIn(
+                    dataStore,
+                    eventEmitter,
+                    multichainVault,
+                    deposit.initialLongToken(),
+                    deposit.account(),
+                    0 // srcChainId is the current block.chainId
+                );
+            }
         }
 
         if (deposit.initialShortTokenAmount() > 0) {
-            depositVault.transferOut(
-                deposit.initialShortToken(),
-                deposit.account(),
-                deposit.initialShortTokenAmount(),
-                deposit.shouldUnwrapNativeToken()
-            );
+            if (deposit.srcChainId() == 0) {
+                depositVault.transferOut(
+                    deposit.initialShortToken(),
+                    deposit.account(),
+                    deposit.initialShortTokenAmount(),
+                    deposit.shouldUnwrapNativeToken()
+                );
+            } else {
+                depositVault.transferOut(
+                    deposit.initialShortToken(),
+                    address(multichainVault),
+                    deposit.initialShortTokenAmount(),
+                    false // shouldUnwrapNativeToken
+                );
+                MultichainUtils.recordTransferIn(
+                    dataStore,
+                    eventEmitter,
+                    multichainVault,
+                    deposit.initialShortToken(),
+                    deposit.account(),
+                    0 // srcChainId is the current block.chainId
+                );
+            }
         }
 
         DepositEventUtils.emitDepositCancelled(

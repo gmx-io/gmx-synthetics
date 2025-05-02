@@ -353,12 +353,29 @@ library ShiftUtils {
 
         ShiftStoreUtils.remove(dataStore, key, shift.account());
 
-        shiftVault.transferOut(
-            shift.fromMarket(),
-            shift.account(),
-            shift.marketTokenAmount(),
-            false // shouldUnwrapNativeToken
-        );
+        if (shift.srcChainId() == 0) {
+            shiftVault.transferOut(
+                shift.fromMarket(),
+                shift.account(),
+                shift.marketTokenAmount(),
+                false // shouldUnwrapNativeToken
+            );
+        } else {
+            shiftVault.transferOut(
+                shift.fromMarket(),
+                address(multichainVault),
+                shift.marketTokenAmount(),
+                false // shouldUnwrapNativeToken
+            );
+            MultichainUtils.recordTransferIn(
+                dataStore,
+                eventEmitter,
+                multichainVault,
+                shift.fromMarket(),
+                shift.account(),
+                0 // srcChainId is the current block.chainId
+            );
+        }
 
         ShiftEventUtils.emitShiftCancelled(
             eventEmitter,
