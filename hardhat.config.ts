@@ -315,7 +315,10 @@ task("update-market-config", "Update market config")
 
 task("deploy", "Deploy contracts", async (taskArgs, env, runSuper) => {
   env.deployTags = taskArgs.tags ?? "";
-  if (!process.env.SKIP_AUTO_HANDLER_REDEPLOYMENT && env.network.name != "hardhat") {
+  if (
+    !(process.env.SKIP_AUTO_HANDLER_REDEPLOYMENT == "true" || process.env.SKIP_AUTO_HANDLER_REDEPLOYMENT == "false") &&
+    env.network.name != "hardhat"
+  ) {
     throw new Error("SKIP_AUTO_HANDLER_REDEPLOYMENT flag is mandatory");
   }
   await runSuper();
