@@ -211,6 +211,13 @@ contract Reader {
             );
     }
 
+    function getPendingPositionImpactPoolDistributionAmount(
+        DataStore dataStore,
+        address market
+    ) external view returns (uint256, uint256) {
+        return MarketUtils.getPendingPositionImpactPoolDistributionAmount(dataStore, market);
+    }
+
     function getNetPnl(
         DataStore dataStore,
         Market.Props memory market,
