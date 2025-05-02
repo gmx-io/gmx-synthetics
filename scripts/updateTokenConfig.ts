@@ -2,7 +2,7 @@ import hre, { network } from "hardhat";
 
 import { validateMarketConfigs } from "./validateMarketConfigsUtils";
 import { encodeData } from "../utils/hash";
-import { ConfigChangeItem, handleConfigChanges } from "../utils/config";
+import { ConfigChangeItem, handleConfigChanges } from "./updateConfigUtils";
 import * as keys from "../utils/keys";
 
 const processTokens = async ({ tokens }): Promise<ConfigChangeItem[]> => {

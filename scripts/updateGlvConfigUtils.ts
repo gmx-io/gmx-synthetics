@@ -1,7 +1,6 @@
 import { encodeData } from "../utils/hash";
 import { getMarketKey, getOnchainMarkets } from "../utils/market";
-import { ConfigChangeItem, handleConfigChanges } from "../utils/config";
-import { handleInBatches } from "../utils/batch";
+import { ConfigChangeItem, handleConfigChanges } from "./updateConfigUtils";
 import * as keys from "../utils/keys";
 
 const processGlvs = async ({
@@ -143,7 +142,7 @@ export async function updateGlvConfig({ write }) {
     await glvHandler.callStatic.addMarketToGlv(glvAddress, marketAddress);
   }
 
-  await handleConfigChanges(configItems, write);
+  await handleConfigChanges(configItems, write, 100);
 
   if (!write) {
     console.info("NOTE: executed in read-only mode, no transactions were sent");

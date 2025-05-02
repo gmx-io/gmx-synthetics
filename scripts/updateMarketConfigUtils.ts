@@ -1,5 +1,5 @@
 import fetch from "node-fetch";
-import { ConfigChangeItem, handleConfigChanges } from "../utils/config";
+import { ConfigChangeItem, handleConfigChanges } from "./updateConfigUtils";
 import { encodeData } from "../utils/hash";
 import * as keys from "../utils/keys";
 import { getMarketKey, getMarketTokenAddresses, getOnchainMarkets } from "../utils/market";
@@ -694,7 +694,7 @@ export async function updateMarketConfig({
     console.info("Add INCLUDE_KEEPER_BASE_KEYS=true to include them\n");
   }
 
-  await handleConfigChanges(configItems, write);
+  await handleConfigChanges(configItems, write, 100);
 }
 
 function getIgnoredParameterNames(ignoredParams) {

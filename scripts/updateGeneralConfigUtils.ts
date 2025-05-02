@@ -1,6 +1,6 @@
 import hre, { network } from "hardhat";
 
-import { ConfigChangeItem, handleConfigChanges } from "../utils/config";
+import { ConfigChangeItem, handleConfigChanges } from "./updateConfigUtils";
 import * as keys from "../utils/keys";
 
 const getConfigItems = (generalConfig, oracleConfig) => {
@@ -156,13 +156,7 @@ const getConfigItems = (generalConfig, oracleConfig) => {
       label: `swapOrderGasLimit`,
     },
     {
-      type: "uint",
-      baseKey: keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR,
-      value: generalConfig.executionGasFeeMultiplierFactor,
-      label: `executionGasFeeMultiplierFactor`,
-    },
-    {
-      type: "uint",
+      type: "bool",
       baseKey: keys.IGNORE_OPEN_INTEREST_FOR_USAGE_FACTOR,
       value: generalConfig.ignoreOpenInterestForUsageFactor,
       label: `ignoreOpenInterestForUsageFactor`,
