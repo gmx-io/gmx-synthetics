@@ -12,11 +12,14 @@ import { IStargate } from "@stargatefinance/stg-evm-v2/src/interfaces/IStargate.
 
 import "../event/EventEmitter.sol";
 import "../data/DataStore.sol";
-import "../deposit/IDepositUtils.sol";
 import "../utils/Cast.sol";
 
-import "./MultichainGmRouter.sol";
-import "./MultichainGlvRouter.sol";
+import "./IMultichainProvider.sol";
+import "./IMultichainGmRouter.sol";
+import "./IMultichainGlvRouter.sol";
+
+import "./MultichainVault.sol";
+import "./MultichainUtils.sol";
 
 
 /**
@@ -43,16 +46,16 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
     MultichainVault public immutable multichainVault;
-    MultichainGmRouter public immutable multichainGmRouter;
-    MultichainGlvRouter public immutable multichainGlvRouter;
+    IMultichainGmRouter public immutable multichainGmRouter;
+    IMultichainGlvRouter public immutable multichainGlvRouter;
 
     constructor(
         DataStore _dataStore,
         RoleStore _roleStore,
         EventEmitter _eventEmitter,
         MultichainVault _multichainVault,
-        MultichainGmRouter _multichainGmRouter,
-        MultichainGlvRouter _multichainGlvRouter
+        IMultichainGmRouter _multichainGmRouter,
+        IMultichainGlvRouter _multichainGlvRouter
     ) RoleModule(_roleStore) {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;

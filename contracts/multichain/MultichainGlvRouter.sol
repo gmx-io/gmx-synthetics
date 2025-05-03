@@ -5,9 +5,10 @@ pragma solidity ^0.8.0;
 import "../exchange/IGlvHandler.sol";
 import "../glv/GlvVault.sol";
 
+import "./IMultichainGlvRouter.sol";
 import "./MultichainRouter.sol";
 
-contract MultichainGlvRouter is MultichainRouter {
+contract MultichainGlvRouter is IMultichainGlvRouter, MultichainRouter {
     using SafeERC20 for IERC20;
 
     GlvVault public immutable glvVault;
