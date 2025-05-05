@@ -15,6 +15,7 @@ import "./MultichainUtils.sol";
 library MultichainOrderRouterUtils {
     using Order for Order.Props;
     using Position for Position.Props;
+    using SafeCast for uint256;
 
     struct TransferFeeFromOrderOrPositionContracts {
         DataStore dataStore;
@@ -130,6 +131,22 @@ library MultichainOrderRouterUtils {
         );
 
         contracts.oracle.validateSequencerUp();
+
+        MarketUtils.applyDeltaToCollateralSum(
+            contracts.dataStore,
+            contracts.eventEmitter,
+            position.market(),
+            position.collateralToken(),
+            position.isLong(),
+            cache.unpaidAmount.toInt256() // delta
+        );
+
+        PositionUtils.updateFundingAndBorrowingState(
+            contracts.dataStore,
+            contracts.eventEmitter,
+            cache.market,
+            cache.prices
+        );
 
         PositionUtils.validatePosition(
             contracts.dataStore,
