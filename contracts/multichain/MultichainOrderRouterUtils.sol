@@ -33,6 +33,7 @@ library MultichainOrderRouterUtils {
         uint256 positionCollateralAmount;
         Market.Props market;
         MarketUtils.MarketPrices prices;
+        bytes32 positionKey;
     }
 
     function transferFeeFromOrderOrPosition(
@@ -101,13 +102,13 @@ library MultichainOrderRouterUtils {
             revert Errors.UnableToPayOrderFee();
         }
 
-        bytes32 positionKey = Position.getPositionKey(
+        cache.positionKey = Position.getPositionKey(
             order.account(),
             order.market(),
             order.initialCollateralToken(),
             order.isLong()
         );
-        Position.Props memory position = PositionStoreUtils.get(contracts.dataStore, positionKey);
+        Position.Props memory position = PositionStoreUtils.get(contracts.dataStore, cache.positionKey);
 
         if (relayParams.fee.feeToken != position.collateralToken()) {
             revert Errors.UnableToPayOrderFee();
@@ -120,7 +121,7 @@ library MultichainOrderRouterUtils {
 
         position.setCollateralAmount(cache.positionCollateralAmount - cache.unpaidAmount);
         contracts.dataStore.setUint(
-            keccak256(abi.encode(positionKey, PositionStoreUtils.COLLATERAL_AMOUNT)),
+            keccak256(abi.encode(cache.positionKey, PositionStoreUtils.COLLATERAL_AMOUNT)),
             cache.positionCollateralAmount - cache.unpaidAmount
         );
 
@@ -154,6 +155,7 @@ library MultichainOrderRouterUtils {
             position,
             cache.market,
             cache.prices,
+            contracts.dataStore.getUint((Keys.ADDITIONAL_ATOMIC_MIN_COLLATERAL_FACTOR)),
             true, // shouldValidateMinPositionSize
             true // shouldValidateMinCollateralUsd
         );

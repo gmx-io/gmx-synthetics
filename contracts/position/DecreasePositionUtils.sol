@@ -215,6 +215,7 @@ library DecreasePositionUtils {
                 params.position,
                 params.market,
                 cache.prices,
+                0, // additionalMinCollateralFactor
                 true, // shouldValidateMinCollateralUsd
                 true // forLiquidation
             );
@@ -319,6 +320,7 @@ library DecreasePositionUtils {
                 params.position,
                 params.market,
                 cache.prices,
+                0, // additionalMinCollateralFactor
                 false, // shouldValidateMinPositionSize
                 false // shouldValidateMinCollateralUsd
             );

@@ -213,6 +213,7 @@ library IncreasePositionUtils {
             params.position,
             params.market,
             prices,
+            0, // additionalMinCollateralFactor
             true, // shouldValidateMinPositionSize
             true // shouldValidateMinCollateralUsd
         );
