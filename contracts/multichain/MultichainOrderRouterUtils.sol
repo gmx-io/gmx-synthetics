@@ -28,7 +28,6 @@ library MultichainOrderRouterUtils {
 
     struct TransferFeeFromOrderOrPositionCache {
         uint256 unpaidAmount;
-        uint256 initialCollateralDeltaAmount;
         uint256 deductFromOrder;
         uint256 positionCollateralAmount;
         Market.Props market;
