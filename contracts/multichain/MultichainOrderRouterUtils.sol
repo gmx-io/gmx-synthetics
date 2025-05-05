@@ -131,8 +131,6 @@ library MultichainOrderRouterUtils {
             MarketStoreUtils.get(contracts.dataStore, order.market())
         );
 
-        contracts.oracle.validateSequencerUp();
-
         MarketUtils.applyDeltaToCollateralSum(
             contracts.dataStore,
             contracts.eventEmitter,

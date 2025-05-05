@@ -70,7 +70,7 @@ contract Oracle is RoleModule {
     // before actions dependent on those on-chain prices are allowed
     // additionally, this can also be used to provide a grace period for
     // users to top up collateral before liquidations occur
-    function validateSequencerUp() external view {
+    function validateSequencerUp() public view {
         if (address(sequencerUptimeFeed) == address(0)) {
             return;
         }
@@ -111,6 +111,8 @@ contract Oracle is RoleModule {
     function setPricesForAtomicAction(
         OracleUtils.SetPricesParams memory params
     ) external onlyController {
+        validateSequencerUp();
+
         OracleUtils.ValidatedPrice[] memory prices = _validatePrices(params, true);
 
         _setPrices(prices);

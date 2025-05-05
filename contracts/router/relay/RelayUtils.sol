@@ -234,8 +234,6 @@ library RelayUtils {
         Oracle oracle,
         IRelayUtils.FeeParams calldata fee
     ) external {
-        oracle.validateSequencerUp();
-
         // swap fee tokens to WNT
         MarketUtils.validateSwapPath(contracts.dataStore, fee.feeSwapPath);
         Market.Props[] memory swapPathMarkets = MarketUtils.getSwapPathMarkets(contracts.dataStore, fee.feeSwapPath);
