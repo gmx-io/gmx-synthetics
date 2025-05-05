@@ -171,8 +171,8 @@ contract MultichainSubaccountRouter is MultichainRouter {
             actionType,
             actionsCount,
             subaccountApproval,
-            storedNonce
+            storedNonce,
+            subaccountApprovalNonces
         );
-        subaccountApprovalNonces[account] = storedNonce + 1;
     }
 }
