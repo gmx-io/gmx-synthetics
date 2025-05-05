@@ -170,6 +170,7 @@ describe("FeeDistributor", function () {
     await dataStore.setUint(keys.FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP, initialTimestamp);
 
     await config.setUint(keys.FEE_DISTRIBUTOR_REFERRAL_REWARDS_WNT_USD_LIMIT, "0x", expandDecimals(1_000_000, 30));
+    await config.setUint(keys.FEE_DISTRIBUTOR_REFERRAL_REWARDS_ESGMX_LIMIT, "0x", expandDecimals(10, 18));
     await config.setUint(keys.FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY, "0x", 600);
     await config.setUint(keys.FEE_DISTRIBUTOR_GAS_LIMIT, "0x", 5_000_000);
     await dataStore.setUintArray(keys.FEE_DISTRIBUTOR_CHAIN_ID, chainIds);
@@ -270,11 +271,6 @@ describe("FeeDistributor", function () {
     await config.setUint(keys.FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_AMOUNT, "0x", expandDecimals(1, 14));
     await config.setUint(
       keys.FEE_DISTRIBUTOR_AMOUNT_THRESHOLD,
-      encodeData(["bytes32"], [feeDistributorConfig.referralRewardsEsGmxKey]),
-      expandDecimals(99, 28)
-    );
-    await config.setUint(
-      keys.FEE_DISTRIBUTOR_AMOUNT_THRESHOLD,
       encodeData(["bytes32"], [feeDistributorConfig.referralRewardsWntKey]),
       expandDecimals(20, 28)
     );
@@ -321,7 +317,7 @@ describe("FeeDistributor", function () {
     await wnt.mint(feeDistributorVault.address, expandDecimals(1_000, 18));
 
     wntReferralRewardsInUsd = expandDecimals(1_000, 30);
-    esGmxForReferralRewards = expandDecimals(100, 18);
+    esGmxForReferralRewards = expandDecimals(10, 18);
     feesV1Usd = expandDecimals(40_000, 30);
     feesV2Usd = expandDecimals(100_000, 30);
   });
@@ -797,7 +793,7 @@ describe("FeeDistributor", function () {
       esGmx.address,
       5,
       [user7.address, user8.address, wallet.address],
-      [expandDecimals(50, 18), expandDecimals(20, 18), expandDecimals(30, 18)]
+      [expandDecimals(5, 18), expandDecimals(2, 18), expandDecimals(3, 18)]
     );
   });
 
@@ -990,7 +986,7 @@ describe("FeeDistributor", function () {
       esGmx.address,
       5,
       [user7.address, user8.address, wallet.address],
-      [expandDecimals(50, 18), expandDecimals(20, 18), expandDecimals(30, 18)]
+      [expandDecimals(5, 18), expandDecimals(2, 18), expandDecimals(3, 18)]
     );
   });
 });

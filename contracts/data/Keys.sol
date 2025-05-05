@@ -531,6 +531,8 @@ library Keys {
     bytes32 public constant FEE_DISTRIBUTOR_REFERRAL_REWARDS_AMOUNT = keccak256(abi.encode("FEE_DISTRIBUTOR_REFERRAL_REWARDS_AMOUNT"));
     // @dev key for FeeDistributor WNT referral awards absolute limit in USD 
     bytes32 public constant FEE_DISTRIBUTOR_REFERRAL_REWARDS_WNT_USD_LIMIT = keccak256(abi.encode("FEE_DISTRIBUTOR_REFERRAL_REWARDS_WNT_USD_LIMIT"));
+    // @dev key for FeeDistributor ESGMX referral awards absolute limit 
+    bytes32 public constant FEE_DISTRIBUTOR_REFERRAL_REWARDS_ESGMX_LIMIT = keccak256(abi.encode("FEE_DISTRIBUTOR_REFERRAL_REWARDS_ESGMX_LIMIT"));
     // @dev key for FeeDistributor GMX price for referral rewards calculations
     bytes32 public constant FEE_DISTRIBUTOR_GMX_PRICE = keccak256(abi.encode("FEE_DISTRIBUTOR_GMX_PRICE"));
     // @dev key for FeeDistributor WNT price for referral rewards calculations

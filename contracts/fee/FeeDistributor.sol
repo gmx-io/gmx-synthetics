@@ -28,7 +28,6 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
     bytes32 public constant gmxKey = keccak256(abi.encode("GMX"));
     bytes32 public constant extendedGmxTrackerKey = keccak256(abi.encode("EXTENDED_GMX_TRACKER"));
     bytes32 public constant dataStoreKey = keccak256(abi.encode("DATASTORE"));
-    bytes32 public constant referralRewardsEsGmxKey = keccak256(abi.encode("REFERRAL_REWARDS_ESGMX"));
     bytes32 public constant referralRewardsWntKey = keccak256(abi.encode("REFERRAL_REWARDS_WNT"));
     bytes32 public constant glpKey = keccak256(abi.encode("GLP"));
     bytes32 public constant treasuryKey = keccak256(abi.encode("TREASURY"));
@@ -365,7 +364,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         if (token == esGmx) {
             // validate the esGMX amount is valid and that there are sufficient esGMX in the feeDistributorVault
             uint256 esGmxForReferralRewards = getUint(Keys.feeDistributorReferralRewardsAmountKey(esGmx));
-            uint256 maxEsGmxReferralRewards = getUint(Keys.feeDistributorAmountThresholdKey(referralRewardsEsGmxKey));
+            uint256 maxEsGmxReferralRewards = getUint(Keys.FEE_DISTRIBUTOR_REFERRAL_REWARDS_ESGMX_LIMIT);
             if (esGmxForReferralRewards > maxEsGmxReferralRewards) {
                 revert Errors.ReferralRewardsThresholdBreached(esGmx, esGmxForReferralRewards, maxEsGmxReferralRewards);
             }

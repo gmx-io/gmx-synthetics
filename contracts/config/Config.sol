@@ -569,6 +569,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
         allowedBaseKeys[Keys.FEE_DISTRIBUTOR_DISTRIBUTION_DAY] = true;
         allowedBaseKeys[Keys.FEE_DISTRIBUTOR_REFERRAL_REWARDS_WNT_USD_LIMIT] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_REFERRAL_REWARDS_ESGMX_LIMIT] = true;
         allowedBaseKeys[Keys.FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY] = true;
         allowedBaseKeys[Keys.FEE_DISTRIBUTOR_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.FEE_DISTRIBUTOR_CHAIN_ID] = true;
