@@ -19,7 +19,7 @@ contract GlvShiftHandler is BaseHandler, ReentrancyGuard {
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        Oracle _oracle,
+        IOracle _oracle,
         MultichainVault _multichainVault,
         GlvVault _glvVault,
         ShiftVault _shiftVault

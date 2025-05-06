@@ -27,7 +27,7 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        Oracle _oracle,
+        IOracle _oracle,
         MultichainVault _multichainVault,
         WithdrawalVault _withdrawalVault
     ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {

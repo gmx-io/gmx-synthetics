@@ -20,7 +20,7 @@ contract MockGelatoRelayRouter is GelatoRelayRouter {
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        Oracle _oracle,
+        IOracle _oracle,
         IOrderHandler _orderHandler,
         OrderVault _orderVault,
         IExternalHandler _externalHandler

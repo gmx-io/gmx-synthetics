@@ -41,7 +41,7 @@ library GlvDepositCalc {
 
     function getMintAmount(
         DataStore dataStore,
-        Oracle oracle,
+        IOracle oracle,
         GlvDeposit.Props memory glvDeposit,
         uint256 receivedMarketTokens,
         uint256 glvValue,

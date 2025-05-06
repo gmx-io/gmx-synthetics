@@ -56,7 +56,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     }
 
     constructor(
-        Oracle _oracle,
+        IOracle _oracle,
         IOrderHandler _orderHandler,
         OrderVault _orderVault,
         IExternalHandler _externalHandler

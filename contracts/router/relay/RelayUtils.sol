@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "../../data/DataStore.sol";
 import "../../event/EventEmitter.sol";
 import "../../order/OrderVault.sol";
-import "../../oracle/Oracle.sol";
+import "../../oracle/IOracle.sol";
 import "../../oracle/OracleUtils.sol";
 import "../../market/Market.sol";
 import "../../swap/SwapUtils.sol";
@@ -231,7 +231,7 @@ library RelayUtils {
     function swapFeeTokens(
         Contracts memory contracts,
         EventEmitter eventEmitter,
-        Oracle oracle,
+        IOracle oracle,
         IRelayUtils.FeeParams calldata fee
     ) external {
         oracle.validateSequencerUp();

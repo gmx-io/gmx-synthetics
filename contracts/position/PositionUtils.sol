@@ -49,7 +49,7 @@ library PositionUtils {
     struct UpdatePositionParamsContracts {
         DataStore dataStore;
         EventEmitter eventEmitter;
-        Oracle oracle;
+        IOracle oracle;
         SwapHandler swapHandler;
         IReferralStorage referralStorage;
     }

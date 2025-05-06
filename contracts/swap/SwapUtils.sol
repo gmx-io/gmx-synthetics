@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 
 import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
-import "../oracle/Oracle.sol";
+import "../oracle/IOracle.sol";
 import "../pricing/SwapPricingUtils.sol";
 import "../fee/FeeUtils.sol";
 
@@ -42,7 +42,7 @@ library SwapUtils {
     struct SwapParams {
         DataStore dataStore;
         EventEmitter eventEmitter;
-        Oracle oracle;
+        IOracle oracle;
         Bank bank;
         bytes32 key;
         address tokenIn;

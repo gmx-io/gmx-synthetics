@@ -12,7 +12,7 @@ abstract contract MultichainRouter is BaseGelatoRelayRouter {
         RoleStore roleStore;
         DataStore dataStore;
         EventEmitter eventEmitter;
-        Oracle oracle;
+        IOracle oracle;
         OrderVault orderVault;
         IOrderHandler orderHandler;
         IExternalHandler externalHandler;

@@ -11,7 +11,7 @@ import "../referral/IReferralStorage.sol";
 
 import "../order/OrderVault.sol";
 
-import "../oracle/Oracle.sol";
+import "../oracle/IOracle.sol";
 import "../swap/SwapHandler.sol";
 
 import "../multichain/MultichainVault.sol";
@@ -63,7 +63,7 @@ library BaseOrderUtils {
         EventEmitter eventEmitter;
         MultichainVault multichainVault;
         OrderVault orderVault;
-        Oracle oracle;
+        IOracle oracle;
         SwapHandler swapHandler;
         IReferralStorage referralStorage;
     }
@@ -169,7 +169,7 @@ library BaseOrderUtils {
     // @param triggerPrice the order's triggerPrice
     // @param isLong whether the order is for a long or short
     function validateOrderTriggerPrice(
-        Oracle oracle,
+        IOracle oracle,
         address indexToken,
         Order.OrderType orderType,
         uint256 triggerPrice,

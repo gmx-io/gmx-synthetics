@@ -11,7 +11,7 @@ import "./WithdrawalStoreUtils.sol";
 import "./WithdrawalEventUtils.sol";
 
 import "../pricing/SwapPricingUtils.sol";
-import "../oracle/Oracle.sol";
+import "../oracle/IOracle.sol";
 import "../position/PositionUtils.sol";
 
 import "../gas/GasUtils.sol";
@@ -39,7 +39,7 @@ library ExecuteWithdrawalUtils {
         EventEmitter eventEmitter;
         MultichainVault multichainVault;
         WithdrawalVault withdrawalVault;
-        Oracle oracle;
+        IOracle oracle;
         bytes32 key;
         address keeper;
         uint256 startingGas;

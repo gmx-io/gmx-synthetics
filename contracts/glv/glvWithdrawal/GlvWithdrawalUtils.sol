@@ -24,7 +24,7 @@ library GlvWithdrawalUtils {
         EventEmitter eventEmitter;
         MultichainVault multichainVault;
         GlvVault glvVault;
-        Oracle oracle;
+        IOracle oracle;
         bytes32 key;
         uint256 startingGas;
         address keeper;
@@ -258,7 +258,7 @@ library GlvWithdrawalUtils {
 
     function _getMarketTokenAmount(
         DataStore dataStore,
-        Oracle oracle,
+        IOracle oracle,
         GlvWithdrawal.Props memory glvWithdrawal
     ) internal view returns (uint256) {
         uint256 glvValue = GlvUtils.getGlvValue(

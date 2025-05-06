@@ -46,7 +46,7 @@ library ShiftUtils {
         EventEmitter eventEmitter;
         MultichainVault multichainVault;
         ShiftVault shiftVault;
-        Oracle oracle;
+        IOracle oracle;
         bytes32 key;
         address keeper;
         uint256 startingGas;

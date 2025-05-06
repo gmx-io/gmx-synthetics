@@ -29,7 +29,7 @@ contract DepositHandler is IDepositHandler, BaseHandler {
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        Oracle _oracle,
+        IOracle _oracle,
         MultichainVault _multichainVault,
         IMultichainTransferRouter _multichainTransferRouter,
         DepositVault _depositVault

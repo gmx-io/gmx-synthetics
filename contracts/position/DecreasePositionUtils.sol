@@ -7,7 +7,6 @@ import "../utils/Precision.sol";
 import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
 
-import "../oracle/Oracle.sol";
 import "../pricing/PositionPricingUtils.sol";
 
 import "./Position.sol";

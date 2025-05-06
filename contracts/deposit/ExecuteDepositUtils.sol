@@ -10,7 +10,7 @@ import "./DepositStoreUtils.sol";
 import "./DepositEventUtils.sol";
 
 import "../pricing/SwapPricingUtils.sol";
-import "../oracle/Oracle.sol";
+import "../oracle/IOracle.sol";
 import "../position/PositionUtils.sol";
 
 import "../multichain/MultichainUtils.sol";
@@ -48,7 +48,7 @@ library ExecuteDepositUtils {
         MultichainVault multichainVault;
         IMultichainTransferRouter multichainTransferRouter;
         DepositVault depositVault;
-        Oracle oracle;
+        IOracle oracle;
         bytes32 key;
         address keeper;
         uint256 startingGas;

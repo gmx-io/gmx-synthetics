@@ -10,7 +10,6 @@ import "./WithdrawalEventUtils.sol";
 import "./IWithdrawalUtils.sol";
 
 import "../nonce/NonceUtils.sol";
-import "../oracle/Oracle.sol";
 
 import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";

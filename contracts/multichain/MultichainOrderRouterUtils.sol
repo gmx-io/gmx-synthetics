@@ -20,7 +20,7 @@ library MultichainOrderRouterUtils {
         DataStore dataStore;
         EventEmitter eventEmitter;
         MultichainVault multichainVault;
-        Oracle oracle;
+        IOracle oracle;
         IReferralStorage referralStorage;
         OrderVault orderVault;
     }

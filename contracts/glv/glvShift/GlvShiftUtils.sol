@@ -27,7 +27,7 @@ library GlvShiftUtils {
     struct ExecuteGlvShiftParams {
         DataStore dataStore;
         EventEmitter eventEmitter;
-        Oracle oracle;
+        IOracle oracle;
         MultichainVault multichainVault;
         ShiftVault shiftVault;
         GlvVault glvVault;

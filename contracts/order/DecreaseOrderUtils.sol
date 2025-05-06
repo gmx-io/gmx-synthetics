@@ -271,7 +271,7 @@ library DecreaseOrderUtils {
 
     // note that minOutputAmount is treated as a USD value for this validation
     function _validateOutputAmount(
-        Oracle oracle,
+        IOracle oracle,
         address outputToken,
         uint256 outputAmount,
         uint256 minOutputAmount
@@ -286,7 +286,7 @@ library DecreaseOrderUtils {
 
     // note that minOutputAmount is treated as a USD value for this validation
     function _validateOutputAmount(
-        Oracle oracle,
+        IOracle oracle,
         address outputToken,
         uint256 outputAmount,
         address secondaryOutputToken,
@@ -310,7 +310,7 @@ library DecreaseOrderUtils {
         DataStore dataStore,
         EventEmitter eventEmitter,
         MultichainVault multichainVault,
-        Oracle oracle,
+        IOracle oracle,
         Order.Props memory order,
         DecreasePositionUtils.DecreasePositionResult memory result,
         string memory reason,

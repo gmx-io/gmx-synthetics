@@ -28,7 +28,7 @@ contract BaseOrderHandler is BaseHandler {
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        Oracle _oracle,
+        IOracle _oracle,
         MultichainVault _multichainVault,
         OrderVault _orderVault,
         SwapHandler _swapHandler,

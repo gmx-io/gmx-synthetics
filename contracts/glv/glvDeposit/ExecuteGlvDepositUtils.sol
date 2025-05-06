@@ -26,7 +26,7 @@ library ExecuteGlvDepositUtils {
         MultichainVault multichainVault;
         IMultichainTransferRouter multichainTransferRouter;
         GlvVault glvVault;
-        Oracle oracle;
+        IOracle oracle;
         bytes32 key;
         uint256 startingGas;
         address keeper;

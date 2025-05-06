@@ -18,7 +18,7 @@ contract ShiftHandler is IShiftHandler, BaseHandler {
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        Oracle _oracle,
+        IOracle _oracle,
         MultichainVault _multichainVault,
         ShiftVault _shiftVault
     ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {

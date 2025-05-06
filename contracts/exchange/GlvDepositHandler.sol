@@ -20,7 +20,7 @@ contract GlvDepositHandler is BaseHandler, ReentrancyGuard {
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        Oracle _oracle,
+        IOracle _oracle,
         MultichainVault _multichainVault,
         IMultichainTransferRouter _multichainTransferRouter,
         GlvVault _glvVault

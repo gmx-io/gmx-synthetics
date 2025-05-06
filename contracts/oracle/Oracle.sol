@@ -8,6 +8,7 @@ import { AggregatorV2V3Interface } from "@chainlink/contracts/src/v0.8/shared/in
 import "../role/RoleModule.sol";
 
 import "./OracleUtils.sol";
+import "./IOracle.sol";
 import "./IOracleProvider.sol";
 import "./ChainlinkPriceFeedUtils.sol";
 import "../price/Price.sol";
@@ -28,7 +29,7 @@ import "../utils/Uint256Mask.sol";
 // may not work with zero / negative prices
 // as a result, zero / negative prices are considered empty / invalid
 // A market may need to be manually settled in this case
-contract Oracle is RoleModule {
+contract Oracle is IOracle, RoleModule {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableValues for EnumerableSet.AddressSet;
     using Price for Price.Props;

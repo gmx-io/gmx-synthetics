@@ -10,7 +10,6 @@ import "./OrderStoreUtils.sol";
 import "./OrderEventUtils.sol";
 import "./OrderUtils.sol";
 
-import "../oracle/Oracle.sol";
 import "../event/EventEmitter.sol";
 
 import "../exchange/IOrderExecutor.sol";
