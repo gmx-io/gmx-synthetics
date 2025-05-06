@@ -268,7 +268,6 @@ describe("FeeDistributor", function () {
       encodeData(["uint256"], [chainId3]),
       expandDecimals(99, 28)
     );
-    await config.setUint(keys.FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_AMOUNT, "0x", expandDecimals(1, 14));
     await config.setUint(
       keys.FEE_DISTRIBUTOR_AMOUNT_THRESHOLD,
       encodeData(["bytes32"], [feeDistributorConfig.referralRewardsWntKey]),
@@ -293,9 +292,6 @@ describe("FeeDistributor", function () {
     await dataStore.setBoolArray(keys.FEE_DISTRIBUTOR_KEEPER_COSTS, [true, false, true]);
     await config.setUint(keys.FEE_DISTRIBUTOR_KEEPER_GLP_FACTOR, "0x", expandDecimals(50, 28));
     await config.setUint(keys.FEE_DISTRIBUTOR_CHAINLINK_FACTOR, "0x", expandDecimals(12, 28));
-    await config.setUint(keys.FEE_DISTRIBUTOR_BRIDGE_ORIGIN_DEADLINE, encodeData(["uint256"], [chainId2]), 300);
-    await config.setUint(keys.FEE_DISTRIBUTOR_BRIDGE_DEST_DEADLINE, encodeData(["uint256"], [chainId1]), 600);
-    await config.setUint(keys.FEE_DISTRIBUTOR_BRIDGE_DEST_DEADLINE, encodeData(["uint256"], [chainId3]), 600);
     await config.setUint(keys.BUYBACK_BATCH_AMOUNT, encodeData(["address"], [gmx.address]), expandDecimals(5, 17));
     await config.setUint(keys.BUYBACK_BATCH_AMOUNT, encodeData(["address"], [wnt.address]), expandDecimals(5, 17));
     await dataStore.setAddress(keys.oracleProviderForTokenKey(wnt.address), chainlinkPriceFeedProvider.address);

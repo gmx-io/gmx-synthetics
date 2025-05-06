@@ -25,16 +25,18 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         BridgingCompleted
     }
 
-    bytes32 public constant gmxKey = keccak256(abi.encode("GMX"));
-    bytes32 public constant extendedGmxTrackerKey = keccak256(abi.encode("EXTENDED_GMX_TRACKER"));
-    bytes32 public constant dataStoreKey = keccak256(abi.encode("DATASTORE"));
-    bytes32 public constant referralRewardsWntKey = keccak256(abi.encode("REFERRAL_REWARDS_WNT"));
-    bytes32 public constant glpKey = keccak256(abi.encode("GLP"));
-    bytes32 public constant treasuryKey = keccak256(abi.encode("TREASURY"));
-    bytes32 public constant layerzeroOftKey = keccak256(abi.encode("LAYERZERO_OFT"));
-    bytes32 public constant feeGlpTrackerKey = keccak256(abi.encode("FEE_GLP_TRACKER"));
-    bytes32 public constant chainlinkKey = keccak256(abi.encode("CHAINLINK"));
-    bytes32 public constant esGmxVesterKey = keccak256(abi.encode("ESGMX_VESTER"));
+    bytes public constant EMPTY_BYTES = "";
+
+    bytes32 public constant GMX = keccak256(abi.encode("GMX"));
+    bytes32 public constant EXTENDED_GMX_TRACKER = keccak256(abi.encode("EXTENDED_GMX_TRACKER"));
+    bytes32 public constant DATASTORE = keccak256(abi.encode("DATASTORE"));
+    bytes32 public constant REFERRAL_REWARDS_WNT = keccak256(abi.encode("REFERRAL_REWARDS_WNT"));
+    bytes32 public constant GLP = keccak256(abi.encode("GLP"));
+    bytes32 public constant TREASURY = keccak256(abi.encode("TREASURY"));
+    bytes32 public constant LAYERZERO_OFT = keccak256(abi.encode("LAYERZERO_OFT"));
+    bytes32 public constant FEE_GLP_TRACKER = keccak256(abi.encode("FEE_GLP_TRACKER"));
+    bytes32 public constant CHAINLINK = keccak256(abi.encode("CHAINLINK"));
+    bytes32 public constant ESGMX_VESTER = keccak256(abi.encode("ESGMX_VESTER"));
 
     FeeDistributorVault public immutable feeDistributorVault;
     FeeHandler public immutable feeHandler;
@@ -91,10 +93,10 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         uint256 chainIdsLength = chainIds.length;
         MultichainReaderUtils.ReadRequestInputs[]
             memory readRequestInputs = new MultichainReaderUtils.ReadRequestInputs[]((chainIdsLength - 1) * 3);
-        uint256 remoteChainIndex;
+        uint256 targetChainIndex;
         for (uint256 i; i < chainIdsLength; i++) {
             uint256 chainId = chainIds[i];
-            address extendedGmxTracker = getAddress(chainId, extendedGmxTrackerKey);
+            address extendedGmxTracker = getAddress(chainId, EXTENDED_GMX_TRACKER);
 
             if (chainId == block.chainid) {
                 uint256 feeAmountGmxCurrentChain = getUint(Keys.withdrawableBuybackTokenAmountKey(gmx)) +
@@ -105,19 +107,22 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
                 continue;
             }
 
-            address gmxOnChainId = getAddress(chainId, gmxKey);
+            address gmxTargetChain = getAddress(chainId, GMX);
             uint32 layerZeroChainId = uint32(getUint(Keys.feeDistributorLayerZeroChainIdKey(chainId)));
-            uint256 readRequestIndex = remoteChainIndex * 3;
+            uint256 readRequestIndex = targetChainIndex * 3;
             readRequestInputs[readRequestIndex] = setReadRequestInput(
                 layerZeroChainId,
-                getAddress(chainId, dataStoreKey),
-                abi.encodeWithSelector(DataStore.getUint.selector, Keys.withdrawableBuybackTokenAmountKey(gmxOnChainId))
+                getAddress(chainId, DATASTORE),
+                abi.encodeWithSelector(
+                    DataStore.getUint.selector,
+                    Keys.withdrawableBuybackTokenAmountKey(gmxTargetChain)
+                )
             );
             readRequestIndex++;
 
             readRequestInputs[readRequestIndex] = setReadRequestInput(
                 layerZeroChainId,
-                gmxOnChainId,
+                gmxTargetChain,
                 abi.encodeWithSelector(IERC20.balanceOf.selector, getAddress(chainId, Keys.FEE_RECEIVER))
             );
             readRequestIndex++;
@@ -127,7 +132,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
                 extendedGmxTracker,
                 abi.encodeWithSelector(IERC20.totalSupply.selector)
             );
-            remoteChainIndex++;
+            targetChainIndex++;
         }
 
         MultichainReaderUtils.ExtraOptionsInputs memory extraOptionsInputs;
@@ -170,7 +175,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         uint256 totalFeeAmountGmx;
         uint256 totalStakedGmx;
         uint256 currentChainIndex;
-        uint256 remoteChainIndex;
+        uint256 targetChainIndex;
         for (uint256 i; i < chainIds.length; i++) {
             uint256 chainId = chainIds[i];
 
@@ -182,14 +187,14 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
                 currentChainIndex = i;
                 continue;
             }
-            (uint256 feeAmountGmx, uint256 stakedGmx) = decodeReadData(receivedData.readData, remoteChainIndex);
+            (uint256 feeAmountGmx, uint256 stakedGmx) = decodeReadData(receivedData.readData, targetChainIndex);
             feeAmountsGmx[i] = feeAmountGmx;
             stakedAmountsGmx[i] = stakedGmx;
             totalFeeAmountGmx += feeAmountGmx;
             totalStakedGmx += stakedGmx;
             setUint(Keys.feeDistributorFeeAmountGmxKey(chainId), feeAmountGmx);
             setUint(Keys.feeDistributorStakedGmxKey(chainId), stakedGmx);
-            remoteChainIndex++;
+            targetChainIndex++;
         }
         setUint(Keys.FEE_DISTRIBUTOR_TOTAL_FEE_AMOUNT_GMX, totalFeeAmountGmx);
         setUint(Keys.FEE_DISTRIBUTOR_TOTAL_STAKED_GMX, totalStakedGmx);
@@ -256,10 +261,8 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         uint256 grossGmxReceived = requiredGmxAmount - origFeeAmountGmxCurrentChain;
         // the slippage factor used when bridging to account for bridging fees and potential slippage
         uint256 slippageFactor = getUint(Keys.feeDistributorBridgeSlippageFactorKey(block.chainid));
-        // additional absolute amount of slippage to account for rounding errors or other minor variances
-        uint256 additionalAllowedSlippage = getUint(Keys.FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_AMOUNT);
         // calculate the minimum acceptable amount of bridged GMX received, taking into account allowed slippage
-        uint256 minGmxReceived = Precision.applyFactor(grossGmxReceived, slippageFactor) - additionalAllowedSlippage;
+        uint256 minGmxReceived = Precision.applyFactor(grossGmxReceived, slippageFactor);
         // the minimum allowed GMX amount after bridging, taking into account slippage
         uint256 minRequiredGmxAmount = origFeeAmountGmxCurrentChain + minGmxReceived;
         // retrieve the current GMX available to distribute now that bridging has been completed
@@ -381,7 +384,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
                 transferOut(token, account, esGmxAmount);
                 totalTokensSent += esGmxAmount;
 
-                address vester = getAddress(block.chainid, esGmxVesterKey);
+                address vester = getAddress(block.chainid, ESGMX_VESTER);
                 uint256 updatedBonusRewards = IVester(vester).bonusRewards(account) + esGmxAmount;
                 IVester(vester).setBonusRewards(account, updatedBonusRewards);
 
@@ -455,7 +458,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
 
     function bridgeGmx(uint256[] memory chainIds, uint256[] memory bridgingAmounts) internal returns (uint256) {
         // Execute bridging transactions from current chain
-        address layerzeroOft = getAddress(block.chainid, layerzeroOftKey);
+        address layerzeroOft = getAddress(block.chainid, LAYERZERO_OFT);
         uint256 sharedDecimals = IOFT(layerzeroOft).sharedDecimals();
         uint256 decimalConversionRate = 10 ** (18 - sharedDecimals);
         uint256 totalGmxBridgedOut;
@@ -486,9 +489,9 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
                 to,
                 sendAmount,
                 minAmountOut,
-                bytes(""),
-                bytes(""),
-                bytes("")
+                EMPTY_BYTES,
+                EMPTY_BYTES,
+                EMPTY_BYTES
             );
             MessagingFee memory messagingFee = IOFT(layerzeroOft).quoteSend(sendParam, false);
 
@@ -536,14 +539,14 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         }
 
         // transfer the WNT for chainlink costs and WNT to the treasury
-        transferOut(wnt, getAddress(block.chainid, chainlinkKey), wntForChainlink);
-        transferOut(wnt, getAddress(block.chainid, treasuryKey), wntForTreasury);
+        transferOut(wnt, getAddress(block.chainid, CHAINLINK), wntForChainlink);
+        transferOut(wnt, getAddress(block.chainid, TREASURY), wntForTreasury);
 
         // update the reward distribution details and transfer the WNT and GMX fees for GLP and GMX
-        updateRewardDistribution(wnt, getAddress(block.chainid, feeGlpTrackerKey), wntForGlp);
+        updateRewardDistribution(wnt, getAddress(block.chainid, FEE_GLP_TRACKER), wntForGlp);
         updateRewardDistribution(
             gmx,
-            getAddress(block.chainid, extendedGmxTrackerKey),
+            getAddress(block.chainid, EXTENDED_GMX_TRACKER),
             getUint(Keys.feeDistributorFeeAmountGmxKey(block.chainid))
         );
     }
@@ -585,8 +588,6 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         providers[0] = getAddress(Keys.oracleProviderForTokenKey(gmx));
         providers[1] = getAddress(Keys.oracleProviderForTokenKey(wnt));
         bytes[] memory data = new bytes[](2);
-        data[0] = "";
-        data[1] = "";
         return (OracleUtils.SetPricesParams(tokens, providers, data));
     }
 
@@ -691,7 +692,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
             revert Errors.WntReferralRewardsInUsdLimitExceeded(wntReferralRewardsInUsd, wntReferralRewardsInUsdLimit);
         }
 
-        uint256 wntForReferralRewardsThreshold = getUint(Keys.feeDistributorAmountThresholdKey(referralRewardsWntKey));
+        uint256 wntForReferralRewardsThreshold = getUint(Keys.feeDistributorAmountThresholdKey(REFERRAL_REWARDS_WNT));
         uint256 maxWntReferralRewardsInUsd = Precision.applyFactor(feesV1Usd, wntForReferralRewardsThreshold);
         if (wntReferralRewardsInUsd > maxWntReferralRewardsInUsd) {
             revert Errors.WntReferralRewardsInUsdThresholdBreached(wntReferralRewardsInUsd, maxWntReferralRewardsInUsd);
@@ -714,10 +715,10 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         uint256 wntForGlp
     ) internal view returns (uint256, uint256) {
         uint256 expectedWntForGlp = totalWntBalance - wntForChainlink - wntForTreasury + keeperCostsTreasury;
-        uint256 glpFeeThreshold = getUint(Keys.feeDistributorAmountThresholdKey(glpKey));
+        uint256 glpFeeThreshold = getUint(Keys.feeDistributorAmountThresholdKey(GLP));
         uint256 minWntForGlp = Precision.applyFactor(expectedWntForGlp, glpFeeThreshold);
         if (wntForGlp < minWntForGlp) {
-            uint256 treasuryFeeThreshold = getUint(Keys.feeDistributorAmountThresholdKey(treasuryKey));
+            uint256 treasuryFeeThreshold = getUint(Keys.feeDistributorAmountThresholdKey(TREASURY));
             uint256 minTreasuryWntAmount = Precision.applyFactor(wntForTreasury, treasuryFeeThreshold);
             uint256 wntGlpShortfall = minWntForGlp - wntForGlp;
             uint256 maxTreasuryWntShortfall = wntForTreasury - minTreasuryWntAmount;
@@ -808,9 +809,9 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
 
     function decodeReadData(
         bytes calldata readData,
-        uint256 remoteChainIndex
+        uint256 targetChainIndex
     ) internal pure returns (uint256, uint256) {
-        uint256 offset = remoteChainIndex * 96;
+        uint256 offset = targetChainIndex * 96;
         (uint256 feeAmountGmx1, uint256 feeAmountGmx2, uint256 stakedGmx) = abi.decode(
             readData[offset:(offset + 96)],
             (uint256, uint256, uint256)

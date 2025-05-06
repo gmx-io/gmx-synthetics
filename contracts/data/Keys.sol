@@ -555,8 +555,6 @@ library Keys {
     bytes32 public constant FEE_DISTRIBUTOR_TOTAL_STAKED_GMX = keccak256(abi.encode("FEE_DISTRIBUTOR_TOTAL_STAKED_GMX"));
     // @dev key for FeeDistributor bridging slippage factor
     bytes32 public constant FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_FACTOR = keccak256(abi.encode("FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_FACTOR"));
-    // @dev key for FeeDistributor fee slippage amount representing allowed slippage after bridging slippage
-    bytes32 public constant FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_AMOUNT = keccak256(abi.encode("FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_AMOUNT"));
     // @dev key for FeeDistributor read response timestamp
     bytes32 public constant FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP = keccak256(abi.encode("FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP"));
     // @dev key for FeeDistributor LayerZero version of chainId
@@ -571,10 +569,6 @@ library Keys {
     bytes32 public constant FEE_DISTRIBUTOR_KEEPER_GLP_FACTOR = keccak256(abi.encode("FEE_DISTRIBUTOR_KEEPER_GLP_FACTOR"));
     // @dev key for FeeDistributor chainlink factor used to determine total chainlink fees paid
     bytes32 public constant FEE_DISTRIBUTOR_CHAINLINK_FACTOR = keccak256(abi.encode("FEE_DISTRIBUTOR_CHAINLINK_FACTOR"));
-    // @dev key for FeeDistributor bridging origin deadline in seconds
-    bytes32 public constant FEE_DISTRIBUTOR_BRIDGE_ORIGIN_DEADLINE = keccak256(abi.encode("FEE_DISTRIBUTOR_BRIDGE_ORIGIN_DEADLINE"));
-    // @dev key for FeeDistributor bridging destination deadline in seconds
-    bytes32 public constant FEE_DISTRIBUTOR_BRIDGE_DEST_DEADLINE = keccak256(abi.encode("FEE_DISTRIBUTOR_BRIDGE_DEST_DEADLINE"));
     // @dev key for FeeDistributor total referral rewards sent in a given week
     bytes32 public constant FEE_DISTRIBUTOR_REFERRAL_REWARDS_SENT = keccak256(abi.encode("FEE_DISTRIBUTOR_REFERRAL_REWARDS_SENT"));
 
@@ -2420,20 +2414,6 @@ library Keys {
     // @return key for FeeDistributor amount threshold for the specified type
     function feeDistributorAmountThresholdKey(bytes32 amountThresholdType) internal pure returns (bytes32) {
         return keccak256(abi.encode(FEE_DISTRIBUTOR_AMOUNT_THRESHOLD, amountThresholdType));
-    }
-
-    // @dev key for FeeDistributor bridging origin deadline in seconds
-    // @param chainId the chainId for the chain
-    // @return key for FeeDistributor bridging origin deadline
-    function feeDistributorBridgeOriginDeadlineKey(uint256 chainId) internal pure returns (bytes32) {
-        return keccak256(abi.encode(FEE_DISTRIBUTOR_BRIDGE_ORIGIN_DEADLINE, chainId));
-    }
-
-    // @dev key for FeeDistributor bridging destination deadline in seconds
-    // @param chainId the chainId for the chain
-    // @return key for FeeDistributor bridging destination deadline
-    function feeDistributorBridgeDestDeadlineKey(uint256 chainId) internal pure returns (bytes32) {
-        return keccak256(abi.encode(FEE_DISTRIBUTOR_BRIDGE_DEST_DEADLINE, chainId));
     }
 
     // @dev key for FeeDistributor referral rewards sent in a given week
