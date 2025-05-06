@@ -27,7 +27,7 @@ contract MockGelatoRelayRouter is GelatoRelayRouter {
     ) GelatoRelayRouter(_router, _roleStore, _dataStore, _eventEmitter, _oracle, _orderHandler, _orderVault, _externalHandler) {}
 
     function testCancelOrderSignature(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         bytes32 key,
         address account,
         uint256 chainId

@@ -14,90 +14,18 @@ import "../../swap/SwapUtils.sol";
 import "../../order/IBaseOrderUtils.sol";
 import { SubaccountApproval } from "../../subaccount/SubaccountUtils.sol";
 
-import "../../deposit/DepositUtils.sol";
-import "../../glv/glvDeposit/GlvDepositUtils.sol";
-import "../../withdrawal/WithdrawalUtils.sol";
-import "../../glv/glvWithdrawal/GlvWithdrawalUtils.sol";
-import "../../shift/ShiftUtils.sol";
+import "../../deposit/IDepositUtils.sol";
+import "../../glv/glvDeposit/IGlvDepositUtils.sol";
+import "../../withdrawal/IWithdrawalUtils.sol";
+import "../../glv/glvWithdrawal/IGlvWithdrawalUtils.sol";
+import "../../shift/IShiftUtils.sol";
+
+import "./IRelayUtils.sol";
 
 struct Contracts {
     DataStore dataStore;
     OrderVault orderVault;
     address wnt;
-}
-
-struct FeeParams {
-    // 1. if no swap is needed then `feeToken` should be WNT address, `feeAmount` should be correct amount and `feeSwapPath` should be empty
-    // 2. if GMX v2 swap is used to swap relay fee then `feeToken` should be the address of the input token,
-    //    `feeAmount` should be the amount of the input token enough to cover the relay fee in WNT, and `feeSwapPath` should be the list of markets
-    //    through which the input token should be swapped to get the output token
-    // 3. if external calls are used then `feeToken` should be WNT address (even though the input token is different)
-    //    `feeAmount` should be 0 because the input token and amount will be specified in `externalCalls`
-    //    `feeSwapPath` should be empty
-    address feeToken;
-    uint256 feeAmount;
-    address[] feeSwapPath;
-}
-
-struct TokenPermit {
-    // EIP-2612 permit https://eips.ethereum.org/EIPS/eip-2612
-    address owner;
-    address spender;
-    uint256 value;
-    uint256 deadline;
-    uint8 v;
-    bytes32 r;
-    bytes32 s;
-    address token;
-}
-
-// external calls could be used to swap relay fee and/or position collateral
-// GMX v2 swaps consume relatively a lot of gas, so using external calls could reduce txn fee
-// for relay fee the funds should be sent to the RelayRouter contract
-// for position collateral the funds should be sent to the OrderVault contract
-//
-// @note when using external calls for position collateral and creating multiple orders via `batch()`
-// then the funds will be allocated to the first increase order because all external calls are processed first
-// and only then OrderVault's balance is used for order's initialCollateralDeltaAmount
-//
-// @note using external calls for position collateral and atomic swaps for relay fee at the same time should be done with caution
-// if position collateral and initial relay fee token are the same then the collateral will be lost
-// for example, a user wants to pay ARB to open a position with USDC as collateral and pay USDC as a relay fee
-// 1. external calls swap ARB for USDC and sends USDC to the OrderVault to use as position collateral
-// 2. USDC is sent to the OrderVault before the swap
-// 3. on swap OrderVault.tokenBalances are synced
-// 4. on order creation OrderVault.recordTransferInt returns 0
-// 5. the collateral is lost
-struct ExternalCalls {
-    // Gelato Relay Router contracts do not support `multicall` and `sendTokens` methods
-    // so all tokens and amounts should be specified here
-    address[] sendTokens; // tokens to send to ExternalHandler
-    uint256[] sendAmounts; // tokens amounts to send to ExternalHandler
-    // lists of external calls to be made
-    address[] externalCallTargets; // external targets to call
-    bytes[] externalCallDataList; // external call data list
-    // refundTokens and refundReceivers are used to send residual funds left in the ExchangeHandler
-    // for example, if "swapExactOut" is used some amount of "tokenIn" could be lefts
-    address[] refundTokens; // tokens to refund to user
-    address[] refundReceivers; // receivers of the refunds
-}
-
-struct RelayParams {
-    // oracle params are used for relay fee swap through GMX v2 pools
-    // if swap is not needed then `oracleParams` values should be empty
-    OracleUtils.SetPricesParams oracleParams;
-    ExternalCalls externalCalls;
-    // token permits could be used to approve spending of tokens by the Router contract
-    // instead of sending separate approval transactions
-    TokenPermit[] tokenPermits;
-    FeeParams fee;
-    // should be retrieved from userNonces(account)
-    uint256 userNonce;
-    // deadline for the transaction. should be used for extra safety so signed message
-    // can't be used in future if a user signs and forgets about it
-    uint256 deadline;
-    bytes signature;
-    uint256 desChainId;
 }
 
 // @note all params except account should be part of the corresponding struct hash
@@ -118,19 +46,6 @@ struct BatchParams {
     IBaseOrderUtils.CreateOrderParams[] createOrderParamsList;
     UpdateOrderParams[] updateOrderParamsList;
     bytes32[] cancelOrderKeys;
-}
-
-struct TransferRequests {
-    address[] tokens;
-    address[] receivers;
-    uint256[] amounts;
-}
-
-struct BridgeOutParams {
-    address token;
-    uint256 amount;
-    address provider;
-    bytes data; // provider specific data e.g. dstEid
 }
 
 string constant UPDATE_ORDER_PARAMS = "UpdateOrderParams(bytes32 key,uint256 sizeDeltaUsd,uint256 acceptablePrice,uint256 triggerPrice,uint256 minOutputAmount,uint256 validFromTime,bool autoCancel,uint256 executionFeeIncrease)";
@@ -317,7 +232,7 @@ library RelayUtils {
         Contracts memory contracts,
         EventEmitter eventEmitter,
         Oracle oracle,
-        FeeParams calldata fee
+        IRelayUtils.FeeParams calldata fee
     ) external {
         oracle.validateSequencerUp();
 
@@ -348,7 +263,7 @@ library RelayUtils {
         }
     }
 
-    function _getRelayParamsHash(RelayParams calldata relayParams) private pure returns (bytes32) {
+    function _getRelayParamsHash(IRelayUtils.RelayParams calldata relayParams) private pure returns (bytes32) {
         return
             keccak256(
                 abi.encode(
@@ -364,7 +279,7 @@ library RelayUtils {
     }
 
     function getRemoveSubaccountStructHash(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address subaccount
     ) external pure returns (bytes32) {
         return keccak256(abi.encode(REMOVE_SUBACCOUNT_TYPEHASH, subaccount, _getRelayParamsHash(relayParams)));
@@ -390,7 +305,7 @@ library RelayUtils {
     }
 
     function getCreateOrderStructHash(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
         address account,
         IBaseOrderUtils.CreateOrderParams memory params
@@ -419,7 +334,7 @@ library RelayUtils {
     }
 
     function getCreateOrderStructHash(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         IBaseOrderUtils.CreateOrderParams memory params
     ) external pure returns (bytes32) {
         bytes32 relayParamsHash = _getRelayParamsHash(relayParams);
@@ -482,14 +397,14 @@ library RelayUtils {
     }
 
     function getUpdateOrderStructHash(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         UpdateOrderParams calldata params
     ) external pure returns (bytes32) {
         return _getUpdateOrderStructHash(relayParams, bytes32(0), address(0), params);
     }
 
     function getUpdateOrderStructHash(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
         address account,
         UpdateOrderParams calldata params
@@ -498,7 +413,7 @@ library RelayUtils {
     }
 
     function _getUpdateOrderStructHash(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         bytes32 subaccountApprovalHash,
         address account,
         UpdateOrderParams calldata params
@@ -533,7 +448,7 @@ library RelayUtils {
     }
 
     function getCancelOrderStructHash(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
         address account,
         bytes32 key
@@ -541,12 +456,12 @@ library RelayUtils {
         return _getCancelOrderStructHash(relayParams, keccak256(abi.encode(subaccountApproval)), account, key);
     }
 
-    function getCancelOrderStructHash(RelayParams calldata relayParams, bytes32 key) external pure returns (bytes32) {
+    function getCancelOrderStructHash(IRelayUtils.RelayParams calldata relayParams, bytes32 key) external pure returns (bytes32) {
         return _getCancelOrderStructHash(relayParams, bytes32(0), address(0), key);
     }
 
     function _getCancelOrderStructHash(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         bytes32 subaccountApprovalHash,
         address account,
         bytes32 key
@@ -584,7 +499,7 @@ library RelayUtils {
     }
 
     function getBatchStructHash(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
         address account,
         BatchParams calldata params
@@ -601,7 +516,7 @@ library RelayUtils {
     }
 
     function getBatchStructHash(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         BatchParams calldata params
     ) external pure returns (bytes32) {
         return
@@ -616,7 +531,7 @@ library RelayUtils {
     }
 
     function _getBatchStructHash(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         bytes32 subaccountApprovalHash,
         address account,
         IBaseOrderUtils.CreateOrderParams[] calldata createOrderParamsList,
@@ -660,7 +575,7 @@ library RelayUtils {
     //////////////////// MULTICHAIN ////////////////////
 
     function getClaimFundingFeesStructHash(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address[] memory markets,
         address[] memory tokens,
         address receiver
@@ -678,7 +593,7 @@ library RelayUtils {
     }
 
     function getClaimCollateralStructHash(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address[] memory markets,
         address[] memory tokens,
         uint256[] memory timeKeys,
@@ -698,7 +613,7 @@ library RelayUtils {
     }
 
     function getClaimAffiliateRewardsStructHash(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address[] memory markets,
         address[] memory tokens,
         address receiver
@@ -716,9 +631,9 @@ library RelayUtils {
     }
 
     function getCreateDepositStructHash(
-        RelayParams calldata relayParams,
-        TransferRequests calldata transferRequests,
-        DepositUtils.CreateDepositParams memory params
+        IRelayUtils.RelayParams calldata relayParams,
+        IRelayUtils.TransferRequests calldata transferRequests,
+        IDepositUtils.CreateDepositParams memory params
     ) external pure returns (bytes32) {
         return
             keccak256(
@@ -739,7 +654,7 @@ library RelayUtils {
     }
 
     function _getCreateDepositAdressesStructHash(
-        DepositUtils.CreateDepositParamsAddresses memory addresses
+        IDepositUtils.CreateDepositParamsAddresses memory addresses
     ) private pure returns (bytes32) {
         return
             keccak256(
@@ -758,9 +673,9 @@ library RelayUtils {
     }
 
     function getCreateGlvDepositStructHash(
-        RelayParams calldata relayParams,
-        TransferRequests calldata transferRequests,
-        GlvDepositUtils.CreateGlvDepositParams memory params
+        IRelayUtils.RelayParams calldata relayParams,
+        IRelayUtils.TransferRequests calldata transferRequests,
+        IGlvDepositUtils.CreateGlvDepositParams memory params
     ) external pure returns (bytes32) {
         return
             keccak256(
@@ -782,7 +697,7 @@ library RelayUtils {
     }
 
     function _getCreateGlvDepositAddressesStructHash(
-        GlvDepositUtils.CreateGlvDepositParamsAddresses memory addresses
+        IGlvDepositUtils.CreateGlvDepositParamsAddresses memory addresses
     ) private pure returns (bytes32) {
         return
             keccak256(
@@ -802,9 +717,9 @@ library RelayUtils {
     }
 
     function getCreateWithdrawalStructHash(
-        RelayParams calldata relayParams,
-        TransferRequests calldata transferRequests,
-        WithdrawalUtils.CreateWithdrawalParams memory params
+        IRelayUtils.RelayParams calldata relayParams,
+        IRelayUtils.TransferRequests calldata transferRequests,
+        IWithdrawalUtils.CreateWithdrawalParams memory params
     ) external pure returns (bytes32) {
         return
             keccak256(
@@ -826,7 +741,7 @@ library RelayUtils {
     }
 
     function _getCreateWithdrawalAddressesStructHash(
-        WithdrawalUtils.CreateWithdrawalParamsAddresses memory addresses
+        IWithdrawalUtils.CreateWithdrawalParamsAddresses memory addresses
     ) private pure returns (bytes32) {
         return
             keccak256(
@@ -843,9 +758,9 @@ library RelayUtils {
     }
 
     function getCreateShiftStructHash(
-        RelayParams calldata relayParams,
-        TransferRequests calldata transferRequests,
-        ShiftUtils.CreateShiftParams memory params
+        IRelayUtils.RelayParams calldata relayParams,
+        IRelayUtils.TransferRequests calldata transferRequests,
+        IShiftUtils.CreateShiftParams memory params
     ) external pure returns (bytes32) {
         return
             keccak256(
@@ -865,7 +780,7 @@ library RelayUtils {
     }
 
     function _getCreateShiftAddressesStructHash(
-        ShiftUtils.CreateShiftParamsAddresses memory addresses
+        IShiftUtils.CreateShiftParamsAddresses memory addresses
     ) private pure returns (bytes32) {
         return
             keccak256(
@@ -881,9 +796,9 @@ library RelayUtils {
     }
 
     function getCreateGlvWithdrawalStructHash(
-        RelayParams calldata relayParams,
-        TransferRequests calldata transferRequests,
-        GlvWithdrawalUtils.CreateGlvWithdrawalParams memory params
+        IRelayUtils.RelayParams calldata relayParams,
+        IRelayUtils.TransferRequests calldata transferRequests,
+        IGlvWithdrawalUtils.CreateGlvWithdrawalParams memory params
     ) external pure returns (bytes32) {
         return
             keccak256(
@@ -905,7 +820,7 @@ library RelayUtils {
     }
 
     function _getCreateGlvWithdrawalAddressesStructHash(
-        GlvWithdrawalUtils.CreateGlvWithdrawalParamsAddresses memory addresses
+        IGlvWithdrawalUtils.CreateGlvWithdrawalParamsAddresses memory addresses
     ) private pure returns (bytes32) {
         return
             keccak256(
@@ -923,8 +838,8 @@ library RelayUtils {
     }
 
     function getBridgeOutStructHash(
-        RelayParams calldata relayParams,
-        BridgeOutParams memory params
+        IRelayUtils.RelayParams calldata relayParams,
+        IRelayUtils.BridgeOutParams memory params
     ) external pure returns (bytes32) {
         return
             keccak256(

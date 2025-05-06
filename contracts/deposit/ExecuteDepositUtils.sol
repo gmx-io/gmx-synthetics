@@ -14,6 +14,7 @@ import "../oracle/Oracle.sol";
 import "../position/PositionUtils.sol";
 
 import "../multichain/MultichainUtils.sol";
+import "../multichain/IMultichainTransferRouter.sol";
 
 import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
@@ -45,6 +46,7 @@ library ExecuteDepositUtils {
         DataStore dataStore;
         EventEmitter eventEmitter;
         MultichainVault multichainVault;
+        IMultichainTransferRouter multichainTransferRouter;
         DepositVault depositVault;
         Oracle oracle;
         bytes32 key;
@@ -284,6 +286,16 @@ library ExecuteDepositUtils {
         cache.callbackEventData.uintItems.setItem(0, "receivedMarketTokens", cache.receivedMarketTokens);
         CallbackUtils.afterDepositExecution(params.key, deposit, cache.callbackEventData);
 
+        // use deposit.dataList to determine if the GM tokens minted should be bridged out to src chain
+        bridgeOutFromController(
+            params.multichainTransferRouter,
+            deposit.receiver(), // account
+            deposit.srcChainId(),
+            cache.market.marketToken, // token
+            cache.receivedMarketTokens, // amount
+            deposit.dataList()
+        );
+
         GasUtils.payExecutionFee(
             GasUtils.PayExecutionFeeContracts(
                 params.dataStore,
@@ -302,6 +314,44 @@ library ExecuteDepositUtils {
         );
 
         return cache.receivedMarketTokens;
+    }
+
+    /// @dev abi.decode can fail if dataList is not properly formed, which would cause the deposit to be cancelled
+    /// @dev first item of dataList should be the GMX_DATA_ACTION hash if dataList is intended to be used for bridging out tokens
+    function bridgeOutFromController(
+        IMultichainTransferRouter multichainTransferRouter,
+        address account,
+        uint256 srcChainId,
+        address token,
+        uint256 amount,
+        bytes32[] memory dataList
+    ) public {
+        if (dataList.length == 0 || dataList[0] != Keys.GMX_DATA_ACTION) {
+            return;
+        }
+
+        bytes memory data = Array.dataArrayToBytes(dataList);
+
+        (IMultichainProvider.ActionType actionType, bytes memory actionData) = abi.decode(
+            data,
+            (IMultichainProvider.ActionType, bytes)
+        );
+
+        if (actionType == IMultichainProvider.ActionType.BridgeOut) {
+            (IRelayUtils.RelayParams memory relayParams, address provider, bytes memory providerData /* e.g. dstEid */) = abi.decode(
+                actionData,
+                (IRelayUtils.RelayParams, address, bytes)
+            );
+
+            IRelayUtils.BridgeOutParams memory bridgeOutParams = IRelayUtils.BridgeOutParams({
+                token: token,
+                amount: amount,
+                provider: provider,
+                data: providerData
+            });
+
+            multichainTransferRouter.bridgeOutFromController(relayParams, account, srcChainId, bridgeOutParams);
+        }
     }
 
     // @dev executes a deposit

@@ -30,7 +30,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
 
     // @note all params except subaccount should be part of the corresponding struct hash
     function batch(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
         address account,
         address subaccount,
@@ -75,7 +75,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
 
     // @note all params except subaccount should be part of the corresponding struct hash
     function createOrder(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
         address account, // main account
         address subaccount,
@@ -102,7 +102,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
 
     // @note all params except subaccount should be part of the corresponding struct hash
     function updateOrder(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
         address account, // main account
         address subaccount,
@@ -121,7 +121,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
 
     // @note all params except subaccount should be part of the corresponding struct hash
     function cancelOrder(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
         address account, // main account
         address subaccount,
@@ -135,7 +135,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
 
     // @note all params except account should be part of the corresponding struct hash
     function removeSubaccount(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         address subaccount
     ) external nonReentrant withRelay(relayParams, account, 0 /* srcChainId is the current block.chainId */, false) {

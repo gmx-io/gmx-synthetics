@@ -33,14 +33,7 @@ const func = createDeployFunction({
 
     return [baseParams];
   },
-  libraryNames: [
-    "MultichainUtils",
-    "OrderStoreUtils",
-    "RelayUtils",
-    "SubaccountUtils",
-    "SubaccountRouterUtils",
-    "MarketUtils",
-  ],
+  libraryNames: ["MultichainUtils", "OrderStoreUtils", "RelayUtils", "SubaccountUtils", "SubaccountRouterUtils"],
 
   afterDeploy: async ({ deployedContract }) => {
     await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");

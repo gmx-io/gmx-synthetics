@@ -12,11 +12,12 @@ import { IStargate } from "@stargatefinance/stg-evm-v2/src/interfaces/IStargate.
 
 import "../event/EventEmitter.sol";
 import "../data/DataStore.sol";
+import "../deposit/IDepositUtils.sol";
+import "../utils/Cast.sol";
 
-import "./MultichainVault.sol";
-import "./MultichainUtils.sol";
-import "./IMultichainProvider.sol";
-import "./MultichainProviderUtils.sol";
+import "./MultichainGmRouter.sol";
+import "./MultichainGlvRouter.sol";
+
 
 /**
  * @title LayerZeroProvider
@@ -40,20 +41,36 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
     MultichainVault public immutable multichainVault;
+    MultichainGmRouter public immutable multichainGmRouter;
+    MultichainGlvRouter public immutable multichainGlvRouter;
 
     constructor(
         DataStore _dataStore,
         RoleStore _roleStore,
         EventEmitter _eventEmitter,
-        MultichainVault _multichainVault
+        MultichainVault _multichainVault,
+        MultichainGmRouter _multichainGmRouter,
+        MultichainGlvRouter _multichainGlvRouter
     ) RoleModule(_roleStore) {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
         multichainVault = _multichainVault;
+        multichainGmRouter = _multichainGmRouter;
+        multichainGlvRouter = _multichainGlvRouter;
     }
 
     /**
-     * Called by Stargate after tokens have been delivered to this contract.
+     * @notice Called by Stargate after tokens have been delivered to this contract.
+     * @dev Handles the receipt of bridged tokens and optionally executes a deposit action.
+     *
+     * @dev If a user bridges tokens with deposit data, and already has sufficient funds in their multichain balance,
+     * it is possible for multiple bridge transactions to result in multiple deposits (i.e. double mints).
+     * For example, if a user bridges 10 WETH and 20,000 USDC, both with deposit data, and already has enough funds,
+     * both bridge transactions could result in a deposit.
+     * 
+     * @dev It is recommended that the interface or frontend enforces that users only bridge amounts that would not
+     * result in double deposits.
+     *
      * @param from The address of the sender (i.e. Stargate address, not user's address).
      * param guid A global unique identifier for tracking the packet.
      * @param message Encoded message. Contains the params needed to record the deposit (account, srcChainId)
@@ -73,7 +90,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         uint256 amountLD = OFTComposeMsgCodec.amountLD(message);
 
         bytes memory composeMessage = OFTComposeMsgCodec.composeMsg(message);
-        (address account, uint256 srcChainId) = MultichainProviderUtils.decodeDeposit(composeMessage);
+        (address account, uint256 srcChainId, bytes memory data) = _decodeLzComposeMsg(composeMessage);
 
         address token = IStargate(from).token();
         if (token == address(0x0)) {
@@ -96,6 +113,15 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             amountLD,
             srcChainId
         );
+
+        if (data.length != 0) {
+            (ActionType actionType, bytes memory actionData) = _decodeLzComposeMsgData(data);
+            if (actionType == ActionType.Deposit) {
+                _handleDepositFromBridge(from, account, srcChainId, actionType, actionData);
+            } else if (actionType == ActionType.GlvDeposit) {
+                _handleGlvDepositFromBridge(from, account, srcChainId, actionType, actionData);
+            }
+        }
     }
 
     /**
@@ -250,7 +276,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
     {
         sendParam = SendParam({
             dstEid: _dstEid,
-            to: MultichainProviderUtils.addressToBytes32(receiver),
+            to: Cast.toBytes32(receiver),
             amountLD: amount,
             minAmountLD: amount,
             extraOptions: bytes(""),
@@ -266,6 +292,95 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
 
         if (stargate.token() == address(0x0)) {
             valueToSend += receipt.amountSentLD;
+        }
+    }
+
+    function _decodeLzComposeMsg(bytes memory message) private pure returns (address, uint256, bytes memory) {
+        return abi.decode(message, (address, uint256, bytes));
+    }
+
+    function _decodeLzComposeMsgData(bytes memory data) private pure returns (ActionType, bytes memory) {
+        return abi.decode(data, (ActionType, bytes));
+    }
+
+    function _areValidTransferRequests(IRelayUtils.TransferRequests memory transferRequests) private pure returns (bool) {
+        if (
+            transferRequests.tokens.length != transferRequests.receivers.length ||
+            transferRequests.tokens.length != transferRequests.amounts.length
+        ) {
+            return false;
+        }
+        for (uint256 i = 0; i < transferRequests.tokens.length; i++) {
+            if (
+                transferRequests.tokens[i] == address(0) ||
+                transferRequests.receivers[i] == address(0) ||
+                transferRequests.amounts[i] == 0
+            ) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function _handleDepositFromBridge(
+        address from,
+        address account,
+        uint256 srcChainId,
+        ActionType actionType,
+        bytes memory actionData
+    ) private {
+        (
+            IRelayUtils.RelayParams memory relayParams,
+            IRelayUtils.TransferRequests memory transferRequests,
+            IDepositUtils.CreateDepositParams memory depositParams
+        ) = abi.decode(actionData, (IRelayUtils.RelayParams, IRelayUtils.TransferRequests, IDepositUtils.CreateDepositParams));
+        
+        if (_areValidTransferRequests(transferRequests)) {
+            try multichainGmRouter.createDepositFromBridge(
+                relayParams,
+                account,
+                srcChainId,
+                transferRequests,
+                depositParams
+            ) returns (bytes32 key) {
+                MultichainEventUtils.emitDepositFromBridge(eventEmitter, from, account, srcChainId, actionType, key);
+            } catch Error(string memory reason) {
+                MultichainEventUtils.emitDepositFromBridgeFailed(eventEmitter, from, account, srcChainId, actionType, reason);
+            } catch (bytes memory reasonBytes) {
+                (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
+                MultichainEventUtils.emitDepositFromBridgeFailed(eventEmitter, from, account, srcChainId, actionType, reason);
+            }
+        }
+    }
+
+    function _handleGlvDepositFromBridge(
+        address from,
+        address account,
+        uint256 srcChainId,
+        ActionType actionType,
+        bytes memory actionData
+    ) private {
+        (
+            IRelayUtils.RelayParams memory relayParams,
+            IRelayUtils.TransferRequests memory transferRequests,
+            IGlvDepositUtils.CreateGlvDepositParams memory glvDepositParams
+        ) = abi.decode(actionData, (IRelayUtils.RelayParams, IRelayUtils.TransferRequests, IGlvDepositUtils.CreateGlvDepositParams));
+        
+        if (_areValidTransferRequests(transferRequests)) {
+            try multichainGlvRouter.createGlvDepositFromBridge(
+                relayParams,
+                account,
+                srcChainId,
+                transferRequests,
+                glvDepositParams
+            ) returns (bytes32 key) {
+                MultichainEventUtils.emitDepositFromBridge(eventEmitter, from, account, srcChainId, actionType, key);
+            } catch Error(string memory reason) {
+                MultichainEventUtils.emitDepositFromBridgeFailed(eventEmitter, from, account, srcChainId, actionType, reason);
+            } catch (bytes memory reasonBytes) {
+                (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
+                MultichainEventUtils.emitDepositFromBridgeFailed(eventEmitter, from, account, srcChainId, actionType, reason);
+            }
         }
     }
 

@@ -595,6 +595,10 @@ export function atomicSwapFeeFactorKey(market: string) {
   return hashData(["bytes32", "address"], [ATOMIC_SWAP_FEE_FACTOR, market]);
 }
 
+export function atomicWithdrawalFeeFactorKey(market: string) {
+  return hashData(["bytes32", "address"], [ATOMIC_WITHDRAWAL_FEE_FACTOR, market]);
+}
+
 export function swapImpactFactorKey(market: string, isPositive: boolean) {
   return hashData(["bytes32", "address", "bool"], [SWAP_IMPACT_FACTOR, market, isPositive]);
 }

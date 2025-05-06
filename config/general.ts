@@ -76,7 +76,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     holdingAddress: "0x3f59203ea1c66527422998b54287e1efcacbe2c5",
     sequencerUptimeFeed: ethers.constants.AddressZero,
     sequencerGraceDuration: 300,
-    maxUiFeeFactor: percentageToFloat("0.05%"),
+    maxUiFeeFactor: percentageToFloat("0.1%"),
     maxAutoCancelOrders: 6,
     maxTotalCallbackGasLimitForAutoCancelOrders: 5_000_000,
     minHandleExecutionErrorGas: 1_200_000,
@@ -131,7 +131,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
 
     gelatoRelayFeeMultiplierFactor: percentageToFloat("107%"), // Relay premium 6% + 1% for swapping collected fees and bridging to Polygon
     gelatoRelayFeeBaseAmount: 50000, // 21000 is base gas, ~10k GelatoRelay gas, some logic after the relay fee is calculated
-    relayFeeAddress: "0x3f59203ea1c66527422998b54287e1efcacbe2c5", // same as holding address. better to have a separate address for the relay fee
+    relayFeeAddress: "0xDA1b841A21FEF1ad1fcd5E19C1a9D682FB675258",
     maxRelayFeeUsdForSubaccount: decimalToFloat(100),
   };
 
@@ -162,6 +162,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       executionGasPerOraclePrice: false,
       estimatedGasFeeBaseAmount: false,
       executionGasFeeBaseAmount: false,
+      estimatedGasFeeMultiplierFactor: false,
+      executionGasFeeMultiplierFactor: false,
       sequencerUptimeFeed: "0xFdB631F5EE196F0ed6FAa767959853A9F217697D",
 
       increaseOrderGasLimit: 3_000_000,

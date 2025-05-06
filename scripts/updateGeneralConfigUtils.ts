@@ -3,10 +3,10 @@ import hre, { network } from "hardhat";
 import prompts from "prompts";
 import { bigNumberify } from "../utils/math";
 import {
-  getFullKey,
-  appendUintConfigIfDifferent,
   appendAddressConfigIfDifferent,
   appendBoolConfigIfDifferent,
+  appendUintConfigIfDifferent,
+  getFullKey,
 } from "../utils/config";
 import * as keys from "../utils/keys";
 import { encodeData } from "../utils/hash";
@@ -242,13 +242,15 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
     }
   }
 
-  await handleConfig(
-    "uint",
-    keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR,
-    "0x",
-    generalConfig.estimatedGasFeeMultiplierFactor,
-    `estimatedGasFeeMultiplierFactor`
-  );
+  if (generalConfig.estimatedGasFeeMultiplierFactor) {
+    await handleConfig(
+      "uint",
+      keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR,
+      "0x",
+      generalConfig.estimatedGasFeeMultiplierFactor,
+      `estimatedGasFeeMultiplierFactor`
+    );
+  }
 
   if (generalConfig.executionGasFeeBaseAmount) {
     await handleConfig(
@@ -278,13 +280,15 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
     }
   }
 
-  await handleConfig(
-    "uint",
-    keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR,
-    "0x",
-    generalConfig.executionGasFeeMultiplierFactor,
-    `executionGasFeeMultiplierFactor`
-  );
+  if (generalConfig.executionGasFeeMultiplierFactor) {
+    await handleConfig(
+      "uint",
+      keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR,
+      "0x",
+      generalConfig.executionGasFeeMultiplierFactor,
+      `executionGasFeeMultiplierFactor`
+    );
+  }
 
   if (generalConfig.requestExpirationTime !== undefined) {
     await handleConfig(
@@ -323,12 +327,20 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
   );
 
   await handleConfig("uint", keys.GELATO_RELAY_FEE_BASE_AMOUNT, "0x", generalConfig.gelatoRelayFeeBaseAmount);
+  await handleConfig(
+    "uint",
+    keys.GELATO_RELAY_FEE_BASE_AMOUNT,
+    "0x",
+    generalConfig.gelatoRelayFeeBaseAmount,
+    "gelatoRelayFeeBaseAmount"
+  );
 
   await handleConfig(
     "uint",
     keys.GELATO_RELAY_FEE_MULTIPLIER_FACTOR,
     "0x",
-    generalConfig.gelatoRelayFeeMultiplierFactor
+    generalConfig.gelatoRelayFeeMultiplierFactor,
+    "gelatoRelayFeeMultiplierFactor"
   );
 
   await handleConfig("address", keys.RELAY_FEE_ADDRESS, "0x", generalConfig.relayFeeAddress, `relayFeeAddress`);
@@ -430,48 +442,22 @@ export async function updateGeneralConfig({ write }) {
     return;
   }
 
-  try {
-    if (!["hardhat"].includes(hre.network.name)) {
-      const { roles } = await hre.gmx.getRoles();
-      const configKeeper = Object.keys(roles.CONFIG_KEEPER)[0];
-      if (!configKeeper) {
-        throw new Error("No config keeper found");
-      }
-      await hre.deployments.read(
-        "Config",
-        {
-          from: configKeeper,
-        },
-        "multicall",
-        multicallWriteParams
-      );
-    }
+  const { roles } = await hre.gmx.getRoles();
+  const from = Object.keys(roles.CONFIG_KEEPER)[0];
+  await config.connect(from).callStatic.multicall(multicallWriteParams);
 
-    if (!write) {
-      ({ write } = await prompts({
-        type: "confirm",
-        name: "write",
-        message: "Do you want to execute the transactions?",
-      }));
-    }
+  if (!write) {
+    ({ write } = await prompts({
+      type: "confirm",
+      name: "write",
+      message: "Do you want to execute the transactions?",
+    }));
+  }
 
-    if (write) {
-      const tx = await config.multicall(multicallWriteParams);
-      console.log(`tx sent: ${tx.hash}`);
-    } else {
-      console.log("NOTE: executed in read-only mode, no transactions were sent");
-    }
-  } catch (ex) {
-    if (
-      ex.errorName === "InvalidBaseKey" &&
-      hre.network.name === "avalanche" &&
-      process.env.SKIP_GLV_LIMITS_AVALANCHE !== "true"
-    ) {
-      console.error(ex);
-      console.log("Use SKIP_GLV_LIMITS_AVALANCHE=true to skip updating GLV gas limits on Avalanche");
-      return;
-    }
-
-    throw ex;
+  if (write) {
+    const tx = await config.multicall(multicallWriteParams);
+    console.log(`tx sent: ${tx.hash}`);
+  } else {
+    console.log("NOTE: executed in read-only mode, no transactions were sent");
   }
 }

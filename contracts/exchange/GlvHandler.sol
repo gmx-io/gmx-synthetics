@@ -17,6 +17,7 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
     using GlvWithdrawal for GlvWithdrawal.Props;
 
     MultichainVault public immutable multichainVault;
+    IMultichainTransferRouter public immutable multichainTransferRouter;
     GlvVault public immutable glvVault;
     ShiftVault public immutable shiftVault;
 
@@ -26,10 +27,12 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
         EventEmitter _eventEmitter,
         Oracle _oracle,
         MultichainVault _multichainVault,
+        IMultichainTransferRouter _multichainTransferRouter,
         GlvVault _glvVault,
         ShiftVault _shiftVault
     ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {
         multichainVault = _multichainVault;
+        multichainTransferRouter = _multichainTransferRouter;
         glvVault = _glvVault;
         shiftVault = _shiftVault;
     }
@@ -37,7 +40,7 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
     function createGlvDeposit(
         address account,
         uint256 srcChainId,
-        GlvDepositUtils.CreateGlvDepositParams calldata params
+        IGlvDepositUtils.CreateGlvDepositParams calldata params
     ) external globalNonReentrant onlyController returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createGlvDepositFeatureDisabledKey(address(this)));
         validateDataListLength(params.dataList.length);
@@ -79,6 +82,7 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
             dataStore: dataStore,
             eventEmitter: eventEmitter,
             multichainVault: multichainVault,
+            multichainTransferRouter: multichainTransferRouter,
             glvVault: glvVault,
             oracle: oracle,
             startingGas: startingGas,
@@ -137,7 +141,7 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
     function createGlvWithdrawal(
         address account,
         uint256 srcChainId,
-        GlvWithdrawalUtils.CreateGlvWithdrawalParams calldata params
+        IGlvWithdrawalUtils.CreateGlvWithdrawalParams calldata params
     ) external globalNonReentrant onlyController returns (bytes32) {
         DataStore _dataStore = dataStore;
         FeatureUtils.validateFeature(_dataStore, Keys.createGlvWithdrawalFeatureDisabledKey(address(this)));

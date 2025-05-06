@@ -424,7 +424,7 @@ describe("Guardian.Fees", () => {
 
           // Negative impact amount for $50,000 of imbalance
           // 50,000^2 * 1e22 / 1e30 = $25
-          expect(positionIncreaseEvent.priceImpactUsd).to.closeTo(
+          expect(positionIncreaseEvent.pendingPriceImpactUsd).to.closeTo(
             expandDecimals(25, 30).mul(-1),
             expandDecimals(1, 17)
           ); // ~$25
@@ -515,7 +515,10 @@ describe("Guardian.Fees", () => {
 
           // Negative impact amount for $50,000 of imbalance
           // 50,000^2 * 5e21 / 1e30 = $12.5
-          expect(positionIncreaseEvent.priceImpactUsd).to.closeTo(expandDecimals(125, 29), expandDecimals(1, 17)); // ~$12.5 in positive impact
+          expect(positionIncreaseEvent.pendingPriceImpactUsd).to.closeTo(
+            expandDecimals(125, 29),
+            expandDecimals(1, 17)
+          ); // ~$12.5 in positive impact
         },
       },
     });

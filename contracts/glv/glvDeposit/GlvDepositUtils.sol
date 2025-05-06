@@ -5,36 +5,18 @@ pragma solidity ^0.8.0;
 import "../../deposit/ExecuteDepositUtils.sol";
 
 import "../../nonce/NonceUtils.sol";
+import "../../gas/GasUtils.sol";
+import "../../multichain/MultichainVault.sol";
 
 import "../GlvVault.sol";
 import "../GlvUtils.sol";
+
+import "./IGlvDepositUtils.sol";
 import "./GlvDepositEventUtils.sol";
 import "./GlvDepositStoreUtils.sol";
 
 library GlvDepositUtils {
     using GlvDeposit for GlvDeposit.Props;
-
-    struct CreateGlvDepositParams {
-        CreateGlvDepositParamsAddresses addresses;
-        uint256 minGlvTokens;
-        uint256 executionFee;
-        uint256 callbackGasLimit;
-        bool shouldUnwrapNativeToken;
-        bool isMarketTokenDeposit;
-        bytes32[] dataList;
-    }
-
-    struct CreateGlvDepositParamsAddresses {
-        address glv;
-        address market;
-        address receiver;
-        address callbackContract;
-        address uiFeeReceiver;
-        address initialLongToken;
-        address initialShortToken;
-        address[] longTokenSwapPath;
-        address[] shortTokenSwapPath;
-    }
 
     struct CreateGlvDepositCache {
         uint256 marketTokenAmount;
@@ -62,7 +44,7 @@ library GlvDepositUtils {
         GlvVault glvVault,
         address account,
         uint256 srcChainId,
-        CreateGlvDepositParams memory params
+        IGlvDepositUtils.CreateGlvDepositParams memory params
     ) external returns (bytes32) {
         AccountUtils.validateAccount(account);
         GlvUtils.validateGlv(dataStore, params.addresses.glv);

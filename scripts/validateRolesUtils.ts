@@ -1,4 +1,3 @@
-import axios from "axios";
 import hre from "hardhat";
 import Role from "../artifacts/contracts/role/Role.sol/Role.json";
 import { hashString } from "../utils/hash";
@@ -97,7 +96,7 @@ export async function validateRoles() {
       const ok = Object.keys(_expectedRoles[requiredRole]).some((member) => member.toLowerCase() === lowercaseAddress);
       if (!ok) {
         errors.push(
-          `role ${requiredRole} is not configured for contract ${contractName} ${deployment.address} ${lowercaseAddress}`
+          `role ${requiredRole} is not configured for contract ${contractName}. "${deployment.address}": true, // ${contractName}`
         );
       }
     }
