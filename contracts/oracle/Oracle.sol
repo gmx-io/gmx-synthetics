@@ -250,15 +250,14 @@ contract Oracle is RoleModule {
         uint256 maxRefPriceDeviationFactor = dataStore.getUint(Keys.MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR);
 
         for (uint256 i; i < params.tokens.length; i++) {
-            address provider = params.providers[i];
+            address _provider = params.providers[i];
+            IOracleProvider provider = IOracleProvider(_provider);
 
-            if (!dataStore.getBool(Keys.isOracleProviderEnabledKey(provider))) {
-                revert Errors.InvalidOracleProvider(provider);
+            if (!dataStore.getBool(Keys.isOracleProviderEnabledKey(_provider))) {
+                revert Errors.InvalidOracleProvider(_provider);
             }
 
             address token = params.tokens[i];
-
-            bool isAtomicProvider = dataStore.getBool(Keys.isAtomicOracleProviderKey(provider));
 
             // if the action is atomic then only validate that the provider is an
             // atomic provider
@@ -271,27 +270,29 @@ contract Oracle is RoleModule {
             // to gain a profit by alternating actions between the two atomic
             // providers
             if (forAtomicAction) {
-                if (!isAtomicProvider) {
-                    revert Errors.NonAtomicOracleProvider(provider);
+                if (provider.shouldAdjustTimestamp()) {
+                    revert Errors.NonAtomicOracleProvider(_provider);
                 }
             } else {
                 address expectedProvider = dataStore.getAddress(Keys.oracleProviderForTokenKey(token));
-                if (provider != expectedProvider) {
-                    revert Errors.InvalidOracleProviderForToken(provider, expectedProvider);
+                if (_provider != expectedProvider) {
+                    revert Errors.InvalidOracleProviderForToken(_provider, expectedProvider);
                 }
             }
 
             bytes memory data = params.data[i];
 
-            OracleUtils.ValidatedPrice memory validatedPrice = IOracleProvider(provider).getOraclePrice(
+            OracleUtils.ValidatedPrice memory validatedPrice = provider.getOraclePrice(
                 token,
                 data
             );
 
+            bool isAtomicProvider = dataStore.getBool(Keys.isAtomicOracleProviderKey(_provider));
+
             // for atomic providers, the timestamp will be the current block's timestamp
             // the timestamp should not be adjusted
             if (!isAtomicProvider) {
-                uint256 timestampAdjustment = dataStore.getUint(Keys.oracleTimestampAdjustmentKey(provider, token));
+                uint256 timestampAdjustment = dataStore.getUint(Keys.oracleTimestampAdjustmentKey(_provider, token));
                 validatedPrice.timestamp -= timestampAdjustment;
             }
 
@@ -301,7 +302,7 @@ contract Oracle is RoleModule {
 
             // for atomic providers, assume that Chainlink would be the main provider
             // so it would be redundant to re-fetch the Chainlink price for validation
-            if (!isAtomicProvider) {
+            if (!provider.isChainlinkOnChainProvider()) {
                 (bool hasRefPrice, uint256 refPrice) = ChainlinkPriceFeedUtils.getPriceFeedPrice(dataStore, token);
 
                 if (hasRefPrice) {

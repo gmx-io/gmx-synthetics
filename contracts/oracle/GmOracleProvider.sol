@@ -47,6 +47,14 @@ contract GmOracleProvider is RoleModule, IOracleProvider {
         oracleStore = _oracleStore;
     }
 
+    function shouldAdjustTimestamp() external pure returns (bool) {
+        return true;
+    }
+
+    function isChainlinkOnChainProvider() external pure returns (bool) {
+        return false;
+    }
+
     // @dev Oracle prices are signed as a value together with a precision, this allows
     // prices to be compacted as uint32 values.
     //
