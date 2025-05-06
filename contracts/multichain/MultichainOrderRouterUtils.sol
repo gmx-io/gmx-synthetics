@@ -15,6 +15,7 @@ import "./MultichainUtils.sol";
 library MultichainOrderRouterUtils {
     using Order for Order.Props;
     using Position for Position.Props;
+    using SafeCast for uint256;
 
     struct TransferFeeFromOrderOrPositionContracts {
         DataStore dataStore;
@@ -27,11 +28,11 @@ library MultichainOrderRouterUtils {
 
     struct TransferFeeFromOrderOrPositionCache {
         uint256 unpaidAmount;
-        uint256 initialCollateralDeltaAmount;
         uint256 deductFromOrder;
         uint256 positionCollateralAmount;
         Market.Props market;
         MarketUtils.MarketPrices prices;
+        bytes32 positionKey;
     }
 
     function transferFeeFromOrderOrPosition(
@@ -100,13 +101,13 @@ library MultichainOrderRouterUtils {
             revert Errors.UnableToPayOrderFee();
         }
 
-        bytes32 positionKey = Position.getPositionKey(
+        cache.positionKey = Position.getPositionKey(
             order.account(),
             order.market(),
             order.initialCollateralToken(),
             order.isLong()
         );
-        Position.Props memory position = PositionStoreUtils.get(contracts.dataStore, positionKey);
+        Position.Props memory position = PositionStoreUtils.get(contracts.dataStore, cache.positionKey);
 
         if (relayParams.fee.feeToken != position.collateralToken()) {
             revert Errors.UnableToPayOrderFee();
@@ -119,7 +120,7 @@ library MultichainOrderRouterUtils {
 
         position.setCollateralAmount(cache.positionCollateralAmount - cache.unpaidAmount);
         contracts.dataStore.setUint(
-            keccak256(abi.encode(positionKey, PositionStoreUtils.COLLATERAL_AMOUNT)),
+            keccak256(abi.encode(cache.positionKey, PositionStoreUtils.COLLATERAL_AMOUNT)),
             cache.positionCollateralAmount - cache.unpaidAmount
         );
 
@@ -129,7 +130,21 @@ library MultichainOrderRouterUtils {
             MarketStoreUtils.get(contracts.dataStore, order.market())
         );
 
-        contracts.oracle.validateSequencerUp();
+        MarketUtils.applyDeltaToCollateralSum(
+            contracts.dataStore,
+            contracts.eventEmitter,
+            position.market(),
+            position.collateralToken(),
+            position.isLong(),
+            cache.unpaidAmount.toInt256() // delta
+        );
+
+        PositionUtils.updateFundingAndBorrowingState(
+            contracts.dataStore,
+            contracts.eventEmitter,
+            cache.market,
+            cache.prices
+        );
 
         PositionUtils.validatePosition(
             contracts.dataStore,
@@ -137,6 +152,7 @@ library MultichainOrderRouterUtils {
             position,
             cache.market,
             cache.prices,
+            contracts.dataStore.getUint((Keys.ADDITIONAL_ATOMIC_MIN_COLLATERAL_FACTOR)),
             true, // shouldValidateMinPositionSize
             true // shouldValidateMinCollateralUsd
         );

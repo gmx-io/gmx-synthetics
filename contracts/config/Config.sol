@@ -555,6 +555,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
         allowedBaseKeys[Keys.MAX_DATA_LENGTH] = true;
         allowedBaseKeys[Keys.GMX_DATA_ACTION] = true;
+        allowedBaseKeys[Keys.ADDITIONAL_ATOMIC_MIN_COLLATERAL_FACTOR] = true;
 
         allowedBaseKeys[Keys.CLAIMABLE_COLLATERAL_DELAY] = true;
 

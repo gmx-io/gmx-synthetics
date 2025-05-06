@@ -194,33 +194,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             cache.srcChainId
         );
 
-        uint256 wntBalanceBefore = IERC20(wnt).balanceOf(address(this));
-        // unwrap wnt to native token and send it into this contract (to pay the bridging fee)
-        TokenUtils.withdrawAndSendNativeToken(
-            dataStore,
-            wnt,
-            address(this), // receiver
-            cache.valueToSend // amount
-        );
-        uint256 wntBalanceAfter = IERC20(wnt).balanceOf(address(this));
-
-        // if the above native token transfer failed, it re-wraps the token and sends it to the receiver (i.e. this contract)
-        // check if wnt was send to this contract due to un-wrapping and transfer it back to user's multichain balance
-        if (wntBalanceAfter > wntBalanceBefore) {
-            uint256 amount = wntBalanceAfter - wntBalanceBefore;
-            TokenUtils.transfer(dataStore, wnt, address(multichainVault), amount);
-            MultichainUtils.recordBridgeIn(
-                dataStore,
-                eventEmitter,
-                multichainVault,
-                this,
-                wnt,
-                params.account,
-                amount,
-                0 // srcChainId
-            );
-            return 0;
-        }
+        IWNT(wnt).withdraw(cache.valueToSend);
 
         // if Stagrate.token() is the ZeroAddress:
         //   - amountSentLD was already added to valueToSend and transferred/unwrapped with the bridging fee

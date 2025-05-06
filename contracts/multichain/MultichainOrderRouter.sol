@@ -39,7 +39,7 @@ contract MultichainOrderRouter is MultichainRouter {
         address account,
         uint256 srcChainId,
         BatchParams calldata params
-    ) external withRelay(relayParams, account, srcChainId, false) nonReentrant returns (bytes32[] memory) {
+    ) external nonReentrant withRelay(relayParams, account, srcChainId, false) returns (bytes32[] memory) {
         bytes32 structHash = RelayUtils.getBatchStructHash(relayParams, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 

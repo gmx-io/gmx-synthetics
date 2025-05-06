@@ -513,6 +513,8 @@ library Keys {
     bytes32 public constant MAX_DATA_LENGTH = keccak256(abi.encode("MAX_DATA_LENGTH"));
     // @dev key for the action data
     bytes32 public constant GMX_DATA_ACTION = keccak256(abi.encode("GMX_DATA_ACTION"));
+    // @dev key for the additional atomic min collateral factor
+    bytes32 public constant ADDITIONAL_ATOMIC_MIN_COLLATERAL_FACTOR = keccak256(abi.encode("ADDITIONAL_ATOMIC_MIN_COLLATERAL_FACTOR"));
 
     // @dev constant for user initiated cancel reason
     string public constant USER_INITIATED_CANCEL = "USER_INITIATED_CANCEL";

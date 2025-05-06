@@ -141,8 +141,6 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
         FeatureUtils.validateFeature(dataStore, Keys.executeAtomicWithdrawalFeatureDisabledKey(address(this)));
         validateDataListLength(params.dataList.length);
 
-        oracle.validateSequencerUp();
-
         if (
             params.addresses.longTokenSwapPath.length != 0 ||
             params.addresses.shortTokenSwapPath.length != 0

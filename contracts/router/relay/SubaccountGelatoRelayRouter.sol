@@ -162,8 +162,8 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             actionType,
             actionsCount,
             subaccountApproval,
-            storedNonce
+            storedNonce,
+            subaccountApprovalNonces
         );
-        subaccountApprovalNonces[account] = storedNonce + 1;
     }
 }

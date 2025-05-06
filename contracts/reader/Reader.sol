@@ -155,6 +155,7 @@ contract Reader {
                 position,
                 market,
                 prices,
+                0, // additionalMinCollateralFactor
                 shouldValidateMinCollateralUsd,
                 forLiquidation
             );
