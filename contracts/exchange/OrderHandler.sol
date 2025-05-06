@@ -16,6 +16,10 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
     using Order for Order.Props;
     using Array for uint256[];
 
+    IOrderExecutor public immutable increaseOrderExecutor;
+    IOrderExecutor public immutable decreaseOrderExecutor;
+    IOrderExecutor public immutable swapOrderExecutor;
+
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
@@ -24,7 +28,10 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         MultichainVault _multichainVault,
         OrderVault _orderVault,
         SwapHandler _swapHandler,
-        IReferralStorage _referralStorage
+        IReferralStorage _referralStorage,
+        IOrderExecutor _increaseOrderExecutor,
+        IOrderExecutor _decreaseOrderExecutor,
+        IOrderExecutor _swapOrderExecutor
     ) BaseOrderHandler(
         _roleStore,
         _dataStore,
@@ -34,7 +41,11 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         _orderVault,
         _swapHandler,
         _referralStorage
-    ) {}
+    ) {
+        increaseOrderExecutor = _increaseOrderExecutor;
+        decreaseOrderExecutor = _decreaseOrderExecutor;
+        swapOrderExecutor = _swapOrderExecutor;
+    }
 
     // @dev creates an order in the order store
     // @param account the order's account
@@ -283,7 +294,23 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
 
         FeatureUtils.validateFeature(params.contracts.dataStore, Keys.executeOrderFeatureDisabledKey(address(this), uint256(params.order.orderType())));
 
-        ExecuteOrderUtils.executeOrder(params);
+        ExecuteOrderUtils.executeOrder(getOrderExecutor(params.order.orderType()), params);
+    }
+
+    function getOrderExecutor(Order.OrderType orderType) internal view returns (IOrderExecutor) {
+        if (BaseOrderUtils.isIncreaseOrder(orderType)) {
+            return increaseOrderExecutor;
+        }
+
+        if (BaseOrderUtils.isDecreaseOrder(orderType)) {
+            return decreaseOrderExecutor;
+        }
+
+        if (BaseOrderUtils.isSwapOrder(orderType)) {
+            return swapOrderExecutor;
+        }
+
+        revert Errors.UnsupportedOrderType(uint256(orderType));
     }
 
     // @dev handle a caught order error

@@ -96,6 +96,9 @@ export async function deployFixture() {
   const orderUtils = await hre.ethers.getContract("OrderUtils");
   const liquidationHandler = await hre.ethers.getContract("LiquidationHandler");
   const adlHandler = await hre.ethers.getContract("AdlHandler");
+  const decreaseOrderExecutor = await hre.ethers.getContract("DecreaseOrderExecutor");
+  const increaseOrderExecutor = await hre.ethers.getContract("IncreaseOrderExecutor");
+  const swapOrderExecutor = await hre.ethers.getContract("SwapOrderExecutor");
   const router = await hre.ethers.getContract("Router");
   const exchangeRouter = await hre.ethers.getContract("ExchangeRouter");
   const gelatoRelayRouter = await hre.ethers.getContract("GelatoRelayRouter");
@@ -293,6 +296,9 @@ export async function deployFixture() {
       orderUtils,
       liquidationHandler,
       adlHandler,
+      decreaseOrderExecutor,
+      increaseOrderExecutor,
+      swapOrderExecutor,
       router,
       exchangeRouter,
       gelatoRelayRouter,

@@ -1,18 +1,8 @@
 import { grantRoleIfNotGranted } from "../utils/role";
 import { createDeployFunction, skipHandlerFunction } from "../utils/deploy";
 
-const constructorContracts = [
-  "RoleStore",
-  "DataStore",
-  "EventEmitter",
-  "Oracle",
-  "MultichainVault",
-  "OrderVault",
-  "SwapHandler",
-  "ReferralStorage",
-  "DecreaseOrderExecutor",
-];
-const contractName = "LiquidationHandler";
+const constructorContracts = ["RoleStore"];
+const contractName = "SwapOrderExecutor";
 
 const func = createDeployFunction({
   contractName: contractName,
@@ -20,7 +10,7 @@ const func = createDeployFunction({
   getDeployArgs: async ({ dependencyContracts }) => {
     return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
   },
-  libraryNames: ["LiquidationUtils", "MarketUtils", "ExecuteOrderUtils", "OrderStoreUtils"],
+  libraryNames: ["SwapOrderUtils"],
   afterDeploy: async ({ deployedContract }) => {
     await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
   },

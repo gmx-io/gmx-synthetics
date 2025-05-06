@@ -13,10 +13,9 @@ import "./OrderUtils.sol";
 import "../oracle/Oracle.sol";
 import "../event/EventEmitter.sol";
 
-import "./IncreaseOrderUtils.sol";
-import "./DecreaseOrderUtils.sol";
-import "./SwapOrderUtils.sol";
-import "./BaseOrderUtils.sol";
+import "../exchange/IOrderExecutor.sol";
+import "../position/PositionUtils.sol";
+import "../position/PositionStoreUtils.sol";
 
 import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
@@ -31,7 +30,7 @@ library ExecuteOrderUtils {
 
     // @dev executes an order
     // @param params BaseOrderUtils.ExecuteOrderParams
-    function executeOrder(BaseOrderUtils.ExecuteOrderParams memory params) external {
+    function executeOrder(IOrderExecutor orderExecutor, BaseOrderUtils.ExecuteOrderParams memory params) external {
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
         params.startingGas -= gasleft() / 63;
 
@@ -70,7 +69,8 @@ library ExecuteOrderUtils {
             prices
         );
 
-        EventUtils.EventLogData memory eventData = processOrder(params);
+        EventUtils.EventLogData memory eventData = orderExecutor.processOrder(params);
+
 
         // validate that internal state changes are correct before calling
         // external callbacks
@@ -133,23 +133,5 @@ library ExecuteOrderUtils {
                 );
             }
         }
-    }
-
-    // @dev process an order execution
-    // @param params BaseOrderUtils.ExecuteOrderParams
-    function processOrder(BaseOrderUtils.ExecuteOrderParams memory params) internal returns (EventUtils.EventLogData memory) {
-        if (BaseOrderUtils.isIncreaseOrder(params.order.orderType())) {
-            return IncreaseOrderUtils.processOrder(params);
-        }
-
-        if (BaseOrderUtils.isDecreaseOrder(params.order.orderType())) {
-            return DecreaseOrderUtils.processOrder(params);
-        }
-
-        if (BaseOrderUtils.isSwapOrder(params.order.orderType())) {
-            return SwapOrderUtils.processOrder(params);
-        }
-
-        revert Errors.UnsupportedOrderType(uint256(params.order.orderType()));
     }
 }

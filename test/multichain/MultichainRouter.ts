@@ -925,7 +925,7 @@ describe("MultichainRouter", () => {
 
         expect(
           (await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).sub(initialBalance)
-        ).closeTo("486281983890256", "10000000000000");
+        ).closeTo("464618983716952", "10000000000000");
       });
     });
 
