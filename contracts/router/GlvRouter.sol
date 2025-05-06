@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 
 import "./BaseRouter.sol";
 import "../exchange/IGlvHandler.sol";
+import "../exchange/IGlvDepositHandler.sol";
 import "../external/IExternalHandler.sol";
 import "../glv/glvDeposit/GlvDepositStoreUtils.sol";
 import "../glv/glvWithdrawal/GlvWithdrawalStoreUtils.sol";
@@ -13,6 +14,7 @@ contract GlvRouter is BaseRouter {
     using GlvDeposit for GlvDeposit.Props;
     using GlvWithdrawal for GlvWithdrawal.Props;
 
+    IGlvDepositHandler public immutable glvDepositHandler;
     IGlvHandler public immutable glvHandler;
     IExternalHandler public immutable externalHandler;
 
@@ -21,9 +23,11 @@ contract GlvRouter is BaseRouter {
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
+        IGlvDepositHandler _glvDepositHandler,
         IGlvHandler _glvHandler,
         IExternalHandler _externalHandler
     ) BaseRouter(_router, _roleStore, _dataStore, _eventEmitter) {
+        glvDepositHandler = _glvDepositHandler;
         glvHandler = _glvHandler;
         externalHandler = _externalHandler;
     }
@@ -40,7 +44,7 @@ contract GlvRouter is BaseRouter {
     ) external payable nonReentrant returns (bytes32) {
         address account = msg.sender;
 
-        return glvHandler.createGlvDeposit(account, 0, params); // srcChainId is the current block.chainId
+        return glvDepositHandler.createGlvDeposit(account, 0, params); // srcChainId is the current block.chainId
     }
 
     function cancelGlvDeposit(bytes32 key) external nonReentrant {
@@ -53,21 +57,21 @@ contract GlvRouter is BaseRouter {
             revert Errors.Unauthorized(msg.sender, "account for cancelGlvDeposit");
         }
 
-        glvHandler.cancelGlvDeposit(key);
+        glvDepositHandler.cancelGlvDeposit(key);
     }
 
     function simulateExecuteGlvDeposit(
         bytes32 key,
         OracleUtils.SimulatePricesParams memory simulatedOracleParams
     ) external payable nonReentrant {
-        glvHandler.simulateExecuteGlvDeposit(key, simulatedOracleParams);
+        glvDepositHandler.simulateExecuteGlvDeposit(key, simulatedOracleParams);
     }
 
     function simulateExecuteLatestGlvDeposit(
         OracleUtils.SimulatePricesParams memory simulatedOracleParams
     ) external payable nonReentrant {
         bytes32 key = NonceUtils.getCurrentKey(dataStore);
-        glvHandler.simulateExecuteGlvDeposit(key, simulatedOracleParams);
+        glvDepositHandler.simulateExecuteGlvDeposit(key, simulatedOracleParams);
     }
 
     function createGlvWithdrawal(

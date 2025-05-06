@@ -6,11 +6,11 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "./BaseHandler.sol";
 
-import "../glv/glvWithdrawal/GlvWithdrawalUtils.sol";
-import "../multichain/IMultichainTransferRouter.sol";
+import "../glv/glvDeposit/GlvDepositUtils.sol";
+import "../glv/glvDeposit/ExecuteGlvDepositUtils.sol";
 
-contract GlvHandler is BaseHandler, ReentrancyGuard {
-    using GlvWithdrawal for GlvWithdrawal.Props;
+contract GlvDepositHandler is BaseHandler, ReentrancyGuard {
+    using GlvDeposit for GlvDeposit.Props;
 
     MultichainVault public immutable multichainVault;
     IMultichainTransferRouter public immutable multichainTransferRouter;
@@ -30,21 +30,20 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
         glvVault = _glvVault;
     }
 
-    function createGlvWithdrawal(
+    function createGlvDeposit(
         address account,
         uint256 srcChainId,
-        IGlvWithdrawalUtils.CreateGlvWithdrawalParams calldata params
+        IGlvDepositUtils.CreateGlvDepositParams calldata params
     ) external globalNonReentrant onlyController returns (bytes32) {
-        DataStore _dataStore = dataStore;
-        FeatureUtils.validateFeature(_dataStore, Keys.createGlvWithdrawalFeatureDisabledKey(address(this)));
+        FeatureUtils.validateFeature(dataStore, Keys.createGlvDepositFeatureDisabledKey(address(this)));
         validateDataListLength(params.dataList.length);
 
-        return GlvWithdrawalUtils.createGlvWithdrawal(_dataStore, eventEmitter, glvVault, account, srcChainId, params);
+        return GlvDepositUtils.createGlvDeposit(dataStore, eventEmitter, glvVault, account, srcChainId, params);
     }
 
     // @key glvDeposit key
     // @oracleParams prices for all markets in GLV are required
-    function executeGlvWithdrawal(
+    function executeGlvDeposit(
         bytes32 key,
         OracleUtils.SetPricesParams calldata oracleParams
     ) external globalNonReentrant onlyOrderKeeper withOraclePrices(oracleParams) {
@@ -52,48 +51,41 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
 
         DataStore _dataStore = dataStore;
 
-        GlvWithdrawal.Props memory glvWithdrawal = GlvWithdrawalStoreUtils.get(_dataStore, key);
-        uint256 marketCount = GlvUtils.getGlvMarketCount(_dataStore, glvWithdrawal.glv());
-        uint256 estimatedGasLimit = GasUtils.estimateExecuteGlvWithdrawalGasLimit(
-            _dataStore,
-            glvWithdrawal,
-            marketCount
-        );
+        GlvDeposit.Props memory glvDeposit = GlvDepositStoreUtils.get(_dataStore, key);
+        uint256 marketCount = GlvUtils.getGlvMarketCount(_dataStore, glvDeposit.glv());
+        uint256 estimatedGasLimit = GasUtils.estimateExecuteGlvDepositGasLimit(_dataStore, glvDeposit, marketCount);
         GasUtils.validateExecutionGas(_dataStore, startingGas, estimatedGasLimit);
 
         uint256 executionGas = GasUtils.getExecutionGas(_dataStore, startingGas);
 
-        try this._executeGlvWithdrawal{gas: executionGas}(key, glvWithdrawal, msg.sender) {} catch (
+        try this._executeGlvDeposit{gas: executionGas}(key, glvDeposit, msg.sender) {} catch (
             bytes memory reasonBytes
         ) {
-            _handleGlvWithdrawalError(key, startingGas, reasonBytes);
+            _handleGlvDepositError(key, startingGas, reasonBytes);
         }
     }
 
-    function _executeGlvWithdrawal(
-        bytes32 key,
-        GlvWithdrawal.Props memory glvWithdrawal,
-        address keeper
-    ) external onlySelf {
+    function _executeGlvDeposit(bytes32 key, GlvDeposit.Props memory glvDeposit, address keeper) external onlySelf {
         uint256 startingGas = gasleft();
 
-        FeatureUtils.validateFeature(dataStore, Keys.executeGlvWithdrawalFeatureDisabledKey(address(this)));
+        FeatureUtils.validateFeature(dataStore, Keys.executeGlvDepositFeatureDisabledKey(address(this)));
 
-        GlvWithdrawalUtils.ExecuteGlvWithdrawalParams memory params = GlvWithdrawalUtils.ExecuteGlvWithdrawalParams({
+        ExecuteGlvDepositUtils.ExecuteGlvDepositParams memory params = ExecuteGlvDepositUtils.ExecuteGlvDepositParams({
             key: key,
             dataStore: dataStore,
             eventEmitter: eventEmitter,
             multichainVault: multichainVault,
+            multichainTransferRouter: multichainTransferRouter,
             glvVault: glvVault,
             oracle: oracle,
             startingGas: startingGas,
             keeper: keeper
         });
 
-        GlvWithdrawalUtils.executeGlvWithdrawal(params, glvWithdrawal);
+        ExecuteGlvDepositUtils.executeGlvDeposit(params, glvDeposit);
     }
 
-    function _handleGlvWithdrawalError(bytes32 key, uint256 startingGas, bytes memory reasonBytes) internal {
+    function _handleGlvDepositError(bytes32 key, uint256 startingGas, bytes memory reasonBytes) internal {
         GasUtils.validateExecutionErrorGas(dataStore, reasonBytes);
 
         bytes4 errorSelector = ErrorUtils.getErrorSelectorFromData(reasonBytes);
@@ -102,7 +94,7 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
 
         (string memory reason /* bool hasRevertMessage */, ) = ErrorUtils.getRevertMessage(reasonBytes);
 
-        GlvWithdrawalUtils.CancelGlvWithdrawalParams memory params = GlvWithdrawalUtils.CancelGlvWithdrawalParams({
+        GlvDepositUtils.CancelGlvDepositParams memory params = GlvDepositUtils.CancelGlvDepositParams({
             dataStore: dataStore,
             eventEmitter: eventEmitter,
             multichainVault: multichainVault,
@@ -113,46 +105,38 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
             reason: reason,
             reasonBytes: reasonBytes
         });
-        GlvWithdrawalUtils.cancelGlvWithdrawal(params);
+        GlvDepositUtils.cancelGlvDeposit(params);
     }
 
-    function cancelGlvWithdrawal(bytes32 key) external globalNonReentrant onlyController {
+    function cancelGlvDeposit(bytes32 key) external globalNonReentrant onlyController {
         uint256 startingGas = gasleft();
 
         DataStore _dataStore = dataStore;
-        FeatureUtils.validateFeature(_dataStore, Keys.cancelGlvWithdrawalFeatureDisabledKey(address(this)));
+        FeatureUtils.validateFeature(_dataStore, Keys.cancelGlvDepositFeatureDisabledKey(address(this)));
 
-        GlvWithdrawal.Props memory glvWithdrawal = GlvWithdrawalStoreUtils.get(_dataStore, key);
-        validateRequestCancellation(glvWithdrawal.updatedAtTime(), "GlvWithdrawal");
+        GlvDeposit.Props memory glvDeposit = GlvDepositStoreUtils.get(_dataStore, key);
+        validateRequestCancellation(glvDeposit.updatedAtTime(), "GlvDeposit");
 
-        GlvWithdrawalUtils.CancelGlvWithdrawalParams memory params = GlvWithdrawalUtils.CancelGlvWithdrawalParams({
+        GlvDepositUtils.CancelGlvDepositParams memory params = GlvDepositUtils.CancelGlvDepositParams({
             dataStore: dataStore,
             eventEmitter: eventEmitter,
             multichainVault: multichainVault,
             glvVault: glvVault,
             key: key,
-            keeper: glvWithdrawal.account(),
+            keeper: glvDeposit.account(),
             startingGas: startingGas,
             reason: Keys.USER_INITIATED_CANCEL,
             reasonBytes: ""
         });
-        GlvWithdrawalUtils.cancelGlvWithdrawal(params);
+        GlvDepositUtils.cancelGlvDeposit(params);
     }
 
-    function simulateExecuteGlvWithdrawal(
+    function simulateExecuteGlvDeposit(
         bytes32 key,
         OracleUtils.SimulatePricesParams memory params
     ) external onlyController withSimulatedOraclePrices(params) globalNonReentrant {
-        GlvWithdrawal.Props memory glvWithdrawal = GlvWithdrawalStoreUtils.get(dataStore, key);
+        GlvDeposit.Props memory glvDeposit = GlvDepositStoreUtils.get(dataStore, key);
 
-        this._executeGlvWithdrawal(key, glvWithdrawal, msg.sender);
-    }
-
-    function addMarketToGlv(address glv, address market) external globalNonReentrant onlyConfigKeeper {
-        GlvUtils.addMarketToGlv(dataStore, eventEmitter, glv, market);
-    }
-
-    function removeMarketFromGlv(address glv, address market) external globalNonReentrant onlyConfigKeeper {
-        GlvUtils.removeMarketFromGlv(dataStore, eventEmitter, glv, market);
+        this._executeGlvDeposit(key, glvDeposit, msg.sender);
     }
 }

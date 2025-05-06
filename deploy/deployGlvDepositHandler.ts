@@ -10,7 +10,7 @@ const constructorContracts = [
   "MultichainTransferRouter",
   "GlvVault",
 ];
-const contractName = "GlvHandler";
+const contractName = "GlvDepositHandler";
 
 const func = createDeployFunction({
   contractName: contractName,
@@ -18,7 +18,7 @@ const func = createDeployFunction({
   getDeployArgs: async ({ dependencyContracts }) => {
     return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
   },
-  libraryNames: ["GasUtils", "GlvUtils", "GlvWithdrawalStoreUtils", "GlvWithdrawalUtils"],
+  libraryNames: ["GasUtils", "GlvUtils", "ExecuteGlvDepositUtils", "GlvDepositStoreUtils", "GlvDepositUtils"],
   afterDeploy: async ({ deployedContract }) => {
     await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
   },

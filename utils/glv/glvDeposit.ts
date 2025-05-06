@@ -29,7 +29,7 @@ export function getAccountGlvDepositKeys(dataStore, account, start, end) {
 }
 
 export async function createGlvDeposit(fixture, overrides: any = {}) {
-  const { glvVault, glvRouter, glvHandler, wnt, ethUsdMarket, ethUsdGlvAddress } = fixture.contracts;
+  const { glvVault, glvRouter, glvDepositHandler, wnt, ethUsdMarket, ethUsdGlvAddress } = fixture.contracts;
   const { wallet, user0 } = fixture.accounts;
 
   const gasUsageLabel = overrides.gasUsageLabel;
@@ -112,7 +112,7 @@ export async function createGlvDeposit(fixture, overrides: any = {}) {
 
   const txReceipt = await logGasUsage({
     tx: useGlvHandler
-      ? glvHandler.connect(sender).createGlvDeposit(account.address, srcChainId, params)
+      ? glvDepositHandler.connect(sender).createGlvDeposit(account.address, srcChainId, params)
       : glvRouter.connect(account).createGlvDeposit(params),
     label: gasUsageLabel,
   });
@@ -122,7 +122,7 @@ export async function createGlvDeposit(fixture, overrides: any = {}) {
 }
 
 export async function executeGlvDeposit(fixture, overrides: any = {}) {
-  const { dataStore, glvHandler, glvRouter, wnt, usdc, sol } = fixture.contracts;
+  const { dataStore, glvDepositHandler, glvRouter, wnt, usdc, sol } = fixture.contracts;
   const gasUsageLabel = overrides.gasUsageLabel;
   const tokens = overrides.tokens || [wnt.address, usdc.address, sol.address];
   const precisions = overrides.precisions || [8, 18, 8];
@@ -150,7 +150,7 @@ export async function executeGlvDeposit(fixture, overrides: any = {}) {
     precisions,
     minPrices,
     maxPrices,
-    execute: glvHandler.executeGlvDeposit,
+    execute: glvDepositHandler.executeGlvDeposit,
     simulateExecute: glvRouter.simulateExecuteGlvDeposit,
     simulate: overrides.simulate,
     dataStreamTokens,

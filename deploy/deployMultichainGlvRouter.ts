@@ -13,7 +13,7 @@ const baseConstructorContracts = [
   "MultichainVault",
 ];
 
-const glvConstructorContracts = ["GlvHandler", "GlvVault"];
+const glvConstructorContracts = ["GlvDepositHandler", "GlvHandler", "GlvVault"];
 
 const func = createDeployFunction({
   contractName: "MultichainGlvRouter",
@@ -31,9 +31,14 @@ const func = createDeployFunction({
       multichainVault: dependencyContracts.MultichainVault.address,
     };
 
-    return [baseParams, dependencyContracts.GlvHandler.address, dependencyContracts.GlvVault.address];
+    return [
+      baseParams,
+      dependencyContracts.GlvDepositHandler.address,
+      dependencyContracts.GlvHandler.address,
+      dependencyContracts.GlvVault.address,
+    ];
   },
-  libraryNames: ["MultichainUtils", "RelayUtils", "SwapUtils", "MarketUtils", "GlvWithdrawalUtils"],
+  libraryNames: ["MultichainUtils", "RelayUtils"],
 
   afterDeploy: async ({ deployedContract }) => {
     await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");

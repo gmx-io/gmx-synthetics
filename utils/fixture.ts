@@ -77,7 +77,9 @@ export async function deployFixture() {
   const glvVault = await hre.ethers.getContract("GlvVault");
   const marketFactory = await hre.ethers.getContract("MarketFactory");
   const glvFactory = await hre.ethers.getContract("GlvFactory");
+  const glvDepositHandler = await hre.ethers.getContract("GlvDepositHandler");
   const glvHandler = await hre.ethers.getContract("GlvHandler");
+  const glvShiftHandler = await hre.ethers.getContract("GlvShiftHandler");
   const glvRouter = await hre.ethers.getContract("GlvRouter");
   const callbackUtils = await hre.ethers.getContract("CallbackUtils");
   const glvDepositStoreUtils = await hre.ethers.getContract("GlvDepositStoreUtils");
@@ -348,7 +350,9 @@ export async function deployFixture() {
       solUsdMarket,
       feeHandler,
       glvFactory,
+      glvDepositHandler,
       glvHandler,
+      glvShiftHandler,
       glvVault,
       glvRouter,
       ethUsdGlvAddress,
