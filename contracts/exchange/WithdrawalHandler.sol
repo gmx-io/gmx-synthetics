@@ -22,6 +22,7 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
 
     MultichainVault public immutable multichainVault;
     WithdrawalVault public immutable withdrawalVault;
+    ISwapHandler public immutable swapHandler;
 
     constructor(
         RoleStore _roleStore,
@@ -29,10 +30,12 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
         EventEmitter _eventEmitter,
         IOracle _oracle,
         MultichainVault _multichainVault,
-        WithdrawalVault _withdrawalVault
+        WithdrawalVault _withdrawalVault,
+        ISwapHandler _swapHandler
     ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {
         multichainVault = _multichainVault;
         withdrawalVault = _withdrawalVault;
+        swapHandler = _swapHandler;
     }
 
     // @dev creates a withdrawal in the withdrawal store
@@ -223,6 +226,7 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
             multichainVault,
             withdrawalVault,
             oracle,
+            swapHandler,
             key,
             keeper,
             startingGas,

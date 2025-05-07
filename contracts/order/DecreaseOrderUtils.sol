@@ -130,7 +130,7 @@ library DecreaseOrderUtils {
         }
 
         try params.contracts.swapHandler.swap(
-            SwapUtils.SwapParams(
+            ISwapUtils.SwapParams(
                 params.contracts.dataStore,
                 params.contracts.eventEmitter,
                 params.contracts.oracle,

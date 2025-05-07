@@ -4,11 +4,11 @@ pragma solidity ^0.8.0;
 
 import "./BaseHandler.sol";
 
-import "../market/Market.sol";
+import "../market/MarketUtils.sol";
 import "../order/BaseOrderUtils.sol";
 import "../order/OrderVault.sol";
 import "../order/Order.sol";
-import "../swap/SwapHandler.sol";
+import "../swap/ISwapHandler.sol";
 
 import "../referral/IReferralStorage.sol";
 
@@ -21,7 +21,7 @@ contract BaseOrderHandler is BaseHandler {
 
     MultichainVault public immutable multichainVault;
     OrderVault public immutable orderVault;
-    SwapHandler public immutable swapHandler;
+    ISwapHandler public immutable swapHandler;
     IReferralStorage public immutable referralStorage;
 
     constructor(
@@ -31,7 +31,7 @@ contract BaseOrderHandler is BaseHandler {
         IOracle _oracle,
         MultichainVault _multichainVault,
         OrderVault _orderVault,
-        SwapHandler _swapHandler,
+        ISwapHandler _swapHandler,
         IReferralStorage _referralStorage
     ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {
         multichainVault = _multichainVault;

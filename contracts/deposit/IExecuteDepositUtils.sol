@@ -9,6 +9,7 @@ import "../multichain/IMultichainTransferRouter.sol";
 import "../deposit/DepositVault.sol";
 import "../oracle/IOracle.sol";
 import "../pricing/ISwapPricingUtils.sol";
+import "../swap/ISwapHandler.sol";
 
 interface IExecuteDepositUtils {
     // @dev ExecuteDepositParams struct used in executeDeposit to avoid stack
@@ -20,6 +21,7 @@ interface IExecuteDepositUtils {
         IMultichainTransferRouter multichainTransferRouter;
         DepositVault depositVault;
         IOracle oracle;
+        ISwapHandler swapHandler;
         bytes32 key;
         address keeper;
         uint256 startingGas;

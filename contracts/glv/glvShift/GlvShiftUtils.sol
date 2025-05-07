@@ -33,6 +33,7 @@ library GlvShiftUtils {
         GlvVault glvVault;
         IDepositHandler depositHandler;
         IWithdrawalHandler withdrawalHandler;
+        ISwapHandler swapHandler;
         bytes32 key;
         address keeper;
     }
@@ -160,6 +161,7 @@ library GlvShiftUtils {
             oracle: params.oracle,
             depositHandler: params.depositHandler,
             withdrawalHandler: params.withdrawalHandler,
+            swapHandler: params.swapHandler,
             key: cache.shiftKey,
             keeper: params.keeper,
 

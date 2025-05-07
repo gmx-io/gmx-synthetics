@@ -2,8 +2,10 @@
 
 pragma solidity ^0.8.0;
 
+import "../fee/FeeUtils.sol";
 import "../referral/ReferralUtils.sol";
 import "./MultichainRouter.sol";
+
 
 /*
  * Fees can be paid from the newly claimed tokens if the recipient is the account.

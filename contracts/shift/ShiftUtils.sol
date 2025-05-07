@@ -50,6 +50,7 @@ library ShiftUtils {
         IOracle oracle;
         IDepositHandler depositHandler;
         IWithdrawalHandler withdrawalHandler;
+        ISwapHandler swapHandler;
         bytes32 key;
         address keeper;
         uint256 startingGas;
@@ -223,6 +224,7 @@ library ShiftUtils {
             params.multichainVault,
             WithdrawalVault(payable(params.shiftVault)),
             params.oracle,
+            params.swapHandler,
             cache.withdrawalKey,
             params.keeper,
             params.startingGas,
@@ -285,6 +287,7 @@ library ShiftUtils {
             IMultichainTransferRouter(payable(0)),
             DepositVault(payable(params.shiftVault)),
             params.oracle,
+            params.swapHandler,
             cache.depositKey,
             params.keeper,
             params.startingGas,

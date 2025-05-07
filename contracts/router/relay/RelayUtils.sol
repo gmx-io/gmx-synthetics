@@ -9,8 +9,8 @@ import "../../event/EventEmitter.sol";
 import "../../order/OrderVault.sol";
 import "../../oracle/IOracle.sol";
 import "../../oracle/OracleUtils.sol";
-import "../../market/Market.sol";
-import "../../swap/SwapUtils.sol";
+import "../../market/MarketUtils.sol";
+import "../../swap/ISwapUtils.sol";
 import "../../order/IBaseOrderUtils.sol";
 import { SubaccountApproval } from "../../subaccount/SubaccountUtils.sol";
 
@@ -19,12 +19,14 @@ import "../../glv/glvDeposit/IGlvDepositUtils.sol";
 import "../../withdrawal/IWithdrawalUtils.sol";
 import "../../glv/glvWithdrawal/IGlvWithdrawalUtils.sol";
 import "../../shift/IShiftUtils.sol";
+import "../../swap/ISwapHandler.sol";
 
 import "./IRelayUtils.sol";
 
 struct Contracts {
     DataStore dataStore;
     OrderVault orderVault;
+    ISwapHandler swapHandler;
     address wnt;
 }
 
@@ -238,8 +240,8 @@ library RelayUtils {
         MarketUtils.validateSwapPath(contracts.dataStore, fee.feeSwapPath);
         Market.Props[] memory swapPathMarkets = MarketUtils.getSwapPathMarkets(contracts.dataStore, fee.feeSwapPath);
 
-        (address outputToken, ) = SwapUtils.swap(
-            SwapUtils.SwapParams({
+        (address outputToken, ) = contracts.swapHandler.swap(
+            ISwapUtils.SwapParams({
                 dataStore: contracts.dataStore,
                 eventEmitter: eventEmitter,
                 oracle: oracle,

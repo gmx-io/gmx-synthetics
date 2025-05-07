@@ -24,6 +24,7 @@ contract DepositHandler is IDepositHandler, BaseHandler {
     DepositVault public immutable depositVault;
     MultichainVault public immutable multichainVault;
     IMultichainTransferRouter public immutable multichainTransferRouter;
+    ISwapHandler public immutable swapHandler;
 
     constructor(
         RoleStore _roleStore,
@@ -32,11 +33,13 @@ contract DepositHandler is IDepositHandler, BaseHandler {
         IOracle _oracle,
         MultichainVault _multichainVault,
         IMultichainTransferRouter _multichainTransferRouter,
-        DepositVault _depositVault
+        DepositVault _depositVault,
+        ISwapHandler _swapHandler
     ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {
         multichainVault = _multichainVault;
         multichainTransferRouter = _multichainTransferRouter;
         depositVault = _depositVault;
+        swapHandler = _swapHandler;
     }
 
     // @dev creates a deposit in the deposit store
@@ -170,6 +173,7 @@ contract DepositHandler is IDepositHandler, BaseHandler {
             multichainTransferRouter,
             depositVault,
             oracle,
+            swapHandler,
             key,
             keeper,
             startingGas,

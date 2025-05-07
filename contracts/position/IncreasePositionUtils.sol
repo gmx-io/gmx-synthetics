@@ -6,6 +6,7 @@ import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
 
 import "../pricing/PositionPricingUtils.sol";
+import "../fee/FeeUtils.sol";
 
 import "./Position.sol";
 import "./PositionStoreUtils.sol";

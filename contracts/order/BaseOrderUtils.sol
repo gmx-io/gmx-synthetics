@@ -10,9 +10,11 @@ import "../event/EventEmitter.sol";
 import "../referral/IReferralStorage.sol";
 
 import "../order/OrderVault.sol";
+import "../utils/Precision.sol";
+import "../position/Position.sol";
 
 import "../oracle/IOracle.sol";
-import "../swap/SwapHandler.sol";
+import "../swap/ISwapHandler.sol";
 
 import "../multichain/MultichainVault.sol";
 
@@ -56,7 +58,7 @@ library BaseOrderUtils {
     // @param eventEmitter EventEmitter
     // @param orderVault OrderVault
     // @param oracle Oracle
-    // @param swapHandler SwapHandler
+    // @param swapHandler ISwapHandler
     // @param referralStorage IReferralStorage
     struct ExecuteOrderParamsContracts {
         DataStore dataStore;
@@ -64,7 +66,7 @@ library BaseOrderUtils {
         MultichainVault multichainVault;
         OrderVault orderVault;
         IOracle oracle;
-        SwapHandler swapHandler;
+        ISwapHandler swapHandler;
         IReferralStorage referralStorage;
     }
 

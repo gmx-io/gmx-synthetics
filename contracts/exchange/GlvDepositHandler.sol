@@ -15,6 +15,7 @@ contract GlvDepositHandler is BaseHandler, ReentrancyGuard {
     MultichainVault public immutable multichainVault;
     IMultichainTransferRouter public immutable multichainTransferRouter;
     GlvVault public immutable glvVault;
+    ISwapHandler public immutable swapHandler;
 
     constructor(
         RoleStore _roleStore,
@@ -23,11 +24,13 @@ contract GlvDepositHandler is BaseHandler, ReentrancyGuard {
         IOracle _oracle,
         MultichainVault _multichainVault,
         IMultichainTransferRouter _multichainTransferRouter,
-        GlvVault _glvVault
+        GlvVault _glvVault,
+        ISwapHandler _swapHandler
     ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {
         multichainVault = _multichainVault;
         multichainTransferRouter = _multichainTransferRouter;
         glvVault = _glvVault;
+        swapHandler = _swapHandler;
     }
 
     function createGlvDeposit(
@@ -78,6 +81,7 @@ contract GlvDepositHandler is BaseHandler, ReentrancyGuard {
             multichainTransferRouter: multichainTransferRouter,
             glvVault: glvVault,
             oracle: oracle,
+            swapHandler: swapHandler,
             startingGas: startingGas,
             keeper: keeper
         });

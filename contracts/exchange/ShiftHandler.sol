@@ -18,6 +18,7 @@ contract ShiftHandler is IShiftHandler, BaseHandler {
     ShiftVault public immutable shiftVault;
     IDepositHandler public depositHandler;
     IWithdrawalHandler public withdrawalHandler;
+    ISwapHandler public immutable swapHandler;
 
     constructor(
         RoleStore _roleStore,
@@ -27,12 +28,14 @@ contract ShiftHandler is IShiftHandler, BaseHandler {
         MultichainVault _multichainVault,
         ShiftVault _shiftVault,
         IDepositHandler _depositHandler,
-        IWithdrawalHandler _withdrawalHandler
+        IWithdrawalHandler _withdrawalHandler,
+        ISwapHandler _swapHandler
     ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {
         multichainVault = _multichainVault;
         shiftVault = _shiftVault;
         depositHandler = _depositHandler;
         withdrawalHandler = _withdrawalHandler;
+        swapHandler = _swapHandler;
     }
 
     function createShift(
@@ -144,6 +147,7 @@ contract ShiftHandler is IShiftHandler, BaseHandler {
             oracle,
             depositHandler,
             withdrawalHandler,
+            swapHandler,
             key,
             keeper,
             startingGas

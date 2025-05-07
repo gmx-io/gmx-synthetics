@@ -12,6 +12,7 @@ import "./PositionEventUtils.sol";
 import "./PositionUtils.sol";
 import "../order/OrderEventUtils.sol";
 import "../utils/Precision.sol";
+import "../fee/FeeUtils.sol";
 
 import "./DecreasePositionSwapUtils.sol";
 

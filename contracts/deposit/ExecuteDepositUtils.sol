@@ -13,6 +13,7 @@ import "./DepositEventUtils.sol";
 import "../pricing/SwapPricingUtils.sol";
 import "../oracle/IOracle.sol";
 import "../position/PositionUtils.sol";
+import "../swap/SwapUtils.sol";
 
 import "../multichain/MultichainUtils.sol";
 import "../multichain/IMultichainTransferRouter.sol";
@@ -575,8 +576,8 @@ library ExecuteDepositUtils {
             swapPath
         );
 
-        (address outputToken, uint256 outputAmount) = SwapUtils.swap(
-            SwapUtils.SwapParams(
+        (address outputToken, uint256 outputAmount) = params.swapHandler.swap(
+            ISwapUtils.SwapParams(
                 params.dataStore, // dataStore
                 params.eventEmitter, // eventEmitter
                 params.oracle, // oracle

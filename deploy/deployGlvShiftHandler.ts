@@ -11,6 +11,7 @@ const constructorContracts = [
   "ShiftVault",
   "DepositHandler",
   "WithdrawalHandler",
+  "SwapHandler",
 ];
 const contractName = "GlvShiftHandler";
 

@@ -31,6 +31,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
     IOrderHandler public immutable orderHandler;
     OrderVault public immutable orderVault;
+    ISwapHandler public immutable swapHandler;
     IExternalHandler public immutable externalHandler;
 
     mapping(address => uint256) public userNonces;
@@ -59,17 +60,20 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         IOracle _oracle,
         IOrderHandler _orderHandler,
         OrderVault _orderVault,
+        ISwapHandler _swapHandler,
         IExternalHandler _externalHandler
     ) OracleModule(_oracle) {
         orderHandler = _orderHandler;
         orderVault = _orderVault;
+        swapHandler = _swapHandler;
+        
         externalHandler = _externalHandler;
     }
 
     function _getContracts() internal view returns (Contracts memory contracts) {
         DataStore _dataStore = dataStore;
         address wnt = TokenUtils.wnt(_dataStore);
-        contracts = Contracts({dataStore: _dataStore, orderVault: orderVault, wnt: wnt});
+        contracts = Contracts({dataStore: _dataStore, orderVault: orderVault, swapHandler: swapHandler, wnt: wnt});
     }
 
     function _batch(

@@ -57,7 +57,7 @@ library SwapOrderUtils {
             );
         }
 
-        (address outputToken, uint256 outputAmount) = SwapUtils.swap(SwapUtils.SwapParams(
+        (address outputToken, uint256 outputAmount) = params.contracts.swapHandler.swap(ISwapUtils.SwapParams(
             params.contracts.dataStore,
             params.contracts.eventEmitter,
             params.contracts.oracle,

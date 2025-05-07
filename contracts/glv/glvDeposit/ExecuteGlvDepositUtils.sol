@@ -27,6 +27,7 @@ library ExecuteGlvDepositUtils {
         IMultichainTransferRouter multichainTransferRouter;
         GlvVault glvVault;
         IOracle oracle;
+        ISwapHandler swapHandler;
         bytes32 key;
         uint256 startingGas;
         address keeper;
@@ -231,6 +232,7 @@ library ExecuteGlvDepositUtils {
                 params.multichainTransferRouter,
                 DepositVault(payable(params.glvVault)),
                 params.oracle,
+                params.swapHandler,
                 depositKey,
                 params.keeper,
                 params.startingGas,

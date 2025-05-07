@@ -22,7 +22,7 @@ contract LiquidationHandler is BaseOrderHandler {
         IOracle _oracle,
         MultichainVault _multichainVault,
         OrderVault _orderVault,
-        SwapHandler _swapHandler,
+        ISwapHandler _swapHandler,
         IReferralStorage _referralStorage,
         IOrderExecutor _decreaseOrderExecutor
     ) BaseOrderHandler(

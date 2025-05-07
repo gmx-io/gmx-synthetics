@@ -25,6 +25,7 @@ library GlvWithdrawalUtils {
         MultichainVault multichainVault;
         GlvVault glvVault;
         IOracle oracle;
+        ISwapHandler swapHandler;
         bytes32 key;
         uint256 startingGas;
         address keeper;
@@ -247,6 +248,7 @@ library GlvWithdrawalUtils {
                 multichainVault: params.multichainVault,
                 withdrawalVault: WithdrawalVault(payable(params.glvVault)),
                 oracle: params.oracle,
+                swapHandler: params.swapHandler,
                 key: withdrawalKey,
                 keeper: params.keeper,
                 startingGas: params.startingGas,

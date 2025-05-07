@@ -9,6 +9,7 @@ const constructorContracts = [
   "MultichainVault",
   "MultichainTransferRouter",
   "GlvVault",
+  "SwapHandler",
 ];
 const contractName = "GlvHandler";
 

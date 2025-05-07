@@ -8,6 +8,7 @@ import "../withdrawal/WithdrawalVault.sol";
 import "../multichain/MultichainVault.sol";
 import "../oracle/IOracle.sol";
 import "../pricing/ISwapPricingUtils.sol";
+import "../swap/ISwapHandler.sol";
 
 interface IExecuteWithdrawalUtils {
     struct ExecuteWithdrawalParams {
@@ -16,6 +17,7 @@ interface IExecuteWithdrawalUtils {
         MultichainVault multichainVault;
         WithdrawalVault withdrawalVault;
         IOracle oracle;
+        ISwapHandler swapHandler;
         bytes32 key;
         address keeper;
         uint256 startingGas;

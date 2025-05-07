@@ -14,6 +14,8 @@ import "./WithdrawalEventUtils.sol";
 import "../pricing/SwapPricingUtils.sol";
 import "../oracle/IOracle.sol";
 import "../position/PositionUtils.sol";
+import "../fee/FeeUtils.sol";
+import "../swap/SwapUtils.sol";
 
 import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
@@ -56,7 +58,7 @@ library ExecuteWithdrawalUtils {
 
     struct SwapCache {
         Market.Props[] swapPathMarkets;
-        SwapUtils.SwapParams swapParams;
+        ISwapUtils.SwapParams swapParams;
         address outputToken;
         uint256 outputAmount;
     }
@@ -370,7 +372,7 @@ library ExecuteWithdrawalUtils {
 
         cache.swapPathMarkets = MarketUtils.getSwapPathMarkets(params.dataStore, swapPath);
 
-        cache.swapParams = SwapUtils.SwapParams({
+        cache.swapParams = ISwapUtils.SwapParams({
             dataStore: params.dataStore,
             eventEmitter: params.eventEmitter,
             oracle: params.oracle,
@@ -386,7 +388,7 @@ library ExecuteWithdrawalUtils {
             swapPricingType: params.swapPricingType
         });
 
-        (cache.outputToken, cache.outputAmount) = SwapUtils.swap(cache.swapParams);
+        (cache.outputToken, cache.outputAmount) = params.swapHandler.swap(cache.swapParams);
 
         // validate that internal state changes are correct before calling
         // external callbacks
