@@ -115,13 +115,13 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
     ) external override globalNonReentrant onlyController {
         FeatureUtils.validateFeature(dataStore, Keys.updateOrderFeatureDisabledKey(address(this), uint256(order.orderType())));
 
-        if (BaseOrderUtils.isMarketOrder(order.orderType())) {
+        if (Order.isMarketOrder(order.orderType())) {
             revert Errors.OrderNotUpdatable(uint256(order.orderType()));
         }
 
         // this could happen if the order was created in new contracts that support new order types
         // but the order is being updated in old contracts
-        if (!BaseOrderUtils.isSupportedOrder(order.orderType())) {
+        if (!Order.isSupportedOrder(order.orderType())) {
             revert Errors.UnsupportedOrderType(uint256(order.orderType()));
         }
 
@@ -188,7 +188,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
 
         FeatureUtils.validateFeature(_dataStore, Keys.cancelOrderFeatureDisabledKey(address(this), uint256(order.orderType())));
 
-        if (BaseOrderUtils.isMarketOrder(order.orderType())) {
+        if (Order.isMarketOrder(order.orderType())) {
             validateRequestCancellation(
                 order.updatedAtTime(),
                 "Order"
@@ -298,15 +298,15 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
     }
 
     function getOrderExecutor(Order.OrderType orderType) internal view returns (IOrderExecutor) {
-        if (BaseOrderUtils.isIncreaseOrder(orderType)) {
+        if (Order.isIncreaseOrder(orderType)) {
             return increaseOrderExecutor;
         }
 
-        if (BaseOrderUtils.isDecreaseOrder(orderType)) {
+        if (Order.isDecreaseOrder(orderType)) {
             return decreaseOrderExecutor;
         }
 
-        if (BaseOrderUtils.isSwapOrder(orderType)) {
+        if (Order.isSwapOrder(orderType)) {
             return swapOrderExecutor;
         }
 
@@ -330,7 +330,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         validateNonKeeperError(errorSelector, reasonBytes);
 
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);
-        bool isMarketOrder = BaseOrderUtils.isMarketOrder(order.orderType());
+        bool isMarketOrder = Order.isMarketOrder(order.orderType());
 
         if (
             // if the order is already frozen, revert with the custom error to provide more information

@@ -13,7 +13,6 @@ import "./Position.sol";
 import "./PositionStoreUtils.sol";
 import "./PositionUtils.sol";
 import "./PositionEventUtils.sol";
-import "../order/BaseOrderUtils.sol";
 import "../order/OrderEventUtils.sol";
 
 import "./DecreasePositionCollateralUtils.sol";
@@ -207,7 +206,7 @@ library DecreasePositionUtils {
             params.order.setDecreasePositionSwapType(Order.DecreasePositionSwapType.NoSwap);
         }
 
-        if (BaseOrderUtils.isLiquidationOrder(params.order.orderType())) {
+        if (Order.isLiquidationOrder(params.order.orderType())) {
             (bool isLiquidatable, string memory reason, PositionUtils.IsPositionLiquidatableInfo memory info) = PositionUtils.isPositionLiquidatable(
                 params.contracts.dataStore,
                 params.contracts.referralStorage,

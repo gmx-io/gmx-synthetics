@@ -14,6 +14,8 @@ import "../nonce/NonceUtils.sol";
 import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
 
+import "../price/Price.sol";
+import "../market/MarketUtils.sol";
 import "../utils/Array.sol";
 import "../utils/AccountUtils.sol";
 

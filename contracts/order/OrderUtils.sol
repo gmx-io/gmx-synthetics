@@ -124,7 +124,7 @@ library OrderUtils {
             params.numbers.executionFee = wntAmount;
         }
 
-        if (BaseOrderUtils.isPositionOrder(params.orderType)) {
+        if (Order.isPositionOrder(params.orderType)) {
             MarketUtils.validatePositionMarket(dataStore, params.addresses.market);
         } else {
             if (params.addresses.market != address(0)) {
@@ -132,7 +132,7 @@ library OrderUtils {
             }
         }
 
-        if (BaseOrderUtils.isMarketOrder(params.orderType) && params.numbers.validFromTime != 0) {
+        if (Order.isMarketOrder(params.orderType) && params.numbers.validFromTime != 0) {
             revert Errors.UnexpectedValidFromTime(uint256(params.orderType));
         }
 
@@ -233,7 +233,7 @@ library OrderUtils {
 
         // this could happen if the order was created in new contracts that support new order types
         // but the order is being cancelled in old contracts
-        if (!BaseOrderUtils.isSupportedOrder(order.orderType())) {
+        if (!Order.isSupportedOrder(order.orderType())) {
             if (params.isAutoCancel) {
                 revert Errors.UnsupportedOrderTypeForAutoCancellation(uint256(order.orderType()));
             } else {
@@ -243,7 +243,7 @@ library OrderUtils {
 
         OrderStoreUtils.remove(params.dataStore, params.key, order.account());
 
-        if (BaseOrderUtils.isIncreaseOrder(order.orderType()) || BaseOrderUtils.isSwapOrder(order.orderType())) {
+        if (Order.isIncreaseOrder(order.orderType()) || Order.isSwapOrder(order.orderType())) {
             if (order.initialCollateralDeltaAmount() > 0) {
                 address cancellationReceiver = order.cancellationReceiver();
                 if (cancellationReceiver == address(0)) {

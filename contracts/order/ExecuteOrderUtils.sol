@@ -116,7 +116,7 @@ library ExecuteOrderUtils {
         // this is because clearAutoCancelOrders loops through each order for
         // the associated position and calls cancelOrder, which pays the keeper
         // based on the gas usage for each cancel order
-        if (BaseOrderUtils.isDecreaseOrder(params.order.orderType())) {
+        if (Order.isDecreaseOrder(params.order.orderType())) {
             bytes32 positionKey = BaseOrderUtils.getPositionKey(params.order);
             uint256 sizeInUsd = params.contracts.dataStore.getUint(
                 keccak256(abi.encode(positionKey, PositionStoreUtils.SIZE_IN_USD))

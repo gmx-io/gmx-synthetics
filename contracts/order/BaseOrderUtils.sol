@@ -74,69 +74,6 @@ library BaseOrderUtils {
         int256 adjustedPriceImpactUsd;
     }
 
-    function isSupportedOrder(Order.OrderType orderType) internal pure returns (bool) {
-        return orderType == Order.OrderType.MarketSwap ||
-               orderType == Order.OrderType.LimitSwap ||
-               orderType == Order.OrderType.MarketIncrease ||
-               orderType == Order.OrderType.MarketDecrease ||
-               orderType == Order.OrderType.LimitIncrease ||
-               orderType == Order.OrderType.LimitDecrease ||
-               orderType == Order.OrderType.StopIncrease ||
-               orderType == Order.OrderType.StopLossDecrease ||
-               orderType == Order.OrderType.Liquidation;
-    }
-
-    // @dev check if an orderType is a market order
-    // @param orderType the order type
-    // @return whether an orderType is a market order
-    function isMarketOrder(Order.OrderType orderType) internal pure returns (bool) {
-        // a liquidation order is not considered as a market order
-        return orderType == Order.OrderType.MarketSwap ||
-               orderType == Order.OrderType.MarketIncrease ||
-               orderType == Order.OrderType.MarketDecrease;
-    }
-
-    // @dev check if an orderType is a swap order
-    // @param orderType the order type
-    // @return whether an orderType is a swap order
-    function isSwapOrder(Order.OrderType orderType) internal pure returns (bool) {
-        return orderType == Order.OrderType.MarketSwap ||
-               orderType == Order.OrderType.LimitSwap;
-    }
-
-    // @dev check if an orderType is a position order
-    // @param orderType the order type
-    // @return whether an orderType is a position order
-    function isPositionOrder(Order.OrderType orderType) internal pure returns (bool) {
-        return isIncreaseOrder(orderType) || isDecreaseOrder(orderType);
-    }
-
-    // @dev check if an orderType is an increase order
-    // @param orderType the order type
-    // @return whether an orderType is an increase order
-    function isIncreaseOrder(Order.OrderType orderType) internal pure returns (bool) {
-        return orderType == Order.OrderType.MarketIncrease ||
-               orderType == Order.OrderType.LimitIncrease ||
-               orderType == Order.OrderType.StopIncrease;
-    }
-
-    // @dev check if an orderType is a decrease order
-    // @param orderType the order type
-    // @return whether an orderType is a decrease order
-    function isDecreaseOrder(Order.OrderType orderType) internal pure returns (bool) {
-        return orderType == Order.OrderType.MarketDecrease ||
-               orderType == Order.OrderType.LimitDecrease ||
-               orderType == Order.OrderType.StopLossDecrease ||
-               orderType == Order.OrderType.Liquidation;
-    }
-
-    // @dev check if an orderType is a liquidation order
-    // @param orderType the order type
-    // @return whether an orderType is a liquidation order
-    function isLiquidationOrder(Order.OrderType orderType) internal pure returns (bool) {
-        return orderType == Order.OrderType.Liquidation;
-    }
-
     // @dev validate the price for increase / decrease orders based on the triggerPrice
     // the acceptablePrice for increase / decrease orders is validated in getExecutionPrice
     //
@@ -176,9 +113,9 @@ library BaseOrderUtils {
         bool isLong
     ) internal view {
         if (
-            isSwapOrder(orderType) ||
-            isMarketOrder(orderType) ||
-            isLiquidationOrder(orderType)
+            Order.isSwapOrder(orderType) ||
+            Order.isMarketOrder(orderType) ||
+            Order.isLiquidationOrder(orderType)
         ) {
             return;
         }
@@ -256,7 +193,7 @@ library BaseOrderUtils {
         Order.OrderType orderType,
         uint256 validFromTime
     ) internal view {
-        if (isMarketOrder(orderType)) {
+        if (Order.isMarketOrder(orderType)) {
             return;
         }
 
@@ -440,7 +377,7 @@ library BaseOrderUtils {
     }
 
     function getPositionKey(Order.Props memory order) internal pure returns (bytes32) {
-        if (isDecreaseOrder(order.orderType())) {
+        if (Order.isDecreaseOrder(order.orderType())) {
             return Position.getPositionKey(
                 order.account(),
                 order.market(),

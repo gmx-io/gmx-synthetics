@@ -15,6 +15,7 @@ import "../nonce/NonceUtils.sol";
 import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
 import "../utils/AccountUtils.sol";
+import "../market/MarketUtils.sol";
 
 import "../deposit/DepositVault.sol";
 import "../exchange/IDepositHandler.sol";

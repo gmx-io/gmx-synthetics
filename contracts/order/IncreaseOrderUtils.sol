@@ -59,7 +59,7 @@ library IncreaseOrderUtils {
         }
 
         if (
-            !BaseOrderUtils.isMarketOrder(params.order.orderType()) &&
+            !Order.isMarketOrder(params.order.orderType()) &&
             params.minOracleTimestamp < params.order.validFromTime()
         ) {
             revert Errors.OracleTimestampsAreSmallerThanRequired(

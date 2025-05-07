@@ -112,7 +112,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
         if (
             params.numbers.initialCollateralDeltaAmount != 0 &&
-            (BaseOrderUtils.isSwapOrder(params.orderType) || BaseOrderUtils.isIncreaseOrder(params.orderType))
+            (Order.isSwapOrder(params.orderType) || Order.isIncreaseOrder(params.orderType))
         ) {
             // for increase and swap orders OrderUtils sets initialCollateralDeltaAmount based on the amount of received initialCollateralToken
             // instead of using initialCollateralDeltaAmount from params

@@ -225,7 +225,7 @@ library DecreaseOrderUtils {
         }
 
         if (
-            !BaseOrderUtils.isMarketOrder(orderType) &&
+            !Order.isMarketOrder(orderType) &&
             minOracleTimestamp < orderValidFromTime
         ) {
             revert Errors.OracleTimestampsAreSmallerThanRequired(minOracleTimestamp, orderValidFromTime);
