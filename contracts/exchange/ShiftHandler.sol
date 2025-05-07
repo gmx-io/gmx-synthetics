@@ -2,17 +2,22 @@
 
 pragma solidity ^0.8.0;
 
-import "./BaseHandler.sol";
-import "../shift/ShiftVault.sol";
+import "../exchange/IWithdrawalHandler.sol";
+
 import "../shift/Shift.sol";
+import "../shift/ShiftVault.sol";
 import "../shift/ShiftUtils.sol";
+
 import "./IShiftHandler.sol";
+import "./BaseHandler.sol";
 
 contract ShiftHandler is IShiftHandler, BaseHandler {
     using Shift for Shift.Props;
 
     MultichainVault public immutable multichainVault;
     ShiftVault public immutable shiftVault;
+    IDepositHandler public depositHandler;
+    IWithdrawalHandler public withdrawalHandler;
 
     constructor(
         RoleStore _roleStore,
@@ -20,10 +25,14 @@ contract ShiftHandler is IShiftHandler, BaseHandler {
         EventEmitter _eventEmitter,
         IOracle _oracle,
         MultichainVault _multichainVault,
-        ShiftVault _shiftVault
+        ShiftVault _shiftVault,
+        IDepositHandler _depositHandler,
+        IWithdrawalHandler _withdrawalHandler
     ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {
         multichainVault = _multichainVault;
         shiftVault = _shiftVault;
+        depositHandler = _depositHandler;
+        withdrawalHandler = _withdrawalHandler;
     }
 
     function createShift(
@@ -133,6 +142,8 @@ contract ShiftHandler is IShiftHandler, BaseHandler {
             multichainVault,
             shiftVault,
             oracle,
+            depositHandler,
+            withdrawalHandler,
             key,
             keeper,
             startingGas

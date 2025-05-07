@@ -14,6 +14,8 @@ contract GlvShiftHandler is BaseHandler, ReentrancyGuard {
     MultichainVault public immutable multichainVault;
     GlvVault public immutable glvVault;
     ShiftVault public immutable shiftVault;
+    IDepositHandler public immutable depositHandler;
+    IWithdrawalHandler public immutable withdrawalHandler;
 
     constructor(
         RoleStore _roleStore,
@@ -22,11 +24,15 @@ contract GlvShiftHandler is BaseHandler, ReentrancyGuard {
         IOracle _oracle,
         MultichainVault _multichainVault,
         GlvVault _glvVault,
-        ShiftVault _shiftVault
+        ShiftVault _shiftVault,
+        IDepositHandler _depositHandler,
+        IWithdrawalHandler _withdrawalHandler
     ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {
         multichainVault = _multichainVault;
         glvVault = _glvVault;
         shiftVault = _shiftVault;
+        depositHandler = _depositHandler;
+        withdrawalHandler = _withdrawalHandler;
     }
 
     function createGlvShift(
@@ -68,6 +74,8 @@ contract GlvShiftHandler is BaseHandler, ReentrancyGuard {
             multichainVault: multichainVault,
             shiftVault: shiftVault,
             glvVault: glvVault,
+            depositHandler: depositHandler,
+            withdrawalHandler: withdrawalHandler,
             oracle: oracle,
             keeper: keeper
         });

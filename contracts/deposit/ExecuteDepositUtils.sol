@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
 
+import "./IExecuteDepositUtils.sol";
 import "./DepositVault.sol";
 import "./DepositStoreUtils.sol";
 import "./DepositEventUtils.sol";
@@ -39,23 +40,6 @@ library ExecuteDepositUtils {
     using EventUtils for EventUtils.Bytes32Items;
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
-
-    // @dev ExecuteDepositParams struct used in executeDeposit to avoid stack
-    // too deep errors
-    struct ExecuteDepositParams {
-        DataStore dataStore;
-        EventEmitter eventEmitter;
-        MultichainVault multichainVault;
-        IMultichainTransferRouter multichainTransferRouter;
-        DepositVault depositVault;
-        IOracle oracle;
-        bytes32 key;
-        address keeper;
-        uint256 startingGas;
-        ISwapPricingUtils.SwapPricingType swapPricingType;
-        bool includeVirtualInventoryImpact;
-        uint256 srcChainId;
-    }
 
     // @dev _ExecuteDepositParams struct used in executeDeposit to avoid stack
     // too deep errors
@@ -105,7 +89,7 @@ library ExecuteDepositUtils {
 
     // @dev executes a deposit
     // @param params ExecuteDepositParams
-    function executeDeposit(ExecuteDepositParams memory params, Deposit.Props memory deposit) external returns (uint256 receivedMarketTokens) {
+    function executeDeposit(IExecuteDepositUtils.ExecuteDepositParams memory params, Deposit.Props memory deposit) external returns (uint256 receivedMarketTokens) {
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
         params.startingGas -= gasleft() / 63;
 
@@ -357,7 +341,7 @@ library ExecuteDepositUtils {
     // @dev executes a deposit
     // @param params ExecuteDepositParams
     // @param _params _ExecuteDepositParams
-    function _executeDeposit(ExecuteDepositParams memory params, _ExecuteDepositParams memory _params, bool balanceWasImproved) internal returns (uint256) {
+    function _executeDeposit(IExecuteDepositUtils.ExecuteDepositParams memory params, _ExecuteDepositParams memory _params, bool balanceWasImproved) internal returns (uint256) {
         // for markets where longToken == shortToken, the price impact factor should be set to zero
         // in which case, the priceImpactUsd would always equal zero
         SwapPricingUtils.SwapFees memory fees = SwapPricingUtils.getSwapFees(
@@ -578,7 +562,7 @@ library ExecuteDepositUtils {
     }
 
     function swap(
-        ExecuteDepositParams memory params,
+        IExecuteDepositUtils.ExecuteDepositParams memory params,
         address[] memory swapPath,
         address initialToken,
         uint256 inputAmount,
@@ -624,7 +608,7 @@ library ExecuteDepositUtils {
     // since it may be possible to deposit a small amount of tokens on the first deposit
     // to cause a high market token price due to rounding of the amount of tokens minted
     function _validateFirstDeposit(
-        ExecuteDepositParams memory params,
+        IExecuteDepositUtils.ExecuteDepositParams memory params,
         Deposit.Props memory deposit,
         Market.Props memory market
     ) internal view {

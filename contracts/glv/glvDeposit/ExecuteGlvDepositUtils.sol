@@ -224,7 +224,7 @@ library ExecuteGlvDepositUtils {
         params.dataStore.addBytes32(Keys.DEPOSIT_LIST, depositKey);
         DepositEventUtils.emitDepositCreated(params.eventEmitter, depositKey, deposit, Deposit.DepositType.Glv);
 
-        ExecuteDepositUtils.ExecuteDepositParams memory executeDepositParams = ExecuteDepositUtils.ExecuteDepositParams(
+        IExecuteDepositUtils.ExecuteDepositParams memory executeDepositParams = IExecuteDepositUtils.ExecuteDepositParams(
                 params.dataStore,
                 params.eventEmitter,
                 params.multichainVault,

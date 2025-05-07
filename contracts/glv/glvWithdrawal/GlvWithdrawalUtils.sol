@@ -141,7 +141,7 @@ library GlvWithdrawalUtils {
         GlvToken(payable(glvWithdrawal.glv())).burn(address(params.glvVault), glvWithdrawal.glvTokenAmount());
         params.glvVault.syncTokenBalance(glvWithdrawal.glv());
 
-        ExecuteWithdrawalUtils.ExecuteWithdrawalResult memory withdrawalResult = _processMarketWithdrawal(
+        IExecuteWithdrawalUtils.ExecuteWithdrawalResult memory withdrawalResult = _processMarketWithdrawal(
             params,
             glvWithdrawal,
             cache.marketTokenAmount
@@ -199,7 +199,7 @@ library GlvWithdrawalUtils {
         ExecuteGlvWithdrawalParams memory params,
         GlvWithdrawal.Props memory glvWithdrawal,
         uint256 marketTokenAmount
-    ) private returns (ExecuteWithdrawalUtils.ExecuteWithdrawalResult memory) {
+    ) private returns (IExecuteWithdrawalUtils.ExecuteWithdrawalResult memory) {
 
         Withdrawal.Props memory withdrawal = Withdrawal.Props(
             Withdrawal.Addresses({
@@ -240,7 +240,7 @@ library GlvWithdrawalUtils {
         );
         params.glvVault.syncTokenBalance(glvWithdrawal.market());
 
-        ExecuteWithdrawalUtils.ExecuteWithdrawalParams memory executeWithdrawalParams = ExecuteWithdrawalUtils
+        IExecuteWithdrawalUtils.ExecuteWithdrawalParams memory executeWithdrawalParams = IExecuteWithdrawalUtils
             .ExecuteWithdrawalParams({
                 dataStore: params.dataStore,
                 eventEmitter: params.eventEmitter,

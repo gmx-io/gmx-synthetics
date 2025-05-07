@@ -122,6 +122,13 @@ contract DepositHandler is IDepositHandler, BaseHandler {
         }
     }
 
+    function executeDepositFromController(
+        IExecuteDepositUtils.ExecuteDepositParams calldata executeDepositParams,
+        Deposit.Props calldata deposit
+    ) external onlyController returns (uint256) {
+        return ExecuteDepositUtils.executeDeposit(executeDepositParams, deposit);
+    }
+
     // @dev simulate execution of a deposit to check for any errors
     // @param key the deposit key
     // @param params OracleUtils.SimulatePricesParams
@@ -156,7 +163,7 @@ contract DepositHandler is IDepositHandler, BaseHandler {
 
         FeatureUtils.validateFeature(dataStore, Keys.executeDepositFeatureDisabledKey(address(this)));
 
-        ExecuteDepositUtils.ExecuteDepositParams memory params = ExecuteDepositUtils.ExecuteDepositParams(
+        IExecuteDepositUtils.ExecuteDepositParams memory params = IExecuteDepositUtils.ExecuteDepositParams(
             dataStore,
             eventEmitter,
             multichainVault,

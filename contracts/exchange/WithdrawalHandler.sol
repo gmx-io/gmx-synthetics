@@ -123,6 +123,13 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
         }
     }
 
+    function executeWithdrawalFromController(
+        IExecuteWithdrawalUtils.ExecuteWithdrawalParams calldata executeWithdrawalParams,
+        Withdrawal.Props calldata withdrawal
+    ) external onlyController returns (IExecuteWithdrawalUtils.ExecuteWithdrawalResult memory) {
+        return ExecuteWithdrawalUtils.executeWithdrawal(executeWithdrawalParams, withdrawal);
+    }
+
     // @notice this function can only be called for markets where Chainlink
     // on-chain feeds are configured for all the tokens of the market
     // for example, if the market has index token as DOGE, long token as WETH
@@ -210,7 +217,7 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
 
         FeatureUtils.validateFeature(dataStore, Keys.executeWithdrawalFeatureDisabledKey(address(this)));
 
-        ExecuteWithdrawalUtils.ExecuteWithdrawalParams memory params = ExecuteWithdrawalUtils.ExecuteWithdrawalParams(
+        IExecuteWithdrawalUtils.ExecuteWithdrawalParams memory params = IExecuteWithdrawalUtils.ExecuteWithdrawalParams(
             dataStore,
             eventEmitter,
             multichainVault,

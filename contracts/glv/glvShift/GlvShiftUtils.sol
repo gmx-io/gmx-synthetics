@@ -31,6 +31,8 @@ library GlvShiftUtils {
         MultichainVault multichainVault;
         ShiftVault shiftVault;
         GlvVault glvVault;
+        IDepositHandler depositHandler;
+        IWithdrawalHandler withdrawalHandler;
         bytes32 key;
         address keeper;
     }
@@ -156,6 +158,8 @@ library GlvShiftUtils {
             multichainVault: params.multichainVault,
             shiftVault: params.shiftVault,
             oracle: params.oracle,
+            depositHandler: params.depositHandler,
+            withdrawalHandler: params.withdrawalHandler,
             key: cache.shiftKey,
             keeper: params.keeper,
 
