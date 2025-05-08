@@ -1,6 +1,8 @@
 import { DeployFunction, DeployResult, DeploymentsExtension } from "hardhat-deploy/dist/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { getExistingContractAddresses } from "../config/overwrite";
+import path from "path";
+import { findFile, readJsonFile, searchDirectory } from "./file";
 
 export async function deployContract(name, args, contractOptions = {}) {
   const contractFactory = await ethers.getContractFactory(name, contractOptions);
@@ -123,12 +125,34 @@ export function createDeployFunction({
   return func;
 }
 
+function getArtifact(contractName: string) {
+  const findContract = findFile(contractName + ".json");
+  const artifactPath = path.join(__dirname, "../artifacts/contracts/");
+  const searchResult = searchDirectory(artifactPath, findContract);
+  return readJsonFile(searchResult);
+}
+
+function getDeployment(contractName: string, network: string) {
+  const findContract = findFile(contractName + ".json");
+  const deploymentsPath = path.join(__dirname, `../deployments/${network}/`);
+  const searchResult = searchDirectory(deploymentsPath, findContract);
+  return readJsonFile(searchResult);
+}
+
 export function skipHandlerFunction(contractName: string): (env: HardhatRuntimeEnvironment) => Promise<boolean> {
   return async function skip(env: HardhatRuntimeEnvironment) {
     const tags = env.deployTags?.split(",") ?? [];
     if (tags.includes(contractName)) {
       return false;
     }
-    return process.env.SKIP_AUTO_HANDLER_REDEPLOYMENT ? true : false;
+    const shouldSkip = process.env.SKIP_AUTO_HANDLER_REDEPLOYMENT ? true : false;
+
+    // Check that handler ABI didn't changed since last deploy
+    const artifact = getArtifact(contractName);
+    const deployment = getDeployment(contractName, hre.network.name);
+    if (shouldSkip && JSON.stringify(deployment.abi) == JSON.stringify(artifact.abi)) {
+      throw new Error(`ABI has been changed for ${contractName}, but contract is not picked for deploy!`);
+    }
+    return shouldSkip;
   };
 }
