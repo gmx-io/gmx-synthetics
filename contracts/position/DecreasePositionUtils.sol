@@ -246,6 +246,13 @@ library DecreasePositionUtils {
             cache.nextPositionBorrowingFactor
         );
 
+        PositionUtils.updatePositionLastSrcChainId(
+            params.contracts.dataStore,
+            params.position,
+            params.order,
+            params.positionKey
+        );
+
         params.position.setSizeInUsd(cache.nextPositionSizeInUsd);
         params.position.setSizeInTokens(params.position.sizeInTokens() - values.sizeDeltaInTokens);
         params.position.setCollateralAmount(values.remainingCollateralAmount);
@@ -272,12 +279,6 @@ library DecreasePositionUtils {
 
             PositionStoreUtils.set(params.contracts.dataStore, params.positionKey, params.position);
         }
-
-        PositionUtils.updatePositionLastSrcChainId(
-            params.contracts.dataStore,
-            params.positionKey,
-            params.order.srcChainId()
-        );
 
         MarketUtils.applyDeltaToCollateralSum(
             params.contracts.dataStore,

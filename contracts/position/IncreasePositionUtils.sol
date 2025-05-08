@@ -139,6 +139,13 @@ library IncreasePositionUtils {
 
         PositionUtils.incrementClaimableFundingAmount(params, fees);
 
+        PositionUtils.updatePositionLastSrcChainId(
+            params.contracts.dataStore,
+            params.position,
+            params.order,
+            params.positionKey
+        );
+
         params.position.setSizeInUsd(cache.nextPositionSizeInUsd);
         params.position.setSizeInTokens(params.position.sizeInTokens() + cache.baseSizeDeltaInTokens);
 
@@ -150,12 +157,6 @@ library IncreasePositionUtils {
         params.position.setIncreasedAtTime(Chain.currentTimestamp());
 
         PositionStoreUtils.set(params.contracts.dataStore, params.positionKey, params.position);
-
-        PositionUtils.updatePositionLastSrcChainId(
-            params.contracts.dataStore,
-            params.positionKey,
-            params.order.srcChainId()
-        );
 
         PositionUtils.updateOpenInterest(
             params,

@@ -807,7 +807,19 @@ library PositionUtils {
         return (cache.priceImpactUsd, cache.executionPrice, cache.balanceWasImproved);
     }
 
-    function updatePositionLastSrcChainId(DataStore dataStore, bytes32 positionKey, uint256 srcChainId) internal {
-        dataStore.setUint(Keys.positionLastSrcChainId(positionKey), srcChainId);
+    function updatePositionLastSrcChainId(
+        DataStore dataStore,
+        Position.Props memory position,
+        Order.Props memory order,
+        bytes32 positionKey
+    ) internal {
+        uint256 positionUpdatedAtTime = position.increasedAtTime() > position.decreasedAtTime()
+            ? position.increasedAtTime()
+            : position.decreasedAtTime();
+
+        if (order.updatedAtTime() > positionUpdatedAtTime) {
+            uint256 srcChainId = order.srcChainId();
+            dataStore.setUint(Keys.positionLastSrcChainId(positionKey), srcChainId);
+        }
     }
 }
