@@ -25,7 +25,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
 
-    uint256 public constant MAX_FEE_FACTOR = 5 * Precision.FLOAT_PRECISION / 100;
+    uint256 public constant MAX_FEE_FACTOR = 5 * Precision.FLOAT_PRECISION / 100; // 5%
 
     // 0.00001% per second, ~315% per year
     uint256 public constant MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND = 100000000000000000000000;
@@ -135,7 +135,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         uint256 dataStreamMultiplier,
         uint256 dataStreamSpreadReductionFactor
     ) external onlyConfigKeeper nonReentrant {
-        
+
         ConfigUtils.setDataStream(
             dataStore,
             eventEmitter,
