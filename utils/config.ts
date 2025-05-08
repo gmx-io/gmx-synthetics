@@ -212,8 +212,8 @@ async function appendConfigIfDifferent(
   }
 }
 
-export function getFullKey(baseKey: string, keyData: string) {
-  if (keyData === "0x") {
+export function getFullKey(baseKey: string, keyData?: string) {
+  if (!keyData || keyData === "0x") {
     return baseKey;
   }
 
