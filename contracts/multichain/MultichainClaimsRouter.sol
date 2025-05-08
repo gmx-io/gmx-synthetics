@@ -25,14 +25,13 @@ contract MultichainClaimsRouter is MultichainRouter {
         uint256 srcChainId,
         bool isSubaccount
     ) {
-        WithRelayCache memory cache;
-        cache.startingGas = gasleft();
+        uint256 startingGas = gasleft();
         _validateGaslessFeature();
-        cache.contracts = _getContracts();
+        Contracts memory contracts = _getContracts();
         _;
         // beforeAction "delayed" after tokens have been claimed
-        _handleRelayBeforeAction(cache.contracts, relayParams, account, srcChainId, isSubaccount);
-        _handleRelayAfterAction(cache.contracts, cache.startingGas, account, srcChainId);
+        _handleRelayBeforeAction(contracts, relayParams, account, srcChainId, isSubaccount);
+        _handleRelayAfterAction(contracts, startingGas, account, srcChainId);
     }
 
     function claimFundingFees(
@@ -78,12 +77,11 @@ contract MultichainClaimsRouter is MultichainRouter {
         uint256[] memory timeKeys,
         address receiver
     ) external nonReentrant withRelayForClaims(relayParams, account, srcChainId, false) returns (uint256[] memory) {
-        bytes32 structHash = RelayUtils.getClaimCollateralStructHash(relayParams, markets, tokens, timeKeys, receiver);
-        _validateCall(relayParams, account, structHash, srcChainId);
-        return _claimCollateral(account, srcChainId, markets, tokens, timeKeys, receiver);
+        return _claimCollateral(relayParams, account, srcChainId, markets, tokens, timeKeys, receiver);
     }
 
     function _claimCollateral(
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         address[] memory markets,
@@ -91,6 +89,10 @@ contract MultichainClaimsRouter is MultichainRouter {
         uint256[] memory timeKeys,
         address receiver
     ) private returns (uint256[] memory claimedAmounts) {
+        // validation added here instead of claimCollateral to avoid stack too deep error
+        bytes32 structHash = RelayUtils.getClaimCollateralStructHash(relayParams, markets, tokens, timeKeys, receiver);
+        _validateCall(relayParams, account, structHash, srcChainId);
+
         claimedAmounts = MarketUtils.batchClaimCollateral(
             dataStore,
             eventEmitter,

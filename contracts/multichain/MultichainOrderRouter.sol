@@ -18,13 +18,12 @@ contract MultichainOrderRouter is MultichainRouter {
         bytes32 orderKey,
         bool isSubaccount
     ) {
-        WithRelayCache memory cache;
-        cache.startingGas = gasleft();
+        uint256 startingGas = gasleft();
         _validateGaslessFeature();
-        cache.contracts = _getContracts();
-        _handleRelayBeforeActionForOrders(cache.contracts, relayParams, account, srcChainId, orderKey, isSubaccount);
+        Contracts memory contracts = _getContracts();
+        _handleRelayBeforeActionForOrders(contracts, relayParams, account, srcChainId, orderKey, isSubaccount);
         _;
-        _handleRelayAfterAction(cache.contracts, cache.startingGas, account, srcChainId);
+        _handleRelayAfterAction(contracts, startingGas, account, srcChainId);
     }
 
     constructor(
