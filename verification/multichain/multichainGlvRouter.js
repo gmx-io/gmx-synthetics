@@ -1,6 +1,6 @@
 // Verification arguments for MultichainGlvRouter
 // Usage example:
-// npx hardhat verify --network arbitrumSepolia --constructor-args ./verification/multichain/multichainGlvRouter.js --contract contracts/multichain/MultichainGlvRouter.sol:MultichainGlvRouter 0xD34926dE6EAa481bD6CA947e009e384AF23e07F1
+// npx hardhat verify --network arbitrumSepolia --constructor-args ./verification/multichain/multichainGlvRouter.js --contract contracts/multichain/MultichainGlvRouter.sol:MultichainGlvRouter 0x427Eb220FBFF2652C04Ff350C8145e091FfAe4B5
 
 module.exports = [
   {
@@ -8,12 +8,14 @@ module.exports = [
     roleStore: "0x55EC3A5B813ECe1ad6C112D358e9Fb08A1402d0a",
     dataStore: "0xAd4759d41195aA5bA8592b8c9B454CD4E1735841",
     eventEmitter: "0x218f23Eb65F1C5939fDbadd46246c47b82dc8998",
-    oracle: "0x73bd4303FDA1EB2d347278FEEe1Bec918d05aA1e",
+    oracle: "0x625674C550aDc15BF6537516301FA72609caf339",
     orderVault: "0xCfc2E935b67d51Ad848c1AdA16e1fB1955fB9829",
-    orderHandler: "0xcd670FA5Cd9A3091d3517b13366C4dB315a5A67c",
+    orderHandler: "0x4A7893DD2eC6f935518fF572Fa903B45cFBF924d",
+    swapHandler: "0x2Eb8CA77E8a4E71d1a772ff4B3fd4cf084c208e2",
     externalHandler: "0x72A1313b0064c682a61cDA6D75a5f886cab2eDC5",
     multichainVault: "0xbFaD74Ce7e3D203B6653368C9903AcF633c5D405"
   },
-  "0x98BCE704B93bC3E0c81701817b17634FcBeE0D35", // GlvHandler
+  "0xD4E4Ae34fb99F3b0fF05C17Ba556FDC7ca2BC5ac", // GlvDepositHandler
+  "0x8fF12aaD57cC8770Ea391e3E39B09605AF28AD80", // GlvHandler
   "0x4212fbd7577dF0b631563d7cF48f49CD86De3Bbe"  // GlvVault
 ];
