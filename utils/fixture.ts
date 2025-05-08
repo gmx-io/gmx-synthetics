@@ -93,6 +93,7 @@ export async function deployFixture() {
   const withdrawalHandler = await hre.ethers.getContract("WithdrawalHandler");
   const shiftHandler = await hre.ethers.getContract("ShiftHandler");
   const orderHandler = await hre.ethers.getContract("OrderHandler");
+  const swapHandler = await hre.ethers.getContract("SwapHandler");
   const externalHandler = await hre.ethers.getContract("ExternalHandler");
   const baseOrderUtils = await hre.ethers.getContract("BaseOrderUtils");
   const orderUtils = await hre.ethers.getContract("OrderUtils");
@@ -293,6 +294,7 @@ export async function deployFixture() {
       withdrawalHandler,
       shiftHandler,
       orderHandler,
+      swapHandler,
       externalHandler,
       baseOrderUtils,
       orderUtils,
