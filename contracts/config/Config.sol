@@ -25,16 +25,14 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
 
-    uint256 public constant MAX_FEE_FACTOR = (5 * Precision.FLOAT_PRECISION) / 100; // 5%
+    uint256 public constant MAX_FEE_FACTOR = 5 * Precision.FLOAT_PRECISION / 100;
 
     // 0.00001% per second, ~315% per year
     uint256 public constant MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND = 100000000000000000000000;
     // at this rate max allowed funding rate will be reached in 1 hour at 100% imbalance if max funding rate is 315%
-    uint256 public constant MAX_ALLOWED_FUNDING_INCREASE_FACTOR_PER_SECOND =
-        MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND / 1 hours;
+    uint256 public constant MAX_ALLOWED_FUNDING_INCREASE_FACTOR_PER_SECOND = MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND / 1 hours;
     // at this rate zero funding rate will be reached in 24 hours if max funding rate is 315%
-    uint256 public constant MAX_ALLOWED_FUNDING_DECREASE_FACTOR_PER_SECOND =
-        MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND / 24 hours;
+    uint256 public constant MAX_ALLOWED_FUNDING_DECREASE_FACTOR_PER_SECOND = MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND / 24 hours;
     // minimum duration required to fully distribute the position impact pool amount
     uint256 public constant MIN_POSITION_IMPACT_POOL_DISTRIBUTION_TIME = 7 days;
 
@@ -42,11 +40,15 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     EventEmitter public immutable eventEmitter;
 
     // @dev the base keys that can be set
-    mapping(bytes32 => bool) public allowedBaseKeys;
+    mapping (bytes32 => bool) public allowedBaseKeys;
     // @dev the limited base keys that can be set
-    mapping(bytes32 => bool) public allowedLimitedBaseKeys;
+    mapping (bytes32 => bool) public allowedLimitedBaseKeys;
 
-    constructor(RoleStore _roleStore, DataStore _dataStore, EventEmitter _eventEmitter) RoleModule(_roleStore) {
+    constructor(
+        RoleStore _roleStore,
+        DataStore _dataStore,
+        EventEmitter _eventEmitter
+    ) RoleModule(_roleStore) {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
 
@@ -76,7 +78,10 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         eventData.addressItems.initItems(2);
         eventData.addressItems.setItem(0, "token", token);
         eventData.addressItems.setItem(1, "provider", provider);
-        eventEmitter.emitEventLog("InitOracleProviderForToken", eventData);
+        eventEmitter.emitEventLog(
+            "InitOracleProviderForToken",
+            eventData
+        );
     }
 
     function setOracleProviderForToken(address token, address provider) external onlyConfigKeeper nonReentrant {
@@ -88,10 +93,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             revert Errors.InvalidOracleProvider(provider);
         }
 
-        if (
-            Chain.currentTimestamp() - dataStore.getUint(Keys.oracleProviderUpdatedAt(token, provider)) <
-            dataStore.getUint(Keys.ORACLE_PROVIDER_MIN_CHANGE_DELAY)
-        ) {
+        if (Chain.currentTimestamp() - dataStore.getUint(Keys.oracleProviderUpdatedAt(token, provider))
+            < dataStore.getUint(Keys.ORACLE_PROVIDER_MIN_CHANGE_DELAY)) {
             revert Errors.OracleProviderMinChangeDelayNotYetPassed(token, provider);
         }
 
@@ -102,7 +105,10 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         eventData.addressItems.initItems(2);
         eventData.addressItems.setItem(0, "token", token);
         eventData.addressItems.setItem(1, "provider", provider);
-        eventEmitter.emitEventLog("SetOracleProviderForToken", eventData);
+        eventEmitter.emitEventLog(
+            "SetOracleProviderForToken",
+            eventData
+        );
     }
 
     function setPriceFeed(
@@ -129,6 +135,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         uint256 dataStreamMultiplier,
         uint256 dataStreamSpreadReductionFactor
     ) external onlyConfigKeeper nonReentrant {
+        
         ConfigUtils.setDataStream(
             dataStore,
             eventEmitter,
@@ -148,7 +155,14 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         uint256 timeKey,
         uint256 factor
     ) external onlyConfigKeeper nonReentrant {
-        ConfigUtils.setClaimableCollateralFactorForTime(dataStore, eventEmitter, market, token, timeKey, factor);
+        ConfigUtils.setClaimableCollateralFactorForTime(
+            dataStore,
+            eventEmitter,
+            market,
+            token,
+            timeKey,
+            factor
+        );
     }
 
     function setClaimableCollateralFactorForAccount(
@@ -224,7 +238,11 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         eventData.boolItems.initItems(1);
         eventData.boolItems.setItem(0, "value", value);
 
-        eventEmitter.emitEventLog1("SetBool", baseKey, eventData);
+        eventEmitter.emitEventLog1(
+            "SetBool",
+            baseKey,
+            eventData
+        );
     }
 
     // @dev set an address value
@@ -249,7 +267,11 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         eventData.addressItems.initItems(1);
         eventData.addressItems.setItem(0, "value", value);
 
-        eventEmitter.emitEventLog1("SetAddress", baseKey, eventData);
+        eventEmitter.emitEventLog1(
+            "SetAddress",
+            baseKey,
+            eventData
+        );
     }
 
     // @dev set a bytes32 value
@@ -272,7 +294,11 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         eventData.bytesItems.initItems(1);
         eventData.bytesItems.setItem(0, "data", data);
 
-        eventEmitter.emitEventLog1("SetBytes32", baseKey, eventData);
+        eventEmitter.emitEventLog1(
+            "SetBytes32",
+            baseKey,
+            eventData
+        );
     }
 
     // @dev set a uint256 value
@@ -307,7 +333,11 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         eventData.uintItems.initItems(1);
         eventData.uintItems.setItem(0, "value", value);
 
-        eventEmitter.emitEventLog1("SetUint", baseKey, eventData);
+        eventEmitter.emitEventLog1(
+            "SetUint",
+            baseKey,
+            eventData
+        );
     }
 
     // @dev set an int256 value
@@ -332,7 +362,11 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         eventData.intItems.initItems(1);
         eventData.intItems.setItem(0, "value", value);
 
-        eventEmitter.emitEventLog1("SetInt", baseKey, eventData);
+        eventEmitter.emitEventLog1(
+            "SetInt",
+            baseKey,
+            eventData
+        );
     }
 
     // @dev initialize the allowed base keys

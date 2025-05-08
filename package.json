@@ -53,7 +53,7 @@
     "@layerzerolabs/lz-evm-messagelib-v2": "3.0.74",
     "@layerzerolabs/lz-evm-oapp-v2": "3.0.75",
     "@layerzerolabs/lz-evm-protocol-v2": "3.0.74",
-    "@layerzerolabs/lz-v2-utilities": "^3.0.88",
+    "@layerzerolabs/lz-v2-utilities": "^3.0.85",
     "@layerzerolabs/oapp-evm": "0.3.1",
     "@layerzerolabs/oft-evm": "^3.1.2",
     "@nomicfoundation/hardhat-foundry": "^1.1.1",
