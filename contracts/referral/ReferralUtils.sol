@@ -132,6 +132,8 @@ library ReferralUtils {
 
         FeatureUtils.validateFeature(dataStore, Keys.claimAffiliateRewardsFeatureDisabledKey(address(this)));
 
+        AccountUtils.validateReceiver(receiver);
+
         uint256[] memory claimedAmounts = new uint256[](markets.length);
 
         for (uint256 i; i < markets.length; i++) {
