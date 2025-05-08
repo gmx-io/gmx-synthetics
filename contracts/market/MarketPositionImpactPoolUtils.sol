@@ -103,8 +103,6 @@ library MarketPositionImpactPoolUtils {
             - shortTokenWithdrawalAmount.toInt256()
         );
 
-        MarketUtils.validateMarketTokenBalance(dataStore, market);
-
         MarketToken(payable(market)).transferOut(
             marketProps.longToken,
             receiver,
@@ -116,6 +114,8 @@ library MarketPositionImpactPoolUtils {
             receiver,
             shortTokenWithdrawalAmount
         );
+
+        MarketUtils.validateMarketTokenBalance(dataStore, market);
 
         MarketEventUtils.emitPositionImpactPoolWithdrawal(
             eventEmitter,

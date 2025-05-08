@@ -34,6 +34,8 @@ library SubaccountRouterUtils {
     ) external {
         FeatureUtils.validateFeature(dataStore, Keys.subaccountFeatureDisabledKey(address(this)));
 
+        SubaccountUtils.validateIntegrationId(dataStore, account, subaccount);
+
         _handleSubaccountApproval(
             dataStore,
             eventEmitter,
