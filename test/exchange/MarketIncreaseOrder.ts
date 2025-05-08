@@ -262,7 +262,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
 
     await handleOrder(fixture, { create: params });
 
-    expect((await provider.getBalance(user1.address)).sub(initialBalance)).closeTo("42248984337992", "10000000000000");
+    expect((await provider.getBalance(user1.address)).sub(initialBalance)).closeTo("47797984382384", "10000000000000");
   });
 
   it("refund execution fee callback", async () => {
