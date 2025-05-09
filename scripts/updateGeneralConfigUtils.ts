@@ -211,13 +211,15 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
     }
   }
 
-  await handleConfig(
-    "uint",
-    keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR,
-    "0x",
-    generalConfig.estimatedGasFeeMultiplierFactor,
-    `estimatedGasFeeMultiplierFactor`
-  );
+  if (generalConfig.estimatedGasFeeMultiplierFactor) {
+    await handleConfig(
+      "uint",
+      keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR,
+      "0x",
+      generalConfig.estimatedGasFeeMultiplierFactor,
+      `estimatedGasFeeMultiplierFactor`
+    );
+  }
 
   if (generalConfig.executionGasFeeBaseAmount) {
     await handleConfig(
@@ -247,13 +249,15 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
     }
   }
 
-  await handleConfig(
-    "uint",
-    keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR,
-    "0x",
-    generalConfig.executionGasFeeMultiplierFactor,
-    `executionGasFeeMultiplierFactor`
-  );
+  if (generalConfig.executionGasFeeMultiplierFactor) {
+    await handleConfig(
+      "uint",
+      keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR,
+      "0x",
+      generalConfig.executionGasFeeMultiplierFactor,
+      `executionGasFeeMultiplierFactor`
+    );
+  }
 
   if (generalConfig.requestExpirationTime !== undefined) {
     await handleConfig(
@@ -289,6 +293,32 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
     "0x",
     generalConfig.maxExecutionFeeMultiplierFactor,
     `maxExecutionFeeMultiplierFactor`
+  );
+
+  await handleConfig(
+    "uint",
+    keys.GELATO_RELAY_FEE_BASE_AMOUNT,
+    "0x",
+    generalConfig.gelatoRelayFeeBaseAmount,
+    "gelatoRelayFeeBaseAmount"
+  );
+
+  await handleConfig(
+    "uint",
+    keys.GELATO_RELAY_FEE_MULTIPLIER_FACTOR,
+    "0x",
+    generalConfig.gelatoRelayFeeMultiplierFactor,
+    "gelatoRelayFeeMultiplierFactor"
+  );
+
+  await handleConfig("address", keys.RELAY_FEE_ADDRESS, "0x", generalConfig.relayFeeAddress, `relayFeeAddress`);
+
+  await handleConfig(
+    "uint",
+    keys.MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT,
+    "0x",
+    generalConfig.maxRelayFeeUsdForSubaccount,
+    `maxRelayFeeUsdForSubaccount`
   );
 };
 
@@ -380,35 +410,22 @@ export async function updateGeneralConfig({ write }) {
     return;
   }
 
-  try {
-    if (!write) {
-      ({ write } = await prompts({
-        type: "confirm",
-        name: "write",
-        message: "Do you want to execute the transactions?",
-      }));
-    }
+  const { roles } = await hre.gmx.getRoles();
+  const from = Object.keys(roles.CONFIG_KEEPER)[0];
+  await config.connect(from).callStatic.multicall(multicallWriteParams);
 
-    if (write) {
-      const tx = await config.multicall(multicallWriteParams);
-      console.log(`tx sent: ${tx.hash}`);
-    } else {
-      await config.callStatic.multicall(multicallWriteParams, {
-        from: "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745",
-      });
-      console.log("NOTE: executed in read-only mode, no transactions were sent");
-    }
-  } catch (ex) {
-    if (
-      ex.errorName === "InvalidBaseKey" &&
-      hre.network.name === "avalanche" &&
-      process.env.SKIP_GLV_LIMITS_AVALANCHE !== "true"
-    ) {
-      console.error(ex);
-      console.log("Use SKIP_GLV_LIMITS_AVALANCHE=true to skip updating GLV gas limits on Avalanche");
-      return;
-    }
+  if (!write) {
+    ({ write } = await prompts({
+      type: "confirm",
+      name: "write",
+      message: "Do you want to execute the transactions?",
+    }));
+  }
 
-    throw ex;
+  if (write) {
+    const tx = await config.multicall(multicallWriteParams);
+    console.log(`tx sent: ${tx.hash}`);
+  } else {
+    console.log("NOTE: executed in read-only mode, no transactions were sent");
   }
 }

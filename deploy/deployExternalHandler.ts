@@ -1,12 +1,12 @@
-import { createDeployFunction } from "../utils/deploy";
+import { createDeployFunction, skipHandlerFunction } from "../utils/deploy";
+
+const contractName = "ExternalHandler";
 
 const func = createDeployFunction({
-  contractName: "ExternalHandler",
+  contractName: contractName,
   id: "ExternalHandler_1",
 });
 
-func.skip = async () => {
-  return process.env.SKIP_HANDLER_DEPLOYMENTS ? true : false;
-};
+func.skip = skipHandlerFunction(contractName);
 
 export default func;
