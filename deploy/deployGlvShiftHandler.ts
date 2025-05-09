@@ -21,7 +21,7 @@ const func = createDeployFunction({
   getDeployArgs: async ({ dependencyContracts }) => {
     return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
   },
-  libraryNames: ["GasUtils", "GlvShiftStoreUtils", "GlvShiftUtils"],
+  libraryNames: ["GasUtils", "GlvUtils", "GlvShiftStoreUtils", "GlvShiftUtils"],
   afterDeploy: async ({ deployedContract }) => {
     await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
   },
@@ -30,9 +30,3 @@ const func = createDeployFunction({
 func.skip = skipHandlerFunction(contractName);
 
 export default func;
-
-// npx hardhat flatten contracts/exchange/GlvShiftHandler.sol > GlvShiftHandler.flat.sol
-// wc -m GlvShiftHandler.flat.sol
-
-// npx hardhat flatten contracts/exchange/GlvDepositHandler.sol > GlvDepositHandler.flat.sol
-// wc -m GlvDepositHandler.flat.sol
