@@ -161,7 +161,6 @@ contract MultichainSubaccountRouter is MultichainRouter {
         uint256 actionsCount,
         SubaccountApproval calldata subaccountApproval
     ) private {
-        uint256 storedNonce = subaccountApprovalNonces[account];
         SubaccountRouterUtils.handleSubaccountAction(
             dataStore,
             eventEmitter,
@@ -170,7 +169,6 @@ contract MultichainSubaccountRouter is MultichainRouter {
             Keys.SUBACCOUNT_ORDER_ACTION, // actionType
             actionsCount,
             subaccountApproval,
-            storedNonce,
             subaccountApprovalNonces
         );
     }
