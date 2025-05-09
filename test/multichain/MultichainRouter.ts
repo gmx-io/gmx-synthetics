@@ -993,78 +993,6 @@ describe("MultichainRouter", () => {
           initialUser1Balance.sub(relayFeeAmount)
         );
       });
-
-      it("order collateral can be used to pay for fees for increase orders", async () => {
-        await sendCreateDeposit(createDepositParams);
-        await executeDeposit(fixture, { gasUsageLabel: "executeMultichainDeposit" });
-        await mintAndBridge(fixture, {
-          account: user1,
-          token: wnt,
-          tokenAmount: collateralDeltaAmount.add(relayFeeAmount),
-        });
-        await sendCreateOrder(createOrderParams);
-
-        // Verify order was created and has the expected collateral amount
-        const orderKeys = await getOrderKeys(dataStore, 0, 1);
-        let order = await reader.getOrder(dataStore.address, orderKeys[0]);
-        expect(order.numbers.initialCollateralDeltaAmount).eq(collateralDeltaAmount);
-
-        // Verify user's multichain balance is insufficient for the update operation (should be zero after paying for deposit and order creation)
-        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0);
-
-        // Try to update order - should use the order's collateral to pay for fees
-        await sendUpdateOrder({ ...updateOrderParams, params: { ...updateOrderParams.params, key: orderKeys[0] } });
-
-        order = await reader.getOrder(dataStore.address, orderKeys[0]);
-        expect(order.numbers.initialCollateralDeltaAmount).eq(collateralDeltaAmount.sub(relayFeeAmount));
-      });
-
-      it("position collateral can NOT be used to pay for fees if position becomes liquidatable", async () => {
-        await sendCreateDeposit(createDepositParams);
-        await executeDeposit(fixture, { gasUsageLabel: "executeMultichainDeposit" });
-        await mintAndBridge(fixture, {
-          account: user1,
-          token: wnt,
-          tokenAmount: collateralDeltaAmount.add(relayFeeAmount),
-        });
-        await sendCreateOrder(createOrderParams);
-        await executeOrder(fixture, { gasUsageLabel: "executeOrder" });
-
-        // Verify order was created and has the expected collateral amount
-        const positionKeys = await getPositionKeys(dataStore, 0, 1);
-        const position = await reader.getPosition(dataStore.address, positionKeys[0]);
-        expect(position.numbers.collateralAmount).eq(collateralDeltaAmount);
-
-        await mintAndBridge(fixture, {
-          account: user1,
-          token: wnt,
-          tokenAmount: collateralDeltaAmount.add(relayFeeAmount),
-        });
-        await sendCreateOrder(createOrderParams);
-
-        // Verify order was created and has the expected collateral amount
-        const orderKeys = await getOrderKeys(dataStore, 0, 1);
-        const order = await reader.getOrder(dataStore.address, orderKeys[0]);
-        expect(order.numbers.initialCollateralDeltaAmount).eq(collateralDeltaAmount);
-
-        // Verify user's multichain balance is insufficient for the update operation (should be zero after paying for deposit and order creation)
-        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0);
-
-        // set primary prices
-        await oracle.setPrimaryPrice(wnt.address, { min: prices.wnt.min, max: prices.wnt.max });
-        await oracle.setPrimaryPrice(usdc.address, { min: prices.usdc.min, max: prices.usdc.max });
-
-        // position has 1 ETH collateral, order oppened with 1 ETH collateral and 1.1 ETH fee
-        const highFeeAmount = collateralDeltaAmount.add(expandDecimals(1, 17)); // 1.0 + 0.1 = 1.1 ETH
-        await expect(
-          sendUpdateOrder({
-            ...updateOrderParams,
-            feeParams: { ...updateOrderParams.feeParams, feeAmount: highFeeAmount },
-            params: { ...updateOrderParams.params, key: orderKeys[0] },
-            gelatoRelayFeeAmount: highFeeAmount,
-          })
-        ).to.be.revertedWithCustomError(errorsContract, "LiquidatablePosition");
-      });
     });
 
     describe("cancelOrder", () => {
@@ -1106,6 +1034,13 @@ describe("MultichainRouter", () => {
         expect(await getOrderCount(dataStore)).to.eq(1);
         expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0);
 
+        await mintAndBridge(fixture, {
+          account: user1,
+          token: wnt,
+          tokenAmount: relayFeeAmount,
+        });
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(relayFeeAmount);
+
         await sendCancelOrder({ ...cancelOrderParams, key: orderKeys[0] });
 
         expect(await getOrderCount(dataStore)).to.eq(0);
@@ -1115,94 +1050,8 @@ describe("MultichainRouter", () => {
           initialFeeReceiverBalance.add(cancelOrderParams.gelatoRelayFeeAmount)
         );
         expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(
-          collateralDeltaAmount.sub(relayFeeAmount).add(executionFee)
-        ); // 1.00 - 0.002 + 0.004 = 1.002 ETH
-      });
-
-      it("order collateral can be used to pay for fees for swap orders", async () => {
-        await sendCreateDeposit({ ...createDepositParams, relayFeeAmount: relayFeeAmount });
-        await executeDeposit(fixture, { gasUsageLabel: "executeMultichainDeposit" }); // 0.004 ETH - executionFee is return to user1's multichain balance
-        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(
-          expandDecimals(4, 15)
-        ); // 0.004 ETH
-        await mintAndBridge(fixture, {
-          account: user1,
-          token: wnt,
-          tokenAmount: collateralDeltaAmount.add(relayFeeAmount),
-        });
-        await sendCreateOrder(createOrderParams);
-
-        // Verify order was created and has the expected collateral amount
-        const orderKeys = await getOrderKeys(dataStore, 0, 1);
-        const order = await reader.getOrder(dataStore.address, orderKeys[0]);
-        expect(order.numbers.initialCollateralDeltaAmount).eq(collateralDeltaAmount);
-
-        // Verify user's multichain balance is insufficient for the update operation (should be zero after paying for deposit and order creation)
-        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0);
-
-        // Try to cancel order - should use the order's collateral to pay for fees
-        await sendCancelOrder({ ...cancelOrderParams, key: orderKeys[0] });
-
-        expect(await getOrderCount(dataStore)).to.eq(0);
-        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(
-          collateralDeltaAmount.sub(relayFeeAmount).add(executionFee)
-        ); // 1.00 - 0.002 + 0.004 = 1.002 ETH
-      });
-
-      it("position collateral can be used to pay for fees for increase orders", async () => {
-        await sendCreateDeposit({ ...createDepositParams, relayFeeAmount: relayFeeAmount });
-        await executeDeposit(fixture, { gasUsageLabel: "executeMultichainDeposit" });
-        await mintAndBridge(fixture, {
-          account: user1,
-          token: wnt,
-          tokenAmount: collateralDeltaAmount.add(relayFeeAmount),
-        });
-        await sendCreateOrder(createOrderParams);
-        await executeOrder(fixture, { gasUsageLabel: "executeOrder" });
-
-        await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: relayFeeAmount });
-        await sendCreateOrder({
-          ...createOrderParams,
-          params: {
-            ...createOrderParams.params,
-            numbers: {
-              ...createOrderParams.params.numbers,
-              initialCollateralDeltaAmount: 0, // override from collateralDeltaAmount to 0 for decreasePosition
-            },
-          },
-        });
-
-        // Verify order/position were created and have the expected collateral amount
-        const positionKeys = await getPositionKeys(dataStore, 0, 1);
-        let position = await reader.getPosition(dataStore.address, positionKeys[0]);
-        expect(position.numbers.collateralAmount).eq(collateralDeltaAmount); // 1 ETH
-
-        const orderKeys = await getOrderKeys(dataStore, 0, 1);
-        const order = await reader.getOrder(dataStore.address, orderKeys[0]);
-        expect(order.numbers.initialCollateralDeltaAmount).eq(0); // 0 ETH
-
-        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0); // 0 ETH
-
-        // set primary prices
-        await oracle.setPrimaryPrice(wnt.address, { min: expandDecimals(4800, 18), max: expandDecimals(5200, 18) });
-        await oracle.setPrimaryPrice(usdc.address, { min: expandDecimals(1, 6), max: expandDecimals(1, 6) });
-
-        const initialFeeReceiverBalance = await wnt.balanceOf(GELATO_RELAY_ADDRESS);
-
-        await sendCancelOrder({ ...cancelOrderParams, key: orderKeys[0] });
-
-        // order is cancelled
-        expect(await getOrderCount(dataStore)).to.eq(0);
-
-        // position collateral is used to pay the order fee
-        position = await reader.getPosition(dataStore.address, positionKeys[0]);
-        expect(position.numbers.collateralAmount).eq(collateralDeltaAmount.sub(relayFeeAmount)); // 1.0 - 0.006 = 0.994 ETH position collateral after fee payment
-        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(executionFee); // 0.004 ETH
-        await expectBalance(
-          wnt.address,
-          GELATO_RELAY_ADDRESS,
-          initialFeeReceiverBalance.add(cancelOrderParams.gelatoRelayFeeAmount)
-        );
+          collateralDeltaAmount.add(executionFee)
+        ); // 1.00 + 0.004 = 1.004 ETH
       });
     });
 
