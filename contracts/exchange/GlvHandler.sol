@@ -9,7 +9,7 @@ import "./BaseHandler.sol";
 import "../glv/glvWithdrawal/GlvWithdrawalUtils.sol";
 import "../multichain/IMultichainTransferRouter.sol";
 
-contract GlvHandler is BaseHandler, ReentrancyGuard {
+contract GlvWithdrawalHandler is BaseHandler, ReentrancyGuard {
     using GlvWithdrawal for GlvWithdrawal.Props;
 
     MultichainVault public immutable multichainVault;

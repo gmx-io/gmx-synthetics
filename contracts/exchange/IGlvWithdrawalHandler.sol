@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 import "../glv/glvWithdrawal/IGlvWithdrawalUtils.sol";
 import "../oracle/OracleUtils.sol";
 
-interface IGlvHandler {
+interface IGlvWithdrawalHandler {
     function createGlvWithdrawal(
         address account,
         uint256 srcChainId,

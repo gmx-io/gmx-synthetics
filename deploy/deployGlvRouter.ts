@@ -7,7 +7,7 @@ const constructorContracts = [
   "DataStore",
   "EventEmitter",
   "GlvDepositHandler",
-  "GlvHandler",
+  "GlvWithdrawalHandler",
   "ExternalHandler",
 ];
 
