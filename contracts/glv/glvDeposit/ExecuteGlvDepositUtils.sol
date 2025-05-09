@@ -26,7 +26,8 @@ library ExecuteGlvDepositUtils {
         MultichainVault multichainVault;
         IMultichainTransferRouter multichainTransferRouter;
         GlvVault glvVault;
-        Oracle oracle;
+        IOracle oracle;
+        ISwapHandler swapHandler;
         bytes32 key;
         uint256 startingGas;
         address keeper;
@@ -224,13 +225,14 @@ library ExecuteGlvDepositUtils {
         params.dataStore.addBytes32(Keys.DEPOSIT_LIST, depositKey);
         DepositEventUtils.emitDepositCreated(params.eventEmitter, depositKey, deposit, Deposit.DepositType.Glv);
 
-        ExecuteDepositUtils.ExecuteDepositParams memory executeDepositParams = ExecuteDepositUtils.ExecuteDepositParams(
+        IExecuteDepositUtils.ExecuteDepositParams memory executeDepositParams = IExecuteDepositUtils.ExecuteDepositParams(
                 params.dataStore,
                 params.eventEmitter,
                 params.multichainVault,
                 params.multichainTransferRouter,
                 DepositVault(payable(params.glvVault)),
                 params.oracle,
+                params.swapHandler,
                 depositKey,
                 params.keeper,
                 params.startingGas,

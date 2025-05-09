@@ -11,6 +11,8 @@ import "./DepositEventUtils.sol";
 import "./IDepositUtils.sol";
 
 import "../nonce/NonceUtils.sol";
+import "../price/Price.sol";
+import "../market/MarketUtils.sol";
 
 import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";

@@ -3,7 +3,6 @@
 pragma solidity ^0.8.0;
 
 import "../order/OrderStoreUtils.sol";
-import "../order/BaseOrderUtils.sol";
 import "../position/PositionUtils.sol";
 import "../position/PositionStoreUtils.sol";
 import "../referral/IReferralStorage.sol";
@@ -21,7 +20,7 @@ library MultichainOrderRouterUtils {
         DataStore dataStore;
         EventEmitter eventEmitter;
         MultichainVault multichainVault;
-        Oracle oracle;
+        IOracle oracle;
         IReferralStorage referralStorage;
         OrderVault orderVault;
     }
@@ -62,7 +61,7 @@ library MultichainOrderRouterUtils {
         // only increase and swap orders have collateral deposited at creation time and can use initialCollateralAmount to pay for the fee
         if (
             order.initialCollateralToken() == relayParams.fee.feeToken &&
-            (BaseOrderUtils.isIncreaseOrder(order.orderType()) || BaseOrderUtils.isSwapOrder(order.orderType()))
+            (Order.isIncreaseOrder(order.orderType()) || Order.isSwapOrder(order.orderType()))
         ) {
             uint256 initialCollateralDeltaAmount = order.initialCollateralDeltaAmount();
             if (initialCollateralDeltaAmount > 0) {
@@ -97,7 +96,7 @@ library MultichainOrderRouterUtils {
 
         // Second try to deduct from position collateral
         // position collateral cannot be used for a swap order, since there is no position
-        if (BaseOrderUtils.isSwapOrder(order.orderType())) {
+        if (Order.isSwapOrder(order.orderType())) {
             revert Errors.UnableToPayOrderFee();
         }
 

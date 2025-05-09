@@ -15,10 +15,11 @@ import "../nonce/NonceUtils.sol";
 import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
 import "../utils/AccountUtils.sol";
+import "../market/MarketUtils.sol";
 
 import "../deposit/DepositVault.sol";
-import "../deposit/ExecuteDepositUtils.sol";
-import "../withdrawal/ExecuteWithdrawalUtils.sol";
+import "../exchange/IDepositHandler.sol";
+import "../exchange/IWithdrawalHandler.sol";
 
 import "../multichain/IMultichainTransferRouter.sol";
 
@@ -46,7 +47,10 @@ library ShiftUtils {
         EventEmitter eventEmitter;
         MultichainVault multichainVault;
         ShiftVault shiftVault;
-        Oracle oracle;
+        IOracle oracle;
+        IDepositHandler depositHandler;
+        IWithdrawalHandler withdrawalHandler;
+        ISwapHandler swapHandler;
         bytes32 key;
         address keeper;
         uint256 startingGas;
@@ -55,13 +59,13 @@ library ShiftUtils {
     struct ExecuteShiftCache {
         Withdrawal.Props withdrawal;
         bytes32 withdrawalKey;
-        ExecuteWithdrawalUtils.ExecuteWithdrawalParams executeWithdrawalParams;
+        IExecuteWithdrawalUtils.ExecuteWithdrawalParams executeWithdrawalParams;
         Market.Props depositMarket;
         uint256 initialLongTokenAmount;
         uint256 initialShortTokenAmount;
         Deposit.Props deposit;
         bytes32 depositKey;
-        ExecuteDepositUtils.ExecuteDepositParams executeDepositParams;
+        IExecuteDepositUtils.ExecuteDepositParams executeDepositParams;
         uint256 receivedMarketTokens;
     }
 
@@ -214,19 +218,20 @@ library ShiftUtils {
             Withdrawal.WithdrawalType.Shift
         );
 
-        cache.executeWithdrawalParams = ExecuteWithdrawalUtils.ExecuteWithdrawalParams(
+        cache.executeWithdrawalParams = IExecuteWithdrawalUtils.ExecuteWithdrawalParams(
             params.dataStore,
             params.eventEmitter,
             params.multichainVault,
             WithdrawalVault(payable(params.shiftVault)),
             params.oracle,
+            params.swapHandler,
             cache.withdrawalKey,
             params.keeper,
             params.startingGas,
             ISwapPricingUtils.SwapPricingType.Shift
         );
 
-        ExecuteWithdrawalUtils.executeWithdrawal(
+        params.withdrawalHandler.executeWithdrawalFromController(
             cache.executeWithdrawalParams,
             cache.withdrawal
         );
@@ -275,13 +280,14 @@ library ShiftUtils {
         // price impact from changes in virtual inventory should be excluded
         // since the action of withdrawing and depositing should not result in
         // a net change of virtual inventory
-        cache.executeDepositParams = ExecuteDepositUtils.ExecuteDepositParams(
+        cache.executeDepositParams = IExecuteDepositUtils.ExecuteDepositParams(
             params.dataStore,
             params.eventEmitter,
             params.multichainVault,
             IMultichainTransferRouter(payable(0)),
             DepositVault(payable(params.shiftVault)),
             params.oracle,
+            params.swapHandler,
             cache.depositKey,
             params.keeper,
             params.startingGas,
@@ -290,7 +296,7 @@ library ShiftUtils {
             shift.srcChainId()
         );
 
-        cache.receivedMarketTokens = ExecuteDepositUtils.executeDeposit(
+        cache.receivedMarketTokens = params.depositHandler.executeDepositFromController(
             cache.executeDepositParams,
             cache.deposit
         );

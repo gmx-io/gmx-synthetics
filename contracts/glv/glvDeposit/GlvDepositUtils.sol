@@ -2,7 +2,6 @@
 
 pragma solidity ^0.8.0;
 
-import "../../deposit/ExecuteDepositUtils.sol";
 
 import "../../nonce/NonceUtils.sol";
 import "../../gas/GasUtils.sol";

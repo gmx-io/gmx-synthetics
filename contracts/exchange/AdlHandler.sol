@@ -26,15 +26,18 @@ contract AdlHandler is BaseOrderHandler {
         uint256 minPnlFactorForAdl;
     }
 
+    IOrderExecutor public immutable decreaseOrderExecutor;
+
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        Oracle _oracle,
+        IOracle _oracle,
         MultichainVault _multichainVault,
         OrderVault _orderVault,
-        SwapHandler _swapHandler,
-        IReferralStorage _referralStorage
+        ISwapHandler _swapHandler,
+        IReferralStorage _referralStorage,
+        IOrderExecutor _decreaseOrderExecutor
     ) BaseOrderHandler(
         _roleStore,
         _dataStore,
@@ -44,7 +47,9 @@ contract AdlHandler is BaseOrderHandler {
         _orderVault,
         _swapHandler,
         _referralStorage
-    ) {}
+    ) {
+        decreaseOrderExecutor = _decreaseOrderExecutor;
+    }
 
     // @dev checks the ADL state to update the isAdlEnabled flag
     // @param market the market to check
@@ -142,7 +147,7 @@ contract AdlHandler is BaseOrderHandler {
 
         FeatureUtils.validateFeature(params.contracts.dataStore, Keys.executeAdlFeatureDisabledKey(address(this), uint256(params.order.orderType())));
 
-        ExecuteOrderUtils.executeOrder(params);
+        ExecuteOrderUtils.executeOrder(decreaseOrderExecutor, params);
 
         // validate that the ratio of pending pnl to pool value was decreased
         cache.nextPnlToPoolFactor = MarketUtils.getPnlToPoolFactor(dataStore, oracle, market, isLong, true);

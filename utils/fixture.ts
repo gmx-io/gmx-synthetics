@@ -77,7 +77,9 @@ export async function deployFixture() {
   const glvVault = await hre.ethers.getContract("GlvVault");
   const marketFactory = await hre.ethers.getContract("MarketFactory");
   const glvFactory = await hre.ethers.getContract("GlvFactory");
-  const glvHandler = await hre.ethers.getContract("GlvHandler");
+  const glvDepositHandler = await hre.ethers.getContract("GlvDepositHandler");
+  const glvWithdrawalHandler = await hre.ethers.getContract("GlvWithdrawalHandler");
+  const glvShiftHandler = await hre.ethers.getContract("GlvShiftHandler");
   const glvRouter = await hre.ethers.getContract("GlvRouter");
   const callbackUtils = await hre.ethers.getContract("CallbackUtils");
   const glvDepositStoreUtils = await hre.ethers.getContract("GlvDepositStoreUtils");
@@ -91,11 +93,15 @@ export async function deployFixture() {
   const withdrawalHandler = await hre.ethers.getContract("WithdrawalHandler");
   const shiftHandler = await hre.ethers.getContract("ShiftHandler");
   const orderHandler = await hre.ethers.getContract("OrderHandler");
+  const swapHandler = await hre.ethers.getContract("SwapHandler");
   const externalHandler = await hre.ethers.getContract("ExternalHandler");
   const baseOrderUtils = await hre.ethers.getContract("BaseOrderUtils");
   const orderUtils = await hre.ethers.getContract("OrderUtils");
   const liquidationHandler = await hre.ethers.getContract("LiquidationHandler");
   const adlHandler = await hre.ethers.getContract("AdlHandler");
+  const decreaseOrderExecutor = await hre.ethers.getContract("DecreaseOrderExecutor");
+  const increaseOrderExecutor = await hre.ethers.getContract("IncreaseOrderExecutor");
+  const swapOrderExecutor = await hre.ethers.getContract("SwapOrderExecutor");
   const router = await hre.ethers.getContract("Router");
   const exchangeRouter = await hre.ethers.getContract("ExchangeRouter");
   const gelatoRelayRouter = await hre.ethers.getContract("GelatoRelayRouter");
@@ -288,11 +294,15 @@ export async function deployFixture() {
       withdrawalHandler,
       shiftHandler,
       orderHandler,
+      swapHandler,
       externalHandler,
       baseOrderUtils,
       orderUtils,
       liquidationHandler,
       adlHandler,
+      decreaseOrderExecutor,
+      increaseOrderExecutor,
+      swapOrderExecutor,
       router,
       exchangeRouter,
       gelatoRelayRouter,
@@ -342,7 +352,9 @@ export async function deployFixture() {
       solUsdMarket,
       feeHandler,
       glvFactory,
-      glvHandler,
+      glvDepositHandler,
+      glvWithdrawalHandler,
+      glvShiftHandler,
       glvVault,
       glvRouter,
       ethUsdGlvAddress,
