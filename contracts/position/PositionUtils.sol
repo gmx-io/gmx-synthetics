@@ -357,6 +357,14 @@ library PositionUtils {
             )
         );
 
+        // cap positive priceImpactUsd based on the max positive position impact factor
+        cache.priceImpactUsd = MarketUtils.capPositiveImpactUsdByMaxPositionImpact(
+            dataStore,
+            market.marketToken,
+            cache.priceImpactUsd,
+            position.sizeInUsd()
+        );
+
         cache.priceImpactUsd += cache.priceImpactUsd > 0
             ? position.pendingImpactAmount() * prices.indexTokenPrice.min.toInt256()
             : position.pendingImpactAmount() * prices.indexTokenPrice.max.toInt256();
