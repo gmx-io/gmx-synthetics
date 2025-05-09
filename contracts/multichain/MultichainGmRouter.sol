@@ -5,13 +5,15 @@ pragma solidity ^0.8.0;
 import "../exchange/IDepositHandler.sol";
 import "../exchange/IWithdrawalHandler.sol";
 import "../exchange/IShiftHandler.sol";
+
 import "../deposit/DepositVault.sol";
 import "../withdrawal/WithdrawalVault.sol";
 import "../shift/ShiftVault.sol";
 
+import "./IMultichainGmRouter.sol";
 import "./MultichainRouter.sol";
 
-contract MultichainGmRouter is MultichainRouter {
+contract MultichainGmRouter is IMultichainGmRouter, MultichainRouter {
     using SafeERC20 for IERC20;
 
     DepositVault public immutable depositVault;

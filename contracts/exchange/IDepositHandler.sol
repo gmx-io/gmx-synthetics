@@ -3,6 +3,9 @@
 pragma solidity ^0.8.0;
 
 import "../deposit/IDepositUtils.sol";
+import "../deposit/IExecuteDepositUtils.sol";
+
+import "../deposit/Deposit.sol";
 import "../oracle/OracleUtils.sol";
 
 interface IDepositHandler {
@@ -12,4 +15,9 @@ interface IDepositHandler {
         bytes32 key,
         OracleUtils.SimulatePricesParams memory params
     ) external;
+
+    function executeDepositFromController(
+        IExecuteDepositUtils.ExecuteDepositParams calldata executeDepositParams,
+        Deposit.Props calldata deposit
+    ) external returns (uint256);
 }

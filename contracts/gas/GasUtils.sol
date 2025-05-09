@@ -12,7 +12,6 @@ import "../deposit/Deposit.sol";
 import "../withdrawal/Withdrawal.sol";
 import "../shift/Shift.sol";
 import "../order/Order.sol";
-import "../order/BaseOrderUtils.sol";
 import "../glv/glvWithdrawal/GlvWithdrawal.sol";
 
 import "../bank/StrictBank.sol";
@@ -420,15 +419,15 @@ library GasUtils {
         DataStore dataStore,
         Order.Props memory order
     ) external view returns (uint256) {
-        if (BaseOrderUtils.isIncreaseOrder(order.orderType())) {
+        if (Order.isIncreaseOrder(order.orderType())) {
             return estimateExecuteIncreaseOrderGasLimit(dataStore, order);
         }
 
-        if (BaseOrderUtils.isDecreaseOrder(order.orderType())) {
+        if (Order.isDecreaseOrder(order.orderType())) {
             return estimateExecuteDecreaseOrderGasLimit(dataStore, order);
         }
 
-        if (BaseOrderUtils.isSwapOrder(order.orderType())) {
+        if (Order.isSwapOrder(order.orderType())) {
             return estimateExecuteSwapOrderGasLimit(dataStore, order);
         }
 

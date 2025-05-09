@@ -22,7 +22,6 @@ library PositionStoreUtils {
     bytes32 public constant SIZE_IN_TOKENS = keccak256(abi.encode("SIZE_IN_TOKENS"));
     bytes32 public constant COLLATERAL_AMOUNT = keccak256(abi.encode("COLLATERAL_AMOUNT"));
     bytes32 public constant PENDING_IMPACT_AMOUNT = keccak256(abi.encode("PENDING_IMPACT_AMOUNT"));
-    bytes32 public constant PENDING_IMPACT_USD = keccak256(abi.encode("PENDING_IMPACT_USD"));
     bytes32 public constant BORROWING_FACTOR = keccak256(abi.encode("BORROWING_FACTOR"));
     bytes32 public constant FUNDING_FEE_AMOUNT_PER_SIZE = keccak256(abi.encode("FUNDING_FEE_AMOUNT_PER_SIZE"));
     bytes32 public constant LONG_TOKEN_CLAIMABLE_FUNDING_AMOUNT_PER_SIZE = keccak256(abi.encode("LONG_TOKEN_CLAIMABLE_FUNDING_AMOUNT_PER_SIZE"));
@@ -64,10 +63,6 @@ library PositionStoreUtils {
 
         position.setPendingImpactAmount(dataStore.getInt(
             keccak256(abi.encode(key, PENDING_IMPACT_AMOUNT))
-        ));
-
-        position.setPendingImpactUsd(dataStore.getInt(
-            keccak256(abi.encode(key, PENDING_IMPACT_USD))
         ));
 
         position.setBorrowingFactor(dataStore.getUint(
@@ -130,11 +125,6 @@ library PositionStoreUtils {
         dataStore.setInt(
             keccak256(abi.encode(key, PENDING_IMPACT_AMOUNT)),
             position.pendingImpactAmount()
-        );
-
-        dataStore.setInt(
-            keccak256(abi.encode(key, PENDING_IMPACT_USD)),
-            position.pendingImpactUsd()
         );
 
         dataStore.setUint(
@@ -217,10 +207,6 @@ library PositionStoreUtils {
 
         dataStore.removeInt(
             keccak256(abi.encode(key, PENDING_IMPACT_AMOUNT))
-        );
-
-        dataStore.removeInt(
-            keccak256(abi.encode(key, PENDING_IMPACT_USD))
         );
 
         dataStore.removeUint(

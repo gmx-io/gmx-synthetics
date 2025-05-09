@@ -16,12 +16,13 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        Oracle _oracle,
+        IOracle _oracle,
         IOrderHandler _orderHandler,
         OrderVault _orderVault,
+        ISwapHandler _swapHandler,
         IExternalHandler _externalHandler
     )
-        BaseGelatoRelayRouter(_oracle, _orderHandler, _orderVault, _externalHandler)
+        BaseGelatoRelayRouter(_oracle, _orderHandler, _orderVault, _swapHandler, _externalHandler)
         BaseRouter(_router, _roleStore, _dataStore, _eventEmitter)
     {}
 

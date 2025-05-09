@@ -179,10 +179,12 @@ library FeeUtils {
 
         FeatureUtils.validateFeature(dataStore, Keys.claimUiFeesFeatureDisabledKey(address(this)));
 
+        AccountUtils.validateReceiver(receiver);
+
         uint256[] memory claimedAmounts = new uint256[](markets.length);
 
         for (uint256 i; i < markets.length; i++) {
-            claimedAmounts[i] = claimUiFees(
+            claimedAmounts[i] = _claimUiFees(
                 dataStore,
                 eventEmitter,
                 uiFeeReceiver,
@@ -195,16 +197,14 @@ library FeeUtils {
         return claimedAmounts;
     }
 
-    function claimUiFees(
+    function _claimUiFees(
         DataStore dataStore,
         EventEmitter eventEmitter,
         address uiFeeReceiver,
         address market,
         address token,
         address receiver
-    ) public returns (uint256) {
-        AccountUtils.validateReceiver(receiver);
-
+    ) private returns (uint256) {
         bytes32 key = Keys.claimableUiFeeAmountKey(market, token, uiFeeReceiver);
 
         uint256 feeAmount = dataStore.getUint(key);

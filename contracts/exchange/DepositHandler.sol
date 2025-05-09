@@ -24,19 +24,22 @@ contract DepositHandler is IDepositHandler, BaseHandler {
     DepositVault public immutable depositVault;
     MultichainVault public immutable multichainVault;
     IMultichainTransferRouter public immutable multichainTransferRouter;
+    ISwapHandler public immutable swapHandler;
 
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        Oracle _oracle,
+        IOracle _oracle,
         MultichainVault _multichainVault,
         IMultichainTransferRouter _multichainTransferRouter,
-        DepositVault _depositVault
+        DepositVault _depositVault,
+        ISwapHandler _swapHandler
     ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {
         multichainVault = _multichainVault;
         multichainTransferRouter = _multichainTransferRouter;
         depositVault = _depositVault;
+        swapHandler = _swapHandler;
     }
 
     // @dev creates a deposit in the deposit store
@@ -122,6 +125,13 @@ contract DepositHandler is IDepositHandler, BaseHandler {
         }
     }
 
+    function executeDepositFromController(
+        IExecuteDepositUtils.ExecuteDepositParams calldata executeDepositParams,
+        Deposit.Props calldata deposit
+    ) external onlyController returns (uint256) {
+        return ExecuteDepositUtils.executeDeposit(executeDepositParams, deposit);
+    }
+
     // @dev simulate execution of a deposit to check for any errors
     // @param key the deposit key
     // @param params OracleUtils.SimulatePricesParams
@@ -156,13 +166,14 @@ contract DepositHandler is IDepositHandler, BaseHandler {
 
         FeatureUtils.validateFeature(dataStore, Keys.executeDepositFeatureDisabledKey(address(this)));
 
-        ExecuteDepositUtils.ExecuteDepositParams memory params = ExecuteDepositUtils.ExecuteDepositParams(
+        IExecuteDepositUtils.ExecuteDepositParams memory params = IExecuteDepositUtils.ExecuteDepositParams(
             dataStore,
             eventEmitter,
             multichainVault,
             multichainTransferRouter,
             depositVault,
             oracle,
+            swapHandler,
             key,
             keeper,
             startingGas,

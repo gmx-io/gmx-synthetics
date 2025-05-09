@@ -182,3 +182,11 @@ export async function getPositionImpactPoolWithdrawalPayload(market: string, rec
     ]),
   };
 }
+
+export async function getWithdrawTokensPayload(token: string, receiver: string, amount: BigNumber) {
+  const layerZeroProvider = await hre.ethers.getContract("LayerZeroProvider");
+  return {
+    target: layerZeroProvider.address,
+    payload: layerZeroProvider.interface.encodeFunctionData("withdrawTokens", [token, receiver, amount]),
+  };
+}

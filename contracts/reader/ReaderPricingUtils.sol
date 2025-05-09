@@ -8,6 +8,8 @@ import "../position/Position.sol";
 import "../position/PositionUtils.sol";
 import "../market/MarketUtils.sol";
 import "../market/Market.sol";
+import "../pricing/SwapPricingUtils.sol";
+import "../swap/SwapUtils.sol";
 
 // @title ReaderPricingUtils
 library ReaderPricingUtils {

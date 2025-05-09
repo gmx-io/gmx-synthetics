@@ -18,6 +18,7 @@ import {
   signalHoldingAddressIfDifferent,
   executeTimelock,
   getPositionImpactPoolWithdrawalPayload,
+  getWithdrawTokensPayload,
 } from "../../utils/timelock";
 import { handleDeposit } from "../../utils/deposit";
 import { usingResult } from "../../utils/use";
@@ -26,11 +27,12 @@ import { getMarketTokenPriceWithPoolValue } from "../../utils/market";
 describe("Timelock", () => {
   let fixture;
   let timelockAdmin, timelockMultisig, user2, user3, signer0, signer9;
-  let timelockConfig, configTimelockController, dataStore, roleStore, oracleStore, wnt;
+  let timelockConfig, configTimelockController, dataStore, roleStore, oracleStore, wnt, usdc, layerZeroProvider;
 
   beforeEach(async () => {
     fixture = await deployFixture();
-    ({ timelockConfig, configTimelockController, dataStore, roleStore, oracleStore, wnt } = fixture.contracts);
+    ({ timelockConfig, configTimelockController, dataStore, roleStore, oracleStore, wnt, usdc, layerZeroProvider } =
+      fixture.contracts);
     ({ user2, user3, signer0, signer9 } = fixture.accounts);
 
     timelockAdmin = fixture.accounts.user0;
@@ -536,6 +538,63 @@ describe("Timelock", () => {
       await expect(
         timelockConfig.connect(timelockAdmin).executeWithOraclePrice(target, payload, oracleParams)
       ).to.be.revertedWith("TimelockController: underlying transaction reverted");
+    });
+  });
+
+  describe("MultichainProvider", () => {
+    const amount = expandDecimals(50_000, 6); // 50,000 USDC
+    const withdrawalAmount = expandDecimals(5_000, 6); // 5,000 USDC
+
+    it("withdrawTokens: usdc", async () => {
+      await usdc.mint(layerZeroProvider.address, amount);
+
+      expect(await usdc.balanceOf(user2.address)).to.eq(0);
+      expect(await usdc.balanceOf(layerZeroProvider.address)).to.eq(amount);
+
+      await expect(
+        timelockConfig
+          .connect(user2)
+          .signalWithdrawTokens(layerZeroProvider.address, usdc.address, user2.address, withdrawalAmount)
+      )
+        .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
+        .withArgs(user2.address, "TIMELOCK_ADMIN");
+
+      await timelockConfig
+        .connect(timelockAdmin)
+        .signalWithdrawTokens(layerZeroProvider.address, usdc.address, user2.address, withdrawalAmount);
+
+      await time.increase(1 * 24 * 60 * 60 + 10);
+
+      const { target, payload } = await getWithdrawTokensPayload(usdc.address, user2.address, withdrawalAmount);
+      await executeTimelock(timelockAdmin, target, payload);
+
+      // user should receive funds, and layerZeroProvider should have the rest
+      expect(await usdc.balanceOf(user2.address)).to.eq(withdrawalAmount);
+      expect(await usdc.balanceOf(layerZeroProvider.address)).to.eq(amount.sub(withdrawalAmount));
+    });
+
+    it("should fail when withdrawing zero amount", async function () {
+      await expect(
+        timelockConfig
+          .connect(timelockAdmin)
+          .signalWithdrawTokens(layerZeroProvider.address, usdc.address, user2.address, 0)
+      ).to.be.revertedWithCustomError(errorsContract, "EmptyWithdrawalAmount");
+    });
+
+    it("should fail when withdrawing more than available", async function () {
+      expect(await usdc.balanceOf(user2.address)).to.eq(0);
+      expect(await usdc.balanceOf(layerZeroProvider.address)).to.eq(0);
+
+      await timelockConfig
+        .connect(timelockAdmin)
+        .signalWithdrawTokens(layerZeroProvider.address, usdc.address, user2.address, withdrawalAmount);
+
+      await time.increase(1 * 24 * 60 * 60 + 10);
+
+      const { target, payload } = await getWithdrawTokensPayload(usdc.address, user2.address, withdrawalAmount);
+      await expect(executeTimelock(timelockAdmin, target, payload)).to.be.revertedWith(
+        "TimelockController: underlying transaction reverted"
+      );
     });
   });
 });

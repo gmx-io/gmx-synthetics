@@ -42,7 +42,7 @@ library MultichainUtils {
         }
 
         // token should have been transferred to multichainVault by IMultichainProvider
-        multichainVault.recordTransferIn(token, amount);
+        amount = multichainVault.recordTransferIn(token);
 
         _increaseMultichainBalance(dataStore, eventEmitter, account, token, amount, srcChainId);
 

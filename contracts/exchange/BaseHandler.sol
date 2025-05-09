@@ -3,12 +3,13 @@
 pragma solidity ^0.8.0;
 
 import "../event/EventEmitter.sol";
-import "../oracle/Oracle.sol";
+import "../oracle/IOracle.sol";
 import "../oracle/OracleModule.sol";
 import "../role/RoleModule.sol";
 import "../utils/GlobalReentrancyGuard.sol";
 import "../error/ErrorUtils.sol";
 import "../feature/FeatureUtils.sol";
+import "../chain/Chain.sol";
 
 contract BaseHandler is RoleModule, GlobalReentrancyGuard, OracleModule {
     EventEmitter public immutable eventEmitter;
@@ -17,7 +18,7 @@ contract BaseHandler is RoleModule, GlobalReentrancyGuard, OracleModule {
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        Oracle _oracle
+        IOracle _oracle
     ) RoleModule(_roleStore) GlobalReentrancyGuard(_dataStore) OracleModule(_oracle) {
         eventEmitter = _eventEmitter;
     }

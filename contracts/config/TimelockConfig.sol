@@ -372,6 +372,46 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         );
     }
 
+    function signalWithdrawTokens(
+        address target,
+        address token,
+        address receiver,
+        uint256 amount
+    ) external onlyTimelockAdmin {
+        if (target == address(0)) {
+            revert Errors.EmptyTarget();
+        }
+        if (token == address(0)) {
+            revert Errors.EmptyToken();
+        }
+        if (receiver == address(0)) {
+            revert Errors.EmptyReceiver();
+        }
+        if (amount == 0) {
+            revert Errors.EmptyWithdrawalAmount();
+        }
+
+        bytes memory payload = abi.encodeWithSignature(
+            "withdrawTokens(address,address,uint256)",
+            token,
+            receiver,
+            amount
+        );
+        timelockController.schedule(target, 0, payload, 0, 0, timelockController.getMinDelay());
+
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(3);
+        eventData.addressItems.setItem(0, "target", target);
+        eventData.addressItems.setItem(1, "token", token);
+        eventData.addressItems.setItem(1, "receiver", receiver);
+
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "amount", amount);
+
+        eventEmitter.emitEventLog("SignalWithdrawTokens", eventData);
+    }
+
     function execute(address target, bytes calldata payload) external onlyTimelockAdmin {
         timelockController.execute(target, 0, payload, 0, 0);
     }

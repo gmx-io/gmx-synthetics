@@ -16,7 +16,7 @@ import "./MarketStoreUtils.sol";
 import "../position/Position.sol";
 import "../order/Order.sol";
 
-import "../oracle/Oracle.sol";
+import "../oracle/IOracle.sol";
 import "../price/Price.sol";
 
 import "../utils/Calc.sol";
@@ -225,7 +225,7 @@ library MarketUtils {
     // @dev return the primary prices for the market tokens
     // @param oracle Oracle
     // @param market the market values
-    function getMarketPrices(Oracle oracle, Market.Props memory market) internal view returns (MarketPrices memory) {
+    function getMarketPrices(IOracle oracle, Market.Props memory market) internal view returns (MarketPrices memory) {
         return MarketPrices(
             oracle.getPrimaryPrice(market.indexToken),
             oracle.getPrimaryPrice(market.longToken),
@@ -1534,7 +1534,7 @@ library MarketUtils {
     // @return (pnl of positions) / (long or short pool value)
     function getPnlToPoolFactor(
         DataStore dataStore,
-        Oracle oracle,
+        IOracle oracle,
         address market,
         bool isLong,
         bool maximize
@@ -2874,7 +2874,7 @@ library MarketUtils {
     // @param pnlFactorType the pnl factor type to check
     function isPnlFactorExceeded(
         DataStore dataStore,
-        Oracle oracle,
+        IOracle oracle,
         address market,
         bool isLong,
         bytes32 pnlFactorType

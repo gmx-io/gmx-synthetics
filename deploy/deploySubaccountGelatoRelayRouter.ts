@@ -9,6 +9,7 @@ const constructorContracts = [
   "Oracle",
   "OrderHandler",
   "OrderVault",
+  "SwapHandler",
   "ExternalHandler",
 ];
 

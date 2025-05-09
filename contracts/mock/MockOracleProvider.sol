@@ -18,4 +18,12 @@ contract MockOracleProvider is IOracleProvider {
             provider: address(this)
         });
     }
+
+    function shouldAdjustTimestamp() external pure returns (bool) {
+        return true;
+    }
+
+    function isChainlinkOnChainProvider() external pure returns (bool) {
+        return false;
+    }
 }

@@ -33,6 +33,14 @@ contract EdgeDataStreamProvider is IOracleProvider {
         verifier = _verifier;
     }
 
+    function shouldAdjustTimestamp() external pure returns (bool) {
+        return true;
+    }
+
+    function isChainlinkOnChainProvider() external pure returns (bool) {
+        return false;
+    }
+
     function getOraclePrice(
         address token,
         bytes memory data

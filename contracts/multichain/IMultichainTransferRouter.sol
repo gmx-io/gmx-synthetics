@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 import "../router/relay/IRelayUtils.sol";
 
 interface IMultichainTransferRouter {
-    function bridgeIn(address account, address token, uint256 srcChainId) external payable;
+    function bridgeIn(address account, address token) external payable;
 
     function bridgeOut(
         IRelayUtils.RelayParams calldata relayParams,

@@ -14,6 +14,11 @@ library LiquidationUtils {
     using Position for Position.Props;
     using Order for Order.Props;
 
+    struct CreateLiquidationOrderCache {
+        bytes32 positionKey;
+        uint256 lastSrcChainId;
+    }
+
     // @dev creates a liquidation order for a position
     // @param dataStore DataStore
     // @param account the position's account
@@ -28,8 +33,10 @@ library LiquidationUtils {
         address collateralToken,
         bool isLong
     ) external returns (bytes32) {
-        bytes32 positionKey = Position.getPositionKey(account, market, collateralToken, isLong);
-        Position.Props memory position = PositionStoreUtils.get(dataStore, positionKey);
+        CreateLiquidationOrderCache memory cache;
+
+        cache.positionKey = Position.getPositionKey(account, market, collateralToken, isLong);
+        Position.Props memory position = PositionStoreUtils.get(dataStore, cache.positionKey);
 
         Order.Addresses memory addresses = Order.Addresses(
             account, // account
@@ -41,6 +48,8 @@ library LiquidationUtils {
             position.collateralToken(), // initialCollateralToken
             new address[](0) // swapPath
         );
+
+        cache.lastSrcChainId = dataStore.getUint(Keys.positionLastSrcChainId(cache.positionKey));
 
         // no slippage is set for this order, in case of a liquidation the amount
         // of collateral being swapped should not be too large
@@ -71,12 +80,12 @@ library LiquidationUtils {
             0, // minOutputAmount
             Chain.currentTimestamp(), // updatedAtTime
             0, // validFromTime
-            dataStore.getUint(Keys.positionLastSrcChainId(positionKey)) // srcChainId
+            cache.lastSrcChainId // srcChainId
         );
 
         Order.Flags memory flags = Order.Flags(
             position.isLong(), // isLong
-            dataStore.getUint(Keys.positionLastSrcChainId(positionKey)) == 0 ? true : false, // shouldUnwrapNativeToken
+            cache.lastSrcChainId == 0 ? true : false, // shouldUnwrapNativeToken
             false, // isFrozen
             false // autoCancel
         );

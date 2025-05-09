@@ -10,6 +10,9 @@ const constructorContracts = [
   "OrderVault",
   "SwapHandler",
   "ReferralStorage",
+  "IncreaseOrderExecutor",
+  "DecreaseOrderExecutor",
+  "SwapOrderExecutor",
 ];
 const contractName = "OrderHandler";
 
@@ -19,7 +22,7 @@ const func = createDeployFunction({
   getDeployArgs: async ({ dependencyContracts }) => {
     return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
   },
-  libraryNames: ["OrderUtils", "ExecuteOrderUtils", "OrderStoreUtils", "OrderEventUtils", "GasUtils", "MarketUtils"],
+  libraryNames: ["GasUtils", "MarketUtils", "ExecuteOrderUtils", "OrderEventUtils", "OrderStoreUtils", "OrderUtils"],
   afterDeploy: async ({ deployedContract, getNamedAccounts, deployments, network }) => {
     const { deployer } = await getNamedAccounts();
     const { execute } = deployments;

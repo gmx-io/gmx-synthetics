@@ -7,14 +7,12 @@ import "../utils/Precision.sol";
 import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
 
-import "../oracle/Oracle.sol";
 import "../pricing/PositionPricingUtils.sol";
 
 import "./Position.sol";
 import "./PositionStoreUtils.sol";
 import "./PositionUtils.sol";
 import "./PositionEventUtils.sol";
-import "../order/BaseOrderUtils.sol";
 import "../order/OrderEventUtils.sol";
 
 import "./DecreasePositionCollateralUtils.sol";
@@ -208,7 +206,7 @@ library DecreasePositionUtils {
             params.order.setDecreasePositionSwapType(Order.DecreasePositionSwapType.NoSwap);
         }
 
-        if (BaseOrderUtils.isLiquidationOrder(params.order.orderType())) {
+        if (Order.isLiquidationOrder(params.order.orderType())) {
             (bool isLiquidatable, string memory reason, PositionUtils.IsPositionLiquidatableInfo memory info) = PositionUtils.isPositionLiquidatable(
                 params.contracts.dataStore,
                 params.contracts.referralStorage,
@@ -247,11 +245,17 @@ library DecreasePositionUtils {
             cache.nextPositionBorrowingFactor
         );
 
+        PositionUtils.updatePositionLastSrcChainId(
+            params.contracts.dataStore,
+            params.position,
+            params.order,
+            params.positionKey
+        );
+
         params.position.setSizeInUsd(cache.nextPositionSizeInUsd);
         params.position.setSizeInTokens(params.position.sizeInTokens() - values.sizeDeltaInTokens);
         params.position.setCollateralAmount(values.remainingCollateralAmount);
         params.position.setPendingImpactAmount(params.position.pendingImpactAmount() - values.proportionalPendingImpactAmount);
-        params.position.setPendingImpactUsd(params.position.pendingImpactUsd() - values.proportionalPendingImpactUsd);
         params.position.setDecreasedAtTime(Chain.currentTimestamp());
 
         PositionUtils.incrementClaimableFundingAmount(params, fees);
@@ -274,12 +278,6 @@ library DecreasePositionUtils {
 
             PositionStoreUtils.set(params.contracts.dataStore, params.positionKey, params.position);
         }
-
-        PositionUtils.updatePositionLastSrcChainId(
-            params.contracts.dataStore,
-            params.positionKey,
-            params.order.srcChainId()
-        );
 
         MarketUtils.applyDeltaToCollateralSum(
             params.contracts.dataStore,

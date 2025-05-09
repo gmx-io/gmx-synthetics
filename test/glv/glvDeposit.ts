@@ -32,7 +32,7 @@ describe("Glv Deposits", () => {
     glvFactory,
     roleStore,
     dataStore,
-    glvHandler,
+    glvShiftHandler,
     ethUsdMarket,
     btcUsdMarket,
     solUsdMarket,
@@ -51,7 +51,7 @@ describe("Glv Deposits", () => {
     ({
       glvReader,
       dataStore,
-      glvHandler,
+      glvShiftHandler,
       ethUsdMarket,
       solUsdMarket,
       btcUsdMarket,
@@ -87,7 +87,7 @@ describe("Glv Deposits", () => {
     const marketListCount = await dataStore.getAddressCount(marketListKey);
     expect(marketListCount.toNumber()).eq(0);
 
-    await glvHandler.addMarketToGlv(ethUsdSingleTokenGlvAddress, ethUsdSingleTokenMarket2.marketToken);
+    await glvShiftHandler.addMarketToGlv(ethUsdSingleTokenGlvAddress, ethUsdSingleTokenMarket2.marketToken);
   });
 
   describe("create glv deposit, validations", () => {

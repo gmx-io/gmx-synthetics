@@ -104,7 +104,7 @@ library SubaccountUtils {
 
         bytes32 key = Keys.subaccountActionCountKey(account, subaccount, actionType);
         uint256 nextValue = dataStore.incrementUint(key, actionsCount);
-        validateSubaccountActionCountAndExpiresAt(dataStore, account, subaccount, actionType, nextValue);
+        _validateSubaccountActionCountAndExpiresAt(dataStore, account, subaccount, actionType, nextValue);
 
         EventUtils.EventLogData memory eventData;
 
@@ -188,13 +188,13 @@ library SubaccountUtils {
         );
     }
 
-    function validateSubaccountActionCountAndExpiresAt(
+    function _validateSubaccountActionCountAndExpiresAt(
         DataStore dataStore,
         address account,
         address subaccount,
         bytes32 actionType,
         uint256 count
-    ) internal view {
+    ) private view {
         bytes32 expiresAtKey = Keys.subaccountExpiresAtKey(account, subaccount, actionType);
         uint256 expiresAt = dataStore.getUint(expiresAtKey);
 
@@ -210,7 +210,7 @@ library SubaccountUtils {
         }
     }
 
-    function validateSubaccount(DataStore dataStore, address account, address subaccount) internal view {
+    function validateSubaccount(DataStore dataStore, address account, address subaccount) public view {
         bytes32 setKey = Keys.subaccountListKey(account);
         if (!dataStore.containsAddress(setKey, subaccount)) {
             revert Errors.SubaccountNotAuthorized(account, subaccount);
@@ -221,7 +221,7 @@ library SubaccountUtils {
         DataStore dataStore,
         address account,
         address subaccount
-    ) internal view {
+    ) external view {
         bytes32 integrationId = dataStore.getBytes32(Keys.subaccountIntegrationIdKey(account, subaccount));
         bytes32 key = Keys.subaccountIntegrationDisabledKey(integrationId);
         if (dataStore.getBool(key)) {
@@ -233,7 +233,7 @@ library SubaccountUtils {
         DataStore dataStore,
         address account,
         address subaccount
-    ) internal view returns (uint256) {
+    ) external view returns (uint256) {
         bytes32 key = Keys.subaccountAutoTopUpAmountKey(account, subaccount);
         return dataStore.getUint(key);
     }
@@ -244,7 +244,7 @@ library SubaccountUtils {
         address account,
         address subaccount,
         uint256 amount
-    ) internal {
+    ) external {
         bytes32 key = Keys.subaccountAutoTopUpAmountKey(account, subaccount);
 
         dataStore.setUint(key, amount);
@@ -272,7 +272,7 @@ library SubaccountUtils {
         address account,
         address subaccount,
         bytes32 integrationId
-    ) internal {
+    ) external {
         bytes32 key = Keys.subaccountIntegrationIdKey(account, subaccount);
 
         dataStore.setBytes32(key, integrationId);

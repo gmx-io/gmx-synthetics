@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "./PositionUtils.sol";
+import "../swap/SwapUtils.sol";
 
 library DecreasePositionSwapUtils {
     using Order for Order.Props;
@@ -18,7 +19,7 @@ library DecreasePositionSwapUtils {
             swapPathMarkets[0] = params.market;
 
             try params.contracts.swapHandler.swap(
-                SwapUtils.SwapParams(
+                ISwapUtils.SwapParams(
                     params.contracts.dataStore,
                     params.contracts.eventEmitter,
                     params.contracts.oracle,
@@ -63,7 +64,7 @@ library DecreasePositionSwapUtils {
             swapPathMarkets[0] = params.market;
 
             try params.contracts.swapHandler.swap(
-                SwapUtils.SwapParams(
+                ISwapUtils.SwapParams(
                     params.contracts.dataStore,
                     params.contracts.eventEmitter,
                     params.contracts.oracle,

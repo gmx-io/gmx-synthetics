@@ -12,11 +12,14 @@ import { IStargate } from "@stargatefinance/stg-evm-v2/src/interfaces/IStargate.
 
 import "../event/EventEmitter.sol";
 import "../data/DataStore.sol";
-import "../deposit/IDepositUtils.sol";
 import "../utils/Cast.sol";
 
-import "./MultichainGmRouter.sol";
-import "./MultichainGlvRouter.sol";
+import "./IMultichainProvider.sol";
+import "./IMultichainGmRouter.sol";
+import "./IMultichainGlvRouter.sol";
+
+import "./MultichainVault.sol";
+import "./MultichainUtils.sol";
 
 
 /**
@@ -31,6 +34,8 @@ import "./MultichainGlvRouter.sol";
  */
 contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModule {
     struct BridgeOutCache {
+        uint32 dstEid;
+        uint256 srcChainId;
         uint256 valueToSend;
         MessagingReceipt msgReceipt;
         SendParam sendParam;
@@ -41,16 +46,16 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
     MultichainVault public immutable multichainVault;
-    MultichainGmRouter public immutable multichainGmRouter;
-    MultichainGlvRouter public immutable multichainGlvRouter;
+    IMultichainGmRouter public immutable multichainGmRouter;
+    IMultichainGlvRouter public immutable multichainGlvRouter;
 
     constructor(
         DataStore _dataStore,
         RoleStore _roleStore,
         EventEmitter _eventEmitter,
         MultichainVault _multichainVault,
-        MultichainGmRouter _multichainGmRouter,
-        MultichainGlvRouter _multichainGlvRouter
+        IMultichainGmRouter _multichainGmRouter,
+        IMultichainGlvRouter _multichainGlvRouter
     ) RoleModule(_roleStore) {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
@@ -163,20 +168,21 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         }
 
         BridgeOutCache memory cache;
+        cache.dstEid = abi.decode(params.data, (uint32));
+        cache.srcChainId = dataStore.getUint(Keys.eidToSrcChainId(cache.dstEid));
 
         (cache.valueToSend, cache.sendParam, cache.messagingFee, cache.receipt) = prepareSend(
             stargate,
             params.amount,
             params.account,
-            abi.decode(params.data, (uint32)) // dstEid
+            cache.dstEid
         );
 
         // LZ/Stargate would round down the `amount` to 6 decimals precision / apply path limits
         params.amount = cache.receipt.amountSentLD;
 
-        IERC20(params.token).approve(params.provider, params.amount);
-
         // transferOut bridging fee amount of wnt from user's multichain balance into this contract
+        // for StargatePoolNative, amountSentLD is added on top of the bridging fee
         MultichainUtils.transferOut(
             dataStore,
             eventEmitter,
@@ -184,39 +190,15 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             wnt, // token
             params.account,
             address(this), // receiver
-            cache.valueToSend, // bridge out fee
-            params.srcChainId
+            cache.valueToSend, // bridge out fee (+ amountSentLD for native token transfers)
+            cache.srcChainId
         );
 
-        uint256 wntBalanceBefore = IERC20(wnt).balanceOf(address(this));
-        // unwrap wnt to native token and send it into this contract (to pay the bridging fee)
-        TokenUtils.withdrawAndSendNativeToken(
-            dataStore,
-            wnt,
-            address(this), // receiver
-            cache.valueToSend // amount
-        );
-        uint256 wntBalanceAfter = IERC20(wnt).balanceOf(address(this));
+        IWNT(wnt).withdraw(cache.valueToSend);
 
-        // if the above native token transfer failed, it re-wraps the token and sends it to the receiver (i.e. this contract)
-        // check if wnt was send to this contract due to un-wrapping and transfer it back to user's multichain balance
-        if (wntBalanceAfter > wntBalanceBefore) {
-            uint256 amount = wntBalanceAfter - wntBalanceBefore;
-            TokenUtils.transfer(dataStore, wnt, address(multichainVault), amount);
-            MultichainUtils.recordBridgeIn(
-                dataStore,
-                eventEmitter,
-                multichainVault,
-                this,
-                wnt,
-                params.account,
-                amount,
-                0 // srcChainId
-            );
-            return 0;
-        }
-
-        // if Stagrate.token() is the ZeroAddress, amountSentLD was already added to valueToSend and transferred/unwrapped with the bridging fee
+        // if Stagrate.token() is the ZeroAddress:
+        //   - amountSentLD was already added to valueToSend and transferred/unwrapped with the bridging fee
+        //   - approval is not needed (since native tokens are being bridged)
         if (stargate.token() != address(0x0)) {
             // `stargate` is e.g. StargatePoolUSDC
             // transferOut amount of tokens from user's multichain balance into this contract
@@ -228,8 +210,10 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
                 params.account,
                 address(this), // receiver
                 params.amount,
-                params.srcChainId
+                cache.srcChainId
             );
+
+            IERC20(params.token).approve(params.provider, params.amount);
         }
 
         (cache.msgReceipt, /* OFTReceipt memory oftReceipt */) = stargate.send{ value: cache.valueToSend }(
@@ -381,6 +365,25 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
                 (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
                 MultichainEventUtils.emitDepositFromBridgeFailed(eventEmitter, from, account, srcChainId, actionType, reason);
             }
+        }
+    }
+
+    /**
+     * @notice Withdraws tokens which have been locked in this contract due to potential errors in lzCompose (e.g. incorrect message format).
+     * @dev Callable through the timelock contract.
+     * @param token The address of the token to withdraw.
+     * @param receiver The address receiving the withdrawn tokens.
+     * @param amount The amount of tokens to withdraw.
+     */
+    function withdrawTokens(address token, address receiver, uint256 amount) external onlyController {
+        if (amount == 0) {
+            revert Errors.EmptyWithdrawalAmount();
+        }
+
+        if (token == address(0)) {
+            TokenUtils.sendNativeToken(dataStore, receiver, amount);
+        } else {
+            TokenUtils.transfer(dataStore, token, receiver, amount);
         }
     }
 

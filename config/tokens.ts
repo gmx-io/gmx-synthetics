@@ -1113,19 +1113,6 @@ const config: {
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
     },
-    USDC: {
-      address: "0x3321Fd36aEaB0d5CdfD26f4A3A93E2D2aAcCB99f", // MintableToken
-      decimals: 6,
-      transferGasLimit: 200 * 1000,
-      dataStreamFeedId: "0x0003dc85e8b01946bf9dfd8b0db860129181eb6105a8c8981d9f28e00b6f60d9", // Circle USDC
-      dataStreamFeedDecimals: 18,
-      priceFeed: {
-        address: "0x0153002d20B96532C639313c2d54c3dA09109309", // Circle USDC
-        decimals: 8,
-        heartbeatDuration: (24 + 1) * 60 * 60,
-        stablePrice: decimalToFloat(1),
-      },
-    },
     "USDC.SG": {
       address: "0x3253a335E7bFfB4790Aa4C25C4250d206E9b9773", // Stargate USDC
       decimals: 6,
@@ -1138,11 +1125,6 @@ const config: {
         heartbeatDuration: (24 + 1) * 60 * 60,
         stablePrice: decimalToFloat(1),
       },
-    },
-    GLV_WETH_USDC: {
-      address: "0x528A5bac7E746C9A509A1f4F6dF58A03d44279F9",
-      decimals: 18,
-      transferGasLimit: 200 * 1000,
     },
   },
   arbitrumGoerli: {

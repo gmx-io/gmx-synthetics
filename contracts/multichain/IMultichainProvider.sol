@@ -18,9 +18,10 @@ interface IMultichainProvider {
         address account;
         address token;
         uint256 amount;
-        uint256 srcChainId;
         bytes data;
     }
 
     function bridgeOut(BridgeOutParams memory params) external returns (uint256);
+
+    function withdrawTokens(address token, address receiver, uint256 amount) external;
 }

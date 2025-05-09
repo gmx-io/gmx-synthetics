@@ -20,11 +20,12 @@ contract MockGelatoRelayRouter is GelatoRelayRouter {
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        Oracle _oracle,
+        IOracle _oracle,
         IOrderHandler _orderHandler,
         OrderVault _orderVault,
+        ISwapHandler _swapHandler,
         IExternalHandler _externalHandler
-    ) GelatoRelayRouter(_router, _roleStore, _dataStore, _eventEmitter, _oracle, _orderHandler, _orderVault, _externalHandler) {}
+    ) GelatoRelayRouter(_router, _roleStore, _dataStore, _eventEmitter, _oracle, _orderHandler, _orderVault, _swapHandler, _externalHandler) {}
 
     function testCancelOrderSignature(
         IRelayUtils.RelayParams calldata relayParams,

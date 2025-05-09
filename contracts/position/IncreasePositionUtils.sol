@@ -5,8 +5,8 @@ pragma solidity ^0.8.0;
 import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
 
-import "../oracle/Oracle.sol";
 import "../pricing/PositionPricingUtils.sol";
+import "../fee/FeeUtils.sol";
 
 import "./Position.sol";
 import "./PositionStoreUtils.sol";
@@ -123,7 +123,6 @@ library IncreasePositionUtils {
         // Instead of applying the delta to the pool, store it using the positionKey
         // No need to flip the priceImpactAmount sign since it isn't applied to the pool, it's just stored
         params.position.setPendingImpactAmount(params.position.pendingImpactAmount() + cache.priceImpactAmount);
-        params.position.setPendingImpactUsd(params.position.pendingImpactUsd() + cache.priceImpactUsd);
 
         cache.nextPositionSizeInUsd = params.position.sizeInUsd() + params.order.sizeDeltaUsd();
         cache.nextPositionBorrowingFactor = MarketUtils.getCumulativeBorrowingFactor(
@@ -140,6 +139,13 @@ library IncreasePositionUtils {
 
         PositionUtils.incrementClaimableFundingAmount(params, fees);
 
+        PositionUtils.updatePositionLastSrcChainId(
+            params.contracts.dataStore,
+            params.position,
+            params.order,
+            params.positionKey
+        );
+
         params.position.setSizeInUsd(cache.nextPositionSizeInUsd);
         params.position.setSizeInTokens(params.position.sizeInTokens() + cache.baseSizeDeltaInTokens);
 
@@ -151,12 +157,6 @@ library IncreasePositionUtils {
         params.position.setIncreasedAtTime(Chain.currentTimestamp());
 
         PositionStoreUtils.set(params.contracts.dataStore, params.positionKey, params.position);
-
-        PositionUtils.updatePositionLastSrcChainId(
-            params.contracts.dataStore,
-            params.positionKey,
-            params.order.srcChainId()
-        );
 
         PositionUtils.updateOpenInterest(
             params,

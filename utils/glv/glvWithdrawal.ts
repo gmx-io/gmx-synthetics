@@ -29,7 +29,7 @@ export function getAccountGlvWithdrawalKeys(dataStore, account, start, end) {
 }
 
 export async function createGlvWithdrawal(fixture, overrides: any = {}) {
-  const { glvVault, glvHandler, glvRouter, wnt, ethUsdMarket, ethUsdGlvAddress } = fixture.contracts;
+  const { glvVault, glvWithdrawalHandler, glvRouter, wnt, ethUsdMarket, ethUsdGlvAddress } = fixture.contracts;
   const { wallet, user0 } = fixture.accounts;
 
   const gasUsageLabel = overrides.gasUsageLabel;
@@ -93,14 +93,14 @@ export async function createGlvWithdrawal(fixture, overrides: any = {}) {
 
   await logGasUsage({
     tx: useGlvHandler
-      ? glvHandler.connect(sender).createGlvWithdrawal(account.address, srcChainId, params)
+      ? glvWithdrawalHandler.connect(sender).createGlvWithdrawal(account.address, srcChainId, params)
       : glvRouter.connect(account).createGlvWithdrawal(params),
     label: gasUsageLabel,
   });
 }
 
 export async function executeGlvWithdrawal(fixture, overrides: any = {}) {
-  const { dataStore, glvHandler, glvRouter, wnt, usdc, sol, ethUsdGlvAddress } = fixture.contracts;
+  const { dataStore, glvWithdrawalHandler, glvRouter, wnt, usdc, sol, ethUsdGlvAddress } = fixture.contracts;
   const gasUsageLabel = overrides.gasUsageLabel;
   const glv = overrides.glv || ethUsdGlvAddress;
   const dataStreamTokens = overrides.dataStreamTokens || [];
@@ -131,7 +131,7 @@ export async function executeGlvWithdrawal(fixture, overrides: any = {}) {
     precisions,
     minPrices,
     maxPrices,
-    execute: glvHandler.executeGlvWithdrawal,
+    execute: glvWithdrawalHandler.executeGlvWithdrawal,
     simulateExecute: glvRouter.simulateExecuteGlvWithdrawal,
     simulate: overrides.simulate,
     dataStreamTokens,

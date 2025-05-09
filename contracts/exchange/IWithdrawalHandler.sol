@@ -3,6 +3,8 @@
 pragma solidity ^0.8.0;
 
 import "../withdrawal/IWithdrawalUtils.sol";
+import "../withdrawal/IExecuteWithdrawalUtils.sol";
+import "../withdrawal/Withdrawal.sol";
 import "../oracle/OracleUtils.sol";
 import "../pricing/ISwapPricingUtils.sol";
 
@@ -19,4 +21,9 @@ interface IWithdrawalHandler {
         OracleUtils.SimulatePricesParams memory params,
         ISwapPricingUtils.SwapPricingType swapPricingType
     ) external;
+    function executeWithdrawalFromController(
+        IExecuteWithdrawalUtils.ExecuteWithdrawalParams calldata executeWithdrawalParams,
+        Withdrawal.Props calldata withdrawal
+    )
+        external returns (IExecuteWithdrawalUtils.ExecuteWithdrawalResult memory);
 }

@@ -5,15 +5,14 @@ pragma solidity ^0.8.0;
 import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
 
-import "../oracle/Oracle.sol";
 import "../pricing/PositionPricingUtils.sol";
 
 import "./Position.sol";
 import "./PositionEventUtils.sol";
 import "./PositionUtils.sol";
-import "../order/BaseOrderUtils.sol";
 import "../order/OrderEventUtils.sol";
 import "../utils/Precision.sol";
+import "../fee/FeeUtils.sol";
 
 import "./DecreasePositionSwapUtils.sol";
 
@@ -81,7 +80,7 @@ library DecreasePositionCollateralUtils {
         collateralCache.isInsolventCloseAllowed =
             params.order.sizeDeltaUsd() == params.position.sizeInUsd() &&
             (
-                BaseOrderUtils.isLiquidationOrder(params.order.orderType()) ||
+                Order.isLiquidationOrder(params.order.orderType()) ||
                 params.secondaryOrderType == Order.SecondaryOrderType.Adl
             );
 
@@ -110,7 +109,7 @@ library DecreasePositionCollateralUtils {
             params.market.shortToken, // shortToken
             params.order.sizeDeltaUsd(), // sizeDeltaUsd
             params.order.uiFeeReceiver(), // uiFeeReceiver
-            BaseOrderUtils.isLiquidationOrder(params.order.orderType()) // isLiquidation
+            Order.isLiquidationOrder(params.order.orderType()) // isLiquidation
         );
 
         // if the pnl is positive, deduct the pnl amount from the pool

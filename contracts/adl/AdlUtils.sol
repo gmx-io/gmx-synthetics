@@ -12,7 +12,7 @@ import "../nonce/NonceUtils.sol";
 import "../callback/CallbackUtils.sol";
 import "../market/Market.sol";
 import "../market/MarketUtils.sol";
-import "../oracle/Oracle.sol";
+import "../oracle/IOracle.sol";
 
 // @title AdlUtils
 // @dev Library to help with auto-deleveraging
@@ -86,7 +86,7 @@ library AdlUtils {
     function updateAdlState(
         DataStore dataStore,
         EventEmitter eventEmitter,
-        Oracle oracle,
+        IOracle oracle,
         address market,
         bool isLong
     ) external {
@@ -212,7 +212,7 @@ library AdlUtils {
     // @param isLong indicates whether to check the long or short side of the market
     function validateAdl(
         DataStore dataStore,
-        Oracle oracle,
+        IOracle oracle,
         address market,
         bool isLong
     ) external view {

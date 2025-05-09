@@ -54,7 +54,6 @@ library Position {
     // @param sizeInTokens the position's size in tokens
     // @param collateralAmount the amount of collateralToken for collateral
     // @param pendingImpactAmount the amount of pending impact for the position
-    // @param pendingImpactUsd the amount of pending impact in USD for the position
     // @param borrowingFactor the position's borrowing factor
     // @param fundingFeeAmountPerSize the position's funding fee per size
     // @param longTokenClaimableFundingAmountPerSize the position's claimable funding amount per size
@@ -68,7 +67,6 @@ library Position {
         uint256 sizeInTokens;
         uint256 collateralAmount;
         int256 pendingImpactAmount;
-        int256 pendingImpactUsd;
         uint256 borrowingFactor;
         uint256 fundingFeeAmountPerSize;
         uint256 longTokenClaimableFundingAmountPerSize;
@@ -136,14 +134,6 @@ library Position {
 
     function setPendingImpactAmount(Props memory props, int256 value) internal pure {
         props.numbers.pendingImpactAmount = value;
-    }
-
-    function pendingImpactUsd(Props memory props) internal pure returns (int256) {
-        return props.numbers.pendingImpactUsd;
-    }
-
-    function setPendingImpactUsd(Props memory props, int256 value) internal pure {
-        props.numbers.pendingImpactUsd = value;
     }
 
     function borrowingFactor(Props memory props) internal pure returns (uint256) {
