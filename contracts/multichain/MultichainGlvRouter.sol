@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "../exchange/IGlvDepositHandler.sol";
-import "../exchange/IGlvHandler.sol";
+import "../exchange/IGlvWithdrawalHandler.sol";
 import "../glv/GlvVault.sol";
 
 import "./IMultichainGlvRouter.sol";
@@ -14,16 +14,16 @@ contract MultichainGlvRouter is IMultichainGlvRouter, MultichainRouter {
 
     IGlvDepositHandler public immutable glvDepositHandler;
     GlvVault public immutable glvVault;
-    IGlvHandler public immutable glvHandler;
+    IGlvWithdrawalHandler public immutable glvWithdrawalHandler;
 
     constructor(
         BaseConstructorParams memory params,
         IGlvDepositHandler _glvDepositHandler,
-        IGlvHandler _glvHandler,
+        IGlvWithdrawalHandler _glvWithdrawalHandler,
         GlvVault _glvVault
     ) MultichainRouter(params) BaseRouter(params.router, params.roleStore, params.dataStore, params.eventEmitter) {
         glvDepositHandler = _glvDepositHandler;
-        glvHandler = _glvHandler;
+        glvWithdrawalHandler = _glvWithdrawalHandler;
         glvVault = _glvVault;
     }
 
@@ -81,6 +81,6 @@ contract MultichainGlvRouter is IMultichainGlvRouter, MultichainRouter {
 
         _processTransferRequests(account, transferRequests, srcChainId);
 
-        return glvHandler.createGlvWithdrawal(account, srcChainId, params);
+        return glvWithdrawalHandler.createGlvWithdrawal(account, srcChainId, params);
     }
 }

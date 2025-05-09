@@ -16,6 +16,6 @@ module.exports = [
     multichainVault: "0xbFaD74Ce7e3D203B6653368C9903AcF633c5D405"
   },
   "0xD4E4Ae34fb99F3b0fF05C17Ba556FDC7ca2BC5ac", // GlvDepositHandler
-  "0x8fF12aaD57cC8770Ea391e3E39B09605AF28AD80", // GlvHandler
+  "0x8fF12aaD57cC8770Ea391e3E39B09605AF28AD80", // GlvWithdrawalHandler
   "0x4212fbd7577dF0b631563d7cF48f49CD86De3Bbe"  // GlvVault
 ];

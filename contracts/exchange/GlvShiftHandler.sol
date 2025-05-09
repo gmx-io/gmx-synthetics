@@ -104,4 +104,12 @@ contract GlvShiftHandler is BaseHandler, ReentrancyGuard {
             reasonBytes
         );
     }
+
+    function addMarketToGlv(address glv, address market) external globalNonReentrant onlyConfigKeeper {
+        GlvUtils.addMarketToGlv(dataStore, eventEmitter, glv, market);
+    }
+
+    function removeMarketFromGlv(address glv, address market) external globalNonReentrant onlyConfigKeeper {
+        GlvUtils.removeMarketFromGlv(dataStore, eventEmitter, glv, market);
+    }
 }

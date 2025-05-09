@@ -11,7 +11,7 @@ const constructorContracts = [
   "GlvVault",
   "SwapHandler",
 ];
-const contractName = "GlvHandler";
+const contractName = "GlvWithdrawalHandler";
 
 const func = createDeployFunction({
   contractName: contractName,

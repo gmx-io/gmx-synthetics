@@ -14,7 +14,7 @@ const baseConstructorContracts = [
   "MultichainVault",
 ];
 
-const glvConstructorContracts = ["GlvDepositHandler", "GlvHandler", "GlvVault"];
+const glvConstructorContracts = ["GlvDepositHandler", "GlvWithdrawalHandler", "GlvVault"];
 
 const func = createDeployFunction({
   contractName: "MultichainGlvRouter",
@@ -36,7 +36,7 @@ const func = createDeployFunction({
     return [
       baseParams,
       dependencyContracts.GlvDepositHandler.address,
-      dependencyContracts.GlvHandler.address,
+      dependencyContracts.GlvWithdrawalHandler.address,
       dependencyContracts.GlvVault.address,
     ];
   },

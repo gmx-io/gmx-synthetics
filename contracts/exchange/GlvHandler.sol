@@ -9,7 +9,7 @@ import "./BaseHandler.sol";
 import "../glv/glvWithdrawal/GlvWithdrawalUtils.sol";
 import "../multichain/IMultichainTransferRouter.sol";
 
-contract GlvHandler is BaseHandler, ReentrancyGuard {
+contract GlvWithdrawalHandler is BaseHandler, ReentrancyGuard {
     using GlvWithdrawal for GlvWithdrawal.Props;
 
     MultichainVault public immutable multichainVault;
@@ -150,13 +150,5 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
         GlvWithdrawal.Props memory glvWithdrawal = GlvWithdrawalStoreUtils.get(dataStore, key);
 
         this._executeGlvWithdrawal(key, glvWithdrawal, msg.sender);
-    }
-
-    function addMarketToGlv(address glv, address market) external globalNonReentrant onlyConfigKeeper {
-        GlvUtils.addMarketToGlv(dataStore, eventEmitter, glv, market);
-    }
-
-    function removeMarketFromGlv(address glv, address market) external globalNonReentrant onlyConfigKeeper {
-        GlvUtils.removeMarketFromGlv(dataStore, eventEmitter, glv, market);
     }
 }

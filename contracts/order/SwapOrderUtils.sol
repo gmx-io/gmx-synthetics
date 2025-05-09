@@ -22,7 +22,7 @@ library SwapOrderUtils {
 
     // @dev process a swap order
     // @param params BaseOrderUtils.ExecuteOrderParams
-    function processOrder(BaseOrderUtils.ExecuteOrderParams memory params) external returns (EventUtils.EventLogData memory) {
+    function processOrder(BaseOrderUtils.ExecuteOrderParams memory params) internal returns (EventUtils.EventLogData memory) {
         if (params.order.market() != address(0)) {
             revert Errors.UnexpectedMarket();
         }
