@@ -15,6 +15,7 @@ struct SubaccountApproval {
     bytes32 actionType;
     uint256 nonce; // for replay attack protection
     uint256 deadline;
+    bytes32 integrationId;
     bytes signature;
 }
 
@@ -216,6 +217,18 @@ library SubaccountUtils {
         }
     }
 
+    function validateIntegrationId(
+        DataStore dataStore,
+        address account,
+        address subaccount
+    ) internal view {
+        bytes32 integrationId = dataStore.getBytes32(Keys.subaccountIntegrationIdKey(account, subaccount));
+        bytes32 key = Keys.subaccountIntegrationDisabledKey(integrationId);
+        if (dataStore.getBool(key)) {
+            revert Errors.SubaccountIntegrationIdDisabled(integrationId);
+        }
+    }
+
     function getSubaccountAutoTopUpAmount(
         DataStore dataStore,
         address account,
@@ -247,6 +260,34 @@ library SubaccountUtils {
 
         eventEmitter.emitEventLog2(
             "SetSubaccountAutoTopUpAmount",
+            Cast.toBytes32(account),
+            Cast.toBytes32(subaccount),
+            eventData
+        );
+    }
+
+    function setSubaccountIntegrationId(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address account,
+        address subaccount,
+        bytes32 integrationId
+    ) internal {
+        bytes32 key = Keys.subaccountIntegrationIdKey(account, subaccount);
+
+        dataStore.setBytes32(key, integrationId);
+
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "account", account);
+        eventData.addressItems.setItem(1, "subaccount", subaccount);
+
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "integrationId", integrationId);
+
+        eventEmitter.emitEventLog2(
+            "SetSubaccountIntegrationId",
             Cast.toBytes32(account),
             Cast.toBytes32(subaccount),
             eventData

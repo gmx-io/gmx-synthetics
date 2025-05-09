@@ -299,6 +299,14 @@ const processMarkets = async ({
 
     await handleConfig(
       "uint",
+      keys.MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION,
+      encodeData(["address"], [marketToken]),
+      marketConfig.minCollateralFactorForLiquidation,
+      `minCollateralFactorForLiquidation ${marketLabel} (${marketToken})`
+    );
+
+    await handleConfig(
+      "uint",
       keys.MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER,
       encodeData(["address", "bool"], [marketToken, true]),
       marketConfig.minCollateralFactorForOpenInterestMultiplierLong,
@@ -837,14 +845,17 @@ export async function updateMarketConfig({
   console.info("multicallWriteParams", multicallWriteParams);
 
   console.log("running simulation");
-  const { roles } = await hre.gmx.getRoles();
-  const from = Object.keys(roles.CONFIG_KEEPER)[0];
   if (!["hardhat"].includes(hre.network.name)) {
+    const { roles } = await hre.gmx.getRoles();
+    const configKeeper = Object.keys(roles.CONFIG_KEEPER)[0];
+    if (!configKeeper) {
+      throw new Error("No config keeper found");
+    }
     await handleInBatches(multicallWriteParams, 100, async (batch) => {
       await read(
         "Config",
         {
-          from,
+          from: configKeeper,
         },
         "multicall",
         batch

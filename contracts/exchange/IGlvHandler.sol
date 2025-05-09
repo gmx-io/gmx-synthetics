@@ -2,14 +2,15 @@
 
 pragma solidity ^0.8.0;
 
-import "../glv/glvDeposit/GlvDepositUtils.sol";
-import "../glv/glvWithdrawal/GlvWithdrawalUtils.sol";
+import "../glv/glvDeposit/IGlvDepositUtils.sol";
+import "../glv/glvWithdrawal/IGlvWithdrawalUtils.sol";
 import "../oracle/OracleUtils.sol";
 
 interface IGlvHandler {
     function createGlvDeposit(
         address account,
-        GlvDepositUtils.CreateGlvDepositParams calldata params
+        uint256 srcChainId,
+        IGlvDepositUtils.CreateGlvDepositParams calldata params
     ) external payable returns (bytes32);
 
     function cancelGlvDeposit(bytes32 key) external;
@@ -18,7 +19,8 @@ interface IGlvHandler {
 
     function createGlvWithdrawal(
         address account,
-        GlvWithdrawalUtils.CreateGlvWithdrawalParams calldata params
+        uint256 srcChainId,
+        IGlvWithdrawalUtils.CreateGlvWithdrawalParams calldata params
     ) external payable returns (bytes32);
 
     function cancelGlvWithdrawal(bytes32 key) external;

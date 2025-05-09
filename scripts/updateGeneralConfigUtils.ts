@@ -3,12 +3,13 @@ import hre, { network } from "hardhat";
 import prompts from "prompts";
 import { bigNumberify } from "../utils/math";
 import {
-  getFullKey,
-  appendUintConfigIfDifferent,
   appendAddressConfigIfDifferent,
   appendBoolConfigIfDifferent,
+  appendUintConfigIfDifferent,
+  getFullKey,
 } from "../utils/config";
 import * as keys from "../utils/keys";
+import { encodeData } from "../utils/hash";
 
 const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig }) => {
   await handleConfig(
@@ -18,6 +19,36 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
     oracleConfig.chainlinkPaymentToken,
     `chainlinkPaymentToken`
   );
+
+  if (network.name != "hardhat") {
+    for (const [multichainProvider, enabled] of Object.entries(generalConfig.multichainProviders)) {
+      await handleConfig(
+        "bool",
+        keys.IS_MULTICHAIN_PROVIDER_ENABLED,
+        encodeData(["address"], [multichainProvider]),
+        enabled,
+        `multichainProvider ${multichainProvider}`
+      );
+    }
+    for (const [multichainEndpoint, enabled] of Object.entries(generalConfig.multichainEndpoints)) {
+      await handleConfig(
+        "bool",
+        keys.IS_MULTICHAIN_ENDPOINT_ENABLED,
+        encodeData(["address"], [multichainEndpoint]),
+        enabled,
+        `multichainEndpoint ${multichainEndpoint}`
+      );
+    }
+    for (const [srcChainId, enabled] of Object.entries(generalConfig.srcChainIds)) {
+      await handleConfig(
+        "bool",
+        keys.IS_SRC_CHAIN_ID_ENABLED,
+        encodeData(["uint"], [srcChainId]),
+        enabled,
+        `srcChainId ${srcChainId}`
+      );
+    }
+  }
 
   await handleConfig(
     "uint",
@@ -280,14 +311,6 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
   }
 
   await handleConfig(
-    "bool",
-    keys.IGNORE_OPEN_INTEREST_FOR_USAGE_FACTOR,
-    "0x",
-    generalConfig.ignoreOpenInterestForUsageFactor,
-    `ignoreOpenInterestForUsageFactor`
-  );
-
-  await handleConfig(
     "uint",
     keys.MAX_EXECUTION_FEE_MULTIPLIER_FACTOR,
     "0x",
@@ -295,6 +318,15 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
     `maxExecutionFeeMultiplierFactor`
   );
 
+  await handleConfig(
+    "uint",
+    keys.ORACLE_PROVIDER_MIN_CHANGE_DELAY,
+    "0x",
+    generalConfig.oracleProviderMinChangeDelay,
+    `oracleProviderMinChangeDelay`
+  );
+
+  await handleConfig("uint", keys.GELATO_RELAY_FEE_BASE_AMOUNT, "0x", generalConfig.gelatoRelayFeeBaseAmount);
   await handleConfig(
     "uint",
     keys.GELATO_RELAY_FEE_BASE_AMOUNT,

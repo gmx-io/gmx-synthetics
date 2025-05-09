@@ -16,6 +16,7 @@ async function main() {
   let hasUpdates = false;
   for (const [key, configKey] of [
     [keys.MAX_ORACLE_PRICE_AGE, "maxOraclePriceAge"],
+    [keys.MAX_ATOMIC_ORACLE_PRICE_AGE, "maxAtomicOraclePriceAge"],
     [keys.MAX_ORACLE_TIMESTAMP_RANGE, "maxOracleTimestampRange"],
   ]) {
     const newValue = oracleConfig[configKey];
@@ -44,6 +45,7 @@ async function main() {
   if (write) {
     for (const [key, configKey] of [
       [keys.MAX_ORACLE_PRICE_AGE, "maxOraclePriceAge"],
+      [keys.MAX_ATOMIC_ORACLE_PRICE_AGE, "maxAtomicOraclePriceAge"],
       [keys.MAX_ORACLE_TIMESTAMP_RANGE, "maxOracleTimestampRange"],
     ]) {
       const newValue = oracleConfig[configKey];

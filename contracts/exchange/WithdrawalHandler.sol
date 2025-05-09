@@ -20,6 +20,7 @@ import "./IWithdrawalHandler.sol";
 contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
     using Withdrawal for Withdrawal.Props;
 
+    MultichainVault public immutable multichainVault;
     WithdrawalVault public immutable withdrawalVault;
 
     constructor(
@@ -27,26 +28,33 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
         DataStore _dataStore,
         EventEmitter _eventEmitter,
         Oracle _oracle,
+        MultichainVault _multichainVault,
         WithdrawalVault _withdrawalVault
     ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {
+        multichainVault = _multichainVault;
         withdrawalVault = _withdrawalVault;
     }
 
     // @dev creates a withdrawal in the withdrawal store
     // @param account the withdrawing account
-    // @param params WithdrawalUtils.CreateWithdrawalParams
+    // @param srcChainId the source chain id
+    // @param params IWithdrawalUtils.CreateWithdrawalParams
     function createWithdrawal(
         address account,
-        WithdrawalUtils.CreateWithdrawalParams calldata params
+        uint256 srcChainId,
+        IWithdrawalUtils.CreateWithdrawalParams calldata params
     ) external override globalNonReentrant onlyController returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createWithdrawalFeatureDisabledKey(address(this)));
+        validateDataListLength(params.dataList.length);
 
         return WithdrawalUtils.createWithdrawal(
             dataStore,
             eventEmitter,
             withdrawalVault,
             account,
-            params
+            srcChainId,
+            params,
+            false // isAtomicWithdrawal
         );
     }
 
@@ -68,6 +76,7 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
         WithdrawalUtils.cancelWithdrawal(
             _dataStore,
             eventEmitter,
+            multichainVault,
             withdrawalVault,
             key,
             withdrawal.account(),
@@ -121,7 +130,7 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
     // for DOGE, WETH, USDC for this method to be callable for the market
     function executeAtomicWithdrawal(
         address account,
-        WithdrawalUtils.CreateWithdrawalParams calldata params,
+        IWithdrawalUtils.CreateWithdrawalParams calldata params,
         OracleUtils.SetPricesParams calldata oracleParams
     )
         external
@@ -130,16 +139,17 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
         withOraclePricesForAtomicAction(oracleParams)
     {
         FeatureUtils.validateFeature(dataStore, Keys.executeAtomicWithdrawalFeatureDisabledKey(address(this)));
+        validateDataListLength(params.dataList.length);
 
         oracle.validateSequencerUp();
 
         if (
-            params.longTokenSwapPath.length != 0 ||
-            params.shortTokenSwapPath.length != 0
+            params.addresses.longTokenSwapPath.length != 0 ||
+            params.addresses.shortTokenSwapPath.length != 0
         ) {
             revert Errors.SwapsNotAllowedForAtomicWithdrawal(
-                params.longTokenSwapPath.length,
-                params.shortTokenSwapPath.length
+                params.addresses.longTokenSwapPath.length,
+                params.addresses.shortTokenSwapPath.length
             );
         }
 
@@ -148,7 +158,9 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
             eventEmitter,
             withdrawalVault,
             account,
-            params
+            0, // srcChainId is the current block.chainId
+            params,
+            true // isAtomicWithdrawal
         );
 
         Withdrawal.Props memory withdrawal = WithdrawalStoreUtils.get(dataStore, key);
@@ -203,6 +215,7 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
         ExecuteWithdrawalUtils.ExecuteWithdrawalParams memory params = ExecuteWithdrawalUtils.ExecuteWithdrawalParams(
             dataStore,
             eventEmitter,
+            multichainVault,
             withdrawalVault,
             oracle,
             key,
@@ -230,6 +243,7 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
         WithdrawalUtils.cancelWithdrawal(
             dataStore,
             eventEmitter,
+            multichainVault,
             withdrawalVault,
             key,
             msg.sender,

@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./BaseHandler.sol";
 
 import "../glv/glvDeposit/GlvDepositUtils.sol";
+import "../glv/glvDeposit/ExecuteGlvDepositUtils.sol";
 import "../glv/glvWithdrawal/GlvWithdrawalUtils.sol";
 import "../glv/glvShift/GlvShiftUtils.sol";
 
@@ -15,6 +16,8 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
     using GlvShift for GlvShift.Props;
     using GlvWithdrawal for GlvWithdrawal.Props;
 
+    MultichainVault public immutable multichainVault;
+    IMultichainTransferRouter public immutable multichainTransferRouter;
     GlvVault public immutable glvVault;
     ShiftVault public immutable shiftVault;
 
@@ -23,20 +26,26 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
         DataStore _dataStore,
         EventEmitter _eventEmitter,
         Oracle _oracle,
+        MultichainVault _multichainVault,
+        IMultichainTransferRouter _multichainTransferRouter,
         GlvVault _glvVault,
         ShiftVault _shiftVault
     ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {
+        multichainVault = _multichainVault;
+        multichainTransferRouter = _multichainTransferRouter;
         glvVault = _glvVault;
         shiftVault = _shiftVault;
     }
 
     function createGlvDeposit(
         address account,
-        GlvDepositUtils.CreateGlvDepositParams calldata params
+        uint256 srcChainId,
+        IGlvDepositUtils.CreateGlvDepositParams calldata params
     ) external globalNonReentrant onlyController returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createGlvDepositFeatureDisabledKey(address(this)));
+        validateDataListLength(params.dataList.length);
 
-        return GlvDepositUtils.createGlvDeposit(dataStore, eventEmitter, glvVault, account, params);
+        return GlvDepositUtils.createGlvDeposit(dataStore, eventEmitter, glvVault, account, srcChainId, params);
     }
 
     // @key glvDeposit key
@@ -68,17 +77,19 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
 
         FeatureUtils.validateFeature(dataStore, Keys.executeGlvDepositFeatureDisabledKey(address(this)));
 
-        GlvDepositUtils.ExecuteGlvDepositParams memory params = GlvDepositUtils.ExecuteGlvDepositParams({
+        ExecuteGlvDepositUtils.ExecuteGlvDepositParams memory params = ExecuteGlvDepositUtils.ExecuteGlvDepositParams({
             key: key,
             dataStore: dataStore,
             eventEmitter: eventEmitter,
+            multichainVault: multichainVault,
+            multichainTransferRouter: multichainTransferRouter,
             glvVault: glvVault,
             oracle: oracle,
             startingGas: startingGas,
             keeper: keeper
         });
 
-        GlvDepositUtils.executeGlvDeposit(params, glvDeposit);
+        ExecuteGlvDepositUtils.executeGlvDeposit(params, glvDeposit);
     }
 
     function _handleGlvDepositError(bytes32 key, uint256 startingGas, bytes memory reasonBytes) internal {
@@ -93,6 +104,7 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
         GlvDepositUtils.CancelGlvDepositParams memory params = GlvDepositUtils.CancelGlvDepositParams({
             dataStore: dataStore,
             eventEmitter: eventEmitter,
+            multichainVault: multichainVault,
             glvVault: glvVault,
             key: key,
             keeper: msg.sender,
@@ -115,6 +127,7 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
         GlvDepositUtils.CancelGlvDepositParams memory params = GlvDepositUtils.CancelGlvDepositParams({
             dataStore: dataStore,
             eventEmitter: eventEmitter,
+            multichainVault: multichainVault,
             glvVault: glvVault,
             key: key,
             keeper: glvDeposit.account(),
@@ -127,12 +140,14 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
 
     function createGlvWithdrawal(
         address account,
-        GlvWithdrawalUtils.CreateGlvWithdrawalParams calldata params
+        uint256 srcChainId,
+        IGlvWithdrawalUtils.CreateGlvWithdrawalParams calldata params
     ) external globalNonReentrant onlyController returns (bytes32) {
         DataStore _dataStore = dataStore;
         FeatureUtils.validateFeature(_dataStore, Keys.createGlvWithdrawalFeatureDisabledKey(address(this)));
+        validateDataListLength(params.dataList.length);
 
-        return GlvWithdrawalUtils.createGlvWithdrawal(_dataStore, eventEmitter, glvVault, account, params);
+        return GlvWithdrawalUtils.createGlvWithdrawal(_dataStore, eventEmitter, glvVault, account, srcChainId, params);
     }
 
     // @key glvDeposit key
@@ -176,6 +191,7 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
             key: key,
             dataStore: dataStore,
             eventEmitter: eventEmitter,
+            multichainVault: multichainVault,
             glvVault: glvVault,
             oracle: oracle,
             startingGas: startingGas,
@@ -197,6 +213,7 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
         GlvWithdrawalUtils.CancelGlvWithdrawalParams memory params = GlvWithdrawalUtils.CancelGlvWithdrawalParams({
             dataStore: dataStore,
             eventEmitter: eventEmitter,
+            multichainVault: multichainVault,
             glvVault: glvVault,
             key: key,
             keeper: msg.sender,
@@ -219,6 +236,7 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
         GlvWithdrawalUtils.CancelGlvWithdrawalParams memory params = GlvWithdrawalUtils.CancelGlvWithdrawalParams({
             dataStore: dataStore,
             eventEmitter: eventEmitter,
+            multichainVault: multichainVault,
             glvVault: glvVault,
             key: key,
             keeper: glvWithdrawal.account(),
@@ -283,6 +301,7 @@ contract GlvHandler is BaseHandler, ReentrancyGuard {
             key: key,
             dataStore: dataStore,
             eventEmitter: eventEmitter,
+            multichainVault: multichainVault,
             shiftVault: shiftVault,
             glvVault: glvVault,
             oracle: oracle,

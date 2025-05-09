@@ -5,6 +5,9 @@ pragma solidity ^0.8.0;
 import "./BaseRouter.sol";
 import "../exchange/IGlvHandler.sol";
 import "../external/IExternalHandler.sol";
+import "../glv/glvDeposit/GlvDepositStoreUtils.sol";
+import "../glv/glvWithdrawal/GlvWithdrawalStoreUtils.sol";
+import "../nonce/NonceUtils.sol";
 
 contract GlvRouter is BaseRouter {
     using GlvDeposit for GlvDeposit.Props;
@@ -33,11 +36,11 @@ contract GlvRouter is BaseRouter {
     }
 
     function createGlvDeposit(
-        GlvDepositUtils.CreateGlvDepositParams calldata params
+        IGlvDepositUtils.CreateGlvDepositParams calldata params
     ) external payable nonReentrant returns (bytes32) {
         address account = msg.sender;
 
-        return glvHandler.createGlvDeposit(account, params);
+        return glvHandler.createGlvDeposit(account, 0, params); // srcChainId is the current block.chainId
     }
 
     function cancelGlvDeposit(bytes32 key) external nonReentrant {
@@ -68,11 +71,11 @@ contract GlvRouter is BaseRouter {
     }
 
     function createGlvWithdrawal(
-        GlvWithdrawalUtils.CreateGlvWithdrawalParams calldata params
+        IGlvWithdrawalUtils.CreateGlvWithdrawalParams calldata params
     ) external payable nonReentrant returns (bytes32) {
         address account = msg.sender;
 
-        return glvHandler.createGlvWithdrawal(account, params);
+        return glvHandler.createGlvWithdrawal(account, 0, params); // srcChainId is the current block.chainId
     }
 
     function cancelGlvWithdrawal(bytes32 key) external nonReentrant {

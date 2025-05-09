@@ -33,6 +33,15 @@ contract StrictBank is Bank {
         return _recordTransferIn(token);
     }
 
+    // @dev records the amount of token transferred into the contract
+    // @dev used by the multichain provider to record the amount of tokens bridged in from a source chain
+    // @param token the token to record the transfer for
+    // @param amount the amount of tokens transferred in
+    // @return the amount of tokens transferred in
+    function recordTransferIn(address token, uint256 amount) external onlyController returns (uint256) {
+        return _recordTransferIn(token, amount);
+    }
+
     // @dev this can be used to update the tokenBalances in case of token burns
     // or similar balance changes
     // the prevBalance is not validated to be more than the nextBalance as this
@@ -51,6 +60,23 @@ contract StrictBank is Bank {
     function _recordTransferIn(address token) internal returns (uint256) {
         uint256 prevBalance = tokenBalances[token];
         uint256 nextBalance = IERC20(token).balanceOf(address(this));
+        tokenBalances[token] = nextBalance;
+
+        return nextBalance - prevBalance;
+    }
+
+    // @dev records the amount of token transferred into the contract
+    // @param token the token to record the transfer for
+    // @param amount the amount of tokens transferred in
+    // @return the amount of tokens transferred in
+    function _recordTransferIn(address token, uint256 amount) internal returns (uint256) {
+        uint256 prevBalance = tokenBalances[token];
+        uint256 nextBalance = prevBalance + amount;
+
+        if (IERC20(token).balanceOf(address(this)) < nextBalance) {
+            revert Errors.InvalidTransferInAmount(token, amount);
+        }
+
         tokenBalances[token] = nextBalance;
 
         return nextBalance - prevBalance;

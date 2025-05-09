@@ -40,6 +40,7 @@ describe("SubaccountGelatoRelayRouter", () => {
   let relaySigner;
   let chainId;
   const referralCode = hashString("referralCode");
+  const integrationId = hashString("integrationId");
 
   let defaultCreateOrderParams;
   let createOrderParams: Parameters<typeof sendCreateOrder>[0];
@@ -76,6 +77,7 @@ describe("SubaccountGelatoRelayRouter", () => {
       isLong: true,
       shouldUnwrapNativeToken: true,
       referralCode,
+      dataList: [],
     };
 
     enableSubaccount = async () => {
@@ -100,6 +102,8 @@ describe("SubaccountGelatoRelayRouter", () => {
     relaySigner = await hre.ethers.getSigner(GELATO_RELAY_ADDRESS);
     chainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
 
+    await dataStore.setBool(keys.isSrcChainIdEnabledKey(chainId), true);
+
     await dataStore.setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1));
     await setNextBlockBaseFeePerGas(expandDecimals(1, 9));
 
@@ -122,6 +126,7 @@ describe("SubaccountGelatoRelayRouter", () => {
       subaccount: user0.address,
       params: defaultCreateOrderParams,
       deadline: 9999999999,
+      desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
       relayRouter: subaccountGelatoRelayRouter,
       chainId,
       gelatoRelayFeeToken: wnt.address,
@@ -208,11 +213,11 @@ describe("SubaccountGelatoRelayRouter", () => {
       const orderKeys = await getOrderKeys(dataStore, 0, 1);
       const order = await reader.getOrder(dataStore.address, orderKeys[0]);
       // 0.099 WETH (0.1 paid - 0.001 relay fee)
-      expect(order.numbers.executionFee).eq("9003720880000000");
-      await expectBalance(wnt.address, user3.address, "90996279120000000");
+      expect(order.numbers.executionFee).eq("9003719840000000");
+      await expectBalance(wnt.address, user3.address, "90996280160000000");
     });
 
-    it("InvalidSignature", async () => {
+    it("InvalidSignature  ", async () => {
       await enableSubaccount();
 
       await expect(
@@ -337,6 +342,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           expiresAt: 9999999999,
           maxAllowedCount: 10,
           actionType: keys.SUBACCOUNT_ORDER_ACTION,
+          integrationId: ethers.constants.HashZero,
           deadline: 0,
           nonce: 0,
         },
@@ -366,6 +372,7 @@ describe("SubaccountGelatoRelayRouter", () => {
             maxAllowedCount: 10,
             actionType: keys.SUBACCOUNT_ORDER_ACTION,
             deadline: 0,
+            integrationId: integrationId,
             nonce: 0,
           },
         })
@@ -382,6 +389,7 @@ describe("SubaccountGelatoRelayRouter", () => {
             maxAllowedCount: 10,
             actionType: keys.SUBACCOUNT_ORDER_ACTION,
             deadline: 9999999099,
+            integrationId: integrationId,
             nonce: 0,
           },
         })
@@ -397,6 +405,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           maxAllowedCount: 10,
           actionType: keys.SUBACCOUNT_ORDER_ACTION,
           deadline: 9999999201,
+          integrationId: integrationId,
           nonce: 0,
         },
       });
@@ -459,6 +468,7 @@ describe("SubaccountGelatoRelayRouter", () => {
             maxAllowedCount: 10,
             actionType: keys.SUBACCOUNT_ORDER_ACTION,
             deadline: 9999999999,
+            integrationId: integrationId,
             nonce: 0,
             signature: "0x123123",
           },
@@ -480,6 +490,7 @@ describe("SubaccountGelatoRelayRouter", () => {
             maxAllowedCount: 10,
             actionType: keys.SUBACCOUNT_ORDER_ACTION,
             deadline: 9999999999,
+            integrationId: integrationId,
             nonce: 1,
           },
         })
@@ -494,6 +505,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           maxAllowedCount: 10,
           actionType: keys.SUBACCOUNT_ORDER_ACTION,
           deadline: 9999999999,
+          integrationId: integrationId,
           nonce: 0,
         },
       });
@@ -507,6 +519,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           maxAllowedCount: 10,
           actionType: keys.SUBACCOUNT_ORDER_ACTION,
           deadline: 9999999999,
+          integrationId: integrationId,
           nonce: 1,
         },
         userNonce: 1,
@@ -522,6 +535,7 @@ describe("SubaccountGelatoRelayRouter", () => {
             maxAllowedCount: 10,
             actionType: keys.SUBACCOUNT_ORDER_ACTION,
             deadline: 9999999999,
+            integrationId: integrationId,
             nonce: 1,
           },
           userNonce: 2,
@@ -560,6 +574,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           maxAllowedCount: 10,
           actionType: keys.SUBACCOUNT_ORDER_ACTION,
           deadline: 9999999999,
+          integrationId: integrationId,
           nonce: 0,
         },
       });
@@ -821,6 +836,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           executionFeeIncrease: 0,
         },
         deadline: 9999999999,
+        desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
         relayRouter: subaccountGelatoRelayRouter,
         chainId,
         gelatoRelayFeeToken: wnt.address,
@@ -832,6 +848,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           maxAllowedCount: 10,
           actionType: keys.SUBACCOUNT_ORDER_ACTION,
           deadline: 9999999999,
+          integrationId: integrationId,
         },
       };
     });
@@ -959,8 +976,8 @@ describe("SubaccountGelatoRelayRouter", () => {
       order = await reader.getOrder(dataStore.address, orderKeys[0]);
 
       // 0.2 WETH in total (initial 0.001 + 0.199 from update)
-      expect(order.numbers.executionFee).closeTo("8026788640000000", "10000000000000");
-      expect(await wnt.balanceOf(holdingAddress)).closeTo("92973738060000000", "10000000000000");
+      expect(order.numbers.executionFee).closeTo("8039135020000000", "10000000000000");
+      expect(await wnt.balanceOf(holdingAddress)).closeTo("92960864980000000", "10000000000000");
     });
 
     it("EmptyOrder", async () => {
@@ -1033,6 +1050,7 @@ describe("SubaccountGelatoRelayRouter", () => {
         subaccount: user0.address,
         key: ethers.constants.HashZero,
         deadline: 9999999999,
+        desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
         relayRouter: subaccountGelatoRelayRouter,
         chainId,
         gelatoRelayFeeToken: wnt.address,
@@ -1044,6 +1062,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           maxAllowedCount: 10,
           actionType: keys.SUBACCOUNT_ORDER_ACTION,
           deadline: 9999999999,
+          integrationId: ethers.constants.HashZero,
           nonce: 0,
         },
       };
@@ -1139,6 +1158,7 @@ describe("SubaccountGelatoRelayRouter", () => {
         gelatoRelayFeeToken: wnt.address,
         gelatoRelayFeeAmount: expandDecimals(1, 15),
         deadline: 9999999999,
+        desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
       };
     });
 
@@ -1272,6 +1292,7 @@ describe("SubaccountGelatoRelayRouter", () => {
         deadline: 9999999999,
         relayRouter: subaccountGelatoRelayRouter,
         chainId,
+        desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
         gelatoRelayFeeToken: wnt.address,
         gelatoRelayFeeAmount: expandDecimals(1, 15),
         subaccountApprovalSigner: user1,
@@ -1283,6 +1304,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           maxAllowedCount: 10,
           actionType: keys.SUBACCOUNT_ORDER_ACTION,
           deadline: 9999999999,
+          integrationId: integrationId,
         },
       };
     });
