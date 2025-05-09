@@ -274,7 +274,6 @@ library PositionUtils {
         Position.Props memory position,
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices,
-        uint256 additionalMinCollateralFactor,
         bool shouldValidateMinPositionSize,
         bool shouldValidateMinCollateralUsd
     ) public view {
@@ -298,7 +297,6 @@ library PositionUtils {
             position,
             market,
             prices,
-            additionalMinCollateralFactor,
             shouldValidateMinCollateralUsd,
             false // forLiquidation
         );
@@ -325,47 +323,9 @@ library PositionUtils {
         Position.Props memory position,
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices,
-        uint256 additionalMinCollateralFactor,
         bool shouldValidateMinCollateralUsd,
         bool forLiquidation
     ) public view returns (bool, string memory, IsPositionLiquidatableInfo memory) {
-        IsPositionLiquidatableInfo memory info = _getIsPositionLiquidatableInfo(
-            dataStore,
-            referralStorage,
-            position,
-            market,
-            prices,
-            additionalMinCollateralFactor,
-            forLiquidation
-        );
-
-        if (shouldValidateMinCollateralUsd) {
-            info.minCollateralUsd = dataStore.getUint(Keys.MIN_COLLATERAL_USD).toInt256();
-            if (info.remainingCollateralUsd < info.minCollateralUsd) {
-                return (true, "min collateral", info);
-            }
-        }
-
-        if (info.remainingCollateralUsd <= 0) {
-            return (true, "< 0", info);
-        }
-
-        if (info.remainingCollateralUsd < info.minCollateralUsdForLeverage) {
-            return (true, "min collateral for leverage", info);
-        }
-
-        return (false, "", info);
-    }
-
-    function _getIsPositionLiquidatableInfo(
-        DataStore dataStore,
-        IReferralStorage referralStorage,
-        Position.Props memory position,
-        Market.Props memory market,
-        MarketUtils.MarketPrices memory prices,
-        uint256 additionalMinCollateralFactor,
-        bool forLiquidation
-    ) private view returns (IsPositionLiquidatableInfo memory) {
         IsPositionLiquidatableCache memory cache;
         IsPositionLiquidatableInfo memory info;
 
@@ -455,7 +415,7 @@ library PositionUtils {
             - collateralCostUsd.toInt256();
 
         if (forLiquidation) {
-            cache.minCollateralFactor = MarketUtils.getMinCollateralFactorForLiquidation(dataStore, market.marketToken) + additionalMinCollateralFactor;
+            cache.minCollateralFactor = MarketUtils.getMinCollateralFactorForLiquidation(dataStore, market.marketToken);
         } else {
             cache.minCollateralFactor = MarketUtils.getMinCollateralFactor(dataStore, market.marketToken);
         }
@@ -465,7 +425,22 @@ library PositionUtils {
         // i.e. if the position does not have sufficient collateral after closing fees it is considered a liquidatable position
         info.minCollateralUsdForLeverage = Precision.applyFactor(position.sizeInUsd(), cache.minCollateralFactor).toInt256();
 
-        return info;
+        if (shouldValidateMinCollateralUsd) {
+            info.minCollateralUsd = dataStore.getUint(Keys.MIN_COLLATERAL_USD).toInt256();
+            if (info.remainingCollateralUsd < info.minCollateralUsd) {
+                return (true, "min collateral", info);
+            }
+        }
+
+        if (info.remainingCollateralUsd <= 0) {
+            return (true, "< 0", info);
+        }
+
+        if (info.remainingCollateralUsd < info.minCollateralUsdForLeverage) {
+            return (true, "min collateral for leverage", info);
+        }
+
+        return (false, "", info);
     }
 
     // fees and price impact are not included for the willPositionCollateralBeSufficient validation
