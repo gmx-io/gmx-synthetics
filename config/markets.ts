@@ -3049,7 +3049,7 @@ const config: {
       ...borrowingRateConfig_HighMax_WithHigherBase,
 
       negativePositionImpactFactor: exponentToFloat("1e-7"),
-      positivePositionImpactFactor: exponentToFloat("5e-8"),
+      positivePositionImpactFactor: exponentToFloat("8.33e-8"),
       positionImpactExponentFactor: exponentToFloat("2e0"),
 
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
@@ -3078,7 +3078,7 @@ const config: {
       ...borrowingRateConfig_HighMax_WithLowerBase,
 
       negativePositionImpactFactor: exponentToFloat("5e-8"),
-      positivePositionImpactFactor: exponentToFloat("2.5e-8"),
+      positivePositionImpactFactor: exponentToFloat("4.17e-8"),
       positionImpactExponentFactor: exponentToFloat("2e0"),
 
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
