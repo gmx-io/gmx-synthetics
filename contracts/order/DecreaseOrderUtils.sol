@@ -26,7 +26,7 @@ library DecreaseOrderUtils {
 
     // @dev process a decrease order
     // @param params BaseOrderUtils.ExecuteOrderParams
-    function processOrder(BaseOrderUtils.ExecuteOrderParams memory params) external returns (EventUtils.EventLogData memory) {
+    function processOrder(BaseOrderUtils.ExecuteOrderParams memory params) internal returns (EventUtils.EventLogData memory) {
         Order.Props memory order = params.order;
         MarketUtils.validatePositionMarket(params.contracts.dataStore, params.market);
 
