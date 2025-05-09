@@ -47,13 +47,12 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         uint256 srcChainId,
         bool isSubaccount
     ) {
-        WithRelayCache memory cache;
-        cache.startingGas = gasleft();
+        uint256 startingGas = gasleft();
         _validateGaslessFeature();
-        cache.contracts = _getContracts();
-        _handleRelayBeforeAction(cache.contracts, relayParams, account, srcChainId, isSubaccount);
+        Contracts memory contracts = _getContracts();
+        _handleRelayBeforeAction(contracts, relayParams, account, srcChainId, isSubaccount);
         _;
-        _handleRelayAfterAction(cache.contracts, cache.startingGas, account, srcChainId);
+        _handleRelayAfterAction(contracts, startingGas, account, srcChainId);
     }
 
     constructor(
