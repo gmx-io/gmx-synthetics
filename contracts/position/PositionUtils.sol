@@ -397,7 +397,9 @@ library PositionUtils {
             )
         );
 
-        cache.priceImpactUsd += position.pendingImpactAmount() * prices.indexTokenPrice.pickPrice(position.isLong()).toInt256();
+        cache.priceImpactUsd += cache.priceImpactUsd > 0
+            ? position.pendingImpactAmount() * prices.indexTokenPrice.min.toInt256()
+            : position.pendingImpactAmount() * prices.indexTokenPrice.max.toInt256();
 
         // even if there is a large positive price impact, positions that would be liquidated
         // if the positive price impact is reduced should not be allowed to be created
