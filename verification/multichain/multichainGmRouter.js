@@ -1,24 +1,24 @@
 // Verification arguments for MultichainGmRouter
 // Usage example:
-// npx hardhat verify --network arbitrumSepolia --constructor-args ./verification/multichain/multichainGmRouter.js --contract contracts/multichain/MultichainGmRouter.sol:MultichainGmRouter 0x6Ba81A1c35813117213Fa73d975C1680553788EE
+// npx hardhat verify --network arbitrumSepolia --constructor-args ./verification/multichain/multichainGmRouter.js --contract contracts/multichain/MultichainGmRouter.sol:MultichainGmRouter 0xebA43d53eC17919415da7CA3bbB2D092C3d21104
 
 module.exports = [
   {
-    router: "0x29aD59c46D0A757478574cf2f88Ff6b3310463a1",
-    roleStore: "0x55EC3A5B813ECe1ad6C112D358e9Fb08A1402d0a",
-    dataStore: "0xAd4759d41195aA5bA8592b8c9B454CD4E1735841",
-    eventEmitter: "0x218f23Eb65F1C5939fDbadd46246c47b82dc8998",
-    oracle: "0x625674C550aDc15BF6537516301FA72609caf339",
-    orderVault: "0xCfc2E935b67d51Ad848c1AdA16e1fB1955fB9829",
-    orderHandler: "0x4A7893DD2eC6f935518fF572Fa903B45cFBF924d",
-    swapHandler: "0x2Eb8CA77E8a4E71d1a772ff4B3fd4cf084c208e2",
-    externalHandler: "0x72A1313b0064c682a61cDA6D75a5f886cab2eDC5",
-    multichainVault: "0xbFaD74Ce7e3D203B6653368C9903AcF633c5D405"
+    router: "0x72F13a44C8ba16a678CAD549F17bc9e06d2B8bD2",
+    roleStore: "0x433E3C47885b929aEcE4149E3c835E565a20D95c",
+    dataStore: "0xCF4c2C4c53157BcC01A596e3788fFF69cBBCD201",
+    eventEmitter: "0xa973c2692C1556E1a3d478e745e9a75624AEDc73",
+    oracle: "0x927935dA161C0Ca7A288d874A5a0C2c394d16739",
+    orderVault: "0x1b8AC606de71686fd2a1AEDEcb6E0EFba28909a2",
+    orderHandler: "0x8E4dF082548D2C58D97d5e1be54D0a6f98f5218F",
+    swapHandler: "0x0FDD1cBc156be5DeF8592B09D9Aab0f30587E34e",
+    externalHandler: "0x2303b33c2895871ae45AD8fEBCB52275657c9F9d",
+    multichainVault: "0xCd46EF5ed7d08B345c47b5a193A719861Aa2CD91"
   },
-  "0xD3D625cb810577b79cd7dF6174b393A2b3be8D33", // DepositVault
-  "0x07B8B529f7e613C946482a57D91f8a19fdeb3Bb4", // DepositHandler
-  "0x324D0234b003796cB44091682702cA6be82A466D", // WithdrawalVault
-  "0x3a3F0a08eDc798F40B1209849484777cd03d1161", // WithdrawalHandler
-  "0x38709fb06f578DEE7d8E66984072C21C7eA59209", // ShiftVault
-  "0x4DAaC9D694b574A0c4ae6bA32657a6049CCA8351"  // ShiftHandler
+  "0x809Ea82C394beB993c2b6B0d73b8FD07ab92DE5A", // DepositVault
+  "0xAedbc2E44A5BED1c37c6e09184044B29De3a2c5f", // DepositHandler
+  "0x7601c9dBbDCf1f5ED1E7Adba4EFd9f2cADa037A5", // WithdrawalVault
+  "0xAD8D86238B615C7B671d8c7e0521a2F5D03E0808", // WithdrawalHandler
+  "0x6b6F9B7B9a6b69942DAE74FB95E694ec277117af", // ShiftVault
+  "0x4AEe88e123FE69e39799C22f479f129ab8e2b2d2"  // ShiftHandler
 ];

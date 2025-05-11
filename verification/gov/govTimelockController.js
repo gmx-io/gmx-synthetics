@@ -1,4 +1,4 @@
-// npx hardhat verify --network arbitrumSepolia --constructor-args ./verification/gov/govTimelockController.js --contract contracts/gov/GovTimelockController.sol:GovTimelockController 0x7800E63C97DB822ac43Cc9C64E7C7334e8f8B4D8
+// npx hardhat verify --network arbitrumSepolia --constructor-args ./verification/gov/govTimelockController.js --contract contracts/gov/GovTimelockController.sol:GovTimelockController 0xb1854C5CfB3D25be6198972d5c3AEa0592e933a4
 
 module.exports = [
   "GMX Gov Timelock Controller",
