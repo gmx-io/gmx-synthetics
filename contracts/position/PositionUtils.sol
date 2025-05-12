@@ -85,8 +85,9 @@ library PositionUtils {
         uint256 sizeDeltaInTokens;
         int256 priceImpactUsd;
         int256 proportionalPendingImpactAmount;
-        int256 proportionalImpactPendingUsd;
+        int256 proportionalPendingImpactUsd;
         uint256 priceImpactDiffUsd;
+        int256 totalImpactUsd;
         DecreasePositionCollateralValuesOutput output;
     }
 
@@ -696,8 +697,6 @@ library PositionUtils {
             // use indexTokenPrice.min and round up to maximize the priceImpactAmount
             cache.priceImpactAmount = Calc.roundUpMagnitudeDivision(cache.priceImpactUsd, indexTokenPrice.min);
         }
-
-        cache.baseSizeDeltaInTokens;
 
         if (params.position.isLong()) {
             // round the number of tokens for long positions down

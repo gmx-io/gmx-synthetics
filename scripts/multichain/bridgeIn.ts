@@ -11,17 +11,20 @@ import { BigNumber } from "ethers";
 const SRC_CHAIN_ID = 11155111; // Sepolia
 const STARGATE_USDC = "0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590"; // Sepolia
 const STARGATE_POOL_USDC = "0x4985b8fcEA3659FD801a5b857dA1D00e985863F0"; // Sepolia
+const STARGATE_POOL_NATIVE = "0x9Cc7e185162Aa5D1425ee924D97a87A0a34A0706"; // Sepolia
 // ArbitrumSepolia
 const DST_EID = 40231; // ArbitrumSepolia
-const LAYERZERO_PROVIDER = "0xa132826C0D28f6626534b1Ca6fD7b2c32dd289e5"; // ArbitrumSepolia
+const LAYERZERO_PROVIDER = "0x886156a4420D724faF838A97fEB4680AD75BC481"; // ArbitrumSepolia
 
 async function prepareSend(
   amount: number | string | BigNumber,
   composeMsg: string,
+  stargatePoolAddress: string,
+  decimals: number,
   extraGas = 500000,
   slippageBps = 100 // Default 1% slippage tolerance
 ) {
-  const stargateContract: IStargate = await ethers.getContractAt("IStargate", STARGATE_POOL_USDC);
+  const stargateContract: IStargate = await ethers.getContractAt("IStargate", stargatePoolAddress);
 
   const extraOptions = Options.newOptions().addExecutorComposeOption(0, extraGas /*, 0*/);
   console.log(`extraOptions: ${extraOptions.toHex()}`);
@@ -30,9 +33,9 @@ async function prepareSend(
   const amountBN = BigNumber.from(amount);
   const minAmountLD = amountBN.sub(amountBN.mul(slippageBps).div(10000)); // without this --> Fails with Stargate_SlippageTooHigh
   console.log(
-    `Bridging amount: ${ethers.utils.formatUnits(amount, 6)}, Min Amount (with ${
+    `Bridging amount: ${ethers.utils.formatUnits(amount, decimals)}, Min Amount (with ${
       slippageBps / 100
-    }% slippage): ${ethers.utils.formatUnits(minAmountLD, 6)}`
+    }% slippage): ${ethers.utils.formatUnits(minAmountLD, decimals)}`
   );
 
   const sendParam = {
@@ -41,17 +44,13 @@ async function prepareSend(
     amountLD: amount,
     minAmountLD: minAmountLD, // Apply slippage tolerance
     extraOptions: extraOptions.toHex(),
-    composeMsg: composeMsg || "0x", // Ensure composeMsg is never empty string
-    oftCmd: "0x", // Use "0x" instead of empty string
+    composeMsg: composeMsg || "0x",
+    oftCmd: "0x",
   };
-  // console.log("sendParam: ", sendParam);
 
-  // Get messaging fee
   const messagingFee = await stargateContract.quoteSend(sendParam, false);
-  // console.log("messagingFee: ", messagingFee);
 
   let valueToSend = messagingFee.nativeFee;
-  // Check if the token is native (ETH)
   const tokenAddress = await stargateContract.token();
   if (tokenAddress === ethers.constants.AddressZero) {
     valueToSend = valueToSend.add(sendParam.amountLD);
@@ -62,6 +61,7 @@ async function prepareSend(
     valueToSend,
     sendParam,
     messagingFee,
+    stargateContract,
   };
 }
 
@@ -70,7 +70,7 @@ async function getIncreasedValues({
   messagingFee,
   account,
   valueToSend,
-  stargatePoolUSDC,
+  stargatePool,
   pricePercentage = 20,
   limitPercentage = 30,
 }) {
@@ -84,7 +84,7 @@ async function getIncreasedValues({
   console.log("Account balance: ", ethers.utils.formatEther(balance), "ETH");
 
   // Estimate gas for transaction
-  let gasLimit = await stargatePoolUSDC.estimateGas
+  let gasLimit = await stargatePool.estimateGas
     .sendToken(
       sendParam,
       messagingFee,
@@ -113,8 +113,7 @@ async function getIncreasedValues({
   return { gasPrice, gasLimit };
 }
 
-async function checkAllowance({ account, amount }) {
-  const usdc: ERC20 = await ethers.getContractAt("ERC20", STARGATE_USDC);
+async function checkAllowance({ account, amount, usdc }) {
   const allowance = await usdc.allowance(account, STARGATE_POOL_USDC);
   if (allowance.lt(amount)) {
     await (await usdc.approve(STARGATE_POOL_USDC, amount)).wait();
@@ -127,31 +126,74 @@ async function checkAllowance({ account, amount }) {
 // source .env (contains ACCOUNT_KEY)
 // npx hardhat run --network sepolia scripts/multichain/bridgeIn.ts
 async function main() {
-  const amount = expandDecimals(10, 6); // USDC
   const [wallet] = await hre.ethers.getSigners();
   const account = wallet.address;
-  await checkAllowance({ account, amount });
-
-  const stargatePoolUSDC: IStargate = await ethers.getContractAt("IStargate", STARGATE_POOL_USDC);
   const composedMsg = ethers.utils.defaultAbiCoder.encode(["address", "uint256"], [account, SRC_CHAIN_ID]);
-  const { valueToSend, sendParam, messagingFee } = await prepareSend(amount, composedMsg);
-  const { gasPrice, gasLimit } = await getIncreasedValues({
-    sendParam,
-    messagingFee,
-    account,
-    valueToSend,
-    stargatePoolUSDC,
-  });
 
-  const tx = await stargatePoolUSDC.sendToken(sendParam, messagingFee, account /* refundAddress */, {
-    value: valueToSend,
-    gasLimit,
-    gasPrice,
-  });
+  const usdcAmount = expandDecimals(10, 6); // USDC
+  const ethAmount = expandDecimals(1, 16); // 0.01 ETH
 
-  console.log("transaction sent", tx.hash);
-  await tx.wait();
-  console.log("receipt received");
+  // Bridge USDC
+  const usdc: ERC20 = await ethers.getContractAt("ERC20", STARGATE_USDC);
+  const usdcBalance = await usdc.balanceOf(account);
+  if (usdcBalance.gte(usdcAmount)) {
+    console.log("USDC balance: %s, USDC amount: %s", ethers.utils.formatUnits(usdcBalance, 6), usdcAmount);
+    await checkAllowance({ account, amount: usdcAmount, usdc });
+    const { valueToSend, sendParam, messagingFee, stargateContract } = await prepareSend(
+      usdcAmount,
+      composedMsg,
+      STARGATE_POOL_USDC,
+      6
+    );
+
+    const { gasPrice, gasLimit } = await getIncreasedValues({
+      sendParam,
+      messagingFee,
+      account,
+      valueToSend,
+      stargatePool: stargateContract,
+    });
+
+    const tx = await stargateContract.sendToken(sendParam, messagingFee, account /* refundAddress */, {
+      value: valueToSend,
+      gasLimit,
+      gasPrice,
+    });
+
+    console.log("USDC transaction sent", tx.hash);
+    await tx.wait();
+    console.log("USDC receipt received");
+  }
+
+  // Bridge ETH
+  const ethBalance = await ethers.provider.getBalance(account);
+  if (ethBalance.gte(ethAmount)) {
+    console.log("ETH balance: %s, ETH amount: %s", ethers.utils.formatUnits(ethBalance, 18), ethAmount);
+    const { valueToSend, sendParam, messagingFee, stargateContract } = await prepareSend(
+      ethAmount,
+      composedMsg,
+      STARGATE_POOL_NATIVE,
+      18
+    );
+
+    const { gasPrice, gasLimit } = await getIncreasedValues({
+      sendParam,
+      messagingFee,
+      account,
+      valueToSend,
+      stargatePool: stargateContract,
+    });
+
+    const tx = await stargateContract.sendToken(sendParam, messagingFee, account /* refundAddress */, {
+      value: valueToSend,
+      gasLimit,
+      gasPrice,
+    });
+
+    console.log("ETH transaction sent", tx.hash);
+    await tx.wait();
+    console.log("ETH receipt received");
+  }
 }
 
 main().catch((error) => {

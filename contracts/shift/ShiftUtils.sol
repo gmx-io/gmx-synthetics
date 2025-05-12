@@ -8,6 +8,7 @@ import "../event/EventEmitter.sol";
 import "./ShiftVault.sol";
 import "./ShiftStoreUtils.sol";
 import "./ShiftEventUtils.sol";
+import "./IShiftUtils.sol";
 
 import "../nonce/NonceUtils.sol";
 
@@ -15,8 +16,11 @@ import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
 import "../utils/AccountUtils.sol";
 
+import "../deposit/DepositVault.sol";
 import "../deposit/ExecuteDepositUtils.sol";
 import "../withdrawal/ExecuteWithdrawalUtils.sol";
+
+import "../multichain/IMultichainTransferRouter.sol";
 
 library ShiftUtils {
     using Deposit for Deposit.Props;
@@ -30,22 +34,6 @@ library ShiftUtils {
     using EventUtils for EventUtils.Bytes32Items;
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
-
-    struct CreateShiftParams {
-        CreateShiftParamsAddresses addresses;
-        uint256 minMarketTokens;
-        uint256 executionFee;
-        uint256 callbackGasLimit;
-        bytes32[] dataList;
-    }
-
-    struct CreateShiftParamsAddresses {
-        address receiver;
-        address callbackContract;
-        address uiFeeReceiver;
-        address fromMarket;
-        address toMarket;
-    }
 
     struct CreateShiftCache {
         uint256 estimatedGasLimit;
@@ -83,7 +71,7 @@ library ShiftUtils {
         ShiftVault shiftVault,
         address account,
         uint256 srcChainId,
-        CreateShiftParams memory params
+        IShiftUtils.CreateShiftParams memory params
     ) external returns (bytes32) {
         AccountUtils.validateAccount(account);
 
@@ -206,7 +194,7 @@ library ShiftUtils {
                 shift.updatedAtTime(),
                 0, // executionFee
                 0, // callbackGasLimit
-                0 // srcChainId
+                0 // srcChainId is the current block.chainId
             ),
             Withdrawal.Flags(
                 false
@@ -291,6 +279,7 @@ library ShiftUtils {
             params.dataStore,
             params.eventEmitter,
             params.multichainVault,
+            IMultichainTransferRouter(payable(0)),
             DepositVault(payable(params.shiftVault)),
             params.oracle,
             cache.depositKey,

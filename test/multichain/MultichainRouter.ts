@@ -45,6 +45,7 @@ export async function mintAndBridge(
     account?: string;
     token: Contract;
     tokenAmount: BigNumberish;
+    data?: string;
     srcChainId?: BigNumberish;
   }
 ) {
@@ -60,7 +61,10 @@ export async function mintAndBridge(
   await token.mint(account.address, tokenAmount);
 
   // mock token bridging (increase user's multichain balance)
-  const encodedMessageEth = ethers.utils.defaultAbiCoder.encode(["address", "uint256"], [account.address, srcChainId]);
+  const encodedMessageEth = ethers.utils.defaultAbiCoder.encode(
+    ["address", "uint256", "bytes"],
+    [account.address, srcChainId, overrides.data || "0x"]
+  );
 
   if (token.address == usdc.address) {
     await token.connect(account).approve(mockStargatePoolUsdc.address, tokenAmount);
@@ -539,7 +543,7 @@ describe("MultichainRouter", () => {
     });
 
     describe("createGlvDeposit", () => {
-      it("creates glvDeposit and sends relayer fee", async () => {
+      it("creates glvDeposit with GM tokens and sends relayer fee", async () => {
         await sendCreateDeposit(createDepositParams); // leaves the residualFee (i.e. executionfee) of 0.004 ETH fee in multichainVault/user's multichain balance
         await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: feeAmount }); // add additional fee to user1's multichain balance
         await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
@@ -572,6 +576,37 @@ describe("MultichainRouter", () => {
         expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdGlvAddress))).eq(
           expandDecimals(95_000, 18)
         ); // GLV
+      });
+
+      it("creates glvDeposit with long/short tokens and sends relayer fee", async () => {
+        const wntAmount = expandDecimals(10, 18);
+        const usdcAmount = expandDecimals(40_000, 6);
+        await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: wntAmount.add(feeAmount) });
+        await mintAndBridge(fixture, { account: user1, token: usdc, tokenAmount: usdcAmount });
+
+        createGlvDepositParams.params.isMarketTokenDeposit = false;
+        createGlvDepositParams.params.addresses.initialLongToken = ethUsdMarket.longToken;
+        createGlvDepositParams.params.addresses.initialShortToken = ethUsdMarket.shortToken;
+        createGlvDepositParams.transferRequests = {
+          tokens: [wnt.address, usdc.address],
+          receivers: [glvVault.address, glvVault.address],
+          amounts: [wntAmount, usdcAmount],
+        };
+
+        expect(await getGlvDepositCount(dataStore)).eq(0);
+
+        await sendCreateGlvDeposit(createGlvDepositParams);
+
+        expect(await getGlvDepositCount(dataStore)).eq(1);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdGlvAddress))).eq(0); // 0 GLV
+
+        await executeGlvDeposit(fixture, { gasUsageLabel: "executeGlvDeposit" });
+
+        expect(await getGlvDepositCount(dataStore)).eq(0);
+        expect(await getBalanceOf(ethUsdGlvAddress, multichainVault.address)).eq(expandDecimals(90_000, 18)); // 90k GLV
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdGlvAddress))).eq(
+          expandDecimals(90_000, 18)
+        ); // 90k GLV
       });
     });
 
@@ -1015,8 +1050,7 @@ describe("MultichainRouter", () => {
         // Verify user's multichain balance is insufficient for the update operation (should be zero after paying for deposit and order creation)
         expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0);
 
-        // set RELAY_MAX_PRICE_AGE and primary prices
-        await dataStore.setUint(keys.RELAY_MAX_PRICE_AGE, ethers.constants.MaxUint256);
+        // set primary prices
         await oracle.setPrimaryPrice(wnt.address, { min: prices.wnt.min, max: prices.wnt.max });
         await oracle.setPrimaryPrice(usdc.address, { min: prices.usdc.min, max: prices.usdc.max });
 
@@ -1149,8 +1183,7 @@ describe("MultichainRouter", () => {
 
         expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0); // 0 ETH
 
-        // set relay price age and primary prices
-        await dataStore.setUint(keys.RELAY_MAX_PRICE_AGE, ethers.constants.MaxUint256);
+        // set primary prices
         await oracle.setPrimaryPrice(wnt.address, { min: expandDecimals(4800, 18), max: expandDecimals(5200, 18) });
         await oracle.setPrimaryPrice(usdc.address, { min: expandDecimals(1, 6), max: expandDecimals(1, 6) });
 
@@ -1415,9 +1448,7 @@ describe("MultichainRouter", () => {
         expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq("57600019"); // 57.600019 USD (received from claiming)
       });
 
-      // TODO: withRelay modifier tries to transfer relayFeeAmount from user's multichain balance in the beginning through _handleRelayBeforeAction/_handleRelayFee
-      // => user can't pay fees anymore using the newly claimed tokens
-      it.skip("User receives funding fees in his multichain balance, pays relay fee from newly claimed tokens", async () => {
+      it("User receives funding fees in his multichain balance, pays relay fee from newly claimed tokens", async () => {
         // the user will pay the relay fee from his newly claimed usdc tokens
         const createClaimParams: Parameters<typeof sendClaimFundingFees>[0] = {
           sender: relaySigner,
@@ -1554,8 +1585,7 @@ describe("MultichainRouter", () => {
         ); // 304 USD (received from claiming, relay fee was paid from existing wnt multichain balance)
       });
 
-      // TODO: fix as above
-      it.skip("User receives collateral in his multichain balance, pays relay fee from newly claimed tokens", async () => {
+      it("User receives collateral in his multichain balance, pays relay fee from newly claimed tokens", async () => {
         // the user will pay the relay fee from his newly claimed usdc tokens
         const createClaimParams: Parameters<typeof sendClaimCollateral>[0] = {
           sender: relaySigner,
@@ -1680,8 +1710,7 @@ describe("MultichainRouter", () => {
         ); // $25
       });
 
-      // TODO: fix as above
-      it.skip("Affiliate receives rewards and residual fee in his multichain balance, pays relay fee from newly claimed tokens", async () => {
+      it("Affiliate receives rewards and residual fee in his multichain balance, pays relay fee from newly claimed tokens", async () => {
         expect(
           await dataStore.getUint(keys.affiliateRewardKey(ethUsdMarket.marketToken, usdc.address, user1.address))
         ).to.eq(expandDecimals(25, 6)); // $25

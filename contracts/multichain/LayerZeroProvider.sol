@@ -12,11 +12,12 @@ import { IStargate } from "@stargatefinance/stg-evm-v2/src/interfaces/IStargate.
 
 import "../event/EventEmitter.sol";
 import "../data/DataStore.sol";
+import "../deposit/IDepositUtils.sol";
+import "../utils/Cast.sol";
 
-import "./MultichainVault.sol";
-import "./MultichainUtils.sol";
-import "./IMultichainProvider.sol";
-import "./MultichainProviderUtils.sol";
+import "./MultichainGmRouter.sol";
+import "./MultichainGlvRouter.sol";
+
 
 /**
  * @title LayerZeroProvider
@@ -30,28 +31,46 @@ import "./MultichainProviderUtils.sol";
  */
 contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModule {
     struct BridgeOutCache {
-        address wnt;
-        uint256 wntBalanceBefore;
-        uint256 wntBalanceAfter;
+        uint256 valueToSend;
+        MessagingReceipt msgReceipt;
+        SendParam sendParam;
+        MessagingFee messagingFee;
+        OFTReceipt receipt;
     }
 
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
     MultichainVault public immutable multichainVault;
+    MultichainGmRouter public immutable multichainGmRouter;
+    MultichainGlvRouter public immutable multichainGlvRouter;
 
     constructor(
         DataStore _dataStore,
         RoleStore _roleStore,
         EventEmitter _eventEmitter,
-        MultichainVault _multichainVault
+        MultichainVault _multichainVault,
+        MultichainGmRouter _multichainGmRouter,
+        MultichainGlvRouter _multichainGlvRouter
     ) RoleModule(_roleStore) {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
         multichainVault = _multichainVault;
+        multichainGmRouter = _multichainGmRouter;
+        multichainGlvRouter = _multichainGlvRouter;
     }
 
     /**
-     * Called by Stargate after tokens have been delivered to this contract.
+     * @notice Called by Stargate after tokens have been delivered to this contract.
+     * @dev Handles the receipt of bridged tokens and optionally executes a deposit action.
+     *
+     * @dev If a user bridges tokens with deposit data, and already has sufficient funds in their multichain balance,
+     * it is possible for multiple bridge transactions to result in multiple deposits (i.e. double mints).
+     * For example, if a user bridges 10 WETH and 20,000 USDC, both with deposit data, and already has enough funds,
+     * both bridge transactions could result in a deposit.
+     * 
+     * @dev It is recommended that the interface or frontend enforces that users only bridge amounts that would not
+     * result in double deposits.
+     *
      * @param from The address of the sender (i.e. Stargate address, not user's address).
      * param guid A global unique identifier for tracking the packet.
      * @param message Encoded message. Contains the params needed to record the deposit (account, srcChainId)
@@ -71,17 +90,38 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         uint256 amountLD = OFTComposeMsgCodec.amountLD(message);
 
         bytes memory composeMessage = OFTComposeMsgCodec.composeMsg(message);
-        (address account, uint256 srcChainId) = MultichainProviderUtils.decodeDeposit(composeMessage);
+        (address account, uint256 srcChainId, bytes memory data) = _decodeLzComposeMsg(composeMessage);
 
         address token = IStargate(from).token();
         if (token == address(0x0)) {
             // `from` is StargatePoolNative
             TokenUtils.depositAndSendWrappedNativeToken(dataStore, address(multichainVault), amountLD);
+
+            // if token is ETH then we need to use WNT
+            token = TokenUtils.wnt(dataStore);
         } else {
             // `from` is e.g. StargatePoolUSDC
             TokenUtils.transfer(dataStore, token, address(multichainVault), amountLD);
         }
-        MultichainUtils.recordBridgeIn(dataStore, eventEmitter, multichainVault, this, token, account, amountLD, srcChainId);
+        MultichainUtils.recordBridgeIn(
+            dataStore,
+            eventEmitter,
+            multichainVault,
+            this,
+            token,
+            account,
+            amountLD,
+            srcChainId
+        );
+
+        if (data.length != 0) {
+            (ActionType actionType, bytes memory actionData) = _decodeLzComposeMsgData(data);
+            if (actionType == ActionType.Deposit) {
+                _handleDepositFromBridge(from, account, srcChainId, actionType, actionData);
+            } else if (actionType == ActionType.GlvDeposit) {
+                _handleGlvDepositFromBridge(from, account, srcChainId, actionType, actionData);
+            }
+        }
     }
 
     /**
@@ -103,11 +143,28 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
      *        - amount: Amount of tokens to bridge
      *        - srcChainId: Source chain ID (for multichain balance accounting)
      *        - data: ABI-encoded destination endpoint ID (dstEid)
+     * @return The amount of tokens bridged out (may be slightly different from params.amount after LZ precision/path limits adjustments)
      */
-    function bridgeOut(IMultichainProvider.BridgeOutParams memory params) external onlyController {
+    function bridgeOut(IMultichainProvider.BridgeOutParams memory params) external onlyController returns (uint256) {
         IStargate stargate = IStargate(params.provider);
 
-        (uint256 valueToSend, SendParam memory sendParam, MessagingFee memory messagingFee, OFTReceipt memory receipt) = prepareSend(
+        address wnt = dataStore.getAddress(Keys.WNT);
+
+        if (stargate.token() == address(0x0)) {
+            // `stargate` is StargatePoolNative
+            if (params.token != wnt) {
+                revert Errors.InvalidBridgeOutToken(params.token);
+            }
+        } else {
+            // `stargate` is e.g. StargatePoolUSDC
+            if (params.token != stargate.token()) {
+                revert Errors.InvalidBridgeOutToken(params.token);
+            }
+        }
+
+        BridgeOutCache memory cache;
+
+        (cache.valueToSend, cache.sendParam, cache.messagingFee, cache.receipt) = prepareSend(
             stargate,
             params.amount,
             params.account,
@@ -115,42 +172,48 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         );
 
         // LZ/Stargate would round down the `amount` to 6 decimals precision / apply path limits
-        params.amount = receipt.amountSentLD;
+        params.amount = cache.receipt.amountSentLD;
 
         IERC20(params.token).approve(params.provider, params.amount);
-
-        BridgeOutCache memory cache;
-        cache.wnt = dataStore.getAddress(Keys.WNT);
 
         // transferOut bridging fee amount of wnt from user's multichain balance into this contract
         MultichainUtils.transferOut(
             dataStore,
             eventEmitter,
             multichainVault,
-            cache.wnt, // token
+            wnt, // token
             params.account,
             address(this), // receiver
-            valueToSend, // bridge out fee
+            cache.valueToSend, // bridge out fee
             params.srcChainId
         );
 
-        cache.wntBalanceBefore = IERC20(cache.wnt).balanceOf(address(this));
+        uint256 wntBalanceBefore = IERC20(wnt).balanceOf(address(this));
         // unwrap wnt to native token and send it into this contract (to pay the bridging fee)
         TokenUtils.withdrawAndSendNativeToken(
             dataStore,
-            cache.wnt,
+            wnt,
             address(this), // receiver
-            valueToSend // amount
+            cache.valueToSend // amount
         );
-        cache.wntBalanceAfter = IERC20(cache.wnt).balanceOf(address(this));
+        uint256 wntBalanceAfter = IERC20(wnt).balanceOf(address(this));
 
         // if the above native token transfer failed, it re-wraps the token and sends it to the receiver (i.e. this contract)
         // check if wnt was send to this contract due to un-wrapping and transfer it back to user's multichain balance
-        if (cache.wntBalanceAfter > cache.wntBalanceBefore) {
-            uint256 amount = cache.wntBalanceAfter - cache.wntBalanceBefore;
-            TokenUtils.transfer(dataStore, cache.wnt, address(multichainVault), amount);
-            MultichainUtils.recordBridgeIn(dataStore, eventEmitter, multichainVault, this, cache.wnt, params.account, amount, 0 /*srcChainId*/); // srcChainId is the current block.chainId
-            return;
+        if (wntBalanceAfter > wntBalanceBefore) {
+            uint256 amount = wntBalanceAfter - wntBalanceBefore;
+            TokenUtils.transfer(dataStore, wnt, address(multichainVault), amount);
+            MultichainUtils.recordBridgeIn(
+                dataStore,
+                eventEmitter,
+                multichainVault,
+                this,
+                wnt,
+                params.account,
+                amount,
+                0 // srcChainId
+            );
+            return 0;
         }
 
         // if Stagrate.token() is the ZeroAddress, amountSentLD was already added to valueToSend and transferred/unwrapped with the bridging fee
@@ -169,11 +232,31 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             );
         }
 
-        /*(MessagingReceipt memory msgReceipt, OFTReceipt memory oftReceipt) =*/ stargate.send{ value: valueToSend }(
-            sendParam,
-            messagingFee,
-            params.account
+        (cache.msgReceipt, /* OFTReceipt memory oftReceipt */) = stargate.send{ value: cache.valueToSend }(
+            cache.sendParam,
+            cache.messagingFee,
+            address(this) // refundAddress
         );
+
+        // fee refunds are send back to this contract, converted to wrapped native token,
+        // sent to multichainVault and user's multichain balance is increased
+        if (cache.msgReceipt.fee.nativeFee < cache.messagingFee.nativeFee) {
+            TokenUtils.depositAndSendWrappedNativeToken(
+                dataStore,
+                address(multichainVault), // receiver
+                cache.messagingFee.nativeFee - cache.msgReceipt.fee.nativeFee // refund amount
+            );
+            MultichainUtils.recordTransferIn(
+                dataStore,
+                eventEmitter,
+                multichainVault,
+                wnt, // token
+                params.account,
+                0 // srcChainId
+            );
+        }
+
+        return params.amount;
     }
 
     function prepareSend(
@@ -181,10 +264,19 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         uint256 amount,
         address receiver,
         uint32 _dstEid
-    ) private view returns (uint256 valueToSend, SendParam memory sendParam, MessagingFee memory messagingFee, OFTReceipt memory receipt) {
+    )
+        private
+        view
+        returns (
+            uint256 valueToSend,
+            SendParam memory sendParam,
+            MessagingFee memory messagingFee,
+            OFTReceipt memory receipt
+        )
+    {
         sendParam = SendParam({
             dstEid: _dstEid,
-            to: MultichainProviderUtils.addressToBytes32(receiver),
+            to: Cast.toBytes32(receiver),
             amountLD: amount,
             minAmountLD: amount,
             extraOptions: bytes(""),
@@ -200,6 +292,95 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
 
         if (stargate.token() == address(0x0)) {
             valueToSend += receipt.amountSentLD;
+        }
+    }
+
+    function _decodeLzComposeMsg(bytes memory message) private pure returns (address, uint256, bytes memory) {
+        return abi.decode(message, (address, uint256, bytes));
+    }
+
+    function _decodeLzComposeMsgData(bytes memory data) private pure returns (ActionType, bytes memory) {
+        return abi.decode(data, (ActionType, bytes));
+    }
+
+    function _areValidTransferRequests(IRelayUtils.TransferRequests memory transferRequests) private pure returns (bool) {
+        if (
+            transferRequests.tokens.length != transferRequests.receivers.length ||
+            transferRequests.tokens.length != transferRequests.amounts.length
+        ) {
+            return false;
+        }
+        for (uint256 i = 0; i < transferRequests.tokens.length; i++) {
+            if (
+                transferRequests.tokens[i] == address(0) ||
+                transferRequests.receivers[i] == address(0) ||
+                transferRequests.amounts[i] == 0
+            ) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function _handleDepositFromBridge(
+        address from,
+        address account,
+        uint256 srcChainId,
+        ActionType actionType,
+        bytes memory actionData
+    ) private {
+        (
+            IRelayUtils.RelayParams memory relayParams,
+            IRelayUtils.TransferRequests memory transferRequests,
+            IDepositUtils.CreateDepositParams memory depositParams
+        ) = abi.decode(actionData, (IRelayUtils.RelayParams, IRelayUtils.TransferRequests, IDepositUtils.CreateDepositParams));
+        
+        if (_areValidTransferRequests(transferRequests)) {
+            try multichainGmRouter.createDepositFromBridge(
+                relayParams,
+                account,
+                srcChainId,
+                transferRequests,
+                depositParams
+            ) returns (bytes32 key) {
+                MultichainEventUtils.emitDepositFromBridge(eventEmitter, from, account, srcChainId, actionType, key);
+            } catch Error(string memory reason) {
+                MultichainEventUtils.emitDepositFromBridgeFailed(eventEmitter, from, account, srcChainId, actionType, reason);
+            } catch (bytes memory reasonBytes) {
+                (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
+                MultichainEventUtils.emitDepositFromBridgeFailed(eventEmitter, from, account, srcChainId, actionType, reason);
+            }
+        }
+    }
+
+    function _handleGlvDepositFromBridge(
+        address from,
+        address account,
+        uint256 srcChainId,
+        ActionType actionType,
+        bytes memory actionData
+    ) private {
+        (
+            IRelayUtils.RelayParams memory relayParams,
+            IRelayUtils.TransferRequests memory transferRequests,
+            IGlvDepositUtils.CreateGlvDepositParams memory glvDepositParams
+        ) = abi.decode(actionData, (IRelayUtils.RelayParams, IRelayUtils.TransferRequests, IGlvDepositUtils.CreateGlvDepositParams));
+        
+        if (_areValidTransferRequests(transferRequests)) {
+            try multichainGlvRouter.createGlvDepositFromBridge(
+                relayParams,
+                account,
+                srcChainId,
+                transferRequests,
+                glvDepositParams
+            ) returns (bytes32 key) {
+                MultichainEventUtils.emitDepositFromBridge(eventEmitter, from, account, srcChainId, actionType, key);
+            } catch Error(string memory reason) {
+                MultichainEventUtils.emitDepositFromBridgeFailed(eventEmitter, from, account, srcChainId, actionType, reason);
+            } catch (bytes memory reasonBytes) {
+                (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
+                MultichainEventUtils.emitDepositFromBridgeFailed(eventEmitter, from, account, srcChainId, actionType, reason);
+            }
         }
     }
 

@@ -65,8 +65,8 @@ library PositionEventUtils {
 
         eventData.intItems.initItems(3);
         eventData.intItems.setItem(0, "collateralDeltaAmount", params.collateralDeltaAmount);
-        eventData.intItems.setItem(1, "priceImpactUsd", params.priceImpactUsd);
-        eventData.intItems.setItem(2, "priceImpactAmount", params.priceImpactAmount);
+        eventData.intItems.setItem(1, "pendingPriceImpactUsd", params.priceImpactUsd);
+        eventData.intItems.setItem(2, "pendingPriceImpactAmount", params.priceImpactAmount);
 
         eventData.boolItems.initItems(1);
         eventData.boolItems.setItem(0, "isLong", params.position.isLong());
@@ -121,11 +121,12 @@ library PositionEventUtils {
         eventData.uintItems.setItem(16, "orderType", uint256(orderType));
         eventData.uintItems.setItem(17, "decreasedAtTime", position.decreasedAtTime());
 
-        eventData.intItems.initItems(4);
+        eventData.intItems.initItems(5);
         eventData.intItems.setItem(0, "priceImpactUsd", values.priceImpactUsd);
         eventData.intItems.setItem(1, "basePnlUsd", values.basePnlUsd);
         eventData.intItems.setItem(2, "uncappedBasePnlUsd", values.uncappedBasePnlUsd);
-        eventData.intItems.setItem(3, "proportionalImpactPendingUsd", values.proportionalImpactPendingUsd);
+        eventData.intItems.setItem(3, "proportionalPendingImpactUsd", values.proportionalPendingImpactUsd);
+        eventData.intItems.setItem(4, "totalImpactUsd", values.totalImpactUsd);
 
         eventData.boolItems.initItems(1);
         eventData.boolItems.setItem(0, "isLong", position.isLong());

@@ -12,6 +12,7 @@ import "../deposit/DepositUtils.sol";
 import "../deposit/ExecuteDepositUtils.sol";
 
 import "../multichain/MultichainVault.sol";
+import "../multichain/IMultichainTransferRouter.sol";
 
 import "./IDepositHandler.sol";
 
@@ -22,6 +23,7 @@ contract DepositHandler is IDepositHandler, BaseHandler {
 
     DepositVault public immutable depositVault;
     MultichainVault public immutable multichainVault;
+    IMultichainTransferRouter public immutable multichainTransferRouter;
 
     constructor(
         RoleStore _roleStore,
@@ -29,19 +31,22 @@ contract DepositHandler is IDepositHandler, BaseHandler {
         EventEmitter _eventEmitter,
         Oracle _oracle,
         MultichainVault _multichainVault,
+        IMultichainTransferRouter _multichainTransferRouter,
         DepositVault _depositVault
     ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {
         multichainVault = _multichainVault;
+        multichainTransferRouter = _multichainTransferRouter;
         depositVault = _depositVault;
     }
 
     // @dev creates a deposit in the deposit store
     // @param account the depositing account
-    // @param params DepositUtils.CreateDepositParams
+    // @param srcChainId the source chain id
+    // @param params IDepositUtils.CreateDepositParams
     function createDeposit(
         address account,
         uint256 srcChainId,
-        DepositUtils.CreateDepositParams calldata params
+        IDepositUtils.CreateDepositParams calldata params
     ) external override globalNonReentrant onlyController returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createDepositFeatureDisabledKey(address(this)));
         validateDataListLength(params.dataList.length);
@@ -155,6 +160,7 @@ contract DepositHandler is IDepositHandler, BaseHandler {
             dataStore,
             eventEmitter,
             multichainVault,
+            multichainTransferRouter,
             depositVault,
             oracle,
             key,

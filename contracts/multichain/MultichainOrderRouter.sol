@@ -8,30 +8,23 @@ import "./MultichainOrderRouterUtils.sol";
 contract MultichainOrderRouter is MultichainRouter {
     IReferralStorage public immutable referralStorage;
 
-    // @dev must be placed before withRelay modifier because
-    // user's multichain balance must be topped-up before _handleRelayFee transfers the feeAmount
-    modifier handleFeePayment(
-        RelayParams calldata relayParams,
+    // @dev same logic as withRelay, but the additional orderKey param
+    // and uses _handleRelayBeforeActionForOrders instead of _handleRelayBeforeAction
+    // to allow paying the relayFee from order/position collateral
+    modifier withRelayForOrders(
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
-        bytes32 orderKey
+        bytes32 orderKey,
+        bool isSubaccount
     ) {
-        // top-up user's multichain balance from order/position collateral if user's multichain balance is insufficient to pay fees
-        MultichainOrderRouterUtils.handleFeePayment(
-            MultichainOrderRouterUtils.HandleFeePaymentContracts({
-                dataStore: dataStore,
-                eventEmitter: eventEmitter,
-                multichainVault: multichainVault,
-                oracle: oracle,
-                referralStorage: referralStorage,
-                orderVault: orderVault
-            }),
-            relayParams,
-            account,
-            srcChainId,
-            orderKey
-        );
+        WithRelayCache memory cache;
+        cache.startingGas = gasleft();
+        _validateGaslessFeature();
+        cache.contracts = _getContracts();
+        _handleRelayBeforeActionForOrders(cache.contracts, relayParams, account, srcChainId, orderKey, isSubaccount);
         _;
+        _handleRelayAfterAction(cache.contracts, cache.startingGas, account, srcChainId);
     }
 
     constructor(
@@ -42,7 +35,7 @@ contract MultichainOrderRouter is MultichainRouter {
     }
 
     function batch(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         BatchParams calldata params
@@ -62,7 +55,7 @@ contract MultichainOrderRouter is MultichainRouter {
     }
 
     function createOrder(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         IBaseOrderUtils.CreateOrderParams calldata params
@@ -74,15 +67,14 @@ contract MultichainOrderRouter is MultichainRouter {
     }
 
     function updateOrder(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         UpdateOrderParams calldata params
     )
         external
         nonReentrant
-        handleFeePayment(relayParams, account, srcChainId, params.key)
-        withRelay(relayParams, account, srcChainId, false)
+        withRelayForOrders(relayParams, account, srcChainId, params.key, false)
     {
         bytes32 structHash = RelayUtils.getUpdateOrderStructHash(relayParams, params);
         _validateCall(relayParams, account, structHash, srcChainId);
@@ -91,19 +83,50 @@ contract MultichainOrderRouter is MultichainRouter {
     }
 
     function cancelOrder(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         bytes32 key
     )
         external
         nonReentrant
-        handleFeePayment(relayParams, account, srcChainId, key)
-        withRelay(relayParams, account, srcChainId, false)
+        withRelayForOrders(relayParams, account, srcChainId, key, false)
     {
         bytes32 structHash = RelayUtils.getCancelOrderStructHash(relayParams, key);
         _validateCall(relayParams, account, structHash, srcChainId);
 
         _cancelOrder(account, key);
+    }
+
+    // @dev same logic as _handleRelayBeforeAction, but with the additional orderKey param
+    // to allow paying the relayFee from order/position collateral
+    function _handleRelayBeforeActionForOrders(
+        Contracts memory contracts,
+        IRelayUtils.RelayParams calldata relayParams,
+        address account,
+        uint256 srcChainId,
+        bytes32 orderKey,
+        bool isSubaccount
+    ) private withOraclePricesForAtomicAction(relayParams.oracleParams) {
+        _handleTokenPermits(relayParams.tokenPermits);
+        _handleExternalCalls(account, srcChainId, relayParams.externalCalls, isSubaccount);
+
+        // top-up user's multichain balance from order/position collateral if user's multichain balance is insufficient to pay fees
+        MultichainOrderRouterUtils.transferFeeFromOrderOrPosition(
+            MultichainOrderRouterUtils.TransferFeeFromOrderOrPositionContracts({
+                dataStore: dataStore,
+                eventEmitter: eventEmitter,
+                multichainVault: multichainVault,
+                oracle: oracle,
+                referralStorage: referralStorage,
+                orderVault: orderVault
+            }),
+            relayParams,
+            account,
+            srcChainId,
+            orderKey
+        );
+
+        _handleRelayFee(contracts, relayParams, account, srcChainId, isSubaccount);
     }
 }

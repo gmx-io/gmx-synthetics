@@ -51,6 +51,7 @@ library Order {
     // @param addresses address values
     // @param numbers number values
     // @param flags boolean values
+    // @param _dataList a list of bytes32 values that can be used for additional data
     struct Props {
         Addresses addresses;
         Numbers numbers;
@@ -103,6 +104,7 @@ library Order {
     // @param minOutputAmount the minimum output amount for decrease orders and swaps
     // note that for decrease orders, multiple tokens could be received, for this reason, the
     // minOutputAmount value is treated as a USD value for validation in decrease orders
+    // @param srcChainId the source chain id
     struct Numbers {
         OrderType orderType;
         DecreasePositionSwapType decreasePositionSwapType;

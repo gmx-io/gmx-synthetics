@@ -92,7 +92,7 @@ export const MIN_MARKET_TOKENS_FOR_FIRST_DEPOSIT = hashString("MIN_MARKET_TOKENS
 
 export const MIN_ORACLE_BLOCK_CONFIRMATIONS = hashString("MIN_ORACLE_BLOCK_CONFIRMATIONS");
 export const MAX_ORACLE_PRICE_AGE = hashString("MAX_ORACLE_PRICE_AGE");
-export const CONFIG_MAX_PRICE_AGE = hashString("CONFIG_MAX_PRICE_AGE");
+export const MAX_ATOMIC_ORACLE_PRICE_AGE = hashString("MAX_ATOMIC_ORACLE_PRICE_AGE");
 export const MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR = hashString("MAX_ORACLE_REF_PRICE_DEVIATION_FACTOR");
 export const MIN_ORACLE_SIGNERS = hashString("MIN_ORACLE_SIGNERS");
 export const MAX_ORACLE_TIMESTAMP_RANGE = hashString("MAX_ORACLE_TIMESTAMP_RANGE");
@@ -276,7 +276,6 @@ export const WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT = hashString("WITHDRAWABLE_BUYBAC
 export const MULTICHAIN_BALANCE = hashString("MULTICHAIN_BALANCE");
 export const IS_MULTICHAIN_PROVIDER_ENABLED = hashString("IS_MULTICHAIN_PROVIDER_ENABLED");
 export const IS_MULTICHAIN_ENDPOINT_ENABLED = hashString("IS_MULTICHAIN_ENDPOINT_ENABLED");
-export const RELAY_MAX_PRICE_AGE = hashString("RELAY_MAX_PRICE_AGE");
 export const IS_SRC_CHAIN_ID_ENABLED = hashString("IS_SRC_CHAIN_ID_ENABLED");
 
 export const VALID_FROM_TIME = hashString("VALID_FROM_TIME");
@@ -566,6 +565,10 @@ export function withdrawalFeeFactorKey(market: string, balanceWasImproved: boole
 
 export function atomicSwapFeeFactorKey(market: string) {
   return hashData(["bytes32", "address"], [ATOMIC_SWAP_FEE_FACTOR, market]);
+}
+
+export function atomicWithdrawalFeeFactorKey(market: string) {
+  return hashData(["bytes32", "address"], [ATOMIC_WITHDRAWAL_FEE_FACTOR, market]);
 }
 
 export function swapImpactFactorKey(market: string, isPositive: boolean) {

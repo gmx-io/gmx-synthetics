@@ -29,7 +29,7 @@ abstract contract MultichainRouter is BaseGelatoRelayRouter {
 
     function _processTransferRequests(
         address account,
-        TransferRequests calldata transferRequests,
+        IRelayUtils.TransferRequests calldata transferRequests,
         uint256 srcChainId
     ) internal {
         if (
@@ -48,6 +48,10 @@ abstract contract MultichainRouter is BaseGelatoRelayRouter {
                 srcChainId
             );
         }
+    }
+
+    function _isMultichain() internal pure override returns (bool) {
+        return true;
     }
 
     function _sendTokens(
@@ -72,17 +76,12 @@ abstract contract MultichainRouter is BaseGelatoRelayRouter {
 
     function _transferResidualFee(
         address wnt,
-        address residualFeeReceiver,
-        uint256 residualFee,
         address account,
+        uint256 residualFee,
         uint256 srcChainId
     ) internal override {
-        if (residualFeeReceiver == account || residualFeeReceiver == address(multichainVault)) {
-            TokenUtils.transfer(dataStore, wnt, address(multichainVault), residualFee);
-            MultichainUtils.recordTransferIn(dataStore, eventEmitter, multichainVault, wnt, account, srcChainId);
-        } else {
-            TokenUtils.transfer(dataStore, wnt, residualFeeReceiver, residualFee);
-        }
+        TokenUtils.transfer(dataStore, wnt, address(multichainVault), residualFee);
+        MultichainUtils.recordTransferIn(dataStore, eventEmitter, multichainVault, wnt, account, srcChainId);
     }
 
     function _recordRefundedAmounts(

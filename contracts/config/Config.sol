@@ -432,6 +432,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
         allowedBaseKeys[Keys.MIN_ORACLE_BLOCK_CONFIRMATIONS] = true;
         allowedBaseKeys[Keys.MAX_ORACLE_PRICE_AGE] = true;
+        allowedBaseKeys[Keys.MAX_ATOMIC_ORACLE_PRICE_AGE] = true;
         allowedBaseKeys[Keys.MAX_ORACLE_TIMESTAMP_RANGE] = true;
         allowedBaseKeys[Keys.ORACLE_TIMESTAMP_ADJUSTMENT] = true;
         allowedBaseKeys[Keys.ORACLE_PROVIDER_MIN_CHANGE_DELAY] = true;
@@ -548,9 +549,9 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.MULTICHAIN_BALANCE] = true;
         allowedBaseKeys[Keys.IS_MULTICHAIN_PROVIDER_ENABLED] = true;
         allowedBaseKeys[Keys.IS_MULTICHAIN_ENDPOINT_ENABLED] = true;
-        allowedBaseKeys[Keys.RELAY_MAX_PRICE_AGE] = true;
         allowedBaseKeys[Keys.POSITION_LAST_SRC_CHAIN_ID] = true;
         allowedBaseKeys[Keys.IS_SRC_CHAIN_ID_ENABLED] = true;
+        allowedBaseKeys[Keys.GMX_DATA_ACTION] = true;
 
         allowedBaseKeys[Keys.MAX_DATA_LENGTH] = true;
 

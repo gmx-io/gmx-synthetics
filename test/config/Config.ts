@@ -216,7 +216,12 @@ describe("Config", () => {
       },
       {
         key: keys.MAX_ORACLE_PRICE_AGE,
-        initial: 3600,
+        initial: 300,
+        type: "Uint",
+      },
+      {
+        key: keys.MAX_ATOMIC_ORACLE_PRICE_AGE,
+        initial: 30,
         type: "Uint",
       },
       {

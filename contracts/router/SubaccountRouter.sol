@@ -99,8 +99,6 @@ contract SubaccountRouter is BaseRouter {
     ) external payable nonReentrant {
         address account = msg.sender;
 
-        SubaccountUtils.validateSubaccount(dataStore, account, subaccount);
-
         SubaccountUtils.setSubaccountIntegrationId(
             dataStore,
             eventEmitter,
@@ -143,7 +141,7 @@ contract SubaccountRouter is BaseRouter {
 
         bytes32 key = orderHandler.createOrder(
             account,
-            0, // srcChainId
+            0, // srcChainId is the current block.chainId
             params,
             params.addresses.callbackContract != address(0)
         );

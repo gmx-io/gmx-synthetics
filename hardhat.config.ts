@@ -315,6 +315,14 @@ task("update-market-config", "Update market config")
   .addOptionalParam("market", "Market address", undefined, types.string)
   .setAction(updateMarketConfig);
 
+task("deploy", "Deploy contracts", async (taskArgs, env, runSuper) => {
+  env.deployTags = taskArgs.tags ?? "";
+  if (!process.env.SKIP_AUTO_HANDLER_REDEPLOYMENT && env.network.name != "hardhat") {
+    throw new Error("SKIP_AUTO_HANDLER_REDEPLOYMENT flag is mandatory");
+  }
+  await runSuper();
+});
+
 task("dependencies", "Print dependencies for a contract")
   .addPositionalParam("file", "Contract", undefined, types.string)
   .setAction(async ({ file }: { file: string }, { run }) => {

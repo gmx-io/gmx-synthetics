@@ -420,6 +420,11 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
     },
+    DOLO: {
+      negativePositionImpactFactor: exponentToFloat("1e-7"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
     wstETH: {
       negativeSwapImpactFactor: exponentToFloat("1e-8"),
       expectedSwapImpactRatio: 20_000,

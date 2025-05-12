@@ -712,6 +712,15 @@ const config: {
       oracleTimestampAdjustment: 1,
       // Chainlink on-chain feed not available
     },
+    DOLO: {
+      synthetic: true,
+      decimals: 18, // https://berascan.com/token/0x0F81001eF0A83ecCE5ccebf63EB302c70a39a654#readContract
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x000355d06b40dff314c9a283f9fd647690f5ebdce666453af72e3fbf08fdce5e",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      // Chainlink on-chain feed not available
+    },
     AAVE: {
       address: "0xba5ddd1f9d7f570dc94a51479a000e3bce967196",
       decimals: 18,
@@ -1070,7 +1079,7 @@ const config: {
         decimals: 8,
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
-      buybackMaxPriceImpactFactor: percentageToFloat("0.30%"),
+      buybackMaxPriceImpactFactor: percentageToFloat("0.4%"),
     },
     LINK: {
       address: "0x5947BB275c521040051D82396192181b413227A3",
@@ -1086,6 +1095,11 @@ const config: {
       transferGasLimit: 200 * 1000,
       dataStreamFeedId: "0x000359843a543ee2fe414dc14c7e7920ef10f4372990b79d6361cdc0dd1ba782",
       dataStreamFeedDecimals: 18,
+      priceFeed: {
+        address: "0xd30e2101a97dcbAeBCBC04F14C3f624E67A35165", // ETH / USD
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
     },
     BTC: {
       address: "0xF79cE1Cf38A09D572b021B4C5548b75A14082F12",
@@ -1097,7 +1111,6 @@ const config: {
         address: "0x56a43EB56Da12C0dc1D972ACb089c06a5dEF8e69",
         decimals: 8,
         heartbeatDuration: (24 + 1) * 60 * 60,
-        stablePrice: decimalToFloat(44000),
       },
     },
     USDC: {

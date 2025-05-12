@@ -14,14 +14,33 @@ contract MultichainClaimsRouter is MultichainRouter {
         BaseConstructorParams memory params
     ) MultichainRouter(params) BaseRouter(params.router, params.roleStore, params.dataStore, params.eventEmitter) {}
 
+    // @dev same logic as withRelay modifier, but different execution order
+    // to allow paying the relayFee from newly claimed tokens
+    // i.e. _handleRelayBeforeAction is "delayed" and executed at the same time as _handleRelayAfterAction
+    modifier withRelayForClaims(
+        IRelayUtils.RelayParams calldata relayParams,
+        address account,
+        uint256 srcChainId,
+        bool isSubaccount
+    ) {
+        WithRelayCache memory cache;
+        cache.startingGas = gasleft();
+        _validateGaslessFeature();
+        cache.contracts = _getContracts();
+        _;
+        // beforeAction "delayed" after tokens have been claimed
+        _handleRelayBeforeAction(cache.contracts, relayParams, account, srcChainId, isSubaccount);
+        _handleRelayAfterAction(cache.contracts, cache.startingGas, account, srcChainId);
+    }
+
     function claimFundingFees(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         address[] memory markets,
         address[] memory tokens,
         address receiver
-    ) external nonReentrant withRelay(relayParams, account, srcChainId, false) returns (uint256[] memory) {
+    ) external nonReentrant withRelayForClaims(relayParams, account, srcChainId, false) returns (uint256[] memory) {
         bytes32 structHash = RelayUtils.getClaimFundingFeesStructHash(relayParams, markets, tokens, receiver);
         _validateCall(relayParams, account, structHash, srcChainId);
         return _claimFundingFees(account, srcChainId, markets, tokens, receiver);
@@ -49,14 +68,14 @@ contract MultichainClaimsRouter is MultichainRouter {
     }
 
     function claimCollateral(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         address[] memory markets,
         address[] memory tokens,
         uint256[] memory timeKeys,
         address receiver
-    ) external nonReentrant withRelay(relayParams, account, srcChainId, false) returns (uint256[] memory) {
+    ) external nonReentrant withRelayForClaims(relayParams, account, srcChainId, false) returns (uint256[] memory) {
         bytes32 structHash = RelayUtils.getClaimCollateralStructHash(relayParams, markets, tokens, timeKeys, receiver);
         _validateCall(relayParams, account, structHash, srcChainId);
         return _claimCollateral(account, srcChainId, markets, tokens, timeKeys, receiver);
@@ -86,13 +105,13 @@ contract MultichainClaimsRouter is MultichainRouter {
     }
 
     function claimAffiliateRewards(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         address[] memory markets,
         address[] memory tokens,
         address receiver
-    ) external nonReentrant withRelay(relayParams, account, srcChainId, false) returns (uint256[] memory) {
+    ) external nonReentrant withRelayForClaims(relayParams, account, srcChainId, false) returns (uint256[] memory) {
         bytes32 structHash = RelayUtils.getClaimAffiliateRewardsStructHash(relayParams, markets, tokens, receiver);
         _validateCall(relayParams, account, structHash, srcChainId);
         return _claimAffiliateRewards(account, srcChainId, markets, tokens, receiver);

@@ -105,7 +105,6 @@ export const EXCLUDED_CONFIG_KEYS = {
   BUYBACK_AVAILABLE_FEE_AMOUNT: true,
   WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT: true,
   HOLDING_ADDRESS: true,
-  CONFIG_MAX_PRICE_AGE: true,
 };
 
 export async function appendUintConfigIfDifferent(
@@ -205,13 +204,13 @@ async function appendConfigIfDifferent(
     }
 
     console.info(
-      "appending config %s %s (%s) to %s, prev: %s %s",
+      "appending config %s %s to %s, prev: %s %s, key: %s",
       type,
       label,
-      key,
       value.toString(),
       currentValue.toString(),
-      changeStr
+      changeStr,
+      key
     );
     list.push(config.interface.encodeFunctionData(setMethod, [baseKey, keyData, value]));
   } else {

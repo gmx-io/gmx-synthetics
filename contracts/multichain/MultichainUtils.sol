@@ -99,6 +99,7 @@ library MultichainUtils {
      * @param account the account for which the multichain balance is decreased
      * @param receiver the account to transfer to
      * @param amount the amount of tokens to transfer
+     * @param srcChainId the source chain id
      */
     function transferOut(
         DataStore dataStore,
@@ -119,8 +120,8 @@ library MultichainUtils {
             revert Errors.InsufficientMultichainBalance(account, token, balance, amount);
         }
 
-        multichainVault.transferOut(token, receiver, amount);
         dataStore.decrementUint(Keys.multichainBalanceKey(account, token), amount);
+        multichainVault.transferOut(token, receiver, amount);
         MultichainEventUtils.emitMultichainTransferOut(eventEmitter, token, account, receiver, amount, srcChainId);
     }
 

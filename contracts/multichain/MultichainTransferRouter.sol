@@ -2,18 +2,28 @@
 
 pragma solidity ^0.8.0;
 
-import "./MultichainRouter.sol";
-import "./MultichainUtils.sol";
-import "./IMultichainProvider.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-contract MultichainTransferRouter is MultichainRouter {
-    IMultichainProvider multichainProvider;
+import "./MultichainRouter.sol";
+import "./IMultichainTransferRouter.sol";
+
+contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, MultichainRouter {
+    IMultichainProvider public multichainProvider;
 
     constructor(
-        BaseConstructorParams memory params,
-        IMultichainProvider _multichainProvider
-    ) MultichainRouter(params) BaseRouter(params.router, params.roleStore, params.dataStore, params.eventEmitter) {
-        multichainProvider = _multichainProvider;
+        BaseConstructorParams memory params
+    )
+        MultichainRouter(params)
+        BaseRouter(params.router, params.roleStore, params.dataStore, params.eventEmitter)
+    {
+        // leave empty, use initialize instead
+    }
+
+    function initialize(address _multichainProvider) external initializer {
+        if (_multichainProvider == address(0)) {
+            revert Errors.InvalidMultichainProvider(address(0));
+        }
+        multichainProvider = IMultichainProvider(_multichainProvider);
     }
 
     /**
@@ -21,14 +31,26 @@ contract MultichainTransferRouter is MultichainRouter {
      * this would be used to move user's funds from their Arbitrum account into their multichain balance
      */
     function bridgeIn(address account, address token, uint256 srcChainId) external payable nonReentrant {
-        MultichainUtils.recordTransferIn(dataStore, eventEmitter, multichainVault, token, account, srcChainId);
+        uint256 amount = MultichainUtils.recordTransferIn(dataStore, eventEmitter, multichainVault, token, account, srcChainId);
+        MultichainEventUtils.emitMultichainBridgeIn(
+            eventEmitter,
+            address(0),
+            token,
+            account,
+            amount,
+            0 // srcChainId is the current block.chainId
+        );
     }
 
+    /*
+     * Bridge out funds recorded under the account
+     * Can be used for same-chain or cross-chain withdrawals
+     */
     function bridgeOut(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
-        BridgeOutParams calldata params
+        IRelayUtils.BridgeOutParams calldata params
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) {
         bytes32 structHash = RelayUtils.getBridgeOutStructHash(relayParams, params);
         _validateCall(relayParams, account, structHash, srcChainId);
@@ -36,10 +58,37 @@ contract MultichainTransferRouter is MultichainRouter {
         _bridgeOut(account, srcChainId, params);
     }
 
+    /*
+     * Bridge out funds recorded under the account
+     * Used to automatically bridge out GM/GLV token after executeDeposit/executeGlvDeposit
+     */
+    function bridgeOutFromController(
+        IRelayUtils.RelayParams calldata relayParams,
+        address account,
+        uint256 srcChainId,
+        IRelayUtils.BridgeOutParams calldata params
+    ) external nonReentrant onlyController withRelay(relayParams, account, srcChainId, false) {
+        _validateCallWithoutSignature(relayParams, srcChainId);
+
+        _bridgeOut(account, srcChainId, params);
+    }
+
+    /*
+     * Bridge out funds recorded under the account OR the smart wallet
+     * Can be used for same-chain withdrawals only
+     * This would be used by the smart wallets to withdraw funds from the multichain vault
+     */
+    function transferOut(
+        IRelayUtils.BridgeOutParams calldata params
+    ) external nonReentrant {
+        address account = msg.sender;
+        _bridgeOut(account, block.chainid, params);
+    }
+
     function _bridgeOut(
         address account,
         uint256 srcChainId,
-        BridgeOutParams calldata params
+        IRelayUtils.BridgeOutParams calldata params
     ) internal {
         if (srcChainId == block.chainid) {
             // same-chain withdrawal: funds are sent directly to the user's wallet
@@ -53,12 +102,24 @@ contract MultichainTransferRouter is MultichainRouter {
                 params.amount,
                 srcChainId
             );
+
             TokenUtils.transfer(dataStore, params.token, account, params.amount);
+
+            MultichainEventUtils.emitMultichainBridgeOut(
+                eventEmitter,
+                address(0), // provider
+                params.token,
+                account,
+                params.amount, // amount
+                0 // srcChainId is the current block.chainId
+            );
         } else {
             // cross-chain withdrawal: using the multichain provider, funds are bridged to the src chain
             MultichainUtils.validateMultichainProvider(dataStore, params.provider);
-            // moves user's funds (amount + bridging fee) from their multichain balance into multichainProvider
-            multichainProvider.bridgeOut(
+
+            // transfer funds (amount + bridging fee) from user's multichain balance to multichainProvider
+            // and execute the bridge out to srcChain
+            uint256 amountOut = multichainProvider.bridgeOut(
                 IMultichainProvider.BridgeOutParams({
                     provider: params.provider,
                     account: account,
@@ -68,15 +129,15 @@ contract MultichainTransferRouter is MultichainRouter {
                     data: params.data
                 })
             );
-        }
 
-        MultichainEventUtils.emitMultichainBridgeOut(
-            eventEmitter,
-            params.provider,
-            params.token,
-            account,
-            params.amount,
-            srcChainId
-        );
+            MultichainEventUtils.emitMultichainBridgeOut(
+                eventEmitter,
+                params.provider,
+                params.token,
+                account,
+                amountOut, // amount
+                srcChainId
+            );
+        }
     }
 }

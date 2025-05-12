@@ -7,11 +7,17 @@ import "../exchange/IWithdrawalHandler.sol";
 import "../exchange/IShiftHandler.sol";
 import "../exchange/IOrderHandler.sol";
 import "../external/IExternalHandler.sol";
-import "../shift/ShiftUtils.sol";
-import "../shift/ShiftStoreUtils.sol";
-import "../referral/ReferralUtils.sol";
 
+import "../deposit/DepositStoreUtils.sol";
+import "../withdrawal/WithdrawalStoreUtils.sol";
+import "../shift/IShiftUtils.sol";
+import "../shift/ShiftStoreUtils.sol";
 import "../order/OrderStoreUtils.sol";
+
+import "../callback/CallbackUtils.sol";
+import "../fee/FeeUtils.sol";
+import "../nonce/NonceUtils.sol";
+import "../referral/ReferralUtils.sol";
 
 import "./BaseRouter.sol";
 import "./IExchangeRouter.sol";
@@ -118,17 +124,17 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
      * long and short tokens from the caller's account to the deposit store, and then calling the
      * `createDeposit()` function on the deposit handler contract.
      *
-     * @param params The deposit parameters, as specified in the `DepositUtils.CreateDepositParams` struct
+     * @param params The deposit parameters, as specified in the `IDepositUtils.CreateDepositParams` struct
      * @return The unique ID of the newly created deposit
      */
     function createDeposit(
-        DepositUtils.CreateDepositParams calldata params
+        IDepositUtils.CreateDepositParams calldata params
     ) external override payable nonReentrant returns (bytes32) {
         address account = msg.sender;
 
         return depositHandler.createDeposit(
             account,
-            0, // srcChainId
+            0, // srcChainId is the current block.chainId
             params
         );
     }
@@ -161,13 +167,13 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
     }
 
     function createWithdrawal(
-        WithdrawalUtils.CreateWithdrawalParams calldata params
+        IWithdrawalUtils.CreateWithdrawalParams calldata params
     ) external override payable nonReentrant returns (bytes32) {
         address account = msg.sender;
 
         return withdrawalHandler.createWithdrawal(
             account,
-            0, // srcChainId
+            0, // srcChainId is the current block.chainId
             params
         );
     }
@@ -182,7 +188,7 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
     }
 
     function executeAtomicWithdrawal(
-        WithdrawalUtils.CreateWithdrawalParams calldata params,
+        IWithdrawalUtils.CreateWithdrawalParams calldata params,
         OracleUtils.SetPricesParams calldata oracleParams
     ) external override payable nonReentrant {
         address account = msg.sender;
@@ -211,13 +217,13 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
     }
 
     function createShift(
-        ShiftUtils.CreateShiftParams calldata params
+        IShiftUtils.CreateShiftParams calldata params
     ) external override payable nonReentrant returns (bytes32) {
         address account = msg.sender;
 
         return shiftHandler.createShift(
             account,
-            0, // srcChainId
+            0, // srcChainId is the current block.chainId
             params
         );
     }
@@ -258,7 +264,7 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
 
         return orderHandler.createOrder(
             account,
-            0, // srcChainId
+            0, // srcChainId is the current block.chainId
             params,
             false
         );

@@ -182,8 +182,8 @@ library Keys {
     bytes32 public constant MIN_ORACLE_BLOCK_CONFIRMATIONS = keccak256(abi.encode("MIN_ORACLE_BLOCK_CONFIRMATIONS"));
     // @dev key for the maximum usable oracle price age in seconds
     bytes32 public constant MAX_ORACLE_PRICE_AGE = keccak256(abi.encode("MAX_ORACLE_PRICE_AGE"));
-    // @dev key for the maximum oracle price for sensible operations age in seconds
-    bytes32 public constant CONFIG_MAX_PRICE_AGE = keccak256(abi.encode("CONFIG_MAX_PRICE_AGE"));
+    // @dev key for the maximum usable atomic oracle price age in seconds
+    bytes32 public constant MAX_ATOMIC_ORACLE_PRICE_AGE = keccak256(abi.encode("MAX_ATOMIC_ORACLE_PRICE_AGE"));
     // @dev key for the maximum oracle timestamp range
     bytes32 public constant MAX_ORACLE_TIMESTAMP_RANGE = keccak256(abi.encode("MAX_ORACLE_TIMESTAMP_RANGE"));
     // @dev key for the maximum oracle price deviation factor from the ref price
@@ -502,12 +502,12 @@ library Keys {
     bytes32 public constant IS_MULTICHAIN_PROVIDER_ENABLED = keccak256(abi.encode("IS_MULTICHAIN_PROVIDER_ENABLED"));
     // @dev key for the flag if a multichain endpoint is enabled
     bytes32 public constant IS_MULTICHAIN_ENDPOINT_ENABLED = keccak256(abi.encode("IS_MULTICHAIN_ENDPOINT_ENABLED"));
-    // @dev key for the relay max price age
-    bytes32 public constant RELAY_MAX_PRICE_AGE = keccak256(abi.encode("RELAY_MAX_PRICE_AGE"));
     // @dev key for the last src chain id from which the user last managed his position
     bytes32 public constant POSITION_LAST_SRC_CHAIN_ID = keccak256(abi.encode("POSITION_LAST_SRC_CHAIN_ID"));
     // @dev key for the flag if a src chain is enabled
     bytes32 public constant IS_SRC_CHAIN_ID_ENABLED = keccak256(abi.encode("IS_SRC_CHAIN_ID_ENABLED"));
+    // @dev key for the action data
+    bytes32 public constant GMX_DATA_ACTION = keccak256(abi.encode("GMX_DATA_ACTION"));
 
     // @dev key for the maximum length for data list array of bytes32
     bytes32 public constant MAX_DATA_LENGTH = keccak256(abi.encode("MAX_DATA_LENGTH"));

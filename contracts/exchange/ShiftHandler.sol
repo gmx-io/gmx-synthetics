@@ -29,7 +29,7 @@ contract ShiftHandler is IShiftHandler, BaseHandler {
     function createShift(
         address account,
         uint256 srcChainId,
-        ShiftUtils.CreateShiftParams calldata params
+        IShiftUtils.CreateShiftParams calldata params
     ) external override globalNonReentrant onlyController returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createShiftFeatureDisabledKey(address(this)));
         validateDataListLength(params.dataList.length);

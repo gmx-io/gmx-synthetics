@@ -10,6 +10,7 @@ import "../GlvVault.sol";
 import "../GlvUtils.sol";
 import "./GlvWithdrawalStoreUtils.sol";
 import "./GlvWithdrawalEventUtils.sol";
+import "./IGlvWithdrawalUtils.sol";
 
 library GlvWithdrawalUtils {
     using GlvWithdrawal for GlvWithdrawal.Props;
@@ -17,26 +18,6 @@ library GlvWithdrawalUtils {
     using SafeCast for uint256;
     using EventUtils for EventUtils.UintItems;
     using EventUtils for EventUtils.AddressItems;
-
-    struct CreateGlvWithdrawalParams {
-        CreateGlvWithdrawalParamsAddresses addresses;
-        uint256 minLongTokenAmount;
-        uint256 minShortTokenAmount;
-        bool shouldUnwrapNativeToken;
-        uint256 executionFee;
-        uint256 callbackGasLimit;
-        bytes32[] dataList;
-    }
-
-    struct CreateGlvWithdrawalParamsAddresses {
-        address receiver;
-        address callbackContract;
-        address uiFeeReceiver;
-        address market;
-        address glv;
-        address[] longTokenSwapPath;
-        address[] shortTokenSwapPath;
-    }
 
     struct ExecuteGlvWithdrawalParams {
         DataStore dataStore;
@@ -74,7 +55,7 @@ library GlvWithdrawalUtils {
         GlvVault glvVault,
         address account,
         uint256 srcChainId,
-        CreateGlvWithdrawalParams memory params
+        IGlvWithdrawalUtils.CreateGlvWithdrawalParams memory params
     ) external returns (bytes32) {
         AccountUtils.validateAccount(account);
         GlvUtils.validateGlv(dataStore, params.addresses.glv);

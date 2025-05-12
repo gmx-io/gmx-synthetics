@@ -14,6 +14,7 @@ interface IBaseOrderUtils {
     // @param decreasePositionSwapType for order.decreasePositionSwapType
     // @param isLong for order.isLong
     // @param shouldUnwrapNativeToken for order.shouldUnwrapNativeToken
+    // @param dataList a list of bytes32 values that can be used for additional data
     // @note all params except should be part of the corresponding struct hash in all relay contracts
     struct CreateOrderParams {
         CreateOrderParamsAddresses addresses;

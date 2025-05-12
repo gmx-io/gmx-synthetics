@@ -66,7 +66,7 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
         afterExecution: ({ logs }) => {
           const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
           expect(positionIncreaseEvent.executionPrice).eq("5010020040080160"); // ~5010
-          expect(positionIncreaseEvent.priceImpactUsd).eq("-399999999999999992588018713340000"); // -400
+          expect(positionIncreaseEvent.pendingPriceImpactUsd).eq("-399999999999999992588018713340000"); // -400
         },
       },
     });
@@ -96,7 +96,7 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
         afterExecution: ({ logs }) => {
           const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
           expect(positionIncreaseEvent.executionPrice).eq("5030181086519114"); // ~5030
-          expect(positionIncreaseEvent.priceImpactUsd).eq("-1199999999999999977764056140040000"); // -1200
+          expect(positionIncreaseEvent.pendingPriceImpactUsd).eq("-1199999999999999977764056140040000"); // -1200
         },
       },
     });
@@ -153,7 +153,7 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
         afterExecution: ({ logs }) => {
           const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
           expect(positionIncreaseEvent.executionPrice).eq("5019828321871391"); // 5019.82
-          expect(positionIncreaseEvent.priceImpactUsd).eq("39500000000000000326409486835000"); // 39.5
+          expect(positionIncreaseEvent.pendingPriceImpactUsd).eq("39500000000000000326409486835000"); // 39.5
         },
       },
     });
@@ -187,7 +187,7 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
           expect(positionDecreaseEvent.executionPrice).eq("5039500000000000"); // 5039.5
           expect(positionDecreaseEvent.basePnlUsd).eq(0);
           expect(positionDecreaseEvent.priceImpactUsd).eq("-79000000000000000652818973670000"); // -79
-          expect(positionDecreaseEvent.proportionalImpactPendingUsd).eq("39500000000000000000000000000000"); // 39.5
+          expect(positionDecreaseEvent.proportionalPendingImpactUsd).eq("39500000000000000000000000000000"); // 39.5
         },
       },
     });
@@ -220,7 +220,7 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
         afterExecution: ({ logs }) => {
           const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
           expect(positionIncreaseEvent.executionPrice).eq("5007009813739234"); // ~5007
-          expect(positionIncreaseEvent.priceImpactUsd).eq("699999999999999987029032748360000"); // 700
+          expect(positionIncreaseEvent.pendingPriceImpactUsd).eq("699999999999999987029032748360000"); // 700
         },
       },
     });
@@ -253,7 +253,7 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
         afterExecution: ({ logs }) => {
           const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
           expect(positionIncreaseEvent.executionPrice).eq("4985044865403788"); // ~4985.04
-          expect(positionIncreaseEvent.priceImpactUsd).eq("-299999999999999994441014035010000"); // -300
+          expect(positionIncreaseEvent.pendingPriceImpactUsd).eq("-299999999999999994441014035010000"); // -300
         },
       },
     });
@@ -293,7 +293,7 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
         afterExecution: ({ logs }) => {
           const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
           expect(positionIncreaseEvent.executionPrice).eq("4995004995004995"); // ~4995
-          expect(positionIncreaseEvent.priceImpactUsd).eq("199999999999999996294009356670000"); // 200
+          expect(positionIncreaseEvent.pendingPriceImpactUsd).eq("199999999999999996294009356670000"); // 200
         },
       },
     });
@@ -325,7 +325,7 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
         afterExecution: ({ logs }) => {
           const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
           expect(positionIncreaseEvent.executionPrice).eq("5005005005005005"); // ~5005
-          expect(positionIncreaseEvent.priceImpactUsd).eq("-99999999999999998147004678330000"); // -100 usd
+          expect(positionIncreaseEvent.pendingPriceImpactUsd).eq("-99999999999999998147004678330000"); // -100 usd
         },
       },
     });
@@ -359,7 +359,7 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
           const positionDecreaseEvent = getEventData(logs, "PositionDecrease");
           expect(positionDecreaseEvent.executionPrice).eq("5002499999999999"); // ~5002
           expect(positionDecreaseEvent.priceImpactUsd).eq("49999999999999999073502339165000"); // ~50 usd
-          expect(positionDecreaseEvent.proportionalImpactPendingUsd).eq("-60000000000000000000000000000000"); // -60 usd
+          expect(positionDecreaseEvent.proportionalPendingImpactUsd).eq("-60000000000000000000000000000000"); // -60 usd
           // totalImpactUsd = (50 - 60) / 5000 = -10 / 5000 = -0.002
         },
       },
@@ -394,7 +394,7 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
           const positionDecreaseEvent = getEventData(logs, "PositionDecrease");
           expect(positionDecreaseEvent.executionPrice).eq("4995000000000001"); // ~4995
           expect(positionDecreaseEvent.priceImpactUsd).eq("-99999999999999998147004678330000"); // -100
-          expect(positionDecreaseEvent.proportionalImpactPendingUsd).eq("-60000000000000000000000000000000"); // -60 usd
+          expect(positionDecreaseEvent.proportionalPendingImpactUsd).eq("-60000000000000000000000000000000"); // -60 usd
           // totalImpactUsd = (-100 - 60) / 5000 = -160 / 5000 = -0.032
         },
       },
@@ -430,7 +430,7 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
           const positionDecreaseEvent = getEventData(logs, "PositionDecrease");
           expect(positionDecreaseEvent.executionPrice).eq("4997500000000001"); // ~4995
           expect(positionDecreaseEvent.priceImpactUsd).eq("49999999999999999073502339165000"); // 50
-          expect(positionDecreaseEvent.proportionalImpactPendingUsd).eq("66666666666666665000000000000000"); // 66.67 usd
+          expect(positionDecreaseEvent.proportionalPendingImpactUsd).eq("66666666666666665000000000000000"); // 66.67 usd
           // totalImpactUsd = (50 + 66.67) / 5000 = 116.67 / 5000 = -0.023334
         },
       },
@@ -496,7 +496,7 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
         afterExecution: ({ logs }) => {
           const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
           expect(positionIncreaseEvent.executionPrice).eq("5005005005005005"); // ~5005
-          expect(positionIncreaseEvent.priceImpactUsd).eq("199999999999999996294009356670000"); // 200
+          expect(positionIncreaseEvent.pendingPriceImpactUsd).eq("199999999999999996294009356670000"); // 200
         },
       },
     });
@@ -510,7 +510,7 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
         afterExecution: ({ logs }) => {
           const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
           expect(positionIncreaseEvent.executionPrice).eq("5010020040080160"); // ~5010
-          expect(positionIncreaseEvent.priceImpactUsd).eq("-399999999999999992588018713340000"); // -400
+          expect(positionIncreaseEvent.pendingPriceImpactUsd).eq("-399999999999999992588018713340000"); // -400
         },
       },
     });
@@ -522,7 +522,7 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
         afterExecution: ({ logs }) => {
           const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
           expect(positionIncreaseEvent.executionPrice).eq("5000500050005000"); // ~5000.5
-          expect(positionIncreaseEvent.priceImpactUsd).eq(expandDecimals(20, 30)); // 20 usd
+          expect(positionIncreaseEvent.pendingPriceImpactUsd).eq(expandDecimals(20, 30)); // 20 usd
         },
       },
     });
@@ -569,7 +569,7 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
         afterExecution: ({ logs }) => {
           const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
           expect(positionIncreaseEvent.executionPrice).eq("5010020040080160"); // ~5010
-          expect(positionIncreaseEvent.priceImpactAmount).eq("-79999999999999999"); // 0.079999999999999999 ETH, 400 USD
+          expect(positionIncreaseEvent.pendingPriceImpactAmount).eq("-79999999999999999"); // 0.079999999999999999 ETH, 400 USD
         },
       },
     });
@@ -616,7 +616,7 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
         afterExecution: ({ logs }) => {
           const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
           expect(positionIncreaseEvent.executionPrice).eq("5025125628140703"); // ~5025.12562814
-          expect(positionIncreaseEvent.priceImpactAmount).eq("-99999999999999999"); // 0.099999999999999999 ETH, 500 USD
+          expect(positionIncreaseEvent.pendingPriceImpactAmount).eq("-99999999999999999"); // 0.099999999999999999 ETH, 500 USD
         },
       },
     });

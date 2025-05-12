@@ -7,7 +7,7 @@ import "../order/BaseOrderUtils.sol";
 import "../position/PositionUtils.sol";
 import "../position/PositionStoreUtils.sol";
 import "../referral/IReferralStorage.sol";
-import "../router/relay/RelayUtils.sol";
+import "../router/relay/IRelayUtils.sol";
 
 import "./MultichainVault.sol";
 import "./MultichainUtils.sol";
@@ -16,7 +16,7 @@ library MultichainOrderRouterUtils {
     using Order for Order.Props;
     using Position for Position.Props;
 
-    struct HandleFeePaymentContracts {
+    struct TransferFeeFromOrderOrPositionContracts {
         DataStore dataStore;
         EventEmitter eventEmitter;
         MultichainVault multichainVault;
@@ -25,7 +25,7 @@ library MultichainOrderRouterUtils {
         OrderVault orderVault;
     }
 
-    struct HandleFeePaymentCache {
+    struct TransferFeeFromOrderOrPositionCache {
         uint256 unpaidAmount;
         uint256 initialCollateralDeltaAmount;
         uint256 deductFromOrder;
@@ -34,9 +34,9 @@ library MultichainOrderRouterUtils {
         MarketUtils.MarketPrices prices;
     }
 
-    function handleFeePayment(
-        HandleFeePaymentContracts memory contracts,
-        RelayParams calldata relayParams,
+    function transferFeeFromOrderOrPosition(
+        TransferFeeFromOrderOrPositionContracts memory contracts,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
         bytes32 key
@@ -53,7 +53,7 @@ library MultichainOrderRouterUtils {
 
         Order.Props memory order = OrderStoreUtils.get(contracts.dataStore, key);
 
-        HandleFeePaymentCache memory cache;
+        TransferFeeFromOrderOrPositionCache memory cache;
 
         cache.unpaidAmount = relayParams.fee.feeAmount - balance;
 
@@ -123,12 +123,6 @@ library MultichainOrderRouterUtils {
             cache.positionCollateralAmount - cache.unpaidAmount
         );
 
-        if (
-            contracts.oracle.minTimestamp() + contracts.dataStore.getUint(Keys.RELAY_MAX_PRICE_AGE) <
-            Chain.currentTimestamp()
-        ) {
-            revert Errors.RelayPriceOutdated();
-        }
         cache.market = MarketStoreUtils.get(contracts.dataStore, order.market());
         cache.prices = MarketUtils.getMarketPrices(
             contracts.oracle,

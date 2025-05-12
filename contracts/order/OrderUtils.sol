@@ -61,7 +61,9 @@ library OrderUtils {
     // @param dataStore DataStore
     // @param eventEmitter EventEmitter
     // @param orderVault OrderVault
+    // @param referralStorage ReferralStorage
     // @param account the order account
+    // @param srcChainId the source chain id
     // @param params IBaseOrderUtils.CreateOrderParams
     // @param shouldCapMaxExecutionFee whether to cap the max execution fee
     function createOrder(
@@ -176,9 +178,9 @@ library OrderUtils {
         uint256 executionFee;
         (executionFee, cache.executionFeeDiff) = GasUtils.validateAndCapExecutionFee(
             dataStore,
-            GasUtils.estimateExecuteOrderGasLimit(dataStore, order), // estimatedGasLimit
+            cache.estimatedGasLimit,
             params.numbers.executionFee,
-            GasUtils.estimateOrderOraclePriceCount(params.addresses.swapPath.length), // oraclePriceCount
+            cache.oraclePriceCount,
             shouldCapMaxExecutionFee
         );
         order.setExecutionFee(executionFee);
