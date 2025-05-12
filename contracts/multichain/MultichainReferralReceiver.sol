@@ -15,7 +15,8 @@ contract MultichainReferralReceiver is OAppReceiver {
     IReferralStorage public immutable referralStorage;
     DataStore public immutable dataStore;
 
-    constructor(IReferralStorage _referralStorege, address _endpoint, address _owner) OAppCore(_endpoint, _owner) Ownable() {
+    constructor(DataStore _dataStore, IReferralStorage _referralStorege, address _endpoint, address _owner) OAppCore(_endpoint, _owner) Ownable() {
+        dataStore = _dataStore;
         referralStorage = _referralStorege;
     }
 
@@ -34,7 +35,7 @@ contract MultichainReferralReceiver is OAppReceiver {
         bytes calldata  // Any extra data or options to trigger on receipt.
     ) internal override {
         address referralSender = Cast.bytes32ToAddress(origin.sender);
-        _validateMultichainReferralSender(referralSender);
+        _validateMultichainReferralSender(dataStore, referralSender);
 
         if (referralSender == address(0)) {
             revert Errors.InvalidReferralSender(referralSender);
@@ -45,9 +46,9 @@ contract MultichainReferralReceiver is OAppReceiver {
         referralStorage.setTraderReferralCode(account, referralCode);
     }
 
-    function _validateMultichainReferralSender(address referralSender) private view {
+    function _validateMultichainReferralSender(DataStore _dataStore, address referralSender) private view {
         bytes32 referralKey = Keys.isMultichainReferralSenderEnabledKey(referralSender);
-        if (!dataStore.getBool(referralKey)) {
+        if (!_dataStore.getBool(referralKey)) {
             revert Errors.InvalidReferralSender(referralSender);
         }
     }
