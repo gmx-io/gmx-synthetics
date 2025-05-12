@@ -10,7 +10,7 @@ interface IGlvDepositHandler {
         address account,
         uint256 srcChainId,
         IGlvDepositUtils.CreateGlvDepositParams calldata params
-    ) external payable returns (bytes32);
+    ) external returns (bytes32);
 
     function cancelGlvDeposit(bytes32 key) external;
 

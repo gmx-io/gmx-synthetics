@@ -4,12 +4,13 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
+import "./IGlvDepositHandler.sol";
 import "./BaseHandler.sol";
 
 import "../glv/glvDeposit/GlvDepositUtils.sol";
 import "../glv/glvDeposit/ExecuteGlvDepositUtils.sol";
 
-contract GlvDepositHandler is BaseHandler, ReentrancyGuard {
+contract GlvDepositHandler is IGlvDepositHandler, BaseHandler, ReentrancyGuard {
     using GlvDeposit for GlvDeposit.Props;
 
     MultichainVault public immutable multichainVault;

@@ -10,7 +10,7 @@ interface IGlvWithdrawalHandler {
         address account,
         uint256 srcChainId,
         IGlvWithdrawalUtils.CreateGlvWithdrawalParams calldata params
-    ) external payable returns (bytes32);
+    ) external returns (bytes32);
 
     function cancelGlvWithdrawal(bytes32 key) external;
 

@@ -4,12 +4,13 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
+import "./IGlvWithdrawalHandler.sol";
 import "./BaseHandler.sol";
 
 import "../glv/glvWithdrawal/GlvWithdrawalUtils.sol";
 import "../multichain/IMultichainTransferRouter.sol";
 
-contract GlvWithdrawalHandler is BaseHandler, ReentrancyGuard {
+contract GlvWithdrawalHandler is IGlvWithdrawalHandler, BaseHandler, ReentrancyGuard {
     using GlvWithdrawal for GlvWithdrawal.Props;
 
     MultichainVault public immutable multichainVault;
