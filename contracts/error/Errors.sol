@@ -453,6 +453,8 @@ library Errors {
     error UnableToPayOrderFee();
     error UnableToPayOrderFeeFromCollateral();
     error InvalidBridgeOutToken(address token);
+    error InvalidReferralSender(address sender);
+    error InsufficientFee(uint256 feeProvided, uint256 feeRequired);
 
     enum SignatureType {
         Call,
