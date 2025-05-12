@@ -365,7 +365,7 @@ library PositionUtils {
             position.sizeInUsd()
         );
 
-        cache.priceImpactUsd += cache.priceImpactUsd > 0
+        cache.priceImpactUsd += position.pendingImpactAmount() > 0
             ? position.pendingImpactAmount() * prices.indexTokenPrice.min.toInt256()
             : position.pendingImpactAmount() * prices.indexTokenPrice.max.toInt256();
 
