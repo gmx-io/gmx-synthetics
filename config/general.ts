@@ -60,9 +60,9 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
 
       skipBorrowingFeeForSmallerSide: false,
 
-      ignoreOpenInterestForUsageFactor: false,
-
       maxExecutionFeeMultiplierFactor: decimalToFloat(100),
+      oracleProviderMinChangeDelay: 3600,
+      configMaxPriceAge: 180,
 
       gelatoRelayFeeMultiplierFactor: 0,
       gelatoRelayFeeBaseAmount: 0,
@@ -76,7 +76,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     holdingAddress: "0x3f59203ea1c66527422998b54287e1efcacbe2c5",
     sequencerUptimeFeed: ethers.constants.AddressZero,
     sequencerGraceDuration: 300,
-    maxUiFeeFactor: percentageToFloat("0.05%"),
+    maxUiFeeFactor: percentageToFloat("0.1%"),
     maxAutoCancelOrders: 6,
     maxTotalCallbackGasLimitForAutoCancelOrders: 5_000_000,
     minHandleExecutionErrorGas: 1_200_000,
@@ -125,13 +125,13 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
 
     skipBorrowingFeeForSmallerSide: true,
 
-    ignoreOpenInterestForUsageFactor: false,
-
     maxExecutionFeeMultiplierFactor: decimalToFloat(100),
+    oracleProviderMinChangeDelay: 3600,
+    configMaxPriceAge: 180,
 
     gelatoRelayFeeMultiplierFactor: percentageToFloat("107%"), // Relay premium 6% + 1% for swapping collected fees and bridging to Polygon
     gelatoRelayFeeBaseAmount: 50000, // 21000 is base gas, ~10k GelatoRelay gas, some logic after the relay fee is calculated
-    relayFeeAddress: "0x3f59203ea1c66527422998b54287e1efcacbe2c5", // same as holding address. better to have a separate address for the relay fee
+    relayFeeAddress: "0xDA1b841A21FEF1ad1fcd5E19C1a9D682FB675258",
     maxRelayFeeUsdForSubaccount: decimalToFloat(100),
   };
 
@@ -140,6 +140,18 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     arbitrumSepolia: {
       maxAutoCancelOrders: 11,
       maxTotalCallbackGasLimitForAutoCancelOrders: 10_000_000,
+      multichainProviders: {
+        "0x6fddB6270F6c71f31B62AE0260cfa8E2e2d186E0": true, // StargatePoolNative
+        "0x543BdA7c6cA4384FE90B1F5929bb851F52888983": true, // StargatePoolUSDC
+      },
+      multichainEndpoints: {
+        "0x6EDCE65403992e310A62460808c4b910D972f10f": true, // LZ Endpoint
+      },
+      srcChainIds: {
+        11155111: true, // Sepolia
+        421614: true, // Arbitrum Sepolia
+        11155420: true, // Optimism Sepolia
+      },
     },
     avalancheFuji: {},
     arbitrum: {
@@ -150,17 +162,17 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       executionGasPerOraclePrice: false,
       estimatedGasFeeBaseAmount: false,
       executionGasFeeBaseAmount: false,
+      estimatedGasFeeMultiplierFactor: false,
+      executionGasFeeMultiplierFactor: false,
       sequencerUptimeFeed: "0xFdB631F5EE196F0ed6FAa767959853A9F217697D",
 
       increaseOrderGasLimit: 3_000_000,
       decreaseOrderGasLimit: 3_000_000,
       swapOrderGasLimit: 2_500_000,
-      ignoreOpenInterestForUsageFactor: true,
     },
     avalanche: {
       increaseOrderGasLimit: 3_500_000,
       decreaseOrderGasLimit: 3_500_000,
-      ignoreOpenInterestForUsageFactor: true,
     },
   }[network.name];
 

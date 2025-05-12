@@ -38,6 +38,7 @@ export async function getCreateOrderSignature({
       { name: "shouldUnwrapNativeToken", type: "bool" },
       { name: "autoCancel", type: "bool" },
       { name: "referralCode", type: "bytes32" },
+      { name: "dataList", type: "bytes32[]" },
       { name: "relayParams", type: "bytes32" },
       { name: "subaccountApproval", type: "bytes32" },
     ],
@@ -73,6 +74,7 @@ export async function getCreateOrderSignature({
     shouldUnwrapNativeToken: params.shouldUnwrapNativeToken,
     autoCancel: false,
     referralCode: params.referralCode,
+    dataList: params.dataList,
     relayParams: hashRelayParams(relayParams),
     subaccountApproval: subaccountApproval ? hashSubaccountApproval(subaccountApproval) : ethers.constants.HashZero,
   };
@@ -122,6 +124,7 @@ export async function getBatchSignature({
       { name: "shouldUnwrapNativeToken", type: "bool" },
       { name: "autoCancel", type: "bool" },
       { name: "referralCode", type: "bytes32" },
+      { name: "dataList", type: "bytes32[]" },
     ],
     CreateOrderAddresses: [
       { name: "receiver", type: "address" },
@@ -170,6 +173,7 @@ export async function getBatchSignature({
       shouldUnwrapNativeToken: p.shouldUnwrapNativeToken,
       autoCancel: false,
       referralCode: p.referralCode,
+      dataList: p.dataList,
     })),
     updateOrderParamsList: updateOrderParamsList.map((p) => ({
       key: p.key,
@@ -252,6 +256,92 @@ export async function getCancelOrderSignature({
     key,
     relayParams: hashRelayParams(relayParams),
     subaccountApproval: subaccountApproval ? hashSubaccountApproval(subaccountApproval) : ethers.constants.HashZero,
+  };
+
+  return signTypedData(signer, domain, types, typedData);
+}
+
+export async function getClaimFundingFeesSignature({ signer, relayParams, verifyingContract, params, chainId }) {
+  if (relayParams.userNonce === undefined) {
+    throw new Error("userNonce is required");
+  }
+  const types = {
+    ClaimFundingFees: [
+      { name: "markets", type: "address[]" },
+      { name: "tokens", type: "address[]" },
+      { name: "receiver", type: "address" },
+      { name: "relayParams", type: "bytes32" },
+    ],
+  };
+  const domain = {
+    name: "GmxBaseGelatoRelayRouter",
+    version: "1",
+    chainId,
+    verifyingContract,
+  };
+  const typedData = {
+    markets: params.markets,
+    tokens: params.tokens,
+    receiver: params.receiver,
+    relayParams: hashRelayParams(relayParams),
+  };
+
+  return signTypedData(signer, domain, types, typedData);
+}
+
+export async function getClaimCollateralSignature({ signer, relayParams, verifyingContract, params, chainId }) {
+  if (relayParams.userNonce === undefined) {
+    throw new Error("userNonce is required");
+  }
+  const types = {
+    ClaimCollateral: [
+      { name: "markets", type: "address[]" },
+      { name: "tokens", type: "address[]" },
+      { name: "timeKeys", type: "uint256[]" },
+      { name: "receiver", type: "address" },
+      { name: "relayParams", type: "bytes32" },
+    ],
+  };
+  const domain = {
+    name: "GmxBaseGelatoRelayRouter",
+    version: "1",
+    chainId,
+    verifyingContract,
+  };
+  const typedData = {
+    markets: params.markets,
+    tokens: params.tokens,
+    timeKeys: params.timeKeys,
+    receiver: params.receiver,
+    relayParams: hashRelayParams(relayParams),
+  };
+
+  return signTypedData(signer, domain, types, typedData);
+}
+
+export async function getClaimAffiliateRewardsSignature({ signer, relayParams, verifyingContract, params, chainId }) {
+  if (relayParams.userNonce === undefined) {
+    throw new Error("userNonce is required");
+  }
+  const types = {
+    ClaimAffiliateRewards: [
+      { name: "markets", type: "address[]" },
+      { name: "tokens", type: "address[]" },
+      { name: "receiver", type: "address" },
+      { name: "relayParams", type: "bytes32" },
+    ],
+  };
+  const domain = {
+    name: "GmxBaseGelatoRelayRouter",
+    version: "1",
+    chainId,
+    verifyingContract,
+  };
+  const typedData = {
+    markets: params.markets,
+    tokens: params.tokens,
+    receiver: params.receiver,
+    relayParams: hashRelayParams(relayParams),
   };
 
   return signTypedData(signer, domain, types, typedData);

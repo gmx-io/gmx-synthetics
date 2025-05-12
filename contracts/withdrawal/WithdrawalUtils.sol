@@ -7,6 +7,7 @@ import "../data/DataStore.sol";
 import "./WithdrawalVault.sol";
 import "./WithdrawalStoreUtils.sol";
 import "./WithdrawalEventUtils.sol";
+import "./IWithdrawalUtils.sol";
 
 import "../nonce/NonceUtils.sol";
 import "../oracle/Oracle.sol";
@@ -16,6 +17,8 @@ import "../callback/CallbackUtils.sol";
 
 import "../utils/Array.sol";
 import "../utils/AccountUtils.sol";
+
+import "../multichain/MultichainVault.sol";
 
 /**
  * @title WithdrawalUtils
@@ -37,37 +40,15 @@ library WithdrawalUtils {
     using EventUtils for EventUtils.StringItems;
 
     /**
-     * @param receiver The address that will receive the withdrawal tokens.
-     * @param callbackContract The contract that will be called back.
-     * @param market The market on which the withdrawal will be executed.
-     * @param minLongTokenAmount The minimum amount of long tokens that must be withdrawn.
-     * @param minShortTokenAmount The minimum amount of short tokens that must be withdrawn.
-     * @param shouldUnwrapNativeToken Whether the native token should be unwrapped when executing the withdrawal.
-     * @param executionFee The execution fee for the withdrawal.
-     * @param callbackGasLimit The gas limit for calling the callback contract.
-     */
-    struct CreateWithdrawalParams {
-        address receiver;
-        address callbackContract;
-        address uiFeeReceiver;
-        address market;
-        address[] longTokenSwapPath;
-        address[] shortTokenSwapPath;
-        uint256 minLongTokenAmount;
-        uint256 minShortTokenAmount;
-        bool shouldUnwrapNativeToken;
-        uint256 executionFee;
-        uint256 callbackGasLimit;
-    }
-
-    /**
      * @dev Creates a withdrawal in the withdrawal store.
      *
      * @param dataStore The data store where withdrawal data is stored.
      * @param eventEmitter The event emitter that is used to emit events.
      * @param withdrawalVault WithdrawalVault.
      * @param account The account that initiated the withdrawal.
+     * @param srcChainId The source chain id for the withdrawal.
      * @param params The parameters for creating the withdrawal.
+     * @param isAtomicWithdrawal Whether the withdrawal is atomic.
      * @return The unique identifier of the created withdrawal.
      */
     function createWithdrawal(
@@ -75,7 +56,9 @@ library WithdrawalUtils {
         EventEmitter eventEmitter,
         WithdrawalVault withdrawalVault,
         address account,
-        CreateWithdrawalParams memory params
+        uint256 srcChainId,
+        IWithdrawalUtils.CreateWithdrawalParams memory params,
+        bool isAtomicWithdrawal
     ) external returns (bytes32) {
         AccountUtils.validateAccount(account);
 
@@ -83,31 +66,31 @@ library WithdrawalUtils {
         uint256 wntAmount = withdrawalVault.recordTransferIn(wnt);
 
         if (wntAmount < params.executionFee) {
-            revert Errors.InsufficientWntAmount(wntAmount, params.executionFee);
+            revert Errors.InsufficientWntAmountForExecutionFee(wntAmount, params.executionFee);
         }
 
-        AccountUtils.validateReceiver(params.receiver);
+        AccountUtils.validateReceiver(params.addresses.receiver);
 
-        uint256 marketTokenAmount = withdrawalVault.recordTransferIn(params.market);
+        uint256 marketTokenAmount = withdrawalVault.recordTransferIn(params.addresses.market);
 
         if (marketTokenAmount == 0) {
             revert Errors.EmptyWithdrawalAmount();
         }
         params.executionFee = wntAmount;
 
-        MarketUtils.validateEnabledMarket(dataStore, params.market);
-        MarketUtils.validateSwapPath(dataStore, params.longTokenSwapPath);
-        MarketUtils.validateSwapPath(dataStore, params.shortTokenSwapPath);
+        MarketUtils.validateEnabledMarket(dataStore, params.addresses.market);
+        MarketUtils.validateSwapPath(dataStore, params.addresses.longTokenSwapPath);
+        MarketUtils.validateSwapPath(dataStore, params.addresses.shortTokenSwapPath);
 
         Withdrawal.Props memory withdrawal = Withdrawal.Props(
             Withdrawal.Addresses(
                 account,
-                params.receiver,
-                params.callbackContract,
-                params.uiFeeReceiver,
-                params.market,
-                params.longTokenSwapPath,
-                params.shortTokenSwapPath
+                params.addresses.receiver,
+                params.addresses.callbackContract,
+                params.addresses.uiFeeReceiver,
+                params.addresses.market,
+                params.addresses.longTokenSwapPath,
+                params.addresses.shortTokenSwapPath
             ),
             Withdrawal.Numbers(
                 marketTokenAmount,
@@ -115,18 +98,22 @@ library WithdrawalUtils {
                 params.minShortTokenAmount,
                 Chain.currentTimestamp(), // updatedAtTime
                 params.executionFee,
-                params.callbackGasLimit
+                params.callbackGasLimit,
+                srcChainId
             ),
             Withdrawal.Flags(
                 params.shouldUnwrapNativeToken
-            )
+            ),
+            params.dataList
         );
 
         CallbackUtils.validateCallbackGasLimit(dataStore, withdrawal.callbackGasLimit());
 
-        uint256 estimatedGasLimit = GasUtils.estimateExecuteWithdrawalGasLimit(dataStore, withdrawal);
-        uint256 oraclePriceCount = GasUtils.estimateWithdrawalOraclePriceCount(withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length);
-        GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, params.executionFee, oraclePriceCount);
+        if (!isAtomicWithdrawal) {
+            uint256 estimatedGasLimit = GasUtils.estimateExecuteWithdrawalGasLimit(dataStore, withdrawal);
+            uint256 oraclePriceCount = GasUtils.estimateWithdrawalOraclePriceCount(withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length);
+            GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, params.executionFee, oraclePriceCount);
+        }
 
         bytes32 key = NonceUtils.getNextKey(dataStore);
 
@@ -149,6 +136,7 @@ library WithdrawalUtils {
     function cancelWithdrawal(
         DataStore dataStore,
         EventEmitter eventEmitter,
+        MultichainVault multichainVault,
         WithdrawalVault withdrawalVault,
         bytes32 key,
         address keeper,
@@ -190,16 +178,20 @@ library WithdrawalUtils {
         CallbackUtils.afterWithdrawalCancellation(key, withdrawal, eventData);
 
         GasUtils.payExecutionFee(
-            dataStore,
-            eventEmitter,
-            withdrawalVault,
+            GasUtils.PayExecutionFeeContracts(
+                dataStore,
+                eventEmitter,
+                multichainVault,
+                withdrawalVault
+            ),
             key,
             withdrawal.callbackContract(),
             withdrawal.executionFee(),
             startingGas,
             GasUtils.estimateWithdrawalOraclePriceCount(withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length),
             keeper,
-            withdrawal.receiver()
+            withdrawal.receiver(),
+            withdrawal.srcChainId()
         );
     }
 }

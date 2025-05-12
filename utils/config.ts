@@ -15,6 +15,7 @@ export const EXCLUDED_CONFIG_KEYS = {
   CLAIMABLE_UI_FEE_AMOUNT: true,
   CLAIMED_COLLATERAL_AMOUNT: true,
   CLAIMABLE_COLLATERAL_FACTOR: true,
+  CLAIMABLE_COLLATERAL_REDUCTION_FACTOR: true,
   COLLATERAL_SUM: true,
   CONTRIBUTOR_ACCOUNT_LIST: true,
   CONTRIBUTOR_LAST_PAYMENT_AT: true,
@@ -24,6 +25,7 @@ export const EXCLUDED_CONFIG_KEYS = {
   CUMULATIVE_BORROWING_FACTOR: true,
   CUMULATIVE_BORROWING_FACTOR_UPDATED_AT: true,
   DATA_STREAM_ID: true,
+  EDGE_DATA_STREAM_ID: true,
   DATA_STREAM_MULTIPLIER: true,
   DEPOSIT_FEE_TYPE: true,
   DEPOSIT_LIST: true,
@@ -46,6 +48,8 @@ export const EXCLUDED_CONFIG_KEYS = {
   MARKET_LIST: true,
   MAX_ALLOWED_SUBACCOUNT_ACTION_COUNT: true,
   SUBACCOUNT_EXPIRES_AT: true,
+  SUBACCOUNT_INTEGRATION_ID: true,
+  SUBACCOUNT_INTEGRATION_DISABLED: true,
   MAX_PNL_FACTOR_FOR_TRADERS: true,
   MAX_PNL_FACTOR_FOR_ADL: true,
   MAX_PNL_FACTOR_FOR_DEPOSITS: true,
@@ -59,6 +63,7 @@ export const EXCLUDED_CONFIG_KEYS = {
   OPEN_INTEREST_IN_TOKENS: true,
   ORACLE_TIMESTAMP_ADJUSTMENT: true,
   ORACLE_PROVIDER_FOR_TOKEN: true,
+  ORACLE_PROVIDER_UPDATED_AT: true,
   ORDER_LIST: true,
   POOL_AMOUNT: true,
   POSITION_FEE_TYPE: true,
@@ -99,6 +104,7 @@ export const EXCLUDED_CONFIG_KEYS = {
   SYNC_CONFIG_LATEST_UPDATE_ID: true,
   BUYBACK_AVAILABLE_FEE_AMOUNT: true,
   WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT: true,
+  HOLDING_ADDRESS: true,
 };
 
 export async function appendUintConfigIfDifferent(
@@ -198,13 +204,13 @@ async function appendConfigIfDifferent(
     }
 
     console.info(
-      "appending config %s %s (%s) to %s, prev: %s %s",
+      "appending config %s %s to %s, prev: %s %s, key: %s",
       type,
       label,
-      key,
       value.toString(),
       currentValue.toString(),
-      changeStr
+      changeStr,
+      key
     );
     list.push(config.interface.encodeFunctionData(setMethod, [baseKey, keyData, value]));
   } else {

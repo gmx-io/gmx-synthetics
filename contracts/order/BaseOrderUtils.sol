@@ -14,6 +14,8 @@ import "../order/OrderVault.sol";
 import "../oracle/Oracle.sol";
 import "../swap/SwapHandler.sol";
 
+import "../multichain/MultichainVault.sol";
+
 // @title Order
 // @dev Library for common order functions used in OrderUtils, IncreaseOrderUtils
 // DecreaseOrderUtils, SwapOrderUtils
@@ -59,6 +61,7 @@ library BaseOrderUtils {
     struct ExecuteOrderParamsContracts {
         DataStore dataStore;
         EventEmitter eventEmitter;
+        MultichainVault multichainVault;
         OrderVault orderVault;
         Oracle oracle;
         SwapHandler swapHandler;

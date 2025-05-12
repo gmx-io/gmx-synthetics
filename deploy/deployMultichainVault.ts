@@ -1,21 +1,18 @@
 import { grantRoleIfNotGranted } from "../utils/role";
 import { createDeployFunction } from "../utils/deploy";
 
-const constructorContracts = ["RoleStore", "DataStore", "EventEmitter", "OracleStore"];
-const timelockDelay = 24 * 60 * 60;
+const constructorContracts = ["RoleStore", "DataStore"];
 
 const func = createDeployFunction({
-  contractName: "Timelock",
+  contractName: "MultichainVault",
   dependencyNames: constructorContracts,
   getDeployArgs: async ({ dependencyContracts }) => {
-    return constructorContracts
-      .map((dependencyName) => dependencyContracts[dependencyName].address)
-      .concat(timelockDelay);
+    return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
   },
   afterDeploy: async ({ deployedContract }) => {
     await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
-    await grantRoleIfNotGranted(deployedContract.address, "ROLE_ADMIN");
   },
+  id: "MultichainVault_1",
 });
 
 export default func;

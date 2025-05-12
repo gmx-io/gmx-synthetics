@@ -34,11 +34,14 @@ library OrderStoreUtils {
     bytes32 public constant MIN_OUTPUT_AMOUNT = keccak256(abi.encode("MIN_OUTPUT_AMOUNT"));
     bytes32 public constant VALID_FROM_TIME = keccak256(abi.encode("VALID_FROM_TIME"));
     bytes32 public constant UPDATED_AT_TIME = keccak256(abi.encode("UPDATED_AT_TIME"));
+    bytes32 public constant SRC_CHAIN_ID = keccak256(abi.encode("SRC_CHAIN_ID"));
 
     bytes32 public constant IS_LONG = keccak256(abi.encode("IS_LONG"));
     bytes32 public constant SHOULD_UNWRAP_NATIVE_TOKEN = keccak256(abi.encode("SHOULD_UNWRAP_NATIVE_TOKEN"));
     bytes32 public constant IS_FROZEN = keccak256(abi.encode("IS_FROZEN"));
     bytes32 public constant AUTO_CANCEL = keccak256(abi.encode("AUTO_CANCEL"));
+
+    bytes32 public constant DATA_LIST = keccak256(abi.encode("DATA_LIST"));
 
     function get(DataStore dataStore, bytes32 key) external view returns (Order.Props memory) {
         Order.Props memory order;
@@ -122,6 +125,10 @@ library OrderStoreUtils {
             keccak256(abi.encode(key, UPDATED_AT_TIME))
         ));
 
+        order.setSrcChainId(dataStore.getUint(
+            keccak256(abi.encode(key, SRC_CHAIN_ID))
+        ));
+
         order.setIsLong(dataStore.getBool(
             keccak256(abi.encode(key, IS_LONG))
         ));
@@ -136,6 +143,10 @@ library OrderStoreUtils {
 
         order.setAutoCancel(dataStore.getBool(
             keccak256(abi.encode(key, AUTO_CANCEL))
+        ));
+
+        order.setDataList(dataStore.getBytes32Array(
+            keccak256(abi.encode(key, DATA_LIST))
         ));
 
         return order;
@@ -247,6 +258,11 @@ library OrderStoreUtils {
             order.updatedAtTime()
         );
 
+        dataStore.setUint(
+            keccak256(abi.encode(key, SRC_CHAIN_ID)),
+            order.srcChainId()
+        );
+
         dataStore.setBool(
             keccak256(abi.encode(key, IS_LONG)),
             order.isLong()
@@ -265,6 +281,11 @@ library OrderStoreUtils {
         dataStore.setBool(
             keccak256(abi.encode(key, AUTO_CANCEL)),
             order.autoCancel()
+        );
+
+        dataStore.setBytes32Array(
+            keccak256(abi.encode(key, DATA_LIST)),
+            order.dataList()
         );
     }
 
@@ -359,6 +380,10 @@ library OrderStoreUtils {
             keccak256(abi.encode(key, UPDATED_AT_TIME))
         );
 
+        dataStore.removeUint(
+            keccak256(abi.encode(key, SRC_CHAIN_ID))
+        );
+
         dataStore.removeBool(
             keccak256(abi.encode(key, IS_LONG))
         );
@@ -373,6 +398,10 @@ library OrderStoreUtils {
 
         dataStore.removeBool(
             keccak256(abi.encode(key, AUTO_CANCEL))
+        );
+
+        dataStore.removeBytes32Array(
+            keccak256(abi.encode(key, DATA_LIST))
         );
     }
 

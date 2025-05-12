@@ -3,12 +3,13 @@ import hre, { network } from "hardhat";
 import prompts from "prompts";
 import { bigNumberify } from "../utils/math";
 import {
-  getFullKey,
-  appendUintConfigIfDifferent,
   appendAddressConfigIfDifferent,
   appendBoolConfigIfDifferent,
+  appendUintConfigIfDifferent,
+  getFullKey,
 } from "../utils/config";
 import * as keys from "../utils/keys";
+import { encodeData } from "../utils/hash";
 
 const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig }) => {
   await handleConfig(
@@ -18,6 +19,36 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
     oracleConfig.chainlinkPaymentToken,
     `chainlinkPaymentToken`
   );
+
+  if (network.name != "hardhat") {
+    for (const [multichainProvider, enabled] of Object.entries(generalConfig.multichainProviders)) {
+      await handleConfig(
+        "bool",
+        keys.IS_MULTICHAIN_PROVIDER_ENABLED,
+        encodeData(["address"], [multichainProvider]),
+        enabled,
+        `multichainProvider ${multichainProvider}`
+      );
+    }
+    for (const [multichainEndpoint, enabled] of Object.entries(generalConfig.multichainEndpoints)) {
+      await handleConfig(
+        "bool",
+        keys.IS_MULTICHAIN_ENDPOINT_ENABLED,
+        encodeData(["address"], [multichainEndpoint]),
+        enabled,
+        `multichainEndpoint ${multichainEndpoint}`
+      );
+    }
+    for (const [srcChainId, enabled] of Object.entries(generalConfig.srcChainIds)) {
+      await handleConfig(
+        "bool",
+        keys.IS_SRC_CHAIN_ID_ENABLED,
+        encodeData(["uint"], [srcChainId]),
+        enabled,
+        `srcChainId ${srcChainId}`
+      );
+    }
+  }
 
   await handleConfig(
     "uint",
@@ -211,13 +242,15 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
     }
   }
 
-  await handleConfig(
-    "uint",
-    keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR,
-    "0x",
-    generalConfig.estimatedGasFeeMultiplierFactor,
-    `estimatedGasFeeMultiplierFactor`
-  );
+  if (generalConfig.estimatedGasFeeMultiplierFactor) {
+    await handleConfig(
+      "uint",
+      keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR,
+      "0x",
+      generalConfig.estimatedGasFeeMultiplierFactor,
+      `estimatedGasFeeMultiplierFactor`
+    );
+  }
 
   if (generalConfig.executionGasFeeBaseAmount) {
     await handleConfig(
@@ -247,21 +280,13 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
     }
   }
 
-  await handleConfig(
-    "uint",
-    keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR,
-    "0x",
-    generalConfig.executionGasFeeMultiplierFactor,
-    `executionGasFeeMultiplierFactor`
-  );
-
-  if (generalConfig.requestExpirationTime !== undefined) {
+  if (generalConfig.executionGasFeeMultiplierFactor) {
     await handleConfig(
       "uint",
-      keys.REQUEST_EXPIRATION_TIME,
+      keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR,
       "0x",
-      generalConfig.requestExpirationTime,
-      `requestExpirationTime`
+      generalConfig.executionGasFeeMultiplierFactor,
+      `executionGasFeeMultiplierFactor`
     );
   }
 
@@ -275,13 +300,15 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
     );
   }
 
-  await handleConfig(
-    "bool",
-    keys.IGNORE_OPEN_INTEREST_FOR_USAGE_FACTOR,
-    "0x",
-    generalConfig.ignoreOpenInterestForUsageFactor,
-    `ignoreOpenInterestForUsageFactor`
-  );
+  if (generalConfig.requestExpirationTime !== undefined) {
+    await handleConfig(
+      "uint",
+      keys.REQUEST_EXPIRATION_TIME,
+      "0x",
+      generalConfig.requestExpirationTime,
+      `requestExpirationTime`
+    );
+  }
 
   await handleConfig(
     "uint",
@@ -291,13 +318,29 @@ const processGeneralConfig = async ({ generalConfig, oracleConfig, handleConfig 
     `maxExecutionFeeMultiplierFactor`
   );
 
+  await handleConfig(
+    "uint",
+    keys.ORACLE_PROVIDER_MIN_CHANGE_DELAY,
+    "0x",
+    generalConfig.oracleProviderMinChangeDelay,
+    `oracleProviderMinChangeDelay`
+  );
+
   await handleConfig("uint", keys.GELATO_RELAY_FEE_BASE_AMOUNT, "0x", generalConfig.gelatoRelayFeeBaseAmount);
+  await handleConfig(
+    "uint",
+    keys.GELATO_RELAY_FEE_BASE_AMOUNT,
+    "0x",
+    generalConfig.gelatoRelayFeeBaseAmount,
+    "gelatoRelayFeeBaseAmount"
+  );
 
   await handleConfig(
     "uint",
     keys.GELATO_RELAY_FEE_MULTIPLIER_FACTOR,
     "0x",
-    generalConfig.gelatoRelayFeeMultiplierFactor
+    generalConfig.gelatoRelayFeeMultiplierFactor,
+    "gelatoRelayFeeMultiplierFactor"
   );
 
   await handleConfig("address", keys.RELAY_FEE_ADDRESS, "0x", generalConfig.relayFeeAddress, `relayFeeAddress`);
@@ -399,35 +442,22 @@ export async function updateGeneralConfig({ write }) {
     return;
   }
 
-  try {
-    if (!write) {
-      ({ write } = await prompts({
-        type: "confirm",
-        name: "write",
-        message: "Do you want to execute the transactions?",
-      }));
-    }
+  const { roles } = await hre.gmx.getRoles();
+  const from = Object.keys(roles.CONFIG_KEEPER)[0];
+  await config.connect(from).callStatic.multicall(multicallWriteParams);
 
-    if (write) {
-      const tx = await config.multicall(multicallWriteParams);
-      console.log(`tx sent: ${tx.hash}`);
-    } else {
-      await config.callStatic.multicall(multicallWriteParams, {
-        from: "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745",
-      });
-      console.log("NOTE: executed in read-only mode, no transactions were sent");
-    }
-  } catch (ex) {
-    if (
-      ex.errorName === "InvalidBaseKey" &&
-      hre.network.name === "avalanche" &&
-      process.env.SKIP_GLV_LIMITS_AVALANCHE !== "true"
-    ) {
-      console.error(ex);
-      console.log("Use SKIP_GLV_LIMITS_AVALANCHE=true to skip updating GLV gas limits on Avalanche");
-      return;
-    }
+  if (!write) {
+    ({ write } = await prompts({
+      type: "confirm",
+      name: "write",
+      message: "Do you want to execute the transactions?",
+    }));
+  }
 
-    throw ex;
+  if (write) {
+    const tx = await config.multicall(multicallWriteParams);
+    console.log(`tx sent: ${tx.hash}`);
+  } else {
+    console.log("NOTE: executed in read-only mode, no transactions were sent");
   }
 }

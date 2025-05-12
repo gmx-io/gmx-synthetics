@@ -108,7 +108,9 @@ const processMarkets = async ({
       continue;
     }
 
-    const marketLabel = `${marketConfig.tokens.indexToken} [${marketConfig.tokens.longToken}-${marketConfig.tokens.shortToken}]`;
+    const marketLabel = `${marketConfig.tokens.indexToken ?? "SPOT-ONLY"} [${marketConfig.tokens.longToken}-${
+      marketConfig.tokens.shortToken
+    }]`;
 
     const handleConfig = async (type, baseKey, keyData, value, label) => {
       const [skip, skipReason] = shouldIgnoreBaseKey(baseKey, supportedRiskOracleMarkets.has(marketConfig));
@@ -240,7 +242,7 @@ const processMarkets = async ({
         keys.ATOMIC_SWAP_FEE_FACTOR,
         encodeData(["address"], [marketToken]),
         marketConfig.atomicSwapFeeFactor,
-        `atomicSwapFeeFactor ${marketToken}`
+        `atomicSwapFeeFactor ${marketLabel} (${marketToken})`
       );
     }
 
@@ -250,7 +252,7 @@ const processMarkets = async ({
         keys.ATOMIC_WITHDRAWAL_FEE_FACTOR,
         encodeData(["address"], [marketToken]),
         marketConfig.atomicWithdrawalFeeFactor,
-        `atomicWithdrawalFeeFactor ${marketToken}`
+        `atomicWithdrawalFeeFactor ${marketLabel} (${marketToken})`
       );
     }
 
@@ -293,6 +295,14 @@ const processMarkets = async ({
       encodeData(["address"], [marketToken]),
       marketConfig.minCollateralFactor,
       `minCollateralFactor ${marketLabel} (${marketToken})`
+    );
+
+    await handleConfig(
+      "uint",
+      keys.MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION,
+      encodeData(["address"], [marketToken]),
+      marketConfig.minCollateralFactorForLiquidation,
+      `minCollateralFactorForLiquidation ${marketLabel} (${marketToken})`
     );
 
     await handleConfig(
@@ -836,11 +846,16 @@ export async function updateMarketConfig({
 
   console.log("running simulation");
   if (!["hardhat"].includes(hre.network.name)) {
+    const { roles } = await hre.gmx.getRoles();
+    const configKeeper = Object.keys(roles.CONFIG_KEEPER)[0];
+    if (!configKeeper) {
+      throw new Error("No config keeper found");
+    }
     await handleInBatches(multicallWriteParams, 100, async (batch) => {
       await read(
         "Config",
         {
-          from: "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745",
+          from: configKeeper,
         },
         "multicall",
         batch
