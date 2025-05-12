@@ -366,6 +366,8 @@ library MarketUtils {
         // use !maximize for pickPrice since the impactPoolUsd is deducted from the poolValue
         uint256 impactPoolUsd = result.impactPoolAmount * indexTokenPrice.pickPrice(!maximize);
 
+        // TODO: add lentPositionImpactPoolAmount
+
         result.poolValue -= impactPoolUsd.toInt256();
 
         return result;
@@ -860,6 +862,16 @@ library MarketUtils {
         int256 priceImpactUsd
     ) internal view returns (int256) {
         // TODO: cap impact by payable impact amount instead
+        // Note that since the price impact can be capped, a malicious
+        // CONFIG_KEEPER can set price impact values to be very large
+        // then make trades to incur a large amount of negative price impact
+        // in account A, and a large amount of positive price impact in
+        // account B
+        // since the price impact in account A is claimable, and the positive
+        // price impact in account B is first paid for by the pool, this method
+        // can be used to reduce the funds in the GM pool
+        // the CLAIMABLE_COLLATERAL_DELAY should be restricted to be at least
+        // 24 hours or more to allow for activity of this form to be blocked
         if (priceImpactUsd < 0) {
             return priceImpactUsd;
         }
