@@ -859,6 +859,7 @@ library MarketUtils {
         Price.Props memory indexTokenPrice,
         int256 priceImpactUsd
     ) internal view returns (int256) {
+        // TODO: cap impact by payable impact amount instead
         if (priceImpactUsd < 0) {
             return priceImpactUsd;
         }
@@ -951,15 +952,39 @@ library MarketUtils {
         EventEmitter eventEmitter,
         address market,
         int256 delta
-    ) internal returns (uint256) {
+    ) internal {
+        bytes32 positionImpactPoolAmountKey = Keys.positionImpactPoolAmountKey(market);
+
+        if (delta < 0) {
+            uint256 currentValue = dataStore.getUint(positionImpactPoolAmountKey);
+            uint256 deductionAmount = (-delta).toUint256();
+            if (deductionAmount > currentValue) {
+                uint256 excessAmount = deductionAmount - currentValue;
+                dataStore.setUint(positionImpactPoolAmountKey, 0);
+                dataStore.incrementUint(Keys.lentPositionImpactPoolAmountKey(market), excessAmount);
+            } else {
+                dataStore.decrementUint(positionImpactPoolAmountKey, deductionAmount);
+            }
+        } else {
+            uint256 additionAmount = delta.toUint256();
+            bytes32 lentPositionImpactPoolAmountKey = Keys.lentPositionImpactPoolAmountKey(market);
+            uint256 lentAmount = dataStore.getUint(lentPositionImpactPoolAmountKey);
+            if (additionAmount > lentAmount) {
+                uint256 excessAmount = additionAmount - lentAmount;
+                dataStore.setUint(lentPositionImpactPoolAmountKey, 0);
+                dataStore.incrementUint(positionImpactPoolAmountKey, excessAmount);
+            } else {
+                dataStore.decrementUint(lentPositionImpactPoolAmountKey, additionAmount);
+            }
+        }
+
         uint256 nextValue = dataStore.applyBoundedDeltaToUint(
             Keys.positionImpactPoolAmountKey(market),
             delta
         );
 
+        // TODO: update events
         MarketEventUtils.emitPositionImpactPoolAmountUpdated(eventEmitter, market, delta, nextValue);
-
-        return nextValue;
     }
 
     // @dev apply a delta to the open interest
