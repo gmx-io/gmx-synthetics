@@ -52,7 +52,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
 
     constructor(
         RoleStore _roleStore,
-        Oracle _oracle,
+        IOracle _oracle,
         FeeDistributorVault _feeDistributorVault,
         FeeHandler _feeHandler,
         DataStore _dataStore,
