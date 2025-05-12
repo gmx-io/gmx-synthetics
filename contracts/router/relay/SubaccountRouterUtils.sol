@@ -29,22 +29,24 @@ library SubaccountRouterUtils {
         bytes32 actionType,
         uint256 actionsCount,
         SubaccountApproval calldata subaccountApproval,
-        uint256 subaccountApprovalStoredNonce
+        mapping(address => uint256) storage subaccountApprovalNonces
     ) external {
         FeatureUtils.validateFeature(dataStore, Keys.subaccountFeatureDisabledKey(address(this)));
+
+        SubaccountUtils.validateIntegrationId(dataStore, account, subaccount);
 
         _handleSubaccountApproval(
             dataStore,
             eventEmitter,
             account,
             subaccountApproval,
-            subaccountApprovalStoredNonce
+            subaccountApprovalNonces
         );
 
         SubaccountUtils.handleSubaccountAction(dataStore, eventEmitter, account, subaccount, actionType, actionsCount);
     }
 
-    function _handleSubaccountApproval(DataStore dataStore, EventEmitter eventEmitter, address account, SubaccountApproval calldata subaccountApproval, uint256 subaccountApprovalStoredNonce) private {
+    function _handleSubaccountApproval(DataStore dataStore, EventEmitter eventEmitter, address account, SubaccountApproval calldata subaccountApproval, mapping(address => uint256) storage subaccountApprovalNonces) private {
         if (subaccountApproval.signature.length == 0) {
             return;
         }
@@ -57,9 +59,13 @@ library SubaccountRouterUtils {
             revert Errors.SubaccountApprovalDeadlinePassed(block.timestamp, subaccountApproval.deadline);
         }
 
-        if (subaccountApprovalStoredNonce != subaccountApproval.nonce) {
-            revert Errors.InvalidSubaccountApprovalNonce(subaccountApprovalStoredNonce, subaccountApproval.nonce);
+        uint256 storedNonce = subaccountApprovalNonces[account];
+
+        if (storedNonce != subaccountApproval.nonce) {
+            revert Errors.InvalidSubaccountApprovalNonce(storedNonce, subaccountApproval.nonce);
         }
+        
+        subaccountApprovalNonces[account] = storedNonce + 1;
 
         bytes32 domainSeparator = RelayUtils.getDomainSeparator(block.chainid);
         bytes32 structHash = RelayUtils.getSubaccountApprovalStructHash(subaccountApproval);

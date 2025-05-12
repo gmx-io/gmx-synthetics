@@ -27,10 +27,13 @@ library GlvShiftUtils {
     struct ExecuteGlvShiftParams {
         DataStore dataStore;
         EventEmitter eventEmitter;
-        Oracle oracle;
+        IOracle oracle;
         MultichainVault multichainVault;
         ShiftVault shiftVault;
         GlvVault glvVault;
+        IDepositHandler depositHandler;
+        IWithdrawalHandler withdrawalHandler;
+        ISwapHandler swapHandler;
         bytes32 key;
         address keeper;
     }
@@ -156,6 +159,9 @@ library GlvShiftUtils {
             multichainVault: params.multichainVault,
             shiftVault: params.shiftVault,
             oracle: params.oracle,
+            depositHandler: params.depositHandler,
+            withdrawalHandler: params.withdrawalHandler,
+            swapHandler: params.swapHandler,
             key: cache.shiftKey,
             keeper: params.keeper,
 

@@ -15,7 +15,7 @@ import {MarketToken} from "./MarketToken.sol";
 import {MarketUtils} from "./MarketUtils.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {SignedMath} from "@openzeppelin/contracts/utils/math/SignedMath.sol";
-import { Oracle } from "../oracle/Oracle.sol";
+import { IOracle } from "../oracle/IOracle.sol";
 
 // @title MarketUtils
 // @dev Library for market functions
@@ -39,7 +39,7 @@ library MarketPositionImpactPoolUtils {
         address market,
         address receiver,
         uint256 amount,
-        Oracle oracle
+        IOracle oracle
     ) external {
         require(amount > 0, "Amount must be greater than 0");
 
@@ -103,8 +103,6 @@ library MarketPositionImpactPoolUtils {
             - shortTokenWithdrawalAmount.toInt256()
         );
 
-        MarketUtils.validateMarketTokenBalance(dataStore, market);
-
         MarketToken(payable(market)).transferOut(
             marketProps.longToken,
             receiver,
@@ -116,6 +114,8 @@ library MarketPositionImpactPoolUtils {
             receiver,
             shortTokenWithdrawalAmount
         );
+
+        MarketUtils.validateMarketTokenBalance(dataStore, market);
 
         MarketEventUtils.emitPositionImpactPoolWithdrawal(
             eventEmitter,

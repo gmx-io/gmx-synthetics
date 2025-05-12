@@ -1,13 +1,13 @@
 import hre from "hardhat";
 
-import { GlvHandler } from "../typechain-types";
+import { GlvShiftHandler } from "../typechain-types";
 import { expandDecimals } from "../utils/math";
 import { BigNumber } from "ethers";
 
 const { ethers } = hre;
 async function main() {
   console.log("run createGlvShift");
-  const glvHandler: GlvHandler = await ethers.getContract("GlvHandler");
+  const glvShiftHandler: GlvShiftHandler = await ethers.getContract("GlvShiftHandler");
 
   const glv = process.env.GLV;
   if (!glv) {
@@ -48,18 +48,18 @@ async function main() {
   console.log("fromMarket: %s", fromMarket);
   console.log("toMarket: %s", toMarket);
   console.log("marketTokenAmount: %s (%s)", marketTokenAmountArg, params.marketTokenAmount);
-  console.log("glv handler %s", glvHandler.address);
+  console.log("glv shift handler %s", glvShiftHandler.address);
 
   if (process.env.WRITE === "true") {
     console.log("sending real transaction...");
-    const tx = await glvHandler.createGlvShift(params);
+    const tx = await glvShiftHandler.createGlvShift(params);
 
     console.log("transaction sent", tx.hash);
     await tx.wait();
     console.log("receipt received");
   } else {
     console.log("running simulation...");
-    const result = await glvHandler.callStatic.createGlvShift(params);
+    const result = await glvShiftHandler.callStatic.createGlvShift(params);
     console.log("done. result: %s", result);
   }
 }

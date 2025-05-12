@@ -2,14 +2,14 @@
 
 pragma solidity ^0.8.0;
 
-import "./Oracle.sol";
+import "./IOracle.sol";
 
 // @title OracleModule
 // @dev Provides convenience functions for interacting with the Oracle
 contract OracleModule {
-    Oracle public immutable oracle;
+    IOracle public immutable oracle;
 
-    constructor(Oracle _oracle) {
+    constructor(IOracle _oracle) {
         oracle = _oracle;
     }
 

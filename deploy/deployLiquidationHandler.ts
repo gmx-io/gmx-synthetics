@@ -10,6 +10,7 @@ const constructorContracts = [
   "OrderVault",
   "SwapHandler",
   "ReferralStorage",
+  "DecreaseOrderExecutor",
 ];
 const contractName = "LiquidationHandler";
 
