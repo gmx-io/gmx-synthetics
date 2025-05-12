@@ -1,11 +1,11 @@
 import hre from "hardhat";
 
-import { GlvHandler } from "../typechain-types";
+import { GlvShiftHandler } from "../typechain-types";
 
 const { ethers } = hre;
 async function main() {
   console.log("run createGlvShift");
-  const glvHandler: GlvHandler = await ethers.getContract("GlvHandler");
+  const glvShiftHandler: GlvShiftHandler = await ethers.getContract("GlvShiftHandler");
 
   const glv = process.env.GLV;
   if (!glv) {
@@ -18,18 +18,18 @@ async function main() {
 
   console.log("glv: %s", glv);
   console.log("market: %s", market);
-  console.log("glv handler %s", glvHandler.address);
+  console.log("glv handler %s", glvShiftHandler.address);
 
   if (process.env.WRITE === "true") {
     console.log("sending real transaction...");
-    const tx = await glvHandler.removeMarketFromGlv(glv, market);
+    const tx = await glvShiftHandler.removeMarketFromGlv(glv, market);
 
     console.log("transaction sent", tx.hash);
     await tx.wait();
     console.log("receipt received");
   } else {
     console.log("running simulation...");
-    const result = await glvHandler.callStatic.removeMarketFromGlv(glv, market);
+    const result = await glvShiftHandler.callStatic.removeMarketFromGlv(glv, market);
     console.log("done. result: %s", result);
   }
 }

@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "../data/DataStore.sol";
-import "../oracle/Oracle.sol";
+import "../oracle/IOracle.sol";
 import "../market/Market.sol";
 import "../market/MarketUtils.sol";
 import "./GlvToken.sol";
@@ -26,13 +26,13 @@ library GlvUtils {
 
     // @dev get the USD value of the Glv
     // @param dataStore DataStore
-    // @param oracle Oracle
+    // @param oracle IOracle
     // @param glv Glv
     // @param maximize
     // @return the USD value of the Glv
     function getGlvValue(
         DataStore dataStore,
-        Oracle oracle,
+        IOracle oracle,
         address glv,
         bool maximize
     ) public view returns (uint256) {
@@ -129,7 +129,7 @@ library GlvUtils {
 
     function getGlvTokenPrice(
         DataStore dataStore,
-        Oracle oracle,
+        IOracle oracle,
         address glv,
         bool maximize
     ) internal view returns (uint256, uint256, uint256) {

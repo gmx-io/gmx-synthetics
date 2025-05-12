@@ -24,7 +24,8 @@ library GlvWithdrawalUtils {
         EventEmitter eventEmitter;
         MultichainVault multichainVault;
         GlvVault glvVault;
-        Oracle oracle;
+        IOracle oracle;
+        ISwapHandler swapHandler;
         bytes32 key;
         uint256 startingGas;
         address keeper;
@@ -141,7 +142,7 @@ library GlvWithdrawalUtils {
         GlvToken(payable(glvWithdrawal.glv())).burn(address(params.glvVault), glvWithdrawal.glvTokenAmount());
         params.glvVault.syncTokenBalance(glvWithdrawal.glv());
 
-        ExecuteWithdrawalUtils.ExecuteWithdrawalResult memory withdrawalResult = _processMarketWithdrawal(
+        IExecuteWithdrawalUtils.ExecuteWithdrawalResult memory withdrawalResult = _processMarketWithdrawal(
             params,
             glvWithdrawal,
             cache.marketTokenAmount
@@ -199,7 +200,7 @@ library GlvWithdrawalUtils {
         ExecuteGlvWithdrawalParams memory params,
         GlvWithdrawal.Props memory glvWithdrawal,
         uint256 marketTokenAmount
-    ) private returns (ExecuteWithdrawalUtils.ExecuteWithdrawalResult memory) {
+    ) private returns (IExecuteWithdrawalUtils.ExecuteWithdrawalResult memory) {
 
         Withdrawal.Props memory withdrawal = Withdrawal.Props(
             Withdrawal.Addresses({
@@ -240,13 +241,14 @@ library GlvWithdrawalUtils {
         );
         params.glvVault.syncTokenBalance(glvWithdrawal.market());
 
-        ExecuteWithdrawalUtils.ExecuteWithdrawalParams memory executeWithdrawalParams = ExecuteWithdrawalUtils
+        IExecuteWithdrawalUtils.ExecuteWithdrawalParams memory executeWithdrawalParams = IExecuteWithdrawalUtils
             .ExecuteWithdrawalParams({
                 dataStore: params.dataStore,
                 eventEmitter: params.eventEmitter,
                 multichainVault: params.multichainVault,
                 withdrawalVault: WithdrawalVault(payable(params.glvVault)),
                 oracle: params.oracle,
+                swapHandler: params.swapHandler,
                 key: withdrawalKey,
                 keeper: params.keeper,
                 startingGas: params.startingGas,
@@ -258,7 +260,7 @@ library GlvWithdrawalUtils {
 
     function _getMarketTokenAmount(
         DataStore dataStore,
-        Oracle oracle,
+        IOracle oracle,
         GlvWithdrawal.Props memory glvWithdrawal
     ) internal view returns (uint256) {
         uint256 glvValue = GlvUtils.getGlvValue(
@@ -296,12 +298,30 @@ library GlvWithdrawalUtils {
         GlvWithdrawal.Props memory glvWithdrawal = GlvWithdrawalStoreUtils.get(params.dataStore, params.key);
         GlvWithdrawalStoreUtils.remove(params.dataStore, params.key, glvWithdrawal.account());
 
-        params.glvVault.transferOut(
-            glvWithdrawal.glv(),
-            glvWithdrawal.account(),
-            glvWithdrawal.glvTokenAmount(),
-            false // shouldUnwrapNativeToken
-        );
+        if (glvWithdrawal.srcChainId() == 0) {
+            params.glvVault.transferOut(
+                glvWithdrawal.glv(),
+                glvWithdrawal.account(),
+                glvWithdrawal.glvTokenAmount(),
+                false // shouldUnwrapNativeToken
+            );
+        } else {
+            params.glvVault.transferOut(
+                glvWithdrawal.glv(),
+                address(params.multichainVault),
+                glvWithdrawal.glvTokenAmount(),
+                false // shouldUnwrapNativeToken
+            );
+            MultichainUtils.recordTransferIn(
+                params.dataStore,
+                params.eventEmitter,
+                params.multichainVault,
+                glvWithdrawal.glv(),
+                glvWithdrawal.account(),
+                0 // srcChainId is the current block.chainId
+            );
+        }
+
 
         GlvWithdrawalEventUtils.emitGlvWithdrawalCancelled(
             params.eventEmitter,

@@ -129,6 +129,6 @@ export function skipHandlerFunction(contractName: string): (env: HardhatRuntimeE
     if (tags.includes(contractName)) {
       return false;
     }
-    return process.env.SKIP_AUTO_HANDLER_REDEPLOYMENT ? true : false;
+    return process.env.SKIP_AUTO_HANDLER_REDEPLOYMENT == "true" ? true : false;
   };
 }

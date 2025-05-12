@@ -15,7 +15,7 @@ async function main() {
   const roleStore = await ethers.getContract("RoleStore");
   const glvFactory = await ethers.getContract("GlvFactory");
   const glvReader = await ethers.getContract("GlvReader");
-  const glvHandler = await ethers.getContract("GlvHandler");
+  const glvShiftHandler = await ethers.getContract("GlvShiftHandler");
 
   const glvAddress = getGlvAddress(
     tokens.WETH.address, // longToken
@@ -66,7 +66,7 @@ async function main() {
   for (const market of markets) {
     if (!glvInfo.markets.includes(market)) {
       console.log("adding market %s to glv", market);
-      const tx = await glvHandler.addMarketToGlv(glvAddress, market);
+      const tx = await glvShiftHandler.addMarketToGlv(glvAddress, market);
       console.log("tx sent: %s", tx.hash);
     } else {
       console.log("skip adding market %s", market);
