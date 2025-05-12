@@ -99,8 +99,6 @@ contract SubaccountRouter is BaseRouter {
     ) external payable nonReentrant {
         address account = msg.sender;
 
-        SubaccountUtils.validateSubaccount(dataStore, account, subaccount);
-
         SubaccountUtils.setSubaccountIntegrationId(
             dataStore,
             eventEmitter,
