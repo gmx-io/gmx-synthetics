@@ -81,10 +81,10 @@ library MarketPositionImpactPoolUtils {
         // We want to withdraw 50/50 long and short tokens from the pool
         // at prices expressed in index token
         uint256 longTokenWithdrawalAmount = Precision.mulDiv(
-            amount / 2, prices.indexTokenPrice.max, prices.longTokenPrice.max
+            amount, prices.indexTokenPrice.max, prices.longTokenPrice.max * 2
         );
         uint256 shortTokenWithdrawalAmount = Precision.mulDiv(
-            amount / 2, prices.indexTokenPrice.max, prices.shortTokenPrice.max
+            amount, prices.indexTokenPrice.max, prices.shortTokenPrice.max * 2
         );
 
         MarketUtils.applyDeltaToPoolAmount(
