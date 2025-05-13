@@ -60,7 +60,7 @@ contract ContributorHandler is ReentrancyGuard, RoleModule, BasicMulticall {
         dataStore.removeAddress(Keys.CONTRIBUTOR_TOKEN_LIST, token);
     }
 
-    function setContributorTokenVault(address token, address vault) external nonReentrant onlyConfigKeeper {
+    function setContributorTokenVault(address token, address vault) external nonReentrant onlyContributorKeeper {
         dataStore.setAddress(Keys.contributorTokenVaultKey(token), vault);
     }
 
@@ -161,8 +161,6 @@ contract ContributorHandler is ReentrancyGuard, RoleModule, BasicMulticall {
         _validateMaxContributorTokenAmounts();
     }
 
-    // note that this is just a sanity validation since the maxTotalContributorTokenAmount
-    // can technically be exceeded since can be separately updated in Config
     function _validateMaxContributorTokenAmounts() internal view {
         uint256 tokenCount = dataStore.getAddressCount(Keys.CONTRIBUTOR_TOKEN_LIST);
         uint256 accountCount = dataStore.getAddressCount(Keys.CONTRIBUTOR_ACCOUNT_LIST);
