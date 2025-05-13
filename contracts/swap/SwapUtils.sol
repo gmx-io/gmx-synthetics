@@ -4,9 +4,11 @@ pragma solidity ^0.8.0;
 
 import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
-import "../oracle/Oracle.sol";
+import "../oracle/IOracle.sol";
 import "../pricing/SwapPricingUtils.sol";
 import "../fee/FeeUtils.sol";
+
+import "./ISwapUtils.sol";
 
 /**
  * @title SwapUtils
@@ -24,36 +26,6 @@ library SwapUtils {
     using EventUtils for EventUtils.Bytes32Items;
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
-
-    /**
-     * @param dataStore The contract that provides access to data stored on-chain.
-     * @param eventEmitter The contract that emits events.
-     * @param oracle The contract that provides access to price data from oracles.
-     * @param bank The contract providing the funds for the swap.
-     * @param key An identifying key for the swap.
-     * @param tokenIn The address of the token that is being swapped.
-     * @param amountIn The amount of the token that is being swapped.
-     * @param swapPathMarkets An array of market properties, specifying the markets in which the swap should be executed.
-     * @param minOutputAmount The minimum amount of tokens that should be received as part of the swap.
-     * @param receiver The address to which the swapped tokens should be sent.
-     * @param uiFeeReceiver The address of the ui fee receiver.
-     * @param shouldUnwrapNativeToken A boolean indicating whether the received tokens should be unwrapped from the wrapped native token (WNT) if they are wrapped.
-     */
-    struct SwapParams {
-        DataStore dataStore;
-        EventEmitter eventEmitter;
-        Oracle oracle;
-        Bank bank;
-        bytes32 key;
-        address tokenIn;
-        uint256 amountIn;
-        Market.Props[] swapPathMarkets;
-        uint256 minOutputAmount;
-        address receiver;
-        address uiFeeReceiver;
-        bool shouldUnwrapNativeToken;
-        ISwapPricingUtils.SwapPricingType swapPricingType;
-    }
 
     /**
      * @param market The market in which the swap should be executed.
@@ -102,7 +74,7 @@ library SwapUtils {
      * @return A tuple containing the address of the token that was received as
      * part of the swap and the amount of the received token.
      */
-    function swap(SwapParams memory params) external returns (address, uint256) {
+    function swap(ISwapUtils.SwapParams memory params) external returns (address, uint256) {
         if (params.amountIn == 0) {
             return (params.tokenIn, params.amountIn);
         }
@@ -208,7 +180,7 @@ library SwapUtils {
      * @param _params The parameters for the swap on this specific market.
      * @return The token and amount that was swapped.
      */
-    function _swap(SwapParams memory params, _SwapParams memory _params) internal returns (address, uint256) {
+    function _swap(ISwapUtils.SwapParams memory params, _SwapParams memory _params) internal returns (address, uint256) {
         SwapCache memory cache;
 
         if (_params.tokenIn != _params.market.longToken && _params.tokenIn != _params.market.shortToken) {

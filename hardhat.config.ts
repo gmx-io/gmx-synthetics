@@ -277,7 +277,7 @@ const config: HardhatUserConfig = {
         chainId: 421614,
         urls: {
           apiURL: "https://api-sepolia.arbiscan.io/api",
-          browserURL: "https://https://sepolia.arbiscan.io/",
+          browserURL: "https://sepolia.arbiscan.io/",
         },
       },
       // {
@@ -329,7 +329,10 @@ task("dependencies", "Print dependencies for a contract")
 
 task("deploy", "Deploy contracts", async (taskArgs, env, runSuper) => {
   env.deployTags = taskArgs.tags ?? "";
-  if (!process.env.SKIP_AUTO_HANDLER_REDEPLOYMENT && env.network.name != "hardhat") {
+  if (
+    !(process.env.SKIP_AUTO_HANDLER_REDEPLOYMENT == "true" || process.env.SKIP_AUTO_HANDLER_REDEPLOYMENT == "false") &&
+    env.network.name != "hardhat"
+  ) {
     throw new Error("SKIP_AUTO_HANDLER_REDEPLOYMENT flag is mandatory");
   }
   await runSuper();

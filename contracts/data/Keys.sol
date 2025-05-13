@@ -502,15 +502,17 @@ library Keys {
     bytes32 public constant IS_MULTICHAIN_PROVIDER_ENABLED = keccak256(abi.encode("IS_MULTICHAIN_PROVIDER_ENABLED"));
     // @dev key for the flag if a multichain endpoint is enabled
     bytes32 public constant IS_MULTICHAIN_ENDPOINT_ENABLED = keccak256(abi.encode("IS_MULTICHAIN_ENDPOINT_ENABLED"));
-    // @dev key for the last src chain id from which the user last managed his position
-    bytes32 public constant POSITION_LAST_SRC_CHAIN_ID = keccak256(abi.encode("POSITION_LAST_SRC_CHAIN_ID"));
     // @dev key for the flag if a src chain is enabled
     bytes32 public constant IS_SRC_CHAIN_ID_ENABLED = keccak256(abi.encode("IS_SRC_CHAIN_ID_ENABLED"));
-    // @dev key for the action data
-    bytes32 public constant GMX_DATA_ACTION = keccak256(abi.encode("GMX_DATA_ACTION"));
+    // @dev key for the last src chain id from which the user last managed his position
+    bytes32 public constant POSITION_LAST_SRC_CHAIN_ID = keccak256(abi.encode("POSITION_LAST_SRC_CHAIN_ID"));
+    // @dev key for the source chain id mapped from the endpoint id
+    bytes32 public constant EID_TO_SRC_CHAIN_ID = keccak256(abi.encode("EID_TO_SRC_CHAIN_ID"));
 
     // @dev key for the maximum length for data list array of bytes32
     bytes32 public constant MAX_DATA_LENGTH = keccak256(abi.encode("MAX_DATA_LENGTH"));
+    // @dev key for the action data
+    bytes32 public constant GMX_DATA_ACTION = keccak256(abi.encode("GMX_DATA_ACTION"));
 
     // @dev constant for user initiated cancel reason
     string public constant USER_INITIATED_CANCEL = "USER_INITIATED_CANCEL";
@@ -2256,6 +2258,16 @@ library Keys {
         return keccak256(abi.encode(
             POSITION_LAST_SRC_CHAIN_ID,
             positionKey
+        ));
+    }
+
+    // @dev key for the source chain id mapped from the endpoint id
+    // @param eid the endpoint id of the source chain
+    // @return key for the srcChainId
+    function eidToSrcChainId(uint32 eid) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            EID_TO_SRC_CHAIN_ID,
+            eid
         ));
     }
 

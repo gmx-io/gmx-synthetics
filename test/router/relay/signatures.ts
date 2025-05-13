@@ -18,6 +18,7 @@ describe("Relay signatures", () => {
     oracle,
     orderHandler,
     orderVault,
+    swapHandler,
     router,
     relayUtils,
     orderStoreUtils,
@@ -26,8 +27,18 @@ describe("Relay signatures", () => {
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0 } = fixture.accounts);
-    ({ dataStore, roleStore, orderVault, router, eventEmitter, oracle, orderHandler, relayUtils, orderStoreUtils } =
-      fixture.contracts);
+    ({
+      dataStore,
+      roleStore,
+      orderVault,
+      router,
+      eventEmitter,
+      oracle,
+      orderHandler,
+      swapHandler,
+      relayUtils,
+      orderStoreUtils,
+    } = fixture.contracts);
   });
 
   beforeEach(async () => {
@@ -41,6 +52,7 @@ describe("Relay signatures", () => {
         oracle.address,
         orderHandler.address,
         orderVault.address,
+        swapHandler.address,
         ethers.constants.AddressZero,
       ],
       {

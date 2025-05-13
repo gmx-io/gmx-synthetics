@@ -49,8 +49,8 @@ library PositionUtils {
     struct UpdatePositionParamsContracts {
         DataStore dataStore;
         EventEmitter eventEmitter;
-        Oracle oracle;
-        SwapHandler swapHandler;
+        IOracle oracle;
+        ISwapHandler swapHandler;
         IReferralStorage referralStorage;
     }
 
@@ -357,7 +357,17 @@ library PositionUtils {
             )
         );
 
-        cache.priceImpactUsd += position.pendingImpactUsd();
+        // cap positive priceImpactUsd based on the max positive position impact factor
+        cache.priceImpactUsd = MarketUtils.capPositiveImpactUsdByMaxPositionImpact(
+            dataStore,
+            market.marketToken,
+            cache.priceImpactUsd,
+            position.sizeInUsd()
+        );
+
+        cache.priceImpactUsd += position.pendingImpactAmount() > 0
+            ? position.pendingImpactAmount() * prices.indexTokenPrice.min.toInt256()
+            : position.pendingImpactAmount() * prices.indexTokenPrice.max.toInt256();
 
         // even if there is a large positive price impact, positions that would be liquidated
         // if the positive price impact is reduced should not be allowed to be created
@@ -782,7 +792,19 @@ library PositionUtils {
         return (cache.priceImpactUsd, cache.executionPrice, cache.balanceWasImproved);
     }
 
-    function updatePositionLastSrcChainId(DataStore dataStore, bytes32 positionKey, uint256 srcChainId) internal {
-        dataStore.setUint(Keys.positionLastSrcChainId(positionKey), srcChainId);
+    function updatePositionLastSrcChainId(
+        DataStore dataStore,
+        Position.Props memory position,
+        Order.Props memory order,
+        bytes32 positionKey
+    ) internal {
+        uint256 positionUpdatedAtTime = position.increasedAtTime() > position.decreasedAtTime()
+            ? position.increasedAtTime()
+            : position.decreasedAtTime();
+
+        if (order.updatedAtTime() > positionUpdatedAtTime) {
+            uint256 srcChainId = order.srcChainId();
+            dataStore.setUint(Keys.positionLastSrcChainId(positionKey), srcChainId);
+        }
     }
 }
