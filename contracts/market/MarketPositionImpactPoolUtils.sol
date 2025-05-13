@@ -16,6 +16,7 @@ import {MarketUtils} from "./MarketUtils.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {SignedMath} from "@openzeppelin/contracts/utils/math/SignedMath.sol";
 import { IOracle } from "../oracle/IOracle.sol";
+import "../position/PositionUtils.sol";
 
 // @title MarketUtils
 // @dev Library for market functions
@@ -51,6 +52,13 @@ library MarketPositionImpactPoolUtils {
 
         Market.Props memory marketProps = MarketStoreUtils.get(dataStore, market);
         MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(oracle, marketProps);
+
+        PositionUtils.updateFundingAndBorrowingState(
+            dataStore,
+            eventEmitter,
+            marketProps,
+            prices
+        );
 
         MarketPoolValueInfo.Props memory poolValueInfo = MarketUtils.getPoolValueInfo(
             dataStore,
