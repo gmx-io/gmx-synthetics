@@ -17,12 +17,12 @@ import * as keys from "../../../utils/keys";
 
 describe("Exchange.PositionPriceImpact.PairMarket", () => {
   let fixture;
-  let user0, user1;
+  let user0, user1, user2;
   let reader, dataStore, referralStorage, ethUsdMarket, wnt;
 
   beforeEach(async () => {
     fixture = await deployFixture();
-    ({ user0, user1 } = fixture.accounts);
+    ({ user0, user1, user2 } = fixture.accounts);
     ({ reader, dataStore, referralStorage, ethUsdMarket, wnt } = fixture.contracts);
 
     await handleDeposit(fixture, {
@@ -526,6 +526,235 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
         },
       },
     });
+  });
+
+  it("price impact tracking", async () => {
+    // user0, open long --> negative price impact
+    // user1, open short --> positive price impact
+    // user2, open short --> negative price impact
+
+    // user1, close short --> positive price impact (0.04 from increase + 0.04 from decrease)
+    // user0, close long -->
+    // user2, close short -->
+
+    // set price impact to 0.1% for every $50,000 of token imbalance
+    // 0.1% => 0.001
+    // 0.001 / 50,000 => 2 * (10 ** -8)
+    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 9));
+    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 8));
+    await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
+
+    const params = {
+      market: ethUsdMarket,
+      initialCollateralToken: wnt,
+      initialCollateralDeltaAmount: expandDecimals(10, 18),
+      swapPath: [],
+      sizeDeltaUsd: decimalToFloat(200 * 1000),
+      executionFee: expandDecimals(1, 15),
+      minOutputAmount: expandDecimals(50000, 6),
+      shouldUnwrapNativeToken: false,
+    };
+
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(0);
+    expect(await dataStore.getInt(keys.totalPendingImpactAmountKey(ethUsdMarket.marketToken))).eq(0);
+    expect(await dataStore.getInt(keys.lentPositionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(0);
+
+    // 1. user0, open long, negative price impact
+    const positionKey0 = getPositionKey(user0.address, ethUsdMarket.marketToken, wnt.address, true);
+    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey0))).eq(0);
+
+    await handleOrder(fixture, {
+      create: {
+        ...params,
+        account: user0,
+        isLong: true,
+        orderType: OrderType.MarketIncrease,
+        acceptablePrice: expandDecimals(5050, 12),
+      },
+      execute: {
+        gasUsageLabel: "executeOrder",
+        afterExecution: ({ logs }) => {
+          const totalPendingImpactEvent = getEventData(logs, "TotalPendingImpactAmountUpdated");
+          expect(totalPendingImpactEvent.market).eq(ethUsdMarket.marketToken);
+          expect(totalPendingImpactEvent.delta).eq("-79999999999999999"); // -0.08 ETH, 400 USD
+          expect(totalPendingImpactEvent.nextValue).eq("-79999999999999999"); // -0.08 ETH, 400 USD
+
+          const lentPositionImpactPoolEvent = getEventData(logs, "LentPositionImpactPoolAmountUpdated");
+          expect(lentPositionImpactPoolEvent).to.be.undefined;
+        },
+      },
+    });
+
+    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey0))).eq("-79999999999999999"); // -0.08 ETH, 400 USD
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(0);
+    expect(await dataStore.getInt(keys.totalPendingImpactAmountKey(ethUsdMarket.marketToken))).eq("-79999999999999999"); // -0.08 ETH, 400 USD
+    expect(await dataStore.getInt(keys.lentPositionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(0);
+
+    // 2. user1, open short, positive price impact
+    const positionKey1 = getPositionKey(user1.address, ethUsdMarket.marketToken, wnt.address, false);
+    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey1))).eq(0);
+
+    await handleOrder(fixture, {
+      create: {
+        ...params,
+        account: user1,
+        isLong: false,
+        orderType: OrderType.MarketIncrease,
+        acceptablePrice: expandDecimals(5005, 12),
+      },
+      execute: {
+        gasUsageLabel: "executeOrder",
+        afterExecution: ({ logs }) => {
+          const totalPendingImpactEvent = getEventData(logs, "TotalPendingImpactAmountUpdated");
+          expect(totalPendingImpactEvent.market).eq(ethUsdMarket.marketToken);
+          expect(totalPendingImpactEvent.delta).eq("39999999999999999"); // 0.04 ETH, 200 USD
+          expect(totalPendingImpactEvent.nextValue).eq("-40000000000000000"); // -0.08 + 0.04 = -0.04 ETH, 200 USD
+
+          const lentPositionImpactPoolEvent = getEventData(logs, "LentPositionImpactPoolAmountUpdated");
+          expect(lentPositionImpactPoolEvent).to.be.undefined;
+        },
+      },
+    });
+
+    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey0))).eq("-79999999999999999"); // -0.08 ETH, 400 USD
+    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey1))).eq("39999999999999999"); // 0.04 ETH, 200 USD
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(0);
+    expect(await dataStore.getInt(keys.totalPendingImpactAmountKey(ethUsdMarket.marketToken))).eq("-40000000000000000"); // -0.08 + 0.04 = -0.04 ETH, 200 USD
+    expect(await dataStore.getInt(keys.lentPositionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(0);
+
+    // 3. user2, open short, negative price impact
+    const positionKey2 = getPositionKey(user2.address, ethUsdMarket.marketToken, wnt.address, false);
+    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey2))).eq(0);
+
+    await handleOrder(fixture, {
+      create: {
+        ...params,
+        account: user2,
+        isLong: false,
+        orderType: OrderType.MarketIncrease,
+        acceptablePrice: expandDecimals(4990, 12),
+      },
+      execute: {
+        gasUsageLabel: "executeOrder",
+        afterExecution: ({ logs }) => {
+          const totalPendingImpactEvent = getEventData(logs, "TotalPendingImpactAmountUpdated");
+          expect(totalPendingImpactEvent.market).eq(ethUsdMarket.marketToken);
+          expect(totalPendingImpactEvent.delta).eq("-79999999999999999"); // -0.08 ETH, 400 USD
+          expect(totalPendingImpactEvent.nextValue).eq("-119999999999999999"); // -0.08 + 0.04 - 0.08 = -0.12 ETH, 600 USD
+
+          const lentPositionImpactPoolEvent = getEventData(logs, "LentPositionImpactPoolAmountUpdated");
+          expect(lentPositionImpactPoolEvent).to.be.undefined;
+        },
+      },
+    });
+
+    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey0))).eq("-79999999999999999"); // -0.08 ETH, 400 USD
+    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey1))).eq("39999999999999999"); // 0.04 ETH, 200 USD
+    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey2))).eq("-79999999999999999"); // -0.08 ETH, 400 USD
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(0);
+    expect(await dataStore.getInt(keys.totalPendingImpactAmountKey(ethUsdMarket.marketToken))).eq(
+      "-119999999999999999"
+    ); // -0.08 + 0.04 - 0.08 = -0.12 ETH, 600 USD
+    expect(await dataStore.getInt(keys.lentPositionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(0);
+
+    // 4. user1, close short, positive price impact (0.04 from increase + 0.04 from decrease)
+    // impact is "lent" to user because the position pool amount is 0
+    await handleOrder(fixture, {
+      create: { ...params, account: user1, isLong: false, orderType: OrderType.MarketDecrease },
+      execute: {
+        gasUsageLabel: "executeOrder",
+        afterExecution: ({ logs }) => {
+          const totalPendingImpactEvent = getEventData(logs, "TotalPendingImpactAmountUpdated");
+          expect(totalPendingImpactEvent.market).eq(ethUsdMarket.marketToken);
+          expect(totalPendingImpactEvent.delta).eq("-39999999999999999"); // -0.04 ETH, 200 USD // TODO: should be +0.04
+          expect(totalPendingImpactEvent.nextValue).eq("-159999999999999998"); // -0.12 - 0.04 = -0.16 ETH, 800 USD // TODO: should be -0.08
+
+          const positionDecreaseEvent = getEventData(logs, "PositionDecrease");
+          expect(positionDecreaseEvent.priceImpactUsd).eq("199999999999999996294009356670000"); // 200 USD, 0.04 ETH
+          expect(positionDecreaseEvent.proportionalPendingImpactUsd).eq("199999999999999995000000000000000"); // 200, 0.04 ETH
+
+          const lentPositionImpactPoolEvent = getEventData(logs, "LentPositionImpactPoolAmountUpdated");
+          expect(lentPositionImpactPoolEvent.market).eq(ethUsdMarket.marketToken);
+          expect(lentPositionImpactPoolEvent.delta).eq("79999999999999999");
+          expect(lentPositionImpactPoolEvent.nextValue).eq("79999999999999999");
+        },
+      },
+    });
+
+    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey0))).eq("-79999999999999999"); // -0.08 ETH, 400 USD
+    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey1))).eq(0);
+    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey2))).eq("-79999999999999999"); // -0.08 ETH, 400 USD
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(0);
+    expect(await dataStore.getInt(keys.totalPendingImpactAmountKey(ethUsdMarket.marketToken))).eq(
+      "-159999999999999998"
+    ); // -0.16 ETH, 800 USD // TODO: should be -0.12 + 0.04 = -0.08
+    expect(await dataStore.getInt(keys.lentPositionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(0); // TODO: should be 0.04 (proportional) + 0.04 (decrease) = 0.08
+
+    // 5. user0, close long, negative price impact
+    await handleOrder(fixture, {
+      create: {
+        ...params,
+        account: user0,
+        isLong: true,
+        orderType: OrderType.MarketDecrease,
+        acceptablePrice: expandDecimals(4990, 12),
+      },
+      execute: {
+        gasUsageLabel: "executeOrder",
+        afterExecution: ({ logs }) => {
+          const totalPendingImpactEvent = getEventData(logs, "TotalPendingImpactAmountUpdated");
+          expect(totalPendingImpactEvent.market).eq(ethUsdMarket.marketToken);
+          expect(totalPendingImpactEvent.delta).eq("79999999999999999"); // 0.08 ETH, 400 USD
+          expect(totalPendingImpactEvent.nextValue).eq("-79999999999999999"); // -0.08 ETH, 400 USD
+
+          const lentPositionImpactPoolEvent = getEventData(logs, "LentPositionImpactPoolAmountUpdated");
+          expect(lentPositionImpactPoolEvent.market).eq(ethUsdMarket.marketToken);
+          expect(lentPositionImpactPoolEvent.delta).eq("79999999999999999");
+          expect(lentPositionImpactPoolEvent.nextValue).eq(0);
+        },
+      },
+    });
+
+    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey0))).eq(0);
+    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey1))).eq(0);
+    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey2))).eq("-79999999999999999"); // -0.08 ETH, 400 USD
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq("79999999999999999"); // 0.08 ETH, 400 USD
+    expect(await dataStore.getInt(keys.totalPendingImpactAmountKey(ethUsdMarket.marketToken))).eq("-79999999999999999"); // -0.08 ETH, 400 USD
+    expect(await dataStore.getInt(keys.lentPositionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(0);
+
+    // 6. user2, close long, positive price impact
+    await handleOrder(fixture, {
+      create: {
+        ...params,
+        account: user2,
+        isLong: false,
+        orderType: OrderType.MarketDecrease,
+        acceptablePrice: expandDecimals(5004, 12),
+      },
+      execute: {
+        gasUsageLabel: "executeOrder",
+        afterExecution: ({ logs }) => {
+          const totalPendingImpactEvent = getEventData(logs, "TotalPendingImpactAmountUpdated");
+          expect(totalPendingImpactEvent.market).eq(ethUsdMarket.marketToken);
+          expect(totalPendingImpactEvent.delta).eq("79999999999999999"); // 0.08 ETH, 400 USD
+          expect(totalPendingImpactEvent.nextValue).eq(0);
+
+          const lentPositionImpactPoolEvent = getEventData(logs, "LentPositionImpactPoolAmountUpdated");
+          expect(lentPositionImpactPoolEvent.market).eq(ethUsdMarket.marketToken);
+          expect(lentPositionImpactPoolEvent.delta).eq(0);
+          expect(lentPositionImpactPoolEvent.nextValue).eq(0);
+        },
+      },
+    });
+
+    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey0))).eq(0);
+    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey1))).eq(0);
+    expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey2))).eq(0);
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(
+      "119999999999999999"
+    ); // 0.12 ETH, 600 USD
+    expect(await dataStore.getInt(keys.totalPendingImpactAmountKey(ethUsdMarket.marketToken))).eq(0);
+    expect(await dataStore.getInt(keys.lentPositionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(0);
   });
 
   it("difference in pnl should be equal to price impact amount", async () => {
