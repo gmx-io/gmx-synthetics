@@ -107,7 +107,7 @@ async function main() {
   await feeDistributorConfig.moveToNextDistributionDay(distributionDay);
 
   await config.setUint(keys.FEE_DISTRIBUTOR_REFERRAL_REWARDS_WNT_USD_LIMIT, "0x", expandDecimals(1_000_000, 30));
-  await config.setUint(keys.FEE_DISTRIBUTOR_REFERRAL_REWARDS_ESGMX_LIMIT, "0x", expandDecimals(10, 18));
+  await config.setUint(keys.FEE_DISTRIBUTOR_REFERRAL_REWARDS_ESGMX_LIMIT, "0x", expandDecimals(100, 18));
   await config.setUint(keys.FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY, "0x", 86400);
   await config.setUint(keys.FEE_DISTRIBUTOR_GAS_LIMIT, "0x", 5_000_000);
 
