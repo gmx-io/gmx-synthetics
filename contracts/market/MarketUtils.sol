@@ -908,6 +908,10 @@ library MarketUtils {
         // price impact that can be used to pay for positive price impact
         int256 totalImpactPoolAmount = impactPoolAmount.toInt256() - totalPendingImpactAmount;
 
+        if (totalImpactPoolAmount < 0) {
+            return 0;
+        }
+
         // use indexTokenPrice.min to maximize the position impact pool reduction
         int256 maxPriceImpactUsdBasedOnImpactPool = totalImpactPoolAmount * indexTokenPrice.min.toInt256();
 
