@@ -2,10 +2,9 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-
-import "../utils/Cast.sol";
-import "../error/Errors.sol";
+import {Errors} from "../error/Errors.sol";
+import {Cast} from "../utils/Cast.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 contract EdgeDataStreamVerifier {
 
@@ -43,7 +42,9 @@ contract EdgeDataStreamVerifier {
             int32 expo
         ) = abi.decode(data, (string, uint192, uint32, uint32, uint256, uint256, bytes, int32));
 
-        if (!verifySignature(feedId, price, roundId, timestamp, bid, ask, signature)) {
+        if (!verifySignature(
+            feedId, price, roundId, timestamp, bid, ask, expo,
+            signature)) {
             revert Errors.InvalidEdgeSigner();
         }
         return Report(
@@ -62,6 +63,7 @@ contract EdgeDataStreamVerifier {
         uint32 timestamp,
         uint256 bid,
         uint256 ask,
+        int32 expo,
         bytes memory signature
     ) public view returns (bool) {
         return extractSigner(
@@ -71,6 +73,7 @@ contract EdgeDataStreamVerifier {
             timestamp,
             bid,
             ask,
+            expo,
             signature
         ) == trustedSigner;
     }
@@ -93,17 +96,22 @@ contract EdgeDataStreamVerifier {
         uint32 timestamp,
         uint256 bid,
         uint256 ask,
+        int32 expo,
         bytes memory signature
     ) public pure returns (address) {
         // Recreate the message that was signed
-        bytes32 messageHash = getMessageHash(
-            feedId,
-            price,
-            roundId,
-            timestamp,
-            bid,
-            ask
-        );
+        bytes32 messageHash;
+        {
+            messageHash = getMessageHash(
+                leftPadBytes(bytes(feedId), 32),
+                Cast.uint192ToBytes(price),
+                Cast.uint32ToBytes(roundId),
+                Cast.uint32ToBytes(timestamp),
+                Cast.uint256ToBytes(bid),
+                Cast.uint256ToBytes(ask),
+                Cast.int32ToBytes(-expo)
+            );
+        }
 
         (address recovered, ECDSA.RecoverError recoverError) = ECDSA.tryRecover(messageHash, signature);
         if (recoverError != ECDSA.RecoverError.NoError) {
@@ -117,27 +125,33 @@ contract EdgeDataStreamVerifier {
      * @dev Creates a hash of the serialized price data in the same format as server does
      */
     function getMessageHash(
-        string memory feedId,
-        uint192 price,
-        uint32 roundId,
-        uint32 timestamp,
-        uint256 bid,
-        uint256 ask
-    ) public pure returns (bytes32) {
-        bytes memory message = abi.encodePacked(
-            leftPadBytes(bytes(feedId), 32),
-            Cast.uint192ToBytes(price),
-            Cast.uint32ToBytes(roundId),
-            Cast.uint32ToBytes(timestamp),
-            Cast.uint256ToBytes(bid),
-            Cast.uint256ToBytes(ask)
-        );
+        bytes memory feedId,
+        bytes memory price,
+        bytes memory roundId,
+        bytes memory ts,
+        bytes memory bid,
+        bytes memory ask,
+        bytes memory expo
+    ) private pure returns (bytes32) {
+
+        bytes memory message = new bytes(224);
+        //emulate abi.encodePacked call via assembly to avoid stack too deep error
+        // all values are 32 bytes long
+        assembly {
+            mstore(add(message, 32), mload(add(feedId, 32)))
+            mstore(add(message, 64), mload(add(price, 32)))
+            mstore(add(message, 96), mload(add(expo, 32)))
+            mstore(add(message, 128), mload(add(roundId, 32)))
+            mstore(add(message, 160), mload(add(ts, 32)))
+            mstore(add(message, 192), mload(add(bid, 32)))
+            mstore(add(message, 224), mload(add(ask, 32)))
+        }
 
         return keccak256(message);
     }
 
-    /**
-     * @dev Left-pads a byte array to the desired length, similar to common.LeftPadBytes in Go
+/**
+ * @dev Left-pads a byte array to the desired length, similar to common.LeftPadBytes in Go
      */
     function leftPadBytes(
         bytes memory data,
@@ -145,13 +159,13 @@ contract EdgeDataStreamVerifier {
     ) internal pure returns (bytes memory) {
         bytes memory result = new bytes(length);
 
-        // If data is longer than length, truncate it
+// If data is longer than length, truncate it
         uint256 dataLength = data.length;
         if (dataLength > length) {
             dataLength = length;
         }
 
-        // Copy data to the end of the result
+// Copy data to the end of the result
         for (uint256 i = 0; i < dataLength; i++) {
             result[length - dataLength + i] = data[i];
         }
