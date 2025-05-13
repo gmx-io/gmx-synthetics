@@ -10,11 +10,12 @@ import "./WithdrawalEventUtils.sol";
 import "./IWithdrawalUtils.sol";
 
 import "../nonce/NonceUtils.sol";
-import "../oracle/Oracle.sol";
 
 import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
 
+import "../price/Price.sol";
+import "../market/MarketUtils.sol";
 import "../utils/Array.sol";
 import "../utils/AccountUtils.sol";
 
@@ -159,12 +160,30 @@ library WithdrawalUtils {
 
         WithdrawalStoreUtils.remove(dataStore, key, withdrawal.account());
 
-        withdrawalVault.transferOut(
-            withdrawal.market(),
-            withdrawal.account(),
-            withdrawal.marketTokenAmount(),
-            false // shouldUnwrapNativeToken
-        );
+        if (withdrawal.srcChainId() == 0) {
+            withdrawalVault.transferOut(
+                withdrawal.market(),
+                withdrawal.account(),
+                withdrawal.marketTokenAmount(),
+                false // shouldUnwrapNativeToken
+            );
+        } else {
+            withdrawalVault.transferOut(
+                withdrawal.market(),
+                address(multichainVault),
+                withdrawal.marketTokenAmount(),
+                false // shouldUnwrapNativeToken
+            );
+            MultichainUtils.recordTransferIn(
+                dataStore,
+                eventEmitter,
+                multichainVault,
+                withdrawal.market(),
+                withdrawal.account(),
+                0 // srcChainId is the current block.chainId
+            );
+        }
+
 
         WithdrawalEventUtils.emitWithdrawalCancelled(
             eventEmitter,

@@ -9,6 +9,7 @@ const baseConstructorContracts = [
   "Oracle",
   "OrderVault",
   "OrderHandler",
+  "SwapHandler",
   "ExternalHandler",
   "MultichainVault",
 ];
@@ -27,13 +28,14 @@ const func = createDeployFunction({
       oracle: dependencyContracts.Oracle.address,
       orderVault: dependencyContracts.OrderVault.address,
       orderHandler: dependencyContracts.OrderHandler.address,
+      swapHandler: dependencyContracts.SwapHandler.address,
       externalHandler: dependencyContracts.ExternalHandler.address,
       multichainVault: dependencyContracts.MultichainVault.address,
     };
 
     return [baseParams];
   },
-  libraryNames: ["MarketUtils", "MultichainUtils", "RelayUtils"],
+  libraryNames: ["MultichainUtils", "RelayUtils"],
 
   afterDeploy: async ({ deployedContract }) => {
     await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");

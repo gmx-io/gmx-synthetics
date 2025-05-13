@@ -14,12 +14,13 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        Oracle _oracle,
+        IOracle _oracle,
         IOrderHandler _orderHandler,
         OrderVault _orderVault,
+        ISwapHandler _swapHandler,
         IExternalHandler _externalHandler
     )
-        BaseGelatoRelayRouter(_oracle, _orderHandler, _orderVault, _externalHandler)
+        BaseGelatoRelayRouter(_oracle, _orderHandler, _orderVault, _swapHandler, _externalHandler)
         BaseRouter(_router, _roleStore, _dataStore, _eventEmitter)
     {}
 
@@ -54,10 +55,9 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             params.updateOrderParamsList.length +
             params.cancelOrderKeys.length;
 
-        _handleSubaccountAction(
+        _handleSubaccountOrderAction(
             account,
             subaccount,
-            Keys.SUBACCOUNT_ORDER_ACTION,
             vars.actionsCount,
             subaccountApproval
         );
@@ -89,7 +89,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         bytes32 structHash = RelayUtils.getCreateOrderStructHash(relayParams, subaccountApproval, account, params);
         _validateCall(relayParams, subaccount, structHash, block.chainid /* srcChainId */);
         SubaccountRouterUtils.validateCreateOrderParams(account, params);
-        _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, 1, subaccountApproval);
+        _handleSubaccountOrderAction(account, subaccount, 1, subaccountApproval);
 
         return
             _createOrder(
@@ -110,7 +110,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     ) external nonReentrant withRelay(relayParams, account, 0 /* srcChainId is the current block.chainId */, true) {
         bytes32 structHash = RelayUtils.getUpdateOrderStructHash(relayParams, subaccountApproval, account, params);
         _validateCall(relayParams, subaccount, structHash, block.chainid /* srcChainId */);
-        _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, 1, subaccountApproval);
+        _handleSubaccountOrderAction(account, subaccount, 1, subaccountApproval);
 
         _updateOrder(
             account,
@@ -129,7 +129,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     ) external nonReentrant withRelay(relayParams, account, 0 /* srcChainId is the current block.chainId */, true) {
         bytes32 structHash = RelayUtils.getCancelOrderStructHash(relayParams, subaccountApproval, account, key);
         _validateCall(relayParams, subaccount, structHash, block.chainid /* srcChainId */);
-        _handleSubaccountAction(account, subaccount, Keys.SUBACCOUNT_ORDER_ACTION, 1, subaccountApproval);
+        _handleSubaccountOrderAction(account, subaccount, 1, subaccountApproval);
         _cancelOrder(account, key);
     }
 
@@ -146,24 +146,21 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         SubaccountUtils.removeSubaccount(dataStore, eventEmitter, account, subaccount);
     }
 
-    function _handleSubaccountAction(
+    function _handleSubaccountOrderAction(
         address account,
         address subaccount,
-        bytes32 actionType,
         uint256 actionsCount,
         SubaccountApproval calldata subaccountApproval
     ) private {
-        uint256 storedNonce = subaccountApprovalNonces[account];
         SubaccountRouterUtils.handleSubaccountAction(
             dataStore,
             eventEmitter,
             account,
             subaccount,
-            actionType,
+            Keys.SUBACCOUNT_ORDER_ACTION, // actionType
             actionsCount,
             subaccountApproval,
-            storedNonce
+            subaccountApprovalNonces
         );
-        subaccountApprovalNonces[account] = storedNonce + 1;
     }
 }

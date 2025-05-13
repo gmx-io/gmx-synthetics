@@ -9,11 +9,12 @@ const baseConstructorContracts = [
   "Oracle",
   "OrderVault",
   "OrderHandler",
+  "SwapHandler",
   "ExternalHandler",
   "MultichainVault",
 ];
 
-const glvConstructorContracts = ["GlvHandler", "GlvVault"];
+const glvConstructorContracts = ["GlvDepositHandler", "GlvWithdrawalHandler", "GlvVault"];
 
 const func = createDeployFunction({
   contractName: "MultichainGlvRouter",
@@ -27,13 +28,19 @@ const func = createDeployFunction({
       oracle: dependencyContracts.Oracle.address,
       orderVault: dependencyContracts.OrderVault.address,
       orderHandler: dependencyContracts.OrderHandler.address,
+      swapHandler: dependencyContracts.SwapHandler.address,
       externalHandler: dependencyContracts.ExternalHandler.address,
       multichainVault: dependencyContracts.MultichainVault.address,
     };
 
-    return [baseParams, dependencyContracts.GlvHandler.address, dependencyContracts.GlvVault.address];
+    return [
+      baseParams,
+      dependencyContracts.GlvDepositHandler.address,
+      dependencyContracts.GlvWithdrawalHandler.address,
+      dependencyContracts.GlvVault.address,
+    ];
   },
-  libraryNames: ["MultichainUtils", "RelayUtils", "SwapUtils", "MarketUtils", "GlvWithdrawalUtils"],
+  libraryNames: ["MultichainUtils", "RelayUtils"],
 
   afterDeploy: async ({ deployedContract }) => {
     await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");

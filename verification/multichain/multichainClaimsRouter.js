@@ -1,19 +1,20 @@
 // a custom argument file may be needed for complex arguments
 // https://hardhat.org/hardhat-runner/plugins/nomicfoundation-hardhat-verify#complex-arguments
 
-// ARBISCAN_API_KEY=<api key> npx hardhat --network arbitrumSepolia verify --constructor-args ./verification/multichain/multichainClaimsRouter.js --contract contracts/multichain/MultichainClaimsRouter.sol:MultichainClaimsRouter 0xd0F1da70b539649DB510cbEd4EA139e0744dC771
+// ARBISCAN_API_KEY=<api key> npx hardhat --network arbitrumSepolia verify --constructor-args ./verification/multichain/multichainClaimsRouter.js --contract contracts/multichain/MultichainClaimsRouter.sol:MultichainClaimsRouter 0xB1203De1AEBC4A7E0f8cBD47C69bC2e30f388Ae8
 
 module.exports = [
   {
-    router: "0xd15B8b178981BFEF71f54BD5C9c4992424a73E5A",
-    roleStore: "0xB0681d729Fc85C93b442Eaf110A847dB8d3cF28F",
-    dataStore: "0xB558f529F97a405178E2437737F97Bb10eFadAfE",
-    eventEmitter: "0x3Ab21B44cffFD87a69F909f40dD2335ff68945A8",
-    oracle: "0x612aF8be55b46676A7034B80c70baadC62fdddb4",
-    orderVault: "0xD2A2044f62D7cD77470AC237408f9f59AcB5965E",
-    orderHandler: "0x9D16Ec2BEB7A9D242330C37F5E0360cAf792F81c",
-    externalHandler: "0xfd056C9432F9f1d1AD7835Ae7d021c8ba27A19DC",
-    multichainVault: "0x924Bb6a9FA7aA0b96697AD8Fd934C782E45DF52f"
+    router: "0x72F13a44C8ba16a678CAD549F17bc9e06d2B8bD2",
+    roleStore: "0x433E3C47885b929aEcE4149E3c835E565a20D95c",
+    dataStore: "0xCF4c2C4c53157BcC01A596e3788fFF69cBBCD201",
+    eventEmitter: "0xa973c2692C1556E1a3d478e745e9a75624AEDc73",
+    oracle: "0x927935dA161C0Ca7A288d874A5a0C2c394d16739",
+    orderVault: "0x1b8AC606de71686fd2a1AEDEcb6E0EFba28909a2",
+    orderHandler: "0x8E4dF082548D2C58D97d5e1be54D0a6f98f5218F",
+    swapHandler: "0x0FDD1cBc156be5DeF8592B09D9Aab0f30587E34e",
+    externalHandler: "0x2303b33c2895871ae45AD8fEBCB52275657c9F9d",
+    multichainVault: "0xCd46EF5ed7d08B345c47b5a193A719861Aa2CD91"
   }
 ];
 

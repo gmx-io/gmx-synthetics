@@ -14,7 +14,7 @@ const STARGATE_POOL_USDC = "0x4985b8fcEA3659FD801a5b857dA1D00e985863F0"; // Sepo
 const STARGATE_POOL_NATIVE = "0x9Cc7e185162Aa5D1425ee924D97a87A0a34A0706"; // Sepolia
 // ArbitrumSepolia
 const DST_EID = 40231; // ArbitrumSepolia
-const LAYERZERO_PROVIDER = "0x886156a4420D724faF838A97fEB4680AD75BC481"; // ArbitrumSepolia
+const LAYERZERO_PROVIDER = "0x7f092E45Eed1d69DD56Fe1a0B8B69B97cd020604"; // ArbitrumSepolia
 
 async function prepareSend(
   amount: number | string | BigNumber,
@@ -128,9 +128,13 @@ async function checkAllowance({ account, amount, usdc }) {
 async function main() {
   const [wallet] = await hre.ethers.getSigners();
   const account = wallet.address;
-  const composedMsg = ethers.utils.defaultAbiCoder.encode(["address", "uint256"], [account, SRC_CHAIN_ID]);
+  const data = "0x"; // encoded actionType and actionData
+  const composedMsg = ethers.utils.defaultAbiCoder.encode(
+    ["address", "uint256", "bytes"],
+    [account, SRC_CHAIN_ID, data]
+  );
 
-  const usdcAmount = expandDecimals(10, 6); // USDC
+  const usdcAmount = expandDecimals(25, 6); // USDC
   const ethAmount = expandDecimals(1, 16); // 0.01 ETH
 
   // Bridge USDC
