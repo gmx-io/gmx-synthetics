@@ -864,7 +864,18 @@ library MarketUtils {
         return (positiveImpactFactor, negativeImpactFactor);
     }
 
-    // @dev cap the input priceImpactUsd by the available amount in the position impact pool
+    // @dev cap the input priceImpactUsd by the available amount in the
+    // position impact pool
+    // Note that since the price impact can be capped, a malicious
+    // CONFIG_KEEPER can set price impact values to be very large
+    // then make trades to incur a large amount of negative price impact
+    // in account A, and a large amount of positive price impact in
+    // account B
+    // since the price impact in account A is claimable, and the positive
+    // price impact in account B is first paid for by the pool, this method
+    // can be used to reduce the funds in the GM pool
+    // the CLAIMABLE_COLLATERAL_DELAY should be restricted to be at least
+    // 24 hours or more to allow for activity of this form to be blocked
     // @param dataStore DataStore
     // @param market the trading market
     // @param indexTokenPrice the price of the token
@@ -874,26 +885,31 @@ library MarketUtils {
         DataStore dataStore,
         address market,
         Price.Props memory indexTokenPrice,
-        int256 priceImpactUsd
+        int256 priceImpactUsd,
+        int256 positionProportionalPendingImpactAmount
     ) internal view returns (int256) {
-        // TODO: cap impact by payable impact amount instead
-        // Note that since the price impact can be capped, a malicious
-        // CONFIG_KEEPER can set price impact values to be very large
-        // then make trades to incur a large amount of negative price impact
-        // in account A, and a large amount of positive price impact in
-        // account B
-        // since the price impact in account A is claimable, and the positive
-        // price impact in account B is first paid for by the pool, this method
-        // can be used to reduce the funds in the GM pool
-        // the CLAIMABLE_COLLATERAL_DELAY should be restricted to be at least
-        // 24 hours or more to allow for activity of this form to be blocked
         if (priceImpactUsd < 0) {
             return priceImpactUsd;
         }
 
         uint256 impactPoolAmount = getPositionImpactPoolAmount(dataStore, market);
+        int256 totalPendingImpactAmount = getTotalPendingImpactAmount(dataStore, market);
+        // on position close, the proportional position pending impact amount will be
+        // subtracted from the totalPendingImpactAmount
+        // e.g. if totalPendingImpactAmount is 5 and proportional position pending
+        // impact amount is 20
+        // after the position is reduced, the totalPendingImpactAmount would be -15
+        totalPendingImpactAmount -= positionProportionalPendingImpactAmount;
+
+        // totalPendingImpactAmount is subtracted from impactPoolAmount
+        // if totalPendingImpactAmount is positive, this means there is pending
+        // price impact that should be covered by the pool
+        // if totalPendingImpactAmount is negative, this means there is pending
+        // price impact that can be used to pay for positive price impact
+        int256 totalImpactPoolAmount = impactPoolAmount.toInt256() - totalPendingImpactAmount;
+
         // use indexTokenPrice.min to maximize the position impact pool reduction
-        int256 maxPriceImpactUsdBasedOnImpactPool = (impactPoolAmount * indexTokenPrice.min).toInt256();
+        int256 maxPriceImpactUsdBasedOnImpactPool = totalImpactPoolAmount * indexTokenPrice.min.toInt256();
 
         if (priceImpactUsd > maxPriceImpactUsdBasedOnImpactPool) {
             priceImpactUsd = maxPriceImpactUsdBasedOnImpactPool;

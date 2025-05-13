@@ -684,6 +684,14 @@ library PositionUtils {
             params.order.sizeDeltaUsd()
         );
 
+        cache.priceImpactUsd = MarketUtils.capPositiveImpactUsdByPositionImpactPool(
+            params.contracts.dataStore,
+            params.market.marketToken,
+            indexTokenPrice,
+            cache.priceImpactUsd,
+            0
+        );
+
         // for long positions
         //
         // if price impact is positive, the sizeDeltaInTokens would be increased by the priceImpactAmount

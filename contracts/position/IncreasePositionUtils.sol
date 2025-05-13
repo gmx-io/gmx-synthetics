@@ -100,7 +100,13 @@ library IncreasePositionUtils {
             );
         }
 
-        (cache.priceImpactUsd, cache.priceImpactAmount, cache.baseSizeDeltaInTokens, cache.executionPrice, cache.balanceWasImproved) = PositionUtils.getExecutionPriceForIncrease(params, prices.indexTokenPrice);
+        (
+            cache.priceImpactUsd,
+            cache.priceImpactAmount,
+            cache.baseSizeDeltaInTokens,
+            cache.executionPrice,
+            cache.balanceWasImproved
+        ) = PositionUtils.getExecutionPriceForIncrease(params, prices.indexTokenPrice);
 
         // process the collateral for the given position and order
         PositionPricingUtils.PositionFees memory fees;
