@@ -248,8 +248,15 @@ library ConfigUtils {
         if (
             baseKey == Keys.SEQUENCER_GRACE_DURATION
         ) {
-            // 2 hours
-            if (value > 7200) {
+            if (value > 2 hours) {
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
+            }
+        }
+
+        if (
+            baseKey == Keys.CLAIMABLE_COLLATERAL_DELAY
+        ) {
+            if (value < 24 hours) {
                 revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
             }
         }
