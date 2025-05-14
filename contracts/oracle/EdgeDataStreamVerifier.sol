@@ -6,6 +6,8 @@ import {Errors} from "../error/Errors.sol";
 import {Cast} from "../utils/Cast.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
+import "hardhat/console.sol";
+
 contract EdgeDataStreamVerifier {
 
     struct Report {
@@ -134,18 +136,18 @@ contract EdgeDataStreamVerifier {
         bytes memory expo
     ) private pure returns (bytes32) {
 
-        bytes memory message = new bytes(224);
-        //emulate abi.encodePacked call via assembly to avoid stack too deep error
-        // all values are 32 bytes long
-        assembly {
-            mstore(add(message, 32), mload(add(feedId, 32)))
-            mstore(add(message, 64), mload(add(price, 32)))
-            mstore(add(message, 96), mload(add(expo, 32)))
-            mstore(add(message, 128), mload(add(roundId, 32)))
-            mstore(add(message, 160), mload(add(ts, 32)))
-            mstore(add(message, 192), mload(add(bid, 32)))
-            mstore(add(message, 224), mload(add(ask, 32)))
-        }
+        // split one abi.encodePacked call into two to avoid stack too deep error
+        bytes memory message = abi.encodePacked(
+            feedId,
+            price,
+            expo
+        );
+        message = abi.encodePacked(message,
+            roundId,
+            ts,
+            bid,
+            ask
+        );
 
         return keccak256(message);
     }
