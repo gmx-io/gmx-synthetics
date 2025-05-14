@@ -170,7 +170,7 @@ library DecreasePositionCollateralUtils {
             params.market.marketToken,
             cache.prices.indexTokenPrice,
             values.totalImpactUsd,
-            values.proportionalPendingImpactUsd
+            values.proportionalPendingImpactAmount
         );
 
         if (values.totalImpactUsd > 0) {
