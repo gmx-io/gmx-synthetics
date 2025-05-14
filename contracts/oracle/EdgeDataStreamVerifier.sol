@@ -6,8 +6,6 @@ import {Errors} from "../error/Errors.sol";
 import {Cast} from "../utils/Cast.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
-import "hardhat/console.sol";
-
 contract EdgeDataStreamVerifier {
 
     struct Report {
@@ -111,7 +109,7 @@ contract EdgeDataStreamVerifier {
                 Cast.uint32ToBytes(timestamp),
                 Cast.uint256ToBytes(bid),
                 Cast.uint256ToBytes(ask),
-                Cast.int32ToBytes(-expo)
+                Cast.int32ToBytes(- expo)
             );
         }
 
@@ -152,22 +150,22 @@ contract EdgeDataStreamVerifier {
         return keccak256(message);
     }
 
-/**
- * @dev Left-pads a byte array to the desired length, similar to common.LeftPadBytes in Go
-     */
+    /**
+    * @dev Left-pads a byte array to the desired length, similar to common.LeftPadBytes in Go
+    */
     function leftPadBytes(
         bytes memory data,
         uint256 length
     ) internal pure returns (bytes memory) {
         bytes memory result = new bytes(length);
 
-// If data is longer than length, truncate it
+        // If data is longer than length, truncate it
         uint256 dataLength = data.length;
         if (dataLength > length) {
             dataLength = length;
         }
 
-// Copy data to the end of the result
+        // Copy data to the end of the result
         for (uint256 i = 0; i < dataLength; i++) {
             result[length - dataLength + i] = data[i];
         }
