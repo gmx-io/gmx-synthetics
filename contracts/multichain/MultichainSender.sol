@@ -4,29 +4,41 @@ pragma solidity ^0.8.20;
 import { MessagingFee } from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/ILayerZeroEndpointV2.sol";
 import { OAppSender } from "@layerzerolabs/oapp-evm/contracts/oapp/OAppSender.sol";
 import { OAppCore } from "@layerzerolabs/oapp-evm/contracts/oapp/OAppCore.sol";
+
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 import "../error/Errors.sol";
 
-contract MultichainReferralSender is OAppSender {
+contract MultichainSender is OAppSender {
 
     constructor(address _endpoint, address _owner) OAppCore(_endpoint, _owner) Ownable() {}
 
     /**
+     * @notice Quotes the fee required to send a message to the destination chain
+     * @param message The message to be sent
+     * @param dstEid Destination chain's endpoint ID
+     * @param options Message execution options (e.g. for sending gas to destination)
+     * @return fee The MessagingFee struct containing the native and ZRO fees
+     */
+    function quote(
+        bytes memory message,
+        uint32 dstEid,
+        bytes calldata options
+    ) external view returns (MessagingFee memory fee) {
+        return _quote(dstEid, message, options, false);
+    }
+
+    /**
      * @notice Sends a message from the source to destination chain
-     * @param account The account to be referred
-     * @param referralCode The referral code to be used
+     * @param message The message to be sent
      * @param dstEid Destination chain's endpoint ID
      * @param options Message execution options (e.g. for sending gas to destination)
      */
-    function sendReferral(
-        address account,
-        bytes32 referralCode,
+    function sendMessage(
+        bytes memory message,
         uint32 dstEid,
         bytes calldata options
     ) external payable {
-        bytes memory message = abi.encode(account, referralCode);
-
         MessagingFee memory fee = _quote(dstEid, message, options, false);
 
         if (msg.value < fee.nativeFee) {
