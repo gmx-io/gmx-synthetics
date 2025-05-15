@@ -164,6 +164,12 @@ const getConfigItems = (generalConfig, oracleConfig) => {
     },
     {
       type: "uint",
+      baseKey: keys.ORACLE_PROVIDER_MIN_CHANGE_DELAY,
+      value: generalConfig.oracleProviderMinChangeDelay,
+      label: `oracleProviderMinChangeDelay`,
+    },
+    {
+      type: "uint",
       baseKey: keys.GELATO_RELAY_FEE_BASE_AMOUNT,
       value: generalConfig.gelatoRelayFeeBaseAmount,
       label: `gelatoRelayFeeBaseAmount`,

@@ -191,6 +191,7 @@ async function appendConfigIfDifferent(
   const config = await hre.ethers.getContract("Config");
 
   const key = getFullKey(baseKey, keyData);
+  keyData = keyData || "0x";
 
   const setMethod = `set${type[0].toUpperCase()}${type.slice(1)}`;
 
