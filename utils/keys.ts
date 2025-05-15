@@ -276,6 +276,7 @@ export const WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT = hashString("WITHDRAWABLE_BUYBAC
 export const MULTICHAIN_BALANCE = hashString("MULTICHAIN_BALANCE");
 export const IS_MULTICHAIN_PROVIDER_ENABLED = hashString("IS_MULTICHAIN_PROVIDER_ENABLED");
 export const IS_MULTICHAIN_ENDPOINT_ENABLED = hashString("IS_MULTICHAIN_ENDPOINT_ENABLED");
+export const IS_MULTICHAIN_SENDER_ENABLED = hashString("IS_MULTICHAIN_SENDER_ENABLED");
 export const IS_SRC_CHAIN_ID_ENABLED = hashString("IS_SRC_CHAIN_ID_ENABLED");
 
 export const VALID_FROM_TIME = hashString("VALID_FROM_TIME");
@@ -864,6 +865,10 @@ export function isMultichainProviderEnabledKey(contract: string) {
 
 export function isMultichainEndpointEnabledKey(contract: string) {
   return hashData(["bytes32", "address"], [IS_MULTICHAIN_ENDPOINT_ENABLED, contract]);
+}
+
+export function isMultichainSenderEnabledKey(contract: string) {
+  return hashData(["bytes32", "address"], [IS_MULTICHAIN_SENDER_ENABLED, contract]);
 }
 
 export function isSrcChainIdEnabledKey(srcChainId: number) {

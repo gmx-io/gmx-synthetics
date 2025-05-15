@@ -147,6 +147,9 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       multichainEndpoints: {
         "0x6EDCE65403992e310A62460808c4b910D972f10f": true, // LZ Endpoint
       },
+      multichainSenders: {
+        "0x307EB4e47D0ce5c348dF2F5ebE3271c3Aec2714e": true, // MultichainSender on Sepolia
+      },
       srcChainIds: {
         11155111: true, // Sepolia
         421614: true, // Arbitrum Sepolia
