@@ -395,7 +395,7 @@ Borrowing fees can use a curve model or kink model.
 
 To use the curve model, the keys to configure would be `BORROWING_FACTOR` and `BORROWING_EXPONENT_FACTOR`, the borrowing factor per second would be calculated as:
 
-```ts
+```
 // reservedUsd is the total USD value reserved for positions
 reservedUsd = MarketUtils.getReservedUsd(...)
 
@@ -411,7 +411,7 @@ borrowingFactorPerSecond = borrowingFactor * reservedUsdAfterExponent / poolUsd
 
 To use the kink model, the keys to configure would be `OPTIMAL_USAGE_FACTOR`, `BASE_BORROWING_FACTOR` and `ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR`, the borrowing factor per second would be calculated as:
 
-```ts
+```
 // usageFactor is the ratio of value reserved for positions to available value that can be reserved
 usageFactor = MarketUtils.getUsageFactor(...)
 
@@ -433,7 +433,7 @@ The code for price impact can be found in the `/pricing` contracts.
 
 Price impact is calculated as:
 
-```ts
+```
 (initial USD difference) ^ (price impact exponent) * (price impact factor) - (next USD difference) ^ (price impact exponent) * (price impact factor)
 ```
 
@@ -835,13 +835,13 @@ After the initial setup:
 
 To compile contracts:
 
-```sh
+```
 npx hardhat compile
 ```
 
 To run all tests:
 
-```sh
+```
 npx hardhat test
 
 ```
@@ -850,12 +850,12 @@ npx hardhat test
 
 To print code metrics:
 
-```sh
+```
 npx ts-node metrics.ts
 ```
 
 To print test coverage:
 
-```sh
+```
 npx hardhat coverage
 ```
