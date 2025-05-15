@@ -271,11 +271,11 @@ describe("MultichainRouter", () => {
       // state after executing deposit
       expect(await getDepositCount(dataStore)).eq(0);
       expect(await wnt.balanceOf(multichainVault.address)).to.approximately(
-        expandDecimals(2107, 12), // feeAmount - keeperFee = 0.004 - 0.001803... = 0.002107... (e.g. 2107827984862624)
+        expandDecimals(21, 14), // feeAmount - keeperFee = 0.004 - ~0.0019 = ~0.0021 (e.g. 0.002099613984796912)
         expandDecimals(1, 12)
       );
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.approximately(
-        expandDecimals(2107, 12), // feeAmount - keeperFee = 0.004 - 0.001803... = 0.002107... (e.g. 2107827984862624)
+        expandDecimals(21, 14), // feeAmount - keeperFee = 0.004 - ~0.0019 = ~0.0021 (e.g. 0.002099613984796912)
         expandDecimals(1, 12)
       );
       expect(await usdc.balanceOf(multichainVault.address)).eq(0);
@@ -925,7 +925,7 @@ describe("MultichainRouter", () => {
 
         expect(
           (await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).sub(initialBalance)
-        ).closeTo("472789983782320", "10000000000000");
+        ).closeTo("423372983386984", "10000000000000");
       });
     });
 
