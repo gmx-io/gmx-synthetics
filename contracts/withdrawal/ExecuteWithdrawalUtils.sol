@@ -4,13 +4,18 @@ pragma solidity ^0.8.0;
 
 import "../data/DataStore.sol";
 
+import "../multichain/MultichainUtils.sol";
+
+import "./IExecuteWithdrawalUtils.sol";
 import "./WithdrawalVault.sol";
 import "./WithdrawalStoreUtils.sol";
 import "./WithdrawalEventUtils.sol";
 
 import "../pricing/SwapPricingUtils.sol";
-import "../oracle/Oracle.sol";
+import "../oracle/IOracle.sol";
 import "../position/PositionUtils.sol";
+import "../fee/FeeUtils.sol";
+import "../swap/SwapUtils.sol";
 
 import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
@@ -32,17 +37,6 @@ library ExecuteWithdrawalUtils {
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
 
-    struct ExecuteWithdrawalParams {
-        DataStore dataStore;
-        EventEmitter eventEmitter;
-        WithdrawalVault withdrawalVault;
-        Oracle oracle;
-        bytes32 key;
-        address keeper;
-        uint256 startingGas;
-        ISwapPricingUtils.SwapPricingType swapPricingType;
-    }
-
     struct ExecuteWithdrawalCache {
         uint256 requestExpirationTime;
         uint256 maxOracleTimestamp;
@@ -50,7 +44,7 @@ library ExecuteWithdrawalUtils {
         uint256 oraclePriceCount;
         Market.Props market;
         MarketUtils.MarketPrices prices;
-        ExecuteWithdrawalResult result;
+        IExecuteWithdrawalUtils.ExecuteWithdrawalResult result;
     }
 
     struct _ExecuteWithdrawalCache {
@@ -62,16 +56,9 @@ library ExecuteWithdrawalUtils {
         uint256 shortTokenPoolAmountDelta;
     }
 
-    struct ExecuteWithdrawalResult {
-        address outputToken;
-        uint256 outputAmount;
-        address secondaryOutputToken;
-        uint256 secondaryOutputAmount;
-    }
-
     struct SwapCache {
         Market.Props[] swapPathMarkets;
-        SwapUtils.SwapParams swapParams;
+        ISwapUtils.SwapParams swapParams;
         address outputToken;
         uint256 outputAmount;
     }
@@ -82,9 +69,9 @@ library ExecuteWithdrawalUtils {
      * @param params The parameters for executing the withdrawal.
      */
     function executeWithdrawal(
-        ExecuteWithdrawalParams memory params,
+        IExecuteWithdrawalUtils.ExecuteWithdrawalParams memory params,
         Withdrawal.Props memory withdrawal
-    ) external returns (ExecuteWithdrawalResult memory) {
+    ) external returns (IExecuteWithdrawalUtils.ExecuteWithdrawalResult memory) {
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
         params.startingGas -= gasleft() / 63;
 
@@ -154,16 +141,20 @@ library ExecuteWithdrawalUtils {
         );
 
         GasUtils.payExecutionFee(
-            params.dataStore,
-            params.eventEmitter,
-            params.withdrawalVault,
+            GasUtils.PayExecutionFeeContracts(
+                params.dataStore,
+                params.eventEmitter,
+                params.multichainVault,
+                params.withdrawalVault
+            ),
             params.key,
             withdrawal.callbackContract(),
             withdrawal.executionFee(),
             params.startingGas,
             cache.oraclePriceCount,
             params.keeper,
-            withdrawal.receiver()
+            withdrawal.receiver(),
+            withdrawal.srcChainId()
         );
 
         return cache.result;
@@ -175,11 +166,11 @@ library ExecuteWithdrawalUtils {
      * @param withdrawal The withdrawal to execute.
      */
     function _executeWithdrawal(
-        ExecuteWithdrawalParams memory params,
+        IExecuteWithdrawalUtils.ExecuteWithdrawalParams memory params,
         Withdrawal.Props memory withdrawal,
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices
-    ) internal returns (ExecuteWithdrawalResult memory) {
+    ) internal returns (IExecuteWithdrawalUtils.ExecuteWithdrawalResult memory) {
         _ExecuteWithdrawalCache memory cache;
 
         (cache.longTokenOutputAmount, cache.shortTokenOutputAmount) = _getOutputAmounts(
@@ -193,7 +184,7 @@ library ExecuteWithdrawalUtils {
             params.dataStore,
             market.marketToken,
             cache.longTokenOutputAmount,
-            false, // forPositiveImpact
+            false, // balanceWasImproved
             withdrawal.uiFeeReceiver(),
             params.swapPricingType
         );
@@ -221,7 +212,7 @@ library ExecuteWithdrawalUtils {
             params.dataStore,
             market.marketToken,
             cache.shortTokenOutputAmount,
-            false, // forPositiveImpact
+            false, // balanceWasImproved
             withdrawal.uiFeeReceiver(),
             params.swapPricingType
         );
@@ -286,7 +277,7 @@ library ExecuteWithdrawalUtils {
 
         params.withdrawalVault.syncTokenBalance(market.marketToken);
 
-        ExecuteWithdrawalResult memory result;
+        IExecuteWithdrawalUtils.ExecuteWithdrawalResult memory result;
         (result.outputToken, result.outputAmount) = _swap(
             params,
             market,
@@ -294,9 +285,9 @@ library ExecuteWithdrawalUtils {
             cache.longTokenOutputAmount,
             withdrawal.longTokenSwapPath(),
             withdrawal.minLongTokenAmount(),
-            withdrawal.receiver(),
+            withdrawal.srcChainId() == 0 ? withdrawal.receiver() : address(params.multichainVault),
             withdrawal.uiFeeReceiver(),
-            withdrawal.shouldUnwrapNativeToken()
+            withdrawal.srcChainId() == 0 ? withdrawal.shouldUnwrapNativeToken() : false
         );
 
         (result.secondaryOutputToken, result.secondaryOutputAmount) = _swap(
@@ -306,10 +297,16 @@ library ExecuteWithdrawalUtils {
             cache.shortTokenOutputAmount,
             withdrawal.shortTokenSwapPath(),
             withdrawal.minShortTokenAmount(),
-            withdrawal.receiver(),
+            withdrawal.srcChainId() == 0 ? withdrawal.receiver() : address(params.multichainVault),
             withdrawal.uiFeeReceiver(),
-            withdrawal.shouldUnwrapNativeToken()
+            withdrawal.srcChainId() == 0 ? withdrawal.shouldUnwrapNativeToken() : false
         );
+
+        // for multichain action, receiver is the multichainVault; increase user's multichain balances
+        if (withdrawal.srcChainId() != 0) {
+            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, result.outputToken, withdrawal.receiver(), 0); // srcChainId is the current block.chainId
+            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, result.secondaryOutputToken, withdrawal.receiver(), 0); // srcChainId is the current block.chainId
+        }
 
         SwapPricingUtils.emitSwapFeesCollected(
             params.eventEmitter,
@@ -361,7 +358,7 @@ library ExecuteWithdrawalUtils {
     }
 
     function _swap(
-        ExecuteWithdrawalParams memory params,
+        IExecuteWithdrawalUtils.ExecuteWithdrawalParams memory params,
         Market.Props memory market,
         address tokenIn,
         uint256 amountIn,
@@ -375,7 +372,7 @@ library ExecuteWithdrawalUtils {
 
         cache.swapPathMarkets = MarketUtils.getSwapPathMarkets(params.dataStore, swapPath);
 
-        cache.swapParams = SwapUtils.SwapParams({
+        cache.swapParams = ISwapUtils.SwapParams({
             dataStore: params.dataStore,
             eventEmitter: params.eventEmitter,
             oracle: params.oracle,
@@ -391,7 +388,7 @@ library ExecuteWithdrawalUtils {
             swapPricingType: params.swapPricingType
         });
 
-        (cache.outputToken, cache.outputAmount) = SwapUtils.swap(cache.swapParams);
+        (cache.outputToken, cache.outputAmount) = params.swapHandler.swap(cache.swapParams);
 
         // validate that internal state changes are correct before calling
         // external callbacks
@@ -401,7 +398,7 @@ library ExecuteWithdrawalUtils {
     }
 
     function _getOutputAmounts(
-        ExecuteWithdrawalParams memory params,
+        IExecuteWithdrawalUtils.ExecuteWithdrawalParams memory params,
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices,
         uint256 marketTokenAmount

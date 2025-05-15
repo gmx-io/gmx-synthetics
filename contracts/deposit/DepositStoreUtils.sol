@@ -30,8 +30,11 @@ library DepositStoreUtils {
     bytes32 public constant UPDATED_AT_TIME = keccak256(abi.encode("UPDATED_AT_TIME"));
     bytes32 public constant EXECUTION_FEE = keccak256(abi.encode("EXECUTION_FEE"));
     bytes32 public constant CALLBACK_GAS_LIMIT = keccak256(abi.encode("CALLBACK_GAS_LIMIT"));
+    bytes32 public constant SRC_CHAIN_ID = keccak256(abi.encode("SRC_CHAIN_ID"));
 
     bytes32 public constant SHOULD_UNWRAP_NATIVE_TOKEN = keccak256(abi.encode("SHOULD_UNWRAP_NATIVE_TOKEN"));
+
+    bytes32 public constant DATA_LIST = keccak256(abi.encode("DATA_LIST"));
 
     function get(DataStore dataStore, bytes32 key) external view returns (Deposit.Props memory) {
         Deposit.Props memory deposit;
@@ -99,8 +102,16 @@ library DepositStoreUtils {
             keccak256(abi.encode(key, CALLBACK_GAS_LIMIT))
         ));
 
+        deposit.setSrcChainId(dataStore.getUint(
+            keccak256(abi.encode(key, SRC_CHAIN_ID))
+        ));
+
         deposit.setShouldUnwrapNativeToken(dataStore.getBool(
             keccak256(abi.encode(key, SHOULD_UNWRAP_NATIVE_TOKEN))
+        ));
+
+        deposit.setDataList(dataStore.getBytes32Array(
+            keccak256(abi.encode(key, DATA_LIST))
         ));
 
         return deposit;
@@ -192,9 +203,19 @@ library DepositStoreUtils {
             deposit.callbackGasLimit()
         );
 
+        dataStore.setUint(
+            keccak256(abi.encode(key, SRC_CHAIN_ID)),
+            deposit.srcChainId()
+        );
+
         dataStore.setBool(
             keccak256(abi.encode(key, SHOULD_UNWRAP_NATIVE_TOKEN)),
             deposit.shouldUnwrapNativeToken()
+        );
+
+        dataStore.setBytes32Array(
+            keccak256(abi.encode(key, DATA_LIST)),
+            deposit.dataList()
         );
     }
 
@@ -273,8 +294,16 @@ library DepositStoreUtils {
             keccak256(abi.encode(key, CALLBACK_GAS_LIMIT))
         );
 
+        dataStore.removeUint(
+            keccak256(abi.encode(key, SRC_CHAIN_ID))
+        );
+
         dataStore.removeBool(
             keccak256(abi.encode(key, SHOULD_UNWRAP_NATIVE_TOKEN))
+        );
+
+        dataStore.removeBytes32Array(
+            keccak256(abi.encode(key, DATA_LIST))
         );
     }
 

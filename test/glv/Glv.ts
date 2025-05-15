@@ -23,7 +23,7 @@ describe("Glv", () => {
     usdc,
     wbtc,
     glvFactory,
-    glvHandler,
+    glvShiftHandler,
     ethUsdGlvAddress,
     config,
     glvReader;
@@ -42,7 +42,7 @@ describe("Glv", () => {
       usdc,
       wbtc,
       glvFactory,
-      glvHandler,
+      glvShiftHandler,
       config,
       ethUsdGlvAddress,
       glvReader,
@@ -115,8 +115,8 @@ describe("Glv", () => {
     let marketListCount = await dataStore.getAddressCount(marketListKey);
     expect(marketListCount.toNumber()).eq(0);
 
-    await glvHandler.addMarketToGlv(glvAddress, ethUsdMarket.marketToken);
-    await glvHandler.addMarketToGlv(glvAddress, solUsdMarket.marketToken);
+    await glvShiftHandler.addMarketToGlv(glvAddress, ethUsdMarket.marketToken);
+    await glvShiftHandler.addMarketToGlv(glvAddress, solUsdMarket.marketToken);
 
     marketListCount = await dataStore.getAddressCount(marketListKey);
     expect(marketListCount.toNumber()).eq(2);
@@ -159,12 +159,12 @@ describe("Glv", () => {
     expect(listedMarkets[1]).eq(solUsdMarket.marketToken);
 
     await expect(
-      glvHandler.removeMarketFromGlv(ethUsdGlvAddress, ethUsdMarket.marketToken)
+      glvShiftHandler.removeMarketFromGlv(ethUsdGlvAddress, ethUsdMarket.marketToken)
     ).to.be.revertedWithCustomError(errorsContract, "GlvEnabledMarket");
 
     await dataStore.setBool(keys.isGlvMarketDisabledKey(ethUsdGlvAddress, ethUsdMarket.marketToken), true);
     await expect(
-      glvHandler.removeMarketFromGlv(ethUsdGlvAddress, ethUsdMarket.marketToken)
+      glvShiftHandler.removeMarketFromGlv(ethUsdGlvAddress, ethUsdMarket.marketToken)
     ).to.be.revertedWithCustomError(errorsContract, "GlvNonZeroMarketBalance");
 
     await handleGlvShift(fixture, {
@@ -177,7 +177,7 @@ describe("Glv", () => {
         [ethUsdMarket.marketToken]: 0,
       },
     });
-    await glvHandler.removeMarketFromGlv(ethUsdGlvAddress, ethUsdMarket.marketToken);
+    await glvShiftHandler.removeMarketFromGlv(ethUsdGlvAddress, ethUsdMarket.marketToken);
 
     marketListCount = await dataStore.getAddressCount(marketListKey);
     expect(marketListCount.toNumber()).eq(1);
@@ -203,7 +203,7 @@ describe("Glv", () => {
     let marketListCount = await dataStore.getAddressCount(marketListKey);
     expect(marketListCount.toNumber()).eq(0);
 
-    await glvHandler.addMarketToGlv(glvAddress, ethUsdSingleTokenMarket2.marketToken);
+    await glvShiftHandler.addMarketToGlv(glvAddress, ethUsdSingleTokenMarket2.marketToken);
 
     marketListCount = await dataStore.getAddressCount(marketListKey);
     expect(marketListCount.toNumber()).eq(1);
@@ -217,7 +217,7 @@ describe("Glv", () => {
   });
 
   it("reverts if market is already added", async () => {
-    await expect(glvHandler.addMarketToGlv(ethUsdGlvAddress, ethUsdMarket.marketToken))
+    await expect(glvShiftHandler.addMarketToGlv(ethUsdGlvAddress, ethUsdMarket.marketToken))
       .to.be.revertedWithCustomError(errorsContract, "GlvMarketAlreadyExists")
       .withArgs(ethUsdGlvAddress, ethUsdMarket.marketToken);
   });
@@ -241,26 +241,26 @@ describe("Glv", () => {
     let marketListCount = await dataStore.getAddressCount(marketListKey);
     expect(marketListCount.toNumber()).eq(0);
 
-    await glvHandler.addMarketToGlv(glvAddress, ethUsdMarket.marketToken);
+    await glvShiftHandler.addMarketToGlv(glvAddress, ethUsdMarket.marketToken);
     marketListCount = await dataStore.getAddressCount(marketListKey);
     expect(marketListCount.toNumber()).eq(1);
 
-    await expect(glvHandler.addMarketToGlv(glvAddress, solUsdMarket.marketToken))
+    await expect(glvShiftHandler.addMarketToGlv(glvAddress, solUsdMarket.marketToken))
       .to.be.revertedWithCustomError(errorsContract, "GlvMaxMarketCountExceeded")
       .withArgs(glvAddress, 1);
 
     await dataStore.setUint(keys.GLV_MAX_MARKET_COUNT, 2);
-    await glvHandler.addMarketToGlv(glvAddress, solUsdMarket.marketToken);
+    await glvShiftHandler.addMarketToGlv(glvAddress, solUsdMarket.marketToken);
     marketListCount = await dataStore.getAddressCount(marketListKey);
     expect(marketListCount.toNumber()).eq(2);
   });
 
   it("reverts if market has incorrect tokens", async () => {
-    await expect(glvHandler.addMarketToGlv(ethUsdGlvAddress, btcUsdMarket.marketToken))
+    await expect(glvShiftHandler.addMarketToGlv(ethUsdGlvAddress, btcUsdMarket.marketToken))
       .to.be.revertedWithCustomError(errorsContract, "GlvInvalidLongToken")
       .withArgs(ethUsdGlvAddress, wbtc.address, wnt.address);
 
-    await expect(glvHandler.addMarketToGlv(ethUsdGlvAddress, ethUsdSingleTokenMarket2.marketToken))
+    await expect(glvShiftHandler.addMarketToGlv(ethUsdGlvAddress, ethUsdSingleTokenMarket2.marketToken))
       .to.be.revertedWithCustomError(errorsContract, "GlvInvalidShortToken")
       .withArgs(ethUsdGlvAddress, wnt.address, usdc.address);
   });

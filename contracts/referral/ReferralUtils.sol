@@ -27,6 +27,7 @@ library ReferralUtils {
         bytes32 referralCode
     ) internal {
         if (referralCode == bytes32(0)) { return; }
+        if (address(referralStorage) == address(0)) { return; }
 
         // skip setting of the referral code if the user already has a referral code
         if (referralStorage.traderReferralCodes(account) != bytes32(0)) { return; }
@@ -75,6 +76,10 @@ library ReferralUtils {
         IReferralStorage referralStorage,
         address trader
     ) internal view returns (bytes32, address, uint256, uint256, uint256) {
+        if (address(referralStorage) == address(0)) {
+            return (bytes32(0), address(0), 0, 0, 0);
+        }
+
         bytes32 code = referralStorage.traderReferralCodes(trader);
         address affiliate;
         uint256 totalRebate;
@@ -106,21 +111,53 @@ library ReferralUtils {
         );
     }
 
-    // @dev Claims the affiliate's reward balance and transfers it to the specified receiver.
+    // @dev Claims affiliate rewards for the given markets and tokens and sends the rewards to the specified receiver.
     // @param dataStore The data store instance to use.
     // @param eventEmitter The event emitter instance to use.
-    // @param market The market address.
-    // @param token The token address.
+    // @param markets An array of market addresses
+    // @param tokens An array of token addresses, corresponding to the given markets
+    // @param receiver The address to which the claimed rewards should be sent
     // @param account The affiliate's address.
-    // @param receiver The address to receive the reward.
-    function claimAffiliateReward(
+    function batchClaimAffiliateRewards(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address[] memory markets,
+        address[] memory tokens,
+        address receiver,
+        address account
+    ) external returns (uint256[] memory) {
+        if (markets.length != tokens.length) {
+            revert Errors.InvalidClaimAffiliateRewardsInput(markets.length, tokens.length);
+        }
+
+        FeatureUtils.validateFeature(dataStore, Keys.claimAffiliateRewardsFeatureDisabledKey(address(this)));
+
+        AccountUtils.validateReceiver(receiver);
+
+        uint256[] memory claimedAmounts = new uint256[](markets.length);
+
+        for (uint256 i; i < markets.length; i++) {
+            claimedAmounts[i] = _claimAffiliateReward(
+                dataStore,
+                eventEmitter,
+                markets[i],
+                tokens[i],
+                account,
+                receiver
+            );
+        }
+
+        return claimedAmounts;
+    }
+
+    function _claimAffiliateReward(
         DataStore dataStore,
         EventEmitter eventEmitter,
         address market,
         address token,
         address account,
         address receiver
-    ) external returns (uint256) {
+    ) private returns (uint256) {
         bytes32 key = Keys.affiliateRewardKey(market, token, account);
 
         uint256 rewardAmount = dataStore.getUint(key);

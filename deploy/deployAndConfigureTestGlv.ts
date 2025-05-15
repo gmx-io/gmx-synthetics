@@ -34,7 +34,7 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
   const glvFactory = await get("GlvFactory");
   const marketFactory = await get("MarketFactory");
 
-  const glvAddress = getGlvAddress(
+  const glvShiftAddress = getGlvAddress(
     weth.address,
     usdc.address,
     glvType,
@@ -64,9 +64,27 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
     dataStore.address
   );
 
-  await execute("DataStore", { from: deployer, log: true }, "setUint", keys.tokenTransferGasLimit(glvAddress), 200_000);
-  await execute("GlvHandler", { from: deployer, log: true }, "addMarketToGlv", glvAddress, ethUsdMarketAddress);
-  await execute("GlvHandler", { from: deployer, log: true }, "addMarketToGlv", glvAddress, solUsdMarketAddress);
+  await execute(
+    "DataStore",
+    { from: deployer, log: true },
+    "setUint",
+    keys.tokenTransferGasLimit(glvShiftAddress),
+    200_000
+  );
+  await execute(
+    "GlvShiftHandler",
+    { from: deployer, log: true },
+    "addMarketToGlv",
+    glvShiftAddress,
+    ethUsdMarketAddress
+  );
+  await execute(
+    "GlvShiftHandler",
+    { from: deployer, log: true },
+    "addMarketToGlv",
+    glvShiftAddress,
+    solUsdMarketAddress
+  );
 };
 
 func.skip = async ({ network }) => {

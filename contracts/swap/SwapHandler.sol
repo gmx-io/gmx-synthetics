@@ -6,12 +6,13 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "../role/RoleModule.sol";
 import "./SwapUtils.sol";
+import "./ISwapHandler.sol";
 
 /**
  * @title SwapHandler
  * @dev A contract to help with swap functions
  */
-contract SwapHandler is ReentrancyGuard, RoleModule {
+contract SwapHandler is ISwapHandler, ReentrancyGuard, RoleModule {
     constructor(RoleStore _roleStore) RoleModule(_roleStore) {}
 
     /**
@@ -20,7 +21,7 @@ contract SwapHandler is ReentrancyGuard, RoleModule {
      * @return (outputToken, outputAmount)
      */
     function swap(
-        SwapUtils.SwapParams memory params
+        ISwapUtils.SwapParams memory params
     )
         external
         nonReentrant
