@@ -7,13 +7,17 @@ import "../exchange/IWithdrawalHandler.sol";
 import "../exchange/IShiftHandler.sol";
 import "../exchange/IOrderHandler.sol";
 import "../external/IExternalHandler.sol";
-import "../shift/ShiftUtils.sol";
-import "../shift/ShiftStoreUtils.sol";
-import "../referral/ReferralUtils.sol";
 
+import "../deposit/DepositStoreUtils.sol";
+import "../withdrawal/WithdrawalStoreUtils.sol";
+import "../shift/IShiftUtils.sol";
+import "../shift/ShiftStoreUtils.sol";
 import "../order/OrderStoreUtils.sol";
 
-import "../feature/FeatureUtils.sol";
+import "../callback/CallbackUtils.sol";
+import "../fee/FeeUtils.sol";
+import "../nonce/NonceUtils.sol";
+import "../referral/ReferralUtils.sol";
 
 import "./BaseRouter.sol";
 import "./IExchangeRouter.sol";
@@ -120,16 +124,17 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
      * long and short tokens from the caller's account to the deposit store, and then calling the
      * `createDeposit()` function on the deposit handler contract.
      *
-     * @param params The deposit parameters, as specified in the `DepositUtils.CreateDepositParams` struct
+     * @param params The deposit parameters, as specified in the `IDepositUtils.CreateDepositParams` struct
      * @return The unique ID of the newly created deposit
      */
     function createDeposit(
-        DepositUtils.CreateDepositParams calldata params
+        IDepositUtils.CreateDepositParams calldata params
     ) external override payable nonReentrant returns (bytes32) {
         address account = msg.sender;
 
         return depositHandler.createDeposit(
             account,
+            0, // srcChainId is the current block.chainId
             params
         );
     }
@@ -162,12 +167,13 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
     }
 
     function createWithdrawal(
-        WithdrawalUtils.CreateWithdrawalParams calldata params
+        IWithdrawalUtils.CreateWithdrawalParams calldata params
     ) external override payable nonReentrant returns (bytes32) {
         address account = msg.sender;
 
         return withdrawalHandler.createWithdrawal(
             account,
+            0, // srcChainId is the current block.chainId
             params
         );
     }
@@ -182,7 +188,7 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
     }
 
     function executeAtomicWithdrawal(
-        WithdrawalUtils.CreateWithdrawalParams calldata params,
+        IWithdrawalUtils.CreateWithdrawalParams calldata params,
         OracleUtils.SetPricesParams calldata oracleParams
     ) external override payable nonReentrant {
         address account = msg.sender;
@@ -211,12 +217,13 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
     }
 
     function createShift(
-        ShiftUtils.CreateShiftParams calldata params
+        IShiftUtils.CreateShiftParams calldata params
     ) external override payable nonReentrant returns (bytes32) {
         address account = msg.sender;
 
         return shiftHandler.createShift(
             account,
+            0, // srcChainId is the current block.chainId
             params
         );
     }
@@ -257,6 +264,7 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
 
         return orderHandler.createOrder(
             account,
+            0, // srcChainId is the current block.chainId
             params,
             false
         );
@@ -367,30 +375,16 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         address[] memory tokens,
         address receiver
     ) external payable nonReentrant returns (uint256[] memory) {
-        if (markets.length != tokens.length) {
-            revert Errors.InvalidClaimFundingFeesInput(markets.length, tokens.length);
-        }
-
-        FeatureUtils.validateFeature(dataStore, Keys.claimFundingFeesFeatureDisabledKey(address(this)));
-
-        AccountUtils.validateReceiver(receiver);
-
         address account = msg.sender;
-
-        uint256[] memory claimedAmounts = new uint256[](markets.length);
-
-        for (uint256 i; i < markets.length; i++) {
-            claimedAmounts[i] = MarketUtils.claimFundingFees(
+        return
+            FeeUtils.batchClaimFundingFees(
                 dataStore,
                 eventEmitter,
-                markets[i],
-                tokens[i],
-                account,
-                receiver
+                markets,
+                tokens,
+                receiver,
+                account
             );
-        }
-
-        return claimedAmounts;
     }
 
     function claimCollateral(
@@ -399,31 +393,17 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         uint256[] memory timeKeys,
         address receiver
     ) external payable nonReentrant returns (uint256[] memory) {
-        if (markets.length != tokens.length || tokens.length != timeKeys.length) {
-            revert Errors.InvalidClaimCollateralInput(markets.length, tokens.length, timeKeys.length);
-        }
-
-        FeatureUtils.validateFeature(dataStore, Keys.claimCollateralFeatureDisabledKey(address(this)));
-
-        AccountUtils.validateReceiver(receiver);
-
         address account = msg.sender;
-
-        uint256[] memory claimedAmounts = new uint256[](markets.length);
-
-        for (uint256 i; i < markets.length; i++) {
-            claimedAmounts[i] = MarketUtils.claimCollateral(
+        return
+            MarketUtils.batchClaimCollateral(
                 dataStore,
                 eventEmitter,
-                markets[i],
-                tokens[i],
-                timeKeys[i],
-                account,
-                receiver
+                markets,
+                tokens,
+                timeKeys,
+                receiver,
+                account
             );
-        }
-
-        return claimedAmounts;
     }
 
     /**
@@ -441,28 +421,16 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         address[] memory tokens,
         address receiver
     ) external payable nonReentrant returns (uint256[] memory) {
-        if (markets.length != tokens.length) {
-            revert Errors.InvalidClaimAffiliateRewardsInput(markets.length, tokens.length);
-        }
-
-        FeatureUtils.validateFeature(dataStore, Keys.claimAffiliateRewardsFeatureDisabledKey(address(this)));
-
         address account = msg.sender;
-
-        uint256[] memory claimedAmounts = new uint256[](markets.length);
-
-        for (uint256 i; i < markets.length; i++) {
-            claimedAmounts[i] = ReferralUtils.claimAffiliateReward(
+        return
+            ReferralUtils.batchClaimAffiliateRewards(
                 dataStore,
                 eventEmitter,
-                markets[i],
-                tokens[i],
-                account,
-                receiver
+                markets,
+                tokens,
+                receiver,
+                account
             );
-        }
-
-        return claimedAmounts;
     }
 
     function setUiFeeFactor(uint256 uiFeeFactor) external payable nonReentrant {
@@ -475,27 +443,7 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         address[] memory tokens,
         address receiver
     ) external payable nonReentrant returns (uint256[] memory) {
-        if (markets.length != tokens.length) {
-            revert Errors.InvalidClaimUiFeesInput(markets.length, tokens.length);
-        }
-
-        FeatureUtils.validateFeature(dataStore, Keys.claimUiFeesFeatureDisabledKey(address(this)));
-
         address uiFeeReceiver = msg.sender;
-
-        uint256[] memory claimedAmounts = new uint256[](markets.length);
-
-        for (uint256 i; i < markets.length; i++) {
-            claimedAmounts[i] = FeeUtils.claimUiFees(
-                dataStore,
-                eventEmitter,
-                uiFeeReceiver,
-                markets[i],
-                tokens[i],
-                receiver
-            );
-        }
-
-        return claimedAmounts;
+        return FeeUtils.batchClaimUiFees(dataStore, eventEmitter, markets, tokens, receiver, uiFeeReceiver);
     }
 }

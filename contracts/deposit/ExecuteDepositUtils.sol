@@ -5,13 +5,18 @@ pragma solidity ^0.8.0;
 import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
 
+import "./IExecuteDepositUtils.sol";
 import "./DepositVault.sol";
 import "./DepositStoreUtils.sol";
 import "./DepositEventUtils.sol";
 
 import "../pricing/SwapPricingUtils.sol";
-import "../oracle/Oracle.sol";
+import "../oracle/IOracle.sol";
 import "../position/PositionUtils.sol";
+import "../swap/SwapUtils.sol";
+
+import "../multichain/MultichainUtils.sol";
+import "../multichain/IMultichainTransferRouter.sol";
 
 import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
@@ -36,20 +41,6 @@ library ExecuteDepositUtils {
     using EventUtils for EventUtils.Bytes32Items;
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
-
-    // @dev ExecuteDepositParams struct used in executeDeposit to avoid stack
-    // too deep errors
-    struct ExecuteDepositParams {
-        DataStore dataStore;
-        EventEmitter eventEmitter;
-        DepositVault depositVault;
-        Oracle oracle;
-        bytes32 key;
-        address keeper;
-        uint256 startingGas;
-        ISwapPricingUtils.SwapPricingType swapPricingType;
-        bool includeVirtualInventoryImpact;
-    }
 
     // @dev _ExecuteDepositParams struct used in executeDeposit to avoid stack
     // too deep errors
@@ -90,6 +81,7 @@ library ExecuteDepositUtils {
         uint256 shortTokenUsd;
         uint256 receivedMarketTokens;
         int256 priceImpactUsd;
+        bool balanceWasImproved;
         uint256 marketTokensSupply;
         EventUtils.EventLogData callbackEventData;
     }
@@ -98,7 +90,7 @@ library ExecuteDepositUtils {
 
     // @dev executes a deposit
     // @param params ExecuteDepositParams
-    function executeDeposit(ExecuteDepositParams memory params, Deposit.Props memory deposit) external returns (uint256 receivedMarketTokens) {
+    function executeDeposit(IExecuteDepositUtils.ExecuteDepositParams memory params, Deposit.Props memory deposit) external returns (uint256 receivedMarketTokens) {
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
         params.startingGas -= gasleft() / 63;
 
@@ -188,7 +180,7 @@ library ExecuteDepositUtils {
         cache.longTokenUsd = cache.longTokenAmount * cache.prices.longTokenPrice.midPrice();
         cache.shortTokenUsd = cache.shortTokenAmount * cache.prices.shortTokenPrice.midPrice();
 
-        cache.priceImpactUsd = SwapPricingUtils.getPriceImpactUsd(
+        (cache.priceImpactUsd, cache.balanceWasImproved) = SwapPricingUtils.getPriceImpactUsd(
             SwapPricingUtils.GetPriceImpactUsdParams(
                 params.dataStore,
                 cache.market,
@@ -216,7 +208,7 @@ library ExecuteDepositUtils {
                 Precision.mulDiv(cache.priceImpactUsd, cache.longTokenUsd, cache.longTokenUsd + cache.shortTokenUsd)
             );
 
-            cache.receivedMarketTokens += _executeDeposit(params, _params);
+            cache.receivedMarketTokens += _executeDeposit(params, _params, cache.balanceWasImproved);
         }
 
         if (cache.shortTokenAmount > 0) {
@@ -233,7 +225,7 @@ library ExecuteDepositUtils {
                 Precision.mulDiv(cache.priceImpactUsd, cache.shortTokenUsd, cache.longTokenUsd + cache.shortTokenUsd)
             );
 
-            cache.receivedMarketTokens += _executeDeposit(params, _params);
+            cache.receivedMarketTokens += _executeDeposit(params, _params, cache.balanceWasImproved);
         }
 
         if (cache.receivedMarketTokens < deposit.minMarketTokens()) {
@@ -279,33 +271,85 @@ library ExecuteDepositUtils {
         cache.callbackEventData.uintItems.setItem(0, "receivedMarketTokens", cache.receivedMarketTokens);
         CallbackUtils.afterDepositExecution(params.key, deposit, cache.callbackEventData);
 
+        // use deposit.dataList to determine if the GM tokens minted should be bridged out to src chain
+        bridgeOutFromController(
+            params.multichainTransferRouter,
+            deposit.receiver(), // account
+            deposit.srcChainId(),
+            cache.market.marketToken, // token
+            cache.receivedMarketTokens, // amount
+            deposit.dataList()
+        );
+
         GasUtils.payExecutionFee(
-            params.dataStore,
-            params.eventEmitter,
-            params.depositVault,
+            GasUtils.PayExecutionFeeContracts(
+                params.dataStore,
+                params.eventEmitter,
+                params.multichainVault,
+                params.depositVault
+            ),
             params.key,
             deposit.callbackContract(),
             deposit.executionFee(),
             params.startingGas,
             GasUtils.estimateDepositOraclePriceCount(deposit.longTokenSwapPath().length + deposit.shortTokenSwapPath().length),
             params.keeper,
-            deposit.receiver()
+            deposit.receiver(),
+            deposit.srcChainId()
         );
 
         return cache.receivedMarketTokens;
     }
 
+    /// @dev abi.decode can fail if dataList is not properly formed, which would cause the deposit to be cancelled
+    /// @dev first item of dataList should be the GMX_DATA_ACTION hash if dataList is intended to be used for bridging out tokens
+    function bridgeOutFromController(
+        IMultichainTransferRouter multichainTransferRouter,
+        address account,
+        uint256 srcChainId,
+        address token,
+        uint256 amount,
+        bytes32[] memory dataList
+    ) public {
+        if (dataList.length == 0 || dataList[0] != Keys.GMX_DATA_ACTION) {
+            return;
+        }
+
+        bytes memory data = Array.dataArrayToBytes(dataList);
+
+        (IMultichainProvider.ActionType actionType, bytes memory actionData) = abi.decode(
+            data,
+            (IMultichainProvider.ActionType, bytes)
+        );
+
+        if (actionType == IMultichainProvider.ActionType.BridgeOut) {
+            (IRelayUtils.RelayParams memory relayParams, address provider, bytes memory providerData /* e.g. dstEid */) = abi.decode(
+                actionData,
+                (IRelayUtils.RelayParams, address, bytes)
+            );
+
+            IRelayUtils.BridgeOutParams memory bridgeOutParams = IRelayUtils.BridgeOutParams({
+                token: token,
+                amount: amount,
+                provider: provider,
+                data: providerData
+            });
+
+            multichainTransferRouter.bridgeOutFromController(relayParams, account, srcChainId, bridgeOutParams);
+        }
+    }
+
     // @dev executes a deposit
     // @param params ExecuteDepositParams
     // @param _params _ExecuteDepositParams
-    function _executeDeposit(ExecuteDepositParams memory params, _ExecuteDepositParams memory _params) internal returns (uint256) {
+    function _executeDeposit(IExecuteDepositUtils.ExecuteDepositParams memory params, _ExecuteDepositParams memory _params, bool balanceWasImproved) internal returns (uint256) {
         // for markets where longToken == shortToken, the price impact factor should be set to zero
         // in which case, the priceImpactUsd would always equal zero
         SwapPricingUtils.SwapFees memory fees = SwapPricingUtils.getSwapFees(
             params.dataStore,
             _params.market.marketToken,
             _params.amount,
-            _params.priceImpactUsd > 0, // forPositiveImpact
+            balanceWasImproved,
             _params.uiFeeReceiver,
             params.swapPricingType
         );
@@ -506,13 +550,20 @@ library ExecuteDepositUtils {
             _params.tokenIn
         );
 
-        MarketToken(payable(_params.market.marketToken)).mint(_params.receiver, mintAmount);
+        if (params.srcChainId == 0) {
+            // mint GM tokens to receiver
+            MarketToken(payable(_params.market.marketToken)).mint(_params.receiver, mintAmount);
+        } else {
+            // mint GM tokens to MultichainVault and increase receiver's multichain GM balance
+            MarketToken(payable(_params.market.marketToken)).mint(address(params.multichainVault), mintAmount);
+            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, _params.market.marketToken, _params.receiver, 0); // srcChainId is the current block.chainId
+        }
 
         return mintAmount;
     }
 
     function swap(
-        ExecuteDepositParams memory params,
+        IExecuteDepositUtils.ExecuteDepositParams memory params,
         address[] memory swapPath,
         address initialToken,
         uint256 inputAmount,
@@ -525,8 +576,8 @@ library ExecuteDepositUtils {
             swapPath
         );
 
-        (address outputToken, uint256 outputAmount) = SwapUtils.swap(
-            SwapUtils.SwapParams(
+        (address outputToken, uint256 outputAmount) = params.swapHandler.swap(
+            ISwapUtils.SwapParams(
                 params.dataStore, // dataStore
                 params.eventEmitter, // eventEmitter
                 params.oracle, // oracle
@@ -558,7 +609,7 @@ library ExecuteDepositUtils {
     // since it may be possible to deposit a small amount of tokens on the first deposit
     // to cause a high market token price due to rounding of the amount of tokens minted
     function _validateFirstDeposit(
-        ExecuteDepositParams memory params,
+        IExecuteDepositUtils.ExecuteDepositParams memory params,
         Deposit.Props memory deposit,
         Market.Props memory market
     ) internal view {

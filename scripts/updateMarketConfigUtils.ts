@@ -273,6 +273,14 @@ const processMarkets = async ({
 
     addConfigItem(
       "uint",
+      keys.MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION,
+      encodeData(["address"], [marketToken]),
+      marketConfig.minCollateralFactorForLiquidation,
+      `minCollateralFactorForLiquidation ${marketLabel} (${marketToken})`
+    );
+
+    addConfigItem(
+      "uint",
       keys.MIN_COLLATERAL_FACTOR_FOR_OPEN_INTEREST_MULTIPLIER,
       encodeData(["address", "bool"], [marketToken, true]),
       marketConfig.minCollateralFactorForOpenInterestMultiplierLong,

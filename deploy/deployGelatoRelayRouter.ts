@@ -3,11 +3,13 @@ import { createDeployFunction } from "../utils/deploy";
 
 const constructorContracts = [
   "Router",
+  "RoleStore",
   "DataStore",
   "EventEmitter",
   "Oracle",
   "OrderHandler",
   "OrderVault",
+  "SwapHandler",
   "ExternalHandler",
 ];
 

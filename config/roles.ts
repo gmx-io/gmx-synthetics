@@ -28,12 +28,18 @@ const requiredRolesForContracts = {
     "SubaccountGelatoRelayRouter",
 
     "OrderHandler",
+    "IncreaseOrderExecutor",
+    "DecreaseOrderExecutor",
+    "SwapOrderExecutor",
+
     "DepositHandler",
     "WithdrawalHandler",
     "AdlHandler",
     "LiquidationHandler",
     "ShiftHandler",
-    "GlvHandler",
+    "GlvDepositHandler",
+    "GlvWithdrawalHandler",
+    "GlvShiftHandler",
     "FeeHandler",
     "SwapHandler",
   ],
@@ -98,6 +104,30 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
 
   const testnetConfig = {
     CONTROLLER: testnetAdmins,
+    ORDER_KEEPER: {
+      "0x3053c7edC20aa08d225CdeC9688136c4ab9F9963": true,
+      "0x508cbC56Ab57A9b0221cf1810a483f8013c92Ff3": true, // An
+      ...testnetAdmins,
+    },
+    ADL_KEEPER: testnetAdmins,
+    LIQUIDATION_KEEPER: {
+      "0x3053c7edC20aa08d225CdeC9688136c4ab9F9963": true,
+      "0x508cbC56Ab57A9b0221cf1810a483f8013c92Ff3": true, // An
+      ...testnetAdmins,
+    },
+    MARKET_KEEPER: testnetAdmins,
+    FROZEN_ORDER_KEEPER: {
+      "0x3053c7edC20aa08d225CdeC9688136c4ab9F9963": true,
+      "0x508cbC56Ab57A9b0221cf1810a483f8013c92Ff3": true, // An
+      ...testnetAdmins,
+    },
+  };
+
+  const arbitrumSepoliaConfig = {
+    CONTROLLER: {
+      "0xCD9706B6B71fdC4351091B5b1D910cEe7Fde28D0": true, // Max
+      ...testnetAdmins,
+    },
     ORDER_KEEPER: {
       "0x3053c7edC20aa08d225CdeC9688136c4ab9F9963": true,
       "0x508cbC56Ab57A9b0221cf1810a483f8013c92Ff3": true, // An
@@ -349,6 +379,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
     arbitrumSepolia: {
       CONFIG_KEEPER: {
         "0xb38302e27bAe8932536A84ab362c3d1013420Cb4": true,
+        "0xCD9706B6B71fdC4351091B5b1D910cEe7Fde28D0": true, // Max
         "0x508cbC56Ab57A9b0221cf1810a483f8013c92Ff3": true, // An
         [deployer]: true,
       },
@@ -364,6 +395,9 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
   for (const rolesForNetwork of Object.values(roles)) {
     for (const accounts of Object.values(rolesForNetwork)) {
       for (const account of Object.keys(accounts)) {
+        if (account === "undefined") {
+          continue;
+        }
         const checksumAccount = ethers.utils.getAddress(account);
         if (account !== checksumAccount) {
           accounts[checksumAccount] = accounts[account];

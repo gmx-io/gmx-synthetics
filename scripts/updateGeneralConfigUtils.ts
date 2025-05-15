@@ -2,6 +2,7 @@ import hre, { network } from "hardhat";
 
 import { ConfigChangeItem, handleConfigChanges } from "./updateConfigUtils";
 import * as keys from "../utils/keys";
+import { encodeData } from "../utils/hash";
 
 const getConfigItems = (generalConfig, oracleConfig) => {
   const configItems: ConfigChangeItem[] = [
@@ -297,6 +298,36 @@ const getConfigItems = (generalConfig, oracleConfig) => {
       value: generalConfig.requestExpirationTime,
       label: `requestExpirationTime`,
     });
+  }
+
+  if (network.name != "hardhat") {
+    for (const [multichainProvider, enabled] of Object.entries(generalConfig.multichainProviders)) {
+      configItems.push({
+        type: "bool",
+        baseKey: keys.IS_MULTICHAIN_PROVIDER_ENABLED,
+        data: encodeData(["address"], [multichainProvider]),
+        value: enabled,
+        label: `multichainProvider ${multichainProvider}`,
+      });
+    }
+    for (const [multichainEndpoint, enabled] of Object.entries(generalConfig.multichainEndpoints)) {
+      configItems.push({
+        type: "bool",
+        baseKey: keys.IS_MULTICHAIN_ENDPOINT_ENABLED,
+        data: encodeData(["address"], [multichainEndpoint]),
+        value: enabled,
+        label: `multichainEndpoint ${multichainEndpoint}`,
+      });
+    }
+    for (const [srcChainId, enabled] of Object.entries(generalConfig.srcChainIds)) {
+      configItems.push({
+        type: "bool",
+        baseKey: keys.IS_SRC_CHAIN_ID_ENABLED,
+        data: encodeData(["uint"], [srcChainId]),
+        value: enabled,
+        label: `srcChainId ${srcChainId}`,
+      });
+    }
   }
 
   return configItems;

@@ -1,6 +1,8 @@
 import hre from "hardhat";
 import { hashString } from "../utils/hash";
-import { timelockWriteMulticall } from "../utils/timelock";
+import { cancelActionById, getGrantRolePayload, getRevokeRolePayload, timelockWriteMulticall } from "../utils/timelock";
+import { TimelockConfig } from "../typechain-types";
+import { validateSourceCode } from "./validateDeploymentUtils";
 
 const expectedTimelockMethods = [
   "signalGrantRole",
@@ -10,7 +12,7 @@ const expectedTimelockMethods = [
   "cancelGrantRole",
 ];
 
-async function getTimelock() {
+async function getTimelock(): Promise<TimelockConfig> {
   const network = hre.network.name;
 
   if (network === "arbitrum") {
@@ -147,11 +149,37 @@ async function main() {
   }
 
   const networkConfig = config[hre.network.name];
+  const provider = hre.ethers.provider;
 
-  if (["signalGrantRole", "grantRoleAfterSignal"].includes(timelockMethod)) {
+  // Check that deployed contracts are matching with local sources
+  for (const { member, role, contractName } of networkConfig.rolesToAdd) {
+    const contractInfo = {
+      address: member,
+      name: contractName,
+      isCodeValidated: false,
+      signalledRoles: [role],
+      unapprovedRoles: [],
+    };
+
+    await validateSourceCode(provider, contractInfo);
+    if (!contractInfo.isCodeValidated) {
+      console.log(`❌${contractInfo.name} is not valid. Sources do not match. See diff in validation folder`);
+    } else {
+      console.log(`✅${contractInfo.name} is valid`);
+    }
+  }
+
+  if (timelockMethod === "signalGrantRole") {
     for (const { member, role, contractName } of networkConfig.rolesToAdd) {
       console.log("%s %s %s %s", timelockMethod, member, role, contractName);
       multicallWriteParams.push(timelock.interface.encodeFunctionData(timelockMethod, [member, hashString(role)]));
+    }
+  }
+
+  if (timelockMethod === "grantRoleAfterSignal") {
+    for (const { member, role } of networkConfig.rolesToAdd) {
+      const { target, payload } = await getGrantRolePayload(member, hashString(role));
+      multicallWriteParams.push(timelock.interface.encodeFunctionData("execute", [target, payload]));
     }
   }
 
@@ -167,7 +195,8 @@ async function main() {
   if (timelockMethod === "revokeRoleAfterSignal") {
     for (const { member, role, contractName } of networkConfig.rolesToRemove) {
       console.log("%s %s %s %s", timelockMethod, member, role, contractName);
-      multicallWriteParams.push(timelock.interface.encodeFunctionData(timelockMethod, [member, hashString(role)]));
+      const { target, payload } = await getRevokeRolePayload(member, hashString(role));
+      multicallWriteParams.push(timelock.interface.encodeFunctionData("execute", [target, payload]));
     }
   }
 
@@ -175,7 +204,7 @@ async function main() {
     const actionKeys = await getGrantRoleActionKeysToCancel({ timelock });
     for (const actionKey of actionKeys) {
       console.log("%s %s", timelockMethod, actionKey);
-      multicallWriteParams.push(timelock.interface.encodeFunctionData("cancelAction", [actionKey]));
+      multicallWriteParams.push(cancelActionById(timelock, actionKey));
     }
   }
 

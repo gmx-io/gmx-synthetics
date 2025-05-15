@@ -7,6 +7,7 @@ import "../error/ErrorUtils.sol";
 import "./IOrderHandler.sol";
 import "../order/OrderUtils.sol";
 import "../order/ExecuteOrderUtils.sol";
+import "../multichain/MultichainVault.sol";
 
 // @title OrderHandler
 // @dev Contract to handle creation, execution and cancellation of orders
@@ -15,33 +16,49 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
     using Order for Order.Props;
     using Array for uint256[];
 
+    IOrderExecutor public immutable increaseOrderExecutor;
+    IOrderExecutor public immutable decreaseOrderExecutor;
+    IOrderExecutor public immutable swapOrderExecutor;
+
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        Oracle _oracle,
+        IOracle _oracle,
+        MultichainVault _multichainVault,
         OrderVault _orderVault,
-        SwapHandler _swapHandler,
-        IReferralStorage _referralStorage
+        ISwapHandler _swapHandler,
+        IReferralStorage _referralStorage,
+        IOrderExecutor _increaseOrderExecutor,
+        IOrderExecutor _decreaseOrderExecutor,
+        IOrderExecutor _swapOrderExecutor
     ) BaseOrderHandler(
         _roleStore,
         _dataStore,
         _eventEmitter,
         _oracle,
+        _multichainVault,
         _orderVault,
         _swapHandler,
         _referralStorage
-    ) {}
+    ) {
+        increaseOrderExecutor = _increaseOrderExecutor;
+        decreaseOrderExecutor = _decreaseOrderExecutor;
+        swapOrderExecutor = _swapOrderExecutor;
+    }
 
     // @dev creates an order in the order store
     // @param account the order's account
+    // @param srcChainId the source chain id
     // @param params BaseOrderUtils.CreateOrderParams
     function createOrder(
         address account,
+        uint256 srcChainId,
         IBaseOrderUtils.CreateOrderParams calldata params,
         bool shouldCapMaxExecutionFee
     ) external override globalNonReentrant onlyController returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createOrderFeatureDisabledKey(address(this), uint256(params.orderType)));
+        validateDataListLength(params.dataList.length);
 
         return OrderUtils.createOrder(
             dataStore,
@@ -49,6 +66,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
             orderVault,
             referralStorage,
             account,
+            srcChainId,
             params,
             shouldCapMaxExecutionFee
         );
@@ -97,13 +115,13 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
     ) external override globalNonReentrant onlyController {
         FeatureUtils.validateFeature(dataStore, Keys.updateOrderFeatureDisabledKey(address(this), uint256(order.orderType())));
 
-        if (BaseOrderUtils.isMarketOrder(order.orderType())) {
+        if (Order.isMarketOrder(order.orderType())) {
             revert Errors.OrderNotUpdatable(uint256(order.orderType()));
         }
 
         // this could happen if the order was created in new contracts that support new order types
         // but the order is being updated in old contracts
-        if (!BaseOrderUtils.isSupportedOrder(order.orderType())) {
+        if (!Order.isSupportedOrder(order.orderType())) {
             revert Errors.UnsupportedOrderType(uint256(order.orderType()));
         }
 
@@ -170,7 +188,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
 
         FeatureUtils.validateFeature(_dataStore, Keys.cancelOrderFeatureDisabledKey(address(this), uint256(order.orderType())));
 
-        if (BaseOrderUtils.isMarketOrder(order.orderType())) {
+        if (Order.isMarketOrder(order.orderType())) {
             validateRequestCancellation(
                 order.updatedAtTime(),
                 "Order"
@@ -181,11 +199,13 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
             OrderUtils.CancelOrderParams(
                 dataStore,
                 eventEmitter,
+                multichainVault,
                 orderVault,
                 key,
                 order.account(),
                 startingGas,
                 true, // isExternalCall
+                false, // isAutoCancel
                 Keys.USER_INITIATED_CANCEL,
                 ""
             )
@@ -209,7 +229,8 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         this._executeOrder(
             key,
             order,
-            msg.sender
+            msg.sender,
+            true // isSimulation
         );
     }
 
@@ -235,7 +256,8 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         try this._executeOrder{ gas: executionGas }(
             key,
             order,
-            msg.sender
+            msg.sender,
+            false // isSimulation
         ) {
         } catch (bytes memory reasonBytes) {
             _handleOrderError(key, startingGas, reasonBytes);
@@ -250,7 +272,8 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
     function _executeOrder(
         bytes32 key,
         Order.Props memory order,
-        address keeper
+        address keeper,
+        bool isSimulation
     ) external onlySelf {
         uint256 startingGas = gasleft();
 
@@ -265,13 +288,29 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         // which would automatically cause the order to be frozen
         // limit increase and limit / trigger decrease orders may fail due to output amount as well and become frozen
         // but only if their acceptablePrice is reached
-        if (params.order.isFrozen() || params.order.orderType() == Order.OrderType.LimitSwap) {
+        if (!isSimulation && (params.order.isFrozen() || params.order.orderType() == Order.OrderType.LimitSwap)) {
             _validateFrozenOrderKeeper(keeper);
         }
 
         FeatureUtils.validateFeature(params.contracts.dataStore, Keys.executeOrderFeatureDisabledKey(address(this), uint256(params.order.orderType())));
 
-        ExecuteOrderUtils.executeOrder(params);
+        ExecuteOrderUtils.executeOrder(getOrderExecutor(params.order.orderType()), params);
+    }
+
+    function getOrderExecutor(Order.OrderType orderType) internal view returns (IOrderExecutor) {
+        if (Order.isIncreaseOrder(orderType)) {
+            return increaseOrderExecutor;
+        }
+
+        if (Order.isDecreaseOrder(orderType)) {
+            return decreaseOrderExecutor;
+        }
+
+        if (Order.isSwapOrder(orderType)) {
+            return swapOrderExecutor;
+        }
+
+        revert Errors.UnsupportedOrderType(uint256(orderType));
     }
 
     // @dev handle a caught order error
@@ -291,7 +330,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         validateNonKeeperError(errorSelector, reasonBytes);
 
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);
-        bool isMarketOrder = BaseOrderUtils.isMarketOrder(order.orderType());
+        bool isMarketOrder = Order.isMarketOrder(order.orderType());
 
         if (
             // if the order is already frozen, revert with the custom error to provide more information
@@ -340,11 +379,13 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
                 OrderUtils.CancelOrderParams(
                     dataStore,
                     eventEmitter,
+                    multichainVault,
                     orderVault,
                     key,
                     msg.sender,
                     startingGas,
                     true, // isExternalCall
+                    false, // isAutoCancel
                     reason,
                     reasonBytes
                 )
@@ -367,6 +408,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         OrderUtils.freezeOrder(
             dataStore,
             eventEmitter,
+            multichainVault,
             orderVault,
             key,
             msg.sender,

@@ -10,9 +10,13 @@ import "../event/EventEmitter.sol";
 import "../referral/IReferralStorage.sol";
 
 import "../order/OrderVault.sol";
+import "../utils/Precision.sol";
+import "../position/Position.sol";
 
-import "../oracle/Oracle.sol";
-import "../swap/SwapHandler.sol";
+import "../oracle/IOracle.sol";
+import "../swap/ISwapHandler.sol";
+
+import "../multichain/MultichainVault.sol";
 
 // @title Order
 // @dev Library for common order functions used in OrderUtils, IncreaseOrderUtils
@@ -54,14 +58,15 @@ library BaseOrderUtils {
     // @param eventEmitter EventEmitter
     // @param orderVault OrderVault
     // @param oracle Oracle
-    // @param swapHandler SwapHandler
+    // @param swapHandler ISwapHandler
     // @param referralStorage IReferralStorage
     struct ExecuteOrderParamsContracts {
         DataStore dataStore;
         EventEmitter eventEmitter;
+        MultichainVault multichainVault;
         OrderVault orderVault;
-        Oracle oracle;
-        SwapHandler swapHandler;
+        IOracle oracle;
+        ISwapHandler swapHandler;
         IReferralStorage referralStorage;
     }
 
@@ -69,69 +74,6 @@ library BaseOrderUtils {
         uint256 price;
         uint256 executionPrice;
         int256 adjustedPriceImpactUsd;
-    }
-
-    function isSupportedOrder(Order.OrderType orderType) internal pure returns (bool) {
-        return orderType == Order.OrderType.MarketSwap ||
-               orderType == Order.OrderType.LimitSwap ||
-               orderType == Order.OrderType.MarketIncrease ||
-               orderType == Order.OrderType.MarketDecrease ||
-               orderType == Order.OrderType.LimitIncrease ||
-               orderType == Order.OrderType.LimitDecrease ||
-               orderType == Order.OrderType.StopIncrease ||
-               orderType == Order.OrderType.StopLossDecrease ||
-               orderType == Order.OrderType.Liquidation;
-    }
-
-    // @dev check if an orderType is a market order
-    // @param orderType the order type
-    // @return whether an orderType is a market order
-    function isMarketOrder(Order.OrderType orderType) internal pure returns (bool) {
-        // a liquidation order is not considered as a market order
-        return orderType == Order.OrderType.MarketSwap ||
-               orderType == Order.OrderType.MarketIncrease ||
-               orderType == Order.OrderType.MarketDecrease;
-    }
-
-    // @dev check if an orderType is a swap order
-    // @param orderType the order type
-    // @return whether an orderType is a swap order
-    function isSwapOrder(Order.OrderType orderType) internal pure returns (bool) {
-        return orderType == Order.OrderType.MarketSwap ||
-               orderType == Order.OrderType.LimitSwap;
-    }
-
-    // @dev check if an orderType is a position order
-    // @param orderType the order type
-    // @return whether an orderType is a position order
-    function isPositionOrder(Order.OrderType orderType) internal pure returns (bool) {
-        return isIncreaseOrder(orderType) || isDecreaseOrder(orderType);
-    }
-
-    // @dev check if an orderType is an increase order
-    // @param orderType the order type
-    // @return whether an orderType is an increase order
-    function isIncreaseOrder(Order.OrderType orderType) internal pure returns (bool) {
-        return orderType == Order.OrderType.MarketIncrease ||
-               orderType == Order.OrderType.LimitIncrease ||
-               orderType == Order.OrderType.StopIncrease;
-    }
-
-    // @dev check if an orderType is a decrease order
-    // @param orderType the order type
-    // @return whether an orderType is a decrease order
-    function isDecreaseOrder(Order.OrderType orderType) internal pure returns (bool) {
-        return orderType == Order.OrderType.MarketDecrease ||
-               orderType == Order.OrderType.LimitDecrease ||
-               orderType == Order.OrderType.StopLossDecrease ||
-               orderType == Order.OrderType.Liquidation;
-    }
-
-    // @dev check if an orderType is a liquidation order
-    // @param orderType the order type
-    // @return whether an orderType is a liquidation order
-    function isLiquidationOrder(Order.OrderType orderType) internal pure returns (bool) {
-        return orderType == Order.OrderType.Liquidation;
     }
 
     // @dev validate the price for increase / decrease orders based on the triggerPrice
@@ -166,16 +108,16 @@ library BaseOrderUtils {
     // @param triggerPrice the order's triggerPrice
     // @param isLong whether the order is for a long or short
     function validateOrderTriggerPrice(
-        Oracle oracle,
+        IOracle oracle,
         address indexToken,
         Order.OrderType orderType,
         uint256 triggerPrice,
         bool isLong
     ) internal view {
         if (
-            isSwapOrder(orderType) ||
-            isMarketOrder(orderType) ||
-            isLiquidationOrder(orderType)
+            Order.isSwapOrder(orderType) ||
+            Order.isMarketOrder(orderType) ||
+            Order.isLiquidationOrder(orderType)
         ) {
             return;
         }
@@ -253,7 +195,7 @@ library BaseOrderUtils {
         Order.OrderType orderType,
         uint256 validFromTime
     ) internal view {
-        if (isMarketOrder(orderType)) {
+        if (Order.isMarketOrder(orderType)) {
             return;
         }
 
@@ -437,7 +379,7 @@ library BaseOrderUtils {
     }
 
     function getPositionKey(Order.Props memory order) internal pure returns (bytes32) {
-        if (isDecreaseOrder(order.orderType())) {
+        if (Order.isDecreaseOrder(order.orderType())) {
             return Position.getPositionKey(
                 order.account(),
                 order.market(),
