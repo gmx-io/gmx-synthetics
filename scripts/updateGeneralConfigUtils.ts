@@ -157,12 +157,6 @@ const getConfigItems = (generalConfig, oracleConfig) => {
       label: `swapOrderGasLimit`,
     },
     {
-      type: "bool",
-      baseKey: keys.IGNORE_OPEN_INTEREST_FOR_USAGE_FACTOR,
-      value: generalConfig.ignoreOpenInterestForUsageFactor,
-      label: `ignoreOpenInterestForUsageFactor`,
-    },
-    {
       type: "uint",
       baseKey: keys.MAX_EXECUTION_FEE_MULTIPLIER_FACTOR,
       value: generalConfig.maxExecutionFeeMultiplierFactor,
@@ -305,7 +299,7 @@ const getConfigItems = (generalConfig, oracleConfig) => {
       configItems.push({
         type: "bool",
         baseKey: keys.IS_MULTICHAIN_PROVIDER_ENABLED,
-        data: encodeData(["address"], [multichainProvider]),
+        keyData: encodeData(["address"], [multichainProvider]),
         value: enabled,
         label: `multichainProvider ${multichainProvider}`,
       });
@@ -314,7 +308,7 @@ const getConfigItems = (generalConfig, oracleConfig) => {
       configItems.push({
         type: "bool",
         baseKey: keys.IS_MULTICHAIN_ENDPOINT_ENABLED,
-        data: encodeData(["address"], [multichainEndpoint]),
+        keyData: encodeData(["address"], [multichainEndpoint]),
         value: enabled,
         label: `multichainEndpoint ${multichainEndpoint}`,
       });
@@ -323,7 +317,7 @@ const getConfigItems = (generalConfig, oracleConfig) => {
       configItems.push({
         type: "bool",
         baseKey: keys.IS_SRC_CHAIN_ID_ENABLED,
-        data: encodeData(["uint"], [srcChainId]),
+        keyData: encodeData(["uint"], [srcChainId]),
         value: enabled,
         label: `srcChainId ${srcChainId}`,
       });
