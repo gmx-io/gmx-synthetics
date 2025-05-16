@@ -15,31 +15,30 @@ contract MultichainSender is OAppSender {
 
     /**
      * @notice Quotes the fee required to send a message to the destination chain
-     * @param message The message to be sent
-     * @param dstEid Destination chain's endpoint ID
-     * @param options Message execution options (e.g. for sending gas to destination)
-     * @return fee The MessagingFee struct containing the native and ZRO fees
+     * @return nativeFee The fee in native gas required to send the message
      */
     function quote(
-        bytes memory message,
         uint32 dstEid,
+        bytes memory message,
         bytes calldata options
-    ) external view returns (MessagingFee memory fee) {
-        return _quote(dstEid, message, options, false);
+    ) external view returns (uint256 nativeFee) {
+        MessagingFee memory fee = _quote(dstEid, message, options, false);
+        return fee.nativeFee;
     }
 
     /**
      * @notice Sends a message from the source to destination chain
-     * @param message The message to be sent
      * @param dstEid Destination chain's endpoint ID
+     * @param message The message to be sent (actionType + actionData)
      * @param options Message execution options (e.g. for sending gas to destination)
      */
     function sendMessage(
-        bytes memory message,
         uint32 dstEid,
+        bytes memory message,
         bytes calldata options
     ) external payable {
-        MessagingFee memory fee = _quote(dstEid, message, options, false);
+        bytes memory encodedMessage = abi.encode(msg.sender, message);
+        MessagingFee memory fee = _quote(dstEid, encodedMessage, options, false);
 
         if (msg.value < fee.nativeFee) {
             revert Errors.InsufficientFee(msg.value, fee.nativeFee);
@@ -47,7 +46,7 @@ contract MultichainSender is OAppSender {
 
         _lzSend(
             dstEid,
-            message,
+            encodedMessage,
             options,
             MessagingFee(msg.value, 0), // fee in native gas and ZRO token
             payable(msg.sender) // refund address in case of failed source message

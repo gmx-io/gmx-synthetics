@@ -44,10 +44,11 @@ contract MultichainReceiver is OAppReceiver {
     ) internal override {
         _validateMultichainSender(dataStore, origin.sender);
 
-        (ActionType actionType, bytes memory actionData) = abi.decode(message, (ActionType, bytes));
+        (address account, bytes memory data) = abi.decode(message, (address, bytes));
+        (ActionType actionType, bytes memory actionData) = abi.decode(data, (ActionType, bytes));
 
         if (actionType == ActionType.SetTraderReferralCode) {
-            (address account, bytes32 referralCode) = abi.decode(actionData, (address, bytes32));
+            (bytes32 referralCode) = abi.decode(actionData, (bytes32));
             referralStorage.setTraderReferralCode(account, referralCode);
         } else {
             revert Errors.InvalidMultichainAction();
