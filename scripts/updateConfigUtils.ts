@@ -134,7 +134,7 @@ export async function handleConfigChanges(items: ConfigChangeItem[], write: bool
   try {
     if (write) {
       await handleInBatches(multicallWriteParams, batchSize, async (batch) => {
-        const tx = await config.connect(from).multicall(batch);
+        const tx = await config.multicall(batch);
         console.log(`tx sent: ${tx.hash}`);
       });
     } else {
