@@ -120,9 +120,7 @@ export async function handleConfigChanges(items: ConfigChangeItem[], write: bool
     batchSize = multicallWriteParams.length;
   }
   await handleInBatches(multicallWriteParams, batchSize, async (batch) => {
-    await config.callStatic.multicall(batch, {
-      from,
-    });
+    await config.connect(from).callStatic.multicall(batch);
   });
 
   if (!write) {
