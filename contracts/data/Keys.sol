@@ -502,8 +502,6 @@ library Keys {
     bytes32 public constant IS_MULTICHAIN_PROVIDER_ENABLED = keccak256(abi.encode("IS_MULTICHAIN_PROVIDER_ENABLED"));
     // @dev key for the flag if a multichain endpoint is enabled
     bytes32 public constant IS_MULTICHAIN_ENDPOINT_ENABLED = keccak256(abi.encode("IS_MULTICHAIN_ENDPOINT_ENABLED"));
-    // @dev key for the flag if a multichain sender is enabled
-    bytes32 public constant IS_MULTICHAIN_SENDER_ENABLED = keccak256(abi.encode("IS_MULTICHAIN_SENDER_ENABLED"));
     // @dev key for the flag if a src chain is enabled
     bytes32 public constant IS_SRC_CHAIN_ID_ENABLED = keccak256(abi.encode("IS_SRC_CHAIN_ID_ENABLED"));
     // @dev key for the last src chain id from which the user last managed his position
@@ -2240,16 +2238,6 @@ library Keys {
         return keccak256(abi.encode(
             IS_MULTICHAIN_ENDPOINT_ENABLED,
             endpoint
-        ));
-    }
-
-    // @dev key for whether a multichain sender is enabled
-    // @param sender the multichain sender
-    // @return key for whether a multichain sender is enabled
-    function isMultichainSenderEnabledKey(address sender) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            IS_MULTICHAIN_SENDER_ENABLED,
-            sender
         ));
     }
 

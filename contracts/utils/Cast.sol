@@ -50,10 +50,6 @@ library Cast {
         return value = value >> (8 * (32 - length));
     }
 
-    function bytes32ToAddress(bytes32 _b) internal pure returns (address) {
-        return address(uint160(uint256(_b)));
-    }
-
     function uint256ToBytes(uint256 x) internal pure returns (bytes memory b) {
         b = new bytes(32);
         assembly { mstore(add(b, 32), x) }

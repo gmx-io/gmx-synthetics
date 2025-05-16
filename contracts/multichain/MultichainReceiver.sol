@@ -31,19 +31,18 @@ contract MultichainReceiver is OAppReceiver {
     /**
      * @dev Called when data is received from the protocol. It overrides the equivalent function in the parent contract.
      * Protocol messages are defined as packets, comprised of the following parameters.
-     * @param origin A struct containing information about where the packet came from.
+     * param origin A struct containing information about where the packet came from.
      * param guid A global unique identifier for tracking the packet.
      * @param message Encoded message containing the action type and data.
+     * @dev MultichainSender and source chain are enforced through setPeer(eid, oAppAddress).
      */
     function _lzReceive(
-        Origin calldata origin,
+        Origin calldata /* origin */,
         bytes32 /* guid */,
         bytes calldata message,
         address, // Executor address as specified by the OAppSender.
         bytes calldata // Any extra data or options to trigger on receipt.
     ) internal override {
-        _validateMultichainSender(dataStore, origin.sender);
-
         (address account, bytes memory data) = abi.decode(message, (address, bytes));
         (ActionType actionType, bytes memory actionData) = abi.decode(data, (ActionType, bytes));
 
@@ -52,14 +51,6 @@ contract MultichainReceiver is OAppReceiver {
             referralStorage.setTraderReferralCode(account, referralCode);
         } else {
             revert Errors.InvalidMultichainAction();
-        }
-    }
-
-    function _validateMultichainSender(DataStore _dataStore, bytes32 originSender) private view {
-        address sender = Cast.bytes32ToAddress(originSender);
-        bytes32 referralKey = Keys.isMultichainSenderEnabledKey(sender);
-        if (!_dataStore.getBool(referralKey)) {
-            revert Errors.InvalidMultichainSender(sender);
         }
     }
 }
