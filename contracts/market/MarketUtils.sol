@@ -126,6 +126,15 @@ library MarketUtils {
         uint256 affiliateRewardAmount;
     }
 
+    struct ApplyDeltaToPositionImpactPoolCache {
+        bytes32 positionImpactPoolAmountKey;
+        bytes32 lentPositionImpactPoolAmountKey;
+        uint256 deltaMagnitude;
+        uint256 poolAmount;
+        uint256 excessAmount;
+        uint256 nextValue;
+    }
+
     // @dev get the market token's price
     // @param dataStore DataStore
     // @param market the market to check
@@ -266,6 +275,8 @@ library MarketUtils {
     // the value of a pool is the worth of the liquidity provider tokens in the pool - pending trader pnl
     // we use the token index prices to calculate this and ignore price impact since if all positions were closed the
     // net price impact should be zero
+    // note that there is exposure to the index token through the positionImpactPoolAmount and lentPositionImpactPoolAmount
+    // if these amounts are large they may be a significant contributor to the GM token price
     // @param dataStore DataStore
     // @param market the market values
     // @param longTokenPrice price of the long token
@@ -367,6 +378,12 @@ library MarketUtils {
         uint256 impactPoolUsd = result.impactPoolAmount * indexTokenPrice.pickPrice(!maximize);
 
         result.poolValue -= impactPoolUsd.toInt256();
+
+        result.lentImpactPoolAmount = dataStore.getUint(Keys.lentPositionImpactPoolAmountKey(market.marketToken));
+        // use maximize for pickPrice since the lentImpactPoolUsd is added to the poolValue
+        uint256 lentImpactPoolUsd = result.lentImpactPoolAmount * indexTokenPrice.pickPrice(maximize);
+
+        result.poolValue += lentImpactPoolUsd.toInt256();
 
         return result;
     }
@@ -847,7 +864,18 @@ library MarketUtils {
         return (positiveImpactFactor, negativeImpactFactor);
     }
 
-    // @dev cap the input priceImpactUsd by the available amount in the position impact pool
+    // @dev cap the input priceImpactUsd by the available amount in the
+    // position impact pool
+    // Note that since the price impact can be capped, a malicious
+    // CONFIG_KEEPER can set price impact values to be very large
+    // then make trades to incur a large amount of negative price impact
+    // in account A, and a large amount of positive price impact in
+    // account B
+    // since the price impact in account A is claimable, and the positive
+    // price impact in account B is first paid for by the pool, this method
+    // can be used to reduce the funds in the GM pool
+    // the CLAIMABLE_COLLATERAL_DELAY should be restricted to be at least
+    // 24 hours or more to allow for activity of this form to be blocked
     // @param dataStore DataStore
     // @param market the trading market
     // @param indexTokenPrice the price of the token
@@ -857,15 +885,35 @@ library MarketUtils {
         DataStore dataStore,
         address market,
         Price.Props memory indexTokenPrice,
-        int256 priceImpactUsd
+        int256 priceImpactUsd,
+        int256 positionProportionalPendingImpactAmount
     ) internal view returns (int256) {
         if (priceImpactUsd < 0) {
             return priceImpactUsd;
         }
 
         uint256 impactPoolAmount = getPositionImpactPoolAmount(dataStore, market);
+        int256 totalPendingImpactAmount = getTotalPendingImpactAmount(dataStore, market);
+        // on position close, the proportional position pending impact amount will be
+        // subtracted from the totalPendingImpactAmount
+        // e.g. if totalPendingImpactAmount is 5 and proportional position pending
+        // impact amount is 20
+        // after the position is reduced, the totalPendingImpactAmount would be -15
+        totalPendingImpactAmount -= positionProportionalPendingImpactAmount;
+
+        // totalPendingImpactAmount is subtracted from impactPoolAmount
+        // if totalPendingImpactAmount is positive, this means there is pending
+        // price impact that should be covered by the pool
+        // if totalPendingImpactAmount is negative, this means there is pending
+        // price impact that can be used to pay for positive price impact
+        int256 totalImpactPoolAmount = impactPoolAmount.toInt256() - totalPendingImpactAmount;
+
+        if (totalImpactPoolAmount < 0) {
+            return 0;
+        }
+
         // use indexTokenPrice.min to maximize the position impact pool reduction
-        int256 maxPriceImpactUsdBasedOnImpactPool = (impactPoolAmount * indexTokenPrice.min).toInt256();
+        int256 maxPriceImpactUsdBasedOnImpactPool = totalImpactPoolAmount * indexTokenPrice.min.toInt256();
 
         if (priceImpactUsd > maxPriceImpactUsdBasedOnImpactPool) {
             priceImpactUsd = maxPriceImpactUsdBasedOnImpactPool;
@@ -899,6 +947,10 @@ library MarketUtils {
         }
 
         return priceImpactUsd;
+    }
+
+    function getTotalPendingImpactAmount(DataStore dataStore, address market) internal view returns (int256) {
+        return dataStore.getInt(Keys.totalPendingImpactAmountKey(market));
     }
 
     // @dev get the position impact pool amount
@@ -941,6 +993,27 @@ library MarketUtils {
         return nextValue;
     }
 
+    function applyDeltaToTotalPendingImpactAmount(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address market,
+        int256 delta
+    ) internal returns (int256) {
+        int256 nextValue = dataStore.applyDeltaToInt(
+            Keys.totalPendingImpactAmountKey(market),
+            delta
+        );
+
+        MarketEventUtils.emitTotalPendingImpactAmountUpdated(
+            eventEmitter,
+            market,
+            delta,
+            nextValue
+        );
+
+        return nextValue;
+    }
+
     // @dev apply a delta to the position impact pool
     // @param dataStore DataStore
     // @param eventEmitter EventEmitter
@@ -951,15 +1024,43 @@ library MarketUtils {
         EventEmitter eventEmitter,
         address market,
         int256 delta
-    ) internal returns (uint256) {
-        uint256 nextValue = dataStore.applyBoundedDeltaToUint(
-            Keys.positionImpactPoolAmountKey(market),
-            delta
-        );
+    ) internal {
+        ApplyDeltaToPositionImpactPoolCache memory cache;
+        cache.deltaMagnitude = delta.abs();
 
-        MarketEventUtils.emitPositionImpactPoolAmountUpdated(eventEmitter, market, delta, nextValue);
+        if (delta < 0) {
+            cache.positionImpactPoolAmountKey = Keys.positionImpactPoolAmountKey(market);
+            cache.poolAmount = dataStore.getUint(cache.positionImpactPoolAmountKey);
 
-        return nextValue;
+            if (cache.deltaMagnitude > cache.poolAmount) {
+                cache.excessAmount = cache.deltaMagnitude - cache.poolAmount;
+
+                dataStore.setUint(cache.positionImpactPoolAmountKey, 0);
+                MarketEventUtils.emitPositionImpactPoolAmountUpdated(eventEmitter, market, cache.poolAmount.toInt256(), 0);
+
+                cache.nextValue = dataStore.incrementUint(Keys.lentPositionImpactPoolAmountKey(market), cache.excessAmount);
+                MarketEventUtils.emitLentPositionImpactPoolAmountUpdated(eventEmitter, market, cache.excessAmount.toInt256(), cache.nextValue);
+            } else {
+                cache.nextValue = dataStore.decrementUint(cache.positionImpactPoolAmountKey, cache.deltaMagnitude);
+                MarketEventUtils.emitPositionImpactPoolAmountUpdated(eventEmitter, market, delta, cache.nextValue);
+            }
+        } else {
+            cache.lentPositionImpactPoolAmountKey = Keys.lentPositionImpactPoolAmountKey(market);
+            cache.poolAmount = dataStore.getUint(cache.lentPositionImpactPoolAmountKey);
+
+            if (cache.deltaMagnitude > cache.poolAmount) {
+                cache.excessAmount = cache.deltaMagnitude - cache.poolAmount;
+
+                dataStore.setUint(cache.lentPositionImpactPoolAmountKey, 0);
+                MarketEventUtils.emitLentPositionImpactPoolAmountUpdated(eventEmitter, market, cache.poolAmount.toInt256(), 0);
+
+                cache.nextValue = dataStore.incrementUint(Keys.positionImpactPoolAmountKey(market), cache.excessAmount);
+                MarketEventUtils.emitPositionImpactPoolAmountUpdated(eventEmitter, market, cache.excessAmount.toInt256(), cache.nextValue);
+            } else {
+                cache.nextValue = dataStore.decrementUint(cache.lentPositionImpactPoolAmountKey, cache.deltaMagnitude);
+                MarketEventUtils.emitLentPositionImpactPoolAmountUpdated(eventEmitter, market, delta, cache.nextValue);
+            }
+        }
     }
 
     // @dev apply a delta to the open interest

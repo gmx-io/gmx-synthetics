@@ -205,7 +205,7 @@ library Errors {
     error UnexpectedPoolValue(int256 poolValue);
 
     // MarketPositionImpactUtils errors
-    error InsufficientImpactPoolValueForWithdrawal(uint256 withdrawalAmount, uint256 poolValue);
+    error InsufficientImpactPoolValueForWithdrawal(uint256 withdrawalAmount, uint256 poolValue, int256 totalPendingImpactAmount);
 
     // Oracle errors
     error SequencerDown();

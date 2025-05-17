@@ -177,6 +177,28 @@ library MarketEventUtils {
         );
     }
 
+    function emitTotalPendingImpactAmountUpdated(
+        EventEmitter eventEmitter,
+        address market,
+        int256 delta,
+        int256 nextValue
+    ) external {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "market", market);
+
+        eventData.intItems.initItems(2);
+        eventData.intItems.setItem(0, "delta", delta);
+        eventData.intItems.setItem(1, "nextValue", nextValue);
+
+        eventEmitter.emitEventLog1(
+            "TotalPendingImpactAmountUpdated",
+            Cast.toBytes32(market),
+            eventData
+        );
+    }
+
     function emitPositionImpactPoolAmountUpdated(
         EventEmitter eventEmitter,
         address market,
@@ -196,6 +218,30 @@ library MarketEventUtils {
 
         eventEmitter.emitEventLog1(
             "PositionImpactPoolAmountUpdated",
+            Cast.toBytes32(market),
+            eventData
+        );
+    }
+
+    function emitLentPositionImpactPoolAmountUpdated(
+        EventEmitter eventEmitter,
+        address market,
+        int256 delta,
+        uint256 nextValue
+    ) external {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "market", market);
+
+        eventData.intItems.initItems(1);
+        eventData.intItems.setItem(0, "delta", delta);
+
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "nextValue", nextValue);
+
+        eventEmitter.emitEventLog1(
+            "LentPositionImpactPoolAmountUpdated",
             Cast.toBytes32(market),
             eventData
         );

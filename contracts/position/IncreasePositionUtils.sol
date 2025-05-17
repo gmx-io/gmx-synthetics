@@ -100,7 +100,13 @@ library IncreasePositionUtils {
             );
         }
 
-        (cache.priceImpactUsd, cache.priceImpactAmount, cache.baseSizeDeltaInTokens, cache.executionPrice, cache.balanceWasImproved) = PositionUtils.getExecutionPriceForIncrease(params, prices.indexTokenPrice);
+        (
+            cache.priceImpactUsd,
+            cache.priceImpactAmount,
+            cache.baseSizeDeltaInTokens,
+            cache.executionPrice,
+            cache.balanceWasImproved
+        ) = PositionUtils.getExecutionPriceForIncrease(params, prices.indexTokenPrice);
 
         // process the collateral for the given position and order
         PositionPricingUtils.PositionFees memory fees;
@@ -123,6 +129,12 @@ library IncreasePositionUtils {
         // Instead of applying the delta to the pool, store it using the positionKey
         // No need to flip the priceImpactAmount sign since it isn't applied to the pool, it's just stored
         params.position.setPendingImpactAmount(params.position.pendingImpactAmount() + cache.priceImpactAmount);
+        MarketUtils.applyDeltaToTotalPendingImpactAmount(
+            params.contracts.dataStore,
+            params.contracts.eventEmitter,
+            params.market.marketToken,
+            cache.priceImpactAmount
+        );
 
         cache.nextPositionSizeInUsd = params.position.sizeInUsd() + params.order.sizeDeltaUsd();
         cache.nextPositionBorrowingFactor = MarketUtils.getCumulativeBorrowingFactor(
