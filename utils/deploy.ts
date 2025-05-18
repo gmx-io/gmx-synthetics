@@ -150,6 +150,9 @@ export function skipHandlerFunction(contractName: string): (env: HardhatRuntimeE
     // Check that handler ABI didn't changed since last deploy
     const artifact = getArtifact(contractName);
     const deployment = getDeployment(contractName, hre.network.name);
+    if (!deployment) {
+      return shouldSkip;
+    }
     if (shouldSkip && JSON.stringify(deployment.abi) == JSON.stringify(artifact.abi)) {
       throw new Error(`ABI has been changed for ${contractName}, but contract is not picked for deploy!`);
     }
