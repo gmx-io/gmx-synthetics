@@ -142,7 +142,7 @@ function getDeployment(contractName: string, network: string) {
 export function skipHandlerFunction(contractName: string): (env: HardhatRuntimeEnvironment) => Promise<boolean> {
   return async function skip(env: HardhatRuntimeEnvironment) {
     const tags = env.deployTags?.split(",") ?? [];
-    if (tags.includes(contractName)) {
+    if (tags.includes(contractName) || hre.network.name === "hardhat") {
       return false;
     }
     const shouldSkip = process.env.SKIP_AUTO_HANDLER_REDEPLOYMENT ? true : false;
@@ -151,7 +151,7 @@ export function skipHandlerFunction(contractName: string): (env: HardhatRuntimeE
     const artifact = getArtifact(contractName);
     const deployment = getDeployment(contractName, hre.network.name);
     if (!deployment) {
-      return shouldSkip;
+      return false;
     }
     if (shouldSkip && JSON.stringify(deployment.abi) == JSON.stringify(artifact.abi)) {
       throw new Error(`ABI has been changed for ${contractName}, but contract is not picked for deploy!`);
