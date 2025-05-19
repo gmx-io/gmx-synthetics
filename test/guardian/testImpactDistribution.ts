@@ -215,6 +215,9 @@ describe("Guardian.PositionImpactPoolDistribution", () => {
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(2, 6));
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 6));
     await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
+
+    await dataStore.setUint(keys.maxLendableImpactFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 1)); // 20%
+
     await config.setPositionImpactDistributionRate(
       ethUsdMarket.marketToken,
       expandDecimals(0, 18), // minPositionImpactPoolAmount

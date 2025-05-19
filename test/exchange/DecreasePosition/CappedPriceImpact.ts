@@ -29,6 +29,8 @@ describe("Exchange.DecreasePosition", () => {
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 7));
     await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
 
+    await dataStore.setUint(keys.maxLendableImpactFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 1)); // 20%
+
     expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(0);
 
     await usingResult(
@@ -151,6 +153,8 @@ describe("Exchange.DecreasePosition", () => {
 
     await dataStore.setUint(keys.maxPositionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 4));
     await dataStore.setUint(keys.maxPositionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 3));
+
+    await dataStore.setUint(keys.maxLendableImpactFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 1)); // 20%
 
     expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(0);
 

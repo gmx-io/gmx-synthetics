@@ -342,6 +342,8 @@ describe("Guardian.Fees", () => {
     await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 3)); // 0.1%
     await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 4)); // 0.05%
 
+    await dataStore.setUint(keys.maxLendableImpactFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 1)); // 20%
+
     // Negative impact fees are greater than positive impact fees
     const negativeImpactPositionFeeFactor = await dataStore.getUint(
       keys.positionFeeFactorKey(ethUsdMarket.marketToken, false)
