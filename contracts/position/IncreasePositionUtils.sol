@@ -106,7 +106,7 @@ library IncreasePositionUtils {
             cache.baseSizeDeltaInTokens,
             cache.executionPrice,
             cache.balanceWasImproved
-        ) = PositionUtils.getExecutionPriceForIncrease(params, prices.indexTokenPrice);
+        ) = PositionUtils.getExecutionPriceForIncrease(params, prices);
 
         // process the collateral for the given position and order
         PositionPricingUtils.PositionFees memory fees;

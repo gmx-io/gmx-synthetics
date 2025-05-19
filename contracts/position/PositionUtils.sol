@@ -647,7 +647,7 @@ library PositionUtils {
     // returns priceImpactUsd, priceImpactAmount, baseSizeDeltaInTokens, executionPrice, balanceWasImproved
     function getExecutionPriceForIncrease(
         UpdatePositionParams memory params,
-        Price.Props memory indexTokenPrice
+        MarketUtils.MarketPrices memory prices
     ) external view returns (int256, int256, uint256, uint256, bool) {
         // note that the executionPrice is not validated against the order.acceptablePrice value
         // if the sizeDeltaUsd is zero
@@ -656,7 +656,7 @@ library PositionUtils {
             // increase order:
             //     - long: use the larger price
             //     - short: use the smaller price
-            return (0, 0, 0, indexTokenPrice.pickPrice(params.position.isLong()), false);
+            return (0, 0, 0, prices.indexTokenPrice.pickPrice(params.position.isLong()), false);
         }
 
         GetExecutionPriceForIncreaseCache memory cache;
@@ -686,8 +686,8 @@ library PositionUtils {
 
         cache.priceImpactUsd = MarketUtils.capPositiveImpactUsdByPositionImpactPool(
             params.contracts.dataStore,
-            params.market.marketToken,
-            indexTokenPrice,
+            params.market,
+            prices,
             cache.priceImpactUsd,
             0
         );
@@ -710,18 +710,18 @@ library PositionUtils {
 
         if (cache.priceImpactUsd > 0) {
             // use indexTokenPrice.max and round down to minimize the priceImpactAmount
-            cache.priceImpactAmount = cache.priceImpactUsd / indexTokenPrice.max.toInt256();
+            cache.priceImpactAmount = cache.priceImpactUsd / prices.indexTokenPrice.max.toInt256();
         } else {
             // use indexTokenPrice.min and round up to maximize the priceImpactAmount
-            cache.priceImpactAmount = Calc.roundUpMagnitudeDivision(cache.priceImpactUsd, indexTokenPrice.min);
+            cache.priceImpactAmount = Calc.roundUpMagnitudeDivision(cache.priceImpactUsd, prices.indexTokenPrice.min);
         }
 
         if (params.position.isLong()) {
             // round the number of tokens for long positions down
-            cache.baseSizeDeltaInTokens = params.order.sizeDeltaUsd() / indexTokenPrice.max;
+            cache.baseSizeDeltaInTokens = params.order.sizeDeltaUsd() / prices.indexTokenPrice.max;
         } else {
             // round the number of tokens for short positions up
-            cache.baseSizeDeltaInTokens = Calc.roundUpDivision(params.order.sizeDeltaUsd(), indexTokenPrice.min);
+            cache.baseSizeDeltaInTokens = Calc.roundUpDivision(params.order.sizeDeltaUsd(), prices.indexTokenPrice.min);
         }
 
         int256 sizeDeltaInTokens;

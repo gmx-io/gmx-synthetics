@@ -328,6 +328,7 @@ library Keys {
     bytes32 public constant POSITION_IMPACT_POOL_AMOUNT = keccak256(abi.encode("POSITION_IMPACT_POOL_AMOUNT"));
     // @dev key for lent position impact pool amount
     bytes32 public constant LENT_POSITION_IMPACT_POOL_AMOUNT = keccak256(abi.encode("LENT_POSITION_IMPACT_POOL_AMOUNT"));
+    bytes32 public constant MAX_LENDABLE_IMPACT_FACTOR = keccak256(abi.encode("MAX_LENDABLE_IMPACT_FACTOR"));
     // @dev key for total pending position impact amount
     bytes32 public constant TOTAL_PENDING_IMPACT_AMOUNT = keccak256(abi.encode("TOTAL_PENDING_IMPACT_AMOUNT"));
     // @dev key for min position impact pool amount
@@ -1384,12 +1385,16 @@ library Keys {
         ));
     }
 
-    // @dev key for amount of tokens lent from a market for positive position impact
-    // @param market the market to check
-    // @return key for amount of tokens lent from a market for positive position impact
     function lentPositionImpactPoolAmountKey(address market) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             LENT_POSITION_IMPACT_POOL_AMOUNT,
+            market
+        ));
+    }
+
+    function maxLendableImpactFactorKey(address market) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            MAX_LENDABLE_IMPACT_FACTOR,
             market
         ));
     }

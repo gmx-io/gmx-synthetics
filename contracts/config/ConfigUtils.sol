@@ -368,6 +368,15 @@ library ConfigUtils {
             }
         }
 
+        if (
+            baseKey == Keys.MAX_LENDABLE_IMPACT_FACTOR
+        ) {
+            // revert if value > 20%
+            if (value > 20 * Precision.FLOAT_PRECISION / 100) {
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
+            }
+        }
+
         if (baseKey == Keys.LIQUIDATION_FEE_FACTOR) {
             // revert if value > 1%
             if (value > Precision.FLOAT_PRECISION / 100) {

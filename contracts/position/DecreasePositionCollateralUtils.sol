@@ -167,8 +167,8 @@ library DecreasePositionCollateralUtils {
         // cap the positive totalImpactUsd by the available amount in the position impact pool
         values.totalImpactUsd = MarketUtils.capPositiveImpactUsdByPositionImpactPool(
             params.contracts.dataStore,
-            params.market.marketToken,
-            cache.prices.indexTokenPrice,
+            params.market,
+            cache.prices,
             values.totalImpactUsd,
             values.proportionalPendingImpactAmount
         );

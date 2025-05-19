@@ -152,7 +152,7 @@ library ReaderPricingUtils {
     function getExecutionPrice(
         DataStore dataStore,
         Market.Props memory market,
-        Price.Props memory indexTokenPrice,
+        MarketUtils.MarketPrices memory prices,
         uint256 positionSizeInUsd,
         uint256 positionSizeInTokens,
         int256 sizeDeltaUsd,
@@ -179,12 +179,12 @@ library ReaderPricingUtils {
         if (sizeDeltaUsd > 0) {
             (result.priceImpactUsd, /* priceImpactAmount */, /* sizeDeltaInTokens */, result.executionPrice, result.balanceWasImproved) = PositionUtils.getExecutionPriceForIncrease(
                 params,
-                indexTokenPrice
+                prices
             );
         } else {
              (result.priceImpactUsd, result.executionPrice, result.balanceWasImproved) = PositionUtils.getExecutionPriceForDecrease(
                 params,
-                indexTokenPrice
+                prices.indexTokenPrice
             );
         }
 

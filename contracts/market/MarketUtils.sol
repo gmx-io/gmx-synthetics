@@ -135,6 +135,19 @@ library MarketUtils {
         uint256 nextValue;
     }
 
+    struct CapPositiveImpactUsdByPositionImpactPoolCache {
+        uint256 impactPoolAmount;
+        int256 totalPendingImpactAmount;
+        int256 totalImpactPoolAmount;
+        uint256 longTokenUsd;
+        uint256 shortTokenUsd;
+        uint256 maxLendableFactor;
+        uint256 maxLendableUsd;
+        uint256 lentAmount;
+        uint256 lentUsd;
+        int256 maxPriceImpactUsd;
+    }
+
     // @dev get the market token's price
     // @param dataStore DataStore
     // @param market the market to check
@@ -883,8 +896,8 @@ library MarketUtils {
     // @return the capped priceImpactUsd
     function capPositiveImpactUsdByPositionImpactPool(
         DataStore dataStore,
-        address market,
-        Price.Props memory indexTokenPrice,
+        Market.Props memory market,
+        MarketPrices memory prices,
         int256 priceImpactUsd,
         int256 positionProportionalPendingImpactAmount
     ) internal view returns (int256) {
@@ -892,31 +905,52 @@ library MarketUtils {
             return priceImpactUsd;
         }
 
-        uint256 impactPoolAmount = getPositionImpactPoolAmount(dataStore, market);
-        int256 totalPendingImpactAmount = getTotalPendingImpactAmount(dataStore, market);
+        CapPositiveImpactUsdByPositionImpactPoolCache memory cache;
+
+        cache.impactPoolAmount = getPositionImpactPoolAmount(dataStore, market.marketToken);
+        cache.totalPendingImpactAmount = getTotalPendingImpactAmount(dataStore, market.marketToken);
         // on position close, the proportional position pending impact amount will be
         // subtracted from the totalPendingImpactAmount
         // e.g. if totalPendingImpactAmount is 5 and proportional position pending
         // impact amount is 20
         // after the position is reduced, the totalPendingImpactAmount would be -15
-        totalPendingImpactAmount -= positionProportionalPendingImpactAmount;
+        cache.totalPendingImpactAmount -= positionProportionalPendingImpactAmount;
 
         // totalPendingImpactAmount is subtracted from impactPoolAmount
         // if totalPendingImpactAmount is positive, this means there is pending
         // price impact that should be covered by the pool
         // if totalPendingImpactAmount is negative, this means there is pending
         // price impact that can be used to pay for positive price impact
-        int256 totalImpactPoolAmount = impactPoolAmount.toInt256() - totalPendingImpactAmount;
+        cache.totalImpactPoolAmount = cache.impactPoolAmount.toInt256() - cache.totalPendingImpactAmount;
 
-        if (totalImpactPoolAmount < 0) {
+        if (cache.totalImpactPoolAmount < 0) {
             return 0;
         }
 
-        // use indexTokenPrice.min to maximize the position impact pool reduction
-        int256 maxPriceImpactUsdBasedOnImpactPool = totalImpactPoolAmount * indexTokenPrice.min.toInt256();
+        // capping the max lendable amount to a factor of the pool amount is mainly a sanity check to prevent
+        // the lent amount from being too large relative to the amounts in the pool
+        // trader pnl, borrowing fees, etc is not factored into this calculation
+        cache.longTokenUsd = getPoolAmount(dataStore, market, market.longToken)  * prices.longTokenPrice.min;
+        cache.shortTokenUsd = getPoolAmount(dataStore, market, market.shortToken)  * prices.shortTokenPrice.min;
+        cache.maxLendableFactor = dataStore.getUint(Keys.maxLendableImpactFactorKey(market.marketToken));
+        cache.maxLendableUsd = Precision.applyFactor(cache.longTokenUsd + cache.shortTokenUsd, cache.maxLendableFactor);
+        cache.lentAmount = dataStore.getUint(Keys.lentPositionImpactPoolAmountKey(market.marketToken));
+        cache.lentUsd = cache.lentAmount * prices.indexTokenPrice.max;
 
-        if (priceImpactUsd > maxPriceImpactUsdBasedOnImpactPool) {
-            priceImpactUsd = maxPriceImpactUsdBasedOnImpactPool;
+        if (cache.lentUsd > cache.maxLendableUsd) {
+            return 0;
+        }
+
+        cache.maxLendableUsd -= cache.lentUsd;
+
+        // use indexTokenPrice.min to maximize the position impact pool reduction
+        cache.maxPriceImpactUsd = cache.totalImpactPoolAmount * prices.indexTokenPrice.min.toInt256();
+        if (cache.maxPriceImpactUsd < cache.maxLendableUsd.toInt256()) {
+            cache.maxPriceImpactUsd = cache.maxLendableUsd.toInt256();
+        }
+
+        if (priceImpactUsd > cache.maxPriceImpactUsd) {
+            priceImpactUsd = cache.maxPriceImpactUsd;
         }
 
         return priceImpactUsd;
