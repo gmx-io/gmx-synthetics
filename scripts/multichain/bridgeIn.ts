@@ -14,7 +14,7 @@ const STARGATE_POOL_USDC = "0x4985b8fcEA3659FD801a5b857dA1D00e985863F0"; // Sepo
 const STARGATE_POOL_NATIVE = "0x9Cc7e185162Aa5D1425ee924D97a87A0a34A0706"; // Sepolia
 // ArbitrumSepolia
 const DST_EID = 40231; // ArbitrumSepolia
-const LAYERZERO_PROVIDER = "0x7f092E45Eed1d69DD56Fe1a0B8B69B97cd020604"; // ArbitrumSepolia
+const layerZeroProvider = import("../../deployments/arbitrumSepolia/LayerZeroProvider.json"); // ArbitrumSepolia
 
 async function prepareSend(
   amount: number | string | BigNumber,
@@ -40,7 +40,7 @@ async function prepareSend(
 
   const sendParam = {
     dstEid: DST_EID,
-    to: ethers.utils.hexZeroPad(ethers.utils.hexlify(LAYERZERO_PROVIDER), 32),
+    to: ethers.utils.hexZeroPad(ethers.utils.hexlify((await layerZeroProvider).address), 32),
     amountLD: amount,
     minAmountLD: minAmountLD, // Apply slippage tolerance
     extraOptions: extraOptions.toHex(),
