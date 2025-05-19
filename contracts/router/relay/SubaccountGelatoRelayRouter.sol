@@ -156,6 +156,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
             dataStore,
             eventEmitter,
             account,
+            block.chainid, // srcChainId
             subaccount,
             Keys.SUBACCOUNT_ORDER_ACTION, // actionType
             actionsCount,

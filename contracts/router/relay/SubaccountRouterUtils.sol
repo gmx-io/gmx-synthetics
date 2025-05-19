@@ -25,6 +25,7 @@ library SubaccountRouterUtils {
         DataStore dataStore,
         EventEmitter eventEmitter,
         address account,
+        uint256 srcChainId,
         address subaccount,
         bytes32 actionType,
         uint256 actionsCount,
@@ -39,6 +40,7 @@ library SubaccountRouterUtils {
             dataStore,
             eventEmitter,
             account,
+            srcChainId,
             subaccountApproval,
             subaccountApprovalNonces
         );
@@ -46,7 +48,7 @@ library SubaccountRouterUtils {
         SubaccountUtils.handleSubaccountAction(dataStore, eventEmitter, account, subaccount, actionType, actionsCount);
     }
 
-    function _handleSubaccountApproval(DataStore dataStore, EventEmitter eventEmitter, address account, SubaccountApproval calldata subaccountApproval, mapping(address => uint256) storage subaccountApprovalNonces) private {
+    function _handleSubaccountApproval(DataStore dataStore, EventEmitter eventEmitter, address account, uint256 srcChainId, SubaccountApproval calldata subaccountApproval, mapping(address => uint256) storage subaccountApprovalNonces) private {
         if (subaccountApproval.signature.length == 0) {
             return;
         }
@@ -67,7 +69,7 @@ library SubaccountRouterUtils {
         
         subaccountApprovalNonces[account] = storedNonce + 1;
 
-        bytes32 domainSeparator = RelayUtils.getDomainSeparator(block.chainid);
+        bytes32 domainSeparator = RelayUtils.getDomainSeparator(srcChainId);
         bytes32 structHash = RelayUtils.getSubaccountApprovalStructHash(subaccountApproval);
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
         RelayUtils.validateSignature(digest, subaccountApproval.signature, account, "subaccount approval");
