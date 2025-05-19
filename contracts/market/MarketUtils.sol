@@ -945,7 +945,7 @@ library MarketUtils {
 
         // use indexTokenPrice.min to maximize the position impact pool reduction
         cache.maxPriceImpactUsd = cache.totalImpactPoolAmount * prices.indexTokenPrice.min.toInt256();
-        if (cache.maxPriceImpactUsd < cache.maxLendableUsd.toInt256()) {
+        if (cache.maxPriceImpactUsd > cache.maxLendableUsd.toInt256()) {
             cache.maxPriceImpactUsd = cache.maxLendableUsd.toInt256();
         }
 

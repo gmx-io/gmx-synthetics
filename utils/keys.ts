@@ -154,6 +154,7 @@ export const TOTAL_PENDING_IMPACT_AMOUNT = hashString("TOTAL_PENDING_IMPACT_AMOU
 export const MIN_POSITION_IMPACT_POOL_AMOUNT = hashString("MIN_POSITION_IMPACT_POOL_AMOUNT");
 export const POSITION_IMPACT_POOL_DISTRIBUTION_RATE = hashString("POSITION_IMPACT_POOL_DISTRIBUTION_RATE");
 export const POSITION_IMPACT_POOL_DISTRIBUTED_AT = hashString("POSITION_IMPACT_POOL_DISTRIBUTED_AT");
+export const MAX_LENDABLE_IMPACT_FACTOR = hashString("MAX_LENDABLE_IMPACT_FACTOR");
 
 export const SWAP_IMPACT_POOL_AMOUNT = hashString("SWAP_IMPACT_POOL_AMOUNT");
 
@@ -555,6 +556,10 @@ export function positionImpactPoolDistributionRateKey(market: string) {
 
 export function positionImpactPoolDistributedAtKey(market: string) {
   return hashData(["bytes32", "address"], [POSITION_IMPACT_POOL_DISTRIBUTED_AT, market]);
+}
+
+export function maxLendableImpactFactorKey(market: string) {
+  return hashData(["bytes32", "address"], [MAX_LENDABLE_IMPACT_FACTOR, market]);
 }
 
 export function swapImpactPoolAmountKey(market: string, token: string) {
