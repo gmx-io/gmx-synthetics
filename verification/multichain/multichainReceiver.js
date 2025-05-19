@@ -1,4 +1,4 @@
-// npx hardhat --network arbitrumSepolia verify --constructor-args ./verification/multichain/multichainReceiver.js --contract contracts/multichain/MultichainReceiver.sol:MultichainReceiver 0x5388cf220045a02A48C3B3F07612800e8016961b
+// npx hardhat --network arbitrumSepolia verify --constructor-args ./verification/multichain/multichainReceiver.js --contract contracts/multichain/MultichainReceiver.sol:MultichainReceiver 0x73253EfDa0BD8d54dAf343b5a85F6d9286B33312
 
 // verifyFallback would automatically verify this contract, but added here just for convenience when verifying this contract alone
 // to be removed once verifyFallback could handle specific contract verification (e.g. --tags option)
