@@ -153,7 +153,7 @@ export function skipHandlerFunction(contractName: string): (env: HardhatRuntimeE
     if (!deployment) {
       return false;
     }
-    if (shouldSkip && JSON.stringify(deployment.abi) == JSON.stringify(artifact.abi)) {
+    if (shouldSkip && JSON.stringify(deployment.abi) !== JSON.stringify(artifact.abi)) {
       throw new Error(`ABI has been changed for ${contractName}, but contract is not picked for deploy!`);
     }
     return shouldSkip;
