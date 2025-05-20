@@ -1183,8 +1183,8 @@ const config: {
       positivePositionImpactFactor: exponentToFloat("2.5e-10"), // 0.05% for ~90,000 USD of imbalance
       positionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
 
-      negativeSwapImpactFactor: exponentToFloat("4e-9"),
-      positiveSwapImpactFactor: exponentToFloat("2e-9"),
+      negativeSwapImpactFactor: exponentToFloat("6e-9"),
+      positiveSwapImpactFactor: exponentToFloat("3e-9"),
 
       // minCollateralFactor of 0.01 (1%) when open interest is 2,700,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.8e-9"),
