@@ -43,6 +43,8 @@ contract MultichainReceiver is OAppReceiver {
         address, // Executor address as specified by the OAppSender.
         bytes calldata // Any extra data or options to trigger on receipt.
     ) internal override {
+        /// @dev `account` is expected to be `msg.sender` from the source chain, as MultichainSender encodes `msg.sender` in the message data.
+        ///      Therefore, MultichainReceiver should be used for actions where the original `msg.sender` from the source chain is required.
         (address account, bytes memory data) = abi.decode(message, (address, bytes));
         (ActionType actionType, bytes memory actionData) = abi.decode(data, (ActionType, bytes));
 

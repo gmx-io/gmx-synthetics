@@ -95,6 +95,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         uint256 amountLD = OFTComposeMsgCodec.amountLD(message);
 
         bytes memory composeMessage = OFTComposeMsgCodec.composeMsg(message);
+        /// @dev The `account` field is user-supplied and not validated; any address may be provided by the sender
         (address account, uint256 srcChainId, bytes memory data) = _decodeLzComposeMsg(composeMessage);
 
         address token = IStargate(from).token();
