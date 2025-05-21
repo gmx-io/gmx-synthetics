@@ -2023,7 +2023,7 @@ const config: {
       swapFeeFactorForPositiveImpact: decimalToFloat(5, 5), // 0.005%,
       swapFeeFactorForNegativeImpact: decimalToFloat(2, 4), // 0.02%,
 
-      isDisabled: false,
+      isDisabled: true,
 
       atomicSwapFeeFactor: percentageToFloat("0.50%"),
     },
