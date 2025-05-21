@@ -634,7 +634,7 @@ const config: {
       swapFeeFactorForPositiveImpact: percentageToFloat("0.25%"),
       swapFeeFactorForNegativeImpact: percentageToFloat("0.25%"),
 
-      isDisabled: false,
+      isDisabled: true,
 
       atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
