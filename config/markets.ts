@@ -1990,7 +1990,7 @@ const config: {
 
       swapOnly: true,
 
-      // isDisabled: false,
+      isDisabled: true,
 
       maxLongTokenPoolAmount: expandDecimals(3300, 18),
       maxShortTokenPoolAmount: expandDecimals(2800, 18),
