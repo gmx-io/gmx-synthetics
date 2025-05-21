@@ -10,7 +10,7 @@ import { executeDeposit, getDepositCount, getDepositKeys } from "../../utils/dep
 import { executeWithdrawal, getWithdrawalCount, getWithdrawalKeys } from "../../utils/withdrawal";
 import { getBalanceOf } from "../../utils/token";
 import { executeShift, getShiftCount, getShiftKeys } from "../../utils/shift";
-import { mintAndBridge } from "./utils";
+import { mintAndBridge } from "../../utils/multichain";
 
 describe("MultichainGmRouter", () => {
   let fixture;
@@ -157,6 +157,7 @@ describe("MultichainGmRouter", () => {
       expect(deposit.addresses.account).eq(user0.address);
       expect(deposit.addresses.receiver).eq(defaultDepositParams.addresses.receiver);
       expect(deposit.addresses.callbackContract).eq(defaultDepositParams.addresses.callbackContract);
+      expect(deposit.addresses.uiFeeReceiver).eq(defaultDepositParams.addresses.uiFeeReceiver);
       expect(deposit.addresses.market).eq(defaultDepositParams.addresses.market);
       expect(deposit.addresses.initialLongToken).eq(createDepositParams.transferRequests.tokens[0]);
       expect(deposit.addresses.initialShortToken).eq(createDepositParams.transferRequests.tokens[1]);

@@ -13,7 +13,7 @@ import { getPositionCount } from "../../utils/position";
 import { expectBalance } from "../../utils/validation";
 import { executeLiquidation } from "../../utils/liquidation";
 import { executeAdl, updateAdlState } from "../../utils/adl";
-import { mintAndBridge } from "./utils";
+import { mintAndBridge } from "../../utils/multichain";
 
 describe("MultichainOrderRouter", () => {
   let fixture;

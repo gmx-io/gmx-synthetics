@@ -10,11 +10,11 @@ import { handleDeposit } from "../../utils/deposit";
 import { handleOrder, OrderType } from "../../utils/order";
 import { hashData, hashString } from "../../utils/hash";
 import { getClaimableCollateralTimeKey } from "../../utils/collateral";
-import { mintAndBridge } from "./utils";
+import { mintAndBridge } from "../../utils/multichain";
 
 describe("MultichainClaimsRouter", () => {
   let fixture;
-  let user0, user1, user3;
+  let user0, user1;
   let dataStore,
     ethUsdMarket,
     wnt,
@@ -29,7 +29,7 @@ describe("MultichainClaimsRouter", () => {
 
   beforeEach(async () => {
     fixture = await deployFixture();
-    ({ user0, user1, user3 } = fixture.accounts);
+    ({ user0, user1 } = fixture.accounts);
     ({
       dataStore,
       ethUsdMarket,
@@ -47,8 +47,6 @@ describe("MultichainClaimsRouter", () => {
 
     relaySigner = await hre.ethers.getSigner(GELATO_RELAY_ADDRESS);
     chainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
-
-    await dataStore.setAddress(keys.FEE_RECEIVER, user3.address);
 
     await dataStore.setBool(keys.isSrcChainIdEnabledKey(chainId), true);
 

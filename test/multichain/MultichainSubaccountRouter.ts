@@ -29,7 +29,7 @@ import { ethers } from "ethers";
 import { handleDeposit } from "../../utils/deposit";
 import { deployContract } from "../../utils/deploy";
 import { parseLogs } from "../../utils/event";
-import { mintAndBridge } from "./MultichainRouter";
+import { mintAndBridge } from "../../utils/multichain";
 
 const BAD_SIGNATURE =
   "0x122e3efab9b46c82dc38adf4ea6cd2c753b00f95c217a0e3a0f4dd110839f07a08eb29c1cc414d551349510e23a75219cd70c8b88515ed2b83bbd88216ffdb051f";

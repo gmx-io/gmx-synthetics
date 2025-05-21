@@ -8,7 +8,7 @@ import * as keys from "../../utils/keys";
 import { executeDeposit } from "../../utils/deposit";
 import { getBalanceOf } from "../../utils/token";
 import { executeGlvDeposit, executeGlvWithdrawal, getGlvDepositCount, getGlvWithdrawalCount } from "../../utils/glv";
-import { mintAndBridge } from "./utils";
+import { mintAndBridge } from "../../utils/multichain";
 
 describe("MultichainGlvRouter", () => {
   let fixture;
