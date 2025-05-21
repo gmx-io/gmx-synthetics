@@ -2,18 +2,12 @@
 
 pragma solidity ^0.8.0;
 
-import "../referral/IReferralStorage.sol";
 import "./MultichainRouter.sol";
 
 contract MultichainOrderRouter is MultichainRouter {
-    IReferralStorage public immutable referralStorage;
-
     constructor(
-        BaseConstructorParams memory params,
-        IReferralStorage _referralStorage
-    ) MultichainRouter(params) BaseRouter(params.router, params.roleStore, params.dataStore, params.eventEmitter) {
-        referralStorage = _referralStorage;
-    }
+        BaseConstructorParams memory params
+    ) MultichainRouter(params) BaseRouter(params.router, params.roleStore, params.dataStore, params.eventEmitter) {}
 
     function batch(
         IRelayUtils.RelayParams calldata relayParams,

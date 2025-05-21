@@ -14,7 +14,7 @@ const baseConstructorContracts = [
   "MultichainVault",
 ];
 
-const orderConstructorContracts = ["ReferralStorage"];
+const orderConstructorContracts = [];
 
 const func = createDeployFunction({
   contractName: "MultichainOrderRouter",
@@ -33,9 +33,9 @@ const func = createDeployFunction({
       multichainVault: dependencyContracts.MultichainVault.address,
     };
 
-    return [baseParams, dependencyContracts.ReferralStorage.address];
+    return [baseParams];
   },
-  libraryNames: ["MarketUtils", "MultichainUtils", "OrderStoreUtils", "RelayUtils"],
+  libraryNames: ["MultichainUtils", "OrderStoreUtils", "RelayUtils"],
 
   afterDeploy: async ({ deployedContract }) => {
     await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
