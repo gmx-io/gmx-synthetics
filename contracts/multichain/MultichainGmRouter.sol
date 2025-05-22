@@ -53,18 +53,6 @@ contract MultichainGmRouter is IMultichainGmRouter, MultichainRouter {
         return _createDeposit(account, srcChainId, transferRequests, params);
     }
 
-    function createDepositFromBridge(
-        IRelayUtils.RelayParams calldata relayParams,
-        address account,
-        uint256 srcChainId,
-        IRelayUtils.TransferRequests calldata transferRequests,
-        IDepositUtils.CreateDepositParams calldata params
-    ) external nonReentrant onlyController withRelay(relayParams, account, srcChainId, false) returns (bytes32) {
-        _validateCallWithoutSignature(relayParams, srcChainId);
-
-        return _createDeposit(account, srcChainId, transferRequests, params);
-    }
-
     function _createDeposit(
         address account,
         uint256 srcChainId,

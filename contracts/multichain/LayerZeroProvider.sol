@@ -123,9 +123,9 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         if (data.length != 0) {
             (ActionType actionType, bytes memory actionData) = _decodeLzComposeMsgData(data);
             if (actionType == ActionType.Deposit) {
-                _handleDepositFromBridge(from, account, srcChainId, actionType, actionData);
+                _handleDeposit(from, account, srcChainId, actionType, actionData);
             } else if (actionType == ActionType.GlvDeposit) {
-                _handleGlvDepositFromBridge(from, account, srcChainId, actionType, actionData);
+                _handleGlvDeposit(from, account, srcChainId, actionType, actionData);
             }
         }
     }
@@ -307,7 +307,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         return true;
     }
 
-    function _handleDepositFromBridge(
+    function _handleDeposit(
         address from,
         address account,
         uint256 srcChainId,
@@ -321,7 +321,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         ) = abi.decode(actionData, (IRelayUtils.RelayParams, IRelayUtils.TransferRequests, IDepositUtils.CreateDepositParams));
         
         if (_areValidTransferRequests(transferRequests)) {
-            try multichainGmRouter.createDepositFromBridge(
+            try multichainGmRouter.createDeposit(
                 relayParams,
                 account,
                 srcChainId,
@@ -338,7 +338,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         }
     }
 
-    function _handleGlvDepositFromBridge(
+    function _handleGlvDeposit(
         address from,
         address account,
         uint256 srcChainId,
@@ -352,7 +352,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         ) = abi.decode(actionData, (IRelayUtils.RelayParams, IRelayUtils.TransferRequests, IGlvDepositUtils.CreateGlvDepositParams));
         
         if (_areValidTransferRequests(transferRequests)) {
-            try multichainGlvRouter.createGlvDepositFromBridge(
+            try multichainGlvRouter.createGlvDeposit(
                 relayParams,
                 account,
                 srcChainId,
