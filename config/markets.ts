@@ -634,7 +634,7 @@ const config: {
       swapFeeFactorForPositiveImpact: percentageToFloat("0.25%"),
       swapFeeFactorForNegativeImpact: percentageToFloat("0.25%"),
 
-      isDisabled: true,
+      isDisabled: false,
 
       atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
@@ -1990,7 +1990,7 @@ const config: {
 
       swapOnly: true,
 
-      isDisabled: true,
+      isDisabled: false,
 
       maxLongTokenPoolAmount: expandDecimals(3300, 18),
       maxShortTokenPoolAmount: expandDecimals(2800, 18),
