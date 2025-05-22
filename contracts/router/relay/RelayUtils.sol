@@ -177,6 +177,9 @@ library RelayUtils {
     bytes32 public constant BRIDGE_OUT_TYPEHASH =
         keccak256(bytes("BridgeOut(address token,uint256 amount,address provider,bytes data,bytes32 relayParams)"));
 
+    bytes32 public constant TRADER_REFERRAL_CODE_TYPEHASH =
+        keccak256(bytes("TraderReferralCode(bytes32 code,bytes32 relayParams)"));
+
     bytes32 public constant CLAIM_FUNDING_FEES_TYPEHASH =
         keccak256(bytes("ClaimFundingFees(address[] markets,address[] tokens,address receiver,bytes32 relayParams)"));
     bytes32 public constant CLAIM_COLLATERAL_TYPEHASH =
@@ -849,6 +852,20 @@ library RelayUtils {
                     params.amount,
                     params.provider,
                     keccak256(abi.encodePacked(params.data)),
+                    _getRelayParamsHash(relayParams)
+                )
+            );
+    }
+
+    function getTraderReferralCodeStructHash(
+        IRelayUtils.RelayParams calldata relayParams,
+        bytes32 referralCode
+    ) external pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    TRADER_REFERRAL_CODE_TYPEHASH,
+                    referralCode,
                     _getRelayParamsHash(relayParams)
                 )
             );

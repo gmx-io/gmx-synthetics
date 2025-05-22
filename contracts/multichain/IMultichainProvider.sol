@@ -12,7 +12,8 @@ interface IMultichainProvider {
         None,
         Deposit,
         GlvDeposit,
-        BridgeOut
+        BridgeOut,
+        SetTraderReferralCode
     }
 
     function bridgeOut(address account, IRelayUtils.BridgeOutParams memory params) external returns (uint256);
