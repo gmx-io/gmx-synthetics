@@ -77,16 +77,16 @@ library MarketPositionImpactPoolUtils {
         uint256 adjustedImpactPoolAmount = poolValueInfo.impactPoolAmount;
         int256 totalPendingImpactAmount = MarketUtils.getTotalPendingImpactAmount(dataStore, market);
 
-        if (adjustedImpactPoolAmount < totalPendingImpactAmount.toUint256()) {
-            revert Errors.InsufficientImpactPoolValueForWithdrawal(amount, poolValueInfo.impactPoolAmount, totalPendingImpactAmount);
-        }
-
         // if there is a positive totalPendingImpactAmount, that means that the
         // excess should be covered by the position impact pool, so subtract this
         // from the impactPoolAmount that can be withdrawn
         // lent amount is not considered here, because if there is a lent amount
         // we assume that the position impact would be zero
         if (totalPendingImpactAmount > 0) {
+            if (adjustedImpactPoolAmount < totalPendingImpactAmount.toUint256()) {
+                revert Errors.InsufficientImpactPoolValueForWithdrawal(amount, poolValueInfo.impactPoolAmount, totalPendingImpactAmount);
+            }
+
             adjustedImpactPoolAmount -= totalPendingImpactAmount.toUint256();
         }
 
