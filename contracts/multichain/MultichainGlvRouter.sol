@@ -46,7 +46,7 @@ contract MultichainGlvRouter is IMultichainGlvRouter, MultichainRouter {
         uint256 srcChainId,
         IRelayUtils.TransferRequests calldata transferRequests,
         IGlvDepositUtils.CreateGlvDepositParams memory params
-    ) external nonReentrant withRelay(relayParams, account, srcChainId, false) returns (bytes32) {
+    ) external nonReentrant onlyController withRelay(relayParams, account, srcChainId, false) returns (bytes32) {
         _validateCallWithoutSignature(relayParams, srcChainId);
 
         return _createGlvDeposit(account, srcChainId, transferRequests, params);
