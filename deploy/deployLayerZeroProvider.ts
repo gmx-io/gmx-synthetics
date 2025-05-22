@@ -25,7 +25,11 @@ const func = createDeployFunction({
 
     const ethersContract = await ethers.getContractAt("MultichainTransferRouter", multichainTransferRouter.address);
 
-    await ethersContract.initialize(deployedContract.address);
+    const multichainProvider = await ethersContract.multichainProvider();
+    if (multichainProvider !== deployedContract.address) {
+      // if MultichainTransferRouter is already initialized, it would throw "Initializable: contract is already initialized"
+      await ethersContract.initialize(deployedContract.address);
+    }
   },
 });
 

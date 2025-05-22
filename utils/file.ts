@@ -43,5 +43,5 @@ export function searchDirectory(dirPath: string, condition: (filename: string) =
 export const findFile =
   (searchFile: string) =>
   (filename: string): boolean => {
-    return filename.endsWith(searchFile);
+    return filename.endsWith("/" + searchFile);
   };
