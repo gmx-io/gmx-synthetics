@@ -2,6 +2,7 @@ import * as path from "path";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { TASK_FLATTEN_GET_FLATTENED_SOURCE } from "hardhat/builtin-tasks/task-names";
 import { iterateDirectory } from "../utils/file";
+import { execSync } from "child_process";
 
 const CONTRACT_SIZE_SOFT_CAP = 900_000;
 
@@ -25,6 +26,8 @@ export async function checkContractsSizing(env: HardhatRuntimeEnvironment) {
     for (const contract of bigContracts) {
       console.warn(contract.name, "\t", contract.size);
     }
-    throw new Error(`Contracts size exceeds ${CONTRACT_SIZE_SOFT_CAP} chars!`);
+    const title = `Contracts size exceeds ${CONTRACT_SIZE_SOFT_CAP} chars!`;
+    execSync(`echo ::warning title=${title}::${bigContracts.map((x) => x.name)}`, { stdio: "inherit" });
+    throw new Error(title);
   }
 }
