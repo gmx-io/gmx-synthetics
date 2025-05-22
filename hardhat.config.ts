@@ -28,6 +28,7 @@ import { updateMarketConfig } from "./scripts/updateMarketConfigUtils";
 import { collectDeployments } from "./scripts/collectDeployments";
 import { TASK_FLATTEN_GET_DEPENDENCY_GRAPH } from "hardhat/builtin-tasks/task-names";
 import { DependencyGraph } from "hardhat/types";
+import { checkContractsSizing } from "./scripts/contractSizes";
 
 const getRpcUrl = (network) => {
   const defaultRpcs = {
@@ -340,5 +341,9 @@ task("deploy", "Deploy contracts", async (taskArgs, env, runSuper) => {
 });
 
 task("collect-deployments", "Collect current deployments into the docs folder").setAction(collectDeployments);
+
+task("measure-contract-sizes", "Check if contract characters count hit 900k limit").setAction(async (taskArgs, env) => {
+  await checkContractsSizing(env);
+});
 
 export default config;
