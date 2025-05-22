@@ -139,8 +139,8 @@ library ExecuteGlvDepositUtils {
             params.multichainTransferRouter,
             glvDeposit.receiver(), // account
             glvDeposit.srcChainId(),
-            cache.market.marketToken, // token
-            cache.receivedMarketTokens, // amount
+            glvDeposit.glv(), // token
+            cache.mintAmount, // amount
             glvDeposit.dataList()
         );
 
