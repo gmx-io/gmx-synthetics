@@ -18,6 +18,10 @@ jobs:
       - name: Check cyclic dependencies
         run: yarn hardhat run scripts/cyclicDependencyCheck.ts
         shell: bash
+      - name: Check contract sizing
+        continue-on-error: true # to show errors as warnings
+        run: yarn hardhat measure-contract-sizes
+        shell: bash
       - name: Run Tests
         run: yarn hardhat test
         shell: bash

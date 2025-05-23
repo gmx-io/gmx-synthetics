@@ -145,7 +145,7 @@ export function skipHandlerFunction(contractName: string): (env: HardhatRuntimeE
     if (tags.includes(contractName) || hre.network.name === "hardhat") {
       return false;
     }
-    const shouldSkip = process.env.SKIP_AUTO_HANDLER_REDEPLOYMENT ? true : false;
+    const shouldSkip = process.env.SKIP_AUTO_HANDLER_REDEPLOYMENT == "true" ? true : false;
 
     // Check that handler ABI didn't changed since last deploy
     const artifact = getArtifact(contractName);
