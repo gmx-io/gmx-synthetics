@@ -330,28 +330,34 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         address account,
         uint256 srcChainId
     ) internal {
-        bool isSponsoredCall = !_isGelatoRelay(msg.sender);
         uint256 residualFeeAmount = ERC20(contracts.wnt).balanceOf(address(this));
-        uint256 relayFee;
-        if (isSponsoredCall) {
-            relayFee = GasUtils.payGelatoRelayFee(
-                contracts.dataStore,
-                contracts.wnt,
-                startingGas,
-                msg.data.length,
-                residualFeeAmount
-            );
-        } else {
-            relayFee = _getFee();
 
-            if (relayFee > residualFeeAmount) {
-                revert Errors.InsufficientRelayFee(relayFee, residualFeeAmount);
+        /// @dev relay fee is excluded for calls made through the IMultichainProvider
+        /// as the user already paid for execution on the source chain
+        if (!dataStore.getBool(Keys.isRelayFeeExcludedKey(msg.sender))) {
+            bool isSponsoredCall = !_isGelatoRelay(msg.sender);
+            uint256 relayFee;
+            if (isSponsoredCall) {
+                relayFee = GasUtils.payGelatoRelayFee(
+                    contracts.dataStore,
+                    contracts.wnt,
+                    startingGas,
+                    msg.data.length,
+                    residualFeeAmount
+                );
+            } else {
+                relayFee = _getFee();
+
+                if (relayFee > residualFeeAmount) {
+                    revert Errors.InsufficientRelayFee(relayFee, residualFeeAmount);
+                }
+
+                _transferRelayFee();
             }
 
-            _transferRelayFee();
+            residualFeeAmount -= relayFee;
         }
 
-        residualFeeAmount -= relayFee;
         if (residualFeeAmount > 0) {
             // residual fee is sent back to the account
             _transferResidualFee(contracts.wnt, account, residualFeeAmount, srcChainId);

@@ -507,6 +507,8 @@ library Keys {
     bytes32 public constant IS_MULTICHAIN_PROVIDER_ENABLED = keccak256(abi.encode("IS_MULTICHAIN_PROVIDER_ENABLED"));
     // @dev key for the flag if a multichain endpoint is enabled
     bytes32 public constant IS_MULTICHAIN_ENDPOINT_ENABLED = keccak256(abi.encode("IS_MULTICHAIN_ENDPOINT_ENABLED"));
+    // @dev key for the flag if the relay fee is excluded for the caller
+    bytes32 public constant IS_RELAY_FEE_EXCLUDED = keccak256(abi.encode("IS_RELAY_FEE_EXCLUDED"));
     // @dev key for the flag if a src chain is enabled
     bytes32 public constant IS_SRC_CHAIN_ID_ENABLED = keccak256(abi.encode("IS_SRC_CHAIN_ID_ENABLED"));
     // @dev key for the last src chain id from which the user last managed his position
@@ -2264,6 +2266,16 @@ library Keys {
         return keccak256(abi.encode(
             IS_MULTICHAIN_ENDPOINT_ENABLED,
             endpoint
+        ));
+    }
+
+    // @dev key for whether a relay fee is excluded for the caller
+    // @param sender the address of the sender
+    // @return key for whether a relay fee is excluded
+    function isRelayFeeExcludedKey(address sender) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            IS_RELAY_FEE_EXCLUDED,
+            sender
         ));
     }
 
