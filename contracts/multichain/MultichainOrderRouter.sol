@@ -20,7 +20,7 @@ contract MultichainOrderRouter is IMultichainOrderRouter, MultichainRouter {
         IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
-        BatchParams calldata params
+        IRelayUtils.BatchParams calldata params
     ) external nonReentrant withRelay(relayParams, account, srcChainId, false) returns (bytes32[] memory) {
         bytes32 structHash = RelayUtils.getBatchStructHash(relayParams, params);
         _validateCall(relayParams, account, structHash, srcChainId);
@@ -52,7 +52,7 @@ contract MultichainOrderRouter is IMultichainOrderRouter, MultichainRouter {
         IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
-        UpdateOrderParams calldata params
+        IRelayUtils.UpdateOrderParams calldata params
     )
         external
         nonReentrant

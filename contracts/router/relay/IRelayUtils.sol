@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "../../oracle/OracleUtils.sol";
+import "../../order/IBaseOrderUtils.sol";
 
 interface IRelayUtils {
     struct FeeParams {
@@ -90,5 +91,25 @@ interface IRelayUtils {
         uint256 amount;
         address provider;
         bytes data; // provider specific data e.g. dstEid
+    }
+
+    // @note all params except account should be part of the corresponding struct hash
+    struct UpdateOrderParams {
+        bytes32 key;
+        uint256 sizeDeltaUsd;
+        uint256 acceptablePrice;
+        uint256 triggerPrice;
+        uint256 minOutputAmount;
+        uint256 validFromTime;
+        bool autoCancel;
+        // should be non zero if order's execution fee should be increased
+        // otherwise should be 0
+        uint256 executionFeeIncrease;
+    }
+
+    struct BatchParams {
+        IBaseOrderUtils.CreateOrderParams[] createOrderParamsList;
+        UpdateOrderParams[] updateOrderParamsList;
+        bytes32[] cancelOrderKeys;
     }
 }

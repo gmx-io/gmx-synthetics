@@ -79,7 +79,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         address account,
         uint256 srcChainId,
         IBaseOrderUtils.CreateOrderParams[] calldata createOrderParamsList,
-        UpdateOrderParams[] calldata updateOrderParamsList,
+        IRelayUtils.UpdateOrderParams[] calldata updateOrderParamsList,
         bytes32[] calldata cancelOrderKeys,
         bool isSubaccount
     ) internal returns (bytes32[] memory) {
@@ -134,7 +134,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             orderHandler.createOrder(account, srcChainId, params, isSubaccount && params.addresses.callbackContract != address(0));
     }
 
-    function _updateOrder(address account, UpdateOrderParams calldata params, bool isSubaccount) internal {
+    function _updateOrder(address account, IRelayUtils.UpdateOrderParams calldata params, bool isSubaccount) internal {
         Contracts memory contracts = _getContracts();
         Order.Props memory order = OrderStoreUtils.get(contracts.dataStore, params.key);
 
