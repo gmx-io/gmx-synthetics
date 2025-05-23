@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 
 import "../router/relay/IRelayUtils.sol";
 
-interface IMultichainMessagingRouter {
+interface IMultichainOrderRouter {
     function setTraderReferralCode(
         IRelayUtils.RelayParams calldata relayParams,
         address account,

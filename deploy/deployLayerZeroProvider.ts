@@ -8,7 +8,7 @@ const constructorContracts = [
   "MultichainVault",
   "MultichainGmRouter",
   "MultichainGlvRouter",
-  "MultichainMessagingRouter",
+  "MultichainOrderRouter",
 ];
 
 const func = createDeployFunction({

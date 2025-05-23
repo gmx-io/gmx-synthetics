@@ -17,7 +17,7 @@ import "../utils/Cast.sol";
 import "./IMultichainProvider.sol";
 import "./IMultichainGmRouter.sol";
 import "./IMultichainGlvRouter.sol";
-import "./IMultichainMessagingRouter.sol";
+import "./IMultichainOrderRouter.sol";
 
 import "./MultichainVault.sol";
 import "./MultichainUtils.sol";
@@ -49,7 +49,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
     MultichainVault public immutable multichainVault;
     IMultichainGmRouter public immutable multichainGmRouter;
     IMultichainGlvRouter public immutable multichainGlvRouter;
-    IMultichainMessagingRouter public immutable multichainMessagingRouter;
+    IMultichainOrderRouter public immutable multichainOrderRouter;
 
     constructor(
         DataStore _dataStore,
@@ -58,14 +58,14 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         MultichainVault _multichainVault,
         IMultichainGmRouter _multichainGmRouter,
         IMultichainGlvRouter _multichainGlvRouter,
-        IMultichainMessagingRouter _multichainMessagingRouter
+        IMultichainOrderRouter _multichainOrderRouter
     ) RoleModule(_roleStore) {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
         multichainVault = _multichainVault;
         multichainGmRouter = _multichainGmRouter;
         multichainGlvRouter = _multichainGlvRouter;
-        multichainMessagingRouter = _multichainMessagingRouter;
+        multichainOrderRouter = _multichainOrderRouter;
     }
 
     /**
@@ -315,6 +315,8 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         return true;
     }
 
+    /// @dev long/short tokens are deposited from user's multichain balance
+    /// GM tokens are minted and transferred to user's multichain balance
     function _handleDeposit(
         address from,
         address account,
@@ -346,6 +348,8 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         }
     }
 
+    /// @dev long/short/GM tokens are deposited from user's multichain balance
+    /// GLV tokens are minted and transferred to user's multichain balance
     function _handleGlvDeposit(
         address from,
         address account,
@@ -378,7 +382,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
     }
 
     /// @dev `account` is expected to be `msg.sender` from the source chain, as
-    /// MultichainMessagingRouter would use it to validate the signature.
+    /// MultichainOrderRouter would use it to validate the signature.
     function _handlerSetTraderReferralCode(
         address from,
         address account,
@@ -391,7 +395,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             bytes32 referralCode
         ) = abi.decode(actionData, (IRelayUtils.RelayParams, bytes32));
 
-        try multichainMessagingRouter.setTraderReferralCode(relayParams, account, srcChainId, referralCode) {
+        try multichainOrderRouter.setTraderReferralCode(relayParams, account, srcChainId, referralCode) {
             MultichainEventUtils.emitActionFromBridge(eventEmitter, from, account, srcChainId, actionType, referralCode);
         } catch Error(string memory reason) {
             MultichainEventUtils.emitActionFromBridgeFailed(eventEmitter, from, account, srcChainId, actionType, reason);

@@ -3,9 +3,10 @@
 pragma solidity ^0.8.0;
 
 import "../referral/IReferralStorage.sol";
+import "./IMultichainOrderRouter.sol";
 import "./MultichainRouter.sol";
 
-contract MultichainOrderRouter is MultichainRouter {
+contract MultichainOrderRouter is IMultichainOrderRouter, MultichainRouter {
     IReferralStorage public immutable referralStorage;
 
     constructor(
@@ -77,5 +78,17 @@ contract MultichainOrderRouter is MultichainRouter {
         _validateCall(relayParams, account, structHash, srcChainId);
 
         _cancelOrder(account, key);
+    }
+
+    function setTraderReferralCode(
+        IRelayUtils.RelayParams calldata relayParams,
+        address account,
+        uint256 srcChainId,
+        bytes32 referralCode
+    ) external nonReentrant withRelay(relayParams, account, srcChainId, false) {
+        bytes32 structHash = RelayUtils.getTraderReferralCodeStructHash(relayParams, referralCode);
+        _validateCall(relayParams, account, structHash, srcChainId);
+
+        referralStorage.setTraderReferralCode(account, referralCode);
     }
 }
