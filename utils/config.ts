@@ -183,6 +183,7 @@ async function appendConfigIfDifferent(
   const config = await hre.ethers.getContract("Config");
 
   const key = getFullKey(baseKey, keyData);
+  keyData = keyData || "0x";
 
   const setMethod = `set${type[0].toUpperCase()}${type.slice(1)}`;
 
@@ -198,13 +199,13 @@ async function appendConfigIfDifferent(
     }
 
     console.info(
-      "appending config %s %s (%s) to %s, prev: %s %s",
+      "appending config %s %s to %s, prev: %s %s, key: %s",
       type,
       label,
-      key,
       value.toString(),
       currentValue.toString(),
-      changeStr
+      changeStr,
+      key
     );
     list.push(config.interface.encodeFunctionData(setMethod, [baseKey, keyData, value]));
   } else {
@@ -212,8 +213,8 @@ async function appendConfigIfDifferent(
   }
 }
 
-export function getFullKey(baseKey: string, keyData: string) {
-  if (keyData === "0x") {
+export function getFullKey(baseKey: string, keyData?: string) {
+  if (!keyData || keyData === "0x") {
     return baseKey;
   }
 

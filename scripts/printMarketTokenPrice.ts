@@ -47,6 +47,16 @@ async function main() {
   console.log("indexToken: %s longToken: %s shortToken: %s", market.indexToken, market.longToken, market.shortToken);
   console.log("pnlFactorType: %s maximize: %s", pnlFactorType, maximize);
 
+  const cumulativeBorrowingFactorUpdatedAtForLongs = await dataStore.getUint(
+    keys.cumulativeBorrowingFactorUpdatedAtKey(marketToken, true)
+  );
+  const cumulativeBorrowingFactorUpdatedAtForShorts = await dataStore.getUint(
+    keys.cumulativeBorrowingFactorUpdatedAtKey(marketToken, false)
+  );
+
+  console.log("cumulativeBorrowingFactorUpdatedAtForLongs", cumulativeBorrowingFactorUpdatedAtForLongs.toString());
+  console.log("cumulativeBorrowingFactorUpdatedAtForShorts", cumulativeBorrowingFactorUpdatedAtForShorts.toString());
+
   const data = await reader.getMarketTokenPrice(
     dataStore.address,
     market,

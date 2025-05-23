@@ -122,3 +122,13 @@ export function createDeployFunction({
 
   return func;
 }
+
+export function skipHandlerFunction(contractName: string): (env: HardhatRuntimeEnvironment) => Promise<boolean> {
+  return async function skip(env: HardhatRuntimeEnvironment) {
+    const tags = env.deployTags?.split(",") ?? [];
+    if (tags.includes(contractName)) {
+      return false;
+    }
+    return process.env.SKIP_AUTO_HANDLER_REDEPLOYMENT ? true : false;
+  };
+}

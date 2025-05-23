@@ -117,7 +117,7 @@ const config: HardhatUserConfig = {
   networks: {
     hardhat: {
       saveDeployments: true,
-      // allowUnlimitedContractSize: true,
+      allowUnlimitedContractSize: true,
       // forking: {
       //   url: `https://rpc.ankr.com/avalanche`,
       //   blockNumber: 33963320,
@@ -278,5 +278,13 @@ task("update-market-config", "Update market config")
   .addParam("write", "Write to the config", false, types.boolean)
   .addOptionalParam("market", "Market address", undefined, types.string)
   .setAction(updateMarketConfig);
+
+task("deploy", "Deploy contracts", async (taskArgs, env, runSuper) => {
+  env.deployTags = taskArgs.tags ?? "";
+  if (!process.env.SKIP_AUTO_HANDLER_REDEPLOYMENT && env.network.name != "hardhat") {
+    throw new Error("SKIP_AUTO_HANDLER_REDEPLOYMENT flag is mandatory");
+  }
+  await runSuper();
+});
 
 export default config;

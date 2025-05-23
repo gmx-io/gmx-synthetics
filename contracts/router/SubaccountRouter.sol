@@ -207,7 +207,8 @@ contract SubaccountRouter is BaseRouter {
             eventEmitter,
             account,
             subaccount,
-            actionType
+            actionType,
+            1
         );
     }
 

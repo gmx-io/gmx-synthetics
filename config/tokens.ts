@@ -712,6 +712,28 @@ const config: {
       oracleTimestampAdjustment: 1,
       // Chainlink on-chain feed not available
     },
+    DOLO: {
+      synthetic: true,
+      decimals: 18, // https://berascan.com/token/0x0F81001eF0A83ecCE5ccebf63EB302c70a39a654#readContract
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x000355d06b40dff314c9a283f9fd647690f5ebdce666453af72e3fbf08fdce5e",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      // Chainlink on-chain feed not available
+    },
+    ZRO: {
+      synthetic: true,
+      decimals: 18, // https://etherscan.io/token/0x6985884c4392d348587b19cb9eaaf157f13271cd#readContract
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003f57f2052095349bdb01a9a82b30701c5fbfa4c5a65c5d42031083890501e",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x1940fEd49cDBC397941f2D336eb4994D599e568B",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+    },
     AAVE: {
       address: "0xba5ddd1f9d7f570dc94a51479a000e3bce967196",
       decimals: 18,
@@ -1070,6 +1092,7 @@ const config: {
         decimals: 8,
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
+      buybackMaxPriceImpactFactor: percentageToFloat("0.4%"),
     },
     LINK: {
       address: "0x5947BB275c521040051D82396192181b413227A3",
@@ -1331,9 +1354,11 @@ const config: {
     MATIC: {
       decimals: 18,
       synthetic: true,
-      dataStreamFeedId: "0x0003fd6ff25e1a28ddd55c85882279987be478a66a75abdf05a468beb5b8b467",
+      // dataStreamFeedId: "0x0003fd6ff25e1a28ddd55c85882279987be478a66a75abdf05a468beb5b8b467",
+      // dataStreamFeedDecimals: 18,
+      // oracleProvider: "gmOracle",
+      dataStreamFeedId: "0x0003dc85e8b01946bf9dfd8b0db860129181eb6105a8c8981d9f28e00b6f60d9",
       dataStreamFeedDecimals: 18,
-      oracleProvider: "gmOracle",
     },
     UNI: {
       decimals: 18,
