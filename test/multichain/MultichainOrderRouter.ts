@@ -65,6 +65,7 @@ describe("MultichainOrderRouter", () => {
   const feeAmount = executionFee.add(relayFeeAmount); // 0.006 ETH
 
   let defaultOrderParams;
+  let createOrderParams: Parameters<typeof sendCreateOrder>[0];
   beforeEach(async () => {
     defaultOrderParams = {
       addresses: {
@@ -93,10 +94,7 @@ describe("MultichainOrderRouter", () => {
       referralCode: hashString("referralCode"),
       dataList: [],
     };
-  });
 
-  let createOrderParams: Parameters<typeof sendCreateOrder>[0];
-  beforeEach(async () => {
     createOrderParams = {
       sender: relaySigner,
       signer: user1,
