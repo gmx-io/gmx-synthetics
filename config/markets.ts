@@ -3,7 +3,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { expandDecimals, exponentToFloat, decimalToFloat, bigNumberify, percentageToFloat } from "../utils/math";
 import { hashString } from "../utils/hash";
-import { SECONDS_PER_HOUR, SECONDS_PER_YEAR } from "../utils/constants";
+import { SECONDS_PER_HOUR, SECONDS_PER_YEAR, SECONDS_PER_DAY } from "../utils/constants";
 
 export type BaseMarketConfig = {
   reserveFactor: BigNumberish;
@@ -109,6 +109,11 @@ export type BaseMarketConfig = {
   minFundingFactorPerSecond: BigNumberish;
   maxFundingFactorPerSecond: BigNumberish;
 
+  // note that this is in the index token, so the amount should be based
+  // on how many decimals the index token is configured to have
+  // e.g. if we want to distribute at a rate of 143 AVAX per day
+  // since AVAX has 18 decimals, the value for this would be:
+  // expandDecimals(143, 18 + 30).div(SECONDS_PER_DAY), 86400 is the seconds per day
   positionImpactPoolDistributionRate: BigNumberish;
   minPositionImpactPoolAmount: BigNumberish;
 
@@ -552,7 +557,7 @@ const config: {
       negativePositionImpactFactor: exponentToFloat("9e-11"),
       positivePositionImpactFactor: exponentToFloat("3e-11"),
 
-      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(2900, 40), // 2.9E+43, 2.5065444873 ETH / day
+      positionImpactPoolDistributionRate: expandDecimals(15, 18 - 1 + 30).div(SECONDS_PER_DAY), // 1.5 ETH per day
       minPositionImpactPoolAmount: expandDecimals(10, 18), // 10 ETH
 
       negativeSwapImpactFactor: exponentToFloat("3e-10"),
