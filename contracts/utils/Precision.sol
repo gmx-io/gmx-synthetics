@@ -17,6 +17,7 @@ import "@openzeppelin/contracts/utils/math/Math.sol";
  */
 library Precision {
     using SafeCast for uint256;
+    using SafeCast for int256;
     using SignedMath for int256;
 
     uint256 public constant FLOAT_PRECISION = 10 ** 30;
@@ -77,6 +78,11 @@ library Precision {
         }
 
         return Math.mulDiv(value, numerator, denominator);
+    }
+
+    function mulDiv(int256 value, uint256 numerator, uint256 denominator, bool roundUpMagnitude) internal pure returns (int256) {
+        uint256 result = mulDiv(value.abs(), numerator, denominator, roundUpMagnitude);
+        return value > 0 ? result.toInt256() : -result.toInt256();
     }
 
     function applyExponentFactor(

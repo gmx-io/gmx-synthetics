@@ -40,7 +40,7 @@ describe("Glv Withdrawals", () => {
     glvFactory,
     glvVault,
     roleStore,
-    glvHandler,
+    glvShiftHandler,
     ethUsdSingleTokenMarket2;
 
   beforeEach(async () => {
@@ -60,7 +60,7 @@ describe("Glv Withdrawals", () => {
       glvFactory,
       glvVault,
       roleStore,
-      glvHandler,
+      glvShiftHandler,
       ethUsdSingleTokenMarket2,
     } = fixture.contracts);
   });
@@ -85,7 +85,7 @@ describe("Glv Withdrawals", () => {
     const marketListCount = await dataStore.getAddressCount(marketListKey);
     expect(marketListCount.toNumber()).eq(0);
 
-    await glvHandler.addMarketToGlv(ethUsdSingleTokenGlvAddress, ethUsdSingleTokenMarket2.marketToken);
+    await glvShiftHandler.addMarketToGlv(ethUsdSingleTokenGlvAddress, ethUsdSingleTokenMarket2.marketToken);
   });
 
   describe("create glv withdrawal, validations", () => {

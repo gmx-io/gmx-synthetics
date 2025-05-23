@@ -3,7 +3,6 @@
 pragma solidity ^0.8.0;
 
 import "../event/EventUtils.sol";
-import "../glv/glvDeposit/GlvDeposit.sol";
 
 // @title IGlvDepositCallbackReceiver
 // @dev interface for a glvDeposit callback contract
@@ -13,7 +12,7 @@ interface IGlvDepositCallbackReceiver {
     // @param glvDeposit the glvDeposit that was executed
     function afterGlvDepositExecution(
         bytes32 key,
-        GlvDeposit.Props memory glvDeposit,
+        EventUtils.EventLogData memory glvDepositData,
         EventUtils.EventLogData memory eventData
     ) external;
 
@@ -22,7 +21,7 @@ interface IGlvDepositCallbackReceiver {
     // @param glvDeposit the glvDeposit that was cancelled
     function afterGlvDepositCancellation(
         bytes32 key,
-        GlvDeposit.Props memory glvDeposit,
+        EventUtils.EventLogData memory glvDepositData,
         EventUtils.EventLogData memory eventData
     ) external;
 }

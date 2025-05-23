@@ -51,10 +51,12 @@ library Order {
     // @param addresses address values
     // @param numbers number values
     // @param flags boolean values
+    // @param _dataList a list of bytes32 values that can be used for additional data
     struct Props {
         Addresses addresses;
         Numbers numbers;
         Flags flags;
+        bytes32[] _dataList;
     }
 
     // @param account the account of the order
@@ -102,6 +104,7 @@ library Order {
     // @param minOutputAmount the minimum output amount for decrease orders and swaps
     // note that for decrease orders, multiple tokens could be received, for this reason, the
     // minOutputAmount value is treated as a USD value for validation in decrease orders
+    // @param srcChainId the source chain id
     struct Numbers {
         OrderType orderType;
         DecreasePositionSwapType decreasePositionSwapType;
@@ -114,6 +117,7 @@ library Order {
         uint256 minOutputAmount;
         uint256 updatedAtTime;
         uint256 validFromTime;
+        uint256 srcChainId;
     }
 
     // @param isLong whether the order is for a long or short
@@ -374,6 +378,13 @@ library Order {
         props.numbers.validFromTime = value;
     }
 
+    function srcChainId(Props memory props) internal pure returns (uint256) {
+        return props.numbers.srcChainId;
+    }
+    function setSrcChainId(Props memory props, uint256 value) internal pure {
+        props.numbers.srcChainId = value;
+    }
+
     // @dev whether the order is for a long or short
     // @param props Props
     // @return whether the order is for a long or short
@@ -426,8 +437,79 @@ library Order {
         props.flags.autoCancel = value;
     }
 
+    function dataList(Props memory props) internal pure returns (bytes32[] memory) {
+        return props._dataList;
+    }
+
+    function setDataList(Props memory props, bytes32[] memory value) internal pure {
+        props._dataList = value;
+    }
+
     // @param props Props
     function touch(Props memory props) internal view {
         props.setUpdatedAtTime(Chain.currentTimestamp());
+    }
+
+    function isSupportedOrder(OrderType _orderType) internal pure returns (bool) {
+        return _orderType == OrderType.MarketSwap ||
+               _orderType == OrderType.LimitSwap ||
+               _orderType == OrderType.MarketIncrease ||
+               _orderType == OrderType.MarketDecrease ||
+               _orderType == OrderType.LimitIncrease ||
+               _orderType == OrderType.LimitDecrease ||
+               _orderType == OrderType.StopIncrease ||
+               _orderType == OrderType.StopLossDecrease ||
+               _orderType == OrderType.Liquidation;
+    }
+
+    // @dev check if an orderType is a market order
+    // @param orderType the order type
+    // @return whether an orderType is a market order
+    function isMarketOrder(OrderType _orderType) internal pure returns (bool) {
+        // a liquidation order is not considered as a market order
+        return _orderType == OrderType.MarketSwap ||
+               _orderType == OrderType.MarketIncrease ||
+               _orderType == OrderType.MarketDecrease;
+    }
+
+    // @dev check if an orderType is a swap order
+    // @param orderType the order type
+    // @return whether an orderType is a swap order
+    function isSwapOrder(OrderType _orderType) internal pure returns (bool) {
+        return _orderType == OrderType.MarketSwap ||
+               _orderType == OrderType.LimitSwap;
+    }
+
+    // @dev check if an orderType is a position order
+    // @param orderType the order type
+    // @return whether an orderType is a position order
+    function isPositionOrder(OrderType _orderType) internal pure returns (bool) {
+        return isIncreaseOrder(_orderType) || isDecreaseOrder(_orderType);
+    }
+
+    // @dev check if an orderType is an increase order
+    // @param orderType the order type
+    // @return whether an orderType is an increase order
+    function isIncreaseOrder(OrderType _orderType) internal pure returns (bool) {
+        return _orderType == OrderType.MarketIncrease ||
+               _orderType == OrderType.LimitIncrease ||
+               _orderType == OrderType.StopIncrease;
+    }
+
+    // @dev check if an orderType is a decrease order
+    // @param orderType the order type
+    // @return whether an orderType is a decrease order
+    function isDecreaseOrder(OrderType _orderType) internal pure returns (bool) {
+        return _orderType == OrderType.MarketDecrease ||
+               _orderType == OrderType.LimitDecrease ||
+               _orderType == OrderType.StopLossDecrease ||
+               _orderType == OrderType.Liquidation;
+    }
+
+    // @dev check if an orderType is a liquidation order
+    // @param orderType the order type
+    // @return whether an orderType is a liquidation order
+    function isLiquidationOrder(OrderType _orderType) internal pure returns (bool) {
+        return _orderType == OrderType.Liquidation;
     }
 }

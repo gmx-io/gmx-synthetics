@@ -12,10 +12,12 @@ library GlvDeposit {
     // @param addresses address values
     // @param numbers number values
     // @param flags boolean values
+    // @param _dataList a list of bytes32 values that can be used for additional data
     struct Props {
         Addresses addresses;
         Numbers numbers;
         Flags flags;
+        bytes32[] _dataList;
     }
 
     // @param account the account depositing liquidity
@@ -43,6 +45,7 @@ library GlvDeposit {
     // sending funds back to the user in case the deposit gets cancelled
     // @param executionFee the execution fee for keepers
     // @param callbackGasLimit the gas limit for the callbackContract
+    // @param srcChainId the source chain id
     struct Numbers {
         uint256 marketTokenAmount;
         uint256 initialLongTokenAmount;
@@ -51,6 +54,7 @@ library GlvDeposit {
         uint256 updatedAtTime;
         uint256 executionFee;
         uint256 callbackGasLimit;
+        uint256 srcChainId;
     }
 
     // @param shouldUnwrapNativeToken whether to unwrap the native token when
@@ -197,6 +201,14 @@ library GlvDeposit {
         props.numbers.callbackGasLimit = value;
     }
 
+    function srcChainId(Props memory props) internal pure returns (uint256) {
+        return props.numbers.srcChainId;
+    }
+
+    function setSrcChainId(Props memory props, uint256 value) internal pure {
+        props.numbers.srcChainId = value;
+    }
+
     function shouldUnwrapNativeToken(Props memory props) internal pure returns (bool) {
         return props.flags.shouldUnwrapNativeToken;
     }
@@ -211,5 +223,13 @@ library GlvDeposit {
 
     function setIsMarketTokenDeposit(Props memory props, bool value) internal pure {
         props.flags.isMarketTokenDeposit = value;
+    }
+
+    function dataList(Props memory props) internal pure returns (bytes32[] memory) {
+        return props._dataList;
+    }
+
+    function setDataList(Props memory props, bytes32[] memory value) internal pure {
+        props._dataList = value;
     }
 }

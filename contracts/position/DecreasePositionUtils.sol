@@ -7,14 +7,12 @@ import "../utils/Precision.sol";
 import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
 
-import "../oracle/Oracle.sol";
 import "../pricing/PositionPricingUtils.sol";
 
 import "./Position.sol";
 import "./PositionStoreUtils.sol";
 import "./PositionUtils.sol";
 import "./PositionEventUtils.sol";
-import "../order/BaseOrderUtils.sol";
 import "../order/OrderEventUtils.sol";
 
 import "./DecreasePositionCollateralUtils.sol";
@@ -208,14 +206,15 @@ library DecreasePositionUtils {
             params.order.setDecreasePositionSwapType(Order.DecreasePositionSwapType.NoSwap);
         }
 
-        if (BaseOrderUtils.isLiquidationOrder(params.order.orderType())) {
+        if (Order.isLiquidationOrder(params.order.orderType())) {
             (bool isLiquidatable, string memory reason, PositionUtils.IsPositionLiquidatableInfo memory info) = PositionUtils.isPositionLiquidatable(
                 params.contracts.dataStore,
                 params.contracts.referralStorage,
                 params.position,
                 params.market,
                 cache.prices,
-                true // shouldValidateMinCollateralUsd
+                true, // shouldValidateMinCollateralUsd
+                true // forLiquidation
             );
 
             if (!isLiquidatable) {
@@ -246,12 +245,28 @@ library DecreasePositionUtils {
             cache.nextPositionBorrowingFactor
         );
 
+        PositionUtils.updatePositionLastSrcChainId(
+            params.contracts.dataStore,
+            params.position,
+            params.order,
+            params.positionKey
+        );
+
         params.position.setSizeInUsd(cache.nextPositionSizeInUsd);
         params.position.setSizeInTokens(params.position.sizeInTokens() - values.sizeDeltaInTokens);
         params.position.setCollateralAmount(values.remainingCollateralAmount);
+        params.position.setPendingImpactAmount(params.position.pendingImpactAmount() - values.proportionalPendingImpactAmount);
         params.position.setDecreasedAtTime(Chain.currentTimestamp());
 
         PositionUtils.incrementClaimableFundingAmount(params, fees);
+
+        // subtract values.proportionalPendingImpactAmount from the total to remove it
+        MarketUtils.applyDeltaToTotalPendingImpactAmount(
+            params.contracts.dataStore,
+            params.contracts.eventEmitter,
+            params.market.marketToken,
+            -values.proportionalPendingImpactAmount
+        );
 
         if (params.position.sizeInUsd() == 0 || params.position.sizeInTokens() == 0) {
             // withdraw all collateral if the position will be closed

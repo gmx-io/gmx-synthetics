@@ -156,4 +156,23 @@ library Array {
 
         return value;
     }
+
+    /**
+     * Converts an array of bytes32 values to bytes.
+     * 
+     * @dev Used to decode the dataList and the first element is not included in the result (i.e. loop starts at index 1)
+     * because it is expected to be the  GMX_DATA_ACTION hash.
+     *
+     * @param dataList the array of bytes32 values to convert
+     * @return data the bytes array representing the input dataList
+     */
+    function dataArrayToBytes(bytes32[] memory dataList) internal pure returns (bytes memory) {
+        bytes memory data;
+
+        for (uint256 i = 1; i < dataList.length; i++) {
+            data = bytes.concat(data, bytes32(dataList[i]));
+        }
+
+        return data;
+    }
 }

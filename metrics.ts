@@ -31,7 +31,9 @@ async function run() {
     "./contracts/referral/ReferralEventUtils.sol",
     "./contracts/withdrawal/WithdrawalEventUtils.sol",
     "./contracts/glv",
-    "./contracts/exchange/GLVHandler.sol",
+    "./contracts/exchange/GLVDepositHandler.sol",
+    "./contracts/exchange/GlvWithdrawalHandler.sol",
+    "./contracts/exchange/GLVShiftHandler.sol",
   ];
 
   const patternedFiles = [
