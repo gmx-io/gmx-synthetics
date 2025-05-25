@@ -1,9 +1,15 @@
 import { expect } from "chai";
 import { impersonateAccount, setBalance } from "@nomicfoundation/hardhat-network-helpers";
-import { decimalToFloat, expandDecimals } from "../../utils/math";
+import { bigNumberify, decimalToFloat, expandDecimals } from "../../utils/math";
 import { deployFixture } from "../../utils/fixture";
 import { GELATO_RELAY_ADDRESS } from "../../utils/relay/addresses";
-import { sendBatch, sendCancelOrder, sendCreateOrder, sendUpdateOrder } from "../../utils/relay/gelatoRelay";
+import {
+  sendBatch,
+  sendCancelOrder,
+  sendCreateOrder,
+  sendUpdateOrder,
+  sendSetTraderReferralCode,
+} from "../../utils/relay/gelatoRelay";
 import * as keys from "../../utils/keys";
 import { handleDeposit } from "../../utils/deposit";
 import { DecreasePositionSwapType, executeOrder, getOrderCount, getOrderKeys, OrderType } from "../../utils/order";
@@ -24,10 +30,12 @@ describe("MultichainOrderRouter", () => {
     wethPriceFeed,
     wnt,
     usdc,
+    referralStorage,
     mockStargatePoolUsdc,
     mockStargatePoolWnt;
   let relaySigner;
   let chainId;
+  const referralCode = hashString("referralCode");
 
   beforeEach(async () => {
     fixture = await deployFixture();
@@ -40,6 +48,7 @@ describe("MultichainOrderRouter", () => {
       wethPriceFeed,
       wnt,
       usdc,
+      referralStorage,
       mockStargatePoolUsdc,
       mockStargatePoolWnt,
     } = fixture.contracts);
@@ -91,7 +100,7 @@ describe("MultichainOrderRouter", () => {
       decreasePositionSwapType: DecreasePositionSwapType.SwapCollateralTokenToPnlToken,
       isLong: true,
       shouldUnwrapNativeToken: false,
-      referralCode: hashString("referralCode"),
+      referralCode,
       dataList: [],
     };
 
@@ -446,6 +455,72 @@ describe("MultichainOrderRouter", () => {
 
       expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).eq(relayFeeAmount);
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0);
+    });
+  });
+
+  describe("setTraderReferralCode", () => {
+    let setTraderReferralCodeParams: Parameters<typeof sendSetTraderReferralCode>[0];
+
+    beforeEach(async () => {
+      setTraderReferralCodeParams = {
+        sender: relaySigner,
+        signer: user1,
+        feeParams: {
+          feeToken: wnt.address,
+          feeAmount: relayFeeAmount, // 0.002 ETH
+          feeSwapPath: [],
+        },
+        account: user1.address,
+        referralCode,
+        deadline: 9999999999,
+        srcChainId: chainId, // 0 means non-multichain action
+        desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
+        relayRouter: multichainOrderRouter,
+        chainId,
+        gelatoRelayFeeToken: wnt.address,
+        gelatoRelayFeeAmount: relayFeeAmount, // 0.002 ETH
+      };
+    });
+
+    beforeEach(async () => {
+      // enable MultichainOrderRouter to call ReferralStorage.setTraderReferralCode
+      await referralStorage.setHandler(multichainOrderRouter.address, true);
+    });
+
+    it("sets trader referral code", async () => {
+      await mintAndBridge(fixture, {
+        account: user1,
+        token: wnt,
+        tokenAmount: relayFeeAmount,
+      });
+
+      expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(0);
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(relayFeeAmount);
+      expect(await referralStorage.traderReferralCodes(user0.address)).eq(ethers.constants.HashZero);
+
+      await sendSetTraderReferralCode(setTraderReferralCodeParams);
+
+      expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(relayFeeAmount);
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0);
+      expect(await referralStorage.traderReferralCodes(user1.address)).eq(referralCode);
+    });
+
+    it("sets trader referral code without paying relayFee if calling contract is whitelisted", async () => {
+      // whitelist MultichainOrderRouter to be excluded from paying the relay fee
+      await dataStore.setBool(keys.isRelayFeeExcludedKey(multichainOrderRouter.address), true);
+      // no fee for whitelisted contract
+      setTraderReferralCodeParams.feeParams.feeAmount = 0;
+      setTraderReferralCodeParams.gelatoRelayFeeAmount = 0;
+
+      expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(0);
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0);
+      expect(await referralStorage.traderReferralCodes(user0.address)).eq(ethers.constants.HashZero);
+
+      await sendSetTraderReferralCode(setTraderReferralCodeParams);
+
+      expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(0);
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0);
+      expect(await referralStorage.traderReferralCodes(user1.address)).eq(referralCode);
     });
   });
 });
