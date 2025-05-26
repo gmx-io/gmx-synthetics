@@ -96,11 +96,8 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         MultichainUtils.validateMultichainProvider(dataStore, from);
         MultichainUtils.validateMultichainEndpoint(dataStore, msg.sender);
 
-        uint256 amountLD = OFTComposeMsgCodec.amountLD(message);
-
-        bytes memory composeMessage = OFTComposeMsgCodec.composeMsg(message);
         /// @dev The `account` field is user-supplied and not validated; any address may be provided by the sender
-        (address account, uint256 srcChainId, bytes memory data) = _decodeLzComposeMsg(composeMessage);
+        (address account, uint256 srcChainId, uint256 amountLD, bytes memory data) = _decodeLzComposeMsg(message);
 
         address token = IStargate(from).token();
         if (token == address(0x0)) {
@@ -125,7 +122,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         );
 
         if (data.length != 0) {
-            (ActionType actionType, bytes memory actionData) = _decodeLzComposeMsgData(data);
+            (ActionType actionType, bytes memory actionData) = abi.decode(data, (ActionType, bytes));
             if (actionType == ActionType.Deposit) {
                 _handleDeposit(from, account, srcChainId, actionType, actionData);
             } else if (actionType == ActionType.GlvDeposit) {
@@ -288,12 +285,16 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         }
     }
 
-    function _decodeLzComposeMsg(bytes memory message) private pure returns (address, uint256, bytes memory) {
-        return abi.decode(message, (address, uint256, bytes));
-    }
+    function _decodeLzComposeMsg(bytes calldata message) private view returns (address, uint256, uint256, bytes memory) {
+        uint256 amountLD = OFTComposeMsgCodec.amountLD(message);
 
-    function _decodeLzComposeMsgData(bytes memory data) private pure returns (ActionType, bytes memory) {
-        return abi.decode(data, (ActionType, bytes));
+        uint32 srcEid = OFTComposeMsgCodec.srcEid(message);
+        uint256 srcChainId = dataStore.getUint(Keys.eidToSrcChainId(srcEid));
+
+        bytes memory composeMessage = OFTComposeMsgCodec.composeMsg(message);
+        (address account, bytes memory data) = abi.decode(composeMessage, (address, bytes));
+
+        return (account, srcChainId, amountLD, data);
     }
 
     function _areValidTransferRequests(IRelayUtils.TransferRequests memory transferRequests) private pure returns (bool) {

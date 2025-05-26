@@ -508,6 +508,7 @@ describe("MultichainOrderRouter", () => {
     });
 
     it("sets trader referral code without paying relayFee if LayerZeroProvider is whitelisted", async () => {
+      await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolUsdc.SRC_EID()), chainId);
       // whitelist LayerZeroProvider to be excluded from paying the relay fee
       await dataStore.setBool(keys.isRelayFeeExcludedKey(layerZeroProvider.address), true);
       // no fee for whitelisted contract
@@ -530,8 +531,7 @@ describe("MultichainOrderRouter", () => {
       const message = await encodeSetTraderReferralCodeMessage(
         setTraderReferralCodeParams,
         referralCode,
-        user1.address,
-        chainId
+        user1.address
       );
       await mockStargatePoolUsdc.connect(user1).sendToken(layerZeroProvider.address, usdcAmount, message);
 

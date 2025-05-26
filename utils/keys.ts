@@ -281,6 +281,7 @@ export const IS_MULTICHAIN_PROVIDER_ENABLED = hashString("IS_MULTICHAIN_PROVIDER
 export const IS_MULTICHAIN_ENDPOINT_ENABLED = hashString("IS_MULTICHAIN_ENDPOINT_ENABLED");
 export const IS_RELAY_FEE_EXCLUDED = hashString("IS_RELAY_FEE_EXCLUDED");
 export const IS_SRC_CHAIN_ID_ENABLED = hashString("IS_SRC_CHAIN_ID_ENABLED");
+export const EID_TO_SRC_CHAIN_ID = hashString("EID_TO_SRC_CHAIN_ID");
 
 export const VALID_FROM_TIME = hashString("VALID_FROM_TIME");
 
@@ -888,4 +889,8 @@ export function isRelayFeeExcludedKey(contract: string) {
 
 export function isSrcChainIdEnabledKey(srcChainId: number) {
   return hashData(["bytes32", "uint256"], [IS_SRC_CHAIN_ID_ENABLED, srcChainId]);
+}
+
+export function eidToSrcChainId(eid: number) {
+  return hashData(["bytes32", "uint32"], [EID_TO_SRC_CHAIN_ID, eid]);
 }

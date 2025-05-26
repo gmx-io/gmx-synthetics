@@ -10,7 +10,6 @@ export async function mintAndBridge(
     token: Contract;
     tokenAmount: BigNumberish;
     data?: string;
-    srcChainId?: BigNumberish;
   }
 ) {
   const { usdc, wnt, mockStargatePoolUsdc, mockStargatePoolWnt, layerZeroProvider } = fixture.contracts;
@@ -19,15 +18,13 @@ export async function mintAndBridge(
   const account = overrides.account || user0;
   const token = overrides.token;
   const tokenAmount = overrides.tokenAmount;
-  const srcChainId =
-    overrides.srcChainId || (await hre.ethers.provider.getNetwork().then((network) => network.chainId));
 
   await token.mint(account.address, tokenAmount);
 
   // mock token bridging (increase user's multichain balance)
   const encodedMessageEth = ethers.utils.defaultAbiCoder.encode(
-    ["address", "uint256", "bytes"],
-    [account.address, srcChainId, overrides.data || "0x"]
+    ["address", "bytes"],
+    [account.address, overrides.data || "0x"]
   );
 
   if (token.address == usdc.address) {
@@ -44,8 +41,7 @@ export async function mintAndBridge(
 export async function encodeSetTraderReferralCodeMessage(
   setTraderReferralCodeParams: Parameters<typeof sendSetTraderReferralCode>[0],
   referralCode: string,
-  account: string,
-  chainId: BigNumberish
+  account: string
 ): Promise<string> {
   const relayParamsType = `tuple(
     tuple(
@@ -95,7 +91,7 @@ export async function encodeSetTraderReferralCodeMessage(
   const ActionType = 4; // SetTraderReferralCode
   const data = ethers.utils.defaultAbiCoder.encode(["uint8", "bytes"], [ActionType, actionData]);
 
-  const message = ethers.utils.defaultAbiCoder.encode(["address", "uint256", "bytes"], [account, chainId, data]);
+  const message = ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, data]);
 
   return message;
 }
