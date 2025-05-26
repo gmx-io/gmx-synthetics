@@ -34,6 +34,7 @@ const getRpcUrl = (network) => {
   const defaultRpcs = {
     arbitrum: "https://arb1.arbitrum.io/rpc",
     avalanche: "https://api.avax.network/ext/bc/C/rpc",
+    botanix: "https://rpc.botanixlabs.com",
     arbitrumGoerli: "https://goerli-rollup.arbitrum.io/rpc",
     arbitrumSepolia: "https://sepolia-rollup.arbitrum.io/rpc",
     sepolia: "https://ethereum-sepolia-rpc.publicnode.com",
@@ -59,6 +60,7 @@ export const getExplorerUrl = (network) => {
   const urls = {
     arbitrum: "https://api.arbiscan.io/",
     avalanche: "https://api.snowtrace.io/",
+    botanix: "https://botanixscan.io/",
     snowscan: "https://api.snowscan.xyz/",
     arbitrumGoerli: "https://api-goerli.arbiscan.io/",
     arbitrumSepolia: "https://api-sepolia.arbiscan.io/",
@@ -173,6 +175,17 @@ const config: HardhatUserConfig = {
         },
       },
       blockGasLimit: 15_000_000,
+    },
+    botanix: {
+      url: getRpcUrl("botanix"),
+      chainId: 3637,
+      accounts: getEnvAccounts(),
+      verify: {
+        etherscan: {
+          apiUrl: getExplorerUrl("botanix"),
+        },
+      },
+      blockGasLimit: 20_000_000,
     },
     snowscan: {
       url: getRpcUrl("avalanche"),
