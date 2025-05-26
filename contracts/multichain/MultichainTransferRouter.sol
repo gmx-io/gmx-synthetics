@@ -71,7 +71,7 @@ contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, M
         address account,
         uint256 srcChainId,
         IRelayUtils.BridgeOutParams calldata params
-    ) external nonReentrant onlyController withRelay(relayParams, account, srcChainId, false) {
+    ) external nonReentrant onlyController {
         _validateCallWithoutSignature(relayParams, srcChainId);
 
         _bridgeOut(account, srcChainId, params);
