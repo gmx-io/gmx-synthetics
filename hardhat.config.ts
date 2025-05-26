@@ -186,6 +186,7 @@ const config: HardhatUserConfig = {
         },
       },
       blockGasLimit: 20_000_000,
+      gasPrice: 10,
     },
     snowscan: {
       url: getRpcUrl("avalanche"),
