@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { impersonateAccount, setBalance } from "@nomicfoundation/hardhat-network-helpers";
-import { bigNumberify, decimalToFloat, expandDecimals } from "../../utils/math";
+import { decimalToFloat, expandDecimals } from "../../utils/math";
 import { deployFixture } from "../../utils/fixture";
 import { GELATO_RELAY_ADDRESS } from "../../utils/relay/addresses";
 import {
@@ -18,7 +18,7 @@ import { getPositionCount } from "../../utils/position";
 import { expectBalance } from "../../utils/validation";
 import { executeLiquidation } from "../../utils/liquidation";
 import { executeAdl, updateAdlState } from "../../utils/adl";
-import { mintAndBridge } from "../../utils/multichain";
+import { encodeSetTraderReferralCodeMessage, mintAndBridge } from "../../utils/multichain";
 
 describe("MultichainOrderRouter", () => {
   let fixture;
@@ -31,6 +31,7 @@ describe("MultichainOrderRouter", () => {
     wnt,
     usdc,
     referralStorage,
+    layerZeroProvider,
     mockStargatePoolUsdc,
     mockStargatePoolWnt;
   let relaySigner;
@@ -49,6 +50,7 @@ describe("MultichainOrderRouter", () => {
       wnt,
       usdc,
       referralStorage,
+      layerZeroProvider,
       mockStargatePoolUsdc,
       mockStargatePoolWnt,
     } = fixture.contracts);
@@ -505,21 +507,38 @@ describe("MultichainOrderRouter", () => {
       expect(await referralStorage.traderReferralCodes(user1.address)).eq(referralCode);
     });
 
-    it("sets trader referral code without paying relayFee if calling contract is whitelisted", async () => {
-      // whitelist MultichainOrderRouter to be excluded from paying the relay fee
-      await dataStore.setBool(keys.isRelayFeeExcludedKey(multichainOrderRouter.address), true);
+    it("sets trader referral code without paying relayFee if LayerZeroProvider is whitelisted", async () => {
+      // whitelist LayerZeroProvider to be excluded from paying the relay fee
+      await dataStore.setBool(keys.isRelayFeeExcludedKey(layerZeroProvider.address), true);
       // no fee for whitelisted contract
       setTraderReferralCodeParams.feeParams.feeAmount = 0;
       setTraderReferralCodeParams.gelatoRelayFeeAmount = 0;
+      // sender is user1, not GELATO_RELAY_ADDRESS
+      setTraderReferralCodeParams.sender = user1.address;
 
+      const usdcAmount = expandDecimals(1, 5); // 0.1 USDC --> e.g. minimum amount required by a stargate pool to bridge a message
+      await usdc.mint(user1.address, usdcAmount);
+      await usdc.connect(user1).approve(mockStargatePoolUsdc.address, usdcAmount);
+
+      expect(await usdc.balanceOf(user1.address)).to.eq(usdcAmount);
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0);
       expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(0);
-      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0);
+      expect(await usdc.balanceOf(layerZeroProvider.address)).to.eq(0);
       expect(await referralStorage.traderReferralCodes(user0.address)).eq(ethers.constants.HashZero);
 
-      await sendSetTraderReferralCode(setTraderReferralCodeParams);
+      const message = await encodeSetTraderReferralCodeMessage(
+        setTraderReferralCodeParams,
+        referralCode,
+        user1.address,
+        chainId
+      );
+      await mockStargatePoolUsdc.connect(user1).sendToken(layerZeroProvider.address, usdcAmount, message);
 
-      expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(0);
-      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0);
+      // referralCode is set, usdcAmount is added to user's multichain balance
+      expect(await usdc.balanceOf(user1.address)).to.eq(0);
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(usdcAmount);
+      expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(0); // does not change
+      expect(await usdc.balanceOf(layerZeroProvider.address)).to.eq(0); // does not change
       expect(await referralStorage.traderReferralCodes(user1.address)).eq(referralCode);
     });
   });
