@@ -511,6 +511,7 @@ describe("MultichainOrderRouter", () => {
       // whitelist LayerZeroProvider to be excluded from paying the relay fee
       await dataStore.setBool(keys.isRelayFeeExcludedKey(layerZeroProvider.address), true);
       // no fee for whitelisted contract
+      setTraderReferralCodeParams.feeParams.feeToken = ethers.constants.AddressZero;
       setTraderReferralCodeParams.feeParams.feeAmount = 0;
       setTraderReferralCodeParams.gelatoRelayFeeAmount = 0;
       // sender is user1, not GELATO_RELAY_ADDRESS
