@@ -1100,6 +1100,14 @@ const config: {
       transferGasLimit: 200 * 1000,
     },
   },
+  botanix: {
+    pBTC: {
+      address: "0x0D2437F93Fed6EA64Ef01cCde385FB1263910C56",
+      decimals: 18,
+      wrappedNative: true,
+      transferGasLimit: 200 * 1000,
+    },
+  },
   arbitrumSepolia: {
     WETH: {
       address: "0x980b62da83eff3d4576c647993b0c1d7faf17c73", // not verified

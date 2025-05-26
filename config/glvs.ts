@@ -146,6 +146,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         ],
       },
     ],
+    botanix: [],
     avalancheFuji: [
       {
         name: "GMX Liquidity Vault [WETH-USDC]",
