@@ -86,6 +86,12 @@ library ExecuteDepositUtils {
         EventUtils.EventLogData callbackEventData;
     }
 
+    struct BridgeOutFromControllerCache {
+        IRelayUtils.RelayParams relayParams;
+        address provider;
+        bytes providerData;
+    }
+
     address public constant RECEIVER_FOR_FIRST_DEPOSIT = address(1);
 
     // @dev executes a deposit
@@ -273,11 +279,13 @@ library ExecuteDepositUtils {
 
         // use deposit.dataList to determine if the GM tokens minted should be bridged out to src chain
         bridgeOutFromController(
+            params.eventEmitter,
             params.multichainTransferRouter,
             deposit.receiver(), // account
             deposit.srcChainId(),
             cache.market.marketToken, // token
             cache.receivedMarketTokens, // amount
+            params.key,
             deposit.dataList()
         );
 
@@ -304,11 +312,13 @@ library ExecuteDepositUtils {
     /// @dev abi.decode can fail if dataList is not properly formed, which would cause the deposit to be cancelled
     /// @dev first item of dataList should be the GMX_DATA_ACTION hash if dataList is intended to be used for bridging out tokens
     function bridgeOutFromController(
+        EventEmitter eventEmitter,
         IMultichainTransferRouter multichainTransferRouter,
         address account,
         uint256 srcChainId,
         address token,
         uint256 amount,
+        bytes32 key,
         bytes32[] memory dataList
     ) public {
         if (dataList.length == 0 || dataList[0] != Keys.GMX_DATA_ACTION) {
@@ -323,7 +333,9 @@ library ExecuteDepositUtils {
         );
 
         if (actionType == IMultichainProvider.ActionType.BridgeOut) {
-            (IRelayUtils.RelayParams memory relayParams, address provider, bytes memory providerData /* e.g. dstEid */) = abi.decode(
+            BridgeOutFromControllerCache memory cache;
+
+            (cache.relayParams, cache.provider, cache.providerData /* e.g. dstEid */) = abi.decode(
                 actionData,
                 (IRelayUtils.RelayParams, address, bytes)
             );
@@ -331,11 +343,18 @@ library ExecuteDepositUtils {
             IRelayUtils.BridgeOutParams memory bridgeOutParams = IRelayUtils.BridgeOutParams({
                 token: token,
                 amount: amount,
-                provider: provider,
-                data: providerData
+                provider: cache.provider,
+                data: cache.providerData
             });
 
-            multichainTransferRouter.bridgeOutFromController(relayParams, account, srcChainId, bridgeOutParams);
+            try multichainTransferRouter.bridgeOutFromController(cache.relayParams, account, srcChainId, bridgeOutParams) {
+                MultichainEventUtils.emitMultichainBridgeAction(eventEmitter, address(this), account, srcChainId, actionType, key);
+            } catch Error(string memory reason) {
+                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, actionType, reason);
+            } catch (bytes memory reasonBytes) {
+                (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
+                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, actionType, reason);
+            }
         }
     }
 

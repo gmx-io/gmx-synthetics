@@ -136,11 +136,13 @@ library ExecuteGlvDepositUtils {
 
         // use glvDeposit.dataList to determine if the GLV tokens minted should be bridged out to src chain
         ExecuteDepositUtils.bridgeOutFromController(
+            params.eventEmitter,
             params.multichainTransferRouter,
             glvDeposit.receiver(), // account
             glvDeposit.srcChainId(),
             glvDeposit.glv(), // token
             cache.mintAmount, // amount
+            params.key,
             glvDeposit.dataList()
         );
 

@@ -338,12 +338,12 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
                 transferRequests,
                 depositParams
             ) returns (bytes32 key) {
-                MultichainEventUtils.emitActionFromBridge(eventEmitter, from, account, srcChainId, actionType, key);
+                MultichainEventUtils.emitMultichainBridgeAction(eventEmitter, from, account, srcChainId, actionType, key);
             } catch Error(string memory reason) {
-                MultichainEventUtils.emitActionFromBridgeFailed(eventEmitter, from, account, srcChainId, actionType, reason);
+                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, from, account, srcChainId, actionType, reason);
             } catch (bytes memory reasonBytes) {
                 (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
-                MultichainEventUtils.emitActionFromBridgeFailed(eventEmitter, from, account, srcChainId, actionType, reason);
+                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, from, account, srcChainId, actionType, reason);
             }
         }
     }
@@ -371,12 +371,12 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
                 transferRequests,
                 glvDepositParams
             ) returns (bytes32 key) {
-                MultichainEventUtils.emitActionFromBridge(eventEmitter, from, account, srcChainId, actionType, key);
+                MultichainEventUtils.emitMultichainBridgeAction(eventEmitter, from, account, srcChainId, actionType, key);
             } catch Error(string memory reason) {
-                MultichainEventUtils.emitActionFromBridgeFailed(eventEmitter, from, account, srcChainId, actionType, reason);
+                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, from, account, srcChainId, actionType, reason);
             } catch (bytes memory reasonBytes) {
                 (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
-                MultichainEventUtils.emitActionFromBridgeFailed(eventEmitter, from, account, srcChainId, actionType, reason);
+                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, from, account, srcChainId, actionType, reason);
             }
         }
     }
@@ -396,12 +396,12 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         ) = abi.decode(actionData, (IRelayUtils.RelayParams, bytes32));
 
         try multichainOrderRouter.setTraderReferralCode(relayParams, account, srcChainId, referralCode) {
-            MultichainEventUtils.emitActionFromBridge(eventEmitter, from, account, srcChainId, actionType, referralCode);
+            MultichainEventUtils.emitMultichainBridgeAction(eventEmitter, from, account, srcChainId, actionType, referralCode);
         } catch Error(string memory reason) {
-            MultichainEventUtils.emitActionFromBridgeFailed(eventEmitter, from, account, srcChainId, actionType, reason);
+            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, from, account, srcChainId, actionType, reason);
         } catch (bytes memory reasonBytes) {
             (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
-            MultichainEventUtils.emitActionFromBridgeFailed(eventEmitter, from, account, srcChainId, actionType, reason);
+            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, from, account, srcChainId, actionType, reason);
         }
     }
 

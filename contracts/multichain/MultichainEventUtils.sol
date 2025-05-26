@@ -59,7 +59,7 @@ library MultichainEventUtils {
         eventEmitter.emitEventLog1("MultichainTransferIn", Cast.toBytes32(account), eventData);
     }
 
-    function emitActionFromBridge(
+    function emitMultichainBridgeAction(
         EventEmitter eventEmitter,
         address provider,
         address account,
@@ -80,10 +80,10 @@ library MultichainEventUtils {
         eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "key", key);
 
-        eventEmitter.emitEventLog1("ActionFromBridge", Cast.toBytes32(account), eventData);
+        eventEmitter.emitEventLog1("MultichainBridgeAction", Cast.toBytes32(account), eventData);
     }
 
-    function emitActionFromBridgeFailed(
+    function emitMultichainBridgeActionFailed(
         EventEmitter eventEmitter,
         address provider,
         address account,
@@ -104,7 +104,7 @@ library MultichainEventUtils {
         eventData.stringItems.initItems(1);
         eventData.stringItems.setItem(0, "reason", reason);
 
-        eventEmitter.emitEventLog1("ActionFromBridgeFailed", Cast.toBytes32(account), eventData);
+        eventEmitter.emitEventLog1("MultichainBridgeActionFailed", Cast.toBytes32(account), eventData);
     }
 
     function emitMultichainBridgeOut(
