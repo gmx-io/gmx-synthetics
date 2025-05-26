@@ -148,6 +148,7 @@ export async function deployFixture() {
   const mockMultichainReaderOriginator = await hre.ethers.getContract("MockMultichainReaderOriginator");
   const feeDistributorVault = await hre.ethers.getContract("FeeDistributorVault");
   const feeDistributor = await hre.ethers.getContract("FeeDistributor");
+  const feeDistributorUtils = await hre.ethers.getContract("FeeDistributorUtils");
 
   const ethUsdMarketAddress = getMarketTokenAddress(
     wnt.address,
@@ -385,6 +386,7 @@ export async function deployFixture() {
       mockMultichainReaderOriginator,
       feeDistributorVault,
       feeDistributor,
+      feeDistributorUtils,
     },
     props: { oracleSalt, signerIndexes: [0, 1, 2, 3, 4, 5, 6], executionFee: "1000000000000000" },
   };

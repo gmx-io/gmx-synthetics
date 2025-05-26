@@ -40,6 +40,7 @@ const func = createDeployFunction({
       .concat(esGmxAddress)
       .concat(wntAddress);
   },
+  libraryNames: ["FeeDistributorUtils"],
   afterDeploy: async ({ deployedContract }) => {
     await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
     await grantRoleIfNotGranted(deployedContract.address, "FEE_KEEPER");

@@ -511,4 +511,5 @@ library Errors {
     error ReferralRewardsArrayMismatch(address token, uint256 addressArrayLength, uint256 amountArrayLength);
     error ReferralRewardsAmountExceedsMaxBatchSize(address token, uint256 addressArrayLength, uint256 maxBatchSize);
     error InvalidReferralRewardToken(address token);
+    error BridgingBalanceArrayMismatch(uint256 balancesLength, uint256 targetBalancesLength);
 }
