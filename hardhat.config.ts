@@ -183,6 +183,7 @@ const config: HardhatUserConfig = {
       verify: {
         etherscan: {
           apiUrl: getExplorerUrl("botanix"),
+          apiKey: "botanix",
         },
       },
       blockGasLimit: 20_000_000,
@@ -278,6 +279,7 @@ const config: HardhatUserConfig = {
       avalancheFujiTestnet: process.env.SNOWTRACE_API_KEY,
       snowtrace: "snowtrace", // apiKey is not required, just set a placeholder
       arbitrumBlockscout: "arbitrumBlockscout",
+      botanix: "botanix",
     },
     customChains: [
       {
@@ -294,6 +296,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: "https://api-sepolia.arbiscan.io/api",
           browserURL: "https://sepolia.arbiscan.io/",
+        },
+      },
+      {
+        network: "botanix",
+        chainId: 3637,
+        urls: {
+          apiURL: "https://botanixscan.io/api",
+          browserURL: "https://botanixscan.io",
         },
       },
       // {
