@@ -1136,7 +1136,7 @@ describe("FeeDistributor", function () {
     expect(glpAfter).to.equal(minGlp);
   });
 
-  it("distribute() with 2 surplus and 2 deficit chains", async () => {
+  it("initiateDistribute() and processLzReceive() with 2 surplus and 2 deficit chains", async () => {
     const eidD = 4000;
     const chainIdD = 40000;
 
@@ -1479,11 +1479,6 @@ describe("FeeDistributor", function () {
     });
 
     await wnt.mint(feeDistributorVaultD.address, expandDecimals(1_000, 18));
-
-    const wntReferralRewardsInUsdD = expandDecimals(1_000, 30);
-    const esGmxForReferralRewardsD = expandDecimals(10, 18);
-    const feesV1UsdD = expandDecimals(40_000, 30);
-    const feesV2UsdD = expandDecimals(100_000, 30);
 
     distributionState = await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE);
     expect(distributionState).to.eq(0);
