@@ -21,7 +21,7 @@ library MultichainUtils {
 
     /**
      * Records a deposit from another chain. IMultichainProvider has CONTROLLER role
-     * @param provider the multichain provider contract
+     * @param multichainProvider the multichain provider contract
      * @param token address of the token being deposited
      * @param account user address on the source chain
      * @param amount the amount of tokens being deposited
@@ -31,7 +31,7 @@ library MultichainUtils {
         DataStore dataStore,
         EventEmitter eventEmitter,
         MultichainVault multichainVault,
-        IMultichainProvider provider,
+        IMultichainProvider multichainProvider,
         address token,
         address account,
         uint256 amount,
@@ -48,7 +48,7 @@ library MultichainUtils {
 
         MultichainEventUtils.emitMultichainBridgeIn(
             eventEmitter,
-            address(provider),
+            address(multichainProvider),
             token,
             account,
             amount,

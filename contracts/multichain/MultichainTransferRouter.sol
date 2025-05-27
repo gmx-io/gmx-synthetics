@@ -128,7 +128,7 @@ contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, M
 
             MultichainEventUtils.emitMultichainBridgeOut(
                 eventEmitter,
-                params.provider,
+                address(multichainProvider),
                 params.token,
                 account,
                 amountOut, // amount

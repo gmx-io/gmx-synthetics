@@ -124,11 +124,11 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         if (data.length != 0) {
             (ActionType actionType, bytes memory actionData) = abi.decode(data, (ActionType, bytes));
             if (actionType == ActionType.Deposit) {
-                _handleDeposit(from, account, srcChainId, actionType, actionData);
+                _handleDeposit(account, srcChainId, actionType, actionData);
             } else if (actionType == ActionType.GlvDeposit) {
-                _handleGlvDeposit(from, account, srcChainId, actionType, actionData);
+                _handleGlvDeposit(account, srcChainId, actionType, actionData);
             } else if (actionType == ActionType.SetTraderReferralCode) {
-                _handleSetTraderReferralCode(from, account, srcChainId, actionType, actionData);
+                _handleSetTraderReferralCode(account, srcChainId, actionType, actionData);
             }
         }
     }
@@ -317,7 +317,6 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
     /// @dev long/short tokens are deposited from user's multichain balance
     /// GM tokens are minted and transferred to user's multichain balance
     function _handleDeposit(
-        address from,
         address account,
         uint256 srcChainId,
         ActionType actionType,
@@ -337,12 +336,12 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
                 transferRequests,
                 depositParams
             ) returns (bytes32 key) {
-                MultichainEventUtils.emitMultichainBridgeAction(eventEmitter, from, account, srcChainId, actionType, key);
+                MultichainEventUtils.emitMultichainBridgeAction(eventEmitter, address(this), account, srcChainId, actionType, key);
             } catch Error(string memory reason) {
-                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, from, account, srcChainId, actionType, reason);
+                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, actionType, reason);
             } catch (bytes memory reasonBytes) {
                 (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
-                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, from, account, srcChainId, actionType, reason);
+                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, actionType, reason);
             }
         }
     }
@@ -350,7 +349,6 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
     /// @dev long/short/GM tokens are deposited from user's multichain balance
     /// GLV tokens are minted and transferred to user's multichain balance
     function _handleGlvDeposit(
-        address from,
         address account,
         uint256 srcChainId,
         ActionType actionType,
@@ -370,12 +368,12 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
                 transferRequests,
                 glvDepositParams
             ) returns (bytes32 key) {
-                MultichainEventUtils.emitMultichainBridgeAction(eventEmitter, from, account, srcChainId, actionType, key);
+                MultichainEventUtils.emitMultichainBridgeAction(eventEmitter, address(this), account, srcChainId, actionType, key);
             } catch Error(string memory reason) {
-                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, from, account, srcChainId, actionType, reason);
+                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, actionType, reason);
             } catch (bytes memory reasonBytes) {
                 (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
-                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, from, account, srcChainId, actionType, reason);
+                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, actionType, reason);
             }
         }
     }
@@ -383,7 +381,6 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
     /// @dev `account` is expected to be `msg.sender` from the source chain, as
     /// MultichainOrderRouter would use it to validate the signature.
     function _handleSetTraderReferralCode(
-        address from,
         address account,
         uint256 srcChainId,
         ActionType actionType,
@@ -395,12 +392,12 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         ) = abi.decode(actionData, (IRelayUtils.RelayParams, bytes32));
 
         try multichainOrderRouter.setTraderReferralCode(relayParams, account, srcChainId, referralCode) {
-            MultichainEventUtils.emitMultichainBridgeAction(eventEmitter, from, account, srcChainId, actionType, referralCode);
+            MultichainEventUtils.emitMultichainBridgeAction(eventEmitter, address(this), account, srcChainId, actionType, referralCode);
         } catch Error(string memory reason) {
-            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, from, account, srcChainId, actionType, reason);
+            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, actionType, reason);
         } catch (bytes memory reasonBytes) {
             (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
-            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, from, account, srcChainId, actionType, reason);
+            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, actionType, reason);
         }
     }
 
