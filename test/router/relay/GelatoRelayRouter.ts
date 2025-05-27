@@ -325,6 +325,7 @@ describe("GelatoRelayRouter", () => {
       await dataStore.setAddress(keys.RELAY_FEE_ADDRESS, user3.address);
 
       const _send = (extraCalldataLength) => {
+        createOrderParams.feeParams.feeAmount = expandDecimals(25, 14); // 0.0025 ETH
         return sendCreateOrder({
           ...createOrderParams,
           externalCalls: {
