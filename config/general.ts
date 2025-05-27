@@ -89,8 +89,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     shiftGasLimit: 2_500_000,
 
     singleSwapGasLimit: 1_000_000, // measured gas required for a swap in a market increase order: ~600,000
-    increaseOrderGasLimit: 4_000_000,
-    decreaseOrderGasLimit: 4_000_000,
+    increaseOrderGasLimit: 3_500_000,
+    decreaseOrderGasLimit: 3_500_000,
     swapOrderGasLimit: 3_000_000,
 
     glvPerMarketGasLimit: 100_000,
@@ -125,7 +125,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
 
     skipBorrowingFeeForSmallerSide: true,
 
-    ignoreOpenInterestForUsageFactor: false,
+    ignoreOpenInterestForUsageFactor: true,
 
     maxExecutionFeeMultiplierFactor: decimalToFloat(100),
 
@@ -157,13 +157,9 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       increaseOrderGasLimit: 3_000_000,
       decreaseOrderGasLimit: 3_000_000,
       swapOrderGasLimit: 2_500_000,
-      ignoreOpenInterestForUsageFactor: true,
     },
-    avalanche: {
-      increaseOrderGasLimit: 3_500_000,
-      decreaseOrderGasLimit: 3_500_000,
-      ignoreOpenInterestForUsageFactor: true,
-    },
+    avalanche: {},
+    botanix: {},
   }[network.name];
 
   if (!networkConfig) {

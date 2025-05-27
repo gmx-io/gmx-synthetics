@@ -1,7 +1,6 @@
 import { BigNumberish } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { percentageToFloat, expandDecimals, numberToBigNumber } from "../utils/math";
-import { isMarketDisabledKey } from "../utils/keys";
 
 type GlvConfig = {
   name: string;
@@ -147,6 +146,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         ],
       },
     ],
+    botanix: [],
     avalancheFuji: [
       {
         name: "GMX Liquidity Vault [WETH-USDC]",

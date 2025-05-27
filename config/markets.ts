@@ -3689,6 +3689,7 @@ const config: {
       fundingFactor: decimalToFloat(16, 7), // ~5000% per year for a 100% skew
     },
   ],
+  botanix: [],
   avalancheFuji: [
     {
       ...baseMarketConfig,

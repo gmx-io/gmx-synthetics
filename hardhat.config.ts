@@ -29,6 +29,7 @@ const getRpcUrl = (network) => {
   const defaultRpcs = {
     arbitrum: "https://arb1.arbitrum.io/rpc",
     avalanche: "https://api.avax.network/ext/bc/C/rpc",
+    botanix: "https://rpc.botanixlabs.com",
     arbitrumGoerli: "https://goerli-rollup.arbitrum.io/rpc",
     arbitrumSepolia: "https://sepolia-rollup.arbitrum.io/rpc",
     avalancheFuji: "https://api.avax-test.network/ext/bc/C/rpc",
@@ -53,6 +54,7 @@ export const getExplorerUrl = (network) => {
   const urls = {
     arbitrum: "https://api.arbiscan.io/",
     avalanche: "https://api.snowtrace.io/",
+    botanix: "https://botanixscan.io/",
     snowscan: "https://api.snowscan.xyz/",
     arbitrumGoerli: "https://api-goerli.arbiscan.io/",
     arbitrumSepolia: "https://api-sepolia.arbiscan.io/",
@@ -151,6 +153,19 @@ const config: HardhatUserConfig = {
       },
       blockGasLimit: 15_000_000,
     },
+    botanix: {
+      url: getRpcUrl("botanix"),
+      chainId: 3637,
+      accounts: getEnvAccounts(),
+      verify: {
+        etherscan: {
+          apiUrl: getExplorerUrl("botanix"),
+          apiKey: "botanix",
+        },
+      },
+      blockGasLimit: 20_000_000,
+      gasPrice: 10,
+    },
     snowscan: {
       url: getRpcUrl("avalanche"),
       chainId: 43114,
@@ -228,6 +243,7 @@ const config: HardhatUserConfig = {
       avalancheFujiTestnet: process.env.SNOWTRACE_API_KEY,
       snowtrace: "snowtrace", // apiKey is not required, just set a placeholder
       arbitrumBlockscout: "arbitrumBlockscout",
+      botanix: "botanix",
     },
     customChains: [
       {
@@ -236,6 +252,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: "https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan",
           browserURL: "https://avalanche.routescan.io",
+        },
+      },
+      {
+        network: "botanix",
+        chainId: 3637,
+        urls: {
+          apiURL: "https://api.routescan.io/v2/network/mainnet/evm/3637/etherscan",
+          browserURL: "https://botanixscan.io",
         },
       },
       {
