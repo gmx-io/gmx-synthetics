@@ -93,6 +93,9 @@ library RelayUtils {
         );
 
     // Multichain
+    bytes32 public constant SET_TRADER_REFERRAL_CODE_TYPEHASH =
+        keccak256(bytes("SetTraderReferralCode(bytes32 referralCode,bytes32 relayParams)"));
+
     bytes32 public constant CREATE_DEPOSIT_TYPEHASH =
         keccak256(
             bytes(
@@ -155,9 +158,6 @@ library RelayUtils {
 
     bytes32 public constant BRIDGE_OUT_TYPEHASH =
         keccak256(bytes("BridgeOut(address token,uint256 amount,address provider,bytes data,bytes32 relayParams)"));
-
-    bytes32 public constant SET_TRADER_REFERRAL_CODE_TYPEHASH =
-        keccak256(bytes("SetTraderReferralCode(bytes32 referralCode,bytes32 relayParams)"));
 
     bytes32 public constant CLAIM_FUNDING_FEES_TYPEHASH =
         keccak256(bytes("ClaimFundingFees(address[] markets,address[] tokens,address receiver,bytes32 relayParams)"));
@@ -556,6 +556,20 @@ library RelayUtils {
 
     //////////////////// MULTICHAIN ////////////////////
 
+    function getTraderReferralCodeStructHash(
+        IRelayUtils.RelayParams calldata relayParams,
+        bytes32 referralCode
+    ) external pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    SET_TRADER_REFERRAL_CODE_TYPEHASH,
+                    referralCode,
+                    _getRelayParamsHash(relayParams)
+                )
+            );
+    }
+
     function getClaimFundingFeesStructHash(
         IRelayUtils.RelayParams calldata relayParams,
         address[] memory markets,
@@ -831,20 +845,6 @@ library RelayUtils {
                     params.amount,
                     params.provider,
                     keccak256(abi.encodePacked(params.data)),
-                    _getRelayParamsHash(relayParams)
-                )
-            );
-    }
-
-    function getTraderReferralCodeStructHash(
-        IRelayUtils.RelayParams calldata relayParams,
-        bytes32 referralCode
-    ) external pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    SET_TRADER_REFERRAL_CODE_TYPEHASH,
-                    referralCode,
                     _getRelayParamsHash(relayParams)
                 )
             );

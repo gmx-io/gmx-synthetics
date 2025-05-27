@@ -128,7 +128,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             } else if (actionType == ActionType.GlvDeposit) {
                 _handleGlvDeposit(from, account, srcChainId, actionType, actionData);
             } else if (actionType == ActionType.SetTraderReferralCode) {
-                _handlerSetTraderReferralCode(from, account, srcChainId, actionType, actionData);
+                _handleSetTraderReferralCode(from, account, srcChainId, actionType, actionData);
             } else {
                 revert Errors.InvalidMultichainAction();
             }
@@ -384,7 +384,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
 
     /// @dev `account` is expected to be `msg.sender` from the source chain, as
     /// MultichainOrderRouter would use it to validate the signature.
-    function _handlerSetTraderReferralCode(
+    function _handleSetTraderReferralCode(
         address from,
         address account,
         uint256 srcChainId,
