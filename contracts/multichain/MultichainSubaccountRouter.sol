@@ -61,7 +61,7 @@ contract MultichainSubaccountRouter is MultichainRouter {
             params.updateOrderParamsList.length +
             params.cancelOrderKeys.length;
 
-        _handleSubaccountOrderAction(account, subaccount, actionsCount, subaccountApproval);
+        _handleSubaccountOrderAction(account, srcChainId, subaccount, actionsCount, subaccountApproval);
     }
 
     // @note all params except subaccount/srcChainId should be part of the corresponding struct hash
@@ -73,14 +73,7 @@ contract MultichainSubaccountRouter is MultichainRouter {
         address subaccount,
         IBaseOrderUtils.CreateOrderParams calldata params
     ) external nonReentrant withRelay(relayParams, account, srcChainId, true) returns (bytes32) {
-        _handleCreateOrder(
-            relayParams,
-            subaccountApproval,
-            account,
-            srcChainId,
-            subaccount,
-            params
-        );
+        _handleCreateOrder(relayParams, subaccountApproval, account, srcChainId, subaccount, params);
 
         return
             _createOrder(
@@ -103,7 +96,7 @@ contract MultichainSubaccountRouter is MultichainRouter {
         bytes32 structHash = RelayUtils.getCreateOrderStructHash(relayParams, subaccountApproval, account, params);
         _validateCall(relayParams, subaccount, structHash, srcChainId);
         SubaccountRouterUtils.validateCreateOrderParams(account, params);
-        _handleSubaccountOrderAction(account, subaccount, 1, subaccountApproval);
+        _handleSubaccountOrderAction(account, srcChainId, subaccount, 1, subaccountApproval);
     }
 
     // @note all params except subaccount/srcChainId should be part of the corresponding struct hash
@@ -115,15 +108,26 @@ contract MultichainSubaccountRouter is MultichainRouter {
         address subaccount,
         UpdateOrderParams calldata params
     ) external nonReentrant withRelay(relayParams, account, srcChainId, true) {
-        bytes32 structHash = RelayUtils.getUpdateOrderStructHash(relayParams, subaccountApproval, account, params);
-        _validateCall(relayParams, subaccount, structHash, srcChainId);
-        _handleSubaccountOrderAction(account, subaccount, 1, subaccountApproval);
-
+        _handleUpdateOrder(relayParams, subaccountApproval, account, srcChainId, subaccount, params);
         _updateOrder(
             account,
             params,
             true // isSubaccount
         );
+    }
+
+    // @dev needed to keep `updateOrder` under the stack limit
+    function _handleUpdateOrder(
+        IRelayUtils.RelayParams calldata relayParams,
+        SubaccountApproval calldata subaccountApproval,
+        address account, // main account
+        uint256 srcChainId,
+        address subaccount,
+        UpdateOrderParams calldata params
+    ) private {
+        bytes32 structHash = RelayUtils.getUpdateOrderStructHash(relayParams, subaccountApproval, account, params);
+        _validateCall(relayParams, subaccount, structHash, srcChainId);
+        _handleSubaccountOrderAction(account, srcChainId, subaccount, 1, subaccountApproval);
     }
 
     // @note all params except subaccount/srcChainId should be part of the corresponding struct hash
@@ -135,10 +139,22 @@ contract MultichainSubaccountRouter is MultichainRouter {
         address subaccount,
         bytes32 key
     ) external nonReentrant withRelay(relayParams, account, srcChainId, true) {
+        _handleCancelOrder(relayParams, subaccountApproval, account, srcChainId, subaccount, key);
+        _cancelOrder(account, key);
+    }
+
+    // @dev needed to keep `cancelOrder` under the stack limit
+    function _handleCancelOrder(
+        IRelayUtils.RelayParams calldata relayParams,
+        SubaccountApproval calldata subaccountApproval,
+        address account, // main account
+        uint256 srcChainId,
+        address subaccount,
+        bytes32 key
+    ) private {
         bytes32 structHash = RelayUtils.getCancelOrderStructHash(relayParams, subaccountApproval, account, key);
         _validateCall(relayParams, subaccount, structHash, srcChainId);
-        _handleSubaccountOrderAction(account, subaccount, 1, subaccountApproval);
-        _cancelOrder(account, key);
+        _handleSubaccountOrderAction(account, srcChainId, subaccount, 1, subaccountApproval);
     }
 
     // @note all params except account/srcChainId should be part of the corresponding struct hash
@@ -157,6 +173,7 @@ contract MultichainSubaccountRouter is MultichainRouter {
 
     function _handleSubaccountOrderAction(
         address account,
+        uint256 srcChainId,
         address subaccount,
         uint256 actionsCount,
         SubaccountApproval calldata subaccountApproval
@@ -165,6 +182,7 @@ contract MultichainSubaccountRouter is MultichainRouter {
             dataStore,
             eventEmitter,
             account,
+            srcChainId,
             subaccount,
             Keys.SUBACCOUNT_ORDER_ACTION, // actionType
             actionsCount,

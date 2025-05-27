@@ -83,7 +83,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("FET", arbitrum_ethUsdcDefaultCap, 0.82503),
           createGlvMarketConfig("AIXBT", arbitrum_ethUsdcDefaultCap, 0.88856),
           createGlvMarketConfig("MKR", arbitrum_ethUsdcDefaultCap, 0.97207),
-          createGlvMarketConfig("DOLO", 600_000, 0.94571),
+          createGlvMarketConfig("DOLO", arbitrum_ethUsdcDefaultCap, 1.1223),
+          createGlvMarketConfig("ZRO", arbitrum_ethUsdcDefaultCap, 1.0),
         ],
       },
       {
@@ -145,6 +146,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         ],
       },
     ],
+    botanix: [],
     avalancheFuji: [
       {
         name: "GMX Liquidity Vault [WETH-USDC]",
@@ -181,6 +183,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
             indexToken: "MATIC",
             glvMaxMarketTokenBalanceAmount: expandDecimals(1_000, 18),
             glvMaxMarketTokenBalanceUsd: expandDecimals(2_000, 30),
+            isMarketDisabled: true,
           },
         ],
       },

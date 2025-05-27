@@ -95,6 +95,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         uint256 amountLD = OFTComposeMsgCodec.amountLD(message);
 
         bytes memory composeMessage = OFTComposeMsgCodec.composeMsg(message);
+        /// @dev The `account` field is user-supplied and not validated; any address may be provided by the sender
         (address account, uint256 srcChainId, bytes memory data) = _decodeLzComposeMsg(composeMessage);
 
         address token = IStargate(from).token();
@@ -150,7 +151,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
      *        - data: ABI-encoded destination endpoint ID (dstEid)
      * @return The amount of tokens bridged out (may be slightly different from params.amount after LZ precision/path limits adjustments)
      */
-    function bridgeOut(IMultichainProvider.BridgeOutParams memory params) external onlyController returns (uint256) {
+    function bridgeOut(address account, IRelayUtils.BridgeOutParams memory params) external onlyController returns (uint256) {
         IStargate stargate = IStargate(params.provider);
 
         address wnt = dataStore.getAddress(Keys.WNT);
@@ -174,7 +175,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         (cache.valueToSend, cache.sendParam, cache.messagingFee, cache.receipt) = prepareSend(
             stargate,
             params.amount,
-            params.account,
+            account,
             cache.dstEid
         );
 
@@ -188,7 +189,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             eventEmitter,
             multichainVault,
             wnt, // token
-            params.account,
+            account,
             address(this), // receiver
             cache.valueToSend, // bridge out fee (+ amountSentLD for native token transfers)
             cache.srcChainId
@@ -207,7 +208,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
                 eventEmitter,
                 multichainVault,
                 params.token,
-                params.account,
+                account,
                 address(this), // receiver
                 params.amount,
                 cache.srcChainId
@@ -235,7 +236,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
                 eventEmitter,
                 multichainVault,
                 wnt, // token
-                params.account,
+                account,
                 0 // srcChainId
             );
         }

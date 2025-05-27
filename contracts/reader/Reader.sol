@@ -272,7 +272,7 @@ contract Reader {
     function getExecutionPrice(
         DataStore dataStore,
         address marketKey,
-        Price.Props memory indexTokenPrice,
+        MarketUtils.MarketPrices memory prices,
         uint256 positionSizeInUsd,
         uint256 positionSizeInTokens,
         int256 sizeDeltaUsd,
@@ -283,7 +283,7 @@ contract Reader {
             ReaderPricingUtils.getExecutionPrice(
                 dataStore,
                 market,
-                indexTokenPrice,
+                prices,
                 positionSizeInUsd,
                 positionSizeInTokens,
                 sizeDeltaUsd,

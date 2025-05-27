@@ -148,10 +148,13 @@ export const MAX_POOL_USD_FOR_DEPOSIT = hashString("MAX_POOL_USD_FOR_DEPOSIT");
 export const MAX_OPEN_INTEREST = hashString("MAX_OPEN_INTEREST");
 
 export const POSITION_IMPACT_POOL_AMOUNT = hashString("POSITION_IMPACT_POOL_AMOUNT");
+export const LENT_POSITION_IMPACT_POOL_AMOUNT = hashString("LENT_POSITION_IMPACT_POOL_AMOUNT");
 export const PENDING_IMPACT_AMOUNT = hashString("PENDING_IMPACT_AMOUNT");
+export const TOTAL_PENDING_IMPACT_AMOUNT = hashString("TOTAL_PENDING_IMPACT_AMOUNT");
 export const MIN_POSITION_IMPACT_POOL_AMOUNT = hashString("MIN_POSITION_IMPACT_POOL_AMOUNT");
 export const POSITION_IMPACT_POOL_DISTRIBUTION_RATE = hashString("POSITION_IMPACT_POOL_DISTRIBUTION_RATE");
 export const POSITION_IMPACT_POOL_DISTRIBUTED_AT = hashString("POSITION_IMPACT_POOL_DISTRIBUTED_AT");
+export const MAX_LENDABLE_IMPACT_FACTOR = hashString("MAX_LENDABLE_IMPACT_FACTOR");
 
 export const SWAP_IMPACT_POOL_AMOUNT = hashString("SWAP_IMPACT_POOL_AMOUNT");
 
@@ -563,6 +566,14 @@ export function positionImpactPoolAmountKey(market: string) {
   return hashData(["bytes32", "address"], [POSITION_IMPACT_POOL_AMOUNT, market]);
 }
 
+export function lentPositionImpactPoolAmountKey(market: string) {
+  return hashData(["bytes32", "address"], [LENT_POSITION_IMPACT_POOL_AMOUNT, market]);
+}
+
+export function totalPendingImpactAmountKey(market: string) {
+  return hashData(["bytes32", "address"], [TOTAL_PENDING_IMPACT_AMOUNT, market]);
+}
+
 export function minPositionImpactPoolAmountKey(market: string) {
   return hashData(["bytes32", "address"], [MIN_POSITION_IMPACT_POOL_AMOUNT, market]);
 }
@@ -573,6 +584,10 @@ export function positionImpactPoolDistributionRateKey(market: string) {
 
 export function positionImpactPoolDistributedAtKey(market: string) {
   return hashData(["bytes32", "address"], [POSITION_IMPACT_POOL_DISTRIBUTED_AT, market]);
+}
+
+export function maxLendableImpactFactorKey(market: string) {
+  return hashData(["bytes32", "address"], [MAX_LENDABLE_IMPACT_FACTOR, market]);
 }
 
 export function swapImpactPoolAmountKey(market: string, token: string) {

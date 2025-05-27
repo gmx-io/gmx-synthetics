@@ -16,6 +16,7 @@ import {MarketUtils} from "./MarketUtils.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {SignedMath} from "@openzeppelin/contracts/utils/math/SignedMath.sol";
 import { IOracle } from "../oracle/IOracle.sol";
+import "../position/PositionUtils.sol";
 
 // @title MarketUtils
 // @dev Library for market functions
@@ -52,6 +53,13 @@ library MarketPositionImpactPoolUtils {
         Market.Props memory marketProps = MarketStoreUtils.get(dataStore, market);
         MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(oracle, marketProps);
 
+        PositionUtils.updateFundingAndBorrowingState(
+            dataStore,
+            eventEmitter,
+            marketProps,
+            prices
+        );
+
         MarketPoolValueInfo.Props memory poolValueInfo = MarketUtils.getPoolValueInfo(
             dataStore,
             marketProps,
@@ -66,8 +74,24 @@ library MarketPositionImpactPoolUtils {
             revert Errors.InvalidPoolValueForWithdrawal(poolValueInfo.poolValue);
         }
 
-        if (poolValueInfo.impactPoolAmount <= amount) {
-            revert Errors.InsufficientImpactPoolValueForWithdrawal(amount, poolValueInfo.impactPoolAmount);
+        uint256 adjustedImpactPoolAmount = poolValueInfo.impactPoolAmount;
+        int256 totalPendingImpactAmount = MarketUtils.getTotalPendingImpactAmount(dataStore, market);
+
+        // if there is a positive totalPendingImpactAmount, that means that the
+        // excess should be covered by the position impact pool, so subtract this
+        // from the impactPoolAmount that can be withdrawn
+        // lent amount is not considered here, because if there is a lent amount
+        // we assume that the position impact would be zero
+        if (totalPendingImpactAmount > 0) {
+            if (adjustedImpactPoolAmount < totalPendingImpactAmount.toUint256()) {
+                revert Errors.InsufficientImpactPoolValueForWithdrawal(amount, poolValueInfo.impactPoolAmount, totalPendingImpactAmount);
+            }
+
+            adjustedImpactPoolAmount -= totalPendingImpactAmount.toUint256();
+        }
+
+        if (adjustedImpactPoolAmount <= amount) {
+            revert Errors.InsufficientImpactPoolValueForWithdrawal(amount, poolValueInfo.impactPoolAmount, totalPendingImpactAmount);
         }
 
         MarketUtils.applyDeltaToPositionImpactPool(
@@ -81,10 +105,10 @@ library MarketPositionImpactPoolUtils {
         // We want to withdraw 50/50 long and short tokens from the pool
         // at prices expressed in index token
         uint256 longTokenWithdrawalAmount = Precision.mulDiv(
-            amount / 2, prices.indexTokenPrice.max, prices.longTokenPrice.max
+            amount, prices.indexTokenPrice.max, prices.longTokenPrice.max * 2
         );
         uint256 shortTokenWithdrawalAmount = Precision.mulDiv(
-            amount / 2, prices.indexTokenPrice.max, prices.shortTokenPrice.max
+            amount, prices.indexTokenPrice.max, prices.shortTokenPrice.max * 2
         );
 
         MarketUtils.applyDeltaToPoolAmount(

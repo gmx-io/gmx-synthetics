@@ -25,11 +25,16 @@ import "./config";
 import "./utils/test";
 import { updateGlvConfig } from "./scripts/updateGlvConfigUtils";
 import { updateMarketConfig } from "./scripts/updateMarketConfigUtils";
+import { collectDeployments } from "./scripts/collectDeployments";
+import { TASK_FLATTEN_GET_DEPENDENCY_GRAPH } from "hardhat/builtin-tasks/task-names";
+import { DependencyGraph } from "hardhat/types";
+import { checkContractsSizing } from "./scripts/contractSizes";
 
 const getRpcUrl = (network) => {
   const defaultRpcs = {
     arbitrum: "https://arb1.arbitrum.io/rpc",
     avalanche: "https://api.avax.network/ext/bc/C/rpc",
+    botanix: "https://rpc.botanixlabs.com",
     arbitrumGoerli: "https://goerli-rollup.arbitrum.io/rpc",
     arbitrumSepolia: "https://sepolia-rollup.arbitrum.io/rpc",
     sepolia: "https://ethereum-sepolia-rpc.publicnode.com",
@@ -55,6 +60,7 @@ export const getExplorerUrl = (network) => {
   const urls = {
     arbitrum: "https://api.arbiscan.io/",
     avalanche: "https://api.snowtrace.io/",
+    botanix: "https://botanixscan.io/",
     snowscan: "https://api.snowscan.xyz/",
     arbitrumGoerli: "https://api-goerli.arbiscan.io/",
     arbitrumSepolia: "https://api-sepolia.arbiscan.io/",
@@ -170,6 +176,19 @@ const config: HardhatUserConfig = {
       },
       blockGasLimit: 15_000_000,
     },
+    botanix: {
+      url: getRpcUrl("botanix"),
+      chainId: 3637,
+      accounts: getEnvAccounts(),
+      verify: {
+        etherscan: {
+          apiUrl: getExplorerUrl("botanix"),
+          apiKey: "botanix",
+        },
+      },
+      blockGasLimit: 20_000_000,
+      gasPrice: 10,
+    },
     snowscan: {
       url: getRpcUrl("avalanche"),
       chainId: 43114,
@@ -255,10 +274,12 @@ const config: HardhatUserConfig = {
       arbitrumOne: process.env.ARBISCAN_API_KEY,
       avalanche: process.env.SNOWTRACE_API_KEY,
       arbitrumGoerli: process.env.ARBISCAN_API_KEY,
+      sepolia: process.env.ETHERSCAN_API_KEY,
       arbitrumSepolia: process.env.ARBISCAN_API_KEY,
       avalancheFujiTestnet: process.env.SNOWTRACE_API_KEY,
       snowtrace: "snowtrace", // apiKey is not required, just set a placeholder
       arbitrumBlockscout: "arbitrumBlockscout",
+      botanix: "botanix",
     },
     customChains: [
       {
@@ -270,11 +291,27 @@ const config: HardhatUserConfig = {
         },
       },
       {
+        network: "botanix",
+        chainId: 3637,
+        urls: {
+          apiURL: "https://api.routescan.io/v2/network/mainnet/evm/3637/etherscan",
+          browserURL: "https://botanixscan.io",
+        },
+      },
+      {
         network: "arbitrumSepolia",
         chainId: 421614,
         urls: {
           apiURL: "https://api-sepolia.arbiscan.io/api",
           browserURL: "https://sepolia.arbiscan.io/",
+        },
+      },
+      {
+        network: "botanix",
+        chainId: 3637,
+        urls: {
+          apiURL: "https://api.routescan.io/v2/network/mainnet/evm/3637/etherscan",
+          browserURL: "https://botanixscan.io",
         },
       },
       // {
@@ -313,6 +350,17 @@ task("update-market-config", "Update market config")
   .addOptionalParam("market", "Market address", undefined, types.string)
   .setAction(updateMarketConfig);
 
+task("dependencies", "Print dependencies for a contract")
+  .addPositionalParam("file", "Contract", undefined, types.string)
+  .setAction(async ({ file }: { file: string }, { run }) => {
+    const graph: DependencyGraph = await run(TASK_FLATTEN_GET_DEPENDENCY_GRAPH, { files: [file] });
+    const dependencies = graph.getResolvedFiles().map((value) => {
+      return value.sourceName;
+    });
+    console.log(dependencies);
+    return graph;
+  });
+
 task("deploy", "Deploy contracts", async (taskArgs, env, runSuper) => {
   env.deployTags = taskArgs.tags ?? "";
   if (
@@ -322,6 +370,12 @@ task("deploy", "Deploy contracts", async (taskArgs, env, runSuper) => {
     throw new Error("SKIP_AUTO_HANDLER_REDEPLOYMENT flag is mandatory");
   }
   await runSuper();
+});
+
+task("collect-deployments", "Collect current deployments into the docs folder").setAction(collectDeployments);
+
+task("measure-contract-sizes", "Check if contract characters count hit 900k limit").setAction(async (taskArgs, env) => {
+  await checkContractsSizing(env);
 });
 
 export default config;

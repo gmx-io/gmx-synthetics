@@ -6,7 +6,7 @@ import { logGasUsage } from "../../utils/gas";
 import * as keys from "../../utils/keys";
 import { sendBridgeOut } from "../../utils/relay/multichain";
 import { GELATO_RELAY_ADDRESS } from "../../utils/relay/addresses";
-import { mintAndBridge } from "./MultichainRouter";
+import { mintAndBridge } from "../../utils/multichain";
 import { impersonateAccount, setBalance } from "@nomicfoundation/hardhat-network-helpers";
 
 describe("MultichainTransferRouter", () => {

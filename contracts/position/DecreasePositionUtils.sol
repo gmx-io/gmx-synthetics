@@ -260,6 +260,14 @@ library DecreasePositionUtils {
 
         PositionUtils.incrementClaimableFundingAmount(params, fees);
 
+        // subtract values.proportionalPendingImpactAmount from the total to remove it
+        MarketUtils.applyDeltaToTotalPendingImpactAmount(
+            params.contracts.dataStore,
+            params.contracts.eventEmitter,
+            params.market.marketToken,
+            -values.proportionalPendingImpactAmount
+        );
+
         if (params.position.sizeInUsd() == 0 || params.position.sizeInTokens() == 0) {
             // withdraw all collateral if the position will be closed
             values.output.outputAmount += params.position.collateralAmount();

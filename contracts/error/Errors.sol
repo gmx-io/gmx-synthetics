@@ -205,7 +205,7 @@ library Errors {
     error UnexpectedPoolValue(int256 poolValue);
 
     // MarketPositionImpactUtils errors
-    error InsufficientImpactPoolValueForWithdrawal(uint256 withdrawalAmount, uint256 poolValue);
+    error InsufficientImpactPoolValueForWithdrawal(uint256 withdrawalAmount, uint256 poolValue, int256 totalPendingImpactAmount);
 
     // Oracle errors
     error SequencerDown();
@@ -453,6 +453,8 @@ library Errors {
     error UnableToPayOrderFee();
     error UnableToPayOrderFeeFromCollateral();
     error InvalidBridgeOutToken(address token);
+    error InvalidMultichainAction();
+    error InsufficientFee(uint256 feeProvided, uint256 feeRequired);
 
     enum SignatureType {
         Call,

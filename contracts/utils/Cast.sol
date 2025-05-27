@@ -67,4 +67,17 @@ library Cast {
         assembly { mstore(add(b, 32), x) }
         return b;
     }
+
+    function int32ToBytes(int32 x) internal pure returns (bytes memory b) {
+        b = new bytes(32);
+//        bytes memory expoBytes = new bytes(1);
+//        if (x < 0) {
+//            expoBytes[0] = bytes1(uint8(-x)); // Use absolute value, e.g., uint8(8) -> 0x08
+//        } else {
+//            expoBytes[0] = bytes1(uint8(x));
+//        }
+        assembly { mstore(add(b, 32), x) }
+        return b;
+//        return expoBytes;
+    }
 }

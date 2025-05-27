@@ -248,8 +248,15 @@ library ConfigUtils {
         if (
             baseKey == Keys.SEQUENCER_GRACE_DURATION
         ) {
-            // 2 hours
-            if (value > 7200) {
+            if (value > 2 hours) {
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
+            }
+        }
+
+        if (
+            baseKey == Keys.CLAIMABLE_COLLATERAL_DELAY
+        ) {
+            if (value < 24 hours) {
                 revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
             }
         }
@@ -336,7 +343,7 @@ library ConfigUtils {
             baseKey == Keys.BORROWING_FACTOR ||
             baseKey == Keys.FUNDING_INCREASE_FACTOR_PER_SECOND ||
             baseKey == Keys.FUNDING_DECREASE_FACTOR_PER_SECOND ||
-            baseKey == Keys.MIN_COLLATERAL_FACTOR
+            baseKey == Keys.MIN_COLLATERAL_FACTOR_FOR_LIQUIDATION
         ) {
             // revert if value > 1%
             if (value > 1 * Precision.FLOAT_PRECISION / 100) {
@@ -352,10 +359,20 @@ library ConfigUtils {
             baseKey == Keys.MAX_UI_FEE_FACTOR ||
             baseKey == Keys.ATOMIC_SWAP_FEE_FACTOR ||
             baseKey == Keys.ATOMIC_WITHDRAWAL_FEE_FACTOR ||
-            baseKey == Keys.BUYBACK_MAX_PRICE_IMPACT_FACTOR
+            baseKey == Keys.BUYBACK_MAX_PRICE_IMPACT_FACTOR ||
+            baseKey == Keys.MIN_COLLATERAL_FACTOR
         ) {
             // revert if value > 5%
             if (value > 5 * Precision.FLOAT_PRECISION / 100) {
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
+            }
+        }
+
+        if (
+            baseKey == Keys.MAX_LENDABLE_IMPACT_FACTOR
+        ) {
+            // revert if value > 20%
+            if (value > 20 * Precision.FLOAT_PRECISION / 100) {
                 revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
             }
         }

@@ -423,7 +423,12 @@ const recommendedMarketConfig = {
     DOLO: {
       negativePositionImpactFactor: exponentToFloat("1e-7"),
       expectedSwapImpactRatio: 20_000,
-      expectedPositionImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    ZRO: {
+      negativePositionImpactFactor: exponentToFloat("5e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 11_900,
     },
     wstETH: {
       negativeSwapImpactFactor: exponentToFloat("1e-8"),

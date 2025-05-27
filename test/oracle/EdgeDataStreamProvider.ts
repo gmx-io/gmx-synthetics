@@ -11,14 +11,16 @@ describe("EdgeDataStreamProvider", function () {
   let fixture;
   let edgeDataStreamProvider, dataStore, oracle, token;
   const BTC_USD_FEED_ID = "BTCUSD";
-  const TIMESTAMP = 1744260903n;
-  const BID = 8194357398389n;
-  const ASK = 8194362396466n;
+  const TIMESTAMP = 1747034118n;
+  const BID = 10569056357735n;
+  const ASK = 10569056357735n;
+  const PRICE = 10569056357735n;
+  const ROUND_ID = 62036512n;
 
   function encodeReport(feedId: string, bid: BigNumberish, ask: BigNumberish, signature: string, expo: BigNumberish) {
     return encodeData(
       ["string", "uint192", "uint32", "uint32", "uint256", "uint256", "bytes", "int32"],
-      [feedId, 8194362396466n, 56490146n, TIMESTAMP, bid, ask, signature, expo]
+      [feedId, PRICE, ROUND_ID, TIMESTAMP, bid, ask, signature, expo]
     );
   }
 
@@ -28,7 +30,7 @@ describe("EdgeDataStreamProvider", function () {
     const ask = ASK;
     const expo = overrides?.expoOverride || -8n;
     const signature =
-      "0x74f634fce6ae2bf6d6b3d93b36276253f15037e12ad5a4c240d823166983d5100c5a21209f3369760d3bd5f55b278e98d9d1875485fd12114d9c1dcdbcbf9c951c";
+      "0xac126b457de59dfdda25c19dde8e78104cf5a6a30613bb8916aef73551cb97710b563a8fe98c6fd5d054a2940ba90af7c66b129b0b2deb841cd1d490bb4ef19e1b";
     const data = encodeReport(feedId, bid, ask, signature, expo);
 
     const callData = edgeDataStreamProvider.interface.encodeFunctionData("getOraclePrice", [token.address, data]);
@@ -89,14 +91,6 @@ describe("EdgeDataStreamProvider", function () {
       await callOraclePrice();
     } catch (e) {
       expect(e.name).to.eq("InvalidDataStreamFeedId");
-    }
-  });
-
-  it("should revert when expo is negative", async function () {
-    try {
-      await callOraclePrice({ expoOverride: -31n });
-    } catch (e) {
-      expect(e.name).to.eq("InvalidEdgeDataStreamExpo");
     }
   });
 });

@@ -45,6 +45,7 @@ export const EXCLUDED_CONFIG_KEYS = {
   IS_ORACLE_PROVIDER_ENABLED: true,
   IS_ATOMIC_ORACLE_PROVIDER: true,
   LATEST_ADL_AT: true,
+  LENT_POSITION_IMPACT_POOL_AMOUNT: true,
   MARKET_LIST: true,
   MAX_ALLOWED_SUBACCOUNT_ACTION_COUNT: true,
   SUBACCOUNT_EXPIRES_AT: true,
@@ -87,6 +88,7 @@ export const EXCLUDED_CONFIG_KEYS = {
   SWAP_IMPACT_POOL_AMOUNT: true,
   SWAP_PATH_MARKET_FLAG: true,
   TOTAL_BORROWING: true,
+  TOTAL_PENDING_IMPACT_AMOUNT: true,
   UI_DEPOSIT_FEE_TYPE: true,
   UI_FEE_FACTOR: true,
   UI_POSITION_FEE_TYPE: true,
@@ -202,6 +204,7 @@ async function appendConfigIfDifferent(
   const config = await hre.ethers.getContract("Config");
 
   const key = getFullKey(baseKey, keyData);
+  keyData = keyData || "0x";
 
   const setMethod = `set${type[0].toUpperCase()}${type.slice(1)}`;
 
@@ -231,8 +234,8 @@ async function appendConfigIfDifferent(
   }
 }
 
-export function getFullKey(baseKey: string, keyData: string) {
-  if (keyData === "0x") {
+export function getFullKey(baseKey: string, keyData?: string) {
+  if (!keyData || keyData === "0x") {
     return baseKey;
   }
 

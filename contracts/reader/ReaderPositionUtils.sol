@@ -205,7 +205,7 @@ library ReaderPositionUtils {
         positionInfo.executionPriceResult = ReaderPricingUtils.getExecutionPrice(
             dataStore,
             cache.market,
-            prices.indexTokenPrice,
+            prices,
             positionInfo.position.sizeInUsd(),
             positionInfo.position.sizeInTokens(),
             -sizeDeltaUsd.toInt256(),
