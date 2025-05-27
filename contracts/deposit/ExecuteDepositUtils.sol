@@ -13,7 +13,8 @@ import "./DepositEventUtils.sol";
 import "../pricing/SwapPricingUtils.sol";
 import "../oracle/IOracle.sol";
 import "../position/PositionUtils.sol";
-import "../swap/SwapUtils.sol";
+import "../swap/ISwapUtils.sol";
+import "../fee/FeeUtils.sol";
 
 import "../multichain/MultichainUtils.sol";
 import "../multichain/IMultichainTransferRouter.sol";
