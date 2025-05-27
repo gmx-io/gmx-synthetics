@@ -348,12 +348,12 @@ library ExecuteDepositUtils {
             });
 
             try multichainTransferRouter.bridgeOutFromController(cache.relayParams, account, srcChainId, bridgeOutParams) {
-                MultichainEventUtils.emitMultichainBridgeAction(eventEmitter, address(this), account, srcChainId, actionType, key);
+                MultichainEventUtils.emitMultichainBridgeAction(eventEmitter, address(this), account, srcChainId, uint256(actionType), key);
             } catch Error(string memory reason) {
-                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, actionType, reason);
+                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
             } catch (bytes memory reasonBytes) {
                 (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
-                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, actionType, reason);
+                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
             }
         }
     }
