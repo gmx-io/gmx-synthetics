@@ -81,6 +81,7 @@ export async function deployFixture() {
   const glvWithdrawalHandler = await hre.ethers.getContract("GlvWithdrawalHandler");
   const glvShiftHandler = await hre.ethers.getContract("GlvShiftHandler");
   const glvRouter = await hre.ethers.getContract("GlvRouter");
+  const gasUtils = await hre.ethers.getContract("GasUtils");
   const callbackUtils = await hre.ethers.getContract("CallbackUtils");
   const glvDepositStoreUtils = await hre.ethers.getContract("GlvDepositStoreUtils");
   const GlvDepositCalc = await hre.ethers.getContract("GlvDepositCalc");
@@ -372,6 +373,7 @@ export async function deployFixture() {
       mockStargatePoolUsdc,
       mockStargatePoolWnt,
       callbackUtils,
+      gasUtils,
       mockOracleProvider,
       edgeDataStreamVerifier,
       edgeDataStreamProvider,

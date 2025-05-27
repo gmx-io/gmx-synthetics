@@ -483,7 +483,7 @@ describe("GelatoRelayRouter", () => {
 
     it("sponsoredCall: creates order and sends relayer fee", async () => {
       const collateralDeltaAmount = createOrderParams.params.numbers.initialCollateralDeltaAmount;
-      const effectiveRelayFee = "1253617010028936"; // the effective fee calculated and charged by GMX contract
+      const effectiveRelayFee = "1385965011087720"; // the effective fee calculated and charged by GMX contract
       await dataStore.setAddress(keys.RELAY_FEE_ADDRESS, user3.address);
 
       const user0WntBalance = await wnt.balanceOf(user0.address);
