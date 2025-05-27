@@ -3,9 +3,6 @@
 pragma solidity ^0.8.0;
 
 import "../../deposit/ExecuteDepositUtils.sol";
-
-import "../../multichain/MultichainUtils.sol";
-
 import "../../nonce/NonceUtils.sol";
 
 import "../GlvVault.sol";
@@ -135,7 +132,7 @@ library ExecuteGlvDepositUtils {
         CallbackUtils.afterGlvDepositExecution(params.key, glvDeposit, eventData);
 
         // use glvDeposit.dataList to determine if the GLV tokens minted should be bridged out to src chain
-        ExecuteDepositUtils.bridgeOutFromController(
+        BridgeOutFromControllerUtils.bridgeOutFromController(
             params.eventEmitter,
             params.multichainTransferRouter,
             glvDeposit.receiver(), // account
