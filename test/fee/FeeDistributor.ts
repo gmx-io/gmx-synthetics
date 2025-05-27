@@ -1460,11 +1460,11 @@ describe("FeeDistributor", function () {
       encodeData(["address"], [mockOftD.address]),
       expandDecimals(5, 17)
     );
+
     await configD.setUint(keys.BUYBACK_BATCH_AMOUNT, encodeData(["address"], [wnt.address]), expandDecimals(5, 17));
     await dataStoreD.setAddress(keys.oracleProviderForTokenKey(wnt.address), chainlinkPriceFeedProvider.address);
     await dataStoreD.setAddress(keys.oracleProviderForTokenKey(gmx.address), chainlinkPriceFeedProvider.address);
-    await dataStoreD.setAddress(keys.tokenTransferGasLimit(mockOftD), 200_000);
-
+    await dataStoreD.setUint(keys.tokenTransferGasLimit(mockOftD.address), 200_000);
     await signer2.sendTransaction({
       to: wallet.address,
       value: expandDecimals(10_000, 18).sub(expandDecimals(1, 15)),
@@ -1614,9 +1614,10 @@ describe("FeeDistributor", function () {
     const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[21].parsedEventData;
     const feeDistributionDataReceived = parseLogs(fixture, receipt)[18].parsedEventData;
     const feeDistributionGmxBridgedOut = parseLogs(fixture, receipt)[17].parsedEventData;
-    const feeDistributionInitiatedEventDataD = parseLogs(fixture, receiptD)[21].parsedEventData;
-    const feeDistributionDataReceivedD = parseLogs(fixture, receiptD)[18].parsedEventData;
-    const feeDistributionGmxBridgedOutD = parseLogs(fixture, receiptD)[17].parsedEventData;
+
+    const feeDistributionInitiatedEventDataD = parseLogs(fixture, receiptD)[12].parsedEventData;
+    const feeDistributionDataReceivedD = parseLogs(fixture, receiptD)[9].parsedEventData;
+    const feeDistributionGmxBridgedOutD = parseLogs(fixture, receiptD)[8].parsedEventData;
 
     const feeAmountGmxA = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdA));
     const feeAmountGmxB = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB));
