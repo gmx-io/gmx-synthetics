@@ -171,7 +171,8 @@ async function main() {
 
   // signalGrantRole and signalRevokeRole in case the granting / revocation of roles needs to be reverted
   if (timelockMethod === "signalGrantRole" || timelockMethod === "signalRevokeRole") {
-    for (const { member, role, contractName } of networkConfig.rolesToRemove) {
+    const roles = timelockMethod === "signalGrantRole" ? networkConfig.rolesToAdd : networkConfig.rolesToRemove;
+    for (const { member, role, contractName } of roles) {
       console.log("%s %s %s %s", timelockMethod, member, role, contractName);
       multicallWriteParams.push(timelock.interface.encodeFunctionData("signalRevokeRole", [member, hashString(role)]));
       multicallWriteParams.push(timelock.interface.encodeFunctionData("signalGrantRole", [member, hashString(role)]));

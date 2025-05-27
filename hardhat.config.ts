@@ -291,6 +291,14 @@ const config: HardhatUserConfig = {
         },
       },
       {
+        network: "botanix",
+        chainId: 3637,
+        urls: {
+          apiURL: "https://api.routescan.io/v2/network/mainnet/evm/3637/etherscan",
+          browserURL: "https://botanixscan.io",
+        },
+      },
+      {
         network: "arbitrumSepolia",
         chainId: 421614,
         urls: {
