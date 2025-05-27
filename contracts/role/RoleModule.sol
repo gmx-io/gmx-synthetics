@@ -159,6 +159,14 @@ contract RoleModule {
     }
 
     /**
+     * @dev Only allows addresses with the CONTRIBUTOR_DISTRIBUTOR role to call the function.
+     */
+    modifier onlyMultichainReader() {
+        _validateRole(Role.MULTICHAIN_READER, "MULTICHAIN_READER");
+        _;
+    }
+
+    /**
      * @dev Validates that the caller has the specified role.
      *
      * If the caller does not have the specified role, the transaction is reverted.
