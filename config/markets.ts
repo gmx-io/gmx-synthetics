@@ -3,7 +3,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { expandDecimals, exponentToFloat, decimalToFloat, bigNumberify, percentageToFloat } from "../utils/math";
 import { hashString } from "../utils/hash";
-import { SECONDS_PER_HOUR, SECONDS_PER_YEAR, SECONDS_PER_DAY } from "../utils/constants";
+import { SECONDS_PER_HOUR, SECONDS_PER_YEAR /* SECONDS_PER_DAY */ } from "../utils/constants";
 
 export type BaseMarketConfig = {
   reserveFactor: BigNumberish;
