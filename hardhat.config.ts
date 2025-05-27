@@ -302,7 +302,7 @@ const config: HardhatUserConfig = {
         network: "botanix",
         chainId: 3637,
         urls: {
-          apiURL: "https://botanixscan.io/api",
+          apiURL: "https://api.routescan.io/v2/network/mainnet/evm/3637/etherscan",
           browserURL: "https://botanixscan.io",
         },
       },
