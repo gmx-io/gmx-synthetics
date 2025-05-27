@@ -1100,6 +1100,14 @@ const config: {
       transferGasLimit: 200 * 1000,
     },
   },
+  botanix: {
+    pBTC: {
+      address: "0x0D2437F93Fed6EA64Ef01cCde385FB1263910C56",
+      decimals: 18,
+      wrappedNative: true,
+      transferGasLimit: 200 * 1000,
+    },
+  },
   arbitrumSepolia: {
     WETH: {
       address: "0x980b62da83eff3d4576c647993b0c1d7faf17c73", // not verified
@@ -1353,9 +1361,11 @@ const config: {
     MATIC: {
       decimals: 18,
       synthetic: true,
-      dataStreamFeedId: "0x0003fd6ff25e1a28ddd55c85882279987be478a66a75abdf05a468beb5b8b467",
+      // dataStreamFeedId: "0x0003fd6ff25e1a28ddd55c85882279987be478a66a75abdf05a468beb5b8b467",
+      // dataStreamFeedDecimals: 18,
+      // oracleProvider: "gmOracle",
+      dataStreamFeedId: "0x0003dc85e8b01946bf9dfd8b0db860129181eb6105a8c8981d9f28e00b6f60d9",
       dataStreamFeedDecimals: 18,
-      oracleProvider: "gmOracle",
     },
     UNI: {
       decimals: 18,

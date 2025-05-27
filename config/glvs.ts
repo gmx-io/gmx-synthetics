@@ -146,6 +146,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         ],
       },
     ],
+    botanix: [],
     avalancheFuji: [
       {
         name: "GMX Liquidity Vault [WETH-USDC]",
@@ -182,6 +183,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
             indexToken: "MATIC",
             glvMaxMarketTokenBalanceAmount: expandDecimals(1_000, 18),
             glvMaxMarketTokenBalanceUsd: expandDecimals(2_000, 30),
+            isMarketDisabled: true,
           },
         ],
       },
