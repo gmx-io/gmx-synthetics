@@ -129,8 +129,6 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
                 _handleGlvDeposit(from, account, srcChainId, actionType, actionData);
             } else if (actionType == ActionType.SetTraderReferralCode) {
                 _handleSetTraderReferralCode(from, account, srcChainId, actionType, actionData);
-            } else {
-                revert Errors.InvalidMultichainAction();
             }
         }
     }
