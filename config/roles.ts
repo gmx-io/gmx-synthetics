@@ -123,30 +123,6 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
     },
   };
 
-  const arbitrumSepoliaConfig = {
-    CONTROLLER: {
-      "0xCD9706B6B71fdC4351091B5b1D910cEe7Fde28D0": true, // Max
-      ...testnetAdmins,
-    },
-    ORDER_KEEPER: {
-      "0x3053c7edC20aa08d225CdeC9688136c4ab9F9963": true,
-      "0x508cbC56Ab57A9b0221cf1810a483f8013c92Ff3": true, // An
-      ...testnetAdmins,
-    },
-    ADL_KEEPER: testnetAdmins,
-    LIQUIDATION_KEEPER: {
-      "0x3053c7edC20aa08d225CdeC9688136c4ab9F9963": true,
-      "0x508cbC56Ab57A9b0221cf1810a483f8013c92Ff3": true, // An
-      ...testnetAdmins,
-    },
-    MARKET_KEEPER: testnetAdmins,
-    FROZEN_ORDER_KEEPER: {
-      "0x3053c7edC20aa08d225CdeC9688136c4ab9F9963": true,
-      "0x508cbC56Ab57A9b0221cf1810a483f8013c92Ff3": true, // An
-      ...testnetAdmins,
-    },
-  };
-
   const roles: {
     [network: string]: {
       [role: string]: {
@@ -355,6 +331,37 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       GOV_TOKEN_CONTROLLER: {
         "0x091eD806490Cc58Fd514441499e58984cCce0630": true, // RewardRouterV2_2
       },
+    },
+    botanix: {
+      ADL_KEEPER: syntheticKeepers.mainnet,
+      FROZEN_ORDER_KEEPER: syntheticKeepers.mainnet,
+      LIQUIDATION_KEEPER: syntheticKeepers.mainnet,
+      ORDER_KEEPER: syntheticKeepers.mainnet,
+      LIMITED_CONFIG_KEEPER: syntheticKeepers.mainnet,
+      CONFIG_KEEPER: {
+        "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745": true, // general_keeper_1
+        "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
+        "0xD5F8b9ba4255B2F73b06f245fcca73D114D1D460": true, // general_keeper_3
+      },
+      FEE_KEEPER: {
+        "0x43CE1d475e06c65DD879f4ec644B8e0E10ff2b6D": true, // fee_keeper_1
+      },
+      MARKET_KEEPER: {
+        "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745": true, // general_keeper_1
+        "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
+        "0xD5F8b9ba4255B2F73b06f245fcca73D114D1D460": true, // general_keeper_3
+      },
+      ROLE_ADMIN: {},
+      ROUTER_PLUGIN: {},
+      TIMELOCK_ADMIN: {
+        "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // timelock_admin_1
+        "0xE014cbD60A793901546178E1c16ad9132C927483": true, // timelock_admin_2
+      },
+      TIMELOCK_MULTISIG: {
+        "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // temp timelock_admin_1
+      },
+      CONTROLLER: {},
+      GOV_TOKEN_CONTROLLER: {},
     },
     avalancheFuji: {
       CONFIG_KEEPER: {

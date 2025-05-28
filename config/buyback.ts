@@ -76,6 +76,8 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<BuybackC
     arbitrumGoerli: defaultEmptyConfig,
 
     avalancheFuji: defaultEmptyConfig,
+
+    botanix: defaultEmptyConfig,
   };
 
   const networkConfig: BuybackConfig = config[hre.network.name];

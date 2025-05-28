@@ -89,8 +89,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     shiftGasLimit: 2_500_000,
 
     singleSwapGasLimit: 1_000_000, // measured gas required for a swap in a market increase order: ~600,000
-    increaseOrderGasLimit: 4_000_000,
-    decreaseOrderGasLimit: 4_000_000,
+    increaseOrderGasLimit: 3_500_000,
+    decreaseOrderGasLimit: 3_500_000,
     swapOrderGasLimit: 3_000_000,
 
     glvPerMarketGasLimit: 100_000,
@@ -170,10 +170,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       decreaseOrderGasLimit: 3_000_000,
       swapOrderGasLimit: 2_500_000,
     },
-    avalanche: {
-      increaseOrderGasLimit: 3_500_000,
-      decreaseOrderGasLimit: 3_500_000,
-    },
+    avalanche: {},
+    botanix: {},
   }[network.name];
 
   if (!networkConfig) {

@@ -169,10 +169,13 @@ async function main() {
     }
   }
 
-  if (timelockMethod === "signalGrantRole") {
-    for (const { member, role, contractName } of networkConfig.rolesToAdd) {
+  // signalGrantRole and signalRevokeRole in case the granting / revocation of roles needs to be reverted
+  if (timelockMethod === "signalGrantRole" || timelockMethod === "signalRevokeRole") {
+    const roles = timelockMethod === "signalGrantRole" ? networkConfig.rolesToAdd : networkConfig.rolesToRemove;
+    for (const { member, role, contractName } of roles) {
       console.log("%s %s %s %s", timelockMethod, member, role, contractName);
-      multicallWriteParams.push(timelock.interface.encodeFunctionData(timelockMethod, [member, hashString(role)]));
+      multicallWriteParams.push(timelock.interface.encodeFunctionData("signalRevokeRole", [member, hashString(role)]));
+      multicallWriteParams.push(timelock.interface.encodeFunctionData("signalGrantRole", [member, hashString(role)]));
     }
   }
 
@@ -180,15 +183,6 @@ async function main() {
     for (const { member, role } of networkConfig.rolesToAdd) {
       const { target, payload } = await getGrantRolePayload(member, hashString(role));
       multicallWriteParams.push(timelock.interface.encodeFunctionData("execute", [target, payload]));
-    }
-  }
-
-  if (timelockMethod === "signalRevokeRole") {
-    for (const { member, role, contractName } of networkConfig.rolesToRemove) {
-      console.log("%s %s %s %s", timelockMethod, member, role, contractName);
-      multicallWriteParams.push(timelock.interface.encodeFunctionData(timelockMethod, [member, hashString(role)]));
-      // signalGrantRole in case the revocation of the role needs to be reverted
-      multicallWriteParams.push(timelock.interface.encodeFunctionData("signalGrantRole", [member, hashString(role)]));
     }
   }
 

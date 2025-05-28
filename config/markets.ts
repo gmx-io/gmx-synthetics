@@ -3,7 +3,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { expandDecimals, exponentToFloat, decimalToFloat, bigNumberify, percentageToFloat } from "../utils/math";
 import { hashString } from "../utils/hash";
-import { SECONDS_PER_HOUR, SECONDS_PER_YEAR } from "../utils/constants";
+import { SECONDS_PER_HOUR, SECONDS_PER_YEAR /* SECONDS_PER_DAY */ } from "../utils/constants";
 
 export type BaseMarketConfig = {
   reserveFactor: BigNumberish;
@@ -110,6 +110,11 @@ export type BaseMarketConfig = {
   minFundingFactorPerSecond: BigNumberish;
   maxFundingFactorPerSecond: BigNumberish;
 
+  // note that this is in the index token, so the amount should be based
+  // on how many decimals the index token is configured to have
+  // e.g. if we want to distribute at a rate of 143 AVAX per day
+  // since AVAX has 18 decimals, the value for this would be:
+  // expandDecimals(143, 18 + 30).div(SECONDS_PER_DAY), 86400 is the seconds per day
   positionImpactPoolDistributionRate: BigNumberish;
   minPositionImpactPoolAmount: BigNumberish;
 
@@ -559,7 +564,7 @@ const config: {
       negativePositionImpactFactor: exponentToFloat("9e-11"),
       positivePositionImpactFactor: exponentToFloat("3e-11"),
 
-      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(2900, 40), // 2.9E+43, 2.5065444873 ETH / day
+      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(15, 18 - 1 + 30).div(SECONDS_PER_DAY), // 1.5 ETH per day
       minPositionImpactPoolAmount: expandDecimals(10, 18), // 10 ETH
 
       negativeSwapImpactFactor: exponentToFloat("3e-10"),
@@ -1205,8 +1210,8 @@ const config: {
       positivePositionImpactFactor: exponentToFloat("2.5e-10"), // 0.05% for ~90,000 USD of imbalance
       positionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
 
-      negativeSwapImpactFactor: exponentToFloat("4e-9"),
-      positiveSwapImpactFactor: exponentToFloat("2e-9"),
+      negativeSwapImpactFactor: exponentToFloat("6e-9"),
+      positiveSwapImpactFactor: exponentToFloat("3e-9"),
 
       // minCollateralFactor of 0.01 (1%) when open interest is 2,700,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.8e-9"),
@@ -2019,7 +2024,7 @@ const config: {
 
       swapOnly: true,
 
-      // isDisabled: false,
+      isDisabled: false,
 
       maxLongTokenPoolAmount: expandDecimals(3300, 18),
       maxShortTokenPoolAmount: expandDecimals(2800, 18),
@@ -2052,7 +2057,7 @@ const config: {
       swapFeeFactorForPositiveImpact: decimalToFloat(5, 5), // 0.005%,
       swapFeeFactorForNegativeImpact: decimalToFloat(2, 4), // 0.02%,
 
-      isDisabled: false,
+      isDisabled: true,
 
       atomicSwapFeeFactor: percentageToFloat("0.50%"),
     },
@@ -2969,10 +2974,10 @@ const config: {
       maxPnlFactorForTraders: percentageToFloat("90%"), // default is 60%
 
       maxOpenInterest: decimalToFloat(1_000_000),
-      maxPoolUsdForDeposit: decimalToFloat(1_500_000), // 1.5x the max open interest
+      maxPoolUsdForDeposit: decimalToFloat(3_000_000),
 
-      maxLongTokenPoolAmount: expandDecimals(22, 8), // ~2M USD (2x the max open interest)
-      maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+      maxLongTokenPoolAmount: expandDecimals(37, 8),
+      maxShortTokenPoolAmount: expandDecimals(4_000_000, 6),
 
       atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },
@@ -3776,6 +3781,7 @@ const config: {
       fundingFactor: decimalToFloat(16, 7), // ~5000% per year for a 100% skew
     },
   ],
+  botanix: [],
   avalancheFuji: [
     {
       ...baseMarketConfig,

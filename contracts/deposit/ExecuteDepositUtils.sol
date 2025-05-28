@@ -13,10 +13,11 @@ import "./DepositEventUtils.sol";
 import "../pricing/SwapPricingUtils.sol";
 import "../oracle/IOracle.sol";
 import "../position/PositionUtils.sol";
-import "../swap/SwapUtils.sol";
+import "../swap/ISwapUtils.sol";
+import "../fee/FeeUtils.sol";
 
 import "../multichain/MultichainUtils.sol";
-import "../multichain/IMultichainTransferRouter.sol";
+import "../multichain/BridgeOutFromControllerUtils.sol";
 
 import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
@@ -84,12 +85,6 @@ library ExecuteDepositUtils {
         bool balanceWasImproved;
         uint256 marketTokensSupply;
         EventUtils.EventLogData callbackEventData;
-    }
-
-    struct BridgeOutFromControllerCache {
-        IRelayUtils.RelayParams relayParams;
-        address provider;
-        bytes providerData;
     }
 
     address public constant RECEIVER_FOR_FIRST_DEPOSIT = address(1);
@@ -278,7 +273,7 @@ library ExecuteDepositUtils {
         CallbackUtils.afterDepositExecution(params.key, deposit, cache.callbackEventData);
 
         // use deposit.dataList to determine if the GM tokens minted should be bridged out to src chain
-        bridgeOutFromController(
+        BridgeOutFromControllerUtils.bridgeOutFromController(
             params.eventEmitter,
             params.multichainTransferRouter,
             deposit.receiver(), // account
@@ -307,55 +302,6 @@ library ExecuteDepositUtils {
         );
 
         return cache.receivedMarketTokens;
-    }
-
-    /// @dev abi.decode can fail if dataList is not properly formed, which would cause the deposit to be cancelled
-    /// @dev first item of dataList should be the GMX_DATA_ACTION hash if dataList is intended to be used for bridging out tokens
-    function bridgeOutFromController(
-        EventEmitter eventEmitter,
-        IMultichainTransferRouter multichainTransferRouter,
-        address account,
-        uint256 srcChainId,
-        address token,
-        uint256 amount,
-        bytes32 key,
-        bytes32[] memory dataList
-    ) public {
-        if (dataList.length == 0 || dataList[0] != Keys.GMX_DATA_ACTION) {
-            return;
-        }
-
-        bytes memory data = Array.dataArrayToBytes(dataList);
-
-        (IMultichainProvider.ActionType actionType, bytes memory actionData) = abi.decode(
-            data,
-            (IMultichainProvider.ActionType, bytes)
-        );
-
-        if (actionType == IMultichainProvider.ActionType.BridgeOut) {
-            BridgeOutFromControllerCache memory cache;
-
-            (cache.relayParams, cache.provider, cache.providerData /* e.g. dstEid */) = abi.decode(
-                actionData,
-                (IRelayUtils.RelayParams, address, bytes)
-            );
-
-            IRelayUtils.BridgeOutParams memory bridgeOutParams = IRelayUtils.BridgeOutParams({
-                token: token,
-                amount: amount,
-                provider: cache.provider,
-                data: cache.providerData
-            });
-
-            try multichainTransferRouter.bridgeOutFromController(cache.relayParams, account, srcChainId, bridgeOutParams) {
-                MultichainEventUtils.emitMultichainBridgeAction(eventEmitter, address(this), account, srcChainId, uint256(actionType), key);
-            } catch Error(string memory reason) {
-                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
-            } catch (bytes memory reasonBytes) {
-                (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
-                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
-            }
-        }
     }
 
     // @dev executes a deposit
