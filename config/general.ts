@@ -152,6 +152,11 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         421614: true, // Arbitrum Sepolia
         11155420: true, // Optimism Sepolia
       },
+      eids: {
+        11155111: 40161, // Sepolia
+        421614: 40231, // Arbitrum Sepolia
+        11155420: 40232, // Optimism Sepolia
+      },
     },
     avalancheFuji: {},
     arbitrum: {
