@@ -14,6 +14,14 @@ contract ChainlinkPriceFeedProvider is IOracleProvider {
         dataStore = _dataStore;
     }
 
+    function shouldAdjustTimestamp() external pure returns (bool) {
+        return false;
+    }
+
+    function isChainlinkOnChainProvider() external pure returns (bool) {
+        return true;
+    }
+
     // @dev the timestamp returned is based on the current blockchain timestamp
     // this is because Chainlink on-chain price feeds have a lower update frequency
     // if a Chainlink on-chain price feed is used, it is assumed that the feed

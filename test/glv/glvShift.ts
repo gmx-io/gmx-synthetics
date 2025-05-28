@@ -32,7 +32,7 @@ describe("Glv Shifts", () => {
     roleStore,
     reader,
     glvFactory,
-    glvHandler,
+    glvShiftHandler,
     ethUsdSingleTokenMarket2,
     wnt,
     sol;
@@ -51,7 +51,7 @@ describe("Glv Shifts", () => {
       roleStore,
       reader,
       glvFactory,
-      glvHandler,
+      glvShiftHandler,
       ethUsdSingleTokenMarket2,
       sol,
       wnt,
@@ -221,8 +221,8 @@ describe("Glv Shifts", () => {
       dataStore.address
     );
     await glvFactory.createGlv(wnt.address, wnt.address, glvType, "Glv name", "Glv symbol");
-    await glvHandler.addMarketToGlv(ethUsdSingleTokenGlvAddress, ethUsdSingleTokenMarket2.marketToken);
-    await glvHandler.addMarketToGlv(ethUsdSingleTokenGlvAddress, solUsdSingleTokenMarket2.marketToken);
+    await glvShiftHandler.addMarketToGlv(ethUsdSingleTokenGlvAddress, ethUsdSingleTokenMarket2.marketToken);
+    await glvShiftHandler.addMarketToGlv(ethUsdSingleTokenGlvAddress, solUsdSingleTokenMarket2.marketToken);
 
     await expectBalances({
       [ethUsdGlvAddress]: {

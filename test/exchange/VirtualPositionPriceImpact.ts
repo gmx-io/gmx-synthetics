@@ -78,7 +78,7 @@ describe("Exchange.VirtualPositionPriceImpact", () => {
       async ({ executeResult }) => {
         const { logs } = executeResult;
         const positionIncreaseInfo = getEventData(logs, "PositionIncrease");
-        expect(positionIncreaseInfo.priceImpactUsd).eq("-399999999999999992588018713340000"); // -400
+        expect(positionIncreaseInfo.pendingPriceImpactUsd).eq("-399999999999999992588018713340000"); // -400
       }
     );
 
@@ -103,7 +103,7 @@ describe("Exchange.VirtualPositionPriceImpact", () => {
       async ({ executeResult }) => {
         const { logs } = executeResult;
         const positionIncreaseInfo = getEventData(logs, "PositionIncrease");
-        expect(positionIncreaseInfo.priceImpactUsd).eq("-1199999999999999977764056140040000"); // -1200
+        expect(positionIncreaseInfo.pendingPriceImpactUsd).eq("-1199999999999999977764056140040000"); // -1200
       }
     );
   });
@@ -142,7 +142,7 @@ describe("Exchange.VirtualPositionPriceImpact", () => {
       async ({ executeResult }) => {
         const { logs } = executeResult;
         const positionIncreaseInfo = getEventData(logs, "PositionIncrease");
-        expect(positionIncreaseInfo.priceImpactUsd).eq("-399999999999999992588018713340000"); // -400
+        expect(positionIncreaseInfo.pendingPriceImpactUsd).eq("-399999999999999992588018713340000"); // -400
       }
     );
 
@@ -168,7 +168,7 @@ describe("Exchange.VirtualPositionPriceImpact", () => {
       async ({ executeResult }) => {
         const { logs } = executeResult;
         const positionIncreaseInfo = getEventData(logs, "PositionIncrease");
-        expect(positionIncreaseInfo.priceImpactUsd).eq("-399999999999999992588018713340000"); // -400
+        expect(positionIncreaseInfo.pendingPriceImpactUsd).eq("-399999999999999992588018713340000"); // -400
       }
     );
 
@@ -192,8 +192,8 @@ describe("Exchange.VirtualPositionPriceImpact", () => {
       }),
       async ({ executeResult }) => {
         const { logs } = executeResult;
-        const positionIncreaseInfo = getEventData(logs, "PositionDecrease");
-        expect(positionIncreaseInfo.priceImpactUsd).eq("199999999999999996294009356670000"); // 200
+        const positionDecreaseInfo = getEventData(logs, "PositionDecrease");
+        expect(positionDecreaseInfo.priceImpactUsd).eq("199999999999999996294009356670000"); // 200
       }
     );
   });

@@ -4,11 +4,11 @@ pragma solidity ^0.8.0;
 
 import "./BaseHandler.sol";
 
-import "../market/Market.sol";
+import "../market/MarketUtils.sol";
 import "../order/BaseOrderUtils.sol";
 import "../order/OrderVault.sol";
 import "../order/Order.sol";
-import "../swap/SwapHandler.sol";
+import "../swap/ISwapHandler.sol";
 
 import "../referral/IReferralStorage.sol";
 
@@ -19,19 +19,22 @@ contract BaseOrderHandler is BaseHandler {
     using Order for Order.Props;
     using Array for uint256[];
 
+    MultichainVault public immutable multichainVault;
     OrderVault public immutable orderVault;
-    SwapHandler public immutable swapHandler;
+    ISwapHandler public immutable swapHandler;
     IReferralStorage public immutable referralStorage;
 
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        Oracle _oracle,
+        IOracle _oracle,
+        MultichainVault _multichainVault,
         OrderVault _orderVault,
-        SwapHandler _swapHandler,
+        ISwapHandler _swapHandler,
         IReferralStorage _referralStorage
     ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {
+        multichainVault = _multichainVault;
         orderVault = _orderVault;
         swapHandler = _swapHandler;
         referralStorage = _referralStorage;
@@ -57,6 +60,7 @@ contract BaseOrderHandler is BaseHandler {
 
         params.contracts.dataStore = dataStore;
         params.contracts.eventEmitter = eventEmitter;
+        params.contracts.multichainVault = multichainVault;
         params.contracts.orderVault = orderVault;
         params.contracts.oracle = oracle;
         params.contracts.swapHandler = swapHandler;

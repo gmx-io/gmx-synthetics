@@ -156,12 +156,6 @@ const getConfigItems = (generalConfig, oracleConfig) => {
       label: `swapOrderGasLimit`,
     },
     {
-      type: "bool",
-      baseKey: keys.IGNORE_OPEN_INTEREST_FOR_USAGE_FACTOR,
-      value: generalConfig.ignoreOpenInterestForUsageFactor,
-      label: `ignoreOpenInterestForUsageFactor`,
-    },
-    {
       type: "uint",
       baseKey: keys.MAX_EXECUTION_FEE_MULTIPLIER_FACTOR,
       value: generalConfig.maxExecutionFeeMultiplierFactor,
@@ -190,6 +184,12 @@ const getConfigItems = (generalConfig, oracleConfig) => {
       baseKey: keys.MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT,
       value: generalConfig.maxRelayFeeUsdForSubaccount,
       label: `maxRelayFeeUsdForSubaccount`,
+    },
+    {
+      type: "uint",
+      baseKey: keys.ORACLE_PROVIDER_MIN_CHANGE_DELAY,
+      value: generalConfig.oracleProviderMinChangeDelay,
+      label: `oracleProviderMinChangeDelay`,
     },
   ];
 

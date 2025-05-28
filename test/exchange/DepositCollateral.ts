@@ -62,7 +62,7 @@ describe("Exchange.DepositCollateral", () => {
         afterExecution: ({ logs }) => {
           const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
           expect(positionIncreaseEvent.executionPrice).eq(expandDecimals(5010, 12));
-          expect(positionIncreaseEvent.priceImpactUsd).eq("0");
+          expect(positionIncreaseEvent.pendingPriceImpactUsd).eq("0");
         },
       },
     });
@@ -92,7 +92,7 @@ describe("Exchange.DepositCollateral", () => {
         afterExecution: ({ logs }) => {
           const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
           expect(positionIncreaseEvent.executionPrice).eq(expandDecimals(5010, 12));
-          expect(positionIncreaseEvent.priceImpactUsd).eq("0");
+          expect(positionIncreaseEvent.pendingPriceImpactUsd).eq("0");
         },
       },
     });

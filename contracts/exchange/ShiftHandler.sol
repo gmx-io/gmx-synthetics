@@ -2,38 +2,56 @@
 
 pragma solidity ^0.8.0;
 
-import "./BaseHandler.sol";
-import "../shift/ShiftVault.sol";
+import "../exchange/IWithdrawalHandler.sol";
+
 import "../shift/Shift.sol";
+import "../shift/ShiftVault.sol";
 import "../shift/ShiftUtils.sol";
+
 import "./IShiftHandler.sol";
+import "./BaseHandler.sol";
 
 contract ShiftHandler is IShiftHandler, BaseHandler {
     using Shift for Shift.Props;
 
+    MultichainVault public immutable multichainVault;
     ShiftVault public immutable shiftVault;
+    IDepositHandler public depositHandler;
+    IWithdrawalHandler public withdrawalHandler;
+    ISwapHandler public immutable swapHandler;
 
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        Oracle _oracle,
-        ShiftVault _shiftVault
+        IOracle _oracle,
+        MultichainVault _multichainVault,
+        ShiftVault _shiftVault,
+        IDepositHandler _depositHandler,
+        IWithdrawalHandler _withdrawalHandler,
+        ISwapHandler _swapHandler
     ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {
+        multichainVault = _multichainVault;
         shiftVault = _shiftVault;
+        depositHandler = _depositHandler;
+        withdrawalHandler = _withdrawalHandler;
+        swapHandler = _swapHandler;
     }
 
     function createShift(
         address account,
-        ShiftUtils.CreateShiftParams calldata params
+        uint256 srcChainId,
+        IShiftUtils.CreateShiftParams calldata params
     ) external override globalNonReentrant onlyController returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createShiftFeatureDisabledKey(address(this)));
+        validateDataListLength(params.dataList.length);
 
         return ShiftUtils.createShift(
             dataStore,
             eventEmitter,
             shiftVault,
             account,
+            srcChainId,
             params
         );
     }
@@ -54,6 +72,7 @@ contract ShiftHandler is IShiftHandler, BaseHandler {
         ShiftUtils.cancelShift(
             _dataStore,
             eventEmitter,
+            multichainVault,
             shiftVault,
             key,
             shift.account(),
@@ -123,8 +142,12 @@ contract ShiftHandler is IShiftHandler, BaseHandler {
         ShiftUtils.ExecuteShiftParams memory params = ShiftUtils.ExecuteShiftParams(
             dataStore,
             eventEmitter,
+            multichainVault,
             shiftVault,
             oracle,
+            depositHandler,
+            withdrawalHandler,
+            swapHandler,
             key,
             keeper,
             startingGas
@@ -149,6 +172,7 @@ contract ShiftHandler is IShiftHandler, BaseHandler {
         ShiftUtils.cancelShift(
             dataStore,
             eventEmitter,
+            multichainVault,
             shiftVault,
             key,
             msg.sender,

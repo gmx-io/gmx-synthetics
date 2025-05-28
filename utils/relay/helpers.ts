@@ -8,6 +8,7 @@ export type SubaccountApproval = {
   maxAllowedCount: BigNumberish;
   actionType: string;
   nonce: BigNumberish;
+  integrationId: string;
   deadline: BigNumberish;
   signature: string;
 };
@@ -51,6 +52,7 @@ export type RelayParams = {
   fee: FeeParams;
   userNonce: BigNumberish;
   deadline: BigNumberish;
+  desChainId: BigNumberish;
 };
 
 export type CreateOrderParams = {
@@ -78,6 +80,7 @@ export type CreateOrderParams = {
   isLong: boolean;
   shouldUnwrapNativeToken: boolean;
   referralCode: string;
+  dataList: string[];
 };
 
 export type UpdateOrderParams = {
@@ -106,6 +109,7 @@ export async function getRelayParams(p: {
   feeParams: any;
   userNonce?: BigNumberish;
   deadline: BigNumberish;
+  desChainId: BigNumberish;
   relayRouter: ethers.Contract;
   signer: ethers.Signer;
 }) {
@@ -127,6 +131,7 @@ export async function getRelayParams(p: {
     fee: p.feeParams,
     userNonce,
     deadline: p.deadline,
+    desChainId: p.desChainId,
   };
 }
 
@@ -154,6 +159,7 @@ export function hashRelayParams(relayParams: RelayParams) {
       "tuple(address feeToken, uint256 feeAmount, address[] feeSwapPath)",
       "uint256",
       "uint256",
+      "uint256",
     ],
     [
       [relayParams.oracleParams.tokens, relayParams.oracleParams.providers, relayParams.oracleParams.data],
@@ -171,6 +177,7 @@ export function hashRelayParams(relayParams: RelayParams) {
       [relayParams.fee.feeToken, relayParams.fee.feeAmount, relayParams.fee.feeSwapPath],
       relayParams.userNonce,
       relayParams.deadline,
+      relayParams.desChainId,
     ]
   );
 
@@ -186,13 +193,14 @@ export function hashSubaccountApproval(subaccountApproval: SubaccountApproval) {
     "actionType",
     "nonce",
     "deadline",
+    "integrationId",
     "signature",
   ]);
 
   return ethers.utils.keccak256(
     ethers.utils.defaultAbiCoder.encode(
       [
-        "tuple(address subaccount,bool shouldAdd,uint256 expiresAt,uint256 maxAllowedCount,bytes32 actionType,uint256 nonce,uint256 deadline,bytes signature)",
+        "tuple(address subaccount,bool shouldAdd,uint256 expiresAt,uint256 maxAllowedCount,bytes32 actionType,uint256 nonce,uint256 deadline,bytes32 integrationId,bytes signature)",
       ],
       [subaccountApproval]
     )
