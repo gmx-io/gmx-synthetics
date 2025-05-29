@@ -2,13 +2,15 @@
 
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+
 import "../exchange/IOrderExecutor.sol";
 import "./SwapOrderUtils.sol";
 
-contract SwapOrderExecutor is RoleModule {
+contract SwapOrderExecutor is ReentrancyGuard, RoleModule {
     constructor(RoleStore _roleStore) RoleModule(_roleStore) {}
 
-    function processOrder(BaseOrderUtils.ExecuteOrderParams memory params) external onlyController returns (EventUtils.EventLogData memory) {
+    function processOrder(BaseOrderUtils.ExecuteOrderParams memory params) external nonReentrant onlyController returns (EventUtils.EventLogData memory) {
         return SwapOrderUtils.processOrder(params);
     }
 }
