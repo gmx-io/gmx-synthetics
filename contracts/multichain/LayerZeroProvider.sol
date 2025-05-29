@@ -117,8 +117,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             this,
             token,
             account,
-            amountLD,
-            srcChainId
+            srcChainId 
         );
 
         if (data.length != 0) {
