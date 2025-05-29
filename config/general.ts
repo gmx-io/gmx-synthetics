@@ -68,6 +68,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       gelatoRelayFeeBaseAmount: 0,
       relayFeeAddress: ethers.constants.AddressZero,
       maxRelayFeeUsdForSubaccount: 0,
+
+      maxDataLength: 256,
     };
   }
 
