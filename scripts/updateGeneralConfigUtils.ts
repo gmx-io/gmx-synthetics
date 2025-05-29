@@ -188,6 +188,12 @@ const getConfigItems = (generalConfig, oracleConfig) => {
     },
     {
       type: "uint",
+      baseKey: keys.MAX_DATA_LENGTH,
+      value: generalConfig.maxDataLength,
+      label: `maxDataLength`,
+    },
+    {
+      type: "uint",
       baseKey: keys.ORACLE_PROVIDER_MIN_CHANGE_DELAY,
       value: generalConfig.oracleProviderMinChangeDelay,
       label: `oracleProviderMinChangeDelay`,
