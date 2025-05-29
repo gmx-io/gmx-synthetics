@@ -36,11 +36,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
     mapping(address => uint256) public userNonces;
 
-    struct WithRelayCache {
-        uint256 startingGas;
-        Contracts contracts;
-    }
-
     modifier withRelay(
         IRelayUtils.RelayParams calldata relayParams,
         address account,
