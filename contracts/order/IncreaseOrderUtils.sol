@@ -18,6 +18,19 @@ library IncreaseOrderUtils {
     function processOrder(BaseOrderUtils.ExecuteOrderParams memory params) internal returns (EventUtils.EventLogData memory) {
         MarketUtils.validatePositionMarket(params.contracts.dataStore, params.market);
 
+        // validate initialCollateralToken is a valid collateral token of the first market in the swapPath
+        // this ensures tokenIn for the swap is not a malicious token
+        Market.Props memory firstMarket = params.swapPathMarkets[0];
+        if (
+            params.order.initialCollateralToken() != firstMarket.longToken &&
+            params.order.initialCollateralToken() != firstMarket.shortToken
+        ) {
+            revert Errors.InvalidCollateralTokenForMarket(
+                firstMarket.marketToken,
+                params.order.initialCollateralToken()
+            );
+        }
+
         (address collateralToken, uint256 collateralIncrementAmount) = params.contracts.swapHandler.swap(ISwapUtils.SwapParams(
             params.contracts.dataStore,
             params.contracts.eventEmitter,
