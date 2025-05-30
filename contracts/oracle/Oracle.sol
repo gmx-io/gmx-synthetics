@@ -260,6 +260,8 @@ contract Oracle is IOracle, RoleModule {
 
             address token = params.tokens[i];
 
+            bool isAtomicProvider = dataStore.getBool(Keys.isAtomicOracleProviderKey(_provider));
+
             // if the action is atomic then only validate that the provider is an
             // atomic provider
             // else, validate that the provider matches the oracleProviderForToken
@@ -271,7 +273,7 @@ contract Oracle is IOracle, RoleModule {
             // to gain a profit by alternating actions between the two atomic
             // providers
             if (forAtomicAction) {
-                if (provider.shouldAdjustTimestamp()) {
+                if (!isAtomicProvider) {
                     revert Errors.NonAtomicOracleProvider(_provider);
                 }
             } else {
@@ -288,11 +290,9 @@ contract Oracle is IOracle, RoleModule {
                 data
             );
 
-            bool isAtomicProvider = dataStore.getBool(Keys.isAtomicOracleProviderKey(_provider));
-
             // for atomic providers, the timestamp will be the current block's timestamp
             // the timestamp should not be adjusted
-            if (!isAtomicProvider) {
+            if (provider.shouldAdjustTimestamp()) {
                 uint256 timestampAdjustment = dataStore.getUint(Keys.oracleTimestampAdjustmentKey(_provider, token));
                 validatedPrice.timestamp -= timestampAdjustment;
             }
