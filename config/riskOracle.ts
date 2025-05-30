@@ -41,6 +41,9 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RiskOrac
     avalanche: {
       riskOracle: "0x0efb5a96Ed1B33308a73355C56Aa1Bc1aa7E4A8E",
     },
+    botanix: {
+      riskOracle: "0x0000000000000000000000000000000000000000",
+    },
     avalancheFuji: {
       riskOracle: "0xE05354F4187820bF0832bF1f5fAd6a0F592b8fB6",
       markets: {

@@ -91,6 +91,9 @@ contract EventEmitter is RoleModule {
             eventData
         );
     }
+
+
+
     // @dev event log for general use
     // @param topic1 event topic 1
     // @param data additional data

@@ -553,6 +553,11 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.BUYBACK_MAX_PRICE_AGE] = true;
 
         allowedBaseKeys[Keys.DATA_STREAM_SPREAD_REDUCTION_FACTOR] = true;
+
+        allowedBaseKeys[Keys.RELAY_FEE_ADDRESS] = true;
+        allowedBaseKeys[Keys.GELATO_RELAY_FEE_BASE_AMOUNT] = true;
+        allowedBaseKeys[Keys.GELATO_RELAY_FEE_MULTIPLIER_FACTOR] = true;
+        allowedBaseKeys[Keys.MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT] = true;
     }
 
     function _initAllowedLimitedBaseKeys() internal {
