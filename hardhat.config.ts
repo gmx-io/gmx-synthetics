@@ -160,7 +160,7 @@ const config: HardhatUserConfig = {
       verify: {
         etherscan: {
           apiUrl: getExplorerUrl("botanix"),
-          apiKey: "botanix",
+          apiKey: process.env.BOTANIX_SCAN_API_KEY,
         },
       },
       blockGasLimit: 20_000_000,
@@ -243,7 +243,7 @@ const config: HardhatUserConfig = {
       avalancheFujiTestnet: process.env.SNOWTRACE_API_KEY,
       snowtrace: "snowtrace", // apiKey is not required, just set a placeholder
       arbitrumBlockscout: "arbitrumBlockscout",
-      botanix: "botanix",
+      botanix: process.env.BOTANIX_SCAN_API_KEY,
     },
     customChains: [
       {
