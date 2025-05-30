@@ -71,7 +71,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
       minOracleBlockConfirmations: 255,
       minOracleSigners: 1,
       dataStreamFeedVerifier: "0xC539169910DE08D237Df0d73BcDa9074c787A4a1",
-      chainlinkPaymentToken: "0x5947BB275c521040051D82396192181b413227A3",
+      chainlinkPaymentToken: "0x0000000000000000000000000000000000000000",
     },
 
     arbitrumSepolia: {
