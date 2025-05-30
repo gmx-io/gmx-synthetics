@@ -355,7 +355,9 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       TIMELOCK_MULTISIG: {
         "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // temp timelock_admin_1
       },
-      CONTROLLER: {},
+      CONTROLLER: {
+        "0xE7BfFf2aB721264887230037940490351700a068": true, // temp deployer
+      },
       GOV_TOKEN_CONTROLLER: {},
     },
     avalancheFuji: {
