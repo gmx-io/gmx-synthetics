@@ -158,7 +158,9 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       decreaseOrderGasLimit: 3_000_000,
       swapOrderGasLimit: 2_500_000,
     },
-    avalanche: {},
+    avalanche: {
+      requestExpirationTime: 60,
+    },
     botanix: {},
   }[network.name];
 
