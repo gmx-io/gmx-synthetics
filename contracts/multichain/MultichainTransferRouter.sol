@@ -26,6 +26,7 @@ contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, M
     /**
      * payable function so that it can be called as a multicall
      * this would be used to move user's funds from their Arbitrum account into their multichain balance
+     * @dev payable is necessary because, when bridging in WNT the user sends ETH along with the transaction (via multicall)
      */
     function bridgeIn(address account, address token) external payable nonReentrant {
         uint256 amount = MultichainUtils.recordTransferIn(
@@ -71,7 +72,7 @@ contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, M
         address account,
         uint256 srcChainId,
         IRelayUtils.BridgeOutParams calldata params
-    ) external nonReentrant onlyController withRelay(relayParams, account, srcChainId, false) {
+    ) external nonReentrant onlyController {
         _validateCallWithoutSignature(relayParams, srcChainId);
 
         _bridgeOut(account, srcChainId, params);
@@ -127,7 +128,7 @@ contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, M
 
             MultichainEventUtils.emitMultichainBridgeOut(
                 eventEmitter,
-                params.provider,
+                address(multichainProvider),
                 params.token,
                 account,
                 amountOut, // amount

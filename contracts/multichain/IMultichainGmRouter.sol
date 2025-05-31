@@ -16,14 +16,6 @@ interface IMultichainGmRouter {
         IDepositUtils.CreateDepositParams calldata params
     ) external returns (bytes32);
 
-    function createDepositFromBridge(
-        IRelayUtils.RelayParams calldata relayParams,
-        address account,
-        uint256 srcChainId,
-        IRelayUtils.TransferRequests calldata transferRequests,
-        IDepositUtils.CreateDepositParams calldata params
-    ) external returns (bytes32);
-
     function createWithdrawal(
         IRelayUtils.RelayParams calldata relayParams,
         address account,

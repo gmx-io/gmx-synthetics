@@ -261,6 +261,36 @@ export async function getCancelOrderSignature({
   return signTypedData(signer, domain, types, typedData);
 }
 
+export async function getSetTraderReferralCodeSignature({
+  signer,
+  relayParams,
+  verifyingContract,
+  referralCode,
+  chainId,
+}) {
+  if (relayParams.userNonce === undefined) {
+    throw new Error("userNonce is required");
+  }
+  const types = {
+    SetTraderReferralCode: [
+      { name: "referralCode", type: "bytes32" },
+      { name: "relayParams", type: "bytes32" },
+    ],
+  };
+  const domain = {
+    name: "GmxBaseGelatoRelayRouter",
+    version: "1",
+    chainId,
+    verifyingContract,
+  };
+  const typedData = {
+    referralCode: referralCode,
+    relayParams: hashRelayParams(relayParams),
+  };
+
+  return signTypedData(signer, domain, types, typedData);
+}
+
 export async function getClaimFundingFeesSignature({ signer, relayParams, verifyingContract, params, chainId }) {
   if (relayParams.userNonce === undefined) {
     throw new Error("userNonce is required");

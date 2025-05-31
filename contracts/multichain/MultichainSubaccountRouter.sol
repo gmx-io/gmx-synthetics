@@ -20,7 +20,7 @@ contract MultichainSubaccountRouter is MultichainRouter {
         address account,
         uint256 srcChainId,
         address subaccount,
-        BatchParams calldata params
+        IRelayUtils.BatchParams calldata params
     ) external nonReentrant withRelay(relayParams, account, srcChainId, true) returns (bytes32[] memory) {
         _handleBatch(
             relayParams,
@@ -48,7 +48,7 @@ contract MultichainSubaccountRouter is MultichainRouter {
         address account,
         uint256 srcChainId,
         address subaccount,
-        BatchParams calldata params
+        IRelayUtils.BatchParams calldata params
     ) private {
         bytes32 structHash = RelayUtils.getBatchStructHash(relayParams, subaccountApproval, account, params);
         _validateCall(relayParams, subaccount, structHash, srcChainId);
@@ -106,7 +106,7 @@ contract MultichainSubaccountRouter is MultichainRouter {
         address account, // main account
         uint256 srcChainId,
         address subaccount,
-        UpdateOrderParams calldata params
+        IRelayUtils.UpdateOrderParams calldata params
     ) external nonReentrant withRelay(relayParams, account, srcChainId, true) {
         _handleUpdateOrder(relayParams, subaccountApproval, account, srcChainId, subaccount, params);
         _updateOrder(
@@ -123,7 +123,7 @@ contract MultichainSubaccountRouter is MultichainRouter {
         address account, // main account
         uint256 srcChainId,
         address subaccount,
-        UpdateOrderParams calldata params
+        IRelayUtils.UpdateOrderParams calldata params
     ) private {
         bytes32 structHash = RelayUtils.getUpdateOrderStructHash(relayParams, subaccountApproval, account, params);
         _validateCall(relayParams, subaccount, structHash, srcChainId);

@@ -184,7 +184,7 @@ library AdlUtils {
 
         Order.Flags memory flags = Order.Flags(
             position.isLong(), // isLong
-            lastSrcChainId == 0 ? true : false, // shouldUnwrapNativeToken
+            lastSrcChainId == 0 , // shouldUnwrapNativeToken
             false, // isFrozen
             false // autoCancel
         );

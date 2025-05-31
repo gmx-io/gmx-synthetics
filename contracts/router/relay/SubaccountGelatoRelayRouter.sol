@@ -35,7 +35,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         SubaccountApproval calldata subaccountApproval,
         address account,
         address subaccount,
-        BatchParams calldata params
+        IRelayUtils.BatchParams calldata params
     )
         external
         nonReentrant
@@ -106,7 +106,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         SubaccountApproval calldata subaccountApproval,
         address account, // main account
         address subaccount,
-        UpdateOrderParams calldata params
+        IRelayUtils.UpdateOrderParams calldata params
     ) external nonReentrant withRelay(relayParams, account, 0 /* srcChainId is the current block.chainId */, true) {
         bytes32 structHash = RelayUtils.getUpdateOrderStructHash(relayParams, subaccountApproval, account, params);
         _validateCall(relayParams, subaccount, structHash, block.chainid /* srcChainId */);

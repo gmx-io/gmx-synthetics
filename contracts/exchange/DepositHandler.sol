@@ -129,6 +129,7 @@ contract DepositHandler is IDepositHandler, BaseHandler {
         IExecuteDepositUtils.ExecuteDepositParams calldata executeDepositParams,
         Deposit.Props calldata deposit
     ) external onlyController returns (uint256) {
+        FeatureUtils.validateFeature(dataStore, Keys.executeDepositFeatureDisabledKey(address(this)));
         return ExecuteDepositUtils.executeDeposit(executeDepositParams, deposit);
     }
 

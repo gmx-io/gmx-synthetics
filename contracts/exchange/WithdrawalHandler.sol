@@ -130,6 +130,7 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
         IExecuteWithdrawalUtils.ExecuteWithdrawalParams calldata executeWithdrawalParams,
         Withdrawal.Props calldata withdrawal
     ) external onlyController returns (IExecuteWithdrawalUtils.ExecuteWithdrawalResult memory) {
+        FeatureUtils.validateFeature(dataStore, Keys.executeWithdrawalFeatureDisabledKey(address(this)));
         return ExecuteWithdrawalUtils.executeWithdrawal(executeWithdrawalParams, withdrawal);
     }
 
