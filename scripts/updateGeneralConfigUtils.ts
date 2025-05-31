@@ -334,6 +334,15 @@ const getConfigItems = (generalConfig, oracleConfig) => {
         label: `srcChainId ${srcChainId}`,
       });
     }
+    for (const [srcChainId, eid] of Object.entries(generalConfig.eids as Record<number, number>)) {
+      configItems.push({
+        type: "uint",
+        baseKey: keys.EID_TO_SRC_CHAIN_ID,
+        keyData: encodeData(["uint"], [eid]),
+        value: srcChainId,
+        label: `eid ${eid} for chainId ${srcChainId}`,
+      });
+    }
   }
 
   return configItems;

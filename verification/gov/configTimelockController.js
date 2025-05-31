@@ -1,4 +1,4 @@
-// npx hardhat verify --network arbitrumSepolia --constructor-args ./verification/gov/configTimelockController.js --contract contracts/config/ConfigTimelockController.sol:ConfigTimelockController 0x7301c6Ec5961bE1eDb0B5993222E2356a299F7Fd
+// npx hardhat verify --network arbitrumSepolia --constructor-args ./verification/gov/configTimelockController.js --contract contracts/config/ConfigTimelockController.sol:ConfigTimelockController 0x6b16B544ab3A12778244DfCb6E83eaa8A7Af9fF6
 
 module.exports = [
   86400,

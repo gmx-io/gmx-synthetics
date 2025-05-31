@@ -37,9 +37,15 @@ const func = createDeployFunction({
   },
   libraryNames: ["GasUtils", "MultichainUtils", "OrderStoreUtils", "RelayUtils"],
 
-  afterDeploy: async ({ deployedContract }) => {
+  afterDeploy: async ({ deployedContract, deployments }) => {
     await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
     await grantRoleIfNotGranted(deployedContract.address, "ROUTER_PLUGIN");
+
+    const { get } = deployments;
+    const referralStorage = await get("ReferralStorage");
+    const referralStorageContract = await ethers.getContractAt("ReferralStorage", referralStorage.address);
+    console.log(`Grant handler role to MultichainOrderRouter in ReferralStorage: ${referralStorage.address}`);
+    await referralStorageContract.setHandler(deployedContract.address, true);
   },
 });
 
