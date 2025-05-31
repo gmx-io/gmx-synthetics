@@ -923,7 +923,7 @@ library MarketUtils {
         // price impact that can be used to pay for positive price impact
         cache.totalImpactPoolAmount = cache.impactPoolAmount.toInt256() - cache.totalPendingImpactAmount;
 
-        if (cache.totalImpactPoolAmount < 0) {
+        if (cache.totalImpactPoolAmount <= 0) {
             return 0;
         }
 

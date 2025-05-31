@@ -167,9 +167,9 @@ describe("MultichainOrderRouter", () => {
       expect(await getPositionCount(dataStore)).to.eq(1);
       // execution fee is ~0.002113 ETH and the excess is returned to user's multichain balance
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).closeTo(
-        "1882636983061096",
+        "1894356983154856",
         expandDecimals(1, 12)
-      ); // 0.004 - ~0.002113 = ~0.001882 ETH
+      ); // 0.004 - ~0.0021 = ~0.0019 ETH
     });
 
     it("liquidation increases user's multichain balance", async () => {
@@ -271,9 +271,9 @@ describe("MultichainOrderRouter", () => {
 
       await executeOrder(fixture, { gasUsageLabel: "executeOrder" });
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).closeTo(
-        "1882636983061096",
+        "1894356983154856",
         expandDecimals(1, 12)
-      ); // ~ 0.001882 ETH
+      ); // ~ 0.0019 ETH
     });
   });
 
