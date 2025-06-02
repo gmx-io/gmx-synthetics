@@ -36,7 +36,6 @@ import "./MultichainUtils.sol";
 contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModule {
     struct BridgeOutCache {
         uint32 dstEid;
-        uint256 srcChainId;
         uint256 valueToSend;
         MessagingReceipt msgReceipt;
         SendParam sendParam;
@@ -153,7 +152,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
      *        - data: ABI-encoded destination endpoint ID (dstEid)
      * @return The amount of tokens bridged out (may be slightly different from params.amount after LZ precision/path limits adjustments)
      */
-    function bridgeOut(address account, IRelayUtils.BridgeOutParams memory params) external onlyController returns (uint256) {
+    function bridgeOut(address account, uint256 srcChainId, IRelayUtils.BridgeOutParams memory params) external onlyController returns (uint256) {
         IStargate stargate = IStargate(params.provider);
 
         address wnt = dataStore.getAddress(Keys.WNT);
@@ -172,7 +171,10 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
 
         BridgeOutCache memory cache;
         cache.dstEid = abi.decode(params.data, (uint32));
-        cache.srcChainId = dataStore.getUint(Keys.eidToSrcChainId(cache.dstEid));
+
+        if (srcChainId != dataStore.getUint(Keys.eidToSrcChainId(cache.dstEid))) {
+            revert Errors.InvalidEid(cache.dstEid);
+        }
 
         (cache.valueToSend, cache.sendParam, cache.messagingFee, cache.receipt) = prepareSend(
             stargate,
@@ -194,7 +196,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             account,
             address(this), // receiver
             cache.valueToSend, // bridge out fee (+ amountSentLD for native token transfers)
-            cache.srcChainId
+            srcChainId
         );
 
         IWNT(wnt).withdraw(cache.valueToSend);
@@ -213,7 +215,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
                 account,
                 address(this), // receiver
                 params.amount,
-                cache.srcChainId
+                srcChainId
             );
 
             IERC20(params.token).approve(params.provider, params.amount);
