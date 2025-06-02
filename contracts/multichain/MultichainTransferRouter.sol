@@ -73,6 +73,11 @@ contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, M
         uint256 srcChainId,
         IRelayUtils.BridgeOutParams calldata params
     ) external nonReentrant onlyController {
+        // cross-chain GM/GLV withdrawals are not allowed when the deposit was made natively (srcChainId == 0)
+        if (srcChainId == 0) {
+            return;
+        }
+
         _validateCallWithoutSignature(relayParams, srcChainId);
 
         _bridgeOut(account, srcChainId, params);
