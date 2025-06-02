@@ -108,7 +108,7 @@ library MarketPositionImpactPoolUtils {
             dataStore,
             marketProps,
             prices,
-            amount * prices.indexTokenPrice.max
+            amount * prices.indexTokenPrice.min
         );
 
         MarketUtils.applyDeltaToPoolAmount(
