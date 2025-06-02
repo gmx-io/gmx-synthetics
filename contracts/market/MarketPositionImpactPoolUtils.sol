@@ -108,7 +108,6 @@ library MarketPositionImpactPoolUtils {
             dataStore,
             marketProps,
             prices,
-            poolValueInfo.poolValue.toUint256(),
             amount * prices.indexTokenPrice.max
         );
 

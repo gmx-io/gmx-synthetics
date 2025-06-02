@@ -438,7 +438,6 @@ library ExecuteWithdrawalUtils {
             params.dataStore,
             market,
             prices,
-            poolValue,
             marketTokensUsd
         );
     }
