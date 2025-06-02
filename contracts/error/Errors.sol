@@ -447,6 +447,7 @@ library Errors {
     error EmptyMultichainTransferOutAmount(address account, address token);
     error InsufficientMultichainBalance(address account, address token, uint256 balance, uint256 amount);
     error InvalidSrcChainId(uint256 srcChainId);
+    error InvalidEid(uint256 eid);
     error InvalidDestinationChainId(uint256 desChainId);
     error TokenPermitsNotAllowedForMultichain();
     error InvalidMultichainProvider(address provider);

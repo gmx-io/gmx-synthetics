@@ -208,6 +208,7 @@ describe("MultichainTransferRouter", () => {
       const srcChainId = 1;
       bridgeOutParams.srcChainId = srcChainId;
       await dataStore.setBool(keys.isSrcChainIdEnabledKey(srcChainId), true);
+      await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolUsdc.SRC_EID()), srcChainId);
 
       await sendBridgeOut(bridgeOutParams);
 

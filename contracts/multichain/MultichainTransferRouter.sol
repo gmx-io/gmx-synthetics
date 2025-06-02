@@ -118,6 +118,7 @@ contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, M
             // and execute the bridge out to srcChain
             uint256 amountOut = multichainProvider.bridgeOut(
                 account,
+                srcChainId,
                 IRelayUtils.BridgeOutParams({
                     token: params.token,
                     amount: params.amount,
