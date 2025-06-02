@@ -3187,8 +3187,6 @@ library MarketUtils {
         uint256 shortTokenPoolUsd = shortTokenPoolAmount * prices.shortTokenPrice.max;
 
         uint256 totalPoolUsd = longTokenPoolUsd + shortTokenPoolUsd;
-        console.log(longTokenPoolUsd);
-        console.log(shortTokenPoolUsd);
 
         uint256 longTokenOutputUsd = Precision.mulDiv(marketTokensUsd, longTokenPoolUsd, totalPoolUsd);
         uint256 shortTokenOutputUsd = Precision.mulDiv(marketTokensUsd, shortTokenPoolUsd, totalPoolUsd);

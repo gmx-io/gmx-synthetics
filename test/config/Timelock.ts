@@ -494,7 +494,7 @@ describe("Timelock", () => {
         user2.address,
         withdrawalAmount
       );
-      await timelockConfig.connect(timelockAdmin).executeWithOraclePrice(target, payload, oracleParams);
+      await timelockConfig.connect(timelockAdmin).executeWithOraclePrice(target, payload, 0, 0, oracleParams);
 
       // Market token price should be unchanged
       await usingResult(getMarketTokenPriceWithPoolValue(fixture), ([marketTokenPrice, poolValueInfo]) => {
@@ -536,7 +536,7 @@ describe("Timelock", () => {
         data: ["0x", "0x"],
       };
       await expect(
-        timelockConfig.connect(timelockAdmin).executeWithOraclePrice(target, payload, oracleParams)
+        timelockConfig.connect(timelockAdmin).executeWithOraclePrice(target, payload, 0, 0, oracleParams)
       ).to.be.revertedWith("TimelockController: underlying transaction reverted");
     });
   });
