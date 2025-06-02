@@ -3177,8 +3177,7 @@ library MarketUtils {
         Market.Props memory market,
         MarketPrices memory prices,
         uint256 poolValue,
-        uint256 marketTokensUsd,
-        uint256 marketTokenAmount
+        uint256 marketTokensUsd
     ) internal view returns(uint256, uint256) {
         uint256 longTokenPoolAmount = getPoolAmount(dataStore, market, market.longToken);
         uint256 shortTokenPoolAmount = getPoolAmount(dataStore, market, market.shortToken);

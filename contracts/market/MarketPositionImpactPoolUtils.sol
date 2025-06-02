@@ -90,7 +90,7 @@ library MarketPositionImpactPoolUtils {
             adjustedImpactPoolAmount -= totalPendingImpactAmount.toUint256();
         }
 
-        if (adjustedImpactPoolAmount <= amount) {
+        if (adjustedImpactPoolAmount < amount) {
             revert Errors.InsufficientImpactPoolValueForWithdrawal(amount, poolValueInfo.impactPoolAmount, totalPendingImpactAmount);
         }
 
@@ -109,8 +109,7 @@ library MarketPositionImpactPoolUtils {
             marketProps,
             prices,
             poolValueInfo.poolValue.toUint256(),
-            amount * prices.indexTokenPrice.max,
-            amount
+            amount * prices.indexTokenPrice.max
         );
 
         MarketUtils.applyDeltaToPoolAmount(

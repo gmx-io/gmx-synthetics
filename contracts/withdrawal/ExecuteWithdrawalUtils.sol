@@ -439,8 +439,7 @@ library ExecuteWithdrawalUtils {
             market,
             prices,
             poolValue,
-            marketTokensUsd,
-            marketTokenAmount
+            marketTokensUsd
         );
     }
 }
