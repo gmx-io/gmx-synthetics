@@ -3171,4 +3171,28 @@ library MarketUtils {
             + cache.claimableUiFeeAmount
             + cache.affiliateRewardAmount;
     }
+
+    function getWithdrawalAmountsForMarketToken(
+        DataStore dataStore,
+        Market.Props memory market,
+        MarketPrices memory prices,
+        uint256 poolValue,
+        uint256 marketTokensUsd,
+        uint256 marketTokenAmount
+    ) internal view returns(uint256, uint256) {
+        uint256 longTokenPoolAmount = getPoolAmount(dataStore, market, market.longToken);
+        uint256 shortTokenPoolAmount = getPoolAmount(dataStore, market, market.shortToken);
+
+        uint256 longTokenPoolUsd = longTokenPoolAmount * prices.longTokenPrice.max;
+        uint256 shortTokenPoolUsd = shortTokenPoolAmount * prices.shortTokenPrice.max;
+
+        uint256 totalPoolUsd = longTokenPoolUsd + shortTokenPoolUsd;
+        console.log(longTokenPoolUsd);
+        console.log(shortTokenPoolUsd);
+
+        uint256 longTokenOutputUsd = Precision.mulDiv(marketTokensUsd, longTokenPoolUsd, totalPoolUsd);
+        uint256 shortTokenOutputUsd = Precision.mulDiv(marketTokensUsd, shortTokenPoolUsd, totalPoolUsd);
+
+        return (longTokenOutputUsd / prices.longTokenPrice.max, shortTokenOutputUsd / prices.shortTokenPrice.max);
+    }
 }
