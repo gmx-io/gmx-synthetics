@@ -332,7 +332,9 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             IDepositUtils.CreateDepositParams memory depositParams
         ) = abi.decode(actionData, (IRelayUtils.RelayParams, IRelayUtils.TransferRequests, IDepositUtils.CreateDepositParams));
         
-        if (_areValidTransferRequests(transferRequests) && _hasEnoughGasForDeposit(account, srcChainId, depositParams)) {
+        if (_areValidTransferRequests(transferRequests)) {
+            _validateExecutionGasForDeposit(account, srcChainId, depositParams);
+
             try multichainGmRouter.createDeposit(
                 relayParams,
                 account,
@@ -350,11 +352,12 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         }
     }
 
-    function _hasEnoughGasForDeposit(
+    /// @dev lzCompose reverts if the execution gas is not sufficient for the deposit
+    function _validateExecutionGasForDeposit(
         address account,
         uint256 srcChainId,
         IDepositUtils.CreateDepositParams memory depositParams
-    ) private view returns (bool) {
+    ) private view {
         Deposit.Props memory deposit = Deposit.Props(
             Deposit.Addresses(
                 account,
@@ -380,9 +383,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             depositParams.dataList
         );
         uint256 estimatedGasLimit = GasUtils.estimateExecuteDepositGasLimit(dataStore, deposit);
-        uint256 minAdditionalGasForExecution = GasUtils.getMinAdditionalGasForExecution(dataStore);
-
-        return gasleft() > estimatedGasLimit + minAdditionalGasForExecution;
+        GasUtils.validateExecutionGas(dataStore, gasleft(), estimatedGasLimit);
     }
 
     /// @dev long/short/GM tokens are deposited from user's multichain balance
@@ -399,7 +400,9 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             IGlvDepositUtils.CreateGlvDepositParams memory glvDepositParams
         ) = abi.decode(actionData, (IRelayUtils.RelayParams, IRelayUtils.TransferRequests, IGlvDepositUtils.CreateGlvDepositParams));
 
-        if (_areValidTransferRequests(transferRequests) && _hasEnoughGasForGlvDeposit(account, srcChainId, glvDepositParams)) {
+        if (_areValidTransferRequests(transferRequests)) {
+            _validateExecutionGasForGlvDeposit(account, srcChainId, glvDepositParams);
+
             try multichainGlvRouter.createGlvDeposit(
                 relayParams,
                 account,
@@ -440,11 +443,12 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         }
     }
 
-    function _hasEnoughGasForGlvDeposit(
+    /// @dev lzCompose reverts if the execution gas is not sufficient for the glvDeposit
+    function _validateExecutionGasForGlvDeposit(
         address account,
         uint256 srcChainId,
         IGlvDepositUtils.CreateGlvDepositParams memory glvDepositParams
-    ) private view returns (bool) {
+    ) private view {
         GlvDeposit.Props memory glvDeposit = GlvDeposit.Props(
             GlvDeposit.Addresses({
                 account: account,
@@ -477,9 +481,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
 
         uint256 marketCount = GlvUtils.getGlvMarketCount(dataStore, glvDepositParams.addresses.glv);
         uint256 estimatedGasLimit = GasUtils.estimateExecuteGlvDepositGasLimit(dataStore, glvDeposit, marketCount);
-        uint256 minAdditionalGasForExecution = GasUtils.getMinAdditionalGasForExecution(dataStore);
-
-        return gasleft() > estimatedGasLimit + minAdditionalGasForExecution;
+        GasUtils.validateExecutionGas(dataStore, gasleft(), estimatedGasLimit);
     }
 
     /**
