@@ -859,3 +859,15 @@ To print test coverage:
 ```sh
 npx hardhat coverage
 ```
+
+To check contract sizes:
+
+```sh
+npx hardhat measure-contract-sizes
+```
+
+To check contract dependencies:
+
+```sh
+npx hardhat dependencies <contract file path>
+```
