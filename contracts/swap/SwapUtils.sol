@@ -100,6 +100,7 @@ library SwapUtils {
         if (address(params.bank) != firstMarket.marketToken) {
             // validate initialCollateralToken is a valid collateral token of the first
             // market in the swapPath ensuring tokenIn is not a malicious token
+            // TOKEN_TRANSFER_GAS_LIMIT should prevent excessive gas consumption due to a malicious token as well
             if (params.tokenIn != firstMarket.longToken && params.tokenIn != firstMarket.shortToken) {
                 revert Errors.InvalidTokenIn(params.tokenIn, firstMarket.marketToken);
             }
