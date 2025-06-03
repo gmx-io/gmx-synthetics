@@ -121,7 +121,7 @@ async function verifyForNetwork(verificationNetwork) {
       await new Promise((resolve, reject) => {
         exec(
           `npx hardhat verify ${contractArg} --network ${verificationNetwork} ${address} ${argStr}`,
-          { timeout: 60_000 }, // 60,000 ms = 60 seconds
+          { timeout: 5 * 60_000 }, // 60,000 ms = 60 seconds
           (error, stdout, stderr) => {
             if (error) {
               if (error.killed) {
