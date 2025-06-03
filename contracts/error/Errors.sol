@@ -343,6 +343,7 @@ library Errors {
     error ShiftFromAndToMarketAreEqual(address market);
     error LongTokensAreNotEqual(address fromMarketLongToken, address toMarketLongToken);
     error ShortTokensAreNotEqual(address fromMarketLongToken, address toMarketLongToken);
+    error BridgeOutNotSupportedDuringShift();
 
     // SwapPricingUtils errors
     error UsdDeltaExceedsPoolValue(int256 usdDelta, uint256 poolUsd);
@@ -446,6 +447,7 @@ library Errors {
     error EmptyMultichainTransferOutAmount(address account, address token);
     error InsufficientMultichainBalance(address account, address token, uint256 balance, uint256 amount);
     error InvalidSrcChainId(uint256 srcChainId);
+    error InvalidEid(uint256 eid);
     error InvalidDestinationChainId(uint256 desChainId);
     error TokenPermitsNotAllowedForMultichain();
     error InvalidMultichainProvider(address provider);

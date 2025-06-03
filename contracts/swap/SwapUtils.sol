@@ -96,8 +96,14 @@ library SwapUtils {
             return (params.tokenIn, params.amountIn);
         }
 
-        if (address(params.bank) != params.swapPathMarkets[0].marketToken) {
-            params.bank.transferOut(params.tokenIn, params.swapPathMarkets[0].marketToken, params.amountIn, false);
+        Market.Props memory firstMarket = params.swapPathMarkets[0];
+        if (address(params.bank) != firstMarket.marketToken) {
+            // validate initialCollateralToken is a valid collateral token of the first
+            // market in the swapPath ensuring tokenIn is not a malicious token
+            if (params.tokenIn != firstMarket.longToken && params.tokenIn != firstMarket.shortToken) {
+                revert Errors.InvalidTokenIn(params.tokenIn, firstMarket.marketToken);
+            }
+            params.bank.transferOut(params.tokenIn, firstMarket.marketToken, params.amountIn, false);
         }
 
         address tokenOut = params.tokenIn;

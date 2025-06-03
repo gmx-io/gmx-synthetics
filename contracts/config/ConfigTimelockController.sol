@@ -36,9 +36,11 @@ contract ConfigTimelockController is TimelockController, OracleModule {
         address target,
         uint256 value,
         bytes calldata payload,
+        bytes32 predecessor,
+        bytes32 salt,
         OracleUtils.SetPricesParams calldata oracleParams
     ) external onlyRoleOrOpenRole(EXECUTOR_ROLE) withOraclePricesForAtomicAction(oracleParams) {
-        execute(target, value, payload, 0, 0);
+        execute(target, value, payload, predecessor, salt);
     }
 
     function withdrawFromPositionImpactPool(

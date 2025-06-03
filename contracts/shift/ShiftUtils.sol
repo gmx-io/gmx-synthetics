@@ -165,6 +165,11 @@ library ShiftUtils {
             revert Errors.EmptyShiftAmount();
         }
 
+        // GMX_DATA_ACTION hash is reserved for bridging out tokens, which is not supported during shifts
+        if (shift.dataList().length != 0 && shift.dataList()[0] == Keys.GMX_DATA_ACTION) {
+            revert Errors.BridgeOutNotSupportedDuringShift();
+        }
+
         ExecuteShiftCache memory cache;
 
         cache.depositMarket = MarketStoreUtils.get(params.dataStore, shift.toMarket());

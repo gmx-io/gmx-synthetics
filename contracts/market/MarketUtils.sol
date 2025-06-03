@@ -923,7 +923,7 @@ library MarketUtils {
         // price impact that can be used to pay for positive price impact
         cache.totalImpactPoolAmount = cache.impactPoolAmount.toInt256() - cache.totalPendingImpactAmount;
 
-        if (cache.totalImpactPoolAmount < 0) {
+        if (cache.totalImpactPoolAmount <= 0) {
             return 0;
         }
 
@@ -3170,5 +3170,25 @@ library MarketUtils {
             + cache.claimableFeeAmount
             + cache.claimableUiFeeAmount
             + cache.affiliateRewardAmount;
+    }
+
+    function getWithdrawalAmountsForMarketToken(
+        DataStore dataStore,
+        Market.Props memory market,
+        MarketPrices memory prices,
+        uint256 marketTokensUsd
+    ) internal view returns(uint256, uint256) {
+        uint256 longTokenPoolAmount = getPoolAmount(dataStore, market, market.longToken);
+        uint256 shortTokenPoolAmount = getPoolAmount(dataStore, market, market.shortToken);
+
+        uint256 longTokenPoolUsd = longTokenPoolAmount * prices.longTokenPrice.max;
+        uint256 shortTokenPoolUsd = shortTokenPoolAmount * prices.shortTokenPrice.max;
+
+        uint256 totalPoolUsd = longTokenPoolUsd + shortTokenPoolUsd;
+
+        uint256 longTokenOutputUsd = Precision.mulDiv(marketTokensUsd, longTokenPoolUsd, totalPoolUsd);
+        uint256 shortTokenOutputUsd = Precision.mulDiv(marketTokensUsd, shortTokenPoolUsd, totalPoolUsd);
+
+        return (longTokenOutputUsd / prices.longTokenPrice.max, shortTokenOutputUsd / prices.shortTokenPrice.max);
     }
 }

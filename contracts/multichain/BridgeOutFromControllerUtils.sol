@@ -32,6 +32,9 @@ library BridgeOutFromControllerUtils {
         bytes32 key,
         bytes32[] memory dataList
     ) external {
+        if (srcChainId == 0) {
+            return;
+        }
         if (dataList.length == 0 || dataList[0] != Keys.GMX_DATA_ACTION) {
             return;
         }
