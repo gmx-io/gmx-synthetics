@@ -5,22 +5,9 @@ pragma solidity ^0.8.0;
 import "../../order/IBaseOrderUtils.sol";
 import "../../feature/FeatureUtils.sol";
 import "../../subaccount/SubaccountUtils.sol";
-import "./BaseGelatoRelayRouter.sol";
+import "./RelayUtils.sol";
 
 library SubaccountRouterUtils {
-    function validateCreateOrderParams(
-        address account,
-        IBaseOrderUtils.CreateOrderParams calldata params
-    ) external pure {
-        if (params.addresses.receiver != account) {
-            revert Errors.InvalidReceiver(params.addresses.receiver);
-        }
-
-        if (params.addresses.cancellationReceiver != address(0) && params.addresses.cancellationReceiver != account) {
-            revert Errors.InvalidCancellationReceiverForSubaccountOrder(params.addresses.cancellationReceiver, account);
-        }
-    }
-
     function handleSubaccountAction(
         DataStore dataStore,
         EventEmitter eventEmitter,

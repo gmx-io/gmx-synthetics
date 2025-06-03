@@ -47,7 +47,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         _validateCall(relayParams, subaccount, vars.structHash, block.chainid /* srcChainId */);
 
         for (uint256 i = 0; i < params.createOrderParamsList.length; i++) {
-            SubaccountRouterUtils.validateCreateOrderParams(account, params.createOrderParamsList[i]);
+            SubaccountUtils.validateCreateOrderParams(account, params.createOrderParamsList[i]);
         }
 
         vars.actionsCount =
@@ -88,7 +88,7 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
     {
         bytes32 structHash = RelayUtils.getCreateOrderStructHash(relayParams, subaccountApproval, account, params);
         _validateCall(relayParams, subaccount, structHash, block.chainid /* srcChainId */);
-        SubaccountRouterUtils.validateCreateOrderParams(account, params);
+        SubaccountUtils.validateCreateOrderParams(account, params);
         _handleSubaccountOrderAction(account, subaccount, 1, subaccountApproval);
 
         return

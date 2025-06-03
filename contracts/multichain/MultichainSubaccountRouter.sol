@@ -54,7 +54,7 @@ contract MultichainSubaccountRouter is MultichainRouter {
         _validateCall(relayParams, subaccount, structHash, srcChainId);
 
         for (uint256 i = 0; i < params.createOrderParamsList.length; i++) {
-            SubaccountRouterUtils.validateCreateOrderParams(account, params.createOrderParamsList[i]);
+            SubaccountUtils.validateCreateOrderParams(account, params.createOrderParamsList[i]);
         }
 
         uint256 actionsCount = params.createOrderParamsList.length +
@@ -95,7 +95,7 @@ contract MultichainSubaccountRouter is MultichainRouter {
     ) private {
         bytes32 structHash = RelayUtils.getCreateOrderStructHash(relayParams, subaccountApproval, account, params);
         _validateCall(relayParams, subaccount, structHash, srcChainId);
-        SubaccountRouterUtils.validateCreateOrderParams(account, params);
+        SubaccountUtils.validateCreateOrderParams(account, params);
         _handleSubaccountOrderAction(account, srcChainId, subaccount, 1, subaccountApproval);
     }
 
