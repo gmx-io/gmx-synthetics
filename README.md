@@ -871,3 +871,9 @@ To check contract dependencies:
 ```sh
 npx hardhat dependencies <contract file path>
 ```
+
+To update contracts info table in the `/docs` folder:
+
+```sh
+npx hardhat collect-deployments
+```
