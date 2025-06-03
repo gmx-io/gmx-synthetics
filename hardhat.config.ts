@@ -54,7 +54,7 @@ export const getExplorerUrl = (network) => {
   const urls = {
     arbitrum: "https://api.arbiscan.io/",
     avalanche: "https://api.snowtrace.io/",
-    botanix: "https://botanixscan.io/",
+    botanix: "https://api.routescan.io/v2/network/mainnet/evm/3637/etherscan/",
     snowscan: "https://api.snowscan.xyz/",
     arbitrumGoerli: "https://api-goerli.arbiscan.io/",
     arbitrumSepolia: "https://api-sepolia.arbiscan.io/",
@@ -250,7 +250,7 @@ const config: HardhatUserConfig = {
         network: "snowtrace",
         chainId: 43114,
         urls: {
-          apiURL: "https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan",
+          apiURL: "https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan/",
           browserURL: "https://avalanche.routescan.io",
         },
       },
@@ -258,7 +258,7 @@ const config: HardhatUserConfig = {
         network: "botanix",
         chainId: 3637,
         urls: {
-          apiURL: "https://api.routescan.io/v2/network/mainnet/evm/3637/etherscan",
+          apiURL: "https://api.routescan.io/v2/network/mainnet/evm/3637/etherscan/",
           browserURL: "https://botanixscan.io",
         },
       },

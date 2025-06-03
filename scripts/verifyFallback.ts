@@ -15,6 +15,14 @@ const apiKey = hre.network.config.verify.etherscan.apiKey;
 // ARBISCAN_API_KEY=<api key> npx hardhat --network arbitrum verify --constructor-args ./verification/gov/govTimelockController.js --contract contracts/gov/GovTimelockController.sol:GovTimelockController 0x99Ff4D52e97813A1784bC4A1b37554DC3499D67e
 async function getIsContractVerified(apiUrl: string, address: string) {
   try {
+    // const url = new URL(`${apiUrl}api`);
+    // url.searchParams.set("module", "contract");
+    // url.searchParams.set("action", "getabi");
+    // url.searchParams.set("address", address);
+    // url.searchParams.set("apikey", apiKey);
+    //
+    // console.log("GET:", url.toString());
+
     const res: any = await got
       .get(`${apiUrl}api`, {
         searchParams: {
@@ -93,8 +101,15 @@ async function verifyForNetwork(verificationNetwork) {
       }
 
       if (isContractVerified) {
-        console.log(`${name} already verified: ${address}`);
-        continue;
+        let isVerified = true;
+        if (isContractVerified.message === "NOTOK") {
+          isVerified = false;
+        }
+
+        if (isVerified) {
+          console.log(`${name} already verified: ${address}`);
+          continue;
+        }
       }
 
       console.log("Verifying contract %s %s %s", name, address, argStr);
@@ -106,9 +121,14 @@ async function verifyForNetwork(verificationNetwork) {
       await new Promise((resolve, reject) => {
         exec(
           `npx hardhat verify ${contractArg} --network ${verificationNetwork} ${address} ${argStr}`,
-          (ex, stdout, stderr) => {
-            if (ex) {
-              reject(ex);
+          { timeout: 60_000 }, // 60,000 ms = 60 seconds
+          (error, stdout, stderr) => {
+            if (error) {
+              if (error.killed) {
+                reject(new Error("Process timed out and was killed"));
+              } else {
+                reject(error);
+              }
               return;
             }
             if (stderr) {
