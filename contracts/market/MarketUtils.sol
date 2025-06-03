@@ -2223,6 +2223,8 @@ library MarketUtils {
     // @dev get the min collateral factor
     // @param dataStore DataStore
     // @param market the market to check
+    // @notice Should always be larger than minCollateralFactorForLiquidation
+    // to ensure users cannot create immediately liquidatable positions.
     function getMinCollateralFactor(DataStore dataStore, address market) internal view returns (uint256) {
         return dataStore.getUint(Keys.minCollateralFactorKey(market));
     }
@@ -2230,6 +2232,7 @@ library MarketUtils {
     // @dev get the min collateral factor for liquidation
     // @param dataStore DataStore
     // @param market the market to check
+    // @notice Should be lower than minCollateralFactor to prevent immediately liquidatable positions.
     function getMinCollateralFactorForLiquidation(DataStore dataStore, address market) internal view returns (uint256) {
         return dataStore.getUint(Keys.minCollateralFactorForLiquidationKey(market));
     }
