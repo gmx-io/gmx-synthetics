@@ -9,14 +9,19 @@ import "./IMultichainTransferRouter.sol";
 
 contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, MultichainRouter {
     IMultichainProvider public multichainProvider;
+    address private deployer;
 
     constructor(
         BaseConstructorParams memory params
     ) MultichainRouter(params) BaseRouter(params.router, params.roleStore, params.dataStore, params.eventEmitter) {
+        deployer = msg.sender;
         // leave empty, use initialize instead
     }
 
     function initialize(address _multichainProvider) external initializer {
+        if (msg.sender != deployer) {
+            revert Errors.InvalidInitializer();
+        }
         if (_multichainProvider == address(0)) {
             revert Errors.InvalidMultichainProvider(address(0));
         }

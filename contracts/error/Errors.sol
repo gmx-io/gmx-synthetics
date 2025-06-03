@@ -450,6 +450,7 @@ library Errors {
     error InvalidEid(uint256 eid);
     error InvalidDestinationChainId(uint256 desChainId);
     error TokenPermitsNotAllowedForMultichain();
+    error InvalidInitializer();
     error InvalidMultichainProvider(address provider);
     error InvalidMultichainEndpoint(address endpoint);
     error UnableToPayOrderFee();
