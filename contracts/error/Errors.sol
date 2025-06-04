@@ -249,7 +249,6 @@ library Errors {
         uint256 maxRefPriceDeviationFactor
     );
     error InvalidBlockRangeSet(uint256 largestMinBlockNumber, uint256 smallestMaxBlockNumber);
-    error EmptyChainlinkPaymentToken();
     error NonAtomicOracleProvider(address provider);
 
     // OracleModule errors

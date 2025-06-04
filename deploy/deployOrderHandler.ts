@@ -27,7 +27,7 @@ const func = createDeployFunction({
     const { deployer } = await getNamedAccounts();
     const { execute } = deployments;
 
-    if (!["arbitrum", "avalanche"].includes(network.name)) {
+    if (!["arbitrum", "avalanche", "botanix"].includes(network.name)) {
       await execute("ReferralStorage", { from: deployer, log: true }, "setHandler", deployedContract.address, true);
     }
 

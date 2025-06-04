@@ -131,7 +131,7 @@ contract ChainlinkDataStreamProvider is IOracleProvider {
         address feeToken = dataStore.getAddress(Keys.CHAINLINK_PAYMENT_TOKEN);
 
         if (feeToken == address(0)) {
-            revert Errors.EmptyChainlinkPaymentToken();
+            return new bytes(0);
         }
 
         return abi.encode(feeToken);
