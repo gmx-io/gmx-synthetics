@@ -329,6 +329,8 @@ library Keys {
     // @dev key for lent position impact pool amount
     bytes32 public constant LENT_POSITION_IMPACT_POOL_AMOUNT = keccak256(abi.encode("LENT_POSITION_IMPACT_POOL_AMOUNT"));
     bytes32 public constant MAX_LENDABLE_IMPACT_FACTOR = keccak256(abi.encode("MAX_LENDABLE_IMPACT_FACTOR"));
+    bytes32 public constant MAX_LENDABLE_IMPACT_FACTOR_FOR_WITHDRAWALS = keccak256(abi.encode("MAX_LENDABLE_IMPACT_FACTOR_FOR_WITHDRAWALS"));
+    bytes32 public constant MAX_LENDABLE_IMPACT_USD = keccak256(abi.encode("MAX_LENDABLE_IMPACT_USD"));
     // @dev key for total pending position impact amount
     bytes32 public constant TOTAL_PENDING_IMPACT_AMOUNT = keccak256(abi.encode("TOTAL_PENDING_IMPACT_AMOUNT"));
     // @dev key for min position impact pool amount
@@ -1397,6 +1399,20 @@ library Keys {
     function maxLendableImpactFactorKey(address market) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             MAX_LENDABLE_IMPACT_FACTOR,
+            market
+        ));
+    }
+
+    function maxLendableImpactFactorForWithdrawalsKey(address market) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            MAX_LENDABLE_IMPACT_FACTOR_FOR_WITHDRAWALS,
+            market
+        ));
+    }
+
+    function maxLendableImpactUsdKey(address market) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            MAX_LENDABLE_IMPACT_USD,
             market
         ));
     }
