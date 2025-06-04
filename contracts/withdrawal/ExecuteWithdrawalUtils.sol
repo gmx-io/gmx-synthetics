@@ -430,7 +430,7 @@ library ExecuteWithdrawalUtils {
 
         uint256 poolValue = poolValueInfo.poolValue.toUint256();
         uint256 marketTokensSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(market.marketToken)));
-        uint256 marketTokensUsd = MarketUtils.marketTokenAmountToUsd(marketTokenAmount, poolValue, marketTokensSupply);
+        uint256 withdrawalUsd = MarketUtils.marketTokenAmountToUsd(marketTokenAmount, poolValue, marketTokensSupply);
 
         MarketEventUtils.emitMarketPoolValueInfo(
             params.eventEmitter,
@@ -440,11 +440,11 @@ library ExecuteWithdrawalUtils {
             marketTokensSupply
         );
 
-        return MarketUtils.getWithdrawalAmountsForMarketToken(
+        return MarketUtils.getProportionalAmounts(
             params.dataStore,
             market,
             prices,
-            marketTokensUsd
+            withdrawalUsd
         );
     }
 
@@ -452,17 +452,17 @@ library ExecuteWithdrawalUtils {
     // it can cause withdrawals to not be executed
     function validateMaxLendableFactor(
         DataStore dataStore,
-        Market.Props market,
+        Market.Props memory market,
         MarketUtils.MarketPrices memory prices
     ) internal view {
         uint256 longTokenUsd = MarketUtils.getPoolAmount(dataStore, market, market.longToken)  * prices.longTokenPrice.min;
         uint256 shortTokenUsd = MarketUtils.getPoolAmount(dataStore, market, market.shortToken)  * prices.shortTokenPrice.min;
         uint256 poolUsd = longTokenUsd + shortTokenUsd;
 
-        uint256 maxLendableFactor = dataStore.getUint(Keys.maxLendableImpactFactorForWithdrawalsKey(market));
+        uint256 maxLendableFactor = dataStore.getUint(Keys.maxLendableImpactFactorForWithdrawalsKey(market.marketToken));
         uint256 maxLendableUsd = Precision.applyFactor(poolUsd, maxLendableFactor);
 
-        uint256 lentAmount = dataStore.getUint(Keys.lentPositionImpactPoolAmountKey(market));
+        uint256 lentAmount = dataStore.getUint(Keys.lentPositionImpactPoolAmountKey(market.marketToken));
         uint256 lentUsd = lentAmount * prices.indexTokenPrice.max;
 
         if (lentUsd > maxLendableUsd) {

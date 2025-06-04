@@ -61,6 +61,9 @@ library Errors {
     error EmptyPositionImpactWithdrawalAmount();
     error OraclePriceOutdated();
     error EmptyTarget();
+    error EmptyFundingAccount();
+    error EmptyReduceLentAmount();
+    error ReductionExceedsLentAmount(uint256 lentAmount, uint256 totalReductionAmount);
 
     // GlvDepositStoreUtils errors
     error GlvDepositNotFound(bytes32 key);

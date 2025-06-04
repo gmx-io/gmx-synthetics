@@ -15,6 +15,8 @@ import {MarketToken} from "./MarketToken.sol";
 import {MarketUtils} from "./MarketUtils.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {SignedMath} from "@openzeppelin/contracts/utils/math/SignedMath.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IOracle } from "../oracle/IOracle.sol";
 import "../position/PositionUtils.sol";
 
@@ -24,6 +26,7 @@ library MarketPositionImpactPoolUtils {
     using SignedMath for int256;
     using SafeCast for int256;
     using SafeCast for uint256;
+    using SafeERC20 for IERC20;
 
     using Market for Market.Props;
 
@@ -37,10 +40,10 @@ library MarketPositionImpactPoolUtils {
     function withdrawFromPositionImpactPool(
         DataStore dataStore,
         EventEmitter eventEmitter,
+        IOracle oracle,
         address market,
         address receiver,
-        uint256 amount,
-        IOracle oracle
+        uint256 amount
     ) external {
         require(amount > 0, "Amount must be greater than 0");
 
@@ -104,7 +107,7 @@ library MarketPositionImpactPoolUtils {
         // Calculate amount of tokens to withdraw:
         // We want to withdraw long and short tokens from the pool
         // at the current pool token ratio
-        (uint256 longTokenWithdrawalAmount, uint256 shortTokenWithdrawalAmount) = MarketUtils.getWithdrawalAmountsForMarketToken(
+        (uint256 longTokenWithdrawalAmount, uint256 shortTokenWithdrawalAmount) = MarketUtils.getProportionalAmounts(
             dataStore,
             marketProps,
             prices,
@@ -146,6 +149,69 @@ library MarketPositionImpactPoolUtils {
             market,
             receiver,
             amount
+        );
+    }
+
+    function reduceLentAmount(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        IOracle oracle,
+        address market,
+        address fundingAccount,
+        uint256 reductionAmount
+    ) external {
+        Market.Props memory marketProps = MarketStoreUtils.get(dataStore, market);
+        MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(oracle, marketProps);
+
+        uint256 lentAmount = dataStore.getUint(Keys.lentPositionImpactPoolAmountKey(market));
+
+        if (reductionAmount > lentAmount) {
+            revert Errors.ReductionExceedsLentAmount(lentAmount, reductionAmount);
+        }
+
+        (uint256 longTokenAmount, uint256 shortTokenAmount) = MarketUtils.getProportionalAmounts(
+            dataStore,
+            marketProps,
+            prices,
+            reductionAmount * prices.indexTokenPrice.max
+        );
+
+        MarketUtils.applyDeltaToPoolAmount(
+            dataStore,
+            eventEmitter,
+            marketProps,
+            marketProps.longToken,
+            longTokenAmount.toInt256()
+        );
+
+        MarketUtils.applyDeltaToPoolAmount(
+            dataStore,
+            eventEmitter,
+            marketProps,
+            marketProps.shortToken,
+            shortTokenAmount.toInt256()
+        );
+
+        uint256 nextValue = dataStore.decrementUint(Keys.lentPositionImpactPoolAmountKey(market), reductionAmount);
+        MarketEventUtils.emitLentPositionImpactPoolAmountUpdated(eventEmitter, market, reductionAmount.toInt256(), nextValue);
+
+        if (longTokenAmount > 0) {
+            IERC20(marketProps.longToken).safeTransferFrom(fundingAccount, market, longTokenAmount);
+        }
+
+        if (shortTokenAmount > 0) {
+            IERC20(marketProps.shortToken).safeTransferFrom(fundingAccount, market, shortTokenAmount);
+        }
+
+        MarketUtils.validateMarketTokenBalance(dataStore, market);
+
+        MarketEventUtils.emitLentImpactAmountReduction(
+            eventEmitter,
+            market,
+            fundingAccount,
+            longTokenAmount,
+            shortTokenAmount,
+            reductionAmount
         );
     }
 }

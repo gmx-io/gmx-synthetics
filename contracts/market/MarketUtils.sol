@@ -3207,11 +3207,11 @@ library MarketUtils {
             + cache.affiliateRewardAmount;
     }
 
-    function getWithdrawalAmountsForMarketToken(
+    function getProportionalAmounts(
         DataStore dataStore,
         Market.Props memory market,
         MarketPrices memory prices,
-        uint256 marketTokensUsd
+        uint256 totalUsd
     ) internal view returns(uint256, uint256) {
         uint256 longTokenPoolAmount = getPoolAmount(dataStore, market, market.longToken);
         uint256 shortTokenPoolAmount = getPoolAmount(dataStore, market, market.shortToken);
@@ -3221,8 +3221,8 @@ library MarketUtils {
 
         uint256 totalPoolUsd = longTokenPoolUsd + shortTokenPoolUsd;
 
-        uint256 longTokenOutputUsd = Precision.mulDiv(marketTokensUsd, longTokenPoolUsd, totalPoolUsd);
-        uint256 shortTokenOutputUsd = Precision.mulDiv(marketTokensUsd, shortTokenPoolUsd, totalPoolUsd);
+        uint256 longTokenOutputUsd = Precision.mulDiv(totalUsd, longTokenPoolUsd, totalPoolUsd);
+        uint256 shortTokenOutputUsd = Precision.mulDiv(totalUsd, shortTokenPoolUsd, totalPoolUsd);
 
         return (longTokenOutputUsd / prices.longTokenPrice.max, shortTokenOutputUsd / prices.shortTokenPrice.max);
     }

@@ -690,18 +690,44 @@ library MarketEventUtils {
         address receiver,
         uint256 amount
     ) external {
-
         EventUtils.EventLogData memory eventData;
 
-        eventData.addressItems.initItems(1);
+        eventData.addressItems.initItems(2);
         eventData.addressItems.setItem(0, "market", market);
+        eventData.addressItems.setItem(1, "receiver", receiver);
 
         eventData.uintItems.initItems(1);
         eventData.uintItems.setItem(0, "amount", amount);
 
         eventEmitter.emitEventLog1(
             "PositionImpactPoolWithdrawal",
-            Cast.toBytes32(receiver),
+            Cast.toBytes32(market),
+            eventData
+        );
+    }
+
+    function emitLentImpactAmountReduction(
+        EventEmitter eventEmitter,
+        address market,
+        address fundingAccount,
+        uint256 longTokenAmount,
+        uint256 shortTokenAmount,
+        uint256 reductionAmount
+    ) external {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "market", market);
+        eventData.addressItems.setItem(1, "fundingAccount", fundingAccount);
+
+        eventData.uintItems.initItems(3);
+        eventData.uintItems.setItem(0, "longTokenAmount", longTokenAmount);
+        eventData.uintItems.setItem(1, "shortTokenAmount", shortTokenAmount);
+        eventData.uintItems.setItem(2, "reductionAmount", reductionAmount);
+
+        eventEmitter.emitEventLog1(
+            "LentImpactAmountReduction",
+            Cast.toBytes32(market),
             eventData
         );
     }
