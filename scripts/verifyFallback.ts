@@ -74,7 +74,11 @@ async function verifyForNetwork(verificationNetwork) {
 
   const unverifiedContracts = [];
 
+  let index = 0;
   for (const [name, deployment] of Object.entries(allDeployments)) {
+    console.log("Checking contract %s of %s", index + 1, Object.keys(allDeployments).length);
+    index++;
+
     const start = Date.now();
     const { address, args } = deployment;
     const argStr = args.map((arg) => encodeArg(arg)).join(" ");
