@@ -1143,6 +1143,8 @@ const config: {
       decimals: 18,
       wrappedNative: true,
       transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x00039d9e45394f473ab1f050a1b963e6b05351e52d71e507509ada0c95ed75b8",
+      dataStreamFeedDecimals: 18,
     },
   },
   arbitrumSepolia: {
