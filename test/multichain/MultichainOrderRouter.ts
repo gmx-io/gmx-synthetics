@@ -39,6 +39,7 @@ describe("MultichainOrderRouter", () => {
     usdc,
     referralStorage,
     layerZeroProvider,
+    chainlinkPriceFeedProvider,
     mockStargatePoolUsdc,
     mockStargatePoolWnt;
   let relaySigner;
@@ -58,6 +59,7 @@ describe("MultichainOrderRouter", () => {
       usdc,
       referralStorage,
       layerZeroProvider,
+      chainlinkPriceFeedProvider,
       mockStargatePoolUsdc,
       mockStargatePoolWnt,
     } = fixture.contracts);
@@ -177,6 +179,59 @@ describe("MultichainOrderRouter", () => {
         "1920055983360448",
         expandDecimals(1, 12)
       ); // 0.004 - ~0.0021 = ~0.0019 ETH
+    });
+
+    it("execution and relayer fee are paid in USDC through the swapPath", async () => {
+      // enable keeper fee payment
+      await dataStore.setUint(keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1));
+
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0);
+      expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(0);
+
+      const feeToken = usdc.address;
+      const feeAmount = expandDecimals(30, 6); // 30 USDC (execution fee + relay fee in USDC = 0.004 ETH + 0.002 ETH = 0.006 ETH = 30 USDC)
+      const feeSwapPath = [ethUsdMarket.marketToken];
+
+      await mintAndBridge(fixture, { account: user1, token: usdc, tokenAmount: feeAmount }); // 30 USDC
+      await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: collateralDeltaAmount }); // 1 ETH
+
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(feeAmount);
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(
+        collateralDeltaAmount
+      );
+
+      createOrderParams.feeParams = {
+        feeToken,
+        feeAmount,
+        feeSwapPath,
+      };
+      createOrderParams.oracleParams = {
+        tokens: [wnt.address, usdc.address],
+        providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
+        data: ["0x", "0x"],
+      };
+      createOrderParams.params.numbers.sizeDeltaUsd = decimalToFloat(20000); // 5x leverage
+      await sendCreateOrder(createOrderParams);
+
+      expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(relayFeeAmount);
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0);
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0);
+
+      await executeOrder(fixture, { gasUsageLabel: "executeOrder" });
+
+      expect(await getOrderCount(dataStore)).to.eq(0);
+      expect(await getPositionCount(dataStore)).to.eq(1);
+      // execution fee is ~0.002113 ETH and the excess is returned to user's multichain balance
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).closeTo(
+        "1920055983360448",
+        expandDecimals(1, 12)
+      ); // 0.004 - ~0.0021 = ~0.0019 ETH
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0);
+
+      // user's position is created with 1 ETH collateral (execution fee is paid in USDC, from the usdc fee amount)
+      const positionKey0 = getPositionKey(user1.address, ethUsdMarket.marketToken, wnt.address, true);
+      const position = await reader.getPosition(dataStore.address, positionKey0);
+      expect(position.numbers.collateralAmount).to.eq(collateralDeltaAmount);
     });
 
     it("liquidation increases user's multichain balance", async () => {
