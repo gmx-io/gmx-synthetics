@@ -8,14 +8,7 @@ const func = createDeployFunction({
   dependencyNames: ["Oracle", "DataStore"],
   libraryNames: ["MarketPositionImpactPoolUtils"],
   getDeployArgs: async ({ dependencyContracts }) => {
-    const { deployer } = await hre.getNamedAccounts();
-    return [
-      timelockDelay,
-      [deployer],
-      [deployer],
-      dependencyContracts["Oracle"].address,
-      dependencyContracts["DataStore"].address,
-    ];
+    return [timelockDelay, [], [], dependencyContracts["Oracle"].address, dependencyContracts["DataStore"].address];
   },
   afterDeploy: async ({ deployedContract }) => {
     await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");

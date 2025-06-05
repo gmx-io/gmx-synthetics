@@ -60,6 +60,7 @@ library Errors {
     error EmptyPositionImpactWithdrawalAmount();
     error OraclePriceOutdated();
     error EmptyTarget();
+    error TargetIsNotAContract(address targer);
 
     // GlvDepositStoreUtils errors
     error GlvDepositNotFound(bytes32 key);
