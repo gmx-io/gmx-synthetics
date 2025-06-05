@@ -3809,22 +3809,13 @@ const config: {
 
       ...baseMarketConfig,
       ...singleTokenMarketConfig,
-      reserveFactor: percentageToFloat("100%"),
-      openInterestReserveFactor: percentageToFloat("100%"),
-      maxPnlFactorForTraders: percentageToFloat("50%"),
 
       ...fundingRateConfig_High,
       ...borrowingRateConfig_HighMax_WithHigherBase,
 
-      negativePositionImpactFactor: exponentToFloat("5e-10"),
-      positivePositionImpactFactor: exponentToFloat("2.5e-10"),
-      positionImpactExponentFactor: exponentToFloat("2.2e0"),
-
-      positiveMaxPositionImpactFactor: percentageToFloat("0.5%"),
-      negativeMaxPositionImpactFactor: percentageToFloat("0.5%"),
-      maxPositionImpactFactorForLiquidations: bigNumberify(0),
-
-      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
+      reserveFactor: percentageToFloat("100%"),
+      openInterestReserveFactor: percentageToFloat("100%"),
+      maxPnlFactorForTraders: percentageToFloat("50%"),
 
       maxOpenInterest: decimalToFloat(100),
       maxPoolUsdForDeposit: decimalToFloat(150),
