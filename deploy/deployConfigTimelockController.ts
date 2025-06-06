@@ -6,7 +6,7 @@ const timelockDelay = 24 * 60 * 60;
 const func = createDeployFunction({
   contractName: "ConfigTimelockController",
   dependencyNames: ["Oracle", "DataStore", "EventEmitter"],
-  libraryNames: ["MarketPositionImpactPoolUtils"],
+  libraryNames: ["PositionImpactPoolUtils"],
   getDeployArgs: async ({ dependencyContracts }) => {
     const { deployer } = await hre.getNamedAccounts();
     return [

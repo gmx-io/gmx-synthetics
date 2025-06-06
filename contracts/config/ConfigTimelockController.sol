@@ -15,10 +15,11 @@ import {TimelockController} from "@openzeppelin/contracts/governance/TimelockCon
 import {OracleModule} from "../oracle/OracleModule.sol";
 import {OracleUtils} from "../oracle/OracleUtils.sol";
 import {Oracle} from "../oracle/Oracle.sol";
-import {MarketPositionImpactPoolUtils} from "../market/MarketPositionImpactPoolUtils.sol";
+import {PositionImpactPoolUtils} from "../market/PositionImpactPoolUtils.sol";
 import {Chain} from "../chain/Chain.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract ConfigTimelockController is TimelockController, OracleModule {
+contract ConfigTimelockController is TimelockController, OracleModule, ReentrancyGuard {
 
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
@@ -64,7 +65,7 @@ contract ConfigTimelockController is TimelockController, OracleModule {
         address receiver,
         uint256 amount
     ) external onlySelf {
-        MarketPositionImpactPoolUtils.withdrawFromPositionImpactPool(
+        PositionImpactPoolUtils.withdrawFromPositionImpactPool(
             dataStore,
             eventEmitter,
             oracle,
@@ -79,7 +80,7 @@ contract ConfigTimelockController is TimelockController, OracleModule {
         address fundingAccount,
         uint256 reductionAmount
     ) external onlySelf {
-        MarketPositionImpactPoolUtils.reduceLentAmount(
+        PositionImpactPoolUtils.reduceLentAmount(
             dataStore,
             eventEmitter,
             oracle,

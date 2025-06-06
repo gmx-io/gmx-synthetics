@@ -20,9 +20,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import { IOracle } from "../oracle/IOracle.sol";
 import "../position/PositionUtils.sol";
 
-// @title MarketUtils
-// @dev Library for market functions
-library MarketPositionImpactPoolUtils {
+library PositionImpactPoolUtils {
     using SignedMath for int256;
     using SafeCast for int256;
     using SafeCast for uint256;
@@ -163,6 +161,13 @@ library MarketPositionImpactPoolUtils {
         Market.Props memory marketProps = MarketStoreUtils.get(dataStore, market);
         MarketUtils.MarketPrices memory prices = MarketUtils.getMarketPrices(oracle, marketProps);
 
+        PositionUtils.updateFundingAndBorrowingState(
+            dataStore,
+            eventEmitter,
+            marketProps,
+            prices
+        );
+
         uint256 lentAmount = dataStore.getUint(Keys.lentPositionImpactPoolAmountKey(market));
 
         if (reductionAmount > lentAmount) {
@@ -175,6 +180,14 @@ library MarketPositionImpactPoolUtils {
             prices,
             reductionAmount * prices.indexTokenPrice.max
         );
+
+        if (longTokenAmount > 0) {
+            IERC20(marketProps.longToken).safeTransferFrom(fundingAccount, market, longTokenAmount);
+        }
+
+        if (shortTokenAmount > 0) {
+            IERC20(marketProps.shortToken).safeTransferFrom(fundingAccount, market, shortTokenAmount);
+        }
 
         MarketUtils.applyDeltaToPoolAmount(
             dataStore,
@@ -194,14 +207,6 @@ library MarketPositionImpactPoolUtils {
 
         uint256 nextValue = dataStore.decrementUint(Keys.lentPositionImpactPoolAmountKey(market), reductionAmount);
         MarketEventUtils.emitLentPositionImpactPoolAmountUpdated(eventEmitter, market, reductionAmount.toInt256(), nextValue);
-
-        if (longTokenAmount > 0) {
-            IERC20(marketProps.longToken).safeTransferFrom(fundingAccount, market, longTokenAmount);
-        }
-
-        if (shortTokenAmount > 0) {
-            IERC20(marketProps.shortToken).safeTransferFrom(fundingAccount, market, shortTokenAmount);
-        }
 
         MarketUtils.validateMarketTokenBalance(dataStore, market);
 
