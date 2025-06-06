@@ -3801,7 +3801,38 @@ const config: {
       fundingFactor: decimalToFloat(16, 7), // ~5000% per year for a 100% skew
     },
   ],
-  botanix: [],
+  botanix: [
+    {
+      tokens: { indexToken: "BTC", longToken: "pBTC", shortToken: "pBTC" },
+      virtualTokenIdForIndexToken: hashString("PERP:BTC/USD"),
+
+      ...singleTokenMarketConfig,
+      ...fundingRateConfig_SingleToken,
+      ...borrowingRateConfig_HighMax_WithLowerBase,
+
+      reserveFactor: percentageToFloat("105%"),
+      openInterestReserveFactor: percentageToFloat("100%"),
+
+      maxLongTokenPoolAmount: expandDecimals(1, 18),
+      maxShortTokenPoolAmount: expandDecimals(1, 18),
+
+      maxPoolUsdForDeposit: decimalToFloat(1000),
+
+      positionImpactExponentFactor: exponentToFloat("1e0"),
+      negativePositionImpactFactor: exponentToFloat("2e-15"),
+      positivePositionImpactFactor: exponentToFloat("1e-15"),
+
+      positionImpactPoolDistributionRate: bigNumberify(0),
+      minPositionImpactPoolAmount: bigNumberify(0),
+
+      minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
+
+      // minCollateralFactor of 0.005 (0.5%) when open interest is 83,000,000 USD
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6e-11"),
+
+      maxOpenInterest: decimalToFloat(1000),
+    },
+  ],
   avalancheFuji: [
     {
       ...baseMarketConfig,

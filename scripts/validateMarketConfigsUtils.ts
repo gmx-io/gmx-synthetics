@@ -514,6 +514,14 @@ const recommendedMarketConfig = {
       expectedPositionImpactRatio: 20_000,
     },
   },
+  botanix: {
+    "BTC:pBTC:pBTC": {
+      negativePositionImpactFactor: 0,
+      negativeSwapImpactFactor: 0,
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+  },
 };
 
 const configTokenMapping = {
