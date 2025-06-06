@@ -948,7 +948,7 @@ library MarketUtils {
             cache.longTokenUsd = getPoolAmount(dataStore, market, market.longToken)  * prices.longTokenPrice.min;
             cache.shortTokenUsd = getPoolAmount(dataStore, market, market.shortToken)  * prices.shortTokenPrice.min;
 
-            cache.maxLendableUsd = getMaxLendableUsd(
+            cache.maxLendableUsd = getMaxLendableUsdAvailable(
                 dataStore,
                 market.marketToken,
                 cache.longTokenUsd + cache.shortTokenUsd,
@@ -963,7 +963,7 @@ library MarketUtils {
         return priceImpactUsd;
     }
 
-    function getMaxLendableUsd(
+    function getMaxLendableUsdAvailable(
         DataStore dataStore,
         address market,
         uint256 poolUsd,
