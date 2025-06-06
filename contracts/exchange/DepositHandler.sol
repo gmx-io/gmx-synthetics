@@ -125,6 +125,12 @@ contract DepositHandler is IDepositHandler, BaseHandler {
         }
     }
 
+    // @dev The executeDepositFromController function was introduced to reduce cross-contract dependencies.
+    // This adds an extra external call during deposit execution (e.g. during shifts), which does not adjust
+    // params.startingGas for the 63/64 gas rule. As a result, gas usage may be overestimated.
+    // Currently, this has no net impact because deposits using this path have executionFee set to zero,
+    // so no gas-based fee is charged. If future uses of this function include deposits with a nonzero
+    // executionFee, the lack of gas correction should be revisited.
     function executeDepositFromController(
         IExecuteDepositUtils.ExecuteDepositParams calldata executeDepositParams,
         Deposit.Props calldata deposit

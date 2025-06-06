@@ -283,6 +283,7 @@ export const IS_MULTICHAIN_ENDPOINT_ENABLED = hashString("IS_MULTICHAIN_ENDPOINT
 export const IS_RELAY_FEE_EXCLUDED = hashString("IS_RELAY_FEE_EXCLUDED");
 export const IS_SRC_CHAIN_ID_ENABLED = hashString("IS_SRC_CHAIN_ID_ENABLED");
 export const EID_TO_SRC_CHAIN_ID = hashString("EID_TO_SRC_CHAIN_ID");
+export const POSITION_LAST_SRC_CHAIN_ID = hashString("POSITION_LAST_SRC_CHAIN_ID");
 
 export const VALID_FROM_TIME = hashString("VALID_FROM_TIME");
 
@@ -898,4 +899,8 @@ export function isSrcChainIdEnabledKey(srcChainId: number) {
 
 export function eidToSrcChainId(eid: number) {
   return hashData(["bytes32", "uint32"], [EID_TO_SRC_CHAIN_ID, eid]);
+}
+
+export function positionLastSrcChainIdKey(positionKey: string) {
+  return hashData(["bytes32", "bytes32"], [POSITION_LAST_SRC_CHAIN_ID, positionKey]);
 }
