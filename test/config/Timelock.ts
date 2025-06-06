@@ -671,6 +671,10 @@ describe("Timelock", () => {
     it("should reduce lent amount", async () => {
       const lentAmount = expandDecimals(10_000, 6); // 1,000 USDC
       await dataStore.setUint(keys.lentPositionImpactPoolAmountKey(ethUsdMarket.marketToken), lentAmount);
+      await usdc.mint(user2.address, expandDecimals(10_000, 6));
+      await wnt.mint(user2.address, expandDecimals(10_000, 18));
+      await wnt.connect(user2).approve(configTimelockController.address, expandDecimals(100000, 18));
+      await usdc.connect(user2).approve(configTimelockController.address, expandDecimals(100000, 18));
 
       await handleDeposit(fixture, {
         create: {
@@ -709,6 +713,10 @@ describe("Timelock", () => {
       await timelockConfig
         .connect(timelockAdmin)
         .executeWithOraclePrice(target, payload, constants.HashZero, constants.HashZero, oracleParams);
+
+      const updatedLentAmount = await dataStore.getUint(keys.lentPositionImpactPoolAmountKey(ethUsdMarket.marketToken));
+      const expectedAmount = lentAmount.sub(reductionAmount);
+      expect(updatedLentAmount).to.eq(expectedAmount);
     });
   });
 });
