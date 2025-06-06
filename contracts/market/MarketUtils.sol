@@ -145,7 +145,6 @@ library MarketUtils {
         uint256 maxLendableUsd;
         uint256 maxPriceImpactUsd;
         uint256 usdRequiredToBeLent;
-        uint256 lendableDiff;
     }
 
     // @dev get the market token's price
