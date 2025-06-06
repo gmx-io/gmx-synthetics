@@ -140,6 +140,7 @@ library MarketUtils {
         uint256 impactPoolUsd;
         int256 totalPendingImpactAmount;
         int256 totalImpactPoolAmount;
+        uint256 lentAmount;
         uint256 longTokenUsd;
         uint256 shortTokenUsd;
         uint256 maxLendableUsd;
@@ -922,6 +923,13 @@ library MarketUtils {
         // price impact that can be used to pay for positive price impact
         cache.totalImpactPoolAmount = cache.impactPoolAmount.toInt256() - cache.totalPendingImpactAmount;
 
+        // due to the possibility of price impact factors changing, it is not
+        // guaranteed for the lentAmount to be 0 after all positions are settled
+        // however, deducting the lentAmount from the totalImpactPoolAmount
+        // can help to have the lentAmount be 0 when all positions are settled
+        cache.lentAmount = dataStore.getUint(Keys.lentPositionImpactPoolAmountKey(market.marketToken));
+        cache.totalImpactPoolAmount -= cache.lentAmount.toInt256();
+
         // if the totalImpactPoolAmount is less than zero that means there are no funds
         // to support a positive price impact
         if (cache.totalImpactPoolAmount <= 0) {
@@ -952,7 +960,8 @@ library MarketUtils {
                 dataStore,
                 market.marketToken,
                 cache.longTokenUsd + cache.shortTokenUsd,
-                prices.indexTokenPrice.max
+                prices.indexTokenPrice.max,
+                cache.lentAmount
             );
 
             if (cache.usdRequiredToBeLent > cache.maxLendableUsd) {
@@ -967,7 +976,8 @@ library MarketUtils {
         DataStore dataStore,
         address market,
         uint256 poolUsd,
-        uint256 indexTokenPrice
+        uint256 indexTokenPrice,
+        uint256 lentAmount
     ) internal view returns (uint256) {
         uint256 maxLendableFactor = dataStore.getUint(Keys.maxLendableImpactFactorKey(market));
         uint256 maxLendableUsd = Precision.applyFactor(poolUsd, maxLendableFactor);
@@ -977,7 +987,6 @@ library MarketUtils {
             maxLendableUsd = maxLendableUsdConfig;
         }
 
-        uint256 lentAmount = dataStore.getUint(Keys.lentPositionImpactPoolAmountKey(market));
         uint256 lentUsd = lentAmount * indexTokenPrice;
 
         if (lentUsd > maxLendableUsd) {
