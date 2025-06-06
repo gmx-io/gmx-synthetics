@@ -8,7 +8,7 @@ const func = createDeployFunction({
   dependencyNames: ["Oracle", "DataStore"],
   libraryNames: ["MarketPositionImpactPoolUtils"],
   getDeployArgs: async ({ dependencyContracts }) => {
-    const { roles } = hre.gmx.getRoles();
+    const { roles } = await hre.gmx.getRoles();
     const executors = Object.keys(roles.TIMELOCK_ADMIN);
     return [
       timelockDelay,
