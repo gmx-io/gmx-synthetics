@@ -19,6 +19,7 @@ import {
   executeTimelock,
   getPositionImpactPoolWithdrawalPayload,
   getWithdrawTokensPayload,
+  getReduceLentAmountPayload,
 } from "../../utils/timelock";
 import { handleDeposit } from "../../utils/deposit";
 import { usingResult } from "../../utils/use";
@@ -600,6 +601,114 @@ describe("Timelock", () => {
       await expect(executeTimelock(timelockAdmin, target, payload)).to.be.revertedWith(
         "TimelockController: underlying transaction reverted"
       );
+    });
+  });
+
+  describe("ReduceLentAmount", () => {
+    let ethUsdMarket, chainlinkPriceFeedProvider;
+
+    beforeEach(async () => {
+      ({ ethUsdMarket, chainlinkPriceFeedProvider } = fixture.contracts);
+    });
+
+    const reductionAmount = expandDecimals(5_000, 6); // 5,000 USDC
+
+    it("check valid input", async () => {
+      await expect(
+        timelockConfig.connect(user2).signalReduceLentAmount(ethUsdMarket.marketToken, user2.address, reductionAmount)
+      )
+        .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
+        .withArgs(user2.address, "TIMELOCK_ADMIN");
+
+      await expect(
+        timelockConfig
+          .connect(timelockAdmin)
+          .signalReduceLentAmount(constants.AddressZero, user2.address, reductionAmount)
+      ).to.be.revertedWithCustomError(errorsContract, "EmptyMarket");
+
+      await expect(
+        timelockConfig
+          .connect(timelockAdmin)
+          .signalReduceLentAmount(ethUsdMarket.marketToken, constants.AddressZero, reductionAmount)
+      ).to.be.revertedWithCustomError(errorsContract, "EmptyFundingAccount");
+
+      await expect(
+        timelockConfig.connect(timelockAdmin).signalReduceLentAmount(ethUsdMarket.marketToken, user2.address, 0)
+      ).to.be.revertedWithCustomError(errorsContract, "EmptyReduceLentAmount");
+
+      await timelockConfig
+        .connect(timelockAdmin)
+        .signalReduceLentAmount(ethUsdMarket.marketToken, user2.address, reductionAmount);
+    });
+
+    it("should fail on too big reduction amount", async () => {
+      const lentAmount = expandDecimals(1_000, 6); // 1,000 USDC
+      await dataStore.setUint(keys.lentPositionImpactPoolAmountKey(ethUsdMarket.marketToken), lentAmount);
+
+      await timelockConfig
+        .connect(timelockAdmin)
+        .signalReduceLentAmount(ethUsdMarket.marketToken, user2.address, reductionAmount);
+
+      await time.increase(1 * 24 * 60 * 60 + 10);
+      const { target, payload } = await getReduceLentAmountPayload(
+        ethUsdMarket.marketToken,
+        user2.address,
+        reductionAmount
+      );
+      const oracleParams = {
+        tokens: [usdc.address, wnt.address],
+        providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
+        data: ["0x", "0x"],
+      };
+      // reduction amount too big
+      await expect(
+        timelockConfig
+          .connect(timelockAdmin)
+          .executeWithOraclePrice(target, payload, constants.HashZero, constants.HashZero, oracleParams)
+      ).to.be.revertedWith("TimelockController: underlying transaction reverted");
+    });
+
+    it("should reduce lent amount", async () => {
+      const lentAmount = expandDecimals(10_000, 6); // 1,000 USDC
+      await dataStore.setUint(keys.lentPositionImpactPoolAmountKey(ethUsdMarket.marketToken), lentAmount);
+
+      await handleDeposit(fixture, {
+        create: {
+          account: user2,
+          market: ethUsdMarket,
+          longTokenAmount: expandDecimals(1000, 18),
+          shortTokenAmount: expandDecimals(1000 * 5000, 6),
+        },
+        execute: {
+          precisions: [8, 18],
+          tokens: [wnt.address, usdc.address],
+          minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+          maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+        },
+      });
+
+      await dataStore.setAddress(keys.oracleProviderForTokenKey(wnt.address), chainlinkPriceFeedProvider.address);
+      await dataStore.setAddress(keys.oracleProviderForTokenKey(usdc.address), chainlinkPriceFeedProvider.address);
+
+      await timelockConfig
+        .connect(timelockAdmin)
+        .signalReduceLentAmount(ethUsdMarket.marketToken, user2.address, reductionAmount);
+
+      await time.increase(1 * 24 * 60 * 60 + 10);
+      const { target, payload } = await getReduceLentAmountPayload(
+        ethUsdMarket.marketToken,
+        user2.address,
+        reductionAmount
+      );
+      const oracleParams = {
+        tokens: [usdc.address, wnt.address],
+        providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
+        data: ["0x", "0x"],
+      };
+
+      await timelockConfig
+        .connect(timelockAdmin)
+        .executeWithOraclePrice(target, payload, constants.HashZero, constants.HashZero, oracleParams);
     });
   });
 });
