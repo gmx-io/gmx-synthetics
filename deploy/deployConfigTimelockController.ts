@@ -8,11 +8,10 @@ const func = createDeployFunction({
   dependencyNames: ["Oracle", "DataStore", "EventEmitter"],
   libraryNames: ["PositionImpactPoolUtils"],
   getDeployArgs: async ({ dependencyContracts }) => {
-    const { deployer } = await hre.getNamedAccounts();
     return [
       timelockDelay,
-      [deployer],
-      [deployer],
+      [],
+      [],
       dependencyContracts["Oracle"].address,
       dependencyContracts["DataStore"].address,
       dependencyContracts["EventEmitter"].address,

@@ -21,7 +21,7 @@ async function grantProposerRole(timelockConfig: string) {
     await configTimelockController.grantRole(EXECUTOR_ROLE, timelockConfig);
     await configTimelockController.revokeRole(TIMELOCK_ADMIN_ROLE, deployer);
   } else {
-    console.info("skipping configTimelockController role config, as deployer does not have access to update roles");
+    console.warn("skipping configTimelockController role config, as deployer does not have access to update roles");
   }
 }
 

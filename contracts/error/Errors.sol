@@ -64,6 +64,7 @@ library Errors {
     error EmptyFundingAccount();
     error EmptyReduceLentAmount();
     error ReductionExceedsLentAmount(uint256 lentAmount, uint256 totalReductionAmount);
+    error TargetIsNotAContract(address target);
 
     // GlvDepositStoreUtils errors
     error GlvDepositNotFound(bytes32 key);

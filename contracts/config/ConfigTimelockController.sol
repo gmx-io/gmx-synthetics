@@ -17,9 +17,9 @@ import {OracleUtils} from "../oracle/OracleUtils.sol";
 import {Oracle} from "../oracle/Oracle.sol";
 import {PositionImpactPoolUtils} from "../market/PositionImpactPoolUtils.sol";
 import {Chain} from "../chain/Chain.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {AccountUtils} from "../utils/AccountUtils.sol";
 
-contract ConfigTimelockController is TimelockController, OracleModule, ReentrancyGuard {
+contract ConfigTimelockController is TimelockController, OracleModule {
 
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
@@ -88,5 +88,12 @@ contract ConfigTimelockController is TimelockController, OracleModule, Reentranc
             fundingAccount,
             reductionAmount
         );
+    }
+
+    function _execute(address target, uint256 value, bytes calldata data) internal override {
+        if (!AccountUtils.isContract(target)) {
+            revert Errors.TargetIsNotAContract(target);
+        }
+        super._execute(target, value, data);
     }
 }
