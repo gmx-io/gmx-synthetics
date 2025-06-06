@@ -8,7 +8,15 @@ const func = createDeployFunction({
   dependencyNames: ["Oracle", "DataStore"],
   libraryNames: ["MarketPositionImpactPoolUtils"],
   getDeployArgs: async ({ dependencyContracts }) => {
-    return [timelockDelay, [], [], dependencyContracts["Oracle"].address, dependencyContracts["DataStore"].address];
+    const { roles } = hre.gmx.getRoles();
+    const executors = Object.keys(roles.TIMELOCK_ADMIN);
+    return [
+      timelockDelay,
+      executors,
+      executors,
+      dependencyContracts["Oracle"].address,
+      dependencyContracts["DataStore"].address,
+    ];
   },
   afterDeploy: async ({ deployedContract }) => {
     await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
