@@ -5,8 +5,8 @@ const timelockDelay = 24 * 60 * 60;
 
 const func = createDeployFunction({
   contractName: "ConfigTimelockController",
-  dependencyNames: ["Oracle", "DataStore"],
-  libraryNames: ["MarketPositionImpactPoolUtils"],
+  dependencyNames: ["Oracle", "DataStore", "EventEmitter"],
+  libraryNames: ["PositionImpactPoolUtils"],
   getDeployArgs: async ({ dependencyContracts }) => {
     const { roles } = await hre.gmx.getRoles();
     const executors = Object.keys(roles.TIMELOCK_ADMIN);
@@ -16,6 +16,7 @@ const func = createDeployFunction({
       executors,
       dependencyContracts["Oracle"].address,
       dependencyContracts["DataStore"].address,
+      dependencyContracts["EventEmitter"].address,
     ];
   },
   afterDeploy: async ({ deployedContract }) => {

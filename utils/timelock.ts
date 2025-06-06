@@ -190,3 +190,15 @@ export async function getWithdrawTokensPayload(token: string, receiver: string, 
     payload: layerZeroProvider.interface.encodeFunctionData("withdrawTokens", [token, receiver, amount]),
   };
 }
+
+export async function getReduceLentAmountPayload(market: string, fundingAccount: string, amount: BigNumber) {
+  const timelockController = await hre.ethers.getContract("ConfigTimelockController");
+  return {
+    target: timelockController.address,
+    payload: timelockController.interface.encodeFunctionData("reduceLentImpactAmount", [
+      market,
+      fundingAccount,
+      amount,
+    ]),
+  };
+}

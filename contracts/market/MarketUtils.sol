@@ -137,15 +137,15 @@ library MarketUtils {
 
     struct CapPositiveImpactUsdByPositionImpactPoolCache {
         uint256 impactPoolAmount;
+        uint256 impactPoolUsd;
         int256 totalPendingImpactAmount;
         int256 totalImpactPoolAmount;
+        uint256 lentAmount;
         uint256 longTokenUsd;
         uint256 shortTokenUsd;
-        uint256 maxLendableFactor;
         uint256 maxLendableUsd;
-        uint256 lentAmount;
-        uint256 lentUsd;
-        int256 maxPriceImpactUsd;
+        uint256 maxPriceImpactUsd;
+        uint256 usdRequiredToBeLent;
     }
 
     // @dev get the market token's price
@@ -923,37 +923,77 @@ library MarketUtils {
         // price impact that can be used to pay for positive price impact
         cache.totalImpactPoolAmount = cache.impactPoolAmount.toInt256() - cache.totalPendingImpactAmount;
 
+        // due to the possibility of price impact factors changing, it is not
+        // guaranteed for the lentAmount to be 0 after all positions are settled
+        // however, deducting the lentAmount from the totalImpactPoolAmount
+        // can help to have the lentAmount be 0 when all positions are settled
+        cache.lentAmount = dataStore.getUint(Keys.lentPositionImpactPoolAmountKey(market.marketToken));
+        cache.totalImpactPoolAmount -= cache.lentAmount.toInt256();
+
+        // if the totalImpactPoolAmount is less than zero that means there are no funds
+        // to support a positive price impact
         if (cache.totalImpactPoolAmount <= 0) {
             return 0;
         }
 
-        // capping the max lendable amount to a factor of the pool amount is mainly a sanity check to prevent
-        // the lent amount from being too large relative to the amounts in the pool
-        // trader pnl, borrowing fees, etc is not factored into this calculation
-        cache.longTokenUsd = getPoolAmount(dataStore, market, market.longToken)  * prices.longTokenPrice.min;
-        cache.shortTokenUsd = getPoolAmount(dataStore, market, market.shortToken)  * prices.shortTokenPrice.min;
-        cache.maxLendableFactor = dataStore.getUint(Keys.maxLendableImpactFactorKey(market.marketToken));
-        cache.maxLendableUsd = Precision.applyFactor(cache.longTokenUsd + cache.shortTokenUsd, cache.maxLendableFactor);
-        cache.lentAmount = dataStore.getUint(Keys.lentPositionImpactPoolAmountKey(market.marketToken));
-        cache.lentUsd = cache.lentAmount * prices.indexTokenPrice.max;
+        // use indexTokenPrice.min to minimize the position impact pool cap
+        cache.maxPriceImpactUsd = cache.totalImpactPoolAmount.toUint256() * prices.indexTokenPrice.min;
 
-        if (cache.lentUsd > cache.maxLendableUsd) {
-            return 0;
+        if (priceImpactUsd > cache.maxPriceImpactUsd.toInt256()) {
+            priceImpactUsd = cache.maxPriceImpactUsd.toInt256();
         }
 
-        cache.maxLendableUsd -= cache.lentUsd;
+        cache.impactPoolUsd = cache.impactPoolAmount * prices.indexTokenPrice.min;
 
-        // use indexTokenPrice.min to maximize the position impact pool reduction
-        cache.maxPriceImpactUsd = cache.totalImpactPoolAmount * prices.indexTokenPrice.min.toInt256();
-        if (cache.maxPriceImpactUsd > cache.maxLendableUsd.toInt256()) {
-            cache.maxPriceImpactUsd = cache.maxLendableUsd.toInt256();
+        if (priceImpactUsd.toUint256() > cache.impactPoolUsd) {
+            cache.usdRequiredToBeLent = priceImpactUsd.toUint256() - cache.impactPoolUsd;
         }
 
-        if (priceImpactUsd > cache.maxPriceImpactUsd) {
-            priceImpactUsd = cache.maxPriceImpactUsd;
+        if (cache.usdRequiredToBeLent > 0) {
+            // capping the max lendable amount to a factor of the pool amount is mainly a sanity check to prevent
+            // the lent amount from being too large relative to the amounts in the pool
+            // trader pnl, borrowing fees, etc is not factored into this calculation
+            cache.longTokenUsd = getPoolAmount(dataStore, market, market.longToken)  * prices.longTokenPrice.min;
+            cache.shortTokenUsd = getPoolAmount(dataStore, market, market.shortToken)  * prices.shortTokenPrice.min;
+
+            cache.maxLendableUsd = getMaxLendableUsdAvailable(
+                dataStore,
+                market.marketToken,
+                cache.longTokenUsd + cache.shortTokenUsd,
+                prices.indexTokenPrice.max,
+                cache.lentAmount
+            );
+
+            if (cache.usdRequiredToBeLent > cache.maxLendableUsd) {
+                priceImpactUsd = cache.impactPoolUsd.toInt256() + cache.maxLendableUsd.toInt256();
+            }
         }
 
         return priceImpactUsd;
+    }
+
+    function getMaxLendableUsdAvailable(
+        DataStore dataStore,
+        address market,
+        uint256 poolUsd,
+        uint256 indexTokenPrice,
+        uint256 lentAmount
+    ) internal view returns (uint256) {
+        uint256 maxLendableFactor = dataStore.getUint(Keys.maxLendableImpactFactorKey(market));
+        uint256 maxLendableUsd = Precision.applyFactor(poolUsd, maxLendableFactor);
+
+        uint256 maxLendableUsdConfig = dataStore.getUint(Keys.maxLendableImpactUsdKey(market));
+        if (maxLendableUsd > maxLendableUsdConfig) {
+            maxLendableUsd = maxLendableUsdConfig;
+        }
+
+        uint256 lentUsd = lentAmount * indexTokenPrice;
+
+        if (lentUsd > maxLendableUsd) {
+            return 0;
+        }
+
+        return maxLendableUsd - lentUsd;
     }
 
     // @dev cap the input priceImpactUsd by the max positive position impact factor
@@ -3175,11 +3215,11 @@ library MarketUtils {
             + cache.affiliateRewardAmount;
     }
 
-    function getWithdrawalAmountsForMarketToken(
+    function getProportionalAmounts(
         DataStore dataStore,
         Market.Props memory market,
         MarketPrices memory prices,
-        uint256 marketTokensUsd
+        uint256 totalUsd
     ) internal view returns(uint256, uint256) {
         uint256 longTokenPoolAmount = getPoolAmount(dataStore, market, market.longToken);
         uint256 shortTokenPoolAmount = getPoolAmount(dataStore, market, market.shortToken);
@@ -3189,8 +3229,8 @@ library MarketUtils {
 
         uint256 totalPoolUsd = longTokenPoolUsd + shortTokenPoolUsd;
 
-        uint256 longTokenOutputUsd = Precision.mulDiv(marketTokensUsd, longTokenPoolUsd, totalPoolUsd);
-        uint256 shortTokenOutputUsd = Precision.mulDiv(marketTokensUsd, shortTokenPoolUsd, totalPoolUsd);
+        uint256 longTokenOutputUsd = Precision.mulDiv(totalUsd, longTokenPoolUsd, totalPoolUsd);
+        uint256 shortTokenOutputUsd = Precision.mulDiv(totalUsd, shortTokenPoolUsd, totalPoolUsd);
 
         return (longTokenOutputUsd / prices.longTokenPrice.max, shortTokenOutputUsd / prices.shortTokenPrice.max);
     }

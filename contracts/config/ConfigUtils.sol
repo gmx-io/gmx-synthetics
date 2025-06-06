@@ -2,6 +2,8 @@
 
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/utils/math/SafeCast.sol";
+
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
 import "../event/EventEmitter.sol";
@@ -10,6 +12,8 @@ import "../utils/Precision.sol";
 import "../market/MarketUtils.sol";
 
 library ConfigUtils {
+    using SafeCast for int256;
+
     using EventUtils for EventUtils.AddressItems;
     using EventUtils for EventUtils.UintItems;
     using EventUtils for EventUtils.Bytes32Items;
@@ -210,6 +214,11 @@ library ConfigUtils {
             if (distributionAmount >= positionImpactPoolAmount) {
                 revert Errors.InvalidPositionImpactPoolDistributionRate(distributionAmount, positionImpactPoolAmount);
             }
+        }
+
+        int256 totalPendingImpactAmount = MarketUtils.getTotalPendingImpactAmount(dataStore, market);
+        if (totalPendingImpactAmount > 0 && minPositionImpactPoolAmount < totalPendingImpactAmount.toUint256()) {
+            revert Errors.InsufficientMinPositionImpactPoolAmount(minPositionImpactPoolAmount, totalPendingImpactAmount);
         }
 
         dataStore.setUint(Keys.minPositionImpactPoolAmountKey(market), minPositionImpactPoolAmount);

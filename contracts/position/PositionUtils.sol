@@ -677,19 +677,15 @@ library PositionUtils {
         // because the price impact pool is empty until user A closes
         // the positive price impact will still be capped during position decrease when the positive
         // price impact is actually paid out
+        //
+        // we do not call capPositiveImpactUsdByPositionImpactPool for increase as we are
+        // uncertain when the impact pool state would be when the position is actually
+        // closed and the impact is to be realized
         cache.priceImpactUsd = MarketUtils.capPositiveImpactUsdByMaxPositionImpact(
             params.contracts.dataStore,
             params.market.marketToken,
             cache.priceImpactUsd,
             params.order.sizeDeltaUsd()
-        );
-
-        cache.priceImpactUsd = MarketUtils.capPositiveImpactUsdByPositionImpactPool(
-            params.contracts.dataStore,
-            params.market,
-            prices,
-            cache.priceImpactUsd,
-            0
         );
 
         // for long positions
