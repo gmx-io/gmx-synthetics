@@ -61,8 +61,10 @@ async function main() {
     throw new Error("Empty market config");
   }
 
+  const marketType = DEFAULT_MARKET_TYPE;
+
   console.info(
-    `creating market: indexToken: ${indexTokenAddress}, longToken: ${longTokenAddress}, shortToken: ${shortTokenAddress}`
+    `creating market: indexToken: ${indexTokenAddress}, longToken: ${longTokenAddress}, shortToken: ${shortTokenAddress}, marketType: ${marketType}`
   );
 
   if (!write) {
@@ -74,13 +76,9 @@ async function main() {
   }
 
   if (write) {
-    const tx0 = await marketFactory.createMarket(
-      indexTokenAddress,
-      longTokenAddress,
-      shortTokenAddress,
-      DEFAULT_MARKET_TYPE
-    );
+    const tx0 = await marketFactory.createMarket(indexTokenAddress, longTokenAddress, shortTokenAddress, marketType);
     console.log(`create market tx sent: ${tx0.hash}`);
+    await tx0.wait();
 
     const receipt = await hre.ethers.provider.getTransactionReceipt(tx0.hash);
     if (!receipt) {

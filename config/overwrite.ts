@@ -11,5 +11,11 @@ export function getExistingContractAddresses(network) {
     };
   }
 
+  if (network.name === "botanix") {
+    return {
+      ReferralStorage: { address: "0x0000000000000000000000000000000000000000" },
+    };
+  }
+
   return {};
 }

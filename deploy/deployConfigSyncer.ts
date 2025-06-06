@@ -26,6 +26,10 @@ const func = createDeployFunction({
   },
 });
 
+func.skip = async ({ network }) => {
+  return network.name === "botanix";
+};
+
 func.dependencies = func.dependencies.concat(["MockRiskOracle"]);
 
 export default func;

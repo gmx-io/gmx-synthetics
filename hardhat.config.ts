@@ -29,6 +29,7 @@ const getRpcUrl = (network) => {
   const defaultRpcs = {
     arbitrum: "https://arb1.arbitrum.io/rpc",
     avalanche: "https://api.avax.network/ext/bc/C/rpc",
+    botanix: "https://rpc.botanixlabs.com",
     arbitrumGoerli: "https://goerli-rollup.arbitrum.io/rpc",
     arbitrumSepolia: "https://sepolia-rollup.arbitrum.io/rpc",
     avalancheFuji: "https://api.avax-test.network/ext/bc/C/rpc",
@@ -53,6 +54,7 @@ export const getExplorerUrl = (network) => {
   const urls = {
     arbitrum: "https://api.arbiscan.io/",
     avalanche: "https://api.snowtrace.io/",
+    botanix: "https://api.routescan.io/v2/network/mainnet/evm/3637/etherscan/",
     snowscan: "https://api.snowscan.xyz/",
     arbitrumGoerli: "https://api-goerli.arbiscan.io/",
     arbitrumSepolia: "https://api-sepolia.arbiscan.io/",
@@ -117,7 +119,7 @@ const config: HardhatUserConfig = {
   networks: {
     hardhat: {
       saveDeployments: true,
-      // allowUnlimitedContractSize: true,
+      allowUnlimitedContractSize: true,
       // forking: {
       //   url: `https://rpc.ankr.com/avalanche`,
       //   blockNumber: 33963320,
@@ -150,6 +152,19 @@ const config: HardhatUserConfig = {
         },
       },
       blockGasLimit: 15_000_000,
+    },
+    botanix: {
+      url: getRpcUrl("botanix"),
+      chainId: 3637,
+      accounts: getEnvAccounts(),
+      verify: {
+        etherscan: {
+          apiUrl: getExplorerUrl("botanix"),
+          apiKey: process.env.BOTANIX_SCAN_API_KEY,
+        },
+      },
+      blockGasLimit: 20_000_000,
+      gasPrice: 10,
     },
     snowscan: {
       url: getRpcUrl("avalanche"),
@@ -228,14 +243,23 @@ const config: HardhatUserConfig = {
       avalancheFujiTestnet: process.env.SNOWTRACE_API_KEY,
       snowtrace: "snowtrace", // apiKey is not required, just set a placeholder
       arbitrumBlockscout: "arbitrumBlockscout",
+      botanix: process.env.BOTANIX_SCAN_API_KEY,
     },
     customChains: [
       {
         network: "snowtrace",
         chainId: 43114,
         urls: {
-          apiURL: "https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan",
+          apiURL: "https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan/",
           browserURL: "https://avalanche.routescan.io",
+        },
+      },
+      {
+        network: "botanix",
+        chainId: 3637,
+        urls: {
+          apiURL: "https://api.routescan.io/v2/network/mainnet/evm/3637/etherscan/api",
+          browserURL: "https://botanixscan.io",
         },
       },
       {
@@ -278,5 +302,13 @@ task("update-market-config", "Update market config")
   .addParam("write", "Write to the config", false, types.boolean)
   .addOptionalParam("market", "Market address", undefined, types.string)
   .setAction(updateMarketConfig);
+
+task("deploy", "Deploy contracts", async (taskArgs, env, runSuper) => {
+  env.deployTags = taskArgs.tags ?? "";
+  if (!process.env.SKIP_AUTO_HANDLER_REDEPLOYMENT && env.network.name != "hardhat") {
+    throw new Error("SKIP_AUTO_HANDLER_REDEPLOYMENT flag is mandatory");
+  }
+  await runSuper();
+});
 
 export default config;
