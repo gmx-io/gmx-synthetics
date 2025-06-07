@@ -13,10 +13,14 @@ import { IStargate } from "@stargatefinance/stg-evm-v2/src/interfaces/IStargate.
 import "../event/EventEmitter.sol";
 import "../data/DataStore.sol";
 import "../utils/Cast.sol";
+import "../gas/GasUtils.sol";
+import "../deposit/DepositStoreUtils.sol";
+import "../glv/GlvUtils.sol";
 
 import "./IMultichainProvider.sol";
 import "./IMultichainGmRouter.sol";
 import "./IMultichainGlvRouter.sol";
+import "./IMultichainOrderRouter.sol";
 
 import "./MultichainVault.sol";
 import "./MultichainUtils.sol";
@@ -35,7 +39,6 @@ import "./MultichainUtils.sol";
 contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModule {
     struct BridgeOutCache {
         uint32 dstEid;
-        uint256 srcChainId;
         uint256 valueToSend;
         MessagingReceipt msgReceipt;
         SendParam sendParam;
@@ -48,6 +51,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
     MultichainVault public immutable multichainVault;
     IMultichainGmRouter public immutable multichainGmRouter;
     IMultichainGlvRouter public immutable multichainGlvRouter;
+    IMultichainOrderRouter public immutable multichainOrderRouter;
 
     constructor(
         DataStore _dataStore,
@@ -55,13 +59,15 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         EventEmitter _eventEmitter,
         MultichainVault _multichainVault,
         IMultichainGmRouter _multichainGmRouter,
-        IMultichainGlvRouter _multichainGlvRouter
+        IMultichainGlvRouter _multichainGlvRouter,
+        IMultichainOrderRouter _multichainOrderRouter
     ) RoleModule(_roleStore) {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
         multichainVault = _multichainVault;
         multichainGmRouter = _multichainGmRouter;
         multichainGlvRouter = _multichainGlvRouter;
+        multichainOrderRouter = _multichainOrderRouter;
     }
 
     /**
@@ -92,11 +98,8 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         MultichainUtils.validateMultichainProvider(dataStore, from);
         MultichainUtils.validateMultichainEndpoint(dataStore, msg.sender);
 
-        uint256 amountLD = OFTComposeMsgCodec.amountLD(message);
-
-        bytes memory composeMessage = OFTComposeMsgCodec.composeMsg(message);
         /// @dev The `account` field is user-supplied and not validated; any address may be provided by the sender
-        (address account, uint256 srcChainId, bytes memory data) = _decodeLzComposeMsg(composeMessage);
+        (address account, uint256 srcChainId, uint256 amountLD, bytes memory data) = _decodeLzComposeMsg(message);
 
         address token = IStargate(from).token();
         if (token == address(0x0)) {
@@ -116,16 +119,17 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             this,
             token,
             account,
-            amountLD,
-            srcChainId
+            srcChainId 
         );
 
         if (data.length != 0) {
-            (ActionType actionType, bytes memory actionData) = _decodeLzComposeMsgData(data);
+            (ActionType actionType, bytes memory actionData) = abi.decode(data, (ActionType, bytes));
             if (actionType == ActionType.Deposit) {
-                _handleDepositFromBridge(from, account, srcChainId, actionType, actionData);
+                _handleDeposit(account, srcChainId, actionType, actionData);
             } else if (actionType == ActionType.GlvDeposit) {
-                _handleGlvDepositFromBridge(from, account, srcChainId, actionType, actionData);
+                _handleGlvDeposit(account, srcChainId, actionType, actionData);
+            } else if (actionType == ActionType.SetTraderReferralCode) {
+                _handleSetTraderReferralCode(account, srcChainId, actionType, actionData);
             }
         }
     }
@@ -151,7 +155,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
      *        - data: ABI-encoded destination endpoint ID (dstEid)
      * @return The amount of tokens bridged out (may be slightly different from params.amount after LZ precision/path limits adjustments)
      */
-    function bridgeOut(address account, IRelayUtils.BridgeOutParams memory params) external onlyController returns (uint256) {
+    function bridgeOut(address account, uint256 srcChainId, IRelayUtils.BridgeOutParams memory params) external onlyController returns (uint256) {
         IStargate stargate = IStargate(params.provider);
 
         address wnt = dataStore.getAddress(Keys.WNT);
@@ -170,7 +174,10 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
 
         BridgeOutCache memory cache;
         cache.dstEid = abi.decode(params.data, (uint32));
-        cache.srcChainId = dataStore.getUint(Keys.eidToSrcChainId(cache.dstEid));
+
+        if (srcChainId != dataStore.getUint(Keys.eidToSrcChainId(cache.dstEid))) {
+            revert Errors.InvalidEid(cache.dstEid);
+        }
 
         (cache.valueToSend, cache.sendParam, cache.messagingFee, cache.receipt) = prepareSend(
             stargate,
@@ -192,7 +199,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             account,
             address(this), // receiver
             cache.valueToSend, // bridge out fee (+ amountSentLD for native token transfers)
-            cache.srcChainId
+            srcChainId
         );
 
         IWNT(wnt).withdraw(cache.valueToSend);
@@ -211,7 +218,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
                 account,
                 address(this), // receiver
                 params.amount,
-                cache.srcChainId
+                srcChainId
             );
 
             IERC20(params.token).approve(params.provider, params.amount);
@@ -280,12 +287,16 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         }
     }
 
-    function _decodeLzComposeMsg(bytes memory message) private pure returns (address, uint256, bytes memory) {
-        return abi.decode(message, (address, uint256, bytes));
-    }
+    function _decodeLzComposeMsg(bytes calldata message) private view returns (address, uint256, uint256, bytes memory) {
+        uint256 amountLD = OFTComposeMsgCodec.amountLD(message);
 
-    function _decodeLzComposeMsgData(bytes memory data) private pure returns (ActionType, bytes memory) {
-        return abi.decode(data, (ActionType, bytes));
+        uint32 srcEid = OFTComposeMsgCodec.srcEid(message);
+        uint256 srcChainId = dataStore.getUint(Keys.eidToSrcChainId(srcEid));
+
+        bytes memory composeMessage = OFTComposeMsgCodec.composeMsg(message);
+        (address account, bytes memory data) = abi.decode(composeMessage, (address, bytes));
+
+        return (account, srcChainId, amountLD, data);
     }
 
     function _areValidTransferRequests(IRelayUtils.TransferRequests memory transferRequests) private pure returns (bool) {
@@ -307,8 +318,9 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         return true;
     }
 
-    function _handleDepositFromBridge(
-        address from,
+    /// @dev long/short tokens are deposited from user's multichain balance
+    /// GM tokens are minted and transferred to user's multichain balance
+    function _handleDeposit(
         address account,
         uint256 srcChainId,
         ActionType actionType,
@@ -321,25 +333,62 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         ) = abi.decode(actionData, (IRelayUtils.RelayParams, IRelayUtils.TransferRequests, IDepositUtils.CreateDepositParams));
         
         if (_areValidTransferRequests(transferRequests)) {
-            try multichainGmRouter.createDepositFromBridge(
+            _validateExecutionGasForDeposit(account, srcChainId, depositParams);
+
+            try multichainGmRouter.createDeposit(
                 relayParams,
                 account,
                 srcChainId,
                 transferRequests,
                 depositParams
             ) returns (bytes32 key) {
-                MultichainEventUtils.emitDepositFromBridge(eventEmitter, from, account, srcChainId, actionType, key);
+                MultichainEventUtils.emitMultichainBridgeAction(eventEmitter, address(this), account, srcChainId, uint256(actionType), key);
             } catch Error(string memory reason) {
-                MultichainEventUtils.emitDepositFromBridgeFailed(eventEmitter, from, account, srcChainId, actionType, reason);
+                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
             } catch (bytes memory reasonBytes) {
                 (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
-                MultichainEventUtils.emitDepositFromBridgeFailed(eventEmitter, from, account, srcChainId, actionType, reason);
+                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
             }
         }
     }
 
-    function _handleGlvDepositFromBridge(
-        address from,
+    /// @dev lzCompose reverts if the execution gas is not sufficient for the deposit
+    function _validateExecutionGasForDeposit(
+        address account,
+        uint256 srcChainId,
+        IDepositUtils.CreateDepositParams memory depositParams
+    ) private view {
+        Deposit.Props memory deposit = Deposit.Props(
+            Deposit.Addresses(
+                account,
+                depositParams.addresses.receiver,
+                depositParams.addresses.callbackContract,
+                depositParams.addresses.uiFeeReceiver,
+                depositParams.addresses.market,
+                depositParams.addresses.initialLongToken,
+                depositParams.addresses.initialShortToken,
+                depositParams.addresses.longTokenSwapPath,
+                depositParams.addresses.shortTokenSwapPath
+            ),
+            Deposit.Numbers(
+                0,
+                0,
+                depositParams.minMarketTokens,
+                Chain.currentTimestamp(), // updatedAtTime
+                depositParams.executionFee,
+                depositParams.callbackGasLimit,
+                srcChainId
+            ),
+            Deposit.Flags(depositParams.shouldUnwrapNativeToken),
+            depositParams.dataList
+        );
+        uint256 estimatedGasLimit = GasUtils.estimateExecuteDepositGasLimit(dataStore, deposit);
+        GasUtils.validateExecutionGas(dataStore, gasleft(), estimatedGasLimit);
+    }
+
+    /// @dev long/short/GM tokens are deposited from user's multichain balance
+    /// GLV tokens are minted and transferred to user's multichain balance
+    function _handleGlvDeposit(
         address account,
         uint256 srcChainId,
         ActionType actionType,
@@ -350,23 +399,89 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             IRelayUtils.TransferRequests memory transferRequests,
             IGlvDepositUtils.CreateGlvDepositParams memory glvDepositParams
         ) = abi.decode(actionData, (IRelayUtils.RelayParams, IRelayUtils.TransferRequests, IGlvDepositUtils.CreateGlvDepositParams));
-        
+
         if (_areValidTransferRequests(transferRequests)) {
-            try multichainGlvRouter.createGlvDepositFromBridge(
+            _validateExecutionGasForGlvDeposit(account, srcChainId, glvDepositParams);
+
+            try multichainGlvRouter.createGlvDeposit(
                 relayParams,
                 account,
                 srcChainId,
                 transferRequests,
                 glvDepositParams
             ) returns (bytes32 key) {
-                MultichainEventUtils.emitDepositFromBridge(eventEmitter, from, account, srcChainId, actionType, key);
+                MultichainEventUtils.emitMultichainBridgeAction(eventEmitter, address(this), account, srcChainId, uint256(actionType), key);
             } catch Error(string memory reason) {
-                MultichainEventUtils.emitDepositFromBridgeFailed(eventEmitter, from, account, srcChainId, actionType, reason);
+                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
             } catch (bytes memory reasonBytes) {
                 (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
-                MultichainEventUtils.emitDepositFromBridgeFailed(eventEmitter, from, account, srcChainId, actionType, reason);
+                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
             }
         }
+    }
+
+    /// @dev `account` is expected to be `msg.sender` from the source chain, as
+    /// MultichainOrderRouter would use it to validate the signature.
+    function _handleSetTraderReferralCode(
+        address account,
+        uint256 srcChainId,
+        ActionType actionType,
+        bytes memory actionData
+    ) private {
+        (
+            IRelayUtils.RelayParams memory relayParams,
+            bytes32 referralCode
+        ) = abi.decode(actionData, (IRelayUtils.RelayParams, bytes32));
+
+        try multichainOrderRouter.setTraderReferralCode(relayParams, account, srcChainId, referralCode) {
+            MultichainEventUtils.emitMultichainBridgeAction(eventEmitter, address(this), account, srcChainId, uint256(actionType), referralCode);
+        } catch Error(string memory reason) {
+            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
+        } catch (bytes memory reasonBytes) {
+            (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
+            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
+        }
+    }
+
+    /// @dev lzCompose reverts if the execution gas is not sufficient for the glvDeposit
+    function _validateExecutionGasForGlvDeposit(
+        address account,
+        uint256 srcChainId,
+        IGlvDepositUtils.CreateGlvDepositParams memory glvDepositParams
+    ) private view {
+        GlvDeposit.Props memory glvDeposit = GlvDeposit.Props(
+            GlvDeposit.Addresses({
+                account: account,
+                glv: glvDepositParams.addresses.glv,
+                receiver: glvDepositParams.addresses.receiver,
+                callbackContract: glvDepositParams.addresses.callbackContract,
+                uiFeeReceiver: glvDepositParams.addresses.uiFeeReceiver,
+                market: glvDepositParams.addresses.market,
+                initialLongToken: glvDepositParams.addresses.initialLongToken,
+                initialShortToken: glvDepositParams.addresses.initialShortToken,
+                longTokenSwapPath: glvDepositParams.addresses.longTokenSwapPath,
+                shortTokenSwapPath: glvDepositParams.addresses.shortTokenSwapPath
+            }),
+            GlvDeposit.Numbers({
+                marketTokenAmount: 0,
+                initialLongTokenAmount: 0,
+                initialShortTokenAmount: 0,
+                minGlvTokens: glvDepositParams.minGlvTokens,
+                updatedAtTime: Chain.currentTimestamp(),
+                executionFee: glvDepositParams.executionFee,
+                callbackGasLimit: glvDepositParams.callbackGasLimit,
+                srcChainId: srcChainId
+            }),
+            GlvDeposit.Flags({
+                shouldUnwrapNativeToken: glvDepositParams.shouldUnwrapNativeToken,
+                isMarketTokenDeposit: glvDepositParams.isMarketTokenDeposit
+            }),
+            glvDepositParams.dataList
+        );
+
+        uint256 marketCount = GlvUtils.getGlvMarketCount(dataStore, glvDepositParams.addresses.glv);
+        uint256 estimatedGasLimit = GasUtils.estimateExecuteGlvDepositGasLimit(dataStore, glvDeposit, marketCount);
+        GasUtils.validateExecutionGas(dataStore, gasleft(), estimatedGasLimit);
     }
 
     /**

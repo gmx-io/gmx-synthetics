@@ -151,13 +151,6 @@ library IncreasePositionUtils {
 
         PositionUtils.incrementClaimableFundingAmount(params, fees);
 
-        PositionUtils.updatePositionLastSrcChainId(
-            params.contracts.dataStore,
-            params.position,
-            params.order,
-            params.positionKey
-        );
-
         params.position.setSizeInUsd(cache.nextPositionSizeInUsd);
         params.position.setSizeInTokens(params.position.sizeInTokens() + cache.baseSizeDeltaInTokens);
 

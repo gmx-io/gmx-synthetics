@@ -1,10 +1,12 @@
 import { BigNumberish, ethers } from "ethers";
-import { sendRelayTransaction, UpdateOrderParams } from "./helpers";
-import { getRelayParams, CreateOrderParams } from "./helpers";
-import { getBatchSignature } from "./signatures";
-import { getCancelOrderSignature } from "./signatures";
-import { getUpdateOrderSignature } from "./signatures";
-import { getCreateOrderSignature } from "./signatures";
+import { CreateOrderParams, UpdateOrderParams, sendRelayTransaction, getRelayParams } from "./helpers";
+import {
+  getBatchSignature,
+  getCreateOrderSignature,
+  getUpdateOrderSignature,
+  getCancelOrderSignature,
+  getSetTraderReferralCodeSignature,
+} from "./signatures";
 
 export async function getSendCreateOrderCalldata(p: {
   signer: ethers.Signer;
@@ -249,6 +251,61 @@ export async function sendBatch(p: {
       ]);
   return sendRelayTransaction({
     calldata: batchCalldata,
+    ...p,
+  });
+}
+
+export async function sendSetTraderReferralCode(p: {
+  sender: ethers.Signer;
+  signer: ethers.Signer;
+  oracleParams?: {
+    tokens: string[];
+    providers: string[];
+    data: string[];
+  };
+  tokenPermits?: {
+    token: string;
+    spender: string;
+    value: BigNumberish;
+    deadline: BigNumberish;
+  }[];
+  feeParams: {
+    feeToken: string;
+    feeAmount: BigNumberish;
+    feeSwapPath: string[];
+  };
+  referralCode: string;
+  chainId: BigNumberish;
+  account: string;
+  deadline: BigNumberish;
+  srcChainId?: BigNumberish; // for multichain actions
+  desChainId: BigNumberish;
+  userNonce?: BigNumberish;
+  relayRouter: ethers.Contract;
+  signature?: string;
+  gelatoRelayFeeToken: string;
+  gelatoRelayFeeAmount: BigNumberish;
+}) {
+  const relayParams = await getRelayParams(p);
+
+  let signature = p.signature;
+  if (!signature) {
+    signature = await getSetTraderReferralCodeSignature({
+      ...p,
+      relayParams,
+      verifyingContract: p.relayRouter.address,
+    });
+  }
+
+  const setTraderReferralCodeCalldata = p.relayRouter.interface.encodeFunctionData("setTraderReferralCode", [
+    { ...relayParams, signature },
+    p.account,
+    p.srcChainId,
+    p.referralCode,
+  ]);
+
+  return sendRelayTransaction({
+    calldata: setTraderReferralCodeCalldata,
     ...p,
   });
 }

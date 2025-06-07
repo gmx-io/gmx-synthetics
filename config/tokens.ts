@@ -734,6 +734,43 @@ const config: {
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
     },
+    CRV: {
+      synthetic: true,
+      decimals: 18, // https://etherscan.io/token/0xd533a949740bb3306d119cc777fa900ba034cd52#readContract
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003d2e4f22df7caac63178e3f81ae33bbbf39ee1612bad959950424fe41412c",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0xaebDA2c976cfd1eE1977Eac079B4382acb849325",
+        decimals: 8,
+        heartbeatDuration: (1 + 1) * 60 * 60, // heartbeatDuration + 1 hour
+      },
+    },
+    MOODENG: {
+      synthetic: true,
+      decimals: 6, // https://solscan.io/token/ED5nyyWEzpPPiWimP8vYm7sD7TD3LAt3Q3gRTWHzPJBY
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x00037feb14674aa2c1d31bb808f3356b249ef73d447b0d93042320acfdebbd09",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    XMR: {
+      synthetic: true,
+      decimals: 12, // https://www.getmonero.org/resources/moneropedia/denominations.html
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x00038f3b8f8be4305564abf0ed3c9cc46cb8b4303c35ab54079ea873b7d74b3a",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    PI: {
+      synthetic: true,
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x00036e16e272620ba510f635bc77fee9fb2de627343ce3aaa6cf068a3d078ac8",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
     AAVE: {
       address: "0xba5ddd1f9d7f570dc94a51479a000e3bce967196",
       decimals: 18,

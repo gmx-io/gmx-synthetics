@@ -3,18 +3,17 @@ import { createDeployFunction } from "../utils/deploy";
 const func = createDeployFunction({
   contractName: "ExecuteDepositUtils",
   libraryNames: [
-    "GasUtils",
-    "FeeUtils",
-    "MarketUtils",
-    "MarketStoreUtils",
-    "MarketEventUtils",
-    "DepositStoreUtils",
-    "DepositEventUtils",
-    "SwapUtils",
-    "SwapPricingUtils",
-    "PositionUtils",
-    "MultichainUtils",
     "CallbackUtils",
+    "DepositEventUtils",
+    "DepositStoreUtils",
+    "FeeUtils",
+    "GasUtils",
+    "MarketEventUtils",
+    "MarketUtils",
+    "BridgeOutFromControllerUtils",
+    "MultichainUtils",
+    "PositionUtils",
+    "SwapPricingUtils",
   ],
 });
 

@@ -23,6 +23,7 @@ import {
 import { handleDeposit } from "../../utils/deposit";
 import { usingResult } from "../../utils/use";
 import { getMarketTokenPriceWithPoolValue } from "../../utils/market";
+import { constants } from "ethers";
 
 describe("Timelock", () => {
   let fixture;
@@ -494,7 +495,9 @@ describe("Timelock", () => {
         user2.address,
         withdrawalAmount
       );
-      await timelockConfig.connect(timelockAdmin).executeWithOraclePrice(target, payload, oracleParams);
+      await timelockConfig
+        .connect(timelockAdmin)
+        .executeWithOraclePrice(target, payload, constants.HashZero, constants.HashZero, oracleParams);
 
       // Market token price should be unchanged
       await usingResult(getMarketTokenPriceWithPoolValue(fixture), ([marketTokenPrice, poolValueInfo]) => {
@@ -536,7 +539,9 @@ describe("Timelock", () => {
         data: ["0x", "0x"],
       };
       await expect(
-        timelockConfig.connect(timelockAdmin).executeWithOraclePrice(target, payload, oracleParams)
+        timelockConfig
+          .connect(timelockAdmin)
+          .executeWithOraclePrice(target, payload, constants.HashZero, constants.HashZero, oracleParams)
       ).to.be.revertedWith("TimelockController: underlying transaction reverted");
     });
   });

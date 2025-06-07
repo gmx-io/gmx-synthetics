@@ -424,6 +424,7 @@ library ExecuteWithdrawalUtils {
 
         uint256 poolValue = poolValueInfo.poolValue.toUint256();
         uint256 marketTokensSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(market.marketToken)));
+        uint256 marketTokensUsd = MarketUtils.marketTokenAmountToUsd(marketTokenAmount, poolValue, marketTokensSupply);
 
         MarketEventUtils.emitMarketPoolValueInfo(
             params.eventEmitter,
@@ -433,19 +434,11 @@ library ExecuteWithdrawalUtils {
             marketTokensSupply
         );
 
-        uint256 longTokenPoolAmount = MarketUtils.getPoolAmount(params.dataStore, market, market.longToken);
-        uint256 shortTokenPoolAmount = MarketUtils.getPoolAmount(params.dataStore, market, market.shortToken);
-
-        uint256 longTokenPoolUsd = longTokenPoolAmount * prices.longTokenPrice.max;
-        uint256 shortTokenPoolUsd = shortTokenPoolAmount * prices.shortTokenPrice.max;
-
-        uint256 totalPoolUsd = longTokenPoolUsd + shortTokenPoolUsd;
-
-        uint256 marketTokensUsd = MarketUtils.marketTokenAmountToUsd(marketTokenAmount, poolValue, marketTokensSupply);
-
-        uint256 longTokenOutputUsd = Precision.mulDiv(marketTokensUsd, longTokenPoolUsd, totalPoolUsd);
-        uint256 shortTokenOutputUsd = Precision.mulDiv(marketTokensUsd, shortTokenPoolUsd, totalPoolUsd);
-
-        return (longTokenOutputUsd / prices.longTokenPrice.max, shortTokenOutputUsd / prices.shortTokenPrice.max);
+        return MarketUtils.getWithdrawalAmountsForMarketToken(
+            params.dataStore,
+            market,
+            prices,
+            marketTokensUsd
+        );
     }
 }

@@ -60,6 +60,7 @@ library Errors {
     error EmptyPositionImpactWithdrawalAmount();
     error OraclePriceOutdated();
     error EmptyTarget();
+    error TargetIsNotAContract(address targer);
 
     // GlvDepositStoreUtils errors
     error GlvDepositNotFound(bytes32 key);
@@ -249,7 +250,6 @@ library Errors {
         uint256 maxRefPriceDeviationFactor
     );
     error InvalidBlockRangeSet(uint256 largestMinBlockNumber, uint256 smallestMaxBlockNumber);
-    error EmptyChainlinkPaymentToken();
     error NonAtomicOracleProvider(address provider);
 
     // OracleModule errors
@@ -343,6 +343,7 @@ library Errors {
     error ShiftFromAndToMarketAreEqual(address market);
     error LongTokensAreNotEqual(address fromMarketLongToken, address toMarketLongToken);
     error ShortTokensAreNotEqual(address fromMarketLongToken, address toMarketLongToken);
+    error BridgeOutNotSupportedDuringShift();
 
     // SwapPricingUtils errors
     error UsdDeltaExceedsPoolValue(int256 usdDelta, uint256 poolUsd);
@@ -446,14 +447,15 @@ library Errors {
     error EmptyMultichainTransferOutAmount(address account, address token);
     error InsufficientMultichainBalance(address account, address token, uint256 balance, uint256 amount);
     error InvalidSrcChainId(uint256 srcChainId);
+    error InvalidEid(uint256 eid);
     error InvalidDestinationChainId(uint256 desChainId);
     error TokenPermitsNotAllowedForMultichain();
+    error InvalidInitializer();
     error InvalidMultichainProvider(address provider);
     error InvalidMultichainEndpoint(address endpoint);
     error UnableToPayOrderFee();
     error UnableToPayOrderFeeFromCollateral();
     error InvalidBridgeOutToken(address token);
-    error InvalidMultichainAction();
     error InsufficientFee(uint256 feeProvided, uint256 feeRequired);
 
     enum SignatureType {

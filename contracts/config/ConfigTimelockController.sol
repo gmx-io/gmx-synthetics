@@ -17,6 +17,7 @@ import {OracleUtils} from "../oracle/OracleUtils.sol";
 import {Oracle} from "../oracle/Oracle.sol";
 import {MarketPositionImpactPoolUtils} from "../market/MarketPositionImpactPoolUtils.sol";
 import {Chain} from "../chain/Chain.sol";
+import {AccountUtils} from "../utils/AccountUtils.sol";
 
 contract ConfigTimelockController is TimelockController, OracleModule {
 
@@ -36,9 +37,11 @@ contract ConfigTimelockController is TimelockController, OracleModule {
         address target,
         uint256 value,
         bytes calldata payload,
+        bytes32 predecessor,
+        bytes32 salt,
         OracleUtils.SetPricesParams calldata oracleParams
     ) external onlyRoleOrOpenRole(EXECUTOR_ROLE) withOraclePricesForAtomicAction(oracleParams) {
-        execute(target, value, payload, 0, 0);
+        execute(target, value, payload, predecessor, salt);
     }
 
     function withdrawFromPositionImpactPool(
@@ -57,5 +60,12 @@ contract ConfigTimelockController is TimelockController, OracleModule {
             amount,
             oracle
         );
+    }
+
+    function _execute(address target, uint256 value, bytes calldata data) internal override {
+        if (!AccountUtils.isContract(target)) {
+            revert Errors.TargetIsNotAContract(target);
+        }
+        super._execute(target, value, data);
     }
 }

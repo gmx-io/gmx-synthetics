@@ -245,13 +245,6 @@ library DecreasePositionUtils {
             cache.nextPositionBorrowingFactor
         );
 
-        PositionUtils.updatePositionLastSrcChainId(
-            params.contracts.dataStore,
-            params.position,
-            params.order,
-            params.positionKey
-        );
-
         params.position.setSizeInUsd(cache.nextPositionSizeInUsd);
         params.position.setSizeInTokens(params.position.sizeInTokens() - values.sizeDeltaInTokens);
         params.position.setCollateralAmount(values.remainingCollateralAmount);

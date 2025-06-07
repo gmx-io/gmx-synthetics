@@ -90,7 +90,7 @@ library MarketPositionImpactPoolUtils {
             adjustedImpactPoolAmount -= totalPendingImpactAmount.toUint256();
         }
 
-        if (adjustedImpactPoolAmount <= amount) {
+        if (adjustedImpactPoolAmount < amount) {
             revert Errors.InsufficientImpactPoolValueForWithdrawal(amount, poolValueInfo.impactPoolAmount, totalPendingImpactAmount);
         }
 
@@ -102,13 +102,13 @@ library MarketPositionImpactPoolUtils {
         );
 
         // Calculate amount of tokens to withdraw:
-        // We want to withdraw 50/50 long and short tokens from the pool
-        // at prices expressed in index token
-        uint256 longTokenWithdrawalAmount = Precision.mulDiv(
-            amount, prices.indexTokenPrice.max, prices.longTokenPrice.max * 2
-        );
-        uint256 shortTokenWithdrawalAmount = Precision.mulDiv(
-            amount, prices.indexTokenPrice.max, prices.shortTokenPrice.max * 2
+        // We want to withdraw long and short tokens from the pool
+        // at the current pool token ratio
+        (uint256 longTokenWithdrawalAmount, uint256 shortTokenWithdrawalAmount) = MarketUtils.getWithdrawalAmountsForMarketToken(
+            dataStore,
+            marketProps,
+            prices,
+            amount * prices.indexTokenPrice.min
         );
 
         MarketUtils.applyDeltaToPoolAmount(

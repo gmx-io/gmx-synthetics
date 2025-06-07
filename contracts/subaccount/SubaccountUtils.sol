@@ -6,6 +6,7 @@ import "../data/Keys.sol";
 import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
 import "../utils/Cast.sol";
+import "../order/IBaseOrderUtils.sol";
 
 struct SubaccountApproval {
     address subaccount;
@@ -27,6 +28,19 @@ library SubaccountUtils {
     using EventUtils for EventUtils.Bytes32Items;
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
+
+    function validateCreateOrderParams(
+        address account,
+        IBaseOrderUtils.CreateOrderParams calldata params
+    ) external pure {
+        if (params.addresses.receiver != account) {
+            revert Errors.InvalidReceiverForSubaccountOrder(params.addresses.receiver, account);
+        }
+
+        if (params.addresses.cancellationReceiver != address(0) && params.addresses.cancellationReceiver != account) {
+            revert Errors.InvalidCancellationReceiverForSubaccountOrder(params.addresses.cancellationReceiver, account);
+        }
+    }
 
     function addSubaccount(DataStore dataStore, EventEmitter eventEmitter, address account, address subaccount) public {
         bytes32 setKey = Keys.subaccountListKey(account);

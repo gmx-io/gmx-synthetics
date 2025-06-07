@@ -258,6 +258,11 @@ library BaseOrderUtils {
         uint256 acceptablePrice,
         bool isLong
     ) internal pure returns (uint256) {
+        // Only the maximum impact factor is applied to cap the resulting priceImpactUsd here.
+        // This does NOT include capping based on the price impact pool balance, so the computed
+        // executionPrice may not reflect the actual executionPrice experienced by the order.
+        // Consumers of this function should be aware that the final execution price may differ
+        // if further capping is applied elsewhere based on the impact pool.
         GetExecutionPriceCache memory cache;
 
         // decrease order:

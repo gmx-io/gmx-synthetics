@@ -68,6 +68,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       gelatoRelayFeeBaseAmount: 0,
       relayFeeAddress: ethers.constants.AddressZero,
       maxRelayFeeUsdForSubaccount: 0,
+
+      maxDataLength: 10,
     };
   }
 
@@ -133,6 +135,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     gelatoRelayFeeBaseAmount: 50000, // 21000 is base gas, ~10k GelatoRelay gas, some logic after the relay fee is calculated
     relayFeeAddress: "0xDA1b841A21FEF1ad1fcd5E19C1a9D682FB675258",
     maxRelayFeeUsdForSubaccount: decimalToFloat(100),
+
+    maxDataLength: 10,
   };
 
   const networkConfig = {
@@ -152,6 +156,11 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         421614: true, // Arbitrum Sepolia
         11155420: true, // Optimism Sepolia
       },
+      eids: {
+        11155111: 40161, // Sepolia
+        421614: 40231, // Arbitrum Sepolia
+        11155420: 40232, // Optimism Sepolia
+      },
     },
     avalancheFuji: {},
     arbitrum: {
@@ -170,7 +179,9 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       decreaseOrderGasLimit: 3_000_000,
       swapOrderGasLimit: 2_500_000,
     },
-    avalanche: {},
+    avalanche: {
+      requestExpirationTime: 60,
+    },
     botanix: {},
   }[network.name];
 

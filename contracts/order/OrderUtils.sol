@@ -24,6 +24,7 @@ import "../utils/Array.sol";
 import "../utils/AccountUtils.sol";
 import "../referral/ReferralUtils.sol";
 import "../multichain/MultichainUtils.sol";
+import "../position/PositionStoreUtils.sol";
 
 // @title OrderUtils
 // @dev Library for order functions
@@ -198,9 +199,28 @@ library OrderUtils {
         updateAutoCancelList(dataStore, key, order, order.autoCancel());
         validateTotalCallbackGasLimitForAutoCancelOrders(dataStore, order);
 
+        _updatePositionLastSrcChainId(dataStore, order);
+
         OrderEventUtils.emitOrderCreated(eventEmitter, key, order);
 
         return key;
+    }
+
+    function _updatePositionLastSrcChainId(
+        DataStore dataStore,
+        Order.Props memory order
+    ) private {
+        bytes32 positionKey = Position.getPositionKey(order.account(), order.market(), order.initialCollateralToken(), order.isLong());
+        Position.Props memory position = PositionStoreUtils.get(dataStore, positionKey);
+
+        uint256 positionUpdatedAtTime = position.increasedAtTime() > position.decreasedAtTime()
+            ? position.increasedAtTime()
+            : position.decreasedAtTime();
+
+        if (order.updatedAtTime() > positionUpdatedAtTime) {
+            uint256 srcChainId = order.srcChainId();
+            dataStore.setUint(Keys.positionLastSrcChainId(positionKey), srcChainId);
+        }
     }
 
     struct CancelOrderCache {

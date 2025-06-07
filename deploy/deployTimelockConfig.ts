@@ -2,9 +2,6 @@ import { grantRoleIfNotGranted } from "../utils/role";
 import { createDeployFunction } from "../utils/deploy";
 import hre, { getNamedAccounts } from "hardhat";
 import { CANCELLER_ROLE, EXECUTOR_ROLE, PROPOSER_ROLE, TIMELOCK_ADMIN_ROLE } from "../utils/gov";
-import { TimelockConfig } from "../typechain-types";
-import { setUintIfDifferent } from "../utils/dataStore";
-import * as keys from "../utils/keys";
 
 const libraries = ["MarketUtils"];
 
@@ -21,7 +18,7 @@ async function grantProposerRole(timelockConfig: string) {
     await configTimelockController.grantRole(EXECUTOR_ROLE, timelockConfig);
     await configTimelockController.revokeRole(TIMELOCK_ADMIN_ROLE, deployer);
   } else {
-    console.info("skipping configTimelockController role config, as deployer does not have access to update roles");
+    console.warn("skipping configTimelockController role config, as deployer does not have access to update roles");
   }
 }
 
