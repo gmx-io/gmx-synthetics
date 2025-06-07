@@ -83,6 +83,11 @@ library ShiftUtils {
             revert Errors.ShiftFromAndToMarketAreEqual(params.addresses.fromMarket);
         }
 
+        // GMX_DATA_ACTION hash is reserved for bridging out tokens, which is not supported during shifts
+        if (params.dataList.length != 0 && params.dataList[0] == Keys.GMX_DATA_ACTION) {
+            revert Errors.BridgeOutNotSupportedDuringShift();
+        }
+
         address wnt = TokenUtils.wnt(dataStore);
         uint256 wntAmount = shiftVault.recordTransferIn(wnt);
 
@@ -163,11 +168,6 @@ library ShiftUtils {
 
         if (shift.marketTokenAmount() == 0) {
             revert Errors.EmptyShiftAmount();
-        }
-
-        // GMX_DATA_ACTION hash is reserved for bridging out tokens, which is not supported during shifts
-        if (shift.dataList().length != 0 && shift.dataList()[0] == Keys.GMX_DATA_ACTION) {
-            revert Errors.BridgeOutNotSupportedDuringShift();
         }
 
         ExecuteShiftCache memory cache;
