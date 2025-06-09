@@ -22,6 +22,7 @@ describe("Relay signatures", () => {
     router,
     relayUtils,
     orderStoreUtils,
+    gasUtils,
     mockContract;
 
   beforeEach(async () => {
@@ -38,6 +39,7 @@ describe("Relay signatures", () => {
       swapHandler,
       relayUtils,
       orderStoreUtils,
+      gasUtils,
     } = fixture.contracts);
   });
 
@@ -59,6 +61,7 @@ describe("Relay signatures", () => {
         libraries: {
           OrderStoreUtils: orderStoreUtils.address,
           RelayUtils: relayUtils.address,
+          GasUtils: gasUtils.address,
         },
       }
     );

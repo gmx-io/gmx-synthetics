@@ -11,7 +11,6 @@ import "../../oracle/IOracle.sol";
 import "../../oracle/OracleUtils.sol";
 import "../../market/MarketUtils.sol";
 import "../../swap/ISwapUtils.sol";
-import "../../order/IBaseOrderUtils.sol";
 import { SubaccountApproval } from "../../subaccount/SubaccountUtils.sol";
 
 import "../../deposit/IDepositUtils.sol";
@@ -28,26 +27,6 @@ struct Contracts {
     OrderVault orderVault;
     ISwapHandler swapHandler;
     address wnt;
-}
-
-// @note all params except account should be part of the corresponding struct hash
-struct UpdateOrderParams {
-    bytes32 key;
-    uint256 sizeDeltaUsd;
-    uint256 acceptablePrice;
-    uint256 triggerPrice;
-    uint256 minOutputAmount;
-    uint256 validFromTime;
-    bool autoCancel;
-    // should be non zero if order's execution fee should be increased
-    // otherwise should be 0
-    uint256 executionFeeIncrease;
-}
-
-struct BatchParams {
-    IBaseOrderUtils.CreateOrderParams[] createOrderParamsList;
-    UpdateOrderParams[] updateOrderParamsList;
-    bytes32[] cancelOrderKeys;
 }
 
 string constant UPDATE_ORDER_PARAMS = "UpdateOrderParams(bytes32 key,uint256 sizeDeltaUsd,uint256 acceptablePrice,uint256 triggerPrice,uint256 minOutputAmount,uint256 validFromTime,bool autoCancel,uint256 executionFeeIncrease)";
@@ -114,6 +93,9 @@ library RelayUtils {
         );
 
     // Multichain
+    bytes32 public constant SET_TRADER_REFERRAL_CODE_TYPEHASH =
+        keccak256(bytes("SetTraderReferralCode(bytes32 referralCode,bytes32 relayParams)"));
+
     bytes32 public constant CREATE_DEPOSIT_TYPEHASH =
         keccak256(
             bytes(
@@ -398,7 +380,7 @@ library RelayUtils {
 
     function getUpdateOrderStructHash(
         IRelayUtils.RelayParams calldata relayParams,
-        UpdateOrderParams calldata params
+        IRelayUtils.UpdateOrderParams calldata params
     ) external pure returns (bytes32) {
         return _getUpdateOrderStructHash(relayParams, bytes32(0), address(0), params);
     }
@@ -407,7 +389,7 @@ library RelayUtils {
         IRelayUtils.RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
         address account,
-        UpdateOrderParams calldata params
+        IRelayUtils.UpdateOrderParams calldata params
     ) external pure returns (bytes32) {
         return _getUpdateOrderStructHash(relayParams, keccak256(abi.encode(subaccountApproval)), account, params);
     }
@@ -416,7 +398,7 @@ library RelayUtils {
         IRelayUtils.RelayParams calldata relayParams,
         bytes32 subaccountApprovalHash,
         address account,
-        UpdateOrderParams calldata params
+        IRelayUtils.UpdateOrderParams calldata params
     ) private pure returns (bytes32) {
         return
             keccak256(
@@ -430,7 +412,7 @@ library RelayUtils {
             );
     }
 
-    function _getUpdateOrderParamsStructHash(UpdateOrderParams calldata params) private pure returns (bytes32) {
+    function _getUpdateOrderParamsStructHash(IRelayUtils.UpdateOrderParams calldata params) private pure returns (bytes32) {
         return
             keccak256(
                 abi.encode(
@@ -502,7 +484,7 @@ library RelayUtils {
         IRelayUtils.RelayParams calldata relayParams,
         SubaccountApproval calldata subaccountApproval,
         address account,
-        BatchParams calldata params
+        IRelayUtils.BatchParams calldata params
     ) external pure returns (bytes32) {
         return
             _getBatchStructHash(
@@ -517,7 +499,7 @@ library RelayUtils {
 
     function getBatchStructHash(
         IRelayUtils.RelayParams calldata relayParams,
-        BatchParams calldata params
+        IRelayUtils.BatchParams calldata params
     ) external pure returns (bytes32) {
         return
             _getBatchStructHash(
@@ -535,7 +517,7 @@ library RelayUtils {
         bytes32 subaccountApprovalHash,
         address account,
         IBaseOrderUtils.CreateOrderParams[] calldata createOrderParamsList,
-        UpdateOrderParams[] calldata updateOrderParamsList,
+        IRelayUtils.UpdateOrderParams[] calldata updateOrderParamsList,
         bytes32[] calldata cancelOrderKeys
     ) private pure returns (bytes32) {
         return
@@ -563,7 +545,7 @@ library RelayUtils {
     }
 
     function _getUpdateOrderParamsListStructHash(
-        UpdateOrderParams[] calldata updateOrderParamsList
+        IRelayUtils.UpdateOrderParams[] calldata updateOrderParamsList
     ) private pure returns (bytes32) {
         bytes32[] memory updateOrderParamsStructHashes = new bytes32[](updateOrderParamsList.length);
         for (uint256 i = 0; i < updateOrderParamsList.length; i++) {
@@ -573,6 +555,20 @@ library RelayUtils {
     }
 
     //////////////////// MULTICHAIN ////////////////////
+
+    function getTraderReferralCodeStructHash(
+        IRelayUtils.RelayParams calldata relayParams,
+        bytes32 referralCode
+    ) external pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    SET_TRADER_REFERRAL_CODE_TYPEHASH,
+                    referralCode,
+                    _getRelayParamsHash(relayParams)
+                )
+            );
+    }
 
     function getClaimFundingFeesStructHash(
         IRelayUtils.RelayParams calldata relayParams,

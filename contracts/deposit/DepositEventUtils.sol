@@ -116,7 +116,7 @@ library DepositEventUtils {
         eventData.addressItems.setItem(0, "longTokenSwapPath", deposit.longTokenSwapPath());
         eventData.addressItems.setItem(1, "shortTokenSwapPath", deposit.shortTokenSwapPath());
 
-        eventData.uintItems.initItems(7);
+        eventData.uintItems.initItems(8);
         eventData.uintItems.setItem(0, "initialLongTokenAmount", deposit.initialLongTokenAmount());
         eventData.uintItems.setItem(1, "initialShortTokenAmount", deposit.initialShortTokenAmount());
         eventData.uintItems.setItem(2, "minMarketTokens", deposit.minMarketTokens());
@@ -124,6 +124,7 @@ library DepositEventUtils {
         eventData.uintItems.setItem(4, "executionFee", deposit.executionFee());
         eventData.uintItems.setItem(5, "callbackGasLimit", deposit.callbackGasLimit());
         eventData.uintItems.setItem(6, "depositType", uint256(depositType));
+        eventData.uintItems.setItem(7, "srcChainId", deposit.srcChainId());
 
         eventData.boolItems.initItems(1);
         eventData.boolItems.setItem(0, "shouldUnwrapNativeToken", deposit.shouldUnwrapNativeToken());

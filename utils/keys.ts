@@ -155,6 +155,7 @@ export const MIN_POSITION_IMPACT_POOL_AMOUNT = hashString("MIN_POSITION_IMPACT_P
 export const POSITION_IMPACT_POOL_DISTRIBUTION_RATE = hashString("POSITION_IMPACT_POOL_DISTRIBUTION_RATE");
 export const POSITION_IMPACT_POOL_DISTRIBUTED_AT = hashString("POSITION_IMPACT_POOL_DISTRIBUTED_AT");
 export const MAX_LENDABLE_IMPACT_FACTOR = hashString("MAX_LENDABLE_IMPACT_FACTOR");
+export const MAX_LENDABLE_IMPACT_USD = hashString("MAX_LENDABLE_IMPACT_USD");
 
 export const SWAP_IMPACT_POOL_AMOUNT = hashString("SWAP_IMPACT_POOL_AMOUNT");
 
@@ -279,7 +280,10 @@ export const WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT = hashString("WITHDRAWABLE_BUYBAC
 export const MULTICHAIN_BALANCE = hashString("MULTICHAIN_BALANCE");
 export const IS_MULTICHAIN_PROVIDER_ENABLED = hashString("IS_MULTICHAIN_PROVIDER_ENABLED");
 export const IS_MULTICHAIN_ENDPOINT_ENABLED = hashString("IS_MULTICHAIN_ENDPOINT_ENABLED");
+export const IS_RELAY_FEE_EXCLUDED = hashString("IS_RELAY_FEE_EXCLUDED");
 export const IS_SRC_CHAIN_ID_ENABLED = hashString("IS_SRC_CHAIN_ID_ENABLED");
+export const EID_TO_SRC_CHAIN_ID = hashString("EID_TO_SRC_CHAIN_ID");
+export const POSITION_LAST_SRC_CHAIN_ID = hashString("POSITION_LAST_SRC_CHAIN_ID");
 
 export const VALID_FROM_TIME = hashString("VALID_FROM_TIME");
 
@@ -560,6 +564,10 @@ export function positionImpactPoolDistributedAtKey(market: string) {
 
 export function maxLendableImpactFactorKey(market: string) {
   return hashData(["bytes32", "address"], [MAX_LENDABLE_IMPACT_FACTOR, market]);
+}
+
+export function maxLendableImpactUsdKey(market: string) {
+  return hashData(["bytes32", "address"], [MAX_LENDABLE_IMPACT_USD, market]);
 }
 
 export function swapImpactPoolAmountKey(market: string, token: string) {
@@ -881,6 +889,18 @@ export function isMultichainEndpointEnabledKey(contract: string) {
   return hashData(["bytes32", "address"], [IS_MULTICHAIN_ENDPOINT_ENABLED, contract]);
 }
 
+export function isRelayFeeExcludedKey(contract: string) {
+  return hashData(["bytes32", "address"], [IS_RELAY_FEE_EXCLUDED, contract]);
+}
+
 export function isSrcChainIdEnabledKey(srcChainId: number) {
   return hashData(["bytes32", "uint256"], [IS_SRC_CHAIN_ID_ENABLED, srcChainId]);
+}
+
+export function eidToSrcChainId(eid: number) {
+  return hashData(["bytes32", "uint32"], [EID_TO_SRC_CHAIN_ID, eid]);
+}
+
+export function positionLastSrcChainIdKey(positionKey: string) {
+  return hashData(["bytes32", "bytes32"], [POSITION_LAST_SRC_CHAIN_ID, positionKey]);
 }

@@ -37,6 +37,7 @@ library Errors {
     error DataStreamIdAlreadyExistsForToken(address token);
     error MaxFundingFactorPerSecondLimitExceeded(uint256 maxFundingFactorPerSecond, uint256 limit);
     error InvalidPositionImpactPoolDistributionRate(uint256 distributionAmount, uint256 positionImpactPoolAmount);
+    error InsufficientMinPositionImpactPoolAmount(uint256 minPositionImpactPoolAmount, int256 totalPendingImpactAmount);
     error MaxDataListLengthExceeded(uint256 dataLength, uint256 maxDataLength);
     error EmptyToken();
 
@@ -60,6 +61,10 @@ library Errors {
     error EmptyPositionImpactWithdrawalAmount();
     error OraclePriceOutdated();
     error EmptyTarget();
+    error EmptyFundingAccount();
+    error EmptyReduceLentAmount();
+    error ReductionExceedsLentAmount(uint256 lentAmount, uint256 totalReductionAmount);
+    error TargetIsNotAContract(address target);
 
     // GlvDepositStoreUtils errors
     error GlvDepositNotFound(bytes32 key);
@@ -249,7 +254,6 @@ library Errors {
         uint256 maxRefPriceDeviationFactor
     );
     error InvalidBlockRangeSet(uint256 largestMinBlockNumber, uint256 smallestMaxBlockNumber);
-    error EmptyChainlinkPaymentToken();
     error NonAtomicOracleProvider(address provider);
 
     // OracleModule errors
@@ -343,6 +347,7 @@ library Errors {
     error ShiftFromAndToMarketAreEqual(address market);
     error LongTokensAreNotEqual(address fromMarketLongToken, address toMarketLongToken);
     error ShortTokensAreNotEqual(address fromMarketLongToken, address toMarketLongToken);
+    error BridgeOutNotSupportedDuringShift();
 
     // SwapPricingUtils errors
     error UsdDeltaExceedsPoolValue(int256 usdDelta, uint256 poolUsd);
@@ -422,6 +427,7 @@ library Errors {
     error MinShortTokens(uint256 received, uint256 expected);
     error InsufficientMarketTokens(uint256 balance, uint256 expected);
     error InvalidPoolValueForWithdrawal(int256 poolValue);
+    error MaxLendableFactorForWithdrawalsExceeded(uint256 poolUsd, uint256 maxLendableUsd, uint256 lentUsd);
 
     // Uint256Mask errors
     error MaskIndexOutOfBounds(uint256 index, string label);
@@ -446,14 +452,15 @@ library Errors {
     error EmptyMultichainTransferOutAmount(address account, address token);
     error InsufficientMultichainBalance(address account, address token, uint256 balance, uint256 amount);
     error InvalidSrcChainId(uint256 srcChainId);
+    error InvalidEid(uint256 eid);
     error InvalidDestinationChainId(uint256 desChainId);
     error TokenPermitsNotAllowedForMultichain();
+    error InvalidInitializer();
     error InvalidMultichainProvider(address provider);
     error InvalidMultichainEndpoint(address endpoint);
     error UnableToPayOrderFee();
     error UnableToPayOrderFeeFromCollateral();
     error InvalidBridgeOutToken(address token);
-    error InvalidMultichainAction();
     error InsufficientFee(uint256 feeProvided, uint256 feeRequired);
 
     enum SignatureType {

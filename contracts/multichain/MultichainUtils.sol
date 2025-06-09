@@ -21,34 +21,32 @@ library MultichainUtils {
 
     /**
      * Records a deposit from another chain. IMultichainProvider has CONTROLLER role
-     * @param provider the multichain provider contract
+     * @param multichainProvider the multichain provider contract
      * @param token address of the token being deposited
      * @param account user address on the source chain
-     * @param amount the amount of tokens being deposited
      * @param srcChainId id of the source chain
      */
     function recordBridgeIn(
         DataStore dataStore,
         EventEmitter eventEmitter,
         MultichainVault multichainVault,
-        IMultichainProvider provider,
+        IMultichainProvider multichainProvider,
         address token,
         address account,
-        uint256 amount,
         uint256 srcChainId
     ) external {
+        // token should have been transferred to multichainVault by IMultichainProvider
+        uint256 amount = multichainVault.recordTransferIn(token);
+
         if (amount == 0) {
             revert Errors.EmptyMultichainTransferInAmount(account, token);
         }
-
-        // token should have been transferred to multichainVault by IMultichainProvider
-        amount = multichainVault.recordTransferIn(token);
 
         _increaseMultichainBalance(dataStore, eventEmitter, account, token, amount, srcChainId);
 
         MultichainEventUtils.emitMultichainBridgeIn(
             eventEmitter,
-            address(provider),
+            address(multichainProvider),
             token,
             account,
             amount,

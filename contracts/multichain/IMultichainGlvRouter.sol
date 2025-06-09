@@ -15,14 +15,6 @@ interface IMultichainGlvRouter {
         IGlvDepositUtils.CreateGlvDepositParams memory params
     ) external returns (bytes32);
 
-    function createGlvDepositFromBridge(
-        IRelayUtils.RelayParams calldata relayParams,
-        address account,
-        uint256 srcChainId,
-        IRelayUtils.TransferRequests calldata transferRequests,
-        IGlvDepositUtils.CreateGlvDepositParams memory params
-    ) external returns (bytes32);
-
     function createGlvWithdrawal(
         IRelayUtils.RelayParams calldata relayParams,
         address account,

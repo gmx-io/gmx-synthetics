@@ -579,7 +579,7 @@ library GasUtils {
         uint256 startingGas,
         uint256 calldataLength,
         uint256 availableFeeAmount
-    ) internal returns (uint256) {
+    ) external returns (uint256) {
         address relayFeeAddress = dataStore.getAddress(Keys.RELAY_FEE_ADDRESS);
         if (relayFeeAddress == address(0)) {
             revert Errors.EmptyRelayFeeAddress();

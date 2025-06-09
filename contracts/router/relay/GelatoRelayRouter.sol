@@ -30,7 +30,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
     function batch(
         IRelayUtils.RelayParams calldata relayParams,
         address account,
-        BatchParams calldata params
+        IRelayUtils.BatchParams calldata params
     )
         external
         nonReentrant
@@ -78,7 +78,7 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
     function updateOrder(
         IRelayUtils.RelayParams calldata relayParams,
         address account,
-        UpdateOrderParams calldata params
+        IRelayUtils.UpdateOrderParams calldata params
     ) external nonReentrant withRelay(relayParams, account, 0 /* srcChainId is the current block.chainId */, false) {
         bytes32 structHash = RelayUtils.getUpdateOrderStructHash(relayParams, params);
         _validateCall(relayParams, account, structHash, block.chainid /* srcChainId */);

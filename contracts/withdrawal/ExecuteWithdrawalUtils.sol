@@ -261,6 +261,12 @@ library ExecuteWithdrawalUtils {
             -cache.shortTokenPoolAmountDelta.toInt256()
         );
 
+        validateMaxLendableFactor(
+            params.dataStore,
+            market,
+            prices
+        );
+
         MarketUtils.validateReserve(params.dataStore, market, prices, true);
 
         MarketUtils.validateReserve(params.dataStore, market, prices, false);
@@ -424,6 +430,7 @@ library ExecuteWithdrawalUtils {
 
         uint256 poolValue = poolValueInfo.poolValue.toUint256();
         uint256 marketTokensSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(market.marketToken)));
+        uint256 withdrawalUsd = MarketUtils.marketTokenAmountToUsd(marketTokenAmount, poolValue, marketTokensSupply);
 
         MarketEventUtils.emitMarketPoolValueInfo(
             params.eventEmitter,
@@ -433,19 +440,33 @@ library ExecuteWithdrawalUtils {
             marketTokensSupply
         );
 
-        uint256 longTokenPoolAmount = MarketUtils.getPoolAmount(params.dataStore, market, market.longToken);
-        uint256 shortTokenPoolAmount = MarketUtils.getPoolAmount(params.dataStore, market, market.shortToken);
+        return MarketUtils.getProportionalAmounts(
+            params.dataStore,
+            market,
+            prices,
+            withdrawalUsd
+        );
+    }
 
-        uint256 longTokenPoolUsd = longTokenPoolAmount * prices.longTokenPrice.max;
-        uint256 shortTokenPoolUsd = shortTokenPoolAmount * prices.shortTokenPrice.max;
+    // note that if the maxLendableImpactFactorForWithdrawals is set too large
+    // it can cause withdrawals to not be executed
+    function validateMaxLendableFactor(
+        DataStore dataStore,
+        Market.Props memory market,
+        MarketUtils.MarketPrices memory prices
+    ) internal view {
+        uint256 longTokenUsd = MarketUtils.getPoolAmount(dataStore, market, market.longToken)  * prices.longTokenPrice.min;
+        uint256 shortTokenUsd = MarketUtils.getPoolAmount(dataStore, market, market.shortToken)  * prices.shortTokenPrice.min;
+        uint256 poolUsd = longTokenUsd + shortTokenUsd;
 
-        uint256 totalPoolUsd = longTokenPoolUsd + shortTokenPoolUsd;
+        uint256 maxLendableFactor = dataStore.getUint(Keys.maxLendableImpactFactorForWithdrawalsKey(market.marketToken));
+        uint256 maxLendableUsd = Precision.applyFactor(poolUsd, maxLendableFactor);
 
-        uint256 marketTokensUsd = MarketUtils.marketTokenAmountToUsd(marketTokenAmount, poolValue, marketTokensSupply);
+        uint256 lentAmount = dataStore.getUint(Keys.lentPositionImpactPoolAmountKey(market.marketToken));
+        uint256 lentUsd = lentAmount * prices.indexTokenPrice.max;
 
-        uint256 longTokenOutputUsd = Precision.mulDiv(marketTokensUsd, longTokenPoolUsd, totalPoolUsd);
-        uint256 shortTokenOutputUsd = Precision.mulDiv(marketTokensUsd, shortTokenPoolUsd, totalPoolUsd);
-
-        return (longTokenOutputUsd / prices.longTokenPrice.max, shortTokenOutputUsd / prices.shortTokenPrice.max);
+        if (lentUsd > maxLendableUsd) {
+            revert Errors.MaxLendableFactorForWithdrawalsExceeded(poolUsd, maxLendableUsd, lentUsd);
+        }
     }
 }

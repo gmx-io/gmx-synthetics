@@ -36,11 +36,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
     mapping(address => uint256) public userNonces;
 
-    struct WithRelayCache {
-        uint256 startingGas;
-        Contracts contracts;
-    }
-
     modifier withRelay(
         IRelayUtils.RelayParams calldata relayParams,
         address account,
@@ -79,7 +74,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         address account,
         uint256 srcChainId,
         IBaseOrderUtils.CreateOrderParams[] calldata createOrderParamsList,
-        UpdateOrderParams[] calldata updateOrderParamsList,
+        IRelayUtils.UpdateOrderParams[] calldata updateOrderParamsList,
         bytes32[] calldata cancelOrderKeys,
         bool isSubaccount
     ) internal returns (bytes32[] memory) {
@@ -134,7 +129,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             orderHandler.createOrder(account, srcChainId, params, isSubaccount && params.addresses.callbackContract != address(0));
     }
 
-    function _updateOrder(address account, UpdateOrderParams calldata params, bool isSubaccount) internal {
+    function _updateOrder(address account, IRelayUtils.UpdateOrderParams calldata params, bool isSubaccount) internal {
         Contracts memory contracts = _getContracts();
         Order.Props memory order = OrderStoreUtils.get(contracts.dataStore, params.key);
 
@@ -275,6 +270,12 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         uint256 srcChainId,
         bool isSubaccount
     ) internal {
+        /// @dev relay fee is excluded for calls made through the IMultichainProvider
+        /// as the user already paid for execution on the source chain
+        if (dataStore.getBool(Keys.isRelayFeeExcludedKey(msg.sender))) {
+            return;
+        }
+
         if (_isGelatoRelay(msg.sender) && _getFeeToken() != contracts.wnt) {
             revert Errors.UnsupportedRelayFeeToken(_getFeeToken(), contracts.wnt);
         }
@@ -330,6 +331,12 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         address account,
         uint256 srcChainId
     ) internal {
+        /// @dev relay fee is excluded for calls made through the IMultichainProvider
+        /// as the user already paid for execution on the source chain
+        if (dataStore.getBool(Keys.isRelayFeeExcludedKey(msg.sender))) {
+            return;
+        }
+
         bool isSponsoredCall = !_isGelatoRelay(msg.sender);
         uint256 residualFeeAmount = ERC20(contracts.wnt).balanceOf(address(this));
         uint256 relayFee;

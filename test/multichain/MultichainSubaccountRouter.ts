@@ -171,11 +171,14 @@ describe("MultichainSubaccountRouter", () => {
       await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
     });
 
-    it("InvalidReceiver", async () => {
+    it("InvalidReceiverForSubaccountOrder", async () => {
       await enableSubaccount();
 
       createOrderParams.params.addresses.receiver = user2.address;
-      await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(errorsContract, "InvalidReceiver");
+      await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidReceiverForSubaccountOrder"
+      );
     });
 
     it("InvalidCancellationReceiverForSubaccountOrder", async () => {
