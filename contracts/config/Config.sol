@@ -455,8 +455,10 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
         allowedBaseKeys[Keys.MAX_EXECUTION_FEE_MULTIPLIER_FACTOR] = true;
 
+        allowedBaseKeys[Keys.CREATE_DEPOSIT_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.DEPOSIT_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.WITHDRAWAL_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.CREATE_GLV_DEPOSIT_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.GLV_DEPOSIT_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.GLV_WITHDRAWAL_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.GLV_SHIFT_GAS_LIMIT] = true;
@@ -466,6 +468,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.INCREASE_ORDER_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.DECREASE_ORDER_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.SWAP_ORDER_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.SET_TRADER_REFERRAL_CODE_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.TOKEN_TRANSFER_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.NATIVE_TOKEN_TRANSFER_GAS_LIMIT] = true;
 
