@@ -1,6 +1,6 @@
 import { grantRoleIfNotGranted } from "../utils/role";
 import { createDeployFunction } from "../utils/deploy";
-import hre, { getNamedAccounts } from "hardhat";
+import { getNamedAccounts } from "hardhat";
 import { CANCELLER_ROLE, EXECUTOR_ROLE, PROPOSER_ROLE, TIMELOCK_ADMIN_ROLE } from "../utils/gov";
 
 const libraries = ["MarketUtils"];
@@ -33,8 +33,6 @@ const func = createDeployFunction({
     await grantProposerRole(deployedContract.address);
     await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
     await grantRoleIfNotGranted(deployedContract.address, "ROLE_ADMIN");
-
-    const generalConfig = await hre.gmx.getGeneral();
   },
 });
 
