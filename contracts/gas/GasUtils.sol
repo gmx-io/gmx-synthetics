@@ -580,6 +580,9 @@ library GasUtils {
         uint256 calldataLength,
         uint256 availableFeeAmount
     ) external returns (uint256) {
+        // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
+        startingGas -= gasleft() / 63;
+
         address relayFeeAddress = dataStore.getAddress(Keys.RELAY_FEE_ADDRESS);
         if (relayFeeAddress == address(0)) {
             revert Errors.EmptyRelayFeeAddress();
