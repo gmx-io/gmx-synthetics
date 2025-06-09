@@ -116,13 +116,7 @@ contract SubaccountRouter is BaseRouter {
 
         _handleSubaccountAction(account, Keys.SUBACCOUNT_ORDER_ACTION);
 
-        if (params.addresses.receiver != account) {
-            revert Errors.InvalidReceiverForSubaccountOrder(params.addresses.receiver, account);
-        }
-
-        if (params.addresses.cancellationReceiver != address(0) && params.addresses.cancellationReceiver != account) {
-            revert Errors.InvalidCancellationReceiverForSubaccountOrder(params.addresses.cancellationReceiver, account);
-        }
+        SubaccountUtils.validateCreateOrderParams(account, params);
 
         if (
             params.orderType == Order.OrderType.MarketSwap ||

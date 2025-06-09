@@ -139,6 +139,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       FROZEN_ORDER_KEEPER: { [deployer]: true },
       CONFIG_KEEPER: { [deployer]: true },
       LIMITED_CONFIG_KEEPER: { [deployer]: true },
+      TIMELOCK_ADMIN: { [deployer]: true },
     },
     arbitrum: {
       ADL_KEEPER: syntheticKeepers.mainnet,
@@ -352,6 +353,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745": true, // general_keeper_1
         "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
         "0xD5F8b9ba4255B2F73b06f245fcca73D114D1D460": true, // general_keeper_3
+        "0xE7BfFf2aB721264887230037940490351700a068": true, // temp deployer
       },
       FEE_KEEPER: {
         "0x43CE1d475e06c65DD879f4ec644B8e0E10ff2b6D": true, // fee_keeper_1
@@ -370,7 +372,9 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       TIMELOCK_MULTISIG: {
         "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // temp timelock_admin_1
       },
-      CONTROLLER: {},
+      CONTROLLER: {
+        "0xE7BfFf2aB721264887230037940490351700a068": true, // temp deployer
+      },
       GOV_TOKEN_CONTROLLER: {},
     },
     avalancheFuji: {

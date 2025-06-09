@@ -6,8 +6,6 @@ import { EventEmitter } from "../event/EventEmitter.sol";
 import { EventUtils } from "../event/EventUtils.sol";
 import { Cast } from "../utils/Cast.sol";
 
-import { IMultichainProvider } from "./IMultichainProvider.sol";
-
 /**
  * @title MultichainEventUtils
  */
@@ -17,6 +15,8 @@ library MultichainEventUtils {
     using EventUtils for EventUtils.Bytes32Items;
     using EventUtils for EventUtils.StringItems;
 
+    /// @param provider the address of the multichain provider for cross-chain action,
+    /// or zero address for same-chain action
     function emitMultichainBridgeIn(
         EventEmitter eventEmitter,
         address provider,
@@ -59,12 +59,14 @@ library MultichainEventUtils {
         eventEmitter.emitEventLog1("MultichainTransferIn", Cast.toBytes32(account), eventData);
     }
 
-    function emitDepositFromBridge(
+    /// @param provider the address of the multichain provider for Deposit/GlvDeposit action types,
+    /// or handler address for BridgeOut action type
+    function emitMultichainBridgeAction(
         EventEmitter eventEmitter,
         address provider,
         address account,
         uint256 srcChainId,
-        IMultichainProvider.ActionType actionType,
+        uint256 actionType,
         bytes32 key
     ) internal {
         EventUtils.EventLogData memory eventData;
@@ -75,20 +77,22 @@ library MultichainEventUtils {
 
         eventData.uintItems.initItems(2);
         eventData.uintItems.setItem(0, "srcChainId", srcChainId);
-        eventData.uintItems.setItem(1, "actionType", uint256(actionType));
+        eventData.uintItems.setItem(1, "actionType", actionType);
 
         eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "key", key);
 
-        eventEmitter.emitEventLog1("DepositFromBridge", Cast.toBytes32(account), eventData);
+        eventEmitter.emitEventLog1("MultichainBridgeAction", Cast.toBytes32(account), eventData);
     }
 
-    function emitDepositFromBridgeFailed(
+    /// @param provider the address of the multichain provider for Deposit/GlvDeposit action types,
+    /// or handler address for BridgeOut action type
+    function emitMultichainBridgeActionFailed(
         EventEmitter eventEmitter,
         address provider,
         address account,
         uint256 srcChainId,
-        IMultichainProvider.ActionType actionType,
+        uint256 actionType,
         string memory reason
     ) internal {
         EventUtils.EventLogData memory eventData;
@@ -99,14 +103,16 @@ library MultichainEventUtils {
 
         eventData.uintItems.initItems(2);
         eventData.uintItems.setItem(0, "srcChainId", srcChainId);
-        eventData.uintItems.setItem(1, "actionType", uint256(actionType));
+        eventData.uintItems.setItem(1, "actionType", actionType);
 
         eventData.stringItems.initItems(1);
         eventData.stringItems.setItem(0, "reason", reason);
 
-        eventEmitter.emitEventLog1("DepositFromBridge", Cast.toBytes32(account), eventData);
+        eventEmitter.emitEventLog1("MultichainBridgeActionFailed", Cast.toBytes32(account), eventData);
     }
 
+    /// @param provider the address of the multichain provider for cross-chain action,
+    /// or zero address for same-chain action
     function emitMultichainBridgeOut(
         EventEmitter eventEmitter,
         address provider,

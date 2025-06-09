@@ -155,6 +155,7 @@ export const MIN_POSITION_IMPACT_POOL_AMOUNT = hashString("MIN_POSITION_IMPACT_P
 export const POSITION_IMPACT_POOL_DISTRIBUTION_RATE = hashString("POSITION_IMPACT_POOL_DISTRIBUTION_RATE");
 export const POSITION_IMPACT_POOL_DISTRIBUTED_AT = hashString("POSITION_IMPACT_POOL_DISTRIBUTED_AT");
 export const MAX_LENDABLE_IMPACT_FACTOR = hashString("MAX_LENDABLE_IMPACT_FACTOR");
+export const MAX_LENDABLE_IMPACT_USD = hashString("MAX_LENDABLE_IMPACT_USD");
 
 export const SWAP_IMPACT_POOL_AMOUNT = hashString("SWAP_IMPACT_POOL_AMOUNT");
 
@@ -279,7 +280,10 @@ export const WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT = hashString("WITHDRAWABLE_BUYBAC
 export const MULTICHAIN_BALANCE = hashString("MULTICHAIN_BALANCE");
 export const IS_MULTICHAIN_PROVIDER_ENABLED = hashString("IS_MULTICHAIN_PROVIDER_ENABLED");
 export const IS_MULTICHAIN_ENDPOINT_ENABLED = hashString("IS_MULTICHAIN_ENDPOINT_ENABLED");
+export const IS_RELAY_FEE_EXCLUDED = hashString("IS_RELAY_FEE_EXCLUDED");
 export const IS_SRC_CHAIN_ID_ENABLED = hashString("IS_SRC_CHAIN_ID_ENABLED");
+export const EID_TO_SRC_CHAIN_ID = hashString("EID_TO_SRC_CHAIN_ID");
+export const POSITION_LAST_SRC_CHAIN_ID = hashString("POSITION_LAST_SRC_CHAIN_ID");
 
 export const MULTICHAIN_READ_CHANNEL = hashString("MULTICHAIN_READ_CHANNEL");
 export const MULTICHAIN_PEERS = hashString("MULTICHAIN_PEERS");
@@ -312,6 +316,34 @@ export const FEE_DISTRIBUTOR_CHAINLINK_FACTOR = hashString("FEE_DISTRIBUTOR_CHAI
 export const VALID_FROM_TIME = hashString("VALID_FROM_TIME");
 
 export const MAX_DATA_LENGTH = hashString("MAX_DATA_LENGTH");
+
+export const MULTICHAIN_READ_CHANNEL = hashString("MULTICHAIN_READ_CHANNEL");
+export const MULTICHAIN_PEERS = hashString("MULTICHAIN_PEERS");
+export const MULTICHAIN_CONFIRMATIONS = hashString("MULTICHAIN_CONFIRMATIONS");
+export const MULTICHAIN_AUTHORIZED_ORIGINATORS = hashString("MULTICHAIN_AUTHORIZED_ORIGINATORS");
+
+export const FEE_DISTRIBUTOR_DISTRIBUTION_DAY = hashString("FEE_DISTRIBUTOR_DISTRIBUTION_DAY");
+export const FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP = hashString("FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP");
+export const FEE_DISTRIBUTOR_STATE = hashString("FEE_DISTRIBUTOR_STATE");
+export const FEE_DISTRIBUTOR_REFERRAL_REWARDS_WNT_USD_LIMIT = hashString("FEE_DISTRIBUTOR_REFERRAL_REWARDS_WNT_USD_LIMIT");
+export const FEE_DISTRIBUTOR_REFERRAL_REWARDS_ESGMX_LIMIT = hashString("FEE_DISTRIBUTOR_REFERRAL_REWARDS_ESGMX_LIMIT");
+export const FEE_DISTRIBUTOR_GMX_PRICE = hashString("FEE_DISTRIBUTOR_GMX_PRICE");
+export const FEE_DISTRIBUTOR_WNT_PRICE = hashString("FEE_DISTRIBUTOR_WNT_PRICE");
+export const FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY = hashString("FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY");
+export const FEE_DISTRIBUTOR_GAS_LIMIT = hashString("FEE_DISTRIBUTOR_GAS_LIMIT");
+export const FEE_DISTRIBUTOR_CHAIN_ID = hashString("FEE_DISTRIBUTOR_CHAIN_ID");
+export const FEE_DISTRIBUTOR_FEE_AMOUNT_GMX = hashString("FEE_DISTRIBUTOR_FEE_AMOUNT_GMX");
+export const FEE_DISTRIBUTOR_TOTAL_FEE_AMOUNT_GMX = hashString("FEE_DISTRIBUTOR_TOTAL_FEE_AMOUNT_GMX");
+export const FEE_DISTRIBUTOR_STAKED_GMX = hashString("FEE_DISTRIBUTOR_STAKED_GMX");
+export const FEE_DISTRIBUTOR_TOTAL_STAKED_GMX = hashString("FEE_DISTRIBUTOR_TOTAL_STAKED_GMX");
+export const FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_FACTOR = hashString("FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_FACTOR");
+export const FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP = hashString("FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP");
+export const FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID = hashString("FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID");
+export const FEE_DISTRIBUTOR_ADDRESS_INFO = hashString("FEE_DISTRIBUTOR_ADDRESS_INFO");
+export const FEE_DISTRIBUTOR_AMOUNT_THRESHOLD = hashString("FEE_DISTRIBUTOR_AMOUNT_THRESHOLD");
+export const FEE_DISTRIBUTOR_KEEPER_COSTS = hashString("FEE_DISTRIBUTOR_KEEPER_COSTS");
+export const FEE_DISTRIBUTOR_KEEPER_GLP_FACTOR = hashString("FEE_DISTRIBUTOR_KEEPER_GLP_FACTOR");
+export const FEE_DISTRIBUTOR_CHAINLINK_FACTOR = hashString("FEE_DISTRIBUTOR_CHAINLINK_FACTOR");
 
 export function accountDepositListKey(account) {
   return hashData(["bytes32", "address"], [ACCOUNT_DEPOSIT_LIST, account]);
@@ -588,6 +620,10 @@ export function positionImpactPoolDistributedAtKey(market: string) {
 
 export function maxLendableImpactFactorKey(market: string) {
   return hashData(["bytes32", "address"], [MAX_LENDABLE_IMPACT_FACTOR, market]);
+}
+
+export function maxLendableImpactUsdKey(market: string) {
+  return hashData(["bytes32", "address"], [MAX_LENDABLE_IMPACT_USD, market]);
 }
 
 export function swapImpactPoolAmountKey(market: string, token: string) {
@@ -905,8 +941,20 @@ export function isMultichainEndpointEnabledKey(contract: string) {
   return hashData(["bytes32", "address"], [IS_MULTICHAIN_ENDPOINT_ENABLED, contract]);
 }
 
+export function isRelayFeeExcludedKey(contract: string) {
+  return hashData(["bytes32", "address"], [IS_RELAY_FEE_EXCLUDED, contract]);
+}
+
 export function isSrcChainIdEnabledKey(srcChainId: number) {
   return hashData(["bytes32", "uint256"], [IS_SRC_CHAIN_ID_ENABLED, srcChainId]);
+}
+
+export function eidToSrcChainId(eid: number) {
+  return hashData(["bytes32", "uint32"], [EID_TO_SRC_CHAIN_ID, eid]);
+}
+
+export function positionLastSrcChainIdKey(positionKey: string) {
+  return hashData(["bytes32", "bytes32"], [POSITION_LAST_SRC_CHAIN_ID, positionKey]);
 }
 
 export function multichainBalanceKey(account: string, token: string) {

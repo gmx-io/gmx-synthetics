@@ -234,29 +234,24 @@ library Keys {
     bytes32 public constant MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT = keccak256(abi.encode("MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT"));
     bytes32 public constant GELATO_RELAY_FEE_MULTIPLIER_FACTOR = keccak256(abi.encode("GELATO_RELAY_FEE_MULTIPLIER_FACTOR"));
     bytes32 public constant GELATO_RELAY_FEE_BASE_AMOUNT = keccak256(abi.encode("GELATO_RELAY_FEE_BASE_AMOUNT"));
-    // @dev key for the estimated gas limit for deposits
     bytes32 public constant DEPOSIT_GAS_LIMIT = keccak256(abi.encode("DEPOSIT_GAS_LIMIT"));
-    // @dev key for the estimated gas limit for withdrawals
+    bytes32 public constant CREATE_DEPOSIT_GAS_LIMIT = keccak256(abi.encode("CREATE_DEPOSIT_GAS_LIMIT"));
     bytes32 public constant WITHDRAWAL_GAS_LIMIT = keccak256(abi.encode("WITHDRAWAL_GAS_LIMIT"));
+    bytes32 public constant CREATE_GLV_DEPOSIT_GAS_LIMIT = keccak256(abi.encode("CREATE_GLV_DEPOSIT_GAS_LIMIT"));
     bytes32 public constant GLV_DEPOSIT_GAS_LIMIT = keccak256(abi.encode("GLV_DEPOSIT_GAS_LIMIT"));
     bytes32 public constant GLV_WITHDRAWAL_GAS_LIMIT = keccak256(abi.encode("GLV_WITHDRAWAL_GAS_LIMIT"));
     bytes32 public constant GLV_SHIFT_GAS_LIMIT = keccak256(abi.encode("GLV_SHIFT_GAS_LIMIT"));
     bytes32 public constant GLV_PER_MARKET_GAS_LIMIT = keccak256(abi.encode("GLV_PER_MARKET_GAS_LIMIT"));
-    // @dev key for the estimated gas limit for shifts
     bytes32 public constant SHIFT_GAS_LIMIT = keccak256(abi.encode("SHIFT_GAS_LIMIT"));
-    // @dev key for the estimated gas limit for single swaps
     bytes32 public constant SINGLE_SWAP_GAS_LIMIT = keccak256(abi.encode("SINGLE_SWAP_GAS_LIMIT"));
-    // @dev key for the estimated gas limit for increase orders
     bytes32 public constant INCREASE_ORDER_GAS_LIMIT = keccak256(abi.encode("INCREASE_ORDER_GAS_LIMIT"));
-    // @dev key for the estimated gas limit for decrease orders
     bytes32 public constant DECREASE_ORDER_GAS_LIMIT = keccak256(abi.encode("DECREASE_ORDER_GAS_LIMIT"));
-    // @dev key for the estimated gas limit for swap orders
     bytes32 public constant SWAP_ORDER_GAS_LIMIT = keccak256(abi.encode("SWAP_ORDER_GAS_LIMIT"));
-    // @dev key for the amount of gas to forward for token transfers
+    bytes32 public constant SET_TRADER_REFERRAL_CODE_GAS_LIMIT = keccak256(abi.encode("SET_TRADER_REFERRAL_CODE_GAS_LIMIT"));
+
     bytes32 public constant TOKEN_TRANSFER_GAS_LIMIT = keccak256(abi.encode("TOKEN_TRANSFER_GAS_LIMIT"));
-    // @dev key for the amount of gas to forward for native token transfers
     bytes32 public constant NATIVE_TOKEN_TRANSFER_GAS_LIMIT = keccak256(abi.encode("NATIVE_TOKEN_TRANSFER_GAS_LIMIT"));
-    // @dev key for the request expiration time, after which the request will be considered expired
+
     bytes32 public constant REQUEST_EXPIRATION_TIME = keccak256(abi.encode("REQUEST_EXPIRATION_TIME"));
 
     bytes32 public constant MAX_CALLBACK_GAS_LIMIT = keccak256(abi.encode("MAX_CALLBACK_GAS_LIMIT"));
@@ -329,6 +324,8 @@ library Keys {
     // @dev key for lent position impact pool amount
     bytes32 public constant LENT_POSITION_IMPACT_POOL_AMOUNT = keccak256(abi.encode("LENT_POSITION_IMPACT_POOL_AMOUNT"));
     bytes32 public constant MAX_LENDABLE_IMPACT_FACTOR = keccak256(abi.encode("MAX_LENDABLE_IMPACT_FACTOR"));
+    bytes32 public constant MAX_LENDABLE_IMPACT_FACTOR_FOR_WITHDRAWALS = keccak256(abi.encode("MAX_LENDABLE_IMPACT_FACTOR_FOR_WITHDRAWALS"));
+    bytes32 public constant MAX_LENDABLE_IMPACT_USD = keccak256(abi.encode("MAX_LENDABLE_IMPACT_USD"));
     // @dev key for total pending position impact amount
     bytes32 public constant TOTAL_PENDING_IMPACT_AMOUNT = keccak256(abi.encode("TOTAL_PENDING_IMPACT_AMOUNT"));
     // @dev key for min position impact pool amount
@@ -507,6 +504,8 @@ library Keys {
     bytes32 public constant IS_MULTICHAIN_PROVIDER_ENABLED = keccak256(abi.encode("IS_MULTICHAIN_PROVIDER_ENABLED"));
     // @dev key for the flag if a multichain endpoint is enabled
     bytes32 public constant IS_MULTICHAIN_ENDPOINT_ENABLED = keccak256(abi.encode("IS_MULTICHAIN_ENDPOINT_ENABLED"));
+    // @dev key for the flag if the relay fee is excluded for the caller
+    bytes32 public constant IS_RELAY_FEE_EXCLUDED = keccak256(abi.encode("IS_RELAY_FEE_EXCLUDED"));
     // @dev key for the flag if a src chain is enabled
     bytes32 public constant IS_SRC_CHAIN_ID_ENABLED = keccak256(abi.encode("IS_SRC_CHAIN_ID_ENABLED"));
     // @dev key for the last src chain id from which the user last managed his position
@@ -1461,6 +1460,20 @@ library Keys {
         ));
     }
 
+    function maxLendableImpactFactorForWithdrawalsKey(address market) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            MAX_LENDABLE_IMPACT_FACTOR_FOR_WITHDRAWALS,
+            market
+        ));
+    }
+
+    function maxLendableImpactUsdKey(address market) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            MAX_LENDABLE_IMPACT_USD,
+            market
+        ));
+    }
+
     function totalPendingImpactAmountKey(address market) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             TOTAL_PENDING_IMPACT_AMOUNT,
@@ -2326,6 +2339,16 @@ library Keys {
         return keccak256(abi.encode(
             IS_MULTICHAIN_ENDPOINT_ENABLED,
             endpoint
+        ));
+    }
+
+    // @dev key for whether a relay fee is excluded for the caller
+    // @param sender the address of the sender
+    // @return key for whether a relay fee is excluded
+    function isRelayFeeExcludedKey(address sender) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            IS_RELAY_FEE_EXCLUDED,
+            sender
         ));
     }
 

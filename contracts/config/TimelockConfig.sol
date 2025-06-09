@@ -336,6 +336,38 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         );
     }
 
+    function signalReduceLentAmount(
+        address market,
+        address fundingAccount,
+        uint256 reductionAmount
+    ) external onlyTimelockAdmin {
+        if (market == address(0)) {
+            revert Errors.EmptyMarket();
+        }
+        if (fundingAccount == address(0)) {
+            revert Errors.EmptyFundingAccount();
+        }
+        if (reductionAmount == 0) {
+            revert Errors.EmptyReduceLentAmount();
+        }
+
+        bytes memory payload = abi.encodeWithSignature(
+            "reduceLentImpactAmount(address,address,uint256)",
+            market, fundingAccount, reductionAmount);
+        timelockController.schedule(address(timelockController), 0, payload, 0, 0, timelockController.getMinDelay());
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "market", market);
+        eventData.addressItems.setItem(1, "fundingAccount", fundingAccount);
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "reductionAmount", reductionAmount);
+        eventEmitter.emitEventLog(
+            "SignalReduceLentImpactAmount",
+            eventData
+        );
+    }
+
     // @dev Withdraw funds from position impact pool(negative price impacts) and send them to `receiver`
     // @param market Market from withdraw
     // @param receiver Account to send funds from pool
@@ -474,10 +506,12 @@ contract TimelockConfig is RoleModule, BasicMulticall {
     function executeWithOraclePrice(
         address target,
         bytes calldata payload,
+        bytes32 predecessor,
+        bytes32 salt,
         OracleUtils.SetPricesParams calldata oracleParams
     ) external onlyTimelockAdmin {
         timelockController.executeWithOraclePrices(
-            target, 0, payload, oracleParams
+            target, 0, payload, predecessor, salt, oracleParams
         );
     }
 

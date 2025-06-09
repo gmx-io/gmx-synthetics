@@ -374,9 +374,12 @@ library GasUtils {
         return 2 + marketCount + swapsCount;
     }
 
-    // @dev the estimated gas limit for deposits
-    // @param dataStore DataStore
-    // @param deposit the deposit to estimate the gas limit for
+    function estimateCreateDepositGasLimit(
+        DataStore dataStore
+    ) internal view returns (uint256) {
+        return dataStore.getUint(Keys.CREATE_DEPOSIT_GAS_LIMIT);
+    }
+
     function estimateExecuteDepositGasLimit(
         DataStore dataStore,
         Deposit.Props memory deposit
@@ -480,6 +483,12 @@ library GasUtils {
             order.callbackGasLimit();
     }
 
+    function estimateCreateGlvDepositGasLimit(
+        DataStore dataStore
+    ) internal view returns (uint256) {
+        return dataStore.getUint(Keys.CREATE_GLV_DEPOSIT_GAS_LIMIT);
+    }
+
     // @dev the estimated gas limit for glv deposits
     // @param dataStore DataStore
     // @param deposit the deposit to estimate the gas limit for
@@ -533,6 +542,12 @@ library GasUtils {
         return dataStore.getUint(Keys.glvShiftGasLimitKey());
     }
 
+    function estimateSetTraderReferralCodeGasLimit(
+        DataStore dataStore
+    ) internal view returns (uint256) {
+        return dataStore.getUint(Keys.SET_TRADER_REFERRAL_CODE_GAS_LIMIT);
+    }
+
     function emitKeeperExecutionFee(EventEmitter eventEmitter, address keeper, uint256 executionFeeAmount) internal {
         EventUtils.EventLogData memory eventData;
 
@@ -579,7 +594,10 @@ library GasUtils {
         uint256 startingGas,
         uint256 calldataLength,
         uint256 availableFeeAmount
-    ) internal returns (uint256) {
+    ) external returns (uint256) {
+        // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
+        startingGas -= gasleft() / 63;
+
         address relayFeeAddress = dataStore.getAddress(Keys.RELAY_FEE_ADDRESS);
         if (relayFeeAddress == address(0)) {
             revert Errors.EmptyRelayFeeAddress();

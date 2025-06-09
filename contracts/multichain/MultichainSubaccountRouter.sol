@@ -20,7 +20,7 @@ contract MultichainSubaccountRouter is MultichainRouter {
         address account,
         uint256 srcChainId,
         address subaccount,
-        BatchParams calldata params
+        IRelayUtils.BatchParams calldata params
     ) external nonReentrant withRelay(relayParams, account, srcChainId, true) returns (bytes32[] memory) {
         _handleBatch(
             relayParams,
@@ -48,13 +48,13 @@ contract MultichainSubaccountRouter is MultichainRouter {
         address account,
         uint256 srcChainId,
         address subaccount,
-        BatchParams calldata params
+        IRelayUtils.BatchParams calldata params
     ) private {
         bytes32 structHash = RelayUtils.getBatchStructHash(relayParams, subaccountApproval, account, params);
         _validateCall(relayParams, subaccount, structHash, srcChainId);
 
         for (uint256 i = 0; i < params.createOrderParamsList.length; i++) {
-            SubaccountRouterUtils.validateCreateOrderParams(account, params.createOrderParamsList[i]);
+            SubaccountUtils.validateCreateOrderParams(account, params.createOrderParamsList[i]);
         }
 
         uint256 actionsCount = params.createOrderParamsList.length +
@@ -95,7 +95,7 @@ contract MultichainSubaccountRouter is MultichainRouter {
     ) private {
         bytes32 structHash = RelayUtils.getCreateOrderStructHash(relayParams, subaccountApproval, account, params);
         _validateCall(relayParams, subaccount, structHash, srcChainId);
-        SubaccountRouterUtils.validateCreateOrderParams(account, params);
+        SubaccountUtils.validateCreateOrderParams(account, params);
         _handleSubaccountOrderAction(account, srcChainId, subaccount, 1, subaccountApproval);
     }
 
@@ -106,7 +106,7 @@ contract MultichainSubaccountRouter is MultichainRouter {
         address account, // main account
         uint256 srcChainId,
         address subaccount,
-        UpdateOrderParams calldata params
+        IRelayUtils.UpdateOrderParams calldata params
     ) external nonReentrant withRelay(relayParams, account, srcChainId, true) {
         _handleUpdateOrder(relayParams, subaccountApproval, account, srcChainId, subaccount, params);
         _updateOrder(
@@ -123,7 +123,7 @@ contract MultichainSubaccountRouter is MultichainRouter {
         address account, // main account
         uint256 srcChainId,
         address subaccount,
-        UpdateOrderParams calldata params
+        IRelayUtils.UpdateOrderParams calldata params
     ) private {
         bytes32 structHash = RelayUtils.getUpdateOrderStructHash(relayParams, subaccountApproval, account, params);
         _validateCall(relayParams, subaccount, structHash, srcChainId);

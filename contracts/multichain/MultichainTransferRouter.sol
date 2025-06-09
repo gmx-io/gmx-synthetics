@@ -9,14 +9,19 @@ import "./IMultichainTransferRouter.sol";
 
 contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, MultichainRouter {
     IMultichainProvider public multichainProvider;
+    address private deployer;
 
     constructor(
         BaseConstructorParams memory params
     ) MultichainRouter(params) BaseRouter(params.router, params.roleStore, params.dataStore, params.eventEmitter) {
+        deployer = msg.sender;
         // leave empty, use initialize instead
     }
 
     function initialize(address _multichainProvider) external initializer {
+        if (msg.sender != deployer) {
+            revert Errors.InvalidInitializer();
+        }
         if (_multichainProvider == address(0)) {
             revert Errors.InvalidMultichainProvider(address(0));
         }
@@ -26,6 +31,7 @@ contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, M
     /**
      * payable function so that it can be called as a multicall
      * this would be used to move user's funds from their Arbitrum account into their multichain balance
+     * @dev payable is necessary because, when bridging in WNT the user sends ETH along with the transaction (via multicall)
      */
     function bridgeIn(address account, address token) external payable nonReentrant {
         uint256 amount = MultichainUtils.recordTransferIn(
@@ -71,7 +77,12 @@ contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, M
         address account,
         uint256 srcChainId,
         IRelayUtils.BridgeOutParams calldata params
-    ) external nonReentrant onlyController withRelay(relayParams, account, srcChainId, false) {
+    ) external nonReentrant onlyController {
+        // cross-chain GM/GLV withdrawals are not allowed when the deposit was made natively (srcChainId == 0)
+        if (srcChainId == 0) {
+            return;
+        }
+
         _validateCallWithoutSignature(relayParams, srcChainId);
 
         _bridgeOut(account, srcChainId, params);
@@ -117,6 +128,7 @@ contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, M
             // and execute the bridge out to srcChain
             uint256 amountOut = multichainProvider.bridgeOut(
                 account,
+                srcChainId,
                 IRelayUtils.BridgeOutParams({
                     token: params.token,
                     amount: params.amount,
@@ -127,7 +139,7 @@ contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, M
 
             MultichainEventUtils.emitMultichainBridgeOut(
                 eventEmitter,
-                params.provider,
+                address(multichainProvider),
                 params.token,
                 account,
                 amountOut, // amount

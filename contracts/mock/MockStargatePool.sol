@@ -13,6 +13,7 @@ contract MockStargatePool {
 
     address public immutable token;
     uint256 public constant BRIDGE_OUT_FEE = 0.001 ether;
+    uint32 public constant SRC_EID = 1; // Mock endpoint id for source chain
 
     constructor(address _token) {
         token = _token;
@@ -33,7 +34,7 @@ contract MockStargatePool {
 
         bytes memory composedMsg = OFTComposeMsgCodec.encode(
             uint64(block.timestamp), // mock nonce
-            1, // mock srcEid
+            SRC_EID,
             _amount,
             encodedMsg
         );

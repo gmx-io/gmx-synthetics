@@ -508,6 +508,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.MAX_PNL_FACTOR] = true;
         allowedBaseKeys[Keys.MIN_PNL_FACTOR_AFTER_ADL] = true;
         allowedBaseKeys[Keys.MAX_LENDABLE_IMPACT_FACTOR] = true;
+        allowedBaseKeys[Keys.MAX_LENDABLE_IMPACT_FACTOR_FOR_WITHDRAWALS] = true;
+        allowedBaseKeys[Keys.MAX_LENDABLE_IMPACT_USD] = true;
 
         allowedBaseKeys[Keys.FUNDING_FACTOR] = true;
         allowedBaseKeys[Keys.FUNDING_EXPONENT_FACTOR] = true;
@@ -550,6 +552,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.MULTICHAIN_BALANCE] = true;
         allowedBaseKeys[Keys.IS_MULTICHAIN_PROVIDER_ENABLED] = true;
         allowedBaseKeys[Keys.IS_MULTICHAIN_ENDPOINT_ENABLED] = true;
+        allowedBaseKeys[Keys.IS_RELAY_FEE_EXCLUDED] = true;
         allowedBaseKeys[Keys.IS_SRC_CHAIN_ID_ENABLED] = true;
         allowedBaseKeys[Keys.POSITION_LAST_SRC_CHAIN_ID] = true;
         allowedBaseKeys[Keys.EID_TO_SRC_CHAIN_ID] = true;

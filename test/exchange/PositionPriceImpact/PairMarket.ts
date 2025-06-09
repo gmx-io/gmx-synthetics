@@ -551,6 +551,7 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
     await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
 
     await dataStore.setUint(keys.maxLendableImpactFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 1)); // 20%
+    await dataStore.setUint(keys.maxLendableImpactUsdKey(ethUsdMarket.marketToken), decimalToFloat(20 * 1000)); // 20k USD
 
     const params = {
       market: ethUsdMarket,
