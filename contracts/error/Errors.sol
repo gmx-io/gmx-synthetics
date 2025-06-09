@@ -169,6 +169,7 @@ library Errors {
     error InsufficientHandleExecutionErrorGas(uint256 gas, uint256 minHandleExecutionErrorGas);
     error InsufficientGasForCancellation(uint256 gas, uint256 minHandleExecutionErrorGas);
     error InsufficientGasForAutoCancellation(uint256 gas, uint256 minHandleExecutionErrorGas);
+    error InsufficientGasLeft(uint256 gas, uint256 estimatedGasLimit);
     error InvalidExecutionFee(uint256 executionFee, uint256 minExecutionFee, uint256 maxExecutionFee);
     error EmptyRelayFeeAddress();
 

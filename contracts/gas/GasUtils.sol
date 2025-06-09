@@ -374,9 +374,12 @@ library GasUtils {
         return 2 + marketCount + swapsCount;
     }
 
-    // @dev the estimated gas limit for deposits
-    // @param dataStore DataStore
-    // @param deposit the deposit to estimate the gas limit for
+    function estimateCreateDepositGasLimit(
+        DataStore dataStore
+    ) internal view returns (uint256) {
+        return dataStore.getUint(Keys.CREATE_DEPOSIT_GAS_LIMIT);
+    }
+
     function estimateExecuteDepositGasLimit(
         DataStore dataStore,
         Deposit.Props memory deposit
@@ -480,6 +483,12 @@ library GasUtils {
             order.callbackGasLimit();
     }
 
+    function estimateCreateGlvDepositGasLimit(
+        DataStore dataStore
+    ) internal view returns (uint256) {
+        return dataStore.getUint(Keys.CREATE_GLV_DEPOSIT_GAS_LIMIT);
+    }
+
     // @dev the estimated gas limit for glv deposits
     // @param dataStore DataStore
     // @param deposit the deposit to estimate the gas limit for
@@ -531,6 +540,12 @@ library GasUtils {
 
     function estimateExecuteGlvShiftGasLimit(DataStore dataStore) external view returns (uint256) {
         return dataStore.getUint(Keys.glvShiftGasLimitKey());
+    }
+
+    function estimateSetTraderReferralCodeGasLimit(
+        DataStore dataStore
+    ) internal view returns (uint256) {
+        return dataStore.getUint(Keys.SET_TRADER_REFERRAL_CODE);
     }
 
     function emitKeeperExecutionFee(EventEmitter eventEmitter, address keeper, uint256 executionFeeAmount) internal {
