@@ -29,6 +29,7 @@ import { collectDeployments } from "./scripts/collectDeployments";
 import { TASK_FLATTEN_GET_DEPENDENCY_GRAPH } from "hardhat/builtin-tasks/task-names";
 import { DependencyGraph } from "hardhat/types";
 import { checkContractsSizing } from "./scripts/contractSizes";
+import { buildReverseDependencies, collectDependents, DependencyMap } from "./utils/dependencies";
 
 const getRpcUrl = (network) => {
   const defaultRpcs = {
@@ -378,18 +379,18 @@ task("measure-contract-sizes", "Check if contract characters count hit 900k limi
   await checkContractsSizing(env);
 });
 
-task("dependents", "Print dependent contracts")
+task("reverse-dependencies", "Print dependent contracts")
   .addPositionalParam("file", "Contract", undefined, types.string)
   .setAction(async ({ file }: { file: string }, { run }) => {
     const graph: DependencyGraph = await run(TASK_FLATTEN_GET_DEPENDENCY_GRAPH, {});
+    const dependencyMap: DependencyMap = {};
     for (const entry of graph.entries()) {
-      for (const resolvedFile of entry[1]) {
-        if (resolvedFile.sourceName === file) {
-          console.log(entry[0].sourceName);
-        }
-      }
+      dependencyMap[entry[0].sourceName] = entry[1].values().map((resolvedFile) => resolvedFile.sourceName);
     }
-    return graph;
+    const reversed = collectDependents(dependencyMap, file);
+    console.log(`Contract ${file} dependents are:\n`);
+    console.log([...reversed].map((l) => `${l}`).join("\n"));
+    return reversed;
   });
 
 export default config;
