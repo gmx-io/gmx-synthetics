@@ -89,11 +89,4 @@ contract ConfigTimelockController is TimelockController, OracleModule {
             reductionAmount
         );
     }
-
-    function _execute(address target, uint256 value, bytes calldata data) internal override {
-        if (!AccountUtils.isContract(target)) {
-            revert Errors.TargetIsNotAContract(target);
-        }
-        super._execute(target, value, data);
-    }
 }
