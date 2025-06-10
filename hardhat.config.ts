@@ -378,4 +378,18 @@ task("measure-contract-sizes", "Check if contract characters count hit 900k limi
   await checkContractsSizing(env);
 });
 
+task("dependents", "Print dependent contracts")
+  .addPositionalParam("file", "Contract", undefined, types.string)
+  .setAction(async ({ file }: { file: string }, { run }) => {
+    const graph: DependencyGraph = await run(TASK_FLATTEN_GET_DEPENDENCY_GRAPH, {});
+    for (const entry of graph.entries()) {
+      for (const resolvedFile of entry[1]) {
+        if (resolvedFile.sourceName === file) {
+          console.log(entry[0].sourceName);
+        }
+      }
+    }
+    return graph;
+  });
+
 export default config;
