@@ -53,6 +53,7 @@ export type RelayParams = {
   userNonce: BigNumberish;
   deadline: BigNumberish;
   desChainId: BigNumberish;
+  signature?: string;
 };
 
 export type CreateOrderParams = {
@@ -182,6 +183,39 @@ export function hashRelayParams(relayParams: RelayParams) {
   );
 
   return ethers.utils.keccak256(encoded);
+}
+
+export function encodeRelayParams(relayParams: RelayParams) {
+  const relayAbiTypes = [
+    "tuple(address[] tokens, address[] providers, bytes[] data)",
+    "tuple(address[] sendTokens,uint256[] sendAmounts,address[] externalCallTargets, bytes[] externalCallDataList, address[] refundTokens, address[] refundReceivers)",
+    "tuple(address owner,address spender,uint256 value,uint256 deadline,uint8 v,bytes32 r,bytes32 s,address token)[] tokenPermits",
+    "tuple(address feeToken, uint256 feeAmount, address[] feeSwapPath)",
+    "uint256 userNonce",
+    "uint256 deadline",
+    "bytes signature",
+    "uint256 desChainId",
+  ];
+  const abiValues = [
+    [relayParams.oracleParams.tokens, relayParams.oracleParams.providers, relayParams.oracleParams.data],
+    relayParams.externalCalls,
+    relayParams.tokenPermits.map((permit) => [
+      permit.owner,
+      permit.spender,
+      permit.value,
+      permit.deadline,
+      permit.v,
+      permit.r,
+      permit.s,
+      permit.token,
+    ]),
+    [relayParams.fee.feeToken, relayParams.fee.feeAmount, relayParams.fee.feeSwapPath],
+    relayParams.userNonce,
+    relayParams.deadline,
+    relayParams.signature,
+    relayParams.desChainId,
+  ];
+  return ethers.utils.defaultAbiCoder.encode(relayAbiTypes, abiValues);
 }
 
 export function hashSubaccountApproval(subaccountApproval: SubaccountApproval) {

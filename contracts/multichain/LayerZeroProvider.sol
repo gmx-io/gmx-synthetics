@@ -25,6 +25,7 @@ import "./IMultichainOrderRouter.sol";
 import "./MultichainVault.sol";
 import "./MultichainUtils.sol";
 
+import "hardhat/console.sol";
 
 /**
  * @title LayerZeroProvider
@@ -78,7 +79,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
      * it is possible for multiple bridge transactions to result in multiple deposits (i.e. double mints).
      * For example, if a user bridges 10 WETH and 20,000 USDC, both with deposit data, and already has enough funds,
      * both bridge transactions could result in a deposit.
-     * 
+     *
      * @dev It is recommended that the interface or frontend enforces that users only bridge amounts that would not
      * result in double deposits.
      *
@@ -98,6 +99,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         MultichainUtils.validateMultichainProvider(dataStore, from);
         MultichainUtils.validateMultichainEndpoint(dataStore, msg.sender);
 
+        console.log("OK");
         /// @dev The `account` field is user-supplied and not validated; any address may be provided by the sender
         (address account, uint256 srcChainId, uint256 amountLD, bytes memory data) = _decodeLzComposeMsg(message);
 
@@ -109,9 +111,11 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             // if token is ETH then we need to use WNT
             token = TokenUtils.wnt(dataStore);
         } else {
+            console.log("1");
             // `from` is e.g. StargatePoolUSDC
             TokenUtils.transfer(dataStore, token, address(multichainVault), amountLD);
         }
+        console.log("2");
         MultichainUtils.recordBridgeIn(
             dataStore,
             eventEmitter,
@@ -119,19 +123,26 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             this,
             token,
             account,
-            srcChainId 
+            srcChainId
         );
 
+        console.log("3");
+
         if (data.length != 0) {
+            console.log("3.1");
             (ActionType actionType, bytes memory actionData) = abi.decode(data, (ActionType, bytes));
             if (actionType == ActionType.Deposit) {
+                console.log("3.2");
                 _handleDeposit(account, srcChainId, actionType, actionData);
             } else if (actionType == ActionType.GlvDeposit) {
+                console.log("3.3");
                 _handleGlvDeposit(account, srcChainId, actionType, actionData);
             } else if (actionType == ActionType.SetTraderReferralCode) {
+                console.log("3.4");
                 _handleSetTraderReferralCode(account, srcChainId, actionType, actionData);
             }
         }
+        console.log("OK-----");
     }
 
     /**
@@ -318,6 +329,17 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         return true;
     }
 
+    struct B {
+        uint256[] a;
+        uint256 b;
+    }
+
+    struct A {
+        B b;
+        address addr1;
+        uint256 c;
+    }
+
     /// @dev long/short tokens are deposited from user's multichain balance
     /// GM tokens are minted and transferred to user's multichain balance
     function _handleDeposit(
@@ -326,15 +348,26 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         ActionType actionType,
         bytes memory actionData
     ) private {
-        (
+        console.log("3.22");
+//        console.logBytes(actionData);
+//        IRelayUtils.RelayParams  memory params = abi.decode(actionData, (IRelayUtils.RelayParams));
+
+//        console.log("3.8");
+//        console.log(params.desChainId);
+//        console.log(params.b.b);
+//        console.log("3.9");
+    (
             IRelayUtils.RelayParams memory relayParams,
             IRelayUtils.TransferRequests memory transferRequests,
             IDepositUtils.CreateDepositParams memory depositParams
         ) = abi.decode(actionData, (IRelayUtils.RelayParams, IRelayUtils.TransferRequests, IDepositUtils.CreateDepositParams));
-        
+
+        console.log("4");
         if (_areValidTransferRequests(transferRequests)) {
+            console.log("4.5");
             _validateExecutionGasForDeposit(account, srcChainId, depositParams);
 
+            console.log("5");
             try multichainGmRouter.createDeposit(
                 relayParams,
                 account,
@@ -344,8 +377,10 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             ) returns (bytes32 key) {
                 MultichainEventUtils.emitMultichainBridgeAction(eventEmitter, address(this), account, srcChainId, uint256(actionType), key);
             } catch Error(string memory reason) {
+                console.log("6");
                 MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
             } catch (bytes memory reasonBytes) {
+                console.log("7");
                 (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
                 MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
             }
