@@ -129,10 +129,7 @@ async function main() {
   const [wallet] = await hre.ethers.getSigners();
   const account = wallet.address;
   const data = "0x"; // encoded actionType and actionData
-  const composedMsg = ethers.utils.defaultAbiCoder.encode(
-    ["address", "uint256", "bytes"],
-    [account, SRC_CHAIN_ID, data]
-  );
+  const composedMsg = ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, data]);
 
   const usdcAmount = expandDecimals(25, 6); // USDC
   const ethAmount = expandDecimals(1, 16); // 0.01 ETH
