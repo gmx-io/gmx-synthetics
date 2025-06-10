@@ -106,8 +106,8 @@ async function main() {
   await dataStore.setUint(keys.FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP, block.timestamp);
   await feeDistributorConfig.moveToNextDistributionDay(distributionDay);
 
-  await config.setUint(keys.FEE_DISTRIBUTOR_REFERRAL_REWARDS_WNT_USD_LIMIT, "0x", expandDecimals(1_000_000, 30));
-  await config.setUint(keys.FEE_DISTRIBUTOR_REFERRAL_REWARDS_ESGMX_LIMIT, "0x", expandDecimals(100, 18));
+  await config.setUint(keys.FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_AMOUNT, "0x", expandDecimals(1_000_000, 30));
+  await config.setUint(keys.FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_ESGMX_AMOUNT, "0x", expandDecimals(100, 18));
   await config.setUint(keys.FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY, "0x", 86400);
   await config.setUint(keys.FEE_DISTRIBUTOR_GAS_LIMIT, "0x", 5_000_000);
 
@@ -209,17 +209,17 @@ async function main() {
     expandDecimals(99, 28)
   );
   await config.setUint(
-    keys.FEE_DISTRIBUTOR_AMOUNT_THRESHOLD,
+    keys.MAX_FEE_DISTRIBUTOR_FACTOR,
     encodeData(["bytes32"], [feeDistributorConfig.referralRewardsWntKey]),
     expandDecimals(20, 28)
   );
   await config.setUint(
-    keys.FEE_DISTRIBUTOR_AMOUNT_THRESHOLD,
+    keys.MIN_FEE_DISTRIBUTOR_FACTOR,
     encodeData(["bytes32"], [feeDistributorConfig.glpKey]),
     expandDecimals(80, 28)
   );
   await config.setUint(
-    keys.FEE_DISTRIBUTOR_AMOUNT_THRESHOLD,
+    keys.MIN_FEE_DISTRIBUTOR_FACTOR,
     encodeData(["bytes32"], [feeDistributorConfig.treasuryKey]),
     expandDecimals(70, 28)
   );

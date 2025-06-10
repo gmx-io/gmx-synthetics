@@ -574,18 +574,19 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.MULTICHAIN_AUTHORIZED_ORIGINATORS] = true;
 
         allowedBaseKeys[Keys.FEE_DISTRIBUTOR_DISTRIBUTION_DAY] = true;
-        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_REFERRAL_REWARDS_WNT_USD_LIMIT] = true;
-        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_REFERRAL_REWARDS_ESGMX_LIMIT] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_AMOUNT] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_ESGMX_AMOUNT] = true;
         allowedBaseKeys[Keys.FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY] = true;
         allowedBaseKeys[Keys.FEE_DISTRIBUTOR_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.FEE_DISTRIBUTOR_CHAIN_ID] = true;
         allowedBaseKeys[Keys.FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_FACTOR] = true;
         allowedBaseKeys[Keys.FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID] = true;
         allowedBaseKeys[Keys.FEE_DISTRIBUTOR_ADDRESS_INFO] = true;
-        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_AMOUNT_THRESHOLD] = true;
         allowedBaseKeys[Keys.FEE_DISTRIBUTOR_KEEPER_COSTS] = true;
         allowedBaseKeys[Keys.FEE_DISTRIBUTOR_KEEPER_GLP_FACTOR] = true;
         allowedBaseKeys[Keys.FEE_DISTRIBUTOR_CHAINLINK_FACTOR] = true;
+        allowedBaseKeys[Keys.MAX_FEE_DISTRIBUTOR_FACTOR] = true;
+        allowedBaseKeys[Keys.MIN_FEE_DISTRIBUTOR_FACTOR] = true;
     }
 
     function _initAllowedLimitedBaseKeys() internal {

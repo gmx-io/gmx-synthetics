@@ -19,6 +19,7 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.BoolItems;
 
+    // constant and immutable variables are internal to reduce the contract size
     bytes internal constant EMPTY_BYTES = "";
 
     bytes32 internal constant GMX = keccak256(abi.encode("GMX"));
@@ -368,9 +369,9 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         if (token == esGmx) {
             // validate the esGMX amount is valid and that there are sufficient esGMX in the feeDistributorVault
             uint256 esGmxForReferralRewards = getUint(Keys.feeDistributorReferralRewardsAmountKey(esGmx));
-            uint256 maxEsGmxReferralRewards = getUint(Keys.FEE_DISTRIBUTOR_REFERRAL_REWARDS_ESGMX_LIMIT);
+            uint256 maxEsGmxReferralRewards = getUint(Keys.FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_ESGMX_AMOUNT);
             if (esGmxForReferralRewards > maxEsGmxReferralRewards) {
-                revert Errors.ReferralRewardsThresholdBreached(esGmx, esGmxForReferralRewards, maxEsGmxReferralRewards);
+                revert Errors.MaxReferralRewardsExceeded(esGmx, esGmxForReferralRewards, maxEsGmxReferralRewards);
             }
 
             uint256 vaultEsGmxBalance = getFeeDistributorVaultBalance(esGmx);
@@ -415,7 +416,7 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         // validate that the total referral rewards sent out is not greater than the total calculated amount
         uint256 tokensForReferralRewards = getUint(Keys.feeDistributorReferralRewardsAmountKey(token));
         if (totalTokensSent > tokensForReferralRewards) {
-            revert Errors.ReferralRewardsThresholdBreached(token, totalTokensSent, tokensForReferralRewards);
+            revert Errors.MaxReferralRewardsExceeded(token, totalTokensSent, tokensForReferralRewards);
         }
 
         setUint(Keys.feeDistributorReferralRewardsSentKey(token), totalTokensSent);
@@ -679,21 +680,21 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         uint256 feesV1Usd,
         uint256 totalWntBalance
     ) internal view returns (uint256) {
-        uint256 wntReferralRewardsInUsdLimit = getUint(Keys.FEE_DISTRIBUTOR_REFERRAL_REWARDS_WNT_USD_LIMIT);
-        if (wntReferralRewardsInUsd > wntReferralRewardsInUsdLimit) {
-            revert Errors.WntReferralRewardsInUsdLimitExceeded(wntReferralRewardsInUsd, wntReferralRewardsInUsdLimit);
+        uint256 maxWntReferralRewardsInUsdAmount = getUint(Keys.FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_AMOUNT);
+        if (wntReferralRewardsInUsd > maxWntReferralRewardsInUsdAmount) {
+            revert Errors.MaxWntReferralRewardsInUsdAmountExceeded(wntReferralRewardsInUsd, maxWntReferralRewardsInUsdAmount);
         }
 
-        uint256 wntForReferralRewardsThreshold = getUint(Keys.feeDistributorAmountThresholdKey(REFERRAL_REWARDS_WNT));
-        uint256 maxWntReferralRewardsInUsd = Precision.applyFactor(feesV1Usd, wntForReferralRewardsThreshold);
+        uint256 maxWntForReferralRewardsFactor = getUint(Keys.maxFeeDistributorFactorKey(REFERRAL_REWARDS_WNT));
+        uint256 maxWntReferralRewardsInUsd = Precision.applyFactor(feesV1Usd, maxWntForReferralRewardsFactor);
         if (wntReferralRewardsInUsd > maxWntReferralRewardsInUsd) {
-            revert Errors.WntReferralRewardsInUsdThresholdBreached(wntReferralRewardsInUsd, maxWntReferralRewardsInUsd);
+            revert Errors.MaxWntReferralRewardsInUsdExceeded(wntReferralRewardsInUsd, maxWntReferralRewardsInUsd);
         }
         uint256 scaledWntPrice = getUint(Keys.FEE_DISTRIBUTOR_WNT_PRICE) * Precision.FLOAT_PRECISION;
         uint256 wntForReferralRewards = Precision.toFactor(wntReferralRewardsInUsd, scaledWntPrice);
-        uint256 maxWntReferralRewards = Precision.applyFactor(totalWntBalance, wntForReferralRewardsThreshold);
+        uint256 maxWntReferralRewards = Precision.applyFactor(totalWntBalance, maxWntForReferralRewardsFactor);
         if (wntForReferralRewards > maxWntReferralRewards) {
-            revert Errors.ReferralRewardsThresholdBreached(wnt, wntForReferralRewards, maxWntReferralRewards);
+            revert Errors.MaxReferralRewardsExceeded(wnt, wntForReferralRewards, maxWntReferralRewards);
         }
 
         return wntForReferralRewards;
@@ -707,19 +708,23 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         uint256 wntForGlp
     ) internal view returns (uint256, uint256) {
         uint256 expectedWntForGlp = totalWntBalance - wntForChainlink - wntForTreasury + keeperCostsTreasury;
-        uint256 glpFeeThreshold = getUint(Keys.feeDistributorAmountThresholdKey(GLP));
-        uint256 minWntForGlp = Precision.applyFactor(expectedWntForGlp, glpFeeThreshold);
+        uint256 minGlpFeeFactor = getUint(Keys.minFeeDistributorFactorKey(GLP));
+        uint256 minWntForGlp = Precision.applyFactor(expectedWntForGlp, minGlpFeeFactor);
         if (wntForGlp < minWntForGlp) {
-            uint256 treasuryFeeThreshold = getUint(Keys.feeDistributorAmountThresholdKey(TREASURY));
-            uint256 minTreasuryWntAmount = Precision.applyFactor(wntForTreasury, treasuryFeeThreshold);
-            uint256 wntGlpShortfall = minWntForGlp - wntForGlp;
-            uint256 maxTreasuryWntShortfall = wntForTreasury - minTreasuryWntAmount;
-            if (wntGlpShortfall > maxTreasuryWntShortfall) {
-                revert Errors.TreasuryFeeThresholdBreached(wntForTreasury, wntGlpShortfall, maxTreasuryWntShortfall);
+            uint256 minTreasuryFeeFactor = getUint(Keys.minFeeDistributorFactorKey(TREASURY));
+            uint256 minTreasuryWntAmount = Precision.applyFactor(wntForTreasury, minTreasuryFeeFactor);
+            uint256 additionalWntForGlp = minWntForGlp - wntForGlp;
+            uint256 maxWntUsableFromTreasury = wntForTreasury - minTreasuryWntAmount;
+            if (additionalWntForGlp > maxWntUsableFromTreasury) {
+                revert Errors.MaxWntUsableFromTreasuryExceeded(
+                    wntForTreasury,
+                    additionalWntForGlp,
+                    maxWntUsableFromTreasury
+                );
             }
 
-            wntForTreasury -= wntGlpShortfall;
-            wntForGlp += wntGlpShortfall;
+            wntForTreasury -= additionalWntForGlp;
+            wntForGlp += additionalWntForGlp;
         }
 
         return (wntForTreasury, wntForGlp);

@@ -510,10 +510,10 @@ library Errors {
     error InvalidDistributionState(uint256 distributionStateUint);
     error BridgedAmountNotSufficient(uint256 minRequiredFeeAmount, uint256 currentChainFeeAmount);
     error BridgingTransactionFailed(bytes result);
-    error WntReferralRewardsInUsdLimitExceeded(uint256 wntReferralRewardsInUsd, uint256 wntReferralRewardsInUsdLimit);
-    error WntReferralRewardsInUsdThresholdBreached(uint256 wntReferralRewardsInUsd, uint256 maxWntReferralRewardsInUsd);
-    error ReferralRewardsThresholdBreached(address token, uint256 tokenReferralRewards, uint256 maxTokenReferralRewards);
-    error TreasuryFeeThresholdBreached(uint256 treasuryWntAmount, uint256 wntGlpShortfall, uint256 maxTreasuryWntShortfall);
+    error MaxWntReferralRewardsInUsdAmountExceeded(uint256 wntReferralRewardsInUsd, uint256 maxWntReferralRewardsInUsdAmount);
+    error MaxWntReferralRewardsInUsdExceeded(uint256 wntReferralRewardsInUsd, uint256 maxWntReferralRewardsInUsd);
+    error MaxReferralRewardsExceeded(address token, uint256 tokenReferralRewards, uint256 maxTokenReferralRewards);
+    error MaxWntUsableFromTreasuryExceeded(uint256 treasuryWntAmount, uint256 additionalWntForGlp, uint256 maxWntUsableFromTreasury);
     error KeeperArrayLengthMismatch(uint256 keepersLength, uint256 keeperTargetBalancesLength, uint256 keeperVersionsLength);
     error SendEthToKeeperFailed(address keeper, uint256 sendAmount, bytes result);
     error KeeperAmountMismatch(uint256 wntForKeepers, uint256 wntToKeepers);
