@@ -121,7 +121,7 @@ export function createDeployFunction({
   }
   func.tags = [contractName];
   func.dependencies = dependencies;
-
+  func.contractName = contractName;
   return func;
 }
 
