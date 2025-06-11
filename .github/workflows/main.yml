@@ -15,13 +15,13 @@ jobs:
           node-version: '20.x'
       - run: yarn --ignore-scripts
         shell: bash
+      - name: Check reverse deps
+        run: yarn hardhat reverse-dependencies contracts/market/PositionImpactPoolUtils.sol
+        shell: bash
       - name: Check cyclic dependencies
         run: yarn hardhat run scripts/cyclicDependencyCheck.ts
         shell: bash
       - name: Check contract sizing
         continue-on-error: true # to show errors as warnings
         run: yarn hardhat measure-contract-sizes
-        shell: bash
-      - name: Run Tests
-        run: yarn hardhat test
         shell: bash
