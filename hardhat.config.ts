@@ -385,7 +385,10 @@ task("reverse-dependencies", "Print dependent contracts")
     const graph: DependencyGraph = await run(TASK_FLATTEN_GET_DEPENDENCY_GRAPH, {});
     const dependencyMap: DependencyMap = {};
     for (const entry of graph.entries()) {
-      dependencyMap[entry[0].sourceName] = entry[1].values().map((resolvedFile) => resolvedFile.sourceName);
+      dependencyMap[entry[0].sourceName] = new Set();
+      for (const resolvedFile of entry[1].values()) {
+        dependencyMap[entry[0].sourceName].add(resolvedFile.sourceName);
+      }
     }
     const reversed = collectDependents(dependencyMap, file);
     console.log(`Contract ${file} dependents are:\n`);
