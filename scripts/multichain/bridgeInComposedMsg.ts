@@ -1,12 +1,13 @@
 import hre from "hardhat";
 import { BigNumber } from "ethers";
 import { JsonRpcProvider } from "@ethersproject/providers";
-import { ERC20, IStargate } from "../../typechain-types";
+import { ERC20, IStargate, DepositVault } from "../../typechain-types";
 
 import { Options } from "@layerzerolabs/lz-v2-utilities";
 
 import { expandDecimals } from "../../utils/math";
-import { encodeSetTraderReferralCodeMessage } from "../../utils/multichain";
+import { encodeDepositMessage, encodeSetTraderReferralCodeMessage } from "../../utils/multichain";
+import { sendCreateDeposit } from "../../utils/relay/multichain";
 
 const { ethers } = hre;
 
@@ -15,10 +16,20 @@ const STARGATE_POOL_USDC_SEPOLIA = "0x4985b8fcEA3659FD801a5b857dA1D00e985863F0";
 const STARGATE_USDC_SEPOLIA = "0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590";
 
 // ArbitrumSepolia
+const WNT = "0x980B62Da83eFf3D4576C647993b0c1D7faf17c73"; // WETH
+const STARGATE_POOL_USDC_ARB_SEPOLIA = "0x543BdA7c6cA4384FE90B1F5929bb851F52888983";
+const STARGATE_USDC_ARB_SEPOLIA = "0x3253a335E7bFfB4790Aa4C25C4250d206E9b9773";
 const DST_CHAIN_ID = 421614;
 const DST_EID = 40231;
 const layerZeroProviderJson = import("../../deployments/arbitrumSepolia/LayerZeroProvider.json");
+const multichainGmRouterJson = import("../../deployments/arbitrumSepolia/MultichainGmRouter.json");
 const multichainOrderRouterJson = import("../../deployments/arbitrumSepolia/MultichainOrderRouter.json");
+const depositVaultJson = import("../../deployments/arbitrumSepolia/DepositVault.json");
+const ethUsdMarket = {
+  marketToken: "0xb6fC4C9eB02C35A134044526C62bb15014Ac0Bcc", // GM { indexToken: "WETH", longToken: "WETH", shortToken: "USDC.SG" }
+  longToken: WNT, // WETH
+  shortToken: STARGATE_USDC_ARB_SEPOLIA, // USDC.SG
+};
 
 async function prepareSend(
   amount: number | string | BigNumber,
@@ -127,9 +138,13 @@ async function retrieveFromDestination(account: string, relayRouterJson: any): P
     provider
   );
 
+  // contracts with default provider
+  const depositVault: DepositVault = await ethers.getContractAt("DepositVault", (await depositVaultJson).address);
+
   const userNonce = await relayRouter.userNonces(account);
 
   return {
+    depositVault,
     relayRouter,
     userNonce: userNonce.toNumber(),
   };
@@ -159,6 +174,56 @@ async function getComposedMsg({
   }
 
   const srcChainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
+
+  if (actionType === ActionType.Deposit) {
+    const { depositVault, relayRouter, userNonce } = await retrieveFromDestination(account, multichainGmRouterJson);
+
+    const defaultDepositParams = {
+      addresses: {
+        receiver: account,
+        callbackContract: account,
+        uiFeeReceiver: account,
+        market: ethUsdMarket.marketToken,
+        initialLongToken: ethUsdMarket.longToken,
+        initialShortToken: ethUsdMarket.shortToken,
+        longTokenSwapPath: [],
+        shortTokenSwapPath: [],
+      },
+      minMarketTokens: 100,
+      shouldUnwrapNativeToken: false,
+      executionFee: expandDecimals(4, 15),
+      callbackGasLimit: "200000",
+      dataList: [],
+    };
+    const depositParams: Parameters<typeof sendCreateDeposit>[0] = {
+      sender: await hre.ethers.getSigner(account),
+      signer: await hre.ethers.getSigner(account),
+      feeParams: {
+        feeToken: ethers.constants.AddressZero,
+        feeAmount: 0,
+        feeSwapPath: [],
+      },
+      transferRequests: {
+        tokens: [WNT, STARGATE_USDC_ARB_SEPOLIA],
+        receivers: [depositVault.address, depositVault.address],
+        amounts: [wntAmount, usdcAmount],
+      },
+      account,
+      params: defaultDepositParams,
+      deadline: 9999999999,
+      chainId: srcChainId,
+      srcChainId: srcChainId, // 0 would mean same chain action
+      desChainId: DST_CHAIN_ID,
+      relayRouter,
+      relayFeeToken: WNT,
+      relayFeeAmount: expandDecimals(2, 15), // 0.002 ETH
+      userNonce, // the actual user nonce from the destination chain
+    };
+
+    const message = await encodeDepositMessage(depositParams, account);
+
+    return message;
+  }
 
   if (actionType === ActionType.SetTraderReferralCode) {
     const referralCode = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(`ReferralCode-${Date.now()}`));
@@ -198,7 +263,8 @@ async function main() {
   // Bridge USDC (ETH bridging fails due to Stargate insufficient funds for path)
   const usdc: ERC20 = await ethers.getContractAt("ERC20", STARGATE_USDC_SEPOLIA);
   const usdcBalance = await usdc.balanceOf(account);
-  const usdcAmount = expandDecimals(1, 6); // to send a composed msg, we need to send the min stargate amount for bridging (e.g. 0.1 USDC)
+  const usdcAmount = expandDecimals(3, 6); // to send a composed msg, we need to send the min stargate amount for bridging (e.g. 0.1 USDC)
+  const wntAmount = expandDecimals(1, 15); // 0.001 WETH (~3 USD)
   if (usdcBalance.lt(usdcAmount)) {
     throw new Error(
       `Insufficient USDC balance: need ${ethers.utils.formatUnits(usdcAmount, 6)} but have ${ethers.utils.formatUnits(
@@ -211,8 +277,8 @@ async function main() {
 
   const composedMsg = await getComposedMsg({
     account,
-    actionType: ActionType.SetTraderReferralCode,
-    wntAmount: BigNumber.from(0),
+    actionType: ActionType.Deposit,
+    wntAmount,
     usdcAmount,
   });
 

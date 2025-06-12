@@ -603,7 +603,7 @@ async function getBridgeOutSignature({
   return signTypedData(signer, domain, types, typedData);
 }
 
-async function getCreateDepositSignature({
+export async function getCreateDepositSignature({
   signer,
   relayParams,
   transferRequests,
