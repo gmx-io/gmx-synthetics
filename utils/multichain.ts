@@ -38,12 +38,7 @@ export async function mintAndBridge(
   }
 }
 
-export async function encodeSetTraderReferralCodeMessage(
-  setTraderReferralCodeParams: Parameters<typeof sendSetTraderReferralCode>[0],
-  referralCode: string,
-  account: string
-): Promise<string> {
-  const relayParamsType = `tuple(
+const relayParamsType = `tuple(
     tuple(
       address[] tokens,
       address[] providers,
@@ -75,6 +70,11 @@ export async function encodeSetTraderReferralCodeMessage(
     uint256 desChainId
   )`;
 
+export async function encodeSetTraderReferralCodeMessage(
+  setTraderReferralCodeParams: Parameters<typeof sendSetTraderReferralCode>[0],
+  referralCode: string,
+  account: string
+): Promise<string> {
   const relayParams = await getRelayParams(setTraderReferralCodeParams);
 
   const signature = await getSetTraderReferralCodeSignature({

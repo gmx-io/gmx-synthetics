@@ -10,14 +10,15 @@ import { encodeSetTraderReferralCodeMessage } from "../../utils/multichain";
 
 const { ethers } = hre;
 
-// SrcChain
-const STARGATE_USDC = "0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590"; // Sepolia
-const STARGATE_POOL_USDC = "0x4985b8fcEA3659FD801a5b857dA1D00e985863F0"; // Sepolia
+// Sepolia
+const STARGATE_POOL_USDC_SEPOLIA = "0x4985b8fcEA3659FD801a5b857dA1D00e985863F0";
+const STARGATE_USDC_SEPOLIA = "0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590";
+
 // ArbitrumSepolia
-const DST_CHAIN_ID = 421614; // ArbitrumSepolia
-const DST_EID = 40231; // ArbitrumSepolia
-const layerZeroProviderJson = import("../../deployments/arbitrumSepolia/LayerZeroProvider.json"); // ArbitrumSepolia
-const multichainOrderRouterJson = import("../../deployments/arbitrumSepolia/MultichainOrderRouter.json"); // ArbitrumSepolia
+const DST_CHAIN_ID = 421614;
+const DST_EID = 40231;
+const layerZeroProviderJson = import("../../deployments/arbitrumSepolia/LayerZeroProvider.json");
+const multichainOrderRouterJson = import("../../deployments/arbitrumSepolia/MultichainOrderRouter.json");
 
 async function prepareSend(
   amount: number | string | BigNumber,
@@ -116,18 +117,20 @@ async function checkAllowance({ account, token, spender, amount }) {
   }
 }
 
-async function getUserNonceFromDestinationChain(account: string): Promise<any> {
+async function retrieveFromDestination(account: string, relayRouterJson: any): Promise<any> {
   const provider = new JsonRpcProvider("https://sepolia-rollup.arbitrum.io/rpc");
-  const multichainOrderRouter = new ethers.Contract(
-    (await multichainOrderRouterJson).address,
+
+  // contracts with destination provider
+  const relayRouter = new ethers.Contract(
+    (await relayRouterJson).address,
     ["function userNonces(address account) view returns (uint256)"],
     provider
   );
 
-  const userNonce = await multichainOrderRouter.userNonces(account);
+  const userNonce = await relayRouter.userNonces(account);
 
   return {
-    multichainOrderRouter,
+    relayRouter,
     userNonce: userNonce.toNumber(),
   };
 }
@@ -140,16 +143,27 @@ enum ActionType {
   SetTraderReferralCode,
 }
 
-async function getComposedMsg(account: string, actionType: ActionType): Promise<string> {
+async function getComposedMsg({
+  account,
+  actionType,
+  wntAmount,
+  usdcAmount,
+}: {
+  account: string;
+  actionType: ActionType;
+  wntAmount: BigNumber;
+  usdcAmount: BigNumber;
+}): Promise<string> {
   if (actionType === ActionType.None) {
     return ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, "0x"]);
   }
 
-  const referralCode = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("referralCode"));
   const srcChainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
-  const { multichainOrderRouter, userNonce } = await getUserNonceFromDestinationChain(account);
 
   if (actionType === ActionType.SetTraderReferralCode) {
+    const referralCode = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(`ReferralCode-${Date.now()}`));
+    const { relayRouter, userNonce } = await retrieveFromDestination(account, multichainOrderRouterJson);
+
     const setTraderReferralCodeParams = {
       sender: await hre.ethers.getSigner(account),
       signer: await hre.ethers.getSigner(account),
@@ -163,7 +177,7 @@ async function getComposedMsg(account: string, actionType: ActionType): Promise<
       deadline: 9999999999,
       srcChainId, // 0 means non-multichain action
       desChainId: DST_CHAIN_ID, // for non-multichain actions, desChainId is the same as chainId
-      relayRouter: multichainOrderRouter,
+      relayRouter,
       chainId: srcChainId,
       gelatoRelayFeeToken: ethers.constants.AddressZero,
       gelatoRelayFeeAmount: 0,
@@ -182,9 +196,9 @@ async function main() {
   const account = wallet.address;
 
   // Bridge USDC (ETH bridging fails due to Stargate insufficient funds for path)
-  const usdc: ERC20 = await ethers.getContractAt("ERC20", STARGATE_USDC);
+  const usdc: ERC20 = await ethers.getContractAt("ERC20", STARGATE_USDC_SEPOLIA);
   const usdcBalance = await usdc.balanceOf(account);
-  const usdcAmount = expandDecimals(1, 5); // to send a composed msg, we need to send the min stargate amount for bridging, which is 0.1 USDC
+  const usdcAmount = expandDecimals(1, 6); // to send a composed msg, we need to send the min stargate amount for bridging (e.g. 0.1 USDC)
   if (usdcBalance.lt(usdcAmount)) {
     throw new Error(
       `Insufficient USDC balance: need ${ethers.utils.formatUnits(usdcAmount, 6)} but have ${ethers.utils.formatUnits(
@@ -193,16 +207,21 @@ async function main() {
       )}`
     );
   }
-  await checkAllowance({ account, token: usdc, spender: STARGATE_POOL_USDC, amount: usdcAmount });
+  await checkAllowance({ account, token: usdc, spender: STARGATE_POOL_USDC_SEPOLIA, amount: usdcAmount });
 
-  const composedMsg = await getComposedMsg(account, ActionType.SetTraderReferralCode);
+  const composedMsg = await getComposedMsg({
+    account,
+    actionType: ActionType.SetTraderReferralCode,
+    wntAmount: BigNumber.from(0),
+    usdcAmount,
+  });
 
   const {
     valueToSend,
     sendParam,
     messagingFee,
     stargatePool: stargatePoolUsdc,
-  } = await prepareSend(usdcAmount, composedMsg, STARGATE_POOL_USDC, 6);
+  } = await prepareSend(usdcAmount, composedMsg, STARGATE_POOL_USDC_SEPOLIA, 6);
 
   const { gasPrice, gasLimit } = await getIncreasedValues({
     sendParam,
