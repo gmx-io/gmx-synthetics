@@ -1,0 +1,38 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "contracts/test/ArbGasInfoTest.sol": {
+      "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.0;\n\ninterface ArbGasInfo {\n    function getCurrentTxL1GasFees() external view returns (uint256);\n}\n\ncontract ArbGasInfoTest {\n    address constant ARB_GAS_INFO_ADDRESS = 0x000000000000000000000000000000000000006C;\n    string public data;\n\n    function getCurrentTxL1GasFees(string calldata _data) public view returns (uint256, uint256) {\n        uint256 a = ArbGasInfo(ARB_GAS_INFO_ADDRESS).getCurrentTxL1GasFees();\n        uint256 b;\n        if (keccak256(abi.encodePacked(_data)) == keccak256(abi.encodePacked(\"FOO\"))) {\n            revert(\"FOO\");\n        } else {\n            b = ArbGasInfo(ARB_GAS_INFO_ADDRESS).getCurrentTxL1GasFees();\n        }\n        return (a, b);\n    }\n\n    function test(string calldata _data) public returns (uint256, uint256) {\n        uint256 a = ArbGasInfo(ARB_GAS_INFO_ADDRESS).getCurrentTxL1GasFees();\n        uint256 b;\n        data = _data;\n        if (keccak256(abi.encodePacked(_data)) == keccak256(abi.encodePacked(\"FOO\"))) {\n            revert(\"FOO\");\n        } else {\n            b = ArbGasInfo(ARB_GAS_INFO_ADDRESS).getCurrentTxL1GasFees();\n        }\n        return (a, b);\n    }\n}\n"
+    }
+  },
+  "settings": {
+    "optimizer": {
+      "enabled": true,
+      "runs": 10,
+      "details": {
+        "constantOptimizer": true
+      }
+    },
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "evm.methodIdentifiers",
+          "metadata",
+          "devdoc",
+          "userdoc",
+          "storageLayout",
+          "evm.gasEstimates"
+        ],
+        "": [
+          "ast"
+        ]
+      }
+    },
+    "metadata": {
+      "useLiteralContent": true
+    }
+  }
+}

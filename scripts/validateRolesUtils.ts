@@ -8,7 +8,7 @@ import * as path from "path";
 
 // bump this when the cache format changes
 const CACHE_VERSION = 2;
-const _cachePath = path.join(__dirname, "../cache/contractInfoCache.json");
+const _cachePath = path.join(__dirname, `../cache/contractInfoCache.${hre.network.name}.json`);
 let _cache: {
   version: number;
   contractInfo: Record<
@@ -126,7 +126,7 @@ async function validateRolesImpl() {
       const ok = Object.keys(_expectedRoles[requiredRole]).some((member) => member.toLowerCase() === lowercaseAddress);
       if (!ok) {
         errors.push(
-          `role ${requiredRole} is not configured for contract ${contractName} ${deployment.address} ${lowercaseAddress}`
+          `role ${requiredRole} is not configured for contract ${contractName}. "${deployment.address}": true, // ${contractName}`
         );
       }
     }

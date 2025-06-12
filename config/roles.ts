@@ -92,7 +92,8 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
     "0xb38302e27bAe8932536A84ab362c3d1013420Cb4": true,
     "0xc9e1CE91d3f782499cFe787b6F1d2AF0Ca76C049": true,
     "0x9f7198eb1b9Ccc0Eb7A07eD228d8FbC12963ea33": true,
-    "0xCD9706B6B71fdC4351091B5b1D910cEe7Fde28D0": true,
+    "0xCD9706B6B71fdC4351091B5b1D910cEe7Fde28D0": true, // Max
+    "0x508cbC56Ab57A9b0221cf1810a483f8013c92Ff3": true, // An
   };
 
   const testnetConfig = {
@@ -169,6 +170,10 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0xA145346c17EA8a56c97fAc0bd810225257AB96E1": true, // SubaccountRouter
         "0x63daFB2CA71767129AB8D0a0909383023C4AfF6E": true, // GelatoRelayRouter
         "0x8964c82e1878d35bEd66d377f97e4F518b7A024F": true, // SubaccountGelatoRelayRouter
+
+        // gasless with sponsored calls
+        "0x9EB239eDf4c6f4c4fC9d30ea2017F8716d049C8D": true, // GelatoRelayRouter
+        "0x5F345B765d5856bC0843cEE8bE234b575eC77DBC": true, // SubaccountGelatoRelayRouter
       },
       TIMELOCK_ADMIN: {
         "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // timelock_admin_1
@@ -215,6 +220,11 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0xedB5cD878871F074371e816AC67CbE010c31f00b": true, // WithdrawalHandler
         "0x94889b5d664eaFf4C249d43206705a70A22E37B4": true, // ShiftHandler
         "0x266C6b192952c743De5541D642DC847d064c182C": true, // SwapHandler
+
+        // gasless with sponsored calls
+        "0x9EB239eDf4c6f4c4fC9d30ea2017F8716d049C8D": true, // GelatoRelayRouter
+        "0x5F345B765d5856bC0843cEE8bE234b575eC77DBC": true, // SubaccountGelatoRelayRouter
+        "0x65B46057C1948064a89aA56ba2bd1c411c007346": true, // Config
       },
       GOV_TOKEN_CONTROLLER: {
         "0x5E4766F932ce00aA4a1A82d3Da85adf15C5694A1": true, // RewardRouterV2_2
@@ -256,6 +266,10 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x233397357bB4cC6B951aa423D7cEadBC610499e2": true, // SubaccountRouter_6
         "0xb33D87b6Be2a6772eebD38C3222F5872A62Cca2A": true, // GelatoRelayRouter
         "0xE26052e5676E636230A9B05652acD3ACA23fc35f": true, // SubaccountGelatoRelayRouter
+
+        // gasless with sponsored calls
+        "0x035A9A047d20a486e14A613B04d5a95d7A617c5D": true, // GelatoRelayRouter
+        "0x3B753c0D0aE55530f24532B8Bb9d0bAcD5B675C0": true, // SubaccountGelatoRelayRouter
       },
       TIMELOCK_ADMIN: {
         "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // timelock_admin_1
@@ -302,10 +316,49 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x6FA5D5a3377790CF646efDB67Fc53d3cE5b345bc": true, // WithdrawalHandler_5
         "0xE270E904B3b52Fe952F00e797f5daC4a1e058DdA": true, // ShiftHandler_5
         "0x1B31d1774270c46dFc3e1E0d2459A1b94CF9373F": true, // SwapHandler_6
+
+        // gasless with sponsored calls
+        "0x9EB239eDf4c6f4c4fC9d30ea2017F8716d049C8D": true, // Config
+        "0x035A9A047d20a486e14A613B04d5a95d7A617c5D": true, // GelatoRelayRouter
+        "0x3B753c0D0aE55530f24532B8Bb9d0bAcD5B675C0": true, // SubaccountGelatoRelayRouter
       },
       GOV_TOKEN_CONTROLLER: {
         "0x091eD806490Cc58Fd514441499e58984cCce0630": true, // RewardRouterV2_2
       },
+    },
+    botanix: {
+      ADL_KEEPER: syntheticKeepers.mainnet,
+      FROZEN_ORDER_KEEPER: syntheticKeepers.mainnet,
+      LIQUIDATION_KEEPER: syntheticKeepers.mainnet,
+      ORDER_KEEPER: syntheticKeepers.mainnet,
+      LIMITED_CONFIG_KEEPER: syntheticKeepers.mainnet,
+      CONFIG_KEEPER: {
+        "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745": true, // general_keeper_1
+        "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
+        "0xD5F8b9ba4255B2F73b06f245fcca73D114D1D460": true, // general_keeper_3
+        "0xE7BfFf2aB721264887230037940490351700a068": true, // temp deployer
+      },
+      FEE_KEEPER: {
+        "0x43CE1d475e06c65DD879f4ec644B8e0E10ff2b6D": true, // fee_keeper_1
+      },
+      MARKET_KEEPER: {
+        "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745": true, // general_keeper_1
+        "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
+        "0xD5F8b9ba4255B2F73b06f245fcca73D114D1D460": true, // general_keeper_3
+      },
+      ROLE_ADMIN: {},
+      ROUTER_PLUGIN: {},
+      TIMELOCK_ADMIN: {
+        "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // timelock_admin_1
+        "0xE014cbD60A793901546178E1c16ad9132C927483": true, // timelock_admin_2
+      },
+      TIMELOCK_MULTISIG: {
+        "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // temp timelock_admin_1
+      },
+      CONTROLLER: {
+        "0xE7BfFf2aB721264887230037940490351700a068": true, // temp deployer
+      },
+      GOV_TOKEN_CONTROLLER: {},
     },
     avalancheFuji: {
       CONFIG_KEEPER: {
@@ -322,15 +375,20 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x03d717E27aF1B566C3efb729F1151E775B411f2B": true,
         "0xC84f3398eDf6336E1Ef55b50Ca3F9f9f96B8b504": true,
       },
+      ROLE_ADMIN: {
+        "0x508cbC56Ab57A9b0221cf1810a483f8013c92Ff3": true, // An
+      },
       ...testnetConfig,
     },
     arbitrumSepolia: {
       CONFIG_KEEPER: {
         "0xb38302e27bAe8932536A84ab362c3d1013420Cb4": true,
+        "0x508cbC56Ab57A9b0221cf1810a483f8013c92Ff3": true, // An
         [deployer]: true,
       },
       ROLE_ADMIN: {
-        "0xCD9706B6B71fdC4351091B5b1D910cEe7Fde28D0": true,
+        "0xCD9706B6B71fdC4351091B5b1D910cEe7Fde28D0": true, // Max
+        "0x508cbC56Ab57A9b0221cf1810a483f8013c92Ff3": true, // An
       },
       ...testnetConfig,
     },
