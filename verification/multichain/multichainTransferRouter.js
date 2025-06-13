@@ -1,6 +1,6 @@
 // Verification arguments for MultichainTransferRouter
 // Usage example:
-// npx hardhat verify --network arbitrumSepolia --constructor-args ./verification/multichain/multichainTransferRouter.js --contract contracts/multichain/MultichainTransferRouter.sol:MultichainTransferRouter 0x5AA33E6F56270D36399B03E92eAd81841320bdD9
+// npx hardhat verify --network arbitrumSepolia --constructor-args ./verification/multichain/multichainTransferRouter.js --contract contracts/multichain/MultichainTransferRouter.sol:MultichainTransferRouter 0xf70427200a1f2748c565183F332886e24B653C1B
 
 module.exports = [
   {
