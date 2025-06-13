@@ -16,6 +16,7 @@ import "@nomicfoundation/hardhat-chai-matchers";
 import "@typechain/hardhat";
 import "@nomiclabs/hardhat-ethers";
 import "@nomicfoundation/hardhat-chai-matchers";
+import "hardhat-abi-exporter";
 
 // extends hre with gmx domain data
 import "./config";
@@ -24,6 +25,11 @@ import "./config";
 import "./utils/test";
 import { updateGlvConfig } from "./scripts/updateGlvConfigUtils";
 import { updateMarketConfig } from "./scripts/updateMarketConfigUtils";
+import { collectDeployments } from "./scripts/collectDeployments";
+import { TASK_FLATTEN_GET_DEPENDENCY_GRAPH } from "hardhat/builtin-tasks/task-names";
+import { DependencyGraph } from "hardhat/types";
+import { checkContractsSizing } from "./scripts/contractSizes";
+import { collectDependents } from "./utils/dependencies";
 
 const getRpcUrl = (network) => {
   const defaultRpcs = {
@@ -32,6 +38,7 @@ const getRpcUrl = (network) => {
     botanix: "https://rpc.botanixlabs.com",
     arbitrumGoerli: "https://goerli-rollup.arbitrum.io/rpc",
     arbitrumSepolia: "https://sepolia-rollup.arbitrum.io/rpc",
+    sepolia: "https://ethereum-sepolia-rpc.publicnode.com",
     avalancheFuji: "https://api.avax-test.network/ext/bc/C/rpc",
     snowtrace: "https://api.avax.network/ext/bc/C/rpc",
     arbitrumBlockscout: "https://arb1.arbitrum.io/rpc",
@@ -58,6 +65,7 @@ export const getExplorerUrl = (network) => {
     snowscan: "https://api.snowscan.xyz/",
     arbitrumGoerli: "https://api-goerli.arbiscan.io/",
     arbitrumSepolia: "https://api-sepolia.arbiscan.io/",
+    sepolia: "https://sepolia.etherscan.io/",
     avalancheFuji: "https://api-testnet.snowtrace.io/",
     arbitrumBlockscout: "https://arbitrum.blockscout.com/api",
   };
@@ -105,16 +113,32 @@ const getEnvAccounts = (chainName?: string) => {
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: "0.8.18",
-    settings: {
-      optimizer: {
-        enabled: true,
-        runs: 10,
-        details: {
-          constantOptimizer: true,
+    compilers: [
+      {
+        version: "0.8.18",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 10,
+            details: {
+              constantOptimizer: true,
+            },
+          },
         },
       },
-    },
+      {
+        version: "0.8.20", // LZ
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 10,
+            details: {
+              constantOptimizer: true,
+            },
+          },
+        },
+      },
+    ],
   },
   networks: {
     hardhat: {
@@ -217,6 +241,18 @@ const config: HardhatUserConfig = {
       },
       blockGasLimit: 10000000,
     },
+    sepolia: {
+      url: getRpcUrl("sepolia"),
+      chainId: 11155111,
+      accounts: getEnvAccounts("sepolia"),
+      verify: {
+        etherscan: {
+          apiUrl: getExplorerUrl("sepolia"),
+          apiKey: process.env.ETHERSCAN_API_KEY,
+        },
+      },
+      blockGasLimit: 10000000,
+    },
     avalancheFuji: {
       url: getRpcUrl("avalancheFuji"),
       chainId: 43113,
@@ -239,6 +275,7 @@ const config: HardhatUserConfig = {
       arbitrumOne: process.env.ARBISCAN_API_KEY,
       avalanche: process.env.SNOWTRACE_API_KEY,
       arbitrumGoerli: process.env.ARBISCAN_API_KEY,
+      sepolia: process.env.ETHERSCAN_API_KEY,
       arbitrumSepolia: process.env.ARBISCAN_API_KEY,
       avalancheFujiTestnet: process.env.SNOWTRACE_API_KEY,
       snowtrace: "snowtrace", // apiKey is not required, just set a placeholder
@@ -267,7 +304,15 @@ const config: HardhatUserConfig = {
         chainId: 421614,
         urls: {
           apiURL: "https://api-sepolia.arbiscan.io/api",
-          browserURL: "https://https://sepolia.arbiscan.io/",
+          browserURL: "https://sepolia.arbiscan.io/",
+        },
+      },
+      {
+        network: "botanix",
+        chainId: 3637,
+        urls: {
+          apiURL: "https://api.routescan.io/v2/network/mainnet/evm/3637/etherscan",
+          browserURL: "https://botanixscan.io",
         },
       },
       // {
@@ -292,6 +337,9 @@ const config: HardhatUserConfig = {
   mocha: {
     timeout: 100000000,
   },
+  abiExporter: {
+    flat: true,
+  },
 };
 
 task("update-glv-config", "Update GLV config")
@@ -303,12 +351,42 @@ task("update-market-config", "Update market config")
   .addOptionalParam("market", "Market address", undefined, types.string)
   .setAction(updateMarketConfig);
 
+task("dependencies", "Print dependencies for a contract")
+  .addPositionalParam("file", "Contract", undefined, types.string)
+  .setAction(async ({ file }: { file: string }, { run }) => {
+    const graph: DependencyGraph = await run(TASK_FLATTEN_GET_DEPENDENCY_GRAPH, { files: [file] });
+    const dependencies = graph.getResolvedFiles().map((value) => {
+      return value.sourceName;
+    });
+    console.log(dependencies);
+    return graph;
+  });
+
 task("deploy", "Deploy contracts", async (taskArgs, env, runSuper) => {
   env.deployTags = taskArgs.tags ?? "";
-  if (!process.env.SKIP_AUTO_HANDLER_REDEPLOYMENT && env.network.name != "hardhat") {
+  if (
+    !(process.env.SKIP_AUTO_HANDLER_REDEPLOYMENT == "true" || process.env.SKIP_AUTO_HANDLER_REDEPLOYMENT == "false") &&
+    env.network.name != "hardhat"
+  ) {
     throw new Error("SKIP_AUTO_HANDLER_REDEPLOYMENT flag is mandatory");
   }
   await runSuper();
 });
+
+task("collect-deployments", "Collect current deployments into the docs folder").setAction(collectDeployments);
+
+task("measure-contract-sizes", "Check if contract characters count hit 900k limit").setAction(async (taskArgs, env) => {
+  await checkContractsSizing(env);
+});
+
+task("reverse-dependencies", "Print dependent contracts")
+  .addPositionalParam("file", "Contract", undefined, types.string)
+  .setAction(async ({ file }: { file: string }, { run }) => {
+    const graph: DependencyGraph = await run(TASK_FLATTEN_GET_DEPENDENCY_GRAPH, {});
+    const reversed = await collectDependents(graph, file);
+    console.log(`Contract ${file} dependents are:\n`);
+    console.log([...reversed].map((l) => `${l}`).join("\n"));
+    return reversed;
+  });
 
 export default config;

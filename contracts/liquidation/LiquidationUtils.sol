@@ -14,6 +14,11 @@ library LiquidationUtils {
     using Position for Position.Props;
     using Order for Order.Props;
 
+    struct CreateLiquidationOrderCache {
+        bytes32 positionKey;
+        uint256 lastSrcChainId;
+    }
+
     // @dev creates a liquidation order for a position
     // @param dataStore DataStore
     // @param account the position's account
@@ -28,8 +33,10 @@ library LiquidationUtils {
         address collateralToken,
         bool isLong
     ) external returns (bytes32) {
-        bytes32 positionKey = Position.getPositionKey(account, market, collateralToken, isLong);
-        Position.Props memory position = PositionStoreUtils.get(dataStore, positionKey);
+        CreateLiquidationOrderCache memory cache;
+
+        cache.positionKey = Position.getPositionKey(account, market, collateralToken, isLong);
+        Position.Props memory position = PositionStoreUtils.get(dataStore, cache.positionKey);
 
         Order.Addresses memory addresses = Order.Addresses(
             account, // account
@@ -41,6 +48,8 @@ library LiquidationUtils {
             position.collateralToken(), // initialCollateralToken
             new address[](0) // swapPath
         );
+
+        cache.lastSrcChainId = dataStore.getUint(Keys.positionLastSrcChainId(cache.positionKey));
 
         // no slippage is set for this order, in case of a liquidation the amount
         // of collateral being swapped should not be too large
@@ -70,12 +79,13 @@ library LiquidationUtils {
             dataStore.getUint(Keys.MAX_CALLBACK_GAS_LIMIT), // callbackGasLimit
             0, // minOutputAmount
             Chain.currentTimestamp(), // updatedAtTime
-            0 // validFromTime
+            0, // validFromTime
+            cache.lastSrcChainId // srcChainId
         );
 
         Order.Flags memory flags = Order.Flags(
             position.isLong(), // isLong
-            true, // shouldUnwrapNativeToken
+            cache.lastSrcChainId == 0, // shouldUnwrapNativeToken
             false, // isFrozen
             false // autoCancel
         );
@@ -83,7 +93,8 @@ library LiquidationUtils {
         Order.Props memory order = Order.Props(
             addresses,
             numbers,
-            flags
+            flags,
+            new bytes32[](0)
         );
 
         bytes32 key = NonceUtils.getNextKey(dataStore);

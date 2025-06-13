@@ -13,23 +13,30 @@ contract LiquidationHandler is BaseOrderHandler {
     using Order for Order.Props;
     using Array for uint256[];
 
+    IOrderExecutor public immutable decreaseOrderExecutor;
+
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        Oracle _oracle,
+        IOracle _oracle,
+        MultichainVault _multichainVault,
         OrderVault _orderVault,
-        SwapHandler _swapHandler,
-        IReferralStorage _referralStorage
+        ISwapHandler _swapHandler,
+        IReferralStorage _referralStorage,
+        IOrderExecutor _decreaseOrderExecutor
     ) BaseOrderHandler(
         _roleStore,
         _dataStore,
         _eventEmitter,
         _oracle,
+        _multichainVault,
         _orderVault,
         _swapHandler,
         _referralStorage
-    ) {}
+    ) {
+        decreaseOrderExecutor = _decreaseOrderExecutor;
+    }
 
     // @dev executes a position liquidation
     // @param account the account of the position to liquidate
@@ -73,6 +80,6 @@ contract LiquidationHandler is BaseOrderHandler {
 
         FeatureUtils.validateFeature(params.contracts.dataStore, Keys.executeOrderFeatureDisabledKey(address(this), uint256(params.order.orderType())));
 
-        ExecuteOrderUtils.executeOrder(params);
+        ExecuteOrderUtils.executeOrder(decreaseOrderExecutor, params);
     }
 }

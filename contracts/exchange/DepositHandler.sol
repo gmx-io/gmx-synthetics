@@ -11,6 +11,9 @@ import "../deposit/DepositVault.sol";
 import "../deposit/DepositUtils.sol";
 import "../deposit/ExecuteDepositUtils.sol";
 
+import "../multichain/MultichainVault.sol";
+import "../multichain/IMultichainTransferRouter.sol";
+
 import "./IDepositHandler.sol";
 
 // @title DepositHandler
@@ -19,31 +22,44 @@ contract DepositHandler is IDepositHandler, BaseHandler {
     using Deposit for Deposit.Props;
 
     DepositVault public immutable depositVault;
+    MultichainVault public immutable multichainVault;
+    IMultichainTransferRouter public immutable multichainTransferRouter;
+    ISwapHandler public immutable swapHandler;
 
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        Oracle _oracle,
-        DepositVault _depositVault
+        IOracle _oracle,
+        MultichainVault _multichainVault,
+        IMultichainTransferRouter _multichainTransferRouter,
+        DepositVault _depositVault,
+        ISwapHandler _swapHandler
     ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {
+        multichainVault = _multichainVault;
+        multichainTransferRouter = _multichainTransferRouter;
         depositVault = _depositVault;
+        swapHandler = _swapHandler;
     }
 
     // @dev creates a deposit in the deposit store
     // @param account the depositing account
-    // @param params DepositUtils.CreateDepositParams
+    // @param srcChainId the source chain id
+    // @param params IDepositUtils.CreateDepositParams
     function createDeposit(
         address account,
-        DepositUtils.CreateDepositParams calldata params
+        uint256 srcChainId,
+        IDepositUtils.CreateDepositParams calldata params
     ) external override globalNonReentrant onlyController returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createDepositFeatureDisabledKey(address(this)));
+        validateDataListLength(params.dataList.length);
 
         return DepositUtils.createDeposit(
             dataStore,
             eventEmitter,
             depositVault,
             account,
+            srcChainId,
             params
         );
     }
@@ -66,6 +82,7 @@ contract DepositHandler is IDepositHandler, BaseHandler {
         DepositUtils.cancelDeposit(
             _dataStore,
             eventEmitter,
+            multichainVault,
             depositVault,
             key,
             deposit.account(),
@@ -108,6 +125,20 @@ contract DepositHandler is IDepositHandler, BaseHandler {
         }
     }
 
+    // @dev The executeDepositFromController function was introduced to reduce cross-contract dependencies.
+    // This adds an extra external call during deposit execution (e.g. during shifts), which does not adjust
+    // params.startingGas for the 63/64 gas rule. As a result, gas usage may be overestimated.
+    // Currently, this has no net impact because deposits using this path have executionFee set to zero,
+    // so no gas-based fee is charged. If future uses of this function include deposits with a nonzero
+    // executionFee, the lack of gas correction should be revisited.
+    function executeDepositFromController(
+        IExecuteDepositUtils.ExecuteDepositParams calldata executeDepositParams,
+        Deposit.Props calldata deposit
+    ) external onlyController returns (uint256) {
+        FeatureUtils.validateFeature(dataStore, Keys.executeDepositFeatureDisabledKey(address(this)));
+        return ExecuteDepositUtils.executeDeposit(executeDepositParams, deposit);
+    }
+
     // @dev simulate execution of a deposit to check for any errors
     // @param key the deposit key
     // @param params OracleUtils.SimulatePricesParams
@@ -142,16 +173,20 @@ contract DepositHandler is IDepositHandler, BaseHandler {
 
         FeatureUtils.validateFeature(dataStore, Keys.executeDepositFeatureDisabledKey(address(this)));
 
-        ExecuteDepositUtils.ExecuteDepositParams memory params = ExecuteDepositUtils.ExecuteDepositParams(
+        IExecuteDepositUtils.ExecuteDepositParams memory params = IExecuteDepositUtils.ExecuteDepositParams(
             dataStore,
             eventEmitter,
+            multichainVault,
+            multichainTransferRouter,
             depositVault,
             oracle,
+            swapHandler,
             key,
             keeper,
             startingGas,
             ISwapPricingUtils.SwapPricingType.Deposit,
-            true // includeVirtualInventoryImpact
+            true, // includeVirtualInventoryImpact
+            deposit.srcChainId()
         );
 
         ExecuteDepositUtils.executeDeposit(params, deposit);
@@ -177,6 +212,7 @@ contract DepositHandler is IDepositHandler, BaseHandler {
         DepositUtils.cancelDeposit(
             dataStore,
             eventEmitter,
+            multichainVault,
             depositVault,
             key,
             msg.sender,

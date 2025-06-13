@@ -41,6 +41,8 @@ export async function createWithdrawal(fixture, overrides: any = {}) {
   const shouldUnwrapNativeToken = overrides.shouldUnwrapNativeToken || false;
   const executionFee = overrides.executionFee || "1000000000000000";
   const callbackGasLimit = overrides.callbackGasLimit || bigNumberify(0);
+  const srcChainId = overrides.srcChainId || bigNumberify(0);
+  const dataList = overrides.dataList || [];
 
   await wnt.mint(withdrawalVault.address, executionFee);
 
@@ -48,22 +50,25 @@ export async function createWithdrawal(fixture, overrides: any = {}) {
   await marketToken.connect(account).transfer(withdrawalVault.address, marketTokenAmount);
 
   const params = {
-    receiver: receiver.address,
-    callbackContract: callbackContract.address,
-    uiFeeReceiver: uiFeeReceiver.address,
-    market: market.marketToken,
-    longTokenSwapPath,
-    shortTokenSwapPath,
+    addresses: {
+      receiver: receiver.address,
+      callbackContract: callbackContract.address,
+      uiFeeReceiver: uiFeeReceiver.address,
+      market: market.marketToken,
+      longTokenSwapPath,
+      shortTokenSwapPath,
+    },
     marketTokenAmount,
     minLongTokenAmount,
     minShortTokenAmount,
     shouldUnwrapNativeToken,
     executionFee,
     callbackGasLimit,
+    dataList,
   };
 
   await logGasUsage({
-    tx: withdrawalHandler.connect(wallet).createWithdrawal(account.address, params),
+    tx: withdrawalHandler.connect(wallet).createWithdrawal(account.address, srcChainId, params),
     label: overrides.gasUsageLabel,
   });
 }
@@ -137,6 +142,8 @@ export async function executeAtomicWithdrawal(fixture, overrides: any = {}) {
   const shouldUnwrapNativeToken = overrides.shouldUnwrapNativeToken || false;
   const executionFee = overrides.executionFee || "1000000000000000";
   const callbackGasLimit = overrides.callbackGasLimit || bigNumberify(0);
+  const srcChainId = overrides.srcChainId || bigNumberify(0);
+  const dataList = overrides.dataList || [];
 
   await wnt.mint(withdrawalVault.address, executionFee);
 
@@ -144,18 +151,22 @@ export async function executeAtomicWithdrawal(fixture, overrides: any = {}) {
   await marketToken.connect(account).transfer(withdrawalVault.address, marketTokenAmount);
 
   const params = {
-    receiver: receiver.address,
-    callbackContract: callbackContract.address,
-    uiFeeReceiver: uiFeeReceiver.address,
-    market: market.marketToken,
-    longTokenSwapPath,
-    shortTokenSwapPath,
+    addresses: {
+      receiver: receiver.address,
+      callbackContract: callbackContract.address,
+      uiFeeReceiver: uiFeeReceiver.address,
+      market: market.marketToken,
+      longTokenSwapPath,
+      shortTokenSwapPath,
+    },
     marketTokenAmount,
     minLongTokenAmount,
     minShortTokenAmount,
     shouldUnwrapNativeToken,
     executionFee,
     callbackGasLimit,
+    srcChainId,
+    dataList,
   };
 
   let oracleParams = overrides.oracleParams;

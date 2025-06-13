@@ -34,7 +34,7 @@ contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall
 
     constructor(
         RoleStore _roleStore,
-        Oracle _oracle,
+        IOracle _oracle,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
         IVaultV1 _vaultV1,

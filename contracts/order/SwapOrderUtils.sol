@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 
 import "./BaseOrderUtils.sol";
 import "../swap/SwapUtils.sol";
+import "../multichain/MultichainUtils.sol";
 
 // @title SwapOrderUtils
 // @dev Library for functions to help with processing a swap order
@@ -21,7 +22,7 @@ library SwapOrderUtils {
 
     // @dev process a swap order
     // @param params BaseOrderUtils.ExecuteOrderParams
-    function processOrder(BaseOrderUtils.ExecuteOrderParams memory params) external returns (EventUtils.EventLogData memory) {
+    function processOrder(BaseOrderUtils.ExecuteOrderParams memory params) internal returns (EventUtils.EventLogData memory) {
         if (params.order.market() != address(0)) {
             revert Errors.UnexpectedMarket();
         }
@@ -34,7 +35,7 @@ library SwapOrderUtils {
         }
 
         if (
-            !BaseOrderUtils.isMarketOrder(params.order.orderType()) &&
+            !Order.isMarketOrder(params.order.orderType()) &&
             params.minOracleTimestamp < params.order.validFromTime()
         ) {
             revert Errors.OracleTimestampsAreSmallerThanRequired(
@@ -56,7 +57,7 @@ library SwapOrderUtils {
             );
         }
 
-        (address outputToken, uint256 outputAmount) = SwapUtils.swap(SwapUtils.SwapParams(
+        (address outputToken, uint256 outputAmount) = params.contracts.swapHandler.swap(ISwapUtils.SwapParams(
             params.contracts.dataStore,
             params.contracts.eventEmitter,
             params.contracts.oracle,
@@ -66,11 +67,22 @@ library SwapOrderUtils {
             params.order.initialCollateralDeltaAmount(),
             params.swapPathMarkets,
             params.order.minOutputAmount(),
-            params.order.receiver(),
+            params.order.srcChainId() == 0 ? params.order.receiver(): address(params.contracts.multichainVault),
             params.order.uiFeeReceiver(),
-            params.order.shouldUnwrapNativeToken(),
+            params.order.srcChainId() == 0 ? params.order.shouldUnwrapNativeToken() : false,
             ISwapPricingUtils.SwapPricingType.Swap
         ));
+
+        if (params.order.srcChainId() != 0) {
+            MultichainUtils.recordTransferIn(
+                params.contracts.dataStore,
+                params.contracts.eventEmitter,
+                params.contracts.multichainVault,
+                outputToken,
+                params.order.receiver(),
+                params.order.srcChainId()
+            );
+        }
 
         EventUtils.EventLogData memory eventData;
         eventData.addressItems.initItems(1);

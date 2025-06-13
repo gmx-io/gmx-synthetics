@@ -13,46 +13,62 @@ import "./BaseGelatoRelayRouter.sol";
 contract GelatoRelayRouter is BaseGelatoRelayRouter {
     constructor(
         Router _router,
+        RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        Oracle _oracle,
+        IOracle _oracle,
         IOrderHandler _orderHandler,
         OrderVault _orderVault,
+        ISwapHandler _swapHandler,
         IExternalHandler _externalHandler
     )
-        BaseGelatoRelayRouter(_router, _dataStore, _eventEmitter, _oracle, _orderHandler, _orderVault, _externalHandler)
+        BaseGelatoRelayRouter(_oracle, _orderHandler, _orderVault, _swapHandler, _externalHandler)
+        BaseRouter(_router, _roleStore, _dataStore, _eventEmitter)
     {}
 
     // @note all params except account should be part of the corresponding struct hash
     function batch(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
-        BatchParams calldata params
-    ) external nonReentrant withRelay(relayParams, account, false) returns (bytes32[] memory) {
+        IRelayUtils.BatchParams calldata params
+    )
+        external
+        nonReentrant
+        withRelay(relayParams, account, 0, false) // srcChainId is the current block.chainId
+        returns (bytes32[] memory)
+    {
         bytes32 structHash = RelayUtils.getBatchStructHash(relayParams, params);
-        _validateCall(relayParams, account, structHash);
+        _validateCall(relayParams, account, structHash, block.chainid /* srcChainId */);
 
-        return _batch(
-            account,
-            params.createOrderParamsList,
-            params.updateOrderParamsList,
-            params.cancelOrderKeys,
-            false // isSubaccount
-        );
+        return
+            _batch(
+                account,
+                0, // srcChainId is the current block.chainId
+                params.createOrderParamsList,
+                params.updateOrderParamsList,
+                params.cancelOrderKeys,
+                false // isSubaccount
+            );
     }
 
     // @note all params except account should be part of the corresponding struct hash
     function createOrder(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         IBaseOrderUtils.CreateOrderParams calldata params
-    ) external nonReentrant withRelay(relayParams, account, false) returns (bytes32) {
+    )
+        external
+        nonReentrant
+        withRelay(relayParams, account, 0, false) // srcChainId is the current block.chainId
+        returns (bytes32)
+    {
         bytes32 structHash = RelayUtils.getCreateOrderStructHash(relayParams, params);
-        _validateCall(relayParams, account, structHash);
+        _validateCall(relayParams, account, structHash, block.chainid /* srcChainId */);
 
         return
             _createOrder(
                 account,
+                0, // srcChainId is the current block.chainId
                 params,
                 false // isSubaccount
             );
@@ -60,12 +76,12 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
 
     // @note all params except account should be part of the corresponding struct hash
     function updateOrder(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
-        UpdateOrderParams calldata params
-    ) external nonReentrant withRelay(relayParams, account, false) {
+        IRelayUtils.UpdateOrderParams calldata params
+    ) external nonReentrant withRelay(relayParams, account, 0 /* srcChainId is the current block.chainId */, false) {
         bytes32 structHash = RelayUtils.getUpdateOrderStructHash(relayParams, params);
-        _validateCall(relayParams, account, structHash);
+        _validateCall(relayParams, account, structHash, block.chainid /* srcChainId */);
 
         _updateOrder(
             account,
@@ -76,12 +92,12 @@ contract GelatoRelayRouter is BaseGelatoRelayRouter {
 
     // @note all params except account should be part of the corresponding struct hash
     function cancelOrder(
-        RelayParams calldata relayParams,
+        IRelayUtils.RelayParams calldata relayParams,
         address account,
         bytes32 key
-    ) external nonReentrant withRelay(relayParams, account, false) {
+    ) external nonReentrant withRelay(relayParams, account, 0 /* srcChainId is the current block.chainId */, false) {
         bytes32 structHash = RelayUtils.getCancelOrderStructHash(relayParams, key);
-        _validateCall(relayParams, account, structHash);
+        _validateCall(relayParams, account, structHash, block.chainid /* srcChainId */);
 
         _cancelOrder(account, key);
     }
