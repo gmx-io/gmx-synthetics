@@ -29,7 +29,7 @@ import { collectDeployments } from "./scripts/collectDeployments";
 import { TASK_FLATTEN_GET_DEPENDENCY_GRAPH } from "hardhat/builtin-tasks/task-names";
 import { DependencyGraph } from "hardhat/types";
 import { checkContractsSizing } from "./scripts/contractSizes";
-import { buildReverseDependencies, collectDependents, DependencyMap } from "./utils/dependencies";
+import { collectDependents } from "./utils/dependencies";
 
 const getRpcUrl = (network) => {
   const defaultRpcs = {
@@ -383,11 +383,7 @@ task("reverse-dependencies", "Print dependent contracts")
   .addPositionalParam("file", "Contract", undefined, types.string)
   .setAction(async ({ file }: { file: string }, { run }) => {
     const graph: DependencyGraph = await run(TASK_FLATTEN_GET_DEPENDENCY_GRAPH, {});
-    const dependencyMap: DependencyMap = {};
-    for (const entry of graph.entries()) {
-      dependencyMap[entry[0].sourceName] = entry[1].values().map((resolvedFile) => resolvedFile.sourceName);
-    }
-    const reversed = collectDependents(dependencyMap, file);
+    const reversed = await collectDependents(graph, file);
     console.log(`Contract ${file} dependents are:\n`);
     console.log([...reversed].map((l) => `${l}`).join("\n"));
     return reversed;
