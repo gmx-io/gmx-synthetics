@@ -2,6 +2,7 @@ import { BigNumberish, Contract } from "ethers";
 import { sendSetTraderReferralCode } from "./relay/gelatoRelay";
 import { getRelayParams } from "./relay/helpers";
 import { getSetTraderReferralCodeSignature } from "./relay/signatures";
+import { getCreateDepositSignature, sendCreateDeposit } from "./relay/multichain";
 
 export async function mintAndBridge(
   fixture,
@@ -38,12 +39,7 @@ export async function mintAndBridge(
   }
 }
 
-export async function encodeSetTraderReferralCodeMessage(
-  setTraderReferralCodeParams: Parameters<typeof sendSetTraderReferralCode>[0],
-  referralCode: string,
-  account: string
-): Promise<string> {
-  const relayParamsType = `tuple(
+const relayParamsType = `tuple(
     tuple(
       address[] tokens,
       address[] providers,
@@ -75,6 +71,60 @@ export async function encodeSetTraderReferralCodeMessage(
     uint256 desChainId
   )`;
 
+const transferRequestsType = `tuple(
+    address[] tokens,
+    address[] receivers,
+    uint256[] amounts
+  ) transferRequests`;
+
+const createDepositParamsType = `tuple(
+    tuple(
+      address receiver,
+      address callbackContract,
+      address uiFeeReceiver,
+      address market,
+      address initialLongToken,
+      address initialShortToken,
+      address[] longTokenSwapPath,
+      address[] shortTokenSwapPath
+    ) addresses,
+    uint256 minMarketTokens,
+    bool shouldUnwrapNativeToken,
+    uint256 executionFee,
+    uint256 callbackGasLimit,
+    bytes32[] dataList
+  )`;
+
+export async function encodeDepositMessage(
+  depositParams: Parameters<typeof sendCreateDeposit>[0],
+  account: string
+): Promise<string> {
+  const relayParams = await getRelayParams(depositParams);
+
+  const signature = await getCreateDepositSignature({
+    ...depositParams,
+    relayParams,
+    verifyingContract: depositParams.relayRouter.address,
+  });
+
+  const actionData = ethers.utils.defaultAbiCoder.encode(
+    [relayParamsType, transferRequestsType, createDepositParamsType],
+    [{ ...relayParams, signature }, depositParams.transferRequests, depositParams.params]
+  );
+
+  const ActionType = 1; // Deposit
+  const data = ethers.utils.defaultAbiCoder.encode(["uint8", "bytes"], [ActionType, actionData]);
+
+  const message = ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, data]);
+
+  return message;
+}
+
+export async function encodeSetTraderReferralCodeMessage(
+  setTraderReferralCodeParams: Parameters<typeof sendSetTraderReferralCode>[0],
+  referralCode: string,
+  account: string
+): Promise<string> {
   const relayParams = await getRelayParams(setTraderReferralCodeParams);
 
   const signature = await getSetTraderReferralCodeSignature({
