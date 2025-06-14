@@ -378,7 +378,12 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     }
 
     function _validateCall(IRelayUtils.RelayParams calldata relayParams, address account, bytes32 structHash, uint256 srcChainId) internal {
-        _validateCallWithoutSignature(relayParams, srcChainId);
+        _validateCallWithoutSignature(
+            srcChainId,
+            relayParams.desChainId,
+            relayParams.deadline,
+            relayParams.tokenPermits.length
+        );
 
         bytes32 domainSeparator = RelayUtils.getDomainSeparator(srcChainId);
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
@@ -408,14 +413,14 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         FeatureUtils.validateFeature(dataStore, Keys.gaslessFeatureDisabledKey(address(this)));
     }
 
-    function _validateCallWithoutSignature(IRelayUtils.RelayParams calldata relayParams, uint256 srcChainId) internal view {
-        if (relayParams.desChainId != block.chainid) {
-            revert Errors.InvalidDestinationChainId(relayParams.desChainId);
+    function _validateCallWithoutSignature(uint256 srcChainId, uint256 desChainId, uint256 deadline, uint256 tokenPermitsLength) internal view {
+        if (desChainId != block.chainid) {
+            revert Errors.InvalidDestinationChainId(desChainId);
         }
 
         if (_isMultichain()) {
             // multichain
-            if (relayParams.tokenPermits.length != 0) {
+            if (tokenPermitsLength != 0) {
                 revert Errors.TokenPermitsNotAllowedForMultichain();
             }
             if (!dataStore.getBool(Keys.isSrcChainIdEnabledKey(srcChainId))) {
@@ -428,6 +433,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             }
         }
 
-        _validateDeadline(relayParams.deadline);
+        _validateDeadline(deadline);
     }
 }

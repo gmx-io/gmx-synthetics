@@ -14,7 +14,8 @@ import "./MultichainEventUtils.sol";
 // @title BridgeOutFromControllerUtils
 library BridgeOutFromControllerUtils {
     struct BridgeOutFromControllerCache {
-        IRelayUtils.RelayParams relayParams;
+        uint256 desChainId;
+        uint256 deadline;
         address provider;
         bytes providerData;
         string reason;
@@ -49,9 +50,9 @@ library BridgeOutFromControllerUtils {
         if (actionType == IMultichainProvider.ActionType.BridgeOut) {
             BridgeOutFromControllerCache memory cache;
 
-            (cache.relayParams, cache.provider, cache.providerData /* e.g. dstEid */) = abi.decode(
+            (cache.desChainId, cache.deadline, cache.provider, cache.providerData /* e.g. dstEid */) = abi.decode(
                 actionData,
-                (IRelayUtils.RelayParams, address, bytes)
+                (uint256, uint256, address, bytes)
             );
 
             IRelayUtils.BridgeOutParams memory bridgeOutParams = IRelayUtils.BridgeOutParams({
@@ -61,7 +62,7 @@ library BridgeOutFromControllerUtils {
                 data: cache.providerData
             });
 
-            try multichainTransferRouter.bridgeOutFromController(cache.relayParams, account, srcChainId, bridgeOutParams) {
+            try multichainTransferRouter.bridgeOutFromController(account, srcChainId, cache.desChainId, cache.deadline, bridgeOutParams) {
                 MultichainEventUtils.emitMultichainBridgeAction(eventEmitter, address(this), account, srcChainId, uint256(actionType), key);
             } catch Error(string memory reason) {
                 MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
