@@ -15,7 +15,6 @@ contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, M
         BaseConstructorParams memory params
     ) MultichainRouter(params) BaseRouter(params.router, params.roleStore, params.dataStore, params.eventEmitter) {
         deployer = msg.sender;
-        // leave empty, use initialize instead
     }
 
     function initialize(address _multichainProvider) external initializer {
