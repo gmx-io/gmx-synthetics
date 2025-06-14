@@ -60,11 +60,11 @@ contract ContributorHandler is ReentrancyGuard, RoleModule, BasicMulticall {
         dataStore.removeAddress(Keys.CONTRIBUTOR_TOKEN_LIST, token);
     }
 
-    function setContributorTokenVault(address token, address vault) external nonReentrant onlyConfigKeeper {
+    function setContributorTokenVault(address token, address vault) external nonReentrant onlyContributorKeeper {
         dataStore.setAddress(Keys.contributorTokenVaultKey(token), vault);
     }
 
-    function setMinContributorPaymentInterval(uint256 interval) external nonReentrant onlyTimelockMultisig {
+    function setMinContributorPaymentInterval(uint256 interval) external nonReentrant onlyController {
         // revert if < 20 days
         if (interval < 20 days) {
             revert Errors.MinContributorPaymentIntervalBelowAllowedRange(interval);
@@ -76,7 +76,7 @@ contract ContributorHandler is ReentrancyGuard, RoleModule, BasicMulticall {
     function setMaxTotalContributorTokenAmount(
         address[] memory tokens,
         uint256[] memory amounts
-    ) external nonReentrant onlyTimelockMultisig {
+    ) external nonReentrant onlyController {
         if (tokens.length != amounts.length) {
             revert Errors.InvalidSetMaxTotalContributorTokenAmountInput(tokens.length, amounts.length);
         }
@@ -84,6 +84,8 @@ contract ContributorHandler is ReentrancyGuard, RoleModule, BasicMulticall {
         for (uint256 i; i < tokens.length; i++) {
             dataStore.setUint(Keys.maxTotalContributorTokenAmountKey(tokens[i]), amounts[i]);
         }
+
+        _validateMaxContributorTokenAmounts();
     }
 
     function sendPayments() external nonReentrant onlyContributorDistributor {
@@ -161,8 +163,6 @@ contract ContributorHandler is ReentrancyGuard, RoleModule, BasicMulticall {
         _validateMaxContributorTokenAmounts();
     }
 
-    // note that this is just a sanity validation since the maxTotalContributorTokenAmount
-    // can technically be exceeded since can be separately updated in Config
     function _validateMaxContributorTokenAmounts() internal view {
         uint256 tokenCount = dataStore.getAddressCount(Keys.CONTRIBUTOR_TOKEN_LIST);
         uint256 accountCount = dataStore.getAddressCount(Keys.CONTRIBUTOR_ACCOUNT_LIST);

@@ -37,6 +37,7 @@ export async function deployFixture() {
   await wnt.deposit({ value: expandDecimals(50, 18) });
 
   const gmx = await hre.ethers.getContract("GMX");
+  const esGmx = await hre.ethers.getContract("ESGMX");
 
   const wbtc = await hre.ethers.getContract("WBTC");
   const sol = { address: getSyntheticTokenAddress(hre.network.config.chainId, "SOL") };
@@ -144,6 +145,13 @@ export async function deployFixture() {
   const mockOracleProvider = await hre.ethers.getContract("MockOracleProvider");
   const edgeDataStreamVerifier = await hre.ethers.getContract("EdgeDataStreamVerifier");
   const edgeDataStreamProvider = await hre.ethers.getContract("EdgeDataStreamProvider");
+  const multichainReader = await hre.ethers.getContract("MultichainReader");
+  const mockEndpointV2 = await hre.ethers.getContract("MockEndpointV2");
+  const mockMultichainReaderOriginator = await hre.ethers.getContract("MockMultichainReaderOriginator");
+  const feeDistributorVault = await hre.ethers.getContract("FeeDistributorVault");
+  const feeDistributor = await hre.ethers.getContract("FeeDistributor");
+  const feeDistributorUtils = await hre.ethers.getContract("FeeDistributorUtils");
+  const contributorHandler = await hre.ethers.getContract("ContributorHandler");
 
   const ethUsdMarketAddress = getMarketTokenAddress(
     wnt.address,
@@ -340,6 +348,7 @@ export async function deployFixture() {
       gmxPriceFeed,
       wnt,
       gmx,
+      esGmx,
       wbtc,
       sol,
       usdc,
@@ -377,6 +386,13 @@ export async function deployFixture() {
       mockOracleProvider,
       edgeDataStreamVerifier,
       edgeDataStreamProvider,
+      multichainReader,
+      mockEndpointV2,
+      mockMultichainReaderOriginator,
+      feeDistributorVault,
+      feeDistributor,
+      feeDistributorUtils,
+      contributorHandler,
     },
     props: { oracleSalt, signerIndexes: [0, 1, 2, 3, 4, 5, 6], executionFee: "1000000000000000" },
   };
