@@ -84,6 +84,8 @@ contract ContributorHandler is ReentrancyGuard, RoleModule, BasicMulticall {
         for (uint256 i; i < tokens.length; i++) {
             dataStore.setUint(Keys.maxTotalContributorTokenAmountKey(tokens[i]), amounts[i]);
         }
+
+        _validateMaxContributorTokenAmounts();
     }
 
     function sendPayments() external nonReentrant onlyContributorDistributor {

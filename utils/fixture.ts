@@ -151,6 +151,7 @@ export async function deployFixture() {
   const feeDistributorVault = await hre.ethers.getContract("FeeDistributorVault");
   const feeDistributor = await hre.ethers.getContract("FeeDistributor");
   const feeDistributorUtils = await hre.ethers.getContract("FeeDistributorUtils");
+  const contributorHandler = await hre.ethers.getContract("ContributorHandler");
 
   const ethUsdMarketAddress = getMarketTokenAddress(
     wnt.address,
@@ -391,6 +392,7 @@ export async function deployFixture() {
       feeDistributorVault,
       feeDistributor,
       feeDistributorUtils,
+      contributorHandler,
     },
     props: { oracleSalt, signerIndexes: [0, 1, 2, 3, 4, 5, 6], executionFee: "1000000000000000" },
   };

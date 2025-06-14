@@ -35,8 +35,7 @@ function getNextDistributionTimestampFixed(currentTimestamp: number, distributio
 
 export async function moveToNextDistributionDay(distributionDay: number) {
   const block = await ethers.provider.getBlock("latest");
-  const currentTimestamp = block.timestamp;
-  const nextTimestamp = getNextDistributionTimestampFixed(currentTimestamp, distributionDay);
+  const nextTimestamp = getNextDistributionTimestampFixed(block.timestamp, distributionDay);
 
   await ethers.provider.send("evm_setNextBlockTimestamp", [nextTimestamp]);
   await ethers.provider.send("evm_mine");
