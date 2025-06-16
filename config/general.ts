@@ -90,6 +90,9 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     withdrawalGasLimit: 1_500_000,
     shiftGasLimit: 2_500_000,
 
+    createDepositGasLimit: 5_000_000,
+    createGlvDepositGasLimit: 5_000_000,
+
     singleSwapGasLimit: 1_000_000, // measured gas required for a swap in a market increase order: ~600,000
     increaseOrderGasLimit: 3_500_000,
     decreaseOrderGasLimit: 3_500_000,
