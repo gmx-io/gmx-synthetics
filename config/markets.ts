@@ -3738,6 +3738,34 @@ const config: {
       atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
+      tokens: { indexToken: "CRV", longToken: "WETH", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:CRV/USD"),
+      virtualMarketId: hashString("SPOT:ETH/USD"),
+
+      ...syntheticMarketConfig,
+      ...fundingRateConfig_High,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
+
+      positionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactFactor: exponentToFloat("1.4e-8"),
+      positivePositionImpactFactor: exponentToFloat("1.2e-8"),
+
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
+
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.7e-8"),
+
+      reserveFactor: percentageToFloat("65%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("60%"), // default is 90%
+      maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
+
+      maxOpenInterest: decimalToFloat(500_000),
+      maxPoolUsdForDeposit: decimalToFloat(750_000), // 1.5x the max open interest
+
+      maxLongTokenPoolAmount: expandDecimals(400, 18), // ~1M USD (2x the max open interest)
+      maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x the max open interest)
+    },
+    {
       tokens: { indexToken: "BTC", longToken: "BTC", shortToken: "USDC.SG" },
       virtualTokenIdForIndexToken: hashString("PERP:BTC/USD"),
       virtualMarketId: hashString("SPOT:BTC/USD"),

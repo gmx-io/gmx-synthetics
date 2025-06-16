@@ -161,7 +161,10 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         shiftMaxPriceImpactFactor: percentageToFloat("0.025%"),
         shiftMinInterval: 300, // 5 minutes
         minTokensForFirstGlvDeposit: expandDecimals(1, 18),
-        markets: [createGlvMarketConfig("WETH", 15_000_000, 1)],
+        markets: [
+          createGlvMarketConfig("WETH", 15_000_000, 1),
+          createGlvMarketConfig("CRV", arbitrum_ethUsdcDefaultCap, 1.0),
+        ],
       },
     ],
     avalancheFuji: [
