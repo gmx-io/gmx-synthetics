@@ -3738,7 +3738,7 @@ const config: {
       atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
-      tokens: { indexToken: "CRV", longToken: "WETH", shortToken: "USDC" },
+      tokens: { indexToken: "CRV", longToken: "WETH", shortToken: "USDC.SG" },
       virtualTokenIdForIndexToken: hashString("PERP:CRV/USD"),
       virtualMarketId: hashString("SPOT:ETH/USD"),
 
