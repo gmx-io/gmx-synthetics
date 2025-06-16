@@ -27,12 +27,19 @@ library BridgeOutFromControllerUtils {
         EventEmitter eventEmitter,
         IMultichainTransferRouter multichainTransferRouter,
         address account,
+        address receiver,
         uint256 srcChainId,
         address token,
         uint256 amount,
         bytes32 key,
         bytes32[] memory dataList
     ) external {
+        if (account != receiver) {
+            // bridging out from a recipient address is not allowed (GM / GLV tokens are minted directly to the recipient)
+            // ensuring the bridging fee is paid by the account, otherwise an attacker could consume
+            // any account's wnt balance as bridging fee by donating a minimal amount of gm or glv
+            return;
+        }
         if (srcChainId == 0) {
             return;
         }

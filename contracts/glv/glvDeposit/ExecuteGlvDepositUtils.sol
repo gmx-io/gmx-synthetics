@@ -135,7 +135,8 @@ library ExecuteGlvDepositUtils {
         BridgeOutFromControllerUtils.bridgeOutFromController(
             params.eventEmitter,
             params.multichainTransferRouter,
-            glvDeposit.receiver(), // account
+            glvDeposit.account(),
+            glvDeposit.receiver(),
             glvDeposit.srcChainId(),
             glvDeposit.glv(), // token
             cache.mintAmount, // amount
