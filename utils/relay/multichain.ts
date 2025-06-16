@@ -788,7 +788,7 @@ async function getCreateShiftSignature({
   return signTypedData(signer, domain, types, typedData);
 }
 
-async function getCreateGlvDepositSignature({
+export async function getCreateGlvDepositSignature({
   signer,
   relayParams,
   transferRequests,

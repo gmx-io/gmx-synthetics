@@ -1,14 +1,19 @@
 import hre from "hardhat";
 import { BigNumber } from "ethers";
 import { JsonRpcProvider } from "@ethersproject/providers";
-import { ERC20, IStargate, DepositVault } from "../../typechain-types";
+import { ERC20, IStargate, DepositVault, RoleStore, GlvFactory, GlvVault } from "../../typechain-types";
 
 import { Options } from "@layerzerolabs/lz-v2-utilities";
 
 import { expandDecimals } from "../../utils/math";
-import { encodeDepositMessage, encodeSetTraderReferralCodeMessage } from "../../utils/multichain";
-import { sendCreateDeposit } from "../../utils/relay/multichain";
+import {
+  encodeDepositMessage,
+  encodeGlvDepositMessage,
+  encodeSetTraderReferralCodeMessage,
+} from "../../utils/multichain";
+import { sendCreateDeposit, sendCreateGlvDeposit } from "../../utils/relay/multichain";
 import * as keys from "../../utils/keys";
+import { getGlvAddress } from "../../utils/glv";
 
 const { ethers } = hre;
 
@@ -23,8 +28,12 @@ const STARGATE_POOL_USDC_ARB_SEPOLIA = "0x543BdA7c6cA4384FE90B1F5929bb851F528889
 const STARGATE_USDC_ARB_SEPOLIA = "0x3253a335E7bFfB4790Aa4C25C4250d206E9b9773";
 const DST_CHAIN_ID = 421614;
 const DST_EID = 40231;
+const ETH_USD_MARKET_TOKEN = ""; // "0xb6fC4C9eB02C35A134044526C62bb15014Ac0Bcc"; // GM { indexToken: "WETH", longToken: "WETH", shortToken: "USDC.SG" }
 
 const dataStoreJson = import("../../deployments/arbitrumSepolia/DataStore.json");
+const roleStoreJson = import("../../deployments/arbitrumSepolia/RoleStore.json");
+const glvFactoryJson = import("../../deployments/arbitrumSepolia/GlvFactory.json");
+const glvVaultJson = import("../../deployments/arbitrumSepolia/GlvVault.json");
 const layerZeroProviderJson = import("../../deployments/arbitrumSepolia/LayerZeroProvider.json");
 const multichainGmRouterJson = import("../../deployments/arbitrumSepolia/MultichainGmRouter.json");
 const multichainOrderRouterJson = import("../../deployments/arbitrumSepolia/MultichainOrderRouter.json");
@@ -143,12 +152,18 @@ async function retrieveFromDestination(account: string, relayRouterJson: any): P
   );
 
   // contracts with default provider
+  const roleStore: RoleStore = await ethers.getContractAt("RoleStore", (await roleStoreJson).address);
+  const glvFactory: GlvFactory = await ethers.getContractAt("GlvFactory", (await glvFactoryJson).address);
+  const glvVault: GlvVault = await ethers.getContractAt("GlvVault", (await glvVaultJson).address);
   const depositVault: DepositVault = await ethers.getContractAt("DepositVault", (await depositVaultJson).address);
 
   const userNonce = await relayRouter.userNonces(account);
 
   return {
     dataStore,
+    roleStore,
+    glvFactory,
+    glvVault,
     depositVault,
     relayRouter,
     userNonce: userNonce.toNumber(),
@@ -181,16 +196,16 @@ async function getComposedMsg({
   const srcChainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
   const { dataStore } = await retrieveFromDestination(account, multichainGmRouterJson);
   const wntAddress = await dataStore.getAddress(keys.WNT);
+  const executionFee = expandDecimals(4, 15); // 0.004 ETH
+
+  const ethUsdMarket = {
+    marketToken: ETH_USD_MARKET_TOKEN,
+    longToken: wntAddress, // WETH
+    shortToken: STARGATE_USDC_ARB_SEPOLIA, // USDC.SG
+  };
 
   if (actionType === ActionType.Deposit) {
     const { depositVault, relayRouter, userNonce } = await retrieveFromDestination(account, multichainGmRouterJson);
-    const executionFee = expandDecimals(4, 15); // 0.004 ETH
-
-    const ethUsdMarket = {
-      marketToken: "0xb6fC4C9eB02C35A134044526C62bb15014Ac0Bcc", // GM { indexToken: "WETH", longToken: "WETH", shortToken: "USDC.SG" }
-      longToken: wntAddress, // WETH
-      shortToken: STARGATE_USDC_ARB_SEPOLIA, // USDC.SG
-    };
 
     const defaultDepositParams = {
       addresses: {
@@ -240,6 +255,72 @@ async function getComposedMsg({
     return message;
   }
 
+  if (actionType === ActionType.GlvDeposit) {
+    const { roleStore, glvFactory, glvVault, relayRouter, userNonce } = await retrieveFromDestination(
+      account,
+      multichainGmRouterJson
+    );
+
+    const ethUsdGlvAddress = getGlvAddress(
+      wntAddress,
+      STARGATE_USDC_ARB_SEPOLIA,
+      ethers.constants.HashZero,
+      "GMX Liquidity Vault [WETH-USDC.SG]",
+      "GLV [WETH-USDC.SG]",
+      glvFactory.address,
+      roleStore.address,
+      dataStore.address
+    );
+
+    const defaultGlvDepositParams = {
+      addresses: {
+        glv: ethUsdGlvAddress,
+        receiver: account,
+        callbackContract: account,
+        uiFeeReceiver: account,
+        market: ethUsdMarket.marketToken,
+        initialLongToken: ethUsdMarket.longToken,
+        initialShortToken: ethUsdMarket.shortToken,
+        longTokenSwapPath: [],
+        shortTokenSwapPath: [],
+      },
+      minGlvTokens: 100,
+      executionFee: 0,
+      callbackGasLimit: "200000",
+      shouldUnwrapNativeToken: true,
+      isMarketTokenDeposit: false,
+      dataList: [],
+    };
+    const createGlvDepositParams: Parameters<typeof sendCreateGlvDeposit>[0] = {
+      sender: await hre.ethers.getSigner(account),
+      signer: await hre.ethers.getSigner(account),
+      feeParams: {
+        feeToken: wntAddress,
+        feeAmount: 0,
+        feeSwapPath: [],
+      },
+      transferRequests: {
+        tokens: [wntAddress, wntAddress, STARGATE_USDC_ARB_SEPOLIA],
+        receivers: [relayRouter.address, glvVault.address, glvVault.address],
+        amounts: [executionFee, wntAmount, usdcAmount],
+      },
+      account,
+      params: defaultGlvDepositParams,
+      deadline: 9999999999,
+      chainId: srcChainId,
+      srcChainId: srcChainId, // 0 would mean same chain action
+      desChainId: srcChainId,
+      relayRouter,
+      relayFeeToken: wntAddress, // WETH
+      relayFeeAmount: expandDecimals(2, 15), // 0.002 ETH
+      userNonce, // the actual user nonce from the destination chain
+    };
+
+    const message = await encodeGlvDepositMessage(createGlvDepositParams, account);
+
+    return message;
+  }
+
   if (actionType === ActionType.SetTraderReferralCode) {
     const referralCode = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(`ReferralCode-${Date.now()}`));
     const { relayRouter, userNonce } = await retrieveFromDestination(account, multichainOrderRouterJson);
@@ -270,8 +351,12 @@ async function getComposedMsg({
   }
 }
 
-// npx hardhat run --network sepolia scripts/multichain/bridgeInComposedMsg.ts
+// ACTION_TYPE=<None/Deposit/GlvDeposit/SetTraderReferralCode> npx hardhat run --network sepolia scripts/multichain/bridgeInComposedMsg.ts
 async function main() {
+  if (!process.env.ACTION_TYPE) {
+    throw new Error("⚠️ ACTION_TYPE is mandatory: None / Deposit / GlvDeposit / SetTraderReferralCode");
+  }
+
   const [wallet] = await hre.ethers.getSigners();
   const account = wallet.address;
 
@@ -292,7 +377,7 @@ async function main() {
 
   const composedMsg = await getComposedMsg({
     account,
-    actionType: ActionType[process.env.ACTION_TYPE] || ActionType.SetTraderReferralCode,
+    actionType: ActionType[process.env.ACTION_TYPE],
     wntAmount,
     usdcAmount,
   });
