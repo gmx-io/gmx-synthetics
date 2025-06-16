@@ -24,6 +24,7 @@ import "../utils/Array.sol";
 import "../utils/AccountUtils.sol";
 import "../referral/ReferralUtils.sol";
 import "../multichain/MultichainUtils.sol";
+import "../swap/SwapUtils.sol";
 
 // @title OrderUtils
 // @dev Library for order functions
@@ -209,7 +210,15 @@ library OrderUtils {
         DataStore dataStore,
         Order.Props memory order
     ) private {
-        bytes32 positionKey = Position.getPositionKey(order.account(), order.market(), order.initialCollateralToken(), order.isLong());
+        if (Order.isSwapOrder(order.orderType())) {
+            return;
+        }
+        address collateralToken = SwapUtils.getOutputToken(
+            dataStore,
+            order.swapPath(),
+            order.initialCollateralToken()
+        );
+        bytes32 positionKey = Position.getPositionKey(order.account(), order.market(), collateralToken, order.isLong());
         dataStore.setUint(Keys.positionLastSrcChainId(positionKey), order.srcChainId());
     }
 
