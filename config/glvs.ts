@@ -151,6 +151,22 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       },
     ],
     botanix: [],
+    arbitrumSepolia: [
+      {
+        name: "GMX Liquidity Vault [WETH-USDC.SG]",
+        symbol: "GLV [WETH-USDC.SG]",
+        address: "0xAb3567e55c205c62B141967145F37b7695a9F854",
+        longToken: "WETH",
+        shortToken: "USDC.SG",
+        shiftMaxPriceImpactFactor: percentageToFloat("0.025%"),
+        shiftMinInterval: 300, // 5 minutes
+        minTokensForFirstGlvDeposit: expandDecimals(1, 18),
+        markets: [
+          createGlvMarketConfig("WETH", 15_000_000, 1),
+          createGlvMarketConfig("CRV", arbitrum_ethUsdcDefaultCap, 1.0),
+        ],
+      },
+    ],
     avalancheFuji: [
       {
         name: "GMX Liquidity Vault [WETH-USDC]",

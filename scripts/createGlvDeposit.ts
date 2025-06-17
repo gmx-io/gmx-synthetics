@@ -6,12 +6,15 @@ import { GlvRouter, MintableToken, WNT } from "../typechain-types";
 
 const { ethers } = hre;
 
+const STARGATE_USDC_ARB_SEPOLIA = "0x3253a335E7bFfB4790Aa4C25C4250d206E9b9773";
+const WETH_ARB_SEPOLIA = "0x980B62Da83eFf3D4576C647993b0c1D7faf17c73";
+
 async function getValues(): Promise<{
   wnt: WNT;
 }> {
-  if (hre.network.name === "avalancheFuji") {
+  if (hre.network.name === "arbitrumSepolia") {
     return {
-      wnt: await ethers.getContractAt("WNT", "0x1D308089a2D1Ced3f1Ce36B1FcaF815b07217be3"),
+      wnt: await ethers.getContractAt("WNT", WETH_ARB_SEPOLIA),
     };
   } else if (hre.network.name === "localhost") {
     return {
@@ -32,10 +35,13 @@ async function main() {
 
   const [wallet] = await ethers.getSigners();
 
-  const executionFee = expandDecimals(2, 17); // 0.2 AVAX
-  if ((await wnt.balanceOf(wallet.address)).lt(executionFee)) {
-    console.log("depositing %s WNT", executionFee.toString());
-    await wnt.deposit({ value: executionFee });
+  const executionFee = expandDecimals(2, 16); // 0.02 ETH
+  const longTokenAmount = expandDecimals(1, 17); // 0.1 weth
+  const shortTokenAmount = expandDecimals(300, 6); // 300 USDC
+
+  if ((await wnt.balanceOf(wallet.address)).lt(executionFee.add(longTokenAmount))) {
+    console.log("depositing %s WNT", executionFee.add(longTokenAmount).toString());
+    await wnt.deposit({ value: executionFee.add(longTokenAmount) });
   }
 
   const wntAllowance = await wnt.allowance(wallet.address, router.address);
@@ -47,24 +53,23 @@ async function main() {
   }
   console.log("WNT balance %s", await wnt.balanceOf(wallet.address));
 
-  const weth: MintableToken = await ethers.getContract("WETH");
-  const longTokenAmount = expandDecimals(1, 17); // 0.1 weth
-  const wethAllowance = await weth.allowance(wallet.address, router.address);
-  console.log("weth address %s", weth.address);
-  console.log("weth allowance %s", wethAllowance.toString());
-  if (wethAllowance.lt(longTokenAmount)) {
-    console.log("approving weth");
-    await weth.approve(router.address, bigNumberify(2).pow(256).sub(1));
-  }
-  const wethBalance = await weth.balanceOf(wallet.address);
-  console.log("weth balance %s", wethBalance);
-  if (wethBalance.lt(longTokenAmount)) {
-    console.log("minting %s weth", longTokenAmount);
-    await weth.mint(wallet.address, longTokenAmount);
-  }
+  // const weth: MintableToken = await ethers.getContract("WETH");
+  // const longTokenAmount = expandDecimals(1, 17); // 0.1 weth
+  // const wethAllowance = await weth.allowance(wallet.address, router.address);
+  // console.log("weth address %s", weth.address);
+  // console.log("weth allowance %s", wethAllowance.toString());
+  // if (wethAllowance.lt(longTokenAmount)) {
+  //   console.log("approving weth");
+  //   await weth.approve(router.address, bigNumberify(2).pow(256).sub(1));
+  // }
+  // const wethBalance = await weth.balanceOf(wallet.address);
+  // console.log("weth balance %s", wethBalance);
+  // if (wethBalance.lt(longTokenAmount)) {
+  //   console.log("minting %s weth", longTokenAmount);
+  //   await weth.mint(wallet.address, longTokenAmount);
+  // }
 
-  const usdc: MintableToken = await ethers.getContract("USDC");
-  const shortTokenAmount = expandDecimals(100, 6); // 100 USDC
+  const usdc: MintableToken = await ethers.getContractAt("MintableToken", STARGATE_USDC_ARB_SEPOLIA);
   const usdcAllowance = await usdc.allowance(wallet.address, router.address);
   console.log("USDC address %s", usdc.address);
   console.log("USDC allowance %s", usdcAllowance.toString());
@@ -79,34 +84,25 @@ async function main() {
     await usdc.mint(wallet.address, shortTokenAmount);
   }
 
-  //   const wethUsdMarketAddress = await getMarketTokenAddress(
-  //     weth.address,
-  //     weth.address,
-  //     usdc.address,
-  //     DEFAULT_MARKET_TYPE,
-  //     marketFactory.address,
-  //     roleStore.address,
-  //     dataStore.address
-  //   );
-
-  // "longTokenAddress":"0x82F0b3695Ed2324e55bbD9A9554cB4192EC3a514"
-  // "shortTokenAddress":"0x3eBDeaA0DB3FfDe96E7a0DBBAFEC961FC50F725F
-
   const params = {
-    glv: "0xDD06Cd6694FeB4222FD1a4146d118078D672d7EB",
-    market: "0xbf338a6C595f06B7Cfff2FA8c958d49201466374", // ETHUSD
-    receiver: wallet.address,
-    callbackContract: ethers.constants.AddressZero,
-    uiFeeReceiver: ethers.constants.AddressZero,
-    initialLongToken: weth.address,
-    initialShortToken: usdc.address,
-    longTokenSwapPath: [],
-    shortTokenSwapPath: [],
+    addresses: {
+      glv: "0xAb3567e55c205c62B141967145F37b7695a9F854",
+      market: "0xb6fC4C9eB02C35A134044526C62bb15014Ac0Bcc", // { indexToken: "WETH", longToken: "WETH", shortToken: "USDC.SG" }
+      // market: "0xAde9D177B9E060D2064ee9F798125e6539fDaA1c", // { indexToken: "CRV", longToken: "WETH", shortToken: "USDC.SG" }
+      receiver: wallet.address,
+      callbackContract: ethers.constants.AddressZero,
+      uiFeeReceiver: ethers.constants.AddressZero,
+      initialLongToken: wnt.address,
+      initialShortToken: usdc.address,
+      longTokenSwapPath: [],
+      shortTokenSwapPath: [],
+    },
     minGlvTokens: 0,
     executionFee: executionFee,
     callbackGasLimit: 0,
     shouldUnwrapNativeToken: false,
     isMarketTokenDeposit: false,
+    dataList: [],
   };
   console.log("glv router %s", glvRouter.address);
   console.log("deposit store %s", glvVault.address);
@@ -114,7 +110,7 @@ async function main() {
 
   const multicallArgs = [
     glvRouter.interface.encodeFunctionData("sendWnt", [glvVault.address, executionFee]),
-    glvRouter.interface.encodeFunctionData("sendTokens", [weth.address, glvVault.address, longTokenAmount]),
+    glvRouter.interface.encodeFunctionData("sendTokens", [wnt.address, glvVault.address, longTokenAmount]),
     glvRouter.interface.encodeFunctionData("sendTokens", [usdc.address, glvVault.address, shortTokenAmount]),
     glvRouter.interface.encodeFunctionData("createGlvDeposit", [params]),
   ];
