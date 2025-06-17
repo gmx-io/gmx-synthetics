@@ -47,8 +47,16 @@ async function prepareSend(
   extraGas = 500000,
   slippageBps = 100 // Default 1% slippage tolerance
 ) {
+  const GAS_LIMIT = 8000000; // 8M gas limit for the executor
+  const LZ_RECEIVE_GAS_ESTIMATION = 8000000; // 8M gas units needed for lzCompose
+  // Calculate msgValue for lzReceive on destination chain
+  // e.g. 50,000 gas * 0.1 gwei (100,000,000 wei) = 5,000,000,000,000 wei
+  const destProvider = new ethers.providers.JsonRpcProvider("https://sepolia-rollup.arbitrum.io/rpc");
+  const gasPrice = await destProvider.getGasPrice();
+  const msgValue = LZ_RECEIVE_GAS_ESTIMATION * gasPrice.toNumber();
+  const extraOptions = Options.newOptions().addExecutorComposeOption(0, GAS_LIMIT, msgValue);
+
   const stargatePool: IStargate = await ethers.getContractAt("IStargate", stargatePoolAddress);
-  const extraOptions = Options.newOptions().addExecutorComposeOption(0, extraGas /*, 0*/);
   console.log(`extraOptions: ${extraOptions.toHex()}`);
   // Calculate minAmountLD with slippage tolerance
   const amountBN = BigNumber.from(amount);
