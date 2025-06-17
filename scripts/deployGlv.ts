@@ -57,7 +57,8 @@ async function main() {
   await setUintIfDifferent(keys.glvShiftMinIntervalKey(glvAddress), 30, "glvShiftMinIntervalKey");
 
   const markets = [
-    "0xb6fC4C9eB02C35A134044526C62bb15014Ac0Bcc", // ETHUSD
+    "0xb6fC4C9eB02C35A134044526C62bb15014Ac0Bcc", // { indexToken: "WETH", longToken: "WETH", shortToken: "USDC.SG" }
+    "0xAde9D177B9E060D2064ee9F798125e6539fDaA1c", // { indexToken: "CRV", longToken: "WETH", shortToken: "USDC.SG" }
   ];
 
   const glvInfo = await glvReader.getGlvInfo(dataStore.address, glvAddress);
