@@ -592,7 +592,7 @@ async function getBridgeOutSignature({
   return signTypedData(signer, domain, types, typedData);
 }
 
-async function getCreateDepositSignature({
+export async function getCreateDepositSignature({
   signer,
   relayParams,
   transferRequests,
@@ -767,7 +767,7 @@ async function getCreateShiftSignature({
   return signTypedData(signer, domain, types, typedData);
 }
 
-async function getCreateGlvDepositSignature({
+export async function getCreateGlvDepositSignature({
   signer,
   relayParams,
   transferRequests,
