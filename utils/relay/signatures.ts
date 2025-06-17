@@ -103,9 +103,6 @@ export async function getBatchSignature({
   account?: string;
   subaccountApproval?: SubaccountApproval;
 }) {
-  if (relayParams.userNonce === undefined) {
-    throw new Error("userNonce is required");
-  }
   const types = {
     Batch: [
       { name: "account", type: "address" },
@@ -268,9 +265,6 @@ export async function getSetTraderReferralCodeSignature({
   referralCode,
   chainId,
 }) {
-  if (relayParams.userNonce === undefined) {
-    throw new Error("userNonce is required");
-  }
   const types = {
     SetTraderReferralCode: [
       { name: "referralCode", type: "bytes32" },
@@ -292,9 +286,6 @@ export async function getSetTraderReferralCodeSignature({
 }
 
 export async function getClaimFundingFeesSignature({ signer, relayParams, verifyingContract, params, chainId }) {
-  if (relayParams.userNonce === undefined) {
-    throw new Error("userNonce is required");
-  }
   const types = {
     ClaimFundingFees: [
       { name: "markets", type: "address[]" },
@@ -320,9 +311,6 @@ export async function getClaimFundingFeesSignature({ signer, relayParams, verify
 }
 
 export async function getClaimCollateralSignature({ signer, relayParams, verifyingContract, params, chainId }) {
-  if (relayParams.userNonce === undefined) {
-    throw new Error("userNonce is required");
-  }
   const types = {
     ClaimCollateral: [
       { name: "markets", type: "address[]" },
@@ -350,9 +338,6 @@ export async function getClaimCollateralSignature({ signer, relayParams, verifyi
 }
 
 export async function getClaimAffiliateRewardsSignature({ signer, relayParams, verifyingContract, params, chainId }) {
-  if (relayParams.userNonce === undefined) {
-    throw new Error("userNonce is required");
-  }
   const types = {
     ClaimAffiliateRewards: [
       { name: "markets", type: "address[]" },

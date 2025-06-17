@@ -69,7 +69,6 @@ export async function encodeSetTraderReferralCodeMessage(
       uint256 feeAmount,
       address[] feeSwapPath
     ) fee,
-    uint256 userNonce,
     uint256 deadline,
     bytes signature,
     uint256 desChainId

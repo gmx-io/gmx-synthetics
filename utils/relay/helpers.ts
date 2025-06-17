@@ -50,7 +50,6 @@ export type RelayParams = {
   tokenPermits: TokenPermit[];
   externalCalls: ExternalCalls;
   fee: FeeParams;
-  userNonce: BigNumberish;
   deadline: BigNumberish;
   desChainId: BigNumberish;
 };
@@ -107,16 +106,11 @@ export async function getRelayParams(p: {
   tokenPermits?: any;
   externalCalls?: any;
   feeParams: any;
-  userNonce?: BigNumberish;
   deadline: BigNumberish;
   desChainId: BigNumberish;
   relayRouter: ethers.Contract;
   signer: ethers.Signer;
 }) {
-  let userNonce = p.userNonce;
-  if (userNonce === undefined) {
-    userNonce = await getUserNonce(await p.signer.getAddress(), p.relayRouter);
-  }
   return {
     oracleParams: p.oracleParams || getDefaultOracleParams(),
     tokenPermits: p.tokenPermits || [],
@@ -129,7 +123,6 @@ export async function getRelayParams(p: {
       refundReceivers: [],
     },
     fee: p.feeParams,
-    userNonce,
     deadline: p.deadline,
     desChainId: p.desChainId,
   };
@@ -159,7 +152,6 @@ export function hashRelayParams(relayParams: RelayParams) {
       "tuple(address feeToken, uint256 feeAmount, address[] feeSwapPath)",
       "uint256",
       "uint256",
-      "uint256",
     ],
     [
       [relayParams.oracleParams.tokens, relayParams.oracleParams.providers, relayParams.oracleParams.data],
@@ -175,7 +167,6 @@ export function hashRelayParams(relayParams: RelayParams) {
         permit.token,
       ]),
       [relayParams.fee.feeToken, relayParams.fee.feeAmount, relayParams.fee.feeSwapPath],
-      relayParams.userNonce,
       relayParams.deadline,
       relayParams.desChainId,
     ]
@@ -213,10 +204,6 @@ export function assertFields(obj: any, fields: string[]) {
       throw new Error(`Field ${field} is undefined`);
     }
   }
-}
-
-export async function getUserNonce(account: string, relayRouter: ethers.Contract) {
-  return relayRouter.userNonces(account);
 }
 
 export async function signTypedData(

@@ -34,7 +34,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     ISwapHandler public immutable swapHandler;
     IExternalHandler public immutable externalHandler;
 
-    mapping(address => uint256) public userNonces;
+    mapping(bytes32 => bool) public digests; // Store digests to prevent duplicate transactions
 
     modifier withRelay(
         IRelayUtils.RelayParams calldata relayParams,
@@ -389,7 +389,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
         RelayUtils.validateSignature(digest, relayParams.signature, account, "call");
 
-        _validateNonce(account, relayParams.userNonce);
+        _validateDigest(digest);
     }
 
     function _isMultichain() internal pure virtual returns (bool) {
@@ -402,11 +402,13 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         }
     }
 
-    function _validateNonce(address account, uint256 userNonce) internal {
-        if (userNonces[account] != userNonce) {
-            revert Errors.InvalidUserNonce(userNonces[account], userNonce);
+    /// @dev Once a transaction is signed and sent to a relay, it cannot be canceled.
+    ///  The user must wait for the expiresAt to pass.
+    function _validateDigest(bytes32 digest) internal {
+        if (digests[digest]) {
+            revert Errors.InvalidUserDigest(digest);
         }
-        userNonces[account] = userNonce + 1;
+        digests[digest] = true;
     }
 
     function _validateGaslessFeature() internal view {

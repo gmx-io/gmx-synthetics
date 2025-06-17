@@ -477,7 +477,7 @@ library Errors {
     // Contract received unsupported fee token from Gelato relay
     error UnsupportedRelayFeeToken(address feeToken, address expectedFeeToken);
     error InvalidPermitSpender(address spender, address expectedSpender);
-    error InvalidUserNonce(uint256 storedUserNonce, uint256 userNonce);
+    error InvalidUserDigest(bytes32 digest);
     error SubaccountApprovalDeadlinePassed(uint256 currentTimestamp, uint256 deadline);
     error InvalidSubaccountApprovalNonce(uint256 storedNonce, uint256 nonce);
     error DeadlinePassed(uint256 currentTimestamp, uint256 deadline);
