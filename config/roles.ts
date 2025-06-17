@@ -121,6 +121,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       "0x508cbC56Ab57A9b0221cf1810a483f8013c92Ff3": true, // An
       ...testnetAdmins,
     },
+    TIMELOCK_ADMIN: testnetAdmins,
   };
 
   const roles: {
