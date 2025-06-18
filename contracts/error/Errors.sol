@@ -37,7 +37,6 @@ library Errors {
     error DataStreamIdAlreadyExistsForToken(address token);
     error MaxFundingFactorPerSecondLimitExceeded(uint256 maxFundingFactorPerSecond, uint256 limit);
     error InvalidPositionImpactPoolDistributionRate(uint256 distributionAmount, uint256 positionImpactPoolAmount);
-    error InsufficientMinPositionImpactPoolAmount(uint256 minPositionImpactPoolAmount, int256 totalPendingImpactAmount);
     error MaxDataListLengthExceeded(uint256 dataLength, uint256 maxDataLength);
     error EmptyToken();
 
