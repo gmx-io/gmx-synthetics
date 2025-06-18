@@ -901,7 +901,7 @@ library MarketUtils {
         int256 priceImpactUsd,
         int256 positionProportionalPendingImpactAmount
     ) internal view returns (int256) {
-        if (priceImpactUsd < 0) {
+        if (priceImpactUsd <= 0) {
             return priceImpactUsd;
         }
 
