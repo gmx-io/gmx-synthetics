@@ -6,6 +6,7 @@ import { TimelockConfig } from "../typechain-types";
 import * as keys from "./keys";
 import { time } from "@nomicfoundation/hardhat-network-helpers";
 import { BigNumber, constants } from "ethers";
+import * as crypto from "crypto";
 
 export async function timelockWriteMulticall({ timelock, multicallWriteParams }) {
   console.info("multicallWriteParams", multicallWriteParams);
@@ -207,4 +208,8 @@ export async function getReduceLentAmountPayload(market: string, fundingAccount:
       amount,
     ]),
   };
+}
+
+export function getRandomSalt() {
+  return "0x" + crypto.randomBytes(32).toString("hex");
 }

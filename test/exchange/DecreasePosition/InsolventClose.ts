@@ -11,12 +11,7 @@ import { executeLiquidation } from "../../../utils/liquidation";
 import { getClaimableCollateralTimeKey } from "../../../utils/collateral";
 import { increaseTime } from "../../../utils/time";
 import * as keys from "../../../utils/keys";
-import {
-  executeTimelock,
-  setHoldingAddressForTimelockTest,
-  signalHoldingAddressIfDifferent,
-} from "../../../utils/timelock";
-import { time } from "@nomicfoundation/hardhat-network-helpers";
+import { setHoldingAddressForTimelockTest, getRandomSalt } from "../../../utils/timelock";
 import { grantRole } from "../../../utils/role";
 
 describe("Exchange.DecreasePosition.InsolventClose", () => {
@@ -164,7 +159,7 @@ describe("Exchange.DecreasePosition.InsolventClose", () => {
       },
     });
 
-    await setHoldingAddressForTimelockTest(user0, user2.address);
+    await setHoldingAddressForTimelockTest(user0, user2.address, getRandomSalt());
 
     await scenes.decreasePosition.long.positivePnl(fixture, {
       create: {

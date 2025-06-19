@@ -20,21 +20,17 @@ import {
   getPositionImpactPoolWithdrawalPayload,
   getWithdrawTokensPayload,
   getReduceLentAmountPayload,
+  getRandomSalt,
 } from "../../utils/timelock";
 import { handleDeposit } from "../../utils/deposit";
 import { usingResult } from "../../utils/use";
 import { getMarketTokenPriceWithPoolValue } from "../../utils/market";
 import { constants } from "ethers";
-import * as crypto from "crypto";
 
 describe("Timelock", () => {
   let fixture;
   let timelockAdmin, timelockMultisig, user2, user3, signer0, signer9;
   let timelockConfig, configTimelockController, dataStore, roleStore, oracleStore, wnt, usdc, layerZeroProvider;
-
-  function getRandomSalt() {
-    return "0x" + crypto.randomBytes(32).toString("hex");
-  }
 
   beforeEach(async () => {
     fixture = await deployFixture();
