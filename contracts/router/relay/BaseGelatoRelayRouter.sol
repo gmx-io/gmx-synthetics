@@ -330,12 +330,12 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         uint256 srcChainId
     ) internal {
         uint256 relayFee;
+        uint256 residualFeeAmount = ERC20(contracts.wnt).balanceOf(address(this));
 
         /// @dev relay fee is excluded for calls made through the IMultichainProvider
         /// as the user already paid for execution on the source chain
         if (!dataStore.getBool(Keys.isRelayFeeExcludedKey(msg.sender))) {
             bool isSponsoredCall = !_isGelatoRelay(msg.sender);
-            uint256 residualFeeAmount = ERC20(contracts.wnt).balanceOf(address(this));
             if (isSponsoredCall) {
                 relayFee = GasUtils.payGelatoRelayFee(
                     contracts.dataStore,
