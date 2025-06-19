@@ -906,13 +906,6 @@ library MarketUtils {
 
         cache.impactPoolAmount = getPositionImpactPoolAmount(dataStore, market.marketToken);
 
-        // use indexTokenPrice.min to minimize the position impact pool cap
-        cache.maxPriceImpactUsd = cache.impactPoolAmount * prices.indexTokenPrice.min;
-
-        if (priceImpactUsd > cache.maxPriceImpactUsd.toInt256()) {
-            priceImpactUsd = cache.maxPriceImpactUsd.toInt256();
-        }
-
         // the totalPendingImpactAmount is not factored into the capping here
         // we assume that the ratio of negative impact to positive impact and
         // ratio of negative impact cap to positive impact cap is such that the
@@ -923,10 +916,14 @@ library MarketUtils {
         // of the actual price impact that would be realised
         cache.impactPoolUsd = cache.impactPoolAmount * prices.indexTokenPrice.min;
 
+        // if priceImpactUsd > impactPoolUsd, calculate the usdRequiredToBeLent
+        // otherwise, the impactPoolUsd is sufficient and priceImpactUsd does not
+        // need to be capped here
         if (priceImpactUsd.toUint256() > cache.impactPoolUsd) {
             cache.usdRequiredToBeLent = priceImpactUsd.toUint256() - cache.impactPoolUsd;
         }
 
+        // if usdRequiredToBeLent > 0, check how much is lendable
         if (cache.usdRequiredToBeLent > 0) {
             cache.lentAmount = dataStore.getUint(Keys.lentPositionImpactPoolAmountKey(market.marketToken));
             // capping the max lendable amount to a factor of the pool amount is mainly a sanity check to prevent
@@ -943,6 +940,7 @@ library MarketUtils {
                 cache.lentAmount
             );
 
+            // if usdRequiredToBeLent > maxLendableUsd, then cap the price impact to impactPoolUsd + maxLendableUsd
             if (cache.usdRequiredToBeLent > cache.maxLendableUsd) {
                 priceImpactUsd = cache.impactPoolUsd.toInt256() + cache.maxLendableUsd.toInt256();
             }
