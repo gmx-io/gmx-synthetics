@@ -66,8 +66,7 @@ library MultichainEventUtils {
         address provider,
         address account,
         uint256 srcChainId,
-        uint256 actionType,
-        bytes32 key
+        uint256 actionType
     ) internal {
         EventUtils.EventLogData memory eventData;
 
@@ -78,9 +77,6 @@ library MultichainEventUtils {
         eventData.uintItems.initItems(2);
         eventData.uintItems.setItem(0, "srcChainId", srcChainId);
         eventData.uintItems.setItem(1, "actionType", actionType);
-
-        eventData.bytes32Items.initItems(1);
-        eventData.bytes32Items.setItem(0, "key", key);
 
         eventEmitter.emitEventLog1("MultichainBridgeAction", Cast.toBytes32(account), eventData);
     }

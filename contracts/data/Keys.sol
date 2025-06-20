@@ -234,11 +234,13 @@ library Keys {
     bytes32 public constant MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT = keccak256(abi.encode("MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT"));
     bytes32 public constant GELATO_RELAY_FEE_MULTIPLIER_FACTOR = keccak256(abi.encode("GELATO_RELAY_FEE_MULTIPLIER_FACTOR"));
     bytes32 public constant GELATO_RELAY_FEE_BASE_AMOUNT = keccak256(abi.encode("GELATO_RELAY_FEE_BASE_AMOUNT"));
-    bytes32 public constant DEPOSIT_GAS_LIMIT = keccak256(abi.encode("DEPOSIT_GAS_LIMIT"));
     bytes32 public constant CREATE_DEPOSIT_GAS_LIMIT = keccak256(abi.encode("CREATE_DEPOSIT_GAS_LIMIT"));
+    bytes32 public constant DEPOSIT_GAS_LIMIT = keccak256(abi.encode("DEPOSIT_GAS_LIMIT"));
+    bytes32 public constant CREATE_WITHDRAWAL_GAS_LIMIT = keccak256(abi.encode("CREATE_WITHDRAWAL_GAS_LIMIT"));
     bytes32 public constant WITHDRAWAL_GAS_LIMIT = keccak256(abi.encode("WITHDRAWAL_GAS_LIMIT"));
     bytes32 public constant CREATE_GLV_DEPOSIT_GAS_LIMIT = keccak256(abi.encode("CREATE_GLV_DEPOSIT_GAS_LIMIT"));
     bytes32 public constant GLV_DEPOSIT_GAS_LIMIT = keccak256(abi.encode("GLV_DEPOSIT_GAS_LIMIT"));
+    bytes32 public constant CREATE_GLV_WITHDRAWAL_GAS_LIMIT = keccak256(abi.encode("CREATE_GLV_WITHDRAWAL_GAS_LIMIT"));
     bytes32 public constant GLV_WITHDRAWAL_GAS_LIMIT = keccak256(abi.encode("GLV_WITHDRAWAL_GAS_LIMIT"));
     bytes32 public constant GLV_SHIFT_GAS_LIMIT = keccak256(abi.encode("GLV_SHIFT_GAS_LIMIT"));
     bytes32 public constant GLV_PER_MARKET_GAS_LIMIT = keccak256(abi.encode("GLV_PER_MARKET_GAS_LIMIT"));

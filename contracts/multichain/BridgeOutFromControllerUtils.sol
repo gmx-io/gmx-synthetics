@@ -70,7 +70,7 @@ library BridgeOutFromControllerUtils {
             });
 
             try multichainTransferRouter.bridgeOutFromController(account, srcChainId, cache.desChainId, cache.deadline, bridgeOutParams) {
-                MultichainEventUtils.emitMultichainBridgeAction(eventEmitter, address(this), account, srcChainId, uint256(actionType), key);
+                MultichainEventUtils.emitMultichainBridgeAction(eventEmitter, address(this), account, srcChainId, uint256(actionType));
             } catch Error(string memory reason) {
                 MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
             } catch (bytes memory reasonBytes) {
