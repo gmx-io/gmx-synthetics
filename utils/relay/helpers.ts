@@ -1,3 +1,4 @@
+import { _TypedDataEncoder } from "ethers/lib/utils";
 import { BigNumberish, ethers } from "ethers";
 import { GELATO_RELAY_ADDRESS } from "./addresses";
 
@@ -210,7 +211,8 @@ export async function signTypedData(
   signer: ethers.Signer,
   domain: Record<string, any>,
   types: Record<string, any>,
-  typedData: Record<string, any>
+  typedData: Record<string, any>,
+  minified = false
 ) {
   for (const [key, value] of Object.entries(domain)) {
     if (value === undefined) {
@@ -223,7 +225,17 @@ export async function signTypedData(
     }
   }
 
-  return (signer as any)._signTypedData(domain, types, typedData);
+  if (!minified) {
+    return (signer as any)._signTypedData(domain, types, typedData);
+  }
+
+  const digest = _TypedDataEncoder.hash(domain, types, typedData);
+  const minifiedTypes = {
+    Minified: [{ name: "digest", type: "bytes32" }],
+  };
+  return (signer as any)._signTypedData(domain, minifiedTypes, {
+    digest,
+  });
 }
 
 export async function sendRelayTransaction({

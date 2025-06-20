@@ -30,6 +30,7 @@ export async function sendCreateOrder(p: {
     integrationId: string;
     nonce: BigNumberish;
     signature?: string;
+    signer?: ethers.Signer;
   };
   externalCalls?: {
     sendTokens: string[];
@@ -233,9 +234,9 @@ export async function getSubaccountApproval(p: {
   let signature = p.subaccountApproval.signature;
   if (!signature) {
     signature = await getSubaccountApprovalSignature({
+      signer: p.signer,
       ...p.subaccountApproval,
       nonce,
-      signer: p.signer,
       chainId: p.chainId,
       verifyingContract: p.relayRouter.address,
     });

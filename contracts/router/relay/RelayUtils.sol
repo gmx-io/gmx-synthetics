@@ -75,12 +75,7 @@ library RelayUtils {
             )
         );
 
-    bytes32 public constant MINIFIED_TYPEHASH =
-        keccak256(
-            bytes(
-                "Minified(bytes32 structHash)"
-            )
-        );
+    bytes32 public constant MINIFIED_TYPEHASH = keccak256(bytes("Minified(bytes32 digest)"));
 
     bytes32 public constant REMOVE_SUBACCOUNT_TYPEHASH =
         keccak256(bytes("RemoveSubaccount(address subaccount,bytes32 relayParams)"));
@@ -203,7 +198,6 @@ library RelayUtils {
     function validateSignature(
         bytes32 domainSeparator,
         bytes32 digest,
-        bytes32 structHash,
         bytes calldata signature,
         address expectedSigner,
         string memory signatureType
@@ -229,7 +223,7 @@ library RelayUtils {
             bytes32 minifiedStructHash = keccak256(
                 abi.encode(
                     MINIFIED_TYPEHASH,
-                    structHash
+                    digest
                 )
             );
 

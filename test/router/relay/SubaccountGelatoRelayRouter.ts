@@ -30,7 +30,7 @@ import { handleDeposit } from "../../../utils/deposit";
 import { deployContract } from "../../../utils/deploy";
 import { parseLogs } from "../../../utils/event";
 
-const BAD_SIGNATURE =
+const INVALID_SIGNATURE =
   "0x122e3efab9b46c82dc38adf4ea6cd2c753b00f95c217a0e3a0f4dd110839f07a08eb29c1cc414d551349510e23a75219cd70c8b88515ed2b83bbd88216ffdb051f";
 
 describe("SubaccountGelatoRelayRouter", () => {
@@ -220,15 +220,25 @@ describe("SubaccountGelatoRelayRouter", () => {
       await expectBalance(wnt.address, user3.address, "90996279120000000");
     });
 
-    it("InvalidSignature  ", async () => {
+    it("InvalidSignature", async () => {
       await enableSubaccount();
 
       await expect(
         sendCreateOrder({
           ...createOrderParams,
-          signature: BAD_SIGNATURE,
+          signature: INVALID_SIGNATURE,
         })
       ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
+    });
+
+    it("InvalidRecoveredSigner", async () => {
+      await enableSubaccount();
+      await expect(
+        sendCreateOrder({
+          ...createOrderParams,
+          signer: ethers.Wallet.createRandom(),
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidRecoveredSigner");
     });
 
     it("InvalidUserDigest", async () => {
@@ -489,6 +499,39 @@ describe("SubaccountGelatoRelayRouter", () => {
       )
         .to.be.revertedWithCustomError(errorsContract, "InvalidSignature")
         .withArgs("subaccount approval");
+    });
+
+    it("InvalidRecoveredSigner of subaccount approval", async () => {
+      await expect(
+        sendCreateOrder({
+          ...createOrderParams,
+          subaccountApproval: {
+            subaccount: user0.address,
+            shouldAdd: true,
+            expiresAt: 9999999999,
+            maxAllowedCount: 10,
+            actionType: keys.SUBACCOUNT_ORDER_ACTION,
+            deadline: 9999999999,
+            integrationId: integrationId,
+            nonce: 0,
+            signer: ethers.Wallet.createRandom(),
+          },
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidRecoveredSigner");
+
+      await sendCreateOrder({
+        ...createOrderParams,
+        subaccountApproval: {
+          subaccount: user0.address,
+          shouldAdd: true,
+          expiresAt: 9999999999,
+          maxAllowedCount: 10,
+          actionType: keys.SUBACCOUNT_ORDER_ACTION,
+          deadline: 9999999999,
+          integrationId: integrationId,
+          nonce: 0,
+        },
+      });
     });
 
     it("InvalidSubaccountApprovalNonce", async () => {
@@ -871,9 +914,15 @@ describe("SubaccountGelatoRelayRouter", () => {
 
     it("InvalidSignature", async () => {
       await expect(
-        sendUpdateOrder({ ...updateOrderParams, signature: BAD_SIGNATURE })
+        sendUpdateOrder({ ...updateOrderParams, signature: INVALID_SIGNATURE })
         // should not fail with InvalidSignature
       ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
+    });
+
+    it("InvalidRecoveredSigner", async () => {
+      await expect(
+        sendUpdateOrder({ ...updateOrderParams, signer: ethers.Wallet.createRandom() })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidRecoveredSigner");
     });
 
     it("SubaccountNotAuthorized", async () => {
@@ -1086,9 +1135,15 @@ describe("SubaccountGelatoRelayRouter", () => {
 
     it("InvalidSignature", async () => {
       await expect(
-        sendCancelOrder({ ...cancelOrderParams, signature: BAD_SIGNATURE })
+        sendCancelOrder({ ...cancelOrderParams, signature: INVALID_SIGNATURE })
         // should not fail with InvalidSignature
       ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
+    });
+
+    it("InvalidRecoveredSigner", async () => {
+      await expect(
+        sendCancelOrder({ ...cancelOrderParams, signer: ethers.Wallet.createRandom() })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidRecoveredSigner");
     });
 
     it("SubaccountNotAuthorized", async () => {
@@ -1179,10 +1234,16 @@ describe("SubaccountGelatoRelayRouter", () => {
     });
 
     it("InvalidSignature", async () => {
-      await expect(sendRemoveSubaccount({ ...params, signature: BAD_SIGNATURE })).to.be.revertedWithCustomError(
+      await expect(sendRemoveSubaccount({ ...params, signature: INVALID_SIGNATURE })).to.be.revertedWithCustomError(
         errorsContract,
         "InvalidSignature"
       );
+    });
+
+    it("InvalidRecoveredSigner", async () => {
+      await expect(
+        sendRemoveSubaccount({ ...params, signer: ethers.Wallet.createRandom() })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidRecoveredSigner");
     });
 
     it("removes subaccount with relay fee swap", async () => {
@@ -1325,9 +1386,16 @@ describe("SubaccountGelatoRelayRouter", () => {
     });
 
     it("InvalidSignature", async () => {
-      await expect(sendBatch({ ...batchParams, signature: BAD_SIGNATURE })).to.be.revertedWithCustomError(
+      await expect(sendBatch({ ...batchParams, signature: INVALID_SIGNATURE })).to.be.revertedWithCustomError(
         errorsContract,
         "InvalidSignature"
+      );
+    });
+
+    it("InvalidRecoveredSigner", async () => {
+      await expect(sendBatch({ ...batchParams, signer: ethers.Wallet.createRandom() })).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidRecoveredSigner"
       );
     });
 

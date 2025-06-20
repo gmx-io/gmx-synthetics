@@ -89,7 +89,6 @@ contract MockGelatoRelayRouter is GelatoRelayRouter {
         RelayUtils.validateSignature(
             domainSeparator,
             digest,
-            structHash,
             signature,
             account,
             "call"

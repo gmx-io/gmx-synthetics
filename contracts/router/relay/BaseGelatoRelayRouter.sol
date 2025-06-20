@@ -390,7 +390,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         RelayUtils.validateSignature(
             domainSeparator,
             digest,
-            structHash,
             relayParams.signature,
             account,
             "call"

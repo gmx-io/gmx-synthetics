@@ -18,6 +18,7 @@ export async function getCreateOrderSignature({
   verifyingContract,
   params,
   chainId,
+  minified = false,
 }: {
   signer: ethers.Signer;
   relayParams: RelayParams;
@@ -26,6 +27,7 @@ export async function getCreateOrderSignature({
   verifyingContract: string;
   params: any;
   chainId: BigNumberish;
+  minified?: boolean;
 }) {
   const types = {
     CreateOrder: [
@@ -79,7 +81,7 @@ export async function getCreateOrderSignature({
     subaccountApproval: subaccountApproval ? hashSubaccountApproval(subaccountApproval) : ethers.constants.HashZero,
   };
 
-  return signTypedData(signer, domain, types, typedData);
+  return signTypedData(signer, domain, types, typedData, minified);
 }
 
 export async function getBatchSignature({

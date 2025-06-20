@@ -62,7 +62,6 @@ library SubaccountRouterUtils {
         RelayUtils.validateSignature(
             domainSeparator,
             digest,
-            structHash,
             subaccountApproval.signature,
             account,
             "subaccount approval"
