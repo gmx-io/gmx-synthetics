@@ -53,13 +53,20 @@ library SubaccountRouterUtils {
         if (storedNonce != subaccountApproval.nonce) {
             revert Errors.InvalidSubaccountApprovalNonce(storedNonce, subaccountApproval.nonce);
         }
-        
+
         subaccountApprovalNonces[account] = storedNonce + 1;
 
         bytes32 domainSeparator = RelayUtils.getDomainSeparator(srcChainId);
         bytes32 structHash = RelayUtils.getSubaccountApprovalStructHash(subaccountApproval);
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
-        RelayUtils.validateSignature(digest, subaccountApproval.signature, account, "subaccount approval");
+        RelayUtils.validateSignature(
+            domainSeparator,
+            digest,
+            structHash,
+            subaccountApproval.signature,
+            account,
+            "subaccount approval"
+        );
 
         SubaccountUtils.handleSubaccountApproval(dataStore, eventEmitter, account, subaccountApproval);
     }

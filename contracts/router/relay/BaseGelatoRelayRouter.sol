@@ -386,7 +386,15 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
 
         _validateDigest(digest);
-        RelayUtils.validateSignature(digest, relayParams.signature, account, "call");
+
+        RelayUtils.validateSignature(
+            domainSeparator,
+            digest,
+            structHash,
+            relayParams.signature,
+            account,
+            "call"
+        );
     }
 
     function _isMultichain() internal pure virtual returns (bool) {
@@ -400,7 +408,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     }
 
     /// @dev Once a transaction is signed and sent to a relay, it cannot be canceled.
-    ///  The user must wait for the expiresAt to pass.
+    /// The user must wait for the expiresAt to pass.
     function _validateDigest(bytes32 digest) internal {
         if (digests[digest]) {
             revert Errors.InvalidUserDigest(digest);

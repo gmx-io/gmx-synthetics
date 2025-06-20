@@ -75,6 +75,13 @@ library RelayUtils {
             )
         );
 
+    bytes32 public constant MINIFIED_TYPEHASH =
+        keccak256(
+            bytes(
+                "Minified(bytes32 structHash)"
+            )
+        );
+
     bytes32 public constant REMOVE_SUBACCOUNT_TYPEHASH =
         keccak256(bytes("RemoveSubaccount(address subaccount,bytes32 relayParams)"));
 
@@ -194,7 +201,9 @@ library RelayUtils {
     }
 
     function validateSignature(
+        bytes32 domainSeparator,
         bytes32 digest,
+        bytes32 structHash,
         bytes calldata signature,
         address expectedSigner,
         string memory signatureType
@@ -207,8 +216,32 @@ library RelayUtils {
             return;
         }
 
-        if (error != ECDSA.RecoverError.NoError || recovered != expectedSigner) {
+        if (error != ECDSA.RecoverError.NoError) {
             revert Errors.InvalidSignature(signatureType);
+        }
+
+        // for some cases, e.g. ledger, signing does not work because the payload
+        // is too large
+        // for these cases, the user can sign a minified structHash instead
+        // the user should be shown the source data that was used to construct
+        // the minified structHash so that they can verify it independently
+        if (recovered != expectedSigner) {
+            bytes32 minifiedStructHash = keccak256(
+                abi.encode(
+                    MINIFIED_TYPEHASH,
+                    structHash
+                )
+            );
+
+            // since digest is already validated in BaseGelatoRelayRouter,
+            // we do not call _validateDigest on minifiedDigest
+            bytes32 minifiedDigest = ECDSA.toTypedDataHash(domainSeparator, minifiedStructHash);
+
+            (address recoveredFromMinified, /* ECDSA.RecoverError error */) = ECDSA.tryRecover(minifiedDigest, signature);
+
+            if (recoveredFromMinified != expectedSigner) {
+                revert Errors.InvalidRecoveredSigner(signatureType, recovered, recoveredFromMinified, expectedSigner);
+            }
         }
     }
 
