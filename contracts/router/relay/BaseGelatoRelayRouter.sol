@@ -384,9 +384,9 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
         bytes32 domainSeparator = RelayUtils.getDomainSeparator(srcChainId);
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
-        RelayUtils.validateSignature(digest, relayParams.signature, account, "call");
 
         _validateDigest(digest);
+        RelayUtils.validateSignature(digest, relayParams.signature, account, "call");
     }
 
     function _isMultichain() internal pure virtual returns (bool) {
