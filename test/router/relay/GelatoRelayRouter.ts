@@ -481,7 +481,15 @@ describe("GelatoRelayRouter", () => {
         verifyingContract: createOrderParams.relayRouter.address,
         minified: true,
       });
-      expect(signature2).not.eq(signature);
+
+      // make sure it returned different signature for minified: true
+      expect(signature2).not.eq(
+        await getCreateOrderSignature({
+          ...createOrderParams,
+          relayParams: relayParams2,
+          verifyingContract: createOrderParams.relayRouter.address,
+        })
+      );
       await sendCreateOrder({
         ...createOrderParams,
         deadline: 9999999998,
