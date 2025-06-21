@@ -82,29 +82,204 @@ async function main() {
     arbitrum: {
       rolesToAdd: [
         {
-          role: "CONTROLLER",
-          member: "0x9eb239edf4c6f4c4fc9d30ea2017f8716d049c8d",
-          contractName: "GelatoRelayRouter",
+          role: "ADL_KEEPER",
+          member: "0xa17a86388bbce9fd73a67f66d87fb0222a824c3f",
         },
         {
-          role: "CONTROLLER",
-          member: "0x5f345b765d5856bc0843cee8be234b575ec77dbc",
-          contractName: "SubaccountGelatoRelayRouter",
+          role: "ADL_KEEPER",
+          member: "0x86fe53a6d47d9a0fdea4c5ac3d80e0e6cc3354cc",
         },
         {
-          role: "CONTROLLER",
-          member: "0x65b46057c1948064a89aa56ba2bd1c411c007346",
-          contractName: "Config",
+          role: "ADL_KEEPER",
+          member: "0x8e2e2dd583e7db8437164a7f89a7288b999253cb",
         },
         {
-          role: "ROUTER_PLUGIN",
-          member: "0x9eb239edf4c6f4c4fc9d30ea2017f8716d049c8d",
-          contractName: "GelatoRelayRouter",
+          role: "ADL_KEEPER",
+          member: "0xc0a53a9ee8e8ea0f585d8dcf26800ef2841f97fd",
         },
         {
-          role: "ROUTER_PLUGIN",
-          member: "0x5f345b765d5856bc0843cee8be234b575ec77dbc",
-          contractName: "SubaccountGelatoRelayRouter",
+          role: "ADL_KEEPER",
+          member: "0xd316a0043056fb787de34aba8cd5323f5c6f8c47",
+        },
+        {
+          role: "ADL_KEEPER",
+          member: "0xb874e07336edc0c278c276ffeb08818976099256",
+        },
+        {
+          role: "ADL_KEEPER",
+          member: "0xa5e4a14cab506ba102977648317e0622ca60bb64",
+        },
+        {
+          role: "ADL_KEEPER",
+          member: "0xdad787d5a86f37a5e480e35b3ca615d46242ce9b",
+        },
+        {
+          role: "ADL_KEEPER",
+          member: "0x56a7ce61d8ab46a27de1837ceddd8522d52d2736",
+        },
+        {
+          role: "ADL_KEEPER",
+          member: "0xc9a5775951f0ea25053fee81d935fbbf4f0fb273",
+        },
+        {
+          role: "FROZEN_ORDER_KEEPER",
+          member: "0xa17a86388bbce9fd73a67f66d87fb0222a824c3f",
+        },
+        {
+          role: "FROZEN_ORDER_KEEPER",
+          member: "0x86fe53a6d47d9a0fdea4c5ac3d80e0e6cc3354cc",
+        },
+        {
+          role: "FROZEN_ORDER_KEEPER",
+          member: "0x8e2e2dd583e7db8437164a7f89a7288b999253cb",
+        },
+        {
+          role: "FROZEN_ORDER_KEEPER",
+          member: "0xc0a53a9ee8e8ea0f585d8dcf26800ef2841f97fd",
+        },
+        {
+          role: "FROZEN_ORDER_KEEPER",
+          member: "0xd316a0043056fb787de34aba8cd5323f5c6f8c47",
+        },
+        {
+          role: "FROZEN_ORDER_KEEPER",
+          member: "0xb874e07336edc0c278c276ffeb08818976099256",
+        },
+        {
+          role: "FROZEN_ORDER_KEEPER",
+          member: "0xa5e4a14cab506ba102977648317e0622ca60bb64",
+        },
+        {
+          role: "FROZEN_ORDER_KEEPER",
+          member: "0xdad787d5a86f37a5e480e35b3ca615d46242ce9b",
+        },
+        {
+          role: "FROZEN_ORDER_KEEPER",
+          member: "0x56a7ce61d8ab46a27de1837ceddd8522d52d2736",
+        },
+        {
+          role: "FROZEN_ORDER_KEEPER",
+          member: "0xc9a5775951f0ea25053fee81d935fbbf4f0fb273",
+        },
+        {
+          role: "LIMITED_CONFIG_KEEPER",
+          member: "0xa17a86388bbce9fd73a67f66d87fb0222a824c3f",
+        },
+        {
+          role: "LIMITED_CONFIG_KEEPER",
+          member: "0x86fe53a6d47d9a0fdea4c5ac3d80e0e6cc3354cc",
+        },
+        {
+          role: "LIMITED_CONFIG_KEEPER",
+          member: "0x8e2e2dd583e7db8437164a7f89a7288b999253cb",
+        },
+        {
+          role: "LIMITED_CONFIG_KEEPER",
+          member: "0xc0a53a9ee8e8ea0f585d8dcf26800ef2841f97fd",
+        },
+        {
+          role: "LIMITED_CONFIG_KEEPER",
+          member: "0xd316a0043056fb787de34aba8cd5323f5c6f8c47",
+        },
+        {
+          role: "LIMITED_CONFIG_KEEPER",
+          member: "0xb874e07336edc0c278c276ffeb08818976099256",
+        },
+        {
+          role: "LIMITED_CONFIG_KEEPER",
+          member: "0xa5e4a14cab506ba102977648317e0622ca60bb64",
+        },
+        {
+          role: "LIMITED_CONFIG_KEEPER",
+          member: "0xdad787d5a86f37a5e480e35b3ca615d46242ce9b",
+        },
+        {
+          role: "LIMITED_CONFIG_KEEPER",
+          member: "0x56a7ce61d8ab46a27de1837ceddd8522d52d2736",
+        },
+        {
+          role: "LIMITED_CONFIG_KEEPER",
+          member: "0xc9a5775951f0ea25053fee81d935fbbf4f0fb273",
+        },
+        {
+          role: "LIQUIDATION_KEEPER",
+          member: "0xa17a86388bbce9fd73a67f66d87fb0222a824c3f",
+        },
+        {
+          role: "LIQUIDATION_KEEPER",
+          member: "0x86fe53a6d47d9a0fdea4c5ac3d80e0e6cc3354cc",
+        },
+        {
+          role: "LIQUIDATION_KEEPER",
+          member: "0x8e2e2dd583e7db8437164a7f89a7288b999253cb",
+        },
+        {
+          role: "LIQUIDATION_KEEPER",
+          member: "0xc0a53a9ee8e8ea0f585d8dcf26800ef2841f97fd",
+        },
+        {
+          role: "LIQUIDATION_KEEPER",
+          member: "0xd316a0043056fb787de34aba8cd5323f5c6f8c47",
+        },
+        {
+          role: "LIQUIDATION_KEEPER",
+          member: "0xb874e07336edc0c278c276ffeb08818976099256",
+        },
+        {
+          role: "LIQUIDATION_KEEPER",
+          member: "0xa5e4a14cab506ba102977648317e0622ca60bb64",
+        },
+        {
+          role: "LIQUIDATION_KEEPER",
+          member: "0xdad787d5a86f37a5e480e35b3ca615d46242ce9b",
+        },
+        {
+          role: "LIQUIDATION_KEEPER",
+          member: "0x56a7ce61d8ab46a27de1837ceddd8522d52d2736",
+        },
+        {
+          role: "LIQUIDATION_KEEPER",
+          member: "0xc9a5775951f0ea25053fee81d935fbbf4f0fb273",
+        },
+        {
+          role: "ORDER_KEEPER",
+          member: "0xa17a86388bbce9fd73a67f66d87fb0222a824c3f",
+        },
+        {
+          role: "ORDER_KEEPER",
+          member: "0x86fe53a6d47d9a0fdea4c5ac3d80e0e6cc3354cc",
+        },
+        {
+          role: "ORDER_KEEPER",
+          member: "0x8e2e2dd583e7db8437164a7f89a7288b999253cb",
+        },
+        {
+          role: "ORDER_KEEPER",
+          member: "0xc0a53a9ee8e8ea0f585d8dcf26800ef2841f97fd",
+        },
+        {
+          role: "ORDER_KEEPER",
+          member: "0xd316a0043056fb787de34aba8cd5323f5c6f8c47",
+        },
+        {
+          role: "ORDER_KEEPER",
+          member: "0xb874e07336edc0c278c276ffeb08818976099256",
+        },
+        {
+          role: "ORDER_KEEPER",
+          member: "0xa5e4a14cab506ba102977648317e0622ca60bb64",
+        },
+        {
+          role: "ORDER_KEEPER",
+          member: "0xdad787d5a86f37a5e480e35b3ca615d46242ce9b",
+        },
+        {
+          role: "ORDER_KEEPER",
+          member: "0x56a7ce61d8ab46a27de1837ceddd8522d52d2736",
+        },
+        {
+          role: "ORDER_KEEPER",
+          member: "0xc9a5775951f0ea25053fee81d935fbbf4f0fb273",
         },
       ],
       rolesToRemove: [],
@@ -112,29 +287,204 @@ async function main() {
     avalanche: {
       rolesToAdd: [
         {
-          role: "CONTROLLER",
-          member: "0x9eb239edf4c6f4c4fc9d30ea2017f8716d049c8d",
-          contractName: "Config",
+          role: "ADL_KEEPER",
+          member: "0xa17a86388bbce9fd73a67f66d87fb0222a824c3f",
         },
         {
-          role: "CONTROLLER",
-          member: "0x035a9a047d20a486e14a613b04d5a95d7a617c5d",
-          contractName: "GelatoRelayRouter",
+          role: "ADL_KEEPER",
+          member: "0x86fe53a6d47d9a0fdea4c5ac3d80e0e6cc3354cc",
         },
         {
-          role: "CONTROLLER",
-          member: "0x3b753c0d0ae55530f24532b8bb9d0bacd5b675c0",
-          contractName: "SubaccountGelatoRelayRouter",
+          role: "ADL_KEEPER",
+          member: "0x8e2e2dd583e7db8437164a7f89a7288b999253cb",
         },
         {
-          role: "ROUTER_PLUGIN",
-          member: "0x035a9a047d20a486e14a613b04d5a95d7a617c5d",
-          contractName: "GelatoRelayRouter",
+          role: "ADL_KEEPER",
+          member: "0xc0a53a9ee8e8ea0f585d8dcf26800ef2841f97fd",
         },
         {
-          role: "ROUTER_PLUGIN",
-          member: "0x3b753c0d0ae55530f24532b8bb9d0bacd5b675c0",
-          contractName: "SubaccountGelatoRelayRouter",
+          role: "ADL_KEEPER",
+          member: "0xd316a0043056fb787de34aba8cd5323f5c6f8c47",
+        },
+        {
+          role: "ADL_KEEPER",
+          member: "0xb874e07336edc0c278c276ffeb08818976099256",
+        },
+        {
+          role: "ADL_KEEPER",
+          member: "0xa5e4a14cab506ba102977648317e0622ca60bb64",
+        },
+        {
+          role: "ADL_KEEPER",
+          member: "0xdad787d5a86f37a5e480e35b3ca615d46242ce9b",
+        },
+        {
+          role: "ADL_KEEPER",
+          member: "0x56a7ce61d8ab46a27de1837ceddd8522d52d2736",
+        },
+        {
+          role: "ADL_KEEPER",
+          member: "0xc9a5775951f0ea25053fee81d935fbbf4f0fb273",
+        },
+        {
+          role: "FROZEN_ORDER_KEEPER",
+          member: "0xa17a86388bbce9fd73a67f66d87fb0222a824c3f",
+        },
+        {
+          role: "FROZEN_ORDER_KEEPER",
+          member: "0x86fe53a6d47d9a0fdea4c5ac3d80e0e6cc3354cc",
+        },
+        {
+          role: "FROZEN_ORDER_KEEPER",
+          member: "0x8e2e2dd583e7db8437164a7f89a7288b999253cb",
+        },
+        {
+          role: "FROZEN_ORDER_KEEPER",
+          member: "0xc0a53a9ee8e8ea0f585d8dcf26800ef2841f97fd",
+        },
+        {
+          role: "FROZEN_ORDER_KEEPER",
+          member: "0xd316a0043056fb787de34aba8cd5323f5c6f8c47",
+        },
+        {
+          role: "FROZEN_ORDER_KEEPER",
+          member: "0xb874e07336edc0c278c276ffeb08818976099256",
+        },
+        {
+          role: "FROZEN_ORDER_KEEPER",
+          member: "0xa5e4a14cab506ba102977648317e0622ca60bb64",
+        },
+        {
+          role: "FROZEN_ORDER_KEEPER",
+          member: "0xdad787d5a86f37a5e480e35b3ca615d46242ce9b",
+        },
+        {
+          role: "FROZEN_ORDER_KEEPER",
+          member: "0x56a7ce61d8ab46a27de1837ceddd8522d52d2736",
+        },
+        {
+          role: "FROZEN_ORDER_KEEPER",
+          member: "0xc9a5775951f0ea25053fee81d935fbbf4f0fb273",
+        },
+        {
+          role: "LIMITED_CONFIG_KEEPER",
+          member: "0xa17a86388bbce9fd73a67f66d87fb0222a824c3f",
+        },
+        {
+          role: "LIMITED_CONFIG_KEEPER",
+          member: "0x86fe53a6d47d9a0fdea4c5ac3d80e0e6cc3354cc",
+        },
+        {
+          role: "LIMITED_CONFIG_KEEPER",
+          member: "0x8e2e2dd583e7db8437164a7f89a7288b999253cb",
+        },
+        {
+          role: "LIMITED_CONFIG_KEEPER",
+          member: "0xc0a53a9ee8e8ea0f585d8dcf26800ef2841f97fd",
+        },
+        {
+          role: "LIMITED_CONFIG_KEEPER",
+          member: "0xd316a0043056fb787de34aba8cd5323f5c6f8c47",
+        },
+        {
+          role: "LIMITED_CONFIG_KEEPER",
+          member: "0xb874e07336edc0c278c276ffeb08818976099256",
+        },
+        {
+          role: "LIMITED_CONFIG_KEEPER",
+          member: "0xa5e4a14cab506ba102977648317e0622ca60bb64",
+        },
+        {
+          role: "LIMITED_CONFIG_KEEPER",
+          member: "0xdad787d5a86f37a5e480e35b3ca615d46242ce9b",
+        },
+        {
+          role: "LIMITED_CONFIG_KEEPER",
+          member: "0x56a7ce61d8ab46a27de1837ceddd8522d52d2736",
+        },
+        {
+          role: "LIMITED_CONFIG_KEEPER",
+          member: "0xc9a5775951f0ea25053fee81d935fbbf4f0fb273",
+        },
+        {
+          role: "LIQUIDATION_KEEPER",
+          member: "0xa17a86388bbce9fd73a67f66d87fb0222a824c3f",
+        },
+        {
+          role: "LIQUIDATION_KEEPER",
+          member: "0x86fe53a6d47d9a0fdea4c5ac3d80e0e6cc3354cc",
+        },
+        {
+          role: "LIQUIDATION_KEEPER",
+          member: "0x8e2e2dd583e7db8437164a7f89a7288b999253cb",
+        },
+        {
+          role: "LIQUIDATION_KEEPER",
+          member: "0xc0a53a9ee8e8ea0f585d8dcf26800ef2841f97fd",
+        },
+        {
+          role: "LIQUIDATION_KEEPER",
+          member: "0xd316a0043056fb787de34aba8cd5323f5c6f8c47",
+        },
+        {
+          role: "LIQUIDATION_KEEPER",
+          member: "0xb874e07336edc0c278c276ffeb08818976099256",
+        },
+        {
+          role: "LIQUIDATION_KEEPER",
+          member: "0xa5e4a14cab506ba102977648317e0622ca60bb64",
+        },
+        {
+          role: "LIQUIDATION_KEEPER",
+          member: "0xdad787d5a86f37a5e480e35b3ca615d46242ce9b",
+        },
+        {
+          role: "LIQUIDATION_KEEPER",
+          member: "0x56a7ce61d8ab46a27de1837ceddd8522d52d2736",
+        },
+        {
+          role: "LIQUIDATION_KEEPER",
+          member: "0xc9a5775951f0ea25053fee81d935fbbf4f0fb273",
+        },
+        {
+          role: "ORDER_KEEPER",
+          member: "0xa17a86388bbce9fd73a67f66d87fb0222a824c3f",
+        },
+        {
+          role: "ORDER_KEEPER",
+          member: "0x86fe53a6d47d9a0fdea4c5ac3d80e0e6cc3354cc",
+        },
+        {
+          role: "ORDER_KEEPER",
+          member: "0x8e2e2dd583e7db8437164a7f89a7288b999253cb",
+        },
+        {
+          role: "ORDER_KEEPER",
+          member: "0xc0a53a9ee8e8ea0f585d8dcf26800ef2841f97fd",
+        },
+        {
+          role: "ORDER_KEEPER",
+          member: "0xd316a0043056fb787de34aba8cd5323f5c6f8c47",
+        },
+        {
+          role: "ORDER_KEEPER",
+          member: "0xb874e07336edc0c278c276ffeb08818976099256",
+        },
+        {
+          role: "ORDER_KEEPER",
+          member: "0xa5e4a14cab506ba102977648317e0622ca60bb64",
+        },
+        {
+          role: "ORDER_KEEPER",
+          member: "0xdad787d5a86f37a5e480e35b3ca615d46242ce9b",
+        },
+        {
+          role: "ORDER_KEEPER",
+          member: "0x56a7ce61d8ab46a27de1837ceddd8522d52d2736",
+        },
+        {
+          role: "ORDER_KEEPER",
+          member: "0xc9a5775951f0ea25053fee81d935fbbf4f0fb273",
         },
       ],
       rolesToRemove: [],

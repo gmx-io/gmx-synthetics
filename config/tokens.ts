@@ -1145,6 +1145,21 @@ const config: {
       dataStreamFeedDecimals: 18,
       wrappedNative: true,
       transferGasLimit: 200 * 1000,
+      dataStreamSpreadReductionFactor: percentageToFloat("100%"),
+    },
+    stBTC: {
+      address: "0xF4586028FFdA7Eca636864F80f8a3f2589E33795",
+      decimals: 18,
+      dataStreamFeedId: "0x0003a22193e4732e22af473c6712928af89dfe72481a39c844559573012d7973",
+      dataStreamFeedDecimals: 18,
+      transferGasLimit: 200 * 1000,
+    },
+    "USDC.e": {
+      address: "0x325eEb3AA50014f35861e3374f54B3997Aa8357d",
+      decimals: 6,
+      dataStreamFeedId: "0x00038f83323b6b08116d1614cf33a9bd71ab5e0abf0c9f1b783a74a43e7bd992",
+      dataStreamFeedDecimals: 18,
+      transferGasLimit: 200 * 1000,
     },
     BTC: {
       synthetic: true,
