@@ -27,6 +27,7 @@ library ReferralUtils {
         bytes32 referralCode
     ) internal {
         if (referralCode == bytes32(0)) { return; }
+        if (address(referralStorage) == address(0)) { return; }
 
         // skip setting of the referral code if the user already has a referral code
         if (referralStorage.traderReferralCodes(account) != bytes32(0)) { return; }
@@ -75,6 +76,10 @@ library ReferralUtils {
         IReferralStorage referralStorage,
         address trader
     ) internal view returns (bytes32, address, uint256, uint256, uint256) {
+        if (address(referralStorage) == address(0)) {
+            return (bytes32(0), address(0), 0, 0, 0);
+        }
+
         bytes32 code = referralStorage.traderReferralCodes(trader);
         address affiliate;
         uint256 totalRebate;
