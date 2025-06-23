@@ -7,6 +7,7 @@ const constructorContracts = [
   "EventEmitter",
   "Oracle",
   "MultichainVault",
+  "MultichainTransferRouter",
   "WithdrawalVault",
   "SwapHandler",
 ];

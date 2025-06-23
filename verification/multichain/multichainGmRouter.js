@@ -1,6 +1,6 @@
 // Verification arguments for MultichainGmRouter
 // Usage example:
-// npx hardhat verify --network arbitrumSepolia --constructor-args ./verification/multichain/multichainGmRouter.js --contract contracts/multichain/MultichainGmRouter.sol:MultichainGmRouter 0x0d9d33D00Ce2bF8eF0bb505F4A2D23988E0DA119
+// npx hardhat verify --network arbitrumSepolia --constructor-args ./verification/multichain/multichainGmRouter.js --contract contracts/multichain/MultichainGmRouter.sol:MultichainGmRouter 0x048692d7466F42318701b4dd3c265A2C3Fd9ed8B
 
 module.exports = [
   {

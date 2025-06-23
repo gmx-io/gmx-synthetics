@@ -88,6 +88,7 @@ contract GlvWithdrawalHandler is IGlvWithdrawalHandler, BaseHandler, ReentrancyG
             dataStore: dataStore,
             eventEmitter: eventEmitter,
             multichainVault: multichainVault,
+            multichainTransferRouter: multichainTransferRouter,
             glvVault: glvVault,
             oracle: oracle,
             swapHandler: swapHandler,

@@ -1,3 +1,4 @@
+import { _TypedDataEncoder } from "ethers/lib/utils";
 import { BigNumberish, ethers } from "ethers";
 import { GELATO_RELAY_ADDRESS } from "./addresses";
 
@@ -50,7 +51,6 @@ export type RelayParams = {
   tokenPermits: TokenPermit[];
   externalCalls: ExternalCalls;
   fee: FeeParams;
-  userNonce: BigNumberish;
   deadline: BigNumberish;
   desChainId: BigNumberish;
 };
@@ -107,16 +107,11 @@ export async function getRelayParams(p: {
   tokenPermits?: any;
   externalCalls?: any;
   feeParams: any;
-  userNonce?: BigNumberish;
   deadline: BigNumberish;
   desChainId: BigNumberish;
   relayRouter: ethers.Contract;
   signer: ethers.Signer;
 }) {
-  let userNonce = p.userNonce;
-  if (userNonce === undefined) {
-    userNonce = await getUserNonce(await p.signer.getAddress(), p.relayRouter);
-  }
   return {
     oracleParams: p.oracleParams || getDefaultOracleParams(),
     tokenPermits: p.tokenPermits || [],
@@ -129,7 +124,6 @@ export async function getRelayParams(p: {
       refundReceivers: [],
     },
     fee: p.feeParams,
-    userNonce,
     deadline: p.deadline,
     desChainId: p.desChainId,
   };
@@ -159,7 +153,6 @@ export function hashRelayParams(relayParams: RelayParams) {
       "tuple(address feeToken, uint256 feeAmount, address[] feeSwapPath)",
       "uint256",
       "uint256",
-      "uint256",
     ],
     [
       [relayParams.oracleParams.tokens, relayParams.oracleParams.providers, relayParams.oracleParams.data],
@@ -175,7 +168,6 @@ export function hashRelayParams(relayParams: RelayParams) {
         permit.token,
       ]),
       [relayParams.fee.feeToken, relayParams.fee.feeAmount, relayParams.fee.feeSwapPath],
-      relayParams.userNonce,
       relayParams.deadline,
       relayParams.desChainId,
     ]
@@ -215,15 +207,12 @@ export function assertFields(obj: any, fields: string[]) {
   }
 }
 
-export async function getUserNonce(account: string, relayRouter: ethers.Contract) {
-  return relayRouter.userNonces(account);
-}
-
 export async function signTypedData(
   signer: ethers.Signer,
   domain: Record<string, any>,
   types: Record<string, any>,
-  typedData: Record<string, any>
+  typedData: Record<string, any>,
+  minified = false
 ) {
   for (const [key, value] of Object.entries(domain)) {
     if (value === undefined) {
@@ -236,7 +225,17 @@ export async function signTypedData(
     }
   }
 
-  return (signer as any)._signTypedData(domain, types, typedData);
+  if (!minified) {
+    return (signer as any)._signTypedData(domain, types, typedData);
+  }
+
+  const digest = _TypedDataEncoder.hash(domain, types, typedData);
+  const minifiedTypes = {
+    Minified: [{ name: "digest", type: "bytes32" }],
+  };
+  return (signer as any)._signTypedData(domain, minifiedTypes, {
+    digest,
+  });
 }
 
 export async function sendRelayTransaction({

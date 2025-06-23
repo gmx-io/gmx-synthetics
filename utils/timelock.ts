@@ -5,7 +5,8 @@ import { hashString } from "./hash";
 import { TimelockConfig } from "../typechain-types";
 import * as keys from "./keys";
 import { time } from "@nomicfoundation/hardhat-network-helpers";
-import { BigNumber } from "ethers";
+import { BigNumber, constants } from "ethers";
+import * as crypto from "crypto";
 
 export async function timelockWriteMulticall({ timelock, multicallWriteParams }) {
   console.info("multicallWriteParams", multicallWriteParams);
@@ -44,8 +45,14 @@ export async function timelockWriteMulticall({ timelock, multicallWriteParams })
   }
 }
 
-export async function cancelAction(timelock: TimelockConfig, target: string, payload: string) {
-  const id = await timelock.getHash(target, payload);
+export async function cancelAction(
+  timelock: TimelockConfig,
+  target: string,
+  payload: string,
+  predecessor: any,
+  salt: any
+) {
+  const id = await timelock.getHash(target, payload, predecessor, salt);
   await cancelActionById(timelock, id);
 }
 
@@ -53,9 +60,9 @@ export async function cancelActionById(timelock: TimelockConfig, id: string) {
   await timelock.cancelAction(id);
 }
 
-export async function executeTimelock(executor: any, target: string, payload: any) {
+export async function executeTimelock(executor: any, target: string, payload: any, predecessor: any, salt: any) {
   const timelockConfig = await hre.ethers.getContract("TimelockConfig");
-  await timelockConfig.connect(executor).execute(target, payload);
+  await timelockConfig.connect(executor).execute(target, payload, predecessor, salt);
 }
 
 export async function setPriceFeedPayload(
@@ -151,24 +158,24 @@ export async function setAtomicOracleProviderPayload(providerAddress: string, va
   };
 }
 
-export async function signalHoldingAddressIfDifferent(executor: any, holdingAddress: string) {
+export async function signalHoldingAddressIfDifferent(executor: any, holdingAddress: string, salt: string) {
   const dataStore = await hre.ethers.getContract("DataStore");
   const existing = await dataStore.getAddress(keys.HOLDING_ADDRESS);
   if (existing.toLowerCase() == holdingAddress.toLowerCase()) {
     return;
   }
   const timelockConfig = await hre.ethers.getContract("TimelockConfig");
-  await timelockConfig.connect(executor).signalSetHoldingAddress(holdingAddress);
+  await timelockConfig.connect(executor).signalSetHoldingAddress(holdingAddress, constants.HashZero, salt);
   return {
     target: dataStore.address,
     payload: dataStore.interface.encodeFunctionData("setAddress", [keys.HOLDING_ADDRESS, holdingAddress]),
   };
 }
 
-export async function setHoldingAddressForTimelockTest(executor: any, holdingAddress: string) {
-  const { target, payload } = await signalHoldingAddressIfDifferent(executor, holdingAddress);
+export async function setHoldingAddressForTimelockTest(executor: any, holdingAddress: string, salt: string) {
+  const { target, payload } = await signalHoldingAddressIfDifferent(executor, holdingAddress, salt);
   await time.increase(1 * 24 * 60 * 60 + 10);
-  await executeTimelock(executor, target, payload);
+  await executeTimelock(executor, target, payload, constants.HashZero, salt);
 }
 
 export async function getPositionImpactPoolWithdrawalPayload(market: string, receiver: string, amount: BigNumber) {
@@ -201,4 +208,8 @@ export async function getReduceLentAmountPayload(market: string, fundingAccount:
       amount,
     ]),
   };
+}
+
+export function getRandomSalt() {
+  return "0x" + crypto.randomBytes(32).toString("hex");
 }

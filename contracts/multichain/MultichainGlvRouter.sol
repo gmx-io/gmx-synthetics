@@ -46,10 +46,10 @@ contract MultichainGlvRouter is IMultichainGlvRouter, MultichainRouter {
         IRelayUtils.TransferRequests calldata transferRequests,
         IGlvDepositUtils.CreateGlvDepositParams memory params
     ) private returns (bytes32) {
+        _processTransferRequests(account, transferRequests, srcChainId);
+
         address wnt = TokenUtils.wnt(dataStore);
         IERC20(wnt).safeTransfer(address(glvVault), params.executionFee);
-
-        _processTransferRequests(account, transferRequests, srcChainId);
 
         return glvDepositHandler.createGlvDeposit(account, srcChainId, params);
     }
@@ -64,10 +64,10 @@ contract MultichainGlvRouter is IMultichainGlvRouter, MultichainRouter {
         bytes32 structHash = RelayUtils.getCreateGlvWithdrawalStructHash(relayParams, transferRequests, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
+        _processTransferRequests(account, transferRequests, srcChainId);
+
         address wnt = TokenUtils.wnt(dataStore);
         IERC20(wnt).safeTransfer(address(glvVault), params.executionFee);
-
-        _processTransferRequests(account, transferRequests, srcChainId);
 
         return glvWithdrawalHandler.createGlvWithdrawal(account, srcChainId, params);
     }

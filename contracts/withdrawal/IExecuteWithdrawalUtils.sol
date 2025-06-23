@@ -10,11 +10,14 @@ import "../oracle/IOracle.sol";
 import "../pricing/ISwapPricingUtils.sol";
 import "../swap/ISwapHandler.sol";
 
+import "../multichain/IMultichainTransferRouter.sol";
+
 interface IExecuteWithdrawalUtils {
     struct ExecuteWithdrawalParams {
         DataStore dataStore;
         EventEmitter eventEmitter;
         MultichainVault multichainVault;
+        IMultichainTransferRouter multichainTransferRouter;
         WithdrawalVault withdrawalVault;
         IOracle oracle;
         ISwapHandler swapHandler;

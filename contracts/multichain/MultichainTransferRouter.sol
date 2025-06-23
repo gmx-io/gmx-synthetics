@@ -15,7 +15,6 @@ contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, M
         BaseConstructorParams memory params
     ) MultichainRouter(params) BaseRouter(params.router, params.roleStore, params.dataStore, params.eventEmitter) {
         deployer = msg.sender;
-        // leave empty, use initialize instead
     }
 
     function initialize(address _multichainProvider) external initializer {
@@ -73,9 +72,10 @@ contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, M
      * Used to automatically bridge out GM/GLV token after executeDeposit/executeGlvDeposit
      */
     function bridgeOutFromController(
-        IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
+        uint256 desChainId,
+        uint256 deadline,
         IRelayUtils.BridgeOutParams calldata params
     ) external nonReentrant onlyController {
         // cross-chain GM/GLV withdrawals are not allowed when the deposit was made natively (srcChainId == 0)
@@ -83,7 +83,12 @@ contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, M
             return;
         }
 
-        _validateCallWithoutSignature(relayParams, srcChainId);
+        _validateCallWithoutSignature(
+            srcChainId,
+            desChainId,
+            deadline,
+            0 // tokenPermits.length
+        );
 
         _bridgeOut(account, srcChainId, params);
     }

@@ -14,7 +14,8 @@ import "./MultichainEventUtils.sol";
 // @title BridgeOutFromControllerUtils
 library BridgeOutFromControllerUtils {
     struct BridgeOutFromControllerCache {
-        IRelayUtils.RelayParams relayParams;
+        uint256 desChainId;
+        uint256 deadline;
         address provider;
         bytes providerData;
         string reason;
@@ -22,16 +23,26 @@ library BridgeOutFromControllerUtils {
 
     /// @dev abi.decode can fail if dataList is not properly formed, which would cause the deposit to be cancelled
     /// @dev first item of dataList should be the GMX_DATA_ACTION hash if dataList is intended to be used for bridging out tokens
+    // note that if account != receiver the transfer will just be skipped instead of throwing an error
     function bridgeOutFromController(
         EventEmitter eventEmitter,
         IMultichainTransferRouter multichainTransferRouter,
         address account,
+        address receiver,
         uint256 srcChainId,
         address token,
         uint256 amount,
-        bytes32 key,
         bytes32[] memory dataList
     ) external {
+        if (account != receiver) {
+            // bridging out from a recipient address is not allowed (GM / GLV tokens are minted directly to the recipient)
+            // ensuring the bridging fee is paid by the account, otherwise an attacker could consume
+            // any account's wnt balance as bridging fee by donating a minimal amount of gm or glv
+            return;
+        }
+        if (amount == 0) {
+            return;
+        }
         if (srcChainId == 0) {
             return;
         }
@@ -49,9 +60,9 @@ library BridgeOutFromControllerUtils {
         if (actionType == IMultichainProvider.ActionType.BridgeOut) {
             BridgeOutFromControllerCache memory cache;
 
-            (cache.relayParams, cache.provider, cache.providerData /* e.g. dstEid */) = abi.decode(
+            (cache.desChainId, cache.deadline, cache.provider, cache.providerData /* e.g. dstEid */) = abi.decode(
                 actionData,
-                (IRelayUtils.RelayParams, address, bytes)
+                (uint256, uint256, address, bytes)
             );
 
             IRelayUtils.BridgeOutParams memory bridgeOutParams = IRelayUtils.BridgeOutParams({
@@ -61,8 +72,8 @@ library BridgeOutFromControllerUtils {
                 data: cache.providerData
             });
 
-            try multichainTransferRouter.bridgeOutFromController(cache.relayParams, account, srcChainId, bridgeOutParams) {
-                MultichainEventUtils.emitMultichainBridgeAction(eventEmitter, address(this), account, srcChainId, uint256(actionType), key);
+            try multichainTransferRouter.bridgeOutFromController(account, srcChainId, cache.desChainId, cache.deadline, bridgeOutParams) {
+                MultichainEventUtils.emitMultichainBridgeAction(eventEmitter, address(this), account, srcChainId, uint256(actionType));
             } catch Error(string memory reason) {
                 MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
             } catch (bytes memory reasonBytes) {

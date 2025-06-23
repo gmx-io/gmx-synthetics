@@ -15,9 +15,10 @@ interface IMultichainTransferRouter {
     ) external;
 
     function bridgeOutFromController(
-        IRelayUtils.RelayParams calldata relayParams,
         address account,
         uint256 srcChainId,
+        uint256 desChainId,
+        uint256 deadline,
         IRelayUtils.BridgeOutParams calldata params
     ) external;
 

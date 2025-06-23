@@ -17,6 +17,8 @@ import "../position/PositionUtils.sol";
 import "../fee/FeeUtils.sol";
 import "../swap/SwapUtils.sol";
 
+import "../multichain/BridgeOutFromControllerUtils.sol";
+
 import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
 
@@ -135,6 +137,28 @@ library ExecuteWithdrawalUtils {
         eventData.uintItems.setItem(0, "outputAmount", cache.result.outputAmount);
         eventData.uintItems.setItem(1, "secondaryOutputAmount", cache.result.secondaryOutputAmount);
         CallbackUtils.afterWithdrawalExecution(params.key, withdrawal, eventData);
+
+        BridgeOutFromControllerUtils.bridgeOutFromController(
+            params.eventEmitter,
+            params.multichainTransferRouter,
+            withdrawal.account(), // account
+            withdrawal.receiver(), // receiver
+            withdrawal.srcChainId(),
+            cache.result.outputToken, // token
+            cache.result.outputAmount, // amount
+            withdrawal.dataList()
+        );
+
+        BridgeOutFromControllerUtils.bridgeOutFromController(
+            params.eventEmitter,
+            params.multichainTransferRouter,
+            withdrawal.account(), // account
+            withdrawal.receiver(), // receiver
+            withdrawal.srcChainId(),
+            cache.result.secondaryOutputToken, // token
+            cache.result.secondaryOutputAmount, // amount
+            withdrawal.dataList()
+        );
 
         cache.oraclePriceCount = GasUtils.estimateWithdrawalOraclePriceCount(
             withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length

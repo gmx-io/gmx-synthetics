@@ -527,6 +527,11 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 10_000,
       expectedPositionImpactRatio: 20_000,
     },
+    CRV: {
+      negativePositionImpactFactor: exponentToFloat("1.4e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 11_600,
+    },
   },
   botanix: {
     "BTC:pBTC:pBTC": {

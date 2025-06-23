@@ -216,11 +216,6 @@ library ConfigUtils {
             }
         }
 
-        int256 totalPendingImpactAmount = MarketUtils.getTotalPendingImpactAmount(dataStore, market);
-        if (totalPendingImpactAmount > 0 && minPositionImpactPoolAmount < totalPendingImpactAmount.toUint256()) {
-            revert Errors.InsufficientMinPositionImpactPoolAmount(minPositionImpactPoolAmount, totalPendingImpactAmount);
-        }
-
         dataStore.setUint(Keys.minPositionImpactPoolAmountKey(market), minPositionImpactPoolAmount);
         dataStore.setUint(Keys.positionImpactPoolDistributionRateKey(market), positionImpactPoolDistributionRate);
 

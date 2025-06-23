@@ -128,12 +128,20 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         // need to manually call the function with the right amount of gas
         if (data.length != 0) {
             (ActionType actionType, bytes memory actionData) = abi.decode(data, (ActionType, bytes));
+
+            // this event is emitted even though the actionType may not be valid
+            MultichainEventUtils.emitMultichainBridgeAction(eventEmitter, address(this), account, srcChainId, uint256(actionType));
+
             if (actionType == ActionType.Deposit) {
                 _handleDeposit(account, srcChainId, actionType, actionData);
             } else if (actionType == ActionType.GlvDeposit) {
                 _handleGlvDeposit(account, srcChainId, actionType, actionData);
             } else if (actionType == ActionType.SetTraderReferralCode) {
                 _handleSetTraderReferralCode(account, srcChainId, actionType, actionData);
+            } else if (actionType == ActionType.Withdrawal) {
+                _handleWithdrawal(account, srcChainId, actionType, actionData);
+            } else if (actionType == ActionType.GlvWithdrawal) {
+                _handleGlvWithdrawal(account, srcChainId, actionType, actionData);
             }
         }
     }
@@ -346,8 +354,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
                 srcChainId,
                 transferRequests,
                 depositParams
-            ) returns (bytes32 key) {
-                MultichainEventUtils.emitMultichainBridgeAction(eventEmitter, address(this), account, srcChainId, uint256(actionType), key);
+            ) {
             } catch Error(string memory reason) {
                 MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
             } catch (bytes memory reasonBytes) {
@@ -381,8 +388,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
                 srcChainId,
                 transferRequests,
                 glvDepositParams
-            ) returns (bytes32 key) {
-                MultichainEventUtils.emitMultichainBridgeAction(eventEmitter, address(this), account, srcChainId, uint256(actionType), key);
+            ) {
             } catch Error(string memory reason) {
                 MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
             } catch (bytes memory reasonBytes) {
@@ -409,12 +415,75 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         _validateGasLeft(estimatedGasLimit);
 
         try multichainOrderRouter.setTraderReferralCode(relayParams, account, srcChainId, referralCode) {
-            MultichainEventUtils.emitMultichainBridgeAction(eventEmitter, address(this), account, srcChainId, uint256(actionType), referralCode);
         } catch Error(string memory reason) {
             MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
         } catch (bytes memory reasonBytes) {
             (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
             MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
+        }
+    }
+
+    function _handleWithdrawal(
+        address account,
+        uint256 srcChainId,
+        ActionType actionType,
+        bytes memory actionData
+    ) private {
+        (
+            IRelayUtils.RelayParams memory relayParams,
+            IRelayUtils.TransferRequests memory transferRequests,
+            IWithdrawalUtils.CreateWithdrawalParams memory withdrawalParams
+        ) = abi.decode(actionData, (IRelayUtils.RelayParams, IRelayUtils.TransferRequests, IWithdrawalUtils.CreateWithdrawalParams));
+
+        if (_areValidTransferRequests(transferRequests)) {
+            uint256 estimatedGasLimit = GasUtils.estimateCreateWithdrawalGasLimit(dataStore);
+            _validateGasLeft(estimatedGasLimit);
+
+            try multichainGmRouter.createWithdrawal(
+                relayParams,
+                account,
+                srcChainId,
+                transferRequests,
+                withdrawalParams
+            ) {
+            } catch Error(string memory reason) {
+                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
+            } catch (bytes memory reasonBytes) {
+                (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
+                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
+            }
+        }
+    }
+
+    function _handleGlvWithdrawal(
+        address account,
+        uint256 srcChainId,
+        ActionType actionType,
+        bytes memory actionData
+    ) private {
+        (
+            IRelayUtils.RelayParams memory relayParams,
+            IRelayUtils.TransferRequests memory transferRequests,
+            IGlvWithdrawalUtils.CreateGlvWithdrawalParams memory glvWithdrawalParams
+        ) = abi.decode(actionData, (IRelayUtils.RelayParams, IRelayUtils.TransferRequests, IGlvWithdrawalUtils.CreateGlvWithdrawalParams));
+
+        if (_areValidTransferRequests(transferRequests)) {
+            uint256 estimatedGasLimit = GasUtils.estimateCreateGlvDepositGasLimit(dataStore);
+            _validateGasLeft(estimatedGasLimit);
+
+            try multichainGlvRouter.createGlvWithdrawal(
+                relayParams,
+                account,
+                srcChainId,
+                transferRequests,
+                glvWithdrawalParams
+            ) {
+            } catch Error(string memory reason) {
+                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
+            } catch (bytes memory reasonBytes) {
+                (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
+                MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
+            }
         }
     }
 

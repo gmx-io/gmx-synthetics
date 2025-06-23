@@ -1183,6 +1183,13 @@ const config: {
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
     },
+    CRV: {
+      synthetic: true,
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x00037c41d40228ff337f3c7339e635906bb60552d748654fe6f9ebfa6a83fc0e",
+      dataStreamFeedDecimals: 18,
+    },
     BTC: {
       address: "0xF79cE1Cf38A09D572b021B4C5548b75A14082F12",
       decimals: 8,
