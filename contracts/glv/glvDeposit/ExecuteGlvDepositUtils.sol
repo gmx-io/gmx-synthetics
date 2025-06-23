@@ -140,7 +140,6 @@ library ExecuteGlvDepositUtils {
             glvDeposit.srcChainId(),
             glvDeposit.glv(), // token
             cache.mintAmount, // amount
-            params.key,
             glvDeposit.dataList()
         );
 

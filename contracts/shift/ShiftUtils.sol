@@ -227,6 +227,7 @@ library ShiftUtils {
             params.dataStore,
             params.eventEmitter,
             params.multichainVault,
+            IMultichainTransferRouter(payable(0)),
             WithdrawalVault(payable(params.shiftVault)),
             params.oracle,
             params.swapHandler,

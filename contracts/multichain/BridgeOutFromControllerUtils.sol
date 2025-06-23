@@ -23,6 +23,7 @@ library BridgeOutFromControllerUtils {
 
     /// @dev abi.decode can fail if dataList is not properly formed, which would cause the deposit to be cancelled
     /// @dev first item of dataList should be the GMX_DATA_ACTION hash if dataList is intended to be used for bridging out tokens
+    // note that if account != receiver the transfer will just be skipped instead of throwing an error
     function bridgeOutFromController(
         EventEmitter eventEmitter,
         IMultichainTransferRouter multichainTransferRouter,
@@ -31,13 +32,15 @@ library BridgeOutFromControllerUtils {
         uint256 srcChainId,
         address token,
         uint256 amount,
-        bytes32 key,
         bytes32[] memory dataList
     ) external {
         if (account != receiver) {
             // bridging out from a recipient address is not allowed (GM / GLV tokens are minted directly to the recipient)
             // ensuring the bridging fee is paid by the account, otherwise an attacker could consume
             // any account's wnt balance as bridging fee by donating a minimal amount of gm or glv
+            return;
+        }
+        if (amount == 0) {
             return;
         }
         if (srcChainId == 0) {
