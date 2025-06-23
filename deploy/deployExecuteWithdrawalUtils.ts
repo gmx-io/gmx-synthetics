@@ -15,6 +15,7 @@ const func = createDeployFunction({
     "PositionUtils",
     "MultichainUtils",
     "CallbackUtils",
+    "BridgeOutFromControllerUtils",
   ],
 });
 
