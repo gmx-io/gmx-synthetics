@@ -1231,7 +1231,7 @@ const config: {
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(1643, 41), // 1.64325E+44, 14,2 AVAX / day
       minPositionImpactPoolAmount: expandDecimals(79, 18), // 79.18 AVAX
 
-      maxOpenInterest: decimalToFloat(1_000_000),
+      maxOpenInterest: decimalToFloat(2_100_000), // ~2% of global OI
 
       atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
@@ -1463,7 +1463,7 @@ const config: {
       positionImpactPoolDistributionRate: bigNumberify(0),
       minPositionImpactPoolAmount: 0,
 
-      maxOpenInterest: decimalToFloat(1_500_000),
+      maxOpenInterest: decimalToFloat(1_600_000), // ~1% of global OI
 
       atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
@@ -2572,7 +2572,7 @@ const config: {
 
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
-      maxOpenInterest: decimalToFloat(750_000),
+      maxOpenInterest: decimalToFloat(1_950_000), // ~1% of global OI
 
       maxPoolUsdForDeposit: decimalToFloat(3_200_000),
 
