@@ -1197,7 +1197,7 @@ const config: {
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(1097, 40), // 1.0973075E+43, 0.948074216 AAVE / day
       minPositionImpactPoolAmount: expandDecimals(723, 16), // 7.23 AAVE
 
-      maxOpenInterest: decimalToFloat(1_500_000),
+      maxOpenInterest: decimalToFloat(2_450_000), // ~2% of global OI
 
       atomicSwapFeeFactor: percentageToFloat("3%"),
     },
