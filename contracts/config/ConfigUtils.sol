@@ -56,43 +56,42 @@ library ConfigUtils {
     function initOracleConfig(
         DataStore dataStore,
         EventEmitter eventEmitter,
-        address token,
         InitOracleConfigParams memory params
     ) external {
-        if (dataStore.getAddress(Keys.priceFeedKey(token)) != address(0)) {
-            revert Errors.PriceFeedAlreadyExistsForToken(token);
+        if (dataStore.getAddress(Keys.priceFeedKey(params.token)) != address(0)) {
+            revert Errors.PriceFeedAlreadyExistsForToken(params.token);
         }
 
-        if (dataStore.getBytes32(Keys.dataStreamIdKey(token)) != bytes32(0)) {
-            revert Errors.DataStreamIdAlreadyExistsForToken(token);
+        if (dataStore.getBytes32(Keys.dataStreamIdKey(params.token)) != bytes32(0)) {
+            revert Errors.DataStreamIdAlreadyExistsForToken(params.token);
         }
 
-        if (dataStore.getBytes32(Keys.edgeDataStreamIdKey(token)) != bytes32(0)) {
-            revert Errors.EdgeDataStreamIdAlreadyExistsForToken(token);
+        if (dataStore.getBytes32(Keys.edgeDataStreamIdKey(params.token)) != bytes32(0)) {
+            revert Errors.EdgeDataStreamIdAlreadyExistsForToken(params.token);
         }
 
-        dataStore.setAddress(Keys.priceFeedKey(token), params.priceFeed.feedAddress);
-        dataStore.setUint(Keys.priceFeedMultiplierKey(token), params.priceFeed.multiplier);
-        dataStore.setUint(Keys.priceFeedHeartbeatDurationKey(token), params.priceFeed.heartbeatDuration);
-        dataStore.setUint(Keys.stablePriceKey(token), params.priceFeed.stablePrice);
+        dataStore.setAddress(Keys.priceFeedKey(params.token), params.priceFeed.feedAddress);
+        dataStore.setUint(Keys.priceFeedMultiplierKey(params.token), params.priceFeed.multiplier);
+        dataStore.setUint(Keys.priceFeedHeartbeatDurationKey(params.token), params.priceFeed.heartbeatDuration);
+        dataStore.setUint(Keys.stablePriceKey(params.token), params.priceFeed.stablePrice);
 
         validateRange(
             dataStore,
             Keys.DATA_STREAM_SPREAD_REDUCTION_FACTOR,
-            abi.encode(token),
+            abi.encode(params.token),
             params.dataStream.spreadReductionFactor
         );
 
-        dataStore.setBytes32(Keys.dataStreamIdKey(token), params.dataStream.feedId);
-        dataStore.setUint(Keys.dataStreamMultiplierKey(token), params.dataStream.multiplier);
-        dataStore.setUint(Keys.dataStreamSpreadReductionFactorKey(token), params.dataStream.spreadReductionFactor);
+        dataStore.setBytes32(Keys.dataStreamIdKey(params.token), params.dataStream.feedId);
+        dataStore.setUint(Keys.dataStreamMultiplierKey(params.token), params.dataStream.multiplier);
+        dataStore.setUint(Keys.dataStreamSpreadReductionFactorKey(params.token), params.dataStream.spreadReductionFactor);
 
-        dataStore.setBytes32(Keys.edgeDataStreamIdKey(token), params.edgeDataStreamId);
+        dataStore.setBytes32(Keys.edgeDataStreamIdKey(params.token), params.edgeDataStreamId);
 
         EventUtils.EventLogData memory eventData;
 
         eventData.addressItems.initItems(2);
-        eventData.addressItems.setItem(0, "token", token);
+        eventData.addressItems.setItem(0, "token", params.token);
         eventData.addressItems.setItem(1, "priceFeedAddress", params.priceFeed.feedAddress);
 
         eventData.uintItems.initItems(5);
@@ -108,7 +107,7 @@ library ConfigUtils {
 
         eventEmitter.emitEventLog1(
             "InitOracleConfig",
-            Cast.toBytes32(token),
+            Cast.toBytes32(params.token),
             eventData
         );
     }

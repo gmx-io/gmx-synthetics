@@ -101,13 +101,11 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     }
 
     function initOracleConfig(
-        address token,
         ConfigUtils.InitOracleConfigParams memory params
     ) external onlyConfigKeeper nonReentrant {
         ConfigUtils.initOracleConfig(
             dataStore,
             eventEmitter,
-            token,
             params
         );
     }

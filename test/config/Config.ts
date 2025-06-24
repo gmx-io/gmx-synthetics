@@ -460,27 +460,53 @@ describe("Config", () => {
     await config.setUint(keys.DATA_STREAM_SPREAD_REDUCTION_FACTOR, encodeData(["address"], [wnt.address]), p100);
   });
 
-  it("setDataStream", async () => {
-    const p100 = percentageToFloat("100%");
-    const feedId = hashString("WNT");
+  it("initOracleConfig", async () => {
+    const token = { address: "0x7f9FBf9bDd3F4105C478b996B648FE6e828a1e98" };
+    expect(await dataStore.getAddress(keys.priceFeedKey(token.address))).eq(ethers.constants.AddressZero);
+    expect(await dataStore.getUint(keys.priceFeedMultiplierKey(token.address))).eq(0);
+    expect(await dataStore.getUint(keys.priceFeedHeartbeatDurationKey(token.address))).eq(0);
+    expect(await dataStore.getUint(keys.stablePriceKey(token.address))).eq(0);
 
-    await expect(
-      config.setDataStream(wnt.address, feedId, expandDecimals(1, 34), p100.add(1))
-    ).to.be.revertedWithCustomError(errorsContract, "ConfigValueExceedsAllowedRange");
+    expect(await dataStore.getBytes32(keys.dataStreamIdKey(token.address))).eq(ethers.constants.HashZero);
+    expect(await dataStore.getUint(keys.dataStreamMultiplierKey(token.address))).eq(0);
+    expect(await dataStore.getUint(keys.dataStreamSpreadReductionFactorKey(token.address))).eq(0);
+    expect(await dataStore.getUint(keys.edgeDataStreamIdKey(token.address))).eq(0);
 
-    expect(await dataStore.getBytes32(keys.dataStreamIdKey(wnt.address))).eq(ethers.constants.HashZero);
-    expect(await dataStore.getUint(keys.dataStreamMultiplierKey(wnt.address))).eq(0);
-    expect(await dataStore.getUint(keys.dataStreamSpreadReductionFactorKey(wnt.address))).eq(0);
+    const oracleConfig = {
+      token: token.address,
+      priceFeed: {
+        feedAddress: "0x221912ce795669f628c51c69b7d0873eDA9C03bB",
+        multiplier: expandDecimals(1, 60 - 18 - 8),
+        heartbeatDuration: (24 + 1) * 60 * 60,
+        stablePrice: decimalToFloat(100),
+      },
+      dataStream: {
+        feedId: hashString("WNT"),
+        multiplier: expandDecimals(1, 60 - 6 - 18),
+        spreadReductionFactor: percentageToFloat("100%"),
+      },
+      edgeDataStreamId: hashString("WNT-EDGE"),
+    };
 
-    await config.setDataStream(wnt.address, feedId, expandDecimals(1, 34), p100);
+    await config.initOracleConfig(oracleConfig);
 
-    expect(await dataStore.getBytes32(keys.dataStreamIdKey(wnt.address))).eq(feedId);
-    expect(await dataStore.getUint(keys.dataStreamMultiplierKey(wnt.address))).eq(expandDecimals(1, 34));
-    expect(await dataStore.getUint(keys.dataStreamSpreadReductionFactorKey(wnt.address))).eq(p100);
+    expect(await dataStore.getAddress(keys.priceFeedKey(token.address))).eq(oracleConfig.priceFeed.feedAddress);
+    expect(await dataStore.getUint(keys.priceFeedMultiplierKey(token.address))).eq(oracleConfig.priceFeed.multiplier);
+    expect(await dataStore.getUint(keys.priceFeedHeartbeatDurationKey(token.address))).eq(
+      oracleConfig.priceFeed.heartbeatDuration
+    );
+    expect(await dataStore.getUint(keys.stablePriceKey(token.address))).eq(decimalToFloat(100));
 
-    await expect(config.setDataStream(wnt.address, feedId, expandDecimals(1, 34), p100)).to.be.revertedWithCustomError(
+    expect(await dataStore.getBytes32(keys.dataStreamIdKey(token.address))).eq(oracleConfig.dataStream.feedId);
+    expect(await dataStore.getUint(keys.dataStreamMultiplierKey(token.address))).eq(oracleConfig.dataStream.multiplier);
+    expect(await dataStore.getUint(keys.dataStreamSpreadReductionFactorKey(token.address))).eq(
+      oracleConfig.dataStream.spreadReductionFactor
+    );
+    expect(await dataStore.getBytes32(keys.edgeDataStreamIdKey(token.address))).eq(oracleConfig.edgeDataStreamId);
+
+    await expect(config.initOracleConfig(oracleConfig)).to.be.revertedWithCustomError(
       errorsContract,
-      "DataStreamIdAlreadyExistsForToken"
+      "PriceFeedAlreadyExistsForToken"
     );
   });
 
