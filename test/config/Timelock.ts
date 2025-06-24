@@ -21,6 +21,7 @@ import {
   getWithdrawTokensPayload,
   getReduceLentAmountPayload,
   getRandomSalt,
+  getEdgeDataStreamPayload,
 } from "../../utils/timelock";
 import { handleDeposit } from "../../utils/deposit";
 import { usingResult } from "../../utils/use";
@@ -495,6 +496,31 @@ describe("Timelock", () => {
     expect(await dataStore.getBytes32(keys.dataStreamIdKey(wnt.address))).eq(hashString("WNT"));
     expect(await dataStore.getUint(keys.dataStreamMultiplierKey(wnt.address))).eq(expandDecimals(1, 34));
     expect(await dataStore.getUint(keys.dataStreamSpreadReductionFactorKey(wnt.address))).eq(p99);
+  });
+
+  it("signalSetEdgeDataStream", async () => {
+    const salt = getRandomSalt();
+    const edgeDataStreamId = hashString("EdgeId");
+
+    await expect(
+      timelockConfig.connect(user2).signalSetEdgeDataStream(wnt.address, edgeDataStreamId, constants.HashZero, salt)
+    )
+      .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
+      .withArgs(user2.address, "TIMELOCK_ADMIN");
+
+    await timelockConfig
+      .connect(timelockAdmin)
+      .signalSetEdgeDataStream(wnt.address, edgeDataStreamId, constants.HashZero, salt);
+
+    const { target, payload } = await getEdgeDataStreamPayload(wnt.address, edgeDataStreamId);
+
+    await time.increase(1 * 24 * 60 * 60 + 10);
+
+    expect(await dataStore.getBytes32(keys.edgeDataStreamIdKey(wnt.address))).eq(ethers.constants.HashZero);
+
+    await timelockConfig.connect(timelockAdmin).execute(target, payload, constants.HashZero, salt);
+
+    expect(await dataStore.getBytes32(keys.edgeDataStreamIdKey(wnt.address))).eq(edgeDataStreamId);
   });
 
   describe("PositionImpactPool", () => {
