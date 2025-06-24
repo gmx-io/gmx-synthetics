@@ -347,7 +347,6 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745": true, // general_keeper_1
         "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
         "0xD5F8b9ba4255B2F73b06f245fcca73D114D1D460": true, // general_keeper_3
-        "0xE7BfFf2aB721264887230037940490351700a068": true, // temp deployer
         "0x656fa39BdB5984b477FA6aB443195D72D1Accc1c": true, // multisig_1
       },
       FEE_KEEPER: {
@@ -439,6 +438,9 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
   for (const rolesForNetwork of Object.values(roles)) {
     for (const accounts of Object.values(rolesForNetwork)) {
       for (const account of Object.keys(accounts)) {
+        if (account === "undefined") {
+          continue;
+        }
         const checksumAccount = ethers.utils.getAddress(account);
         if (account !== checksumAccount) {
           accounts[checksumAccount] = accounts[account];

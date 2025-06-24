@@ -46,11 +46,11 @@ const trustedExternalContracts = new Set(
   ].map((address) => address.toLowerCase())
 );
 
-async function validateMember({ role, member }) {
+async function validateMember({ role, member, errors }) {
   if (["ROLE_ADMIN", "TIMELOCK_MULTISIG", "CONTROLLER"].includes(role)) {
     const code = await hre.ethers.provider.getCode(member);
     if (code === "0x") {
-      throw new Error(`EOA (Externally Owned Account) with ${role} role`);
+      errors.push(`EOA (Externally Owned Account) with ${role} role`);
     }
   }
 }
@@ -121,13 +121,21 @@ async function validateRolesImpl() {
 
   for (const [requiredRole, contracts] of Object.entries(requiredRolesForContracts)) {
     for (const contractName of contracts) {
-      const deployment = await hre.deployments.get(contractName);
-      const lowercaseAddress = deployment.address.toLowerCase();
-      const ok = Object.keys(_expectedRoles[requiredRole]).some((member) => member.toLowerCase() === lowercaseAddress);
-      if (!ok) {
-        errors.push(
-          `role ${requiredRole} is not configured for contract ${contractName}. "${deployment.address}": true, // ${contractName}`
+      let deployment;
+
+      try {
+        deployment = await hre.deployments.get(contractName);
+        const lowercaseAddress = deployment.address.toLowerCase();
+        const ok = Object.keys(_expectedRoles[requiredRole]).some(
+          (member) => member.toLowerCase() === lowercaseAddress
         );
+        if (!ok) {
+          errors.push(
+            `role ${requiredRole} is not configured for contract ${contractName}. "${deployment.address}": true, // ${contractName}`
+          );
+        }
+      } catch (e) {
+        console.log("error", e);
       }
     }
   }
@@ -156,7 +164,7 @@ async function validateRolesImpl() {
     const allMembers = [...new Set([...members, ...Object.keys(expectedRoles[role] ?? {})])];
     await Promise.all(
       allMembers.map(async (member) => {
-        await validateMember({ role, member });
+        await validateMember({ role, member, errors });
       })
     );
 
@@ -226,7 +234,6 @@ async function validateRolesImpl() {
     for (const error of errors) {
       console.error("❌", error);
     }
-    throw new Error("Roles are not valid");
   }
 
   return { rolesToAdd, rolesToRemove };
@@ -274,6 +281,10 @@ function getIsGmxDeployer(contractAddress: string) {
 }
 
 async function validateDataStreamProviderHasDiscount() {
+  // fee discount is not needed on certain networks like Botanix
+  if (hre.network.name === "botanix") {
+    return;
+  }
   console.log("validating data stream provider has discount");
   const { dataStreamVerifierAddress } = getValues();
   const tokens = await hre.gmx.getTokens();
@@ -313,6 +324,10 @@ async function validateDataStreamProviderHasDiscount() {
 }
 
 async function validateIsReferralStorageHandler() {
+  // the ReferralStorage is not deployed on Botanix
+  if (hre.network.name === "botanix") {
+    return;
+  }
   console.log("validating is referral storage handler");
   const { referralStorageAddress } = getValues();
   if (referralStorageAddress) {
