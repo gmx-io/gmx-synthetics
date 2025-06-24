@@ -478,7 +478,7 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         EventUtils.EventLogData memory eventData;
 
         eventData.addressItems.initItems(1);
-        eventData.addressItems.setItem(1, "token", token);
+        eventData.addressItems.setItem(0, "token", token);
 
         eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "edgeDataStreamId", edgeDataStreamId);
