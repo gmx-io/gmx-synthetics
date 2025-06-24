@@ -461,6 +461,31 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         eventEmitter.emitEventLog("SignalWithdrawTokens", eventData);
     }
 
+    function signalSetEdgeDataStream(
+        bytes32 edgeDataStreamId,
+        address token,
+        bytes32 predecessor,
+        bytes32 salt
+    ) external onlyTimelockAdmin {
+        if (edgeDataStreamId == bytes32(0)) {
+            revert Errors.EmptyDataStreamFeedId(token);
+        }
+
+        bytes memory payload = abi.encodeWithSignature("setBytes32(bytes32,bytes32)",
+            Keys.edgeDataStreamIdKey(token), edgeDataStreamId);
+        timelockController.schedule(dataStore, 0, payload, predecessor, salt, timelockController.getMinDelay());
+
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(1, "token", token);
+
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "edgeDataStreamId", edgeDataStreamId);
+
+        eventEmitter.emitEventLog("SignalSetEdgeDataStream", eventData);
+    }
+
     function execute(address target, bytes calldata payload, bytes32 predecessor, bytes32 salt) external onlyTimelockAdmin {
         timelockController.execute(target, 0, payload, predecessor, salt);
     }

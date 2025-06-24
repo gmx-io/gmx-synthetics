@@ -210,6 +210,14 @@ export async function getReduceLentAmountPayload(market: string, fundingAccount:
   };
 }
 
+export async function getEdgeDataStreamPayload(edgeDataStreamId: string, token: string) {
+  const dataStore = await hre.ethers.getContract("DataStore");
+  return {
+    target: dataStore.address,
+    payload: dataStore.interface.encodeFunctionData("setBytes32", [keys.edgeDataStreamIdKey(token), edgeDataStreamId]),
+  };
+}
+
 export function getRandomSalt() {
   return "0x" + crypto.randomBytes(32).toString("hex");
 }
