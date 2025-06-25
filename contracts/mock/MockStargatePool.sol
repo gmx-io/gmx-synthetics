@@ -8,6 +8,8 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { MessagingFee, OFTReceipt, SendParam, MessagingReceipt, OFTLimit, OFTFeeDetail } from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
 import { OFTComposeMsgCodec } from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTComposeMsgCodec.sol";
 
+import {LayerZeroProvider} from "../multichain/LayerZeroProvider.sol";
+
 contract MockStargatePool {
     using SafeERC20 for IERC20;
 
@@ -21,11 +23,11 @@ contract MockStargatePool {
 
     /**
      * @dev Mock function to simulate receiving tokens from source chain and delivering to target chain (bridgeIn flow)
-     * @param _to The recipient contract (LayerZeroProvider)
+     * @param layerZeroProvider The recipient contract (LayerZeroProvider)
      * @param _amount The amount of tokens to send
      * @param _message The encoded message containing account, token, srcChainId
      */
-    function sendToken(address _to, uint256 _amount, bytes calldata _message) external {
+    function sendToken(LayerZeroProvider layerZeroProvider, uint256 _amount, bytes calldata _message) external {
         // prepend composeFrom (msg.sender) to the user payload
         bytes memory encodedMsg = abi.encodePacked(
             OFTComposeMsgCodec.addressToBytes32(msg.sender),
@@ -39,20 +41,16 @@ contract MockStargatePool {
             encodedMsg
         );
 
-        IERC20(token).transferFrom(msg.sender, _to, _amount);
+        IERC20(token).transferFrom(msg.sender, address(layerZeroProvider), _amount);
 
         // Simulate cross-chain message delivery by directly calling lzCompose on the LayerZeroProvider contract
-        (bool success, ) = _to.call(
-            abi.encodeWithSignature(
-                "lzCompose(address,bytes32,bytes,address,bytes)",
-                address(this),
-                bytes32(uint256(1)), // guid
-                composedMsg,
-                address(this),
-                "" // extraData
-            )
+        layerZeroProvider.lzCompose(
+            address(this),
+            bytes32(uint256(1)), // mock guid
+            composedMsg,
+            address(this),
+            "" // extraData
         );
-        require(success, "Mock Stargate: lzCompose failed");
     }
 
     /**

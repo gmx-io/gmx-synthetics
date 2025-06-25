@@ -3,9 +3,11 @@ import { expect } from "chai";
 import * as keys from "../../utils/keys";
 import { deployFixture } from "../../utils/fixture";
 import { expandDecimals } from "../../utils/math";
-import { encodeSetTraderReferralCodeMessage, mintAndBridge } from "../../utils/multichain";
+import { encodeDepositMessage, encodeSetTraderReferralCodeMessage, mintAndBridge } from "../../utils/multichain";
 import { hashString } from "../../utils/hash";
 import { sendSetTraderReferralCode } from "../../utils/relay/gelatoRelay";
+import { sendCreateDeposit } from "../../utils/relay/multichain";
+import { executeDeposit, getDepositCount } from "../../utils/deposit";
 
 describe("LayerZeroProvider", () => {
   let fixture;
@@ -13,8 +15,11 @@ describe("LayerZeroProvider", () => {
   let dataStore,
     wnt,
     usdc,
+    ethUsdMarket,
+    depositVault,
     multichainVault,
     layerZeroProvider,
+    multichainGmRouter,
     multichainOrderRouter,
     mockStargatePoolWnt,
     mockStargatePoolUsdc,
@@ -29,8 +34,11 @@ describe("LayerZeroProvider", () => {
       dataStore,
       wnt,
       usdc,
+      ethUsdMarket,
+      depositVault,
       multichainVault,
       layerZeroProvider,
+      multichainGmRouter,
       multichainOrderRouter,
       mockStargatePoolWnt,
       mockStargatePoolUsdc,
@@ -61,6 +69,89 @@ describe("LayerZeroProvider", () => {
       expect(await usdc.balanceOf(layerZeroProvider.address)).eq(0);
       expect(await usdc.balanceOf(multichainVault.address)).eq(amount);
       expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, usdc.address))).eq(amount);
+    });
+
+    describe("actionType: Deposit", () => {
+      const wntAmount = expandDecimals(9, 18);
+      const usdcAmount = expandDecimals(45_000, 6);
+      const executionFee = 0; // 0.004 ETH TODO: why there is no execution fee in user's multichain balance?
+
+      let createDepositParams: Parameters<typeof sendCreateDeposit>[0];
+      beforeEach(async () => {
+        const defaultDepositParams = {
+          addresses: {
+            receiver: user1.address,
+            callbackContract: user1.address,
+            uiFeeReceiver: user1.address,
+            market: ethUsdMarket.marketToken,
+            initialLongToken: ethUsdMarket.longToken,
+            initialShortToken: ethUsdMarket.shortToken,
+            longTokenSwapPath: [],
+            shortTokenSwapPath: [],
+          },
+          minMarketTokens: 100,
+          shouldUnwrapNativeToken: false,
+          executionFee,
+          callbackGasLimit: "200000",
+          dataList: [],
+        };
+        createDepositParams = {
+          sender: user1, // sender is user1 on the source chain, not GELATO_RELAY_ADDRESS
+          signer: user1,
+          feeParams: {
+            feeToken: wnt.address,
+            feeAmount: 0,
+            feeSwapPath: [],
+          },
+          transferRequests: {
+            tokens: [wnt.address, usdc.address],
+            receivers: [depositVault.address, depositVault.address],
+            amounts: [wntAmount, usdcAmount],
+          },
+          account: user1.address,
+          params: defaultDepositParams,
+          deadline: 9999999999,
+          chainId,
+          srcChainId: chainId, // 0 would mean same chain action
+          desChainId: chainId,
+          relayRouter: multichainGmRouter,
+          relayFeeToken: wnt.address,
+          relayFeeAmount: 0,
+        };
+      });
+
+      it("creates deposit without paying relayFee if LayerZeroProvider is whitelisted", async () => {
+        await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolUsdc.SRC_EID()), chainId);
+        // whitelist LayerZeroProvider to be excluded from paying the relay fee
+        await dataStore.setBool(keys.isRelayFeeExcludedKey(layerZeroProvider.address), true);
+        // enable MultichainOrderRouter to call ReferralStorage.setTraderReferralCode
+        await referralStorage.setHandler(multichainOrderRouter.address, true);
+
+        await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: wntAmount.add(executionFee) });
+        await usdc.mint(user1.address, usdcAmount);
+        await usdc.connect(user1).approve(mockStargatePoolUsdc.address, usdcAmount);
+
+        expect(await getDepositCount(dataStore)).eq(0);
+        expect(await usdc.balanceOf(user1.address)).to.eq(usdcAmount);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0);
+        expect(await usdc.balanceOf(layerZeroProvider.address)).to.eq(0);
+
+        const message = await encodeDepositMessage(createDepositParams, user1.address);
+        await mockStargatePoolUsdc.connect(user1).sendToken(layerZeroProvider.address, usdcAmount, message);
+
+        expect(await getDepositCount(dataStore)).eq(1);
+        expect(await usdc.balanceOf(user1.address)).to.eq(0);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdMarket.marketToken))).to.eq(0);
+        expect(await usdc.balanceOf(layerZeroProvider.address)).to.eq(0); // does not change
+
+        await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
+
+        expect(await getDepositCount(dataStore)).eq(0);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdMarket.marketToken))).to.eq(
+          expandDecimals(90_000, 18)
+        ); // 90,000 GM
+      });
     });
 
     describe("actionType: SetTraderReferralCode", () => {
