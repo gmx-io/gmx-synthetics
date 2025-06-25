@@ -103,7 +103,7 @@ contract EdgeDataStreamVerifier {
         bytes32 messageHash;
         {
             messageHash = getMessageHash(
-                leftPadBytes(bytes(feedId), 32),
+                keccak256(bytes(feedId)),
                 Cast.uint192ToBytes(price),
                 Cast.uint32ToBytes(roundId),
                 Cast.uint32ToBytes(timestamp),
@@ -125,7 +125,7 @@ contract EdgeDataStreamVerifier {
      * @dev Creates a hash of the serialized price data in the same format as server does
      */
     function getMessageHash(
-        bytes memory feedId,
+        bytes32 feedId,
         bytes memory price,
         bytes memory roundId,
         bytes memory ts,
@@ -148,28 +148,5 @@ contract EdgeDataStreamVerifier {
         );
 
         return keccak256(message);
-    }
-
-    /**
-    * @dev Left-pads a byte array to the desired length, similar to common.LeftPadBytes in Go
-    */
-    function leftPadBytes(
-        bytes memory data,
-        uint256 length
-    ) internal pure returns (bytes memory) {
-        bytes memory result = new bytes(length);
-
-        // If data is longer than length, truncate it
-        uint256 dataLength = data.length;
-        if (dataLength > length) {
-            dataLength = length;
-        }
-
-        // Copy data to the end of the result
-        for (uint256 i = 0; i < dataLength; i++) {
-            result[length - dataLength + i] = data[i];
-        }
-
-        return result;
     }
 }
