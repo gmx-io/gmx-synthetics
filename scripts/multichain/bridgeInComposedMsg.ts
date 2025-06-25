@@ -233,7 +233,7 @@ async function getComposedMsg({
       sender: await hre.ethers.getSigner(account),
       signer: await hre.ethers.getSigner(account),
       feeParams: {
-        feeToken: ethers.constants.AddressZero,
+        feeToken: wntAddress, // feeToken must default to WNT, otherwise the Gelato Relay will revert with UnexpectedRelayFeeToken
         feeAmount: 0,
         feeSwapPath: [],
       },
@@ -332,7 +332,7 @@ async function getComposedMsg({
       sender: await hre.ethers.getSigner(account),
       signer: await hre.ethers.getSigner(account),
       feeParams: {
-        feeToken: ethers.constants.AddressZero,
+        feeToken: wntAddress, // feeToken must default to WNT, otherwise the Gelato Relay will revert with UnexpectedRelayFeeToken
         feeAmount: 0,
         feeSwapPath: [],
       },
