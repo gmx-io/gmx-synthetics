@@ -4,7 +4,7 @@ import * as keys from "../../utils/keys";
 import { expandDecimals } from "../../utils/math";
 import { decodeValidatedPrice } from "../../utils/oracle-provider";
 import { BigNumberish } from "ethers";
-import { encodeData } from "../../utils/hash";
+import { encodeData, hashString, keccakString } from "../../utils/hash";
 import { ethers } from "hardhat";
 
 describe("EdgeDataStreamProvider", function () {
@@ -47,10 +47,7 @@ describe("EdgeDataStreamProvider", function () {
     fixture = await deployFixture();
     ({ edgeDataStreamProvider, dataStore, oracle, wbtc: token } = fixture.contracts);
 
-    await dataStore.setBytes32(
-      keys.edgeDataStreamIdKey(token.address),
-      ethers.utils.formatBytes32String(BTC_USD_FEED_ID)
-    );
+    await dataStore.setBytes32(keys.edgeDataStreamIdKey(token.address), keccakString(BTC_USD_FEED_ID));
   });
 
   it("should call getOraclePrice and return valid params", async function () {

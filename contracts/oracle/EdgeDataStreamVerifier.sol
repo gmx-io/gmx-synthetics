@@ -48,7 +48,7 @@ contract EdgeDataStreamVerifier {
             revert Errors.InvalidEdgeSigner();
         }
         return Report(
-            Cast.toBytes32(feedId),
+            keccak256(bytes(feedId)),
             bid,
             ask,
             timestamp,
