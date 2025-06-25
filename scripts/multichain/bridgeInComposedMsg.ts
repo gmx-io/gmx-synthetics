@@ -155,7 +155,7 @@ async function retrieveFromDestination(account: string, relayRouterJson: any): P
   );
   const relayRouter = new ethers.Contract(
     (await relayRouterJson).address,
-    ["function userNonces(address account) view returns (uint256)"],
+    ["function digests(bytes32 dicest) view returns (bool)"],
     provider
   );
 
@@ -165,8 +165,6 @@ async function retrieveFromDestination(account: string, relayRouterJson: any): P
   const glvVault: GlvVault = await ethers.getContractAt("GlvVault", (await glvVaultJson).address);
   const depositVault: DepositVault = await ethers.getContractAt("DepositVault", (await depositVaultJson).address);
 
-  const userNonce = await relayRouter.userNonces(account);
-
   return {
     dataStore,
     roleStore,
@@ -174,7 +172,6 @@ async function retrieveFromDestination(account: string, relayRouterJson: any): P
     glvVault,
     depositVault,
     relayRouter,
-    userNonce: userNonce.toNumber(),
   };
 }
 
@@ -213,7 +210,7 @@ async function getComposedMsg({
   };
 
   if (actionType === ActionType.Deposit) {
-    const { depositVault, relayRouter, userNonce } = await retrieveFromDestination(account, multichainGmRouterJson);
+    const { depositVault, relayRouter } = await retrieveFromDestination(account, multichainGmRouterJson);
 
     const defaultDepositParams = {
       addresses: {
@@ -255,7 +252,6 @@ async function getComposedMsg({
       relayRouter,
       relayFeeToken: wntAddress, // WETH
       relayFeeAmount: expandDecimals(2, 15), // 0.002 ETH
-      userNonce, // the actual user nonce from the destination chain
     };
 
     const message = await encodeDepositMessage(depositParams, account);
@@ -264,7 +260,7 @@ async function getComposedMsg({
   }
 
   if (actionType === ActionType.GlvDeposit) {
-    const { roleStore, glvFactory, glvVault, relayRouter, userNonce } = await retrieveFromDestination(
+    const { roleStore, glvFactory, glvVault, relayRouter } = await retrieveFromDestination(
       account,
       multichainGmRouterJson
     );
@@ -321,7 +317,6 @@ async function getComposedMsg({
       relayRouter,
       relayFeeToken: wntAddress, // WETH
       relayFeeAmount: expandDecimals(2, 15), // 0.002 ETH
-      userNonce, // the actual user nonce from the destination chain
     };
 
     const message = await encodeGlvDepositMessage(createGlvDepositParams, account);
@@ -331,7 +326,7 @@ async function getComposedMsg({
 
   if (actionType === ActionType.SetTraderReferralCode) {
     const referralCode = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(`ReferralCode-${Date.now()}`));
-    const { relayRouter, userNonce } = await retrieveFromDestination(account, multichainOrderRouterJson);
+    const { relayRouter } = await retrieveFromDestination(account, multichainOrderRouterJson);
 
     const setTraderReferralCodeParams = {
       sender: await hre.ethers.getSigner(account),
@@ -350,7 +345,6 @@ async function getComposedMsg({
       chainId: srcChainId,
       gelatoRelayFeeToken: ethers.constants.AddressZero,
       gelatoRelayFeeAmount: 0,
-      userNonce, // the actual user nonce from the destination chain
     };
 
     const message = await encodeSetTraderReferralCodeMessage(setTraderReferralCodeParams, referralCode, account);
