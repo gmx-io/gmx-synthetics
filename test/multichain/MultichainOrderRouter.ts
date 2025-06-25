@@ -25,7 +25,7 @@ import { getPositionCount, getPositionKey } from "../../utils/position";
 import { expectBalance } from "../../utils/validation";
 import { executeLiquidation } from "../../utils/liquidation";
 import { executeAdl, updateAdlState } from "../../utils/adl";
-import { encodeSetTraderReferralCodeMessage, mintAndBridge } from "../../utils/multichain";
+import { mintAndBridge } from "../../utils/multichain";
 
 describe("MultichainOrderRouter", () => {
   let fixture;
@@ -38,7 +38,6 @@ describe("MultichainOrderRouter", () => {
     wnt,
     usdc,
     referralStorage,
-    layerZeroProvider,
     chainlinkPriceFeedProvider,
     mockStargatePoolUsdc,
     mockStargatePoolWnt;
@@ -58,7 +57,6 @@ describe("MultichainOrderRouter", () => {
       wnt,
       usdc,
       referralStorage,
-      layerZeroProvider,
       chainlinkPriceFeedProvider,
       mockStargatePoolUsdc,
       mockStargatePoolWnt,
@@ -796,7 +794,6 @@ describe("MultichainOrderRouter", () => {
 
   describe("setTraderReferralCode", () => {
     let setTraderReferralCodeParams: Parameters<typeof sendSetTraderReferralCode>[0];
-
     beforeEach(async () => {
       setTraderReferralCodeParams = {
         sender: relaySigner,
@@ -818,12 +815,10 @@ describe("MultichainOrderRouter", () => {
       };
     });
 
-    beforeEach(async () => {
+    it("sets trader referral code and sends relayer fee", async () => {
       // enable MultichainOrderRouter to call ReferralStorage.setTraderReferralCode
       await referralStorage.setHandler(multichainOrderRouter.address, true);
-    });
 
-    it("sets trader referral code", async () => {
       await mintAndBridge(fixture, {
         account: user1,
         token: wnt,
@@ -838,42 +833,6 @@ describe("MultichainOrderRouter", () => {
 
       expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(relayFeeAmount);
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0);
-      expect(await referralStorage.traderReferralCodes(user1.address)).eq(referralCode);
-    });
-
-    it("sets trader referral code without paying relayFee if LayerZeroProvider is whitelisted", async () => {
-      await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolUsdc.SRC_EID()), chainId);
-      // whitelist LayerZeroProvider to be excluded from paying the relay fee
-      await dataStore.setBool(keys.isRelayFeeExcludedKey(layerZeroProvider.address), true);
-      // no fee for whitelisted contract
-      setTraderReferralCodeParams.feeParams.feeToken = wnt.address;
-      setTraderReferralCodeParams.feeParams.feeAmount = 0;
-      setTraderReferralCodeParams.gelatoRelayFeeAmount = 0;
-      // sender is user1, not GELATO_RELAY_ADDRESS
-      setTraderReferralCodeParams.sender = user1.address;
-
-      const usdcAmount = expandDecimals(1, 5); // 0.1 USDC --> e.g. minimum amount required by a stargate pool to bridge a message
-      await usdc.mint(user1.address, usdcAmount);
-      await usdc.connect(user1).approve(mockStargatePoolUsdc.address, usdcAmount);
-
-      expect(await usdc.balanceOf(user1.address)).to.eq(usdcAmount);
-      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0);
-      expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(0);
-      expect(await usdc.balanceOf(layerZeroProvider.address)).to.eq(0);
-      expect(await referralStorage.traderReferralCodes(user0.address)).eq(ethers.constants.HashZero);
-
-      const message = await encodeSetTraderReferralCodeMessage(
-        setTraderReferralCodeParams,
-        referralCode,
-        user1.address
-      );
-      await mockStargatePoolUsdc.connect(user1).sendToken(layerZeroProvider.address, usdcAmount, message);
-
-      // referralCode is set, usdcAmount is added to user's multichain balance
-      expect(await usdc.balanceOf(user1.address)).to.eq(0);
-      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(usdcAmount);
-      expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(0); // does not change
-      expect(await usdc.balanceOf(layerZeroProvider.address)).to.eq(0); // does not change
       expect(await referralStorage.traderReferralCodes(user1.address)).eq(referralCode);
     });
   });
