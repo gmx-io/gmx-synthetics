@@ -28,7 +28,7 @@ const STARGATE_POOL_USDC_ARB_SEPOLIA = "0x543BdA7c6cA4384FE90B1F5929bb851F528889
 const STARGATE_USDC_ARB_SEPOLIA = "0x3253a335E7bFfB4790Aa4C25C4250d206E9b9773";
 const DST_CHAIN_ID = 421614;
 const DST_EID = 40231;
-const ETH_USD_MARKET_TOKEN = ""; // "0xb6fC4C9eB02C35A134044526C62bb15014Ac0Bcc"; // GM { indexToken: "WETH", longToken: "WETH", shortToken: "USDC.SG" }
+const ETH_USD_MARKET_TOKEN = "0xb6fC4C9eB02C35A134044526C62bb15014Ac0Bcc"; // GM { indexToken: "WETH", longToken: "WETH", shortToken: "USDC.SG" }
 
 const dataStoreJson = import("../../deployments/arbitrumSepolia/DataStore.json");
 const roleStoreJson = import("../../deployments/arbitrumSepolia/RoleStore.json");
@@ -150,7 +150,7 @@ async function retrieveFromDestination(account: string, relayRouterJson: any): P
   // contracts with destination provider
   const dataStore = new ethers.Contract(
     (await dataStoreJson).address,
-    ["function getAddress(bytes32 key) view returns (address)"],
+    ["function getAddress(bytes32 key) view returns (address)", "function getUint(bytes32 key) view returns (uint256)"],
     provider
   );
   const relayRouter = new ethers.Contract(
@@ -210,7 +210,7 @@ async function getComposedMsg({
   };
 
   if (actionType === ActionType.Deposit) {
-    const { depositVault, relayRouter } = await retrieveFromDestination(account, multichainGmRouterJson);
+    const { dataStore, depositVault, relayRouter } = await retrieveFromDestination(account, multichainGmRouterJson);
 
     const defaultDepositParams = {
       addresses: {
@@ -251,8 +251,28 @@ async function getComposedMsg({
       desChainId: DST_CHAIN_ID,
       relayRouter,
       relayFeeToken: wntAddress, // WETH
-      relayFeeAmount: expandDecimals(2, 15), // 0.002 ETH
+      relayFeeAmount: 0,
     };
+
+    const userMultichainBalanceWnt = await dataStore.getUint(keys.multichainBalanceKey(account, wntAddress));
+    if (userMultichainBalanceWnt.lt(wntAmount)) {
+      throw new Error(
+        `User multichain balance WNT: userMultichainBalanceWnt: ${ethers.utils.formatUnits(
+          userMultichainBalanceWnt
+        )} < amount: ${ethers.utils.formatUnits(wntAmount)}`
+      );
+    }
+    const userMultichainBalanceUsdc = await dataStore.getUint(
+      keys.multichainBalanceKey(account, STARGATE_USDC_ARB_SEPOLIA)
+    );
+    if (userMultichainBalanceUsdc.lt(usdcAmount)) {
+      throw new Error(
+        `User multichain balance USDC: userMultichainBalanceUsdc: ${ethers.utils.formatUnits(
+          userMultichainBalanceUsdc,
+          6
+        )} < amount: ${ethers.utils.formatUnits(usdcAmount, 6)}`
+      );
+    }
 
     const message = await encodeDepositMessage(depositParams, account);
 
