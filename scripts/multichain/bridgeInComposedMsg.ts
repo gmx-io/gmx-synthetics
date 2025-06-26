@@ -257,7 +257,7 @@ async function getComposedMsg({
     const userMultichainBalanceWnt = await dataStore.getUint(keys.multichainBalanceKey(account, wntAddress));
     if (userMultichainBalanceWnt.lt(wntAmount)) {
       throw new Error(
-        `User multichain balance WNT: userMultichainBalanceWnt: ${ethers.utils.formatUnits(
+        `User multichain balance WNT: ${ethers.utils.formatUnits(
           userMultichainBalanceWnt
         )} < amount: ${ethers.utils.formatUnits(wntAmount)}`
       );
@@ -267,12 +267,21 @@ async function getComposedMsg({
     );
     if (userMultichainBalanceUsdc.lt(usdcAmount)) {
       throw new Error(
-        `User multichain balance USDC: userMultichainBalanceUsdc: ${ethers.utils.formatUnits(
+        `User multichain balance USDC: ${ethers.utils.formatUnits(
           userMultichainBalanceUsdc,
           6
         )} < amount: ${ethers.utils.formatUnits(usdcAmount, 6)}`
       );
     }
+
+    const userMultichainBalanceGM = await dataStore.getUint(
+      keys.multichainBalanceKey(account, ethUsdMarket.marketToken)
+    );
+    console.log(
+      `User multichain balance GM: ${ethers.utils.formatUnits(userMultichainBalanceGM)} for marketToken: ${
+        ethUsdMarket.marketToken
+      }`
+    );
 
     const message = await encodeDepositMessage(depositParams, account);
 
@@ -385,8 +394,8 @@ async function main() {
   // Bridge USDC (ETH bridging fails due to Stargate insufficient funds for path)
   const usdc: ERC20 = await ethers.getContractAt("ERC20", STARGATE_USDC_SEPOLIA);
   const usdcBalance = await usdc.balanceOf(account);
-  const usdcAmount = expandDecimals(50, 6); // to send a composed msg, we need to send the min stargate amount for bridging (e.g. 0.1 USDC)
-  const wntAmount = expandDecimals(25, 16); // 0.025 WETH (~75 USD)
+  const usdcAmount = expandDecimals(300, 6); // to send a composed msg, we need to send the min stargate amount for bridging if user's multichain balance already has the deposit funds (e.g. 0.1 USDC)
+  const wntAmount = expandDecimals(2, 17); // 0.2 WETH (~600 USD)
   if (usdcBalance.lt(usdcAmount)) {
     throw new Error(
       `Insufficient USDC balance: need ${ethers.utils.formatUnits(usdcAmount, 6)} but have ${ethers.utils.formatUnits(
