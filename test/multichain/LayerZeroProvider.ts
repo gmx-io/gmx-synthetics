@@ -3,11 +3,17 @@ import { expect } from "chai";
 import * as keys from "../../utils/keys";
 import { deployFixture } from "../../utils/fixture";
 import { expandDecimals } from "../../utils/math";
-import { encodeDepositMessage, encodeSetTraderReferralCodeMessage, mintAndBridge } from "../../utils/multichain";
+import {
+  encodeDepositMessage,
+  encodeGlvDepositMessage,
+  encodeSetTraderReferralCodeMessage,
+  mintAndBridge,
+} from "../../utils/multichain";
 import { hashString } from "../../utils/hash";
 import { sendSetTraderReferralCode } from "../../utils/relay/gelatoRelay";
-import { sendCreateDeposit } from "../../utils/relay/multichain";
+import { sendCreateDeposit, sendCreateGlvDeposit } from "../../utils/relay/multichain";
 import { executeDeposit, getDepositCount } from "../../utils/deposit";
+import { executeGlvDeposit, getGlvDepositCount } from "../../utils/glv";
 
 describe("LayerZeroProvider", () => {
   let fixture;
@@ -16,10 +22,13 @@ describe("LayerZeroProvider", () => {
     wnt,
     usdc,
     ethUsdMarket,
+    ethUsdGlvAddress,
     depositVault,
+    glvVault,
     multichainVault,
     layerZeroProvider,
     multichainGmRouter,
+    multichainGlvRouter,
     multichainOrderRouter,
     mockStargatePoolWnt,
     mockStargatePoolUsdc,
@@ -35,10 +44,13 @@ describe("LayerZeroProvider", () => {
       wnt,
       usdc,
       ethUsdMarket,
+      ethUsdGlvAddress,
       depositVault,
+      glvVault,
       multichainVault,
       layerZeroProvider,
       multichainGmRouter,
+      multichainGlvRouter,
       multichainOrderRouter,
       mockStargatePoolWnt,
       mockStargatePoolUsdc,
@@ -124,8 +136,6 @@ describe("LayerZeroProvider", () => {
         await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolUsdc.SRC_EID()), chainId);
         // whitelist LayerZeroProvider to be excluded from paying the relay fee
         await dataStore.setBool(keys.isRelayFeeExcludedKey(layerZeroProvider.address), true);
-        // enable MultichainOrderRouter to call ReferralStorage.setTraderReferralCode
-        await referralStorage.setHandler(multichainOrderRouter.address, true);
 
         await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: wntAmount.add(executionFee) });
         await usdc.mint(user1.address, usdcAmount);
@@ -149,6 +159,89 @@ describe("LayerZeroProvider", () => {
 
         expect(await getDepositCount(dataStore)).eq(0);
         expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdMarket.marketToken))).to.eq(
+          expandDecimals(90_000, 18)
+        ); // 90,000 GM
+      });
+    });
+
+    describe("actionType: GlvDeposit using long / short tokens, without paying relayFee if LayerZeroProvider is whitelisted", () => {
+      const wntAmount = expandDecimals(9, 18);
+      const usdcAmount = expandDecimals(45_000, 6);
+      const executionFee = expandDecimals(4, 15); // 0.004 ETH
+
+      let createGlvDepositParams: Parameters<typeof sendCreateGlvDeposit>[0];
+      beforeEach(async () => {
+        const defaultGlvDepositParams = {
+          addresses: {
+            glv: ethUsdGlvAddress,
+            receiver: user1.address,
+            callbackContract: user1.address,
+            uiFeeReceiver: user1.address,
+            market: ethUsdMarket.marketToken,
+            initialLongToken: ethUsdMarket.longToken,
+            initialShortToken: ethUsdMarket.shortToken,
+            longTokenSwapPath: [],
+            shortTokenSwapPath: [],
+          },
+          minGlvTokens: 100,
+          executionFee: 0,
+          callbackGasLimit: "200000",
+          shouldUnwrapNativeToken: true,
+          isMarketTokenDeposit: false,
+          dataList: [],
+        };
+        createGlvDepositParams = {
+          sender: user1, // sender is user1 on the source chain, not GELATO_RELAY_ADDRESS
+          signer: user1,
+          feeParams: {
+            feeToken: wnt.address,
+            feeAmount: executionFee, // 0.004 ETH
+            feeSwapPath: [],
+          },
+          transferRequests: {
+            tokens: [wnt.address, usdc.address],
+            receivers: [glvVault.address, glvVault.address],
+            amounts: [wntAmount, usdcAmount],
+          },
+          account: user1.address,
+          params: defaultGlvDepositParams,
+          deadline: 9999999999,
+          chainId,
+          srcChainId: chainId,
+          desChainId: chainId,
+          relayRouter: multichainGlvRouter,
+          relayFeeToken: wnt.address,
+          relayFeeAmount: 0,
+        };
+      });
+
+      it("creates glvDeposit without paying relayFee if LayerZeroProvider is whitelisted", async () => {
+        await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolUsdc.SRC_EID()), chainId);
+        // whitelist LayerZeroProvider to be excluded from paying the relay fee
+        await dataStore.setBool(keys.isRelayFeeExcludedKey(layerZeroProvider.address), true);
+
+        await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: wntAmount.add(executionFee) });
+        await usdc.mint(user1.address, usdcAmount);
+        await usdc.connect(user1).approve(mockStargatePoolUsdc.address, usdcAmount);
+
+        expect(await getGlvDepositCount(dataStore)).eq(0);
+        expect(await usdc.balanceOf(user1.address)).to.eq(usdcAmount);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0);
+        expect(await usdc.balanceOf(layerZeroProvider.address)).to.eq(0);
+
+        const message = await encodeGlvDepositMessage(createGlvDepositParams, user1.address);
+        await mockStargatePoolUsdc.connect(user1).sendToken(layerZeroProvider.address, usdcAmount, message);
+
+        expect(await getGlvDepositCount(dataStore)).eq(1);
+        expect(await usdc.balanceOf(user1.address)).to.eq(0);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdGlvAddress))).to.eq(0);
+        expect(await usdc.balanceOf(layerZeroProvider.address)).to.eq(0); // does not change
+
+        await executeGlvDeposit(fixture, { gasUsageLabel: "executeDeposit" });
+
+        expect(await getGlvDepositCount(dataStore)).eq(0);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdGlvAddress))).to.eq(
           expandDecimals(90_000, 18)
         ); // 90,000 GM
       });
