@@ -161,7 +161,9 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     avalanche: {
       requestExpirationTime: 60,
     },
-    botanix: {},
+    botanix: {
+      positionFeeReceiverFactor: decimalToFloat(50, 2), // 50%
+    },
   }[network.name];
 
   if (!networkConfig) {
