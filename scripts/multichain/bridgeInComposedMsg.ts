@@ -201,7 +201,7 @@ async function getComposedMsg({
   const srcChainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
   const { dataStore } = await retrieveFromDestination(account, multichainGmRouterJson);
   const wntAddress = await dataStore.getAddress(keys.WNT);
-  const executionFee = expandDecimals(4, 15); // 0.004 ETH
+  const executionFee = expandDecimals(1, 17); // 0.1 ETH
 
   const ethUsdMarket = {
     marketToken: ETH_USD_MARKET_TOKEN,
@@ -234,14 +234,14 @@ async function getComposedMsg({
       signer: await hre.ethers.getSigner(account),
       feeParams: {
         feeToken: wntAddress, // feeToken must default to WNT, otherwise the Gelato Relay will revert with UnexpectedRelayFeeToken
-        feeAmount: 0,
+        feeAmount: executionFee, // needed to execute "IERC20(wnt).safeTransfer(address(depositVault), params.executionFee);"
         feeSwapPath: [],
       },
       // transferRequests contains the execution fee + collateral tokens
       transferRequests: {
-        tokens: [wntAddress, wntAddress, STARGATE_USDC_ARB_SEPOLIA],
-        receivers: [relayRouter.address, depositVault.address, depositVault.address],
-        amounts: [executionFee, wntAmount, usdcAmount],
+        tokens: [wntAddress, STARGATE_USDC_ARB_SEPOLIA],
+        receivers: [depositVault.address, depositVault.address],
+        amounts: [wntAmount, usdcAmount],
       },
       account,
       params: defaultDepositParams,
@@ -385,8 +385,8 @@ async function main() {
   // Bridge USDC (ETH bridging fails due to Stargate insufficient funds for path)
   const usdc: ERC20 = await ethers.getContractAt("ERC20", STARGATE_USDC_SEPOLIA);
   const usdcBalance = await usdc.balanceOf(account);
-  const usdcAmount = expandDecimals(3, 6); // to send a composed msg, we need to send the min stargate amount for bridging (e.g. 0.1 USDC)
-  const wntAmount = expandDecimals(1, 15); // 0.001 WETH (~3 USD)
+  const usdcAmount = expandDecimals(50, 6); // to send a composed msg, we need to send the min stargate amount for bridging (e.g. 0.1 USDC)
+  const wntAmount = expandDecimals(25, 16); // 0.025 WETH (~75 USD)
   if (usdcBalance.lt(usdcAmount)) {
     throw new Error(
       `Insufficient USDC balance: need ${ethers.utils.formatUnits(usdcAmount, 6)} but have ${ethers.utils.formatUnits(
