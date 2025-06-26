@@ -74,7 +74,7 @@ describe("LayerZeroProvider", () => {
     describe("actionType: Deposit", () => {
       const wntAmount = expandDecimals(9, 18);
       const usdcAmount = expandDecimals(45_000, 6);
-      const executionFee = 0; // 0.004 ETH TODO: why there is no execution fee in user's multichain balance?
+      const executionFee = expandDecimals(4, 15); // 0.004 ETH
 
       let createDepositParams: Parameters<typeof sendCreateDeposit>[0];
       beforeEach(async () => {
@@ -100,7 +100,7 @@ describe("LayerZeroProvider", () => {
           signer: user1,
           feeParams: {
             feeToken: wnt.address,
-            feeAmount: 0,
+            feeAmount: executionFee,
             feeSwapPath: [],
           },
           transferRequests: {
