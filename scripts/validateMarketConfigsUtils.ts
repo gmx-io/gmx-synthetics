@@ -517,17 +517,17 @@ const recommendedMarketConfig = {
   botanix: {
     "BTC:pBTC:pBTC": {
       negativePositionImpactFactor: 0,
-      expectedPositionImpactRatio: 20_000,
+      expectedPositionImpactRatio: 10_000,
     },
     "BTC:stBTC:stBTC": {
       negativePositionImpactFactor: 0,
-      expectedPositionImpactRatio: 20_000,
+      expectedPositionImpactRatio: 10_000,
     },
     "BTC:stBTC:USDC.e": {
       negativePositionImpactFactor: 0,
       negativeSwapImpactFactor: exponentToFloat("5e-9").div(2),
       expectedSwapImpactRatio: 10_000,
-      expectedPositionImpactRatio: 20_000,
+      expectedPositionImpactRatio: 10_000,
     },
     stBTC: {
       expectedSwapImpactRatio: 10_000,
