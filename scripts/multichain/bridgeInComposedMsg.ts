@@ -1,7 +1,15 @@
 import hre from "hardhat";
 import { BigNumber } from "ethers";
 import { JsonRpcProvider } from "@ethersproject/providers";
-import { ERC20, IStargate, DepositVault, RoleStore, GlvFactory, GlvVault } from "../../typechain-types";
+import {
+  ERC20,
+  IStargate,
+  DepositVault,
+  RoleStore,
+  GlvFactory,
+  GlvVault,
+  WithdrawalVault,
+} from "../../typechain-types";
 
 import { Options } from "@layerzerolabs/lz-v2-utilities";
 
@@ -10,8 +18,9 @@ import {
   encodeDepositMessage,
   encodeGlvDepositMessage,
   encodeSetTraderReferralCodeMessage,
+  encodeWithdrawalMessage,
 } from "../../utils/multichain";
-import { sendCreateDeposit, sendCreateGlvDeposit } from "../../utils/relay/multichain";
+import { sendCreateDeposit, sendCreateGlvDeposit, sendCreateWithdrawal } from "../../utils/relay/multichain";
 import * as keys from "../../utils/keys";
 
 const { ethers } = hre;
@@ -39,6 +48,7 @@ const multichainGmRouterJson = import("../../deployments/arbitrumSepolia/Multich
 const multichainGlvRouterJson = import("../../deployments/arbitrumSepolia/MultichainGlvRouter.json");
 const multichainOrderRouterJson = import("../../deployments/arbitrumSepolia/MultichainOrderRouter.json");
 const depositVaultJson = import("../../deployments/arbitrumSepolia/DepositVault.json");
+const withdrawalVaultJson = import("../../deployments/arbitrumSepolia/WithdrawalVault.json");
 
 async function prepareSend(
   amount: number | string | BigNumber,
@@ -165,6 +175,12 @@ async function retrieveFromDestination(account: string, relayRouterJson: any): P
   const glvFactory: GlvFactory = await ethers.getContractAt("GlvFactory", (await glvFactoryJson).address);
   const glvVault: GlvVault = await ethers.getContractAt("GlvVault", (await glvVaultJson).address);
   const depositVault: DepositVault = await ethers.getContractAt("DepositVault", (await depositVaultJson).address);
+  const withdrawalVault: WithdrawalVault = await ethers.getContractAt(
+    "WithdrawalVault",
+    (
+      await withdrawalVaultJson
+    ).address
+  );
 
   return {
     dataStore,
@@ -172,6 +188,7 @@ async function retrieveFromDestination(account: string, relayRouterJson: any): P
     glvFactory,
     glvVault,
     depositVault,
+    withdrawalVault,
     relayRouter,
   };
 }
@@ -182,6 +199,8 @@ enum ActionType {
   GlvDeposit,
   BridgeOut,
   SetTraderReferralCode,
+  Withdrawal,
+  GlvWithdrawal,
 }
 
 async function getComposedMsg({
@@ -189,11 +208,13 @@ async function getComposedMsg({
   actionType,
   wntAmount,
   usdcAmount,
+  gmAmount,
 }: {
   account: string;
   actionType: ActionType;
   wntAmount: BigNumber;
   usdcAmount: BigNumber;
+  gmAmount: BigNumber;
 }): Promise<string> {
   if (actionType === ActionType.None) {
     return ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, "0x"]);
@@ -279,6 +300,87 @@ async function getComposedMsg({
     );
 
     const message = await encodeDepositMessage(depositParams, account);
+
+    return message;
+  }
+
+  if (actionType === ActionType.Withdrawal) {
+    const { dataStore, withdrawalVault, relayRouter } = await retrieveFromDestination(account, multichainGmRouterJson);
+
+    const defaultWithdrawalParams = {
+      addresses: {
+        receiver: account,
+        callbackContract: account,
+        uiFeeReceiver: account,
+        market: ethUsdMarket.marketToken,
+        longTokenSwapPath: [],
+        shortTokenSwapPath: [],
+      },
+      minLongTokenAmount: 0,
+      minShortTokenAmount: 0,
+      shouldUnwrapNativeToken: false,
+      executionFee,
+      callbackGasLimit: "200000",
+      dataList: [],
+    };
+    const withdrawalParams: Parameters<typeof sendCreateWithdrawal>[0] = {
+      sender: await hre.ethers.getSigner(account),
+      signer: await hre.ethers.getSigner(account),
+      feeParams: {
+        feeToken: wntAddress,
+        feeAmount: executionFee,
+        feeSwapPath: [],
+      },
+      transferRequests: {
+        tokens: [ethUsdMarket.marketToken],
+        receivers: [withdrawalVault.address],
+        amounts: [gmAmount],
+      },
+      account: account,
+      params: defaultWithdrawalParams,
+      deadline: 9999999999,
+      chainId: srcChainId,
+      srcChainId: srcChainId,
+      desChainId: DST_CHAIN_ID,
+      relayRouter: relayRouter,
+      relayFeeToken: wntAddress,
+      relayFeeAmount: 0,
+    };
+
+    const userMultichainBalanceWnt = await dataStore.getUint(keys.multichainBalanceKey(account, wntAddress));
+    console.log(
+      "User's multichain WNT: %s, amount: %s",
+      ethers.utils.formatUnits(userMultichainBalanceWnt),
+      ethers.utils.formatUnits(wntAmount)
+    );
+    const userMultichainBalanceUsdc = await dataStore.getUint(
+      keys.multichainBalanceKey(account, STARGATE_USDC_ARB_SEPOLIA)
+    );
+    console.log(
+      "User's multichain USDC: %s, amount: %s",
+      ethers.utils.formatUnits(userMultichainBalanceUsdc, 6),
+      ethers.utils.formatUnits(usdcAmount, 6)
+    );
+    const userMultichainBalanceGM = await dataStore.getUint(
+      keys.multichainBalanceKey(account, ethUsdMarket.marketToken)
+    );
+    console.log(
+      "User's multichain GM: %s for marketToken: %s",
+      ethers.utils.formatUnits(userMultichainBalanceGM),
+      ethUsdMarket.marketToken
+    );
+    const userMultichainBalanceGLV = await dataStore.getUint(keys.multichainBalanceKey(account, ETH_USD_GLV_ADDRESS));
+    console.log(
+      "User's multichain GLV: %s for GlvToken: %s",
+      ethers.utils.formatUnits(userMultichainBalanceGLV),
+      ETH_USD_GLV_ADDRESS
+    );
+
+    if (userMultichainBalanceGM.lt(gmAmount)) {
+      throw new Error("Insufficient GM in user's multichain account");
+    }
+
+    const message = await encodeWithdrawalMessage(withdrawalParams, account);
 
     return message;
   }
@@ -392,10 +494,12 @@ async function getComposedMsg({
   }
 }
 
-// ACTION_TYPE=<None/Deposit/GlvDeposit/SetTraderReferralCode> npx hardhat run --network sepolia scripts/multichain/bridgeInComposedMsg.ts
+// ACTION_TYPE=<None/Deposit/GlvDeposit/SetTraderReferralCode/Withdrawal/GlvWithdrawal> npx hardhat run --network sepolia scripts/multichain/bridgeInComposedMsg.ts
 async function main() {
   if (!process.env.ACTION_TYPE) {
-    throw new Error("⚠️ ACTION_TYPE is mandatory: None / Deposit / GlvDeposit / SetTraderReferralCode");
+    throw new Error(
+      "⚠️ ACTION_TYPE is mandatory: None / Deposit / GlvDeposit / SetTraderReferralCode / Withdrawal / GlvWithdrawal"
+    );
   }
 
   const [wallet] = await hre.ethers.getSigners();
@@ -406,6 +510,7 @@ async function main() {
   const usdcBalance = await usdc.balanceOf(account);
   const usdcAmount = expandDecimals(300, 6); // to send a composed msg, we need to send the min stargate amount for bridging if user's multichain balance already has the deposit funds (e.g. 0.1 USDC)
   const wntAmount = expandDecimals(2, 17); // 0.2 WETH (~600 USD) --> amount is not being bridged, it's only used for the glv deposit as the long token and comes from user's multichain balance
+  const gmAmount = expandDecimals(50, 18);
   if (usdcBalance.lt(usdcAmount)) {
     throw new Error(
       `Insufficient USDC balance: need ${ethers.utils.formatUnits(usdcAmount, 6)} but have ${ethers.utils.formatUnits(
@@ -421,6 +526,7 @@ async function main() {
     actionType: ActionType[process.env.ACTION_TYPE],
     wntAmount,
     usdcAmount,
+    gmAmount,
   });
 
   const {
