@@ -224,6 +224,7 @@ async function getComposedMsg({
   const { dataStore } = await retrieveFromDestination(account, multichainGmRouterJson);
   const wntAddress = await dataStore.getAddress(keys.WNT);
   const executionFee = expandDecimals(1, 17); // 0.1 ETH
+  const deadline = Math.floor(Date.now() / 1000) + 86400; // 86400 seconds = 1 day
 
   const ethUsdMarket = {
     marketToken: ETH_USD_MARKET_TOKEN,
@@ -267,7 +268,7 @@ async function getComposedMsg({
       },
       account,
       params: defaultDepositParams,
-      deadline: 9999999999,
+      deadline,
       chainId: srcChainId,
       srcChainId: srcChainId, // 0 would mean same chain action
       desChainId: DST_CHAIN_ID,
@@ -338,7 +339,7 @@ async function getComposedMsg({
       },
       account: account,
       params: defaultWithdrawalParams,
-      deadline: 9999999999,
+      deadline,
       chainId: srcChainId,
       srcChainId: srcChainId,
       desChainId: DST_CHAIN_ID,
@@ -422,7 +423,7 @@ async function getComposedMsg({
       },
       account,
       params: defaultGlvDepositParams,
-      deadline: 9999999999,
+      deadline,
       chainId: srcChainId,
       srcChainId: srcChainId, // 0 would mean same chain action
       desChainId: DST_CHAIN_ID,
@@ -479,7 +480,7 @@ async function getComposedMsg({
       },
       account,
       referralCode,
-      deadline: 9999999999,
+      deadline,
       srcChainId, // 0 means non-multichain action
       desChainId: DST_CHAIN_ID, // for non-multichain actions, desChainId is the same as chainId
       relayRouter,
