@@ -826,7 +826,7 @@ export async function getCreateGlvDepositSignature({
   return signTypedData(signer, domain, types, typedData);
 }
 
-async function getCreateGlvWithdrawalSignature({
+export async function getCreateGlvWithdrawalSignature({
   signer,
   relayParams,
   transferRequests,
