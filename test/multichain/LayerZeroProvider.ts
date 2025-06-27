@@ -34,7 +34,6 @@ describe("LayerZeroProvider", () => {
     mockStargatePoolUsdc,
     referralStorage;
   let chainId;
-  const referralCode = hashString("referralCode");
 
   beforeEach(async () => {
     fixture = await deployFixture();
@@ -69,25 +68,23 @@ describe("LayerZeroProvider", () => {
   });
 
   describe("lzCompose", async () => {
-    it("mintAndBridge: usdc", async () => {
-      const amount = expandDecimals(1000, 6);
+    const wntAmount = expandDecimals(9, 18);
+    const usdcAmount = expandDecimals(45_000, 6);
+    const executionFee = expandDecimals(4, 15); // 0.004 ETH
 
+    it("mintAndBridge: usdc", async () => {
       await mintAndBridge(fixture, {
         token: usdc,
-        tokenAmount: amount,
+        tokenAmount: usdcAmount,
       });
 
       // usdc has been transterred from LayerZeroProvider to MultichainVault and recorded under the user's multicahin balance
       expect(await usdc.balanceOf(layerZeroProvider.address)).eq(0);
-      expect(await usdc.balanceOf(multichainVault.address)).eq(amount);
-      expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, usdc.address))).eq(amount);
+      expect(await usdc.balanceOf(multichainVault.address)).eq(usdcAmount);
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, usdc.address))).eq(usdcAmount);
     });
 
     describe("actionType: Deposit", () => {
-      const wntAmount = expandDecimals(9, 18);
-      const usdcAmount = expandDecimals(45_000, 6);
-      const executionFee = expandDecimals(4, 15); // 0.004 ETH
-
       let createDepositParams: Parameters<typeof sendCreateDeposit>[0];
       beforeEach(async () => {
         const defaultDepositParams = {
@@ -164,11 +161,7 @@ describe("LayerZeroProvider", () => {
       });
     });
 
-    describe("actionType: GlvDeposit using long / short tokens, without paying relayFee if LayerZeroProvider is whitelisted", () => {
-      const wntAmount = expandDecimals(9, 18);
-      const usdcAmount = expandDecimals(45_000, 6);
-      const executionFee = expandDecimals(4, 15); // 0.004 ETH
-
+    describe("actionType: GlvDeposit", () => {
       let createGlvDepositParams: Parameters<typeof sendCreateGlvDeposit>[0];
       beforeEach(async () => {
         const defaultGlvDepositParams = {
@@ -184,7 +177,7 @@ describe("LayerZeroProvider", () => {
             shortTokenSwapPath: [],
           },
           minGlvTokens: 100,
-          executionFee: 0,
+          executionFee,
           callbackGasLimit: "200000",
           shouldUnwrapNativeToken: true,
           isMarketTokenDeposit: false,
@@ -215,7 +208,7 @@ describe("LayerZeroProvider", () => {
         };
       });
 
-      it("creates glvDeposit without paying relayFee if LayerZeroProvider is whitelisted", async () => {
+      it("creates glvDeposit, using long / short tokens, without paying relayFee if LayerZeroProvider is whitelisted", async () => {
         await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolUsdc.SRC_EID()), chainId);
         // whitelist LayerZeroProvider to be excluded from paying the relay fee
         await dataStore.setBool(keys.isRelayFeeExcludedKey(layerZeroProvider.address), true);
@@ -248,6 +241,8 @@ describe("LayerZeroProvider", () => {
     });
 
     describe("actionType: SetTraderReferralCode", () => {
+      const referralCode = hashString("referralCode");
+
       let setTraderReferralCodeParams: Parameters<typeof sendSetTraderReferralCode>[0];
       beforeEach(async () => {
         setTraderReferralCodeParams = {
