@@ -4,9 +4,11 @@ import { getRelayParams } from "./relay/helpers";
 import { getSetTraderReferralCodeSignature } from "./relay/signatures";
 import {
   getCreateDepositSignature,
+  getCreateWithdrawalSignature,
   getCreateGlvDepositSignature,
   sendCreateDeposit,
   sendCreateGlvDeposit,
+  sendCreateWithdrawal,
 } from "./relay/multichain";
 
 export async function mintAndBridge(
@@ -99,6 +101,23 @@ const createDepositParamsType = `tuple(
     bytes32[] dataList
   )`;
 
+const createWithdrawalParamsType = `tuple(
+    tuple(
+      address receiver,
+      address callbackContract,
+      address uiFeeReceiver,
+      address market,
+      address[] longTokenSwapPath,
+      address[] shortTokenSwapPath
+    ) addresses,
+    uint256 minLongTokenAmount,
+    uint256 minShortTokenAmount,
+    bool shouldUnwrapNativeToken,
+    uint256 executionFee,
+    uint256 callbackGasLimit,
+    bytes32[] dataList
+  )`;
+
 const createGlvDepositParamsType = `tuple(
     tuple(
       address glv,
@@ -137,6 +156,31 @@ export async function encodeDepositMessage(
   );
 
   const ActionType = 1; // Deposit
+  const data = ethers.utils.defaultAbiCoder.encode(["uint8", "bytes"], [ActionType, actionData]);
+
+  const message = ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, data]);
+
+  return message;
+}
+
+export async function encodeWithdrawalMessage(
+  withdrawalParams: Parameters<typeof sendCreateWithdrawal>[0],
+  account: string
+): Promise<string> {
+  const relayParams = await getRelayParams(withdrawalParams);
+
+  const signature = await getCreateWithdrawalSignature({
+    ...withdrawalParams,
+    relayParams,
+    verifyingContract: withdrawalParams.relayRouter.address,
+  });
+
+  const actionData = ethers.utils.defaultAbiCoder.encode(
+    [relayParamsType, transferRequestsType, createWithdrawalParamsType],
+    [{ ...relayParams, signature }, withdrawalParams.transferRequests, withdrawalParams.params]
+  );
+
+  const ActionType = 5; // Withdrawal
   const data = ethers.utils.defaultAbiCoder.encode(["uint8", "bytes"], [ActionType, actionData]);
 
   const message = ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, data]);

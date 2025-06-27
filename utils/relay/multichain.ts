@@ -648,7 +648,7 @@ export async function getCreateDepositSignature({
   return signTypedData(signer, domain, types, typedData);
 }
 
-async function getCreateWithdrawalSignature({
+export async function getCreateWithdrawalSignature({
   signer,
   relayParams,
   transferRequests,

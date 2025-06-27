@@ -7,13 +7,15 @@ import {
   encodeDepositMessage,
   encodeGlvDepositMessage,
   encodeSetTraderReferralCodeMessage,
+  encodeWithdrawalMessage,
   mintAndBridge,
 } from "../../utils/multichain";
 import { hashString } from "../../utils/hash";
 import { sendSetTraderReferralCode } from "../../utils/relay/gelatoRelay";
-import { sendCreateDeposit, sendCreateGlvDeposit } from "../../utils/relay/multichain";
+import { sendCreateDeposit, sendCreateGlvDeposit, sendCreateWithdrawal } from "../../utils/relay/multichain";
 import { executeDeposit, getDepositCount } from "../../utils/deposit";
 import { executeGlvDeposit, getGlvDepositCount } from "../../utils/glv";
+import { executeWithdrawal, getWithdrawalCount } from "../../utils/withdrawal";
 
 describe("LayerZeroProvider", () => {
   let fixture;
@@ -24,6 +26,7 @@ describe("LayerZeroProvider", () => {
     ethUsdMarket,
     ethUsdGlvAddress,
     depositVault,
+    withdrawalVault,
     glvVault,
     multichainVault,
     layerZeroProvider,
@@ -45,6 +48,7 @@ describe("LayerZeroProvider", () => {
       ethUsdMarket,
       ethUsdGlvAddress,
       depositVault,
+      withdrawalVault,
       glvVault,
       multichainVault,
       layerZeroProvider,
@@ -84,7 +88,7 @@ describe("LayerZeroProvider", () => {
       expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, usdc.address))).eq(usdcAmount);
     });
 
-    describe("actionType: Deposit", () => {
+    describe("actionType: Deposit, Withdrawal", () => {
       let createDepositParams: Parameters<typeof sendCreateDeposit>[0];
       beforeEach(async () => {
         const defaultDepositParams = {
@@ -129,11 +133,13 @@ describe("LayerZeroProvider", () => {
         };
       });
 
-      it("creates deposit without paying relayFee if LayerZeroProvider is whitelisted", async () => {
+      beforeEach(async () => {
         await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolUsdc.SRC_EID()), chainId);
         // whitelist LayerZeroProvider to be excluded from paying the relay fee
         await dataStore.setBool(keys.isRelayFeeExcludedKey(layerZeroProvider.address), true);
+      });
 
+      it("creates deposit without paying relayFee if LayerZeroProvider is whitelisted", async () => {
         await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: wntAmount.add(executionFee) });
         await usdc.mint(user1.address, usdcAmount);
         await usdc.connect(user1).approve(mockStargatePoolUsdc.address, usdcAmount);
@@ -158,6 +164,95 @@ describe("LayerZeroProvider", () => {
         expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdMarket.marketToken))).to.eq(
           expandDecimals(90_000, 18)
         ); // 90,000 GM
+      });
+
+      it("creates withdrawal without paying relayFee if LayerZeroProvider is whitelisted", async () => {
+        // first create and execute deposit
+        await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: wntAmount.add(executionFee) });
+        await usdc.mint(user1.address, usdcAmount);
+        await usdc.connect(user1).approve(mockStargatePoolUsdc.address, usdcAmount);
+        const depositMessage = await encodeDepositMessage(createDepositParams, user1.address);
+        await mockStargatePoolUsdc.connect(user1).sendToken(layerZeroProvider.address, usdcAmount, depositMessage);
+        await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
+
+        const defaultWithdrawalParams = {
+          addresses: {
+            receiver: user1.address,
+            callbackContract: user1.address,
+            uiFeeReceiver: user1.address,
+            market: ethUsdMarket.marketToken,
+            longTokenSwapPath: [],
+            shortTokenSwapPath: [],
+          },
+          minLongTokenAmount: 0,
+          minShortTokenAmount: 0,
+          shouldUnwrapNativeToken: false,
+          executionFee,
+          callbackGasLimit: "200000",
+          dataList: [],
+        };
+        const createWithdrawalParams = {
+          sender: user1, // sender is user1 on the source chain, not GELATO_RELAY_ADDRESS
+          signer: user1,
+          feeParams: {
+            feeToken: wnt.address,
+            feeAmount: executionFee,
+            feeSwapPath: [],
+          },
+          transferRequests: {
+            tokens: [ethUsdMarket.marketToken],
+            receivers: [withdrawalVault.address],
+            amounts: [expandDecimals(22_500, 18)], // withdraw 25% of GM tokens
+          },
+          account: user1.address, // user1 was the receiver of the deposit
+          params: defaultWithdrawalParams,
+          deadline: 9999999999,
+          chainId,
+          srcChainId: chainId,
+          desChainId: chainId,
+          relayRouter: multichainGmRouter,
+          relayFeeToken: wnt.address,
+          relayFeeAmount: 0,
+        };
+
+        expect(await getWithdrawalCount(dataStore)).eq(0);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(executionFee);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdMarket.marketToken))).to.eq(
+          expandDecimals(90_000, 18)
+        ); // 90,000 GM
+
+        const withdrawalMessage = await encodeWithdrawalMessage(createWithdrawalParams, user1.address);
+        // await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: executionFee });
+        const minBridgingAmount = expandDecimals(1, 6); // minimum amount required by a stargate pool to bridge a message
+        await usdc.mint(user1.address, minBridgingAmount);
+        await usdc.connect(user1).approve(mockStargatePoolUsdc.address, minBridgingAmount);
+        await mockStargatePoolUsdc
+          .connect(user1)
+          .sendToken(layerZeroProvider.address, minBridgingAmount, withdrawalMessage);
+
+        expect(await getWithdrawalCount(dataStore)).eq(1);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(
+          minBridgingAmount
+        );
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdMarket.marketToken))).to.eq(
+          expandDecimals(67_500, 18)
+        ); // 90,000 - 22,500 = 67,500 GM
+
+        // GM tokens are burned and wnt/usdc are sent to multichainVault and user's multichain balance is increased
+        await executeWithdrawal(fixture, { gasUsageLabel: "executeWithdrawal" });
+
+        expect(await getWithdrawalCount(dataStore)).eq(0);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(
+          wntAmount.div(4).add(executionFee)
+        ); // 25% of GM tokens were withdrawn, so 25% of wnt is sent to multichainVault
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(
+          usdcAmount.div(4).add(minBridgingAmount)
+        ); // 25% of GM tokens were withdrawn, so 25% of usdc is sent to multichainVault
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdMarket.marketToken))).to.eq(
+          expandDecimals(67_500, 18)
+        ); // 90,000 - 22,500 = 67,500 GM
       });
     });
 
