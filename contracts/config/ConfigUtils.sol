@@ -19,82 +19,95 @@ library ConfigUtils {
     using EventUtils for EventUtils.Bytes32Items;
     using EventUtils for EventUtils.BoolItems;
 
-    function setPriceFeed(
-        DataStore dataStore,
-        EventEmitter eventEmitter,
-        address token,
-        address priceFeed,
-        uint256 priceFeedMultiplier,
-        uint256 priceFeedHeartbeatDuration,
-        uint256 stablePrice
-    ) external {
-        if (dataStore.getAddress(Keys.priceFeedKey(token)) != address(0)) {
-            revert Errors.PriceFeedAlreadyExistsForToken(token);
-        }
-
-        dataStore.setAddress(Keys.priceFeedKey(token), priceFeed);
-        dataStore.setUint(Keys.priceFeedMultiplierKey(token), priceFeedMultiplier);
-        dataStore.setUint(Keys.priceFeedHeartbeatDurationKey(token), priceFeedHeartbeatDuration);
-        dataStore.setUint(Keys.stablePriceKey(token), stablePrice);
-
-        EventUtils.EventLogData memory eventData;
-
-        eventData.addressItems.initItems(2);
-        eventData.addressItems.setItem(0, "token", token);
-        eventData.addressItems.setItem(1, "priceFeed", priceFeed);
-
-        eventData.uintItems.initItems(3);
-        eventData.uintItems.setItem(0, "priceFeedMultiplier", priceFeedMultiplier);
-        eventData.uintItems.setItem(1, "priceFeedHeartbeatDuration", priceFeedHeartbeatDuration);
-        eventData.uintItems.setItem(2, "stablePrice", stablePrice);
-
-        eventEmitter.emitEventLog1(
-            "ConfigSetPriceFeed",
-            Cast.toBytes32(token),
-            eventData
-        );
+    struct InitOracleConfigPriceFeedParams {
+        address feedAddress;
+        uint256 multiplier;
+        uint256 heartbeatDuration;
+        uint256 stablePrice;
     }
 
-    function setDataStream(
+    struct InitOracleConfigDataStreamParams {
+        bytes32 feedId;
+        uint256 multiplier;
+        uint256 spreadReductionFactor;
+    }
+
+    struct InitOracleConfigParams {
+        address token;
+        InitOracleConfigPriceFeedParams priceFeed;
+        InitOracleConfigDataStreamParams dataStream;
+        bytes32 edgeDataStreamId;
+    }
+
+    // 0.00001% per second, ~315% per year
+    uint256 public constant MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND = 100000000000000000000000;
+    // at this rate max allowed funding rate will be reached in 1 hour at 100% imbalance if max funding rate is 315%
+    uint256 public constant MAX_ALLOWED_FUNDING_INCREASE_FACTOR_PER_SECOND = MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND / 1 hours;
+    // at this rate zero funding rate will be reached in 24 hours if max funding rate is 315%
+    uint256 public constant MAX_ALLOWED_FUNDING_DECREASE_FACTOR_PER_SECOND = MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND / 24 hours;
+    // minimum duration required to fully distribute the position impact pool amount
+    uint256 public constant MIN_POSITION_IMPACT_POOL_DISTRIBUTION_TIME = 7 days;
+
+    // only allow initializing oracle config if there is no config set for any oracle provider
+    // this is to prevent a malicious config keeper from misconfiguring an oracle provider for
+    // a token then updating the token's oracle provider to the misconfigured provider
+    // if updating of oracle config is needed for a token that already has an oracle config
+    // the TimelockConfig should be used instead
+    function initOracleConfig(
         DataStore dataStore,
         EventEmitter eventEmitter,
-        address token,
-        bytes32 feedId,
-        uint256 dataStreamMultiplier,
-        uint256 dataStreamSpreadReductionFactor,
-        uint256 maxAllowedMaxFundingFactorPerSecond,
-        uint256 maxAllowedFundingIncreaseFactorPerSecond,
-        uint256 maxAllowedFundingDecreaseFactorPerSecond
+        InitOracleConfigParams memory params
     ) external {
-        if (dataStore.getBytes32(Keys.dataStreamIdKey(token)) != bytes32(0)) {
-            revert Errors.DataStreamIdAlreadyExistsForToken(token);
+        if (dataStore.getAddress(Keys.priceFeedKey(params.token)) != address(0)) {
+            revert Errors.PriceFeedAlreadyExistsForToken(params.token);
         }
+
+        if (dataStore.getBytes32(Keys.dataStreamIdKey(params.token)) != bytes32(0)) {
+            revert Errors.DataStreamIdAlreadyExistsForToken(params.token);
+        }
+
+        if (dataStore.getBytes32(Keys.edgeDataStreamIdKey(params.token)) != bytes32(0)) {
+            revert Errors.EdgeDataStreamIdAlreadyExistsForToken(params.token);
+        }
+
+        dataStore.setAddress(Keys.priceFeedKey(params.token), params.priceFeed.feedAddress);
+        dataStore.setUint(Keys.priceFeedMultiplierKey(params.token), params.priceFeed.multiplier);
+        dataStore.setUint(Keys.priceFeedHeartbeatDurationKey(params.token), params.priceFeed.heartbeatDuration);
+        dataStore.setUint(Keys.stablePriceKey(params.token), params.priceFeed.stablePrice);
 
         validateRange(
             dataStore,
             Keys.DATA_STREAM_SPREAD_REDUCTION_FACTOR,
-            abi.encode(token),
-            dataStreamSpreadReductionFactor,
-            maxAllowedMaxFundingFactorPerSecond,
-            maxAllowedFundingIncreaseFactorPerSecond,
-            maxAllowedFundingDecreaseFactorPerSecond
+            abi.encode(params.token),
+            params.dataStream.spreadReductionFactor
         );
 
-        dataStore.setBytes32(Keys.dataStreamIdKey(token), feedId);
-        dataStore.setUint(Keys.dataStreamMultiplierKey(token), dataStreamMultiplier);
-        dataStore.setUint(Keys.dataStreamSpreadReductionFactorKey(token), dataStreamSpreadReductionFactor);
+        dataStore.setBytes32(Keys.dataStreamIdKey(params.token), params.dataStream.feedId);
+        dataStore.setUint(Keys.dataStreamMultiplierKey(params.token), params.dataStream.multiplier);
+        dataStore.setUint(Keys.dataStreamSpreadReductionFactorKey(params.token), params.dataStream.spreadReductionFactor);
+
+        dataStore.setBytes32(Keys.edgeDataStreamIdKey(params.token), params.edgeDataStreamId);
 
         EventUtils.EventLogData memory eventData;
-        eventData.addressItems.initItems(1);
-        eventData.addressItems.setItem(0, "token", token);
-        eventData.bytes32Items.initItems(1);
-        eventData.bytes32Items.setItem(0, "feedId", feedId);
-        eventData.uintItems.initItems(2);
-        eventData.uintItems.setItem(0, "dataStreamMultiplier", dataStreamMultiplier);
-        eventData.uintItems.setItem(1, "dataStreamSpreadReductionFactor", dataStreamSpreadReductionFactor);
+
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "token", params.token);
+        eventData.addressItems.setItem(1, "priceFeedAddress", params.priceFeed.feedAddress);
+
+        eventData.uintItems.initItems(5);
+        eventData.uintItems.setItem(0, "priceFeedMultiplier", params.priceFeed.multiplier);
+        eventData.uintItems.setItem(1, "priceFeedHeartbeatDuration", params.priceFeed.heartbeatDuration);
+        eventData.uintItems.setItem(2, "stablePrice", params.priceFeed.stablePrice);
+        eventData.uintItems.setItem(3, "dataStreamMultiplier", params.dataStream.multiplier);
+        eventData.uintItems.setItem(4, "dataStreamSpreadReductionFactor", params.dataStream.spreadReductionFactor);
+
+        eventData.bytes32Items.initItems(2);
+        eventData.bytes32Items.setItem(0, "dataStreamFeedId", params.dataStream.feedId);
+        eventData.bytes32Items.setItem(1, "edgeDataStreamId", params.edgeDataStreamId);
+
         eventEmitter.emitEventLog1(
-            "ConfigSetDataStream",
-            Cast.toBytes32(token),
+            "InitOracleConfig",
+            Cast.toBytes32(params.token),
             eventData
         );
     }
@@ -201,24 +214,18 @@ library ConfigUtils {
         EventEmitter eventEmitter,
         address market,
         uint256 minPositionImpactPoolAmount,
-        uint256 positionImpactPoolDistributionRate,
-        uint256 minPositionImpactPoolDistributionTime
+        uint256 positionImpactPoolDistributionRate
     ) external {
         MarketUtils.distributePositionImpactPool(dataStore, eventEmitter, market);
 
         // Ensure the full positionImpactPoolAmount cannot be distributed in less then the minimum required time
         uint256 positionImpactPoolAmount = MarketUtils.getPositionImpactPoolAmount(dataStore, market);
         // positionImpactPoolDistributionRate has FLOAT_PRECISION, distributionAmount has WEI_PRECISION
-        uint256 distributionAmount = Precision.applyFactor(minPositionImpactPoolDistributionTime, positionImpactPoolDistributionRate);
+        uint256 distributionAmount = Precision.applyFactor(MIN_POSITION_IMPACT_POOL_DISTRIBUTION_TIME, positionImpactPoolDistributionRate);
         if (positionImpactPoolAmount > 0) {
             if (distributionAmount >= positionImpactPoolAmount) {
                 revert Errors.InvalidPositionImpactPoolDistributionRate(distributionAmount, positionImpactPoolAmount);
             }
-        }
-
-        int256 totalPendingImpactAmount = MarketUtils.getTotalPendingImpactAmount(dataStore, market);
-        if (totalPendingImpactAmount > 0 && minPositionImpactPoolAmount < totalPendingImpactAmount.toUint256()) {
-            revert Errors.InsufficientMinPositionImpactPoolAmount(minPositionImpactPoolAmount, totalPendingImpactAmount);
         }
 
         dataStore.setUint(Keys.minPositionImpactPoolAmountKey(market), minPositionImpactPoolAmount);
@@ -249,10 +256,7 @@ library ConfigUtils {
         DataStore dataStore,
         bytes32 baseKey,
         bytes memory data,
-        uint256 value,
-        uint256 maxAllowedMaxFundingFactorPerSecond,
-        uint256 maxAllowedFundingIncreaseFactorPerSecond,
-        uint256 maxAllowedFundingDecreaseFactorPerSecond
+        uint256 value
     ) public view {
         if (
             baseKey == Keys.SEQUENCER_GRACE_DURATION
@@ -273,7 +277,7 @@ library ConfigUtils {
         if (
             baseKey == Keys.MAX_FUNDING_FACTOR_PER_SECOND
         ) {
-            if (value > maxAllowedMaxFundingFactorPerSecond) {
+            if (value > MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND) {
                 revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
             }
 
@@ -297,7 +301,7 @@ library ConfigUtils {
         if (
             baseKey == Keys.FUNDING_INCREASE_FACTOR_PER_SECOND
         ) {
-            if (value > maxAllowedFundingIncreaseFactorPerSecond) {
+            if (value > MAX_ALLOWED_FUNDING_INCREASE_FACTOR_PER_SECOND) {
                 revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
             }
         }
@@ -305,7 +309,7 @@ library ConfigUtils {
         if (
             baseKey == Keys.FUNDING_DECREASE_FACTOR_PER_SECOND
         ) {
-            if (value > maxAllowedFundingDecreaseFactorPerSecond) {
+            if (value > MAX_ALLOWED_FUNDING_DECREASE_FACTOR_PER_SECOND) {
                 revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
             }
         }

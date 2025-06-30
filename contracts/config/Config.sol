@@ -25,17 +25,6 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
 
-    uint256 public constant MAX_FEE_FACTOR = 5 * Precision.FLOAT_PRECISION / 100; // 5%
-
-    // 0.00001% per second, ~315% per year
-    uint256 public constant MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND = 100000000000000000000000;
-    // at this rate max allowed funding rate will be reached in 1 hour at 100% imbalance if max funding rate is 315%
-    uint256 public constant MAX_ALLOWED_FUNDING_INCREASE_FACTOR_PER_SECOND = MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND / 1 hours;
-    // at this rate zero funding rate will be reached in 24 hours if max funding rate is 315%
-    uint256 public constant MAX_ALLOWED_FUNDING_DECREASE_FACTOR_PER_SECOND = MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND / 24 hours;
-    // minimum duration required to fully distribute the position impact pool amount
-    uint256 public constant MIN_POSITION_IMPACT_POOL_DISTRIBUTION_TIME = 7 days;
-
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
 
@@ -111,41 +100,13 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         );
     }
 
-    function setPriceFeed(
-        address token,
-        address priceFeed,
-        uint256 priceFeedMultiplier,
-        uint256 priceFeedHeartbeatDuration,
-        uint256 stablePrice
+    function initOracleConfig(
+        ConfigUtils.InitOracleConfigParams memory params
     ) external onlyConfigKeeper nonReentrant {
-        ConfigUtils.setPriceFeed(
+        ConfigUtils.initOracleConfig(
             dataStore,
             eventEmitter,
-            token,
-            priceFeed,
-            priceFeedMultiplier,
-            priceFeedHeartbeatDuration,
-            stablePrice
-        );
-    }
-
-    function setDataStream(
-        address token,
-        bytes32 feedId,
-        uint256 dataStreamMultiplier,
-        uint256 dataStreamSpreadReductionFactor
-    ) external onlyConfigKeeper nonReentrant {
-
-        ConfigUtils.setDataStream(
-            dataStore,
-            eventEmitter,
-            token,
-            feedId,
-            dataStreamMultiplier,
-            dataStreamSpreadReductionFactor,
-            MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND,
-            MAX_ALLOWED_FUNDING_INCREASE_FACTOR_PER_SECOND,
-            MAX_ALLOWED_FUNDING_DECREASE_FACTOR_PER_SECOND
+            params
         );
     }
 
@@ -211,8 +172,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             eventEmitter,
             market,
             minPositionImpactPoolAmount,
-            positionImpactPoolDistributionRate,
-            MIN_POSITION_IMPACT_POOL_DISTRIBUTION_TIME
+            positionImpactPoolDistributionRate
         );
     }
 
@@ -314,10 +274,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             dataStore,
             baseKey,
             data,
-            value,
-            MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND,
-            MAX_ALLOWED_FUNDING_INCREASE_FACTOR_PER_SECOND,
-            MAX_ALLOWED_FUNDING_DECREASE_FACTOR_PER_SECOND
+            value
         );
 
         dataStore.setUint(fullKey, value);
@@ -457,9 +414,11 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
         allowedBaseKeys[Keys.CREATE_DEPOSIT_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.DEPOSIT_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.CREATE_WITHDRAWAL_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.WITHDRAWAL_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.CREATE_GLV_DEPOSIT_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.GLV_DEPOSIT_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.CREATE_GLV_WITHDRAWAL_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.GLV_WITHDRAWAL_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.GLV_SHIFT_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.GLV_PER_MARKET_GAS_LIMIT] = true;

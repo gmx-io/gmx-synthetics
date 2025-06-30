@@ -34,7 +34,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     ISwapHandler public immutable swapHandler;
     IExternalHandler public immutable externalHandler;
 
-    mapping(address => uint256) public userNonces;
+    mapping(bytes32 => bool) public digests; // Store digests to prevent duplicate transactions
 
     modifier withRelay(
         IRelayUtils.RelayParams calldata relayParams,
@@ -60,7 +60,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         orderHandler = _orderHandler;
         orderVault = _orderVault;
         swapHandler = _swapHandler;
-        
         externalHandler = _externalHandler;
     }
 
@@ -270,12 +269,9 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         uint256 srcChainId,
         bool isSubaccount
     ) internal {
-        /// @dev relay fee is excluded for calls made through the IMultichainProvider
-        /// as the user already paid for execution on the source chain
-        if (dataStore.getBool(Keys.isRelayFeeExcludedKey(msg.sender))) {
-            return;
-        }
-
+        // we do not return early here even if isRelayFeeExcluded is true
+        // for the msg.sender
+        // this would allow fee tokens to still be swapped if needed
         if (_isGelatoRelay(msg.sender) && _getFeeToken() != contracts.wnt) {
             revert Errors.UnsupportedRelayFeeToken(_getFeeToken(), contracts.wnt);
         }
@@ -292,7 +288,9 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
                 }
             }
 
+            // send tokens to the orderVault to swap
             _sendTokens(account, relayParams.fee.feeToken, address(contracts.orderVault), relayParams.fee.feeAmount, srcChainId);
+            // swapFeeTokens will swap the tokens and send the output tokens to address(this)
             RelayUtils.swapFeeTokens(contracts, eventEmitter, oracle, relayParams.fee);
         } else if (relayParams.fee.feeToken == contracts.wnt) {
             // fee tokens could be sent through external calls
@@ -331,31 +329,30 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         address account,
         uint256 srcChainId
     ) internal {
+        uint256 relayFee;
+        uint256 residualFeeAmount = ERC20(contracts.wnt).balanceOf(address(this));
+
         /// @dev relay fee is excluded for calls made through the IMultichainProvider
         /// as the user already paid for execution on the source chain
-        if (dataStore.getBool(Keys.isRelayFeeExcludedKey(msg.sender))) {
-            return;
-        }
+        if (!dataStore.getBool(Keys.isRelayFeeExcludedKey(msg.sender))) {
+            bool isSponsoredCall = !_isGelatoRelay(msg.sender);
+            if (isSponsoredCall) {
+                relayFee = GasUtils.payGelatoRelayFee(
+                    contracts.dataStore,
+                    contracts.wnt,
+                    startingGas,
+                    msg.data.length,
+                    residualFeeAmount
+                );
+            } else {
+                relayFee = _getFee();
 
-        bool isSponsoredCall = !_isGelatoRelay(msg.sender);
-        uint256 residualFeeAmount = ERC20(contracts.wnt).balanceOf(address(this));
-        uint256 relayFee;
-        if (isSponsoredCall) {
-            relayFee = GasUtils.payGelatoRelayFee(
-                contracts.dataStore,
-                contracts.wnt,
-                startingGas,
-                msg.data.length,
-                residualFeeAmount
-            );
-        } else {
-            relayFee = _getFee();
+                if (relayFee > residualFeeAmount) {
+                    revert Errors.InsufficientRelayFee(relayFee, residualFeeAmount);
+                }
 
-            if (relayFee > residualFeeAmount) {
-                revert Errors.InsufficientRelayFee(relayFee, residualFeeAmount);
+                _transferRelayFee();
             }
-
-            _transferRelayFee();
         }
 
         residualFeeAmount -= relayFee;
@@ -378,13 +375,25 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     }
 
     function _validateCall(IRelayUtils.RelayParams calldata relayParams, address account, bytes32 structHash, uint256 srcChainId) internal {
-        _validateCallWithoutSignature(relayParams, srcChainId);
+        _validateCallWithoutSignature(
+            srcChainId,
+            relayParams.desChainId,
+            relayParams.deadline,
+            relayParams.tokenPermits.length
+        );
 
         bytes32 domainSeparator = RelayUtils.getDomainSeparator(srcChainId);
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
-        RelayUtils.validateSignature(digest, relayParams.signature, account, "call");
 
-        _validateNonce(account, relayParams.userNonce);
+        _validateDigest(digest);
+
+        RelayUtils.validateSignature(
+            domainSeparator,
+            digest,
+            relayParams.signature,
+            account,
+            "call"
+        );
     }
 
     function _isMultichain() internal pure virtual returns (bool) {
@@ -397,25 +406,27 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         }
     }
 
-    function _validateNonce(address account, uint256 userNonce) internal {
-        if (userNonces[account] != userNonce) {
-            revert Errors.InvalidUserNonce(userNonces[account], userNonce);
+    /// @dev Once a transaction is signed and sent to a relay, it cannot be canceled.
+    /// The user must wait for the expiresAt to pass.
+    function _validateDigest(bytes32 digest) internal {
+        if (digests[digest]) {
+            revert Errors.InvalidUserDigest(digest);
         }
-        userNonces[account] = userNonce + 1;
+        digests[digest] = true;
     }
 
     function _validateGaslessFeature() internal view {
         FeatureUtils.validateFeature(dataStore, Keys.gaslessFeatureDisabledKey(address(this)));
     }
 
-    function _validateCallWithoutSignature(IRelayUtils.RelayParams calldata relayParams, uint256 srcChainId) internal view {
-        if (relayParams.desChainId != block.chainid) {
-            revert Errors.InvalidDestinationChainId(relayParams.desChainId);
+    function _validateCallWithoutSignature(uint256 srcChainId, uint256 desChainId, uint256 deadline, uint256 tokenPermitsLength) internal view {
+        if (desChainId != block.chainid) {
+            revert Errors.InvalidDestinationChainId(desChainId);
         }
 
         if (_isMultichain()) {
             // multichain
-            if (relayParams.tokenPermits.length != 0) {
+            if (tokenPermitsLength != 0) {
                 revert Errors.TokenPermitsNotAllowedForMultichain();
             }
             if (!dataStore.getBool(Keys.isSrcChainIdEnabledKey(srcChainId))) {
@@ -428,6 +439,6 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
             }
         }
 
-        _validateDeadline(relayParams.deadline);
+        _validateDeadline(deadline);
     }
 }

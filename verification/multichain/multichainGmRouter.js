@@ -1,6 +1,6 @@
 // Verification arguments for MultichainGmRouter
 // Usage example:
-// npx hardhat verify --network arbitrumSepolia --constructor-args ./verification/multichain/multichainGmRouter.js --contract contracts/multichain/MultichainGmRouter.sol:MultichainGmRouter 0x0d9d33D00Ce2bF8eF0bb505F4A2D23988E0DA119
+// npx hardhat verify --network arbitrumSepolia --constructor-args ./verification/multichain/multichainGmRouter.js --contract contracts/multichain/MultichainGmRouter.sol:MultichainGmRouter 0x0a0Aad0aFA2d9f0a9604363d616d267516BE1FBb
 
 module.exports = [
   {
@@ -18,7 +18,7 @@ module.exports = [
   "0x809Ea82C394beB993c2b6B0d73b8FD07ab92DE5A", // DepositVault
   "0xAedbc2E44A5BED1c37c6e09184044B29De3a2c5f", // DepositHandler
   "0x7601c9dBbDCf1f5ED1E7Adba4EFd9f2cADa037A5", // WithdrawalVault
-  "0xAD8D86238B615C7B671d8c7e0521a2F5D03E0808", // WithdrawalHandler
+  "0x30cD4bdC0Be8b0F5B54C4312cA6Bc3817a67162F", // WithdrawalHandler
   "0x6b6F9B7B9a6b69942DAE74FB95E694ec277117af", // ShiftVault
   "0x4AEe88e123FE69e39799C22f479f129ab8e2b2d2"  // ShiftHandler
 ];

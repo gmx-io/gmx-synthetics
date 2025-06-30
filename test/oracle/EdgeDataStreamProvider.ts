@@ -4,18 +4,18 @@ import * as keys from "../../utils/keys";
 import { expandDecimals } from "../../utils/math";
 import { decodeValidatedPrice } from "../../utils/oracle-provider";
 import { BigNumberish } from "ethers";
-import { encodeData } from "../../utils/hash";
+import { encodeData, hashString, keccakString } from "../../utils/hash";
 import { ethers } from "hardhat";
 
 describe("EdgeDataStreamProvider", function () {
   let fixture;
   let edgeDataStreamProvider, dataStore, oracle, token;
   const BTC_USD_FEED_ID = "BTCUSD";
-  const TIMESTAMP = 1747034118n;
-  const BID = 10569056357735n;
-  const ASK = 10569056357735n;
-  const PRICE = 10569056357735n;
-  const ROUND_ID = 62036512n;
+  const TIMESTAMP = 1750837864n;
+  const BID = 10671055000000n;
+  const ASK = 10671056000000n;
+  const PRICE = 10671056000000n;
+  const ROUND_ID = 69643918n;
 
   function encodeReport(feedId: string, bid: BigNumberish, ask: BigNumberish, signature: string, expo: BigNumberish) {
     return encodeData(
@@ -30,7 +30,7 @@ describe("EdgeDataStreamProvider", function () {
     const ask = ASK;
     const expo = overrides?.expoOverride || -8n;
     const signature =
-      "0xac126b457de59dfdda25c19dde8e78104cf5a6a30613bb8916aef73551cb97710b563a8fe98c6fd5d054a2940ba90af7c66b129b0b2deb841cd1d490bb4ef19e1b";
+      "0x362238f28eb7273f1235d307a147e2ccdef655835566b43a22c5902b9673f64332b206ff569dbdc08e69ff60db64a93189817d8f38e15a8074bc2e2315b6cd0e1c";
     const data = encodeReport(feedId, bid, ask, signature, expo);
 
     const callData = edgeDataStreamProvider.interface.encodeFunctionData("getOraclePrice", [token.address, data]);
@@ -47,10 +47,7 @@ describe("EdgeDataStreamProvider", function () {
     fixture = await deployFixture();
     ({ edgeDataStreamProvider, dataStore, oracle, wbtc: token } = fixture.contracts);
 
-    await dataStore.setBytes32(
-      keys.edgeDataStreamIdKey(token.address),
-      ethers.utils.formatBytes32String(BTC_USD_FEED_ID)
-    );
+    await dataStore.setBytes32(keys.edgeDataStreamIdKey(token.address), keccakString(BTC_USD_FEED_ID));
   });
 
   it("should call getOraclePrice and return valid params", async function () {

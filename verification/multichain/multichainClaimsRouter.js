@@ -1,7 +1,7 @@
 // a custom argument file may be needed for complex arguments
 // https://hardhat.org/hardhat-runner/plugins/nomicfoundation-hardhat-verify#complex-arguments
 
-// ARBISCAN_API_KEY=<api key> npx hardhat --network arbitrumSepolia verify --constructor-args ./verification/multichain/multichainClaimsRouter.js --contract contracts/multichain/MultichainClaimsRouter.sol:MultichainClaimsRouter 0x2E76656fC34E53AADfFB2a7985bC3D140e44ADA4
+// ARBISCAN_API_KEY=<api key> npx hardhat --network arbitrumSepolia verify --constructor-args ./verification/multichain/multichainClaimsRouter.js --contract contracts/multichain/MultichainClaimsRouter.sol:MultichainClaimsRouter 0xb8f2544beb1654aA3401e065A0360d4745c5c672
 
 module.exports = [
   {

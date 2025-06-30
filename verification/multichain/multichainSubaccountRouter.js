@@ -1,6 +1,6 @@
 // Verification arguments for MultichainSubaccountRouter
 // Usage example:
-// npx hardhat verify --network arbitrumSepolia --constructor-args ./verification/multichain/multichainSubaccountRouter.js --contract contracts/multichain/MultichainSubaccountRouter.sol:MultichainSubaccountRouter 0x6CF2C0b3190A1D432688c3De0cee1615142c7BEE
+// npx hardhat verify --network arbitrumSepolia --constructor-args ./verification/multichain/multichainSubaccountRouter.js --contract contracts/multichain/MultichainSubaccountRouter.sol:MultichainSubaccountRouter 0xbEF71a2f866c8C0F591BAdb01825af2E0EC84340
 
 module.exports = [
   {

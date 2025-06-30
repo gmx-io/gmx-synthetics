@@ -276,11 +276,11 @@ library ExecuteDepositUtils {
         BridgeOutFromControllerUtils.bridgeOutFromController(
             params.eventEmitter,
             params.multichainTransferRouter,
-            deposit.receiver(), // account
+            deposit.account(),
+            deposit.receiver(),
             deposit.srcChainId(),
             cache.market.marketToken, // token
             cache.receivedMarketTokens, // amount
-            params.key,
             deposit.dataList()
         );
 

@@ -35,9 +35,9 @@ library Errors {
     error OracleProviderMinChangeDelayNotYetPassed(address token, address provider);
     error PriceFeedAlreadyExistsForToken(address token);
     error DataStreamIdAlreadyExistsForToken(address token);
+    error EdgeDataStreamIdAlreadyExistsForToken(address token);
     error MaxFundingFactorPerSecondLimitExceeded(uint256 maxFundingFactorPerSecond, uint256 limit);
     error InvalidPositionImpactPoolDistributionRate(uint256 distributionAmount, uint256 positionImpactPoolAmount);
-    error InsufficientMinPositionImpactPoolAmount(uint256 minPositionImpactPoolAmount, int256 totalPendingImpactAmount);
     error MaxDataListLengthExceeded(uint256 dataLength, uint256 maxDataLength);
     error EmptyToken();
 
@@ -64,7 +64,6 @@ library Errors {
     error EmptyFundingAccount();
     error EmptyReduceLentAmount();
     error ReductionExceedsLentAmount(uint256 lentAmount, uint256 totalReductionAmount);
-    error TargetIsNotAContract(address target);
 
     // GlvDepositStoreUtils errors
     error GlvDepositNotFound(bytes32 key);
@@ -471,13 +470,14 @@ library Errors {
 
     // Gelato relay errors
     error InvalidSignature(string signatureType);
+    error InvalidRecoveredSigner(string signatureType, address recovered, address recoveredFromMinified, address expectedSigner);
     // User sent incorrect fee token or incorrect swap path
     error UnexpectedRelayFeeTokenAfterSwap(address feeToken, address expectedFeeToken);
     error UnexpectedRelayFeeToken(address feeToken, address expectedFeeToken);
     // Contract received unsupported fee token from Gelato relay
     error UnsupportedRelayFeeToken(address feeToken, address expectedFeeToken);
     error InvalidPermitSpender(address spender, address expectedSpender);
-    error InvalidUserNonce(uint256 storedUserNonce, uint256 userNonce);
+    error InvalidUserDigest(bytes32 digest);
     error SubaccountApprovalDeadlinePassed(uint256 currentTimestamp, uint256 deadline);
     error InvalidSubaccountApprovalNonce(uint256 storedNonce, uint256 nonce);
     error DeadlinePassed(uint256 currentTimestamp, uint256 deadline);

@@ -391,6 +391,12 @@ library GasUtils {
         return dataStore.getUint(Keys.depositGasLimitKey()) + deposit.callbackGasLimit() + gasForSwaps;
     }
 
+    function estimateCreateWithdrawalGasLimit(
+        DataStore dataStore
+    ) internal view returns (uint256) {
+        return dataStore.getUint(Keys.CREATE_WITHDRAWAL_GAS_LIMIT);
+    }
+
     // @dev the estimated gas limit for withdrawals
     // @param dataStore DataStore
     // @param withdrawal the withdrawal to estimate the gas limit for
@@ -514,6 +520,12 @@ library GasUtils {
         uint256 gasForSwaps = swapCount * gasPerSwap;
 
         return gasLimit + dataStore.getUint(Keys.depositGasLimitKey()) + gasForSwaps;
+    }
+
+    function estimateCreateGlvWithdrawalGasLimit(
+        DataStore dataStore
+    ) internal view returns (uint256) {
+        return dataStore.getUint(Keys.CREATE_GLV_WITHDRAWAL_GAS_LIMIT);
     }
 
     // @dev the estimated gas limit for glv withdrawals

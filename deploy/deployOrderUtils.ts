@@ -10,7 +10,7 @@ const func = createDeployFunction({
     "CallbackUtils",
     "MarketUtils",
     "MultichainUtils",
-    "PositionStoreUtils",
+    "SwapUtils",
   ],
 });
 

@@ -16,14 +16,14 @@ describe("EdgeDataStreamVerifier", function () {
 
   it("should verify a valid signature", async function () {
     const feedId = "BTCUSD";
-    const price = 10569056357735n;
-    const roundId = 62036512n;
-    const timestamp = 1747034118n;
-    const bid = 10569056357735n;
-    const ask = 10569056357735n;
+    const price = 10671056000000n;
+    const roundId = 69643918n;
+    const timestamp = 1750837864n;
+    const bid = 10671055000000n;
+    const ask = 10671056000000n;
     const expo = -8;
     const signature =
-      "0xac126b457de59dfdda25c19dde8e78104cf5a6a30613bb8916aef73551cb97710b563a8fe98c6fd5d054a2940ba90af7c66b129b0b2deb841cd1d490bb4ef19e1b";
+      "0x362238f28eb7273f1235d307a147e2ccdef655835566b43a22c5902b9673f64332b206ff569dbdc08e69ff60db64a93189817d8f38e15a8074bc2e2315b6cd0e1c";
 
     const isValid = await verifier.verifySignature(feedId, price, roundId, timestamp, bid, ask, expo, signature);
     expect(isValid).to.be.true;
@@ -62,14 +62,14 @@ describe("EdgeDataStreamVerifier", function () {
 
   it("should extract the correct signer address", async function () {
     const feedId = "SOLUSD";
-    const price = 17897261207n;
-    const roundId = 62036512n;
-    const timestamp = 1747034118n;
-    const bid = 17896761214n;
-    const ask = 17897261207n;
+    const price = 14722937298n;
+    const roundId = 69643918n;
+    const timestamp = 1750837864n;
+    const bid = 14722437045n;
+    const ask = 14722937298n;
     const expo = -8;
     const signature =
-      "0xff0f98a71c3b166b5639e47f53b340147f9b02b718d33716711b38c532f549b940aea2b061d896ccf193770360ba288da1f267e9783b00b4fe3c34c6a66ebc831c";
+      "0x196d8b2d3f9b583f62a9727a56128d3b117dd1b9305cd499cbdca4b2f5865cc53d02caf049c3725e20926506ab0ea46cae2b3d31f183eca71cae86ed0fe54ab21c";
 
     const signer = await verifier.extractSigner(feedId, price, roundId, timestamp, bid, ask, expo, signature);
 

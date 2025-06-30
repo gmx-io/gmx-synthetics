@@ -59,10 +59,10 @@ contract MultichainGmRouter is IMultichainGmRouter, MultichainRouter {
         IRelayUtils.TransferRequests calldata transferRequests,
         IDepositUtils.CreateDepositParams calldata params
     ) private returns (bytes32) {
+        _processTransferRequests(account, transferRequests, srcChainId);
+
         address wnt = TokenUtils.wnt(dataStore);
         IERC20(wnt).safeTransfer(address(depositVault), params.executionFee);
-
-        _processTransferRequests(account, transferRequests, srcChainId);
 
         return depositHandler.createDeposit(account, srcChainId, params);
     }
@@ -77,10 +77,10 @@ contract MultichainGmRouter is IMultichainGmRouter, MultichainRouter {
         bytes32 structHash = RelayUtils.getCreateWithdrawalStructHash(relayParams, transferRequests, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
+        _processTransferRequests(account, transferRequests, srcChainId);
+
         address wnt = TokenUtils.wnt(dataStore);
         IERC20(wnt).safeTransfer(address(withdrawalVault), params.executionFee);
-
-        _processTransferRequests(account, transferRequests, srcChainId);
 
         return withdrawalHandler.createWithdrawal(account, srcChainId, params);
     }
@@ -95,10 +95,10 @@ contract MultichainGmRouter is IMultichainGmRouter, MultichainRouter {
         bytes32 structHash = RelayUtils.getCreateShiftStructHash(relayParams, transferRequests, params);
         _validateCall(relayParams, account, structHash, srcChainId);
 
+        _processTransferRequests(account, transferRequests, srcChainId);
+
         address wnt = TokenUtils.wnt(dataStore);
         IERC20(wnt).safeTransfer(address(shiftVault), params.executionFee);
-
-        _processTransferRequests(account, transferRequests, srcChainId);
 
         return shiftHandler.createShift(account, srcChainId, params);
     }

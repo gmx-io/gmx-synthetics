@@ -13,6 +13,7 @@ const func = createDeployFunction({
     "WithdrawalEventUtils",
     "MultichainUtils",
     "CallbackUtils",
+    "BridgeOutFromControllerUtils",
   ],
 });
 

@@ -110,6 +110,18 @@ const getConfigItems = (generalConfig, oracleConfig) => {
     },
     {
       type: "uint",
+      baseKey: keys.CREATE_DEPOSIT_GAS_LIMIT,
+      value: generalConfig.createDepositGasLimit,
+      label: `createDepositGasLimit`,
+    },
+    {
+      type: "uint",
+      baseKey: keys.CREATE_GLV_DEPOSIT_GAS_LIMIT,
+      value: generalConfig.createGlvDepositGasLimit,
+      label: `createGlvDepositGasLimit`,
+    },
+    {
+      type: "uint",
       baseKey: keys.WITHDRAWAL_GAS_LIMIT,
       value: generalConfig.withdrawalGasLimit,
       label: `withdrawalGasLimit`,

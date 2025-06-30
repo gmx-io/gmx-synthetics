@@ -23,6 +23,7 @@ library GlvWithdrawalUtils {
         DataStore dataStore;
         EventEmitter eventEmitter;
         MultichainVault multichainVault;
+        IMultichainTransferRouter multichainTransferRouter;
         GlvVault glvVault;
         IOracle oracle;
         ISwapHandler swapHandler;
@@ -172,6 +173,29 @@ library GlvWithdrawalUtils {
         eventData.uintItems.setItem(1, "secondaryOutputAmount", withdrawalResult.secondaryOutputAmount);
         CallbackUtils.afterGlvWithdrawalExecution(params.key, glvWithdrawal, eventData);
 
+
+        BridgeOutFromControllerUtils.bridgeOutFromController(
+            params.eventEmitter,
+            params.multichainTransferRouter,
+            glvWithdrawal.account(), // account
+            glvWithdrawal.receiver(), // receiver
+            glvWithdrawal.srcChainId(),
+            withdrawalResult.outputToken, // token
+            withdrawalResult.outputAmount, // amount
+            glvWithdrawal.dataList()
+        );
+
+        BridgeOutFromControllerUtils.bridgeOutFromController(
+            params.eventEmitter,
+            params.multichainTransferRouter,
+            glvWithdrawal.account(), // account
+            glvWithdrawal.receiver(), // receiver
+            glvWithdrawal.srcChainId(),
+            withdrawalResult.secondaryOutputToken, // token
+            withdrawalResult.secondaryOutputAmount, // amount
+            glvWithdrawal.dataList()
+        );
+
         cache.marketCount = GlvUtils.getGlvMarketCount(params.dataStore, glvWithdrawal.glv());
         cache.oraclePriceCount = GasUtils.estimateGlvWithdrawalOraclePriceCount(
             cache.marketCount,
@@ -246,6 +270,7 @@ library GlvWithdrawalUtils {
                 dataStore: params.dataStore,
                 eventEmitter: params.eventEmitter,
                 multichainVault: params.multichainVault,
+                multichainTransferRouter: params.multichainTransferRouter,
                 withdrawalVault: WithdrawalVault(payable(params.glvVault)),
                 oracle: params.oracle,
                 swapHandler: params.swapHandler,
