@@ -1146,6 +1146,11 @@ const config: {
       wrappedNative: true,
       transferGasLimit: 200 * 1000,
       dataStreamSpreadReductionFactor: percentageToFloat("100%"),
+      priceFeed: {
+        address: "0x632d2713F48ac2DF441b3cE46Bd7fa4467D419d1",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
     },
     stBTC: {
       address: "0xF4586028FFdA7Eca636864F80f8a3f2589E33795",
@@ -1160,6 +1165,11 @@ const config: {
       dataStreamFeedId: "0x00038f83323b6b08116d1614cf33a9bd71ab5e0abf0c9f1b783a74a43e7bd992",
       dataStreamFeedDecimals: 18,
       transferGasLimit: 200 * 1000,
+      priceFeed: {
+        address: "0x9563258f5FF50C176A3780ab02dF25cc39C092C0",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
     },
     BTC: {
       synthetic: true,
@@ -1167,6 +1177,11 @@ const config: {
       dataStreamFeedId: "0x00039d9e45394f473ab1f050a1b963e6b05351e52d71e507509ada0c95ed75b8",
       dataStreamFeedDecimals: 18,
       dataStreamSpreadReductionFactor: percentageToFloat("100%"),
+      priceFeed: {
+        address: "0x632d2713F48ac2DF441b3cE46Bd7fa4467D419d1",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
     },
   },
   arbitrumSepolia: {
