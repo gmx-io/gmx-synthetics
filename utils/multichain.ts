@@ -17,19 +17,28 @@ export async function mintAndBridge(
   fixture,
   overrides: {
     account?: string;
-    token: Contract;
+    token?: Contract;
     tokenAmount: BigNumberish;
     data?: string;
   }
 ) {
-  const { usdc, wnt, mockStargatePoolUsdc, mockStargatePoolWnt, layerZeroProvider } = fixture.contracts;
+  const { usdc, mockStargatePoolUsdc, mockStargatePoolNative, layerZeroProvider } = fixture.contracts;
   const { user0 } = fixture.accounts;
 
   const account = overrides.account || user0;
   const token = overrides.token;
   const tokenAmount = overrides.tokenAmount;
 
-  await token.mint(account.address, tokenAmount);
+  if (!token) {
+    // StargatePoolNative is being used to bridge native ETH
+    await account.sendTransaction({
+      to: mockStargatePoolNative.address,
+      value: tokenAmount,
+    });
+  } else {
+    // e.g. StargatePoolUsdc is being used to bridge USDC
+    await token.mint(account.address, tokenAmount);
+  }
 
   // mock token bridging (increase user's multichain balance)
   const encodedMessageEth = ethers.utils.defaultAbiCoder.encode(
@@ -37,14 +46,15 @@ export async function mintAndBridge(
     [account.address, overrides.data || "0x"]
   );
 
-  if (token.address == usdc.address) {
+  if (!token) {
+    await mockStargatePoolNative
+      .connect(account)
+      .sendToken(layerZeroProvider.address, tokenAmount, encodedMessageEth, { value: tokenAmount });
+  } else if (token.address == usdc.address) {
     await token.connect(account).approve(mockStargatePoolUsdc.address, tokenAmount);
     await mockStargatePoolUsdc.connect(account).sendToken(layerZeroProvider.address, tokenAmount, encodedMessageEth);
-  } else if (token.address == wnt.address) {
-    await token.connect(account).approve(mockStargatePoolWnt.address, tokenAmount);
-    await mockStargatePoolWnt.connect(account).sendToken(layerZeroProvider.address, tokenAmount, encodedMessageEth);
   } else {
-    throw new Error("Unsupported Stargate");
+    throw new Error("Unsupported StargatePool");
   }
 }
 

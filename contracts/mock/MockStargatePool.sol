@@ -27,7 +27,7 @@ contract MockStargatePool {
      * @param _amount The amount of tokens to send
      * @param _message The encoded message containing account, token, srcChainId
      */
-    function sendToken(LayerZeroProvider layerZeroProvider, uint256 _amount, bytes calldata _message) external {
+    function sendToken(LayerZeroProvider layerZeroProvider, uint256 _amount, bytes calldata _message) external payable {
         // prepend composeFrom (msg.sender) to the user payload
         bytes memory encodedMsg = abi.encodePacked(
             OFTComposeMsgCodec.addressToBytes32(msg.sender),
@@ -41,10 +41,14 @@ contract MockStargatePool {
             encodedMsg
         );
 
-        IERC20(token).transferFrom(msg.sender, address(layerZeroProvider), _amount);
+        if (token == address(0)) {
+            require(msg.value == _amount, "Incorrect ETH amount sent");
+        } else {
+            IERC20(token).transferFrom(msg.sender, address(layerZeroProvider), _amount);
+        }
 
         // Simulate cross-chain message delivery by directly calling lzCompose on the LayerZeroProvider contract
-        layerZeroProvider.lzCompose(
+        layerZeroProvider.lzCompose{value: msg.value}(
             address(this),
             bytes32(uint256(1)), // mock guid
             composedMsg,
@@ -101,4 +105,6 @@ contract MockStargatePool {
     function quoteSend(SendParam memory, bool) external pure returns (MessagingFee memory msgFee) {
         return MessagingFee({ nativeFee: BRIDGE_OUT_FEE, lzTokenFee: 0 });
     }
+
+    receive() external payable {}
 }

@@ -27,7 +27,7 @@ describe("MultichainGmRouter", () => {
     wnt,
     usdc,
     mockStargatePoolUsdc,
-    mockStargatePoolWnt;
+    mockStargatePoolNative;
   let relaySigner;
   let chainId;
 
@@ -50,7 +50,7 @@ describe("MultichainGmRouter", () => {
       wnt,
       usdc,
       mockStargatePoolUsdc,
-      mockStargatePoolWnt,
+      mockStargatePoolNative,
     } = fixture.contracts);
 
     defaultDepositParams = {
@@ -109,9 +109,9 @@ describe("MultichainGmRouter", () => {
 
     await dataStore.setBool(keys.isSrcChainIdEnabledKey(chainId), true);
 
-    await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolWnt.address), true);
-    await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolWnt.address), true);
-    await mintAndBridge(fixture, { token: wnt, tokenAmount: wntAmount.add(feeAmount) });
+    await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolNative.address), true);
+    await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolNative.address), true);
+    await mintAndBridge(fixture, { tokenAmount: wntAmount.add(feeAmount) });
 
     await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolUsdc.address), true);
     await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolUsdc.address), true);
@@ -254,7 +254,7 @@ describe("MultichainGmRouter", () => {
 
     it("creates withdrawal and sends relayer fee", async () => {
       await sendCreateDeposit(createDepositParams); // leaves the residualFee (i.e. executionfee) of 0.004 ETH fee in multichainVault/user's multichain balance
-      await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: expandDecimals(3, 15) }); // add additional fee to user1's multichain balance
+      await mintAndBridge(fixture, { account: user1, tokenAmount: expandDecimals(3, 15) }); // add additional fee to user1's multichain balance
       await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
 
       expect(await getWithdrawalCount(dataStore)).eq(0);

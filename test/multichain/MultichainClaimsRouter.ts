@@ -22,7 +22,7 @@ describe("MultichainClaimsRouter", () => {
     chainlinkPriceFeedProvider,
     multichainClaimsRouter,
     mockStargatePoolUsdc,
-    mockStargatePoolWnt,
+    mockStargatePoolNative,
     referralStorage;
   let relaySigner;
   let chainId;
@@ -38,7 +38,7 @@ describe("MultichainClaimsRouter", () => {
       chainlinkPriceFeedProvider,
       multichainClaimsRouter,
       mockStargatePoolUsdc,
-      mockStargatePoolWnt,
+      mockStargatePoolNative,
       referralStorage,
     } = fixture.contracts);
 
@@ -50,10 +50,10 @@ describe("MultichainClaimsRouter", () => {
 
     await dataStore.setBool(keys.isSrcChainIdEnabledKey(chainId), true);
 
-    await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolWnt.address), true);
+    await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolNative.address), true);
     await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolUsdc.address), true);
 
-    await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolWnt.address), true);
+    await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolNative.address), true);
     await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolUsdc.address), true);
   });
 
@@ -137,7 +137,7 @@ describe("MultichainClaimsRouter", () => {
 
     it("User receives funding fees in his multichain balance, pays relay fee from existing multichain balance", async () => {
       // increase user's wnt multichain balance to pay for fees
-      await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: feeAmount });
+      await mintAndBridge(fixture, { account: user1, tokenAmount: feeAmount });
 
       // the user will pay the relay fee from his newly claimed tokens
       const createClaimParams: Parameters<typeof sendClaimFundingFees>[0] = {
@@ -271,7 +271,7 @@ describe("MultichainClaimsRouter", () => {
 
     it("User receives collateral in his multichain balance, pays relay fee from his existing multicahin balance", async () => {
       // increase user's wnt multichain balance to pay for fees
-      await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: feeAmount });
+      await mintAndBridge(fixture, { account: user1, tokenAmount: feeAmount });
 
       // the user will pay the relay fee from his newly claimed tokens
       const createClaimParams: Parameters<typeof sendClaimCollateral>[0] = {
@@ -397,7 +397,7 @@ describe("MultichainClaimsRouter", () => {
         await dataStore.getUint(keys.affiliateRewardKey(ethUsdMarket.marketToken, usdc.address, user1.address))
       ).to.eq(expandDecimals(25, 6)); // $25
       // increase affiliate's wnt multichain balance to pay for fees
-      await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: feeAmount });
+      await mintAndBridge(fixture, { account: user1, tokenAmount: feeAmount });
 
       // affiliate will pay the relay fee from his existing wnt multichain balance
       const createClaimParams: Parameters<typeof sendClaimAffiliateRewards>[0] = {

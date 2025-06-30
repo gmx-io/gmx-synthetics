@@ -34,7 +34,7 @@ describe("MultichainLifeCycle", () => {
     wnt,
     usdc,
     mockStargatePoolUsdc,
-    mockStargatePoolWnt;
+    mockStargatePoolNative;
   let relaySigner;
   let chainId;
 
@@ -55,7 +55,7 @@ describe("MultichainLifeCycle", () => {
       wnt,
       usdc,
       mockStargatePoolUsdc,
-      mockStargatePoolWnt,
+      mockStargatePoolNative,
     } = fixture.contracts);
   });
 
@@ -68,10 +68,10 @@ describe("MultichainLifeCycle", () => {
 
     await dataStore.setBool(keys.isSrcChainIdEnabledKey(chainId), true);
 
-    await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolWnt.address), true);
+    await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolNative.address), true);
     await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolUsdc.address), true);
 
-    await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolWnt.address), true);
+    await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolNative.address), true);
     await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolUsdc.address), true);
   });
 
@@ -95,7 +95,7 @@ describe("MultichainLifeCycle", () => {
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0);
 
     // 1. mint and bridge WNT and USDC to multichainVault
-    await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: wntAmount.add(feeAmount) });
+    await mintAndBridge(fixture, { account: user1, tokenAmount: wntAmount.add(feeAmount) });
     await mintAndBridge(fixture, { account: user1, token: usdc, tokenAmount: usdcAmount });
 
     // multichainVault balance
@@ -247,7 +247,7 @@ describe("MultichainLifeCycle", () => {
     expect(await getBalanceOf(ethUsdMarket.marketToken, glvVault.address)).eq(0); // GM
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdGlvAddress))).eq(0); // GLV
 
-    await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: feeAmount });
+    await mintAndBridge(fixture, { account: user1, tokenAmount: feeAmount });
     await sendCreateGlvDeposit(createGlvDepositParams);
 
     // after glv deposit is created (user has 47.5k GM and 0 GLV, 47.5k of his GM moved from user's multichain balance to glvVault)
@@ -331,7 +331,7 @@ describe("MultichainLifeCycle", () => {
     expect(await getBalanceOf(ethUsdGlvAddress, glvVault.address)).eq(0); // GLV in glvVault
     expect(await getBalanceOf(ethUsdMarket.marketToken, ethUsdGlvAddress)).eq(expandDecimals(47_500, 18)); // GM in ethUsdGlv
 
-    await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: feeAmount });
+    await mintAndBridge(fixture, { account: user1, tokenAmount: feeAmount });
     await sendCreateGlvWithdrawal(createGlvWithdrawalParams);
 
     // before glv withdrawal is executed (user has 47.5k GM and 47.5k GLV)
@@ -422,7 +422,7 @@ describe("MultichainLifeCycle", () => {
     ); // 47,500 GM
 
     // Create withdrawal
-    await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: feeAmount });
+    await mintAndBridge(fixture, { account: user1, tokenAmount: feeAmount });
     await sendCreateWithdrawal(createWithdrawalParams);
 
     // user's multichain balance
@@ -464,7 +464,7 @@ describe("MultichainLifeCycle", () => {
 
     // 5. bridge out
     const bridgeOutAmount = expandDecimals(10000, 6); // 10,000 USDC
-    const bridgeOutFee = await mockStargatePoolWnt.BRIDGE_OUT_FEE();
+    const bridgeOutFee = await mockStargatePoolNative.BRIDGE_OUT_FEE();
     const defaultBridgeOutParams = {
       token: usdc.address,
       amount: bridgeOutAmount,

@@ -47,7 +47,7 @@ describe("MultichainSubaccountRouter", () => {
     usdc,
     chainlinkPriceFeedProvider,
     mockStargatePoolUsdc,
-    mockStargatePoolWnt;
+    mockStargatePoolNative;
   let relaySigner;
   let chainId;
   const referralCode = hashString("referralCode");
@@ -74,7 +74,7 @@ describe("MultichainSubaccountRouter", () => {
       usdc,
       chainlinkPriceFeedProvider,
       mockStargatePoolUsdc,
-      mockStargatePoolWnt,
+      mockStargatePoolNative,
     } = fixture.contracts);
 
     defaultCreateOrderParams = {
@@ -128,9 +128,9 @@ describe("MultichainSubaccountRouter", () => {
 
     // Multichain
     await dataStore.setBool(keys.isSrcChainIdEnabledKey(chainId), true);
-    await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolWnt.address), true);
-    await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolWnt.address), true);
-    await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: wntAmountBridged });
+    await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolNative.address), true);
+    await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolNative.address), true);
+    await mintAndBridge(fixture, { account: user1, tokenAmount: wntAmountBridged });
     await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolUsdc.address), true);
     await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolUsdc.address), true);
     await mintAndBridge(fixture, { account: user1, token: usdc, tokenAmount: usdcAmountBridged });

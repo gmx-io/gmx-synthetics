@@ -39,7 +39,7 @@ describe("LayerZeroProvider", () => {
     multichainGmRouter,
     multichainGlvRouter,
     multichainOrderRouter,
-    mockStargatePoolWnt,
+    mockStargatePoolNative,
     mockStargatePoolUsdc,
     referralStorage;
   let chainId;
@@ -61,7 +61,7 @@ describe("LayerZeroProvider", () => {
       multichainGmRouter,
       multichainGlvRouter,
       multichainOrderRouter,
-      mockStargatePoolWnt,
+      mockStargatePoolNative,
       mockStargatePoolUsdc,
       referralStorage,
     } = fixture.contracts);
@@ -70,8 +70,8 @@ describe("LayerZeroProvider", () => {
 
     await dataStore.setBool(keys.isSrcChainIdEnabledKey(chainId), true);
 
-    await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolWnt.address), true);
-    await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolWnt.address), true);
+    await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolNative.address), true);
+    await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolNative.address), true);
 
     await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolUsdc.address), true);
     await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolUsdc.address), true);
@@ -146,7 +146,7 @@ describe("LayerZeroProvider", () => {
       });
 
       it("creates deposit without paying relayFee if LayerZeroProvider is whitelisted", async () => {
-        await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: wntAmount.add(executionFee) });
+        await mintAndBridge(fixture, { account: user1, tokenAmount: wntAmount.add(executionFee) });
         await usdc.mint(user1.address, usdcAmount);
         await usdc.connect(user1).approve(mockStargatePoolUsdc.address, usdcAmount);
 
@@ -174,7 +174,7 @@ describe("LayerZeroProvider", () => {
 
       it("creates withdrawal without paying relayFee if LayerZeroProvider is whitelisted", async () => {
         // first create and execute deposit
-        await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: wntAmount.add(executionFee) });
+        await mintAndBridge(fixture, { account: user1, tokenAmount: wntAmount.add(executionFee) });
         await usdc.mint(user1.address, usdcAmount);
         await usdc.connect(user1).approve(mockStargatePoolUsdc.address, usdcAmount);
         const depositMessage = await encodeDepositMessage(createDepositParams, user1.address);
@@ -229,7 +229,7 @@ describe("LayerZeroProvider", () => {
         ); // 90,000 GM
 
         const withdrawalMessage = await encodeWithdrawalMessage(createWithdrawalParams, user1.address);
-        // await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: executionFee });
+        // await mintAndBridge(fixture, { account: user1, tokenAmount: executionFee });
         const minBridgingAmount = expandDecimals(1, 6); // minimum amount required by a stargate pool to bridge a message
         await usdc.mint(user1.address, minBridgingAmount);
         await usdc.connect(user1).approve(mockStargatePoolUsdc.address, minBridgingAmount);
@@ -317,7 +317,7 @@ describe("LayerZeroProvider", () => {
       });
 
       it("creates glvDeposit, using long / short tokens, without paying relayFee if LayerZeroProvider is whitelisted", async () => {
-        await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: wntAmount.add(executionFee) });
+        await mintAndBridge(fixture, { account: user1, tokenAmount: wntAmount.add(executionFee) });
         await usdc.mint(user1.address, usdcAmount);
         await usdc.connect(user1).approve(mockStargatePoolUsdc.address, usdcAmount);
 
@@ -346,7 +346,7 @@ describe("LayerZeroProvider", () => {
       });
 
       it("creates glvWithdrawal, using long / short tokens, without paying relayFee if LayerZeroProvider is whitelisted", async () => {
-        await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: wntAmount.add(executionFee) });
+        await mintAndBridge(fixture, { account: user1, tokenAmount: wntAmount.add(executionFee) });
         await usdc.mint(user1.address, usdcAmount);
         await usdc.connect(user1).approve(mockStargatePoolUsdc.address, usdcAmount);
 
