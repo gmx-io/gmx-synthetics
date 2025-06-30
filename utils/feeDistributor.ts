@@ -3,8 +3,6 @@ import { hashString } from "./hash";
 export const gmxKey = hashString("GMX");
 export const extendedGmxTrackerKey = hashString("EXTENDED_GMX_TRACKER");
 export const dataStoreKey = hashString("DATASTORE");
-export const referralRewardsWntKey = hashString("REFERRAL_REWARDS_WNT");
-export const glpKey = hashString("GLP");
 export const treasuryKey = hashString("TREASURY");
 export const layerzeroOftKey = hashString("LAYERZERO_OFT");
 export const feeGlpTrackerKey = hashString("FEE_GLP_TRACKER");

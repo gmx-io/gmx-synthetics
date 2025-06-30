@@ -298,6 +298,7 @@ export const FEE_DISTRIBUTOR_DISTRIBUTION_DAY = hashString("FEE_DISTRIBUTOR_DIST
 export const FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP = hashString("FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP");
 export const FEE_DISTRIBUTOR_STATE = hashString("FEE_DISTRIBUTOR_STATE");
 export const FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_AMOUNT = hashString("FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_AMOUNT");
+export const FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_FACTOR = hashString("FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_FACTOR");
 export const FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_ESGMX_AMOUNT = hashString("FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_ESGMX_AMOUNT");
 export const FEE_DISTRIBUTOR_GMX_PRICE = hashString("FEE_DISTRIBUTOR_GMX_PRICE");
 export const FEE_DISTRIBUTOR_WNT_PRICE = hashString("FEE_DISTRIBUTOR_WNT_PRICE");
@@ -315,8 +316,8 @@ export const FEE_DISTRIBUTOR_ADDRESS_INFO = hashString("FEE_DISTRIBUTOR_ADDRESS_
 export const FEE_DISTRIBUTOR_KEEPER_COSTS = hashString("FEE_DISTRIBUTOR_KEEPER_COSTS");
 export const FEE_DISTRIBUTOR_KEEPER_GLP_FACTOR = hashString("FEE_DISTRIBUTOR_KEEPER_GLP_FACTOR");
 export const FEE_DISTRIBUTOR_CHAINLINK_FACTOR = hashString("FEE_DISTRIBUTOR_CHAINLINK_FACTOR");
-export const MAX_FEE_DISTRIBUTOR_FACTOR = hashString("MAX_FEE_DISTRIBUTOR_FACTOR");
-export const MIN_FEE_DISTRIBUTOR_FACTOR = hashString("MIN_FEE_DISTRIBUTOR_FACTOR");
+export const FEE_DISTRIBUTOR_MIN_GLP_FEE_FACTOR = hashString("FEE_DISTRIBUTOR_MIN_GLP_FEE_FACTOR");
+export const FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY = hashString("FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY");
 
 export const CONTRIBUTOR_LAST_PAYMENT_AT = hashString("CONTRIBUTOR_LAST_PAYMENT_AT");
 
@@ -966,12 +967,4 @@ export function feeDistributorLayerZeroChainIdKey(chainId: number) {
 
 export function feeDistributorAddressInfoKey(chainId: number, addressName: string) {
   return hashData(["bytes32", "uint256", "bytes32"], [FEE_DISTRIBUTOR_ADDRESS_INFO, chainId, addressName]);
-}
-
-export function maxFeeDistributorFactorKey(factorType: string) {
-  return hashData(["bytes32", "bytes32"], [MAX_FEE_DISTRIBUTOR_FACTOR, factorType]);
-}
-
-export function minFeeDistributorFactorKey(factorType: string) {
-  return hashData(["bytes32", "bytes32"], [MIN_FEE_DISTRIBUTOR_FACTOR, factorType]);
 }

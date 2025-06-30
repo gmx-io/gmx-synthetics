@@ -208,21 +208,8 @@ async function main() {
     encodeData(["uint256"], [chainId3]),
     expandDecimals(99, 28)
   );
-  await config.setUint(
-    keys.MAX_FEE_DISTRIBUTOR_FACTOR,
-    encodeData(["bytes32"], [feeDistributorConfig.referralRewardsWntKey]),
-    expandDecimals(20, 28)
-  );
-  await config.setUint(
-    keys.MIN_FEE_DISTRIBUTOR_FACTOR,
-    encodeData(["bytes32"], [feeDistributorConfig.glpKey]),
-    expandDecimals(80, 28)
-  );
-  await config.setUint(
-    keys.MIN_FEE_DISTRIBUTOR_FACTOR,
-    encodeData(["bytes32"], [feeDistributorConfig.treasuryKey]),
-    expandDecimals(70, 28)
-  );
+  await config.setUint(keys.FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_FACTOR, "0x", expandDecimals(20, 28));
+  await config.setUint(keys.FEE_DISTRIBUTOR_MIN_GLP_FEE_FACTOR, "0x", expandDecimals(80, 28));
 
   await dataStore.setAddressArray(keys.FEE_DISTRIBUTOR_KEEPER_COSTS, [
     accounts[3].address,

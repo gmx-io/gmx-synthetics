@@ -578,6 +578,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
         allowedBaseKeys[Keys.FEE_DISTRIBUTOR_DISTRIBUTION_DAY] = true;
         allowedBaseKeys[Keys.FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_AMOUNT] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_FACTOR] = true;
         allowedBaseKeys[Keys.FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_ESGMX_AMOUNT] = true;
         allowedBaseKeys[Keys.FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY] = true;
         allowedBaseKeys[Keys.FEE_DISTRIBUTOR_GAS_LIMIT] = true;
@@ -588,8 +589,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.FEE_DISTRIBUTOR_KEEPER_COSTS] = true;
         allowedBaseKeys[Keys.FEE_DISTRIBUTOR_KEEPER_GLP_FACTOR] = true;
         allowedBaseKeys[Keys.FEE_DISTRIBUTOR_CHAINLINK_FACTOR] = true;
-        allowedBaseKeys[Keys.MAX_FEE_DISTRIBUTOR_FACTOR] = true;
-        allowedBaseKeys[Keys.MIN_FEE_DISTRIBUTOR_FACTOR] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_MIN_GLP_FEE_FACTOR] = true;
+        allowedBaseKeys[Keys.FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY] = true;
     }
 
     function _initAllowedLimitedBaseKeys() internal {

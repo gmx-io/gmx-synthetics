@@ -25,8 +25,6 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
     bytes32 internal constant GMX = keccak256(abi.encode("GMX"));
     bytes32 internal constant EXTENDED_GMX_TRACKER = keccak256(abi.encode("EXTENDED_GMX_TRACKER"));
     bytes32 internal constant DATASTORE = keccak256(abi.encode("DATASTORE"));
-    bytes32 internal constant REFERRAL_REWARDS_WNT = keccak256(abi.encode("REFERRAL_REWARDS_WNT"));
-    bytes32 internal constant GLP = keccak256(abi.encode("GLP"));
     bytes32 internal constant TREASURY = keccak256(abi.encode("TREASURY"));
     bytes32 internal constant LAYERZERO_OFT = keccak256(abi.encode("LAYERZERO_OFT"));
     bytes32 internal constant FEE_GLP_TRACKER = keccak256(abi.encode("FEE_GLP_TRACKER"));
@@ -581,7 +579,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         uint256 wntReferralRewardsInUsd,
         uint256 feesV1Usd,
         uint256 feesV2Usd
-    ) internal view returns (uint256, uint256, uint256, uint256, uint256) {
+    ) internal returns (uint256, uint256, uint256, uint256, uint256) {
         // the WNT fee amount related calculations
         uint256 totalWntBalance = getFeeDistributorVaultBalance(wnt);
 
@@ -597,26 +595,27 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
             keeperCostsTreasury
         );
 
-        // calculate the total WNT referral rewards to be sent and validate the calculated amount
-        uint256 wntForReferralRewards = calculateWntForReferralRewards(
-            wntReferralRewardsInUsd,
-            feesV1Usd,
-            totalWntBalance
-        );
+        // validate wntReferralRewardsInUsd and calculate the referral rewards in WNT to be sent
+        uint256 wntForReferralRewards = calculateWntForReferralRewards(wntReferralRewardsInUsd, feesV1Usd);
 
         // calculate the amount of WNT to be used as GLP fees, validate the calculated amount and adjust if necessary
         uint256 wntForGlp = totalWntBalance -
-            keeperCostsGlp -
             keeperCostsTreasury -
             wntForChainlink -
             wntForTreasury -
             wntForReferralRewards;
 
+        uint256 maxKeeperCostsGlp = Precision.applyFactor(wntForGlp, getUint(Keys.FEE_DISTRIBUTOR_KEEPER_GLP_FACTOR));
+        if (keeperCostsGlp > maxKeeperCostsGlp) {
+            wntForTreasury -= (keeperCostsGlp - maxKeeperCostsGlp);
+            keeperCostsGlp = maxKeeperCostsGlp;
+        }
+        wntForGlp -= keeperCostsGlp;
+
         (wntForTreasury, wntForGlp) = finalizeWntForTreasuryAndGlp(
             totalWntBalance,
             wntForChainlink,
             wntForTreasury,
-            keeperCostsTreasury,
             wntForGlp
         );
 
@@ -633,7 +632,6 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
 
         uint256 keeperCostsTreasury;
         uint256 keeperCostsGlp;
-        uint256 keeperGlpFactor = getUint(Keys.FEE_DISTRIBUTOR_KEEPER_GLP_FACTOR);
         for (uint256 i; i < keepers.length; i++) {
             uint256 keeperTargetBalance = keepersTargetBalance[i];
             uint256 keeperBalance = keepers[i].balance;
@@ -642,9 +640,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
                 if (keepersV2[i]) {
                     keeperCostsTreasury += keeperCost;
                 } else {
-                    uint256 keeperCostGlp = Precision.applyFactor(keeperCost, keeperGlpFactor);
-                    keeperCostsGlp += keeperCostGlp;
-                    keeperCostsTreasury += (keeperCost - keeperCostGlp);
+                    keeperCostsGlp += keeperCost;
                 }
             }
         }
@@ -670,25 +666,24 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
 
     function calculateWntForReferralRewards(
         uint256 wntReferralRewardsInUsd,
-        uint256 feesV1Usd,
-        uint256 totalWntBalance
+        uint256 feesV1Usd
     ) internal view returns (uint256) {
         uint256 maxWntReferralRewardsInUsdAmount = getUint(Keys.FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_AMOUNT);
         if (wntReferralRewardsInUsd > maxWntReferralRewardsInUsdAmount) {
-            revert Errors.MaxWntReferralRewardsInUsdAmountExceeded(wntReferralRewardsInUsd, maxWntReferralRewardsInUsdAmount);
+            revert Errors.MaxWntReferralRewardsInUsdAmountExceeded(
+                wntReferralRewardsInUsd,
+                maxWntReferralRewardsInUsdAmount
+            );
         }
 
-        uint256 maxWntForReferralRewardsFactor = getUint(Keys.maxFeeDistributorFactorKey(REFERRAL_REWARDS_WNT));
-        uint256 maxWntReferralRewardsInUsd = Precision.applyFactor(feesV1Usd, maxWntForReferralRewardsFactor);
+        uint256 maxWntReferralRewardsInUsdFactor = getUint(Keys.FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_FACTOR);
+        uint256 maxWntReferralRewardsInUsd = Precision.applyFactor(feesV1Usd, maxWntReferralRewardsInUsdFactor);
         if (wntReferralRewardsInUsd > maxWntReferralRewardsInUsd) {
             revert Errors.MaxWntReferralRewardsInUsdExceeded(wntReferralRewardsInUsd, maxWntReferralRewardsInUsd);
         }
+
         uint256 scaledWntPrice = getUint(Keys.FEE_DISTRIBUTOR_WNT_PRICE) * Precision.FLOAT_PRECISION;
         uint256 wntForReferralRewards = Precision.toFactor(wntReferralRewardsInUsd, scaledWntPrice);
-        uint256 maxWntReferralRewards = Precision.applyFactor(totalWntBalance, maxWntForReferralRewardsFactor);
-        if (wntForReferralRewards > maxWntReferralRewards) {
-            revert Errors.MaxReferralRewardsExceeded(wnt, wntForReferralRewards, maxWntReferralRewards);
-        }
 
         return wntForReferralRewards;
     }
@@ -697,26 +692,28 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         uint256 totalWntBalance,
         uint256 wntForChainlink,
         uint256 wntForTreasury,
-        uint256 keeperCostsTreasury,
         uint256 wntForGlp
-    ) internal view returns (uint256, uint256) {
-        uint256 expectedWntForGlp = totalWntBalance - wntForChainlink - wntForTreasury + keeperCostsTreasury;
-        uint256 minGlpFeeFactor = getUint(Keys.minFeeDistributorFactorKey(GLP));
+    ) internal returns (uint256, uint256) {
+        uint256 expectedWntForGlp = totalWntBalance - wntForChainlink - wntForTreasury;
+        uint256 minGlpFeeFactor = getUint(Keys.FEE_DISTRIBUTOR_MIN_GLP_FEE_FACTOR);
         uint256 minWntForGlp = Precision.applyFactor(expectedWntForGlp, minGlpFeeFactor);
         if (wntForGlp < minWntForGlp) {
-            uint256 minTreasuryFeeFactor = getUint(Keys.minFeeDistributorFactorKey(TREASURY));
-            uint256 minTreasuryWntAmount = Precision.applyFactor(wntForTreasury, minTreasuryFeeFactor);
             uint256 additionalWntForGlp = minWntForGlp - wntForGlp;
-            uint256 maxWntUsableFromTreasury = wntForTreasury - minTreasuryWntAmount;
-            if (additionalWntForGlp > maxWntUsableFromTreasury) {
-                revert Errors.MaxWntUsableFromTreasuryExceeded(
-                    wntForTreasury,
-                    additionalWntForGlp,
-                    maxWntUsableFromTreasury
+            if (additionalWntForGlp > wntForTreasury) {
+                uint256 additionalWntForGlpFromTreasury = additionalWntForGlp - wntForTreasury;
+                uint256 maxWntFromTreasury = getUint(Keys.FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY);
+                if (maxWntFromTreasury > additionalWntForGlpFromTreasury) {
+                    revert Errors.MaxWntFromTreasuryExceeded(maxWntFromTreasury, additionalWntForGlpFromTreasury);
+                }
+                IERC20(wnt).transferFrom(
+                    getAddress(block.chainid, TREASURY),
+                    address(feeDistributorVault),
+                    additionalWntForGlpFromTreasury
                 );
+                wntForTreasury = 0;
+            } else {
+                wntForTreasury -= additionalWntForGlp;
             }
-
-            wntForTreasury -= additionalWntForGlp;
             wntForGlp += additionalWntForGlp;
         }
 

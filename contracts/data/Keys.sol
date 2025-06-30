@@ -539,6 +539,8 @@ library Keys {
     bytes32 public constant FEE_DISTRIBUTOR_REFERRAL_REWARDS_AMOUNT = keccak256(abi.encode("FEE_DISTRIBUTOR_REFERRAL_REWARDS_AMOUNT"));
     // @dev key for FeeDistributor max WNT referral awards amount in USD
     bytes32 public constant FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_AMOUNT = keccak256(abi.encode("FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_AMOUNT"));
+    // @dev key for FeeDistributor max WNT referral rewards factor in USD
+    bytes32 public constant FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_FACTOR = keccak256(abi.encode("FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_FACTOR"));
     // @dev key for FeeDistributor max ESGMX referral awards amount
     bytes32 public constant FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_ESGMX_AMOUNT = keccak256(abi.encode("FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_ESGMX_AMOUNT"));
     // @dev key for FeeDistributor GMX price for referral rewards calculations
@@ -557,7 +559,7 @@ library Keys {
     bytes32 public constant FEE_DISTRIBUTOR_TOTAL_FEE_AMOUNT_GMX = keccak256(abi.encode("FEE_DISTRIBUTOR_TOTAL_FEE_AMOUNT_GMX"));
     // @dev key for FeeDistributor total fee amount in USD by version
     bytes32 public constant FEE_DISTRIBUTOR_FEE_AMOUNT_USD = keccak256(abi.encode("FEE_DISTRIBUTOR_FEE_AMOUNT_USD"));
-    // @dev key for FeeDistributor staked gmx for a given chain
+    // @dev key for FeeDistributor staked GMX for a given chain
     bytes32 public constant FEE_DISTRIBUTOR_STAKED_GMX = keccak256(abi.encode("FEE_DISTRIBUTOR_STAKED_GMX"));
     // @dev key FeeDistributor total staked GMX for all chains combined
     bytes32 public constant FEE_DISTRIBUTOR_TOTAL_STAKED_GMX = keccak256(abi.encode("FEE_DISTRIBUTOR_TOTAL_STAKED_GMX"));
@@ -571,16 +573,16 @@ library Keys {
     bytes32 public constant FEE_DISTRIBUTOR_ADDRESS_INFO = keccak256(abi.encode("FEE_DISTRIBUTOR_ADDRESS_INFO"));
     // @dev key for FeeDistributor keeper costs
     bytes32 public constant FEE_DISTRIBUTOR_KEEPER_COSTS = keccak256(abi.encode("FEE_DISTRIBUTOR_KEEPER_COSTS"));
-    // @dev key for FeeDistributor keeper glp factor used to determine costs paid from glp fees
+    // @dev key for FeeDistributor keeper GLP factor used to determine costs paid from GLP fees
     bytes32 public constant FEE_DISTRIBUTOR_KEEPER_GLP_FACTOR = keccak256(abi.encode("FEE_DISTRIBUTOR_KEEPER_GLP_FACTOR"));
     // @dev key for FeeDistributor chainlink factor used to determine total chainlink fees paid
     bytes32 public constant FEE_DISTRIBUTOR_CHAINLINK_FACTOR = keccak256(abi.encode("FEE_DISTRIBUTOR_CHAINLINK_FACTOR"));
     // @dev key for FeeDistributor total referral rewards sent in a given week
     bytes32 public constant FEE_DISTRIBUTOR_REFERRAL_REWARDS_SENT = keccak256(abi.encode("FEE_DISTRIBUTOR_REFERRAL_REWARDS_SENT"));
-    // @dev key for max FeeDistributor factor
-    bytes32 public constant MAX_FEE_DISTRIBUTOR_FACTOR = keccak256(abi.encode("MAX_FEE_DISTRIBUTOR_FACTOR"));
-    // @dev key for min FeeDistributor factor
-    bytes32 public constant MIN_FEE_DISTRIBUTOR_FACTOR = keccak256(abi.encode("MIN_FEE_DISTRIBUTOR_FACTOR"));
+    // @dev key for FeeDistributor min GLP fee factor
+    bytes32 public constant FEE_DISTRIBUTOR_MIN_GLP_FEE_FACTOR = keccak256(abi.encode("FEE_DISTRIBUTOR_MIN_GLP_FEE_FACTOR"));
+    // @dev key for max WNT amount from treasury to cover keeper costs
+    bytes32 public constant FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY = keccak256(abi.encode("FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY"));
 
     // @dev constant for user initiated cancel reason
     string public constant USER_INITIATED_CANCEL = "USER_INITIATED_CANCEL";
@@ -2479,19 +2481,5 @@ library Keys {
     // @return key for FeeDistributor referral rewards sent in a given week
     function feeDistributorReferralRewardsSentKey(address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(FEE_DISTRIBUTOR_REFERRAL_REWARDS_SENT, token));
-    }
-
-    // @dev key for max FeeDistributor factor
-    // @param factorType the type of factor to retrieve
-    // @return key for max FeeDistributor factor for the specified type
-    function maxFeeDistributorFactorKey(bytes32 factorType) internal pure returns (bytes32) {
-        return keccak256(abi.encode(MAX_FEE_DISTRIBUTOR_FACTOR, factorType));
-    }
-
-    // @dev key for min FeeDistributor factor
-    // @param factorType the type of factor to retrieve
-    // @return key for min FeeDistributor factor for the specified type
-    function minFeeDistributorFactorKey(bytes32 factorType) internal pure returns (bytes32) {
-        return keccak256(abi.encode(MIN_FEE_DISTRIBUTOR_FACTOR, factorType));
     }
 }

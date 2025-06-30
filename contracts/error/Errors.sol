@@ -513,7 +513,7 @@ library Errors {
     error MaxWntReferralRewardsInUsdAmountExceeded(uint256 wntReferralRewardsInUsd, uint256 maxWntReferralRewardsInUsdAmount);
     error MaxWntReferralRewardsInUsdExceeded(uint256 wntReferralRewardsInUsd, uint256 maxWntReferralRewardsInUsd);
     error MaxReferralRewardsExceeded(address token, uint256 tokenReferralRewards, uint256 maxTokenReferralRewards);
-    error MaxWntUsableFromTreasuryExceeded(uint256 treasuryWntAmount, uint256 additionalWntForGlp, uint256 maxWntUsableFromTreasury);
+    error MaxWntFromTreasuryExceeded(uint256 maxWntFromTreasury, uint256 additionalWntForGlpFromTreasury);
     error KeeperArrayLengthMismatch(uint256 keepersLength, uint256 keeperTargetBalancesLength, uint256 keeperVersionsLength);
     error SendEthToKeeperFailed(address keeper, uint256 sendAmount, bytes result);
     error KeeperAmountMismatch(uint256 wntForKeepers, uint256 wntToKeepers);
