@@ -8,6 +8,8 @@ import { sendBridgeOut } from "../../utils/relay/multichain";
 import { GELATO_RELAY_ADDRESS } from "../../utils/relay/addresses";
 import { mintAndBridge } from "../../utils/multichain";
 import { impersonateAccount, setBalance } from "@nomicfoundation/hardhat-network-helpers";
+import { parseLogs } from "../../utils/event";
+import { errorsContract } from "../../utils/error";
 
 describe("MultichainTransferRouter", () => {
   let fixture;
@@ -230,6 +232,89 @@ describe("MultichainTransferRouter", () => {
 
       // 5. The bridge out fee (in native tokens) was sent to the provider
       expect(await hre.ethers.provider.getBalance(mockStargatePoolUsdc.address)).eq(bridgeOutFee); // 0.001 ETH
+    });
+  });
+
+  describe("transferOut", () => {
+    it("should execute transferOut successfully", async () => {
+      const transferOutParams = {
+        token: usdc.address,
+        amount: expandDecimals(1000, 6),
+        provider: mockStargatePoolUsdc.address,
+        data: ethers.utils.defaultAbiCoder.encode(["uint32"], [1]), // dstEid = 1
+      };
+
+      // Mock initial balances and states
+      await usdc.mint(multichainVault.address, transferOutParams.amount);
+      await dataStore.setUint(keys.multichainBalanceKey(user1.address, usdc.address), transferOutParams.amount);
+
+      expect(await usdc.balanceOf(user1.address)).to.eq(0);
+      expect(await usdc.balanceOf(multichainVault.address)).to.eq(transferOutParams.amount);
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(
+        transferOutParams.amount
+      );
+
+      // Execute transferOut
+      const tx = await multichainTransferRouter.connect(user1).transferOut(transferOutParams);
+
+      // Validate post-transfer states
+      expect(await usdc.balanceOf(user1.address)).to.eq(transferOutParams.amount);
+      expect(await usdc.balanceOf(multichainVault.address)).to.eq(0);
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0);
+
+      const txReceipt = await hre.ethers.provider.getTransactionReceipt(tx.hash);
+      const logs = parseLogs(fixture, txReceipt);
+      const transferOutLog = logs.find((log) => log.parsedEventInfo?.eventName === "MultichainTransferOut");
+      expect(transferOutLog.parsedEventData.token).eq(usdc.address);
+      expect(transferOutLog.parsedEventData.account).eq(user1.address);
+      expect(transferOutLog.parsedEventData.receiver).eq(user1.address);
+      expect(transferOutLog.parsedEventData.amount).eq(transferOutParams.amount);
+      expect(transferOutLog.parsedEventData.srcChainId).eq(chainId);
+
+      await logGasUsage({
+        tx,
+        label: "multichainTransferRouter.transferOut",
+      });
+    });
+
+    it("should return early if the token amount is zero", async () => {
+      const transferOutParams = {
+        token: usdc.address,
+        amount: 0,
+        provider: mockStargatePoolUsdc.address,
+        data: ethers.utils.defaultAbiCoder.encode(["uint32"], [1]),
+      };
+
+      const tx = await multichainTransferRouter.connect(user1).transferOut(transferOutParams);
+
+      // Validate that no state changes occurred
+      expect(await usdc.balanceOf(user1.address)).to.eq(0);
+      expect(await usdc.balanceOf(multichainVault.address)).to.eq(0);
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0);
+
+      const txReceipt = await hre.ethers.provider.getTransactionReceipt(tx.hash);
+      const logs = parseLogs(fixture, txReceipt);
+      const bridgeOutLog = logs.find((log) => log.parsedEventInfo?.eventName === "MultichainBridgeOut");
+      expect(bridgeOutLog.parsedEventData.token).eq(usdc.address);
+      expect(bridgeOutLog.parsedEventData.amount).eq(0);
+
+      await logGasUsage({
+        tx,
+        label: "multichainTransferRouter.transferOut (early return)",
+      });
+    });
+
+    it("should revert if the user has insufficient multichain balance", async () => {
+      const transferOutParams = {
+        token: usdc.address,
+        amount: expandDecimals(1000, 6),
+        provider: mockStargatePoolUsdc.address,
+        data: ethers.utils.defaultAbiCoder.encode(["uint32"], [1]),
+      };
+
+      await expect(multichainTransferRouter.connect(user1).transferOut(transferOutParams))
+        .to.be.revertedWithCustomError(errorsContract, "InsufficientMultichainBalance")
+        .withArgs(user1.address, transferOutParams.token, 0, transferOutParams.amount);
     });
   });
 });
