@@ -290,6 +290,7 @@ export const POSITION_LAST_SRC_CHAIN_ID = hashString("POSITION_LAST_SRC_CHAIN_ID
 export const VALID_FROM_TIME = hashString("VALID_FROM_TIME");
 
 export const MAX_DATA_LENGTH = hashString("MAX_DATA_LENGTH");
+export const GMX_DATA_ACTION = hashString("GMX_DATA_ACTION");
 
 export function accountDepositListKey(account) {
   return hashData(["bytes32", "address"], [ACCOUNT_DEPOSIT_LIST, account]);

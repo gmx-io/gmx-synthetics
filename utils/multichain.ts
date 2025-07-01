@@ -12,6 +12,7 @@ import {
   sendCreateGlvWithdrawal,
   getCreateGlvWithdrawalSignature,
 } from "./relay/multichain";
+import * as keys from "../utils/keys";
 
 export async function mintAndBridge(
   fixture,
@@ -292,4 +293,31 @@ export async function encodeSetTraderReferralCodeMessage(
   const message = ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, data]);
 
   return message;
+}
+
+export function encodeBridgeOutDataList(
+  actionType: number,
+  desChainId: BigNumberish,
+  deadline: BigNumberish,
+  provider: string,
+  providerData: string
+): string[] {
+  const actionData = ethers.utils.defaultAbiCoder.encode(
+    ["uint256", "uint256", "address", "bytes"],
+    [desChainId, deadline, provider, providerData]
+  );
+
+  let data = ethers.utils.defaultAbiCoder.encode(["uint8", "bytes"], [actionType, actionData]);
+
+  const dataList = [keys.GMX_DATA_ACTION];
+
+  // Remove '0x' prefix from the encoded data (re-added bellow for all array items)
+  data = data.slice(2);
+
+  // Transform the bytes data into an array of bytes32
+  for (let i = 0; i < data.length; i += 64) {
+    dataList.push(`0x${data.slice(i, i + 64)}`);
+  }
+
+  return dataList;
 }
