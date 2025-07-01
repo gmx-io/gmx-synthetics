@@ -598,25 +598,14 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         // validate wntReferralRewardsInUsd and calculate the referral rewards in WNT to be sent
         uint256 wntForReferralRewards = calculateWntForReferralRewards(wntReferralRewardsInUsd, feesV1Usd);
 
-        // calculate the amount of WNT to be used as GLP fees, validate the calculated amount and adjust if necessary
-        uint256 wntForGlp = totalWntBalance -
-            keeperCostsTreasury -
-            wntForChainlink -
-            wntForTreasury -
-            wntForReferralRewards;
-
-        uint256 maxKeeperCostsGlp = Precision.applyFactor(wntForGlp, getUint(Keys.FEE_DISTRIBUTOR_KEEPER_GLP_FACTOR));
-        if (keeperCostsGlp > maxKeeperCostsGlp) {
-            wntForTreasury -= (keeperCostsGlp - maxKeeperCostsGlp);
-            keeperCostsGlp = maxKeeperCostsGlp;
-        }
-        wntForGlp -= keeperCostsGlp;
-
+        uint256 wntForGlp;
         (wntForTreasury, wntForGlp) = finalizeWntForTreasuryAndGlp(
             totalWntBalance,
+            keeperCostsTreasury,
+            keeperCostsGlp,
             wntForChainlink,
             wntForTreasury,
-            wntForGlp
+            wntForReferralRewards
         );
 
         return (wntForKeepers, wntForChainlink, wntForTreasury, wntForReferralRewards, wntForGlp);
@@ -690,20 +679,56 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
 
     function finalizeWntForTreasuryAndGlp(
         uint256 totalWntBalance,
+        uint256 keeperCostsTreasury,
+        uint256 keeperCostsGlp,
         uint256 wntForChainlink,
         uint256 wntForTreasury,
-        uint256 wntForGlp
+        uint256 wntForReferralRewards
     ) internal returns (uint256, uint256) {
+        // calculate the amount of WNT to be used as GLP fees, validate the calculated amount and adjust if necessary
+        uint256 wntForGlp = totalWntBalance -
+            keeperCostsTreasury -
+            wntForChainlink -
+            wntForTreasury -
+            wntForReferralRewards;
+
+        uint256 maxKeeperCostsGlp = Precision.applyFactor(
+            wntForGlp,
+            getUint(Keys.FEE_DISTRIBUTOR_MAX_GLP_KEEPER_COSTS_FACTOR)
+        );
+        uint256 additionalWntFromTreasury;
+        if (keeperCostsGlp > maxKeeperCostsGlp) {
+            uint256 additionalWntForV1KeeperCosts = keeperCostsGlp - maxKeeperCostsGlp;
+            if (additionalWntForV1KeeperCosts > wntForTreasury) {
+                uint256 maxWntFromTreasury = getUint(Keys.FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY);
+                additionalWntFromTreasury = additionalWntForV1KeeperCosts - wntForTreasury;
+                if (maxWntFromTreasury > additionalWntFromTreasury) {
+                    revert Errors.MaxWntFromTreasuryExceeded(maxWntFromTreasury, additionalWntFromTreasury);
+                }
+                IERC20(wnt).transferFrom(
+                    getAddress(block.chainid, TREASURY),
+                    address(feeDistributorVault),
+                    additionalWntFromTreasury
+                );
+                wntForTreasury = 0;
+            } else {
+                wntForTreasury -= additionalWntForV1KeeperCosts;
+            }
+            keeperCostsGlp = maxKeeperCostsGlp;
+        }
+        wntForGlp -= keeperCostsGlp;
+
         uint256 expectedWntForGlp = totalWntBalance - wntForChainlink - wntForTreasury;
         uint256 minGlpFeeFactor = getUint(Keys.FEE_DISTRIBUTOR_MIN_GLP_FEE_FACTOR);
         uint256 minWntForGlp = Precision.applyFactor(expectedWntForGlp, minGlpFeeFactor);
         if (wntForGlp < minWntForGlp) {
             uint256 additionalWntForGlp = minWntForGlp - wntForGlp;
             if (additionalWntForGlp > wntForTreasury) {
-                uint256 additionalWntForGlpFromTreasury = additionalWntForGlp - wntForTreasury;
                 uint256 maxWntFromTreasury = getUint(Keys.FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY);
-                if (maxWntFromTreasury > additionalWntForGlpFromTreasury) {
-                    revert Errors.MaxWntFromTreasuryExceeded(maxWntFromTreasury, additionalWntForGlpFromTreasury);
+                uint256 additionalWntForGlpFromTreasury = additionalWntForGlp - wntForTreasury;
+                additionalWntFromTreasury += additionalWntForGlpFromTreasury;
+                if (maxWntFromTreasury > additionalWntFromTreasury) {
+                    revert Errors.MaxWntFromTreasuryExceeded(maxWntFromTreasury, additionalWntFromTreasury);
                 }
                 IERC20(wnt).transferFrom(
                     getAddress(block.chainid, TREASURY),

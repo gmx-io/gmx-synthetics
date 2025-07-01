@@ -575,8 +575,8 @@ library Keys {
     bytes32 public constant FEE_DISTRIBUTOR_ADDRESS_INFO = keccak256(abi.encode("FEE_DISTRIBUTOR_ADDRESS_INFO"));
     // @dev key for FeeDistributor keeper costs
     bytes32 public constant FEE_DISTRIBUTOR_KEEPER_COSTS = keccak256(abi.encode("FEE_DISTRIBUTOR_KEEPER_COSTS"));
-    // @dev key for FeeDistributor keeper GLP factor used to determine costs paid from GLP fees
-    bytes32 public constant FEE_DISTRIBUTOR_KEEPER_GLP_FACTOR = keccak256(abi.encode("FEE_DISTRIBUTOR_KEEPER_GLP_FACTOR"));
+    // @dev key for FeeDistributor max GLP keeper costs factor used to determine max V1 keeper costs paid from GLP fees
+    bytes32 public constant FEE_DISTRIBUTOR_MAX_GLP_KEEPER_COSTS_FACTOR = keccak256(abi.encode("FEE_DISTRIBUTOR_MAX_GLP_KEEPER_COSTS_FACTOR"));
     // @dev key for FeeDistributor chainlink factor used to determine total chainlink fees paid
     bytes32 public constant FEE_DISTRIBUTOR_CHAINLINK_FACTOR = keccak256(abi.encode("FEE_DISTRIBUTOR_CHAINLINK_FACTOR"));
     // @dev key for FeeDistributor total referral rewards sent in a given week

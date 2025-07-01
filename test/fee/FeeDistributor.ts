@@ -320,7 +320,7 @@ describe("FeeDistributor", function () {
       expandDecimals(4, 15),
     ]);
     await dataStore.setBoolArray(keys.FEE_DISTRIBUTOR_KEEPER_COSTS, [true, false, true]);
-    await config.setUint(keys.FEE_DISTRIBUTOR_KEEPER_GLP_FACTOR, "0x", expandDecimals(50, 28));
+    await config.setUint(keys.FEE_DISTRIBUTOR_MAX_GLP_KEEPER_COSTS_FACTOR, "0x", expandDecimals(50, 28));
     await config.setUint(keys.FEE_DISTRIBUTOR_CHAINLINK_FACTOR, "0x", expandDecimals(12, 28));
     await config.setUint(keys.BUYBACK_BATCH_AMOUNT, encodeData(["address"], [gmx.address]), expandDecimals(5, 17));
     await config.setUint(keys.BUYBACK_BATCH_AMOUNT, encodeData(["address"], [wnt.address]), expandDecimals(5, 17));
@@ -1149,7 +1149,6 @@ describe("FeeDistributor", function () {
         gmx.address,
         esGmx.address,
         wnt.address,
-        chainIdD,
       ],
       {
         libraries: {
@@ -1399,7 +1398,7 @@ describe("FeeDistributor", function () {
       expandDecimals(4, 15),
     ]);
     await dataStoreD.setBoolArray(keys.FEE_DISTRIBUTOR_KEEPER_COSTS, [true, false, true]);
-    await configD.setUint(keys.FEE_DISTRIBUTOR_KEEPER_GLP_FACTOR, "0x", expandDecimals(50, 28));
+    await configD.setUint(keys.FEE_DISTRIBUTOR_MAX_GLP_KEEPER_COSTS_FACTOR, "0x", expandDecimals(50, 28));
     await configD.setUint(keys.FEE_DISTRIBUTOR_CHAINLINK_FACTOR, "0x", expandDecimals(12, 28));
     await configD.setUint(
       keys.BUYBACK_BATCH_AMOUNT,
