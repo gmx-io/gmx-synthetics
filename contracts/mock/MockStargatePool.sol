@@ -13,7 +13,7 @@ import {LayerZeroProvider} from "../multichain/LayerZeroProvider.sol";
 contract MockStargatePool {
     using SafeERC20 for IERC20;
 
-    address public immutable token;
+    address public token;
     uint256 public constant BRIDGE_OUT_FEE = 0.001 ether;
     uint32 public constant SRC_EID = 1; // Mock endpoint id for source chain
 
