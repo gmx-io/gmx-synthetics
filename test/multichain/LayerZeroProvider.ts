@@ -94,6 +94,27 @@ describe("LayerZeroProvider", () => {
       expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, usdc.address))).eq(usdcAmount);
     });
 
+    it("mintAndBridge: ETH", async () => {
+      const ethAmount = expandDecimals(1, 18); // 1 ETH
+
+      expect(await wnt.balanceOf(user1.address)).eq(0);
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).eq(0);
+      const ethBalanceBefore = await hre.ethers.provider.getBalance(user1.address);
+
+      await mintAndBridge(fixture, {
+        account: user1,
+        token: undefined, // undefined means sending native tokens (ETH)
+        tokenAmount: ethAmount,
+      });
+
+      expect(await wnt.balanceOf(user1.address)).eq(0);
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).eq(ethAmount);
+      expect(await hre.ethers.provider.getBalance(user1.address)).closeTo(
+        ethBalanceBefore.sub(ethAmount),
+        expandDecimals(1, 15)
+      ); // approximately 0.001 ETH for tx gas
+    });
+
     describe("actionType: Deposit, Withdrawal", () => {
       let createDepositParams: Parameters<typeof sendCreateDeposit>[0];
       beforeEach(async () => {
