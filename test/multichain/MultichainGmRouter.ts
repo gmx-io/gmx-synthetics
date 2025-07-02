@@ -398,6 +398,39 @@ describe("MultichainGmRouter", () => {
         expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, wnt.address))).to.eq(executionFee);
         expect(await hre.ethers.provider.getBalance(mockStargatePoolGM.address)).eq(bridgingFee); // mockStargatePoolGM received the bridging fee
       });
+
+      it("create withdrawal and bridge out from controller the GM tokens, on the same chain", async () => {
+        await sendCreateDeposit(createDepositParams); // refunds the executionfee of 0.004 ETH fee in user's multichain balance
+        await mintAndBridge(fixture, { account: user1, tokenAmount: relayFeeAmount }); // top-up user1's multichain balance to cover the relay fee
+        await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
+
+        createWithdrawalParams.params.dataList = encodeBridgeOutDataList(
+          actionType,
+          chainId, // desChainId
+          deadline,
+          ethers.constants.AddressZero, // provider (can be the zero address since the tokens are transferred directly to the user's wallet on the same chain)
+          providerData
+        );
+
+        expect(await getBalanceOf(wnt.address, user1.address)).eq(0);
+        expect(await getBalanceOf(usdc.address, user1.address)).eq(0);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(
+          executionFee.add(relayFeeAmount)
+        );
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdMarket.marketToken))).to.eq(
+          expandDecimals(95_000, 18)
+        );
+
+        await sendCreateWithdrawal(createWithdrawalParams);
+        await executeWithdrawal(fixture, { gasUsageLabel: "executeWithdrawal" });
+
+        expect(await getBalanceOf(wnt.address, user1.address)).eq(wntAmount);
+        expect(await getBalanceOf(usdc.address, user1.address)).eq(usdcAmount);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(executionFee);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdMarket.marketToken))).to.eq(0);
+      });
     });
   });
 
