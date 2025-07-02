@@ -236,9 +236,9 @@ describe("MultichainGmRouter", () => {
         ); // executionFee
       });
 
-      // TODO: impersonate srcChainId / chainId in hardhat and enable test
-      // to be able to create a deposit on a source chain and execute it on a different chain
-      // without impersonating, the first deposit action reverts with InvalidRecoveredSigner
+      // TODO: Enable test once hardhat supports changing the chain id during the test
+      // without changing the chainId, tx reverts with InvalidRecoveredSigner (signature fails)
+      // to test the bridgeOut flow, could temporarily disable the signature verification (e.g. comment out the RelayUtils.validateSignature call)
       it.skip("create deposit and bridge out from controller the GM tokens, on the source chain", async () => {
         // use the StargatePoolUSDC as the StargatePoolGM --> StargatePoolGM.token() will be the GM token
         const mockStargatePoolGM = mockStargatePoolUsdc;
