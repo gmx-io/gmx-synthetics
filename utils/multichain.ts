@@ -30,13 +30,7 @@ export async function mintAndBridge(
   const token = overrides.token;
   const tokenAmount = overrides.tokenAmount;
 
-  if (!token) {
-    // StargatePoolNative is being used to bridge native ETH
-    await account.sendTransaction({
-      to: mockStargatePoolNative.address,
-      value: tokenAmount,
-    });
-  } else {
+  if (token) {
     // e.g. StargatePoolUsdc is being used to bridge USDC
     await token.mint(account.address, tokenAmount);
   }
