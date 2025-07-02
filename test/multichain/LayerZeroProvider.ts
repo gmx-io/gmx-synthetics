@@ -29,6 +29,7 @@ describe("LayerZeroProvider", () => {
   let dataStore,
     wnt,
     usdc,
+    usdt,
     ethUsdMarket,
     ethUsdGlvAddress,
     depositVault,
@@ -51,6 +52,7 @@ describe("LayerZeroProvider", () => {
       dataStore,
       wnt,
       usdc,
+      usdt,
       ethUsdMarket,
       ethUsdGlvAddress,
       depositVault,
@@ -93,6 +95,27 @@ describe("LayerZeroProvider", () => {
       expect(await usdc.balanceOf(layerZeroProvider.address)).eq(0);
       expect(await usdc.balanceOf(multichainVault.address)).eq(usdcAmount);
       expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, usdc.address))).eq(usdcAmount);
+    });
+
+    it("bridgeInTokens: usdt", async () => {
+      // use MockStargatePoolUsdc as MockStargatePoolUsdt to bridge USDT (same flow applies to GM / GLV)
+      const mockStargatePoolUsdt = mockStargatePoolUsdc;
+      await mockStargatePoolUsdt.updateToken(usdt.address);
+
+      const usdtAmount = expandDecimals(1000, 6); // 1000 USDT
+
+      expect(await usdt.balanceOf(user1.address)).eq(0); // usdtAmount is automatically minted before bridging
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdt.address))).eq(0);
+
+      await bridgeInTokens(fixture, {
+        account: user1,
+        token: usdt,
+        amount: usdtAmount,
+        stargatePool: mockStargatePoolUsdt,
+      });
+
+      expect(await usdt.balanceOf(user1.address)).eq(0);
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdt.address))).eq(usdtAmount);
     });
 
     it("bridgeInTokens: ETH", async () => {
