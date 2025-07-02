@@ -10,7 +10,7 @@ import { executeDeposit, getDepositCount, getDepositKeys } from "../../utils/dep
 import { executeWithdrawal, getWithdrawalCount, getWithdrawalKeys } from "../../utils/withdrawal";
 import { getBalanceOf } from "../../utils/token";
 import { executeShift, getShiftCount, getShiftKeys } from "../../utils/shift";
-import { encodeBridgeOutDataList, mintAndBridge } from "../../utils/multichain";
+import { encodeBridgeOutDataList, bridgeInTokens } from "../../utils/multichain";
 
 describe("MultichainGmRouter", () => {
   let fixture;
@@ -113,11 +113,11 @@ describe("MultichainGmRouter", () => {
 
     await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolNative.address), true);
     await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolNative.address), true);
-    await mintAndBridge(fixture, { tokenAmount: wntAmount.add(feeAmount) });
+    await bridgeInTokens(fixture, { tokenAmount: wntAmount.add(feeAmount) });
 
     await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolUsdc.address), true);
     await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolUsdc.address), true);
-    await mintAndBridge(fixture, { token: usdc, tokenAmount: usdcAmount });
+    await bridgeInTokens(fixture, { token: usdc, tokenAmount: usdcAmount });
   });
 
   describe("createDeposit", () => {
@@ -257,7 +257,7 @@ describe("MultichainGmRouter", () => {
     it("creates withdrawal and sends relayer fee", async () => {
       await sendCreateDeposit(createDepositParams); // leaves the residualFee (i.e. executionfee) of 0.004 ETH fee in multichainVault/user's multichain balance
       await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
-      await mintAndBridge(fixture, { account: user1, tokenAmount: relayFeeAmount }); // top-up user1's multichain balance to cover the relay fee
+      await bridgeInTokens(fixture, { account: user1, tokenAmount: relayFeeAmount }); // top-up user1's multichain balance to cover the relay fee
 
       expect(await getWithdrawalCount(dataStore)).eq(0);
       expect(await wnt.balanceOf(multichainVault.address)).eq(feeAmount); // 0.006 ETH
@@ -388,7 +388,7 @@ describe("MultichainGmRouter", () => {
 
         // top up user's multichain balance with the bridging fee, required to bridge out from controller
         const bridgingFee = await mockStargatePoolGM.BRIDGE_OUT_FEE();
-        await mintAndBridge(fixture, { account: user0, tokenAmount: bridgingFee });
+        await bridgeInTokens(fixture, { account: user0, tokenAmount: bridgingFee });
 
         // TODO: impersonate chainId as the hardhat chainId
         await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
@@ -401,7 +401,7 @@ describe("MultichainGmRouter", () => {
 
       it("create withdrawal and bridge out from controller the GM tokens, on the same chain", async () => {
         await sendCreateDeposit(createDepositParams); // refunds the executionfee of 0.004 ETH fee in user's multichain balance
-        await mintAndBridge(fixture, { account: user1, tokenAmount: relayFeeAmount }); // top-up user1's multichain balance to cover the relay fee
+        await bridgeInTokens(fixture, { account: user1, tokenAmount: relayFeeAmount }); // top-up user1's multichain balance to cover the relay fee
         await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
 
         createWithdrawalParams.params.dataList = encodeBridgeOutDataList(
@@ -488,7 +488,7 @@ describe("MultichainGmRouter", () => {
         expandDecimals(95_000, 18)
       );
 
-      await mintAndBridge(fixture, { account: user1, tokenAmount: relayFeeAmount }); // top-up user1's multichain balance to cover the relay fee
+      await bridgeInTokens(fixture, { account: user1, tokenAmount: relayFeeAmount }); // top-up user1's multichain balance to cover the relay fee
       await sendCreateShift(createShiftParams);
 
       const shiftKeys = await getShiftKeys(dataStore, 0, 1);

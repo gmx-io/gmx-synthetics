@@ -8,7 +8,7 @@ import * as keys from "../../utils/keys";
 import { executeDeposit } from "../../utils/deposit";
 import { getBalanceOf } from "../../utils/token";
 import { executeGlvDeposit, executeGlvWithdrawal, getGlvDepositCount, getGlvWithdrawalCount } from "../../utils/glv";
-import { encodeBridgeOutDataList, mintAndBridge } from "../../utils/multichain";
+import { encodeBridgeOutDataList, bridgeInTokens } from "../../utils/multichain";
 
 describe("MultichainGlvRouter", () => {
   let fixture;
@@ -109,11 +109,11 @@ describe("MultichainGlvRouter", () => {
 
     await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolNative.address), true);
     await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolNative.address), true);
-    await mintAndBridge(fixture, { tokenAmount: wntAmount.add(feeAmount) });
+    await bridgeInTokens(fixture, { tokenAmount: wntAmount.add(feeAmount) });
 
     await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolUsdc.address), true);
     await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolUsdc.address), true);
-    await mintAndBridge(fixture, { token: usdc, tokenAmount: usdcAmount });
+    await bridgeInTokens(fixture, { token: usdc, tokenAmount: usdcAmount });
   });
 
   let defaultGlvDepositParams;
@@ -168,7 +168,7 @@ describe("MultichainGlvRouter", () => {
   describe("createGlvDeposit", () => {
     it("creates glvDeposit with GM tokens and sends relayer fee", async () => {
       await sendCreateDeposit(createDepositParams); // leaves the residualFee (i.e. executionfee) of 0.004 ETH fee in multichainVault/user's multichain balance
-      await mintAndBridge(fixture, { account: user1, tokenAmount: feeAmount }); // add additional fee to user1's multichain balance
+      await bridgeInTokens(fixture, { account: user1, tokenAmount: feeAmount }); // add additional fee to user1's multichain balance
       await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
 
       // before glv deposit is created (user has 95k GM and 0 GLV)
@@ -202,8 +202,8 @@ describe("MultichainGlvRouter", () => {
     });
 
     it("creates glvDeposit with long/short tokens and sends relayer fee", async () => {
-      await mintAndBridge(fixture, { account: user1, tokenAmount: wntAmount.add(feeAmount) });
-      await mintAndBridge(fixture, { account: user1, token: usdc, tokenAmount: usdcAmount });
+      await bridgeInTokens(fixture, { account: user1, tokenAmount: wntAmount.add(feeAmount) });
+      await bridgeInTokens(fixture, { account: user1, token: usdc, tokenAmount: usdcAmount });
 
       createGlvDepositParams.params.isMarketTokenDeposit = false;
       createGlvDepositParams.params.addresses.initialLongToken = ethUsdMarket.longToken;
@@ -280,7 +280,7 @@ describe("MultichainGlvRouter", () => {
 
     it("creates glvWithdrawal and sends relayer fee", async () => {
       await sendCreateDeposit(createDepositParams);
-      await mintAndBridge(fixture, { account: user1, tokenAmount: feeAmount }); // add additional fee to user1's multichain balance
+      await bridgeInTokens(fixture, { account: user1, tokenAmount: feeAmount }); // add additional fee to user1's multichain balance
       await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
       await sendCreateGlvDeposit(createGlvDepositParams);
       await executeGlvDeposit(fixture, { gasUsageLabel: "executeGlvDeposit" });
@@ -327,8 +327,8 @@ describe("MultichainGlvRouter", () => {
       const providerData = ethers.utils.defaultAbiCoder.encode(["uint32"], [1]); // providerData
 
       it("create glvDeposit and bridge out from controller the GLV tokens, on the same chain", async () => {
-        await mintAndBridge(fixture, { account: user1, tokenAmount: wntAmount.add(feeAmount) });
-        await mintAndBridge(fixture, { account: user1, token: usdc, tokenAmount: usdcAmount });
+        await bridgeInTokens(fixture, { account: user1, tokenAmount: wntAmount.add(feeAmount) });
+        await bridgeInTokens(fixture, { account: user1, token: usdc, tokenAmount: usdcAmount });
 
         createGlvDepositParams.params.isMarketTokenDeposit = false;
         createGlvDepositParams.params.addresses.initialLongToken = ethUsdMarket.longToken;
@@ -366,7 +366,7 @@ describe("MultichainGlvRouter", () => {
       it("creates glvWithdrawal and bridge out from controller the GLV tokens, on the same chain", async () => {
         await sendCreateDeposit(createDepositParams);
         await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
-        await mintAndBridge(fixture, { account: user1, tokenAmount: relayFeeAmount }); // top-up user1's multichain balance to cover the relay fee
+        await bridgeInTokens(fixture, { account: user1, tokenAmount: relayFeeAmount }); // top-up user1's multichain balance to cover the relay fee
         await sendCreateGlvDeposit(createGlvDepositParams);
         await executeGlvDeposit(fixture, { gasUsageLabel: "executeGlvDeposit" });
 
@@ -388,7 +388,7 @@ describe("MultichainGlvRouter", () => {
           providerData
         );
 
-        await mintAndBridge(fixture, { account: user1, tokenAmount: relayFeeAmount }); // top-up user1's multichain balance to cover the relay fee
+        await bridgeInTokens(fixture, { account: user1, tokenAmount: relayFeeAmount }); // top-up user1's multichain balance to cover the relay fee
         await sendCreateGlvWithdrawal(createGlvWithdrawalParams);
         await executeGlvWithdrawal(fixture, { gasUsageLabel: "executeGlvWithdrawal" });
 

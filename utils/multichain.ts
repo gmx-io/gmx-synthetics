@@ -14,7 +14,7 @@ import {
 } from "./relay/multichain";
 import * as keys from "../utils/keys";
 
-export async function mintAndBridge(
+export async function bridgeInTokens(
   fixture,
   overrides: {
     account?: string;

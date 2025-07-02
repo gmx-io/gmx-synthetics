@@ -6,7 +6,7 @@ import { logGasUsage } from "../../utils/gas";
 import * as keys from "../../utils/keys";
 import { sendBridgeOut } from "../../utils/relay/multichain";
 import { GELATO_RELAY_ADDRESS } from "../../utils/relay/addresses";
-import { mintAndBridge } from "../../utils/multichain";
+import { bridgeInTokens } from "../../utils/multichain";
 import { impersonateAccount, setBalance } from "@nomicfoundation/hardhat-network-helpers";
 import { parseLogs } from "../../utils/event";
 import { errorsContract } from "../../utils/error";
@@ -43,7 +43,7 @@ describe("MultichainTransferRouter", () => {
     await dataStore.setBool(keys.isSrcChainIdEnabledKey(chainId), true);
   });
 
-  it("bridgeIn wnt", async () => {
+  it("bridgeIn wnt (same-chain flow)", async () => {
     const amount = expandDecimals(50, 18); // 50 ETH
     const user1EthBalanceBefore = await hre.ethers.provider.getBalance(user1.address);
 
@@ -72,7 +72,7 @@ describe("MultichainTransferRouter", () => {
     });
   });
 
-  it("bridgeIn usdc", async () => {
+  it("bridgeIn usdc (same-chain flow)", async () => {
     const amount = expandDecimals(50 * 1000, 6); // 50,000 USDC
     await usdc.mint(user1.address, amount);
     await usdc.connect(user1).approve(router.address, amount);
@@ -148,11 +148,11 @@ describe("MultichainTransferRouter", () => {
       // add usdc to user's multichain balance
       await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolUsdc.address), true);
       await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolUsdc.address), true);
-      await mintAndBridge(fixture, { account: user1, token: usdc, tokenAmount: bridgeOutAmount });
+      await bridgeInTokens(fixture, { account: user1, token: usdc, tokenAmount: bridgeOutAmount });
       // add wnt to user's multichain balance
       await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolNative.address), true);
       await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolNative.address), true);
-      await mintAndBridge(fixture, { account: user1, tokenAmount: feeAmount });
+      await bridgeInTokens(fixture, { account: user1, tokenAmount: feeAmount });
 
       // user's wallet balance
       expect(await usdc.balanceOf(user1.address)).eq(0);
@@ -191,12 +191,12 @@ describe("MultichainTransferRouter", () => {
     it("cross-chain withdrawal", async () => {
       await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolUsdc.address), true);
       await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolUsdc.address), true);
-      await mintAndBridge(fixture, { account: user1, token: usdc, tokenAmount: bridgeOutAmount });
+      await bridgeInTokens(fixture, { account: user1, token: usdc, tokenAmount: bridgeOutAmount });
 
       const bridgeOutFee = await mockStargatePoolNative.BRIDGE_OUT_FEE();
       await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolNative.address), true);
       await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolNative.address), true);
-      await mintAndBridge(fixture, { account: user1, tokenAmount: feeAmount.add(bridgeOutFee) });
+      await bridgeInTokens(fixture, { account: user1, tokenAmount: feeAmount.add(bridgeOutFee) });
 
       expect(await usdc.balanceOf(multichainVault.address)).eq(bridgeOutAmount);
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(bridgeOutAmount); // 1000 USDC
