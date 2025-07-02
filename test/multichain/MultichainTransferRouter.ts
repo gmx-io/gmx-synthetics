@@ -148,11 +148,11 @@ describe("MultichainTransferRouter", () => {
       // add usdc to user's multichain balance
       await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolUsdc.address), true);
       await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolUsdc.address), true);
-      await bridgeInTokens(fixture, { account: user1, token: usdc, tokenAmount: bridgeOutAmount });
+      await bridgeInTokens(fixture, { account: user1, token: usdc, amount: bridgeOutAmount });
       // add wnt to user's multichain balance
       await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolNative.address), true);
       await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolNative.address), true);
-      await bridgeInTokens(fixture, { account: user1, tokenAmount: feeAmount });
+      await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
 
       // user's wallet balance
       expect(await usdc.balanceOf(user1.address)).eq(0);
@@ -191,12 +191,12 @@ describe("MultichainTransferRouter", () => {
     it("cross-chain withdrawal", async () => {
       await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolUsdc.address), true);
       await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolUsdc.address), true);
-      await bridgeInTokens(fixture, { account: user1, token: usdc, tokenAmount: bridgeOutAmount });
+      await bridgeInTokens(fixture, { account: user1, token: usdc, amount: bridgeOutAmount });
 
       const bridgeOutFee = await mockStargatePoolNative.BRIDGE_OUT_FEE();
       await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolNative.address), true);
       await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolNative.address), true);
-      await bridgeInTokens(fixture, { account: user1, tokenAmount: feeAmount.add(bridgeOutFee) });
+      await bridgeInTokens(fixture, { account: user1, amount: feeAmount.add(bridgeOutFee) });
 
       expect(await usdc.balanceOf(multichainVault.address)).eq(bridgeOutAmount);
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(bridgeOutAmount); // 1000 USDC

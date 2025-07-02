@@ -154,7 +154,7 @@ describe("MultichainOrderRouter", () => {
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0);
       expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(0);
 
-      await bridgeInTokens(fixture, { account: user1, tokenAmount: collateralDeltaAmount.add(feeAmount) });
+      await bridgeInTokens(fixture, { account: user1, amount: collateralDeltaAmount.add(feeAmount) });
 
       expect(await getOrderCount(dataStore)).to.eq(0);
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(
@@ -190,8 +190,8 @@ describe("MultichainOrderRouter", () => {
       const feeAmount = expandDecimals(30, 6); // 30 USDC (execution fee + relay fee in USDC = 0.004 ETH + 0.002 ETH = 0.006 ETH = 30 USDC)
       const feeSwapPath = [ethUsdMarket.marketToken];
 
-      await bridgeInTokens(fixture, { account: user1, token: usdc, tokenAmount: feeAmount }); // 30 USDC
-      await bridgeInTokens(fixture, { account: user1, tokenAmount: collateralDeltaAmount }); // 1 ETH
+      await bridgeInTokens(fixture, { account: user1, token: usdc, amount: feeAmount }); // 30 USDC
+      await bridgeInTokens(fixture, { account: user1, amount: collateralDeltaAmount }); // 1 ETH
 
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(feeAmount);
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(
@@ -236,7 +236,7 @@ describe("MultichainOrderRouter", () => {
       // order is created from a source chain
       await bridgeInTokens(fixture, {
         account: user1,
-        tokenAmount: collateralDeltaAmount.add(feeAmount),
+        amount: collateralDeltaAmount.add(feeAmount),
       });
       await sendCreateOrder(createOrderParams);
       await executeOrder(fixture, { gasUsageLabel: "executeOrder" });
@@ -269,7 +269,7 @@ describe("MultichainOrderRouter", () => {
       // order is created from a source chain
       await bridgeInTokens(fixture, {
         account: user1,
-        tokenAmount: collateralDeltaAmount.add(feeAmount),
+        amount: collateralDeltaAmount.add(feeAmount),
       });
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(
         collateralDeltaAmount.add(feeAmount)
@@ -319,7 +319,7 @@ describe("MultichainOrderRouter", () => {
       await dataStore.setUint(keys.EXECUTION_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1));
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0);
 
-      await bridgeInTokens(fixture, { account: user1, tokenAmount: collateralDeltaAmount.add(feeAmount) });
+      await bridgeInTokens(fixture, { account: user1, amount: collateralDeltaAmount.add(feeAmount) });
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(
         collateralDeltaAmount.add(feeAmount)
       );
@@ -369,7 +369,7 @@ describe("MultichainOrderRouter", () => {
     });
 
     it("updates multichain order and sends relayer fee", async () => {
-      await bridgeInTokens(fixture, { account: user1, tokenAmount: collateralDeltaAmount.add(feeAmount) });
+      await bridgeInTokens(fixture, { account: user1, amount: collateralDeltaAmount.add(feeAmount) });
       expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(0);
 
       await sendCreateOrder(createOrderParams);
@@ -387,7 +387,7 @@ describe("MultichainOrderRouter", () => {
       expect(order.flags.autoCancel).eq(false);
 
       // relayFeeAmount was paid to create order, top-up relayFeeAmount for update order
-      await bridgeInTokens(fixture, { account: user1, tokenAmount: relayFeeAmount });
+      await bridgeInTokens(fixture, { account: user1, amount: relayFeeAmount });
 
       await sendUpdateOrder({ ...updateOrderParams, params: { ...updateOrderParams.params, key: orderKeys[0] } });
 
@@ -431,7 +431,7 @@ describe("MultichainOrderRouter", () => {
     it("cancels multichain order and sends relayer fee", async () => {
       await bridgeInTokens(fixture, {
         account: user1,
-        tokenAmount: collateralDeltaAmount.add(feeAmount),
+        amount: collateralDeltaAmount.add(feeAmount),
       });
       await sendCreateOrder(createOrderParams);
       expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(relayFeeAmount);
@@ -442,7 +442,7 @@ describe("MultichainOrderRouter", () => {
 
       await bridgeInTokens(fixture, {
         account: user1,
-        tokenAmount: relayFeeAmount,
+        amount: relayFeeAmount,
       });
       // relayFeeAmount was paid to create order, top-up relayFeeAmount for cancel order
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(relayFeeAmount);
@@ -488,7 +488,7 @@ describe("MultichainOrderRouter", () => {
       const batchFeeAmount = executionFee.mul(2).add(relayFeeAmount); // 0.004 * 2 + 0.002 = 0.01 ETH
       await bridgeInTokens(fixture, {
         account: user1,
-        tokenAmount: collateralDeltaAmount.mul(2).add(batchFeeAmount),
+        amount: collateralDeltaAmount.mul(2).add(batchFeeAmount),
       });
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(
         collateralDeltaAmount.mul(2).add(batchFeeAmount)
@@ -561,8 +561,8 @@ describe("MultichainOrderRouter", () => {
       expect(await dataStore.getUint(keys.positionLastSrcChainIdKey(positionKey0))).to.eq(0);
 
       // 2. create order from the multichain --> positionLastSrcChainId is set to the current chainId
-      await bridgeInTokens(fixture, { account: user1, token: usdc, tokenAmount: collateralDeltaAmountUsdc });
-      await bridgeInTokens(fixture, { account: user1, tokenAmount: feeAmount });
+      await bridgeInTokens(fixture, { account: user1, token: usdc, amount: collateralDeltaAmountUsdc });
+      await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
       createOrderParams.params.addresses.initialCollateralToken = usdc.address;
       createOrderParams.params.numbers.initialCollateralDeltaAmount = collateralDeltaAmountUsdc;
       createOrderParams.params.numbers.sizeDeltaUsd = decimalToFloat(15_000);
@@ -609,8 +609,8 @@ describe("MultichainOrderRouter", () => {
     });
 
     it("position created from same-chain, position updated from multichain, liquidations sent to the user's multichain balance", async () => {
-      await bridgeInTokens(fixture, { account: user1, token: usdc, tokenAmount: collateralDeltaAmountUsdc });
-      await bridgeInTokens(fixture, { account: user1, tokenAmount: feeAmount });
+      await bridgeInTokens(fixture, { account: user1, token: usdc, amount: collateralDeltaAmountUsdc });
+      await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
 
       expect(await getOrderCount(dataStore)).to.eq(0);
       expect(await usdc.balanceOf(user1.address)).to.eq(0);
@@ -649,8 +649,8 @@ describe("MultichainOrderRouter", () => {
     });
 
     it("position created from same-chain, position updated from multichain (but order not yet executed), liquidations sent to the user's multichain balance", async () => {
-      await bridgeInTokens(fixture, { account: user1, token: usdc, tokenAmount: collateralDeltaAmountUsdc });
-      await bridgeInTokens(fixture, { account: user1, tokenAmount: feeAmount });
+      await bridgeInTokens(fixture, { account: user1, token: usdc, amount: collateralDeltaAmountUsdc });
+      await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
 
       expect(await getOrderCount(dataStore)).to.eq(0);
       expect(await usdc.balanceOf(user1.address)).to.eq(0);
@@ -704,8 +704,8 @@ describe("MultichainOrderRouter", () => {
     });
 
     it("adl increases user's multichain balance", async () => {
-      await bridgeInTokens(fixture, { account: user1, token: usdc, tokenAmount: collateralDeltaAmountUsdc });
-      await bridgeInTokens(fixture, { account: user1, tokenAmount: feeAmount });
+      await bridgeInTokens(fixture, { account: user1, token: usdc, amount: collateralDeltaAmountUsdc });
+      await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
 
       // order is created from a source chain
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(
@@ -816,7 +816,7 @@ describe("MultichainOrderRouter", () => {
 
       await bridgeInTokens(fixture, {
         account: user1,
-        tokenAmount: relayFeeAmount,
+        amount: relayFeeAmount,
       });
 
       expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(0);

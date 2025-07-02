@@ -84,8 +84,9 @@ describe("LayerZeroProvider", () => {
 
     it("bridgeInTokens: usdc", async () => {
       await bridgeInTokens(fixture, {
+        account: user0,
         token: usdc,
-        tokenAmount: usdcAmount,
+        amount: usdcAmount,
       });
 
       // usdc has been transterred from LayerZeroProvider to MultichainVault and recorded under the user's multicahin balance
@@ -104,7 +105,7 @@ describe("LayerZeroProvider", () => {
       await bridgeInTokens(fixture, {
         account: user1,
         token: undefined, // undefined means sending native tokens (ETH)
-        tokenAmount: ethAmount,
+        amount: ethAmount,
       });
 
       expect(await wnt.balanceOf(user1.address)).eq(0);
@@ -167,7 +168,7 @@ describe("LayerZeroProvider", () => {
       });
 
       it("creates deposit without paying relayFee if LayerZeroProvider is whitelisted", async () => {
-        await bridgeInTokens(fixture, { account: user1, tokenAmount: wntAmount.add(executionFee) });
+        await bridgeInTokens(fixture, { account: user1, amount: wntAmount.add(executionFee) });
         await usdc.mint(user1.address, usdcAmount);
         await usdc.connect(user1).approve(mockStargatePoolUsdc.address, usdcAmount);
 
@@ -195,7 +196,7 @@ describe("LayerZeroProvider", () => {
 
       it("creates withdrawal without paying relayFee if LayerZeroProvider is whitelisted", async () => {
         // first create and execute deposit
-        await bridgeInTokens(fixture, { account: user1, tokenAmount: wntAmount.add(executionFee) });
+        await bridgeInTokens(fixture, { account: user1, amount: wntAmount.add(executionFee) });
         await usdc.mint(user1.address, usdcAmount);
         await usdc.connect(user1).approve(mockStargatePoolUsdc.address, usdcAmount);
         const depositMessage = await encodeDepositMessage(createDepositParams, user1.address);
@@ -250,7 +251,6 @@ describe("LayerZeroProvider", () => {
         ); // 90,000 GM
 
         const withdrawalMessage = await encodeWithdrawalMessage(createWithdrawalParams, user1.address);
-        // await bridgeInTokens(fixture, { account: user1, tokenAmount: executionFee });
         const minBridgingAmount = expandDecimals(1, 6); // minimum amount required by a stargate pool to bridge a message
         await usdc.mint(user1.address, minBridgingAmount);
         await usdc.connect(user1).approve(mockStargatePoolUsdc.address, minBridgingAmount);
@@ -338,7 +338,7 @@ describe("LayerZeroProvider", () => {
       });
 
       it("creates glvDeposit, using long / short tokens, without paying relayFee if LayerZeroProvider is whitelisted", async () => {
-        await bridgeInTokens(fixture, { account: user1, tokenAmount: wntAmount.add(executionFee) });
+        await bridgeInTokens(fixture, { account: user1, amount: wntAmount.add(executionFee) });
         await usdc.mint(user1.address, usdcAmount);
         await usdc.connect(user1).approve(mockStargatePoolUsdc.address, usdcAmount);
 
@@ -367,7 +367,7 @@ describe("LayerZeroProvider", () => {
       });
 
       it("creates glvWithdrawal, using long / short tokens, without paying relayFee if LayerZeroProvider is whitelisted", async () => {
-        await bridgeInTokens(fixture, { account: user1, tokenAmount: wntAmount.add(executionFee) });
+        await bridgeInTokens(fixture, { account: user1, amount: wntAmount.add(executionFee) });
         await usdc.mint(user1.address, usdcAmount);
         await usdc.connect(user1).approve(mockStargatePoolUsdc.address, usdcAmount);
 

@@ -137,7 +137,7 @@ describe("MultichainClaimsRouter", () => {
 
     it("User receives funding fees in his multichain balance, pays relay fee from existing multichain balance", async () => {
       // increase user's wnt multichain balance to pay for fees
-      await bridgeInTokens(fixture, { account: user1, tokenAmount: feeAmount });
+      await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
 
       // the user will pay the relay fee from his newly claimed tokens
       const createClaimParams: Parameters<typeof sendClaimFundingFees>[0] = {
@@ -271,7 +271,7 @@ describe("MultichainClaimsRouter", () => {
 
     it("User receives collateral in his multichain balance, pays relay fee from his existing multicahin balance", async () => {
       // increase user's wnt multichain balance to pay for fees
-      await bridgeInTokens(fixture, { account: user1, tokenAmount: feeAmount });
+      await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
 
       // the user will pay the relay fee from his newly claimed tokens
       const createClaimParams: Parameters<typeof sendClaimCollateral>[0] = {
@@ -397,7 +397,7 @@ describe("MultichainClaimsRouter", () => {
         await dataStore.getUint(keys.affiliateRewardKey(ethUsdMarket.marketToken, usdc.address, user1.address))
       ).to.eq(expandDecimals(25, 6)); // $25
       // increase affiliate's wnt multichain balance to pay for fees
-      await bridgeInTokens(fixture, { account: user1, tokenAmount: feeAmount });
+      await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
 
       // affiliate will pay the relay fee from his existing wnt multichain balance
       const createClaimParams: Parameters<typeof sendClaimAffiliateRewards>[0] = {

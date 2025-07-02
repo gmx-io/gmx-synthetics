@@ -130,10 +130,10 @@ describe("MultichainSubaccountRouter", () => {
     await dataStore.setBool(keys.isSrcChainIdEnabledKey(chainId), true);
     await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolNative.address), true);
     await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolNative.address), true);
-    await bridgeInTokens(fixture, { account: user1, tokenAmount: wntAmountBridged });
+    await bridgeInTokens(fixture, { account: user1, amount: wntAmountBridged });
     await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolUsdc.address), true);
     await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolUsdc.address), true);
-    await bridgeInTokens(fixture, { account: user1, token: usdc, tokenAmount: usdcAmountBridged });
+    await bridgeInTokens(fixture, { account: user1, token: usdc, amount: usdcAmountBridged });
 
     await dataStore.setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1));
     await setNextBlockBaseFeePerGas(expandDecimals(1, 9));

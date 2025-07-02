@@ -95,8 +95,8 @@ describe("MultichainLifeCycle", () => {
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0);
 
     // 1. mint and bridge WNT and USDC to multichainVault
-    await bridgeInTokens(fixture, { account: user1, tokenAmount: wntAmount.add(feeAmount) });
-    await bridgeInTokens(fixture, { account: user1, token: usdc, tokenAmount: usdcAmount });
+    await bridgeInTokens(fixture, { account: user1, amount: wntAmount.add(feeAmount) });
+    await bridgeInTokens(fixture, { account: user1, token: usdc, amount: usdcAmount });
 
     // multichainVault balance
     expect(await wnt.balanceOf(multichainVault.address)).eq(wntAmount.add(feeAmount)); // 10 + 0.006 = 10.006 ETH
@@ -247,7 +247,7 @@ describe("MultichainLifeCycle", () => {
     expect(await getBalanceOf(ethUsdMarket.marketToken, glvVault.address)).eq(0); // GM
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdGlvAddress))).eq(0); // GLV
 
-    await bridgeInTokens(fixture, { account: user1, tokenAmount: feeAmount });
+    await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
     await sendCreateGlvDeposit(createGlvDepositParams);
 
     // after glv deposit is created (user has 47.5k GM and 0 GLV, 47.5k of his GM moved from user's multichain balance to glvVault)
@@ -331,7 +331,7 @@ describe("MultichainLifeCycle", () => {
     expect(await getBalanceOf(ethUsdGlvAddress, glvVault.address)).eq(0); // GLV in glvVault
     expect(await getBalanceOf(ethUsdMarket.marketToken, ethUsdGlvAddress)).eq(expandDecimals(47_500, 18)); // GM in ethUsdGlv
 
-    await bridgeInTokens(fixture, { account: user1, tokenAmount: feeAmount });
+    await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
     await sendCreateGlvWithdrawal(createGlvWithdrawalParams);
 
     // before glv withdrawal is executed (user has 47.5k GM and 47.5k GLV)
@@ -422,7 +422,7 @@ describe("MultichainLifeCycle", () => {
     ); // 47,500 GM
 
     // Create withdrawal
-    await bridgeInTokens(fixture, { account: user1, tokenAmount: feeAmount });
+    await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
     await sendCreateWithdrawal(createWithdrawalParams);
 
     // user's multichain balance

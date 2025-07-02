@@ -17,22 +17,26 @@ import * as keys from "../utils/keys";
 export async function bridgeInTokens(
   fixture,
   overrides: {
-    account?: string;
+    account: string;
     token?: Contract;
-    tokenAmount: BigNumberish;
+    amount: BigNumberish;
     data?: string;
+    stargatePool?: Contract;
   }
 ) {
-  const { usdc, mockStargatePoolUsdc, mockStargatePoolNative, layerZeroProvider } = fixture.contracts;
+  const { layerZeroProvider, mockStargatePoolUsdc, mockStargatePoolNative } = fixture.contracts;
   const { user0 } = fixture.accounts;
 
   const account = overrides.account || user0;
   const token = overrides.token;
-  const tokenAmount = overrides.tokenAmount;
+  const amount = overrides.amount;
+  const stargatePool = overrides.stargatePool || token ? mockStargatePoolUsdc : mockStargatePoolNative;
+  const msgValue = token ? 0 : amount; // if token is provided, we don't send native token
 
   if (token) {
     // e.g. StargatePoolUsdc is being used to bridge USDC
-    await token.mint(account.address, tokenAmount);
+    await token.mint(account.address, amount);
+    await token.connect(account).approve(stargatePool.address, amount);
   }
 
   // mock token bridging (increase user's multichain balance)
@@ -41,16 +45,9 @@ export async function bridgeInTokens(
     [account.address, overrides.data || "0x"]
   );
 
-  if (!token) {
-    await mockStargatePoolNative
-      .connect(account)
-      .sendToken(layerZeroProvider.address, tokenAmount, encodedMessageEth, { value: tokenAmount });
-  } else if (token.address == usdc.address) {
-    await token.connect(account).approve(mockStargatePoolUsdc.address, tokenAmount);
-    await mockStargatePoolUsdc.connect(account).sendToken(layerZeroProvider.address, tokenAmount, encodedMessageEth);
-  } else {
-    throw new Error("Unsupported StargatePool");
-  }
+  await stargatePool
+    .connect(account)
+    .sendToken(layerZeroProvider.address, amount, encodedMessageEth, { value: msgValue });
 }
 
 const relayParamsType = `tuple(
