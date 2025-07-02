@@ -34,6 +34,12 @@ describe("MultichainGmRouter", () => {
   let defaultDepositParams;
   let createDepositParams: Parameters<typeof sendCreateDeposit>[0];
 
+  const wntAmount = expandDecimals(10, 18);
+  const usdcAmount = expandDecimals(45_000, 6);
+  const feeAmount = expandDecimals(6, 15);
+  const executionFee = expandDecimals(4, 15);
+  const relayFeeAmount = expandDecimals(2, 15);
+
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1, user2, user3 } = fixture.accounts);
@@ -66,7 +72,7 @@ describe("MultichainGmRouter", () => {
       },
       minMarketTokens: 100,
       shouldUnwrapNativeToken: false,
-      executionFee: expandDecimals(4, 15),
+      executionFee,
       callbackGasLimit: "200000",
       dataList: [],
     };
@@ -77,16 +83,12 @@ describe("MultichainGmRouter", () => {
     relaySigner = await hre.ethers.getSigner(GELATO_RELAY_ADDRESS);
     chainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
 
-    const wntAmount = expandDecimals(10, 18);
-    const usdcAmount = expandDecimals(45_000, 6);
-    const feeAmount = expandDecimals(6, 15);
-
     createDepositParams = {
       sender: relaySigner,
       signer: user0,
       feeParams: {
         feeToken: wnt.address,
-        feeAmount: feeAmount, // 0.006 ETH
+        feeAmount, // 0.006 ETH
         feeSwapPath: [],
       },
       transferRequests: {
@@ -102,7 +104,7 @@ describe("MultichainGmRouter", () => {
       desChainId: chainId,
       relayRouter: multichainGmRouter,
       relayFeeToken: wnt.address,
-      relayFeeAmount: expandDecimals(2, 15), // 0.002 ETH
+      relayFeeAmount, // 0.002 ETH
     };
 
     await dataStore.setAddress(keys.FEE_RECEIVER, user3.address);
@@ -222,7 +224,7 @@ describe("MultichainGmRouter", () => {
         minLongTokenAmount: 0,
         minShortTokenAmount: 0,
         shouldUnwrapNativeToken: false,
-        executionFee: expandDecimals(4, 15), // feeAmount - relayFeeAmount = 0.007 - 0.003 = 0.004 ETH
+        executionFee, // 0.004 ETH
         callbackGasLimit: "200000",
         dataList: [],
       };
@@ -232,7 +234,7 @@ describe("MultichainGmRouter", () => {
         signer: user1, // user1 was the receiver of the deposit
         feeParams: {
           feeToken: wnt.address,
-          feeAmount: expandDecimals(7, 15), // 0.007 ETH
+          feeAmount, // 0.006 ETH
           feeSwapPath: [],
         },
         transferRequests: {
@@ -248,21 +250,19 @@ describe("MultichainGmRouter", () => {
         desChainId: chainId,
         relayRouter: multichainGmRouter,
         relayFeeToken: wnt.address,
-        relayFeeAmount: expandDecimals(3, 15), // 0.003 ETH
+        relayFeeAmount, // 0.002 ETH
       };
     });
 
     it("creates withdrawal and sends relayer fee", async () => {
       await sendCreateDeposit(createDepositParams); // leaves the residualFee (i.e. executionfee) of 0.004 ETH fee in multichainVault/user's multichain balance
-      await mintAndBridge(fixture, { account: user1, tokenAmount: expandDecimals(3, 15) }); // add additional fee to user1's multichain balance
       await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
+      await mintAndBridge(fixture, { account: user1, tokenAmount: relayFeeAmount }); // top-up user1's multichain balance to cover the relay fee
 
       expect(await getWithdrawalCount(dataStore)).eq(0);
-      expect(await wnt.balanceOf(multichainVault.address)).eq(expandDecimals(7, 15));
+      expect(await wnt.balanceOf(multichainVault.address)).eq(feeAmount); // 0.006 ETH
       expect(await usdc.balanceOf(multichainVault.address)).eq(0);
-      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(
-        expandDecimals(7, 15)
-      );
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(feeAmount); // 0.006 ETH
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0);
       expect(await wnt.balanceOf(withdrawalVault.address)).eq(0);
       expect(await usdc.balanceOf(withdrawalVault.address)).eq(0);
@@ -286,7 +286,7 @@ describe("MultichainGmRouter", () => {
       expect(withdrawal.numbers.marketTokenAmount).eq(createWithdrawalParams.transferRequests.amounts[0]); // 95,000 GM
       expect(withdrawal.numbers.minLongTokenAmount).eq(createWithdrawalParams.params.minLongTokenAmount);
       expect(withdrawal.numbers.minShortTokenAmount).eq(createWithdrawalParams.params.minShortTokenAmount);
-      expect(withdrawal.numbers.executionFee).eq(expandDecimals(4, 15)); // 0.007 - 0.003 = 0.004 ETH (feeAmount - relayFeeAmount)
+      expect(withdrawal.numbers.executionFee).eq(executionFee); // 0.004 ETH
       expect(withdrawal.numbers.callbackGasLimit).eq(createWithdrawalParams.params.callbackGasLimit);
       expect(withdrawal.flags.shouldUnwrapNativeToken).eq(createWithdrawalParams.params.shouldUnwrapNativeToken);
       expect(withdrawal._dataList).deep.eq(createWithdrawalParams.params.dataList);
@@ -297,7 +297,7 @@ describe("MultichainGmRouter", () => {
       expect(await usdc.balanceOf(multichainVault.address)).eq(0);
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0); // user's fee was sent to withdrawalVault
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0);
-      expect(await wnt.balanceOf(withdrawalVault.address)).eq(expandDecimals(4, 15)); // 0.004 ETH --> executionFee is sent to withdrawalVault
+      expect(await wnt.balanceOf(withdrawalVault.address)).eq(executionFee); // 0.004 ETH --> executionFee is sent to withdrawalVault
       expect(await usdc.balanceOf(withdrawalVault.address)).eq(0);
       expect(await getBalanceOf(ethUsdMarket.marketToken, multichainVault.address)).eq(0); // GM tokens were transferred out from multichainVault
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdMarket.marketToken))).to.eq(0); // user's multichain balance was decreased
@@ -310,14 +310,12 @@ describe("MultichainGmRouter", () => {
 
       // state after execute withdrawal
       expect(await getWithdrawalCount(dataStore)).eq(0);
-      expect(await wnt.balanceOf(multichainVault.address)).eq(expandDecimals(10_004, 15));
-      expect(await usdc.balanceOf(multichainVault.address)).eq(expandDecimals(45_000, 6));
+      expect(await wnt.balanceOf(multichainVault.address)).eq(wntAmount.add(executionFee));
+      expect(await usdc.balanceOf(multichainVault.address)).eq(usdcAmount);
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(
-        expandDecimals(10_004, 15)
+        wntAmount.add(executionFee)
       );
-      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(
-        expandDecimals(45_000, 6)
-      );
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(usdcAmount);
       expect(await wnt.balanceOf(withdrawalVault.address)).eq(0); // all wnt was sent to multichainVault
       expect(await usdc.balanceOf(withdrawalVault.address)).eq(0); // all usdc was sent to multichainVault
       expect(await getBalanceOf(ethUsdMarket.marketToken, multichainVault.address)).eq(0); // all GM tokens were burned
@@ -390,16 +388,14 @@ describe("MultichainGmRouter", () => {
 
         // top up user's multichain balance with the bridging fee, required to bridge out from controller
         const bridgingFee = await mockStargatePoolGM.BRIDGE_OUT_FEE();
-        mintAndBridge(fixture, { account: user0, tokenAmount: bridgingFee });
+        await mintAndBridge(fixture, { account: user0, tokenAmount: bridgingFee });
 
         // TODO: impersonate chainId as the hardhat chainId
         await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
 
         expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(expandDecimals(95_000, 18)); // 95,000 GM
         expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, ethUsdMarket.marketToken))).to.eq(0);
-        expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, wnt.address))).to.eq(
-          expandDecimals(4, 15)
-        ); // executionFee
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, wnt.address))).to.eq(executionFee);
         expect(await hre.ethers.provider.getBalance(mockStargatePoolGM.address)).eq(bridgingFee); // mockStargatePoolGM received the bridging fee
       });
     });
@@ -408,7 +404,6 @@ describe("MultichainGmRouter", () => {
   describe("createShift", () => {
     let defaultShiftParams;
     let createShiftParams: Parameters<typeof sendCreateShift>[0];
-    const feeAmount = expandDecimals(4, 15);
 
     beforeEach(async () => {
       defaultShiftParams = {
@@ -420,7 +415,7 @@ describe("MultichainGmRouter", () => {
           toMarket: solUsdMarket.marketToken,
         },
         minMarketTokens: 50,
-        executionFee: expandDecimals(2, 15), // feeAmount - relayFeeAmount = 0.004 - 0.002 = 0.002 ETH
+        executionFee,
         callbackGasLimit: "200000",
         dataList: [],
       };
@@ -446,7 +441,7 @@ describe("MultichainGmRouter", () => {
         desChainId: chainId,
         relayRouter: multichainGmRouter,
         relayFeeToken: wnt.address,
-        relayFeeAmount: expandDecimals(2, 15),
+        relayFeeAmount,
       };
     });
 
@@ -460,6 +455,7 @@ describe("MultichainGmRouter", () => {
         expandDecimals(95_000, 18)
       );
 
+      await mintAndBridge(fixture, { account: user1, tokenAmount: relayFeeAmount }); // top-up user1's multichain balance to cover the relay fee
       await sendCreateShift(createShiftParams);
 
       const shiftKeys = await getShiftKeys(dataStore, 0, 1);
