@@ -8,7 +8,7 @@ import * as keys from "../../utils/keys";
 import { executeDeposit } from "../../utils/deposit";
 import { getBalanceOf } from "../../utils/token";
 import { executeGlvDeposit, executeGlvWithdrawal, getGlvDepositCount, getGlvWithdrawalCount } from "../../utils/glv";
-import { mintAndBridge } from "../../utils/multichain";
+import { encodeBridgeOutDataList, mintAndBridge } from "../../utils/multichain";
 
 describe("MultichainGlvRouter", () => {
   let fixture;
@@ -228,6 +228,49 @@ describe("MultichainGlvRouter", () => {
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdGlvAddress))).eq(
         expandDecimals(95_000, 18)
       ); // 95k GLV
+    });
+
+    describe("bridgeOutFromController", () => {
+      const actionType = 3; // ActionType.BridgeOut
+      const deadline = Math.floor(Date.now() / 1000) + 3600; // deadline (1 hour from now)
+      const providerData = ethers.utils.defaultAbiCoder.encode(["uint32"], [1]); // providerData
+
+      it("create glvDeposit and bridge out from controller the GLV tokens, on the same chain", async () => {
+        await mintAndBridge(fixture, { account: user1, tokenAmount: wntAmount.add(feeAmount) });
+        await mintAndBridge(fixture, { account: user1, token: usdc, tokenAmount: usdcAmount });
+
+        createGlvDepositParams.params.isMarketTokenDeposit = false;
+        createGlvDepositParams.params.addresses.initialLongToken = ethUsdMarket.longToken;
+        createGlvDepositParams.params.addresses.initialShortToken = ethUsdMarket.shortToken;
+        createGlvDepositParams.transferRequests = {
+          tokens: [wnt.address, usdc.address],
+          receivers: [glvVault.address, glvVault.address],
+          amounts: [wntAmount, usdcAmount],
+        };
+
+        createGlvDepositParams.params.dataList = encodeBridgeOutDataList(
+          actionType,
+          chainId, // desChainId
+          deadline,
+          ethers.constants.AddressZero, // provider (can be the zero address since the tokens are transferred directly to the user's wallet on the same chain)
+          providerData
+        );
+
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).eq(
+          wntAmount.add(feeAmount)
+        );
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).eq(usdcAmount);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdGlvAddress))).eq(0); // 0 GLV
+        expect(await getBalanceOf(ethUsdGlvAddress, user0.address)).eq(0); // 0 GLV
+
+        await sendCreateGlvDeposit(createGlvDepositParams);
+        await executeGlvDeposit(fixture, { gasUsageLabel: "executeGlvDeposit/bridgeOutFromController" });
+
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).eq(executionFee);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).eq(0);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdGlvAddress))).eq(0); // GLV bridged out from user's multichain balance
+        expect(await getBalanceOf(ethUsdGlvAddress, user1.address)).eq(expandDecimals(95_000, 18)); // 95k GLV bridged out into user's wallet
+      });
     });
   });
 
