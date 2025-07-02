@@ -362,6 +362,44 @@ describe("MultichainGlvRouter", () => {
         expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdGlvAddress))).eq(0); // GLV bridged out from user's multichain balance
         expect(await getBalanceOf(ethUsdGlvAddress, user1.address)).eq(expandDecimals(95_000, 18)); // 95k GLV bridged out into user's wallet
       });
+
+      it("creates glvWithdrawal and bridge out from controller the GLV tokens, on the same chain", async () => {
+        await sendCreateDeposit(createDepositParams);
+        await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
+        await mintAndBridge(fixture, { account: user1, tokenAmount: relayFeeAmount }); // top-up user1's multichain balance to cover the relay fee
+        await sendCreateGlvDeposit(createGlvDepositParams);
+        await executeGlvDeposit(fixture, { gasUsageLabel: "executeGlvDeposit" });
+
+        expect(await getBalanceOf(ethUsdGlvAddress, user1.address)).eq(0);
+        expect(await getBalanceOf(wnt.address, user1.address)).eq(0);
+        expect(await getBalanceOf(usdc.address, user1.address)).eq(0);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdGlvAddress))).eq(
+          expandDecimals(95_000, 18)
+        ); // 95k GLV
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).eq(executionFee); // refund from the glvDeposit execution
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).eq(0); // 0 USDC
+
+        // enable bridge out from controller
+        createGlvWithdrawalParams.params.dataList = encodeBridgeOutDataList(
+          actionType,
+          chainId, // desChainId
+          deadline,
+          ethers.constants.AddressZero, // provider (can be the zero address since the tokens are transferred directly to the user's wallet on the same chain)
+          providerData
+        );
+
+        await mintAndBridge(fixture, { account: user1, tokenAmount: relayFeeAmount }); // top-up user1's multichain balance to cover the relay fee
+        await sendCreateGlvWithdrawal(createGlvWithdrawalParams);
+        await executeGlvWithdrawal(fixture, { gasUsageLabel: "executeGlvWithdrawal" });
+
+        // withdrawn funds are bridged out to user's wallet
+        expect(await getBalanceOf(ethUsdGlvAddress, user1.address)).eq(0);
+        expect(await getBalanceOf(wnt.address, user1.address)).eq(wntAmount);
+        expect(await getBalanceOf(usdc.address, user1.address)).eq(usdcAmount);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdGlvAddress))).eq(0); // GLV
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).eq(executionFee); // 0.004 ETH
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).eq(0); // 0 USDC
+      });
     });
   });
 });
