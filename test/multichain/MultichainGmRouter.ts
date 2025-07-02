@@ -204,86 +204,6 @@ describe("MultichainGmRouter", () => {
         expandDecimals(95_000, 18)
       ); // 95,000 GM
     });
-
-    describe("bridgeOutFromController", () => {
-      const actionType = 3; // ActionType.BridgeOut
-      const deadline = Math.floor(Date.now() / 1000) + 3600; // deadline (1 hour from now)
-      const providerData = ethers.utils.defaultAbiCoder.encode(["uint32"], [1]); // providerData
-
-      it("create deposit and bridge out from controller the GM tokens, on the same chain", async () => {
-        createDepositParams.params.addresses.receiver = user0.address; // receiver must the be account to enable bridging out from controller
-        createDepositParams.params.dataList = encodeBridgeOutDataList(
-          actionType,
-          chainId, // desChainId
-          deadline,
-          ethers.constants.AddressZero, // provider (can be the zero address since the tokens are transferred directly to the user's wallet on the same chain)
-          providerData
-        );
-
-        expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(0);
-        expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, ethUsdMarket.marketToken))).to.eq(0);
-        expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, wnt.address))).to.eq(
-          expandDecimals(10, 18).add(expandDecimals(6, 15))
-        ); // depositAmount + (relayFee + executionFee)
-
-        await sendCreateDeposit(createDepositParams);
-        await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
-
-        expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(expandDecimals(95_000, 18)); // 95,000 GM
-        expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, ethUsdMarket.marketToken))).to.eq(0);
-        expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, wnt.address))).to.eq(
-          expandDecimals(4, 15)
-        ); // executionFee
-      });
-
-      // TODO: Enable test once hardhat supports changing the chain id during the test
-      // without changing the chainId, tx reverts with InvalidRecoveredSigner (signature fails)
-      // to test the bridgeOut flow, could temporarily disable the signature verification (e.g. comment out the RelayUtils.validateSignature call)
-      it.skip("create deposit and bridge out from controller the GM tokens, on the source chain", async () => {
-        // use the StargatePoolUSDC as the StargatePoolGM --> StargatePoolGM.token() will be the GM token
-        const mockStargatePoolGM = mockStargatePoolUsdc;
-        await mockStargatePoolGM.updateToken(ethUsdMarket.marketToken);
-
-        createDepositParams.params.addresses.receiver = user0.address; // receiver must the be account to enable bridging out from controller
-        createDepositParams.params.dataList = encodeBridgeOutDataList(
-          actionType,
-          chainId, // desChainId
-          deadline,
-          mockStargatePoolGM.address, // provider
-          providerData
-        );
-
-        const srcChainId = 1;
-        createDepositParams.srcChainId = srcChainId;
-        await dataStore.setBool(keys.isSrcChainIdEnabledKey(srcChainId), true);
-        await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolGM.SRC_EID()), srcChainId);
-
-        expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(0);
-        expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, ethUsdMarket.marketToken))).to.eq(0);
-        expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, wnt.address))).to.eq(
-          expandDecimals(10, 18).add(expandDecimals(6, 15))
-        ); // depositAmount + (relayFee + executionFee)
-        expect(await hre.ethers.provider.getBalance(mockStargatePoolGM.address)).eq(0);
-
-        // TODO: impersonate srcChainId as the hardhat chainId
-        await sendCreateDeposit(createDepositParams);
-        expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, wnt.address))).to.eq(0); // funds moved from user's multichain balance to the MultichainVault
-
-        // top up user's multichain balance with the bridging fee, required to bridge out from controller
-        const bridgingFee = await mockStargatePoolGM.BRIDGE_OUT_FEE();
-        mintAndBridge(fixture, { account: user0, tokenAmount: bridgingFee });
-
-        // TODO: impersonate chainId as the hardhat chainId
-        await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
-
-        expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(expandDecimals(95_000, 18)); // 95,000 GM
-        expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, ethUsdMarket.marketToken))).to.eq(0);
-        expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, wnt.address))).to.eq(
-          expandDecimals(4, 15)
-        ); // executionFee
-        expect(await hre.ethers.provider.getBalance(mockStargatePoolGM.address)).eq(bridgingFee); // mockStargatePoolGM received the bridging fee
-      });
-    });
   });
 
   describe("createWithdrawal", () => {
@@ -402,6 +322,86 @@ describe("MultichainGmRouter", () => {
       expect(await usdc.balanceOf(withdrawalVault.address)).eq(0); // all usdc was sent to multichainVault
       expect(await getBalanceOf(ethUsdMarket.marketToken, multichainVault.address)).eq(0); // all GM tokens were burned
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdMarket.marketToken))).to.eq(0); // all user's GM tokens were burned
+    });
+
+    describe("bridgeOutFromController", () => {
+      const actionType = 3; // ActionType.BridgeOut
+      const deadline = Math.floor(Date.now() / 1000) + 3600; // deadline (1 hour from now)
+      const providerData = ethers.utils.defaultAbiCoder.encode(["uint32"], [1]); // providerData
+
+      it("create deposit and bridge out from controller the GM tokens, on the same chain", async () => {
+        createDepositParams.params.addresses.receiver = user0.address; // receiver must the be account to enable bridging out from controller
+        createDepositParams.params.dataList = encodeBridgeOutDataList(
+          actionType,
+          chainId, // desChainId
+          deadline,
+          ethers.constants.AddressZero, // provider (can be the zero address since the tokens are transferred directly to the user's wallet on the same chain)
+          providerData
+        );
+
+        expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(0);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, ethUsdMarket.marketToken))).to.eq(0);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, wnt.address))).to.eq(
+          expandDecimals(10, 18).add(expandDecimals(6, 15))
+        ); // depositAmount + (relayFee + executionFee)
+
+        await sendCreateDeposit(createDepositParams);
+        await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
+
+        expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(expandDecimals(95_000, 18)); // 95,000 GM
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, ethUsdMarket.marketToken))).to.eq(0);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, wnt.address))).to.eq(
+          expandDecimals(4, 15)
+        ); // executionFee
+      });
+
+      // TODO: Enable test once hardhat supports changing the chain id during the test
+      // without changing the chainId, tx reverts with InvalidRecoveredSigner (signature fails)
+      // to test the bridgeOut flow, could temporarily disable the signature verification (e.g. comment out the RelayUtils.validateSignature call)
+      it.skip("create deposit and bridge out from controller the GM tokens, on the source chain", async () => {
+        // use the StargatePoolUSDC as the StargatePoolGM --> StargatePoolGM.token() will be the GM token
+        const mockStargatePoolGM = mockStargatePoolUsdc;
+        await mockStargatePoolGM.updateToken(ethUsdMarket.marketToken);
+
+        createDepositParams.params.addresses.receiver = user0.address; // receiver must the be account to enable bridging out from controller
+        createDepositParams.params.dataList = encodeBridgeOutDataList(
+          actionType,
+          chainId, // desChainId
+          deadline,
+          mockStargatePoolGM.address, // provider
+          providerData
+        );
+
+        const srcChainId = 1;
+        createDepositParams.srcChainId = srcChainId;
+        await dataStore.setBool(keys.isSrcChainIdEnabledKey(srcChainId), true);
+        await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolGM.SRC_EID()), srcChainId);
+
+        expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(0);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, ethUsdMarket.marketToken))).to.eq(0);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, wnt.address))).to.eq(
+          expandDecimals(10, 18).add(expandDecimals(6, 15))
+        ); // depositAmount + (relayFee + executionFee)
+        expect(await hre.ethers.provider.getBalance(mockStargatePoolGM.address)).eq(0);
+
+        // TODO: impersonate srcChainId as the hardhat chainId
+        await sendCreateDeposit(createDepositParams);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, wnt.address))).to.eq(0); // funds moved from user's multichain balance to the MultichainVault
+
+        // top up user's multichain balance with the bridging fee, required to bridge out from controller
+        const bridgingFee = await mockStargatePoolGM.BRIDGE_OUT_FEE();
+        mintAndBridge(fixture, { account: user0, tokenAmount: bridgingFee });
+
+        // TODO: impersonate chainId as the hardhat chainId
+        await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
+
+        expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(expandDecimals(95_000, 18)); // 95,000 GM
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, ethUsdMarket.marketToken))).to.eq(0);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, wnt.address))).to.eq(
+          expandDecimals(4, 15)
+        ); // executionFee
+        expect(await hre.ethers.provider.getBalance(mockStargatePoolGM.address)).eq(bridgingFee); // mockStargatePoolGM received the bridging fee
+      });
     });
   });
 
