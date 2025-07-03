@@ -468,7 +468,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         ) = abi.decode(actionData, (IRelayUtils.RelayParams, IRelayUtils.TransferRequests, IGlvWithdrawalUtils.CreateGlvWithdrawalParams));
 
         if (_areValidTransferRequests(transferRequests)) {
-            uint256 estimatedGasLimit = GasUtils.estimateCreateGlvDepositGasLimit(dataStore);
+            uint256 estimatedGasLimit = GasUtils.estimateCreateGlvWithdrawalGasLimit(dataStore);
             _validateGasLeft(estimatedGasLimit);
 
             try multichainGlvRouter.createGlvWithdrawal(

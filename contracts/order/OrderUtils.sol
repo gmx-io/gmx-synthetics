@@ -213,11 +213,16 @@ library OrderUtils {
         if (Order.isSwapOrder(order.orderType())) {
             return;
         }
-        address collateralToken = SwapUtils.getOutputToken(
-            dataStore,
-            order.swapPath(),
-            order.initialCollateralToken()
-        );
+        address collateralToken = order.initialCollateralToken();
+
+        if (Order.isIncreaseOrder(order.orderType())) {
+            collateralToken = SwapUtils.getOutputToken(
+                dataStore,
+                order.swapPath(),
+                order.initialCollateralToken()
+            );
+        }
+
         bytes32 positionKey = Position.getPositionKey(order.account(), order.market(), collateralToken, order.isLong());
         dataStore.setUint(Keys.positionLastSrcChainId(positionKey), order.srcChainId());
     }
