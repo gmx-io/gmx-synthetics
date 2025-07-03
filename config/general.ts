@@ -72,7 +72,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       relayFeeAddress: ethers.constants.AddressZero,
       maxRelayFeeUsdForSubaccount: 0,
 
-      maxDataLength: 10,
+      maxDataLength: 14,
     };
   }
 
@@ -142,7 +142,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     relayFeeAddress: "0xDA1b841A21FEF1ad1fcd5E19C1a9D682FB675258",
     maxRelayFeeUsdForSubaccount: decimalToFloat(100),
 
-    maxDataLength: 10,
+    maxDataLength: 14,
   };
 
   const networkConfig = {
