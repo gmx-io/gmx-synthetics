@@ -211,38 +211,28 @@ describe("GelatoRelayRouter", () => {
       ).to.be.revertedWithCustomError(errorsContract, "InvalidRecoveredSigner");
     });
 
-    it("InvalidUserDigest", async () => {
+    it("InvalidUserNonce", async () => {
       await wnt.connect(user0).approve(router.address, expandDecimals(1, 18));
+
+      await expect(
+        sendCreateOrder({
+          ...createOrderParams,
+          userNonce: 100,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidUserNonce");
 
       await sendCreateOrder({
         ...createOrderParams,
+        userNonce: 0,
       });
 
-      // identical digest should revert
+      // same nonce should revert
       await expect(
         sendCreateOrder({
           ...createOrderParams,
+          userNonce: 0,
         })
-      ).to.be.revertedWithCustomError(errorsContract, "InvalidUserDigest");
-
-      // different digest should NOT revert
-      // digest is different if any structHash params are different (e.g. deadline, referralCode, defaultParams, etc)
-      await expect(
-        sendCreateOrder({
-          ...createOrderParams,
-          deadline: 9999999998,
-        })
-      ).to.not.be.revertedWithCustomError(errorsContract, "InvalidUserDigest");
-
-      await expect(
-        sendCreateOrder({
-          ...createOrderParams,
-          params: {
-            ...createOrderParams.params,
-            referralCode: hashString("newReferralCode"),
-          },
-        })
-      ).to.not.be.revertedWithCustomError(errorsContract, "InvalidUserDigest");
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidUserNonce");
     });
 
     it("DeadlinePassed", async () => {
@@ -637,7 +627,6 @@ describe("GelatoRelayRouter", () => {
       await sendCreateOrder({
         ...createOrderParams,
         sender: user3,
-        deadline: 9999999998, // different deadline to avoid InvalidUserDigest
       });
       const wntBalance1 = await wnt.balanceOf(user3.address);
       const effectiveRelayFee = wntBalance1.sub(wntBalance0);
@@ -647,7 +636,6 @@ describe("GelatoRelayRouter", () => {
       await sendCreateOrder({
         ...createOrderParams,
         sender: user3,
-        deadline: 9999999997, // different deadline to avoid InvalidUserDigest
       });
       const wntBalance2 = await wnt.balanceOf(user3.address);
       const effectiveRelayFee2 = wntBalance2.sub(wntBalance1);
@@ -658,7 +646,6 @@ describe("GelatoRelayRouter", () => {
       await sendCreateOrder({
         ...createOrderParams,
         sender: user3,
-        deadline: 9999999996, // different deadline to avoid InvalidUserDigest
       });
       const wntBalance3 = await wnt.balanceOf(user3.address);
       const effectiveRelayFee3 = wntBalance3.sub(wntBalance2);
@@ -669,7 +656,6 @@ describe("GelatoRelayRouter", () => {
       const tx = await sendCreateOrder({
         ...createOrderParams,
         sender: user3,
-        deadline: 9999999995, // different deadline to avoid InvalidUserDigest
       });
       const wntBalance4 = await wnt.balanceOf(user3.address);
       const effectiveRelayFee4 = wntBalance4.sub(wntBalance3);

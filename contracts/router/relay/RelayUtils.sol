@@ -284,6 +284,7 @@ library RelayUtils {
                     relayParams.externalCalls,
                     relayParams.tokenPermits,
                     relayParams.fee,
+                    relayParams.userNonce,
                     relayParams.deadline,
                     relayParams.desChainId
                 )

@@ -39,6 +39,7 @@ interface SendCreate {
   account: string;
   params: any;
   signature?: string;
+  userNonce?: BigNumberish;
   deadline: BigNumberish;
   chainId: BigNumberish;
   srcChainId: BigNumberish;
@@ -180,6 +181,7 @@ export async function sendCreateOrder(p: {
   account: string;
   params: any;
   signature?: string;
+  userNonce?: BigNumberish;
   srcChainId: BigNumberish;
   deadline: BigNumberish;
   desChainId: BigNumberish;
@@ -233,6 +235,7 @@ export async function sendClaimFundingFees(p: {
   account: string;
   params: any;
   signature?: string;
+  userNonce?: BigNumberish;
   srcChainId: BigNumberish;
   deadline: BigNumberish;
   desChainId: BigNumberish;
@@ -292,6 +295,7 @@ export async function sendClaimCollateral(p: {
   account: string;
   params: any;
   signature?: string;
+  userNonce?: BigNumberish;
   srcChainId: BigNumberish;
   deadline: BigNumberish;
   desChainId: BigNumberish;
@@ -352,6 +356,7 @@ export async function sendClaimAffiliateRewards(p: {
   account: string;
   params: any;
   signature?: string;
+  userNonce?: BigNumberish;
   srcChainId: BigNumberish;
   deadline: BigNumberish;
   desChainId: BigNumberish;
@@ -418,6 +423,7 @@ export async function sendUpdateOrder(p: {
   deadline: BigNumberish;
   srcChainId: BigNumberish;
   desChainId: BigNumberish;
+  userNonce?: BigNumberish;
   relayRouter: ethers.Contract;
   signature?: string;
   relayFeeToken: string;
@@ -465,6 +471,7 @@ export async function sendCancelOrder(p: {
   deadline: BigNumberish;
   srcChainId: BigNumberish;
   desChainId: BigNumberish;
+  userNonce?: BigNumberish;
   relayRouter: ethers.Contract;
   signature?: string;
   relayFeeToken: string;
@@ -529,6 +536,7 @@ export async function sendBridgeOut(p: {
   account: string;
   params: any;
   signature?: string;
+  userNonce?: BigNumberish;
   deadline: BigNumberish;
   srcChainId: BigNumberish;
   desChainId: BigNumberish;
@@ -571,6 +579,9 @@ async function getBridgeOutSignature({
   params: any;
   srcChainId: BigNumberish;
 }) {
+  if (relayParams.userNonce === undefined) {
+    throw new Error("userNonce is required");
+  }
   const types = {
     BridgeOut: [
       { name: "token", type: "address" },
@@ -607,6 +618,9 @@ export async function getCreateDepositSignature({
   params: any;
   chainId: BigNumberish;
 }) {
+  if (relayParams.userNonce === undefined) {
+    throw new Error("userNonce is required");
+  }
   const types = {
     CreateDeposit: [
       { name: "transferTokens", type: "address[]" },
@@ -663,6 +677,9 @@ async function getCreateWithdrawalSignature({
   params: any;
   chainId: BigNumberish;
 }) {
+  if (relayParams.userNonce === undefined) {
+    throw new Error("userNonce is required");
+  }
   const types = {
     CreateWithdrawal: [
       { name: "transferTokens", type: "address[]" },
@@ -730,6 +747,10 @@ async function getCreateShiftSignature({
   };
   chainId: BigNumberish;
 }) {
+  if (relayParams.userNonce === undefined) {
+    throw new Error("userNonce is required");
+  }
+
   const types = {
     CreateShift: [
       { name: "transferTokens", type: "address[]" },
@@ -782,6 +803,9 @@ export async function getCreateGlvDepositSignature({
   params: any;
   chainId: BigNumberish;
 }) {
+  if (relayParams.userNonce === undefined) {
+    throw new Error("userNonce is required");
+  }
   const types = {
     CreateGlvDeposit: [
       { name: "transferTokens", type: "address[]" },
@@ -841,6 +865,9 @@ async function getCreateGlvWithdrawalSignature({
   params: any;
   chainId: BigNumberish;
 }) {
+  if (relayParams.userNonce === undefined) {
+    throw new Error("userNonce is required");
+  }
   const types = {
     CreateGlvWithdrawal: [
       { name: "transferTokens", type: "address[]" },
