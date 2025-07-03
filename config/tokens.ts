@@ -1160,6 +1160,18 @@ const config: {
       transferGasLimit: 200 * 1000,
     },
     "USDC.e": {
+      address: "0x29ee6138dd4c9815f46d34a4a1ed48f46758a402",
+      decimals: 6,
+      dataStreamFeedId: "0x00038f83323b6b08116d1614cf33a9bd71ab5e0abf0c9f1b783a74a43e7bd992",
+      dataStreamFeedDecimals: 18,
+      transferGasLimit: 200 * 1000,
+      priceFeed: {
+        address: "0x9563258f5FF50C176A3780ab02dF25cc39C092C0",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+    },
+    "USDC.e (Archived)": {
       address: "0x325eEb3AA50014f35861e3374f54B3997Aa8357d",
       decimals: 6,
       dataStreamFeedId: "0x00038f83323b6b08116d1614cf33a9bd71ab5e0abf0c9f1b783a74a43e7bd992",
