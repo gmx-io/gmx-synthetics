@@ -61,6 +61,10 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             revert Errors.OracleProviderAlreadyExistsForToken(token);
         }
 
+        if (!dataStore.getBool(Keys.isOracleProviderEnabledKey(provider))) {
+            revert Errors.InvalidOracleProvider(provider);
+        }
+
         dataStore.setAddress(Keys.oracleProviderForTokenKey(token), provider);
 
         EventUtils.EventLogData memory eventData;
