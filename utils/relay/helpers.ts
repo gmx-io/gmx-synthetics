@@ -116,7 +116,7 @@ export async function getRelayParams(p: {
 }) {
   let userNonce = p.userNonce;
   if (userNonce === undefined) {
-    userNonce = await getUserNonce(await p.signer.getAddress(), p.relayRouter);
+    userNonce = await getUserNonce();
   }
   return {
     oracleParams: p.oracleParams || getDefaultOracleParams(),
@@ -216,7 +216,7 @@ export function assertFields(obj: any, fields: string[]) {
   }
 }
 
-export async function getUserNonce(account: string, relayRouter: ethers.Contract) {
+export async function getUserNonce() {
   return Math.floor(Math.random() * 1000000); // Generate a random nonce
 }
 

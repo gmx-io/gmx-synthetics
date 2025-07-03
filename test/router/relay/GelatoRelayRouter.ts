@@ -146,6 +146,7 @@ describe("GelatoRelayRouter", () => {
       },
       tokenPermits: [tokenPermit],
       account: user0.address,
+      userNonce: 1,
       createOrderParamsList: [],
       updateOrderParamsList: [],
       cancelOrderKeys: [],
@@ -446,7 +447,7 @@ describe("GelatoRelayRouter", () => {
       createOrderParams.params.numbers.executionFee = executionFee;
       createOrderParams.feeParams.feeAmount = expandDecimals(6, 15); // relay fee is 0.001, execution fee is 0.002, 0.003 should be sent back
 
-      const relayParams = await getRelayParams(createOrderParams);
+      const relayParams = await getRelayParams({ ...createOrderParams, userNonce: 1 });
       const signature = await getCreateOrderSignature({
         ...createOrderParams,
         relayParams,
@@ -454,10 +455,11 @@ describe("GelatoRelayRouter", () => {
       });
       await sendCreateOrder({
         ...createOrderParams,
+        userNonce: 1,
         signature: signature,
       });
 
-      const relayParams2 = await getRelayParams({ ...createOrderParams, deadline: 9999999998 });
+      const relayParams2 = await getRelayParams({ ...createOrderParams, userNonce: 1, deadline: 9999999998 });
       const signature2 = await getCreateOrderSignature({
         ...createOrderParams,
         relayParams: relayParams2,
@@ -476,6 +478,7 @@ describe("GelatoRelayRouter", () => {
       await sendCreateOrder({
         ...createOrderParams,
         deadline: 9999999998,
+        userNonce: 1,
         signature: signature2,
       });
 
