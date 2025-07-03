@@ -459,7 +459,7 @@ describe("GelatoRelayRouter", () => {
         signature: signature,
       });
 
-      const relayParams2 = await getRelayParams({ ...createOrderParams, userNonce: 1, deadline: 9999999998 });
+      const relayParams2 = await getRelayParams({ ...createOrderParams, userNonce: 2 });
       const signature2 = await getCreateOrderSignature({
         ...createOrderParams,
         relayParams: relayParams2,
@@ -477,8 +477,7 @@ describe("GelatoRelayRouter", () => {
       );
       await sendCreateOrder({
         ...createOrderParams,
-        deadline: 9999999998,
-        userNonce: 1,
+        userNonce: 2,
         signature: signature2,
       });
 
