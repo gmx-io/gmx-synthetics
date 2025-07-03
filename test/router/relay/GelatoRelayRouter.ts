@@ -146,6 +146,7 @@ describe("GelatoRelayRouter", () => {
       },
       tokenPermits: [tokenPermit],
       account: user0.address,
+      userNonce: 1,
       createOrderParamsList: [],
       updateOrderParamsList: [],
       cancelOrderKeys: [],
@@ -216,33 +217,16 @@ describe("GelatoRelayRouter", () => {
 
       await sendCreateOrder({
         ...createOrderParams,
+        userNonce: 0,
       });
 
-      // identical digest should revert
+      // same nonce should revert
       await expect(
         sendCreateOrder({
           ...createOrderParams,
+          userNonce: 0,
         })
       ).to.be.revertedWithCustomError(errorsContract, "InvalidUserDigest");
-
-      // different digest should NOT revert
-      // digest is different if any structHash params are different (e.g. deadline, referralCode, defaultParams, etc)
-      await expect(
-        sendCreateOrder({
-          ...createOrderParams,
-          deadline: 9999999998,
-        })
-      ).to.not.be.revertedWithCustomError(errorsContract, "InvalidUserDigest");
-
-      await expect(
-        sendCreateOrder({
-          ...createOrderParams,
-          params: {
-            ...createOrderParams.params,
-            referralCode: hashString("newReferralCode"),
-          },
-        })
-      ).to.not.be.revertedWithCustomError(errorsContract, "InvalidUserDigest");
     });
 
     it("DeadlinePassed", async () => {
@@ -463,7 +447,7 @@ describe("GelatoRelayRouter", () => {
       createOrderParams.params.numbers.executionFee = executionFee;
       createOrderParams.feeParams.feeAmount = expandDecimals(6, 15); // relay fee is 0.001, execution fee is 0.002, 0.003 should be sent back
 
-      const relayParams = await getRelayParams(createOrderParams);
+      const relayParams = await getRelayParams({ ...createOrderParams, userNonce: 1 });
       const signature = await getCreateOrderSignature({
         ...createOrderParams,
         relayParams,
@@ -471,10 +455,11 @@ describe("GelatoRelayRouter", () => {
       });
       await sendCreateOrder({
         ...createOrderParams,
+        userNonce: 1,
         signature: signature,
       });
 
-      const relayParams2 = await getRelayParams({ ...createOrderParams, deadline: 9999999998 });
+      const relayParams2 = await getRelayParams({ ...createOrderParams, userNonce: 2 });
       const signature2 = await getCreateOrderSignature({
         ...createOrderParams,
         relayParams: relayParams2,
@@ -492,7 +477,7 @@ describe("GelatoRelayRouter", () => {
       );
       await sendCreateOrder({
         ...createOrderParams,
-        deadline: 9999999998,
+        userNonce: 2,
         signature: signature2,
       });
 
@@ -637,7 +622,6 @@ describe("GelatoRelayRouter", () => {
       await sendCreateOrder({
         ...createOrderParams,
         sender: user3,
-        deadline: 9999999998, // different deadline to avoid InvalidUserDigest
       });
       const wntBalance1 = await wnt.balanceOf(user3.address);
       const effectiveRelayFee = wntBalance1.sub(wntBalance0);
@@ -647,7 +631,6 @@ describe("GelatoRelayRouter", () => {
       await sendCreateOrder({
         ...createOrderParams,
         sender: user3,
-        deadline: 9999999997, // different deadline to avoid InvalidUserDigest
       });
       const wntBalance2 = await wnt.balanceOf(user3.address);
       const effectiveRelayFee2 = wntBalance2.sub(wntBalance1);
@@ -658,7 +641,6 @@ describe("GelatoRelayRouter", () => {
       await sendCreateOrder({
         ...createOrderParams,
         sender: user3,
-        deadline: 9999999996, // different deadline to avoid InvalidUserDigest
       });
       const wntBalance3 = await wnt.balanceOf(user3.address);
       const effectiveRelayFee3 = wntBalance3.sub(wntBalance2);
@@ -669,7 +651,6 @@ describe("GelatoRelayRouter", () => {
       const tx = await sendCreateOrder({
         ...createOrderParams,
         sender: user3,
-        deadline: 9999999995, // different deadline to avoid InvalidUserDigest
       });
       const wntBalance4 = await wnt.balanceOf(user3.address);
       const effectiveRelayFee4 = wntBalance4.sub(wntBalance3);

@@ -265,33 +265,16 @@ describe("MultichainSubaccountRouter", () => {
 
       await sendCreateOrder({
         ...createOrderParams,
+        userNonce: 0,
       });
 
-      // identical digest should revert
+      // same nonce should revert
       await expect(
         sendCreateOrder({
           ...createOrderParams,
+          userNonce: 0,
         })
       ).to.be.revertedWithCustomError(errorsContract, "InvalidUserDigest");
-
-      // different digest should NOT revert
-      // digest is different if any structHash params are different (e.g. deadline, referralCode, defaultParams, etc)
-      await expect(
-        sendCreateOrder({
-          ...createOrderParams,
-          deadline: 9999999998,
-        })
-      ).to.not.be.revertedWithCustomError(errorsContract, "InvalidUserDigest");
-
-      await expect(
-        sendCreateOrder({
-          ...createOrderParams,
-          params: {
-            ...createOrderParams.params,
-            referralCode: hashString("newReferralCode"),
-          },
-        })
-      ).to.not.be.revertedWithCustomError(errorsContract, "InvalidUserDigest");
     });
 
     it("DeadlinePassed", async () => {
@@ -532,7 +515,7 @@ describe("MultichainSubaccountRouter", () => {
         subaccountApproval: {
           subaccount: user0.address,
           shouldAdd: true,
-          expiresAt: 9999999998,
+          expiresAt: 9999999999,
           maxAllowedCount: 10,
           actionType: keys.SUBACCOUNT_ORDER_ACTION,
           deadline: 9999999999,
@@ -549,10 +532,11 @@ describe("MultichainSubaccountRouter", () => {
           expiresAt: 9999999999,
           maxAllowedCount: 10,
           actionType: keys.SUBACCOUNT_ORDER_ACTION,
-          deadline: 9999999998, // different deadline to avoid InvalidUserDigest
+          deadline: 9999999999,
           integrationId: integrationId,
           nonce: 1,
         },
+        userNonce: 1,
       });
 
       await expect(
@@ -568,6 +552,7 @@ describe("MultichainSubaccountRouter", () => {
             integrationId: integrationId,
             nonce: 1,
           },
+          userNonce: 2,
         })
       ).to.be.revertedWithCustomError(errorsContract, "InvalidSubaccountApprovalNonce");
     });
