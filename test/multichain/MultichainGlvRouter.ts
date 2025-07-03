@@ -385,6 +385,8 @@ describe("MultichainGlvRouter", () => {
           chainId, // desChainId
           deadline,
           ethers.constants.AddressZero, // provider (can be the zero address since the tokens are transferred directly to the user's wallet on the same chain)
+          providerData,
+          ethers.constants.AddressZero, // secondaryProvider
           providerData
         );
 
