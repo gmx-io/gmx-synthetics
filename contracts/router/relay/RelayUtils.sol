@@ -231,7 +231,11 @@ library RelayUtils {
             // we do not call _validateDigest on minifiedDigest
             bytes32 minifiedDigest = ECDSA.toTypedDataHash(domainSeparator, minifiedStructHash);
 
-            (address recoveredFromMinified, /* ECDSA.RecoverError error */) = ECDSA.tryRecover(minifiedDigest, signature);
+            (address recoveredFromMinified, ECDSA.RecoverError errorFromMinified) = ECDSA.tryRecover(minifiedDigest, signature);
+
+            if (errorFromMinified != ECDSA.RecoverError.NoError) {
+                revert Errors.InvalidSignature(signatureType);
+            }
 
             if (recoveredFromMinified != expectedSigner) {
                 revert Errors.InvalidRecoveredSigner(signatureType, recovered, recoveredFromMinified, expectedSigner);

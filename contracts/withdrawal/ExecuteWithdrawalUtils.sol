@@ -146,17 +146,8 @@ library ExecuteWithdrawalUtils {
             withdrawal.srcChainId(),
             cache.result.outputToken, // token
             cache.result.outputAmount, // amount
-            withdrawal.dataList()
-        );
-
-        BridgeOutFromControllerUtils.bridgeOutFromController(
-            params.eventEmitter,
-            params.multichainTransferRouter,
-            withdrawal.account(), // account
-            withdrawal.receiver(), // receiver
-            withdrawal.srcChainId(),
-            cache.result.secondaryOutputToken, // token
-            cache.result.secondaryOutputAmount, // amount
+            cache.result.secondaryOutputToken, // secondaryToken
+            cache.result.secondaryOutputAmount, // secondaryAmount
             withdrawal.dataList()
         );
 

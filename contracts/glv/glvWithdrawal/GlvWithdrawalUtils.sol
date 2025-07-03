@@ -182,17 +182,8 @@ library GlvWithdrawalUtils {
             glvWithdrawal.srcChainId(),
             withdrawalResult.outputToken, // token
             withdrawalResult.outputAmount, // amount
-            glvWithdrawal.dataList()
-        );
-
-        BridgeOutFromControllerUtils.bridgeOutFromController(
-            params.eventEmitter,
-            params.multichainTransferRouter,
-            glvWithdrawal.account(), // account
-            glvWithdrawal.receiver(), // receiver
-            glvWithdrawal.srcChainId(),
-            withdrawalResult.secondaryOutputToken, // token
-            withdrawalResult.secondaryOutputAmount, // amount
+            withdrawalResult.secondaryOutputToken, // secondaryToken
+            withdrawalResult.secondaryOutputAmount, // secondaryAmount
             glvWithdrawal.dataList()
         );
 
