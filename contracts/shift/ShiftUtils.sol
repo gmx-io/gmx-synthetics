@@ -208,7 +208,7 @@ library ShiftUtils {
             Withdrawal.Flags(
                 false
             ),
-            shift.dataList()
+            new bytes32[](0)
         );
 
         cache.withdrawalKey = NonceUtils.getNextKey(params.dataStore);
@@ -273,7 +273,7 @@ library ShiftUtils {
             Deposit.Flags(
                 false // shouldUnwrapNativeToken
             ),
-            shift.dataList()
+            new bytes32[](0)
         );
 
         cache.depositKey = NonceUtils.getNextKey(params.dataStore);
