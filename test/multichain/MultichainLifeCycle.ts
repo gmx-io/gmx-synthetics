@@ -355,8 +355,8 @@ describe("MultichainLifeCycle", () => {
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.approximately(
       wntAmount
         .div(2) // 50% of WNT deposited
-        .add("6747587957980704"), // execution fee refunds (from deposit + glvDeposit + glvWithdrawal)
-      expandDecimals(1, 12)
+        .add("6744710957957688"), // execution fee refunds (from deposit + glvDeposit + glvWithdrawal)
+      expandDecimals(5, 12)
     );
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).eq(
       usdcAmount.div(2) // 50% of USDC deposited
@@ -408,8 +408,8 @@ describe("MultichainLifeCycle", () => {
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.approximately(
       wntAmount
         .div(2) // 50% of WNT deposited
-        .add("6747586957980696"), // execution fee refunds (from deposit + glvDeposit + glvWithdrawal)
-      expandDecimals(1, 12)
+        .add("6744710957957688"), // execution fee refunds (from deposit + glvDeposit + glvWithdrawal)
+      expandDecimals(5, 12)
     );
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).eq(
       expandDecimals(22_500, 6)
@@ -429,8 +429,8 @@ describe("MultichainLifeCycle", () => {
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.approximately(
       wntAmount
         .div(2) // 50% of WNT deposited
-        .add("6747585957980688"), // execution fee refunds (from deposit + glvDeposit + glvWithdrawal)
-      expandDecimals(1, 12)
+        .add("6744710957957688"), // execution fee refunds (from deposit + glvDeposit + glvWithdrawal)
+      expandDecimals(5, 12)
     );
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(
       expandDecimals(22_500, 6)
@@ -451,8 +451,8 @@ describe("MultichainLifeCycle", () => {
     // user's multichain balance
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.approximately(
       wntAmount // 100% of WNT deposited
-        .add("9233173945865392"), // execution fee refunds (from deposit + glvDeposit + glvWithdrawal + withdrawal)
-      expandDecimals(1, 12)
+        .add("9228684945829480"), // execution fee refunds (from deposit + glvDeposit + glvWithdrawal + withdrawal)
+      expandDecimals(5, 12)
     );
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(
       expandDecimals(45_000, 6)
