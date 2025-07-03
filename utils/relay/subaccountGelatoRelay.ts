@@ -61,6 +61,7 @@ export async function sendCreateOrder(p: {
   account: string;
   params: any;
   signature?: string;
+  userNonce?: BigNumberish;
   deadline: BigNumberish;
   srcChainId?: BigNumberish; // for non-multichain actions, srcChainId is 0
   desChainId: BigNumberish;
@@ -159,6 +160,7 @@ export async function sendUpdateOrder(p: {
   deadline: BigNumberish;
   srcChainId?: BigNumberish; // for non-multichain actions, srcChainId is 0
   desChainId: BigNumberish;
+  userNonce?: BigNumberish;
   relayRouter: ethers.Contract;
   signature?: string;
   gelatoRelayFeeToken: string;
@@ -285,6 +287,7 @@ export async function sendCancelOrder(p: {
   deadline: BigNumberish;
   srcChainId?: BigNumberish; // for non-multichain actions, srcChainId is 0
   desChainId: BigNumberish;
+  userNonce?: BigNumberish;
   relayRouter: ethers.Contract;
   signature?: string;
   gelatoRelayFeeToken: string;
@@ -404,6 +407,7 @@ export async function sendRemoveSubaccount(p: {
   deadline: BigNumberish;
   srcChainId?: BigNumberish; // for non-multichain actions, srcChainId is 0
   desChainId: BigNumberish;
+  userNonce?: BigNumberish;
   relayRouter: ethers.Contract;
   signature?: string;
   gelatoRelayFeeToken: string;
@@ -478,6 +482,7 @@ export async function sendBatch(p: {
   desChainId: BigNumberish;
   account: string;
   deadline: BigNumberish;
+  userNonce?: BigNumberish;
   relayRouter: ethers.Contract;
   signature?: string;
   gelatoRelayFeeToken: string;
