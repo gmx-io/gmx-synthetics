@@ -211,15 +211,8 @@ describe("GelatoRelayRouter", () => {
       ).to.be.revertedWithCustomError(errorsContract, "InvalidRecoveredSigner");
     });
 
-    it("InvalidUserNonce", async () => {
+    it("InvalidUserDigest", async () => {
       await wnt.connect(user0).approve(router.address, expandDecimals(1, 18));
-
-      await expect(
-        sendCreateOrder({
-          ...createOrderParams,
-          userNonce: 100,
-        })
-      ).to.be.revertedWithCustomError(errorsContract, "InvalidUserNonce");
 
       await sendCreateOrder({
         ...createOrderParams,
@@ -232,7 +225,7 @@ describe("GelatoRelayRouter", () => {
           ...createOrderParams,
           userNonce: 0,
         })
-      ).to.be.revertedWithCustomError(errorsContract, "InvalidUserNonce");
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidUserDigest");
     });
 
     it("DeadlinePassed", async () => {

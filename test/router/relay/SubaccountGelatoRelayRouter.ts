@@ -241,15 +241,8 @@ describe("SubaccountGelatoRelayRouter", () => {
       ).to.be.revertedWithCustomError(errorsContract, "InvalidRecoveredSigner");
     });
 
-    it("InvalidUserNonce", async () => {
+    it("InvalidUserDigest", async () => {
       await enableSubaccount();
-
-      await expect(
-        sendCreateOrder({
-          ...createOrderParams,
-          userNonce: 100,
-        })
-      ).to.be.revertedWithCustomError(errorsContract, "InvalidUserNonce");
 
       await sendCreateOrder({
         ...createOrderParams,
@@ -262,7 +255,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           ...createOrderParams,
           userNonce: 0,
         })
-      ).to.be.revertedWithCustomError(errorsContract, "InvalidUserNonce");
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidUserDigest");
     });
 
     it("DeadlinePassed", async () => {

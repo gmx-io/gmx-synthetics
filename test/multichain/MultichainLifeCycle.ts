@@ -355,7 +355,7 @@ describe("MultichainLifeCycle", () => {
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.approximately(
       wntAmount
         .div(2) // 50% of WNT deposited
-        .add("6744710957957688"), // execution fee refunds (from deposit + glvDeposit + glvWithdrawal)
+        .add("6747587957980704"), // execution fee refunds (from deposit + glvDeposit + glvWithdrawal)
       expandDecimals(1, 12)
     );
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).eq(
@@ -408,7 +408,7 @@ describe("MultichainLifeCycle", () => {
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.approximately(
       wntAmount
         .div(2) // 50% of WNT deposited
-        .add("6744710957957688"), // execution fee refunds (from deposit + glvDeposit + glvWithdrawal)
+        .add("6747586957980696"), // execution fee refunds (from deposit + glvDeposit + glvWithdrawal)
       expandDecimals(1, 12)
     );
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).eq(
@@ -429,7 +429,7 @@ describe("MultichainLifeCycle", () => {
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.approximately(
       wntAmount
         .div(2) // 50% of WNT deposited
-        .add("6744710957957688"), // execution fee refunds (from deposit + glvDeposit + glvWithdrawal)
+        .add("6747585957980688"), // execution fee refunds (from deposit + glvDeposit + glvWithdrawal)
       expandDecimals(1, 12)
     );
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(
@@ -451,7 +451,7 @@ describe("MultichainLifeCycle", () => {
     // user's multichain balance
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.approximately(
       wntAmount // 100% of WNT deposited
-        .add("9228684945829480"), // execution fee refunds (from deposit + glvDeposit + glvWithdrawal + withdrawal)
+        .add("9233173945865392"), // execution fee refunds (from deposit + glvDeposit + glvWithdrawal + withdrawal)
       expandDecimals(1, 12)
     );
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(

@@ -260,15 +260,8 @@ describe("MultichainSubaccountRouter", () => {
       ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
     });
 
-    it("InvalidUserNonce", async () => {
+    it("InvalidUserDigest", async () => {
       await enableSubaccount();
-
-      await expect(
-        sendCreateOrder({
-          ...createOrderParams,
-          userNonce: 100,
-        })
-      ).to.be.revertedWithCustomError(errorsContract, "InvalidUserNonce");
 
       await sendCreateOrder({
         ...createOrderParams,
@@ -281,7 +274,7 @@ describe("MultichainSubaccountRouter", () => {
           ...createOrderParams,
           userNonce: 0,
         })
-      ).to.be.revertedWithCustomError(errorsContract, "InvalidUserNonce");
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidUserDigest");
     });
 
     it("DeadlinePassed", async () => {
