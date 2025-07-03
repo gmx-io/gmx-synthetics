@@ -57,6 +57,10 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     }
 
     function initOracleProviderForToken(address token, address provider) external onlyConfigKeeper nonReentrant {
+        if (token == address(0)) {
+            revert Errors.EmptyToken();
+        }
+
         if (dataStore.getAddress(Keys.oracleProviderForTokenKey(token)) != address(0)) {
             revert Errors.OracleProviderAlreadyExistsForToken(token);
         }
