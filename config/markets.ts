@@ -1194,7 +1194,7 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 2,700,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.8e-9"),
 
-      positionImpactPoolDistributionRate: expandDecimals(37, 18 + 30).div(SECONDS_PER_DAY), // 37 AAVE per day
+      positionImpactPoolDistributionRate: expandDecimals(5, 18 + 30).div(SECONDS_PER_DAY), // 5 AAVE per day
       minPositionImpactPoolAmount: expandDecimals(900, 18), // 900 AAVE
 
       maxOpenInterest: decimalToFloat(2_450_000), // ~2% of global OI
