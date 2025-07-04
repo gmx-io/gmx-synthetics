@@ -4,28 +4,40 @@ import { getRelayParams } from "./relay/helpers";
 import { getSetTraderReferralCodeSignature } from "./relay/signatures";
 import {
   getCreateDepositSignature,
+  getCreateWithdrawalSignature,
   getCreateGlvDepositSignature,
   sendCreateDeposit,
   sendCreateGlvDeposit,
+  sendCreateWithdrawal,
+  sendCreateGlvWithdrawal,
+  getCreateGlvWithdrawalSignature,
 } from "./relay/multichain";
+import * as keys from "../utils/keys";
 
-export async function mintAndBridge(
+export async function bridgeInTokens(
   fixture,
   overrides: {
-    account?: string;
-    token: Contract;
-    tokenAmount: BigNumberish;
+    account: string;
+    token?: Contract;
+    amount: BigNumberish;
     data?: string;
+    stargatePool?: Contract;
   }
 ) {
-  const { usdc, wnt, mockStargatePoolUsdc, mockStargatePoolWnt, layerZeroProvider } = fixture.contracts;
+  const { layerZeroProvider, mockStargatePoolUsdc, mockStargatePoolNative } = fixture.contracts;
   const { user0 } = fixture.accounts;
 
   const account = overrides.account || user0;
   const token = overrides.token;
-  const tokenAmount = overrides.tokenAmount;
+  const amount = overrides.amount;
+  const stargatePool = overrides.stargatePool || token ? mockStargatePoolUsdc : mockStargatePoolNative;
+  const msgValue = token ? 0 : amount; // if token is provided, we don't send native token
 
-  await token.mint(account.address, tokenAmount);
+  if (token) {
+    // e.g. StargatePoolUsdc is being used to bridge USDC
+    await token.mint(account.address, amount);
+    await token.connect(account).approve(stargatePool.address, amount);
+  }
 
   // mock token bridging (increase user's multichain balance)
   const encodedMessageEth = ethers.utils.defaultAbiCoder.encode(
@@ -33,15 +45,9 @@ export async function mintAndBridge(
     [account.address, overrides.data || "0x"]
   );
 
-  if (token.address == usdc.address) {
-    await token.connect(account).approve(mockStargatePoolUsdc.address, tokenAmount);
-    await mockStargatePoolUsdc.connect(account).sendToken(layerZeroProvider.address, tokenAmount, encodedMessageEth);
-  } else if (token.address == wnt.address) {
-    await token.connect(account).approve(mockStargatePoolWnt.address, tokenAmount);
-    await mockStargatePoolWnt.connect(account).sendToken(layerZeroProvider.address, tokenAmount, encodedMessageEth);
-  } else {
-    throw new Error("Unsupported Stargate");
-  }
+  await stargatePool
+    .connect(account)
+    .sendToken(layerZeroProvider.address, amount, encodedMessageEth, { value: msgValue });
 }
 
 const relayParamsType = `tuple(
@@ -100,6 +106,23 @@ const createDepositParamsType = `tuple(
     bytes32[] dataList
   )`;
 
+const createWithdrawalParamsType = `tuple(
+    tuple(
+      address receiver,
+      address callbackContract,
+      address uiFeeReceiver,
+      address market,
+      address[] longTokenSwapPath,
+      address[] shortTokenSwapPath
+    ) addresses,
+    uint256 minLongTokenAmount,
+    uint256 minShortTokenAmount,
+    bool shouldUnwrapNativeToken,
+    uint256 executionFee,
+    uint256 callbackGasLimit,
+    bytes32[] dataList
+  )`;
+
 const createGlvDepositParamsType = `tuple(
     tuple(
       address glv,
@@ -117,6 +140,24 @@ const createGlvDepositParamsType = `tuple(
     uint256 callbackGasLimit,
     bool shouldUnwrapNativeToken,
     bool isMarketTokenDeposit,
+    bytes32[] dataList
+  )`;
+
+const createGlvWithdrawalParamsType = `tuple(
+    tuple(
+      address receiver,
+      address callbackContract,
+      address uiFeeReceiver,
+      address market,
+      address glv,
+      address[] longTokenSwapPath,
+      address[] shortTokenSwapPath
+    ) addresses,
+    uint256 minLongTokenAmount,
+    uint256 minShortTokenAmount,
+    bool shouldUnwrapNativeToken,
+    uint256 executionFee,
+    uint256 callbackGasLimit,
     bytes32[] dataList
   )`;
 
@@ -138,6 +179,31 @@ export async function encodeDepositMessage(
   );
 
   const ActionType = 1; // Deposit
+  const data = ethers.utils.defaultAbiCoder.encode(["uint8", "bytes"], [ActionType, actionData]);
+
+  const message = ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, data]);
+
+  return message;
+}
+
+export async function encodeWithdrawalMessage(
+  withdrawalParams: Parameters<typeof sendCreateWithdrawal>[0],
+  account: string
+): Promise<string> {
+  const relayParams = await getRelayParams(withdrawalParams);
+
+  const signature = await getCreateWithdrawalSignature({
+    ...withdrawalParams,
+    relayParams,
+    verifyingContract: withdrawalParams.relayRouter.address,
+  });
+
+  const actionData = ethers.utils.defaultAbiCoder.encode(
+    [relayParamsType, transferRequestsType, createWithdrawalParamsType],
+    [{ ...relayParams, signature }, withdrawalParams.transferRequests, withdrawalParams.params]
+  );
+
+  const ActionType = 5; // Withdrawal
   const data = ethers.utils.defaultAbiCoder.encode(["uint8", "bytes"], [ActionType, actionData]);
 
   const message = ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, data]);
@@ -170,6 +236,31 @@ export async function encodeGlvDepositMessage(
   return message;
 }
 
+export async function encodeGlvWithdrawalMessage(
+  glvWithdrawalParams: Parameters<typeof sendCreateGlvWithdrawal>[0],
+  account: string
+): Promise<string> {
+  const relayParams = await getRelayParams(glvWithdrawalParams);
+
+  const signature = await getCreateGlvWithdrawalSignature({
+    ...glvWithdrawalParams,
+    relayParams,
+    verifyingContract: glvWithdrawalParams.relayRouter.address,
+  });
+
+  const actionData = ethers.utils.defaultAbiCoder.encode(
+    [relayParamsType, transferRequestsType, createGlvWithdrawalParamsType],
+    [{ ...relayParams, signature }, glvWithdrawalParams.transferRequests, glvWithdrawalParams.params]
+  );
+
+  const ActionType = 6; // GlvWithdrawal
+  const data = ethers.utils.defaultAbiCoder.encode(["uint8", "bytes"], [ActionType, actionData]);
+
+  const message = ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, data]);
+
+  return message;
+}
+
 export async function encodeSetTraderReferralCodeMessage(
   setTraderReferralCodeParams: Parameters<typeof sendSetTraderReferralCode>[0],
   referralCode: string,
@@ -194,4 +285,41 @@ export async function encodeSetTraderReferralCodeMessage(
   const message = ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, data]);
 
   return message;
+}
+
+export function encodeBridgeOutDataList(
+  actionType: number,
+  desChainId: BigNumberish,
+  deadline: BigNumberish,
+  provider: string,
+  providerData: string,
+  secondaryProvider?: string,
+  secondaryProviderData?: string
+): string[] {
+  let actionData;
+  if (secondaryProvider && secondaryProviderData) {
+    actionData = ethers.utils.defaultAbiCoder.encode(
+      ["uint256", "uint256", "address", "bytes", "address", "bytes"],
+      [desChainId, deadline, provider, providerData, secondaryProvider, secondaryProviderData]
+    );
+  } else {
+    actionData = ethers.utils.defaultAbiCoder.encode(
+      ["uint256", "uint256", "address", "bytes"],
+      [desChainId, deadline, provider, providerData]
+    );
+  }
+
+  let data = ethers.utils.defaultAbiCoder.encode(["uint8", "bytes"], [actionType, actionData]);
+
+  const dataList = [keys.GMX_DATA_ACTION];
+
+  // Remove '0x' prefix from the encoded data (re-added bellow for all array items)
+  data = data.slice(2);
+
+  // Transform the bytes data into an array of bytes32
+  for (let i = 0; i < data.length; i += 64) {
+    dataList.push(`0x${data.slice(i, i + 64)}`);
+  }
+
+  return dataList;
 }

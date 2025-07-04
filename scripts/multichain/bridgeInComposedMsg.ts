@@ -1,7 +1,15 @@
 import hre from "hardhat";
 import { BigNumber } from "ethers";
 import { JsonRpcProvider } from "@ethersproject/providers";
-import { ERC20, IStargate, DepositVault, RoleStore, GlvFactory, GlvVault } from "../../typechain-types";
+import {
+  ERC20,
+  IStargate,
+  DepositVault,
+  RoleStore,
+  GlvFactory,
+  GlvVault,
+  WithdrawalVault,
+} from "../../typechain-types";
 
 import { Options } from "@layerzerolabs/lz-v2-utilities";
 
@@ -9,11 +17,17 @@ import { expandDecimals } from "../../utils/math";
 import {
   encodeDepositMessage,
   encodeGlvDepositMessage,
+  encodeGlvWithdrawalMessage,
   encodeSetTraderReferralCodeMessage,
+  encodeWithdrawalMessage,
 } from "../../utils/multichain";
-import { sendCreateDeposit, sendCreateGlvDeposit } from "../../utils/relay/multichain";
+import {
+  sendCreateDeposit,
+  sendCreateGlvDeposit,
+  sendCreateGlvWithdrawal,
+  sendCreateWithdrawal,
+} from "../../utils/relay/multichain";
 import * as keys from "../../utils/keys";
-import { getGlvAddress } from "../../utils/glv";
 
 const { ethers } = hre;
 
@@ -28,7 +42,8 @@ const STARGATE_POOL_USDC_ARB_SEPOLIA = "0x543BdA7c6cA4384FE90B1F5929bb851F528889
 const STARGATE_USDC_ARB_SEPOLIA = "0x3253a335E7bFfB4790Aa4C25C4250d206E9b9773";
 const DST_CHAIN_ID = 421614;
 const DST_EID = 40231;
-const ETH_USD_MARKET_TOKEN = ""; // "0xb6fC4C9eB02C35A134044526C62bb15014Ac0Bcc"; // GM { indexToken: "WETH", longToken: "WETH", shortToken: "USDC.SG" }
+const ETH_USD_MARKET_TOKEN = "0xb6fC4C9eB02C35A134044526C62bb15014Ac0Bcc"; // GM { indexToken: "WETH", longToken: "WETH", shortToken: "USDC.SG" }
+const ETH_USD_GLV_ADDRESS = "0xAb3567e55c205c62B141967145F37b7695a9F854"; // GMX Liquidity Vault [WETH-USDC.SG]
 
 const dataStoreJson = import("../../deployments/arbitrumSepolia/DataStore.json");
 const roleStoreJson = import("../../deployments/arbitrumSepolia/RoleStore.json");
@@ -36,8 +51,10 @@ const glvFactoryJson = import("../../deployments/arbitrumSepolia/GlvFactory.json
 const glvVaultJson = import("../../deployments/arbitrumSepolia/GlvVault.json");
 const layerZeroProviderJson = import("../../deployments/arbitrumSepolia/LayerZeroProvider.json");
 const multichainGmRouterJson = import("../../deployments/arbitrumSepolia/MultichainGmRouter.json");
+const multichainGlvRouterJson = import("../../deployments/arbitrumSepolia/MultichainGlvRouter.json");
 const multichainOrderRouterJson = import("../../deployments/arbitrumSepolia/MultichainOrderRouter.json");
 const depositVaultJson = import("../../deployments/arbitrumSepolia/DepositVault.json");
+const withdrawalVaultJson = import("../../deployments/arbitrumSepolia/WithdrawalVault.json");
 
 async function prepareSend(
   amount: number | string | BigNumber,
@@ -150,12 +167,12 @@ async function retrieveFromDestination(account: string, relayRouterJson: any): P
   // contracts with destination provider
   const dataStore = new ethers.Contract(
     (await dataStoreJson).address,
-    ["function getAddress(bytes32 key) view returns (address)"],
+    ["function getAddress(bytes32 key) view returns (address)", "function getUint(bytes32 key) view returns (uint256)"],
     provider
   );
   const relayRouter = new ethers.Contract(
     (await relayRouterJson).address,
-    ["function userNonces(address account) view returns (uint256)"],
+    ["function digests(bytes32 dicest) view returns (bool)"],
     provider
   );
 
@@ -164,8 +181,12 @@ async function retrieveFromDestination(account: string, relayRouterJson: any): P
   const glvFactory: GlvFactory = await ethers.getContractAt("GlvFactory", (await glvFactoryJson).address);
   const glvVault: GlvVault = await ethers.getContractAt("GlvVault", (await glvVaultJson).address);
   const depositVault: DepositVault = await ethers.getContractAt("DepositVault", (await depositVaultJson).address);
-
-  const userNonce = await relayRouter.userNonces(account);
+  const withdrawalVault: WithdrawalVault = await ethers.getContractAt(
+    "WithdrawalVault",
+    (
+      await withdrawalVaultJson
+    ).address
+  );
 
   return {
     dataStore,
@@ -173,8 +194,8 @@ async function retrieveFromDestination(account: string, relayRouterJson: any): P
     glvFactory,
     glvVault,
     depositVault,
+    withdrawalVault,
     relayRouter,
-    userNonce: userNonce.toNumber(),
   };
 }
 
@@ -184,6 +205,8 @@ enum ActionType {
   GlvDeposit,
   BridgeOut,
   SetTraderReferralCode,
+  Withdrawal,
+  GlvWithdrawal,
 }
 
 async function getComposedMsg({
@@ -191,11 +214,15 @@ async function getComposedMsg({
   actionType,
   wntAmount,
   usdcAmount,
+  gmAmount,
+  glvAmount,
 }: {
   account: string;
   actionType: ActionType;
   wntAmount: BigNumber;
   usdcAmount: BigNumber;
+  gmAmount: BigNumber;
+  glvAmount: BigNumber;
 }): Promise<string> {
   if (actionType === ActionType.None) {
     return ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, "0x"]);
@@ -204,7 +231,8 @@ async function getComposedMsg({
   const srcChainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
   const { dataStore } = await retrieveFromDestination(account, multichainGmRouterJson);
   const wntAddress = await dataStore.getAddress(keys.WNT);
-  const executionFee = expandDecimals(4, 15); // 0.004 ETH
+  const executionFee = expandDecimals(1, 17); // 0.1 ETH
+  const deadline = Math.floor(Date.now() / 1000) + 86400; // 86400 seconds = 1 day
 
   const ethUsdMarket = {
     marketToken: ETH_USD_MARKET_TOKEN,
@@ -213,7 +241,7 @@ async function getComposedMsg({
   };
 
   if (actionType === ActionType.Deposit) {
-    const { depositVault, relayRouter, userNonce } = await retrieveFromDestination(account, multichainGmRouterJson);
+    const { dataStore, depositVault, relayRouter } = await retrieveFromDestination(account, multichainGmRouterJson);
 
     const defaultDepositParams = {
       addresses: {
@@ -236,53 +264,142 @@ async function getComposedMsg({
       sender: await hre.ethers.getSigner(account),
       signer: await hre.ethers.getSigner(account),
       feeParams: {
-        feeToken: ethers.constants.AddressZero,
-        feeAmount: 0,
+        feeToken: wntAddress, // feeToken must default to WNT, otherwise the Gelato Relay will revert with UnexpectedRelayFeeToken
+        feeAmount: executionFee, // needed to execute "IERC20(wnt).safeTransfer(address(depositVault), params.executionFee);"
         feeSwapPath: [],
       },
       // transferRequests contains the execution fee + collateral tokens
       transferRequests: {
-        tokens: [wntAddress, wntAddress, STARGATE_USDC_ARB_SEPOLIA],
-        receivers: [relayRouter.address, depositVault.address, depositVault.address],
-        amounts: [executionFee, wntAmount, usdcAmount],
+        tokens: [wntAddress, STARGATE_USDC_ARB_SEPOLIA],
+        receivers: [depositVault.address, depositVault.address],
+        amounts: [wntAmount, usdcAmount],
       },
       account,
       params: defaultDepositParams,
-      deadline: 9999999999,
+      deadline,
       chainId: srcChainId,
       srcChainId: srcChainId, // 0 would mean same chain action
       desChainId: DST_CHAIN_ID,
       relayRouter,
       relayFeeToken: wntAddress, // WETH
-      relayFeeAmount: expandDecimals(2, 15), // 0.002 ETH
-      userNonce, // the actual user nonce from the destination chain
+      relayFeeAmount: 0,
     };
+
+    const userMultichainBalanceWnt = await dataStore.getUint(keys.multichainBalanceKey(account, wntAddress));
+    console.log(
+      "User's multichain WNT: %s, amount: %s",
+      ethers.utils.formatUnits(userMultichainBalanceWnt),
+      ethers.utils.formatUnits(wntAmount)
+    );
+    const userMultichainBalanceUsdc = await dataStore.getUint(
+      keys.multichainBalanceKey(account, STARGATE_USDC_ARB_SEPOLIA)
+    );
+    console.log(
+      "User's multichain USDC: %s, amount: %s",
+      ethers.utils.formatUnits(userMultichainBalanceUsdc, 6),
+      ethers.utils.formatUnits(usdcAmount, 6)
+    );
+    const userMultichainBalanceGM = await dataStore.getUint(
+      keys.multichainBalanceKey(account, ethUsdMarket.marketToken)
+    );
+    console.log(
+      "User's multichain GM: %s for marketToken: %s",
+      ethers.utils.formatUnits(userMultichainBalanceGM),
+      ethUsdMarket.marketToken
+    );
 
     const message = await encodeDepositMessage(depositParams, account);
 
     return message;
   }
 
-  if (actionType === ActionType.GlvDeposit) {
-    const { roleStore, glvFactory, glvVault, relayRouter, userNonce } = await retrieveFromDestination(
-      account,
-      multichainGmRouterJson
+  if (actionType === ActionType.Withdrawal) {
+    const { dataStore, withdrawalVault, relayRouter } = await retrieveFromDestination(account, multichainGmRouterJson);
+
+    const defaultWithdrawalParams = {
+      addresses: {
+        receiver: account,
+        callbackContract: account,
+        uiFeeReceiver: account,
+        market: ethUsdMarket.marketToken,
+        longTokenSwapPath: [],
+        shortTokenSwapPath: [],
+      },
+      minLongTokenAmount: 0,
+      minShortTokenAmount: 0,
+      shouldUnwrapNativeToken: false,
+      executionFee,
+      callbackGasLimit: "200000",
+      dataList: [],
+    };
+    const withdrawalParams: Parameters<typeof sendCreateWithdrawal>[0] = {
+      sender: await hre.ethers.getSigner(account),
+      signer: await hre.ethers.getSigner(account),
+      feeParams: {
+        feeToken: wntAddress,
+        feeAmount: executionFee,
+        feeSwapPath: [],
+      },
+      transferRequests: {
+        tokens: [ethUsdMarket.marketToken],
+        receivers: [withdrawalVault.address],
+        amounts: [gmAmount],
+      },
+      account: account,
+      params: defaultWithdrawalParams,
+      deadline,
+      chainId: srcChainId,
+      srcChainId: srcChainId,
+      desChainId: DST_CHAIN_ID,
+      relayRouter: relayRouter,
+      relayFeeToken: wntAddress,
+      relayFeeAmount: 0,
+    };
+
+    const userMultichainBalanceWnt = await dataStore.getUint(keys.multichainBalanceKey(account, wntAddress));
+    console.log(
+      "User's multichain WNT: %s, amount: %s",
+      ethers.utils.formatUnits(userMultichainBalanceWnt),
+      ethers.utils.formatUnits(wntAmount)
+    );
+    const userMultichainBalanceUsdc = await dataStore.getUint(
+      keys.multichainBalanceKey(account, STARGATE_USDC_ARB_SEPOLIA)
+    );
+    console.log(
+      "User's multichain USDC: %s, amount: %s",
+      ethers.utils.formatUnits(userMultichainBalanceUsdc, 6),
+      ethers.utils.formatUnits(usdcAmount, 6)
+    );
+    const userMultichainBalanceGM = await dataStore.getUint(
+      keys.multichainBalanceKey(account, ethUsdMarket.marketToken)
+    );
+    console.log(
+      "User's multichain GM: %s for marketToken: %s",
+      ethers.utils.formatUnits(userMultichainBalanceGM),
+      ethUsdMarket.marketToken
+    );
+    const userMultichainBalanceGLV = await dataStore.getUint(keys.multichainBalanceKey(account, ETH_USD_GLV_ADDRESS));
+    console.log(
+      "User's multichain GLV: %s for GlvToken: %s",
+      ethers.utils.formatUnits(userMultichainBalanceGLV),
+      ETH_USD_GLV_ADDRESS
     );
 
-    const ethUsdGlvAddress = getGlvAddress(
-      wntAddress,
-      STARGATE_USDC_ARB_SEPOLIA,
-      ethers.constants.HashZero,
-      "GMX Liquidity Vault [WETH-USDC.SG]",
-      "GLV [WETH-USDC.SG]",
-      glvFactory.address,
-      roleStore.address,
-      dataStore.address
-    );
+    if (userMultichainBalanceGM.lt(gmAmount)) {
+      throw new Error("Insufficient GM in user's multichain account");
+    }
+
+    const message = await encodeWithdrawalMessage(withdrawalParams, account);
+
+    return message;
+  }
+
+  if (actionType === ActionType.GlvDeposit) {
+    const { glvVault, relayRouter } = await retrieveFromDestination(account, multichainGlvRouterJson);
 
     const defaultGlvDepositParams = {
       addresses: {
-        glv: ethUsdGlvAddress,
+        glv: ETH_USD_GLV_ADDRESS,
         receiver: account,
         callbackContract: account,
         uiFeeReceiver: account,
@@ -293,7 +410,7 @@ async function getComposedMsg({
         shortTokenSwapPath: [],
       },
       minGlvTokens: 100,
-      executionFee: 0,
+      executionFee,
       callbackGasLimit: "200000",
       shouldUnwrapNativeToken: true,
       isMarketTokenDeposit: false,
@@ -304,53 +421,158 @@ async function getComposedMsg({
       signer: await hre.ethers.getSigner(account),
       feeParams: {
         feeToken: wntAddress,
-        feeAmount: 0,
+        feeAmount: executionFee,
         feeSwapPath: [],
       },
       transferRequests: {
-        tokens: [wntAddress, wntAddress, STARGATE_USDC_ARB_SEPOLIA],
-        receivers: [relayRouter.address, glvVault.address, glvVault.address],
-        amounts: [executionFee, wntAmount, usdcAmount],
+        tokens: [wntAddress, STARGATE_USDC_ARB_SEPOLIA],
+        receivers: [glvVault.address, glvVault.address],
+        amounts: [wntAmount, usdcAmount],
       },
       account,
       params: defaultGlvDepositParams,
-      deadline: 9999999999,
+      deadline,
       chainId: srcChainId,
       srcChainId: srcChainId, // 0 would mean same chain action
-      desChainId: srcChainId,
+      desChainId: DST_CHAIN_ID,
       relayRouter,
       relayFeeToken: wntAddress, // WETH
-      relayFeeAmount: expandDecimals(2, 15), // 0.002 ETH
-      userNonce, // the actual user nonce from the destination chain
+      relayFeeAmount: 0,
     };
+
+    const userMultichainBalanceWnt = await dataStore.getUint(keys.multichainBalanceKey(account, wntAddress));
+    console.log(
+      "User's multichain WNT: %s, amount: %s",
+      ethers.utils.formatUnits(userMultichainBalanceWnt),
+      ethers.utils.formatUnits(wntAmount)
+    );
+    const userMultichainBalanceUsdc = await dataStore.getUint(
+      keys.multichainBalanceKey(account, STARGATE_USDC_ARB_SEPOLIA)
+    );
+    console.log(
+      "User's multichain USDC: %s, amount: %s",
+      ethers.utils.formatUnits(userMultichainBalanceUsdc, 6),
+      ethers.utils.formatUnits(usdcAmount, 6)
+    );
+    const userMultichainBalanceGM = await dataStore.getUint(
+      keys.multichainBalanceKey(account, ethUsdMarket.marketToken)
+    );
+    console.log(
+      "User's multichain GM: %s for marketToken: %s",
+      ethers.utils.formatUnits(userMultichainBalanceGM),
+      ethUsdMarket.marketToken
+    );
+    const userMultichainBalanceGLV = await dataStore.getUint(keys.multichainBalanceKey(account, ETH_USD_GLV_ADDRESS));
+    console.log(
+      "User's multichain GLV: %s for GlvToken: %s",
+      ethers.utils.formatUnits(userMultichainBalanceGLV),
+      ETH_USD_GLV_ADDRESS
+    );
 
     const message = await encodeGlvDepositMessage(createGlvDepositParams, account);
 
     return message;
   }
 
+  if (actionType === ActionType.GlvWithdrawal) {
+    const { glvVault, relayRouter } = await retrieveFromDestination(account, multichainGlvRouterJson);
+
+    const defaultGlvWithdrawalParams = {
+      addresses: {
+        receiver: account,
+        callbackContract: account,
+        uiFeeReceiver: account,
+        market: ethUsdMarket.marketToken,
+        glv: ETH_USD_GLV_ADDRESS,
+        longTokenSwapPath: [],
+        shortTokenSwapPath: [],
+      },
+      minLongTokenAmount: 0,
+      minShortTokenAmount: 0,
+      shouldUnwrapNativeToken: false,
+      executionFee,
+      callbackGasLimit: "200000",
+      dataList: [],
+    };
+    const createGlvWithdrawalParams: Parameters<typeof sendCreateGlvWithdrawal>[0] = {
+      sender: await hre.ethers.getSigner(account),
+      signer: await hre.ethers.getSigner(account),
+      feeParams: {
+        feeToken: wntAddress,
+        feeAmount: executionFee,
+        feeSwapPath: [],
+      },
+      transferRequests: {
+        tokens: [ETH_USD_GLV_ADDRESS],
+        receivers: [glvVault.address],
+        amounts: [glvAmount],
+      },
+      account: account,
+      params: defaultGlvWithdrawalParams,
+      deadline,
+      chainId: srcChainId,
+      srcChainId: srcChainId,
+      desChainId: DST_CHAIN_ID,
+      relayRouter,
+      relayFeeToken: wntAddress,
+      relayFeeAmount: 0,
+    };
+
+    const userMultichainBalanceWnt = await dataStore.getUint(keys.multichainBalanceKey(account, wntAddress));
+    console.log(
+      "User's multichain WNT: %s, amount: %s",
+      ethers.utils.formatUnits(userMultichainBalanceWnt),
+      ethers.utils.formatUnits(wntAmount)
+    );
+    const userMultichainBalanceUsdc = await dataStore.getUint(
+      keys.multichainBalanceKey(account, STARGATE_USDC_ARB_SEPOLIA)
+    );
+    console.log(
+      "User's multichain USDC: %s, amount: %s",
+      ethers.utils.formatUnits(userMultichainBalanceUsdc, 6),
+      ethers.utils.formatUnits(usdcAmount, 6)
+    );
+    const userMultichainBalanceGM = await dataStore.getUint(
+      keys.multichainBalanceKey(account, ethUsdMarket.marketToken)
+    );
+    console.log(
+      "User's multichain GM: %s for marketToken: %s",
+      ethers.utils.formatUnits(userMultichainBalanceGM),
+      ethUsdMarket.marketToken
+    );
+    const userMultichainBalanceGLV = await dataStore.getUint(keys.multichainBalanceKey(account, ETH_USD_GLV_ADDRESS));
+    console.log(
+      "User's multichain GLV: %s for GlvToken: %s",
+      ethers.utils.formatUnits(userMultichainBalanceGLV),
+      ETH_USD_GLV_ADDRESS
+    );
+
+    const message = await encodeGlvWithdrawalMessage(createGlvWithdrawalParams, account);
+
+    return message;
+  }
+
   if (actionType === ActionType.SetTraderReferralCode) {
     const referralCode = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(`ReferralCode-${Date.now()}`));
-    const { relayRouter, userNonce } = await retrieveFromDestination(account, multichainOrderRouterJson);
+    const { relayRouter } = await retrieveFromDestination(account, multichainOrderRouterJson);
 
     const setTraderReferralCodeParams = {
       sender: await hre.ethers.getSigner(account),
       signer: await hre.ethers.getSigner(account),
       feeParams: {
-        feeToken: ethers.constants.AddressZero,
+        feeToken: wntAddress, // feeToken must default to WNT, otherwise the Gelato Relay will revert with UnexpectedRelayFeeToken
         feeAmount: 0,
         feeSwapPath: [],
       },
       account,
       referralCode,
-      deadline: 9999999999,
+      deadline,
       srcChainId, // 0 means non-multichain action
       desChainId: DST_CHAIN_ID, // for non-multichain actions, desChainId is the same as chainId
       relayRouter,
       chainId: srcChainId,
       gelatoRelayFeeToken: ethers.constants.AddressZero,
       gelatoRelayFeeAmount: 0,
-      userNonce, // the actual user nonce from the destination chain
     };
 
     const message = await encodeSetTraderReferralCodeMessage(setTraderReferralCodeParams, referralCode, account);
@@ -359,10 +581,12 @@ async function getComposedMsg({
   }
 }
 
-// ACTION_TYPE=<None/Deposit/GlvDeposit/SetTraderReferralCode> npx hardhat run --network sepolia scripts/multichain/bridgeInComposedMsg.ts
+// ACTION_TYPE=<None/Deposit/GlvDeposit/SetTraderReferralCode/Withdrawal/GlvWithdrawal> npx hardhat run --network sepolia scripts/multichain/bridgeInComposedMsg.ts
 async function main() {
   if (!process.env.ACTION_TYPE) {
-    throw new Error("⚠️ ACTION_TYPE is mandatory: None / Deposit / GlvDeposit / SetTraderReferralCode");
+    throw new Error(
+      "⚠️ ACTION_TYPE is mandatory: None / Deposit / GlvDeposit / SetTraderReferralCode / Withdrawal / GlvWithdrawal"
+    );
   }
 
   const [wallet] = await hre.ethers.getSigners();
@@ -371,8 +595,10 @@ async function main() {
   // Bridge USDC (ETH bridging fails due to Stargate insufficient funds for path)
   const usdc: ERC20 = await ethers.getContractAt("ERC20", STARGATE_USDC_SEPOLIA);
   const usdcBalance = await usdc.balanceOf(account);
-  const usdcAmount = expandDecimals(3, 6); // to send a composed msg, we need to send the min stargate amount for bridging (e.g. 0.1 USDC)
-  const wntAmount = expandDecimals(1, 15); // 0.001 WETH (~3 USD)
+  const usdcAmount = expandDecimals(300, 6); // to send a composed msg, we need to send the min stargate amount for bridging if user's multichain balance already has the deposit funds (e.g. 0.1 USDC)
+  const wntAmount = expandDecimals(2, 17); // 0.2 WETH (~600 USD) --> amount is not being bridged, it's only used for the glv deposit as the long token and comes from user's multichain balance
+  const gmAmount = expandDecimals(50, 18);
+  const glvAmount = expandDecimals(40, 18);
   if (usdcBalance.lt(usdcAmount)) {
     throw new Error(
       `Insufficient USDC balance: need ${ethers.utils.formatUnits(usdcAmount, 6)} but have ${ethers.utils.formatUnits(
@@ -388,6 +614,8 @@ async function main() {
     actionType: ActionType[process.env.ACTION_TYPE],
     wntAmount,
     usdcAmount,
+    gmAmount,
+    glvAmount,
   });
 
   const {

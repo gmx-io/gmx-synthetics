@@ -29,7 +29,7 @@ import { ethers } from "ethers";
 import { handleDeposit } from "../../utils/deposit";
 import { deployContract } from "../../utils/deploy";
 import { parseLogs } from "../../utils/event";
-import { mintAndBridge } from "../../utils/multichain";
+import { bridgeInTokens } from "../../utils/multichain";
 
 const BAD_SIGNATURE =
   "0x122e3efab9b46c82dc38adf4ea6cd2c753b00f95c217a0e3a0f4dd110839f07a08eb29c1cc414d551349510e23a75219cd70c8b88515ed2b83bbd88216ffdb051f";
@@ -47,7 +47,7 @@ describe("MultichainSubaccountRouter", () => {
     usdc,
     chainlinkPriceFeedProvider,
     mockStargatePoolUsdc,
-    mockStargatePoolWnt;
+    mockStargatePoolNative;
   let relaySigner;
   let chainId;
   const referralCode = hashString("referralCode");
@@ -74,7 +74,7 @@ describe("MultichainSubaccountRouter", () => {
       usdc,
       chainlinkPriceFeedProvider,
       mockStargatePoolUsdc,
-      mockStargatePoolWnt,
+      mockStargatePoolNative,
     } = fixture.contracts);
 
     defaultCreateOrderParams = {
@@ -128,12 +128,12 @@ describe("MultichainSubaccountRouter", () => {
 
     // Multichain
     await dataStore.setBool(keys.isSrcChainIdEnabledKey(chainId), true);
-    await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolWnt.address), true);
-    await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolWnt.address), true);
-    await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: wntAmountBridged });
+    await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolNative.address), true);
+    await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolNative.address), true);
+    await bridgeInTokens(fixture, { account: user1, amount: wntAmountBridged });
     await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolUsdc.address), true);
     await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolUsdc.address), true);
-    await mintAndBridge(fixture, { account: user1, token: usdc, tokenAmount: usdcAmountBridged });
+    await bridgeInTokens(fixture, { account: user1, token: usdc, amount: usdcAmountBridged });
 
     await dataStore.setUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR, decimalToFloat(1));
     await setNextBlockBaseFeePerGas(expandDecimals(1, 9));

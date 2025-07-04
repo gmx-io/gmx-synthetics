@@ -8,7 +8,7 @@ import * as keys from "../../utils/keys";
 import { executeDeposit } from "../../utils/deposit";
 import { getBalanceOf } from "../../utils/token";
 import { executeGlvDeposit, executeGlvWithdrawal, getGlvDepositCount, getGlvWithdrawalCount } from "../../utils/glv";
-import { mintAndBridge } from "../../utils/multichain";
+import { encodeBridgeOutDataList, bridgeInTokens } from "../../utils/multichain";
 
 describe("MultichainGlvRouter", () => {
   let fixture;
@@ -24,9 +24,15 @@ describe("MultichainGlvRouter", () => {
     wnt,
     usdc,
     mockStargatePoolUsdc,
-    mockStargatePoolWnt;
+    mockStargatePoolNative;
   let relaySigner;
   let chainId;
+
+  const wntAmount = expandDecimals(10, 18);
+  const usdcAmount = expandDecimals(45_000, 6);
+  const feeAmount = expandDecimals(6, 15);
+  const executionFee = expandDecimals(4, 15);
+  const relayFeeAmount = expandDecimals(2, 15);
 
   let defaultDepositParams;
   let createDepositParams: Parameters<typeof sendCreateDeposit>[0];
@@ -46,7 +52,7 @@ describe("MultichainGlvRouter", () => {
       wnt,
       usdc,
       mockStargatePoolUsdc,
-      mockStargatePoolWnt,
+      mockStargatePoolNative,
     } = fixture.contracts);
 
     defaultDepositParams = {
@@ -62,7 +68,7 @@ describe("MultichainGlvRouter", () => {
       },
       minMarketTokens: 100,
       shouldUnwrapNativeToken: false,
-      executionFee: expandDecimals(4, 15),
+      executionFee,
       callbackGasLimit: "200000",
       dataList: [],
     };
@@ -73,16 +79,12 @@ describe("MultichainGlvRouter", () => {
     relaySigner = await hre.ethers.getSigner(GELATO_RELAY_ADDRESS);
     chainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
 
-    const wntAmount = expandDecimals(10, 18);
-    const usdcAmount = expandDecimals(45_000, 6);
-    const feeAmountDeposit = expandDecimals(6, 15);
-
     createDepositParams = {
       sender: relaySigner,
       signer: user0,
       feeParams: {
         feeToken: wnt.address,
-        feeAmount: feeAmountDeposit, // 0.006 ETH
+        feeAmount: feeAmount, // 0.006 ETH
         feeSwapPath: [],
       },
       transferRequests: {
@@ -98,25 +100,24 @@ describe("MultichainGlvRouter", () => {
       desChainId: chainId,
       relayRouter: multichainGmRouter,
       relayFeeToken: wnt.address,
-      relayFeeAmount: expandDecimals(2, 15), // 0.002 ETH
+      relayFeeAmount, // 0.002 ETH
     };
 
     await dataStore.setAddress(keys.FEE_RECEIVER, user3.address);
 
     await dataStore.setBool(keys.isSrcChainIdEnabledKey(chainId), true);
 
-    await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolWnt.address), true);
-    await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolWnt.address), true);
-    await mintAndBridge(fixture, { token: wnt, tokenAmount: wntAmount.add(feeAmountDeposit) });
+    await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolNative.address), true);
+    await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolNative.address), true);
+    await bridgeInTokens(fixture, { account: user0, amount: wntAmount.add(feeAmount) });
 
     await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolUsdc.address), true);
     await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolUsdc.address), true);
-    await mintAndBridge(fixture, { token: usdc, tokenAmount: usdcAmount });
+    await bridgeInTokens(fixture, { account: user0, token: usdc, amount: usdcAmount });
   });
 
   let defaultGlvDepositParams;
   let createGlvDepositParams: Parameters<typeof sendCreateGlvDeposit>[0];
-  const feeAmount = expandDecimals(4, 15);
 
   beforeEach(async () => {
     defaultGlvDepositParams = {
@@ -132,7 +133,7 @@ describe("MultichainGlvRouter", () => {
         shortTokenSwapPath: [],
       },
       minGlvTokens: 100,
-      executionFee: 0,
+      executionFee,
       callbackGasLimit: "200000",
       shouldUnwrapNativeToken: true,
       isMarketTokenDeposit: true,
@@ -160,14 +161,14 @@ describe("MultichainGlvRouter", () => {
       desChainId: chainId,
       relayRouter: multichainGlvRouter,
       relayFeeToken: wnt.address,
-      relayFeeAmount: expandDecimals(2, 15), // 0.002 ETH
+      relayFeeAmount, // 0.002 ETH
     };
   });
 
   describe("createGlvDeposit", () => {
     it("creates glvDeposit with GM tokens and sends relayer fee", async () => {
       await sendCreateDeposit(createDepositParams); // leaves the residualFee (i.e. executionfee) of 0.004 ETH fee in multichainVault/user's multichain balance
-      await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: feeAmount }); // add additional fee to user1's multichain balance
+      await bridgeInTokens(fixture, { account: user1, amount: feeAmount }); // add additional fee to user1's multichain balance
       await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
 
       // before glv deposit is created (user has 95k GM and 0 GLV)
@@ -201,10 +202,8 @@ describe("MultichainGlvRouter", () => {
     });
 
     it("creates glvDeposit with long/short tokens and sends relayer fee", async () => {
-      const wntAmount = expandDecimals(10, 18);
-      const usdcAmount = expandDecimals(40_000, 6);
-      await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: wntAmount.add(feeAmount) });
-      await mintAndBridge(fixture, { account: user1, token: usdc, tokenAmount: usdcAmount });
+      await bridgeInTokens(fixture, { account: user1, amount: wntAmount.add(feeAmount) });
+      await bridgeInTokens(fixture, { account: user1, token: usdc, amount: usdcAmount });
 
       createGlvDepositParams.params.isMarketTokenDeposit = false;
       createGlvDepositParams.params.addresses.initialLongToken = ethUsdMarket.longToken;
@@ -225,10 +224,10 @@ describe("MultichainGlvRouter", () => {
       await executeGlvDeposit(fixture, { gasUsageLabel: "executeGlvDeposit" });
 
       expect(await getGlvDepositCount(dataStore)).eq(0);
-      expect(await getBalanceOf(ethUsdGlvAddress, multichainVault.address)).eq(expandDecimals(90_000, 18)); // 90k GLV
+      expect(await getBalanceOf(ethUsdGlvAddress, multichainVault.address)).eq(expandDecimals(95_000, 18)); // 95k GLV
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdGlvAddress))).eq(
-        expandDecimals(90_000, 18)
-      ); // 90k GLV
+        expandDecimals(95_000, 18)
+      ); // 95k GLV
     });
   });
 
@@ -249,7 +248,7 @@ describe("MultichainGlvRouter", () => {
         minLongTokenAmount: 0,
         minShortTokenAmount: 0,
         shouldUnwrapNativeToken: false,
-        executionFee: 0, // expandDecimals(1, 15), // 0.001 ETH
+        executionFee, // 0.002 ETH
         callbackGasLimit: "200000",
         dataList: [],
       };
@@ -275,13 +274,13 @@ describe("MultichainGlvRouter", () => {
         desChainId: chainId,
         relayRouter: multichainGlvRouter,
         relayFeeToken: wnt.address,
-        relayFeeAmount: expandDecimals(2, 15), // 0.002 ETH
+        relayFeeAmount, // 0.002 ETH
       };
     });
 
     it("creates glvWithdrawal and sends relayer fee", async () => {
       await sendCreateDeposit(createDepositParams);
-      await mintAndBridge(fixture, { account: user1, token: wnt, tokenAmount: feeAmount }); // add additional fee to user1's multichain balance
+      await bridgeInTokens(fixture, { account: user1, amount: feeAmount }); // add additional fee to user1's multichain balance
       await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
       await sendCreateGlvDeposit(createGlvDepositParams);
       await executeGlvDeposit(fixture, { gasUsageLabel: "executeGlvDeposit" });
@@ -315,11 +314,94 @@ describe("MultichainGlvRouter", () => {
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdGlvAddress))).eq(0); // GLV
       // user's multicahin assets
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).eq(
-        expandDecimals(10_004, 15)
-      ); // 10.004 ETH
+        expandDecimals(10, 18).add(feeAmount)
+      ); // 10.006 ETH
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).eq(
         expandDecimals(45_000, 6)
       ); // 45,000 USDC
+    });
+
+    describe("bridgeOutFromController", () => {
+      const actionType = 3; // ActionType.BridgeOut
+      const deadline = Math.floor(Date.now() / 1000) + 3600; // deadline (1 hour from now)
+      const providerData = ethers.utils.defaultAbiCoder.encode(["uint32"], [1]); // providerData
+
+      it("create glvDeposit and bridge out from controller the GLV tokens, on the same chain", async () => {
+        await bridgeInTokens(fixture, { account: user1, amount: wntAmount.add(feeAmount) });
+        await bridgeInTokens(fixture, { account: user1, token: usdc, amount: usdcAmount });
+
+        createGlvDepositParams.params.isMarketTokenDeposit = false;
+        createGlvDepositParams.params.addresses.initialLongToken = ethUsdMarket.longToken;
+        createGlvDepositParams.params.addresses.initialShortToken = ethUsdMarket.shortToken;
+        createGlvDepositParams.transferRequests = {
+          tokens: [wnt.address, usdc.address],
+          receivers: [glvVault.address, glvVault.address],
+          amounts: [wntAmount, usdcAmount],
+        };
+
+        createGlvDepositParams.params.dataList = encodeBridgeOutDataList(
+          actionType,
+          chainId, // desChainId
+          deadline,
+          ethers.constants.AddressZero, // provider (can be the zero address since the tokens are transferred directly to the user's wallet on the same chain)
+          providerData
+        );
+
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).eq(
+          wntAmount.add(feeAmount)
+        );
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).eq(usdcAmount);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdGlvAddress))).eq(0); // 0 GLV
+        expect(await getBalanceOf(ethUsdGlvAddress, user0.address)).eq(0); // 0 GLV
+
+        await sendCreateGlvDeposit(createGlvDepositParams);
+        await executeGlvDeposit(fixture, { gasUsageLabel: "executeGlvDeposit/bridgeOutFromController" });
+
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).eq(executionFee);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).eq(0);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdGlvAddress))).eq(0); // GLV bridged out from user's multichain balance
+        expect(await getBalanceOf(ethUsdGlvAddress, user1.address)).eq(expandDecimals(95_000, 18)); // 95k GLV bridged out into user's wallet
+      });
+
+      it("creates glvWithdrawal and bridge out from controller the GLV tokens, on the same chain", async () => {
+        await sendCreateDeposit(createDepositParams);
+        await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
+        await bridgeInTokens(fixture, { account: user1, amount: relayFeeAmount }); // top-up user1's multichain balance to cover the relay fee
+        await sendCreateGlvDeposit(createGlvDepositParams);
+        await executeGlvDeposit(fixture, { gasUsageLabel: "executeGlvDeposit" });
+
+        expect(await getBalanceOf(ethUsdGlvAddress, user1.address)).eq(0);
+        expect(await getBalanceOf(wnt.address, user1.address)).eq(0);
+        expect(await getBalanceOf(usdc.address, user1.address)).eq(0);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdGlvAddress))).eq(
+          expandDecimals(95_000, 18)
+        ); // 95k GLV
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).eq(executionFee); // refund from the glvDeposit execution
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).eq(0); // 0 USDC
+
+        // enable bridge out from controller
+        createGlvWithdrawalParams.params.dataList = encodeBridgeOutDataList(
+          actionType,
+          chainId, // desChainId
+          deadline,
+          ethers.constants.AddressZero, // provider (can be the zero address since the tokens are transferred directly to the user's wallet on the same chain)
+          providerData,
+          ethers.constants.AddressZero, // secondaryProvider
+          providerData
+        );
+
+        await bridgeInTokens(fixture, { account: user1, amount: relayFeeAmount }); // top-up user1's multichain balance to cover the relay fee
+        await sendCreateGlvWithdrawal(createGlvWithdrawalParams);
+        await executeGlvWithdrawal(fixture, { gasUsageLabel: "executeGlvWithdrawal" });
+
+        // withdrawn funds are bridged out to user's wallet
+        expect(await getBalanceOf(ethUsdGlvAddress, user1.address)).eq(0);
+        expect(await getBalanceOf(wnt.address, user1.address)).eq(wntAmount);
+        expect(await getBalanceOf(usdc.address, user1.address)).eq(usdcAmount);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdGlvAddress))).eq(0); // GLV
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).eq(executionFee); // 0.004 ETH
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).eq(0); // 0 USDC
+      });
     });
   });
 });

@@ -132,6 +132,8 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             // this event is emitted even though the actionType may not be valid
             MultichainEventUtils.emitMultichainBridgeAction(eventEmitter, address(this), account, srcChainId, uint256(actionType));
 
+            /// @dev relayParams.fee.feeToken must default to WNT when feeSwapPath is not being used
+            /// otherwise reverts with UnexpectedRelayFeeToken
             if (actionType == ActionType.Deposit) {
                 _handleDeposit(account, srcChainId, actionType, actionData);
             } else if (actionType == ActionType.GlvDeposit) {
