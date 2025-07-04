@@ -186,6 +186,9 @@ library ShiftUtils {
         params.shiftVault.recordTransferIn(cache.depositMarket.longToken);
         params.shiftVault.recordTransferIn(cache.depositMarket.shortToken);
 
+        // srcChainId must be zero for the withdrawal, so that the withdrawn
+        // tokens would be sent to the ShiftVault wallet balance instead of the
+        // ShiftVault multichain balance
         cache.withdrawal = Withdrawal.Props(
             Withdrawal.Addresses(
                 shift.account(),
@@ -208,7 +211,7 @@ library ShiftUtils {
             Withdrawal.Flags(
                 false
             ),
-            new bytes32[](0)
+            new bytes32[](0) // dataList
         );
 
         cache.withdrawalKey = NonceUtils.getNextKey(params.dataStore);
@@ -249,6 +252,9 @@ library ShiftUtils {
 
         // set the uiFeeReceiver to the zero address since the ui fee was already paid
         // while executing the withdrawal
+        // srcChainId should be the Shift srcChainId so that the GM tokens would
+        // go into the appropriate balance either the user's wallet balance
+        // or their multichain balance
         cache.deposit = Deposit.Props(
             Deposit.Addresses(
                 shift.account(),
@@ -273,7 +279,7 @@ library ShiftUtils {
             Deposit.Flags(
                 false // shouldUnwrapNativeToken
             ),
-            new bytes32[](0)
+            new bytes32[](0) // dataList
         );
 
         cache.depositKey = NonceUtils.getNextKey(params.dataStore);
@@ -286,6 +292,8 @@ library ShiftUtils {
         // price impact from changes in virtual inventory should be excluded
         // since the action of withdrawing and depositing should not result in
         // a net change of virtual inventory
+        // shift.srcChainId should be used for the srcChainId here so that GM tokens
+        // would go to the appropriate balance eitehr the user's wallet balance or multichain balance
         cache.executeDepositParams = IExecuteDepositUtils.ExecuteDepositParams(
             params.dataStore,
             params.eventEmitter,
@@ -298,8 +306,7 @@ library ShiftUtils {
             params.keeper,
             params.startingGas,
             ISwapPricingUtils.SwapPricingType.Shift,
-            false, // includeVirtualInventoryImpact
-            shift.srcChainId()
+            false // includeVirtualInventoryImpact
         );
 
         cache.receivedMarketTokens = params.depositHandler.executeDepositFromController(

@@ -234,10 +234,10 @@ library GlvWithdrawalUtils {
                 updatedAtTime: glvWithdrawal.updatedAtTime(),
                 executionFee: 0,
                 callbackGasLimit: 0,
-                srcChainId: glvWithdrawal.srcChainId()
+                srcChainId: 0
             }),
             Withdrawal.Flags({shouldUnwrapNativeToken: glvWithdrawal.shouldUnwrapNativeToken()}),
-            glvWithdrawal.dataList()
+            new bytes32[](0)
         );
 
         bytes32 withdrawalKey = NonceUtils.getNextKey(params.dataStore);

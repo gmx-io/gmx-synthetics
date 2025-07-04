@@ -89,7 +89,6 @@ library ExecuteGlvDepositUtils {
             MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, glvDeposit.glv(), glvDeposit.receiver(), 0); // srcChainId is the current block.chainId
         }
 
-
         cache.market = MarketUtils.getEnabledMarket(params.dataStore, glvDeposit.market());
         cache.marketPoolValueInfo = MarketUtils.getPoolValueInfo(
             params.dataStore,
@@ -225,20 +224,19 @@ library ExecuteGlvDepositUtils {
         DepositEventUtils.emitDepositCreated(params.eventEmitter, depositKey, deposit, Deposit.DepositType.Glv);
 
         IExecuteDepositUtils.ExecuteDepositParams memory executeDepositParams = IExecuteDepositUtils.ExecuteDepositParams(
-                params.dataStore,
-                params.eventEmitter,
-                params.multichainVault,
-                params.multichainTransferRouter,
-                DepositVault(payable(params.glvVault)),
-                params.oracle,
-                params.swapHandler,
-                depositKey,
-                params.keeper,
-                params.startingGas,
-                ISwapPricingUtils.SwapPricingType.Deposit,
-                true, // includeVirtualInventoryImpact
-                0 // srcChainId is the current block.chainId
-            );
+            params.dataStore,
+            params.eventEmitter,
+            params.multichainVault,
+            params.multichainTransferRouter,
+            DepositVault(payable(params.glvVault)),
+            params.oracle,
+            params.swapHandler,
+            depositKey,
+            params.keeper,
+            params.startingGas,
+            ISwapPricingUtils.SwapPricingType.Deposit,
+            true // includeVirtualInventoryImpact
+        );
 
         uint256 receivedMarketTokens = ExecuteDepositUtils.executeDeposit(executeDepositParams, deposit);
         return receivedMarketTokens;

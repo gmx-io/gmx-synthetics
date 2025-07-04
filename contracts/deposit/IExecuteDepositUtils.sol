@@ -27,6 +27,5 @@ interface IExecuteDepositUtils {
         uint256 startingGas;
         ISwapPricingUtils.SwapPricingType swapPricingType;
         bool includeVirtualInventoryImpact;
-        uint256 srcChainId;
     }
 }
