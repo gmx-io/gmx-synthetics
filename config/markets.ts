@@ -3,7 +3,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { expandDecimals, exponentToFloat, decimalToFloat, bigNumberify, percentageToFloat } from "../utils/math";
 import { hashString } from "../utils/hash";
-import { SECONDS_PER_HOUR, SECONDS_PER_YEAR /* SECONDS_PER_DAY */ } from "../utils/constants";
+import { SECONDS_PER_DAY, SECONDS_PER_HOUR, SECONDS_PER_YEAR } from "../utils/constants";
 
 export type BaseMarketConfig = {
   reserveFactor: BigNumberish;
@@ -1194,8 +1194,8 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 2,700,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.8e-9"),
 
-      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(1097, 40), // 1.0973075E+43, 0.948074216 AAVE / day
-      minPositionImpactPoolAmount: expandDecimals(723, 16), // 7.23 AAVE
+      positionImpactPoolDistributionRate: expandDecimals(37, 18 + 30).div(SECONDS_PER_DAY), // 37 AAVE per day
+      minPositionImpactPoolAmount: expandDecimals(900, 18), // 900 AAVE
 
       maxOpenInterest: decimalToFloat(2_450_000), // ~2% of global OI
 
@@ -2935,6 +2935,9 @@ const config: {
 
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
+
+      positionImpactPoolDistributionRate: expandDecimals(53, 8 + 30).div(SECONDS_PER_DAY), // 53 HYPE per day
+      minPositionImpactPoolAmount: expandDecimals(3400, 8), // 3400 HYPE
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2e-10"),
 
