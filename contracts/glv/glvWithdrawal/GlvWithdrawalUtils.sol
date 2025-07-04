@@ -217,6 +217,9 @@ library GlvWithdrawalUtils {
         uint256 marketTokenAmount
     ) private returns (IExecuteWithdrawalUtils.ExecuteWithdrawalResult memory) {
 
+        // srcChainId should be glvWithdrawal.srcChainId so that the withdrawn funds
+        // are sent to the appropriate balance either the user's wallet balance
+        // or the user's multichain balance
         Withdrawal.Props memory withdrawal = Withdrawal.Props(
             Withdrawal.Addresses({
                 account: glvWithdrawal.glv(),
@@ -234,7 +237,7 @@ library GlvWithdrawalUtils {
                 updatedAtTime: glvWithdrawal.updatedAtTime(),
                 executionFee: 0,
                 callbackGasLimit: 0,
-                srcChainId: 0
+                srcChainId: glvWithdrawal.srcChainId()
             }),
             Withdrawal.Flags({shouldUnwrapNativeToken: glvWithdrawal.shouldUnwrapNativeToken()}),
             new bytes32[](0)
