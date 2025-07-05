@@ -1,10 +1,10 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { createDeployFunction } from "../utils/deploy";
 
-const constructorContracts = ["WETH"];
+const constructorContracts = [];
 
 const func = createDeployFunction({
-  contractName: "MockStargatePoolWnt",
+  contractName: "MockStargatePoolNative",
   dependencyNames: constructorContracts,
   getDeployArgs: async ({ dependencyContracts }) => {
     return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);

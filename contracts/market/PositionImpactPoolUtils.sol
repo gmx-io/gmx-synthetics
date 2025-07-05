@@ -175,8 +175,8 @@ library PositionImpactPoolUtils {
         }
 
         uint256 reductionUsd = reductionAmount * prices.indexTokenPrice.max;
-        uint256 longTokenAmount = reductionUsd / 2 / prices.longTokenPrice.min;
-        uint256 shortTokenAmount = reductionUsd / 2 / prices.shortTokenPrice.min;
+        uint256 longTokenAmount = Calc.roundUpDivision(reductionUsd, 2 * prices.longTokenPrice.min);
+        uint256 shortTokenAmount = Calc.roundUpDivision(reductionUsd, 2 * prices.shortTokenPrice.min);
 
         if (longTokenAmount > 0) {
             IERC20(marketProps.longToken).safeTransferFrom(fundingAccount, market, longTokenAmount);

@@ -26,6 +26,9 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       createDepositGasLimit: 5_000_000,
       createGlvDepositGasLimit: 5_000_000,
 
+      createWithdrawalGasLimit: 5_000_000,
+      createGlvWithdrawalGasLimit: 5_000_000,
+
       singleSwapGasLimit: 0,
       increaseOrderGasLimit: 0,
       decreaseOrderGasLimit: 0,
@@ -72,7 +75,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       relayFeeAddress: ethers.constants.AddressZero,
       maxRelayFeeUsdForSubaccount: 0,
 
-      maxDataLength: 10,
+      maxDataLength: 14,
     };
   }
 
@@ -95,6 +98,9 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
 
     createDepositGasLimit: 5_000_000,
     createGlvDepositGasLimit: 5_000_000,
+
+    createWithdrawalGasLimit: 5_000_000,
+    createGlvWithdrawalGasLimit: 5_000_000,
 
     singleSwapGasLimit: 1_000_000, // measured gas required for a swap in a market increase order: ~600,000
     increaseOrderGasLimit: 3_500_000,
@@ -142,7 +148,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     relayFeeAddress: "0xDA1b841A21FEF1ad1fcd5E19C1a9D682FB675258",
     maxRelayFeeUsdForSubaccount: decimalToFloat(100),
 
-    maxDataLength: 10,
+    maxDataLength: 14,
   };
 
   const networkConfig = {

@@ -71,6 +71,8 @@ interface IRelayUtils {
         // instead of sending separate approval transactions
         TokenPermit[] tokenPermits;
         FeeParams fee;
+        // interface generates a random nonce
+        uint256 userNonce;
         // deadline for the transaction. should be used for extra safety so signed message
         // can't be used in future if a user signs and forgets about it
         uint256 deadline;

@@ -43,21 +43,6 @@ library ExecuteDepositUtils {
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
 
-    // @dev _ExecuteDepositParams struct used in executeDeposit to avoid stack
-    // too deep errors
-    //
-    // @param market the market to deposit into
-    // @param account the depositing account
-    // @param receiver the account to send the market tokens to
-    // @param uiFeeReceiver the ui fee receiver account
-    // @param tokenIn the token to deposit, either the market.longToken or
-    // market.shortToken
-    // @param tokenOut the other token, if tokenIn is market.longToken then
-    // tokenOut is market.shortToken and vice versa
-    // @param tokenInPrice price of tokenIn
-    // @param tokenOutPrice price of tokenOut
-    // @param amount amount of tokenIn
-    // @param priceImpactUsd price impact in USD
     struct _ExecuteDepositParams {
         Market.Props market;
         address account;
@@ -69,6 +54,7 @@ library ExecuteDepositUtils {
         Price.Props tokenOutPrice;
         uint256 amount;
         int256 priceImpactUsd;
+        uint256 srcChainId;
     }
 
     struct ExecuteDepositCache {
@@ -206,7 +192,8 @@ library ExecuteDepositUtils {
                 cache.prices.longTokenPrice,
                 cache.prices.shortTokenPrice,
                 cache.longTokenAmount,
-                Precision.mulDiv(cache.priceImpactUsd, cache.longTokenUsd, cache.longTokenUsd + cache.shortTokenUsd)
+                Precision.mulDiv(cache.priceImpactUsd, cache.longTokenUsd, cache.longTokenUsd + cache.shortTokenUsd),
+                deposit.srcChainId()
             );
 
             cache.receivedMarketTokens += _executeDeposit(params, _params, cache.balanceWasImproved);
@@ -223,7 +210,8 @@ library ExecuteDepositUtils {
                 cache.prices.shortTokenPrice,
                 cache.prices.longTokenPrice,
                 cache.shortTokenAmount,
-                Precision.mulDiv(cache.priceImpactUsd, cache.shortTokenUsd, cache.longTokenUsd + cache.shortTokenUsd)
+                Precision.mulDiv(cache.priceImpactUsd, cache.shortTokenUsd, cache.longTokenUsd + cache.shortTokenUsd),
+                deposit.srcChainId()
             );
 
             cache.receivedMarketTokens += _executeDeposit(params, _params, cache.balanceWasImproved);
@@ -307,7 +295,11 @@ library ExecuteDepositUtils {
     // @dev executes a deposit
     // @param params ExecuteDepositParams
     // @param _params _ExecuteDepositParams
-    function _executeDeposit(IExecuteDepositUtils.ExecuteDepositParams memory params, _ExecuteDepositParams memory _params, bool balanceWasImproved) internal returns (uint256) {
+    function _executeDeposit(
+        IExecuteDepositUtils.ExecuteDepositParams memory params,
+        _ExecuteDepositParams memory _params,
+        bool balanceWasImproved
+    ) internal returns (uint256) {
         // for markets where longToken == shortToken, the price impact factor should be set to zero
         // in which case, the priceImpactUsd would always equal zero
         SwapPricingUtils.SwapFees memory fees = SwapPricingUtils.getSwapFees(
@@ -515,7 +507,7 @@ library ExecuteDepositUtils {
             _params.tokenIn
         );
 
-        if (params.srcChainId == 0) {
+        if (_params.srcChainId == 0) {
             // mint GM tokens to receiver
             MarketToken(payable(_params.market.marketToken)).mint(_params.receiver, mintAmount);
         } else {

@@ -141,7 +141,7 @@ export async function deployFixture() {
   const multichainUtils = await hre.ethers.getContract("MultichainUtils");
   const layerZeroProvider = await hre.ethers.getContract("LayerZeroProvider");
   const mockStargatePoolUsdc = await hre.ethers.getContract("MockStargatePoolUsdc");
-  const mockStargatePoolWnt = await hre.ethers.getContract("MockStargatePoolWnt");
+  const mockStargatePoolNative = await hre.ethers.getContract("MockStargatePoolNative");
   const mockOracleProvider = await hre.ethers.getContract("MockOracleProvider");
   const edgeDataStreamVerifier = await hre.ethers.getContract("EdgeDataStreamVerifier");
   const edgeDataStreamProvider = await hre.ethers.getContract("EdgeDataStreamProvider");
@@ -380,7 +380,7 @@ export async function deployFixture() {
       multichainUtils,
       layerZeroProvider,
       mockStargatePoolUsdc,
-      mockStargatePoolWnt,
+      mockStargatePoolNative,
       callbackUtils,
       gasUtils,
       mockOracleProvider,
