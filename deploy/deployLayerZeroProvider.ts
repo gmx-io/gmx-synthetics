@@ -32,13 +32,6 @@ const func = createDeployFunction({
       // if MultichainTransferRouter is already initialized, it would throw "Initializable: contract is already initialized"
       await ethersContract.initialize(deployedContract.address);
     }
-
-    const dataStore = await get("DataStore");
-    const dataStoreContract = await ethers.getContractAt("DataStore", dataStore.address);
-    console.log(
-      `Setting isRelayFeeExcludedKey for LayerZeroProvider address in DataStore: ${deployedContract.address}`
-    );
-    await dataStoreContract.setBool(keys.isRelayFeeExcludedKey(deployedContract.address), true);
   },
 });
 

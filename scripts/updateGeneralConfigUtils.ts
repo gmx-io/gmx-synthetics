@@ -4,7 +4,7 @@ import { ConfigChangeItem, handleConfigChanges } from "./updateConfigUtils";
 import * as keys from "../utils/keys";
 import { encodeData } from "../utils/hash";
 
-const getConfigItems = (generalConfig, oracleConfig) => {
+const getConfigItems = async (generalConfig, oracleConfig) => {
   const configItems: ConfigChangeItem[] = [
     {
       type: "address",
@@ -330,6 +330,15 @@ const getConfigItems = (generalConfig, oracleConfig) => {
     });
   }
 
+  const layerZeroProvider = await hre.ethers.getContract("LayerZeroProvider");
+  configItems.push({
+    type: "bool",
+    baseKey: keys.IS_RELAY_FEE_EXCLUDED,
+    keyData: encodeData(["address"], [layerZeroProvider.address]),
+    value: true,
+    label: `isRelayFeeExcluded ${layerZeroProvider.address}`,
+  });
+
   if (network.name != "hardhat") {
     for (const [multichainProvider, enabled] of Object.entries(generalConfig.multichainProviders)) {
       configItems.push({
@@ -376,6 +385,6 @@ export async function updateGeneralConfig({ write }) {
   const generalConfig = await hre.gmx.getGeneral();
   const oracleConfig = await hre.gmx.getOracle();
 
-  const items = getConfigItems(generalConfig, oracleConfig);
+  const items = await getConfigItems(generalConfig, oracleConfig);
   await handleConfigChanges(items, write);
 }

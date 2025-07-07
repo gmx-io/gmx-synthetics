@@ -23,5 +23,10 @@
   "GlvFactory_2": 1727673472,
   "GlvVault_1": 1727673480,
   "ChainlinkDataStreamProvider_4": 1733100941,
-  "Oracle_5": 1741708280
+  "Oracle_5": 1741708280,
+  "GovTimelockController_6": 1751877058,
+  "ChainlinkPriceFeedProvider_6": 1751877091,
+  "Oracle_6": 1751877099,
+  "ChainlinkDataStreamProvider_6": 1751877112,
+  "MultichainVault_1": 1751877119
 }
