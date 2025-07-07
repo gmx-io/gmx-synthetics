@@ -15,6 +15,7 @@ import { Options } from "@layerzerolabs/lz-v2-utilities";
 
 import { expandDecimals } from "../../utils/math";
 import {
+  encodeBridgeOutDataList,
   encodeDepositMessage,
   encodeGlvDepositMessage,
   encodeGlvWithdrawalMessage,
@@ -44,6 +45,8 @@ const DST_CHAIN_ID = 421614;
 const DST_EID = 40231;
 const ETH_USD_MARKET_TOKEN = "0xb6fC4C9eB02C35A134044526C62bb15014Ac0Bcc"; // GM { indexToken: "WETH", longToken: "WETH", shortToken: "USDC.SG" }
 const ETH_USD_GLV_ADDRESS = "0xAb3567e55c205c62B141967145F37b7695a9F854"; // GMX Liquidity Vault [WETH-USDC.SG]
+const GM_OFT_ADAPTER = "0xe4EBcAC4a2e6CBEE385eE407f7D5E278Bc07e11e";
+const GLV_OFT_ADAPTER = "0xd5bdea6dc8e4b7429b72675386fc903def06599d";
 
 const dataStoreJson = import("../../deployments/arbitrumSepolia/DataStore.json");
 const roleStoreJson = import("../../deployments/arbitrumSepolia/RoleStore.json");
@@ -578,6 +581,181 @@ async function getComposedMsg({
     const message = await encodeSetTraderReferralCodeMessage(setTraderReferralCodeParams, referralCode, account);
 
     return message;
+  }
+
+  if (actionType === ActionType.BridgeOut) {
+    const { dataStore, depositVault, relayRouter } = await retrieveFromDestination(account, multichainGmRouterJson);
+
+    // dataList determines if the GM / GLV tokens are being bridged out or not
+    const deadline = Math.floor(Date.now() / 1000) + 3600; // deadline (1 hour from now)
+    const providerData = ethers.utils.defaultAbiCoder.encode(["uint32"], [DST_EID]); // providerData
+
+    if (!process.env.token || process.env.token === "GM") {
+      const dataList = encodeBridgeOutDataList(
+        actionType,
+        DST_CHAIN_ID, // desChainId
+        deadline,
+        GM_OFT_ADAPTER, // provider
+        providerData
+      );
+
+      const defaultDepositParams = {
+        addresses: {
+          receiver: account,
+          callbackContract: account,
+          uiFeeReceiver: account,
+          market: ethUsdMarket.marketToken,
+          initialLongToken: ethUsdMarket.longToken,
+          initialShortToken: ethUsdMarket.shortToken,
+          longTokenSwapPath: [],
+          shortTokenSwapPath: [],
+        },
+        minMarketTokens: 100,
+        shouldUnwrapNativeToken: false,
+        executionFee,
+        callbackGasLimit: "200000",
+        dataList,
+      };
+      const depositParams: Parameters<typeof sendCreateDeposit>[0] = {
+        sender: await hre.ethers.getSigner(account),
+        signer: await hre.ethers.getSigner(account),
+        feeParams: {
+          feeToken: wntAddress, // feeToken must default to WNT, otherwise the Gelato Relay will revert with UnexpectedRelayFeeToken
+          feeAmount: executionFee, // needed to execute "IERC20(wnt).safeTransfer(address(depositVault), params.executionFee);"
+          feeSwapPath: [],
+        },
+        // transferRequests contains the execution fee + collateral tokens
+        transferRequests: {
+          tokens: [wntAddress, STARGATE_USDC_ARB_SEPOLIA],
+          receivers: [depositVault.address, depositVault.address],
+          amounts: [wntAmount, usdcAmount],
+        },
+        account,
+        params: defaultDepositParams,
+        deadline,
+        chainId: srcChainId,
+        srcChainId: srcChainId, // 0 would mean same chain action
+        desChainId: DST_CHAIN_ID,
+        relayRouter,
+        relayFeeToken: wntAddress, // WETH
+        relayFeeAmount: 0,
+      };
+
+      const userMultichainBalanceWnt = await dataStore.getUint(keys.multichainBalanceKey(account, wntAddress));
+      console.log(
+        "User's multichain WNT: %s, amount: %s",
+        ethers.utils.formatUnits(userMultichainBalanceWnt),
+        ethers.utils.formatUnits(wntAmount)
+      );
+      const userMultichainBalanceUsdc = await dataStore.getUint(
+        keys.multichainBalanceKey(account, STARGATE_USDC_ARB_SEPOLIA)
+      );
+      console.log(
+        "User's multichain USDC: %s, amount: %s",
+        ethers.utils.formatUnits(userMultichainBalanceUsdc, 6),
+        ethers.utils.formatUnits(usdcAmount, 6)
+      );
+      const userMultichainBalanceGM = await dataStore.getUint(
+        keys.multichainBalanceKey(account, ethUsdMarket.marketToken)
+      );
+      console.log(
+        "User's multichain GM: %s for marketToken: %s",
+        ethers.utils.formatUnits(userMultichainBalanceGM),
+        ethUsdMarket.marketToken
+      );
+
+      const message = await encodeDepositMessage(depositParams, account);
+
+      return message;
+    }
+
+    if (process.env.token === "GLV") {
+      const { glvVault, relayRouter } = await retrieveFromDestination(account, multichainGlvRouterJson);
+
+      const dataList = encodeBridgeOutDataList(
+        actionType,
+        DST_CHAIN_ID, // desChainId
+        deadline,
+        GLV_OFT_ADAPTER, // provider
+        providerData
+      );
+
+      const defaultGlvDepositParams = {
+        addresses: {
+          glv: ETH_USD_GLV_ADDRESS,
+          receiver: account,
+          callbackContract: account,
+          uiFeeReceiver: account,
+          market: ethUsdMarket.marketToken,
+          initialLongToken: ethUsdMarket.longToken,
+          initialShortToken: ethUsdMarket.shortToken,
+          longTokenSwapPath: [],
+          shortTokenSwapPath: [],
+        },
+        minGlvTokens: 100,
+        executionFee,
+        callbackGasLimit: "200000",
+        shouldUnwrapNativeToken: true,
+        isMarketTokenDeposit: false,
+        dataList,
+      };
+      const createGlvDepositParams: Parameters<typeof sendCreateGlvDeposit>[0] = {
+        sender: await hre.ethers.getSigner(account),
+        signer: await hre.ethers.getSigner(account),
+        feeParams: {
+          feeToken: wntAddress,
+          feeAmount: executionFee,
+          feeSwapPath: [],
+        },
+        transferRequests: {
+          tokens: [wntAddress, STARGATE_USDC_ARB_SEPOLIA],
+          receivers: [glvVault.address, glvVault.address],
+          amounts: [wntAmount, usdcAmount],
+        },
+        account,
+        params: defaultGlvDepositParams,
+        deadline,
+        chainId: srcChainId,
+        srcChainId: srcChainId, // 0 would mean same chain action
+        desChainId: DST_CHAIN_ID,
+        relayRouter,
+        relayFeeToken: wntAddress, // WETH
+        relayFeeAmount: 0,
+      };
+
+      const userMultichainBalanceWnt = await dataStore.getUint(keys.multichainBalanceKey(account, wntAddress));
+      console.log(
+        "User's multichain WNT: %s, amount: %s",
+        ethers.utils.formatUnits(userMultichainBalanceWnt),
+        ethers.utils.formatUnits(wntAmount)
+      );
+      const userMultichainBalanceUsdc = await dataStore.getUint(
+        keys.multichainBalanceKey(account, STARGATE_USDC_ARB_SEPOLIA)
+      );
+      console.log(
+        "User's multichain USDC: %s, amount: %s",
+        ethers.utils.formatUnits(userMultichainBalanceUsdc, 6),
+        ethers.utils.formatUnits(usdcAmount, 6)
+      );
+      const userMultichainBalanceGM = await dataStore.getUint(
+        keys.multichainBalanceKey(account, ethUsdMarket.marketToken)
+      );
+      console.log(
+        "User's multichain GM: %s for marketToken: %s",
+        ethers.utils.formatUnits(userMultichainBalanceGM),
+        ethUsdMarket.marketToken
+      );
+      const userMultichainBalanceGLV = await dataStore.getUint(keys.multichainBalanceKey(account, ETH_USD_GLV_ADDRESS));
+      console.log(
+        "User's multichain GLV: %s for GlvToken: %s",
+        ethers.utils.formatUnits(userMultichainBalanceGLV),
+        ETH_USD_GLV_ADDRESS
+      );
+
+      const message = await encodeGlvDepositMessage(createGlvDepositParams, account);
+
+      return message;
+    }
   }
 }
 
