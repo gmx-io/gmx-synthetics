@@ -3,7 +3,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { expandDecimals, exponentToFloat, decimalToFloat, bigNumberify, percentageToFloat } from "../utils/math";
 import { hashString } from "../utils/hash";
-import { SECONDS_PER_HOUR, SECONDS_PER_YEAR /* SECONDS_PER_DAY */ } from "../utils/constants";
+import { SECONDS_PER_DAY, SECONDS_PER_HOUR, SECONDS_PER_YEAR } from "../utils/constants";
 
 export type BaseMarketConfig = {
   reserveFactor: BigNumberish;
@@ -1216,10 +1216,10 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 2,700,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.8e-9"),
 
-      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(1097, 40), // 1.0973075E+43, 0.948074216 AAVE / day
-      minPositionImpactPoolAmount: expandDecimals(723, 16), // 7.23 AAVE
+      positionImpactPoolDistributionRate: expandDecimals(5, 18 + 30).div(SECONDS_PER_DAY), // 5 AAVE per day
+      minPositionImpactPoolAmount: expandDecimals(900, 18), // 900 AAVE
 
-      maxOpenInterest: decimalToFloat(1_500_000),
+      maxOpenInterest: decimalToFloat(2_450_000), // ~2% of global OI
 
       atomicSwapFeeFactor: percentageToFloat("3%"),
     },
@@ -2966,6 +2966,9 @@ const config: {
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
 
+      positionImpactPoolDistributionRate: expandDecimals(53, 8 + 30).div(SECONDS_PER_DAY), // 53 HYPE per day
+      minPositionImpactPoolAmount: expandDecimals(3400, 8), // 3400 HYPE
+
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2e-10"),
 
       reserveFactor: percentageToFloat("145%"), // default is 95%
@@ -3951,36 +3954,37 @@ const config: {
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6e-11"),
 
       maxOpenInterest: decimalToFloat(1000),
+
+      isDisabled: true,
     },
     {
       tokens: { indexToken: "BTC", longToken: "stBTC", shortToken: "stBTC" },
       virtualTokenIdForIndexToken: hashString("PERP:BTC/USD"),
 
       ...singleTokenMarketConfig,
-      ...fundingRateConfig_SingleToken,
-      ...borrowingRateConfig_HighMax_WithLowerBase,
+      ...fundingRateConfig_Low,
+      ...borrowingRateConfig_LowMax_WithLowerBase,
 
       reserveFactor: percentageToFloat("105%"),
       openInterestReserveFactor: percentageToFloat("100%"),
 
-      maxLongTokenPoolAmount: expandDecimals(1, 18),
-      maxShortTokenPoolAmount: expandDecimals(1, 18),
+      maxLongTokenPoolAmount: expandDecimals(50, 18),
+      maxShortTokenPoolAmount: expandDecimals(50, 18),
 
-      maxPoolUsdForDeposit: decimalToFloat(1000),
+      maxPoolUsdForDeposit: decimalToFloat(3_000_000),
 
-      positionImpactExponentFactor: exponentToFloat("1e0"),
-      negativePositionImpactFactor: exponentToFloat("2e-15"),
-      positivePositionImpactFactor: exponentToFloat("1e-15"),
+      positionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactFactor: exponentToFloat("3e-10"),
+      positivePositionImpactFactor: exponentToFloat("2.5e-10"),
 
       positionImpactPoolDistributionRate: bigNumberify(0),
       minPositionImpactPoolAmount: bigNumberify(0),
 
       minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
 
-      // minCollateralFactor of 0.005 (0.5%) when open interest is 83,000,000 USD
-      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6e-11"),
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.78e-9"),
 
-      maxOpenInterest: decimalToFloat(1000),
+      maxOpenInterest: decimalToFloat(2_000_000),
     },
     {
       tokens: { indexToken: "BTC", longToken: "stBTC", shortToken: "USDC.e" },
@@ -3991,27 +3995,30 @@ const config: {
       ...fundingRateConfig_Low,
       ...borrowingRateConfig_LowMax_WithLowerBase,
 
-      reserveFactor: percentageToFloat("105%"),
-      openInterestReserveFactor: percentageToFloat("100%"),
+      reserveFactor: percentageToFloat("135%"),
+      openInterestReserveFactor: percentageToFloat("130%"),
 
-      maxLongTokenPoolAmount: expandDecimals(1, 18),
-      maxShortTokenPoolAmount: expandDecimals(1, 18),
+      maxLongTokenPoolAmount: expandDecimals(50, 18),
+      maxShortTokenPoolAmount: expandDecimals(5_000_000, 6),
 
-      maxPoolUsdForDeposit: decimalToFloat(1000),
+      maxPoolUsdForDeposit: decimalToFloat(3_000_000),
 
-      positionImpactExponentFactor: exponentToFloat("1e0"),
-      negativePositionImpactFactor: exponentToFloat("2e-15"),
-      positivePositionImpactFactor: exponentToFloat("1e-15"),
+      positionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactFactor: exponentToFloat("3e-10"),
+      positivePositionImpactFactor: exponentToFloat("2.5e-10"),
+
+      swapImpactExponentFactor: exponentToFloat("2e0"),
+      negativeSwapImpactFactor: exponentToFloat("3.5e-09"),
+      positiveSwapImpactFactor: exponentToFloat("1.75e-09"),
 
       positionImpactPoolDistributionRate: bigNumberify(0),
       minPositionImpactPoolAmount: bigNumberify(0),
 
       minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
 
-      // minCollateralFactor of 0.005 (0.5%) when open interest is 83,000,000 USD
-      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6e-11"),
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.14e-9"),
 
-      maxOpenInterest: decimalToFloat(1000),
+      maxOpenInterest: decimalToFloat(2_000_000),
     },
   ],
   avalancheFuji: [

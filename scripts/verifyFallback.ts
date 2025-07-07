@@ -68,11 +68,12 @@ function encodeArg(arg) {
 
 async function verifyForNetwork(verificationNetwork) {
   const apiUrl = getExplorerUrl(verificationNetwork);
-  const cacheFilePath = `./scripts/cache/verification/${verificationNetwork}.json`;
+  const apiHost = new URL(apiUrl).host;
+  const cacheFilePath = `./scripts/cache/verification/${verificationNetwork}-${apiHost}.json`;
   console.log("cacheFilePath", cacheFilePath);
   console.log("apiUrl", apiUrl);
 
-  let cache = readJsonFile(cacheFilePath);
+  let cache: Record<string, boolean> = readJsonFile(cacheFilePath);
   if (cache === undefined) {
     cache = {};
   }
@@ -92,7 +93,6 @@ async function verifyForNetwork(verificationNetwork) {
     const argStr = args.map((arg) => encodeArg(arg)).join(" ");
 
     if (process.env.CONTRACT && process.env.CONTRACT !== name) {
-      console.log("skip %s", name);
       continue;
     }
 
@@ -105,15 +105,8 @@ async function verifyForNetwork(verificationNetwork) {
       }
 
       if (isContractVerified) {
-        let isVerified = true;
-        if (isContractVerified.message === "NOTOK") {
-          isVerified = false;
-        }
-
-        if (isVerified) {
-          console.log(`${name} already verified: ${address}`);
-          continue;
-        }
+        console.log(`${name} already verified: ${address}`);
+        continue;
       }
 
       console.log("Verifying contract %s %s %s", name, address, argStr);
@@ -151,7 +144,7 @@ async function verifyForNetwork(verificationNetwork) {
         error: ex,
       });
       console.error("Failed to verify contract %s in %ss", address, (Date.now() - start) / 1000);
-      console.error(ex);
+      console.error("error", ex);
     }
   }
 

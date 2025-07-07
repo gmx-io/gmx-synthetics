@@ -192,9 +192,11 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       swapOrderGasLimit: 2_500_000,
     },
     avalanche: {
-      requestExpirationTime: 60,
+      requestExpirationTime: 180,
     },
-    botanix: {},
+    botanix: {
+      positionFeeReceiverFactor: decimalToFloat(50, 2), // 50%
+    },
   }[network.name];
 
   if (!networkConfig) {
