@@ -272,7 +272,7 @@ library GlvDepositUtils {
             cache.mintAmount
         );
 
-        // glvValue can be calculated with GLV oracle price which is slightly increased after the deposit due to paid fees
+        // glvValue can be calculated with GLV oracle price which is increased a bit after the deposit due to paid fees
         // so the glvValue might be slightly inaccurate, but it should not be an issue for emitting GlvValueUpdated event
         cache.glvValue = GlvUtils.getGlvValue(
             params.dataStore,

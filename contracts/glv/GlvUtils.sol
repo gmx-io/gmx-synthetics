@@ -11,6 +11,7 @@ import "./GlvEventUtils.sol";
 import "./GlvStoreUtils.sol";
 
 library GlvUtils {
+    using Price for Price.Props;
     using SafeCast for int256;
     using SafeCast for uint256;
 
@@ -39,8 +40,8 @@ library GlvUtils {
         bool forceCalculation
     ) public view returns (uint256) {
         if (!forceCalculation) {
-            (Price.Props memory glvTokenPrice, bool isEmpty) = oracle.getPrimaryPriceIfNotEmpty(glv);
-            if (!isEmpty) {
+            Price.Props memory glvTokenPrice = oracle.getPrimaryPriceIfNotEmpty(glv);
+            if (!glvTokenPrice.isEmpty()) {
                 uint256 supply = ERC20(glv).totalSupply();
                 return (maximize ? glvTokenPrice.max : glvTokenPrice.min) * supply;
             }
