@@ -26,6 +26,7 @@ const PANIC_MAP = {
   0x51: "call a zero-initialized variable of internal function type.",
 };
 export const PANIC_SIGNATURE4 = ethers.utils.id("Panic(uint256)").slice(0, 10);
+export const ERROR_SIGNATURE4 = ethers.utils.id("Error(string)").slice(0, 10);
 
 export function parseError(reasonBytes, shouldThrow = true) {
   if (reasonBytes.startsWith(PANIC_SIGNATURE4)) {
@@ -36,15 +37,34 @@ export function parseError(reasonBytes, shouldThrow = true) {
     } as any;
   }
 
-  try {
-    const reason = errorsInterface.parseError(reasonBytes);
-    return reason;
-  } catch (e) {
-    if (!shouldThrow) {
-      return;
-    }
-    throw new Error(`Could not parse errorBytes ${reasonBytes}`);
+  if (reasonBytes.startsWith(ERROR_SIGNATURE4)) {
+    const [errorString] = ethers.utils.defaultAbiCoder.decode(
+      ["string"],
+      "0x" + reasonBytes.slice(ERROR_SIGNATURE4.length)
+    );
+    return {
+      name: "Error",
+      args: [errorString],
+    } as any;
   }
+
+  try {
+    return errorsInterface.parseError(reasonBytes);
+  } catch (e) {
+    // eslint-disable-next-line no-empty
+  }
+
+  if (!shouldThrow) {
+    return;
+  }
+  throw new Error(`Could not parse errorBytes ${reasonBytes}`);
+}
+
+export function formatParsedError(error: { name: string; args: any[] }) {
+  return `${error.name}(${Object.entries(error.args)
+    .filter(([key]) => isNaN(parseInt(key)))
+    .map(([key, value]) => `${key}=${value}`)
+    .join(", ")})`;
 }
 
 export function getCancellationReason({ logs, eventName }) {
