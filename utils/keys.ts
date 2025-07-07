@@ -111,6 +111,12 @@ export const NATIVE_TOKEN_TRANSFER_GAS_LIMIT = hashString("NATIVE_TOKEN_TRANSFER
 
 export const MAX_CALLBACK_GAS_LIMIT = hashString("MAX_CALLBACK_GAS_LIMIT");
 
+export const MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT = hashString("MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT");
+export const GELATO_RELAY_FEE_BASE_AMOUNT = hashString("GELATO_RELAY_FEE_BASE_AMOUNT");
+export const GELATO_RELAY_FEE_MULTIPLIER_FACTOR = hashString("GELATO_RELAY_FEE_MULTIPLIER_FACTOR");
+
+export const RELAY_FEE_ADDRESS = hashString("RELAY_FEE_ADDRESS");
+
 export const REQUEST_EXPIRATION_TIME = hashString("REQUEST_EXPIRATION_TIME");
 
 export const PRICE_FEED = hashString("PRICE_FEED");
@@ -149,6 +155,7 @@ export const SWAP_FEE_FACTOR = hashString("SWAP_FEE_FACTOR");
 export const DEPOSIT_FEE_FACTOR = hashString("DEPOSIT_FEE_FACTOR");
 export const WITHDRAWAL_FEE_FACTOR = hashString("WITHDRAWAL_FEE_FACTOR");
 export const ATOMIC_SWAP_FEE_FACTOR = hashString("ATOMIC_SWAP_FEE_FACTOR");
+export const ATOMIC_WITHDRAWAL_FEE_FACTOR = hashString("ATOMIC_WITHDRAWAL_FEE_FACTOR");
 export const SWAP_IMPACT_FACTOR = hashString("SWAP_IMPACT_FACTOR");
 export const SWAP_IMPACT_EXPONENT_FACTOR = hashString("SWAP_IMPACT_EXPONENT_FACTOR");
 
@@ -519,6 +526,10 @@ export function withdrawalFeeFactorKey(market: string, forPositiveImpact: boolea
 
 export function atomicSwapFeeFactorKey(market: string) {
   return hashData(["bytes32", "address"], [ATOMIC_SWAP_FEE_FACTOR, market]);
+}
+
+export function atomicWithdrawalFeeFactorKey(market: string) {
+  return hashData(["bytes32", "address"], [ATOMIC_WITHDRAWAL_FEE_FACTOR, market]);
 }
 
 export function swapImpactFactorKey(market: string, isPositive: boolean) {

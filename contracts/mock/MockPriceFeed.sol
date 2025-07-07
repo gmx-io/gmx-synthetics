@@ -36,4 +36,12 @@ contract MockPriceFeed is IPriceFeed {
             uint80(0) // answeredInRound
         );
     }
+
+    function description() external view returns (string memory) {
+        return "description";
+    }
+
+    function decimals() external view returns (uint8) {
+        return 8;
+    }
 }

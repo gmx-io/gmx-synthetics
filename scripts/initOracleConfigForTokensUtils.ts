@@ -9,6 +9,8 @@ import { TokenConfig } from "../config/tokens";
 import * as keys from "../utils/keys";
 import { getOracleProviderAddress } from "../utils/oracle";
 
+import IPriceFeed from "../artifacts/contracts/oracle/IPriceFeed.sol/IPriceFeed.json";
+
 export async function initOracleConfigForTokens({ write }) {
   const tokens = await hre.gmx.getTokens();
 
@@ -88,10 +90,12 @@ export async function initOracleConfigForTokens({ write }) {
 
     if (onchainConfig.priceFeed === ethers.constants.AddressZero && token.priceFeed) {
       const { priceFeed } = token;
+
       const priceFeedMultiplier = expandDecimals(1, 60 - token.decimals - priceFeed.decimals);
       const stablePrice = priceFeed.stablePrice ? priceFeed.stablePrice : 0;
 
-      await validatePriceFeed(tokenSymbol, token);
+      await validatePriceFeed(tokenSymbol, token, priceFeedMultiplier);
+
       console.log(
         `setPriceFeed(${tokenSymbol}, ${priceFeed.address}, ${priceFeedMultiplier.toString()}, ${
           priceFeed.heartbeatDuration
@@ -185,7 +189,7 @@ export async function initOracleConfigForTokens({ write }) {
   }
 }
 
-export async function validatePriceFeed(tokenSymbol: string, token: TokenConfig) {
+export async function validatePriceFeed(tokenSymbol: string, token: TokenConfig, priceFeedMultiplier) {
   if (process.env.SKIP_PRICE_FEED_VALIDATION) {
     console.log(`skipping price feed validation for ${tokenSymbol}`);
     return;
@@ -198,21 +202,30 @@ export async function validatePriceFeed(tokenSymbol: string, token: TokenConfig)
     return;
   }
 
-  const contract = new ethers.Contract(
-    priceFeed.address,
-    ["function decimals() view returns (uint8)", "function description() view returns (string)"],
-    ethers.provider
-  );
+  const contract = new ethers.Contract(priceFeed.address, IPriceFeed.abi, ethers.provider);
 
   let decimals: number;
   let description: string;
+  let latestRoundData;
 
   try {
-    [decimals, description] = await Promise.all([contract.decimals(), contract.description()]);
+    [decimals, description, latestRoundData] = await Promise.all([
+      contract.decimals(),
+      contract.description(),
+      contract.latestRoundData(),
+    ]);
   } catch (e) {
     console.log(`failed to validate price feed for ${tokenSymbol}`);
     throw e;
   }
+
+  console.log(`${tokenSymbol} decimals: ${decimals.toString()}`);
+  console.log(
+    `${tokenSymbol} price: ${ethers.utils.formatUnits(
+      latestRoundData.answer.mul(priceFeedMultiplier).mul(expandDecimals(1, token.decimals)).div(expandDecimals(1, 30)),
+      30
+    )}`
+  );
 
   if (decimals !== priceFeed.decimals) {
     throw new Error(
@@ -231,6 +244,7 @@ export async function validatePriceFeed(tokenSymbol: string, token: TokenConfig)
       WAVAX: "AVAX",
       "USDT.e": "USDT",
       "DAI.e": "DAI",
+      pBTC: "BTC",
     }[tokenSymbol] ?? tokenSymbol;
 
   // in avalancheFuji USDT feed is used as USDC and DAI price feeds

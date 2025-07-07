@@ -12,4 +12,8 @@ interface IPriceFeed {
         uint256 updatedAt,
         uint80 answeredInRound
     );
+
+    function description() external view returns (string memory);
+
+    function decimals() external view returns (uint8);
 }

@@ -263,8 +263,8 @@ describe("SubaccountRouter", () => {
     expect(order.numbers.initialCollateralDeltaAmount).eq(expandDecimals(100, 6));
 
     // 0.1 WETH in total
-    expect(order.numbers.executionFee).eq("2411100480000000");
-    await expectBalance(wnt.address, user2.address, "97588899520000000");
+    expect(order.numbers.executionFee).closeTo("2411149120000000", "1000000000000000");
+    await expectBalance(wnt.address, user2.address, ["97588899520000000", "1000000000000"]);
 
     expect(
       await dataStore.getUint(

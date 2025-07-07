@@ -155,6 +155,7 @@ library Errors {
     error InsufficientHandleExecutionErrorGas(uint256 gas, uint256 minHandleExecutionErrorGas);
     error InsufficientGasForCancellation(uint256 gas, uint256 minHandleExecutionErrorGas);
     error InvalidExecutionFee(uint256 executionFee, uint256 minExecutionFee, uint256 maxExecutionFee);
+    error EmptyRelayFeeAddress();
 
     // MarketFactory errors
     error MarketAlreadyExists(bytes32 salt, address existingMarketAddress);
@@ -235,7 +236,6 @@ library Errors {
         uint256 maxRefPriceDeviationFactor
     );
     error InvalidBlockRangeSet(uint256 largestMinBlockNumber, uint256 smallestMaxBlockNumber);
-    error EmptyChainlinkPaymentToken();
     error NonAtomicOracleProvider(address provider);
 
     // OracleModule errors
@@ -436,8 +436,11 @@ library Errors {
     error SubaccountApprovalDeadlinePassed(uint256 currentTimestamp, uint256 deadline);
     error InvalidSubaccountApprovalNonce(uint256 storedNonce, uint256 nonce);
     error DeadlinePassed(uint256 currentTimestamp, uint256 deadline);
-    error InsufficientRelayFee(uint256 requiredRelayFee, uint256 feeAmount);
+    error InsufficientRelayFee(uint256 requiredRelayFee, uint256 availableFeeAmount);
     error InvalidSubaccountApprovalSubaccount();
     error NonEmptyExternalCallsForSubaccountOrder();
-    error InvalidRelayParams();
+    error RelayEmptyBatch();
+    error RelayCalldataTooLong(uint256 calldataLength);
+    error InvalidExternalCalls(uint256 sendTokensLength, uint256 sendAmountsLength);
+    error MaxRelayFeeSwapForSubaccountExceeded(uint256 feeUsd, uint256 maxFeeUsd);
 }

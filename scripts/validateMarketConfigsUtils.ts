@@ -400,6 +400,56 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
     },
+    HYPE: {
+      negativePositionImpactFactor: exponentToFloat("2e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    JUP: {
+      negativePositionImpactFactor: exponentToFloat("1.5e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    MKR: {
+      negativePositionImpactFactor: exponentToFloat("1.6e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    OM: {
+      negativePositionImpactFactor: exponentToFloat("5e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    DOLO: {
+      negativePositionImpactFactor: exponentToFloat("1e-7"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    ZRO: {
+      negativePositionImpactFactor: exponentToFloat("5e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 11_900,
+    },
+    CRV: {
+      negativePositionImpactFactor: exponentToFloat("1.4e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 11_600,
+    },
+    MOODENG: {
+      negativePositionImpactFactor: exponentToFloat("1.2e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    XMR: {
+      negativePositionImpactFactor: exponentToFloat("1.8e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    PI: {
+      negativePositionImpactFactor: exponentToFloat("2.54e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
     wstETH: {
       negativeSwapImpactFactor: exponentToFloat("1e-8"),
       expectedSwapImpactRatio: 20_000,
@@ -462,6 +512,26 @@ const recommendedMarketConfig = {
       negativePositionImpactFactor: exponentToFloat("5e-7"),
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
+    },
+  },
+  botanix: {
+    "BTC:pBTC:pBTC": {
+      negativePositionImpactFactor: 0,
+      expectedPositionImpactRatio: 10_000,
+    },
+    "BTC:stBTC:stBTC": {
+      negativePositionImpactFactor: 0,
+      expectedPositionImpactRatio: 10_000,
+    },
+    "BTC:stBTC:USDC.e": {
+      negativePositionImpactFactor: 0,
+      negativeSwapImpactFactor: exponentToFloat("5e-9").div(2),
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 10_000,
+    },
+    stBTC: {
+      expectedSwapImpactRatio: 10_000,
+      negativeSwapImpactFactor: exponentToFloat("5e-9").div(2),
     },
   },
 };
@@ -986,6 +1056,8 @@ export async function validateMarketConfigs() {
   const marketKeysToSkip = {
     "0x74885b4D524d497261259B38900f54e6dbAd2210:0x74885b4D524d497261259B38900f54e6dbAd2210:0xaf88d065e77c8cC2239327C5EDb3A432268e5831":
       true, // old APE market
+    "0x1B9e25f54225bcdCf347569E38C41Ade9BB686e5:0xF4586028FFdA7Eca636864F80f8a3f2589E33795:0x325eEb3AA50014f35861e3374f54B3997Aa8357d":
+      true, // old stBTC-USDC.e market
   };
 
   for (const market of markets) {
@@ -993,6 +1065,7 @@ export async function validateMarketConfigs() {
     const longTokenSymbol = addressToSymbol[market.longToken];
     const shortTokenSymbol = addressToSymbol[market.shortToken];
     const marketKey = getMarketKey(market.indexToken, market.longToken, market.shortToken);
+    console.log("marketKey", marketKey);
 
     if (marketKeysToSkip[marketKey]) {
       continue;

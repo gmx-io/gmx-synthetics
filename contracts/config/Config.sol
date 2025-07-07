@@ -500,6 +500,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.DEPOSIT_FEE_FACTOR] = true;
         allowedBaseKeys[Keys.WITHDRAWAL_FEE_FACTOR] = true;
         allowedBaseKeys[Keys.ATOMIC_SWAP_FEE_FACTOR] = true;
+        allowedBaseKeys[Keys.ATOMIC_WITHDRAWAL_FEE_FACTOR] = true;
 
         allowedBaseKeys[Keys.MAX_UI_FEE_FACTOR] = true;
         allowedBaseKeys[Keys.MAX_AUTO_CANCEL_ORDERS] = true;
@@ -552,6 +553,11 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.BUYBACK_MAX_PRICE_AGE] = true;
 
         allowedBaseKeys[Keys.DATA_STREAM_SPREAD_REDUCTION_FACTOR] = true;
+
+        allowedBaseKeys[Keys.RELAY_FEE_ADDRESS] = true;
+        allowedBaseKeys[Keys.GELATO_RELAY_FEE_BASE_AMOUNT] = true;
+        allowedBaseKeys[Keys.GELATO_RELAY_FEE_MULTIPLIER_FACTOR] = true;
+        allowedBaseKeys[Keys.MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT] = true;
     }
 
     function _initAllowedLimitedBaseKeys() internal {
@@ -710,6 +716,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             baseKey == Keys.POSITION_FEE_FACTOR ||
             baseKey == Keys.MAX_UI_FEE_FACTOR ||
             baseKey == Keys.ATOMIC_SWAP_FEE_FACTOR ||
+            baseKey == Keys.ATOMIC_WITHDRAWAL_FEE_FACTOR ||
             baseKey == Keys.BUYBACK_MAX_PRICE_IMPACT_FACTOR
         ) {
             // revert if value > 5%

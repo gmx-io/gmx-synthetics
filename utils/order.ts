@@ -22,6 +22,8 @@ export const OrderType = {
   StopIncrease: 8,
 };
 
+export const orderTypeNames = Object.fromEntries(Object.entries(OrderType).map(([key, value]) => [value, key]));
+
 export const DecreasePositionSwapType = {
   NoSwap: 0,
   SwapPnlTokenToCollateralToken: 1,

@@ -87,8 +87,10 @@ export async function deployFixture() {
   const withdrawalHandler = await hre.ethers.getContract("WithdrawalHandler");
   const shiftHandler = await hre.ethers.getContract("ShiftHandler");
   const orderHandler = await hre.ethers.getContract("OrderHandler");
+  const externalHandler = await hre.ethers.getContract("ExternalHandler");
   const baseOrderUtils = await hre.ethers.getContract("BaseOrderUtils");
   const orderUtils = await hre.ethers.getContract("OrderUtils");
+  const relayUtils = await hre.ethers.getContract("RelayUtils");
   const liquidationHandler = await hre.ethers.getContract("LiquidationHandler");
   const adlHandler = await hre.ethers.getContract("AdlHandler");
   const router = await hre.ethers.getContract("Router");
@@ -264,6 +266,7 @@ export async function deployFixture() {
       withdrawalHandler,
       shiftHandler,
       orderHandler,
+      externalHandler,
       baseOrderUtils,
       orderUtils,
       liquidationHandler,
@@ -319,6 +322,7 @@ export async function deployFixture() {
       glvStoreUtils,
       glvReader,
       mockVaultV1,
+      relayUtils,
     },
     props: { oracleSalt, signerIndexes: [0, 1, 2, 3, 4, 5, 6], executionFee: "1000000000000000" },
   };

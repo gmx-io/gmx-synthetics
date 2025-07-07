@@ -63,6 +63,11 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       ignoreOpenInterestForUsageFactor: false,
 
       maxExecutionFeeMultiplierFactor: decimalToFloat(100),
+
+      gelatoRelayFeeMultiplierFactor: 0,
+      gelatoRelayFeeBaseAmount: 0,
+      relayFeeAddress: ethers.constants.AddressZero,
+      maxRelayFeeUsdForSubaccount: 0,
     };
   }
 
@@ -71,7 +76,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     holdingAddress: "0x3f59203ea1c66527422998b54287e1efcacbe2c5",
     sequencerUptimeFeed: ethers.constants.AddressZero,
     sequencerGraceDuration: 300,
-    maxUiFeeFactor: percentageToFloat("0.05%"),
+    maxUiFeeFactor: percentageToFloat("0.1%"),
     maxAutoCancelOrders: 6,
     maxTotalCallbackGasLimitForAutoCancelOrders: 5_000_000,
     minHandleExecutionErrorGas: 1_200_000,
@@ -84,8 +89,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     shiftGasLimit: 2_500_000,
 
     singleSwapGasLimit: 1_000_000, // measured gas required for a swap in a market increase order: ~600,000
-    increaseOrderGasLimit: 4_000_000,
-    decreaseOrderGasLimit: 4_000_000,
+    increaseOrderGasLimit: 3_500_000,
+    decreaseOrderGasLimit: 3_500_000,
     swapOrderGasLimit: 3_000_000,
 
     glvPerMarketGasLimit: 100_000,
@@ -120,9 +125,14 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
 
     skipBorrowingFeeForSmallerSide: true,
 
-    ignoreOpenInterestForUsageFactor: false,
+    ignoreOpenInterestForUsageFactor: true,
 
     maxExecutionFeeMultiplierFactor: decimalToFloat(100),
+
+    gelatoRelayFeeMultiplierFactor: percentageToFloat("107%"), // Relay premium 6% + 1% for swapping collected fees and bridging to Polygon
+    gelatoRelayFeeBaseAmount: 50000, // 21000 is base gas, ~10k GelatoRelay gas, some logic after the relay fee is calculated
+    relayFeeAddress: "0xDA1b841A21FEF1ad1fcd5E19C1a9D682FB675258",
+    maxRelayFeeUsdForSubaccount: decimalToFloat(100),
   };
 
   const networkConfig = {
@@ -140,17 +150,19 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       executionGasPerOraclePrice: false,
       estimatedGasFeeBaseAmount: false,
       executionGasFeeBaseAmount: false,
+      estimatedGasFeeMultiplierFactor: false,
+      executionGasFeeMultiplierFactor: false,
       sequencerUptimeFeed: "0xFdB631F5EE196F0ed6FAa767959853A9F217697D",
 
       increaseOrderGasLimit: 3_000_000,
       decreaseOrderGasLimit: 3_000_000,
       swapOrderGasLimit: 2_500_000,
-      ignoreOpenInterestForUsageFactor: true,
     },
     avalanche: {
-      increaseOrderGasLimit: 3_500_000,
-      decreaseOrderGasLimit: 3_500_000,
-      ignoreOpenInterestForUsageFactor: true,
+      requestExpirationTime: 180,
+    },
+    botanix: {
+      positionFeeReceiverFactor: decimalToFloat(50, 2), // 50%
     },
   }[network.name];
 

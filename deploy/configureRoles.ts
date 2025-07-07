@@ -14,23 +14,24 @@ const rolesToRemove = {
   hardhat: [],
   arbitrum: [],
   avalanche: [],
+  botanix: [],
   avalancheFuji: [],
   arbitrumGoerli: [],
   arbitrumSepolia: [],
 };
 
 const func = async ({ gmx, network }) => {
-  const rolesConfig = await gmx.getRoles();
-  for (const role in rolesConfig) {
-    const accounts = rolesConfig[role];
+  const { roles } = await gmx.getRoles();
+  for (const role in roles) {
+    const accounts = roles[role];
     for (const account in accounts) {
       await grantRoleIfNotGranted(account, role);
     }
   }
 
   const _rolesToRemove = rolesToRemove[network.name];
-  for (const { account, role } of _rolesToRemove) {
-    await revokeRoleIfGranted(account, role);
+  for (const { member, role } of _rolesToRemove) {
+    await revokeRoleIfGranted(member, role);
   }
 };
 

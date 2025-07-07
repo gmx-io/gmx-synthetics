@@ -3,7 +3,6 @@ import hre from "hardhat";
 import * as keys from "../utils/keys";
 import { toLoggableObject } from "../utils/print";
 import got from "got";
-import { expandDecimals } from "../utils/math";
 
 function getValues() {
   if (hre.network.name === "arbitrum") {
@@ -46,6 +45,16 @@ async function main() {
   console.log("Getting price data for market %s", marketToken);
   console.log("indexToken: %s longToken: %s shortToken: %s", market.indexToken, market.longToken, market.shortToken);
   console.log("pnlFactorType: %s maximize: %s", pnlFactorType, maximize);
+
+  const cumulativeBorrowingFactorUpdatedAtForLongs = await dataStore.getUint(
+    keys.cumulativeBorrowingFactorUpdatedAtKey(marketToken, true)
+  );
+  const cumulativeBorrowingFactorUpdatedAtForShorts = await dataStore.getUint(
+    keys.cumulativeBorrowingFactorUpdatedAtKey(marketToken, false)
+  );
+
+  console.log("cumulativeBorrowingFactorUpdatedAtForLongs", cumulativeBorrowingFactorUpdatedAtForLongs.toString());
+  console.log("cumulativeBorrowingFactorUpdatedAtForShorts", cumulativeBorrowingFactorUpdatedAtForShorts.toString());
 
   const data = await reader.getMarketTokenPrice(
     dataStore.address,

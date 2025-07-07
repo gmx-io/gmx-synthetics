@@ -1,10 +1,52 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 export type RolesConfig = {
-  [role: string]: {
-    [account: string]: boolean;
+  roles: {
+    [role: string]: {
+      [account: string]: boolean;
+    };
   };
-}[];
+  requiredRolesForContracts: {
+    [role: string]: string[];
+  };
+};
+
+const requiredRolesForContracts = {
+  CONTROLLER: [
+    "Config",
+    "MarketFactory",
+    "GlvFactory",
+    "Timelock",
+    "OracleStore",
+    "Oracle",
+    "ConfigSyncer",
+
+    "ExchangeRouter",
+    "SubaccountRouter",
+    "GlvRouter",
+    "GelatoRelayRouter",
+    "SubaccountGelatoRelayRouter",
+
+    "OrderHandler",
+    "DepositHandler",
+    "WithdrawalHandler",
+    "AdlHandler",
+    "LiquidationHandler",
+    "ShiftHandler",
+    "GlvHandler",
+    "FeeHandler",
+    "SwapHandler",
+  ],
+  ROUTER_PLUGIN: [
+    "ExchangeRouter",
+    "SubaccountRouter",
+    "GlvRouter",
+    "GelatoRelayRouter",
+    "SubaccountGelatoRelayRouter",
+  ],
+  ROLE_ADMIN: ["Timelock"],
+  CONFIG_KEEPER: ["ConfigSyncer"],
+};
 
 // roles are granted in deploy/configureRoles.ts
 // to add / remove roles after deployment, scripts/updateRoles.ts can be used
@@ -23,6 +65,17 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       "0x6A2B3A13be0c723674BCfd722d4e133b3f356e05": true,
       "0xDd5c59B7C4e8faD38732caffbeBd20a61bf9F3FC": true,
       "0xEB2bB25dDd2B1872D5189Ae72fCeC9b160dD3FB2": true,
+
+      "0xa17A86388BBcE9fd73a67F66D87FB0222A824c3f": true,
+      "0x86fe53a6D47d9a0fDEA4C5Ac3D80E0E6CC3354cc": true,
+      "0x8E2e2Dd583e7DB8437164A7F89A7288b999253CB": true,
+      "0xC0a53a9Ee8E8ea0f585d8DcF26800EF2841f97fD": true,
+      "0xd316a0043056fb787dE34ABA8cd5323f5C6f8c47": true,
+      "0xB874e07336Edc0c278C276FfEb08818976099256": true,
+      "0xa5E4a14CaB506bA102977648317E0622cA60BB64": true,
+      "0xdAD787D5a86f37a5E480e35b3Ca615D46242Ce9B": true,
+      "0x56a7CE61D8aB46A27De1837ceddd8522D52D2736": true,
+      "0xC9A5775951F0ea25053fEe81D935FBBF4F0Fb273": true,
     },
   };
 
@@ -50,6 +103,8 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
     "0xb38302e27bAe8932536A84ab362c3d1013420Cb4": true,
     "0xc9e1CE91d3f782499cFe787b6F1d2AF0Ca76C049": true,
     "0x9f7198eb1b9Ccc0Eb7A07eD228d8FbC12963ea33": true,
+    "0xCD9706B6B71fdC4351091B5b1D910cEe7Fde28D0": true, // Max
+    "0x508cbC56Ab57A9b0221cf1810a483f8013c92Ff3": true, // An
   };
 
   const testnetConfig = {
@@ -73,8 +128,12 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
     },
   };
 
-  const config: {
-    [network: string]: RolesConfig;
+  const roles: {
+    [network: string]: {
+      [role: string]: {
+        [account: string]: boolean;
+      };
+    };
   } = {
     hardhat: {
       CONTROLLER: { [deployer]: true },
@@ -116,6 +175,16 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0xa329221a77BE08485f59310b873b14815c82E10D": true, // SubaccountRouter_4
         "0x105b5aFe50FBCe7759051974fB1710ce331C77B3": true, // GlvRouter_4
         "0x994C598e3b0661bb805d53c6fa6B4504b23b68dD": true, // GlvRouter_4a
+
+        // gasless
+        "0x602b805EedddBbD9ddff44A7dcBD46cb07849685": true, // ExchangeRouter
+        "0xA145346c17EA8a56c97fAc0bd810225257AB96E1": true, // SubaccountRouter
+        "0x63daFB2CA71767129AB8D0a0909383023C4AfF6E": true, // GelatoRelayRouter
+        "0x8964c82e1878d35bEd66d377f97e4F518b7A024F": true, // SubaccountGelatoRelayRouter
+
+        // gasless with sponsored calls
+        "0x9EB239eDf4c6f4c4fC9d30ea2017F8716d049C8D": true, // GelatoRelayRouter
+        "0x5F345B765d5856bC0843cEE8bE234b575eC77DBC": true, // SubaccountGelatoRelayRouter
       },
       TIMELOCK_ADMIN: {
         "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // timelock_admin_1
@@ -149,6 +218,24 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x3f6dF0c3A7221BA1375E87e7097885a601B41Afc": true, // GlvHandler_4
         "0x105b5aFe50FBCe7759051974fB1710ce331C77B3": true, // GlvRouter_4
         "0x994C598e3b0661bb805d53c6fa6B4504b23b68dD": true, // GlvRouter_4a
+
+        // gasless
+        "0x492f2511eC89e425125e494bd8385E055B2f752A": true, // Config
+        "0x918b60bA71bAdfaDA72EF3A6C6F71d0C41D4785C": true, // Oracle
+        "0x602b805EedddBbD9ddff44A7dcBD46cb07849685": true, // ExchangeRouter
+        "0xA145346c17EA8a56c97fAc0bd810225257AB96E1": true, // SubaccountRouter
+        "0x63daFB2CA71767129AB8D0a0909383023C4AfF6E": true, // GelatoRelayRouter
+        "0x8964c82e1878d35bEd66d377f97e4F518b7A024F": true, // SubaccountGelatoRelayRouter
+        "0xfc9Bc118fdDb89FF6fF720840446D73478dE4153": true, // OrderHandler
+        "0x089f51AAb35e854D2B65C9396622361a1854Bc3D": true, // DepositHandler
+        "0xedB5cD878871F074371e816AC67CbE010c31f00b": true, // WithdrawalHandler
+        "0x94889b5d664eaFf4C249d43206705a70A22E37B4": true, // ShiftHandler
+        "0x266C6b192952c743De5541D642DC847d064c182C": true, // SwapHandler
+
+        // gasless with sponsored calls
+        "0x9EB239eDf4c6f4c4fC9d30ea2017F8716d049C8D": true, // GelatoRelayRouter
+        "0x5F345B765d5856bC0843cEE8bE234b575eC77DBC": true, // SubaccountGelatoRelayRouter
+        "0x65B46057C1948064a89aA56ba2bd1c411c007346": true, // Config
       },
       GOV_TOKEN_CONTROLLER: {
         "0x5E4766F932ce00aA4a1A82d3Da85adf15C5694A1": true, // RewardRouterV2_2
@@ -184,6 +271,16 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x5aEb6AD978f59e220aA9099e09574e1c5E03AafD": true, // SubaccountRouter_4
         "0x6BE75346C0262015E45c6fC0e3268BBa73e87D1a": true, // GlvRouter_4
         "0x16500C1d8fFE2F695D8DCADf753F664993287ae4": true, // GlvRouter_4a
+
+        // gasless
+        "0xFa843af557824Be5127eaCB3c4B5D86EADEB73A1": true, // ExchangeRouter_6
+        "0x233397357bB4cC6B951aa423D7cEadBC610499e2": true, // SubaccountRouter_6
+        "0xb33D87b6Be2a6772eebD38C3222F5872A62Cca2A": true, // GelatoRelayRouter
+        "0xE26052e5676E636230A9B05652acD3ACA23fc35f": true, // SubaccountGelatoRelayRouter
+
+        // gasless with sponsored calls
+        "0x035A9A047d20a486e14A613B04d5a95d7A617c5D": true, // GelatoRelayRouter
+        "0x3B753c0D0aE55530f24532B8Bb9d0bAcD5B675C0": true, // SubaccountGelatoRelayRouter
       },
       TIMELOCK_ADMIN: {
         "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // timelock_admin_1
@@ -217,10 +314,91 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x48486CaF8851ed0085432789D28A8820bEcbfd45": true, // GlvHandler_4
         "0x6BE75346C0262015E45c6fC0e3268BBa73e87D1a": true, // GlvRouter_4
         "0x16500C1d8fFE2F695D8DCADf753F664993287ae4": true, // GlvRouter_4a
+
+        // gasless
+        "0xC2D6cC2B5444b2d3611d812A9EA47648cfFc05c1": true, // Config_5
+        "0x13c986424DeD8D78d9313dD90cD847E4DeBA5cb3": true, // Oracle_5
+        "0xFa843af557824Be5127eaCB3c4B5D86EADEB73A1": true, // ExchangeRouter_6
+        "0x233397357bB4cC6B951aa423D7cEadBC610499e2": true, // SubaccountRouter_6
+        "0xb33D87b6Be2a6772eebD38C3222F5872A62Cca2A": true, // GelatoRelayRouter
+        "0xE26052e5676E636230A9B05652acD3ACA23fc35f": true, // SubaccountGelatoRelayRouter
+        "0x00db21077c63FFf542c017Cc4cDCC84229BFb373": true, // OrderHandler_5
+        "0xE78C15c818ebAAd31BaC58167157522B4d01ee2f": true, // DepositHandler_5
+        "0x6FA5D5a3377790CF646efDB67Fc53d3cE5b345bc": true, // WithdrawalHandler_5
+        "0xE270E904B3b52Fe952F00e797f5daC4a1e058DdA": true, // ShiftHandler_5
+        "0x1B31d1774270c46dFc3e1E0d2459A1b94CF9373F": true, // SwapHandler_6
+
+        // gasless with sponsored calls
+        "0x9EB239eDf4c6f4c4fC9d30ea2017F8716d049C8D": true, // Config
+        "0x035A9A047d20a486e14A613B04d5a95d7A617c5D": true, // GelatoRelayRouter
+        "0x3B753c0D0aE55530f24532B8Bb9d0bAcD5B675C0": true, // SubaccountGelatoRelayRouter
       },
       GOV_TOKEN_CONTROLLER: {
         "0x091eD806490Cc58Fd514441499e58984cCce0630": true, // RewardRouterV2_2
       },
+    },
+    botanix: {
+      ADL_KEEPER: syntheticKeepers.mainnet,
+      FROZEN_ORDER_KEEPER: syntheticKeepers.mainnet,
+      LIQUIDATION_KEEPER: syntheticKeepers.mainnet,
+      ORDER_KEEPER: syntheticKeepers.mainnet,
+      LIMITED_CONFIG_KEEPER: syntheticKeepers.mainnet,
+      CONFIG_KEEPER: {
+        "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745": true, // general_keeper_1
+        "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
+        "0xD5F8b9ba4255B2F73b06f245fcca73D114D1D460": true, // general_keeper_3
+        "0x656fa39BdB5984b477FA6aB443195D72D1Accc1c": true, // multisig_1
+      },
+      FEE_KEEPER: {
+        "0x43CE1d475e06c65DD879f4ec644B8e0E10ff2b6D": true, // fee_keeper_1
+      },
+      MARKET_KEEPER: {
+        "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745": true, // general_keeper_1
+        "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
+        "0xD5F8b9ba4255B2F73b06f245fcca73D114D1D460": true, // general_keeper_3
+      },
+      ROLE_ADMIN: {
+        "0xca3e30b51A7c3bd40bFc52a61AB0cE57B3Ab3ad8": true, // Timelock_4
+      },
+      ROUTER_PLUGIN: {
+        "0xB11214E34796d6Df5F17172D82B5F3221E17253d": true, // ExchangeRouter_4
+        "0x31568A44593297788Cae4D0A70b0746c26886208": true, // SubaccountRouter_4
+        "0x8C142F1826a6679Abcc9bAa54ddbf11CC080C106": true, // GlvRouter_4
+        "0xfF95979396B138E7e014E91932A12D78d569f3B8": true, // GelatoRelayRouter
+        "0x0817645a12215EAb65379AEe23fD9f9b69BAa063": true, // SubaccountGelatoRelayRouter
+      },
+      TIMELOCK_ADMIN: {
+        "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // timelock_admin_1
+        "0xE014cbD60A793901546178E1c16ad9132C927483": true, // timelock_admin_2
+        "0x656fa39BdB5984b477FA6aB443195D72D1Accc1c": true, // multisig_1
+      },
+      TIMELOCK_MULTISIG: {
+        "0x656fa39BdB5984b477FA6aB443195D72D1Accc1c": true, // multisig_1
+      },
+      CONTROLLER: {
+        "0xfFC63573B55B39b75b1e44e54C308e44505E0D28": true, // OracleStore_1
+        "0xcb7656751B0f8aFCBe15D135D7aC58727DE06768": true, // MarketFactory_1
+        "0x3e04e6b37B23969F3Ca1c2aAc8568322bd90BA90": true, // GlvFactory_1
+
+        "0x1302668D7Fd4b5d060e0555c1ADDB6AfC92eFfC7": true, // Config_4
+        "0xca3e30b51A7c3bd40bFc52a61AB0cE57B3Ab3ad8": true, // Timelock_4
+        "0xe79118d6D92a4b23369ba356C90b9A7ABf1CB961": true, // Oracle_4
+        "0x40f1988925e44Bc0D93F7FbE997d6D3ac6F40cc1": true, // SwapHandler_4
+        "0x88572CfDa78CC002E6DA44032e5b160b42b5b557": true, // AdlHandler_4
+        "0x6d26057816343067d1AF8bD826A9E8574E757B02": true, // DepositHandler_4
+        "0x7a28d3B38bf637E6C067dd62fc6B543DAd8d8FfF": true, // WithdrawalHandler_4
+        "0x63668ecd6bC39BE702AEd755eC721a27c3ca210A": true, // OrderHandler_4
+        "0xB11214E34796d6Df5F17172D82B5F3221E17253d": true, // ExchangeRouter_4
+        "0xC1077B7c36e6eD7B3d37E9CfbBeD358a4931EFE9": true, // LiquidationHandler_4
+        "0x31568A44593297788Cae4D0A70b0746c26886208": true, // SubaccountRouter_4
+
+        "0xA281FDd456AFf5fB5f295F84bdc4a7F26F21A932": true, // ShiftHandler_4
+        "0xB75AdE19252A9db51ea861E9A39C80BB0D7aAd82": true, // GlvHandler_4
+        "0x8C142F1826a6679Abcc9bAa54ddbf11CC080C106": true, // GlvRouter_4
+        "0xfF95979396B138E7e014E91932A12D78d569f3B8": true, // GelatoRelayRouter
+        "0x0817645a12215EAb65379AEe23fD9f9b69BAa063": true, // SubaccountGelatoRelayRouter
+      },
+      GOV_TOKEN_CONTROLLER: {},
     },
     avalancheFuji: {
       CONFIG_KEEPER: {
@@ -237,16 +415,43 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x03d717E27aF1B566C3efb729F1151E775B411f2B": true,
         "0xC84f3398eDf6336E1Ef55b50Ca3F9f9f96B8b504": true,
       },
+      ROLE_ADMIN: {
+        "0x508cbC56Ab57A9b0221cf1810a483f8013c92Ff3": true, // An
+      },
       ...testnetConfig,
     },
     arbitrumSepolia: {
       CONFIG_KEEPER: {
         "0xb38302e27bAe8932536A84ab362c3d1013420Cb4": true,
+        "0x508cbC56Ab57A9b0221cf1810a483f8013c92Ff3": true, // An
         [deployer]: true,
+      },
+      ROLE_ADMIN: {
+        "0xCD9706B6B71fdC4351091B5b1D910cEe7Fde28D0": true, // Max
+        "0x508cbC56Ab57A9b0221cf1810a483f8013c92Ff3": true, // An
       },
       ...testnetConfig,
     },
   };
 
-  return config[hre.network.name];
+  // normalize addresses
+  for (const rolesForNetwork of Object.values(roles)) {
+    for (const accounts of Object.values(rolesForNetwork)) {
+      for (const account of Object.keys(accounts)) {
+        if (account === "undefined") {
+          continue;
+        }
+        const checksumAccount = ethers.utils.getAddress(account);
+        if (account !== checksumAccount) {
+          accounts[checksumAccount] = accounts[account];
+          delete accounts[account];
+        }
+      }
+    }
+  }
+
+  return {
+    roles: roles[hre.network.name],
+    requiredRolesForContracts,
+  };
 }
