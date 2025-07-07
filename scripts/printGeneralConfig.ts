@@ -10,7 +10,6 @@ async function main() {
     { key: "RELAY_FEE_ADDRESS", method: "getAddress" },
     { key: "GELATO_RELAY_FEE_BASE_AMOUNT", method: "getUint" },
     { key: "GELATO_RELAY_FEE_MULTIPLIER_FACTOR", method: "getUint", format: (v) => `${formatAmount(v, 28)}%` },
-    { key: "GELATO_RELAY_FEE_MULTIPLIER_FACTOR", method: "getUint", format: (v) => `${formatAmount(v, 28)}%` },
     { key: "MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT", method: "getUint", format: (v) => `$${formatAmount(v, 30)}` },
   ];
 
