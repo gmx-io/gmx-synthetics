@@ -39,5 +39,5 @@ const func = async ({ gmx }: HardhatRuntimeEnvironment) => {
 };
 
 func.tags = ["GeneralSettings"];
-func.dependencies = ["DataStore", "Config", "Multicall", "Roles"];
+func.dependencies = ["DataStore", "Config", "Multicall", "Roles", "LayerZeroProvider"];
 export default func;
