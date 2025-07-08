@@ -503,6 +503,84 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         return totalGmxBridgedOut;
     }
 
+    function calculateWntFeesAndCosts(
+        uint256 wntReferralRewardsInUsd,
+        uint256 feesV1Usd,
+        uint256 feesV2Usd
+    ) internal returns (uint256, uint256, uint256, uint256, uint256) {
+        // the WNT fee amount related calculations
+        uint256 totalWntBalance = getFeeDistributorVaultBalance(wnt);
+
+        // calculate the WNT that needs to be sent to each keeper
+        (uint256 keeperCostsTreasury, uint256 keeperCostsGlp) = calculateKeeperCosts();
+        uint256 wntForKeepers = keeperCostsTreasury + keeperCostsGlp;
+
+        // calculate the WNT for chainlink costs and amount of WNT to be sent to the treasury
+        (uint256 wntForChainlink, uint256 wntForTreasury) = calculateChainlinkAndTreasuryAmounts(
+            totalWntBalance,
+            feesV1Usd,
+            feesV2Usd,
+            keeperCostsTreasury
+        );
+
+        // validate wntReferralRewardsInUsd and calculate the referral rewards in WNT to be sent
+        uint256 wntForReferralRewards = calculateWntForReferralRewards(wntReferralRewardsInUsd, feesV1Usd);
+
+        uint256 wntForGlp;
+        (wntForTreasury, wntForGlp) = finalizeWntForTreasuryAndGlp(
+            totalWntBalance,
+            keeperCostsTreasury,
+            keeperCostsGlp,
+            wntForChainlink,
+            wntForTreasury,
+            wntForReferralRewards
+        );
+
+        return (wntForKeepers, wntForChainlink, wntForTreasury, wntForReferralRewards, wntForGlp);
+    }
+
+    function finalizeWntForTreasuryAndGlp(
+        uint256 totalWntBalance,
+        uint256 keeperCostsTreasury,
+        uint256 keeperCostsGlp,
+        uint256 wntForChainlink,
+        uint256 wntForTreasury,
+        uint256 wntForReferralRewards
+    ) internal returns (uint256, uint256) {
+        // calculate the amount of WNT to be used as GLP fees, validate the calculated amount and adjust if necessary
+        uint256 glpWntBeforeV1KeeperAndReferralCosts = totalWntBalance -
+            keeperCostsTreasury -
+            wntForChainlink -
+            wntForTreasury;
+
+        uint256 maxKeeperAndReferralCostsGlp = Precision.applyFactor(
+            glpWntBeforeV1KeeperAndReferralCosts,
+            getUint(Keys.FEE_DISTRIBUTOR_MAX_GLP_KEEPER_REFERRAL_COSTS_FACTOR)
+        );
+        if ((keeperCostsGlp + wntForReferralRewards) > maxKeeperAndReferralCostsGlp) {
+            uint256 additionalWntForGlp = (keeperCostsGlp + wntForReferralRewards) - maxKeeperAndReferralCostsGlp;
+            if (additionalWntForGlp > wntForTreasury) {
+                uint256 maxWntFromTreasury = getUint(Keys.FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY);
+                uint256 additionalWntFromTreasury = additionalWntForGlp - wntForTreasury;
+                if (maxWntFromTreasury > additionalWntFromTreasury) {
+                    revert Errors.MaxWntFromTreasuryExceeded(maxWntFromTreasury, additionalWntFromTreasury);
+                }
+                IERC20(wnt).transferFrom(
+                    getAddress(mockChainId, TREASURY),
+                    address(feeDistributorVault),
+                    additionalWntFromTreasury
+                );
+                wntForTreasury = 0;
+            } else {
+                wntForTreasury -= additionalWntForGlp;
+            }
+            keeperCostsGlp = maxKeeperAndReferralCostsGlp - wntForReferralRewards;
+        }
+        uint256 wntForGlp = glpWntBeforeV1KeeperAndReferralCosts - keeperCostsGlp - wntForReferralRewards;
+
+        return (wntForTreasury, wntForGlp);
+    }
+
     function transferFeesAndCosts(
         uint256 wntForKeepers,
         uint256 wntForChainlink,
@@ -580,42 +658,6 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         return (OracleUtils.SetPricesParams(tokens, providers, data));
     }
 
-    function calculateWntFeesAndCosts(
-        uint256 wntReferralRewardsInUsd,
-        uint256 feesV1Usd,
-        uint256 feesV2Usd
-    ) internal returns (uint256, uint256, uint256, uint256, uint256) {
-        // the WNT fee amount related calculations
-        uint256 totalWntBalance = getFeeDistributorVaultBalance(wnt);
-
-        // calculate the WNT that needs to be sent to each keeper
-        (uint256 keeperCostsTreasury, uint256 keeperCostsGlp) = calculateKeeperCosts();
-        uint256 wntForKeepers = keeperCostsTreasury + keeperCostsGlp;
-
-        // calculate the WNT for chainlink costs and amount of WNT to be sent to the treasury
-        (uint256 wntForChainlink, uint256 wntForTreasury) = calculateChainlinkAndTreasuryAmounts(
-            totalWntBalance,
-            feesV1Usd,
-            feesV2Usd,
-            keeperCostsTreasury
-        );
-
-        // validate wntReferralRewardsInUsd and calculate the referral rewards in WNT to be sent
-        uint256 wntForReferralRewards = calculateWntForReferralRewards(wntReferralRewardsInUsd, feesV1Usd);
-
-        uint256 wntForGlp;
-        (wntForTreasury, wntForGlp) = finalizeWntForTreasuryAndGlp(
-            totalWntBalance,
-            keeperCostsTreasury,
-            keeperCostsGlp,
-            wntForChainlink,
-            wntForTreasury,
-            wntForReferralRewards
-        );
-
-        return (wntForKeepers, wntForChainlink, wntForTreasury, wntForReferralRewards, wntForGlp);
-    }
-
     function calculateKeeperCosts() internal view returns (uint256, uint256) {
         address[] memory keepers = getAddressArray(Keys.FEE_DISTRIBUTOR_KEEPER_COSTS);
         uint256[] memory keepersTargetBalance = getUintArray(Keys.FEE_DISTRIBUTOR_KEEPER_COSTS);
@@ -680,74 +722,6 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         uint256 wntForReferralRewards = Precision.toFactor(wntReferralRewardsInUsd, scaledWntPrice);
 
         return wntForReferralRewards;
-    }
-
-    function finalizeWntForTreasuryAndGlp(
-        uint256 totalWntBalance,
-        uint256 keeperCostsTreasury,
-        uint256 keeperCostsGlp,
-        uint256 wntForChainlink,
-        uint256 wntForTreasury,
-        uint256 wntForReferralRewards
-    ) internal returns (uint256, uint256) {
-        // calculate the amount of WNT to be used as GLP fees, validate the calculated amount and adjust if necessary
-        uint256 wntForGlp = totalWntBalance -
-            keeperCostsTreasury -
-            wntForChainlink -
-            wntForTreasury -
-            wntForReferralRewards;
-
-        uint256 maxKeeperCostsGlp = Precision.applyFactor(
-            wntForGlp,
-            getUint(Keys.FEE_DISTRIBUTOR_MAX_GLP_KEEPER_COSTS_FACTOR)
-        );
-        uint256 additionalWntFromTreasury;
-        if (keeperCostsGlp > maxKeeperCostsGlp) {
-            uint256 additionalWntForV1KeeperCosts = keeperCostsGlp - maxKeeperCostsGlp;
-            if (additionalWntForV1KeeperCosts > wntForTreasury) {
-                uint256 maxWntFromTreasury = getUint(Keys.FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY);
-                additionalWntFromTreasury = additionalWntForV1KeeperCosts - wntForTreasury;
-                if (maxWntFromTreasury > additionalWntFromTreasury) {
-                    revert Errors.MaxWntFromTreasuryExceeded(maxWntFromTreasury, additionalWntFromTreasury);
-                }
-                IERC20(wnt).transferFrom(
-                    getAddress(mockChainId, TREASURY),
-                    address(feeDistributorVault),
-                    additionalWntFromTreasury
-                );
-                wntForTreasury = 0;
-            } else {
-                wntForTreasury -= additionalWntForV1KeeperCosts;
-            }
-            keeperCostsGlp = maxKeeperCostsGlp;
-        }
-        wntForGlp -= keeperCostsGlp;
-
-        uint256 expectedWntForGlp = totalWntBalance - wntForChainlink - wntForTreasury;
-        uint256 minGlpFeeFactor = getUint(Keys.FEE_DISTRIBUTOR_MIN_GLP_FEE_FACTOR);
-        uint256 minWntForGlp = Precision.applyFactor(expectedWntForGlp, minGlpFeeFactor);
-        if (wntForGlp < minWntForGlp) {
-            uint256 additionalWntForGlp = minWntForGlp - wntForGlp;
-            if (additionalWntForGlp > wntForTreasury) {
-                uint256 maxWntFromTreasury = getUint(Keys.FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY);
-                uint256 additionalWntForGlpFromTreasury = additionalWntForGlp - wntForTreasury;
-                additionalWntFromTreasury += additionalWntForGlpFromTreasury;
-                if (maxWntFromTreasury > additionalWntFromTreasury) {
-                    revert Errors.MaxWntFromTreasuryExceeded(maxWntFromTreasury, additionalWntFromTreasury);
-                }
-                IERC20(wnt).transferFrom(
-                    getAddress(mockChainId, TREASURY),
-                    address(feeDistributorVault),
-                    additionalWntForGlpFromTreasury
-                );
-                wntForTreasury = 0;
-            } else {
-                wntForTreasury -= additionalWntForGlp;
-            }
-            wntForGlp += additionalWntForGlp;
-        }
-
-        return (wntForTreasury, wntForGlp);
     }
 
     function getUint(bytes32 fullKey) internal view returns (uint256) {

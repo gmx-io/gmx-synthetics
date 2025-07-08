@@ -209,7 +209,6 @@ async function main() {
     expandDecimals(99, 28)
   );
   await config.setUint(keys.FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_FACTOR, "0x", expandDecimals(20, 28));
-  await config.setUint(keys.FEE_DISTRIBUTOR_MIN_GLP_FEE_FACTOR, "0x", expandDecimals(80, 28));
 
   await dataStore.setAddressArray(keys.FEE_DISTRIBUTOR_KEEPER_COSTS, [
     accounts[3].address,
@@ -222,7 +221,7 @@ async function main() {
     expandDecimals(4, 15),
   ]);
   await dataStore.setBoolArray(keys.FEE_DISTRIBUTOR_KEEPER_COSTS, [true, false, true]);
-  await config.setUint(keys.FEE_DISTRIBUTOR_MAX_GLP_KEEPER_COSTS_FACTOR, "0x", expandDecimals(50, 28));
+  await config.setUint(keys.FEE_DISTRIBUTOR_MAX_GLP_KEEPER_REFERRAL_COSTS_FACTOR, "0x", expandDecimals(50, 28));
   await config.setUint(keys.FEE_DISTRIBUTOR_CHAINLINK_FACTOR, "0x", expandDecimals(12, 28));
   await config.setUint(keys.BUYBACK_BATCH_AMOUNT, encodeData(["address"], [gmx.address]), expandDecimals(5, 17));
   await config.setUint(keys.BUYBACK_BATCH_AMOUNT, encodeData(["address"], [wnt.address]), expandDecimals(5, 17));
