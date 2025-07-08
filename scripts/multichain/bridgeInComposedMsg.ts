@@ -36,6 +36,7 @@ const { ethers } = hre;
 // Sepolia
 const STARGATE_POOL_USDC_SEPOLIA = "0x4985b8fcEA3659FD801a5b857dA1D00e985863F0";
 const STARGATE_USDC_SEPOLIA = "0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590";
+const SRC_EID = 40161;
 
 // ArbitrumSepolia
 // const WNT = "0x980B62Da83eFf3D4576C647993b0c1D7faf17c73"; // WETH from DataStore
@@ -535,7 +536,7 @@ async function getComposedMsg({
 
     // dataList determines if the GM / GLV tokens are being bridged out or not
     const deadline = Math.floor(Date.now() / 1000) + 3600; // deadline (1 hour from now)
-    const providerData = ethers.utils.defaultAbiCoder.encode(["uint32"], [DST_EID]); // providerData
+    const providerData = ethers.utils.defaultAbiCoder.encode(["uint32"], [SRC_EID]); // providerData (on bridgeOut desEid is referring to the chain where the tokens are bridged out i.e. back to the source chain)
 
     if (!process.env.token || process.env.token === "GM") {
       const dataList = encodeBridgeOutDataList(
