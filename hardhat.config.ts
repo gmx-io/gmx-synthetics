@@ -30,6 +30,7 @@ import { TASK_FLATTEN_GET_DEPENDENCY_GRAPH } from "hardhat/builtin-tasks/task-na
 import { DependencyGraph } from "hardhat/types";
 import { checkContractsSizing } from "./scripts/contractSizes";
 import { collectDependents } from "./utils/dependencies";
+import { writeJsonFile } from "./utils/file";
 
 const getRpcUrl = (network) => {
   const defaultRpcs = {
@@ -389,5 +390,25 @@ task("reverse-dependencies", "Print dependent contracts")
     console.log([...reversed].map((l) => `${l}`).join("\n"));
     return reversed;
   });
+
+// Convert stringified array to real JSON array
+function parseArrayString(input: string): string[] | string {
+  if (!input.startsWith("[") || !input.endsWith("]")) return input;
+
+  const fixed = input.replace(/(0x[a-fA-F0-9]{40})/g, '"$1"');
+  return JSON.parse(fixed);
+}
+
+// Override default verify task to work with array arguments.
+// Create temporary arguments file and pass it to the super task
+task("verify", "Verify contract", async (taskArgs, env, runSuper) => {
+  const cacheFilePath = `./cache/temp-verifications-args.json`;
+  const parsed = taskArgs.constructorArgsParams.map(parseArrayString);
+
+  writeJsonFile(cacheFilePath, parsed);
+  taskArgs.constructorArgsParams = undefined;
+  taskArgs.constructorArgs = cacheFilePath;
+  await runSuper();
+});
 
 export default config;
