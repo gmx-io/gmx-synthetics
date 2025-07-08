@@ -60,7 +60,8 @@ const getRpcUrl = (network) => {
 export const getExplorerUrl = (network) => {
   const urls = {
     arbitrum: "https://api.arbiscan.io/",
-    avalanche: "https://api.snowtrace.io/",
+    // avalanche: "https://api.snowtrace.io/",
+    avalanche: "https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan/",
     botanix: "https://api.routescan.io/v2/network/mainnet/evm/3637/etherscan/",
     snowscan: "https://api.snowscan.xyz/",
     arbitrumGoerli: "https://api-goerli.arbiscan.io/",
@@ -292,14 +293,6 @@ const config: HardhatUserConfig = {
         },
       },
       {
-        network: "botanix",
-        chainId: 3637,
-        urls: {
-          apiURL: "https://api.routescan.io/v2/network/mainnet/evm/3637/etherscan/api",
-          browserURL: "https://botanixscan.io",
-        },
-      },
-      {
         network: "arbitrumSepolia",
         chainId: 421614,
         urls: {
@@ -313,6 +306,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: "https://api.routescan.io/v2/network/mainnet/evm/3637/etherscan",
           browserURL: "https://botanixscan.io",
+        },
+      },
+      {
+        network: "avalanche",
+        chainId: 43114,
+        urls: {
+          apiURL: "https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan/api",
+          browserURL: "https://snowtrace.io",
         },
       },
       // {
