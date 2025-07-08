@@ -29,6 +29,7 @@ import {
   sendCreateWithdrawal,
 } from "../../utils/relay/multichain";
 import * as keys from "../../utils/keys";
+import { checkAllowance, getIncreasedValues } from "./utils";
 
 const { ethers } = hre;
 
@@ -108,60 +109,6 @@ async function prepareSend(
     messagingFee,
     stargatePool,
   };
-}
-
-async function getIncreasedValues({
-  sendParam,
-  messagingFee,
-  account,
-  valueToSend,
-  stargatePool,
-  pricePercentage = 20,
-  limitPercentage = 30,
-}) {
-  // Get current gas price and increase it by a smaller percentage to avoid high costs
-  const feeData = await ethers.provider.getFeeData();
-  const gasPrice = feeData.gasPrice.mul(pricePercentage + 100).div(100);
-  console.log("Gas price: ", ethers.utils.formatUnits(gasPrice, "gwei"), "gwei");
-
-  // Get account balance for comparison
-  const balance = await ethers.provider.getBalance(account);
-  console.log("Account balance: ", ethers.utils.formatEther(balance), "ETH");
-
-  // Estimate gas for transaction
-  let gasLimit = await stargatePool.estimateGas
-    .sendToken(
-      sendParam,
-      messagingFee,
-      account, // refundAddress
-      { value: valueToSend }
-    )
-    .catch((e) => {
-      console.log("Gas estimation failed, using fallback gas limit");
-      return BigNumber.from(1000000); // More reasonable fallback gas limit
-    });
-  gasLimit = gasLimit.mul(limitPercentage + 100).div(100);
-  const txCost = gasLimit.mul(gasPrice).add(messagingFee.nativeFee);
-  console.log("Estimated transaction cost: ", ethers.utils.formatEther(txCost), "ETH");
-
-  if (txCost.gt(balance)) {
-    console.error(
-      `Insufficient funds: need ${ethers.utils.formatEther(txCost)} ETH but have ${ethers.utils.formatEther(
-        balance
-      )} ETH`
-    );
-    throw new Error("Insufficient funds for transaction");
-  }
-
-  return { gasPrice, gasLimit };
-}
-
-async function checkAllowance({ account, token, spender, amount }) {
-  const allowance = await token.allowance(account, spender);
-  if (allowance.lt(amount)) {
-    await (await token.approve(spender, amount)).wait();
-    console.log(`Allowance is now: ${await token.allowance(account, spender)}`);
-  }
 }
 
 async function retrieveFromDestination(account: string, relayRouterJson: any): Promise<any> {
