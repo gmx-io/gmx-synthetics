@@ -30,6 +30,8 @@ import { TASK_FLATTEN_GET_DEPENDENCY_GRAPH } from "hardhat/builtin-tasks/task-na
 import { DependencyGraph } from "hardhat/types";
 import { checkContractsSizing } from "./scripts/contractSizes";
 import { collectDependents } from "./utils/dependencies";
+import { writeJsonFile } from "./utils/file";
+import { TASK_VERIFY } from "@nomicfoundation/hardhat-verify/internal/task-names";
 
 const getRpcUrl = (network) => {
   const defaultRpcs = {
@@ -60,7 +62,8 @@ const getRpcUrl = (network) => {
 export const getExplorerUrl = (network) => {
   const urls = {
     arbitrum: "https://api.arbiscan.io/",
-    avalanche: "https://api.snowtrace.io/",
+    // avalanche: "https://api.snowtrace.io/",
+    avalanche: "https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan/",
     botanix: "https://api.routescan.io/v2/network/mainnet/evm/3637/etherscan/",
     snowscan: "https://api.snowscan.xyz/",
     arbitrumGoerli: "https://api-goerli.arbiscan.io/",
@@ -292,14 +295,6 @@ const config: HardhatUserConfig = {
         },
       },
       {
-        network: "botanix",
-        chainId: 3637,
-        urls: {
-          apiURL: "https://api.routescan.io/v2/network/mainnet/evm/3637/etherscan/api",
-          browserURL: "https://botanixscan.io",
-        },
-      },
-      {
         network: "arbitrumSepolia",
         chainId: 421614,
         urls: {
@@ -313,6 +308,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: "https://api.routescan.io/v2/network/mainnet/evm/3637/etherscan",
           browserURL: "https://botanixscan.io",
+        },
+      },
+      {
+        network: "avalanche",
+        chainId: 43114,
+        urls: {
+          apiURL: "https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan/api",
+          browserURL: "https://snowtrace.io",
         },
       },
       // {
@@ -388,5 +391,31 @@ task("reverse-dependencies", "Print dependent contracts")
     console.log([...reversed].map((l) => `${l}`).join("\n"));
     return reversed;
   });
+
+function parseInputArgs(input: string): string[] | string {
+  if (input.startsWith("{")) return JSON.parse(input);
+  if (input.startsWith('"')) return input.substring(1, input.length - 1);
+  if (!input.startsWith("[") || !input.endsWith("]")) return input;
+
+  return JSON.parse(input);
+}
+
+// Override default verify task to work with array arguments.
+// Create temporary arguments file and pass it to the hardhat-verify task
+// THIS TASK SHOULD BE USED ONLY WITH verifyFallback.ts script!
+task("verify-complex-args", "Verify contract with complex args", async (taskArgs, env, runSuper) => {
+  if (taskArgs.constructorArgsParams != undefined) {
+    const cacheFilePath = `./cache/temp-verifications-args.json`;
+    const args = taskArgs.constructorArgsParams.match(/"[^"]*"|\[[^\]]*\]|\S+/g);
+    if (args != null) {
+      const parsed = args.map(parseInputArgs);
+      writeJsonFile(cacheFilePath, parsed);
+      taskArgs.constructorArgsParams = undefined;
+      taskArgs.constructorArgs = cacheFilePath;
+    }
+  }
+
+  await env.run(TASK_VERIFY, taskArgs);
+});
 
 export default config;

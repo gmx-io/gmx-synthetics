@@ -307,13 +307,15 @@ describe("Guardian.PositionImpactPoolDistribution", () => {
       },
     });
 
-    const positivePI = expandDecimals(8, 16); // 0.08 eth 400 usd
     const distributionAmt = expandDecimals(2, 17); // 0.2 eth
+
+    // positive and negative impact caps are configured to be 2%
+    // so total impact is capped to $200 (2% of 10,000) or 0.04 ETH
 
     expect(await dataStore.getInt(getPendingImpactAmountKey(positionKey0))).eq(0); // long position decreased by 100% i.e. closed
 
     expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).to.approximately(
-      negativePI.sub(distributionAmt).sub(positivePI),
+      distributionAmt.sub(expandDecimals(4, 16)),
       expandDecimals(1, 14)
     );
   });

@@ -19,5 +19,10 @@
   "WithdrawalVault_1": 1748595185,
   "ShiftVault_1": 1748595221,
   "ExternalHandler_1": 1748596095,
-  "GlvVault_1": 1748596173
+  "GlvVault_1": 1748596173,
+  "GovTimelockController_6": 1751878019,
+  "ChainlinkPriceFeedProvider_6": 1751878053,
+  "Oracle_6": 1751878221,
+  "ChainlinkDataStreamProvider_6": 1751878226,
+  "MultichainVault_1": 1751878232
 }

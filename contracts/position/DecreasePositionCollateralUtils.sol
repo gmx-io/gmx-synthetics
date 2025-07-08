@@ -164,6 +164,13 @@ library DecreasePositionCollateralUtils {
             }
         }
 
+        values.totalImpactUsd = MarketUtils.capPositiveImpactUsdByMaxPositionImpact(
+            params.contracts.dataStore,
+            params.market.marketToken,
+            values.totalImpactUsd,
+            params.order.sizeDeltaUsd()
+        );
+
         // cap the positive totalImpactUsd by the available amount in the position impact pool
         values.totalImpactUsd = MarketUtils.capPositiveImpactUsdByPositionImpactPool(
             params.contracts.dataStore,

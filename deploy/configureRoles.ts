@@ -29,8 +29,8 @@ const func = async ({ gmx, network }) => {
   }
 
   const _rolesToRemove = rolesToRemove[network.name];
-  for (const { account, role } of _rolesToRemove) {
-    await revokeRoleIfGranted(account, role);
+  for (const { member, role } of _rolesToRemove) {
+    await revokeRoleIfGranted(member, role);
   }
 };
 
