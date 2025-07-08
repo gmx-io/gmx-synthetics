@@ -59,6 +59,10 @@ function encodeArg(arg) {
     return `[${arg.map((item) => encodeArg(item))}]`;
   }
 
+  if (typeof arg === "object") {
+    return `${JSON.stringify(arg)}`;
+  }
+
   if (typeof arg !== "string") {
     return arg;
   }
@@ -115,26 +119,11 @@ async function verifyForNetwork(verificationNetwork) {
       const contractArg = `--contract ${contractFQN}`;
 
       console.log("command", `npx hardhat verify ${contractArg} --network ${verificationNetwork} ${address} ${argStr}`);
-      await new Promise((resolve, reject) => {
-        exec(
-          `npx hardhat verify ${contractArg} --network ${verificationNetwork} ${address} ${argStr}`,
-          { timeout: 10 * 60_000 },
-          (error, stdout, stderr) => {
-            if (error) {
-              if (error.killed) {
-                reject(new Error("Process timed out and was killed"));
-              } else {
-                reject(error);
-              }
-              return;
-            }
-            if (stderr) {
-              reject(stderr);
-              return;
-            }
-            resolve(stdout);
-          }
-        );
+      await hre.run("verify-complex-args", {
+        contract: contractFQN,
+        network: verificationNetwork,
+        address: address,
+        constructorArgsParams: argStr,
       });
       console.log("Verified contract %s %s in %ss", name, address, (Date.now() - start) / 1000);
       cache[address] = true;

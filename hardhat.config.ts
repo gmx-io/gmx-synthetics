@@ -31,6 +31,7 @@ import { DependencyGraph } from "hardhat/types";
 import { checkContractsSizing } from "./scripts/contractSizes";
 import { collectDependents } from "./utils/dependencies";
 import { writeJsonFile } from "./utils/file";
+import { TASK_VERIFY } from "@nomicfoundation/hardhat-verify/internal/task-names";
 
 const getRpcUrl = (network) => {
   const defaultRpcs = {
@@ -391,24 +392,30 @@ task("reverse-dependencies", "Print dependent contracts")
     return reversed;
   });
 
-// Convert stringified array to real JSON array
-function parseArrayString(input: string): string[] | string {
+function parseInputArgs(input: string): string[] | string {
+  if (input.startsWith("{")) return JSON.parse(input);
+  if (input.startsWith('"')) return input.substring(1, input.length - 1);
   if (!input.startsWith("[") || !input.endsWith("]")) return input;
 
-  const fixed = input.replace(/(0x[a-fA-F0-9]{40})/g, '"$1"');
-  return JSON.parse(fixed);
+  return JSON.parse(input);
 }
 
 // Override default verify task to work with array arguments.
-// Create temporary arguments file and pass it to the super task
-task("verify", "Verify contract", async (taskArgs, env, runSuper) => {
-  const cacheFilePath = `./cache/temp-verifications-args.json`;
-  const parsed = taskArgs.constructorArgsParams.map(parseArrayString);
+// Create temporary arguments file and pass it to the hardhat-verify task
+// THIS TASK SHOULD BE USED ONLY WITH verifyFallback.ts script!
+task("verify-complex-args", "Verify contract with complex args", async (taskArgs, env, runSuper) => {
+  if (taskArgs.constructorArgsParams != undefined) {
+    const cacheFilePath = `./cache/temp-verifications-args.json`;
+    const args = taskArgs.constructorArgsParams.match(/"[^"]*"|\[[^\]]*\]|\S+/g);
+    if (args != null) {
+      const parsed = args.map(parseInputArgs);
+      writeJsonFile(cacheFilePath, parsed);
+      taskArgs.constructorArgsParams = undefined;
+      taskArgs.constructorArgs = cacheFilePath;
+    }
+  }
 
-  writeJsonFile(cacheFilePath, parsed);
-  taskArgs.constructorArgsParams = undefined;
-  taskArgs.constructorArgs = cacheFilePath;
-  await runSuper();
+  await env.run(TASK_VERIFY, taskArgs);
 });
 
 export default config;
