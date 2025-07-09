@@ -8,6 +8,25 @@ import got from "got";
 
 const apiKey = hre.network.config.verify.etherscan.apiKey;
 
+const largeContracts = {
+  AdlHandler: true,
+  DepositHandler: true,
+  ExecuteDepositUtils: true,
+  ExecuteGlvDepositUtils: true,
+  ExecuteOrderUtils: true,
+  ExecuteWithdrawalUtils: true,
+  GlvDepositHandler: true,
+  GlvShiftHandler: true,
+  GlvShiftUtils: true,
+  GlvWithdrawalHandler: true,
+  GlvWithdrawalUtils: true,
+  LiquidationHandler: true,
+  OrderHandler: true,
+  Reader: true,
+  ReaderUtils: true,
+  WithdrawalHandler: true,
+};
+
 // a custom argument file may be needed for complex arguments
 // https://hardhat.org/hardhat-runner/plugins/nomicfoundation-hardhat-verify#complex-arguments
 //
@@ -97,6 +116,11 @@ async function verifyForNetwork(verificationNetwork) {
     const argStr = args.map((arg) => encodeArg(arg)).join(" ");
 
     if (process.env.CONTRACT && process.env.CONTRACT !== name) {
+      continue;
+    }
+
+    if (process.env.SKIP_LARGE_CONTRACTS && largeContracts[name]) {
+      console.log(`skipping large contract: ${name}`);
       continue;
     }
 
