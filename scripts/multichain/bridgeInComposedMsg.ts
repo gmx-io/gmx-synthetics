@@ -1,15 +1,6 @@
 import hre from "hardhat";
 import { BigNumber } from "ethers";
-import { JsonRpcProvider } from "@ethersproject/providers";
-import {
-  ERC20,
-  IStargate,
-  DepositVault,
-  RoleStore,
-  GlvFactory,
-  GlvVault,
-  WithdrawalVault,
-} from "../../typechain-types";
+import { ERC20, IStargate } from "../../typechain-types";
 
 import { Options } from "@layerzerolabs/lz-v2-utilities";
 
@@ -28,8 +19,8 @@ import {
   sendCreateGlvWithdrawal,
   sendCreateWithdrawal,
 } from "../../utils/relay/multichain";
+import { checkAllowance, getDeployments, getIncreasedValues } from "./utils";
 import * as keys from "../../utils/keys";
-import { checkAllowance, getIncreasedValues } from "./utils";
 
 const { ethers } = hre;
 
@@ -49,17 +40,6 @@ const ETH_USD_MARKET_TOKEN = "0xb6fC4C9eB02C35A134044526C62bb15014Ac0Bcc"; // GM
 const ETH_USD_GLV_ADDRESS = "0xAb3567e55c205c62B141967145F37b7695a9F854"; // GMX Liquidity Vault [WETH-USDC.SG]
 const GM_OFT_ADAPTER = "0xe4EBcAC4a2e6CBEE385eE407f7D5E278Bc07e11e";
 const GLV_OFT_ADAPTER = "0xd5bdea6dc8e4b7429b72675386fc903def06599d";
-
-const dataStoreJson = import("../../deployments/arbitrumSepolia/DataStore.json");
-const roleStoreJson = import("../../deployments/arbitrumSepolia/RoleStore.json");
-const glvFactoryJson = import("../../deployments/arbitrumSepolia/GlvFactory.json");
-const glvVaultJson = import("../../deployments/arbitrumSepolia/GlvVault.json");
-const layerZeroProviderJson = import("../../deployments/arbitrumSepolia/LayerZeroProvider.json");
-const multichainGmRouterJson = import("../../deployments/arbitrumSepolia/MultichainGmRouter.json");
-const multichainGlvRouterJson = import("../../deployments/arbitrumSepolia/MultichainGlvRouter.json");
-const multichainOrderRouterJson = import("../../deployments/arbitrumSepolia/MultichainOrderRouter.json");
-const depositVaultJson = import("../../deployments/arbitrumSepolia/DepositVault.json");
-const withdrawalVaultJson = import("../../deployments/arbitrumSepolia/WithdrawalVault.json");
 
 async function prepareSend(
   amount: number | string | BigNumber,
@@ -88,9 +68,10 @@ async function prepareSend(
       slippageBps / 100
     }% slippage): ${ethers.utils.formatUnits(minAmountLD, decimals)}`
   );
+  const { layerZeroProvider } = await getDeployments();
   const sendParam = {
     dstEid: DST_EID,
-    to: ethers.utils.hexZeroPad(ethers.utils.hexlify((await layerZeroProviderJson).address), 32),
+    to: ethers.utils.hexZeroPad(ethers.utils.hexlify(layerZeroProvider.address), 32),
     amountLD: amount,
     minAmountLD: minAmountLD, // Apply slippage tolerance
     extraOptions: extraOptions.toHex(),
@@ -109,44 +90,6 @@ async function prepareSend(
     sendParam,
     messagingFee,
     stargatePool,
-  };
-}
-
-async function retrieveFromDestination(account: string, relayRouterJson: any): Promise<any> {
-  const provider = new JsonRpcProvider("https://sepolia-rollup.arbitrum.io/rpc");
-
-  // contracts with destination provider
-  const dataStore = new ethers.Contract(
-    (await dataStoreJson).address,
-    ["function getAddress(bytes32 key) view returns (address)", "function getUint(bytes32 key) view returns (uint256)"],
-    provider
-  );
-  const relayRouter = new ethers.Contract(
-    (await relayRouterJson).address,
-    ["function digests(bytes32 dicest) view returns (bool)"],
-    provider
-  );
-
-  // contracts with default provider
-  const roleStore: RoleStore = await ethers.getContractAt("RoleStore", (await roleStoreJson).address);
-  const glvFactory: GlvFactory = await ethers.getContractAt("GlvFactory", (await glvFactoryJson).address);
-  const glvVault: GlvVault = await ethers.getContractAt("GlvVault", (await glvVaultJson).address);
-  const depositVault: DepositVault = await ethers.getContractAt("DepositVault", (await depositVaultJson).address);
-  const withdrawalVault: WithdrawalVault = await ethers.getContractAt(
-    "WithdrawalVault",
-    (
-      await withdrawalVaultJson
-    ).address
-  );
-
-  return {
-    dataStore,
-    roleStore,
-    glvFactory,
-    glvVault,
-    depositVault,
-    withdrawalVault,
-    relayRouter,
   };
 }
 
@@ -180,7 +123,7 @@ async function getComposedMsg({
   }
 
   const srcChainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
-  const { dataStore } = await retrieveFromDestination(account, multichainGmRouterJson);
+  const { dataStore } = await getDeployments();
   const wntAddress = await dataStore.getAddress(keys.WNT);
   const executionFee = expandDecimals(1, 17); // 0.1 ETH
   const deadline = Math.floor(Date.now() / 1000) + 86400; // 86400 seconds = 1 day
@@ -192,7 +135,7 @@ async function getComposedMsg({
   };
 
   if (actionType === ActionType.Deposit) {
-    const { dataStore, depositVault, relayRouter } = await retrieveFromDestination(account, multichainGmRouterJson);
+    const { depositVault, multichainGmRouter } = await getDeployments();
 
     const defaultDepositParams = {
       addresses: {
@@ -231,7 +174,7 @@ async function getComposedMsg({
       chainId: srcChainId,
       srcChainId: srcChainId, // 0 would mean same chain action
       desChainId: DST_CHAIN_ID,
-      relayRouter,
+      relayRouter: multichainGmRouter,
       relayFeeToken: wntAddress, // WETH
       relayFeeAmount: 0,
     };
@@ -265,7 +208,7 @@ async function getComposedMsg({
   }
 
   if (actionType === ActionType.Withdrawal) {
-    const { dataStore, withdrawalVault, relayRouter } = await retrieveFromDestination(account, multichainGmRouterJson);
+    const { dataStore, withdrawalVault, multichainGmRouter } = await getDeployments();
 
     const defaultWithdrawalParams = {
       addresses: {
@@ -302,7 +245,7 @@ async function getComposedMsg({
       chainId: srcChainId,
       srcChainId: srcChainId,
       desChainId: DST_CHAIN_ID,
-      relayRouter: relayRouter,
+      relayRouter: multichainGmRouter,
       relayFeeToken: wntAddress,
       relayFeeAmount: 0,
     };
@@ -346,7 +289,7 @@ async function getComposedMsg({
   }
 
   if (actionType === ActionType.GlvDeposit) {
-    const { glvVault, relayRouter } = await retrieveFromDestination(account, multichainGlvRouterJson);
+    const { glvVault, multichainGlvRouter } = await getDeployments();
 
     const defaultGlvDepositParams = {
       addresses: {
@@ -386,7 +329,7 @@ async function getComposedMsg({
       chainId: srcChainId,
       srcChainId: srcChainId, // 0 would mean same chain action
       desChainId: DST_CHAIN_ID,
-      relayRouter,
+      relayRouter: multichainGlvRouter,
       relayFeeToken: wntAddress, // WETH
       relayFeeAmount: 0,
     };
@@ -426,7 +369,7 @@ async function getComposedMsg({
   }
 
   if (actionType === ActionType.GlvWithdrawal) {
-    const { glvVault, relayRouter } = await retrieveFromDestination(account, multichainGlvRouterJson);
+    const { glvVault, multichainGlvRouter } = await getDeployments();
 
     const defaultGlvWithdrawalParams = {
       addresses: {
@@ -464,7 +407,7 @@ async function getComposedMsg({
       chainId: srcChainId,
       srcChainId: srcChainId,
       desChainId: DST_CHAIN_ID,
-      relayRouter,
+      relayRouter: multichainGlvRouter,
       relayFeeToken: wntAddress,
       relayFeeAmount: 0,
     };
@@ -505,7 +448,7 @@ async function getComposedMsg({
 
   if (actionType === ActionType.SetTraderReferralCode) {
     const referralCode = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(`ReferralCode-${Date.now()}`));
-    const { relayRouter } = await retrieveFromDestination(account, multichainOrderRouterJson);
+    const { multichainOrderRouter } = await getDeployments();
 
     const setTraderReferralCodeParams = {
       sender: await hre.ethers.getSigner(account),
@@ -520,7 +463,7 @@ async function getComposedMsg({
       deadline,
       srcChainId, // 0 means non-multichain action
       desChainId: DST_CHAIN_ID, // for non-multichain actions, desChainId is the same as chainId
-      relayRouter,
+      relayRouter: multichainOrderRouter,
       chainId: srcChainId,
       gelatoRelayFeeToken: ethers.constants.AddressZero,
       gelatoRelayFeeAmount: 0,
@@ -532,7 +475,7 @@ async function getComposedMsg({
   }
 
   if (actionType === ActionType.BridgeOut) {
-    const { dataStore, depositVault, relayRouter } = await retrieveFromDestination(account, multichainGmRouterJson);
+    const { dataStore, depositVault, multichainGmRouter } = await getDeployments();
 
     // dataList determines if the GM / GLV tokens are being bridged out or not
     const deadline = Math.floor(Date.now() / 1000) + 3600; // deadline (1 hour from now)
@@ -584,7 +527,7 @@ async function getComposedMsg({
         chainId: srcChainId,
         srcChainId: srcChainId, // 0 would mean same chain action
         desChainId: DST_CHAIN_ID,
-        relayRouter,
+        relayRouter: multichainGmRouter,
         relayFeeToken: wntAddress, // WETH
         relayFeeAmount: 0,
       };
@@ -618,7 +561,7 @@ async function getComposedMsg({
     }
 
     if (process.env.token === "GLV") {
-      const { glvVault, relayRouter } = await retrieveFromDestination(account, multichainGlvRouterJson);
+      const { glvVault, multichainGlvRouter } = await getDeployments();
 
       const dataList = encodeBridgeOutDataList(
         actionType,
@@ -666,7 +609,7 @@ async function getComposedMsg({
         chainId: srcChainId,
         srcChainId: srcChainId, // 0 would mean same chain action
         desChainId: DST_CHAIN_ID,
-        relayRouter,
+        relayRouter: multichainGlvRouter,
         relayFeeToken: wntAddress, // WETH
         relayFeeAmount: 0,
       };

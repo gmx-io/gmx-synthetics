@@ -108,14 +108,24 @@ async function main() {
   const userAccountBalanceAfter = await token.balanceOf(account);
   const userMultichainBalanceAfter = await dataStore.getUint(keys.multichainBalanceKey(account, token.address));
 
-  console.log(" - account balance before:", ethers.utils.formatUnits(userAccountBalanceBefore, await token.decimals()));
-  console.log(" - account balance after:", ethers.utils.formatUnits(userAccountBalanceAfter, await token.decimals()));
   console.log(
-    " - multichain balance before: %s",
+    "User's account %s balance before:",
+    await token.symbol(),
+    ethers.utils.formatUnits(userAccountBalanceBefore, await token.decimals())
+  );
+  console.log(
+    "User's account %s balance after:",
+    await token.symbol(),
+    ethers.utils.formatUnits(userAccountBalanceAfter, await token.decimals())
+  );
+  console.log(
+    "User's multichain %s balance before: %s",
+    await token.symbol(),
     ethers.utils.formatUnits(userMultichainBalanceBefore, await token.decimals())
   );
   console.log(
-    " - multichain balance after: %s",
+    "User's multichain %s balance after: %s",
+    await token.symbol(),
     ethers.utils.formatUnits(userMultichainBalanceAfter, await token.decimals())
   );
 

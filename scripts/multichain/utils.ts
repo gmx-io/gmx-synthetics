@@ -1,12 +1,33 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
 import { BigNumber } from "ethers";
-import { MultichainTransferRouter, MultichainVault } from "../../typechain-types";
+import {
+  DepositVault,
+  GlvFactory,
+  GlvVault,
+  LayerZeroProvider,
+  MultichainGlvRouter,
+  MultichainGmRouter,
+  MultichainOrderRouter,
+  MultichainTransferRouter,
+  MultichainVault,
+  RoleStore,
+  WithdrawalVault,
+} from "../../typechain-types";
 import * as keys from "../../utils/keys";
 
 const { ethers } = hre;
 
 const dataStoreJson = import("../../deployments/arbitrumSepolia/DataStore.json");
+const roleStoreJson = import("../../deployments/arbitrumSepolia/RoleStore.json");
+const glvFactoryJson = import("../../deployments/arbitrumSepolia/GlvFactory.json");
+const depositVaultJson = import("../../deployments/arbitrumSepolia/DepositVault.json");
+const withdrawalVaultJson = import("../../deployments/arbitrumSepolia/WithdrawalVault.json");
+const glvVaultJson = import("../../deployments/arbitrumSepolia/GlvVault.json");
+const layerZeroProviderJson = import("../../deployments/arbitrumSepolia/LayerZeroProvider.json");
 const multichainVaultJson = import("../../deployments/arbitrumSepolia/MultichainVault.json");
+const multichainGmRouterJson = import("../../deployments/arbitrumSepolia/MultichainGmRouter.json");
+const multichainGlvRouterJson = import("../../deployments/arbitrumSepolia/MultichainGlvRouter.json");
+const multichainOrderRouterJson = import("../../deployments/arbitrumSepolia/MultichainOrderRouter.json");
 const multichainTransferRouterJson = import("../../deployments/arbitrumSepolia/MultichainTransferRouter.json");
 
 export async function getDeployments(): Promise<any> {
@@ -19,10 +40,21 @@ export async function getDeployments(): Promise<any> {
     provider
   );
 
-  const multichainTransferRouter: MultichainTransferRouter = await ethers.getContractAt(
-    "MultichainTransferRouter",
+  // contracts with provider from calling chain
+  const roleStore: RoleStore = await ethers.getContractAt("RoleStore", (await roleStoreJson).address);
+  const glvFactory: GlvFactory = await ethers.getContractAt("GlvFactory", (await glvFactoryJson).address);
+  const depositVault: DepositVault = await ethers.getContractAt("DepositVault", (await depositVaultJson).address);
+  const withdrawalVault: WithdrawalVault = await ethers.getContractAt(
+    "WithdrawalVault",
     (
-      await multichainTransferRouterJson
+      await withdrawalVaultJson
+    ).address
+  );
+  const glvVault: GlvVault = await ethers.getContractAt("GlvVault", (await glvVaultJson).address);
+  const layerZeroProvider: LayerZeroProvider = await ethers.getContractAt(
+    "LayerZeroProvider",
+    (
+      await layerZeroProviderJson
     ).address
   );
   const multichainVault: MultichainVault = await ethers.getContractAt(
@@ -31,9 +63,43 @@ export async function getDeployments(): Promise<any> {
       await multichainVaultJson
     ).address
   );
+  const multichainGmRouter: MultichainGmRouter = await ethers.getContractAt(
+    "MultichainGmRouter",
+    (
+      await multichainGmRouterJson
+    ).address
+  );
+  const multichainGlvRouter: MultichainGlvRouter = await ethers.getContractAt(
+    "MultichainGlvRouter",
+    (
+      await multichainGlvRouterJson
+    ).address
+  );
+  const multichainOrderRouter: MultichainOrderRouter = await ethers.getContractAt(
+    "MultichainOrderRouter",
+    (
+      await multichainOrderRouterJson
+    ).address
+  );
+  const multichainTransferRouter: MultichainTransferRouter = await ethers.getContractAt(
+    "MultichainTransferRouter",
+    (
+      await multichainTransferRouterJson
+    ).address
+  );
+
   return {
     dataStore,
+    roleStore,
+    glvFactory,
+    depositVault,
+    withdrawalVault,
+    glvVault,
+    layerZeroProvider,
     multichainVault,
+    multichainGmRouter,
+    multichainGlvRouter,
+    multichainOrderRouter,
     multichainTransferRouter,
   };
 }
