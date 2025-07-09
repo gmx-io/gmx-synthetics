@@ -24,6 +24,7 @@ const largeContracts = {
   Reader: true,
   ReaderUtils: true,
   WithdrawalHandler: true,
+  SubaccountGelatoRelayRouter: true,
 };
 
 function withTimeout(promise, timeoutMs, timeoutMessage = "Timed out") {
