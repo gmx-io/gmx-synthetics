@@ -72,8 +72,8 @@ async function main() {
     account,
     params: bridgeOutParams,
     deadline: 9999999999,
-    srcChainId: chainId, // 0 means non-multichain action
-    desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
+    srcChainId: process.env.TO_CHAIN_ID || 11155111, // default to Sepolia
+    desChainId: chainId, // desChainId must be the settlement chain id (e.g. arbitrum)
     relayRouter: multichainTransferRouter,
     relayFeeToken: wntAddress,
     relayFeeAmount,
