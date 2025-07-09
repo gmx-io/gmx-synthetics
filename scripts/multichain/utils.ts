@@ -1,6 +1,42 @@
+import { JsonRpcProvider } from "@ethersproject/providers";
 import { BigNumber } from "ethers";
+import { MultichainTransferRouter, MultichainVault } from "../../typechain-types";
+import * as keys from "../../utils/keys";
 
 const { ethers } = hre;
+
+const dataStoreJson = import("../../deployments/arbitrumSepolia/DataStore.json");
+const multichainVaultJson = import("../../deployments/arbitrumSepolia/MultichainVault.json");
+const multichainTransferRouterJson = import("../../deployments/arbitrumSepolia/MultichainTransferRouter.json");
+
+export async function getDeployments(): Promise<any> {
+  const provider = new JsonRpcProvider("https://sepolia-rollup.arbitrum.io/rpc");
+
+  // contracts with arbitrum sepolia provider
+  const dataStore = new ethers.Contract(
+    (await dataStoreJson).address,
+    ["function getAddress(bytes32 key) view returns (address)", "function getUint(bytes32 key) view returns (uint256)"],
+    provider
+  );
+
+  const multichainTransferRouter: MultichainTransferRouter = await ethers.getContractAt(
+    "MultichainTransferRouter",
+    (
+      await multichainTransferRouterJson
+    ).address
+  );
+  const multichainVault: MultichainVault = await ethers.getContractAt(
+    "MultichainVault",
+    (
+      await multichainVaultJson
+    ).address
+  );
+  return {
+    dataStore,
+    multichainVault,
+    multichainTransferRouter,
+  };
+}
 
 export async function getIncreasedValues({
   sendParam,
@@ -42,10 +78,21 @@ export async function getIncreasedValues({
 }
 
 export async function checkBalance({ account, token, amount }) {
-  console.log(`Checking balance for account: ${account} and ${process.env.TOKEN} token: ${token.address}`);
+  console.log(`Checking balance for account: ${account} and ${await token.symbol()} token: ${token.address}`);
   const balance = await token.balanceOf(account);
   if (balance.lt(amount)) {
     throw new Error(`Insufficient balance. Need ${amount} but have ${balance}`);
+  }
+}
+
+export async function checkMultichainBalance({ account, token, amount }) {
+  console.log(
+    `Checking multichain balance for account: ${account} and ${await token.symbol()} token: ${token.address}`
+  );
+  const { dataStore } = await getDeployments();
+  const balance = await dataStore.getUint(keys.multichainBalanceKey(account, token.address));
+  if (balance.lt(amount)) {
+    throw new Error(`Insufficient multichain balance. Need ${amount} but have ${balance}`);
   }
 }
 

@@ -1,13 +1,11 @@
 import hre from "hardhat";
 import { BigNumber } from "ethers";
-import { ERC20, IStargate, MultichainTransferRouter, MultichainVault } from "../../typechain-types";
-
+import { ERC20, IStargate } from "../../typechain-types";
 import { expandDecimals } from "../../utils/math";
-import { checkAllowance, checkBalance, getIncreasedValues } from "./utils";
+import { checkMultichainBalance, getDeployments } from "./utils";
 import { getRelayParams } from "../../utils/relay/helpers";
 import { getBridgeOutSignature, sendBridgeOut } from "../../utils/relay/multichain";
 import * as keys from "../../utils/keys";
-import { JsonRpcProvider } from "@ethersproject/providers";
 
 const { ethers } = hre;
 
@@ -23,43 +21,13 @@ const GLV_ADDRESS = "0xAb3567e55c205c62B141967145F37b7695a9F854"; // GMX Liquidi
 const GM_OFT_ADAPTER = "0xe4EBcAC4a2e6CBEE385eE407f7D5E278Bc07e11e";
 const GLV_OFT_ADAPTER = "0xd5bdea6dc8e4b7429b72675386fc903def06599d";
 
-const multichainTransferRouterJson = import("../../deployments/arbitrumSepolia/MultichainTransferRouter.json");
-const multichainVaultJson = import("../../deployments/arbitrumSepolia/MultichainVault.json");
-const dataStoreJson = import("../../deployments/arbitrumSepolia/DataStore.json");
-async function retrieveFromDestination(): Promise<any> {
-  const provider = new JsonRpcProvider("https://sepolia-rollup.arbitrum.io/rpc");
-  // contracts with destination provider
-  const dataStore = new ethers.Contract(
-    (await dataStoreJson).address,
-    ["function getAddress(bytes32 key) view returns (address)", "function getUint(bytes32 key) view returns (uint256)"],
-    provider
-  );
-  const multichainTransferRouter: MultichainTransferRouter = await ethers.getContractAt(
-    "MultichainTransferRouter",
-    (
-      await multichainTransferRouterJson
-    ).address
-  );
-  const multichainVault: MultichainVault = await ethers.getContractAt(
-    "MultichainVault",
-    (
-      await multichainVaultJson
-    ).address
-  );
-  return {
-    dataStore,
-    multichainVault,
-    multichainTransferRouter,
-  };
-}
-
 // TOKEN=<USDC/GM/GLV> AMOUNT=<number> npx hardhat run --network sepolia scripts/multichain/bridgeOutCrossChain.ts
 async function main() {
   const [wallet] = await hre.ethers.getSigners();
   const account = wallet.address;
 
   const chainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
-  const { dataStore, multichainTransferRouter } = await retrieveFromDestination();
+  const { dataStore, multichainTransferRouter } = await getDeployments();
 
   const wntAddress = await dataStore.getAddress(keys.WNT);
   const feeAmount = expandDecimals(6, 15);
@@ -85,7 +53,7 @@ async function main() {
     throw new Error("⚠️ Unsupported TOKEN type. Use 'USDC', 'GM', or 'GLV'.");
   }
 
-  // await checkMultichainBalance({ account, token, amount });
+  await checkMultichainBalance({ account, token, amount });
 
   const bridgeOutParams = {
     token: token.address,
@@ -121,39 +89,34 @@ async function main() {
   const userMultichainBalanceBefore = await dataStore.getUint(keys.multichainBalanceKey(account, token.address));
 
   console.log(
-    "Bridging out %s: %s, account= %s, amount= %s, from chainId= %s, to chainId= %s",
+    "Bridging out %s (%s): account= %s, amount= %s, srcChainId= %s, desChainId= %s",
     await token.symbol(),
     token.address,
     account,
     ethers.utils.formatUnits(amount, await token.decimals()),
-    chainId,
-    chainId
+    sendBridgeOutParams.srcChainId,
+    sendBridgeOutParams.desChainId
   );
 
-  const tx = await multichainTransferRouter.bridgeOut({ ...relayParams, signature }, account, chainId, bridgeOutParams);
+  const tx = await multichainTransferRouter.bridgeOut(
+    { ...relayParams, signature },
+    account,
+    sendBridgeOutParams.srcChainId,
+    bridgeOutParams
+  );
 
   const userAccountBalanceAfter = await token.balanceOf(account);
   const userMultichainBalanceAfter = await dataStore.getUint(keys.multichainBalanceKey(account, token.address));
 
+  console.log(" - account balance before:", ethers.utils.formatUnits(userAccountBalanceBefore, await token.decimals()));
+  console.log(" - account balance after:", ethers.utils.formatUnits(userAccountBalanceAfter, await token.decimals()));
   console.log(
-    `User's ${await token.symbol()} account balance before:`,
-    ethers.utils.formatUnits(userAccountBalanceBefore, await token.decimals())
+    " - multichain balance before: %s",
+    ethers.utils.formatUnits(userMultichainBalanceBefore, await token.decimals())
   );
   console.log(
-    `User's ${await token.symbol()} multichain balance before: ${ethers.utils.formatUnits(
-      userMultichainBalanceBefore,
-      await token.decimals()
-    )}, amount: ${ethers.utils.formatUnits(amount, await token.decimals())}`
-  );
-  console.log(
-    `User's ${await token.symbol()} account balance after:`,
-    ethers.utils.formatUnits(userAccountBalanceAfter, await token.decimals())
-  );
-  console.log(
-    `User's ${await token.symbol()} multichain balance after: ${ethers.utils.formatUnits(
-      userMultichainBalanceAfter,
-      await token.decimals()
-    )}, amount: ${ethers.utils.formatUnits(amount, await token.decimals())}`
+    " - multichain balance after: %s",
+    ethers.utils.formatUnits(userMultichainBalanceAfter, await token.decimals())
   );
 
   console.log("Bridge out tx:", tx.hash);
