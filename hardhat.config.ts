@@ -404,18 +404,24 @@ function parseInputArgs(input: string): string[] | string {
 // Create temporary arguments file and pass it to the hardhat-verify task
 // THIS TASK SHOULD BE USED ONLY WITH verifyFallback.ts script!
 task("verify-complex-args", "Verify contract with complex args", async (taskArgs, env, runSuper) => {
-  if (taskArgs.constructorArgsParams != undefined) {
-    const cacheFilePath = `./cache/temp-verifications-args.json`;
-    const args = taskArgs.constructorArgsParams.match(/"[^"]*"|\[[^\]]*\]|\S+/g);
-    if (args != null) {
-      const parsed = args.map(parseInputArgs);
-      writeJsonFile(cacheFilePath, parsed);
-      taskArgs.constructorArgsParams = undefined;
-      taskArgs.constructorArgs = cacheFilePath;
+  try {
+    if (taskArgs.constructorArgsParams != undefined) {
+      const cacheFilePath = `./cache/temp-verifications-args.json`;
+      const args = taskArgs.constructorArgsParams.match(/"[^"]*"|\[[^\]]*\]|\S+/g);
+      if (args != null) {
+        const parsed = args.map(parseInputArgs);
+        writeJsonFile(cacheFilePath, parsed);
+        taskArgs.constructorArgsParams = undefined;
+        taskArgs.constructorArgs = cacheFilePath;
+      }
     }
-  }
 
-  await env.run(TASK_VERIFY, taskArgs);
+    await env.run(TASK_VERIFY, taskArgs);
+
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: e };
+  }
 });
 
 export default config;
