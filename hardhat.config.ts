@@ -30,7 +30,7 @@ import { TASK_FLATTEN_GET_DEPENDENCY_GRAPH } from "hardhat/builtin-tasks/task-na
 import { DependencyGraph } from "hardhat/types";
 import { checkContractsSizing } from "./scripts/contractSizes";
 import { collectDependents } from "./utils/dependencies";
-import { writeJsonFile } from "./utils/file";
+import { deleteFile, writeJsonFile } from "./utils/file";
 import { TASK_VERIFY } from "@nomicfoundation/hardhat-verify/internal/task-names";
 
 const getRpcUrl = (network) => {
@@ -405,8 +405,10 @@ function parseInputArgs(input: string): string[] | string {
 // THIS TASK SHOULD BE USED ONLY WITH verifyFallback.ts script!
 task("verify-complex-args", "Verify contract with complex args", async (taskArgs, env, runSuper) => {
   try {
+    const cacheFilePath = `./cache/temp-verifications-args-${taskArgs.address}.json`;
     if (taskArgs.constructorArgsParams != undefined) {
-      const cacheFilePath = `./cache/temp-verifications-args.json`;
+      // split args string with spaces, but do not split quoted strings
+      // "A B C" D E => ["A B C", "D", "E"]
       const args = taskArgs.constructorArgsParams.match(/"[^"]*"|\[[^\]]*\]|\S+/g);
       if (args != null) {
         const parsed = args.map(parseInputArgs);
@@ -418,6 +420,7 @@ task("verify-complex-args", "Verify contract with complex args", async (taskArgs
 
     await env.run(TASK_VERIFY, taskArgs);
 
+    deleteFile(cacheFilePath);
     return { success: true };
   } catch (e) {
     return { success: false, error: e };

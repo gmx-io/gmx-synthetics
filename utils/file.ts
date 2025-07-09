@@ -59,3 +59,11 @@ export const findFile =
   (filename: string): boolean => {
     return filename.endsWith("/" + searchFile);
   };
+
+export function deleteFile(filePath: string) {
+  if (fs.existsSync(filePath)) {
+    fs.unlinkSync(filePath);
+  } else {
+    console.warn(`File ${filePath} does not exist`);
+  }
+}

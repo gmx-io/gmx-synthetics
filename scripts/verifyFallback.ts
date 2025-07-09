@@ -156,7 +156,7 @@ async function verifyForNetwork(verificationNetwork) {
           address: address,
           constructorArgsParams: argStr,
         }),
-        10 * 60_000
+        5 * 60_000
       );
 
       if (!success) {
