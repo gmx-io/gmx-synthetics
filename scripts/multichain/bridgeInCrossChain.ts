@@ -1,13 +1,17 @@
 import hre from "hardhat";
 import { BigNumber } from "ethers";
-import { ERC20, IStargate } from "../../typechain-types";
+import { ERC20, IOFT } from "../../typechain-types";
 
 import { Options } from "@layerzerolabs/lz-v2-utilities";
 
 import { expandDecimals } from "../../utils/math";
-import { checkAllowance, checkBalance, getIncreasedValues } from "./utils";
+import { checkAllowance, checkBalance, getDeployments, getIncreasedValues } from "./utils";
 
 const { ethers } = hre;
+
+// IOFT vs. IStargate
+// IOFT is being used since it's more general, but IStargate has identical
+// interface, tho only difference being the additional `sendToken` method
 
 // Sepolia
 const STARGATE_POOL_USDC_SEPOLIA = "0x4985b8fcEA3659FD801a5b857dA1D00e985863F0";
@@ -26,7 +30,7 @@ async function getComposedMsg({ account }: { account: string }): Promise<string>
 async function prepareSend(
   amount: number | string | BigNumber,
   composeMsg: string,
-  stargatePoolAddress: string,
+  oftAddress: string,
   decimals: number,
   gasLimit = 500000,
   extraGasForLzCompose = 500000,
@@ -39,7 +43,7 @@ async function prepareSend(
   const msgValue = extraGasForLzCompose * gasPrice.toNumber();
   const extraOptions = Options.newOptions().addExecutorComposeOption(0, gasLimit, msgValue);
 
-  const stargatePool: IStargate = await ethers.getContractAt("IStargate", stargatePoolAddress);
+  const oft: IOFT = await ethers.getContractAt("IOFT", oftAddress);
   console.log(`extraOptions: ${extraOptions.toHex()}`);
   // Calculate minAmountLD with slippage tolerance
   const amountBN = BigNumber.from(amount);
@@ -58,9 +62,9 @@ async function prepareSend(
     composeMsg: composeMsg || "0x",
     oftCmd: "0x",
   };
-  const messagingFee = await stargatePool.quoteSend(sendParam, false);
+  const messagingFee = await oft.quoteSend(sendParam, false);
   let valueToSend = messagingFee.nativeFee;
-  const tokenAddress = await stargatePool.token();
+  const tokenAddress = await oft.token();
   if (tokenAddress === ethers.constants.AddressZero) {
     valueToSend = valueToSend.add(sendParam.amountLD);
   }
@@ -69,7 +73,7 @@ async function prepareSend(
     valueToSend,
     sendParam,
     messagingFee,
-    stargatePool,
+    oft,
   };
 }
 
@@ -82,40 +86,40 @@ async function main() {
   let valueToSend;
   let sendParam;
   let messagingFee;
-  let stargatePool;
+  let oft;
   const composedMsg = await getComposedMsg({ account });
 
   if (process.env.TOKEN === "USDC") {
     amount = expandDecimals(Number(process.env.AMOUNT) || 50, 6); // 50 USDC
-    ({ valueToSend, sendParam, messagingFee, stargatePool } = await prepareSend(
+    ({ valueToSend, sendParam, messagingFee, oft } = await prepareSend(
       amount,
       composedMsg,
       STARGATE_POOL_USDC_SEPOLIA,
       6
     ));
   } else if (process.env.TOKEN === "GM") {
-    amount = expandDecimals(Number(process.env.AMOUNT) || 10, 18); // 10 GM
-    ({ valueToSend, sendParam, messagingFee, stargatePool } = await prepareSend(amount, composedMsg, GM_OFT, 18));
+    amount = expandDecimals(Number(process.env.AMOUNT) || 3, 18); // 3 GM
+    ({ valueToSend, sendParam, messagingFee, oft } = await prepareSend(amount, composedMsg, GM_OFT, 18));
   } else if (process.env.TOKEN === "GLV") {
-    amount = expandDecimals(Number(process.env.AMOUNT) || 10, 18); // 10 GLV
-    ({ valueToSend, sendParam, messagingFee, stargatePool } = await prepareSend(amount, composedMsg, GLV_OFT, 18));
+    amount = expandDecimals(Number(process.env.AMOUNT) || 1, 18); // 1 GLV
+    ({ valueToSend, sendParam, messagingFee, oft } = await prepareSend(amount, composedMsg, GLV_OFT, 18)); // todo
   } else {
     throw new Error("⚠️ Unsupported TOKEN type. Use 'USDC', 'GM', or 'GLV'.");
   }
 
-  const token: ERC20 = await ethers.getContractAt("ERC20", await stargatePool.token());
+  const token: ERC20 = await ethers.getContractAt("ERC20", await oft.token());
   await checkBalance({ account, token, amount });
-  await checkAllowance({ account, token, spender: stargatePool.address, amount });
+  await checkAllowance({ account, token, spender: oft.address, amount });
 
   const { gasPrice, gasLimit } = await getIncreasedValues({
     sendParam,
     messagingFee,
     account,
     valueToSend,
-    stargatePool,
+    stargatePool: oft,
   });
 
-  const tx = await stargatePool.sendToken(sendParam, messagingFee, account /* refundAddress */, {
+  const tx = await oft.send(sendParam, messagingFee, account /* refundAddress */, {
     value: valueToSend,
     gasLimit,
     gasPrice,

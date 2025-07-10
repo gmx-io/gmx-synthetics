@@ -124,7 +124,7 @@ export async function getIncreasedValues({
 
   // Estimate gas for transaction
   let gasLimit = await stargatePool.estimateGas
-    .sendToken(
+    .send(
       sendParam,
       messagingFee,
       account, // refundAddress
