@@ -5,7 +5,14 @@ import { ERC20, IOFT } from "../../typechain-types";
 import { Options } from "@layerzerolabs/lz-v2-utilities";
 
 import { expandDecimals } from "../../utils/math";
-import { checkAllowance, checkBalance, getDeployments, getIncreasedValues } from "./utils";
+import {
+  checkAllowance,
+  checkBalance,
+  getDeployments,
+  getIncreasedValues,
+  logMultichainBalance,
+  logTokenBalance,
+} from "./utils";
 
 const { ethers } = hre;
 
@@ -121,6 +128,9 @@ async function main() {
     stargatePool: oft,
   });
 
+  await logTokenBalance(account, token, "before");
+  await logMultichainBalance(account, token, "before");
+
   const tx = await oft.send(sendParam, messagingFee, account /* refundAddress */, {
     value: valueToSend,
     gasLimit,
@@ -130,6 +140,9 @@ async function main() {
   console.log("Bridge in tx:", tx.hash);
   await tx.wait();
   console.log("Tx receipt received");
+
+  await logTokenBalance(account, token, "after");
+  await logMultichainBalance(account, token, "after (will update after funds are actually bridged)");
 }
 
 main().catch((error) => {

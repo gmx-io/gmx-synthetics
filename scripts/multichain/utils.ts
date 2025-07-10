@@ -2,6 +2,7 @@ import { JsonRpcProvider } from "@ethersproject/providers";
 import { BigNumber } from "ethers";
 import {
   DepositVault,
+  ERC20,
   GlvFactory,
   GlvVault,
   LayerZeroProvider,
@@ -119,8 +120,7 @@ export async function getIncreasedValues({
   console.log("Gas price: ", ethers.utils.formatUnits(gasPrice, "gwei"), "gwei");
 
   // Get account balance for comparison
-  const balance = await ethers.provider.getBalance(account);
-  console.log("Account balance: ", ethers.utils.formatEther(balance), "ETH");
+  const balance = await logEthBalance(account, "before transaction");
 
   // Estimate gas for transaction
   let gasLimit = await stargatePool.estimateGas
@@ -169,4 +169,30 @@ export async function checkAllowance({ account, token, spender, amount }) {
     await (await token.approve(spender, amount)).wait();
     console.log(`Allowance is now: ${await token.allowance(account, spender)}`);
   }
+}
+
+export async function logEthBalance(account: string, at = "") {
+  const balance = await ethers.provider.getBalance(account);
+  console.log(`User's account ETH balance ${at}: ${ethers.utils.formatUnits(balance, 18)}`);
+  return balance;
+}
+
+export async function logTokenBalance(account: string, token: ERC20, at = "") {
+  const balance = await token.balanceOf(account);
+  console.log(
+    `User's account ${await token.symbol()} balance ${at}: ${ethers.utils.formatUnits(balance, await token.decimals())}`
+  );
+  return balance;
+}
+
+export async function logMultichainBalance(account: string, token: ERC20, at = "") {
+  const { dataStore } = await getDeployments();
+  const balance = await dataStore.getUint(keys.multichainBalanceKey(account, token.address));
+  console.log(
+    `User's multichain ${await token.symbol()} balance ${at}: ${ethers.utils.formatUnits(
+      balance,
+      await token.decimals()
+    )}`
+  );
+  return balance;
 }

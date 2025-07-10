@@ -2,7 +2,7 @@ import hre from "hardhat";
 import { BigNumber } from "ethers";
 import { ERC20, IStargate } from "../../typechain-types";
 import { expandDecimals } from "../../utils/math";
-import { checkMultichainBalance, getDeployments } from "./utils";
+import { checkMultichainBalance, getDeployments, logMultichainBalance, logTokenBalance } from "./utils";
 import { getRelayParams } from "../../utils/relay/helpers";
 import { getBridgeOutSignature, sendBridgeOut } from "../../utils/relay/multichain";
 import * as keys from "../../utils/keys";
@@ -21,7 +21,7 @@ const GLV_ADDRESS = "0xAb3567e55c205c62B141967145F37b7695a9F854"; // GMX Liquidi
 const GM_OFT_ADAPTER = "0xe4EBcAC4a2e6CBEE385eE407f7D5E278Bc07e11e";
 const GLV_OFT_ADAPTER = "0xd5bdea6dc8e4b7429b72675386fc903def06599d";
 
-// TOKEN=<USDC/GM/GLV> AMOUNT=<number> npx hardhat run --network sepolia scripts/multichain/bridgeOutCrossChain.ts
+// TOKEN=<USDC/GM/GLV> AMOUNT=<number> npx hardhat run --network arbitrumSepolia scripts/multichain/bridgeOutCrossChain.ts
 async function main() {
   const [wallet] = await hre.ethers.getSigners();
   const account = wallet.address;
@@ -85,18 +85,7 @@ async function main() {
     verifyingContract: multichainTransferRouter.address,
   });
 
-  const userAccountBalanceBefore = await token.balanceOf(account);
-  const userMultichainBalanceBefore = await dataStore.getUint(keys.multichainBalanceKey(account, token.address));
-
-  console.log(
-    "Bridging out %s (%s): account= %s, amount= %s, srcChainId= %s, desChainId= %s",
-    await token.symbol(),
-    token.address,
-    account,
-    ethers.utils.formatUnits(amount, await token.decimals()),
-    sendBridgeOutParams.srcChainId,
-    sendBridgeOutParams.desChainId
-  );
+  logMultichainBalance(account, token, "before");
 
   const tx = await multichainTransferRouter.bridgeOut(
     { ...relayParams, signature },
@@ -105,33 +94,11 @@ async function main() {
     bridgeOutParams
   );
 
-  const userAccountBalanceAfter = await token.balanceOf(account);
-  const userMultichainBalanceAfter = await dataStore.getUint(keys.multichainBalanceKey(account, token.address));
-
-  console.log(
-    "User's account %s balance before:",
-    await token.symbol(),
-    ethers.utils.formatUnits(userAccountBalanceBefore, await token.decimals())
-  );
-  console.log(
-    "User's account %s balance after:",
-    await token.symbol(),
-    ethers.utils.formatUnits(userAccountBalanceAfter, await token.decimals())
-  );
-  console.log(
-    "User's multichain %s balance before: %s",
-    await token.symbol(),
-    ethers.utils.formatUnits(userMultichainBalanceBefore, await token.decimals())
-  );
-  console.log(
-    "User's multichain %s balance after: %s",
-    await token.symbol(),
-    ethers.utils.formatUnits(userMultichainBalanceAfter, await token.decimals())
-  );
-
   console.log("Bridge out tx:", tx.hash);
   await tx.wait();
   console.log("Tx receipt received");
+
+  logMultichainBalance(account, token, "after");
 }
 
 main().catch((error) => {
