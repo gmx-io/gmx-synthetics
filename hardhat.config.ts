@@ -405,18 +405,18 @@ function parseInputArgs(input: string): string[] | string {
 // THIS TASK SHOULD BE USED ONLY WITH verifyFallback.ts script!
 task("verify-complex-args", "Verify contract with complex args", async (taskArgs, env, runSuper) => {
   try {
-    const cacheFilePath = `./cache/temp-verifications-args-${taskArgs.address}.json`;
-    if (taskArgs.constructorArgsParams != undefined) {
+    const cacheFilePath = `./cache/verifications-args-${taskArgs.address}.json`;
+    let args = [];
+    if (taskArgs.constructorArgsParams != undefined && taskArgs.constructorArgsParams != "") {
       // split args string with spaces, but do not split quoted strings
       // "A B C" D E => ["A B C", "D", "E"]
-      const args = taskArgs.constructorArgsParams.match(/"[^"]*"|\[[^\]]*\]|\S+/g);
-      if (args != null) {
-        const parsed = args.map(parseInputArgs);
-        writeJsonFile(cacheFilePath, parsed);
-        taskArgs.constructorArgsParams = undefined;
-        taskArgs.constructorArgs = cacheFilePath;
-      }
+      args = taskArgs.constructorArgsParams.match(/"[^"]*"|\[[^\]]*\]|\S+/g);
     }
+
+    const parsed = args.map(parseInputArgs);
+    writeJsonFile(cacheFilePath, parsed);
+    taskArgs.constructorArgsParams = undefined;
+    taskArgs.constructorArgs = cacheFilePath;
 
     await env.run(TASK_VERIFY, taskArgs);
 
