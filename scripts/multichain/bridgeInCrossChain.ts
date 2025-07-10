@@ -41,7 +41,9 @@ async function prepareSend(
   const destProvider = new ethers.providers.JsonRpcProvider("https://sepolia-rollup.arbitrum.io/rpc");
   const gasPrice = await destProvider.getGasPrice();
   const msgValue = extraGasForLzCompose * gasPrice.toNumber();
-  const extraOptions = Options.newOptions().addExecutorComposeOption(0, gasLimit, msgValue);
+  const extraOptions = Options.newOptions()
+    .addExecutorLzReceiveOption(gasLimit, 0)
+    .addExecutorComposeOption(0, gasLimit, msgValue);
 
   const oft: IOFT = await ethers.getContractAt("IOFT", oftAddress);
   console.log(`extraOptions: ${extraOptions.toHex()}`);
