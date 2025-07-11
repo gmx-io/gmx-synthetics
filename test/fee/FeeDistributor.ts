@@ -320,6 +320,7 @@ describe("FeeDistributor", function () {
     ]);
     await dataStore.setBoolArray(keys.FEE_DISTRIBUTOR_KEEPER_COSTS, [true, false, true]);
     await config.setUint(keys.FEE_DISTRIBUTOR_MAX_GLP_KEEPER_REFERRAL_COSTS_FACTOR, "0x", expandDecimals(50, 28));
+    await config.setUint(keys.FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY, "0x", expandDecimals(1, 16));
     await config.setUint(keys.FEE_DISTRIBUTOR_CHAINLINK_FACTOR, "0x", expandDecimals(12, 28));
     await config.setUint(keys.BUYBACK_BATCH_AMOUNT, encodeData(["address"], [gmx.address]), expandDecimals(5, 17));
     await config.setUint(keys.BUYBACK_BATCH_AMOUNT, encodeData(["address"], [wnt.address]), expandDecimals(5, 17));
@@ -340,6 +341,9 @@ describe("FeeDistributor", function () {
     });
 
     await wnt.mint(feeDistributorVault.address, expandDecimals(1_000, 18));
+
+    await wnt.mint(user6.address, expandDecimals(1, 18));
+    await wnt.connect(user6).approve(feeDistributor.address, expandDecimals(1, 18));
 
     wntReferralRewardsInUsd = expandDecimals(1_000, 30);
     esGmxForReferralRewards = expandDecimals(10, 18);
@@ -1026,8 +1030,6 @@ describe("FeeDistributor", function () {
   });
 
   it("wntForGlp shortfall covered by wntForTreasury", async () => {
-    await config.setUint(keys.FEE_DISTRIBUTOR_MAX_GLP_KEEPER_REFERRAL_COSTS_FACTOR, "0x", expandDecimals(50, 28));
-
     await feeDistributorConfig.moveToNextDistributionDay(distributionDay);
 
     await mockLzReadResponseChainA.setTotalSupply(expandDecimals(3_000_000, 18));
@@ -1122,6 +1124,151 @@ describe("FeeDistributor", function () {
     const glpIncrease = minGlp.sub(wntForGlpPre);
 
     const wntForTreasury = wntForTreasuryPre.sub(glpIncrease);
+    const wntForGlp = wntForGlpPre.add(glpIncrease);
+    const wntForKeepers = keeperCostsTreasury.add(keeperCostsGlpPre);
+
+    const keeper1Balance = await ethers.provider.getBalance(user2.address);
+    const keeper2Balance = await ethers.provider.getBalance(user3.address);
+    const keeper3Balance = await ethers.provider.getBalance(user4.address);
+
+    expect(distributionState).to.eq(0);
+
+    expect(keeper1Balance).to.eq(keeperCosts[0]);
+    expect(keeper2Balance).to.eq(keeperCosts[1]);
+    expect(keeper3Balance).gte(keeperCosts[2]);
+
+    expect(distributeEventData.feesV1Usd).to.eq(feesV1Usd);
+    expect(distributeEventData.feesV2Usd).to.eq(feesV2Usd);
+    expect(distributeEventData.wntForKeepers).to.eq(wntForKeepers);
+    expect(distributeEventData.wntForChainlink).to.eq(wntForChainlink);
+    expect(distributeEventData.wntForTreasury).to.eq(wntForTreasury);
+    expect(distributeEventData.wntForGlp).to.eq(wntForGlp);
+    expect(distributeEventData.wntForReferralRewards).to.eq(wntForReferralRewards);
+    expect(distributeEventData.esGmxForReferralRewards).to.eq(esGmxForReferralRewards);
+  });
+
+  it("wntForGlp shortfall covered by wntForTreasury and WNT from treasury", async () => {
+    await feeDistributorConfig.moveToNextDistributionDay(distributionDay);
+
+    await mockLzReadResponseChainA.setTotalSupply(expandDecimals(3_000_000, 18));
+    await mockExtendedGmxTracker.setTotalSupply(expandDecimals(6_000_000, 18));
+    await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
+
+    await mockLzReadResponseChainA.setUint(
+      keys.withdrawableBuybackTokenAmountKey(mockOftA.address),
+      expandDecimals(10_000, 18)
+    );
+    await mockLzReadResponseChainC.setUint(
+      keys.withdrawableBuybackTokenAmountKey(mockOftC.address),
+      expandDecimals(20_000, 18)
+    );
+    await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(40_000, 18));
+    await gmx.mint(feeHandler.address, expandDecimals(40_000, 18));
+
+    await gmx.mint(wallet.address, expandDecimals(170_000, 18));
+    await gmx.transfer(feeDistributorVault.address, expandDecimals(120_000, 18));
+
+    await wnt.burn(feeDistributorVault.address, await wnt.balanceOf(feeDistributorVault.address));
+
+    await wnt.mint(feeDistributorVault.address, expandDecimals(1, 17));
+
+    await wallet.sendTransaction({
+      to: feeDistributor.address,
+      value: expandDecimals(1, 18),
+    });
+
+    await dataStore.setUintArray(keys.FEE_DISTRIBUTOR_KEEPER_COSTS, [
+      expandDecimals(3, 15),
+      expandDecimals(9, 16),
+      expandDecimals(4, 15),
+    ]);
+
+    await feeDistributor.initiateDistribute();
+
+    const feesV1Usd = expandDecimals(10_000, 30);
+    const feesV2Usd = expandDecimals(40_000, 30);
+
+    const keeperCosts = await dataStore.getUintArray(keys.FEE_DISTRIBUTOR_KEEPER_COSTS);
+
+    const keeper1BalancePreDistribute = await ethers.provider.getBalance(user2.address);
+    const keeper2BalancePreDistribute = await ethers.provider.getBalance(user3.address);
+
+    const sentToKeeper1 = keeperCosts[0].sub(keeper1BalancePreDistribute);
+    const sentToKeeper2 = keeperCosts[1].sub(keeper2BalancePreDistribute);
+    const keeperCostsGlpPre = sentToKeeper2;
+    const keeperCostsTreasury = sentToKeeper1;
+
+    const totalWntBalance = await wnt.balanceOf(feeDistributorVault.address);
+
+    const totalFeesUsd = feesV1Usd.add(feesV2Usd);
+    const chainlinkTreasuryWnt = totalWntBalance.mul(feesV2Usd).div(totalFeesUsd);
+
+    const chainlinkFactor = await dataStore.getUint(keys.FEE_DISTRIBUTOR_CHAINLINK_FACTOR);
+    const wntForChainlink = chainlinkTreasuryWnt.mul(chainlinkFactor).div(expandDecimals(1, 30));
+    const wntForTreasuryPre = chainlinkTreasuryWnt.sub(wntForChainlink).sub(keeperCostsTreasury);
+    const wntReferralRewardsInUsd = expandDecimals(35, 30);
+    const wntPrice = await dataStore.getUint(keys.FEE_DISTRIBUTOR_WNT_PRICE);
+    const wntForReferralRewards = wntReferralRewardsInUsd.div(wntPrice);
+    const esGmxForReferralRewards = 0;
+    const wntForGlpPre = totalWntBalance
+      .sub(keeperCostsGlpPre)
+      .sub(keeperCostsTreasury)
+      .sub(wntForChainlink)
+      .sub(wntForTreasuryPre)
+      .sub(wntForReferralRewards);
+
+    const glpWntBeforeV1KeeperAndReferralCosts = totalWntBalance
+      .sub(keeperCostsTreasury)
+      .sub(wntForChainlink)
+      .sub(wntForTreasuryPre);
+
+    const maxGlpKeeperReferralCostsFactor = await dataStore.getUint(
+      keys.FEE_DISTRIBUTOR_MAX_GLP_KEEPER_REFERRAL_COSTS_FACTOR
+    );
+    const maxKeeperAndReferralCostsGlp = glpWntBeforeV1KeeperAndReferralCosts
+      .mul(maxGlpKeeperReferralCostsFactor)
+      .div(expandDecimals(1, 30));
+    const minGlp = glpWntBeforeV1KeeperAndReferralCosts.sub(maxKeeperAndReferralCostsGlp);
+    const glpIncrease = minGlp.sub(wntForGlpPre);
+    const additionalWntFromTreasury = glpIncrease - wntForTreasuryPre;
+
+    const maxWntFromTreasury = dataStore.getUint(keys.FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY);
+
+    await expect(
+      feeDistributor.distribute(wntReferralRewardsInUsd, esGmxForReferralRewards, feesV1Usd, feesV2Usd)
+    ).to.be.revertedWithCustomError(
+      errorsContract,
+      "MaxWntFromTreasuryExceeded",
+      maxWntFromTreasury,
+      additionalWntFromTreasury
+    );
+
+    await config.setUint(keys.FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY, "0x", expandDecimals(1, 17));
+
+    const treasuryBalancePre = await wnt.balanceOf(user6.address);
+
+    const distributeTx = await feeDistributor.distribute(
+      wntReferralRewardsInUsd,
+      esGmxForReferralRewards,
+      feesV1Usd,
+      feesV2Usd
+    );
+
+    const distributeReceipt = await distributeTx.wait();
+
+    const distributeEventData = parseLogs(fixture, distributeReceipt)[8].parsedEventData;
+
+    const glpAfter = await wnt.balanceOf(mockFeeGlpTracker.address);
+
+    expect(glpAfter).to.equal(minGlp);
+
+    const treasuryBalanceAfter = await wnt.balanceOf(user6.address);
+    const sentFromTreasury = treasuryBalancePre.sub(treasuryBalanceAfter);
+    const glpFromTreasury = glpIncrease.sub(wntForTreasuryPre);
+
+    expect(sentFromTreasury).to.equal(glpFromTreasury);
+
+    const wntForTreasury = 0;
     const wntForGlp = wntForGlpPre.add(glpIncrease);
     const wntForKeepers = keeperCostsTreasury.add(keeperCostsGlpPre);
 
@@ -1452,6 +1599,7 @@ describe("FeeDistributor", function () {
     ]);
     await dataStoreD.setBoolArray(keys.FEE_DISTRIBUTOR_KEEPER_COSTS, [true, false, true]);
     await configD.setUint(keys.FEE_DISTRIBUTOR_MAX_GLP_KEEPER_REFERRAL_COSTS_FACTOR, "0x", expandDecimals(50, 28));
+    await configD.setUint(keys.FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY, "0x", expandDecimals(1, 16));
     await configD.setUint(keys.FEE_DISTRIBUTOR_CHAINLINK_FACTOR, "0x", expandDecimals(12, 28));
     await configD.setUint(
       keys.BUYBACK_BATCH_AMOUNT,

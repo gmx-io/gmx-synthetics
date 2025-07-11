@@ -563,7 +563,7 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
             if (additionalWntForGlp > wntForTreasury) {
                 uint256 maxWntFromTreasury = getUint(Keys.FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY);
                 uint256 additionalWntFromTreasury = additionalWntForGlp - wntForTreasury;
-                if (maxWntFromTreasury > additionalWntFromTreasury) {
+                if (additionalWntFromTreasury > maxWntFromTreasury) {
                     revert Errors.MaxWntFromTreasuryExceeded(maxWntFromTreasury, additionalWntFromTreasury);
                 }
                 IERC20(wnt).transferFrom(
