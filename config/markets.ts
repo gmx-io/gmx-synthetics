@@ -463,8 +463,8 @@ const config: {
       negativePositionImpactFactor: exponentToFloat("9e-11"),
       positivePositionImpactFactor: exponentToFloat("3e-11"),
 
-      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(138, 30), // 1.38E+32, 0.119232 BTC / day
-      minPositionImpactPoolAmount: expandDecimals(95, 6), // 0.95 BTC
+      positionImpactPoolDistributionRate: expandDecimals(2411, 30 + 4).div(SECONDS_PER_DAY), // 0.2411 BTC / day
+      minPositionImpactPoolAmount: expandDecimals(44, 8), // 44 BTC
 
       negativeSwapImpactFactor: exponentToFloat("4e-10"), // 0.05% for 1,250,000 USD of imbalance
       positiveSwapImpactFactor: exponentToFloat("2e-10"), // 0.05% for 2,500,000 USD of imbalance
@@ -557,7 +557,7 @@ const config: {
       negativePositionImpactFactor: exponentToFloat("9e-11"),
       positivePositionImpactFactor: exponentToFloat("3e-11"),
 
-      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(15, 18 - 1 + 30).div(SECONDS_PER_DAY), // 1.5 ETH per day
+      positionImpactPoolDistributionRate: expandDecimals(1042, 30 + 16).div(SECONDS_PER_DAY), // 10.42 ETH per day
       minPositionImpactPoolAmount: expandDecimals(10, 18), // 10 ETH
 
       negativeSwapImpactFactor: exponentToFloat("3e-10"),
@@ -701,8 +701,8 @@ const config: {
       reserveFactor: percentageToFloat("185%"),
       openInterestReserveFactor: percentageToFloat("180%"),
 
-      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(2491, 30), // 2.491335E+33, 215.25128205 XRP / day
-      minPositionImpactPoolAmount: expandDecimals(4169, 6), // 4169.846154 XRP
+      positionImpactPoolDistributionRate: expandDecimals(1366, 30 + 18).div(SECONDS_PER_DAY), // 1366 XRP / day
+      minPositionImpactPoolAmount: expandDecimals(338133, 18), // 338133 XRP
 
       maxOpenInterest: decimalToFloat(2_000_000),
 
@@ -743,8 +743,8 @@ const config: {
       reserveFactor: percentageToFloat("185%"),
       openInterestReserveFactor: percentageToFloat("180%"),
 
-      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(488, 34), // 0.488E+37, 4216 DOGE / day
-      minPositionImpactPoolAmount: expandDecimals(26000, 8), // 26000 DOGE
+      positionImpactPoolDistributionRate: expandDecimals(7189, 38).div(SECONDS_PER_DAY), // 7189 DOGE / day
+      minPositionImpactPoolAmount: expandDecimals(3280141, 8), // 3280141 DOGE
 
       maxOpenInterest: decimalToFloat(6_000_000),
 
@@ -958,8 +958,8 @@ const config: {
       reserveFactor: percentageToFloat("275%"),
       openInterestReserveFactor: percentageToFloat("270%"),
 
-      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(230, 33), // 0.2300306+36, 20 SOL / day
-      minPositionImpactPoolAmount: expandDecimals(219, 9), // 219 SOL
+      positionImpactPoolDistributionRate: expandDecimals(31, 30 + 9).div(SECONDS_PER_DAY), // 31 SOL / day
+      minPositionImpactPoolAmount: expandDecimals(9574, 9), // 9574 SOL
 
       maxOpenInterest: decimalToFloat(17_500_000),
 
@@ -1125,8 +1125,8 @@ const config: {
       // minCollateralFactor of 0.005 (0.5%) when open interest is 8,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: decimalToFloat(64, 11),
 
-      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(827, 42), // 0.827E+45, 71.488 LINK / day
-      minPositionImpactPoolAmount: expandDecimals(638, 18), // 638 LINK
+      positionImpactPoolDistributionRate: expandDecimals(277, 30 + 18).div(SECONDS_PER_DAY), // 277 LINK / day
+      minPositionImpactPoolAmount: expandDecimals(41779, 18), // 41779 LINK
 
       maxOpenInterest: decimalToFloat(10_000_000),
 
@@ -1160,8 +1160,8 @@ const config: {
       reserveFactor: percentageToFloat("235%"),
       openInterestReserveFactor: percentageToFloat("230%"),
 
-      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(800, 43), // 0.800565E+46, 691.69 ARB / day
-      minPositionImpactPoolAmount: expandDecimals(27598, 18), // 27598 ARB
+      positionImpactPoolDistributionRate: expandDecimals(1697, 30 + 18).div(SECONDS_PER_DAY), // 1697 ARB / day
+      minPositionImpactPoolAmount: expandDecimals(384957, 18), // 384957 ARB
 
       maxOpenInterest: decimalToFloat(5_000_000),
 
@@ -1393,8 +1393,8 @@ const config: {
       reserveFactor: percentageToFloat("205%"),
       openInterestReserveFactor: percentageToFloat("200%"),
 
-      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(65, 42), // 6.5e43, 5.6 GMX / day
-      minPositionImpactPoolAmount: expandDecimals(50, 18), // 50 GMX
+      positionImpactPoolDistributionRate: expandDecimals(105, 30 + 18).div(SECONDS_PER_DAY), // 105 GMX / day
+      minPositionImpactPoolAmount: expandDecimals(11534, 18), // 11534 GMX
 
       maxOpenInterest: decimalToFloat(1_800_000),
 
