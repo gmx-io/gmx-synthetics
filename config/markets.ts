@@ -558,7 +558,7 @@ const config: {
       positivePositionImpactFactor: exponentToFloat("3e-11"),
 
       positionImpactPoolDistributionRate: expandDecimals(1042, 30 + 16).div(SECONDS_PER_DAY), // 10.42 ETH per day
-      minPositionImpactPoolAmount: expandDecimals(10, 18), // 10 ETH
+      minPositionImpactPoolAmount: expandDecimals(1921, 18), // 1921 ETH
 
       negativeSwapImpactFactor: exponentToFloat("3e-10"),
       positiveSwapImpactFactor: exponentToFloat("2e-10"),
