@@ -701,8 +701,8 @@ const config: {
       reserveFactor: percentageToFloat("185%"),
       openInterestReserveFactor: percentageToFloat("180%"),
 
-      positionImpactPoolDistributionRate: expandDecimals(1366, 30 + 18).div(SECONDS_PER_DAY), // 1366 XRP / day
-      minPositionImpactPoolAmount: expandDecimals(338133, 18), // 338133 XRP
+      positionImpactPoolDistributionRate: expandDecimals(1366, 30 + 6).div(SECONDS_PER_DAY), // 1366 XRP / day
+      minPositionImpactPoolAmount: expandDecimals(338133, 6), // 338133 XRP
 
       maxOpenInterest: decimalToFloat(2_000_000),
 
