@@ -33,6 +33,7 @@ const SRC_EID = 40161;
 // const WNT = "0x980B62Da83eFf3D4576C647993b0c1D7faf17c73"; // WETH from DataStore
 // const WNT = "0x3031a6d5d9648ba5f50f656cd4a1672e1167a34a"; // aeWETH
 const STARGATE_POOL_USDC_ARB_SEPOLIA = "0x543BdA7c6cA4384FE90B1F5929bb851F52888983";
+const STARGATE_POOL_NATIVE_ARB_SEPOLIA = "0x6fddB6270F6c71f31B62AE0260cfa8E2e2d186E0";
 const STARGATE_USDC_ARB_SEPOLIA = "0x3253a335E7bFfB4790Aa4C25C4250d206E9b9773";
 const DST_CHAIN_ID = 421614;
 const DST_EID = 40231;
@@ -125,7 +126,7 @@ async function getComposedMsg({
   const srcChainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
   const { dataStore } = await getDeployments();
   const wntAddress = await dataStore.getAddress(keys.WNT);
-  const executionFee = expandDecimals(1, 17); // 0.1 ETH
+  const executionFee = expandDecimals(4, 16); // 0.04 ETH
   const deadline = Math.floor(Date.now() / 1000) + 86400; // 86400 seconds = 1 day
 
   const ethUsdMarket = {
@@ -475,13 +476,13 @@ async function getComposedMsg({
   }
 
   if (actionType === ActionType.BridgeOut) {
-    const { dataStore, depositVault, multichainGmRouter } = await getDeployments();
+    const { dataStore, depositVault, withdrawalVault, multichainGmRouter } = await getDeployments();
 
     // dataList determines if the GM / GLV tokens are being bridged out or not
     const deadline = Math.floor(Date.now() / 1000) + 3600; // deadline (1 hour from now)
     const providerData = ethers.utils.defaultAbiCoder.encode(["uint32"], [SRC_EID]); // providerData (on bridgeOut desEid is referring to the chain where the tokens are bridged out i.e. back to the source chain)
 
-    if (!process.env.token || process.env.token === "GM") {
+    if (process.env.EXECUTE === "Deposit") {
       const dataList = encodeBridgeOutDataList(
         actionType,
         DST_CHAIN_ID, // desChainId
@@ -560,7 +561,86 @@ async function getComposedMsg({
       return message;
     }
 
-    if (process.env.token === "GLV") {
+    if (process.env.EXECUTE === "Withdrawal") {
+      // @dev order of token / secondary token is important and must match the output token/secondary token from execute withdrawal
+      const dataList = encodeBridgeOutDataList(
+        actionType,
+        DST_CHAIN_ID, // desChainId
+        deadline,
+        STARGATE_POOL_NATIVE_ARB_SEPOLIA, // provider -- > bridge out wnt
+        providerData,
+        STARGATE_POOL_USDC_ARB_SEPOLIA, // provider --> bridge out usdc
+        providerData
+      );
+      const defaultWithdrawalParams = {
+        addresses: {
+          receiver: account,
+          callbackContract: account,
+          uiFeeReceiver: account,
+          market: ethUsdMarket.marketToken,
+          longTokenSwapPath: [],
+          shortTokenSwapPath: [],
+        },
+        minLongTokenAmount: 0,
+        minShortTokenAmount: 0,
+        shouldUnwrapNativeToken: false,
+        executionFee,
+        callbackGasLimit: "200000",
+        dataList,
+      };
+      const withdrawalParams: Parameters<typeof sendCreateWithdrawal>[0] = {
+        sender: await hre.ethers.getSigner(account),
+        signer: await hre.ethers.getSigner(account),
+        feeParams: {
+          feeToken: wntAddress,
+          feeAmount: executionFee,
+          feeSwapPath: [],
+        },
+        transferRequests: {
+          tokens: [ethUsdMarket.marketToken],
+          receivers: [withdrawalVault.address],
+          amounts: [gmAmount],
+        },
+        account: account,
+        params: defaultWithdrawalParams,
+        deadline,
+        chainId: srcChainId,
+        srcChainId: srcChainId,
+        desChainId: DST_CHAIN_ID,
+        relayRouter: multichainGmRouter,
+        relayFeeToken: wntAddress,
+        relayFeeAmount: 0,
+      };
+
+      const userMultichainBalanceWnt = await dataStore.getUint(keys.multichainBalanceKey(account, wntAddress));
+      console.log(
+        "User's multichain WNT: %s, amount: %s",
+        ethers.utils.formatUnits(userMultichainBalanceWnt),
+        ethers.utils.formatUnits(wntAmount)
+      );
+      const userMultichainBalanceUsdc = await dataStore.getUint(
+        keys.multichainBalanceKey(account, STARGATE_USDC_ARB_SEPOLIA)
+      );
+      console.log(
+        "User's multichain USDC: %s, amount: %s",
+        ethers.utils.formatUnits(userMultichainBalanceUsdc, 6),
+        ethers.utils.formatUnits(usdcAmount, 6)
+      );
+      const userMultichainBalanceGM = await dataStore.getUint(
+        keys.multichainBalanceKey(account, ethUsdMarket.marketToken)
+      );
+      console.log(
+        "User's multichain GM: %s for marketToken: %s",
+        ethers.utils.formatUnits(userMultichainBalanceGM),
+        ethUsdMarket.marketToken
+      );
+
+      const message = await encodeWithdrawalMessage(withdrawalParams, account);
+
+      return message;
+    }
+
+    if (process.env.EXECUTE === "GlvDeposit") {
       const { glvVault, multichainGlvRouter } = await getDeployments();
 
       const dataList = encodeBridgeOutDataList(
