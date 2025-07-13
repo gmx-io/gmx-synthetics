@@ -20,6 +20,8 @@ const GM_ADDRESS = "0xb6fC4C9eB02C35A134044526C62bb15014Ac0Bcc"; // GM { indexTo
 const GLV_ADDRESS = "0xAb3567e55c205c62B141967145F37b7695a9F854"; // GMX Liquidity Vault [WETH-USDC.SG]
 const GM_OFT_ADAPTER = "0xe4EBcAC4a2e6CBEE385eE407f7D5E278Bc07e11e";
 const GLV_OFT_ADAPTER = "0xd5bdea6dc8e4b7429b72675386fc903def06599d";
+const ETH_USD_MARKET_TOKEN = "0xb6fC4C9eB02C35A134044526C62bb15014Ac0Bcc"; // GM { indexToken: "WETH", longToken: "WETH", shortToken: "USDC.SG" }
+const ETH_USD_GLV_ADDRESS = "0xAb3567e55c205c62B141967145F37b7695a9F854"; // GMX Liquidity Vault [WETH-USDC.SG]
 
 // TOKEN=<USDC/GM/GLV> AMOUNT=<number> npx hardhat run --network arbitrumSepolia scripts/multichain/bridgeOutCrossChain.ts
 async function main() {
@@ -41,14 +43,17 @@ async function main() {
     amount = expandDecimals(Number(process.env.AMOUNT) || 30, 6); // 30 USDC
     stargatePool = await ethers.getContractAt("IStargate", STARGATE_POOL_USDC_ARB_SEPOLIA);
     token = await ethers.getContractAt("ERC20", await stargatePool.token());
+    logMultichainBalance(account, "USDC", token.address, 6);
   } else if (process.env.TOKEN === "GM") {
     amount = expandDecimals(Number(process.env.AMOUNT) || 10, 18); // 10 GM
     stargatePool = await ethers.getContractAt("IStargate", GM_OFT_ADAPTER);
     token = await ethers.getContractAt("ERC20", GM_ADDRESS);
+    logMultichainBalance(account, "GM", ETH_USD_MARKET_TOKEN);
   } else if (process.env.TOKEN === "GLV") {
     amount = expandDecimals(Number(process.env.AMOUNT) || 5, 18); // 5 GLV
     stargatePool = await ethers.getContractAt("IStargate", GLV_OFT_ADAPTER);
     token = await ethers.getContractAt("ERC20", GLV_ADDRESS);
+    logMultichainBalance(account, "GLV", ETH_USD_GLV_ADDRESS);
   } else {
     throw new Error("⚠️ Unsupported TOKEN type. Use 'USDC', 'GM', or 'GLV'.");
   }
@@ -85,8 +90,6 @@ async function main() {
     verifyingContract: multichainTransferRouter.address,
   });
 
-  logMultichainBalance(account, token, "before");
-
   const tx = await multichainTransferRouter.bridgeOut(
     { ...relayParams, signature },
     account,
@@ -97,8 +100,6 @@ async function main() {
   console.log("Bridge out tx:", tx.hash);
   await tx.wait();
   console.log("Tx receipt received");
-
-  logMultichainBalance(account, token, "after");
 }
 
 main().catch((error) => {

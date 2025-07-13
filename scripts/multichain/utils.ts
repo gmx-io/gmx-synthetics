@@ -40,6 +40,7 @@ export async function getDeployments(): Promise<any> {
     ["function getAddress(bytes32 key) view returns (address)", "function getUint(bytes32 key) view returns (uint256)"],
     provider
   );
+  const wntAddress = await dataStore.getAddress(keys.WNT);
 
   // contracts with provider from calling chain
   const roleStore: RoleStore = await ethers.getContractAt("RoleStore", (await roleStoreJson).address);
@@ -91,6 +92,7 @@ export async function getDeployments(): Promise<any> {
 
   return {
     dataStore,
+    wntAddress,
     roleStore,
     glvFactory,
     depositVault,
@@ -185,14 +187,14 @@ export async function logTokenBalance(account: string, token: ERC20, at = "") {
   return balance;
 }
 
-export async function logMultichainBalance(account: string, token: ERC20, at = "") {
+export async function logMultichainBalance(
+  account: string,
+  tokenSymbol: string,
+  tokenAddress: string,
+  tokenDecimals = 18
+) {
   const { dataStore } = await getDeployments();
-  const balance = await dataStore.getUint(keys.multichainBalanceKey(account, token.address));
-  console.log(
-    `User's multichain ${await token.symbol()} balance ${at}: ${ethers.utils.formatUnits(
-      balance,
-      await token.decimals()
-    )}`
-  );
+  const balance = await dataStore.getUint(keys.multichainBalanceKey(account, tokenAddress));
+  console.log(`User's multichain ${tokenSymbol} balance: ${ethers.utils.formatUnits(balance, tokenDecimals)}`);
   return balance;
 }

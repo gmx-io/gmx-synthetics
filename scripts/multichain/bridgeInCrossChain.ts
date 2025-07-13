@@ -10,9 +10,11 @@ import {
   checkBalance,
   getDeployments,
   getIncreasedValues,
+  logEthBalance,
   logMultichainBalance,
   logTokenBalance,
 } from "./utils";
+import * as keys from "../../utils/keys";
 
 const { ethers } = hre;
 
@@ -24,9 +26,13 @@ const { ethers } = hre;
 const STARGATE_POOL_USDC_SEPOLIA = "0x4985b8fcEA3659FD801a5b857dA1D00e985863F0";
 const GM_OFT = "0xe4EBcAC4a2e6CBEE385eE407f7D5E278Bc07e11e";
 const GLV_OFT = "0xD5BdEa6dC8E4B7429b72675386fC903DEf06599d";
+const STARGATE_POOL_NATIVE_SEPOLIA = "0x9Cc7e185162Aa5D1425ee924D97a87A0a34A0706";
 
 // ArbitrumSepolia
 const DST_EID = 40231;
+const STARGATE_USDC_ARB_SEPOLIA = "0x3253a335E7bFfB4790Aa4C25C4250d206E9b9773";
+const ETH_USD_MARKET_TOKEN = "0xb6fC4C9eB02C35A134044526C62bb15014Ac0Bcc"; // GM { indexToken: "WETH", longToken: "WETH", shortToken: "USDC.SG" }
+const ETH_USD_GLV_ADDRESS = "0xAb3567e55c205c62B141967145F37b7695a9F854"; // GMX Liquidity Vault [WETH-USDC.SG]
 
 const layerZeroProviderJson = import("../../deployments/arbitrumSepolia/LayerZeroProvider.json");
 
@@ -86,7 +92,7 @@ async function prepareSend(
   };
 }
 
-// TOKEN=<USDC/GM/GLV> AMOUNT=<number> npx hardhat run --network sepolia scripts/multichain/bridgeInCrossChain.ts
+// TOKEN=USDC npx hardhat run --network sepolia scripts/multichain/bridgeInCrossChain.ts
 async function main() {
   const [wallet] = await hre.ethers.getSigners();
   const account = wallet.address;
@@ -98,7 +104,17 @@ async function main() {
   let oft;
   const composedMsg = await getComposedMsg({ account });
 
-  if (process.env.TOKEN === "USDC") {
+  if (process.env.TOKEN === "ETH") {
+    amount = expandDecimals(Number(process.env.AMOUNT) || 20, 16); // 0.2 ETH
+    ({ valueToSend, sendParam, messagingFee, oft } = await prepareSend(
+      amount,
+      composedMsg,
+      STARGATE_POOL_NATIVE_SEPOLIA,
+      6
+    ));
+    const { wntAddress } = await getDeployments();
+    await logMultichainBalance(account, "WNT", wntAddress);
+  } else if (process.env.TOKEN === "USDC") {
     amount = expandDecimals(Number(process.env.AMOUNT) || 50, 6); // 50 USDC
     ({ valueToSend, sendParam, messagingFee, oft } = await prepareSend(
       amount,
@@ -106,19 +122,27 @@ async function main() {
       STARGATE_POOL_USDC_SEPOLIA,
       6
     ));
+    await logMultichainBalance(account, "USDC", STARGATE_POOL_USDC_SEPOLIA, 6);
   } else if (process.env.TOKEN === "GM") {
     amount = expandDecimals(Number(process.env.AMOUNT) || 3, 18); // 3 GM
     ({ valueToSend, sendParam, messagingFee, oft } = await prepareSend(amount, composedMsg, GM_OFT, 18));
+    await logMultichainBalance(account, "GM", ETH_USD_MARKET_TOKEN);
   } else if (process.env.TOKEN === "GLV") {
     amount = expandDecimals(Number(process.env.AMOUNT) || 1, 18); // 1 GLV
-    ({ valueToSend, sendParam, messagingFee, oft } = await prepareSend(amount, composedMsg, GLV_OFT, 18)); // todo
+    ({ valueToSend, sendParam, messagingFee, oft } = await prepareSend(amount, composedMsg, GLV_OFT, 18));
+    await logMultichainBalance(account, "GLV", ETH_USD_GLV_ADDRESS);
   } else {
     throw new Error("⚠️ Unsupported TOKEN type. Use 'USDC', 'GM', or 'GLV'.");
   }
 
   const token: ERC20 = await ethers.getContractAt("ERC20", await oft.token());
-  await checkBalance({ account, token, amount });
-  await checkAllowance({ account, token, spender: oft.address, amount });
+  if (process.env.TOKEN === "ETH") {
+    await logEthBalance(account, "before");
+  } else {
+    await checkBalance({ account, token, amount });
+    await checkAllowance({ account, token, spender: oft.address, amount });
+    await logTokenBalance(account, token, "before");
+  }
 
   const { gasPrice, gasLimit } = await getIncreasedValues({
     sendParam,
@@ -127,9 +151,6 @@ async function main() {
     valueToSend,
     stargatePool: oft,
   });
-
-  await logTokenBalance(account, token, "before");
-  await logMultichainBalance(account, token, "before");
 
   const tx = await oft.send(sendParam, messagingFee, account /* refundAddress */, {
     value: valueToSend,
@@ -141,8 +162,11 @@ async function main() {
   await tx.wait();
   console.log("Tx receipt received");
 
-  await logTokenBalance(account, token, "after");
-  await logMultichainBalance(account, token, "after (will update after funds are actually bridged)");
+  if (process.env.TOKEN === "ETH") {
+    await logEthBalance(account, "after");
+  } else {
+    await logTokenBalance(account, token, "after");
+  }
 }
 
 main().catch((error) => {
