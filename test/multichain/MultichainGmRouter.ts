@@ -399,7 +399,7 @@ describe("MultichainGmRouter", () => {
         expect(await hre.ethers.provider.getBalance(mockStargatePoolGM.address)).eq(bridgingFee); // mockStargatePoolGM received the bridging fee
       });
 
-      it("create withdrawal and bridge out from controller the GM tokens, on the same chain", async () => {
+      it("create withdrawal and bridge out from controller the long / short tokens, on the same chain", async () => {
         await sendCreateDeposit(createDepositParams); // refunds the executionfee of 0.004 ETH fee in user's multichain balance
         await bridgeInTokens(fixture, { account: user1, amount: relayFeeAmount }); // top-up user1's multichain balance to cover the relay fee
         await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });

@@ -363,7 +363,7 @@ describe("MultichainGlvRouter", () => {
         expect(await getBalanceOf(ethUsdGlvAddress, user1.address)).eq(expandDecimals(95_000, 18)); // 95k GLV bridged out into user's wallet
       });
 
-      it("creates glvWithdrawal and bridge out from controller the GLV tokens, on the same chain", async () => {
+      it("creates glvWithdrawal and bridge out from controller the long / short tokens, on the same chain", async () => {
         await sendCreateDeposit(createDepositParams);
         await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
         await bridgeInTokens(fixture, { account: user1, amount: relayFeeAmount }); // top-up user1's multichain balance to cover the relay fee

@@ -193,6 +193,8 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             revert Errors.InvalidEid(cache.dstEid);
         }
 
+        params.amount = _removeDust(stargate.token(), params.amount);
+
         (cache.valueToSend, cache.sendParam, cache.messagingFee, cache.receipt) = prepareSend(
             stargate,
             params.amount,
@@ -298,6 +300,18 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
 
         if (stargate.token() == address(0x0)) {
             valueToSend += receipt.amountSentLD;
+        }
+    }
+
+    /// @dev Remove dust to avoid SlippageExceeded reverts on GM / GLV adapters
+    function _removeDust(address token, uint256 _amountLD) private view returns (uint256 amountLD) {
+        if (ERC20(token).decimals() == 18) {
+            // remove dust for e.g. GM / GLV tokens
+            uint256 decimalConversionRate = 10 ** 12;
+            return (_amountLD / decimalConversionRate) * decimalConversionRate;
+        } else {
+            // no need to remove dust for e.g. USDC
+            return _amountLD;
         }
     }
 

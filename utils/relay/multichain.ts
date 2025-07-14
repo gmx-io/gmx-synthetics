@@ -566,7 +566,7 @@ export async function sendBridgeOut(p: {
   });
 }
 
-async function getBridgeOutSignature({
+export async function getBridgeOutSignature({
   signer,
   relayParams,
   verifyingContract,
