@@ -193,6 +193,8 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             revert Errors.InvalidEid(cache.dstEid);
         }
 
+        params.amount = _removeDust(stargate.token(), params.amount);
+
         (cache.valueToSend, cache.sendParam, cache.messagingFee, cache.receipt) = prepareSend(
             stargate,
             params.amount,
@@ -284,7 +286,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             dstEid: _dstEid,
             to: Cast.toBytes32(receiver),
             amountLD: amount,
-            minAmountLD: _removeDust(stargate.token(), amount),
+            minAmountLD: amount,
             extraOptions: bytes(""),
             composeMsg: bytes(""),
             oftCmd: ""
