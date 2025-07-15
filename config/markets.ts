@@ -1560,7 +1560,7 @@ const config: {
       positionImpactPoolDistributionRate: bigNumberify(0),
       minPositionImpactPoolAmount: bigNumberify(0),
 
-      maxOpenInterest: decimalToFloat(1_000_000),
+      maxOpenInterest: decimalToFloat(6_000_000),
 
       maxPoolUsdForDeposit: decimalToFloat(9_000_000),
       maxLongTokenPoolAmount: expandDecimals(2960, 18),
