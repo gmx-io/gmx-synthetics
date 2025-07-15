@@ -127,7 +127,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("MOODENG", arbitrum_btcUsdcDefaultCap, 1),
           createGlvMarketConfig("XMR", arbitrum_btcUsdcDefaultCap, 1),
           createGlvMarketConfig("PI", arbitrum_btcUsdcDefaultCap, 1),
-          createGlvMarketConfig("PUMP", arbitrum_btcUsdcDefaultCap, 1),
+          createGlvMarketConfig("PUMP", 250_000, 1),
         ],
       },
     ],
