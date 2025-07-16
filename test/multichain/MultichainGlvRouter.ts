@@ -3,12 +3,20 @@ import { impersonateAccount, setBalance } from "@nomicfoundation/hardhat-network
 import { expandDecimals } from "../../utils/math";
 import { deployFixture } from "../../utils/fixture";
 import { GELATO_RELAY_ADDRESS } from "../../utils/relay/addresses";
-import { sendCreateDeposit, sendCreateGlvDeposit, sendCreateGlvWithdrawal } from "../../utils/relay/multichain";
+import {
+  getCreateGlvDepositSignature,
+  getCreateGlvWithdrawalSignature,
+  sendCreateDeposit,
+  sendCreateGlvDeposit,
+  sendCreateGlvWithdrawal,
+} from "../../utils/relay/multichain";
 import * as keys from "../../utils/keys";
 import { executeDeposit } from "../../utils/deposit";
 import { getBalanceOf } from "../../utils/token";
 import { executeGlvDeposit, executeGlvWithdrawal, getGlvDepositCount, getGlvWithdrawalCount } from "../../utils/glv";
 import { encodeBridgeOutDataList, bridgeInTokens } from "../../utils/multichain";
+import { errorsContract } from "../../utils/error";
+import { getRelayParams } from "../../utils/relay/helpers";
 
 describe("MultichainGlvRouter", () => {
   let fixture;
@@ -229,6 +237,142 @@ describe("MultichainGlvRouter", () => {
         expandDecimals(95_000, 18)
       ); // 95k GLV
     });
+
+    it("should revert if signature is invalid due to incorrect signer", async () => {
+      await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
+
+      createGlvDepositParams.signer = user2; // incorrect signer
+      await expect(sendCreateGlvDeposit(createGlvDepositParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidRecoveredSigner"
+      );
+
+      createGlvDepositParams.signer = user1; // correct signer
+      await bridgeInTokens(fixture, { account: user1, amount: wntAmount.add(feeAmount) });
+      await bridgeInTokens(fixture, { account: user1, token: usdc, amount: usdcAmount });
+      await expect(sendCreateGlvDeposit(createGlvDepositParams)).to.not.be.reverted;
+    });
+
+    it("should transfer WNT to relayer for relay fee", async () => {
+      await bridgeInTokens(fixture, { account: user1, amount: wntAmount.add(feeAmount) });
+      await bridgeInTokens(fixture, { account: user1, token: usdc, amount: usdcAmount });
+
+      const relayInitial = await wnt.balanceOf(GELATO_RELAY_ADDRESS);
+      await sendCreateGlvDeposit(createGlvDepositParams);
+      const relayFinal = await wnt.balanceOf(GELATO_RELAY_ADDRESS);
+      expect(relayFinal.sub(relayInitial)).eq(relayFeeAmount);
+    });
+
+    it("should revert if deadline has passed", async () => {
+      await bridgeInTokens(fixture, { account: user1, amount: wntAmount.add(feeAmount) });
+      await bridgeInTokens(fixture, { account: user1, token: usdc, amount: usdcAmount });
+
+      createGlvDepositParams.deadline = 1; // past deadline
+      await expect(sendCreateGlvDeposit(createGlvDepositParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "DeadlinePassed"
+      );
+
+      createGlvDepositParams.deadline = 9999999999; // future deadline
+      await expect(sendCreateGlvDeposit(createGlvDepositParams)).to.not.be.reverted;
+    });
+
+    it("should revert if any data in params is tampered", async () => {
+      await bridgeInTokens(fixture, { account: user1, amount: wntAmount.add(feeAmount) });
+      await bridgeInTokens(fixture, { account: user1, token: usdc, amount: usdcAmount });
+
+      createGlvDepositParams.userNonce = 1; // set value upfront to have the same user nonce for relayParams here and when recalculated in sendCreateGlvDeposit
+      const relayParams = await getRelayParams(createGlvDepositParams);
+      const signature = await getCreateGlvDepositSignature({
+        ...createGlvDepositParams,
+        relayParams,
+        verifyingContract: createGlvDepositParams.relayRouter.address,
+      });
+      createGlvDepositParams.signature = signature;
+
+      createGlvDepositParams.params.minGlvTokens = 99; // tamper a param field
+      await expect(sendCreateGlvDeposit(createGlvDepositParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidRecoveredSigner"
+      );
+
+      createGlvDepositParams.params.minGlvTokens = 100; // use the original value again
+      await expect(sendCreateGlvDeposit(createGlvDepositParams)).to.not.be.reverted;
+    });
+
+    it("should revert if amounts cannot be covered", async () => {
+      await expect(sendCreateGlvDeposit(createGlvDepositParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InsufficientMultichainBalance"
+      );
+
+      // bridge in long + fee tokens, but not USDC
+      await bridgeInTokens(fixture, { account: user1, amount: wntAmount.add(feeAmount) });
+      await expect(sendCreateGlvDeposit(createGlvDepositParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InsufficientMultichainBalance"
+      );
+
+      // bridge in short token as well
+      await bridgeInTokens(fixture, { account: user1, token: usdc, amount: usdcAmount });
+      await expect(sendCreateGlvDeposit(createGlvDepositParams)).to.not.be.reverted;
+    });
+
+    it("should transfer tokens from MultichainVault to GlvVault", async () => {
+      await bridgeInTokens(fixture, { account: user1, amount: wntAmount.add(feeAmount) });
+      await bridgeInTokens(fixture, { account: user1, token: usdc, amount: usdcAmount });
+
+      expect(await wnt.balanceOf(multichainVault.address)).to.eq(wntAmount.add(feeAmount));
+      expect(await usdc.balanceOf(multichainVault.address)).to.eq(usdcAmount);
+      expect(await wnt.balanceOf(glvVault.address)).to.eq(0);
+      expect(await usdc.balanceOf(glvVault.address)).to.eq(0);
+
+      await sendCreateGlvDeposit(createGlvDepositParams);
+
+      expect(await wnt.balanceOf(multichainVault.address)).to.eq(0); // transferred out
+      expect(await usdc.balanceOf(multichainVault.address)).to.eq(0); // transferred out
+      expect(await wnt.balanceOf(glvVault.address)).to.eq(wntAmount.add(executionFee)); // transferred in
+      expect(await usdc.balanceOf(glvVault.address)).to.eq(usdcAmount); // transferred in
+    });
+
+    it("should revert if user has insufficient multichain balance", async () => {
+      // await bridgeInTokens(fixture, { account: user1, amount: wntAmount.add(feeAmount) });
+      // await bridgeInTokens(fixture, { account: user1, token: usdc, amount: usdcAmount });
+
+      await dataStore.setUint(keys.multichainBalanceKey(user0.address, wnt.address), 0); // remove balance
+      await expect(sendCreateGlvDeposit(createGlvDepositParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InsufficientMultichainBalance"
+      );
+    });
+
+    it("should revert if same params are reused (simulate replay)", async () => {
+      createGlvDepositParams.userNonce = 1; // set value upfront to have the same user nonce for relayParams here and when recalculated in sendCreateGlvDeposit
+      const relayParams = await getRelayParams(createGlvDepositParams);
+      const signature = await getCreateGlvDepositSignature({
+        ...createGlvDepositParams,
+        relayParams,
+        verifyingContract: createGlvDepositParams.relayRouter.address,
+      });
+      createGlvDepositParams.signature = signature;
+
+      await bridgeInTokens(fixture, { account: user1, amount: wntAmount.add(feeAmount) });
+      await bridgeInTokens(fixture, { account: user1, token: usdc, amount: usdcAmount });
+      await sendCreateGlvDeposit(createGlvDepositParams);
+
+      // reuse exact same params and signature
+      await bridgeInTokens(fixture, { account: user1, amount: wntAmount.add(feeAmount) });
+      await bridgeInTokens(fixture, { account: user1, token: usdc, amount: usdcAmount });
+      await expect(sendCreateGlvDeposit(createGlvDepositParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidUserDigest"
+      );
+
+      // reset nonce and signature (sendCreateGlvDeposit will recalculate them)
+      createGlvDepositParams.userNonce = undefined;
+      createGlvDepositParams.signature = undefined;
+      await expect(sendCreateGlvDeposit(createGlvDepositParams)).to.not.be.reverted;
+    });
   });
 
   describe("createGlvWithdrawal", () => {
@@ -319,6 +463,164 @@ describe("MultichainGlvRouter", () => {
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).eq(
         expandDecimals(45_000, 6)
       ); // 45,000 USDC
+    });
+
+    it("should revert if signature is invalid due to incorrect signer", async () => {
+      await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
+
+      createGlvWithdrawalParams.signer = user2; // incorrect signer
+      await expect(sendCreateGlvWithdrawal(createGlvWithdrawalParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidRecoveredSigner"
+      );
+
+      await bridgeInTokens(fixture, { account: user1, amount: wntAmount.add(relayFeeAmount) });
+      await bridgeInTokens(fixture, { account: user1, token: usdc, amount: usdcAmount });
+      await sendCreateGlvDeposit(createGlvDepositParams);
+      await executeGlvDeposit(fixture, { gasUsageLabel: "executeGlvDeposit" });
+
+      createGlvWithdrawalParams.signer = user1; // correct signer
+      await expect(sendCreateGlvWithdrawal(createGlvWithdrawalParams)).to.not.be.reverted;
+    });
+
+    it("should transfer WNT to relayer for relay fee", async () => {
+      await bridgeInTokens(fixture, { account: user1, amount: wntAmount.add(feeAmount) });
+      await bridgeInTokens(fixture, { account: user1, token: usdc, amount: usdcAmount });
+      await sendCreateGlvDeposit(createGlvDepositParams);
+      await executeGlvDeposit(fixture, { gasUsageLabel: "executeGlvDeposit" });
+      await bridgeInTokens(fixture, { account: user1, amount: relayFeeAmount });
+
+      const relayInitial = await wnt.balanceOf(GELATO_RELAY_ADDRESS);
+      await sendCreateGlvWithdrawal(createGlvWithdrawalParams);
+      const relayFinal = await wnt.balanceOf(GELATO_RELAY_ADDRESS);
+      expect(relayFinal.sub(relayInitial)).eq(relayFeeAmount);
+    });
+
+    it("should revert if deadline has passed", async () => {
+      await bridgeInTokens(fixture, { account: user1, amount: wntAmount.add(feeAmount) });
+      await bridgeInTokens(fixture, { account: user1, token: usdc, amount: usdcAmount });
+      await sendCreateGlvDeposit(createGlvDepositParams);
+      await executeGlvDeposit(fixture, { gasUsageLabel: "executeGlvDeposit" });
+      await bridgeInTokens(fixture, { account: user1, amount: relayFeeAmount });
+
+      createGlvWithdrawalParams.deadline = 1; // past deadline
+      await expect(sendCreateGlvWithdrawal(createGlvWithdrawalParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "DeadlinePassed"
+      );
+
+      createGlvWithdrawalParams.deadline = 9999999999; // future deadline
+      await sendCreateGlvWithdrawal(createGlvWithdrawalParams); // ).to.not.be.reverted;
+    });
+
+    it("should revert if any data in params is tampered", async () => {
+      await bridgeInTokens(fixture, { account: user1, amount: wntAmount.add(feeAmount) });
+      await bridgeInTokens(fixture, { account: user1, token: usdc, amount: usdcAmount });
+      await sendCreateGlvDeposit(createGlvDepositParams);
+      await executeGlvDeposit(fixture, { gasUsageLabel: "executeGlvDeposit" });
+      await bridgeInTokens(fixture, { account: user1, amount: relayFeeAmount });
+
+      createGlvWithdrawalParams.userNonce = 1; // set value upfront to have the same user nonce for relayParams here and when recalculated in sendCreateGlvWithdrawal
+      const relayParams = await getRelayParams(createGlvWithdrawalParams);
+      const signature = await getCreateGlvWithdrawalSignature({
+        ...createGlvWithdrawalParams,
+        relayParams,
+        verifyingContract: createGlvWithdrawalParams.relayRouter.address,
+      });
+      createGlvWithdrawalParams.signature = signature;
+
+      createGlvWithdrawalParams.deadline = 9999999998; // tamper a param field
+      // await sendCreateGlvWithdrawal(createGlvWithdrawalParams)
+      await expect(sendCreateGlvWithdrawal(createGlvWithdrawalParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidRecoveredSigner"
+      );
+
+      createGlvWithdrawalParams.deadline = 9999999999; // use the original value again
+      await expect(sendCreateGlvWithdrawal(createGlvWithdrawalParams)).to.not.be.reverted;
+    });
+
+    it("should revert if fee cannot be covered", async () => {
+      await bridgeInTokens(fixture, { account: user1, amount: wntAmount.add(feeAmount) });
+      await bridgeInTokens(fixture, { account: user1, token: usdc, amount: usdcAmount });
+      await sendCreateGlvDeposit(createGlvDepositParams);
+      await executeGlvDeposit(fixture, { gasUsageLabel: "executeGlvDeposit" });
+
+      await expect(sendCreateGlvWithdrawal(createGlvWithdrawalParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InsufficientMultichainBalance"
+      );
+
+      await bridgeInTokens(fixture, { account: user1, amount: relayFeeAmount });
+      await expect(sendCreateGlvWithdrawal(createGlvWithdrawalParams)).to.not.be.reverted;
+    });
+
+    it("should transfer tokens from MultichainVault to GlvVault", async () => {
+      await bridgeInTokens(fixture, { account: user1, amount: wntAmount.add(feeAmount) });
+      await bridgeInTokens(fixture, { account: user1, token: usdc, amount: usdcAmount });
+      await sendCreateGlvDeposit(createGlvDepositParams);
+      await executeGlvDeposit(fixture, { gasUsageLabel: "executeGlvDeposit" });
+
+      expect(await getBalanceOf(ethUsdGlvAddress, multichainVault.address)).eq(expandDecimals(95_000, 18));
+      expect(await getBalanceOf(ethUsdGlvAddress, glvVault.address)).eq(0);
+
+      await bridgeInTokens(fixture, { account: user1, amount: relayFeeAmount });
+      await sendCreateGlvWithdrawal(createGlvWithdrawalParams);
+
+      expect(await getBalanceOf(ethUsdGlvAddress, multichainVault.address)).eq(0); // transferred out
+      expect(await getBalanceOf(ethUsdGlvAddress, glvVault.address)).eq(expandDecimals(95_000, 18)); // transferred in
+    });
+
+    it("should revert if user has insufficient multichain balance", async () => {
+      await bridgeInTokens(fixture, { account: user1, amount: wntAmount.add(feeAmount) });
+      await bridgeInTokens(fixture, { account: user1, token: usdc, amount: usdcAmount });
+      await sendCreateGlvDeposit(createGlvDepositParams);
+      await executeGlvDeposit(fixture, { gasUsageLabel: "executeGlvDeposit" });
+      await bridgeInTokens(fixture, { account: user1, amount: relayFeeAmount });
+
+      const withdrawalAmount = expandDecimals(95_000, 18);
+      createGlvWithdrawalParams.transferRequests.amounts = [withdrawalAmount.add(1)];
+      await expect(sendCreateGlvWithdrawal(createGlvWithdrawalParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InsufficientMultichainBalance"
+      );
+
+      createGlvWithdrawalParams.transferRequests.amounts = [withdrawalAmount];
+      await expect(sendCreateGlvWithdrawal(createGlvWithdrawalParams)).to.not.be.reverted;
+    });
+
+    it("should revert if same params are reused (simulate replay)", async () => {
+      await bridgeInTokens(fixture, { account: user1, amount: wntAmount.add(feeAmount) });
+      await bridgeInTokens(fixture, { account: user1, token: usdc, amount: usdcAmount });
+      await sendCreateGlvDeposit(createGlvDepositParams);
+      await executeGlvDeposit(fixture, { gasUsageLabel: "executeGlvDeposit" });
+
+      createGlvWithdrawalParams.userNonce = 1; // set value upfront to have the same user nonce for relayParams here and when recalculated in sendCreateGlvWithdrawal
+      createGlvWithdrawalParams.transferRequests.amounts = [expandDecimals(10_000, 18)]; // set lower withdrawal amount to enable multiple withdrawals
+      const relayParams = await getRelayParams(createGlvWithdrawalParams);
+      const signature = await getCreateGlvWithdrawalSignature({
+        ...createGlvWithdrawalParams,
+        relayParams,
+        verifyingContract: createGlvWithdrawalParams.relayRouter.address,
+      });
+      createGlvWithdrawalParams.signature = signature;
+
+      await bridgeInTokens(fixture, { account: user1, amount: wntAmount.add(feeAmount) });
+      await bridgeInTokens(fixture, { account: user1, token: usdc, amount: usdcAmount });
+      await sendCreateGlvWithdrawal(createGlvWithdrawalParams);
+
+      // reuse exact same params and signature
+      await bridgeInTokens(fixture, { account: user1, amount: wntAmount.add(feeAmount) });
+      await bridgeInTokens(fixture, { account: user1, token: usdc, amount: usdcAmount });
+      await expect(sendCreateGlvWithdrawal(createGlvWithdrawalParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidUserDigest"
+      );
+
+      // reset nonce and signature (sendCreateGlvWithdrawal will recalculate them)
+      createGlvWithdrawalParams.userNonce = undefined;
+      createGlvWithdrawalParams.signature = undefined;
+      await expect(sendCreateGlvWithdrawal(createGlvWithdrawalParams)).to.not.be.reverted;
     });
 
     describe("bridgeOutFromController", () => {
