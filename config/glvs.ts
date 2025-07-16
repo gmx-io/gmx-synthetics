@@ -148,6 +148,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("LTC", avalanche_avaxUsdcDefaultCap, 2.9631),
           createGlvMarketConfig("TRUMP", avalanche_avaxUsdcDefaultCap, 0.98854),
           createGlvMarketConfig("MELANIA", avalanche_avaxUsdcDefaultCap, 0.95133),
+          createGlvMarketConfig("PUMP", avalanche_avaxUsdcDefaultCap, 1),
         ],
       },
     ],
