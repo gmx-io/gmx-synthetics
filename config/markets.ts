@@ -3245,6 +3245,35 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(4, 8), // ~500k USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(500_000, 6), // ~500k USD (2x the max open interest)
     },
+    {
+      tokens: { indexToken: "ARB", longToken: "ARB", shortToken: "ARB" },
+      virtualTokenIdForIndexToken: hashString("PERP:ARB/USD"),
+
+      ...singleTokenMarketConfig,
+      reserveFactor: percentageToFloat("105%"),
+      openInterestReserveFactor: percentageToFloat("100%"),
+      maxPnlFactorForTraders: percentageToFloat("90%"),
+
+      ...fundingRateConfig_High,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
+
+      negativePositionImpactFactor: exponentToFloat("8.4e-9"),
+      positivePositionImpactFactor: exponentToFloat("7e-9"),
+      positionImpactExponentFactor: exponentToFloat("2e0"),
+
+      positiveMaxPositionImpactFactor: percentageToFloat("0.5%"),
+      negativeMaxPositionImpactFactor: percentageToFloat("0.5%"),
+      maxPositionImpactFactorForLiquidations: bigNumberify(0), // 0%
+
+      minCollateralFactor: percentageToFloat("1.33%"), // 75x leverage
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("1.48e-8"),
+
+      maxOpenInterest: decimalToFloat(1_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(1_500_000), // 1.5x the max open interest
+
+      maxLongTokenPoolAmount: expandDecimals(4_500_000, 18), // ~2M USD (2x the max open interest)
+      maxShortTokenPoolAmount: expandDecimals(4_500_000, 18), // ~2M USD (2x the max open interest)
+    },
   ],
   avalanche: [
     {
