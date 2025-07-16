@@ -1,3 +1,4 @@
+import prompts from "prompts";
 import hre from "hardhat";
 
 import { getMarketKey, getMarketTokenAddresses, getOnchainMarkets } from "../utils/market";
@@ -120,7 +121,7 @@ async function main() {
           4,
           true
         ),
-        change ? formatAmount(change, 2) + "x" : "-"
+        change ? formatAmount(change, 4) + "x" : "-"
       );
     }
 
@@ -130,11 +131,11 @@ async function main() {
         : null;
       wasChanged = true;
       console.log(
-        "minPositionImpactPoolAmount           %s %s -> %s (%sx)",
+        "minPositionImpactPoolAmount           %s %s -> %s (%s)",
         marketLabel.padEnd(18),
         formatAmount(currentMinPositionImpactPoolAmount, indexTokenConfig.decimals, 2, true),
         formatAmount(marketConfig.minPositionImpactPoolAmount, indexTokenConfig.decimals, 2, true),
-        change ? formatAmount(change, 2) : "- "
+        change ? formatAmount(change, 4) + "x" : "-"
       );
     }
 
@@ -157,7 +158,16 @@ async function main() {
   console.log(`updating ${multicallWriteParams.length} params`);
   console.log("multicallWriteParams", multicallWriteParams);
 
-  if (process.env.WRITE === "true") {
+  let write = process.env.WRITE === "true";
+  if (!write) {
+    ({ write } = await prompts({
+      type: "confirm",
+      name: "write",
+      message: "Do you want to execute the transactions?",
+    }));
+  }
+
+  if (write) {
     const tx = await config.multicall(multicallWriteParams);
     console.log(`tx sent: ${tx.hash}`);
   } else {
