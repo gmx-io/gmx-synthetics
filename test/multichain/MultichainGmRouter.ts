@@ -4,13 +4,22 @@ import { impersonateAccount, setBalance } from "@nomicfoundation/hardhat-network
 import { decimalToFloat, expandDecimals } from "../../utils/math";
 import { deployFixture } from "../../utils/fixture";
 import { GELATO_RELAY_ADDRESS } from "../../utils/relay/addresses";
-import { sendCreateDeposit, sendCreateWithdrawal, sendCreateShift } from "../../utils/relay/multichain";
+import {
+  sendCreateDeposit,
+  sendCreateWithdrawal,
+  sendCreateShift,
+  getCreateDepositSignature,
+  getCreateWithdrawalSignature,
+  getCreateShiftSignature,
+} from "../../utils/relay/multichain";
 import * as keys from "../../utils/keys";
 import { executeDeposit, getDepositCount, getDepositKeys } from "../../utils/deposit";
 import { executeWithdrawal, getWithdrawalCount, getWithdrawalKeys } from "../../utils/withdrawal";
 import { getBalanceOf } from "../../utils/token";
 import { executeShift, getShiftCount, getShiftKeys } from "../../utils/shift";
 import { encodeBridgeOutDataList, bridgeInTokens } from "../../utils/multichain";
+import { getRelayParams } from "../../utils/relay/helpers";
+import { errorsContract } from "../../utils/error";
 
 describe("MultichainGmRouter", () => {
   let fixture;
@@ -206,6 +215,113 @@ describe("MultichainGmRouter", () => {
         expandDecimals(95_000, 18)
       ); // 95,000 GM
     });
+
+    it("should revert if signature is invalid due to incorrect signer", async () => {
+      createDepositParams.signer = user2; // incorrect signer
+      await expect(sendCreateDeposit(createDepositParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidRecoveredSigner"
+      );
+
+      createDepositParams.signer = user0; // correct signer
+      await expect(sendCreateDeposit(createDepositParams)).to.not.be.reverted;
+    });
+
+    it("should transfer WNT to relayer for relay fee", async () => {
+      const relayInitial = await wnt.balanceOf(GELATO_RELAY_ADDRESS);
+      await sendCreateDeposit(createDepositParams);
+      const relayFinal = await wnt.balanceOf(GELATO_RELAY_ADDRESS);
+      expect(relayFinal.sub(relayInitial)).eq(relayFeeAmount);
+    });
+
+    it("should revert if deadline has passed", async () => {
+      createDepositParams.deadline = 1; // past deadline
+      await expect(sendCreateDeposit(createDepositParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "DeadlinePassed"
+      );
+
+      createDepositParams.deadline = 9999999999; // future deadline
+      await expect(sendCreateDeposit(createDepositParams)).to.not.be.reverted;
+    });
+
+    it("should revert if any data in params is tampered", async () => {
+      createDepositParams.userNonce = 1; // set value upfront to have the same user nonce for relayParams here and when recalculated in sendCreateDeposit
+      const relayParams = await getRelayParams(createDepositParams);
+      const signature = await getCreateDepositSignature({
+        ...createDepositParams,
+        relayParams,
+        verifyingContract: createDepositParams.relayRouter.address,
+      });
+      createDepositParams.signature = signature;
+
+      createDepositParams.params.minMarketTokens = 123456; // tamper a param field
+      await expect(sendCreateDeposit(createDepositParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidRecoveredSigner"
+      );
+
+      createDepositParams.params.minMarketTokens = 100; // use the original value again
+      await expect(sendCreateDeposit(createDepositParams)).to.not.be.reverted;
+    });
+
+    it("should revert if fee cannot be covered", async () => {
+      await dataStore.setUint(keys.multichainBalanceKey(user0.address, wnt.address), wntAmount.add(feeAmount).sub(1)); // missing 1 wei
+      await expect(sendCreateDeposit(createDepositParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InsufficientMultichainBalance"
+      );
+
+      await dataStore.setUint(keys.multichainBalanceKey(user0.address, wnt.address), wntAmount.add(feeAmount));
+      await expect(sendCreateDeposit(createDepositParams)).to.not.be.reverted;
+    });
+
+    it("should transfer tokens from MultichainVault to DepositVault", async () => {
+      expect(await wnt.balanceOf(multichainVault.address)).to.eq(wntAmount.add(feeAmount));
+      expect(await usdc.balanceOf(multichainVault.address)).to.eq(usdcAmount);
+      expect(await wnt.balanceOf(depositVault.address)).to.eq(0);
+      expect(await usdc.balanceOf(depositVault.address)).to.eq(0);
+
+      await sendCreateDeposit(createDepositParams);
+
+      expect(await wnt.balanceOf(multichainVault.address)).to.eq(0); // transferred out
+      expect(await usdc.balanceOf(multichainVault.address)).to.eq(0); // transferred out
+      expect(await wnt.balanceOf(depositVault.address)).to.eq(wntAmount.add(executionFee)); // transferred in
+      expect(await usdc.balanceOf(depositVault.address)).to.eq(usdcAmount); // transferred in
+    });
+
+    it("should revert if user has insufficient multichain balance", async () => {
+      await dataStore.setUint(keys.multichainBalanceKey(user0.address, wnt.address), 0); // remove balance
+      await expect(sendCreateDeposit(createDepositParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InsufficientMultichainBalance"
+      );
+    });
+
+    it("should revert if same params are reused (simulate replay)", async () => {
+      createDepositParams.userNonce = 1; // set value upfront to have the same user nonce for relayParams here and when recalculated in sendCreateDeposit
+      const relayParams = await getRelayParams(createDepositParams);
+      const signature = await getCreateDepositSignature({
+        ...createDepositParams,
+        relayParams,
+        verifyingContract: createDepositParams.relayRouter.address,
+      });
+      createDepositParams.signature = signature;
+      await sendCreateDeposit(createDepositParams);
+
+      await bridgeInTokens(fixture, { account: user0, amount: wntAmount.add(feeAmount) });
+      await bridgeInTokens(fixture, { account: user0, token: usdc, amount: usdcAmount });
+      // reuse exact same params and signature
+      await expect(sendCreateDeposit(createDepositParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidUserDigest"
+      );
+
+      // reset nonce and signature (sendCreateDeposit will recalculate them)
+      createDepositParams.userNonce = undefined;
+      createDepositParams.signature = undefined;
+      await expect(sendCreateDeposit(createDepositParams)).to.not.be.reverted;
+    });
   });
 
   describe("createWithdrawal", () => {
@@ -320,6 +436,130 @@ describe("MultichainGmRouter", () => {
       expect(await usdc.balanceOf(withdrawalVault.address)).eq(0); // all usdc was sent to multichainVault
       expect(await getBalanceOf(ethUsdMarket.marketToken, multichainVault.address)).eq(0); // all GM tokens were burned
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdMarket.marketToken))).to.eq(0); // all user's GM tokens were burned
+    });
+
+    it("should revert if signature is invalid due to incorrect signer", async () => {
+      await sendCreateDeposit(createDepositParams);
+      await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
+      await bridgeInTokens(fixture, { account: user1, amount: relayFeeAmount });
+
+      createWithdrawalParams.signer = user2; // incorrect signer
+      await expect(sendCreateWithdrawal(createWithdrawalParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidRecoveredSigner"
+      );
+
+      createWithdrawalParams.signer = user1; // correct signer
+      await expect(sendCreateWithdrawal(createWithdrawalParams)).to.not.be.reverted;
+    });
+
+    it("should transfer WNT to relayer for relay fee", async () => {
+      await sendCreateDeposit(createDepositParams);
+      await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
+      await bridgeInTokens(fixture, { account: user1, amount: relayFeeAmount });
+
+      const relayInitial = await wnt.balanceOf(GELATO_RELAY_ADDRESS);
+      await sendCreateWithdrawal(createWithdrawalParams);
+      const relayFinal = await wnt.balanceOf(GELATO_RELAY_ADDRESS);
+      expect(relayFinal.sub(relayInitial)).eq(relayFeeAmount);
+    });
+
+    it("should revert if deadline has passed", async () => {
+      await sendCreateDeposit(createDepositParams);
+      await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
+      await bridgeInTokens(fixture, { account: user1, amount: relayFeeAmount });
+
+      createWithdrawalParams.deadline = 1; // past deadline
+      await expect(sendCreateWithdrawal(createWithdrawalParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "DeadlinePassed"
+      );
+
+      createWithdrawalParams.deadline = 9999999999; // future deadline
+      await expect(sendCreateWithdrawal(createWithdrawalParams)).to.not.be.reverted;
+    });
+
+    it("should revert if any data in params is tampered", async () => {
+      await sendCreateDeposit(createDepositParams);
+      await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
+      await bridgeInTokens(fixture, { account: user1, amount: relayFeeAmount });
+
+      createWithdrawalParams.userNonce = 1; // set value upfront to have the same user nonce for relayParams here and when recalculated in sendCreateWithdrawal
+      const relayParams = await getRelayParams(createWithdrawalParams);
+      const signature = await getCreateWithdrawalSignature({
+        ...createWithdrawalParams,
+        relayParams,
+        verifyingContract: createWithdrawalParams.relayRouter.address,
+      });
+      createWithdrawalParams.signature = signature;
+
+      createWithdrawalParams.params.minLongTokenAmount = 1; // tamper a param field
+      await expect(sendCreateWithdrawal(createWithdrawalParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidRecoveredSigner"
+      );
+
+      createWithdrawalParams.params.minLongTokenAmount = 0; // use the original value again
+      await expect(sendCreateWithdrawal(createWithdrawalParams)).to.not.be.reverted;
+    });
+
+    it("should revert if fee cannot be covered", async () => {
+      await dataStore.setUint(keys.multichainBalanceKey(user0.address, wnt.address), feeAmount.sub(1)); // missing 1 wei
+      await expect(sendCreateWithdrawal(createWithdrawalParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InsufficientMultichainBalance"
+      );
+    });
+
+    it("should transfer GM tokens from MultichainVault to WithdrawalVault", async () => {
+      await sendCreateDeposit(createDepositParams);
+      await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
+      await bridgeInTokens(fixture, { account: user1, amount: relayFeeAmount });
+
+      expect(await getBalanceOf(ethUsdMarket.marketToken, multichainVault.address)).eq(expandDecimals(95_000, 18));
+      expect(await getBalanceOf(ethUsdMarket.marketToken, withdrawalVault.address)).eq(0);
+
+      await sendCreateWithdrawal(createWithdrawalParams);
+
+      expect(await getBalanceOf(ethUsdMarket.marketToken, multichainVault.address)).eq(0); // transferred out
+      expect(await getBalanceOf(ethUsdMarket.marketToken, withdrawalVault.address)).eq(expandDecimals(95_000, 18)); // transferred in
+    });
+
+    it("should revert if user has insufficient multichain balance", async () => {
+      await dataStore.setUint(keys.multichainBalanceKey(user1.address, wnt.address), 0); // remove balance
+      await expect(sendCreateWithdrawal(createWithdrawalParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InsufficientMultichainBalance"
+      );
+    });
+
+    it("should revert if same params are reused (simulate replay)", async () => {
+      await sendCreateDeposit(createDepositParams);
+      await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
+      await bridgeInTokens(fixture, { account: user1, amount: relayFeeAmount });
+
+      createWithdrawalParams.userNonce = 1; // set value upfront to have the same user nonce for relayParams here and when recalculated in sendCreateWithdrawal
+      createWithdrawalParams.transferRequests.amounts = [expandDecimals(10_000, 18)]; // reduce withdrawal amount to enable multiple withdrawals
+      const relayParams = await getRelayParams(createWithdrawalParams);
+      const signature = await getCreateWithdrawalSignature({
+        ...createWithdrawalParams,
+        relayParams,
+        verifyingContract: createWithdrawalParams.relayRouter.address,
+      });
+      createWithdrawalParams.signature = signature;
+      await sendCreateWithdrawal(createWithdrawalParams);
+
+      await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
+      // reuse exact same params and signature
+      await expect(sendCreateWithdrawal(createWithdrawalParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidUserDigest"
+      );
+
+      // reset nonce and signature (sendCreateWithdrawal will recalculate them)
+      createWithdrawalParams.userNonce = undefined;
+      createWithdrawalParams.signature = undefined;
+      await expect(sendCreateWithdrawal(createWithdrawalParams)).to.not.be.reverted;
     });
 
     describe("bridgeOutFromController", () => {
@@ -515,6 +755,130 @@ describe("MultichainGmRouter", () => {
       expect(
         await dataStore.getUint(keys.multichainBalanceKey(user1.address, solUsdMarket.marketToken))
       ).to.approximately(expandDecimals(50_000, 18), expandDecimals(1, 12)); // ~50k
+    });
+
+    it("should revert if signature is invalid due to incorrect signer", async () => {
+      await sendCreateDeposit(createDepositParams);
+      await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
+      await bridgeInTokens(fixture, { account: user1, amount: relayFeeAmount });
+
+      createShiftParams.signer = user2; // incorrect signer
+      await expect(sendCreateShift(createShiftParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidRecoveredSigner"
+      );
+
+      createShiftParams.signer = user1; // correct signer
+      await expect(sendCreateShift(createShiftParams)).to.not.be.reverted;
+    });
+
+    it("should transfer WNT to relayer for relay fee", async () => {
+      await sendCreateDeposit(createDepositParams);
+      await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
+      await bridgeInTokens(fixture, { account: user1, amount: relayFeeAmount });
+
+      const relayInitial = await wnt.balanceOf(GELATO_RELAY_ADDRESS);
+      await sendCreateShift(createShiftParams);
+      const relayFinal = await wnt.balanceOf(GELATO_RELAY_ADDRESS);
+      expect(relayFinal.sub(relayInitial)).eq(relayFeeAmount);
+    });
+
+    it("should revert if deadline has passed", async () => {
+      await sendCreateDeposit(createDepositParams);
+      await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
+      await bridgeInTokens(fixture, { account: user1, amount: relayFeeAmount });
+
+      createShiftParams.deadline = 1; // past deadline
+      await expect(sendCreateShift(createShiftParams)).to.be.revertedWithCustomError(errorsContract, "DeadlinePassed");
+
+      createShiftParams.deadline = 9999999999; // future deadline
+      await expect(sendCreateShift(createShiftParams)).to.not.be.reverted;
+    });
+
+    it("should revert if any data in params is tampered", async () => {
+      await sendCreateDeposit(createDepositParams);
+      await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
+      await bridgeInTokens(fixture, { account: user1, amount: relayFeeAmount });
+
+      createShiftParams.userNonce = 1; // set value upfront to have the same user nonce for relayParams here and when recalculated in sendCreateShift
+      const relayParams = await getRelayParams(createShiftParams);
+      const signature = await getCreateShiftSignature({
+        ...createShiftParams,
+        relayParams,
+        verifyingContract: createShiftParams.relayRouter.address,
+      });
+      createShiftParams.signature = signature;
+
+      createShiftParams.params.minMarketTokens = 51; // tamper a param field
+      await expect(sendCreateShift(createShiftParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidRecoveredSigner"
+      );
+
+      createShiftParams.params.minMarketTokens = 50; // use the original value again
+      await expect(sendCreateShift(createShiftParams)).to.not.be.reverted;
+    });
+
+    it("should revert if fee cannot be covered", async () => {
+      await dataStore.setUint(keys.multichainBalanceKey(user0.address, wnt.address), feeAmount.sub(1)); // missing 1 wei
+      await expect(sendCreateShift(createShiftParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InsufficientMultichainBalance"
+      );
+    });
+
+    it("should transfer GM tokens from MultichainVault to ShiftVault", async () => {
+      await sendCreateDeposit(createDepositParams);
+      await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
+      await bridgeInTokens(fixture, { account: user1, amount: relayFeeAmount });
+
+      const initialAmount = expandDecimals(95_000, 18);
+      const shiftAmount = expandDecimals(50_000, 18);
+
+      expect(await getBalanceOf(ethUsdMarket.marketToken, multichainVault.address)).eq(initialAmount);
+      expect(await getBalanceOf(ethUsdMarket.marketToken, shiftVault.address)).eq(0);
+
+      await sendCreateShift(createShiftParams);
+
+      expect(await getBalanceOf(ethUsdMarket.marketToken, multichainVault.address)).eq(initialAmount.sub(shiftAmount)); // transferred out
+      expect(await getBalanceOf(ethUsdMarket.marketToken, shiftVault.address)).eq(shiftAmount); // transferred in
+    });
+
+    it("should revert if user has insufficient multichain balance", async () => {
+      await dataStore.setUint(keys.multichainBalanceKey(user1.address, wnt.address), 0); // remove balance
+      await expect(sendCreateShift(createShiftParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InsufficientMultichainBalance"
+      );
+    });
+
+    it("should revert if same params are reused (simulate replay)", async () => {
+      await sendCreateDeposit(createDepositParams);
+      await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
+      await bridgeInTokens(fixture, { account: user1, amount: relayFeeAmount });
+
+      createShiftParams.userNonce = 1; // set value upfront to have the same user nonce for relayParams here and when recalculated in sendCreateShift
+      createShiftParams.transferRequests.amounts = [expandDecimals(10_000, 18)]; // reduce Shift amount to enable multiple Shifts
+      const relayParams = await getRelayParams(createShiftParams);
+      const signature = await getCreateShiftSignature({
+        ...createShiftParams,
+        relayParams,
+        verifyingContract: createShiftParams.relayRouter.address,
+      });
+      createShiftParams.signature = signature;
+      await sendCreateShift(createShiftParams);
+
+      await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
+      // reuse exact same params and signature
+      await expect(sendCreateShift(createShiftParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidUserDigest"
+      );
+
+      // reset nonce and signature (sendCreateShift will recalculate them)
+      createShiftParams.userNonce = undefined;
+      createShiftParams.signature = undefined;
+      await expect(sendCreateShift(createShiftParams)).to.not.be.reverted;
     });
   });
 });

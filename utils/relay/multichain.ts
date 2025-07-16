@@ -720,7 +720,7 @@ export async function getCreateWithdrawalSignature({
   return signTypedData(signer, domain, types, typedData);
 }
 
-async function getCreateShiftSignature({
+export async function getCreateShiftSignature({
   signer,
   relayParams,
   transferRequests,
