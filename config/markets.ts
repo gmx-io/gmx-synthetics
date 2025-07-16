@@ -557,7 +557,7 @@ const config: {
       negativePositionImpactFactor: exponentToFloat("9e-11"),
       positivePositionImpactFactor: exponentToFloat("3e-11"),
 
-      positionImpactPoolDistributionRate: expandDecimals(1042, 30 + 16).div(SECONDS_PER_DAY), // 10.42 ETH per day
+      positionImpactPoolDistributionRate: expandDecimals(1354, 30 + 16).div(SECONDS_PER_DAY), // 13.54 ETH per day
       minPositionImpactPoolAmount: expandDecimals(1921, 18), // 1921 ETH
 
       negativeSwapImpactFactor: exponentToFloat("3e-10"),
@@ -701,7 +701,7 @@ const config: {
       reserveFactor: percentageToFloat("185%"),
       openInterestReserveFactor: percentageToFloat("180%"),
 
-      positionImpactPoolDistributionRate: expandDecimals(1366, 30 + 6).div(SECONDS_PER_DAY), // 1366 XRP / day
+      positionImpactPoolDistributionRate: expandDecimals(1775, 30 + 6).div(SECONDS_PER_DAY), // 1775 XRP / day
       minPositionImpactPoolAmount: expandDecimals(338133, 6), // 338133 XRP
 
       maxOpenInterest: decimalToFloat(2_000_000),
@@ -743,7 +743,7 @@ const config: {
       reserveFactor: percentageToFloat("185%"),
       openInterestReserveFactor: percentageToFloat("180%"),
 
-      positionImpactPoolDistributionRate: expandDecimals(7189, 38).div(SECONDS_PER_DAY), // 7189 DOGE / day
+      positionImpactPoolDistributionRate: expandDecimals(9345, 38).div(SECONDS_PER_DAY), // 9345 DOGE / day
       minPositionImpactPoolAmount: expandDecimals(3280141, 8), // 3280141 DOGE
 
       maxOpenInterest: decimalToFloat(6_000_000),
@@ -1160,7 +1160,7 @@ const config: {
       reserveFactor: percentageToFloat("235%"),
       openInterestReserveFactor: percentageToFloat("230%"),
 
-      positionImpactPoolDistributionRate: expandDecimals(1697, 30 + 18).div(SECONDS_PER_DAY), // 1697 ARB / day
+      positionImpactPoolDistributionRate: expandDecimals(2206, 30 + 18).div(SECONDS_PER_DAY), // 2206 ARB / day
       minPositionImpactPoolAmount: expandDecimals(384957, 18), // 384957 ARB
 
       maxOpenInterest: decimalToFloat(5_000_000),
@@ -1557,8 +1557,8 @@ const config: {
 
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
-      positionImpactPoolDistributionRate: bigNumberify(0),
-      minPositionImpactPoolAmount: bigNumberify(0),
+      positionImpactPoolDistributionRate: expandDecimals(531, 30 + 9).div(SECONDS_PER_DAY), // 531 SUI / day
+      minPositionImpactPoolAmount: expandDecimals(13793, 9), // 13793 SUI
 
       maxOpenInterest: decimalToFloat(1_000_000),
 
