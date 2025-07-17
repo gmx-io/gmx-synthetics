@@ -479,6 +479,11 @@ library Keys {
     // @dev key for the buyback withdrawable fees
     bytes32 public constant WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT = keccak256(abi.encode("WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT"));
 
+    // @dev key for the claimable fund amount for a specific account and token
+    bytes32 public constant CLAIMABLE_FUNDS_AMOUNT = keccak256(abi.encode("CLAIMABLE_FUNDS_AMOUNT"));
+    // @dev key for the total claimable amount for a specific token
+    bytes32 public constant TOTAL_CLAIMABLE_FUNDS_AMOUNT = keccak256(abi.encode("TOTAL_CLAIMABLE_FUNDS_AMOUNT"));
+
     // @dev constant for user initiated cancel reason
     string public constant USER_INITIATED_CANCEL = "USER_INITIATED_CANCEL";
 
@@ -2113,6 +2118,28 @@ library Keys {
     function buybackMaxPriceImpactFactorKey(address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             BUYBACK_MAX_PRICE_IMPACT_FACTOR,
+            token
+        ));
+    }
+
+    // @dev key for the claimable fund amount for a specific account and token
+    // @param account the account to claim funds for
+    // @param token the token to claim
+    // @return key for claimable fund amount
+    function claimableFundsAmountKey(address account, address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            CLAIMABLE_FUNDS_AMOUNT,
+            account,
+            token
+        ));
+    }
+
+    // @dev key for the total claimable amount for a specific token
+    // @param token the token for which to retrieve the total claimable amount
+    // @return key for total claimable amount
+    function totalClaimableFundsAmountKey(address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            TOTAL_CLAIMABLE_FUNDS_AMOUNT,
             token
         ));
     }
