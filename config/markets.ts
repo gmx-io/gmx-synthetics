@@ -3723,8 +3723,8 @@ const config: {
 
       maxPoolUsdForDeposit: decimalToFloat(50_000_000),
 
-      negativePositionImpactFactor: exponentToFloat("9e-11"),
-      positivePositionImpactFactor: exponentToFloat("3e-11"),
+      negativePositionImpactFactor: exponentToFloat("5e-6"),
+      positivePositionImpactFactor: exponentToFloat("2.5e-6"),
 
       minPositionImpactPoolAmount: expandDecimals(10, 18), // 10 ETH
 
@@ -3732,7 +3732,7 @@ const config: {
       positiveSwapImpactFactor: exponentToFloat("2e-10"),
 
       minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
-      minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("0.25%"), // 200x leverage
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6e-11"),
 
