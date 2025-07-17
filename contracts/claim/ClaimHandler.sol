@@ -97,6 +97,10 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
         for (uint256 i = 0; i < accounts.length; i++) {
             address account = accounts[i];
 
+            if (account == address(0)) {
+                revert Errors.EmptyAccount();
+            }
+
             bytes32 claimableKey = Keys.claimableFundsAmountKey(account, token);
             uint256 amount = dataStore.getUint(claimableKey);
             dataStore.setUint(claimableKey, 0);
@@ -115,6 +119,9 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
         if (tokens.length == 0) {
             revert Errors.InvalidParams("tokens length is 0");
         }
+        if (receiver == address(0)) {
+            revert Errors.EmptyReceiver();
+        }
 
         for (uint256 i = 0; i < tokens.length; i++) {
             address token = tokens[i];
@@ -132,12 +139,12 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
 
             dataStore.setUint(claimableKey, 0);
             uint256 totalAmountLeft = dataStore.decrementUint(Keys.totalClaimableFundsAmountKey(token), claimableAmount);
+            claimVault.transferOut(token, receiver, claimableAmount);
 
             if (totalAmountLeft > IERC20(token).balanceOf(address(claimVault))) {
                 revert Errors.InsufficientFunds(token);
             }
 
-            claimVault.transferOut(token, receiver, claimableAmount);
             ClaimEventUtils.emitClaimFundsClaimed(eventEmitter, receiver, token, claimableAmount);
         }
     }
