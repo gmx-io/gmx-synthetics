@@ -3265,7 +3265,6 @@ const config: {
       negativeMaxPositionImpactFactor: percentageToFloat("0.5%"),
       maxPositionImpactFactorForLiquidations: bigNumberify(0), // 0%
 
-      minCollateralFactor: percentageToFloat("1.33%"), // 75x leverage
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("1.48e-8"),
 
       maxOpenInterest: decimalToFloat(1_000_000),
