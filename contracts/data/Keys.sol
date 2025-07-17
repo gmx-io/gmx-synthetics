@@ -519,6 +519,10 @@ library Keys {
     bytes32 public constant MAX_DATA_LENGTH = keccak256(abi.encode("MAX_DATA_LENGTH"));
     // @dev key for the action data
     bytes32 public constant GMX_DATA_ACTION = keccak256(abi.encode("GMX_DATA_ACTION"));
+    // @dev key for the claimable fund amount for a specific account and token
+    bytes32 public constant CLAIMABLE_FUNDS_AMOUNT = keccak256(abi.encode("CLAIMABLE_FUNDS_AMOUNT"));
+    // @dev key for the total claimable amount for a specific token
+    bytes32 public constant TOTAL_CLAIMABLE_FUNDS_AMOUNT = keccak256(abi.encode("TOTAL_CLAIMABLE_FUNDS_AMOUNT"));
 
     // @dev constant for user initiated cancel reason
     string public constant USER_INITIATED_CANCEL = "USER_INITIATED_CANCEL";
@@ -2303,7 +2307,7 @@ library Keys {
     }
 
     // @dev key for the last src chain id from which the user last managed his position
-    // @param positionKey the position key for which to retreive the last src chain id
+    // @param positionKey the position key for which to retrieve the last src chain id
     // @return key for the last src chain id from which the user last managed his position
     function positionLastSrcChainId(bytes32 positionKey) internal pure returns (bytes32) {
         return keccak256(abi.encode(
@@ -2323,13 +2327,35 @@ library Keys {
     }
 
     // @dev key for user's multichain balance
-    // @param account the account for which to retreive the user balance key
-    // @param token the token for which to retreive the user balance key
+    // @param account the account for which to retrieve the user balance key
+    // @param token the token for which to retrieve the user balance key
     // @return key for multichain balance for a given user and token
     function multichainBalanceKey(address account, address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             MULTICHAIN_BALANCE,
             account,
+            token
+        ));
+    }
+
+    // @dev key for the claimable fund amount for a specific account and token
+    // @param account the account to claim funds for
+    // @param token the token to claim
+    // @return key for claimable fund amount
+    function claimableFundsAmountKey(address account, address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            CLAIMABLE_FUNDS_AMOUNT,
+            account,
+            token
+        ));
+    }
+
+    // @dev key for the total claimable amount for a specific token
+    // @param token the token for which to retrieve the total claimable amount
+    // @return key for total claimable amount
+    function totalClaimableFundsAmountKey(address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            TOTAL_CLAIMABLE_FUNDS_AMOUNT,
             token
         ));
     }
