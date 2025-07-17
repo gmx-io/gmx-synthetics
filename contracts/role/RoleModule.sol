@@ -158,6 +158,11 @@ contract RoleModule {
         _;
     }
 
+    modifier onlyClaimAdmin() {
+        _validateRole(Role.CLAIM_ADMIN, "CLAIM_ADMIN");
+        _;
+    }
+
     /**
      * @dev Validates that the caller has the specified role.
      *
