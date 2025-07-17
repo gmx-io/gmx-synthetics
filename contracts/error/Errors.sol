@@ -376,6 +376,8 @@ library Errors {
     error EmptyAmount();
     error EmptyClaimableAmount(address token);
     error InvalidToken(address token);
+    error InvalidParams(string reason);
+    error InsufficientFunds(address token);
 
     // Array errors
     error CompactedArrayOutOfBounds(
@@ -448,6 +450,4 @@ library Errors {
     error RelayCalldataTooLong(uint256 calldataLength);
     error InvalidExternalCalls(uint256 sendTokensLength, uint256 sendAmountsLength);
     error MaxRelayFeeSwapForSubaccountExceeded(uint256 feeUsd, uint256 maxFeeUsd);
-
-    error InvalidParams(string reason);
 }
