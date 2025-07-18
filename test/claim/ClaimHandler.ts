@@ -56,14 +56,11 @@ describe("ClaimHandler", () => {
       const initialVaultBalance = await wnt.balanceOf(claimVault.address);
       expect(initialVaultBalance).to.equal(0);
 
-      const firstDepositAmounts = [
-        { account: user0.address, amount: expandDecimals(100, 18) },
-        { account: user1.address, amount: expandDecimals(200, 18) },
-        { account: user2.address, amount: expandDecimals(300, 18) },
-      ];
+      const firstDepositAccounts = [user0.address, user1.address, user2.address];
+      const firstDepositAmounts = [expandDecimals(100, 18), expandDecimals(200, 18), expandDecimals(300, 18)];
       const firstDepositTotal = expandDecimals(600, 18);
 
-      await claimHandler.connect(wallet).depositFunds(wnt.address, firstDepositAmounts);
+      await claimHandler.connect(wallet).depositFunds(wnt.address, firstDepositAccounts, firstDepositAmounts);
 
       expect(await claimHandler.getClaimableAmount(user0.address, wnt.address)).to.equal(expandDecimals(100, 18));
       expect(await claimHandler.getClaimableAmount(user1.address, wnt.address)).to.equal(expandDecimals(200, 18));
@@ -73,14 +70,11 @@ describe("ClaimHandler", () => {
       expect(await wnt.balanceOf(wallet.address)).to.equal(initialDepositorBalance.sub(firstDepositTotal));
       expect(await wnt.balanceOf(claimVault.address)).to.equal(initialVaultBalance.add(firstDepositTotal));
 
-      const secondDepositAmounts = [
-        { account: user0.address, amount: expandDecimals(50, 18) },
-        { account: user1.address, amount: expandDecimals(75, 18) },
-        { account: user2.address, amount: expandDecimals(25, 18) },
-      ];
+      const secondDepositAccounts = [user0.address, user1.address, user2.address];
+      const secondDepositAmounts = [expandDecimals(50, 18), expandDecimals(75, 18), expandDecimals(25, 18)];
       const secondDepositTotal = expandDecimals(150, 18);
 
-      await claimHandler.connect(wallet).depositFunds(wnt.address, secondDepositAmounts);
+      await claimHandler.connect(wallet).depositFunds(wnt.address, secondDepositAccounts, secondDepositAmounts);
 
       expect(await claimHandler.getClaimableAmount(user0.address, wnt.address)).to.equal(expandDecimals(150, 18)); // 100 + 50
       expect(await claimHandler.getClaimableAmount(user1.address, wnt.address)).to.equal(expandDecimals(275, 18)); // 200 + 75
@@ -95,58 +89,65 @@ describe("ClaimHandler", () => {
     });
 
     it("should revert with Unauthorized when caller is not CONFIG_KEEPER", async () => {
-      const amounts = [{ account: user0.address, amount: expandDecimals(100, 18) }];
+      const accounts = [user0.address];
+      const amounts = [expandDecimals(100, 18)];
 
-      await expect(claimHandler.connect(user1).depositFunds(wnt.address, amounts)).to.be.revertedWithCustomError(
-        errorsContract,
-        "Unauthorized"
-      );
+      await expect(
+        claimHandler.connect(user1).depositFunds(wnt.address, accounts, amounts)
+      ).to.be.revertedWithCustomError(errorsContract, "Unauthorized");
     });
 
     it("should revert with InvalidParams when amounts array is empty", async () => {
-      await expect(claimHandler.connect(wallet).depositFunds(wnt.address, [])).to.be.revertedWithCustomError(
+      await expect(claimHandler.connect(wallet).depositFunds(wnt.address, [], [])).to.be.revertedWithCustomError(
         errorsContract,
         "InvalidParams"
       );
     });
 
-    it("should revert with EmptyToken when token address is zero", async () => {
-      const amounts = [{ account: user0.address, amount: expandDecimals(100, 18) }];
+    it("should revert with InvalidParams when arrays have different lengths", async () => {
+      const accounts = [user0.address, user1.address];
+      const amounts = [expandDecimals(100, 18)]; // Different length
 
       await expect(
-        claimHandler.connect(wallet).depositFunds(ethers.constants.AddressZero, amounts)
+        claimHandler.connect(wallet).depositFunds(wnt.address, accounts, amounts)
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidParams");
+    });
+
+    it("should revert with EmptyToken when token address is zero", async () => {
+      const accounts = [user0.address];
+      const amounts = [expandDecimals(100, 18)];
+
+      await expect(
+        claimHandler.connect(wallet).depositFunds(ethers.constants.AddressZero, accounts, amounts)
       ).to.be.revertedWithCustomError(errorsContract, "EmptyToken");
     });
 
     it("should revert with EmptyAccount when account address is zero", async () => {
-      const amounts = [{ account: ethers.constants.AddressZero, amount: expandDecimals(100, 18) }];
+      const accounts = [ethers.constants.AddressZero];
+      const amounts = [expandDecimals(100, 18)];
 
-      await expect(claimHandler.connect(wallet).depositFunds(wnt.address, amounts)).to.be.revertedWithCustomError(
-        errorsContract,
-        "EmptyAccount"
-      );
+      await expect(
+        claimHandler.connect(wallet).depositFunds(wnt.address, accounts, amounts)
+      ).to.be.revertedWithCustomError(errorsContract, "EmptyAccount");
     });
 
     it("should revert with EmptyAmount when amount is zero", async () => {
-      const amounts = [{ account: user0.address, amount: 0 }];
+      const accounts = [user0.address];
+      const amounts = [0];
 
-      await expect(claimHandler.connect(wallet).depositFunds(wnt.address, amounts)).to.be.revertedWithCustomError(
-        errorsContract,
-        "EmptyAmount"
-      );
+      await expect(
+        claimHandler.connect(wallet).depositFunds(wnt.address, accounts, amounts)
+      ).to.be.revertedWithCustomError(errorsContract, "EmptyAmount");
     });
   });
 
   describe("withdrawFunds", () => {
     it("should handle withdrawals correctly - happy path", async () => {
-      const depositAmounts = [
-        { account: user0.address, amount: expandDecimals(100, 18) },
-        { account: user1.address, amount: expandDecimals(200, 18) },
-        { account: user2.address, amount: expandDecimals(300, 18) },
-      ];
+      const depositAccounts = [user0.address, user1.address, user2.address];
+      const depositAmounts = [expandDecimals(100, 18), expandDecimals(200, 18), expandDecimals(300, 18)];
       const totalDeposited = expandDecimals(600, 18);
 
-      await claimHandler.connect(wallet).depositFunds(wnt.address, depositAmounts);
+      await claimHandler.connect(wallet).depositFunds(wnt.address, depositAccounts, depositAmounts);
 
       expect(await claimHandler.getClaimableAmount(user0.address, wnt.address)).to.equal(expandDecimals(100, 18));
       expect(await claimHandler.getClaimableAmount(user1.address, wnt.address)).to.equal(expandDecimals(200, 18));
@@ -183,9 +184,7 @@ describe("ClaimHandler", () => {
 
     it("should revert with Unauthorized when caller is not TIMELOCK_MULTISIG", async () => {
       // Setup some funds first
-      await claimHandler
-        .connect(wallet)
-        .depositFunds(wnt.address, [{ account: user0.address, amount: expandDecimals(100, 18) }]);
+      await claimHandler.connect(wallet).depositFunds(wnt.address, [user0.address], [expandDecimals(100, 18)]);
 
       await expect(
         claimHandler.connect(user1).withdrawFunds(wnt.address, [user0.address], user1.address)
@@ -217,9 +216,7 @@ describe("ClaimHandler", () => {
     });
 
     it("should handle withdrawals for accounts with zero claimable amounts", async () => {
-      await claimHandler
-        .connect(wallet)
-        .depositFunds(wnt.address, [{ account: user0.address, amount: expandDecimals(100, 18) }]);
+      await claimHandler.connect(wallet).depositFunds(wnt.address, [user0.address], [expandDecimals(100, 18)]);
 
       const initialReceiverBalance = await wnt.balanceOf(user1.address);
 
@@ -235,13 +232,10 @@ describe("ClaimHandler", () => {
 
   describe("transferClaim", () => {
     it("should handle claim transfers correctly - happy path", async () => {
-      const depositAmounts = [
-        { account: user0.address, amount: expandDecimals(100, 18) },
-        { account: user1.address, amount: expandDecimals(200, 18) },
-        { account: user2.address, amount: expandDecimals(300, 18) },
-      ];
+      const depositAccounts = [user0.address, user1.address, user2.address];
+      const depositAmounts = [expandDecimals(100, 18), expandDecimals(200, 18), expandDecimals(300, 18)];
 
-      await claimHandler.connect(wallet).depositFunds(wnt.address, depositAmounts);
+      await claimHandler.connect(wallet).depositFunds(wnt.address, depositAccounts, depositAmounts);
 
       expect(await claimHandler.getClaimableAmount(user0.address, wnt.address)).to.equal(expandDecimals(100, 18));
       expect(await claimHandler.getClaimableAmount(user1.address, wnt.address)).to.equal(expandDecimals(200, 18));
@@ -309,9 +303,7 @@ describe("ClaimHandler", () => {
     });
 
     it("should handle transfers for accounts with zero claimable amounts", async () => {
-      await claimHandler
-        .connect(wallet)
-        .depositFunds(wnt.address, [{ account: user0.address, amount: expandDecimals(100, 18) }]);
+      await claimHandler.connect(wallet).depositFunds(wnt.address, [user0.address], [expandDecimals(100, 18)]);
 
       await claimHandler
         .connect(user0)
@@ -326,17 +318,13 @@ describe("ClaimHandler", () => {
 
   describe("claimFunds", () => {
     it("should handle claims correctly - happy path", async () => {
-      const wntDepositAmounts = [
-        { account: user0.address, amount: expandDecimals(100, 18) },
-        { account: user1.address, amount: expandDecimals(200, 18) },
-      ];
-      const usdcDepositAmounts = [
-        { account: user0.address, amount: expandDecimals(1000, 6) },
-        { account: user1.address, amount: expandDecimals(2000, 6) },
-      ];
+      const wntDepositAccounts = [user0.address, user1.address];
+      const wntDepositAmounts = [expandDecimals(100, 18), expandDecimals(200, 18)];
+      const usdcDepositAccounts = [user0.address, user1.address];
+      const usdcDepositAmounts = [expandDecimals(1000, 6), expandDecimals(2000, 6)];
 
-      await claimHandler.connect(wallet).depositFunds(wnt.address, wntDepositAmounts);
-      await claimHandler.connect(wallet).depositFunds(usdc.address, usdcDepositAmounts);
+      await claimHandler.connect(wallet).depositFunds(wnt.address, wntDepositAccounts, wntDepositAmounts);
+      await claimHandler.connect(wallet).depositFunds(usdc.address, usdcDepositAccounts, usdcDepositAmounts);
 
       const initialUser0WntBalance = await wnt.balanceOf(user0.address);
       const initialUser0UsdcBalance = await usdc.balanceOf(user0.address);
@@ -404,11 +392,9 @@ describe("ClaimHandler", () => {
     });
 
     it("should revert with InsufficientFunds when final state is inconsistent", async () => {
-      const usdcDepositAmounts = [
-        { account: user0.address, amount: expandDecimals(1000, 6) },
-        { account: user1.address, amount: expandDecimals(2000, 6) },
-      ];
-      await claimHandler.connect(wallet).depositFunds(usdc.address, usdcDepositAmounts);
+      const usdcDepositAccounts = [user0.address, user1.address];
+      const usdcDepositAmounts = [expandDecimals(1000, 6), expandDecimals(2000, 6)];
+      await claimHandler.connect(wallet).depositFunds(usdc.address, usdcDepositAccounts, usdcDepositAmounts);
 
       await usdc.burn(claimVault.address, expandDecimals(1, 6));
 
