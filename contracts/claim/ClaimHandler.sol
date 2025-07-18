@@ -124,9 +124,6 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
         if (fromAccounts.length == 0) {
             revert Errors.InvalidParams("accounts length is 0");
         }
-        if (toAccounts.length == 0) {
-            revert Errors.InvalidParams("receivers length is 0");
-        }
         if (fromAccounts.length != toAccounts.length) {
             revert Errors.InvalidParams("accounts and receivers length mismatch");
         }
@@ -135,29 +132,24 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
         }
 
         for (uint256 i = 0; i < fromAccounts.length; i++) {
-            address fromAccount = fromAccounts[i];
-            address toAccount = toAccounts[i];
-
-            if (fromAccount == address(0)) {
+            if (fromAccounts[i] == address(0)) {
                 revert Errors.EmptyAccount();
             }
-            if (toAccount == address(0)) {
+            if (toAccounts[i] == address(0)) {
                 revert Errors.EmptyReceiver();
             }
 
-            bytes32 fromAccountKey = Keys.claimableFundsAmountKey(fromAccount, token);
+            bytes32 fromAccountKey = Keys.claimableFundsAmountKey(fromAccounts[i], token);
             uint256 amount = dataStore.getUint(fromAccountKey);
 
             if (amount > 0) {
                 dataStore.setUint(fromAccountKey, 0);
-
-                bytes32 toAccountKey = Keys.claimableFundsAmountKey(toAccount, token);
-                uint256 nextAmount = dataStore.incrementUint(toAccountKey, amount);
+                uint256 nextAmount = dataStore.incrementUint(Keys.claimableFundsAmountKey(toAccounts[i], token), amount);
 
                 ClaimEventUtils.emitClaimFundsTransferred(
                     eventEmitter,
-                    fromAccount,
-                    toAccount,
+                    fromAccounts[i],
+                    toAccounts[i],
                     token,
                     amount,
                     nextAmount
