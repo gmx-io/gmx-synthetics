@@ -40,10 +40,7 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
     // @dev deposit funds for multiple accounts and tokens in batch
     // @param token the token to deposit
     // @param amounts array of deposit parameters
-    function depositFunds(
-        address token,
-        DepositAmount[] calldata amounts
-    ) external globalNonReentrant onlyClaimAdmin {
+    function depositFunds(address token, DepositAmount[] calldata amounts) external globalNonReentrant onlyConfigKeeper {
         if (amounts.length == 0) {
             revert Errors.InvalidParams("amounts length is 0");
         }
@@ -63,11 +60,14 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
                 revert Errors.EmptyAmount();
             }
 
-            dataStore.incrementUint(Keys.claimableFundsAmountKey(amount.account, token), amount.amount);
+            uint256 nextAmount = dataStore.incrementUint(
+                Keys.claimableFundsAmountKey(amount.account, token),
+                amount.amount
+            );
 
             totalTransferAmount += amount.amount;
 
-            ClaimEventUtils.emitClaimFundsDeposited(eventEmitter, amount.account, token, amount.amount);
+            ClaimEventUtils.emitClaimFundsDeposited(eventEmitter, amount.account, token, amount.amount, nextAmount);
         }
 
         IERC20(token).safeTransferFrom(msg.sender, address(claimVault), totalTransferAmount);
@@ -82,7 +82,7 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
         address token,
         address[] calldata accounts,
         address receiver
-    ) external globalNonReentrant onlyClaimAdmin {
+    ) external globalNonReentrant onlyTimelockMultisig {
         if (accounts.length == 0) {
             revert Errors.InvalidParams("accounts length is 0");
         }
@@ -112,6 +112,60 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
         dataStore.decrementUint(Keys.totalClaimableFundsAmountKey(token), totalWithdrawnAmount);
     }
 
+    // @dev transfer claim funds between accounts
+    // @param token the token to transfer
+    // @param fromAccounts array of accounts to transfer from
+    // @param toAccounts array of accounts to transfer to
+    function transferClaim(
+        address token,
+        address[] calldata fromAccounts,
+        address[] calldata toAccounts
+    ) external globalNonReentrant onlyTimelockMultisig {
+        if (fromAccounts.length == 0) {
+            revert Errors.InvalidParams("accounts length is 0");
+        }
+        if (toAccounts.length == 0) {
+            revert Errors.InvalidParams("receivers length is 0");
+        }
+        if (fromAccounts.length != toAccounts.length) {
+            revert Errors.InvalidParams("accounts and receivers length mismatch");
+        }
+        if (token == address(0)) {
+            revert Errors.EmptyToken();
+        }
+
+        for (uint256 i = 0; i < fromAccounts.length; i++) {
+            address fromAccount = fromAccounts[i];
+            address toAccount = toAccounts[i];
+
+            if (fromAccount == address(0)) {
+                revert Errors.EmptyAccount();
+            }
+            if (toAccount == address(0)) {
+                revert Errors.EmptyReceiver();
+            }
+
+            bytes32 fromAccountKey = Keys.claimableFundsAmountKey(fromAccount, token);
+            uint256 amount = dataStore.getUint(fromAccountKey);
+
+            if (amount > 0) {
+                dataStore.setUint(fromAccountKey, 0);
+
+                bytes32 toAccountKey = Keys.claimableFundsAmountKey(toAccount, token);
+                uint256 nextAmount = dataStore.incrementUint(toAccountKey, amount);
+
+                ClaimEventUtils.emitClaimFundsTransferred(
+                    eventEmitter,
+                    fromAccount,
+                    toAccount,
+                    token,
+                    amount,
+                    nextAmount
+                );
+            }
+        }
+    }
+
     // @dev claim funds for the calling account for multiple tokens
     // @param tokens array of tokens to claim
     // @param receiver the receiver of the funds
@@ -138,7 +192,10 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
             }
 
             dataStore.setUint(claimableKey, 0);
-            uint256 totalAmountLeft = dataStore.decrementUint(Keys.totalClaimableFundsAmountKey(token), claimableAmount);
+            uint256 totalAmountLeft = dataStore.decrementUint(
+                Keys.totalClaimableFundsAmountKey(token),
+                claimableAmount
+            );
             claimVault.transferOut(token, receiver, claimableAmount);
 
             if (totalAmountLeft > IERC20(token).balanceOf(address(claimVault))) {
