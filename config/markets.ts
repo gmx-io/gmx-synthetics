@@ -3242,8 +3242,8 @@ const config: {
       maxOpenInterest: decimalToFloat(250_000),
       maxPoolUsdForDeposit: decimalToFloat(600_000),
 
-      maxLongTokenPoolAmount: expandDecimals(4, 8), // ~500k USD (2x the max open interest)
-      maxShortTokenPoolAmount: expandDecimals(500_000, 6), // ~500k USD (2x the max open interest)
+      maxLongTokenPoolAmount: expandDecimals(7, 8), // ~800k+ USD
+      maxShortTokenPoolAmount: expandDecimals(800_000, 6), // ~800k USD
     },
     {
       tokens: { indexToken: "ARB", longToken: "ARB", shortToken: "ARB" },
