@@ -19,22 +19,20 @@ library ClaimEventUtils {
         EventEmitter eventEmitter,
         address account,
         address token,
-        uint256 amount    ) external {
+        uint256 amount,
+        uint256 nextAmount
+    ) external {
         EventUtils.EventLogData memory eventData;
 
         eventData.addressItems.initItems(2);
         eventData.addressItems.setItem(0, "account", account);
         eventData.addressItems.setItem(1, "token", token);
 
-        eventData.uintItems.initItems(1);
+        eventData.uintItems.initItems(2);
         eventData.uintItems.setItem(0, "amount", amount);
+        eventData.uintItems.setItem(1, "nextAmount", nextAmount);
 
-        eventEmitter.emitEventLog2(
-            "ClaimFundsDeposited",
-            Cast.toBytes32(account),
-            Cast.toBytes32(token),
-            eventData
-        );
+        eventEmitter.emitEventLog2("ClaimFundsDeposited", Cast.toBytes32(account), Cast.toBytes32(token), eventData);
     }
 
     // @dev emit a ClaimFundsWithdrawn event
@@ -60,12 +58,7 @@ library ClaimEventUtils {
         eventData.uintItems.initItems(1);
         eventData.uintItems.setItem(0, "amount", amount);
 
-        eventEmitter.emitEventLog2(
-            "ClaimFundsWithdrawn",
-            Cast.toBytes32(account),
-            Cast.toBytes32(token),
-            eventData
-        );
+        eventEmitter.emitEventLog2("ClaimFundsWithdrawn", Cast.toBytes32(account), Cast.toBytes32(token), eventData);
     }
 
     // @dev emit a ClaimFundsClaimed event
@@ -73,12 +66,7 @@ library ClaimEventUtils {
     // @param account the account that claimed funds
     // @param token the token that was claimed
     // @param amount the amount that was claimed
-    function emitClaimFundsClaimed(
-        EventEmitter eventEmitter,
-        address account,
-        address token,
-        uint256 amount
-    ) external {
+    function emitClaimFundsClaimed(EventEmitter eventEmitter, address account, address token, uint256 amount) external {
         EventUtils.EventLogData memory eventData;
 
         eventData.addressItems.initItems(2);
@@ -88,10 +76,38 @@ library ClaimEventUtils {
         eventData.uintItems.initItems(1);
         eventData.uintItems.setItem(0, "amount", amount);
 
+        eventEmitter.emitEventLog2("ClaimFundsClaimed", Cast.toBytes32(account), Cast.toBytes32(token), eventData);
+    }
+
+    // @dev emit a ClaimFundsTransferred event
+    // @param eventEmitter the event emitter
+    // @param fromAccount the account that funds were transferred from
+    // @param toAccount the account that funds were transferred to
+    // @param token the token that was transferred
+    // @param amount the amount that was transferred
+    function emitClaimFundsTransferred(
+        EventEmitter eventEmitter,
+        address fromAccount,
+        address toAccount,
+        address token,
+        uint256 amount,
+        uint256 nextAmount
+    ) external {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(3);
+        eventData.addressItems.setItem(0, "fromAccount", fromAccount);
+        eventData.addressItems.setItem(1, "toAccount", toAccount);
+        eventData.addressItems.setItem(2, "token", token);
+
+        eventData.uintItems.initItems(2);
+        eventData.uintItems.setItem(0, "amount", amount);
+        eventData.uintItems.setItem(1, "nextAmount", nextAmount);
+
         eventEmitter.emitEventLog2(
-            "ClaimFundsClaimed",
-            Cast.toBytes32(account),
-            Cast.toBytes32(token),
+            "ClaimFundsTransferred",
+            Cast.toBytes32(fromAccount),
+            Cast.toBytes32(toAccount),
             eventData
         );
     }

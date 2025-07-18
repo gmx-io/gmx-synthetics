@@ -110,10 +110,4 @@ library Role {
      * Hash: 0xcdf6da7ad30d8b9afea66fb1cb11b1b7d0b50e9b30b69561a3ca52c39251360c
      */
     bytes32 public constant CONTRIBUTOR_DISTRIBUTOR = keccak256(abi.encode("CONTRIBUTOR_DISTRIBUTOR"));
-
-    /**
-     * @dev The CLAIM_ADMIN role.
-     * Hash: 0x3816efacf145d41a12de1ee8ae9dc340b887f4ca0f3bba62a645b2fefa4cab33
-     */
-    bytes32 public constant CLAIM_ADMIN = keccak256(abi.encode("CLAIM_ADMIN"));
 }
