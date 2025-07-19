@@ -305,14 +305,13 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
 
     /// @dev Remove dust to avoid SlippageExceeded reverts on GM / GLV adapters
     function _removeDust(address token, uint256 _amountLD) private view returns (uint256 amountLD) {
-        if (ERC20(token).decimals() == 18) {
-            // remove dust for e.g. GM / GLV tokens
-            uint256 decimalConversionRate = 10 ** 12;
-            return (_amountLD / decimalConversionRate) * decimalConversionRate;
-        } else {
-            // no need to remove dust for e.g. USDC
+        uint256 decimals = ERC20(token).decimals();
+        if (decimals <= 6) {
             return _amountLD;
         }
+
+        uint256 precision = 10 ** (decimals - 6);
+        return (_amountLD / precision) * precision;
     }
 
     function _decodeLzComposeMsg(bytes calldata message) private view returns (address, uint256, uint256, bytes memory) {
