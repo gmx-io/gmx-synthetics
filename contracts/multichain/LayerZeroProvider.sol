@@ -126,7 +126,8 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         // otherwise the function will revert
         // if the action cannot be completed due to gas issues, the user would
         // need to manually call the function with the right amount of gas
-        if (data.length != 0) {
+        // srcChainId could be zero when returned from _decodeLzComposeMsg, skip follow up actions in this case
+        if (srcChainId != 0 && data.length != 0) {
             (ActionType actionType, bytes memory actionData) = abi.decode(data, (ActionType, bytes));
 
             // this event is emitted even though the actionType may not be valid
