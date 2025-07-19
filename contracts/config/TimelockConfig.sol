@@ -476,7 +476,7 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         targets[0] = dataStore;
         targets[1] = dataStore;
 
-        bytes[] memory payloads = new bytes[](4);
+        bytes[] memory payloads = new bytes[](2);
         payloads[0] = abi.encodeWithSignature("setBytes32(bytes32,address)",
             Keys.edgeDataStreamIdKey(token), edgeDataStreamId);
         payloads[1] = abi.encodeWithSignature("setUint(bytes32,uint256)",

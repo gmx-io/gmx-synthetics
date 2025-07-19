@@ -71,7 +71,10 @@ export async function sendCreateOrder(p: {
   gelatoRelayFeeAmount: BigNumberish;
 }) {
   const relayParams = await getRelayParams(p);
-  const subaccountApproval = await getSubaccountApproval({ ...p, signer: p.subaccountApprovalSigner });
+  const subaccountApproval = await getSubaccountApproval({
+    ...p,
+    signer: p.subaccountApprovalSigner,
+  });
 
   let signature = p.signature;
   if (!signature) {
@@ -167,7 +170,10 @@ export async function sendUpdateOrder(p: {
   gelatoRelayFeeAmount: BigNumberish;
 }) {
   const relayParams = await getRelayParams(p);
-  const subaccountApproval = await getSubaccountApproval({ ...p, signer: p.subaccountApprovalSigner });
+  const subaccountApproval = await getSubaccountApproval({
+    ...p,
+    signer: p.subaccountApprovalSigner,
+  });
 
   let signature = p.signature;
   if (!signature) {
@@ -208,6 +214,7 @@ export function getEmptySubaccountApproval() {
     maxAllowedCount: 0,
     actionType: keys.SUBACCOUNT_ORDER_ACTION,
     nonce: 0,
+    desChainId: 0,
     signature: "0x",
     integrationId: ethers.constants.HashZero,
     deadline: 9999999999,
@@ -219,6 +226,7 @@ export async function getSubaccountApproval(p: {
     nonce?: BigNumberish;
     signature?: string;
   };
+  desChainId: BigNumberish;
   account: string;
   relayRouter: ethers.Contract;
   chainId: BigNumberish;
@@ -247,6 +255,7 @@ export async function getSubaccountApproval(p: {
   return {
     ...p.subaccountApproval,
     nonce,
+    desChainId: p.desChainId,
     signature,
   };
 }

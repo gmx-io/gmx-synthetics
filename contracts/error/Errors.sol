@@ -480,6 +480,7 @@ library Errors {
     error InvalidUserDigest(bytes32 digest);
     error SubaccountApprovalDeadlinePassed(uint256 currentTimestamp, uint256 deadline);
     error InvalidSubaccountApprovalNonce(uint256 storedNonce, uint256 nonce);
+    error InvalidSubaccountApprovalDesChainId(uint256 desChainId);
     error DeadlinePassed(uint256 currentTimestamp, uint256 deadline);
     error InsufficientRelayFee(uint256 requiredRelayFee, uint256 availableFeeAmount);
     error InvalidSubaccountApprovalSubaccount();

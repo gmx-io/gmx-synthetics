@@ -520,12 +520,12 @@ describe("Timelock", () => {
     await time.increase(1 * 24 * 60 * 60 + 10);
 
     expect(await dataStore.getBytes32(keys.edgeDataStreamIdKey(wnt.address))).eq(ethers.constants.HashZero);
-    expect(await dataStore.getBytes32(keys.edgeDataStreamTokenDecimalsKey(wnt.address))).eq(0);
+    expect(await dataStore.getUint(keys.edgeDataStreamTokenDecimalsKey(wnt.address))).eq(0);
 
     await timelockConfig.connect(timelockAdmin).execute(target, payload, constants.HashZero, salt);
 
     expect(await dataStore.getBytes32(keys.edgeDataStreamIdKey(wnt.address))).eq(edgeDataStreamId);
-    expect(await dataStore.getBytes32(keys.edgeDataStreamTokenDecimalsKey(wnt.address))).eq(tokenDecimals);
+    expect(await dataStore.getUint(keys.edgeDataStreamTokenDecimalsKey(wnt.address))).eq(tokenDecimals);
   });
 
   describe("PositionImpactPool", () => {
