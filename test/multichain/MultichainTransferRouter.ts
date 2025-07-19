@@ -295,8 +295,7 @@ describe("MultichainTransferRouter", () => {
       const txReceipt = await hre.ethers.provider.getTransactionReceipt(tx.hash);
       const logs = parseLogs(fixture, txReceipt);
       const bridgeOutLog = logs.find((log) => log.parsedEventInfo?.eventName === "MultichainBridgeOut");
-      expect(bridgeOutLog.parsedEventData.token).eq(usdc.address);
-      expect(bridgeOutLog.parsedEventData.amount).eq(0);
+      expect(bridgeOutLog).eq(undefined);
 
       await logGasUsage({
         tx,
