@@ -63,6 +63,9 @@ describe("EdgeDataStreamProvider", function () {
 
     await dataStore.setBytes32(keys.edgeDataStreamIdKey(wbtc.address), keccakString(BTC_USD_FEED_ID));
     await dataStore.setBytes32(keys.edgeDataStreamIdKey(wnt.address), keccakString(ETH_USD_FEED_ID));
+
+    await dataStore.setUint(keys.edgeDataStreamTokenDecimalsKey(wbtc.address), 8);
+    await dataStore.setUint(keys.edgeDataStreamTokenDecimalsKey(wnt.address), 18);
   });
 
   it("should call getOraclePrice and return valid params", async function () {

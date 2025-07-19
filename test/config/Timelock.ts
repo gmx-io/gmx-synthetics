@@ -513,7 +513,7 @@ describe("Timelock", () => {
 
     await timelockConfig
       .connect(timelockAdmin)
-      .signalSetEdgeDataStream(edgeDataStreamId, wnt.address, constants.HashZero, salt);
+      .signalSetEdgeDataStream(wnt.address, edgeDataStreamId, tokenDecimals, constants.HashZero, salt);
 
     const { target, payload } = await getEdgeDataStreamPayload(edgeDataStreamId, wnt.address);
 

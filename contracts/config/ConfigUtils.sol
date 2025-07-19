@@ -389,10 +389,20 @@ library ConfigUtils {
         }
 
         if (
-            baseKey == Keys.MAX_LENDABLE_IMPACT_FACTOR
+            baseKey == Keys.MAX_LENDABLE_IMPACT_FACTOR ||
+            baseKey == Keys.MAX_LENDABLE_IMPACT_FACTOR_FOR_WITHDRAWALS
         ) {
-            // revert if value > 20%
-            if (value > 20 * Precision.FLOAT_PRECISION / 100) {
+            // revert if value > 10%
+            if (value > 10 * Precision.FLOAT_PRECISION / 100) {
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
+            }
+        }
+
+        if (
+            baseKey == Keys.MAX_LENDABLE_IMPACT_USD
+        ) {
+            // revert if value > 50,000
+            if (value > 50 * 1000 * Precision.FLOAT_PRECISION) {
                 revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
             }
         }
