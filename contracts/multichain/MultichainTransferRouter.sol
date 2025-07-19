@@ -104,6 +104,10 @@ contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, M
     }
 
     function _bridgeOut(address account, uint256 srcChainId, IRelayUtils.BridgeOutParams calldata params) internal {
+        if (params.amount == 0) {
+            return;
+        }
+
         if (srcChainId == block.chainid) {
             // same-chain withdrawal: funds are sent directly to the user's wallet
             MultichainUtils.transferOut(

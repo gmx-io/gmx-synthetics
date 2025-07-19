@@ -160,6 +160,10 @@ library BridgeOutFromControllerUtils {
         address token,
         uint256 amount
     ) internal {
+        if (amount == 0) {
+            return;
+        }
+
         IRelayUtils.BridgeOutParams memory bridgeOutParams = IRelayUtils.BridgeOutParams({
             token: token,
             amount: amount,
