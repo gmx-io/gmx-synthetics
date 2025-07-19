@@ -13,17 +13,6 @@ library Cast {
         return bytes32(uint256(uint160(value)));
     }
 
-    function toBytes32(string memory value) internal pure returns (bytes32 result) {
-        bytes memory tempEmptyString = bytes(value);
-        if (tempEmptyString.length == 0) {
-            return 0x0;
-        }
-
-        assembly {
-            result := mload(add(value, 32))
-        }
-    }
-
     /**
      * @dev Converts a bytes array to a uint256.
      * Handles cases where the uint256 stored in bytes is stored with or without padding.
