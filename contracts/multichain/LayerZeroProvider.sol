@@ -197,6 +197,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         (cache.valueToSend, cache.sendParam, cache.messagingFee, cache.receipt) = prepareSend(
             stargate,
             params.amount,
+            params.minAmountOut,
             account,
             cache.dstEid
         );
@@ -269,6 +270,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
     function prepareSend(
         IStargate stargate,
         uint256 amount,
+        uint256 minAmountOut,
         address receiver,
         uint32 _dstEid
     )
@@ -285,7 +287,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             dstEid: _dstEid,
             to: Cast.toBytes32(receiver),
             amountLD: amount,
-            minAmountLD: 0,
+            minAmountLD: minAmountOut,
             extraOptions: bytes(""),
             composeMsg: bytes(""),
             oftCmd: ""

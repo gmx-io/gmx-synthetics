@@ -141,6 +141,7 @@ contract MultichainTransferRouter is IMultichainTransferRouter, Initializable, M
                 IRelayUtils.BridgeOutParams({
                     token: params.token,
                     amount: params.amount,
+                    minAmountOut: params.minAmountOut,
                     provider: params.provider,
                     data: params.data
                 })

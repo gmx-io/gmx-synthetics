@@ -141,14 +141,16 @@ library ExecuteWithdrawalUtils {
         BridgeOutFromControllerUtils.bridgeOutFromController(
             params.eventEmitter,
             params.multichainTransferRouter,
-            withdrawal.account(), // account
-            withdrawal.receiver(), // receiver
-            withdrawal.srcChainId(),
-            cache.result.outputToken, // token
-            cache.result.outputAmount, // amount
-            cache.result.secondaryOutputToken, // secondaryToken
-            cache.result.secondaryOutputAmount, // secondaryAmount
-            withdrawal.dataList()
+            BridgeOutFromControllerUtils.BridgeOutFromControllerParams({
+                account: withdrawal.account(), // account
+                receiver: withdrawal.receiver(), // receiver
+                srcChainId: withdrawal.srcChainId(),
+                token: cache.result.outputToken, // token
+                amount: cache.result.outputAmount, // amount
+                secondaryToken: cache.result.secondaryOutputToken, // secondaryToken
+                secondaryAmount: cache.result.secondaryOutputAmount, // secondaryAmount
+                dataList: withdrawal.dataList()
+            })
         );
 
         cache.oraclePriceCount = GasUtils.estimateWithdrawalOraclePriceCount(

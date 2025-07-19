@@ -89,6 +89,7 @@ interface IRelayUtils {
     struct BridgeOutParams {
         address token;
         uint256 amount;
+        uint256 minAmountOut;
         address provider;
         bytes data; // provider specific data e.g. dstEid
     }

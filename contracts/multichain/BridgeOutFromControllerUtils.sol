@@ -13,15 +13,39 @@ import "./MultichainEventUtils.sol";
 
 // @title BridgeOutFromControllerUtils
 library BridgeOutFromControllerUtils {
-    struct BridgeOutFromControllerCache {
+    struct BridgeOutFromControllerParams {
+        address account;
+        address receiver;
+        uint256 srcChainId;
+        address token;
+        uint256 amount;
+        address secondaryToken;
+        uint256 secondaryAmount;
+        bytes32[] dataList;
+    }
+
+    struct _BridgeOutParams {
         IMultichainProvider.ActionType actionType;
-        bytes actionData;
+        address account;
+        address token;
+        uint256 srcChainId;
+        uint256 desChainId;
+        uint256 amount;
+        uint256 minAmountOut;
+        uint256 deadline;
+        address provider;
+        bytes providerData;
+    }
+
+    struct BridgeOutActionData {
         uint256 desChainId;
         uint256 deadline;
         address provider;
         bytes providerData;
+        uint256 minAmountOut;
         address secondaryProvider;
         bytes secondaryProviderData;
+        uint256 secondaryMinAmountOut;
     }
 
     /// @dev abi.decode can fail if dataList is not properly formed, which would cause the deposit to be cancelled
@@ -48,27 +72,28 @@ library BridgeOutFromControllerUtils {
         }
 
         bytes memory data = Array.dataArrayToBytes(dataList);
-        BridgeOutFromControllerCache memory cache;
+        _BridgeOutParams memory _bridgeOutParams;
         bytes memory actionData;
-        (cache.actionType, actionData) = abi.decode(
+        (_bridgeOutParams.actionType, actionData) = abi.decode(
             data,
             (IMultichainProvider.ActionType, bytes)
         );
 
-        if (cache.actionType == IMultichainProvider.ActionType.BridgeOut) {
-            (cache.desChainId, cache.deadline, cache.provider, cache.providerData /* e.g. dstEid */) = abi.decode(
+        if (_bridgeOutParams.actionType == IMultichainProvider.ActionType.BridgeOut) {
+            (_bridgeOutParams.desChainId, _bridgeOutParams.deadline, _bridgeOutParams.provider, _bridgeOutParams.providerData, _bridgeOutParams.minAmountOut) = abi.decode(
                 actionData,
-                (uint256, uint256, address, bytes)
+                (uint256, uint256, address, bytes, uint256)
             );
+
+            _bridgeOutParams.account = account;
+            _bridgeOutParams.srcChainId = srcChainId;
+            _bridgeOutParams.token = token;
+            _bridgeOutParams.amount = amount;
 
             _bridgeOut(
                 eventEmitter,
                 multichainTransferRouter,
-                cache,
-                account,
-                srcChainId,
-                token,
-                amount
+                _bridgeOutParams
             );
         }
     }
@@ -76,76 +101,86 @@ library BridgeOutFromControllerUtils {
     function bridgeOutFromController(
         EventEmitter eventEmitter,
         IMultichainTransferRouter multichainTransferRouter,
-        address account,
-        address receiver,
-        uint256 srcChainId,
-        address token,
-        uint256 amount,
-        address secondaryToken,
-        uint256 secondaryAmount,
-        bytes32[] memory dataList
+        BridgeOutFromControllerParams memory params
     ) external {
         if (!_shouldProcessBridgeOut(
-            account,
-            receiver,
-            amount + secondaryAmount,
-            srcChainId,
-            dataList
+            params.account,
+            params.receiver,
+            params.amount + params.secondaryAmount,
+            params.srcChainId,
+            params.dataList
         )) {
             return;
         }
 
-        bytes memory data = Array.dataArrayToBytes(dataList);
-        BridgeOutFromControllerCache memory cache;
+        bytes memory data = Array.dataArrayToBytes(params.dataList);
+        _BridgeOutParams memory _bridgeOutParams;
+
         bytes memory actionData;
-        (cache.actionType, actionData) = abi.decode(
+        (_bridgeOutParams.actionType, actionData) = abi.decode(
             data,
             (IMultichainProvider.ActionType, bytes)
         );
 
-        if (cache.actionType == IMultichainProvider.ActionType.BridgeOut) {
-            if (token == secondaryToken || secondaryToken == address(0)) {
+        if (_bridgeOutParams.actionType == IMultichainProvider.ActionType.BridgeOut) {
+            if (params.token == params.secondaryToken || params.secondaryToken == address(0)) {
                 // providerData is to contain information such as dstEid
-                (cache.desChainId, cache.deadline, cache.provider, cache.providerData) = abi.decode(
+                (
+                    _bridgeOutParams.desChainId,
+                    _bridgeOutParams.deadline,
+                    _bridgeOutParams.provider,
+                    _bridgeOutParams.providerData,
+                    _bridgeOutParams.minAmountOut
+                ) = abi.decode(
                     actionData,
-                    (uint256, uint256, address, bytes)
+                    (uint256, uint256, address, bytes, uint256)
                 );
+
+                _bridgeOutParams.account = params.account;
+                _bridgeOutParams.srcChainId = params.srcChainId;
+                _bridgeOutParams.token = params.token;
+                _bridgeOutParams.amount = params.amount;
 
                 _bridgeOut(
                     eventEmitter,
                     multichainTransferRouter,
-                    cache,
-                    account,
-                    srcChainId,
-                    token,
-                    amount + secondaryAmount
+                    _bridgeOutParams
                 );
             } else {
-                (cache.desChainId, cache.deadline, cache.provider, cache.providerData, cache.secondaryProvider, cache.secondaryProviderData) = abi.decode(
-                    actionData,
-                    (uint256, uint256, address, bytes, address, bytes)
-                );
-                _bridgeOut(
-                    eventEmitter,
-                    multichainTransferRouter,
-                    cache,
-                    account,
-                    srcChainId,
-                    token,
-                    amount
-                );
-
-                cache.provider = cache.secondaryProvider;
-                cache.providerData = cache.secondaryProviderData;
+                BridgeOutActionData memory decodedActionData = abi.decode(actionData, (BridgeOutActionData));
 
                 _bridgeOut(
                     eventEmitter,
                     multichainTransferRouter,
-                    cache,
-                    account,
-                    srcChainId,
-                    secondaryToken,
-                    secondaryAmount
+                    _BridgeOutParams({
+                        actionType: _bridgeOutParams.actionType,
+                        account: params.account,
+                        token: params.token,
+                        srcChainId: params.srcChainId,
+                        desChainId: decodedActionData.desChainId,
+                        amount: params.amount,
+                        minAmountOut: decodedActionData.minAmountOut,
+                        deadline: decodedActionData.deadline,
+                        provider: decodedActionData.provider,
+                        providerData: decodedActionData.providerData
+                    })
+                );
+
+                _bridgeOut(
+                    eventEmitter,
+                    multichainTransferRouter,
+                    _BridgeOutParams({
+                        actionType: _bridgeOutParams.actionType,
+                        account: params.account,
+                        token: params.token,
+                        srcChainId: params.srcChainId,
+                        desChainId: decodedActionData.desChainId,
+                        amount: params.secondaryAmount,
+                        minAmountOut: decodedActionData.secondaryMinAmountOut,
+                        deadline: decodedActionData.deadline,
+                        provider: decodedActionData.secondaryProvider,
+                        providerData: decodedActionData.secondaryProviderData
+                    })
                 );
             }
         }
@@ -154,30 +189,27 @@ library BridgeOutFromControllerUtils {
     function _bridgeOut(
         EventEmitter eventEmitter,
         IMultichainTransferRouter multichainTransferRouter,
-        BridgeOutFromControllerCache memory cache,
-        address account,
-        uint256 srcChainId,
-        address token,
-        uint256 amount
+        _BridgeOutParams memory params
     ) internal {
-        if (amount == 0) {
+        if (params.amount == 0) {
             return;
         }
 
         IRelayUtils.BridgeOutParams memory bridgeOutParams = IRelayUtils.BridgeOutParams({
-            token: token,
-            amount: amount,
-            provider: cache.provider,
-            data: cache.providerData
+            token: params.token,
+            amount: params.amount,
+            minAmountOut: params.minAmountOut,
+            provider: params.provider,
+            data: params.providerData
         });
 
-        try multichainTransferRouter.bridgeOutFromController(account, srcChainId, cache.desChainId, cache.deadline, bridgeOutParams) {
-            MultichainEventUtils.emitMultichainBridgeAction(eventEmitter, address(this), account, srcChainId, uint256(cache.actionType));
+        try multichainTransferRouter.bridgeOutFromController(params.account, params.srcChainId, params.desChainId, params.deadline, bridgeOutParams) {
+            MultichainEventUtils.emitMultichainBridgeAction(eventEmitter, address(this), params.account, params.srcChainId, uint256(params.actionType));
         } catch Error(string memory reason) {
-            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(cache.actionType), reason);
+            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), params.account, params.srcChainId, uint256(params.actionType), reason);
         } catch (bytes memory reasonBytes) {
             (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
-            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(cache.actionType), reason);
+            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), params.account, params.srcChainId, uint256(params.actionType), reason);
         }
     }
 
