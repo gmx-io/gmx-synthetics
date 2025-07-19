@@ -193,19 +193,21 @@ export function hashSubaccountApproval(subaccountApproval: SubaccountApproval) {
     "maxAllowedCount",
     "actionType",
     "nonce",
+    "desChainId",
     "deadline",
     "integrationId",
     "signature",
   ]);
 
-  return ethers.utils.keccak256(
+  const hash = ethers.utils.keccak256(
     ethers.utils.defaultAbiCoder.encode(
       [
-        "tuple(address subaccount,bool shouldAdd,uint256 expiresAt,uint256 maxAllowedCount,bytes32 actionType,uint256 nonce,uint256 deadline,bytes32 integrationId,bytes signature)",
+        "tuple(address subaccount,bool shouldAdd,uint256 expiresAt,uint256 maxAllowedCount,bytes32 actionType,uint256 nonce,uint256 desChainId,uint256 deadline,bytes32 integrationId,bytes signature)",
       ],
       [subaccountApproval]
     )
   );
+  return hash;
 }
 
 export function assertFields(obj: any, fields: string[]) {

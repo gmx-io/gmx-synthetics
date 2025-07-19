@@ -247,6 +247,7 @@ export async function getSubaccountApproval(p: {
       signer: p.signer,
       ...p.subaccountApproval,
       nonce,
+      desChainId: p.desChainId,
       chainId: p.chainId,
       verifyingContract: p.relayRouter.address,
     });
@@ -348,6 +349,7 @@ async function getSubaccountApprovalSignature(p: {
   deadline: BigNumberish;
   integrationId: string;
   nonce: BigNumberish;
+  desChainId: BigNumberish;
 }) {
   const domain = {
     name: "GmxBaseGelatoRelayRouter",
@@ -364,6 +366,7 @@ async function getSubaccountApprovalSignature(p: {
       { name: "maxAllowedCount", type: "uint256" },
       { name: "actionType", type: "bytes32" },
       { name: "nonce", type: "uint256" },
+      { name: "desChainId", type: "uint256" },
       { name: "deadline", type: "uint256" },
       { name: "integrationId", type: "bytes32" },
     ],
@@ -377,6 +380,7 @@ async function getSubaccountApprovalSignature(p: {
     actionType: p.actionType,
     deadline: p.deadline,
     nonce: p.nonce,
+    desChainId: p.desChainId,
     integrationId: p.integrationId,
   };
 
