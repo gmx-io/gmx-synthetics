@@ -285,7 +285,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             dstEid: _dstEid,
             to: Cast.toBytes32(receiver),
             amountLD: amount,
-            minAmountLD: amount,
+            minAmountLD: 0,
             extraOptions: bytes(""),
             composeMsg: bytes(""),
             oftCmd: ""
