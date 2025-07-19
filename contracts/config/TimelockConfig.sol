@@ -462,8 +462,9 @@ contract TimelockConfig is RoleModule, BasicMulticall {
     }
 
     function signalSetEdgeDataStream(
-        bytes32 edgeDataStreamId,
         address token,
+        bytes32 edgeDataStreamId,
+        uint256 edgeDataStreamTokenDecimals,
         bytes32 predecessor,
         bytes32 salt
     ) external onlyTimelockAdmin {
@@ -471,9 +472,18 @@ contract TimelockConfig is RoleModule, BasicMulticall {
             revert Errors.EmptyDataStreamFeedId(token);
         }
 
-        bytes memory payload = abi.encodeWithSignature("setBytes32(bytes32,bytes32)",
+        address[] memory targets = new address[](2);
+        targets[0] = dataStore;
+        targets[1] = dataStore;
+
+        bytes[] memory payloads = new bytes[](4);
+        payloads[0] = abi.encodeWithSignature("setBytes32(bytes32,address)",
             Keys.edgeDataStreamIdKey(token), edgeDataStreamId);
-        timelockController.schedule(dataStore, 0, payload, predecessor, salt, timelockController.getMinDelay());
+        payloads[1] = abi.encodeWithSignature("setUint(bytes32,uint256)",
+            Keys.edgeDataStreamTokenDecimalsKey(token), edgeDataStreamTokenDecimals);
+
+        uint256[] memory values = new uint256[](2);
+        timelockController.scheduleBatch(targets, values, payloads, predecessor, salt, timelockController.getMinDelay());
 
         EventUtils.EventLogData memory eventData;
 
@@ -482,6 +492,9 @@ contract TimelockConfig is RoleModule, BasicMulticall {
 
         eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "edgeDataStreamId", edgeDataStreamId);
+
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "edgeDataStreamTokenDecimals", edgeDataStreamTokenDecimals);
 
         eventEmitter.emitEventLog("SignalSetEdgeDataStream", eventData);
     }
