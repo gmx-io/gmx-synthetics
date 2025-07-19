@@ -172,7 +172,7 @@ library BridgeOutFromControllerUtils {
                     _BridgeOutParams({
                         actionType: _bridgeOutParams.actionType,
                         account: params.account,
-                        token: params.token,
+                        token: params.secondaryToken,
                         srcChainId: params.srcChainId,
                         desChainId: decodedActionData.desChainId,
                         amount: params.secondaryAmount,

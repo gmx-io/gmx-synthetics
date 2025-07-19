@@ -468,6 +468,7 @@ describe("MultichainLifeCycle", () => {
     const defaultBridgeOutParams = {
       token: usdc.address,
       amount: bridgeOutAmount,
+      minAmountOut: 0,
       provider: mockStargatePoolUsdc.address,
       data: ethers.utils.defaultAbiCoder.encode(["uint32"], [1]), // dstEid = 1 (destination endpoint ID)
     };

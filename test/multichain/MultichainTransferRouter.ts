@@ -113,6 +113,7 @@ describe("MultichainTransferRouter", () => {
       defaultBridgeOutParams = {
         token: usdc.address,
         amount: bridgeOutAmount,
+        minAmountOut: 0,
         provider: mockStargatePoolUsdc.address,
         data: ethers.utils.defaultAbiCoder.encode(["uint32"], [1]), // dstEid = 1 (destination endpoint ID)
       };
@@ -240,6 +241,7 @@ describe("MultichainTransferRouter", () => {
       const transferOutParams = {
         token: usdc.address,
         amount: expandDecimals(1000, 6),
+        minAmountOut: 0,
         provider: mockStargatePoolUsdc.address,
         data: ethers.utils.defaultAbiCoder.encode(["uint32"], [1]), // dstEid = 1
       };
@@ -281,6 +283,7 @@ describe("MultichainTransferRouter", () => {
       const transferOutParams = {
         token: usdc.address,
         amount: 0,
+        minAmountOut: 0,
         provider: mockStargatePoolUsdc.address,
         data: ethers.utils.defaultAbiCoder.encode(["uint32"], [1]),
       };
@@ -307,6 +310,7 @@ describe("MultichainTransferRouter", () => {
       const transferOutParams = {
         token: usdc.address,
         amount: expandDecimals(1000, 6),
+        minAmountOut: 0,
         provider: mockStargatePoolUsdc.address,
         data: ethers.utils.defaultAbiCoder.encode(["uint32"], [1]),
       };

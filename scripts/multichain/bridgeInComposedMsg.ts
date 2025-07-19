@@ -492,7 +492,8 @@ async function getComposedMsg({
         DST_CHAIN_ID, // desChainId
         deadline,
         GM_OFT_ADAPTER, // provider
-        providerData
+        providerData,
+        0 // minAmountOut
       );
 
       const defaultDepositParams = {
@@ -572,9 +573,11 @@ async function getComposedMsg({
         DST_CHAIN_ID, // desChainId
         deadline,
         STARGATE_POOL_NATIVE_ARB_SEPOLIA, // provider -- > bridge out wnt
+        0, // minAmountOut
         providerData,
         STARGATE_POOL_USDC_ARB_SEPOLIA, // provider --> bridge out usdc
-        providerData
+        providerData,
+        0 // secondaryMinAmountOut
       );
       const defaultWithdrawalParams = {
         addresses: {
@@ -652,7 +655,8 @@ async function getComposedMsg({
         DST_CHAIN_ID, // desChainId
         deadline,
         GLV_OFT_ADAPTER, // provider
-        providerData
+        providerData,
+        0 // minAmountOut
       );
 
       const defaultGlvDepositParams = {
@@ -742,8 +746,10 @@ async function getComposedMsg({
         deadline,
         STARGATE_POOL_NATIVE_ARB_SEPOLIA, // provider -- > bridge out wnt
         providerData,
+        0, // minAmountOut
         STARGATE_POOL_USDC_ARB_SEPOLIA, // provider --> bridge out usdc
-        providerData
+        providerData,
+        0 // secondaryMinAmountOut
       );
 
       const defaultGlvWithdrawalParams = {

@@ -334,7 +334,8 @@ describe("MultichainGmRouter", () => {
           chainId, // desChainId
           deadline,
           ethers.constants.AddressZero, // provider (can be the zero address since the tokens are transferred directly to the user's wallet on the same chain)
-          providerData
+          providerData,
+          0 // minAmountOut
         );
 
         expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(0);
@@ -367,7 +368,8 @@ describe("MultichainGmRouter", () => {
           chainId, // desChainId
           deadline,
           mockStargatePoolGM.address, // provider
-          providerData
+          providerData,
+          0 // minAmountOut
         );
 
         const srcChainId = 1;
@@ -410,8 +412,10 @@ describe("MultichainGmRouter", () => {
           deadline,
           ethers.constants.AddressZero, // provider (can be the zero address since the tokens are transferred directly to the user's wallet on the same chain)
           providerData,
+          0, // minAmountOut
           ethers.constants.AddressZero, // secondaryProvider
-          providerData
+          providerData,
+          0 // secondaryMinAmountOut
         );
 
         expect(await getBalanceOf(wnt.address, user1.address)).eq(0);
