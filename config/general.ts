@@ -58,6 +58,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
 
       minPositionSizeUsd: decimalToFloat(1),
       claimableCollateralTimeDivisor: 60 * 60,
+      claimableCollateralDelay: 5 * 24 * 60 * 60,
 
       positionFeeReceiverFactor: 0,
       swapFeeReceiverFactor: 0,
@@ -131,6 +132,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
 
     minPositionSizeUsd: decimalToFloat(1),
     claimableCollateralTimeDivisor: 60 * 60,
+    claimableCollateralDelay: 5 * 24 * 60 * 60,
 
     positionFeeReceiverFactor: decimalToFloat(37, 2), // 37%
     swapFeeReceiverFactor: decimalToFloat(37, 2), // 37%
