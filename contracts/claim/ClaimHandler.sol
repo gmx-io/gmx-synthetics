@@ -112,6 +112,9 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
     }
 
     // @dev withdraw funds from the claim vault for multiple accounts in batch
+    // this is an admin recovery function used when users cannot access their EOA
+    // or when alternative distribution methods are needed. This zeros out user
+    // claimable amounts and transfers funds to the specified receiver.
     // @param token the token to withdraw
     // @param params array of withdraw parameters
     // @param receiver the receiver of the funds
@@ -241,6 +244,8 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
 
             claimVault.transferOut(param.token, receiver, claimableAmount);
             uint256 totalAmountLeft = dataStore.getUint(Keys.totalClaimableFundsAmountKey(param.token));
+
+            // invariant check
             if (totalAmountLeft > IERC20(param.token).balanceOf(address(claimVault))) {
                 revert Errors.InsufficientFunds(param.token);
             }
