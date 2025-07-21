@@ -14,11 +14,13 @@ library ClaimEventUtils {
     // @param eventEmitter the event emitter
     // @param account the account funds were deposited for
     // @param token the token that was deposited
+    // @param distributionId the distribution id that was deposited
     // @param amount the amount that was deposited
     function emitClaimFundsDeposited(
         EventEmitter eventEmitter,
         address account,
         address token,
+        uint256 distributionId,
         uint256 amount,
         uint256 nextAmount
     ) external {
@@ -28,9 +30,10 @@ library ClaimEventUtils {
         eventData.addressItems.setItem(0, "account", account);
         eventData.addressItems.setItem(1, "token", token);
 
-        eventData.uintItems.initItems(2);
-        eventData.uintItems.setItem(0, "amount", amount);
-        eventData.uintItems.setItem(1, "nextAmount", nextAmount);
+        eventData.uintItems.initItems(3);
+        eventData.uintItems.setItem(0, "distributionId", distributionId);
+        eventData.uintItems.setItem(1, "amount", amount);
+        eventData.uintItems.setItem(2, "nextAmount", nextAmount);
 
         eventEmitter.emitEventLog2("ClaimFundsDeposited", Cast.toBytes32(account), Cast.toBytes32(token), eventData);
     }
@@ -39,12 +42,14 @@ library ClaimEventUtils {
     // @param eventEmitter the event emitter
     // @param account the account that funds were withdrawn for
     // @param token the token that was withdrawn
+    // @param distributionId the distribution id that was withdrawn
     // @param amount the amount that was withdrawn
     // @param receiver the address that received the funds
     function emitClaimFundsWithdrawn(
         EventEmitter eventEmitter,
         address account,
         address token,
+        uint256 distributionId,
         uint256 amount,
         address receiver
     ) external {
@@ -55,8 +60,9 @@ library ClaimEventUtils {
         eventData.addressItems.setItem(1, "token", token);
         eventData.addressItems.setItem(2, "receiver", receiver);
 
-        eventData.uintItems.initItems(1);
-        eventData.uintItems.setItem(0, "amount", amount);
+        eventData.uintItems.initItems(2);
+        eventData.uintItems.setItem(0, "distributionId", distributionId);
+        eventData.uintItems.setItem(1, "amount", amount);
 
         eventEmitter.emitEventLog2("ClaimFundsWithdrawn", Cast.toBytes32(account), Cast.toBytes32(token), eventData);
     }
@@ -65,16 +71,18 @@ library ClaimEventUtils {
     // @param eventEmitter the event emitter
     // @param account the account that claimed funds
     // @param token the token that was claimed
+    // @param distributionId the distribution id that was claimed
     // @param amount the amount that was claimed
-    function emitClaimFundsClaimed(EventEmitter eventEmitter, address account, address token, uint256 amount) external {
+    function emitClaimFundsClaimed(EventEmitter eventEmitter, address account, address token, uint256 distributionId, uint256 amount) external {
         EventUtils.EventLogData memory eventData;
 
         eventData.addressItems.initItems(2);
         eventData.addressItems.setItem(0, "account", account);
         eventData.addressItems.setItem(1, "token", token);
 
-        eventData.uintItems.initItems(1);
-        eventData.uintItems.setItem(0, "amount", amount);
+        eventData.uintItems.initItems(2);
+        eventData.uintItems.setItem(0, "distributionId", distributionId);
+        eventData.uintItems.setItem(1, "amount", amount);
 
         eventEmitter.emitEventLog2("ClaimFundsClaimed", Cast.toBytes32(account), Cast.toBytes32(token), eventData);
     }
@@ -87,9 +95,10 @@ library ClaimEventUtils {
     // @param amount the amount that was transferred
     function emitClaimFundsTransferred(
         EventEmitter eventEmitter,
+        address token,
+        uint256 distributionId,
         address fromAccount,
         address toAccount,
-        address token,
         uint256 amount,
         uint256 nextAmount
     ) external {
@@ -100,9 +109,11 @@ library ClaimEventUtils {
         eventData.addressItems.setItem(1, "toAccount", toAccount);
         eventData.addressItems.setItem(2, "token", token);
 
-        eventData.uintItems.initItems(2);
-        eventData.uintItems.setItem(0, "amount", amount);
-        eventData.uintItems.setItem(1, "nextAmount", nextAmount);
+        eventData.uintItems.initItems(3);
+        eventData.uintItems.setItem(0, "distributionId", distributionId);
+        eventData.uintItems.setItem(1, "amount", amount);
+        eventData.uintItems.setItem(2, "nextAmount", nextAmount);
+
 
         eventEmitter.emitEventLog2(
             "ClaimFundsTransferred",

@@ -2341,12 +2341,14 @@ library Keys {
     // @dev key for the claimable fund amount for a specific account and token
     // @param account the account to claim funds for
     // @param token the token to claim
+    // @param distributionId the distribution id to claim funds for
     // @return key for claimable fund amount
-    function claimableFundsAmountKey(address account, address token) internal pure returns (bytes32) {
+    function claimableFundsAmountKey(address account, address token, uint256 distributionId) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             CLAIMABLE_FUNDS_AMOUNT,
             account,
-            token
+            token,
+            distributionId
         ));
     }
 
