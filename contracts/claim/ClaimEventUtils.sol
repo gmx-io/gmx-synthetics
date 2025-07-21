@@ -139,7 +139,7 @@ library ClaimEventUtils {
     function emitClaimTermsSet(EventEmitter eventEmitter, uint256 distributionId, bytes32 termsHash) external {
         EventUtils.EventLogData memory eventData;
 
-        eventData.uintItems.initItems(2);
+        eventData.uintItems.initItems(1);
         eventData.uintItems.setItem(0, "distributionId", distributionId);
 
         eventData.bytes32Items.initItems(1);
