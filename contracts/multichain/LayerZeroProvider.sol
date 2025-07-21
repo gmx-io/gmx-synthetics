@@ -99,6 +99,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         MultichainUtils.validateMultichainEndpoint(dataStore, msg.sender);
 
         /// @dev The `account` field is user-supplied and not validated; any address may be provided by the sender
+        // msg.sender and from need to be validated for account and token to not be spoofable
         (address account, uint256 srcChainId, uint256 amountLD, bytes memory data) = _decodeLzComposeMsg(message);
 
         address token = IStargate(from).token();
