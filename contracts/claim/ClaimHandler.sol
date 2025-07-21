@@ -38,6 +38,17 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
         uint256 amount;
     }
 
+    struct WithdrawParam {
+        address account;
+        uint256 distributionId;
+    }
+
+    struct ClaimParam {
+        address token;
+        uint256 distributionId;
+        bytes termsSignature;
+    }
+
     struct TransferClaimCache {
         uint256 distributionId;
         bytes32 fromAccountKey;
@@ -92,11 +103,6 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
 
         IERC20(token).safeTransferFrom(msg.sender, address(claimVault), totalTransferAmount);
         dataStore.incrementUint(Keys.totalClaimableFundsAmountKey(token), totalTransferAmount);
-    }
-
-    struct WithdrawParam {
-        address account;
-        uint256 distributionId;
     }
 
     // @dev withdraw funds from the claim vault for multiple accounts in batch
@@ -196,54 +202,47 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
     }
 
     // @dev claim funds for the calling account for multiple tokens
-    // @param tokens array of tokens to claim
+    // @param params array of claim parameters
     // @param receiver the receiver of the funds
-    function claimFunds(
-        address[] calldata tokens,
-        uint256[] calldata distributionIds,
-        bytes[] calldata termsSignatures,
-        address receiver
-    ) external globalNonReentrant {
-        if (tokens.length == 0) {
-            revert Errors.InvalidParams("tokens length is 0");
+    function claimFunds(ClaimParam[] calldata params, address receiver) external globalNonReentrant {
+        if (params.length == 0) {
+            revert Errors.InvalidParams("claim params length is 0");
         }
         if (receiver == address(0)) {
             revert Errors.EmptyReceiver();
         }
-        if (distributionIds.length != tokens.length) {
-            revert Errors.InvalidParams("distributionIds length mismatch");
-        }
-        if (termsSignatures.length != tokens.length) {
-            revert Errors.InvalidParams("termsSignatures length mismatch");
-        }
 
-        for (uint256 i = 0; i < tokens.length; i++) {
-            address token = tokens[i];
-            uint256 distributionId = distributionIds[i];
-            bytes calldata termsSignature = termsSignatures[i];
+        for (uint256 i = 0; i < params.length; i++) {
+            ClaimParam memory param = params[i];
 
-            if (token == address(0)) {
+            if (param.token == address(0)) {
                 revert Errors.EmptyToken();
             }
 
-            validateTermsSignature(distributionId, msg.sender, termsSignature);
+            validateTermsSignature(param.distributionId, msg.sender, param.termsSignature);
 
-            bytes32 claimableKey = Keys.claimableFundsAmountKey(msg.sender, token, distributionId);
+            bytes32 claimableKey = Keys.claimableFundsAmountKey(msg.sender, param.token, param.distributionId);
             uint256 claimableAmount = dataStore.getUint(claimableKey);
 
             if (claimableAmount == 0) {
-                revert Errors.EmptyClaimableAmount(token);
+                revert Errors.EmptyClaimableAmount(param.token);
             }
 
             dataStore.setUint(claimableKey, 0);
-            dataStore.decrementUint(Keys.totalClaimableFundsAmountKey(token), claimableAmount);
+            dataStore.decrementUint(Keys.totalClaimableFundsAmountKey(param.token), claimableAmount);
 
-            ClaimEventUtils.emitClaimFundsClaimed(eventEmitter, receiver, token, distributionId, claimableAmount);
+            ClaimEventUtils.emitClaimFundsClaimed(
+                eventEmitter,
+                receiver,
+                param.token,
+                param.distributionId,
+                claimableAmount
+            );
 
-            claimVault.transferOut(token, receiver, claimableAmount);
-            uint256 totalAmountLeft = dataStore.getUint(Keys.totalClaimableFundsAmountKey(token));
-            if (totalAmountLeft > IERC20(token).balanceOf(address(claimVault))) {
-                revert Errors.InsufficientFunds(token);
+            claimVault.transferOut(param.token, receiver, claimableAmount);
+            uint256 totalAmountLeft = dataStore.getUint(Keys.totalClaimableFundsAmountKey(param.token));
+            if (totalAmountLeft > IERC20(param.token).balanceOf(address(claimVault))) {
+                revert Errors.InsufficientFunds(param.token);
             }
         }
     }
@@ -283,7 +282,7 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
         ClaimEventUtils.emitClaimTermsRemoved(eventEmitter, distributionId);
     }
 
-    function validateTermsSignature(uint256 distributionId, address account, bytes calldata signature) internal view {
+    function validateTermsSignature(uint256 distributionId, address account, bytes memory signature) internal view {
         string memory terms = dataStore.getString(Keys.claimTermsKey(distributionId));
         if (bytes(terms).length == 0) {
             return;
