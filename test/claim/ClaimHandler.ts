@@ -139,6 +139,32 @@ describe("ClaimHandler", () => {
         claimHandler.connect(wallet).depositFunds(wnt.address, 1, accounts, amounts)
       ).to.be.revertedWithCustomError(errorsContract, "EmptyAmount");
     });
+
+    it("should handle deposits with multiple distributionIds for same accounts", async () => {
+      const accounts = [user0.address, user1.address];
+      const amounts = [expandDecimals(100, 18), expandDecimals(200, 18)];
+
+      await claimHandler.connect(wallet).depositFunds(wnt.address, 1, accounts, amounts);
+
+      // deposit for distribution 2 with same accounts but different amounts
+      const amounts2 = [expandDecimals(50, 18), expandDecimals(75, 18)];
+      await claimHandler.connect(wallet).depositFunds(wnt.address, 2, accounts, amounts2);
+
+      expect(await claimHandler.getClaimableAmount(user0.address, wnt.address, [1])).to.equal(expandDecimals(100, 18));
+      expect(await claimHandler.getClaimableAmount(user1.address, wnt.address, [1])).to.equal(expandDecimals(200, 18));
+
+      expect(await claimHandler.getClaimableAmount(user0.address, wnt.address, [2])).to.equal(expandDecimals(50, 18));
+      expect(await claimHandler.getClaimableAmount(user1.address, wnt.address, [2])).to.equal(expandDecimals(75, 18));
+
+      expect(await claimHandler.getClaimableAmount(user0.address, wnt.address, [1, 2])).to.equal(
+        expandDecimals(150, 18)
+      );
+      expect(await claimHandler.getClaimableAmount(user1.address, wnt.address, [1, 2])).to.equal(
+        expandDecimals(275, 18)
+      );
+
+      expect(await claimHandler.getTotalClaimableAmount(wnt.address)).to.equal(expandDecimals(425, 18));
+    });
   });
 
   describe("withdrawFunds", () => {
@@ -228,6 +254,38 @@ describe("ClaimHandler", () => {
       expect(await wnt.balanceOf(claimVault.address)).to.equal(0);
       expect(await wnt.balanceOf(user1.address)).to.equal(initialReceiverBalance.add(expandDecimals(100, 18)));
     });
+
+    it("should handle withdrawals across multiple distributionIds", async () => {
+      const accounts = [user0.address, user1.address];
+      const amounts1 = [expandDecimals(100, 18), expandDecimals(200, 18)];
+      const amounts2 = [expandDecimals(50, 18), expandDecimals(75, 18)];
+
+      await claimHandler.connect(wallet).depositFunds(wnt.address, 1, accounts, amounts1);
+      await claimHandler.connect(wallet).depositFunds(wnt.address, 2, accounts, amounts2);
+
+      expect(await claimHandler.getTotalClaimableAmount(wnt.address)).to.equal(expandDecimals(425, 18));
+
+      const receiver = ethers.Wallet.createRandom();
+
+      await claimHandler.connect(user0).withdrawFunds(wnt.address, [user0.address], [1, 2], receiver.address);
+
+      expect(await claimHandler.getClaimableAmount(user0.address, wnt.address, [1])).to.equal(0);
+      expect(await claimHandler.getClaimableAmount(user0.address, wnt.address, [2])).to.equal(0);
+
+      expect(await claimHandler.getClaimableAmount(user1.address, wnt.address, [1])).to.equal(expandDecimals(200, 18));
+      expect(await claimHandler.getClaimableAmount(user1.address, wnt.address, [2])).to.equal(expandDecimals(75, 18));
+
+      expect(await wnt.balanceOf(receiver.address)).to.equal(expandDecimals(150, 18));
+      expect(await claimHandler.getTotalClaimableAmount(wnt.address)).to.equal(expandDecimals(275, 18));
+
+      await claimHandler.connect(user0).withdrawFunds(wnt.address, [user1.address], [1], receiver.address);
+
+      expect(await claimHandler.getClaimableAmount(user1.address, wnt.address, [1])).to.equal(0);
+      expect(await claimHandler.getClaimableAmount(user1.address, wnt.address, [2])).to.equal(expandDecimals(75, 18));
+      expect(await wnt.balanceOf(receiver.address)).to.equal(expandDecimals(350, 18));
+
+      expect(await claimHandler.getTotalClaimableAmount(wnt.address)).to.equal(expandDecimals(75, 18));
+    });
   });
 
   describe("transferClaim", () => {
@@ -313,6 +371,24 @@ describe("ClaimHandler", () => {
       expect(await claimHandler.getClaimableAmount(user1.address, wnt.address, [1])).to.equal(0);
       expect(await claimHandler.getClaimableAmount(user2.address, wnt.address, [1])).to.equal(expandDecimals(100, 18));
       expect(await claimHandler.getTotalClaimableAmount(wnt.address)).to.equal(expandDecimals(100, 18));
+    });
+
+    it("should handle claim transfers across multiple distributionIds", async () => {
+      await claimHandler.connect(wallet).depositFunds(wnt.address, 1, [user0.address], [expandDecimals(100, 18)]);
+      await claimHandler.connect(wallet).depositFunds(wnt.address, 2, [user0.address], [expandDecimals(200, 18)]);
+      await claimHandler.connect(wallet).depositFunds(wnt.address, 3, [user0.address], [expandDecimals(50, 18)]);
+
+      await claimHandler.connect(user0).transferClaim(wnt.address, [1, 3], [user0.address], [user1.address]);
+
+      expect(await claimHandler.getClaimableAmount(user0.address, wnt.address, [1])).to.equal(0);
+      expect(await claimHandler.getClaimableAmount(user0.address, wnt.address, [2])).to.equal(expandDecimals(200, 18));
+      expect(await claimHandler.getClaimableAmount(user0.address, wnt.address, [3])).to.equal(0);
+
+      expect(await claimHandler.getClaimableAmount(user1.address, wnt.address, [1])).to.equal(expandDecimals(100, 18));
+      expect(await claimHandler.getClaimableAmount(user1.address, wnt.address, [2])).to.equal(0);
+      expect(await claimHandler.getClaimableAmount(user1.address, wnt.address, [3])).to.equal(expandDecimals(50, 18));
+
+      expect(await claimHandler.getTotalClaimableAmount(wnt.address)).to.equal(expandDecimals(350, 18));
     });
   });
 
@@ -400,6 +476,29 @@ describe("ClaimHandler", () => {
       await expect(
         claimHandler.connect(user0).claimFunds([usdc.address], [1], user0.address)
       ).to.be.revertedWithCustomError(errorsContract, "InsufficientFunds");
+    });
+
+    it("should handle claims across multiple distributionIds and tokens", async () => {
+      await claimHandler.connect(wallet).depositFunds(wnt.address, 1, [user0.address], [expandDecimals(100, 18)]);
+      await claimHandler.connect(wallet).depositFunds(wnt.address, 2, [user0.address], [expandDecimals(200, 18)]);
+      await claimHandler.connect(wallet).depositFunds(usdc.address, 1, [user0.address], [expandDecimals(1000, 6)]);
+      await claimHandler.connect(wallet).depositFunds(usdc.address, 3, [user0.address], [expandDecimals(2000, 6)]);
+
+      const receiver = ethers.Wallet.createRandom();
+
+      await claimHandler.connect(user0).claimFunds([wnt.address], [1, 2], receiver.address);
+
+      await claimHandler.connect(user0).claimFunds([usdc.address], [1, 3], receiver.address);
+
+      expect(await claimHandler.getClaimableAmount(user0.address, wnt.address, [1, 2])).to.equal(0);
+      expect(await claimHandler.getClaimableAmount(user0.address, usdc.address, [1, 3])).to.equal(0);
+
+      expect(await wnt.balanceOf(receiver.address)).to.equal(
+        expandDecimals(300, 18) // 100 + 200
+      );
+      expect(await usdc.balanceOf(receiver.address)).to.equal(
+        expandDecimals(3000, 6) // 1000 + 2000
+      );
     });
   });
 });
