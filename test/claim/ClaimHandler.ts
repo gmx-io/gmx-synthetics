@@ -337,10 +337,11 @@ describe("ClaimHandler", () => {
       expect(await claimHandler.getClaimableAmount(wallet.address, wnt.address, [1])).to.equal(0);
       expect(await claimHandler.getTotalClaimableAmount(wnt.address)).to.equal(expandDecimals(600, 18));
 
-      const fromAccounts1 = [user0.address, user1.address];
-      const toAccounts1 = [wallet.address, wallet.address];
-
-      await claimHandler.connect(user0).transferClaim(wnt.address, [1, 1], fromAccounts1, toAccounts1);
+      const transferParams1 = [
+        { token: wnt.address, distributionId: 1, fromAccount: user0.address, toAccount: wallet.address },
+        { token: wnt.address, distributionId: 1, fromAccount: user1.address, toAccount: wallet.address },
+      ];
+      await claimHandler.connect(user0).transferClaim(wnt.address, transferParams1);
 
       expect(await claimHandler.getClaimableAmount(user0.address, wnt.address, [1])).to.equal(0);
       expect(await claimHandler.getClaimableAmount(user1.address, wnt.address, [1])).to.equal(0);
@@ -348,10 +349,10 @@ describe("ClaimHandler", () => {
       expect(await claimHandler.getClaimableAmount(wallet.address, wnt.address, [1])).to.equal(expandDecimals(300, 18)); // 100 + 200
       expect(await claimHandler.getTotalClaimableAmount(wnt.address)).to.equal(expandDecimals(600, 18)); // total unchanged
 
-      const fromAccounts2 = [user2.address];
-      const toAccounts2 = [user1.address];
-
-      await claimHandler.connect(user0).transferClaim(wnt.address, [1], fromAccounts2, toAccounts2);
+      const transferParams2 = [
+        { token: wnt.address, distributionId: 1, fromAccount: user2.address, toAccount: user1.address },
+      ];
+      await claimHandler.connect(user0).transferClaim(wnt.address, transferParams2);
 
       expect(await claimHandler.getClaimableAmount(user0.address, wnt.address, [1])).to.equal(0);
       expect(await claimHandler.getClaimableAmount(user1.address, wnt.address, [1])).to.equal(expandDecimals(300, 18));
@@ -361,38 +362,49 @@ describe("ClaimHandler", () => {
     });
 
     it("should revert with Unauthorized when caller is not TIMELOCK_MULTISIG", async () => {
+      const transferParams = [
+        { token: wnt.address, distributionId: 1, fromAccount: user0.address, toAccount: user1.address },
+      ];
       await expect(
-        claimHandler.connect(user1).transferClaim(wnt.address, [1], [user0.address], [user1.address])
+        claimHandler.connect(user1).transferClaim(wnt.address, transferParams)
       ).to.be.revertedWithCustomError(errorsContract, "Unauthorized");
     });
 
     it("should revert with InvalidParams when fromAccounts array is empty", async () => {
-      await expect(
-        claimHandler.connect(user0).transferClaim(wnt.address, [], [], [user1.address])
-      ).to.be.revertedWithCustomError(errorsContract, "InvalidParams");
-    });
-
-    it("should revert with InvalidParams when arrays have different lengths", async () => {
-      await expect(
-        claimHandler.connect(user0).transferClaim(wnt.address, [1], [user0.address], [user1.address, user2.address])
-      ).to.be.revertedWithCustomError(errorsContract, "InvalidParams");
+      await expect(claimHandler.connect(user0).transferClaim(wnt.address, []))
+        .to.be.revertedWithCustomError(errorsContract, "InvalidParams")
+        .withArgs("transfer params length is 0");
     });
 
     it("should revert with EmptyToken when token address is zero", async () => {
+      const transferParams = [
+        {
+          token: ethers.constants.AddressZero,
+          distributionId: 1,
+          fromAccount: user0.address,
+          toAccount: user1.address,
+        },
+      ];
       await expect(
-        claimHandler.connect(user0).transferClaim(ethers.constants.AddressZero, [1], [user0.address], [user1.address])
+        claimHandler.connect(user0).transferClaim(ethers.constants.AddressZero, transferParams)
       ).to.be.revertedWithCustomError(errorsContract, "EmptyToken");
     });
 
     it("should revert with EmptyAccount when fromAccount address is zero", async () => {
+      const transferParams = [
+        { token: wnt.address, distributionId: 1, fromAccount: ethers.constants.AddressZero, toAccount: user1.address },
+      ];
       await expect(
-        claimHandler.connect(user0).transferClaim(wnt.address, [1], [ethers.constants.AddressZero], [user1.address])
+        claimHandler.connect(user0).transferClaim(wnt.address, transferParams)
       ).to.be.revertedWithCustomError(errorsContract, "EmptyAccount");
     });
 
     it("should revert with EmptyReceiver when toAccount address is zero", async () => {
+      const transferParams = [
+        { token: wnt.address, distributionId: 1, fromAccount: user0.address, toAccount: ethers.constants.AddressZero },
+      ];
       await expect(
-        claimHandler.connect(user0).transferClaim(wnt.address, [1], [user0.address], [ethers.constants.AddressZero])
+        claimHandler.connect(user0).transferClaim(wnt.address, transferParams)
       ).to.be.revertedWithCustomError(errorsContract, "EmptyReceiver");
     });
 
@@ -401,9 +413,11 @@ describe("ClaimHandler", () => {
         .connect(wallet)
         .depositFunds(wnt.address, 1, [{ account: user0.address, amount: expandDecimals(100, 18) }]);
 
-      await claimHandler
-        .connect(user0)
-        .transferClaim(wnt.address, [1, 1], [user0.address, user1.address], [user2.address, user2.address]);
+      const transferParams = [
+        { token: wnt.address, distributionId: 1, fromAccount: user0.address, toAccount: user2.address },
+        { token: wnt.address, distributionId: 1, fromAccount: user1.address, toAccount: user2.address },
+      ];
+      await claimHandler.connect(user0).transferClaim(wnt.address, transferParams);
 
       expect(await claimHandler.getClaimableAmount(user0.address, wnt.address, [1])).to.equal(0);
       expect(await claimHandler.getClaimableAmount(user1.address, wnt.address, [1])).to.equal(0);
@@ -422,9 +436,11 @@ describe("ClaimHandler", () => {
         .connect(wallet)
         .depositFunds(wnt.address, 3, [{ account: user0.address, amount: expandDecimals(50, 18) }]);
 
-      await claimHandler
-        .connect(user0)
-        .transferClaim(wnt.address, [1, 3], [user0.address, user0.address], [user1.address, user1.address]);
+      const transferParams = [
+        { token: wnt.address, distributionId: 1, fromAccount: user0.address, toAccount: user1.address },
+        { token: wnt.address, distributionId: 3, fromAccount: user0.address, toAccount: user1.address },
+      ];
+      await claimHandler.connect(user0).transferClaim(wnt.address, transferParams);
 
       expect(await claimHandler.getClaimableAmount(user0.address, wnt.address, [1])).to.equal(0);
       expect(await claimHandler.getClaimableAmount(user0.address, wnt.address, [2])).to.equal(expandDecimals(200, 18));
@@ -609,26 +625,28 @@ describe("ClaimHandler", () => {
     });
 
     it("should handle claims across multiple distributionIds and tokens", async () => {
-      await claimHandler.connect(wallet).depositFunds(wnt.address, 1, [
-        { account: user0.address, amount: expandDecimals(100, 18) },
-        { account: user0.address, amount: expandDecimals(1000, 6) },
-      ]);
+      await claimHandler
+        .connect(wallet)
+        .depositFunds(wnt.address, 1, [{ account: user0.address, amount: expandDecimals(100, 18) }]);
       await claimHandler
         .connect(wallet)
         .depositFunds(wnt.address, 2, [{ account: user0.address, amount: expandDecimals(200, 18) }]);
+      await claimHandler
+        .connect(wallet)
+        .depositFunds(usdc.address, 1, [{ account: user0.address, amount: expandDecimals(1000, 6) }]);
       await claimHandler
         .connect(wallet)
         .depositFunds(usdc.address, 3, [{ account: user0.address, amount: expandDecimals(2000, 6) }]);
 
       const receiver = ethers.Wallet.createRandom();
 
-      const claimParams = [
+      const claimParams1 = [
         { token: wnt.address, distributionId: 1, termsSignature: "0x" },
         { token: wnt.address, distributionId: 2, termsSignature: "0x" },
         { token: usdc.address, distributionId: 1, termsSignature: "0x" },
         { token: usdc.address, distributionId: 3, termsSignature: "0x" },
       ];
-      await claimHandler.connect(user0).claimFunds(claimParams, receiver.address);
+      await claimHandler.connect(user0).claimFunds(claimParams1, receiver.address);
 
       expect(await claimHandler.getClaimableAmount(user0.address, wnt.address, [1, 2])).to.equal(0);
       expect(await claimHandler.getClaimableAmount(user0.address, usdc.address, [1, 3])).to.equal(0);

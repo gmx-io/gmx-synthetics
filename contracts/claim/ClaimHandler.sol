@@ -49,8 +49,14 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
         bytes termsSignature;
     }
 
-    struct TransferClaimCache {
+    struct TransferClaimParam {
+        address token;
         uint256 distributionId;
+        address fromAccount;
+        address toAccount;
+    }
+
+    struct TransferClaimCache {
         bytes32 fromAccountKey;
         bytes32 toAccountKey;
         uint256 amount;
@@ -152,48 +158,42 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
 
     // @dev transfer claim funds between accounts
     // @param token the token to transfer
-    // @param fromAccounts array of accounts to transfer from
-    // @param toAccounts array of accounts to transfer to
+    // @param params array of transfer parameters
     function transferClaim(
         address token,
-        uint256[] calldata distributionIds,
-        address[] calldata fromAccounts,
-        address[] calldata toAccounts
+        TransferClaimParam[] calldata params
     ) external globalNonReentrant onlyTimelockMultisig {
-        if (fromAccounts.length == 0) {
-            revert Errors.InvalidParams("accounts length is 0");
-        }
-        if (fromAccounts.length != toAccounts.length) {
-            revert Errors.InvalidParams("accounts and receivers length mismatch");
+        if (params.length == 0) {
+            revert Errors.InvalidParams("transfer params length is 0");
         }
         if (token == address(0)) {
             revert Errors.EmptyToken();
         }
 
         TransferClaimCache memory cache;
-        for (uint256 i = 0; i < fromAccounts.length; i++) {
-            if (fromAccounts[i] == address(0)) {
+        for (uint256 i = 0; i < params.length; i++) {
+            TransferClaimParam memory param = params[i];
+            if (param.fromAccount == address(0)) {
                 revert Errors.EmptyAccount();
             }
-            if (toAccounts[i] == address(0)) {
+            if (param.toAccount == address(0)) {
                 revert Errors.EmptyReceiver();
             }
-            cache.distributionId = distributionIds[i];
 
-            cache.fromAccountKey = Keys.claimableFundsAmountKey(fromAccounts[i], token, cache.distributionId);
+            cache.fromAccountKey = Keys.claimableFundsAmountKey(param.fromAccount, token, param.distributionId);
             cache.amount = dataStore.getUint(cache.fromAccountKey);
 
             if (cache.amount > 0) {
                 dataStore.setUint(cache.fromAccountKey, 0);
-                cache.toAccountKey = Keys.claimableFundsAmountKey(toAccounts[i], token, cache.distributionId);
+                cache.toAccountKey = Keys.claimableFundsAmountKey(param.toAccount, token, param.distributionId);
                 cache.nextAmount = dataStore.incrementUint(cache.toAccountKey, cache.amount);
 
                 ClaimEventUtils.emitClaimFundsTransferred(
                     eventEmitter,
                     token,
-                    cache.distributionId,
-                    fromAccounts[i],
-                    toAccounts[i],
+                    param.distributionId,
+                    param.fromAccount,
+                    param.toAccount,
                     cache.amount,
                     cache.nextAmount
                 );
