@@ -2,7 +2,7 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 
 import { deployFixture } from "../../utils/fixture";
-import { expandDecimals, formatAmount } from "../../utils/math";
+import { expandDecimals } from "../../utils/math";
 import { grantRole } from "../../utils/role";
 import { errorsContract } from "../../utils/error";
 import { deployContract } from "../../utils/deploy";
