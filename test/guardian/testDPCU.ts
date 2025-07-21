@@ -28,7 +28,7 @@ describe("Guardian.DecreasePositionCollateralUtils", () => {
     await scenes.deposit(fixture);
   });
 
-  it("OrderSizeDeltaAutoUpdated: Estimated Position Value Less Than MIN_COLLATERAL_USD", async () => {
+  it("OrderCollateralDeltaAmountAutoUpdated: Estimated Position Value Less Than MIN_COLLATERAL_USD", async () => {
     // Set the MIN_COLLATERAL_USD extremely high so that:
     // (estimatedRemainingCollateralUsd + cache.estimatedRemainingPnlUsd) < params.contracts.dataStore.getUint(Keys.MIN_COLLATERAL_USD).toInt256()
     await dataStore.setUint(keys.MIN_COLLATERAL_USD, decimalToFloat(50_000));
@@ -60,14 +60,14 @@ describe("Guardian.DecreasePositionCollateralUtils", () => {
         },
       }),
       (result) => {
-        const event = getEventData(result.executeResult.logs, "OrderSizeDeltaAutoUpdated");
-        expect(event.sizeDeltaUsd).eq(decimalToFloat(100 * 1000));
-        expect(event.nextSizeDeltaUsd).eq(decimalToFloat(200 * 1000));
+        const event = getEventData(result.executeResult.logs, "OrderCollateralDeltaAmountAutoUpdated");
+        expect(event.collateralDeltaAmount).eq(expandDecimals(9, 18));
+        expect(event.nextCollateralDeltaAmount).eq(0);
       }
     );
 
-    // No positions remains
-    expect(await getPositionCount(dataStore)).eq(0);
+    // position remains
+    expect(await getPositionCount(dataStore)).eq(1);
   });
 
   it("getEmptyFees and execution succeeds", async () => {
