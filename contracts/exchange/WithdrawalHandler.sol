@@ -2,6 +2,8 @@
 
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+
 import "./BaseHandler.sol";
 import "../error/ErrorUtils.sol";
 
@@ -17,7 +19,7 @@ import "./IWithdrawalHandler.sol";
 
 // @title WithdrawalHandler
 // @dev Contract to handle creation, execution and cancellation of withdrawals
-contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
+contract WithdrawalHandler is IWithdrawalHandler, BaseHandler, ReentrancyGuard {
     using Withdrawal for Withdrawal.Props;
 
     MultichainVault public immutable multichainVault;
@@ -132,7 +134,7 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
     function executeWithdrawalFromController(
         IExecuteWithdrawalUtils.ExecuteWithdrawalParams calldata executeWithdrawalParams,
         Withdrawal.Props calldata withdrawal
-    ) external onlyController returns (IExecuteWithdrawalUtils.ExecuteWithdrawalResult memory) {
+    ) external nonReentrant onlyController returns (IExecuteWithdrawalUtils.ExecuteWithdrawalResult memory) {
         FeatureUtils.validateFeature(dataStore, Keys.executeWithdrawalFeatureDisabledKey(address(this)));
         return ExecuteWithdrawalUtils.executeWithdrawal(executeWithdrawalParams, withdrawal);
     }
