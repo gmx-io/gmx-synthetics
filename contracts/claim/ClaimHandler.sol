@@ -94,43 +94,51 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
         dataStore.incrementUint(Keys.totalClaimableFundsAmountKey(token), totalTransferAmount);
     }
 
+    struct WithdrawParam {
+        address account;
+        uint256 distributionId;
+    }
+
     // @dev withdraw funds from the claim vault for multiple accounts in batch
     // @param token the token to withdraw
-    // @param accounts array of accounts to withdraw funds for
+    // @param params array of withdraw parameters
     // @param receiver the receiver of the funds
     function withdrawFunds(
         address token,
-        address[] calldata accounts,
-        uint256[] calldata distributionIds,
+        WithdrawParam[] calldata params,
         address receiver
     ) external globalNonReentrant onlyTimelockMultisig {
         if (token == address(0)) {
             revert Errors.EmptyToken();
         }
-        if (accounts.length == 0) {
-            revert Errors.InvalidParams("accounts length is 0");
-        }
-        if (distributionIds.length != accounts.length) {
-            revert Errors.InvalidParams("distributionIds length mismatch");
+        if (params.length == 0) {
+            revert Errors.InvalidParams("withdraw params length is 0");
         }
         if (receiver == address(0)) {
             revert Errors.EmptyReceiver();
         }
 
         uint256 totalWithdrawnAmount;
-        for (uint256 i = 0; i < accounts.length; i++) {
-            address account = accounts[i];
+        for (uint256 i = 0; i < params.length; i++) {
+            WithdrawParam memory param = params[i];
 
-            if (account == address(0)) {
+            if (param.account == address(0)) {
                 revert Errors.EmptyAccount();
             }
 
-            bytes32 claimableKey = Keys.claimableFundsAmountKey(account, token, distributionIds[i]);
+            bytes32 claimableKey = Keys.claimableFundsAmountKey(param.account, token, param.distributionId);
             uint256 amount = dataStore.getUint(claimableKey);
             dataStore.setUint(claimableKey, 0);
             totalWithdrawnAmount += amount;
 
-            ClaimEventUtils.emitClaimFundsWithdrawn(eventEmitter, account, token, distributionIds[i], amount, receiver);
+            ClaimEventUtils.emitClaimFundsWithdrawn(
+                eventEmitter,
+                param.account,
+                token,
+                param.distributionId,
+                amount,
+                receiver
+            );
         }
         claimVault.transferOut(token, receiver, totalWithdrawnAmount);
         dataStore.decrementUint(Keys.totalClaimableFundsAmountKey(token), totalWithdrawnAmount);
