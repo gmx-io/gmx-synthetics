@@ -722,11 +722,6 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_HighMax_WithLowerBase,
 
-      maxLongTokenPoolAmount: expandDecimals(3450, 18),
-      maxShortTokenPoolAmount: expandDecimals(11_000_000, 6),
-
-      maxPoolUsdForDeposit: decimalToFloat(10_000_000),
-
       positionImpactExponentFactor: exponentToFloat("1.62e0"),
       negativePositionImpactFactor: exponentToFloat("3.18e-7"),
       positivePositionImpactFactor: exponentToFloat("1.06e-7"),
@@ -746,7 +741,12 @@ const config: {
       positionImpactPoolDistributionRate: expandDecimals(9345, 38).div(SECONDS_PER_DAY), // 9345 DOGE / day
       minPositionImpactPoolAmount: expandDecimals(3280141, 8), // 3280141 DOGE
 
-      maxOpenInterest: decimalToFloat(6_000_000),
+      maxOpenInterest: decimalToFloat(10_000_000),
+
+      maxPoolUsdForDeposit: decimalToFloat(12_000_000),
+
+      maxLongTokenPoolAmount: expandDecimals(3660, 18),
+      maxShortTokenPoolAmount: expandDecimals(14_000_000, 6),
 
       atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
