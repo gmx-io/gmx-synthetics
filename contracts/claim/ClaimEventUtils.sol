@@ -9,6 +9,7 @@ import "../utils/Cast.sol";
 library ClaimEventUtils {
     using EventUtils for EventUtils.AddressItems;
     using EventUtils for EventUtils.UintItems;
+    using EventUtils for EventUtils.Bytes32Items;
 
     // @dev emit a ClaimFundsDeposited event
     // @param eventEmitter the event emitter
@@ -16,6 +17,7 @@ library ClaimEventUtils {
     // @param token the token that was deposited
     // @param distributionId the distribution id that was deposited
     // @param amount the amount that was deposited
+    // @param nextAmount the updated total amount for the account
     function emitClaimFundsDeposited(
         EventEmitter eventEmitter,
         address account,
@@ -73,7 +75,13 @@ library ClaimEventUtils {
     // @param token the token that was claimed
     // @param distributionId the distribution id that was claimed
     // @param amount the amount that was claimed
-    function emitClaimFundsClaimed(EventEmitter eventEmitter, address account, address token, uint256 distributionId, uint256 amount) external {
+    function emitClaimFundsClaimed(
+        EventEmitter eventEmitter,
+        address account,
+        address token,
+        uint256 distributionId,
+        uint256 amount
+    ) external {
         EventUtils.EventLogData memory eventData;
 
         eventData.addressItems.initItems(2);
@@ -89,10 +97,12 @@ library ClaimEventUtils {
 
     // @dev emit a ClaimFundsTransferred event
     // @param eventEmitter the event emitter
+    // @param token the token that was transferred
+    // @param distributionId the distribution id for the transfer
     // @param fromAccount the account that funds were transferred from
     // @param toAccount the account that funds were transferred to
-    // @param token the token that was transferred
     // @param amount the amount that was transferred
+    // @param nextAmount the updated total amount for the recipient
     function emitClaimFundsTransferred(
         EventEmitter eventEmitter,
         address token,
@@ -114,12 +124,39 @@ library ClaimEventUtils {
         eventData.uintItems.setItem(1, "amount", amount);
         eventData.uintItems.setItem(2, "nextAmount", nextAmount);
 
-
         eventEmitter.emitEventLog2(
             "ClaimFundsTransferred",
             Cast.toBytes32(fromAccount),
             Cast.toBytes32(toAccount),
             eventData
         );
+    }
+
+    // @dev emit a ClaimTermsSet event
+    // @param eventEmitter the event emitter
+    // @param distributionId the distribution id for the terms
+    // @param termsHash the hash of the terms string
+    function emitClaimTermsSet(EventEmitter eventEmitter, uint256 distributionId, bytes32 termsHash) external {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.uintItems.initItems(2);
+        eventData.uintItems.setItem(0, "distributionId", distributionId);
+
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "termsHash", termsHash);
+
+        eventEmitter.emitEventLog1("ClaimTermsSet", bytes32(distributionId), eventData);
+    }
+
+    // @dev emit a ClaimTermsRemoved event
+    // @param eventEmitter the event emitter
+    // @param distributionId the distribution id for the terms that were removed
+    function emitClaimTermsRemoved(EventEmitter eventEmitter, uint256 distributionId) external {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "distributionId", distributionId);
+
+        eventEmitter.emitEventLog1("ClaimTermsRemoved", bytes32(distributionId), eventData);
     }
 }

@@ -7,15 +7,16 @@ import { grantRole } from "../../utils/role";
 import { errorsContract } from "../../utils/error";
 import { deployContract } from "../../utils/deploy";
 import { ClaimVault } from "../../typechain-types";
+import * as keys from "../../utils/keys";
+import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 
 describe("ClaimHandler", () => {
-  let fixture;
   let user0, user1, user2, wallet;
   let roleStore, dataStore, eventEmitter, claimHandler, claimVault: ClaimVault;
   let wnt, usdc;
 
-  beforeEach(async () => {
-    fixture = await deployFixture();
+  async function setup() {
+    const fixture = await deployFixture();
     ({ user0, user1, user2, wallet } = fixture.accounts);
     ({ roleStore, dataStore, eventEmitter, wnt, usdc } = fixture.contracts);
 
@@ -43,6 +44,10 @@ describe("ClaimHandler", () => {
 
     await wnt.connect(wallet).approve(claimHandler.address, expandDecimals(1000, 18));
     await usdc.connect(wallet).approve(claimHandler.address, expandDecimals(1000000, 6));
+  }
+
+  beforeEach(async () => {
+    await loadFixture(setup);
   });
 
   describe("depositFunds", () => {
@@ -568,6 +573,164 @@ describe("ClaimHandler", () => {
       expect(await usdc.balanceOf(receiver.address)).to.equal(
         expandDecimals(3000, 6) // 1000 + 2000
       );
+    });
+  });
+
+  describe("setTerms", () => {
+    describe("access control", () => {
+      it("should revert when non-CONFIG_KEEPER tries to set terms", async () => {
+        const distributionId = 1;
+        const terms = "I agree to the terms and conditions";
+
+        await expect(claimHandler.connect(user0).setTerms(distributionId, terms)).to.be.revertedWithCustomError(
+          errorsContract,
+          "Unauthorized"
+        );
+      });
+
+      it("should allow CONFIG_KEEPER to set terms successfully", async () => {
+        const distributionId = 1;
+        const terms = "I agree to the terms and conditions";
+
+        await claimHandler.connect(wallet).setTerms(distributionId, terms);
+      });
+    });
+
+    describe("input validation", () => {
+      it("should revert when distributionId is 0", async () => {
+        const distributionId = 0;
+        const terms = "I agree to the terms and conditions";
+        await expect(claimHandler.connect(wallet).setTerms(distributionId, terms)).to.be.revertedWithCustomError(
+          errorsContract,
+          "InvalidParams"
+        );
+      });
+
+      it("should revert when terms string is empty", async () => {
+        const distributionId = 1;
+        const emptyTerms = "";
+
+        await expect(claimHandler.connect(wallet).setTerms(distributionId, emptyTerms)).to.be.revertedWithCustomError(
+          errorsContract,
+          "InvalidParams"
+        );
+      });
+
+      it("should handle terms with newlines and formatting", async () => {
+        const distributionId = 1;
+        const termsWithFormatting = `Terms and Conditions:
+        1. You must comply with all rules
+        2. No unauthorized access
+        3. Data will be processed according to our privacy policy
+
+        By signing, you agree to these terms.`;
+
+        await claimHandler.connect(wallet).setTerms(distributionId, termsWithFormatting);
+        const terms = await dataStore.getString(keys.claimTermsKey(distributionId));
+        expect(terms).to.equal(termsWithFormatting);
+      });
+    });
+
+    describe("duplicate prevention", () => {
+      it("should revert when setting identical terms for different distributionId", async () => {
+        const terms = "I agree to the terms and conditions";
+        const distributionId1 = 1;
+        const distributionId2 = 2;
+
+        await claimHandler.connect(wallet).setTerms(distributionId1, terms);
+
+        await expect(claimHandler.connect(wallet).setTerms(distributionId2, terms)).to.be.revertedWithCustomError(
+          errorsContract,
+          "DuplicateClaimTerms"
+        );
+      });
+
+      it("should allow setting different terms for different distributionId", async () => {
+        const terms1 = "First set of terms and conditions";
+        const terms2 = "Second set of terms and conditions";
+        const distributionId1 = 1;
+        const distributionId2 = 2;
+
+        await claimHandler.connect(wallet).setTerms(distributionId1, terms1);
+        await claimHandler.connect(wallet).setTerms(distributionId2, terms2);
+
+        expect(await dataStore.getString(keys.claimTermsKey(distributionId1))).to.equal(terms1);
+        expect(await dataStore.getString(keys.claimTermsKey(distributionId2))).to.equal(terms2);
+      });
+
+      it("should allow setting same distributionId with different terms", async () => {
+        const terms1 = "First terms";
+        const terms2 = "Second terms";
+        const distributionId = 1;
+
+        await claimHandler.connect(wallet).setTerms(distributionId, terms1);
+        await claimHandler.connect(wallet).setTerms(distributionId, terms2);
+
+        expect(await dataStore.getString(keys.claimTermsKey(distributionId))).to.equal(terms2);
+      });
+    });
+  });
+
+  describe("removeTerms", () => {
+    describe("access control", () => {
+      it("should revert when non-CONFIG_KEEPER tries to remove terms", async () => {
+        const distributionId = 1;
+        const terms = "Terms to be removed";
+
+        await claimHandler.connect(wallet).setTerms(distributionId, terms);
+
+        await expect(claimHandler.connect(user0).removeTerms(distributionId)).to.be.revertedWithCustomError(
+          errorsContract,
+          "Unauthorized"
+        );
+      });
+
+      it("should allow CONFIG_KEEPER to remove terms successfully", async () => {
+        const distributionId = 1;
+        const terms = "Terms to be removed";
+
+        await claimHandler.connect(wallet).setTerms(distributionId, terms);
+        await claimHandler.connect(wallet).removeTerms(distributionId);
+      });
+    });
+
+    describe("functionality", () => {
+      it("should successfully remove existing terms", async () => {
+        const distributionId = 1;
+        const terms = "Terms to be removed";
+
+        await claimHandler.connect(wallet).setTerms(distributionId, terms);
+        expect(await dataStore.getString(keys.claimTermsKey(distributionId))).to.equal(terms);
+
+        await claimHandler.connect(wallet).removeTerms(distributionId);
+        expect(await dataStore.getString(keys.claimTermsKey(distributionId))).to.equal("");
+
+        await claimHandler
+          .connect(wallet)
+          .depositFunds(wnt.address, distributionId, [user0.address], [expandDecimals(100, 18)]);
+
+        // can claim without signature
+        await claimHandler.connect(user0).claimFunds([wnt.address], [distributionId], ["0x"], user0.address);
+      });
+
+      it("should revert when trying to remove non-existent terms", async () => {
+        const distributionId = 999;
+
+        await expect(claimHandler.connect(wallet).removeTerms(distributionId))
+          .to.be.revertedWithCustomError(errorsContract, "InvalidParams")
+          .withArgs("terms not found");
+      });
+
+      it("should allow setting new terms after removal", async () => {
+        const distributionId = 1;
+        const originalTerms = "Original terms";
+        const newTerms = "New terms after removal";
+
+        await claimHandler.connect(wallet).setTerms(distributionId, originalTerms);
+        await claimHandler.connect(wallet).removeTerms(distributionId);
+        await claimHandler.connect(wallet).setTerms(distributionId, newTerms);
+        expect(await dataStore.getString(keys.claimTermsKey(distributionId))).to.equal(newTerms);
+      });
     });
   });
 });

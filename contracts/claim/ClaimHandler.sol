@@ -239,7 +239,15 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
     }
 
     function setTerms(uint256 distributionId, string calldata terms) external onlyConfigKeeper {
-        bytes32 claimTermsBackrefKey = Keys.claimTermsBackrefKey(distributionId);
+        if (distributionId == 0) {
+            revert Errors.InvalidParams("distributionId is 0");
+        }
+        if (bytes(terms).length == 0) {
+            revert Errors.InvalidParams("terms is empty");
+        }
+
+        bytes32 termsHash = keccak256(bytes(terms));
+        bytes32 claimTermsBackrefKey = Keys.claimTermsBackrefKey(termsHash);
         uint256 existingDistributionId = dataStore.getUint(claimTermsBackrefKey);
         if (existingDistributionId != 0) {
             revert Errors.DuplicateClaimTerms(existingDistributionId);
@@ -247,6 +255,22 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
 
         dataStore.setUint(claimTermsBackrefKey, distributionId);
         dataStore.setString(Keys.claimTermsKey(distributionId), terms);
+
+        ClaimEventUtils.emitClaimTermsSet(eventEmitter, distributionId, termsHash);
+    }
+
+    function removeTerms(uint256 distributionId) external onlyConfigKeeper {
+        string memory terms = dataStore.getString(Keys.claimTermsKey(distributionId));
+        if (bytes(terms).length == 0) {
+            revert Errors.InvalidParams("terms not found");
+        }
+
+        bytes32 termsHash = keccak256(bytes(terms));
+        bytes32 claimTermsBackrefKey = Keys.claimTermsBackrefKey(termsHash);
+        dataStore.setUint(claimTermsBackrefKey, 0);
+        dataStore.setString(Keys.claimTermsKey(distributionId), "");
+
+        ClaimEventUtils.emitClaimTermsRemoved(eventEmitter, distributionId);
     }
 
     function validateTermsSignature(uint256 distributionId, address account, bytes calldata signature) internal view {

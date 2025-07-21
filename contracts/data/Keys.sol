@@ -2373,10 +2373,10 @@ library Keys {
         ));
     }
 
-    function claimTermsBackrefKey(uint256 distributionId) internal pure returns (bytes32) {
+    function claimTermsBackrefKey(bytes32 termsHash) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             CLAIM_TERMS_BACKREF,
-            distributionId
+            termsHash
         ));
     }
 }
