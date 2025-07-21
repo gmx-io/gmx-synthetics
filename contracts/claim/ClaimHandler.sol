@@ -33,7 +33,7 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
         claimVault = _claimVault;
     }
 
-    struct DepositAmount {
+    struct DepositParam {
         address account;
         uint256 amount;
     }
@@ -52,14 +52,10 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
     function depositFunds(
         address token,
         uint256 distributionId,
-        address[] calldata accounts,
-        uint256[] calldata amounts
+        DepositParam[] calldata params
     ) external globalNonReentrant onlyConfigKeeper {
-        if (amounts.length == 0) {
-            revert Errors.InvalidParams("amounts length is 0");
-        }
-        if (accounts.length != amounts.length) {
-            revert Errors.InvalidParams("accounts and amounts length mismatch");
+        if (params.length == 0) {
+            revert Errors.InvalidParams("deposit params length is 0");
         }
         if (token == address(0)) {
             revert Errors.EmptyToken();
@@ -67,25 +63,31 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
 
         uint256 totalTransferAmount;
 
-        for (uint256 i = 0; i < accounts.length; i++) {
-            address account = accounts[i];
-            uint256 amount = amounts[i];
+        for (uint256 i = 0; i < params.length; i++) {
+            DepositParam memory param = params[i];
 
-            if (account == address(0)) {
+            if (param.account == address(0)) {
                 revert Errors.EmptyAccount();
             }
-            if (amount == 0) {
+            if (param.amount == 0) {
                 revert Errors.EmptyAmount();
             }
 
             uint256 nextAmount = dataStore.incrementUint(
-                Keys.claimableFundsAmountKey(account, token, distributionId),
-                amount
+                Keys.claimableFundsAmountKey(param.account, token, distributionId),
+                param.amount
             );
 
-            totalTransferAmount += amount;
+            totalTransferAmount += param.amount;
 
-            ClaimEventUtils.emitClaimFundsDeposited(eventEmitter, account, token, distributionId, amount, nextAmount);
+            ClaimEventUtils.emitClaimFundsDeposited(
+                eventEmitter,
+                param.account,
+                token,
+                distributionId,
+                param.amount,
+                nextAmount
+            );
         }
 
         IERC20(token).safeTransferFrom(msg.sender, address(claimVault), totalTransferAmount);
