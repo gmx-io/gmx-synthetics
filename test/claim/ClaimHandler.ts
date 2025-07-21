@@ -191,7 +191,6 @@ describe("ClaimHandler", () => {
 
       const initialReceiverBalance = await wnt.balanceOf(user1.address);
 
-      const firstWithdrawalAccounts = [user0.address, user1.address];
       const firstWithdrawalAmount = expandDecimals(300, 18); // 100 + 200
 
       const firstWithdrawParams = [
@@ -207,7 +206,6 @@ describe("ClaimHandler", () => {
       expect(await wnt.balanceOf(claimVault.address)).to.equal(expandDecimals(300, 18)); // 600 - 300 = 300
       expect(await wnt.balanceOf(user1.address)).to.equal(initialReceiverBalance.add(firstWithdrawalAmount));
 
-      const secondWithdrawalAccounts = [user2.address];
       const secondWithdrawalAmount = expandDecimals(300, 18);
 
       const secondWithdrawParams = [{ account: user2.address, distributionId: 1 }];
