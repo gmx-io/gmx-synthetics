@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 import "../role/RoleModule.sol";
 import "../utils/GlobalReentrancyGuard.sol";
@@ -35,6 +36,14 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
     struct DepositAmount {
         address account;
         uint256 amount;
+    }
+
+    struct TransferClaimCache {
+        uint256 distributionId;
+        bytes32 fromAccountKey;
+        bytes32 toAccountKey;
+        uint256 amount;
+        uint256 nextAmount;
     }
 
     // @dev deposit funds for multiple accounts and tokens in batch
@@ -93,14 +102,14 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
         uint256[] calldata distributionIds,
         address receiver
     ) external globalNonReentrant onlyTimelockMultisig {
+        if (token == address(0)) {
+            revert Errors.EmptyToken();
+        }
         if (accounts.length == 0) {
             revert Errors.InvalidParams("accounts length is 0");
         }
-        if (distributionIds.length == 0) {
-            revert Errors.InvalidParams("distributionIds length is 0");
-        }
-        if (token == address(0)) {
-            revert Errors.EmptyToken();
+        if (distributionIds.length != accounts.length) {
+            revert Errors.InvalidParams("distributionIds length mismatch");
         }
         if (receiver == address(0)) {
             revert Errors.EmptyReceiver();
@@ -114,33 +123,15 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
                 revert Errors.EmptyAccount();
             }
 
-            for (uint256 j = 0; j < distributionIds.length; j++) {
-                // uint256 distributionId = distributionIds[j];
-                bytes32 claimableKey = Keys.claimableFundsAmountKey(account, token, distributionIds[j]);
-                uint256 amount = dataStore.getUint(claimableKey);
-                dataStore.setUint(claimableKey, 0);
-                totalWithdrawnAmount += amount;
+            bytes32 claimableKey = Keys.claimableFundsAmountKey(account, token, distributionIds[i]);
+            uint256 amount = dataStore.getUint(claimableKey);
+            dataStore.setUint(claimableKey, 0);
+            totalWithdrawnAmount += amount;
 
-                ClaimEventUtils.emitClaimFundsWithdrawn(
-                    eventEmitter,
-                    account,
-                    token,
-                    distributionIds[j],
-                    amount,
-                    receiver
-                );
-            }
+            ClaimEventUtils.emitClaimFundsWithdrawn(eventEmitter, account, token, distributionIds[i], amount, receiver);
         }
         claimVault.transferOut(token, receiver, totalWithdrawnAmount);
         dataStore.decrementUint(Keys.totalClaimableFundsAmountKey(token), totalWithdrawnAmount);
-    }
-
-    struct TransferClaimCache {
-        uint256 distributionId;
-        bytes32 fromAccountKey;
-        bytes32 toAccountKey;
-        uint256 amount;
-        uint256 nextAmount;
     }
 
     // @dev transfer claim funds between accounts
@@ -171,27 +162,25 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
             if (toAccounts[i] == address(0)) {
                 revert Errors.EmptyReceiver();
             }
+            cache.distributionId = distributionIds[i];
 
-            for (uint256 j = 0; j < distributionIds.length; j++) {
-                cache.distributionId = distributionIds[j];
-                cache.fromAccountKey = Keys.claimableFundsAmountKey(fromAccounts[i], token, cache.distributionId);
-                cache.amount = dataStore.getUint(cache.fromAccountKey);
+            cache.fromAccountKey = Keys.claimableFundsAmountKey(fromAccounts[i], token, cache.distributionId);
+            cache.amount = dataStore.getUint(cache.fromAccountKey);
 
-                if (cache.amount > 0) {
-                    dataStore.setUint(cache.fromAccountKey, 0);
-                    cache.toAccountKey = Keys.claimableFundsAmountKey(toAccounts[i], token, cache.distributionId);
-                    cache.nextAmount = dataStore.incrementUint(cache.toAccountKey, cache.amount);
+            if (cache.amount > 0) {
+                dataStore.setUint(cache.fromAccountKey, 0);
+                cache.toAccountKey = Keys.claimableFundsAmountKey(toAccounts[i], token, cache.distributionId);
+                cache.nextAmount = dataStore.incrementUint(cache.toAccountKey, cache.amount);
 
-                    ClaimEventUtils.emitClaimFundsTransferred(
-                        eventEmitter,
-                        token,
-                        cache.distributionId,
-                        fromAccounts[i],
-                        toAccounts[i],
-                        cache.amount,
-                        cache.nextAmount
-                    );
-                }
+                ClaimEventUtils.emitClaimFundsTransferred(
+                    eventEmitter,
+                    token,
+                    cache.distributionId,
+                    fromAccounts[i],
+                    toAccounts[i],
+                    cache.amount,
+                    cache.nextAmount
+                );
             }
         }
     }
@@ -202,6 +191,7 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
     function claimFunds(
         address[] calldata tokens,
         uint256[] calldata distributionIds,
+        bytes[] calldata termsSignatures,
         address receiver
     ) external globalNonReentrant {
         if (tokens.length == 0) {
@@ -210,36 +200,65 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
         if (receiver == address(0)) {
             revert Errors.EmptyReceiver();
         }
+        if (distributionIds.length != tokens.length) {
+            revert Errors.InvalidParams("distributionIds length mismatch");
+        }
+        if (termsSignatures.length != tokens.length) {
+            revert Errors.InvalidParams("termsSignatures length mismatch");
+        }
 
         for (uint256 i = 0; i < tokens.length; i++) {
             address token = tokens[i];
+            uint256 distributionId = distributionIds[i];
+            bytes calldata termsSignature = termsSignatures[i];
 
             if (token == address(0)) {
                 revert Errors.EmptyToken();
             }
 
-            uint256 totalClaimedAmount;
-            for (uint256 j = 0; j < distributionIds.length; j++) {
-                uint256 distributionId = distributionIds[j];
-                bytes32 claimableKey = Keys.claimableFundsAmountKey(msg.sender, token, distributionId);
-                uint256 claimableAmount = dataStore.getUint(claimableKey);
+            validateTermsSignature(distributionId, msg.sender, termsSignature);
 
-                if (claimableAmount == 0) {
-                    revert Errors.EmptyClaimableAmount(token);
-                }
+            bytes32 claimableKey = Keys.claimableFundsAmountKey(msg.sender, token, distributionId);
+            uint256 claimableAmount = dataStore.getUint(claimableKey);
 
-                totalClaimedAmount += claimableAmount;
-                dataStore.setUint(claimableKey, 0);
-                dataStore.decrementUint(Keys.totalClaimableFundsAmountKey(token), claimableAmount);
-
-                ClaimEventUtils.emitClaimFundsClaimed(eventEmitter, receiver, token, distributionId, claimableAmount);
+            if (claimableAmount == 0) {
+                revert Errors.EmptyClaimableAmount(token);
             }
 
-            claimVault.transferOut(token, receiver, totalClaimedAmount);
+            dataStore.setUint(claimableKey, 0);
+            dataStore.decrementUint(Keys.totalClaimableFundsAmountKey(token), claimableAmount);
+
+            ClaimEventUtils.emitClaimFundsClaimed(eventEmitter, receiver, token, distributionId, claimableAmount);
+
+            claimVault.transferOut(token, receiver, claimableAmount);
             uint256 totalAmountLeft = dataStore.getUint(Keys.totalClaimableFundsAmountKey(token));
             if (totalAmountLeft > IERC20(token).balanceOf(address(claimVault))) {
                 revert Errors.InsufficientFunds(token);
             }
+        }
+    }
+
+    function setTerms(uint256 distributionId, string calldata terms) external onlyConfigKeeper {
+        bytes32 claimTermsBackrefKey = Keys.claimTermsBackrefKey(distributionId);
+        uint256 existingDistributionId = dataStore.getUint(claimTermsBackrefKey);
+        if (existingDistributionId != 0) {
+            revert Errors.DuplicateClaimTerms(existingDistributionId);
+        }
+
+        dataStore.setUint(claimTermsBackrefKey, distributionId);
+        dataStore.setString(Keys.claimTermsKey(distributionId), terms);
+    }
+
+    function validateTermsSignature(uint256 distributionId, address account, bytes calldata signature) internal view {
+        string memory terms = dataStore.getString(Keys.claimTermsKey(distributionId));
+        if (bytes(terms).length == 0) {
+            return;
+        }
+
+        bytes32 ethSignedMessageHash = ECDSA.toEthSignedMessageHash(bytes(terms));
+        address recoveredSigner = ECDSA.recover(ethSignedMessageHash, signature);
+        if (recoveredSigner != account) {
+            revert Errors.InvalidClaimTermsSignature(recoveredSigner, account);
         }
     }
 

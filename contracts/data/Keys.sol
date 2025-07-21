@@ -483,6 +483,10 @@ library Keys {
     bytes32 public constant CLAIMABLE_FUNDS_AMOUNT = keccak256(abi.encode("CLAIMABLE_FUNDS_AMOUNT"));
     // @dev key for the total claimable amount for a specific token
     bytes32 public constant TOTAL_CLAIMABLE_FUNDS_AMOUNT = keccak256(abi.encode("TOTAL_CLAIMABLE_FUNDS_AMOUNT"));
+    // @dev key for the terms for a specific distribution
+    bytes32 public constant CLAIM_TERMS = keccak256(abi.encode("CLAIM_TERMS"));
+    // @dev key for the terms hash for a specific distribution
+    bytes32 public constant CLAIM_TERMS_BACKREF = keccak256(abi.encode("CLAIM_TERMS_BACKREF"));
 
     // @dev constant for user initiated cancel reason
     string public constant USER_INITIATED_CANCEL = "USER_INITIATED_CANCEL";
@@ -2143,6 +2147,20 @@ library Keys {
         return keccak256(abi.encode(
             TOTAL_CLAIMABLE_FUNDS_AMOUNT,
             token
+        ));
+    }
+
+    function claimTermsKey(uint256 distributionId) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            CLAIM_TERMS,
+            distributionId
+        ));
+    }
+
+    function claimTermsBackrefKey(uint256 distributionId) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            CLAIM_TERMS_BACKREF,
+            distributionId
         ));
     }
 }
