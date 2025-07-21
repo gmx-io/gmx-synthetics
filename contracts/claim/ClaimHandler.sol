@@ -42,6 +42,7 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
     // @param amounts array of deposit parameters
     function depositFunds(
         address token,
+        uint256 distributionId,
         address[] calldata accounts,
         uint256[] calldata amounts
     ) external globalNonReentrant onlyConfigKeeper {
@@ -68,11 +69,14 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
                 revert Errors.EmptyAmount();
             }
 
-            uint256 nextAmount = dataStore.incrementUint(Keys.claimableFundsAmountKey(account, token), amount);
+            uint256 nextAmount = dataStore.incrementUint(
+                Keys.claimableFundsAmountKey(account, token, distributionId),
+                amount
+            );
 
             totalTransferAmount += amount;
 
-            ClaimEventUtils.emitClaimFundsDeposited(eventEmitter, account, token, amount, nextAmount);
+            ClaimEventUtils.emitClaimFundsDeposited(eventEmitter, account, token, distributionId, amount, nextAmount);
         }
 
         IERC20(token).safeTransferFrom(msg.sender, address(claimVault), totalTransferAmount);
@@ -86,10 +90,14 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
     function withdrawFunds(
         address token,
         address[] calldata accounts,
+        uint256[] calldata distributionIds,
         address receiver
     ) external globalNonReentrant onlyTimelockMultisig {
         if (accounts.length == 0) {
             revert Errors.InvalidParams("accounts length is 0");
+        }
+        if (distributionIds.length == 0) {
+            revert Errors.InvalidParams("distributionIds length is 0");
         }
         if (token == address(0)) {
             revert Errors.EmptyToken();
@@ -106,15 +114,33 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
                 revert Errors.EmptyAccount();
             }
 
-            bytes32 claimableKey = Keys.claimableFundsAmountKey(account, token);
-            uint256 amount = dataStore.getUint(claimableKey);
-            dataStore.setUint(claimableKey, 0);
-            totalWithdrawnAmount += amount;
+            for (uint256 j = 0; j < distributionIds.length; j++) {
+                // uint256 distributionId = distributionIds[j];
+                bytes32 claimableKey = Keys.claimableFundsAmountKey(account, token, distributionIds[j]);
+                uint256 amount = dataStore.getUint(claimableKey);
+                dataStore.setUint(claimableKey, 0);
+                totalWithdrawnAmount += amount;
 
-            ClaimEventUtils.emitClaimFundsWithdrawn(eventEmitter, account, token, amount, receiver);
+                ClaimEventUtils.emitClaimFundsWithdrawn(
+                    eventEmitter,
+                    account,
+                    token,
+                    distributionIds[j],
+                    amount,
+                    receiver
+                );
+            }
         }
         claimVault.transferOut(token, receiver, totalWithdrawnAmount);
         dataStore.decrementUint(Keys.totalClaimableFundsAmountKey(token), totalWithdrawnAmount);
+    }
+
+    struct TransferClaimCache {
+        uint256 distributionId;
+        bytes32 fromAccountKey;
+        bytes32 toAccountKey;
+        uint256 amount;
+        uint256 nextAmount;
     }
 
     // @dev transfer claim funds between accounts
@@ -123,6 +149,7 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
     // @param toAccounts array of accounts to transfer to
     function transferClaim(
         address token,
+        uint256[] calldata distributionIds,
         address[] calldata fromAccounts,
         address[] calldata toAccounts
     ) external globalNonReentrant onlyTimelockMultisig {
@@ -136,6 +163,7 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
             revert Errors.EmptyToken();
         }
 
+        TransferClaimCache memory cache;
         for (uint256 i = 0; i < fromAccounts.length; i++) {
             if (fromAccounts[i] == address(0)) {
                 revert Errors.EmptyAccount();
@@ -144,24 +172,26 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
                 revert Errors.EmptyReceiver();
             }
 
-            bytes32 fromAccountKey = Keys.claimableFundsAmountKey(fromAccounts[i], token);
-            uint256 amount = dataStore.getUint(fromAccountKey);
+            for (uint256 j = 0; j < distributionIds.length; j++) {
+                cache.distributionId = distributionIds[j];
+                cache.fromAccountKey = Keys.claimableFundsAmountKey(fromAccounts[i], token, cache.distributionId);
+                cache.amount = dataStore.getUint(cache.fromAccountKey);
 
-            if (amount > 0) {
-                dataStore.setUint(fromAccountKey, 0);
-                uint256 nextAmount = dataStore.incrementUint(
-                    Keys.claimableFundsAmountKey(toAccounts[i], token),
-                    amount
-                );
+                if (cache.amount > 0) {
+                    dataStore.setUint(cache.fromAccountKey, 0);
+                    cache.toAccountKey = Keys.claimableFundsAmountKey(toAccounts[i], token, cache.distributionId);
+                    cache.nextAmount = dataStore.incrementUint(cache.toAccountKey, cache.amount);
 
-                ClaimEventUtils.emitClaimFundsTransferred(
-                    eventEmitter,
-                    fromAccounts[i],
-                    toAccounts[i],
-                    token,
-                    amount,
-                    nextAmount
-                );
+                    ClaimEventUtils.emitClaimFundsTransferred(
+                        eventEmitter,
+                        token,
+                        cache.distributionId,
+                        fromAccounts[i],
+                        toAccounts[i],
+                        cache.amount,
+                        cache.nextAmount
+                    );
+                }
             }
         }
     }
@@ -169,7 +199,11 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
     // @dev claim funds for the calling account for multiple tokens
     // @param tokens array of tokens to claim
     // @param receiver the receiver of the funds
-    function claimFunds(address[] calldata tokens, address receiver) external globalNonReentrant {
+    function claimFunds(
+        address[] calldata tokens,
+        uint256[] calldata distributionIds,
+        address receiver
+    ) external globalNonReentrant {
         if (tokens.length == 0) {
             revert Errors.InvalidParams("tokens length is 0");
         }
@@ -184,25 +218,28 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
                 revert Errors.EmptyToken();
             }
 
-            bytes32 claimableKey = Keys.claimableFundsAmountKey(msg.sender, token);
-            uint256 claimableAmount = dataStore.getUint(claimableKey);
+            uint256 totalClaimedAmount;
+            for (uint256 j = 0; j < distributionIds.length; j++) {
+                uint256 distributionId = distributionIds[j];
+                bytes32 claimableKey = Keys.claimableFundsAmountKey(msg.sender, token, distributionId);
+                uint256 claimableAmount = dataStore.getUint(claimableKey);
 
-            if (claimableAmount == 0) {
-                revert Errors.EmptyClaimableAmount(token);
+                if (claimableAmount == 0) {
+                    revert Errors.EmptyClaimableAmount(token);
+                }
+
+                totalClaimedAmount += claimableAmount;
+                dataStore.setUint(claimableKey, 0);
+                dataStore.decrementUint(Keys.totalClaimableFundsAmountKey(token), claimableAmount);
+
+                ClaimEventUtils.emitClaimFundsClaimed(eventEmitter, receiver, token, distributionId, claimableAmount);
             }
 
-            claimVault.transferOut(token, receiver, claimableAmount);
-            dataStore.setUint(claimableKey, 0);
-            uint256 totalAmountLeft = dataStore.decrementUint(
-                Keys.totalClaimableFundsAmountKey(token),
-                claimableAmount
-            );
-
+            claimVault.transferOut(token, receiver, totalClaimedAmount);
+            uint256 totalAmountLeft = dataStore.getUint(Keys.totalClaimableFundsAmountKey(token));
             if (totalAmountLeft > IERC20(token).balanceOf(address(claimVault))) {
                 revert Errors.InsufficientFunds(token);
             }
-
-            ClaimEventUtils.emitClaimFundsClaimed(eventEmitter, receiver, token, claimableAmount);
         }
     }
 
@@ -210,8 +247,17 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
     // @param account the account to check
     // @param token the token to check
     // @return the claimable amount
-    function getClaimableAmount(address account, address token) external view returns (uint256) {
-        return dataStore.getUint(Keys.claimableFundsAmountKey(account, token));
+    function getClaimableAmount(
+        address account,
+        address token,
+        uint256[] calldata distributionIds
+    ) external view returns (uint256) {
+        uint256 totalClaimableAmount;
+        for (uint256 i = 0; i < distributionIds.length; i++) {
+            uint256 distributionId = distributionIds[i];
+            totalClaimableAmount += dataStore.getUint(Keys.claimableFundsAmountKey(account, token, distributionId));
+        }
+        return totalClaimableAmount;
     }
 
     // @dev get the total claimable amount for a token
