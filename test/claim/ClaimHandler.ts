@@ -194,7 +194,11 @@ describe("ClaimHandler", () => {
       const firstWithdrawalAccounts = [user0.address, user1.address];
       const firstWithdrawalAmount = expandDecimals(300, 18); // 100 + 200
 
-      await claimHandler.connect(user0).withdrawFunds(wnt.address, firstWithdrawalAccounts, [1, 1], user1.address);
+      const firstWithdrawParams = [
+        { account: user0.address, distributionId: 1 },
+        { account: user1.address, distributionId: 1 },
+      ];
+      await claimHandler.connect(user0).withdrawFunds(wnt.address, firstWithdrawParams, user1.address);
 
       expect(await claimHandler.getClaimableAmount(user0.address, wnt.address, [1])).to.equal(0);
       expect(await claimHandler.getClaimableAmount(user1.address, wnt.address, [1])).to.equal(0);
@@ -206,7 +210,8 @@ describe("ClaimHandler", () => {
       const secondWithdrawalAccounts = [user2.address];
       const secondWithdrawalAmount = expandDecimals(300, 18);
 
-      await claimHandler.connect(user0).withdrawFunds(wnt.address, secondWithdrawalAccounts, [1], user2.address);
+      const secondWithdrawParams = [{ account: user2.address, distributionId: 1 }];
+      await claimHandler.connect(user0).withdrawFunds(wnt.address, secondWithdrawParams, user2.address);
 
       expect(await claimHandler.getClaimableAmount(user0.address, wnt.address, [1])).to.equal(0);
       expect(await claimHandler.getClaimableAmount(user1.address, wnt.address, [1])).to.equal(0);
@@ -222,32 +227,36 @@ describe("ClaimHandler", () => {
         .connect(wallet)
         .depositFunds(wnt.address, 1, [{ account: user0.address, amount: expandDecimals(100, 18) }]);
 
+      const params = [{ account: user0.address, distributionId: 1 }];
       await expect(
-        claimHandler.connect(user1).withdrawFunds(wnt.address, [user0.address], [1], user1.address)
+        claimHandler.connect(user1).withdrawFunds(wnt.address, params, user1.address)
       ).to.be.revertedWithCustomError(errorsContract, "Unauthorized");
     });
 
     it("should revert with InvalidParams when accounts array is empty", async () => {
-      await expect(
-        claimHandler.connect(user0).withdrawFunds(wnt.address, [], [], user1.address)
-      ).to.be.revertedWithCustomError(errorsContract, "InvalidParams");
+      await expect(claimHandler.connect(user0).withdrawFunds(wnt.address, [], user1.address))
+        .to.be.revertedWithCustomError(errorsContract, "InvalidParams")
+        .withArgs("withdraw params length is 0");
     });
 
     it("should revert with EmptyToken when token address is zero", async () => {
+      const params = [{ account: user0.address, distributionId: 1 }];
       await expect(
-        claimHandler.connect(user0).withdrawFunds(ethers.constants.AddressZero, [user0.address], [1], user1.address)
+        claimHandler.connect(user0).withdrawFunds(ethers.constants.AddressZero, params, user1.address)
       ).to.be.revertedWithCustomError(errorsContract, "EmptyToken");
     });
 
     it("should revert with EmptyReceiver when receiver address is zero", async () => {
+      const params = [{ account: user0.address, distributionId: 1 }];
       await expect(
-        claimHandler.connect(user0).withdrawFunds(wnt.address, [user0.address], [1], ethers.constants.AddressZero)
+        claimHandler.connect(user0).withdrawFunds(wnt.address, params, ethers.constants.AddressZero)
       ).to.be.revertedWithCustomError(errorsContract, "EmptyReceiver");
     });
 
     it("should revert with EmptyAccount when account address is zero", async () => {
+      const params = [{ account: ethers.constants.AddressZero, distributionId: 1 }];
       await expect(
-        claimHandler.connect(user0).withdrawFunds(wnt.address, [ethers.constants.AddressZero], [1], user1.address)
+        claimHandler.connect(user0).withdrawFunds(wnt.address, params, user1.address)
       ).to.be.revertedWithCustomError(errorsContract, "EmptyAccount");
     });
 
@@ -258,9 +267,11 @@ describe("ClaimHandler", () => {
 
       const initialReceiverBalance = await wnt.balanceOf(user1.address);
 
-      await claimHandler
-        .connect(user0)
-        .withdrawFunds(wnt.address, [user0.address, user1.address], [1, 1], user1.address);
+      const withdrawParams = [
+        { account: user0.address, distributionId: 1 },
+        { account: user1.address, distributionId: 1 },
+      ];
+      await claimHandler.connect(user0).withdrawFunds(wnt.address, withdrawParams, user1.address);
 
       expect(await claimHandler.getClaimableAmount(user0.address, wnt.address, [1])).to.equal(0);
       expect(await claimHandler.getClaimableAmount(user1.address, wnt.address, [1])).to.equal(0);
@@ -286,9 +297,11 @@ describe("ClaimHandler", () => {
 
       const receiver = ethers.Wallet.createRandom();
 
-      await claimHandler
-        .connect(user0)
-        .withdrawFunds(wnt.address, [user0.address, user0.address], [1, 2], receiver.address);
+      const withdrawParams = [
+        { account: user0.address, distributionId: 1 },
+        { account: user0.address, distributionId: 2 },
+      ];
+      await claimHandler.connect(user0).withdrawFunds(wnt.address, withdrawParams, receiver.address);
 
       expect(await claimHandler.getClaimableAmount(user0.address, wnt.address, [1])).to.equal(0);
       expect(await claimHandler.getClaimableAmount(user0.address, wnt.address, [2])).to.equal(0);
@@ -299,7 +312,8 @@ describe("ClaimHandler", () => {
       expect(await wnt.balanceOf(receiver.address)).to.equal(expandDecimals(150, 18));
       expect(await claimHandler.getTotalClaimableAmount(wnt.address)).to.equal(expandDecimals(275, 18));
 
-      await claimHandler.connect(user0).withdrawFunds(wnt.address, [user1.address], [1], receiver.address);
+      const withdrawParams2 = [{ account: user1.address, distributionId: 1 }];
+      await claimHandler.connect(user0).withdrawFunds(wnt.address, withdrawParams2, receiver.address);
 
       expect(await claimHandler.getClaimableAmount(user1.address, wnt.address, [1])).to.equal(0);
       expect(await claimHandler.getClaimableAmount(user1.address, wnt.address, [2])).to.equal(expandDecimals(75, 18));
