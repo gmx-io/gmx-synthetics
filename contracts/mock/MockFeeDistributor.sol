@@ -9,6 +9,7 @@ import "../fee/FeeDistributorUtils.sol";
 import "../fee/FeeDistributorVault.sol";
 import "../fee/FeeHandler.sol";
 import "../multichain/MultichainReader.sol";
+import "../oracle/ChainlinkPriceFeedUtils.sol";
 import "../v1/IRewardTrackerV1.sol";
 import "../v1/IRewardDistributorV1.sol";
 import "../v1/IVesterV1.sol";
@@ -36,6 +37,7 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
     FeeDistributorVault internal immutable feeDistributorVault;
     FeeHandler internal immutable feeHandler;
     DataStore internal immutable dataStore;
+    DataStore internal immutable dataStoreForOracle;
     EventEmitter internal immutable eventEmitter;
     MultichainReader internal immutable multichainReader;
 
@@ -52,6 +54,7 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         FeeDistributorVault _feeDistributorVault,
         FeeHandler _feeHandler,
         DataStore _dataStore,
+        DataStore _dataStoreForOracle,
         EventEmitter _eventEmitter,
         MultichainReader _multichainReader,
         address _gmx,
@@ -62,6 +65,7 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         feeDistributorVault = _feeDistributorVault;
         feeHandler = _feeHandler;
         dataStore = _dataStore;
+        dataStoreForOracle = _dataStoreForOracle;
         eventEmitter = _eventEmitter;
         multichainReader = _multichainReader;
         gmx = _gmx;
@@ -644,8 +648,8 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
     }
 
     function setTokenPrices() internal withOraclePrices(retrieveSetPricesParams()) {
-        setUint(Keys.FEE_DISTRIBUTOR_GMX_PRICE, oracle.getPrimaryPrice(gmxForOracle).max);
-        setUint(Keys.FEE_DISTRIBUTOR_WNT_PRICE, oracle.getPrimaryPrice(wnt).max);
+        setUint(Keys.FEE_DISTRIBUTOR_GMX_PRICE, getOraclePrice(gmxForOracle));
+        setUint(Keys.FEE_DISTRIBUTOR_WNT_PRICE, getOraclePrice(wnt));
     }
 
     function retrieveSetPricesParams() internal view returns (OracleUtils.SetPricesParams memory) {
@@ -739,6 +743,16 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
 
     function getFeeDistributorVaultBalance(address token) internal view returns (uint256) {
         return IERC20(token).balanceOf(address(feeDistributorVault));
+    }
+
+    function getOraclePrice(address token) internal view returns (uint256) {
+        (bool hasPriceFeed, uint256 price) = ChainlinkPriceFeedUtils.getPriceFeedPrice(dataStoreForOracle, token);
+
+        if (!hasPriceFeed) {
+            revert Errors.EmptyChainlinkPriceFeed(token);
+        }
+
+        return price;
     }
 
     function getUintArray(bytes32 key) internal view returns (uint256[] memory) {

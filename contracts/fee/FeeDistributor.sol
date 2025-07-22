@@ -9,6 +9,7 @@ import "./FeeDistributorUtils.sol";
 import "./FeeDistributorVault.sol";
 import "./FeeHandler.sol";
 import "../multichain/MultichainReader.sol";
+import "../oracle/ChainlinkPriceFeedUtils.sol";
 import "../v1/IRewardTrackerV1.sol";
 import "../v1/IRewardDistributorV1.sol";
 import "../v1/IVesterV1.sol";
@@ -639,8 +640,8 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
     }
 
     function setTokenPrices() internal withOraclePrices(retrieveSetPricesParams()) {
-        setUint(Keys.FEE_DISTRIBUTOR_GMX_PRICE, oracle.getPrimaryPrice(gmx).max);
-        setUint(Keys.FEE_DISTRIBUTOR_WNT_PRICE, oracle.getPrimaryPrice(wnt).max);
+        setUint(Keys.FEE_DISTRIBUTOR_GMX_PRICE, getOraclePrice(gmx));
+        setUint(Keys.FEE_DISTRIBUTOR_WNT_PRICE, getOraclePrice(wnt));
     }
 
     function retrieveSetPricesParams() internal view returns (OracleUtils.SetPricesParams memory) {
@@ -734,6 +735,16 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
 
     function getFeeDistributorVaultBalance(address token) internal view returns (uint256) {
         return IERC20(token).balanceOf(address(feeDistributorVault));
+    }
+
+    function getOraclePrice(address token) internal view returns (uint256) {
+        (bool hasPriceFeed, uint256 price) = ChainlinkPriceFeedUtils.getPriceFeedPrice(dataStore, token);
+
+        if (!hasPriceFeed) {
+            revert Errors.EmptyChainlinkPriceFeed(token);
+        }
+
+        return price;
     }
 
     function getUintArray(bytes32 key) internal view returns (uint256[] memory) {

@@ -1344,6 +1344,7 @@ describe("FeeDistributor", function () {
         feeDistributorVaultD.address,
         feeHandlerD.address,
         dataStoreD.address,
+        dataStore.address,
         eventEmitter.address,
         multichainReaderD.address,
         mockOftD.address,
