@@ -6,14 +6,16 @@ import { expandDecimals } from "../../utils/math";
 import { grantRole } from "../../utils/role";
 import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
+import { getEventDataArray, parseLogs } from "../../utils/event";
 
 describe("ClaimHandler", () => {
   let user0, user1, user2, wallet;
   let roleStore, dataStore, claimHandler, claimVault;
   let wnt, usdc;
+  let fixture;
 
   beforeEach(async () => {
-    const fixture = await deployFixture();
+    fixture = await deployFixture();
     ({ user0, user1, user2, wallet } = fixture.accounts);
     ({ roleStore, dataStore, wnt, usdc, claimHandler, claimVault } = fixture.contracts);
 
@@ -45,7 +47,34 @@ describe("ClaimHandler", () => {
       ];
       const firstDepositTotal = expandDecimals(600, 18);
 
-      await claimHandler.connect(wallet).depositFunds(wnt.address, 1, firstDepositParams);
+      const tx = await claimHandler.connect(wallet).depositFunds(wnt.address, 1, firstDepositParams);
+      const txReceipt = await hre.ethers.provider.getTransactionReceipt(tx.hash);
+      const logs = parseLogs(fixture, txReceipt);
+      const events = getEventDataArray(logs, "ClaimFundsDeposited");
+      expect(events.length).to.equal(3);
+      expect(events).to.deep.equal([
+        {
+          account: user0.address,
+          amount: expandDecimals(100, 18),
+          token: wnt.address,
+          distributionId: 1,
+          nextAmount: expandDecimals(100, 18),
+        },
+        {
+          account: user1.address,
+          amount: expandDecimals(200, 18),
+          token: wnt.address,
+          distributionId: 1,
+          nextAmount: expandDecimals(200, 18),
+        },
+        {
+          account: user2.address,
+          amount: expandDecimals(300, 18),
+          token: wnt.address,
+          distributionId: 1,
+          nextAmount: expandDecimals(300, 18),
+        },
+      ]);
 
       expect(await claimHandler.getClaimableAmount(user0.address, wnt.address, [1])).to.equal(expandDecimals(100, 18));
       expect(await claimHandler.getClaimableAmount(user1.address, wnt.address, [1])).to.equal(expandDecimals(200, 18));
@@ -174,7 +203,28 @@ describe("ClaimHandler", () => {
         { account: user0.address, distributionId: 1 },
         { account: user1.address, distributionId: 1 },
       ];
-      await claimHandler.connect(user0).withdrawFunds(wnt.address, firstWithdrawParams, user1.address);
+      const tx = await claimHandler.connect(user0).withdrawFunds(wnt.address, firstWithdrawParams, user1.address);
+
+      const txReceipt = await hre.ethers.provider.getTransactionReceipt(tx.hash);
+      const logs = parseLogs(fixture, txReceipt);
+      const withdrawEvents = getEventDataArray(logs, "ClaimFundsWithdrawn");
+      expect(withdrawEvents.length).to.equal(2);
+      expect(withdrawEvents).to.deep.equal([
+        {
+          account: user0.address,
+          token: wnt.address,
+          distributionId: 1,
+          amount: expandDecimals(100, 18),
+          receiver: user1.address,
+        },
+        {
+          account: user1.address,
+          token: wnt.address,
+          distributionId: 1,
+          amount: expandDecimals(200, 18),
+          receiver: user1.address,
+        },
+      ]);
 
       expect(await claimHandler.getClaimableAmount(user0.address, wnt.address, [1])).to.equal(0);
       expect(await claimHandler.getClaimableAmount(user1.address, wnt.address, [1])).to.equal(0);
@@ -197,7 +247,6 @@ describe("ClaimHandler", () => {
     });
 
     it("should revert with Unauthorized when caller is not TIMELOCK_MULTISIG", async () => {
-      // Setup some funds first
       await claimHandler
         .connect(wallet)
         .depositFunds(wnt.address, 1, [{ account: user0.address, amount: expandDecimals(100, 18) }]);
@@ -318,7 +367,30 @@ describe("ClaimHandler", () => {
         { token: wnt.address, distributionId: 1, fromAccount: user0.address, toAccount: wallet.address },
         { token: wnt.address, distributionId: 1, fromAccount: user1.address, toAccount: wallet.address },
       ];
-      await claimHandler.connect(user0).transferClaim(wnt.address, transferParams1);
+      const tx = await claimHandler.connect(user0).transferClaim(wnt.address, transferParams1);
+
+      const txReceipt = await ethers.provider.getTransactionReceipt(tx.hash);
+      const logs = parseLogs(fixture, txReceipt);
+      const transferEvents = getEventDataArray(logs, "ClaimFundsTransferred");
+      expect(transferEvents.length).to.equal(2);
+      expect(transferEvents).to.deep.equal([
+        {
+          fromAccount: user0.address,
+          toAccount: wallet.address,
+          token: wnt.address,
+          distributionId: 1,
+          amount: expandDecimals(100, 18),
+          nextAmount: expandDecimals(100, 18), // wallet had 0, now has 100
+        },
+        {
+          fromAccount: user1.address,
+          toAccount: wallet.address,
+          token: wnt.address,
+          distributionId: 1,
+          amount: expandDecimals(200, 18),
+          nextAmount: expandDecimals(300, 18), // wallet had 100, now has 300
+        },
+      ]);
 
       expect(await claimHandler.getClaimableAmount(user0.address, wnt.address, [1])).to.equal(0);
       expect(await claimHandler.getClaimableAmount(user1.address, wnt.address, [1])).to.equal(0);
@@ -459,7 +531,26 @@ describe("ClaimHandler", () => {
         { token: wnt.address, distributionId: 1, termsSignature: "0x" },
         { token: usdc.address, distributionId: 1, termsSignature: "0x" },
       ];
-      await claimHandler.connect(user0).claimFunds(claimParams, user0.address);
+      const tx = await claimHandler.connect(user0).claimFunds(claimParams, user0.address);
+
+      const txReceipt = await ethers.provider.getTransactionReceipt(tx.hash);
+      const logs = parseLogs(fixture, txReceipt);
+      const claimEvents = getEventDataArray(logs, "ClaimFundsClaimed");
+      expect(claimEvents.length).to.equal(2);
+      expect(claimEvents).to.deep.equal([
+        {
+          account: user0.address,
+          token: wnt.address,
+          distributionId: 1,
+          amount: expandDecimals(100, 18),
+        },
+        {
+          account: user0.address,
+          token: usdc.address,
+          distributionId: 1,
+          amount: expandDecimals(1000, 6),
+        },
+      ]);
 
       expect(await claimHandler.getClaimableAmount(user0.address, wnt.address, [1])).to.equal(0);
       expect(await claimHandler.getClaimableAmount(user0.address, usdc.address, [1])).to.equal(0);
@@ -654,7 +745,16 @@ describe("ClaimHandler", () => {
         const distributionId = 1;
         const terms = "I agree to the terms and conditions";
 
-        await claimHandler.connect(wallet).setTerms(distributionId, terms);
+        const tx = await claimHandler.connect(wallet).setTerms(distributionId, terms);
+
+        const txReceipt = await ethers.provider.getTransactionReceipt(tx.hash);
+        const logs = parseLogs(fixture, txReceipt);
+        const setTermsEvents = getEventDataArray(logs, "ClaimTermsSet");
+        expect(setTermsEvents.length).to.equal(1);
+        expect(setTermsEvents[0]).to.deep.equal({
+          distributionId: 1,
+          termsHash: ethers.utils.keccak256(ethers.utils.toUtf8Bytes(terms)),
+        });
       });
     });
 
@@ -752,7 +852,15 @@ describe("ClaimHandler", () => {
         const terms = "Terms to be removed";
 
         await claimHandler.connect(wallet).setTerms(distributionId, terms);
-        await claimHandler.connect(wallet).removeTerms(distributionId);
+        const tx = await claimHandler.connect(wallet).removeTerms(distributionId);
+
+        const txReceipt = await ethers.provider.getTransactionReceipt(tx.hash);
+        const logs = parseLogs(fixture, txReceipt);
+        const removeTermsEvents = getEventDataArray(logs, "ClaimTermsRemoved");
+        expect(removeTermsEvents.length).to.equal(1);
+        expect(removeTermsEvents[0]).to.deep.equal({
+          distributionId: 1,
+        });
       });
     });
 
