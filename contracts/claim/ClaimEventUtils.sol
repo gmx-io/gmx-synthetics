@@ -25,7 +25,7 @@ library ClaimEventUtils {
         uint256 distributionId,
         uint256 amount,
         uint256 nextAmount
-    ) external {
+    ) internal {
         EventUtils.EventLogData memory eventData;
 
         eventData.addressItems.initItems(2);
@@ -54,7 +54,7 @@ library ClaimEventUtils {
         uint256 distributionId,
         uint256 amount,
         address receiver
-    ) external {
+    ) internal {
         EventUtils.EventLogData memory eventData;
 
         eventData.addressItems.initItems(3);
@@ -81,7 +81,7 @@ library ClaimEventUtils {
         address token,
         uint256 distributionId,
         uint256 amount
-    ) external {
+    ) internal {
         EventUtils.EventLogData memory eventData;
 
         eventData.addressItems.initItems(2);
@@ -111,7 +111,7 @@ library ClaimEventUtils {
         address toAccount,
         uint256 amount,
         uint256 nextAmount
-    ) external {
+    ) internal {
         EventUtils.EventLogData memory eventData;
 
         eventData.addressItems.initItems(3);
@@ -136,7 +136,7 @@ library ClaimEventUtils {
     // @param eventEmitter the event emitter
     // @param distributionId the distribution id for the terms
     // @param termsHash the hash of the terms string
-    function emitClaimTermsSet(EventEmitter eventEmitter, uint256 distributionId, bytes32 termsHash) external {
+    function emitClaimTermsSet(EventEmitter eventEmitter, uint256 distributionId, bytes32 termsHash) internal {
         EventUtils.EventLogData memory eventData;
 
         eventData.uintItems.initItems(1);
@@ -151,7 +151,7 @@ library ClaimEventUtils {
     // @dev emit a ClaimTermsRemoved event
     // @param eventEmitter the event emitter
     // @param distributionId the distribution id for the terms that were removed
-    function emitClaimTermsRemoved(EventEmitter eventEmitter, uint256 distributionId) external {
+    function emitClaimTermsRemoved(EventEmitter eventEmitter, uint256 distributionId) internal {
         EventUtils.EventLogData memory eventData;
 
         eventData.uintItems.initItems(1);

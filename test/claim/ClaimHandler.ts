@@ -5,49 +5,26 @@ import { deployFixture } from "../../utils/fixture";
 import { expandDecimals } from "../../utils/math";
 import { grantRole } from "../../utils/role";
 import { errorsContract } from "../../utils/error";
-import { deployContract } from "../../utils/deploy";
-import { ClaimVault } from "../../typechain-types";
 import * as keys from "../../utils/keys";
-import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 
 describe("ClaimHandler", () => {
   let user0, user1, user2, wallet;
-  let roleStore, dataStore, eventEmitter, claimHandler, claimVault: ClaimVault;
+  let roleStore, dataStore, claimHandler, claimVault;
   let wnt, usdc;
 
-  async function setup() {
+  beforeEach(async () => {
     const fixture = await deployFixture();
     ({ user0, user1, user2, wallet } = fixture.accounts);
-    ({ roleStore, dataStore, eventEmitter, wnt, usdc } = fixture.contracts);
-
-    const claimVaultContract = await deployContract("ClaimVault", [roleStore.address, dataStore.address]);
-    claimVault = (await ethers.getContractAt("ClaimVault", claimVaultContract.address)) as ClaimVault;
-
-    const claimEventUtils = await deployContract("ClaimEventUtils", []);
-
-    claimHandler = await deployContract(
-      "ClaimHandler",
-      [roleStore.address, dataStore.address, eventEmitter.address, claimVaultContract.address],
-      {
-        libraries: {
-          ClaimEventUtils: claimEventUtils.address,
-        },
-      }
-    );
+    ({ roleStore, dataStore, wnt, usdc, claimHandler, claimVault } = fixture.contracts);
 
     await grantRole(roleStore, wallet.address, "CLAIM_ADMIN");
     await grantRole(roleStore, user0.address, "TIMELOCK_MULTISIG");
-    await grantRole(roleStore, claimHandler.address, "CONTROLLER");
 
     await wnt.mint(wallet.address, expandDecimals(1000, 18));
     await usdc.mint(wallet.address, expandDecimals(1000000, 6));
 
     await wnt.connect(wallet).approve(claimHandler.address, expandDecimals(1000, 18));
     await usdc.connect(wallet).approve(claimHandler.address, expandDecimals(1000000, 6));
-  }
-
-  beforeEach(async () => {
-    await loadFixture(setup);
   });
 
   describe("depositFunds", () => {
