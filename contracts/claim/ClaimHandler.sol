@@ -153,6 +153,7 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
         }
         claimVault.transferOut(token, receiver, totalWithdrawnAmount);
         dataStore.decrementUint(Keys.totalClaimableFundsAmountKey(token), totalWithdrawnAmount);
+        _validateTotalClaimableFundsAmount(token);
     }
 
     // @dev transfer claim funds between accounts
@@ -196,6 +197,8 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
                 );
             }
         }
+
+        _validateTotalClaimableFundsAmount(token);
     }
 
     // @dev claim funds for the calling account for multiple tokens
