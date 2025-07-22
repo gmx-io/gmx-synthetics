@@ -64,6 +64,7 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
     }
 
     // @dev deposit funds for multiple accounts and tokens in batch
+    // Rebasing tokens, tokens that change balance on transfer, with token burns, etc are not supported
     // @param token the token to deposit
     // @param distributionId the distribution id
     // @param params array of deposit parameters
