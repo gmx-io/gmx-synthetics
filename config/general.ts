@@ -58,6 +58,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
 
       minPositionSizeUsd: decimalToFloat(1),
       claimableCollateralTimeDivisor: 60 * 60,
+      claimableCollateralDelay: 5 * 24 * 60 * 60,
 
       positionFeeReceiverFactor: 0,
       swapFeeReceiverFactor: 0,
@@ -75,7 +76,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       relayFeeAddress: ethers.constants.AddressZero,
       maxRelayFeeUsdForSubaccount: 0,
 
-      maxDataLength: 14,
+      maxDataLength: 18,
     };
   }
 
@@ -131,6 +132,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
 
     minPositionSizeUsd: decimalToFloat(1),
     claimableCollateralTimeDivisor: 60 * 60,
+    claimableCollateralDelay: 5 * 24 * 60 * 60,
 
     positionFeeReceiverFactor: decimalToFloat(37, 2), // 37%
     swapFeeReceiverFactor: decimalToFloat(37, 2), // 37%
@@ -148,7 +150,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     relayFeeAddress: "0xDA1b841A21FEF1ad1fcd5E19C1a9D682FB675258",
     maxRelayFeeUsdForSubaccount: decimalToFloat(100),
 
-    maxDataLength: 14,
+    maxDataLength: 18,
   };
 
   const networkConfig = {
@@ -159,6 +161,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       multichainProviders: {
         "0x6fddB6270F6c71f31B62AE0260cfa8E2e2d186E0": true, // StargatePoolNative
         "0x543BdA7c6cA4384FE90B1F5929bb851F52888983": true, // StargatePoolUSDC
+        "0xe4EBcAC4a2e6CBEE385eE407f7D5E278Bc07e11e": true, // MarketToken_Adapter
+        "0xD5BdEa6dC8E4B7429b72675386fC903DEf06599d": true, // GlvToken_Adapter
       },
       multichainEndpoints: {
         "0x6EDCE65403992e310A62460808c4b910D972f10f": true, // LZ Endpoint

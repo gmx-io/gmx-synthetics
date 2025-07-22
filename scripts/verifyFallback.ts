@@ -1,5 +1,4 @@
-import { setTimeout } from "timers/promises";
-import { exec } from "child_process";
+import { setTimeout as delay } from "timers/promises";
 import { readJsonFile, writeJsonFile } from "../utils/file";
 import { getExplorerUrl } from "../hardhat.config";
 
@@ -7,6 +6,33 @@ import hre from "hardhat";
 import got from "got";
 
 const apiKey = hre.network.config.verify.etherscan.apiKey;
+
+const largeContracts = {
+  AdlHandler: true,
+  DepositHandler: true,
+  ExecuteDepositUtils: true,
+  ExecuteGlvDepositUtils: true,
+  ExecuteOrderUtils: true,
+  ExecuteWithdrawalUtils: true,
+  GlvDepositHandler: true,
+  GlvShiftHandler: true,
+  GlvShiftUtils: true,
+  GlvWithdrawalHandler: true,
+  GlvWithdrawalUtils: true,
+  LiquidationHandler: true,
+  OrderHandler: true,
+  Reader: true,
+  ReaderUtils: true,
+  WithdrawalHandler: true,
+  SubaccountGelatoRelayRouter: true,
+};
+
+function withTimeout(promise, timeoutMs, timeoutMessage = "Timed out") {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error(timeoutMessage)), timeoutMs)),
+  ]);
+}
 
 // a custom argument file may be needed for complex arguments
 // https://hardhat.org/hardhat-runner/plugins/nomicfoundation-hardhat-verify#complex-arguments
@@ -100,10 +126,15 @@ async function verifyForNetwork(verificationNetwork) {
       continue;
     }
 
+    if (process.env.SKIP_LARGE_CONTRACTS && largeContracts[name]) {
+      console.log(`skipping large contract: ${name}`);
+      continue;
+    }
+
     try {
       let isContractVerified = cache[address];
       if (!isContractVerified) {
-        await setTimeout(200);
+        await delay(200);
         console.log(`checking contract verification ${address}`);
         isContractVerified = await getIsContractVerified(apiUrl, address);
       }
@@ -119,12 +150,19 @@ async function verifyForNetwork(verificationNetwork) {
       const contractArg = `--contract ${contractFQN}`;
 
       console.log("command", `npx hardhat verify ${contractArg} --network ${verificationNetwork} ${address} ${argStr}`);
-      await hre.run("verify-complex-args", {
-        contract: contractFQN,
-        network: verificationNetwork,
-        address: address,
-        constructorArgsParams: argStr,
-      });
+      const { success, error } = await withTimeout(
+        hre.run("verify-complex-args", {
+          contract: contractFQN,
+          network: verificationNetwork,
+          address: address,
+          constructorArgsParams: argStr,
+        }),
+        5 * 60_000
+      );
+
+      if (!success) {
+        throw new Error(error);
+      }
       console.log("Verified contract %s %s in %ss", name, address, (Date.now() - start) / 1000);
       cache[address] = true;
     } catch (ex) {

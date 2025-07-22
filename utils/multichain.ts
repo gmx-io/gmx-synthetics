@@ -293,19 +293,34 @@ export function encodeBridgeOutDataList(
   deadline: BigNumberish,
   provider: string,
   providerData: string,
+  minAmountOut: BigNumberish,
   secondaryProvider?: string,
-  secondaryProviderData?: string
+  secondaryProviderData?: string,
+  secondaryMinAmountOut?: BigNumberish
 ): string[] {
   let actionData;
-  if (secondaryProvider && secondaryProviderData) {
+  if (secondaryProviderData) {
     actionData = ethers.utils.defaultAbiCoder.encode(
-      ["uint256", "uint256", "address", "bytes", "address", "bytes"],
-      [desChainId, deadline, provider, providerData, secondaryProvider, secondaryProviderData]
+      [
+        "tuple(uint256 desChainId, uint256 deadline, address provider, bytes providerData, uint256 minAmountOut, address secondaryProvider, bytes secondaryProviderData, uint256 secondaryMinAmountOut)",
+      ],
+      [
+        [
+          desChainId,
+          deadline,
+          provider,
+          providerData,
+          minAmountOut,
+          secondaryProvider,
+          secondaryProviderData,
+          secondaryMinAmountOut,
+        ],
+      ]
     );
   } else {
     actionData = ethers.utils.defaultAbiCoder.encode(
-      ["uint256", "uint256", "address", "bytes"],
-      [desChainId, deadline, provider, providerData]
+      ["uint256", "uint256", "address", "bytes", "uint256"],
+      [desChainId, deadline, provider, providerData, minAmountOut]
     );
   }
 

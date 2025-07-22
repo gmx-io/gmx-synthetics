@@ -64,9 +64,15 @@ contract EdgeDataStreamProvider is IOracleProvider {
         if (report.bid > report.ask) {
             revert Errors.InvalidEdgeDataStreamPrices(token, report.bid, report.ask);
         }
-        // Edge oracle precision is negative. Which means that values are like: value * 10^abs(expo)
-        // converting bid&ask to FLOAT_PRECISION
-        int256 floatMultiplier = int256(30) + report.expo;
+
+        // @dev converting edge price feed price to the price of the 1 unit of the token represented with 30 decimals
+        // e.g. WETH has 18 decimals and price of 3000 USD per WETH.
+        // So oracle price decimals should be 30 - 18 = 10 ^ 12
+        // Note that report.expo is a negative value
+        // With edge price being negative we get formula: edgePrice * 10 ^ (30 - 18 - 8)
+        // dataStore decimals instead of token.decimals is used here because token can be synthetic
+        uint256 tokenDecimals = dataStore.getUint(Keys.edgeDataStreamTokenDecimalsKey(token));
+        int256 floatMultiplier = int256(30) - int256(tokenDecimals) + report.expo;
         if (floatMultiplier < 0) {
             revert Errors.InvalidEdgeDataStreamExpo(report.expo);
         }

@@ -210,12 +210,15 @@ export async function getReduceLentAmountPayload(market: string, fundingAccount:
   };
 }
 
-export async function getEdgeDataStreamPayload(edgeDataStreamId: string, token: string) {
+export async function getEdgeDataStreamPayload(token: string, edgeDataStreamId: string, tokenDecimals) {
   const dataStore = await hre.ethers.getContract("DataStore");
-  return {
-    target: dataStore.address,
-    payload: dataStore.interface.encodeFunctionData("setBytes32", [keys.edgeDataStreamIdKey(token), edgeDataStreamId]),
-  };
+  const targets = [dataStore.address, dataStore.address];
+  const values = [0, 0];
+  const payloads = [
+    dataStore.interface.encodeFunctionData("setBytes32", [keys.edgeDataStreamIdKey(token), edgeDataStreamId]),
+    dataStore.interface.encodeFunctionData("setUint", [keys.edgeDataStreamTokenDecimalsKey(token), tokenDecimals]),
+  ];
+  return { targets, values, payloads };
 }
 
 export function getRandomSalt() {

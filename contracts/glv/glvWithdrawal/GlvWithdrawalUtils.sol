@@ -177,14 +177,16 @@ library GlvWithdrawalUtils {
         BridgeOutFromControllerUtils.bridgeOutFromController(
             params.eventEmitter,
             params.multichainTransferRouter,
-            glvWithdrawal.account(), // account
-            glvWithdrawal.receiver(), // receiver
-            glvWithdrawal.srcChainId(),
-            withdrawalResult.outputToken, // token
-            withdrawalResult.outputAmount, // amount
-            withdrawalResult.secondaryOutputToken, // secondaryToken
-            withdrawalResult.secondaryOutputAmount, // secondaryAmount
-            glvWithdrawal.dataList()
+            BridgeOutFromControllerUtils.BridgeOutFromControllerParams({
+                account: glvWithdrawal.account(), // account
+                receiver: glvWithdrawal.receiver(), // receiver
+                srcChainId: glvWithdrawal.srcChainId(),
+                token: withdrawalResult.outputToken, // token
+                amount: withdrawalResult.outputAmount, // amount
+                secondaryToken: withdrawalResult.secondaryOutputToken, // secondaryToken
+                secondaryAmount: withdrawalResult.secondaryOutputAmount, // secondaryAmount
+                dataList: glvWithdrawal.dataList()
+            })
         );
 
         cache.marketCount = GlvUtils.getGlvMarketCount(params.dataStore, glvWithdrawal.glv());

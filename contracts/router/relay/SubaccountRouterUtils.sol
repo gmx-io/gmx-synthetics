@@ -44,6 +44,10 @@ library SubaccountRouterUtils {
             revert Errors.InvalidSubaccountApprovalSubaccount();
         }
 
+        if (subaccountApproval.desChainId != block.chainid) {
+            revert Errors.InvalidSubaccountApprovalDesChainId(subaccountApproval.desChainId);
+        }
+
         if (block.timestamp > subaccountApproval.deadline) {
             revert Errors.SubaccountApprovalDeadlinePassed(block.timestamp, subaccountApproval.deadline);
         }

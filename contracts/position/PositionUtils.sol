@@ -111,6 +111,7 @@ library PositionUtils {
         uint256 initialCollateralAmount;
         uint256 nextPositionSizeInUsd;
         uint256 nextPositionBorrowingFactor;
+        int256 minCollateralUsd;
     }
 
 

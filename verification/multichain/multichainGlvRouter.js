@@ -1,6 +1,6 @@
 // Verification arguments for MultichainGlvRouter
 // Usage example:
-// npx hardhat verify --network arbitrumSepolia --constructor-args ./verification/multichain/multichainGlvRouter.js --contract contracts/multichain/MultichainGlvRouter.sol:MultichainGlvRouter 0xFFd139ab13921366B732197450c1F625d095b5bD
+// npx hardhat verify --network arbitrumSepolia --constructor-args ./verification/multichain/multichainGlvRouter.js --contract contracts/multichain/MultichainGlvRouter.sol:MultichainGlvRouter 0xdb4100846da98E799a737D6E13Eed7f22A801c51
 
 module.exports = [
   {
@@ -8,7 +8,7 @@ module.exports = [
     roleStore: "0x433E3C47885b929aEcE4149E3c835E565a20D95c",
     dataStore: "0xCF4c2C4c53157BcC01A596e3788fFF69cBBCD201",
     eventEmitter: "0xa973c2692C1556E1a3d478e745e9a75624AEDc73",
-    oracle: "0x927935dA161C0Ca7A288d874A5a0C2c394d16739",
+    oracle: "0x0dC4e24C63C24fE898Dda574C962Ba7Fbb146964",
     orderVault: "0x1b8AC606de71686fd2a1AEDEcb6E0EFba28909a2",
     orderHandler: "0xF11aCD2a504D920F5522Cb2B241F01faf8940F72",
     swapHandler: "0x658A7B81C66F8cdA09F1A76725bc7359D8D554c6",

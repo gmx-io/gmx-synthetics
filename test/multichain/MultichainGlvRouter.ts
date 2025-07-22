@@ -344,7 +344,8 @@ describe("MultichainGlvRouter", () => {
           chainId, // desChainId
           deadline,
           ethers.constants.AddressZero, // provider (can be the zero address since the tokens are transferred directly to the user's wallet on the same chain)
-          providerData
+          providerData,
+          0 // minAmountOut
         );
 
         expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).eq(
@@ -363,7 +364,7 @@ describe("MultichainGlvRouter", () => {
         expect(await getBalanceOf(ethUsdGlvAddress, user1.address)).eq(expandDecimals(95_000, 18)); // 95k GLV bridged out into user's wallet
       });
 
-      it("creates glvWithdrawal and bridge out from controller the GLV tokens, on the same chain", async () => {
+      it("creates glvWithdrawal and bridge out from controller the long / short tokens, on the same chain", async () => {
         await sendCreateDeposit(createDepositParams);
         await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
         await bridgeInTokens(fixture, { account: user1, amount: relayFeeAmount }); // top-up user1's multichain balance to cover the relay fee
@@ -386,8 +387,10 @@ describe("MultichainGlvRouter", () => {
           deadline,
           ethers.constants.AddressZero, // provider (can be the zero address since the tokens are transferred directly to the user's wallet on the same chain)
           providerData,
+          0, // minAmountOut
           ethers.constants.AddressZero, // secondaryProvider
-          providerData
+          providerData,
+          0 // secondaryMinAmountOut
         );
 
         await bridgeInTokens(fixture, { account: user1, amount: relayFeeAmount }); // top-up user1's multichain balance to cover the relay fee

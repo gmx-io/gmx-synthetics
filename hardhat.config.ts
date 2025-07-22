@@ -30,7 +30,7 @@ import { TASK_FLATTEN_GET_DEPENDENCY_GRAPH } from "hardhat/builtin-tasks/task-na
 import { DependencyGraph } from "hardhat/types";
 import { checkContractsSizing } from "./scripts/contractSizes";
 import { collectDependents } from "./utils/dependencies";
-import { writeJsonFile } from "./utils/file";
+import { deleteFile, writeJsonFile } from "./utils/file";
 import { TASK_VERIFY } from "@nomicfoundation/hardhat-verify/internal/task-names";
 
 const getRpcUrl = (network) => {
@@ -118,19 +118,7 @@ const config: HardhatUserConfig = {
   solidity: {
     compilers: [
       {
-        version: "0.8.18",
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 10,
-            details: {
-              constantOptimizer: true,
-            },
-          },
-        },
-      },
-      {
-        version: "0.8.20", // LZ
+        version: "0.8.29",
         settings: {
           optimizer: {
             enabled: true,
@@ -404,18 +392,27 @@ function parseInputArgs(input: string): string[] | string {
 // Create temporary arguments file and pass it to the hardhat-verify task
 // THIS TASK SHOULD BE USED ONLY WITH verifyFallback.ts script!
 task("verify-complex-args", "Verify contract with complex args", async (taskArgs, env, runSuper) => {
-  if (taskArgs.constructorArgsParams != undefined) {
-    const cacheFilePath = `./cache/temp-verifications-args.json`;
-    const args = taskArgs.constructorArgsParams.match(/"[^"]*"|\[[^\]]*\]|\S+/g);
-    if (args != null) {
-      const parsed = args.map(parseInputArgs);
-      writeJsonFile(cacheFilePath, parsed);
-      taskArgs.constructorArgsParams = undefined;
-      taskArgs.constructorArgs = cacheFilePath;
+  try {
+    const cacheFilePath = `./cache/verifications-args-${taskArgs.address}.json`;
+    let args = [];
+    if (taskArgs.constructorArgsParams != undefined && taskArgs.constructorArgsParams != "") {
+      // split args string with spaces, but do not split quoted strings
+      // "A B C" D E => ["A B C", "D", "E"]
+      args = taskArgs.constructorArgsParams.match(/"[^"]*"|\[[^\]]*\]|\S+/g);
     }
-  }
 
-  await env.run(TASK_VERIFY, taskArgs);
+    const parsed = args.map(parseInputArgs);
+    writeJsonFile(cacheFilePath, parsed);
+    taskArgs.constructorArgsParams = undefined;
+    taskArgs.constructorArgs = cacheFilePath;
+
+    await env.run(TASK_VERIFY, taskArgs);
+
+    deleteFile(cacheFilePath);
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: e };
+  }
 });
 
 export default config;

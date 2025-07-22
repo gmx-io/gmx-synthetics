@@ -137,11 +137,22 @@ library DecreasePositionUtils {
                 positionValues
             );
 
+            cache.minCollateralUsd = params.contracts.dataStore.getUint(Keys.MIN_COLLATERAL_USD).toInt256();
+
             // do not allow withdrawal of collateral if it would lead to the position
             // having an insufficient amount of collateral
             // this helps to prevent gaming by opening a position then reducing collateral
             // to increase the leverage of the position
-            if (!willBeSufficient) {
+            //
+            // alternatively, if the estimatedRemainingCollateralUsd + estimatedRemainingPnlUsd will be less
+            // than minCollateralUsd, then set the initialCollateralDeltaAmount to zero as well
+            // in the subsequent check, the position size may be updated to fully close the position
+            // due to the above condition, so adding the collateral back here can help avoid the position
+            // being fully closed
+            if (
+                !willBeSufficient ||
+                (estimatedRemainingCollateralUsd + cache.estimatedRemainingPnlUsd) < cache.minCollateralUsd
+            ) {
                 if (params.order.sizeDeltaUsd() == 0) {
                     revert Errors.UnableToWithdrawCollateral(estimatedRemainingCollateralUsd);
                 }
@@ -166,7 +177,7 @@ library DecreasePositionUtils {
             // if the position has sufficient remaining collateral including pnl
             // then allow the position to be partially closed and the updated
             // position to remain open
-            if ((estimatedRemainingCollateralUsd + cache.estimatedRemainingPnlUsd) < params.contracts.dataStore.getUint(Keys.MIN_COLLATERAL_USD).toInt256()) {
+            if ((estimatedRemainingCollateralUsd + cache.estimatedRemainingPnlUsd) < cache.minCollateralUsd) {
                 OrderEventUtils.emitOrderSizeDeltaAutoUpdated(
                     params.contracts.eventEmitter,
                     params.orderKey,
