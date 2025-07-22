@@ -35,7 +35,7 @@ describe("ClaimHandler", () => {
       }
     );
 
-    await grantRole(roleStore, wallet.address, "CONFIG_KEEPER");
+    await grantRole(roleStore, wallet.address, "CLAIM_ADMIN");
     await grantRole(roleStore, user0.address, "TIMELOCK_MULTISIG");
     await grantRole(roleStore, claimHandler.address, "CONTROLLER");
 
@@ -99,7 +99,7 @@ describe("ClaimHandler", () => {
       expect(await wnt.balanceOf(claimVault.address)).to.equal(initialVaultBalance.add(totalDeposited));
     });
 
-    it("should revert with Unauthorized when caller is not CONFIG_KEEPER", async () => {
+    it("should revert with Unauthorized when caller is not CLAIM_ADMIN", async () => {
       const params = [{ account: user0.address, amount: expandDecimals(100, 18) }];
 
       await expect(claimHandler.connect(user1).depositFunds(wnt.address, 1, params)).to.be.revertedWithCustomError(
@@ -644,7 +644,7 @@ describe("ClaimHandler", () => {
 
   describe("setTerms", () => {
     describe("access control", () => {
-      it("should revert when non-CONFIG_KEEPER tries to set terms", async () => {
+      it("should revert when non-CLAIM_ADMIN tries to set terms", async () => {
         const distributionId = 1;
         const terms = "I agree to the terms and conditions";
 
@@ -654,7 +654,7 @@ describe("ClaimHandler", () => {
         );
       });
 
-      it("should allow CONFIG_KEEPER to set terms successfully", async () => {
+      it("should allow CLAIM_ADMIN to set terms successfully", async () => {
         const distributionId = 1;
         const terms = "I agree to the terms and conditions";
 
@@ -739,7 +739,7 @@ describe("ClaimHandler", () => {
 
   describe("removeTerms", () => {
     describe("access control", () => {
-      it("should revert when non-CONFIG_KEEPER tries to remove terms", async () => {
+      it("should revert when non-CLAIM_ADMIN tries to remove terms", async () => {
         const distributionId = 1;
         const terms = "Terms to be removed";
 
@@ -751,7 +751,7 @@ describe("ClaimHandler", () => {
         );
       });
 
-      it("should allow CONFIG_KEEPER to remove terms successfully", async () => {
+      it("should allow CLAIM_ADMIN to remove terms successfully", async () => {
         const distributionId = 1;
         const terms = "Terms to be removed";
 

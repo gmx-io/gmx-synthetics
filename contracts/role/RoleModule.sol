@@ -159,6 +159,14 @@ contract RoleModule {
     }
 
     /**
+     * @dev Only allows addresses with the CLAIM_ADMIN role to call the function.
+     */
+    modifier onlyClaimAdmin() {
+        _validateRole(Role.CLAIM_ADMIN, "CLAIM_ADMIN");
+        _;
+    }
+
+    /**
      * @dev Validates that the caller has the specified role.
      *
      * If the caller does not have the specified role, the transaction is reverted.
