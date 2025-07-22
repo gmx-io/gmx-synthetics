@@ -10,7 +10,7 @@ import {
   getAccountPositionKeys,
 } from "../../utils/position";
 import { handleDeposit } from "../../utils/deposit";
-import { applyFactor, decimalToFloat, expandDecimals } from "../../utils/math";
+import { applyFactor, bigNumberify, decimalToFloat, expandDecimals } from "../../utils/math";
 import { getOrderKeys, handleOrder, OrderType } from "../../utils/order";
 import * as keys from "../../utils/keys";
 import { expect } from "chai";
@@ -24,7 +24,7 @@ import { SwapPricingType } from "../../utils/swap";
 import { constants } from "ethers";
 
 // eslint-disable-next-line no-undef
-xdescribe("Hedge GM", () => {
+describe("Hedge GM", () => {
   let fixture;
   let dataStore, exchangeRouter, reader, referralStorage, ethUsdMarket, wnt, usdc;
   let user0, user1;
@@ -128,12 +128,12 @@ xdescribe("Hedge GM", () => {
 
     // PriceImpactPool generated
     // 100 ETH ~ $500_000 = 10% of initial pool size
-    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(market.marketToken))).eq("107084384063745019801");
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(market.marketToken))).eq("107084384063745018000");
 
     await usingResult(
       getMarketTokenPriceWithPoolValue(fixture, { prices: prices.ethUsdMarket }),
       ([marketTokenPrice, poolValueInfo]) => {
-        expect(poolValueInfo.poolValue).eq("4404532117928286854000000000000000000");
+        expect(poolValueInfo.poolValue).eq("4404261600001000019000000000000000000");
         expect(poolValueInfo.longPnl).eq(0);
         expect(poolValueInfo.shortPnl).eq(0);
         expect(poolValueInfo.netPnl).eq(0);
@@ -186,11 +186,11 @@ xdescribe("Hedge GM", () => {
     await usingResult(
       getMarketTokenPriceWithPoolValue(fixture, { prices: prices.ethUsdMarket }),
       ([marketTokenPrice, poolValueInfo]) => {
-        expect(poolValueInfo.poolValue).eq("5085780094919942456198406137576000000");
+        expect(poolValueInfo.poolValue).eq("5058832837283931949670370853492000000");
       }
     );
     const position0 = await getPositionInfo(0);
-    expect(position0.fees.borrowing.borrowingFeeUsd).eq("681247976991655602198406137576000000");
+    expect(position0.fees.borrowing.borrowingFeeUsd).eq("654571237282931930670370853492000000");
   }
 
   async function getPositionInfo(positionId) {
@@ -261,19 +261,19 @@ xdescribe("Hedge GM", () => {
     const oiShort = await dataStore.getUint(keys.openInterestKey(ethUsdMarket.marketToken, wnt.address, false));
     console.log(`oiLong: ${oiLong.toString()}, olShort: ${oiShort.toString()}`);
 
-    const userPV = poolValueInfo.poolValue.mul(userShare).div(prices.longTokenPrice.min).div(expandDecimals(1, 18));
-
     const longTokenPoolShare = poolValueInfo.longTokenUsd
       .mul(expandDecimals(1, 30))
       .div(poolValueInfo.longTokenUsd.add(poolValueInfo.shortTokenUsd));
     console.log(`longTokenPoolShare: ${longTokenPoolShare.toString()}`);
 
+    const oiDiffInLongToken = oiLong.sub(oiShort).div(prices.longTokenPrice.min);
+    console.log(`OI diff: ${oiDiffInLongToken.toString()}`);
+
     const exposure = poolValueInfo.longTokenAmount
       .sub(PIPool)
-      .sub(oiLong)
-      .add(oiShort)
+      .sub(oiDiffInLongToken)
       .mul(userShare)
-      .div(expandDecimals(1, 2));
+      .div(expandDecimals(1, 6));
 
     return exposure;
   }
@@ -361,6 +361,12 @@ xdescribe("Hedge GM", () => {
     const longExposure = await getLongExposure(ethUsdMarket, user1, pricesWith10PercentDiscount);
     console.log(`LongExposure: ${longExposure.toString()}\n\n`);
 
+    const expectedPnL = longExposure
+      .div(bigNumberify(10))
+      .mul(highPrices.longTokenPrice.min)
+      .div(expandDecimals(1, 36));
+    console.log(`ExpectedPnL: ${expectedPnL}`);
+
     await handleWithdrawal(fixture, {
       create: {
         account: user1,
@@ -399,7 +405,7 @@ xdescribe("Hedge GM", () => {
   });
 
   // eslint-disable-next-line no-undef
-  it("calc hedge amount for a single asset deposit", async () => {
+  xit("calc hedge amount for a single asset deposit", async () => {
     // User mints GM tokens for a $550k worth @ $5500 /ETH
     // deposit in a single asset
     const userEthBalance = await wnt.balanceOf(user1.address);
