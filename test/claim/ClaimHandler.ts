@@ -561,6 +561,25 @@ describe("ClaimHandler", () => {
       }
     });
 
+    it("should fail on malformed signatures", async () => {
+      const distributionId = 1;
+      const terms = "I agree to the terms and conditions";
+
+      await claimHandler.connect(wallet).setTerms(distributionId, terms);
+      await claimHandler
+        .connect(wallet)
+        .depositFunds(wnt.address, distributionId, [{ account: user0.address, amount: expandDecimals(100, 18) }]);
+
+      const malformedSignatures = ["0x", "0x1234"];
+
+      for (const malformedSig of malformedSignatures) {
+        const claimParams = [{ token: wnt.address, distributionId, termsSignature: malformedSig }];
+        await expect(claimHandler.connect(user0).claimFunds(claimParams, user0.address)).to.be.revertedWith(
+          "ECDSA: invalid signature length"
+        );
+      }
+    });
+
     it("should revert with InvalidParams when params array is empty", async () => {
       await expect(claimHandler.connect(user0).claimFunds([], user0.address))
         .to.be.revertedWithCustomError(errorsContract, "InvalidParams")
