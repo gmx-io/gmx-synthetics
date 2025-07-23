@@ -17,5 +17,10 @@
   "ShiftVault_1": 1718613286,
   "GlvFactory_2": 1725253745,
   "GlvVault_1": 1725253003,
-  "GovTimelockController_6": 1751878036
+  "GovTimelockController_6": 1751878036,
+  "MultichainVault_1": 1753240251,
+  "ChainlinkPriceFeedProvider_6": 1753240260,
+  "Oracle_6": 1753240274,
+  "ChainlinkDataStreamProvider_6": 1753245755,
+  "ClaimVault_1": 1753245825
 }
