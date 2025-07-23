@@ -7,7 +7,7 @@ import got from "got";
 
 const apiKey = hre.network.config.verify.etherscan.apiKey;
 
-const largeContracts = {
+const largeContractsMap = {
   AdlHandler: true,
   DepositHandler: true,
   ExecuteDepositUtils: true,
@@ -112,6 +112,7 @@ async function verifyForNetwork(verificationNetwork) {
   console.log("Verifying %s contracts", Object.keys(allDeployments).length);
 
   const unverifiedContracts = [];
+  const largeContracts = [];
 
   let index = 0;
   for (const [name, deployment] of Object.entries(allDeployments)) {
@@ -122,17 +123,26 @@ async function verifyForNetwork(verificationNetwork) {
     const { address, args } = deployment;
     const argStr = args.map((arg) => encodeArg(arg)).join(" ");
 
+    const metadata = JSON.parse(deployment.metadata);
+    const contractFQN = `${Object.keys(metadata.settings.compilationTarget)[0]}:${name}`;
+    const contractArg = `--contract ${contractFQN}`;
+    const command = `npx hardhat verify ${contractArg} --network ${verificationNetwork} ${address} ${argStr}`;
+
     if (process.env.CONTRACT && process.env.CONTRACT !== name) {
       continue;
     }
 
-    if (process.env.SKIP_LARGE_CONTRACTS && largeContracts[name]) {
+    if (process.env.SKIP_LARGE_CONTRACTS && largeContractsMap[name]) {
       console.log(`skipping large contract: ${name}`);
+      largeContracts.push({ address, command });
       continue;
     }
 
     try {
       let isContractVerified = cache[address];
+
+      console.log("command", command);
+
       if (!isContractVerified) {
         await delay(200);
         console.log(`checking contract verification ${address}`);
@@ -145,11 +155,6 @@ async function verifyForNetwork(verificationNetwork) {
       }
 
       console.log("Verifying contract %s %s %s", name, address, argStr);
-      const metadata = JSON.parse(deployment.metadata);
-      const contractFQN = `${Object.keys(metadata.settings.compilationTarget)[0]}:${name}`;
-      const contractArg = `--contract ${contractFQN}`;
-
-      console.log("command", `npx hardhat verify ${contractArg} --network ${verificationNetwork} ${address} ${argStr}`);
       const { success, error } = await withTimeout(
         hre.run("verify-complex-args", {
           contract: contractFQN,
@@ -169,6 +174,7 @@ async function verifyForNetwork(verificationNetwork) {
       unverifiedContracts.push({
         address,
         error: ex,
+        command,
       });
       console.error("Failed to verify contract %s in %ss", address, (Date.now() - start) / 1000);
       console.error("error", ex);
@@ -183,6 +189,7 @@ async function verifyForNetwork(verificationNetwork) {
     for (let i = 0; i < unverifiedContracts.length; i++) {
       const unverifiedContract = unverifiedContracts[i];
       console.log(`${i + 1}: ${unverifiedContract.address}`);
+      console.log(`Command: ${unverifiedContract.command}`);
     }
     console.log(`-------`);
     for (let i = 0; i < unverifiedContracts.length; i++) {
@@ -190,8 +197,20 @@ async function verifyForNetwork(verificationNetwork) {
       console.log(`${i + 1}: ${unverifiedContract.address}`);
       console.log(`Error: ${unverifiedContract.error}`);
     }
+    console.log(`-------`);
   }
-  console.log("Done");
+
+  if (largeContracts.length > 0) {
+    console.log(`${largeContracts.length} large contracts skipped`);
+    console.log(`-------`);
+
+    for (let i = 0; i < largeContracts.length; i++) {
+      const largeContract = largeContracts[i];
+      console.log(`${i + 1}: ${largeContract.address}`);
+      console.log(`Command: ${largeContract.command}`);
+    }
+    console.log(`-------`);
+  }
 }
 
 async function main() {

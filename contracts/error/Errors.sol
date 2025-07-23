@@ -394,6 +394,15 @@ library Errors {
     error EmptyReceiver();
     error DataListLengthExceeded();
 
+    // ClaimHandler errors
+    error EmptyAmount();
+    error EmptyClaimableAmount(address token);
+    error InvalidToken(address token);
+    error InvalidParams(string reason);
+    error InsufficientFunds(address token);
+    error InvalidClaimTermsSignature(address recoveredSigner, address expectedSigner);
+    error DuplicateClaimTerms(uint256 existingDistributionId);
+
     // Array errors
     error CompactedArrayOutOfBounds(
         uint256[] compactedValues,
