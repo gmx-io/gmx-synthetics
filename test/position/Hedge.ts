@@ -257,8 +257,8 @@ describe("Hedge GM", () => {
     console.log(`UserShare: ${userShare.toString()}, UserDirectShare: ${userDirectShareUSD.toString()},
      userLongTokenShare: ${userLongTokenShare.toString()}`);
 
-    const oiLong = await dataStore.getUint(keys.openInterestKey(ethUsdMarket.marketToken, wnt.address, true));
-    const oiShort = await dataStore.getUint(keys.openInterestKey(ethUsdMarket.marketToken, wnt.address, false));
+    const oiLong = await dataStore.getUint(keys.openInterestInTokensKey(ethUsdMarket.marketToken, wnt.address, true));
+    const oiShort = await dataStore.getUint(keys.openInterestInTokensKey(ethUsdMarket.marketToken, wnt.address, false));
     console.log(`oiLong: ${oiLong.toString()}, olShort: ${oiShort.toString()}`);
 
     const longTokenPoolShare = poolValueInfo.longTokenUsd
@@ -271,7 +271,8 @@ describe("Hedge GM", () => {
 
     const exposure = poolValueInfo.longTokenAmount
       .sub(PIPool)
-      .sub(oiDiffInLongToken)
+      .sub(oiLong)
+      .add(oiShort)
       .mul(userShare)
       .div(expandDecimals(1, 6));
 
@@ -291,6 +292,7 @@ describe("Hedge GM", () => {
       .mul(expandDecimals(5500, 0))
       .add(expandDecimals(275_000, 18))
       .div(expandDecimals(1, 18));
+
     await handleDeposit(fixture, {
       create: {
         account: user1,
@@ -307,26 +309,6 @@ describe("Hedge GM", () => {
     });
     userGMTokenAmount = await _marketToken.balanceOf(user1.address);
     console.log("User market token amount: ", userGMTokenAmount.toString());
-    // expect(userGMTokenAmount).eq("527074594933126991047450");
-
-    const gmTokenPriceOriginal = await getMarketTokenPrice(fixture, { prices: highPrices });
-    console.log(`GM original price: ${gmTokenPriceOriginal.toString()}`);
-    const marketTokenUSDValueOriginal = gmTokenPriceOriginal.mul(userGMTokenAmount).div(expandDecimals(1, 48));
-    console.log("MarketTokenUSDValueOriginal: ", marketTokenUSDValueOriginal.toString());
-
-    // estimate amount of tokens to widthdrawal
-    const withdrawalAmountOutOriginal = await reader.getWithdrawalAmountOut(
-      dataStore.address,
-      ethUsdMarket,
-      highPrices,
-      userGMTokenAmount,
-      constants.AddressZero,
-      SwapPricingType.TwoStep
-    );
-    // expect(withdrawalAmountOut[0]).eq("42195318546114002297");
-    // expect(withdrawalAmountOut[1]).eq("324695881271");
-    console.log(`withdrawalAmountOutOriginal[0]: ${withdrawalAmountOutOriginal[0].toString()},
-     withdrawalAmountOutOriginal[1]: ${withdrawalAmountOutOriginal[1].toString()}`);
 
     const gmTokenPrice = await getMarketTokenPrice(fixture, { prices: pricesWith10PercentDiscount });
     console.log(`GM price: ${gmTokenPrice.toString()}`);
@@ -334,7 +316,7 @@ describe("Hedge GM", () => {
     // estimate USD value of GM tokens
     const marketTokenUSDValue = gmTokenPrice.mul(userGMTokenAmount).div(expandDecimals(1, 48));
     console.log("MarketTokenUSDValue: ", marketTokenUSDValue.toString());
-    // expect(marketTokenUSDValue).eq("535057");
+    expect(marketTokenUSDValue).eq("532793");
 
     // estimate amount of tokens to widthdrawal
     const withdrawalAmountOut = await reader.getWithdrawalAmountOut(
@@ -345,8 +327,6 @@ describe("Hedge GM", () => {
       constants.AddressZero,
       SwapPricingType.TwoStep
     );
-    // expect(withdrawalAmountOut[0]).eq("42195318546114002297");
-    // expect(withdrawalAmountOut[1]).eq("324695881271");
     console.log(`WithdrawalAmountOut[0]: ${withdrawalAmountOut[0].toString()},
      WithdrawalAmountOut[1]: ${withdrawalAmountOut[1].toString()}`);
 
@@ -355,16 +335,17 @@ describe("Hedge GM", () => {
       .mul(expandDecimals(4950, 0))
       .add(expandDecimals(withdrawalAmountOut[1], 12))
       .div(expandDecimals(1, 18));
-    // expect(withdrawalCompositionUsdValue).eq("533562")
-    console.log(`withdrawalCompositionUsdValue: ${withdrawalCompositionUsdValue}`);
+    expect(withdrawalCompositionUsdValue).eq(marketTokenUSDValue);
 
+    // Calculate exposure to long token
     const longExposure = await getLongExposure(ethUsdMarket, user1, pricesWith10PercentDiscount);
     console.log(`LongExposure: ${longExposure.toString()}\n\n`);
 
+    // Calculate user PnL after long token price drops by 10%
     const expectedPnL = longExposure
-      .div(bigNumberify(10))
-      .mul(highPrices.longTokenPrice.min)
-      .div(expandDecimals(1, 36));
+      .mul(pricesWith10PercentDiscount.longTokenPrice.min)
+      .sub(longExposure.mul(highPrices.longTokenPrice.min))
+      .div(expandDecimals(1, 42));
     console.log(`ExpectedPnL: ${expectedPnL}`);
 
     await handleWithdrawal(fixture, {
@@ -395,13 +376,14 @@ describe("Hedge GM", () => {
       .add(expandDecimals(userUsdcBalance2.sub(userUsdcBalance), 12))
       .div(expandDecimals(1, 18));
     console.log("User balance: ", userBalance.toString());
-    // expect(userBalance).eq("533562");
+    expect(userBalance).eq(marketTokenUSDValue);
 
     console.log(userDepositUsdValue.toString());
     const userLongPnl = userBalance.sub(userDepositUsdValue);
     console.log("PNL: ", userLongPnl.toString());
-    const userPnLPercent = userLongPnl.mul(expandDecimals(1, 18)).div(userDepositUsdValue);
-    console.log("PNL%: ", userPnLPercent.toString());
+
+    // Expect that PnL calculated from longExposure to be close with the real PnL with 1 USD tolerance
+    expect(expectedPnL.sub(userLongPnl)).closeTo("0", "1");
   });
 
   // eslint-disable-next-line no-undef
