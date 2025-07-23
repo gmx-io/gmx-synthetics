@@ -159,6 +159,14 @@ contract RoleModule {
     }
 
     /**
+     * @dev Only allows addresses with the CLAIM_ADMIN role to call the function.
+     */
+    modifier onlyClaimAdmin() {
+        _validateRole(Role.CLAIM_ADMIN, "CLAIM_ADMIN");
+        _;
+    }
+
+    /**
      * @dev Only allows addresses with the CONTRIBUTOR_DISTRIBUTOR role to call the function.
      */
     modifier onlyMultichainReader() {

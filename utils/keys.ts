@@ -289,6 +289,7 @@ export const IS_RELAY_FEE_EXCLUDED = hashString("IS_RELAY_FEE_EXCLUDED");
 export const IS_SRC_CHAIN_ID_ENABLED = hashString("IS_SRC_CHAIN_ID_ENABLED");
 export const EID_TO_SRC_CHAIN_ID = hashString("EID_TO_SRC_CHAIN_ID");
 export const POSITION_LAST_SRC_CHAIN_ID = hashString("POSITION_LAST_SRC_CHAIN_ID");
+export const CLAIM_TERMS = hashString("CLAIM_TERMS");
 
 export const VALID_FROM_TIME = hashString("VALID_FROM_TIME");
 
@@ -940,6 +941,10 @@ export function eidToSrcChainId(eid: number) {
 
 export function positionLastSrcChainIdKey(positionKey: string) {
   return hashData(["bytes32", "bytes32"], [POSITION_LAST_SRC_CHAIN_ID, positionKey]);
+}
+
+export function claimTermsKey(distributionId: number) {
+  return hashData(["bytes32", "uint256"], [CLAIM_TERMS, distributionId]);
 }
 
 export function multichainBalanceKey(account: string, token: string) {
