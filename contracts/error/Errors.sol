@@ -394,6 +394,15 @@ library Errors {
     error EmptyReceiver();
     error DataListLengthExceeded();
 
+    // ClaimHandler errors
+    error EmptyAmount();
+    error EmptyClaimableAmount(address token);
+    error InvalidToken(address token);
+    error InvalidParams(string reason);
+    error InsufficientFunds(address token);
+    error InvalidClaimTermsSignature(address recoveredSigner, address expectedSigner);
+    error DuplicateClaimTerms(uint256 existingDistributionId);
+
     // Array errors
     error CompactedArrayOutOfBounds(
         uint256[] compactedValues,
@@ -480,6 +489,7 @@ library Errors {
     error InvalidUserDigest(bytes32 digest);
     error SubaccountApprovalDeadlinePassed(uint256 currentTimestamp, uint256 deadline);
     error InvalidSubaccountApprovalNonce(uint256 storedNonce, uint256 nonce);
+    error InvalidSubaccountApprovalDesChainId(uint256 desChainId);
     error DeadlinePassed(uint256 currentTimestamp, uint256 deadline);
     error InsufficientRelayFee(uint256 requiredRelayFee, uint256 availableFeeAmount);
     error InvalidSubaccountApprovalSubaccount();

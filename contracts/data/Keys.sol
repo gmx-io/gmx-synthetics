@@ -346,8 +346,8 @@ library Keys {
     bytes32 public constant PRICE_FEED_HEARTBEAT_DURATION = keccak256(abi.encode("PRICE_FEED_HEARTBEAT_DURATION"));
     // @dev key for data stream feed id
     bytes32 public constant DATA_STREAM_ID = keccak256(abi.encode("DATA_STREAM_ID"));
-    // @dev key for edge oracle data stream feed id
     bytes32 public constant EDGE_DATA_STREAM_ID = keccak256(abi.encode("EDGE_DATA_STREAM_ID"));
+    bytes32 public constant EDGE_DATA_STREAM_TOKEN_DECIMALS = keccak256(abi.encode("EDGE_DATA_STREAM_TOKEN_DECIMALS"));
     // @dev key for data stream feed multiplier
     bytes32 public constant DATA_STREAM_MULTIPLIER = keccak256(abi.encode("DATA_STREAM_MULTIPLIER"));
     bytes32 public constant DATA_STREAM_SPREAD_REDUCTION_FACTOR = keccak256(abi.encode("DATA_STREAM_SPREAD_REDUCTION_FACTOR"));
@@ -519,6 +519,14 @@ library Keys {
     bytes32 public constant MAX_DATA_LENGTH = keccak256(abi.encode("MAX_DATA_LENGTH"));
     // @dev key for the action data
     bytes32 public constant GMX_DATA_ACTION = keccak256(abi.encode("GMX_DATA_ACTION"));
+    // @dev key for the claimable fund amount for a specific account and token
+    bytes32 public constant CLAIMABLE_FUNDS_AMOUNT = keccak256(abi.encode("CLAIMABLE_FUNDS_AMOUNT"));
+    // @dev key for the total claimable amount for a specific token
+    bytes32 public constant TOTAL_CLAIMABLE_FUNDS_AMOUNT = keccak256(abi.encode("TOTAL_CLAIMABLE_FUNDS_AMOUNT"));
+    // @dev key for the terms for a specific distribution
+    bytes32 public constant CLAIM_TERMS = keccak256(abi.encode("CLAIM_TERMS"));
+    // @dev key for the terms hash for a specific distribution
+    bytes32 public constant CLAIM_TERMS_BACKREF = keccak256(abi.encode("CLAIM_TERMS_BACKREF"));
 
     // @dev constant for user initiated cancel reason
     string public constant USER_INITIATED_CANCEL = "USER_INITIATED_CANCEL";
@@ -1992,12 +2000,16 @@ library Keys {
         ));
     }
 
-    // @dev key for edge oracle data stream feed ID
-    // @param token the token to get the key for
-    // @return key for data stream feed ID
     function edgeDataStreamIdKey(address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             EDGE_DATA_STREAM_ID,
+            token
+        ));
+    }
+
+    function edgeDataStreamTokenDecimalsKey(address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            EDGE_DATA_STREAM_TOKEN_DECIMALS,
             token
         ));
     }
@@ -2303,7 +2315,7 @@ library Keys {
     }
 
     // @dev key for the last src chain id from which the user last managed his position
-    // @param positionKey the position key for which to retreive the last src chain id
+    // @param positionKey the position key for which to retrieve the last src chain id
     // @return key for the last src chain id from which the user last managed his position
     function positionLastSrcChainId(bytes32 positionKey) internal pure returns (bytes32) {
         return keccak256(abi.encode(
@@ -2323,14 +2335,52 @@ library Keys {
     }
 
     // @dev key for user's multichain balance
-    // @param account the account for which to retreive the user balance key
-    // @param token the token for which to retreive the user balance key
+    // @param account the account for which to retrieve the user balance key
+    // @param token the token for which to retrieve the user balance key
     // @return key for multichain balance for a given user and token
     function multichainBalanceKey(address account, address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             MULTICHAIN_BALANCE,
             account,
             token
+        ));
+    }
+
+    // @dev key for the claimable fund amount for a specific account and token
+    // @param account the account to claim funds for
+    // @param token the token to claim
+    // @param distributionId the distribution id to claim funds for
+    // @return key for claimable fund amount
+    function claimableFundsAmountKey(address account, address token, uint256 distributionId) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            CLAIMABLE_FUNDS_AMOUNT,
+            account,
+            token,
+            distributionId
+        ));
+    }
+
+    // @dev key for the total claimable amount for a specific token
+    // @param token the token for which to retrieve the total claimable amount
+    // @return key for total claimable amount
+    function totalClaimableFundsAmountKey(address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            TOTAL_CLAIMABLE_FUNDS_AMOUNT,
+            token
+        ));
+    }
+
+    function claimTermsKey(uint256 distributionId) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            CLAIM_TERMS,
+            distributionId
+        ));
+    }
+
+    function claimTermsBackrefKey(bytes32 termsHash) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            CLAIM_TERMS_BACKREF,
+            termsHash
         ));
     }
 }

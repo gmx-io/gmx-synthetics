@@ -86,6 +86,12 @@ const getConfigItems = async (generalConfig, oracleConfig) => {
     },
     {
       type: "uint",
+      baseKey: keys.CLAIMABLE_COLLATERAL_DELAY,
+      value: generalConfig.claimableCollateralDelay,
+      label: `claimableCollateralDelay`,
+    },
+    {
+      type: "uint",
       baseKey: keys.SWAP_FEE_RECEIVER_FACTOR,
       value: generalConfig.swapFeeReceiverFactor,
       label: `swapFeeReceiverFactor`,

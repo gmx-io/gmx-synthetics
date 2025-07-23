@@ -128,6 +128,7 @@ export const PRICE_FEED_MULTIPLIER = hashString("PRICE_FEED_MULTIPLIER");
 export const PRICE_FEED_HEARTBEAT_DURATION = hashString("PRICE_FEED_HEARTBEAT_DURATION");
 export const DATA_STREAM_ID = hashString("DATA_STREAM_ID");
 export const EDGE_DATA_STREAM_ID = hashString("EDGE_DATA_STREAM_ID");
+export const EDGE_DATA_STREAM_TOKEN_DECIMALS = hashString("EDGE_DATA_STREAM_TOKEN_DECIMALS");
 export const DATA_STREAM_MULTIPLIER = hashString("DATA_STREAM_MULTIPLIER");
 export const DATA_STREAM_SPREAD_REDUCTION_FACTOR = hashString("DATA_STREAM_SPREAD_REDUCTION_FACTOR");
 export const STABLE_PRICE = hashString("STABLE_PRICE");
@@ -288,6 +289,7 @@ export const IS_RELAY_FEE_EXCLUDED = hashString("IS_RELAY_FEE_EXCLUDED");
 export const IS_SRC_CHAIN_ID_ENABLED = hashString("IS_SRC_CHAIN_ID_ENABLED");
 export const EID_TO_SRC_CHAIN_ID = hashString("EID_TO_SRC_CHAIN_ID");
 export const POSITION_LAST_SRC_CHAIN_ID = hashString("POSITION_LAST_SRC_CHAIN_ID");
+export const CLAIM_TERMS = hashString("CLAIM_TERMS");
 
 export const VALID_FROM_TIME = hashString("VALID_FROM_TIME");
 
@@ -446,6 +448,10 @@ export function dataStreamIdKey(token: string) {
 
 export function edgeDataStreamIdKey(token: string) {
   return hashData(["bytes32", "address"], [EDGE_DATA_STREAM_ID, token]);
+}
+
+export function edgeDataStreamTokenDecimalsKey(token: string) {
+  return hashData(["bytes32", "address"], [EDGE_DATA_STREAM_TOKEN_DECIMALS, token]);
 }
 
 export function dataStreamMultiplierKey(token: string) {
@@ -908,4 +914,8 @@ export function eidToSrcChainId(eid: number) {
 
 export function positionLastSrcChainIdKey(positionKey: string) {
   return hashData(["bytes32", "bytes32"], [POSITION_LAST_SRC_CHAIN_ID, positionKey]);
+}
+
+export function claimTermsKey(distributionId: number) {
+  return hashData(["bytes32", "uint256"], [CLAIM_TERMS, distributionId]);
 }

@@ -485,7 +485,10 @@ describe("Config", () => {
         multiplier: expandDecimals(1, 60 - 6 - 18),
         spreadReductionFactor: percentageToFloat("100%"),
       },
-      edgeDataStreamId: hashString("WNT-EDGE"),
+      edge: {
+        feedId: hashString("WNT-EDGE"),
+        tokenDecimals: 15,
+      },
     };
 
     await config.initOracleConfig(oracleConfig);
@@ -502,7 +505,10 @@ describe("Config", () => {
     expect(await dataStore.getUint(keys.dataStreamSpreadReductionFactorKey(token.address))).eq(
       oracleConfig.dataStream.spreadReductionFactor
     );
-    expect(await dataStore.getBytes32(keys.edgeDataStreamIdKey(token.address))).eq(oracleConfig.edgeDataStreamId);
+    expect(await dataStore.getBytes32(keys.edgeDataStreamIdKey(token.address))).eq(oracleConfig.edge.feedId);
+    expect(await dataStore.getUint(keys.edgeDataStreamTokenDecimalsKey(token.address))).eq(
+      oracleConfig.edge.tokenDecimals
+    );
 
     await expect(config.initOracleConfig(oracleConfig)).to.be.revertedWithCustomError(
       errorsContract,

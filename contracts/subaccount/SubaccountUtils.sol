@@ -15,6 +15,7 @@ struct SubaccountApproval {
     uint256 maxAllowedCount;
     bytes32 actionType;
     uint256 nonce; // for replay attack protection
+    uint256 desChainId;
     uint256 deadline;
     bytes32 integrationId;
     bytes signature;

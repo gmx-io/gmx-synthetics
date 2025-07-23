@@ -71,7 +71,10 @@ export async function sendCreateOrder(p: {
   gelatoRelayFeeAmount: BigNumberish;
 }) {
   const relayParams = await getRelayParams(p);
-  const subaccountApproval = await getSubaccountApproval({ ...p, signer: p.subaccountApprovalSigner });
+  const subaccountApproval = await getSubaccountApproval({
+    ...p,
+    signer: p.subaccountApprovalSigner,
+  });
 
   let signature = p.signature;
   if (!signature) {
@@ -167,7 +170,10 @@ export async function sendUpdateOrder(p: {
   gelatoRelayFeeAmount: BigNumberish;
 }) {
   const relayParams = await getRelayParams(p);
-  const subaccountApproval = await getSubaccountApproval({ ...p, signer: p.subaccountApprovalSigner });
+  const subaccountApproval = await getSubaccountApproval({
+    ...p,
+    signer: p.subaccountApprovalSigner,
+  });
 
   let signature = p.signature;
   if (!signature) {
@@ -208,6 +214,7 @@ export function getEmptySubaccountApproval() {
     maxAllowedCount: 0,
     actionType: keys.SUBACCOUNT_ORDER_ACTION,
     nonce: 0,
+    desChainId: 0,
     signature: "0x",
     integrationId: ethers.constants.HashZero,
     deadline: 9999999999,
@@ -219,6 +226,7 @@ export async function getSubaccountApproval(p: {
     nonce?: BigNumberish;
     signature?: string;
   };
+  desChainId: BigNumberish;
   account: string;
   relayRouter: ethers.Contract;
   chainId: BigNumberish;
@@ -239,6 +247,7 @@ export async function getSubaccountApproval(p: {
       signer: p.signer,
       ...p.subaccountApproval,
       nonce,
+      desChainId: p.desChainId,
       chainId: p.chainId,
       verifyingContract: p.relayRouter.address,
     });
@@ -247,6 +256,7 @@ export async function getSubaccountApproval(p: {
   return {
     ...p.subaccountApproval,
     nonce,
+    desChainId: p.desChainId,
     signature,
   };
 }
@@ -339,6 +349,7 @@ async function getSubaccountApprovalSignature(p: {
   deadline: BigNumberish;
   integrationId: string;
   nonce: BigNumberish;
+  desChainId: BigNumberish;
 }) {
   const domain = {
     name: "GmxBaseGelatoRelayRouter",
@@ -355,6 +366,7 @@ async function getSubaccountApprovalSignature(p: {
       { name: "maxAllowedCount", type: "uint256" },
       { name: "actionType", type: "bytes32" },
       { name: "nonce", type: "uint256" },
+      { name: "desChainId", type: "uint256" },
       { name: "deadline", type: "uint256" },
       { name: "integrationId", type: "bytes32" },
     ],
@@ -368,6 +380,7 @@ async function getSubaccountApprovalSignature(p: {
     actionType: p.actionType,
     deadline: p.deadline,
     nonce: p.nonce,
+    desChainId: p.desChainId,
     integrationId: p.integrationId,
   };
 

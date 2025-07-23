@@ -118,19 +118,7 @@ const config: HardhatUserConfig = {
   solidity: {
     compilers: [
       {
-        version: "0.8.18",
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 10,
-            details: {
-              constantOptimizer: true,
-            },
-          },
-        },
-      },
-      {
-        version: "0.8.20", // LZ
+        version: "0.8.29",
         settings: {
           optimizer: {
             enabled: true,
@@ -191,7 +179,6 @@ const config: HardhatUserConfig = {
         },
       },
       blockGasLimit: 20_000_000,
-      gasPrice: 10,
     },
     snowscan: {
       url: getRpcUrl("avalanche"),

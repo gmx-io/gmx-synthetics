@@ -586,6 +586,7 @@ export async function getBridgeOutSignature({
     BridgeOut: [
       { name: "token", type: "address" },
       { name: "amount", type: "uint256" },
+      { name: "minAmountOut", type: "uint256" },
       { name: "provider", type: "address" },
       { name: "data", type: "bytes" },
       { name: "relayParams", type: "bytes32" },
@@ -594,6 +595,7 @@ export async function getBridgeOutSignature({
   const typedData = {
     token: params.token,
     amount: params.amount,
+    minAmountOut: params.minAmountOut,
     provider: params.provider,
     data: params.data,
     relayParams: hashRelayParams(relayParams),

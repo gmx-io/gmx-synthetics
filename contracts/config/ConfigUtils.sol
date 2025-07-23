@@ -32,11 +32,16 @@ library ConfigUtils {
         uint256 spreadReductionFactor;
     }
 
+    struct InitOracleConfigEdgeParams {
+        bytes32 feedId;
+        uint256 tokenDecimals;
+    }
+
     struct InitOracleConfigParams {
         address token;
         InitOracleConfigPriceFeedParams priceFeed;
         InitOracleConfigDataStreamParams dataStream;
-        bytes32 edgeDataStreamId;
+        InitOracleConfigEdgeParams edge;
     }
 
     // 0.00001% per second, ~315% per year
@@ -86,7 +91,8 @@ library ConfigUtils {
         dataStore.setUint(Keys.dataStreamMultiplierKey(params.token), params.dataStream.multiplier);
         dataStore.setUint(Keys.dataStreamSpreadReductionFactorKey(params.token), params.dataStream.spreadReductionFactor);
 
-        dataStore.setBytes32(Keys.edgeDataStreamIdKey(params.token), params.edgeDataStreamId);
+        dataStore.setBytes32(Keys.edgeDataStreamIdKey(params.token), params.edge.feedId);
+        dataStore.setUint(Keys.edgeDataStreamTokenDecimalsKey(params.token), params.edge.tokenDecimals);
 
         EventUtils.EventLogData memory eventData;
 
@@ -94,16 +100,17 @@ library ConfigUtils {
         eventData.addressItems.setItem(0, "token", params.token);
         eventData.addressItems.setItem(1, "priceFeedAddress", params.priceFeed.feedAddress);
 
-        eventData.uintItems.initItems(5);
+        eventData.uintItems.initItems(6);
         eventData.uintItems.setItem(0, "priceFeedMultiplier", params.priceFeed.multiplier);
         eventData.uintItems.setItem(1, "priceFeedHeartbeatDuration", params.priceFeed.heartbeatDuration);
         eventData.uintItems.setItem(2, "stablePrice", params.priceFeed.stablePrice);
         eventData.uintItems.setItem(3, "dataStreamMultiplier", params.dataStream.multiplier);
         eventData.uintItems.setItem(4, "dataStreamSpreadReductionFactor", params.dataStream.spreadReductionFactor);
+        eventData.uintItems.setItem(5, "edgeDataStreamTokenDecimals", params.edge.tokenDecimals);
 
         eventData.bytes32Items.initItems(2);
         eventData.bytes32Items.setItem(0, "dataStreamFeedId", params.dataStream.feedId);
-        eventData.bytes32Items.setItem(1, "edgeDataStreamId", params.edgeDataStreamId);
+        eventData.bytes32Items.setItem(1, "edgeDataStreamId", params.edge.feedId);
 
         eventEmitter.emitEventLog1(
             "InitOracleConfig",
@@ -382,10 +389,20 @@ library ConfigUtils {
         }
 
         if (
-            baseKey == Keys.MAX_LENDABLE_IMPACT_FACTOR
+            baseKey == Keys.MAX_LENDABLE_IMPACT_FACTOR ||
+            baseKey == Keys.MAX_LENDABLE_IMPACT_FACTOR_FOR_WITHDRAWALS
         ) {
-            // revert if value > 20%
-            if (value > 20 * Precision.FLOAT_PRECISION / 100) {
+            // revert if value > 10%
+            if (value > 10 * Precision.FLOAT_PRECISION / 100) {
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
+            }
+        }
+
+        if (
+            baseKey == Keys.MAX_LENDABLE_IMPACT_USD
+        ) {
+            // revert if value > 50,000
+            if (value > 50 * 1000 * Precision.FLOAT_PRECISION) {
                 revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
             }
         }

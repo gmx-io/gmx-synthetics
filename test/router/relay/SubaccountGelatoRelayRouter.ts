@@ -352,6 +352,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           deadline: 0,
           nonce: 0,
         },
+        desChainId: chainId,
         account: user1.address,
         relayRouter: subaccountGelatoRelayRouter,
         chainId,

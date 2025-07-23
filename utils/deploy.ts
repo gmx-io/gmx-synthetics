@@ -67,12 +67,18 @@ export function createDeployFunction({
 
     let deployedContract: DeployResult;
 
+    let waitConfirmations;
+    if (network.name === "avalanche" || network.name === "botanix") {
+      waitConfirmations = 2;
+    }
+
     try {
       deployedContract = await deploy(contractName, {
         from: deployer,
         log: true,
         args: deployArgs,
         libraries,
+        waitConfirmations,
       });
     } catch (e) {
       // the caught error might not be very informative

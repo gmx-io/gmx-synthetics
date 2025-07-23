@@ -2,6 +2,8 @@
 
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+
 import "./BaseHandler.sol";
 
 import "../market/Market.sol";
@@ -18,7 +20,7 @@ import "./IDepositHandler.sol";
 
 // @title DepositHandler
 // @dev Contract to handle creation, execution and cancellation of deposits
-contract DepositHandler is IDepositHandler, BaseHandler {
+contract DepositHandler is IDepositHandler, BaseHandler, ReentrancyGuard {
     using Deposit for Deposit.Props;
 
     DepositVault public immutable depositVault;
@@ -134,7 +136,7 @@ contract DepositHandler is IDepositHandler, BaseHandler {
     function executeDepositFromController(
         IExecuteDepositUtils.ExecuteDepositParams calldata executeDepositParams,
         Deposit.Props calldata deposit
-    ) external onlyController returns (uint256) {
+    ) external nonReentrant onlyController returns (uint256) {
         FeatureUtils.validateFeature(dataStore, Keys.executeDepositFeatureDisabledKey(address(this)));
         return ExecuteDepositUtils.executeDeposit(executeDepositParams, deposit);
     }

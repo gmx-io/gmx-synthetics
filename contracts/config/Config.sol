@@ -519,16 +519,13 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
         allowedBaseKeys[Keys.DATA_STREAM_SPREAD_REDUCTION_FACTOR] = true;
 
-        allowedBaseKeys[Keys.MULTICHAIN_BALANCE] = true;
         allowedBaseKeys[Keys.IS_MULTICHAIN_PROVIDER_ENABLED] = true;
         allowedBaseKeys[Keys.IS_MULTICHAIN_ENDPOINT_ENABLED] = true;
         allowedBaseKeys[Keys.IS_RELAY_FEE_EXCLUDED] = true;
         allowedBaseKeys[Keys.IS_SRC_CHAIN_ID_ENABLED] = true;
-        allowedBaseKeys[Keys.POSITION_LAST_SRC_CHAIN_ID] = true;
         allowedBaseKeys[Keys.EID_TO_SRC_CHAIN_ID] = true;
 
         allowedBaseKeys[Keys.MAX_DATA_LENGTH] = true;
-        allowedBaseKeys[Keys.GMX_DATA_ACTION] = true;
 
         allowedBaseKeys[Keys.CLAIMABLE_COLLATERAL_DELAY] = true;
 

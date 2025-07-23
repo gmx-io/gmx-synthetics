@@ -501,26 +501,31 @@ describe("Timelock", () => {
   it("signalSetEdgeDataStream", async () => {
     const salt = getRandomSalt();
     const edgeDataStreamId = hashString("EdgeId");
+    const tokenDecimals = 12;
 
     await expect(
-      timelockConfig.connect(user2).signalSetEdgeDataStream(edgeDataStreamId, wnt.address, constants.HashZero, salt)
+      timelockConfig
+        .connect(user2)
+        .signalSetEdgeDataStream(wnt.address, edgeDataStreamId, tokenDecimals, constants.HashZero, salt)
     )
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
       .withArgs(user2.address, "TIMELOCK_ADMIN");
 
     await timelockConfig
       .connect(timelockAdmin)
-      .signalSetEdgeDataStream(edgeDataStreamId, wnt.address, constants.HashZero, salt);
+      .signalSetEdgeDataStream(wnt.address, edgeDataStreamId, tokenDecimals, constants.HashZero, salt);
 
-    const { target, payload } = await getEdgeDataStreamPayload(edgeDataStreamId, wnt.address);
+    const { targets, values, payloads } = await getEdgeDataStreamPayload(wnt.address, edgeDataStreamId, tokenDecimals);
 
     await time.increase(1 * 24 * 60 * 60 + 10);
 
     expect(await dataStore.getBytes32(keys.edgeDataStreamIdKey(wnt.address))).eq(ethers.constants.HashZero);
+    expect(await dataStore.getUint(keys.edgeDataStreamTokenDecimalsKey(wnt.address))).eq(0);
 
-    await timelockConfig.connect(timelockAdmin).execute(target, payload, constants.HashZero, salt);
+    await timelockConfig.connect(timelockAdmin).executeBatch(targets, values, payloads, constants.HashZero, salt);
 
     expect(await dataStore.getBytes32(keys.edgeDataStreamIdKey(wnt.address))).eq(edgeDataStreamId);
+    expect(await dataStore.getUint(keys.edgeDataStreamTokenDecimalsKey(wnt.address))).eq(tokenDecimals);
   });
 
   describe("PositionImpactPool", () => {

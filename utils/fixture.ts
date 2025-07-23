@@ -5,8 +5,9 @@ import { hashData } from "./hash";
 import { getMarketTokenAddress, DEFAULT_MARKET_TYPE } from "./market";
 import { getSyntheticTokenAddress } from "./token";
 import { getGlvAddress } from "./glv";
+import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 
-export async function deployFixture() {
+async function setup() {
   await hre.deployments.fixture();
   const chainId = 31337; // hardhat chain id
   const accountList = await hre.ethers.getSigners();
@@ -144,6 +145,8 @@ export async function deployFixture() {
   const mockOracleProvider = await hre.ethers.getContract("MockOracleProvider");
   const edgeDataStreamVerifier = await hre.ethers.getContract("EdgeDataStreamVerifier");
   const edgeDataStreamProvider = await hre.ethers.getContract("EdgeDataStreamProvider");
+  const claimHandler = await hre.ethers.getContract("ClaimHandler");
+  const claimVault = await hre.ethers.getContract("ClaimVault");
 
   const ethUsdMarketAddress = getMarketTokenAddress(
     wnt.address,
@@ -377,7 +380,13 @@ export async function deployFixture() {
       mockOracleProvider,
       edgeDataStreamVerifier,
       edgeDataStreamProvider,
+      claimHandler,
+      claimVault,
     },
     props: { oracleSalt, signerIndexes: [0, 1, 2, 3, 4, 5, 6], executionFee: "1000000000000000" },
   };
+}
+
+export async function deployFixture() {
+  return loadFixture(setup);
 }
