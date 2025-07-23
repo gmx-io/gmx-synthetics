@@ -57,13 +57,6 @@ async function main() {
   const tokens = await hre.gmx.getTokens();
   const configItems = await processTokens({ tokens });
 
-  if (configItems.length === 0) {
-    console.log("no changes to apply");
-    return;
-  }
-
-  console.log(`updating ${configItems.length} params`);
-
   const write = process.env.WRITE === "true";
   await handleConfigChanges(configItems, write);
 }

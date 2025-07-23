@@ -16,7 +16,17 @@ export interface ConfigChangeItem {
   label: string;
 }
 
-export async function handleConfigChanges(items: ConfigChangeItem[], write: boolean, batchSize = 0) {
+export enum ChangeResult {
+  NO_CHANGES,
+  SIMULATE,
+  WRITE,
+}
+
+export async function handleConfigChanges(
+  items: ConfigChangeItem[],
+  write: boolean,
+  batchSize = 0
+): Promise<ChangeResult> {
   const dataStore = await hre.ethers.getContract("DataStore");
   const multicall = await hre.ethers.getContract("Multicall3");
   const config = await hre.ethers.getContract("Config");
@@ -106,13 +116,13 @@ export async function handleConfigChanges(items: ConfigChangeItem[], write: bool
     }
   }
 
-  console.log(`updating ${multicallWriteParams.length} params`);
-  console.log("multicallWriteParams", multicallWriteParams);
-
   if (multicallWriteParams.length === 0) {
     console.log("no changes to apply");
-    return;
+    return ChangeResult.NO_CHANGES;
   }
+
+  console.log(`updating ${multicallWriteParams.length} params`);
+  console.log("multicallWriteParams", multicallWriteParams);
 
   const { roles } = await hre.gmx.getRoles();
   const from = Object.keys(roles.CONFIG_KEEPER)[0];
@@ -137,8 +147,10 @@ export async function handleConfigChanges(items: ConfigChangeItem[], write: bool
         const tx = await config.multicall(batch);
         console.log(`tx sent: ${tx.hash}`);
       });
+      return ChangeResult.WRITE;
     } else {
       console.log("NOTE: executed in read-only mode, no transactions were sent");
+      return ChangeResult.SIMULATE;
     }
   } catch (ex) {
     if (
@@ -148,7 +160,6 @@ export async function handleConfigChanges(items: ConfigChangeItem[], write: bool
     ) {
       console.error(ex);
       console.log("Use SKIP_GLV_LIMITS_AVALANCHE=true to skip updating GLV gas limits on Avalanche");
-      return;
     }
 
     throw ex;
