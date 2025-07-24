@@ -132,12 +132,6 @@ async function verifyForNetwork(verificationNetwork) {
       continue;
     }
 
-    if (process.env.SKIP_LARGE_CONTRACTS && largeContractsMap[name]) {
-      console.log(`skipping large contract: ${name}`);
-      largeContracts.push({ address, command });
-      continue;
-    }
-
     try {
       let isContractVerified = cache[address];
 
@@ -151,6 +145,12 @@ async function verifyForNetwork(verificationNetwork) {
 
       if (isContractVerified) {
         console.log(`${name} already verified: ${address}`);
+        continue;
+      }
+
+      if (process.env.SKIP_LARGE_CONTRACTS && largeContractsMap[name]) {
+        console.log(`skipping large contract: ${name}`);
+        largeContracts.push({ address, command });
         continue;
       }
 
