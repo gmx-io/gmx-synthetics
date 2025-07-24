@@ -615,7 +615,9 @@ describe("ClaimHandler", () => {
               .connect(wallet)
               .depositFunds(wnt.address, distributionId, [{ account: user0.address, amount: expandDecimals(100, 18) }]);
 
-            const signature = await tt.signer().signMessage(terms);
+            const chainId = (await ethers.provider.getNetwork()).chainId;
+            const message = `${terms}\ncontract ${claimHandler.address.toLowerCase()}\nchainId ${chainId}`;
+            const signature = await tt.signer().signMessage(message);
 
             const initialBalance = await wnt.balanceOf(user0.address);
             const initialVaultBalance = await wnt.balanceOf(claimVault.address);
