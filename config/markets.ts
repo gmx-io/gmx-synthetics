@@ -2757,11 +2757,11 @@ const config: {
 
       maxPnlFactorForTraders: percentageToFloat("90%"), // default is 60%
 
-      maxOpenInterest: decimalToFloat(1_000_000),
-      maxPoolUsdForDeposit: decimalToFloat(1_500_000), // 1.5x the max open interest
+      maxOpenInterest: decimalToFloat(2_400_000),
+      maxPoolUsdForDeposit: decimalToFloat(3_600_000), // 1.5x the max open interest
 
-      maxLongTokenPoolAmount: expandDecimals(21, 8), // ~2M USD (2x the max open interest)
-      maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+      maxLongTokenPoolAmount: expandDecimals(40, 8), // 2x the max open interest
+      maxShortTokenPoolAmount: expandDecimals(4_800_000, 6), // 2x the max open interest
 
       atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },
