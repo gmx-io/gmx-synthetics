@@ -741,12 +741,12 @@ const config: {
       positionImpactPoolDistributionRate: expandDecimals(9345, 38).div(SECONDS_PER_DAY), // 9345 DOGE / day
       minPositionImpactPoolAmount: expandDecimals(3280141, 8), // 3280141 DOGE
 
-      maxOpenInterest: decimalToFloat(10_000_000),
+      maxOpenInterest: decimalToFloat(19_000_000),
 
-      maxPoolUsdForDeposit: decimalToFloat(12_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(28_500_000),
 
-      maxLongTokenPoolAmount: expandDecimals(3660, 18),
-      maxShortTokenPoolAmount: expandDecimals(14_000_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(10500, 18),
+      maxShortTokenPoolAmount: expandDecimals(38_000_000, 6),
 
       atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
