@@ -236,6 +236,7 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
 
             ClaimEventUtils.emitClaimFundsClaimed(
                 eventEmitter,
+                msg.sender,
                 receiver,
                 param.token,
                 param.distributionId,
