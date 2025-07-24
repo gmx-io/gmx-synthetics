@@ -72,21 +72,24 @@ library ClaimEventUtils {
     // @dev emit a ClaimFundsClaimed event
     // @param eventEmitter the event emitter
     // @param account the account that claimed funds
+    // @param receiver the address that received the funds
     // @param token the token that was claimed
     // @param distributionId the distribution id that was claimed
     // @param amount the amount that was claimed
     function emitClaimFundsClaimed(
         EventEmitter eventEmitter,
         address account,
+        address receiver,
         address token,
         uint256 distributionId,
         uint256 amount
     ) internal {
         EventUtils.EventLogData memory eventData;
 
-        eventData.addressItems.initItems(2);
+        eventData.addressItems.initItems(3);
         eventData.addressItems.setItem(0, "account", account);
-        eventData.addressItems.setItem(1, "token", token);
+        eventData.addressItems.setItem(1, "receiver", receiver);
+        eventData.addressItems.setItem(2, "token", token);
 
         eventData.uintItems.initItems(2);
         eventData.uintItems.setItem(0, "distributionId", distributionId);
