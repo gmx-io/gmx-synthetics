@@ -49,7 +49,7 @@
   "dependencies": {
     "@apollo/client": "^3.9.3",
     "@chainlink/contracts": "1.1.0",
-    "@gelatonetwork/relay-context": "4.1.0",
+    "@gelatonetwork/relay-context": "4.1.1",
     "@layerzerolabs/lz-evm-protocol-v2": "3.0.74",
     "@layerzerolabs/lz-v2-utilities": "^3.0.85",
     "@layerzerolabs/oapp-evm": "0.3.2",
