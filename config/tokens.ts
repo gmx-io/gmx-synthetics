@@ -1247,11 +1247,6 @@ const config: {
         stablePrice: decimalToFloat(1),
       },
     },
-    GLV_WETH_USDC: {
-      address: "0x528A5bac7E746C9A509A1f4F6dF58A03d44279F9",
-      decimals: 18,
-      transferGasLimit: 200 * 1000,
-    },
   },
   arbitrumGoerli: {
     WETH: {
