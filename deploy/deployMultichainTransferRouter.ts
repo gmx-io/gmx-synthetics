@@ -14,11 +14,9 @@ const baseConstructorContracts = [
   "MultichainVault",
 ];
 
-const transferConstructorContracts = [];
-
 const func = createDeployFunction({
   contractName: "MultichainTransferRouter",
-  dependencyNames: [...baseConstructorContracts, ...transferConstructorContracts],
+  dependencyNames: [...baseConstructorContracts],
   getDeployArgs: async ({ dependencyContracts }) => {
     const baseParams = {
       router: dependencyContracts.Router.address,
