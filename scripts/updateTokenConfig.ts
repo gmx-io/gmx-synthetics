@@ -4,6 +4,7 @@ import { validateMarketConfigs } from "./validateMarketConfigsUtils";
 import { encodeData } from "../utils/hash";
 import { ConfigChangeItem, handleConfigChanges } from "./updateConfigUtils";
 import * as keys from "../utils/keys";
+import { validatePriceFeeds } from "./validatePriceFeedsUtils";
 
 const processTokens = async ({ tokens }): Promise<ConfigChangeItem[]> => {
   const configItems: ConfigChangeItem[] = [];
@@ -53,6 +54,8 @@ async function main() {
       throw new Error("Invalid market configs");
     }
   }
+
+  await validatePriceFeeds(); // which validates the tokens as well
 
   const tokens = await hre.gmx.getTokens();
   const configItems = await processTokens({ tokens });

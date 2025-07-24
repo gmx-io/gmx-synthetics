@@ -98,14 +98,12 @@ async function getBeaconImplementation(beaconAddress) {
 
 export async function validateTokens() {
   const tokens = await hre.gmx.getTokens();
-  console.log(`validating ${Object.entries(tokens).length} tokens ...`);
+  console.log(`\nValidating ${Object.entries(tokens).length} tokens ...`);
 
   const errors = [];
   const warnings = [];
 
   for (const [tokenSymbol, token] of Object.entries(tokens)) {
-    console.log("");
-
     if (whitelistedTokens[hre.network.name].includes(tokenSymbol)) {
       console.log(`skipping ${tokenSymbol} as it is whitelisted`);
       continue;
@@ -133,13 +131,13 @@ export async function validateTokens() {
     }
 
     const isErc777 = await isErc777Token(token.address);
-    console.log(`isErc777: ${isErc777}`);
+    console.log(`   isErc777: ${isErc777}`);
     if (isErc777) {
       errors.push(`${tokenSymbol} is an ERC777 token`);
     }
 
     const callbacks = await detectCallbackFunctions(token.address);
-    console.log(`hasCallbacks: ${callbacks.length > 0}`);
+    console.log(`   hasCallbacks: ${callbacks.length > 0}`);
 
     if (callbacks.length > 0) {
       errors.push(`${tokenSymbol} hasCallbacks: ${callbacks.join(",")}`);
@@ -160,11 +158,11 @@ export async function validateTokens() {
     }
 
     if (implementationAddress) {
-      console.log(`upgradeable: ${upgradeability}`);
-      console.log(`implementation: ${implementationAddress}`);
+      console.log(`   upgradeable: ${upgradeability}`);
+      console.log(`   implementation: ${implementationAddress}`);
 
       const implCallbacks = await detectCallbackFunctions(implementationAddress);
-      console.log(`implHasCallbacks: ${implCallbacks.length > 0}`);
+      console.log(`   implHasCallbacks: ${implCallbacks.length > 0}`);
       if (implCallbacks.length > 0) {
         errors.push(`${tokenSymbol} implHasCallbacks: ${implCallbacks.join(",")}`);
       } else {
@@ -172,33 +170,20 @@ export async function validateTokens() {
       }
     }
   }
-  console.log(`\n... validated ${Object.entries(tokens).length} tokens`);
+  console.log(`... validated ${Object.entries(tokens).length} tokens`);
 
-  console.log(`\nwarnings: ${warnings.length}`);
+  console.log(`warnings: ${warnings.length}`);
   for (const warning of warnings) {
     console.log(`⚠️ ${warning}`);
   }
 
-  console.log(`\nerrors: ${errors.length}`);
+  console.log(`errors: ${errors.length}`);
   for (const error of errors) {
     console.log(`🛑 ${error}`);
   }
   if (errors.length == 0) {
-    console.log("\n✅ All tokens are valid");
+    console.log("✅ All tokens are valid.\n");
   } else {
-    throw new Error(`\n🛑 Validation failed for ${errors.length} tokens`);
+    throw new Error(`🛑 Validation failed for ${errors.length} tokens`);
   }
 }
-
-async function main() {
-  await validateTokens();
-}
-
-main()
-  .then(() => {
-    process.exit(0);
-  })
-  .catch((ex) => {
-    console.error(ex);
-    process.exit(1);
-  });
