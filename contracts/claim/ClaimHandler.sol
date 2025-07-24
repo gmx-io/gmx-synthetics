@@ -65,6 +65,7 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
 
     // @dev deposit funds for multiple accounts and tokens in batch
     // Rebasing tokens, tokens that change balance on transfer, with token burns, etc are not supported
+    // If the distribution requires terms, then `setTerms` must be called before depositing funds
     // @param token the token to deposit
     // @param distributionId the distribution id
     // @param params array of deposit parameters
@@ -174,6 +175,10 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
         TransferClaimCache memory cache;
         for (uint256 i = 0; i < params.length; i++) {
             TransferClaimParam memory param = params[i];
+
+            if (param.fromAccount == param.toAccount) {
+                revert Errors.InvalidParams("fromAccount and toAccount cannot be the same");
+            }
 
             _validateNonEmptyAccount(param.fromAccount);
             _validateNonEmptyReceiver(param.toAccount);

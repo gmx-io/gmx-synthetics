@@ -457,6 +457,15 @@ describe("ClaimHandler", () => {
       ).to.be.revertedWithCustomError(errorsContract, "EmptyReceiver");
     });
 
+    it("should revert with InvalidParams when fromAccount and toAccount are the same", async () => {
+      const transferParams = [
+        { token: wnt.address, distributionId: 1, fromAccount: user0.address, toAccount: user0.address },
+      ];
+      await expect(claimHandler.connect(user0).transferClaim(wnt.address, transferParams))
+        .to.be.revertedWithCustomError(errorsContract, "InvalidParams")
+        .withArgs("fromAccount and toAccount cannot be the same");
+    });
+
     it("should handle transfers for accounts with zero claimable amounts", async () => {
       await claimHandler
         .connect(wallet)
