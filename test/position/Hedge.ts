@@ -1,10 +1,17 @@
-import { contractAt } from "../../utils/deploy";
+import { contractAt, deployContract } from "../../utils/deploy";
 import { deployFixture } from "../../utils/fixture";
 
-import { getPositionKeys } from "../../utils/position";
+import { grantRole } from "../../utils/role";
+import { validateStoreUtils } from "../../utils/storeUtils";
+import {
+  getPositionCount,
+  getPositionKeys,
+  getAccountPositionCount,
+  getAccountPositionKeys,
+} from "../../utils/position";
 import { handleDeposit } from "../../utils/deposit";
-import { decimalToFloat, expandDecimals } from "../../utils/math";
-import { handleOrder, OrderType } from "../../utils/order";
+import { applyFactor, bigNumberify, decimalToFloat, expandDecimals } from "../../utils/math";
+import { getOrderKeys, handleOrder, OrderType } from "../../utils/order";
 import * as keys from "../../utils/keys";
 import { expect } from "chai";
 import { scenes } from "../scenes";
@@ -121,12 +128,12 @@ describe("Hedge GM", () => {
 
     // PriceImpactPool generated
     // 100 ETH ~ $500_000 = 10% of initial pool size
-    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(market.marketToken))).eq("107084384063745019801");
+    expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(market.marketToken))).eq("107084384063745018000");
 
     await usingResult(
       getMarketTokenPriceWithPoolValue(fixture, { prices: prices.ethUsdMarket }),
       ([marketTokenPrice, poolValueInfo]) => {
-        expect(poolValueInfo.poolValue).eq("4404532117928286854000000000000000000");
+        expect(poolValueInfo.poolValue).eq("4404261600001000019000000000000000000");
         expect(poolValueInfo.longPnl).eq(0);
         expect(poolValueInfo.shortPnl).eq(0);
         expect(poolValueInfo.netPnl).eq(0);
@@ -179,11 +186,11 @@ describe("Hedge GM", () => {
     await usingResult(
       getMarketTokenPriceWithPoolValue(fixture, { prices: prices.ethUsdMarket }),
       ([marketTokenPrice, poolValueInfo]) => {
-        expect(poolValueInfo.poolValue).eq("5085780094919942456198406137576000000");
+        expect(poolValueInfo.poolValue).eq("5058832837283931949670370853492000000");
       }
     );
     const position0 = await getPositionInfo(0);
-    expect(position0.fees.borrowing.borrowingFeeUsd).eq("681247976991655602198406137576000000");
+    expect(position0.fees.borrowing.borrowingFeeUsd).eq("654571237282931930670370853492000000");
   }
 
   async function getPositionInfo(positionId) {
@@ -219,6 +226,11 @@ describe("Hedge GM", () => {
     const PIPool = await dataStore.getUint(keys.positionImpactPoolAmountKey(market.marketToken));
     console.log(`\n\nPI pool: ${PIPool.toString()}`);
 
+    const poolNetPnl = await reader.getNetPnl(dataStore.address, market, prices.indexTokenPrice, false);
+    console.log(`poolNetPnl: ${poolNetPnl.toString()}`);
+    const poolLongPnl = await reader.getPnl(dataStore.address, market, prices.indexTokenPrice, true, false);
+    console.log(`poolLongPnl: ${poolLongPnl.toString()}`);
+
     const [marketTokenPrice, poolValueInfo] = await getMarketTokenPriceWithPoolValue(fixture, {
       prices,
       market: market,
@@ -235,7 +247,15 @@ describe("Hedge GM", () => {
     console.log(`Supply: ${marketTokenSupply.toString()}, tokens: ${marketTokenAmount.toString()}`);
     const userShare = marketTokenAmount.mul(expandDecimals(1, 18)).div(marketTokenSupply);
 
-    console.log(`UserShare: ${userShare.toString()}`);
+    const userLongTokenShare = poolValueInfo.longTokenAmount.mul(userShare).div(expandDecimals(1, 18));
+    const userShortTokenShare = poolValueInfo.shortTokenAmount.mul(userShare).div(expandDecimals(1, 18));
+
+    const userDirectShareUSD = userLongTokenShare
+      .mul(prices.longTokenPrice.min)
+      .add(userShortTokenShare.mul(prices.shortTokenPrice.min));
+
+    console.log(`UserShare: ${userShare.toString()}, UserDirectShare: ${userDirectShareUSD.toString()},
+     userLongTokenShare: ${userLongTokenShare.toString()}`);
 
     const oiLong = await dataStore.getUint(keys.openInterestInTokensKey(ethUsdMarket.marketToken, wnt.address, true));
     const oiShort = await dataStore.getUint(keys.openInterestInTokensKey(ethUsdMarket.marketToken, wnt.address, false));
@@ -245,6 +265,9 @@ describe("Hedge GM", () => {
       .mul(expandDecimals(1, 30))
       .div(poolValueInfo.longTokenUsd.add(poolValueInfo.shortTokenUsd));
     console.log(`longTokenPoolShare: ${longTokenPoolShare.toString()}`);
+
+    const oiDiffInLongToken = oiLong.sub(oiShort).div(prices.longTokenPrice.min);
+    console.log(`OI diff: ${oiDiffInLongToken.toString()}`);
 
     const exposure = poolValueInfo.longTokenAmount
       .sub(PIPool)
@@ -293,9 +316,9 @@ describe("Hedge GM", () => {
     // estimate USD value of GM tokens
     const marketTokenUSDValue = gmTokenPrice.mul(userGMTokenAmount).div(expandDecimals(1, 48));
     console.log("MarketTokenUSDValue: ", marketTokenUSDValue.toString());
-    expect(marketTokenUSDValue).eq("533562");
+    expect(marketTokenUSDValue).eq("532793");
 
-    // estimate amount of tokens to withdrawal
+    // estimate amount of tokens to widthdrawal
     const withdrawalAmountOut = await reader.getWithdrawalAmountOut(
       dataStore.address,
       ethUsdMarket,

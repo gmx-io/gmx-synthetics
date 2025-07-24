@@ -45,40 +45,40 @@ export async function main() {
       baseKey: keys.CREATE_GLV_DEPOSIT_FEATURE_DISABLED,
       data: encodeData(["address"], ["0x3f6dF0c3A7221BA1375E87e7097885a601B41Afc"]),
     },
-    // {
-    //   baseKey: keys.CREATE_ORDER_FEATURE_DISABLED,
-    //   data: encodeData(["address", "uint256"], ["0x352f684ab9e97a6321a13CF03A61316B681D9fD2", OrderType.MarketSwap]),
-    // },
-    // {
-    //   baseKey: keys.CREATE_ORDER_FEATURE_DISABLED,
-    //   data: encodeData(["address", "uint256"], ["0x352f684ab9e97a6321a13CF03A61316B681D9fD2", OrderType.LimitSwap]),
-    // },
-    // {
-    //   baseKey: keys.CREATE_ORDER_FEATURE_DISABLED,
-    //   data: encodeData(
-    //     ["address", "uint256"],
-    //     ["0x352f684ab9e97a6321a13CF03A61316B681D9fD2", OrderType.MarketIncrease]
-    //   ),
-    // },
-    // {
-    //   baseKey: keys.CREATE_ORDER_FEATURE_DISABLED,
-    //   data: encodeData(["address", "uint256"], ["0x352f684ab9e97a6321a13CF03A61316B681D9fD2", OrderType.LimitIncrease]),
-    // },
-    // {
-    //   baseKey: keys.CREATE_ORDER_FEATURE_DISABLED,
-    //   data: encodeData(["address", "uint256"], ["0x352f684ab9e97a6321a13CF03A61316B681D9fD2", OrderType.LimitDecrease]),
-    // },
-    // {
-    //   baseKey: keys.CREATE_ORDER_FEATURE_DISABLED,
-    //   data: encodeData(
-    //     ["address", "uint256"],
-    //     ["0x352f684ab9e97a6321a13CF03A61316B681D9fD2", OrderType.StopLossDecrease]
-    //   ),
-    // },
-    // {
-    //   baseKey: keys.CREATE_ORDER_FEATURE_DISABLED,
-    //   data: encodeData(["address", "uint256"], ["0x352f684ab9e97a6321a13CF03A61316B681D9fD2", OrderType.Liquidation]),
-    // },
+    {
+      baseKey: keys.CREATE_ORDER_FEATURE_DISABLED,
+      data: encodeData(["address", "uint256"], ["0x352f684ab9e97a6321a13CF03A61316B681D9fD2", OrderType.MarketSwap]),
+    },
+    {
+      baseKey: keys.CREATE_ORDER_FEATURE_DISABLED,
+      data: encodeData(["address", "uint256"], ["0x352f684ab9e97a6321a13CF03A61316B681D9fD2", OrderType.LimitSwap]),
+    },
+    {
+      baseKey: keys.CREATE_ORDER_FEATURE_DISABLED,
+      data: encodeData(
+        ["address", "uint256"],
+        ["0x352f684ab9e97a6321a13CF03A61316B681D9fD2", OrderType.MarketIncrease]
+      ),
+    },
+    {
+      baseKey: keys.CREATE_ORDER_FEATURE_DISABLED,
+      data: encodeData(["address", "uint256"], ["0x352f684ab9e97a6321a13CF03A61316B681D9fD2", OrderType.LimitIncrease]),
+    },
+    {
+      baseKey: keys.CREATE_ORDER_FEATURE_DISABLED,
+      data: encodeData(["address", "uint256"], ["0x352f684ab9e97a6321a13CF03A61316B681D9fD2", OrderType.LimitDecrease]),
+    },
+    {
+      baseKey: keys.CREATE_ORDER_FEATURE_DISABLED,
+      data: encodeData(
+        ["address", "uint256"],
+        ["0x352f684ab9e97a6321a13CF03A61316B681D9fD2", OrderType.StopLossDecrease]
+      ),
+    },
+    {
+      baseKey: keys.CREATE_ORDER_FEATURE_DISABLED,
+      data: encodeData(["address", "uint256"], ["0x352f684ab9e97a6321a13CF03A61316B681D9fD2", OrderType.Liquidation]),
+    },
     // SYNC_CONFIG_FEATURE_DISABLED address is a placeholder and needs to be updated once final contract is deployed to mainnet
     // {
     //   baseKey: keys.SYNC_CONFIG_FEATURE_DISABLED,
