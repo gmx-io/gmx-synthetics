@@ -314,6 +314,8 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
 
         string memory message = string.concat(
             terms,
+            "\ndistributionId ",
+            Strings.toString(distributionId),
             "\ncontract ",
             Strings.toHexString(address(this)),
             "\nchainId ",
