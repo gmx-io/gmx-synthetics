@@ -12,9 +12,24 @@ const ERC1820_ABI = [
 // Hash of "ERC777Token" per ERC-1820 spec
 const ERC777_INTERFACE_HASH = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("ERC777Token"));
 
-const IMPLEMENTATION_SLOT = "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc";
-// const ADMIN_SLOT = "0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103"; // admin-based behavior isn’t  different for callback detection and ERC777 check, so no need to take different actions based on proxy type
-const BEACON_SLOT = "0xa3f0ad74e5424f2d3d81c7cdd48ab208b5bfa6d06c18a42f3b72a1f3eab72c36";
+// EIP-1967 slots for upgradeable contracts
+const IMPLEMENTATION_SLOT = "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc"; // bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1)
+const BEACON_SLOT = "0xa3f0ad74e5424f2d3d81c7cdd48ab208b5bfa6d06c18a42f3b72a1f3eab72c36"; // bytes32(uint256(keccak256("eip1967.proxy.beacon")) - 1)
+
+const whitelistedTokens = {
+  arbitrumSepolia: ["WETH"],
+  arbitrum: [
+    "WETH", // implHasCallbacks: transferAndCall
+    "ARB", // implHasCallbacks: transferAndCall
+    "USDC.e", // implHasCallbacks: transferAndCall
+  ],
+  avalanche: [
+    "LINK", // hasCallbacks: transferAndCall
+  ],
+  botanix: [
+    // doesn't have the ERC1820_ABI
+  ],
+};
 
 const callbackFunctionNames = [
   "onTokenReceived",
@@ -86,12 +101,15 @@ export async function validateTokens() {
   console.log(`validating ${Object.entries(tokens).length} tokens ...`);
 
   const errors = [];
+  const warnings = [];
 
   for (const [tokenSymbol, token] of Object.entries(tokens)) {
-    let upgradeability = null;
-    let implementationAddress = null;
-
     console.log("");
+
+    if (whitelistedTokens[hre.network.name].includes(tokenSymbol)) {
+      console.log(`skipping ${tokenSymbol} as it is whitelisted`);
+      continue;
+    }
 
     if (!token.decimals) {
       throw new Error(`token ${tokenSymbol} has no decimals`);
@@ -130,6 +148,9 @@ export async function validateTokens() {
     const implSlot = await ethers.provider.getStorageAt(token.address, IMPLEMENTATION_SLOT);
     const beaconSlot = await ethers.provider.getStorageAt(token.address, BEACON_SLOT);
 
+    let upgradeability: string;
+    let implementationAddress: string;
+
     if (beaconSlot !== ethers.constants.HashZero) {
       upgradeability = "beacon";
       implementationAddress = await getBeaconImplementation(parseAddress(beaconSlot));
@@ -146,13 +167,26 @@ export async function validateTokens() {
       console.log(`implHasCallbacks: ${implCallbacks.length > 0}`);
       if (implCallbacks.length > 0) {
         errors.push(`${tokenSymbol} implHasCallbacks: ${implCallbacks.join(",")}`);
+      } else {
+        warnings.push(`${tokenSymbol} is upgradeable but has no callbacks in implementation`);
       }
     }
   }
   console.log(`\n... validated ${Object.entries(tokens).length} tokens`);
+
+  console.log(`\nwarnings: ${warnings.length}`);
+  for (const warning of warnings) {
+    console.log(`⚠️ ${warning}`);
+  }
+
   console.log(`\nerrors: ${errors.length}`);
   for (const error of errors) {
-    console.log(`error: ${error}`);
+    console.log(`🛑 ${error}`);
+  }
+  if (errors.length == 0) {
+    console.log("\n✅ All tokens are valid");
+  } else {
+    throw new Error(`\n🛑 Validation failed for ${errors.length} tokens`);
   }
 }
 
