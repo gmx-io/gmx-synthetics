@@ -63,7 +63,18 @@ async function fetchAbi(address) {
 }
 
 async function detectCallbackFunctions(address) {
-  const abi = await fetchAbi(address);
+  let abi;
+  if (hre.network.name === "botanix") {
+    try {
+      abi = await fetchAbi(address);
+    } catch {
+      console.log("   ⚠️ Unable to fetch ABI, callbacks validation skipped");
+      return [];
+    }
+  } else {
+    abi = await fetchAbi(address);
+  }
+
   const iface = new ethers.utils.Interface(abi);
   const functions = Object.keys(iface.functions);
 
@@ -71,6 +82,12 @@ async function detectCallbackFunctions(address) {
 }
 
 export async function isErc777Token(tokenAddress) {
+  if (hre.network.name === "botanix") {
+    const code = await ethers.provider.getCode(ERC1820_REGISTRY);
+    console.log("   ⚠️ Unable to find the registry, ERC777 validation skipped");
+    if (code === "0x") return false;
+  }
+
   const provider = ethers.provider;
   const registry = new ethers.Contract(ERC1820_REGISTRY, ERC1820_ABI, provider);
 
@@ -101,7 +118,6 @@ export async function validateTokens() {
   console.log(`\nValidating ${Object.entries(tokens).length} tokens ...`);
 
   const errors = [];
-  const warnings = [];
 
   for (const [tokenSymbol, token] of Object.entries(tokens)) {
     if (whitelistedTokens[hre.network.name].includes(tokenSymbol)) {
@@ -166,16 +182,11 @@ export async function validateTokens() {
       if (implCallbacks.length > 0) {
         errors.push(`${tokenSymbol} implHasCallbacks: ${implCallbacks.join(",")}`);
       } else {
-        warnings.push(`${tokenSymbol} is upgradeable but has no callbacks in implementation`);
+        console.log(`   ⚠️ ${tokenSymbol} is upgradeable but has no callbacks in implementation`);
       }
     }
   }
   console.log(`... validated ${Object.entries(tokens).length} tokens`);
-
-  console.log(`warnings: ${warnings.length}`);
-  for (const warning of warnings) {
-    console.log(`⚠️ ${warning}`);
-  }
 
   console.log(`errors: ${errors.length}`);
   for (const error of errors) {
