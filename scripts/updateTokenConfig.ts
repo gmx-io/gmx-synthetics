@@ -4,7 +4,7 @@ import { validateMarketConfigs } from "./validateMarketConfigsUtils";
 import { encodeData } from "../utils/hash";
 import { ConfigChangeItem, handleConfigChanges } from "./updateConfigUtils";
 import * as keys from "../utils/keys";
-import { validatePriceFeeds } from "./validatePriceFeedsUtils";
+import { validateTickers } from "./validateTickersUtils";
 
 const processTokens = async ({ tokens }): Promise<ConfigChangeItem[]> => {
   const configItems: ConfigChangeItem[] = [];
@@ -55,7 +55,7 @@ async function main() {
     }
   }
 
-  await validatePriceFeeds(); // which validates the tokens as well
+  await validateTickers();
 
   const tokens = await hre.gmx.getTokens();
   const configItems = await processTokens({ tokens });

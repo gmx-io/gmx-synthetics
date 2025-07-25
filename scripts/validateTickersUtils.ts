@@ -121,7 +121,7 @@ async function validateRealtimeFeedConfig({
   return { shouldUpdate: true, realtimeFeedMultiplier };
 }
 
-export async function validatePriceFeeds() {
+export async function validateTickers() {
   if (process.env.SKIP_TOKEN_VALIDATION === undefined) {
     await validateTokens();
   }
