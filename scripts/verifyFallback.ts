@@ -132,12 +132,6 @@ async function verifyForNetwork(verificationNetwork) {
       continue;
     }
 
-    if (process.env.SKIP_LARGE_CONTRACTS && largeContractsMap[name]) {
-      console.log(`skipping large contract: ${name}`);
-      largeContracts.push({ address, command });
-      continue;
-    }
-
     try {
       let isContractVerified = cache[address];
 
@@ -151,6 +145,12 @@ async function verifyForNetwork(verificationNetwork) {
 
       if (isContractVerified) {
         console.log(`${name} already verified: ${address}`);
+        continue;
+      }
+
+      if (process.env.SKIP_LARGE_CONTRACTS && largeContractsMap[name]) {
+        console.log(`skipping large contract: ${name}`);
+        largeContracts.push({ address, command });
         continue;
       }
 
@@ -189,13 +189,13 @@ async function verifyForNetwork(verificationNetwork) {
     for (let i = 0; i < unverifiedContracts.length; i++) {
       const unverifiedContract = unverifiedContracts[i];
       console.log(`${i + 1}: ${unverifiedContract.address}`);
-      console.log(`Command: ${unverifiedContract.command}`);
+      console.log(`Command: ${unverifiedContract.command}\n`);
     }
     console.log(`-------`);
     for (let i = 0; i < unverifiedContracts.length; i++) {
       const unverifiedContract = unverifiedContracts[i];
       console.log(`${i + 1}: ${unverifiedContract.address}`);
-      console.log(`Error: ${unverifiedContract.error}`);
+      console.log(`Error: ${unverifiedContract.error}\n`);
     }
     console.log(`-------`);
   }
@@ -207,7 +207,7 @@ async function verifyForNetwork(verificationNetwork) {
     for (let i = 0; i < largeContracts.length; i++) {
       const largeContract = largeContracts[i];
       console.log(`${i + 1}: ${largeContract.address}`);
-      console.log(`Command: ${largeContract.command}`);
+      console.log(`Command: ${largeContract.command}\n`);
     }
     console.log(`-------`);
   }

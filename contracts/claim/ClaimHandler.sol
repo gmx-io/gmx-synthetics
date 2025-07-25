@@ -65,6 +65,7 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
 
     // @dev deposit funds for multiple accounts and tokens in batch
     // Rebasing tokens, tokens that change balance on transfer, with token burns, etc are not supported
+    // If the distribution requires terms, then `setTerms` must be called before depositing funds
     // @param token the token to deposit
     // @param distributionId the distribution id
     // @param params array of deposit parameters
@@ -175,6 +176,10 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
         for (uint256 i = 0; i < params.length; i++) {
             TransferClaimParam memory param = params[i];
 
+            if (param.fromAccount == param.toAccount) {
+                revert Errors.InvalidParams("fromAccount and toAccount cannot be the same");
+            }
+
             _validateNonEmptyAccount(param.fromAccount);
             _validateNonEmptyReceiver(param.toAccount);
             _validateNonZeroDistributionId(param.distributionId);
@@ -217,7 +222,7 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
             _validateNonEmptyToken(param.token);
             _validateNonZeroDistributionId(param.distributionId);
 
-            validateTermsSignature(param.distributionId, msg.sender, param.termsSignature);
+            _validateTermsSignature(param.distributionId, msg.sender, param.termsSignature);
 
             bytes32 claimableKey = Keys.claimableFundsAmountKey(msg.sender, param.token, param.distributionId);
             uint256 claimableAmount = dataStore.getUint(claimableKey);
@@ -231,6 +236,7 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
 
             ClaimEventUtils.emitClaimFundsClaimed(
                 eventEmitter,
+                msg.sender,
                 receiver,
                 param.token,
                 param.distributionId,
@@ -276,19 +282,6 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
         ClaimEventUtils.emitClaimTermsRemoved(eventEmitter, distributionId);
     }
 
-    function validateTermsSignature(uint256 distributionId, address account, bytes memory signature) internal view {
-        string memory terms = dataStore.getString(Keys.claimTermsKey(distributionId));
-        if (bytes(terms).length == 0) {
-            return;
-        }
-
-        bytes32 ethSignedMessageHash = ECDSA.toEthSignedMessageHash(bytes(terms));
-        address recoveredSigner = ECDSA.recover(ethSignedMessageHash, signature);
-        if (recoveredSigner != account) {
-            revert Errors.InvalidClaimTermsSignature(recoveredSigner, account);
-        }
-    }
-
     // @dev get the claimable amount for an account and token
     // @param account the account to check
     // @param token the token to check
@@ -311,6 +304,29 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
     // @return the total claimable amount
     function getTotalClaimableAmount(address token) external view returns (uint256) {
         return dataStore.getUint(Keys.totalClaimableFundsAmountKey(token));
+    }
+
+    function _validateTermsSignature(uint256 distributionId, address account, bytes memory signature) internal view {
+        string memory terms = dataStore.getString(Keys.claimTermsKey(distributionId));
+        if (bytes(terms).length == 0) {
+            return;
+        }
+
+        string memory message = string.concat(
+            terms,
+            "\ndistributionId ",
+            Strings.toString(distributionId),
+            "\ncontract ",
+            Strings.toHexString(address(this)),
+            "\nchainId ",
+            Strings.toString(block.chainid)
+        );
+
+        bytes32 ethSignedMessageHash = ECDSA.toEthSignedMessageHash(bytes(message));
+        address recoveredSigner = ECDSA.recover(ethSignedMessageHash, signature);
+        if (recoveredSigner != account) {
+            revert Errors.InvalidClaimTermsSignature(recoveredSigner, account);
+        }
     }
 
     function _validateNonZeroDistributionId(uint256 distributionId) internal pure {

@@ -457,6 +457,15 @@ describe("ClaimHandler", () => {
       ).to.be.revertedWithCustomError(errorsContract, "EmptyReceiver");
     });
 
+    it("should revert with InvalidParams when fromAccount and toAccount are the same", async () => {
+      const transferParams = [
+        { token: wnt.address, distributionId: 1, fromAccount: user0.address, toAccount: user0.address },
+      ];
+      await expect(claimHandler.connect(user0).transferClaim(wnt.address, transferParams))
+        .to.be.revertedWithCustomError(errorsContract, "InvalidParams")
+        .withArgs("fromAccount and toAccount cannot be the same");
+    });
+
     it("should handle transfers for accounts with zero claimable amounts", async () => {
       await claimHandler
         .connect(wallet)
@@ -517,10 +526,10 @@ describe("ClaimHandler", () => {
       await claimHandler.connect(wallet).depositFunds(wnt.address, 1, wntDepositParams);
       await claimHandler.connect(wallet).depositFunds(usdc.address, 1, usdcDepositParams);
 
-      const initialUser0WntBalance = await wnt.balanceOf(user0.address);
-      const initialUser0UsdcBalance = await usdc.balanceOf(user0.address);
       const initialUser1WntBalance = await wnt.balanceOf(user1.address);
       const initialUser1UsdcBalance = await usdc.balanceOf(user1.address);
+      const initialUser2WntBalance = await wnt.balanceOf(user0.address);
+      const initialUser2UsdcBalance = await usdc.balanceOf(user0.address);
 
       expect(await claimHandler.getClaimableAmount(user0.address, wnt.address, [1])).to.equal(expandDecimals(100, 18));
       expect(await claimHandler.getClaimableAmount(user0.address, usdc.address, [1])).to.equal(expandDecimals(1000, 6));
@@ -531,7 +540,7 @@ describe("ClaimHandler", () => {
         { token: wnt.address, distributionId: 1, termsSignature: "0x" },
         { token: usdc.address, distributionId: 1, termsSignature: "0x" },
       ];
-      const tx = await claimHandler.connect(user0).claimFunds(claimParams, user0.address);
+      const tx = await claimHandler.connect(user0).claimFunds(claimParams, user2.address);
 
       const txReceipt = await ethers.provider.getTransactionReceipt(tx.hash);
       const logs = parseLogs(fixture, txReceipt);
@@ -540,12 +549,14 @@ describe("ClaimHandler", () => {
       expect(claimEvents).to.deep.equal([
         {
           account: user0.address,
+          receiver: user2.address,
           token: wnt.address,
           distributionId: 1,
           amount: expandDecimals(100, 18),
         },
         {
           account: user0.address,
+          receiver: user2.address,
           token: usdc.address,
           distributionId: 1,
           amount: expandDecimals(1000, 6),
@@ -559,8 +570,8 @@ describe("ClaimHandler", () => {
       expect(await claimHandler.getTotalClaimableAmount(wnt.address)).to.equal(expandDecimals(200, 18));
       expect(await claimHandler.getTotalClaimableAmount(usdc.address)).to.equal(expandDecimals(2000, 6));
 
-      expect(await wnt.balanceOf(user0.address)).to.equal(initialUser0WntBalance.add(expandDecimals(100, 18)));
-      expect(await usdc.balanceOf(user0.address)).to.equal(initialUser0UsdcBalance.add(expandDecimals(1000, 6)));
+      expect(await wnt.balanceOf(user2.address)).to.equal(initialUser2WntBalance.add(expandDecimals(100, 18)));
+      expect(await usdc.balanceOf(user2.address)).to.equal(initialUser2UsdcBalance.add(expandDecimals(1000, 6)));
 
       const claimParams2 = [{ token: wnt.address, distributionId: 1, termsSignature: "0x" }];
       await claimHandler.connect(user1).claimFunds(claimParams2, user1.address);
@@ -578,7 +589,7 @@ describe("ClaimHandler", () => {
 
       expect(await claimHandler.getClaimableAmount(user1.address, usdc.address, [1])).to.equal(0);
       expect(await claimHandler.getTotalClaimableAmount(usdc.address)).to.equal(0);
-      expect(await usdc.balanceOf(user2.address)).to.equal(expandDecimals(2000, 6));
+      expect(await usdc.balanceOf(user2.address)).to.equal(expandDecimals(3000, 6));
     });
 
     describe("signature validation", () => {
@@ -604,7 +615,9 @@ describe("ClaimHandler", () => {
               .connect(wallet)
               .depositFunds(wnt.address, distributionId, [{ account: user0.address, amount: expandDecimals(100, 18) }]);
 
-            const signature = await tt.signer().signMessage(terms);
+            const chainId = (await ethers.provider.getNetwork()).chainId;
+            const message = `${terms}\ndistributionId ${distributionId}\ncontract ${claimHandler.address.toLowerCase()}\nchainId ${chainId}`;
+            const signature = await tt.signer().signMessage(message);
 
             const initialBalance = await wnt.balanceOf(user0.address);
             const initialVaultBalance = await wnt.balanceOf(claimVault.address);
