@@ -139,7 +139,7 @@ library BridgeOutFromControllerUtils {
                 _bridgeOutParams.account = params.account;
                 _bridgeOutParams.srcChainId = params.srcChainId;
                 _bridgeOutParams.token = params.token;
-                _bridgeOutParams.amount = params.amount;
+                _bridgeOutParams.amount = params.amount + params.secondaryAmount;
 
                 _bridgeOut(
                     eventEmitter,

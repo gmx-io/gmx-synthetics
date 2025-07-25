@@ -1,3 +1,4 @@
+import prompts from "prompts";
 import hre from "hardhat";
 
 import { getMarketKey, getMarketTokenAddresses, getOnchainMarkets } from "../utils/market";
@@ -93,6 +94,11 @@ async function main() {
 
     let wasChanged = false;
 
+    const indexTokenConfig = tokensByAddress[indexToken];
+    const longTokenConfig = tokensByAddress[longToken];
+    const shortTokenConfig = tokensByAddress[shortToken];
+    const marketLabel = `${indexTokenConfig?.symbol ?? "SPOT"} [${longTokenConfig.symbol}/${shortTokenConfig.symbol}]`;
+
     if (!currentPositionImpactPoolDistributionRate.eq(marketConfig.positionImpactPoolDistributionRate)) {
       const change = currentPositionImpactPoolDistributionRate.gt(0)
         ? bigNumberify(marketConfig.positionImpactPoolDistributionRate)
@@ -101,11 +107,21 @@ async function main() {
         : null;
       wasChanged = true;
       console.log(
-        "positionImpactPoolDistributionRate was changed for market %s. prev value %s new value %s (%sx)",
-        marketToken,
-        currentPositionImpactPoolDistributionRate,
-        marketConfig.positionImpactPoolDistributionRate,
-        change ? formatAmount(change, 4) : "n/a "
+        "positionImpactPoolDistributionRate    %s %s/day -> %s/day (%s)",
+        marketLabel.padEnd(18),
+        formatAmount(
+          bigNumberify(currentPositionImpactPoolDistributionRate).mul(86400),
+          30 + indexTokenConfig.decimals,
+          4,
+          true
+        ),
+        formatAmount(
+          bigNumberify(marketConfig.positionImpactPoolDistributionRate).mul(86400),
+          30 + indexTokenConfig.decimals,
+          4,
+          true
+        ),
+        change ? formatAmount(change, 4) + "x" : "-"
       );
     }
 
@@ -115,11 +131,11 @@ async function main() {
         : null;
       wasChanged = true;
       console.log(
-        "minPositionImpactPoolAmount was changed for market %s. prev value %s new value %s (%sx)",
-        marketToken,
-        currentMinPositionImpactPoolAmount,
-        marketConfig.minPositionImpactPoolAmount,
-        change ? formatAmount(change, 4) : "n/a "
+        "minPositionImpactPoolAmount           %s %s -> %s (%s)",
+        marketLabel.padEnd(18),
+        formatAmount(currentMinPositionImpactPoolAmount, indexTokenConfig.decimals, 2, true),
+        formatAmount(marketConfig.minPositionImpactPoolAmount, indexTokenConfig.decimals, 2, true),
+        change ? formatAmount(change, 4) + "x" : "-"
       );
     }
 
@@ -142,7 +158,16 @@ async function main() {
   console.log(`updating ${multicallWriteParams.length} params`);
   console.log("multicallWriteParams", multicallWriteParams);
 
-  if (process.env.WRITE === "true") {
+  let write = process.env.WRITE === "true";
+  if (!write) {
+    ({ write } = await prompts({
+      type: "confirm",
+      name: "write",
+      message: "Do you want to execute the transactions?",
+    }));
+  }
+
+  if (write) {
     const tx = await config.multicall(multicallWriteParams);
     console.log(`tx sent: ${tx.hash}`);
   } else {
