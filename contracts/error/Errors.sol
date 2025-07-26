@@ -34,6 +34,8 @@ library Errors {
     error OracleProviderAlreadyExistsForToken(address token);
     error OracleProviderMinChangeDelayNotYetPassed(address token, address provider);
     error PriceFeedAlreadyExistsForToken(address token);
+    error PriceFeedAddressNotValidForToken(address token);
+    error PriceFeedDescriptionMismatchForToken(address token);
     error DataStreamIdAlreadyExistsForToken(address token);
     error EdgeDataStreamIdAlreadyExistsForToken(address token);
     error MaxFundingFactorPerSecondLimitExceeded(uint256 maxFundingFactorPerSecond, uint256 limit);

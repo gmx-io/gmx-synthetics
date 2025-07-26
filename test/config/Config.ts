@@ -3,9 +3,10 @@ import { deployFixture } from "../../utils/fixture";
 
 import { EXCLUDED_CONFIG_KEYS } from "../../utils/config";
 import { grantRole } from "../../utils/role";
-import { encodeData, hashString } from "../../utils/hash";
+import { encodeData, hashString, keccakString } from "../../utils/hash";
 import { bigNumberify, decimalToFloat, expandDecimals, percentageToFloat } from "../../utils/math";
 import { TOKEN_ORACLE_TYPES } from "../../utils/oracle";
+import { deployContract } from "../../utils/deploy";
 import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
 import Keys from "../../artifacts/contracts/data/Keys.sol/Keys.json";
@@ -462,6 +463,13 @@ describe("Config", () => {
 
   it("initOracleConfig", async () => {
     const token = { address: "0x7f9FBf9bDd3F4105C478b996B648FE6e828a1e98" };
+    const mockFlags = await deployContract("MockFlags", []);
+    const mockPriceFeed = await deployContract("MockPriceFeed", []);
+
+    await dataStore.setAddress(keys.CHAINLINK_FLAGS, mockFlags.address);
+
+    expect(await mockFlags.getFlag(mockPriceFeed.address)).is.false;
+
     expect(await dataStore.getAddress(keys.priceFeedKey(token.address))).eq(ethers.constants.AddressZero);
     expect(await dataStore.getUint(keys.priceFeedMultiplierKey(token.address))).eq(0);
     expect(await dataStore.getUint(keys.priceFeedHeartbeatDurationKey(token.address))).eq(0);
@@ -472,10 +480,14 @@ describe("Config", () => {
     expect(await dataStore.getUint(keys.dataStreamSpreadReductionFactorKey(token.address))).eq(0);
     expect(await dataStore.getUint(keys.edgeDataStreamIdKey(token.address))).eq(0);
 
+    await mockFlags.setFlag(mockPriceFeed.address, true);
+    expect(await mockFlags.getFlag(mockPriceFeed.address)).is.true;
+
     const oracleConfig = {
       token: token.address,
       priceFeed: {
-        feedAddress: "0x221912ce795669f628c51c69b7d0873eDA9C03bB",
+        feedAddress: mockPriceFeed.address,
+        descriptionHash: keccakString("description"),
         multiplier: expandDecimals(1, 60 - 18 - 8),
         heartbeatDuration: (24 + 1) * 60 * 60,
         stablePrice: decimalToFloat(100),

@@ -4,6 +4,8 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
+import "../oracle/IFlags.sol";
+import "../oracle/IPriceFeed.sol";
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
 import "../event/EventEmitter.sol";
@@ -21,6 +23,7 @@ library ConfigUtils {
 
     struct InitOracleConfigPriceFeedParams {
         address feedAddress;
+        bytes32 descriptionHash;
         uint256 multiplier;
         uint256 heartbeatDuration;
         uint256 stablePrice;
@@ -73,6 +76,14 @@ library ConfigUtils {
 
         if (dataStore.getBytes32(Keys.edgeDataStreamIdKey(params.token)) != bytes32(0)) {
             revert Errors.EdgeDataStreamIdAlreadyExistsForToken(params.token);
+        }
+        
+        if (!IFlags(dataStore.getAddress(Keys.CHAINLINK_FLAGS)).getFlag(params.priceFeed.feedAddress)) {
+            revert Errors.PriceFeedAddressNotValidForToken(params.token);
+        }
+
+        if (params.priceFeed.descriptionHash != keccak256(bytes(IPriceFeed(params.priceFeed.feedAddress).description()))) {
+            revert Errors.PriceFeedDescriptionMismatchForToken(params.token);
         }
 
         dataStore.setAddress(Keys.priceFeedKey(params.token), params.priceFeed.feedAddress);
