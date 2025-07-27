@@ -122,10 +122,6 @@ async function validateRealtimeFeedConfig({
 }
 
 export async function validateTickers() {
-  if (process.env.SKIP_TOKEN_VALIDATION === undefined) {
-    await validateTokens();
-  }
-
   const dataStore = await hre.ethers.getContract("DataStore");
   const clientId = process.env.REALTIME_FEED_CLIENT_ID;
   const clientSecret = process.env.REALTIME_FEED_CLIENT_SECRET;
