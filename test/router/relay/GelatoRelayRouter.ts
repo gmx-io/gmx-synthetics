@@ -475,6 +475,14 @@ describe("GelatoRelayRouter", () => {
           verifyingContract: createOrderParams.relayRouter.address,
         })
       );
+      await expect(
+        sendCreateOrder({
+          ...createOrderParams,
+          userNonce: 2,
+          signature: signature,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidRecoveredSigner");
+
       await sendCreateOrder({
         ...createOrderParams,
         userNonce: 2,
