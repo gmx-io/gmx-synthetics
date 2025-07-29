@@ -249,7 +249,7 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
         }
     }
 
-    function setTerms(uint256 distributionId, string calldata terms) external onlyClaimAdmin {
+    function setTerms(uint256 distributionId, string calldata terms) external globalNonReentrant onlyClaimAdmin {
         _validateNonZeroDistributionId(distributionId);
         if (bytes(terms).length == 0) {
             revert Errors.InvalidParams("terms is empty");
@@ -268,7 +268,7 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
         ClaimEventUtils.emitClaimTermsSet(eventEmitter, distributionId, termsHash);
     }
 
-    function removeTerms(uint256 distributionId) external onlyClaimAdmin {
+    function removeTerms(uint256 distributionId) external globalNonReentrant onlyClaimAdmin {
         string memory terms = dataStore.getString(Keys.claimTermsKey(distributionId));
         if (bytes(terms).length == 0) {
             revert Errors.InvalidParams("terms not found");
