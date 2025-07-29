@@ -48,6 +48,7 @@ describe("FeeDistributor", function () {
     marketUtils,
     feeDistributorUtils,
     mockVaultV1,
+    mockFlags,
     wallet,
     user0,
     user1,
@@ -116,6 +117,7 @@ describe("FeeDistributor", function () {
       marketUtils,
       feeDistributorUtils,
       mockVaultV1,
+      mockFlags,
     } = fixture.contracts);
 
     ({
@@ -1305,11 +1307,15 @@ describe("FeeDistributor", function () {
     await feeDistributorConfig.moveToNextDistributionDay(distributionDay);
 
     const dataStoreD = await deployContract("DataStore", [roleStore.address]);
-    const configD = await deployContract("Config", [roleStore.address, dataStoreD.address, eventEmitter.address], {
-      libraries: {
-        "contracts/config/ConfigUtils.sol:ConfigUtils": configUtils.address,
-      },
-    });
+    const configD = await deployContract(
+      "Config",
+      [roleStore.address, dataStoreD.address, eventEmitter.address, mockFlags.address],
+      {
+        libraries: {
+          "contracts/config/ConfigUtils.sol:ConfigUtils": configUtils.address,
+        },
+      }
+    );
     const mockEndpointV2DMultichain = await deployContract("MockEndpointV2", [eidD]);
     const mockEndpointV2D = await deployContract("MockEndpointV2", [eidD]);
     const mockOftD = await deployContract("MockOFT", ["GMX", "GMX", mockEndpointV2D.address, wallet.address]);

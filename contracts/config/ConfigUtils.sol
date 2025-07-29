@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { FlagsInterface } from "@chainlink/contracts/src/v0.8/interfaces/FlagsInterface.sol";
 
 import "../oracle/IFlags.sol";
 import "../oracle/IPriceFeed.sol";
@@ -64,6 +65,7 @@ library ConfigUtils {
     function initOracleConfig(
         DataStore dataStore,
         EventEmitter eventEmitter,
+        FlagsInterface flags,
         InitOracleConfigParams memory params
     ) external {
         if (dataStore.getAddress(Keys.priceFeedKey(params.token)) != address(0)) {
@@ -78,7 +80,7 @@ library ConfigUtils {
             revert Errors.EdgeDataStreamIdAlreadyExistsForToken(params.token);
         }
         
-        if (!IFlags(dataStore.getAddress(Keys.CHAINLINK_FLAGS)).getFlag(params.priceFeed.feedAddress)) {
+        if (!flags.getFlag(params.priceFeed.feedAddress)) {
             revert Errors.PriceFeedAddressNotValidForToken(params.token);
         }
 

@@ -499,20 +499,6 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         eventEmitter.emitEventLog("SignalSetEdgeDataStream", eventData);
     }
 
-    function signalSetChainlinkFlags(address flags, bytes32 predecessor, bytes32 salt) external onlyTimelockAdmin {
-        bytes memory payload = abi.encodeWithSignature("setAddress(bytes32,address)",
-            Keys.CHAINLINK_FLAGS, flags);
-        timelockController.schedule(dataStore, 0, payload, predecessor, salt, timelockController.getMinDelay());
-
-        EventUtils.EventLogData memory eventData;
-        eventData.addressItems.initItems(1);
-        eventData.addressItems.setItem(0, "flags", flags);
-        eventEmitter.emitEventLog(
-            "SignalSetChainlinkFlags",
-            eventData
-        );
-    }
-
     function execute(address target, bytes calldata payload, bytes32 predecessor, bytes32 salt) external onlyTimelockAdmin {
         timelockController.execute(target, 0, payload, predecessor, salt);
     }

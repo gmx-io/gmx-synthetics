@@ -16,12 +16,12 @@ import { mine } from "@nomicfoundation/hardhat-network-helpers";
 describe("Config", () => {
   let fixture;
   let user0, user1, user2;
-  let config, configUtils, dataStore, roleStore, ethUsdMarket, wnt;
+  let config, configUtils, dataStore, roleStore, mockFlags, ethUsdMarket, wnt;
   const { AddressZero } = ethers.constants;
 
   beforeEach(async () => {
     fixture = await deployFixture();
-    ({ config, configUtils, dataStore, roleStore, ethUsdMarket, wnt } = fixture.contracts);
+    ({ config, configUtils, dataStore, roleStore, mockFlags, ethUsdMarket, wnt } = fixture.contracts);
     ({ user0, user1, user2 } = fixture.accounts);
 
     await grantRole(roleStore, user0.address, "CONFIG_KEEPER");
@@ -463,10 +463,7 @@ describe("Config", () => {
 
   it("initOracleConfig", async () => {
     const token = { address: "0x7f9FBf9bDd3F4105C478b996B648FE6e828a1e98" };
-    const mockFlags = await deployContract("MockFlags", []);
     const mockPriceFeed = await deployContract("MockPriceFeed", []);
-
-    await dataStore.setAddress(keys.CHAINLINK_FLAGS, mockFlags.address);
 
     expect(await mockFlags.getFlag(mockPriceFeed.address)).is.false;
 
