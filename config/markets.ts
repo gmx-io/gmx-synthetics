@@ -583,10 +583,10 @@ const config: {
       reserveFactor: percentageToFloat("105%"),
       openInterestReserveFactor: percentageToFloat("100%"),
 
-      maxLongTokenPoolAmount: expandDecimals(25_000, 18),
-      maxShortTokenPoolAmount: expandDecimals(25_000, 18),
+      maxLongTokenPoolAmount: expandDecimals(12_000, 18),
+      maxShortTokenPoolAmount: expandDecimals(12_000, 18),
 
-      maxPoolUsdForDeposit: decimalToFloat(25_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(35_000_000),
 
       positionImpactExponentFactor: exponentToFloat("1e0"),
       negativePositionImpactFactor: exponentToFloat("2e-15"),
