@@ -15,7 +15,6 @@ export async function initOracleConfigForTokens({ write }) {
   const tokens = await hre.gmx.getTokens();
 
   const dataStore = await hre.ethers.getContract("DataStore");
-  const eventEmitter = await hre.ethers.getContract("EventEmitter");
   const multicall = await hre.ethers.getContract("Multicall3");
   const config = await hre.ethers.getContract("Config");
 
@@ -91,16 +90,18 @@ export async function initOracleConfigForTokens({ write }) {
 
     const { priceFeed } = token;
 
-    const priceFeedMultiplier = expandDecimals(1, 60 - token.decimals - priceFeed.decimals);
-    const stablePrice = priceFeed.stablePrice ? priceFeed.stablePrice : 0;
+    let priceFeedMultiplier = bigNumberify(0);
+    if (priceFeed) {
+      priceFeedMultiplier = expandDecimals(1, 60 - token.decimals - priceFeed.decimals);
+    }
 
     await validatePriceFeed(tokenSymbol, token, priceFeedMultiplier);
 
     const initOracleConfigPriceFeedParams = {
       feedAddress: token.priceFeed?.address ?? ethers.constants.AddressZero,
       multiplier: priceFeedMultiplier,
-      heartbeatDuration: priceFeed.heartbeatDuration,
-      stablePrice,
+      heartbeatDuration: priceFeed?.heartbeatDuration ?? 0,
+      stablePrice: priceFeed?.stablePrice ?? 0,
     };
 
     const dataStreamMultiplier = expandDecimals(1, 60 - token.decimals - token.dataStreamFeedDecimals);
@@ -118,15 +119,13 @@ export async function initOracleConfigForTokens({ write }) {
     };
 
     const initOracleConfigParams = {
-      token,
-      initOracleConfigPriceFeedParams,
-      initOracleConfigDataStreamParams,
-      initOracleConfigEdgeParams,
+      token: token.address,
+      priceFeed: initOracleConfigPriceFeedParams,
+      dataStream: initOracleConfigDataStreamParams,
+      edge: initOracleConfigEdgeParams,
     };
 
-    multicallWriteParams.push(
-      config.interface.encodeFunctionData("initOracleConfig", [dataStore, eventEmitter, initOracleConfigParams])
-    );
+    multicallWriteParams.push(config.interface.encodeFunctionData("initOracleConfig", [initOracleConfigParams]));
 
     if (
       token.oracleTimestampAdjustment !== undefined &&
