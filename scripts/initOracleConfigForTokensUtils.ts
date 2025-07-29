@@ -10,11 +10,8 @@ import * as keys from "../utils/keys";
 import { getOracleProviderAddress } from "../utils/oracle";
 
 import IPriceFeed from "../artifacts/contracts/oracle/IPriceFeed.sol/IPriceFeed.json";
-import { validateTickers } from "./validateTickersUtils";
 
 export async function initOracleConfigForTokens({ write }) {
-  await validateTickers();
-
   const tokens = await hre.gmx.getTokens();
 
   const dataStore = await hre.ethers.getContract("DataStore");
