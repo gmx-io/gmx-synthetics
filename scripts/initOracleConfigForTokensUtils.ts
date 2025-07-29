@@ -239,6 +239,7 @@ export async function validatePriceFeed(tokenSymbol: string, token: TokenConfig,
       "USDT.e": "USDT",
       "DAI.e": "DAI",
       pBTC: "BTC",
+      "USDC.SG": "USDC",
     }[tokenSymbol] ?? tokenSymbol;
 
   // in avalancheFuji USDT feed is used as USDC and DAI price feeds
