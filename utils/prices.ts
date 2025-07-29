@@ -27,6 +27,10 @@ export function getTickersUrl() {
     return "https://avalanche-api.gmxinfra.io/prices/tickers";
   }
 
+  if (hre.network.name === "botanix") {
+    return "https://botanix-api.gmxinfra.io/prices/tickers";
+  }
+
   throw new Error("Unsupported network");
 }
 
