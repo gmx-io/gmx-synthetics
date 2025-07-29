@@ -97,6 +97,10 @@ export async function initOracleConfigForTokens({ write }) {
 
     await validatePriceFeed(tokenSymbol, token, priceFeedMultiplier);
 
+    if (hre.network.name === "avalanche" && tokenSymbol === "LINK") {
+      continue; // skip LINK on Avalanche as it is missing dataStreamFeedId & dataStreamFeedDecimals configs
+    }
+
     const initOracleConfigPriceFeedParams = {
       feedAddress: token.priceFeed?.address ?? ethers.constants.AddressZero,
       multiplier: priceFeedMultiplier,
@@ -233,13 +237,14 @@ export async function validatePriceFeed(tokenSymbol: string, token: TokenConfig,
       tBTC: "BTC",
       WETH: "ETH",
       "USDC.e": "USDC",
+      "USDC.e (Archived)": "USDC", // botanix
       "BTC.b": "BTC",
       "WETH.e": "ETH",
       WAVAX: "AVAX",
       "USDT.e": "USDT",
       "DAI.e": "DAI",
       pBTC: "BTC",
-      "USDC.SG": "USDC",
+      "USDC.SG": "USDC", // arbitrumSepolia
     }[tokenSymbol] ?? tokenSymbol;
 
   // in avalancheFuji USDT feed is used as USDC and DAI price feeds
