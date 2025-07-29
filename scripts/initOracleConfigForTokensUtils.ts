@@ -18,6 +18,7 @@ export async function initOracleConfigForTokens({ write }) {
   const tokens = await hre.gmx.getTokens();
 
   const dataStore = await hre.ethers.getContract("DataStore");
+  const eventEmitter = await hre.ethers.getContract("EventEmitter");
   const multicall = await hre.ethers.getContract("Multicall3");
   const config = await hre.ethers.getContract("Config");
 
@@ -91,50 +92,44 @@ export async function initOracleConfigForTokens({ write }) {
     const token = tokens[tokenSymbol];
     const onchainConfig = onchainOracleConfig[tokenSymbol];
 
-    if (onchainConfig.priceFeed === ethers.constants.AddressZero && token.priceFeed) {
-      const { priceFeed } = token;
+    const { priceFeed } = token;
 
-      const priceFeedMultiplier = expandDecimals(1, 60 - token.decimals - priceFeed.decimals);
-      const stablePrice = priceFeed.stablePrice ? priceFeed.stablePrice : 0;
+    const priceFeedMultiplier = expandDecimals(1, 60 - token.decimals - priceFeed.decimals);
+    const stablePrice = priceFeed.stablePrice ? priceFeed.stablePrice : 0;
 
-      await validatePriceFeed(tokenSymbol, token, priceFeedMultiplier);
+    await validatePriceFeed(tokenSymbol, token, priceFeedMultiplier);
 
-      console.log(
-        `setPriceFeed(${tokenSymbol}, ${priceFeed.address}, ${priceFeedMultiplier.toString()}, ${
-          priceFeed.heartbeatDuration
-        }, ${stablePrice.toString()})`
-      );
+    const initOracleConfigPriceFeedParams = {
+      feedAddress: token.priceFeed?.address ?? ethers.constants.AddressZero,
+      multiplier: priceFeedMultiplier,
+      heartbeatDuration: priceFeed.heartbeatDuration,
+      stablePrice,
+    };
 
-      multicallWriteParams.push(
-        config.interface.encodeFunctionData("setPriceFeed", [
-          token.address,
-          priceFeed.address,
-          priceFeedMultiplier,
-          priceFeed.heartbeatDuration,
-          stablePrice,
-        ])
-      );
-    }
+    const dataStreamMultiplier = expandDecimals(1, 60 - token.decimals - token.dataStreamFeedDecimals);
+    const dataStreamSpreadReductionFactor = bigNumberify(token.dataStreamSpreadReductionFactor ?? 0);
 
-    if (onchainConfig.dataStreamId === ethers.constants.HashZero && token.dataStreamFeedId) {
-      const dataStreamMultiplier = expandDecimals(1, 60 - token.decimals - token.dataStreamFeedDecimals);
-      const dataStreamSpreadReductionFactor = bigNumberify(token.dataStreamSpreadReductionFactor ?? 0);
+    const initOracleConfigDataStreamParams = {
+      feedId: token.dataStreamFeedId,
+      multiplier: dataStreamMultiplier,
+      spreadReductionFactor: dataStreamSpreadReductionFactor,
+    };
 
-      console.log(
-        `setDataStream(${tokenSymbol} ${
-          token.dataStreamFeedId
-        }, ${dataStreamMultiplier.toString()}, ${dataStreamSpreadReductionFactor.toString()})`
-      );
+    const initOracleConfigEdgeParams = {
+      feedId: ethers.constants.HashZero, // TODO: use token.edge.feedId
+      tokenDecimals: 0, // TODO: use token.edge.tokenDecimals
+    };
 
-      multicallWriteParams.push(
-        config.interface.encodeFunctionData("setDataStream", [
-          token.address,
-          token.dataStreamFeedId,
-          dataStreamMultiplier,
-          dataStreamSpreadReductionFactor,
-        ])
-      );
-    }
+    const initOracleConfigParams = {
+      token,
+      initOracleConfigPriceFeedParams,
+      initOracleConfigDataStreamParams,
+      initOracleConfigEdgeParams,
+    };
+
+    multicallWriteParams.push(
+      config.interface.encodeFunctionData("initOracleConfig", [dataStore, eventEmitter, initOracleConfigParams])
+    );
 
     if (
       token.oracleTimestampAdjustment !== undefined &&
