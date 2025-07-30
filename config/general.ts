@@ -178,7 +178,24 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         11155420: 40232, // Optimism Sepolia
       },
     },
-    avalancheFuji: {},
+    avalancheFuji: {
+      maxAutoCancelOrders: 11,
+      maxTotalCallbackGasLimitForAutoCancelOrders: 10_000_000,
+      multichainProviders: {
+        // Stargate pools are not deployed on Fuji
+      },
+      multichainEndpoints: {
+        "0x6EDCE65403992e310A62460808c4b910D972f10f": true, // LZ Endpoint
+      },
+      srcChainIds: {
+        43113: true, // Avalanche Fuji
+        421614: true, // Arbitrum Sepolia
+      },
+      eids: {
+        43113: 40106, // Avalanche Fuji
+        421614: 40231, // Arbitrum Sepolia
+      },
+    },
     arbitrum: {
       maxAutoCancelOrders: 11,
       maxTotalCallbackGasLimitForAutoCancelOrders: 10_000_000,
