@@ -118,6 +118,10 @@ export type BaseMarketConfig = {
   positionImpactPoolDistributionRate: BigNumberish;
   minPositionImpactPoolAmount: BigNumberish;
 
+  maxLendableImpactFactor?: BigNumberish;
+  maxLendableImpactFactorForWithdrawals?: BigNumberish;
+  maxLendableImpactUsd?: BigNumberish;
+
   virtualMarketId?: string;
   virtualTokenIdForIndexToken?: string;
 

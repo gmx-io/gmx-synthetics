@@ -1084,6 +1084,14 @@ export async function validateMarketConfigs() {
       throw new Error(`Missing configs for ${indexTokenSymbol}[${longTokenSymbol}-${shortTokenSymbol}]`);
     }
 
+    for (const key of ["maxLendableImpactFactor", "maxLendableImpactFactorForWithdrawals", "maxLendableImpactUsd"]) {
+      if (marketConfig[key] && marketConfig[key] != 0) {
+        throw new Error(
+          `${key} should not be set to more than zero, unless the old V2 contracts are disabled, only remove this check if it is confirmed that the old V2 contracts have been disabled`
+        );
+      }
+    }
+
     await validatePerpConfig({ marketConfig, indexTokenSymbol, longTokenSymbol, shortTokenSymbol, dataStore, errors });
     await validateSwapConfig({ marketConfig, indexTokenSymbol, longTokenSymbol, shortTokenSymbol, dataStore, errors });
   }
