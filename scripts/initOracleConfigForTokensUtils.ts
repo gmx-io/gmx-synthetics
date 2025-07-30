@@ -2,7 +2,7 @@ import hre, { ethers } from "hardhat";
 import prompts from "prompts";
 
 import { getFullKey } from "../utils/config";
-import { encodeData } from "../utils/hash";
+import { encodeData, hashString } from "../utils/hash";
 import { bigNumberify, expandDecimals } from "../utils/math";
 
 import { TokenConfig } from "../config/tokens";
@@ -118,8 +118,8 @@ export async function initOracleConfigForTokens({ write }) {
     };
 
     const initOracleConfigEdgeParams = {
-      feedId: ethers.constants.HashZero, // TODO: use token.edge.feedId
-      tokenDecimals: 0, // TODO: use token.edge.tokenDecimals
+      feedId: hashString(token.edge?.feedId || ""), // TODO: check behaviour for tokens without an edge.feedId field
+      tokenDecimals: token.edge?.tokenDecimals || token.decimals,
     };
 
     const initOracleConfigParams = {
