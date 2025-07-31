@@ -93,12 +93,7 @@ export async function initOracleConfigForTokens({ write }) {
     let priceFeedMultiplier = bigNumberify(0);
     if (priceFeed) {
       priceFeedMultiplier = expandDecimals(1, 60 - token.decimals - priceFeed.decimals);
-    }
-
-    await validatePriceFeed(tokenSymbol, token, priceFeedMultiplier);
-
-    if (hre.network.name === "avalanche" && tokenSymbol === "LINK") {
-      continue; // skip LINK on Avalanche as it is missing dataStreamFeedId & dataStreamFeedDecimals configs
+      await validatePriceFeed(tokenSymbol, token, priceFeedMultiplier);
     }
 
     const initOracleConfigPriceFeedParams = {
@@ -107,6 +102,10 @@ export async function initOracleConfigForTokens({ write }) {
       heartbeatDuration: priceFeed?.heartbeatDuration ?? 0,
       stablePrice: priceFeed?.stablePrice ?? 0,
     };
+
+    if (hre.network.name === "avalanche" && tokenSymbol === "LINK") {
+      continue; // skip LINK on Avalanche as it is missing dataStreamFeedId & dataStreamFeedDecimals configs
+    }
 
     const dataStreamMultiplier = expandDecimals(1, 60 - token.decimals - token.dataStreamFeedDecimals);
     const dataStreamSpreadReductionFactor = bigNumberify(token.dataStreamSpreadReductionFactor ?? 0);
@@ -118,8 +117,8 @@ export async function initOracleConfigForTokens({ write }) {
     };
 
     const initOracleConfigEdgeParams = {
-      feedId: hashString(token.edge?.feedId || ""), // TODO: check behaviour for tokens without an edge.feedId field
-      tokenDecimals: token.edge?.tokenDecimals || token.decimals,
+      feedId: hashString(token.edge?.feedId || ""), // token.edge.feedId is expected as string e.g. ETHUSD
+      tokenDecimals: token.edge?.tokenDecimals || 0,
     };
 
     const initOracleConfigParams = {
