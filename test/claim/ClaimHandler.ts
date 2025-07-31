@@ -7,17 +7,18 @@ import { grantRole } from "../../utils/role";
 import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
 import { getEventDataArray, parseLogs } from "../../utils/event";
+import { encodeData } from "../../utils/hash";
 
 describe("ClaimHandler", () => {
   let user0, user1, user2, wallet;
-  let roleStore, dataStore, claimHandler, claimVault;
+  let roleStore, dataStore, config, claimHandler, claimVault;
   let wnt, usdc;
   let fixture;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1, user2, wallet } = fixture.accounts);
-    ({ roleStore, dataStore, wnt, usdc, claimHandler, claimVault } = fixture.contracts);
+    ({ roleStore, dataStore, config, wnt, usdc, claimHandler, claimVault } = fixture.contracts);
 
     await grantRole(roleStore, wallet.address, "CLAIM_ADMIN");
     await grantRole(roleStore, user0.address, "TIMELOCK_MULTISIG");
@@ -703,6 +704,22 @@ describe("ClaimHandler", () => {
       await expect(claimHandler.connect(user0).claimFunds(claimParams, user0.address)).to.be.revertedWithCustomError(
         errorsContract,
         "InsufficientFunds"
+      );
+    });
+
+    it("should revert if feature is disabled", async () => {
+      const usdcDepositParams = [
+        { account: user0.address, amount: expandDecimals(1000, 6) },
+        { account: user1.address, amount: expandDecimals(2000, 6) },
+      ];
+      await claimHandler.connect(wallet).depositFunds(usdc.address, 1, usdcDepositParams);
+
+      await config.setBool(keys.GENERAL_CLAIM_FEATURE_DISABLED, encodeData(["uint256"], [1]), true);
+
+      const claimParams = [{ token: usdc.address, distributionId: 1, termsSignature: "0x" }];
+      await expect(claimHandler.connect(user0).claimFunds(claimParams, user0.address)).to.be.revertedWithCustomError(
+        errorsContract,
+        "DisabledFeature"
       );
     });
 

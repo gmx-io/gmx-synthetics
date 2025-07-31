@@ -163,18 +163,13 @@ library Keys {
     // @dev key for whether the cancel order feature is disabled
     bytes32 public constant CANCEL_ORDER_FEATURE_DISABLED = keccak256(abi.encode("CANCEL_ORDER_FEATURE_DISABLED"));
 
-    // @dev key for whether the claim funding fees feature is disabled
     bytes32 public constant CLAIM_FUNDING_FEES_FEATURE_DISABLED = keccak256(abi.encode("CLAIM_FUNDING_FEES_FEATURE_DISABLED"));
-    // @dev key for whether the claim collateral feature is disabled
     bytes32 public constant CLAIM_COLLATERAL_FEATURE_DISABLED = keccak256(abi.encode("CLAIM_COLLATERAL_FEATURE_DISABLED"));
-    // @dev key for whether the claim affiliate rewards feature is disabled
     bytes32 public constant CLAIM_AFFILIATE_REWARDS_FEATURE_DISABLED = keccak256(abi.encode("CLAIM_AFFILIATE_REWARDS_FEATURE_DISABLED"));
-    // @dev key for whether the claim ui fees feature is disabled
     bytes32 public constant CLAIM_UI_FEES_FEATURE_DISABLED = keccak256(abi.encode("CLAIM_UI_FEES_FEATURE_DISABLED"));
-    // @dev key for whether the subaccount feature is disabled
     bytes32 public constant SUBACCOUNT_FEATURE_DISABLED = keccak256(abi.encode("SUBACCOUNT_FEATURE_DISABLED"));
-    // @dev key for whether the gasless feature is disabled
     bytes32 public constant GASLESS_FEATURE_DISABLED = keccak256(abi.encode("GASLESS_FEATURE_DISABLED"));
+    bytes32 public constant GENERAL_CLAIM_FEATURE_DISABLED = keccak256(abi.encode("GENERAL_CLAIM_FEATURE_DISABLED"));
 
     // @dev key for the minimum required oracle signers for an oracle observation
     bytes32 public constant MIN_ORACLE_SIGNERS = keccak256(abi.encode("MIN_ORACLE_SIGNERS"));
@@ -972,6 +967,13 @@ library Keys {
         return keccak256(abi.encode(
             GASLESS_FEATURE_DISABLED,
             module
+        ));
+    }
+
+    function generalClaimFeatureDisabled(uint256 distributionId) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            GENERAL_CLAIM_FEATURE_DISABLED,
+            distributionId
         ));
     }
 
