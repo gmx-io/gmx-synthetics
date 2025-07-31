@@ -541,7 +541,7 @@ const recommendedMarketConfig = {
       negativePositionImpactFactor: exponentToFloat("5e-11"),
       negativeSwapImpactFactor: exponentToFloat("5e-11"),
       expectedSwapImpactRatio: 10_000,
-      expectedPositionImpactRatio: 20_000,
+      expectedPositionImpactRatio: 11_111,
     },
     CRV: {
       negativePositionImpactFactor: exponentToFloat("1.4e-8"),
