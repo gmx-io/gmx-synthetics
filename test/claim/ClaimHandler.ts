@@ -706,6 +706,22 @@ describe("ClaimHandler", () => {
       );
     });
 
+    it("should revert if feature is disabled", async () => {
+      const usdcDepositParams = [
+        { account: user0.address, amount: expandDecimals(1000, 6) },
+        { account: user1.address, amount: expandDecimals(2000, 6) },
+      ];
+      await claimHandler.connect(wallet).depositFunds(usdc.address, 1, usdcDepositParams);
+
+      await dataStore.setBool(keys.generalClaimFeatureDisabled(1), true);
+
+      const claimParams = [{ token: usdc.address, distributionId: 1, termsSignature: "0x" }];
+      await expect(claimHandler.connect(user0).claimFunds(claimParams, user0.address)).to.be.revertedWithCustomError(
+        errorsContract,
+        "DisabledFeature"
+      );
+    });
+
     it("should handle claims across multiple distributionIds and tokens", async () => {
       await claimHandler
         .connect(wallet)

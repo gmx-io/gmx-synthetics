@@ -389,6 +389,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.CLAIM_COLLATERAL_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.CLAIM_AFFILIATE_REWARDS_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.CLAIM_UI_FEES_FEATURE_DISABLED] = true;
+        allowedBaseKeys[Keys.GENERAL_CLAIM_FEATURE_DISABLED] = true;
 
         allowedBaseKeys[Keys.MIN_AFFILIATE_REWARD_FACTOR] = true;
 

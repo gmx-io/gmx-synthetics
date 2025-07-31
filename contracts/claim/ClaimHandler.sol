@@ -14,6 +14,7 @@ import "../data/Keys.sol";
 import "../error/Errors.sol";
 import "./ClaimVault.sol";
 import "./ClaimEventUtils.sol";
+import "../feature/FeatureUtils.sol";
 
 // @title ClaimHandler
 // @dev Contract for distributing lost funds to users
@@ -218,6 +219,8 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
 
         for (uint256 i = 0; i < params.length; i++) {
             ClaimParam memory param = params[i];
+
+            FeatureUtils.validateFeature(dataStore, Keys.generalClaimFeatureDisabled(param.distributionId));
 
             _validateNonEmptyToken(param.token);
             _validateNonZeroDistributionId(param.distributionId);
