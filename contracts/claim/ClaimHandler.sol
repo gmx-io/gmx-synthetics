@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 
 import "../role/RoleModule.sol";
 import "../utils/GlobalReentrancyGuard.sol";
@@ -327,7 +328,14 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
 
         bytes32 ethSignedMessageHash = ECDSA.toEthSignedMessageHash(bytes(message));
         address recoveredSigner = ECDSA.recover(ethSignedMessageHash, signature);
-        if (recoveredSigner != account) {
+        if (recoveredSigner == account) {
+            return;
+        }
+
+        bool isValidSignature = SignatureChecker.isValidERC1271SignatureNow(account, ethSignedMessageHash, signature);
+
+        if (!isValidSignature) {
+            // note that the recoveredSigner in this error is recovered from the earlier ECDSA.recover
             revert Errors.InvalidClaimTermsSignature(recoveredSigner, account);
         }
     }
