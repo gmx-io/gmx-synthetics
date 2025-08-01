@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
@@ -21,6 +22,7 @@ import "../safe/SafeUtils.sol";
 // @title ClaimHandler
 // @dev Contract for distributing lost funds to users
 contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
+    using Address for address;
     using SafeERC20 for IERC20;
 
     EventEmitter public immutable eventEmitter;
@@ -335,6 +337,10 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
             return;
         }
 
+        if (!account.isContract()) {
+            revert Errors.InvalidClaimTermsSignature(recoveredSigner, account);
+        }
+
         bool isValidSignature = SignatureChecker.isValidERC1271SignatureNow(account, ethSignedMessageHash, signature);
 
         if (isValidSignature) { return; }
@@ -346,9 +352,7 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
 
         if (isValidSignature) { return; }
 
-        // note that the recoveredSigner in this error is recovered from the earlier ECDSA.recover
-        // so it may be misleading for signatures from contracts
-        revert Errors.InvalidClaimTermsSignature(recoveredSigner, account);
+        revert Errors.InvalidClaimTermsSignatureForContract(account);
     }
 
     function _validateNonZeroDistributionId(uint256 distributionId) internal pure {

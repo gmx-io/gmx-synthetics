@@ -656,8 +656,9 @@ describe("ClaimHandler", () => {
 
       for (const malformedSig of malformedSignatures) {
         const claimParams = [{ token: wnt.address, distributionId, termsSignature: malformedSig }];
-        await expect(claimHandler.connect(user0).claimFunds(claimParams, user0.address)).to.be.revertedWith(
-          "ECDSA: invalid signature length"
+        await expect(claimHandler.connect(user0).claimFunds(claimParams, user0.address)).to.be.revertedWithCustomError(
+          errorsContract,
+          "InvalidClaimTermsSignature"
         );
       }
     });
