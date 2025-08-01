@@ -16,6 +16,7 @@ import "../error/Errors.sol";
 import "./ClaimVault.sol";
 import "./ClaimEventUtils.sol";
 import "../feature/FeatureUtils.sol";
+import "../safe/SafeUtils.sol";
 
 // @title ClaimHandler
 // @dev Contract for distributing lost funds to users
@@ -310,13 +311,14 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
         return dataStore.getUint(Keys.totalClaimableFundsAmountKey(token));
     }
 
+    // note that signature can be empty here for signing by contracts
     function _validateTermsSignature(uint256 distributionId, address account, bytes memory signature) internal view {
         string memory terms = dataStore.getString(Keys.claimTermsKey(distributionId));
         if (bytes(terms).length == 0) {
             return;
         }
 
-        string memory message = string.concat(
+        bytes memory message = bytes(string.concat(
             terms,
             "\ndistributionId ",
             Strings.toString(distributionId),
@@ -324,20 +326,29 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
             Strings.toHexString(address(this)),
             "\nchainId ",
             Strings.toString(block.chainid)
-        );
+        ));
 
-        bytes32 ethSignedMessageHash = ECDSA.toEthSignedMessageHash(bytes(message));
-        address recoveredSigner = ECDSA.recover(ethSignedMessageHash, signature);
-        if (recoveredSigner == account) {
+        bytes32 ethSignedMessageHash = ECDSA.toEthSignedMessageHash(message);
+        (address recoveredSigner, ECDSA.RecoverError error) = ECDSA.tryRecover(ethSignedMessageHash, signature);
+
+        if (error == ECDSA.RecoverError.NoError && recoveredSigner == account) {
             return;
         }
 
         bool isValidSignature = SignatureChecker.isValidERC1271SignatureNow(account, ethSignedMessageHash, signature);
 
-        if (!isValidSignature) {
-            // note that the recoveredSigner in this error is recovered from the earlier ECDSA.recover
-            revert Errors.InvalidClaimTermsSignature(recoveredSigner, account);
-        }
+        if (isValidSignature) { return; }
+
+        // if the signature is still not valid, attempt to check signature validation for a safe account
+        bytes32 safeMessageHash = SafeUtils.getMessageHash(account, message);
+
+        isValidSignature = SignatureChecker.isValidERC1271SignatureNow(account, safeMessageHash, signature);
+
+        if (isValidSignature) { return; }
+
+        // note that the recoveredSigner in this error is recovered from the earlier ECDSA.recover
+        // so it may be misleading for signatures from contracts
+        revert Errors.InvalidClaimTermsSignature(recoveredSigner, account);
     }
 
     function _validateNonZeroDistributionId(uint256 distributionId) internal pure {
