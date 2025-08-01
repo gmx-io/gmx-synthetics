@@ -3239,11 +3239,11 @@ const config: {
       openInterestReserveFactor: percentageToFloat("50%"), // default is 90%
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
-      maxOpenInterest: decimalToFloat(250_000),
-      maxPoolUsdForDeposit: decimalToFloat(600_000),
+      maxOpenInterest: decimalToFloat(500_000),
+      maxPoolUsdForDeposit: decimalToFloat(750_000),
 
-      maxLongTokenPoolAmount: expandDecimals(7, 8), // ~800k+ USD
-      maxShortTokenPoolAmount: expandDecimals(800_000, 6), // ~800k USD
+      maxLongTokenPoolAmount: expandDecimals(9, 8),
+      maxShortTokenPoolAmount: expandDecimals(1000_000, 6),
     },
     {
       tokens: { indexToken: "ARB", longToken: "ARB", shortToken: "ARB" },
