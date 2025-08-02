@@ -1630,11 +1630,11 @@ const config: {
       positionImpactPoolDistributionRate: bigNumberify(0),
       minPositionImpactPoolAmount: bigNumberify(0),
 
-      maxOpenInterest: decimalToFloat(500_000),
-      maxPoolUsdForDeposit: decimalToFloat(750_000),
+      maxOpenInterest: decimalToFloat(1_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(1_500_000),
 
-      maxLongTokenPoolAmount: expandDecimals(380, 18), // ~1M USD (2x the max open interest)
-      maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x the max open interest)
+      maxLongTokenPoolAmount: expandDecimals(577, 18),
+      maxShortTokenPoolAmount: expandDecimals(2_000_000, 6),
 
       atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
