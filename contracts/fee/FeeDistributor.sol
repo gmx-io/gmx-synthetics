@@ -10,12 +10,14 @@ import "./FeeDistributorVault.sol";
 import "./FeeHandler.sol";
 import "../multichain/MultichainReader.sol";
 import "../oracle/ChainlinkPriceFeedUtils.sol";
+import "../claim/ClaimUtils.sol";
 import "../v1/IRewardTrackerV1.sol";
 import "../v1/IRewardDistributorV1.sol";
 import "../v1/IVesterV1.sol";
 import "../v1/IMintable.sol";
 
 contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
+    using EventUtils for EventUtils.AddressItems;
     using EventUtils for EventUtils.UintItems;
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.BoolItems;
@@ -28,7 +30,6 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
     bytes32 internal constant DATASTORE = keccak256(abi.encode("DATASTORE"));
     bytes32 internal constant TREASURY = keccak256(abi.encode("TREASURY"));
     bytes32 internal constant LAYERZERO_OFT = keccak256(abi.encode("LAYERZERO_OFT"));
-    bytes32 internal constant FEE_GLP_TRACKER = keccak256(abi.encode("FEE_GLP_TRACKER"));
     bytes32 internal constant CHAINLINK = keccak256(abi.encode("CHAINLINK"));
     bytes32 internal constant ESGMX_VESTER = keccak256(abi.encode("ESGMX_VESTER"));
 
@@ -38,6 +39,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
     EventEmitter internal immutable eventEmitter;
     MultichainReader internal immutable multichainReader;
 
+    address internal immutable claimVault;
     address internal immutable gmx;
     address internal immutable esGmx;
     address internal immutable wnt;
@@ -52,6 +54,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         DataStore _dataStore,
         EventEmitter _eventEmitter,
         MultichainReader _multichainReader,
+        address _claimVault,
         address _gmx,
         address _esGmx,
         address _wnt
@@ -61,6 +64,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
         multichainReader = _multichainReader;
+        claimVault = _claimVault;
         gmx = _gmx;
         esGmx = _esGmx;
         wnt = _wnt;
@@ -78,9 +82,9 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         validateDistributionState(DistributionState.None);
         validateDistributionNotCompleted();
 
-        // reset referral rewards sent for WNT and esGMX to 0 for the current week's distribution
-        setUint(Keys2.feeDistributorReferralRewardsSentKey(wnt), 0);
-        setUint(Keys2.feeDistributorReferralRewardsSentKey(esGmx), 0);
+        // reset referral rewards deposited for WNT and esGMX to 0 for the current week's distribution
+        setUint(Keys2.feeDistributorReferralRewardsDepositedKey(wnt), 0);
+        setUint(Keys2.feeDistributorReferralRewardsDepositedKey(esGmx), 0);
 
         // populate readRequestInputs and extraOptionsInputs param used for cross chain LZRead request
         uint256[] memory chainIds = retrieveChainIds();
@@ -302,17 +306,13 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         // withdraw any WNT fees remaining in the feeHandler
         feeHandler.withdrawFees(wnt);
 
-        // calculate the WNT GLP fees and other costs
+        // calculate WNT costs and transfer to appropriate addresses
         (
             uint256 wntForKeepers,
             uint256 wntForChainlink,
             uint256 wntForTreasury,
-            uint256 wntForReferralRewards,
-            uint256 wntForGlp
-        ) = calculateWntFeesAndCosts(wntReferralRewardsInUsd, feesV1Usd, feesV2Usd);
-
-        // transfer calculated fees and costs to the appropriate addresses
-        transferFeesAndCosts(wntForKeepers, wntForChainlink, wntForTreasury, wntForGlp);
+            uint256 wntForReferralRewards
+        ) = calculateAndTransferWntCosts(wntReferralRewardsInUsd, feesV1Usd, feesV2Usd);
 
         // set the total fees in USD and referral reward amounts
         setUint(Keys2.feeDistributorFeeAmountUsdKey(1), feesV1Usd);
@@ -323,95 +323,78 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         setDistributionState(uint256(DistributionState.None));
 
         EventUtils.EventLogData memory eventData;
-        eventData.uintItems.initItems(8);
+        eventData.uintItems.initItems(7);
         eventData = setUintItem(eventData, 0, "feesV1Usd", feesV1Usd);
         eventData = setUintItem(eventData, 1, "feesV2Usd", feesV2Usd);
         eventData = setUintItem(eventData, 2, "wntForKeepers", wntForKeepers);
         eventData = setUintItem(eventData, 3, "wntForChainlink", wntForChainlink);
         eventData = setUintItem(eventData, 4, "wntForTreasury", wntForTreasury);
-        eventData = setUintItem(eventData, 5, "wntForGlp", wntForGlp);
-        eventData = setUintItem(eventData, 6, "wntForReferralRewards", wntForReferralRewards);
-        eventData = setUintItem(eventData, 7, "esGmxForReferralRewards", esGmxForReferralRewards);
+        eventData = setUintItem(eventData, 5, "wntForReferralRewards", wntForReferralRewards);
+        eventData = setUintItem(eventData, 6, "esGmxForReferralRewards", esGmxForReferralRewards);
         emitEventLog("FeeDistributionCompleted", eventData);
     }
 
-    // @dev distribute the calculated referral rewards to the specified accounts
+    // @dev deposit the calculated referral rewards in the ClaimVault for the specified accounts
     // @param token the token in which the referral rewards will be sent
-    // @param maxBatchSize the maximum number of accounts that will be sent in one transaction
-    // @param accounts the accounts to which referral rewards will be sent
-    // @param amounts the amounts of referral rewards that will be sent to each account
-    function sendReferralRewards(
+    // @param distributionId the distribution id
+    // @param params array of referral rewards deposit parameters
+    function depositReferralRewards(
         address token,
-        uint256 maxBatchSize,
-        address[] calldata accounts,
-        uint256[] calldata amounts
+        uint256 distributionId,
+        ClaimUtils.DepositParam[] calldata params
     ) external nonReentrant onlyFeeDistributionKeeper {
         // validate the distribution state and that the accounts and amounts arrays are valid lengths
         validateDistributionState(DistributionState.None);
 
-        if (accounts.length != amounts.length) {
-            revert Errors.ReferralRewardsArrayMismatch(token, accounts.length, amounts.length);
-        }
-
-        if (accounts.length > maxBatchSize) {
-            revert Errors.ReferralRewardsAmountExceedsMaxBatchSize(token, accounts.length, maxBatchSize);
-        }
-
-        uint256 totalTokensSent = getUint(Keys2.feeDistributorReferralRewardsSentKey(token));
+        uint256 tokensForReferralRewards = getUint(Keys2.feeDistributorReferralRewardsAmountKey(token));
         if (token == esGmx) {
             // validate the esGMX amount is valid and that there are sufficient esGMX in the feeDistributorVault
-            uint256 esGmxForReferralRewards = getUint(Keys2.feeDistributorReferralRewardsAmountKey(esGmx));
             uint256 maxEsGmxReferralRewards = getUint(Keys2.FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_ESGMX_AMOUNT);
-            if (esGmxForReferralRewards > maxEsGmxReferralRewards) {
-                revert Errors.MaxReferralRewardsExceeded(esGmx, esGmxForReferralRewards, maxEsGmxReferralRewards);
+            if (tokensForReferralRewards > maxEsGmxReferralRewards) {
+                revert Errors.MaxEsGmxReferralRewardsAmountExceeded(tokensForReferralRewards, maxEsGmxReferralRewards);
             }
 
             uint256 vaultEsGmxBalance = getFeeDistributorVaultBalance(esGmx);
-            if (esGmxForReferralRewards > vaultEsGmxBalance) {
-                IMintable(esGmx).mint(address(feeDistributorVault), esGmxForReferralRewards - vaultEsGmxBalance);
+            if (tokensForReferralRewards > vaultEsGmxBalance) {
+                IMintable(esGmx).mint(address(feeDistributorVault), tokensForReferralRewards - vaultEsGmxBalance);
             }
 
-            // send the esGMX referral rewards to the specified accounts and update bonus reward amounts
-            for (uint256 i; i < accounts.length; i++) {
-                address account = accounts[i];
-                uint256 esGmxAmount = amounts[i];
-                transferOut(token, account, esGmxAmount);
-                totalTokensSent += esGmxAmount;
+            // update esGMX bonus reward amounts for each account in the vester contract
+            for (uint256 i; i < params.length; i++) {
+                ClaimUtils.DepositParam memory param = params[i];
 
                 address vester = getAddress(block.chainid, ESGMX_VESTER);
-                uint256 updatedBonusRewards = IVester(vester).bonusRewards(account) + esGmxAmount;
-                IVester(vester).setBonusRewards(account, updatedBonusRewards);
+                uint256 totalEsGmxRewards = IVester(vester).bonusRewards(param.account) + param.amount;
+                IVester(vester).setBonusRewards(param.account, totalEsGmxRewards);
 
                 EventUtils.EventLogData memory eventData;
+                eventData.addressItems.initItems(1);
+                eventData.addressItems.setItem(0, "account", param.account);
+
                 eventData.uintItems.initItems(2);
-                eventData = setUintItem(eventData, 0, "esGmxAmount", esGmxAmount);
-                eventData = setUintItem(eventData, 1, "updatedBonusRewards", updatedBonusRewards);
-                emitEventLog("EsGmxReferralRewardsSent", eventData);
-            }
-        } else if (token == wnt) {
-            // send the WNT referral rewards to the specified accounts
-            for (uint256 i; i < accounts.length; i++) {
-                address account = accounts[i];
-                uint256 wntAmount = amounts[i];
-                transferOut(token, account, wntAmount);
-                totalTokensSent += wntAmount;
+                eventData = setUintItem(eventData, 0, "amount", param.amount);
+                eventData = setUintItem(eventData, 1, "totalEsGmxRewards", totalEsGmxRewards);
 
-                EventUtils.EventLogData memory eventData;
-                eventData.uintItems.initItems(1);
-                eventData = setUintItem(eventData, 0, "wntAmount", wntAmount);
-                emitEventLog("WntReferralRewardsSent", eventData);
+                eventEmitter.emitEventLog1("TotalEsGmxRewardsIncreased", Cast.toBytes32(param.account), eventData);
             }
-        } else {
+        } else if (token != wnt) {
             revert Errors.InvalidReferralRewardToken(token);
         }
 
-        // validate that the total referral rewards sent out is not greater than the total calculated amount
-        uint256 tokensForReferralRewards = getUint(Keys2.feeDistributorReferralRewardsAmountKey(token));
-        if (totalTokensSent > tokensForReferralRewards) {
-            revert Errors.MaxReferralRewardsExceeded(token, totalTokensSent, tokensForReferralRewards);
+        uint256 totalTransferAmount = getUint(Keys2.feeDistributorReferralRewardsDepositedKey(token)) +
+            ClaimUtils.incrementClaims(dataStore, eventEmitter, token, distributionId, params);
+
+        transferOut(token, claimVault, totalTransferAmount);
+        dataStore.incrementUint(Keys.totalClaimableFundsAmountKey(token), totalTransferAmount);
+
+        ClaimUtils._validateTotalClaimableFundsAmount(dataStore, token, claimVault);
+
+        // validate that the total referral rewards deposited is not greater than the total calculated amount
+        if (totalTransferAmount > tokensForReferralRewards) {
+            revert Errors.MaxReferralRewardsExceeded(token, totalTransferAmount, tokensForReferralRewards);
         }
 
-        setUint(Keys2.feeDistributorReferralRewardsSentKey(token), totalTokensSent);
+        setUint(Keys2.feeDistributorReferralRewardsDepositedKey(token), totalTransferAmount);
     }
 
     function calculateAndBridgeGmx(
@@ -499,66 +482,63 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         return totalGmxBridgedOut;
     }
 
-    function calculateWntFeesAndCosts(
+    function calculateAndTransferWntCosts(
         uint256 wntReferralRewardsInUsd,
         uint256 feesV1Usd,
         uint256 feesV2Usd
-    ) internal returns (uint256, uint256, uint256, uint256, uint256) {
+    ) internal returns (uint256, uint256, uint256, uint256) {
         // the WNT fee amount related calculations
         uint256 totalWntBalance = getFeeDistributorVaultBalance(wnt);
 
         // calculate the WNT that needs to be sent to each keeper
-        (uint256 keeperCostsTreasury, uint256 keeperCostsGlp) = calculateKeeperCosts();
-        uint256 wntForKeepers = keeperCostsTreasury + keeperCostsGlp;
+        (uint256 keeperCostsV1, uint256 keeperCostsV2) = calculateKeeperCosts();
+        uint256 wntForKeepers = keeperCostsV1 + keeperCostsV2;
 
         // calculate the WNT for chainlink costs and amount of WNT to be sent to the treasury
         (uint256 wntForChainlink, uint256 wntForTreasury) = calculateChainlinkAndTreasuryAmounts(
             totalWntBalance,
             feesV1Usd,
             feesV2Usd,
-            keeperCostsTreasury
+            keeperCostsV2
         );
 
         // validate wntReferralRewardsInUsd and calculate the referral rewards in WNT to be sent
         uint256 wntForReferralRewards = calculateWntForReferralRewards(wntReferralRewardsInUsd, feesV1Usd);
 
-        uint256 wntForGlp;
-        (wntForTreasury, wntForGlp) = finalizeWntForTreasuryAndGlp(
+        wntForTreasury = finalizeWntForTreasury(
             totalWntBalance,
-            keeperCostsTreasury,
-            keeperCostsGlp,
+            keeperCostsV1,
+            keeperCostsV2,
             wntForChainlink,
             wntForTreasury,
             wntForReferralRewards
         );
 
-        return (wntForKeepers, wntForChainlink, wntForTreasury, wntForReferralRewards, wntForGlp);
+        transferWntCosts(wntForKeepers, wntForChainlink, wntForTreasury);
+
+        return (wntForKeepers, wntForChainlink, wntForTreasury, wntForReferralRewards);
     }
 
-    function finalizeWntForTreasuryAndGlp(
+    function finalizeWntForTreasury(
         uint256 totalWntBalance,
-        uint256 keeperCostsTreasury,
-        uint256 keeperCostsGlp,
+        uint256 keeperCostsV1,
+        uint256 keeperCostsV2,
         uint256 wntForChainlink,
         uint256 wntForTreasury,
         uint256 wntForReferralRewards
-    ) internal returns (uint256, uint256) {
-        // calculate the amount of WNT to be used as GLP fees, validate the calculated amount and adjust if necessary
-        uint256 glpWntBeforeV1KeeperAndReferralCosts = totalWntBalance -
-            keeperCostsTreasury -
+    ) internal returns (uint256) {
+        // calculate the remaining WNT for Treasury, validate the calculated amount and adjust if necessary
+        uint256 wntBeforeV1KeeperCostsAndReferralRewards = totalWntBalance -
+            keeperCostsV2 -
             wntForChainlink -
             wntForTreasury;
 
-        uint256 keeperAndReferralCostsGlp = keeperCostsGlp + wntForReferralRewards;
-        uint256 maxKeeperAndReferralCostsGlp = Precision.applyFactor(
-            glpWntBeforeV1KeeperAndReferralCosts,
-            getUint(Keys2.FEE_DISTRIBUTOR_MAX_GLP_KEEPER_REFERRAL_COSTS_FACTOR)
-        );
-        if (keeperAndReferralCostsGlp > maxKeeperAndReferralCostsGlp) {
-            uint256 additionalWntForGlp = keeperAndReferralCostsGlp - maxKeeperAndReferralCostsGlp;
-            if (additionalWntForGlp > wntForTreasury) {
+        uint256 keeperAndReferralCostsV1 = keeperCostsV1 + wntForReferralRewards;
+        if (keeperAndReferralCostsV1 > wntBeforeV1KeeperCostsAndReferralRewards) {
+            uint256 additionalWntForV1Costs = keeperAndReferralCostsV1 - wntBeforeV1KeeperCostsAndReferralRewards;
+            if (additionalWntForV1Costs > wntForTreasury) {
                 uint256 maxWntFromTreasury = getUint(Keys2.FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY);
-                uint256 additionalWntFromTreasury = additionalWntForGlp - wntForTreasury;
+                uint256 additionalWntFromTreasury = additionalWntForV1Costs - wntForTreasury;
                 if (additionalWntFromTreasury > maxWntFromTreasury) {
                     revert Errors.MaxWntFromTreasuryExceeded(maxWntFromTreasury, additionalWntFromTreasury);
                 }
@@ -569,21 +549,16 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
                 );
                 wntForTreasury = 0;
             } else {
-                wntForTreasury -= additionalWntForGlp;
+                wntForTreasury -= additionalWntForV1Costs;
             }
-            keeperAndReferralCostsGlp = maxKeeperAndReferralCostsGlp;
+        } else {
+            uint256 remainingWntForTreasury = wntBeforeV1KeeperCostsAndReferralRewards - keeperAndReferralCostsV1;
+            wntForTreasury += remainingWntForTreasury;
         }
-        uint256 wntForGlp = glpWntBeforeV1KeeperAndReferralCosts - keeperAndReferralCostsGlp;
-
-        return (wntForTreasury, wntForGlp);
+        return wntForTreasury;
     }
 
-    function transferFeesAndCosts(
-        uint256 wntForKeepers,
-        uint256 wntForChainlink,
-        uint256 wntForTreasury,
-        uint256 wntForGlp
-    ) internal {
+    function transferWntCosts(uint256 wntForKeepers, uint256 wntForChainlink, uint256 wntForTreasury) internal {
         // transfer the WNT that needs to be sent to each keeper
         address[] memory keepers = getAddressArray(Keys2.FEE_DISTRIBUTOR_KEEPER_COSTS);
         uint256[] memory keepersTargetBalance = getUintArray(Keys2.FEE_DISTRIBUTOR_KEEPER_COSTS);
@@ -602,25 +577,17 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
             revert Errors.KeeperAmountMismatch(wntForKeepers, wntToKeepers);
         }
 
-        // transfer the WNT for chainlink costs and WNT to the treasury
+        // transfer the WNT for chainlink costs and WNT for the treasury
         transferOut(wnt, getAddress(block.chainid, CHAINLINK), wntForChainlink);
         transferOut(wnt, getAddress(block.chainid, TREASURY), wntForTreasury);
 
-        // update the reward distribution details and transfer the WNT and GMX fees for GLP and GMX
-        updateRewardDistribution(wnt, getAddress(block.chainid, FEE_GLP_TRACKER), wntForGlp);
-        updateRewardDistribution(
-            gmx,
-            getAddress(block.chainid, EXTENDED_GMX_TRACKER),
-            getUint(Keys2.feeDistributorFeeAmountGmxKey(block.chainid))
-        );
-    }
-
-    function updateRewardDistribution(address rewardToken, address tracker, uint256 rewardAmount) internal {
-        // transfer the calculated fees for the week and update the last distribution time and tokens per interval
-        transferOut(rewardToken, tracker, rewardAmount);
-        address distributor = IRewardTracker(tracker).distributor();
+        // transfer gmx fees for the week and update the last distribution time and tokens per interval
+        address extendedGmxTracker = getAddress(block.chainid, EXTENDED_GMX_TRACKER);
+        uint256 feeAmountGmx = getUint(Keys2.feeDistributorFeeAmountGmxKey(block.chainid));
+        address distributor = IRewardTracker(extendedGmxTracker).distributor();
+        transferOut(gmx, extendedGmxTracker, feeAmountGmx);
         IRewardDistributor(distributor).updateLastDistributionTime();
-        IRewardDistributor(distributor).setTokensPerInterval(rewardAmount / 1 weeks);
+        IRewardDistributor(distributor).setTokensPerInterval(feeAmountGmx / 1 weeks);
     }
 
     function setUint(bytes32 fullKey, uint256 value) internal {
@@ -663,36 +630,36 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
             revert Errors.KeeperArrayLengthMismatch(keepers.length, keepersTargetBalance.length, keepersV2.length);
         }
 
-        uint256 keeperCostsTreasury;
-        uint256 keeperCostsGlp;
+        uint256 keeperCostsV1;
+        uint256 keeperCostsV2;
         for (uint256 i; i < keepers.length; i++) {
             uint256 keeperTargetBalance = keepersTargetBalance[i];
             uint256 keeperBalance = keepers[i].balance;
             if (keeperTargetBalance > keeperBalance) {
                 uint256 keeperCost = keeperTargetBalance - keeperBalance;
-                if (keepersV2[i]) {
-                    keeperCostsTreasury += keeperCost;
+                if (!keepersV2[i]) {
+                    keeperCostsV1 += keeperCost;
                 } else {
-                    keeperCostsGlp += keeperCost;
+                    keeperCostsV2 += keeperCost;
                 }
             }
         }
 
-        return (keeperCostsTreasury, keeperCostsGlp);
+        return (keeperCostsV1, keeperCostsV2);
     }
 
     function calculateChainlinkAndTreasuryAmounts(
         uint256 totalWntBalance,
         uint256 feesV1Usd,
         uint256 feesV2Usd,
-        uint256 keeperCostsTreasury
+        uint256 keeperCostsV2
     ) internal view returns (uint256, uint256) {
         uint256 chainlinkTreasuryWntAmount = Precision.mulDiv(totalWntBalance, feesV2Usd, feesV1Usd + feesV2Usd);
         uint256 wntForChainlink = Precision.applyFactor(
             chainlinkTreasuryWntAmount,
             getUint(Keys2.FEE_DISTRIBUTOR_CHAINLINK_FACTOR)
         );
-        uint256 wntForTreasury = chainlinkTreasuryWntAmount - wntForChainlink - keeperCostsTreasury;
+        uint256 wntForTreasury = chainlinkTreasuryWntAmount - wntForChainlink - keeperCostsV2;
 
         return (wntForChainlink, wntForTreasury);
     }
@@ -738,6 +705,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
     }
 
     function getOraclePrice(address token) internal view returns (uint256) {
+        // ChainlinkPriceProvider.getOraclePrice() is not used since the prices are for non-stablecoin tokens
         (bool hasPriceFeed, uint256 price) = ChainlinkPriceFeedUtils.getPriceFeedPrice(dataStore, token);
 
         if (!hasPriceFeed) {

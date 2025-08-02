@@ -9,6 +9,7 @@ const constructorContracts = [
   "DataStore",
   "EventEmitter",
   "MultichainReader",
+  "ClaimVault",
 ];
 
 const func = createDeployFunction({
@@ -40,7 +41,7 @@ const func = createDeployFunction({
       .concat(esGmxAddress)
       .concat(wntAddress);
   },
-  libraryNames: ["FeeDistributorUtils"],
+  libraryNames: ["FeeDistributorUtils", "ClaimUtils"],
   afterDeploy: async ({ deployedContract }) => {
     await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
     await grantRoleIfNotGranted(deployedContract.address, "FEE_KEEPER");

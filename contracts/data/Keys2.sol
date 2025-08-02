@@ -60,12 +60,10 @@ library Keys2 {
     bytes32 public constant FEE_DISTRIBUTOR_ADDRESS_INFO = keccak256(abi.encode("FEE_DISTRIBUTOR_ADDRESS_INFO"));
     // @dev key for FeeDistributor keeper costs
     bytes32 public constant FEE_DISTRIBUTOR_KEEPER_COSTS = keccak256(abi.encode("FEE_DISTRIBUTOR_KEEPER_COSTS"));
-    // @dev key for FeeDistributor max GLP keeper costs factor used to determine max V1 keeper and referral costs paid from GLP fees
-    bytes32 public constant FEE_DISTRIBUTOR_MAX_GLP_KEEPER_REFERRAL_COSTS_FACTOR = keccak256(abi.encode("FEE_DISTRIBUTOR_MAX_GLP_KEEPER_REFERRAL_COSTS_FACTOR"));
     // @dev key for FeeDistributor chainlink factor used to determine total chainlink fees paid
     bytes32 public constant FEE_DISTRIBUTOR_CHAINLINK_FACTOR = keccak256(abi.encode("FEE_DISTRIBUTOR_CHAINLINK_FACTOR"));
-    // @dev key for FeeDistributor total referral rewards sent in a given week
-    bytes32 public constant FEE_DISTRIBUTOR_REFERRAL_REWARDS_SENT = keccak256(abi.encode("FEE_DISTRIBUTOR_REFERRAL_REWARDS_SENT"));
+    // @dev key for FeeDistributor total referral rewards deposited to the claim vault in a given week
+    bytes32 public constant FEE_DISTRIBUTOR_REFERRAL_REWARDS_DEPOSITED = keccak256(abi.encode("FEE_DISTRIBUTOR_REFERRAL_REWARDS_DEPOSITED"));
     // @dev key for max WNT amount from treasury to cover keeper costs
     bytes32 public constant FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY = keccak256(abi.encode("FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY"));
 
@@ -147,10 +145,10 @@ library Keys2 {
         return keccak256(abi.encode(FEE_DISTRIBUTOR_ADDRESS_INFO, chainId, addressName));
     }
 
-    // @dev key for FeeDistributor referral rewards sent in a given week
-    // @param token the token for which to check the referral rewards sent
-    // @return key for FeeDistributor referral rewards sent in a given week
-    function feeDistributorReferralRewardsSentKey(address token) internal pure returns (bytes32) {
-        return keccak256(abi.encode(FEE_DISTRIBUTOR_REFERRAL_REWARDS_SENT, token));
+    // @dev key for FeeDistributor referral rewards deposited to the claim vault in a given week
+    // @param token the token for which to check the referral rewards deposited
+    // @return key for FeeDistributor referral rewards deposited in a given week
+    function feeDistributorReferralRewardsDepositedKey(address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(FEE_DISTRIBUTOR_REFERRAL_REWARDS_DEPOSITED, token));
     }
 }

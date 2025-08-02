@@ -552,7 +552,6 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID] = true;
         allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_ADDRESS_INFO] = true;
         allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_KEEPER_COSTS] = true;
-        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_MAX_GLP_KEEPER_REFERRAL_COSTS_FACTOR] = true;
         allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_CHAINLINK_FACTOR] = true;
         allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY] = true;
     }
