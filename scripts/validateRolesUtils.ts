@@ -276,7 +276,7 @@ async function validateDataStreamProviderHasDiscount() {
   console.log("feeManagerAddress", feeManagerAddress);
   const feeManager = new hre.ethers.Contract(
     feeManagerAddress,
-    ["function s_subscriberDiscounts(address,bytes32,address) view returns (uint256)"],
+    ["function s_globalDiscounts(address,address) view returns (uint256)"],
     hre.ethers.provider
   );
 
@@ -285,11 +285,7 @@ async function validateDataStreamProviderHasDiscount() {
   }
 
   const dataStreamProviderDeployment = await hre.deployments.get("ChainlinkDataStreamProvider");
-  const discount = await feeManager.s_subscriberDiscounts(
-    dataStreamProviderDeployment.address,
-    "0x000316d702a8e25e6b4ef4d449e3413dff067ee77dd366f0550251c07daf05ee",
-    tokens.LINK.address
-  );
+  const discount = await feeManager.s_globalDiscounts(dataStreamProviderDeployment.address, tokens.LINK.address);
   if (!discount.eq(expandDecimals(1, 18))) {
     console.warn(
       "🟠 ChainlinkDataStreamProvider %s does not have a 100% discount. Check on this with Chainlink",
