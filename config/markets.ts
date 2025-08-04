@@ -118,6 +118,10 @@ export type BaseMarketConfig = {
   positionImpactPoolDistributionRate: BigNumberish;
   minPositionImpactPoolAmount: BigNumberish;
 
+  maxLendableImpactFactor?: BigNumberish;
+  maxLendableImpactFactorForWithdrawals?: BigNumberish;
+  maxLendableImpactUsd?: BigNumberish;
+
   virtualMarketId?: string;
   virtualTokenIdForIndexToken?: string;
 
@@ -3807,8 +3811,8 @@ const config: {
 
       maxPoolUsdForDeposit: decimalToFloat(50_000_000),
 
-      negativePositionImpactFactor: exponentToFloat("5e-6"),
-      positivePositionImpactFactor: exponentToFloat("2.5e-6"),
+      negativePositionImpactFactor: exponentToFloat("5e-7"), // 0.0000005
+      positivePositionImpactFactor: exponentToFloat("4.5e-7"), // 0.00000045
 
       minPositionImpactPoolAmount: expandDecimals(10, 18), // 10 ETH
 
@@ -3823,6 +3827,10 @@ const config: {
       maxOpenInterest: decimalToFloat(70_000_000),
 
       atomicSwapFeeFactor: percentageToFloat("2.25%"),
+
+      maxLendableImpactFactor: exponentToFloat("2e-3"), // 0.002
+      maxLendableImpactFactorForWithdrawals: exponentToFloat("2e-3"), // 0.002
+      maxLendableImpactUsd: decimalToFloat(25), // $25
     },
     {
       tokens: { indexToken: "CRV", longToken: "WETH", shortToken: "USDC.SG" },

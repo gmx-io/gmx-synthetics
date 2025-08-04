@@ -157,6 +157,7 @@ export const MIN_POSITION_IMPACT_POOL_AMOUNT = hashString("MIN_POSITION_IMPACT_P
 export const POSITION_IMPACT_POOL_DISTRIBUTION_RATE = hashString("POSITION_IMPACT_POOL_DISTRIBUTION_RATE");
 export const POSITION_IMPACT_POOL_DISTRIBUTED_AT = hashString("POSITION_IMPACT_POOL_DISTRIBUTED_AT");
 export const MAX_LENDABLE_IMPACT_FACTOR = hashString("MAX_LENDABLE_IMPACT_FACTOR");
+export const MAX_LENDABLE_IMPACT_FACTOR_FOR_WITHDRAWALS = hashString("MAX_LENDABLE_IMPACT_FACTOR_FOR_WITHDRAWALS");
 export const MAX_LENDABLE_IMPACT_USD = hashString("MAX_LENDABLE_IMPACT_USD");
 
 export const SWAP_IMPACT_POOL_AMOUNT = hashString("SWAP_IMPACT_POOL_AMOUNT");
@@ -580,6 +581,10 @@ export function positionImpactPoolDistributedAtKey(market: string) {
 
 export function maxLendableImpactFactorKey(market: string) {
   return hashData(["bytes32", "address"], [MAX_LENDABLE_IMPACT_FACTOR, market]);
+}
+
+export function maxLendableImpactFactorForWithdrawalsKey(market: string) {
+  return hashData(["bytes32", "address"], [MAX_LENDABLE_IMPACT_FACTOR_FOR_WITHDRAWALS, market]);
 }
 
 export function maxLendableImpactUsdKey(market: string) {
