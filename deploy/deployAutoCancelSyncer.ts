@@ -11,7 +11,7 @@ const func = createDeployFunction({
   },
   libraryNames: ["OrderStoreUtils"],
   afterDeploy: async ({ deployedContract }) => {
-    await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
+    await grantRoleIfNotGranted(deployedContract, "CONTROLLER");
   },
 });
 

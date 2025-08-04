@@ -44,7 +44,7 @@ const func = createDeployFunction({
     );
 
     // the Oracle contract requires the CONTROLLER to emit events
-    await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER", "oracle");
+    await grantRoleIfNotGranted(deployedContract, "CONTROLLER", "oracle");
   },
   id: "Oracle_6",
 });

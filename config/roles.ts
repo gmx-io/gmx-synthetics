@@ -14,12 +14,14 @@ export type RolesConfig = {
 const requiredRolesForContracts = {
   CONTROLLER: [
     "Config",
+    "ConfigSyncer",
+    "ConfigTimelockController",
+
     "MarketFactory",
     "GlvFactory",
-    "Timelock",
+    "TimelockConfig",
     "OracleStore",
     "Oracle",
-    "ConfigSyncer",
 
     "ExchangeRouter",
     "SubaccountRouter",
@@ -40,8 +42,18 @@ const requiredRolesForContracts = {
     "GlvDepositHandler",
     "GlvWithdrawalHandler",
     "GlvShiftHandler",
-    "FeeHandler",
     "SwapHandler",
+
+    "ClaimHandler",
+    "FeeHandler",
+
+    "LayerZeroProvider",
+    "MultichainClaimsRouter",
+    "MultichainGlvRouter",
+    "MultichainGmRouter",
+    "MultichainOrderRouter",
+    "MultichainSubaccountRouter",
+    "MultichainTransferRouter",
   ],
   ROUTER_PLUGIN: [
     "ExchangeRouter",
@@ -49,8 +61,15 @@ const requiredRolesForContracts = {
     "GlvRouter",
     "GelatoRelayRouter",
     "SubaccountGelatoRelayRouter",
+    "MultichainClaimsRouter",
+
+    "MultichainGlvRouter",
+    "MultichainGmRouter",
+    "MultichainOrderRouter",
+    "MultichainSubaccountRouter",
+    "MultichainTransferRouter",
   ],
-  ROLE_ADMIN: ["Timelock"],
+  ROLE_ADMIN: ["TimelockConfig", "ConfigTimelockController"],
   CONFIG_KEEPER: ["ConfigSyncer"],
 };
 
