@@ -54,6 +54,7 @@ export async function getContractCreationFromEtherscan(contractAddress: string):
     action: "getcontractcreation",
     contractaddresses: contractAddress,
   });
+
   const data = response.result[0];
   const info = {
     contractAddress: data.contractAddress,
@@ -78,6 +79,11 @@ async function _requestEtherscan(params: Record<string, any>) {
       module: "contract",
     },
   });
+
+  if (response && response.data && response.data.message === "NOTOK") {
+    throw new Error(`api called failed, ${response.data.result}`);
+  }
+
   await sleep(500);
   return response.data;
 }
