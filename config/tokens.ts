@@ -27,6 +27,11 @@ type OracleTestPriceFeed = {
 
 type OraclePriceFeed = OracleRealPriceFeed | OracleTestPriceFeed;
 
+type OracleEdge = {
+  feedId: string;
+  tokenDecimals: number;
+};
+
 type BaseTokenConfig = {
   decimals: number;
   transferGasLimit?: number;
@@ -36,6 +41,7 @@ type BaseTokenConfig = {
   dataStreamFeedDecimals?: number;
   dataStreamSpreadReductionFactor?: BigNumberish;
   priceFeed?: OraclePriceFeed;
+  edge?: OracleEdge;
 };
 
 // synthetic token without corresponding token
