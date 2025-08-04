@@ -61,7 +61,7 @@ const getRpcUrl = (network) => {
 
 export const getExplorerUrl = (network) => {
   const urls = {
-    arbitrum: "https://api.arbiscan.io/",
+    arbitrum: "https://api.etherscan.io/v2/api?chainid=42161",
     // avalanche: "https://api.snowtrace.io/",
     avalanche: "https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan/",
     botanix: "https://api.routescan.io/v2/network/mainnet/evm/3637/etherscan/",

@@ -47,7 +47,6 @@ const func = createDeployFunction({
 
   afterDeploy: async ({ deployedContract }) => {
     await grantRoleIfNotGranted(deployedContract, "CONTROLLER");
-    await grantRoleIfNotGranted(deployedContract, "ROUTER_PLUGIN");
   },
 });
 
