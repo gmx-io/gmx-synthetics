@@ -18,6 +18,7 @@ const BEACON_SLOT = "0xa3f0ad74e5424f2d3d81c7cdd48ab208b5bfa6d06c18a42f3b72a1f3e
 
 const whitelistedTokens = {
   arbitrumSepolia: ["WETH"],
+  avalancheFuji: ["WAVAX"],
   arbitrum: [
     "WETH", // implHasCallbacks: transferAndCall
     "ARB", // implHasCallbacks: transferAndCall

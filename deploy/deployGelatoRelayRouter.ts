@@ -21,8 +21,8 @@ const func = createDeployFunction({
   },
   libraryNames: ["GasUtils", "OrderStoreUtils", "RelayUtils"],
   afterDeploy: async ({ deployedContract }) => {
-    await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
-    await grantRoleIfNotGranted(deployedContract.address, "ROUTER_PLUGIN");
+    await grantRoleIfNotGranted(deployedContract, "CONTROLLER");
+    await grantRoleIfNotGranted(deployedContract, "ROUTER_PLUGIN");
   },
 });
 

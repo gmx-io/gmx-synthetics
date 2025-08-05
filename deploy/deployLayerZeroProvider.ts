@@ -20,7 +20,7 @@ const func = createDeployFunction({
     return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
   },
   afterDeploy: async ({ deployedContract, deployments }) => {
-    await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
+    await grantRoleIfNotGranted(deployedContract, "CONTROLLER");
 
     const { get } = deployments;
     const multichainTransferRouter = await get("MultichainTransferRouter");

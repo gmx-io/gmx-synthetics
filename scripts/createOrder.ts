@@ -18,7 +18,9 @@ import { BigNumberish } from "ethers";
 //
 // then run:
 //
-// REALTIME_FEED_CLIENT_ID=<clien-id> REALTIME_FEED_CLIENT_SECRET=<client-secret> ACCOUNT_KEY_FILE=key-file.json npx hardhat run --network arbitrumGoerli scripts/createOrder.ts
+// ACCOUNT_KEY_FILE=key-file.json npx hardhat run --network arbitrumSepolia scripts/createOrder.ts
+// or
+// ACCOUNT_KEY=private-key npx hardhat run --network arbitrumSepolia scripts/createOrder.ts
 //
 // after running the script the position should be viewable on
 // https://chainlink-workshop.gmx-interface.pages.dev/#/actions/v2/<your account address>
@@ -94,9 +96,9 @@ async function createOrder({
     decreasePositionSwapType,
     isLong,
     shouldUnwrapNativeToken: true,
+    autoCancel: false,
     referralCode,
     dataList: [],
-    autoCancel: false,
   };
 
   const gasLimit = await exchangeRouter.estimateGas.multicall(
@@ -115,8 +117,6 @@ async function createOrder({
   );
 
   console.log("gasLimit %s", gasLimit);
-
-  exchangeRouter.sendTokens(initialCollateralToken, orderVault.address, initialCollateralDeltaAmount);
 
   const tx = await exchangeRouter.multicall(
     [
@@ -145,25 +145,33 @@ async function main() {
   const referralCode = ethers.constants.HashZero;
   const markets = await reader.getMarkets(dataStore.address, 0, 100);
 
-  // a list of markets can be printed using scripts/printMarkets.ts
-  const BTC_USD_MARKET = ethers.utils.getAddress("0xBb532Ab4923C23c2bfA455151B14fec177a34C0D");
+  let market;
+  let USDC;
 
-  if (!markets.some((m) => m.marketToken === BTC_USD_MARKET)) {
-    throw new Error(`${BTC_USD_MARKET} is not a valid market`);
+  // a list of markets can be printed using scripts/printMarkets.ts
+  // list of tokens can be found in config/tokens.ts
+  if (hre.network.name === "arbitrumSepolia") {
+    market = ethers.utils.getAddress("0xb6fC4C9eB02C35A134044526C62bb15014Ac0Bcc"); // index: WETH  long: WETH  short: USDC.SG
+    USDC = ethers.utils.getAddress("0x3253a335E7bFfB4790Aa4C25C4250d206E9b9773"); // Stargate USDC
+  } else if (hre.network.name === "avalancheFuji") {
+    market = ethers.utils.getAddress("0xbf338a6C595f06B7Cfff2FA8c958d49201466374"); // index: WETH  long: WETH  short: USDC
+    USDC = ethers.utils.getAddress("0x3eBDeaA0DB3FfDe96E7a0DBBAFEC961FC50F725F"); // MintableToken
+  } else {
+    throw new Error(`Unsupported network: ${hre.network.name}`);
   }
 
-  // list of tokens can be found in config/tokens.ts
-  const USDC = ethers.utils.getAddress("0x3321Fd36aEaB0d5CdfD26f4A3A93E2D2aAcCB99f");
+  if (!markets.some((m) => m.marketToken === market)) {
+    throw new Error(`${market} is not a valid market`);
+  }
+
   const tokens = await hre.gmx.getTokens();
   if (!Object.values(tokens).some((t) => t.address === USDC)) {
     throw new Error(`${USDC} is not a valid token`);
   }
 
-  const market = BTC_USD_MARKET;
-
   // allow 30bps (0.3%) slippage
   // divide by 10^18 to get the price per unit of token
-  const acceptablePrice = expandDecimals(82273, 22);
+  const acceptablePrice = expandDecimals(3600, 12); // 3600 USD per ETH
 
   const tx = await createOrder({
     router,

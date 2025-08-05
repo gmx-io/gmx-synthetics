@@ -30,6 +30,7 @@ const roleLabels = {
   [encodeRole("LIQUIDATION_KEEPER")]: "LIQUIDATION_KEEPER",
   [encodeRole("ADL_KEEPER")]: "ADL_KEEPER",
   [encodeRole("CONTRIBUTOR_KEEPER")]: "CONTRIBUTOR_KEEPER",
+  [encodeRole("CLAIM_ADMIN")]: "CLAIM_ADMIN",
 };
 
 async function main() {

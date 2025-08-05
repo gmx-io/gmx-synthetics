@@ -541,7 +541,7 @@ const recommendedMarketConfig = {
       negativePositionImpactFactor: exponentToFloat("5e-11"),
       negativeSwapImpactFactor: exponentToFloat("5e-11"),
       expectedSwapImpactRatio: 10_000,
-      expectedPositionImpactRatio: 20_000,
+      expectedPositionImpactRatio: 11_111,
     },
     CRV: {
       negativePositionImpactFactor: exponentToFloat("1.4e-8"),
@@ -1082,6 +1082,16 @@ export async function validateMarketConfigs() {
       !marketConfig.maxShortTokenPoolUsdForDeposit
     ) {
       throw new Error(`Missing configs for ${indexTokenSymbol}[${longTokenSymbol}-${shortTokenSymbol}]`);
+    }
+
+    if (hre.network.name != "arbitrumSepolia") {
+      for (const key of ["maxLendableImpactFactor", "maxLendableImpactFactorForWithdrawals", "maxLendableImpactUsd"]) {
+        if (marketConfig[key] && marketConfig[key] != 0) {
+          throw new Error(
+            `${key} should not be set to more than zero, unless the old V2 contracts are disabled, only remove this check if it is confirmed that the old V2 contracts have been disabled`
+          );
+        }
+      }
     }
 
     await validatePerpConfig({ marketConfig, indexTokenSymbol, longTokenSymbol, shortTokenSymbol, dataStore, errors });

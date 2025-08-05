@@ -12,7 +12,7 @@ const func = createDeployFunction({
   },
   libraryNames: ["ClaimUtils"],
   afterDeploy: async ({ deployedContract }) => {
-    await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
+    await grantRoleIfNotGranted(deployedContract, "CONTROLLER");
   },
 });
 

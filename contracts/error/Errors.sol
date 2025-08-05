@@ -401,6 +401,7 @@ library Errors {
     error InvalidParams(string reason);
     error InsufficientFunds(address token);
     error InvalidClaimTermsSignature(address recoveredSigner, address expectedSigner);
+    error InvalidClaimTermsSignatureForContract(address expectedSigner);
     error DuplicateClaimTerms(uint256 existingDistributionId);
 
     // Array errors

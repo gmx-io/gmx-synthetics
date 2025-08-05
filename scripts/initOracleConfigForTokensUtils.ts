@@ -2,7 +2,7 @@ import hre, { ethers } from "hardhat";
 import prompts from "prompts";
 
 import { getFullKey } from "../utils/config";
-import { encodeData } from "../utils/hash";
+import { encodeData, hashString } from "../utils/hash";
 import { bigNumberify, expandDecimals } from "../utils/math";
 
 import { TokenConfig } from "../config/tokens";
@@ -10,11 +10,8 @@ import * as keys from "../utils/keys";
 import { getOracleProviderAddress } from "../utils/oracle";
 
 import IPriceFeed from "../artifacts/contracts/oracle/IPriceFeed.sol/IPriceFeed.json";
-import { validateTickers } from "./validateTickersUtils";
 
 export async function initOracleConfigForTokens({ write }) {
-  await validateTickers();
-
   const tokens = await hre.gmx.getTokens();
 
   const dataStore = await hre.ethers.getContract("DataStore");
@@ -91,50 +88,47 @@ export async function initOracleConfigForTokens({ write }) {
     const token = tokens[tokenSymbol];
     const onchainConfig = onchainOracleConfig[tokenSymbol];
 
-    if (onchainConfig.priceFeed === ethers.constants.AddressZero && token.priceFeed) {
-      const { priceFeed } = token;
+    const { priceFeed } = token;
 
-      const priceFeedMultiplier = expandDecimals(1, 60 - token.decimals - priceFeed.decimals);
-      const stablePrice = priceFeed.stablePrice ? priceFeed.stablePrice : 0;
-
+    let priceFeedMultiplier = bigNumberify(0);
+    if (priceFeed) {
+      priceFeedMultiplier = expandDecimals(1, 60 - token.decimals - priceFeed.decimals);
       await validatePriceFeed(tokenSymbol, token, priceFeedMultiplier);
-
-      console.log(
-        `setPriceFeed(${tokenSymbol}, ${priceFeed.address}, ${priceFeedMultiplier.toString()}, ${
-          priceFeed.heartbeatDuration
-        }, ${stablePrice.toString()})`
-      );
-
-      multicallWriteParams.push(
-        config.interface.encodeFunctionData("setPriceFeed", [
-          token.address,
-          priceFeed.address,
-          priceFeedMultiplier,
-          priceFeed.heartbeatDuration,
-          stablePrice,
-        ])
-      );
     }
 
-    if (onchainConfig.dataStreamId === ethers.constants.HashZero && token.dataStreamFeedId) {
-      const dataStreamMultiplier = expandDecimals(1, 60 - token.decimals - token.dataStreamFeedDecimals);
-      const dataStreamSpreadReductionFactor = bigNumberify(token.dataStreamSpreadReductionFactor ?? 0);
+    const initOracleConfigPriceFeedParams = {
+      feedAddress: token.priceFeed?.address ?? ethers.constants.AddressZero,
+      multiplier: priceFeedMultiplier,
+      heartbeatDuration: priceFeed?.heartbeatDuration ?? 0,
+      stablePrice: priceFeed?.stablePrice ?? 0,
+    };
 
-      console.log(
-        `setDataStream(${tokenSymbol} ${
-          token.dataStreamFeedId
-        }, ${dataStreamMultiplier.toString()}, ${dataStreamSpreadReductionFactor.toString()})`
-      );
-
-      multicallWriteParams.push(
-        config.interface.encodeFunctionData("setDataStream", [
-          token.address,
-          token.dataStreamFeedId,
-          dataStreamMultiplier,
-          dataStreamSpreadReductionFactor,
-        ])
-      );
+    if (hre.network.name === "avalanche" && tokenSymbol === "LINK") {
+      continue; // skip LINK on Avalanche as it is missing dataStreamFeedId & dataStreamFeedDecimals configs
     }
+
+    const dataStreamMultiplier = expandDecimals(1, 60 - token.decimals - token.dataStreamFeedDecimals);
+    const dataStreamSpreadReductionFactor = bigNumberify(token.dataStreamSpreadReductionFactor ?? 0);
+
+    const initOracleConfigDataStreamParams = {
+      feedId: token.dataStreamFeedId,
+      multiplier: dataStreamMultiplier,
+      spreadReductionFactor: dataStreamSpreadReductionFactor,
+    };
+
+    const initOracleConfigEdgeParams = {
+      feedId: hashString(token.edge?.feedId || ""), // token.edge.feedId is expected as string e.g. ETHUSD
+      tokenDecimals: token.edge?.tokenDecimals || 0,
+    };
+
+    const initOracleConfigParams = {
+      token: token.address,
+      priceFeed: initOracleConfigPriceFeedParams,
+      dataStream: initOracleConfigDataStreamParams,
+      edge: initOracleConfigEdgeParams,
+    };
+
+    multicallWriteParams.push(config.interface.encodeFunctionData("initOracleConfig", [initOracleConfigParams]));
 
     if (
       token.oracleTimestampAdjustment !== undefined &&
@@ -242,12 +236,14 @@ export async function validatePriceFeed(tokenSymbol: string, token: TokenConfig,
       tBTC: "BTC",
       WETH: "ETH",
       "USDC.e": "USDC",
+      "USDC.e (Archived)": "USDC", // botanix
       "BTC.b": "BTC",
       "WETH.e": "ETH",
       WAVAX: "AVAX",
       "USDT.e": "USDT",
       "DAI.e": "DAI",
       pBTC: "BTC",
+      "USDC.SG": "USDC", // arbitrumSepolia
     }[tokenSymbol] ?? tokenSymbol;
 
   // in avalancheFuji USDT feed is used as USDC and DAI price feeds

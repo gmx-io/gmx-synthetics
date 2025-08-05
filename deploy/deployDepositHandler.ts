@@ -21,7 +21,7 @@ const func = createDeployFunction({
   },
   libraryNames: ["DepositUtils", "ExecuteDepositUtils", "DepositStoreUtils", "GasUtils"],
   afterDeploy: async ({ deployedContract }) => {
-    await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
+    await grantRoleIfNotGranted(deployedContract, "CONTROLLER");
   },
 });
 

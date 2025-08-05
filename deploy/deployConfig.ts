@@ -11,7 +11,7 @@ const func = createDeployFunction({
   },
   libraryNames: ["MarketUtils", "ConfigUtils"],
   afterDeploy: async ({ deployedContract }) => {
-    await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
+    await grantRoleIfNotGranted(deployedContract, "CONTROLLER");
   },
 });
 

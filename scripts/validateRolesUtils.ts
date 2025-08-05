@@ -13,7 +13,7 @@ interface ContractInfo {
 
 // bump this when the cache format changes
 const CACHE_VERSION = 2;
-const _cache = new FileCache<ContractInfo>("contractInfoCache.json", CACHE_VERSION);
+const _cache = new FileCache<ContractInfo>(`contractInfoCache-${hre.network.name}.json`, CACHE_VERSION);
 
 const GMX_V2_DEPLOYER_ADDRESS = "0xe7bfff2ab721264887230037940490351700a068";
 const GMX_V1_DEPLOYER_ADDRESS = "0x5f799f365fa8a2b60ac0429c48b153ca5a6f0cf8";
@@ -21,6 +21,7 @@ const GMX_V1_DEPLOYER_ADDRESS = "0x5f799f365fa8a2b60ac0429c48b153ca5a6f0cf8";
 const trustedExternalContracts = new Set(
   [
     "0x4b6ACC5b2db1757bD49408FeE92e32D39608B5d9", // Gnosis Safe
+    "0x8d1d2e24ec641edc6a1ebe0f3ae7af0ebc573e0d",
   ].map((address) => address.toLowerCase())
 );
 
@@ -189,7 +190,11 @@ export async function validateRoles() {
     }
   }
 
+  console.log("-------");
+
   console.log("diff:\n%s", JSON.stringify({ rolesToAdd, rolesToRemove }, null, 2));
+
+  console.log("-------");
 
   await validateDataStreamProviderHasDiscount();
   await validateIsReferralStorageHandler();

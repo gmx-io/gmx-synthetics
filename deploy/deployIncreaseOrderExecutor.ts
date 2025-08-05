@@ -12,7 +12,7 @@ const func = createDeployFunction({
   },
   libraryNames: ["IncreasePositionUtils", "PositionStoreUtils"],
   afterDeploy: async ({ deployedContract }) => {
-    await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
+    await grantRoleIfNotGranted(deployedContract, "CONTROLLER");
   },
 });
 

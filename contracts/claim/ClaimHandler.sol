@@ -2,9 +2,11 @@
 
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 
 import "../role/RoleModule.sol";
 import "../utils/GlobalReentrancyGuard.sol";
@@ -15,10 +17,13 @@ import "../error/Errors.sol";
 import "./ClaimVault.sol";
 import "./ClaimUtils.sol";
 import "./ClaimEventUtils.sol";
+import "../feature/FeatureUtils.sol";
+import "../safe/SafeUtils.sol";
 
 // @title ClaimHandler
 // @dev Contract for distributing lost funds to users
 contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
+    using Address for address;
     using SafeERC20 for IERC20;
 
     EventEmitter public immutable eventEmitter;
@@ -190,10 +195,12 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
         for (uint256 i = 0; i < params.length; i++) {
             ClaimParam memory param = params[i];
 
+            FeatureUtils.validateFeature(dataStore, Keys.generalClaimFeatureDisabled(param.distributionId));
+
             ClaimUtils._validateNonEmptyToken(param.token);
             ClaimUtils._validateNonZeroDistributionId(param.distributionId);
 
-            _validateTermsSignature(dataStore, param.distributionId, msg.sender, param.termsSignature);
+            _validateTermsSignature(param.distributionId, msg.sender, param.termsSignature);
 
             bytes32 claimableKey = Keys.claimableFundsAmountKey(msg.sender, param.token, param.distributionId);
             uint256 claimableAmount = dataStore.getUint(claimableKey);
@@ -277,18 +284,14 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
         return dataStore.getUint(Keys.totalClaimableFundsAmountKey(token));
     }
 
-    function _validateTermsSignature(
-        DataStore dataStore,
-        uint256 distributionId,
-        address account,
-        bytes memory signature
-    ) internal view {
+    // note that signature can be empty here for signing by contracts
+    function _validateTermsSignature(uint256 distributionId, address account, bytes memory signature) internal view {
         string memory terms = dataStore.getString(Keys.claimTermsKey(distributionId));
         if (bytes(terms).length == 0) {
             return;
         }
 
-        string memory message = string.concat(
+        bytes memory message = bytes(string.concat(
             terms,
             "\ndistributionId ",
             Strings.toString(distributionId),
@@ -296,13 +299,31 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
             Strings.toHexString(address(this)),
             "\nchainId ",
             Strings.toString(block.chainid)
-        );
+        ));
 
-        bytes32 ethSignedMessageHash = ECDSA.toEthSignedMessageHash(bytes(message));
-        address recoveredSigner = ECDSA.recover(ethSignedMessageHash, signature);
-        if (recoveredSigner != account) {
+        bytes32 ethSignedMessageHash = ECDSA.toEthSignedMessageHash(message);
+        (address recoveredSigner, ECDSA.RecoverError error) = ECDSA.tryRecover(ethSignedMessageHash, signature);
+
+        if (error == ECDSA.RecoverError.NoError && recoveredSigner == account) {
+            return;
+        }
+
+        if (!account.isContract()) {
             revert Errors.InvalidClaimTermsSignature(recoveredSigner, account);
         }
+
+        bool isValidSignature = SignatureChecker.isValidERC1271SignatureNow(account, ethSignedMessageHash, signature);
+
+        if (isValidSignature) { return; }
+
+        // if the signature is still not valid, attempt to check signature validation for a safe account
+        bytes32 safeMessageHash = SafeUtils.getMessageHash(account, message);
+
+        isValidSignature = SignatureChecker.isValidERC1271SignatureNow(account, safeMessageHash, signature);
+
+        if (isValidSignature) { return; }
+
+        revert Errors.InvalidClaimTermsSignatureForContract(account);
     }
 
     function _validateNonEmptyReceiver(address receiver) internal pure {

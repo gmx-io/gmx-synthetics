@@ -70,6 +70,8 @@ library ClaimEventUtils {
     }
 
     // @dev emit a ClaimFundsClaimed event
+    // this event is emitted when user claims funds and funds are transferred
+    // from the claim vault to the receiver
     // @param eventEmitter the event emitter
     // @param account the account that claimed funds
     // @param receiver the address that received the funds
@@ -99,6 +101,9 @@ library ClaimEventUtils {
     }
 
     // @dev emit a ClaimFundsTransferred event
+    // this event is emitted when funds are transferred from one account to another
+    // it affects internal accounting of the claimable funds amount only
+    // funds stay inside the claim vault
     // @param eventEmitter the event emitter
     // @param token the token that was transferred
     // @param distributionId the distribution id for the transfer
