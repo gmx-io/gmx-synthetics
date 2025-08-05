@@ -97,7 +97,7 @@ describe("MultichainReader", function () {
     const nativeFee = await mockMultichainReaderOriginator.callQuoteReadFee(readRequestInputs, extraOptionsInputs);
 
     // revoke CONTROLLER role from the mockMultichainReaderOriginator contract
-    await revokeRoleIfGranted(mockMultichainReaderOriginator.address, "CONTROLLER");
+    await revokeRoleIfGranted(mockMultichainReaderOriginator, "CONTROLLER");
 
     // Execute send operation from multichainReader with expected response
     await expect(
