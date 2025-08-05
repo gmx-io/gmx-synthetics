@@ -43,8 +43,8 @@ const func = createDeployFunction({
   },
   libraryNames: ["FeeDistributorUtils", "ClaimUtils"],
   afterDeploy: async ({ deployedContract }) => {
-    await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
-    await grantRoleIfNotGranted(deployedContract.address, "FEE_KEEPER");
+    await grantRoleIfNotGranted(deployedContract, "CONTROLLER");
+    await grantRoleIfNotGranted(deployedContract, "FEE_KEEPER");
   },
 });
 

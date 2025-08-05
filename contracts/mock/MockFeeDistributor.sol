@@ -342,7 +342,7 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         setDistributionState(uint256(DistributionState.None));
 
         EventUtils.EventLogData memory eventData;
-        eventData.uintItems.initItems(8);
+        eventData.uintItems.initItems(7);
         eventData = setUintItem(eventData, 0, "feesV1Usd", feesV1Usd);
         eventData = setUintItem(eventData, 1, "feesV2Usd", feesV2Usd);
         eventData = setUintItem(eventData, 2, "wntForKeepers", wntForKeepers);

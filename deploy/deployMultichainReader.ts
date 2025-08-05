@@ -21,8 +21,8 @@ const func = createDeployFunction({
       .concat(endpointAddress);
   },
   afterDeploy: async ({ deployedContract }) => {
-    await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
-    await grantRoleIfNotGranted(deployedContract.address, "MULTICHAIN_READER");
+    await grantRoleIfNotGranted(deployedContract, "CONTROLLER");
+    await grantRoleIfNotGranted(deployedContract, "MULTICHAIN_READER");
   },
 });
 
