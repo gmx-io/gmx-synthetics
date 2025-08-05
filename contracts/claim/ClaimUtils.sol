@@ -20,31 +20,6 @@ library ClaimUtils {
         uint256 amount;
     }
 
-    struct WithdrawParam {
-        address account;
-        uint256 distributionId;
-    }
-
-    struct ClaimParam {
-        address token;
-        uint256 distributionId;
-        bytes termsSignature;
-    }
-
-    struct TransferClaimParam {
-        address token;
-        uint256 distributionId;
-        address fromAccount;
-        address toAccount;
-    }
-
-    struct TransferClaimCache {
-        bytes32 fromAccountKey;
-        bytes32 toAccountKey;
-        uint256 amount;
-        uint256 nextAmount;
-    }
-
     function incrementClaims(
         DataStore dataStore,
         EventEmitter eventEmitter,
@@ -88,34 +63,6 @@ library ClaimUtils {
         return totalTransferAmount;
     }
 
-    function _validateTermsSignature(
-        DataStore dataStore,
-        uint256 distributionId,
-        address account,
-        bytes memory signature
-    ) internal view {
-        string memory terms = dataStore.getString(Keys.claimTermsKey(distributionId));
-        if (bytes(terms).length == 0) {
-            return;
-        }
-
-        string memory message = string.concat(
-            terms,
-            "\ndistributionId ",
-            Strings.toString(distributionId),
-            "\ncontract ",
-            Strings.toHexString(address(this)),
-            "\nchainId ",
-            Strings.toString(block.chainid)
-        );
-
-        bytes32 ethSignedMessageHash = ECDSA.toEthSignedMessageHash(bytes(message));
-        address recoveredSigner = ECDSA.recover(ethSignedMessageHash, signature);
-        if (recoveredSigner != account) {
-            revert Errors.InvalidClaimTermsSignature(recoveredSigner, account);
-        }
-    }
-
     function _validateNonZeroDistributionId(uint256 distributionId) internal pure {
         if (distributionId == 0) {
             revert Errors.InvalidParams("distributionId is 0");
@@ -125,12 +72,6 @@ library ClaimUtils {
     function _validateNonEmptyAccount(address account) internal pure {
         if (account == address(0)) {
             revert Errors.EmptyAccount();
-        }
-    }
-
-    function _validateNonEmptyReceiver(address receiver) internal pure {
-        if (receiver == address(0)) {
-            revert Errors.EmptyReceiver();
         }
     }
 

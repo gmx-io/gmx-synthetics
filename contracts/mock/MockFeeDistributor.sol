@@ -311,6 +311,12 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         uint256 feesV1Usd,
         uint256 feesV2Usd
     ) external nonReentrant onlyFeeDistributionKeeper {
+        // validate that the TREASURY address stored in dataStore is not a zero address
+        address treasuryAddress = getAddress(mockChainId, TREASURY);
+        if (treasuryAddress == address(0)) {
+            revert Errors.ZeroTreasuryAddress();
+        }
+
         // validate the distribution states, LZRead response timestamp and distribution has not yet been completed
         validateDistributionState(DistributionState.BridgingCompleted);
         validateReadResponseTimestamp(getUint(Keys2.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP));
@@ -394,20 +400,26 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
             revert Errors.InvalidReferralRewardToken(token);
         }
 
-        uint256 totalTransferAmount = getUint(Keys2.feeDistributorReferralRewardsDepositedKey(token)) +
-            ClaimUtils.incrementClaims(dataStore, eventEmitter, token, distributionId, params);
-
+        uint256 totalTransferAmount = ClaimUtils.incrementClaims(
+            dataStore,
+            eventEmitter,
+            token,
+            distributionId,
+            params
+        );
         transferOut(token, claimVault, totalTransferAmount);
         dataStore.incrementUint(Keys.totalClaimableFundsAmountKey(token), totalTransferAmount);
 
         ClaimUtils._validateTotalClaimableFundsAmount(dataStore, token, claimVault);
 
-        // validate that the total referral rewards deposited is not greater than the total calculated amount
-        if (totalTransferAmount > tokensForReferralRewards) {
-            revert Errors.MaxReferralRewardsExceeded(token, totalTransferAmount, tokensForReferralRewards);
+        // validate that the cumulative referral rewards deposited is not greater than the total calculated amount
+        uint256 cumulativeTransferAmount = getUint(Keys2.feeDistributorReferralRewardsDepositedKey(token)) +
+            totalTransferAmount;
+        if (cumulativeTransferAmount > tokensForReferralRewards) {
+            revert Errors.MaxReferralRewardsExceeded(token, cumulativeTransferAmount, tokensForReferralRewards);
         }
 
-        setUint(Keys2.feeDistributorReferralRewardsDepositedKey(token), totalTransferAmount);
+        setUint(Keys2.feeDistributorReferralRewardsDepositedKey(token), cumulativeTransferAmount);
     }
 
     function calculateAndBridgeGmx(

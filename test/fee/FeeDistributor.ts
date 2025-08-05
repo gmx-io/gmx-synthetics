@@ -604,7 +604,7 @@ describe("FeeDistributor", function () {
     expect(feeReceiverAmountAfterBridgingC).to.equal(expandDecimals(40_000, 18));
   });
 
-  it("distribute() and sendReferralRewards() for fee deficit", async function () {
+  it("distribute() and depositReferralRewards() for fee deficit", async function () {
     distributionState = await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE);
     expect(distributionState).to.eq(0);
 
@@ -812,22 +812,42 @@ describe("FeeDistributor", function () {
     expect(distributeEventData.wntForReferralRewards).to.eq(wntForReferralRewards);
     expect(distributeEventData.esGmxForReferralRewards).to.eq(esGmxForReferralRewards);
 
-    await feeDistributor.sendReferralRewards(
-      wnt.address,
-      5,
-      [user7.address, user8.address, wallet.address],
-      [expandDecimals(8, 16), expandDecimals(5, 16), expandDecimals(7, 16)]
-    );
+    const distributionId = 1;
 
-    await feeDistributor.sendReferralRewards(
-      esGmx.address,
-      5,
-      [user7.address, user8.address, wallet.address],
-      [expandDecimals(5, 18), expandDecimals(2, 18), expandDecimals(3, 18)]
-    );
+    const wntReferralRewardsParams = [
+      {
+        account: user7.address,
+        amount: expandDecimals(8, 16),
+      },
+      {
+        account: user8.address,
+        amount: expandDecimals(5, 16),
+      },
+      {
+        account: wallet.address,
+        amount: expandDecimals(7, 16),
+      },
+    ];
+    await feeDistributor.depositReferralRewards(wnt.address, distributionId, wntReferralRewardsParams);
+
+    const esGmxReferralRewardsParams = [
+      {
+        account: user7.address,
+        amount: expandDecimals(5, 18),
+      },
+      {
+        account: user8.address,
+        amount: expandDecimals(2, 18),
+      },
+      {
+        account: wallet.address,
+        amount: expandDecimals(3, 18),
+      },
+    ];
+    await feeDistributor.depositReferralRewards(esGmx.address, distributionId, esGmxReferralRewardsParams);
   });
 
-  it("distribute() and sendReferralRewards() for fee surplus", async function () {
+  it("distribute() and depositReferralRewards() for fee surplus", async function () {
     distributionState = await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE);
     expect(distributionState).to.eq(0);
 
@@ -1010,19 +1030,39 @@ describe("FeeDistributor", function () {
     expect(distributeEventData.wntForReferralRewards).to.eq(wntForReferralRewards);
     expect(distributeEventData.esGmxForReferralRewards).to.eq(esGmxForReferralRewards);
 
-    await feeDistributor.sendReferralRewards(
-      wnt.address,
-      5,
-      [user7.address, user8.address, wallet.address],
-      [expandDecimals(8, 16), expandDecimals(5, 16), expandDecimals(7, 16)]
-    );
+    const distributionId = 1;
 
-    await feeDistributor.sendReferralRewards(
-      esGmx.address,
-      5,
-      [user7.address, user8.address, wallet.address],
-      [expandDecimals(5, 18), expandDecimals(2, 18), expandDecimals(3, 18)]
-    );
+    const wntReferralRewardsParams = [
+      {
+        account: user7.address,
+        amount: expandDecimals(8, 16),
+      },
+      {
+        account: user8.address,
+        amount: expandDecimals(5, 16),
+      },
+      {
+        account: wallet.address,
+        amount: expandDecimals(7, 16),
+      },
+    ];
+    await feeDistributor.depositReferralRewards(wnt.address, distributionId, wntReferralRewardsParams);
+
+    const esGmxReferralRewardsParams = [
+      {
+        account: user7.address,
+        amount: expandDecimals(5, 18),
+      },
+      {
+        account: user8.address,
+        amount: expandDecimals(2, 18),
+      },
+      {
+        account: wallet.address,
+        amount: expandDecimals(3, 18),
+      },
+    ];
+    await feeDistributor.depositReferralRewards(esGmx.address, distributionId, esGmxReferralRewardsParams);
   });
 
   it("WNT for V1 keeper costs and referral rewards shortfall covered by WNT from treasury", async () => {
@@ -1243,9 +1283,6 @@ describe("FeeDistributor", function () {
     await grantRole(roleStore, feeHandlerD.address, "CONTROLLER");
     await grantRole(roleStore, mockFeeDistributor.address, "CONTROLLER");
     await grantRole(roleStore, mockFeeDistributor.address, "FEE_KEEPER");
-
-    const testMockChainId = await mockFeeDistributor.mockChainId();
-    expect(chainIdD).to.eq(testMockChainId);
 
     await mockEndpointV2DMultichain.setDestLzEndpoint(multichainReaderD.address, mockEndpointV2DMultichain.address);
     await mockEndpointV2DMultichain.setReadChannelId(channelId);

@@ -34,6 +34,31 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
         claimVault = _claimVault;
     }
 
+    struct WithdrawParam {
+        address account;
+        uint256 distributionId;
+    }
+
+    struct ClaimParam {
+        address token;
+        uint256 distributionId;
+        bytes termsSignature;
+    }
+
+    struct TransferClaimParam {
+        address token;
+        uint256 distributionId;
+        address fromAccount;
+        address toAccount;
+    }
+
+    struct TransferClaimCache {
+        bytes32 fromAccountKey;
+        bytes32 toAccountKey;
+        uint256 amount;
+        uint256 nextAmount;
+    }
+
     // @dev deposit funds for multiple accounts and tokens in batch
     // Rebasing tokens, tokens that change balance on transfer, with token burns, etc are not supported
     // If the distribution requires terms, then `setTerms` must be called before depositing funds
@@ -68,11 +93,11 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
     // @param receiver the receiver of the funds
     function withdrawFunds(
         address token,
-        ClaimUtils.WithdrawParam[] calldata params,
+        WithdrawParam[] calldata params,
         address receiver
     ) external globalNonReentrant onlyTimelockMultisig {
         ClaimUtils._validateNonEmptyToken(token);
-        ClaimUtils._validateNonEmptyReceiver(receiver);
+        _validateNonEmptyReceiver(receiver);
 
         if (params.length == 0) {
             revert Errors.InvalidParams("withdraw params length is 0");
@@ -80,7 +105,7 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
 
         uint256 totalWithdrawnAmount;
         for (uint256 i = 0; i < params.length; i++) {
-            ClaimUtils.WithdrawParam memory param = params[i];
+            WithdrawParam memory param = params[i];
 
             ClaimUtils._validateNonEmptyAccount(param.account);
             ClaimUtils._validateNonZeroDistributionId(param.distributionId);
@@ -111,23 +136,23 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
     // @param params array of transfer parameters
     function transferClaim(
         address token,
-        ClaimUtils.TransferClaimParam[] calldata params
+        TransferClaimParam[] calldata params
     ) external globalNonReentrant onlyTimelockMultisig {
         if (params.length == 0) {
             revert Errors.InvalidParams("transfer params length is 0");
         }
         ClaimUtils._validateNonEmptyToken(token);
 
-        ClaimUtils.TransferClaimCache memory cache;
+        TransferClaimCache memory cache;
         for (uint256 i = 0; i < params.length; i++) {
-            ClaimUtils.TransferClaimParam memory param = params[i];
+            TransferClaimParam memory param = params[i];
 
             if (param.fromAccount == param.toAccount) {
                 revert Errors.InvalidParams("fromAccount and toAccount cannot be the same");
             }
 
             ClaimUtils._validateNonEmptyAccount(param.fromAccount);
-            ClaimUtils._validateNonEmptyReceiver(param.toAccount);
+            _validateNonEmptyReceiver(param.toAccount);
             ClaimUtils._validateNonZeroDistributionId(param.distributionId);
 
             cache.fromAccountKey = Keys.claimableFundsAmountKey(param.fromAccount, token, param.distributionId);
@@ -156,19 +181,19 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
     // @dev claim funds for the calling account for multiple tokens
     // @param params array of claim parameters
     // @param receiver the receiver of the funds
-    function claimFunds(ClaimUtils.ClaimParam[] calldata params, address receiver) external globalNonReentrant {
+    function claimFunds(ClaimParam[] calldata params, address receiver) external globalNonReentrant {
         if (params.length == 0) {
             revert Errors.InvalidParams("claim params length is 0");
         }
-        ClaimUtils._validateNonEmptyReceiver(receiver);
+        _validateNonEmptyReceiver(receiver);
 
         for (uint256 i = 0; i < params.length; i++) {
-            ClaimUtils.ClaimParam memory param = params[i];
+            ClaimParam memory param = params[i];
 
             ClaimUtils._validateNonEmptyToken(param.token);
             ClaimUtils._validateNonZeroDistributionId(param.distributionId);
 
-            ClaimUtils._validateTermsSignature(dataStore, param.distributionId, msg.sender, param.termsSignature);
+            _validateTermsSignature(dataStore, param.distributionId, msg.sender, param.termsSignature);
 
             bytes32 claimableKey = Keys.claimableFundsAmountKey(msg.sender, param.token, param.distributionId);
             uint256 claimableAmount = dataStore.getUint(claimableKey);
@@ -250,5 +275,39 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
     // @return the total claimable amount
     function getTotalClaimableAmount(address token) external view returns (uint256) {
         return dataStore.getUint(Keys.totalClaimableFundsAmountKey(token));
+    }
+
+    function _validateTermsSignature(
+        DataStore dataStore,
+        uint256 distributionId,
+        address account,
+        bytes memory signature
+    ) internal view {
+        string memory terms = dataStore.getString(Keys.claimTermsKey(distributionId));
+        if (bytes(terms).length == 0) {
+            return;
+        }
+
+        string memory message = string.concat(
+            terms,
+            "\ndistributionId ",
+            Strings.toString(distributionId),
+            "\ncontract ",
+            Strings.toHexString(address(this)),
+            "\nchainId ",
+            Strings.toString(block.chainid)
+        );
+
+        bytes32 ethSignedMessageHash = ECDSA.toEthSignedMessageHash(bytes(message));
+        address recoveredSigner = ECDSA.recover(ethSignedMessageHash, signature);
+        if (recoveredSigner != account) {
+            revert Errors.InvalidClaimTermsSignature(recoveredSigner, account);
+        }
+    }
+
+    function _validateNonEmptyReceiver(address receiver) internal pure {
+        if (receiver == address(0)) {
+            revert Errors.EmptyReceiver();
+        }
     }
 }
