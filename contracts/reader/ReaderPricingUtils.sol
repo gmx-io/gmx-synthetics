@@ -24,6 +24,9 @@ library ReaderPricingUtils {
         int256 priceImpactUsd;
         uint256 executionPrice;
         bool balanceWasImproved;
+        int256 proportionalPendingImpactUsd;
+        int256 totalImpactUsd;
+        uint256 priceImpactDiffUsd;
     }
 
     struct PositionInfo {
@@ -186,6 +189,52 @@ library ReaderPricingUtils {
                 params,
                 prices.indexTokenPrice
             );
+
+            result.proportionalPendingImpactUsd = _getProportionalPendingImpactValues(
+                params.position.sizeInUsd(),
+                params.position.pendingImpactAmount(),
+                params.order.sizeDeltaUsd(),
+                prices.indexTokenPrice
+            );
+
+            result.totalImpactUsd = result.proportionalPendingImpactUsd + result.priceImpactUsd;
+
+            if (result.totalImpactUsd < 0) {
+                uint256 maxPriceImpactFactor = MarketUtils.getMaxPositionImpactFactor(
+                    dataStore,
+                    market.marketToken,
+                    false
+                );
+
+                // convert the max price impact to the min negative value
+                // e.g. if sizeDeltaUsd is 10,000 and maxPriceImpactFactor is 2%
+                // then minPriceImpactUsd = -200
+                int256 minPriceImpactUsd = -Precision.applyFactor(params.order.sizeDeltaUsd(), maxPriceImpactFactor).toInt256();
+
+                // cap totalImpactUsd to the min negative value and store the difference in priceImpactDiffUsd
+                // e.g. if totalImpactUsd is -500 and minPriceImpactUsd is -200
+                // then set priceImpactDiffUsd to -200 - -500 = 300
+                // set totalImpactUsd to -200
+                if (result.totalImpactUsd < minPriceImpactUsd) {
+                    result.priceImpactDiffUsd = (minPriceImpactUsd - result.totalImpactUsd).toUint256();
+                    result.totalImpactUsd = minPriceImpactUsd;
+                }
+            }
+
+            result.totalImpactUsd = MarketUtils.capPositiveImpactUsdByMaxPositionImpact(
+                params.contracts.dataStore,
+                params.market.marketToken,
+                result.totalImpactUsd,
+                uint256(-sizeDeltaUsd)
+            );
+
+            // cap the positive totalImpactUsd by the available amount in the position impact pool
+            result.totalImpactUsd = MarketUtils.capPositiveImpactUsdByPositionImpactPool(
+                dataStore,
+                market,
+                prices,
+                result.totalImpactUsd
+            );
         }
 
         return result;
@@ -244,5 +293,21 @@ library ReaderPricingUtils {
         }
 
         return (priceImpactUsdBeforeCap, priceImpactAmount, tokenInPriceImpactAmount);
+    }
+
+    function _getProportionalPendingImpactValues(
+        uint256 sizeInUsd,
+        int256 positionPendingImpactAmount,
+        uint256 sizeDeltaUsd,
+        Price.Props memory indexTokenPrice
+    ) private pure returns (int256) {
+        int256 proportionalPendingImpactAmount = Precision.mulDiv(positionPendingImpactAmount, sizeDeltaUsd, sizeInUsd, positionPendingImpactAmount < 0);
+
+        // minimize the positive impact, maximize the negative impact
+        int256 proportionalPendingImpactUsd = proportionalPendingImpactAmount > 0
+            ? proportionalPendingImpactAmount * indexTokenPrice.min.toInt256()
+            : proportionalPendingImpactAmount * indexTokenPrice.max.toInt256();
+
+        return proportionalPendingImpactUsd;
     }
 }

@@ -1,7 +1,7 @@
-import { validatePriceFeeds } from "./validatePriceFeedsUtils";
+import { validateTickers } from "./validateTickersUtils";
 
 async function main() {
-  await validatePriceFeeds();
+  await validateTickers();
 }
 
 main()

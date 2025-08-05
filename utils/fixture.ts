@@ -148,6 +148,7 @@ async function setup() {
   const edgeDataStreamProvider = await hre.ethers.getContract("EdgeDataStreamProvider");
   const claimHandler = await hre.ethers.getContract("ClaimHandler");
   const claimVault = await hre.ethers.getContract("ClaimVault");
+  const claimUtils = await hre.ethers.getContract("ClaimUtils");
   const multichainReader = await hre.ethers.getContract("MultichainReader");
   const mockEndpointV2 = await hre.ethers.getContract("MockEndpointV2");
   const mockMultichainReaderOriginator = await hre.ethers.getContract("MockMultichainReaderOriginator");
@@ -392,6 +393,7 @@ async function setup() {
       edgeDataStreamProvider,
       claimHandler,
       claimVault,
+      claimUtils,
       multichainReader,
       mockEndpointV2,
       mockMultichainReaderOriginator,

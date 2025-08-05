@@ -573,8 +573,8 @@ async function getComposedMsg({
         DST_CHAIN_ID, // desChainId
         deadline,
         STARGATE_POOL_NATIVE_ARB_SEPOLIA, // provider -- > bridge out wnt
-        0, // minAmountOut
         providerData,
+        0, // minAmountOut
         STARGATE_POOL_USDC_ARB_SEPOLIA, // provider --> bridge out usdc
         providerData,
         0 // secondaryMinAmountOut

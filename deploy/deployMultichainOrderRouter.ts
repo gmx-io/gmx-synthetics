@@ -38,8 +38,8 @@ const func = createDeployFunction({
   libraryNames: ["GasUtils", "MultichainUtils", "OrderStoreUtils", "RelayUtils"],
 
   afterDeploy: async ({ gmx, deployedContract, deployments }) => {
-    await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
-    await grantRoleIfNotGranted(deployedContract.address, "ROUTER_PLUGIN");
+    await grantRoleIfNotGranted(deployedContract, "CONTROLLER");
+    await grantRoleIfNotGranted(deployedContract, "ROUTER_PLUGIN");
 
     if (!gmx.isExistingMainnetDeployment) {
       const { get } = deployments;

@@ -638,7 +638,30 @@ const processMarkets = async ({
       marketConfig.negativeMaxPositionImpactFactor,
       `negativeMaxPositionImpactFactor ${marketLabel} (${marketToken})`
     );
-    ("");
+
+    addConfigItem(
+      "uint",
+      keys.MAX_LENDABLE_IMPACT_FACTOR,
+      encodeData(["address"], [marketToken]),
+      marketConfig.maxLendableImpactFactor,
+      `maxLendableImpactFactor ${marketLabel} (${marketToken})`
+    );
+
+    addConfigItem(
+      "uint",
+      keys.MAX_LENDABLE_IMPACT_FACTOR_FOR_WITHDRAWALS,
+      encodeData(["address"], [marketToken]),
+      marketConfig.maxLendableImpactFactorForWithdrawals,
+      `maxLendableImpactFactorForWithdrawals ${marketLabel} (${marketToken})`
+    );
+
+    addConfigItem(
+      "uint",
+      keys.MAX_LENDABLE_IMPACT_USD,
+      encodeData(["address"], [marketToken]),
+      marketConfig.maxLendableImpactUsd,
+      `maxLendableImpactUsd ${marketLabel} (${marketToken})`
+    );
   }
 
   return [configItems, ignoredRiskOracleParams, ignoredKeeperParams];

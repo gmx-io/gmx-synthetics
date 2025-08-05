@@ -403,6 +403,7 @@ library Errors {
     error InvalidParams(string reason);
     error InsufficientFunds(address token);
     error InvalidClaimTermsSignature(address recoveredSigner, address expectedSigner);
+    error InvalidClaimTermsSignatureForContract(address expectedSigner);
     error DuplicateClaimTerms(uint256 existingDistributionId);
 
     // Array errors
@@ -524,14 +525,14 @@ library Errors {
     error BridgingTransactionFailed(bytes result);
     error MaxWntReferralRewardsInUsdAmountExceeded(uint256 wntReferralRewardsInUsd, uint256 maxWntReferralRewardsInUsdAmount);
     error MaxWntReferralRewardsInUsdExceeded(uint256 wntReferralRewardsInUsd, uint256 maxWntReferralRewardsInUsd);
-    error MaxReferralRewardsExceeded(address token, uint256 tokenReferralRewards, uint256 maxTokenReferralRewards);
+    error MaxEsGmxReferralRewardsAmountExceeded(uint256 tokensForReferralRewards, uint256 maxEsGmxReferralRewards);
+    error MaxReferralRewardsExceeded(address token, uint256 cumulativeTransferAmount, uint256 tokensForReferralRewards);
     error MaxWntFromTreasuryExceeded(uint256 maxWntFromTreasury, uint256 additionalWntFromTreasury);
     error KeeperArrayLengthMismatch(uint256 keepersLength, uint256 keeperTargetBalancesLength, uint256 keeperVersionsLength);
     error SendEthToKeeperFailed(address keeper, uint256 sendAmount, bytes result);
     error KeeperAmountMismatch(uint256 wntForKeepers, uint256 wntToKeepers);
     error AttemptedBridgeAmountTooHigh(uint256 minRequiredFeeAmount, uint256 feeAmountCurrentChain, uint256 amountToBridgeOut);
-    error ReferralRewardsArrayMismatch(address token, uint256 addressArrayLength, uint256 amountArrayLength);
-    error ReferralRewardsAmountExceedsMaxBatchSize(address token, uint256 addressArrayLength, uint256 maxBatchSize);
     error InvalidReferralRewardToken(address token);
     error BridgingBalanceArrayMismatch(uint256 balancesLength, uint256 targetBalancesLength);
+    error ZeroTreasuryAddress();
 }

@@ -31,7 +31,7 @@ const func = createDeployFunction({
       await execute("ReferralStorage", { from: deployer, log: true }, "setHandler", deployedContract.address, true);
     }
 
-    await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
+    await grantRoleIfNotGranted(deployedContract, "CONTROLLER");
   },
 });
 

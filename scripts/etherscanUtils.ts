@@ -1,3 +1,4 @@
+import { setTimeout as sleep } from "timers/promises";
 import hre from "hardhat";
 import axios from "axios";
 import { FileCache } from "./cacheUtils";
@@ -7,7 +8,7 @@ interface ContractName {
   contractName: string | undefined;
   isVerified: boolean;
 }
-const nameCache = new FileCache<ContractName>("contractName.json", CONTRACT_NAME_CACHE_VERSION);
+const nameCache = new FileCache<ContractName>(`contractName-${hre.network.name}.json`, CONTRACT_NAME_CACHE_VERSION);
 
 const CONTRACT_CREATION_CACHE_VERSION = 1;
 interface ContractCreation {
@@ -19,7 +20,10 @@ interface ContractCreation {
   contractFactory: string;
   creationBytecode: string;
 }
-const creationCache = new FileCache<ContractCreation>("contractCreation.json", CONTRACT_CREATION_CACHE_VERSION);
+const creationCache = new FileCache<ContractCreation>(
+  `contractCreation-${hre.network.name}.json`,
+  CONTRACT_CREATION_CACHE_VERSION
+);
 
 export async function getContractNameFromEtherscan(contractAddress: string): Promise<ContractName> {
   if (nameCache.has(contractAddress)) {
@@ -50,6 +54,7 @@ export async function getContractCreationFromEtherscan(contractAddress: string):
     action: "getcontractcreation",
     contractaddresses: contractAddress,
   });
+
   const data = response.result[0];
   const info = {
     contractAddress: data.contractAddress,
@@ -66,7 +71,7 @@ export async function getContractCreationFromEtherscan(contractAddress: string):
 
 async function _requestEtherscan(params: Record<string, any>) {
   const apiKey = hre.network.verify.etherscan.apiKey;
-  const baseUrl = hre.network.verify.etherscan.apiUrl + "api";
+  const baseUrl = hre.network.verify.etherscan.apiUrl;
   const response = await axios.get(baseUrl, {
     params: {
       ...params,
@@ -74,5 +79,11 @@ async function _requestEtherscan(params: Record<string, any>) {
       module: "contract",
     },
   });
+
+  if (response && response.data && response.data.message === "NOTOK") {
+    throw new Error(`api called failed, ${response.data.result}`);
+  }
+
+  await sleep(500);
   return response.data;
 }

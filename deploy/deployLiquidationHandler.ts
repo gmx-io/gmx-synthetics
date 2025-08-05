@@ -22,7 +22,7 @@ const func = createDeployFunction({
   },
   libraryNames: ["LiquidationUtils", "MarketUtils", "ExecuteOrderUtils", "OrderStoreUtils"],
   afterDeploy: async ({ deployedContract }) => {
-    await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
+    await grantRoleIfNotGranted(deployedContract, "CONTROLLER");
   },
 });
 

@@ -22,7 +22,7 @@ const func = createDeployFunction({
   },
   libraryNames: ["ShiftUtils", "ShiftStoreUtils", "GasUtils"],
   afterDeploy: async ({ deployedContract }) => {
-    await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
+    await grantRoleIfNotGranted(deployedContract, "CONTROLLER");
   },
 });
 
