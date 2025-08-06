@@ -177,7 +177,7 @@ function validateSourceFile(fullContractName: string, sourceCode: string): boole
 }
 
 function showDiff(localPath: string, sourceCode: string, contractName: string) {
-  const outDir = path.join(__dirname, "../validation");
+  const outDir = path.join(__dirname, `../validation/${hre.network.name}`);
   if (!fs.existsSync(outDir)) {
     fs.mkdirSync(outDir);
   }
