@@ -86,8 +86,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("DOLO", arbitrum_ethUsdcDefaultCap, 1.1223),
           createGlvMarketConfig("ZRO", arbitrum_ethUsdcDefaultCap, 1.0),
           createGlvMarketConfig("CRV", arbitrum_ethUsdcDefaultCap, 1.0),
-          // createGlvMarketConfig("MNT", arbitrum_ethUsdcDefaultCap, 1.0),
-          // createGlvMarketConfig("SPX6900", arbitrum_ethUsdcDefaultCap, 1.0),
+          createGlvMarketConfig("MNT", arbitrum_ethUsdcDefaultCap, 1.0),
+          createGlvMarketConfig("SPX6900", arbitrum_ethUsdcDefaultCap, 1.0),
         ],
       },
       {
