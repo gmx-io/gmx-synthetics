@@ -55,7 +55,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         shiftMinInterval: 30 * 60, // 30 minutes
         minTokensForFirstGlvDeposit: expandDecimals(1, 18),
         markets: [
-          createGlvMarketConfig("WETH", 15_000_000, 1.3309),
+          createGlvMarketConfig("WETH", 35_000_000, 1.3309),
           createGlvMarketConfig("XRP", 10_000_000, 1.2033),
           createGlvMarketConfig("SUI", 7_500_000, 0.98039),
           createGlvMarketConfig("DOGE", 7_500_000, 1.6338),
@@ -100,7 +100,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         shiftMinInterval: 30 * 60, // 30 minutes
         minTokensForFirstGlvDeposit: expandDecimals(1, 18),
         markets: [
-          createGlvMarketConfig("BTC", 10_000_000, 2.2846),
+          createGlvMarketConfig("BTC", 30_000_000, 2.2846),
           createGlvMarketConfig("FARTCOIN", 4_300_000, 1.1257),
           createGlvMarketConfig("ORDI", arbitrum_btcUsdcDefaultCap, 1.3308),
           createGlvMarketConfig("STX", arbitrum_btcUsdcDefaultCap, 1.3731),
