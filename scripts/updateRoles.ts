@@ -4,8 +4,8 @@ import { cancelActionById, getGrantRolePayload, getRevokeRolePayload, timelockWr
 import { TimelockConfig } from "../typechain-types";
 import { validateSourceCode } from "./validateDeploymentUtils";
 
-import * as _rolesToAdd from "./rolesToAdd";
-import * as _rolesToRemove from "./rolesToRemove";
+import * as _rolesToAdd from "./roles/rolesToAdd";
+import * as _rolesToRemove from "./roles/rolesToRemove";
 
 const expectedTimelockMethods = [
   "signalGrantRole",
@@ -94,6 +94,10 @@ async function main() {
 
   const rolesToAdd = _rolesToAdd[hre.network.name];
   const rolesToRemove = _rolesToRemove[hre.network.name];
+
+  if (!rolesToAdd || !rolesToRemove) {
+    throw new Error(`rolesToAdd || rolesToRemove not configured for network ${hre.network.name}`);
+  }
 
   const provider = hre.ethers.provider;
 
