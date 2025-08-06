@@ -3,6 +3,7 @@ import { hashString } from "../utils/hash";
 import { cancelActionById, getGrantRolePayload, getRevokeRolePayload, timelockWriteMulticall } from "../utils/timelock";
 import { TimelockConfig } from "../typechain-types";
 import { validateSourceCode } from "./validateDeploymentUtils";
+import Timelock from "../abis/Timelock.json";
 
 import * as _rolesToAdd from "./roles/rolesToAdd";
 import * as _rolesToRemove from "./roles/rolesToRemove";
@@ -19,15 +20,15 @@ async function getTimelock(): Promise<TimelockConfig> {
   const network = hre.network.name;
 
   if (network === "arbitrum") {
-    return await ethers.getContractAt("Timelock", "0x7A967D114B8676874FA2cFC1C14F3095C88418Eb");
+    return await new ethers.Contract("0x7A967D114B8676874FA2cFC1C14F3095C88418Eb", Timelock.abi);
   }
 
   if (network === "avalanche") {
-    return await ethers.getContractAt("Timelock", "0xdF23692341538340db0ff04C65017F51b69a29f6");
+    return await new ethers.Contract("0xdF23692341538340db0ff04C65017F51b69a29f6", Timelock.abi);
   }
 
   if (network === "botanix") {
-    return await ethers.getContractAt("Timelock", "0xca3e30b51A7c3bd40bFc52a61AB0cE57B3Ab3ad8");
+    return await new ethers.Contract("0xca3e30b51A7c3bd40bFc52a61AB0cE57B3Ab3ad8", Timelock.abi);
   }
 
   throw new Error("Unsupported network");
@@ -107,7 +108,7 @@ async function main() {
       address: member,
       name: contractName,
       isCodeValidated: false,
-      signalledRoles: [role],
+      signalledRoles: [hashString(role)],
       unapprovedRoles: [],
     };
 

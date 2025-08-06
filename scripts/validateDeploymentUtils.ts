@@ -7,6 +7,24 @@ import { getIsGmxDeployer } from "./validateRolesUtils";
 import { execSync } from "child_process";
 import { getContractCreationFromEtherscan } from "./etherscanUtils";
 import { FileCache } from "./cacheUtils";
+import { hashString } from "../utils/hash";
+
+const externalContractsAllowedForRoles = {
+  [hashString("TIMELOCK_ADMIN")]: true,
+  [hashString("TIMELOCK_MULTISIG")]: true,
+  [hashString("CONFIG_KEEPER")]: true,
+  [hashString("LIMITED_CONFIG_KEEPER")]: true,
+  [hashString("MARKET_KEEPER")]: true,
+  [hashString("FEE_KEEPER")]: true,
+  [hashString("FEE_DISTRIBUTION_KEEPER")]: true,
+  [hashString("ORDER_KEEPER")]: true,
+  [hashString("FROZEN_ORDER_KEEPER")]: true,
+  [hashString("LIQUIDATION_KEEPER")]: true,
+  [hashString("ADL_KEEPER")]: true,
+  [hashString("CONTRIBUTOR_KEEPER")]: true,
+  [hashString("CONTRIBUTOR_DISTRIBUTOR")]: true,
+  [hashString("CLAIM_ADMIN")]: true,
+};
 
 export interface SignalRoleInfo {
   account: string;
@@ -69,7 +87,18 @@ export async function validateSourceCode(provider: JsonRpcProvider, contractInfo
     console.log(`${contractInfo.name} already validated`);
     return;
   }
+  // isExternalContractAllowed would be true if signalledRoles is empty
+  const isExternalContractAllowed = contractInfo.signalledRoles.every(
+    (roleKey) => externalContractsAllowedForRoles[roleKey]
+  );
+
+  if (isExternalContractAllowed) {
+    contractInfo.isCodeValidated = true;
+    return;
+  }
+
   const { contractCreator } = await getContractCreationFromEtherscan(contractInfo.address);
+
   if (!getIsGmxDeployer(contractCreator)) {
     throw new Error(`❌ Contract creator for ${contractInfo.address} is not GMX!`);
   }
