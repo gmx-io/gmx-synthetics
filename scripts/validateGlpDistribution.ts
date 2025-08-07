@@ -1,6 +1,6 @@
 import fs from "fs";
 import { parse } from "fast-csv";
-import { bigNumberify, parseDecimalToUnits, PRECISION } from "../utils/math";
+import { bigNumberify, parseDecimalToUnits, FLOAT_PRECISION, PRECISION } from "../utils/math";
 
 function summarize(values) {
   if (values.length === 0) {
@@ -22,6 +22,15 @@ function summarize(values) {
   return { min, max, median, avg, sum };
 }
 
+function printDiffs(usdDiffs) {
+  const { min, max, median, avg } = summarize(usdDiffs);
+
+  console.log(`    min: ${ethers.utils.formatUnits(min, PRECISION)}`);
+  console.log(`    max: ${ethers.utils.formatUnits(max, PRECISION)}`);
+  console.log(`    median: ${ethers.utils.formatUnits(median, PRECISION)}`);
+  console.log(`    avg: ${ethers.utils.formatUnits(avg, PRECISION)}`);
+}
+
 async function main() {
   let rowCount = 0;
   let totalEthGlv = bigNumberify(0);
@@ -31,27 +40,33 @@ async function main() {
   const stream = fs.createReadStream("./out/glp-distribution.csv").pipe(parse({ headers: true }));
 
   const usdDiffs = [];
+  const percentageDiffs = [];
 
   for await (const row of stream) {
     console.log(`${row.account}: ${row.ethGlv}, ${row.btcGlv}, ${row.usdc}`);
     totalEthGlv = totalEthGlv.add(parseDecimalToUnits(row.ethGlv));
     totalBtcGlv = totalBtcGlv.add(parseDecimalToUnits(row.btcGlv));
     totalUsdc = totalUsdc.add(parseDecimalToUnits(row.usdc));
-    usdDiffs.push(parseDecimalToUnits(row.distributionUsd).sub(parseDecimalToUnits(row.duneEstimatedDistributionUsd)));
+    const usdDiff = parseDecimalToUnits(row.distributionUsd).sub(parseDecimalToUnits(row.duneEstimatedDistributionUsd));
+    const percentageDiff = usdDiff
+      .mul(FLOAT_PRECISION)
+      .mul(100)
+      .div(parseDecimalToUnits(row.duneEstimatedDistributionUsd));
+    usdDiffs.push(usdDiff);
+    percentageDiffs.push(percentageDiff);
     rowCount++;
   }
-
-  const { min, max, median, avg } = summarize(usdDiffs);
 
   console.log(`total rows: ${rowCount}`);
   console.log(`totalEthGlv: ${ethers.utils.formatUnits(totalEthGlv, PRECISION)}`);
   console.log(`totalBtcGlv: ${ethers.utils.formatUnits(totalBtcGlv, PRECISION)}`);
   console.log(`totalUsdc: ${ethers.utils.formatUnits(totalUsdc, PRECISION)}`);
+
   console.log(`distributionUsd - duneEstimatedDistributionUsd:`);
-  console.log(`    min: ${ethers.utils.formatUnits(min, PRECISION)}`);
-  console.log(`    max: ${ethers.utils.formatUnits(max, PRECISION)}`);
-  console.log(`    median: ${ethers.utils.formatUnits(median, PRECISION)}`);
-  console.log(`    avg: ${ethers.utils.formatUnits(avg, PRECISION)}`);
+  printDiffs(usdDiffs);
+
+  console.log(`distributionUsd - duneEstimatedDistributionUsd (%):`);
+  printDiffs(percentageDiffs);
 }
 
 main()
