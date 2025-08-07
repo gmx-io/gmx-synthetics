@@ -4,10 +4,10 @@ import path from "path";
 import prompts from "prompts";
 import { ethers } from "ethers";
 import hre from "hardhat";
-import { bigNumberify, expandDecimals, formatAmount } from "../../utils/math";
+import { bigNumberify, expandDecimals, formatAmount } from "../utils/math";
 import fetch from "node-fetch";
 
-import staticReceiverOverridesMap from "./receiverOverrides";
+import staticReceiverOverridesMap from "./incentives/receiverOverrides";
 
 normalizeAddressesInMap(staticReceiverOverridesMap);
 
@@ -291,6 +291,14 @@ export function getChainId() {
 
   if (hre.network.name === "avalanche") {
     return 43114;
+  }
+
+  if (hre.network.name === "botanix") {
+    return 3637;
+  }
+
+  if (hre.network.name === "arbitrumSepolia") {
+    return 421614;
   }
 
   throw new Error("Unsupported network");

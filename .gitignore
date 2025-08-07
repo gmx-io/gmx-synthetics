@@ -18,6 +18,7 @@ out
 
 #Hardhat files
 /cache/
+data
 artifacts
 deployments/localhost
 deployments.txt

@@ -188,6 +188,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       CLAIM_ADMIN: {
         "0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D": true, // security_multisig_1
         "0x2B5765633b7059a10a25af47B45409ea47AbC689": true, // claim_admin_1
+        "0xD2E217d800C41c86De1e01FD72009d4Eafc539a3": true, // claim_admin_2
         ...generalConfigKeepers.mainnet,
       },
       CONFIG_KEEPER: {
