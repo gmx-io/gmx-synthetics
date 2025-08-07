@@ -11,10 +11,13 @@ import { handleOrder, OrderType } from "../../utils/order";
 import { hashData, hashString } from "../../utils/hash";
 import { getClaimableCollateralTimeKey } from "../../utils/collateral";
 import { bridgeInTokens } from "../../utils/multichain";
+import { errorsContract } from "../../utils/error";
+import { getRelayParams } from "../../utils/relay/helpers";
+import { getClaimCollateralSignature, getClaimFundingFeesSignature } from "../../utils/relay/signatures";
 
 describe("MultichainClaimsRouter", () => {
   let fixture;
-  let user0, user1;
+  let user0, user1, user2;
   let dataStore,
     ethUsdMarket,
     wnt,
@@ -29,7 +32,7 @@ describe("MultichainClaimsRouter", () => {
 
   beforeEach(async () => {
     fixture = await deployFixture();
-    ({ user0, user1 } = fixture.accounts);
+    ({ user0, user1, user2 } = fixture.accounts);
     ({
       dataStore,
       ethUsdMarket,
@@ -135,12 +138,10 @@ describe("MultichainClaimsRouter", () => {
       });
     });
 
-    it("User receives funding fees in his multichain balance, pays relay fee from existing multichain balance", async () => {
-      // increase user's wnt multichain balance to pay for fees
-      await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
-
+    let createClaimParams: Parameters<typeof sendClaimFundingFees>[0];
+    beforeEach(async () => {
       // the user will pay the relay fee from his newly claimed tokens
-      const createClaimParams: Parameters<typeof sendClaimFundingFees>[0] = {
+      createClaimParams = {
         sender: relaySigner,
         signer: user1,
         feeParams: {
@@ -162,6 +163,11 @@ describe("MultichainClaimsRouter", () => {
         relayFeeToken: wnt.address,
         relayFeeAmount: relayFeeAmount,
       };
+    });
+
+    it("User receives funding fees in his multichain balance, pays relay fee from existing multichain balance", async () => {
+      // increase user's wnt multichain balance to pay for fees
+      await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
 
       expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(0);
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(feeAmount); // 0.003 ETH
@@ -178,32 +184,15 @@ describe("MultichainClaimsRouter", () => {
 
     it("User receives funding fees in his multichain balance, pays relay fee from newly claimed tokens", async () => {
       // the user will pay the relay fee from his newly claimed usdc tokens
-      const createClaimParams: Parameters<typeof sendClaimFundingFees>[0] = {
-        sender: relaySigner,
-        signer: user1,
-        feeParams: {
-          feeToken: usdc.address, // user will use his newly claimed usdc to pay for fees
-          feeAmount: expandDecimals(15, 6), // 15 USD = 0.003 ETH (feeAmount must be gt relayFeeAmount)
-          feeSwapPath: [ethUsdMarket.marketToken],
-        },
-        oracleParams: {
-          tokens: [wnt.address, usdc.address],
-          providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
-          data: ["0x", "0x"],
-        },
-        account: user1.address,
-        params: {
-          markets: [ethUsdMarket.marketToken],
-          tokens: [usdc.address],
-          receiver: user1.address, // receiver must be the same as account to pay from the newly claimed tokens
-        },
-        deadline: 9999999999,
-        srcChainId: chainId, // 0 means non-multichain action
-        desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
-        relayRouter: multichainClaimsRouter,
-        chainId,
-        relayFeeToken: wnt.address,
-        relayFeeAmount: expandDecimals(2, 15), // 0.002 ETH
+      createClaimParams.feeParams = {
+        feeToken: usdc.address, // user will use his newly claimed usdc to pay for fees
+        feeAmount: expandDecimals(15, 6), // 15 USD = 0.003 ETH (feeAmount must be gt relayFeeAmount)
+        feeSwapPath: [ethUsdMarket.marketToken],
+      };
+      createClaimParams.oracleParams = {
+        tokens: [wnt.address, usdc.address],
+        providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
+        data: ["0x", "0x"],
       };
 
       expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(0);
@@ -217,6 +206,94 @@ describe("MultichainClaimsRouter", () => {
         expandDecimals(1, 15)
       ); // 0.003 (equivalent of $15) - 0.002 = 0.001 ETH (received as residualFee)
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq("42600019"); // 42.600019 USD (received from claiming, after paying relay fee)
+    });
+
+    it("should revert if signature is invalid due to incorrect signer", async () => {
+      createClaimParams.signer = user2; // incorrect signer
+      await expect(sendClaimFundingFees(createClaimParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidRecoveredSigner"
+      );
+
+      createClaimParams.signer = user1; // correct signer
+      await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
+      await expect(sendClaimFundingFees(createClaimParams)).to.not.be.reverted;
+    });
+
+    it("should transfer WNT to relayer for relay fee", async () => {
+      const relayInitial = await wnt.balanceOf(GELATO_RELAY_ADDRESS);
+      await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
+      await sendClaimFundingFees(createClaimParams);
+      const relayFinal = await wnt.balanceOf(GELATO_RELAY_ADDRESS);
+      expect(relayFinal.sub(relayInitial)).eq(relayFeeAmount);
+    });
+
+    it("should revert if deadline has passed", async () => {
+      createClaimParams.deadline = 1; // past deadline
+      await expect(sendClaimFundingFees(createClaimParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "DeadlinePassed"
+      );
+
+      createClaimParams.deadline = 9999999999; // future deadline
+      await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
+      await expect(sendClaimFundingFees(createClaimParams)).to.not.be.reverted;
+    });
+
+    it("should revert if any data in params is tampered", async () => {
+      createClaimParams.userNonce = 1; // set value upfront to have the same user nonce for relayParams here and when recalculated in sendClaimFundingFees
+      const relayParams = await getRelayParams(createClaimParams);
+      const signature = await getClaimFundingFeesSignature({
+        ...createClaimParams,
+        relayParams,
+        verifyingContract: createClaimParams.relayRouter.address,
+      });
+      createClaimParams.signature = signature;
+
+      createClaimParams.deadline = 9999999998; // tamper a param field
+      await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
+      await expect(sendClaimFundingFees(createClaimParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidRecoveredSigner"
+      );
+
+      createClaimParams.deadline = 9999999999; // use the original value again
+      await expect(sendClaimFundingFees(createClaimParams)).to.not.be.reverted;
+    });
+
+    it("should revert if fee cannot be covered", async () => {
+      await expect(sendClaimFundingFees(createClaimParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InsufficientMultichainBalance"
+      );
+
+      await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
+      await sendClaimFundingFees(createClaimParams); //).to.not.be.reverted;
+    });
+
+    it("should revert if same params are reused (simulate replay)", async () => {
+      createClaimParams.userNonce = 1; // set value upfront to have the same user nonce for relayParams here and when recalculated in sendClaimFundingFees
+      const relayParams = await getRelayParams(createClaimParams);
+      const signature = await getClaimFundingFeesSignature({
+        ...createClaimParams,
+        relayParams,
+        verifyingContract: createClaimParams.relayRouter.address,
+      });
+      createClaimParams.signature = signature;
+      await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
+      await sendClaimFundingFees(createClaimParams);
+
+      // reuse exact same params and signature
+      await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
+      await expect(sendClaimFundingFees(createClaimParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidUserDigest"
+      );
+
+      // reset nonce and signature (sendClaimFundingFees will recalculate them)
+      createClaimParams.userNonce = undefined;
+      createClaimParams.signature = undefined;
+      await expect(sendClaimFundingFees(createClaimParams)).to.not.be.reverted;
     });
   });
 
@@ -269,12 +346,10 @@ describe("MultichainClaimsRouter", () => {
       );
     });
 
-    it("User receives collateral in his multichain balance, pays relay fee from his existing multicahin balance", async () => {
-      // increase user's wnt multichain balance to pay for fees
-      await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
-
+    let createClaimParams: Parameters<typeof sendClaimCollateral>[0];
+    beforeEach(async () => {
       // the user will pay the relay fee from his newly claimed tokens
-      const createClaimParams: Parameters<typeof sendClaimCollateral>[0] = {
+      createClaimParams = {
         sender: relaySigner,
         signer: user1,
         feeParams: {
@@ -297,6 +372,11 @@ describe("MultichainClaimsRouter", () => {
         relayFeeToken: wnt.address,
         relayFeeAmount: relayFeeAmount, // 0.002 ETH
       };
+    });
+
+    it("User receives collateral in his multichain balance, pays relay fee from his existing multicahin balance", async () => {
+      // increase user's wnt multichain balance to pay for fees
+      await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
 
       expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(0);
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(feeAmount); // 0.003 ETH
@@ -315,33 +395,15 @@ describe("MultichainClaimsRouter", () => {
 
     it("User receives collateral in his multichain balance, pays relay fee from newly claimed tokens", async () => {
       // the user will pay the relay fee from his newly claimed usdc tokens
-      const createClaimParams: Parameters<typeof sendClaimCollateral>[0] = {
-        sender: relaySigner,
-        signer: user1,
-        feeParams: {
-          feeToken: usdc.address, // user will use his newly claimed usdc to pay for fees
-          feeAmount: expandDecimals(15, 6), // 15 USD = 0.003 ETH (feeAmount must be gt relayFeeAmount)
-          feeSwapPath: [ethUsdMarket.marketToken],
-        },
-        oracleParams: {
-          tokens: [wnt.address, usdc.address],
-          providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
-          data: ["0x", "0x"],
-        },
-        account: user1.address,
-        params: {
-          markets: [ethUsdMarket.marketToken],
-          tokens: [usdc.address],
-          timeKeys: [timeKey],
-          receiver: user1.address, // receiver must be the same as account to pay from the newly claimed tokens
-        },
-        deadline: 9999999999,
-        srcChainId: chainId, // 0 means non-multichain action
-        desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
-        relayRouter: multichainClaimsRouter,
-        chainId,
-        relayFeeToken: wnt.address,
-        relayFeeAmount: expandDecimals(2, 15), // 0.002 ETH
+      createClaimParams.feeParams = {
+        feeToken: usdc.address, // user will use his newly claimed usdc to pay for fees
+        feeAmount: expandDecimals(15, 6), // 15 USD = 0.003 ETH (feeAmount must be gt relayFeeAmount)
+        feeSwapPath: [ethUsdMarket.marketToken],
+      };
+      createClaimParams.oracleParams = {
+        tokens: [wnt.address, usdc.address],
+        providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
+        data: ["0x", "0x"],
       };
 
       expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(0);
@@ -357,6 +419,69 @@ describe("MultichainClaimsRouter", () => {
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(
         expandDecimals(304, 6).sub(expandDecimals(15, 6))
       ); // claimable collateral is 304 USD, 15 USD is paid as relay fee from the newly claimed tokens
+    });
+
+    it("should revert if signature is invalid due to incorrect signer", async () => {
+      createClaimParams.signer = user2; // incorrect signer
+      await expect(sendClaimCollateral(createClaimParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidRecoveredSigner"
+      );
+
+      createClaimParams.signer = user1; // correct signer
+      await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
+      await expect(sendClaimCollateral(createClaimParams)).to.not.be.reverted;
+    });
+
+    it("should transfer WNT to relayer for relay fee", async () => {
+      const relayInitial = await wnt.balanceOf(GELATO_RELAY_ADDRESS);
+      await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
+      await sendClaimCollateral(createClaimParams);
+      const relayFinal = await wnt.balanceOf(GELATO_RELAY_ADDRESS);
+      expect(relayFinal.sub(relayInitial)).eq(relayFeeAmount);
+    });
+
+    it("should revert if deadline has passed", async () => {
+      createClaimParams.deadline = 1; // past deadline
+      await expect(sendClaimCollateral(createClaimParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "DeadlinePassed"
+      );
+
+      createClaimParams.deadline = 9999999999; // future deadline
+      await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
+      await expect(sendClaimCollateral(createClaimParams)).to.not.be.reverted;
+    });
+
+    it("should revert if any data in params is tampered", async () => {
+      createClaimParams.userNonce = 1; // set value upfront to have the same user nonce for relayParams here and when recalculated in sendClaimCollateral
+      const relayParams = await getRelayParams(createClaimParams);
+      const signature = await getClaimCollateralSignature({
+        ...createClaimParams,
+        relayParams,
+        verifyingContract: createClaimParams.relayRouter.address,
+      });
+      createClaimParams.signature = signature;
+
+      createClaimParams.deadline = 9999999998; // tamper a param field
+      await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
+      await expect(sendClaimCollateral(createClaimParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidRecoveredSigner"
+      );
+
+      createClaimParams.deadline = 9999999999; // use the original value again
+      await expect(sendClaimCollateral(createClaimParams)).to.not.be.reverted;
+    });
+
+    it("should revert if fee cannot be covered", async () => {
+      await expect(sendClaimCollateral(createClaimParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InsufficientMultichainBalance"
+      );
+
+      await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
+      await sendClaimCollateral(createClaimParams); //).to.not.be.reverted;
     });
   });
 
@@ -392,15 +517,10 @@ describe("MultichainClaimsRouter", () => {
       });
     });
 
-    it("Affiliate receives rewards in his multichain balance, pays relay fee from existing multichain balance", async () => {
-      expect(
-        await dataStore.getUint(keys.affiliateRewardKey(ethUsdMarket.marketToken, usdc.address, user1.address))
-      ).to.eq(expandDecimals(25, 6)); // $25
-      // increase affiliate's wnt multichain balance to pay for fees
-      await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
-
+    let createClaimParams: Parameters<typeof sendClaimAffiliateRewards>[0];
+    beforeEach(async () => {
       // affiliate will pay the relay fee from his existing wnt multichain balance
-      const createClaimParams: Parameters<typeof sendClaimAffiliateRewards>[0] = {
+      createClaimParams = {
         sender: relaySigner,
         signer: user1,
         feeParams: {
@@ -422,6 +542,14 @@ describe("MultichainClaimsRouter", () => {
         relayFeeToken: wnt.address,
         relayFeeAmount: relayFeeAmount,
       };
+    });
+
+    it("Affiliate receives rewards in his multichain balance, pays relay fee from existing multichain balance", async () => {
+      expect(
+        await dataStore.getUint(keys.affiliateRewardKey(ethUsdMarket.marketToken, usdc.address, user1.address))
+      ).to.eq(expandDecimals(25, 6)); // $25
+      // increase affiliate's wnt multichain balance to pay for fees
+      await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
 
       expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(0);
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(feeAmount);
@@ -444,32 +572,15 @@ describe("MultichainClaimsRouter", () => {
       ).to.eq(expandDecimals(25, 6)); // $25
 
       // the user will pay the relay fee from his newly claimed tokens
-      const createClaimParams: Parameters<typeof sendClaimAffiliateRewards>[0] = {
-        sender: relaySigner,
-        signer: user1,
-        feeParams: {
-          feeToken: usdc.address, // user will use his newly claimed usdc to pay for fees
-          feeAmount: expandDecimals(15, 6), // 15 USD = 0.003 ETH (feeAmount must be gt relayFeeAmount)
-          feeSwapPath: [ethUsdMarket.marketToken],
-        },
-        oracleParams: {
-          tokens: [wnt.address, usdc.address],
-          providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
-          data: ["0x", "0x"],
-        },
-        account: user1.address,
-        params: {
-          markets: [ethUsdMarket.marketToken],
-          tokens: [usdc.address],
-          receiver: user1.address, // receiver must be the same as account to pay from the newly claimed tokens
-        },
-        deadline: 9999999999,
-        srcChainId: chainId, // 0 means non-multichain action
-        desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
-        relayRouter: multichainClaimsRouter,
-        chainId,
-        relayFeeToken: wnt.address,
-        relayFeeAmount: expandDecimals(2, 15), // 0.002 ETH
+      createClaimParams.feeParams = {
+        feeToken: usdc.address, // user will use his newly claimed usdc to pay for fees
+        feeAmount: expandDecimals(15, 6), // 15 USD = 0.003 ETH (feeAmount must be gt relayFeeAmount)
+        feeSwapPath: [ethUsdMarket.marketToken],
+      };
+      createClaimParams.oracleParams = {
+        tokens: [wnt.address, usdc.address],
+        providers: [chainlinkPriceFeedProvider.address, chainlinkPriceFeedProvider.address],
+        data: ["0x", "0x"],
       };
 
       expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(0);

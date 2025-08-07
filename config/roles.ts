@@ -121,6 +121,14 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
     },
   };
 
+  const generalConfigKeepers = {
+    mainnet: {
+      "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745": true, // general_keeper_1
+      "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
+      "0xD5F8b9ba4255B2F73b06f245fcca73D114D1D460": true, // general_keeper_3
+    },
+  };
+
   const testnetAdmins = {
     "0xC84f3398eDf6336E1Ef55b50Ca3F9f9f96B8b504": true,
     "0xFb11f15f206bdA02c224EDC744b0E50E46137046": true,
@@ -177,13 +185,16 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       LIQUIDATION_KEEPER: syntheticKeepers.mainnet,
       ORDER_KEEPER: { ...syntheticKeepers.mainnet, ...chainlinkKeepers.arbitrum, ...gelatoKeepers.arbitrum },
       LIMITED_CONFIG_KEEPER: syntheticKeepers.mainnet,
+      CLAIM_ADMIN: {
+        "0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D": true, // security_multisig_1
+        "0x2B5765633b7059a10a25af47B45409ea47AbC689": true, // claim_admin_1
+        ...generalConfigKeepers.mainnet,
+      },
       CONFIG_KEEPER: {
-        "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745": true, // general_keeper_1
-        "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
-        "0xD5F8b9ba4255B2F73b06f245fcca73D114D1D460": true, // general_keeper_3
         "0x4b6ACC5b2db1757bD49408FeE92e32D39608B5d9": true, // multisig_1
         "0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D": true, // security_multisig_1
         "0x9Ff65141a396A3ea2Eb4CdBdc5A8A4c4Cb4BD189": true, // ConfigSyncer
+        ...generalConfigKeepers.mainnet,
       },
       FEE_KEEPER: {
         "0x43CE1d475e06c65DD879f4ec644B8e0E10ff2b6D": true, // fee_keeper_1
@@ -194,9 +205,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0xD5F8b9ba4255B2F73b06f245fcca73D114D1D460": true, // general_keeper_3
       },
       MARKET_KEEPER: {
-        "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745": true, // general_keeper_1
-        "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
-        "0xD5F8b9ba4255B2F73b06f245fcca73D114D1D460": true, // general_keeper_3
+        ...generalConfigKeepers.mainnet,
       },
       ROLE_ADMIN: {
         "0x625D4b5456f065756De8d618dE094bE7618e8A0d": true, // TimelockConfig
@@ -271,13 +280,16 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       LIQUIDATION_KEEPER: syntheticKeepers.mainnet,
       ORDER_KEEPER: syntheticKeepers.mainnet,
       LIMITED_CONFIG_KEEPER: syntheticKeepers.mainnet,
+      CLAIM_ADMIN: {
+        "0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D": true, // security_multisig_1
+        "0x2B5765633b7059a10a25af47B45409ea47AbC689": true, // claim_admin_1
+        ...generalConfigKeepers.mainnet,
+      },
       CONFIG_KEEPER: {
-        "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745": true, // general_keeper_1
-        "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
-        "0xD5F8b9ba4255B2F73b06f245fcca73D114D1D460": true, // general_keeper_3
         "0x15F9eBC71c539926B8f652a534d29B4Af57CaD55": true, // multisig_1
         "0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D": true, // security_multisig_1
         "0x7dCec0356434d03a6071C96347516df3eF4471bB": true, // ConfigSyncer_4
+        ...generalConfigKeepers.mainnet,
       },
       FEE_KEEPER: {
         "0x43CE1d475e06c65DD879f4ec644B8e0E10ff2b6D": true, // fee_keeper_1
@@ -288,9 +300,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0xD5F8b9ba4255B2F73b06f245fcca73D114D1D460": true, // general_keeper_3
       },
       MARKET_KEEPER: {
-        "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745": true, // general_keeper_1
-        "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
-        "0xD5F8b9ba4255B2F73b06f245fcca73D114D1D460": true, // general_keeper_3
+        ...generalConfigKeepers.mainnet,
       },
       ROLE_ADMIN: {
         "0x40794bcBCFb347689fa8c4da69f6405Cf0ECf2C5": true, // TimelockConfig
@@ -365,19 +375,20 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       LIQUIDATION_KEEPER: syntheticKeepers.mainnet,
       ORDER_KEEPER: syntheticKeepers.mainnet,
       LIMITED_CONFIG_KEEPER: syntheticKeepers.mainnet,
+      CLAIM_ADMIN: {
+        "0x656fa39BdB5984b477FA6aB443195D72D1Accc1c": true, // security_multisig_botanix
+        "0x2B5765633b7059a10a25af47B45409ea47AbC689": true, // claim_admin_1
+        ...generalConfigKeepers.mainnet,
+      },
       CONFIG_KEEPER: {
-        "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745": true, // general_keeper_1
-        "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
-        "0xD5F8b9ba4255B2F73b06f245fcca73D114D1D460": true, // general_keeper_3
-        "0x656fa39BdB5984b477FA6aB443195D72D1Accc1c": true, // multisig_1
+        "0x656fa39BdB5984b477FA6aB443195D72D1Accc1c": true, // security_multisig_botanix
+        ...generalConfigKeepers.mainnet,
       },
       FEE_KEEPER: {
         "0x43CE1d475e06c65DD879f4ec644B8e0E10ff2b6D": true, // fee_keeper_1
       },
       MARKET_KEEPER: {
-        "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745": true, // general_keeper_1
-        "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
-        "0xD5F8b9ba4255B2F73b06f245fcca73D114D1D460": true, // general_keeper_3
+        ...generalConfigKeepers.mainnet,
       },
       ROLE_ADMIN: {
         "0x8fB97fEfF5f7CfbE9c63D51F6CbBC914E425d965": true, // TimelockConfig
@@ -398,7 +409,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       TIMELOCK_ADMIN: {
         "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // timelock_admin_1
         "0xE014cbD60A793901546178E1c16ad9132C927483": true, // timelock_admin_2
-        "0x656fa39BdB5984b477FA6aB443195D72D1Accc1c": true, // multisig_1
+        "0x656fa39BdB5984b477FA6aB443195D72D1Accc1c": true, // security_multisig_botanix
       },
       TIMELOCK_MULTISIG: {
         "0x656fa39BdB5984b477FA6aB443195D72D1Accc1c": true, // multisig_1

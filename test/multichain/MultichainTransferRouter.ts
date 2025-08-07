@@ -4,12 +4,13 @@ import { deployFixture } from "../../utils/fixture";
 import { expandDecimals } from "../../utils/math";
 import { logGasUsage } from "../../utils/gas";
 import * as keys from "../../utils/keys";
-import { sendBridgeOut } from "../../utils/relay/multichain";
+import { getBridgeOutSignature, sendBridgeOut } from "../../utils/relay/multichain";
 import { GELATO_RELAY_ADDRESS } from "../../utils/relay/addresses";
 import { bridgeInTokens } from "../../utils/multichain";
 import { impersonateAccount, setBalance } from "@nomicfoundation/hardhat-network-helpers";
 import { parseLogs } from "../../utils/event";
 import { errorsContract } from "../../utils/error";
+import { getRelayParams } from "../../utils/relay/helpers";
 
 describe("MultichainTransferRouter", () => {
   let fixture;
@@ -233,6 +234,144 @@ describe("MultichainTransferRouter", () => {
 
       // 5. The bridge out fee (in native tokens) was sent to the provider
       expect(await hre.ethers.provider.getBalance(mockStargatePoolUsdc.address)).eq(bridgeOutFee); // 0.001 ETH
+    });
+
+    it("should revert if signature is invalid due to incorrect signer", async () => {
+      // add usdc to user's multichain balance
+      await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolUsdc.address), true);
+      await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolUsdc.address), true);
+      await bridgeInTokens(fixture, { account: user1, token: usdc, amount: bridgeOutAmount });
+      // add wnt to user's multichain balance
+      await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolNative.address), true);
+      await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolNative.address), true);
+      await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
+
+      bridgeOutParams.signer = user2; // incorrect signer
+      await expect(sendBridgeOut(bridgeOutParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidRecoveredSigner"
+      );
+
+      bridgeOutParams.signer = user1; // correct signer
+      await expect(sendBridgeOut(bridgeOutParams)).to.not.be.reverted;
+    });
+
+    it("should transfer WNT to relayer for relay fee", async () => {
+      // add usdc to user's multichain balance
+      await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolUsdc.address), true);
+      await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolUsdc.address), true);
+      await bridgeInTokens(fixture, { account: user1, token: usdc, amount: bridgeOutAmount });
+      // add wnt to user's multichain balance
+      await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolNative.address), true);
+      await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolNative.address), true);
+      await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
+
+      const relayBefore = await wnt.balanceOf(GELATO_RELAY_ADDRESS);
+      await sendBridgeOut(bridgeOutParams);
+      const relayAfter = await wnt.balanceOf(GELATO_RELAY_ADDRESS);
+      expect(relayAfter).eq(relayBefore.add(relayFeeAmount));
+    });
+
+    it("should revert if deadline has passed", async () => {
+      // add usdc to user's multichain balance
+      await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolUsdc.address), true);
+      await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolUsdc.address), true);
+      await bridgeInTokens(fixture, { account: user1, token: usdc, amount: bridgeOutAmount });
+      // add wnt to user's multichain balance
+      await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolNative.address), true);
+      await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolNative.address), true);
+      await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
+
+      bridgeOutParams.deadline = 1; // past deadline
+      await expect(sendBridgeOut(bridgeOutParams)).to.be.revertedWithCustomError(errorsContract, "DeadlinePassed");
+
+      bridgeOutParams.deadline = 9999999999; // future deadline
+      await expect(sendBridgeOut(bridgeOutParams)).to.not.be.reverted;
+    });
+
+    it("should revert if any data in params is tampered", async () => {
+      // add usdc to user's multichain balance
+      await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolUsdc.address), true);
+      await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolUsdc.address), true);
+      await bridgeInTokens(fixture, { account: user1, token: usdc, amount: bridgeOutAmount });
+      // add wnt to user's multichain balance
+      await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolNative.address), true);
+      await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolNative.address), true);
+      await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
+
+      bridgeOutParams.userNonce = 1; // set value upfront to have the same user nonce for relayParams here and when recalculated in sendCreateDeposit
+      const relayParams = await getRelayParams(bridgeOutParams);
+      const signature = await getBridgeOutSignature({
+        ...bridgeOutParams,
+        relayParams,
+        verifyingContract: bridgeOutParams.relayRouter.address,
+      });
+      bridgeOutParams.signature = signature;
+
+      bridgeOutParams.params.minAmountOut = 1; // tamper a param field
+      await expect(sendBridgeOut(bridgeOutParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidRecoveredSigner"
+      );
+
+      bridgeOutParams.params.minAmountOut = 0; // use the original value again
+      await expect(sendBridgeOut(bridgeOutParams)).to.not.be.reverted;
+    });
+
+    it("should revert if fee cannot be covered", async () => {
+      // add usdc to user's multichain balance
+      await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolUsdc.address), true);
+      await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolUsdc.address), true);
+      await bridgeInTokens(fixture, { account: user1, token: usdc, amount: bridgeOutAmount });
+      // add wnt to user's multichain balance
+      await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolNative.address), true);
+      await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolNative.address), true);
+      await bridgeInTokens(fixture, { account: user1, amount: feeAmount.sub(1) }); // missing 1 wei
+
+      await expect(sendBridgeOut(bridgeOutParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InsufficientMultichainBalance"
+      );
+
+      await bridgeInTokens(fixture, { account: user1, amount: 1 }); // top-up with the missing 1 wei
+      await expect(sendBridgeOut(bridgeOutParams)).to.not.be.reverted;
+    });
+
+    it("should revert if same params are reused (simulate replay)", async () => {
+      // add usdc to user's multichain balance
+      await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolUsdc.address), true);
+      await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolUsdc.address), true);
+      await bridgeInTokens(fixture, { account: user1, token: usdc, amount: bridgeOutAmount });
+      // add wnt to user's multichain balance
+      await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolNative.address), true);
+      await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolNative.address), true);
+      await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
+
+      bridgeOutParams.userNonce = 1; // set value upfront to have the same user nonce for relayParams here and when recalculated in sendCreateDeposit
+      const relayParams = await getRelayParams(bridgeOutParams);
+      const signature = await getBridgeOutSignature({
+        ...bridgeOutParams,
+        relayParams,
+        verifyingContract: bridgeOutParams.relayRouter.address,
+      });
+      bridgeOutParams.signature = signature;
+      await sendBridgeOut(bridgeOutParams);
+
+      // add usdc to user's multichain balance
+      await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolUsdc.address), true);
+      await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolUsdc.address), true);
+      await bridgeInTokens(fixture, { account: user1, token: usdc, amount: bridgeOutAmount });
+      // add wnt to user's multichain balance
+      await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolNative.address), true);
+      await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolNative.address), true);
+      await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
+      // reuse exact same params and signature
+      await expect(sendBridgeOut(bridgeOutParams)).to.be.revertedWithCustomError(errorsContract, "InvalidUserDigest");
+
+      // reset nonce and signature (sendBridgeOut will recalculate them)
+      bridgeOutParams.userNonce = undefined;
+      bridgeOutParams.signature = undefined;
+      await expect(sendBridgeOut(bridgeOutParams)).to.not.be.reverted;
     });
   });
 
