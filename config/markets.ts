@@ -3130,8 +3130,8 @@ const config: {
       maxOpenInterest: decimalToFloat(2_500_000),
       maxPoolUsdForDeposit: decimalToFloat(1_500_000),
 
-      maxLongTokenPoolAmount: expandDecimals(370, 18), // ~1M USD (2x the max open interest)
-      maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x the max open interest)
+      maxLongTokenPoolAmount: expandDecimals(390, 18),
+      maxShortTokenPoolAmount: expandDecimals(1_500_000, 6),
     },
     {
       tokens: { indexToken: "MOODENG", longToken: "WBTC.e", shortToken: "USDC" },
