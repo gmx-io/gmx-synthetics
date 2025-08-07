@@ -5,7 +5,13 @@ export const MAX_UINT8 = "255"; // 2^8 - 1
 export const MAX_UINT32 = "4294967295"; // 2^32 - 1
 export const MAX_UINT64 = "18446744073709551615"; // 2^64 - 1
 
+export const PRECISION = 30;
 export const FLOAT_PRECISION = expandDecimals(1, 30);
+
+export function parseDecimalToUnits(value) {
+  const decimal = new Decimal(value);
+  return ethers.utils.parseUnits(decimal.toFixed(), PRECISION);
+}
 
 export function percentageToFloat(value) {
   if (value[value.length - 1] !== "%") {
