@@ -3,4 +3,15 @@ src = 'contracts'
 out = 'out'
 libs = ['node_modules', 'lib']
 test = 'test'
-cache_path  = 'cache_forge'
+cache_path = 'cache_forge'
+fork_url = 'http://127.0.0.1:8545'
+# sender = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266' Hardhat's first account from default mnemonic not needed for read-only tests
+fs_permissions = [{ access = "read", path = "./deployments" }]
+
+[rpc_endpoints]
+localhost = 'http://127.0.0.1:8545'
+
+[invariant]
+runs = 256
+depth = 15
+fail_on_revert = false
