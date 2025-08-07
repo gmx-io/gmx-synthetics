@@ -97,7 +97,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         longToken: "WBTC.e",
         shortToken: "USDC",
         shiftMaxPriceImpactFactor: percentageToFloat("0.025%"),
-        shiftMinInterval: 5 * 60, // 5 minutes
+        shiftMinInterval: 30 * 60, // 30 minutes
         minTokensForFirstGlvDeposit: expandDecimals(1, 18),
         markets: [
           createGlvMarketConfig("BTC", 30_000_000, 2.7),
