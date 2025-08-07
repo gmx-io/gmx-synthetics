@@ -1,20 +1,19 @@
 import prompts from "prompts";
 import hre from "hardhat";
-import { hashString } from "../utils/hash";
+import { hashString } from "../../utils/hash";
 
 const distributionId = 4672592;
 let write = process.env.WRITE === "true";
+const terms = process.env.TERMS;
 const CLAIM_ADMIN = hashString("CLAIM_ADMIN");
 
 async function main() {
-  if (hre.network.name !== "arbitrum") {
-    throw new Error("This script is only for Arbitrum");
+  if (!terms) {
+    throw new Error("TERMS is not set");
   }
 
   const claimHandler = await hre.ethers.getContract("ClaimHandler");
-  const roleStore = await hre.ethers.getContract("RoleStore");
 
-  const terms = "I accept the terms and conditions of the GLP distribution";
   const params = [distributionId, terms];
 
   if (!write) {
@@ -33,6 +32,7 @@ async function main() {
     console.log("tx", tx.hash);
     await tx.wait();
   } else {
+    const roleStore = await hre.ethers.getContract("RoleStore");
     const claimAdmin = (await roleStore.getRoleMembers(CLAIM_ADMIN, 0, 1))[0];
     const result = await claimHandler.connect(claimAdmin).callStatic.setTerms(...params);
     console.log("result", result);
