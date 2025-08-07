@@ -1,8 +1,0 @@
-[profile.default]
-src = "src"
-out = "out"
-libs = ["lib", "../contracts"]
-
-remappings = ["@contracts/=../contracts/"]
-
-fs_permissions = [{ access = "read", path = "./deployments" }]
