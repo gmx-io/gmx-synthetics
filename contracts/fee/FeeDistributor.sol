@@ -73,7 +73,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
     // @dev initiate the weekly fee distribution process
     function initiateDistribute() external nonReentrant onlyFeeDistributionKeeper {
         // validate that the FEE_RECEIVER address stored in dataStore = FeeDistributorVault
-        address feeReceiver = dataStore.getAddress(Keys.FEE_RECEIVER);
+        address feeReceiver = getAddress(Keys.FEE_RECEIVER);
         if (feeReceiver != address(feeDistributorVault)) {
             revert Errors.InvalidFeeReceiver(feeReceiver);
         }
@@ -94,7 +94,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         uint256 targetChainIndex;
         for (uint256 i; i < chainIdsLength; i++) {
             uint256 chainId = chainIds[i];
-            address extendedGmxTracker = getAddress(chainId, EXTENDED_GMX_TRACKER);
+            address extendedGmxTracker = getAddressInfoForChain(chainId, EXTENDED_GMX_TRACKER);
 
             if (chainId == block.chainid) {
                 uint256 feeAmountGmxCurrentChain = getUint(Keys.withdrawableBuybackTokenAmountKey(gmx)) +
@@ -105,12 +105,12 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
                 continue;
             }
 
-            address gmxTargetChain = getAddress(chainId, GMX);
+            address gmxTargetChain = getAddressInfoForChain(chainId, GMX);
             uint32 layerZeroChainId = uint32(getUint(Keys2.feeDistributorLayerZeroChainIdKey(chainId)));
             uint256 readRequestIndex = targetChainIndex * 3;
             readRequestInputs[readRequestIndex] = setReadRequestInput(
                 layerZeroChainId,
-                getAddress(chainId, DATASTORE),
+                getAddressInfoForChain(chainId, DATASTORE),
                 abi.encodeWithSelector(
                     DataStore.getUint.selector,
                     Keys.withdrawableBuybackTokenAmountKey(gmxTargetChain)
@@ -121,7 +121,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
             readRequestInputs[readRequestIndex] = setReadRequestInput(
                 layerZeroChainId,
                 gmxTargetChain,
-                abi.encodeWithSelector(IERC20.balanceOf.selector, getAddress(chainId, Keys.FEE_RECEIVER))
+                abi.encodeWithSelector(IERC20.balanceOf.selector, getAddressInfoForChain(chainId, Keys.FEE_RECEIVER))
             );
             readRequestIndex++;
 
@@ -299,7 +299,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         uint256 feesV2Usd
     ) external nonReentrant onlyFeeDistributionKeeper {
         // validate that the TREASURY address stored in dataStore is not a zero address
-        address treasuryAddress = getAddress(block.chainid, TREASURY);
+        address treasuryAddress = getAddressInfo(TREASURY);
         if (treasuryAddress == address(0)) {
             revert Errors.ZeroTreasuryAddress();
         }
@@ -369,7 +369,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
             for (uint256 i; i < params.length; i++) {
                 ClaimUtils.DepositParam memory param = params[i];
 
-                address vester = getAddress(block.chainid, ESGMX_VESTER);
+                address vester = getAddressInfo(ESGMX_VESTER);
                 uint256 totalEsGmxRewards = IVester(vester).bonusRewards(param.account) + param.amount;
                 IVester(vester).setBonusRewards(param.account, totalEsGmxRewards);
 
@@ -438,7 +438,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
 
     function bridgeGmx(uint256[] memory chainIds, uint256[] memory bridgingAmounts) internal returns (uint256) {
         // Execute bridging transactions from current chain
-        address layerzeroOft = getAddress(block.chainid, LAYERZERO_OFT);
+        address layerzeroOft = getAddressInfo(LAYERZERO_OFT);
         uint256 sharedDecimals = IOFT(layerzeroOft).sharedDecimals();
         uint256 decimalConversionRate = 10 ** (18 - sharedDecimals);
         uint256 totalGmxBridgedOut;
@@ -459,7 +459,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
             // Prepare remaining params needed for the bridging transaction
             uint256 chainId = chainIds[i];
             uint32 layerzeroChainId = uint32(getUint(Keys2.feeDistributorLayerZeroChainIdKey(chainId)));
-            bytes32 to = Cast.toBytes32(getAddress(chainId, Keys.FEE_RECEIVER));
+            bytes32 to = Cast.toBytes32(getAddressInfoForChain(chainId, Keys.FEE_RECEIVER));
             uint256 minAmountOut = removeDust(
                 Precision.applyFactor(sendAmount, getUint(Keys2.feeDistributorBridgeSlippageFactorKey(chainId))),
                 decimalConversionRate
@@ -555,7 +555,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
                     revert Errors.MaxWntFromTreasuryExceeded(maxWntFromTreasury, additionalWntFromTreasury);
                 }
                 IERC20(wnt).transferFrom(
-                    getAddress(block.chainid, TREASURY),
+                    getAddressInfo(TREASURY),
                     address(feeDistributorVault),
                     additionalWntFromTreasury
                 );
@@ -590,11 +590,11 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         }
 
         // transfer the WNT for chainlink costs and WNT for the treasury
-        transferOut(wnt, getAddress(block.chainid, CHAINLINK), wntForChainlink);
-        transferOut(wnt, getAddress(block.chainid, TREASURY), wntForTreasury);
+        transferOut(wnt, getAddressInfo(CHAINLINK), wntForChainlink);
+        transferOut(wnt, getAddressInfo(TREASURY), wntForTreasury);
 
         // transfer gmx fees for the week and update the last distribution time and tokens per interval
-        address extendedGmxTracker = getAddress(block.chainid, EXTENDED_GMX_TRACKER);
+        address extendedGmxTracker = getAddressInfo(EXTENDED_GMX_TRACKER);
         uint256 feeAmountGmx = getUint(Keys2.feeDistributorFeeAmountGmxKey(block.chainid));
         address distributor = IRewardTracker(extendedGmxTracker).distributor();
         transferOut(gmx, extendedGmxTracker, feeAmountGmx);
@@ -708,8 +708,12 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         return dataStore.getAddress(fullKey);
     }
 
-    function getAddress(uint256 chainId, bytes32 addressKey) internal view returns (address) {
-        return getAddress(Keys2.feeDistributorAddressInfoKey(chainId, addressKey));
+    function getAddressInfo(bytes32 addressKey) internal view returns (address) {
+        return getAddress(Keys2.feeDistributorAddressInfoForChainKey(block.chainid, addressKey));
+    }
+
+    function getAddressInfoForChain(uint256 chainId, bytes32 addressKey) internal view returns (address) {
+        return getAddress(Keys2.feeDistributorAddressInfoForChainKey(chainId, addressKey));
     }
 
     function getFeeDistributorVaultBalance(address token) internal view returns (uint256) {

@@ -56,8 +56,8 @@ library Keys2 {
     bytes32 public constant FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP = keccak256(abi.encode("FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP"));
     // @dev key for FeeDistributor LayerZero version of chainId
     bytes32 public constant FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID = keccak256(abi.encode("FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID"));
-    // @dev key for contract and keeper addresses used in FeeDistributor
-    bytes32 public constant FEE_DISTRIBUTOR_ADDRESS_INFO = keccak256(abi.encode("FEE_DISTRIBUTOR_ADDRESS_INFO"));
+    // @dev key for contract and keeper addresses stored by chain used in FeeDistributor
+    bytes32 public constant FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN = keccak256(abi.encode("FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN"));
     // @dev key for FeeDistributor keeper costs
     bytes32 public constant FEE_DISTRIBUTOR_KEEPER_COSTS = keccak256(abi.encode("FEE_DISTRIBUTOR_KEEPER_COSTS"));
     // @dev key for FeeDistributor chainlink factor used to determine total chainlink fees paid
@@ -137,12 +137,12 @@ library Keys2 {
         return keccak256(abi.encode(FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID, chainId));
     }
 
-    // @dev key for contract and keeper addresses used in FeeDistributor 
+    // @dev key for contract and keeper addresses used in FeeDistributor stored by chain
     // @param chainId the chainId for the chain
     // @param addressName bytes32 representing the address to be retrieved
-    // @return key for contract and keeper addresses used in FeeDistributor
-    function feeDistributorAddressInfoKey(uint256 chainId, bytes32 addressName) internal pure returns (bytes32) {
-        return keccak256(abi.encode(FEE_DISTRIBUTOR_ADDRESS_INFO, chainId, addressName));
+    // @return key for contract and keeper addresses used in FeeDistributor stored by chain
+    function feeDistributorAddressInfoForChainKey(uint256 chainId, bytes32 addressName) internal pure returns (bytes32) {
+        return keccak256(abi.encode(FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN, chainId, addressName));
     }
 
     // @dev key for FeeDistributor referral rewards deposited to the claim vault in a given week

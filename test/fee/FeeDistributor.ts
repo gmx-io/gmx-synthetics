@@ -223,73 +223,73 @@ describe("FeeDistributor", function () {
     await config.setUint(keys.FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID, encodeData(["uint256"], [chainIdB]), eidB);
     await config.setUint(keys.FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID, encodeData(["uint256"], [chainIdC]), eidC);
     await config.setAddress(
-      keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdA, feeDistributorConfig.gmxKey]),
       mockOftA.address
     );
     await config.setAddress(
-      keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdB, feeDistributorConfig.gmxKey]),
       gmx.address
     );
     await config.setAddress(
-      keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdC, feeDistributorConfig.gmxKey]),
       mockOftC.address
     );
     await config.setAddress(
-      keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdA, feeDistributorConfig.extendedGmxTrackerKey]),
       mockLzReadResponseChainA.address
     );
     await config.setAddress(
-      keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdB, feeDistributorConfig.extendedGmxTrackerKey]),
       mockExtendedGmxTracker.address
     );
     await config.setAddress(
-      keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdC, feeDistributorConfig.extendedGmxTrackerKey]),
       mockLzReadResponseChainC.address
     );
     await config.setAddress(
-      keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdA, feeDistributorConfig.dataStoreKey]),
       mockLzReadResponseChainA.address
     );
     await config.setAddress(
-      keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdC, feeDistributorConfig.dataStoreKey]),
       mockLzReadResponseChainC.address
     );
     await config.setAddress(
-      keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdA, keys.FEE_RECEIVER]),
       user0.address
     );
     await dataStore.setAddress(keys.FEE_RECEIVER, feeDistributorVault.address);
     await config.setAddress(
-      keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdC, keys.FEE_RECEIVER]),
       user1.address
     );
     await config.setAddress(
-      keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdB, feeDistributorConfig.layerzeroOftKey]),
       mockOftAdapterB.address
     );
     await config.setAddress(
-      keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdB, feeDistributorConfig.chainlinkKey]),
       user5.address
     );
     await config.setAddress(
-      keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdB, feeDistributorConfig.treasuryKey]),
       user6.address
     );
     await config.setAddress(
-      keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdB, feeDistributorConfig.esGmxVesterKey]),
       mockVester.address
     );
@@ -1315,22 +1315,22 @@ describe("FeeDistributor", function () {
     await dataStore.setUintArray(keys.FEE_DISTRIBUTOR_CHAIN_ID, chainIds);
     await config.setUint(keys.FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID, encodeData(["uint256"], [chainIdD]), eidD);
     await config.setAddress(
-      keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdD, feeDistributorConfig.gmxKey]),
       mockOftD.address
     );
     await config.setAddress(
-      keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdD, feeDistributorConfig.extendedGmxTrackerKey]),
       mockExtendedGmxTrackerD.address
     );
     await config.setAddress(
-      keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdD, feeDistributorConfig.dataStoreKey]),
       dataStoreD.address
     );
     await config.setAddress(
-      keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdD, keys.FEE_RECEIVER]),
       feeDistributorVaultD.address
     );
@@ -1378,98 +1378,98 @@ describe("FeeDistributor", function () {
     await configD.setUint(keys.FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID, encodeData(["uint256"], [chainIdC]), eidC);
     await configD.setUint(keys.FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID, encodeData(["uint256"], [chainIdD]), eidD);
     await configD.setAddress(
-      keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdA, feeDistributorConfig.gmxKey]),
       mockOftA.address
     );
     await configD.setAddress(
-      keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdB, feeDistributorConfig.gmxKey]),
       gmx.address
     );
     await configD.setAddress(
-      keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdC, feeDistributorConfig.gmxKey]),
       mockOftC.address
     );
     await configD.setAddress(
-      keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdD, feeDistributorConfig.gmxKey]),
       mockOftD.address
     );
     await configD.setAddress(
-      keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdA, feeDistributorConfig.extendedGmxTrackerKey]),
       mockLzReadResponseChainA.address
     );
     await configD.setAddress(
-      keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdB, feeDistributorConfig.extendedGmxTrackerKey]),
       mockExtendedGmxTracker.address
     );
     await configD.setAddress(
-      keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdC, feeDistributorConfig.extendedGmxTrackerKey]),
       mockLzReadResponseChainC.address
     );
     await configD.setAddress(
-      keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdD, feeDistributorConfig.extendedGmxTrackerKey]),
       mockExtendedGmxTrackerD.address
     );
     await configD.setAddress(
-      keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdA, feeDistributorConfig.dataStoreKey]),
       mockLzReadResponseChainA.address
     );
     await configD.setAddress(
-      keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdB, feeDistributorConfig.dataStoreKey]),
       dataStore.address
     );
     await configD.setAddress(
-      keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdC, feeDistributorConfig.dataStoreKey]),
       mockLzReadResponseChainC.address
     );
     await configD.setAddress(
-      keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdD, feeDistributorConfig.feeGlpTrackerKey]),
       mockFeeGlpTrackerD.address
     );
     await configD.setAddress(
-      keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdA, keys.FEE_RECEIVER]),
       user0.address
     );
     await configD.setAddress(
-      keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdB, keys.FEE_RECEIVER]),
       feeDistributorVault.address
     );
     await configD.setAddress(
-      keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdC, keys.FEE_RECEIVER]),
       user1.address
     );
     await dataStoreD.setAddress(keys.FEE_RECEIVER, feeDistributorVaultD.address);
     await configD.setAddress(
-      keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdD, feeDistributorConfig.layerzeroOftKey]),
       mockOftD.address
     );
     await configD.setAddress(
-      keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdD, feeDistributorConfig.chainlinkKey]),
       signer0.address
     );
     await configD.setAddress(
-      keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdD, feeDistributorConfig.treasuryKey]),
       signer1.address
     );
     await configD.setAddress(
-      keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
+      keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdD, feeDistributorConfig.esGmxVesterKey]),
       mockVesterD.address
     );
