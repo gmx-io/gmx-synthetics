@@ -39,8 +39,8 @@ function createGlvMarketConfig(
 }
 
 export default async function ({ network }: HardhatRuntimeEnvironment) {
-  const arbitrum_ethUsdcDefaultCap = 3_000_000; // 20% of 15M
-  const arbitrum_btcUsdcDefaultCap = 2_000_000; // 20% of 10M
+  const arbitrum_ethUsdcDefaultCap = 6_000_000; // 20% of 30M
+  const arbitrum_btcUsdcDefaultCap = 4_000_000; // 20% of 20M
   const avalanche_avaxUsdcDefaultCap = 320_000; // 20% of 1.6M
 
   const config: GlvConfig = {
@@ -60,9 +60,9 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("SUI", 7_500_000, 0.98039),
           createGlvMarketConfig("DOGE", 7_500_000, 1.6338),
           createGlvMarketConfig("LTC", 7_500_000, 1.286),
-          createGlvMarketConfig("BERA", 6_500_000, 0.76405),
-          createGlvMarketConfig("TRUMP", 4_600_000, 0.84268),
-          createGlvMarketConfig("RENDER", 4_620_000, 0.81567),
+          createGlvMarketConfig("BERA", arbitrum_ethUsdcDefaultCap, 0.76405),
+          createGlvMarketConfig("TRUMP", arbitrum_ethUsdcDefaultCap, 0.84268),
+          createGlvMarketConfig("RENDER", arbitrum_ethUsdcDefaultCap, 0.81567),
           createGlvMarketConfig("MELANIA", arbitrum_ethUsdcDefaultCap, 0.78007),
           createGlvMarketConfig("ATOM", arbitrum_ethUsdcDefaultCap, 0.98972),
           createGlvMarketConfig("NEAR", arbitrum_ethUsdcDefaultCap, 0.97498),
