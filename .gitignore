@@ -17,15 +17,15 @@ keys
 out
 
 #Hardhat files
-/cache/
-data
-artifacts
-deployments/localhost
-deployments.txt
+/cache
+/data
+/artifacts
+/deployments/localhost
+/deployments.txt
 *.log
 .cursorignore*
 
 .idea
-abi
+/abi
 
-validation
+/validation

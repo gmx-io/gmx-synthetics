@@ -12,7 +12,6 @@ export async function main() {
     //   baseKey: keys.CREATE_DEPOSIT_FEATURE_DISABLED,
     //   data: encodeData(["address"], ["0x352f684ab9e97a6321a13CF03A61316B681D9fD2"]),
     // },
-
     // {
     //   baseKey: keys.CREATE_WITHDRAWAL_FEATURE_DISABLED,
     //   data: encodeData(["address"], ["0x9E32088F3c1a5EB38D32d1Ec6ba0bCBF499DC9ac"]),
@@ -41,49 +40,53 @@ export async function main() {
     //   baseKey: keys.EXECUTE_SHIFT_FEATURE_DISABLED,
     //   data: encodeData(["address"], ["0xEa90EC1228F7D1b3D47D84d1c9D46dBDFEfF7709"]),
     // },
-    {
-      baseKey: keys.CREATE_GLV_DEPOSIT_FEATURE_DISABLED,
-      data: encodeData(["address"], ["0x3f6dF0c3A7221BA1375E87e7097885a601B41Afc"]),
-    },
-    {
-      baseKey: keys.CREATE_ORDER_FEATURE_DISABLED,
-      data: encodeData(["address", "uint256"], ["0x352f684ab9e97a6321a13CF03A61316B681D9fD2", OrderType.MarketSwap]),
-    },
-    {
-      baseKey: keys.CREATE_ORDER_FEATURE_DISABLED,
-      data: encodeData(["address", "uint256"], ["0x352f684ab9e97a6321a13CF03A61316B681D9fD2", OrderType.LimitSwap]),
-    },
-    {
-      baseKey: keys.CREATE_ORDER_FEATURE_DISABLED,
-      data: encodeData(
-        ["address", "uint256"],
-        ["0x352f684ab9e97a6321a13CF03A61316B681D9fD2", OrderType.MarketIncrease]
-      ),
-    },
-    {
-      baseKey: keys.CREATE_ORDER_FEATURE_DISABLED,
-      data: encodeData(["address", "uint256"], ["0x352f684ab9e97a6321a13CF03A61316B681D9fD2", OrderType.LimitIncrease]),
-    },
-    {
-      baseKey: keys.CREATE_ORDER_FEATURE_DISABLED,
-      data: encodeData(["address", "uint256"], ["0x352f684ab9e97a6321a13CF03A61316B681D9fD2", OrderType.LimitDecrease]),
-    },
-    {
-      baseKey: keys.CREATE_ORDER_FEATURE_DISABLED,
-      data: encodeData(
-        ["address", "uint256"],
-        ["0x352f684ab9e97a6321a13CF03A61316B681D9fD2", OrderType.StopLossDecrease]
-      ),
-    },
-    {
-      baseKey: keys.CREATE_ORDER_FEATURE_DISABLED,
-      data: encodeData(["address", "uint256"], ["0x352f684ab9e97a6321a13CF03A61316B681D9fD2", OrderType.Liquidation]),
-    },
+    // {
+    //   baseKey: keys.CREATE_GLV_DEPOSIT_FEATURE_DISABLED,
+    //   data: encodeData(["address"], ["0x3f6dF0c3A7221BA1375E87e7097885a601B41Afc"]),
+    // },
+    // {
+    //   baseKey: keys.CREATE_ORDER_FEATURE_DISABLED,
+    //   data: encodeData(["address", "uint256"], ["0x352f684ab9e97a6321a13CF03A61316B681D9fD2", OrderType.MarketSwap]),
+    // },
+    // {
+    //   baseKey: keys.CREATE_ORDER_FEATURE_DISABLED,
+    //   data: encodeData(["address", "uint256"], ["0x352f684ab9e97a6321a13CF03A61316B681D9fD2", OrderType.LimitSwap]),
+    // },
+    // {
+    //   baseKey: keys.CREATE_ORDER_FEATURE_DISABLED,
+    //   data: encodeData(
+    //     ["address", "uint256"],
+    //     ["0x352f684ab9e97a6321a13CF03A61316B681D9fD2", OrderType.MarketIncrease]
+    //   ),
+    // },
+    // {
+    //   baseKey: keys.CREATE_ORDER_FEATURE_DISABLED,
+    //   data: encodeData(["address", "uint256"], ["0x352f684ab9e97a6321a13CF03A61316B681D9fD2", OrderType.LimitIncrease]),
+    // },
+    // {
+    //   baseKey: keys.CREATE_ORDER_FEATURE_DISABLED,
+    //   data: encodeData(["address", "uint256"], ["0x352f684ab9e97a6321a13CF03A61316B681D9fD2", OrderType.LimitDecrease]),
+    // },
+    // {
+    //   baseKey: keys.CREATE_ORDER_FEATURE_DISABLED,
+    //   data: encodeData(
+    //     ["address", "uint256"],
+    //     ["0x352f684ab9e97a6321a13CF03A61316B681D9fD2", OrderType.StopLossDecrease]
+    //   ),
+    // },
+    // {
+    //   baseKey: keys.CREATE_ORDER_FEATURE_DISABLED,
+    //   data: encodeData(["address", "uint256"], ["0x352f684ab9e97a6321a13CF03A61316B681D9fD2", OrderType.Liquidation]),
+    // },
     // SYNC_CONFIG_FEATURE_DISABLED address is a placeholder and needs to be updated once final contract is deployed to mainnet
     // {
     //   baseKey: keys.SYNC_CONFIG_FEATURE_DISABLED,
     //   data: encodeData(["address"], ["0x352f684ab9e97a6321a13CF03A61316B681D9fD2"]),
     // },
+    {
+      baseKey: keys.GENERAL_CLAIM_FEATURE_DISABLED,
+      data: encodeData(["uint256"], "11802763389053472339483616176459046875189472617101418668457790595837638713068"),
+    },
   ];
 
   const isDisabled = process.env.IS_DISABLED;
