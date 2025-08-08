@@ -56,6 +56,8 @@ library Keys2 {
     bytes32 public constant FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP = keccak256(abi.encode("FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP"));
     // @dev key for FeeDistributor LayerZero version of chainId
     bytes32 public constant FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID = keccak256(abi.encode("FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID"));
+    // @dev key for contract and keeper addresses stored used in FeeDistributor
+    bytes32 public constant FEE_DISTRIBUTOR_ADDRESS_INFO = keccak256(abi.encode("FEE_DISTRIBUTOR_ADDRESS_INFO"));
     // @dev key for contract and keeper addresses stored by chain used in FeeDistributor
     bytes32 public constant FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN = keccak256(abi.encode("FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN"));
     // @dev key for FeeDistributor keeper costs
@@ -135,6 +137,13 @@ library Keys2 {
     // @return key for FeeDistributor LayerZero chainId
     function feeDistributorLayerZeroChainIdKey(uint256 chainId) internal pure returns (bytes32) {
         return keccak256(abi.encode(FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID, chainId));
+    }
+
+    // @dev key for contract and keeper addresses used in FeeDistributor
+    // @param addressName bytes32 representing the address to be retrieved
+    // @return key for contract and keeper addresses used in FeeDistributor
+    function feeDistributorAddressInfoKey(bytes32 addressName) internal pure returns (bytes32) {
+        return keccak256(abi.encode(FEE_DISTRIBUTOR_ADDRESS_INFO, addressName));
     }
 
     // @dev key for contract and keeper addresses used in FeeDistributor stored by chain
