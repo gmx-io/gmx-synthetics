@@ -1,12 +1,25 @@
 import fs from "fs";
 import { parse, writeToPath } from "fast-csv";
-import { bigNumberify, parseDecimalToUnits, FLOAT_PRECISION, PRECISION } from "../utils/math";
+import { bigNumberify, parseDecimalToUnits, expandDecimals, FLOAT_PRECISION, PRECISION } from "../utils/math";
 
 const ETH_GLV_PRICE = parseDecimalToUnits("1.4876");
 const BTC_GLV_PRICE = parseDecimalToUnits("1.6269");
 
+const ETH_GLV_ADDRESS = "0x528A5bac7E746C9A509A1f4F6dF58A03d44279F9";
+const BTC_GLV_ADDRESS = "0xdf03eed325b82bc1d4db8b49c30ecc9e05104b96";
+
+async function saveCsvFile(filePath, outputRows) {
+  await new Promise((resolve, reject) => {
+    writeToPath(filePath, outputRows, { headers: true }).on("error", reject).on("finish", resolve);
+  });
+}
+
+const distributionId = "11802763389053472339483616176459046875189472617101418668457790595837638713068";
+const chainId = 42161;
+
 async function getSummary(file) {
-  const stream = fs.createReadStream(file.path).pipe(parse({ headers: true }));
+  const filePath = `./data/${file.name}.csv`;
+  const stream = fs.createReadStream(filePath).pipe(parse({ headers: true }));
 
   let sharesInFile = bigNumberify(0);
   let glpInFile = bigNumberify(0);
@@ -24,9 +37,10 @@ async function getSummary(file) {
     500: bigNumberify(0),
   };
 
-  const outputRowsForFile = [];
+  const infoRows = [];
 
   for await (const row of stream) {
+    const { account } = row;
     const share = parseDecimalToUnits(row.distribution_share);
     const glpBalance = parseDecimalToUnits(row.balance_before_event);
     sharesInFile = sharesInFile.add(share);
@@ -49,24 +63,56 @@ async function getSummary(file) {
       sharesInTop["500"] = sharesInTop["500"].add(share);
     }
 
-    const ethGlv = totalEthGlv.mul(share).div(FLOAT_PRECISION);
-    const btcGlv = totalBtcGlv.mul(share).div(FLOAT_PRECISION);
-    const usdc = totalUsdc.mul(share).div(FLOAT_PRECISION);
+    const ethGlvAmount = totalEthGlv.mul(share).div(FLOAT_PRECISION);
+    const btcGlvAmount = totalBtcGlv.mul(share).div(FLOAT_PRECISION);
+    const usdcAmount = totalUsdc.mul(share).div(FLOAT_PRECISION);
 
-    const ethGlvUsd = ethGlv.mul(ETH_GLV_PRICE).div(FLOAT_PRECISION);
-    const btcGlvUsd = btcGlv.mul(BTC_GLV_PRICE).div(FLOAT_PRECISION);
-    const distributionUsd = ethGlvUsd.add(btcGlvUsd).add(usdc);
+    const ethGlvUsd = ethGlvAmount.mul(ETH_GLV_PRICE).div(FLOAT_PRECISION);
+    const btcGlvUsd = btcGlvAmount.mul(BTC_GLV_PRICE).div(FLOAT_PRECISION);
+    const distributionUsd = ethGlvUsd.add(btcGlvUsd).add(usdcAmount);
 
-    const outputRow = {
-      account: row.account,
-      ethGlv: ethers.utils.formatUnits(ethGlv, PRECISION),
-      btcGlv: ethers.utils.formatUnits(btcGlv, PRECISION),
-      usdc: ethers.utils.formatUnits(usdc, PRECISION),
+    const infoRow = {
+      account,
+      ethGlv: ethers.utils.formatUnits(ethGlvAmount, PRECISION),
+      btcGlv: ethers.utils.formatUnits(btcGlvAmount, PRECISION),
+      usdc: ethers.utils.formatUnits(usdcAmount, PRECISION),
       distributionUsd: ethers.utils.formatUnits(distributionUsd, PRECISION),
       duneEstimatedDistributionUsd: row.approximate_distribution_usd,
     };
 
-    outputRowsForFile.push(outputRow);
+    infoRows.push(infoRow);
+
+    const distributionRows = [];
+
+    if (ethGlvAmount.gt(0)) {
+      distributionRows.push({
+        account,
+        token: ETH_GLV_ADDRESS,
+        amount: ethGlvAmount.div(expandDecimals(1, PRECISION - 18)).toString(),
+        chainId,
+        distributionId,
+      });
+    }
+
+    if (btcGlvAmount.gt(0)) {
+      distributionRows.push({
+        account,
+        token: BTC_GLV_ADDRESS,
+        amount: btcGlvAmount.div(expandDecimals(1, PRECISION - 18)).toString(),
+        chainId,
+        distributionId,
+      });
+    }
+
+    if (usdcAmount.gt(0)) {
+      distributionRows.push({
+        account,
+        token: BTC_GLV_ADDRESS,
+        amount: usdcAmount.div(expandDecimals(1, PRECISION - 6)).toString(),
+        chainId,
+        distributionId,
+      });
+    }
 
     // console.log(`${outputRow.account}: ${outputRow.distributionUsd}, ${outputRow.duneEstimatedDistributionUsd}`);
   }
@@ -80,31 +126,31 @@ async function getSummary(file) {
   console.log(`${file.path} shares in top 400: ${ethers.utils.formatUnits(sharesInTop["400"], PRECISION)}`);
   console.log(`${file.path} shares in top 500: ${ethers.utils.formatUnits(sharesInTop["500"], PRECISION)}`);
 
-  return { sharesInFile, glpInFile, outputRowsForFile };
+  return { sharesInFile, glpInFile, infoRows };
 }
 
 async function main() {
   const files = [
     {
-      path: "./data/GLP_GLV-for-CONTRACT.csv",
+      name: "GLP_GLV-for-CONTRACT",
       ethGlv: "1120591.39",
       btcGlv: "1030973.33",
       usdc: "0",
     },
     {
-      path: "./data/GLP_GLV-for-EOA-and-SAFE.csv",
+      name: "GLP_GLV-for-EOA-and-SAFE",
       ethGlv: "8506066.32",
       btcGlv: "7825803.11",
       usdc: "0",
     },
     {
-      path: "./data/GLP_USDC-for-CONTRACT.csv",
+      name: "GLP_USDC-for-CONTRACT",
       ethGlv: "0",
       btcGlv: "0",
       usdc: "13140880.47",
     },
     {
-      path: "./data/GLP_USDC-for-EOA-and-SAFE.csv",
+      name: "GLP_USDC-for-EOA-and-SAFE",
       ethGlv: "0",
       btcGlv: "0",
       usdc: "883940.81",
@@ -113,16 +159,14 @@ async function main() {
 
   let totalGlp = bigNumberify(0);
 
-  let outputRows = [];
+  let allInfoRows = [];
   for (const file of files) {
-    const { glpInFile, outputRowsForFile } = await getSummary(file);
-    outputRows = outputRows.concat(outputRowsForFile);
+    const { glpInFile, infoRows } = await getSummary(file);
+    allInfoRows = allInfoRows.concat(infoRows);
     totalGlp = totalGlp.add(glpInFile);
   }
 
-  await new Promise((resolve, reject) => {
-    writeToPath("./out/glp-distribution.csv", outputRows, { headers: true }).on("error", reject).on("finish", resolve);
-  });
+  await saveCsvFile("./out/glp-distribution.csv", allInfoRows);
 
   console.log(`total GLP: ${ethers.utils.formatUnits(totalGlp, PRECISION)}`);
 }
