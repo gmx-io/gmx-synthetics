@@ -27,7 +27,13 @@ type DepositFundsParams = [
   }[]
 ];
 
-const batchSize = 100;
+const additionalTokensDecimals = {
+  "0x528A5bac7E746C9A509A1f4F6dF58A03d44279F9": 18, // ETH GLV
+  "0xdf03eed325b82bc1d4db8b49c30ecc9e05104b96": 18, // BTC GLV
+};
+
+// NOTE: do not change batch size in the middle of the distribution
+const batchSize = 50;
 
 const simulationAccount = process.env.SIMULATION_ACCOUNT;
 const skipEmptyClaimableAmountValidation = process.env.SKIP_EMPTY_CLAIMABLE_AMOUNT_VALIDATION === "1";
@@ -41,10 +47,14 @@ async function main() {
   const tokenConfig = Object.values(tokens).find((token) => token.address.toLowerCase() === data.token.toLowerCase());
   const multicall = await hre.ethers.getContract("Multicall3");
 
-  if (!tokenConfig) {
+  let tokenDecimals: number;
+  if (tokenConfig) {
+    tokenDecimals = tokenConfig.decimals;
+  } else if (data.token in additionalTokensDecimals) {
+    tokenDecimals = additionalTokensDecimals[data.token];
+  } else {
     throw new Error(`Unrecognized token ${data.token}`);
   }
-  const tokenDecimals = tokenConfig.decimals;
 
   if (migrations[id] && !skipMigrationValidation) {
     throw new Error(`Distribution ${id} was already sent. Run with SKIP_MIGRATION_VALIDATION=1 if this is expected`);
@@ -80,14 +90,12 @@ async function main() {
 
   const balance = await tokenContract.balanceOf(signerAddress);
   if (balance.lt(totalAmount)) {
-    throw new Error(
-      `Current balance ${formatAmount(balance, tokenDecimals, 2, true)} is lower than required ${formatAmount(
-        totalAmount,
-        tokenDecimals,
-        2,
-        true
-      )}`
+    console.warn(
+      "WARN: current balance %s is lower than required %s",
+      formatAmount(balance, tokenDecimals, 2, true),
+      formatAmount(totalAmount, tokenDecimals, 2, true)
     );
+    await setTimeout(1000);
   }
   console.log("balance is %s", formatAmount(balance, tokenDecimals, 2, true));
 
@@ -157,6 +165,8 @@ async function main() {
 
   console.log("running simulation");
   for (const [i, { batchIndex, from, to, batch }] of batches.entries()) {
+    await validateEmptyClaimableAmount(claimHandler, multicall, data, batch, tokenDecimals);
+
     console.log("simulating sending batch %s-%s token %s typeId %s", from, to, data.token, data.distributionTypeId);
 
     for (const [j, { account, amount }] of batch.entries()) {
@@ -168,8 +178,6 @@ async function main() {
         amount
       );
     }
-
-    await validateEmptyClaimableAmount(claimHandler, multicall, data, batch, tokenDecimals);
 
     const params: DepositFundsParams = [data.token, data.distributionTypeId, batch];
 

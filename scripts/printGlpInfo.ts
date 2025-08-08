@@ -190,12 +190,16 @@ async function saveDistribution(
     if (!rows) {
       throw new Error(`No rows for token type ${tokenType}`);
     }
+    if (rows.length === 0) {
+      continue;
+    }
+
     const token = tokenTypeToToken[tokenType];
     if (!token) {
       throw new Error(`Unknown token type ${tokenType}`);
     }
 
-    const distributionDir = `${__dirname}/distributions/data/glp/${name}`;
+    const distributionDir = `${__dirname}/distributions/data/glp`;
     if (!fs.existsSync(distributionDir)) {
       fs.mkdirSync(distributionDir, { recursive: true });
     }
