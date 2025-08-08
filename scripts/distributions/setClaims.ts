@@ -30,11 +30,14 @@ type DepositFundsParams = [
 const batchSize = 100;
 
 const simulationAccount = process.env.SIMULATION_ACCOUNT;
+const skipEmptyClaimableAmountValidation = process.env.SKIP_EMPTY_CLAIMABLE_AMOUNT_VALIDATION === "1";
+const skipMigrationValidation = process.env.SKIP_MIGRATION_VALIDATION === "1";
 
 async function main() {
   const { data, distributionTypeName, id } = await readDistributionFile();
   const tokens = await hre.gmx.getTokens();
   const tokenConfig = Object.values(tokens).find((token) => token.address.toLowerCase() === data.token.toLowerCase());
+  const multicall = await hre.ethers.getContract("Multicall3");
 
   if (!tokenConfig) {
     throw new Error(`Unrecognized token ${data.token}`);
@@ -42,7 +45,7 @@ async function main() {
   const tokenDecimals = tokenConfig.decimals;
 
   const migrations = readMigrations();
-  if (migrations[id] && !process.env.SKIP_MIGRATION_VALIDATION) {
+  if (migrations[id] && !skipMigrationValidation) {
     throw new Error(`Distribution ${id} was already sent. Run with SKIP_MIGRATION_VALIDATION=1 if this is expected`);
   }
 
@@ -165,6 +168,8 @@ async function main() {
       );
     }
 
+    await validateEmptyClaimableAmount(claimHandler, multicall, data, batch, tokenDecimals);
+
     const params: DepositFundsParams = [data.token, data.distributionTypeId, batch];
 
     const result = await (simulationAccount
@@ -239,6 +244,52 @@ async function main() {
 }
 
 type Migrations = Record<string, number>;
+
+async function validateEmptyClaimableAmount(
+  claimHandler: any,
+  multicall: any,
+  data: {
+    token: string;
+    distributionTypeId: number;
+  },
+  batch: { account: string; amount: BigNumber }[],
+  tokenDecimals: number
+) {
+  const accounts = batch.map(({ account }) => account);
+  const payload = accounts.map((account) => ({
+    target: claimHandler.address,
+    callData: claimHandler.interface.encodeFunctionData("getClaimableAmount", [
+      account,
+      data.token,
+      [data.distributionTypeId],
+    ]),
+  }));
+  const result = await multicall.callStatic.aggregate3(payload);
+  const claimableAmounts = result.map(({ returnData }) => {
+    const decoded = claimHandler.interface.decodeFunctionResult("getClaimableAmount", returnData);
+    return decoded[0];
+  });
+
+  let isValid = true;
+  for (const [i, account] of accounts.entries()) {
+    const claimableAmount = claimableAmounts[i];
+    if (claimableAmount.gt(0)) {
+      isValid = false;
+      console.warn(
+        "WARN: account %s already has claimable amount %s (%s)",
+        account,
+        formatAmount(claimableAmount, tokenDecimals, 4, true),
+        claimableAmount
+      );
+    }
+  }
+
+  if (!isValid && !skipEmptyClaimableAmountValidation) {
+    throw new Error(
+      "Some accounts already have claimable amount. pass SKIP_EMPTY_CLAIMABLE_AMOUNT_VALIDATION=1 to skip this check"
+    );
+  }
+}
 
 function getMigrationsFilepath() {
   return path.join(__dirname, ".migrations.json");
