@@ -167,6 +167,7 @@ async function main() {
     totalGlp = totalGlp.add(glpInFile);
 
     await saveTxnPayload(claimHandler, file.name, distributionRows);
+    await saveDistribution(file.name, distributionRows);
   }
 
   await saveCsvFile(`${__dirname}/distributions/out/glp-distribution.csv`, allInfoRows);
@@ -179,6 +180,45 @@ const tokenTypeToToken = {
   btcGlv: BTC_GLV_ADDRESS,
   usdc: USDC_ADDRESS,
 };
+
+async function saveDistribution(
+  name: string,
+  distributionRows: Record<string, { account: string; token: string; amount: string }[]>
+) {
+  for (const tokenType of ["ethGlv", "btcGlv", "usdc"]) {
+    const rows = distributionRows[tokenType];
+    if (!rows) {
+      throw new Error(`No rows for token type ${tokenType}`);
+    }
+    const token = tokenTypeToToken[tokenType];
+    if (!token) {
+      throw new Error(`Unknown token type ${tokenType}`);
+    }
+
+    const distributionDir = `${__dirname}/distributions/data/glp/${name}`;
+    if (!fs.existsSync(distributionDir)) {
+      fs.mkdirSync(distributionDir, { recursive: true });
+    }
+    const distributionPath = `${distributionDir}/${name}_${tokenType}.json`;
+    fs.writeFileSync(
+      distributionPath,
+      JSON.stringify(
+        {
+          chainId,
+          distributionTypeId: distributionId,
+          token,
+          amounts: rows.reduce((acc, { account, amount }) => {
+            acc[account] = amount.toString();
+            return acc;
+          }, {} as Record<string, string>),
+        },
+        null,
+        2
+      )
+    );
+    console.log(`${name} ${tokenType} distribution saved to ${distributionPath}`);
+  }
+}
 
 async function saveTxnPayload(
   claimHandler: any,
@@ -223,7 +263,7 @@ async function saveTxnPayload(
     }
     const savedBatchesCount = Math.min(maxBatches, batches.length);
     console.log(
-      `${name} ${tokenType} txn payload saved to ${txnPayloadDir} (${savedBatchesCount} of ${batches.length} batches)`
+      `${name} ${tokenType} txn payload saved to ${txnPayloadDir}/ (${savedBatchesCount} of ${batches.length} batches)`
     );
   }
 }

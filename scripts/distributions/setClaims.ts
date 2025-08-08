@@ -34,7 +34,9 @@ const skipEmptyClaimableAmountValidation = process.env.SKIP_EMPTY_CLAIMABLE_AMOU
 const skipMigrationValidation = process.env.SKIP_MIGRATION_VALIDATION === "1";
 
 async function main() {
-  const { data, distributionTypeName, id } = await readDistributionFile();
+  const migrations = readMigrations();
+
+  const { data, distributionTypeName, id } = await readDistributionFile(migrations);
   const tokens = await hre.gmx.getTokens();
   const tokenConfig = Object.values(tokens).find((token) => token.address.toLowerCase() === data.token.toLowerCase());
   const multicall = await hre.ethers.getContract("Multicall3");
@@ -44,7 +46,6 @@ async function main() {
   }
   const tokenDecimals = tokenConfig.decimals;
 
-  const migrations = readMigrations();
   if (migrations[id] && !skipMigrationValidation) {
     throw new Error(`Distribution ${id} was already sent. Run with SKIP_MIGRATION_VALIDATION=1 if this is expected`);
   }
@@ -250,7 +251,7 @@ async function validateEmptyClaimableAmount(
   multicall: any,
   data: {
     token: string;
-    distributionTypeId: number;
+    distributionTypeId: number | string;
   },
   batch: { account: string; amount: BigNumber }[],
   tokenDecimals: number
@@ -344,13 +345,14 @@ function readBatchesInProgress(dataId: string): BatchesInProgress {
   return ret;
 }
 
-async function readDistributionFile() {
+async function readDistributionFile(migrations: Migrations) {
   let filepath: string;
   if (process.env.FILENAME) {
     const filename = process.env.FILENAME;
     filepath = filename.startsWith("/") ? filename : path.join(process.cwd(), filename);
   } else {
     const dataDir = path.join(__dirname, "data");
+    console.log("looking for distribution files in %s", dataDir);
     const files = globSync(`${dataDir}/**/*.json`);
     if (files.length === 0) {
       throw new Error(`No distribution files found in ${dataDir}/ and FILENAME is not set`);
@@ -359,8 +361,35 @@ async function readDistributionFile() {
       type: "select",
       name: "filepath",
       message: "Select distribution file",
-      choices: files.map((file) => ({ title: file.split("/data/")[1], value: file })),
+      choices: files
+        .map((file) => {
+          const id = getIdFromPath(file);
+          const processed = id in migrations;
+          const title =
+            file.split("/data/")[1] +
+            (processed ? ` (processed on ${new Date(migrations[id] * 1000).toISOString().substring(0, 10)})` : "");
+          return {
+            title,
+            value: file,
+            disabled: processed,
+          };
+        })
+        .sort((a, b) => {
+          const aId = getIdFromPath(a.value);
+          const bId = getIdFromPath(b.value);
+          if (migrations[aId] && !migrations[bId]) {
+            return 1;
+          }
+          if (!migrations[aId] && migrations[bId]) {
+            return -1;
+          }
+          return 0;
+        }),
     }));
+  }
+
+  if (!filepath) {
+    throw new Error("No distribution file selected");
   }
 
   console.log("reading file %s", filepath);
@@ -391,13 +420,17 @@ async function readDistributionFile() {
     throw new Error(`Invalid current chain id: ${getChainId()}, distribution chain id: ${data.chainId}`);
   }
 
-  const id = filepath.split("/").pop().split(".")[0];
+  const id = getIdFromPath(filepath);
 
   return {
     id,
     data,
     distributionTypeName,
   };
+}
+
+function getIdFromPath(filepath: string) {
+  return filepath.split("/").pop().split(".")[0];
 }
 
 if (require.main === module) {
