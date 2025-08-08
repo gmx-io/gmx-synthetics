@@ -1,12 +1,16 @@
 import fs from "fs";
 import { parse, writeToPath } from "fast-csv";
 import { bigNumberify, parseDecimalToUnits, expandDecimals, FLOAT_PRECISION, PRECISION } from "../utils/math";
+import { chunk } from "lodash";
 
 const ETH_GLV_PRICE = parseDecimalToUnits("1.4876");
 const BTC_GLV_PRICE = parseDecimalToUnits("1.6269");
 
 const ETH_GLV_ADDRESS = "0x528A5bac7E746C9A509A1f4F6dF58A03d44279F9";
 const BTC_GLV_ADDRESS = "0xdf03eed325b82bc1d4db8b49c30ecc9e05104b96";
+const USDC_ADDRESS = "0xaf88d065e77c8cC2239327C5EDb3A432268e5831";
+
+const maxBatches = process.env.MAX_TXN_BATCHES ? parseInt(process.env.MAX_TXN_BATCHES) : 10;
 
 async function saveCsvFile(filePath, outputRows) {
   await new Promise((resolve, reject) => {
@@ -18,7 +22,7 @@ const distributionId = "11802763389053472339483616176459046875189472617101418668
 const chainId = 42161;
 
 async function getSummary(file) {
-  const filePath = `./data/${file.name}.csv`;
+  const filePath = `${__dirname}/data/${file.name}.csv`;
   const stream = fs.createReadStream(filePath).pipe(parse({ headers: true }));
 
   let sharesInFile = bigNumberify(0);
@@ -38,6 +42,11 @@ async function getSummary(file) {
   };
 
   const infoRows = [];
+  const distributionRows = {
+    ethGlv: [],
+    btcGlv: [],
+    usdc: [],
+  };
 
   for await (const row of stream) {
     const { account } = row;
@@ -47,19 +56,19 @@ async function getSummary(file) {
     glpInFile = glpInFile.add(glpBalance);
     rowCount++;
 
-    if (rowCount < 100) {
+    if (rowCount <= 100) {
       sharesInTop["100"] = sharesInTop["100"].add(share);
     }
-    if (rowCount < 200) {
+    if (rowCount <= 200) {
       sharesInTop["200"] = sharesInTop["200"].add(share);
     }
-    if (rowCount < 300) {
+    if (rowCount <= 300) {
       sharesInTop["300"] = sharesInTop["300"].add(share);
     }
-    if (rowCount < 400) {
+    if (rowCount <= 400) {
       sharesInTop["400"] = sharesInTop["400"].add(share);
     }
-    if (rowCount < 500) {
+    if (rowCount <= 500) {
       sharesInTop["500"] = sharesInTop["500"].add(share);
     }
 
@@ -81,52 +90,43 @@ async function getSummary(file) {
     };
 
     infoRows.push(infoRow);
-
-    const distributionRows = [];
-
     if (ethGlvAmount.gt(0)) {
-      distributionRows.push({
+      distributionRows.ethGlv.push({
         account,
         token: ETH_GLV_ADDRESS,
         amount: ethGlvAmount.div(expandDecimals(1, PRECISION - 18)).toString(),
-        chainId,
-        distributionId,
       });
     }
 
     if (btcGlvAmount.gt(0)) {
-      distributionRows.push({
+      distributionRows.btcGlv.push({
         account,
         token: BTC_GLV_ADDRESS,
         amount: btcGlvAmount.div(expandDecimals(1, PRECISION - 18)).toString(),
-        chainId,
-        distributionId,
       });
     }
 
     if (usdcAmount.gt(0)) {
-      distributionRows.push({
+      distributionRows.usdc.push({
         account,
         token: BTC_GLV_ADDRESS,
         amount: usdcAmount.div(expandDecimals(1, PRECISION - 6)).toString(),
-        chainId,
-        distributionId,
       });
     }
 
     // console.log(`${outputRow.account}: ${outputRow.distributionUsd}, ${outputRow.duneEstimatedDistributionUsd}`);
   }
 
-  console.log(`${file.path} total shares: ${ethers.utils.formatUnits(sharesInFile, PRECISION)}`);
-  console.log(`${file.path} total GLP: ${ethers.utils.formatUnits(glpInFile, PRECISION)}`);
-  console.log(`${file.path} total accounts: ${rowCount}`);
-  console.log(`${file.path} shares in top 100: ${ethers.utils.formatUnits(sharesInTop["100"], PRECISION)}`);
-  console.log(`${file.path} shares in top 200: ${ethers.utils.formatUnits(sharesInTop["200"], PRECISION)}`);
-  console.log(`${file.path} shares in top 300: ${ethers.utils.formatUnits(sharesInTop["300"], PRECISION)}`);
-  console.log(`${file.path} shares in top 400: ${ethers.utils.formatUnits(sharesInTop["400"], PRECISION)}`);
-  console.log(`${file.path} shares in top 500: ${ethers.utils.formatUnits(sharesInTop["500"], PRECISION)}`);
+  console.log(`${file.name} total shares: ${ethers.utils.formatUnits(sharesInFile, PRECISION)}`);
+  console.log(`${file.name} total GLP: ${ethers.utils.formatUnits(glpInFile, PRECISION)}`);
+  console.log(`${file.name} total accounts: ${rowCount}`);
+  console.log(`${file.name} shares in top 100: ${ethers.utils.formatUnits(sharesInTop["100"], PRECISION)}`);
+  console.log(`${file.name} shares in top 200: ${ethers.utils.formatUnits(sharesInTop["200"], PRECISION)}`);
+  console.log(`${file.name} shares in top 300: ${ethers.utils.formatUnits(sharesInTop["300"], PRECISION)}`);
+  console.log(`${file.name} shares in top 400: ${ethers.utils.formatUnits(sharesInTop["400"], PRECISION)}`);
+  console.log(`${file.name} shares in top 500: ${ethers.utils.formatUnits(sharesInTop["500"], PRECISION)}`);
 
-  return { sharesInFile, glpInFile, infoRows };
+  return { sharesInFile, glpInFile, infoRows, distributionRows };
 }
 
 async function main() {
@@ -158,17 +158,70 @@ async function main() {
   ];
 
   let totalGlp = bigNumberify(0);
+  const claimHandler = await hre.ethers.getContract("ClaimHandler");
 
   let allInfoRows = [];
   for (const file of files) {
-    const { glpInFile, infoRows } = await getSummary(file);
+    const { glpInFile, infoRows, distributionRows } = await getSummary(file);
     allInfoRows = allInfoRows.concat(infoRows);
     totalGlp = totalGlp.add(glpInFile);
+
+    await saveTxnPayload(claimHandler, file.name, distributionRows);
   }
 
-  await saveCsvFile("./out/glp-distribution.csv", allInfoRows);
+  await saveCsvFile(`${__dirname}/out/glp-distribution.csv`, allInfoRows);
 
   console.log(`total GLP: ${ethers.utils.formatUnits(totalGlp, PRECISION)}`);
+}
+
+const tokenTypeToToken = {
+  ethGlv: ETH_GLV_ADDRESS,
+  btcGlv: BTC_GLV_ADDRESS,
+  usdc: USDC_ADDRESS,
+};
+
+async function saveTxnPayload(
+  claimHandler: any,
+  name: string,
+  distributionRows: Record<string, { account: string; token: string; amount: string }[]>
+) {
+  for (const tokenType of ["ethGlv", "btcGlv", "usdc"]) {
+    const rows = distributionRows[tokenType];
+    if (!rows) {
+      throw new Error(`No rows for token type ${tokenType}`);
+    }
+    if (rows.length === 0) {
+      continue;
+    }
+    const token = tokenTypeToToken[tokenType];
+    if (!token) {
+      throw new Error(`Unknown token type ${tokenType}`);
+    }
+
+    const txnPayloadDir = `${__dirname}/out/glp-distribution-txn-payload/${name}/${tokenType}`;
+    if (!fs.existsSync(txnPayloadDir)) {
+      fs.mkdirSync(txnPayloadDir, { recursive: true });
+    }
+
+    const batches = chunk(rows, 50);
+
+    for (const [i, batch] of (
+      batches.slice(0, maxBatches) as { account: string; token: string; amount: string }[][]
+    ).entries()) {
+      const params = [token, distributionId, batch.map(({ account, amount }) => ({ account, amount }))];
+      const txnPayload = claimHandler.interface.encodeFunctionData("depositFunds", params);
+      const totalAmount = batch.reduce((acc, { amount }) => acc.add(amount), bigNumberify(0));
+
+      fs.writeFileSync(
+        `${txnPayloadDir}/${i}.json`,
+        JSON.stringify({ chainId, totalAmount: totalAmount.toString(), batchIndex: i, params, txnPayload }, null, 2)
+      );
+    }
+    const savedBatchesCount = Math.min(maxBatches, batches.length);
+    console.log(
+      `${name} ${tokenType} txn payload saved to ${txnPayloadDir} (${savedBatchesCount} of ${batches.length} batches)`
+    );
+  }
 }
 
 main()
