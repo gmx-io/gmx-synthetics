@@ -64,7 +64,9 @@ export const ARBITRUM_STIP_B_TRADING_BONUS_ID = 1006;
 export const AVALANCHE_RUSH_LP_ID = 1100;
 export const AVALANCHE_RUSH_TRADING_ID = 1101;
 export const THRESHOLD_tBTC_ID = 1200;
-const TEST_DISTRIBUTION_TYPE_ID = 9876;
+export const GLV_V1_TEST = 4672592;
+export const GLV_V1_DISTRIBUTION_ID = "11802763389053472339483616176459046875189472617101418668457790595837638713068";
+export const TEST_DISTRIBUTION_TYPE_ID = 9876;
 
 export const INCENTIVES_DISTRIBUTOR_ADDRESS = "0x8704EE9AB8622BbC25410C7D4717ED51f776c7f6";
 
@@ -121,6 +123,14 @@ export const distributionTypes: Record<
       name: "Threshold tBTC",
       incentivesType: "lp",
     },
+    [GLV_V1_TEST]: {
+      name: "GLV V1 TEST",
+      incentivesType: "lp",
+    },
+    [GLV_V1_DISTRIBUTION_ID]: {
+      name: "GLV V1 DISTRIBUTION",
+      incentivesType: "lp",
+    },
   },
   [43114]: {
     [AVALANCHE_RUSH_LP_ID]: {
@@ -134,7 +144,7 @@ export const distributionTypes: Record<
   },
 };
 
-export function getDistributionTypeName(distributionTypeId: number) {
+export function getDistributionTypeName(distributionTypeId: number | string) {
   const chainId = getChainId();
   if (!distributionTypes[chainId][distributionTypeId]) {
     throw new Error(`Unknown distribution with type id ${distributionTypeId} for chain id ${chainId}`);

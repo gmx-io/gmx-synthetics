@@ -8,6 +8,8 @@ import { execSync } from "child_process";
 import { getContractCreationFromEtherscan } from "./etherscanUtils";
 import { FileCache } from "./cacheUtils";
 import { hashString } from "../utils/hash";
+import { getExplorerUrl } from "../hardhat.config";
+import got from "got";
 
 const externalContractsAllowedForRoles = {
   [hashString("TIMELOCK_ADMIN")]: true,
@@ -105,7 +107,7 @@ export async function validateSourceCode(provider: JsonRpcProvider, contractInfo
 
   try {
     // also extracts contract name
-    await validateWithSourcify(contractInfo);
+    await validateWithExplorer(contractInfo);
   } catch (error) {
     console.error(`Sourcify validation failed: ${error}.\nFallback to compilation artifact validation`);
     await compareContractBytecodes(provider, contractInfo);
@@ -138,9 +140,59 @@ async function getSourcifyData(contractAddress: string): Promise<SourcifyRespons
   return response.data;
 }
 
-async function validateWithSourcify(contractInfo: ContractInfo): Promise<boolean> {
-  console.log(`Trying to validate ${contractInfo.address} via sourcify`);
-  const sourcifyData: SourcifyResponse = await getSourcifyData(contractInfo.address);
+async function getSourcesFromRoutescan(contractAddress: string): Promise<SourcifyResponse> {
+  const chainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
+  if (sourcifyCache.has(`${contractAddress}-${chainId}`)) {
+    return sourcifyCache.get(`${contractAddress}-${chainId}`);
+  }
+
+  const apiUrl = getExplorerUrl(hre.network.name);
+  const apiKey = hre.network.config.verify.etherscan.apiKey;
+  const response: any = await got
+    .get(`${apiUrl}api`, {
+      searchParams: {
+        module: "contract",
+        action: "getsourcecode",
+        address: contractAddress,
+        apikey: apiKey,
+      },
+    })
+    .json();
+
+  if (response.status != 1) {
+    throw new Error("sources are not validated");
+  }
+
+  //convert to sourcify response
+  const sources = response.result[0].SourceCode;
+  const parsedSources = JSON.parse(sources.slice(1, -1));
+
+  const sourcifyResponse = {
+    address: contractAddress,
+    chainId: chainId,
+    compilation: {
+      name: response.result[0].ContractName,
+    },
+    sources: parsedSources.sources,
+    verifiedAt: "",
+    match: "EXACT",
+    creationMatch: "EXACT",
+  };
+  sourcifyCache.set(`${contractAddress}-${chainId}`, sourcifyResponse);
+  return sourcifyResponse;
+}
+
+async function validateWithExplorer(contractInfo: ContractInfo): Promise<boolean> {
+  let sourcifyData: SourcifyResponse;
+  const chainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
+  if (chainId === 3637) {
+    //botanix
+    console.log(`Trying to validate ${contractInfo.address} via routescan`);
+    sourcifyData = await getSourcesFromRoutescan(contractInfo.address);
+  } else {
+    console.log(`Trying to validate ${contractInfo.address} via sourcify`);
+    sourcifyData = await getSourcifyData(contractInfo.address);
+  }
 
   contractInfo.name = sourcifyData.compilation.name;
   console.log(`Resolved as ${contractInfo.name}`);

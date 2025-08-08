@@ -27,25 +27,36 @@ type DepositFundsParams = [
   }[]
 ];
 
-const batchSize = 100;
+const additionalTokensDecimals = {
+  "0x528A5bac7E746C9A509A1f4F6dF58A03d44279F9": 18, // ETH GLV
+  "0xdf03eed325b82bc1d4db8b49c30ecc9e05104b96": 18, // BTC GLV
+};
+
+// NOTE: do not change batch size in the middle of the distribution
+const batchSize = 50;
 
 const simulationAccount = process.env.SIMULATION_ACCOUNT;
+const skipEmptyClaimableAmountValidation = process.env.SKIP_EMPTY_CLAIMABLE_AMOUNT_VALIDATION === "1";
+const skipMigrationValidation = process.env.SKIP_MIGRATION_VALIDATION === "1";
 
 async function main() {
-  const { data, distributionTypeName, id } = await readDistributionFile();
+  const migrations = readMigrations();
+
+  const { data, distributionTypeName, id } = await readDistributionFile(migrations);
   const tokens = await hre.gmx.getTokens();
   const tokenConfig = Object.values(tokens).find((token) => token.address.toLowerCase() === data.token.toLowerCase());
+  const multicall = await hre.ethers.getContract("Multicall3");
 
   let tokenDecimals: number;
-  if (!tokenConfig) {
-    tokenDecimals = 18;
-    console.warn("WARN: unrecognized token %s, using default 18 decimals", data.token);
-  } else {
+  if (tokenConfig) {
     tokenDecimals = tokenConfig.decimals;
+  } else if (data.token in additionalTokensDecimals) {
+    tokenDecimals = additionalTokensDecimals[data.token];
+  } else {
+    throw new Error(`Unrecognized token ${data.token}`);
   }
 
-  const migrations = readMigrations();
-  if (migrations[id] && !process.env.SKIP_MIGRATION_VALIDATION) {
+  if (migrations[id] && !skipMigrationValidation) {
     throw new Error(`Distribution ${id} was already sent. Run with SKIP_MIGRATION_VALIDATION=1 if this is expected`);
   }
 
@@ -79,14 +90,12 @@ async function main() {
 
   const balance = await tokenContract.balanceOf(signerAddress);
   if (balance.lt(totalAmount)) {
-    throw new Error(
-      `Current balance ${formatAmount(balance, tokenDecimals, 2, true)} is lower than required ${formatAmount(
-        totalAmount,
-        tokenDecimals,
-        2,
-        true
-      )}`
+    console.warn(
+      "WARN: current balance %s is lower than required %s",
+      formatAmount(balance, tokenDecimals, 2, true),
+      formatAmount(totalAmount, tokenDecimals, 2, true)
     );
+    await setTimeout(1000);
   }
   console.log("balance is %s", formatAmount(balance, tokenDecimals, 2, true));
 
@@ -156,6 +165,8 @@ async function main() {
 
   console.log("running simulation");
   for (const [i, { batchIndex, from, to, batch }] of batches.entries()) {
+    await validateEmptyClaimableAmount(claimHandler, multicall, data, batch, tokenDecimals);
+
     console.log("simulating sending batch %s-%s token %s typeId %s", from, to, data.token, data.distributionTypeId);
 
     for (const [j, { account, amount }] of batch.entries()) {
@@ -243,6 +254,52 @@ async function main() {
 
 type Migrations = Record<string, number>;
 
+async function validateEmptyClaimableAmount(
+  claimHandler: any,
+  multicall: any,
+  data: {
+    token: string;
+    distributionTypeId: number | string;
+  },
+  batch: { account: string; amount: BigNumber }[],
+  tokenDecimals: number
+) {
+  const accounts = batch.map(({ account }) => account);
+  const payload = accounts.map((account) => ({
+    target: claimHandler.address,
+    callData: claimHandler.interface.encodeFunctionData("getClaimableAmount", [
+      account,
+      data.token,
+      [data.distributionTypeId],
+    ]),
+  }));
+  const result = await multicall.callStatic.aggregate3(payload);
+  const claimableAmounts = result.map(({ returnData }) => {
+    const decoded = claimHandler.interface.decodeFunctionResult("getClaimableAmount", returnData);
+    return decoded[0];
+  });
+
+  let isValid = true;
+  for (const [i, account] of accounts.entries()) {
+    const claimableAmount = claimableAmounts[i];
+    if (claimableAmount.gt(0)) {
+      isValid = false;
+      console.warn(
+        "WARN: account %s already has claimable amount %s (%s)",
+        account,
+        formatAmount(claimableAmount, tokenDecimals, 4, true),
+        claimableAmount
+      );
+    }
+  }
+
+  if (!isValid && !skipEmptyClaimableAmountValidation) {
+    throw new Error(
+      "Some accounts already have claimable amount. pass SKIP_EMPTY_CLAIMABLE_AMOUNT_VALIDATION=1 to skip this check"
+    );
+  }
+}
+
 function getMigrationsFilepath() {
   return path.join(__dirname, ".migrations.json");
 }
@@ -296,13 +353,14 @@ function readBatchesInProgress(dataId: string): BatchesInProgress {
   return ret;
 }
 
-async function readDistributionFile() {
+async function readDistributionFile(migrations: Migrations) {
   let filepath: string;
   if (process.env.FILENAME) {
     const filename = process.env.FILENAME;
     filepath = filename.startsWith("/") ? filename : path.join(process.cwd(), filename);
   } else {
     const dataDir = path.join(__dirname, "data");
+    console.log("looking for distribution files in %s", dataDir);
     const files = globSync(`${dataDir}/**/*.json`);
     if (files.length === 0) {
       throw new Error(`No distribution files found in ${dataDir}/ and FILENAME is not set`);
@@ -311,8 +369,35 @@ async function readDistributionFile() {
       type: "select",
       name: "filepath",
       message: "Select distribution file",
-      choices: files.map((file) => ({ title: file.split("/data/")[1], value: file })),
+      choices: files
+        .map((file) => {
+          const id = getIdFromPath(file);
+          const processed = id in migrations;
+          const title =
+            file.split("/data/")[1] +
+            (processed ? ` (processed on ${new Date(migrations[id] * 1000).toISOString().substring(0, 10)})` : "");
+          return {
+            title,
+            value: file,
+            disabled: processed,
+          };
+        })
+        .sort((a, b) => {
+          const aId = getIdFromPath(a.value);
+          const bId = getIdFromPath(b.value);
+          if (migrations[aId] && !migrations[bId]) {
+            return 1;
+          }
+          if (!migrations[aId] && migrations[bId]) {
+            return -1;
+          }
+          return 0;
+        }),
     }));
+  }
+
+  if (!filepath) {
+    throw new Error("No distribution file selected");
   }
 
   console.log("reading file %s", filepath);
@@ -320,7 +405,7 @@ async function readDistributionFile() {
     token: string;
     amounts: Record<string, string>;
     chainId: number;
-    distributionTypeId: number;
+    distributionTypeId: number | string;
   } = JSON.parse(fs.readFileSync(filepath).toString());
 
   if (!data.token) {
@@ -343,13 +428,17 @@ async function readDistributionFile() {
     throw new Error(`Invalid current chain id: ${getChainId()}, distribution chain id: ${data.chainId}`);
   }
 
-  const id = filepath.split("/").pop().split(".")[0];
+  const id = getIdFromPath(filepath);
 
   return {
     id,
     data,
     distributionTypeName,
   };
+}
+
+function getIdFromPath(filepath: string) {
+  return filepath.split("/").pop().split(".")[0];
 }
 
 if (require.main === module) {
