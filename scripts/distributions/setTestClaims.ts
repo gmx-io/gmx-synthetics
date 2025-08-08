@@ -1,7 +1,7 @@
 import prompts from "prompts";
 import hre from "hardhat";
-import { expandDecimals } from "../utils/math";
-import { hashString } from "../utils/hash";
+import { expandDecimals } from "../../utils/math";
+import { hashString } from "../../utils/hash";
 import { BigNumber, BigNumberish, Contract } from "ethers";
 
 // 0x196A492f60696930D6eE0551D3f4eD56b668Aa00
