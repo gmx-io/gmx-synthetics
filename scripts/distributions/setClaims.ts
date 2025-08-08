@@ -368,7 +368,7 @@ async function readDistributionFile() {
     token: string;
     amounts: Record<string, string>;
     chainId: number;
-    distributionTypeId: number;
+    distributionTypeId: number | string;
   } = JSON.parse(fs.readFileSync(filepath).toString());
 
   if (!data.token) {
