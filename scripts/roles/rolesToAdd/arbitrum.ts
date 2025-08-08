@@ -5,10 +5,6 @@ export const ROLES_TO_ADD = [
   },
   {
     role: "CLAIM_ADMIN",
-    member: "0x0765678b4f2b45fa9604264a63762e2fe460df64",
-  },
-  {
-    role: "CLAIM_ADMIN",
     member: "0xd5f8b9ba4255b2f73b06f245fcca73d114d1d460",
   },
   {
@@ -20,11 +16,6 @@ export const ROLES_TO_ADD = [
     role: "CONFIG_KEEPER",
     member: "0x9ff65141a396a3ea2eb4cdbdc5a8a4c4cb4bd189",
     contractName: "ConfigSyncer",
-  },
-  {
-    role: "CONTROLLER",
-    member: "0x3055239cf2ad6f7006c60a6db509de7b3b01a0a1",
-    contractName: "Config",
   },
   {
     role: "CONTROLLER",

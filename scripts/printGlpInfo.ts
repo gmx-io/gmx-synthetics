@@ -22,7 +22,7 @@ const distributionId = "11802763389053472339483616176459046875189472617101418668
 const chainId = 42161;
 
 async function getSummary(file) {
-  const filePath = `${__dirname}/data/${file.name}.csv`;
+  const filePath = `${__dirname}/distributions/data/${file.name}.csv`;
   const stream = fs.createReadStream(filePath).pipe(parse({ headers: true }));
 
   let sharesInFile = bigNumberify(0);
@@ -169,7 +169,7 @@ async function main() {
     await saveTxnPayload(claimHandler, file.name, distributionRows);
   }
 
-  await saveCsvFile(`${__dirname}/out/glp-distribution.csv`, allInfoRows);
+  await saveCsvFile(`${__dirname}/distributions/out/glp-distribution.csv`, allInfoRows);
 
   console.log(`total GLP: ${ethers.utils.formatUnits(totalGlp, PRECISION)}`);
 }
@@ -198,7 +198,7 @@ async function saveTxnPayload(
       throw new Error(`Unknown token type ${tokenType}`);
     }
 
-    const txnPayloadDir = `${__dirname}/out/glp-distribution-txn-payload/${name}/${tokenType}`;
+    const txnPayloadDir = `${__dirname}/distributions/out/glp-distribution-txn-payload/${name}/${tokenType}`;
     if (!fs.existsSync(txnPayloadDir)) {
       fs.mkdirSync(txnPayloadDir, { recursive: true });
     }
@@ -214,7 +214,11 @@ async function saveTxnPayload(
 
       fs.writeFileSync(
         `${txnPayloadDir}/${i}.json`,
-        JSON.stringify({ chainId, totalAmount: totalAmount.toString(), batchIndex: i, params, txnPayload }, null, 2)
+        JSON.stringify(
+          { chainId, totalAmount: totalAmount.toString(), tokenAddress: token, batchIndex: i, params, txnPayload },
+          null,
+          2
+        )
       );
     }
     const savedBatchesCount = Math.min(maxBatches, batches.length);
