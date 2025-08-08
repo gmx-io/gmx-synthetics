@@ -214,7 +214,11 @@ async function saveTxnPayload(
 
       fs.writeFileSync(
         `${txnPayloadDir}/${i}.json`,
-        JSON.stringify({ chainId, totalAmount: totalAmount.toString(), batchIndex: i, params, txnPayload }, null, 2)
+        JSON.stringify(
+          { chainId, totalAmount: totalAmount.toString(), tokenAddress: token, batchIndex: i, params, txnPayload },
+          null,
+          2
+        )
       );
     }
     const savedBatchesCount = Math.min(maxBatches, batches.length);
