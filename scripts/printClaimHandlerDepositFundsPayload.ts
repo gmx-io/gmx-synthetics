@@ -15,8 +15,8 @@ async function main() {
 
   console.log("amounts");
   let totalAmount = bigNumberify(0);
-  for (const row of decoded.params) {
-    console.log("\t", row.account, row.amount.toString());
+  for (const [i, row] of decoded.params.entries()) {
+    console.log("\t rn %s account %s amount %s", i + 1, row.account, row.amount.toString());
     totalAmount = totalAmount.add(row.amount);
   }
 
