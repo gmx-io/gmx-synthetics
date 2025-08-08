@@ -36,13 +36,10 @@ async function main() {
   const tokens = await hre.gmx.getTokens();
   const tokenConfig = Object.values(tokens).find((token) => token.address.toLowerCase() === data.token.toLowerCase());
 
-  let tokenDecimals: number;
   if (!tokenConfig) {
-    tokenDecimals = 18;
-    console.warn("WARN: unrecognized token %s, using default 18 decimals", data.token);
-  } else {
-    tokenDecimals = tokenConfig.decimals;
+    throw new Error(`Unrecognized token ${data.token}`);
   }
+  const tokenDecimals = tokenConfig.decimals;
 
   const migrations = readMigrations();
   if (migrations[id] && !process.env.SKIP_MIGRATION_VALIDATION) {
