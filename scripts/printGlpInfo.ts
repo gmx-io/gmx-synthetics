@@ -169,7 +169,7 @@ async function main() {
     await saveTxnPayload(claimHandler, file.name, distributionRows);
   }
 
-  await saveCsvFile(`${__dirname}/out/glp-distribution.csv`, allInfoRows);
+  await saveCsvFile(`${__dirname}/distributions/out/glp-distribution.csv`, allInfoRows);
 
   console.log(`total GLP: ${ethers.utils.formatUnits(totalGlp, PRECISION)}`);
 }
