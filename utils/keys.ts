@@ -926,6 +926,6 @@ export function positionLastSrcChainIdKey(positionKey: string) {
   return hashData(["bytes32", "bytes32"], [POSITION_LAST_SRC_CHAIN_ID, positionKey]);
 }
 
-export function claimTermsKey(distributionId: number) {
+export function claimTermsKey(distributionId: number | string) {
   return hashData(["bytes32", "uint256"], [CLAIM_TERMS, distributionId]);
 }
