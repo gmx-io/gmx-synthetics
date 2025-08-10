@@ -136,7 +136,6 @@ async function main() {
   }
 
   await runSimulation(claimHandler, batches, data, tokenDecimals);
-
   await confirmProceed("Do you want to execute the transactions?");
 
   const txHashes = [];
@@ -345,7 +344,7 @@ async function checkBalance(tokenContract: any, signerAddress: string, totalAmou
   const balance = await tokenContract.balanceOf(signerAddress);
   if (balance.lt(totalAmount)) {
     console.warn(
-      "WARN: current balance %s is lower than required %s",
+      "WARN: current balance %s is lower than the total amount %s",
       formatAmount(balance, tokenDecimals, 2, true),
       formatAmount(totalAmount, tokenDecimals, 2, true)
     );
