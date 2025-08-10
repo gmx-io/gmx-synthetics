@@ -1,8 +1,5 @@
 {
-  "GLP_GLV-for-EOA-and-SAFE_ethGlv": {
-    "lastSentRecipientIndex": 249
-  },
-  "GLP_GLV-for-EOA-and-SAFE_btcGlv": {
-    "lastSentRecipientIndex": 249
-  }
+    "GLP_GLV-for-EOA-and-SAFE_ethGlv": {
+        "lastSentRecipientIndex": 249
+    }
 }
