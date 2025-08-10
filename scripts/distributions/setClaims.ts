@@ -298,12 +298,13 @@ async function transferFundsFromSafe(
   }
 
   console.log(
-    "WARN: transferring %s from safe %s to %s",
+    "WARN: transferring %s (%s) from safe %s to %s",
     formatAmount(amount, tokenDecimals, 4, true),
+    amount,
     SAFE_ADDRESS,
     signerAddress
   );
-  await confirmProceed();
+  await confirmProceed("do you want to proceed with the top up?");
 
   const tx = await tokenContract.transferFrom(SAFE_ADDRESS, signerAddress, amount);
   console.log("sent transferFrom txn %s, waiting...", tx.hash);
