@@ -9,7 +9,7 @@ import "../../../contracts/multichain/MultichainTransferRouter.sol";
 string constant FORK_URL = "http://127.0.0.1:8545";
 
 /**
- * @dev Test that verifies contracts have been deployed and correctly configured to an anvil node using the hardhat deployment script.
+ * @dev Test that verifies contracts have been deployed and wired correctly to an anvil node using the hardhat deployment script.
  */
 contract ConnectionTest is Test {
     address layerZeroProviderAddr;
@@ -20,7 +20,7 @@ contract ConnectionTest is Test {
     MultichainTransferRouter multichainTransferRouter;
 
     function setUp() public {
-        // Create fork of the running Hardhat node at localhost:8545
+        // Create fork of the running anvil node at localhost:8545
         vm.createSelectFork(FORK_URL);
 
         roleStoreAddr = _loadDeploymentAddress("RoleStore");
@@ -77,9 +77,6 @@ contract ConnectionTest is Test {
         );
     }
 
-    /**
-     * @dev Basic contract interactions
-     */
     function testContractInteraction() public {
         uint256 roleCount = roleStore.getRoleCount();
         console.log("Total roles in system:", roleCount);
