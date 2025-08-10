@@ -142,8 +142,6 @@ async function main() {
 
   console.log("running simulation");
   for (const { batch, totalBatchAmount } of batches) {
-    await validateEmptyClaimableAmount(claimHandler, multicall, data, batch, tokenDecimals);
-
     const from = batch[0].globalIndex;
     const to = batch[batch.length - 1].globalIndex;
     console.log(
@@ -178,6 +176,8 @@ async function main() {
 
   const txHashes = [];
   for (const { batch, totalBatchAmount } of batches) {
+    await validateEmptyClaimableAmount(claimHandler, multicall, data, batch, tokenDecimals);
+
     const from = batch[0].globalIndex;
     const to = batch[batch.length - 1].globalIndex;
     console.log("sending batch %s-%s token %s typeId %s", from, to, data.token, data.distributionTypeId);
