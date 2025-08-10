@@ -29,7 +29,7 @@ const additionalTokensDecimals = {
   "0xdf03eed325b82bc1d4db8b49c30ecc9e05104b96": 18, // BTC GLV
 };
 
-const batchSize = 100;
+const batchSize = process.env.BATCH_SIZE ? parseInt(process.env.BATCH_SIZE) : 100;
 
 const simulationAccount = process.env.SIMULATION_ACCOUNT;
 const skipEmptyClaimableAmountValidation = process.env.SKIP_EMPTY_CLAIMABLE_AMOUNT_VALIDATION === "1";
