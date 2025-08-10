@@ -415,6 +415,8 @@ async function validateEmptyClaimableAmount(
       "Some accounts already have claimable amount. pass SKIP_EMPTY_CLAIMABLE_AMOUNT_VALIDATION=1 to skip this check"
     );
   }
+
+  console.log("claimable amounts are valid");
 }
 
 function getMigrationsFilepath() {
