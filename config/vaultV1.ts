@@ -6,6 +6,10 @@ export type VaultV1Config = {
 
 export default async function (hre: HardhatRuntimeEnvironment): Promise<VaultV1Config> {
   const config: { [network: string]: VaultV1Config } = {
+    localhost: {
+      vaultV1: "0x0000000000000000000000000000000000000000", // MockVaultV1 for FeeHandler (only if fee distribution testing needed)
+      gmx: "0x0000000000000000000000000000000000000000", // Mock GMX token for FeeHandler (only if fee distribution testing needed)
+    },
     hardhat: {},
     arbitrum: {
       vaultV1: "0x489ee077994B6658eAfA855C308275EAd8097C4A",

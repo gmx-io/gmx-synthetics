@@ -4375,16 +4375,71 @@ const config: {
   localhost: [
     {
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:ETH/USD"),
+      virtualMarketId: hashString("SPOT:ETH/USD"),
+
+      ...baseMarketConfig,
+      ...fundingRateConfig_Low,
+      ...borrowingRateConfig_LowMax_WithLowerBase,
+
+      reserveFactor: percentageToFloat("275%"),
+      openInterestReserveFactor: percentageToFloat("270%"),
+
+      maxLongTokenPoolAmount: expandDecimals(32_000, 18),
+      maxShortTokenPoolAmount: expandDecimals(100_000_000, 6),
+
+      maxPoolUsdForDeposit: decimalToFloat(50_000_000),
+
+      negativePositionImpactFactor: exponentToFloat("5e-7"), // 0.0000005
+      positivePositionImpactFactor: exponentToFloat("4.5e-7"), // 0.00000045
+
+      minPositionImpactPoolAmount: expandDecimals(10, 18), // 10 ETH
+
+      negativeSwapImpactFactor: exponentToFloat("3e-10"),
+      positiveSwapImpactFactor: exponentToFloat("2e-10"),
+
+      minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("0.25%"), // 200x leverage
+
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6e-11"),
+
+      maxOpenInterest: decimalToFloat(70_000_000),
+
+      atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
-      tokens: { indexToken: "GMX", longToken: "GMX", shortToken: "USDC" },
-    },
-    {
-      tokens: { longToken: "WETH", shortToken: "USDC" },
-      swapOnly: true,
-    },
-    {
-      tokens: { indexToken: "SOL", longToken: "WETH", shortToken: "USDC" },
+      tokens: { indexToken: "WBTC", longToken: "WBTC", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:BTC/USD"),
+      virtualMarketId: hashString("SPOT:BTC/USD"),
+
+      ...baseMarketConfig,
+      ...fundingRateConfig_Low,
+      ...borrowingRateConfig_LowMax_WithLowerBase,
+
+      reserveFactor: percentageToFloat("245%"),
+      openInterestReserveFactor: percentageToFloat("240%"),
+
+      maxLongTokenPoolAmount: expandDecimals(2200, 8),
+      maxShortTokenPoolAmount: expandDecimals(110_000_000, 6),
+
+      maxPoolUsdForDeposit: decimalToFloat(60_000_000),
+
+      negativePositionImpactFactor: exponentToFloat("9e-11"),
+      positivePositionImpactFactor: exponentToFloat("3e-11"),
+
+      minPositionImpactPoolAmount: expandDecimals(95, 6), // 0.95 BTC
+
+      negativeSwapImpactFactor: exponentToFloat("4e-10"), // 0.05% for 1,250,000 USD of imbalance
+      positiveSwapImpactFactor: exponentToFloat("2e-10"), // 0.05% for 2,500,000 USD of imbalance
+
+      minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
+
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6e-11"),
+
+      maxOpenInterest: decimalToFloat(60_000_000),
+
+      atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },
   ],
 };

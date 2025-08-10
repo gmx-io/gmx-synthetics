@@ -12,6 +12,7 @@ import { grantRoleIfNotGranted, revokeRoleIfGranted } from "../utils/role";
 
 const rolesToRemove = {
   hardhat: [],
+  localhost: [],
   arbitrum: [],
   avalanche: [],
   botanix: [],

@@ -218,6 +218,14 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     botanix: {
       positionFeeReceiverFactor: decimalToFloat(50, 2), // 50%
     },
+    localhost: {
+      maxAutoCancelOrders: 11,
+      maxTotalCallbackGasLimitForAutoCancelOrders: 10_000_000,
+      multichainProviders: {},
+      multichainEndpoints: {},
+      srcChainIds: {},
+      eids: {},
+    },
   }[network.name];
 
   if (!networkConfig) {

@@ -142,6 +142,9 @@ const config: HardhatUserConfig = {
     },
     localhost: {
       saveDeployments: true,
+      chainId: 31337,
+      gasPrice: 1000000000, // 1 gwei
+      gas: 30000000, // 30M gas limit
     },
     arbitrum: {
       url: getRpcUrl("arbitrum"),

@@ -171,6 +171,17 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       LIMITED_CONFIG_KEEPER: { [deployer]: true },
       TIMELOCK_ADMIN: { [deployer]: true },
     },
+    localhost: {
+      CONTROLLER: { [deployer]: true },
+      ORDER_KEEPER: { [deployer]: true },
+      ADL_KEEPER: { [deployer]: true },
+      LIQUIDATION_KEEPER: { [deployer]: true },
+      MARKET_KEEPER: { [deployer]: true },
+      FROZEN_ORDER_KEEPER: { [deployer]: true },
+      CONFIG_KEEPER: { [deployer]: true },
+      LIMITED_CONFIG_KEEPER: { [deployer]: true },
+      TIMELOCK_ADMIN: { [deployer]: true },
+    },
     arbitrum: {
       ADL_KEEPER: syntheticKeepers.mainnet,
       FROZEN_ORDER_KEEPER: syntheticKeepers.mainnet,

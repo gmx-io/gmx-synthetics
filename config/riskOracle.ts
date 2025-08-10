@@ -18,6 +18,7 @@ export type RiskOracleConfig = {
 export default async function (hre: HardhatRuntimeEnvironment): Promise<RiskOracleConfig> {
   const config: { [network: string]: RiskOracleConfig } = {
     localhost: {
+      riskOracle: "0x0000000000000000000000000000000000000000", // Will use MockRiskOracle
       markets: {
         "0x1Da892c7AE651Fe4264D61f2110f8B0DEFA4AAE4": {
           // Address for hardhat deployment WETH/USDC pool

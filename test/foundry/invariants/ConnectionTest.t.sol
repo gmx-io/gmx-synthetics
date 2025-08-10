@@ -9,35 +9,28 @@ import "../../../contracts/multichain/MultichainTransferRouter.sol";
 string constant FORK_URL = "http://127.0.0.1:8545";
 
 /**
- * @dev Test that verifies Foundry can connect to the running Hardhat node and validate key contract configurations
+ * @dev Test that verifies contracts have been deployed and correctly configured to an anvil node using the hardhat deployment script.
  */
 contract ConnectionTest is Test {
     address layerZeroProviderAddr;
     address multichainTransferRouterAddr;
     address roleStoreAddr;
 
-    RoleStore roleStoreContract;
-    MultichainTransferRouter multichainTransferRouterContract;
+    RoleStore roleStore;
+    MultichainTransferRouter multichainTransferRouter;
 
     function setUp() public {
         // Create fork of the running Hardhat node at localhost:8545
         vm.createSelectFork(FORK_URL);
 
-        // Load contract addresses from deployment artifacts
+        roleStoreAddr = _loadDeploymentAddress("RoleStore");
         layerZeroProviderAddr = _loadDeploymentAddress("LayerZeroProvider");
         multichainTransferRouterAddr = _loadDeploymentAddress("MultichainTransferRouter");
-        roleStoreAddr = _loadDeploymentAddress("RoleStore");
 
-        // Initialize contract interfaces
-        roleStoreContract = RoleStore(roleStoreAddr);
-        multichainTransferRouterContract = MultichainTransferRouter(multichainTransferRouterAddr);
+        roleStore = RoleStore(roleStoreAddr);
+        multichainTransferRouter = MultichainTransferRouter(multichainTransferRouterAddr);
     }
 
-    /**
-     * @dev Load contract address from deployment artifact
-     * @param contractName The name of the contract (e.g., "LayerZeroProvider")
-     * @return The deployed contract address
-     */
     function _loadDeploymentAddress(string memory contractName) internal view returns (address) {
         string memory deploymentPath = string.concat("./deployments/localhost/", contractName, ".json");
         string memory json = vm.readFile(deploymentPath);
@@ -49,10 +42,8 @@ contract ConnectionTest is Test {
         return contractAddress;
     }
 
-    /**
-     * @dev Verify basic connection to Hardhat node
-     */
-    function testConnectionToHardhatNode() public {
+    /// @dev Verify basic connection to Anvil node
+    function testConnectionToAnvilNode() public {
         // Verify connection to a live node (block number > 0)
         assertTrue(block.number > 0, "Should be connected to live node");
 
@@ -62,12 +53,9 @@ contract ConnectionTest is Test {
         assertTrue(roleStoreAddr.code.length > 0, "RoleStore should have code");
     }
 
-    /**
-     * @dev Verify LayerZeroProvider has CONTROLLER role
-     */
     function testLayerZeroProviderHasControllerRole() public {
         // Check if LayerZeroProvider has CONTROLLER role
-        bool hasControllerRole = roleStoreContract.hasRole(layerZeroProviderAddr, Role.CONTROLLER);
+        bool hasControllerRole = roleStore.hasRole(layerZeroProviderAddr, Role.CONTROLLER);
 
         console.log("LayerZeroProvider has CONTROLLER role:", hasControllerRole);
         console.log("Role.CONTROLLER hash:", vm.toString(Role.CONTROLLER));
@@ -75,12 +63,9 @@ contract ConnectionTest is Test {
         assertTrue(hasControllerRole, "LayerZeroProvider should have CONTROLLER role");
     }
 
-    /**
-     * @dev Verify MultichainTransferRouter.multichainProvider points to LayerZeroProvider
-     */
+    /// @dev Verify MultichainTransferRouter.multichainProvider points to LayerZeroProvider
     function testMultichainTransferRouterConfiguration() public {
-        // Get the multichainProvider address from MultichainTransferRouter
-        address multichainProvider = address(multichainTransferRouterContract.multichainProvider());
+        address multichainProvider = address(multichainTransferRouter.multichainProvider());
 
         console.log("MultichainTransferRouter.multichainProvider:", multichainProvider);
         console.log("Expected LayerZeroProvider address:", layerZeroProviderAddr);
@@ -96,7 +81,7 @@ contract ConnectionTest is Test {
      * @dev Basic contract interactions
      */
     function testContractInteraction() public {
-        uint256 roleCount = roleStoreContract.getRoleCount();
+        uint256 roleCount = roleStore.getRoleCount();
         console.log("Total roles in system:", roleCount);
         assertTrue(roleCount > 0, "Should have at least one role");
     }

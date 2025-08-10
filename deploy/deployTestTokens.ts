@@ -1,5 +1,5 @@
-import { setBalance } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { ethers } from "hardhat";
 import { TokenConfig } from "../config/tokens";
 
 import * as keys from "../utils/keys";
@@ -39,7 +39,13 @@ const func = async ({ getNamedAccounts, deployments, gmx, network }: HardhatRunt
     tokens[tokenSymbol].address = address;
     if (newlyDeployed) {
       if (token.wrappedNative && !network.live) {
-        await setBalance(address, expandDecimals(1000, token.decimals));
+        const balance = expandDecimals(1000, token.decimals);
+        if (network.name === "hardhat") {
+          await network.provider.send("hardhat_setBalance", [address, `0x${balance.toHexString().slice(2)}`]);
+        } else {
+          // Use Anvil method for localhost/anvil
+          await network.provider.send("anvil_setBalance", [address, `0x${balance.toHexString().slice(2)}`]);
+        }
       }
 
       if (!token.wrappedNative) {

@@ -549,6 +549,20 @@ const recommendedMarketConfig = {
       expectedPositionImpactRatio: 11_600,
     },
   },
+  localhost: {
+    WETH: {
+      negativePositionImpactFactor: exponentToFloat("5e-7"),
+      negativeSwapImpactFactor: exponentToFloat("3e-10"),
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 11_111,
+    },
+    WBTC: {
+      negativePositionImpactFactor: exponentToFloat("9e-11"),
+      negativeSwapImpactFactor: exponentToFloat("3e-10"),
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+  },
   botanix: {
     "BTC:pBTC:pBTC": {
       negativePositionImpactFactor: 0,
