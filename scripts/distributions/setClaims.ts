@@ -34,6 +34,9 @@ const batchSize = 100;
 const simulationAccount = process.env.SIMULATION_ACCOUNT;
 const skipEmptyClaimableAmountValidation = process.env.SKIP_EMPTY_CLAIMABLE_AMOUNT_VALIDATION === "1";
 const skipMigrationValidation = process.env.SKIP_MIGRATION_VALIDATION === "1";
+const topUpFromSafe = process.env.TOP_UP_FROM_SAFE === "1";
+const maxTopUpFromSafe = process.env.MAX_TOP_UP_FROM_SAFE ? bigNumberify(process.env.MAX_TOP_UP_FROM_SAFE) : undefined;
+const SAFE_ADDRESS = "0xD2E217d800C41c86De1e01FD72009d4Eafc539a3";
 
 // for testing only
 const skipConfirmations = process.env.SKIP_CONFIRMATIONS === "1";
@@ -91,6 +94,7 @@ async function main() {
   const claimHandler = await hre.ethers.getContract("ClaimHandler");
   const tokenContract = await hre.ethers.getContractAt("MintableToken", data.token);
 
+  await transferFundsFromSafe(tokenContract, signerAddress, totalAmount, tokenDecimals);
   await checkBalance(tokenContract, signerAddress, totalAmount, tokenDecimals);
   await checkAllowance(tokenContract, claimHandler, data, signerAddress, totalAmount, tokenDecimals);
   validateDuplicatedRecipients(data);
@@ -177,6 +181,19 @@ async function main() {
       );
     }
 
+    const balance = await tokenContract.balanceOf(signerAddress);
+    const totalBatchAmount = batch.reduce((acc, { amount }) => acc.add(amount), bigNumberify(0));
+    if (balance.lt(totalBatchAmount)) {
+      console.warn(
+        "WARN: current balance %s is lower than required %s for batch %s-%s",
+        formatAmount(balance, tokenDecimals, 2, true),
+        formatAmount(totalBatchAmount, tokenDecimals, 2, true),
+        from,
+        to
+      );
+      throw new Error("Not enough balance to send batch");
+    }
+
     const params: DepositFundsParams = [data.token, data.distributionTypeId, batch];
     const gasLimit = await claimHandler.estimateGas.depositFunds(...params);
 
@@ -254,6 +271,44 @@ async function checkAllowance(
     await tx.wait();
     console.log("approval done");
   }
+}
+
+async function transferFundsFromSafe(
+  tokenContract: any,
+  signerAddress: string,
+  totalAmount: BigNumber,
+  tokenDecimals: number
+) {
+  if (!topUpFromSafe) {
+    return;
+  }
+  if (hre.network.name !== "arbitrum") {
+    throw new Error("transferFundsFromSafe is only supported on Arbitrum");
+  }
+
+  const allowance = await tokenContract.allowance(SAFE_ADDRESS, signerAddress);
+  if (allowance.eq(0)) {
+    console.warn("WARN: safe %s allowance for %s is 0. skip top up", SAFE_ADDRESS, signerAddress);
+    return;
+  }
+
+  let amount = totalAmount.lt(allowance) ? totalAmount : allowance;
+  if (maxTopUpFromSafe && maxTopUpFromSafe.lt(amount)) {
+    amount = maxTopUpFromSafe;
+  }
+
+  console.log(
+    "WARN: transferring %s from safe %s to %s",
+    formatAmount(amount, tokenDecimals, 4, true),
+    SAFE_ADDRESS,
+    signerAddress
+  );
+  await confirmProceed();
+
+  const tx = await tokenContract.transferFrom(SAFE_ADDRESS, signerAddress, amount);
+  console.log("sent transferFrom txn %s, waiting...", tx.hash);
+  await tx.wait();
+  console.log("transferFrom done");
 }
 
 async function checkBalance(tokenContract: any, signerAddress: string, totalAmount: BigNumber, tokenDecimals: number) {
