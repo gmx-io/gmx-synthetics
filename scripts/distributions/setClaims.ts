@@ -135,8 +135,7 @@ async function main() {
     batches.push({ batch, totalBatchAmount });
   }
 
-  await runSimulation(claimHandler, batches, data, tokenDecimals);
-
+  await runSimulation(claimHandler, multicall, batches, data, tokenDecimals);
   await confirmProceed("Do you want to execute the transactions?");
 
   const txHashes = [];
@@ -219,6 +218,7 @@ type Batches = {
 
 async function runSimulation(
   claimHandler: any,
+  multicall: any,
   batches: Batches,
   data: { token: string; distributionTypeId: number | string },
   tokenDecimals: number
@@ -231,6 +231,7 @@ async function runSimulation(
 
   console.log("running simulation. pass SKIP_SIMULATION=1 to skip");
   for (const { batch, totalBatchAmount } of batches) {
+    await validateEmptyClaimableAmount(claimHandler, multicall, data, batch, tokenDecimals);
     const from = batch[0].globalIndex;
     const to = batch[batch.length - 1].globalIndex;
     console.log(
@@ -345,7 +346,7 @@ async function checkBalance(tokenContract: any, signerAddress: string, totalAmou
   const balance = await tokenContract.balanceOf(signerAddress);
   if (balance.lt(totalAmount)) {
     console.warn(
-      "WARN: current balance %s is lower than required %s",
+      "WARN: current balance %s is lower than the total amount %s",
       formatAmount(balance, tokenDecimals, 2, true),
       formatAmount(totalAmount, tokenDecimals, 2, true)
     );
