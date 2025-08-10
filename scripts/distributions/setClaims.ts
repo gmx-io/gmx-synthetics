@@ -123,26 +123,37 @@ async function main() {
   const batchesCount = Math.ceil(accountsAndAmounts.length / batchSize);
 
   const batches: {
-    account: string;
-    amount: BigNumber;
-    globalIndex: number;
-  }[][] = [];
+    batch: {
+      account: string;
+      amount: BigNumber;
+      globalIndex: number;
+    }[];
+    totalBatchAmount: BigNumber;
+  }[] = [];
   for (const batchIndex of range(0, batchesCount)) {
     const from = batchIndex * batchSize;
     const batch = accountsAndAmounts.slice(from, from + batchSize).map((item, i) => ({
       ...item,
       globalIndex: startRecipientIndex + batchIndex * batchSize + i,
     }));
-    batches.push(batch);
+    const totalBatchAmount = batch.reduce((acc, { amount }) => acc.add(amount), bigNumberify(0));
+    batches.push({ batch, totalBatchAmount });
   }
 
   console.log("running simulation");
-  for (const batch of batches) {
+  for (const { batch, totalBatchAmount } of batches) {
     await validateEmptyClaimableAmount(claimHandler, multicall, data, batch, tokenDecimals);
 
     const from = batch[0].globalIndex;
     const to = batch[batch.length - 1].globalIndex;
-    console.log("simulating sending batch %s-%s token %s typeId %s", from, to, data.token, data.distributionTypeId);
+    console.log(
+      "simulating sending batch %s-%s token %s total amount %s typeId %s",
+      from,
+      to,
+      data.token,
+      formatAmount(totalBatchAmount, tokenDecimals),
+      data.distributionTypeId
+    );
 
     for (const { account, amount, globalIndex } of batch) {
       console.log(
@@ -166,7 +177,7 @@ async function main() {
   await confirmProceed("Do you want to execute the transactions?");
 
   const txHashes = [];
-  for (const batch of batches) {
+  for (const { batch, totalBatchAmount } of batches) {
     const from = batch[0].globalIndex;
     const to = batch[batch.length - 1].globalIndex;
     console.log("sending batch %s-%s token %s typeId %s", from, to, data.token, data.distributionTypeId);
@@ -182,7 +193,6 @@ async function main() {
     }
 
     const balance = await tokenContract.balanceOf(signerAddress);
-    const totalBatchAmount = batch.reduce((acc, { amount }) => acc.add(amount), bigNumberify(0));
     if (balance.lt(totalBatchAmount)) {
       console.warn(
         "WARN: current balance %s is lower than required %s for batch %s-%s",
@@ -335,7 +345,6 @@ async function confirmProceed(message = "Do you want to proceed?") {
     type: "confirm",
     name: "proceed",
     message,
-    initial: true,
   });
   if (!proceed) {
     process.exit(0);
