@@ -8,6 +8,7 @@ import { range } from "lodash";
 import { bigNumberify, formatAmount } from "../../utils/math";
 import path from "path";
 import { getChainId, getDistributionTypeName } from "../helpers";
+import { setTimeout } from "timers/promises";
 
 /*
 Example of usage:
@@ -37,6 +38,7 @@ const skipMigrationValidation = process.env.SKIP_MIGRATION_VALIDATION === "1";
 const topUpFromSafe = process.env.TOP_UP_FROM_SAFE === "1";
 const maxTopUpFromSafe = process.env.MAX_TOP_UP_FROM_SAFE ? bigNumberify(process.env.MAX_TOP_UP_FROM_SAFE) : undefined;
 const SAFE_ADDRESS = "0xD2E217d800C41c86De1e01FD72009d4Eafc539a3";
+const skipSimulation = process.env.SKIP_SIMULATION === "1";
 
 // for testing only
 const skipConfirmations = process.env.SKIP_CONFIRMATIONS === "1";
@@ -122,14 +124,7 @@ async function main() {
   }
   const batchesCount = Math.ceil(accountsAndAmounts.length / batchSize);
 
-  const batches: {
-    batch: {
-      account: string;
-      amount: BigNumber;
-      globalIndex: number;
-    }[];
-    totalBatchAmount: BigNumber;
-  }[] = [];
+  const batches: Batches = [];
   for (const batchIndex of range(0, batchesCount)) {
     const from = batchIndex * batchSize;
     const batch = accountsAndAmounts.slice(from, from + batchSize).map((item, i) => ({
@@ -140,37 +135,7 @@ async function main() {
     batches.push({ batch, totalBatchAmount });
   }
 
-  console.log("running simulation");
-  for (const { batch, totalBatchAmount } of batches) {
-    const from = batch[0].globalIndex;
-    const to = batch[batch.length - 1].globalIndex;
-    console.log(
-      "simulating sending batch %s-%s token %s total amount %s typeId %s",
-      from,
-      to,
-      data.token,
-      formatAmount(totalBatchAmount, tokenDecimals),
-      data.distributionTypeId
-    );
-
-    for (const { account, amount, globalIndex } of batch) {
-      console.log(
-        "%s recipient %s amount %s (%s)",
-        globalIndex,
-        account,
-        formatAmount(amount, tokenDecimals, 4, true),
-        amount
-      );
-    }
-
-    const params: DepositFundsParams = [data.token, data.distributionTypeId, batch];
-
-    const result = await (simulationAccount
-      ? claimHandler.connect(simulationAccount)
-      : claimHandler
-    ).callStatic.depositFunds(...params);
-    console.log("simulation batch %s-%s done, result %s", from, to, result);
-  }
+  await runSimulation(claimHandler, batches, data, tokenDecimals);
 
   await confirmProceed("Do you want to execute the transactions?");
 
@@ -241,6 +206,60 @@ async function main() {
   saveMigrations(migrations);
   delete batchesInProgress[id];
   saveBatchesInProgress(batchesInProgress);
+}
+
+type Batches = {
+  batch: {
+    account: string;
+    amount: BigNumber;
+    globalIndex: number;
+  }[];
+  totalBatchAmount: BigNumber;
+}[];
+
+async function runSimulation(
+  claimHandler: any,
+  batches: Batches,
+  data: { token: string; distributionTypeId: number | string },
+  tokenDecimals: number
+) {
+  if (skipSimulation) {
+    console.warn("WARN: skipping simulation");
+    await setTimeout(1000);
+    return;
+  }
+
+  console.log("running simulation. pass SKIP_SIMULATION=1 to skip");
+  for (const { batch, totalBatchAmount } of batches) {
+    const from = batch[0].globalIndex;
+    const to = batch[batch.length - 1].globalIndex;
+    console.log(
+      "simulating sending batch %s-%s token %s total amount %s typeId %s",
+      from,
+      to,
+      data.token,
+      formatAmount(totalBatchAmount, tokenDecimals),
+      data.distributionTypeId
+    );
+
+    for (const { account, amount, globalIndex } of batch) {
+      console.log(
+        "%s recipient %s amount %s (%s)",
+        globalIndex,
+        account,
+        formatAmount(amount, tokenDecimals, 4, true),
+        amount
+      );
+    }
+
+    const params: DepositFundsParams = [data.token, data.distributionTypeId, batch];
+
+    const result = await (simulationAccount
+      ? claimHandler.connect(simulationAccount)
+      : claimHandler
+    ).callStatic.depositFunds(...params);
+    console.log("simulation batch %s-%s done, result %s", from, to, result);
+  }
 }
 
 function validateDuplicatedRecipients(data: { amounts: Record<string, string> }) {
