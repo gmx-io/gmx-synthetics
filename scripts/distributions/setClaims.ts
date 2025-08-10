@@ -35,10 +35,12 @@ const batchSize = process.env.BATCH_SIZE ? parseInt(process.env.BATCH_SIZE) : 10
 const simulationAccount = process.env.SIMULATION_ACCOUNT;
 const skipEmptyClaimableAmountValidation = process.env.SKIP_EMPTY_CLAIMABLE_AMOUNT_VALIDATION === "1";
 const skipMigrationValidation = process.env.SKIP_MIGRATION_VALIDATION === "1";
+const skipSimulation = process.env.SKIP_SIMULATION === "1";
+
+// top up from safe was used for GLP distribution
 const topUpFromSafe = process.env.TOP_UP_FROM_SAFE === "1";
 const maxTopUpFromSafe = process.env.MAX_TOP_UP_FROM_SAFE ? bigNumberify(process.env.MAX_TOP_UP_FROM_SAFE) : undefined;
 const SAFE_ADDRESS = "0xD2E217d800C41c86De1e01FD72009d4Eafc539a3";
-const skipSimulation = process.env.SKIP_SIMULATION === "1";
 
 // for testing only
 const skipConfirmations = process.env.SKIP_CONFIRMATIONS === "1";
