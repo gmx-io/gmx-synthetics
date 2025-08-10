@@ -20,6 +20,7 @@ out
 /cache
 /data
 /scripts/distributions/data
+!/scripts/distributions/data/glp
 /artifacts
 /deployments/localhost
 /deployments.txt
