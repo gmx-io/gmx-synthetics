@@ -1110,7 +1110,7 @@ const config: {
       openInterestReserveFactor: percentageToFloat("230%"),
 
       maxLongTokenPoolAmount: expandDecimals(690_000, 18),
-      maxShortTokenPoolAmount: expandDecimals(11_000_000, 6),
+      maxShortTokenPoolAmount: expandDecimals(13_000_000, 6),
 
       maxPoolUsdForDeposit: decimalToFloat(10_800_000),
 
@@ -2544,8 +2544,8 @@ const config: {
       maxOpenInterest: decimalToFloat(1_000_000),
       maxPoolUsdForDeposit: decimalToFloat(2_400_000),
 
-      maxLongTokenPoolAmount: expandDecimals(600, 18), // ~2M USD (2x the max open interest)
-      maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
+      maxLongTokenPoolAmount: expandDecimals(700, 18),
+      maxShortTokenPoolAmount: expandDecimals(3_000_000, 6),
 
       atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
@@ -2576,8 +2576,8 @@ const config: {
 
       maxPoolUsdForDeposit: decimalToFloat(3_840_000),
 
-      maxLongTokenPoolAmount: expandDecimals(33, 8),
-      maxShortTokenPoolAmount: expandDecimals(3_200_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(37, 8),
+      maxShortTokenPoolAmount: expandDecimals(4_600_000, 6),
 
       atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },
@@ -3074,7 +3074,7 @@ const config: {
       maxPoolUsdForDeposit: decimalToFloat(720_000),
 
       maxLongTokenPoolAmount: expandDecimals(285, 18),
-      maxShortTokenPoolAmount: expandDecimals(750_000, 6),
+      maxShortTokenPoolAmount: expandDecimals(864_000, 6),
     },
     {
       tokens: { indexToken: "ZRO", longToken: "WETH", shortToken: "USDC" },
