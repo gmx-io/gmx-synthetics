@@ -1,7 +1,7 @@
 import { setTimeout as sleep } from "timers/promises";
 import hre from "hardhat";
 import { getExplorerUrl } from "../hardhat.config";
-import got from "got";
+import { sendExplorerRequest } from "./etherscanUtils";
 
 const { ethers } = hre;
 
@@ -42,24 +42,7 @@ const callbackFunctionNames = [
 ];
 
 async function fetchAbi(address) {
-  const apiUrl = getExplorerUrl(hre.network.name);
-  const apiKey = hre.network.config.verify.etherscan.apiKey;
-  const res: any = await got
-    .get(`${apiUrl}api`, {
-      searchParams: {
-        module: "contract",
-        action: "getabi",
-        address,
-        apikey: apiKey,
-      },
-    })
-    .json();
-
-  if (res.status !== "1") {
-    throw new Error("Failed to fetch ABI from Etherscan.");
-  }
-
-  await sleep(200);
+  const res: any = await sendExplorerRequest({ action: "getabi", address });
   return JSON.parse(res.result);
 }
 

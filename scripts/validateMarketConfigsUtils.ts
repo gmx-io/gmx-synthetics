@@ -610,6 +610,7 @@ async function validatePerpConfig({
   shortTokenSymbol,
   indexTokenSymbol,
   dataStore,
+  warnings,
   errors,
 }) {
   if (!marketConfig.tokens.indexToken) {
@@ -617,6 +618,14 @@ async function validatePerpConfig({
   }
 
   const marketLabel = `${indexTokenSymbol} [${longTokenSymbol}-${shortTokenSymbol}]`;
+
+  if (!marketConfig.minCollateralFactor.eq(marketConfig.minCollateralFactorForLiquidation)) {
+    warnings.push({
+      message: `marketConfig.minCollateralFactor != marketConfig.minCollateralFactorForLiquidation for ${marketLabel}`,
+      expected: marketConfig.minCollateralFactor,
+      actual: marketConfig.minCollateralFactorForLiquidation,
+    });
+  }
 
   console.log("validatePerpConfig", indexTokenSymbol);
   const recommendedPerpConfig =
@@ -1071,6 +1080,7 @@ export async function validateMarketConfigs() {
   markets.sort((a, b) => a.indexToken.localeCompare(b.indexToken));
 
   const errors = [];
+  const warnings = [];
 
   // validate market configs as some markets may not be created on-chain yet
   for (const marketConfig of marketConfigs) {
@@ -1104,8 +1114,24 @@ export async function validateMarketConfigs() {
       }
     }
 
-    await validatePerpConfig({ marketConfig, indexTokenSymbol, longTokenSymbol, shortTokenSymbol, dataStore, errors });
-    await validateSwapConfig({ marketConfig, indexTokenSymbol, longTokenSymbol, shortTokenSymbol, dataStore, errors });
+    await validatePerpConfig({
+      marketConfig,
+      indexTokenSymbol,
+      longTokenSymbol,
+      shortTokenSymbol,
+      dataStore,
+      errors,
+      warnings,
+    });
+    await validateSwapConfig({
+      marketConfig,
+      indexTokenSymbol,
+      longTokenSymbol,
+      shortTokenSymbol,
+      dataStore,
+      errors,
+      warnings,
+    });
   }
 
   const marketKeysToSkip = {
@@ -1144,6 +1170,7 @@ export async function validateMarketConfigs() {
       indexTokenSymbol,
       dataStore,
       errors,
+      warnings,
     });
     await validateSwapConfig({
       market,
@@ -1153,7 +1180,14 @@ export async function validateMarketConfigs() {
       indexTokenSymbol,
       dataStore,
       errors,
+      warnings,
     });
+  }
+
+  for (const warning of warnings) {
+    console.log(
+      `Warn: ${warning.message}, expected: ${warning.expected.toString()}, actual: ${warning.actual.toString()}`
+    );
   }
 
   for (const error of errors) {

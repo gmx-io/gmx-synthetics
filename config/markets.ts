@@ -4097,6 +4097,7 @@ const config: {
       minPositionImpactPoolAmount: bigNumberify(0),
 
       minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
 
       // minCollateralFactor of 0.005 (0.5%) when open interest is 83,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6e-11"),
@@ -4129,6 +4130,7 @@ const config: {
       minPositionImpactPoolAmount: bigNumberify(0),
 
       minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.78e-9"),
 
@@ -4163,6 +4165,7 @@ const config: {
       minPositionImpactPoolAmount: bigNumberify(0),
 
       minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.14e-9"),
 
