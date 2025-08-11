@@ -277,7 +277,7 @@ contract Oracle is IOracle, RoleModule {
                     revert Errors.NonAtomicOracleProvider(_provider);
                 }
             } else {
-                address expectedProvider = dataStore.getAddress(Keys.oracleProviderForTokenKey(token));
+                address expectedProvider = dataStore.getAddress(Keys.oracleProviderForTokenKey(address(this), token));
                 if (_provider != expectedProvider) {
                     revert Errors.InvalidOracleProviderForToken(_provider, expectedProvider);
                 }
@@ -301,8 +301,6 @@ contract Oracle is IOracle, RoleModule {
                 revert Errors.MaxPriceAgeExceeded(validatedPrice.timestamp, Chain.currentTimestamp());
             }
 
-            // for atomic providers, assume that Chainlink would be the main provider
-            // so it would be redundant to re-fetch the Chainlink price for validation
             if (!provider.isChainlinkOnChainProvider()) {
                 (bool hasRefPrice, uint256 refPrice) = ChainlinkPriceFeedUtils.getPriceFeedPrice(dataStore, token);
 

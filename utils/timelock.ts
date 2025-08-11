@@ -136,12 +136,16 @@ export async function setOracleProviderEnabledPayload(providerAddress: string, v
   };
 }
 
-export async function setOracleProviderForTokenPayload(tokenAddress: string, providerAddress: string) {
+export async function setOracleProviderForTokenPayload(
+  oracleAddress: string,
+  tokenAddress: string,
+  providerAddress: string
+) {
   const dataStore = await hre.ethers.getContract("DataStore");
   return {
     target: dataStore.address,
     payload: dataStore.interface.encodeFunctionData("setAddress", [
-      keys.oracleProviderForTokenKey(tokenAddress),
+      keys.oracleProviderForTokenKey(oracleAddress, tokenAddress),
       providerAddress,
     ]),
   };
