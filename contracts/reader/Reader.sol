@@ -276,6 +276,7 @@ contract Reader {
         uint256 positionSizeInUsd,
         uint256 positionSizeInTokens,
         int256 sizeDeltaUsd,
+        int256 pendingImpactAmount,
         bool isLong
     ) external view returns (ReaderPricingUtils.ExecutionPriceResult memory) {
         Market.Props memory market = MarketStoreUtils.get(dataStore, marketKey);
@@ -287,6 +288,7 @@ contract Reader {
                 positionSizeInUsd,
                 positionSizeInTokens,
                 sizeDeltaUsd,
+                pendingImpactAmount,
                 isLong
             );
     }

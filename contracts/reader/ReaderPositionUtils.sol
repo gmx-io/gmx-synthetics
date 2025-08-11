@@ -209,6 +209,7 @@ library ReaderPositionUtils {
             positionInfo.position.sizeInUsd(),
             positionInfo.position.sizeInTokens(),
             -sizeDeltaUsd.toInt256(),
+            positionInfo.position.pendingImpactAmount(),
             positionInfo.position.isLong()
         );
 
