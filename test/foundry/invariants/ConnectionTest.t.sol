@@ -1,15 +1,17 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import "forge-std/Test.sol";
-import "../../../contracts/role/RoleStore.sol";
 import "../../../contracts/role/Role.sol";
+import "../../../contracts/role/RoleStore.sol";
 import "../../../contracts/multichain/MultichainTransferRouter.sol";
 
-string constant FORK_URL = "http://127.0.0.1:8545";
+import "forge-std/Test.sol";
+
+import "./TestHelpers.sol";
+import "./TestConstants.sol";
 
 /**
- * @dev Test that verifies contracts have been deployed and wired correctly to an anvil node using the hardhat deployment script.
+ * Verify contracts have been deployed and wired correctly to an anvil node using the hardhat deployment script.
  */
 contract ConnectionTest is Test {
     address layerZeroProviderAddr;
@@ -20,26 +22,15 @@ contract ConnectionTest is Test {
     MultichainTransferRouter multichainTransferRouter;
 
     function setUp() public {
-        // Create fork of the running anvil node at localhost:8545
-        vm.createSelectFork(FORK_URL);
+        // Setup fork connection
+        vm.createSelectFork(TestConstants.FORK_URL);
 
-        roleStoreAddr = _loadDeploymentAddress("RoleStore");
-        layerZeroProviderAddr = _loadDeploymentAddress("LayerZeroProvider");
-        multichainTransferRouterAddr = _loadDeploymentAddress("MultichainTransferRouter");
+        roleStoreAddr = TestHelpers.loadDeploymentAddress(vm, "RoleStore");
+        layerZeroProviderAddr = TestHelpers.loadDeploymentAddress(vm, "LayerZeroProvider");
+        multichainTransferRouterAddr = TestHelpers.loadDeploymentAddress(vm, "MultichainTransferRouter");
 
         roleStore = RoleStore(roleStoreAddr);
         multichainTransferRouter = MultichainTransferRouter(multichainTransferRouterAddr);
-    }
-
-    function _loadDeploymentAddress(string memory contractName) internal view returns (address) {
-        string memory deploymentPath = string.concat("./deployments/localhost/", contractName, ".json");
-        string memory json = vm.readFile(deploymentPath);
-
-        address contractAddress = vm.parseJsonAddress(json, ".address");
-        require(contractAddress != address(0), string.concat("Failed to load address for ", contractName));
-        console.log("Loaded %s at: %s", contractName, contractAddress);
-
-        return contractAddress;
     }
 
     /// @dev Verify basic connection to Anvil node
