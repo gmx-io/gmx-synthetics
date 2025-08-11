@@ -58,7 +58,7 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         eventData.addressItems.setItem(0, "account", account);
         eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "roleKey", roleKey);
-        eventEmitter.emitEventLog(
+        _signalPendingAction(
             "SignalGrantRole",
             eventData
         );
@@ -78,7 +78,7 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         eventData.addressItems.setItem(0, "account", account);
         eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "roleKey", roleKey);
-        eventEmitter.emitEventLog(
+        _signalPendingAction(
             "SignalRevokeRole",
             eventData
         );
@@ -95,7 +95,7 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         eventData.addressItems.setItem(0, "account", account);
         eventData.bytes32Items.initItems(1);
         eventData.bytes32Items.setItem(0, "roleKey", roleKey);
-        eventEmitter.emitEventLog(
+        _signalPendingAction(
             "RevokeRole",
             eventData
         );
@@ -111,7 +111,7 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         eventData.addressItems.setItem(0, "provider", provider);
         eventData.boolItems.initItems(1);
         eventData.boolItems.setItem(0, "value", value);
-        eventEmitter.emitEventLog(
+        _signalPendingAction(
             "SignalSetOracleProviderEnabled",
             eventData
         );
@@ -126,7 +126,7 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         eventData.addressItems.initItems(2);
         eventData.addressItems.setItem(0, "token", token);
         eventData.addressItems.setItem(1, "provider", provider);
-        eventEmitter.emitEventLog(
+        _signalPendingAction(
             "SignalSetOracleProviderForToken",
             eventData
         );
@@ -142,7 +142,7 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         eventData.addressItems.setItem(0, "provider", provider);
         eventData.boolItems.initItems(1);
         eventData.boolItems.setItem(0, "value", value);
-        eventEmitter.emitEventLog(
+        _signalPendingAction(
             "SignalSetAtomicOracleProvider",
             eventData
         );
@@ -159,7 +159,7 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         EventUtils.EventLogData memory eventData;
         eventData.addressItems.initItems(1);
         eventData.addressItems.setItem(0, "account", account);
-        eventEmitter.emitEventLog(
+        _signalPendingAction(
             "SignalAddOracleSigner",
             eventData
         );
@@ -176,7 +176,7 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         EventUtils.EventLogData memory eventData;
         eventData.addressItems.initItems(1);
         eventData.addressItems.setItem(0, "account", account);
-        eventEmitter.emitEventLog(
+        _signalPendingAction(
             "SignalRemoveOracleSigner",
             eventData
         );
@@ -196,7 +196,7 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         EventUtils.EventLogData memory eventData;
         eventData.addressItems.initItems(1);
         eventData.addressItems.setItem(0, "account", account);
-        eventEmitter.emitEventLog(
+        _signalPendingAction(
             "SignalSetFeeReceiver",
             eventData
         );
@@ -216,7 +216,7 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         EventUtils.EventLogData memory eventData;
         eventData.addressItems.initItems(1);
         eventData.addressItems.setItem(0, "account", account);
-        eventEmitter.emitEventLog(
+        _signalPendingAction(
             "SignalSetHoldingAddress",
             eventData
         );
@@ -264,7 +264,7 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         eventData.uintItems.setItem(0, "priceFeedMultiplier", priceFeedMultiplier);
         eventData.uintItems.setItem(1, "priceFeedHeartbeatDuration", priceFeedHeartbeatDuration);
         eventData.uintItems.setItem(2, "stablePrice", stablePrice);
-        eventEmitter.emitEventLog(
+        _signalPendingAction(
             "SignalSetPriceFeed",
             eventData
         );
@@ -311,7 +311,7 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         eventData.uintItems.initItems(2);
         eventData.uintItems.setItem(0, "dataStreamMultiplier", dataStreamMultiplier);
         eventData.uintItems.setItem(1, "dataStreamSpreadReductionFactor", dataStreamSpreadReductionFactor);
-        eventEmitter.emitEventLog(
+        _signalPendingAction(
             "SignalSetDataStream",
             eventData
         );
@@ -341,7 +341,7 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         EventUtils.EventLogData memory eventData;
         eventData.uintItems.initItems(1);
         eventData.uintItems.setItem(0, "timelockDelay", _timelockDelay);
-        eventEmitter.emitEventLog(
+        _signalPendingAction(
             "IncreaseTimelockDelay",
             eventData
         );
@@ -375,7 +375,7 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         eventData.addressItems.setItem(1, "fundingAccount", fundingAccount);
         eventData.uintItems.initItems(1);
         eventData.uintItems.setItem(0, "reductionAmount", reductionAmount);
-        eventEmitter.emitEventLog(
+        _signalPendingAction(
             "SignalReduceLentImpactAmount",
             eventData
         );
@@ -413,7 +413,7 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         eventData.addressItems.setItem(1, "receiver", receiver);
         eventData.uintItems.initItems(1);
         eventData.uintItems.setItem(0, "amount", amount);
-        eventEmitter.emitEventLog(
+        _signalPendingAction(
             "SignalWithdrawFromPositionImpactPool",
             eventData
         );
@@ -458,7 +458,7 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         eventData.uintItems.initItems(1);
         eventData.uintItems.setItem(0, "amount", amount);
 
-        eventEmitter.emitEventLog("SignalWithdrawTokens", eventData);
+        _signalPendingAction("SignalWithdrawTokens", eventData);
     }
 
     function signalSetEdgeDataStream(
@@ -496,7 +496,7 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         eventData.uintItems.initItems(1);
         eventData.uintItems.setItem(0, "edgeDataStreamTokenDecimals", edgeDataStreamTokenDecimals);
 
-        eventEmitter.emitEventLog("SignalSetEdgeDataStream", eventData);
+        _signalPendingAction("SignalSetEdgeDataStream", eventData);
     }
 
     function execute(address target, bytes calldata payload, bytes32 predecessor, bytes32 salt) external onlyTimelockAdmin {
@@ -541,5 +541,28 @@ contract TimelockConfig is RoleModule, BasicMulticall {
 
     function cancelAction(bytes32 id) external onlyTimelockAdmin {
         timelockController.cancel(id);
+    }
+
+    function _signalPendingAction(string memory actionLabel, EventUtils.EventLogData memory eventData) internal {
+        EventUtils.EventLogData memory actionData;
+
+        bytes32 actionKey = keccak256(abi.encode(actionLabel));
+
+        actionData.bytes32Items.initItems(1);
+        actionData.bytes32Items.setItem(0, "actionKey", actionKey);
+
+        actionData.stringItems.initItems(1);
+        actionData.stringItems.setItem(0, "actionLabel", actionLabel);
+
+        eventEmitter.emitEventLog1(
+            "SignalPendingAction",
+            actionKey,
+            actionData
+        );
+
+        eventEmitter.emitEventLog(
+            actionLabel,
+            eventData
+        );
     }
 }

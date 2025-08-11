@@ -16,7 +16,7 @@ export async function timelockWriteMulticall({ timelock, multicallWriteParams })
   }
 
   await hre.deployments.read(
-    "Timelock",
+    "TimelockConfig",
     {
       from: "0xE014cbD60A793901546178E1c16ad9132C927483",
       log: true,
