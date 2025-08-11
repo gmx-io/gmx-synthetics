@@ -27,6 +27,8 @@ out
 *.log
 .cursorignore*
 
+/validation/
+
 .idea
 /abi
 
