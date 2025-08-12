@@ -4,7 +4,13 @@ import { setOracleProviderEnabledPayload, timelockWriteMulticall } from "../util
 const expectedTimelockMethods = ["signalSetOracleProviderEnabled", "setOracleProviderEnabledAfterSignal"];
 
 async function main() {
-  const timelock = await hre.ethers.getContract("TimelockConfig");
+  const timelockConfigAddresses = {
+    arbitrum: "0x625D4b5456f065756De8d618dE094bE7618e8A0d",
+    avalanche: "0x40794bcBCFb347689fa8c4da69f6405Cf0ECf2C5",
+    botanix: "0x8fB97fEfF5f7CfbE9c63D51F6CbBC914E425d965",
+  };
+  const timelock = await hre.ethers.getContractAt("TimelockConfig", timelockConfigAddresses[hre.network.name]);
+  console.log("timelock", timelock.address);
   const chainlinkPriceFeedProvider = await hre.ethers.getContract("ChainlinkPriceFeedProvider");
   const chainlinkDataStreamProvider = await hre.ethers.getContract("ChainlinkDataStreamProvider");
   const edgeDataStreamProvider = await hre.ethers.getContract("EdgeDataStreamProvider");
@@ -28,8 +34,8 @@ async function main() {
   // };
 
   const providersToAdd = [
-    chainlinkPriceFeedProvider.address,
-    chainlinkDataStreamProvider.address,
+    // chainlinkPriceFeedProvider.address,
+    // chainlinkDataStreamProvider.address,
     edgeDataStreamProvider.address,
   ];
 

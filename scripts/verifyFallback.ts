@@ -1,11 +1,9 @@
 import { setTimeout as delay } from "timers/promises";
 import { readJsonFile, writeJsonFile } from "../utils/file";
 import { getExplorerUrl } from "../hardhat.config";
+import { sendExplorerRequest } from "./etherscanUtils";
 
 import hre from "hardhat";
-import got from "got";
-
-const apiKey = hre.network.config.verify.etherscan.apiKey;
 
 const largeContractsMap = {
   AdlHandler: true,
@@ -41,24 +39,7 @@ function withTimeout(promise, timeoutMs, timeoutMessage = "Timed out") {
 // ARBISCAN_API_KEY=<api key> npx hardhat --network arbitrum verify --constructor-args ./verification/gov/govTimelockController.js --contract contracts/gov/GovTimelockController.sol:GovTimelockController 0x99Ff4D52e97813A1784bC4A1b37554DC3499D67e
 async function getIsContractVerified(apiUrl: string, address: string) {
   try {
-    // const url = new URL(`${apiUrl}api`);
-    // url.searchParams.set("module", "contract");
-    // url.searchParams.set("action", "getabi");
-    // url.searchParams.set("address", address);
-    // url.searchParams.set("apikey", apiKey);
-    //
-    // console.log("GET:", url.toString());
-
-    const res: any = await got
-      .get(`${apiUrl}api`, {
-        searchParams: {
-          module: "contract",
-          action: "getabi",
-          address,
-          apikey: apiKey,
-        },
-      })
-      .json();
+    const res: any = await sendExplorerRequest({ action: "getabi", address });
 
     if (res.status !== "1") {
       if (res.result?.includes("rate limit reached")) {

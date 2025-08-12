@@ -1,6 +1,4 @@
-import { setTimeout as sleep } from "timers/promises";
 import hre from "hardhat";
-import { getExplorerUrl } from "../hardhat.config";
 import { sendExplorerRequest } from "./etherscanUtils";
 
 const { ethers } = hre;
