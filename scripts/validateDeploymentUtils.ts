@@ -7,6 +7,26 @@ import { getIsGmxDeployer } from "./validateRolesUtils";
 import { execSync } from "child_process";
 import { getContractCreationFromEtherscan } from "./etherscanUtils";
 import { FileCache } from "./cacheUtils";
+import { hashString } from "../utils/hash";
+import { getExplorerUrl } from "../hardhat.config";
+import got from "got";
+
+const externalContractsAllowedForRoles = {
+  [hashString("TIMELOCK_ADMIN")]: true,
+  [hashString("TIMELOCK_MULTISIG")]: true,
+  [hashString("CONFIG_KEEPER")]: true,
+  [hashString("LIMITED_CONFIG_KEEPER")]: true,
+  [hashString("MARKET_KEEPER")]: true,
+  [hashString("FEE_KEEPER")]: true,
+  [hashString("FEE_DISTRIBUTION_KEEPER")]: true,
+  [hashString("ORDER_KEEPER")]: true,
+  [hashString("FROZEN_ORDER_KEEPER")]: true,
+  [hashString("LIQUIDATION_KEEPER")]: true,
+  [hashString("ADL_KEEPER")]: true,
+  [hashString("CONTRIBUTOR_KEEPER")]: true,
+  [hashString("CONTRIBUTOR_DISTRIBUTOR")]: true,
+  [hashString("CLAIM_ADMIN")]: true,
+};
 
 export interface SignalRoleInfo {
   account: string;
@@ -69,14 +89,25 @@ export async function validateSourceCode(provider: JsonRpcProvider, contractInfo
     console.log(`${contractInfo.name} already validated`);
     return;
   }
+  // isExternalContractAllowed would be true if signalledRoles is empty
+  const isExternalContractAllowed = contractInfo.signalledRoles.every(
+    (roleKey) => externalContractsAllowedForRoles[roleKey]
+  );
+
+  if (isExternalContractAllowed) {
+    contractInfo.isCodeValidated = true;
+    return;
+  }
+
   const { contractCreator } = await getContractCreationFromEtherscan(contractInfo.address);
+
   if (!getIsGmxDeployer(contractCreator)) {
     throw new Error(`❌ Contract creator for ${contractInfo.address} is not GMX!`);
   }
 
   try {
     // also extracts contract name
-    await validateWithSourcify(contractInfo);
+    await validateWithExplorer(contractInfo);
   } catch (error) {
     console.error(`Sourcify validation failed: ${error}.\nFallback to compilation artifact validation`);
     await compareContractBytecodes(provider, contractInfo);
@@ -109,9 +140,59 @@ async function getSourcifyData(contractAddress: string): Promise<SourcifyRespons
   return response.data;
 }
 
-async function validateWithSourcify(contractInfo: ContractInfo): Promise<boolean> {
-  console.log(`Trying to validate ${contractInfo.address} via sourcify`);
-  const sourcifyData: SourcifyResponse = await getSourcifyData(contractInfo.address);
+async function getSourcesFromRoutescan(contractAddress: string): Promise<SourcifyResponse> {
+  const chainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
+  if (sourcifyCache.has(`${contractAddress}-${chainId}`)) {
+    return sourcifyCache.get(`${contractAddress}-${chainId}`);
+  }
+
+  const apiUrl = getExplorerUrl(hre.network.name);
+  const apiKey = hre.network.config.verify.etherscan.apiKey;
+  const response: any = await got
+    .get(`${apiUrl}api`, {
+      searchParams: {
+        module: "contract",
+        action: "getsourcecode",
+        address: contractAddress,
+        apikey: apiKey,
+      },
+    })
+    .json();
+
+  if (response.status != 1) {
+    throw new Error("sources are not validated");
+  }
+
+  //convert to sourcify response
+  const sources = response.result[0].SourceCode;
+  const parsedSources = JSON.parse(sources.slice(1, -1));
+
+  const sourcifyResponse = {
+    address: contractAddress,
+    chainId: chainId,
+    compilation: {
+      name: response.result[0].ContractName,
+    },
+    sources: parsedSources.sources,
+    verifiedAt: "",
+    match: "EXACT",
+    creationMatch: "EXACT",
+  };
+  sourcifyCache.set(`${contractAddress}-${chainId}`, sourcifyResponse);
+  return sourcifyResponse;
+}
+
+async function validateWithExplorer(contractInfo: ContractInfo): Promise<boolean> {
+  let sourcifyData: SourcifyResponse;
+  const chainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
+  if (chainId === 3637) {
+    //botanix
+    console.log(`Trying to validate ${contractInfo.address} via routescan`);
+    sourcifyData = await getSourcesFromRoutescan(contractInfo.address);
+  } else {
+    console.log(`Trying to validate ${contractInfo.address} via sourcify`);
+    sourcifyData = await getSourcifyData(contractInfo.address);
+  }
 
   contractInfo.name = sourcifyData.compilation.name;
   console.log(`Resolved as ${contractInfo.name}`);
@@ -148,7 +229,7 @@ function validateSourceFile(fullContractName: string, sourceCode: string): boole
 }
 
 function showDiff(localPath: string, sourceCode: string, contractName: string) {
-  const outDir = path.join(__dirname, "../validation");
+  const outDir = path.join(__dirname, `../validation/${hre.network.name}`);
   if (!fs.existsSync(outDir)) {
     fs.mkdirSync(outDir);
   }

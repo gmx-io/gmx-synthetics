@@ -16,7 +16,6 @@ export class FileCache<T> {
 
   constructor(cacheFileName: string, expectedCacheVersion: number) {
     const cacheFilePath = path.join(__dirname, "../cache", cacheFileName);
-    console.log("cacheFilePath", cacheFilePath);
     this.filePath = path.resolve(cacheFilePath);
     this.loadCache(expectedCacheVersion);
   }

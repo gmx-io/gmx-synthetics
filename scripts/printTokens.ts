@@ -3,6 +3,7 @@ import * as keys from "../utils/keys";
 
 async function main() {
   const dataStore = await hre.ethers.getContract("DataStore");
+  const oracle = await hre.ethers.getContract("Oracle");
 
   const { gmx, deployments } = hre;
   for (const [symbol, tokenConfig] of Object.entries(await gmx.getTokens())) {
@@ -12,7 +13,7 @@ async function main() {
       address = _address;
     }
 
-    const oracleProviderKey = keys.oracleProviderForTokenKey(address);
+    const oracleProviderKey = keys.oracleProviderForTokenKey(oracle.address, address);
     const oracleProvider = await dataStore.getAddress(oracleProviderKey);
     const oracleTimestampAdjustmentKey = keys.oracleTimestampAdjustmentKey(oracleProvider, address);
     const oracleTimestampAdjustment = await dataStore.getUint(oracleTimestampAdjustmentKey);

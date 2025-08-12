@@ -31,12 +31,21 @@ import { constants } from "ethers";
 describe("Timelock", () => {
   let fixture;
   let timelockAdmin, timelockMultisig, user2, user3, signer0, signer9;
-  let timelockConfig, configTimelockController, dataStore, roleStore, oracleStore, wnt, usdc, layerZeroProvider;
+  let timelockConfig, configTimelockController, dataStore, roleStore, oracleStore, oracle, wnt, usdc, layerZeroProvider;
 
   beforeEach(async () => {
     fixture = await deployFixture();
-    ({ timelockConfig, configTimelockController, dataStore, roleStore, oracleStore, wnt, usdc, layerZeroProvider } =
-      fixture.contracts);
+    ({
+      timelockConfig,
+      configTimelockController,
+      dataStore,
+      roleStore,
+      oracleStore,
+      oracle,
+      wnt,
+      usdc,
+      layerZeroProvider,
+    } = fixture.contracts);
     ({ user2, user3, signer0, signer9 } = fixture.accounts);
 
     timelockAdmin = fixture.accounts.user0;
@@ -291,16 +300,16 @@ describe("Timelock", () => {
     await expect(
       timelockConfig
         .connect(user2)
-        .signalSetOracleProviderForToken(wnt.address, user3.address, constants.HashZero, salt)
+        .signalSetOracleProviderForToken(oracle.address, wnt.address, user3.address, constants.HashZero, salt)
     )
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
       .withArgs(user2.address, "TIMELOCK_ADMIN");
 
     await timelockConfig
       .connect(timelockAdmin)
-      .signalSetOracleProviderForToken(wnt.address, user3.address, constants.HashZero, salt);
+      .signalSetOracleProviderForToken(oracle.address, wnt.address, user3.address, constants.HashZero, salt);
 
-    const { target, payload } = await setOracleProviderForTokenPayload(wnt.address, user3.address);
+    const { target, payload } = await setOracleProviderForTokenPayload(oracle.address, wnt.address, user3.address);
     await expect(timelockConfig.connect(user2).execute(target, payload, constants.HashZero, salt))
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
       .withArgs(user2.address, "TIMELOCK_ADMIN");
@@ -311,13 +320,13 @@ describe("Timelock", () => {
 
     await time.increase(1 * 24 * 60 * 60 + 10);
 
-    expect(await dataStore.getAddress(keys.oracleProviderForTokenKey(wnt.address))).eq(
+    expect(await dataStore.getAddress(keys.oracleProviderForTokenKey(oracle.address, wnt.address))).eq(
       fixture.contracts.gmOracleProvider.address
     );
 
     await timelockConfig.connect(timelockAdmin).execute(target, payload, constants.HashZero, salt);
 
-    expect(await dataStore.getAddress(keys.oracleProviderForTokenKey(wnt.address))).eq(user3.address);
+    expect(await dataStore.getAddress(keys.oracleProviderForTokenKey(oracle.address, wnt.address))).eq(user3.address);
   });
 
   it("setOracleProviderEnabled", async () => {
@@ -549,8 +558,14 @@ describe("Timelock", () => {
         },
       });
 
-      await dataStore.setAddress(keys.oracleProviderForTokenKey(wnt.address), chainlinkPriceFeedProvider.address);
-      await dataStore.setAddress(keys.oracleProviderForTokenKey(usdc.address), chainlinkPriceFeedProvider.address);
+      await dataStore.setAddress(
+        keys.oracleProviderForTokenKey(oracle.address, wnt.address),
+        chainlinkPriceFeedProvider.address
+      );
+      await dataStore.setAddress(
+        keys.oracleProviderForTokenKey(oracle.address, usdc.address),
+        chainlinkPriceFeedProvider.address
+      );
     });
 
     it("Position impact pool withdrawal", async () => {
@@ -851,8 +866,14 @@ describe("Timelock", () => {
         },
       });
 
-      await dataStore.setAddress(keys.oracleProviderForTokenKey(wnt.address), chainlinkPriceFeedProvider.address);
-      await dataStore.setAddress(keys.oracleProviderForTokenKey(usdc.address), chainlinkPriceFeedProvider.address);
+      await dataStore.setAddress(
+        keys.oracleProviderForTokenKey(oracle.address, wnt.address),
+        chainlinkPriceFeedProvider.address
+      );
+      await dataStore.setAddress(
+        keys.oracleProviderForTokenKey(oracle.address, usdc.address),
+        chainlinkPriceFeedProvider.address
+      );
 
       await timelockConfig
         .connect(timelockAdmin)

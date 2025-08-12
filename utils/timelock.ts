@@ -15,15 +15,15 @@ export async function timelockWriteMulticall({ timelock, multicallWriteParams })
     return;
   }
 
-  await hre.deployments.read(
-    "Timelock",
-    {
-      from: "0xE014cbD60A793901546178E1c16ad9132C927483",
-      log: true,
-    },
-    "multicall",
-    multicallWriteParams
-  );
+  // await hre.deployments.read(
+  //   "TimelockConfig",
+  //   {
+  //     from: "0xE014cbD60A793901546178E1c16ad9132C927483",
+  //     log: true,
+  //   },
+  //   "multicall",
+  //   multicallWriteParams
+  // );
 
   let write = process.env.WRITE === "true";
 
@@ -136,12 +136,16 @@ export async function setOracleProviderEnabledPayload(providerAddress: string, v
   };
 }
 
-export async function setOracleProviderForTokenPayload(tokenAddress: string, providerAddress: string) {
+export async function setOracleProviderForTokenPayload(
+  oracleAddress: string,
+  tokenAddress: string,
+  providerAddress: string
+) {
   const dataStore = await hre.ethers.getContract("DataStore");
   return {
     target: dataStore.address,
     payload: dataStore.interface.encodeFunctionData("setAddress", [
-      keys.oracleProviderForTokenKey(tokenAddress),
+      keys.oracleProviderForTokenKey(oracleAddress, tokenAddress),
       providerAddress,
     ]),
   };

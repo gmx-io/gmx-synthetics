@@ -7,7 +7,7 @@ import {
   processArgs,
   requestSubgraph,
   saveDistribution,
-} from "./helpers";
+} from "../helpers";
 
 const BASIS_POINTS_DIVISOR = 10000;
 

@@ -1022,9 +1022,10 @@ library Keys {
     // @dev key for oracle provider for token
     // @param token the token
     // @return key for oracle provider for token
-    function oracleProviderForTokenKey(address token) internal pure returns (bytes32) {
+    function oracleProviderForTokenKey(address oracle, address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             ORACLE_PROVIDER_FOR_TOKEN,
+            oracle,
             token
         ));
     }

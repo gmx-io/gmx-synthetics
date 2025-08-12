@@ -480,8 +480,8 @@ export function oracleTimestampAdjustmentKey(provider: string, token: string) {
   return hashData(["bytes32", "address", "address"], [ORACLE_TIMESTAMP_ADJUSTMENT, provider, token]);
 }
 
-export function oracleProviderForTokenKey(token: string) {
-  return hashData(["bytes32", "address"], [ORACLE_PROVIDER_FOR_TOKEN, token]);
+export function oracleProviderForTokenKey(oracle: string, token: string) {
+  return hashData(["bytes32", "address", "address"], [ORACLE_PROVIDER_FOR_TOKEN, oracle, token]);
 }
 
 export function oracleProviderUpdatedAtKey(token: string, provider: string) {
@@ -926,6 +926,6 @@ export function positionLastSrcChainIdKey(positionKey: string) {
   return hashData(["bytes32", "bytes32"], [POSITION_LAST_SRC_CHAIN_ID, positionKey]);
 }
 
-export function claimTermsKey(distributionId: number) {
+export function claimTermsKey(distributionId: number | string) {
   return hashData(["bytes32", "uint256"], [CLAIM_TERMS, distributionId]);
 }

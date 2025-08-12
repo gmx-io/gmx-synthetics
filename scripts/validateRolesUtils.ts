@@ -87,6 +87,7 @@ export async function validateRoles() {
   });
 
   const { roles: _expectedRoles, requiredRolesForContracts } = await hre.gmx.getRoles();
+
   const errors = [];
   const warns = [];
 

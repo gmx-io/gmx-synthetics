@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { BigNumber } from "ethers";
 import { formatAmount } from "../../utils/math";
-import { STIP_MIGRATION_DISTRIBUTION_TYPE_ID } from "./helpers";
+import { STIP_MIGRATION_DISTRIBUTION_TYPE_ID } from "../helpers";
 
 const ARB_ADDRESS = "0x912CE59144191C1204E64559FE8253a0e49E6548";
 

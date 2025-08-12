@@ -58,7 +58,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
 
       minPositionSizeUsd: decimalToFloat(1),
       claimableCollateralTimeDivisor: 60 * 60,
-      claimableCollateralDelay: 5 * 24 * 60 * 60,
+      claimableCollateralDelay: 14 * 24 * 60 * 60,
 
       positionFeeReceiverFactor: 0,
       swapFeeReceiverFactor: 0,
@@ -151,6 +151,11 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     maxRelayFeeUsdForSubaccount: decimalToFloat(100),
 
     maxDataLength: 18,
+
+    multichainProviders: {},
+    multichainEndpoints: {},
+    srcChainIds: {},
+    eids: {},
   };
 
   const networkConfig = {
@@ -212,9 +217,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       decreaseOrderGasLimit: 3_000_000,
       swapOrderGasLimit: 2_500_000,
     },
-    avalanche: {
-      requestExpirationTime: 180,
-    },
+    avalanche: {},
     botanix: {
       positionFeeReceiverFactor: decimalToFloat(50, 2), // 50%
     },

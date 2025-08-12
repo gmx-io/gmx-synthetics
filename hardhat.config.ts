@@ -82,10 +82,14 @@ export const getExplorerUrl = (network) => {
 };
 
 const getEnvAccounts = (chainName?: string) => {
-  const { ACCOUNT_KEY, ACCOUNT_KEY_FILE, ARBITRUM_SEPOLIA_ACCOUNT_KEY } = process.env;
+  const { ACCOUNT_KEY, ACCOUNT_KEY_FILE, ARBITRUM_SEPOLIA_ACCOUNT_KEY, ARBITRUM_ACCOUNT_KEY } = process.env;
 
   if (chainName === "arbitrumSepolia" && ARBITRUM_SEPOLIA_ACCOUNT_KEY) {
     return [ARBITRUM_SEPOLIA_ACCOUNT_KEY];
+  }
+
+  if (chainName === "arbitrum" && ARBITRUM_ACCOUNT_KEY) {
+    return [ARBITRUM_ACCOUNT_KEY];
   }
 
   if (ACCOUNT_KEY) {
@@ -94,7 +98,7 @@ const getEnvAccounts = (chainName?: string) => {
 
   if (ACCOUNT_KEY_FILE) {
     const filepath = path.join("./keys/", ACCOUNT_KEY_FILE);
-    const data = JSON.parse(fs.readFileSync(filepath));
+    const data = JSON.parse(fs.readFileSync(filepath).toString());
     if (!data) {
       throw new Error("Invalid key file");
     }
@@ -355,7 +359,7 @@ task("dependencies", "Print dependencies for a contract")
     return graph;
   });
 
-task("deploy", "Deploy contracts", async (taskArgs, env, runSuper) => {
+task("deploy", "Deploy contracts", async (taskArgs: any, env, runSuper) => {
   env.deployTags = taskArgs.tags ?? "";
   if (
     !(process.env.SKIP_AUTO_HANDLER_REDEPLOYMENT == "true" || process.env.SKIP_AUTO_HANDLER_REDEPLOYMENT == "false") &&
@@ -393,7 +397,7 @@ function parseInputArgs(input: string): string[] | string {
 // Override default verify task to work with array arguments.
 // Create temporary arguments file and pass it to the hardhat-verify task
 // THIS TASK SHOULD BE USED ONLY WITH verifyFallback.ts script!
-task("verify-complex-args", "Verify contract with complex args", async (taskArgs, env, runSuper) => {
+task("verify-complex-args", "Verify contract with complex args", async (taskArgs: any, env) => {
   try {
     const cacheFilePath = `./cache/verifications-args-${taskArgs.address}.json`;
     let args = [];
