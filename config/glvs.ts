@@ -88,6 +88,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("CRV", arbitrum_ethUsdcDefaultCap, 1.23),
           createGlvMarketConfig("MNT", arbitrum_ethUsdcDefaultCap, 1.02),
           createGlvMarketConfig("SPX6900", arbitrum_ethUsdcDefaultCap, 1.02),
+          createGlvMarketConfig("OKB", arbitrum_ethUsdcDefaultCap, 1),
         ],
       },
       {
@@ -130,6 +131,9 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("XMR", arbitrum_btcUsdcDefaultCap, 1.06),
           createGlvMarketConfig("PI", arbitrum_btcUsdcDefaultCap, 1.07),
           createGlvMarketConfig("PUMP", arbitrum_btcUsdcDefaultCap, 1.05),
+          createGlvMarketConfig("ALGO", arbitrum_btcUsdcDefaultCap, 1),
+          createGlvMarketConfig("HBAR", arbitrum_btcUsdcDefaultCap, 1),
+          createGlvMarketConfig("CRO", arbitrum_btcUsdcDefaultCap, 1),
         ],
       },
     ],
