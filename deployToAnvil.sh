@@ -50,6 +50,10 @@ export SKIP_AUTO_HANDLER_REDEPLOYMENT=false
 npx hardhat deploy --network localhost --reset
 
 echo ""
+echo "Markets deployed and configured (based on markets.ts, tokens.ts):"
+npx hardhat run scripts/printMarkets.ts --network localhost
+
+echo ""
 echo "Deployment complete\!"
 echo "Anvil PID: $ANVIL_PID"
 echo ""

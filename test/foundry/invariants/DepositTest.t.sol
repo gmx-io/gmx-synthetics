@@ -12,10 +12,12 @@ import "../../../contracts/data/DataStore.sol";
 import "../../../contracts/router/Router.sol";
 import "../../../contracts/market/MarketFactory.sol";
 import "../../../contracts/market/Market.sol";
+import "../../../contracts/market/MarketToken.sol";
 import "../../../contracts/token/IWNT.sol";
 import "../../../contracts/role/RoleStore.sol";
 import "../../../contracts/data/Keys.sol";
 import "../../../contracts/mock/MintableToken.sol";
+import "../../../contracts/role/Role.sol";
 
 import "forge-std/Test.sol";
 
@@ -23,10 +25,9 @@ import "./TestHelpers.sol";
 import "./TestConstants.sol";
 
 /**
- * @dev Test deposit creation flow on deployed GMX contracts on anvil node
+ * @dev Test deposit flow on deployed GMX contracts on anvil node
  */
 contract DepositTest is Test {
-    // Deployed contracts
     ExchangeRouter exchangeRouter;
     DepositHandler depositHandler;
     DepositVault depositVault;
@@ -43,7 +44,7 @@ contract DepositTest is Test {
     address user1;
 
     // Market
-    address ethUsdMarketToken;
+    MarketToken ethUsdMarket;
 
     function setUp() public {
         // Setup fork connection
@@ -68,39 +69,30 @@ contract DepositTest is Test {
         // Setup user with ETH for gas
         vm.deal(user1, TestConstants.ETH_AMOUNT_FOR_GAS);
 
-        // Check if market exists, create if needed
+        // Load ethUsdMarket
         _setupMarket();
+
+        // Grant ORDER_KEEPER role to deployer for deposit execution
+        console.log("Granting ORDER_KEEPER role to deployer: ", TestConstants.DEPLOYER);
+        console.logBytes32(Role.ORDER_KEEPER);
+        vm.prank(TestConstants.DEPLOYER);
+        roleStore.grantRole(TestConstants.DEPLOYER, Role.ORDER_KEEPER);
+        console.log(
+            "ORDER_KEEPER role granted to deployer:",
+            roleStore.hasRole(TestConstants.DEPLOYER, Role.ORDER_KEEPER)
+        );
     }
 
     function _setupMarket() internal {
-        // Check if WETH:WETH:USDC market exists
-        bytes32 marketKey = keccak256(abi.encode(address(weth), address(weth), address(usdc)));
+        // The WETH:WETH:USDC market should already be deployed and configured
+        address ethUsdMarketAddress = 0x6A39E7540ECa7a88A9A39F2A5456f18BC3C8Aee6;
+        ethUsdMarket = MarketToken(payable(ethUsdMarketAddress));
 
-        // Try to get market from DataStore
-        // Market key is stored as: keccak256(abi.encode("MARKET_BY_KEY", marketKey))
-        bytes32 marketByKeyHash = keccak256(abi.encode("MARKET_BY_KEY", marketKey));
-        address existingMarket = dataStore.getAddress(marketByKeyHash);
-
-        if (existingMarket != address(0)) {
-            ethUsdMarketToken = existingMarket;
-            console.log("Using existing WETH:WETH:USDC market at:", ethUsdMarketToken);
-            return;
-        }
-
-        // Market doesn't exist, create it
-        console.log("Creating WETH:WETH:USDC market...");
-
-        // Impersonate deployer who has CONTROLLER role
-        vm.prank(TestConstants.DEPLOYER);
-        Market.Props memory market = marketFactory.createMarket(
-            address(weth), // indexToken
-            address(weth), // longToken
-            address(usdc), // shortToken
-            "" // marketType (empty for DEFAULT_MARKET_TYPE)
-        );
-        ethUsdMarketToken = market.marketToken;
-
-        console.log("Created WETH:WETH:USDC market at:", ethUsdMarketToken);
+        // Verify the market is properly configured by checking a key parameter
+        bytes32 maxOpenInterestKey = Keys.maxOpenInterestKey(ethUsdMarketAddress, true);
+        uint256 maxOpenInterest = dataStore.getUint(maxOpenInterestKey);
+        console.log("Market max open interest: %s USD", maxOpenInterest / 10 ** 30); // 70_000_000
+        assertTrue(maxOpenInterest > 0, "Max open interest key should exist");
     }
 
     function testDepositCreation() public {
@@ -141,7 +133,7 @@ contract DepositTest is Test {
                 receiver: user1,
                 callbackContract: address(0),
                 uiFeeReceiver: address(0),
-                market: ethUsdMarketToken,
+                market: address(ethUsdMarket),
                 initialLongToken: address(weth),
                 initialShortToken: address(usdc),
                 longTokenSwapPath: new address[](0),
@@ -155,7 +147,7 @@ contract DepositTest is Test {
         });
 
         console.log("Creating deposit...");
-        console.log("Market:", ethUsdMarketToken);
+        console.log("Market:", address(ethUsdMarket));
         console.log("Long token (WETH):", address(weth));
         console.log("Short token (USDC):", address(usdc));
         console.log("Long amount:", wethAmount);
@@ -195,7 +187,7 @@ contract DepositTest is Test {
         // Verify deposit properties
         assertEq(deposit.addresses.account, user1, "Account should be user1");
         assertEq(deposit.addresses.receiver, user1, "Receiver should be user1");
-        assertEq(deposit.addresses.market, ethUsdMarketToken, "Market should match");
+        assertEq(deposit.addresses.market, address(ethUsdMarket), "Market should match");
         assertEq(deposit.addresses.initialLongToken, address(weth), "Long token should be WETH");
         assertEq(deposit.addresses.initialShortToken, address(usdc), "Short token should be USDC");
         assertEq(deposit.numbers.initialLongTokenAmount, wethAmount, "Long token amount should match");
