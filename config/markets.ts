@@ -3354,7 +3354,7 @@ const config: {
       maxOpenInterest: decimalToFloat(500_000),
       maxPoolUsdForDeposit: decimalToFloat(750_000), // 1.5x the max open interest
 
-      maxLongTokenPoolAmount: expandDecimals(230, 18), // ~1M USD (2x the max open interest)
+      maxLongTokenPoolAmount: expandDecimals(210, 18), // ~1M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x the max open interest)
     },
     {

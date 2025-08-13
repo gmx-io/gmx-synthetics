@@ -831,6 +831,11 @@ const config: {
       dataStreamFeedId: "0x000329810dcc8c4557e19e34d42cbfa3ac7e85ddb465ff22b66abe06f4bbbcbb",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0xea320E4d688B143A3bFBF1b4a5cc4B986fCa086c",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
     },
     AAVE: {
       address: "0xba5ddd1f9d7f570dc94a51479a000e3bce967196",
