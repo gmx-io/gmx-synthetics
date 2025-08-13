@@ -3329,6 +3329,118 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(140, 18), // ~500k USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(500_000, 6), // ~500k USD (2x the max open interest)
     },
+    // {
+    //   tokens: { indexToken: "OKB", longToken: "WETH", shortToken: "USDC" },
+    //   virtualTokenIdForIndexToken: hashString("PERP:OKB/USD"),
+    //   virtualMarketId: hashString("SPOT:ETH/USD"),
+
+    //   ...syntheticMarketConfig,
+    //   ...fundingRateConfig_Default,
+    //   ...borrowingRateConfig_LowMax_WithHigherBase,
+
+    //   positionImpactExponentFactor: exponentToFloat("2e0"),
+    //   negativePositionImpactFactor: exponentToFloat("5.82e-8"),
+    //   positivePositionImpactFactor: exponentToFloat("4.85e-8"),
+
+    //   negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+    //   positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
+
+    //   minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.7e-8"),
+
+    //   reserveFactor: percentageToFloat("75%"), // default is 95%
+    //   openInterestReserveFactor: percentageToFloat("70%"), // default is 90%
+    //   maxPnlFactorForTraders: percentageToFloat("90%"), // default is 60%
+
+    //   maxOpenInterest: decimalToFloat(500_000),
+    //   maxPoolUsdForDeposit: decimalToFloat(750_000), // 1.5x the max open interest
+
+    //   maxLongTokenPoolAmount: expandDecimals(210, 18), // ~1M USD (2x the max open interest)
+    //   maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x the max open interest)
+    // },
+    {
+      tokens: { indexToken: "ALGO", longToken: "WBTC.e", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:ALGO/USD"),
+      virtualMarketId: hashString("SPOT:BTC/USD"),
+
+      ...syntheticMarketConfig,
+      ...fundingRateConfig_Default,
+      ...borrowingRateConfig_LowMax_WithHigherBase,
+
+      positionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactFactor: exponentToFloat("1.47e-8"),
+      positivePositionImpactFactor: exponentToFloat("1.22e-8"),
+
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
+
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.7e-8"),
+
+      reserveFactor: percentageToFloat("75%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("70%"), // default is 90%
+      maxPnlFactorForTraders: percentageToFloat("90%"), // default is 60%
+
+      maxOpenInterest: decimalToFloat(500_000),
+      maxPoolUsdForDeposit: decimalToFloat(750_000),
+
+      maxLongTokenPoolAmount: expandDecimals(8, 8), // ~1M USD (2x the max open interest)
+      maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x the max open interest)
+    },
+    {
+      tokens: { indexToken: "HBAR", longToken: "WBTC.e", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:HBAR/USD"),
+      virtualMarketId: hashString("SPOT:BTC/USD"),
+
+      ...syntheticMarketConfig,
+      ...fundingRateConfig_Default,
+      ...borrowingRateConfig_LowMax_WithHigherBase,
+
+      positionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactFactor: exponentToFloat("7.4e-8"),
+      positivePositionImpactFactor: exponentToFloat("6.16e-8"),
+
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
+
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.7e-8"),
+
+      reserveFactor: percentageToFloat("75%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("70%"), // default is 90%
+      maxPnlFactorForTraders: percentageToFloat("90%"), // default is 60%
+
+      maxOpenInterest: decimalToFloat(500_000),
+      maxPoolUsdForDeposit: decimalToFloat(750_000),
+
+      maxLongTokenPoolAmount: expandDecimals(8, 8), // ~1M USD (2x the max open interest)
+      maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x the max open interest)
+    },
+    {
+      tokens: { indexToken: "CRO", longToken: "WBTC.e", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:CRO/USD"),
+      virtualMarketId: hashString("SPOT:BTC/USD"),
+
+      ...syntheticMarketConfig,
+      ...fundingRateConfig_Default,
+      ...borrowingRateConfig_LowMax_WithHigherBase,
+
+      positionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactFactor: exponentToFloat("2.42e-8"),
+      positivePositionImpactFactor: exponentToFloat("2.01e-8"),
+
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
+
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.7e-8"),
+
+      reserveFactor: percentageToFloat("75%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("70%"), // default is 90%
+      maxPnlFactorForTraders: percentageToFloat("90%"), // default is 60%
+
+      maxOpenInterest: decimalToFloat(500_000),
+      maxPoolUsdForDeposit: decimalToFloat(750_000),
+
+      maxLongTokenPoolAmount: expandDecimals(8, 8), // ~1M USD (2x the max open interest)
+      maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x the max open interest)
+    },
   ],
   avalanche: [
     {

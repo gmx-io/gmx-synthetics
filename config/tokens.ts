@@ -800,6 +800,43 @@ const config: {
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },
+    // OKB: {
+    //   synthetic: true,
+    //   decimals: 18, // https://etherscan.io/token/0x75231f58b43240c9718dd58b4967c5114342a86c#readProxyContract
+    //   transferGasLimit: 200 * 1000,
+    //   dataStreamFeedId: "", // TODO:
+    //   dataStreamFeedDecimals: 18,
+    //   oracleTimestampAdjustment: 1,
+    // },
+    ALGO: {
+      synthetic: true,
+      decimals: 6, // https://explorer.perawallet.app/asset/0/
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003b864d7f86b46f63afba8359e86436fe57c99dfbbe260848c9caef6565892",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    HBAR: {
+      synthetic: true,
+      decimals: 8, // https://docs.hedera.com/hedera/core-concepts/smart-contracts/understanding-hederas-evm-differences-and-compatibility/for-evm-developers-migrating-to-hedera/decimal-handling-8-vs.-18-decimals
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x000368f5793785d9a20180f5137a05a558b2518ac13e6c77a93b97670da207c9",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    CRO: {
+      synthetic: true,
+      decimals: 8, // https://etherscan.io/token/0xa0b73e1ff0b80914ab6fe0444e65848c4c34450b#readContract
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x000329810dcc8c4557e19e34d42cbfa3ac7e85ddb465ff22b66abe06f4bbbcbb",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0xea320E4d688B143A3bFBF1b4a5cc4B986fCa086c",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+    },
     AAVE: {
       address: "0xba5ddd1f9d7f570dc94a51479a000e3bce967196",
       decimals: 18,
