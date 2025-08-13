@@ -157,12 +157,12 @@ function generateNetworkMarkdown(network: string, deployments: Deployment[], for
 
 function generateSummarySection(
   deployments: NetworkDeployments,
-  changedNetworksForTimestamp: Set<string> = new Set()
+  forNetworksTimestamp: Set<string> = new Set()
 ): string {
   let markdown = `\n## Deployments\n\n`;
 
   // Add timestamp explanation
-  markdown += `*Note: The "Last Updated" timestamp reflects when deployment files were committed to the repository, not the on-chain deployment time. This represents when the deployment artifacts were finalized and committed after successful deployment.*\n\n`;
+  markdown += `*Note: The "Last Updated" timestamp shows when deployment artifacts were committed to git, not the actual on-chain deployment timestamps.*\n\n`;
 
   // Mainnet section
   markdown += "### Mainnet\n\n";
@@ -173,7 +173,7 @@ function generateSummarySection(
     const info = NETWORK_INFO[network];
     if (info.type === "mainnet") {
       const count = deployments[network]?.length || 0;
-      const forceCurrentTime = changedNetworksForTimestamp.has(network);
+      const forceCurrentTime = forNetworksTimestamp.has(network);
       const lastUpdated = getNetworkLastUpdated(network, forceCurrentTime);
       markdown += `| ${info.name} | ${count} | [View](./${network}-deployments.md) | ${lastUpdated} |\n`;
     }
@@ -188,7 +188,7 @@ function generateSummarySection(
     const info = NETWORK_INFO[network];
     if (info.type === "testnet") {
       const count = deployments[network]?.length || 0;
-      const forceCurrentTime = changedNetworksForTimestamp.has(network);
+      const forceCurrentTime = forNetworksTimestamp.has(network);
       const lastUpdated = getNetworkLastUpdated(network, forceCurrentTime);
       markdown += `| ${info.name} | ${count} | [View](./${network}-deployments.md) | ${lastUpdated} |\n`;
     }
@@ -230,8 +230,14 @@ function hasNetworkChanged(network: string, currentDeployments: Deployment[]): b
   }
 }
 
-export async function generateDeploymentDocs(changedNetworks?: string[]) {
-  console.log("Collecting deployments from all networks...");
+export async function generateDeploymentDocs(forNetworks?: string[]) {
+  // If specific networks are provided, only update those + README
+  // e.g. npx hardhat generate-deployment-docs --networks arbitrum
+  //      npx hardhat generate-deployment-docs --networks arbitrum,avalanche
+  // Otherwise, update all networks (for manual runs)
+  const networksToUpdate = forNetworks && forNetworks.length > 0 ? forNetworks : ALL_NETWORKS;
+  console.log("Collecting deployments for:", networksToUpdate.join(", "));
+
   const deployments = await collectDeployments();
 
   // Ensure docs directory exists
@@ -241,35 +247,29 @@ export async function generateDeploymentDocs(changedNetworks?: string[]) {
     fs.mkdirSync(docsDir);
   }
 
-  // If specific networks are provided, only update those + README
-  // Otherwise, update all networks (for manual runs)
-  const networksToUpdate = changedNetworks && changedNetworks.length > 0 ? changedNetworks : ALL_NETWORKS;
+  // Always detect which networks actually have changes
+  const forNetworksTimestamp = new Set<string>();
 
-  // For manual runs, detect which networks actually have changes
-  const isManualRun = !changedNetworks || changedNetworks.length === 0;
-  const changedNetworksForTimestamp = new Set<string>();
-
-  if (isManualRun) {
-    // Check each network for actual changes
-    for (const network of networksToUpdate) {
-      if (hasNetworkChanged(network, deployments[network] || [])) {
-        changedNetworksForTimestamp.add(network);
-      }
+  // Check each network for actual changes
+  for (const network of networksToUpdate) {
+    if (hasNetworkChanged(network, deployments[network] || [])) {
+      forNetworksTimestamp.add(network);
     }
-  } else {
-    // For automatic runs, use the provided changed networks
-    changedNetworks.forEach((network) => changedNetworksForTimestamp.add(network));
   }
 
   // Generate individual network markdown files directly in docs
   for (const network of networksToUpdate) {
     const networkDeployments = deployments[network] || [];
-    const forceCurrentTime = changedNetworksForTimestamp.has(network);
-    const markdown = generateNetworkMarkdown(network, networkDeployments, forceCurrentTime);
+    const hasChanges = forNetworksTimestamp.has(network);
+    const markdown = generateNetworkMarkdown(network, networkDeployments, hasChanges);
     const outputPath = path.join(docsDir, `${network}-deployments.md`);
 
     fs.writeFileSync(outputPath, markdown);
-    console.log(`Generated ${network} deployment documentation (${networkDeployments.length} contracts)`);
+    if (hasChanges) {
+      console.log(`Updated deployment docs for ${network} (${networkDeployments.length} contracts)`);
+    } else {
+      console.log(`No deployment updates for ${network}`);
+    }
   }
 
   // Generate complete README content from template
@@ -281,25 +281,22 @@ export async function generateDeploymentDocs(changedNetworks?: string[]) {
   readmeContent += "## Automatic Updates\n\n";
   readmeContent += "The deployment documentation is automatically updated when:\n";
   readmeContent +=
-    "1. **On commit** - When deployment files change, the pre-commit hook selectively updates only the affected network documentation and this README\n";
+    "1. **On commit** - When deployment files change, the post-commit hook selectively updates only the affected network documentation and this README\n";
   readmeContent +=
-    "2. **Manual update** - Run `npx hardhat generate-deployment-docs` to regenerate all network documentation files. Manual runs update all network documentation files regardless of recent changes\n\n";
+    "2. **Manual update** - Run `npx hardhat generate-deployment-docs` to regenerate all network documentation files. Use the `--networks <network1,network2>` flag to update specific networks only. Manual runs only update docs for networks with actual deployment changes\n\n";
   readmeContent +=
     "The documentation is generated from the deployment artifacts in `/deployments/` and is kept in sync automatically through git hooks.\n";
 
   // Add deployment summary section to README
-  const summarySection = generateSummarySection(deployments, changedNetworksForTimestamp);
+  const summarySection = generateSummarySection(deployments, forNetworksTimestamp);
   readmeContent = readmeContent.trimEnd() + "\n" + summarySection;
 
   fs.writeFileSync(readmePath, readmeContent);
 
-  console.log("\nDeployment documentation generated successfully!");
-  if (changedNetworks && changedNetworks.length > 0) {
-    console.log(`- Updated networks: ${changedNetworks.join(", ")}`);
-  } else {
-    console.log(`- Individual networks: docs/*-deployments.md`);
+  if (forNetworksTimestamp.size > 0) {
+    console.log(`\nDocumentation updated successfully for: ${Array.from(forNetworksTimestamp).join(", ")}`);
+    console.log(`Summary updated in docs/README.md`);
   }
-  console.log(`- Summary updated: docs/README.md`);
 }
 
 // Run if called directly

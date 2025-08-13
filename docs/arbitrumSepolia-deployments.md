@@ -73,7 +73,7 @@
 | LayerZeroProvider | `0xa7eCDc6Ba5CB88fce2B7E331c1bB55b3D77d2926` | [View on Explorer](https://sepolia.arbiscan.io/address/0xa7eCDc6Ba5CB88fce2B7E331c1bB55b3D77d2926) |
 | LiquidationHandler | `0xDa7cB6CFd67DFe3EBDeEEFC4BDc63598C9601CcA` | [View on Explorer](https://sepolia.arbiscan.io/address/0xDa7cB6CFd67DFe3EBDeEEFC4BDc63598C9601CcA) |
 | LiquidationUtils | `0xd7895B038d96E76EDCE71C774F105b9e0c12762B` | [View on Explorer](https://sepolia.arbiscan.io/address/0xd7895B038d96E76EDCE71C774F105b9e0c12762B) |
-| MarketEventUtils | `0xFCBbC9e2932b8dCE1A8d225c2E6294cB92C40438` | [View on Explorer](https://sepolia.arbiscan.io/address/0xFCBbC9e2932b8dCE1A8d225c2E6294cB92C40438) |
+| MarketEventUtils | `0xEf579d03fB3581Fe7C639AE6153C056F527a6881` | [View on Explorer](https://sepolia.arbiscan.io/address/0xEf579d03fB3581Fe7C639AE6153C056F527a6881) |
 | MarketFactory | `0x1934838E3d85416A6cF5bF7A5E619f12BE01C4b2` | [View on Explorer](https://sepolia.arbiscan.io/address/0x1934838E3d85416A6cF5bF7A5E619f12BE01C4b2) |
 | MarketPositionImpactPoolUtils | `0x6145aC381129cB6AF66D59AA431dF232820057cC` | [View on Explorer](https://sepolia.arbiscan.io/address/0x6145aC381129cB6AF66D59AA431dF232820057cC) |
 | MarketStoreUtils | `0xE2BD964b66c3Cf61B91b041e37AE8A3bD552cB38` | [View on Explorer](https://sepolia.arbiscan.io/address/0xE2BD964b66c3Cf61B91b041e37AE8A3bD552cB38) |

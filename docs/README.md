@@ -5,14 +5,14 @@ This directory contains automatically generated deployment documentation for GMX
 ## Automatic Updates
 
 The deployment documentation is automatically updated when:
-1. **On commit** - When deployment files change, the pre-commit hook selectively updates only the affected network documentation and this README
-2. **Manual update** - Run `npx hardhat generate-deployment-docs` to regenerate all network documentation files. Manual runs update all network documentation files regardless of recent changes
+1. **On commit** - When deployment files change, the post-commit hook selectively updates only the affected network documentation and this README
+2. **Manual update** - Run `npx hardhat generate-deployment-docs` to regenerate all network documentation files. Use the `--networks <network1,network2>` flag to update specific networks only. Manual runs only update docs for networks with actual deployment changes
 
 The documentation is generated from the deployment artifacts in `/deployments/` and is kept in sync automatically through git hooks.
 
 ## Deployments
 
-*Note: The "Last Updated" timestamp reflects when deployment files were committed to the repository, not the on-chain deployment time. This represents when the deployment artifacts were finalized and committed after successful deployment.*
+*Note: The "Last Updated" timestamp shows when deployment artifacts were committed to git, not the actual on-chain deployment timestamps.*
 
 ### Mainnet
 
