@@ -641,8 +641,8 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         tokens[0] = gmxForOracle;
         tokens[1] = wnt;
         address[] memory providers = createAddressArray(2);
-        providers[0] = getAddress(Keys.oracleProviderForTokenKey(gmxForOracle));
-        providers[1] = getAddress(Keys.oracleProviderForTokenKey(wnt));
+        providers[0] = getAddress(Keys.oracleProviderForTokenKey(address(oracle), gmxForOracle));
+        providers[1] = getAddress(Keys.oracleProviderForTokenKey(address(oracle), wnt));
         bytes[] memory data = new bytes[](2);
         return (OracleUtils.SetPricesParams(tokens, providers, data));
     }

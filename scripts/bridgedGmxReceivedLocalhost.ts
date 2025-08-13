@@ -36,6 +36,7 @@ async function main() {
   const roleStore = await ethers.getContract("RoleStore");
   const feeHandler = await ethers.getContract("FeeHandler");
   const chainlinkPriceFeedProvider = await ethers.getContract("ChainlinkPriceFeedProvider");
+  const oracle = await ethers.getContract("Oracle");
 
   const mockExtendedGmxDistributor = await deployContract("MockRewardDistributorV1", []);
   const mockFeeGlpDistributor = await deployContract("MockRewardDistributorV1", []);
@@ -224,8 +225,8 @@ async function main() {
   await config.setUint(keys.FEE_DISTRIBUTOR_CHAINLINK_FACTOR, "0x", expandDecimals(12, 28));
   await config.setUint(keys.BUYBACK_BATCH_AMOUNT, encodeData(["address"], [gmx.address]), expandDecimals(5, 17));
   await config.setUint(keys.BUYBACK_BATCH_AMOUNT, encodeData(["address"], [wnt.address]), expandDecimals(5, 17));
-  await dataStore.setAddress(keys.oracleProviderForTokenKey(wnt.address), chainlinkPriceFeedProvider.address);
-  await dataStore.setAddress(keys.oracleProviderForTokenKey(gmx.address), chainlinkPriceFeedProvider.address);
+  await dataStore.setAddress(keys.oracleProviderForTokenKey(oracle.address, wnt.address), chainlinkPriceFeedProvider.address);
+  await dataStore.setAddress(keys.oracleProviderForTokenKey(oracle.address, gmx.address), chainlinkPriceFeedProvider.address);
 
   await accounts[3].sendTransaction({
     to: accounts[0].address,

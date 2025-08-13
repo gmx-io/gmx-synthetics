@@ -320,8 +320,8 @@ describe("FeeDistributor", function () {
     await config.setUint(keys.FEE_DISTRIBUTOR_CHAINLINK_FACTOR, "0x", expandDecimals(12, 28));
     await config.setUint(keys.BUYBACK_BATCH_AMOUNT, encodeData(["address"], [gmx.address]), expandDecimals(5, 17));
     await config.setUint(keys.BUYBACK_BATCH_AMOUNT, encodeData(["address"], [wnt.address]), expandDecimals(5, 17));
-    await dataStore.setAddress(keys.oracleProviderForTokenKey(wnt.address), chainlinkPriceFeedProvider.address);
-    await dataStore.setAddress(keys.oracleProviderForTokenKey(gmx.address), chainlinkPriceFeedProvider.address);
+    await dataStore.setAddress(keys.oracleProviderForTokenKey(oracle.address, wnt.address), chainlinkPriceFeedProvider.address);
+    await dataStore.setAddress(keys.oracleProviderForTokenKey(oracle.address, gmx.address), chainlinkPriceFeedProvider.address);
 
     await user2.sendTransaction({
       to: wallet.address,
@@ -1507,8 +1507,8 @@ describe("FeeDistributor", function () {
     );
 
     await configD.setUint(keys.BUYBACK_BATCH_AMOUNT, encodeData(["address"], [wnt.address]), expandDecimals(5, 17));
-    await dataStoreD.setAddress(keys.oracleProviderForTokenKey(wnt.address), chainlinkPriceFeedProvider.address);
-    await dataStoreD.setAddress(keys.oracleProviderForTokenKey(gmx.address), chainlinkPriceFeedProvider.address);
+    await dataStoreD.setAddress(keys.oracleProviderForTokenKey(oracle.address, wnt.address), chainlinkPriceFeedProvider.address);
+    await dataStoreD.setAddress(keys.oracleProviderForTokenKey(oracle.address, gmx.address), chainlinkPriceFeedProvider.address);
     await dataStoreD.setUint(keys.tokenTransferGasLimit(mockOftD.address), 200_000);
     await signer2.sendTransaction({
       to: wallet.address,

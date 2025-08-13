@@ -628,8 +628,8 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         tokens[0] = gmx;
         tokens[1] = wnt;
         address[] memory providers = createAddressArray(2);
-        providers[0] = getAddress(Keys.oracleProviderForTokenKey(gmx));
-        providers[1] = getAddress(Keys.oracleProviderForTokenKey(wnt));
+        providers[0] = getAddress(Keys.oracleProviderForTokenKey(address(oracle), gmx));
+        providers[1] = getAddress(Keys.oracleProviderForTokenKey(address(oracle), wnt));
         bytes[] memory data = new bytes[](2);
         return (OracleUtils.SetPricesParams(tokens, providers, data));
     }
