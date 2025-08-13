@@ -20,8 +20,11 @@ const GMX_V1_DEPLOYER_ADDRESS = "0x5f799f365fa8a2b60ac0429c48b153ca5a6f0cf8";
 
 const trustedExternalContracts = new Set(
   [
-    "0x4b6ACC5b2db1757bD49408FeE92e32D39608B5d9", // Gnosis Safe
+    "0x4b6ACC5b2db1757bD49408FeE92e32D39608B5d9",
     "0x8d1d2e24ec641edc6a1ebe0f3ae7af0ebc573e0d",
+    "0xD2E217d800C41c86De1e01FD72009d4Eafc539a3",
+    "0x15F9eBC71c539926B8f652a534d29B4Af57CaD55",
+    "0x656fa39BdB5984b477FA6aB443195D72D1Accc1c",
   ].map((address) => address.toLowerCase())
 );
 
