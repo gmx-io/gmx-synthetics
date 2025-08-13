@@ -3,6 +3,3 @@
 
 yarn lint
 git add $(git diff --name-only --cached --diff-filter=AM)
-
-# Update deployment documentation if deployment files changed
-./scripts/generateDeploymentDocs.sh

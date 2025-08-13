@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Check if any deployment files have been modified
-DEPLOYMENT_CHANGED=$(git diff --cached --name-only | grep -E "deployments/(arbitrum|avalanche|botanix|arbitrumSepolia|avalancheFuji)/.*\.json$")
+# Check if any deployment files have been modified in the last commit
+DEPLOYMENT_CHANGED=$(git diff --name-only HEAD~1 HEAD | grep -E "deployments/(arbitrum|avalanche|botanix|arbitrumSepolia|avalancheFuji)/.*\.json$")
 
 if [ ! -z "$DEPLOYMENT_CHANGED" ]; then
   echo "Deployment files changed, updating documentation..."
@@ -20,5 +20,6 @@ if [ ! -z "$DEPLOYMENT_CHANGED" ]; then
     git add "docs/${network}-deployments.md"
   done
   
-  echo "Deployment documentation updated successfully!"
+  git commit -m "Auto-commit deployment docs for ${CHANGED_NETWORKS}"
+  echo "Deployment docs auto-updated and committed successfully!"
 fi
