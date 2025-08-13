@@ -3,7 +3,6 @@ import { hashString } from "../utils/hash";
 import { cancelActionById, getGrantRolePayload, getRevokeRolePayload, timelockWriteMulticall } from "../utils/timelock";
 import { TimelockConfig } from "../typechain-types";
 import { validateSourceCode } from "./validateDeploymentUtils";
-import Timelock from "../abis/Timelock.json";
 
 import * as _rolesToAdd from "./roles/rolesToAdd";
 import * as _rolesToRemove from "./roles/rolesToRemove";
@@ -20,15 +19,15 @@ async function getTimelock(): Promise<TimelockConfig> {
   const network = hre.network.name;
 
   if (network === "arbitrum") {
-    return await new ethers.Contract("0x7A967D114B8676874FA2cFC1C14F3095C88418Eb", Timelock.abi);
+    return await ethers.getContractAt("TimelockConfig", "0x625D4b5456f065756De8d618dE094bE7618e8A0d");
   }
 
   if (network === "avalanche") {
-    return await new ethers.Contract("0xdF23692341538340db0ff04C65017F51b69a29f6", Timelock.abi);
+    return await ethers.getContractAt("TimelockConfig", "0x40794bcBCFb347689fa8c4da69f6405Cf0ECf2C5");
   }
 
   if (network === "botanix") {
-    return await new ethers.Contract("0xca3e30b51A7c3bd40bFc52a61AB0cE57B3Ab3ad8", Timelock.abi);
+    return await ethers.getContractAt("TimelockConfig", "0x8fB97fEfF5f7CfbE9c63D51F6CbBC914E425d965");
   }
 
   throw new Error("Unsupported network");
@@ -102,6 +101,9 @@ async function main() {
 
   const provider = hre.ethers.provider;
 
+  const predecessor = ethers.constants.HashZero;
+  const salt = ethers.constants.HashZero;
+
   // Check that deployed contracts are matching with local sources
   for (const { member, role, contractName } of rolesToAdd) {
     const contractInfo = {
@@ -125,8 +127,12 @@ async function main() {
     const roles = timelockMethod === "signalGrantRole" ? rolesToAdd : rolesToRemove;
     for (const { member, role, contractName } of roles) {
       console.log("%s %s %s %s", timelockMethod, member, role, contractName);
-      multicallWriteParams.push(timelock.interface.encodeFunctionData("signalRevokeRole", [member, hashString(role)]));
-      multicallWriteParams.push(timelock.interface.encodeFunctionData("signalGrantRole", [member, hashString(role)]));
+      multicallWriteParams.push(
+        timelock.interface.encodeFunctionData("signalRevokeRole", [member, hashString(role), predecessor, salt])
+      );
+      multicallWriteParams.push(
+        timelock.interface.encodeFunctionData("signalGrantRole", [member, hashString(role), predecessor, salt])
+      );
     }
   }
 
