@@ -16,8 +16,6 @@ Example of usage:
 npx hardhat --network arbitrum run scripts/distributions/setClaims.ts
 */
 
-let write = process.env.WRITE === "true";
-
 type DepositFundsParams = [
   string,
   BigNumberish,
@@ -32,12 +30,20 @@ const additionalTokensDecimals = {
   "0xdf03eed325b82bc1d4db8b49c30ecc9e05104b96": 18, // BTC GLV
 };
 
-// NOTE: do not change batch size in the middle of the distribution
-const batchSize = 50;
+const batchSize = process.env.BATCH_SIZE ? parseInt(process.env.BATCH_SIZE) : 100;
 
 const simulationAccount = process.env.SIMULATION_ACCOUNT;
 const skipEmptyClaimableAmountValidation = process.env.SKIP_EMPTY_CLAIMABLE_AMOUNT_VALIDATION === "1";
 const skipMigrationValidation = process.env.SKIP_MIGRATION_VALIDATION === "1";
+const skipSimulation = process.env.SKIP_SIMULATION === "1";
+
+// top up from safe was used for GLP distribution
+const topUpFromSafe = process.env.TOP_UP_FROM_SAFE === "1";
+const maxTopUpFromSafe = process.env.MAX_TOP_UP_FROM_SAFE ? bigNumberify(process.env.MAX_TOP_UP_FROM_SAFE) : undefined;
+const SAFE_ADDRESS = "0xD2E217d800C41c86De1e01FD72009d4Eafc539a3";
+
+// for testing only
+const skipConfirmations = process.env.SKIP_CONFIRMATIONS === "1";
 
 async function main() {
   const migrations = readMigrations();
@@ -62,16 +68,20 @@ async function main() {
 
   const [signer] = await hre.ethers.getSigners();
 
-  if (write) {
-    console.warn("WARN: sending real transaction...");
-    await setTimeout(5000);
-  }
-
   let totalAmount = bigNumberify(0);
-  const accountsAndAmounts = Object.entries(data.amounts).map(([account, amount]) => ({
-    account,
-    amount: bigNumberify(amount),
-  }));
+  let accountsAndAmounts = Object.entries(data.amounts)
+    .map(([account, amount]) => ({
+      account,
+      amount: bigNumberify(amount),
+    }))
+    .sort((a, b) => {
+      // sort to make the order stable
+      // NOTE. distribution files should never be updated during a distribution
+      if (a.amount.eq(b.amount)) {
+        return 0;
+      }
+      return a.amount.lt(b.amount) ? 1 : -1;
+    });
 
   for (const amount of Object.values(data.amounts)) {
     totalAmount = totalAmount.add(amount);
@@ -88,17 +98,196 @@ async function main() {
   const claimHandler = await hre.ethers.getContract("ClaimHandler");
   const tokenContract = await hre.ethers.getContractAt("MintableToken", data.token);
 
-  const balance = await tokenContract.balanceOf(signerAddress);
-  if (balance.lt(totalAmount)) {
-    console.warn(
-      "WARN: current balance %s is lower than required %s",
-      formatAmount(balance, tokenDecimals, 2, true),
-      formatAmount(totalAmount, tokenDecimals, 2, true)
-    );
-    await setTimeout(1000);
-  }
-  console.log("balance is %s", formatAmount(balance, tokenDecimals, 2, true));
+  await transferFundsFromSafe(tokenContract, signerAddress, totalAmount, tokenDecimals);
+  await checkBalance(tokenContract, signerAddress, totalAmount, tokenDecimals);
+  await checkAllowance(tokenContract, claimHandler, data, signerAddress, totalAmount, tokenDecimals);
+  validateDuplicatedRecipients(data);
 
+  const batchesInProgress = readBatchesInProgress(id);
+  const lastSentRecipientIndex = batchesInProgress[id].lastSentRecipientIndex;
+  const startRecipientIndex = lastSentRecipientIndex + 1;
+
+  if (lastSentRecipientIndex >= 0) {
+    const startRecipientAccount = accountsAndAmounts[startRecipientIndex].account;
+    if (!startRecipientAccount) {
+      throw new Error("startRecipientAccount is undefined");
+    }
+
+    console.warn(
+      "WARN: lastSentRecipientIndex is %s, starting from index recipient: %s (%s), %s of %s recipients left",
+      lastSentRecipientIndex,
+      startRecipientIndex,
+      startRecipientAccount,
+      accountsAndAmounts.length - startRecipientIndex,
+      accountsAndAmounts.length
+    );
+    accountsAndAmounts = accountsAndAmounts.slice(startRecipientIndex);
+    await confirmProceed();
+  }
+  const batchesCount = Math.ceil(accountsAndAmounts.length / batchSize);
+
+  const batches: Batches = [];
+  for (const batchIndex of range(0, batchesCount)) {
+    const from = batchIndex * batchSize;
+    const batch = accountsAndAmounts.slice(from, from + batchSize).map((item, i) => ({
+      ...item,
+      globalIndex: startRecipientIndex + batchIndex * batchSize + i,
+    }));
+    const totalBatchAmount = batch.reduce((acc, { amount }) => acc.add(amount), bigNumberify(0));
+    batches.push({ batch, totalBatchAmount });
+  }
+
+  await runSimulation(claimHandler, multicall, batches, data, tokenDecimals);
+  await confirmProceed("Do you want to execute the transactions?");
+
+  const txHashes = [];
+  for (const { batch, totalBatchAmount } of batches) {
+    await validateEmptyClaimableAmount(claimHandler, multicall, data, batch, tokenDecimals);
+
+    const from = batch[0].globalIndex;
+    const to = batch[batch.length - 1].globalIndex;
+    console.log("sending batch %s-%s token %s typeId %s", from, to, data.token, data.distributionTypeId);
+
+    for (const { account, amount, globalIndex } of batch) {
+      console.log(
+        "%s recipient %s amount %s (%s)",
+        globalIndex,
+        account,
+        formatAmount(amount, tokenDecimals, 4, true),
+        amount
+      );
+    }
+
+    const balance = await tokenContract.balanceOf(signerAddress);
+    if (balance.lt(totalBatchAmount)) {
+      console.warn(
+        "WARN: current balance %s is lower than required %s for batch %s-%s",
+        formatAmount(balance, tokenDecimals, 2, true),
+        formatAmount(totalBatchAmount, tokenDecimals, 2, true),
+        from,
+        to
+      );
+      throw new Error("Not enough balance to send batch");
+    }
+
+    const params: DepositFundsParams = [data.token, data.distributionTypeId, batch];
+    const gasLimit = await claimHandler.estimateGas.depositFunds(...params);
+
+    const tx = await claimHandler.depositFunds(...params, {
+      gasLimit: gasLimit.add(1_000_000),
+    });
+    console.log("sent batch txn %s, waiting...", tx.hash);
+    txHashes.push(tx.hash);
+    try {
+      await tx.wait();
+    } catch (ex) {
+      console.error(
+        "ERROR. txn %s failed. manually check if it was mined and, if it was, update %s, set %s.lastSentRecipientIndex to %s. otherwise deposits will be duplicated on the next run",
+        tx.hash,
+        getBatchesInProgressFilepath(),
+        id,
+        batch[batch.length - 1].globalIndex
+      );
+      throw ex;
+    }
+    console.log("batch %s-%s done", from, to);
+
+    batchesInProgress[id].lastSentRecipientIndex = batch[batch.length - 1].globalIndex;
+    saveBatchesInProgress(batchesInProgress);
+  }
+
+  if (txHashes.length) {
+    console.log("sent %s transactions:", txHashes.length);
+    for (const txHash of txHashes) {
+      console.log(txHash);
+    }
+  }
+
+  migrations[id] = Math.floor(Date.now() / 1000);
+  saveMigrations(migrations);
+  delete batchesInProgress[id];
+  saveBatchesInProgress(batchesInProgress);
+}
+
+type Batches = {
+  batch: {
+    account: string;
+    amount: BigNumber;
+    globalIndex: number;
+  }[];
+  totalBatchAmount: BigNumber;
+}[];
+
+async function runSimulation(
+  claimHandler: any,
+  multicall: any,
+  batches: Batches,
+  data: { token: string; distributionTypeId: number | string },
+  tokenDecimals: number
+) {
+  if (skipSimulation) {
+    console.warn("WARN: skipping simulation");
+    await setTimeout(1000);
+    return;
+  }
+
+  console.log("running simulation. pass SKIP_SIMULATION=1 to skip");
+  for (const { batch, totalBatchAmount } of batches) {
+    await validateEmptyClaimableAmount(claimHandler, multicall, data, batch, tokenDecimals);
+    const from = batch[0].globalIndex;
+    const to = batch[batch.length - 1].globalIndex;
+    console.log(
+      "simulating sending batch %s-%s token %s total amount %s typeId %s",
+      from,
+      to,
+      data.token,
+      formatAmount(totalBatchAmount, tokenDecimals),
+      data.distributionTypeId
+    );
+
+    for (const { account, amount, globalIndex } of batch) {
+      console.log(
+        "%s recipient %s amount %s (%s)",
+        globalIndex,
+        account,
+        formatAmount(amount, tokenDecimals, 4, true),
+        amount
+      );
+    }
+
+    const params: DepositFundsParams = [data.token, data.distributionTypeId, batch];
+
+    const result = await (simulationAccount
+      ? claimHandler.connect(simulationAccount)
+      : claimHandler
+    ).callStatic.depositFunds(...params);
+    console.log("simulation batch %s-%s done, result %s", from, to, result);
+  }
+}
+
+function validateDuplicatedRecipients(data: { amounts: Record<string, string> }) {
+  // objects can't have duplicate keys, but addresses can be in different cases
+  const seenRecipients = new Set();
+  for (const recipient of Object.keys(data.amounts)) {
+    const normalizedAddress = recipient.toLowerCase().trim();
+    if (seenRecipients.has(normalizedAddress)) {
+      throw new Error(`Duplicated recipient ${normalizedAddress}`);
+    }
+    seenRecipients.add(normalizedAddress);
+  }
+}
+
+async function checkAllowance(
+  tokenContract: any,
+  claimHandler: any,
+  data: {
+    token: string;
+    distributionTypeId: number | string;
+  },
+  signerAddress: string,
+  totalAmount: BigNumber,
+  tokenDecimals: number
+) {
   const allowance = await tokenContract.allowance(signerAddress, claimHandler.address);
   console.log("total amount to send: %s", formatAmount(totalAmount, tokenDecimals, 4, true));
   console.log("current allowance is %s", formatAmount(allowance, tokenDecimals, 4, true));
@@ -112,147 +301,77 @@ async function main() {
     const tx = await tokenContract.approve(claimHandler.address, totalAmount);
     console.log("sent approve txn %s, waiting...", tx.hash);
     await tx.wait();
-    console.log("done");
-  }
-
-  const seenRecipients = new Set();
-  for (const recipient of Object.keys(data.amounts)) {
-    if (seenRecipients.has(recipient)) {
-      throw new Error(`Duplicated recipient ${recipient}`);
-    }
-    seenRecipients.add(recipient);
-  }
-
-  const txHashes = [];
-  const batchesInProgress = readBatchesInProgress(id);
-  const batchesCount = Math.ceil(accountsAndAmounts.length / batchSize);
-  const lastSentBatchIndex = batchesInProgress[id].lastSentBatchIndex;
-
-  const firstRecipientIndex = (lastSentBatchIndex + 1) * batchSize;
-  if (lastSentBatchIndex >= 0) {
-    const firstRecipientIndex = (lastSentBatchIndex + 1) * batchSize;
-    const firstRecipient = accountsAndAmounts[firstRecipientIndex].account;
-    console.warn(
-      "WARN: lastSentBatchIndex is %s, starting from index %s, first recipient: %s (%s)",
-      lastSentBatchIndex,
-      lastSentBatchIndex + 1,
-      firstRecipientIndex,
-      firstRecipient
-    );
-    await setTimeout(5000);
-  }
-
-  const batches: {
-    from: number;
-    to: number;
-    batch: {
-      account: string;
-      amount: BigNumber;
-    }[];
-    batchIndex: number;
-  }[] = [];
-  for (const batchIndex of range(lastSentBatchIndex + 1, batchesCount)) {
-    const from = batchIndex * batchSize;
-    const to = Math.min(from + batchSize, accountsAndAmounts.length);
-    const batch = accountsAndAmounts.slice(from, to);
-    batches.push({
-      from,
-      to,
-      batch,
-      batchIndex,
-    });
-  }
-
-  console.log("running simulation");
-  for (const [i, { batchIndex, from, to, batch }] of batches.entries()) {
-    await validateEmptyClaimableAmount(claimHandler, multicall, data, batch, tokenDecimals);
-
-    console.log("simulating sending batch %s-%s token %s typeId %s", from, to, data.token, data.distributionTypeId);
-
-    for (const [j, { account, amount }] of batch.entries()) {
-      console.log(
-        "%s recipient %s amount %s (%s)",
-        firstRecipientIndex + i * batchSize + j,
-        account,
-        formatAmount(amount, tokenDecimals, 4, true),
-        amount
-      );
-    }
-
-    const params: DepositFundsParams = [data.token, data.distributionTypeId, batch];
-
-    const result = await (simulationAccount
-      ? claimHandler.connect(simulationAccount)
-      : claimHandler
-    ).callStatic.depositFunds(...params);
-    console.log("simulation batch %s done, result %s", batchIndex, result);
-  }
-
-  if (!write) {
-    ({ write } = await prompts({
-      type: "confirm",
-      name: "write",
-      message: "Do you want to execute the transactions?",
-    }));
-  }
-
-  if (write) {
-    for (const [i, { batchIndex, from, to, batch }] of batches.entries()) {
-      console.log("sending batch %s-%s token %s typeId %s", from, to, data.token, data.distributionTypeId);
-
-      for (const [j, { account, amount }] of batch.entries()) {
-        console.log(
-          "%s recipient %s amount %s (%s)",
-          firstRecipientIndex + i * batchSize + j,
-          account,
-          formatAmount(amount, tokenDecimals, 4, true),
-          amount
-        );
-      }
-
-      const params: DepositFundsParams = [data.token, data.distributionTypeId, batch];
-      const gasLimit = await claimHandler.estimateGas.depositFunds(...params);
-
-      const tx = await claimHandler.depositFunds(...params, {
-        gasLimit: gasLimit.add(1_000_000),
-      });
-      console.log("sent batch txn %s, waiting...", tx.hash);
-      txHashes.push(tx.hash);
-      try {
-        await tx.wait();
-      } catch (ex) {
-        console.error(
-          "WARN: failed to wait for txn %s. manually check it's status and if it was mined update %s, set %s.lastSentBatchIndex to %s. otherwise deposits will be duplicated on the next run",
-          tx.hash,
-          getBatchesInProgressFilepath(),
-          id,
-          batchIndex
-        );
-        throw ex;
-      }
-      console.log("batch %s done", batchIndex);
-
-      batchesInProgress[id].lastSentBatchIndex = batchIndex;
-      saveBatchesInProgress(batchesInProgress);
-    }
-
-    if (txHashes.length) {
-      console.log("sent %s transactions:", txHashes.length);
-      for (const txHash of txHashes) {
-        console.log(txHash);
-      }
-    }
-
-    migrations[id] = Math.floor(Date.now() / 1000);
-    saveMigrations(migrations);
-    delete batchesInProgress[id];
-    saveBatchesInProgress(batchesInProgress);
-  } else {
-    console.warn("WARN: read-only mode. skip sending transaction");
+    console.log("approval done");
   }
 }
 
+async function transferFundsFromSafe(
+  tokenContract: any,
+  signerAddress: string,
+  totalAmount: BigNumber,
+  tokenDecimals: number
+) {
+  if (!topUpFromSafe) {
+    return;
+  }
+  if (hre.network.name !== "arbitrum") {
+    throw new Error("transferFundsFromSafe is only supported on Arbitrum");
+  }
+
+  const allowance = await tokenContract.allowance(SAFE_ADDRESS, signerAddress);
+  if (allowance.eq(0)) {
+    console.warn("WARN: safe %s allowance for %s is 0. skip top up", SAFE_ADDRESS, signerAddress);
+    return;
+  }
+
+  let amount = totalAmount.lt(allowance) ? totalAmount : allowance;
+  if (maxTopUpFromSafe && maxTopUpFromSafe.lt(amount)) {
+    amount = maxTopUpFromSafe;
+  }
+
+  console.log(
+    "WARN: transferring %s (%s) from safe %s to %s",
+    formatAmount(amount, tokenDecimals, 4, true),
+    amount,
+    SAFE_ADDRESS,
+    signerAddress
+  );
+  await confirmProceed("do you want to proceed with the top up?");
+
+  const tx = await tokenContract.transferFrom(SAFE_ADDRESS, signerAddress, amount);
+  console.log("sent transferFrom txn %s, waiting...", tx.hash);
+  await tx.wait();
+  console.log("transferFrom done");
+}
+
+async function checkBalance(tokenContract: any, signerAddress: string, totalAmount: BigNumber, tokenDecimals: number) {
+  const balance = await tokenContract.balanceOf(signerAddress);
+  if (balance.lt(totalAmount)) {
+    console.warn(
+      "WARN: current balance %s is lower than the total amount %s",
+      formatAmount(balance, tokenDecimals, 2, true),
+      formatAmount(totalAmount, tokenDecimals, 2, true)
+    );
+    await confirmProceed();
+  }
+  console.log("balance is %s", formatAmount(balance, tokenDecimals, 2, true));
+}
+
 type Migrations = Record<string, number>;
+
+async function confirmProceed(message = "Do you want to proceed?") {
+  if (skipConfirmations) {
+    return;
+  }
+  const { proceed } = await prompts({
+    type: "confirm",
+    name: "proceed",
+    message,
+  });
+  if (!proceed) {
+    process.exit(0);
+  }
+}
 
 async function validateEmptyClaimableAmount(
   claimHandler: any,
@@ -298,6 +417,8 @@ async function validateEmptyClaimableAmount(
       "Some accounts already have claimable amount. pass SKIP_EMPTY_CLAIMABLE_AMOUNT_VALIDATION=1 to skip this check"
     );
   }
+
+  console.log("claimable amounts are valid");
 }
 
 function getMigrationsFilepath() {
@@ -319,7 +440,7 @@ function readMigrations(): Migrations {
   return JSON.parse(content.toString());
 }
 
-type BatchesInProgress = Record<string, { lastSentBatchIndex: number }>;
+type BatchesInProgress = Record<string, { lastSentRecipientIndex: number }>;
 
 function getBatchesInProgressFilepath(): string {
   return path.join(__dirname, ".batchesInProgress.json");
@@ -339,15 +460,15 @@ function readBatchesInProgress(dataId: string): BatchesInProgress {
     ret = JSON.parse(content.toString());
   }
   if (dataId in ret) {
-    if (!("lastSentBatchIndex" in ret[dataId])) {
-      throw new Error("`lastSentBatchIndex` is missing");
+    if (!("lastSentRecipientIndex" in ret[dataId])) {
+      throw new Error("`lastSentRecipientIndex` is missing");
     }
-    if (ret[dataId].lastSentBatchIndex < 0) {
-      throw new Error("`lastSentBatchIndex` should be greater or equal to zero");
+    if (ret[dataId].lastSentRecipientIndex < 0) {
+      throw new Error("`lastSentRecipientIndex` should be greater or equal to zero");
     }
   } else {
     ret[dataId] = {
-      lastSentBatchIndex: -1, // -1 means no batches were sent before
+      lastSentRecipientIndex: -1, // -1 means no batches were sent before
     };
   }
   return ret;

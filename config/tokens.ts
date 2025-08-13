@@ -785,6 +785,27 @@ const config: {
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },
+    MNT: {
+      synthetic: true,
+      decimals: 18, // https://etherscan.io/token/0x3c3a81e81dc49a522a592e7622a7e711c06bf354#readProxyContract
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003dedb9e322eea3d1f6454b31241018b5fea9d0bffedbf4c49fec12798cb70",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x37DDEE84dE03d039e1Bf809b7a01EDd2c4665771",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+    },
+    SPX6900: {
+      synthetic: true,
+      decimals: 8, // https://etherscan.io/token/0xe0f63a424a4439cbe457d80e4f4b51ad25b2c56c#readContract
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003c5eefa9b2f6a05d0f6613692ffc61083636429169b9a5b0353ea47b9091c",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
     AAVE: {
       address: "0xba5ddd1f9d7f570dc94a51479a000e3bce967196",
       decimals: 18,

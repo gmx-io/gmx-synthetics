@@ -17,6 +17,7 @@ export async function initOracleConfigForTokens({ write }) {
   const dataStore = await hre.ethers.getContract("DataStore");
   const multicall = await hre.ethers.getContract("Multicall3");
   const config = await hre.ethers.getContract("Config");
+  const oracle = await hre.ethers.getContract("Oracle");
 
   const multicallReadParams = [];
 
@@ -45,7 +46,7 @@ export async function initOracleConfigForTokens({ write }) {
       target: dataStore.address,
       allowFailure: false,
       callData: dataStore.interface.encodeFunctionData("getAddress", [
-        getFullKey(keys.ORACLE_PROVIDER_FOR_TOKEN, encodeData(["address"], [token.address])),
+        getFullKey(keys.ORACLE_PROVIDER_FOR_TOKEN, encodeData(["address", "address"], [oracle.address, token.address])),
       ]),
     });
 

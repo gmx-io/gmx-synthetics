@@ -2,7 +2,7 @@ import prompts from "prompts";
 import hre from "hardhat";
 import { hashString } from "../../utils/hash";
 
-const distributionId = 4672592;
+const distributionId = process.env.DISTRIBUTION_ID;
 let write = process.env.WRITE === "true";
 const terms = process.env.TERMS;
 const CLAIM_ADMIN = hashString("CLAIM_ADMIN");
@@ -10,6 +10,9 @@ const CLAIM_ADMIN = hashString("CLAIM_ADMIN");
 async function main() {
   if (!terms) {
     throw new Error("TERMS is not set");
+  }
+  if (!distributionId) {
+    throw new Error("DISTRIBUTION_ID is not set");
   }
 
   const claimHandler = await hre.ethers.getContract("ClaimHandler");

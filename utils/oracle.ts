@@ -251,6 +251,7 @@ export async function getOracleParams({
   const signerInfo = getSignerInfo(signerIndexes);
 
   const dataStore = await hre.ethers.getContract("DataStore");
+  const oracle = await hre.ethers.getContract("Oracle");
   const gmOracleProvider = await hre.ethers.getContract("GmOracleProvider");
   const chainlinkPriceFeedProvider = await hre.ethers.getContract("ChainlinkPriceFeedProvider");
   const chainlinkDataStreamFeedProvider = await hre.ethers.getContract("ChainlinkDataStreamProvider");
@@ -322,7 +323,10 @@ export async function getOracleParams({
 
   for (let i = 0; i < priceFeedTokens.length; i++) {
     const token = priceFeedTokens[i];
-    await dataStore.setAddress(keys.oracleProviderForTokenKey(token), chainlinkPriceFeedProvider.address);
+    await dataStore.setAddress(
+      keys.oracleProviderForTokenKey(oracle.address, token),
+      chainlinkPriceFeedProvider.address
+    );
     params.tokens.push(token);
     params.providers.push(chainlinkPriceFeedProvider.address);
     params.data.push("0x");
@@ -330,7 +334,10 @@ export async function getOracleParams({
 
   for (let i = 0; i < dataStreamTokens.length; i++) {
     const token = dataStreamTokens[i];
-    await dataStore.setAddress(keys.oracleProviderForTokenKey(token), chainlinkDataStreamFeedProvider.address);
+    await dataStore.setAddress(
+      keys.oracleProviderForTokenKey(oracle.address, token),
+      chainlinkDataStreamFeedProvider.address
+    );
     params.tokens.push(token);
     params.providers.push(chainlinkDataStreamFeedProvider.address);
     params.data.push(dataStreamData[i]);

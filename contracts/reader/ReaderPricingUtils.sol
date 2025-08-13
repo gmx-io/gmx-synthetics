@@ -159,6 +159,7 @@ library ReaderPricingUtils {
         uint256 positionSizeInUsd,
         uint256 positionSizeInTokens,
         int256 sizeDeltaUsd,
+        int256 pendingImpactAmount,
         bool isLong
     ) external view returns (ExecutionPriceResult memory) {
         PositionUtils.UpdatePositionParams memory params;
@@ -176,6 +177,7 @@ library ReaderPricingUtils {
         params.position.setSizeInUsd(positionSizeInUsd);
         params.position.setSizeInTokens(positionSizeInTokens);
         params.position.setIsLong(isLong);
+        params.position.setPendingImpactAmount(pendingImpactAmount);
 
         ExecutionPriceResult memory result;
 
