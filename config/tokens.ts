@@ -800,14 +800,14 @@ const config: {
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },
-    OKB: {
-      synthetic: true,
-      decimals: 18, // https://etherscan.io/token/0x75231f58b43240c9718dd58b4967c5114342a86c#readProxyContract
-      transferGasLimit: 200 * 1000,
-      dataStreamFeedId: "", // TODO:
-      dataStreamFeedDecimals: 18,
-      oracleTimestampAdjustment: 1,
-    },
+    // OKB: {
+    //   synthetic: true,
+    //   decimals: 18, // https://etherscan.io/token/0x75231f58b43240c9718dd58b4967c5114342a86c#readProxyContract
+    //   transferGasLimit: 200 * 1000,
+    //   dataStreamFeedId: "", // TODO:
+    //   dataStreamFeedDecimals: 18,
+    //   oracleTimestampAdjustment: 1,
+    // },
     ALGO: {
       synthetic: true,
       decimals: 6, // https://explorer.perawallet.app/asset/0/

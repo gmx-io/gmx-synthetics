@@ -471,11 +471,11 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 12_000,
     },
-    OKB: {
-      negativePositionImpactFactor: exponentToFloat("5.82e-8"),
-      expectedSwapImpactRatio: 20_000,
-      expectedPositionImpactRatio: 12_000,
-    },
+    // OKB: {
+    //   negativePositionImpactFactor: exponentToFloat("5.82e-8"),
+    //   expectedSwapImpactRatio: 20_000,
+    //   expectedPositionImpactRatio: 12_000,
+    // },
     ALGO: {
       negativePositionImpactFactor: exponentToFloat("1.47e-8"),
       expectedSwapImpactRatio: 20_000,
