@@ -87,7 +87,20 @@ function generateMarkdownTable(deployments: Deployment[], network: string): stri
   return markdown;
 }
 
-function getNetworkLastUpdated(network: string): string {
+function getNetworkLastUpdated(network: string, forceCurrentTime = false): string {
+  // If forced to use current time (for manual runs with changes), show current timestamp
+  if (forceCurrentTime) {
+    return new Date().toLocaleString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "UTC",
+      timeZoneName: "short",
+    });
+  }
+  // Use git history to show actual deployment time
   const dir = `deployments/${network}/`;
   const absoluteDir = path.join(__dirname, "..", dir);
 
@@ -122,45 +135,13 @@ function getNetworkLastUpdated(network: string): string {
       timeZoneName: "short",
     });
   } catch (error) {
-    // Fallback to filesystem times if git fails
-    try {
-      const files = fs.readdirSync(absoluteDir);
-      let mostRecentTime = 0;
-
-      for (const file of files) {
-        if (!file.endsWith(".json") || file === ".migrations.json") {
-          continue;
-        }
-
-        const filePath = path.join(absoluteDir, file);
-        const stats = fs.statSync(filePath);
-        if (stats.mtime.getTime() > mostRecentTime) {
-          mostRecentTime = stats.mtime.getTime();
-        }
-      }
-
-      if (mostRecentTime === 0) {
-        return "Never";
-      }
-
-      return new Date(mostRecentTime).toLocaleString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        timeZone: "UTC",
-        timeZoneName: "short",
-      });
-    } catch {
-      return "Unknown";
-    }
+    return "Unknown";
   }
 }
 
-function generateNetworkMarkdown(network: string, deployments: Deployment[]): string {
+function generateNetworkMarkdown(network: string, deployments: Deployment[], forceCurrentTime = false): string {
   const info = NETWORK_INFO[network];
-  const lastUpdated = getNetworkLastUpdated(network);
+  const lastUpdated = getNetworkLastUpdated(network, forceCurrentTime);
 
   let markdown = `# ${info.name} Deployments\n\n`;
   markdown += `**Network Type:** ${info.type === "mainnet" ? "Mainnet" : "Testnet"}  \n`;
@@ -174,7 +155,10 @@ function generateNetworkMarkdown(network: string, deployments: Deployment[]): st
   return markdown;
 }
 
-function generateSummarySection(deployments: NetworkDeployments): string {
+function generateSummarySection(
+  deployments: NetworkDeployments,
+  changedNetworksForTimestamp: Set<string> = new Set()
+): string {
   let markdown = `\n## Deployments\n\n`;
 
   // Add timestamp explanation
@@ -189,7 +173,8 @@ function generateSummarySection(deployments: NetworkDeployments): string {
     const info = NETWORK_INFO[network];
     if (info.type === "mainnet") {
       const count = deployments[network]?.length || 0;
-      const lastUpdated = getNetworkLastUpdated(network);
+      const forceCurrentTime = changedNetworksForTimestamp.has(network);
+      const lastUpdated = getNetworkLastUpdated(network, forceCurrentTime);
       markdown += `| ${info.name} | ${count} | [View](./${network}-deployments.md) | ${lastUpdated} |\n`;
     }
   }
@@ -203,12 +188,46 @@ function generateSummarySection(deployments: NetworkDeployments): string {
     const info = NETWORK_INFO[network];
     if (info.type === "testnet") {
       const count = deployments[network]?.length || 0;
-      const lastUpdated = getNetworkLastUpdated(network);
+      const forceCurrentTime = changedNetworksForTimestamp.has(network);
+      const lastUpdated = getNetworkLastUpdated(network, forceCurrentTime);
       markdown += `| ${info.name} | ${count} | [View](./${network}-deployments.md) | ${lastUpdated} |\n`;
     }
   }
 
   return markdown;
+}
+
+function hasNetworkChanged(network: string, currentDeployments: Deployment[]): boolean {
+  const docsDir = path.join(__dirname, "../docs");
+  const existingDocPath = path.join(docsDir, `${network}-deployments.md`);
+
+  if (!fs.existsSync(existingDocPath)) {
+    return true; // New network, consider it changed
+  }
+
+  try {
+    const existingDoc = fs.readFileSync(existingDocPath, "utf-8");
+
+    // Extract contract count from existing doc
+    const countMatch = existingDoc.match(/\*\*Total Contracts:\*\* (\d+)/);
+    const existingCount = countMatch ? parseInt(countMatch[1]) : 0;
+
+    if (existingCount !== currentDeployments.length) {
+      return true; // Contract count changed
+    }
+
+    // Check if any contract addresses have changed by looking for the contract name and address
+    for (const deployment of currentDeployments) {
+      const contractLine = `| ${deployment.contractName} | \`${deployment.contractAddress}\` |`;
+      if (!existingDoc.includes(contractLine)) {
+        return true; // Address changed or contract is new
+      }
+    }
+
+    return false; // No changes detected
+  } catch (error) {
+    return true; // Error reading existing file, consider it changed
+  }
 }
 
 export async function generateDeploymentDocs(changedNetworks?: string[]) {
@@ -226,10 +245,27 @@ export async function generateDeploymentDocs(changedNetworks?: string[]) {
   // Otherwise, update all networks (for manual runs)
   const networksToUpdate = changedNetworks && changedNetworks.length > 0 ? changedNetworks : ALL_NETWORKS;
 
+  // For manual runs, detect which networks actually have changes
+  const isManualRun = !changedNetworks || changedNetworks.length === 0;
+  const changedNetworksForTimestamp = new Set<string>();
+
+  if (isManualRun) {
+    // Check each network for actual changes
+    for (const network of networksToUpdate) {
+      if (hasNetworkChanged(network, deployments[network] || [])) {
+        changedNetworksForTimestamp.add(network);
+      }
+    }
+  } else {
+    // For automatic runs, use the provided changed networks
+    changedNetworks.forEach((network) => changedNetworksForTimestamp.add(network));
+  }
+
   // Generate individual network markdown files directly in docs
   for (const network of networksToUpdate) {
     const networkDeployments = deployments[network] || [];
-    const markdown = generateNetworkMarkdown(network, networkDeployments);
+    const forceCurrentTime = changedNetworksForTimestamp.has(network);
+    const markdown = generateNetworkMarkdown(network, networkDeployments, forceCurrentTime);
     const outputPath = path.join(docsDir, `${network}-deployments.md`);
 
     fs.writeFileSync(outputPath, markdown);
@@ -239,21 +275,20 @@ export async function generateDeploymentDocs(changedNetworks?: string[]) {
   // Generate complete README content from template
   const readmePath = path.join(docsDir, "README.md");
 
-  let readmeContent = `# GMX Synthetics Documentation
-
-This directory contains automatically generated deployment documentation for GMX Synthetics contracts across all supported networks.
-
-## Automatic Updates
-
-The deployment documentation is automatically updated when:
-1. **On commit** - When deployment files change, the pre-commit hook selectively updates only the affected network documentation and this README
-2. **Manual update** - Run \`npx hardhat generate-deployment-docs\` to regenerate all network documentation files. Manual runs update all network documentation files regardless of recent changes
-
-The documentation is generated from the deployment artifacts in \`/deployments/\` and is kept in sync automatically through git hooks.
-`;
+  let readmeContent = "# GMX Synthetics Documentation\n\n";
+  readmeContent +=
+    "This directory contains automatically generated deployment documentation for GMX Synthetics contracts across all supported networks.\n\n";
+  readmeContent += "## Automatic Updates\n\n";
+  readmeContent += "The deployment documentation is automatically updated when:\n";
+  readmeContent +=
+    "1. **On commit** - When deployment files change, the pre-commit hook selectively updates only the affected network documentation and this README\n";
+  readmeContent +=
+    "2. **Manual update** - Run `npx hardhat generate-deployment-docs` to regenerate all network documentation files. Manual runs update all network documentation files regardless of recent changes\n\n";
+  readmeContent +=
+    "The documentation is generated from the deployment artifacts in `/deployments/` and is kept in sync automatically through git hooks.\n";
 
   // Add deployment summary section to README
-  const summarySection = generateSummarySection(deployments);
+  const summarySection = generateSummarySection(deployments, changedNetworksForTimestamp);
   readmeContent = readmeContent.trimEnd() + "\n" + summarySection;
 
   fs.writeFileSync(readmePath, readmeContent);
