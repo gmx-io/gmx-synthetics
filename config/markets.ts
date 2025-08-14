@@ -552,7 +552,7 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(32_000, 18),
       maxShortTokenPoolAmount: expandDecimals(100_000_000, 6),
 
-      maxPoolUsdForDeposit: decimalToFloat(70_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(90_000_000),
 
       negativePositionImpactFactor: exponentToFloat("9e-11"),
       positivePositionImpactFactor: exponentToFloat("3e-11"),
@@ -586,7 +586,7 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(12_000, 18),
       maxShortTokenPoolAmount: expandDecimals(12_000, 18),
 
-      maxPoolUsdForDeposit: decimalToFloat(35_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(45_000_000),
 
       positionImpactExponentFactor: exponentToFloat("1e0"),
       negativePositionImpactFactor: exponentToFloat("2e-15"),
