@@ -21,7 +21,9 @@ describe("FeeDistributor", function () {
     dataStore,
     config,
     wnt,
+    gmxA,
     gmx,
+    gmxC,
     esGmx,
     roleStore,
     feeHandler,
@@ -33,9 +35,9 @@ describe("FeeDistributor", function () {
     mockEndpointV2A,
     mockEndpointV2B,
     mockEndpointV2C,
-    mockOftA,
-    mockOftAdapterB,
-    mockOftC,
+    mockGmxAdapterA,
+    mockGmxAdapterB,
+    mockGmxAdapterC,
     initialTimestamp,
     chainlinkPriceFeedProvider,
     wethPriceFeed,
@@ -46,7 +48,6 @@ describe("FeeDistributor", function () {
     marketUtils,
     feeDistributorUtils,
     mockVaultV1,
-    claimVault,
     claimUtils,
     wallet,
     user0,
@@ -79,6 +80,7 @@ describe("FeeDistributor", function () {
   const eidA = 1000;
   const eidB = 2000;
   const eidC = 3000;
+  const eidD = 4000;
 
   // Constants representing chain ID for testing purposes
   const chainIdA = 10000;
@@ -117,7 +119,6 @@ describe("FeeDistributor", function () {
       marketUtils,
       feeDistributorUtils,
       mockVaultV1,
-      claimVault,
       claimUtils,
     } = fixture.contracts);
 
@@ -155,41 +156,43 @@ describe("FeeDistributor", function () {
     // use separate mockEndpointV2B endpoint to avoid reentrancy issues when using mockEndpointV2
     mockEndpointV2B = await deployContract("MockEndpointV2", [eidB]);
     mockEndpointV2C = await deployContract("MockEndpointV2", [eidC]);
-    mockOftA = await deployContract("MockOFT", ["GMX", "GMX", mockEndpointV2A.address, wallet.address]);
-    mockOftAdapterB = await deployContract("MockOFTAdapter", [gmx.address, mockEndpointV2B.address, wallet.address]);
-    mockOftC = await deployContract("MockOFT", ["GMX", "GMX", mockEndpointV2C.address, wallet.address]);
+    gmxA = await deployContract("MintableToken", ["GMX", "GMX", 18]);
+    gmxC = await deployContract("MintableToken", ["GMX", "GMX", 18]);
+    mockGmxAdapterA = await deployContract("MockGMX_Adapter", [[{ dstEid: eidB, limit: expandDecimals(1000000, 18), window: 60 }, { dstEid: eidC, limit: expandDecimals(1000000, 18), window: 60 }, { dstEid: eidD, limit: expandDecimals(1000000, 18), window: 60 },], gmxA.address, gmxA.address, mockEndpointV2A.address, wallet.address]);
+    mockGmxAdapterB = await deployContract("MockGMX_Adapter", [[{ dstEid: eidA, limit: expandDecimals(1000000, 18), window: 60 }, { dstEid: eidC, limit: expandDecimals(1000000, 18), window: 60 }, { dstEid: eidD, limit: expandDecimals(1000000, 18), window: 60 },], gmx.address, gmx.address, mockEndpointV2B.address, wallet.address]);
+    mockGmxAdapterC = await deployContract("MockGMX_Adapter", [[{ dstEid: eidA, limit: expandDecimals(1000000, 18), window: 60 }, { dstEid: eidB, limit: expandDecimals(1000000, 18), window: 60 }, { dstEid: eidD, limit: expandDecimals(1000000, 18), window: 60 },], gmxC.address, gmxC.address, mockEndpointV2C.address, wallet.address]);
 
     await grantRole(roleStore, wallet.address, "FEE_DISTRIBUTION_KEEPER");
 
-    options = Options.newOptions().addExecutorLzReceiveOption(65000, 0).toHex().toString();
+    options = Options.newOptions().addExecutorLzReceiveOption(300000, 0).toHex().toString();
 
     // set mock contract values
     await mockEndpointV2.setDestLzEndpoint(multichainReader.address, mockEndpointV2.address);
     await mockEndpointV2.setReadChannelId(channelId);
 
-    await mockEndpointV2A.setDestLzEndpoint(mockOftAdapterB.address, mockEndpointV2B.address);
-    await mockEndpointV2A.setDestLzEndpoint(mockOftC.address, mockEndpointV2C.address);
+    await mockEndpointV2A.setDestLzEndpoint(mockGmxAdapterB.address, mockEndpointV2B.address);
+    await mockEndpointV2A.setDestLzEndpoint(mockGmxAdapterC.address, mockEndpointV2C.address);
 
-    await mockEndpointV2B.setDestLzEndpoint(mockOftA.address, mockEndpointV2A.address);
-    await mockEndpointV2B.setDestLzEndpoint(mockOftC.address, mockEndpointV2C.address);
+    await mockEndpointV2B.setDestLzEndpoint(mockGmxAdapterA.address, mockEndpointV2A.address);
+    await mockEndpointV2B.setDestLzEndpoint(mockGmxAdapterC.address, mockEndpointV2C.address);
 
-    await mockEndpointV2C.setDestLzEndpoint(mockOftA.address, mockEndpointV2A.address);
-    await mockEndpointV2C.setDestLzEndpoint(mockOftAdapterB.address, mockEndpointV2B.address);
+    await mockEndpointV2C.setDestLzEndpoint(mockGmxAdapterA.address, mockEndpointV2A.address);
+    await mockEndpointV2C.setDestLzEndpoint(mockGmxAdapterB.address, mockEndpointV2B.address);
 
-    await mockOftA.setPeer(eidB, ethers.utils.zeroPad(mockOftAdapterB.address, 32));
-    await mockOftA.setPeer(eidC, ethers.utils.zeroPad(mockOftC.address, 32));
-    await mockOftA.setEnforcedOptions([{ eid: eidB, msgType: 1, options: options }]);
-    await mockOftA.setEnforcedOptions([{ eid: eidC, msgType: 1, options: options }]);
+    await mockGmxAdapterA.setPeer(eidB, ethers.utils.zeroPad(mockGmxAdapterB.address, 32));
+    await mockGmxAdapterA.setPeer(eidC, ethers.utils.zeroPad(mockGmxAdapterC.address, 32));
+    await mockGmxAdapterA.setEnforcedOptions([{ eid: eidB, msgType: 1, options: options }]);
+    await mockGmxAdapterA.setEnforcedOptions([{ eid: eidC, msgType: 1, options: options }]);
 
-    await mockOftAdapterB.setPeer(eidA, ethers.utils.zeroPad(mockOftA.address, 32));
-    await mockOftAdapterB.setPeer(eidC, ethers.utils.zeroPad(mockOftC.address, 32));
-    await mockOftAdapterB.setEnforcedOptions([{ eid: eidA, msgType: 1, options: options }]);
-    await mockOftAdapterB.setEnforcedOptions([{ eid: eidC, msgType: 1, options: options }]);
+    await mockGmxAdapterB.setPeer(eidA, ethers.utils.zeroPad(mockGmxAdapterA.address, 32));
+    await mockGmxAdapterB.setPeer(eidC, ethers.utils.zeroPad(mockGmxAdapterC.address, 32));
+    await mockGmxAdapterB.setEnforcedOptions([{ eid: eidA, msgType: 1, options: options }]);
+    await mockGmxAdapterB.setEnforcedOptions([{ eid: eidC, msgType: 1, options: options }]);
 
-    await mockOftC.setPeer(eidA, ethers.utils.zeroPad(mockOftA.address, 32));
-    await mockOftC.setPeer(eidB, ethers.utils.zeroPad(mockOftAdapterB.address, 32));
-    await mockOftC.setEnforcedOptions([{ eid: eidA, msgType: 1, options: options }]);
-    await mockOftC.setEnforcedOptions([{ eid: eidB, msgType: 1, options: options }]);
+    await mockGmxAdapterC.setPeer(eidA, ethers.utils.zeroPad(mockGmxAdapterA.address, 32));
+    await mockGmxAdapterC.setPeer(eidB, ethers.utils.zeroPad(mockGmxAdapterB.address, 32));
+    await mockGmxAdapterC.setEnforcedOptions([{ eid: eidA, msgType: 1, options: options }]);
+    await mockGmxAdapterC.setEnforcedOptions([{ eid: eidB, msgType: 1, options: options }]);
 
     // Setting LZRead configuration in dataStore for multichainReader
     await config.setBool(
@@ -225,7 +228,7 @@ describe("FeeDistributor", function () {
     await config.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdA, feeDistributorConfig.gmxKey]),
-      mockOftA.address
+      gmxA.address
     );
     await config.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
@@ -235,7 +238,7 @@ describe("FeeDistributor", function () {
     await config.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdC, feeDistributorConfig.gmxKey]),
-      mockOftC.address
+      gmxC.address
     );
     await config.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
@@ -276,7 +279,7 @@ describe("FeeDistributor", function () {
     await config.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
       encodeData(["bytes32"], [feeDistributorConfig.layerzeroOftKey]),
-      mockOftAdapterB.address
+      mockGmxAdapterB.address
     );
     await config.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
@@ -381,18 +384,17 @@ describe("FeeDistributor", function () {
     await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
 
     await mockLzReadResponseChainA.setUint(
-      keys.withdrawableBuybackTokenAmountKey(mockOftA.address),
+      keys.withdrawableBuybackTokenAmountKey(gmxA.address),
       expandDecimals(40_000, 18)
     );
     await mockLzReadResponseChainC.setUint(
-      keys.withdrawableBuybackTokenAmountKey(mockOftC.address),
+      keys.withdrawableBuybackTokenAmountKey(gmxC.address),
       expandDecimals(20_000, 18)
     );
     await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(10_000, 18));
     await gmx.mint(feeHandler.address, expandDecimals(10_000, 18));
 
     await gmx.mint(wallet.address, expandDecimals(170_000, 18));
-    await gmx.approve(mockOftAdapterB.address, expandDecimals(130_000, 18));
     let sendParam = {
       dstEid: eidA,
       to: addressToBytes32(user0.address),
@@ -402,9 +404,9 @@ describe("FeeDistributor", function () {
       composeMsg: ethers.utils.arrayify("0x"),
       oftCmd: ethers.utils.arrayify("0x"),
     };
-    let feeQuote = await mockOftAdapterB.quoteSend(sendParam, false);
+    let feeQuote = await mockGmxAdapterB.quoteSend(sendParam, false);
     let nativeFee = feeQuote.nativeFee;
-    await mockOftAdapterB.send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, wallet.address, {
+    await mockGmxAdapterB.send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, wallet.address, {
       value: nativeFee,
     });
 
@@ -419,9 +421,9 @@ describe("FeeDistributor", function () {
       composeMsg: ethers.utils.arrayify("0x"),
       oftCmd: ethers.utils.arrayify("0x"),
     };
-    feeQuote = await mockOftAdapterB.quoteSend(sendParam, false);
+    feeQuote = await mockGmxAdapterB.quoteSend(sendParam, false);
     nativeFee = feeQuote.nativeFee;
-    await mockOftAdapterB.send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, wallet.address, {
+    await mockGmxAdapterB.send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, wallet.address, {
       value: nativeFee,
     });
 
@@ -489,18 +491,17 @@ describe("FeeDistributor", function () {
     await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
 
     await mockLzReadResponseChainA.setUint(
-      keys.withdrawableBuybackTokenAmountKey(mockOftA.address),
+      keys.withdrawableBuybackTokenAmountKey(gmxA.address),
       expandDecimals(10_000, 18)
     );
     await mockLzReadResponseChainC.setUint(
-      keys.withdrawableBuybackTokenAmountKey(mockOftC.address),
+      keys.withdrawableBuybackTokenAmountKey(gmxC.address),
       expandDecimals(20_000, 18)
     );
     await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(40_000, 18));
     await gmx.mint(feeHandler.address, expandDecimals(40_000, 18));
 
     await gmx.mint(wallet.address, expandDecimals(170_000, 18));
-    await gmx.approve(mockOftAdapterB.address, expandDecimals(50_000, 18));
     let sendParam = {
       dstEid: eidA,
       to: addressToBytes32(user0.address),
@@ -510,9 +511,9 @@ describe("FeeDistributor", function () {
       composeMsg: ethers.utils.arrayify("0x"),
       oftCmd: ethers.utils.arrayify("0x"),
     };
-    let feeQuote = await mockOftAdapterB.quoteSend(sendParam, false);
+    let feeQuote = await mockGmxAdapterB.quoteSend(sendParam, false);
     let nativeFee = feeQuote.nativeFee;
-    await mockOftAdapterB.send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, wallet.address, {
+    await mockGmxAdapterB.send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, wallet.address, {
       value: nativeFee,
     });
 
@@ -527,9 +528,9 @@ describe("FeeDistributor", function () {
       composeMsg: ethers.utils.arrayify("0x"),
       oftCmd: ethers.utils.arrayify("0x"),
     };
-    feeQuote = await mockOftAdapterB.quoteSend(sendParam, false);
+    feeQuote = await mockGmxAdapterB.quoteSend(sendParam, false);
     nativeFee = feeQuote.nativeFee;
-    await mockOftAdapterB.send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, wallet.address, {
+    await mockGmxAdapterB.send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, wallet.address, {
       value: nativeFee,
     });
 
@@ -544,9 +545,9 @@ describe("FeeDistributor", function () {
     let gmxPrice = await gmxPriceFeed.latestAnswer();
     expect(gmxPrice).to.eq(expandDecimals(20, 8));
 
-    const feeReceiverAmountBeforeBridgingA = await mockOftA.balanceOf(user0.address);
+    const feeReceiverAmountBeforeBridgingA = await gmxA.balanceOf(user0.address);
     const feeReceiverAmountBeforeBridgingB = await gmx.balanceOf(feeDistributorVault.address);
-    const feeReceiverAmountBeforeBridgingC = await mockOftC.balanceOf(user1.address);
+    const feeReceiverAmountBeforeBridgingC = await gmxC.balanceOf(user1.address);
 
     const tx = await feeDistributor.initiateDistribute();
     const receipt = await tx.wait();
@@ -555,9 +556,9 @@ describe("FeeDistributor", function () {
 
     const distributeTimestamp = await dataStore.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
 
-    const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[21].parsedEventData;
-    const feeDistributionDataReceived = parseLogs(fixture, receipt)[18].parsedEventData;
-    const feeDistributionGmxBridgedOut = parseLogs(fixture, receipt)[17].parsedEventData;
+    const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[19].parsedEventData;
+    const feeDistributionDataReceived = parseLogs(fixture, receipt)[16].parsedEventData;
+    const feeDistributionGmxBridgedOut = parseLogs(fixture, receipt)[15].parsedEventData;
 
     const feeAmountGmxA = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdA));
     const feeAmountGmxB = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB));
@@ -572,9 +573,9 @@ describe("FeeDistributor", function () {
     wntPrice = await dataStore.getUint(keys.FEE_DISTRIBUTOR_WNT_PRICE);
     gmxPrice = await dataStore.getUint(keys.FEE_DISTRIBUTOR_GMX_PRICE);
 
-    const feeReceiverAmountAfterBridgingA = await mockOftA.balanceOf(user0.address);
+    const feeReceiverAmountAfterBridgingA = await gmxA.balanceOf(user0.address);
     const feeReceiverAmountAfterBridgingB = await gmx.balanceOf(feeDistributorVault.address);
-    const feeReceiverAmountAfterBridgingC = await mockOftC.balanceOf(user1.address);
+    const feeReceiverAmountAfterBridgingC = await gmxC.balanceOf(user1.address);
 
     expect(distributeTimestamp).to.equal(timestamp);
 
@@ -615,18 +616,17 @@ describe("FeeDistributor", function () {
     await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
 
     await mockLzReadResponseChainA.setUint(
-      keys.withdrawableBuybackTokenAmountKey(mockOftA.address),
+      keys.withdrawableBuybackTokenAmountKey(gmxA.address),
       expandDecimals(40_000, 18)
     );
     await mockLzReadResponseChainC.setUint(
-      keys.withdrawableBuybackTokenAmountKey(mockOftC.address),
+      keys.withdrawableBuybackTokenAmountKey(gmxC.address),
       expandDecimals(20_000, 18)
     );
     await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(10_000, 18));
     await gmx.mint(feeHandler.address, expandDecimals(10_000, 18));
 
     await gmx.mint(wallet.address, expandDecimals(170_000, 18));
-    await gmx.approve(mockOftAdapterB.address, expandDecimals(130_000, 18));
     let sendParam = {
       dstEid: eidA,
       to: addressToBytes32(user0.address),
@@ -636,9 +636,9 @@ describe("FeeDistributor", function () {
       composeMsg: ethers.utils.arrayify("0x"),
       oftCmd: ethers.utils.arrayify("0x"),
     };
-    let feeQuote = await mockOftAdapterB.quoteSend(sendParam, false);
+    let feeQuote = await mockGmxAdapterB.quoteSend(sendParam, false);
     let nativeFee = feeQuote.nativeFee;
-    await mockOftAdapterB.send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, wallet.address, {
+    await mockGmxAdapterB.send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, wallet.address, {
       value: nativeFee,
     });
 
@@ -653,9 +653,9 @@ describe("FeeDistributor", function () {
       composeMsg: ethers.utils.arrayify("0x"),
       oftCmd: ethers.utils.arrayify("0x"),
     };
-    feeQuote = await mockOftAdapterB.quoteSend(sendParam, false);
+    feeQuote = await mockGmxAdapterB.quoteSend(sendParam, false);
     nativeFee = feeQuote.nativeFee;
-    await mockOftAdapterB.send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, wallet.address, {
+    await mockGmxAdapterB.send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, wallet.address, {
       value: nativeFee,
     });
 
@@ -724,9 +724,9 @@ describe("FeeDistributor", function () {
       composeMsg: ethers.utils.arrayify("0x"),
       oftCmd: ethers.utils.arrayify("0x"),
     };
-    feeQuote = await mockOftA.quoteSend(sendParam, false);
+    feeQuote = await mockGmxAdapterA.quoteSend(sendParam, false);
     nativeFee = feeQuote.nativeFee;
-    await mockOftA.connect(user0).send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, user0.address, {
+    await mockGmxAdapterA.connect(user0).send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, user0.address, {
       value: nativeFee,
     });
 
@@ -739,15 +739,15 @@ describe("FeeDistributor", function () {
       composeMsg: ethers.utils.arrayify("0x"),
       oftCmd: ethers.utils.arrayify("0x"),
     };
-    feeQuote = await mockOftA.quoteSend(sendParam, false);
+    feeQuote = await mockGmxAdapterA.quoteSend(sendParam, false);
     nativeFee = feeQuote.nativeFee;
-    await mockOftA.connect(user0).send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, user0.address, {
+    await mockGmxAdapterA.connect(user0).send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, user0.address, {
       value: nativeFee,
     });
 
-    const user0Balance = await mockOftA.balanceOf(user0.address);
+    const user0Balance = await gmxA.balanceOf(user0.address);
     const feeDistributorVaultBalance = await gmx.balanceOf(feeDistributorVault.address);
-    const user1Balance = await mockOftC.balanceOf(user1.address);
+    const user1Balance = await gmxC.balanceOf(user1.address);
 
     expect(user0Balance).to.equal(expandDecimals(80_000, 18));
     expect(feeDistributorVaultBalance).to.equal(expandDecimals(60_000, 18));
@@ -858,18 +858,17 @@ describe("FeeDistributor", function () {
     await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
 
     await mockLzReadResponseChainA.setUint(
-      keys.withdrawableBuybackTokenAmountKey(mockOftA.address),
+      keys.withdrawableBuybackTokenAmountKey(gmxA.address),
       expandDecimals(10_000, 18)
     );
     await mockLzReadResponseChainC.setUint(
-      keys.withdrawableBuybackTokenAmountKey(mockOftC.address),
+      keys.withdrawableBuybackTokenAmountKey(gmxC.address),
       expandDecimals(20_000, 18)
     );
     await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(40_000, 18));
     await gmx.mint(feeHandler.address, expandDecimals(40_000, 18));
 
     await gmx.mint(wallet.address, expandDecimals(170_000, 18));
-    await gmx.approve(mockOftAdapterB.address, expandDecimals(50_000, 18));
     let sendParam = {
       dstEid: eidA,
       to: addressToBytes32(user0.address),
@@ -879,9 +878,9 @@ describe("FeeDistributor", function () {
       composeMsg: ethers.utils.arrayify("0x"),
       oftCmd: ethers.utils.arrayify("0x"),
     };
-    let feeQuote = await mockOftAdapterB.quoteSend(sendParam, false);
+    let feeQuote = await mockGmxAdapterB.quoteSend(sendParam, false);
     let nativeFee = feeQuote.nativeFee;
-    await mockOftAdapterB.send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, wallet.address, {
+    await mockGmxAdapterB.send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, wallet.address, {
       value: nativeFee,
     });
 
@@ -896,9 +895,9 @@ describe("FeeDistributor", function () {
       composeMsg: ethers.utils.arrayify("0x"),
       oftCmd: ethers.utils.arrayify("0x"),
     };
-    feeQuote = await mockOftAdapterB.quoteSend(sendParam, false);
+    feeQuote = await mockGmxAdapterB.quoteSend(sendParam, false);
     nativeFee = feeQuote.nativeFee;
-    await mockOftAdapterB.send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, wallet.address, {
+    await mockGmxAdapterB.send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, wallet.address, {
       value: nativeFee,
     });
 
@@ -913,9 +912,9 @@ describe("FeeDistributor", function () {
     let gmxPrice = await gmxPriceFeed.latestAnswer();
     expect(gmxPrice).to.eq(expandDecimals(20, 8));
 
-    const feeReceiverAmountBeforeBridgingA = await mockOftA.balanceOf(user0.address);
+    const feeReceiverAmountBeforeBridgingA = await gmxA.balanceOf(user0.address);
     const feeReceiverAmountBeforeBridgingB = await gmx.balanceOf(feeDistributorVault.address);
-    const feeReceiverAmountBeforeBridgingC = await mockOftC.balanceOf(user1.address);
+    const feeReceiverAmountBeforeBridgingC = await gmxC.balanceOf(user1.address);
 
     const tx = await feeDistributor.initiateDistribute();
     const receipt = await tx.wait();
@@ -926,9 +925,9 @@ describe("FeeDistributor", function () {
 
     const distributeTimestamp = await dataStore.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
 
-    const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[21].parsedEventData;
-    const feeDistributionDataReceived = parseLogs(fixture, receipt)[18].parsedEventData;
-    const feeDistributionGmxBridgedOut = parseLogs(fixture, receipt)[17].parsedEventData;
+    const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[19].parsedEventData;
+    const feeDistributionDataReceived = parseLogs(fixture, receipt)[16].parsedEventData;
+    const feeDistributionGmxBridgedOut = parseLogs(fixture, receipt)[15].parsedEventData;
 
     const feeAmountGmxA = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdA));
     const feeAmountGmxB = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB));
@@ -943,9 +942,9 @@ describe("FeeDistributor", function () {
     wntPrice = await dataStore.getUint(keys.FEE_DISTRIBUTOR_WNT_PRICE);
     gmxPrice = await dataStore.getUint(keys.FEE_DISTRIBUTOR_GMX_PRICE);
 
-    const feeReceiverAmountAfterBridgingA = await mockOftA.balanceOf(user0.address);
+    const feeReceiverAmountAfterBridgingA = await gmxA.balanceOf(user0.address);
     const feeReceiverAmountAfterBridgingB = await gmx.balanceOf(feeDistributorVault.address);
-    const feeReceiverAmountAfterBridgingC = await mockOftC.balanceOf(user1.address);
+    const feeReceiverAmountAfterBridgingC = await gmxC.balanceOf(user1.address);
 
     expect(distributionState).to.eq(3);
 
@@ -1073,11 +1072,11 @@ describe("FeeDistributor", function () {
     await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
 
     await mockLzReadResponseChainA.setUint(
-      keys.withdrawableBuybackTokenAmountKey(mockOftA.address),
+      keys.withdrawableBuybackTokenAmountKey(gmxA.address),
       expandDecimals(10_000, 18)
     );
     await mockLzReadResponseChainC.setUint(
-      keys.withdrawableBuybackTokenAmountKey(mockOftC.address),
+      keys.withdrawableBuybackTokenAmountKey(gmxC.address),
       expandDecimals(20_000, 18)
     );
     await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(40_000, 18));
@@ -1128,12 +1127,6 @@ describe("FeeDistributor", function () {
     const wntPrice = await dataStore.getUint(keys.FEE_DISTRIBUTOR_WNT_PRICE);
     const wntForReferralRewards = wntReferralRewardsInUsd.div(wntPrice);
     const esGmxForReferralRewards = 0;
-    const remainingWnt = totalWntBalance
-      .sub(keeperCostsV1)
-      .sub(keeperCostsV2)
-      .sub(wntForChainlink)
-      .sub(wntForTreasuryPre)
-      .sub(wntForReferralRewards);
 
     const remainingWntBeforeV1KeeperAndReferralCosts = totalWntBalance
       .sub(keeperCostsV2)
@@ -1199,7 +1192,6 @@ describe("FeeDistributor", function () {
   });
 
   it("initiateDistribute() and processLzReceive() with 2 surplus and 2 deficit chains", async () => {
-    const eidD = 4000;
     const chainIdD = 40000;
 
     chainIds = [chainIdA, chainIdB, chainIdC, chainIdD];
@@ -1218,7 +1210,8 @@ describe("FeeDistributor", function () {
     });
     const mockEndpointV2DMultichain = await deployContract("MockEndpointV2", [eidD]);
     const mockEndpointV2D = await deployContract("MockEndpointV2", [eidD]);
-    const mockOftD = await deployContract("MockOFT", ["GMX", "GMX", mockEndpointV2D.address, wallet.address]);
+    const gmxD = await deployContract("MintableToken", ["GMX", "GMX", 18]);
+    const mockGmxAdapterD = await deployContract("MockGMX_Adapter", [[{ dstEid: eidA, limit: expandDecimals(1000000, 18), window: 60 }, { dstEid: eidB, limit: expandDecimals(1000000, 18), window: 60 }, { dstEid: eidC, limit: expandDecimals(1000000, 18), window: 60 },], gmxD.address, gmxD.address, mockEndpointV2D.address, wallet.address]);
     const feeHandlerD = await deployContract(
       "FeeHandler",
       [
@@ -1227,7 +1220,7 @@ describe("FeeDistributor", function () {
         dataStoreD.address,
         eventEmitter.address,
         mockVaultV1.address,
-        mockOftD.address,
+        gmxD.address,
       ],
       {
         libraries: {
@@ -1255,7 +1248,7 @@ describe("FeeDistributor", function () {
         eventEmitter.address,
         multichainReaderD.address,
         signer8.address,
-        mockOftD.address,
+        gmxD.address,
         esGmx.address,
         wnt.address,
         mockVars,
@@ -1285,29 +1278,29 @@ describe("FeeDistributor", function () {
     await mockEndpointV2DMultichain.setDestLzEndpoint(multichainReaderD.address, mockEndpointV2DMultichain.address);
     await mockEndpointV2DMultichain.setReadChannelId(channelId);
 
-    await mockEndpointV2D.setDestLzEndpoint(mockOftA.address, mockEndpointV2A.address);
-    await mockEndpointV2D.setDestLzEndpoint(mockOftAdapterB.address, mockEndpointV2B.address);
-    await mockEndpointV2D.setDestLzEndpoint(mockOftC.address, mockEndpointV2C.address);
+    await mockEndpointV2D.setDestLzEndpoint(mockGmxAdapterA.address, mockEndpointV2A.address);
+    await mockEndpointV2D.setDestLzEndpoint(mockGmxAdapterB.address, mockEndpointV2B.address);
+    await mockEndpointV2D.setDestLzEndpoint(mockGmxAdapterC.address, mockEndpointV2C.address);
 
-    await mockOftD.setPeer(eidA, ethers.utils.zeroPad(mockOftA.address, 32));
-    await mockOftD.setPeer(eidB, ethers.utils.zeroPad(mockOftAdapterB.address, 32));
-    await mockOftD.setPeer(eidC, ethers.utils.zeroPad(mockOftC.address, 32));
-    await mockOftD.setEnforcedOptions([{ eid: eidA, msgType: 1, options: options }]);
-    await mockOftD.setEnforcedOptions([{ eid: eidB, msgType: 1, options: options }]);
-    await mockOftD.setEnforcedOptions([{ eid: eidC, msgType: 1, options: options }]);
+    await mockGmxAdapterD.setPeer(eidA, ethers.utils.zeroPad(mockGmxAdapterA.address, 32));
+    await mockGmxAdapterD.setPeer(eidB, ethers.utils.zeroPad(mockGmxAdapterB.address, 32));
+    await mockGmxAdapterD.setPeer(eidC, ethers.utils.zeroPad(mockGmxAdapterC.address, 32));
+    await mockGmxAdapterD.setEnforcedOptions([{ eid: eidA, msgType: 1, options: options }]);
+    await mockGmxAdapterD.setEnforcedOptions([{ eid: eidB, msgType: 1, options: options }]);
+    await mockGmxAdapterD.setEnforcedOptions([{ eid: eidC, msgType: 1, options: options }]);
 
-    await mockEndpointV2A.setDestLzEndpoint(mockOftD.address, mockEndpointV2D.address);
-    await mockEndpointV2B.setDestLzEndpoint(mockOftD.address, mockEndpointV2D.address);
-    await mockEndpointV2C.setDestLzEndpoint(mockOftD.address, mockEndpointV2D.address);
+    await mockEndpointV2A.setDestLzEndpoint(mockGmxAdapterD.address, mockEndpointV2D.address);
+    await mockEndpointV2B.setDestLzEndpoint(mockGmxAdapterD.address, mockEndpointV2D.address);
+    await mockEndpointV2C.setDestLzEndpoint(mockGmxAdapterD.address, mockEndpointV2D.address);
 
-    await mockOftA.setPeer(eidD, ethers.utils.zeroPad(mockOftD.address, 32));
-    await mockOftA.setEnforcedOptions([{ eid: eidD, msgType: 1, options: options }]);
+    await mockGmxAdapterA.setPeer(eidD, ethers.utils.zeroPad(mockGmxAdapterD.address, 32));
+    await mockGmxAdapterA.setEnforcedOptions([{ eid: eidD, msgType: 1, options: options }]);
 
-    await mockOftAdapterB.setPeer(eidD, ethers.utils.zeroPad(mockOftD.address, 32));
-    await mockOftAdapterB.setEnforcedOptions([{ eid: eidD, msgType: 1, options: options }]);
+    await mockGmxAdapterB.setPeer(eidD, ethers.utils.zeroPad(mockGmxAdapterD.address, 32));
+    await mockGmxAdapterB.setEnforcedOptions([{ eid: eidD, msgType: 1, options: options }]);
 
-    await mockOftC.setPeer(eidD, ethers.utils.zeroPad(mockOftD.address, 32));
-    await mockOftC.setEnforcedOptions([{ eid: eidD, msgType: 1, options: options }]);
+    await mockGmxAdapterC.setPeer(eidD, ethers.utils.zeroPad(mockGmxAdapterD.address, 32));
+    await mockGmxAdapterC.setEnforcedOptions([{ eid: eidD, msgType: 1, options: options }]);
 
     await config.setUint(keys.MULTICHAIN_CONFIRMATIONS, encodeData(["uint256"], [eidD]), numberOfConfirmations);
     await dataStore.setUintArray(keys.FEE_DISTRIBUTOR_CHAIN_ID, chainIds);
@@ -1315,7 +1308,7 @@ describe("FeeDistributor", function () {
     await config.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdD, feeDistributorConfig.gmxKey]),
-      mockOftD.address
+      gmxD.address
     );
     await config.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
@@ -1378,7 +1371,7 @@ describe("FeeDistributor", function () {
     await configD.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdA, feeDistributorConfig.gmxKey]),
-      mockOftA.address
+      gmxA.address
     );
     await configD.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
@@ -1388,12 +1381,12 @@ describe("FeeDistributor", function () {
     await configD.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdC, feeDistributorConfig.gmxKey]),
-      mockOftC.address
+      gmxC.address
     );
     await configD.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
       encodeData(["uint256", "bytes32"], [chainIdD, feeDistributorConfig.gmxKey]),
-      mockOftD.address
+      gmxD.address
     );
     await configD.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
@@ -1449,7 +1442,7 @@ describe("FeeDistributor", function () {
     await configD.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
       encodeData(["bytes32"], [feeDistributorConfig.layerzeroOftKey]),
-      mockOftD.address
+      mockGmxAdapterD.address
     );
     await configD.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
@@ -1502,14 +1495,14 @@ describe("FeeDistributor", function () {
     await configD.setUint(keys.FEE_DISTRIBUTOR_CHAINLINK_FACTOR, "0x", expandDecimals(12, 28));
     await configD.setUint(
       keys.BUYBACK_BATCH_AMOUNT,
-      encodeData(["address"], [mockOftD.address]),
+      encodeData(["address"], [gmxD.address]),
       expandDecimals(5, 17)
     );
 
     await configD.setUint(keys.BUYBACK_BATCH_AMOUNT, encodeData(["address"], [wnt.address]), expandDecimals(5, 17));
     await dataStoreD.setAddress(keys.oracleProviderForTokenKey(oracle.address, wnt.address), chainlinkPriceFeedProvider.address);
     await dataStoreD.setAddress(keys.oracleProviderForTokenKey(oracle.address, gmx.address), chainlinkPriceFeedProvider.address);
-    await dataStoreD.setUint(keys.tokenTransferGasLimit(mockOftD.address), 200_000);
+    await dataStoreD.setUint(keys.tokenTransferGasLimit(gmxD.address), 200_000);
     await signer2.sendTransaction({
       to: wallet.address,
       value: expandDecimals(10_000, 18).sub(expandDecimals(1, 15)),
@@ -1539,19 +1532,18 @@ describe("FeeDistributor", function () {
     await mockExtendedGmxTrackerD.setTotalSupply(expandDecimals(6_000_000, 18));
 
     await mockLzReadResponseChainA.setUint(
-      keys.withdrawableBuybackTokenAmountKey(mockOftA.address),
+      keys.withdrawableBuybackTokenAmountKey(gmxA.address),
       expandDecimals(10_000, 18)
     );
     await mockLzReadResponseChainC.setUint(
-      keys.withdrawableBuybackTokenAmountKey(mockOftC.address),
+      keys.withdrawableBuybackTokenAmountKey(gmxC.address),
       expandDecimals(20_000, 18)
     );
     await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(40_000, 18));
     await gmx.mint(feeHandler.address, expandDecimals(40_000, 18));
-    await dataStoreD.setUint(keys.withdrawableBuybackTokenAmountKey(mockOftD.address), expandDecimals(50_000, 18));
+    await dataStoreD.setUint(keys.withdrawableBuybackTokenAmountKey(gmxD.address), expandDecimals(50_000, 18));
 
     await gmx.mint(wallet.address, expandDecimals(290_000, 18));
-    await gmx.approve(mockOftAdapterB.address, expandDecimals(170_000, 18));
     let sendParam = {
       dstEid: eidA,
       to: addressToBytes32(user0.address),
@@ -1561,9 +1553,9 @@ describe("FeeDistributor", function () {
       composeMsg: ethers.utils.arrayify("0x"),
       oftCmd: ethers.utils.arrayify("0x"),
     };
-    let feeQuote = await mockOftAdapterB.quoteSend(sendParam, false);
+    let feeQuote = await mockGmxAdapterB.quoteSend(sendParam, false);
     let nativeFee = feeQuote.nativeFee;
-    await mockOftAdapterB.send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, wallet.address, {
+    await mockGmxAdapterB.send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, wallet.address, {
       value: nativeFee,
     });
 
@@ -1578,9 +1570,9 @@ describe("FeeDistributor", function () {
       composeMsg: ethers.utils.arrayify("0x"),
       oftCmd: ethers.utils.arrayify("0x"),
     };
-    feeQuote = await mockOftAdapterB.quoteSend(sendParam, false);
+    feeQuote = await mockGmxAdapterB.quoteSend(sendParam, false);
     nativeFee = feeQuote.nativeFee;
-    await mockOftAdapterB.send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, wallet.address, {
+    await mockGmxAdapterB.send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, wallet.address, {
       value: nativeFee,
     });
 
@@ -1593,9 +1585,9 @@ describe("FeeDistributor", function () {
       composeMsg: ethers.utils.arrayify("0x"),
       oftCmd: ethers.utils.arrayify("0x"),
     };
-    feeQuote = await mockOftAdapterB.quoteSend(sendParam, false);
+    feeQuote = await mockGmxAdapterB.quoteSend(sendParam, false);
     nativeFee = feeQuote.nativeFee;
-    await mockOftAdapterB.send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, wallet.address, {
+    await mockGmxAdapterB.send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, wallet.address, {
       value: nativeFee,
     });
 
@@ -1608,9 +1600,9 @@ describe("FeeDistributor", function () {
       composeMsg: ethers.utils.arrayify("0x"),
       oftCmd: ethers.utils.arrayify("0x"),
     };
-    feeQuote = await mockOftAdapterB.quoteSend(sendParam, false);
+    feeQuote = await mockGmxAdapterB.quoteSend(sendParam, false);
     nativeFee = feeQuote.nativeFee;
-    await mockOftAdapterB.send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, wallet.address, {
+    await mockGmxAdapterB.send(sendParam, { nativeFee: nativeFee, lzTokenFee: 0 }, wallet.address, {
       value: nativeFee,
     });
 
@@ -1630,10 +1622,10 @@ describe("FeeDistributor", function () {
     let gmxPrice = await gmxPriceFeed.latestAnswer();
     expect(gmxPrice).to.eq(expandDecimals(20, 8));
 
-    const feeReceiverAmountBeforeBridgingA = await mockOftA.balanceOf(user0.address);
+    const feeReceiverAmountBeforeBridgingA = await gmxA.balanceOf(user0.address);
     const feeReceiverAmountBeforeBridgingB = await gmx.balanceOf(feeDistributorVault.address);
-    const feeReceiverAmountBeforeBridgingC = await mockOftC.balanceOf(user1.address);
-    const feeReceiverAmountBeforeBridgingD = await mockOftD.balanceOf(feeDistributorVaultD.address);
+    const feeReceiverAmountBeforeBridgingC = await gmxC.balanceOf(user1.address);
+    const feeReceiverAmountBeforeBridgingD = await gmxD.balanceOf(feeDistributorVaultD.address);
 
     const tx = await feeDistributor.initiateDistribute();
     const receipt = await tx.wait();
@@ -1651,13 +1643,13 @@ describe("FeeDistributor", function () {
     const distributeTimestamp = await dataStore.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
     const distributeTimestampD = await dataStoreD.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
 
-    const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[21].parsedEventData;
-    const feeDistributionDataReceived = parseLogs(fixture, receipt)[18].parsedEventData;
-    const feeDistributionGmxBridgedOut = parseLogs(fixture, receipt)[17].parsedEventData;
+    const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[19].parsedEventData;
+    const feeDistributionDataReceived = parseLogs(fixture, receipt)[16].parsedEventData;
+    const feeDistributionGmxBridgedOut = parseLogs(fixture, receipt)[15].parsedEventData;
 
-    const feeDistributionInitiatedEventDataD = parseLogs(fixture, receiptD)[12].parsedEventData;
-    const feeDistributionDataReceivedD = parseLogs(fixture, receiptD)[9].parsedEventData;
-    const feeDistributionGmxBridgedOutD = parseLogs(fixture, receiptD)[8].parsedEventData;
+    const feeDistributionInitiatedEventDataD = parseLogs(fixture, receiptD)[13].parsedEventData;
+    const feeDistributionDataReceivedD = parseLogs(fixture, receiptD)[10].parsedEventData;
+    const feeDistributionGmxBridgedOutD = parseLogs(fixture, receiptD)[9].parsedEventData;
 
     const feeAmountGmxA = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdA));
     const feeAmountGmxB = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB));
@@ -1674,10 +1666,10 @@ describe("FeeDistributor", function () {
     wntPrice = await dataStore.getUint(keys.FEE_DISTRIBUTOR_WNT_PRICE);
     gmxPrice = await dataStore.getUint(keys.FEE_DISTRIBUTOR_GMX_PRICE);
 
-    const feeReceiverAmountAfterBridgingA = await mockOftA.balanceOf(user0.address);
+    const feeReceiverAmountAfterBridgingA = await gmxA.balanceOf(user0.address);
     const feeReceiverAmountAfterBridgingB = await gmx.balanceOf(feeDistributorVault.address);
-    const feeReceiverAmountAfterBridgingC = await mockOftC.balanceOf(user1.address);
-    const feeReceiverAmountAfterBridgingD = await mockOftD.balanceOf(feeDistributorVaultD.address);
+    const feeReceiverAmountAfterBridgingC = await gmxC.balanceOf(user1.address);
+    const feeReceiverAmountAfterBridgingD = await gmxD.balanceOf(feeDistributorVaultD.address);
 
     expect(distributionState).to.eq(3);
     expect(distributionStateD).to.eq(3);
