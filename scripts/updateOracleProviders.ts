@@ -34,8 +34,8 @@ async function main() {
   // };
 
   const providersToAdd = [
-    // chainlinkPriceFeedProvider.address,
-    // chainlinkDataStreamProvider.address,
+    chainlinkPriceFeedProvider.address,
+    chainlinkDataStreamProvider.address,
     edgeDataStreamProvider.address,
   ];
 

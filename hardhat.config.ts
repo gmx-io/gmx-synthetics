@@ -81,6 +81,27 @@ export const getExplorerUrl = (network) => {
   return url;
 };
 
+// for etherscan, a single string is expected to be returned
+// for other networks / explorers, an object is needed
+const getEtherscanApiKey = () => {
+  if (process.env.HARDHAT_NETWORK === "arbitrum") {
+    return process.env.ARBISCAN_API_KEY;
+  }
+
+  return {
+    // hardhat-verify plugin uses "avalancheFujiTestnet" name
+    arbitrumOne: process.env.ARBISCAN_API_KEY,
+    avalanche: process.env.SNOWTRACE_API_KEY,
+    arbitrumGoerli: process.env.ARBISCAN_API_KEY,
+    sepolia: process.env.ETHERSCAN_API_KEY,
+    arbitrumSepolia: process.env.ARBISCAN_API_KEY,
+    avalancheFujiTestnet: process.env.SNOWTRACE_API_KEY,
+    snowtrace: "snowtrace", // apiKey is not required, just set a placeholder
+    arbitrumBlockscout: "arbitrumBlockscout",
+    botanix: process.env.BOTANIX_SCAN_API_KEY,
+  };
+};
+
 const getEnvAccounts = (chainName?: string) => {
   const { ACCOUNT_KEY, ACCOUNT_KEY_FILE, ARBITRUM_SEPOLIA_ACCOUNT_KEY, ARBITRUM_ACCOUNT_KEY } = process.env;
 
@@ -264,18 +285,7 @@ const config: HardhatUserConfig = {
   // hardhat-deploy has issues with some contracts
   // https://github.com/wighawag/hardhat-deploy/issues/264
   etherscan: {
-    apiKey: {
-      // hardhat-verify plugin uses "avalancheFujiTestnet" name
-      arbitrumOne: process.env.ARBISCAN_API_KEY,
-      avalanche: process.env.SNOWTRACE_API_KEY,
-      arbitrumGoerli: process.env.ARBISCAN_API_KEY,
-      sepolia: process.env.ETHERSCAN_API_KEY,
-      arbitrumSepolia: process.env.ARBISCAN_API_KEY,
-      avalancheFujiTestnet: process.env.SNOWTRACE_API_KEY,
-      snowtrace: "snowtrace", // apiKey is not required, just set a placeholder
-      arbitrumBlockscout: "arbitrumBlockscout",
-      botanix: process.env.BOTANIX_SCAN_API_KEY,
-    },
+    apiKey: getEtherscanApiKey(),
     customChains: [
       {
         network: "snowtrace",
