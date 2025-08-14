@@ -2,8 +2,7 @@ import hre from "hardhat";
 import { hashString } from "../utils/hash";
 import { cancelActionById, getGrantRolePayload, getRevokeRolePayload, timelockWriteMulticall } from "../utils/timelock";
 import { TimelockConfig } from "../typechain-types";
-import { validateSourceCode } from "./validateDeploymentUtils";
-import Timelock from "../abis/Timelock.json";
+import { ContractInfo, validateSourceCode } from "./validateDeploymentUtils";
 
 import * as _rolesToAdd from "./roles/rolesToAdd";
 import * as _rolesToRemove from "./roles/rolesToRemove";
@@ -20,15 +19,15 @@ async function getTimelock(): Promise<TimelockConfig> {
   const network = hre.network.name;
 
   if (network === "arbitrum") {
-    return await new ethers.Contract("0x7A967D114B8676874FA2cFC1C14F3095C88418Eb", Timelock.abi);
+    return await ethers.getContractAt("TimelockConfig", "0x625D4b5456f065756De8d618dE094bE7618e8A0d");
   }
 
   if (network === "avalanche") {
-    return await new ethers.Contract("0xdF23692341538340db0ff04C65017F51b69a29f6", Timelock.abi);
+    return await ethers.getContractAt("TimelockConfig", "0x40794bcBCFb347689fa8c4da69f6405Cf0ECf2C5");
   }
 
   if (network === "botanix") {
-    return await new ethers.Contract("0xca3e30b51A7c3bd40bFc52a61AB0cE57B3Ab3ad8", Timelock.abi);
+    return await ethers.getContractAt("TimelockConfig", "0x8fB97fEfF5f7CfbE9c63D51F6CbBC914E425d965");
   }
 
   throw new Error("Unsupported network");
@@ -102,16 +101,28 @@ async function main() {
 
   const provider = hre.ethers.provider;
 
-  // Check that deployed contracts are matching with local sources
-  for (const { member, role, contractName } of rolesToAdd) {
-    const contractInfo = {
-      address: member,
-      name: contractName,
-      isCodeValidated: false,
-      signalledRoles: [hashString(role)],
-      unapprovedRoles: [],
-    };
+  const predecessor = ethers.constants.HashZero;
+  const salt = ethers.constants.HashZero;
 
+  // Check that deployed contracts are matching with local sources
+  const contractInfos: Map<string, ContractInfo> = new Map();
+  for (const { member, role, contractName } of rolesToAdd) {
+    if (contractInfos.has(contractName)) {
+      contractInfos[contractName].signalledRoles.push(hashString(role));
+    } else {
+      contractInfos[contractName] = {
+        address: member,
+        name: contractName,
+        isCodeValidated: false,
+        signalledRoles: [hashString(role)],
+        unapprovedRoles: [],
+        approvedRoles: [],
+      };
+    }
+  }
+
+  // Check that deployed contracts are matching with local sources
+  for (const contractInfo of Object.values(contractInfos)) {
     await validateSourceCode(provider, contractInfo);
     if (!contractInfo.isCodeValidated) {
       console.log(`❌${contractInfo.name} is not valid. Sources do not match. See diff in validation folder`);
@@ -125,15 +136,19 @@ async function main() {
     const roles = timelockMethod === "signalGrantRole" ? rolesToAdd : rolesToRemove;
     for (const { member, role, contractName } of roles) {
       console.log("%s %s %s %s", timelockMethod, member, role, contractName);
-      multicallWriteParams.push(timelock.interface.encodeFunctionData("signalRevokeRole", [member, hashString(role)]));
-      multicallWriteParams.push(timelock.interface.encodeFunctionData("signalGrantRole", [member, hashString(role)]));
+      multicallWriteParams.push(
+        timelock.interface.encodeFunctionData("signalRevokeRole", [member, hashString(role), predecessor, salt])
+      );
+      multicallWriteParams.push(
+        timelock.interface.encodeFunctionData("signalGrantRole", [member, hashString(role), predecessor, salt])
+      );
     }
   }
 
   if (timelockMethod === "grantRoleAfterSignal") {
     for (const { member, role } of rolesToAdd) {
       const { target, payload } = await getGrantRolePayload(member, hashString(role));
-      multicallWriteParams.push(timelock.interface.encodeFunctionData("execute", [target, payload]));
+      multicallWriteParams.push(timelock.interface.encodeFunctionData("execute", [target, payload, predecessor, salt]));
     }
   }
 
@@ -141,7 +156,7 @@ async function main() {
     for (const { member, role, contractName } of rolesToRemove) {
       console.log("%s %s %s %s", timelockMethod, member, role, contractName);
       const { target, payload } = await getRevokeRolePayload(member, hashString(role));
-      multicallWriteParams.push(timelock.interface.encodeFunctionData("execute", [target, payload]));
+      multicallWriteParams.push(timelock.interface.encodeFunctionData("execute", [target, payload, predecessor, salt]));
     }
   }
 
