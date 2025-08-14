@@ -26,6 +26,7 @@ import "./utils/test";
 import { updateGlvConfig } from "./scripts/updateGlvConfigUtils";
 import { updateMarketConfig } from "./scripts/updateMarketConfigUtils";
 import { collectDeployments } from "./scripts/collectDeployments";
+import { generateDeploymentDocs } from "./scripts/generateDeploymentDocs";
 import { TASK_FLATTEN_GET_DEPENDENCY_GRAPH } from "hardhat/builtin-tasks/task-names";
 import { DependencyGraph } from "hardhat/types";
 import { checkContractsSizing } from "./scripts/contractSizes";
@@ -76,6 +77,23 @@ export const getExplorerUrl = (network) => {
   const url = urls[network];
   if (!url) {
     throw new Error(`Empty explorer url for ${network}`);
+  }
+
+  return url;
+};
+
+export const getBlockExplorerUrl = (network) => {
+  const urls = {
+    arbitrum: "https://arbiscan.io",
+    avalanche: "https://snowscan.xyz",
+    botanix: "https://botanixscan.io",
+    arbitrumSepolia: "https://sepolia.arbiscan.io",
+    avalancheFuji: "https://testnet.snowscan.xyz",
+  };
+
+  const url = urls[network];
+  if (!url) {
+    throw new Error(`No block explorer URL configured for network: ${network}`);
   }
 
   return url;
@@ -378,6 +396,13 @@ task("deploy", "Deploy contracts", async (taskArgs: any, env, runSuper) => {
 });
 
 task("collect-deployments", "Collect current deployments into the docs folder").setAction(collectDeployments);
+
+task("generate-deployment-docs", "Generate deployment documentation for all networks")
+  .addOptionalParam("networks", "Comma-separated list of networks to update", undefined, types.string)
+  .setAction(async (taskArgs) => {
+    const networks = taskArgs.networks ? taskArgs.networks.split(",") : undefined;
+    await generateDeploymentDocs(networks);
+  });
 
 task("measure-contract-sizes", "Check if contract characters count hit 900k limit").setAction(async (taskArgs, env) => {
   await checkContractsSizing(env);
