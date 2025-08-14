@@ -29,7 +29,7 @@ export async function createSigningServer() {
     setTimeout(() => {
       console.info("go to http://localhost:5173/signer");
       console.info('connect a wallet and click on the "Sign" button');
-      spawn("open", ["http://localhost:5173/signer"]);
+      // spawn("open", ["http://localhost:5173/signer"]);
     }, 1000);
 
     subProcess = spawn("yarn", ["app", "--logLevel", "warn"], {

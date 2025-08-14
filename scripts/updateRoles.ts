@@ -148,7 +148,7 @@ async function main() {
   if (timelockMethod === "grantRoleAfterSignal") {
     for (const { member, role } of rolesToAdd) {
       const { target, payload } = await getGrantRolePayload(member, hashString(role));
-      multicallWriteParams.push(timelock.interface.encodeFunctionData("execute", [target, payload]));
+      multicallWriteParams.push(timelock.interface.encodeFunctionData("execute", [target, payload, predecessor, salt]));
     }
   }
 
@@ -156,7 +156,7 @@ async function main() {
     for (const { member, role, contractName } of rolesToRemove) {
       console.log("%s %s %s %s", timelockMethod, member, role, contractName);
       const { target, payload } = await getRevokeRolePayload(member, hashString(role));
-      multicallWriteParams.push(timelock.interface.encodeFunctionData("execute", [target, payload]));
+      multicallWriteParams.push(timelock.interface.encodeFunctionData("execute", [target, payload, predecessor, salt]));
     }
   }
 
