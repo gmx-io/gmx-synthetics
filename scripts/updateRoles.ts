@@ -2,7 +2,7 @@ import hre from "hardhat";
 import { hashString } from "../utils/hash";
 import { cancelActionById, getGrantRolePayload, getRevokeRolePayload, timelockWriteMulticall } from "../utils/timelock";
 import { TimelockConfig } from "../typechain-types";
-import { validateSourceCode } from "./validateDeploymentUtils";
+import { ContractInfo, validateSourceCode } from "./validateDeploymentUtils";
 import Timelock from "../abis/Timelock.json";
 
 import * as _rolesToAdd from "./roles/rolesToAdd";
@@ -102,16 +102,24 @@ async function main() {
 
   const provider = hre.ethers.provider;
 
-  // Check that deployed contracts are matching with local sources
+  const contractInfos: Map<string, ContractInfo> = new Map();
   for (const { member, role, contractName } of rolesToAdd) {
-    const contractInfo = {
-      address: member,
-      name: contractName,
-      isCodeValidated: false,
-      signalledRoles: [hashString(role)],
-      unapprovedRoles: [],
-    };
+    if (contractInfos.has(contractName)) {
+      contractInfos[contractName].signalledRoles.push(hashString(role));
+    } else {
+      contractInfos[contractName] = {
+        address: member,
+        name: contractName,
+        isCodeValidated: false,
+        signalledRoles: [hashString(role)],
+        unapprovedRoles: [],
+        approvedRoles: [],
+      };
+    }
+  }
 
+  // Check that deployed contracts are matching with local sources
+  for (const contractInfo of Object.values(contractInfos)) {
     await validateSourceCode(provider, contractInfo);
     if (!contractInfo.isCodeValidated) {
       console.log(`❌${contractInfo.name} is not valid. Sources do not match. See diff in validation folder`);
