@@ -3,7 +3,7 @@ import { addressToBytes32 } from "@layerzerolabs/lz-v2-utilities";
 
 import { expect } from "chai";
 import { grantRole } from "../../utils/role";
-import { expandDecimals } from "../../utils/math";
+import { expandDecimals, bigNumberify } from "../../utils/math";
 import { deployFixture } from "../../utils/fixture";
 import { encodeData } from "../../utils/hash";
 import { deployContract } from "../../utils/deploy";
@@ -48,6 +48,7 @@ describe("FeeDistributor", function () {
     marketUtils,
     feeDistributorUtils,
     mockVaultV1,
+    claimVault,
     claimUtils,
     wallet,
     user0,
@@ -119,6 +120,7 @@ describe("FeeDistributor", function () {
       marketUtils,
       feeDistributorUtils,
       mockVaultV1,
+      claimVault,
       claimUtils,
     } = fixture.contracts);
 
@@ -158,9 +160,39 @@ describe("FeeDistributor", function () {
     mockEndpointV2C = await deployContract("MockEndpointV2", [eidC]);
     gmxA = await deployContract("MintableToken", ["GMX", "GMX", 18]);
     gmxC = await deployContract("MintableToken", ["GMX", "GMX", 18]);
-    mockGmxAdapterA = await deployContract("MockGMX_Adapter", [[{ dstEid: eidB, limit: expandDecimals(1000000, 18), window: 60 }, { dstEid: eidC, limit: expandDecimals(1000000, 18), window: 60 }, { dstEid: eidD, limit: expandDecimals(1000000, 18), window: 60 },], gmxA.address, gmxA.address, mockEndpointV2A.address, wallet.address]);
-    mockGmxAdapterB = await deployContract("MockGMX_Adapter", [[{ dstEid: eidA, limit: expandDecimals(1000000, 18), window: 60 }, { dstEid: eidC, limit: expandDecimals(1000000, 18), window: 60 }, { dstEid: eidD, limit: expandDecimals(1000000, 18), window: 60 },], gmx.address, gmx.address, mockEndpointV2B.address, wallet.address]);
-    mockGmxAdapterC = await deployContract("MockGMX_Adapter", [[{ dstEid: eidA, limit: expandDecimals(1000000, 18), window: 60 }, { dstEid: eidB, limit: expandDecimals(1000000, 18), window: 60 }, { dstEid: eidD, limit: expandDecimals(1000000, 18), window: 60 },], gmxC.address, gmxC.address, mockEndpointV2C.address, wallet.address]);
+    mockGmxAdapterA = await deployContract("MockGMX_Adapter", [
+      [
+        { dstEid: eidB, limit: expandDecimals(1000000, 18), window: 60 },
+        { dstEid: eidC, limit: expandDecimals(1000000, 18), window: 60 },
+        { dstEid: eidD, limit: expandDecimals(1000000, 18), window: 60 },
+      ],
+      gmxA.address,
+      gmxA.address,
+      mockEndpointV2A.address,
+      wallet.address,
+    ]);
+    mockGmxAdapterB = await deployContract("MockGMX_Adapter", [
+      [
+        { dstEid: eidA, limit: expandDecimals(1000000, 18), window: 60 },
+        { dstEid: eidC, limit: expandDecimals(1000000, 18), window: 60 },
+        { dstEid: eidD, limit: expandDecimals(1000000, 18), window: 60 },
+      ],
+      gmx.address,
+      gmx.address,
+      mockEndpointV2B.address,
+      wallet.address,
+    ]);
+    mockGmxAdapterC = await deployContract("MockGMX_Adapter", [
+      [
+        { dstEid: eidA, limit: expandDecimals(1000000, 18), window: 60 },
+        { dstEid: eidB, limit: expandDecimals(1000000, 18), window: 60 },
+        { dstEid: eidD, limit: expandDecimals(1000000, 18), window: 60 },
+      ],
+      gmxC.address,
+      gmxC.address,
+      mockEndpointV2C.address,
+      wallet.address,
+    ]);
 
     await grantRole(roleStore, wallet.address, "FEE_DISTRIBUTION_KEEPER");
 
@@ -283,7 +315,7 @@ describe("FeeDistributor", function () {
     );
     await config.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO,
-      encodeData([ "bytes32"], [feeDistributorConfig.chainlinkKey]),
+      encodeData(["bytes32"], [feeDistributorConfig.chainlinkKey]),
       user5.address
     );
     await config.setAddress(
@@ -323,8 +355,14 @@ describe("FeeDistributor", function () {
     await config.setUint(keys.FEE_DISTRIBUTOR_CHAINLINK_FACTOR, "0x", expandDecimals(12, 28));
     await config.setUint(keys.BUYBACK_BATCH_AMOUNT, encodeData(["address"], [gmx.address]), expandDecimals(5, 17));
     await config.setUint(keys.BUYBACK_BATCH_AMOUNT, encodeData(["address"], [wnt.address]), expandDecimals(5, 17));
-    await dataStore.setAddress(keys.oracleProviderForTokenKey(oracle.address, wnt.address), chainlinkPriceFeedProvider.address);
-    await dataStore.setAddress(keys.oracleProviderForTokenKey(oracle.address, gmx.address), chainlinkPriceFeedProvider.address);
+    await dataStore.setAddress(
+      keys.oracleProviderForTokenKey(oracle.address, wnt.address),
+      chainlinkPriceFeedProvider.address
+    );
+    await dataStore.setAddress(
+      keys.oracleProviderForTokenKey(oracle.address, gmx.address),
+      chainlinkPriceFeedProvider.address
+    );
 
     await user2.sendTransaction({
       to: wallet.address,
@@ -845,6 +883,20 @@ describe("FeeDistributor", function () {
       },
     ];
     await feeDistributor.depositReferralRewards(esGmx.address, distributionId, esGmxReferralRewardsParams);
+
+    const wntReferralRewardsDeposited = wntReferralRewardsParams.reduce(
+      (acc, curr) => acc.add(curr.amount),
+      bigNumberify(0)
+    );
+    const esGmxReferralRewardsDeposited = esGmxReferralRewardsParams.reduce(
+      (acc, curr) => acc.add(curr.amount),
+      bigNumberify(0)
+    );
+    const claimVaultWntBalance = await wnt.balanceOf(claimVault.address);
+    const claimVaultEsGmxBalance = await esGmx.balanceOf(claimVault.address);
+
+    expect(wntReferralRewardsDeposited).to.eq(claimVaultWntBalance);
+    expect(esGmxReferralRewardsDeposited).to.eq(claimVaultEsGmxBalance);
   });
 
   it("distribute() and depositReferralRewards() for fee surplus", async function () {
@@ -1062,6 +1114,20 @@ describe("FeeDistributor", function () {
       },
     ];
     await feeDistributor.depositReferralRewards(esGmx.address, distributionId, esGmxReferralRewardsParams);
+
+    const wntReferralRewardsDeposited = wntReferralRewardsParams.reduce(
+      (acc, curr) => acc.add(curr.amount),
+      bigNumberify(0)
+    );
+    const esGmxReferralRewardsDeposited = esGmxReferralRewardsParams.reduce(
+      (acc, curr) => acc.add(curr.amount),
+      bigNumberify(0)
+    );
+    const claimVaultWntBalance = await wnt.balanceOf(claimVault.address);
+    const claimVaultEsGmxBalance = await esGmx.balanceOf(claimVault.address);
+
+    expect(wntReferralRewardsDeposited).to.eq(claimVaultWntBalance);
+    expect(esGmxReferralRewardsDeposited).to.eq(claimVaultEsGmxBalance);
   });
 
   it("WNT for V1 keeper costs and referral rewards shortfall covered by WNT from treasury", async () => {
@@ -1211,17 +1277,20 @@ describe("FeeDistributor", function () {
     const mockEndpointV2DMultichain = await deployContract("MockEndpointV2", [eidD]);
     const mockEndpointV2D = await deployContract("MockEndpointV2", [eidD]);
     const gmxD = await deployContract("MintableToken", ["GMX", "GMX", 18]);
-    const mockGmxAdapterD = await deployContract("MockGMX_Adapter", [[{ dstEid: eidA, limit: expandDecimals(1000000, 18), window: 60 }, { dstEid: eidB, limit: expandDecimals(1000000, 18), window: 60 }, { dstEid: eidC, limit: expandDecimals(1000000, 18), window: 60 },], gmxD.address, gmxD.address, mockEndpointV2D.address, wallet.address]);
+    const mockGmxAdapterD = await deployContract("MockGMX_Adapter", [
+      [
+        { dstEid: eidA, limit: expandDecimals(1000000, 18), window: 60 },
+        { dstEid: eidB, limit: expandDecimals(1000000, 18), window: 60 },
+        { dstEid: eidC, limit: expandDecimals(1000000, 18), window: 60 },
+      ],
+      gmxD.address,
+      gmxD.address,
+      mockEndpointV2D.address,
+      wallet.address,
+    ]);
     const feeHandlerD = await deployContract(
       "FeeHandler",
-      [
-        roleStore.address,
-        oracle.address,
-        dataStoreD.address,
-        eventEmitter.address,
-        mockVaultV1.address,
-        gmxD.address,
-      ],
+      [roleStore.address, oracle.address, dataStoreD.address, eventEmitter.address, mockVaultV1.address, gmxD.address],
       {
         libraries: {
           "contracts/market/MarketUtils.sol:MarketUtils": marketUtils.address,
@@ -1493,15 +1562,17 @@ describe("FeeDistributor", function () {
     await dataStoreD.setBoolArray(keys.FEE_DISTRIBUTOR_KEEPER_COSTS, [true, false, true]);
     await configD.setUint(keys.FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY, "0x", expandDecimals(1, 16));
     await configD.setUint(keys.FEE_DISTRIBUTOR_CHAINLINK_FACTOR, "0x", expandDecimals(12, 28));
-    await configD.setUint(
-      keys.BUYBACK_BATCH_AMOUNT,
-      encodeData(["address"], [gmxD.address]),
-      expandDecimals(5, 17)
-    );
+    await configD.setUint(keys.BUYBACK_BATCH_AMOUNT, encodeData(["address"], [gmxD.address]), expandDecimals(5, 17));
 
     await configD.setUint(keys.BUYBACK_BATCH_AMOUNT, encodeData(["address"], [wnt.address]), expandDecimals(5, 17));
-    await dataStoreD.setAddress(keys.oracleProviderForTokenKey(oracle.address, wnt.address), chainlinkPriceFeedProvider.address);
-    await dataStoreD.setAddress(keys.oracleProviderForTokenKey(oracle.address, gmx.address), chainlinkPriceFeedProvider.address);
+    await dataStoreD.setAddress(
+      keys.oracleProviderForTokenKey(oracle.address, wnt.address),
+      chainlinkPriceFeedProvider.address
+    );
+    await dataStoreD.setAddress(
+      keys.oracleProviderForTokenKey(oracle.address, gmx.address),
+      chainlinkPriceFeedProvider.address
+    );
     await dataStoreD.setUint(keys.tokenTransferGasLimit(gmxD.address), 200_000);
     await signer2.sendTransaction({
       to: wallet.address,
