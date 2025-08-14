@@ -20,7 +20,7 @@ library TestConstants {
 
     /// @dev Standard token amounts for testing
     uint256 constant ETH_AMOUNT_FOR_GAS = 1 ether;
-    uint256 constant WETH_AMOUNT = 1 ether;
-    uint256 constant USDC_AMOUNT = 5000 * 10 ** 6; // 5000 USDC
-    uint256 constant EXECUTION_FEE = 0.001 ether;
+    uint256 constant WETH_AMOUNT = 10 ether;
+    uint256 constant USDC_AMOUNT = 50000 * 10 ** 6; // 50,000 USDC
+    uint256 constant EXECUTION_FEE = 0.0032 ether; // Updated to meet minimum requirement
 }
