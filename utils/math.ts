@@ -1,4 +1,4 @@
-import { BigNumber, BigNumberish, ethers } from "ethers";
+import { BigNumberish, ethers } from "ethers";
 import Decimal from "decimal.js";
 
 export const MAX_UINT8 = "255"; // 2^8 - 1
@@ -10,7 +10,7 @@ export const FLOAT_PRECISION = expandDecimals(1, 30);
 
 export function parseDecimalToUnits(value) {
   const decimal = new Decimal(value);
-  return ethers.utils.parseUnits(decimal.toFixed(), PRECISION);
+  return ethers.parseUnits(decimal.toFixed(), PRECISION);
 }
 
 export function percentageToFloat(value) {
@@ -20,7 +20,7 @@ export function percentageToFloat(value) {
 
   const trimmedValue = value.substring(0, value.length - 1);
 
-  return ethers.utils.parseUnits(trimmedValue, 28);
+  return ethers.parseUnits(trimmedValue, 28);
 }
 
 export function exponentToFloat(value) {
@@ -38,15 +38,15 @@ export function exponentToFloat(value) {
     throw new Error("Invalid exponent");
   }
 
-  return ethers.utils.parseUnits(components[0], 30 + exponent);
+  return ethers.parseUnits(components[0], 30 + exponent);
 }
 
 export function bigNumberify(n) {
-  return ethers.BigNumber.from(n);
+  return BigInt(n);
 }
 
 export function expandDecimals(n, decimals) {
-  return bigNumberify(n).mul(bigNumberify(10).pow(decimals));
+  return BigInt(n) * BigInt(10) ** BigInt(decimals);
 }
 
 export function decimalToFloat(value, decimals = 0) {
@@ -54,7 +54,7 @@ export function decimalToFloat(value, decimals = 0) {
 }
 
 export function applyFactor(n: BigNumberish, factor: BigNumberish) {
-  return BigNumber.from(n).mul(factor).div(FLOAT_PRECISION);
+  return (BigInt(n) * BigInt(factor)) / FLOAT_PRECISION;
 }
 
 // both `base` and `exponent` should have 30 decimals
@@ -62,7 +62,7 @@ export function pow(base: BigNumberish, exponent: BigNumberish) {
   const baseDecimal = new Decimal(base.toString()).div(FLOAT_PRECISION.toString());
   const exponentDecimal = new Decimal(exponent.toString()).div(FLOAT_PRECISION.toString());
 
-  return BigNumber.from(baseDecimal.pow(exponentDecimal).mul(FLOAT_PRECISION.toString()).toFixed(0));
+  return BigInt(baseDecimal.pow(exponentDecimal).mul(FLOAT_PRECISION.toString()).toFixed(0));
 }
 
 const limitDecimals = (amount, maxDecimals) => {
@@ -122,7 +122,7 @@ export function formatAmount(
   if (displayDecimals === undefined) {
     displayDecimals = 4;
   }
-  let amountStr = ethers.utils.formatUnits(amount, tokenDecimals);
+  let amountStr = ethers.formatUnits(amount, tokenDecimals);
   amountStr = limitDecimals(amountStr, displayDecimals);
   if (displayDecimals !== 0) {
     amountStr = padDecimals(amountStr, displayDecimals);
@@ -139,7 +139,7 @@ export function formatPercent(amount: BigNumberish, displayDecimals?: number) {
 
 export function numberToBigNumber(value: number | string, decimals: number) {
   const [mantissa, exponentStr] = value.toString().split(/e\+?/);
-  let ret = ethers.utils.parseUnits(mantissa, 30);
+  let ret = ethers.parseUnits(mantissa, 30);
 
   let exponent = decimals;
 
@@ -147,10 +147,10 @@ export function numberToBigNumber(value: number | string, decimals: number) {
     exponent += Number(exponentStr);
   }
   if (exponent > 0) {
-    ret = ret.mul(bigNumberify(10).pow(exponent));
+    ret = ret * BigInt(10 ** exponent);
   } else {
-    ret = ret.div(bigNumberify(10).pow(-exponent));
+    ret = ret / BigInt(10 ** -exponent);
   }
 
-  return ret.div(expandDecimals(1, 30));
+  return ret / expandDecimals(1, 30);
 }

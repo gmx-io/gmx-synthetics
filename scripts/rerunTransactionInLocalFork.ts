@@ -10,7 +10,7 @@ async function main() {
 
   const tx = await ethers.provider.getTransaction(txHash);
 
-  const localProvider = new ethers.providers.JsonRpcProvider("http://localhost:8545");
+  const localProvider = new ethers.JsonRpcProvider("http://localhost:8545");
 
   try {
     const block = await localProvider.getBlock("latest");

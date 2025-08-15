@@ -80,7 +80,7 @@ describe("GlvStoreUtils", () => {
 
     Object.keys(emptyStoreItem).forEach((key) => {
       if (isNaN(parseInt(key))) {
-        expect(fetchedItem[key]).deep.eq(ethers.constants.AddressZero);
+        expect(fetchedItem[key]).deep.eq(ethers.ZeroAddress);
       }
     });
 

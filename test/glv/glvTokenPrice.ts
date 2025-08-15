@@ -233,8 +233,8 @@ describe("Glv Token Price", () => {
         marketTokenAmount: expandDecimals(10_000, 18),
         market: ethUsdMarket,
         isMarketTokenDeposit: true,
-        initialLongToken: ethers.constants.AddressZero,
-        initialShortToken: ethers.constants.AddressZero,
+        initialLongToken: ethers.ZeroAddress,
+        initialShortToken: ethers.ZeroAddress,
       },
     });
 

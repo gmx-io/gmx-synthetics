@@ -67,7 +67,7 @@ export async function getCreateOrderSignature({
 
   const domain = getDomain(chainId, verifyingContract);
   const typedData = {
-    account: subaccountApproval ? account : ethers.constants.AddressZero,
+    account: subaccountApproval ? account : ethers.ZeroAddress,
     addresses: params.addresses,
     numbers: params.numbers,
     orderType: params.orderType,
@@ -165,7 +165,7 @@ export async function getBatchSignature({
     verifyingContract,
   };
   const typedData = {
-    account: subaccountApproval ? account : ethers.constants.AddressZero,
+    account: subaccountApproval ? account : ethers.ZeroAddress,
     createOrderParamsList: createOrderParamsList.map((p) => ({
       addresses: p.addresses,
       numbers: p.numbers,
@@ -225,7 +225,7 @@ export async function getUpdateOrderSignature({
 
   const domain = getDomain(chainId, verifyingContract);
   const typedData = {
-    account: subaccountApproval ? account : ethers.constants.AddressZero,
+    account: subaccountApproval ? account : ethers.ZeroAddress,
     params,
     relayParams: hashRelayParams(relayParams),
     subaccountApproval: subaccountApproval ? hashSubaccountApproval(subaccountApproval) : ethers.constants.HashZero,
@@ -254,7 +254,7 @@ export async function getCancelOrderSignature({
 
   const domain = getDomain(chainId, verifyingContract);
   const typedData = {
-    account: subaccountApproval ? account : ethers.constants.AddressZero,
+    account: subaccountApproval ? account : ethers.ZeroAddress,
     key,
     relayParams: hashRelayParams(relayParams),
     subaccountApproval: subaccountApproval ? hashSubaccountApproval(subaccountApproval) : ethers.constants.HashZero,

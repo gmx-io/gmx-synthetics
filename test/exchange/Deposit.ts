@@ -22,7 +22,7 @@ import { prices } from "../../utils/prices";
 
 describe("Exchange.Deposit", () => {
   const { provider } = ethers;
-  const { AddressZero, HashZero } = ethers.constants;
+  const { ZeroAddress, ZeroHash } = ethers;
 
   let fixture;
   let user0, user1, user2;
@@ -88,7 +88,7 @@ describe("Exchange.Deposit", () => {
     await dataStore.setBool(_createDepositFeatureDisabledKey, false);
 
     await expect(
-      createDeposit(fixture, { ...params, account: { address: AddressZero } })
+      createDeposit(fixture, { ...params, account: { address: ZeroAddress } })
     ).to.be.revertedWithCustomError(errorsContract, "EmptyAccount");
 
     await expect(
@@ -140,7 +140,7 @@ describe("Exchange.Deposit", () => {
     await expect(createDeposit(fixture, params)).to.be.revertedWithCustomError(errorsContract, "EmptyDepositAmounts");
 
     await expect(
-      createDeposit(fixture, { ...params, longTokenAmount: bigNumberify(1), receiver: { address: AddressZero } })
+      createDeposit(fixture, { ...params, longTokenAmount: bigNumberify(1), receiver: { address: ZeroAddress } })
     ).to.be.revertedWithCustomError(errorsContract, "EmptyReceiver");
 
     await expect(createDeposit(fixture, { ...params, longTokenAmount: bigNumberify(1), callbackGasLimit: "3000000" }))
@@ -241,7 +241,7 @@ describe("Exchange.Deposit", () => {
 
   it("executeDeposit validations", async () => {
     await expect(
-      depositHandler.connect(user0).executeDeposit(HashZero, {
+      depositHandler.connect(user0).executeDeposit(ZeroHash, {
         tokens: [],
         providers: [],
         data: [],
@@ -296,13 +296,13 @@ describe("Exchange.Deposit", () => {
 
     deposit = await reader.getDeposit(dataStore.address, depositKeys[0]);
 
-    expect(deposit.addresses.account).eq(AddressZero);
+    expect(deposit.addresses.account).eq(ZeroAddress);
     expect(await getBalanceOf(ethUsdMarket.marketToken, user1.address)).eq(expandDecimals(95000, 18));
     expect(await getDepositCount(dataStore)).eq(0);
 
     await expect(
       executeDeposit(fixture, {
-        depositKey: HashZero,
+        depositKey: ZeroHash,
         oracleBlockNumber: (await provider.getBlock()).number,
         gasUsageLabel: "executeDeposit",
       })
@@ -404,7 +404,7 @@ describe("Exchange.Deposit", () => {
 
   it("simulateExecuteDeposit", async () => {
     await expect(
-      depositHandler.connect(user0).simulateExecuteDeposit(HashZero, {
+      depositHandler.connect(user0).simulateExecuteDeposit(ZeroHash, {
         primaryTokens: [],
         primaryPrices: [],
         minTimestamp: 0,
@@ -424,7 +424,7 @@ describe("Exchange.Deposit", () => {
 
     const emptyDeposit = await depositStoreUtilsTest.getEmptyDeposit();
 
-    await expect(depositHandler.connect(user0)._executeDeposit(HashZero, emptyDeposit, user0.address))
+    await expect(depositHandler.connect(user0)._executeDeposit(ZeroHash, emptyDeposit, user0.address))
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
       .withArgs(user0.address, "SELF");
   });
@@ -549,7 +549,7 @@ describe("Exchange.Deposit", () => {
         prices.ethUsdMarket,
         expandDecimals(10, 18), // longTokenAmount
         0, // shortTokenAmount
-        AddressZero,
+        ZeroAddress,
         SwapPricingType.TwoStep,
         true // includeVirtualInventoryImpact
       )
@@ -562,7 +562,7 @@ describe("Exchange.Deposit", () => {
         prices.ethUsdMarket,
         expandDecimals(10, 18), // longTokenAmount
         expandDecimals(1000, 6), // shortTokenAmount
-        AddressZero,
+        ZeroAddress,
         SwapPricingType.TwoStep,
         true // includeVirtualInventoryImpact
       )

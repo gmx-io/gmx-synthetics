@@ -1,18 +1,18 @@
 import { ethers } from "ethers";
-const { getAddress, keccak256, toUtf8Bytes } = ethers.utils;
+const { getAddress, keccak256, toUtf8Bytes } = ethers;
 
 export function encodeData(dataTypes, dataValues) {
-  const bytes = ethers.utils.defaultAbiCoder.encode(dataTypes, dataValues);
-  return ethers.utils.hexlify(bytes);
+  const bytes = ethers.AbiCoder.defaultAbiCoder().encode(dataTypes, dataValues);
+  return ethers.toBeHex(bytes);
 }
 
 export function decodeData(dataTypes, data) {
-  return ethers.utils.defaultAbiCoder.decode(dataTypes, data);
+  return ethers.AbiCoder.defaultAbiCoder().decode(dataTypes, data);
 }
 
 export function hashData(dataTypes, dataValues) {
-  const bytes = ethers.utils.defaultAbiCoder.encode(dataTypes, dataValues);
-  const hash = ethers.utils.keccak256(ethers.utils.arrayify(bytes));
+  const bytes = ethers.AbiCoder.defaultAbiCoder().encode(dataTypes, dataValues);
+  const hash = ethers.keccak256(ethers.getBytes(bytes));
 
   return hash;
 }

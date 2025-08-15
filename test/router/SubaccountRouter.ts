@@ -286,7 +286,7 @@ describe("SubaccountRouter", () => {
       positionKeys[0],
       prices.ethUsdMarket,
       0, // sizeDeltaUsd
-      ethers.constants.AddressZero,
+      ethers.ZeroAddress,
       true // usePositionSizeAsSizeDeltaUsd
     );
 
@@ -379,7 +379,7 @@ describe("SubaccountRouter", () => {
         positionKeys[0],
         prices.ethUsdMarket,
         0, // sizeDeltaUsd
-        ethers.constants.AddressZero,
+        ethers.ZeroAddress,
         true // usePositionSizeAsSizeDeltaUsd
       ),
       (positionInfo) => {
@@ -423,7 +423,7 @@ describe("SubaccountRouter", () => {
         positionKeys[0],
         prices.ethUsdMarket,
         0, // sizeDeltaUsd
-        ethers.constants.AddressZero,
+        ethers.ZeroAddress,
         true // usePositionSizeAsSizeDeltaUsd
       ),
       (positionInfo) => {
@@ -688,7 +688,7 @@ describe("SubaccountRouter", () => {
     ).eq(2);
 
     await usingResult(reader.getOrder(dataStore.address, orderKey), (order) => {
-      expect(order.addresses.account).eq(ethers.constants.AddressZero);
+      expect(order.addresses.account).eq(ethers.ZeroAddress);
     });
 
     await createOrder(fixture, {

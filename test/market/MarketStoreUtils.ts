@@ -79,7 +79,7 @@ describe("MarketStoreUtils", () => {
 
     Object.keys(emptyStoreItem).forEach((key) => {
       if (isNaN(key)) {
-        expect(fetchedItem[key]).deep.eq(ethers.constants.AddressZero);
+        expect(fetchedItem[key]).deep.eq(ethers.ZeroAddress);
       }
     });
 

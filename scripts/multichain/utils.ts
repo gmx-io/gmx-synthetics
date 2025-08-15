@@ -1,5 +1,3 @@
-import { JsonRpcProvider } from "@ethersproject/providers";
-import { BigNumber } from "ethers";
 import {
   DepositVault,
   ERC20,
@@ -32,7 +30,7 @@ const multichainOrderRouterJson = import("../../deployments/arbitrumSepolia/Mult
 const multichainTransferRouterJson = import("../../deployments/arbitrumSepolia/MultichainTransferRouter.json");
 
 export async function getDeployments(): Promise<any> {
-  const provider = new JsonRpcProvider("https://sepolia-rollup.arbitrum.io/rpc");
+  const provider = new ethers.JsonRpcProvider("https://sepolia-rollup.arbitrum.io/rpc");
 
   // contracts with arbitrum sepolia provider
   const dataStore = new ethers.Contract(
@@ -134,7 +132,7 @@ export async function getIncreasedValues({
     )
     .catch((e) => {
       console.log("Gas estimation failed, using fallback gas limit");
-      return BigNumber.from(1000000); // More reasonable fallback gas limit
+      return BigInt(1000000); // More reasonable fallback gas limit
     });
   gasLimit = gasLimit.mul(limitPercentage + 100).div(100);
   const txCost = gasLimit.mul(gasPrice).add(messagingFee.nativeFee);

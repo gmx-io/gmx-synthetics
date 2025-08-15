@@ -109,7 +109,7 @@ async function validateFetchedItemAfterRemove({ dataStore, itemKey, emptyStoreIt
         expect(value, key).deep.eq([]);
       } else {
         const value = await dataStore.getAddress(hash);
-        expect(value, key).eq(ethers.constants.AddressZero);
+        expect(value, key).eq(ethers.ZeroAddress);
       }
     }
   }

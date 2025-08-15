@@ -23,7 +23,7 @@ import { prices } from "../../utils/prices";
 
 describe("Exchange.Shift", () => {
   const { provider } = ethers;
-  const { AddressZero, HashZero } = ethers.constants;
+  const { ZeroAddress, ZeroHash } = ethers;
 
   let fixture;
   let user0, user1, user2, user3;
@@ -179,7 +179,7 @@ describe("Exchange.Shift", () => {
 
     shift = await reader.getShift(dataStore.address, shiftKeys[0]);
 
-    expect(shift.addresses.account).eq(AddressZero);
+    expect(shift.addresses.account).eq(ZeroAddress);
     expect(await getSupplyOf(ethUsdMarket.marketToken)).eq(expandDecimals(2500, 18));
     expect(await getSupplyOf(solUsdMarket.marketToken)).eq(expandDecimals(7500, 18));
     expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(expandDecimals(2500, 18));
@@ -190,7 +190,7 @@ describe("Exchange.Shift", () => {
 
     await expect(
       executeShift(fixture, {
-        shiftKey: HashZero,
+        shiftKey: ZeroHash,
         oracleBlockNumber: (await provider.getBlock()).number,
         gasUsageLabel: "executeShift",
       })
@@ -199,7 +199,7 @@ describe("Exchange.Shift", () => {
 
   it("simulateExecuteShift", async () => {
     await expect(
-      shiftHandler.connect(user0).simulateExecuteShift(HashZero, {
+      shiftHandler.connect(user0).simulateExecuteShift(ZeroHash, {
         primaryTokens: [],
         primaryPrices: [],
         minTimestamp: 0,
@@ -219,7 +219,7 @@ describe("Exchange.Shift", () => {
 
     const emptyShift = await shiftStoreUtilsTest.getEmptyShift();
 
-    await expect(shiftHandler.connect(user0)._executeShift(HashZero, emptyShift, user0.address))
+    await expect(shiftHandler.connect(user0)._executeShift(ZeroHash, emptyShift, user0.address))
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
       .withArgs(user0.address, "SELF");
   });

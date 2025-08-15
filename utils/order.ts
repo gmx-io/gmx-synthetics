@@ -80,9 +80,9 @@ export async function createOrder(fixture, overrides) {
   const account = overrides.account || user0;
   const receiver = overrides.receiver || account;
   const cancellationReceiver = overrides.cancellationReceiver || receiver;
-  const callbackContract = overrides.callbackContract || { address: ethers.constants.AddressZero };
-  const market = overrides.market || { marketToken: ethers.constants.AddressZero };
-  const uiFeeReceiver = overrides.uiFeeReceiver || { address: ethers.constants.AddressZero };
+  const callbackContract = overrides.callbackContract || { address: ethers.ZeroAddress };
+  const market = overrides.market || { marketToken: ethers.ZeroAddress };
+  const uiFeeReceiver = overrides.uiFeeReceiver || { address: ethers.ZeroAddress };
   const sizeDeltaUsd = overrides.sizeDeltaUsd || "0";
   const initialCollateralDeltaAmount = overrides.initialCollateralDeltaAmount || "0";
   const swapPath = overrides.swapPath || [];

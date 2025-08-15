@@ -75,7 +75,7 @@ describe("Exchange.DepositCollateral", () => {
         positionKeys[0],
         prices.ethUsdMarket,
         0, // sizeDeltaUsd
-        ethers.constants.AddressZero,
+        ethers.ZeroAddress,
         true // usePositionSizeAsSizeDeltaUsd
       ),
       (positionInfo) => {
@@ -104,7 +104,7 @@ describe("Exchange.DepositCollateral", () => {
         positionKeys[0],
         prices.ethUsdMarket,
         0, // sizeDeltaUsd
-        ethers.constants.AddressZero,
+        ethers.ZeroAddress,
         true // usePositionSizeAsSizeDeltaUsd
       ),
       (positionInfo) => {

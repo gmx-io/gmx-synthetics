@@ -26,7 +26,7 @@ import { SwapPricingType } from "../../utils/swap";
 import * as keys from "../../utils/keys";
 
 describe("Exchange.Withdrawal", () => {
-  const { AddressZero } = ethers.constants;
+  const { ZeroAddress } = ethers;
 
   let fixture;
   let user0, user1, user2;
@@ -143,7 +143,7 @@ describe("Exchange.Withdrawal", () => {
     });
 
     withdrawal = await reader.getWithdrawal(dataStore.address, withdrawalKeys[0]);
-    expect(withdrawal.addresses.account).eq(AddressZero);
+    expect(withdrawal.addresses.account).eq(ZeroAddress);
     expect(await getWithdrawalCount(dataStore)).eq(0);
 
     expect(await getMarketTokenPrice(fixture)).eq(expandDecimals(1, 30));
@@ -254,7 +254,7 @@ describe("Exchange.Withdrawal", () => {
       ethUsdMarket,
       prices.ethUsdMarket,
       expandDecimals(49940, 18), // marketTokenAmount
-      AddressZero,
+      ZeroAddress,
       SwapPricingType.TwoStep
     );
 

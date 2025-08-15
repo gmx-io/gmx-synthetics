@@ -146,7 +146,7 @@ describe("Guardian.FundingFees", () => {
       positionKeys[0],
       prices.ethUsdMarket,
       0, // sizeDeltaUsd
-      ethers.constants.AddressZero,
+      ethers.ZeroAddress,
       true // usePositionSizeAsSizeDeltaUsd
     );
     const normalMarketShortPositionInfo = await reader.getPositionInfo(
@@ -155,7 +155,7 @@ describe("Guardian.FundingFees", () => {
       positionKeys[1],
       prices.ethUsdMarket,
       0, // sizeDeltaUsd
-      ethers.constants.AddressZero,
+      ethers.ZeroAddress,
       true // usePositionSizeAsSizeDeltaUsd
     );
     const homogenousMarketLongPositionInfo = await reader.getPositionInfo(
@@ -164,7 +164,7 @@ describe("Guardian.FundingFees", () => {
       positionKeys[2],
       prices.ethUsdSingleTokenMarket,
       0, // sizeDeltaUsd
-      ethers.constants.AddressZero,
+      ethers.ZeroAddress,
       true // usePositionSizeAsSizeDeltaUsd
     );
     const homogenousMarketShortPositionInfo = await reader.getPositionInfo(
@@ -173,7 +173,7 @@ describe("Guardian.FundingFees", () => {
       positionKeys[3],
       prices.ethUsdSingleTokenMarket,
       0, // sizeDeltaUsd
-      ethers.constants.AddressZero,
+      ethers.ZeroAddress,
       true // usePositionSizeAsSizeDeltaUsd
     );
 

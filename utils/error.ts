@@ -3,8 +3,8 @@ import { ethers } from "hardhat";
 
 import Errors from "../artifacts/contracts/error/Errors.sol/Errors.json";
 
-export const errorsInterface = new ethers.utils.Interface(Errors.abi);
-export const errorsContract = new ethers.Contract(ethers.constants.AddressZero, Errors.abi);
+export const errorsInterface = new ethers.Interface(Errors.abi);
+export const errorsContract = new ethers.Contract(ethers.ZeroAddress, Errors.abi);
 
 export function getErrorString(error: { name: string; args: any[] }) {
   return JSON.stringify({
@@ -25,8 +25,8 @@ const PANIC_MAP = {
   0x41: "allocate too much memory or create an array that is too large",
   0x51: "call a zero-initialized variable of internal function type.",
 };
-export const PANIC_SIGNATURE4 = ethers.utils.id("Panic(uint256)").slice(0, 10);
-export const ERROR_SIGNATURE4 = ethers.utils.id("Error(string)").slice(0, 10);
+export const PANIC_SIGNATURE4 = ethers.id("Panic(uint256)").slice(0, 10);
+export const ERROR_SIGNATURE4 = ethers.id("Error(string)").slice(0, 10);
 
 export function parseError(reasonBytes, shouldThrow = true) {
   if (reasonBytes.startsWith(PANIC_SIGNATURE4)) {

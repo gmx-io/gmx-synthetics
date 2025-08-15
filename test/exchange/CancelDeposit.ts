@@ -10,8 +10,7 @@ import { getDepositCount, getDepositKeys, createDeposit } from "../../utils/depo
 import * as keys from "../../utils/keys";
 
 describe("Exchange.CancelDeposit", () => {
-  const { provider } = ethers;
-  const { AddressZero } = ethers.constants;
+  const { provider, ZeroAddress } = ethers;
 
   let fixture;
   let user0, user1;
@@ -89,12 +88,12 @@ describe("Exchange.CancelDeposit", () => {
 
     deposit = await reader.getDeposit(dataStore.address, depositKeys[0]);
 
-    expect(deposit.addresses.account).eq(AddressZero);
-    expect(deposit.addresses.receiver).eq(AddressZero);
-    expect(deposit.addresses.callbackContract).eq(AddressZero);
-    expect(deposit.addresses.market).eq(AddressZero);
-    expect(deposit.addresses.initialLongToken).eq(AddressZero);
-    expect(deposit.addresses.initialShortToken).eq(AddressZero);
+    expect(deposit.addresses.account).eq(ZeroAddress);
+    expect(deposit.addresses.receiver).eq(ZeroAddress);
+    expect(deposit.addresses.callbackContract).eq(ZeroAddress);
+    expect(deposit.addresses.market).eq(ZeroAddress);
+    expect(deposit.addresses.initialLongToken).eq(ZeroAddress);
+    expect(deposit.addresses.initialShortToken).eq(ZeroAddress);
     expect(deposit.addresses.longTokenSwapPath).deep.eq([]);
     expect(deposit.addresses.shortTokenSwapPath).deep.eq([]);
     expect(deposit.numbers.initialLongTokenAmount).eq(0);

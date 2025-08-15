@@ -63,7 +63,7 @@ describe("Exchange.WithdrawCollateral", () => {
         positionKeys[0],
         prices.ethUsdMarket,
         0, // sizeDeltaUsd
-        ethers.constants.AddressZero,
+        ethers.ZeroAddress,
         true // usePositionSizeAsSizeDeltaUsd
       ),
       (positionInfo) => {
@@ -105,7 +105,7 @@ describe("Exchange.WithdrawCollateral", () => {
         positionKeys[0],
         prices.ethUsdMarket,
         0, // sizeDeltaUsd
-        ethers.constants.AddressZero,
+        ethers.ZeroAddress,
         true // usePositionSizeAsSizeDeltaUsd
       ),
       (positionInfo) => {

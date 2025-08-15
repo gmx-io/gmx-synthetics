@@ -69,7 +69,7 @@ async function main() {
     marketFrom,
     marketFromPrices,
     marketFromAmountIn,
-    hre.ethers.constants.AddressZero,
+    hre.ethers.ZeroAddress,
     bigNumberify(1), // SwapPricingType.Shift
     { blockTag: blockNumber }
   );
@@ -92,7 +92,7 @@ async function main() {
     marketToPrices,
     withdrawalOutput[0],
     withdrawalOutput[1],
-    hre.ethers.constants.AddressZero,
+    hre.ethers.ZeroAddress,
     bigNumberify(1), // SwapPricingType.Shift
     false, // includeVirtualInventoryImpact
     { blockTag: blockNumber }

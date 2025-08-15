@@ -171,7 +171,7 @@ async function setup() {
   const ethUsdtMarket = await reader.getMarket(dataStore.address, ethUsdtMarketAddress);
 
   const ethUsdSpotOnlyMarketAddress = getMarketTokenAddress(
-    ethers.constants.AddressZero,
+    ethers.ZeroAddress,
     wnt.address,
     usdc.address,
     DEFAULT_MARKET_TYPE,

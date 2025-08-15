@@ -183,7 +183,7 @@ describe("Timelock", () => {
 
     await time.increase(1 * 24 * 60 * 60 + 10);
 
-    expect(await dataStore.getAddress(keys.FEE_RECEIVER)).eq(ethers.constants.AddressZero);
+    expect(await dataStore.getAddress(keys.FEE_RECEIVER)).eq(ethers.ZeroAddress);
 
     await timelockConfig.connect(timelockAdmin).execute(dataStore.address, payload, constants.HashZero, salt);
 
@@ -207,7 +207,7 @@ describe("Timelock", () => {
 
     await time.increase(1 * 24 * 60 * 60 + 10);
 
-    expect(await dataStore.getAddress(keys.HOLDING_ADDRESS)).eq(ethers.constants.AddressZero);
+    expect(await dataStore.getAddress(keys.HOLDING_ADDRESS)).eq(ethers.ZeroAddress);
 
     await executeTimelock(timelockAdmin, target, payload, constants.HashZero, salt);
 
@@ -395,7 +395,7 @@ describe("Timelock", () => {
 
   it("setPriceFeed", async () => {
     const salt = getRandomSalt();
-    await dataStore.setAddress(keys.priceFeedKey(wnt.address), ethers.constants.AddressZero);
+    await dataStore.setAddress(keys.priceFeedKey(wnt.address), ethers.ZeroAddress);
     await dataStore.setUint(keys.priceFeedMultiplierKey(wnt.address), 0);
 
     await expect(
@@ -444,7 +444,7 @@ describe("Timelock", () => {
 
     await time.increase(1 * 24 * 60 * 60 + 10);
 
-    expect(await dataStore.getAddress(keys.priceFeedKey(wnt.address))).eq(ethers.constants.AddressZero);
+    expect(await dataStore.getAddress(keys.priceFeedKey(wnt.address))).eq(ethers.ZeroAddress);
     expect(await dataStore.getUint(keys.priceFeedMultiplierKey(wnt.address))).eq(0);
     expect(await dataStore.getUint(keys.stablePriceKey(wnt.address))).eq(0);
 

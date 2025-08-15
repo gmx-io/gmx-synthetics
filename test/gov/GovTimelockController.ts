@@ -8,7 +8,7 @@ import { TIMELOCK_ADMIN_ROLE, PROPOSER_ROLE, EXECUTOR_ROLE, CANCELLER_ROLE } fro
 describe("GovTimelockController", () => {
   let timelock;
   let wallet, user0, user1, user2, user3;
-  const { HashZero } = ethers.constants;
+  const { ZeroHash } = ethers;
 
   beforeEach(async () => {
     const accountList = await hre.ethers.getSigners();
@@ -51,7 +51,7 @@ describe("GovTimelockController", () => {
         timelock.address, // target
         0, // value
         timelock.interface.encodeFunctionData("grantRole", [PROPOSER_ROLE, user3.address]), // data
-        HashZero, // predecessor
+        ZeroHash, // predecessor
         "0x0000000000000000000000000000000000000000000000000000000000000001", // salt
         5 * 24 * 60 * 60 // delay
       )
@@ -61,7 +61,7 @@ describe("GovTimelockController", () => {
       timelock.address, // target
       0, // value
       timelock.interface.encodeFunctionData("grantRole", [PROPOSER_ROLE, user3.address]), // data
-      HashZero, // predecessor
+      ZeroHash, // predecessor
       "0x0000000000000000000000000000000000000000000000000000000000000001", // salt
       5 * 24 * 60 * 60 // delay
     );
@@ -72,7 +72,7 @@ describe("GovTimelockController", () => {
       timelock.address, // target
       0, // value
       timelock.interface.encodeFunctionData("grantRole", [PROPOSER_ROLE, user3.address]), // data
-      HashZero, // predecessor
+      ZeroHash, // predecessor
       "0x0000000000000000000000000000000000000000000000000000000000000001", // salt
       5 * 24 * 60 * 60 // delay
     );
@@ -82,7 +82,7 @@ describe("GovTimelockController", () => {
         timelock.address, // target
         0, // value
         timelock.interface.encodeFunctionData("grantRole", [PROPOSER_ROLE, user3.address]), // data
-        HashZero, // predecessor
+        ZeroHash, // predecessor
         "0x0000000000000000000000000000000000000000000000000000000000000001" // salt
       )
     ).to.be.revertedWith(`AccessControl: account ${user1.address.toLowerCase()} is missing role ${EXECUTOR_ROLE}`);
@@ -92,7 +92,7 @@ describe("GovTimelockController", () => {
         timelock.address, // target
         0, // value
         timelock.interface.encodeFunctionData("grantRole", [PROPOSER_ROLE, user3.address]), // data
-        HashZero, // predecessor
+        ZeroHash, // predecessor
         "0x0000000000000000000000000000000000000000000000000000000000000001" // salt
       )
     ).to.be.revertedWith("TimelockController: operation is not ready");
@@ -104,7 +104,7 @@ describe("GovTimelockController", () => {
         timelock.address, // target
         0, // value
         timelock.interface.encodeFunctionData("grantRole", [PROPOSER_ROLE, user3.address]), // data
-        HashZero, // predecessor
+        ZeroHash, // predecessor
         "0x0000000000000000000000000000000000000000000000000000000000000001" // salt
       )
     ).to.be.revertedWith("TimelockController: operation is not ready");
@@ -117,7 +117,7 @@ describe("GovTimelockController", () => {
       timelock.address, // target
       0, // value
       timelock.interface.encodeFunctionData("grantRole", [PROPOSER_ROLE, user3.address]), // data
-      HashZero, // predecessor
+      ZeroHash, // predecessor
       "0x0000000000000000000000000000000000000000000000000000000000000001" // salt
     );
 
@@ -129,7 +129,7 @@ describe("GovTimelockController", () => {
       timelock.address, // target
       0, // value
       timelock.interface.encodeFunctionData("updateDelay", [3 * 24 * 60 * 60]), // data
-      HashZero, // predecessor
+      ZeroHash, // predecessor
       "0x0000000000000000000000000000000000000000000000000000000000000001", // salt
       5 * 24 * 60 * 60 // delay
     );
@@ -142,7 +142,7 @@ describe("GovTimelockController", () => {
       timelock.address, // target
       0, // value
       timelock.interface.encodeFunctionData("updateDelay", [3 * 24 * 60 * 60]), // data
-      HashZero, // predecessor
+      ZeroHash, // predecessor
       "0x0000000000000000000000000000000000000000000000000000000000000001" // salt
     );
 

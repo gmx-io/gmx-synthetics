@@ -189,8 +189,8 @@ describe("MultichainGlvRouter", () => {
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdGlvAddress))).eq(0); // GLV
 
       createGlvDepositParams.params.isMarketTokenDeposit = true;
-      createGlvDepositParams.params.addresses.initialLongToken = ethers.constants.AddressZero;
-      createGlvDepositParams.params.addresses.initialShortToken = ethers.constants.AddressZero;
+      createGlvDepositParams.params.addresses.initialLongToken = ethers.ZeroAddress;
+      createGlvDepositParams.params.addresses.initialShortToken = ethers.ZeroAddress;
       createGlvDepositParams.transferRequests = {
         tokens: [ethUsdMarket.marketToken],
         receivers: [glvVault.address],
@@ -636,7 +636,7 @@ describe("MultichainGlvRouter", () => {
           actionType,
           chainId, // desChainId
           deadline,
-          ethers.constants.AddressZero, // provider (can be the zero address since the tokens are transferred directly to the user's wallet on the same chain)
+          ethers.ZeroAddress, // provider (can be the zero address since the tokens are transferred directly to the user's wallet on the same chain)
           providerData,
           0 // minAmountOut
         );
@@ -677,10 +677,10 @@ describe("MultichainGlvRouter", () => {
           actionType,
           chainId, // desChainId
           deadline,
-          ethers.constants.AddressZero, // provider (can be the zero address since the tokens are transferred directly to the user's wallet on the same chain)
+          ethers.ZeroAddress, // provider (can be the zero address since the tokens are transferred directly to the user's wallet on the same chain)
           providerData,
           0, // minAmountOut
-          ethers.constants.AddressZero, // secondaryProvider
+          ethers.ZeroAddress, // secondaryProvider
           providerData,
           0 // secondaryMinAmountOut
         );

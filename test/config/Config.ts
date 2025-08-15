@@ -16,7 +16,7 @@ describe("Config", () => {
   let fixture;
   let user0, user1, user2;
   let config, oracle, configUtils, dataStore, roleStore, ethUsdMarket, wnt;
-  const { AddressZero } = ethers.constants;
+  const { ZeroAddress } = ethers;
 
   beforeEach(async () => {
     fixture = await deployFixture();
@@ -106,7 +106,7 @@ describe("Config", () => {
         .setAddress(keys.IS_MARKET_DISABLED, encodeData(["address"], [ethUsdMarket.marketToken]), wnt.address)
     ).to.be.revertedWithCustomError(errorsContract, "Unauthorized");
 
-    expect(await dataStore.getAddress(key)).eq(AddressZero);
+    expect(await dataStore.getAddress(key)).eq(ZeroAddress);
 
     await config
       .connect(user0)
@@ -462,7 +462,7 @@ describe("Config", () => {
 
   it("initOracleConfig", async () => {
     const token = { address: "0x7f9FBf9bDd3F4105C478b996B648FE6e828a1e98" };
-    expect(await dataStore.getAddress(keys.priceFeedKey(token.address))).eq(ethers.constants.AddressZero);
+    expect(await dataStore.getAddress(keys.priceFeedKey(token.address))).eq(ethers.ZeroAddress);
     expect(await dataStore.getUint(keys.priceFeedMultiplierKey(token.address))).eq(0);
     expect(await dataStore.getUint(keys.priceFeedHeartbeatDurationKey(token.address))).eq(0);
     expect(await dataStore.getUint(keys.stablePriceKey(token.address))).eq(0);
@@ -615,9 +615,7 @@ describe("Config", () => {
 
     it("validates token address is not zero", async () => {
       await expect(
-        config
-          .connect(user0)
-          .setOracleProviderForToken(oracle.address, ethers.constants.AddressZero, oracleProvider1.address)
+        config.connect(user0).setOracleProviderForToken(oracle.address, ethers.ZeroAddress, oracleProvider1.address)
       ).to.be.revertedWithCustomError(errorsContract, "EmptyToken");
     });
 

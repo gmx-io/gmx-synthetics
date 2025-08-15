@@ -33,7 +33,7 @@ function getTickersUrl() {
 }
 
 function getTokenPrice({ token, pricesByTokenAddress }) {
-  if (token === ethers.constants.AddressZero) {
+  if (token === ethers.ZeroAddress) {
     return {
       min: bigNumberify(0),
       max: bigNumberify(0),

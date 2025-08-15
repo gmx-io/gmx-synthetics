@@ -10,7 +10,7 @@ import { getCancellationReason } from "../error";
 import { expectCancellationReason } from "../validation";
 import { expect } from "chai";
 
-const { AddressZero } = ethers.constants;
+const { ZeroAddress } = ethers;
 
 export function getGlvWithdrawalKeys(dataStore, start, end) {
   return dataStore.getBytes32ValuesAt(keys.GLV_WITHDRAWAL_LIST, start, end);
@@ -37,8 +37,8 @@ export async function createGlvWithdrawal(fixture, overrides: any = {}) {
   const sender = overrides.sender || wallet;
   const account = overrides.account || user0;
   const receiver = overrides.receiver || account;
-  const callbackContract = overrides.callbackContract || { address: ethers.constants.AddressZero };
-  const uiFeeReceiver = overrides.uiFeeReceiver || { address: ethers.constants.AddressZero };
+  const callbackContract = overrides.callbackContract || { address: ZeroAddress };
+  const uiFeeReceiver = overrides.uiFeeReceiver || { address: ZeroAddress };
   const market = overrides.market || ethUsdMarket;
   const longTokenSwapPath = overrides.longTokenSwapPath || [];
   const shortTokenSwapPath = overrides.shortTokenSwapPath || [];
@@ -178,12 +178,12 @@ export async function handleGlvWithdrawal(fixture, overrides: any = {}) {
 }
 
 export function expectEmptyGlvWithdrawal(glvWithdrawal: any) {
-  expect(glvWithdrawal.addresses.account).eq(AddressZero);
-  expect(glvWithdrawal.addresses.receiver).eq(AddressZero);
-  expect(glvWithdrawal.addresses.callbackContract).eq(AddressZero);
-  expect(glvWithdrawal.addresses.market).eq(AddressZero);
-  expect(glvWithdrawal.addresses.glv).eq(AddressZero);
-  expect(glvWithdrawal.addresses.uiFeeReceiver).eq(AddressZero);
+  expect(glvWithdrawal.addresses.account).eq(ZeroAddress);
+  expect(glvWithdrawal.addresses.receiver).eq(ZeroAddress);
+  expect(glvWithdrawal.addresses.callbackContract).eq(ZeroAddress);
+  expect(glvWithdrawal.addresses.market).eq(ZeroAddress);
+  expect(glvWithdrawal.addresses.glv).eq(ZeroAddress);
+  expect(glvWithdrawal.addresses.uiFeeReceiver).eq(ZeroAddress);
   expect(glvWithdrawal.addresses.longTokenSwapPath).deep.eq([]);
   expect(glvWithdrawal.addresses.shortTokenSwapPath).deep.eq([]);
 

@@ -119,7 +119,7 @@ describe("Exchange.BorrowingFees", () => {
       positionKeys[0],
       prices.ethUsdMarket,
       0, // sizeDeltaUsd
-      ethers.constants.AddressZero,
+      ethers.ZeroAddress,
       true // usePositionSizeAsSizeDeltaUsd
     );
     const position1 = await reader.getPositionInfo(
@@ -128,7 +128,7 @@ describe("Exchange.BorrowingFees", () => {
       positionKeys[1],
       prices.ethUsdMarket,
       0, // sizeDeltaUsd
-      ethers.constants.AddressZero,
+      ethers.ZeroAddress,
       true // usePositionSizeAsSizeDeltaUsd
     );
 
@@ -318,7 +318,7 @@ describe("Exchange.BorrowingFees", () => {
         positionKeys[0],
         prices.ethUsdMarket,
         0, // sizeDeltaUsd
-        ethers.constants.AddressZero,
+        ethers.ZeroAddress,
         true // usePositionSizeAsSizeDeltaUsd
       ),
       (position) => {
@@ -358,7 +358,7 @@ describe("Exchange.BorrowingFees", () => {
         positionKeys[0],
         prices.ethUsdMarket,
         0, // sizeDeltaUsd
-        ethers.constants.AddressZero,
+        ethers.ZeroAddress,
         true // usePositionSizeAsSizeDeltaUsd
       ),
       (position) => {
@@ -376,7 +376,7 @@ describe("Exchange.BorrowingFees", () => {
         positionKeys[1],
         prices.ethUsdMarket,
         0, // sizeDeltaUsd
-        ethers.constants.AddressZero,
+        ethers.ZeroAddress,
         true // usePositionSizeAsSizeDeltaUsd
       ),
       (position) => {
@@ -515,7 +515,7 @@ describe("Exchange.BorrowingFees", () => {
         positionKeys[0],
         prices.ethUsdSingleTokenMarket,
         0, // sizeDeltaUsd
-        ethers.constants.AddressZero,
+        ethers.ZeroAddress,
         true // usePositionSizeAsSizeDeltaUsd
       ),
       (position) => {
@@ -555,7 +555,7 @@ describe("Exchange.BorrowingFees", () => {
         positionKeys[0],
         prices.ethUsdSingleTokenMarket,
         0, // sizeDeltaUsd
-        ethers.constants.AddressZero,
+        ethers.ZeroAddress,
         true // usePositionSizeAsSizeDeltaUsd
       ),
       (position) => {
@@ -573,7 +573,7 @@ describe("Exchange.BorrowingFees", () => {
         positionKeys[1],
         prices.ethUsdSingleTokenMarket,
         0, // sizeDeltaUsd
-        ethers.constants.AddressZero,
+        ethers.ZeroAddress,
         true // usePositionSizeAsSizeDeltaUsd
       ),
       (position) => {

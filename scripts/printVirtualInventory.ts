@@ -14,7 +14,7 @@ async function main() {
   console.log("reading data from DataStore %s Reader %s", dataStore.address, reader.address);
 
   for (const market of markets) {
-    const indexToken = tokens[market.tokens.indexToken] || { address: ethers.constants.AddressZero };
+    const indexToken = tokens[market.tokens.indexToken] || { address: ethers.ZeroAddress };
     const longToken = tokens[market.tokens.longToken];
     const shortToken = tokens[market.tokens.shortToken];
 

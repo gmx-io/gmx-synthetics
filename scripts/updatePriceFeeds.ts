@@ -44,7 +44,7 @@ async function main() {
     const stablePrice = priceFeed.stablePrice ? priceFeed.stablePrice : 0;
 
     const currentPriceFeed = await dataStore.getAddress(keys.priceFeedKey(tokenConfig.address));
-    if (currentPriceFeed !== ethers.constants.AddressZero) {
+    if (currentPriceFeed !== ethers.ZeroAddress) {
       throw new Error(`priceFeed already exists for ${token}`);
     }
 

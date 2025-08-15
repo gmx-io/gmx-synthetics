@@ -140,9 +140,7 @@ export function getMarketTokenAddresses(marketConfig, tokens) {
     throw new Error("invalid shortToken");
   }
 
-  const indexToken = marketConfig.swapOnly
-    ? ethers.constants.AddressZero
-    : tokens[marketConfig.tokens.indexToken].address;
+  const indexToken = marketConfig.swapOnly ? ethers.ZeroAddress : tokens[marketConfig.tokens.indexToken].address;
   const longToken = tokens[marketConfig.tokens.longToken].address;
   const shortToken = tokens[marketConfig.tokens.shortToken].address;
   return [indexToken, longToken, shortToken];

@@ -206,7 +206,7 @@ describe("Hedge GM", () => {
       positionKeys[0],
       positionPrices,
       0, // sizeDeltaUsd
-      ethers.constants.AddressZero,
+      ethers.ZeroAddress,
       true // usePositionSizeAsSizeDeltaUsd
     );
     return position0;

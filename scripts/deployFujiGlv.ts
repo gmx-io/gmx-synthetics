@@ -31,7 +31,7 @@ async function main() {
   const glv = await glvReader.getGlv(dataStore.address, glvAddress);
   console.log("glv", glv);
 
-  if (glv.glvToken === ethers.constants.AddressZero) {
+  if (glv.glvToken === ethers.ZeroAddress) {
     console.log("creating glv...");
     const tx = await glvFactory.createGlv(
       tokens.WETH.address, // longToken

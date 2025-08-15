@@ -7,9 +7,9 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     // Note that this is only for the hardhat config, the config for all
     // other networks is separate from this
     return {
-      feeReceiver: ethers.constants.AddressZero,
-      holdingAddress: ethers.constants.AddressZero,
-      sequencerUptimeFeed: ethers.constants.AddressZero,
+      feeReceiver: ethers.ZeroAddress,
+      holdingAddress: ethers.ZeroAddress,
+      sequencerUptimeFeed: ethers.ZeroAddress,
       sequencerGraceDuration: 300,
       maxUiFeeFactor: decimalToFloat(5, 5), // 0.005%
       maxAutoCancelOrders: 6,
@@ -73,7 +73,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
 
       gelatoRelayFeeMultiplierFactor: 0,
       gelatoRelayFeeBaseAmount: 0,
-      relayFeeAddress: ethers.constants.AddressZero,
+      relayFeeAddress: ethers.ZeroAddress,
       maxRelayFeeUsdForSubaccount: 0,
 
       maxDataLength: 18,
@@ -83,7 +83,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
   const generalConfig = {
     feeReceiver: "0x43ce1d475e06c65dd879f4ec644b8e0e10ff2b6d",
     holdingAddress: "0x3f59203ea1c66527422998b54287e1efcacbe2c5",
-    sequencerUptimeFeed: ethers.constants.AddressZero,
+    sequencerUptimeFeed: ethers.ZeroAddress,
     sequencerGraceDuration: 300,
     maxUiFeeFactor: percentageToFloat("0.1%"),
     maxAutoCancelOrders: 6,

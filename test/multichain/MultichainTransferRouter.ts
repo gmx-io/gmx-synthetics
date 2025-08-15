@@ -167,7 +167,7 @@ describe("MultichainTransferRouter", () => {
       expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).eq(0); // 0 WNT
 
       // provider and data are not used for same-chain withdrawals
-      bridgeOutParams.params.provider = ethers.constants.AddressZero;
+      bridgeOutParams.params.provider = ethers.ZeroAddress;
       bridgeOutParams.params.data = "0x";
 
       await sendBridgeOut(bridgeOutParams);

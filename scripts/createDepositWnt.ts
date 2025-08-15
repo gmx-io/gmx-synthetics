@@ -82,13 +82,13 @@ async function main() {
   const params: DepositUtils.CreateDepositParamsStruct = {
     addresses: {
       receiver: wallet.address,
-      callbackContract: ethers.constants.AddressZero,
+      callbackContract: ethers.ZeroAddress,
       market: wntUsdMarketAddress,
       initialLongToken: wnt.address,
       longTokenSwapPath: [],
       initialShortToken: usdc.address,
       shortTokenSwapPath: [],
-      uiFeeReceiver: ethers.constants.AddressZero,
+      uiFeeReceiver: ethers.ZeroAddress,
     },
     minMarketTokens: 0,
     shouldUnwrapNativeToken: false,

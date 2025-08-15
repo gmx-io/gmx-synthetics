@@ -76,7 +76,7 @@ describe("Reader.PendingImpactAmount", () => {
       positionKeys[positionKeys.length - 1],
       prices,
       0, // sizeDeltaUsd
-      ethers.constants.AddressZero,
+      ethers.ZeroAddress,
       true // usePositionSizeAsSizeDeltaUsd
     );
 

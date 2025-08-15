@@ -10,8 +10,6 @@ import { getCancellationReason } from "../error";
 import { expectCancellationReason } from "../validation";
 import { expect } from "chai";
 
-const { AddressZero } = ethers.constants;
-
 export function getGlvDepositKeys(dataStore, start, end) {
   return dataStore.getBytes32ValuesAt(keys.GLV_DEPOSIT_LIST, start, end);
 }
@@ -37,8 +35,8 @@ export async function createGlvDeposit(fixture, overrides: any = {}) {
   const sender = overrides.sender || wallet;
   const account = overrides.account || user0;
   const receiver = overrides.receiver || account;
-  const callbackContract = overrides.callbackContract || { address: ethers.constants.AddressZero };
-  const uiFeeReceiver = overrides.uiFeeReceiver || { address: ethers.constants.AddressZero };
+  const callbackContract = overrides.callbackContract || { address: ethers.ZeroAddress };
+  const uiFeeReceiver = overrides.uiFeeReceiver || { address: ethers.ZeroAddress };
   const market = overrides.market || ethUsdMarket;
   const initialLongToken = overrides.initialLongToken || market.longToken;
   const initialShortToken = overrides.initialShortToken || market.shortToken;
@@ -198,14 +196,14 @@ export async function handleGlvDeposit(
 }
 
 export function expectEmptyGlvDeposit(glvDeposit: any) {
-  expect(glvDeposit.addresses.glv).eq(AddressZero);
-  expect(glvDeposit.addresses.account).eq(AddressZero);
-  expect(glvDeposit.addresses.receiver).eq(AddressZero);
-  expect(glvDeposit.addresses.callbackContract).eq(AddressZero);
-  expect(glvDeposit.addresses.uiFeeReceiver).eq(AddressZero);
-  expect(glvDeposit.addresses.market).eq(AddressZero);
-  expect(glvDeposit.addresses.initialLongToken).eq(AddressZero);
-  expect(glvDeposit.addresses.initialShortToken).eq(AddressZero);
+  expect(glvDeposit.addresses.glv).eq(ethers.ZeroAddress);
+  expect(glvDeposit.addresses.account).eq(ethers.ZeroAddress);
+  expect(glvDeposit.addresses.receiver).eq(ethers.ZeroAddress);
+  expect(glvDeposit.addresses.callbackContract).eq(ethers.ZeroAddress);
+  expect(glvDeposit.addresses.uiFeeReceiver).eq(ethers.ZeroAddress);
+  expect(glvDeposit.addresses.market).eq(ethers.ZeroAddress);
+  expect(glvDeposit.addresses.initialLongToken).eq(ethers.ZeroAddress);
+  expect(glvDeposit.addresses.initialShortToken).eq(ethers.ZeroAddress);
   expect(glvDeposit.addresses.longTokenSwapPath).deep.eq([]);
   expect(glvDeposit.addresses.shortTokenSwapPath).deep.eq([]);
 

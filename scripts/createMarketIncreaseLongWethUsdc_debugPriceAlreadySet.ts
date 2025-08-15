@@ -65,9 +65,9 @@ async function main() {
   const params: IBaseOrderUtils.CreateOrderParamsStruct = {
     addresses: {
       receiver: wallet.address,
-      cancellationReceiver: ethers.constants.AddressZero,
-      uiFeeReceiver: ethers.constants.AddressZero,
-      callbackContract: ethers.constants.AddressZero,
+      cancellationReceiver: ethers.ZeroAddress,
+      uiFeeReceiver: ethers.ZeroAddress,
+      callbackContract: ethers.ZeroAddress,
       market: market,
       initialCollateralToken: "0x3eBDeaA0DB3FfDe96E7a0DBBAFEC961FC50F725F",
       swapPath: ["0xCc6AC193E1d1Ef102eCBBA864BBfE87E414a7A0D"],

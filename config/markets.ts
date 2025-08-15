@@ -114,7 +114,7 @@ export type BaseMarketConfig = {
   // on how many decimals the index token is configured to have
   // e.g. if we want to distribute at a rate of 143 AVAX per day
   // since AVAX has 18 decimals, the value for this would be:
-  // expandDecimals(143, 18 + 30).div(SECONDS_PER_DAY), 86400 is the seconds per day
+  // expandDecimals(143, 18 + 30) / BigInt(SECONDS_PER_DAY), 86400 is the seconds per day
   positionImpactPoolDistributionRate: BigNumberish;
   minPositionImpactPoolAmount: BigNumberish;
 
@@ -163,16 +163,12 @@ type FundingRateConfig = Partial<{
 const fundingRateConfig_Low: FundingRateConfig = {
   // increase to 75% at 100% imbalance (100%/0%) in 3 hours
   // increase to 75% at 20% imbalance (60.%/40%) in 15 hours
-  fundingIncreaseFactorPerSecond: percentageToFloat("75%")
-    .div(SECONDS_PER_YEAR)
-    .div(SECONDS_PER_HOUR * 3),
+  fundingIncreaseFactorPerSecond: percentageToFloat("75%") / BigInt(SECONDS_PER_YEAR) / BigInt(SECONDS_PER_HOUR * 3),
 
   // reduce from max 75% to 0% in 48 hours
-  fundingDecreaseFactorPerSecond: percentageToFloat("75%")
-    .div(SECONDS_PER_YEAR)
-    .div(SECONDS_PER_HOUR * 48),
+  fundingDecreaseFactorPerSecond: percentageToFloat("75%") / BigInt(SECONDS_PER_YEAR) / BigInt(SECONDS_PER_HOUR * 48),
 
-  maxFundingFactorPerSecond: percentageToFloat("75%").div(SECONDS_PER_YEAR),
+  maxFundingFactorPerSecond: percentageToFloat("75%") / BigInt(SECONDS_PER_YEAR),
 
   thresholdForStableFunding: percentageToFloat("4%"),
   thresholdForDecreaseFunding: 0,
@@ -181,16 +177,12 @@ const fundingRateConfig_Low: FundingRateConfig = {
 const fundingRateConfig_Default: FundingRateConfig = {
   // increase to 90% at 100% imbalance (100%/0%) in 3 hours
   // increase to 90% at 20% imbalance (60.%/40%) in 15 hours
-  fundingIncreaseFactorPerSecond: percentageToFloat("90%")
-    .div(SECONDS_PER_YEAR)
-    .div(SECONDS_PER_HOUR * 3),
+  fundingIncreaseFactorPerSecond: percentageToFloat("90%") / BigInt(SECONDS_PER_YEAR) / BigInt(SECONDS_PER_HOUR * 3),
 
   // reduce from max 90% to 0% in 48 hours
-  fundingDecreaseFactorPerSecond: percentageToFloat("90%")
-    .div(SECONDS_PER_YEAR)
-    .div(SECONDS_PER_HOUR * 48),
+  fundingDecreaseFactorPerSecond: percentageToFloat("90%") / BigInt(SECONDS_PER_YEAR) / BigInt(SECONDS_PER_HOUR * 48),
 
-  maxFundingFactorPerSecond: percentageToFloat("90%").div(SECONDS_PER_YEAR),
+  maxFundingFactorPerSecond: percentageToFloat("90%") / BigInt(SECONDS_PER_YEAR),
 
   thresholdForStableFunding: percentageToFloat("4%"),
   thresholdForDecreaseFunding: 0,
@@ -199,16 +191,12 @@ const fundingRateConfig_Default: FundingRateConfig = {
 const fundingRateConfig_High: FundingRateConfig = {
   // increase to 100% at 100% imbalance (100%/0%) in 3 hours
   // increase to 100% at 20% imbalance (60.%/40%) in 15 hours
-  fundingIncreaseFactorPerSecond: percentageToFloat("100%")
-    .div(SECONDS_PER_YEAR)
-    .div(SECONDS_PER_HOUR * 3),
+  fundingIncreaseFactorPerSecond: percentageToFloat("100%") / BigInt(SECONDS_PER_YEAR) / BigInt(SECONDS_PER_HOUR * 3),
 
   // reduce from max 100% to 0% in 48 hours
-  fundingDecreaseFactorPerSecond: percentageToFloat("100%")
-    .div(SECONDS_PER_YEAR)
-    .div(SECONDS_PER_HOUR * 48),
+  fundingDecreaseFactorPerSecond: percentageToFloat("100%") / BigInt(SECONDS_PER_YEAR) / BigInt(SECONDS_PER_HOUR * 48),
 
-  maxFundingFactorPerSecond: percentageToFloat("100%").div(SECONDS_PER_YEAR),
+  maxFundingFactorPerSecond: percentageToFloat("100%") / BigInt(SECONDS_PER_YEAR),
 
   thresholdForStableFunding: percentageToFloat("4%"),
   thresholdForDecreaseFunding: 0,
@@ -217,16 +205,12 @@ const fundingRateConfig_High: FundingRateConfig = {
 const fundingRateConfig_SingleToken: FundingRateConfig = {
   // increase to 90% at 100% imbalance (100%/0%) in 3 hours
   // increase to 90% at 20% imbalance (60%/40%) in 15 hours
-  fundingIncreaseFactorPerSecond: percentageToFloat("90%")
-    .div(SECONDS_PER_YEAR)
-    .div(SECONDS_PER_HOUR * 3),
+  fundingIncreaseFactorPerSecond: percentageToFloat("90%") / BigInt(SECONDS_PER_YEAR) / BigInt(SECONDS_PER_HOUR * 3),
 
   // reduce from max 90% to 0% in 48 hours
-  fundingDecreaseFactorPerSecond: percentageToFloat("90%")
-    .div(SECONDS_PER_YEAR)
-    .div(SECONDS_PER_HOUR * 48),
+  fundingDecreaseFactorPerSecond: percentageToFloat("90%") / BigInt(SECONDS_PER_YEAR) / BigInt(SECONDS_PER_HOUR * 48),
 
-  maxFundingFactorPerSecond: percentageToFloat("90%").div(SECONDS_PER_YEAR),
+  maxFundingFactorPerSecond: percentageToFloat("90%") / BigInt(SECONDS_PER_YEAR),
 
   thresholdForStableFunding: percentageToFloat("4%"),
   thresholdForDecreaseFunding: 0,
@@ -240,24 +224,24 @@ type BorrowingRateConfig = Partial<{
 
 const borrowingRateConfig_LowMax_WithLowerBase: BorrowingRateConfig = {
   optimalUsageFactor: percentageToFloat("75%"),
-  baseBorrowingFactor: percentageToFloat("45%").div(SECONDS_PER_YEAR),
-  aboveOptimalUsageBorrowingFactor: percentageToFloat("100%").div(SECONDS_PER_YEAR),
+  baseBorrowingFactor: percentageToFloat("45%") / BigInt(SECONDS_PER_YEAR),
+  aboveOptimalUsageBorrowingFactor: percentageToFloat("100%") / BigInt(SECONDS_PER_YEAR),
 };
 const borrowingRateConfig_LowMax_WithHigherBase: BorrowingRateConfig = {
   optimalUsageFactor: percentageToFloat("75%"),
-  baseBorrowingFactor: percentageToFloat("50%").div(SECONDS_PER_YEAR),
-  aboveOptimalUsageBorrowingFactor: percentageToFloat("100%").div(SECONDS_PER_YEAR),
+  baseBorrowingFactor: percentageToFloat("50%") / BigInt(SECONDS_PER_YEAR),
+  aboveOptimalUsageBorrowingFactor: percentageToFloat("100%") / BigInt(SECONDS_PER_YEAR),
 };
 
 const borrowingRateConfig_HighMax_WithLowerBase: BorrowingRateConfig = {
   optimalUsageFactor: percentageToFloat("75%"),
-  baseBorrowingFactor: percentageToFloat("50%").div(SECONDS_PER_YEAR),
-  aboveOptimalUsageBorrowingFactor: percentageToFloat("130%").div(SECONDS_PER_YEAR),
+  baseBorrowingFactor: percentageToFloat("50%") / BigInt(SECONDS_PER_YEAR),
+  aboveOptimalUsageBorrowingFactor: percentageToFloat("130%") / BigInt(SECONDS_PER_YEAR),
 };
 const borrowingRateConfig_HighMax_WithHigherBase: BorrowingRateConfig = {
   optimalUsageFactor: percentageToFloat("75%"),
-  baseBorrowingFactor: percentageToFloat("55%").div(SECONDS_PER_YEAR),
-  aboveOptimalUsageBorrowingFactor: percentageToFloat("130%").div(SECONDS_PER_YEAR),
+  baseBorrowingFactor: percentageToFloat("55%") / BigInt(SECONDS_PER_YEAR),
+  aboveOptimalUsageBorrowingFactor: percentageToFloat("130%") / BigInt(SECONDS_PER_YEAR),
 };
 
 const baseMarketConfig: Partial<BaseMarketConfig> = {
@@ -310,11 +294,9 @@ const baseMarketConfig: Partial<BaseMarketConfig> = {
   fundingFactor: exponentToFloat("2e-8"), // ~63% per year for a 100% skew
   fundingExponentFactor: decimalToFloat(1),
 
-  minFundingFactorPerSecond: percentageToFloat("1%").div(SECONDS_PER_YEAR),
-  maxFundingFactorPerSecond: percentageToFloat("90%").div(SECONDS_PER_YEAR), // ~0.246% per day
-  fundingIncreaseFactorPerSecond: percentageToFloat("90%")
-    .div(SECONDS_PER_YEAR)
-    .div(SECONDS_PER_HOUR * 3),
+  minFundingFactorPerSecond: percentageToFloat("1%") / BigInt(SECONDS_PER_YEAR),
+  maxFundingFactorPerSecond: percentageToFloat("90%") / BigInt(SECONDS_PER_YEAR), // ~0.246% per day
+  fundingIncreaseFactorPerSecond: percentageToFloat("90%") / BigInt(SECONDS_PER_YEAR) / BigInt(SECONDS_PER_HOUR * 3),
   fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
   thresholdForDecreaseFunding: decimalToFloat(0),
 
@@ -471,7 +453,7 @@ const config: {
       negativePositionImpactFactor: exponentToFloat("9e-11"),
       positivePositionImpactFactor: exponentToFloat("3e-11"),
 
-      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(1206, 30 + 4).div(SECONDS_PER_DAY), // 0.1206 BTC / day
+      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(1206, 30 + 4) / BigInt(SECONDS_PER_DAY), // 0.1206 BTC / day
       minPositionImpactPoolAmount: expandDecimals(44, 8), // 44 BTC
 
       negativeSwapImpactFactor: exponentToFloat("4e-10"), // 0.05% for 1,250,000 USD of imbalance
@@ -568,7 +550,7 @@ const config: {
       negativePositionImpactFactor: exponentToFloat("9e-11"),
       positivePositionImpactFactor: exponentToFloat("3e-11"),
 
-      positionImpactPoolDistributionRate: expandDecimals(951, 30 + 16).div(SECONDS_PER_DAY), // 9.51 ETH per day
+      positionImpactPoolDistributionRate: expandDecimals(951, 30 + 16) / BigInt(SECONDS_PER_DAY), // 9.51 ETH per day
       minPositionImpactPoolAmount: expandDecimals(1627, 18), // 1627 ETH
 
       negativeSwapImpactFactor: exponentToFloat("3e-10"),
@@ -717,7 +699,7 @@ const config: {
       reserveFactor: percentageToFloat("185%"),
       openInterestReserveFactor: percentageToFloat("180%"),
 
-      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(1775, 30 + 6).div(SECONDS_PER_DAY), // 1775 XRP / day
+      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(1775, 30 + 6) / BigInt(SECONDS_PER_DAY), // 1775 XRP / day
       minPositionImpactPoolAmount: expandDecimals(305641, 6), // 305641 XRP
 
       maxOpenInterest: decimalToFloat(2_000_000),
@@ -755,7 +737,7 @@ const config: {
       reserveFactor: percentageToFloat("185%"),
       openInterestReserveFactor: percentageToFloat("180%"),
 
-      positionImpactPoolDistributionRate: expandDecimals(35043, 38).div(SECONDS_PER_DAY), // 35043 DOGE / day
+      positionImpactPoolDistributionRate: expandDecimals(35043, 38) / BigInt(SECONDS_PER_DAY), // 35043 DOGE / day
       minPositionImpactPoolAmount: expandDecimals(2511744, 8), // 2511744 DOGE
 
       maxOpenInterest: decimalToFloat(19_000_000),
@@ -939,13 +921,11 @@ const config: {
       minPnlFactorAfterAdl: percentageToFloat("40%"),
       maxPnlFactorForWithdrawals: percentageToFloat("35%"),
 
-      fundingIncreaseFactorPerSecond: percentageToFloat("125%")
-        .div(SECONDS_PER_YEAR)
-        .div(SECONDS_PER_HOUR * 3),
-      fundingDecreaseFactorPerSecond: percentageToFloat("125%")
-        .div(SECONDS_PER_YEAR)
-        .div(SECONDS_PER_HOUR * 48),
-      maxFundingFactorPerSecond: percentageToFloat("125%").div(SECONDS_PER_YEAR),
+      fundingIncreaseFactorPerSecond:
+        percentageToFloat("125%") / BigInt(SECONDS_PER_YEAR) / BigInt(SECONDS_PER_HOUR * 3),
+      fundingDecreaseFactorPerSecond:
+        percentageToFloat("125%") / BigInt(SECONDS_PER_YEAR) / BigInt(SECONDS_PER_HOUR * 48),
+      maxFundingFactorPerSecond: percentageToFloat("125%") / BigInt(SECONDS_PER_YEAR),
 
       atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
@@ -978,7 +958,7 @@ const config: {
       reserveFactor: percentageToFloat("275%"),
       openInterestReserveFactor: percentageToFloat("270%"),
 
-      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(22, 30 + 9).div(SECONDS_PER_DAY), // 22 SOL / day
+      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(22, 30 + 9) / BigInt(SECONDS_PER_DAY), // 22 SOL / day
       minPositionImpactPoolAmount: expandDecimals(9574, 9), // 9574 SOL
 
       maxOpenInterest: decimalToFloat(17_500_000),
@@ -1150,7 +1130,7 @@ const config: {
       // minCollateralFactor of 0.005 (0.5%) when open interest is 8,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: decimalToFloat(64, 11),
 
-      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(173, 30 + 18).div(SECONDS_PER_DAY), // 173 LINK / day
+      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(173, 30 + 18) / BigInt(SECONDS_PER_DAY), // 173 LINK / day
       minPositionImpactPoolAmount: expandDecimals(41779, 18), // 41779 LINK
 
       maxOpenInterest: decimalToFloat(10_000_000),
@@ -1186,7 +1166,7 @@ const config: {
       reserveFactor: percentageToFloat("235%"),
       openInterestReserveFactor: percentageToFloat("230%"),
 
-      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(1378, 30 + 18).div(SECONDS_PER_DAY), // 1378 ARB / day
+      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(1378, 30 + 18) / BigInt(SECONDS_PER_DAY), // 1378 ARB / day
       minPositionImpactPoolAmount: expandDecimals(384957, 18), // 384957 ARB
 
       maxOpenInterest: decimalToFloat(5_000_000),
@@ -1220,7 +1200,7 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 2,700,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.8e-9"),
 
-      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(25, 17 + 30).div(SECONDS_PER_DAY), // 2.5 AAVE per day
+      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(25, 17 + 30) / BigInt(SECONDS_PER_DAY), // 2.5 AAVE per day
       minPositionImpactPoolAmount: expandDecimals(900, 18), // 900 AAVE
 
       maxOpenInterest: decimalToFloat(2_450_000), // ~2% of global OI
@@ -1422,7 +1402,7 @@ const config: {
       reserveFactor: percentageToFloat("205%"),
       openInterestReserveFactor: percentageToFloat("200%"),
 
-      positionImpactPoolDistributionRate: expandDecimals(79, 30 + 18).div(SECONDS_PER_DAY), // 79 GMX / day
+      positionImpactPoolDistributionRate: expandDecimals(79, 30 + 18) / BigInt(SECONDS_PER_DAY), // 79 GMX / day
       minPositionImpactPoolAmount: expandDecimals(11534, 18), // 11534 GMX
 
       maxOpenInterest: decimalToFloat(1_800_000),
@@ -1587,7 +1567,7 @@ const config: {
 
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
-      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(265, 30 + 9).div(SECONDS_PER_DAY), // 265 SUI / day
+      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(265, 30 + 9) / BigInt(SECONDS_PER_DAY), // 265 SUI / day
       minPositionImpactPoolAmount: expandDecimals(13793, 9), // 13793 SUI
 
       maxOpenInterest: decimalToFloat(9_000_000),
@@ -2395,7 +2375,7 @@ const config: {
       ...fundingRateConfig_Default,
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // timeToDecreaseFromMaxFundingToZero is "-" in initial recomandations
       ...borrowingRateConfig_HighMax_WithHigherBase,
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("110%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("110%") / BigInt(SECONDS_PER_YEAR),
 
       negativePositionImpactFactor: exponentToFloat("9e-9"),
       positivePositionImpactFactor: exponentToFloat("4.5e-9"),
@@ -2429,7 +2409,7 @@ const config: {
       ...fundingRateConfig_Default,
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // timeToDecreaseFromMaxFundingToZero is "-" in initial recomandations
       ...borrowingRateConfig_HighMax_WithHigherBase,
-      aboveOptimalUsageBorrowingFactor: percentageToFloat("110%").div(SECONDS_PER_YEAR),
+      aboveOptimalUsageBorrowingFactor: percentageToFloat("110%") / BigInt(SECONDS_PER_YEAR),
 
       negativePositionImpactFactor: exponentToFloat("9e-9"),
       positivePositionImpactFactor: exponentToFloat("4.5e-9"),
@@ -2970,7 +2950,7 @@ const config: {
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
 
-      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(40, 8 + 30).div(SECONDS_PER_DAY), // 40 HYPE per day
+      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(40, 8 + 30) / BigInt(SECONDS_PER_DAY), // 40 HYPE per day
       minPositionImpactPoolAmount: expandDecimals(3400, 8), // 3400 HYPE
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2e-10"),
@@ -3966,7 +3946,7 @@ const config: {
     },
     {
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "DAI" },
-      virtualMarketId: ethers.constants.HashZero,
+      virtualMarketId: ethers.ZeroHash,
     },
     { tokens: { indexToken: "WETH", longToken: "USDC", shortToken: "USDC" } },
     { tokens: { indexToken: "BTC", longToken: "WBTC", shortToken: "USDC" } },

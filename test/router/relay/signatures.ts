@@ -55,7 +55,7 @@ describe("Relay signatures", () => {
         orderHandler.address,
         orderVault.address,
         swapHandler.address,
-        ethers.constants.AddressZero,
+        ethers.ZeroAddress,
       ],
       {
         libraries: {

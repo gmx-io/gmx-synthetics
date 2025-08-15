@@ -34,9 +34,7 @@ async function main() {
   const tickerByToken = Object.fromEntries(tickers.map((t) => [t.tokenAddress, t]));
 
   const indexTokenTicker =
-    market.indexToken === hre.ethers.constants.AddressZero
-      ? { minPrice: 0, maxPrice: 0 }
-      : tickerByToken[market.indexToken];
+    market.indexToken === hre.ethers.ZeroAddress ? { minPrice: 0, maxPrice: 0 } : tickerByToken[market.indexToken];
   const longTokenTicker = tickerByToken[market.longToken];
   const shortTokenTicker = tickerByToken[market.shortToken];
 

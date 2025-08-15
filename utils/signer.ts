@@ -101,7 +101,7 @@ export async function signExternally(unsignedTransaction) {
 
 export async function getFrameSigner() {
   try {
-    const frame = new ethers.providers.JsonRpcProvider("http://127.0.0.1:1248");
+    const frame = new ethers.JsonRpcProvider("http://127.0.0.1:1248");
     const signer = frame.getSigner();
     if (hre.network.config.chainId !== (await signer.getChainId())) {
       throw new Error("Incorrect frame network");

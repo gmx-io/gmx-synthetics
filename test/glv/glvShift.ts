@@ -98,7 +98,7 @@ describe("Glv Shifts", () => {
     };
 
     it("EmptyGlv", async () => {
-      const badGlvAddress = ethers.constants.AddressZero.slice(0, -1) + "C";
+      const badGlvAddress = ethers.ZeroAddress.slice(0, -1) + "C";
       await expect(createGlvShift(fixture, { ...params, glv: badGlvAddress }))
         .to.be.revertedWithCustomError(errorsContract, "EmptyGlv")
         .withArgs(badGlvAddress);

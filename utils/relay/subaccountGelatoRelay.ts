@@ -208,7 +208,7 @@ export async function sendUpdateOrder(p: {
 
 export function getEmptySubaccountApproval() {
   return {
-    subaccount: ethers.constants.AddressZero,
+    subaccount: ethers.ZeroAddress,
     shouldAdd: false,
     expiresAt: 0,
     maxAllowedCount: 0,

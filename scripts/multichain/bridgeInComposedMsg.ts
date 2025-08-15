@@ -54,7 +54,7 @@ async function prepareSend(
   const LZ_RECEIVE_GAS_ESTIMATION = 8000000; // 8M gas units needed for lzCompose
   // Calculate msgValue for lzReceive on destination chain
   // e.g. 50,000 gas * 0.1 gwei (100,000,000 wei) = 5,000,000,000,000 wei
-  const destProvider = new ethers.providers.JsonRpcProvider("https://sepolia-rollup.arbitrum.io/rpc");
+  const destProvider = new ethers.JsonRpcProvider("https://sepolia-rollup.arbitrum.io/rpc");
   const gasPrice = await destProvider.getGasPrice();
   const msgValue = LZ_RECEIVE_GAS_ESTIMATION * gasPrice.toNumber();
   const extraOptions = Options.newOptions().addExecutorComposeOption(0, GAS_LIMIT, msgValue);
@@ -82,7 +82,7 @@ async function prepareSend(
   const messagingFee = await stargatePool.quoteSend(sendParam, false);
   let valueToSend = messagingFee.nativeFee;
   const tokenAddress = await stargatePool.token();
-  if (tokenAddress === ethers.constants.AddressZero) {
+  if (tokenAddress === ethers.ZeroAddress) {
     valueToSend = valueToSend.add(sendParam.amountLD);
   }
   console.log(`valueToSend: ${ethers.utils.formatUnits(valueToSend)} ETH`);
@@ -466,7 +466,7 @@ async function getComposedMsg({
       desChainId: DST_CHAIN_ID, // for non-multichain actions, desChainId is the same as chainId
       relayRouter: multichainOrderRouter,
       chainId: srcChainId,
-      gelatoRelayFeeToken: ethers.constants.AddressZero,
+      gelatoRelayFeeToken: ethers.ZeroAddress,
       gelatoRelayFeeAmount: 0,
     };
 

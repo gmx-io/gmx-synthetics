@@ -79,7 +79,7 @@ describe("Exchange.FundingFees.SingleTokenMarket", () => {
       getPositionKey(user0.address, ethUsdSingleTokenMarket.marketToken, usdc.address, true),
       prices.ethUsdSingleTokenMarket,
       1,
-      ethers.constants.AddressZero,
+      ethers.ZeroAddress,
       false
     );
 
@@ -89,7 +89,7 @@ describe("Exchange.FundingFees.SingleTokenMarket", () => {
       getPositionKey(user1.address, ethUsdSingleTokenMarket.marketToken, usdc.address, false),
       prices.ethUsdSingleTokenMarket,
       1,
-      ethers.constants.AddressZero,
+      ethers.ZeroAddress,
       false
     );
 

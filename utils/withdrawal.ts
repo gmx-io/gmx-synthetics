@@ -30,8 +30,8 @@ export async function createWithdrawal(fixture, overrides: any = {}) {
 
   const account = overrides.account || user0;
   const receiver = overrides.receiver || account;
-  const callbackContract = overrides.callbackContract || { address: ethers.constants.AddressZero };
-  const uiFeeReceiver = overrides.uiFeeReceiver || { address: ethers.constants.AddressZero };
+  const callbackContract = overrides.callbackContract || { address: ethers.ZeroAddress };
+  const uiFeeReceiver = overrides.uiFeeReceiver || { address: ethers.ZeroAddress };
   const market = overrides.market || ethUsdMarket;
   const longTokenSwapPath = overrides.longTokenSwapPath || [];
   const shortTokenSwapPath = overrides.shortTokenSwapPath || [];
@@ -131,8 +131,8 @@ export async function executeAtomicWithdrawal(fixture, overrides: any = {}) {
 
   const account = overrides.account || user0;
   const receiver = overrides.receiver || account;
-  const callbackContract = overrides.callbackContract || { address: ethers.constants.AddressZero };
-  const uiFeeReceiver = overrides.uiFeeReceiver || { address: ethers.constants.AddressZero };
+  const callbackContract = overrides.callbackContract || { address: ethers.ZeroAddress };
+  const uiFeeReceiver = overrides.uiFeeReceiver || { address: ethers.ZeroAddress };
   const market = overrides.market || ethUsdMarket;
   const longTokenSwapPath = overrides.longTokenSwapPath || [];
   const shortTokenSwapPath = overrides.shortTokenSwapPath || [];

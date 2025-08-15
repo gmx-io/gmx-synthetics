@@ -148,7 +148,7 @@ describe("FeeHandler", () => {
     // Validate that address(0) can't be passed if version = 2
     await expect(
       feeHandler.getOutputAmount(
-        [ethUsdMarket.marketToken, ethers.constants.AddressZero],
+        [ethUsdMarket.marketToken, ethers.ZeroAddress],
         usdc.address,
         gmx.address,
         2,
@@ -197,7 +197,7 @@ describe("FeeHandler", () => {
     // Validate that getOutputAmount for V1 USDC/GMX after the position increase returns $40 * 30% = 12
     expect(
       await feeHandler.getOutputAmount(
-        [ethers.constants.AddressZero],
+        [ethers.ZeroAddress],
         usdc.address,
         gmx.address,
         1,
@@ -209,7 +209,7 @@ describe("FeeHandler", () => {
     // Validate that for V1 USDC/WETH after the position increase returns $40 * 70% = 28
     expect(
       await feeHandler.getOutputAmount(
-        [ethers.constants.AddressZero],
+        [ethers.ZeroAddress],
         usdc.address,
         wnt.address,
         1,
@@ -259,7 +259,7 @@ describe("FeeHandler", () => {
     // Validate that for V1 USDC/GMX after the batch size decrease returns maxFeeTokenAmountGmxUsdc
     expect(
       await feeHandler.getOutputAmount(
-        [ethers.constants.AddressZero],
+        [ethers.ZeroAddress],
         usdc.address,
         gmx.address,
         1,
@@ -311,14 +311,14 @@ describe("FeeHandler", () => {
 
     // Validate that claimFees reverts if market = address(0) and version = 2
     await expect(
-      feeHandler.connect(user0).claimFees(ethers.constants.AddressZero, usdc.address, 2)
+      feeHandler.connect(user0).claimFees(ethers.ZeroAddress, usdc.address, 2)
     ).to.be.revertedWithCustomError(errorsContract, "EmptyClaimFeesMarket");
 
     // Validate that user0 successfully claims V2 USDC fees from the ETH/USD market
     await feeHandler.connect(user0).claimFees(ethUsdMarket.marketToken, usdc.address, 2);
 
     // Validate that user0 successfully claims V1 USDC fees
-    await feeHandler.connect(user0).claimFees(ethers.constants.AddressZero, usdc.address, 1);
+    await feeHandler.connect(user0).claimFees(ethers.ZeroAddress, usdc.address, 1);
 
     // Validate expected balances after claiming USDC fees
     expect(await usdc.balanceOf(feeHandler.address)).eq(expandDecimals(65, 6)); // $25 + $40
@@ -397,7 +397,7 @@ describe("FeeHandler", () => {
     expect(await wnt.balanceOf(user1.address)).eq(await dataStore.getUint(keys.buybackBatchAmountKey(wnt.address)));
 
     // Validate that user0 succesfully claims V1 WETH fees
-    await feeHandler.connect(user0).claimFees(ethers.constants.AddressZero, wnt.address, 1);
+    await feeHandler.connect(user0).claimFees(ethers.ZeroAddress, wnt.address, 1);
     expect(await wnt.balanceOf(feeHandler.address)).eq(expandDecimals(8, 15));
 
     // Validate that WETH WithdrawableBuybackTokenAmount equals claimed WETH fees * (1 - gmx buyback factor)

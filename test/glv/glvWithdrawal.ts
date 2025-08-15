@@ -90,7 +90,7 @@ describe("Glv Withdrawals", () => {
 
   describe("create glv withdrawal, validations", () => {
     let params;
-    const badAddress = ethers.constants.AddressZero.slice(0, -1) + "1";
+    const badAddress = ethers.ZeroAddress.slice(0, -1) + "1";
 
     beforeEach(async () => {
       params = {
@@ -125,7 +125,7 @@ describe("Glv Withdrawals", () => {
       await expect(
         createGlvWithdrawal(fixture, {
           ...params,
-          account: { address: ethers.constants.AddressZero },
+          account: { address: ethers.ZeroAddress },
           useGlvHandler: true,
         })
       ).to.be.revertedWithCustomError(errorsContract, "EmptyAccount");
@@ -133,7 +133,7 @@ describe("Glv Withdrawals", () => {
 
     it("EmptyReceiver", async () => {
       await expect(
-        createGlvWithdrawal(fixture, { ...params, receiver: { address: ethers.constants.AddressZero } })
+        createGlvWithdrawal(fixture, { ...params, receiver: { address: ethers.ZeroAddress } })
       ).to.be.revertedWithCustomError(errorsContract, "EmptyReceiver");
     });
 

@@ -208,7 +208,7 @@ describe("MultichainSubaccountRouter", () => {
         sendCreateOrder({
           ...createOrderParams,
           externalCalls: {
-            sendTokens: [ethers.constants.AddressZero],
+            sendTokens: [ethers.ZeroAddress],
             sendAmounts: [0],
             externalCallTargets: [user0.address],
             externalCallDataList: ["0x"],
@@ -357,7 +357,7 @@ describe("MultichainSubaccountRouter", () => {
     it("InvalidSubaccountApprovalSubaccount", async () => {
       const subaccountApproval = await getSubaccountApproval({
         subaccountApproval: {
-          subaccount: ethers.constants.AddressZero,
+          subaccount: ethers.ZeroAddress,
           shouldAdd: true,
           expiresAt: 9999999999,
           maxAllowedCount: 10,
@@ -871,7 +871,7 @@ describe("MultichainSubaccountRouter", () => {
         sendUpdateOrder({
           ...updateOrderParams,
           externalCalls: {
-            sendTokens: [ethers.constants.AddressZero],
+            sendTokens: [ethers.ZeroAddress],
             sendAmounts: [0],
             externalCallTargets: [user0.address],
             externalCallDataList: ["0x"],
@@ -1086,7 +1086,7 @@ describe("MultichainSubaccountRouter", () => {
         sendCancelOrder({
           ...cancelOrderParams,
           externalCalls: {
-            sendTokens: [ethers.constants.AddressZero],
+            sendTokens: [ethers.ZeroAddress],
             sendAmounts: [0],
             externalCallTargets: [user0.address],
             externalCallDataList: ["0x"],
@@ -1341,7 +1341,7 @@ describe("MultichainSubaccountRouter", () => {
       expect(await getOrderCount(dataStore)).eq(2);
 
       const orderAfter = await reader.getOrder(dataStore.address, orderKeys[0]);
-      expect(orderAfter.addresses.account).eq(ethers.constants.AddressZero);
+      expect(orderAfter.addresses.account).eq(ethers.ZeroAddress);
 
       const order2After = await reader.getOrder(dataStore.address, orderKeys[1]);
       expect(order2After.numbers.sizeDeltaUsd).eq(301);

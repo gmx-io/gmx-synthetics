@@ -19,7 +19,7 @@ async function main() {
   const markets = [...(await reader.getMarkets(dataStore.address, 0, 100))];
 
   for (const [, market] of markets.entries()) {
-    if (market.indexToken === hre.ethers.constants.AddressZero) {
+    if (market.indexToken === hre.ethers.ZeroAddress) {
       continue;
     }
     const indexTokenSymbol = addressToSymbol[market.indexToken];

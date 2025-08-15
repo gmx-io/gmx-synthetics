@@ -337,7 +337,7 @@ describe("GelatoRelayRouter", () => {
             sendAmounts: [1],
             externalCallTargets: [wnt.address],
             externalCallDataList: [
-              wnt.interface.encodeFunctionData("allowance", [GELATO_RELAY_ADDRESS, ethers.constants.AddressZero]) +
+              wnt.interface.encodeFunctionData("allowance", [GELATO_RELAY_ADDRESS, ethers.ZeroAddress]) +
                 new Array(extraCalldataLength)
                   .fill(null)
                   .map(() => {
@@ -380,7 +380,7 @@ describe("GelatoRelayRouter", () => {
           const userWntBalanceBefore = await wnt.balanceOf(user0.address);
           const marketToken =
             c.orderType == OrderType.MarketSwap || c.orderType == OrderType.LimitSwap
-              ? ethers.constants.AddressZero
+              ? ethers.ZeroAddress
               : defaultParams.addresses.market;
           createOrderParams.params.addresses.market = marketToken;
           const tx = await sendCreateOrder({
@@ -1518,7 +1518,7 @@ describe("GelatoRelayRouter", () => {
       expect(await getOrderCount(dataStore)).eq(2);
 
       const orderAfter = await reader.getOrder(dataStore.address, orderKeys[0]);
-      expect(orderAfter.addresses.account).eq(ethers.constants.AddressZero);
+      expect(orderAfter.addresses.account).eq(ethers.ZeroAddress);
 
       const order2After = await reader.getOrder(dataStore.address, orderKeys[1]);
       expect(order2After.numbers.sizeDeltaUsd).eq(301);

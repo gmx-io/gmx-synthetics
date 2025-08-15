@@ -98,7 +98,7 @@ export async function initOracleConfigForTokens({ write }) {
     }
 
     const initOracleConfigPriceFeedParams = {
-      feedAddress: token.priceFeed?.address ?? ethers.constants.AddressZero,
+      feedAddress: token.priceFeed?.address ?? ethers.ZeroAddress,
       multiplier: priceFeedMultiplier,
       heartbeatDuration: priceFeed?.heartbeatDuration ?? 0,
       stablePrice: priceFeed?.stablePrice ?? 0,
@@ -129,10 +129,7 @@ export async function initOracleConfigForTokens({ write }) {
       edge: initOracleConfigEdgeParams,
     };
 
-    if (
-      onchainConfig.priceFeed === ethers.constants.AddressZero &&
-      onchainConfig.dataStreamId === ethers.constants.AddressZero
-    ) {
+    if (onchainConfig.priceFeed === ethers.ZeroAddress && onchainConfig.dataStreamId === ethers.ZeroAddress) {
       console.log(`${multicallWriteParams.length}: init oracle config for ${tokenSymbol}`);
       multicallWriteParams.push(config.interface.encodeFunctionData("initOracleConfig", [initOracleConfigParams]));
     } else {
@@ -163,7 +160,7 @@ export async function initOracleConfigForTokens({ write }) {
     const onchainConfig = onchainOracleConfig[tokenSymbol];
     const oracleProviderAddress = await getOracleProviderAddress(token.oracleProvider);
 
-    if (onchainConfig.oracleProvider === ethers.constants.AddressZero) {
+    if (onchainConfig.oracleProvider === ethers.ZeroAddress) {
       console.log(`${multicallWriteParams.length}: update oracle provider for ${tokenSymbol}`);
       multicallWriteParams.push(
         config.interface.encodeFunctionData("initOracleProviderForToken", [
@@ -211,7 +208,7 @@ export async function validatePriceFeed(tokenSymbol: string, token: TokenConfig,
   const { priceFeed } = token;
   console.log(`validating price feed for ${tokenSymbol}. use SKIP_PRICE_FEED_VALIDATION=true to skip`);
 
-  if (!priceFeed || priceFeed.address === ethers.constants.AddressZero) {
+  if (!priceFeed || priceFeed.address === ethers.ZeroAddress) {
     return;
   }
 

@@ -125,12 +125,12 @@ describe("ClaimHandler", () => {
       const params = [{ account: user0.address, amount: expandDecimals(100, 18) }];
 
       await expect(
-        claimHandler.connect(wallet).depositFunds(ethers.constants.AddressZero, 1, params)
+        claimHandler.connect(wallet).depositFunds(ethers.ZeroAddress, 1, params)
       ).to.be.revertedWithCustomError(errorsContract, "EmptyToken");
     });
 
     it("should revert with EmptyAccount when account address is zero", async () => {
-      const params = [{ account: ethers.constants.AddressZero, amount: expandDecimals(100, 18) }];
+      const params = [{ account: ethers.ZeroAddress, amount: expandDecimals(100, 18) }];
 
       await expect(claimHandler.connect(wallet).depositFunds(wnt.address, 1, params)).to.be.revertedWithCustomError(
         errorsContract,
@@ -267,19 +267,19 @@ describe("ClaimHandler", () => {
     it("should revert with EmptyToken when token address is zero", async () => {
       const params = [{ account: user0.address, distributionId: 1 }];
       await expect(
-        claimHandler.connect(user0).withdrawFunds(ethers.constants.AddressZero, params, user1.address)
+        claimHandler.connect(user0).withdrawFunds(ethers.ZeroAddress, params, user1.address)
       ).to.be.revertedWithCustomError(errorsContract, "EmptyToken");
     });
 
     it("should revert with EmptyReceiver when receiver address is zero", async () => {
       const params = [{ account: user0.address, distributionId: 1 }];
       await expect(
-        claimHandler.connect(user0).withdrawFunds(wnt.address, params, ethers.constants.AddressZero)
+        claimHandler.connect(user0).withdrawFunds(wnt.address, params, ethers.ZeroAddress)
       ).to.be.revertedWithCustomError(errorsContract, "EmptyReceiver");
     });
 
     it("should revert with EmptyAccount when account address is zero", async () => {
-      const params = [{ account: ethers.constants.AddressZero, distributionId: 1 }];
+      const params = [{ account: ethers.ZeroAddress, distributionId: 1 }];
       await expect(
         claimHandler.connect(user0).withdrawFunds(wnt.address, params, user1.address)
       ).to.be.revertedWithCustomError(errorsContract, "EmptyAccount");
@@ -429,20 +429,20 @@ describe("ClaimHandler", () => {
     it("should revert with EmptyToken when token address is zero", async () => {
       const transferParams = [
         {
-          token: ethers.constants.AddressZero,
+          token: ethers.ZeroAddress,
           distributionId: 1,
           fromAccount: user0.address,
           toAccount: user1.address,
         },
       ];
       await expect(
-        claimHandler.connect(user0).transferClaim(ethers.constants.AddressZero, transferParams)
+        claimHandler.connect(user0).transferClaim(ethers.ZeroAddress, transferParams)
       ).to.be.revertedWithCustomError(errorsContract, "EmptyToken");
     });
 
     it("should revert with EmptyAccount when fromAccount address is zero", async () => {
       const transferParams = [
-        { token: wnt.address, distributionId: 1, fromAccount: ethers.constants.AddressZero, toAccount: user1.address },
+        { token: wnt.address, distributionId: 1, fromAccount: ethers.ZeroAddress, toAccount: user1.address },
       ];
       await expect(
         claimHandler.connect(user0).transferClaim(wnt.address, transferParams)
@@ -451,7 +451,7 @@ describe("ClaimHandler", () => {
 
     it("should revert with EmptyReceiver when toAccount address is zero", async () => {
       const transferParams = [
-        { token: wnt.address, distributionId: 1, fromAccount: user0.address, toAccount: ethers.constants.AddressZero },
+        { token: wnt.address, distributionId: 1, fromAccount: user0.address, toAccount: ethers.ZeroAddress },
       ];
       await expect(
         claimHandler.connect(user0).transferClaim(wnt.address, transferParams)
@@ -672,12 +672,12 @@ describe("ClaimHandler", () => {
     it("should revert with EmptyReceiver when receiver address is zero", async () => {
       const claimParams = [{ token: wnt.address, distributionId: 1, termsSignature: "0x" }];
       await expect(
-        claimHandler.connect(user0).claimFunds(claimParams, ethers.constants.AddressZero)
+        claimHandler.connect(user0).claimFunds(claimParams, ethers.ZeroAddress)
       ).to.be.revertedWithCustomError(errorsContract, "EmptyReceiver");
     });
 
     it("should revert with EmptyToken when token address is zero", async () => {
-      const claimParams = [{ token: ethers.constants.AddressZero, distributionId: 1, termsSignature: "0x" }];
+      const claimParams = [{ token: ethers.ZeroAddress, distributionId: 1, termsSignature: "0x" }];
       await expect(claimHandler.connect(user0).claimFunds(claimParams, user0.address)).to.be.revertedWithCustomError(
         errorsContract,
         "EmptyToken"

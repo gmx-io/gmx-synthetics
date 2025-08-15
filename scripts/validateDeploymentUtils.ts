@@ -1,8 +1,8 @@
 import axios from "axios";
 import hre, { ethers } from "hardhat";
+import { JsonRpcProvider } from "ethers";
 import * as fs from "fs";
 import * as path from "path";
-import { JsonRpcProvider } from "@ethersproject/providers";
 import { getIsGmxDeployer } from "./validateRolesUtils";
 import { execSync } from "child_process";
 import { getContractCreationFromEtherscan } from "./etherscanUtils";

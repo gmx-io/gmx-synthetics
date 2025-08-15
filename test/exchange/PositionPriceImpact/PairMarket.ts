@@ -819,7 +819,7 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
         positionKey0,
         marketPrices,
         decimalToFloat(200_000),
-        ethers.constants.AddressZero,
+        ethers.ZeroAddress,
         false
       ),
       (positionInfo) => {
@@ -864,7 +864,7 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
         positionKey0,
         marketPrices,
         decimalToFloat(300_000),
-        ethers.constants.AddressZero,
+        ethers.ZeroAddress,
         false
       ),
       (positionInfo) => {
@@ -922,7 +922,7 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
         positionKey0,
         marketPrices,
         decimalToFloat(150_000),
-        ethers.constants.AddressZero,
+        ethers.ZeroAddress,
         false
       ),
       (positionInfo) => {

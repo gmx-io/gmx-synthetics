@@ -50,7 +50,7 @@ describe("Exchange.DecreasePosition", () => {
         positionKey0,
         prices.ethUsdMarket,
         0,
-        ethers.constants.AddressZero,
+        ethers.ZeroAddress,
         true
       ),
       (positionInfo) => {
@@ -102,7 +102,7 @@ describe("Exchange.DecreasePosition", () => {
         positionKey0,
         prices.ethUsdMarket,
         0,
-        ethers.constants.AddressZero,
+        ethers.ZeroAddress,
         true
       ),
       (positionInfo) => {

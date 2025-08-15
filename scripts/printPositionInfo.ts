@@ -206,7 +206,7 @@ async function main() {
       positionKey,
       prices as any,
       0,
-      ethers.constants.AddressZero,
+      ethers.ZeroAddress,
       true,
       { blockTag }
     );

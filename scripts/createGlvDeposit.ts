@@ -90,8 +90,8 @@ async function main() {
       market: "0xb6fC4C9eB02C35A134044526C62bb15014Ac0Bcc", // { indexToken: "WETH", longToken: "WETH", shortToken: "USDC.SG" }
       // market: "0xAde9D177B9E060D2064ee9F798125e6539fDaA1c", // { indexToken: "CRV", longToken: "WETH", shortToken: "USDC.SG" }
       receiver: wallet.address,
-      callbackContract: ethers.constants.AddressZero,
-      uiFeeReceiver: ethers.constants.AddressZero,
+      callbackContract: ethers.ZeroAddress,
+      uiFeeReceiver: ethers.ZeroAddress,
       initialLongToken: wnt.address,
       initialShortToken: usdc.address,
       longTokenSwapPath: [],

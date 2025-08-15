@@ -19,8 +19,8 @@ const stablecoinSymbols = {
 const BASIS_POINTS_DIVISOR = 10_000;
 
 const recommendedStablecoinSwapConfig = {
-  negativeSwapImpactFactor: decimalToFloat(1, 9).div(2),
-  negativePositionImpactFactor: decimalToFloat(1, 9).div(2),
+  negativeSwapImpactFactor: decimalToFloat(1, 9) / BigInt(2),
+  negativePositionImpactFactor: decimalToFloat(1, 9) / BigInt(2),
   expectedSwapImpactRatio: 10_000,
 };
 
@@ -483,44 +483,44 @@ const recommendedMarketConfig = {
   },
   avalanche: {
     "BTC.b": {
-      negativePositionImpactFactor: exponentToFloat("5e-11").div(2),
-      negativeSwapImpactFactor: exponentToFloat("5e-11").div(2),
+      negativePositionImpactFactor: exponentToFloat("5e-11") / BigInt(2),
+      negativeSwapImpactFactor: exponentToFloat("5e-11") / BigInt(2),
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 16_666,
     },
     "WETH.e": {
-      negativePositionImpactFactor: exponentToFloat("5e-11").div(2),
-      negativeSwapImpactFactor: exponentToFloat("5e-11").div(2),
+      negativePositionImpactFactor: exponentToFloat("5e-11") / BigInt(2),
+      negativeSwapImpactFactor: exponentToFloat("5e-11") / BigInt(2),
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 16_666,
     },
     WAVAX: {
-      negativePositionImpactFactor: exponentToFloat("1e-8").div(2),
-      negativeSwapImpactFactor: exponentToFloat("5e-9").div(2),
+      negativePositionImpactFactor: exponentToFloat("1e-8") / BigInt(2),
+      negativeSwapImpactFactor: exponentToFloat("5e-9") / BigInt(2),
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
     },
     LTC: {
-      negativePositionImpactFactor: exponentToFloat("8e-9").div(2),
-      negativeSwapImpactFactor: exponentToFloat("8e-9").div(2),
+      negativePositionImpactFactor: exponentToFloat("8e-9") / BigInt(2),
+      negativeSwapImpactFactor: exponentToFloat("8e-9") / BigInt(2),
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
     },
     DOGE: {
-      negativePositionImpactFactor: exponentToFloat("8e-9").div(2),
-      negativeSwapImpactFactor: exponentToFloat("8e-9").div(2),
+      negativePositionImpactFactor: exponentToFloat("8e-9") / BigInt(2),
+      negativeSwapImpactFactor: exponentToFloat("8e-9") / BigInt(2),
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
     },
     SOL: {
-      negativePositionImpactFactor: exponentToFloat("5e-9").div(2),
-      negativeSwapImpactFactor: exponentToFloat("5e-9").div(2),
+      negativePositionImpactFactor: exponentToFloat("5e-9") / BigInt(2),
+      negativeSwapImpactFactor: exponentToFloat("5e-9") / BigInt(2),
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
     },
     XRP: {
-      negativePositionImpactFactor: exponentToFloat("5e-9").div(2),
-      negativeSwapImpactFactor: exponentToFloat("5e-9").div(2),
+      negativePositionImpactFactor: exponentToFloat("5e-9") / BigInt(2),
+      negativeSwapImpactFactor: exponentToFloat("5e-9") / BigInt(2),
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
     },
@@ -570,13 +570,13 @@ const recommendedMarketConfig = {
     },
     "BTC:stBTC:USDC.e": {
       negativePositionImpactFactor: 0,
-      negativeSwapImpactFactor: exponentToFloat("5e-9").div(2),
+      negativeSwapImpactFactor: exponentToFloat("5e-9") / BigInt(2),
       expectedSwapImpactRatio: 10_000,
       expectedPositionImpactRatio: 10_000,
     },
     stBTC: {
       expectedSwapImpactRatio: 10_000,
-      negativeSwapImpactFactor: exponentToFloat("5e-9").div(2),
+      negativeSwapImpactFactor: exponentToFloat("5e-9") / BigInt(2),
     },
   },
 };
@@ -591,8 +591,9 @@ function getTradeSizeForImpact({ priceImpactBps, impactExponentFactor, impactFac
   if (bigNumberify(0).eq(impactFactor)) {
     return bigNumberify(0);
   }
-  const exponent = 1 / (impactExponentFactor.div(decimalToFloat(1, 2)).toNumber() / 100 - 1);
-  const base = bigNumberify(priceImpactBps).mul(decimalToFloat(1)).div(10_000).div(impactFactor).toNumber();
+  const exponent = 1 / (impactExponentFactor / BigInt(decimalToFloat(1, 2)).toNumber() / 100 - 1);
+  const base =
+    (bigNumberify(priceImpactBps) * BigInt(decimalToFloat(1))) / BigInt(10_000) / BigInt(impactFactor).toNumber();
 
   const tradeSize = Math.pow(base, exponent);
 
@@ -777,9 +778,9 @@ async function validatePerpConfig({
   }
 
   if (bigNumberify(recommendedPerpConfig.negativePositionImpactFactor).gt(0)) {
-    const percentageOfPerpImpactRecommendation = bigNumberify(negativePositionImpactFactor)
-      .mul(100)
-      .div(recommendedPerpConfig.negativePositionImpactFactor);
+    const percentageOfPerpImpactRecommendation =
+      (bigNumberify(negativePositionImpactFactor) * BigInt(100)) /
+      BigInt(recommendedPerpConfig.negativePositionImpactFactor);
 
     console.log(
       `    Position impact compared to recommendation: ${
@@ -817,7 +818,8 @@ async function validatePerpConfig({
   }
 
   if (negativePositionImpactFactor.gt(0) && positivePositionImpactFactor.gt(0)) {
-    const impactRatio = negativePositionImpactFactor.mul(BASIS_POINTS_DIVISOR).div(positivePositionImpactFactor);
+    const impactRatio =
+      (negativePositionImpactFactor * BigInt(BASIS_POINTS_DIVISOR)) / BigInt(positivePositionImpactFactor);
     if (impactRatio.lt(recommendedPerpConfig.expectedPositionImpactRatio)) {
       console.error(
         "invalid position impact factors ratio is %s expected ratio %s",
@@ -860,13 +862,12 @@ async function validatePerpConfig({
     );
   }
 
-  const maxLongTokenPoolUsdBasedOnMaxOpenInterest = maxOpenInterestForLongs
-    .mul(FLOAT_PRECISION)
-    .div(openInterestReserveFactorLongs);
-  const maxBorrowingFactorForLongsPerYear = pow(maxOpenInterestForLongs, borrowingExponentFactorForLongs)
-    .mul(borrowingFactorForLongs)
-    .div(maxLongTokenPoolUsdBasedOnMaxOpenInterest)
-    .mul(SECONDS_PER_YEAR);
+  const maxLongTokenPoolUsdBasedOnMaxOpenInterest =
+    (maxOpenInterestForLongs * BigInt(FLOAT_PRECISION)) / BigInt(openInterestReserveFactorLongs);
+  const maxBorrowingFactorForLongsPerYear =
+    ((pow(maxOpenInterestForLongs, borrowingExponentFactorForLongs) * BigInt(borrowingFactorForLongs)) /
+      BigInt(maxLongTokenPoolUsdBasedOnMaxOpenInterest)) *
+    BigInt(SECONDS_PER_YEAR);
 
   if (maxBorrowingFactorForLongsPerYear.gt(decimalToFloat(15, 1))) {
     throw new Error("maxBorrowingFactorForLongsPerYear is more than 150%");
@@ -874,13 +875,12 @@ async function validatePerpConfig({
 
   console.log(`    maxBorrowingFactorForLongsPerYear: ${formatAmount(maxBorrowingFactorForLongsPerYear, 28)}%`);
 
-  const maxShortTokenPoolUsdBasedOnMaxOpenInterest = maxOpenInterestForShorts
-    .mul(FLOAT_PRECISION)
-    .div(openInterestReserveFactorShorts);
-  const maxBorrowingFactorForShortsPerYear = pow(maxOpenInterestForShorts, borrowingExponentFactorForShorts)
-    .mul(borrowingFactorForShorts)
-    .div(maxShortTokenPoolUsdBasedOnMaxOpenInterest)
-    .mul(SECONDS_PER_YEAR);
+  const maxShortTokenPoolUsdBasedOnMaxOpenInterest =
+    (maxOpenInterestForShorts * BigInt(FLOAT_PRECISION)) / BigInt(openInterestReserveFactorShorts);
+  const maxBorrowingFactorForShortsPerYear =
+    ((pow(maxOpenInterestForShorts, borrowingExponentFactorForShorts) * BigInt(borrowingFactorForShorts)) /
+      BigInt(maxShortTokenPoolUsdBasedOnMaxOpenInterest)) *
+    BigInt(SECONDS_PER_YEAR);
 
   if (maxBorrowingFactorForShortsPerYear.gt(decimalToFloat(15, 1))) {
     throw new Error("maxBorrowingFactorForShortsPerYear is more than 150%");
@@ -901,7 +901,7 @@ async function validatePerpConfig({
     baseBorrowingFactorForLongs,
     baseBorrowingFactorForShorts,
   })) {
-    if (value.mul(SECONDS_PER_YEAR).gt(decimalToFloat(1))) {
+    if (value * BigInt(SECONDS_PER_YEAR).gt(decimalToFloat(1))) {
       throw new Error(`${key} is more than 100% annualized`);
     }
   }
@@ -910,7 +910,7 @@ async function validatePerpConfig({
     aboveOptimalUsageBorrowingFactorForLongs,
     aboveOptimalUsageBorrowingFactorForShorts,
   })) {
-    if (value.mul(SECONDS_PER_YEAR).gt(decimalToFloat(3))) {
+    if (value * BigInt(SECONDS_PER_YEAR).gt(decimalToFloat(3))) {
       throw new Error(`${key} is more than 300% annualized`);
     }
   }
@@ -919,7 +919,7 @@ async function validatePerpConfig({
     throw new Error("fundingExponentFactor != 1");
   }
 
-  const maxFundingFactorPerYear = fundingFactor.mul(SECONDS_PER_YEAR);
+  const maxFundingFactorPerYear = fundingFactor * BigInt(SECONDS_PER_YEAR);
 
   if (maxFundingFactorPerYear.gt(decimalToFloat(1))) {
     throw new Error("maxFundingFactorPerYear is more than 100%");
@@ -1009,9 +1009,8 @@ async function validateSwapConfig({
     ({ negativeSwapImpactFactor, positiveSwapImpactFactor, swapImpactExponentFactor } = bigNumberResults);
   }
 
-  const percentageOfSwapImpactRecommendation = negativeSwapImpactFactor
-    .mul(100)
-    .div(recommendedSwapConfig.negativeSwapImpactFactor);
+  const percentageOfSwapImpactRecommendation =
+    (negativeSwapImpactFactor * BigInt(100)) / BigInt(recommendedSwapConfig.negativeSwapImpactFactor);
 
   console.log(
     `    Swap impact compared to recommendation: ${
@@ -1043,7 +1042,7 @@ async function validateSwapConfig({
     );
   }
 
-  const impactRatio = negativeSwapImpactFactor.mul(BASIS_POINTS_DIVISOR).div(positiveSwapImpactFactor);
+  const impactRatio = (negativeSwapImpactFactor * BigInt(BASIS_POINTS_DIVISOR)) / BigInt(positiveSwapImpactFactor);
   if (impactRatio.lt(recommendedSwapConfig.expectedSwapImpactRatio)) {
     throw new Error(
       `Invalid swap impact factors for ${indexTokenSymbol}[${longTokenSymbol}-${shortTokenSymbol}]: ${impactRatio} expected ${recommendedSwapConfig.expectedSwapImpactRatio} negativeSwapImpactFactor ${negativeSwapImpactFactor} positiveSwapImpactFactor ${positiveSwapImpactFactor}`

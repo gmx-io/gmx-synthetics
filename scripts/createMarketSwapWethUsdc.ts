@@ -80,8 +80,8 @@ async function main() {
   const params: BaseOrderUtils.CreateOrderParamsStruct = {
     addresses: {
       receiver: wallet.address,
-      callbackContract: ethers.constants.AddressZero,
-      market: ethers.constants.AddressZero,
+      callbackContract: ethers.ZeroAddress,
+      market: ethers.ZeroAddress,
       initialCollateralToken: weth.address,
       swapPath: [wethUsdMarketAddress],
     },

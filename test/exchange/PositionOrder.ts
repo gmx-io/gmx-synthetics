@@ -11,7 +11,7 @@ import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
 
 describe("Exchange.PositionOrder", () => {
-  const { AddressZero, HashZero } = ethers.constants;
+  const { ZeroAddress, ZeroHash } = ethers;
 
   let fixture;
   let user0, user1;
@@ -93,7 +93,7 @@ describe("Exchange.PositionOrder", () => {
 
     await dataStore.setBool(_createOrderFeatureDisabledKey, false);
 
-    await expect(createOrder(fixture, { ...params, account: { address: AddressZero } })).to.be.revertedWithCustomError(
+    await expect(createOrder(fixture, { ...params, account: { address: ZeroAddress } })).to.be.revertedWithCustomError(
       errorsContract,
       "EmptyAccount"
     );
@@ -204,7 +204,7 @@ describe("Exchange.PositionOrder", () => {
         ...params,
         market: ethUsdMarket,
         swapPath: [],
-        receiver: { address: AddressZero },
+        receiver: { address: ZeroAddress },
         initialCollateralToken: usdc,
         initialCollateralDeltaAmount: bigNumberify(0),
         executionFee: "200",
@@ -298,7 +298,7 @@ describe("Exchange.PositionOrder", () => {
 
     await referralStorage.connect(user1).registerCode(referralCode);
 
-    expect(await referralStorage.traderReferralCodes(user0.address)).eq(HashZero);
+    expect(await referralStorage.traderReferralCodes(user0.address)).eq(ZeroHash);
 
     await createOrder(fixture, params);
 

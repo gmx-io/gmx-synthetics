@@ -170,8 +170,8 @@ describe("Guardian.Glv", () => {
         marketTokenAmount: expandDecimals(1000, 18),
         market: ethUsdMarket,
         isMarketTokenDeposit: true,
-        initialLongToken: ethers.constants.AddressZero,
-        initialShortToken: ethers.constants.AddressZero,
+        initialLongToken: ethers.ZeroAddress,
+        initialShortToken: ethers.ZeroAddress,
       },
       execute: {
         minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(100, 5)],
@@ -354,8 +354,8 @@ describe("Guardian.Glv", () => {
         marketTokenAmount: expandDecimals(1000, 18),
         market: ethUsdMarket,
         isMarketTokenDeposit: true,
-        initialLongToken: ethers.constants.AddressZero,
-        initialShortToken: ethers.constants.AddressZero,
+        initialLongToken: ethers.ZeroAddress,
+        initialShortToken: ethers.ZeroAddress,
       },
       execute: {
         minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(100, 5)],

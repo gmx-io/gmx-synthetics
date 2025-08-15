@@ -91,8 +91,8 @@ async function main() {
   const params: DepositUtils.CreateDepositParamsStruct = {
     addresses: {
       receiver: wallet.address,
-      callbackContract: ethers.constants.AddressZero,
-      uiFeeReceiver: ethers.constants.AddressZero,
+      callbackContract: ethers.ZeroAddress,
+      uiFeeReceiver: ethers.ZeroAddress,
       market: syntheticMarketAddress,
       initialLongToken: weth.address,
       initialShortToken: usdc.address,

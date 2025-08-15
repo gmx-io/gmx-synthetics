@@ -75,7 +75,7 @@ export async function isErc777Token(tokenAddress) {
 
   const implementer = await registry.getInterfaceImplementer(tokenAddress, ERC777_INTERFACE_HASH);
 
-  return implementer !== ethers.constants.AddressZero;
+  return implementer !== ethers.ZeroAddress;
 }
 
 function parseAddress(slot) {

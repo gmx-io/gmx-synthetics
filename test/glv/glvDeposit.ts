@@ -24,7 +24,7 @@ import { expectBalances } from "../../utils/validation";
 
 describe("Glv Deposits", () => {
   const { provider } = ethers;
-  const { AddressZero } = ethers.constants;
+  const { ZeroAddress } = ethers;
 
   let fixture;
   let user0, user1, user2;
@@ -92,7 +92,7 @@ describe("Glv Deposits", () => {
 
   describe("create glv deposit, validations", () => {
     let params;
-    const badAddress = ethers.constants.AddressZero.slice(0, -1) + "1";
+    const badAddress = ethers.ZeroAddress.slice(0, -1) + "1";
 
     beforeEach(async () => {
       params = {
@@ -130,7 +130,7 @@ describe("Glv Deposits", () => {
       await expect(
         createGlvDeposit(fixture, {
           ...params,
-          account: { address: ethers.constants.AddressZero },
+          account: { address: ethers.ZeroAddress },
           useGlvHandler: true,
         })
       ).to.be.revertedWithCustomError(errorsContract, "EmptyAccount");
@@ -138,7 +138,7 @@ describe("Glv Deposits", () => {
 
     it("EmptyReceiver", async () => {
       await expect(
-        createGlvDeposit(fixture, { longTokenAmount: 1, receiver: { address: ethers.constants.AddressZero } })
+        createGlvDeposit(fixture, { longTokenAmount: 1, receiver: { address: ethers.ZeroAddress } })
       ).to.be.revertedWithCustomError(errorsContract, "EmptyReceiver");
     });
 
@@ -172,7 +172,7 @@ describe("Glv Deposits", () => {
     });
 
     it("InvalidGlvDepositInitialShortToken", async () => {
-      await expect(createGlvDeposit(fixture, { ...params, isMarketTokenDeposit: true, initialLongToken: AddressZero }))
+      await expect(createGlvDeposit(fixture, { ...params, isMarketTokenDeposit: true, initialLongToken: ZeroAddress }))
         .to.be.revertedWithCustomError(errorsContract, "InvalidGlvDepositInitialShortToken")
         .withArgs(ethUsdMarket.shortToken);
     });
@@ -181,8 +181,8 @@ describe("Glv Deposits", () => {
       await expect(
         createGlvDeposit(fixture, {
           ...params,
-          initialLongToken: AddressZero,
-          initialShortToken: AddressZero,
+          initialLongToken: ZeroAddress,
+          initialShortToken: ZeroAddress,
           longTokenSwapPath: [ethUsdMarket.marketToken],
           shortTokenSwapPath: [ethUsdMarket.marketToken, btcUsdMarket.marketToken],
           isMarketTokenDeposit: true,
@@ -236,8 +236,8 @@ describe("Glv Deposits", () => {
       receiver: user1,
       callbackContract: user2,
       market: ethUsdMarket,
-      initialLongToken: AddressZero,
-      initialShortToken: AddressZero,
+      initialLongToken: ZeroAddress,
+      initialShortToken: ZeroAddress,
       longTokenSwapPath: [],
       shortTokenSwapPath: [],
       minGlvTokens: 100,
@@ -554,8 +554,8 @@ describe("Glv Deposits", () => {
         market: ethUsdMarket,
         marketTokenAmount: expandDecimals(5_000, 18),
         isMarketTokenDeposit: true,
-        initialLongToken: AddressZero,
-        initialShortToken: AddressZero,
+        initialLongToken: ZeroAddress,
+        initialShortToken: ZeroAddress,
       },
     });
 
@@ -574,8 +574,8 @@ describe("Glv Deposits", () => {
         market: solUsdMarket,
         marketTokenAmount: expandDecimals(5_000, 18),
         isMarketTokenDeposit: true,
-        initialLongToken: AddressZero,
-        initialShortToken: AddressZero,
+        initialLongToken: ZeroAddress,
+        initialShortToken: ZeroAddress,
       },
     });
 
@@ -937,8 +937,8 @@ describe("Glv Deposits", () => {
       receiver: user1,
       market: ethUsdMarket,
       callbackContract: user2,
-      initialLongToken: AddressZero,
-      initialShortToken: AddressZero,
+      initialLongToken: ZeroAddress,
+      initialShortToken: ZeroAddress,
       longTokenSwapPath: [],
       shortTokenSwapPath: [],
       minGlvTokens: 100,

@@ -573,7 +573,7 @@ describe("MultichainGmRouter", () => {
           actionType,
           chainId, // desChainId
           deadline,
-          ethers.constants.AddressZero, // provider (can be the zero address since the tokens are transferred directly to the user's wallet on the same chain)
+          ethers.ZeroAddress, // provider (can be the zero address since the tokens are transferred directly to the user's wallet on the same chain)
           providerData,
           0 // minAmountOut
         );
@@ -650,10 +650,10 @@ describe("MultichainGmRouter", () => {
           actionType,
           chainId, // desChainId
           deadline,
-          ethers.constants.AddressZero, // provider (can be the zero address since the tokens are transferred directly to the user's wallet on the same chain)
+          ethers.ZeroAddress, // provider (can be the zero address since the tokens are transferred directly to the user's wallet on the same chain)
           providerData,
           0, // minAmountOut
-          ethers.constants.AddressZero, // secondaryProvider
+          ethers.ZeroAddress, // secondaryProvider
           providerData,
           0 // secondaryMinAmountOut
         );
@@ -746,7 +746,7 @@ describe("MultichainGmRouter", () => {
 
       expect(await getShiftCount(dataStore)).eq(0);
       shift = await reader.getShift(dataStore.address, shiftKeys[0]);
-      expect(shift.addresses.account).eq(ethers.constants.AddressZero);
+      expect(shift.addresses.account).eq(ethers.ZeroAddress);
 
       expect(await getBalanceOf(ethUsdMarket.marketToken, multichainVault.address)).eq(expandDecimals(45_000, 18)); // 95k - 50k
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, ethUsdMarket.marketToken))).to.eq(
