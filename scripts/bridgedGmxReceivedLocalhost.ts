@@ -8,7 +8,7 @@ import * as feeDistributorConfig from "../utils/feeDistributor";
 import * as keys from "../utils/keys";
 
 async function main() {
-  const options = Options.newOptions().addExecutorLzReceiveOption(65000, 0).toHex().toString();
+  const options = Options.newOptions().addExecutorLzReceiveOption(300000, 0).toHex().toString();
   const eidA = 1000,
     eidB = 2000,
     eidC = 3000;
