@@ -14,7 +14,7 @@ import {
   requestPrices,
   requestSubgraph,
   saveDistribution,
-} from "./helpers";
+} from "../helpers";
 import { toLoggableObject } from "../../utils/print";
 import { setTimeout } from "timers/promises";
 

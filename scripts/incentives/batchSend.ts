@@ -8,7 +8,7 @@ import { range } from "lodash";
 import { bigNumberify, formatAmount } from "../../utils/math";
 import path from "path";
 import BatchSenderAbi from "./abi/BatchSender";
-import { getChainId, getDistributionTypeName } from "./helpers";
+import { getChainId, getDistributionTypeName } from "../helpers";
 import { setTimeout } from "timers/promises";
 
 /*

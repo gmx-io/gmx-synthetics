@@ -26,12 +26,17 @@ import { expectBalance } from "../../utils/validation";
 import { executeLiquidation } from "../../utils/liquidation";
 import { executeAdl, updateAdlState } from "../../utils/adl";
 import { bridgeInTokens } from "../../utils/multichain";
+import { errorsContract } from "../../utils/error";
+import { getRelayParams } from "../../utils/relay/helpers";
+import { getCreateOrderSignature } from "../../utils/relay/signatures";
 
 describe("MultichainOrderRouter", () => {
   let fixture;
   let user0, user1, user2;
   let reader,
     dataStore,
+    orderVault,
+    multichainVault,
     multichainOrderRouter,
     ethUsdMarket,
     wethPriceFeed,
@@ -51,6 +56,8 @@ describe("MultichainOrderRouter", () => {
     ({
       reader,
       dataStore,
+      orderVault,
+      multichainVault,
       multichainOrderRouter,
       ethUsdMarket,
       wethPriceFeed,
@@ -332,6 +339,109 @@ describe("MultichainOrderRouter", () => {
         "1922882983383064",
         expandDecimals(1, 12)
       ); // ~ 0.0019 ETH
+    });
+
+    it("should revert if signature is invalid due to incorrect signer", async () => {
+      await bridgeInTokens(fixture, { account: user1, amount: collateralDeltaAmount.add(feeAmount) });
+
+      createOrderParams.signer = user2; // incorrect signer
+      await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidRecoveredSigner"
+      );
+
+      createOrderParams.signer = user1; // correct signer
+      await expect(sendCreateOrder(createOrderParams)).to.not.be.reverted;
+    });
+
+    it("should transfer WNT to relayer for relay fee", async () => {
+      await bridgeInTokens(fixture, { account: user1, amount: collateralDeltaAmount.add(feeAmount) });
+      const relayInitial = await wnt.balanceOf(GELATO_RELAY_ADDRESS);
+      await sendCreateOrder(createOrderParams);
+      const relayFinal = await wnt.balanceOf(GELATO_RELAY_ADDRESS);
+      expect(relayFinal).eq(relayInitial.add(relayFeeAmount));
+    });
+
+    it("should revert if deadline has passed", async () => {
+      await bridgeInTokens(fixture, { account: user1, amount: collateralDeltaAmount.add(feeAmount) });
+
+      createOrderParams.deadline = 1; // past deadline
+      await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(errorsContract, "DeadlinePassed");
+
+      createOrderParams.deadline = 9999999999; // future deadline
+      await expect(sendCreateOrder(createOrderParams)).to.not.be.reverted;
+    });
+
+    it("should revert if any data in params is tampered", async () => {
+      await bridgeInTokens(fixture, { account: user1, amount: collateralDeltaAmount.add(feeAmount) });
+
+      createOrderParams.userNonce = 1; // set value upfront to have the same user nonce for relayParams here and when recalculated in sendCreateOrder
+      const relayParams = await getRelayParams(createOrderParams);
+      const signature = await getCreateOrderSignature({
+        ...createOrderParams,
+        relayParams,
+        verifyingContract: createOrderParams.relayRouter.address,
+      });
+      createOrderParams.signature = signature;
+
+      createOrderParams.params.numbers.minOutputAmount = 699; // tamper a param field
+      await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidRecoveredSigner"
+      );
+
+      createOrderParams.params.numbers.minOutputAmount = 700; // use the original value again
+      await expect(sendCreateOrder(createOrderParams)).to.not.be.reverted;
+    });
+
+    it("should revert if fee cannot be covered", async () => {
+      await bridgeInTokens(fixture, { account: user1, amount: collateralDeltaAmount.add(feeAmount.sub(1)) }); // missing 1 wei
+      await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InsufficientMultichainBalance"
+      );
+
+      await bridgeInTokens(fixture, { account: user1, amount: 1 }); // top-up the missing 1 wei
+      await expect(sendCreateOrder(createOrderParams)).to.not.be.reverted;
+    });
+
+    it("should transfer tokens from MultichainVault to OrderVault", async () => {
+      await bridgeInTokens(fixture, { account: user1, amount: collateralDeltaAmount.add(feeAmount) });
+
+      expect(await wnt.balanceOf(multichainVault.address)).to.eq(collateralDeltaAmount.add(feeAmount));
+      expect(await wnt.balanceOf(orderVault.address)).to.eq(0);
+
+      await sendCreateOrder(createOrderParams);
+
+      expect(await wnt.balanceOf(multichainVault.address)).to.eq(0); // transferred out
+      expect(await wnt.balanceOf(orderVault.address)).to.eq(collateralDeltaAmount.add(executionFee)); // transferred in
+      expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(relayFeeAmount); // transferred in
+    });
+
+    it("should revert if same params are reused (simulate replay)", async () => {
+      await bridgeInTokens(fixture, { account: user1, amount: collateralDeltaAmount.add(feeAmount) });
+
+      createOrderParams.userNonce = 1; // set value upfront to have the same user nonce for relayParams here and when recalculated in sendCreateOrder
+      const relayParams = await getRelayParams(createOrderParams);
+      const signature = await getCreateOrderSignature({
+        ...createOrderParams,
+        relayParams,
+        verifyingContract: createOrderParams.relayRouter.address,
+      });
+      createOrderParams.signature = signature;
+      await sendCreateOrder(createOrderParams);
+
+      await bridgeInTokens(fixture, { account: user1, amount: collateralDeltaAmount.add(feeAmount) });
+      // reuse exact same params and signature
+      await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidUserDigest"
+      );
+
+      // reset nonce and signature (sendCreateOrder will recalculate them)
+      createOrderParams.userNonce = undefined;
+      createOrderParams.signature = undefined;
+      await expect(sendCreateOrder(createOrderParams)).to.not.be.reverted;
     });
   });
 

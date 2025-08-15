@@ -17,6 +17,7 @@ export async function initOracleConfigForTokens({ write }) {
   const dataStore = await hre.ethers.getContract("DataStore");
   const multicall = await hre.ethers.getContract("Multicall3");
   const config = await hre.ethers.getContract("Config");
+  const oracle = await hre.ethers.getContract("Oracle");
 
   const multicallReadParams = [];
 
@@ -45,7 +46,7 @@ export async function initOracleConfigForTokens({ write }) {
       target: dataStore.address,
       allowFailure: false,
       callData: dataStore.interface.encodeFunctionData("getAddress", [
-        getFullKey(keys.ORACLE_PROVIDER_FOR_TOKEN, encodeData(["address"], [token.address])),
+        getFullKey(keys.ORACLE_PROVIDER_FOR_TOKEN, encodeData(["address", "address"], [oracle.address, token.address])),
       ]),
     });
 
@@ -128,7 +129,15 @@ export async function initOracleConfigForTokens({ write }) {
       edge: initOracleConfigEdgeParams,
     };
 
-    multicallWriteParams.push(config.interface.encodeFunctionData("initOracleConfig", [initOracleConfigParams]));
+    if (
+      onchainConfig.priceFeed === ethers.constants.AddressZero &&
+      onchainConfig.dataStreamId === ethers.constants.AddressZero
+    ) {
+      console.log(`${multicallWriteParams.length}: init oracle config for ${tokenSymbol}`);
+      multicallWriteParams.push(config.interface.encodeFunctionData("initOracleConfig", [initOracleConfigParams]));
+    } else {
+      console.log(`skipping priceFeed and dataStream update for ${tokenSymbol}`);
+    }
 
     if (
       token.oracleTimestampAdjustment !== undefined &&
@@ -136,7 +145,7 @@ export async function initOracleConfigForTokens({ write }) {
     ) {
       const oracleProviderAddress = await getOracleProviderAddress(token.oracleProvider);
       console.log(
-        `set oracle timestamp adjustment ${oracleProviderAddress} ${tokenSymbol} ${token.oracleTimestampAdjustment}`
+        `${multicallWriteParams.length}: set oracle timestamp adjustment ${oracleProviderAddress} ${tokenSymbol} ${token.oracleTimestampAdjustment}`
       );
 
       multicallWriteParams.push(
@@ -154,11 +163,17 @@ export async function initOracleConfigForTokens({ write }) {
     const onchainConfig = onchainOracleConfig[tokenSymbol];
     const oracleProviderAddress = await getOracleProviderAddress(token.oracleProvider);
 
-    if (onchainConfig.oracleProvider.toLowerCase() !== oracleProviderAddress.toLowerCase()) {
-      console.log(`update oracle provider for ${tokenSymbol}`);
+    if (onchainConfig.oracleProvider === ethers.constants.AddressZero) {
+      console.log(`${multicallWriteParams.length}: update oracle provider for ${tokenSymbol}`);
       multicallWriteParams.push(
-        config.interface.encodeFunctionData("initOracleProviderForToken", [token.address, oracleProviderAddress])
+        config.interface.encodeFunctionData("initOracleProviderForToken", [
+          oracle.address,
+          token.address,
+          oracleProviderAddress,
+        ])
       );
+    } else {
+      console.log(`skipping update oracle provider for ${tokenSymbol}`);
     }
   }
 
@@ -180,6 +195,7 @@ export async function initOracleConfigForTokens({ write }) {
 
   if (write) {
     const tx = await config.multicall(multicallWriteParams);
+
     console.log(`tx sent: ${tx.hash}`);
   } else {
     console.log("NOTE: executed in read-only mode, no transactions were sent");

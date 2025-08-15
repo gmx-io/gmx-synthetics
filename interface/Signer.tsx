@@ -11,6 +11,7 @@ import "./Signer.css";
 
 const fetcher = (...args) => fetch(...args).then((res) => res.json());
 
+// configuration for the chains is also in app.tsx
 function getTransactionLink(chainId, transactionHash) {
   if (chainId === 42161) {
     return `https://arbiscan.io/tx/${transactionHash}`;
@@ -18,6 +19,10 @@ function getTransactionLink(chainId, transactionHash) {
 
   if (chainId === 43114) {
     return `https://snowtrace.io/tx/${transactionHash}`;
+  }
+
+  if (chainId === 3637) {
+    return `https://botanixscan.io/tx/${transactionHash}`;
   }
 
   console.log("unsupported chainId", chainId);

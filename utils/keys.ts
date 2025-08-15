@@ -322,6 +322,7 @@ export const FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_FACTOR = hashString("FEE_DISTRIBUTO
 export const FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP = hashString("FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP");
 export const FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID = hashString("FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID");
 export const FEE_DISTRIBUTOR_ADDRESS_INFO = hashString("FEE_DISTRIBUTOR_ADDRESS_INFO");
+export const FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN = hashString("FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN");
 export const FEE_DISTRIBUTOR_KEEPER_COSTS = hashString("FEE_DISTRIBUTOR_KEEPER_COSTS");
 export const FEE_DISTRIBUTOR_CHAINLINK_FACTOR = hashString("FEE_DISTRIBUTOR_CHAINLINK_FACTOR");
 export const FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY = hashString("FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY");
@@ -510,8 +511,8 @@ export function oracleTimestampAdjustmentKey(provider: string, token: string) {
   return hashData(["bytes32", "address", "address"], [ORACLE_TIMESTAMP_ADJUSTMENT, provider, token]);
 }
 
-export function oracleProviderForTokenKey(token: string) {
-  return hashData(["bytes32", "address"], [ORACLE_PROVIDER_FOR_TOKEN, token]);
+export function oracleProviderForTokenKey(oracle: string, token: string) {
+  return hashData(["bytes32", "address", "address"], [ORACLE_PROVIDER_FOR_TOKEN, oracle, token]);
 }
 
 export function oracleProviderUpdatedAtKey(token: string, provider: string) {
@@ -952,7 +953,7 @@ export function positionLastSrcChainIdKey(positionKey: string) {
   return hashData(["bytes32", "bytes32"], [POSITION_LAST_SRC_CHAIN_ID, positionKey]);
 }
 
-export function claimTermsKey(distributionId: number) {
+export function claimTermsKey(distributionId: number | string) {
   return hashData(["bytes32", "uint256"], [CLAIM_TERMS, distributionId]);
 }
 
@@ -989,5 +990,9 @@ export function feeDistributorLayerZeroChainIdKey(chainId: number) {
 }
 
 export function feeDistributorAddressInfoKey(chainId: number, addressName: string) {
-  return hashData(["bytes32", "uint256", "bytes32"], [FEE_DISTRIBUTOR_ADDRESS_INFO, chainId, addressName]);
+  return hashData(["bytes32", "uint256", "bytes32"], [FEE_DISTRIBUTOR_ADDRESS_INFO, addressName]);
+}
+
+export function feeDistributorAddressInfoForChainKey(chainId: number, addressName: string) {
+  return hashData(["bytes32", "uint256", "bytes32"], [FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN, chainId, addressName]);
 }

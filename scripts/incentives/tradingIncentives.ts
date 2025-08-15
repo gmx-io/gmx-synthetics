@@ -11,7 +11,7 @@ import {
   requestPrices,
   requestSubgraph,
   saveDistribution,
-} from "./helpers";
+} from "../helpers";
 
 async function requestMigrationData(fromTimestamp: number) {
   const data: {

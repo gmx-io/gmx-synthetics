@@ -30,7 +30,7 @@ export async function getContractNameFromEtherscan(contractAddress: string): Pro
     return nameCache.get(contractAddress);
   }
 
-  const response = await _requestEtherscan({
+  const response = await sendExplorerRequest({
     action: "getsourcecode",
     address: contractAddress,
   });
@@ -50,7 +50,7 @@ export async function getContractCreationFromEtherscan(contractAddress: string):
     return creationCache.get(contractAddress);
   }
 
-  const response = await _requestEtherscan({
+  const response = await sendExplorerRequest({
     action: "getcontractcreation",
     contractaddresses: contractAddress,
   });
@@ -69,7 +69,7 @@ export async function getContractCreationFromEtherscan(contractAddress: string):
   return info;
 }
 
-async function _requestEtherscan(params: Record<string, any>) {
+export async function sendExplorerRequest(params: Record<string, any>) {
   const apiKey = hre.network.verify.etherscan.apiKey;
   const baseUrl = hre.network.verify.etherscan.apiUrl;
   const response = await axios.get(baseUrl, {

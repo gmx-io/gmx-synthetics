@@ -2,6 +2,8 @@
 
 pragma solidity ^0.8.0;
 
+import "../data/DataStore.sol";
+import "../data/Keys2.sol";
 import "../error/Errors.sol";
 
 enum DistributionState {
@@ -19,7 +21,34 @@ struct Transfer {
 
 // @title FeeDistributorUtils
 library FeeDistributorUtils {
-    function sortChainIds(uint256[] memory chainIds) external pure returns (uint256[] memory) {
+    function calculateKeeperCosts(DataStore dataStore) external view returns (uint256, uint256) {
+        address[] memory keepers = dataStore.getAddressArray(Keys2.FEE_DISTRIBUTOR_KEEPER_COSTS);
+        uint256[] memory keepersTargetBalance = dataStore.getUintArray(Keys2.FEE_DISTRIBUTOR_KEEPER_COSTS);
+        bool[] memory keepersV2 = dataStore.getBoolArray(Keys2.FEE_DISTRIBUTOR_KEEPER_COSTS);
+        if (keepers.length != keepersTargetBalance.length || keepers.length != keepersV2.length) {
+            revert Errors.KeeperArrayLengthMismatch(keepers.length, keepersTargetBalance.length, keepersV2.length);
+        }
+
+        uint256 keeperCostsV1;
+        uint256 keeperCostsV2;
+        for (uint256 i; i < keepers.length; i++) {
+            uint256 keeperTargetBalance = keepersTargetBalance[i];
+            uint256 keeperBalance = keepers[i].balance;
+            if (keeperTargetBalance > keeperBalance) {
+                uint256 keeperCost = keeperTargetBalance - keeperBalance;
+                if (!keepersV2[i]) {
+                    keeperCostsV1 += keeperCost;
+                } else {
+                    keeperCostsV2 += keeperCost;
+                }
+            }
+        }
+
+        return (keeperCostsV1, keeperCostsV2);
+    }
+    
+    function retrieveChainIds(DataStore dataStore) external view returns (uint256[] memory) {
+        uint256[] memory chainIds = dataStore.getUintArray(Keys2.FEE_DISTRIBUTOR_CHAIN_ID);
         sort(chainIds, 0, int256(chainIds.length - 1));
         return chainIds;
     }

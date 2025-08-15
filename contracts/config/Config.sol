@@ -61,32 +61,33 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         _;
     }
 
-    function initOracleProviderForToken(address token, address provider) external onlyConfigKeeper nonReentrant {
+    function initOracleProviderForToken(address oracle, address token, address provider) external onlyConfigKeeper nonReentrant {
         if (token == address(0)) {
             revert Errors.EmptyToken();
         }
 
-        if (dataStore.getAddress(Keys.oracleProviderForTokenKey(token)) != address(0)) {
-            revert Errors.OracleProviderAlreadyExistsForToken(token);
+        if (dataStore.getAddress(Keys.oracleProviderForTokenKey(oracle, token)) != address(0)) {
+            revert Errors.OracleProviderAlreadyExistsForToken(oracle, token);
         }
 
         if (!dataStore.getBool(Keys.isOracleProviderEnabledKey(provider))) {
             revert Errors.InvalidOracleProvider(provider);
         }
 
-        dataStore.setAddress(Keys.oracleProviderForTokenKey(token), provider);
+        dataStore.setAddress(Keys.oracleProviderForTokenKey(oracle, token), provider);
 
         EventUtils.EventLogData memory eventData;
-        eventData.addressItems.initItems(2);
-        eventData.addressItems.setItem(0, "token", token);
-        eventData.addressItems.setItem(1, "provider", provider);
+        eventData.addressItems.initItems(3);
+        eventData.addressItems.setItem(0, "oracle", oracle);
+        eventData.addressItems.setItem(1, "token", token);
+        eventData.addressItems.setItem(2, "provider", provider);
         eventEmitter.emitEventLog(
             "InitOracleProviderForToken",
             eventData
         );
     }
 
-    function setOracleProviderForToken(address token, address provider) external onlyConfigKeeper nonReentrant {
+    function setOracleProviderForToken(address oracle, address token, address provider) external onlyConfigKeeper nonReentrant {
         if (token == address(0)) {
             revert Errors.EmptyToken();
         }
@@ -101,12 +102,13 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         }
 
         dataStore.setUint(Keys.oracleProviderUpdatedAt(token, provider), Chain.currentTimestamp());
-        dataStore.setAddress(Keys.oracleProviderForTokenKey(token), provider);
+        dataStore.setAddress(Keys.oracleProviderForTokenKey(oracle, token), provider);
 
         EventUtils.EventLogData memory eventData;
-        eventData.addressItems.initItems(2);
-        eventData.addressItems.setItem(0, "token", token);
-        eventData.addressItems.setItem(1, "provider", provider);
+        eventData.addressItems.initItems(3);
+        eventData.addressItems.setItem(0, "oracle", oracle);
+        eventData.addressItems.setItem(1, "token", token);
+        eventData.addressItems.setItem(2, "provider", provider);
         eventEmitter.emitEventLog(
             "SetOracleProviderForToken",
             eventData
@@ -557,6 +559,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_FACTOR] = true;
         allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID] = true;
         allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_ADDRESS_INFO] = true;
+        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN] = true;
         allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_KEEPER_COSTS] = true;
         allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_CHAINLINK_FACTOR] = true;
         allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY] = true;

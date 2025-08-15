@@ -31,7 +31,7 @@ library Errors {
     error ConfigValueExceedsAllowedRange(bytes32 baseKey, uint256 value);
     error InvalidClaimableFactor(uint256 value);
     error InvalidClaimableReductionFactor(uint256 value);
-    error OracleProviderAlreadyExistsForToken(address token);
+    error OracleProviderAlreadyExistsForToken(address oracle, address token);
     error OracleProviderMinChangeDelayNotYetPassed(address token, address provider);
     error PriceFeedAlreadyExistsForToken(address token);
     error PriceFeedAddressNotValidForToken(address token);

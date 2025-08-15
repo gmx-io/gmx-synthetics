@@ -5,6 +5,7 @@ import * as keys from "../utils/keys";
 async function main() {
   const tokens = await hre.gmx.getTokens();
   const dataStore = await hre.ethers.getContract("DataStore");
+  const oracle = await hre.ethers.getContract("Oracle");
 
   for (const [tokenSymbol, tokenConfig] of Object.entries(tokens)) {
     let tokenAddress = tokenConfig.address;
@@ -12,7 +13,7 @@ async function main() {
       tokenAddress = (await hre.ethers.getContract(tokenSymbol)).address;
     }
 
-    const oracleProviderForTokenKey = keys.oracleProviderForTokenKey(tokenAddress);
+    const oracleProviderForTokenKey = keys.oracleProviderForTokenKey(oracle.address, tokenAddress);
     const oracleTypeKey = keys.oracleTypeKey(tokenAddress);
     const priceFeedKey = keys.priceFeedKey(tokenAddress);
 

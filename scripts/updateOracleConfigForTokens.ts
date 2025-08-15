@@ -25,6 +25,7 @@ export async function updateOracleConfigForTokens() {
   const dataStore = await hre.ethers.getContract("DataStore");
   const multicall = await hre.ethers.getContract("Multicall3");
   const timelock = await hre.ethers.getContract("TimelockConfig");
+  const oracle = await hre.ethers.getContract("Oracle");
 
   const multicallReadParams = [];
 
@@ -94,7 +95,7 @@ export async function updateOracleConfigForTokens() {
       target: dataStore.address,
       allowFailure: false,
       callData: dataStore.interface.encodeFunctionData("getAddress", [
-        getFullKey(keys.ORACLE_PROVIDER_FOR_TOKEN, encodeData(["address"], [token.address])),
+        getFullKey(keys.ORACLE_PROVIDER_FOR_TOKEN, encodeData(["address", "address"], [oracle.address, token.address])),
       ]),
     });
 
@@ -264,7 +265,10 @@ export async function updateOracleConfigForTokens() {
         testnetTasks.push(async () => {
           printTxHash(
             `set oracle provider for token ${token.address}`,
-            await dataStore.setAddress(keys.oracleProviderForTokenKey(token.address), oracleProviderAddress)
+            await dataStore.setAddress(
+              keys.oracleProviderForTokenKey(oracle.address, token.address),
+              oracleProviderAddress
+            )
           );
         });
       }
@@ -284,7 +288,11 @@ export async function updateOracleConfigForTokens() {
           ])
         );
       } else {
-        const { target, payload } = await setOracleProviderForTokenPayload(token.address, oracleProviderAddress);
+        const { target, payload } = await setOracleProviderForTokenPayload(
+          oracle.address,
+          token.address,
+          oracleProviderAddress
+        );
         multicallWriteParams.push(timelock.interface.encodeFunctionData("execute", [target, payload]));
       }
     }

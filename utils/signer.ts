@@ -16,6 +16,8 @@ export async function createSigningServer() {
 
   const port = 3030;
 
+  let subProcess;
+
   app = express();
   app.use(cors());
   app.use(bodyParser.urlencoded({ extended: false }));
@@ -27,19 +29,19 @@ export async function createSigningServer() {
     setTimeout(() => {
       console.info("go to http://localhost:5173/signer");
       console.info('connect a wallet and click on the "Sign" button');
-      spawn("open", ["http://localhost:5173/signer"]);
+      // spawn("open", ["http://localhost:5173/signer"]);
     }, 1000);
 
-    const child = spawn("yarn", ["app", "--logLevel", "warn"], {
+    subProcess = spawn("yarn", ["app", "--logLevel", "warn"], {
       stdio: "inherit", // Inherit stdout/stderr to see logs
       shell: true, // Use shell to allow command parsing
     });
 
-    child.on("error", (err) => {
+    subProcess.on("error", (err) => {
       console.error("Failed to start process:", err);
     });
 
-    child.on("exit", (code) => {
+    subProcess.on("exit", (code) => {
       if (code === 0) {
         console.log("Process finished successfully.");
       } else {
@@ -74,8 +76,13 @@ export async function createSigningServer() {
 
     if (!hasPendingTransaction) {
       console.info("no pending transactions left, closing server");
-      server.close();
-      process.exit(1);
+      server.close(() => {
+        if (subProcess && !subProcess.killed) {
+          console.info("killing subProcess process...");
+          subProcess.kill("SIGTERM"); // or "SIGINT"
+        }
+        process.exit(0);
+      });
     }
   });
 }

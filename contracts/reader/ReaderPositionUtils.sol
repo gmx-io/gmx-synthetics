@@ -209,6 +209,7 @@ library ReaderPositionUtils {
             positionInfo.position.sizeInUsd(),
             positionInfo.position.sizeInTokens(),
             -sizeDeltaUsd.toInt256(),
+            positionInfo.position.pendingImpactAmount(),
             positionInfo.position.isLong()
         );
 
@@ -307,6 +308,7 @@ library ReaderPositionUtils {
             sizeDeltaUsd
         );
 
+        // with totalImpactUsd the pnlAfterPriceImpactUsd may not be a very useful value to return and may be deprecated in a future iteration
         positionInfo.pnlAfterPriceImpactUsd = positionInfo.executionPriceResult.priceImpactUsd + positionInfo.basePnlUsd;
 
         positionInfo.fees.totalCostAmountExcludingFunding =
