@@ -78,7 +78,7 @@ export async function getCreateOrderSignature({
     referralCode: params.referralCode,
     dataList: params.dataList,
     relayParams: hashRelayParams(relayParams),
-    subaccountApproval: subaccountApproval ? hashSubaccountApproval(subaccountApproval) : ethers.constants.HashZero,
+    subaccountApproval: subaccountApproval ? hashSubaccountApproval(subaccountApproval) : ethers.ZeroHash,
   };
 
   return signTypedData(signer, domain, types, typedData, minified);
@@ -189,7 +189,7 @@ export async function getBatchSignature({
     })),
     cancelOrderKeys,
     relayParams: hashRelayParams(relayParams),
-    subaccountApproval: subaccountApproval ? hashSubaccountApproval(subaccountApproval) : ethers.constants.HashZero,
+    subaccountApproval: subaccountApproval ? hashSubaccountApproval(subaccountApproval) : ethers.ZeroHash,
   };
 
   return signTypedData(signer, domain, types, typedData);
@@ -228,7 +228,7 @@ export async function getUpdateOrderSignature({
     account: subaccountApproval ? account : ethers.ZeroAddress,
     params,
     relayParams: hashRelayParams(relayParams),
-    subaccountApproval: subaccountApproval ? hashSubaccountApproval(subaccountApproval) : ethers.constants.HashZero,
+    subaccountApproval: subaccountApproval ? hashSubaccountApproval(subaccountApproval) : ethers.ZeroHash,
   };
 
   return signTypedData(signer, domain, types, typedData);
@@ -257,7 +257,7 @@ export async function getCancelOrderSignature({
     account: subaccountApproval ? account : ethers.ZeroAddress,
     key,
     relayParams: hashRelayParams(relayParams),
-    subaccountApproval: subaccountApproval ? hashSubaccountApproval(subaccountApproval) : ethers.constants.HashZero,
+    subaccountApproval: subaccountApproval ? hashSubaccountApproval(subaccountApproval) : ethers.ZeroHash,
   };
 
   return signTypedData(signer, domain, types, typedData);

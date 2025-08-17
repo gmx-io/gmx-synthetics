@@ -50,7 +50,7 @@ describe("Glv", () => {
   });
 
   it("creates glv vault", async () => {
-    const glvType = ethers.constants.HashZero;
+    const glvType = ethers.ZeroHash;
     const glvAddress = getGlvAddress(
       wbtc.address,
       usdc.address,
@@ -74,7 +74,7 @@ describe("Glv", () => {
   });
 
   it("creates glv vault, single asset markets", async () => {
-    const glvType = ethers.constants.HashZero;
+    const glvType = ethers.ZeroHash;
     const glvAddress = getGlvAddress(
       wbtc.address,
       wbtc.address,
@@ -98,7 +98,7 @@ describe("Glv", () => {
   });
 
   it("adds markets to Glv", async () => {
-    const glvType = ethers.constants.HashZero.slice(0, -1) + "1"; // to avoid conflict with existing market
+    const glvType = ethers.ZeroHash.slice(0, -1) + "1"; // to avoid conflict with existing market
     const glvAddress = getGlvAddress(
       wnt.address,
       usdc.address,
@@ -186,7 +186,7 @@ describe("Glv", () => {
   });
 
   it("adds markets to Glv, single asset markets", async () => {
-    const glvType = ethers.constants.HashZero;
+    const glvType = ethers.ZeroHash;
     const glvAddress = getGlvAddress(
       wnt.address,
       wnt.address,
@@ -224,7 +224,7 @@ describe("Glv", () => {
 
   it("reverts if max market count exceeded", async () => {
     await dataStore.setUint(keys.GLV_MAX_MARKET_COUNT, 1);
-    const glvType = ethers.constants.HashZero.slice(0, -1) + "1"; // to avoid conflict with existing market
+    const glvType = ethers.ZeroHash.slice(0, -1) + "1"; // to avoid conflict with existing market
     const glvAddress = getGlvAddress(
       wnt.address,
       usdc.address,

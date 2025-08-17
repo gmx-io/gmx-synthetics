@@ -116,7 +116,7 @@ describe("MultichainTransferRouter", () => {
         amount: bridgeOutAmount,
         minAmountOut: 0,
         provider: mockStargatePoolUsdc.address,
-        data: ethers.utils.defaultAbiCoder.encode(["uint32"], [1]), // dstEid = 1 (destination endpoint ID)
+        data: ethers.AbiCoder.defaultAbiCoder().encode(["uint32"], [1]), // dstEid = 1 (destination endpoint ID)
       };
     });
 
@@ -382,7 +382,7 @@ describe("MultichainTransferRouter", () => {
         amount: expandDecimals(1000, 6),
         minAmountOut: 0,
         provider: mockStargatePoolUsdc.address,
-        data: ethers.utils.defaultAbiCoder.encode(["uint32"], [1]), // dstEid = 1
+        data: ethers.AbiCoder.defaultAbiCoder().encode(["uint32"], [1]), // dstEid = 1
       };
 
       // Mock initial balances and states
@@ -424,7 +424,7 @@ describe("MultichainTransferRouter", () => {
         amount: 0,
         minAmountOut: 0,
         provider: mockStargatePoolUsdc.address,
-        data: ethers.utils.defaultAbiCoder.encode(["uint32"], [1]),
+        data: ethers.AbiCoder.defaultAbiCoder().encode(["uint32"], [1]),
       };
 
       const tx = await multichainTransferRouter.connect(user1).transferOut(transferOutParams);
@@ -451,7 +451,7 @@ describe("MultichainTransferRouter", () => {
         amount: expandDecimals(1000, 6),
         minAmountOut: 0,
         provider: mockStargatePoolUsdc.address,
-        data: ethers.utils.defaultAbiCoder.encode(["uint32"], [1]),
+        data: ethers.AbiCoder.defaultAbiCoder().encode(["uint32"], [1]),
       };
 
       await expect(multichainTransferRouter.connect(user1).transferOut(transferOutParams))

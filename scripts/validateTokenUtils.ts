@@ -147,10 +147,10 @@ export async function validateTokens() {
     let upgradeability: string;
     let implementationAddress: string;
 
-    if (beaconSlot !== ethers.constants.HashZero) {
+    if (beaconSlot !== ethers.ZeroHash) {
       upgradeability = "beacon";
       implementationAddress = await getBeaconImplementation(parseAddress(beaconSlot));
-    } else if (implSlot !== ethers.constants.HashZero) {
+    } else if (implSlot !== ethers.ZeroHash) {
       upgradeability = "transparent or uups";
       implementationAddress = parseAddress(implSlot);
     }

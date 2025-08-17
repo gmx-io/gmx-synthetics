@@ -14,7 +14,7 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
   const weth = tokens.WETH;
   const usdc = tokens.USDC;
   const sol = tokens.SOL;
-  const glvType = ethers.constants.HashZero;
+  const glvType = ethers.ZeroHash;
 
   const glvName = "GMX Liquidity Vault [WETH-USDC]";
   const glvSymbol = "GLV [WETH-USDC]";

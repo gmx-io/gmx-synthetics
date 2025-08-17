@@ -215,7 +215,7 @@ describe("ConfigSyncer", () => {
     expect(await dataStore.getBool(keys.syncConfigUpdateCompletedKey(update.updateId))).to.be.true;
     expect(await dataStore.getUint(keys.syncConfigLatestUpdateIdKey())).to.equal(update.updateId);
 
-    const [baseKey, data] = ethers.utils.defaultAbiCoder.decode(["bytes32", "bytes"], update.additionalData);
+    const [baseKey, data] = ethers.AbiCoder.defaultAbiCoder().decode(["bytes32", "bytes"], update.additionalData);
     const fullKey = getFullKey(baseKey, data);
     expect(await dataStore.getUint(fullKey)).to.equal(update.newValue);
 
@@ -273,7 +273,7 @@ describe("ConfigSyncer", () => {
         expect(await dataStore.getUint(keys.syncConfigLatestUpdateIdKey())).to.equal(latestUpdateId);
       }
 
-      const [baseKey, data] = ethers.utils.defaultAbiCoder.decode(["bytes32", "bytes"], update.additionalData);
+      const [baseKey, data] = ethers.AbiCoder.defaultAbiCoder().decode(["bytes32", "bytes"], update.additionalData);
       const fullKey = getFullKey(baseKey, data);
       expect(await dataStore.getUint(fullKey)).to.equal(update.newValue);
 
@@ -307,7 +307,7 @@ describe("ConfigSyncer", () => {
     const latestUpdateId = update.updateId;
     expect(await dataStore.getUint(keys.syncConfigLatestUpdateIdKey())).to.equal(latestUpdateId);
 
-    const [baseKey, data] = ethers.utils.defaultAbiCoder.decode(["bytes32", "bytes"], update.additionalData);
+    const [baseKey, data] = ethers.AbiCoder.defaultAbiCoder().decode(["bytes32", "bytes"], update.additionalData);
     const fullKey = getFullKey(baseKey, data);
     expect(await dataStore.getUint(fullKey)).to.equal(update.newValue);
 
@@ -350,7 +350,7 @@ describe("ConfigSyncer", () => {
       const update = await mockRiskOracle.getLatestUpdateByParameterAndMarket(parameter, market);
       expect(await dataStore.getBool(keys.syncConfigUpdateCompletedKey(update.updateId))).to.be.true;
 
-      const [baseKey, data] = ethers.utils.defaultAbiCoder.decode(["bytes32", "bytes"], update.additionalData);
+      const [baseKey, data] = ethers.AbiCoder.defaultAbiCoder().decode(["bytes32", "bytes"], update.additionalData);
       const fullKey = getFullKey(baseKey, data);
       expect(await dataStore.getUint(fullKey)).to.equal(update.newValue);
 
@@ -391,7 +391,7 @@ describe("ConfigSyncer", () => {
     expect(await dataStore.getBool(keys.syncConfigUpdateCompletedKey(update.updateId))).to.be.true;
     expect(await dataStore.getUint(keys.syncConfigLatestUpdateIdKey())).to.equal(update.updateId);
 
-    const [baseKey, data] = ethers.utils.defaultAbiCoder.decode(["bytes32", "bytes"], update.additionalData);
+    const [baseKey, data] = ethers.AbiCoder.defaultAbiCoder().decode(["bytes32", "bytes"], update.additionalData);
     const fullKey = getFullKey(baseKey, data);
     expect(await dataStore.getUint(fullKey)).to.equal(update.newValue);
 
@@ -456,7 +456,7 @@ describe("ConfigSyncer", () => {
         expect(await dataStore.getUint(keys.syncConfigLatestUpdateIdKey())).to.equal(latestUpdateId);
       }
 
-      const [baseKey, data] = ethers.utils.defaultAbiCoder.decode(["bytes32", "bytes"], update.additionalData);
+      const [baseKey, data] = ethers.AbiCoder.defaultAbiCoder().decode(["bytes32", "bytes"], update.additionalData);
       const fullKey = getFullKey(baseKey, data);
       expect(await dataStore.getUint(fullKey)).to.equal(update.newValue);
 

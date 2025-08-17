@@ -209,7 +209,7 @@ describe("Glv Shifts", () => {
       decimalToFloat(10_000)
     );
 
-    const glvType = ethers.constants.HashZero;
+    const glvType = ethers.ZeroHash;
     const ethUsdSingleTokenGlvAddress = getGlvAddress(
       wnt.address,
       wnt.address,
@@ -266,7 +266,7 @@ describe("Glv Shifts", () => {
 
   describe("execute glv shift, validations", () => {
     it("GlvShiftNotFound", async () => {
-      const key = ethers.constants.HashZero.slice(0, -1) + "f";
+      const key = ethers.ZeroHash.slice(0, -1) + "f";
       await expect(executeGlvShift(fixture, { key }))
         .to.be.revertedWithCustomError(errorsContract, "GlvShiftNotFound")
         .withArgs(key);

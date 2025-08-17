@@ -18,14 +18,14 @@ export async function updateRiskOracleConfig({ write }) {
   if (!riskOracleConfig) {
     throw new Error("no configuration found for the current network");
   }
-  
+
   if (riskOracleConfig.markets) {
     for (const [marketAddress, marketConfig] of Object.entries(riskOracleConfig.markets)) {
       if (marketConfig.syncConfigMarketDisabled !== undefined) {
         const baseKey = keys.SYNC_CONFIG_MARKET_DISABLED;
         const data = encodeData(["address"], [marketAddress]);
         const key = getFullKey(baseKey, data);
-        
+
         syncConfigKeys.push({
           description: `key: SYNC_CONFIG_MARKET_DISABLED for market: ${marketAddress}`,
           baseKey: baseKey,
@@ -33,7 +33,7 @@ export async function updateRiskOracleConfig({ write }) {
           key: key,
           newValue: marketConfig.syncConfigMarketDisabled,
         });
-        
+
         multicallReadParams.push({
           target: dataStore.address,
           allowFailure: false,
@@ -46,7 +46,7 @@ export async function updateRiskOracleConfig({ write }) {
           const baseKey = keys.SYNC_CONFIG_MARKET_PARAMETER_DISABLED;
           const data = encodeData(["address", "string"], [marketAddress, parameterKey]);
           const key = getFullKey(baseKey, data);
-          
+
           syncConfigKeys.push({
             description: `key: SYNC_CONFIG_MARKET_PARAMETER_DISABLED for market: ${marketAddress} and parameter: ${parameterKey}`,
             baseKey: baseKey,
@@ -54,7 +54,7 @@ export async function updateRiskOracleConfig({ write }) {
             key: key,
             newValue: parameterValue,
           });
-          
+
           multicallReadParams.push({
             target: dataStore.address,
             allowFailure: false,
@@ -70,7 +70,7 @@ export async function updateRiskOracleConfig({ write }) {
       const baseKey = keys.SYNC_CONFIG_PARAMETER_DISABLED;
       const data = encodeData(["string"], [parameterKey]);
       const key = getFullKey(baseKey, data);
-      
+
       syncConfigKeys.push({
         description: `key: SYNC_CONFIG_PARAMETER_DISABLED for parameter: ${parameterKey}`,
         baseKey: baseKey,
@@ -94,17 +94,11 @@ export async function updateRiskOracleConfig({ write }) {
     const description = syncConfigKeys[i].description;
     const baseKey = syncConfigKeys[i].baseKey;
     const data = syncConfigKeys[i].data;
-    const oldValue = ethers.utils.defaultAbiCoder.decode(["bool"], result[i].returnData)[0];
+    const oldValue = ethers.AbiCoder.defaultAbiCoder().decode(["bool"], result[i].returnData)[0];
     const newValue = syncConfigKeys[i].newValue;
-    
+
     if (newValue !== oldValue) {
-      multicallWriteParams.push(
-        config.interface.encodeFunctionData("setBool", [
-          baseKey,
-          data,
-          newValue,
-        ])
-      );
+      multicallWriteParams.push(config.interface.encodeFunctionData("setBool", [baseKey, data, newValue]));
       console.info(`updating ${description} from ${oldValue} to ${newValue}`);
     } else {
       console.info(`skipping ${description} as it is already set to ${newValue}`);

@@ -298,7 +298,7 @@ export async function getOracleParams({
       signatures.push(signature);
     }
 
-    const data = ethers.utils.defaultAbiCoder.encode(
+    const data = ethers.AbiCoder.defaultAbiCoder().encode(
       ["tuple(address, uint256, uint256, uint256, uint256, uint256, bytes32, uint256[], uint256[], bytes[])"],
       [
         [
@@ -388,7 +388,7 @@ async function getOracleProviderMap() {
 export function encodeDataStreamData(data) {
   const { feedId, validFromTimestamp, observationsTimestamp, nativeFee, linkFee, expiresAt, price, bid, ask } = data;
 
-  return ethers.utils.defaultAbiCoder.encode(
+  return ethers.AbiCoder.defaultAbiCoder().encode(
     ["bytes32", "uint32", "uint32", "uint192", "uint192", "uint32", "int192", "int192", "int192"],
     [feedId, validFromTimestamp, observationsTimestamp, nativeFee, linkFee, expiresAt, price, bid, ask]
   );

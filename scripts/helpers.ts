@@ -350,7 +350,7 @@ async function validateDolomiteVaults(vaults: string[]) {
       if (!success) {
         throw new Error("Multicall request failed");
       }
-      const dolomiteMargin: string = ethers.utils.defaultAbiCoder.decode(["address"], returnData)[0];
+      const dolomiteMargin: string = ethers.AbiCoder.defaultAbiCoder().decode(["address"], returnData)[0];
       console.log("dolomite vault %s margin %s", batch[j], dolomiteMargin);
       if (dolomiteMargin !== dolomiteValidMarginAddress) {
         console.error(

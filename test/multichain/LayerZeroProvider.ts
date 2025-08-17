@@ -513,7 +513,7 @@ describe("LayerZeroProvider", () => {
         expect(await usdc.balanceOf(user1.address)).to.eq(usdcAmount);
         expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0);
         expect(await usdc.balanceOf(layerZeroProvider.address)).to.eq(0);
-        expect(await referralStorage.traderReferralCodes(user0.address)).eq(ethers.constants.HashZero);
+        expect(await referralStorage.traderReferralCodes(user0.address)).eq(ethers.ZeroHash);
 
         const message = await encodeSetTraderReferralCodeMessage(
           setTraderReferralCodeParams,

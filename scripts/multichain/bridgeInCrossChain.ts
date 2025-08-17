@@ -37,7 +37,7 @@ const ETH_USD_GLV_ADDRESS = "0xAb3567e55c205c62B141967145F37b7695a9F854"; // GMX
 const layerZeroProviderJson = import("../../deployments/arbitrumSepolia/LayerZeroProvider.json");
 
 async function getComposedMsg({ account }: { account: string }): Promise<string> {
-  return ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, "0x"]);
+  return ethers.AbiCoder.defaultAbiCoder().encode(["address", "bytes"], [account, "0x"]);
 }
 
 async function prepareSend(

@@ -109,7 +109,7 @@ async function validateRealtimeFeedConfig({
     )}%, tickerSpreadMax: ${formatAmount(tickerSpreadMax, 2, 2)}%`
   );
 
-  if (storedRealtimeFeedId !== ethers.constants.HashZero) {
+  if (storedRealtimeFeedId !== ethers.ZeroHash) {
     if (storedRealtimeFeedId === token.realtimeFeedId) {
       console.log(`skipping ${tokenSymbol} as the stored realtimeFeedId already matches the config`);
       return { shouldUpdate: false };

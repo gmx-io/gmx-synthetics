@@ -120,7 +120,7 @@ async function getComposedMsg({
   glvAmount: BigNumber;
 }): Promise<string> {
   if (actionType === ActionType.None) {
-    return ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, "0x"]);
+    return ethers.AbiCoder.defaultAbiCoder().encode(["address", "bytes"], [account, "0x"]);
   }
 
   const srcChainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
@@ -484,7 +484,7 @@ async function getComposedMsg({
 
     // dataList determines if the GM / GLV tokens are being bridged out or not
     const deadline = Math.floor(Date.now() / 1000) + 3600; // deadline (1 hour from now)
-    const providerData = ethers.utils.defaultAbiCoder.encode(["uint32"], [SRC_EID]); // providerData (on bridgeOut desEid is referring to the chain where the tokens are bridged out i.e. back to the source chain)
+    const providerData = ethers.AbiCoder.defaultAbiCoder().encode(["uint32"], [SRC_EID]); // providerData (on bridgeOut desEid is referring to the chain where the tokens are bridged out i.e. back to the source chain)
 
     if (process.env.EXECUTE === "Deposit") {
       const dataList = encodeBridgeOutDataList(

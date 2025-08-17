@@ -467,7 +467,7 @@ describe("Config", () => {
     expect(await dataStore.getUint(keys.priceFeedHeartbeatDurationKey(token.address))).eq(0);
     expect(await dataStore.getUint(keys.stablePriceKey(token.address))).eq(0);
 
-    expect(await dataStore.getBytes32(keys.dataStreamIdKey(token.address))).eq(ethers.constants.HashZero);
+    expect(await dataStore.getBytes32(keys.dataStreamIdKey(token.address))).eq(ethers.ZeroHash);
     expect(await dataStore.getUint(keys.dataStreamMultiplierKey(token.address))).eq(0);
     expect(await dataStore.getUint(keys.dataStreamSpreadReductionFactorKey(token.address))).eq(0);
     expect(await dataStore.getUint(keys.edgeDataStreamIdKey(token.address))).eq(0);

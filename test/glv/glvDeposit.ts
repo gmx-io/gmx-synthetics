@@ -69,7 +69,7 @@ describe("Glv Deposits", () => {
 
   let ethUsdSingleTokenGlvAddress: string;
   beforeEach(async () => {
-    const glvType = ethers.constants.HashZero;
+    const glvType = ethers.ZeroHash;
 
     ethUsdSingleTokenGlvAddress = getGlvAddress(
       wnt.address,
@@ -596,7 +596,7 @@ describe("Glv Deposits", () => {
     const firstDepositReceiver = { address: "0x0000000000000000000000000000000000000001" };
 
     it("GlvDepositNotFound", async () => {
-      const key = ethers.constants.HashZero.slice(0, -1) + "f";
+      const key = ethers.ZeroHash.slice(0, -1) + "f";
       await expect(
         executeGlvDeposit(fixture, {
           key,

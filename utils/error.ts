@@ -30,7 +30,7 @@ export const ERROR_SIGNATURE4 = ethers.id("Error(string)").slice(0, 10);
 
 export function parseError(reasonBytes, shouldThrow = true) {
   if (reasonBytes.startsWith(PANIC_SIGNATURE4)) {
-    const [panicCode] = ethers.utils.defaultAbiCoder.decode(["uint256"], "0x" + reasonBytes.slice(10));
+    const [panicCode] = ethers.AbiCoder.defaultAbiCoder().decode(["uint256"], "0x" + reasonBytes.slice(10));
     return {
       name: "Panic",
       args: [panicCode.toString(), PANIC_MAP[panicCode.toString()]],
@@ -38,7 +38,7 @@ export function parseError(reasonBytes, shouldThrow = true) {
   }
 
   if (reasonBytes.startsWith(ERROR_SIGNATURE4)) {
-    const [errorString] = ethers.utils.defaultAbiCoder.decode(
+    const [errorString] = ethers.AbiCoder.defaultAbiCoder().decode(
       ["string"],
       "0x" + reasonBytes.slice(ERROR_SIGNATURE4.length)
     );

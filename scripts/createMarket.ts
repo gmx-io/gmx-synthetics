@@ -111,7 +111,7 @@ async function main() {
       if (existingVirtualTokenIdForIndexToken.toLowerCase() === virtualTokenId.toLowerCase()) {
         console.log("skipping setting of virtualTokenId as it already set");
       } else {
-        if (existingVirtualTokenIdForIndexToken === ethers.constants.HashZero) {
+        if (existingVirtualTokenIdForIndexToken === ethers.ZeroHash) {
           console.log(`setting virtualTokenId: ${virtualTokenId}`);
           const tx2 = await config.setBytes32(
             keys.VIRTUAL_TOKEN_ID,

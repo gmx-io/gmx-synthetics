@@ -1,5 +1,4 @@
-import { _TypedDataEncoder } from "ethers/lib/utils";
-import { BigNumberish, ethers } from "ethers";
+import { BigNumberish, ethers, TypedDataEncoder } from "ethers";
 import { GELATO_RELAY_ADDRESS } from "./addresses";
 
 export type SubaccountApproval = {
@@ -152,7 +151,7 @@ export function getDomain(chainId: BigNumberish, verifyingContract: string) {
 }
 
 export function hashRelayParams(relayParams: RelayParams) {
-  const encoded = ethers.utils.defaultAbiCoder.encode(
+  const encoded = ethers.AbiCoder.defaultAbiCoder().encode(
     [
       "tuple(address[] tokens, address[] providers, bytes[] data)",
       "tuple(address[] sendTokens,uint256[] sendAmounts,address[] externalCallTargets, bytes[] externalCallDataList, address[] refundTokens, address[] refundReceivers)",
@@ -182,7 +181,7 @@ export function hashRelayParams(relayParams: RelayParams) {
     ]
   );
 
-  return ethers.utils.keccak256(encoded);
+  return ethers.keccak256(encoded);
 }
 
 export function hashSubaccountApproval(subaccountApproval: SubaccountApproval) {
@@ -199,8 +198,8 @@ export function hashSubaccountApproval(subaccountApproval: SubaccountApproval) {
     "signature",
   ]);
 
-  const hash = ethers.utils.keccak256(
-    ethers.utils.defaultAbiCoder.encode(
+  const hash = ethers.keccak256(
+    ethers.AbiCoder.defaultAbiCoder().encode(
       [
         "tuple(address subaccount,bool shouldAdd,uint256 expiresAt,uint256 maxAllowedCount,bytes32 actionType,uint256 nonce,uint256 desChainId,uint256 deadline,bytes32 integrationId,bytes signature)",
       ],
@@ -244,7 +243,7 @@ export async function signTypedData(
     return (signer as any)._signTypedData(domain, types, typedData);
   }
 
-  const digest = _TypedDataEncoder.hash(domain, types, typedData);
+  const digest = TypedDataEncoder.hash(domain, types, typedData);
   const minifiedTypes = {
     Minified: [{ name: "digest", type: "bytes32" }],
   };
@@ -268,8 +267,8 @@ export async function sendRelayTransaction({
 }) {
   try {
     return await sender.sendTransaction({
-      to: relayRouter.address,
-      data: ethers.utils.solidityPack(
+      to: await relayRouter.getAddress(),
+      data: ethers.solidityPacked(
         ["bytes", "address", "address", "uint256"],
         [calldata, GELATO_RELAY_ADDRESS, gelatoRelayFeeToken, gelatoRelayFeeAmount]
       ),

@@ -216,7 +216,7 @@ export function getEmptySubaccountApproval() {
     nonce: 0,
     desChainId: 0,
     signature: "0x",
-    integrationId: ethers.constants.HashZero,
+    integrationId: ethers.ZeroHash,
     deadline: 9999999999,
   };
 }

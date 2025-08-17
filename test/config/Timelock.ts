@@ -496,7 +496,7 @@ describe("Timelock", () => {
 
     await time.increase(1 * 24 * 60 * 60 + 10);
 
-    expect(await dataStore.getBytes32(keys.dataStreamIdKey(wnt.address))).eq(ethers.constants.HashZero);
+    expect(await dataStore.getBytes32(keys.dataStreamIdKey(wnt.address))).eq(ethers.ZeroHash);
     expect(await dataStore.getUint(keys.dataStreamMultiplierKey(wnt.address))).eq(0);
     expect(await dataStore.getUint(keys.dataStreamSpreadReductionFactorKey(wnt.address))).eq(0);
 
@@ -528,7 +528,7 @@ describe("Timelock", () => {
 
     await time.increase(1 * 24 * 60 * 60 + 10);
 
-    expect(await dataStore.getBytes32(keys.edgeDataStreamIdKey(wnt.address))).eq(ethers.constants.HashZero);
+    expect(await dataStore.getBytes32(keys.edgeDataStreamIdKey(wnt.address))).eq(ethers.ZeroHash);
     expect(await dataStore.getUint(keys.edgeDataStreamTokenDecimalsKey(wnt.address))).eq(0);
 
     await timelockConfig.connect(timelockAdmin).executeBatch(targets, values, payloads, constants.HashZero, salt);

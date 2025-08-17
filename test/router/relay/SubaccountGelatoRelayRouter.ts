@@ -348,7 +348,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           expiresAt: 9999999999,
           maxAllowedCount: 10,
           actionType: keys.SUBACCOUNT_ORDER_ACTION,
-          integrationId: ethers.constants.HashZero,
+          integrationId: ethers.ZeroHash,
           deadline: 0,
           nonce: 0,
         },
@@ -866,7 +866,7 @@ describe("SubaccountGelatoRelayRouter", () => {
         account: user1.address,
         subaccount: user0.address,
         params: {
-          key: ethers.constants.HashZero,
+          key: ethers.ZeroHash,
           sizeDeltaUsd: decimalToFloat(1000),
           acceptablePrice: decimalToFloat(4900),
           triggerPrice: decimalToFloat(4800),
@@ -1094,7 +1094,7 @@ describe("SubaccountGelatoRelayRouter", () => {
         tokenPermits: [tokenPermit],
         account: user1.address,
         subaccount: user0.address,
-        key: ethers.constants.HashZero,
+        key: ethers.ZeroHash,
         deadline: 9999999999,
         desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
         relayRouter: subaccountGelatoRelayRouter,
@@ -1108,7 +1108,7 @@ describe("SubaccountGelatoRelayRouter", () => {
           maxAllowedCount: 10,
           actionType: keys.SUBACCOUNT_ORDER_ACTION,
           deadline: 9999999999,
-          integrationId: ethers.constants.HashZero,
+          integrationId: ethers.ZeroHash,
           nonce: 0,
         },
       };

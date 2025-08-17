@@ -149,7 +149,7 @@ function parseSignalGrantRoleEvent(eventArg: Result): SignalRoleInfo {
 }
 
 function encodeRole(roleKey: string): string {
-  const encoded = ethers.utils.defaultAbiCoder.encode(["string"], [roleKey]);
+  const encoded = ethers.AbiCoder.defaultAbiCoder().encode(["string"], [roleKey]);
   return ethers.utils.keccak256(encoded);
 }
 

@@ -46,8 +46,8 @@ async function main() {
     throw new Error(`Unexpected TIMELOCK_METHOD: ${timelockMethod}`);
   }
 
-  const predecessor = ethers.constants.HashZero;
-  const salt = ethers.constants.HashZero;
+  const predecessor = ethers.ZeroHash;
+  const salt = ethers.ZeroHash;
 
   for (const provider of providersToAdd) {
     if (timelockMethod === "signalSetOracleProviderEnabled") {

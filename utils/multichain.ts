@@ -40,7 +40,7 @@ export async function bridgeInTokens(
   }
 
   // mock token bridging (increase user's multichain balance)
-  const encodedMessageEth = ethers.utils.defaultAbiCoder.encode(
+  const encodedMessageEth = ethers.AbiCoder.defaultAbiCoder().encode(
     ["address", "bytes"],
     [account.address, overrides.data || "0x"]
   );
@@ -173,15 +173,15 @@ export async function encodeDepositMessage(
     verifyingContract: depositParams.relayRouter.address,
   });
 
-  const actionData = ethers.utils.defaultAbiCoder.encode(
+  const actionData = ethers.AbiCoder.defaultAbiCoder().encode(
     [relayParamsType, transferRequestsType, createDepositParamsType],
     [{ ...relayParams, signature }, depositParams.transferRequests, depositParams.params]
   );
 
   const ActionType = 1; // Deposit
-  const data = ethers.utils.defaultAbiCoder.encode(["uint8", "bytes"], [ActionType, actionData]);
+  const data = ethers.AbiCoder.defaultAbiCoder().encode(["uint8", "bytes"], [ActionType, actionData]);
 
-  const message = ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, data]);
+  const message = ethers.AbiCoder.defaultAbiCoder().encode(["address", "bytes"], [account, data]);
 
   return message;
 }
@@ -198,15 +198,15 @@ export async function encodeWithdrawalMessage(
     verifyingContract: withdrawalParams.relayRouter.address,
   });
 
-  const actionData = ethers.utils.defaultAbiCoder.encode(
+  const actionData = ethers.AbiCoder.defaultAbiCoder().encode(
     [relayParamsType, transferRequestsType, createWithdrawalParamsType],
     [{ ...relayParams, signature }, withdrawalParams.transferRequests, withdrawalParams.params]
   );
 
   const ActionType = 5; // Withdrawal
-  const data = ethers.utils.defaultAbiCoder.encode(["uint8", "bytes"], [ActionType, actionData]);
+  const data = ethers.AbiCoder.defaultAbiCoder().encode(["uint8", "bytes"], [ActionType, actionData]);
 
-  const message = ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, data]);
+  const message = ethers.AbiCoder.defaultAbiCoder().encode(["address", "bytes"], [account, data]);
 
   return message;
 }
@@ -223,15 +223,15 @@ export async function encodeGlvDepositMessage(
     verifyingContract: glvDepositParams.relayRouter.address,
   });
 
-  const actionData = ethers.utils.defaultAbiCoder.encode(
+  const actionData = ethers.AbiCoder.defaultAbiCoder().encode(
     [relayParamsType, transferRequestsType, createGlvDepositParamsType],
     [{ ...relayParams, signature }, glvDepositParams.transferRequests, glvDepositParams.params]
   );
 
   const ActionType = 2; // GlvDeposit
-  const data = ethers.utils.defaultAbiCoder.encode(["uint8", "bytes"], [ActionType, actionData]);
+  const data = ethers.AbiCoder.defaultAbiCoder().encode(["uint8", "bytes"], [ActionType, actionData]);
 
-  const message = ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, data]);
+  const message = ethers.AbiCoder.defaultAbiCoder().encode(["address", "bytes"], [account, data]);
 
   return message;
 }
@@ -248,15 +248,15 @@ export async function encodeGlvWithdrawalMessage(
     verifyingContract: glvWithdrawalParams.relayRouter.address,
   });
 
-  const actionData = ethers.utils.defaultAbiCoder.encode(
+  const actionData = ethers.AbiCoder.defaultAbiCoder().encode(
     [relayParamsType, transferRequestsType, createGlvWithdrawalParamsType],
     [{ ...relayParams, signature }, glvWithdrawalParams.transferRequests, glvWithdrawalParams.params]
   );
 
   const ActionType = 6; // GlvWithdrawal
-  const data = ethers.utils.defaultAbiCoder.encode(["uint8", "bytes"], [ActionType, actionData]);
+  const data = ethers.AbiCoder.defaultAbiCoder().encode(["uint8", "bytes"], [ActionType, actionData]);
 
-  const message = ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, data]);
+  const message = ethers.AbiCoder.defaultAbiCoder().encode(["address", "bytes"], [account, data]);
 
   return message;
 }
@@ -274,15 +274,15 @@ export async function encodeSetTraderReferralCodeMessage(
     verifyingContract: setTraderReferralCodeParams.relayRouter.address,
   });
 
-  const actionData = ethers.utils.defaultAbiCoder.encode(
+  const actionData = ethers.AbiCoder.defaultAbiCoder().encode(
     [relayParamsType, "bytes32"],
     [{ ...relayParams, signature }, referralCode]
   );
 
   const ActionType = 4; // SetTraderReferralCode
-  const data = ethers.utils.defaultAbiCoder.encode(["uint8", "bytes"], [ActionType, actionData]);
+  const data = ethers.AbiCoder.defaultAbiCoder().encode(["uint8", "bytes"], [ActionType, actionData]);
 
-  const message = ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, data]);
+  const message = ethers.AbiCoder.defaultAbiCoder().encode(["address", "bytes"], [account, data]);
 
   return message;
 }
@@ -300,7 +300,7 @@ export function encodeBridgeOutDataList(
 ): string[] {
   let actionData;
   if (secondaryProviderData) {
-    actionData = ethers.utils.defaultAbiCoder.encode(
+    actionData = ethers.AbiCoder.defaultAbiCoder().encode(
       [
         "tuple(uint256 desChainId, uint256 deadline, address provider, bytes providerData, uint256 minAmountOut, address secondaryProvider, bytes secondaryProviderData, uint256 secondaryMinAmountOut)",
       ],
@@ -318,13 +318,13 @@ export function encodeBridgeOutDataList(
       ]
     );
   } else {
-    actionData = ethers.utils.defaultAbiCoder.encode(
+    actionData = ethers.AbiCoder.defaultAbiCoder().encode(
       ["uint256", "uint256", "address", "bytes", "uint256"],
       [desChainId, deadline, provider, providerData, minAmountOut]
     );
   }
 
-  let data = ethers.utils.defaultAbiCoder.encode(["uint8", "bytes"], [actionType, actionData]);
+  let data = ethers.AbiCoder.defaultAbiCoder().encode(["uint8", "bytes"], [actionType, actionData]);
 
   const dataList = [keys.GMX_DATA_ACTION];
 

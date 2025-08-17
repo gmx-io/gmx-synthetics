@@ -490,8 +490,8 @@ describe("GelatoRelayRouter", () => {
       });
 
       const orderKeys = await getOrderKeys(dataStore, 0, 2);
-      expect(orderKeys[0]).not.eq(ethers.constants.HashZero);
-      expect(orderKeys[1]).not.eq(ethers.constants.HashZero);
+      expect(orderKeys[0]).not.eq(ethers.ZeroHash);
+      expect(orderKeys[1]).not.eq(ethers.ZeroHash);
 
       const order = await reader.getOrder(dataStore.address, orderKeys[0]);
       expect(order.addresses.account).eq(user0.address);
@@ -507,7 +507,7 @@ describe("GelatoRelayRouter", () => {
       const p = createOrderParams;
       const relayParams = await getRelayParams(p);
       const calldata = p.relayRouter.interface.encodeFunctionData("createOrder", [
-        { ...relayParams, signature: ethers.constants.HashZero },
+        { ...relayParams, signature: ethers.ZeroHash },
         p.account,
         p.params,
       ]);
@@ -1079,7 +1079,7 @@ describe("GelatoRelayRouter", () => {
           0,
           0,
           0,
-          ethers.constants.HashZero,
+          ethers.ZeroHash,
           {
             gasLimit: 10_000_000,
           }
@@ -1200,7 +1200,7 @@ describe("GelatoRelayRouter", () => {
         tokenPermits: [tokenPermit],
         account: user0.address,
         params: {
-          key: ethers.constants.HashZero,
+          key: ethers.ZeroHash,
           sizeDeltaUsd: decimalToFloat(1),
           acceptablePrice: decimalToFloat(2),
           triggerPrice: decimalToFloat(3),
@@ -1365,7 +1365,7 @@ describe("GelatoRelayRouter", () => {
           feeSwapPath: [],
         },
         tokenPermits: [tokenPermit],
-        key: ethers.constants.HashZero,
+        key: ethers.ZeroHash,
         account: user0.address,
         deadline: 9999999999,
         desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId

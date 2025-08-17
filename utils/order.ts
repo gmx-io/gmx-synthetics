@@ -95,7 +95,7 @@ export async function createOrder(fixture, overrides) {
   const minOutputAmount = overrides.minOutputAmount || 0;
   const shouldUnwrapNativeToken = overrides.shouldUnwrapNativeToken || false;
   const autoCancel = overrides.autoCancel || false;
-  const referralCode = overrides.referralCode || ethers.constants.HashZero;
+  const referralCode = overrides.referralCode || ethers.ZeroHash;
   const validFromTime = overrides.validFromTime || 0;
   const srcChainId = overrides.srcChainId || 0;
   const dataList = overrides.dataList || [];

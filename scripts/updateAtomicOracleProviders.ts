@@ -13,8 +13,8 @@ async function main() {
 
   const multicallWriteParams = [];
 
-  const predecessor = ethers.constants.HashZero;
-  const salt = ethers.constants.HashZero;
+  const predecessor = ethers.ZeroHash;
+  const salt = ethers.ZeroHash;
 
   const timelockMethod = process.env.TIMELOCK_METHOD;
   if (!expectedTimelockMethods.includes(timelockMethod)) {

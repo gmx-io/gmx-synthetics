@@ -626,7 +626,7 @@ describe("MultichainGlvRouter", () => {
     describe("bridgeOutFromController", () => {
       const actionType = 3; // ActionType.BridgeOut
       const deadline = Math.floor(Date.now() / 1000) + 3600; // deadline (1 hour from now)
-      const providerData = ethers.utils.defaultAbiCoder.encode(["uint32"], [1]); // providerData
+      const providerData = ethers.AbiCoder.defaultAbiCoder().encode(["uint32"], [1]); // providerData
 
       it("create glvDeposit and bridge out from controller the GLV tokens, on the same chain", async () => {
         await bridgeInTokens(fixture, { account: user1, amount: wntAmount.add(feeAmount) });

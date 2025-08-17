@@ -107,7 +107,7 @@ async function main() {
   const multicallArgs = [
     exchangeRouter.interface.encodeFunctionData("sendWnt", [orderVault.address, executionFee]),
     exchangeRouter.interface.encodeFunctionData("sendTokens", [weth.address, orderVault.address, longTokenAmount]),
-    exchangeRouter.interface.encodeFunctionData("createOrder", [params, ethers.constants.HashZero]),
+    exchangeRouter.interface.encodeFunctionData("createOrder", [params, ethers.ZeroHash]),
   ];
   console.log("multicall args", multicallArgs);
 

@@ -22,11 +22,11 @@ async function main() {
   if (result.args.oracleParams?.realtimeFeedData) {
     const { realtimeFeedData } = result.args.oracleParams;
     for (let i = 0; i < realtimeFeedData.length; i++) {
-      const oracleData = ethers.utils.defaultAbiCoder.decode(
+      const oracleData = ethers.AbiCoder.defaultAbiCoder().decode(
         ["bytes32[3]", "bytes", "bytes32[]", "bytes32[]", "bytes32"],
         realtimeFeedData[i]
       );
-      const oracleValues = ethers.utils.defaultAbiCoder.decode(
+      const oracleValues = ethers.AbiCoder.defaultAbiCoder().decode(
         ["bytes32", "uint32", "int192", "int192", "int192", "uint64", "bytes32", "uint64", "uint64"],
         oracleData[1]
       );

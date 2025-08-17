@@ -1,7 +1,7 @@
 import hre from "hardhat";
 import { DataStore, Multicall3 } from "../typechain-types";
 import { hashData, hashString } from "../utils/hash";
-import { fetchJson } from "ethers/lib/utils";
+import { FetchRequest } from "ethers";
 
 function getListKey(positionKey: string) {
   return hashData(["bytes32", "bytes32"], [hashString("AUTO_CANCEL_ORDER_LIST"), positionKey]);
@@ -11,9 +11,12 @@ async function main() {
   const dataStore = (await hre.ethers.getContract("DataStore")) as DataStore;
   const multicall = (await hre.ethers.getContract("Multicall3")) as Multicall3;
 
-  const positionKeys = await fetchJson(
+  const request = new FetchRequest(
     "https://api.dune.com/api/v1/query/3955674/results?limit=30000&api_key=vkJEGucSg4Geqz30oxXM7oEersXXEKf3"
-  ).then((r) => r.result.rows.map((r) => r.position_key));
+  );
+  const response = await request.send();
+  const data = await response.bodyJson;
+  const positionKeys = data.result.rows.map((r: any) => r.position_key);
 
   console.log("total positions", positionKeys.length);
 

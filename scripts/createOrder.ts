@@ -142,7 +142,7 @@ async function main() {
   const dataStore = await hre.ethers.getContract<DataStore>("DataStore");
   const exchangeRouter = await hre.ethers.getContract<ExchangeRouter>("ExchangeRouter");
   const receiver = await exchangeRouter.signer.getAddress();
-  const referralCode = ethers.constants.HashZero;
+  const referralCode = ethers.ZeroHash;
   const markets = await reader.getMarkets(dataStore.address, 0, 100);
 
   let market;

@@ -67,7 +67,7 @@ describe("Glv Withdrawals", () => {
 
   let ethUsdSingleTokenGlvAddress: string;
   beforeEach(async () => {
-    const glvType = ethers.constants.HashZero;
+    const glvType = ethers.ZeroHash;
 
     ethUsdSingleTokenGlvAddress = getGlvAddress(
       wnt.address,
@@ -342,7 +342,7 @@ describe("Glv Withdrawals", () => {
 
   describe("execute glv withdrawal, validations", () => {
     it("GlvWithdrawalNotFound", async () => {
-      const key = ethers.constants.HashZero.slice(0, -1) + "f";
+      const key = ethers.ZeroHash.slice(0, -1) + "f";
       await expect(executeGlvWithdrawal(fixture, { key }))
         .to.be.revertedWithCustomError(errorsContract, "GlvWithdrawalNotFound")
         .withArgs(key);

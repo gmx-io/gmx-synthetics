@@ -102,7 +102,7 @@ async function main() {
     shouldUnwrapNativeToken: false, // not relevant for market swap
     decreasePositionSwapType: 0, // no swap
     autoCancel: true,
-    referralCode: ethers.constants.HashZero,
+    referralCode: ethers.ZeroHash,
   };
   console.log("exchange router %s", exchangeRouter.address);
   console.log("order store %s", orderVault.address);

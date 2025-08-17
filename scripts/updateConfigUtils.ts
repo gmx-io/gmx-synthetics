@@ -73,9 +73,9 @@ export async function handleConfigChanges(
     if (type === "uint") {
       dataCache[key] = bigNumberify(value);
     } else if (type === "address") {
-      dataCache[key] = ethers.utils.defaultAbiCoder.decode(["address"], value)[0];
+      dataCache[key] = ethers.AbiCoder.defaultAbiCoder().decode(["address"], value)[0];
     } else if (type === "bool") {
-      dataCache[key] = ethers.utils.defaultAbiCoder.decode(["bool"], value)[0];
+      dataCache[key] = ethers.AbiCoder.defaultAbiCoder().decode(["bool"], value)[0];
     } else {
       throw new Error(`Unsupported type: ${type}`);
     }

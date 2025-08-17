@@ -239,7 +239,7 @@ async function setup() {
   const ethUsdGlvAddress = getGlvAddress(
     wnt.address,
     usdc.address,
-    ethers.constants.HashZero,
+    ethers.ZeroHash,
     "GMX Liquidity Vault [WETH-USDC]",
     "GLV [WETH-USDC]",
     glvFactory.address,

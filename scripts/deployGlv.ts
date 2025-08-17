@@ -20,7 +20,7 @@ async function main() {
   const glvAddress = getGlvAddress(
     tokens.WETH.address, // longToken
     tokens["USDC.SG"].address, // shortToken
-    ethers.constants.HashZero, // glvType
+    ethers.ZeroHash, // glvType
     "GMX Liquidity Vault [WETH-USDC.SG]", // name
     "GLV [WETH-USDC.SG]", // symbol
     glvFactory.address,
@@ -37,7 +37,7 @@ async function main() {
     const tx = await glvFactory.createGlv(
       tokens.WETH.address, // longToken
       tokens["USDC.SG"].address, // shortToken
-      ethers.constants.HashZero, // glvType
+      ethers.ZeroHash, // glvType
       "GMX Liquidity Vault [WETH-USDC.SG]", // name
       "GLV [WETH-USDC.SG]" // symbol
     );
