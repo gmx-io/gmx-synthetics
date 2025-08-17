@@ -106,7 +106,7 @@ async function main() {
   ];
   console.log("multicall args", multicallArgs);
 
-  const result = await exchangeRouter.callStatic.multicall(multicallArgs, {
+  const result = await exchangeRouter.multicall.staticCall(multicallArgs, {
     value: longTokenAmount.add(executionFee),
     gasLimit: 8000000,
   });

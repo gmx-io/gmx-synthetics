@@ -340,9 +340,9 @@ const getConfigItems = async (generalConfig, oracleConfig) => {
   configItems.push({
     type: "bool",
     baseKey: keys.IS_RELAY_FEE_EXCLUDED,
-    keyData: encodeData(["address"], [layerZeroProvider.address]),
+    keyData: encodeData(["address"], [layerZeroProvider.target]),
     value: true,
-    label: `isRelayFeeExcluded ${layerZeroProvider.address}`,
+    label: `isRelayFeeExcluded ${layerZeroProvider.target}`,
   });
 
   if (network.name != "hardhat") {

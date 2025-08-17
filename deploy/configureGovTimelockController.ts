@@ -7,9 +7,9 @@ const func = async ({ getNamedAccounts }) => {
   const protocolGovernor = await ethers.getContract("ProtocolGovernor");
 
   if (await govTimelockController.hasRole(TIMELOCK_ADMIN_ROLE, deployer)) {
-    await govTimelockController.grantRole(PROPOSER_ROLE, protocolGovernor.address);
-    await govTimelockController.grantRole(CANCELLER_ROLE, protocolGovernor.address);
-    await govTimelockController.grantRole(EXECUTOR_ROLE, protocolGovernor.address);
+    await govTimelockController.grantRole(PROPOSER_ROLE, protocolGovernor.target);
+    await govTimelockController.grantRole(CANCELLER_ROLE, protocolGovernor.target);
+    await govTimelockController.grantRole(EXECUTOR_ROLE, protocolGovernor.target);
     await govTimelockController.revokeRole(TIMELOCK_ADMIN_ROLE, deployer);
   } else {
     console.info("skipping govTimelockController role config, as deployer does not have access to update roles");

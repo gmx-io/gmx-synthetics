@@ -126,7 +126,7 @@ export async function appendUintConfigIfDifferent(
   label?: string
 ) {
   await appendConfigIfDifferent(list, dataCache, "uint", baseKey, keyData, value, {
-    compare: (a, b) => a.eq(b),
+    compare: (a, b) => a == b, // BigInt & number comparison --> use loosely equality
     label,
   });
 }
@@ -234,7 +234,7 @@ export function getFullKey(baseKey: string, keyData?: string) {
     return baseKey;
   }
 
-  const keyArray = ethers.utils.concat([ethers.utils.arrayify(baseKey), ethers.utils.arrayify(keyData)]);
+  const keyArray = ethers.concat([ethers.getBytes(baseKey), ethers.getBytes(keyData)]);
 
   return ethers.keccak256(keyArray);
 }
