@@ -125,7 +125,8 @@ export async function handleConfigChanges(
   console.log("multicallWriteParams", multicallWriteParams);
 
   const { roles } = await hre.gmx.getRoles();
-  const from = Object.keys(roles.CONFIG_KEEPER)[0];
+  const fromAddress = Object.keys(roles.CONFIG_KEEPER)[0];
+  const from = await hre.ethers.getSigner(fromAddress);
   if (batchSize == 0) {
     batchSize = multicallWriteParams.length;
   }
