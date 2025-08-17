@@ -226,7 +226,7 @@ async function getContractInfo(
     return _cache.get(contractAddress);
   }
 
-  let contractName = contractNameByAddress[ethers.utils.getAddress(contractAddress)];
+  let contractName = contractNameByAddress[ethers.getAddress(contractAddress)];
   let isContract = true;
   let shouldCache = true;
   let isGmxDeployer = true;

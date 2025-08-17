@@ -42,7 +42,7 @@ async function requestMigrationData(fromTimestamp: number) {
     userTradingIncentivesStats: data.userTradingIncentivesStats
       .map((item) => {
         return {
-          account: ethers.utils.getAddress(item.account),
+          account: ethers.getAddress(item.account),
           positionFeesUsd: bigNumberify(item.positionFeesUsd),
         };
       })

@@ -671,8 +671,8 @@ describe("GelatoRelayRouter", () => {
       // validate that they were indeed passed
       const bytes = ethers.utils.arrayify(tx.data);
       const [feeReceiverFromCalldata, feeTokenFromCalldata, feeAmountFromCalldata] = [
-        ethers.utils.getAddress(ethers.utils.hexlify(bytes.slice(-72, -52))),
-        ethers.utils.getAddress(ethers.utils.hexlify(bytes.slice(-52, -32))),
+        ethers.getAddress(ethers.utils.hexlify(bytes.slice(-72, -52))),
+        ethers.getAddress(ethers.utils.hexlify(bytes.slice(-52, -32))),
         bigNumberify(ethers.utils.hexlify(bytes.slice(-32))),
       ];
 

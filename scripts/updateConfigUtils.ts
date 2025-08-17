@@ -43,19 +43,19 @@ export async function handleConfigChanges(
 
     if (item.type === "uint") {
       multicallReadParams.push({
-        target: dataStore.address,
+        target: dataStore.target,
         allowFailure: false,
         callData: dataStore.interface.encodeFunctionData("getUint", [key]),
       });
     } else if (item.type === "address") {
       multicallReadParams.push({
-        target: dataStore.address,
+        target: dataStore.target,
         allowFailure: false,
         callData: dataStore.interface.encodeFunctionData("getAddress", [key]),
       });
     } else if (item.type === "bool") {
       multicallReadParams.push({
-        target: dataStore.address,
+        target: dataStore.target,
         allowFailure: false,
         callData: dataStore.interface.encodeFunctionData("getBool", [key]),
       });
@@ -64,7 +64,7 @@ export async function handleConfigChanges(
     }
   }
 
-  const result = await multicall.callStatic.aggregate3(multicallReadParams);
+  const result = await multicall.aggregate3.staticCall(multicallReadParams);
   const dataCache = {};
   for (let i = 0; i < configKeys.length; i++) {
     const type = types[i];

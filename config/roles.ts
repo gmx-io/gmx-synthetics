@@ -487,7 +487,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         if (account === "undefined") {
           continue;
         }
-        const checksumAccount = ethers.utils.getAddress(account);
+        const checksumAccount = ethers.getAddress(account);
         if (account !== checksumAccount) {
           accounts[checksumAccount] = accounts[account];
           delete accounts[account];

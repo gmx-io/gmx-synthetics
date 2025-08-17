@@ -208,23 +208,23 @@ async function requestBalancesData(
       const userBalances: Record<string, BigNumber> = {};
       for (const lpStat of data.liquidityProviderIncentivesStats) {
         if (lpStat.glvOrMarketAddress === glvOrMarketAddress) {
-          userBalances[ethers.utils.getAddress(lpStat.account)] = bigNumberify(lpStat.weightedAverageTokensBalance);
+          userBalances[ethers.getAddress(lpStat.account)] = bigNumberify(lpStat.weightedAverageTokensBalance);
         }
       }
       for (const info of liquidityProviderInfos) {
         if (info.glvOrMarketAddress !== glvOrMarketAddress) {
           continue;
         }
-        if (ethers.utils.getAddress(info.account) in userBalances) {
+        if (ethers.getAddress(info.account) in userBalances) {
           continue;
         }
         if (info.tokensBalance === "0") {
           continue;
         }
-        userBalances[ethers.utils.getAddress(info.account)] = bigNumberify(info.tokensBalance);
+        userBalances[ethers.getAddress(info.account)] = bigNumberify(info.tokensBalance);
       }
 
-      return [ethers.utils.getAddress(glvOrMarketAddress), userBalances];
+      return [ethers.getAddress(glvOrMarketAddress), userBalances];
     })
   );
 

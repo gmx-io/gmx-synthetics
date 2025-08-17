@@ -79,7 +79,7 @@ export async function isErc777Token(tokenAddress) {
 }
 
 function parseAddress(slot) {
-  return ethers.utils.getAddress(`0x${slot.slice(-40)}`);
+  return ethers.getAddress(`0x${slot.slice(-40)}`);
 }
 
 async function getBeaconImplementation(beaconAddress) {

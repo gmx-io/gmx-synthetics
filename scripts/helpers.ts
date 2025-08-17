@@ -13,7 +13,7 @@ normalizeAddressesInMap(staticReceiverOverridesMap);
 
 function normalizeAddressesInMap(map: Record<string, string>) {
   for (const address of Object.keys(map)) {
-    const checksumAddress = ethers.utils.getAddress(address);
+    const checksumAddress = ethers.getAddress(address);
     if (checksumAddress !== address) {
       map[checksumAddress] = map[address];
       delete map[address];
@@ -381,7 +381,7 @@ export async function fetchDolomiteReceiverOverrides() {
 
   const overrides = Object.fromEntries(
     Object.entries(res.data).map(([from, to]) => {
-      return [ethers.utils.getAddress(from), ethers.utils.getAddress(to)];
+      return [ethers.getAddress(from), ethers.getAddress(to)];
     })
   );
 
@@ -404,7 +404,7 @@ export async function overrideReceivers(data: Record<string, string>): Promise<R
   const appliedOverrides: Record<string, string> = {};
 
   for (const [receiver, amount] of Object.entries(data)) {
-    const checksumReceiver = ethers.utils.getAddress(receiver);
+    const checksumReceiver = ethers.getAddress(receiver);
     const newReceiver = receiverOverridesMap[checksumReceiver];
     if (!newReceiver) {
       continue;
@@ -439,7 +439,7 @@ export function saveDistribution(
   const id = `${dateStr}_${hre.network.name}_${distributionTypeId}`;
 
   Object.keys(jsonResult).forEach((receiver) => {
-    if (ethers.utils.getAddress(receiver) !== receiver) {
+    if (ethers.getAddress(receiver) !== receiver) {
       throw Error(`Receiver address should be check summed: ${receiver}`);
     }
   });

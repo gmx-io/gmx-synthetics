@@ -1617,7 +1617,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<TokensCo
       (token as any).address = getSyntheticTokenAddress(hre.network.config.chainId, tokenSymbol);
     }
     if (token.address) {
-      (token as any).address = ethers.utils.getAddress(token.address);
+      (token as any).address = ethers.getAddress(token.address);
     }
     if (!hre.network.live) {
       (token as any).deploy = true;

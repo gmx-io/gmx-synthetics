@@ -7,7 +7,7 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
   const { read, execute, log } = deployments;
   const { deployer } = await getNamedAccounts();
   const oracleConfig = await gmx.getOracle();
-  const oracleSigners = oracleConfig.signers.map((s) => ethers.utils.getAddress(s));
+  const oracleSigners = oracleConfig.signers.map((s) => ethers.getAddress(s));
 
   const existingSignersCount = await read("OracleStore", "getSignerCount");
   const existingSigners = await read("OracleStore", "getSigners", 0, existingSignersCount);

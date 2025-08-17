@@ -151,11 +151,11 @@ async function main() {
   // a list of markets can be printed using scripts/printMarkets.ts
   // list of tokens can be found in config/tokens.ts
   if (hre.network.name === "arbitrumSepolia") {
-    market = ethers.utils.getAddress("0xb6fC4C9eB02C35A134044526C62bb15014Ac0Bcc"); // index: WETH  long: WETH  short: USDC.SG
-    USDC = ethers.utils.getAddress("0x3253a335E7bFfB4790Aa4C25C4250d206E9b9773"); // Stargate USDC
+    market = ethers.getAddress("0xb6fC4C9eB02C35A134044526C62bb15014Ac0Bcc"); // index: WETH  long: WETH  short: USDC.SG
+    USDC = ethers.getAddress("0x3253a335E7bFfB4790Aa4C25C4250d206E9b9773"); // Stargate USDC
   } else if (hre.network.name === "avalancheFuji") {
-    market = ethers.utils.getAddress("0xbf338a6C595f06B7Cfff2FA8c958d49201466374"); // index: WETH  long: WETH  short: USDC
-    USDC = ethers.utils.getAddress("0x3eBDeaA0DB3FfDe96E7a0DBBAFEC961FC50F725F"); // MintableToken
+    market = ethers.getAddress("0xbf338a6C595f06B7Cfff2FA8c958d49201466374"); // index: WETH  long: WETH  short: USDC
+    USDC = ethers.getAddress("0x3eBDeaA0DB3FfDe96E7a0DBBAFEC961FC50F725F"); // MintableToken
   } else {
     throw new Error(`Unsupported network: ${hre.network.name}`);
   }

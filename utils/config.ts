@@ -236,5 +236,5 @@ export function getFullKey(baseKey: string, keyData?: string) {
 
   const keyArray = ethers.utils.concat([ethers.utils.arrayify(baseKey), ethers.utils.arrayify(keyData)]);
 
-  return ethers.utils.keccak256(keyArray);
+  return ethers.keccak256(keyArray);
 }
