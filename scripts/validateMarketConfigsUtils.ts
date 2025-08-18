@@ -450,6 +450,27 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 12_000,
     },
+    PUMP: {
+      negativePositionImpactFactor: exponentToFloat("6e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    "ARB:ARB:ARB": {
+      negativePositionImpactFactor: exponentToFloat("8.4e-9"),
+      negativeSwapImpactFactor: 0,
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    MNT: {
+      negativePositionImpactFactor: exponentToFloat("4.12e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    SPX6900: {
+      negativePositionImpactFactor: exponentToFloat("1.44e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
     wstETH: {
       negativeSwapImpactFactor: exponentToFloat("1e-8"),
       expectedSwapImpactRatio: 20_000,
@@ -513,6 +534,30 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
     },
+    PUMP: {
+      negativePositionImpactFactor: exponentToFloat("6e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+  },
+  arbitrumSepolia: {
+    BTC: {
+      negativePositionImpactFactor: exponentToFloat("5e-11"),
+      negativeSwapImpactFactor: exponentToFloat("5e-11"),
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    WETH: {
+      negativePositionImpactFactor: exponentToFloat("5e-11"),
+      negativeSwapImpactFactor: exponentToFloat("5e-11"),
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 11_111,
+    },
+    CRV: {
+      negativePositionImpactFactor: exponentToFloat("1.4e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 11_600,
+    },
   },
   botanix: {
     "BTC:pBTC:pBTC": {
@@ -565,6 +610,7 @@ async function validatePerpConfig({
   shortTokenSymbol,
   indexTokenSymbol,
   dataStore,
+  warnings,
   errors,
 }) {
   if (!marketConfig.tokens.indexToken) {
@@ -572,6 +618,14 @@ async function validatePerpConfig({
   }
 
   const marketLabel = `${indexTokenSymbol} [${longTokenSymbol}-${shortTokenSymbol}]`;
+
+  if (!marketConfig.minCollateralFactor.eq(marketConfig.minCollateralFactorForLiquidation)) {
+    warnings.push({
+      message: `marketConfig.minCollateralFactor != marketConfig.minCollateralFactorForLiquidation for ${marketLabel}`,
+      expected: marketConfig.minCollateralFactor,
+      actual: marketConfig.minCollateralFactorForLiquidation,
+    });
+  }
 
   console.log("validatePerpConfig", indexTokenSymbol);
   const recommendedPerpConfig =
@@ -1026,6 +1080,7 @@ export async function validateMarketConfigs() {
   markets.sort((a, b) => a.indexToken.localeCompare(b.indexToken));
 
   const errors = [];
+  const warnings = [];
 
   // validate market configs as some markets may not be created on-chain yet
   for (const marketConfig of marketConfigs) {
@@ -1049,8 +1104,34 @@ export async function validateMarketConfigs() {
       throw new Error(`Missing configs for ${indexTokenSymbol}[${longTokenSymbol}-${shortTokenSymbol}]`);
     }
 
-    await validatePerpConfig({ marketConfig, indexTokenSymbol, longTokenSymbol, shortTokenSymbol, dataStore, errors });
-    await validateSwapConfig({ marketConfig, indexTokenSymbol, longTokenSymbol, shortTokenSymbol, dataStore, errors });
+    if (hre.network.name != "arbitrumSepolia") {
+      for (const key of ["maxLendableImpactFactor", "maxLendableImpactFactorForWithdrawals", "maxLendableImpactUsd"]) {
+        if (marketConfig[key] && marketConfig[key] != 0) {
+          throw new Error(
+            `${key} should not be set to more than zero, unless the old V2 contracts are disabled, only remove this check if it is confirmed that the old V2 contracts have been disabled`
+          );
+        }
+      }
+    }
+
+    await validatePerpConfig({
+      marketConfig,
+      indexTokenSymbol,
+      longTokenSymbol,
+      shortTokenSymbol,
+      dataStore,
+      errors,
+      warnings,
+    });
+    await validateSwapConfig({
+      marketConfig,
+      indexTokenSymbol,
+      longTokenSymbol,
+      shortTokenSymbol,
+      dataStore,
+      errors,
+      warnings,
+    });
   }
 
   const marketKeysToSkip = {
@@ -1089,6 +1170,7 @@ export async function validateMarketConfigs() {
       indexTokenSymbol,
       dataStore,
       errors,
+      warnings,
     });
     await validateSwapConfig({
       market,
@@ -1098,7 +1180,14 @@ export async function validateMarketConfigs() {
       indexTokenSymbol,
       dataStore,
       errors,
+      warnings,
     });
+  }
+
+  for (const warning of warnings) {
+    console.log(
+      `Warn: ${warning.message}, expected: ${warning.expected.toString()}, actual: ${warning.actual.toString()}`
+    );
   }
 
   for (const error of errors) {

@@ -177,6 +177,28 @@ library MarketEventUtils {
         );
     }
 
+    function emitTotalPendingImpactAmountUpdated(
+        EventEmitter eventEmitter,
+        address market,
+        int256 delta,
+        int256 nextValue
+    ) external {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "market", market);
+
+        eventData.intItems.initItems(2);
+        eventData.intItems.setItem(0, "delta", delta);
+        eventData.intItems.setItem(1, "nextValue", nextValue);
+
+        eventEmitter.emitEventLog1(
+            "TotalPendingImpactAmountUpdated",
+            Cast.toBytes32(market),
+            eventData
+        );
+    }
+
     function emitPositionImpactPoolAmountUpdated(
         EventEmitter eventEmitter,
         address market,
@@ -196,6 +218,30 @@ library MarketEventUtils {
 
         eventEmitter.emitEventLog1(
             "PositionImpactPoolAmountUpdated",
+            Cast.toBytes32(market),
+            eventData
+        );
+    }
+
+    function emitLentPositionImpactPoolAmountUpdated(
+        EventEmitter eventEmitter,
+        address market,
+        int256 delta,
+        uint256 nextValue
+    ) external {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "market", market);
+
+        eventData.intItems.initItems(1);
+        eventData.intItems.setItem(0, "delta", delta);
+
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "nextValue", nextValue);
+
+        eventEmitter.emitEventLog1(
+            "LentPositionImpactPoolAmountUpdated",
             Cast.toBytes32(market),
             eventData
         );
@@ -351,6 +397,26 @@ library MarketEventUtils {
         );
     }
 
+    function emitBorrowing(
+        EventEmitter eventEmitter,
+        address market,
+        uint256 borrowingFactorPerSecond
+    ) external {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "market", market);
+
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "borrowingFactorPerSecond", borrowingFactorPerSecond);
+
+        eventEmitter.emitEventLog1(
+            "Borrowing",
+            Cast.toBytes32(market),
+            eventData
+        );
+    }
+
     function emitBorrowingFactorUpdated(
         EventEmitter eventEmitter,
         address market,
@@ -372,6 +438,26 @@ library MarketEventUtils {
 
         eventEmitter.emitEventLog1(
             "CumulativeBorrowingFactorUpdated",
+            Cast.toBytes32(market),
+            eventData
+        );
+    }
+
+    function emitFunding(
+        EventEmitter eventEmitter,
+        address market,
+        uint256 fundingFactorPerSecond
+    ) external {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "market", market);
+
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "fundingFactorPerSecond", fundingFactorPerSecond);
+
+        eventEmitter.emitEventLog1(
+            "Funding",
             Cast.toBytes32(market),
             eventData
         );
@@ -594,6 +680,54 @@ library MarketEventUtils {
         eventEmitter.emitEventLog1(
             "UiFeeFactorUpdated",
             Cast.toBytes32(account),
+            eventData
+        );
+    }
+
+    function emitPositionImpactPoolWithdrawal(
+        EventEmitter eventEmitter,
+        address market,
+        address receiver,
+        uint256 amount
+    ) external {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "market", market);
+        eventData.addressItems.setItem(1, "receiver", receiver);
+
+        eventData.uintItems.initItems(1);
+        eventData.uintItems.setItem(0, "amount", amount);
+
+        eventEmitter.emitEventLog1(
+            "PositionImpactPoolWithdrawal",
+            Cast.toBytes32(market),
+            eventData
+        );
+    }
+
+    function emitLentImpactAmountReduction(
+        EventEmitter eventEmitter,
+        address market,
+        address fundingAccount,
+        uint256 longTokenAmount,
+        uint256 shortTokenAmount,
+        uint256 reductionAmount
+    ) external {
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "market", market);
+        eventData.addressItems.setItem(1, "fundingAccount", fundingAccount);
+
+        eventData.uintItems.initItems(3);
+        eventData.uintItems.setItem(0, "longTokenAmount", longTokenAmount);
+        eventData.uintItems.setItem(1, "shortTokenAmount", shortTokenAmount);
+        eventData.uintItems.setItem(2, "reductionAmount", reductionAmount);
+
+        eventEmitter.emitEventLog1(
+            "LentImpactAmountReduction",
+            Cast.toBytes32(market),
             eventData
         );
     }

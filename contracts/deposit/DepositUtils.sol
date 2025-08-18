@@ -8,12 +8,16 @@ import "../event/EventEmitter.sol";
 import "./DepositVault.sol";
 import "./DepositStoreUtils.sol";
 import "./DepositEventUtils.sol";
+import "./IDepositUtils.sol";
 
 import "../nonce/NonceUtils.sol";
+import "../price/Price.sol";
+import "../market/MarketUtils.sol";
 
 import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
 import "../utils/AccountUtils.sol";
+import "../multichain/MultichainUtils.sol";
 
 // @title DepositUtils
 // @dev Library for deposit functions, to help with the depositing of liquidity
@@ -25,63 +29,38 @@ library DepositUtils {
     using Price for Price.Props;
     using Deposit for Deposit.Props;
 
-    // @dev CreateDepositParams struct used in createDeposit to avoid stack
-    // too deep errors
-    //
-    // @param receiver the address to send the market tokens to
-    // @param callbackContract the callback contract
-    // @param uiFeeReceiver the ui fee receiver
-    // @param market the market to deposit into
-    // @param minMarketTokens the minimum acceptable number of liquidity tokens
-    // @param shouldUnwrapNativeToken whether to unwrap the native token when
-    // sending funds back to the user in case the deposit gets cancelled
-    // @param executionFee the execution fee for keepers
-    // @param callbackGasLimit the gas limit for the callbackContract
-    struct CreateDepositParams {
-        address receiver;
-        address callbackContract;
-        address uiFeeReceiver;
-        address market;
-        address initialLongToken;
-        address initialShortToken;
-        address[] longTokenSwapPath;
-        address[] shortTokenSwapPath;
-        uint256 minMarketTokens;
-        bool shouldUnwrapNativeToken;
-        uint256 executionFee;
-        uint256 callbackGasLimit;
-    }
-
     // @dev creates a deposit
     //
     // @param dataStore DataStore
     // @param eventEmitter EventEmitter
     // @param depositVault DepositVault
     // @param account the depositing account
+    // @param srcChainId the source chain id
     // @param params CreateDepositParams
     function createDeposit(
         DataStore dataStore,
         EventEmitter eventEmitter,
         DepositVault depositVault,
         address account,
-        CreateDepositParams memory params
+        uint256 srcChainId,
+        IDepositUtils.CreateDepositParams memory params
     ) external returns (bytes32) {
         AccountUtils.validateAccount(account);
 
-        Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, params.market);
-        MarketUtils.validateSwapPath(dataStore, params.longTokenSwapPath);
-        MarketUtils.validateSwapPath(dataStore, params.shortTokenSwapPath);
+        Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, params.addresses.market);
+        MarketUtils.validateSwapPath(dataStore, params.addresses.longTokenSwapPath);
+        MarketUtils.validateSwapPath(dataStore, params.addresses.shortTokenSwapPath);
 
         // if the initialLongToken and initialShortToken are the same, only the initialLongTokenAmount would
         // be non-zero, the initialShortTokenAmount would be zero
-        uint256 initialLongTokenAmount = depositVault.recordTransferIn(params.initialLongToken);
-        uint256 initialShortTokenAmount = depositVault.recordTransferIn(params.initialShortToken);
+        uint256 initialLongTokenAmount = depositVault.recordTransferIn(params.addresses.initialLongToken);
+        uint256 initialShortTokenAmount = depositVault.recordTransferIn(params.addresses.initialShortToken);
 
         address wnt = TokenUtils.wnt(dataStore);
 
-        if (params.initialLongToken == wnt) {
+        if (params.addresses.initialLongToken == wnt) {
             initialLongTokenAmount -= params.executionFee;
-        } else if (params.initialShortToken == wnt) {
+        } else if (params.addresses.initialShortToken == wnt) {
             initialShortTokenAmount -= params.executionFee;
         } else {
             uint256 wntAmount = depositVault.recordTransferIn(wnt);
@@ -96,19 +75,19 @@ library DepositUtils {
             revert Errors.EmptyDepositAmounts();
         }
 
-        AccountUtils.validateReceiver(params.receiver);
+        AccountUtils.validateReceiver(params.addresses.receiver);
 
         Deposit.Props memory deposit = Deposit.Props(
             Deposit.Addresses(
                 account,
-                params.receiver,
-                params.callbackContract,
-                params.uiFeeReceiver,
+                params.addresses.receiver,
+                params.addresses.callbackContract,
+                params.addresses.uiFeeReceiver,
                 market.marketToken,
-                params.initialLongToken,
-                params.initialShortToken,
-                params.longTokenSwapPath,
-                params.shortTokenSwapPath
+                params.addresses.initialLongToken,
+                params.addresses.initialShortToken,
+                params.addresses.longTokenSwapPath,
+                params.addresses.shortTokenSwapPath
             ),
             Deposit.Numbers(
                 initialLongTokenAmount,
@@ -116,20 +95,23 @@ library DepositUtils {
                 params.minMarketTokens,
                 Chain.currentTimestamp(), // updatedAtTime
                 params.executionFee,
-                params.callbackGasLimit
+                params.callbackGasLimit,
+                srcChainId
             ),
             Deposit.Flags(
                 params.shouldUnwrapNativeToken
-            )
+            ),
+            params.dataList
         );
 
         CallbackUtils.validateCallbackGasLimit(dataStore, deposit.callbackGasLimit());
 
-        uint256 estimatedGasLimit = GasUtils.estimateExecuteDepositGasLimit(dataStore, deposit);
-        uint256 oraclePriceCount = GasUtils.estimateDepositOraclePriceCount(
-            deposit.longTokenSwapPath().length + deposit.shortTokenSwapPath().length
+        GasUtils.validateExecutionFee(
+            dataStore,
+            GasUtils.estimateExecuteDepositGasLimit(dataStore, deposit), // estimatedGasLimit
+            params.executionFee,
+            GasUtils.estimateDepositOraclePriceCount(deposit.longTokenSwapPath().length + deposit.shortTokenSwapPath().length) // oraclePriceCount
         );
-        GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, params.executionFee, oraclePriceCount);
 
         bytes32 key = NonceUtils.getNextKey(dataStore);
 
@@ -151,6 +133,7 @@ library DepositUtils {
     function cancelDeposit(
         DataStore dataStore,
         EventEmitter eventEmitter,
+        MultichainVault multichainVault,
         DepositVault depositVault,
         bytes32 key,
         address keeper,
@@ -176,21 +159,55 @@ library DepositUtils {
         DepositStoreUtils.remove(dataStore, key, deposit.account());
 
         if (deposit.initialLongTokenAmount() > 0) {
-            depositVault.transferOut(
-                deposit.initialLongToken(),
-                deposit.account(),
-                deposit.initialLongTokenAmount(),
-                deposit.shouldUnwrapNativeToken()
-            );
+            if (deposit.srcChainId() == 0) {
+                depositVault.transferOut(
+                    deposit.initialLongToken(),
+                    deposit.account(),
+                    deposit.initialLongTokenAmount(),
+                    deposit.shouldUnwrapNativeToken()
+                );
+            } else {
+                depositVault.transferOut(
+                    deposit.initialLongToken(),
+                    address(multichainVault),
+                    deposit.initialLongTokenAmount(),
+                    false // shouldUnwrapNativeToken
+                );
+                MultichainUtils.recordTransferIn(
+                    dataStore,
+                    eventEmitter,
+                    multichainVault,
+                    deposit.initialLongToken(),
+                    deposit.account(),
+                    0 // srcChainId is the current block.chainId
+                );
+            }
         }
 
         if (deposit.initialShortTokenAmount() > 0) {
-            depositVault.transferOut(
-                deposit.initialShortToken(),
-                deposit.account(),
-                deposit.initialShortTokenAmount(),
-                deposit.shouldUnwrapNativeToken()
-            );
+            if (deposit.srcChainId() == 0) {
+                depositVault.transferOut(
+                    deposit.initialShortToken(),
+                    deposit.account(),
+                    deposit.initialShortTokenAmount(),
+                    deposit.shouldUnwrapNativeToken()
+                );
+            } else {
+                depositVault.transferOut(
+                    deposit.initialShortToken(),
+                    address(multichainVault),
+                    deposit.initialShortTokenAmount(),
+                    false // shouldUnwrapNativeToken
+                );
+                MultichainUtils.recordTransferIn(
+                    dataStore,
+                    eventEmitter,
+                    multichainVault,
+                    deposit.initialShortToken(),
+                    deposit.account(),
+                    0 // srcChainId is the current block.chainId
+                );
+            }
         }
 
         DepositEventUtils.emitDepositCancelled(
@@ -205,16 +222,20 @@ library DepositUtils {
         CallbackUtils.afterDepositCancellation(key, deposit, eventData);
 
         GasUtils.payExecutionFee(
-            dataStore,
-            eventEmitter,
-            depositVault,
+            GasUtils.PayExecutionFeeContracts(
+                dataStore,
+                eventEmitter,
+                multichainVault,
+                depositVault
+            ),
             key,
             deposit.callbackContract(),
             deposit.executionFee(),
             startingGas,
             GasUtils.estimateDepositOraclePriceCount(deposit.longTokenSwapPath().length + deposit.shortTokenSwapPath().length),
             keeper,
-            deposit.receiver()
+            deposit.receiver(),
+            deposit.srcChainId()
         );
     }
 }

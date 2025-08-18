@@ -7,14 +7,12 @@ import "../utils/Precision.sol";
 import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
 
-import "../oracle/Oracle.sol";
 import "../pricing/PositionPricingUtils.sol";
 
 import "./Position.sol";
 import "./PositionStoreUtils.sol";
 import "./PositionUtils.sol";
 import "./PositionEventUtils.sol";
-import "../order/BaseOrderUtils.sol";
 import "../order/OrderEventUtils.sol";
 
 import "./DecreasePositionCollateralUtils.sol";
@@ -139,11 +137,22 @@ library DecreasePositionUtils {
                 positionValues
             );
 
+            cache.minCollateralUsd = params.contracts.dataStore.getUint(Keys.MIN_COLLATERAL_USD).toInt256();
+
             // do not allow withdrawal of collateral if it would lead to the position
             // having an insufficient amount of collateral
             // this helps to prevent gaming by opening a position then reducing collateral
             // to increase the leverage of the position
-            if (!willBeSufficient) {
+            //
+            // alternatively, if the estimatedRemainingCollateralUsd + estimatedRemainingPnlUsd will be less
+            // than minCollateralUsd, then set the initialCollateralDeltaAmount to zero as well
+            // in the subsequent check, the position size may be updated to fully close the position
+            // due to the above condition, so adding the collateral back here can help avoid the position
+            // being fully closed
+            if (
+                !willBeSufficient ||
+                (estimatedRemainingCollateralUsd + cache.estimatedRemainingPnlUsd) < cache.minCollateralUsd
+            ) {
                 if (params.order.sizeDeltaUsd() == 0) {
                     revert Errors.UnableToWithdrawCollateral(estimatedRemainingCollateralUsd);
                 }
@@ -168,7 +177,7 @@ library DecreasePositionUtils {
             // if the position has sufficient remaining collateral including pnl
             // then allow the position to be partially closed and the updated
             // position to remain open
-            if ((estimatedRemainingCollateralUsd + cache.estimatedRemainingPnlUsd) < params.contracts.dataStore.getUint(Keys.MIN_COLLATERAL_USD).toInt256()) {
+            if ((estimatedRemainingCollateralUsd + cache.estimatedRemainingPnlUsd) < cache.minCollateralUsd) {
                 OrderEventUtils.emitOrderSizeDeltaAutoUpdated(
                     params.contracts.eventEmitter,
                     params.orderKey,
@@ -208,14 +217,15 @@ library DecreasePositionUtils {
             params.order.setDecreasePositionSwapType(Order.DecreasePositionSwapType.NoSwap);
         }
 
-        if (BaseOrderUtils.isLiquidationOrder(params.order.orderType())) {
+        if (Order.isLiquidationOrder(params.order.orderType())) {
             (bool isLiquidatable, string memory reason, PositionUtils.IsPositionLiquidatableInfo memory info) = PositionUtils.isPositionLiquidatable(
                 params.contracts.dataStore,
                 params.contracts.referralStorage,
                 params.position,
                 params.market,
                 cache.prices,
-                true // shouldValidateMinCollateralUsd
+                true, // shouldValidateMinCollateralUsd
+                true // forLiquidation
             );
 
             if (!isLiquidatable) {
@@ -249,9 +259,18 @@ library DecreasePositionUtils {
         params.position.setSizeInUsd(cache.nextPositionSizeInUsd);
         params.position.setSizeInTokens(params.position.sizeInTokens() - values.sizeDeltaInTokens);
         params.position.setCollateralAmount(values.remainingCollateralAmount);
+        params.position.setPendingImpactAmount(params.position.pendingImpactAmount() - values.proportionalPendingImpactAmount);
         params.position.setDecreasedAtTime(Chain.currentTimestamp());
 
         PositionUtils.incrementClaimableFundingAmount(params, fees);
+
+        // subtract values.proportionalPendingImpactAmount from the total to remove it
+        MarketUtils.applyDeltaToTotalPendingImpactAmount(
+            params.contracts.dataStore,
+            params.contracts.eventEmitter,
+            params.market.marketToken,
+            -values.proportionalPendingImpactAmount
+        );
 
         if (params.position.sizeInUsd() == 0 || params.position.sizeInTokens() == 0) {
             // withdraw all collateral if the position will be closed

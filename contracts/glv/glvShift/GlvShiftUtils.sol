@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "../../event/EventEmitter.sol";
+import "../../multichain/MultichainVault.sol";
 import "../../shift/ShiftUtils.sol";
 import "../GlvUtils.sol";
 import "../GlvVault.sol";
@@ -26,9 +27,13 @@ library GlvShiftUtils {
     struct ExecuteGlvShiftParams {
         DataStore dataStore;
         EventEmitter eventEmitter;
-        Oracle oracle;
+        IOracle oracle;
+        MultichainVault multichainVault;
         ShiftVault shiftVault;
         GlvVault glvVault;
+        IDepositHandler depositHandler;
+        IWithdrawalHandler withdrawalHandler;
+        ISwapHandler swapHandler;
         bytes32 key;
         address keeper;
     }
@@ -138,8 +143,10 @@ library GlvShiftUtils {
                 marketTokenAmount: glvShift.marketTokenAmount(),
                 updatedAtTime: glvShift.updatedAtTime(),
                 executionFee: 0,
-                callbackGasLimit: 0
-            })
+                callbackGasLimit: 0,
+                srcChainId: 0 // srcChainId is the current block.chainId
+            }),
+            new bytes32[](0)
         );
 
         cache.shiftKey = keccak256(abi.encode(params.key, "shift"));
@@ -148,8 +155,12 @@ library GlvShiftUtils {
         ShiftUtils.ExecuteShiftParams memory executeShiftParams = ShiftUtils.ExecuteShiftParams({
             dataStore: params.dataStore,
             eventEmitter: params.eventEmitter,
+            multichainVault: params.multichainVault,
             shiftVault: params.shiftVault,
             oracle: params.oracle,
+            depositHandler: params.depositHandler,
+            withdrawalHandler: params.withdrawalHandler,
+            swapHandler: params.swapHandler,
             key: cache.shiftKey,
             keeper: params.keeper,
 

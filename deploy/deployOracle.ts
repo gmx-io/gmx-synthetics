@@ -23,6 +23,11 @@ const func = createDeployFunction({
     );
     await setUintIfDifferent(keys.MAX_ORACLE_PRICE_AGE, oracleConfig.maxOraclePriceAge, "max oracle price age");
     await setUintIfDifferent(
+      keys.MAX_ATOMIC_ORACLE_PRICE_AGE,
+      oracleConfig.maxAtomicOraclePriceAge,
+      "max atomic oracle price age"
+    );
+    await setUintIfDifferent(
       keys.MAX_ORACLE_TIMESTAMP_RANGE,
       oracleConfig.maxOracleTimestampRange,
       "max oracle timestamp range"
@@ -39,9 +44,9 @@ const func = createDeployFunction({
     );
 
     // the Oracle contract requires the CONTROLLER to emit events
-    await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER", "oracle");
+    await grantRoleIfNotGranted(deployedContract, "CONTROLLER", "oracle");
   },
-  id: "Oracle_5",
+  id: "Oracle_6",
 });
 
 func.dependencies = func.dependencies.concat(["Tokens", "MockDataStreamVerifier", "ChainlinkPriceFeedProvider"]);

@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "../data/DataStore.sol";
-import "../oracle/Oracle.sol";
+import "../oracle/IOracle.sol";
 import "../market/Market.sol";
 import "../market/MarketUtils.sol";
 import "./GlvToken.sol";
@@ -27,14 +27,14 @@ library GlvUtils {
 
     // @dev get the USD value of the Glv
     // @param dataStore DataStore
-    // @param oracle Oracle
+    // @param oracle IOracle
     // @param glv Glv
     // @param maximize
     // @param forceCalculation. do not use GLV oracle price even if it's available
     // @return the USD value of the Glv
     function getGlvValue(
         DataStore dataStore,
-        Oracle oracle,
+        IOracle oracle,
         address glv,
         bool maximize,
         bool forceCalculation
@@ -140,7 +140,7 @@ library GlvUtils {
 
     function getGlvTokenPrice(
         DataStore dataStore,
-        Oracle oracle,
+        IOracle oracle,
         address glv,
         bool maximize,
         bool forceCalculation

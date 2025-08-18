@@ -2,6 +2,8 @@
 
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+
 import "./BaseHandler.sol";
 import "../error/ErrorUtils.sol";
 
@@ -17,36 +19,50 @@ import "./IWithdrawalHandler.sol";
 
 // @title WithdrawalHandler
 // @dev Contract to handle creation, execution and cancellation of withdrawals
-contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
+contract WithdrawalHandler is IWithdrawalHandler, BaseHandler, ReentrancyGuard {
     using Withdrawal for Withdrawal.Props;
 
+    MultichainVault public immutable multichainVault;
     WithdrawalVault public immutable withdrawalVault;
+    IMultichainTransferRouter public immutable multichainTransferRouter;
+    ISwapHandler public immutable swapHandler;
 
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        Oracle _oracle,
-        WithdrawalVault _withdrawalVault
+        IOracle _oracle,
+        MultichainVault _multichainVault,
+        IMultichainTransferRouter _multichainTransferRouter,
+        WithdrawalVault _withdrawalVault,
+        ISwapHandler _swapHandler
     ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {
+        multichainVault = _multichainVault;
+        multichainTransferRouter = _multichainTransferRouter;
         withdrawalVault = _withdrawalVault;
+        swapHandler = _swapHandler;
     }
 
     // @dev creates a withdrawal in the withdrawal store
     // @param account the withdrawing account
-    // @param params WithdrawalUtils.CreateWithdrawalParams
+    // @param srcChainId the source chain id
+    // @param params IWithdrawalUtils.CreateWithdrawalParams
     function createWithdrawal(
         address account,
-        WithdrawalUtils.CreateWithdrawalParams calldata params
+        uint256 srcChainId,
+        IWithdrawalUtils.CreateWithdrawalParams calldata params
     ) external override globalNonReentrant onlyController returns (bytes32) {
         FeatureUtils.validateFeature(dataStore, Keys.createWithdrawalFeatureDisabledKey(address(this)));
+        validateDataListLength(params.dataList.length);
 
         return WithdrawalUtils.createWithdrawal(
             dataStore,
             eventEmitter,
             withdrawalVault,
             account,
-            params
+            srcChainId,
+            params,
+            false // isAtomicWithdrawal
         );
     }
 
@@ -68,6 +84,7 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
         WithdrawalUtils.cancelWithdrawal(
             _dataStore,
             eventEmitter,
+            multichainVault,
             withdrawalVault,
             key,
             withdrawal.account(),
@@ -114,6 +131,14 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
         }
     }
 
+    function executeWithdrawalFromController(
+        IExecuteWithdrawalUtils.ExecuteWithdrawalParams calldata executeWithdrawalParams,
+        Withdrawal.Props calldata withdrawal
+    ) external nonReentrant onlyController returns (IExecuteWithdrawalUtils.ExecuteWithdrawalResult memory) {
+        FeatureUtils.validateFeature(dataStore, Keys.executeWithdrawalFeatureDisabledKey(address(this)));
+        return ExecuteWithdrawalUtils.executeWithdrawal(executeWithdrawalParams, withdrawal, true);
+    }
+
     // @notice this function can only be called for markets where Chainlink
     // on-chain feeds are configured for all the tokens of the market
     // for example, if the market has index token as DOGE, long token as WETH
@@ -121,7 +146,7 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
     // for DOGE, WETH, USDC for this method to be callable for the market
     function executeAtomicWithdrawal(
         address account,
-        WithdrawalUtils.CreateWithdrawalParams calldata params,
+        IWithdrawalUtils.CreateWithdrawalParams calldata params,
         OracleUtils.SetPricesParams calldata oracleParams
     )
         external
@@ -130,16 +155,15 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
         withOraclePricesForAtomicAction(oracleParams)
     {
         FeatureUtils.validateFeature(dataStore, Keys.executeAtomicWithdrawalFeatureDisabledKey(address(this)));
-
-        oracle.validateSequencerUp();
+        validateDataListLength(params.dataList.length);
 
         if (
-            params.longTokenSwapPath.length != 0 ||
-            params.shortTokenSwapPath.length != 0
+            params.addresses.longTokenSwapPath.length != 0 ||
+            params.addresses.shortTokenSwapPath.length != 0
         ) {
             revert Errors.SwapsNotAllowedForAtomicWithdrawal(
-                params.longTokenSwapPath.length,
-                params.shortTokenSwapPath.length
+                params.addresses.longTokenSwapPath.length,
+                params.addresses.shortTokenSwapPath.length
             );
         }
 
@@ -148,7 +172,9 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
             eventEmitter,
             withdrawalVault,
             account,
-            params
+            0, // srcChainId is the current block.chainId
+            params,
+            true // isAtomicWithdrawal
         );
 
         Withdrawal.Props memory withdrawal = WithdrawalStoreUtils.get(dataStore, key);
@@ -200,11 +226,14 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
 
         FeatureUtils.validateFeature(dataStore, Keys.executeWithdrawalFeatureDisabledKey(address(this)));
 
-        ExecuteWithdrawalUtils.ExecuteWithdrawalParams memory params = ExecuteWithdrawalUtils.ExecuteWithdrawalParams(
+        IExecuteWithdrawalUtils.ExecuteWithdrawalParams memory params = IExecuteWithdrawalUtils.ExecuteWithdrawalParams(
             dataStore,
             eventEmitter,
+            multichainVault,
+            multichainTransferRouter,
             withdrawalVault,
             oracle,
+            swapHandler,
             key,
             keeper,
             startingGas,
@@ -230,6 +259,7 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler {
         WithdrawalUtils.cancelWithdrawal(
             dataStore,
             eventEmitter,
+            multichainVault,
             withdrawalVault,
             key,
             msg.sender,

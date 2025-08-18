@@ -43,9 +43,10 @@ describe("Glv Withdrawals", () => {
     glvFactory,
     glvVault,
     roleStore,
-    glvHandler,
+    gmOracleProvider,
+    glvShiftHandler,
     ethUsdSingleTokenMarket2,
-    gmOracleProvider;
+    oracle;
 
   beforeEach(async () => {
     fixture = await deployFixture();
@@ -65,9 +66,10 @@ describe("Glv Withdrawals", () => {
       glvFactory,
       glvVault,
       roleStore,
-      glvHandler,
+      glvShiftHandler,
       ethUsdSingleTokenMarket2,
       gmOracleProvider,
+      oracle,
     } = fixture.contracts);
   });
 
@@ -91,7 +93,7 @@ describe("Glv Withdrawals", () => {
     const marketListCount = await dataStore.getAddressCount(marketListKey);
     expect(marketListCount.toNumber()).eq(0);
 
-    await glvHandler.addMarketToGlv(ethUsdSingleTokenGlvAddress, ethUsdSingleTokenMarket2.marketToken);
+    await glvShiftHandler.addMarketToGlv(ethUsdSingleTokenGlvAddress, ethUsdSingleTokenMarket2.marketToken);
   });
 
   describe("create glv withdrawal, validations", () => {
@@ -508,7 +510,10 @@ describe("Glv Withdrawals", () => {
   it("execute glv withdrawal with oracle GLV price", async () => {
     const oracleTypeKey = keys.oracleTypeKey(ethUsdGlvAddress);
     await setBytes32IfDifferent(oracleTypeKey, TOKEN_ORACLE_TYPES.DEFAULT, "oracle type");
-    await dataStore.setAddress(keys.oracleProviderForTokenKey(ethUsdGlvAddress), gmOracleProvider.address);
+    await dataStore.setAddress(
+      keys.oracleProviderForTokenKey(oracle.address, ethUsdGlvAddress),
+      gmOracleProvider.address
+    );
 
     await expectBalances({
       [user0.address]: {

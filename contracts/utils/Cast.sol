@@ -21,7 +21,7 @@ library Cast {
      */
     function bytesToUint256(bytes memory uint256AsBytes) internal pure returns (uint256) {
         uint256 length = uint256AsBytes.length;
-        
+
         if(length > 32) {
             revert Errors.Uint256AsBytesLengthExceeds32Bytes(length);
         }
@@ -31,11 +31,42 @@ library Cast {
         }
 
         uint256 value;
-        
+
         assembly {
             value := mload(add(uint256AsBytes, 32))
         }
 
         return value = value >> (8 * (32 - length));
+    }
+
+    function uint256ToBytes(uint256 x) internal pure returns (bytes memory b) {
+        b = new bytes(32);
+        assembly { mstore(add(b, 32), x) }
+        return b;
+    }
+
+    function uint192ToBytes(uint192 x) internal pure returns (bytes memory b) {
+        b = new bytes(32);
+        assembly { mstore(add(b, 32), x) }
+        return b;
+    }
+
+    function uint32ToBytes(uint32 x) internal pure returns (bytes memory b) {
+        b = new bytes(32);
+        assembly { mstore(add(b, 32), x) }
+        return b;
+    }
+
+    function int32ToBytes(int32 x) internal pure returns (bytes memory b) {
+        b = new bytes(32);
+//        bytes memory expoBytes = new bytes(1);
+//        if (x < 0) {
+//            expoBytes[0] = bytes1(uint8(-x)); // Use absolute value, e.g., uint8(8) -> 0x08
+//        } else {
+//            expoBytes[0] = bytes1(uint8(x));
+//        }
+        assembly { mstore(add(b, 32), x) }
+        return b;
+//        return expoBytes;
     }
 }

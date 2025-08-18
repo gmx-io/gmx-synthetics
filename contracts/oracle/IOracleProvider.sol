@@ -11,4 +11,10 @@ interface IOracleProvider {
         address token,
         bytes memory data
     ) external returns (OracleUtils.ValidatedPrice memory);
+
+    /// @dev for all oracle providers besides ChainlinkPriceFeedProvider
+    function shouldAdjustTimestamp() external pure returns (bool);
+
+    /// @dev for ChainlinkPriceFeedProvider
+    function isChainlinkOnChainProvider() external pure returns (bool);
 }

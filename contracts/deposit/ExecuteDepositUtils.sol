@@ -5,13 +5,19 @@ pragma solidity ^0.8.0;
 import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
 
+import "./IExecuteDepositUtils.sol";
 import "./DepositVault.sol";
 import "./DepositStoreUtils.sol";
 import "./DepositEventUtils.sol";
 
 import "../pricing/SwapPricingUtils.sol";
-import "../oracle/Oracle.sol";
+import "../oracle/IOracle.sol";
 import "../position/PositionUtils.sol";
+import "../swap/ISwapUtils.sol";
+import "../fee/FeeUtils.sol";
+
+import "../multichain/MultichainUtils.sol";
+import "../multichain/BridgeOutFromControllerUtils.sol";
 
 import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
@@ -37,35 +43,6 @@ library ExecuteDepositUtils {
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
 
-    // @dev ExecuteDepositParams struct used in executeDeposit to avoid stack
-    // too deep errors
-    struct ExecuteDepositParams {
-        DataStore dataStore;
-        EventEmitter eventEmitter;
-        DepositVault depositVault;
-        Oracle oracle;
-        bytes32 key;
-        address keeper;
-        uint256 startingGas;
-        ISwapPricingUtils.SwapPricingType swapPricingType;
-        bool includeVirtualInventoryImpact;
-    }
-
-    // @dev _ExecuteDepositParams struct used in executeDeposit to avoid stack
-    // too deep errors
-    //
-    // @param market the market to deposit into
-    // @param account the depositing account
-    // @param receiver the account to send the market tokens to
-    // @param uiFeeReceiver the ui fee receiver account
-    // @param tokenIn the token to deposit, either the market.longToken or
-    // market.shortToken
-    // @param tokenOut the other token, if tokenIn is market.longToken then
-    // tokenOut is market.shortToken and vice versa
-    // @param tokenInPrice price of tokenIn
-    // @param tokenOutPrice price of tokenOut
-    // @param amount amount of tokenIn
-    // @param priceImpactUsd price impact in USD
     struct _ExecuteDepositParams {
         Market.Props market;
         address account;
@@ -77,6 +54,7 @@ library ExecuteDepositUtils {
         Price.Props tokenOutPrice;
         uint256 amount;
         int256 priceImpactUsd;
+        uint256 srcChainId;
     }
 
     struct ExecuteDepositCache {
@@ -90,6 +68,7 @@ library ExecuteDepositUtils {
         uint256 shortTokenUsd;
         uint256 receivedMarketTokens;
         int256 priceImpactUsd;
+        bool balanceWasImproved;
         uint256 marketTokensSupply;
         EventUtils.EventLogData callbackEventData;
         MarketPoolValueInfo.Props poolValueInfo;
@@ -102,7 +81,7 @@ library ExecuteDepositUtils {
     // @param deposit
     // @param skipRemoval if true, the deposit will not be removed from the data store.
     // This is used when executing a deposit as part of a shift or a glv deposit and the deposit is not stored in the data store
-    function executeDeposit(ExecuteDepositParams memory params, Deposit.Props memory deposit, bool skipRemoval) external returns (uint256 receivedMarketTokens) {
+    function executeDeposit(IExecuteDepositUtils.ExecuteDepositParams memory params, Deposit.Props memory deposit, bool skipRemoval) external returns (uint256 receivedMarketTokens) {
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
         params.startingGas -= gasleft() / 63;
 
@@ -193,7 +172,7 @@ library ExecuteDepositUtils {
         cache.longTokenUsd = cache.longTokenAmount * cache.prices.longTokenPrice.midPrice();
         cache.shortTokenUsd = cache.shortTokenAmount * cache.prices.shortTokenPrice.midPrice();
 
-        cache.priceImpactUsd = SwapPricingUtils.getPriceImpactUsd(
+        (cache.priceImpactUsd, cache.balanceWasImproved) = SwapPricingUtils.getPriceImpactUsd(
             SwapPricingUtils.GetPriceImpactUsdParams(
                 params.dataStore,
                 cache.market,
@@ -218,10 +197,11 @@ library ExecuteDepositUtils {
                 cache.prices.longTokenPrice,
                 cache.prices.shortTokenPrice,
                 cache.longTokenAmount,
-                Precision.mulDiv(cache.priceImpactUsd, cache.longTokenUsd, cache.longTokenUsd + cache.shortTokenUsd)
+                Precision.mulDiv(cache.priceImpactUsd, cache.longTokenUsd, cache.longTokenUsd + cache.shortTokenUsd),
+                deposit.srcChainId()
             );
 
-            cache.receivedMarketTokens += _executeDeposit(params, _params);
+            cache.receivedMarketTokens += _executeDeposit(params, _params, cache.balanceWasImproved);
         }
 
         if (cache.shortTokenAmount > 0) {
@@ -235,10 +215,11 @@ library ExecuteDepositUtils {
                 cache.prices.shortTokenPrice,
                 cache.prices.longTokenPrice,
                 cache.shortTokenAmount,
-                Precision.mulDiv(cache.priceImpactUsd, cache.shortTokenUsd, cache.longTokenUsd + cache.shortTokenUsd)
+                Precision.mulDiv(cache.priceImpactUsd, cache.shortTokenUsd, cache.longTokenUsd + cache.shortTokenUsd),
+                deposit.srcChainId()
             );
 
-            cache.receivedMarketTokens += _executeDeposit(params, _params);
+            cache.receivedMarketTokens += _executeDeposit(params, _params, cache.balanceWasImproved);
         }
 
         if (cache.receivedMarketTokens < deposit.minMarketTokens()) {
@@ -284,17 +265,33 @@ library ExecuteDepositUtils {
         cache.callbackEventData.uintItems.setItem(0, "receivedMarketTokens", cache.receivedMarketTokens);
         CallbackUtils.afterDepositExecution(params.key, deposit, cache.callbackEventData);
 
-        GasUtils.payExecutionFee(
-            params.dataStore,
+        // use deposit.dataList to determine if the GM tokens minted should be bridged out to src chain
+        BridgeOutFromControllerUtils.bridgeOutFromController(
             params.eventEmitter,
-            params.depositVault,
+            params.multichainTransferRouter,
+            deposit.account(),
+            deposit.receiver(),
+            deposit.srcChainId(),
+            cache.market.marketToken, // token
+            cache.receivedMarketTokens, // amount
+            deposit.dataList()
+        );
+
+        GasUtils.payExecutionFee(
+            GasUtils.PayExecutionFeeContracts(
+                params.dataStore,
+                params.eventEmitter,
+                params.multichainVault,
+                params.depositVault
+            ),
             params.key,
             deposit.callbackContract(),
             deposit.executionFee(),
             params.startingGas,
             GasUtils.estimateDepositOraclePriceCount(deposit.longTokenSwapPath().length + deposit.shortTokenSwapPath().length),
             params.keeper,
-            deposit.receiver()
+            deposit.receiver(),
+            deposit.srcChainId()
         );
 
         return cache.receivedMarketTokens;
@@ -303,14 +300,18 @@ library ExecuteDepositUtils {
     // @dev executes a deposit
     // @param params ExecuteDepositParams
     // @param _params _ExecuteDepositParams
-    function _executeDeposit(ExecuteDepositParams memory params, _ExecuteDepositParams memory _params) internal returns (uint256) {
+    function _executeDeposit(
+        IExecuteDepositUtils.ExecuteDepositParams memory params,
+        _ExecuteDepositParams memory _params,
+        bool balanceWasImproved
+    ) internal returns (uint256) {
         // for markets where longToken == shortToken, the price impact factor should be set to zero
         // in which case, the priceImpactUsd would always equal zero
         SwapPricingUtils.SwapFees memory fees = SwapPricingUtils.getSwapFees(
             params.dataStore,
             _params.market.marketToken,
             _params.amount,
-            _params.priceImpactUsd > 0, // forPositiveImpact
+            balanceWasImproved,
             _params.uiFeeReceiver,
             params.swapPricingType
         );
@@ -511,13 +512,20 @@ library ExecuteDepositUtils {
             _params.tokenIn
         );
 
-        MarketToken(payable(_params.market.marketToken)).mint(_params.receiver, mintAmount);
+        if (_params.srcChainId == 0) {
+            // mint GM tokens to receiver
+            MarketToken(payable(_params.market.marketToken)).mint(_params.receiver, mintAmount);
+        } else {
+            // mint GM tokens to MultichainVault and increase receiver's multichain GM balance
+            MarketToken(payable(_params.market.marketToken)).mint(address(params.multichainVault), mintAmount);
+            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, _params.market.marketToken, _params.receiver, 0); // srcChainId is the current block.chainId
+        }
 
         return mintAmount;
     }
 
     function swap(
-        ExecuteDepositParams memory params,
+        IExecuteDepositUtils.ExecuteDepositParams memory params,
         address[] memory swapPath,
         address initialToken,
         uint256 inputAmount,
@@ -530,8 +538,8 @@ library ExecuteDepositUtils {
             swapPath
         );
 
-        (address outputToken, uint256 outputAmount) = SwapUtils.swap(
-            SwapUtils.SwapParams(
+        (address outputToken, uint256 outputAmount) = params.swapHandler.swap(
+            ISwapUtils.SwapParams(
                 params.dataStore, // dataStore
                 params.eventEmitter, // eventEmitter
                 params.oracle, // oracle
@@ -563,7 +571,7 @@ library ExecuteDepositUtils {
     // since it may be possible to deposit a small amount of tokens on the first deposit
     // to cause a high market token price due to rounding of the amount of tokens minted
     function _validateFirstDeposit(
-        ExecuteDepositParams memory params,
+        IExecuteDepositUtils.ExecuteDepositParams memory params,
         Deposit.Props memory deposit,
         Market.Props memory market
     ) internal view {

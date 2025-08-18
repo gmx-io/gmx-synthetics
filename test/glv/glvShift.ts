@@ -34,12 +34,13 @@ describe("Glv Shifts", () => {
     roleStore,
     reader,
     glvFactory,
-    glvHandler,
+    glvShiftHandler,
     ethUsdSingleTokenMarket2,
     wnt,
     sol,
     usdc,
-    gmOracleProvider;
+    gmOracleProvider,
+    oracle;
 
   beforeEach(async () => {
     fixture = await deployFixture();
@@ -55,12 +56,13 @@ describe("Glv Shifts", () => {
       roleStore,
       reader,
       glvFactory,
-      glvHandler,
+      glvShiftHandler,
       ethUsdSingleTokenMarket2,
       sol,
       wnt,
       usdc,
       gmOracleProvider,
+      oracle,
     } = fixture.contracts);
   });
 
@@ -199,7 +201,10 @@ describe("Glv Shifts", () => {
   it("execute glv shift with oracle GLV price", async () => {
     const oracleTypeKey = keys.oracleTypeKey(ethUsdGlvAddress);
     await setBytes32IfDifferent(oracleTypeKey, TOKEN_ORACLE_TYPES.DEFAULT, "oracle type");
-    await dataStore.setAddress(keys.oracleProviderForTokenKey(ethUsdGlvAddress), gmOracleProvider.address);
+    await dataStore.setAddress(
+      keys.oracleProviderForTokenKey(oracle.address, ethUsdGlvAddress),
+      gmOracleProvider.address
+    );
 
     await expectBalances({
       [ethUsdGlvAddress]: {
@@ -281,8 +286,8 @@ describe("Glv Shifts", () => {
       dataStore.address
     );
     await glvFactory.createGlv(wnt.address, wnt.address, glvType, "Glv name", "Glv symbol");
-    await glvHandler.addMarketToGlv(ethUsdSingleTokenGlvAddress, ethUsdSingleTokenMarket2.marketToken);
-    await glvHandler.addMarketToGlv(ethUsdSingleTokenGlvAddress, solUsdSingleTokenMarket2.marketToken);
+    await glvShiftHandler.addMarketToGlv(ethUsdSingleTokenGlvAddress, ethUsdSingleTokenMarket2.marketToken);
+    await glvShiftHandler.addMarketToGlv(ethUsdSingleTokenGlvAddress, solUsdSingleTokenMarket2.marketToken);
 
     await expectBalances({
       [ethUsdGlvAddress]: {

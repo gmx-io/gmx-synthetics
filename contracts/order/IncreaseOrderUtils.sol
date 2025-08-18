@@ -15,10 +15,10 @@ library IncreaseOrderUtils {
 
     // @dev process an increase order
     // @param params BaseOrderUtils.ExecuteOrderParams
-    function processOrder(BaseOrderUtils.ExecuteOrderParams memory params) external returns (EventUtils.EventLogData memory) {
+    function processOrder(BaseOrderUtils.ExecuteOrderParams memory params) internal returns (EventUtils.EventLogData memory) {
         MarketUtils.validatePositionMarket(params.contracts.dataStore, params.market);
 
-        (address collateralToken, uint256 collateralIncrementAmount) = SwapUtils.swap(SwapUtils.SwapParams(
+        (address collateralToken, uint256 collateralIncrementAmount) = params.contracts.swapHandler.swap(ISwapUtils.SwapParams(
             params.contracts.dataStore,
             params.contracts.eventEmitter,
             params.contracts.oracle,
@@ -59,7 +59,7 @@ library IncreaseOrderUtils {
         }
 
         if (
-            !BaseOrderUtils.isMarketOrder(params.order.orderType()) &&
+            !Order.isMarketOrder(params.order.orderType()) &&
             params.minOracleTimestamp < params.order.validFromTime()
         ) {
             revert Errors.OracleTimestampsAreSmallerThanRequired(

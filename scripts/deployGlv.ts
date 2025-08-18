@@ -6,7 +6,7 @@ import * as keys from "../utils/keys";
 import { decimalToFloat, expandDecimals } from "../utils/math";
 
 async function main() {
-  if (hre.network.name !== "avalancheFuji") {
+  if (hre.network.name !== "arbitrumSepolia") {
     throw new Error("unsupported network");
   }
 
@@ -15,18 +15,19 @@ async function main() {
   const roleStore = await ethers.getContract("RoleStore");
   const glvFactory = await ethers.getContract("GlvFactory");
   const glvReader = await ethers.getContract("GlvReader");
-  const glvHandler = await ethers.getContract("GlvHandler");
+  const glvShiftHandler = await ethers.getContract("GlvShiftHandler");
 
   const glvAddress = getGlvAddress(
     tokens.WETH.address, // longToken
-    tokens.USDC.address, // shortToken
+    tokens["USDC.SG"].address, // shortToken
     ethers.constants.HashZero, // glvType
-    "GMX Liquidity Vault [WETH-USDC]", // name
-    "GLV [WETH-USDC]", // symbol
+    "GMX Liquidity Vault [WETH-USDC.SG]", // name
+    "GLV [WETH-USDC.SG]", // symbol
     glvFactory.address,
     roleStore.address,
     dataStore.address
   );
+  console.log("glvAddress", glvAddress);
 
   const glv = await glvReader.getGlv(dataStore.address, glvAddress);
   console.log("glv", glv);
@@ -35,10 +36,10 @@ async function main() {
     console.log("creating glv...");
     const tx = await glvFactory.createGlv(
       tokens.WETH.address, // longToken
-      tokens.USDC.address, // shortToken
+      tokens["USDC.SG"].address, // shortToken
       ethers.constants.HashZero, // glvType
-      "GMX Liquidity Vault [WETH-USDC]", // name
-      "GLV [WETH-USDC]" // symbol
+      "GMX Liquidity Vault [WETH-USDC.SG]", // name
+      "GLV [WETH-USDC.SG]" // symbol
     );
     console.log("tx sent: %s", tx.hash);
   } else {
@@ -56,9 +57,8 @@ async function main() {
   await setUintIfDifferent(keys.glvShiftMinIntervalKey(glvAddress), 30, "glvShiftMinIntervalKey");
 
   const markets = [
-    "0xbf338a6C595f06B7Cfff2FA8c958d49201466374", // ETHUSD
-    "0xCc6AC193E1d1Ef102eCBBA864BBfE87E414a7A0D", // DOTUSD
-    "0x1d9dC405CCEFA78b203BaD9CCe1b1623D2B25D9e", // TESTUSD
+    "0xb6fC4C9eB02C35A134044526C62bb15014Ac0Bcc", // { indexToken: "WETH", longToken: "WETH", shortToken: "USDC.SG" }
+    "0xAde9D177B9E060D2064ee9F798125e6539fDaA1c", // { indexToken: "CRV", longToken: "WETH", shortToken: "USDC.SG" }
   ];
 
   const glvInfo = await glvReader.getGlvInfo(dataStore.address, glvAddress);
@@ -66,7 +66,7 @@ async function main() {
   for (const market of markets) {
     if (!glvInfo.markets.includes(market)) {
       console.log("adding market %s to glv", market);
-      const tx = await glvHandler.addMarketToGlv(glvAddress, market);
+      const tx = await glvShiftHandler.addMarketToGlv(glvAddress, market);
       console.log("tx sent: %s", tx.hash);
     } else {
       console.log("skip adding market %s", market);

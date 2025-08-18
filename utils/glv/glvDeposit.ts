@@ -29,7 +29,7 @@ export function getAccountGlvDepositKeys(dataStore, account, start, end) {
 }
 
 export async function createGlvDeposit(fixture, overrides: any = {}) {
-  const { glvVault, glvRouter, glvHandler, wnt, ethUsdMarket, ethUsdGlvAddress } = fixture.contracts;
+  const { glvVault, glvRouter, glvDepositHandler, wnt, ethUsdMarket, ethUsdGlvAddress } = fixture.contracts;
   const { wallet, user0 } = fixture.accounts;
 
   const gasUsageLabel = overrides.gasUsageLabel;
@@ -48,11 +48,13 @@ export async function createGlvDeposit(fixture, overrides: any = {}) {
   const shouldUnwrapNativeToken = overrides.shouldUnwrapNativeToken || false;
   const executionFee = bigNumberify(overrides.executionFee ?? "1000000000000000");
   const callbackGasLimit = bigNumberify(overrides.callbackGasLimit ?? 0);
+  const srcChainId = bigNumberify(overrides.srcChainId ?? 0);
   const marketTokenAmount = bigNumberify(overrides.marketTokenAmount ?? 0);
   const longTokenAmount = bigNumberify(overrides.longTokenAmount ?? 0);
   const shortTokenAmount = bigNumberify(overrides.shortTokenAmount ?? 0);
   const isMarketTokenDeposit = overrides.isMarketTokenDeposit || false;
   const useGlvHandler = Boolean(overrides.useGlvHandler) || false;
+  const dataList = overrides.dataList || [];
 
   const executionFeeToMint = bigNumberify(overrides.executionFeeToMint ?? executionFee);
   await wnt.mint(glvVault.address, executionFeeToMint);
@@ -80,15 +82,17 @@ export async function createGlvDeposit(fixture, overrides: any = {}) {
   }
 
   const params = {
-    glv,
-    receiver: receiver.address,
-    callbackContract: callbackContract.address,
-    uiFeeReceiver: uiFeeReceiver.address,
-    market: market.marketToken,
-    initialLongToken,
-    initialShortToken,
-    longTokenSwapPath,
-    shortTokenSwapPath,
+    addresses: {
+      glv,
+      receiver: receiver.address,
+      callbackContract: callbackContract.address,
+      uiFeeReceiver: uiFeeReceiver.address,
+      market: market.marketToken,
+      initialLongToken,
+      initialShortToken,
+      longTokenSwapPath,
+      shortTokenSwapPath,
+    },
     marketTokenAmount,
     minGlvTokens,
     shouldUnwrapNativeToken,
@@ -96,6 +100,7 @@ export async function createGlvDeposit(fixture, overrides: any = {}) {
     callbackGasLimit,
     isMarketTokenDeposit,
     gasUsageLabel,
+    dataList,
   };
 
   const optionalParams = new Set(["gasUsageLabel", "simulate", "simulateExecute"]);
@@ -107,7 +112,7 @@ export async function createGlvDeposit(fixture, overrides: any = {}) {
 
   const txReceipt = await logGasUsage({
     tx: useGlvHandler
-      ? glvHandler.connect(sender).createGlvDeposit(account.address, params)
+      ? glvDepositHandler.connect(sender).createGlvDeposit(account.address, srcChainId, params)
       : glvRouter.connect(account).createGlvDeposit(params),
     label: gasUsageLabel,
   });
@@ -117,7 +122,7 @@ export async function createGlvDeposit(fixture, overrides: any = {}) {
 }
 
 export async function executeGlvDeposit(fixture, overrides: any = {}) {
-  const { dataStore, glvHandler, glvRouter, wnt, usdc, sol } = fixture.contracts;
+  const { dataStore, glvDepositHandler, glvRouter, wnt, usdc, sol } = fixture.contracts;
   const gasUsageLabel = overrides.gasUsageLabel;
   const tokens = overrides.tokens || [wnt.address, usdc.address, sol.address];
   const precisions = overrides.precisions || [8, 18, 8];
@@ -145,7 +150,7 @@ export async function executeGlvDeposit(fixture, overrides: any = {}) {
     precisions,
     minPrices,
     maxPrices,
-    execute: glvHandler.executeGlvDeposit,
+    execute: glvDepositHandler.executeGlvDeposit,
     simulateExecute: glvRouter.simulateExecuteGlvDeposit,
     simulate: overrides.simulate,
     dataStreamTokens,
@@ -265,4 +270,6 @@ export function expectGlvDeposit(glvDeposit: any, expected: any) {
       expect(glvDeposit.flags[key], key).eq(expected[key]);
     }
   });
+
+  expect(glvDeposit._dataList).deep.eq(expected.dataList);
 }

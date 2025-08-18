@@ -4,6 +4,7 @@ import { validateMarketConfigs } from "./validateMarketConfigsUtils";
 import { encodeData } from "../utils/hash";
 import { ConfigChangeItem, handleConfigChanges } from "./updateConfigUtils";
 import * as keys from "../utils/keys";
+import { validateTokens } from "./validateTokenUtils";
 
 const processTokens = async ({ tokens }): Promise<ConfigChangeItem[]> => {
   const configItems: ConfigChangeItem[] = [];
@@ -54,15 +55,10 @@ async function main() {
     }
   }
 
+  await validateTokens();
+
   const tokens = await hre.gmx.getTokens();
   const configItems = await processTokens({ tokens });
-
-  if (configItems.length === 0) {
-    console.log("no changes to apply");
-    return;
-  }
-
-  console.log(`updating ${configItems.length} params`);
 
   const write = process.env.WRITE === "true";
   await handleConfigChanges(configItems, write);

@@ -23,7 +23,7 @@ const func = createDeployFunction({
       "isAtomicOracleProviderKey"
     );
   },
-  id: "ChainlinkPriceFeedProvider_2",
+  id: "ChainlinkPriceFeedProvider_6",
 });
 
 export default func;

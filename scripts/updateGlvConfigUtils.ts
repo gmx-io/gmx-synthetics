@@ -1,7 +1,8 @@
 import { encodeData } from "../utils/hash";
 import { getMarketKey, getOnchainMarkets } from "../utils/market";
-import { ConfigChangeItem, handleConfigChanges } from "./updateConfigUtils";
+import { ChangeResult, ConfigChangeItem, handleConfigChanges } from "./updateConfigUtils";
 import * as keys from "../utils/keys";
+import prompts from "prompts";
 
 const processGlvs = async ({
   glvs,
@@ -113,11 +114,13 @@ export async function updateGlvConfig({ write }) {
   console.log("running update glv config...");
   const { read } = hre.deployments;
 
-  const [tokens, glvs, dataStore, glvHandler] = await Promise.all([
+  const [tokens, glvs, dataStore, glvShiftHandler] = await Promise.all([
     hre.gmx.getTokens(),
     hre.gmx.getGlvs(),
     hre.ethers.getContract("DataStore"),
-    hre.ethers.getContract("GlvHandler"),
+    hre.ethers.getContract("GlvShiftHandler"),
+    hre.ethers.getContract("Multicall3"),
+    hre.ethers.getContract("Config"),
   ]);
 
   const onchainMarketsByTokens = await getOnchainMarkets(read, dataStore.address);
@@ -129,29 +132,40 @@ export async function updateGlvConfig({ write }) {
     dataStore,
   });
 
-  if (configItems.length === 0) {
-    console.log("no changes to apply");
-    return;
-  }
-
-  console.info(`updating ${configItems.length} params`);
-
   console.log("running simulation");
   for (const [glvAddress, marketAddress] of marketsToAdd) {
     console.log("simulating adding market %s to glv %s", marketAddress, glvAddress);
-    await glvHandler.callStatic.addMarketToGlv(glvAddress, marketAddress);
+    await glvShiftHandler.callStatic.addMarketToGlv(glvAddress, marketAddress);
   }
 
-  await handleConfigChanges(configItems, write, 100);
+  const changeResult = await handleConfigChanges(configItems, write, 100);
 
-  if (!write) {
-    console.info("NOTE: executed in read-only mode, no transactions were sent");
+  if (marketsToAdd.length == 0) {
+    console.log("no markets to add");
+    return;
+  }
+
+  if (changeResult == ChangeResult.NO_CHANGES) {
+    if (!write) {
+      ({ write } = await prompts({
+        type: "confirm",
+        name: "write",
+        message: "Do you want to execute the transactions (add markets)?",
+      }));
+    }
+    if (!write) {
+      console.info("NOTE: executed in read-only mode, no transactions were sent");
+      return;
+    }
+  }
+
+  if (changeResult == ChangeResult.SIMULATE) {
     return;
   }
 
   for (const [glvAddress, marketAddress] of marketsToAdd) {
     console.log("adding market %s to glv %s", marketAddress, glvAddress);
-    const tx = await glvHandler.addMarketToGlv(glvAddress, marketAddress);
+    const tx = await glvShiftHandler.addMarketToGlv(glvAddress, marketAddress);
     console.log("sent tx: %s", tx.hash);
   }
 }

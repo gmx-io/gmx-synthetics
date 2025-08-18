@@ -16,6 +16,7 @@ import "@nomicfoundation/hardhat-chai-matchers";
 import "@typechain/hardhat";
 import "@nomiclabs/hardhat-ethers";
 import "@nomicfoundation/hardhat-chai-matchers";
+import "hardhat-abi-exporter";
 
 // extends hre with gmx domain data
 import "./config";
@@ -24,6 +25,13 @@ import "./config";
 import "./utils/test";
 import { updateGlvConfig } from "./scripts/updateGlvConfigUtils";
 import { updateMarketConfig } from "./scripts/updateMarketConfigUtils";
+import { collectDeployments } from "./scripts/collectDeployments";
+import { TASK_FLATTEN_GET_DEPENDENCY_GRAPH } from "hardhat/builtin-tasks/task-names";
+import { DependencyGraph } from "hardhat/types";
+import { checkContractsSizing } from "./scripts/contractSizes";
+import { collectDependents } from "./utils/dependencies";
+import { deleteFile, writeJsonFile } from "./utils/file";
+import { TASK_VERIFY } from "@nomicfoundation/hardhat-verify/internal/task-names";
 
 const getRpcUrl = (network) => {
   const defaultRpcs = {
@@ -32,6 +40,7 @@ const getRpcUrl = (network) => {
     botanix: "https://rpc.botanixlabs.com",
     arbitrumGoerli: "https://goerli-rollup.arbitrum.io/rpc",
     arbitrumSepolia: "https://sepolia-rollup.arbitrum.io/rpc",
+    sepolia: "https://ethereum-sepolia-rpc.publicnode.com",
     avalancheFuji: "https://api.avax-test.network/ext/bc/C/rpc",
     snowtrace: "https://api.avax.network/ext/bc/C/rpc",
     arbitrumBlockscout: "https://arb1.arbitrum.io/rpc",
@@ -52,12 +61,14 @@ const getRpcUrl = (network) => {
 
 export const getExplorerUrl = (network) => {
   const urls = {
-    arbitrum: "https://api.arbiscan.io/",
-    avalanche: "https://api.snowtrace.io/",
+    arbitrum: "https://api.etherscan.io/v2/api?chainid=42161",
+    // avalanche: "https://api.snowtrace.io/",
+    avalanche: "https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan/",
     botanix: "https://api.routescan.io/v2/network/mainnet/evm/3637/etherscan/",
     snowscan: "https://api.snowscan.xyz/",
     arbitrumGoerli: "https://api-goerli.arbiscan.io/",
     arbitrumSepolia: "https://api-sepolia.arbiscan.io/",
+    sepolia: "https://sepolia.etherscan.io/",
     avalancheFuji: "https://api-testnet.snowtrace.io/",
     arbitrumBlockscout: "https://arbitrum.blockscout.com/api",
   };
@@ -71,10 +82,14 @@ export const getExplorerUrl = (network) => {
 };
 
 const getEnvAccounts = (chainName?: string) => {
-  const { ACCOUNT_KEY, ACCOUNT_KEY_FILE, ARBITRUM_SEPOLIA_ACCOUNT_KEY } = process.env;
+  const { ACCOUNT_KEY, ACCOUNT_KEY_FILE, ARBITRUM_SEPOLIA_ACCOUNT_KEY, ARBITRUM_ACCOUNT_KEY } = process.env;
 
   if (chainName === "arbitrumSepolia" && ARBITRUM_SEPOLIA_ACCOUNT_KEY) {
     return [ARBITRUM_SEPOLIA_ACCOUNT_KEY];
+  }
+
+  if (chainName === "arbitrum" && ARBITRUM_ACCOUNT_KEY) {
+    return [ARBITRUM_ACCOUNT_KEY];
   }
 
   if (ACCOUNT_KEY) {
@@ -83,7 +98,7 @@ const getEnvAccounts = (chainName?: string) => {
 
   if (ACCOUNT_KEY_FILE) {
     const filepath = path.join("./keys/", ACCOUNT_KEY_FILE);
-    const data = JSON.parse(fs.readFileSync(filepath));
+    const data = JSON.parse(fs.readFileSync(filepath).toString());
     if (!data) {
       throw new Error("Invalid key file");
     }
@@ -105,16 +120,20 @@ const getEnvAccounts = (chainName?: string) => {
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: "0.8.18",
-    settings: {
-      optimizer: {
-        enabled: true,
-        runs: 10,
-        details: {
-          constantOptimizer: true,
+    compilers: [
+      {
+        version: "0.8.29",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 10,
+            details: {
+              constantOptimizer: true,
+            },
+          },
         },
       },
-    },
+    ],
   },
   networks: {
     hardhat: {
@@ -164,7 +183,6 @@ const config: HardhatUserConfig = {
         },
       },
       blockGasLimit: 20_000_000,
-      gasPrice: 10,
     },
     snowscan: {
       url: getRpcUrl("avalanche"),
@@ -217,6 +235,18 @@ const config: HardhatUserConfig = {
       },
       blockGasLimit: 10000000,
     },
+    sepolia: {
+      url: getRpcUrl("sepolia"),
+      chainId: 11155111,
+      accounts: getEnvAccounts("sepolia"),
+      verify: {
+        etherscan: {
+          apiUrl: getExplorerUrl("sepolia"),
+          apiKey: process.env.ETHERSCAN_API_KEY,
+        },
+      },
+      blockGasLimit: 10000000,
+    },
     avalancheFuji: {
       url: getRpcUrl("avalancheFuji"),
       chainId: 43113,
@@ -239,6 +269,7 @@ const config: HardhatUserConfig = {
       arbitrumOne: process.env.ARBISCAN_API_KEY,
       avalanche: process.env.SNOWTRACE_API_KEY,
       arbitrumGoerli: process.env.ARBISCAN_API_KEY,
+      sepolia: process.env.ETHERSCAN_API_KEY,
       arbitrumSepolia: process.env.ARBISCAN_API_KEY,
       avalancheFujiTestnet: process.env.SNOWTRACE_API_KEY,
       snowtrace: "snowtrace", // apiKey is not required, just set a placeholder
@@ -255,19 +286,27 @@ const config: HardhatUserConfig = {
         },
       },
       {
-        network: "botanix",
-        chainId: 3637,
-        urls: {
-          apiURL: "https://api.routescan.io/v2/network/mainnet/evm/3637/etherscan/api",
-          browserURL: "https://botanixscan.io",
-        },
-      },
-      {
         network: "arbitrumSepolia",
         chainId: 421614,
         urls: {
           apiURL: "https://api-sepolia.arbiscan.io/api",
-          browserURL: "https://https://sepolia.arbiscan.io/",
+          browserURL: "https://sepolia.arbiscan.io/",
+        },
+      },
+      {
+        network: "botanix",
+        chainId: 3637,
+        urls: {
+          apiURL: "https://api.routescan.io/v2/network/mainnet/evm/3637/etherscan",
+          browserURL: "https://botanixscan.io",
+        },
+      },
+      {
+        network: "avalanche",
+        chainId: 43114,
+        urls: {
+          apiURL: "https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan/api",
+          browserURL: "https://snowtrace.io",
         },
       },
       // {
@@ -292,6 +331,9 @@ const config: HardhatUserConfig = {
   mocha: {
     timeout: 100000000,
   },
+  abiExporter: {
+    flat: true,
+  },
 };
 
 task("update-glv-config", "Update GLV config")
@@ -303,12 +345,77 @@ task("update-market-config", "Update market config")
   .addOptionalParam("market", "Market address", undefined, types.string)
   .setAction(updateMarketConfig);
 
-task("deploy", "Deploy contracts", async (taskArgs, env, runSuper) => {
+task("dependencies", "Print dependencies for a contract")
+  .addPositionalParam("file", "Contract", undefined, types.string)
+  .setAction(async ({ file }: { file: string }, { run }) => {
+    const graph: DependencyGraph = await run(TASK_FLATTEN_GET_DEPENDENCY_GRAPH, { files: [file] });
+    const dependencies = graph.getResolvedFiles().map((value) => {
+      return value.sourceName;
+    });
+    console.log(dependencies);
+    return graph;
+  });
+
+task("deploy", "Deploy contracts", async (taskArgs: any, env, runSuper) => {
   env.deployTags = taskArgs.tags ?? "";
-  if (!process.env.SKIP_AUTO_HANDLER_REDEPLOYMENT && env.network.name != "hardhat") {
+  if (
+    !(process.env.SKIP_AUTO_HANDLER_REDEPLOYMENT == "true" || process.env.SKIP_AUTO_HANDLER_REDEPLOYMENT == "false") &&
+    env.network.name != "hardhat"
+  ) {
     throw new Error("SKIP_AUTO_HANDLER_REDEPLOYMENT flag is mandatory");
   }
   await runSuper();
+});
+
+task("collect-deployments", "Collect current deployments into the docs folder").setAction(collectDeployments);
+
+task("measure-contract-sizes", "Check if contract characters count hit 900k limit").setAction(async (taskArgs, env) => {
+  await checkContractsSizing(env);
+});
+
+task("reverse-dependencies", "Print dependent contracts")
+  .addPositionalParam("file", "Contract", undefined, types.string)
+  .setAction(async ({ file }: { file: string }, { run }) => {
+    const graph: DependencyGraph = await run(TASK_FLATTEN_GET_DEPENDENCY_GRAPH, {});
+    const reversed = await collectDependents(graph, file);
+    console.log(`Contract ${file} dependents are:\n`);
+    console.log([...reversed].map((l) => `${l}`).join("\n"));
+    return reversed;
+  });
+
+function parseInputArgs(input: string): string[] | string {
+  if (input.startsWith("{")) return JSON.parse(input);
+  if (input.startsWith('"')) return input.substring(1, input.length - 1);
+  if (!input.startsWith("[") || !input.endsWith("]")) return input;
+
+  return JSON.parse(input);
+}
+
+// Override default verify task to work with array arguments.
+// Create temporary arguments file and pass it to the hardhat-verify task
+// THIS TASK SHOULD BE USED ONLY WITH verifyFallback.ts script!
+task("verify-complex-args", "Verify contract with complex args", async (taskArgs: any, env) => {
+  try {
+    const cacheFilePath = `./cache/verifications-args-${taskArgs.address}.json`;
+    let args = [];
+    if (taskArgs.constructorArgsParams != undefined && taskArgs.constructorArgsParams != "") {
+      // split args string with spaces, but do not split quoted strings
+      // "A B C" D E => ["A B C", "D", "E"]
+      args = taskArgs.constructorArgsParams.match(/"[^"]*"|\[[^\]]*\]|\S+/g);
+    }
+
+    const parsed = args.map(parseInputArgs);
+    writeJsonFile(cacheFilePath, parsed);
+    taskArgs.constructorArgsParams = undefined;
+    taskArgs.constructorArgs = cacheFilePath;
+
+    await env.run(TASK_VERIFY, taskArgs);
+
+    deleteFile(cacheFilePath);
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: e };
+  }
 });
 
 export default config;

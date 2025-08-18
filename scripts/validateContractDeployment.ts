@@ -1,12 +1,11 @@
 import hre, { ethers } from "hardhat";
-import { execSync } from "child_process";
-import * as fs from "fs";
-import * as path from "path";
 import dotenv from "dotenv";
-import * as readline from "node:readline";
 import { Result } from "@ethersproject/abi";
-import { JsonRpcProvider, TransactionReceipt } from "@ethersproject/providers";
-import axios from "axios";
+import { TransactionReceipt } from "@ethersproject/providers";
+import { ContractInfo, SignalRoleInfo, validateSourceCode } from "./validateDeploymentUtils";
+import path from "path";
+import { RolesConfig } from "../config/roles";
+import { execSync } from "child_process";
 
 dotenv.config();
 
@@ -31,6 +30,7 @@ const roleLabels = {
   [encodeRole("LIQUIDATION_KEEPER")]: "LIQUIDATION_KEEPER",
   [encodeRole("ADL_KEEPER")]: "ADL_KEEPER",
   [encodeRole("CONTRIBUTOR_KEEPER")]: "CONTRIBUTOR_KEEPER",
+  [encodeRole("CLAIM_ADMIN")]: "CLAIM_ADMIN",
 };
 
 async function main() {
@@ -49,41 +49,55 @@ async function main() {
   console.log(`Checking deployment against commit: ${COMMIT_HASH}`);
   execSync(`git checkout ${COMMIT_HASH}`, { stdio: "inherit" });
 
-  try {
-    const contractInfos = await extractRolesFromTx(tx);
-    console.log("Contracts: ", contractInfos);
-    for (const contractInfo of contractInfos) {
-      // also extracts contract name
-      const isCodeValidated = await validateFromEtherscan(contractInfo);
-      // Fallback to bytecode compilation if sources are not verified on etherscan
-      if (!isCodeValidated) {
-        await compareContractBytecodes(provider, contractInfo);
-      }
-      await validateRoles(contractInfo);
+  // load roles file which was checkout with git
+  // local files are using upon execution, so we need to reload file from git
+  // but dynamic import load files from cache, so as a workaround we copy/paste roles file and load it again
+  const rolesFilePath = path.join(__dirname, "../config/roles.ts");
+  const roleCopyPath = path.join(__dirname, "../config/roles-copy.ts");
+  execSync(`cp ${rolesFilePath} ${roleCopyPath}`, { stdio: "inherit" });
+  const rolesFile = await import(roleCopyPath);
+  const rolesConfig = await rolesFile["default"](hre);
+
+  const contractInfos = await extractRolesFromTx(tx);
+  console.log("Contracts: ", contractInfos);
+  for (const contractInfo of contractInfos) {
+    try {
+      await validateSourceCode(provider, contractInfo);
+    } catch (error) {
+      console.error(error);
+      process.exit(1);
     }
-  } catch (error) {
-    console.error("❌ " + error);
-    process.exit(1);
+
+    await validateRoles(contractInfo, rolesConfig);
   }
 
+  console.log("\n------- Verification completed -------\n");
+  printResults(contractInfos);
+
+  execSync(`rm ${roleCopyPath}`, { stdio: "inherit" });
   // Restore git to previous state
   execSync(`git checkout -`, { stdio: "inherit" });
-  console.log("✅ Verification completed.");
+}
+
+function printResults(contractInfos: ContractInfo[]) {
+  for (const contractInfo of contractInfos) {
+    if (contractInfo.isCodeValidated) {
+      console.log(`\n✅${contractInfo.name} is valid`);
+    } else {
+      console.log(`\n❌${contractInfo.name} is not valid. Sources do not match. See diff in the validation folder`);
+    }
+    for (const signalledRole of contractInfo.approvedRoles) {
+      console.log(`✅ ${roleLabels[signalledRole]} role approved`);
+    }
+    for (const unapprovedRole of contractInfo.unapprovedRoles) {
+      console.log(
+        `❌ ${unapprovedRole} ${roleLabels[unapprovedRole]} role is not approved for ${contractInfo.name} ${contractInfo.address}!`
+      );
+    }
+  }
 }
 
 // Roles
-
-interface SignalRoleInfo {
-  account: string;
-  roleKey: string;
-}
-
-interface ContractInfo {
-  address: string;
-  name: string | null;
-  isCodeValidated: boolean;
-  signalledRoles: string[];
-}
 
 async function extractRolesFromTx(txReceipt: TransactionReceipt): Promise<ContractInfo[]> {
   const contractInfos = new Map<string, ContractInfo>();
@@ -99,10 +113,12 @@ async function extractRolesFromTx(txReceipt: TransactionReceipt): Promise<Contra
         contractInfos.get(signal.account).signalledRoles.push(signal.roleKey);
       } else {
         contractInfos.set(signal.account, {
-          address: signal.account,
+          address: ethers.utils.getAddress(signal.account),
           name: null,
           isCodeValidated: false,
           signalledRoles: [signal.roleKey],
+          unapprovedRoles: [],
+          approvedRoles: [],
         });
       }
     }
@@ -110,15 +126,16 @@ async function extractRolesFromTx(txReceipt: TransactionReceipt): Promise<Contra
   return [...contractInfos].map(([, value]) => value);
 }
 
-async function validateRoles(contractInfo: ContractInfo) {
-  const { requiredRolesForContracts } = await hre.gmx.getRoles();
+async function validateRoles(contractInfo: ContractInfo, rolesConfig: RolesConfig) {
   for (const signalledRole of contractInfo.signalledRoles) {
-    if (!(await checkRole(contractInfo.name, contractInfo.address, signalledRole, requiredRolesForContracts))) {
-      throw new Error(
-        `Role ${signalledRole} ${roleLabels[signalledRole]} is not approved for ${contractInfo.name} ${contractInfo.address}!`
-      );
+    if (await checkRole(contractInfo.name, contractInfo.address, signalledRole, rolesConfig)) {
+      contractInfo.approvedRoles.push(signalledRole);
+    } else {
+      contractInfo.unapprovedRoles.push(signalledRole);
     }
   }
+  // clear signalled roles to avoid double validation
+  contractInfo.signalledRoles = [];
   console.log(`✅ Roles for ${contractInfo.name} validated`);
 }
 
@@ -140,246 +157,16 @@ async function checkRole(
   contractName: string,
   contractAddress: string,
   signalledRole: string,
-  requiredRolesForContracts: Record<string, string[]>
+  rolesConfig: RolesConfig
 ): Promise<boolean> {
-  const rolesConfig = await hre.gmx.getRoles();
   for (const [role, addresses] of Object.entries(rolesConfig.roles)) {
     if (addresses[contractAddress]) {
-      if (encodeRole(role) === signalledRole && requiredRolesForContracts[role].includes(contractName)) {
+      if (encodeRole(role) === signalledRole && rolesConfig.requiredRolesForContracts[role].includes(contractName)) {
         return true;
       }
     }
   }
   return false;
-}
-
-// Verify sources from etherscan
-async function validateFromEtherscan(contractInfo: ContractInfo): Promise<boolean> {
-  console.log(`Trying to validate ${contractInfo.address} via etherscan`);
-  const apiKey = hre.network.verify.etherscan.apiKey;
-  const url = hre.network.verify.etherscan.apiUrl + "api";
-  try {
-    const path =
-      url + "?module=contract" + "&action=getsourcecode" + `&address=${contractInfo.address}` + `&apikey=${apiKey}`;
-    const response = await axios.get(path);
-    const sources: string = response.data.result[0].SourceCode;
-    if (!sources) {
-      //Source code not verified
-      return false;
-    }
-    contractInfo.name = response.data.result[0].ContractName;
-    console.log(`Resolved as ${contractInfo.name}`);
-    // Remove extra brackets
-    const data = JSON.parse(sources.slice(1, sources.length - 1));
-
-    for (const source of Object.entries(data.sources)) {
-      await validateSourceFile(source[0], source[1]["content"]);
-    }
-    contractInfo.isCodeValidated = true;
-    return true;
-  } catch (error) {
-    console.error("Error:", error);
-    return false;
-  }
-}
-
-async function validateSourceFile(fullContractName: string, sourceCode: string): Promise<boolean> {
-  try {
-    let filePath = path.join(__dirname, "../node_modules/" + fullContractName);
-    if (!fs.existsSync(filePath)) {
-      // if it is not a node_module — consider it local
-      filePath = path.join(__dirname, "../" + fullContractName);
-    }
-
-    const fileContent = fs.readFileSync(filePath, "utf-8");
-    if (fileContent === sourceCode) {
-      return true;
-    } else {
-      console.error(`❌ Sources mismatch for ${fullContractName}. Resolving diff`);
-      await showDiff(filePath, sourceCode);
-      return false;
-    }
-  } catch (error) {
-    throw new Error("Error reading file:" + error);
-  }
-}
-
-async function showDiff(localPath: string, sourceCode: string) {
-  const tempFilePath = path.join(__dirname, "../out", "temp_file.txt");
-  fs.writeFileSync(tempFilePath, sourceCode, "utf-8");
-
-  try {
-    execSync(`git diff --no-index ${localPath} ${tempFilePath}`, { stdio: "inherit", encoding: "utf-8" });
-  } catch (error) {
-    // git diff works but produce error for some reason
-  } finally {
-    fs.unlinkSync(tempFilePath);
-  }
-}
-
-// Bytecode
-
-interface DeploymentInfo {
-  contractName: string;
-  constructorArgs: string[];
-  deploymentTxHash: string;
-}
-
-async function extractContractNameAndArgsFromDeployment(contractAddress: string): Promise<DeploymentInfo> {
-  const deploymentsPath = path.join(__dirname, "../deployments/" + hre.network.name);
-  const searchContractDeployment = checkAddressInFile(contractAddress);
-  const deployment = await searchDirectory(deploymentsPath, searchContractDeployment);
-  if (!deployment) {
-    throw new Error(`Could not find deployment ${contractAddress}`);
-  }
-  console.log("Deployment: " + deployment);
-  const contractName = path.basename(deployment, path.extname(deployment));
-  console.log("ContractName: " + contractName);
-  const deploymentJson = JSON.parse(fs.readFileSync(deployment, "utf-8"));
-  return {
-    contractName: contractName,
-    constructorArgs: deploymentJson.args,
-    deploymentTxHash: deploymentJson.transactionHash,
-  };
-}
-
-async function getArtifactBytecode(contractName: string): Promise<string> {
-  const findContract = findFile(contractName + ".json");
-  const buildPath = path.join(__dirname, "../artifacts/contracts/");
-  const searchResult = await searchDirectory(buildPath, findContract);
-  if (!searchResult) {
-    throw new Error("Artifact not found");
-  }
-
-  return JSON.parse(fs.readFileSync(searchResult, "utf-8")).bytecode;
-}
-
-async function compareContractBytecodes(provider: JsonRpcProvider, contractInfo: ContractInfo): Promise<void> {
-  console.log("Comparing bytecodes with compilation artifact");
-
-  const { contractName, constructorArgs, deploymentTxHash } = await extractContractNameAndArgsFromDeployment(
-    contractInfo.address
-  );
-  contractInfo.name = contractName;
-
-  await compileContract(contractName);
-
-  const artifactBytecode = await getArtifactBytecode(contractName);
-
-  const Contract = await ethers.getContract(contractName);
-  if (!Contract) {
-    throw new Error(`Could not find contract ${contractName}`);
-  }
-  const encodedArgs = ethers.utils.defaultAbiCoder
-    .encode(
-      Contract.interface.deploy.inputs.map((i) => i.type), // Get types from ABI
-      constructorArgs
-    )
-    .slice(2); //remove 0x at start
-
-  console.log("Encoded args: " + encodedArgs);
-
-  const localBytecodeStripped = stripBytecodeIpfsHash(artifactBytecode);
-
-  console.log(`Fetching blockchain bytecode from ${contractInfo.address} for ${contractName}`);
-  const deploymentTx = await provider.getTransaction(deploymentTxHash);
-  const blockchainBytecode = deploymentTx.data;
-  const blockchainBytecodeWithoutMetadata = stripBytecodeIpfsHash(blockchainBytecode);
-  const blockchainDeployBytecode = blockchainBytecodeWithoutMetadata.slice(
-    0,
-    blockchainBytecodeWithoutMetadata.length - encodedArgs.length
-  ); // bytecode without metadata and constructor args
-
-  if (localBytecodeStripped !== blockchainDeployBytecode) {
-    throw new Error("Bytecodes does not match!");
-  }
-
-  // Check deployment args are the same
-  const blockchainArgs = blockchainBytecodeWithoutMetadata.slice(
-    blockchainBytecodeWithoutMetadata.length - encodedArgs.length
-  );
-  if (encodedArgs !== blockchainArgs) {
-    throw new Error("Args does not match!");
-  }
-
-  contractInfo.isCodeValidated = true;
-  console.log("✅ Bytecodes match");
-}
-
-// contract metadata contains ipfs hash which can be different
-// i.e. solc compiler binary hash is different
-// So we remove this hash, but leave solidity version metadata
-function stripBytecodeIpfsHash(bytecode: string): string {
-  const ipfsTag = "ea2646970667358221220";
-  const solcCompilerTag = "64736f6c6343";
-  const storageTagIndex = bytecode.lastIndexOf(ipfsTag); // means ipfs storage location
-  const compilerTagIndex = bytecode.lastIndexOf(solcCompilerTag); // means "solc compiler"
-  // ipfs hash locate in the middle of storage tag and compiler tags
-  return bytecode.slice(0, storageTagIndex + ipfsTag.length) + bytecode.slice(compilerTagIndex);
-}
-
-async function compileContract(contractName: string) {
-  // Find artifact with our contract and remove it to force recompilation of this contract
-  const findContract = findFile(contractName + ".sol");
-  const buildPath = path.join(__dirname, "../artifacts/contracts/");
-  const searchResult = await searchDirectory(buildPath, findContract);
-  if (searchResult) {
-    fs.rmSync(searchResult, { recursive: true, force: true });
-  }
-
-  execSync("npx hardhat compile", { stdio: "inherit" });
-  console.log(`${contractName} compiled successfully.`);
-}
-
-//Using streaming read cause file can be big
-const checkAddressInFile =
-  (address: string) =>
-  async (filename: string): Promise<boolean> => {
-    if (fs.lstatSync(filename).isDirectory()) {
-      return false;
-    }
-
-    try {
-      const fileStream = fs.createReadStream(filename);
-      const rl = readline.createInterface({ input: fileStream, crlfDelay: Infinity });
-
-      for await (const line of rl) {
-        if (line.includes(`"address": "${address}",`)) {
-          return true;
-        }
-      }
-      return false;
-    } catch (error) {
-      console.error("Error reading file:", error);
-      return false;
-    }
-  };
-
-const findFile =
-  (searchFile: string) =>
-  (filename: string): Promise<boolean> => {
-    return Promise.resolve(filename.endsWith(searchFile));
-  };
-
-// Search recursively through all files in the `dirPath` and test it with `condition`
-// Returns filename when condition is true
-async function searchDirectory(dirPath: string, condition: (filename: string) => Promise<boolean>): Promise<string> {
-  const contractFiles = fs.readdirSync(dirPath);
-  for (const file of contractFiles) {
-    const name = path.join(dirPath, file);
-
-    if (await condition(name)) {
-      return name;
-    }
-
-    if (fs.lstatSync(name).isDirectory()) {
-      const result = await searchDirectory(name, condition);
-      if (result) {
-        return result;
-      }
-    }
-  }
-  return null;
 }
 
 main().catch((error) => {

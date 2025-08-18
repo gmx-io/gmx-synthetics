@@ -1,7 +1,16 @@
 import { grantRoleIfNotGranted } from "../utils/role";
 import { createDeployFunction, skipHandlerFunction } from "../utils/deploy";
 
-const constructorContracts = ["RoleStore", "DataStore", "EventEmitter", "Oracle", "WithdrawalVault"];
+const constructorContracts = [
+  "RoleStore",
+  "DataStore",
+  "EventEmitter",
+  "Oracle",
+  "MultichainVault",
+  "MultichainTransferRouter",
+  "WithdrawalVault",
+  "SwapHandler",
+];
 const contractName = "WithdrawalHandler";
 
 const func = createDeployFunction({
@@ -12,7 +21,7 @@ const func = createDeployFunction({
   },
   libraryNames: ["WithdrawalUtils", "ExecuteWithdrawalUtils", "WithdrawalStoreUtils", "GasUtils"],
   afterDeploy: async ({ deployedContract }) => {
-    await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
+    await grantRoleIfNotGranted(deployedContract, "CONTROLLER");
   },
 });
 
