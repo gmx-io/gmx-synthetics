@@ -21,6 +21,8 @@ Args are passing as env vars.
 @arg RECEIVER - funds receiver address
 @arg TIMELOCK_METHOD - should be one of "signalWithdrawFromPositionImpactPool" || "executeWithOraclePrice"
 @arg SALT(optional) - provide custom salt for execute* method
+@arg ORACLE(optional) - which oracle to use for prices. Possible options: "chainlinkPriceFeed" | "chainlinkDataStream".
+default: chainlinkPriceFeed
 
 example for ETH-USDC market to withdraw 1 ETH worth of funds:
 MARKET=0x70d95587d40A2caf56bd97485aB3Eec10Bee6336 AMOUNT=1000000000000000000 \
@@ -31,33 +33,83 @@ npx hardhat run scripts/withdrawFromPositionImpactPool.ts --network arbitrum
 
 const expectedTimelockMethods = ["signalWithdrawFromPositionImpactPool", "executeWithOraclePrice"];
 
+function mapTokenInfo(token) {
+  return {
+    address: token.address,
+    provider: token.priceFeed.address,
+    data: "0x",
+  };
+}
+
+async function fetchChainlinkPriceFeedInfo(marketInfo) {
+  const result = {
+    shortToken: {},
+    longToken: {},
+    indexToken: {},
+  };
+  const tokens = await hre.gmx.getTokens();
+  for (const tokenSymbol of Object.keys(tokens)) {
+    if (tokens[tokenSymbol].address.toLowerCase() === marketInfo.shortToken.toLowerCase()) {
+      result.shortToken = mapTokenInfo(tokens[tokenSymbol]);
+    }
+    if (tokens[tokenSymbol].address.toLowerCase() === marketInfo.longToken.toLowerCase()) {
+      result.longToken = mapTokenInfo(tokens[tokenSymbol]);
+    }
+    if (tokens[tokenSymbol].address.toLowerCase() === marketInfo.indexToken.toLowerCase()) {
+      result.indexToken = mapTokenInfo(tokens[tokenSymbol]);
+    }
+  }
+  return result;
+}
+
+async function fetchChainlinkDataStreamInfo(marketInfo) {
+  const chainlinkDataStreamProvider = await hre.ethers.getContract("ChainlinkDataStreamProvider");
+  const signedPrices = await fetchSignedPrices();
+  return {
+    shortToken: {
+      address: signedPrices[marketInfo.shortToken.toLowerCase()].address,
+      provider: chainlinkDataStreamProvider.address,
+      data: signedPrices[marketInfo.shortToken.toLowerCase()].blob,
+    },
+    longToken: {
+      address: signedPrices[marketInfo.longToken.toLowerCase()].address,
+      provider: chainlinkDataStreamProvider.address,
+      data: signedPrices[marketInfo.longToken.toLowerCase()].blob,
+    },
+    indexToken: {
+      address: signedPrices[marketInfo.indexToken.toLowerCase()].address,
+      provider: chainlinkDataStreamProvider.address,
+      data: signedPrices[marketInfo.indexToken.toLowerCase()].blob,
+    },
+  };
+}
+
 async function fetchOracleParams(marketKey) {
   const reader = await hre.ethers.getContract("Reader");
   const dataStore = await hre.ethers.getContract("DataStore");
   const marketInfo = await reader.getMarket(dataStore.address, marketKey);
 
-  const signedPrices = await fetchSignedPrices();
-  const shortToken = signedPrices[marketInfo.shortToken.toLowerCase()];
-  const longToken = signedPrices[marketInfo.longToken.toLowerCase()];
-  const indexToken = signedPrices[marketInfo.indexToken.toLowerCase()];
-
-  if (!shortToken) {
-    throw new Error(`Token ${marketInfo.shortToken} not found in the signed prices`);
+  let oracleParams: { shortToken: any; longToken: any; indexToken: any };
+  if (process.env.ORACLE === "chainlinkDataStream") {
+    oracleParams = await fetchChainlinkDataStreamInfo(marketInfo);
+  } else {
+    oracleParams = await fetchChainlinkPriceFeedInfo(marketInfo);
   }
-  if (!longToken) {
-    throw new Error(`Token ${marketInfo.longToken} not found in the signed prices`);
+  if (!oracleParams.shortToken) {
+    throw new Error(`Token ${marketInfo.shortToken} not found`);
   }
-  const chainlinkDataStreamProvider = await hre.ethers.getContract("ChainlinkDataStreamProvider");
+  if (!oracleParams.longToken) {
+    throw new Error(`Token ${marketInfo.longToken} not found`);
+  }
+  if (!oracleParams.indexToken) {
+    throw new Error(`Token ${marketInfo.indexToken} not found`);
+  }
 
-  console.log(`Got oracle prices for ${longToken.tokenSymbol}/${shortToken.tokenSymbol}`);
+  console.log(`Got oracle prices for ${oracleParams.longToken.tokenSymbol}/${oracleParams.shortToken.tokenSymbol}`);
   return {
-    tokens: [shortToken.address, longToken.address, indexToken.address],
-    providers: [
-      chainlinkDataStreamProvider.address,
-      chainlinkDataStreamProvider.address,
-      chainlinkDataStreamProvider.address,
-    ],
-    data: [shortToken.blob, longToken.blob, indexToken.blob],
+    tokens: [oracleParams.shortToken.address, oracleParams.longToken.address, oracleParams.indexToken.address],
+    providers: [oracleParams.shortToken.provider, oracleParams.longToken.provider, oracleParams.indexToken.provider],
+    data: [oracleParams.shortToken.data, oracleParams.longToken.data, oracleParams.indexToken.data],
   };
 }
 
@@ -78,7 +130,7 @@ async function main() {
     throw new Error(`No market key provided`);
   }
   if (!amount) {
-    throw new Error(`No amout provided`);
+    throw new Error(`No amount provided`);
   }
   if (!receiver) {
     throw new Error(`No receiver address provided`);
@@ -113,7 +165,7 @@ async function main() {
       salt = process.env.SALT;
     }
     if (!salt) {
-      throw new Error("Please provide salt via cache file or evn var");
+      throw new Error("Please provide salt via cache file or env var");
     }
 
     const oracleParams = await fetchOracleParams(market);
