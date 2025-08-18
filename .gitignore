@@ -15,6 +15,7 @@ tmp
 keys
 .rpcs.json
 out
+cache_forge/
 
 #Hardhat files
 /cache

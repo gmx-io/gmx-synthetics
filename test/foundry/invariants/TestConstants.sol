@@ -18,6 +18,8 @@ library TestConstants {
     address constant USER_2 = 0x0000000000000000000000000000000000002222;
     address constant USER_3 = 0x0000000000000000000000000000000000003333;
 
+    address constant RECEIVER_FOR_FIRST_DEPOSIT = address(1);
+
     /// @dev Standard token amounts for testing
     uint256 constant ETH_AMOUNT_FOR_GAS = 1 ether;
     uint256 constant WETH_AMOUNT = 10 ether;
