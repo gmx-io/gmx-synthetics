@@ -39,6 +39,7 @@ async function fetchOracleParams(marketKey) {
   const signedPrices = await fetchSignedPrices();
   const shortToken = signedPrices[marketInfo.shortToken.toLowerCase()];
   const longToken = signedPrices[marketInfo.longToken.toLowerCase()];
+  const indexToken = signedPrices[marketInfo.indexToken.toLowerCase()];
 
   if (!shortToken) {
     throw new Error(`Token ${marketInfo.shortToken} not found in the signed prices`);
@@ -50,9 +51,13 @@ async function fetchOracleParams(marketKey) {
 
   console.log(`Got oracle prices for ${longToken.tokenSymbol}/${shortToken.tokenSymbol}`);
   return {
-    tokens: [shortToken.address, longToken.address],
-    providers: [chainlinkDataStreamProvider.address, chainlinkDataStreamProvider.address],
-    data: [shortToken.blob, longToken.blob],
+    tokens: [shortToken.address, longToken.address, indexToken.address],
+    providers: [
+      chainlinkDataStreamProvider.address,
+      chainlinkDataStreamProvider.address,
+      chainlinkDataStreamProvider.address,
+    ],
+    data: [shortToken.blob, longToken.blob, indexToken.blob],
   };
 }
 
