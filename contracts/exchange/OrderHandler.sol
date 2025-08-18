@@ -264,17 +264,20 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         }
     }
 
+    // @dev used by other handlers to avoid duplicating the same code on their side
+    // this method is similar to `executeGlvShift` but skips execution gas validation
     function executeOrderForController(
         bytes32 key,
         Order.Props memory order,
         uint256 startingGas,
-        uint256 executionGas
+        uint256 executionGas,
+        bool isSimulation
     ) external onlyController {
         try this._executeOrder{ gas: executionGas }(
             key,
             order,
             msg.sender,
-            false // isSimulation
+            isSimulation
         ) {
         } catch (bytes memory reasonBytes) {
             _handleOrderError(key, startingGas, reasonBytes);
@@ -291,7 +294,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         Order.Props memory order,
         address keeper,
         bool isSimulation
-    ) external onlySelf {
+    ) external onlySelfOrController {
         uint256 startingGas = gasleft();
 
         BaseOrderUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(

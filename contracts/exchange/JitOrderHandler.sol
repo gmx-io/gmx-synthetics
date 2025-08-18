@@ -69,7 +69,6 @@ contract JitOrderHandler is BaseOrderHandler, ReentrancyGuard {
         FeatureUtils.validateFeature(dataStore, Keys.createGlvShiftFeatureDisabledKey(address(this)));
 
         uint256 startingGas = gasleft();
-        DataStore _dataStore = dataStore;
 
         Order.Props memory order = OrderStoreUtils.get(dataStore, orderKey);
 
@@ -77,26 +76,59 @@ contract JitOrderHandler is BaseOrderHandler, ReentrancyGuard {
             revert Errors.GlvInvalidToMarket(params.toMarket, order.market());
         }
 
+        DataStore _dataStore = dataStore;
         _validateExecutionGas(_dataStore, startingGas, order);
-
-        (bytes32 glvShiftKey, GlvShift.Props memory glvShift) = _createGlvShift(
-            _dataStore,
-            params,
-            order.updatedAtTime(),
-            orderKey
-        );
-
-        glvShiftHandler.executeGlvShiftForController(
-            glvShiftKey,
-            glvShift,
-            GasUtils.getExecutionGas(_dataStore, gasleft())
-        );
+        _shiftLiquidity(_dataStore, params, orderKey, order.updatedAtTime());
 
         orderHandler.executeOrderForController(
             orderKey,
             order,
             startingGas,
-            GasUtils.getExecutionGas(_dataStore, gasleft())
+            GasUtils.getExecutionGas(_dataStore, gasleft()),
+            false // isSimulation
+        );
+    }
+
+    function simulateShiftLiquidityAndExecuteOrder(
+        GlvShiftUtils.CreateGlvShiftParams memory params,
+        bytes32 orderKey,
+        OracleUtils.SimulatePricesParams memory oracleParams
+    ) external globalNonReentrant withSimulatedOraclePrices(oracleParams) {
+        DataStore _dataStore = dataStore;
+        Order.Props memory order = OrderStoreUtils.get(dataStore, orderKey);
+
+        if (order.market() != params.toMarket) {
+            revert Errors.GlvInvalidToMarket(params.toMarket, order.market());
+        }
+
+        _shiftLiquidity(_dataStore, params, orderKey, order.updatedAtTime());
+
+        orderHandler._executeOrder(
+            orderKey,
+            order,
+            msg.sender,
+            true // isSimulation
+        );
+    }
+
+    function _shiftLiquidity(
+        DataStore _dataStore,
+        GlvShiftUtils.CreateGlvShiftParams memory params,
+        bytes32 orderKey,
+        uint256 orderUpdatedAtTime
+    ) internal {
+        (bytes32 glvShiftKey, GlvShift.Props memory glvShift) = _createGlvShift(
+            _dataStore,
+            params,
+            orderUpdatedAtTime,
+            orderKey
+        );
+
+        glvShiftHandler._executeGlvShift(
+            glvShiftKey,
+            glvShift,
+            msg.sender,
+            true // skipRemoval
         );
     }
 
