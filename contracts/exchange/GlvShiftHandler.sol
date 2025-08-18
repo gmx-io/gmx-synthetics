@@ -62,12 +62,22 @@ contract GlvShiftHandler is BaseHandler, ReentrancyGuard {
 
         uint256 executionGas = GasUtils.getExecutionGas(_dataStore, startingGas);
 
-        try this._executeGlvShift{gas: executionGas}(key, glvShift, msg.sender) {} catch (bytes memory reasonBytes) {
+        try this._executeGlvShift{gas: executionGas}(key, glvShift, msg.sender, false) {} catch (bytes memory reasonBytes) {
             _handleGlvShiftError(key, reasonBytes);
         }
     }
 
-    function _executeGlvShift(bytes32 key, GlvShift.Props memory glvShift, address keeper) external onlySelf {
+    function executeGlvShiftForController(
+        bytes32 key,
+        GlvShift.Props memory glvShift,
+        uint256 executionGas
+    ) external onlyController {
+        try this._executeGlvShift{gas: executionGas}(key, glvShift, msg.sender, false) {} catch (bytes memory reasonBytes) {
+            _handleGlvShiftError(key, reasonBytes);
+        }
+    }
+
+    function _executeGlvShift(bytes32 key, GlvShift.Props memory glvShift, address keeper, bool skipRemoval) external onlySelf {
         FeatureUtils.validateFeature(dataStore, Keys.executeGlvShiftFeatureDisabledKey(address(this)));
 
         GlvShiftUtils.ExecuteGlvShiftParams memory params = GlvShiftUtils.ExecuteGlvShiftParams({
@@ -84,7 +94,7 @@ contract GlvShiftHandler is BaseHandler, ReentrancyGuard {
             keeper: keeper
         });
 
-        GlvShiftUtils.executeGlvShift(params, glvShift);
+        GlvShiftUtils.executeGlvShift(params, glvShift, skipRemoval);
     }
 
     function _handleGlvShiftError(bytes32 key, bytes memory reasonBytes) internal {

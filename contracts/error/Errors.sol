@@ -104,6 +104,8 @@ library Errors {
     error GlvNameTooLong();
     // GlvStoreUtils
     error GlvNotFound(address key);
+    // Jit
+    error GlvInvalidToMarket(address market, address expectedMarket);
 
     // DepositStoreUtils errors
     error DepositNotFound(bytes32 key);

@@ -264,6 +264,23 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         }
     }
 
+    function executeOrderForController(
+        bytes32 key,
+        Order.Props memory order,
+        uint256 startingGas,
+        uint256 executionGas
+    ) external onlyController {
+        try this._executeOrder{ gas: executionGas }(
+            key,
+            order,
+            msg.sender,
+            false // isSimulation
+        ) {
+        } catch (bytes memory reasonBytes) {
+            _handleOrderError(key, startingGas, reasonBytes);
+        }
+    }
+
     // @dev executes an order
     // @param key the key of the order to execute
     // @param oracleParams OracleUtils.SetPricesParams

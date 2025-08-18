@@ -59,6 +59,30 @@ library GlvShiftUtils {
         EventEmitter eventEmitter,
         CreateGlvShiftParams memory params
     ) external returns (bytes32) {
+        validateGlvShift(dataStore, params);
+
+        GlvShift.Props memory glvShift = GlvShift.Props(
+            GlvShift.Addresses({glv: params.glv, fromMarket: params.fromMarket, toMarket: params.toMarket}),
+            GlvShift.Numbers({
+                marketTokenAmount: params.marketTokenAmount,
+                minMarketTokens: params.minMarketTokens,
+                updatedAtTime: Chain.currentTimestamp()
+            })
+        );
+
+        bytes32 key = NonceUtils.getNextKey(dataStore);
+
+        GlvShiftStoreUtils.set(dataStore, key, glvShift);
+
+        GlvShiftEventUtils.emitGlvShiftCreated(eventEmitter, key, glvShift);
+
+        return key;
+    }
+
+    function validateGlvShift(
+        DataStore dataStore,
+        CreateGlvShiftParams memory params
+    ) internal view {
         GlvUtils.validateGlv(dataStore, params.glv);
         GlvUtils.validateGlvMarket(dataStore, params.glv, params.fromMarket, false);
         GlvUtils.validateGlvMarket(dataStore, params.glv, params.toMarket, true);
@@ -77,23 +101,6 @@ library GlvShiftUtils {
 
         MarketUtils.validateEnabledMarket(dataStore, params.fromMarket);
         MarketUtils.validateEnabledMarket(dataStore, params.toMarket);
-
-        GlvShift.Props memory glvShift = GlvShift.Props(
-            GlvShift.Addresses({glv: params.glv, fromMarket: params.fromMarket, toMarket: params.toMarket}),
-            GlvShift.Numbers({
-                marketTokenAmount: params.marketTokenAmount,
-                minMarketTokens: params.minMarketTokens,
-                updatedAtTime: Chain.currentTimestamp()
-            })
-        );
-
-        bytes32 key = NonceUtils.getNextKey(dataStore);
-
-        GlvShiftStoreUtils.set(dataStore, key, glvShift);
-
-        GlvShiftEventUtils.emitGlvShiftCreated(eventEmitter, key, glvShift);
-
-        return key;
     }
 
     function validateGlvShiftInterval(DataStore dataStore, address glv) internal view {
@@ -114,9 +121,12 @@ library GlvShiftUtils {
 
     function executeGlvShift(
         ExecuteGlvShiftParams memory params,
-        GlvShift.Props memory glvShift
+        GlvShift.Props memory glvShift,
+        bool skipRemoval
     ) external returns (uint256) {
-        GlvShiftStoreUtils.remove(params.dataStore, params.key);
+        if (!skipRemoval) {
+            GlvShiftStoreUtils.remove(params.dataStore, params.key);
+        }
 
         validateGlvShiftInterval(params.dataStore, glvShift.glv());
         params.dataStore.setUint(Keys.glvShiftLastExecutedAtKey(glvShift.glv()), Chain.currentTimestamp());
