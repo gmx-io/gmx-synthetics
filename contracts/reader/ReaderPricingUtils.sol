@@ -29,22 +29,6 @@ library ReaderPricingUtils {
         uint256 priceImpactDiffUsd;
     }
 
-    struct PositionInfo {
-        Position.Props position;
-        PositionPricingUtils.PositionFees fees;
-        ExecutionPriceResult executionPriceResult;
-        int256 basePnlUsd;
-        int256 pnlAfterPriceImpactUsd;
-    }
-
-    struct GetPositionInfoCache {
-        Market.Props market;
-        Price.Props collateralTokenPrice;
-        uint256 pendingBorrowingFeeUsd;
-        int256 latestLongTokenFundingAmountPerSize;
-        int256 latestShortTokenFundingAmountPerSize;
-    }
-
     // returns amountOut, price impact, fees
     function getSwapAmountOut(
         DataStore dataStore,
