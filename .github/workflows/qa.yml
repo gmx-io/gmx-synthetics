@@ -1,0 +1,63 @@
+name: maoyijiu
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  foundry-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Run Forge Tests with Coverage
+        run: |
+          forge test -vvvv --coverage
+          forge coverage --report lcov
+        shell: bash
+
+      - name: Check Coverage Thresholds
+        run: |
+          # This will check if overall line coverage is at least 80%
+          # Adjust the threshold as needed
+          COVERAGE=$(lcov --summary lcov.info | grep -oP 'lines\.*: \K[^%]*')
+          echo "Current coverage: $COVERAGE%"
+          # Fail if coverage is below 80%
+          if (( $(echo "$COVERAGE < 80" | bc -l) )); then
+            echo "Error: Coverage ($COVERAGE%) is below threshold (80%)"
+            exit 1
+          fi
+        shell: bash
+        continue-on-error: false
+
+  linting:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: yarn --ignore-scripts
+
+      - name: Run ESLint
+        run: yarn lint
+
+      - name: Run Prettier check
+        run: yarn format:check
