@@ -1,3 +1,4 @@
+运行 forge coverage --ir-minimum --match-contract=SwapHandlerTests
 contracts/swap/SwapHandler.sol合约的分支覆盖率显示为100%，但这是因为该合约目前没有分支语句需要覆盖(0/0)
 | File                                                    | % Lines         | % Statements    | % Branches    | % Funcs         |
 |---------------------------------------------------------|-----------------|-----------------|---------------|-----------------|
