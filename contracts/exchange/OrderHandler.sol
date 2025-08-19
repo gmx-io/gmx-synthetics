@@ -265,7 +265,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
     }
 
     // @dev used by other handlers to avoid duplicating the same code on their side
-    // this method is similar to `executeGlvShift` but skips execution gas validation
+    // this method is similar to `executeOrder` but skips execution gas validation
     function executeOrderForController(
         bytes32 key,
         Order.Props memory order,

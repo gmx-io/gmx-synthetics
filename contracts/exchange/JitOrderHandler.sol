@@ -4,18 +4,11 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-// import "./BaseHandler.sol";
-
-// import "../glv/glvDeposit/GlvDepositUtils.sol";
-// import "../glv/glvWithdrawal/GlvWithdrawalUtils.sol";
 import "../glv/glvShift/GlvShiftUtils.sol";
 import "./BaseOrderHandler.sol";
 import "../oracle/Oracle.sol";
 import "../swap/SwapHandler.sol";
 import "../order/OrderStoreUtils.sol";
-import "./IOrderExecutor.sol";
-import "../order/OrderUtils.sol";
-import "../order/ExecuteOrderUtils.sol";
 import "./GlvShiftHandler.sol";
 import "./OrderHandler.sol";
 
@@ -25,9 +18,6 @@ contract JitOrderHandler is BaseOrderHandler, ReentrancyGuard {
     using GlvDeposit for GlvDeposit.Props;
     using GlvShift for GlvShift.Props;
     using GlvWithdrawal for GlvWithdrawal.Props;
-
-    GlvVault public immutable glvVault;
-    ShiftVault public immutable shiftVault;
 
     GlvShiftHandler public immutable glvShiftHandler;
     OrderHandler public immutable orderHandler;
@@ -41,9 +31,8 @@ contract JitOrderHandler is BaseOrderHandler, ReentrancyGuard {
         OrderVault _orderVault,
         SwapHandler _swapHandler,
         IReferralStorage _referralStorage,
-        GlvVault _glvVault,
-        ShiftVault _shiftVault,
-        OrderHandler _orderHandler
+        OrderHandler _orderHandler,
+        GlvShiftHandler _glvShiftHandler
     )
         BaseOrderHandler(
             _roleStore,
@@ -56,11 +45,11 @@ contract JitOrderHandler is BaseOrderHandler, ReentrancyGuard {
             _referralStorage
         )
     {
-        glvVault = _glvVault;
-        shiftVault = _shiftVault;
         orderHandler = _orderHandler;
+        glvShiftHandler = _glvShiftHandler;
     }
 
+    // TODO: support multiple glv shifts
     function shiftLiquidityAndExecuteOrder(
         GlvShiftUtils.CreateGlvShiftParams memory params,
         bytes32 orderKey,
@@ -73,7 +62,7 @@ contract JitOrderHandler is BaseOrderHandler, ReentrancyGuard {
         Order.Props memory order = OrderStoreUtils.get(dataStore, orderKey);
 
         if (order.market() != params.toMarket) {
-            revert Errors.GlvInvalidToMarket(params.toMarket, order.market());
+            revert Errors.JitInvalidToMarket(params.toMarket, order.market());
         }
 
         DataStore _dataStore = dataStore;
@@ -98,7 +87,7 @@ contract JitOrderHandler is BaseOrderHandler, ReentrancyGuard {
         Order.Props memory order = OrderStoreUtils.get(dataStore, orderKey);
 
         if (order.market() != params.toMarket) {
-            revert Errors.GlvInvalidToMarket(params.toMarket, order.market());
+            revert Errors.JitInvalidToMarket(params.toMarket, order.market());
         }
 
         _shiftLiquidity(_dataStore, params, orderKey, order.updatedAtTime());

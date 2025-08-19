@@ -105,7 +105,7 @@ library Errors {
     // GlvStoreUtils
     error GlvNotFound(address key);
     // Jit
-    error GlvInvalidToMarket(address market, address expectedMarket);
+    error JitInvalidToMarket(address market, address expectedMarket);
 
     // DepositStoreUtils errors
     error DepositNotFound(bytes32 key);

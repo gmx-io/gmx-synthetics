@@ -95,6 +95,7 @@ async function setup() {
   const withdrawalHandler = await hre.ethers.getContract("WithdrawalHandler");
   const shiftHandler = await hre.ethers.getContract("ShiftHandler");
   const orderHandler = await hre.ethers.getContract("OrderHandler");
+  const jitOrderHandler = await hre.ethers.getContract("JitOrderHandler");
   const swapHandler = await hre.ethers.getContract("SwapHandler");
   const externalHandler = await hre.ethers.getContract("ExternalHandler");
   const baseOrderUtils = await hre.ethers.getContract("BaseOrderUtils");
@@ -298,6 +299,7 @@ async function setup() {
       withdrawalHandler,
       shiftHandler,
       orderHandler,
+      jitOrderHandler,
       swapHandler,
       externalHandler,
       baseOrderUtils,
