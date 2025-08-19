@@ -320,5 +320,16 @@ async function validateIsReferralStorageHandler() {
         referralStorageAddress
       );
     }
+
+    // check MultichainOrderRouter received the handler role in ReferralStorage after deployment
+    const multichainOrderRouterDeployment = await hre.deployments.get("MultichainOrderRouter");
+    const isMultichainHandler = await referralStorage.isHandler(multichainOrderRouterDeployment.address);
+    if (!isMultichainHandler) {
+      console.warn(
+        "MultichainOrderRouter %s is missing the handler role in ReferralStorage %s",
+        multichainOrderRouterDeployment.address,
+        referralStorageAddress
+      );
+    }
   }
 }
