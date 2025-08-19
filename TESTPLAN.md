@@ -37,8 +37,6 @@
 
 ### Liquidity Math (没有找到sol文件) 
 
-
-
 ---
 
 ## 3. 边界值测试
@@ -61,26 +59,16 @@
 
 ## 4. 数值不变测试
 
-1. **LP Value Conservation**
-
-   ```
-   ΔLPValue == fee + priceImpact + traderPnl
-   ```
-2. **Non-negative reserves**
-
-   ```
-   tokenReserve >= 0 && quoteReserve >= 0
-   ```
-3. **Constant-product check (AMM)**
-
-   ```
-   oldReserves.x * oldReserves.y <= newReserves.x * newReserves.y + 1 wei
-   ```
-4. **Funding & PnL**
-
-   ```
-   sum(longPositions) + sum(shortPositions) == totalNotionalValue
-   ```
+| **场景编号** | **测试场景描述**           | **输入参数**                                                                        | **预期结果 / 不变性验证**                                                    |                               |           |
+| -------- | -------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------- | ----------------------------- | --------- |
+| **1**   | 单 hop swap：检查输入与输出守恒 | `amountIn = 100`，`swapPathMarkets = [MarketX]`，`minOutputAmount = 50`           | 验证 `ΔLPValue == fee + priceImpact + traderPnl` 成立；总资产变化符合 swap 定价规则 |                               |           |
+| **2**   | 多 hop swap：逐步累计      | `amountIn = 200`，`swapPathMarkets = [MarketX, MarketY]`，`minOutputAmount = 150` | 每个 hop 输出应作为下一个 hop 输入，保证 `Σ(amountOut[i])` 与最终 `outputAmount` 一致   |                               |           |
+| **3**   | rounding 误差检查        | 构造小数换算导致精度丢失的场景（如 1 wei 的拆分 swap）                                               | 验证最终 \`                                                             | expectedOutput - actualOutput | ≤ 1 wei\` |
+| **4**   | SafeCast 溢出保护        | `amountIn = type(uint256).max`，`swapPathMarkets = []`                           | 交易应成功，不发生溢出；不变量：`outputAmount ≤ uint256.max`                        |                               |           |
+| **5**   | minOutputAmount 约束   | `amountIn = 100`，`expectedOutput = 95`，`minOutputAmount = 90`                   | 验证 `outputAmount ≥ minOutputAmount`；否则 Revert                       |                               |           |
+| **6**   | fee 分润不变性            | `amountIn = 1000`，`uiFeeReceiver = Carol`                                       | 验证 `amountIn = userReceived + protocolFee + uiFee` 成立；总值守恒          |                               |           |
+| **7**   | unwrap 场景下守恒         | 最后一步 swap 输出 WETH=50，`shouldUnwrapNativeToken = true`                           | 验证 Bob 实际收到 ETH=50；token 总量不变（WETH→ETH 仅换壳）                         |                               |           |
+| **8**   | 多用户并发时数据清理           | Alice swap 后，`dataStore` 标记清除，再由 Bob swap                                       | 验证 `dataStore` 中的标记被正确 reset，不影响下一次 swap；保证市场标志位守恒（最终均为 false）      |                               |           |
 
 ---
 
@@ -88,11 +76,14 @@
 
 * **Rounding errors**
 
-  * Use fuzzing (Foundry) to test small fractions and extreme values
-  * Assert `abs(actual - expected) <= 1 wei`
+  * 构造极端输入，例如 amountIn = 1、amountIn = veryLargeNumber，以及带小数比例的价格（比如 1.333...）
+  * 在测试中预期值用高精度公式（比如 Python/Foundry BigNumber）计算，再和合约输出对比。
+  * Assert abs(expectedOutput - actualOutput) <= 1 wei。如果超过 1 wei，说明 rounding 存在问题。
 
 * **Overflow / SafeCast**
 
-  * Explicitly cast large numbers and test boundary conditions
-  * Confirm `SafeCast` reverts when value > max allowed
+  * 构造输入边界值，比如 amountIn = type(uint256).max 或接近 2^128 - 1。
+  * 调用 swap，观察是否触发 SafeCast revert。
+  * 对于超过范围的数值，交易应当 revert（防止静默截断）。
+  * 在合法范围内应当正确执行，输出与输入保持一致性。
 
