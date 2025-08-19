@@ -9,6 +9,7 @@ import "../market/Market.sol";
 import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
 import "../oracle/Oracle.sol";
+import "../role/RoleStore.sol";
 
 contract SwapHandlerTest is Test {
     SwapHandler swapHandler;
@@ -28,10 +29,15 @@ contract SwapHandlerTest is Test {
         roleStore = new RoleStore();
         swapHandler = new SwapHandler(roleStore);
 
-        dataStore = new DataStore();
-        eventEmitter = new EventEmitter();
-        oracle = new Oracle();
-        bank = new Bank();
+        dataStore = new DataStore(roleStore);
+        eventEmitter = new EventEmitter(roleStore);
+        oracle = new Oracle(
+            roleStore, 
+            dataStore, 
+            eventEmitter, 
+            AggregatorV2V3Interface(address(0))
+            );
+        bank = new Bank(roleStore, dataStore);
         
         tokenA = makeAddr("tokenA");
         vm.deal(alice, 100 ether);
@@ -78,8 +84,13 @@ contract SwapHandlerTest is Test {
         vm.assume(amountIn > 0 && amountIn < 1e30);
 
         // 构造1-hop路径
-        Market.Props ;
-        path[0] = Market.Props({ marketToken: market });
+        Market.Props[] memory path = new Market.Props[](1);
+        path[0] = Market.Props({
+        marketToken: market,
+        indexToken: address(0),
+        longToken: address(0),
+        shortToken: address(0)
+        });
 
         SwapUtils.SwapParams memory params;
         params.tokenIn = tokenA;
@@ -96,9 +107,19 @@ contract SwapHandlerTest is Test {
 
     /// 场景5: SwapPath中市场重复
     function testSwapRevertOnDuplicatedMarket() public {
-        Market.Props ;
-        path[0] = Market.Props({ marketToken: market });
-        path[1] = Market.Props({ marketToken: market });
+        Market.Props[] memory path = new Market.Props[](2);
+        path[0] = Market.Props({
+        marketToken: market,
+        indexToken: address(0),
+        longToken: address(0),
+        shortToken: address(0)
+        });
+        path[1] = Market.Props({
+        marketToken: market,
+        indexToken: address(0),
+        longToken: address(0),
+        shortToken: address(0)
+        });
 
         SwapUtils.SwapParams memory params;
         params.tokenIn = tokenA;
@@ -111,8 +132,13 @@ contract SwapHandlerTest is Test {
 
     /// 场景6: 输出小于最小要求
     function testSwapRevertOnLowOutput() public {
-        Market.Props ;
-        path[0] = Market.Props({ marketToken: market });
+        Market.Props[] memory path = new Market.Props[](1);
+        path[0] = Market.Props({
+        marketToken: market,
+        indexToken: address(0),
+        longToken: address(0),
+        shortToken: address(0)
+        });
 
         SwapUtils.SwapParams memory params;
         params.amountIn = 100;
@@ -184,6 +210,7 @@ contract SwapHandlerTest is Test {
         ( , uint256 outputAmount) = swapHandler.swap(params);
 
         uint256 expected = 1;
-        assertLe(expected - outputAmount <= 1, true);
+        uint256 diff = expected >= outputAmount ? expected - outputAmount : outputAmount - expected;
+        assertLe(diff, 1);
     }
 }
