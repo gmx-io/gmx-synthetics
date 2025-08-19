@@ -1,7 +1,7 @@
 import { setTimeout as delay } from "timers/promises";
 import { readJsonFile, writeJsonFile } from "../utils/file";
 import { getExplorerUrl } from "../hardhat.config";
-import { sendExplorerRequest } from "./etherscanUtils";
+import { sendExplorerRequest } from "../utils/explorer";
 
 import hre from "hardhat";
 
