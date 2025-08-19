@@ -9,9 +9,9 @@ npx hardhat --network arbitrum run scripts/distributions/analyzeContractAccounts
 
 Environment variables:
 - SAMPLE_SIZE: Number of accounts to analyze (default: analyze all)
-  Example: SAMPLE_SIZE=50 npx hardhat --network arbitrum run scripts/distributions/analyzeContractAccounts.ts
+  Example: SAMPLE_SIZE=5 npx hardhat --network arbitrum run scripts/distributions/analyzeContractAccounts.ts
 
-This script analyzes the CONTRACT CSV files to identify which are smart wallets
+This script analyzes the CONTRACT CSV files to identify which ones are smart wallets
 */
 
 // EIP-1271 signature validation interface
@@ -45,8 +45,8 @@ async function main() {
 
   // Process both CSV files
   const csvFiles = [
-    "/Users/max/gmx/gmx-synthetics/scripts/distributions/data/GLP_GLV-for-CONTRACT.csv",
-    "/Users/max/gmx/gmx-synthetics/scripts/distributions/data/GLP_USDC-for-CONTRACT.csv",
+    path.join(__dirname, "data/GLP_GLV-for-CONTRACT.csv"),
+    path.join(__dirname, "data/GLP_USDC-for-CONTRACT.csv"),
   ];
 
   for (const csvFile of csvFiles) {
@@ -138,7 +138,7 @@ async function main() {
 
     if (otherContracts.length > 0) {
       console.log("Showing first 10 regular contracts:");
-      console.log("Address                                     | Contract Name");
+      console.log("Address                                    | Contract Name");
       console.log("-------------------------------------------|--------------------");
 
       for (let i = 0; i < Math.min(10, otherContracts.length); i++) {
@@ -153,7 +153,7 @@ async function main() {
     }
 
     if (sampleSize && allAccounts.length > accounts.length) {
-      console.log(`\n📝 NOTE: This is a sample analysis of the first ${sampleSize} accounts only.`);
+      console.log(`\nNOTE: This is a sample analysis of the first ${sampleSize} accounts only.`);
       console.log(`   Total accounts in file: ${allAccounts.length}`);
       console.log(`   To analyze all accounts, run without SAMPLE_SIZE environment variable`);
     }
