@@ -10,8 +10,6 @@ import { getOrderCount, OrderType, createOrder } from "../../utils/order";
 import { shiftLiquidityAndExecuteOrder } from "../../utils/jit";
 
 describe("Jit", () => {
-  const { provider } = ethers;
-
   let fixture;
   let user1;
   let dataStore, ethUsdMarket, solUsdMarket, ethUsdGlvAddress, wnt, executionFee;

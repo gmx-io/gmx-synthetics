@@ -49,9 +49,8 @@ contract JitOrderHandler is BaseOrderHandler, ReentrancyGuard {
         glvShiftHandler = _glvShiftHandler;
     }
 
-    // TODO: support multiple glv shifts
     function shiftLiquidityAndExecuteOrder(
-        GlvShiftUtils.CreateGlvShiftParams memory params,
+        GlvShiftUtils.CreateGlvShiftParams[] memory shiftParamsList,
         bytes32 orderKey,
         OracleUtils.SetPricesParams calldata oracleParams
     ) external globalNonReentrant onlyOrderKeeper withOraclePrices(oracleParams) {
@@ -60,14 +59,17 @@ contract JitOrderHandler is BaseOrderHandler, ReentrancyGuard {
         uint256 startingGas = gasleft();
 
         Order.Props memory order = OrderStoreUtils.get(dataStore, orderKey);
+        DataStore _dataStore = dataStore;
+        _validateExecutionGas(_dataStore, startingGas, order, shiftParamsList.length);
 
-        if (order.market() != params.toMarket) {
-            revert Errors.JitInvalidToMarket(params.toMarket, order.market());
+        for (uint256 i = 0; i < shiftParamsList.length; i++) {
+            if (order.market() != shiftParamsList[i].toMarket) {
+                revert Errors.JitInvalidToMarket(shiftParamsList[i].toMarket, order.market());
+            }
+
+            _shiftLiquidity(_dataStore, shiftParamsList[i], orderKey, order.updatedAtTime());
         }
 
-        DataStore _dataStore = dataStore;
-        _validateExecutionGas(_dataStore, startingGas, order);
-        _shiftLiquidity(_dataStore, params, orderKey, order.updatedAtTime());
 
         orderHandler.executeOrderForController(
             orderKey,
@@ -79,18 +81,20 @@ contract JitOrderHandler is BaseOrderHandler, ReentrancyGuard {
     }
 
     function simulateShiftLiquidityAndExecuteOrder(
-        GlvShiftUtils.CreateGlvShiftParams memory params,
+        GlvShiftUtils.CreateGlvShiftParams[] memory shiftParamsList,
         bytes32 orderKey,
         OracleUtils.SimulatePricesParams memory oracleParams
     ) external globalNonReentrant withSimulatedOraclePrices(oracleParams) {
         DataStore _dataStore = dataStore;
         Order.Props memory order = OrderStoreUtils.get(dataStore, orderKey);
 
-        if (order.market() != params.toMarket) {
-            revert Errors.JitInvalidToMarket(params.toMarket, order.market());
-        }
+        for (uint256 i = 0; i < shiftParamsList.length; i++) {
+            if (order.market() != shiftParamsList[i].toMarket) {
+                revert Errors.JitInvalidToMarket(shiftParamsList[i].toMarket, order.market());
+            }
 
-        _shiftLiquidity(_dataStore, params, orderKey, order.updatedAtTime());
+            _shiftLiquidity(_dataStore, shiftParamsList[i], orderKey, order.updatedAtTime());
+        }
 
         orderHandler._executeOrder(
             orderKey,
@@ -142,8 +146,8 @@ contract JitOrderHandler is BaseOrderHandler, ReentrancyGuard {
         return (glvShiftKey, glvShift);
     }
 
-    function _validateExecutionGas(DataStore _dataStore, uint256 startingGas, Order.Props memory order) internal view {
-        uint256 glvShiftEstimatedGasLimit = GasUtils.estimateExecuteGlvShiftGasLimit(_dataStore);
+    function _validateExecutionGas(DataStore _dataStore, uint256 startingGas, Order.Props memory order, uint256 shiftsCount) internal view {
+        uint256 glvShiftEstimatedGasLimit = GasUtils.estimateExecuteGlvShiftGasLimit(_dataStore) * shiftsCount;
         uint256 orderEstimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(_dataStore, order);
 
         uint256 estimatedGasLimit = glvShiftEstimatedGasLimit + orderEstimatedGasLimit;

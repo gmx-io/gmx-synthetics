@@ -79,7 +79,7 @@ export async function shiftLiquidityAndExecuteOrder(
   }
 
   const params = {
-    args: [glvShiftParams, orderKey],
+    args: [[glvShiftParams], orderKey],
     oracleBlockNumber,
     tokens,
     precisions,
