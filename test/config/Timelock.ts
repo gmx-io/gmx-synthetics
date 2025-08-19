@@ -639,7 +639,7 @@ describe("Timelock", () => {
       // user should receive funds
       const usdcFinishBalance = await usdc.balanceOf(user2.address);
       const wntFinishBalance = await wnt.balanceOf(user2.address);
-      expect(usdcFinishBalance).to.eq(decimalToFloat(25, 22)); // 2.5 USDC
+      expect(usdcFinishBalance).to.eq(decimalToFloat(25, 22)); // 2500 USDC
       expect(wntFinishBalance).to.eq(decimalToFloat(5, 13)); // 0.5 ETH
     });
 
