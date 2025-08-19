@@ -452,8 +452,8 @@ const config: {
       ...fundingRateConfig_Low,
       ...borrowingRateConfig_LowMax_WithLowerBase,
 
-      reserveFactor: percentageToFloat("280%"),
-      openInterestReserveFactor: percentageToFloat("275%"),
+      reserveFactor: percentageToFloat("350%"),
+      openInterestReserveFactor: percentageToFloat("345%"),
 
       maxLongTokenPoolAmount: expandDecimals(2200, 8),
       maxShortTokenPoolAmount: expandDecimals(110_000_000, 6),
@@ -1176,8 +1176,8 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_LowMax_WithHigherBase,
 
-      reserveFactor: percentageToFloat("165%"),
-      openInterestReserveFactor: percentageToFloat("160%"),
+      reserveFactor: percentageToFloat("180%"),
+      openInterestReserveFactor: percentageToFloat("175%"),
 
       maxLongTokenPoolAmount: expandDecimals(27_800, 18),
       maxShortTokenPoolAmount: expandDecimals(3_500_000, 6),
@@ -2179,8 +2179,8 @@ const config: {
       // minCollateralFactor of 0.01 (1%)
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
 
-      reserveFactor: percentageToFloat("135%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("130%"), // default is 90%
+      reserveFactor: percentageToFloat("100%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("95%"), // default is 90%
 
       maxPnlFactorForTraders: percentageToFloat("90%"), // default is 60%
 
