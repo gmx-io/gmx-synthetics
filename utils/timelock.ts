@@ -15,15 +15,17 @@ export async function timelockWriteMulticall({ timelock, multicallWriteParams })
     return;
   }
 
-  // await hre.deployments.read(
-  //   "TimelockConfig",
-  //   {
-  //     from: "0xE014cbD60A793901546178E1c16ad9132C927483",
-  //     log: true,
-  //   },
-  //   "multicall",
-  //   multicallWriteParams
-  // );
+  if (process.env.SKIP_VALIDATION === undefined) {
+    await hre.deployments.read(
+      "TimelockConfig",
+      {
+        from: "0xE014cbD60A793901546178E1c16ad9132C927483",
+        log: true,
+      },
+      "multicall",
+      multicallWriteParams
+    );
+  }
 
   let write = process.env.WRITE === "true";
 
