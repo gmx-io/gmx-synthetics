@@ -203,6 +203,12 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
     },
+    "WIF:WBTC.e:USDC": {
+      negativePositionImpactFactor: exponentToFloat("3.13e-09"),
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
     POL: {
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       expectedSwapImpactRatio: 20_000,
@@ -471,11 +477,21 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 12_000,
     },
-    // OKB: {
-    //   negativePositionImpactFactor: exponentToFloat("5.82e-8"),
-    //   expectedSwapImpactRatio: 20_000,
-    //   expectedPositionImpactRatio: 12_000,
-    // },
+    CVX: {
+      negativePositionImpactFactor: exponentToFloat("8.45e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    KAS: {
+      negativePositionImpactFactor: exponentToFloat("2.08e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    OKB: {
+      negativePositionImpactFactor: exponentToFloat("5.82e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
     ALGO: {
       negativePositionImpactFactor: exponentToFloat("1.47e-8"),
       expectedSwapImpactRatio: 20_000,

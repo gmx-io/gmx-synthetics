@@ -800,14 +800,6 @@ const config: {
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },
-    // OKB: {
-    //   synthetic: true,
-    //   decimals: 18, // https://etherscan.io/token/0x75231f58b43240c9718dd58b4967c5114342a86c#readProxyContract
-    //   transferGasLimit: 200 * 1000,
-    //   dataStreamFeedId: "", // TODO:
-    //   dataStreamFeedDecimals: 18,
-    //   oracleTimestampAdjustment: 1,
-    // },
     ALGO: {
       synthetic: true,
       decimals: 6, // https://explorer.perawallet.app/asset/0/
@@ -836,6 +828,33 @@ const config: {
         decimals: 8,
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
+    },
+    CVX: {
+      synthetic: true,
+      decimals: 18, // https://etherscan.io/token/0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b#readContract
+      dataStreamFeedId: "0x0003e95ca25588986a3611cf132be9635d86f16636f2f561b932c0087a7f5c34",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x851175a919f36c8e30197c09a9A49dA932c2CC00",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+    },
+    KAS: {
+      synthetic: true,
+      decimals: 8, // https://etherscan.io/address/0x112b08621e27e10773ec95d250604a041f36c582#readContract
+      dataStreamFeedId: "0x0003c871148642ab1e886f06d203b1c1e7933b51b7e4064ea11529a4262566d3",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    OKB: {
+      synthetic: true,
+      decimals: 18, // https://etherscan.io/token/0x75231f58b43240c9718dd58b4967c5114342a86c#readProxyContract
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003d2d8fef8271831e3245a1d00553e217e4d71a7a1468c7f327173a758c74f",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
     },
     AAVE: {
       address: "0xba5ddd1f9d7f570dc94a51479a000e3bce967196",
