@@ -23,11 +23,9 @@ const SAFE_ABI = [
   "function getThreshold() public view returns (uint256)",
 ];
 
-// Argent wallet interface
-const ARGENT_ABI = ["function owner() public view returns (address)"];
-
 // EIP-1967 slots for upgradeable contracts
-const IMPLEMENTATION_SLOT = "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc";
+const IMPLEMENTATION_SLOT = "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc"; // bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1)
+const BEACON_SLOT = "0xa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50"; // bytes32(uint256(keccak256("eip1967.proxy.beacon")) - 1)
 
 interface AccountInfo {
   account: string;
@@ -43,6 +41,10 @@ async function main() {
   const provider = hre.ethers.provider;
   const sampleSize = process.env.SAMPLE_SIZE ? parseInt(process.env.SAMPLE_SIZE) : undefined;
 
+  // Initialize report content
+  let reportContent = "# Smart Wallet Analysis Report\n\n";
+  reportContent += `Generated on: ${new Date().toISOString()}\n\n`;
+
   // Process both CSV files
   const csvFiles = [
     path.join(__dirname, "data/GLP_GLV-for-CONTRACT.csv"),
@@ -54,6 +56,8 @@ async function main() {
     console.log("Analyzing:", path.basename(csvFile));
     console.log("========================================\n");
 
+    reportContent += `## Analysis ${path.basename(csvFile)}\n\n`;
+
     const allAccounts = parseCSV(csvFile);
     const accounts = sampleSize ? allAccounts.slice(0, sampleSize) : allAccounts;
 
@@ -61,8 +65,10 @@ async function main() {
       console.log(
         `Analyzing first ${accounts.length} of ${allAccounts.length} contract accounts (SAMPLE_SIZE=${sampleSize})\n`
       );
+      reportContent += `Analyzing first ${accounts.length} of ${allAccounts.length} contract accounts (SAMPLE_SIZE=${sampleSize})\n\n`;
     } else {
       console.log(`Analyzing all ${accounts.length} contract accounts\n`);
+      reportContent += `Analyzing all ${accounts.length} contract accounts\n\n`;
     }
 
     // Analyze each account
@@ -82,6 +88,7 @@ async function main() {
           account.implementation = walletInfo.implementation;
           smartWallets.push(account);
         } else {
+          account.implementation = walletInfo.implementation;
           otherContracts.push(account);
         }
       } catch (error) {
@@ -95,28 +102,10 @@ async function main() {
       }
     }
 
-    console.log("\n");
+    console.log("\n"); // Clear the progress line
 
-    // Display results
-    console.log("=== SMART WALLETS IDENTIFIED ===");
-    console.log(`Total: ${smartWallets.length} out of ${accounts.length} contracts\n`);
-
-    if (smartWallets.length > 0) {
-      console.log(
-        "Address                                    | Type         | Contract Name                  | Distribution USD"
-      );
-      console.log(
-        "-------------------------------------------|--------------|--------------------------------|------------------"
-      );
-
-      for (const wallet of smartWallets) {
-        const name = wallet.contractName || "-";
-        const usd = parseFloat(wallet.approximateDistributionUsd).toFixed(2);
-        console.log(
-          `${wallet.account} | ${(wallet.walletType || "Unknown").padEnd(12)} | ${name.padEnd(30)} | $${usd}`
-        );
-      }
-    }
+    // Generate report content
+    reportContent += `### Smart Wallets Identified\n\n`;
 
     // Summary by wallet type
     const walletTypes: Record<string, number> = {};
@@ -125,39 +114,60 @@ async function main() {
       walletTypes[type] = (walletTypes[type] || 0) + 1;
     }
 
+    // Build breakdown string
+    let breakdownStr = "";
     if (Object.keys(walletTypes).length > 0) {
-      console.log("\n=== SMART WALLET TYPE BREAKDOWN ===");
-      for (const [type, count] of Object.entries(walletTypes)) {
-        console.log(`${type}: ${count}`);
-      }
+      const typeBreakdown = Object.entries(walletTypes)
+        .map(([type, count]) => `${type}: ${count}`)
+        .join(", ");
+      breakdownStr = ` (${typeBreakdown})`;
     }
 
-    // Show some regular contracts for context
-    console.log("\n=== REGULAR CONTRACTS (NOT SMART WALLETS) ===");
-    console.log(`Total: ${otherContracts.length} out of ${accounts.length} contracts\n`);
+    reportContent += `**Total:** ${smartWallets.length} out of ${accounts.length} contracts${breakdownStr}\n\n`;
+
+    if (smartWallets.length > 0) {
+      reportContent += `| Address | Type | Contract Name | Implementation | Distribution USD |\n`;
+      reportContent += `|---------|------|---------------|----------------|------------------|\n`;
+
+      for (const wallet of smartWallets) {
+        const name = wallet.contractName || "-";
+        const type = wallet.walletType || "-";
+        const implementation = wallet.implementation || "-";
+        const usd = parseFloat(wallet.approximateDistributionUsd).toFixed(2);
+        reportContent += `| ${wallet.account} | ${type} | ${name} | ${implementation} | $${usd} |\n`;
+      }
+      reportContent += `\n`;
+    }
+
+    // Add regular contracts section
+    reportContent += `### Regular Contracts (Not Smart Wallets)\n\n`;
+    reportContent += `**Total:** ${otherContracts.length} out of ${accounts.length} contracts\n\n`;
 
     if (otherContracts.length > 0) {
-      console.log("Showing first 10 regular contracts:");
-      console.log("Address                                    | Contract Name");
-      console.log("-------------------------------------------|--------------------");
+      reportContent += `| Address | Type | Contract Name | Implementation | Distribution USD |\n`;
+      reportContent += `|---------|------|---------------|----------------|------------------|\n`;
 
-      for (let i = 0; i < Math.min(10, otherContracts.length); i++) {
-        const contract = otherContracts[i];
-        const name = contract.contractName || "(unnamed)";
-        console.log(`${contract.account} | ${name}`);
+      for (const contract of otherContracts) {
+        const name = contract.contractName || "-";
+        const type = "-"; // Not a smart wallet, so no type
+        const implementation = contract.implementation || "-";
+        const usd = parseFloat(contract.approximateDistributionUsd).toFixed(2);
+        reportContent += `| ${contract.account} | ${type} | ${name} | ${implementation} | $${usd} |\n`;
       }
-
-      if (otherContracts.length > 10) {
-        console.log(`... and ${otherContracts.length - 10} more`);
-      }
+      reportContent += `\n`;
     }
 
     if (sampleSize && allAccounts.length > accounts.length) {
-      console.log(`\nNOTE: This is a sample analysis of the first ${sampleSize} accounts only.`);
-      console.log(`   Total accounts in file: ${allAccounts.length}`);
-      console.log(`   To analyze all accounts, run without SAMPLE_SIZE environment variable`);
+      reportContent += `**NOTE:** This is a sample analysis of the first ${sampleSize} accounts only.\n`;
+      reportContent += `- Total accounts in file: ${allAccounts.length}\n`;
+      reportContent += `- To analyze all accounts, run without SAMPLE_SIZE environment variable\n\n`;
     }
   }
+
+  // Write report to file
+  const reportPath = path.join(__dirname, "REPORT.md");
+  fs.writeFileSync(reportPath, reportContent);
+  console.log(`Report written to: ${reportPath}`);
 }
 
 function parseCSV(filepath: string): AccountInfo[] {
@@ -194,7 +204,7 @@ async function identifyContractType(
   address: string,
   provider: ethers.providers.Provider
 ): Promise<{ isSmartWallet: boolean; walletType?: string; implementation?: string }> {
-  // Check for Safe wallet
+  // Check for Safe wallet first (most reliable)
   try {
     const safe = new ethers.Contract(address, SAFE_ABI, provider);
     const [owners, threshold] = await Promise.all([
@@ -206,79 +216,130 @@ async function identifyContractType(
       return { isSmartWallet: true, walletType: "Safe" };
     }
   } catch {
-    // Ignore if Safe detection fails
-  }
-
-  // Check for Argent wallet
-  try {
-    const argent = new ethers.Contract(address, ARGENT_ABI, provider);
-    const owner = await argent.owner().catch(() => null);
-
-    if (owner && ethers.utils.isAddress(owner)) {
-      // Additional check for isValidSignature
-      if (await hasEIP1271(address, provider)) {
-        return { isSmartWallet: true, walletType: "Argent" };
-      }
-    }
-  } catch {
-    // Ignore if Argent detection fails
+    // Not a Safe
   }
 
   // Check for proxy implementation (might be upgradeable smart wallet)
+  let proxyImplementation: string | undefined;
+
+  // Check standard implementation slot
   try {
     const implSlot = await provider.getStorageAt(address, IMPLEMENTATION_SLOT);
-    if (implSlot !== "0x0000000000000000000000000000000000000000000000000000000000000000") {
+    if (implSlot !== ethers.constants.HashZero) {
       const implementation = ethers.utils.getAddress("0x" + implSlot.slice(-40));
+      proxyImplementation = implementation;
 
-      // Check if the implementation has EIP-1271
-      if (await hasEIP1271(address, provider)) {
+      // Check if the implementation is a smart wallet
+      const implWalletInfo = await checkImplementationWallet(implementation, provider);
+
+      if (implWalletInfo.isSmartWallet) {
         return {
           isSmartWallet: true,
-          walletType: "SmartWallet",
+          walletType: implWalletInfo.walletType,
           implementation,
         };
       }
     }
   } catch {
-    // Ignore if proxy detection fails
+    // Ignore if implementation slot detection fails
   }
 
-  // Check for generic EIP-1271 support (could be any smart wallet)
-  if (await hasEIP1271(address, provider)) {
-    return { isSmartWallet: true, walletType: "EIP1271" };
+  // Check beacon slot if no implementation found
+  if (!proxyImplementation) {
+    try {
+      const beaconSlot = await provider.getStorageAt(address, BEACON_SLOT);
+      if (beaconSlot !== ethers.constants.HashZero) {
+        const beaconAddress = ethers.utils.getAddress("0x" + beaconSlot.slice(-40));
+
+        try {
+          const beaconContract = new ethers.Contract(
+            beaconAddress,
+            ["function implementation() view returns (address)"],
+            provider
+          );
+          const implementation = await beaconContract.implementation();
+          proxyImplementation = implementation;
+
+          // Check if the implementation is a smart wallet
+          const implWalletInfo = await checkImplementationWallet(implementation, provider);
+
+          if (implWalletInfo.isSmartWallet) {
+            return {
+              isSmartWallet: true,
+              walletType: implWalletInfo.walletType,
+              implementation,
+            };
+          }
+        } catch (error) {
+          console.log(`Failed to get implementation from beacon at ${beaconAddress}`);
+        }
+      }
+    } catch {
+      // Ignore if beacon slot detection fails
+    }
   }
 
-  // Not identified as a smart wallet
+  // Finally, check for generic EIP-1271 support
+  const hasEIP1271Support = await hasEIP1271(address, provider);
+  if (hasEIP1271Support) {
+    return { isSmartWallet: true, walletType: "EIP-1271", implementation: proxyImplementation };
+  }
+
+  // Not a smart wallet
+  return { isSmartWallet: false, implementation: proxyImplementation };
+}
+
+async function checkImplementationWallet(
+  address: string,
+  provider: ethers.providers.Provider
+): Promise<{ isSmartWallet: boolean; walletType?: string }> {
+  // First, check for EIP-1271 support
+  const hasEIP1271Support = await hasEIP1271(address, provider);
+
+  if (hasEIP1271Support) {
+    // Has EIP-1271, now determine if it's Safe, or Other
+
+    // Check if it's a Safe wallet
+    try {
+      const safe = new ethers.Contract(address, SAFE_ABI, provider);
+      const [owners, threshold] = await Promise.all([
+        safe.getOwners().catch(() => null),
+        safe.getThreshold().catch(() => null),
+      ]);
+
+      if (owners !== null && threshold !== null && Array.isArray(owners) && owners.length > 0) {
+        return { isSmartWallet: true, walletType: "Safe-impl" };
+      }
+    } catch {
+      // Not a Safe
+    }
+
+    // Has EIP-1271 but not Safe - it's some other smart wallet
+    return { isSmartWallet: true, walletType: "EIP-1271-impl" };
+  }
+
+  // No EIP-1271 support - not a smart wallet
   return { isSmartWallet: false };
 }
 
 async function hasEIP1271(address: string, provider: ethers.providers.Provider): Promise<boolean> {
-  try {
-    const contract = new ethers.Contract(address, EIP1271_ABI, provider);
-    const dummyHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("test"));
-    const dummySignature = "0x00";
+  const selectors = [
+    "0x1626ba7e", // isValidSignature(bytes32,bytes)
+    "0x20c13b0b", // isValidSignature(bytes,bytes) - legacy
+  ];
 
-    // Check if the contract has the isValidSignature function by checking bytecode
-    const code = await provider.getCode(address);
-    // Function selector for isValidSignature(bytes32,bytes): 0x1626ba7e
-    if (!code.includes("1626ba7e")) {
-      return false;
-    }
-
+  for (const selector of selectors) {
     try {
-      // Try to call the function - it should return bytes4 if it's a real EIP-1271 implementation
-      const result = await contract.callStatic.isValidSignature(dummyHash, dummySignature);
-      // EIP-1271 should return bytes4, either 0x1626ba7e for valid or something else for invalid
-      // If we get any bytes4 response, it likely implements EIP-1271
-      return ethers.utils.hexDataLength(result) === 4;
-    } catch (error: any) {
-      // If it reverts with a specific error about signature validation, it might still be EIP-1271
-      // But if it reverts because the function doesn't exist, it's not EIP-1271
-      return false;
+      const ret = await provider.call({ to: address, data: selector });
+      if (ret !== "0x") {
+        return true;
+      }
+    } catch (e) {
+      // Revert = no function OR invalid input, keep checking
     }
-  } catch {
-    return false;
   }
+
+  return false;
 }
 
 if (require.main === module) {
