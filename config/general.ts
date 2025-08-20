@@ -216,8 +216,39 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       increaseOrderGasLimit: 3_000_000,
       decreaseOrderGasLimit: 3_000_000,
       swapOrderGasLimit: 2_500_000,
+
+      multichainProviders: {
+        "0xA45B5130f36CDcA45667738e2a258AB09f4A5f7F": true, // StargatePoolNative
+        "0xe8CDF27AcD73a434D661C84887215F7598e7d0d3": true, // StargatePoolUSDC
+      },
+      multichainEndpoints: {
+        "0x1a44076050125825900e736c501f859c50fE728c": true, // LZ Endpoint
+      },
+      srcChainIds: {
+        8453: true, // Base
+        42161: true, // Arbitrum
+      },
+      eids: {
+        8453: 30184, // Base
+        42161: 30110, // Arbitrum
+      },
     },
-    avalanche: {},
+    avalanche: {
+      multichainProviders: {
+        "0x5634c4a5FEd09819E3c46D86A965Dd9447d86e47": true, // StargatePoolUSDC
+      },
+      multichainEndpoints: {
+        "0x1a44076050125825900e736c501f859c50fE728c": true, // LZ Endpoint
+      },
+      srcChainIds: {
+        8453: true, // Base
+        43114: true, // Avalanche
+      },
+      eids: {
+        8453: 30184, // Base
+        43114: 30106, // Avalanche
+      },
+    },
     botanix: {
       positionFeeReceiverFactor: decimalToFloat(50, 2), // 50%
     },

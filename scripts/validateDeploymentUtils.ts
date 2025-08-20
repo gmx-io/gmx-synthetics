@@ -5,7 +5,7 @@ import * as path from "path";
 import { JsonRpcProvider } from "@ethersproject/providers";
 import { getIsGmxDeployer } from "./validateRolesUtils";
 import { execSync } from "child_process";
-import { getContractCreationFromEtherscan } from "./etherscanUtils";
+import { getContractCreationFromEtherscan } from "../utils/explorer";
 import { FileCache } from "./cacheUtils";
 import { hashString } from "../utils/hash";
 import { getExplorerUrl } from "../hardhat.config";

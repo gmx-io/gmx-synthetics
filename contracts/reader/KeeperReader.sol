@@ -25,7 +25,7 @@ contract KeeperReader {
         return orders;
     }
 
-    function getLiquidatablePositions(
+    /* function getLiquidatablePositions(
         DataStore dataStore,
         IReferralStorage referralStorage,
         MarketUtils.MarketPrices[] memory marketPrices,
@@ -34,7 +34,7 @@ contract KeeperReader {
         bool shouldValidateMinCollateralUsd
     ) external view returns (bytes32[] memory) {
 
-    }
+    } */
 
     // bytes32[] memory positionKeys = PositionStoreUtils.getAccountPositionKeys(dataStore, account, start, end);
     // Position.Props[] memory positions = new Position.Props[](positionKeys.length);
