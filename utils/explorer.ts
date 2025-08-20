@@ -1,7 +1,7 @@
 import { setTimeout as sleep } from "timers/promises";
 import hre from "hardhat";
 import axios from "axios";
-import { FileCache } from "./cacheUtils";
+import { FileCache } from "../scripts/cacheUtils";
 
 const CONTRACT_NAME_CACHE_VERSION = 1;
 interface ContractName {
