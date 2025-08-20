@@ -57,33 +57,41 @@ async function main() {
   console.log("cumulativeBorrowingFactorUpdatedAtForLongs", cumulativeBorrowingFactorUpdatedAtForLongs.toString());
   console.log("cumulativeBorrowingFactorUpdatedAtForShorts", cumulativeBorrowingFactorUpdatedAtForShorts.toString());
 
-  let blockTag = "latest";
-  if (process.env.BLOCK) {
-    blockTag = parseInt(process.env.BLOCK);
+  const blocks = [];
+
+  if (process.env.BLOCK0) {
+    blocks.push(parseInt(process.env.BLOCK0));
   }
+  if (process.env.BLOCK1) {
+    blocks.push(parseInt(process.env.BLOCK1));
+  }
+  blocks.push("latest");
 
-  const data = await reader.getMarketTokenPrice(
-    dataStore.address,
-    market,
-    {
-      min: indexTokenTicker.minPrice,
-      max: indexTokenTicker.maxPrice,
-    },
-    {
-      min: longTokenTicker.minPrice,
-      max: longTokenTicker.maxPrice,
-    },
-    {
-      min: shortTokenTicker.minPrice,
-      max: shortTokenTicker.maxPrice,
-    },
-    pnlFactorType,
-    maximize,
-    { blockTag }
-  );
+  for (const [index, block] of blocks.entries()) {
+    const data = await reader.getMarketTokenPrice(
+      dataStore.address,
+      market,
+      {
+        min: indexTokenTicker.minPrice,
+        max: indexTokenTicker.maxPrice,
+      },
+      {
+        min: longTokenTicker.minPrice,
+        max: longTokenTicker.maxPrice,
+      },
+      {
+        min: shortTokenTicker.minPrice,
+        max: shortTokenTicker.maxPrice,
+      },
+      pnlFactorType,
+      maximize,
+      { blockTag: block }
+    );
 
-  console.log("Price for market %s is %s", marketToken, data[0]);
-  console.log(toLoggableObject(data[1]));
+    console.log(`Block ${index}: ${block}`);
+    console.log("Price for market %s is %s", marketToken, data[0]);
+    // console.log(toLoggableObject(data[1]));
+  }
 }
 
 main()
