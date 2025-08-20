@@ -197,18 +197,18 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
     },
-    WIF: {
+    "WIF:WIF:USDC": {
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       negativeSwapImpactFactor: exponentToFloat("3e-8"),
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
     },
-    // WIF: {
-    //   negativePositionImpactFactor: exponentToFloat("3.13e-09"),
-    //   negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
-    //   expectedSwapImpactRatio: 20_000,
-    //   expectedPositionImpactRatio: 12_000,
-    // },
+    WIF: {
+      negativePositionImpactFactor: exponentToFloat("3.13e-09"),
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
     POL: {
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       expectedSwapImpactRatio: 20_000,
