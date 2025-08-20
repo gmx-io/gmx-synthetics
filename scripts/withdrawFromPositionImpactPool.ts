@@ -33,32 +33,32 @@ npx hardhat run scripts/withdrawFromPositionImpactPool.ts --network arbitrum
 
 const expectedTimelockMethods = ["signalWithdrawFromPositionImpactPool", "executeWithOraclePrice"];
 
-function mapTokenInfo(token) {
-  return {
-    address: token.address,
-    provider: token.priceFeed.address,
-    data: "0x",
-  };
-}
-
 async function fetchChainlinkPriceFeedInfo(marketInfo) {
+  const chainlinkPriceFeedProvider = await hre.ethers.getContract("ChainlinkPriceFeedProvider");
   const result = {
     shortToken: {},
     longToken: {},
     indexToken: {},
   };
-  const tokens = await hre.gmx.getTokens();
-  for (const tokenSymbol of Object.keys(tokens)) {
-    if (tokens[tokenSymbol].address.toLowerCase() === marketInfo.shortToken.toLowerCase()) {
-      result.shortToken = mapTokenInfo(tokens[tokenSymbol]);
-    }
-    if (tokens[tokenSymbol].address.toLowerCase() === marketInfo.longToken.toLowerCase()) {
-      result.longToken = mapTokenInfo(tokens[tokenSymbol]);
-    }
-    if (tokens[tokenSymbol].address.toLowerCase() === marketInfo.indexToken.toLowerCase()) {
-      result.indexToken = mapTokenInfo(tokens[tokenSymbol]);
-    }
-  }
+
+  return {
+    shortToken: {
+      address: marketInfo.shortToken.toLowerCase(),
+      provider: chainlinkPriceFeedProvider.address,
+      data: "0x",
+    },
+    longToken: {
+      address: marketInfo.longToken.toLowerCase(),
+      provider: chainlinkPriceFeedProvider.address,
+      data: "0x",
+    },
+    indexToken: {
+      address: marketInfo.indexToken.toLowerCase(),
+      provider: chainlinkPriceFeedProvider.address,
+      data: "0x",
+    },
+  };
+
   return result;
 }
 
@@ -67,17 +67,17 @@ async function fetchChainlinkDataStreamInfo(marketInfo) {
   const signedPrices = await fetchSignedPrices();
   return {
     shortToken: {
-      address: signedPrices[marketInfo.shortToken.toLowerCase()].address,
+      address: marketInfo.shortToken.toLowerCase(),
       provider: chainlinkDataStreamProvider.address,
       data: signedPrices[marketInfo.shortToken.toLowerCase()].blob,
     },
     longToken: {
-      address: signedPrices[marketInfo.longToken.toLowerCase()].address,
+      address: marketInfo.longToken.toLowerCase(),
       provider: chainlinkDataStreamProvider.address,
       data: signedPrices[marketInfo.longToken.toLowerCase()].blob,
     },
     indexToken: {
-      address: signedPrices[marketInfo.indexToken.toLowerCase()].address,
+      address: marketInfo.indexToken.toLowerCase(),
       provider: chainlinkDataStreamProvider.address,
       data: signedPrices[marketInfo.indexToken.toLowerCase()].blob,
     },
@@ -105,11 +105,38 @@ async function fetchOracleParams(marketKey) {
     throw new Error(`Token ${marketInfo.indexToken} not found`);
   }
 
-  console.log(`Got oracle prices for ${oracleParams.longToken.tokenSymbol}/${oracleParams.shortToken.tokenSymbol}`);
+  console.log(
+    `Got oracle prices for ${oracleParams.indexToken.address}[${oracleParams.longToken.address}-${oracleParams.shortToken.address}]`
+  );
+
+  const tokens = [oracleParams.shortToken.address, oracleParams.longToken.address, oracleParams.indexToken.address];
+
+  const providers = [
+    oracleParams.shortToken.provider,
+    oracleParams.longToken.provider,
+    oracleParams.indexToken.provider,
+  ];
+
+  const data = [oracleParams.shortToken.data, oracleParams.longToken.data, oracleParams.indexToken.data];
+
+  const exists = new Set();
+  const uniqueTokens = [];
+  const uniqueProviders = [];
+  const uniqueData = [];
+
+  tokens.forEach((token, i) => {
+    if (!exists.has(token)) {
+      exists.add(token);
+      uniqueTokens.push(token);
+      uniqueProviders.push(providers[i]);
+      uniqueData.push(data[i]);
+    }
+  });
+
   return {
-    tokens: [oracleParams.shortToken.address, oracleParams.longToken.address, oracleParams.indexToken.address],
-    providers: [oracleParams.shortToken.provider, oracleParams.longToken.provider, oracleParams.indexToken.provider],
-    data: [oracleParams.shortToken.data, oracleParams.longToken.data, oracleParams.indexToken.data],
+    tokens: uniqueTokens,
+    providers: uniqueProviders,
+    data: uniqueData,
   };
 }
 
@@ -161,12 +188,13 @@ async function main() {
   if (timelockMethod === "executeWithOraclePrice") {
     const { target, payload } = await getPositionImpactPoolWithdrawalPayload(market, receiver, bigNumberify(amount));
     let salt = saltCache["withdrawFromPositionImpactPool"];
-    if (!salt) {
+    if (process.env.SALT) {
       salt = process.env.SALT;
     }
     if (!salt) {
       throw new Error("Please provide salt via cache file or env var");
     }
+    console.log("salt", salt);
 
     const oracleParams = await fetchOracleParams(market);
 

@@ -3,7 +3,7 @@ import hre from "hardhat";
 import * as keys from "../utils/keys";
 import { toLoggableObject } from "../utils/print";
 import got from "got";
-import { expandDecimals } from "../utils/math";
+import { bigNumberify } from "../utils/math";
 
 function getValues() {
   if (hre.network.name === "arbitrum") {
@@ -57,6 +57,11 @@ async function main() {
   console.log("cumulativeBorrowingFactorUpdatedAtForLongs", cumulativeBorrowingFactorUpdatedAtForLongs.toString());
   console.log("cumulativeBorrowingFactorUpdatedAtForShorts", cumulativeBorrowingFactorUpdatedAtForShorts.toString());
 
+  let blockTag = "latest";
+  if (process.env.BLOCK) {
+    blockTag = parseInt(process.env.BLOCK);
+  }
+
   const data = await reader.getMarketTokenPrice(
     dataStore.address,
     market,
@@ -73,7 +78,8 @@ async function main() {
       max: shortTokenTicker.maxPrice,
     },
     pnlFactorType,
-    maximize
+    maximize,
+    { blockTag }
   );
 
   console.log("Price for market %s is %s", marketToken, data[0]);
