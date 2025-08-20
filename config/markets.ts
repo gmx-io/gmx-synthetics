@@ -3,7 +3,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { expandDecimals, exponentToFloat, decimalToFloat, bigNumberify, percentageToFloat } from "../utils/math";
 import { hashString } from "../utils/hash";
-import { SECONDS_PER_DAY, SECONDS_PER_HOUR, SECONDS_PER_YEAR } from "../utils/constants";
+import { SECONDS_PER_HOUR, SECONDS_PER_YEAR } from "../utils/constants";
 
 export type BaseMarketConfig = {
   reserveFactor: BigNumberish;
@@ -557,7 +557,7 @@ const config: {
       negativePositionImpactFactor: exponentToFloat("9e-11"),
       positivePositionImpactFactor: exponentToFloat("3e-11"),
 
-      positionImpactPoolDistributionRate: expandDecimals(951, 30 + 16).div(SECONDS_PER_DAY), // 9.51 ETH per day
+      positionImpactPoolDistributionRate: bigNumberify(0),
       minPositionImpactPoolAmount: expandDecimals(1627, 18), // 1627 ETH
 
       negativeSwapImpactFactor: exponentToFloat("3e-10"),
@@ -738,7 +738,7 @@ const config: {
       reserveFactor: percentageToFloat("185%"),
       openInterestReserveFactor: percentageToFloat("180%"),
 
-      positionImpactPoolDistributionRate: expandDecimals(35043, 38).div(SECONDS_PER_DAY), // 35043 DOGE / day
+      positionImpactPoolDistributionRate: bigNumberify(0),
       minPositionImpactPoolAmount: expandDecimals(2511744, 8), // 2511744 DOGE
 
       maxOpenInterest: decimalToFloat(19_000_000),
@@ -1393,7 +1393,7 @@ const config: {
       reserveFactor: percentageToFloat("205%"),
       openInterestReserveFactor: percentageToFloat("200%"),
 
-      positionImpactPoolDistributionRate: expandDecimals(79, 30 + 18).div(SECONDS_PER_DAY), // 79 GMX / day
+      positionImpactPoolDistributionRate: bigNumberify(0),
       minPositionImpactPoolAmount: expandDecimals(11534, 18), // 11534 GMX
 
       maxOpenInterest: decimalToFloat(1_800_000),
