@@ -2,7 +2,7 @@ import hre from "hardhat";
 import Role from "../artifacts/contracts/role/Role.sol/Role.json";
 import { hashString } from "../utils/hash";
 import { expandDecimals } from "../utils/math";
-import { getContractNameFromEtherscan, getContractCreationFromEtherscan } from "./etherscanUtils";
+import { getContractNameFromEtherscan, getContractCreationFromEtherscan } from "../utils/explorer";
 import { FileCache } from "./cacheUtils";
 
 interface ContractInfo {

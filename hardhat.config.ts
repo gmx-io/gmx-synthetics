@@ -85,10 +85,10 @@ export const getExplorerUrl = (network) => {
 export const getBlockExplorerUrl = (network) => {
   const urls = {
     arbitrum: "https://arbiscan.io",
-    avalanche: "https://snowscan.xyz",
+    avalanche: "https://snowtrace.io",
     botanix: "https://botanixscan.io",
     arbitrumSepolia: "https://sepolia.arbiscan.io",
-    avalancheFuji: "https://testnet.snowscan.xyz",
+    avalancheFuji: "https://testnet.snowtrace.io",
   };
 
   const url = urls[network];
