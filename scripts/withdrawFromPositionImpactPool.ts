@@ -88,10 +88,10 @@ async function fetchOracleParams({ indexToken, longToken, shortToken }) {
   const marketInfo = { indexToken, longToken, shortToken };
 
   let oracleParams: { shortToken: any; longToken: any; indexToken: any };
-  if (process.env.ORACLE === "chainlinkDataStream") {
-    oracleParams = await fetchChainlinkDataStreamInfo(marketInfo);
-  } else {
+  if (process.env.ORACLE === "chainlinkPriceFeed") {
     oracleParams = await fetchChainlinkPriceFeedInfo(marketInfo);
+  } else {
+    oracleParams = await fetchChainlinkDataStreamInfo(marketInfo);
   }
   if (!oracleParams.shortToken) {
     throw new Error(`Token ${marketInfo.shortToken} not found`);
