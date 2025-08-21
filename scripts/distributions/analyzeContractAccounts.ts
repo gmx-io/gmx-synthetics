@@ -14,9 +14,6 @@ Environment variables:
 This script analyzes the CONTRACT CSV files to identify which ones are smart wallets
 */
 
-// EIP-1271 signature validation interface
-const EIP1271_ABI = ["function isValidSignature(bytes32 hash, bytes memory signature) public view returns (bytes4)"];
-
 // Safe (Gnosis Safe) wallet interface
 const SAFE_ABI = [
   "function getOwners() public view returns (address[])",
@@ -29,9 +26,7 @@ const BEACON_SLOT = "0xa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b3
 
 interface AccountInfo {
   account: string;
-  contractName?: string;
-  distributionToken: string;
-  approximateDistributionUsd: string;
+  distributionUsd: string;
   isSmartWallet?: boolean;
   walletType?: string;
   implementation?: string;
@@ -126,15 +121,14 @@ async function main() {
     reportContent += `**Total:** ${smartWallets.length} out of ${accounts.length} contracts${breakdownStr}\n\n`;
 
     if (smartWallets.length > 0) {
-      reportContent += `| Address | Type | Contract Name | Implementation | Distribution USD |\n`;
-      reportContent += `|---------|------|---------------|----------------|------------------|\n`;
+      reportContent += `| Address | Type | Implementation | Distribution USD |\n`;
+      reportContent += `|---------|------|----------------|------------------|\n`;
 
       for (const wallet of smartWallets) {
-        const name = wallet.contractName || "-";
         const type = wallet.walletType || "-";
         const implementation = wallet.implementation || "-";
-        const usd = parseFloat(wallet.approximateDistributionUsd).toFixed(2);
-        reportContent += `| ${wallet.account} | ${type} | ${name} | ${implementation} | $${usd} |\n`;
+        const usd = parseFloat(wallet.distributionUsd || "0").toFixed(2);
+        reportContent += `| ${wallet.account} | ${type} | ${implementation} | $${usd} |\n`;
       }
       reportContent += `\n`;
     }
@@ -144,15 +138,14 @@ async function main() {
     reportContent += `**Total:** ${otherContracts.length} out of ${accounts.length} contracts\n\n`;
 
     if (otherContracts.length > 0) {
-      reportContent += `| Address | Type | Contract Name | Implementation | Distribution USD |\n`;
-      reportContent += `|---------|------|---------------|----------------|------------------|\n`;
+      reportContent += `| Address | Type | Implementation | Distribution USD |\n`;
+      reportContent += `|---------|------|----------------|------------------|\n`;
 
       for (const contract of otherContracts) {
-        const name = contract.contractName || "-";
         const type = "-"; // Not a smart wallet, so no type
         const implementation = contract.implementation || "-";
-        const usd = parseFloat(contract.approximateDistributionUsd).toFixed(2);
-        reportContent += `| ${contract.account} | ${type} | ${name} | ${implementation} | $${usd} |\n`;
+        const usd = parseFloat(contract.distributionUsd || "0").toFixed(2);
+        reportContent += `| ${contract.account} | ${type} | ${implementation} | $${usd} |\n`;
       }
       reportContent += `\n`;
     }
@@ -182,17 +175,18 @@ function parseCSV(filepath: string): AccountInfo[] {
     if (!line) continue;
 
     const values = line.split(",");
+
+    // csv columns format: account,ethGlv,btcGlv,usdc,distributionUsd,duneEstimatedDistributionUsd
     const accountIndex = headers.indexOf("account");
-    const contractNameIndex = headers.indexOf("contract_name");
-    const tokenIndex = headers.indexOf("distribution_token");
-    const usdIndex = headers.indexOf("approximate_distribution_usd");
+    const distributionUsdIndex =
+      headers.indexOf("distributionUsd") !== -1
+        ? headers.indexOf("distributionUsd")
+        : headers.indexOf("approximate_distribution_usd");
 
     if (accountIndex >= 0 && values[accountIndex]) {
       accounts.push({
         account: values[accountIndex],
-        contractName: values[contractNameIndex] || undefined,
-        distributionToken: values[tokenIndex] || "",
-        approximateDistributionUsd: values[usdIndex] || "0",
+        distributionUsd: values[distributionUsdIndex] || "0",
       });
     }
   }
