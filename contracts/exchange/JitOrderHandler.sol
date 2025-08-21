@@ -83,8 +83,8 @@ contract JitOrderHandler is IJitOrderHandler, BaseOrderHandler, ReentrancyGuard 
     ) external globalNonReentrant withSimulatedOraclePrices(oracleParams) {
         uint256 startingGas = gasleft();
 
-        FeatureUtils.validateFeature(_dataStore, Keys.jitFeatureDisabledKey(address(this)));
         DataStore _dataStore = dataStore;
+        FeatureUtils.validateFeature(_dataStore, Keys.jitFeatureDisabledKey(address(this)));
         Order.Props memory order = OrderStoreUtils.get(_dataStore, orderKey);
 
         _processShifts(_dataStore, shiftParamsList, order, orderKey);
