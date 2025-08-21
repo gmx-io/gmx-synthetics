@@ -36,15 +36,12 @@ library GlvUtils {
         DataStore dataStore,
         IOracle oracle,
         address glv,
-        bool maximize,
-        bool forceCalculation
+        bool maximize
     ) public view returns (uint256) {
-        if (!forceCalculation) {
-            Price.Props memory glvTokenPrice = oracle.getPrimaryPriceIfNotEmpty(glv);
-            if (!glvTokenPrice.isEmpty()) {
-                uint256 supply = ERC20(glv).totalSupply();
-                return (maximize ? glvTokenPrice.max : glvTokenPrice.min) * supply;
-            }
+        Price.Props memory glvTokenPrice = oracle.getPrimaryPriceIfNotEmpty(glv);
+        if (!glvTokenPrice.isEmpty()) {
+            uint256 supply = ERC20(glv).totalSupply();
+            return (maximize ? glvTokenPrice.max : glvTokenPrice.min) * supply;
         }
 
         GetGlvValueCache memory cache;
@@ -142,10 +139,9 @@ library GlvUtils {
         DataStore dataStore,
         IOracle oracle,
         address glv,
-        bool maximize,
-        bool forceCalculation
+        bool maximize
     ) internal view returns (uint256, uint256, uint256) {
-        uint256 value = getGlvValue(dataStore, oracle, glv, maximize, forceCalculation);
+        uint256 value = getGlvValue(dataStore, oracle, glv, maximize);
         uint256 supply = ERC20(glv).totalSupply();
 
         return _getGlvTokenPrice(value, supply);

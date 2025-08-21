@@ -126,7 +126,7 @@ export async function executeGlvWithdrawal(fixture, overrides: any = {}) {
 
   const params: any = {
     glv,
-    key: glvWithdrawalKey,
+    args: [glvWithdrawalKey],
     tokens,
     precisions,
     minPrices,

@@ -157,8 +157,7 @@ library GlvWithdrawalUtils {
             params.dataStore,
             params.oracle,
             glvWithdrawal.glv(),
-            true, // maximize
-            false // forceCalculation
+            true // maximize
         );
         GlvEventUtils.emitGlvValueUpdated(
             params.eventEmitter,
@@ -290,8 +289,7 @@ library GlvWithdrawalUtils {
             dataStore,
             oracle,
             glvWithdrawal.glv(),
-            false, // maximize
-            false // forceCalculation
+            false // maximize
         );
         uint256 glvSupply = GlvToken(payable(glvWithdrawal.glv())).totalSupply();
         uint256 glvTokenUsd = GlvUtils.glvTokenAmountToUsd(glvWithdrawal.glvTokenAmount(), glvValue, glvSupply);

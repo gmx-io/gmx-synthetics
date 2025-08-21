@@ -1,13 +1,14 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 
-import { handleGlvDeposit } from "../../utils/glv";
+import { getGlvShiftCount, handleGlvDeposit } from "../../utils/glv";
 import { deployFixture } from "../../utils/fixture";
 import { decimalToFloat, expandDecimals } from "../../utils/math";
 import * as keys from "../../utils/keys";
 import { expectBalances } from "../../utils/validation";
-import { getOrderCount, OrderType, createOrder } from "../../utils/order";
-import { shiftLiquidityAndExecuteOrder } from "../../utils/jit";
+import { getOrderCount, OrderType, createOrder, executeOrder } from "../../utils/order";
+import { executeJitOrder } from "../../utils/jit";
+import { errorsContract } from "../../utils/error";
 
 describe("Jit", () => {
   let fixture;
@@ -20,30 +21,40 @@ describe("Jit", () => {
 
     ({ dataStore, ethUsdMarket, solUsdMarket, ethUsdGlvAddress, wnt } = fixture.contracts);
     ({ executionFee } = fixture.props);
+
+    await dataStore.setUint(keys.glvShiftMaxPriceImpactFactorKey(ethUsdGlvAddress), decimalToFloat(1, 2)); // 1%
+    await dataStore.setUint(keys.reserveFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(1, 0)); // 100%
+    await dataStore.setUint(keys.reserveFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 0)); // 100%
+    await dataStore.setUint(keys.reserveFactorKey(solUsdMarket.marketToken, true), decimalToFloat(1, 0)); // 100%
+    await dataStore.setUint(keys.reserveFactorKey(solUsdMarket.marketToken, false), decimalToFloat(1, 0)); // 100%
+    await dataStore.setUint(keys.openInterestReserveFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(1, 0)); // 100%
+    await dataStore.setUint(keys.openInterestReserveFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 0)); // 100%
+    await dataStore.setUint(keys.openInterestReserveFactorKey(solUsdMarket.marketToken, true), decimalToFloat(1, 0)); // 100%
+    await dataStore.setUint(keys.openInterestReserveFactorKey(solUsdMarket.marketToken, false), decimalToFloat(1, 0)); // 100%
   });
 
   it("shift liquidity and execute order", async () => {
     await handleGlvDeposit(fixture, {
       create: {
         glv: ethUsdGlvAddress,
-        longTokenAmount: expandDecimals(10, 18),
-        shortTokenAmount: expandDecimals(50_000, 6),
+        longTokenAmount: expandDecimals(1, 18),
+        shortTokenAmount: expandDecimals(5_000, 6),
       },
     });
 
     await handleGlvDeposit(fixture, {
       create: {
         glv: ethUsdGlvAddress,
-        longTokenAmount: expandDecimals(10, 18),
-        shortTokenAmount: expandDecimals(50_000, 6),
+        longTokenAmount: expandDecimals(1, 18),
+        shortTokenAmount: expandDecimals(5_000, 6),
         market: solUsdMarket,
       },
     });
 
     await expectBalances({
       [ethUsdGlvAddress]: {
-        [ethUsdMarket.marketToken]: expandDecimals(100_000, 18),
-        [solUsdMarket.marketToken]: expandDecimals(100_000, 18),
+        [ethUsdMarket.marketToken]: expandDecimals(10_000, 18),
+        [solUsdMarket.marketToken]: expandDecimals(10_000, 18),
       },
     });
 
@@ -53,10 +64,10 @@ describe("Jit", () => {
     const params = {
       market: ethUsdMarket,
       initialCollateralToken: wnt,
-      initialCollateralDeltaAmount: expandDecimals(1, 18),
+      initialCollateralDeltaAmount: expandDecimals(1, 17), // 0.1 ETH
       swapPath: [ethUsdMarket.marketToken],
       orderType: OrderType.MarketIncrease,
-      sizeDeltaUsd: decimalToFloat(2 * 1000),
+      sizeDeltaUsd: decimalToFloat(6_000), // ETH market only has $5000 worth of WETH in the pool
       acceptablePrice: expandDecimals(5001, 12),
       executionFee,
       minOutputAmount: 0,
@@ -71,23 +82,60 @@ describe("Jit", () => {
 
     expect(await getOrderCount(dataStore)).eq(1);
 
-    await dataStore.setUint(keys.glvShiftMaxPriceImpactFactorKey(ethUsdGlvAddress), decimalToFloat(1, 2)); // 1%
-    await shiftLiquidityAndExecuteOrder(fixture, {
-      gasUsageLabel: "shiftLiquidityAndExecuteOrder",
-      glvShift: {
-        marketTokenAmount: expandDecimals(1000, 18),
-      },
-    } as Parameters<typeof shiftLiquidityAndExecuteOrder>[1]);
+    expect(await getGlvShiftCount(dataStore)).eq(0);
+    await executeOrder(fixture, {
+      gasUsageLabel: "executeOrder",
+      expectedCancellationReason: "InsufficientReserve",
+    } as Parameters<typeof executeJitOrder>[1]);
+    expect(await getOrderCount(dataStore)).eq(0);
+
+    await createOrder(fixture, params);
+
+    await executeJitOrder(fixture, {
+      gasUsageLabel: "executeOrder",
+      glvShifts: [
+        {
+          marketTokenAmount: expandDecimals(2000, 18),
+        },
+      ],
+    } as Parameters<typeof executeJitOrder>[1]);
 
     // order was executed
     expect(await getOrderCount(dataStore)).eq(0);
+    expect(await getGlvShiftCount(dataStore)).eq(0);
 
     // and liquidity was shifted
     await expectBalances({
       [ethUsdGlvAddress]: {
-        [ethUsdMarket.marketToken]: expandDecimals(101_000, 18),
-        [solUsdMarket.marketToken]: expandDecimals(99_000, 18),
+        [ethUsdMarket.marketToken]: expandDecimals(12_000, 18),
+        [solUsdMarket.marketToken]: expandDecimals(8_000, 18),
       },
     });
   });
+
+  it("JitEmptyShiftParams", async () => {
+    await expect(
+      executeJitOrder(fixture, {
+        gasUsageLabel: "executeOrder",
+        orderKey: "0x0000000000000000000000000000000000000000000000000000000000000000",
+        glvShifts: [],
+      } as Parameters<typeof executeJitOrder>[1])
+    ).to.be.revertedWithCustomError(errorsContract, "JitEmptyShiftParams");
+  });
+
+  it("JitInvalidToMarket", async () => {
+    await expect(
+      executeJitOrder(fixture, {
+        gasUsageLabel: "executeOrder",
+        orderKey: "0x0000000000000000000000000000000000000000000000000000000000000000",
+        glvShifts: [
+          {
+            toMarket: solUsdMarket.marketToken,
+          },
+        ],
+      } as Parameters<typeof executeJitOrder>[1])
+    ).to.be.revertedWithCustomError(errorsContract, "JitInvalidToMarket");
+  });
+
+  it.skip("InsufficientExecutionGas");
 });

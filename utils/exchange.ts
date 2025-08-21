@@ -51,7 +51,7 @@ export function getExecuteParams(fixture, { tokens, prices }) {
 export async function executeWithOracleParams(
   fixture,
   overrides: {
-    args: any[];
+    args?: any[];
     oracleBlocks?: any[];
     oracleBlockNumber?: number;
     tokens: string[];
@@ -72,7 +72,7 @@ export async function executeWithOracleParams(
   }
 ) {
   const {
-    args,
+    args = [],
     oracleBlocks,
     oracleBlockNumber,
     tokens,

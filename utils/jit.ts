@@ -7,18 +7,18 @@ import { getCancellationReason, getErrorString } from "./error";
 import { expect } from "chai";
 import { BigNumberish } from "ethers";
 
-export async function shiftLiquidityAndExecuteOrder(
+export async function executeJitOrder(
   fixture,
   overrides: {
     gasUsageLabel?: string;
     oracleBlockNumberOffset?: number;
-    glvShift?: {
+    glvShifts?: {
       glv?: string;
       toMarket?: string;
       fromMarket?: string;
       marketTokenAmount?: BigNumberish;
       minMarketTokens?: BigNumberish;
-    };
+    }[];
     tokens?: string[];
     dataStreamTokens?: string[];
     dataStreamData?: string[];
@@ -43,14 +43,16 @@ export async function shiftLiquidityAndExecuteOrder(
   const { gasUsageLabel, oracleBlockNumberOffset } = overrides;
   const { dataStore, jitOrderHandler } = fixture.contracts;
 
-  const glvShiftOverrides = overrides.glvShift || ({} as any);
-  const glvShiftParams = {
-    glv: glvShiftOverrides.glv ?? fixture.contracts.ethUsdGlvAddress,
-    fromMarket: glvShiftOverrides.toMarket ?? fixture.contracts.solUsdMarket.marketToken,
-    toMarket: glvShiftOverrides.fromMarket ?? fixture.contracts.ethUsdMarket.marketToken,
-    marketTokenAmount: glvShiftOverrides.marketTokenAmount ?? expandDecimals(1, 15), // 0.001 ETH
-    minMarketTokens: glvShiftOverrides.minMarketTokens ?? 0,
-  };
+  const glvShiftParamsList = (overrides.glvShifts ?? []).map((glvShift) => {
+    // apply defaults
+    return {
+      glv: glvShift.glv ?? fixture.contracts.ethUsdGlvAddress,
+      fromMarket: glvShift.toMarket ?? fixture.contracts.solUsdMarket.marketToken,
+      toMarket: glvShift.fromMarket ?? fixture.contracts.ethUsdMarket.marketToken,
+      marketTokenAmount: glvShift.marketTokenAmount ?? expandDecimals(1, 15), // 0.001 ETH
+      minMarketTokens: glvShift.minMarketTokens ?? 0,
+    };
+  });
 
   const tokens = overrides.tokens || [wnt.address, usdc.address, sol.address];
   const dataStreamTokens = overrides.dataStreamTokens || [];
@@ -79,16 +81,14 @@ export async function shiftLiquidityAndExecuteOrder(
   }
 
   const params = {
-    args: [[glvShiftParams], orderKey],
+    args: [glvShiftParamsList, orderKey],
     oracleBlockNumber,
     tokens,
     precisions,
     minPrices,
     maxPrices,
     simulate: overrides.simulate,
-    execute: overrides.simulate
-      ? jitOrderHandler.simulateShiftLiquidityAndExecuteOrder
-      : jitOrderHandler.shiftLiquidityAndExecuteOrder,
+    execute: overrides.simulate ? jitOrderHandler.simulateexecuteJitOrder : jitOrderHandler.executeJitOrder,
     gasUsageLabel,
     oracleBlocks,
     minOracleBlockNumbers,

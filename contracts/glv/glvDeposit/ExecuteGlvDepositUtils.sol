@@ -65,8 +65,7 @@ library ExecuteGlvDepositUtils {
             params.dataStore,
             params.oracle,
             glvDeposit.glv(),
-            true, // maximize
-            false // forceCalculation
+            true // maximize
         );
         GlvToken(payable(glvDeposit.glv())).syncTokenBalance(glvDeposit.market());
 
@@ -121,8 +120,7 @@ library ExecuteGlvDepositUtils {
             params.dataStore,
             params.oracle,
             glvDeposit.glv(),
-            true, // maximize
-            false // forceCalculation
+            true // maximize
         );
         cache.glvSupply = GlvToken(payable(glvDeposit.glv())).totalSupply();
         GlvEventUtils.emitGlvValueUpdated(params.eventEmitter, glvDeposit.glv(), cache.glvValue, cache.glvSupply);
