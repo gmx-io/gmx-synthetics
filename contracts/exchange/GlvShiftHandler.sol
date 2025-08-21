@@ -67,19 +67,6 @@ contract GlvShiftHandler is BaseHandler, ReentrancyGuard {
         }
     }
 
-    // @dev used by other handlers to avoid duplicating the same code on their side
-    // this method is similar to `executeGlvShift` but skips execution gas validation
-    function executeGlvShiftForController(
-        bytes32 key,
-        GlvShift.Props memory glvShift,
-        uint256 executionGas,
-        bool skipRemoval
-    ) external onlyController {
-        try this._executeGlvShift{gas: executionGas}(key, glvShift, msg.sender, skipRemoval) {} catch (bytes memory reasonBytes) {
-            _handleGlvShiftError(key, reasonBytes);
-        }
-    }
-
     function _executeGlvShift(bytes32 key, GlvShift.Props memory glvShift, address keeper, bool skipRemoval) external onlySelfOrController {
         FeatureUtils.validateFeature(dataStore, Keys.executeGlvShiftFeatureDisabledKey(address(this)));
 

@@ -11,9 +11,10 @@ import "../swap/SwapHandler.sol";
 import "../order/OrderStoreUtils.sol";
 import "./GlvShiftHandler.sol";
 import "./OrderHandler.sol";
+import "./IJitOrderHandler.sol";
 
 // Jit stands for Just-in-time liquidity
-contract JitOrderHandler is BaseOrderHandler, ReentrancyGuard {
+contract JitOrderHandler is IJitOrderHandler, BaseOrderHandler, ReentrancyGuard {
     using Order for Order.Props;
     using GlvDeposit for GlvDeposit.Props;
     using GlvShift for GlvShift.Props;
@@ -49,11 +50,11 @@ contract JitOrderHandler is BaseOrderHandler, ReentrancyGuard {
         glvShiftHandler = _glvShiftHandler;
     }
 
-    function shiftLiquidityAndExecuteOrder(
+    function executeJitOrder(
         GlvShiftUtils.CreateGlvShiftParams[] memory shiftParamsList,
         bytes32 orderKey,
         OracleUtils.SetPricesParams calldata oracleParams
-    ) external globalNonReentrant onlyOrderKeeper withOraclePrices(oracleParams) {
+    ) override external globalNonReentrant onlyOrderKeeper withOraclePrices(oracleParams) {
         FeatureUtils.validateFeature(dataStore, Keys.createGlvShiftFeatureDisabledKey(address(this)));
 
         uint256 startingGas = gasleft();
@@ -80,7 +81,7 @@ contract JitOrderHandler is BaseOrderHandler, ReentrancyGuard {
         );
     }
 
-    function simulateShiftLiquidityAndExecuteOrder(
+    function simulateExecuteJitOrder(
         GlvShiftUtils.CreateGlvShiftParams[] memory shiftParamsList,
         bytes32 orderKey,
         OracleUtils.SimulatePricesParams memory oracleParams
