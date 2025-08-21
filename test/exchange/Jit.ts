@@ -6,20 +6,20 @@ import { deployFixture } from "../../utils/fixture";
 import { decimalToFloat, expandDecimals } from "../../utils/math";
 import * as keys from "../../utils/keys";
 import { expectBalances } from "../../utils/validation";
-import { getOrderCount, OrderType, createOrder, executeOrder } from "../../utils/order";
+import { getOrderCount, OrderType, createOrder } from "../../utils/order";
 import { executeJitOrder } from "../../utils/jit";
 import { errorsContract } from "../../utils/error";
 
 describe("Jit", () => {
   let fixture;
   let user1;
-  let dataStore, ethUsdMarket, solUsdMarket, ethUsdGlvAddress, wnt, executionFee;
+  let dataStore, ethUsdMarket, solUsdMarket, ethUsdGlvAddress, wnt, executionFee, jitOrderHandler;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user1 } = fixture.accounts);
 
-    ({ dataStore, ethUsdMarket, solUsdMarket, ethUsdGlvAddress, wnt } = fixture.contracts);
+    ({ dataStore, ethUsdMarket, solUsdMarket, ethUsdGlvAddress, wnt, jitOrderHandler } = fixture.contracts);
     ({ executionFee } = fixture.props);
 
     await dataStore.setUint(keys.glvShiftMaxPriceImpactFactorKey(ethUsdGlvAddress), decimalToFloat(1, 2)); // 1%
@@ -83,8 +83,14 @@ describe("Jit", () => {
     expect(await getOrderCount(dataStore)).eq(1);
 
     expect(await getGlvShiftCount(dataStore)).eq(0);
-    await executeOrder(fixture, {
+
+    await executeJitOrder(fixture, {
       gasUsageLabel: "executeOrder",
+      glvShifts: [
+        {
+          marketTokenAmount: expandDecimals(1, 18),
+        },
+      ],
       expectedCancellationReason: "InsufficientReserve",
     } as Parameters<typeof executeJitOrder>[1]);
     expect(await getOrderCount(dataStore)).eq(0);
@@ -95,7 +101,7 @@ describe("Jit", () => {
       gasUsageLabel: "executeOrder",
       glvShifts: [
         {
-          marketTokenAmount: expandDecimals(2000, 18),
+          marketTokenAmount: expandDecimals(1999, 18),
         },
       ],
     } as Parameters<typeof executeJitOrder>[1]);
@@ -121,6 +127,29 @@ describe("Jit", () => {
         glvShifts: [],
       } as Parameters<typeof executeJitOrder>[1])
     ).to.be.revertedWithCustomError(errorsContract, "JitEmptyShiftParams");
+  });
+
+  it("Unauthorized", async () => {
+    await expect(
+      executeJitOrder(fixture, {
+        gasUsageLabel: "executeOrder",
+        orderKey: "0x0000000000000000000000000000000000000000000000000000000000000000",
+        glvShifts: [],
+        sender: user1,
+      } as Parameters<typeof executeJitOrder>[1])
+    ).to.be.revertedWithCustomError(errorsContract, "Unauthorized");
+  });
+
+  it("DisabledFeature", async () => {
+    await dataStore.setBool(keys.jitFeatureDisabledKey(jitOrderHandler.address), true);
+
+    await expect(
+      executeJitOrder(fixture, {
+        gasUsageLabel: "executeOrder",
+        orderKey: "0x0000000000000000000000000000000000000000000000000000000000000000",
+        glvShifts: [],
+      } as Parameters<typeof executeJitOrder>[1])
+    ).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
   });
 
   it("JitInvalidToMarket", async () => {

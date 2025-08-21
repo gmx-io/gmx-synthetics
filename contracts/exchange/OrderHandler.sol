@@ -288,13 +288,12 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
     // @param key the key of the order to execute
     // @param oracleParams OracleUtils.SetPricesParams
     // @param keeper the keeper executing the order
-    // @param startingGas the starting gas
     function _executeOrder(
         bytes32 key,
         Order.Props memory order,
         address keeper,
         bool isSimulation
-    ) external onlySelfOrController {
+    ) external onlySelf {
         uint256 startingGas = gasleft();
 
         BaseOrderUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(

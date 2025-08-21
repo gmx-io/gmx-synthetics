@@ -37,11 +37,14 @@ export async function executeJitOrder(
     expectedFrozenReason?: string;
     orderKey?: string;
     oracleBlockNumber?: number;
+    sender?: any;
   } = {}
 ) {
   const { wnt, usdc, sol } = fixture.contracts;
   const { gasUsageLabel, oracleBlockNumberOffset } = overrides;
   const { dataStore, jitOrderHandler } = fixture.contracts;
+
+  const sender = overrides.sender ?? fixture.accounts.wallet;
 
   const glvShiftParamsList = (overrides.glvShifts ?? []).map((glvShift) => {
     // apply defaults
@@ -80,6 +83,7 @@ export async function executeJitOrder(
     oracleBlockNumber = oracleBlockNumber.add(oracleBlockNumberOffset);
   }
 
+  const method = overrides.simulate ? "simulateexecuteJitOrder" : "executeJitOrder";
   const params = {
     args: [glvShiftParamsList, orderKey],
     oracleBlockNumber,
@@ -88,7 +92,7 @@ export async function executeJitOrder(
     minPrices,
     maxPrices,
     simulate: overrides.simulate,
-    execute: overrides.simulate ? jitOrderHandler.simulateexecuteJitOrder : jitOrderHandler.executeJitOrder,
+    execute: jitOrderHandler.connect(sender)[method],
     gasUsageLabel,
     oracleBlocks,
     minOracleBlockNumbers,

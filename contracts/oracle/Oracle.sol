@@ -152,19 +152,21 @@ contract Oracle is IOracle, RoleModule {
     // @dev get the tokens of tokensWithPrices for the specified indexes
     // @param start the start index, the value for this index will be included
     // @param end the end index, the value for this index will not be included
-    // @return the tokens of tokensWithPrices for the specified indexes. throws if the price is empty
+    // @return the tokens of tokensWithPrices for the specified indexes
     function getTokensWithPrices(uint256 start, uint256 end) external view returns (address[] memory) {
         return tokensWithPrices.valuesAt(start, end);
     }
 
     // @dev get the primary price of a token
     // @param token the token to get the price for
-    // @param raise whether to revert if the price is empty
-    // @return the primary price of a token
+    // @return the primary price of a token. reverts if the price is empty
     function getPrimaryPrice(address token) external view returns (Price.Props memory) {
         return _getPrimaryPrice(token, true);
     }
 
+    // @dev get the primary price of a token
+    // @param token the token to get the price for
+    // @return the primary price of a token. returns empty price if price was not set
     function getPrimaryPriceIfNotEmpty(address token) external view returns (Price.Props memory) {
         return _getPrimaryPrice(token, false);
     }

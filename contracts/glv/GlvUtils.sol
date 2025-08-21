@@ -30,7 +30,6 @@ library GlvUtils {
     // @param oracle IOracle
     // @param glv Glv
     // @param maximize
-    // @param forceCalculation. do not use GLV oracle price even if it's available
     // @return the USD value of the Glv
     function getGlvValue(
         DataStore dataStore,

@@ -176,7 +176,6 @@ library OrderUtils {
         cache.estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(dataStore, order);
         cache.oraclePriceCount = GasUtils.estimateOrderOraclePriceCount(params.addresses.swapPath.length);
         uint256 executionFee;
-        // TODO should calculated differently for jit orders
         (executionFee, cache.executionFeeDiff) = GasUtils.validateAndCapExecutionFee(
             dataStore,
             cache.estimatedGasLimit,

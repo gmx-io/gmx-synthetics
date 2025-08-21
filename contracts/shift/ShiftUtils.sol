@@ -154,10 +154,11 @@ library ShiftUtils {
         return cache.key;
     }
 
-    // @param params
-    // @param shift
+    // @param params execution params
+    // @param shift the shift to execute
     // @param skipRemoval if true, the shift will not be removed from the data store.
     // This is used when executing a shift as part of a glv shift and the shift is not stored in the data store
+    // @returns receivedMarketTokens the amount of market tokens received
     function executeShift(
         ExecuteShiftParams memory params,
         Shift.Props memory shift,
