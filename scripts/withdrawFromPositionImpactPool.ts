@@ -1,10 +1,10 @@
 import hre from "hardhat";
-import { getPositionImpactPoolWithdrawalPayload, getRandomSalt, timelockWriteMulticall } from "../utils/timelock";
-import { bigNumberify } from "../utils/math";
+import { getPositionImpactPoolWithdrawalPayload, timelockWriteMulticall } from "../utils/timelock";
+import { expandDecimals, formatAmount } from "../utils/math";
 import { constants } from "ethers";
-import { readJsonFile, writeJsonFile } from "../utils/file";
-import path from "path";
 import { fetchSignedPrices } from "../utils/prices";
+import { fetchMarketAddress } from "../utils/market";
+import * as keys from "../utils/keys";
 
 /*
 Executes signalWithdrawFromPositionImpactPool and executeWithOraclePrice timelock methods.
@@ -33,7 +33,7 @@ npx hardhat run scripts/withdrawFromPositionImpactPool.ts --network arbitrum
 
 const expectedTimelockMethods = ["signalWithdrawFromPositionImpactPool", "executeWithOraclePrice"];
 
-async function fetchChainlinkPriceFeedInfo(marketInfo) {
+async function fetchChainlinkPriceFeedInfo({ indexToken, longToken, shortToken }) {
   const chainlinkPriceFeedProvider = await hre.ethers.getContract("ChainlinkPriceFeedProvider");
   const result = {
     shortToken: {},
@@ -42,18 +42,18 @@ async function fetchChainlinkPriceFeedInfo(marketInfo) {
   };
 
   return {
-    shortToken: {
-      address: marketInfo.shortToken.toLowerCase(),
+    indexToken: {
+      address: indexToken.toLowerCase(),
       provider: chainlinkPriceFeedProvider.address,
       data: "0x",
     },
     longToken: {
-      address: marketInfo.longToken.toLowerCase(),
+      address: longToken.toLowerCase(),
       provider: chainlinkPriceFeedProvider.address,
       data: "0x",
     },
-    indexToken: {
-      address: marketInfo.indexToken.toLowerCase(),
+    shortToken: {
+      address: shortToken.toLowerCase(),
       provider: chainlinkPriceFeedProvider.address,
       data: "0x",
     },
@@ -62,32 +62,30 @@ async function fetchChainlinkPriceFeedInfo(marketInfo) {
   return result;
 }
 
-async function fetchChainlinkDataStreamInfo(marketInfo) {
+async function fetchChainlinkDataStreamInfo({ indexToken, longToken, shortToken }) {
   const chainlinkDataStreamProvider = await hre.ethers.getContract("ChainlinkDataStreamProvider");
   const signedPrices = await fetchSignedPrices();
   return {
-    shortToken: {
-      address: marketInfo.shortToken.toLowerCase(),
+    indexToken: {
+      address: indexToken.toLowerCase(),
       provider: chainlinkDataStreamProvider.address,
-      data: signedPrices[marketInfo.shortToken.toLowerCase()].blob,
+      data: signedPrices[indexToken.toLowerCase()].blob,
     },
     longToken: {
-      address: marketInfo.longToken.toLowerCase(),
+      address: longToken.toLowerCase(),
       provider: chainlinkDataStreamProvider.address,
-      data: signedPrices[marketInfo.longToken.toLowerCase()].blob,
+      data: signedPrices[longToken.toLowerCase()].blob,
     },
-    indexToken: {
-      address: marketInfo.indexToken.toLowerCase(),
+    shortToken: {
+      address: shortToken.toLowerCase(),
       provider: chainlinkDataStreamProvider.address,
-      data: signedPrices[marketInfo.indexToken.toLowerCase()].blob,
+      data: signedPrices[shortToken.toLowerCase()].blob,
     },
   };
 }
 
-async function fetchOracleParams(marketKey) {
-  const reader = await hre.ethers.getContract("Reader");
-  const dataStore = await hre.ethers.getContract("DataStore");
-  const marketInfo = await reader.getMarket(dataStore.address, marketKey);
+async function fetchOracleParams({ indexToken, longToken, shortToken }) {
+  const marketInfo = { indexToken, longToken, shortToken };
 
   let oracleParams: { shortToken: any; longToken: any; indexToken: any };
   if (process.env.ORACLE === "chainlinkDataStream") {
@@ -109,15 +107,15 @@ async function fetchOracleParams(marketKey) {
     `Got oracle prices for ${oracleParams.indexToken.address}[${oracleParams.longToken.address}-${oracleParams.shortToken.address}]`
   );
 
-  const tokens = [oracleParams.shortToken.address, oracleParams.longToken.address, oracleParams.indexToken.address];
+  const tokens = [oracleParams.indexToken.address, oracleParams.longToken.address, oracleParams.shortToken.address];
 
   const providers = [
-    oracleParams.shortToken.provider,
-    oracleParams.longToken.provider,
     oracleParams.indexToken.provider,
+    oracleParams.longToken.provider,
+    oracleParams.shortToken.provider,
   ];
 
-  const data = [oracleParams.shortToken.data, oracleParams.longToken.data, oracleParams.indexToken.data];
+  const data = [oracleParams.indexToken.data, oracleParams.longToken.data, oracleParams.shortToken.data];
 
   const exists = new Set();
   const uniqueTokens = [];
@@ -140,63 +138,73 @@ async function fetchOracleParams(marketKey) {
   };
 }
 
-async function main() {
-  const market = process.env.MARKET;
-  const amount = process.env.AMOUNT;
-  const receiver = process.env.RECEIVER;
-  const timelockMethod = process.env.TIMELOCK_METHOD;
+async function handleWithdrawalItem({
+  marketKey,
+  amount,
+  receiver,
+  timelockMethod,
+  multicallWriteParams,
+  timelock,
+  salt,
+  tokens,
+  marketFactory,
+  roleStore,
+  dataStore,
+}) {
+  const tokenSymbols = marketKey.split(":");
+  const indexTokenSymbol = tokenSymbols[0];
+  const longTokenSymbol = tokenSymbols[1];
+  const shortTokenSymbol = tokenSymbols[2];
 
-  const multicallWriteParams = [];
+  const indexToken = tokens[indexTokenSymbol];
+  const longToken = tokens[longTokenSymbol];
+  const shortToken = tokens[shortTokenSymbol];
 
-  const timelock = await hre.ethers.getContract("TimelockConfig");
-
-  if (!expectedTimelockMethods.includes(timelockMethod)) {
-    throw new Error(`Unexpected TIMELOCK_METHOD: ${timelockMethod}`);
-  }
-  if (!market) {
-    throw new Error(`No market key provided`);
-  }
-  if (!amount) {
-    throw new Error(`No amount provided`);
-  }
-  if (!receiver) {
-    throw new Error(`No receiver address provided`);
+  if (!indexToken) {
+    throw new Error(`Invalid indexToken: ${indexToken}`);
   }
 
-  const saltCacheFileName = path.join(__dirname, "../cache", "salt.json");
-  let saltCache = readJsonFile(saltCacheFileName);
-  if (!saltCache) {
-    saltCache = {};
+  if (!longToken) {
+    throw new Error(`Invalid longToken: ${longToken}`);
   }
+
+  if (!shortToken) {
+    throw new Error(`Invalid shortToken: ${shortToken}`);
+  }
+
+  const marketAddress = await fetchMarketAddress(indexToken.address, longToken.address, shortToken.address);
+
+  const adjustedAmount = expandDecimals(amount, indexToken.decimals);
+  console.log("marketAddress", marketAddress);
+  const priceImpactPoolAmount = await dataStore.getUint(keys.positionImpactPoolAmountKey(marketAddress));
+
+  if (adjustedAmount.gt(priceImpactPoolAmount)) {
+    throw new Error(
+      `adjustedAmount > priceImpactPoolAmount for ${marketKey}: ${adjustedAmount.toString()}, ${priceImpactPoolAmount.toString()}`
+    );
+  }
+
+  const percentage = adjustedAmount.mul(10_000).div(priceImpactPoolAmount);
+  console.log(
+    `withdrawing ${adjustedAmount.toString()} from ${marketKey}, percentage: ${formatAmount(percentage, 2, 2)}`
+  );
 
   if (timelockMethod === "signalWithdrawFromPositionImpactPool") {
-    const salt = getRandomSalt();
-    saltCache["withdrawFromPositionImpactPool"] = salt;
-
     multicallWriteParams.push(
       timelock.interface.encodeFunctionData(timelockMethod, [
-        market,
+        marketAddress,
         receiver,
-        bigNumberify(amount),
+        adjustedAmount,
         constants.HashZero, // predecessor
         salt,
       ])
     );
-
-    writeJsonFile(saltCacheFileName, saltCache);
   }
-  if (timelockMethod === "executeWithOraclePrice") {
-    const { target, payload } = await getPositionImpactPoolWithdrawalPayload(market, receiver, bigNumberify(amount));
-    let salt = saltCache["withdrawFromPositionImpactPool"];
-    if (process.env.SALT) {
-      salt = process.env.SALT;
-    }
-    if (!salt) {
-      throw new Error("Please provide salt via cache file or env var");
-    }
-    console.log("salt", salt);
 
-    const oracleParams = await fetchOracleParams(market);
+  if (timelockMethod === "executeWithOraclePrice") {
+    const { target, payload } = await getPositionImpactPoolWithdrawalPayload(marketAddress, receiver, adjustedAmount);
+
+    const oracleParams = await fetchOracleParams({ indexToken, longToken, shortToken });
 
     multicallWriteParams.push(
       timelock.interface.encodeFunctionData("executeWithOraclePrice", [
@@ -207,6 +215,112 @@ async function main() {
         oracleParams,
       ])
     );
+  }
+}
+
+async function main() {
+  const timelockMethod = process.env.TIMELOCK_METHOD;
+
+  if (!expectedTimelockMethods.includes(timelockMethod)) {
+    throw new Error(`Unexpected TIMELOCK_METHOD: ${timelockMethod}`);
+  }
+
+  const receiver = "0x4bd1cdAab4254fC43ef6424653cA2375b4C94C0E";
+
+  // NOTE: amount is the human readable token amount
+  // e.g. to withdraw 500 ETH, amount would be "500"
+  // and not 500 * (10 ** 18)
+  const withdrawalItems = [
+    {
+      marketKey: "WETH:WETH:USDC",
+      amount: 1500,
+    },
+    {
+      marketKey: "BTC:WBTC.e:USDC",
+      amount: 35,
+    },
+    {
+      marketKey: "LINK:LINK:USDC",
+      amount: 35_000,
+    },
+    {
+      marketKey: "XRP:WETH:USDC",
+      amount: 250_000,
+    },
+    {
+      marketKey: "SOL:SOL:USDC",
+      amount: 8400,
+    },
+    {
+      marketKey: "HYPE:WBTC.e:USDC",
+      amount: 1900,
+    },
+    {
+      marketKey: "DOGE:WETH:USDC",
+      amount: 1_400_000,
+    },
+    {
+      marketKey: "AAVE:AAVE:USDC",
+      amount: 850,
+    },
+    {
+      marketKey: "GMX:GMX:USDC",
+      amount: 8300,
+    },
+    {
+      marketKey: "ARB:ARB:USDC",
+      amount: 350_000,
+    },
+    {
+      marketKey: "UNI:UNI:USDC",
+      amount: 13_000,
+    },
+    {
+      marketKey: "PEPE:PEPE:USDC",
+      amount: 6_000_000_000,
+    },
+    {
+      marketKey: "NEAR:WETH:USDC",
+      amount: 20_000,
+    },
+    {
+      marketKey: "LTC:WETH:USDC",
+      amount: 700,
+    },
+    {
+      marketKey: "WIF:WIF:USDC",
+      amount: 65_000,
+    },
+  ];
+
+  let salt = ethers.constants.HashZero;
+  if (process.env.SALT) {
+    salt = process.env.SALT;
+  }
+
+  const multicallWriteParams = [];
+  const timelock = await hre.ethers.getContract("TimelockConfig");
+  const marketFactory = await ethers.getContract("MarketFactory");
+  const roleStore = await ethers.getContract("RoleStore");
+  const dataStore = await ethers.getContract("DataStore");
+
+  const tokens = await hre.gmx.getTokens();
+  const marketConfigs = await hre.gmx.getMarkets();
+
+  for (const withdrawalItem of withdrawalItems) {
+    await handleWithdrawalItem({
+      ...withdrawalItem,
+      receiver,
+      timelockMethod,
+      multicallWriteParams,
+      timelock,
+      salt,
+      tokens,
+      marketConfigs,
+      marketFactory,
+      roleStore,
+      dataStore,
+    });
   }
 
   console.log(`sending ${multicallWriteParams.length} updates`);
