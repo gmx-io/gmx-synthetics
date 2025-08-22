@@ -78,20 +78,23 @@ async function main() {
 
         // Check if contract has DOLOMITE_MARGIN function
         const hasDolomite = await hasDolomiteMargin(account.account, provider);
-        account.isSmartContractWallet = hasDolomite ? "yes" : "no";
+        account.isDolomite = hasDolomite ? "yes" : "no";
 
         if (walletInfo.isSmartWallet) {
           account.isSmartWallet = true;
           account.walletType = walletInfo.walletType;
           account.implementation = walletInfo.implementation;
+          account.isSmartContractWallet = walletInfo.walletType || "Unknown";
           smartWallets.push(account);
         } else {
           account.implementation = walletInfo.implementation;
+          account.isSmartContractWallet = "no";
           otherContracts.push(account);
         }
       } catch (error) {
         // If analysis fails, assume it's a regular contract
         account.isSmartContractWallet = "no";
+        account.isDolomite = "no";
         otherContracts.push(account);
       }
 
@@ -163,12 +166,45 @@ async function main() {
       reportContent += `- Total accounts in file: ${allAccounts.length}\n`;
       reportContent += `- To analyze all accounts, run without SAMPLE_SIZE environment variable\n\n`;
     }
+
+    // Generate output CSV with same format as input but with analyzed columns
+    const outputCsvPath = csvFile.replace(".csv", "-analyzed.csv");
+    const csvContent = generateOutputCSV(accounts);
+    fs.writeFileSync(outputCsvPath, csvContent);
+    console.log(`Analyzed CSV written to: ${outputCsvPath}`);
   }
 
   // Write report to file
   const reportPath = path.join(__dirname, "REPORT.md");
   fs.writeFileSync(reportPath, reportContent);
   console.log(`Report written to: ${reportPath}`);
+}
+
+function generateOutputCSV(accounts: AccountInfo[]): string {
+  // Header matches input format: account,ethGlv,btcGlv,usdc,distributionUsd,duneEstimatedDistributionUsd,status,isSmartContractWallet,isDolomite
+  const header =
+    "account,ethGlv,btcGlv,usdc,distributionUsd,duneEstimatedDistributionUsd,status,isSmartContractWallet,isDolomite\n";
+
+  let csvContent = header;
+
+  for (const account of accounts) {
+    // Use placeholders for columns we don't have data for, fill in our analyzed columns
+    const row = [
+      account.account,
+      "", // ethGlv - placeholder
+      "", // btcGlv - placeholder
+      "", // usdc - placeholder
+      account.distributionUsd || "0",
+      "", // duneEstimatedDistributionUsd - placeholder
+      "", // status - placeholder
+      account.isSmartContractWallet || "no",
+      account.isDolomite || "no",
+    ].join(",");
+
+    csvContent += row + "\n";
+  }
+
+  return csvContent;
 }
 
 function parseCSV(filepath: string): AccountInfo[] {
