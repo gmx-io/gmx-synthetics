@@ -220,7 +220,6 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         OracleUtils.SimulatePricesParams memory params
     ) external
         override
-        onlyController
         withSimulatedOraclePrices(params)
         globalNonReentrant
     {

@@ -196,7 +196,6 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler, ReentrancyGuard {
         ISwapPricingUtils.SwapPricingType swapPricingType
     ) external
         override
-        onlyController
         withSimulatedOraclePrices(params)
         globalNonReentrant
     {

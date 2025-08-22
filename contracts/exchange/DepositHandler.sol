@@ -149,7 +149,6 @@ contract DepositHandler is IDepositHandler, BaseHandler, ReentrancyGuard {
         OracleUtils.SimulatePricesParams memory params
     ) external
         override
-        onlyController
         withSimulatedOraclePrices(params)
         globalNonReentrant
     {
