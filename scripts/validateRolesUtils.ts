@@ -2,8 +2,9 @@ import hre from "hardhat";
 import Role from "../artifacts/contracts/role/Role.sol/Role.json";
 import { hashString } from "../utils/hash";
 import { expandDecimals } from "../utils/math";
-import { getContractNameFromEtherscan, getContractCreationFromEtherscan } from "./etherscanUtils";
+import { getContractNameFromEtherscan, getContractCreationFromEtherscan } from "../utils/explorer";
 import { FileCache } from "./cacheUtils";
+import { isRelayFeeExcludedKey } from "../utils/keys";
 
 interface ContractInfo {
   isContract: boolean;
@@ -202,6 +203,7 @@ export async function validateRoles() {
 
   await validateDataStreamProviderHasDiscount();
   await validateIsReferralStorageHandler();
+  await validateMultichainProvidersRelayFeeExclusion();
 
   if (warns.length > 0) {
     for (const warn of warns) {
@@ -319,6 +321,35 @@ async function validateIsReferralStorageHandler() {
         orderHandlerDeployment.address,
         referralStorageAddress
       );
+    }
+
+    // check MultichainOrderRouter received the handler role in ReferralStorage after deployment
+    const multichainOrderRouterDeployment = await hre.deployments.get("MultichainOrderRouter");
+    const isMultichainHandler = await referralStorage.isHandler(multichainOrderRouterDeployment.address);
+    if (!isMultichainHandler) {
+      console.warn(
+        "🟠 MultichainOrderRouter %s is missing the handler role in ReferralStorage %s",
+        multichainOrderRouterDeployment.address,
+        referralStorageAddress
+      );
+    }
+  }
+}
+
+async function validateMultichainProvidersRelayFeeExclusion() {
+  console.log("validating multichain providers are excluded from relay fees");
+
+  const dataStore = await hre.ethers.getContract("DataStore");
+
+  // List of multichain providers to check
+  const multichainProviders = ["LayerZeroProvider"];
+
+  for (const providerName of multichainProviders) {
+    const providerDeployment = await hre.deployments.get(providerName);
+    const isExcluded = await dataStore.getBool(isRelayFeeExcludedKey(providerDeployment.address));
+
+    if (!isExcluded) {
+      console.warn("🟠 %s %s is not excluded from relay fees", providerName, providerDeployment.address);
     }
   }
 }

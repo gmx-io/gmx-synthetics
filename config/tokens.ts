@@ -1608,7 +1608,7 @@ const config: {
   },
 };
 
-export default async function (hre: HardhatRuntimeEnvironment): Promise<TokensConfig> {
+function getTokens(hre: HardhatRuntimeEnvironment) {
   const tokens = config[hre.network.name];
 
   for (const [tokenSymbol, token] of Object.entries(tokens as TokensConfig)) {
@@ -1633,4 +1633,22 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<TokensCo
   }
 
   return tokens;
+}
+
+// note that this will not return tokens that are deployed at runtime
+export async function tokenByAddress(hre: HardhatRuntimeEnvironment) {
+  const tokens = getTokens(hre);
+  const map = {};
+
+  for (const token of Object.values(tokens as TokensConfig)) {
+    if (token.address) {
+      map[token.address] = token;
+    }
+  }
+
+  return;
+}
+
+export default async function (hre: HardhatRuntimeEnvironment): Promise<TokensConfig> {
+  return getTokens(hre);
 }

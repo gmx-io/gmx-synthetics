@@ -1,5 +1,5 @@
 import hre from "hardhat";
-import { sendExplorerRequest } from "./etherscanUtils";
+import { sendExplorerRequest } from "../utils/explorer";
 
 const { ethers } = hre;
 

@@ -136,14 +136,6 @@ library PositionUtils {
         int256 minCollateralUsdForLeverage;
     }
 
-    // @dev IsPositionLiquidatableCache struct used in isPositionLiquidatable
-    // to avoid stack too deep errors
-    // @param positionPnlUsd the position's pnl in USD
-    // @param minCollateralFactor the min collateral factor
-    // @param collateralTokenPrice the collateral token price
-    // @param collateralUsd the position's collateral in USD
-    // @param usdDeltaForPriceImpact the usdDelta value for the price impact calculation
-    // @param priceImpactUsd the price impact of closing the position in USD
     struct IsPositionLiquidatableCache {
         int256 positionPnlUsd;
         uint256 minCollateralFactor;
@@ -312,12 +304,6 @@ library PositionUtils {
         }
     }
 
-    // @dev check if a position is liquidatable
-    // @param dataStore DataStore
-    // @param referralStorage IReferralStorage
-    // @param position the position values
-    // @param market the market values
-    // @param prices the prices of the tokens in the market
     function isPositionLiquidatable(
         DataStore dataStore,
         IReferralStorage referralStorage,

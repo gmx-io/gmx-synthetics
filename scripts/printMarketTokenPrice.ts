@@ -3,6 +3,7 @@ import hre from "hardhat";
 import * as keys from "../utils/keys";
 import { toLoggableObject } from "../utils/print";
 import got from "got";
+import { bigNumberify } from "../utils/math";
 
 function getValues() {
   if (hre.network.name === "arbitrum") {
@@ -56,27 +57,41 @@ async function main() {
   console.log("cumulativeBorrowingFactorUpdatedAtForLongs", cumulativeBorrowingFactorUpdatedAtForLongs.toString());
   console.log("cumulativeBorrowingFactorUpdatedAtForShorts", cumulativeBorrowingFactorUpdatedAtForShorts.toString());
 
-  const data = await reader.getMarketTokenPrice(
-    dataStore.address,
-    market,
-    {
-      min: indexTokenTicker.minPrice,
-      max: indexTokenTicker.maxPrice,
-    },
-    {
-      min: longTokenTicker.minPrice,
-      max: longTokenTicker.maxPrice,
-    },
-    {
-      min: shortTokenTicker.minPrice,
-      max: shortTokenTicker.maxPrice,
-    },
-    pnlFactorType,
-    maximize
-  );
+  const blocks = [];
 
-  console.log("Price for market %s is %s", marketToken, data[0]);
-  console.log(toLoggableObject(data[1]));
+  if (process.env.BLOCK0) {
+    blocks.push(parseInt(process.env.BLOCK0));
+  }
+  if (process.env.BLOCK1) {
+    blocks.push(parseInt(process.env.BLOCK1));
+  }
+  blocks.push("latest");
+
+  for (const [index, block] of blocks.entries()) {
+    const data = await reader.getMarketTokenPrice(
+      dataStore.address,
+      market,
+      {
+        min: indexTokenTicker.minPrice,
+        max: indexTokenTicker.maxPrice,
+      },
+      {
+        min: longTokenTicker.minPrice,
+        max: longTokenTicker.maxPrice,
+      },
+      {
+        min: shortTokenTicker.minPrice,
+        max: shortTokenTicker.maxPrice,
+      },
+      pnlFactorType,
+      maximize,
+      { blockTag: block }
+    );
+
+    console.log(`Block ${index}: ${block}`);
+    console.log("Price for market %s is %s", marketToken, data[0]);
+    // console.log(toLoggableObject(data[1]));
+  }
 }
 
 main()

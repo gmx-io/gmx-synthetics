@@ -85,10 +85,10 @@ export const getExplorerUrl = (network) => {
 export const getBlockExplorerUrl = (network) => {
   const urls = {
     arbitrum: "https://arbiscan.io",
-    avalanche: "https://snowscan.xyz",
+    avalanche: "https://snowtrace.io",
     botanix: "https://botanixscan.io",
     arbitrumSepolia: "https://sepolia.arbiscan.io",
-    avalancheFuji: "https://testnet.snowscan.xyz",
+    avalancheFuji: "https://testnet.snowtrace.io",
   };
 
   const url = urls[network];
@@ -179,8 +179,8 @@ const config: HardhatUserConfig = {
       saveDeployments: true,
       allowUnlimitedContractSize: true,
       // forking: {
-      //   url: `https://rpc.ankr.com/avalanche`,
-      //   blockNumber: 33963320,
+      //   url: getRpcUrl("arbitrum"),
+      //   blockNumber: 370370866,
       // },
     },
     localhost: {
