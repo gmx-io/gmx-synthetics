@@ -42,8 +42,8 @@ async function main() {
 
   // Process both CSV files
   const csvFiles = [
-    path.join(__dirname, "data/GLP_GLV-for-CONTRACT.csv"),
-    path.join(__dirname, "data/GLP_USDC-for-CONTRACT.csv"),
+    path.join(__dirname, "data/sample-for-CONTRACT.csv"),
+    // path.join(__dirname, "data/GLP_USDC-for-CONTRACT.csv"),
   ];
 
   for (const csvFile of csvFiles) {
@@ -224,12 +224,12 @@ async function identifyContractType(
       proxyImplementation = implementation;
 
       // Check if the implementation is a smart wallet
-      const implWalletInfo = await checkImplementationWallet(implementation, provider);
+      const isSmartWallet = await hasEIP1271(implementation, provider);
 
-      if (implWalletInfo.isSmartWallet) {
+      if (isSmartWallet) {
         return {
           isSmartWallet: true,
-          walletType: implWalletInfo.walletType,
+          walletType: "EIP-1271-proxy",
           implementation,
         };
       }
@@ -255,12 +255,12 @@ async function identifyContractType(
           proxyImplementation = implementation;
 
           // Check if the implementation is a smart wallet
-          const implWalletInfo = await checkImplementationWallet(implementation, provider);
+          const isSmartWallet = await hasEIP1271(implementation, provider);
 
-          if (implWalletInfo.isSmartWallet) {
+          if (isSmartWallet) {
             return {
               isSmartWallet: true,
-              walletType: implWalletInfo.walletType,
+              walletType: "EIP-1271-beacon",
               implementation,
             };
           }
@@ -283,57 +283,61 @@ async function identifyContractType(
   return { isSmartWallet: false, implementation: proxyImplementation };
 }
 
-async function checkImplementationWallet(
-  address: string,
-  provider: ethers.providers.Provider
-): Promise<{ isSmartWallet: boolean; walletType?: string }> {
-  // First, check for EIP-1271 support
-  const hasEIP1271Support = await hasEIP1271(address, provider);
-
-  if (hasEIP1271Support) {
-    // Has EIP-1271, now determine if it's Safe, or Other
-
-    // Check if it's a Safe wallet
-    try {
-      const safe = new ethers.Contract(address, SAFE_ABI, provider);
-      const [owners, threshold] = await Promise.all([
-        safe.getOwners().catch(() => null),
-        safe.getThreshold().catch(() => null),
-      ]);
-
-      if (owners !== null && threshold !== null && Array.isArray(owners) && owners.length > 0) {
-        return { isSmartWallet: true, walletType: "Safe-impl" };
-      }
-    } catch {
-      // Not a Safe
-    }
-
-    // Has EIP-1271 but not Safe - it's some other smart wallet
-    return { isSmartWallet: true, walletType: "EIP-1271-impl" };
-  }
-
-  // No EIP-1271 support - not a smart wallet
-  return { isSmartWallet: false };
-}
-
 async function hasEIP1271(address: string, provider: ethers.providers.Provider): Promise<boolean> {
-  const selectors = [
-    "0x1626ba7e", // isValidSignature(bytes32,bytes)
-    "0x20c13b0b", // isValidSignature(bytes,bytes) - legacy
+  const EIP1271_ABI = [
+    "function isValidSignature(bytes32 hash, bytes memory signature) external view returns (bytes4)",
+    "function isValidSignature(bytes memory data, bytes memory signature) external view returns (bytes4)", // legacy version
   ];
 
-  for (const selector of selectors) {
+  try {
+    // Primary method: Try to call the functions directly
+    // This is more reliable than bytecode inspection
+    const contract = new ethers.Contract(address, EIP1271_ABI, provider);
+
+    // Try current version with dummy parameters
     try {
-      const ret = await provider.call({ to: address, data: selector });
-      if (ret !== "0x") {
+      const dummyHash = ethers.utils.keccak256("0x00");
+      const dummySignature = "0x00";
+      await contract.callStatic["isValidSignature(bytes32,bytes)"](dummyHash, dummySignature);
+      return true; // Function exists and executed (even if it returned invalid)
+    } catch (error: any) {
+      // Check if the error is because the function reverted (meaning it exists)
+      // vs the function not existing at all
+      if (error.data && error.data !== "0x") {
+        // There's return data, which means the function exists but reverted
         return true;
       }
-    } catch (e) {
-      // Revert = no function OR invalid input, keep checking
+      // If error.error exists and contains revert info, function exists
+      if (error.error && error.error.data && error.error.data !== "0x") {
+        return true;
+      }
     }
-  }
 
-  return false;
+    // Try legacy version with dummy parameters
+    try {
+      const dummyData = "0x00";
+      const dummySignature = "0x00";
+      await contract.callStatic["isValidSignature(bytes,bytes)"](dummyData, dummySignature);
+      return true; // Function exists and executed
+    } catch (error: any) {
+      // Check if the error is because the function reverted (meaning it exists)
+      // vs the function not existing at all
+      if (error.data && error.data !== "0x") {
+        // There's return data, which means the function exists but reverted
+        return true;
+      }
+      // If error.error exists and contains revert info, function exists
+      if (error.error && error.error.data && error.error.data !== "0x") {
+        return true;
+      }
+    }
+
+    // Neither function is callable - not EIP-1271 compliant
+    return false;
+  } catch (error) {
+    console.error(`Error checking EIP-1271 for ${address}:`, error);
+    return false;
+  }
 }
 
 if (require.main === module) {

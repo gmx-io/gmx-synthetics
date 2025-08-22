@@ -1,6 +1,6 @@
 # Smart Wallet Analysis Report
 
-Generated on: 2025-08-21T08:01:00.574Z
+Generated on: 2025-08-22T11:01:51.207Z
 
 ## Analysis GLP_GLV-for-CONTRACT.csv
 
@@ -8,7 +8,7 @@ Analyzing all 1700 contract accounts
 
 ### Smart Wallets Identified
 
-**Total:** 41 out of 1700 contracts (EIP-1271-impl: 28, Safe: 5, EIP-1271: 8)
+**Total:** 59 out of 1700 contracts (EIP-1271-impl: 28, Safe: 5, EIP-1271: 26)
 
 | Address | Type | Implementation | Distribution USD |
 |---------|------|----------------|------------------|
@@ -17,6 +17,7 @@ Analyzing all 1700 contract accounts
 | 0xf42b28742b8d23ec0223ddc3581f691efcf5675c | Safe | - | $680.40 |
 | 0x06116a1baec9d0b75534d2b34b8eeb085c94e08b | EIP-1271-impl | 0x62Cf82FB0484aF382714cD09296260edc1DC0c6c | $659.76 |
 | 0x67c5ebffc52d5188925488537b2a06901c3b2b39 | EIP-1271-impl | 0x62Cf82FB0484aF382714cD09296260edc1DC0c6c | $523.43 |
+| 0xd7da23e91608e92f7ee90b7015bdafc03ef0c709 | EIP-1271 | - | $486.41 |
 | 0x4417dcb75b949ca95eb8ddd7af9737852dd27211 | EIP-1271-impl | 0x62Cf82FB0484aF382714cD09296260edc1DC0c6c | $376.57 |
 | 0xc63e1858f973e1c338fc298c7664f45c59b1f504 | EIP-1271 | - | $347.74 |
 | 0xc69adac3d27672c6907aae429eee3e69f76f7106 | EIP-1271 | - | $315.40 |
@@ -26,37 +27,54 @@ Analyzing all 1700 contract accounts
 | 0xa4f89d72f8f3844628934af19bdb8df3bb12d63a | EIP-1271-impl | 0x62Cf82FB0484aF382714cD09296260edc1DC0c6c | $105.68 |
 | 0xa7aceef788db6820c8b45ae8070856e35172556e | EIP-1271-impl | 0x62Cf82FB0484aF382714cD09296260edc1DC0c6c | $100.18 |
 | 0xc4a200d9dbf546c6f0458020d8b570d9f6c41bb4 | EIP-1271-impl | 0x62Cf82FB0484aF382714cD09296260edc1DC0c6c | $83.66 |
+| 0x64fffd9d14f3a4befc2fc47c8667f840109fb55b | EIP-1271 | - | $59.33 |
+| 0x68f728cce065a3336dca08ae88d13bd59cc72a62 | EIP-1271 | - | $49.25 |
+| 0xe93601bf2d747dd4e7c328ec1ff252617ace6169 | EIP-1271 | - | $26.15 |
 | 0xd816fa9a53ff64a718b8dc70f636af7d18f624e9 | EIP-1271-impl | 0x62Cf82FB0484aF382714cD09296260edc1DC0c6c | $23.83 |
 | 0xe32938d2934cbeee253de5d1dec7ca8a401f085d | EIP-1271-impl | 0x62Cf82FB0484aF382714cD09296260edc1DC0c6c | $13.20 |
 | 0xf81b8a48235ab7358b304d03ffc4280e45db4443 | EIP-1271-impl | 0x62Cf82FB0484aF382714cD09296260edc1DC0c6c | $13.20 |
+| 0xc59b3698ca3388b1a322e3e4cb5a98e6a8acd6ec | EIP-1271 | - | $12.59 |
+| 0x59801efd7a20f1a3a4ab0c924388d124bd38f38d | EIP-1271 | - | $12.34 |
 | 0x6706ddb5a84de68ce8534aac2e710e1110fc5c06 | EIP-1271-impl | 0x53a2A0aF86b0134C7A7b4bD40884dAA78c48416E | $11.91 |
 | 0xd9e7f9753405945faed91e4f1f4721c2184b0323 | EIP-1271-impl | 0x62Cf82FB0484aF382714cD09296260edc1DC0c6c | $10.56 |
+| 0xfebe2e4797b5efca9447c65d0df33ffafd8e7845 | EIP-1271 | - | $10.41 |
 | 0x476e93e40e12da89b832e866e97efaf227e4cc4d | Safe | - | $9.01 |
 | 0xc181319758b969d9ea722e73b1b0536cac8c08c9 | EIP-1271-impl | 0x62Cf82FB0484aF382714cD09296260edc1DC0c6c | $8.79 |
 | 0x3429c0ee8a9b16675bb4ac99e09e52c024d2ff47 | EIP-1271-impl | 0x53a2A0aF86b0134C7A7b4bD40884dAA78c48416E | $7.16 |
 | 0x1c4d9f13d94dae69f4fb454e89da1927839a2055 | EIP-1271 | - | $6.97 |
+| 0x6e4a25d148bdb3fa8623abd36ab8754478fc4ac4 | EIP-1271 | - | $6.82 |
 | 0xee8c5251b456650d8a39407ac61092c64c0cf471 | EIP-1271-impl | 0x62Cf82FB0484aF382714cD09296260edc1DC0c6c | $6.60 |
+| 0x60896148b5c72c56f7bf6da47f2d175c596cdbdd | EIP-1271 | - | $6.02 |
 | 0x974e829006b7bb8d7cd146d2973ecdfcb1bfd6f7 | EIP-1271 | - | $5.67 |
+| 0xaafa53d801ea053dfe4662f4aeb1de16610ba7bc | EIP-1271 | - | $5.47 |
 | 0x4368f53583741f9429ddeb3db26bf6b6f19e629c | EIP-1271-impl | 0x7f7e992a01Ec06F40Cf9Ce24FC11741Ca5eD25fa | $5.25 |
+| 0x7c84570566bf73905d25b2a1b1d5e4f1fa543a68 | EIP-1271 | - | $5.24 |
+| 0xc8a69dd7ba67dd43154acace470341aa1b46e5db | EIP-1271 | - | $5.21 |
 | 0x79543bedaabc4fafdbaec404b7792893327051a8 | EIP-1271-impl | 0x62Cf82FB0484aF382714cD09296260edc1DC0c6c | $5.21 |
+| 0xcfb47f2ae59c96ca5fa5a37fd22580a923d06a9a | EIP-1271 | - | $5.19 |
 | 0x48cf286cc5a14959094c7c0f961cf73192960615 | EIP-1271-impl | 0x62Cf82FB0484aF382714cD09296260edc1DC0c6c | $3.94 |
+| 0xb4f4c89ce0f2e27107817d41514b464b6f0473ac | EIP-1271 | 0x8B215C62DF93dBb46237aC43FDdA5d7b95BaA7cF | $3.93 |
 | 0xce6996f89245db5e30158c84a8bd8f11b89b470e | EIP-1271-impl | 0x53a2A0aF86b0134C7A7b4bD40884dAA78c48416E | $3.75 |
 | 0xa5df28908a4caef561ce60b68bda140f7e8e596e | EIP-1271-impl | 0x53a2A0aF86b0134C7A7b4bD40884dAA78c48416E | $3.58 |
 | 0x290f4f95923170eaad0f8cadd84b6e887171c17a | Safe | - | $3.28 |
+| 0x8d77fa0058335ce7da21f421fa5154feeb0abfde | EIP-1271 | - | $3.11 |
+| 0x3948db6c668fa125b6fac4c5ca766525528bb5a4 | EIP-1271 | 0x9fF2982A19cc3AC5618d868cdB7065345C49AE04 | $2.45 |
 | 0x89cf1a3453adc6af481c8ca972968ea98c42dd05 | EIP-1271 | - | $2.40 |
 | 0xb9be190e1f9b4e9c3d0766c371ae2c37b2bdd14d | EIP-1271 | - | $2.40 |
 | 0x83e839b2aeb7e80e88d7c037fd71817eaae7a34a | EIP-1271-impl | 0x7f7e992a01Ec06F40Cf9Ce24FC11741Ca5eD25fa | $2.40 |
 | 0x7cceb1e90f1f4b04fe1fc1684c72a97f3b3367a3 | EIP-1271 | - | $2.28 |
+| 0x78527d784dea30c226339fe390dfd3c2138a3344 | EIP-1271 | - | $2.07 |
 | 0x2c3c20ecadc8905dd5073c1ac860b315b75094b9 | EIP-1271-impl | 0x62Cf82FB0484aF382714cD09296260edc1DC0c6c | $1.56 |
 | 0x324eddd663df8a0d3762428a01f766fbba1eaed3 | EIP-1271-impl | 0x62Cf82FB0484aF382714cD09296260edc1DC0c6c | $1.37 |
 | 0xcb94963b359a42b8b843f8ebcf584afd2fdd3547 | EIP-1271-impl | 0x7f7e992a01Ec06F40Cf9Ce24FC11741Ca5eD25fa | $1.37 |
 | 0x79f43501b5d3103b55554051d755b24975bc28e0 | EIP-1271-impl | 0x62Cf82FB0484aF382714cD09296260edc1DC0c6c | $1.32 |
+| 0x4d1c02952418a5b004a8ac757cab8b9c977fe68f | EIP-1271 | - | $1.32 |
 | 0x8e04fd7947d7b207a1122878afc1e1f9ce4af31e | EIP-1271-impl | 0x62Cf82FB0484aF382714cD09296260edc1DC0c6c | $1.32 |
 | 0xd6cceafa9e6df1f954a18544b0304e38bba64486 | EIP-1271-impl | 0x53a2A0aF86b0134C7A7b4bD40884dAA78c48416E | $1.20 |
 
 ### Regular Contracts (Not Smart Wallets)
 
-**Total:** 1659 out of 1700 contracts
+**Total:** 1641 out of 1700 contracts
 
 | Address | Type | Implementation | Distribution USD |
 |---------|------|----------------|------------------|
@@ -125,7 +143,6 @@ Analyzing all 1700 contract accounts
 | 0x15058c8cf45af20d780f3d73fb15758ead6a857d | - | - | $553.67 |
 | 0xaea5e4aa29d932febca618db01818b8db119e801 | - | - | $548.12 |
 | 0x2cba02a2bc8552cbb9fcaf0477697e9249f848a4 | - | 0xc3991f83f2FB241b05db76e0c1BB24a81E0C5463 | $536.70 |
-| 0xd7da23e91608e92f7ee90b7015bdafc03ef0c709 | - | - | $486.41 |
 | 0x02937f9ccf53494c66063f75c2ecb610a9bf62fc | - | - | $474.83 |
 | 0xc908a710c97b3bb07fdfdecfff397cab6eac8c0c | - | - | $469.03 |
 | 0xf50255e6fec5aebdd07a288a832c3b932b08fba7 | - | - | $422.09 |
@@ -276,7 +293,6 @@ Analyzing all 1700 contract accounts
 | 0x23960d0c839ce2eb183243f04092a7299c0b0ae2 | - | - | $60.25 |
 | 0xda810d21ab9349ab44bc787531c633d8a6383af1 | - | - | $60.18 |
 | 0xe87ebea4dbbce87fc839ce9cbe25ddb23e12c024 | - | - | $59.56 |
-| 0x64fffd9d14f3a4befc2fc47c8667f840109fb55b | - | - | $59.33 |
 | 0x486d8c54f4cd4d2d79f872b1b5b6c56db7ca7093 | - | - | $58.91 |
 | 0x343316b010a0b0df3dd96307a6f12be661c463f1 | - | - | $58.74 |
 | 0xb2e6f7997d30974bffdfccf8ed35bf9f53baa779 | - | - | $58.62 |
@@ -311,7 +327,6 @@ Analyzing all 1700 contract accounts
 | 0x0095a8b3d5657196c90f4150d2bca1becc018b66 | - | - | $49.87 |
 | 0x00fd2c29cf3aa4880a4c05e7ca1382bf987b3495 | - | - | $49.81 |
 | 0x0a57dba0422d33a017c23c88490983a365a16d72 | - | - | $49.43 |
-| 0x68f728cce065a3336dca08ae88d13bd59cc72a62 | - | - | $49.25 |
 | 0x218ad768e1d3dae446724e521443801464504792 | - | 0xc3991f83f2FB241b05db76e0c1BB24a81E0C5463 | $49.04 |
 | 0x524359cea2332bb8f915980ede6e8c6036c3528d | - | - | $48.99 |
 | 0xa30e1fba2f7ae95630f531891ace4f023dd57e10 | - | - | $48.93 |
@@ -408,7 +423,6 @@ Analyzing all 1700 contract accounts
 | 0xa61a32ab332fe503440b837457e1c9d02a3008af | - | - | $26.38 |
 | 0x0d155939836bc7172fc8734e38162185767fa434 | - | - | $26.34 |
 | 0x7717d3fc516321a7ba946475e50ee34ca2c8de54 | - | - | $26.19 |
-| 0xe93601bf2d747dd4e7c328ec1ff252617ace6169 | - | - | $26.15 |
 | 0x6c6ebb6a73177c41fc59b9fdbfbe79f9ad2d619a | - | - | $25.90 |
 | 0x429ebd3e454a20f9e39c292cbe715fd056d58aaa | - | - | $25.87 |
 | 0x7f05a022ff2cb32c5e4e927c680f2a1ffa9da5f9 | - | - | $25.80 |
@@ -593,13 +607,11 @@ Analyzing all 1700 contract accounts
 | 0x4a26a662ecdcc7d0bde008569ab2d9f65eaaf03b | - | - | $13.06 |
 | 0x4275385fa0321d92c6d8ef1ea324b8bf7fe31e54 | - | - | $12.88 |
 | 0x394679c2ead2148a0a5b73e2f713cbbb1ca21c7c | - | - | $12.70 |
-| 0xc59b3698ca3388b1a322e3e4cb5a98e6a8acd6ec | - | - | $12.59 |
 | 0x7bb7ff7c60fd42f686ee4f1bdb7d1466ff148cff | - | - | $12.58 |
 | 0xc2fbd366f23b9b9543143d263f166f697d6a3a7a | - | 0xc3991f83f2FB241b05db76e0c1BB24a81E0C5463 | $12.54 |
 | 0x65a950faa2982257ce4411e3cf42faf4338cdece | - | 0xc3991f83f2FB241b05db76e0c1BB24a81E0C5463 | $12.53 |
 | 0x27150e6fa3aa6cc0f89e2e1d092ab4c04b05a57d | - | - | $12.50 |
 | 0xfc60171a6ea2e2aee2fef61ef1132aa8ca4dc2d8 | - | - | $12.47 |
-| 0x59801efd7a20f1a3a4ab0c924388d124bd38f38d | - | - | $12.34 |
 | 0x6a88678ed6908b069e29cd76b60ae3134531cede | - | 0xc3991f83f2FB241b05db76e0c1BB24a81E0C5463 | $12.32 |
 | 0xa6c358d086c5fb6de7cb98ee58fdf2fae7ffd2ea | - | - | $12.20 |
 | 0xa555bbed29861623befe7564b6441c2c4ea24122 | - | - | $12.17 |
@@ -647,7 +659,6 @@ Analyzing all 1700 contract accounts
 | 0x19ce16308187d09cfd4332726eef976ef48cc74d | - | - | $10.44 |
 | 0x73b68a4f8c98d62cb763341bf2459ce9f5a86280 | - | - | $10.43 |
 | 0x4c6b0d460d9bd19a14369fb19abf196125b2084f | - | - | $10.42 |
-| 0xfebe2e4797b5efca9447c65d0df33ffafd8e7845 | - | - | $10.41 |
 | 0xd6ca6b1426eb791e43933e4767fd0b5525278229 | - | - | $10.39 |
 | 0x647a43a011dfdd3db9eb960aa10ff2168fc6e687 | - | - | $10.38 |
 | 0xf91bc771c24e70be360de6aaee9f3ae0fd506863 | - | - | $10.37 |
@@ -815,7 +826,6 @@ Analyzing all 1700 contract accounts
 | 0x8893f015dcbff9d3ad3e13c97cc3b7901fdae8c7 | - | - | $6.83 |
 | 0xae9729365ed3a2fdf6d32abdafa98c6fca1ac2f2 | - | - | $6.83 |
 | 0x8c303480c8d7d91ac2bb9b739dd5c8674af3eef6 | - | 0xc3991f83f2FB241b05db76e0c1BB24a81E0C5463 | $6.83 |
-| 0x6e4a25d148bdb3fa8623abd36ab8754478fc4ac4 | - | - | $6.82 |
 | 0xab473b2a2e092a4c28a469361890a2738ba2dabf | - | 0xc3991f83f2FB241b05db76e0c1BB24a81E0C5463 | $6.81 |
 | 0x953f55b284f9cd2ee3b3cde64cfdbfc3017e70f1 | - | - | $6.80 |
 | 0x72de5049deee09eb9ecc78a49a738df42de6f2e2 | - | - | $6.80 |
@@ -896,7 +906,6 @@ Analyzing all 1700 contract accounts
 | 0x1d6c0ca01e1eedcba6313d3a1673ee680bd2eda7 | - | - | $6.06 |
 | 0x97dc761bb2322b789f9bfec0c2e22c1794205955 | - | - | $6.04 |
 | 0xca094b9a563c68348b3f44cc68a7d4a59ccba1cd | - | - | $6.02 |
-| 0x60896148b5c72c56f7bf6da47f2d175c596cdbdd | - | - | $6.02 |
 | 0xbb46a367ea90549565a52d7d14517019b32e8f8d | - | - | $6.02 |
 | 0x34ac8309ade44a6c7f2db466109f1c4c2a1488cf | - | - | $5.99 |
 | 0xaffdbdbd7a77b83324e041600a1ad7c81ccc6c7c | - | - | $5.98 |
@@ -953,7 +962,6 @@ Analyzing all 1700 contract accounts
 | 0x869eab3fa0e373b415133fee381a04e4087f4cb0 | - | 0xc3991f83f2FB241b05db76e0c1BB24a81E0C5463 | $5.49 |
 | 0xb9832ffd40c0c00714f9938e5069957baa8d3bef | - | - | $5.48 |
 | 0xbefcadf5aa5f6984f413533945d07c16bd937140 | - | - | $5.48 |
-| 0xaafa53d801ea053dfe4662f4aeb1de16610ba7bc | - | - | $5.47 |
 | 0xda4845f8787a06e2a2adae6046d90fabecdff605 | - | - | $5.45 |
 | 0x2388e022c2a2eb52731773d3ab1af4da33f84be0 | - | - | $5.45 |
 | 0x6042d5f49e1272ba576b95e9caaf462b16341974 | - | 0xc3991f83f2FB241b05db76e0c1BB24a81E0C5463 | $5.45 |
@@ -991,7 +999,6 @@ Analyzing all 1700 contract accounts
 | 0x968a00b920aeefb8d3d1dba400456ebef59550ff | - | - | $5.24 |
 | 0x8accc3c201d1d5cc3d1732c65e2700ccd39af3c6 | - | - | $5.24 |
 | 0x7f14351a52736d884ebdc6a4d398a758545f5eb8 | - | - | $5.24 |
-| 0x7c84570566bf73905d25b2a1b1d5e4f1fa543a68 | - | - | $5.24 |
 | 0xc6710939d1c75d021f5874772b45a1fec423d49b | - | - | $5.24 |
 | 0xfdff9b2adc23859abaf976d5830cdff8813fc509 | - | - | $5.24 |
 | 0x63425491d73655b42a49d86238179a88963a10ed | - | - | $5.24 |
@@ -1006,13 +1013,11 @@ Analyzing all 1700 contract accounts
 | 0x17a13d67cf762fe60291f65ac8c1d3b04ef90101 | - | - | $5.22 |
 | 0xa5145fb0f15153c6b079da2a9d3ae8a3935810aa | - | - | $5.22 |
 | 0xfea5cef7f1a7768186428ee22459ad46a8d8ae07 | - | - | $5.22 |
-| 0xc8a69dd7ba67dd43154acace470341aa1b46e5db | - | - | $5.21 |
 | 0x02c9fb1aa176fa13e4457fd720dd98939060f5cd | - | - | $5.21 |
 | 0x0d7dab0c4e7e3e36370df58947e7aa1915eeb59b | - | - | $5.20 |
 | 0xe4ac0a66e1a15dfe04858df08a3d176aeff4d780 | - | - | $5.20 |
 | 0x23265a920f0107b8d7406345382ab7d4c1e17fd3 | - | - | $5.20 |
 | 0xd2edcdffb1a84269a995eef14442ad936aa45427 | - | - | $5.19 |
-| 0xcfb47f2ae59c96ca5fa5a37fd22580a923d06a9a | - | - | $5.19 |
 | 0x1a63bc2514abb8ff5c9b6771cdd9ca63e267ea83 | - | - | $5.19 |
 | 0x33e41b1de3cf931042b0546cdb39e88d9a35f412 | - | - | $5.16 |
 | 0xe41361c90c78b853a3240e4aa8401c777e3843b9 | - | - | $5.16 |
@@ -1140,7 +1145,6 @@ Analyzing all 1700 contract accounts
 | 0x3fa5db10208968abf88c44158ea74a8d511483eb | - | - | $3.97 |
 | 0x2e54de69fd0a8032cc854e82fe4745857a0e103c | - | - | $3.96 |
 | 0x46ddc6ad1537dccaaf81b2b6efac205cd3ea7dbf | - | - | $3.96 |
-| 0xb4f4c89ce0f2e27107817d41514b464b6f0473ac | - | 0x8B215C62DF93dBb46237aC43FDdA5d7b95BaA7cF | $3.93 |
 | 0x204e6bca626a7ad881a2ce659b26aa06b42c0c81 | - | - | $3.93 |
 | 0x07975d6b6985f544874f5b2373174cec56a02aca | - | - | $3.91 |
 | 0xa8a4595957fa4055f81015e04d6b1bd6fbb3baf1 | - | - | $3.85 |
@@ -1184,7 +1188,6 @@ Analyzing all 1700 contract accounts
 | 0x5b9026874cf56ecc38a98aad61de66f87924156f | - | - | $3.17 |
 | 0xc9161e94197af835da84f85e5d267b189e2197c6 | - | - | $3.12 |
 | 0x5d84c49856e5c517694c2de0dae2e73f5326fff1 | - | - | $3.12 |
-| 0x8d77fa0058335ce7da21f421fa5154feeb0abfde | - | - | $3.11 |
 | 0x8355817ce171d7769f1f0bd22fae05c6cd80afcc | - | - | $3.09 |
 | 0x02dfa09c41427e7c7610ed31ce1ae3f3d9446d4e | - | - | $3.09 |
 | 0xe599a80c21cdd1ddf629d088a285476b06a15fdc | - | - | $3.07 |
@@ -1242,7 +1245,6 @@ Analyzing all 1700 contract accounts
 | 0x1530eecd42ecdedef8795d20366db5cc046647ac | - | 0xc3991f83f2FB241b05db76e0c1BB24a81E0C5463 | $2.48 |
 | 0xb14ddbbf19efe925be715d41a4a9556aef7826c9 | - | 0xc3991f83f2FB241b05db76e0c1BB24a81E0C5463 | $2.48 |
 | 0xb0a7ed075a4dc17b87eb24c195dff0f8c8614a17 | - | 0xc3991f83f2FB241b05db76e0c1BB24a81E0C5463 | $2.47 |
-| 0x3948db6c668fa125b6fac4c5ca766525528bb5a4 | - | 0x9fF2982A19cc3AC5618d868cdB7065345C49AE04 | $2.45 |
 | 0xea24e071ff75041d1926967ee0d197abc25e205c | - | - | $2.42 |
 | 0x5b76e5e0d25eb0685b4bd3c56cd947041a45e47e | - | - | $2.40 |
 | 0x2684ae6ab46407e959b3ff02edf33c3089394f4a | - | 0xc3991f83f2FB241b05db76e0c1BB24a81E0C5463 | $2.38 |
@@ -1274,7 +1276,6 @@ Analyzing all 1700 contract accounts
 | 0x90cf9abd5524e697ddb161cc357124c65d84996f | - | - | $2.07 |
 | 0x5343c850f936a91caf4c929936095f22c02311ae | - | - | $2.07 |
 | 0xb6fe3f136eeb4c199beaaaddf5525e109051a80f | - | - | $2.07 |
-| 0x78527d784dea30c226339fe390dfd3c2138a3344 | - | - | $2.07 |
 | 0x9e118b300c6424781835e58e8ebfcbe22c6daab8 | - | - | $2.07 |
 | 0xf5fbbbaeaeb9d00ae3350987c8cec1d8db57bf2f | - | - | $2.06 |
 | 0xb11ed91e4634e8752746cbc61678809947087656 | - | - | $2.06 |
@@ -1533,7 +1534,6 @@ Analyzing all 1700 contract accounts
 | 0x2904d5ad509ba936fed010d35723bff5c058cb80 | - | 0xc3991f83f2FB241b05db76e0c1BB24a81E0C5463 | $1.32 |
 | 0xea794c6c797ce40927ea06a1214405e7a9168d01 | - | - | $1.32 |
 | 0x08200dfa7d16a36920b17d3d1fd827389a3ff2dc | - | - | $1.32 |
-| 0x4d1c02952418a5b004a8ac757cab8b9c977fe68f | - | - | $1.32 |
 | 0x6f83f71dc746a81f417cc11742d48416e01cebda | - | - | $1.32 |
 | 0x254fda6cc87689d1685d13b961bdc96b3baaa187 | - | - | $1.32 |
 | 0xda53a8088889a24840ae70eeb21d1d95226d3816 | - | 0xc3991f83f2FB241b05db76e0c1BB24a81E0C5463 | $1.32 |
