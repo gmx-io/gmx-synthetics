@@ -30,6 +30,8 @@ interface AccountInfo {
   isSmartWallet?: boolean;
   walletType?: string;
   implementation?: string;
+  isSmartContractWallet?: string;
+  isDolomite?: string;
 }
 
 async function main() {
@@ -41,10 +43,7 @@ async function main() {
   reportContent += `Generated on: ${new Date().toISOString()}\n\n`;
 
   // Process both CSV files
-  const csvFiles = [
-    path.join(__dirname, "data/sample-for-CONTRACT.csv"),
-    // path.join(__dirname, "data/GLP_USDC-for-CONTRACT.csv"),
-  ];
+  const csvFiles = [path.join(__dirname, "data/GLP_GLV-for-CONTRACT1.csv")];
 
   for (const csvFile of csvFiles) {
     console.log("\n========================================");
@@ -77,6 +76,10 @@ async function main() {
       try {
         const walletInfo = await identifyContractType(account.account, provider);
 
+        // Check if contract has DOLOMITE_MARGIN function
+        const hasDolomite = await hasDolomiteMargin(account.account, provider);
+        account.isSmartContractWallet = hasDolomite ? "yes" : "no";
+
         if (walletInfo.isSmartWallet) {
           account.isSmartWallet = true;
           account.walletType = walletInfo.walletType;
@@ -88,6 +91,7 @@ async function main() {
         }
       } catch (error) {
         // If analysis fails, assume it's a regular contract
+        account.isSmartContractWallet = "no";
         otherContracts.push(account);
       }
 
@@ -121,14 +125,16 @@ async function main() {
     reportContent += `**Total:** ${smartWallets.length} out of ${accounts.length} contracts${breakdownStr}\n\n`;
 
     if (smartWallets.length > 0) {
-      reportContent += `| Address | Type | Implementation | Distribution USD |\n`;
-      reportContent += `|---------|------|----------------|------------------|\n`;
+      reportContent += `| Address | Type | Implementation | Distribution USD | isSmartContractWallet | isDolomite |\n`;
+      reportContent += `|---------|------|----------------|------------------|----------------------|------------|\n`;
 
       for (const wallet of smartWallets) {
         const type = wallet.walletType || "-";
         const implementation = wallet.implementation || "-";
         const usd = parseFloat(wallet.distributionUsd || "0").toFixed(2);
-        reportContent += `| ${wallet.account} | ${type} | ${implementation} | $${usd} |\n`;
+        const isSmartContractWallet = wallet.isSmartContractWallet || "-";
+        const isDolomite = wallet.isDolomite || "-";
+        reportContent += `| ${wallet.account} | ${type} | ${implementation} | $${usd} | ${isSmartContractWallet} | ${isDolomite} |\n`;
       }
       reportContent += `\n`;
     }
@@ -138,14 +144,16 @@ async function main() {
     reportContent += `**Total:** ${otherContracts.length} out of ${accounts.length} contracts\n\n`;
 
     if (otherContracts.length > 0) {
-      reportContent += `| Address | Type | Implementation | Distribution USD |\n`;
-      reportContent += `|---------|------|----------------|------------------|\n`;
+      reportContent += `| Address | Type | Implementation | Distribution USD | isSmartContractWallet | isDolomite |\n`;
+      reportContent += `|---------|------|----------------|------------------|----------------------|------------|\n`;
 
       for (const contract of otherContracts) {
         const type = "-"; // Not a smart wallet, so no type
         const implementation = contract.implementation || "-";
         const usd = parseFloat(contract.distributionUsd || "0").toFixed(2);
-        reportContent += `| ${contract.account} | ${type} | ${implementation} | $${usd} |\n`;
+        const isSmartContractWallet = contract.isSmartContractWallet || "-";
+        const isDolomite = contract.isDolomite || "-";
+        reportContent += `| ${contract.account} | ${type} | ${implementation} | $${usd} | ${isSmartContractWallet} | ${isDolomite} |\n`;
       }
       reportContent += `\n`;
     }
@@ -176,17 +184,18 @@ function parseCSV(filepath: string): AccountInfo[] {
 
     const values = line.split(",");
 
-    // csv columns format: account,ethGlv,btcGlv,usdc,distributionUsd,duneEstimatedDistributionUsd
+    // csv columns format: account,ethGlv,btcGlv,usdc,distributionUsd,duneEstimatedDistributionUsd,status,isSmartContractWallet,isDolomite
     const accountIndex = headers.indexOf("account");
-    const distributionUsdIndex =
-      headers.indexOf("distributionUsd") !== -1
-        ? headers.indexOf("distributionUsd")
-        : headers.indexOf("approximate_distribution_usd");
+    const distributionUsdIndex = headers.indexOf("distributionUsd");
+    const isSmartContractWalletIndex = headers.indexOf("isSmartContractWallet");
+    const isDolomiteIndex = headers.indexOf("isDolomite");
 
     if (accountIndex >= 0 && values[accountIndex]) {
       accounts.push({
         account: values[accountIndex],
         distributionUsd: values[distributionUsdIndex] || "0",
+        isSmartContractWallet: isSmartContractWalletIndex >= 0 ? values[isSmartContractWalletIndex] : undefined,
+        isDolomite: isDolomiteIndex >= 0 ? values[isDolomiteIndex] : undefined,
       });
     }
   }
@@ -281,6 +290,37 @@ async function identifyContractType(
 
   // Not a smart wallet
   return { isSmartWallet: false, implementation: proxyImplementation };
+}
+
+async function hasDolomiteMargin(address: string, provider: ethers.providers.Provider): Promise<boolean> {
+  const DOLOMITE_ABI = ["function DOLOMITE_MARGIN() external view returns (address)"];
+
+  try {
+    const contract = new ethers.Contract(address, DOLOMITE_ABI, provider);
+
+    // Try to call DOLOMITE_MARGIN function
+    try {
+      await contract.callStatic.DOLOMITE_MARGIN();
+      return true; // Function exists and executed
+    } catch (error: any) {
+      // Check if the error is because the function reverted (meaning it exists)
+      // vs the function not existing at all
+      if (error.data && error.data !== "0x") {
+        // There's return data, which means the function exists but reverted
+        return true;
+      }
+      // If error.error exists and contains revert info, function exists
+      if (error.error && error.error.data && error.error.data !== "0x") {
+        return true;
+      }
+    }
+
+    // Function is not callable - doesn't exist
+    return false;
+  } catch (error) {
+    console.error(`Error checking DOLOMITE_MARGIN for ${address}:`, error);
+    return false;
+  }
 }
 
 async function hasEIP1271(address: string, provider: ethers.providers.Provider): Promise<boolean> {
