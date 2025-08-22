@@ -151,9 +151,6 @@ library GlvWithdrawalUtils {
 
         GlvWithdrawalEventUtils.emitGlvWithdrawalExecuted(params.eventEmitter, params.key, glvWithdrawal.account());
 
-        // NOTE: glvValue can be calculated with GLV oracle price, the actual value may be changed slightly after the shift due to paid fees
-        // so the glvValue might be slightly inaccurate
-        // should not be an issue for emitting GlvValueUpdated event
         cache.glvValue = GlvUtils.getGlvValue(
             params.dataStore,
             params.oracle,

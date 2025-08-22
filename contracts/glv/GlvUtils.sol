@@ -25,12 +25,15 @@ library GlvUtils {
         Market.Props market;
     }
 
-    // @dev get the USD value of the Glv
+    // @dev get the USD value of the GLV
     // @param dataStore DataStore
     // @param oracle IOracle
-    // @param glv Glv
+    // @param glv GLV
     // @param maximize
-    // @return the USD value of the Glv
+    // @return the USD value of the GLV
+    // NOTE GLV value can be calculated with GLV oracle price, the actual value may be changed slightly after the shift, deposit or withdrawal due to paid fees
+    // and the oracle price timestamp always lag behind the current block and may be calculated based on different contracts state
+    // so GLV glv value might be slightly inaccurate
     function getGlvValue(
         DataStore dataStore,
         IOracle oracle,

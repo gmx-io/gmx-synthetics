@@ -58,9 +58,6 @@ library ExecuteGlvDepositUtils {
 
         cache.receivedMarketTokens = _processMarketDeposit(params, glvDeposit, params.glvVault);
 
-        // glvValue should be calculated after funds are deposited into GM market
-        // but before GLV syncs GM token balance for glvValue to account for
-        // slightly increased GM market price because of paid fees
         cache.glvValue = GlvUtils.getGlvValue(
             params.dataStore,
             params.oracle,
