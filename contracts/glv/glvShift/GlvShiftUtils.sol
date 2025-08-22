@@ -235,7 +235,8 @@ library GlvShiftUtils {
             params.dataStore,
             params.oracle,
             glvShift.glv(),
-            true // maximize
+            true, // maximize
+            false // forceCalculation
         );
         cache.glvSupply = GlvToken(payable(glvShift.glv())).totalSupply();
         GlvEventUtils.emitGlvValueUpdated(params.eventEmitter, glvShift.glv(), cache.glvValue, cache.glvSupply);

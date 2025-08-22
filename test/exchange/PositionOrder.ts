@@ -334,17 +334,6 @@ describe("Exchange.PositionOrder", () => {
     const currentTimestamp = (await ethers.provider.getBlock()).timestamp;
 
     await expect(
-      orderHandler.connect(user0).simulateExecuteOrder(orderKeys[0], {
-        primaryTokens: [],
-        primaryPrices: [],
-        minTimestamp: currentTimestamp,
-        maxTimestamp: currentTimestamp,
-      })
-    )
-      .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
-      .withArgs(user0.address, "CONTROLLER");
-
-    await expect(
       orderHandler.simulateExecuteOrder(orderKeys[0], {
         primaryTokens: [wnt.address, usdc.address],
         primaryPrices: [

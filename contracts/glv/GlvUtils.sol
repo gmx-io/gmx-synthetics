@@ -30,20 +30,25 @@ library GlvUtils {
     // @param oracle IOracle
     // @param glv GLV
     // @param maximize
+    // @param forceCalculation if true, the GLV value will be calculated even if the GLV token price is not empty
     // @return the USD value of the GLV
     // NOTE GLV value can be calculated with GLV oracle price, the actual value may be changed slightly after the shift, deposit or withdrawal due to paid fees
     // and the oracle price timestamp always lag behind the current block and may be calculated based on different contracts state
     // so GLV glv value might be slightly inaccurate
+    // if accuracy is critical then pass forceCalculation = true
     function getGlvValue(
         DataStore dataStore,
         IOracle oracle,
         address glv,
-        bool maximize
+        bool maximize,
+        bool forceCalculation
     ) public view returns (uint256) {
-        Price.Props memory glvTokenPrice = oracle.getPrimaryPriceIfNotEmpty(glv);
-        if (!glvTokenPrice.isEmpty()) {
-            uint256 supply = ERC20(glv).totalSupply();
-            return (maximize ? glvTokenPrice.max : glvTokenPrice.min) * supply;
+        if (!forceCalculation) {
+            Price.Props memory glvTokenPrice = oracle.getPrimaryPriceIfNotEmpty(glv);
+            if (!glvTokenPrice.isEmpty()) {
+                uint256 supply = ERC20(glv).totalSupply();
+                return (maximize ? glvTokenPrice.max : glvTokenPrice.min) * supply;
+            }
         }
 
         GetGlvValueCache memory cache;
@@ -141,9 +146,10 @@ library GlvUtils {
         DataStore dataStore,
         IOracle oracle,
         address glv,
-        bool maximize
+        bool maximize,
+        bool forceCalculation
     ) internal view returns (uint256, uint256, uint256) {
-        uint256 value = getGlvValue(dataStore, oracle, glv, maximize);
+        uint256 value = getGlvValue(dataStore, oracle, glv, maximize, forceCalculation);
         uint256 supply = ERC20(glv).totalSupply();
 
         return _getGlvTokenPrice(value, supply);
