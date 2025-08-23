@@ -6,10 +6,10 @@ const expectedTimelockMethods = ["signalSetAtomicOracleProvider", "setAtomicOrac
 async function main() {
   const timelock = await hre.ethers.getContract("TimelockConfig");
 
-  const chainlinkPriceFeedProvider = await hre.ethers.getContract("ChainlinkPriceFeedProvider");
+  // const chainlinkPriceFeedProvider = await hre.ethers.getContract("ChainlinkPriceFeedProvider");
   const chainlinkDataStreamProvider = await hre.ethers.getContract("ChainlinkDataStreamProvider");
 
-  const providersToAdd = [chainlinkPriceFeedProvider.address, chainlinkDataStreamProvider.address];
+  const providersToAdd = [chainlinkDataStreamProvider.address];
 
   const multicallWriteParams = [];
 
