@@ -65,6 +65,26 @@ export async function getMarketTokenPriceWithPoolValue(fixture, overrides: any =
   );
 }
 
+export async function fetchMarketAddress(indexTokenAddress, longTokenAddress, shortTokenAddress, marketType) {
+  if (!marketType) {
+    marketType = DEFAULT_MARKET_TYPE;
+  }
+  const dataStore = await hre.ethers.getContract("DataStore");
+  const salt = hashData(
+    ["string", "address", "address", "address", "bytes32"],
+    ["GMX_MARKET", indexTokenAddress, longTokenAddress, shortTokenAddress, marketType]
+  );
+
+  const marketSalt = hashString("MARKET_SALT");
+
+  const marketSaltHash = hashData(["bytes32", "bytes32"], [marketSalt, salt]);
+  const marketAddress = await dataStore.getAddress(marketSaltHash);
+  return marketAddress;
+}
+
+// note that if the MarketToken byteCode changes this function would not be able
+// to retrieve the on-chain market address
+// use fetchMarketAddress instead for this case
 export function getMarketTokenAddress(
   indexToken: string,
   longToken: string,
@@ -72,15 +92,19 @@ export function getMarketTokenAddress(
   marketType: string,
   marketFactoryAddress: string,
   roleStoreAddress: string,
-  dataStoreAddress: string
+  dataStoreAddress: string,
+  byteCode?
 ): string {
   const salt = hashData(
     ["string", "address", "address", "address", "bytes32"],
     ["GMX_MARKET", indexToken, longToken, shortToken, marketType]
   );
-  // eslint-disable-next-line
-  const MarketTokenArtifact = require("../artifacts/contracts/market/MarketToken.sol/MarketToken.json");
-  const byteCode = MarketTokenArtifact.bytecode;
+  console.log("salt", salt);
+  if (!byteCode) {
+    // eslint-disable-next-line
+    const MarketTokenArtifact = require("../artifacts/contracts/market/MarketToken.sol/MarketToken.json");
+    byteCode = MarketTokenArtifact.bytecode;
+  }
   return calculateCreate2(marketFactoryAddress, salt, byteCode, {
     params: [roleStoreAddress, dataStoreAddress],
     types: ["address", "address"],

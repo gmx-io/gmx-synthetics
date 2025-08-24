@@ -27,6 +27,7 @@ async function main() {
       roleStore.address,
       dataStore.address
     );
+    console.log("marketTokenAddress", marketTokenAddress);
 
     const marketName = market.tokens.indexToken ? `${market.tokens.indexToken}/USD` : "SWAP-ONLY";
     console.log(`${marketName} [${market.tokens.longToken}-${market.tokens.shortToken}]`);

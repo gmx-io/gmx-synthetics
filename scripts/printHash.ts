@@ -1,5 +1,7 @@
 async function main() {
-  console.log(ethers.BigNumber.from(ethers.utils.id("GLP_DISTRIBUTION")).toString());
+  const str = "MAX_PNL_FACTOR_FOR_TRADERS";
+  console.log(ethers.utils.id(str));
+  console.log(ethers.BigNumber.from(ethers.utils.id(str)).toString());
 }
 
 main()
