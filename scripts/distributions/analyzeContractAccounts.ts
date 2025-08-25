@@ -35,6 +35,12 @@ async function main() {
   const provider = hre.ethers.provider;
   const sampleSize = process.env.SAMPLE_SIZE ? parseInt(process.env.SAMPLE_SIZE) : undefined;
 
+  // Create output directory if it doesn't exist
+  const outputDir = path.join(__dirname, "out");
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir, { recursive: true });
+  }
+
   // Initialize report content
   let reportContent = "# Smart Wallet Analysis Report\n\n";
   reportContent += `Generated on: ${new Date().toISOString()}\n\n`;
@@ -145,14 +151,15 @@ async function main() {
     }
 
     // Generate output CSV with same format as input but with analyzed columns
-    const outputCsvPath = csvFile.replace(".csv", "-analyzed.csv");
+    const outputCsvName = path.basename(csvFile).replace(".csv", "-analyzed.csv");
+    const outputCsvPath = path.join(outputDir, outputCsvName);
     const csvContent = generateOutputCSV(accounts);
     fs.writeFileSync(outputCsvPath, csvContent);
     console.log(`Analyzed CSV written to: ${outputCsvPath}`);
   }
 
   // Write report to file
-  const reportPath = path.join(__dirname, "REPORT.md");
+  const reportPath = path.join(outputDir, "REPORT.md");
   fs.writeFileSync(reportPath, reportContent);
   console.log(`Report written to: ${reportPath}`);
 }
