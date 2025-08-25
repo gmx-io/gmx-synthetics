@@ -129,7 +129,7 @@ contract JitOrderHandler is IJitOrderHandler, BaseOrderHandler, ReentrancyGuard 
                 orderKey
             );
 
-            glvShiftHandler._executeGlvShift(
+            glvShiftHandler.doExecuteGlvShift(
                 glvShiftKey,
                 glvShift,
                 msg.sender,

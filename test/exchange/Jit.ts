@@ -1,5 +1,4 @@
 import { expect } from "chai";
-import { ethers } from "hardhat";
 
 import { getGlvShiftCount, handleGlvDeposit } from "../../utils/glv";
 import { deployFixture } from "../../utils/fixture";
@@ -14,6 +13,7 @@ describe("Jit", () => {
   let fixture;
   let user1;
   let dataStore, ethUsdMarket, solUsdMarket, ethUsdGlvAddress, wnt, executionFee, jitOrderHandler;
+  let orderParams;
 
   beforeEach(async () => {
     fixture = await deployFixture();
@@ -31,6 +31,22 @@ describe("Jit", () => {
     await dataStore.setUint(keys.openInterestReserveFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 0)); // 100%
     await dataStore.setUint(keys.openInterestReserveFactorKey(solUsdMarket.marketToken, true), decimalToFloat(1, 0)); // 100%
     await dataStore.setUint(keys.openInterestReserveFactorKey(solUsdMarket.marketToken, false), decimalToFloat(1, 0)); // 100%
+
+    orderParams = {
+      market: ethUsdMarket,
+      initialCollateralToken: wnt,
+      initialCollateralDeltaAmount: expandDecimals(1, 17), // 0.1 ETH
+      swapPath: [ethUsdMarket.marketToken],
+      sizeDeltaUsd: decimalToFloat(6_000), // ETH market only has $5000 worth of WETH in the pool
+      acceptablePrice: expandDecimals(5001, 12),
+      executionFee,
+      orderType: OrderType.MarketIncrease,
+      minOutputAmount: 0,
+      isLong: true,
+      shouldUnwrapNativeToken: false,
+      gasUsageLabel: "createOrder",
+      cancellationReceiver: user1,
+    };
   });
 
   it("shift liquidity and execute order", async () => {
@@ -59,26 +75,7 @@ describe("Jit", () => {
     });
 
     expect(await getOrderCount(dataStore)).eq(0);
-    await dataStore.setUint(keys.MAX_DATA_LENGTH, 256);
-    const dataList = [ethers.utils.formatBytes32String("customData")];
-    const params = {
-      market: ethUsdMarket,
-      initialCollateralToken: wnt,
-      initialCollateralDeltaAmount: expandDecimals(1, 17), // 0.1 ETH
-      swapPath: [ethUsdMarket.marketToken],
-      orderType: OrderType.MarketIncrease,
-      sizeDeltaUsd: decimalToFloat(6_000), // ETH market only has $5000 worth of WETH in the pool
-      acceptablePrice: expandDecimals(5001, 12),
-      executionFee,
-      minOutputAmount: 0,
-      isLong: true,
-      shouldUnwrapNativeToken: false,
-      gasUsageLabel: "createOrder",
-      cancellationReceiver: user1,
-      dataList,
-    };
-
-    await createOrder(fixture, params);
+    await createOrder(fixture, orderParams);
 
     expect(await getOrderCount(dataStore)).eq(1);
 
@@ -95,7 +92,7 @@ describe("Jit", () => {
     } as Parameters<typeof executeJitOrder>[1]);
     expect(await getOrderCount(dataStore)).eq(0);
 
-    await createOrder(fixture, params);
+    await createOrder(fixture, orderParams);
 
     await executeJitOrder(fixture, {
       gasUsageLabel: "executeOrder",
@@ -132,22 +129,11 @@ describe("Jit", () => {
       [OrderType.StopIncrease, false],
     ] as const) {
       it(`OrderType ${orderTypeNames[orderType]}`, async () => {
-        const params = {
+        await createOrder(fixture, {
+          ...orderParams,
           market: [OrderType.LimitSwap, OrderType.MarketSwap].includes(orderType) ? undefined : ethUsdMarket,
-          initialCollateralToken: wnt,
-          initialCollateralDeltaAmount: expandDecimals(1, 17), // 0.1 ETH
-          swapPath: [ethUsdMarket.marketToken],
-          sizeDeltaUsd: decimalToFloat(6_000), // ETH market only has $5000 worth of WETH in the pool
-          acceptablePrice: expandDecimals(5001, 12),
-          executionFee,
           orderType,
-          minOutputAmount: 0,
-          isLong: true,
-          shouldUnwrapNativeToken: false,
-          gasUsageLabel: "createOrder",
-          cancellationReceiver: user1,
-        };
-        await createOrder(fixture, params);
+        });
 
         if (shouldRevert) {
           await expect(
@@ -169,10 +155,10 @@ describe("Jit", () => {
   });
 
   it("JitEmptyShiftParams", async () => {
+    await createOrder(fixture, orderParams);
     await expect(
       executeJitOrder(fixture, {
         gasUsageLabel: "executeOrder",
-        orderKey: "0x0000000000000000000000000000000000000000000000000000000000000000",
         glvShifts: [],
       } as Parameters<typeof executeJitOrder>[1])
     ).to.be.revertedWithCustomError(errorsContract, "JitEmptyShiftParams");
@@ -202,10 +188,10 @@ describe("Jit", () => {
   });
 
   it("JitInvalidToMarket", async () => {
+    await createOrder(fixture, orderParams);
     await expect(
       executeJitOrder(fixture, {
         gasUsageLabel: "executeOrder",
-        orderKey: "0x0000000000000000000000000000000000000000000000000000000000000000",
         glvShifts: [
           {
             toMarket: solUsdMarket.marketToken,

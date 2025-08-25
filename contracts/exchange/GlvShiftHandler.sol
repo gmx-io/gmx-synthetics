@@ -62,12 +62,12 @@ contract GlvShiftHandler is BaseHandler, ReentrancyGuard {
 
         uint256 executionGas = GasUtils.getExecutionGas(_dataStore, startingGas);
 
-        try this._executeGlvShift{gas: executionGas}(key, glvShift, msg.sender, false) {} catch (bytes memory reasonBytes) {
+        try this.doExecuteGlvShift{gas: executionGas}(key, glvShift, msg.sender, false) {} catch (bytes memory reasonBytes) {
             _handleGlvShiftError(key, reasonBytes);
         }
     }
 
-    function _executeGlvShift(bytes32 key, GlvShift.Props memory glvShift, address keeper, bool skipRemoval) external onlySelfOrController {
+    function doExecuteGlvShift(bytes32 key, GlvShift.Props memory glvShift, address keeper, bool skipRemoval) external onlySelfOrController {
         FeatureUtils.validateFeature(dataStore, Keys.executeGlvShiftFeatureDisabledKey(address(this)));
 
         GlvShiftUtils.ExecuteGlvShiftParams memory params = GlvShiftUtils.ExecuteGlvShiftParams({

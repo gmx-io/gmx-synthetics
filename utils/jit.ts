@@ -50,8 +50,8 @@ export async function executeJitOrder(
     // apply defaults
     return {
       glv: glvShift.glv ?? fixture.contracts.ethUsdGlvAddress,
-      fromMarket: glvShift.toMarket ?? fixture.contracts.solUsdMarket.marketToken,
-      toMarket: glvShift.fromMarket ?? fixture.contracts.ethUsdMarket.marketToken,
+      fromMarket: glvShift.fromMarket ?? fixture.contracts.solUsdMarket.marketToken,
+      toMarket: glvShift.toMarket ?? fixture.contracts.ethUsdMarket.marketToken,
       marketTokenAmount: glvShift.marketTokenAmount ?? expandDecimals(1, 15), // 0.001 ETH
       minMarketTokens: glvShift.minMarketTokens ?? 0,
     };
