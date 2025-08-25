@@ -5,7 +5,7 @@ import hre from "hardhat";
 
 /*
 Usage:
-npx hardhat --network arbitrum run scripts/distributions/analyzeContractAccounts.ts
+npx hardhat --network arbitrum run scripts/distributions/analyzeContractAccounts.ts | tee scripts/distributions/out/distributions-logs.txt
 
 Environment variables:
 - SAMPLE_SIZE: Number of accounts to analyze (default: analyze all)
@@ -14,9 +14,22 @@ Environment variables:
 This script analyzes the CONTRACT CSV files to identify which ones are smart wallets
 */
 
+// CSV files to process
+const CSV_FILES = [path.join(__dirname, "data/distributions.csv")];
+
 // EIP-1967 slots for upgradeable contracts
 const IMPLEMENTATION_SLOT = "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc"; // bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1)
 const BEACON_SLOT = "0xa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50"; // bytes32(uint256(keccak256("eip1967.proxy.beacon")) - 1)
+
+const messageHash = ethers.utils.hashMessage("some-message");
+let messageSignature: string;
+const validSignatureResponses = [
+  // https://eips.ethereum.org/EIPS/eip-1271
+  "0x1626ba7e", // valid signature e.g. bytes4(keccak256("isValidSignature(bytes32,bytes)"))
+  "0xffffffff", // invalid signature - suggested by spec
+  "0x00000000", // invalid signature - not in spec, but commonly used
+  // Any other 4-byte value could be a fallback function
+];
 
 interface AccountInfo {
   account: string;
@@ -32,6 +45,9 @@ interface AccountInfo {
 }
 
 async function main() {
+  const signer = new ethers.Wallet(process.env.ACCOUNT_KEY);
+  messageSignature = await signer.signMessage(ethers.utils.arrayify(messageHash));
+
   const provider = hre.ethers.provider;
   const sampleSize = process.env.SAMPLE_SIZE ? parseInt(process.env.SAMPLE_SIZE) : undefined;
 
@@ -45,10 +61,7 @@ async function main() {
   let reportContent = "# Smart Wallet Analysis Report\n\n";
   reportContent += `Generated on: ${new Date().toISOString()}\n\n`;
 
-  // Process both CSV files
-  const csvFiles = [path.join(__dirname, "data/distributions.csv")];
-
-  for (const csvFile of csvFiles) {
+  for (const csvFile of CSV_FILES) {
     console.log("\n========================================");
     console.log("Analyzing:", path.basename(csvFile));
     console.log("========================================\n");
@@ -74,7 +87,7 @@ async function main() {
 
     for (let i = 0; i < accounts.length; i++) {
       const account = accounts[i];
-      process.stdout.write(`\rAnalyzing ${i + 1}/${accounts.length}...`);
+      process.stdout.write(`\rAnalyzing ${i + 1}/${accounts.length}...`); // comment out progress if using tee scripts/distributions/out/distributions-logs.txt
 
       try {
         const result = await identifyContractType(account.account, provider);
@@ -309,58 +322,28 @@ async function hasDolomiteMargin(address: string, provider: ethers.providers.Pro
 async function hasEIP1271(address: string, provider: ethers.providers.Provider): Promise<boolean> {
   const EIP1271_ABI = [
     "function isValidSignature(bytes32 hash, bytes memory signature) external view returns (bytes4)",
-    "function isValidSignature(bytes memory data, bytes memory signature) external view returns (bytes4)", // legacy version
   ];
+  const contract = new ethers.Contract(address, EIP1271_ABI, provider);
 
   try {
-    // Primary method: Try to call the functions directly
-    // This is more reliable than bytecode inspection
-    const contract = new ethers.Contract(address, EIP1271_ABI, provider);
-
-    // Try current version with dummy parameters
-    try {
-      const dummyHash = ethers.utils.keccak256("0x00");
-      const dummySignature = "0x00";
-      await contract.callStatic["isValidSignature(bytes32,bytes)"](dummyHash, dummySignature);
-      return true; // Function exists and executed (even if it returned invalid)
-    } catch (error: any) {
-      // Check if the error is because the function reverted (meaning it exists)
-      // vs the function not existing at all
-      if (error.data && error.data !== "0x") {
-        // There's return data, which means the function exists but reverted
-        return true;
-      }
-      // If error.error exists and contains revert info, function exists
-      if (error.error && error.error.data && error.error.data !== "0x") {
-        return true;
-      }
+    const result = await contract.callStatic["isValidSignature(bytes32,bytes)"](messageHash, messageSignature);
+    console.log(`${address} try --> call result: ${result}`);
+    if (validSignatureResponses.includes(result)) {
+      // is flagging 1036 out of 1700 addresses (returning 0x00000000 or 0xffffffff)
+      return true; // Valid EIP-1271 response
     }
-
-    // Try legacy version with dummy parameters
-    try {
-      const dummyData = "0x00";
-      const dummySignature = "0x00";
-      await contract.callStatic["isValidSignature(bytes,bytes)"](dummyData, dummySignature);
-      return true; // Function exists and executed
-    } catch (error: any) {
-      // Check if the error is because the function reverted (meaning it exists)
-      // vs the function not existing at all
-      if (error.data && error.data !== "0x") {
-        // There's return data, which means the function exists but reverted
-        return true;
-      }
-      // If error.error exists and contains revert info, function exists
-      if (error.error && error.error.data && error.error.data !== "0x") {
-        return true;
-      }
+    // If the function returned something else, it's likely a fallback function
+  } catch (error: any) {
+    if (error.errorSignature && error.reason && !error.reason.includes("Function does not exist")) {
+      // is flagging 7 out of 1700 addresses (5 SafeProxy, 2 unverified contracts)
+      console.log(
+        `${address} catch --> reason= ${error.reason}, errorArgs= ${error.errorArgs}, errorName= ${error.errorName}, errorSignature= ${error.errorSignature})`
+      );
+      return true;
     }
-
-    // Neither function is callable - not EIP-1271 compliant
-    return false;
-  } catch (error) {
-    console.error(`Error checking EIP-1271 for ${address}:`, error);
-    return false;
   }
+
+  return false;
 }
 
 if (require.main === module) {
