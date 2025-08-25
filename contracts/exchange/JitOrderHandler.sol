@@ -61,6 +61,7 @@ contract JitOrderHandler is IJitOrderHandler, BaseOrderHandler, ReentrancyGuard 
         FeatureUtils.validateFeature(_dataStore, Keys.jitFeatureDisabledKey(address(this)));
 
         Order.Props memory order = OrderStoreUtils.get(_dataStore, orderKey);
+        _validateOrder(order);
 
         _processShifts(_dataStore, shiftParamsList, order, orderKey);
 
@@ -87,6 +88,7 @@ contract JitOrderHandler is IJitOrderHandler, BaseOrderHandler, ReentrancyGuard 
         DataStore _dataStore = dataStore;
         FeatureUtils.validateFeature(_dataStore, Keys.jitFeatureDisabledKey(address(this)));
         Order.Props memory order = OrderStoreUtils.get(_dataStore, orderKey);
+        _validateOrder(order);
 
         _processShifts(_dataStore, shiftParamsList, order, orderKey);
 
@@ -97,6 +99,12 @@ contract JitOrderHandler is IJitOrderHandler, BaseOrderHandler, ReentrancyGuard 
             GasUtils.getExecutionGas(_dataStore, gasleft()),
             true // isSimulation
         );
+    }
+
+    function _validateOrder(Order.Props memory order) internal pure {
+        if (!Order.isIncreaseOrder(order.orderType())) {
+            revert Errors.JitUnsupportedOrderType(uint256(order.orderType()));
+        }
     }
 
     function _processShifts(

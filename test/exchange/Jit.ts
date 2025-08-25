@@ -119,6 +119,55 @@ describe("Jit", () => {
     });
   });
 
+  describe("JitUnsupportedOrderType", () => {
+    const orderTypeNames = Object.fromEntries(Object.entries(OrderType).map(([key, value]) => [value, key]));
+    for (const [orderType, shouldRevert] of [
+      [OrderType.MarketSwap, true],
+      [OrderType.LimitSwap, true],
+      [OrderType.MarketIncrease, false],
+      [OrderType.LimitIncrease, false],
+      [OrderType.MarketDecrease, true],
+      [OrderType.LimitDecrease, true],
+      [OrderType.StopLossDecrease, true],
+      [OrderType.StopIncrease, false],
+    ] as const) {
+      it(`OrderType ${orderTypeNames[orderType]}`, async () => {
+        const params = {
+          market: [OrderType.LimitSwap, OrderType.MarketSwap].includes(orderType) ? undefined : ethUsdMarket,
+          initialCollateralToken: wnt,
+          initialCollateralDeltaAmount: expandDecimals(1, 17), // 0.1 ETH
+          swapPath: [ethUsdMarket.marketToken],
+          sizeDeltaUsd: decimalToFloat(6_000), // ETH market only has $5000 worth of WETH in the pool
+          acceptablePrice: expandDecimals(5001, 12),
+          executionFee,
+          orderType,
+          minOutputAmount: 0,
+          isLong: true,
+          shouldUnwrapNativeToken: false,
+          gasUsageLabel: "createOrder",
+          cancellationReceiver: user1,
+        };
+        await createOrder(fixture, params);
+
+        if (shouldRevert) {
+          await expect(
+            executeJitOrder(fixture, {
+              gasUsageLabel: "executeOrder",
+              glvShifts: [],
+            } as Parameters<typeof executeJitOrder>[1])
+          ).to.be.revertedWithCustomError(errorsContract, "JitUnsupportedOrderType");
+        } else {
+          await expect(
+            executeJitOrder(fixture, {
+              gasUsageLabel: "executeOrder",
+              glvShifts: [],
+            } as Parameters<typeof executeJitOrder>[1])
+          ).to.not.be.revertedWithCustomError(errorsContract, "JitUnsupportedOrderType");
+        }
+      });
+    }
+  });
+
   it("JitEmptyShiftParams", async () => {
     await expect(
       executeJitOrder(fixture, {

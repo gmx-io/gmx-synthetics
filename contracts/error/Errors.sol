@@ -107,6 +107,7 @@ library Errors {
     // Jit
     error JitInvalidToMarket(address market, address expectedMarket);
     error JitEmptyShiftParams();
+    error JitUnsupportedOrderType(uint256 orderType);
 
     // DepositStoreUtils errors
     error DepositNotFound(bytes32 key);
