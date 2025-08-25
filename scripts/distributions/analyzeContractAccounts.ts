@@ -293,32 +293,17 @@ async function identifyContractType(
 async function hasDolomiteMargin(address: string, provider: ethers.providers.Provider): Promise<boolean> {
   const DOLOMITE_ABI = ["function DOLOMITE_MARGIN() external view returns (address)"];
 
+  const contract = new ethers.Contract(address, DOLOMITE_ABI, provider);
+  // Try to call DOLOMITE_MARGIN function
   try {
-    const contract = new ethers.Contract(address, DOLOMITE_ABI, provider);
-
-    // Try to call DOLOMITE_MARGIN function
-    try {
-      await contract.callStatic.DOLOMITE_MARGIN();
-      return true; // Function exists and executed
-    } catch (error: any) {
-      // Check if the error is because the function reverted (meaning it exists)
-      // vs the function not existing at all
-      if (error.data && error.data !== "0x") {
-        // There's return data, which means the function exists but reverted
-        return true;
-      }
-      // If error.error exists and contains revert info, function exists
-      if (error.error && error.error.data && error.error.data !== "0x") {
-        return true;
-      }
-    }
-
-    // Function is not callable - doesn't exist
-    return false;
-  } catch (error) {
-    console.error(`Error checking DOLOMITE_MARGIN for ${address}:`, error);
-    return false;
+    await contract.callStatic.DOLOMITE_MARGIN();
+    return true; // Function exists and executed
+  } catch (error: any) {
+    // DOLOMITE_MARGIN does not revert in Dolomite contracts (it's a view function returning an address)
+    // so no need to check the error data or revert reason
   }
+
+  return false;
 }
 
 async function hasEIP1271(address: string, provider: ethers.providers.Provider): Promise<boolean> {
