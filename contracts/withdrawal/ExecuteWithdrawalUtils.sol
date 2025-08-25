@@ -82,7 +82,11 @@ library ExecuteWithdrawalUtils {
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
         params.startingGas -= gasleft() / 63;
 
-        if (!skipRemoval) {
+        if (skipRemoval) {
+            if (params.dataStore.containsBytes32(Keys.WITHDRAWAL_LIST, params.key)) {
+                revert Errors.RemovalShouldNotBeSkipped(Keys.WITHDRAWAL_LIST, params.key);
+            }
+        } else {
             WithdrawalStoreUtils.remove(params.dataStore, params.key, withdrawal.account());
         }
 
@@ -284,11 +288,7 @@ library ExecuteWithdrawalUtils {
             -cache.shortTokenPoolAmountDelta.toInt256()
         );
 
-        validateMaxLendableFactor(
-            params.dataStore,
-            market,
-            prices
-        );
+        validateMaxLendableFactor(params.dataStore, market, prices);
 
         MarketUtils.validateReserve(params.dataStore, market, prices, true);
 
@@ -333,8 +333,22 @@ library ExecuteWithdrawalUtils {
 
         // for multichain action, receiver is the multichainVault; increase user's multichain balances
         if (withdrawal.srcChainId() != 0) {
-            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, result.outputToken, withdrawal.receiver(), 0); // srcChainId is the current block.chainId
-            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, result.secondaryOutputToken, withdrawal.receiver(), 0); // srcChainId is the current block.chainId
+            MultichainUtils.recordTransferIn(
+                params.dataStore,
+                params.eventEmitter,
+                params.multichainVault,
+                result.outputToken,
+                withdrawal.receiver(),
+                0
+            ); // srcChainId is the current block.chainId
+            MultichainUtils.recordTransferIn(
+                params.dataStore,
+                params.eventEmitter,
+                params.multichainVault,
+                result.secondaryOutputToken,
+                withdrawal.receiver(),
+                0
+            ); // srcChainId is the current block.chainId
         }
 
         SwapPricingUtils.emitSwapFeesCollected(
@@ -463,12 +477,7 @@ library ExecuteWithdrawalUtils {
             marketTokensSupply
         );
 
-        return MarketUtils.getProportionalAmounts(
-            params.dataStore,
-            market,
-            prices,
-            withdrawalUsd
-        );
+        return MarketUtils.getProportionalAmounts(params.dataStore, market, prices, withdrawalUsd);
     }
 
     // note that if the maxLendableImpactFactorForWithdrawals is set too large
@@ -478,11 +487,15 @@ library ExecuteWithdrawalUtils {
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices
     ) internal view {
-        uint256 longTokenUsd = MarketUtils.getPoolAmount(dataStore, market, market.longToken)  * prices.longTokenPrice.min;
-        uint256 shortTokenUsd = MarketUtils.getPoolAmount(dataStore, market, market.shortToken)  * prices.shortTokenPrice.min;
+        uint256 longTokenUsd = MarketUtils.getPoolAmount(dataStore, market, market.longToken) *
+            prices.longTokenPrice.min;
+        uint256 shortTokenUsd = MarketUtils.getPoolAmount(dataStore, market, market.shortToken) *
+            prices.shortTokenPrice.min;
         uint256 poolUsd = longTokenUsd + shortTokenUsd;
 
-        uint256 maxLendableFactor = dataStore.getUint(Keys.maxLendableImpactFactorForWithdrawalsKey(market.marketToken));
+        uint256 maxLendableFactor = dataStore.getUint(
+            Keys.maxLendableImpactFactorForWithdrawalsKey(market.marketToken)
+        );
         uint256 maxLendableUsd = Precision.applyFactor(poolUsd, maxLendableFactor);
 
         uint256 lentAmount = dataStore.getUint(Keys.lentPositionImpactPoolAmountKey(market.marketToken));

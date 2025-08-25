@@ -167,7 +167,11 @@ library ShiftUtils {
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
         params.startingGas -= gasleft() / 63;
 
-        if (!skipRemoval) {
+        if (skipRemoval) {
+            if (params.dataStore.containsBytes32(Keys.SHIFT_LIST, params.key)) {
+                revert Errors.RemovalShouldNotBeSkipped(Keys.SHIFT_LIST, params.key);
+            }
+        } else {
             ShiftStoreUtils.remove(params.dataStore, params.key, shift.account());
         }
 

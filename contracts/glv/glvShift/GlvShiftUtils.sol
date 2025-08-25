@@ -62,7 +62,7 @@ library GlvShiftUtils {
         validateGlvShift(dataStore, params);
 
         GlvShift.Props memory glvShift = GlvShift.Props(
-            GlvShift.Addresses({glv: params.glv, fromMarket: params.fromMarket, toMarket: params.toMarket}),
+            GlvShift.Addresses({ glv: params.glv, fromMarket: params.fromMarket, toMarket: params.toMarket }),
             GlvShift.Numbers({
                 marketTokenAmount: params.marketTokenAmount,
                 minMarketTokens: params.minMarketTokens,
@@ -79,10 +79,7 @@ library GlvShiftUtils {
         return key;
     }
 
-    function validateGlvShift(
-        DataStore dataStore,
-        CreateGlvShiftParams memory params
-    ) internal view {
+    function validateGlvShift(DataStore dataStore, CreateGlvShiftParams memory params) internal view {
         GlvUtils.validateGlv(dataStore, params.glv);
         GlvUtils.validateGlvMarket(dataStore, params.glv, params.fromMarket, false);
         GlvUtils.validateGlvMarket(dataStore, params.glv, params.toMarket, true);
@@ -124,7 +121,11 @@ library GlvShiftUtils {
         GlvShift.Props memory glvShift,
         bool skipRemoval
     ) external returns (uint256) {
-        if (!skipRemoval) {
+        if (skipRemoval) {
+            if (params.dataStore.containsBytes32(Keys.GLV_SHIFT_LIST, params.key)) {
+                revert Errors.RemovalShouldNotBeSkipped(Keys.GLV_SHIFT_LIST, params.key);
+            }
+        } else {
             GlvShiftStoreUtils.remove(params.dataStore, params.key);
         }
 
@@ -173,7 +174,6 @@ library GlvShiftUtils {
             swapHandler: params.swapHandler,
             key: cache.shiftKey,
             keeper: params.keeper,
-
             // executionFee is not used for GlvShift's
             // pass gasleft() not to break startGas calculations inside ShiftUtils
             startingGas: gasleft()

@@ -85,7 +85,11 @@ library ExecuteDepositUtils {
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
         params.startingGas -= gasleft() / 63;
 
-        if (!skipRemoval) {
+        if (skipRemoval) {
+            if (params.dataStore.containsBytes32(Keys.DEPOSIT_LIST, params.key)) {
+               revert Errors.RemovalShouldNotBeSkipped(Keys.DEPOSIT_LIST, params.key);
+            }
+        } else {
             DepositStoreUtils.remove(params.dataStore, params.key, deposit.account());
         }
 

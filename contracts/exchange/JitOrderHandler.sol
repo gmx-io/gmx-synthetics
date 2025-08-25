@@ -68,7 +68,7 @@ contract JitOrderHandler is IJitOrderHandler, BaseOrderHandler, ReentrancyGuard 
         // use gasleft() instead of startingGas to account for gas spent on GLV shifts
         GasUtils.validateExecutionGas(dataStore, gasleft(), estimatedGasLimit);
 
-        orderHandler.executeOrderForController(
+        orderHandler.executeOrderFromController(
             orderKey,
             order,
             startingGas,
@@ -90,7 +90,7 @@ contract JitOrderHandler is IJitOrderHandler, BaseOrderHandler, ReentrancyGuard 
 
         _processShifts(_dataStore, shiftParamsList, order, orderKey);
 
-        orderHandler.executeOrderForController(
+        orderHandler.executeOrderFromController(
             orderKey,
             order,
             startingGas,
