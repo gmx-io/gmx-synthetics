@@ -94,6 +94,7 @@ describe("Jit", () => {
 
     await createOrder(fixture, orderParams);
 
+    // test simulation
     await executeJitOrder(fixture, {
       gasUsageLabel: "executeOrder",
       glvShifts: [
@@ -118,6 +119,51 @@ describe("Jit", () => {
     expect(await getGlvShiftCount(dataStore)).eq(0);
 
     // and liquidity was shifted
+    await expectBalances({
+      [ethUsdGlvAddress]: {
+        [ethUsdMarket.marketToken]: expandDecimals(12_000, 18),
+        [solUsdMarket.marketToken]: expandDecimals(8_000, 18),
+      },
+    });
+  });
+
+  it("multiple glv shifts", async () => {
+    await handleGlvDeposit(fixture, {
+      create: {
+        glv: ethUsdGlvAddress,
+        longTokenAmount: expandDecimals(1, 18),
+        shortTokenAmount: expandDecimals(5_000, 6),
+      },
+    });
+
+    await handleGlvDeposit(fixture, {
+      create: {
+        glv: ethUsdGlvAddress,
+        longTokenAmount: expandDecimals(1, 18),
+        shortTokenAmount: expandDecimals(5_000, 6),
+        market: solUsdMarket,
+      },
+    });
+
+    await expectBalances({
+      [ethUsdGlvAddress]: {
+        [ethUsdMarket.marketToken]: expandDecimals(10_000, 18),
+        [solUsdMarket.marketToken]: expandDecimals(10_000, 18),
+      },
+    });
+
+    await createOrder(fixture, orderParams);
+    expect(await getOrderCount(dataStore)).eq(1);
+
+    const { logs } = await executeJitOrder(fixture, {
+      gasUsageLabel: "executeOrder",
+      glvShifts: [{ marketTokenAmount: expandDecimals(1000, 18) }, { marketTokenAmount: expandDecimals(1000, 18) }],
+    } as Parameters<typeof executeJitOrder>[1]);
+    expect(await getOrderCount(dataStore)).eq(0);
+
+    const glvShiftExecutedLogs = logs.filter((log) => log.parsedEventInfo?.eventName === "GlvShiftExecuted");
+    expect(glvShiftExecutedLogs.length).eq(2);
+
     await expectBalances({
       [ethUsdGlvAddress]: {
         [ethUsdMarket.marketToken]: expandDecimals(12_000, 18),
