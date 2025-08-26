@@ -163,6 +163,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     arbitrumSepolia: {
       maxAutoCancelOrders: 11,
       maxTotalCallbackGasLimitForAutoCancelOrders: 10_000_000,
+      claimableCollateralDelay: 24 * 60 * 60,
       multichainProviders: {
         "0x6fddB6270F6c71f31B62AE0260cfa8E2e2d186E0": true, // StargatePoolNative
         "0x543BdA7c6cA4384FE90B1F5929bb851F52888983": true, // StargatePoolUSDC
