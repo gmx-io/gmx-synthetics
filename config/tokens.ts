@@ -1250,7 +1250,7 @@ const config: {
       priceFeed: {
         address: "0xd30e2101a97dcbAeBCBC04F14C3f624E67A35165", // ETH / USD
         decimals: 8,
-        heartbeatDuration: 72 * 60 * 60,
+        heartbeatDuration: 144 * 60 * 60,
       },
     },
     CRV: {
@@ -1269,7 +1269,7 @@ const config: {
       priceFeed: {
         address: "0x56a43EB56Da12C0dc1D972ACb089c06a5dEF8e69",
         decimals: 8,
-        heartbeatDuration: 72 * 60 * 60,
+        heartbeatDuration: 144 * 60 * 60,
       },
     },
     "USDC.SG": {
@@ -1281,7 +1281,7 @@ const config: {
       priceFeed: {
         address: "0x0153002d20B96532C639313c2d54c3dA09109309", // Circle USDC
         decimals: 8,
-        heartbeatDuration: 72 * 60 * 60,
+        heartbeatDuration: 144 * 60 * 60,
         stablePrice: decimalToFloat(1),
       },
     },
