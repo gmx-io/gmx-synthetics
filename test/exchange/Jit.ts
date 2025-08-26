@@ -101,6 +101,16 @@ describe("Jit", () => {
           marketTokenAmount: expandDecimals(1999, 18),
         },
       ],
+      simulate: true,
+    } as Parameters<typeof executeJitOrder>[1]);
+
+    await executeJitOrder(fixture, {
+      gasUsageLabel: "executeOrder",
+      glvShifts: [
+        {
+          marketTokenAmount: expandDecimals(1999, 18),
+        },
+      ],
     } as Parameters<typeof executeJitOrder>[1]);
 
     // order was executed

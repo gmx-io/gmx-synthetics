@@ -83,7 +83,6 @@ export async function executeJitOrder(
     oracleBlockNumber = oracleBlockNumber.add(oracleBlockNumberOffset);
   }
 
-  const method = overrides.simulate ? "simulateexecuteJitOrder" : "executeJitOrder";
   const params = {
     args: [glvShiftParamsList, orderKey],
     oracleBlockNumber,
@@ -92,7 +91,8 @@ export async function executeJitOrder(
     minPrices,
     maxPrices,
     simulate: overrides.simulate,
-    execute: jitOrderHandler.connect(sender)[method],
+    execute: jitOrderHandler.connect(sender).executeJitOrder,
+    simulateExecute: jitOrderHandler.connect(sender).simulateExecuteJitOrder,
     gasUsageLabel,
     oracleBlocks,
     minOracleBlockNumbers,
@@ -105,6 +105,11 @@ export async function executeJitOrder(
   };
 
   const txReceipt = await executeWithOracleParams(fixture, params);
+
+  if (overrides.simulate) {
+    return;
+  }
+
   const logs = parseLogs(fixture, txReceipt);
   const cancellationReason = await getCancellationReason({
     logs,
