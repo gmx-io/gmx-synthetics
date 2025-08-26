@@ -4196,32 +4196,35 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:BTC/USD"),
 
       ...singleTokenMarketConfig,
-      ...fundingRateConfig_SingleToken,
-      ...borrowingRateConfig_HighMax_WithLowerBase,
+      positionFeeFactorForNegativeImpact: percentageToFloat("0.06%"),
+      positionFeeFactorForPositiveImpact: percentageToFloat("0.04%"),
+      minCollateralUsd: decimalToFloat(1, 0), // 1 USD
+      ...fundingRateConfig_Low,
+      ...borrowingRateConfig_LowMax_WithLowerBase,
+
+      positionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactFactor: exponentToFloat("3e-10"),
+      positivePositionImpactFactor: exponentToFloat("2.5e-10"),
+
+      positiveMaxPositionImpactFactor: percentageToFloat("0.5%"),
+      negativeMaxPositionImpactFactor: percentageToFloat("0.5%"),
+      maxPositionImpactFactorForLiquidations: bigNumberify(0), // 0%
 
       reserveFactor: percentageToFloat("105%"),
       openInterestReserveFactor: percentageToFloat("100%"),
-
-      maxLongTokenPoolAmount: expandDecimals(1, 18),
-      maxShortTokenPoolAmount: expandDecimals(1, 18),
-
-      maxPoolUsdForDeposit: decimalToFloat(1000),
-
-      positionImpactExponentFactor: exponentToFloat("1e0"),
-      negativePositionImpactFactor: exponentToFloat("2e-15"),
-      positivePositionImpactFactor: exponentToFloat("1e-15"),
+      maxPnlFactorForTraders: percentageToFloat("90%"),
 
       positionImpactPoolDistributionRate: bigNumberify(0),
       minPositionImpactPoolAmount: bigNumberify(0),
 
       minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.78e-9"),
 
-      // minCollateralFactor of 0.005 (0.5%) when open interest is 83,000,000 USD
-      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6e-11"),
+      maxOpenInterest: decimalToFloat(2_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(3_000_000), // 1.5x max open interest
 
-      maxOpenInterest: decimalToFloat(1000),
-
-      isDisabled: true,
+      maxLongTokenPoolAmount: expandDecimals(36, 18), // ~4M USD (2x max open interest)
+      maxShortTokenPoolAmount: expandDecimals(36, 18), // ~4M USD (2x max open interest)
     },
     {
       tokens: { indexToken: "BTC", longToken: "stBTC", shortToken: "stBTC" },

@@ -588,8 +588,8 @@ const recommendedMarketConfig = {
   },
   botanix: {
     "BTC:pBTC:pBTC": {
-      negativePositionImpactFactor: 0,
-      expectedPositionImpactRatio: 10_000,
+      negativePositionImpactFactor: exponentToFloat("3e-10"),
+      expectedPositionImpactRatio: 12_000,
     },
     "BTC:stBTC:stBTC": {
       negativePositionImpactFactor: 0,
