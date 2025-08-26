@@ -14,6 +14,7 @@ struct RateLimitExemptAddress {
     address addr;
     bool isExempt;
 }
+
 interface IOverridableInboundRatelimit {
     error InputLengthMismatch(uint256 addressOrGUIDLength, uint256 overridableLength); // 0x6b7f6f0e
 
@@ -26,6 +27,7 @@ interface IOverridableInboundRatelimit {
     /// Storage Variables
     /// ------------------------------------------------------------------------------
     function exemptAddresses(address addr) external view returns (bool isExempt);
+
     function guidOverrides(bytes32 guid) external view returns (bool canOverride);
 
     /*
@@ -52,6 +54,7 @@ interface IOverridableInboundRatelimit {
      */
     function modifyOverridableGUIDs(bytes32[] calldata guids, bool canOverride) external;
 }
+
 /**
  * @title MintBurnOFTAdapter Contract
  * @author LayerZero Labs (@shankars99)
@@ -72,7 +75,7 @@ contract MockGMX_Adapter is MintBurnOFTAdapter, RateLimiter, IOverridableInbound
         IMintableBurnable _minterBurner,
         address _lzEndpoint,
         address _delegate
-    ) MintBurnOFTAdapter(_token, _minterBurner, _lzEndpoint, _delegate) {
+    ) MintBurnOFTAdapter(_token, _minterBurner, _lzEndpoint, _delegate) Ownable() {
         _setRateLimits(_rateLimitConfigs);
     }
 
@@ -129,12 +132,19 @@ contract MockGMX_Adapter is MintBurnOFTAdapter, RateLimiter, IOverridableInbound
         uint256 _minAmountLD,
         uint32 _dstEid
     ) internal virtual override returns (uint256 amountSentLD, uint256 amountReceivedLD) {
-        /// @dev The original layerzero rate limiter is an outbound rate limit.
-        /// @dev A unidirectional graph can be inverted by swapping the inflow and outflow functions.
-        /// @dev This makes the rate limiter an inbound rate limit.
-        super._inflow(_dstEid, _amountLD);
+        /// @dev amountSentLD is amountLD with dust removed
+        /// @dev amountReceivedLD is amountSentLD with other token amount changes such as fee, etc.
+        /// @dev GMX does not have any "changes" and so the following is true:
+        ///         amountSentLD = amountReceivedLD
+        (amountSentLD, amountReceivedLD) = super._debit(_from, _amountLD, _minAmountLD, _dstEid);
 
-        return super._debit(_from, _amountLD, _minAmountLD, _dstEid);
+        /// @dev If the sender is an exemptAddress (FeeDistributor) then we do NOT refill the rate limiter.
+        if (!exemptAddresses[msg.sender]) {
+            /// @dev The original layerzero rate limiter is an outbound rate limit.
+            /// @dev A unidirectional graph can be inverted by swapping the inflow and outflow functions.
+            /// @dev This makes the rate limiter an inbound rate limit.
+            super._inflow(_dstEid, amountReceivedLD);
+        }
     }
 
     /**
