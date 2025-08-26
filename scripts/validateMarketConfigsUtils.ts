@@ -492,6 +492,16 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 12_000,
     },
+    AERO: {
+      negativePositionImpactFactor: exponentToFloat("2.43e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    BRETT: {
+      negativePositionImpactFactor: exponentToFloat("2.69e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
     ALGO: {
       negativePositionImpactFactor: exponentToFloat("1.47e-8"),
       expectedSwapImpactRatio: 20_000,

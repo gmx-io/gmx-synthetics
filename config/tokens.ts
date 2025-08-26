@@ -856,6 +856,20 @@ const config: {
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },
+    AERO: {
+      synthetic: true,
+      decimals: 18, // https://basescan.org/token/0x940181a94a35a4569e4529a3cdfb74e38fd98631#readContract
+      dataStreamFeedId: "0x00038458999fd77d9deece17154ee687193b328cf7a53670501dd8ccad906ff6",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    BRETT: {
+      synthetic: true,
+      decimals: 18, // https://basescan.org/token/0x532f27101965dd16442e59d40670faf5ebb142e4#readContract
+      dataStreamFeedId: "0x00033e321855f7cbfa1da803f4b6b0b06fb28d15e1a8d8132accaf8ffdfd81ed",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
     AAVE: {
       address: "0xba5ddd1f9d7f570dc94a51479a000e3bce967196",
       decimals: 18,
