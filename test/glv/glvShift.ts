@@ -489,7 +489,7 @@ describe("Glv Shifts", () => {
       });
     });
 
-    it("GlvShiftMaxPriceImpactExceeded", async () => {
+    it("GlvShiftMaxLossExceeded", async () => {
       // make first pool imbalanced
       await handleGlvDeposit(fixture, {
         create: {
@@ -518,7 +518,7 @@ describe("Glv Shifts", () => {
         },
         execute: {
           expectedCancellationReason: {
-            name: "GlvShiftMaxPriceImpactExceeded",
+            name: "GlvShiftMaxLossExceeded",
 
             // 0.1%
             args: [decimalToFloat(1, 3), 0],
@@ -526,7 +526,7 @@ describe("Glv Shifts", () => {
         },
       });
 
-      await dataStore.setUint(keys.glvShiftMaxPriceImpactFactorKey(ethUsdGlvAddress), decimalToFloat(9, 4)); // 0.09%
+      await dataStore.setUint(keys.glvShiftMaxLossFactorKey(ethUsdGlvAddress), decimalToFloat(9, 4)); // 0.09%
       await handleGlvShift(fixture, {
         create: {
           fromMarket: ethUsdMarket,
@@ -535,7 +535,7 @@ describe("Glv Shifts", () => {
         },
         execute: {
           expectedCancellationReason: {
-            name: "GlvShiftMaxPriceImpactExceeded",
+            name: "GlvShiftMaxLossExceeded",
 
             // 0.1%
             args: [decimalToFloat(1, 3), decimalToFloat(9, 4)],
@@ -543,7 +543,7 @@ describe("Glv Shifts", () => {
         },
       });
 
-      await dataStore.setUint(keys.glvShiftMaxPriceImpactFactorKey(ethUsdGlvAddress), decimalToFloat(1, 3)); // 0.1%
+      await dataStore.setUint(keys.glvShiftMaxLossFactorKey(ethUsdGlvAddress), decimalToFloat(1, 3)); // 0.1%
       await handleGlvShift(fixture, {
         create: {
           fromMarket: ethUsdMarket,
@@ -561,7 +561,7 @@ describe("Glv Shifts", () => {
       });
 
       // positive impact is always allowed
-      await dataStore.setUint(keys.glvShiftMaxPriceImpactFactorKey(ethUsdGlvAddress), 0);
+      await dataStore.setUint(keys.glvShiftMaxLossFactorKey(ethUsdGlvAddress), 0);
       await handleGlvShift(fixture, {
         create: {
           fromMarket: ethUsdMarket,

@@ -22,7 +22,7 @@ describe("Jit", () => {
     ({ dataStore, ethUsdMarket, solUsdMarket, ethUsdGlvAddress, wnt, jitOrderHandler } = fixture.contracts);
     ({ executionFee } = fixture.props);
 
-    await dataStore.setUint(keys.glvShiftMaxPriceImpactFactorKey(ethUsdGlvAddress), decimalToFloat(1, 2)); // 1%
+    await dataStore.setUint(keys.glvShiftMaxLossFactorKey(ethUsdGlvAddress), decimalToFloat(1, 2)); // 1%
     await dataStore.setUint(keys.reserveFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(1, 0)); // 100%
     await dataStore.setUint(keys.reserveFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 0)); // 100%
     await dataStore.setUint(keys.reserveFactorKey(solUsdMarket.marketToken, true), decimalToFloat(1, 0)); // 100%

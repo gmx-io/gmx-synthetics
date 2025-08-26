@@ -265,7 +265,7 @@ export const SUBACCOUNT_INTEGRATION_DISABLED = hashString("SUBACCOUNT_INTEGRATIO
 export const GLV_SUPPORTED_MARKET_LIST = hashString("GLV_SUPPORTED_MARKET_LIST");
 export const MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT = hashString("MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT");
 
-export const GLV_SHIFT_MAX_PRICE_IMPACT_FACTOR = hashString("GLV_SHIFT_MAX_PRICE_IMPACT_FACTOR");
+export const GLV_SHIFT_MAX_LOSS_FACTOR = hashString("GLV_SHIFT_MAX_LOSS_FACTOR");
 export const GLV_MAX_MARKET_COUNT = hashString("GLV_MAX_MARKET_COUNT");
 export const GLV_MAX_MARKET_TOKEN_BALANCE_USD = hashString("GLV_MAX_MARKET_TOKEN_BALANCE_USD");
 export const GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT = hashString("GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT");
@@ -851,8 +851,8 @@ export function glvShiftMinIntervalKey(glv: string) {
   return hashData(["bytes32", "address"], [GLV_SHIFT_MIN_INTERVAL, glv]);
 }
 
-export function glvShiftMaxPriceImpactFactorKey(glv: string) {
-  return hashData(["bytes32", "address"], [GLV_SHIFT_MAX_PRICE_IMPACT_FACTOR, glv]);
+export function glvShiftMaxLossFactorKey(glv: string) {
+  return hashData(["bytes32", "address"], [GLV_SHIFT_MAX_LOSS_FACTOR, glv]);
 }
 
 export function isGlvMarketDisabledKey(glv: string, market: string) {

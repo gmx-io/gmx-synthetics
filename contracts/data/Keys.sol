@@ -451,7 +451,7 @@ library Keys {
     bytes32 public constant GLV_MAX_MARKET_TOKEN_BALANCE_USD = keccak256(abi.encode("GLV_MAX_MARKET_TOKEN_BALANCE_USD"));
     bytes32 public constant GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT = keccak256(abi.encode("GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT"));
     bytes32 public constant IS_GLV_MARKET_DISABLED = keccak256(abi.encode("IS_GLV_MARKET_DISABLED"));
-    bytes32 public constant GLV_SHIFT_MAX_PRICE_IMPACT_FACTOR = keccak256(abi.encode("GLV_SHIFT_MAX_PRICE_IMPACT_FACTOR"));
+    bytes32 public constant GLV_SHIFT_MAX_LOSS_FACTOR = keccak256(abi.encode("GLV_SHIFT_MAX_LOSS_FACTOR"));
     bytes32 public constant GLV_SHIFT_LAST_EXECUTED_AT = keccak256(abi.encode("GLV_SHIFT_LAST_EXECUTED_AT"));
     bytes32 public constant GLV_SHIFT_MIN_INTERVAL = keccak256(abi.encode("GLV_SHIFT_MIN_INTERVAL"));
     bytes32 public constant MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT = keccak256(abi.encode("MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT"));
@@ -2113,9 +2113,9 @@ library Keys {
 
     // @dev key for max allowed price impact for glv shifts
     // if effective price impact exceeds max price impact then glv shift fails
-    function glvShiftMaxPriceImpactFactorKey(address glv) internal pure returns (bytes32) {
+    function glvShiftMaxLossFactorKey(address glv) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            GLV_SHIFT_MAX_PRICE_IMPACT_FACTOR,
+            GLV_SHIFT_MAX_LOSS_FACTOR,
             glv
         ));
     }

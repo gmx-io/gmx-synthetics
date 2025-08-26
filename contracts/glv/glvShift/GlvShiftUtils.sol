@@ -267,14 +267,14 @@ library GlvShiftUtils {
             return;
         }
 
-        uint256 glvMaxShiftPriceImpactFactor = dataStore.getUint(Keys.glvShiftMaxPriceImpactFactorKey(glv));
+        uint256 glvMaxShiftPriceImpactFactor = dataStore.getUint(Keys.glvShiftMaxLossFactorKey(glv));
 
         uint256 effectivePriceImpactFactor = Precision.toFactor(
             marketTokensUsd - receivedMarketTokensUsd,
             marketTokensUsd
         );
         if (effectivePriceImpactFactor > glvMaxShiftPriceImpactFactor) {
-            revert Errors.GlvShiftMaxPriceImpactExceeded(effectivePriceImpactFactor, glvMaxShiftPriceImpactFactor);
+            revert Errors.GlvShiftMaxLossExceeded(effectivePriceImpactFactor, glvMaxShiftPriceImpactFactor);
         }
     }
 }
