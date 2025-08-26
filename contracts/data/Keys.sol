@@ -475,8 +475,8 @@ library Keys {
     bytes32 public constant CONTRIBUTOR_TOKEN_AMOUNT = keccak256(abi.encode("CONTRIBUTOR_TOKEN_AMOUNT"));
     // @dev key for the max total contributor token amount
     bytes32 public constant MAX_TOTAL_CONTRIBUTOR_TOKEN_AMOUNT = keccak256(abi.encode("MAX_TOTAL_CONTRIBUTOR_TOKEN_AMOUNT"));
-    // @dev key for the contributor token vault
-    bytes32 public constant CONTRIBUTOR_TOKEN_VAULT = keccak256(abi.encode("CONTRIBUTOR_TOKEN_VAULT"));
+    // @dev key for the contributor funding account
+    bytes32 public constant CONTRIBUTOR_FUNDING_ACCOUNT = keccak256(abi.encode("CONTRIBUTOR_FUNDING_ACCOUNT"));
     // @dev key for the contributor last payment at
     bytes32 public constant CONTRIBUTOR_LAST_PAYMENT_AT = keccak256(abi.encode("CONTRIBUTOR_LAST_PAYMENT_AT"));
     // @dev key for the min contributor payment interval
@@ -2215,12 +2215,12 @@ library Keys {
         ));
     }
 
-    // @dev key for the contributor token vault
+    // @dev key for the contributor funding account
     // @param token the contributor token
-    // @return key for the contributor token vault
-    function contributorTokenVaultKey(address token) internal pure returns (bytes32) {
+    // @return key for the contributor funding account
+    function contributorFundingAccountKey(address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            CONTRIBUTOR_TOKEN_VAULT,
+            CONTRIBUTOR_FUNDING_ACCOUNT,
             token
         ));
     }
