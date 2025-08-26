@@ -20,6 +20,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
   let user0, user1;
   let reader,
     dataStore,
+    orderHandler,
     orderVault,
     referralStorage,
     ethUsdMarket,
@@ -36,6 +37,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
     ({
       reader,
       dataStore,
+      orderHandler,
       orderVault,
       referralStorage,
       ethUsdMarket,
@@ -577,5 +579,12 @@ describe("Exchange.MarketIncreaseOrder", () => {
         expect(poolValueInfo.poolValue).eq(expandDecimals(19800, 30));
       }
     );
+  });
+
+  it("executeOrderFromController Unauthorized", async () => {
+    const emptyOrder = await reader.getOrder(dataStore.address, ethers.constants.HashZero);
+    await expect(
+      orderHandler.connect(user1).executeOrderFromController(ethers.constants.HashZero, emptyOrder, 0, 0, false)
+    ).to.be.revertedWithCustomError(errorsContract, "Unauthorized");
   });
 });
