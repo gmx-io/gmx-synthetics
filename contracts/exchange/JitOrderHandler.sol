@@ -82,7 +82,7 @@ contract JitOrderHandler is IJitOrderHandler, BaseOrderHandler, ReentrancyGuard 
         GlvShiftUtils.CreateGlvShiftParams[] memory shiftParamsList,
         bytes32 orderKey,
         OracleUtils.SimulatePricesParams memory oracleParams
-    ) external globalNonReentrant withSimulatedOraclePrices(oracleParams) {
+    ) external override globalNonReentrant withSimulatedOraclePrices(oracleParams) {
         uint256 startingGas = gasleft();
 
         DataStore _dataStore = dataStore;

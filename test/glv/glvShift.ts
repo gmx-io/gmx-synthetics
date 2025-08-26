@@ -24,6 +24,7 @@ describe("Glv Shifts", () => {
   const { provider } = ethers;
 
   let fixture;
+  let user1;
   let glvReader,
     dataStore,
     ethUsdMarket,
@@ -64,6 +65,8 @@ describe("Glv Shifts", () => {
       gmOracleProvider,
       oracle,
     } = fixture.contracts);
+
+    ({ user1 } = fixture.accounts);
   });
 
   it("create glv shift", async () => {
@@ -570,5 +573,27 @@ describe("Glv Shifts", () => {
         },
       });
     });
+  });
+
+  it("GlvShiftHandler.doExecuteGlvShift Unauthorized", async () => {
+    await expect(
+      glvShiftHandler.connect(user1).doExecuteGlvShift(
+        ethers.constants.HashZero,
+        {
+          addresses: {
+            fromMarket: ethUsdMarket.marketToken,
+            toMarket: solUsdMarket.marketToken,
+            glv: ethUsdGlvAddress,
+          },
+          numbers: {
+            marketTokenAmount: expandDecimals(1000, 18),
+            minMarketTokens: expandDecimals(1000, 18),
+            updatedAtTime: 123123,
+          },
+        },
+        ethers.constants.AddressZero,
+        false
+      )
+    ).to.be.revertedWithCustomError(errorsContract, "Unauthorized");
   });
 });
