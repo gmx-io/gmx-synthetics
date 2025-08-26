@@ -3070,11 +3070,11 @@ const config: {
 
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
-      maxOpenInterest: decimalToFloat(250_000),
-      maxPoolUsdForDeposit: decimalToFloat(720_000),
+      maxOpenInterest: decimalToFloat(500_000),
+      maxPoolUsdForDeposit: decimalToFloat(1_000_000),
 
       maxLongTokenPoolAmount: expandDecimals(285, 18),
-      maxShortTokenPoolAmount: expandDecimals(864_000, 6),
+      maxShortTokenPoolAmount: expandDecimals(1_200_000, 6),
     },
     {
       tokens: { indexToken: "ZRO", longToken: "WETH", shortToken: "USDC" },
