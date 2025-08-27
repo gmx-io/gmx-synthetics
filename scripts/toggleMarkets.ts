@@ -4,6 +4,11 @@ import { encodeData } from "../utils/hash";
 import { getMarketKey, getMarketTokenAddresses, getOnchainMarkets } from "../utils/market";
 import * as keys from "../utils/keys";
 
+/*
+partial toggle example:
+ENABLE_MARKET_KEY=0x1B9e25f54225bcdCf347569E38C41Ade9BB686e5:0x0D2437F93Fed6EA64Ef01cCde385FB1263910C56:0x0D2437F93Fed6EA64Ef01cCde385FB1263910C56 ACCOUNT_KEY_FILE=key.json npx hardhat --network botanix run scripts/toggleMarkets.ts
+*/
+
 async function toggleMarket({ config, multicallWriteParams, marketToken, marketNameFull, isDisabled }) {
   if (isDisabled) {
     console.log(`    disabling ${marketNameFull}`);
