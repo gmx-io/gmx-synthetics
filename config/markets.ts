@@ -4196,9 +4196,6 @@ const config: {
       virtualTokenIdForIndexToken: hashString("PERP:BTC/USD"),
 
       ...singleTokenMarketConfig,
-      positionFeeFactorForNegativeImpact: percentageToFloat("0.06%"),
-      positionFeeFactorForPositiveImpact: percentageToFloat("0.04%"),
-      minCollateralUsd: decimalToFloat(1, 0), // 1 USD
       ...fundingRateConfig_Low,
       ...borrowingRateConfig_LowMax_WithLowerBase,
 
@@ -4206,16 +4203,9 @@ const config: {
       negativePositionImpactFactor: exponentToFloat("3e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
 
-      positiveMaxPositionImpactFactor: percentageToFloat("0.5%"),
-      negativeMaxPositionImpactFactor: percentageToFloat("0.5%"),
-      maxPositionImpactFactorForLiquidations: bigNumberify(0), // 0%
-
       reserveFactor: percentageToFloat("105%"),
       openInterestReserveFactor: percentageToFloat("100%"),
       maxPnlFactorForTraders: percentageToFloat("90%"),
-
-      positionImpactPoolDistributionRate: bigNumberify(0),
-      minPositionImpactPoolAmount: bigNumberify(0),
 
       minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.78e-9"),
