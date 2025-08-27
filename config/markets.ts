@@ -2542,10 +2542,10 @@ const config: {
       maxPnlFactorForTraders: percentageToFloat("90%"), // default is 60%
 
       maxOpenInterest: decimalToFloat(3_000_000),
-      maxPoolUsdForDeposit: decimalToFloat(4_800_000),
+      maxPoolUsdForDeposit: decimalToFloat(6_300_000),
 
-      maxLongTokenPoolAmount: expandDecimals(1345, 18),
-      maxShortTokenPoolAmount: expandDecimals(5_760_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(1660, 18),
+      maxShortTokenPoolAmount: expandDecimals(7_560_000, 6),
 
       atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
@@ -3127,11 +3127,11 @@ const config: {
       openInterestReserveFactor: percentageToFloat("90%"), // default is 90%
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
-      maxOpenInterest: decimalToFloat(2_500_000),
-      maxPoolUsdForDeposit: decimalToFloat(3_500_000),
+      maxOpenInterest: decimalToFloat(3_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(4_750_000),
 
-      maxLongTokenPoolAmount: expandDecimals(1100, 18),
-      maxShortTokenPoolAmount: expandDecimals(4_200_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(1470, 18),
+      maxShortTokenPoolAmount: expandDecimals(5_700_000, 6),
     },
     {
       tokens: { indexToken: "MOODENG", longToken: "WBTC.e", shortToken: "USDC" },
