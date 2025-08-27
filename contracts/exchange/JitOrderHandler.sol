@@ -126,7 +126,8 @@ contract JitOrderHandler is IJitOrderHandler, BaseOrderHandler, ReentrancyGuard 
                 _dataStore,
                 shiftParamsList[i],
                 order.updatedAtTime(),
-                orderKey
+                orderKey,
+                i
             );
 
             glvShiftHandler.doExecuteGlvShift(
@@ -142,7 +143,8 @@ contract JitOrderHandler is IJitOrderHandler, BaseOrderHandler, ReentrancyGuard 
         DataStore _dataStore,
         GlvShiftUtils.CreateGlvShiftParams memory params,
         uint256 orderUpdatedAtTime,
-        bytes32 orderKey
+        bytes32 orderKey,
+        uint256 index
     ) internal returns (bytes32, GlvShift.Props memory) {
         GlvShiftUtils.validateGlvShift(_dataStore, params);
         GlvShift.Props memory glvShift = GlvShift.Props(
@@ -153,7 +155,7 @@ contract JitOrderHandler is IJitOrderHandler, BaseOrderHandler, ReentrancyGuard 
                 updatedAtTime: orderUpdatedAtTime
             })
         );
-        bytes32 glvShiftKey = keccak256(abi.encode(orderKey, "glvShift"));
+        bytes32 glvShiftKey = keccak256(abi.encode(orderKey, "glvShift", index));
         GlvShiftEventUtils.emitGlvShiftCreated(eventEmitter, glvShiftKey, glvShift);
 
         return (glvShiftKey, glvShift);
