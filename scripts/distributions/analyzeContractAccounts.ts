@@ -87,7 +87,7 @@ async function main() {
       process.stdout.write(`\rAnalyzing ${i + 1}/${accounts.length}...`);
 
       try {
-        const result = await hasEIP1271WithCheck(account.account, provider);
+        const result = await hasEIP1271(account.account, provider);
 
         // Check if contract has DOLOMITE_MARGIN function
         const hasDolomite = await hasDolomiteMargin(account.account, provider);
@@ -280,7 +280,7 @@ async function hasDolomiteMargin(address: string, provider: ethers.providers.Pro
   return false;
 }
 
-async function hasEIP1271WithCheck(
+async function hasEIP1271(
   address: string,
   provider: ethers.providers.Provider
 ): Promise<{ isSmartWallet: boolean; needsManualCheck: boolean }> {
@@ -301,40 +301,13 @@ async function hasEIP1271WithCheck(
     if (error.errorSignature && error.reason && !error.reason.includes("Function does not exist")) {
       // is flagging 7 out of 1700 addresses (5 SafeProxy, 2 unverified contracts)
       console.log(
-        `\nWARNING: isValidSignature call failed with signature error and reason "${error.reason}" for ${address}. Contract should be manually verified.\n`
+        `\nWARNING: isValidSignature call failed with signature error and reason "${error.reason}" for ${address}. Contract should be manually verified.`
       );
       return { isSmartWallet: false, needsManualCheck: true };
     }
   }
 
   return { isSmartWallet: false, needsManualCheck: false };
-}
-
-async function hasEIP1271(address: string, provider: ethers.providers.Provider): Promise<boolean> {
-  const EIP1271_ABI = [
-    "function isValidSignature(bytes32 hash, bytes memory signature) external view returns (bytes4)",
-  ];
-  const contract = new ethers.Contract(address, EIP1271_ABI, provider);
-
-  try {
-    const result = await contract.callStatic["isValidSignature(bytes32,bytes)"](messageHash, messageSignature);
-    // console.log(`${address} try --> call result: ${result}`);
-    if (validSignatureResponses.includes(result)) {
-      // is flagging 1036 out of 1700 addresses (returning 0x00000000 or 0xffffffff)
-      return true; // Valid EIP-1271 response
-    }
-    // If the function returned something else, it's likely a fallback function
-  } catch (error: any) {
-    if (error.errorSignature && error.reason && !error.reason.includes("Function does not exist")) {
-      // is flagging 7 out of 1700 addresses (5 SafeProxy, 2 unverified contracts)
-      console.log(
-        `\nWARNING: isValidSignature call failed with signature error and reason "${error.reason}" for ${address}. Contract should be manually verified.\n`
-      );
-      return false;
-    }
-  }
-
-  return false;
 }
 
 if (require.main === module) {
