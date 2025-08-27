@@ -42,6 +42,7 @@ library Errors {
     error InvalidPositionImpactPoolDistributionRate(uint256 distributionAmount, uint256 positionImpactPoolAmount);
     error MaxDataListLengthExceeded(uint256 dataLength, uint256 maxDataLength);
     error EmptyToken();
+    error OldVirtualMarketIdStillInUse(bytes32 vid, uint256 remainingCount);
 
     // ContributorHandler errors
     error InvalidSetContributorPaymentInput(uint256 tokensLength, uint256 amountsLength);

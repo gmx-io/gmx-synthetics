@@ -192,6 +192,12 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         );
     }
 
+    function setVirtualMarketIds(
+        ConfigUtils.SetVirtualMarketIdsParams[] memory params
+    ) external onlyConfigKeeper nonReentrant {
+        ConfigUtils.setVirtualMarketIds(dataStore, params);
+    }
+
     // @dev set a bool value
     // @param baseKey the base key of the value to set
     // @param data the additional data to be combined with the base key

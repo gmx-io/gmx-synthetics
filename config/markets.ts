@@ -696,7 +696,7 @@ const config: {
     {
       tokens: { indexToken: "XRP", longToken: "WETH", shortToken: "USDC" },
       virtualTokenIdForIndexToken: hashString("PERP:XRP/USD"),
-      virtualMarketId: hashString("SPOT:XRP/USD"),
+      virtualMarketId: hashString("SPOT:ETH/USD"),
 
       ...synthethicMarketConfig_IncreasedCapacity,
       ...fundingRateConfig_Default,
@@ -732,7 +732,7 @@ const config: {
     {
       tokens: { indexToken: "DOGE", longToken: "WETH", shortToken: "USDC" },
       virtualTokenIdForIndexToken: hashString("PERP:DOGE/USD"),
-      virtualMarketId: hashString("SPOT:DOGE/USD"),
+      virtualMarketId: hashString("SPOT:ETH/USD"),
 
       ...synthethicMarketConfig_IncreasedCapacity,
       ...fundingRateConfig_Default,
@@ -770,7 +770,7 @@ const config: {
     {
       tokens: { indexToken: "EIGEN", longToken: "WETH", shortToken: "USDC" },
       virtualTokenIdForIndexToken: hashString("PERP:EIGEN/USD"),
-      virtualMarketId: hashString("SPOT:WETH/USD"),
+      virtualMarketId: hashString("SPOT:ETH/USD"),
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
@@ -1054,7 +1054,7 @@ const config: {
     {
       tokens: { indexToken: "LTC", longToken: "WETH", shortToken: "USDC" },
       virtualTokenIdForIndexToken: hashString("PERP:LTC/USD"),
-      virtualMarketId: hashString("SPOT:LTC/USD"),
+      virtualMarketId: hashString("SPOT:ETH/USD"),
 
       ...syntheticMarketConfig,
       ...fundingRateConfig_Default,
@@ -3497,7 +3497,7 @@ const config: {
     {
       tokens: { indexToken: "XRP", longToken: "WAVAX", shortToken: "USDC" },
       virtualTokenIdForIndexToken: hashString("PERP:XRP/USD"),
-      virtualMarketId: hashString("SPOT:XRP/USD"),
+      virtualMarketId: hashString("SPOT:AVAX/USD"),
 
       ...syntheticMarketConfig,
 
@@ -3533,7 +3533,7 @@ const config: {
     {
       tokens: { indexToken: "DOGE", longToken: "WAVAX", shortToken: "USDC" },
       virtualTokenIdForIndexToken: hashString("PERP:DOGE/USD"),
-      virtualMarketId: hashString("SPOT:DOGE/USD"),
+      virtualMarketId: hashString("SPOT:AVAX/USD"),
 
       ...syntheticMarketConfig,
 
@@ -3602,7 +3602,7 @@ const config: {
     {
       tokens: { indexToken: "LTC", longToken: "WAVAX", shortToken: "USDC" },
       virtualTokenIdForIndexToken: hashString("PERP:LTC/USD"),
-      virtualMarketId: hashString("SPOT:LTC/USD"),
+      virtualMarketId: hashString("SPOT:AVAX/USD"),
 
       ...syntheticMarketConfig,
 
@@ -4201,7 +4201,7 @@ const config: {
     {
       ...baseMarketConfig,
       tokens: { indexToken: "WETH", longToken: "WETH", shortToken: "DAI" },
-      virtualMarketId: hashString("SPOT:AVAX/USD"),
+      virtualMarketId: hashString("SPOT:ETH/USD"),
       virtualTokenIdForIndexToken: "0x275d2a6e341e6a078d4eee59b08907d1e50825031c5481f9551284f4b7ee2fb9",
 
       negativeSwapImpactFactor: percentageToFloat("0.000001%"),
