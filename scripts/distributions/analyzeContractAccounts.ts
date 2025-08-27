@@ -79,19 +79,24 @@ async function main() {
     // Analyze each account
     const smartWallets: AccountInfo[] = [];
     const otherContracts: AccountInfo[] = [];
+    const needsManualCheck: AccountInfo[] = [];
 
     for (let i = 0; i < accounts.length; i++) {
       const account = accounts[i];
-      process.stdout.write(`\rAnalyzing ${i + 1}/${accounts.length}...`); // comment out progress if using tee scripts/distributions/out/distributions-logs.txt
+      // NOTE: comment out progress bar if using tee scripts/distributions/out/distributions-logs.txt
+      process.stdout.write(`\rAnalyzing ${i + 1}/${accounts.length}...`);
 
       try {
-        const isSmartWallet = await hasEIP1271(account.account, provider);
+        const result = await hasEIP1271WithCheck(account.account, provider);
 
         // Check if contract has DOLOMITE_MARGIN function
         const hasDolomite = await hasDolomiteMargin(account.account, provider);
         account.isDolomite = hasDolomite ? "yes" : "no";
 
-        if (isSmartWallet) {
+        if (result.needsManualCheck) {
+          account.isSmartContractWallet = "?";
+          needsManualCheck.push(account);
+        } else if (result.isSmartWallet) {
           account.isSmartContractWallet = "yes";
           smartWallets.push(account);
         } else {
@@ -100,10 +105,10 @@ async function main() {
         }
       } catch (error) {
         console.log(`Error analyzing ${account.account}:`, error);
-        // If analysis fails, assume it's a regular contract
-        account.isSmartContractWallet = "no";
+        // If analysis fails, mark for manual check
+        account.isSmartContractWallet = "?";
         account.isDolomite = "no";
-        otherContracts.push(account);
+        needsManualCheck.push(account);
       }
 
       // Small delay to avoid rate limiting
@@ -118,7 +123,8 @@ async function main() {
     reportContent += `### Analysis Results\n\n`;
 
     reportContent += `**Smart Wallets:** ${smartWallets.length} out of ${accounts.length} contracts\n`;
-    reportContent += `**Regular Contracts:** ${otherContracts.length} out of ${accounts.length} contracts\n\n`;
+    reportContent += `**Regular Contracts:** ${otherContracts.length} out of ${accounts.length} contracts\n`;
+    reportContent += `**Needs Manual Check:** ${needsManualCheck.length} out of ${accounts.length} contracts\n\n`;
 
     // Smart Wallets table
     if (smartWallets.length > 0) {
@@ -144,6 +150,21 @@ async function main() {
       for (const account of otherContracts) {
         const usd = parseFloat(account.distributionUsd || "0").toFixed(2);
         const isSmartContractWallet = "no";
+        const isDolomite = account.isDolomite || "-";
+        reportContent += `| ${account.account} | $${usd} | ${isSmartContractWallet} | ${isDolomite} |\n`;
+      }
+      reportContent += `\n`;
+    }
+
+    // Needs Manual Check table
+    if (needsManualCheck.length > 0) {
+      reportContent += `### Contracts Requiring Manual Verification\n\n`;
+      reportContent += `| Address | Distribution USD | isSmartContractWallet | isDolomite |\n`;
+      reportContent += `|---------|------------------|----------------------|------------|\n`;
+
+      for (const account of needsManualCheck) {
+        const usd = parseFloat(account.distributionUsd || "0").toFixed(2);
+        const isSmartContractWallet = "?";
         const isDolomite = account.isDolomite || "-";
         reportContent += `| ${account.account} | $${usd} | ${isSmartContractWallet} | ${isDolomite} |\n`;
       }
@@ -191,7 +212,7 @@ function generateOutputCSV(accounts: AccountInfo[]): string {
       account.distributionUsd || "0",
       account.duneEstimatedDistributionUsd || "",
       account.status || "",
-      account.isSmartContractWallet || "no",
+      account.isSmartContractWallet || "?",
       account.isDolomite || "no",
     ];
     csvContent += values.join(",") + "\n";
@@ -259,6 +280,36 @@ async function hasDolomiteMargin(address: string, provider: ethers.providers.Pro
   return false;
 }
 
+async function hasEIP1271WithCheck(
+  address: string,
+  provider: ethers.providers.Provider
+): Promise<{ isSmartWallet: boolean; needsManualCheck: boolean }> {
+  const EIP1271_ABI = [
+    "function isValidSignature(bytes32 hash, bytes memory signature) external view returns (bytes4)",
+  ];
+  const contract = new ethers.Contract(address, EIP1271_ABI, provider);
+
+  try {
+    const result = await contract.callStatic["isValidSignature(bytes32,bytes)"](messageHash, messageSignature);
+    // console.log(`${address} try --> call result: ${result}`);
+    if (validSignatureResponses.includes(result)) {
+      // is flagging 1036 out of 1700 addresses (returning 0x00000000 or 0xffffffff)
+      return { isSmartWallet: true, needsManualCheck: false }; // Valid EIP-1271 response
+    }
+    // If the function returned something else, it's likely a fallback function
+  } catch (error: any) {
+    if (error.errorSignature && error.reason && !error.reason.includes("Function does not exist")) {
+      // is flagging 7 out of 1700 addresses (5 SafeProxy, 2 unverified contracts)
+      console.log(
+        `\nWARNING: isValidSignature call failed with signature error and reason "${error.reason}" for ${address}. Contract should be manually verified.\n`
+      );
+      return { isSmartWallet: false, needsManualCheck: true };
+    }
+  }
+
+  return { isSmartWallet: false, needsManualCheck: false };
+}
+
 async function hasEIP1271(address: string, provider: ethers.providers.Provider): Promise<boolean> {
   const EIP1271_ABI = [
     "function isValidSignature(bytes32 hash, bytes memory signature) external view returns (bytes4)",
@@ -277,7 +328,7 @@ async function hasEIP1271(address: string, provider: ethers.providers.Provider):
     if (error.errorSignature && error.reason && !error.reason.includes("Function does not exist")) {
       // is flagging 7 out of 1700 addresses (5 SafeProxy, 2 unverified contracts)
       console.log(
-        `WARNING: isValidSignature call failed with signature error "${error.errorSignature}" for ${address}. Contract should be manually verified.`
+        `\nWARNING: isValidSignature call failed with signature error and reason "${error.reason}" for ${address}. Contract should be manually verified.\n`
       );
       return false;
     }
