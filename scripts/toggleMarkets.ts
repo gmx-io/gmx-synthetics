@@ -36,6 +36,19 @@ export async function main() {
   for (const marketConfig of markets) {
     const [indexToken, longToken, shortToken] = getMarketTokenAddresses(marketConfig, tokens);
     const marketKey = getMarketKey(indexToken, longToken, shortToken);
+
+    const shouldSkip =
+      (process.env.ENABLE_MARKET_KEY && process.env.ENABLE_MARKET_KEY !== marketKey) ||
+      (process.env.DISABLE_MARKET_KEY && process.env.DISABLE_MARKET_KEY !== marketKey);
+
+    if (shouldSkip) {
+      console.log(`skipping ${marketKey}`);
+      continue;
+    }
+
+    const shouldEnable = process.env.ENABLE_ALL || process.env.ENABLE_MARKET_KEY === marketKey;
+    const shouldDisable = process.env.DISABLE_ALL || process.env.DISABLE_MARKET_KEY === marketKey;
+
     const onchainMarket = onchainMarketsByTokens[marketKey];
     const marketToken = onchainMarket.marketToken;
 
@@ -45,7 +58,7 @@ export async function main() {
 
     const toggleMarketParams = { config, multicallWriteParams, marketToken, marketNameFull };
 
-    if (process.env.ENABLE_ALL) {
+    if (shouldEnable) {
       if (marketConfig.isDisabled) {
         console.warn(`    WARNING: ${marketNameFull} has isDisabled set to true, skipping market`);
         continue;
@@ -55,7 +68,7 @@ export async function main() {
       continue;
     }
 
-    if (process.env.DISABLE_ALL) {
+    if (shouldDisable) {
       console.log(`disabling ${marketNameFull}`);
       await toggleMarket({ ...toggleMarketParams, isDisabled: true });
       continue;
