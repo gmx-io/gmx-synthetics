@@ -806,6 +806,76 @@ const config: {
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },
+    ALGO: {
+      synthetic: true,
+      decimals: 6, // https://explorer.perawallet.app/asset/0/
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003b864d7f86b46f63afba8359e86436fe57c99dfbbe260848c9caef6565892",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    HBAR: {
+      synthetic: true,
+      decimals: 8, // https://docs.hedera.com/hedera/core-concepts/smart-contracts/understanding-hederas-evm-differences-and-compatibility/for-evm-developers-migrating-to-hedera/decimal-handling-8-vs.-18-decimals
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x000368f5793785d9a20180f5137a05a558b2518ac13e6c77a93b97670da207c9",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    CRO: {
+      synthetic: true,
+      decimals: 8, // https://etherscan.io/token/0xa0b73e1ff0b80914ab6fe0444e65848c4c34450b#readContract
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x000329810dcc8c4557e19e34d42cbfa3ac7e85ddb465ff22b66abe06f4bbbcbb",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0xea320E4d688B143A3bFBF1b4a5cc4B986fCa086c",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+    },
+    CVX: {
+      synthetic: true,
+      decimals: 18, // https://etherscan.io/token/0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b#readContract
+      dataStreamFeedId: "0x0003e95ca25588986a3611cf132be9635d86f16636f2f561b932c0087a7f5c34",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x851175a919f36c8e30197c09a9A49dA932c2CC00",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+    },
+    KAS: {
+      synthetic: true,
+      decimals: 8, // https://etherscan.io/address/0x112b08621e27e10773ec95d250604a041f36c582#readContract
+      dataStreamFeedId: "0x0003c871148642ab1e886f06d203b1c1e7933b51b7e4064ea11529a4262566d3",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    OKB: {
+      synthetic: true,
+      decimals: 18, // https://etherscan.io/token/0x75231f58b43240c9718dd58b4967c5114342a86c#readProxyContract
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003d2d8fef8271831e3245a1d00553e217e4d71a7a1468c7f327173a758c74f",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    AERO: {
+      synthetic: true,
+      decimals: 18, // https://basescan.org/token/0x940181a94a35a4569e4529a3cdfb74e38fd98631#readContract
+      dataStreamFeedId: "0x00038458999fd77d9deece17154ee687193b328cf7a53670501dd8ccad906ff6",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    BRETT: {
+      synthetic: true,
+      decimals: 18, // https://basescan.org/token/0x532f27101965dd16442e59d40670faf5ebb142e4#readContract
+      dataStreamFeedId: "0x00033e321855f7cbfa1da803f4b6b0b06fb28d15e1a8d8132accaf8ffdfd81ed",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
     AAVE: {
       address: "0xba5ddd1f9d7f570dc94a51479a000e3bce967196",
       decimals: 18,
@@ -1250,7 +1320,7 @@ const config: {
       priceFeed: {
         address: "0xd30e2101a97dcbAeBCBC04F14C3f624E67A35165", // ETH / USD
         decimals: 8,
-        heartbeatDuration: (24 + 1) * 60 * 60,
+        heartbeatDuration: 144 * 60 * 60,
       },
     },
     CRV: {
@@ -1269,7 +1339,7 @@ const config: {
       priceFeed: {
         address: "0x56a43EB56Da12C0dc1D972ACb089c06a5dEF8e69",
         decimals: 8,
-        heartbeatDuration: (24 + 1) * 60 * 60,
+        heartbeatDuration: 144 * 60 * 60,
       },
     },
     "USDC.SG": {
@@ -1281,7 +1351,7 @@ const config: {
       priceFeed: {
         address: "0x0153002d20B96532C639313c2d54c3dA09109309", // Circle USDC
         decimals: 8,
-        heartbeatDuration: (24 + 1) * 60 * 60,
+        heartbeatDuration: 144 * 60 * 60,
         stablePrice: decimalToFloat(1),
       },
     },
@@ -1613,7 +1683,7 @@ const config: {
   },
 };
 
-export default async function (hre: HardhatRuntimeEnvironment): Promise<TokensConfig> {
+function getTokens(hre: HardhatRuntimeEnvironment) {
   const tokens = config[hre.network.name];
 
   for (const [tokenSymbol, token] of Object.entries(tokens as TokensConfig)) {
@@ -1638,4 +1708,22 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<TokensCo
   }
 
   return tokens;
+}
+
+// note that this will not return tokens that are deployed at runtime
+export async function tokenByAddress(hre: HardhatRuntimeEnvironment) {
+  const tokens = getTokens(hre);
+  const map = {};
+
+  for (const token of Object.values(tokens as TokensConfig)) {
+    if (token.address) {
+      map[token.address] = token;
+    }
+  }
+
+  return;
+}
+
+export default async function (hre: HardhatRuntimeEnvironment): Promise<TokensConfig> {
+  return getTokens(hre);
 }

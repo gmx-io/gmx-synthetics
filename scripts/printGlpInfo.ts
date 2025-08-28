@@ -126,6 +126,8 @@ async function getSummary(file) {
   console.log(`${file.name} shares in top 400: ${ethers.utils.formatUnits(sharesInTop["400"], PRECISION)}`);
   console.log(`${file.name} shares in top 500: ${ethers.utils.formatUnits(sharesInTop["500"], PRECISION)}`);
 
+  await saveCsvFile(`${__dirname}/distributions/out/${file.name}.csv`, infoRows);
+
   return { sharesInFile, glpInFile, infoRows, distributionRows };
 }
 

@@ -179,8 +179,8 @@ const config: HardhatUserConfig = {
       saveDeployments: true,
       allowUnlimitedContractSize: true,
       // forking: {
-      //   url: `https://rpc.ankr.com/avalanche`,
-      //   blockNumber: 33963320,
+      //   url: getRpcUrl("arbitrum"),
+      //   blockNumber: 370370866,
       // },
     },
     localhost: {

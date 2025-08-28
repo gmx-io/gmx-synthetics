@@ -44,8 +44,8 @@ describe("ContributorHandler", () => {
     await contributorHandler.addContributorToken(gmx.address);
     await contributorHandler.addContributorToken(usdc.address);
 
-    await contributorHandler.setContributorTokenVault(gmx.address, user6.address);
-    await contributorHandler.setContributorTokenVault(usdc.address, user7.address);
+    await contributorHandler.setContributorFundingAccount(gmx.address, user6.address);
+    await contributorHandler.setContributorFundingAccount(usdc.address, user7.address);
 
     await contributorHandler.setMinContributorPaymentInterval(daysInSeconds(28));
 
@@ -118,7 +118,7 @@ describe("ContributorHandler", () => {
     );
 
     await expect(
-      contributorHandler.connect(user8).setContributorTokenVault(usdc.address, wallet.address)
+      contributorHandler.connect(user8).setContributorFundingAccount(usdc.address, wallet.address)
     ).to.be.revertedWithCustomError(errorsContract, "Unauthorized", "CONTRIBUTOR_KEEPER");
 
     await expect(
@@ -205,7 +205,7 @@ describe("ContributorHandler", () => {
     );
   });
 
-  it("sendPayments() can only be executed after min payment interval, vault approvals and by CONTRIBUTOR_DISTRIBUTOR", async function () {
+  it("sendPayments() can only be executed after min payment interval, funding account approvals and by CONTRIBUTOR_DISTRIBUTOR", async function () {
     const block = await ethers.provider.getBlock("latest");
     await dataStore.setUint(CONTRIBUTOR_LAST_PAYMENT_AT, block.timestamp);
 
