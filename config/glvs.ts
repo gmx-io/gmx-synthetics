@@ -35,6 +35,7 @@ function createGlvMarketConfig(
     indexToken: tokenSymbol,
     glvMaxMarketTokenBalanceAmount: numberToBigNumber(usdCap / tokenPrice, 18),
     glvMaxMarketTokenBalanceUsd: numberToBigNumber(usdCap, 30),
+    isMarketDisabled: false,
   };
 }
 
