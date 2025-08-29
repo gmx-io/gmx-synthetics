@@ -6,6 +6,8 @@ import hre from "hardhat";
 /*
 Usage:
 npx hardhat --network arbitrum run scripts/distributions/analyzeContractAccounts.ts | tee scripts/distributions/out/distributions-logs.txt
+OR
+FILEPATH=./scripts/data/distributions.csv npx hardhat --network arbitrum run scripts/distributions/analyzeContractAccounts.ts | tee scripts/distributions/out/distributions-logs.txt
 
 Environment variables:
 - SAMPLE_SIZE: Number of accounts to analyze (default: analyze all)
@@ -14,8 +16,14 @@ Environment variables:
 This script analyzes the CONTRACT CSV files to identify which ones are smart wallets
 */
 
+const CSV_FILES = [];
+
 // CSV files to process
-const CSV_FILES = [path.join(__dirname, "data/distributions.csv")];
+if (process.env.FILEPATH) {
+  CSV_FILES.push(path.join(process.cwd(), process.env.FILEPATH));
+} else {
+  CSV_FILES.push(path.join(__dirname, "data/distributions.csv"));
+}
 
 const messageHash = ethers.utils.hashMessage("some-message");
 let messageSignature: string;
@@ -38,6 +46,14 @@ interface AccountInfo {
   isSmartContractWallet?: string;
   isDolomite?: string;
 }
+
+const manuallyCheckedSmartWalletAccounts = [
+  "0xf42b28742b8d23ec0223ddc3581f691efcf5675c",
+  "0xe5bfa2543d0630bcbecc66684d950c3c99c2f497",
+  "0x882dad8e29922ab48237beb605d70d04fa6488db",
+  "0x476e93e40e12da89b832e866e97efaf227e4cc4d",
+  "0x290f4f95923170eaad0f8cadd84b6e887171c17a",
+].map((account) => account.toLowerCase());
 
 async function main() {
   const signer = new ethers.Wallet(process.env.ACCOUNT_KEY);
@@ -88,6 +104,13 @@ async function main() {
 
       try {
         const result = await hasEIP1271(account.account, provider);
+
+        if (manuallyCheckedSmartWalletAccounts.includes(account.account.toLowerCase())) {
+          console.log(`Manually checked smart wallet: ${account.account}`);
+          account.isSmartContractWallet = "yes";
+          smartWallets.push(account);
+          continue;
+        }
 
         // Check if contract has DOLOMITE_MARGIN function
         const hasDolomite = await hasDolomiteMargin(account.account, provider);

@@ -1,6 +1,6 @@
 import fs from "fs";
 import { parse, writeToPath } from "fast-csv";
-import { bigNumberify, parseDecimalToUnits, expandDecimals, FLOAT_PRECISION, PRECISION } from "../utils/math";
+import { bigNumberify, parseDecimalToUnits, expandDecimals, FLOAT_PRECISION, PRECISION } from "../../utils/math";
 import { chunk } from "lodash";
 
 const ETH_GLV_PRICE = parseDecimalToUnits("1.4876");
@@ -22,7 +22,7 @@ const distributionId = "11802763389053472339483616176459046875189472617101418668
 const chainId = 42161;
 
 async function getSummary(file) {
-  const filePath = `${__dirname}/distributions/data/${file.name}.csv`;
+  const filePath = `${__dirname}/data/${file.name}.csv`;
   const stream = fs.createReadStream(filePath).pipe(parse({ headers: true }));
 
   let sharesInFile = bigNumberify(0);
@@ -126,7 +126,7 @@ async function getSummary(file) {
   console.log(`${file.name} shares in top 400: ${ethers.utils.formatUnits(sharesInTop["400"], PRECISION)}`);
   console.log(`${file.name} shares in top 500: ${ethers.utils.formatUnits(sharesInTop["500"], PRECISION)}`);
 
-  await saveCsvFile(`${__dirname}/distributions/out/${file.name}.csv`, infoRows);
+  await saveCsvFile(`${__dirname}/out/${file.name}.csv`, infoRows);
 
   return { sharesInFile, glpInFile, infoRows, distributionRows };
 }
@@ -138,6 +138,7 @@ async function main() {
       ethGlv: "1120591.39",
       btcGlv: "1030973.33",
       usdc: "0",
+      filterBySmartWallet: true,
     },
     {
       name: "GLP_GLV-for-EOA-and-SAFE",
@@ -145,12 +146,12 @@ async function main() {
       btcGlv: "7825803.11",
       usdc: "0",
     },
-    {
-      name: "GLP_USDC-for-CONTRACT",
-      ethGlv: "0",
-      btcGlv: "0",
-      usdc: "13140880.47",
-    },
+    // {
+    //   name: "GLP_USDC-for-CONTRACT",
+    //   ethGlv: "0",
+    //   btcGlv: "0",
+    //   usdc: "13140880.47",
+    // },
     {
       name: "GLP_USDC-for-EOA-and-SAFE",
       ethGlv: "0",
@@ -165,14 +166,25 @@ async function main() {
   let allInfoRows = [];
   for (const file of files) {
     const { glpInFile, infoRows, distributionRows } = await getSummary(file);
+    const smartWallets = file.filterBySmartWallet ? await getSmartWallet(file.name) : [];
     allInfoRows = allInfoRows.concat(infoRows);
     totalGlp = totalGlp.add(glpInFile);
 
-    await saveTxnPayload(claimHandler, file.name, distributionRows);
-    await saveDistribution(file.name, distributionRows);
+    let distributionRowsForDistribution = distributionRows;
+    let name = file.name;
+    if (file.filterBySmartWallet) {
+      distributionRowsForDistribution = {
+        ethGlv: distributionRows.ethGlv.filter((row) => smartWallets.includes(row.account.toLowerCase())),
+        btcGlv: distributionRows.btcGlv.filter((row) => smartWallets.includes(row.account.toLowerCase())),
+        usdc: distributionRows.usdc.filter((row) => smartWallets.includes(row.account.toLowerCase())),
+      };
+      name = `${name}_smart-wallets`;
+    }
+    await saveTxnPayload(claimHandler, name, distributionRowsForDistribution);
+    await saveDistribution(name, distributionRowsForDistribution);
   }
 
-  await saveCsvFile(`${__dirname}/distributions/out/glp-distribution.csv`, allInfoRows);
+  await saveCsvFile(`${__dirname}/out/glp-distribution.csv`, allInfoRows);
 
   console.log(`total GLP: ${ethers.utils.formatUnits(totalGlp, PRECISION)}`);
 }
@@ -201,7 +213,7 @@ async function saveDistribution(
       throw new Error(`Unknown token type ${tokenType}`);
     }
 
-    const distributionDir = `${__dirname}/distributions/data/glp`;
+    const distributionDir = `${__dirname}/data/glp`;
     if (!fs.existsSync(distributionDir)) {
       fs.mkdirSync(distributionDir, { recursive: true });
     }
@@ -213,6 +225,7 @@ async function saveDistribution(
           chainId,
           distributionTypeId: distributionId,
           token,
+          totalAmount: rows.reduce((acc, { amount }) => acc.add(amount), bigNumberify(0)).toString(),
           amounts: rows.reduce((acc, { account, amount }) => {
             acc[account] = amount.toString();
             return acc;
@@ -224,6 +237,29 @@ async function saveDistribution(
     );
     console.log(`${name} ${tokenType} distribution saved to ${distributionPath}`);
   }
+}
+
+async function getSmartWallet(name: string) {
+  const excludedAccounts = [
+    // funds for these accounts were already distributed
+    "0xb81a869025fa244a9841d86630996368857a6e86",
+  ].map((account) => account.toLowerCase());
+
+  const filePath = `${__dirname}/out/${name}-analyzed.csv`;
+  const stream = fs.createReadStream(filePath).pipe(parse({ headers: true }));
+
+  const smartWallets = [];
+  for await (const row of stream) {
+    const { account } = row;
+    if (excludedAccounts.includes(account.toLowerCase())) {
+      console.warn(`Skipping excluded account: ${account}`);
+      continue;
+    }
+    if (row.isSmartContractWallet === "yes") {
+      smartWallets.push(account);
+    }
+  }
+  return smartWallets;
 }
 
 async function saveTxnPayload(
@@ -244,7 +280,7 @@ async function saveTxnPayload(
       throw new Error(`Unknown token type ${tokenType}`);
     }
 
-    const txnPayloadDir = `${__dirname}/distributions/out/glp-distribution-txn-payload/${name}/${tokenType}`;
+    const txnPayloadDir = `${__dirname}/out/glp-distribution-txn-payload/${name}/${tokenType}`;
     if (!fs.existsSync(txnPayloadDir)) {
       fs.mkdirSync(txnPayloadDir, { recursive: true });
     }
