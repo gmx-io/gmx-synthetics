@@ -277,8 +277,8 @@ library ConfigUtils {
     function setVirtualMarketIds(DataStore dataStore, SetVirtualMarketIdsParams[] memory params) external {
         uint256 paramsCount = params.length;
         bytes32[] memory oldVirtualMarketIds = new bytes32[](paramsCount);
-        address[] memory allMarkets = dataStore.getAddressArray(Keys.MARKET_LIST);
-        uint256 allMarketsCount = allMarkets.length;
+        uint256 marketListCount = dataStore.getAddressCount(Keys.MARKET_LIST);
+        address[] memory marketList = dataStore.getAddressValuesAt(Keys.MARKET_LIST, 0, marketListCount);
 
         // Apply all virtualMarketId updates
         for (uint256 i; i < paramsCount; i++) {
@@ -287,8 +287,8 @@ library ConfigUtils {
             bytes32 newVirtualMarketId = params[i].newVirtualMarketId;
             if (oldVirtualMarketId == newVirtualMarketId) {
                 revert Errors.NewVirtualMarketIdAlreadySetForMarket(newVirtualMarketId, market);
-            } 
-            
+            }
+
             oldVirtualMarketIds[i] = oldVirtualMarketId;
             dataStore.setBytes32(Keys.virtualMarketIdKey(market), newVirtualMarketId);
         }
@@ -306,8 +306,8 @@ library ConfigUtils {
             if (found) continue;
 
             uint256 remainingMarkets;
-            for (uint256 j; j < allMarketsCount; j++) {
-                address market = allMarkets[j];
+            for (uint256 j; j < marketListCount; j++) {
+                address market = marketList[j];
                 if (dataStore.getBytes32(Keys.virtualMarketIdKey(market)) == oldVirtualMarketId) {
                     ++remainingMarkets;
                 }
@@ -315,7 +315,7 @@ library ConfigUtils {
             if (remainingMarkets != 0) {
                 revert Errors.OldVirtualMarketIdStillInUse(oldVirtualMarketId, remainingMarkets);
             }
-            
+
             dataStore.setUint(Keys.virtualInventoryForSwapsKey(oldVirtualMarketId, true), 0);
             dataStore.setUint(Keys.virtualInventoryForSwapsKey(oldVirtualMarketId, false), 0);
         }
@@ -332,12 +332,16 @@ library ConfigUtils {
             }
             if (found) continue;
 
-            address longToken = dataStore.getAddress(keccak256(abi.encode(params[i].market, MarketStoreUtils.LONG_TOKEN)));
-            address shortToken = dataStore.getAddress(keccak256(abi.encode(params[i].market, MarketStoreUtils.SHORT_TOKEN)));
+            address longToken = dataStore.getAddress(
+                keccak256(abi.encode(params[i].market, MarketStoreUtils.LONG_TOKEN))
+            );
+            address shortToken = dataStore.getAddress(
+                keccak256(abi.encode(params[i].market, MarketStoreUtils.SHORT_TOKEN))
+            );
             uint256 sumLongPool;
             uint256 sumShortPool;
-            for (uint256 j; j < allMarketsCount; j++) {
-                address market = allMarkets[j];
+            for (uint256 j; j < marketListCount; j++) {
+                address market = marketList[j];
                 if (dataStore.getBytes32(Keys.virtualMarketIdKey(market)) != newVirtualMarketId) continue;
                 if (dataStore.getAddress(keccak256(abi.encode(market, MarketStoreUtils.LONG_TOKEN))) != longToken) {
                     revert Errors.NewVirtualMarketIdLongTokenMismatch(newVirtualMarketId, market);
