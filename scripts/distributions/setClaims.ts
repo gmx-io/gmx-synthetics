@@ -14,6 +14,12 @@ import { setTimeout } from "timers/promises";
 Example of usage:
 
 npx hardhat --network arbitrum run scripts/distributions/setClaims.ts
+
+allow top up from safe:
+TOP_UP_FROM_SAFE=1 npx hardhat --network arbitrum run scripts/distributions/setClaims.ts
+
+limit top up from safe:
+TOP_UP_FROM_SAFE=1 MAX_TOP_UP_FROM_SAFE=123 npx hardhat --network arbitrum run scripts/distributions/setClaims.ts
 */
 
 type DepositFundsParams = [

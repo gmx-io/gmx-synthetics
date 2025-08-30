@@ -82,7 +82,11 @@ contract ContributorHandler is ReentrancyGuard, RoleModule, BasicMulticall {
         }
 
         for (uint256 i; i < tokens.length; i++) {
-            dataStore.setUint(Keys.maxTotalContributorTokenAmountKey(tokens[i]), amounts[i]);
+            address token = tokens[i];
+            if (!dataStore.containsAddress(Keys.CONTRIBUTOR_TOKEN_LIST, token)) {
+                revert Errors.InvalidContributorToken(token);
+            }
+            dataStore.setUint(Keys.maxTotalContributorTokenAmountKey(token), amounts[i]);
         }
 
         _validateMaxContributorTokenAmounts();
