@@ -159,7 +159,7 @@ contract Oracle is IOracle, RoleModule {
 
     // @dev get the primary price of a token
     // @param token the token to get the price for
-    // @return the primary price of a token. reverts if the price is empty
+    // @return the primary price of a token. reverts if the price is empty and token is not zero address
     function getPrimaryPrice(address token) external view returns (Price.Props memory) {
         return _getPrimaryPrice(token, true);
     }
