@@ -873,14 +873,9 @@ const config: {
     WLFI: {
       synthetic: true,
       decimals: 18, // https://etherscan.io/token/0xdA5e1988097297dCdc1f90D4dFE7909e847CBeF6#readProxyContract
-      dataStreamFeedId: "", // TODO: Get from Chainlink Data Streams
+      dataStreamFeedId: "0x000348a0911d971aafb082790ac3b4af7271c5d8d9603b644240442d8656c2d6",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
-      priceFeed: {
-        address: "", // TODO: Get from Chainlink Price Feeds
-        decimals: 8,
-        heartbeatDuration: (24 + 1) * 60 * 60,
-      },
     },
     AAVE: {
       address: "0xba5ddd1f9d7f570dc94a51479a000e3bce967196",
@@ -1151,14 +1146,9 @@ const config: {
     WLFI: {
       synthetic: true,
       decimals: 18, // https://etherscan.io/token/0xdA5e1988097297dCdc1f90D4dFE7909e847CBeF6#readProxyContract
-      dataStreamFeedId: "", // TODO: Get from Chainlink Data Streams
+      dataStreamFeedId: "0x000348a0911d971aafb082790ac3b4af7271c5d8d9603b644240442d8656c2d6",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
-      priceFeed: {
-        address: "", // TODO: Get from Chainlink Price Feeds
-        decimals: 8,
-        heartbeatDuration: (24 + 1) * 60 * 60,
-      },
     },
     WAVAX: {
       address: "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",
