@@ -231,7 +231,7 @@ library GlvShiftUtils {
             cache.fromMarketTokenSupply
         );
 
-        validatePriceImpact(params.dataStore, glvShift.glv(), cache.marketTokensUsd, cache.receivedMarketTokensUsd);
+        validateGlvShiftMaxLoss(params.dataStore, glvShift.glv(), cache.marketTokensUsd, cache.receivedMarketTokensUsd);
 
         GlvShiftEventUtils.emitGlvShiftExecuted(params.eventEmitter, params.key, cache.receivedMarketTokens);
 
@@ -260,7 +260,7 @@ library GlvShiftUtils {
         GlvShiftEventUtils.emitGlvShiftCancelled(eventEmitter, key, reason, reasonBytes);
     }
 
-    function validatePriceImpact(
+    function validateGlvShiftMaxLoss(
         DataStore dataStore,
         address glv,
         uint256 marketTokensUsd,
