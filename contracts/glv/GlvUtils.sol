@@ -144,19 +144,6 @@ library GlvUtils {
 
     function getGlvTokenPrice(
         DataStore dataStore,
-        IOracle oracle,
-        address glv,
-        bool maximize,
-        bool forceCalculation
-    ) internal view returns (uint256, uint256, uint256) {
-        uint256 value = getGlvValue(dataStore, oracle, glv, maximize, forceCalculation);
-        uint256 supply = ERC20(glv).totalSupply();
-
-        return _getGlvTokenPrice(value, supply);
-    }
-
-    function getGlvTokenPrice(
-        DataStore dataStore,
         address[] memory marketAddresses,
         Price.Props[] memory indexTokenPrices,
         Price.Props memory longTokenPrice,
