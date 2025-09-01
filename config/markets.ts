@@ -3592,16 +3592,16 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("1.48e-7"),
 
-      reserveFactor: percentageToFloat("35%"),
-      openInterestReserveFactor: percentageToFloat("30%"),
+      reserveFactor: percentageToFloat("105%"),
+      openInterestReserveFactor: percentageToFloat("100%"),
 
       maxPnlFactorForTraders: percentageToFloat("50%"),
 
-      maxOpenInterest: decimalToFloat(250_000),
-      maxPoolUsdForDeposit: decimalToFloat(375_000),
+      maxOpenInterest: decimalToFloat(1_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(1_500_000),
 
-      maxLongTokenPoolAmount: expandDecimals(115, 18), // ~500K USD (2x max open interest)
-      maxShortTokenPoolAmount: expandDecimals(500_000, 6), // ~500K USD (2x max open interest)
+      maxLongTokenPoolAmount: expandDecimals(460, 18), // ~2m USD (2x max open interest)
+      maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2m USD (2x max open interest)
     },
   ],
   avalanche: [
