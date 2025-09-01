@@ -95,6 +95,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("AAVE", arbitrum_ethUsdcDefaultCap, 1),
           createGlvMarketConfig("AERO", arbitrum_ethUsdcDefaultCap, 1),
           createGlvMarketConfig("BRETT", arbitrum_ethUsdcDefaultCap, 1),
+          // createGlvMarketConfig("WLFI", arbitrum_ethUsdcDefaultCap, 1),
         ],
       },
       {
@@ -163,6 +164,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("TRUMP", avalanche_avaxUsdcDefaultCap, 1.06),
           createGlvMarketConfig("MELANIA", avalanche_avaxUsdcDefaultCap, 1.03),
           createGlvMarketConfig("PUMP", avalanche_avaxUsdcDefaultCap, 1),
+          // createGlvMarketConfig("WLFI", avalanche_avaxUsdcDefaultCap, 1),
         ],
       },
     ],

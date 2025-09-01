@@ -3575,6 +3575,34 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(9, 8), // ~1M USD (2x max open interest)
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x max open interest)
     },
+    {
+      tokens: { indexToken: "WLFI", longToken: "WETH", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:WLFI/USD"),
+      virtualMarketId: hashString("SPOT:ETH/USD"),
+
+      ...syntheticMarketConfig,
+      ...fundingRateConfig_High,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
+
+      negativePositionImpactFactor: exponentToFloat("6e-8"),
+      positivePositionImpactFactor: exponentToFloat("5e-8"),
+
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
+
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("1.48e-7"),
+
+      reserveFactor: percentageToFloat("35%"),
+      openInterestReserveFactor: percentageToFloat("30%"),
+
+      maxPnlFactorForTraders: percentageToFloat("50%"),
+
+      maxOpenInterest: decimalToFloat(250_000),
+      maxPoolUsdForDeposit: decimalToFloat(375_000),
+
+      maxLongTokenPoolAmount: expandDecimals(115, 18), // ~500K USD (2x max open interest)
+      maxShortTokenPoolAmount: expandDecimals(500_000, 6), // ~500K USD (2x max open interest)
+    },
   ],
   avalanche: [
     {
@@ -3934,6 +3962,34 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(22_000, 18), // ~500k USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(500_000, 6), // ~500k USD (2x the max open interest)
+    },
+    {
+      tokens: { indexToken: "WLFI", longToken: "WAVAX", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:WLFI/USD"),
+      virtualMarketId: hashString("SPOT:AVAX/USD"),
+
+      ...syntheticMarketConfig,
+      ...fundingRateConfig_High,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
+
+      negativePositionImpactFactor: exponentToFloat("6e-8"),
+      positivePositionImpactFactor: exponentToFloat("5e-8"),
+
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
+
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("1.48e-7"),
+
+      reserveFactor: percentageToFloat("35%"),
+      openInterestReserveFactor: percentageToFloat("30%"),
+
+      maxPnlFactorForTraders: percentageToFloat("50%"),
+
+      maxOpenInterest: decimalToFloat(250_000),
+      maxPoolUsdForDeposit: decimalToFloat(375_000),
+
+      maxLongTokenPoolAmount: expandDecimals(22_000, 18), // ~500K USD (2x max open interest)
+      maxShortTokenPoolAmount: expandDecimals(500_000, 6), // ~500K USD (2x max open interest)
     },
     {
       tokens: { indexToken: "WAVAX", longToken: "WAVAX", shortToken: "USDC" },

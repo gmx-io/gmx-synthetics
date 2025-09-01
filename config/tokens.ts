@@ -870,6 +870,13 @@ const config: {
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },
+    WLFI: {
+      synthetic: true,
+      decimals: 18, // https://etherscan.io/token/0xdA5e1988097297dCdc1f90D4dFE7909e847CBeF6#readProxyContract
+      dataStreamFeedId: "0x000348a0911d971aafb082790ac3b4af7271c5d8d9603b644240442d8656c2d6",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
     AAVE: {
       address: "0xba5ddd1f9d7f570dc94a51479a000e3bce967196",
       decimals: 18,
@@ -1133,6 +1140,13 @@ const config: {
       decimals: 18,
       transferGasLimit: 200 * 1000,
       dataStreamFeedId: "0x00032ce910d5ee7e47506b9f0607acdc017fb6cd92ed3696eb3573db6ad41cb9",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    WLFI: {
+      synthetic: true,
+      decimals: 18, // https://etherscan.io/token/0xdA5e1988097297dCdc1f90D4dFE7909e847CBeF6#readProxyContract
+      dataStreamFeedId: "0x000348a0911d971aafb082790ac3b4af7271c5d8d9603b644240442d8656c2d6",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },
