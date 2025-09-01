@@ -268,6 +268,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
     function executeOrderFromController(
         bytes32 key,
         Order.Props memory order,
+        address keeper,
         uint256 startingGas,
         uint256 executionGas,
         bool isSimulation
@@ -275,7 +276,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         try this._executeOrder{ gas: executionGas }(
             key,
             order,
-            msg.sender,
+            keeper,
             isSimulation
         ) {
         } catch (bytes memory reasonBytes) {
