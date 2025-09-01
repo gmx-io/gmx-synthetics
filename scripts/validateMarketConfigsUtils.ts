@@ -590,6 +590,11 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 12_000,
     },
+    WLFI: {
+      negativePositionImpactFactor: exponentToFloat("6e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
   },
   botanix: {
     "BTC:pBTC:pBTC": {
