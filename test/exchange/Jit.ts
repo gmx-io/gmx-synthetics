@@ -127,6 +127,8 @@ describe("Jit", () => {
     });
   });
 
+  it.skip("simulation fails");
+
   it("multiple glv shifts", async () => {
     await handleGlvDeposit(fixture, {
       create: {
