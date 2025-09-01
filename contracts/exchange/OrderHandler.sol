@@ -280,6 +280,9 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
             isSimulation
         ) {
         } catch (bytes memory reasonBytes) {
+            if (isSimulation) {
+                ErrorUtils.revertWithCustomError(reasonBytes);
+            }
             _handleOrderError(key, startingGas, reasonBytes);
         }
     }
