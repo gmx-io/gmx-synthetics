@@ -870,6 +870,18 @@ const config: {
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },
+    WLFI: {
+      synthetic: true,
+      decimals: 18, // https://etherscan.io/token/0xdA5e1988097297dCdc1f90D4dFE7909e847CBeF6#readProxyContract
+      dataStreamFeedId: "", // TODO: Get from Chainlink Data Streams
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "", // TODO: Get from Chainlink Price Feeds
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+    },
     AAVE: {
       address: "0xba5ddd1f9d7f570dc94a51479a000e3bce967196",
       decimals: 18,
