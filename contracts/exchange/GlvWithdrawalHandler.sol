@@ -17,6 +17,7 @@ contract GlvWithdrawalHandler is IGlvWithdrawalHandler, BaseHandler, ReentrancyG
     IMultichainTransferRouter public immutable multichainTransferRouter;
     GlvVault public immutable glvVault;
     ISwapHandler public immutable swapHandler;
+    IWithdrawalHandler public immutable withdrawalHandler;
 
     constructor(
         RoleStore _roleStore,
@@ -26,12 +27,14 @@ contract GlvWithdrawalHandler is IGlvWithdrawalHandler, BaseHandler, ReentrancyG
         MultichainVault _multichainVault,
         IMultichainTransferRouter _multichainTransferRouter,
         GlvVault _glvVault,
-        ISwapHandler _swapHandler
+        ISwapHandler _swapHandler,
+        IWithdrawalHandler _withdrawalHandler
     ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {
         multichainVault = _multichainVault;
         multichainTransferRouter = _multichainTransferRouter;
         glvVault = _glvVault;
         swapHandler = _swapHandler;
+        withdrawalHandler = _withdrawalHandler;
     }
 
     function createGlvWithdrawal(
@@ -92,6 +95,7 @@ contract GlvWithdrawalHandler is IGlvWithdrawalHandler, BaseHandler, ReentrancyG
             glvVault: glvVault,
             oracle: oracle,
             swapHandler: swapHandler,
+            withdrawalHandler: withdrawalHandler,
             startingGas: startingGas,
             keeper: keeper
         });

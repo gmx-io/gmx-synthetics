@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 
 import "../../deposit/ExecuteDepositUtils.sol";
 import "../../nonce/NonceUtils.sol";
+import "../../exchange/IDepositHandler.sol";
 
 import "../GlvVault.sol";
 import "../GlvUtils.sol";
@@ -25,6 +26,7 @@ library ExecuteGlvDepositUtils {
         GlvVault glvVault;
         IOracle oracle;
         ISwapHandler swapHandler;
+        IDepositHandler depositHandler;
         bytes32 key;
         uint256 startingGas;
         address keeper;
@@ -236,7 +238,7 @@ library ExecuteGlvDepositUtils {
             true // includeVirtualInventoryImpact
         );
 
-        uint256 receivedMarketTokens = ExecuteDepositUtils.executeDeposit(executeDepositParams, deposit, true);
+        uint256 receivedMarketTokens = params.depositHandler.executeDepositFromController(executeDepositParams, deposit);
         return receivedMarketTokens;
     }
 }

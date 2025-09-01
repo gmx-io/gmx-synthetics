@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "../../withdrawal/ExecuteWithdrawalUtils.sol";
+import "../../exchange/IWithdrawalHandler.sol";
 
 import "../../nonce/NonceUtils.sol";
 
@@ -27,6 +28,7 @@ library GlvWithdrawalUtils {
         GlvVault glvVault;
         IOracle oracle;
         ISwapHandler swapHandler;
+        IWithdrawalHandler withdrawalHandler;
         bytes32 key;
         uint256 startingGas;
         address keeper;
@@ -276,7 +278,7 @@ library GlvWithdrawalUtils {
                 swapPricingType: ISwapPricingUtils.SwapPricingType.Withdrawal
             });
 
-        return ExecuteWithdrawalUtils.executeWithdrawal(executeWithdrawalParams, withdrawal, true);
+        return params.withdrawalHandler.executeWithdrawalFromController(executeWithdrawalParams, withdrawal);
     }
 
     function _getMarketTokenAmount(
