@@ -270,9 +270,15 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         Order.Props memory order,
         address keeper,
         uint256 startingGas,
-        uint256 executionGas,
         bool isSimulation
     ) external onlyController {
+        uint256 executionGas = gasleft();
+
+        uint256 estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(dataStore, order);
+        GasUtils.validateExecutionGas(dataStore, executionGas, estimatedGasLimit);
+
+        executionGas = GasUtils.getExecutionGas(dataStore, executionGas);
+
         try this._executeOrder{ gas: executionGas }(
             key,
             order,

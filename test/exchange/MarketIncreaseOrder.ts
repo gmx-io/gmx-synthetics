@@ -586,7 +586,7 @@ describe("Exchange.MarketIncreaseOrder", () => {
     await expect(
       orderHandler
         .connect(user1)
-        .executeOrderFromController(ethers.constants.HashZero, emptyOrder, user1.address, 0, 0, false)
+        .executeOrderFromController(ethers.constants.HashZero, emptyOrder, user1.address, 0, false)
     ).to.be.revertedWithCustomError(errorsContract, "Unauthorized");
   });
 });
