@@ -125,6 +125,19 @@ describe("Glv Shifts", () => {
         .withArgs(ethUsdGlvAddress, btcUsdMarket.marketToken);
     });
 
+    it("ShiftFromAndToMarketAreEqual", async () => {
+      await handleGlvDeposit(fixture, {
+        create: {
+          longTokenAmount: expandDecimals(1, 18),
+          shortTokenAmount: expandDecimals(5000, 6),
+        },
+      });
+
+      await expect(createGlvShift(fixture, { fromMarket: ethUsdMarket, toMarket: ethUsdMarket }))
+        .to.be.revertedWithCustomError(errorsContract, "ShiftFromAndToMarketAreEqual")
+        .withArgs(ethUsdMarket.marketToken);
+    });
+
     it("GlvDisabledMarket", async () => {
       await handleGlvDeposit(fixture, {
         create: {

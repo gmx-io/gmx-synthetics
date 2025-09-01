@@ -80,6 +80,10 @@ library GlvShiftUtils {
     }
 
     function validateGlvShift(DataStore dataStore, CreateGlvShiftParams memory params) internal view {
+        if (params.fromMarket == params.toMarket) {
+            revert Errors.ShiftFromAndToMarketAreEqual(params.fromMarket);
+        }
+
         GlvUtils.validateGlv(dataStore, params.glv);
         GlvUtils.validateGlvMarket(dataStore, params.glv, params.fromMarket, false);
         GlvUtils.validateGlvMarket(dataStore, params.glv, params.toMarket, true);
