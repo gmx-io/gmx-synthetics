@@ -3,8 +3,6 @@ import { bigNumberify, expandDecimals } from "./math";
 import { getOrderKeys } from "./order";
 import { executeWithOracleParams } from "./exchange";
 import { parseLogs } from "./event";
-import { getCancellationReason, getErrorString } from "./error";
-import { expect } from "chai";
 import { BigNumberish } from "ethers";
 
 export async function executeJitOrder(
@@ -33,8 +31,6 @@ export async function executeJitOrder(
     oracleTimestamps?: number[];
     blockHashes?: string[];
     afterExecution?: (result: any) => Promise<void>;
-    expectedCancellationReason?: string;
-    expectedFrozenReason?: string;
     orderKey?: string;
     oracleBlockNumber?: number;
     sender?: any;
@@ -111,41 +107,6 @@ export async function executeJitOrder(
   }
 
   const logs = parseLogs(fixture, txReceipt);
-  const cancellationReason = await getCancellationReason({
-    logs,
-    eventName: "OrderCancelled",
-  });
-
-  if (cancellationReason) {
-    if (overrides.expectedCancellationReason) {
-      expect(cancellationReason.name).eq(overrides.expectedCancellationReason);
-    } else {
-      throw new Error(`Order was cancelled: ${getErrorString(cancellationReason)}`);
-    }
-  } else {
-    if (overrides.expectedCancellationReason) {
-      throw new Error(
-        `Order was not cancelled, expected cancellation with reason: ${overrides.expectedCancellationReason}`
-      );
-    }
-  }
-
-  const frozenReason = await getCancellationReason({
-    logs,
-    eventName: "OrderFrozen",
-  });
-
-  if (frozenReason) {
-    if (overrides.expectedFrozenReason) {
-      expect(frozenReason.name).eq(overrides.expectedFrozenReason);
-    } else {
-      throw new Error(`Order was frozen: ${getErrorString(frozenReason)}`);
-    }
-  } else {
-    if (overrides.expectedFrozenReason) {
-      throw new Error(`Order was not frozen, expected freeze with reason: ${overrides.expectedFrozenReason}`);
-    }
-  }
 
   const result = { txReceipt, logs };
 

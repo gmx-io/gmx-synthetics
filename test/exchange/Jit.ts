@@ -81,25 +81,23 @@ describe("Jit", () => {
 
     expect(await getGlvShiftCount(dataStore)).eq(0);
 
-    await executeJitOrder(fixture, {
-      gasUsageLabel: "executeOrder",
-      glvShifts: [
-        {
-          marketTokenAmount: expandDecimals(1, 18),
-        },
-      ],
-      expectedCancellationReason: "InsufficientReserve",
-    } as Parameters<typeof executeJitOrder>[1]);
-    expect(await getOrderCount(dataStore)).eq(0);
-
-    await createOrder(fixture, orderParams);
+    await expect(
+      executeJitOrder(fixture, {
+        gasUsageLabel: "executeOrder",
+        glvShifts: [
+          {
+            marketTokenAmount: expandDecimals(1, 18),
+          },
+        ],
+      } as Parameters<typeof executeJitOrder>[1])
+    ).to.be.revertedWithCustomError(errorsContract, "InsufficientReserve");
 
     // test simulation
     await executeJitOrder(fixture, {
       gasUsageLabel: "executeOrder",
       glvShifts: [
         {
-          marketTokenAmount: expandDecimals(1999, 18),
+          marketTokenAmount: expandDecimals(2000, 18),
         },
       ],
       simulate: true,
@@ -109,7 +107,7 @@ describe("Jit", () => {
       gasUsageLabel: "executeOrder",
       glvShifts: [
         {
-          marketTokenAmount: expandDecimals(1999, 18),
+          marketTokenAmount: expandDecimals(2000, 18),
         },
       ],
     } as Parameters<typeof executeJitOrder>[1]);

@@ -55,23 +55,7 @@ contract JitOrderHandler is IJitOrderHandler, BaseOrderHandler, ReentrancyGuard 
         bytes32 orderKey,
         OracleUtils.SetPricesParams calldata oracleParams
     ) external override globalNonReentrant onlyOrderKeeper withOraclePrices(oracleParams) {
-        uint256 startingGas = gasleft();
-
-        DataStore _dataStore = dataStore;
-        FeatureUtils.validateFeature(_dataStore, Keys.jitFeatureDisabledKey(address(this)));
-
-        Order.Props memory order = OrderStoreUtils.get(_dataStore, orderKey);
-        _validateOrder(order);
-
-        _processShifts(_dataStore, shiftParamsList, order, orderKey);
-
-        orderHandler.executeOrderFromController(
-            orderKey,
-            order,
-            msg.sender,
-            startingGas,
-            false // isSimulation
-        );
+        _executeJitOrder(shiftParamsList, orderKey, false);
     }
 
     function simulateExecuteJitOrder(
@@ -79,8 +63,14 @@ contract JitOrderHandler is IJitOrderHandler, BaseOrderHandler, ReentrancyGuard 
         bytes32 orderKey,
         OracleUtils.SimulatePricesParams memory oracleParams
     ) external override globalNonReentrant withSimulatedOraclePrices(oracleParams) {
-        uint256 startingGas = gasleft();
+        _executeJitOrder(shiftParamsList, orderKey, true);
+    }
 
+    function _executeJitOrder(
+        GlvShiftUtils.CreateGlvShiftParams[] memory shiftParamsList,
+        bytes32 orderKey,
+        bool isSimulation
+    ) internal {
         DataStore _dataStore = dataStore;
         FeatureUtils.validateFeature(_dataStore, Keys.jitFeatureDisabledKey(address(this)));
         Order.Props memory order = OrderStoreUtils.get(_dataStore, orderKey);
@@ -88,12 +78,15 @@ contract JitOrderHandler is IJitOrderHandler, BaseOrderHandler, ReentrancyGuard 
 
         _processShifts(_dataStore, shiftParamsList, order, orderKey);
 
-        orderHandler.executeOrderFromController(
+        // should be called after shifts are processed and right before the order execution for gasleft() to be accurate
+        uint256 estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(_dataStore, order);
+        GasUtils.validateExecutionGas(_dataStore, gasleft(), estimatedGasLimit);
+
+        orderHandler.doExecuteOrder(
             orderKey,
             order,
             msg.sender,
-            startingGas,
-            true // isSimulation
+            isSimulation
         );
     }
 

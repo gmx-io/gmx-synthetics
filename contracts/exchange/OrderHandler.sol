@@ -2,6 +2,8 @@
 
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+
 import "./BaseOrderHandler.sol";
 import "../error/ErrorUtils.sol";
 import "./IOrderHandler.sol";
@@ -11,7 +13,7 @@ import "../multichain/MultichainVault.sol";
 
 // @title OrderHandler
 // @dev Contract to handle creation, execution and cancellation of orders
-contract OrderHandler is IOrderHandler, BaseOrderHandler {
+contract OrderHandler is IOrderHandler, BaseOrderHandler, ReentrancyGuard {
     using SafeCast for uint256;
     using Order for Order.Props;
     using Array for uint256[];
@@ -225,7 +227,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
     {
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);
 
-        this._executeOrder(
+        this.doExecuteOrder(
             key,
             order,
             msg.sender,
@@ -252,7 +254,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
 
         uint256 executionGas = GasUtils.getExecutionGas(dataStore, startingGas);
 
-        try this._executeOrder{ gas: executionGas }(
+        try this.doExecuteOrder{ gas: executionGas }(
             key,
             order,
             msg.sender,
@@ -263,47 +265,17 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         }
     }
 
-    // @dev used by other handlers to avoid duplicating the same code on their side
-    // this method is similar to `executeOrder` but skips execution gas validation
-    // the caller function should be protected by a reentrancy guard
-    function executeOrderFromController(
-        bytes32 key,
-        Order.Props memory order,
-        address keeper,
-        uint256 startingGas,
-        bool isSimulation
-    ) external onlyController {
-        uint256 executionGas = gasleft();
-
-        uint256 estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(dataStore, order);
-        GasUtils.validateExecutionGas(dataStore, executionGas, estimatedGasLimit);
-
-        executionGas = GasUtils.getExecutionGas(dataStore, executionGas);
-
-        try this._executeOrder{ gas: executionGas }(
-            key,
-            order,
-            keeper,
-            isSimulation
-        ) {
-        } catch (bytes memory reasonBytes) {
-            if (isSimulation) {
-                ErrorUtils.revertWithCustomError(reasonBytes);
-            }
-            _handleOrderError(key, startingGas, reasonBytes);
-        }
-    }
-
     // @dev executes an order
     // @param key the key of the order to execute
     // @param oracleParams OracleUtils.SetPricesParams
     // @param keeper the keeper executing the order
-    function _executeOrder(
+    // @note the caller function should be protected by global reentrancy guard
+    function doExecuteOrder(
         bytes32 key,
         Order.Props memory order,
         address keeper,
         bool isSimulation
-    ) external onlySelf {
+    ) external nonReentrant onlySelfOrController {
         uint256 startingGas = gasleft();
 
         BaseOrderUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(
