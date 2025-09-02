@@ -76,7 +76,7 @@ library GasUtils {
     // to prevent potential blocking of cancellations by malicious contracts using e.g. large revert reasons
     //
     // during the estimateGas call by keepers, an insufficient amount of gas may be estimated
-    // the amount estimated may be insufficient for execution but sufficient for cancellaton
+    // the amount estimated may be insufficient for execution but sufficient for cancellation
     // this could lead to invalid cancellations due to insufficient gas used by keepers
     //
     // to help prevent this, out of gas errors are attempted to be caught and reverted for estimateGas calls

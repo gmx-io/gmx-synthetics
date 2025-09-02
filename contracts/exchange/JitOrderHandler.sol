@@ -82,6 +82,7 @@ contract JitOrderHandler is IJitOrderHandler, BaseOrderHandler, ReentrancyGuard 
         uint256 estimatedGasLimit = GasUtils.estimateExecuteOrderGasLimit(_dataStore, order);
         GasUtils.validateExecutionGas(_dataStore, gasleft(), estimatedGasLimit);
 
+        // order should not be cancelled on execution failure otherwise incorrect orders could manipulate GLV to shift liquidity
         orderHandler.doExecuteOrder(
             orderKey,
             order,
@@ -108,6 +109,7 @@ contract JitOrderHandler is IJitOrderHandler, BaseOrderHandler, ReentrancyGuard 
 
         // @note GLV shifts should use the latest prices other if GLV oracle price is used
         // then there may be a discrepancy between GM prices used to calculate GLV oracle price and current GM prices
+        // JIT_SHIFT_UPDATE_AT_TIME_BUFFER is used to enforce this
         uint256 updatedAtTime = block.timestamp - _dataStore.getUint(Keys.JIT_SHIFT_UPDATE_AT_TIME_BUFFER);
         if (updatedAtTime < order.updatedAtTime()) {
             updatedAtTime = order.updatedAtTime();
