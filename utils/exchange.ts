@@ -69,6 +69,7 @@ export async function executeWithOracleParams(
     minOracleBlockNumbers?: number[];
     maxOracleBlockNumbers?: number[];
     oracleTimestamps?: number[];
+    gasLimit?: number;
   }
 ) {
   const {
@@ -86,6 +87,7 @@ export async function executeWithOracleParams(
     dataStreamTokens,
     dataStreamData,
     priceFeedTokens,
+    gasLimit,
   } = overrides;
   const { provider } = ethers;
   const { signers } = fixture.accounts;
@@ -164,7 +166,7 @@ export async function executeWithOracleParams(
   } else {
     oracleParams = await getOracleParams(oracleArgs);
     return logGasUsage({
-      tx: execute(...args, oracleParams),
+      tx: execute(...args, oracleParams, { gasLimit }),
       label: gasUsageLabel,
     });
   }

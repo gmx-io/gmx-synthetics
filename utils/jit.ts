@@ -34,6 +34,7 @@ export async function executeJitOrder(
     orderKey?: string;
     oracleBlockNumber?: number;
     sender?: any;
+    gasLimit?: number;
   } = {}
 ) {
   const { wnt, usdc, sol } = fixture.contracts;
@@ -98,6 +99,7 @@ export async function executeJitOrder(
     dataStreamTokens,
     dataStreamData,
     priceFeedTokens,
+    gasLimit: overrides.gasLimit,
   };
 
   const txReceipt = await executeWithOracleParams(fixture, params);

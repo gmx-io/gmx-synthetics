@@ -83,7 +83,7 @@ describe("Jit", () => {
 
     await expect(
       executeJitOrder(fixture, {
-        gasUsageLabel: "executeOrder",
+        gasUsageLabel: "executeJitOrder",
         glvShifts: [
           {
             marketTokenAmount: expandDecimals(1, 18),
@@ -94,7 +94,7 @@ describe("Jit", () => {
 
     // test simulation
     await executeJitOrder(fixture, {
-      gasUsageLabel: "executeOrder",
+      gasUsageLabel: "executeJitOrder",
       glvShifts: [
         {
           marketTokenAmount: expandDecimals(2000, 18),
@@ -104,7 +104,7 @@ describe("Jit", () => {
     } as Parameters<typeof executeJitOrder>[1]);
 
     await executeJitOrder(fixture, {
-      gasUsageLabel: "executeOrder",
+      gasUsageLabel: "executeJitOrder",
       glvShifts: [
         {
           marketTokenAmount: expandDecimals(2000, 18),
@@ -156,7 +156,7 @@ describe("Jit", () => {
     expect(await getOrderCount(dataStore)).eq(1);
 
     const { logs } = await executeJitOrder(fixture, {
-      gasUsageLabel: "executeOrder",
+      gasUsageLabel: "executeJitOrder",
       glvShifts: [{ marketTokenAmount: expandDecimals(1000, 18) }, { marketTokenAmount: expandDecimals(1000, 18) }],
     } as Parameters<typeof executeJitOrder>[1]);
     expect(await getOrderCount(dataStore)).eq(0);
@@ -194,7 +194,7 @@ describe("Jit", () => {
     await createOrder(fixture, orderParams);
     await expect(
       executeJitOrder(fixture, {
-        gasUsageLabel: "executeOrder",
+        gasUsageLabel: "executeJitOrder",
         glvShifts: [{ marketTokenAmount: expandDecimals(1000, 18) }, { marketTokenAmount: expandDecimals(1000, 18) }],
       } as Parameters<typeof executeJitOrder>[1])
     ).to.be.revertedWithCustomError(errorsContract, "OracleTimestampsAreSmallerThanRequired");
@@ -222,14 +222,14 @@ describe("Jit", () => {
         if (shouldRevert) {
           await expect(
             executeJitOrder(fixture, {
-              gasUsageLabel: "executeOrder",
+              gasUsageLabel: "executeJitOrder",
               glvShifts: [],
             } as Parameters<typeof executeJitOrder>[1])
           ).to.be.revertedWithCustomError(errorsContract, "JitUnsupportedOrderType");
         } else {
           await expect(
             executeJitOrder(fixture, {
-              gasUsageLabel: "executeOrder",
+              gasUsageLabel: "executeJitOrder",
               glvShifts: [],
             } as Parameters<typeof executeJitOrder>[1])
           ).to.not.be.revertedWithCustomError(errorsContract, "JitUnsupportedOrderType");
@@ -242,7 +242,7 @@ describe("Jit", () => {
     await createOrder(fixture, orderParams);
     await expect(
       executeJitOrder(fixture, {
-        gasUsageLabel: "executeOrder",
+        gasUsageLabel: "executeJitOrder",
         glvShifts: [],
       } as Parameters<typeof executeJitOrder>[1])
     ).to.be.revertedWithCustomError(errorsContract, "JitEmptyShiftParams");
@@ -251,7 +251,7 @@ describe("Jit", () => {
   it("Unauthorized", async () => {
     await expect(
       executeJitOrder(fixture, {
-        gasUsageLabel: "executeOrder",
+        gasUsageLabel: "executeJitOrder",
         orderKey: "0x0000000000000000000000000000000000000000000000000000000000000000",
         glvShifts: [],
         sender: user1,
@@ -264,7 +264,7 @@ describe("Jit", () => {
 
     await expect(
       executeJitOrder(fixture, {
-        gasUsageLabel: "executeOrder",
+        gasUsageLabel: "executeJitOrder",
         orderKey: "0x0000000000000000000000000000000000000000000000000000000000000000",
         glvShifts: [],
       } as Parameters<typeof executeJitOrder>[1])
@@ -275,7 +275,7 @@ describe("Jit", () => {
     await createOrder(fixture, orderParams);
     await expect(
       executeJitOrder(fixture, {
-        gasUsageLabel: "executeOrder",
+        gasUsageLabel: "executeJitOrder",
         glvShifts: [
           {
             toMarket: solUsdMarket.marketToken,
@@ -285,5 +285,32 @@ describe("Jit", () => {
     ).to.be.revertedWithCustomError(errorsContract, "JitInvalidToMarket");
   });
 
-  it.skip("InsufficientExecutionGas");
+  it("InsufficientExecutionGas", async () => {
+    await handleGlvDeposit(fixture, {
+      create: {
+        glv: ethUsdGlvAddress,
+        longTokenAmount: expandDecimals(1, 18),
+        shortTokenAmount: expandDecimals(5_000, 6),
+      },
+    });
+
+    await handleGlvDeposit(fixture, {
+      create: {
+        glv: ethUsdGlvAddress,
+        longTokenAmount: expandDecimals(1, 18),
+        shortTokenAmount: expandDecimals(5_000, 6),
+        market: solUsdMarket,
+      },
+    });
+
+    await createOrder(fixture, orderParams);
+    await dataStore.setUint(keys.increaseOrderGasLimitKey(), 10_000_000);
+    await expect(
+      executeJitOrder(fixture, {
+        gasUsageLabel: "executeJitOrder",
+        glvShifts: [{ marketTokenAmount: expandDecimals(1000, 18) }, { marketTokenAmount: expandDecimals(1000, 18) }],
+        gasLimit: 15_000_000,
+      } as Parameters<typeof executeJitOrder>[1])
+    ).to.be.revertedWithCustomError(errorsContract, "InsufficientExecutionGas");
+  });
 });
