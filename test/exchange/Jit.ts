@@ -47,9 +47,7 @@ describe("Jit", () => {
       gasUsageLabel: "createOrder",
       cancellationReceiver: user1,
     };
-  });
 
-  it("shift liquidity and execute order", async () => {
     await handleGlvDeposit(fixture, {
       create: {
         glv: ethUsdGlvAddress,
@@ -66,7 +64,9 @@ describe("Jit", () => {
         market: solUsdMarket,
       },
     });
+  });
 
+  it("shift liquidity and execute order", async () => {
     await expectBalances({
       [ethUsdGlvAddress]: {
         [ethUsdMarket.marketToken]: expandDecimals(10_000, 18),
@@ -125,26 +125,34 @@ describe("Jit", () => {
     });
   });
 
-  it.skip("simulation fails");
+  it("execution reverts on invalid order instead of cancellation", async () => {
+    await createOrder(fixture, { ...orderParams, sizeDeltaUsd: expandDecimals(100_000, 18) });
+
+    await expect(
+      executeJitOrder(fixture, {
+        gasUsageLabel: "executeJitOrder",
+        glvShifts: [
+          {
+            marketTokenAmount: expandDecimals(2000, 18),
+          },
+        ],
+        simulate: true,
+      } as Parameters<typeof executeJitOrder>[1])
+    ).to.be.revertedWithCustomError(errorsContract, "MinPositionSize");
+
+    await expect(
+      executeJitOrder(fixture, {
+        gasUsageLabel: "executeJitOrder",
+        glvShifts: [
+          {
+            marketTokenAmount: expandDecimals(2000, 18),
+          },
+        ],
+      } as Parameters<typeof executeJitOrder>[1])
+    ).to.be.revertedWithCustomError(errorsContract, "MinPositionSize");
+  });
 
   it("multiple glv shifts", async () => {
-    await handleGlvDeposit(fixture, {
-      create: {
-        glv: ethUsdGlvAddress,
-        longTokenAmount: expandDecimals(1, 18),
-        shortTokenAmount: expandDecimals(5_000, 6),
-      },
-    });
-
-    await handleGlvDeposit(fixture, {
-      create: {
-        glv: ethUsdGlvAddress,
-        longTokenAmount: expandDecimals(1, 18),
-        shortTokenAmount: expandDecimals(5_000, 6),
-        market: solUsdMarket,
-      },
-    });
-
     await expectBalances({
       [ethUsdGlvAddress]: {
         [ethUsdMarket.marketToken]: expandDecimals(10_000, 18),
@@ -173,23 +181,6 @@ describe("Jit", () => {
   });
 
   it("OracleTimestampsAreSmallerThanRequired", async () => {
-    await handleGlvDeposit(fixture, {
-      create: {
-        glv: ethUsdGlvAddress,
-        longTokenAmount: expandDecimals(1, 18),
-        shortTokenAmount: expandDecimals(5_000, 6),
-      },
-    });
-
-    await handleGlvDeposit(fixture, {
-      create: {
-        glv: ethUsdGlvAddress,
-        longTokenAmount: expandDecimals(1, 18),
-        shortTokenAmount: expandDecimals(5_000, 6),
-        market: solUsdMarket,
-      },
-    });
-
     await dataStore.setUint(keys.JIT_SHIFT_UPDATE_AT_TIME_BUFFER, 0);
     await createOrder(fixture, orderParams);
     await expect(
@@ -286,23 +277,6 @@ describe("Jit", () => {
   });
 
   it("InsufficientExecutionGas", async () => {
-    await handleGlvDeposit(fixture, {
-      create: {
-        glv: ethUsdGlvAddress,
-        longTokenAmount: expandDecimals(1, 18),
-        shortTokenAmount: expandDecimals(5_000, 6),
-      },
-    });
-
-    await handleGlvDeposit(fixture, {
-      create: {
-        glv: ethUsdGlvAddress,
-        longTokenAmount: expandDecimals(1, 18),
-        shortTokenAmount: expandDecimals(5_000, 6),
-        market: solUsdMarket,
-      },
-    });
-
     await createOrder(fixture, orderParams);
     await dataStore.setUint(keys.increaseOrderGasLimitKey(), 10_000_000);
     await expect(
