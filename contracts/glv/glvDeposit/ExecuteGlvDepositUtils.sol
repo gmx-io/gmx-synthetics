@@ -190,7 +190,6 @@ library ExecuteGlvDepositUtils {
         );
 
         if (glvDeposit.isMarketTokenDeposit()) {
-
             // user deposited GM tokens
             glvVault.transferOut(glvDeposit.market(), glvDeposit.glv(), glvDeposit.marketTokenAmount());
             return glvDeposit.marketTokenAmount();
