@@ -581,12 +581,10 @@ describe("Exchange.MarketIncreaseOrder", () => {
     );
   });
 
-  it("executeOrderFromController Unauthorized", async () => {
+  it("doExecuteOrder Unauthorized", async () => {
     const emptyOrder = await reader.getOrder(dataStore.address, ethers.constants.HashZero);
     await expect(
-      orderHandler
-        .connect(user1)
-        .executeOrderFromController(ethers.constants.HashZero, emptyOrder, user1.address, 0, false)
+      orderHandler.connect(user1).doExecuteOrder(ethers.constants.HashZero, emptyOrder, user1.address, false)
     ).to.be.revertedWithCustomError(errorsContract, "Unauthorized");
   });
 });
