@@ -525,6 +525,9 @@ library Keys {
     // @dev key for the terms hash for a specific distribution
     bytes32 public constant CLAIM_TERMS_BACKREF = keccak256(abi.encode("CLAIM_TERMS_BACKREF"));
 
+    // @dev key for the buffer for the update at time of the jit shifts
+    bytes32 public constant JIT_SHIFT_UPDATE_AT_TIME_BUFFER = keccak256(abi.encode("JIT_SHIFT_UPDATE_AT_TIME_BUFFER"));
+
     // @dev constant for user initiated cancel reason
     string public constant USER_INITIATED_CANCEL = "USER_INITIATED_CANCEL";
 

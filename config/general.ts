@@ -77,6 +77,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       maxRelayFeeUsdForSubaccount: 0,
 
       maxDataLength: 18,
+
+      jitShiftUpdateAtTimeBuffer: 30,
     };
   }
 
@@ -156,6 +158,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     multichainEndpoints: {},
     srcChainIds: {},
     eids: {},
+
+    jitShiftUpdateAtTimeBuffer: 30,
   };
 
   const networkConfig = {

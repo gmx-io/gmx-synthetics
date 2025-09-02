@@ -106,6 +106,13 @@ contract JitOrderHandler is IJitOrderHandler, BaseOrderHandler, ReentrancyGuard 
             revert Errors.JitEmptyShiftParams();
         }
 
+        // @note GLV shifts should use the latest prices other if GLV oracle price is used
+        // then there may be a discrepancy between GM prices used to calculate GLV oracle price and current GM prices
+        uint256 updatedAtTime = block.timestamp - _dataStore.getUint(Keys.JIT_SHIFT_UPDATE_AT_TIME_BUFFER);
+        if (updatedAtTime < order.updatedAtTime()) {
+            updatedAtTime = order.updatedAtTime();
+        }
+
         for (uint256 i = 0; i < shiftParamsList.length; i++) {
             if (order.market() != shiftParamsList[i].toMarket) {
                 revert Errors.JitInvalidToMarket(shiftParamsList[i].toMarket, order.market());
@@ -114,7 +121,7 @@ contract JitOrderHandler is IJitOrderHandler, BaseOrderHandler, ReentrancyGuard 
             (bytes32 glvShiftKey, GlvShift.Props memory glvShift) = _createGlvShift(
                 _dataStore,
                 shiftParamsList[i],
-                order.updatedAtTime(),
+                updatedAtTime,
                 orderKey,
                 i
             );
@@ -131,7 +138,7 @@ contract JitOrderHandler is IJitOrderHandler, BaseOrderHandler, ReentrancyGuard 
     function _createGlvShift(
         DataStore _dataStore,
         GlvShiftUtils.CreateGlvShiftParams memory params,
-        uint256 orderUpdatedAtTime,
+        uint256 updatedAtTime,
         bytes32 orderKey,
         uint256 index
     ) internal returns (bytes32, GlvShift.Props memory) {
@@ -141,7 +148,7 @@ contract JitOrderHandler is IJitOrderHandler, BaseOrderHandler, ReentrancyGuard 
             GlvShift.Numbers({
                 marketTokenAmount: params.marketTokenAmount,
                 minMarketTokens: params.minMarketTokens,
-                updatedAtTime: orderUpdatedAtTime
+                updatedAtTime: updatedAtTime
             })
         );
         bytes32 glvShiftKey = keccak256(abi.encode(orderKey, "glvShift", index));

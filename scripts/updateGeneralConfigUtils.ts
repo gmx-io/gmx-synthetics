@@ -228,6 +228,12 @@ const getConfigItems = async (generalConfig, oracleConfig) => {
       value: generalConfig.oracleProviderMinChangeDelay,
       label: `oracleProviderMinChangeDelay`,
     },
+    {
+      type: "uint",
+      baseKey: keys.JIT_SHIFT_UPDATE_AT_TIME_BUFFER,
+      value: generalConfig.jitShiftUpdateAtTimeBuffer,
+      label: `jitShiftUpdateAtTimeBuffer`,
+    },
   ];
 
   if (hre.network.name !== "avalanche" || process.env.SKIP_GLV_LIMITS_AVALANCHE !== "true") {

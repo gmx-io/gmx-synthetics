@@ -172,6 +172,34 @@ describe("Jit", () => {
     });
   });
 
+  it("OracleTimestampsAreSmallerThanRequired", async () => {
+    await handleGlvDeposit(fixture, {
+      create: {
+        glv: ethUsdGlvAddress,
+        longTokenAmount: expandDecimals(1, 18),
+        shortTokenAmount: expandDecimals(5_000, 6),
+      },
+    });
+
+    await handleGlvDeposit(fixture, {
+      create: {
+        glv: ethUsdGlvAddress,
+        longTokenAmount: expandDecimals(1, 18),
+        shortTokenAmount: expandDecimals(5_000, 6),
+        market: solUsdMarket,
+      },
+    });
+
+    await dataStore.setUint(keys.JIT_SHIFT_UPDATE_AT_TIME_BUFFER, 0);
+    await createOrder(fixture, orderParams);
+    await expect(
+      executeJitOrder(fixture, {
+        gasUsageLabel: "executeOrder",
+        glvShifts: [{ marketTokenAmount: expandDecimals(1000, 18) }, { marketTokenAmount: expandDecimals(1000, 18) }],
+      } as Parameters<typeof executeJitOrder>[1])
+    ).to.be.revertedWithCustomError(errorsContract, "OracleTimestampsAreSmallerThanRequired");
+  });
+
   describe("JitUnsupportedOrderType", () => {
     const orderTypeNames = Object.fromEntries(Object.entries(OrderType).map(([key, value]) => [value, key]));
     for (const [orderType, shouldRevert] of [
