@@ -454,7 +454,7 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         eventData.addressItems.initItems(3);
         eventData.addressItems.setItem(0, "target", target);
         eventData.addressItems.setItem(1, "token", token);
-        eventData.addressItems.setItem(1, "receiver", receiver);
+        eventData.addressItems.setItem(2, "receiver", receiver);
 
         eventData.uintItems.initItems(1);
         eventData.uintItems.setItem(0, "amount", amount);
@@ -502,7 +502,9 @@ contract TimelockConfig is RoleModule, BasicMulticall {
 
     function signalSetMinContributorPaymentInterval(
         address target,
-        uint256 interval
+        uint256 interval,
+        bytes32 predecessor,
+        bytes32 salt
     ) external onlyTimelockAdmin {
         if (target == address(0)) {
             revert Errors.EmptyTarget();
@@ -515,20 +517,22 @@ contract TimelockConfig is RoleModule, BasicMulticall {
             "setMinContributorPaymentInterval(uint256)",
             interval
         );
-        timelockController.schedule(target, 0, payload, 0, 0, timelockController.getMinDelay());
+        timelockController.schedule(target, 0, payload, predecessor, salt, timelockController.getMinDelay());
 
         EventUtils.EventLogData memory eventData;
 
         eventData.uintItems.initItems(1);
         eventData.uintItems.setItem(0, "interval", interval);
 
-        eventEmitter.emitEventLog("signalSetMinContributorPaymentInterval", eventData);
+        _signalPendingAction("SignalSetMinContributorPaymentInterval", eventData);
     }
 
     function signalSetMaxTotalContributorTokenAmount(
         address target,
-        address[] memory tokens,
-        uint256[] memory amounts
+        address[] calldata tokens,
+        uint256[] calldata amounts,
+        bytes32 predecessor,
+        bytes32 salt
     ) external onlyTimelockAdmin {
         if (target == address(0)) {
             revert Errors.EmptyTarget();
@@ -542,17 +546,15 @@ contract TimelockConfig is RoleModule, BasicMulticall {
             tokens,
             amounts
         );
-        timelockController.schedule(target, 0, payload, 0, 0, timelockController.getMinDelay());
+        timelockController.schedule(target, 0, payload, predecessor, salt, timelockController.getMinDelay());
+
+        bytes32 configHash = keccak256(abi.encode(tokens, amounts));
 
         EventUtils.EventLogData memory eventData;
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "configHash", configHash);
 
-        eventData.addressItems.initArrayItems(1);
-        eventData.addressItems.setItem(0, "tokens", tokens);
-
-        eventData.uintItems.initArrayItems(1);
-        eventData.uintItems.setItem(0, "amounts", amounts);
-
-        eventEmitter.emitEventLog("setMaxTotalContributorTokenAmount", eventData);
+        _signalPendingAction("SignalSetMaxTotalContributorTokenAmount", eventData);
     }
 
     function execute(address target, bytes calldata payload, bytes32 predecessor, bytes32 salt) external onlyTimelockAdmin {
