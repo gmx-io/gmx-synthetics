@@ -3,8 +3,8 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { decimalToFloat, percentageToFloat, expandDecimals } from "../utils/math";
 
 export default async function ({ network }: HardhatRuntimeEnvironment) {
-  if (network.name === "hardhat") {
-    // Note that this is only for the hardhat config, the config for all
+  if (network.name === "hardhat" || network.name === "localhost") {
+    // Note that this is only for the hardhat/localhost config, the config for all
     // other networks is separate from this
     return {
       feeReceiver: ethers.constants.AddressZero,
@@ -77,6 +77,10 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       maxRelayFeeUsdForSubaccount: 0,
 
       maxDataLength: 18,
+      multichainProviders: {},
+      multichainEndpoints: {},
+      srcChainIds: {},
+      eids: {},
     };
   }
 

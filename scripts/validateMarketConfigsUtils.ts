@@ -625,6 +625,20 @@ const recommendedMarketConfig = {
       negativeSwapImpactFactor: exponentToFloat("5e-9").div(2),
     },
   },
+  localhost: {
+    WETH: {
+      negativePositionImpactFactor: exponentToFloat("5e-11"),
+      negativeSwapImpactFactor: exponentToFloat("5e-11"),
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 11_111,
+    },
+    WBTC: {
+      negativePositionImpactFactor: exponentToFloat("5e-11"),
+      negativeSwapImpactFactor: exponentToFloat("5e-11"),
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+  },
 };
 
 const configTokenMapping = {

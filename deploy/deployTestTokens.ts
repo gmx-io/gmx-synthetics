@@ -38,7 +38,8 @@ const func = async ({ getNamedAccounts, deployments, gmx, network }: HardhatRunt
 
     tokens[tokenSymbol].address = address;
     if (newlyDeployed) {
-      if (token.wrappedNative && !network.live) {
+      if (token.wrappedNative && !network.live && network.name !== "localhost") {
+        // TODO: check if balances are set on localhost
         await setBalance(address, expandDecimals(1000, token.decimals));
       }
 

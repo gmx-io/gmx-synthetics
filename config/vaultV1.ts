@@ -7,6 +7,7 @@ export type VaultV1Config = {
 export default async function (hre: HardhatRuntimeEnvironment): Promise<VaultV1Config> {
   const config: { [network: string]: VaultV1Config } = {
     hardhat: {},
+    localhost: {},
     arbitrum: {
       vaultV1: "0x489ee077994B6658eAfA855C308275EAd8097C4A",
       gmx: "0xfc5A1A6EB076a2C7aD06eD22C90d7E710E35ad0a",

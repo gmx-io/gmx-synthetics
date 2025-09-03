@@ -10,7 +10,7 @@ const func = createDeployFunction({
   getDeployArgs: async ({ dependencyContracts, gmx, network, get }) => {
     const oracleConfig = await gmx.getOracle();
     let dataStreamFeedVerifierAddress = oracleConfig.dataStreamFeedVerifier;
-    if (network.name === "hardhat") {
+    if (network.name === "hardhat" || network.name === "localhost") {
       const dataStreamFeedVerifier = await get("MockDataStreamVerifier");
       dataStreamFeedVerifierAddress = dataStreamFeedVerifier.address;
     }
