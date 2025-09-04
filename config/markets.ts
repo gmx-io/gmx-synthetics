@@ -3620,7 +3620,7 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.7e-8"),
 
-      reserveFactor: percentageToFloat("75%"),
+      reserveFactor: percentageToFloat("100%"),
       openInterestReserveFactor: percentageToFloat("70%"),
       maxPnlFactorForTraders: percentageToFloat("90%"),
 
@@ -3647,7 +3647,7 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.7e-8"),
 
-      reserveFactor: percentageToFloat("75%"),
+      reserveFactor: percentageToFloat("100%"),
       openInterestReserveFactor: percentageToFloat("70%"),
       maxPnlFactorForTraders: percentageToFloat("90%"),
 
@@ -3674,7 +3674,7 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.7e-8"),
 
-      reserveFactor: percentageToFloat("75%"),
+      reserveFactor: percentageToFloat("100%"),
       openInterestReserveFactor: percentageToFloat("70%"),
       maxPnlFactorForTraders: percentageToFloat("90%"),
 
