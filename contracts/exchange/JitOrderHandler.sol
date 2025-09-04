@@ -59,7 +59,7 @@ contract JitOrderHandler is IJitOrderHandler, BaseOrderHandler {
         GlvShiftUtils.CreateGlvShiftParams[] memory shiftParamsList,
         bytes32 orderKey,
         OracleUtils.SimulatePricesParams memory oracleParams
-    ) external override globalNonReentrant withSimulatedOraclePrices(oracleParams) {
+    ) external override withSimulatedOraclePrices(oracleParams) globalNonReentrant {
         _executeJitOrder(shiftParamsList, orderKey, true);
     }
 
