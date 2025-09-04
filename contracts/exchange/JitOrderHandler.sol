@@ -14,11 +14,8 @@ import "./OrderHandler.sol";
 import "./IJitOrderHandler.sol";
 
 // Jit stands for Just-in-time liquidity
-contract JitOrderHandler is IJitOrderHandler, BaseOrderHandler, ReentrancyGuard {
+contract JitOrderHandler is IJitOrderHandler, BaseOrderHandler {
     using Order for Order.Props;
-    using GlvDeposit for GlvDeposit.Props;
-    using GlvShift for GlvShift.Props;
-    using GlvWithdrawal for GlvWithdrawal.Props;
 
     GlvShiftHandler public immutable glvShiftHandler;
     OrderHandler public immutable orderHandler;
