@@ -117,7 +117,6 @@ contract ShiftHandler is IShiftHandler, BaseHandler {
         OracleUtils.SimulatePricesParams memory params
     ) external
         override
-        onlyController
         withSimulatedOraclePrices(params)
         globalNonReentrant
     {
