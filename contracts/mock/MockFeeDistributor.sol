@@ -653,7 +653,13 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         uint256 feesV2Usd,
         uint256 keeperCostsV2
     ) internal view returns (uint256, uint256) {
-        uint256 chainlinkTreasuryWntAmount = Precision.mulDiv(totalWntBalance, feesV2Usd, feesV1Usd + feesV2Usd);
+        uint256 feesV1UsdInWnt = Precision.applyFactor(feesV1Usd, getUint(Keys2.FEE_DISTRIBUTOR_V1_FEES_WNT_FACTOR));
+        uint256 feesV2UsdInWnt = Precision.applyFactor(feesV2Usd, getUint(Keys2.FEE_DISTRIBUTOR_V2_FEES_WNT_FACTOR));
+        uint256 chainlinkTreasuryWntAmount = Precision.mulDiv(
+            totalWntBalance,
+            feesV2UsdInWnt,
+            feesV1UsdInWnt + feesV2UsdInWnt
+        );
         uint256 wntForChainlink = Precision.applyFactor(
             chainlinkTreasuryWntAmount,
             getUint(Keys2.FEE_DISTRIBUTOR_CHAINLINK_FACTOR)

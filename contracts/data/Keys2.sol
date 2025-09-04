@@ -68,6 +68,10 @@ library Keys2 {
     bytes32 public constant FEE_DISTRIBUTOR_REFERRAL_REWARDS_DEPOSITED = keccak256(abi.encode("FEE_DISTRIBUTOR_REFERRAL_REWARDS_DEPOSITED"));
     // @dev key for max WNT amount from treasury to cover keeper costs
     bytes32 public constant FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY = keccak256(abi.encode("FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY"));
+    // @dev key for factor used to determine amount of total V1 fees USD that are in WNT
+    bytes32 public constant FEE_DISTRIBUTOR_V1_FEES_WNT_FACTOR = keccak256(abi.encode("FEE_DISTRIBUTOR_V1_FEES_WNT_FACTOR"));
+    // @dev key for factor used to determine amount of total V2 fees USD that are in WNT
+    bytes32 public constant FEE_DISTRIBUTOR_V2_FEES_WNT_FACTOR = keccak256(abi.encode("FEE_DISTRIBUTOR_V2_FEES_WNT_FACTOR"));
 
     // @dev key for the multichain peers mapping (peer address stored as bytes32)
     // @param readChannel the readChannel for which to retrieve the respective peer
