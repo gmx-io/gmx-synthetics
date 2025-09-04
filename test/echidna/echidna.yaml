@@ -1,0 +1,20 @@
+testMode: assertion
+testLimit: 1000
+
+# RPC connection to local Ganache
+rpcUrl: "http://127.0.0.1:8545"
+
+# Corpus directory for test cases
+corpusDir: corpus
+
+# Sequence length for fuzzing
+seqLen: 25
+
+# Solidity compiler settings
+solcArgs: "--optimize --optimize-runs 200"
+
+# Coverage (optional, helps identify what code paths are tested)
+coverage: true
+
+# Filter functions to test (optional)
+# filterFunctions: ["test_", "echidna_"]

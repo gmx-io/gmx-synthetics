@@ -32,3 +32,11 @@ out
 /abi
 
 /validation
+
+# Echidna testing artifacts
+/test/echidna/corpus/
+/test/echidna/crytic-export/
+/test/echidna/*.txt
+/test/echidna/*.html
+/test/echidna/*.lcov
+/test/echidna/covered.*
