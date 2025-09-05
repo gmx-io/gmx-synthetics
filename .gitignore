@@ -40,3 +40,4 @@ out
 /test/echidna/*.html
 /test/echidna/*.lcov
 /test/echidna/covered.*
+/crytic-export/

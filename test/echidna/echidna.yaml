@@ -5,7 +5,7 @@ testLimit: 1000
 rpcUrl: "http://127.0.0.1:8545"
 
 # Corpus directory for test cases
-corpusDir: corpus
+corpusDir: "test/echidna/corpus"
 
 # Sequence length for fuzzing
 seqLen: 25
@@ -18,3 +18,13 @@ coverage: true
 
 # Filter functions to test (optional)
 # filterFunctions: ["test_", "echidna_"]
+
+
+# start local chain:
+# etheno --ganache --ganache-args "--deterministic --gasLimit 10000000" -x ./contracts/echidna/init.json
+# cleanup local deployments:
+# rm -rf deployments/localhost
+# deploy locally:
+# SKIP_AUTO_HANDLER_REDEPLOYMENT=false npx hardhat deploy --network localhost
+# run echidna (from root):
+# echidna test/echidna --contract SetupTest --config test/echidna/echidna.yaml
