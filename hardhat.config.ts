@@ -68,8 +68,8 @@ export const getExplorerUrl = (network) => {
     botanix: "https://api.routescan.io/v2/network/mainnet/evm/3637/etherscan/",
     snowscan: "https://api.snowscan.xyz/",
     arbitrumGoerli: "https://api-goerli.arbiscan.io/",
-    arbitrumSepolia: "https://api-sepolia.arbiscan.io/",
-    sepolia: "https://sepolia.etherscan.io/",
+    arbitrumSepolia: "https://api.etherscan.io/v2/api?chainid=421614",
+    sepolia: "https://api.etherscan.io/v2/api?chainid=11155111",
     avalancheFuji: "https://api-testnet.snowtrace.io/",
     arbitrumBlockscout: "https://arbitrum.blockscout.com/api",
   };
@@ -303,7 +303,7 @@ const config: HardhatUserConfig = {
   // hardhat-deploy has issues with some contracts
   // https://github.com/wighawag/hardhat-deploy/issues/264
   etherscan: {
-    apiKey: getEtherscanApiKey(),
+    apiKey: process.env.ETHERSCAN_API_KEY, // etherscan v2 uses a single apiKey for all networks
     customChains: [
       {
         network: "snowtrace",
@@ -317,7 +317,7 @@ const config: HardhatUserConfig = {
         network: "arbitrumSepolia",
         chainId: 421614,
         urls: {
-          apiURL: "https://api-sepolia.arbiscan.io/api",
+          apiURL: "https://api.etherscan.io/v2/api",
           browserURL: "https://sepolia.arbiscan.io/",
         },
       },
