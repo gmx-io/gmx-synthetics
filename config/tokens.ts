@@ -1248,6 +1248,15 @@ const config: {
       address: "0x5947BB275c521040051D82396192181b413227A3",
       decimals: 18,
       transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x00036d7a1251e3f67d6658466b5e9e7fe8418af7feac9567ff322bff95cc2401",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x49ccd9ca821EfEab2b98c60dC60F518E765EDe9a",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+      buybackMaxPriceImpactFactor: MID_BUYBACK_IMPACT,
     },
   },
   botanix: {
