@@ -125,9 +125,13 @@ export async function initOracleConfigForTokens({ write }) {
       edge: initOracleConfigEdgeParams,
     };
 
+    console.log(
+      `    onchainConfig.priceFeed: ${onchainConfig.priceFeed}, onchainConfig.dataStreamId: ${onchainConfig.dataStreamId}`
+    );
+
     if (
       onchainConfig.priceFeed === ethers.constants.AddressZero &&
-      onchainConfig.dataStreamId === ethers.constants.AddressZero
+      onchainConfig.dataStreamId === ethers.constants.HashZero
     ) {
       console.log(`${multicallWriteParams.length}: init oracle config for ${tokenSymbol}`);
       multicallWriteParams.push(config.interface.encodeFunctionData("initOracleConfig", [initOracleConfigParams]));
