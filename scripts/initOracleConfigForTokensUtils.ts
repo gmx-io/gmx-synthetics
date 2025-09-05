@@ -104,10 +104,6 @@ export async function initOracleConfigForTokens({ write }) {
       stablePrice: priceFeed?.stablePrice ?? 0,
     };
 
-    if (hre.network.name === "avalanche" && tokenSymbol === "LINK") {
-      continue; // skip LINK on Avalanche as it is missing dataStreamFeedId & dataStreamFeedDecimals configs
-    }
-
     const dataStreamMultiplier = expandDecimals(1, 60 - token.decimals - token.dataStreamFeedDecimals);
     const dataStreamSpreadReductionFactor = bigNumberify(token.dataStreamSpreadReductionFactor ?? 0);
 
@@ -129,9 +125,13 @@ export async function initOracleConfigForTokens({ write }) {
       edge: initOracleConfigEdgeParams,
     };
 
+    console.log(
+      `    onchainConfig.priceFeed: ${onchainConfig.priceFeed}, onchainConfig.dataStreamId: ${onchainConfig.dataStreamId}`
+    );
+
     if (
       onchainConfig.priceFeed === ethers.constants.AddressZero &&
-      onchainConfig.dataStreamId === ethers.constants.AddressZero
+      onchainConfig.dataStreamId === ethers.constants.HashZero
     ) {
       console.log(`${multicallWriteParams.length}: init oracle config for ${tokenSymbol}`);
       multicallWriteParams.push(config.interface.encodeFunctionData("initOracleConfig", [initOracleConfigParams]));
