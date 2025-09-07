@@ -5,6 +5,25 @@ pragma solidity ^0.8.0;
 import "../market/MarketUtils.sol";
 
 contract MarketUtilsTest {
+    function validateSwapMarket(
+        DataStore dataStore,
+        address marketAddress,
+        address tokenIn,
+        address tokenOut
+    ) external view {
+        // Only calls MarketUtils's validateSwapMarket here, actual parameters can be mocked as needed
+        MarketUtils.validateSwapMarket(dataStore, marketAddress);
+    }
+
+    function getOppositeToken(
+        DataStore dataStore,
+        address marketAddress,
+        address token
+    ) external view returns (address) {
+        // Only calls MarketUtils's getOppositeToken here, actual parameters can be mocked as needed
+        Market.Props memory market;
+        return MarketUtils.getOppositeToken(token, market);
+    }
     function getUsageFactor(
         DataStore dataStore,
         Market.Props memory market,
