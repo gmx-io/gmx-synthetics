@@ -4336,6 +4336,7 @@ const config: {
       maxPnlFactorForTraders: percentageToFloat("90%"),
 
       minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.78e-9"),
 
       maxOpenInterest: decimalToFloat(2_000_000),
