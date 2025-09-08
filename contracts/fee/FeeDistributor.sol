@@ -145,8 +145,8 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
 
         EventUtils.EventLogData memory eventData;
         eventData.uintItems.initItems(2);
-        eventData = _setUintItem(eventData, 0, "numberOfChainsReadRequests", chainIdsLength - 1);
-        eventData = _setUintItem(eventData, 1, "messagingFee.nativeFee", messagingFee.nativeFee);
+        _setUintItem(eventData, 0, "numberOfChainsReadRequests", chainIdsLength - 1);
+        _setUintItem(eventData, 1, "messagingFee.nativeFee", messagingFee.nativeFee);
         _emitEventLog("FeeDistributionInitiated", eventData);
     }
 
@@ -235,7 +235,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
 
         EventUtils.EventLogData memory eventData;
         eventData.uintItems.initItems(1);
-        eventData = _setUintItem(eventData, 0, "feeAmountGmxCurrentChain", feeAmountGmxCurrentChain);
+        _setUintItem(eventData, 0, "feeAmountGmxCurrentChain", feeAmountGmxCurrentChain);
         eventData.bytesItems.initItems(1);
         eventData.bytesItems.setItem(0, "receivedData", abi.encode(receivedData));
         eventData.boolItems.initItems(1);
@@ -282,8 +282,8 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
 
         EventUtils.EventLogData memory eventData;
         eventData.uintItems.initItems(2);
-        eventData = _setUintItem(eventData, 0, "gmxReceived", gmxReceived);
-        eventData = _setUintItem(eventData, 1, "feeAmountGmxCurrentChain", feeAmountGmxCurrentChain);
+        _setUintItem(eventData, 0, "gmxReceived", gmxReceived);
+        _setUintItem(eventData, 1, "feeAmountGmxCurrentChain", feeAmountGmxCurrentChain);
         _emitEventLog("FeeDistributionBridgedGmxReceived", eventData);
     }
 
@@ -330,13 +330,13 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
 
         EventUtils.EventLogData memory eventData;
         eventData.uintItems.initItems(7);
-        eventData = _setUintItem(eventData, 0, "feesV1Usd", feesV1Usd);
-        eventData = _setUintItem(eventData, 1, "feesV2Usd", feesV2Usd);
-        eventData = _setUintItem(eventData, 2, "wntForKeepers", wntForKeepers);
-        eventData = _setUintItem(eventData, 3, "wntForChainlink", wntForChainlink);
-        eventData = _setUintItem(eventData, 4, "wntForTreasury", wntForTreasury);
-        eventData = _setUintItem(eventData, 5, "wntForReferralRewards", wntForReferralRewards);
-        eventData = _setUintItem(eventData, 6, "esGmxForReferralRewards", esGmxForReferralRewards);
+        _setUintItem(eventData, 0, "feesV1Usd", feesV1Usd);
+        _setUintItem(eventData, 1, "feesV2Usd", feesV2Usd);
+        _setUintItem(eventData, 2, "wntForKeepers", wntForKeepers);
+        _setUintItem(eventData, 3, "wntForChainlink", wntForChainlink);
+        _setUintItem(eventData, 4, "wntForTreasury", wntForTreasury);
+        _setUintItem(eventData, 5, "wntForReferralRewards", wntForReferralRewards);
+        _setUintItem(eventData, 6, "esGmxForReferralRewards", esGmxForReferralRewards);
         _emitEventLog("FeeDistributionCompleted", eventData);
     }
 
@@ -378,8 +378,8 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
                 eventData.addressItems.setItem(0, "account", param.account);
 
                 eventData.uintItems.initItems(2);
-                eventData = _setUintItem(eventData, 0, "amount", param.amount);
-                eventData = _setUintItem(eventData, 1, "totalEsGmxRewards", totalEsGmxRewards);
+                _setUintItem(eventData, 0, "amount", param.amount);
+                _setUintItem(eventData, 1, "totalEsGmxRewards", totalEsGmxRewards);
 
                 eventEmitter.emitEventLog1("TotalEsGmxRewardsIncreased", Cast.toBytes32(param.account), eventData);
             }
@@ -488,7 +488,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
 
         EventUtils.EventLogData memory eventData;
         eventData.uintItems.initItems(1);
-        eventData = _setUintItem(eventData, 0, "totalGmxBridgedOut", totalGmxBridgedOut);
+        _setUintItem(eventData, 0, "totalGmxBridgedOut", totalGmxBridgedOut);
         _emitEventLog("FeeDistributionGmxBridgedOut", eventData);
 
         return totalGmxBridgedOut;
@@ -735,16 +735,6 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         }
     }
 
-    function _setUintItem(
-        EventUtils.EventLogData memory eventData,
-        uint256 itemNumber,
-        string memory itemName,
-        uint256 uintItem
-    ) internal pure returns (EventUtils.EventLogData memory) {
-        eventData.uintItems.setItem(itemNumber, itemName, uintItem);
-        return eventData;
-    }
-
     function _setReadRequestInput(
         uint32 chainId,
         address target,
@@ -776,5 +766,14 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
 
     function _removeDust(uint256 amount, uint256 decimalConversionRate) internal pure returns (uint256) {
         return (amount / decimalConversionRate) * decimalConversionRate;
+    }
+
+    function _setUintItem(
+        EventUtils.EventLogData memory eventData,
+        uint256 itemNumber,
+        string memory itemName,
+        uint256 uintItem
+    ) internal pure {
+        eventData.uintItems.setItem(itemNumber, itemName, uintItem);
     }
 }

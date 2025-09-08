@@ -126,7 +126,7 @@ contract ContributorHandler is ReentrancyGuard, RoleModule, BasicMulticall {
                 IERC20(token).safeTransferFrom(fundingAccount, account, amount);
 
                 EventUtils.EventLogData memory eventData;
-                eventData.addressItems.initItems(3);
+                eventData.addressItems.initItems(2);
                 eventData.addressItems.setItem(0, "account", account);
                 eventData.addressItems.setItem(1, "token", token);
                 eventData.uintItems.initItems(1);
