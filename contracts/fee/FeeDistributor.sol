@@ -71,6 +71,12 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
     }
 
     // @dev initiate the weekly fee distribution process
+    //
+    // The fee distribution process relies on the premise that this function is executed synchronously
+    // across all chains to which it is deployed and is executed for the same fee distribution period
+    //
+    // In cases in which a chain encounters downtime or a keeper experiences issues, a contingency
+    // should be in place to ensure the fee distribution is completed without issues
     function initiateDistribute() external nonReentrant onlyFeeDistributionKeeper {
         // validate that the FEE_RECEIVER address stored in dataStore = FeeDistributorVault
         address feeReceiver = _getAddress(Keys.FEE_RECEIVER);
