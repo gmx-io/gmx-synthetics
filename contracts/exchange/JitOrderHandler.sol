@@ -106,8 +106,8 @@ contract JitOrderHandler is IJitOrderHandler, BaseOrderHandler {
 
         // @note GLV shifts should use the latest prices other if GLV oracle price is used
         // then there may be a discrepancy between GM prices used to calculate GLV oracle price and current GM prices
-        // JIT_SHIFT_UPDATE_AT_TIME_BUFFER is used to enforce this
-        uint256 updatedAtTime = block.timestamp - _dataStore.getUint(Keys.JIT_SHIFT_UPDATE_AT_TIME_BUFFER);
+        // MAX_ATOMIC_ORACLE_PRICE_AGE is used to enforce this
+        uint256 updatedAtTime = block.timestamp - _dataStore.getUint(Keys.MAX_ATOMIC_ORACLE_PRICE_AGE);
         if (updatedAtTime < order.updatedAtTime()) {
             updatedAtTime = order.updatedAtTime();
         }

@@ -181,7 +181,7 @@ describe("Jit", () => {
   });
 
   it("OracleTimestampsAreSmallerThanRequired", async () => {
-    await dataStore.setUint(keys.JIT_SHIFT_UPDATE_AT_TIME_BUFFER, 0);
+    await dataStore.setUint(keys.MAX_ATOMIC_ORACLE_PRICE_AGE, 0);
     await createOrder(fixture, orderParams);
     await expect(
       executeJitOrder(fixture, {

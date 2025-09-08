@@ -294,7 +294,6 @@ export const EID_TO_SRC_CHAIN_ID = hashString("EID_TO_SRC_CHAIN_ID");
 export const POSITION_LAST_SRC_CHAIN_ID = hashString("POSITION_LAST_SRC_CHAIN_ID");
 export const CLAIM_TERMS = hashString("CLAIM_TERMS");
 
-export const JIT_SHIFT_UPDATE_AT_TIME_BUFFER = hashString("JIT_SHIFT_UPDATE_AT_TIME_BUFFER");
 export const VALID_FROM_TIME = hashString("VALID_FROM_TIME");
 
 export const MAX_DATA_LENGTH = hashString("MAX_DATA_LENGTH");
