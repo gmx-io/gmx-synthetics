@@ -1,48 +1,31 @@
-import axios from "axios";
 import hre from "hardhat";
 import Role from "../artifacts/contracts/role/Role.sol/Role.json";
 import { hashString } from "../utils/hash";
 import { expandDecimals } from "../utils/math";
-import * as fs from "fs";
-import * as path from "path";
+import { getContractNameFromEtherscan, getContractCreationFromEtherscan } from "../utils/explorer";
+import { FileCache } from "./cacheUtils";
+import { isRelayFeeExcludedKey } from "../utils/keys";
+
+interface ContractInfo {
+  isContract: boolean;
+  contractName: string;
+  isGmxDeployer: boolean;
+}
 
 // bump this when the cache format changes
 const CACHE_VERSION = 2;
-const _cachePath = path.join(__dirname, `../cache/contractInfoCache.${hre.network.name}.json`);
-let _cache: {
-  version: number;
-  contractInfo: Record<
-    string,
-    {
-      isContract: boolean;
-      contractName: string;
-      isGmxDeployer: boolean;
-    }
-  >;
-};
-if (fs.existsSync(_cachePath)) {
-  const _cacheFileContent = fs.readFileSync(_cachePath, "utf8").toString();
-  _cache = JSON.parse(_cacheFileContent);
-  if (_cache.version !== CACHE_VERSION) {
-    console.warn("Cache version mismatch, resetting cache");
-    _cache = {
-      version: CACHE_VERSION,
-      contractInfo: {},
-    };
-  }
-} else {
-  _cache = {
-    version: CACHE_VERSION,
-    contractInfo: {},
-  };
-}
+const _cache = new FileCache<ContractInfo>(`contractInfoCache-${hre.network.name}.json`, CACHE_VERSION);
 
 const GMX_V2_DEPLOYER_ADDRESS = "0xe7bfff2ab721264887230037940490351700a068";
 const GMX_V1_DEPLOYER_ADDRESS = "0x5f799f365fa8a2b60ac0429c48b153ca5a6f0cf8";
 
 const trustedExternalContracts = new Set(
   [
-    "0x4b6ACC5b2db1757bD49408FeE92e32D39608B5d9", // Gnosis Safe
+    "0x4b6ACC5b2db1757bD49408FeE92e32D39608B5d9",
+    "0x8d1d2e24ec641edc6a1ebe0f3ae7af0ebc573e0d",
+    "0xD2E217d800C41c86De1e01FD72009d4Eafc539a3",
+    "0x15F9eBC71c539926B8f652a534d29B4Af57CaD55",
+    "0x656fa39BdB5984b477FA6aB443195D72D1Accc1c",
   ].map((address) => address.toLowerCase())
 );
 
@@ -81,14 +64,6 @@ function getValues(): { referralStorageAddress?: string; dataStreamVerifierAddre
 }
 
 export async function validateRoles() {
-  try {
-    await validateRolesImpl();
-  } finally {
-    fs.writeFileSync(path.join(__dirname, "../cache/contractInfoCache.json"), JSON.stringify(_cache, null, 2));
-  }
-}
-
-async function validateRolesImpl() {
   const roles = Role.abi.map((i) => i.name) as string[];
   const deployments = await hre.deployments.all();
   const contractNameByAddress = Object.fromEntries(
@@ -116,6 +91,7 @@ async function validateRolesImpl() {
   });
 
   const { roles: _expectedRoles, requiredRolesForContracts } = await hre.gmx.getRoles();
+
   const errors = [];
   const warns = [];
 
@@ -219,10 +195,15 @@ async function validateRolesImpl() {
     }
   }
 
+  console.log("-------");
+
   console.log("diff:\n%s", JSON.stringify({ rolesToAdd, rolesToRemove }, null, 2));
+
+  console.log("-------");
 
   await validateDataStreamProviderHasDiscount();
   await validateIsReferralStorageHandler();
+  await validateMultichainProvidersRelayFeeExclusion();
 
   if (warns.length > 0) {
     for (const warn of warns) {
@@ -242,9 +223,9 @@ async function validateRolesImpl() {
 async function getContractInfo(
   contractNameByAddress: Record<string, string>,
   contractAddress: string
-): Promise<{ isContract: boolean; contractName: string; isGmxDeployer: boolean }> {
-  if (_cache.contractInfo[contractAddress]) {
-    return _cache.contractInfo[contractAddress];
+): Promise<ContractInfo> {
+  if (_cache.has(contractAddress)) {
+    return _cache.get(contractAddress);
   }
 
   let contractName = contractNameByAddress[ethers.utils.getAddress(contractAddress)];
@@ -268,12 +249,12 @@ async function getContractInfo(
 
   if (shouldCache) {
     // should not cache data for unverified contracts
-    _cache.contractInfo[contractAddress] = { isContract, contractName, isGmxDeployer };
+    _cache.set(contractAddress, { isContract, contractName, isGmxDeployer });
   }
   return { isContract, contractName, isGmxDeployer };
 }
 
-function getIsGmxDeployer(contractAddress: string) {
+export function getIsGmxDeployer(contractAddress: string) {
   return (
     contractAddress.toLowerCase() === GMX_V1_DEPLOYER_ADDRESS.toLowerCase() ||
     contractAddress.toLowerCase() === GMX_V2_DEPLOYER_ADDRESS.toLowerCase()
@@ -301,7 +282,7 @@ async function validateDataStreamProviderHasDiscount() {
   console.log("feeManagerAddress", feeManagerAddress);
   const feeManager = new hre.ethers.Contract(
     feeManagerAddress,
-    ["function s_subscriberDiscounts(address,bytes32,address) view returns (uint256)"],
+    ["function s_globalDiscounts(address,address) view returns (uint256)"],
     hre.ethers.provider
   );
 
@@ -310,11 +291,7 @@ async function validateDataStreamProviderHasDiscount() {
   }
 
   const dataStreamProviderDeployment = await hre.deployments.get("ChainlinkDataStreamProvider");
-  const discount = await feeManager.s_subscriberDiscounts(
-    dataStreamProviderDeployment.address,
-    "0x000316d702a8e25e6b4ef4d449e3413dff067ee77dd366f0550251c07daf05ee",
-    tokens.LINK.address
-  );
+  const discount = await feeManager.s_globalDiscounts(dataStreamProviderDeployment.address, tokens.LINK.address);
   if (!discount.eq(expandDecimals(1, 18))) {
     console.warn(
       "🟠 ChainlinkDataStreamProvider %s does not have a 100% discount. Check on this with Chainlink",
@@ -345,51 +322,34 @@ async function validateIsReferralStorageHandler() {
         referralStorageAddress
       );
     }
+
+    // check MultichainOrderRouter received the handler role in ReferralStorage after deployment
+    const multichainOrderRouterDeployment = await hre.deployments.get("MultichainOrderRouter");
+    const isMultichainHandler = await referralStorage.isHandler(multichainOrderRouterDeployment.address);
+    if (!isMultichainHandler) {
+      console.warn(
+        "🟠 MultichainOrderRouter %s is missing the handler role in ReferralStorage %s",
+        multichainOrderRouterDeployment.address,
+        referralStorageAddress
+      );
+    }
   }
 }
 
-async function getContractNameFromEtherscan(
-  contractAddress: string
-): Promise<{ contractName: string; isVerified: true } | { contractName?: string; isVerified: false }> {
-  const response = await _requestEtherscan({
-    action: "getsourcecode",
-    address: contractAddress,
-  });
-  const sources: string = response.result[0].SourceCode;
-  if (sources === "") {
-    // source code not verified
-    return { isVerified: false };
+async function validateMultichainProvidersRelayFeeExclusion() {
+  console.log("validating multichain providers are excluded from relay fees");
+
+  const dataStore = await hre.ethers.getContract("DataStore");
+
+  // List of multichain providers to check
+  const multichainProviders = ["LayerZeroProvider"];
+
+  for (const providerName of multichainProviders) {
+    const providerDeployment = await hre.deployments.get(providerName);
+    const isExcluded = await dataStore.getBool(isRelayFeeExcludedKey(providerDeployment.address));
+
+    if (!isExcluded) {
+      console.warn("🟠 %s %s is not excluded from relay fees", providerName, providerDeployment.address);
+    }
   }
-  return { contractName: response.result[0].ContractName, isVerified: true };
-}
-
-async function getContractCreationFromEtherscan(contractAddress: string) {
-  const response = await _requestEtherscan({
-    action: "getcontractcreation",
-    contractaddresses: contractAddress,
-  });
-  const data = response.result[0];
-
-  return {
-    contractAddress: data.contractAddress,
-    contractCreator: data.contractCreator,
-    txHash: data.txHash,
-    blockNumber: Number(data.blockNumber),
-    timestamp: Number(data.timestamp),
-    contractFactory: data.contractFactory,
-    creationBytecode: data.creationBytecode,
-  };
-}
-
-async function _requestEtherscan(params: Record<string, any>) {
-  const apiKey = hre.network.verify.etherscan.apiKey;
-  const baseUrl = hre.network.verify.etherscan.apiUrl + "api";
-  const response = await axios.get(baseUrl, {
-    params: {
-      ...params,
-      apikey: apiKey,
-      module: "contract",
-    },
-  });
-  return response.data;
 }

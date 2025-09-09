@@ -1,26 +1,39 @@
+import prompts from "prompts";
+
 import { getFullKey } from "../utils/config";
 import { encodeData } from "../utils/hash";
 import { bigNumberify, expandDecimals } from "../utils/math";
-import { timelockWriteMulticall } from "../utils/timelock";
+import {
+  setDataStreamPayload,
+  setOracleProviderForTokenPayload,
+  setPriceFeedPayload,
+  timelockWriteMulticall,
+} from "../utils/timelock";
 
 import * as keys from "../utils/keys";
 import { getOracleProviderAddress, getOracleProviderKey } from "../utils/oracle";
 import { validatePriceFeed } from "./initOracleConfigForTokensUtils";
+import { handleInBatches } from "../utils/batch";
 
 const expectedPhases = ["signal", "finalize"];
+
+const isTestnet = hre.network.name === "arbitrumSepolia" || hre.network.name === "avalancheFuji";
 
 export async function updateOracleConfigForTokens() {
   const tokens = await hre.gmx.getTokens();
 
   const dataStore = await hre.ethers.getContract("DataStore");
   const multicall = await hre.ethers.getContract("Multicall3");
-  const timelock = await hre.ethers.getContract("Timelock");
+  const timelock = await hre.ethers.getContract("TimelockConfig");
+  const oracle = await hre.ethers.getContract("Oracle");
 
   const multicallReadParams = [];
 
   const phase = process.env.PHASE;
 
-  if (!expectedPhases.includes(phase)) {
+  if (isTestnet && phase) {
+    throw new Error(`PHASE is not allowed on testnet`);
+  } else if (!isTestnet && !expectedPhases.includes(phase)) {
     throw new Error(`Unexpected PHASE: ${phase}. valid values: ${expectedPhases.join(", ")}`);
   }
 
@@ -82,7 +95,7 @@ export async function updateOracleConfigForTokens() {
       target: dataStore.address,
       allowFailure: false,
       callData: dataStore.interface.encodeFunctionData("getAddress", [
-        getFullKey(keys.ORACLE_PROVIDER_FOR_TOKEN, encodeData(["address"], [token.address])),
+        getFullKey(keys.ORACLE_PROVIDER_FOR_TOKEN, encodeData(["address", "address"], [oracle.address, token.address])),
       ]),
     });
 
@@ -110,6 +123,7 @@ export async function updateOracleConfigForTokens() {
   }
 
   const multicallWriteParams = [];
+  const testnetTasks: (() => Promise<void>)[] = [];
 
   for (const tokenSymbol of tokenSymbols) {
     console.log(`checking: ${tokenSymbol}`);
@@ -147,17 +161,45 @@ export async function updateOracleConfigForTokens() {
         }, ${stablePrice.toString()})`
       );
 
-      const method = phase === "signal" ? "signalSetPriceFeed" : "setPriceFeedAfterSignal";
-
-      multicallWriteParams.push(
-        timelock.interface.encodeFunctionData(method, [
+      if (isTestnet) {
+        testnetTasks.push(async () => {
+          printTxHash(
+            `set price feed ${token.address}`,
+            await dataStore.setAddress(keys.priceFeedKey(token.address), priceFeed.address)
+          );
+          printTxHash(
+            `set price feed multiplier ${token.address}`,
+            await dataStore.setUint(keys.priceFeedMultiplierKey(token.address), priceFeedMultiplier)
+          );
+          printTxHash(
+            `set price feed heartbeat duration ${token.address}`,
+            await dataStore.setUint(keys.priceFeedHeartbeatDurationKey(token.address), priceFeed.heartbeatDuration)
+          );
+          printTxHash(
+            `set stable price ${token.address}`,
+            await dataStore.setUint(keys.stablePriceKey(token.address), stablePrice)
+          );
+        });
+      } else if (phase === "signal") {
+        multicallWriteParams.push(
+          timelock.interface.encodeFunctionData("signalSetPriceFeed", [
+            token.address,
+            priceFeed.address,
+            priceFeedMultiplier,
+            priceFeed.heartbeatDuration,
+            stablePrice,
+          ])
+        );
+      } else {
+        const { targets, values, payloads } = await setPriceFeedPayload(
           token.address,
           priceFeed.address,
           priceFeedMultiplier,
           priceFeed.heartbeatDuration,
-          stablePrice,
-        ])
-      );
+          stablePrice
+        );
+        multicallWriteParams.push(timelock.interface.encodeFunctionData("executeBatch", [targets, values, payloads]));
+      }
     }
 
     if (token.dataStreamFeedId && onchainConfig.dataStreamId !== token.dataStreamFeedId) {
@@ -176,16 +218,42 @@ export async function updateOracleConfigForTokens() {
         }, ${dataStreamMultiplier.toString()}, ${dataStreamSpreadReductionFactor.toString()})`
       );
 
-      const method = phase === "signal" ? "signalSetDataStream" : "setDataStreamAfterSignal";
-
-      multicallWriteParams.push(
-        timelock.interface.encodeFunctionData(method, [
+      if (isTestnet) {
+        testnetTasks.push(async () => {
+          printTxHash(
+            `set data stream id ${token.address}`,
+            await dataStore.setBytes32(keys.dataStreamIdKey(token.address), token.dataStreamFeedId)
+          );
+          printTxHash(
+            `set data stream multiplier ${token.address}`,
+            await dataStore.setUint(keys.dataStreamMultiplierKey(token.address), dataStreamMultiplier)
+          );
+          printTxHash(
+            `set data stream spread reduction factor ${token.address}`,
+            await dataStore.setUint(
+              keys.dataStreamSpreadReductionFactorKey(token.address),
+              dataStreamSpreadReductionFactor
+            )
+          );
+        });
+      } else if (phase === "signal") {
+        multicallWriteParams.push(
+          timelock.interface.encodeFunctionData("signalSetDataStream", [
+            token.address,
+            token.dataStreamFeedId,
+            dataStreamMultiplier,
+            dataStreamSpreadReductionFactor,
+          ])
+        );
+      } else {
+        const { targets, values, payloads } = await setDataStreamPayload(
           token.address,
           token.dataStreamFeedId,
           dataStreamMultiplier,
-          dataStreamSpreadReductionFactor,
-        ])
-      );
+          dataStreamSpreadReductionFactor
+        );
+        multicallWriteParams.push(timelock.interface.encodeFunctionData("executeBatch", [targets, values, payloads]));
+      }
     }
 
     const oracleProviderAddress = await getOracleProviderAddress(token.oracleProvider);
@@ -193,26 +261,62 @@ export async function updateOracleConfigForTokens() {
       const oracleProviderKey = await getOracleProviderKey(oracleProviderAddress);
       console.log(`setOracleProviderForToken(${tokenSymbol} ${oracleProviderKey} ${oracleProviderAddress})`);
 
-      const method = phase === "signal" ? "signalSetOracleProviderForToken" : "setOracleProviderForTokenAfterSignal";
-
+      if (isTestnet) {
+        testnetTasks.push(async () => {
+          printTxHash(
+            `set oracle provider for token ${token.address}`,
+            await dataStore.setAddress(
+              keys.oracleProviderForTokenKey(oracle.address, token.address),
+              oracleProviderAddress
+            )
+          );
+        });
+      }
       // signalSetOracleProviderForToken back to the current oracle provider in case
       // the oracle provider change needs to be rolled back
-      if (method === "signalSetOracleProviderForToken") {
+      else if (phase === "signal") {
         multicallWriteParams.push(
           timelock.interface.encodeFunctionData("signalSetOracleProviderForToken", [
             token.address,
             onchainConfig.oracleProviderForToken,
           ])
         );
+        multicallWriteParams.push(
+          timelock.interface.encodeFunctionData("signalSetOracleProviderForToken", [
+            token.address,
+            oracleProviderAddress,
+          ])
+        );
+      } else {
+        const { target, payload } = await setOracleProviderForTokenPayload(
+          oracle.address,
+          token.address,
+          oracleProviderAddress
+        );
+        multicallWriteParams.push(timelock.interface.encodeFunctionData("execute", [target, payload]));
       }
-
-      multicallWriteParams.push(timelock.interface.encodeFunctionData(method, [token.address, oracleProviderAddress]));
     }
   }
 
   console.log(`updating ${multicallWriteParams.length} params`);
 
-  await timelockWriteMulticall({ timelock, multicallWriteParams });
+  if (isTestnet && testnetTasks.length > 0) {
+    const { write } = await prompts({
+      type: "confirm",
+      name: "write",
+      message: `Do you want to execute ${testnetTasks.length} transactions?`,
+    });
+
+    if (write) {
+      await handleInBatches(testnetTasks, 1, (tasks) => Promise.all(tasks.map((task) => task())));
+    }
+  } else if (!isTestnet) {
+    await timelockWriteMulticall({ timelock, multicallWriteParams });
+  }
+}
+
+function printTxHash(label: string, tx: any) {
+  console.log(`${label} tx sent`, tx.hash);
 }
 
 async function main() {

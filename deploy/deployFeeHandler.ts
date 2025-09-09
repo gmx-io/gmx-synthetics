@@ -28,7 +28,7 @@ const func = createDeployFunction({
   },
   libraryNames: ["MarketUtils"],
   afterDeploy: async ({ deployedContract }) => {
-    await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
+    await grantRoleIfNotGranted(deployedContract, "CONTROLLER");
   },
   // FeeHandler should not be re-deployed as the new FeeHandler would not have
   // the funds from the existing FeeHandler which could lead to errors in

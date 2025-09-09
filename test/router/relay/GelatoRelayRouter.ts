@@ -29,8 +29,9 @@ import { ethers } from "ethers";
 import { parseLogs } from "../../../utils/event";
 import { deployContract } from "../../../utils/deploy";
 import { getRelayParams } from "../../../utils/relay/helpers";
+import { getCreateOrderSignature } from "../../../utils/relay/signatures";
 
-const BAD_SIGNATURE =
+const INVALID_SIGNATURE =
   "0x122e3efab9b46c82dc38adf4ea6cd2c753b00f95c217a0e3a0f4dd110839f07a08eb29c1cc414d551349510e23a75219cd70c8b88515ed2b83bbd88216ffdb051f";
 
 const GMX_SIMULATION_ORIGIN = "0x" + keccakString("GMX SIMULATION ORIGIN").slice(-40);
@@ -97,6 +98,7 @@ describe("GelatoRelayRouter", () => {
       isLong: true,
       shouldUnwrapNativeToken: true,
       referralCode,
+      dataList: [],
     };
 
     await impersonateAccount(GELATO_RELAY_ADDRESS);
@@ -106,6 +108,8 @@ describe("GelatoRelayRouter", () => {
 
     relaySigner = await hre.ethers.getSigner(GELATO_RELAY_ADDRESS);
     chainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
+
+    await dataStore.setBool(keys.isSrcChainIdEnabledKey(chainId), true);
   });
 
   let createOrderParams: Parameters<typeof sendCreateOrder>[0];
@@ -125,6 +129,7 @@ describe("GelatoRelayRouter", () => {
       account: user0.address,
       params: defaultParams,
       deadline: 9999999999,
+      desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
       relayRouter: gelatoRelayRouter,
       chainId,
       gelatoRelayFeeToken: wnt.address,
@@ -141,12 +146,14 @@ describe("GelatoRelayRouter", () => {
       },
       tokenPermits: [tokenPermit],
       account: user0.address,
+      userNonce: 1,
       createOrderParamsList: [],
       updateOrderParamsList: [],
       cancelOrderKeys: [],
       deadline: 9999999999,
       relayRouter: gelatoRelayRouter,
       chainId,
+      desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
       gelatoRelayFeeToken: wnt.address,
       gelatoRelayFeeAmount: expandDecimals(1, 15),
     };
@@ -191,20 +198,22 @@ describe("GelatoRelayRouter", () => {
       await expect(
         sendCreateOrder({
           ...createOrderParams,
-          signature: BAD_SIGNATURE,
+          signature: INVALID_SIGNATURE,
         })
       ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
     });
 
-    it("InvalidUserNonce", async () => {
-      await wnt.connect(user0).approve(router.address, expandDecimals(1, 18));
-
+    it("InvalidRecoveredSigner", async () => {
       await expect(
         sendCreateOrder({
           ...createOrderParams,
-          userNonce: 100,
+          signer: ethers.Wallet.createRandom(),
         })
-      ).to.be.revertedWithCustomError(errorsContract, "InvalidUserNonce");
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidRecoveredSigner");
+    });
+
+    it("InvalidUserDigest", async () => {
+      await wnt.connect(user0).approve(router.address, expandDecimals(1, 18));
 
       await sendCreateOrder({
         ...createOrderParams,
@@ -217,7 +226,7 @@ describe("GelatoRelayRouter", () => {
           ...createOrderParams,
           userNonce: 0,
         })
-      ).to.be.revertedWithCustomError(errorsContract, "InvalidUserNonce");
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidUserDigest");
     });
 
     it("DeadlinePassed", async () => {
@@ -320,6 +329,7 @@ describe("GelatoRelayRouter", () => {
       await dataStore.setAddress(keys.RELAY_FEE_ADDRESS, user3.address);
 
       const _send = (extraCalldataLength) => {
+        createOrderParams.feeParams.feeAmount = expandDecimals(25, 14); // 0.0025 ETH
         return sendCreateOrder({
           ...createOrderParams,
           externalCalls: {
@@ -368,6 +378,11 @@ describe("GelatoRelayRouter", () => {
           createOrderParams.params.orderType = c.orderType;
           createOrderParams.feeParams.feeAmount = expandDecimals(6, 15); // relay fee is 0.001, execution fee is 0.002, 0.003 should be sent back
           const userWntBalanceBefore = await wnt.balanceOf(user0.address);
+          const marketToken =
+            c.orderType == OrderType.MarketSwap || c.orderType == OrderType.LimitSwap
+              ? ethers.constants.AddressZero
+              : defaultParams.addresses.market;
+          createOrderParams.params.addresses.market = marketToken;
           const tx = await sendCreateOrder({
             ...createOrderParams,
           });
@@ -382,7 +397,6 @@ describe("GelatoRelayRouter", () => {
           }
           expect(await wnt.allowance(user0.address, router.address)).to.eq(expectedAllowance);
           // relay fee was sent
-          // relay fee was sent
           await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, gelatoRelayFeeAmount);
 
           const orderKeys = await getOrderKeys(dataStore, 0, 1);
@@ -391,7 +405,7 @@ describe("GelatoRelayRouter", () => {
           expect(order.addresses.account).eq(user0.address);
           expect(order.addresses.receiver).eq(user0.address);
           expect(order.addresses.callbackContract).eq(user1.address);
-          expect(order.addresses.market).eq(ethUsdMarket.marketToken);
+          expect(order.addresses.market).eq(marketToken);
           expect(order.addresses.initialCollateralToken).eq(ethUsdMarket.longToken);
           expect(order.addresses.swapPath).deep.eq([ethUsdMarket.marketToken]);
           expect(order.numbers.orderType).eq(c.orderType);
@@ -424,6 +438,68 @@ describe("GelatoRelayRouter", () => {
           });
         });
       }
+    });
+
+    it("minified digest signature", async () => {
+      expect(await wnt.allowance(user0.address, router.address)).to.eq(0);
+      await expectBalance(wnt.address, GELATO_RELAY_ADDRESS, 0);
+      const executionFee = expandDecimals(2, 15);
+      createOrderParams.params.numbers.executionFee = executionFee;
+      createOrderParams.feeParams.feeAmount = expandDecimals(6, 15); // relay fee is 0.001, execution fee is 0.002, 0.003 should be sent back
+
+      const relayParams = await getRelayParams({ ...createOrderParams, userNonce: 1 });
+      const signature = await getCreateOrderSignature({
+        ...createOrderParams,
+        relayParams,
+        verifyingContract: createOrderParams.relayRouter.address,
+      });
+      await sendCreateOrder({
+        ...createOrderParams,
+        userNonce: 1,
+        signature: signature,
+      });
+
+      const relayParams2 = await getRelayParams({ ...createOrderParams, userNonce: 2 });
+      const signature2 = await getCreateOrderSignature({
+        ...createOrderParams,
+        relayParams: relayParams2,
+        verifyingContract: createOrderParams.relayRouter.address,
+        minified: true,
+      });
+
+      // make sure it returned different signature for minified: true
+      expect(signature2).not.eq(
+        await getCreateOrderSignature({
+          ...createOrderParams,
+          relayParams: relayParams2,
+          verifyingContract: createOrderParams.relayRouter.address,
+        })
+      );
+      await expect(
+        sendCreateOrder({
+          ...createOrderParams,
+          userNonce: 2,
+          signature: signature,
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidRecoveredSigner");
+
+      await sendCreateOrder({
+        ...createOrderParams,
+        userNonce: 2,
+        signature: signature2,
+      });
+
+      const orderKeys = await getOrderKeys(dataStore, 0, 2);
+      expect(orderKeys[0]).not.eq(ethers.constants.HashZero);
+      expect(orderKeys[1]).not.eq(ethers.constants.HashZero);
+
+      const order = await reader.getOrder(dataStore.address, orderKeys[0]);
+      expect(order.addresses.account).eq(user0.address);
+
+      const order2 = await reader.getOrder(dataStore.address, orderKeys[1]);
+      expect(order2.addresses.account).eq(user0.address);
+
+      await stopImpersonatingAccount(GELATO_RELAY_ADDRESS);
     });
 
     it("sponsoredCall: skips signature validation in gas estimation if tx.origin is GMX_SIMULATION_ORIGIN", async () => {
@@ -474,7 +550,7 @@ describe("GelatoRelayRouter", () => {
 
     it("sponsoredCall: creates order and sends relayer fee", async () => {
       const collateralDeltaAmount = createOrderParams.params.numbers.initialCollateralDeltaAmount;
-      const effectiveRelayFee = "1253617010028936"; // the effective fee calculated and charged by GMX contract
+      const effectiveRelayFee = "1385965011087720"; // the effective fee calculated and charged by GMX contract
       await dataStore.setAddress(keys.RELAY_FEE_ADDRESS, user3.address);
 
       const user0WntBalance = await wnt.balanceOf(user0.address);
@@ -1134,6 +1210,7 @@ describe("GelatoRelayRouter", () => {
           executionFeeIncrease: 0,
         },
         deadline: 9999999999,
+        desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
         relayRouter: gelatoRelayRouter,
         chainId,
         gelatoRelayFeeToken: wnt.address,
@@ -1163,9 +1240,18 @@ describe("GelatoRelayRouter", () => {
       await expect(
         sendUpdateOrder({
           ...updateOrderParams,
-          signature: BAD_SIGNATURE,
+          signature: INVALID_SIGNATURE,
         })
       ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
+    });
+
+    it("InvalidRecoveredSigner", async () => {
+      await expect(
+        sendUpdateOrder({
+          ...updateOrderParams,
+          signer: ethers.Wallet.createRandom(),
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidRecoveredSigner");
     });
 
     it("Unauthorized", async () => {
@@ -1282,6 +1368,7 @@ describe("GelatoRelayRouter", () => {
         key: ethers.constants.HashZero,
         account: user0.address,
         deadline: 9999999999,
+        desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
         relayRouter: gelatoRelayRouter,
         chainId,
         gelatoRelayFeeToken: wnt.address,
@@ -1310,9 +1397,18 @@ describe("GelatoRelayRouter", () => {
       await expect(
         sendCancelOrder({
           ...cancelOrderParams,
-          signature: BAD_SIGNATURE,
+          signature: INVALID_SIGNATURE,
         })
       ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
+    });
+
+    it("InvalidRecoveredSigner", async () => {
+      await expect(
+        sendCancelOrder({
+          ...cancelOrderParams,
+          signer: ethers.Wallet.createRandom(),
+        })
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidRecoveredSigner");
     });
 
     it("Unauthorized", async () => {
@@ -1351,9 +1447,16 @@ describe("GelatoRelayRouter", () => {
     });
 
     it("InvalidSignature", async () => {
-      await expect(sendBatch({ ...batchParams, signature: BAD_SIGNATURE })).to.be.revertedWithCustomError(
+      await expect(sendBatch({ ...batchParams, signature: INVALID_SIGNATURE })).to.be.revertedWithCustomError(
         errorsContract,
         "InvalidSignature"
+      );
+    });
+
+    it("InvalidRecoveredSigner", async () => {
+      await expect(sendBatch({ ...batchParams, signer: ethers.Wallet.createRandom() })).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidRecoveredSigner"
       );
     });
 

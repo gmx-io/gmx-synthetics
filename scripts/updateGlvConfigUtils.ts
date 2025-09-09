@@ -114,11 +114,13 @@ export async function updateGlvConfig({ write }) {
   console.log("running update glv config...");
   const { read } = hre.deployments;
 
-  const [tokens, glvs, dataStore, glvHandler] = await Promise.all([
+  const [tokens, glvs, dataStore, glvShiftHandler] = await Promise.all([
     hre.gmx.getTokens(),
     hre.gmx.getGlvs(),
     hre.ethers.getContract("DataStore"),
-    hre.ethers.getContract("GlvHandler"),
+    hre.ethers.getContract("GlvShiftHandler"),
+    hre.ethers.getContract("Multicall3"),
+    hre.ethers.getContract("Config"),
   ]);
 
   const onchainMarketsByTokens = await getOnchainMarkets(read, dataStore.address);
@@ -133,7 +135,7 @@ export async function updateGlvConfig({ write }) {
   console.log("running simulation");
   for (const [glvAddress, marketAddress] of marketsToAdd) {
     console.log("simulating adding market %s to glv %s", marketAddress, glvAddress);
-    await glvHandler.callStatic.addMarketToGlv(glvAddress, marketAddress);
+    await glvShiftHandler.callStatic.addMarketToGlv(glvAddress, marketAddress);
   }
 
   const changeResult = await handleConfigChanges(configItems, write, 100);
@@ -163,7 +165,7 @@ export async function updateGlvConfig({ write }) {
 
   for (const [glvAddress, marketAddress] of marketsToAdd) {
     console.log("adding market %s to glv %s", marketAddress, glvAddress);
-    const tx = await glvHandler.addMarketToGlv(glvAddress, marketAddress);
+    const tx = await glvShiftHandler.addMarketToGlv(glvAddress, marketAddress);
     console.log("sent tx: %s", tx.hash);
   }
 }

@@ -53,8 +53,8 @@ async function main() {
   );
 
   const marketConfigs = await hre.gmx.getMarkets();
-  const marketConfigKey = getMarketKey(indexTokenAddress, longTokenAddress, shortTokenAddress);
   const marketConfigByKey = createMarketConfigByKey({ marketConfigs, tokens });
+  const marketConfigKey = getMarketKey(indexTokenAddress, longTokenAddress, shortTokenAddress);
   const marketConfig = marketConfigByKey[marketConfigKey];
 
   if (!marketConfig) {

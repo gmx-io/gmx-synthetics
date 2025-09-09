@@ -6,6 +6,7 @@ library Shift {
     struct Props {
         Addresses addresses;
         Numbers numbers;
+        bytes32[] _dataList;
     }
 
     struct Addresses {
@@ -23,6 +24,7 @@ library Shift {
         uint256 updatedAtTime;
         uint256 executionFee;
         uint256 callbackGasLimit;
+        uint256 srcChainId;
     }
 
     function account(Props memory props) internal pure returns (address) {
@@ -113,4 +115,19 @@ library Shift {
         props.numbers.callbackGasLimit = value;
     }
 
+    function srcChainId(Props memory props) internal pure returns (uint256) {
+        return props.numbers.srcChainId;
+    }
+
+    function setSrcChainId(Props memory props, uint256 value) internal pure {
+        props.numbers.srcChainId = value;
+    }
+
+    function dataList(Props memory props) internal pure returns (bytes32[] memory) {
+        return props._dataList;
+    }
+
+    function setDataList(Props memory props, bytes32[] memory value) internal pure {
+        props._dataList = value;
+    }
 }

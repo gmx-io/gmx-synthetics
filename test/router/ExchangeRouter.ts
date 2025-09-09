@@ -11,6 +11,7 @@ import { hashString } from "../../utils/hash";
 import { getNextKey } from "../../utils/nonce";
 import { errorsContract } from "../../utils/error";
 import { OrderType, DecreasePositionSwapType, getOrderKeys } from "../../utils/order";
+import * as keys from "../../utils/keys";
 
 describe("ExchangeRouter", () => {
   let fixture;
@@ -47,6 +48,8 @@ describe("ExchangeRouter", () => {
   });
 
   it("createDeposit", async () => {
+    await dataStore.setUint(keys.MAX_DATA_LENGTH, 256);
+    const dataList = [ethers.utils.formatBytes32String("customData")];
     await usdc.mint(user0.address, expandDecimals(50 * 1000, 6));
     await usdc.connect(user0).approve(router.address, expandDecimals(50 * 1000, 6));
     const tx = await exchangeRouter.connect(user0).multicall(
@@ -59,18 +62,22 @@ describe("ExchangeRouter", () => {
         ]),
         exchangeRouter.interface.encodeFunctionData("createDeposit", [
           {
-            receiver: user1.address,
-            callbackContract: user2.address,
-            uiFeeReceiver: user3.address,
-            market: ethUsdMarket.marketToken,
-            initialLongToken: ethUsdMarket.longToken,
-            initialShortToken: ethUsdMarket.shortToken,
-            longTokenSwapPath: [ethUsdMarket.marketToken, ethUsdSpotOnlyMarket.marketToken],
-            shortTokenSwapPath: [ethUsdSpotOnlyMarket.marketToken, ethUsdMarket.marketToken],
+            addresses: {
+              receiver: user1.address,
+              callbackContract: user2.address,
+              uiFeeReceiver: user3.address,
+              market: ethUsdMarket.marketToken,
+              initialLongToken: ethUsdMarket.longToken,
+              initialShortToken: ethUsdMarket.shortToken,
+              longTokenSwapPath: [ethUsdMarket.marketToken, ethUsdSpotOnlyMarket.marketToken],
+              shortTokenSwapPath: [ethUsdSpotOnlyMarket.marketToken, ethUsdMarket.marketToken],
+            },
             minMarketTokens: 100,
             shouldUnwrapNativeToken: true,
             executionFee,
             callbackGasLimit: "200000",
+            srcChainId: 0,
+            dataList,
           },
         ]),
       ],
@@ -93,7 +100,9 @@ describe("ExchangeRouter", () => {
     expect(deposit.numbers.minMarketTokens).eq(100);
     expect(deposit.numbers.executionFee).eq(expandDecimals(1, 18));
     expect(deposit.numbers.callbackGasLimit).eq("200000");
+    expect(deposit.numbers.srcChainId).eq(0);
     expect(deposit.flags.shouldUnwrapNativeToken).eq(true);
+    expect(deposit._dataList).deep.eq(dataList);
 
     await logGasUsage({
       tx,
@@ -103,6 +112,8 @@ describe("ExchangeRouter", () => {
 
   it("createOrder", async () => {
     const referralCode = hashString("referralCode");
+    await dataStore.setUint(keys.MAX_DATA_LENGTH, 256);
+    const dataList = [ethers.utils.formatBytes32String("customData")];
     await usdc.mint(user0.address, expandDecimals(50 * 1000, 6));
     await usdc.connect(user0).approve(router.address, expandDecimals(50 * 1000, 6));
     const tx = await exchangeRouter.connect(user0).multicall(
@@ -134,6 +145,7 @@ describe("ExchangeRouter", () => {
             isLong: true,
             shouldUnwrapNativeToken: true,
             referralCode,
+            dataList,
           },
         ]),
       ],
@@ -158,10 +170,13 @@ describe("ExchangeRouter", () => {
     expect(order.numbers.executionFee).eq(expandDecimals(1, 18));
     expect(order.numbers.callbackGasLimit).eq("200000");
     expect(order.numbers.minOutputAmount).eq(700);
+    expect(order.numbers.srcChainId).eq(0);
 
     expect(order.flags.isLong).eq(true);
     expect(order.flags.shouldUnwrapNativeToken).eq(true);
     expect(order.flags.isFrozen).eq(false);
+
+    expect(order._dataList).deep.eq(dataList);
 
     await logGasUsage({
       tx,
@@ -177,6 +192,8 @@ describe("ExchangeRouter", () => {
       },
     });
 
+    await dataStore.setUint(keys.MAX_DATA_LENGTH, 256);
+    const dataList = [ethers.utils.formatBytes32String("customData")];
     const marketToken = await contractAt("MarketToken", ethUsdMarket.marketToken);
     await marketToken.connect(user0).approve(router.address, expandDecimals(50 * 1000, 18));
 
@@ -190,18 +207,21 @@ describe("ExchangeRouter", () => {
         ]),
         exchangeRouter.interface.encodeFunctionData("createWithdrawal", [
           {
-            receiver: user1.address,
-            callbackContract: user2.address,
-            uiFeeReceiver: user3.address,
-            market: ethUsdMarket.marketToken,
-            longTokenSwapPath: [],
-            shortTokenSwapPath: [],
+            addresses: {
+              receiver: user1.address,
+              callbackContract: user2.address,
+              uiFeeReceiver: user3.address,
+              market: ethUsdMarket.marketToken,
+              longTokenSwapPath: [],
+              shortTokenSwapPath: [],
+            },
             marketTokenAmount: 700,
             minLongTokenAmount: 800,
             minShortTokenAmount: 900,
             shouldUnwrapNativeToken: true,
             executionFee,
             callbackGasLimit: "200000",
+            dataList,
           },
         ]),
       ],
@@ -223,7 +243,10 @@ describe("ExchangeRouter", () => {
     expect(withdrawal.numbers.minShortTokenAmount).eq(900);
     expect(withdrawal.numbers.executionFee).eq(expandDecimals(1, 18));
     expect(withdrawal.numbers.callbackGasLimit).eq("200000");
+    expect(withdrawal.numbers.srcChainId).eq(0);
     expect(withdrawal.flags.shouldUnwrapNativeToken).eq(true);
+
+    expect(withdrawal._dataList).deep.eq(dataList);
 
     await logGasUsage({
       tx,
@@ -250,18 +273,22 @@ describe("ExchangeRouter", () => {
           ]),
           exchangeRouter.interface.encodeFunctionData("createDeposit", [
             {
-              receiver: user1.address,
-              callbackContract: user2.address,
-              uiFeeReceiver: user3.address,
-              market: ethUsdMarket.marketToken,
-              initialLongToken: ethUsdMarket.longToken,
-              initialShortToken: ethUsdMarket.shortToken,
-              longTokenSwapPath: [],
-              shortTokenSwapPath: [],
+              addresses: {
+                receiver: user1.address,
+                callbackContract: user2.address,
+                uiFeeReceiver: user3.address,
+                market: ethUsdMarket.marketToken,
+                initialLongToken: ethUsdMarket.longToken,
+                initialShortToken: ethUsdMarket.shortToken,
+                longTokenSwapPath: [],
+                shortTokenSwapPath: [],
+              },
               minMarketTokens: 100,
               shouldUnwrapNativeToken: true,
               executionFee,
               callbackGasLimit: "200000",
+              srcChainId: 0,
+              dataList: [],
             },
           ]),
           exchangeRouter.interface.encodeFunctionData("simulateExecuteDeposit", [

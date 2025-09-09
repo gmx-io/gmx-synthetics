@@ -2,12 +2,15 @@
 
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 import "../v1/IRouterV1.sol";
 
 import "../data/DataStore.sol";
 import "../fee/FeeBatchStoreUtils.sol";
 import "../market/Market.sol";
 import "../router/IExchangeRouter.sol";
+import "../swap/SwapUtils.sol";
 
 // @title FeeSwapUtils
 library FeeSwapUtils {
@@ -141,7 +144,8 @@ library FeeSwapUtils {
             false, // isLong
             false, // shouldUnwrapNativeToken
             false, // autoCancel
-            bytes32(0) // referralCode
+            bytes32(0), // referralCode
+            new bytes32[](0) // dataList
         );
 
         return params;

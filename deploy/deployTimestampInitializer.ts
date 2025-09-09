@@ -1,3 +1,5 @@
+import { HardhatRuntimeEnvironment } from "hardhat/types";
+
 import { grantRoleIfNotGranted } from "../utils/role";
 import { createDeployFunction } from "../utils/deploy";
 
@@ -10,8 +12,12 @@ const func = createDeployFunction({
     return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
   },
   afterDeploy: async ({ deployedContract }) => {
-    await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
+    await grantRoleIfNotGranted(deployedContract, "CONTROLLER");
   },
 });
+
+func.skip = async ({ network }: HardhatRuntimeEnvironment) => {
+  return network.name !== "hardhat";
+};
 
 export default func;

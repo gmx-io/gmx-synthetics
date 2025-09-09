@@ -6,6 +6,7 @@ import "../data/Keys.sol";
 import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
 import "../utils/Cast.sol";
+import "../order/IBaseOrderUtils.sol";
 
 struct SubaccountApproval {
     address subaccount;
@@ -14,7 +15,9 @@ struct SubaccountApproval {
     uint256 maxAllowedCount;
     bytes32 actionType;
     uint256 nonce; // for replay attack protection
+    uint256 desChainId;
     uint256 deadline;
+    bytes32 integrationId;
     bytes signature;
 }
 
@@ -26,6 +29,19 @@ library SubaccountUtils {
     using EventUtils for EventUtils.Bytes32Items;
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
+
+    function validateCreateOrderParams(
+        address account,
+        IBaseOrderUtils.CreateOrderParams calldata params
+    ) external pure {
+        if (params.addresses.receiver != account) {
+            revert Errors.InvalidReceiverForSubaccountOrder(params.addresses.receiver, account);
+        }
+
+        if (params.addresses.cancellationReceiver != address(0) && params.addresses.cancellationReceiver != account) {
+            revert Errors.InvalidCancellationReceiverForSubaccountOrder(params.addresses.cancellationReceiver, account);
+        }
+    }
 
     function addSubaccount(DataStore dataStore, EventEmitter eventEmitter, address account, address subaccount) public {
         bytes32 setKey = Keys.subaccountListKey(account);
@@ -103,7 +119,7 @@ library SubaccountUtils {
 
         bytes32 key = Keys.subaccountActionCountKey(account, subaccount, actionType);
         uint256 nextValue = dataStore.incrementUint(key, actionsCount);
-        validateSubaccountActionCountAndExpiresAt(dataStore, account, subaccount, actionType, nextValue);
+        _validateSubaccountActionCountAndExpiresAt(dataStore, account, subaccount, actionType, nextValue);
 
         EventUtils.EventLogData memory eventData;
 
@@ -187,13 +203,13 @@ library SubaccountUtils {
         );
     }
 
-    function validateSubaccountActionCountAndExpiresAt(
+    function _validateSubaccountActionCountAndExpiresAt(
         DataStore dataStore,
         address account,
         address subaccount,
         bytes32 actionType,
         uint256 count
-    ) internal view {
+    ) private view {
         bytes32 expiresAtKey = Keys.subaccountExpiresAtKey(account, subaccount, actionType);
         uint256 expiresAt = dataStore.getUint(expiresAtKey);
 
@@ -209,10 +225,22 @@ library SubaccountUtils {
         }
     }
 
-    function validateSubaccount(DataStore dataStore, address account, address subaccount) internal view {
+    function validateSubaccount(DataStore dataStore, address account, address subaccount) public view {
         bytes32 setKey = Keys.subaccountListKey(account);
         if (!dataStore.containsAddress(setKey, subaccount)) {
             revert Errors.SubaccountNotAuthorized(account, subaccount);
+        }
+    }
+
+    function validateIntegrationId(
+        DataStore dataStore,
+        address account,
+        address subaccount
+    ) external view {
+        bytes32 integrationId = dataStore.getBytes32(Keys.subaccountIntegrationIdKey(account, subaccount));
+        bytes32 key = Keys.subaccountIntegrationDisabledKey(integrationId);
+        if (dataStore.getBool(key)) {
+            revert Errors.SubaccountIntegrationIdDisabled(integrationId);
         }
     }
 
@@ -220,7 +248,7 @@ library SubaccountUtils {
         DataStore dataStore,
         address account,
         address subaccount
-    ) internal view returns (uint256) {
+    ) external view returns (uint256) {
         bytes32 key = Keys.subaccountAutoTopUpAmountKey(account, subaccount);
         return dataStore.getUint(key);
     }
@@ -231,7 +259,7 @@ library SubaccountUtils {
         address account,
         address subaccount,
         uint256 amount
-    ) internal {
+    ) external {
         bytes32 key = Keys.subaccountAutoTopUpAmountKey(account, subaccount);
 
         dataStore.setUint(key, amount);
@@ -247,6 +275,34 @@ library SubaccountUtils {
 
         eventEmitter.emitEventLog2(
             "SetSubaccountAutoTopUpAmount",
+            Cast.toBytes32(account),
+            Cast.toBytes32(subaccount),
+            eventData
+        );
+    }
+
+    function setSubaccountIntegrationId(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address account,
+        address subaccount,
+        bytes32 integrationId
+    ) external {
+        bytes32 key = Keys.subaccountIntegrationIdKey(account, subaccount);
+
+        dataStore.setBytes32(key, integrationId);
+
+        EventUtils.EventLogData memory eventData;
+
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "account", account);
+        eventData.addressItems.setItem(1, "subaccount", subaccount);
+
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "integrationId", integrationId);
+
+        eventEmitter.emitEventLog2(
+            "SetSubaccountIntegrationId",
             Cast.toBytes32(account),
             Cast.toBytes32(subaccount),
             eventData

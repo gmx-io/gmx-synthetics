@@ -12,13 +12,35 @@ describe("Relay signatures", () => {
   let fixture;
   let user0;
   let domain;
-  let dataStore, eventEmitter, oracle, orderHandler, orderVault, router, relayUtils, orderStoreUtils, mockContract;
+  let dataStore,
+    roleStore,
+    eventEmitter,
+    oracle,
+    orderHandler,
+    orderVault,
+    swapHandler,
+    router,
+    relayUtils,
+    orderStoreUtils,
+    gasUtils,
+    mockContract;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0 } = fixture.accounts);
-    ({ dataStore, orderVault, router, eventEmitter, oracle, orderHandler, relayUtils, orderStoreUtils } =
-      fixture.contracts);
+    ({
+      dataStore,
+      roleStore,
+      orderVault,
+      router,
+      eventEmitter,
+      oracle,
+      orderHandler,
+      swapHandler,
+      relayUtils,
+      orderStoreUtils,
+      gasUtils,
+    } = fixture.contracts);
   });
 
   beforeEach(async () => {
@@ -26,17 +48,20 @@ describe("Relay signatures", () => {
       "MockGelatoRelayRouter",
       [
         router.address,
+        roleStore.address,
         dataStore.address,
         eventEmitter.address,
         oracle.address,
         orderHandler.address,
         orderVault.address,
+        swapHandler.address,
         ethers.constants.AddressZero,
       ],
       {
         libraries: {
           OrderStoreUtils: orderStoreUtils.address,
           RelayUtils: relayUtils.address,
+          GasUtils: gasUtils.address,
         },
       }
     );

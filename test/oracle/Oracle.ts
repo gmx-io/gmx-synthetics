@@ -6,6 +6,7 @@ import { deployFixture } from "../../utils/fixture";
 import { TOKEN_ORACLE_TYPES, getOracleParams, encodeDataStreamData } from "../../utils/oracle";
 import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
+import { mine } from "@nomicfoundation/hardhat-network-helpers";
 
 describe("Oracle", () => {
   let signers;
@@ -21,7 +22,8 @@ describe("Oracle", () => {
   });
 
   it("setPrices", async () => {
-    const block = await ethers.provider.getBlock();
+    await mine();
+    const block = await hre.ethers.provider.getBlock();
 
     await dataStore.setBytes32(keys.dataStreamIdKey(wbtc.address), hashString("WBTC"));
     await dataStore.setUint(keys.dataStreamMultiplierKey(wbtc.address), expandDecimals(1, 34));

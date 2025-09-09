@@ -11,6 +11,9 @@ const func = createDeployFunction({
     "MarketUtils",
     "ExecuteWithdrawalUtils",
     "WithdrawalEventUtils",
+    "MultichainUtils",
+    "CallbackUtils",
+    "BridgeOutFromControllerUtils",
   ],
 });
 

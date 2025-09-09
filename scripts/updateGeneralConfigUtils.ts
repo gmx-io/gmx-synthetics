@@ -2,8 +2,9 @@ import hre, { network } from "hardhat";
 
 import { ConfigChangeItem, handleConfigChanges } from "./updateConfigUtils";
 import * as keys from "../utils/keys";
+import { encodeData } from "../utils/hash";
 
-const getConfigItems = (generalConfig, oracleConfig) => {
+const getConfigItems = async (generalConfig, oracleConfig) => {
   const configItems: ConfigChangeItem[] = [
     {
       type: "address",
@@ -85,6 +86,12 @@ const getConfigItems = (generalConfig, oracleConfig) => {
     },
     {
       type: "uint",
+      baseKey: keys.CLAIMABLE_COLLATERAL_DELAY,
+      value: generalConfig.claimableCollateralDelay,
+      label: `claimableCollateralDelay`,
+    },
+    {
+      type: "uint",
       baseKey: keys.SWAP_FEE_RECEIVER_FACTOR,
       value: generalConfig.swapFeeReceiverFactor,
       label: `swapFeeReceiverFactor`,
@@ -106,6 +113,30 @@ const getConfigItems = (generalConfig, oracleConfig) => {
       baseKey: keys.DEPOSIT_GAS_LIMIT,
       value: generalConfig.depositGasLimit,
       label: `depositGasLimit`,
+    },
+    {
+      type: "uint",
+      baseKey: keys.CREATE_DEPOSIT_GAS_LIMIT,
+      value: generalConfig.createDepositGasLimit,
+      label: `createDepositGasLimit`,
+    },
+    {
+      type: "uint",
+      baseKey: keys.CREATE_GLV_DEPOSIT_GAS_LIMIT,
+      value: generalConfig.createGlvDepositGasLimit,
+      label: `createGlvDepositGasLimit`,
+    },
+    {
+      type: "uint",
+      baseKey: keys.CREATE_WITHDRAWAL_GAS_LIMIT,
+      value: generalConfig.createWithdrawalGasLimit,
+      label: `createWithdrawalGasLimit`,
+    },
+    {
+      type: "uint",
+      baseKey: keys.CREATE_GLV_WITHDRAWAL_GAS_LIMIT,
+      value: generalConfig.createGlvWithdrawalGasLimit,
+      label: `createGlvWithdrawalGasLimit`,
     },
     {
       type: "uint",
@@ -156,12 +187,6 @@ const getConfigItems = (generalConfig, oracleConfig) => {
       label: `swapOrderGasLimit`,
     },
     {
-      type: "bool",
-      baseKey: keys.IGNORE_OPEN_INTEREST_FOR_USAGE_FACTOR,
-      value: generalConfig.ignoreOpenInterestForUsageFactor,
-      label: `ignoreOpenInterestForUsageFactor`,
-    },
-    {
       type: "uint",
       baseKey: keys.MAX_EXECUTION_FEE_MULTIPLIER_FACTOR,
       value: generalConfig.maxExecutionFeeMultiplierFactor,
@@ -190,6 +215,18 @@ const getConfigItems = (generalConfig, oracleConfig) => {
       baseKey: keys.MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT,
       value: generalConfig.maxRelayFeeUsdForSubaccount,
       label: `maxRelayFeeUsdForSubaccount`,
+    },
+    {
+      type: "uint",
+      baseKey: keys.MAX_DATA_LENGTH,
+      value: generalConfig.maxDataLength,
+      label: `maxDataLength`,
+    },
+    {
+      type: "uint",
+      baseKey: keys.ORACLE_PROVIDER_MIN_CHANGE_DELAY,
+      value: generalConfig.oracleProviderMinChangeDelay,
+      label: `oracleProviderMinChangeDelay`,
     },
   ];
 
@@ -299,6 +336,54 @@ const getConfigItems = (generalConfig, oracleConfig) => {
     });
   }
 
+  const layerZeroProvider = await hre.ethers.getContract("LayerZeroProvider");
+  configItems.push({
+    type: "bool",
+    baseKey: keys.IS_RELAY_FEE_EXCLUDED,
+    keyData: encodeData(["address"], [layerZeroProvider.address]),
+    value: true,
+    label: `isRelayFeeExcluded ${layerZeroProvider.address}`,
+  });
+
+  if (network.name != "hardhat") {
+    for (const [multichainProvider, enabled] of Object.entries(generalConfig.multichainProviders)) {
+      configItems.push({
+        type: "bool",
+        baseKey: keys.IS_MULTICHAIN_PROVIDER_ENABLED,
+        keyData: encodeData(["address"], [multichainProvider]),
+        value: enabled,
+        label: `multichainProvider ${multichainProvider}`,
+      });
+    }
+    for (const [multichainEndpoint, enabled] of Object.entries(generalConfig.multichainEndpoints)) {
+      configItems.push({
+        type: "bool",
+        baseKey: keys.IS_MULTICHAIN_ENDPOINT_ENABLED,
+        keyData: encodeData(["address"], [multichainEndpoint]),
+        value: enabled,
+        label: `multichainEndpoint ${multichainEndpoint}`,
+      });
+    }
+    for (const [srcChainId, enabled] of Object.entries(generalConfig.srcChainIds)) {
+      configItems.push({
+        type: "bool",
+        baseKey: keys.IS_SRC_CHAIN_ID_ENABLED,
+        keyData: encodeData(["uint"], [srcChainId]),
+        value: enabled,
+        label: `srcChainId ${srcChainId}`,
+      });
+    }
+    for (const [srcChainId, eid] of Object.entries(generalConfig.eids as Record<number, number>)) {
+      configItems.push({
+        type: "uint",
+        baseKey: keys.EID_TO_SRC_CHAIN_ID,
+        keyData: encodeData(["uint"], [eid]),
+        value: srcChainId,
+        label: `eid ${eid} for chainId ${srcChainId}`,
+      });
+    }
+  }
+
   return configItems;
 };
 
@@ -306,6 +391,6 @@ export async function updateGeneralConfig({ write }) {
   const generalConfig = await hre.gmx.getGeneral();
   const oracleConfig = await hre.gmx.getOracle();
 
-  const items = getConfigItems(generalConfig, oracleConfig);
+  const items = await getConfigItems(generalConfig, oracleConfig);
   await handleConfigChanges(items, write);
 }

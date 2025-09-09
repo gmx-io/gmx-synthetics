@@ -8,15 +8,20 @@ import "../event/EventEmitter.sol";
 import "./ShiftVault.sol";
 import "./ShiftStoreUtils.sol";
 import "./ShiftEventUtils.sol";
+import "./IShiftUtils.sol";
 
 import "../nonce/NonceUtils.sol";
 
 import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
 import "../utils/AccountUtils.sol";
+import "../market/MarketUtils.sol";
 
-import "../deposit/ExecuteDepositUtils.sol";
-import "../withdrawal/ExecuteWithdrawalUtils.sol";
+import "../deposit/DepositVault.sol";
+import "../exchange/IDepositHandler.sol";
+import "../exchange/IWithdrawalHandler.sol";
+
+import "../multichain/IMultichainTransferRouter.sol";
 
 library ShiftUtils {
     using Deposit for Deposit.Props;
@@ -31,17 +36,6 @@ library ShiftUtils {
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
 
-    struct CreateShiftParams {
-        address receiver;
-        address callbackContract;
-        address uiFeeReceiver;
-        address fromMarket;
-        address toMarket;
-        uint256 minMarketTokens;
-        uint256 executionFee;
-        uint256 callbackGasLimit;
-    }
-
     struct CreateShiftCache {
         uint256 estimatedGasLimit;
         uint256 oraclePriceCount;
@@ -51,8 +45,12 @@ library ShiftUtils {
     struct ExecuteShiftParams {
         DataStore dataStore;
         EventEmitter eventEmitter;
+        MultichainVault multichainVault;
         ShiftVault shiftVault;
-        Oracle oracle;
+        IOracle oracle;
+        IDepositHandler depositHandler;
+        IWithdrawalHandler withdrawalHandler;
+        ISwapHandler swapHandler;
         bytes32 key;
         address keeper;
         uint256 startingGas;
@@ -61,13 +59,13 @@ library ShiftUtils {
     struct ExecuteShiftCache {
         Withdrawal.Props withdrawal;
         bytes32 withdrawalKey;
-        ExecuteWithdrawalUtils.ExecuteWithdrawalParams executeWithdrawalParams;
+        IExecuteWithdrawalUtils.ExecuteWithdrawalParams executeWithdrawalParams;
         Market.Props depositMarket;
         uint256 initialLongTokenAmount;
         uint256 initialShortTokenAmount;
         Deposit.Props deposit;
         bytes32 depositKey;
-        ExecuteDepositUtils.ExecuteDepositParams executeDepositParams;
+        IExecuteDepositUtils.ExecuteDepositParams executeDepositParams;
         uint256 receivedMarketTokens;
     }
 
@@ -76,24 +74,30 @@ library ShiftUtils {
         EventEmitter eventEmitter,
         ShiftVault shiftVault,
         address account,
-        CreateShiftParams memory params
+        uint256 srcChainId,
+        IShiftUtils.CreateShiftParams memory params
     ) external returns (bytes32) {
         AccountUtils.validateAccount(account);
 
-        if (params.fromMarket == params.toMarket) {
-            revert Errors.ShiftFromAndToMarketAreEqual(params.fromMarket);
+        if (params.addresses.fromMarket == params.addresses.toMarket) {
+            revert Errors.ShiftFromAndToMarketAreEqual(params.addresses.fromMarket);
+        }
+
+        // GMX_DATA_ACTION hash is reserved for bridging out tokens, which is not supported during shifts
+        if (params.dataList.length != 0 && params.dataList[0] == Keys.GMX_DATA_ACTION) {
+            revert Errors.BridgeOutNotSupportedDuringShift();
         }
 
         address wnt = TokenUtils.wnt(dataStore);
         uint256 wntAmount = shiftVault.recordTransferIn(wnt);
 
         if (wntAmount < params.executionFee) {
-            revert Errors.InsufficientWntAmount(wntAmount, params.executionFee);
+            revert Errors.InsufficientWntAmountForExecutionFee(wntAmount, params.executionFee);
         }
 
-        AccountUtils.validateReceiver(params.receiver);
+        AccountUtils.validateReceiver(params.addresses.receiver);
 
-        uint256 marketTokenAmount = shiftVault.recordTransferIn(params.fromMarket);
+        uint256 marketTokenAmount = shiftVault.recordTransferIn(params.addresses.fromMarket);
 
         if (marketTokenAmount == 0) {
             revert Errors.EmptyShiftAmount();
@@ -101,8 +105,8 @@ library ShiftUtils {
 
         params.executionFee = wntAmount;
 
-        Market.Props memory fromMarket = MarketUtils.getEnabledMarket(dataStore, params.fromMarket);
-        Market.Props memory toMarket = MarketUtils.getEnabledMarket(dataStore, params.toMarket);
+        Market.Props memory fromMarket = MarketUtils.getEnabledMarket(dataStore, params.addresses.fromMarket);
+        Market.Props memory toMarket = MarketUtils.getEnabledMarket(dataStore, params.addresses.toMarket);
 
         if (fromMarket.longToken != toMarket.longToken) {
             revert Errors.LongTokensAreNotEqual(fromMarket.longToken, toMarket.longToken);
@@ -115,19 +119,21 @@ library ShiftUtils {
         Shift.Props memory shift = Shift.Props(
             Shift.Addresses(
                 account,
-                params.receiver,
-                params.callbackContract,
-                params.uiFeeReceiver,
-                params.fromMarket,
-                params.toMarket
+                params.addresses.receiver,
+                params.addresses.callbackContract,
+                params.addresses.uiFeeReceiver,
+                params.addresses.fromMarket,
+                params.addresses.toMarket
             ),
             Shift.Numbers(
                 marketTokenAmount,
                 params.minMarketTokens,
                 Chain.currentTimestamp(),
                 params.executionFee,
-                params.callbackGasLimit
-            )
+                params.callbackGasLimit,
+                srcChainId
+            ),
+            params.dataList
         );
 
         CallbackUtils.validateCallbackGasLimit(dataStore, shift.callbackGasLimit());
@@ -180,6 +186,9 @@ library ShiftUtils {
         params.shiftVault.recordTransferIn(cache.depositMarket.longToken);
         params.shiftVault.recordTransferIn(cache.depositMarket.shortToken);
 
+        // srcChainId must be zero for the withdrawal, so that the withdrawn
+        // tokens would be sent to the ShiftVault wallet balance instead of the
+        // ShiftVault multichain balance
         cache.withdrawal = Withdrawal.Props(
             Withdrawal.Addresses(
                 shift.account(),
@@ -196,11 +205,13 @@ library ShiftUtils {
                 0, // minShortTokenAmount
                 shift.updatedAtTime(),
                 0, // executionFee
-                0 // callbackGasLimit
+                0, // callbackGasLimit
+                0 // srcChainId is the current block.chainId
             ),
             Withdrawal.Flags(
                 false
-            )
+            ),
+            new bytes32[](0) // dataList
         );
 
         cache.withdrawalKey = NonceUtils.getNextKey(params.dataStore);
@@ -215,18 +226,21 @@ library ShiftUtils {
             Withdrawal.WithdrawalType.Shift
         );
 
-        cache.executeWithdrawalParams = ExecuteWithdrawalUtils.ExecuteWithdrawalParams(
+        cache.executeWithdrawalParams = IExecuteWithdrawalUtils.ExecuteWithdrawalParams(
             params.dataStore,
             params.eventEmitter,
+            params.multichainVault,
+            IMultichainTransferRouter(payable(0)),
             WithdrawalVault(payable(params.shiftVault)),
             params.oracle,
+            params.swapHandler,
             cache.withdrawalKey,
             params.keeper,
             params.startingGas,
             ISwapPricingUtils.SwapPricingType.Shift
         );
 
-        ExecuteWithdrawalUtils.executeWithdrawal(
+        params.withdrawalHandler.executeWithdrawalFromController(
             cache.executeWithdrawalParams,
             cache.withdrawal
         );
@@ -238,6 +252,9 @@ library ShiftUtils {
 
         // set the uiFeeReceiver to the zero address since the ui fee was already paid
         // while executing the withdrawal
+        // srcChainId should be the Shift srcChainId so that the GM tokens would
+        // go into the appropriate balance either the user's wallet balance
+        // or their multichain balance
         cache.deposit = Deposit.Props(
             Deposit.Addresses(
                 shift.account(),
@@ -256,11 +273,13 @@ library ShiftUtils {
                 shift.minMarketTokens(),
                 shift.updatedAtTime(),
                 0, // executionFee
-                0 // callbackGasLimit
+                0, // callbackGasLimit
+                shift.srcChainId()
             ),
             Deposit.Flags(
                 false // shouldUnwrapNativeToken
-            )
+            ),
+            new bytes32[](0) // dataList
         );
 
         cache.depositKey = NonceUtils.getNextKey(params.dataStore);
@@ -273,11 +292,16 @@ library ShiftUtils {
         // price impact from changes in virtual inventory should be excluded
         // since the action of withdrawing and depositing should not result in
         // a net change of virtual inventory
-        cache.executeDepositParams = ExecuteDepositUtils.ExecuteDepositParams(
+        // shift.srcChainId should be used for the srcChainId here so that GM tokens
+        // would go to the appropriate balance eitehr the user's wallet balance or multichain balance
+        cache.executeDepositParams = IExecuteDepositUtils.ExecuteDepositParams(
             params.dataStore,
             params.eventEmitter,
+            params.multichainVault,
+            IMultichainTransferRouter(payable(0)),
             DepositVault(payable(params.shiftVault)),
             params.oracle,
+            params.swapHandler,
             cache.depositKey,
             params.keeper,
             params.startingGas,
@@ -285,7 +309,7 @@ library ShiftUtils {
             false // includeVirtualInventoryImpact
         );
 
-        cache.receivedMarketTokens = ExecuteDepositUtils.executeDeposit(
+        cache.receivedMarketTokens = params.depositHandler.executeDepositFromController(
             cache.executeDepositParams,
             cache.deposit
         );
@@ -303,16 +327,20 @@ library ShiftUtils {
         CallbackUtils.afterShiftExecution(params.key, shift, eventData);
 
         GasUtils.payExecutionFee(
-            params.dataStore,
-            params.eventEmitter,
-            params.shiftVault,
+            GasUtils.PayExecutionFeeContracts(
+                params.dataStore,
+                params.eventEmitter,
+                params.multichainVault,
+                params.shiftVault
+            ),
             params.key,
             shift.callbackContract(),
             shift.executionFee(),
             params.startingGas,
             GasUtils.estimateShiftOraclePriceCount(),
             params.keeper,
-            shift.receiver()
+            shift.receiver(),
+            shift.srcChainId()
         );
 
         return cache.receivedMarketTokens;
@@ -321,6 +349,7 @@ library ShiftUtils {
     function cancelShift(
         DataStore dataStore,
         EventEmitter eventEmitter,
+        MultichainVault multichainVault,
         ShiftVault shiftVault,
         bytes32 key,
         address keeper,
@@ -343,12 +372,29 @@ library ShiftUtils {
 
         ShiftStoreUtils.remove(dataStore, key, shift.account());
 
-        shiftVault.transferOut(
-            shift.fromMarket(),
-            shift.account(),
-            shift.marketTokenAmount(),
-            false // shouldUnwrapNativeToken
-        );
+        if (shift.srcChainId() == 0) {
+            shiftVault.transferOut(
+                shift.fromMarket(),
+                shift.account(),
+                shift.marketTokenAmount(),
+                false // shouldUnwrapNativeToken
+            );
+        } else {
+            shiftVault.transferOut(
+                shift.fromMarket(),
+                address(multichainVault),
+                shift.marketTokenAmount(),
+                false // shouldUnwrapNativeToken
+            );
+            MultichainUtils.recordTransferIn(
+                dataStore,
+                eventEmitter,
+                multichainVault,
+                shift.fromMarket(),
+                shift.account(),
+                0 // srcChainId is the current block.chainId
+            );
+        }
 
         ShiftEventUtils.emitShiftCancelled(
             eventEmitter,
@@ -362,16 +408,20 @@ library ShiftUtils {
         CallbackUtils.afterShiftCancellation(key, shift, eventData);
 
         GasUtils.payExecutionFee(
-            dataStore,
-            eventEmitter,
-            shiftVault,
+            GasUtils.PayExecutionFeeContracts(
+                dataStore,
+                eventEmitter,
+                multichainVault,
+                shiftVault
+            ),
             key,
             shift.callbackContract(),
             shift.executionFee(),
             startingGas,
             GasUtils.estimateShiftOraclePriceCount(),
             keeper,
-            shift.receiver()
+            shift.receiver(),
+            shift.srcChainId()
         );
     }
 }

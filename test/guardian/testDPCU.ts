@@ -28,7 +28,7 @@ describe("Guardian.DecreasePositionCollateralUtils", () => {
     await scenes.deposit(fixture);
   });
 
-  it("OrderSizeDeltaAutoUpdated: Estimated Position Value Less Than MIN_COLLATERAL_USD", async () => {
+  it("OrderCollateralDeltaAmountAutoUpdated: Estimated Position Value Less Than MIN_COLLATERAL_USD", async () => {
     // Set the MIN_COLLATERAL_USD extremely high so that:
     // (estimatedRemainingCollateralUsd + cache.estimatedRemainingPnlUsd) < params.contracts.dataStore.getUint(Keys.MIN_COLLATERAL_USD).toInt256()
     await dataStore.setUint(keys.MIN_COLLATERAL_USD, decimalToFloat(50_000));
@@ -60,14 +60,14 @@ describe("Guardian.DecreasePositionCollateralUtils", () => {
         },
       }),
       (result) => {
-        const event = getEventData(result.executeResult.logs, "OrderSizeDeltaAutoUpdated");
-        expect(event.sizeDeltaUsd).eq(decimalToFloat(100 * 1000));
-        expect(event.nextSizeDeltaUsd).eq(decimalToFloat(200 * 1000));
+        const event = getEventData(result.executeResult.logs, "OrderCollateralDeltaAmountAutoUpdated");
+        expect(event.collateralDeltaAmount).eq(expandDecimals(9, 18));
+        expect(event.nextCollateralDeltaAmount).eq(0);
       }
     );
 
-    // No positions remains
-    expect(await getPositionCount(dataStore)).eq(0);
+    // position remains
+    expect(await getPositionCount(dataStore)).eq(1);
   });
 
   it("getEmptyFees and execution succeeds", async () => {
@@ -99,8 +99,8 @@ describe("Guardian.DecreasePositionCollateralUtils", () => {
     expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, wnt.address)).eq(expandDecimals(1000, 18));
     expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, usdc.address)).eq(expandDecimals(1_000_000, 6));
 
-    // Position fee factor set which will be emptied on getEmptyFees
-    await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 2)); // 5%
+    // Position fee factor set which will be emptied on getEmptyFees. Balance was improved, positive fee factor is used.
+    await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 2)); // 5%
 
     // Because of Positive PnL, order passes validatePosition
     // even if entire collateral was used to pay fees.
@@ -169,8 +169,8 @@ describe("Guardian.DecreasePositionCollateralUtils", () => {
     expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, wnt.address)).eq(expandDecimals(1000, 18));
     expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, usdc.address)).eq(expandDecimals(1_000_000, 6));
 
-    // Position fee factor set which will be emptied on getEmptyFees
-    await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 2)); // 5%
+    // Position fee factor set which will be emptied on getEmptyFees. Balance was improved, positive fee factor is used.
+    await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 2)); // 5%
 
     // Entire collateral used to pay fees,
     // so initialCollateralDeltaAmount of 1 USDC will be enough to trigger auto-update
@@ -322,7 +322,7 @@ describe("Guardian.DecreasePositionCollateralUtils", () => {
     await scenes.increasePosition.long(fixture, {
       create: {
         sizeDeltaUsd: decimalToFloat(700_000),
-        initialCollateralDeltaAmount: expandDecimals(20_175, 6),
+        initialCollateralDeltaAmount: expandDecimals(20_700, 6),
       },
     });
 

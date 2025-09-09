@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Grouped Contracts Table</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+
+    details {
+      margin-bottom: 20px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 10px;
+    }
+
+    summary {
+      font-size: 1.2em;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th, td {
+      padding: 8px;
+      border: 1px solid #aaa;
+      text-align: left;
+    }
+
+    th {
+      background-color: #eee;
+    }
+
+    a {
+      color: #1a73e8;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Contract Deployments</h2>
+<div id="container">
+  <!-- Content will be dynamically loaded here -->
+</div>
+
+<script>
+
+  function getExplorerBase(network) {
+    switch (network) {
+      case 'arbitrum':
+        return 'https://arbiscan.io';
+      case 'avalanche':
+        return 'https://snowtrace.io';
+      default:
+        return 'https://etherscan.io';
+    }
+  }
+
+  fetch('contracts.json')
+    .then(response => response.json())
+    .then(jsonData => {
+      const container = document.getElementById("container");
+
+      for (const [network, contracts] of Object.entries(jsonData)) {
+        const explorer = getExplorerBase(network);
+        const details = document.createElement("details");
+        details.open = true;
+
+        const summary = document.createElement("summary");
+        summary.textContent = network.charAt(0).toUpperCase() + network.slice(1);
+        details.appendChild(summary);
+
+        const table = document.createElement("table");
+        table.innerHTML = `
+          <thead>
+            <tr>
+              <th>Contract Address</th>
+              <th>Contract Name</th>
+<!--              <th>Deployed Date</th>-->
+              <th>Transaction Hash</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${contracts.map(contract => `
+              <tr>
+                <td><a href="${explorer}/address/${contract.contractAddress}" target="_blank">${contract.contractAddress}</a></td>
+                <td>${contract.contractName}</td>
+<!--                <td>${contract.deployedDate}</td>-->
+                <td><a href="${explorer}/tx/${contract.txHash}" target="_blank">${contract.txHash}</a></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        `;
+
+        details.appendChild(table);
+        container.appendChild(details);
+      }
+    })
+    .catch(error => {
+      console.error('Failed to load JSON:', error);
+      document.getElementById("container").innerText = "Failed to load contract data.";
+    });
+</script>
+
+</body>
+</html>

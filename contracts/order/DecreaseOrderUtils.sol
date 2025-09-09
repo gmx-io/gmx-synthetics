@@ -6,6 +6,7 @@ import "./BaseOrderUtils.sol";
 import "../swap/SwapUtils.sol";
 import "../position/DecreasePositionUtils.sol";
 import "../error/ErrorUtils.sol";
+import "../multichain/MultichainUtils.sol";
 
 // @title DecreaseOrderUtils
 // @dev Library for functions to help with processing a decrease order
@@ -25,7 +26,7 @@ library DecreaseOrderUtils {
 
     // @dev process a decrease order
     // @param params BaseOrderUtils.ExecuteOrderParams
-    function processOrder(BaseOrderUtils.ExecuteOrderParams memory params) external returns (EventUtils.EventLogData memory) {
+    function processOrder(BaseOrderUtils.ExecuteOrderParams memory params) internal returns (EventUtils.EventLogData memory) {
         Order.Props memory order = params.order;
         MarketUtils.validatePositionMarket(params.contracts.dataStore, params.market);
 
@@ -72,19 +73,51 @@ library DecreaseOrderUtils {
                 order.minOutputAmount()
             );
 
-            MarketToken(payable(order.market())).transferOut(
-                result.outputToken,
-                order.receiver(),
-                result.outputAmount,
-                order.shouldUnwrapNativeToken()
-            );
+            if (order.srcChainId() == 0) {
+                MarketToken(payable(order.market())).transferOut(
+                    result.outputToken,
+                    order.receiver(),
+                    result.outputAmount,
+                    order.shouldUnwrapNativeToken()
+                );
 
-            MarketToken(payable(order.market())).transferOut(
-                result.secondaryOutputToken,
-                order.receiver(),
-                result.secondaryOutputAmount,
-                order.shouldUnwrapNativeToken()
-            );
+                MarketToken(payable(order.market())).transferOut(
+                    result.secondaryOutputToken,
+                    order.receiver(),
+                    result.secondaryOutputAmount,
+                    order.shouldUnwrapNativeToken()
+                );
+            } else {
+                MarketToken(payable(order.market())).transferOut(
+                    result.outputToken,
+                    address(params.contracts.multichainVault), // receiver
+                    result.outputAmount,
+                    false // shouldUnwrapNativeToken
+                );
+                MultichainUtils.recordTransferIn(
+                    params.contracts.dataStore,
+                    params.contracts.eventEmitter,
+                    params.contracts.multichainVault,
+                    result.outputToken,
+                    order.receiver(),
+                    order.srcChainId()
+                );
+
+                MarketToken(payable(order.market())).transferOut(
+                    result.secondaryOutputToken,
+                    address(params.contracts.multichainVault), // receiver
+                    result.secondaryOutputAmount,
+                    false // shouldUnwrapNativeToken
+                );
+                MultichainUtils.recordTransferIn(
+                    params.contracts.dataStore,
+                    params.contracts.eventEmitter,
+                    params.contracts.multichainVault,
+                    result.secondaryOutputToken,
+                    order.receiver(),
+                    order.srcChainId()
+                );
+            }
 
             return getOutputEventData(
                 result.outputToken,
@@ -97,7 +130,7 @@ library DecreaseOrderUtils {
         }
 
         try params.contracts.swapHandler.swap(
-            SwapUtils.SwapParams(
+            ISwapUtils.SwapParams(
                 params.contracts.dataStore,
                 params.contracts.eventEmitter,
                 params.contracts.oracle,
@@ -107,9 +140,9 @@ library DecreaseOrderUtils {
                 result.outputAmount,
                 params.swapPathMarkets,
                 0,
-                order.receiver(),
+                order.srcChainId() == 0 ? order.receiver(): address(params.contracts.multichainVault),
                 order.uiFeeReceiver(),
-                order.shouldUnwrapNativeToken(),
+                order.srcChainId() == 0 ? order.shouldUnwrapNativeToken() : false,
                 ISwapPricingUtils.SwapPricingType.Swap
             )
         ) returns (address tokenOut, uint256 swapOutputAmount) {
@@ -119,6 +152,17 @@ library DecreaseOrderUtils {
                 swapOutputAmount,
                 order.minOutputAmount()
             );
+
+            if (order.srcChainId() != 0) {
+                MultichainUtils.recordTransferIn(
+                    params.contracts.dataStore,
+                    params.contracts.eventEmitter,
+                    params.contracts.multichainVault,
+                    tokenOut,
+                    order.receiver(),
+                    order.srcChainId()
+                );
+            }
 
             return getOutputEventData(
                 tokenOut,
@@ -132,6 +176,9 @@ library DecreaseOrderUtils {
             (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
 
             _handleSwapError(
+                params.contracts.dataStore,
+                params.contracts.eventEmitter,
+                params.contracts.multichainVault,
                 params.contracts.oracle,
                 order,
                 result,
@@ -178,7 +225,7 @@ library DecreaseOrderUtils {
         }
 
         if (
-            !BaseOrderUtils.isMarketOrder(orderType) &&
+            !Order.isMarketOrder(orderType) &&
             minOracleTimestamp < orderValidFromTime
         ) {
             revert Errors.OracleTimestampsAreSmallerThanRequired(minOracleTimestamp, orderValidFromTime);
@@ -224,7 +271,7 @@ library DecreaseOrderUtils {
 
     // note that minOutputAmount is treated as a USD value for this validation
     function _validateOutputAmount(
-        Oracle oracle,
+        IOracle oracle,
         address outputToken,
         uint256 outputAmount,
         uint256 minOutputAmount
@@ -239,7 +286,7 @@ library DecreaseOrderUtils {
 
     // note that minOutputAmount is treated as a USD value for this validation
     function _validateOutputAmount(
-        Oracle oracle,
+        IOracle oracle,
         address outputToken,
         uint256 outputAmount,
         address secondaryOutputToken,
@@ -260,7 +307,10 @@ library DecreaseOrderUtils {
     }
 
     function _handleSwapError(
-        Oracle oracle,
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        MultichainVault multichainVault,
+        IOracle oracle,
         Order.Props memory order,
         DecreasePositionUtils.DecreasePositionResult memory result,
         string memory reason,
@@ -275,12 +325,29 @@ library DecreaseOrderUtils {
             order.minOutputAmount()
         );
 
-        MarketToken(payable(order.market())).transferOut(
-            result.outputToken,
-            order.receiver(),
-            result.outputAmount,
-            order.shouldUnwrapNativeToken()
-        );
+        if (order.srcChainId() == 0) {
+            MarketToken(payable(order.market())).transferOut(
+                result.outputToken,
+                order.receiver(),
+                result.outputAmount,
+                order.shouldUnwrapNativeToken()
+            );
+        } else {
+            MarketToken(payable(order.market())).transferOut(
+                result.outputToken,
+                address(multichainVault),
+                result.outputAmount,
+                false // shouldUnwrapNativeToken
+            );
+            MultichainUtils.recordTransferIn(
+                dataStore,
+                eventEmitter,
+                multichainVault,
+                result.outputToken,
+                order.receiver(),
+                0 // srcChainId is the current block.chainId
+            );
+        }
     }
 
     function getOutputEventData(

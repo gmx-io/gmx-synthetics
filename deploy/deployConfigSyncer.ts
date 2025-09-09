@@ -21,8 +21,8 @@ const func = createDeployFunction({
       .concat(riskOracleAddress);
   },
   afterDeploy: async ({ deployedContract }) => {
-    await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
-    await grantRoleIfNotGranted(deployedContract.address, "CONFIG_KEEPER");
+    await grantRoleIfNotGranted(deployedContract, "CONTROLLER");
+    await grantRoleIfNotGranted(deployedContract, "CONFIG_KEEPER");
   },
 });
 

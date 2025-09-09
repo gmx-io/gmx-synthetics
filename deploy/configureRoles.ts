@@ -16,7 +16,6 @@ const rolesToRemove = {
   avalanche: [],
   botanix: [],
   avalancheFuji: [],
-  arbitrumGoerli: [],
   arbitrumSepolia: [],
 };
 
@@ -25,13 +24,13 @@ const func = async ({ gmx, network }) => {
   for (const role in roles) {
     const accounts = roles[role];
     for (const account in accounts) {
-      await grantRoleIfNotGranted(account, role);
+      await grantRoleIfNotGranted({ address: account }, role);
     }
   }
 
   const _rolesToRemove = rolesToRemove[network.name];
   for (const { member, role } of _rolesToRemove) {
-    await revokeRoleIfGranted(member, role);
+    await revokeRoleIfGranted({ address: member }, role);
   }
 };
 

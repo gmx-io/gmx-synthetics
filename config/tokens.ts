@@ -27,6 +27,11 @@ type OracleTestPriceFeed = {
 
 type OraclePriceFeed = OracleRealPriceFeed | OracleTestPriceFeed;
 
+type OracleEdge = {
+  feedId: string;
+  tokenDecimals: number;
+};
+
 type BaseTokenConfig = {
   decimals: number;
   transferGasLimit?: number;
@@ -36,6 +41,7 @@ type BaseTokenConfig = {
   dataStreamFeedDecimals?: number;
   dataStreamSpreadReductionFactor?: BigNumberish;
   priceFeed?: OraclePriceFeed;
+  edge?: OracleEdge;
 };
 
 // synthetic token without corresponding token
@@ -1277,6 +1283,15 @@ const config: {
       address: "0x5947BB275c521040051D82396192181b413227A3",
       decimals: 18,
       transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x00036d7a1251e3f67d6658466b5e9e7fe8418af7feac9567ff322bff95cc2401",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x49ccd9ca821EfEab2b98c60dC60F518E765EDe9a",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+      buybackMaxPriceImpactFactor: MID_BUYBACK_IMPACT,
     },
   },
   botanix: {
@@ -1344,32 +1359,43 @@ const config: {
       decimals: 18,
       wrappedNative: true,
       transferGasLimit: 200 * 1000,
-      dataStreamFeedId: "0x0001d678deabc04f0494b78138727170ff1cf1daf91fca6954de59e41fa0965c",
+      dataStreamFeedId: "0x000359843a543ee2fe414dc14c7e7920ef10f4372990b79d6361cdc0dd1ba782",
+      dataStreamFeedDecimals: 18,
+      priceFeed: {
+        address: "0xd30e2101a97dcbAeBCBC04F14C3f624E67A35165", // ETH / USD
+        decimals: 8,
+        heartbeatDuration: 144 * 60 * 60,
+      },
+    },
+    CRV: {
+      synthetic: true,
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x00037c41d40228ff337f3c7339e635906bb60552d748654fe6f9ebfa6a83fc0e",
       dataStreamFeedDecimals: 18,
     },
     BTC: {
       address: "0xF79cE1Cf38A09D572b021B4C5548b75A14082F12",
       decimals: 8,
       transferGasLimit: 200 * 1000,
-      dataStreamFeedId: "0x0001ef0379c835e64d03082e561403cc14b2779b525d93149b25df0ee3ef9456",
+      dataStreamFeedId: "0x00037da06d56d083fe599397a4769a042d63aa73dc4ef57709d31e9971a5b439",
       dataStreamFeedDecimals: 18,
       priceFeed: {
         address: "0x56a43EB56Da12C0dc1D972ACb089c06a5dEF8e69",
         decimals: 8,
-        heartbeatDuration: 3 * 24 * 60 * 60,
-        stablePrice: decimalToFloat(44000),
+        heartbeatDuration: 144 * 60 * 60,
       },
     },
-    USDC: {
-      address: "0x3321Fd36aEaB0d5CdfD26f4A3A93E2D2aAcCB99f",
+    "USDC.SG": {
+      address: "0x3253a335E7bFfB4790Aa4C25C4250d206E9b9773", // Stargate USDC
       decimals: 6,
       transferGasLimit: 200 * 1000,
-      dataStreamFeedId: "0x0001829d7d4c7c5badcd54d2126e621c51eabf32393ffab969e311b18ed80138",
+      dataStreamFeedId: "0x0003dc85e8b01946bf9dfd8b0db860129181eb6105a8c8981d9f28e00b6f60d9", // Circle USDC
       dataStreamFeedDecimals: 18,
       priceFeed: {
-        address: "0x0153002d20B96532C639313c2d54c3dA09109309",
+        address: "0x0153002d20B96532C639313c2d54c3dA09109309", // Circle USDC
         decimals: 8,
-        heartbeatDuration: 3 * 24 * 60 * 60,
+        heartbeatDuration: 144 * 60 * 60,
         stablePrice: decimalToFloat(1),
       },
     },
@@ -1696,7 +1722,7 @@ const config: {
   },
 };
 
-export default async function (hre: HardhatRuntimeEnvironment): Promise<TokensConfig> {
+function getTokens(hre: HardhatRuntimeEnvironment) {
   const tokens = config[hre.network.name];
 
   for (const [tokenSymbol, token] of Object.entries(tokens as TokensConfig)) {
@@ -1721,4 +1747,22 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<TokensCo
   }
 
   return tokens;
+}
+
+// note that this will not return tokens that are deployed at runtime
+export async function tokenByAddress(hre: HardhatRuntimeEnvironment) {
+  const tokens = getTokens(hre);
+  const map = {};
+
+  for (const token of Object.values(tokens as TokensConfig)) {
+    if (token.address) {
+      map[token.address] = token;
+    }
+  }
+
+  return;
+}
+
+export default async function (hre: HardhatRuntimeEnvironment): Promise<TokensConfig> {
+  return getTokens(hre);
 }

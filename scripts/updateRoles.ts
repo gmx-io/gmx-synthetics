@@ -1,6 +1,11 @@
 import hre from "hardhat";
 import { hashString } from "../utils/hash";
-import { timelockWriteMulticall } from "../utils/timelock";
+import { cancelActionById, getGrantRolePayload, getRevokeRolePayload, timelockWriteMulticall } from "../utils/timelock";
+import { TimelockConfig } from "../typechain-types";
+import { ContractInfo, validateSourceCode } from "./validateDeploymentUtils";
+
+import * as _rolesToAdd from "./roles/rolesToAdd";
+import * as _rolesToRemove from "./roles/rolesToRemove";
 
 const expectedTimelockMethods = [
   "signalGrantRole",
@@ -10,15 +15,19 @@ const expectedTimelockMethods = [
   "cancelGrantRole",
 ];
 
-async function getTimelock() {
+async function getTimelock(): Promise<TimelockConfig> {
   const network = hre.network.name;
 
   if (network === "arbitrum") {
-    return await ethers.getContractAt("Timelock", "0x7A967D114B8676874FA2cFC1C14F3095C88418Eb");
+    return await ethers.getContractAt("TimelockConfig", "0x625D4b5456f065756De8d618dE094bE7618e8A0d");
   }
 
   if (network === "avalanche") {
-    return await ethers.getContractAt("Timelock", "0xdF23692341538340db0ff04C65017F51b69a29f6");
+    return await ethers.getContractAt("TimelockConfig", "0x40794bcBCFb347689fa8c4da69f6405Cf0ECf2C5");
+  }
+
+  if (network === "botanix") {
+    return await ethers.getContractAt("TimelockConfig", "0x8fB97fEfF5f7CfbE9c63D51F6CbBC914E425d965");
   }
 
   throw new Error("Unsupported network");
@@ -76,419 +85,6 @@ async function main() {
   // NOTE: the existing Timelock needs to be used to grant roles to new contracts including new Timelocks
   const timelock = await getTimelock();
 
-  const config = {
-    arbitrum: {
-      rolesToAdd: [
-        {
-          role: "ADL_KEEPER",
-          member: "0xa17a86388bbce9fd73a67f66d87fb0222a824c3f",
-        },
-        {
-          role: "ADL_KEEPER",
-          member: "0x86fe53a6d47d9a0fdea4c5ac3d80e0e6cc3354cc",
-        },
-        {
-          role: "ADL_KEEPER",
-          member: "0x8e2e2dd583e7db8437164a7f89a7288b999253cb",
-        },
-        {
-          role: "ADL_KEEPER",
-          member: "0xc0a53a9ee8e8ea0f585d8dcf26800ef2841f97fd",
-        },
-        {
-          role: "ADL_KEEPER",
-          member: "0xd316a0043056fb787de34aba8cd5323f5c6f8c47",
-        },
-        {
-          role: "ADL_KEEPER",
-          member: "0xb874e07336edc0c278c276ffeb08818976099256",
-        },
-        {
-          role: "ADL_KEEPER",
-          member: "0xa5e4a14cab506ba102977648317e0622ca60bb64",
-        },
-        {
-          role: "ADL_KEEPER",
-          member: "0xdad787d5a86f37a5e480e35b3ca615d46242ce9b",
-        },
-        {
-          role: "ADL_KEEPER",
-          member: "0x56a7ce61d8ab46a27de1837ceddd8522d52d2736",
-        },
-        {
-          role: "ADL_KEEPER",
-          member: "0xc9a5775951f0ea25053fee81d935fbbf4f0fb273",
-        },
-        {
-          role: "FROZEN_ORDER_KEEPER",
-          member: "0xa17a86388bbce9fd73a67f66d87fb0222a824c3f",
-        },
-        {
-          role: "FROZEN_ORDER_KEEPER",
-          member: "0x86fe53a6d47d9a0fdea4c5ac3d80e0e6cc3354cc",
-        },
-        {
-          role: "FROZEN_ORDER_KEEPER",
-          member: "0x8e2e2dd583e7db8437164a7f89a7288b999253cb",
-        },
-        {
-          role: "FROZEN_ORDER_KEEPER",
-          member: "0xc0a53a9ee8e8ea0f585d8dcf26800ef2841f97fd",
-        },
-        {
-          role: "FROZEN_ORDER_KEEPER",
-          member: "0xd316a0043056fb787de34aba8cd5323f5c6f8c47",
-        },
-        {
-          role: "FROZEN_ORDER_KEEPER",
-          member: "0xb874e07336edc0c278c276ffeb08818976099256",
-        },
-        {
-          role: "FROZEN_ORDER_KEEPER",
-          member: "0xa5e4a14cab506ba102977648317e0622ca60bb64",
-        },
-        {
-          role: "FROZEN_ORDER_KEEPER",
-          member: "0xdad787d5a86f37a5e480e35b3ca615d46242ce9b",
-        },
-        {
-          role: "FROZEN_ORDER_KEEPER",
-          member: "0x56a7ce61d8ab46a27de1837ceddd8522d52d2736",
-        },
-        {
-          role: "FROZEN_ORDER_KEEPER",
-          member: "0xc9a5775951f0ea25053fee81d935fbbf4f0fb273",
-        },
-        {
-          role: "LIMITED_CONFIG_KEEPER",
-          member: "0xa17a86388bbce9fd73a67f66d87fb0222a824c3f",
-        },
-        {
-          role: "LIMITED_CONFIG_KEEPER",
-          member: "0x86fe53a6d47d9a0fdea4c5ac3d80e0e6cc3354cc",
-        },
-        {
-          role: "LIMITED_CONFIG_KEEPER",
-          member: "0x8e2e2dd583e7db8437164a7f89a7288b999253cb",
-        },
-        {
-          role: "LIMITED_CONFIG_KEEPER",
-          member: "0xc0a53a9ee8e8ea0f585d8dcf26800ef2841f97fd",
-        },
-        {
-          role: "LIMITED_CONFIG_KEEPER",
-          member: "0xd316a0043056fb787de34aba8cd5323f5c6f8c47",
-        },
-        {
-          role: "LIMITED_CONFIG_KEEPER",
-          member: "0xb874e07336edc0c278c276ffeb08818976099256",
-        },
-        {
-          role: "LIMITED_CONFIG_KEEPER",
-          member: "0xa5e4a14cab506ba102977648317e0622ca60bb64",
-        },
-        {
-          role: "LIMITED_CONFIG_KEEPER",
-          member: "0xdad787d5a86f37a5e480e35b3ca615d46242ce9b",
-        },
-        {
-          role: "LIMITED_CONFIG_KEEPER",
-          member: "0x56a7ce61d8ab46a27de1837ceddd8522d52d2736",
-        },
-        {
-          role: "LIMITED_CONFIG_KEEPER",
-          member: "0xc9a5775951f0ea25053fee81d935fbbf4f0fb273",
-        },
-        {
-          role: "LIQUIDATION_KEEPER",
-          member: "0xa17a86388bbce9fd73a67f66d87fb0222a824c3f",
-        },
-        {
-          role: "LIQUIDATION_KEEPER",
-          member: "0x86fe53a6d47d9a0fdea4c5ac3d80e0e6cc3354cc",
-        },
-        {
-          role: "LIQUIDATION_KEEPER",
-          member: "0x8e2e2dd583e7db8437164a7f89a7288b999253cb",
-        },
-        {
-          role: "LIQUIDATION_KEEPER",
-          member: "0xc0a53a9ee8e8ea0f585d8dcf26800ef2841f97fd",
-        },
-        {
-          role: "LIQUIDATION_KEEPER",
-          member: "0xd316a0043056fb787de34aba8cd5323f5c6f8c47",
-        },
-        {
-          role: "LIQUIDATION_KEEPER",
-          member: "0xb874e07336edc0c278c276ffeb08818976099256",
-        },
-        {
-          role: "LIQUIDATION_KEEPER",
-          member: "0xa5e4a14cab506ba102977648317e0622ca60bb64",
-        },
-        {
-          role: "LIQUIDATION_KEEPER",
-          member: "0xdad787d5a86f37a5e480e35b3ca615d46242ce9b",
-        },
-        {
-          role: "LIQUIDATION_KEEPER",
-          member: "0x56a7ce61d8ab46a27de1837ceddd8522d52d2736",
-        },
-        {
-          role: "LIQUIDATION_KEEPER",
-          member: "0xc9a5775951f0ea25053fee81d935fbbf4f0fb273",
-        },
-        {
-          role: "ORDER_KEEPER",
-          member: "0xa17a86388bbce9fd73a67f66d87fb0222a824c3f",
-        },
-        {
-          role: "ORDER_KEEPER",
-          member: "0x86fe53a6d47d9a0fdea4c5ac3d80e0e6cc3354cc",
-        },
-        {
-          role: "ORDER_KEEPER",
-          member: "0x8e2e2dd583e7db8437164a7f89a7288b999253cb",
-        },
-        {
-          role: "ORDER_KEEPER",
-          member: "0xc0a53a9ee8e8ea0f585d8dcf26800ef2841f97fd",
-        },
-        {
-          role: "ORDER_KEEPER",
-          member: "0xd316a0043056fb787de34aba8cd5323f5c6f8c47",
-        },
-        {
-          role: "ORDER_KEEPER",
-          member: "0xb874e07336edc0c278c276ffeb08818976099256",
-        },
-        {
-          role: "ORDER_KEEPER",
-          member: "0xa5e4a14cab506ba102977648317e0622ca60bb64",
-        },
-        {
-          role: "ORDER_KEEPER",
-          member: "0xdad787d5a86f37a5e480e35b3ca615d46242ce9b",
-        },
-        {
-          role: "ORDER_KEEPER",
-          member: "0x56a7ce61d8ab46a27de1837ceddd8522d52d2736",
-        },
-        {
-          role: "ORDER_KEEPER",
-          member: "0xc9a5775951f0ea25053fee81d935fbbf4f0fb273",
-        },
-      ],
-      rolesToRemove: [],
-    },
-    avalanche: {
-      rolesToAdd: [
-        {
-          role: "ADL_KEEPER",
-          member: "0xa17a86388bbce9fd73a67f66d87fb0222a824c3f",
-        },
-        {
-          role: "ADL_KEEPER",
-          member: "0x86fe53a6d47d9a0fdea4c5ac3d80e0e6cc3354cc",
-        },
-        {
-          role: "ADL_KEEPER",
-          member: "0x8e2e2dd583e7db8437164a7f89a7288b999253cb",
-        },
-        {
-          role: "ADL_KEEPER",
-          member: "0xc0a53a9ee8e8ea0f585d8dcf26800ef2841f97fd",
-        },
-        {
-          role: "ADL_KEEPER",
-          member: "0xd316a0043056fb787de34aba8cd5323f5c6f8c47",
-        },
-        {
-          role: "ADL_KEEPER",
-          member: "0xb874e07336edc0c278c276ffeb08818976099256",
-        },
-        {
-          role: "ADL_KEEPER",
-          member: "0xa5e4a14cab506ba102977648317e0622ca60bb64",
-        },
-        {
-          role: "ADL_KEEPER",
-          member: "0xdad787d5a86f37a5e480e35b3ca615d46242ce9b",
-        },
-        {
-          role: "ADL_KEEPER",
-          member: "0x56a7ce61d8ab46a27de1837ceddd8522d52d2736",
-        },
-        {
-          role: "ADL_KEEPER",
-          member: "0xc9a5775951f0ea25053fee81d935fbbf4f0fb273",
-        },
-        {
-          role: "FROZEN_ORDER_KEEPER",
-          member: "0xa17a86388bbce9fd73a67f66d87fb0222a824c3f",
-        },
-        {
-          role: "FROZEN_ORDER_KEEPER",
-          member: "0x86fe53a6d47d9a0fdea4c5ac3d80e0e6cc3354cc",
-        },
-        {
-          role: "FROZEN_ORDER_KEEPER",
-          member: "0x8e2e2dd583e7db8437164a7f89a7288b999253cb",
-        },
-        {
-          role: "FROZEN_ORDER_KEEPER",
-          member: "0xc0a53a9ee8e8ea0f585d8dcf26800ef2841f97fd",
-        },
-        {
-          role: "FROZEN_ORDER_KEEPER",
-          member: "0xd316a0043056fb787de34aba8cd5323f5c6f8c47",
-        },
-        {
-          role: "FROZEN_ORDER_KEEPER",
-          member: "0xb874e07336edc0c278c276ffeb08818976099256",
-        },
-        {
-          role: "FROZEN_ORDER_KEEPER",
-          member: "0xa5e4a14cab506ba102977648317e0622ca60bb64",
-        },
-        {
-          role: "FROZEN_ORDER_KEEPER",
-          member: "0xdad787d5a86f37a5e480e35b3ca615d46242ce9b",
-        },
-        {
-          role: "FROZEN_ORDER_KEEPER",
-          member: "0x56a7ce61d8ab46a27de1837ceddd8522d52d2736",
-        },
-        {
-          role: "FROZEN_ORDER_KEEPER",
-          member: "0xc9a5775951f0ea25053fee81d935fbbf4f0fb273",
-        },
-        {
-          role: "LIMITED_CONFIG_KEEPER",
-          member: "0xa17a86388bbce9fd73a67f66d87fb0222a824c3f",
-        },
-        {
-          role: "LIMITED_CONFIG_KEEPER",
-          member: "0x86fe53a6d47d9a0fdea4c5ac3d80e0e6cc3354cc",
-        },
-        {
-          role: "LIMITED_CONFIG_KEEPER",
-          member: "0x8e2e2dd583e7db8437164a7f89a7288b999253cb",
-        },
-        {
-          role: "LIMITED_CONFIG_KEEPER",
-          member: "0xc0a53a9ee8e8ea0f585d8dcf26800ef2841f97fd",
-        },
-        {
-          role: "LIMITED_CONFIG_KEEPER",
-          member: "0xd316a0043056fb787de34aba8cd5323f5c6f8c47",
-        },
-        {
-          role: "LIMITED_CONFIG_KEEPER",
-          member: "0xb874e07336edc0c278c276ffeb08818976099256",
-        },
-        {
-          role: "LIMITED_CONFIG_KEEPER",
-          member: "0xa5e4a14cab506ba102977648317e0622ca60bb64",
-        },
-        {
-          role: "LIMITED_CONFIG_KEEPER",
-          member: "0xdad787d5a86f37a5e480e35b3ca615d46242ce9b",
-        },
-        {
-          role: "LIMITED_CONFIG_KEEPER",
-          member: "0x56a7ce61d8ab46a27de1837ceddd8522d52d2736",
-        },
-        {
-          role: "LIMITED_CONFIG_KEEPER",
-          member: "0xc9a5775951f0ea25053fee81d935fbbf4f0fb273",
-        },
-        {
-          role: "LIQUIDATION_KEEPER",
-          member: "0xa17a86388bbce9fd73a67f66d87fb0222a824c3f",
-        },
-        {
-          role: "LIQUIDATION_KEEPER",
-          member: "0x86fe53a6d47d9a0fdea4c5ac3d80e0e6cc3354cc",
-        },
-        {
-          role: "LIQUIDATION_KEEPER",
-          member: "0x8e2e2dd583e7db8437164a7f89a7288b999253cb",
-        },
-        {
-          role: "LIQUIDATION_KEEPER",
-          member: "0xc0a53a9ee8e8ea0f585d8dcf26800ef2841f97fd",
-        },
-        {
-          role: "LIQUIDATION_KEEPER",
-          member: "0xd316a0043056fb787de34aba8cd5323f5c6f8c47",
-        },
-        {
-          role: "LIQUIDATION_KEEPER",
-          member: "0xb874e07336edc0c278c276ffeb08818976099256",
-        },
-        {
-          role: "LIQUIDATION_KEEPER",
-          member: "0xa5e4a14cab506ba102977648317e0622ca60bb64",
-        },
-        {
-          role: "LIQUIDATION_KEEPER",
-          member: "0xdad787d5a86f37a5e480e35b3ca615d46242ce9b",
-        },
-        {
-          role: "LIQUIDATION_KEEPER",
-          member: "0x56a7ce61d8ab46a27de1837ceddd8522d52d2736",
-        },
-        {
-          role: "LIQUIDATION_KEEPER",
-          member: "0xc9a5775951f0ea25053fee81d935fbbf4f0fb273",
-        },
-        {
-          role: "ORDER_KEEPER",
-          member: "0xa17a86388bbce9fd73a67f66d87fb0222a824c3f",
-        },
-        {
-          role: "ORDER_KEEPER",
-          member: "0x86fe53a6d47d9a0fdea4c5ac3d80e0e6cc3354cc",
-        },
-        {
-          role: "ORDER_KEEPER",
-          member: "0x8e2e2dd583e7db8437164a7f89a7288b999253cb",
-        },
-        {
-          role: "ORDER_KEEPER",
-          member: "0xc0a53a9ee8e8ea0f585d8dcf26800ef2841f97fd",
-        },
-        {
-          role: "ORDER_KEEPER",
-          member: "0xd316a0043056fb787de34aba8cd5323f5c6f8c47",
-        },
-        {
-          role: "ORDER_KEEPER",
-          member: "0xb874e07336edc0c278c276ffeb08818976099256",
-        },
-        {
-          role: "ORDER_KEEPER",
-          member: "0xa5e4a14cab506ba102977648317e0622ca60bb64",
-        },
-        {
-          role: "ORDER_KEEPER",
-          member: "0xdad787d5a86f37a5e480e35b3ca615d46242ce9b",
-        },
-        {
-          role: "ORDER_KEEPER",
-          member: "0x56a7ce61d8ab46a27de1837ceddd8522d52d2736",
-        },
-        {
-          role: "ORDER_KEEPER",
-          member: "0xc9a5775951f0ea25053fee81d935fbbf4f0fb273",
-        },
-      ],
-      rolesToRemove: [],
-    },
-  };
-
   const multicallWriteParams = [];
 
   const timelockMethod = process.env.TIMELOCK_METHOD;
@@ -496,29 +92,71 @@ async function main() {
     throw new Error(`Unexpected TIMELOCK_METHOD: ${timelockMethod}`);
   }
 
-  const networkConfig = config[hre.network.name];
+  const rolesToAdd = _rolesToAdd[hre.network.name];
+  const rolesToRemove = _rolesToRemove[hre.network.name];
+
+  if (!rolesToAdd || !rolesToRemove) {
+    throw new Error(`rolesToAdd || rolesToRemove not configured for network ${hre.network.name}`);
+  }
+
+  const provider = hre.ethers.provider;
+
+  const predecessor = ethers.constants.HashZero;
+  const salt = ethers.constants.HashZero;
+
+  // Check that deployed contracts are matching with local sources
+  const contractInfos: Map<string, ContractInfo> = new Map();
+  for (const { member, role, contractName } of rolesToAdd) {
+    if (contractInfos.has(contractName)) {
+      contractInfos[contractName].signalledRoles.push(hashString(role));
+    } else {
+      contractInfos[contractName] = {
+        address: member,
+        name: contractName,
+        isCodeValidated: false,
+        signalledRoles: [hashString(role)],
+        unapprovedRoles: [],
+        approvedRoles: [],
+      };
+    }
+  }
+
+  // Check that deployed contracts are matching with local sources
+  for (const contractInfo of Object.values(contractInfos)) {
+    await validateSourceCode(provider, contractInfo);
+    if (!contractInfo.isCodeValidated) {
+      console.log(`❌${contractInfo.name} is not valid. Sources do not match. See diff in validation folder`);
+    } else {
+      console.log(`✅${contractInfo.name} is valid`);
+    }
+  }
 
   // signalGrantRole and signalRevokeRole in case the granting / revocation of roles needs to be reverted
   if (timelockMethod === "signalGrantRole" || timelockMethod === "signalRevokeRole") {
-    const roles = timelockMethod === "signalGrantRole" ? networkConfig.rolesToAdd : networkConfig.rolesToRemove;
+    const roles = timelockMethod === "signalGrantRole" ? rolesToAdd : rolesToRemove;
     for (const { member, role, contractName } of roles) {
       console.log("%s %s %s %s", timelockMethod, member, role, contractName);
-      multicallWriteParams.push(timelock.interface.encodeFunctionData("signalRevokeRole", [member, hashString(role)]));
-      multicallWriteParams.push(timelock.interface.encodeFunctionData("signalGrantRole", [member, hashString(role)]));
+      multicallWriteParams.push(
+        timelock.interface.encodeFunctionData("signalRevokeRole", [member, hashString(role), predecessor, salt])
+      );
+      multicallWriteParams.push(
+        timelock.interface.encodeFunctionData("signalGrantRole", [member, hashString(role), predecessor, salt])
+      );
     }
   }
 
   if (timelockMethod === "grantRoleAfterSignal") {
-    for (const { member, role, contractName } of networkConfig.rolesToAdd) {
-      console.log("%s %s %s %s", timelockMethod, member, role, contractName);
-      multicallWriteParams.push(timelock.interface.encodeFunctionData(timelockMethod, [member, hashString(role)]));
+    for (const { member, role } of rolesToAdd) {
+      const { target, payload } = await getGrantRolePayload(member, hashString(role));
+      multicallWriteParams.push(timelock.interface.encodeFunctionData("execute", [target, payload, predecessor, salt]));
     }
   }
 
   if (timelockMethod === "revokeRoleAfterSignal") {
-    for (const { member, role, contractName } of networkConfig.rolesToRemove) {
+    for (const { member, role, contractName } of rolesToRemove) {
       console.log("%s %s %s %s", timelockMethod, member, role, contractName);
-      multicallWriteParams.push(timelock.interface.encodeFunctionData(timelockMethod, [member, hashString(role)]));
+      const { target, payload } = await getRevokeRolePayload(member, hashString(role));
+      multicallWriteParams.push(timelock.interface.encodeFunctionData("execute", [target, payload, predecessor, salt]));
     }
   }
 
@@ -526,7 +164,7 @@ async function main() {
     const actionKeys = await getGrantRoleActionKeysToCancel({ timelock });
     for (const actionKey of actionKeys) {
       console.log("%s %s", timelockMethod, actionKey);
-      multicallWriteParams.push(timelock.interface.encodeFunctionData("cancelAction", [actionKey]));
+      multicallWriteParams.push(cancelActionById(timelock, actionKey));
     }
   }
 

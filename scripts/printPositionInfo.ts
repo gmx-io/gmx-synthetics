@@ -3,7 +3,7 @@ import got from "got";
 import { toLoggableObject } from "../utils/print";
 import { Position } from "../typechain-types/contracts/position/PositionUtils";
 import { hashData } from "../utils/hash";
-import { getBlockByTimestamp } from "./incentives/helpers";
+import { getBlockByTimestamp } from "./helpers";
 import { TokenConfig, TokensConfig } from "../config/tokens";
 import { expandDecimals, formatAmount } from "../utils/math";
 const ethers = hre.ethers;

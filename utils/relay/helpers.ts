@@ -1,3 +1,4 @@
+import { _TypedDataEncoder } from "ethers/lib/utils";
 import { BigNumberish, ethers } from "ethers";
 import { GELATO_RELAY_ADDRESS } from "./addresses";
 
@@ -8,6 +9,7 @@ export type SubaccountApproval = {
   maxAllowedCount: BigNumberish;
   actionType: string;
   nonce: BigNumberish;
+  integrationId: string;
   deadline: BigNumberish;
   signature: string;
 };
@@ -51,6 +53,7 @@ export type RelayParams = {
   fee: FeeParams;
   userNonce: BigNumberish;
   deadline: BigNumberish;
+  desChainId: BigNumberish;
 };
 
 export type CreateOrderParams = {
@@ -78,6 +81,7 @@ export type CreateOrderParams = {
   isLong: boolean;
   shouldUnwrapNativeToken: boolean;
   referralCode: string;
+  dataList: string[];
 };
 
 export type UpdateOrderParams = {
@@ -106,12 +110,13 @@ export async function getRelayParams(p: {
   feeParams: any;
   userNonce?: BigNumberish;
   deadline: BigNumberish;
+  desChainId: BigNumberish;
   relayRouter: ethers.Contract;
   signer: ethers.Signer;
 }) {
   let userNonce = p.userNonce;
   if (userNonce === undefined) {
-    userNonce = await getUserNonce(await p.signer.getAddress(), p.relayRouter);
+    userNonce = await getUserNonce();
   }
   return {
     oracleParams: p.oracleParams || getDefaultOracleParams(),
@@ -127,6 +132,7 @@ export async function getRelayParams(p: {
     fee: p.feeParams,
     userNonce,
     deadline: p.deadline,
+    desChainId: p.desChainId,
   };
 }
 
@@ -154,6 +160,7 @@ export function hashRelayParams(relayParams: RelayParams) {
       "tuple(address feeToken, uint256 feeAmount, address[] feeSwapPath)",
       "uint256",
       "uint256",
+      "uint256",
     ],
     [
       [relayParams.oracleParams.tokens, relayParams.oracleParams.providers, relayParams.oracleParams.data],
@@ -171,6 +178,7 @@ export function hashRelayParams(relayParams: RelayParams) {
       [relayParams.fee.feeToken, relayParams.fee.feeAmount, relayParams.fee.feeSwapPath],
       relayParams.userNonce,
       relayParams.deadline,
+      relayParams.desChainId,
     ]
   );
 
@@ -185,18 +193,21 @@ export function hashSubaccountApproval(subaccountApproval: SubaccountApproval) {
     "maxAllowedCount",
     "actionType",
     "nonce",
+    "desChainId",
     "deadline",
+    "integrationId",
     "signature",
   ]);
 
-  return ethers.utils.keccak256(
+  const hash = ethers.utils.keccak256(
     ethers.utils.defaultAbiCoder.encode(
       [
-        "tuple(address subaccount,bool shouldAdd,uint256 expiresAt,uint256 maxAllowedCount,bytes32 actionType,uint256 nonce,uint256 deadline,bytes signature)",
+        "tuple(address subaccount,bool shouldAdd,uint256 expiresAt,uint256 maxAllowedCount,bytes32 actionType,uint256 nonce,uint256 desChainId,uint256 deadline,bytes32 integrationId,bytes signature)",
       ],
       [subaccountApproval]
     )
   );
+  return hash;
 }
 
 export function assertFields(obj: any, fields: string[]) {
@@ -207,15 +218,16 @@ export function assertFields(obj: any, fields: string[]) {
   }
 }
 
-export async function getUserNonce(account: string, relayRouter: ethers.Contract) {
-  return relayRouter.userNonces(account);
+export async function getUserNonce() {
+  return Math.floor(Math.random() * 1000000); // Generate a random nonce
 }
 
 export async function signTypedData(
   signer: ethers.Signer,
   domain: Record<string, any>,
   types: Record<string, any>,
-  typedData: Record<string, any>
+  typedData: Record<string, any>,
+  minified = false
 ) {
   for (const [key, value] of Object.entries(domain)) {
     if (value === undefined) {
@@ -228,7 +240,17 @@ export async function signTypedData(
     }
   }
 
-  return (signer as any)._signTypedData(domain, types, typedData);
+  if (!minified) {
+    return (signer as any)._signTypedData(domain, types, typedData);
+  }
+
+  const digest = _TypedDataEncoder.hash(domain, types, typedData);
+  const minifiedTypes = {
+    Minified: [{ name: "digest", type: "bytes32" }],
+  };
+  return (signer as any)._signTypedData(domain, minifiedTypes, {
+    digest,
+  });
 }
 
 export async function sendRelayTransaction({
