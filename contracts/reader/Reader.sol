@@ -143,7 +143,8 @@ contract Reader {
         bytes32 positionKey,
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices,
-        bool shouldValidateMinCollateralUsd
+        bool shouldValidateMinCollateralUsd,
+        bool forLiquidation
     ) public view returns (bool, string memory, PositionUtils.IsPositionLiquidatableInfo memory) {
         Position.Props memory position = PositionStoreUtils.get(dataStore, positionKey);
 
@@ -154,7 +155,8 @@ contract Reader {
                 position,
                 market,
                 prices,
-                shouldValidateMinCollateralUsd
+                shouldValidateMinCollateralUsd,
+                forLiquidation
             );
     }
 
@@ -163,7 +165,7 @@ contract Reader {
         address account,
         uint256 start,
         uint256 end
-    ) external view returns (Order.Props[] memory) {
+    ) external view returns (ReaderUtils.OrderInfo[] memory) {
         return ReaderUtils.getAccountOrders(dataStore, account, start, end);
     }
 
@@ -207,6 +209,13 @@ contract Reader {
                 pnlFactorType,
                 maximize
             );
+    }
+
+    function getPendingPositionImpactPoolDistributionAmount(
+        DataStore dataStore,
+        address market
+    ) external view returns (uint256, uint256) {
+        return MarketUtils.getPendingPositionImpactPoolDistributionAmount(dataStore, market);
     }
 
     function getNetPnl(
@@ -263,10 +272,11 @@ contract Reader {
     function getExecutionPrice(
         DataStore dataStore,
         address marketKey,
-        Price.Props memory indexTokenPrice,
+        MarketUtils.MarketPrices memory prices,
         uint256 positionSizeInUsd,
         uint256 positionSizeInTokens,
         int256 sizeDeltaUsd,
+        int256 pendingImpactAmount,
         bool isLong
     ) external view returns (ReaderPricingUtils.ExecutionPriceResult memory) {
         Market.Props memory market = MarketStoreUtils.get(dataStore, marketKey);
@@ -274,10 +284,11 @@ contract Reader {
             ReaderPricingUtils.getExecutionPrice(
                 dataStore,
                 market,
-                indexTokenPrice,
+                prices,
                 positionSizeInUsd,
                 positionSizeInTokens,
                 sizeDeltaUsd,
+                pendingImpactAmount,
                 isLong
             );
     }

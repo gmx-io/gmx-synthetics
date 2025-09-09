@@ -1,44 +1,40 @@
 import { grantRoleIfNotGranted } from "../utils/role";
-import { createDeployFunction } from "../utils/deploy";
+import { createDeployFunction, skipHandlerFunction } from "../utils/deploy";
 
 const constructorContracts = [
   "RoleStore",
   "DataStore",
   "EventEmitter",
   "Oracle",
+  "MultichainVault",
   "OrderVault",
   "SwapHandler",
   "ReferralStorage",
+  "IncreaseOrderExecutor",
+  "DecreaseOrderExecutor",
+  "SwapOrderExecutor",
 ];
+const contractName = "OrderHandler";
 
 const func = createDeployFunction({
-  contractName: "OrderHandler",
+  contractName: contractName,
   dependencyNames: constructorContracts,
   getDeployArgs: async ({ dependencyContracts }) => {
     return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
   },
-  libraryNames: [
-    "MarketStoreUtils",
-    "OrderUtils",
-    "ExecuteOrderUtils",
-    "OrderStoreUtils",
-    "OrderEventUtils",
-    "GasUtils",
-  ],
+  libraryNames: ["GasUtils", "MarketUtils", "ExecuteOrderUtils", "OrderEventUtils", "OrderStoreUtils", "OrderUtils"],
   afterDeploy: async ({ deployedContract, getNamedAccounts, deployments, network }) => {
     const { deployer } = await getNamedAccounts();
     const { execute } = deployments;
 
-    if (!["arbitrum", "avalanche"].includes(network.name)) {
+    if (!["arbitrum", "avalanche", "botanix"].includes(network.name)) {
       await execute("ReferralStorage", { from: deployer, log: true }, "setHandler", deployedContract.address, true);
     }
 
-    await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
+    await grantRoleIfNotGranted(deployedContract, "CONTROLLER");
   },
 });
 
-func.skip = async () => {
-  return process.env.SKIP_HANDLER_DEPLOYMENTS ? true : false;
-};
+func.skip = skipHandlerFunction(contractName);
 
 export default func;

@@ -18,6 +18,7 @@ describe("FeeHandler", () => {
   let user0, user1;
   let roleStore,
     dataStore,
+    oracle,
     wnt,
     gmx,
     usdc,
@@ -36,6 +37,7 @@ describe("FeeHandler", () => {
     ({
       roleStore,
       dataStore,
+      oracle,
       ethUsdMarket,
       wnt,
       gmx,
@@ -282,9 +284,18 @@ describe("FeeHandler", () => {
     await config.setUint(keys.BUYBACK_BATCH_AMOUNT, encodeData(["address"], [wnt.address]), expandDecimals(1, 15)); // 1 * 10 ^ 15 = 0.001
 
     // Set oracle provider for WETH, GMX and USDC to chainlinkPriceFeedProvider so the buyback() function will work in testing
-    await dataStore.setAddress(keys.oracleProviderForTokenKey(wnt.address), chainlinkPriceFeedProvider.address);
-    await dataStore.setAddress(keys.oracleProviderForTokenKey(gmx.address), chainlinkPriceFeedProvider.address);
-    await dataStore.setAddress(keys.oracleProviderForTokenKey(usdc.address), chainlinkPriceFeedProvider.address);
+    await dataStore.setAddress(
+      keys.oracleProviderForTokenKey(oracle.address, wnt.address),
+      chainlinkPriceFeedProvider.address
+    );
+    await dataStore.setAddress(
+      keys.oracleProviderForTokenKey(oracle.address, gmx.address),
+      chainlinkPriceFeedProvider.address
+    );
+    await dataStore.setAddress(
+      keys.oracleProviderForTokenKey(oracle.address, usdc.address),
+      chainlinkPriceFeedProvider.address
+    );
 
     // Set USDC/GMX params for the buyback function's withOraclePrices modifier
     const usdcGmxParams = {

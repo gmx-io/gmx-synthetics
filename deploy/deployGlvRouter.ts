@@ -1,7 +1,15 @@
 import { grantRoleIfNotGranted } from "../utils/role";
 import { createDeployFunction } from "../utils/deploy";
 
-const constructorContracts = ["Router", "RoleStore", "DataStore", "EventEmitter", "GlvHandler", "ExternalHandler"];
+const constructorContracts = [
+  "Router",
+  "RoleStore",
+  "DataStore",
+  "EventEmitter",
+  "GlvDepositHandler",
+  "GlvWithdrawalHandler",
+  "ExternalHandler",
+];
 
 const func = createDeployFunction({
   contractName: "GlvRouter",
@@ -11,8 +19,8 @@ const func = createDeployFunction({
   },
   libraryNames: ["GlvDepositStoreUtils", "GlvWithdrawalStoreUtils"],
   afterDeploy: async ({ deployedContract }) => {
-    await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
-    await grantRoleIfNotGranted(deployedContract.address, "ROUTER_PLUGIN");
+    await grantRoleIfNotGranted(deployedContract, "CONTROLLER");
+    await grantRoleIfNotGranted(deployedContract, "ROUTER_PLUGIN");
   },
 });
 

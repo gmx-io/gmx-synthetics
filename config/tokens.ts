@@ -27,6 +27,11 @@ type OracleTestPriceFeed = {
 
 type OraclePriceFeed = OracleRealPriceFeed | OracleTestPriceFeed;
 
+type OracleEdge = {
+  feedId: string;
+  tokenDecimals: number;
+};
+
 type BaseTokenConfig = {
   decimals: number;
   transferGasLimit?: number;
@@ -36,6 +41,7 @@ type BaseTokenConfig = {
   dataStreamFeedDecimals?: number;
   dataStreamSpreadReductionFactor?: BigNumberish;
   priceFeed?: OraclePriceFeed;
+  edge?: OracleEdge;
 };
 
 // synthetic token without corresponding token
@@ -712,6 +718,192 @@ const config: {
       oracleTimestampAdjustment: 1,
       // Chainlink on-chain feed not available
     },
+    DOLO: {
+      synthetic: true,
+      decimals: 18, // https://berascan.com/token/0x0F81001eF0A83ecCE5ccebf63EB302c70a39a654#readContract
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x000355d06b40dff314c9a283f9fd647690f5ebdce666453af72e3fbf08fdce5e",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      // Chainlink on-chain feed not available
+    },
+    ZRO: {
+      synthetic: true,
+      decimals: 18, // https://etherscan.io/token/0x6985884c4392d348587b19cb9eaaf157f13271cd#readContract
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003f57f2052095349bdb01a9a82b30701c5fbfa4c5a65c5d42031083890501e",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x1940fEd49cDBC397941f2D336eb4994D599e568B",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+    },
+    CRV: {
+      synthetic: true,
+      decimals: 18, // https://etherscan.io/token/0xd533a949740bb3306d119cc777fa900ba034cd52#readContract
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003d2e4f22df7caac63178e3f81ae33bbbf39ee1612bad959950424fe41412c",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0xaebDA2c976cfd1eE1977Eac079B4382acb849325",
+        decimals: 8,
+        heartbeatDuration: (1 + 1) * 60 * 60, // heartbeatDuration + 1 hour
+      },
+    },
+    MOODENG: {
+      synthetic: true,
+      decimals: 6, // https://solscan.io/token/ED5nyyWEzpPPiWimP8vYm7sD7TD3LAt3Q3gRTWHzPJBY
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x00037feb14674aa2c1d31bb808f3356b249ef73d447b0d93042320acfdebbd09",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    XMR: {
+      synthetic: true,
+      decimals: 12, // https://www.getmonero.org/resources/moneropedia/denominations.html
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x00038f3b8f8be4305564abf0ed3c9cc46cb8b4303c35ab54079ea873b7d74b3a",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    PI: {
+      synthetic: true,
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x00036e16e272620ba510f635bc77fee9fb2de627343ce3aaa6cf068a3d078ac8",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    PUMP: {
+      synthetic: true,
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x00032ce910d5ee7e47506b9f0607acdc017fb6cd92ed3696eb3573db6ad41cb9",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    MNT: {
+      synthetic: true,
+      decimals: 18, // https://etherscan.io/token/0x3c3a81e81dc49a522a592e7622a7e711c06bf354#readProxyContract
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003dedb9e322eea3d1f6454b31241018b5fea9d0bffedbf4c49fec12798cb70",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x37DDEE84dE03d039e1Bf809b7a01EDd2c4665771",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+    },
+    SPX6900: {
+      synthetic: true,
+      decimals: 8, // https://etherscan.io/token/0xe0f63a424a4439cbe457d80e4f4b51ad25b2c56c#readContract
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003c5eefa9b2f6a05d0f6613692ffc61083636429169b9a5b0353ea47b9091c",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    ALGO: {
+      synthetic: true,
+      decimals: 6, // https://explorer.perawallet.app/asset/0/
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003b864d7f86b46f63afba8359e86436fe57c99dfbbe260848c9caef6565892",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    HBAR: {
+      synthetic: true,
+      decimals: 8, // https://docs.hedera.com/hedera/core-concepts/smart-contracts/understanding-hederas-evm-differences-and-compatibility/for-evm-developers-migrating-to-hedera/decimal-handling-8-vs.-18-decimals
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x000368f5793785d9a20180f5137a05a558b2518ac13e6c77a93b97670da207c9",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    CRO: {
+      synthetic: true,
+      decimals: 8, // https://etherscan.io/token/0xa0b73e1ff0b80914ab6fe0444e65848c4c34450b#readContract
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x000329810dcc8c4557e19e34d42cbfa3ac7e85ddb465ff22b66abe06f4bbbcbb",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0xea320E4d688B143A3bFBF1b4a5cc4B986fCa086c",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+    },
+    CVX: {
+      synthetic: true,
+      decimals: 18, // https://etherscan.io/token/0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b#readContract
+      dataStreamFeedId: "0x0003e95ca25588986a3611cf132be9635d86f16636f2f561b932c0087a7f5c34",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x851175a919f36c8e30197c09a9A49dA932c2CC00",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+    },
+    KAS: {
+      synthetic: true,
+      decimals: 8, // https://etherscan.io/address/0x112b08621e27e10773ec95d250604a041f36c582#readContract
+      dataStreamFeedId: "0x0003c871148642ab1e886f06d203b1c1e7933b51b7e4064ea11529a4262566d3",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    OKB: {
+      synthetic: true,
+      decimals: 18, // https://etherscan.io/token/0x75231f58b43240c9718dd58b4967c5114342a86c#readProxyContract
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003d2d8fef8271831e3245a1d00553e217e4d71a7a1468c7f327173a758c74f",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    AERO: {
+      synthetic: true,
+      decimals: 18, // https://basescan.org/token/0x940181a94a35a4569e4529a3cdfb74e38fd98631#readContract
+      dataStreamFeedId: "0x00038458999fd77d9deece17154ee687193b328cf7a53670501dd8ccad906ff6",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    BRETT: {
+      synthetic: true,
+      decimals: 18, // https://basescan.org/token/0x532f27101965dd16442e59d40670faf5ebb142e4#readContract
+      dataStreamFeedId: "0x00033e321855f7cbfa1da803f4b6b0b06fb28d15e1a8d8132accaf8ffdfd81ed",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    WLFI: {
+      synthetic: true,
+      decimals: 18, // https://etherscan.io/token/0xdA5e1988097297dCdc1f90D4dFE7909e847CBeF6#readProxyContract
+      dataStreamFeedId: "0x000348a0911d971aafb082790ac3b4af7271c5d8d9603b644240442d8656c2d6",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    WELL: {
+      synthetic: true,
+      decimals: 18, // https://basescan.org/token/0xff8adec2221f9f4d8dfbafa6b9a297d17603493d#readProxyContract
+      dataStreamFeedId: "0x00032074a30ba476c45cf517868fca15c694813dae41fb795e95c10ae0023316",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    VVV: {
+      synthetic: true,
+      decimals: 18, // https://basescan.org/token/0xacfe6019ed1a7dc6f7b508c02d1b04ec88cc21bf#readContract
+      dataStreamFeedId: "0x0003195dde0f669c58fa396bdd60488cbebcf4e0d869905fb79b3ed4b763c7a9",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    MORPHO: {
+      synthetic: true,
+      decimals: 18, // https://etherscan.io/token/0x58D97B57BB95320F9a05dC918Aef65434969c2B2#readProxyContract
+      dataStreamFeedId: "0x0003df1ca5682717315cc4f0db6f3c782eec3f6861f38ba90f5a2383b75404d8",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
     AAVE: {
       address: "0xba5ddd1f9d7f570dc94a51479a000e3bce967196",
       decimals: 18,
@@ -970,6 +1162,21 @@ const config: {
         heartbeatDuration: 0,
       },
     },
+    PUMP: {
+      synthetic: true,
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x00032ce910d5ee7e47506b9f0607acdc017fb6cd92ed3696eb3573db6ad41cb9",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    WLFI: {
+      synthetic: true,
+      decimals: 18, // https://etherscan.io/token/0xdA5e1988097297dCdc1f90D4dFE7909e847CBeF6#readProxyContract
+      dataStreamFeedId: "0x000348a0911d971aafb082790ac3b4af7271c5d8d9603b644240442d8656c2d6",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
     WAVAX: {
       address: "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",
       decimals: 18,
@@ -1070,11 +1277,80 @@ const config: {
         decimals: 8,
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
+      buybackMaxPriceImpactFactor: percentageToFloat("0.4%"),
     },
     LINK: {
       address: "0x5947BB275c521040051D82396192181b413227A3",
       decimals: 18,
       transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x00036d7a1251e3f67d6658466b5e9e7fe8418af7feac9567ff322bff95cc2401",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x49ccd9ca821EfEab2b98c60dC60F518E765EDe9a",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+      buybackMaxPriceImpactFactor: MID_BUYBACK_IMPACT,
+    },
+  },
+  botanix: {
+    pBTC: {
+      address: "0x0D2437F93Fed6EA64Ef01cCde385FB1263910C56",
+      decimals: 18,
+      dataStreamFeedId: "0x00039d9e45394f473ab1f050a1b963e6b05351e52d71e507509ada0c95ed75b8",
+      dataStreamFeedDecimals: 18,
+      wrappedNative: true,
+      transferGasLimit: 200 * 1000,
+      dataStreamSpreadReductionFactor: percentageToFloat("100%"),
+      priceFeed: {
+        address: "0x632d2713F48ac2DF441b3cE46Bd7fa4467D419d1",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+    },
+    stBTC: {
+      address: "0xF4586028FFdA7Eca636864F80f8a3f2589E33795",
+      decimals: 18,
+      dataStreamFeedId: "0x0003a22193e4732e22af473c6712928af89dfe72481a39c844559573012d7973",
+      dataStreamFeedDecimals: 18,
+      transferGasLimit: 200 * 1000,
+    },
+    "USDC.e": {
+      address: "0x29ee6138dd4c9815f46d34a4a1ed48f46758a402",
+      decimals: 6,
+      dataStreamFeedId: "0x00038f83323b6b08116d1614cf33a9bd71ab5e0abf0c9f1b783a74a43e7bd992",
+      dataStreamFeedDecimals: 18,
+      transferGasLimit: 200 * 1000,
+      priceFeed: {
+        address: "0x9563258f5FF50C176A3780ab02dF25cc39C092C0",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+    },
+    "USDC.e (Archived)": {
+      address: "0x325eEb3AA50014f35861e3374f54B3997Aa8357d",
+      decimals: 6,
+      dataStreamFeedId: "0x00038f83323b6b08116d1614cf33a9bd71ab5e0abf0c9f1b783a74a43e7bd992",
+      dataStreamFeedDecimals: 18,
+      transferGasLimit: 200 * 1000,
+      priceFeed: {
+        address: "0x9563258f5FF50C176A3780ab02dF25cc39C092C0",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+    },
+    BTC: {
+      synthetic: true,
+      decimals: 8,
+      dataStreamFeedId: "0x00039d9e45394f473ab1f050a1b963e6b05351e52d71e507509ada0c95ed75b8",
+      dataStreamFeedDecimals: 18,
+      dataStreamSpreadReductionFactor: percentageToFloat("100%"),
+      priceFeed: {
+        address: "0x632d2713F48ac2DF441b3cE46Bd7fa4467D419d1",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
     },
   },
   arbitrumSepolia: {
@@ -1083,39 +1359,45 @@ const config: {
       decimals: 18,
       wrappedNative: true,
       transferGasLimit: 200 * 1000,
-      dataStreamFeedId: "0x0001d678deabc04f0494b78138727170ff1cf1daf91fca6954de59e41fa0965c",
+      dataStreamFeedId: "0x000359843a543ee2fe414dc14c7e7920ef10f4372990b79d6361cdc0dd1ba782",
+      dataStreamFeedDecimals: 18,
+      priceFeed: {
+        address: "0xd30e2101a97dcbAeBCBC04F14C3f624E67A35165", // ETH / USD
+        decimals: 8,
+        heartbeatDuration: 144 * 60 * 60,
+      },
+    },
+    CRV: {
+      synthetic: true,
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x00037c41d40228ff337f3c7339e635906bb60552d748654fe6f9ebfa6a83fc0e",
       dataStreamFeedDecimals: 18,
     },
     BTC: {
       address: "0xF79cE1Cf38A09D572b021B4C5548b75A14082F12",
       decimals: 8,
       transferGasLimit: 200 * 1000,
-      dataStreamFeedId: "0x0001ef0379c835e64d03082e561403cc14b2779b525d93149b25df0ee3ef9456",
+      dataStreamFeedId: "0x00037da06d56d083fe599397a4769a042d63aa73dc4ef57709d31e9971a5b439",
       dataStreamFeedDecimals: 18,
       priceFeed: {
         address: "0x56a43EB56Da12C0dc1D972ACb089c06a5dEF8e69",
         decimals: 8,
-        heartbeatDuration: 3 * 24 * 60 * 60,
-        stablePrice: decimalToFloat(44000),
+        heartbeatDuration: 144 * 60 * 60,
       },
     },
-    USDC: {
-      address: "0x3321Fd36aEaB0d5CdfD26f4A3A93E2D2aAcCB99f",
+    "USDC.SG": {
+      address: "0x3253a335E7bFfB4790Aa4C25C4250d206E9b9773", // Stargate USDC
       decimals: 6,
       transferGasLimit: 200 * 1000,
-      dataStreamFeedId: "0x0001829d7d4c7c5badcd54d2126e621c51eabf32393ffab969e311b18ed80138",
+      dataStreamFeedId: "0x0003dc85e8b01946bf9dfd8b0db860129181eb6105a8c8981d9f28e00b6f60d9", // Circle USDC
       dataStreamFeedDecimals: 18,
       priceFeed: {
-        address: "0x0153002d20B96532C639313c2d54c3dA09109309",
+        address: "0x0153002d20B96532C639313c2d54c3dA09109309", // Circle USDC
         decimals: 8,
-        heartbeatDuration: 3 * 24 * 60 * 60,
+        heartbeatDuration: 144 * 60 * 60,
         stablePrice: decimalToFloat(1),
       },
-    },
-    GLV_WETH_USDC: {
-      address: "0x528A5bac7E746C9A509A1f4F6dF58A03d44279F9",
-      decimals: 18,
-      transferGasLimit: 200 * 1000,
     },
   },
   arbitrumGoerli: {
@@ -1331,9 +1613,11 @@ const config: {
     MATIC: {
       decimals: 18,
       synthetic: true,
-      dataStreamFeedId: "0x0003fd6ff25e1a28ddd55c85882279987be478a66a75abdf05a468beb5b8b467",
+      // dataStreamFeedId: "0x0003fd6ff25e1a28ddd55c85882279987be478a66a75abdf05a468beb5b8b467",
+      // dataStreamFeedDecimals: 18,
+      // oracleProvider: "gmOracle",
+      dataStreamFeedId: "0x0003dc85e8b01946bf9dfd8b0db860129181eb6105a8c8981d9f28e00b6f60d9",
       dataStreamFeedDecimals: 18,
-      oracleProvider: "gmOracle",
     },
     UNI: {
       decimals: 18,
@@ -1438,7 +1722,7 @@ const config: {
   },
 };
 
-export default async function (hre: HardhatRuntimeEnvironment): Promise<TokensConfig> {
+function getTokens(hre: HardhatRuntimeEnvironment) {
   const tokens = config[hre.network.name];
 
   for (const [tokenSymbol, token] of Object.entries(tokens as TokensConfig)) {
@@ -1463,4 +1747,22 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<TokensCo
   }
 
   return tokens;
+}
+
+// note that this will not return tokens that are deployed at runtime
+export async function tokenByAddress(hre: HardhatRuntimeEnvironment) {
+  const tokens = getTokens(hre);
+  const map = {};
+
+  for (const token of Object.values(tokens as TokensConfig)) {
+    if (token.address) {
+      map[token.address] = token;
+    }
+  }
+
+  return;
+}
+
+export default async function (hre: HardhatRuntimeEnvironment): Promise<TokensConfig> {
+  return getTokens(hre);
 }

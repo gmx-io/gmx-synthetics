@@ -30,10 +30,16 @@ library Errors {
     error InvalidBaseKey(bytes32 baseKey);
     error ConfigValueExceedsAllowedRange(bytes32 baseKey, uint256 value);
     error InvalidClaimableFactor(uint256 value);
-    error OracleProviderAlreadyExistsForToken(address token);
+    error InvalidClaimableReductionFactor(uint256 value);
+    error OracleProviderAlreadyExistsForToken(address oracle, address token);
+    error OracleProviderMinChangeDelayNotYetPassed(address token, address provider);
     error PriceFeedAlreadyExistsForToken(address token);
     error DataStreamIdAlreadyExistsForToken(address token);
+    error EdgeDataStreamIdAlreadyExistsForToken(address token);
     error MaxFundingFactorPerSecondLimitExceeded(uint256 maxFundingFactorPerSecond, uint256 limit);
+    error InvalidPositionImpactPoolDistributionRate(uint256 distributionAmount, uint256 positionImpactPoolAmount);
+    error MaxDataListLengthExceeded(uint256 dataLength, uint256 maxDataLength);
+    error EmptyToken();
 
     // ContributorHandler errors
     error InvalidSetContributorPaymentInput(uint256 tokensLength, uint256 amountsLength);
@@ -50,7 +56,14 @@ library Errors {
     error InvalidTimelockDelay(uint256 timelockDelay);
     error MaxTimelockDelayExceeded(uint256 timelockDelay);
     error InvalidFeeReceiver(address receiver);
-    error InvalidOracleSigner(address receiver);
+    error InvalidOracleSigner(address signer);
+    error InvalidHoldingAddress(address account);
+    error EmptyPositionImpactWithdrawalAmount();
+    error OraclePriceOutdated();
+    error EmptyTarget();
+    error EmptyFundingAccount();
+    error EmptyReduceLentAmount();
+    error ReductionExceedsLentAmount(uint256 lentAmount, uint256 totalReductionAmount);
 
     // GlvDepositStoreUtils errors
     error GlvDepositNotFound(bytes32 key);
@@ -154,7 +167,10 @@ library Errors {
     error InsufficientExecutionGas(uint256 startingGas, uint256 estimatedGasLimit, uint256 minAdditionalGasForExecution);
     error InsufficientHandleExecutionErrorGas(uint256 gas, uint256 minHandleExecutionErrorGas);
     error InsufficientGasForCancellation(uint256 gas, uint256 minHandleExecutionErrorGas);
+    error InsufficientGasForAutoCancellation(uint256 gas, uint256 minHandleExecutionErrorGas);
+    error InsufficientGasLeft(uint256 gas, uint256 estimatedGasLimit);
     error InvalidExecutionFee(uint256 executionFee, uint256 minExecutionFee, uint256 maxExecutionFee);
+    error EmptyRelayFeeAddress();
 
     // MarketFactory errors
     error MarketAlreadyExists(bytes32 salt, address existingMarketAddress);
@@ -192,6 +208,9 @@ library Errors {
     error InvalidMarketTokenBalanceForCollateralAmount(address market, address token, uint256 balance, uint256 collateralAmount);
     error InvalidMarketTokenBalanceForClaimableFunding(address market, address token, uint256 balance, uint256 claimableFundingFeeAmount);
     error UnexpectedPoolValue(int256 poolValue);
+
+    // MarketPositionImpactUtils errors
+    error InsufficientImpactPoolValueForWithdrawal(uint256 withdrawalAmount, uint256 poolValue, int256 totalPendingImpactAmount);
 
     // Oracle errors
     error SequencerDown();
@@ -235,7 +254,6 @@ library Errors {
         uint256 maxRefPriceDeviationFactor
     );
     error InvalidBlockRangeSet(uint256 largestMinBlockNumber, uint256 smallestMaxBlockNumber);
-    error EmptyChainlinkPaymentToken();
     error NonAtomicOracleProvider(address provider);
 
     // OracleModule errors
@@ -253,6 +271,7 @@ library Errors {
     // BaseOrderUtils errors
     error EmptyOrder();
     error UnsupportedOrderType(uint256 orderType);
+    error UnsupportedOrderTypeForAutoCancellation(uint256 orderType);
     error InvalidOrderPrices(
         uint256 primaryPriceMin,
         uint256 primaryPriceMax,
@@ -328,6 +347,7 @@ library Errors {
     error ShiftFromAndToMarketAreEqual(address market);
     error LongTokensAreNotEqual(address fromMarketLongToken, address toMarketLongToken);
     error ShortTokensAreNotEqual(address fromMarketLongToken, address toMarketLongToken);
+    error BridgeOutNotSupportedDuringShift();
 
     // SwapPricingUtils errors
     error UsdDeltaExceedsPoolValue(int256 usdDelta, uint256 poolUsd);
@@ -360,6 +380,7 @@ library Errors {
     error SubaccountNotAuthorized(address account, address subaccount);
     error MaxSubaccountActionCountExceeded(address account, address subaccount, uint256 count, uint256 maxCount);
     error SubaccountApprovalExpired(address account, address subaccount, uint256 deadline, uint256 currentTimestamp);
+    error SubaccountIntegrationIdDisabled(bytes32 integrationId);
 
     // TokenUtils errors
     error TokenTransferError(address token, address receiver, uint256 amount);
@@ -371,6 +392,17 @@ library Errors {
     // AccountUtils errors
     error EmptyAccount();
     error EmptyReceiver();
+    error DataListLengthExceeded();
+
+    // ClaimHandler errors
+    error EmptyAmount();
+    error EmptyClaimableAmount(address token);
+    error InvalidToken(address token);
+    error InvalidParams(string reason);
+    error InsufficientFunds(address token);
+    error InvalidClaimTermsSignature(address recoveredSigner, address expectedSigner);
+    error InvalidClaimTermsSignatureForContract(address expectedSigner);
+    error DuplicateClaimTerms(uint256 existingDistributionId);
 
     // Array errors
     error CompactedArrayOutOfBounds(
@@ -404,8 +436,8 @@ library Errors {
     error MinLongTokens(uint256 received, uint256 expected);
     error MinShortTokens(uint256 received, uint256 expected);
     error InsufficientMarketTokens(uint256 balance, uint256 expected);
-    error InsufficientWntAmount(uint256 wntAmount, uint256 executionFee);
     error InvalidPoolValueForWithdrawal(int256 poolValue);
+    error MaxLendableFactorForWithdrawalsExceeded(uint256 poolUsd, uint256 maxLendableUsd, uint256 lentUsd);
 
     // Uint256Mask errors
     error MaskIndexOutOfBounds(uint256 index, string label);
@@ -424,20 +456,58 @@ library Errors {
     // Reader errors
     error EmptyMarketPrice(address market);
 
+    // Multichain errors
+    error InvalidTransferRequestsLength();
+    error EmptyMultichainTransferInAmount(address account, address token);
+    error EmptyMultichainTransferOutAmount(address account, address token);
+    error InsufficientMultichainBalance(address account, address token, uint256 balance, uint256 amount);
+    error InvalidSrcChainId(uint256 srcChainId);
+    error InvalidEid(uint256 eid);
+    error InvalidDestinationChainId(uint256 desChainId);
+    error TokenPermitsNotAllowedForMultichain();
+    error InvalidInitializer();
+    error InvalidMultichainProvider(address provider);
+    error InvalidMultichainEndpoint(address endpoint);
+    error UnableToPayOrderFee();
+    error UnableToPayOrderFeeFromCollateral();
+    error InvalidBridgeOutToken(address token);
+    error InsufficientFee(uint256 feeProvided, uint256 feeRequired);
+
+    enum SignatureType {
+        Call,
+        SubaccountApproval
+    }
+
     // Gelato relay errors
     error InvalidSignature(string signatureType);
+    error InvalidRecoveredSigner(string signatureType, address recovered, address recoveredFromMinified, address expectedSigner);
     // User sent incorrect fee token or incorrect swap path
     error UnexpectedRelayFeeTokenAfterSwap(address feeToken, address expectedFeeToken);
     error UnexpectedRelayFeeToken(address feeToken, address expectedFeeToken);
     // Contract received unsupported fee token from Gelato relay
     error UnsupportedRelayFeeToken(address feeToken, address expectedFeeToken);
     error InvalidPermitSpender(address spender, address expectedSpender);
-    error InvalidUserNonce(uint256 storedUserNonce, uint256 userNonce);
+    error InvalidUserDigest(bytes32 digest);
     error SubaccountApprovalDeadlinePassed(uint256 currentTimestamp, uint256 deadline);
     error InvalidSubaccountApprovalNonce(uint256 storedNonce, uint256 nonce);
+    error InvalidSubaccountApprovalDesChainId(uint256 desChainId);
     error DeadlinePassed(uint256 currentTimestamp, uint256 deadline);
-    error InsufficientRelayFee(uint256 requiredRelayFee, uint256 feeAmount);
+    error InsufficientRelayFee(uint256 requiredRelayFee, uint256 availableFeeAmount);
     error InvalidSubaccountApprovalSubaccount();
     error NonEmptyExternalCallsForSubaccountOrder();
-    error InvalidRelayParams();
+
+    // EventUtils error
+    error EventItemNotFound(string key);
+
+    // EdgeOracle verifier errors
+    error InvalidTrustedSignerAddress();
+    error InvalidEdgeSigner();
+    error InvalidEdgeSignature(uint256 recoverError);
+    error InvalidEdgeDataStreamBidAsk(address token, uint256 bid, uint256 ask);
+    error InvalidEdgeDataStreamPrices(address token, uint256 bid, uint256 ask);
+    error InvalidEdgeDataStreamExpo(int256 expo);
+    error RelayEmptyBatch();
+    error RelayCalldataTooLong(uint256 calldataLength);
+    error InvalidExternalCalls(uint256 sendTokensLength, uint256 sendAmountsLength);
+    error MaxRelayFeeSwapForSubaccountExceeded(uint256 feeUsd, uint256 maxFeeUsd);
 }

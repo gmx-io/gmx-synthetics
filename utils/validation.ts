@@ -1,3 +1,4 @@
+import hre from "hardhat";
 import { expect } from "chai";
 import { bigNumberify } from "./math";
 
@@ -24,9 +25,11 @@ export function expectWithinRange(actualValue, expectedValue, allowedRange) {
 export async function expectBalances(
   expected: Record<string, Record<string, BigNumberish | [BigNumberish, BigNumberish]>>
 ) {
+  const tokens = await hre.gmx.getTokens();
+  const addressToSymbol = Object.fromEntries(Object.entries(tokens).map(([symbol, token]) => [token.address, symbol]));
   for (const [i, [account, tokenAndExpectedBalances]] of Object.entries(expected).entries()) {
     for (const [j, [token, expectedBalance]] of Object.entries(tokenAndExpectedBalances).entries()) {
-      const label = `balance ${i}-${j} account ${account} token ${token}`;
+      const label = `balance ${i}-${j} account ${account} token ${addressToSymbol[token]} ${token}`;
       await expectBalance(token, account, expectedBalance, label);
     }
   }

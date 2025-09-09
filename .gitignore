@@ -17,11 +17,18 @@ keys
 out
 
 #Hardhat files
-/cache/
-artifacts
-deployments/localhost
-deployments.txt
+/cache
+/data
+/scripts/distributions/out
+/artifacts
+/deployments/localhost
+/deployments.txt
 *.log
 .cursorignore*
 
+/validation/
+
 .idea
+/abi
+
+/validation

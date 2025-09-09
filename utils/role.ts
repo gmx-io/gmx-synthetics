@@ -9,14 +9,17 @@ export async function revokeRole(roleStore, account, role) {
   await roleStore.revokeRole(account, hashString(role));
 }
 
-export async function grantRoleIfNotGranted(address: string, role: string, addressLabel = "") {
-  if (process.env.FOR_EXISTING_MAINNET_DEPLOYMENT) {
+export async function grantRoleIfNotGranted(deployedContract, role: string, addressLabel = "") {
+  if (hre.gmx.isExistingMainnetDeployment) {
     return;
   }
 
+  const { address } = deployedContract;
   const { deployments, getNamedAccounts } = hre;
   const { read, execute, log } = deployments;
   const { deployer } = await getNamedAccounts();
+
+  log(`grantRoleIfNotGranted: ${deployedContract.contractName}, ${role}`);
 
   const roleHash = hashString(role);
   const hasRole = await read("RoleStore", "hasRole", address, roleHash);
@@ -29,11 +32,12 @@ export async function grantRoleIfNotGranted(address: string, role: string, addre
   }
 }
 
-export async function revokeRoleIfGranted(address: string, role: string, addressLabel = "") {
-  if (process.env.FOR_EXISTING_MAINNET_DEPLOYMENT) {
+export async function revokeRoleIfGranted(contract, role: string, addressLabel = "") {
+  if (hre.gmx.isExistingMainnetDeployment) {
     return;
   }
 
+  const { address } = contract;
   const { deployments, getNamedAccounts } = hre;
   const { read, execute, log } = deployments;
   const { deployer } = await getNamedAccounts();

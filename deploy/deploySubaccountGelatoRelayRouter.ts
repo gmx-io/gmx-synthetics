@@ -3,11 +3,13 @@ import { createDeployFunction } from "../utils/deploy";
 
 const constructorContracts = [
   "Router",
+  "RoleStore",
   "DataStore",
   "EventEmitter",
   "Oracle",
   "OrderHandler",
   "OrderVault",
+  "SwapHandler",
   "ExternalHandler",
 ];
 
@@ -17,10 +19,10 @@ const func = createDeployFunction({
   getDeployArgs: async ({ dependencyContracts }) => {
     return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
   },
-  libraryNames: ["MarketStoreUtils", "MarketUtils", "OrderStoreUtils", "SwapUtils", "SubaccountUtils"],
+  libraryNames: ["GasUtils", "OrderStoreUtils", "RelayUtils", "SubaccountRouterUtils", "SubaccountUtils"],
   afterDeploy: async ({ deployedContract }) => {
-    await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
-    await grantRoleIfNotGranted(deployedContract.address, "ROUTER_PLUGIN");
+    await grantRoleIfNotGranted(deployedContract, "CONTROLLER");
+    await grantRoleIfNotGranted(deployedContract, "ROUTER_PLUGIN");
   },
 });
 

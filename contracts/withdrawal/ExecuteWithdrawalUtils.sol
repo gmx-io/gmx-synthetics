@@ -4,13 +4,20 @@ pragma solidity ^0.8.0;
 
 import "../data/DataStore.sol";
 
+import "../multichain/MultichainUtils.sol";
+
+import "./IExecuteWithdrawalUtils.sol";
 import "./WithdrawalVault.sol";
 import "./WithdrawalStoreUtils.sol";
 import "./WithdrawalEventUtils.sol";
 
 import "../pricing/SwapPricingUtils.sol";
-import "../oracle/Oracle.sol";
+import "../oracle/IOracle.sol";
 import "../position/PositionUtils.sol";
+import "../fee/FeeUtils.sol";
+import "../swap/SwapUtils.sol";
+
+import "../multichain/BridgeOutFromControllerUtils.sol";
 
 import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
@@ -32,17 +39,6 @@ library ExecuteWithdrawalUtils {
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
 
-    struct ExecuteWithdrawalParams {
-        DataStore dataStore;
-        EventEmitter eventEmitter;
-        WithdrawalVault withdrawalVault;
-        Oracle oracle;
-        bytes32 key;
-        address keeper;
-        uint256 startingGas;
-        ISwapPricingUtils.SwapPricingType swapPricingType;
-    }
-
     struct ExecuteWithdrawalCache {
         uint256 requestExpirationTime;
         uint256 maxOracleTimestamp;
@@ -50,7 +46,7 @@ library ExecuteWithdrawalUtils {
         uint256 oraclePriceCount;
         Market.Props market;
         MarketUtils.MarketPrices prices;
-        ExecuteWithdrawalResult result;
+        IExecuteWithdrawalUtils.ExecuteWithdrawalResult result;
     }
 
     struct _ExecuteWithdrawalCache {
@@ -62,16 +58,9 @@ library ExecuteWithdrawalUtils {
         uint256 shortTokenPoolAmountDelta;
     }
 
-    struct ExecuteWithdrawalResult {
-        address outputToken;
-        uint256 outputAmount;
-        address secondaryOutputToken;
-        uint256 secondaryOutputAmount;
-    }
-
     struct SwapCache {
         Market.Props[] swapPathMarkets;
-        SwapUtils.SwapParams swapParams;
+        ISwapUtils.SwapParams swapParams;
         address outputToken;
         uint256 outputAmount;
     }
@@ -82,9 +71,9 @@ library ExecuteWithdrawalUtils {
      * @param params The parameters for executing the withdrawal.
      */
     function executeWithdrawal(
-        ExecuteWithdrawalParams memory params,
+        IExecuteWithdrawalUtils.ExecuteWithdrawalParams memory params,
         Withdrawal.Props memory withdrawal
-    ) external returns (ExecuteWithdrawalResult memory) {
+    ) external returns (IExecuteWithdrawalUtils.ExecuteWithdrawalResult memory) {
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
         params.startingGas -= gasleft() / 63;
 
@@ -149,21 +138,40 @@ library ExecuteWithdrawalUtils {
         eventData.uintItems.setItem(1, "secondaryOutputAmount", cache.result.secondaryOutputAmount);
         CallbackUtils.afterWithdrawalExecution(params.key, withdrawal, eventData);
 
+        BridgeOutFromControllerUtils.bridgeOutFromController(
+            params.eventEmitter,
+            params.multichainTransferRouter,
+            BridgeOutFromControllerUtils.BridgeOutFromControllerParams({
+                account: withdrawal.account(), // account
+                receiver: withdrawal.receiver(), // receiver
+                srcChainId: withdrawal.srcChainId(),
+                token: cache.result.outputToken, // token
+                amount: cache.result.outputAmount, // amount
+                secondaryToken: cache.result.secondaryOutputToken, // secondaryToken
+                secondaryAmount: cache.result.secondaryOutputAmount, // secondaryAmount
+                dataList: withdrawal.dataList()
+            })
+        );
+
         cache.oraclePriceCount = GasUtils.estimateWithdrawalOraclePriceCount(
             withdrawal.longTokenSwapPath().length + withdrawal.shortTokenSwapPath().length
         );
 
         GasUtils.payExecutionFee(
-            params.dataStore,
-            params.eventEmitter,
-            params.withdrawalVault,
+            GasUtils.PayExecutionFeeContracts(
+                params.dataStore,
+                params.eventEmitter,
+                params.multichainVault,
+                params.withdrawalVault
+            ),
             params.key,
             withdrawal.callbackContract(),
             withdrawal.executionFee(),
             params.startingGas,
             cache.oraclePriceCount,
             params.keeper,
-            withdrawal.receiver()
+            withdrawal.receiver(),
+            withdrawal.srcChainId()
         );
 
         return cache.result;
@@ -175,11 +183,11 @@ library ExecuteWithdrawalUtils {
      * @param withdrawal The withdrawal to execute.
      */
     function _executeWithdrawal(
-        ExecuteWithdrawalParams memory params,
+        IExecuteWithdrawalUtils.ExecuteWithdrawalParams memory params,
         Withdrawal.Props memory withdrawal,
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices
-    ) internal returns (ExecuteWithdrawalResult memory) {
+    ) internal returns (IExecuteWithdrawalUtils.ExecuteWithdrawalResult memory) {
         _ExecuteWithdrawalCache memory cache;
 
         (cache.longTokenOutputAmount, cache.shortTokenOutputAmount) = _getOutputAmounts(
@@ -193,7 +201,7 @@ library ExecuteWithdrawalUtils {
             params.dataStore,
             market.marketToken,
             cache.longTokenOutputAmount,
-            false, // forPositiveImpact
+            false, // balanceWasImproved
             withdrawal.uiFeeReceiver(),
             params.swapPricingType
         );
@@ -221,7 +229,7 @@ library ExecuteWithdrawalUtils {
             params.dataStore,
             market.marketToken,
             cache.shortTokenOutputAmount,
-            false, // forPositiveImpact
+            false, // balanceWasImproved
             withdrawal.uiFeeReceiver(),
             params.swapPricingType
         );
@@ -270,6 +278,12 @@ library ExecuteWithdrawalUtils {
             -cache.shortTokenPoolAmountDelta.toInt256()
         );
 
+        validateMaxLendableFactor(
+            params.dataStore,
+            market,
+            prices
+        );
+
         MarketUtils.validateReserve(params.dataStore, market, prices, true);
 
         MarketUtils.validateReserve(params.dataStore, market, prices, false);
@@ -286,7 +300,7 @@ library ExecuteWithdrawalUtils {
 
         params.withdrawalVault.syncTokenBalance(market.marketToken);
 
-        ExecuteWithdrawalResult memory result;
+        IExecuteWithdrawalUtils.ExecuteWithdrawalResult memory result;
         (result.outputToken, result.outputAmount) = _swap(
             params,
             market,
@@ -294,9 +308,9 @@ library ExecuteWithdrawalUtils {
             cache.longTokenOutputAmount,
             withdrawal.longTokenSwapPath(),
             withdrawal.minLongTokenAmount(),
-            withdrawal.receiver(),
+            withdrawal.srcChainId() == 0 ? withdrawal.receiver() : address(params.multichainVault),
             withdrawal.uiFeeReceiver(),
-            withdrawal.shouldUnwrapNativeToken()
+            withdrawal.srcChainId() == 0 ? withdrawal.shouldUnwrapNativeToken() : false
         );
 
         (result.secondaryOutputToken, result.secondaryOutputAmount) = _swap(
@@ -306,10 +320,16 @@ library ExecuteWithdrawalUtils {
             cache.shortTokenOutputAmount,
             withdrawal.shortTokenSwapPath(),
             withdrawal.minShortTokenAmount(),
-            withdrawal.receiver(),
+            withdrawal.srcChainId() == 0 ? withdrawal.receiver() : address(params.multichainVault),
             withdrawal.uiFeeReceiver(),
-            withdrawal.shouldUnwrapNativeToken()
+            withdrawal.srcChainId() == 0 ? withdrawal.shouldUnwrapNativeToken() : false
         );
+
+        // for multichain action, receiver is the multichainVault; increase user's multichain balances
+        if (withdrawal.srcChainId() != 0) {
+            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, result.outputToken, withdrawal.receiver(), 0); // srcChainId is the current block.chainId
+            MultichainUtils.recordTransferIn(params.dataStore, params.eventEmitter, params.multichainVault, result.secondaryOutputToken, withdrawal.receiver(), 0); // srcChainId is the current block.chainId
+        }
 
         SwapPricingUtils.emitSwapFeesCollected(
             params.eventEmitter,
@@ -361,7 +381,7 @@ library ExecuteWithdrawalUtils {
     }
 
     function _swap(
-        ExecuteWithdrawalParams memory params,
+        IExecuteWithdrawalUtils.ExecuteWithdrawalParams memory params,
         Market.Props memory market,
         address tokenIn,
         uint256 amountIn,
@@ -375,7 +395,7 @@ library ExecuteWithdrawalUtils {
 
         cache.swapPathMarkets = MarketUtils.getSwapPathMarkets(params.dataStore, swapPath);
 
-        cache.swapParams = SwapUtils.SwapParams({
+        cache.swapParams = ISwapUtils.SwapParams({
             dataStore: params.dataStore,
             eventEmitter: params.eventEmitter,
             oracle: params.oracle,
@@ -391,7 +411,7 @@ library ExecuteWithdrawalUtils {
             swapPricingType: params.swapPricingType
         });
 
-        (cache.outputToken, cache.outputAmount) = SwapUtils.swap(cache.swapParams);
+        (cache.outputToken, cache.outputAmount) = params.swapHandler.swap(cache.swapParams);
 
         // validate that internal state changes are correct before calling
         // external callbacks
@@ -401,7 +421,7 @@ library ExecuteWithdrawalUtils {
     }
 
     function _getOutputAmounts(
-        ExecuteWithdrawalParams memory params,
+        IExecuteWithdrawalUtils.ExecuteWithdrawalParams memory params,
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices,
         uint256 marketTokenAmount
@@ -427,6 +447,7 @@ library ExecuteWithdrawalUtils {
 
         uint256 poolValue = poolValueInfo.poolValue.toUint256();
         uint256 marketTokensSupply = MarketUtils.getMarketTokenSupply(MarketToken(payable(market.marketToken)));
+        uint256 withdrawalUsd = MarketUtils.marketTokenAmountToUsd(marketTokenAmount, poolValue, marketTokensSupply);
 
         MarketEventUtils.emitMarketPoolValueInfo(
             params.eventEmitter,
@@ -436,19 +457,33 @@ library ExecuteWithdrawalUtils {
             marketTokensSupply
         );
 
-        uint256 longTokenPoolAmount = MarketUtils.getPoolAmount(params.dataStore, market, market.longToken);
-        uint256 shortTokenPoolAmount = MarketUtils.getPoolAmount(params.dataStore, market, market.shortToken);
+        return MarketUtils.getProportionalAmounts(
+            params.dataStore,
+            market,
+            prices,
+            withdrawalUsd
+        );
+    }
 
-        uint256 longTokenPoolUsd = longTokenPoolAmount * prices.longTokenPrice.max;
-        uint256 shortTokenPoolUsd = shortTokenPoolAmount * prices.shortTokenPrice.max;
+    // note that if the maxLendableImpactFactorForWithdrawals is set too large
+    // it can cause withdrawals to not be executed
+    function validateMaxLendableFactor(
+        DataStore dataStore,
+        Market.Props memory market,
+        MarketUtils.MarketPrices memory prices
+    ) internal view {
+        uint256 longTokenUsd = MarketUtils.getPoolAmount(dataStore, market, market.longToken)  * prices.longTokenPrice.min;
+        uint256 shortTokenUsd = MarketUtils.getPoolAmount(dataStore, market, market.shortToken)  * prices.shortTokenPrice.min;
+        uint256 poolUsd = longTokenUsd + shortTokenUsd;
 
-        uint256 totalPoolUsd = longTokenPoolUsd + shortTokenPoolUsd;
+        uint256 maxLendableFactor = dataStore.getUint(Keys.maxLendableImpactFactorForWithdrawalsKey(market.marketToken));
+        uint256 maxLendableUsd = Precision.applyFactor(poolUsd, maxLendableFactor);
 
-        uint256 marketTokensUsd = MarketUtils.marketTokenAmountToUsd(marketTokenAmount, poolValue, marketTokensSupply);
+        uint256 lentAmount = dataStore.getUint(Keys.lentPositionImpactPoolAmountKey(market.marketToken));
+        uint256 lentUsd = lentAmount * prices.indexTokenPrice.max;
 
-        uint256 longTokenOutputUsd = Precision.mulDiv(marketTokensUsd, longTokenPoolUsd, totalPoolUsd);
-        uint256 shortTokenOutputUsd = Precision.mulDiv(marketTokensUsd, shortTokenPoolUsd, totalPoolUsd);
-
-        return (longTokenOutputUsd / prices.longTokenPrice.max, shortTokenOutputUsd / prices.shortTokenPrice.max);
+        if (lentUsd > maxLendableUsd) {
+            revert Errors.MaxLendableFactorForWithdrawalsExceeded(poolUsd, maxLendableUsd, lentUsd);
+        }
     }
 }

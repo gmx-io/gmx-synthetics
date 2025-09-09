@@ -15,6 +15,11 @@ export const EXCLUDED_CONFIG_KEYS = {
   CLAIMABLE_UI_FEE_AMOUNT: true,
   CLAIMED_COLLATERAL_AMOUNT: true,
   CLAIMABLE_COLLATERAL_FACTOR: true,
+  CLAIMABLE_COLLATERAL_REDUCTION_FACTOR: true,
+  CLAIMABLE_FUNDS_AMOUNT: true,
+  TOTAL_CLAIMABLE_FUNDS_AMOUNT: true,
+  CLAIM_TERMS_BACKREF: true,
+  CLAIM_TERMS: true,
   COLLATERAL_SUM: true,
   CONTRIBUTOR_ACCOUNT_LIST: true,
   CONTRIBUTOR_LAST_PAYMENT_AT: true,
@@ -24,6 +29,8 @@ export const EXCLUDED_CONFIG_KEYS = {
   CUMULATIVE_BORROWING_FACTOR: true,
   CUMULATIVE_BORROWING_FACTOR_UPDATED_AT: true,
   DATA_STREAM_ID: true,
+  EDGE_DATA_STREAM_ID: true,
+  EDGE_DATA_STREAM_TOKEN_DECIMALS: true,
   DATA_STREAM_MULTIPLIER: true,
   DEPOSIT_FEE_TYPE: true,
   DEPOSIT_LIST: true,
@@ -34,6 +41,7 @@ export const EXCLUDED_CONFIG_KEYS = {
   FUNDING_FEE_AMOUNT_PER_SIZE: true,
   CLAIMABLE_FUNDING_AMOUNT_PER_SIZE: true,
   FUNDING_UPDATED_AT: true,
+  GMX_DATA_ACTION: true,
   GLV_DEPOSIT_LIST: true,
   ACCOUNT_GLV_DEPOSIT_LIST: true,
   GLV_WITHDRAWAL_LIST: true,
@@ -43,9 +51,12 @@ export const EXCLUDED_CONFIG_KEYS = {
   IS_ORACLE_PROVIDER_ENABLED: true,
   IS_ATOMIC_ORACLE_PROVIDER: true,
   LATEST_ADL_AT: true,
+  LENT_POSITION_IMPACT_POOL_AMOUNT: true,
   MARKET_LIST: true,
   MAX_ALLOWED_SUBACCOUNT_ACTION_COUNT: true,
   SUBACCOUNT_EXPIRES_AT: true,
+  SUBACCOUNT_INTEGRATION_ID: true,
+  SUBACCOUNT_INTEGRATION_DISABLED: true,
   MAX_PNL_FACTOR_FOR_TRADERS: true,
   MAX_PNL_FACTOR_FOR_ADL: true,
   MAX_PNL_FACTOR_FOR_DEPOSITS: true,
@@ -54,17 +65,20 @@ export const EXCLUDED_CONFIG_KEYS = {
   MIN_CONTRIBUTOR_PAYMENT_INTERVAL: true,
   MIN_ORACLE_SIGNERS: true,
   MIN_POSITION_IMPACT_POOL_AMOUNT: true,
+  MULTICHAIN_BALANCE: true,
   NONCE: true,
   OPEN_INTEREST: true,
   OPEN_INTEREST_IN_TOKENS: true,
   ORACLE_TIMESTAMP_ADJUSTMENT: true,
   ORACLE_PROVIDER_FOR_TOKEN: true,
+  ORACLE_PROVIDER_UPDATED_AT: true,
   ORDER_LIST: true,
   POOL_AMOUNT: true,
   POSITION_FEE_TYPE: true,
   POSITION_IMPACT_POOL_AMOUNT: true,
   POSITION_IMPACT_POOL_DISTRIBUTED_AT: true,
   POSITION_IMPACT_POOL_DISTRIBUTION_RATE: true,
+  POSITION_LAST_SRC_CHAIN_ID: true,
   POSITION_LIST: true,
   PRICE_FEED: true,
   PRICE_FEED_MULTIPLIER: true,
@@ -82,6 +96,7 @@ export const EXCLUDED_CONFIG_KEYS = {
   SWAP_IMPACT_POOL_AMOUNT: true,
   SWAP_PATH_MARKET_FLAG: true,
   TOTAL_BORROWING: true,
+  TOTAL_PENDING_IMPACT_AMOUNT: true,
   UI_DEPOSIT_FEE_TYPE: true,
   UI_FEE_FACTOR: true,
   UI_POSITION_FEE_TYPE: true,
@@ -99,6 +114,7 @@ export const EXCLUDED_CONFIG_KEYS = {
   SYNC_CONFIG_LATEST_UPDATE_ID: true,
   BUYBACK_AVAILABLE_FEE_AMOUNT: true,
   WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT: true,
+  HOLDING_ADDRESS: true,
 };
 
 export async function appendUintConfigIfDifferent(
@@ -183,6 +199,7 @@ async function appendConfigIfDifferent(
   const config = await hre.ethers.getContract("Config");
 
   const key = getFullKey(baseKey, keyData);
+  keyData = keyData || "0x";
 
   const setMethod = `set${type[0].toUpperCase()}${type.slice(1)}`;
 
@@ -198,13 +215,13 @@ async function appendConfigIfDifferent(
     }
 
     console.info(
-      "appending config %s %s (%s) to %s, prev: %s %s",
+      "appending config %s %s to %s, prev: %s %s, key: %s",
       type,
       label,
-      key,
       value.toString(),
       currentValue.toString(),
-      changeStr
+      changeStr,
+      key
     );
     list.push(config.interface.encodeFunctionData(setMethod, [baseKey, keyData, value]));
   } else {
@@ -212,8 +229,8 @@ async function appendConfigIfDifferent(
   }
 }
 
-export function getFullKey(baseKey: string, keyData: string) {
-  if (keyData === "0x") {
+export function getFullKey(baseKey: string, keyData?: string) {
+  if (!keyData || keyData === "0x") {
     return baseKey;
   }
 

@@ -23,6 +23,12 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       withdrawalGasLimit: 0,
       shiftGasLimit: 2_500_000,
 
+      createDepositGasLimit: 5_000_000,
+      createGlvDepositGasLimit: 5_000_000,
+
+      createWithdrawalGasLimit: 5_000_000,
+      createGlvWithdrawalGasLimit: 5_000_000,
+
       singleSwapGasLimit: 0,
       increaseOrderGasLimit: 0,
       decreaseOrderGasLimit: 0,
@@ -52,6 +58,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
 
       minPositionSizeUsd: decimalToFloat(1),
       claimableCollateralTimeDivisor: 60 * 60,
+      claimableCollateralDelay: 5 * 24 * 60 * 60,
 
       positionFeeReceiverFactor: 0,
       swapFeeReceiverFactor: 0,
@@ -60,9 +67,16 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
 
       skipBorrowingFeeForSmallerSide: false,
 
-      ignoreOpenInterestForUsageFactor: false,
-
       maxExecutionFeeMultiplierFactor: decimalToFloat(100),
+      oracleProviderMinChangeDelay: 3600,
+      configMaxPriceAge: 180,
+
+      gelatoRelayFeeMultiplierFactor: 0,
+      gelatoRelayFeeBaseAmount: 0,
+      relayFeeAddress: ethers.constants.AddressZero,
+      maxRelayFeeUsdForSubaccount: 0,
+
+      maxDataLength: 18,
     };
   }
 
@@ -71,7 +85,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     holdingAddress: "0x3f59203ea1c66527422998b54287e1efcacbe2c5",
     sequencerUptimeFeed: ethers.constants.AddressZero,
     sequencerGraceDuration: 300,
-    maxUiFeeFactor: percentageToFloat("0.05%"),
+    maxUiFeeFactor: percentageToFloat("0.1%"),
     maxAutoCancelOrders: 6,
     maxTotalCallbackGasLimitForAutoCancelOrders: 5_000_000,
     minHandleExecutionErrorGas: 1_200_000,
@@ -83,9 +97,15 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     withdrawalGasLimit: 1_500_000,
     shiftGasLimit: 2_500_000,
 
+    createDepositGasLimit: 5_000_000,
+    createGlvDepositGasLimit: 5_000_000,
+
+    createWithdrawalGasLimit: 5_000_000,
+    createGlvWithdrawalGasLimit: 5_000_000,
+
     singleSwapGasLimit: 1_000_000, // measured gas required for a swap in a market increase order: ~600,000
-    increaseOrderGasLimit: 4_000_000,
-    decreaseOrderGasLimit: 4_000_000,
+    increaseOrderGasLimit: 3_500_000,
+    decreaseOrderGasLimit: 3_500_000,
     swapOrderGasLimit: 3_000_000,
 
     glvPerMarketGasLimit: 100_000,
@@ -112,6 +132,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
 
     minPositionSizeUsd: decimalToFloat(1),
     claimableCollateralTimeDivisor: 60 * 60,
+    claimableCollateralDelay: 5 * 24 * 60 * 60,
 
     positionFeeReceiverFactor: decimalToFloat(37, 2), // 37%
     swapFeeReceiverFactor: decimalToFloat(37, 2), // 37%
@@ -120,9 +141,21 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
 
     skipBorrowingFeeForSmallerSide: true,
 
-    ignoreOpenInterestForUsageFactor: false,
-
     maxExecutionFeeMultiplierFactor: decimalToFloat(100),
+    oracleProviderMinChangeDelay: 3600,
+    configMaxPriceAge: 180,
+
+    gelatoRelayFeeMultiplierFactor: percentageToFloat("107%"), // Relay premium 6% + 1% for swapping collected fees and bridging to Polygon
+    gelatoRelayFeeBaseAmount: 50000, // 21000 is base gas, ~10k GelatoRelay gas, some logic after the relay fee is calculated
+    relayFeeAddress: "0xDA1b841A21FEF1ad1fcd5E19C1a9D682FB675258",
+    maxRelayFeeUsdForSubaccount: decimalToFloat(100),
+
+    maxDataLength: 18,
+
+    multichainProviders: {},
+    multichainEndpoints: {},
+    srcChainIds: {},
+    eids: {},
   };
 
   const networkConfig = {
@@ -130,8 +163,45 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     arbitrumSepolia: {
       maxAutoCancelOrders: 11,
       maxTotalCallbackGasLimitForAutoCancelOrders: 10_000_000,
+      claimableCollateralDelay: 24 * 60 * 60,
+      multichainProviders: {
+        "0x6fddB6270F6c71f31B62AE0260cfa8E2e2d186E0": true, // StargatePoolNative
+        "0x543BdA7c6cA4384FE90B1F5929bb851F52888983": true, // StargatePoolUSDC
+        "0xe4EBcAC4a2e6CBEE385eE407f7D5E278Bc07e11e": true, // MarketToken_Adapter
+        "0xD5BdEa6dC8E4B7429b72675386fC903DEf06599d": true, // GlvToken_Adapter
+      },
+      multichainEndpoints: {
+        "0x6EDCE65403992e310A62460808c4b910D972f10f": true, // LZ Endpoint
+      },
+      srcChainIds: {
+        11155111: true, // Sepolia
+        421614: true, // Arbitrum Sepolia
+        11155420: true, // Optimism Sepolia
+      },
+      eids: {
+        11155111: 40161, // Sepolia
+        421614: 40231, // Arbitrum Sepolia
+        11155420: 40232, // Optimism Sepolia
+      },
     },
-    avalancheFuji: {},
+    avalancheFuji: {
+      maxAutoCancelOrders: 11,
+      maxTotalCallbackGasLimitForAutoCancelOrders: 10_000_000,
+      multichainProviders: {
+        // Stargate pools are not deployed on Fuji
+      },
+      multichainEndpoints: {
+        "0x6EDCE65403992e310A62460808c4b910D972f10f": true, // LZ Endpoint
+      },
+      srcChainIds: {
+        43113: true, // Avalanche Fuji
+        421614: true, // Arbitrum Sepolia
+      },
+      eids: {
+        43113: 40106, // Avalanche Fuji
+        421614: 40231, // Arbitrum Sepolia
+      },
+    },
     arbitrum: {
       maxAutoCancelOrders: 11,
       maxTotalCallbackGasLimitForAutoCancelOrders: 10_000_000,
@@ -140,17 +210,48 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       executionGasPerOraclePrice: false,
       estimatedGasFeeBaseAmount: false,
       executionGasFeeBaseAmount: false,
+      estimatedGasFeeMultiplierFactor: false,
+      executionGasFeeMultiplierFactor: false,
       sequencerUptimeFeed: "0xFdB631F5EE196F0ed6FAa767959853A9F217697D",
 
       increaseOrderGasLimit: 3_000_000,
       decreaseOrderGasLimit: 3_000_000,
       swapOrderGasLimit: 2_500_000,
-      ignoreOpenInterestForUsageFactor: true,
+
+      multichainProviders: {
+        "0xA45B5130f36CDcA45667738e2a258AB09f4A5f7F": true, // StargatePoolNative
+        "0xe8CDF27AcD73a434D661C84887215F7598e7d0d3": true, // StargatePoolUSDC
+      },
+      multichainEndpoints: {
+        "0x1a44076050125825900e736c501f859c50fE728c": true, // LZ Endpoint
+      },
+      srcChainIds: {
+        8453: true, // Base
+        42161: true, // Arbitrum
+      },
+      eids: {
+        8453: 30184, // Base
+        42161: 30110, // Arbitrum
+      },
     },
     avalanche: {
-      increaseOrderGasLimit: 3_500_000,
-      decreaseOrderGasLimit: 3_500_000,
-      ignoreOpenInterestForUsageFactor: true,
+      multichainProviders: {
+        "0x5634c4a5FEd09819E3c46D86A965Dd9447d86e47": true, // StargatePoolUSDC
+      },
+      multichainEndpoints: {
+        "0x1a44076050125825900e736c501f859c50fE728c": true, // LZ Endpoint
+      },
+      srcChainIds: {
+        8453: true, // Base
+        43114: true, // Avalanche
+      },
+      eids: {
+        8453: 30184, // Base
+        43114: 30106, // Avalanche
+      },
+    },
+    botanix: {
+      positionFeeReceiverFactor: decimalToFloat(50, 2), // 50%
     },
   }[network.name];
 

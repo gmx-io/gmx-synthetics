@@ -7,7 +7,27 @@ import { getDefaultWallets, RainbowKitProvider } from "@rainbow-me/rainbowkit";
 import { configureChains, createConfig, WagmiConfig } from "wagmi";
 import { publicProvider } from "wagmi/providers/public";
 import { arbitrum, avalanche } from "wagmi/chains";
-const { chains, publicClient } = configureChains([arbitrum, avalanche], [publicProvider()]);
+
+const botanix = {
+  id: 3637,
+  name: "Botanix",
+  network: "botanix",
+  nativeCurrency: {
+    name: "Bitcoin",
+    symbol: "BTC",
+    decimals: 18,
+  },
+  rpcUrls: {
+    default: { http: ["https://rpc.botanixlabs.com"] },
+    public: { http: ["https://rpc.botanixlabs.com"] },
+  },
+  blockExplorers: {
+    default: { name: "Botanix Explorer", url: "https://botanixscan.io/" },
+  },
+  testnet: false,
+};
+
+const { chains, publicClient } = configureChains([arbitrum, avalanche, botanix], [publicProvider()]);
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";

@@ -9,16 +9,18 @@ import { TOKEN_ORACLE_TYPES } from "../../utils/oracle";
 import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
 import Keys from "../../artifacts/contracts/data/Keys.sol/Keys.json";
+import { ethers } from "hardhat";
+import { mine } from "@nomicfoundation/hardhat-network-helpers";
 
 describe("Config", () => {
   let fixture;
   let user0, user1, user2;
-  let config, dataStore, roleStore, ethUsdMarket, wnt;
+  let config, oracle, configUtils, dataStore, roleStore, ethUsdMarket, wnt;
   const { AddressZero } = ethers.constants;
 
   beforeEach(async () => {
     fixture = await deployFixture();
-    ({ config, dataStore, roleStore, ethUsdMarket, wnt } = fixture.contracts);
+    ({ config, oracle, configUtils, dataStore, roleStore, ethUsdMarket, wnt } = fixture.contracts);
     ({ user0, user1, user2 } = fixture.accounts);
 
     await grantRole(roleStore, user0.address, "CONFIG_KEEPER");
@@ -70,10 +72,6 @@ describe("Config", () => {
   });
 
   it("allows LIMITED_CONFIG_KEEPER to set allowedLimitedBaseKeys", async () => {
-    expect(await dataStore.getAddress(keys.HOLDING_ADDRESS)).eq(AddressZero);
-    await config.connect(user0).setAddress(keys.HOLDING_ADDRESS, "0x", user1.address);
-    expect(await dataStore.getAddress(keys.HOLDING_ADDRESS)).eq(user1.address);
-
     await expect(config.connect(user2).setAddress(keys.HOLDING_ADDRESS, "0x", user2.address))
       .to.be.revertedWithCustomError(errorsContract, "InvalidBaseKey")
       .withArgs(keys.HOLDING_ADDRESS);
@@ -192,11 +190,6 @@ describe("Config", () => {
 
     const list = [
       {
-        key: keys.HOLDING_ADDRESS,
-        initial: AddressZero,
-        type: "Address",
-      },
-      {
         key: keys.MIN_HANDLE_EXECUTION_ERROR_GAS,
         initial: 1_200_000,
         type: "Uint",
@@ -223,7 +216,12 @@ describe("Config", () => {
       },
       {
         key: keys.MAX_ORACLE_PRICE_AGE,
-        initial: 3600,
+        initial: 300,
+        type: "Uint",
+      },
+      {
+        key: keys.MAX_ATOMIC_ORACLE_PRICE_AGE,
+        initial: 30,
         type: "Uint",
       },
       {
@@ -345,6 +343,31 @@ describe("Config", () => {
     expect(await dataStore.getUint(keys.positionImpactPoolDistributionRateKey(ethUsdMarket.marketToken))).eq(2);
   });
 
+  it("setPositionImpactDistributionRate reverts if position impact pool is fully distributed in less than 1 week (604800 seconds)", async () => {
+    const positionImpactPoolAmount = expandDecimals(200, 18); // 200 ETH
+    await dataStore.setUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken), positionImpactPoolAmount);
+
+    const minPositionImpactPoolAmount = 1;
+    const invalidDistributionRate = expandDecimals(4, 44); // positionImpactPoolDistributionRate, 0.0004 ETH per second, 200 ETH for   500,0000 seconds
+    const validDistributionRate = expandDecimals(2, 44); // positionImpactPoolDistributionRate, 0.0002 ETH per second, 200 ETH for 1,000,0000 seconds
+
+    await expect(
+      config.setPositionImpactDistributionRate(
+        ethUsdMarket.marketToken,
+        minPositionImpactPoolAmount,
+        invalidDistributionRate
+      )
+    ).to.be.revertedWithCustomError(configUtils, "InvalidPositionImpactPoolDistributionRate");
+
+    await expect(
+      config.setPositionImpactDistributionRate(
+        ethUsdMarket.marketToken,
+        minPositionImpactPoolAmount,
+        validDistributionRate
+      )
+    ).to.not.be.reverted;
+  });
+
   it("setClaimableCollateralFactorForTime", async () => {
     await expect(
       config.connect(user1).setClaimableCollateralFactorForTime(
@@ -437,27 +460,59 @@ describe("Config", () => {
     await config.setUint(keys.DATA_STREAM_SPREAD_REDUCTION_FACTOR, encodeData(["address"], [wnt.address]), p100);
   });
 
-  it("setDataStream", async () => {
-    const p100 = percentageToFloat("100%");
-    const feedId = hashString("WNT");
+  it("initOracleConfig", async () => {
+    const token = { address: "0x7f9FBf9bDd3F4105C478b996B648FE6e828a1e98" };
+    expect(await dataStore.getAddress(keys.priceFeedKey(token.address))).eq(ethers.constants.AddressZero);
+    expect(await dataStore.getUint(keys.priceFeedMultiplierKey(token.address))).eq(0);
+    expect(await dataStore.getUint(keys.priceFeedHeartbeatDurationKey(token.address))).eq(0);
+    expect(await dataStore.getUint(keys.stablePriceKey(token.address))).eq(0);
 
-    await expect(
-      config.setDataStream(wnt.address, feedId, expandDecimals(1, 34), p100.add(1))
-    ).to.be.revertedWithCustomError(errorsContract, "ConfigValueExceedsAllowedRange");
+    expect(await dataStore.getBytes32(keys.dataStreamIdKey(token.address))).eq(ethers.constants.HashZero);
+    expect(await dataStore.getUint(keys.dataStreamMultiplierKey(token.address))).eq(0);
+    expect(await dataStore.getUint(keys.dataStreamSpreadReductionFactorKey(token.address))).eq(0);
+    expect(await dataStore.getUint(keys.edgeDataStreamIdKey(token.address))).eq(0);
 
-    expect(await dataStore.getBytes32(keys.dataStreamIdKey(wnt.address))).eq(ethers.constants.HashZero);
-    expect(await dataStore.getUint(keys.dataStreamMultiplierKey(wnt.address))).eq(0);
-    expect(await dataStore.getUint(keys.dataStreamSpreadReductionFactorKey(wnt.address))).eq(0);
+    const oracleConfig = {
+      token: token.address,
+      priceFeed: {
+        feedAddress: "0x221912ce795669f628c51c69b7d0873eDA9C03bB",
+        multiplier: expandDecimals(1, 60 - 18 - 8),
+        heartbeatDuration: (24 + 1) * 60 * 60,
+        stablePrice: decimalToFloat(100),
+      },
+      dataStream: {
+        feedId: hashString("WNT"),
+        multiplier: expandDecimals(1, 60 - 6 - 18),
+        spreadReductionFactor: percentageToFloat("100%"),
+      },
+      edge: {
+        feedId: hashString("WNT-EDGE"),
+        tokenDecimals: 15,
+      },
+    };
 
-    await config.setDataStream(wnt.address, feedId, expandDecimals(1, 34), p100);
+    await config.initOracleConfig(oracleConfig);
 
-    expect(await dataStore.getBytes32(keys.dataStreamIdKey(wnt.address))).eq(feedId);
-    expect(await dataStore.getUint(keys.dataStreamMultiplierKey(wnt.address))).eq(expandDecimals(1, 34));
-    expect(await dataStore.getUint(keys.dataStreamSpreadReductionFactorKey(wnt.address))).eq(p100);
+    expect(await dataStore.getAddress(keys.priceFeedKey(token.address))).eq(oracleConfig.priceFeed.feedAddress);
+    expect(await dataStore.getUint(keys.priceFeedMultiplierKey(token.address))).eq(oracleConfig.priceFeed.multiplier);
+    expect(await dataStore.getUint(keys.priceFeedHeartbeatDurationKey(token.address))).eq(
+      oracleConfig.priceFeed.heartbeatDuration
+    );
+    expect(await dataStore.getUint(keys.stablePriceKey(token.address))).eq(decimalToFloat(100));
 
-    await expect(config.setDataStream(wnt.address, feedId, expandDecimals(1, 34), p100)).to.be.revertedWithCustomError(
+    expect(await dataStore.getBytes32(keys.dataStreamIdKey(token.address))).eq(oracleConfig.dataStream.feedId);
+    expect(await dataStore.getUint(keys.dataStreamMultiplierKey(token.address))).eq(oracleConfig.dataStream.multiplier);
+    expect(await dataStore.getUint(keys.dataStreamSpreadReductionFactorKey(token.address))).eq(
+      oracleConfig.dataStream.spreadReductionFactor
+    );
+    expect(await dataStore.getBytes32(keys.edgeDataStreamIdKey(token.address))).eq(oracleConfig.edge.feedId);
+    expect(await dataStore.getUint(keys.edgeDataStreamTokenDecimalsKey(token.address))).eq(
+      oracleConfig.edge.tokenDecimals
+    );
+
+    await expect(config.initOracleConfig(oracleConfig)).to.be.revertedWithCustomError(
       errorsContract,
-      "DataStreamIdAlreadyExistsForToken"
+      "PriceFeedAlreadyExistsForToken"
     );
   });
 
@@ -505,5 +560,106 @@ describe("Config", () => {
         keys.claimableCollateralFactorForAccountKey(ethUsdMarket.marketToken, wnt.address, 100, user1.address)
       )
     ).eq(expandDecimals(1, 30));
+  });
+
+  it("validates reserve factors", async () => {
+    const ten = expandDecimals(10, 30);
+
+    await expect(
+      config.setUint(
+        keys.RESERVE_FACTOR,
+        encodeData(["address", "bool"], [ethUsdMarket.marketToken, false]),
+        ten.add("1")
+      )
+    ).to.be.revertedWithCustomError(errorsContract, "ConfigValueExceedsAllowedRange");
+
+    await config.setUint(keys.RESERVE_FACTOR, encodeData(["address", "bool"], [ethUsdMarket.marketToken, false]), ten);
+
+    const reserveFactorKey = keys.reserveFactorKey(ethUsdMarket.marketToken, false);
+    expect(await dataStore.getUint(reserveFactorKey)).eq(ten);
+
+    await expect(
+      config.setUint(
+        keys.OPEN_INTEREST_RESERVE_FACTOR,
+        encodeData(["address", "bool"], [ethUsdMarket.marketToken, false]),
+        ten.add("1")
+      )
+    ).to.be.revertedWithCustomError(errorsContract, "ConfigValueExceedsAllowedRange");
+
+    await config.setUint(
+      keys.OPEN_INTEREST_RESERVE_FACTOR,
+      encodeData(["address", "bool"], [ethUsdMarket.marketToken, false]),
+      ten
+    );
+    const oiReserveFactorKey = keys.openInterestReserveFactorKey(ethUsdMarket.marketToken, false);
+    expect(await dataStore.getUint(oiReserveFactorKey)).eq(ten);
+  });
+
+  describe("setOracleProviderForToken", async () => {
+    let oracleProvider1, oracleProvider2;
+
+    beforeEach(async () => {
+      const mockOracleProviderFactory = await ethers.getContractFactory("MockOracleProvider");
+      oracleProvider1 = await mockOracleProviderFactory.deploy();
+      oracleProvider2 = await mockOracleProviderFactory.deploy();
+
+      await dataStore.setBool(keys.isOracleProviderEnabledKey(oracleProvider1.address), true);
+      await dataStore.setBool(keys.isOracleProviderEnabledKey(oracleProvider2.address), true);
+    });
+
+    it("only allows config keeper to set oracle provider", async () => {
+      await expect(
+        config.connect(user1).setOracleProviderForToken(oracle.address, wnt.address, oracleProvider1.address)
+      ).to.be.revertedWithCustomError(errorsContract, "Unauthorized");
+    });
+
+    it("validates token address is not zero", async () => {
+      await expect(
+        config
+          .connect(user0)
+          .setOracleProviderForToken(oracle.address, ethers.constants.AddressZero, oracleProvider1.address)
+      ).to.be.revertedWithCustomError(errorsContract, "EmptyToken");
+    });
+
+    it("validates oracle provider is enabled", async () => {
+      const disabledProvider = await (await ethers.getContractFactory("MockOracleProvider")).deploy();
+      await expect(
+        config.connect(user0).setOracleProviderForToken(oracle.address, wnt.address, disabledProvider.address)
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidOracleProvider");
+    });
+
+    it("allows changing to different provider without delay", async () => {
+      await config.connect(user0).setOracleProviderForToken(oracle.address, wnt.address, oracleProvider1.address);
+      await config.connect(user0).setOracleProviderForToken(oracle.address, wnt.address, oracleProvider2.address);
+    });
+
+    it("enforces delay between updates for same provider", async () => {
+      await config.connect(user0).setOracleProviderForToken(oracle.address, wnt.address, oracleProvider1.address);
+      await config.connect(user0).setOracleProviderForToken(oracle.address, wnt.address, oracleProvider2.address);
+      // Try to set the same provider again immediately
+      await expect(
+        config.connect(user0).setOracleProviderForToken(oracle.address, wnt.address, oracleProvider1.address)
+      ).to.be.revertedWithCustomError(errorsContract, "OracleProviderMinChangeDelayNotYetPassed");
+
+      const delay = await dataStore.getUint(keys.ORACLE_PROVIDER_MIN_CHANGE_DELAY);
+      await mine(delay.toNumber());
+
+      // Should succeed after delay
+      await config.connect(user0).setOracleProviderForToken(oracle.address, wnt.address, oracleProvider1.address);
+    });
+
+    it("updates provider and timestamp correctly", async () => {
+      const tx = await config
+        .connect(user0)
+        .setOracleProviderForToken(oracle.address, wnt.address, oracleProvider1.address);
+      const timestamp = (await ethers.provider.getBlock(tx.blockNumber)).timestamp;
+
+      expect(await dataStore.getAddress(keys.oracleProviderForTokenKey(oracle.address, wnt.address))).to.equal(
+        oracleProvider1.address
+      );
+      expect(await dataStore.getUint(keys.oracleProviderUpdatedAtKey(wnt.address, oracleProvider1.address))).to.equal(
+        timestamp
+      );
+    });
   });
 });

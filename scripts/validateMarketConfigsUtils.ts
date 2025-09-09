@@ -203,6 +203,12 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
     },
+    "WIF:WBTC.e:USDC": {
+      negativePositionImpactFactor: exponentToFloat("3.13e-09"),
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
     POL: {
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       expectedSwapImpactRatio: 20_000,
@@ -420,6 +426,122 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
     },
+    DOLO: {
+      negativePositionImpactFactor: exponentToFloat("1e-7"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    ZRO: {
+      negativePositionImpactFactor: exponentToFloat("5e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 11_900,
+    },
+    CRV: {
+      negativePositionImpactFactor: exponentToFloat("1.4e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 11_600,
+    },
+    MOODENG: {
+      negativePositionImpactFactor: exponentToFloat("1.2e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    XMR: {
+      negativePositionImpactFactor: exponentToFloat("1.8e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    PI: {
+      negativePositionImpactFactor: exponentToFloat("2.54e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    PUMP: {
+      negativePositionImpactFactor: exponentToFloat("6e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    "ARB:ARB:ARB": {
+      negativePositionImpactFactor: exponentToFloat("8.4e-9"),
+      negativeSwapImpactFactor: 0,
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    MNT: {
+      negativePositionImpactFactor: exponentToFloat("4.12e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    SPX6900: {
+      negativePositionImpactFactor: exponentToFloat("1.44e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    CVX: {
+      negativePositionImpactFactor: exponentToFloat("8.45e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    KAS: {
+      negativePositionImpactFactor: exponentToFloat("2.08e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    OKB: {
+      negativePositionImpactFactor: exponentToFloat("5.82e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    AERO: {
+      negativePositionImpactFactor: exponentToFloat("2.43e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    BRETT: {
+      negativePositionImpactFactor: exponentToFloat("2.69e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    ALGO: {
+      negativePositionImpactFactor: exponentToFloat("1.47e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    HBAR: {
+      negativePositionImpactFactor: exponentToFloat("7.4e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    CRO: {
+      negativePositionImpactFactor: exponentToFloat("2.42e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    WLFI: {
+      negativePositionImpactFactor: exponentToFloat("6e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    WELL: {
+      negativePositionImpactFactor: exponentToFloat("1.75e-7"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    VVV: {
+      negativePositionImpactFactor: exponentToFloat("1.02e-7"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    MORPHO: {
+      negativePositionImpactFactor: exponentToFloat("4.89e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    "LINK:WETH:USDC": {
+      negativePositionImpactFactor: exponentToFloat("4.1e-11"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
     wstETH: {
       negativeSwapImpactFactor: exponentToFloat("1e-8"),
       expectedSwapImpactRatio: 20_000,
@@ -483,6 +605,55 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
     },
+    PUMP: {
+      negativePositionImpactFactor: exponentToFloat("6e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    WLFI: {
+      negativePositionImpactFactor: exponentToFloat("6e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+  },
+  arbitrumSepolia: {
+    BTC: {
+      negativePositionImpactFactor: exponentToFloat("5e-11"),
+      negativeSwapImpactFactor: exponentToFloat("5e-11"),
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+    WETH: {
+      negativePositionImpactFactor: exponentToFloat("5e-11"),
+      negativeSwapImpactFactor: exponentToFloat("5e-11"),
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 11_111,
+    },
+    CRV: {
+      negativePositionImpactFactor: exponentToFloat("1.4e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 11_600,
+    },
+  },
+  botanix: {
+    "BTC:pBTC:pBTC": {
+      negativePositionImpactFactor: exponentToFloat("3e-10"),
+      expectedPositionImpactRatio: 12_000,
+    },
+    "BTC:stBTC:stBTC": {
+      negativePositionImpactFactor: 0,
+      expectedPositionImpactRatio: 10_000,
+    },
+    "BTC:stBTC:USDC.e": {
+      negativePositionImpactFactor: 0,
+      negativeSwapImpactFactor: exponentToFloat("5e-9").div(2),
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 10_000,
+    },
+    stBTC: {
+      expectedSwapImpactRatio: 10_000,
+      negativeSwapImpactFactor: exponentToFloat("5e-9").div(2),
+    },
   },
 };
 
@@ -515,6 +686,7 @@ async function validatePerpConfig({
   shortTokenSymbol,
   indexTokenSymbol,
   dataStore,
+  warnings,
   errors,
 }) {
   if (!marketConfig.tokens.indexToken) {
@@ -522,6 +694,14 @@ async function validatePerpConfig({
   }
 
   const marketLabel = `${indexTokenSymbol} [${longTokenSymbol}-${shortTokenSymbol}]`;
+
+  if (!marketConfig.minCollateralFactor.eq(marketConfig.minCollateralFactorForLiquidation)) {
+    warnings.push({
+      message: `marketConfig.minCollateralFactor != marketConfig.minCollateralFactorForLiquidation for ${marketLabel}`,
+      expected: marketConfig.minCollateralFactor,
+      actual: marketConfig.minCollateralFactorForLiquidation,
+    });
+  }
 
   console.log("validatePerpConfig", indexTokenSymbol);
   const recommendedPerpConfig =
@@ -976,6 +1156,7 @@ export async function validateMarketConfigs() {
   markets.sort((a, b) => a.indexToken.localeCompare(b.indexToken));
 
   const errors = [];
+  const warnings = [];
 
   // validate market configs as some markets may not be created on-chain yet
   for (const marketConfig of marketConfigs) {
@@ -999,13 +1180,41 @@ export async function validateMarketConfigs() {
       throw new Error(`Missing configs for ${indexTokenSymbol}[${longTokenSymbol}-${shortTokenSymbol}]`);
     }
 
-    await validatePerpConfig({ marketConfig, indexTokenSymbol, longTokenSymbol, shortTokenSymbol, dataStore, errors });
-    await validateSwapConfig({ marketConfig, indexTokenSymbol, longTokenSymbol, shortTokenSymbol, dataStore, errors });
+    if (hre.network.name != "arbitrumSepolia") {
+      for (const key of ["maxLendableImpactFactor", "maxLendableImpactFactorForWithdrawals", "maxLendableImpactUsd"]) {
+        if (marketConfig[key] && marketConfig[key] != 0) {
+          throw new Error(
+            `${key} should not be set to more than zero, unless the old V2 contracts are disabled, only remove this check if it is confirmed that the old V2 contracts have been disabled`
+          );
+        }
+      }
+    }
+
+    await validatePerpConfig({
+      marketConfig,
+      indexTokenSymbol,
+      longTokenSymbol,
+      shortTokenSymbol,
+      dataStore,
+      errors,
+      warnings,
+    });
+    await validateSwapConfig({
+      marketConfig,
+      indexTokenSymbol,
+      longTokenSymbol,
+      shortTokenSymbol,
+      dataStore,
+      errors,
+      warnings,
+    });
   }
 
   const marketKeysToSkip = {
     "0x74885b4D524d497261259B38900f54e6dbAd2210:0x74885b4D524d497261259B38900f54e6dbAd2210:0xaf88d065e77c8cC2239327C5EDb3A432268e5831":
       true, // old APE market
+    "0x1B9e25f54225bcdCf347569E38C41Ade9BB686e5:0xF4586028FFdA7Eca636864F80f8a3f2589E33795:0x325eEb3AA50014f35861e3374f54B3997Aa8357d":
+      true, // old stBTC-USDC.e market
   };
 
   for (const market of markets) {
@@ -1013,6 +1222,7 @@ export async function validateMarketConfigs() {
     const longTokenSymbol = addressToSymbol[market.longToken];
     const shortTokenSymbol = addressToSymbol[market.shortToken];
     const marketKey = getMarketKey(market.indexToken, market.longToken, market.shortToken);
+    console.log("marketKey", marketKey);
 
     if (marketKeysToSkip[marketKey]) {
       continue;
@@ -1036,6 +1246,7 @@ export async function validateMarketConfigs() {
       indexTokenSymbol,
       dataStore,
       errors,
+      warnings,
     });
     await validateSwapConfig({
       market,
@@ -1045,7 +1256,14 @@ export async function validateMarketConfigs() {
       indexTokenSymbol,
       dataStore,
       errors,
+      warnings,
     });
+  }
+
+  for (const warning of warnings) {
+    console.log(
+      `Warn: ${warning.message}, expected: ${warning.expected.toString()}, actual: ${warning.actual.toString()}`
+    );
   }
 
   for (const error of errors) {

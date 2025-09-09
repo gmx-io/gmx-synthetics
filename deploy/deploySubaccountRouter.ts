@@ -7,7 +7,7 @@ const func = createDeployFunction({
   contractName: "SubaccountRouter",
   dependencyNames: constructorContracts,
   getDependencies: () => {
-    if (process.env.FOR_EXISTING_MAINNET_DEPLOYMENT) {
+    if (hre.gmx.isExistingMainnetDeployment) {
       return ["OrderStoreUtils", "SubaccountUtils"];
     }
 
@@ -18,8 +18,8 @@ const func = createDeployFunction({
   },
   libraryNames: ["OrderStoreUtils", "SubaccountUtils"],
   afterDeploy: async ({ deployedContract }) => {
-    await grantRoleIfNotGranted(deployedContract.address, "CONTROLLER");
-    await grantRoleIfNotGranted(deployedContract.address, "ROUTER_PLUGIN");
+    await grantRoleIfNotGranted(deployedContract, "CONTROLLER");
+    await grantRoleIfNotGranted(deployedContract, "ROUTER_PLUGIN");
   },
 });
 

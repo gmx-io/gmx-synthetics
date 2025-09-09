@@ -22,6 +22,8 @@ export const OrderType = {
   StopIncrease: 8,
 };
 
+export const orderTypeNames = Object.fromEntries(Object.entries(OrderType).map(([key, value]) => [value, key]));
+
 export const DecreasePositionSwapType = {
   NoSwap: 0,
   SwapPnlTokenToCollateralToken: 1,
@@ -95,6 +97,8 @@ export async function createOrder(fixture, overrides) {
   const autoCancel = overrides.autoCancel || false;
   const referralCode = overrides.referralCode || ethers.constants.HashZero;
   const validFromTime = overrides.validFromTime || 0;
+  const srcChainId = overrides.srcChainId || 0;
+  const dataList = overrides.dataList || [];
 
   if (
     [
@@ -136,10 +140,11 @@ export async function createOrder(fixture, overrides) {
     shouldUnwrapNativeToken,
     autoCancel,
     referralCode,
+    dataList,
   };
 
   const txReceipt = await logGasUsage({
-    tx: orderHandler.connect(sender).createOrder(account.address, params, false),
+    tx: orderHandler.connect(sender).createOrder(account.address, srcChainId, params, false),
     label: gasUsageLabel,
   });
 

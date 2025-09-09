@@ -5,7 +5,10 @@ pragma solidity ^0.8.0;
 // @title MarketPoolInfo
 library MarketPoolValueInfo {
     // @dev struct to avoid stack too deep errors for the getPoolValue call
-    // @param value the pool value
+    // @param poolValue the value of the pool in USD
+    // @param longPnl the pending pnl of long positions
+    // @param shortPnl the pending pnl of short positions
+    // @param netPnl the net pnl of long and short positions
     // @param longTokenAmount the amount of long token in the pool
     // @param shortTokenAmount the amount of short token in the pool
     // @param longTokenUsd the USD value of the long tokens in the pool
@@ -13,9 +16,7 @@ library MarketPoolValueInfo {
     // @param totalBorrowingFees the total pending borrowing fees for the market
     // @param borrowingFeePoolFactor the pool factor for borrowing fees
     // @param impactPoolAmount the amount of tokens in the impact pool
-    // @param longPnl the pending pnl of long positions
-    // @param shortPnl the pending pnl of short positions
-    // @param netPnl the net pnl of long and short positions
+    // @param lentImpactPoolAmount the amount lent if impact pool is less than the positive price impact
     struct Props {
         int256 poolValue;
         int256 longPnl;
@@ -31,5 +32,6 @@ library MarketPoolValueInfo {
         uint256 borrowingFeePoolFactor;
 
         uint256 impactPoolAmount;
+        uint256 lentImpactPoolAmount;
     }
 }

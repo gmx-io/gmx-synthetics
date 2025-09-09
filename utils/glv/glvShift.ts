@@ -9,7 +9,7 @@ import { expectCancellationReason } from "../validation";
 import { getCancellationReason } from "../error";
 
 export async function createGlvShift(fixture, overrides: any = {}) {
-  const { glvHandler, ethUsdMarket, solUsdMarket, ethUsdGlvAddress } = fixture.contracts;
+  const { glvShiftHandler, ethUsdMarket, solUsdMarket, ethUsdGlvAddress } = fixture.contracts;
   const { wallet } = fixture.accounts;
 
   const gasUsageLabel = overrides.gasUsageLabel;
@@ -35,7 +35,7 @@ export async function createGlvShift(fixture, overrides: any = {}) {
   }
 
   const txReceipt = await logGasUsage({
-    tx: glvHandler.connect(sender).createGlvShift(params),
+    tx: glvShiftHandler.connect(sender).createGlvShift(params),
     label: gasUsageLabel,
   });
 
@@ -44,7 +44,7 @@ export async function createGlvShift(fixture, overrides: any = {}) {
 }
 
 export async function executeGlvShift(fixture, overrides: any = {}) {
-  const { dataStore, glvHandler, wnt, usdc, sol, ethUsdGlvAddress } = fixture.contracts;
+  const { dataStore, glvShiftHandler, wnt, usdc, sol, ethUsdGlvAddress } = fixture.contracts;
   const gasUsageLabel = overrides.gasUsageLabel;
   const glv = overrides.glv || ethUsdGlvAddress;
   const tokens = overrides.tokens || [wnt.address, usdc.address, sol.address];
@@ -74,7 +74,7 @@ export async function executeGlvShift(fixture, overrides: any = {}) {
     precisions,
     minPrices,
     maxPrices,
-    execute: glvHandler.executeGlvShift,
+    execute: glvShiftHandler.executeGlvShift,
     dataStreamTokens,
     dataStreamData,
     priceFeedTokens,

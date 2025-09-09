@@ -18,16 +18,48 @@ export async function fetchTickerPrices() {
   return pricesByTokenAddress;
 }
 
-export function getTickersUrl() {
+export async function fetchSignedPrices() {
+  const signedPricesUrl = getSignedPricesUrl();
+  const tokenPricesResponse = await fetch(signedPricesUrl);
+  const tokenPrices = await tokenPricesResponse.json();
+  const pricesByTokenAddress = {};
+
+  for (const tokenPrice of tokenPrices.signedPrices) {
+    pricesByTokenAddress[tokenPrice.tokenAddress.toLowerCase()] = {
+      min: bigNumberify(tokenPrice.minPriceFull),
+      max: bigNumberify(tokenPrice.maxPriceFull),
+      oracleType: tokenPrice.oracleType,
+      blob: tokenPrice.blob,
+      tokenSymbol: tokenPrice.tokenSymbol,
+      address: tokenPrice.tokenAddress,
+    };
+  }
+
+  return pricesByTokenAddress;
+}
+
+export function getGmxInfraUrl(): string {
   if (hre.network.name === "arbitrum") {
-    return "https://arbitrum-api.gmxinfra.io/prices/tickers";
+    return "https://arbitrum-api.gmxinfra.io/";
   }
 
   if (hre.network.name === "avalanche") {
-    return "https://avalanche-api.gmxinfra.io/prices/tickers";
+    return "https://avalanche-api.gmxinfra.io/";
+  }
+
+  if (hre.network.name === "botanix") {
+    return "https://botanix-api.gmxinfra.io/";
   }
 
   throw new Error("Unsupported network");
+}
+
+export function getSignedPricesUrl(): string {
+  return getGmxInfraUrl() + "signed_prices/latest";
+}
+
+export function getTickersUrl() {
+  return getGmxInfraUrl() + "prices/tickers";
 }
 
 export const prices: Record<string, any> = {};

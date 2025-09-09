@@ -93,6 +93,21 @@ contract SubaccountRouter is BaseRouter {
         );
     }
 
+    function setIntegrationId(
+        address subaccount,
+        bytes32 integrationId
+    ) external payable nonReentrant {
+        address account = msg.sender;
+
+        SubaccountUtils.setSubaccountIntegrationId(
+            dataStore,
+            eventEmitter,
+            account,
+            subaccount,
+            integrationId
+        );
+    }
+
     function createOrder(
         address account,
         IBaseOrderUtils.CreateOrderParams calldata params
@@ -101,13 +116,7 @@ contract SubaccountRouter is BaseRouter {
 
         _handleSubaccountAction(account, Keys.SUBACCOUNT_ORDER_ACTION);
 
-        if (params.addresses.receiver != account) {
-            revert Errors.InvalidReceiverForSubaccountOrder(params.addresses.receiver, account);
-        }
-
-        if (params.addresses.cancellationReceiver != address(0) && params.addresses.cancellationReceiver != account) {
-            revert Errors.InvalidCancellationReceiverForSubaccountOrder(params.addresses.cancellationReceiver, account);
-        }
+        SubaccountUtils.validateCreateOrderParams(account, params);
 
         if (
             params.orderType == Order.OrderType.MarketSwap ||
@@ -126,6 +135,7 @@ contract SubaccountRouter is BaseRouter {
 
         bytes32 key = orderHandler.createOrder(
             account,
+            0, // srcChainId is the current block.chainId
             params,
             params.addresses.callbackContract != address(0)
         );
@@ -202,12 +212,16 @@ contract SubaccountRouter is BaseRouter {
         FeatureUtils.validateFeature(dataStore, Keys.subaccountFeatureDisabledKey(address(this)));
 
         address subaccount = msg.sender;
+
+        SubaccountUtils.validateIntegrationId(dataStore, account, subaccount);
+
         SubaccountUtils.handleSubaccountAction(
             dataStore,
             eventEmitter,
             account,
             subaccount,
-            actionType
+            actionType,
+            1
         );
     }
 

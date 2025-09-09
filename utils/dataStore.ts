@@ -1,5 +1,6 @@
 import hre from "hardhat";
 import { BigNumber } from "ethers";
+import { signalHoldingAddressIfDifferent } from "./timelock";
 
 export async function setUintIfDifferent(key: string, value: BigNumber | string | number, label?: string) {
   await setIfDifferent("uint", key, value, {
@@ -40,7 +41,7 @@ async function setIfDifferent(
     throw new Error(`Value for ${label || key} of type ${type} is undefined`);
   }
 
-  if (process.env.FOR_EXISTING_MAINNET_DEPLOYMENT) {
+  if (hre.gmx.isExistingMainnetDeployment) {
     return;
   }
 
