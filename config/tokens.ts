@@ -876,6 +876,34 @@ const config: {
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },
+    WLFI: {
+      synthetic: true,
+      decimals: 18, // https://etherscan.io/token/0xdA5e1988097297dCdc1f90D4dFE7909e847CBeF6#readProxyContract
+      dataStreamFeedId: "0x000348a0911d971aafb082790ac3b4af7271c5d8d9603b644240442d8656c2d6",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    WELL: {
+      synthetic: true,
+      decimals: 18, // https://basescan.org/token/0xff8adec2221f9f4d8dfbafa6b9a297d17603493d#readProxyContract
+      dataStreamFeedId: "0x00032074a30ba476c45cf517868fca15c694813dae41fb795e95c10ae0023316",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    VVV: {
+      synthetic: true,
+      decimals: 18, // https://basescan.org/token/0xacfe6019ed1a7dc6f7b508c02d1b04ec88cc21bf#readContract
+      dataStreamFeedId: "0x0003195dde0f669c58fa396bdd60488cbebcf4e0d869905fb79b3ed4b763c7a9",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    MORPHO: {
+      synthetic: true,
+      decimals: 18, // https://etherscan.io/token/0x58D97B57BB95320F9a05dC918Aef65434969c2B2#readProxyContract
+      dataStreamFeedId: "0x0003df1ca5682717315cc4f0db6f3c782eec3f6861f38ba90f5a2383b75404d8",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
     AAVE: {
       address: "0xba5ddd1f9d7f570dc94a51479a000e3bce967196",
       decimals: 18,
@@ -1142,6 +1170,13 @@ const config: {
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },
+    WLFI: {
+      synthetic: true,
+      decimals: 18, // https://etherscan.io/token/0xdA5e1988097297dCdc1f90D4dFE7909e847CBeF6#readProxyContract
+      dataStreamFeedId: "0x000348a0911d971aafb082790ac3b4af7271c5d8d9603b644240442d8656c2d6",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
     WAVAX: {
       address: "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",
       decimals: 18,
@@ -1248,6 +1283,15 @@ const config: {
       address: "0x5947BB275c521040051D82396192181b413227A3",
       decimals: 18,
       transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x00036d7a1251e3f67d6658466b5e9e7fe8418af7feac9567ff322bff95cc2401",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x49ccd9ca821EfEab2b98c60dC60F518E765EDe9a",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+      buybackMaxPriceImpactFactor: MID_BUYBACK_IMPACT,
     },
   },
   botanix: {

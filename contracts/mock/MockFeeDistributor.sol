@@ -84,20 +84,26 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
     }
 
     // @dev initiate the weekly fee distribution process
+    //
+    // The fee distribution process relies on the premise that this function is executed synchronously
+    // across all chains to which it is deployed and is executed for the same fee distribution period
+    //
+    // In cases in which a chain encounters downtime or a keeper experiences issues, a contingency
+    // should be in place to ensure the fee distribution is completed without issues
     function initiateDistribute() external nonReentrant onlyFeeDistributionKeeper {
         // validate that the FEE_RECEIVER address stored in dataStore = FeeDistributorVault
-        address feeReceiver = getAddress(Keys.FEE_RECEIVER);
+        address feeReceiver = _getAddress(Keys.FEE_RECEIVER);
         if (feeReceiver != address(feeDistributorVault)) {
             revert Errors.InvalidFeeReceiver(feeReceiver);
         }
 
         // validate distribution state and that distribution is not yet completed for the current week
-        validateDistributionState(DistributionState.None);
-        validateDistributionNotCompleted();
+        _validateDistributionState(DistributionState.None);
+        _validateDistributionNotCompleted();
 
         // reset referral rewards deposited for WNT and esGMX to 0 for the current week's distribution
-        setUint(Keys2.feeDistributorReferralRewardsDepositedKey(wnt), 0);
-        setUint(Keys2.feeDistributorReferralRewardsDepositedKey(esGmx), 0);
+        _setUint(Keys2.feeDistributorReferralRewardsDepositedKey(wnt), 0);
+        _setUint(Keys2.feeDistributorReferralRewardsDepositedKey(esGmx), 0);
 
         // populate readRequestInputs and extraOptionsInputs param used for cross chain LZRead request
         uint256[] memory chainIds = FeeDistributorUtils.retrieveChainIds(dataStore);
@@ -107,23 +113,23 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         uint256 targetChainIndex;
         for (uint256 i; i < chainIdsLength; i++) {
             uint256 chainId = chainIds[i];
-            address extendedGmxTracker = getAddressInfoForChain(chainId, EXTENDED_GMX_TRACKER);
+            address extendedGmxTracker = _getAddressInfoForChain(chainId, EXTENDED_GMX_TRACKER);
 
             if (chainId == mockChainId) {
-                uint256 feeAmountGmxCurrentChain = getUint(Keys.withdrawableBuybackTokenAmountKey(gmx)) +
-                    getFeeDistributorVaultBalance(gmx);
+                uint256 feeAmountGmxCurrentChain = _getUint(Keys.withdrawableBuybackTokenAmountKey(gmx)) +
+                    _getFeeDistributorVaultBalance(gmx);
                 uint256 stakedGmx = IERC20(extendedGmxTracker).totalSupply();
-                setUint(Keys2.feeDistributorFeeAmountGmxKey(chainId), feeAmountGmxCurrentChain);
-                setUint(Keys2.feeDistributorStakedGmxKey(chainId), stakedGmx);
+                _setUint(Keys2.feeDistributorFeeAmountGmxKey(chainId), feeAmountGmxCurrentChain);
+                _setUint(Keys2.feeDistributorStakedGmxKey(chainId), stakedGmx);
                 continue;
             }
 
-            address gmxTargetChain = getAddressInfoForChain(chainId, GMX);
-            uint32 layerZeroChainId = uint32(getUint(Keys2.feeDistributorLayerZeroChainIdKey(chainId)));
+            address gmxTargetChain = _getAddressInfoForChain(chainId, GMX);
+            uint32 layerZeroChainId = uint32(_getUint(Keys2.feeDistributorLayerZeroChainIdKey(chainId)));
             uint256 readRequestIndex = targetChainIndex * 3;
-            readRequestInputs[readRequestIndex] = setReadRequestInput(
+            readRequestInputs[readRequestIndex] = _setReadRequestInput(
                 layerZeroChainId,
-                getAddressInfoForChain(chainId, DATASTORE),
+                _getAddressInfoForChain(chainId, DATASTORE),
                 abi.encodeWithSelector(
                     DataStore.getUint.selector,
                     Keys.withdrawableBuybackTokenAmountKey(gmxTargetChain)
@@ -131,14 +137,14 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
             );
             readRequestIndex++;
 
-            readRequestInputs[readRequestIndex] = setReadRequestInput(
+            readRequestInputs[readRequestIndex] = _setReadRequestInput(
                 layerZeroChainId,
                 gmxTargetChain,
-                abi.encodeWithSelector(IERC20.balanceOf.selector, getAddressInfoForChain(chainId, Keys.FEE_RECEIVER))
+                abi.encodeWithSelector(IERC20.balanceOf.selector, _getAddressInfoForChain(chainId, Keys.FEE_RECEIVER))
             );
             readRequestIndex++;
 
-            readRequestInputs[readRequestIndex] = setReadRequestInput(
+            readRequestInputs[readRequestIndex] = _setReadRequestInput(
                 layerZeroChainId,
                 extendedGmxTracker,
                 abi.encodeWithSelector(IERC20.totalSupply.selector)
@@ -147,10 +153,10 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         }
 
         MultichainReaderUtils.ExtraOptionsInputs memory extraOptionsInputs;
-        extraOptionsInputs.gasLimit = uint128(getUint(Keys2.FEE_DISTRIBUTOR_GAS_LIMIT));
+        extraOptionsInputs.gasLimit = uint128(_getUint(Keys2.FEE_DISTRIBUTOR_GAS_LIMIT));
         extraOptionsInputs.returnDataSize = ((uint32(chainIdsLength) - 1) * 96) + 8;
 
-        setDistributionState(uint256(DistributionState.Initiated));
+        _setDistributionState(uint256(DistributionState.Initiated));
 
         // calculate native token fee required and execute multichainReader.sendReadRequests LZRead request
         MessagingFee memory messagingFee = multichainReader.quoteReadFee(readRequestInputs, extraOptionsInputs);
@@ -158,9 +164,9 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
 
         EventUtils.EventLogData memory eventData;
         eventData.uintItems.initItems(2);
-        eventData = setUintItem(eventData, 0, "numberOfChainsReadRequests", chainIdsLength - 1);
-        eventData = setUintItem(eventData, 1, "messagingFee.nativeFee", messagingFee.nativeFee);
-        emitEventLog("FeeDistributionInitiated", eventData);
+        _setUintItem(eventData, 0, "numberOfChainsReadRequests", chainIdsLength - 1);
+        _setUintItem(eventData, 1, "messagingFee.nativeFee", messagingFee.nativeFee);
+        _emitEventLog("FeeDistributionInitiated", eventData);
     }
 
     // @dev receive and process the LZRead request received data and bridge GMX to other chains if necessary
@@ -171,18 +177,18 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         MultichainReaderUtils.ReceivedData calldata receivedData
     ) external onlyMultichainReader {
         // validate the distribution state and that the LZRead response is within the acceptable time limit
-        validateDistributionState(DistributionState.Initiated);
-        validateReadResponseTimestamp(receivedData.timestamp);
+        _validateDistributionState(DistributionState.Initiated);
+        _validateReadResponseTimestamp(receivedData.timestamp);
 
         // withdraw any GMX fees remaining in the feeHandler
         feeHandler.withdrawFees(gmx);
 
         // set the current chain and LZRead response fee amounts, staked GMX amounts, timestamp and current chain WNT price
         uint256[] memory chainIds = FeeDistributorUtils.retrieveChainIds(dataStore);
-        uint256[] memory feeAmountsGmx = createUintArray(chainIds.length);
-        uint256[] memory stakedAmountsGmx = createUintArray(chainIds.length);
-        uint256 feeAmountGmxCurrentChain = getUint(Keys2.feeDistributorFeeAmountGmxKey(mockChainId));
-        uint256 stakedGmxCurrentChain = getUint(Keys2.feeDistributorStakedGmxKey(mockChainId));
+        uint256[] memory feeAmountsGmx = _createUintArray(chainIds.length);
+        uint256[] memory stakedAmountsGmx = _createUintArray(chainIds.length);
+        uint256 feeAmountGmxCurrentChain = _getUint(Keys2.feeDistributorFeeAmountGmxKey(mockChainId));
+        uint256 stakedGmxCurrentChain = _getUint(Keys2.feeDistributorStakedGmxKey(mockChainId));
         uint256 totalFeeAmountGmx;
         uint256 totalStakedGmx;
         uint256 currentChainIndex;
@@ -198,19 +204,19 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
                 currentChainIndex = i;
                 continue;
             }
-            (uint256 feeAmountGmx, uint256 stakedGmx) = decodeReadData(receivedData.readData, targetChainIndex);
+            (uint256 feeAmountGmx, uint256 stakedGmx) = _decodeReadData(receivedData.readData, targetChainIndex);
             feeAmountsGmx[i] = feeAmountGmx;
             stakedAmountsGmx[i] = stakedGmx;
             totalFeeAmountGmx += feeAmountGmx;
             totalStakedGmx += stakedGmx;
-            setUint(Keys2.feeDistributorFeeAmountGmxKey(chainId), feeAmountGmx);
-            setUint(Keys2.feeDistributorStakedGmxKey(chainId), stakedGmx);
+            _setUint(Keys2.feeDistributorFeeAmountGmxKey(chainId), feeAmountGmx);
+            _setUint(Keys2.feeDistributorStakedGmxKey(chainId), stakedGmx);
             targetChainIndex++;
         }
-        setUint(Keys2.FEE_DISTRIBUTOR_TOTAL_FEE_AMOUNT_GMX, totalFeeAmountGmx);
-        setUint(Keys2.FEE_DISTRIBUTOR_TOTAL_STAKED_GMX, totalStakedGmx);
-        setUint(Keys2.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP, receivedData.timestamp);
-        setTokenPrices();
+        _setUint(Keys2.FEE_DISTRIBUTOR_TOTAL_FEE_AMOUNT_GMX, totalFeeAmountGmx);
+        _setUint(Keys2.FEE_DISTRIBUTOR_TOTAL_STAKED_GMX, totalStakedGmx);
+        _setUint(Keys2.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP, receivedData.timestamp);
+        _setTokenPrices();
 
         uint256 requiredGmxAmount = Precision.mulDiv(totalFeeAmountGmx, stakedGmxCurrentChain, totalStakedGmx);
         bool isBridgingCompleted;
@@ -219,7 +225,7 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
             // only attempt to bridge to other chains if this chain has a surplus of GMX
             if (feeAmountGmxCurrentChain > requiredGmxAmount) {
                 // Call the internal bridging function
-                uint256 totalGmxBridgedOut = calculateAndBridgeGmx(
+                uint256 totalGmxBridgedOut = _calculateAndBridgeGmx(
                     chainIds,
                     totalFeeAmountGmx,
                     stakedAmountsGmx,
@@ -237,47 +243,47 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
                         totalGmxBridgedOut
                     );
                 }
-                setUint(Keys2.feeDistributorFeeAmountGmxKey(mockChainId), newFeeAmountGmxCurrentChain);
+                _setUint(Keys2.feeDistributorFeeAmountGmxKey(mockChainId), newFeeAmountGmxCurrentChain);
             }
             isBridgingCompleted = true;
-            setDistributionState(uint256(DistributionState.BridgingCompleted));
+            _setDistributionState(uint256(DistributionState.BridgingCompleted));
         } else {
             isBridgingCompleted = false;
-            setDistributionState(uint256(DistributionState.ReadDataReceived));
+            _setDistributionState(uint256(DistributionState.ReadDataReceived));
         }
 
         EventUtils.EventLogData memory eventData;
         eventData.uintItems.initItems(1);
-        eventData = setUintItem(eventData, 0, "feeAmountGmxCurrentChain", feeAmountGmxCurrentChain);
+        _setUintItem(eventData, 0, "feeAmountGmxCurrentChain", feeAmountGmxCurrentChain);
         eventData.bytesItems.initItems(1);
         eventData.bytesItems.setItem(0, "receivedData", abi.encode(receivedData));
         eventData.boolItems.initItems(1);
         eventData.boolItems.setItem(0, "isBridgingCompleted", isBridgingCompleted);
-        emitEventLog("FeeDistributionDataReceived", eventData);
+        _emitEventLog("FeeDistributionDataReceived", eventData);
     }
 
     // @dev function executed via an automated Gelato transaction when bridged GMX is received on this chain
     function bridgedGmxReceived() external nonReentrant onlyFeeDistributionKeeper {
-        validateDistributionState(DistributionState.ReadDataReceived);
-        validateReadResponseTimestamp(getUint(Keys2.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP));
-        validateDistributionNotCompleted();
+        _validateDistributionState(DistributionState.ReadDataReceived);
+        _validateReadResponseTimestamp(_getUint(Keys2.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP));
+        _validateDistributionNotCompleted();
 
-        uint256 totalFeeAmountGmx = getUint(Keys2.FEE_DISTRIBUTOR_TOTAL_FEE_AMOUNT_GMX);
-        uint256 stakedGmxCurrentChain = getUint(Keys2.feeDistributorStakedGmxKey(mockChainId));
-        uint256 totalStakedGmx = getUint(Keys2.FEE_DISTRIBUTOR_TOTAL_STAKED_GMX);
+        uint256 totalFeeAmountGmx = _getUint(Keys2.FEE_DISTRIBUTOR_TOTAL_FEE_AMOUNT_GMX);
+        uint256 stakedGmxCurrentChain = _getUint(Keys2.feeDistributorStakedGmxKey(mockChainId));
+        uint256 totalStakedGmx = _getUint(Keys2.FEE_DISTRIBUTOR_TOTAL_STAKED_GMX);
         uint256 requiredGmxAmount = Precision.mulDiv(totalFeeAmountGmx, stakedGmxCurrentChain, totalStakedGmx);
-        uint256 origFeeAmountGmxCurrentChain = getUint(Keys2.feeDistributorFeeAmountGmxKey(mockChainId));
+        uint256 origFeeAmountGmxCurrentChain = _getUint(Keys2.feeDistributorFeeAmountGmxKey(mockChainId));
 
         // the gross amount of GMX that should be received, before taking into account slippage
         uint256 grossGmxReceived = requiredGmxAmount - origFeeAmountGmxCurrentChain;
         // the slippage factor used when bridging to account for bridging fees and potential slippage
-        uint256 slippageFactor = getUint(Keys2.feeDistributorBridgeSlippageFactorKey(mockChainId));
+        uint256 slippageFactor = _getUint(Keys2.feeDistributorBridgeSlippageFactorKey(mockChainId));
         // calculate the minimum acceptable amount of bridged GMX received, taking into account allowed slippage
         uint256 minGmxReceived = Precision.applyFactor(grossGmxReceived, slippageFactor);
         // the minimum allowed GMX amount after bridging, taking into account slippage
         uint256 minRequiredGmxAmount = origFeeAmountGmxCurrentChain + minGmxReceived;
         // retrieve the current GMX available to distribute now that bridging has been completed
-        uint256 feeAmountGmxCurrentChain = getFeeDistributorVaultBalance(gmx);
+        uint256 feeAmountGmxCurrentChain = _getFeeDistributorVaultBalance(gmx);
 
         // if the calculated amount doesn't meet the min bridging requirement, revert
         if (feeAmountGmxCurrentChain < minRequiredGmxAmount) {
@@ -285,8 +291,8 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         }
 
         // now that the GMX available to distribute has been validated, update in dataStore and update DistributionState
-        setUint(Keys2.feeDistributorFeeAmountGmxKey(mockChainId), feeAmountGmxCurrentChain);
-        setDistributionState(uint256(DistributionState.BridgingCompleted));
+        _setUint(Keys2.feeDistributorFeeAmountGmxKey(mockChainId), feeAmountGmxCurrentChain);
+        _setDistributionState(uint256(DistributionState.BridgingCompleted));
 
         // infer the bridged GMX received - note that it is technically possible for this value to not match the actual
         // bridged GMX received if for example, GMX is sent to the FeeDistributorVault from another source or GMX fees
@@ -295,9 +301,9 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
 
         EventUtils.EventLogData memory eventData;
         eventData.uintItems.initItems(2);
-        eventData = setUintItem(eventData, 0, "gmxReceived", gmxReceived);
-        eventData = setUintItem(eventData, 1, "feeAmountGmxCurrentChain", feeAmountGmxCurrentChain);
-        emitEventLog("FeeDistributionBridgedGmxReceived", eventData);
+        _setUintItem(eventData, 0, "gmxReceived", gmxReceived);
+        _setUintItem(eventData, 1, "feeAmountGmxCurrentChain", feeAmountGmxCurrentChain);
+        _emitEventLog("FeeDistributionBridgedGmxReceived", eventData);
     }
 
     // @dev complete the fee distribution calculations, token transfers and if necessary bridge GMX cross-chain
@@ -312,15 +318,15 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         uint256 feesV2Usd
     ) external nonReentrant onlyFeeDistributionKeeper {
         // validate that the TREASURY address stored in dataStore is not a zero address
-        address treasuryAddress = getAddressInfo(TREASURY);
+        address treasuryAddress = _getAddressInfo(TREASURY);
         if (treasuryAddress == address(0)) {
             revert Errors.ZeroTreasuryAddress();
         }
 
         // validate the distribution states, LZRead response timestamp and distribution has not yet been completed
-        validateDistributionState(DistributionState.BridgingCompleted);
-        validateReadResponseTimestamp(getUint(Keys2.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP));
-        validateDistributionNotCompleted();
+        _validateDistributionState(DistributionState.BridgingCompleted);
+        _validateReadResponseTimestamp(_getUint(Keys2.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP));
+        _validateDistributionNotCompleted();
 
         // withdraw any WNT fees remaining in the feeHandler
         feeHandler.withdrawFees(wnt);
@@ -331,26 +337,26 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
             uint256 wntForChainlink,
             uint256 wntForTreasury,
             uint256 wntForReferralRewards
-        ) = calculateAndTransferWntCosts(wntReferralRewardsInUsd, feesV1Usd, feesV2Usd);
+        ) = _calculateAndTransferWntCosts(wntReferralRewardsInUsd, feesV1Usd, feesV2Usd);
 
         // set the total fees in USD and referral reward amounts
-        setUint(Keys2.feeDistributorFeeAmountUsdKey(1), feesV1Usd);
-        setUint(Keys2.feeDistributorFeeAmountUsdKey(2), feesV2Usd);
-        setUint(Keys2.feeDistributorReferralRewardsAmountKey(wnt), wntForReferralRewards);
-        setUint(Keys2.feeDistributorReferralRewardsAmountKey(esGmx), esGmxForReferralRewards);
-        setUint(Keys2.FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP, block.timestamp);
-        setDistributionState(uint256(DistributionState.None));
+        _setUint(Keys2.feeDistributorFeeAmountUsdKey(1), feesV1Usd);
+        _setUint(Keys2.feeDistributorFeeAmountUsdKey(2), feesV2Usd);
+        _setUint(Keys2.feeDistributorReferralRewardsAmountKey(wnt), wntForReferralRewards);
+        _setUint(Keys2.feeDistributorReferralRewardsAmountKey(esGmx), esGmxForReferralRewards);
+        _setUint(Keys2.FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP, block.timestamp);
+        _setDistributionState(uint256(DistributionState.None));
 
         EventUtils.EventLogData memory eventData;
         eventData.uintItems.initItems(7);
-        eventData = setUintItem(eventData, 0, "feesV1Usd", feesV1Usd);
-        eventData = setUintItem(eventData, 1, "feesV2Usd", feesV2Usd);
-        eventData = setUintItem(eventData, 2, "wntForKeepers", wntForKeepers);
-        eventData = setUintItem(eventData, 3, "wntForChainlink", wntForChainlink);
-        eventData = setUintItem(eventData, 4, "wntForTreasury", wntForTreasury);
-        eventData = setUintItem(eventData, 5, "wntForReferralRewards", wntForReferralRewards);
-        eventData = setUintItem(eventData, 6, "esGmxForReferralRewards", esGmxForReferralRewards);
-        emitEventLog("FeeDistributionCompleted", eventData);
+        _setUintItem(eventData, 0, "feesV1Usd", feesV1Usd);
+        _setUintItem(eventData, 1, "feesV2Usd", feesV2Usd);
+        _setUintItem(eventData, 2, "wntForKeepers", wntForKeepers);
+        _setUintItem(eventData, 3, "wntForChainlink", wntForChainlink);
+        _setUintItem(eventData, 4, "wntForTreasury", wntForTreasury);
+        _setUintItem(eventData, 5, "wntForReferralRewards", wntForReferralRewards);
+        _setUintItem(eventData, 6, "esGmxForReferralRewards", esGmxForReferralRewards);
+        _emitEventLog("FeeDistributionCompleted", eventData);
     }
 
     // @dev deposit the calculated referral rewards in the ClaimVault for the specified accounts
@@ -363,17 +369,17 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         ClaimUtils.DepositParam[] calldata params
     ) external nonReentrant onlyFeeDistributionKeeper {
         // validate the distribution state and that the accounts and amounts arrays are valid lengths
-        validateDistributionState(DistributionState.None);
+        _validateDistributionState(DistributionState.None);
 
-        uint256 tokensForReferralRewards = getUint(Keys2.feeDistributorReferralRewardsAmountKey(token));
+        uint256 tokensForReferralRewards = _getUint(Keys2.feeDistributorReferralRewardsAmountKey(token));
         if (token == esGmx) {
             // validate the esGMX amount is valid and that there are sufficient esGMX in the feeDistributorVault
-            uint256 maxEsGmxReferralRewards = getUint(Keys2.FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_ESGMX_AMOUNT);
+            uint256 maxEsGmxReferralRewards = _getUint(Keys2.FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_ESGMX_AMOUNT);
             if (tokensForReferralRewards > maxEsGmxReferralRewards) {
                 revert Errors.MaxEsGmxReferralRewardsAmountExceeded(tokensForReferralRewards, maxEsGmxReferralRewards);
             }
 
-            uint256 vaultEsGmxBalance = getFeeDistributorVaultBalance(esGmx);
+            uint256 vaultEsGmxBalance = _getFeeDistributorVaultBalance(esGmx);
             if (tokensForReferralRewards > vaultEsGmxBalance) {
                 IMintable(esGmx).mint(address(feeDistributorVault), tokensForReferralRewards - vaultEsGmxBalance);
             }
@@ -382,7 +388,7 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
             for (uint256 i; i < params.length; i++) {
                 ClaimUtils.DepositParam memory param = params[i];
 
-                address vester = getAddressInfo(ESGMX_VESTER);
+                address vester = _getAddressInfo(ESGMX_VESTER);
                 uint256 totalEsGmxRewards = IVester(vester).bonusRewards(param.account) + param.amount;
                 IVester(vester).setBonusRewards(param.account, totalEsGmxRewards);
 
@@ -391,8 +397,8 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
                 eventData.addressItems.setItem(0, "account", param.account);
 
                 eventData.uintItems.initItems(2);
-                eventData = setUintItem(eventData, 0, "amount", param.amount);
-                eventData = setUintItem(eventData, 1, "totalEsGmxRewards", totalEsGmxRewards);
+                _setUintItem(eventData, 0, "amount", param.amount);
+                _setUintItem(eventData, 1, "totalEsGmxRewards", totalEsGmxRewards);
 
                 eventEmitter.emitEventLog1("TotalEsGmxRewardsIncreased", Cast.toBytes32(param.account), eventData);
             }
@@ -407,22 +413,22 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
             distributionId,
             params
         );
-        transferOut(token, claimVault, totalTransferAmount);
+        _transferOut(token, claimVault, totalTransferAmount);
         dataStore.incrementUint(Keys.totalClaimableFundsAmountKey(token), totalTransferAmount);
 
         ClaimUtils._validateTotalClaimableFundsAmount(dataStore, token, claimVault);
 
         // validate that the cumulative referral rewards deposited is not greater than the total calculated amount
-        uint256 cumulativeTransferAmount = getUint(Keys2.feeDistributorReferralRewardsDepositedKey(token)) +
+        uint256 cumulativeTransferAmount = _getUint(Keys2.feeDistributorReferralRewardsDepositedKey(token)) +
             totalTransferAmount;
         if (cumulativeTransferAmount > tokensForReferralRewards) {
             revert Errors.MaxReferralRewardsExceeded(token, cumulativeTransferAmount, tokensForReferralRewards);
         }
 
-        setUint(Keys2.feeDistributorReferralRewardsDepositedKey(token), cumulativeTransferAmount);
+        _setUint(Keys2.feeDistributorReferralRewardsDepositedKey(token), cumulativeTransferAmount);
     }
 
-    function calculateAndBridgeGmx(
+    function _calculateAndBridgeGmx(
         uint256[] memory chainIds,
         uint256 totalFeeAmountGmx,
         uint256[] memory stakedAmountsGmx,
@@ -438,7 +444,7 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
 
         Transfer[] memory transfer = FeeDistributorUtils.computeTransfers(feeAmountsGmx, target);
 
-        uint256[] memory bridgingAmounts = createUintArray(chainIdsLength);
+        uint256[] memory bridgingAmounts = _createUintArray(chainIdsLength);
 
         for (uint256 j; j < transfer.length; j++) {
             if (transfer[j].from == currentChainIndex) {
@@ -446,12 +452,12 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
             }
         }
 
-        return bridgeGmx(chainIds, bridgingAmounts);
+        return _bridgeGmx(chainIds, bridgingAmounts);
     }
 
-    function bridgeGmx(uint256[] memory chainIds, uint256[] memory bridgingAmounts) internal returns (uint256) {
+    function _bridgeGmx(uint256[] memory chainIds, uint256[] memory bridgingAmounts) internal returns (uint256) {
         // Execute bridging transactions from current chain
-        address layerzeroOft = getAddressInfo(LAYERZERO_OFT);
+        address layerzeroOft = _getAddressInfo(LAYERZERO_OFT);
         uint256 sharedDecimals = IOFT(layerzeroOft).sharedDecimals();
         uint256 decimalConversionRate = 10 ** (18 - sharedDecimals);
         uint256 totalGmxBridgedOut;
@@ -459,10 +465,10 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
             uint256 bridgingAmount = bridgingAmounts[i];
             if (bridgingAmount == 0) continue;
 
-            uint256 sendAmount = removeDust(bridgingAmount, decimalConversionRate);
+            uint256 sendAmount = _removeDust(bridgingAmount, decimalConversionRate);
 
             // Move GMX needed for bridging to this contract from FeeDistributorVault
-            transferOut(gmx, address(this), sendAmount);
+            _transferOut(gmx, address(this), sendAmount);
 
             // If the Layerzero OFT contract on this chain is not also the GMX token, approve the sendAmount
             if (layerzeroOft != gmx) {
@@ -471,10 +477,10 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
 
             // Prepare remaining params needed for the bridging transaction
             uint256 chainId = chainIds[i];
-            uint32 layerzeroChainId = uint32(getUint(Keys2.feeDistributorLayerZeroChainIdKey(chainId)));
-            bytes32 to = Cast.toBytes32(getAddressInfoForChain(chainId, Keys.FEE_RECEIVER));
-            uint256 minAmountOut = removeDust(
-                Precision.applyFactor(sendAmount, getUint(Keys2.feeDistributorBridgeSlippageFactorKey(chainId))),
+            uint32 layerzeroChainId = uint32(_getUint(Keys2.feeDistributorLayerZeroChainIdKey(chainId)));
+            bytes32 to = Cast.toBytes32(_getAddressInfoForChain(chainId, Keys.FEE_RECEIVER));
+            uint256 minAmountOut = _removeDust(
+                Precision.applyFactor(sendAmount, _getUint(Keys2.feeDistributorBridgeSlippageFactorKey(chainId))),
                 decimalConversionRate
             );
             SendParam memory sendParam = SendParam(
@@ -501,26 +507,26 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
 
         EventUtils.EventLogData memory eventData;
         eventData.uintItems.initItems(1);
-        eventData = setUintItem(eventData, 0, "totalGmxBridgedOut", totalGmxBridgedOut);
-        emitEventLog("FeeDistributionGmxBridgedOut", eventData);
+        _setUintItem(eventData, 0, "totalGmxBridgedOut", totalGmxBridgedOut);
+        _emitEventLog("FeeDistributionGmxBridgedOut", eventData);
 
         return totalGmxBridgedOut;
     }
 
-    function calculateAndTransferWntCosts(
+    function _calculateAndTransferWntCosts(
         uint256 wntReferralRewardsInUsd,
         uint256 feesV1Usd,
         uint256 feesV2Usd
     ) internal returns (uint256, uint256, uint256, uint256) {
         // the WNT fee amount related calculations
-        uint256 totalWntBalance = getFeeDistributorVaultBalance(wnt);
+        uint256 totalWntBalance = _getFeeDistributorVaultBalance(wnt);
 
         // calculate the WNT that needs to be sent to each keeper
         (uint256 keeperCostsV1, uint256 keeperCostsV2) = FeeDistributorUtils.calculateKeeperCosts(dataStore);
         uint256 wntForKeepers = keeperCostsV1 + keeperCostsV2;
 
         // calculate the WNT for chainlink costs and amount of WNT to be sent to the treasury
-        (uint256 wntForChainlink, uint256 wntForTreasury) = calculateChainlinkAndTreasuryAmounts(
+        (uint256 wntForChainlink, uint256 wntForTreasury) = _calculateChainlinkAndTreasuryAmounts(
             totalWntBalance,
             feesV1Usd,
             feesV2Usd,
@@ -528,9 +534,9 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         );
 
         // validate wntReferralRewardsInUsd and calculate the referral rewards in WNT to be sent
-        uint256 wntForReferralRewards = calculateWntForReferralRewards(wntReferralRewardsInUsd, feesV1Usd);
+        uint256 wntForReferralRewards = _calculateWntForReferralRewards(wntReferralRewardsInUsd, feesV1Usd);
 
-        wntForTreasury = finalizeWntForTreasury(
+        wntForTreasury = _finalizeWntForTreasury(
             totalWntBalance,
             keeperCostsV1,
             keeperCostsV2,
@@ -539,12 +545,12 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
             wntForReferralRewards
         );
 
-        transferWntCosts(wntForKeepers, wntForChainlink, wntForTreasury);
+        _transferWntCosts(wntForKeepers, wntForChainlink, wntForTreasury);
 
         return (wntForKeepers, wntForChainlink, wntForTreasury, wntForReferralRewards);
     }
 
-    function finalizeWntForTreasury(
+    function _finalizeWntForTreasury(
         uint256 totalWntBalance,
         uint256 keeperCostsV1,
         uint256 keeperCostsV2,
@@ -562,13 +568,13 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         if (keeperAndReferralCostsV1 > wntBeforeV1KeeperCostsAndReferralRewards) {
             uint256 additionalWntForV1Costs = keeperAndReferralCostsV1 - wntBeforeV1KeeperCostsAndReferralRewards;
             if (additionalWntForV1Costs > wntForTreasury) {
-                uint256 maxWntFromTreasury = getUint(Keys2.FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY);
+                uint256 maxWntFromTreasury = _getUint(Keys2.FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY);
                 uint256 additionalWntFromTreasury = additionalWntForV1Costs - wntForTreasury;
                 if (additionalWntFromTreasury > maxWntFromTreasury) {
                     revert Errors.MaxWntFromTreasuryExceeded(maxWntFromTreasury, additionalWntFromTreasury);
                 }
                 IERC20(wnt).transferFrom(
-                    getAddressInfo(TREASURY),
+                    _getAddressInfo(TREASURY),
                     address(feeDistributorVault),
                     additionalWntFromTreasury
                 );
@@ -583,7 +589,7 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         return wntForTreasury;
     }
 
-    function transferWntCosts(uint256 wntForKeepers, uint256 wntForChainlink, uint256 wntForTreasury) internal {
+    function _transferWntCosts(uint256 wntForKeepers, uint256 wntForChainlink, uint256 wntForTreasury) internal {
         // transfer the WNT that needs to be sent to each keeper
         address[] memory keepers = dataStore.getAddressArray(Keys2.FEE_DISTRIBUTOR_KEEPER_COSTS);
         uint256[] memory keepersTargetBalance = dataStore.getUintArray(Keys2.FEE_DISTRIBUTOR_KEEPER_COSTS);
@@ -603,71 +609,77 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         }
 
         // transfer the WNT for chainlink costs and WNT for the treasury
-        transferOut(wnt, getAddressInfo(CHAINLINK), wntForChainlink);
-        transferOut(wnt, getAddressInfo(TREASURY), wntForTreasury);
+        _transferOut(wnt, _getAddressInfo(CHAINLINK), wntForChainlink);
+        _transferOut(wnt, _getAddressInfo(TREASURY), wntForTreasury);
 
         // transfer gmx fees for the week and update the last distribution time and tokens per interval
-        address extendedGmxTracker = getAddressInfoForChain(mockChainId, EXTENDED_GMX_TRACKER);
-        uint256 feeAmountGmx = getUint(Keys2.feeDistributorFeeAmountGmxKey(mockChainId));
+        address extendedGmxTracker = _getAddressInfoForChain(mockChainId, EXTENDED_GMX_TRACKER);
+        uint256 feeAmountGmx = _getUint(Keys2.feeDistributorFeeAmountGmxKey(mockChainId));
         address distributor = IRewardTracker(extendedGmxTracker).distributor();
-        transferOut(gmx, extendedGmxTracker, feeAmountGmx);
+        _transferOut(gmx, extendedGmxTracker, feeAmountGmx);
         IRewardDistributor(distributor).updateLastDistributionTime();
         IRewardDistributor(distributor).setTokensPerInterval(feeAmountGmx / 1 weeks);
     }
 
-    function setUint(bytes32 fullKey, uint256 value) internal {
+    function _setUint(bytes32 fullKey, uint256 value) internal {
         dataStore.setUint(fullKey, value);
     }
 
-    function setDistributionState(uint256 value) internal {
-        setUint(Keys2.FEE_DISTRIBUTOR_STATE, value);
+    function _setDistributionState(uint256 value) internal {
+        _setUint(Keys2.FEE_DISTRIBUTOR_STATE, value);
     }
 
-    function transferOut(address token, address receiver, uint256 amount) internal {
+    function _transferOut(address token, address receiver, uint256 amount) internal {
         feeDistributorVault.transferOut(token, receiver, amount);
     }
 
-    function emitEventLog(string memory eventName, EventUtils.EventLogData memory eventData) internal {
+    function _emitEventLog(string memory eventName, EventUtils.EventLogData memory eventData) internal {
         eventEmitter.emitEventLog(eventName, eventData);
     }
 
-    function setTokenPrices() internal withOraclePrices(retrieveSetPricesParams()) {
-        setUint(Keys2.FEE_DISTRIBUTOR_GMX_PRICE, getOraclePrice(gmxForOracle));
-        setUint(Keys2.FEE_DISTRIBUTOR_WNT_PRICE, getOraclePrice(wnt));
+    function _setTokenPrices() internal withOraclePrices(_retrieveSetPricesParams()) {
+        _setUint(Keys2.FEE_DISTRIBUTOR_GMX_PRICE, _getOraclePrice(gmxForOracle));
+        _setUint(Keys2.FEE_DISTRIBUTOR_WNT_PRICE, _getOraclePrice(wnt));
     }
 
-    function retrieveSetPricesParams() internal view returns (OracleUtils.SetPricesParams memory) {
-        address[] memory tokens = createAddressArray(2);
+    function _retrieveSetPricesParams() internal view returns (OracleUtils.SetPricesParams memory) {
+        address[] memory tokens = _createAddressArray(2);
         tokens[0] = gmxForOracle;
         tokens[1] = wnt;
-        address[] memory providers = createAddressArray(2);
-        providers[0] = getAddress(Keys.oracleProviderForTokenKey(address(oracle), gmxForOracle));
-        providers[1] = getAddress(Keys.oracleProviderForTokenKey(address(oracle), wnt));
+        address[] memory providers = _createAddressArray(2);
+        providers[0] = _getAddress(Keys.oracleProviderForTokenKey(address(oracle), gmxForOracle));
+        providers[1] = _getAddress(Keys.oracleProviderForTokenKey(address(oracle), wnt));
         bytes[] memory data = new bytes[](2);
         return (OracleUtils.SetPricesParams(tokens, providers, data));
     }
 
-    function calculateChainlinkAndTreasuryAmounts(
+    function _calculateChainlinkAndTreasuryAmounts(
         uint256 totalWntBalance,
         uint256 feesV1Usd,
         uint256 feesV2Usd,
         uint256 keeperCostsV2
     ) internal view returns (uint256, uint256) {
-        uint256 chainlinkTreasuryWntAmount = Precision.mulDiv(totalWntBalance, feesV2Usd, feesV1Usd + feesV2Usd);
+        uint256 feesV1UsdInWnt = Precision.applyFactor(feesV1Usd, _getUint(Keys2.FEE_DISTRIBUTOR_V1_FEES_WNT_FACTOR));
+        uint256 feesV2UsdInWnt = Precision.applyFactor(feesV2Usd, _getUint(Keys2.FEE_DISTRIBUTOR_V2_FEES_WNT_FACTOR));
+        uint256 chainlinkTreasuryWntAmount = Precision.mulDiv(
+            totalWntBalance,
+            feesV2UsdInWnt,
+            feesV1UsdInWnt + feesV2UsdInWnt
+        );
         uint256 wntForChainlink = Precision.applyFactor(
             chainlinkTreasuryWntAmount,
-            getUint(Keys2.FEE_DISTRIBUTOR_CHAINLINK_FACTOR)
+            _getUint(Keys2.FEE_DISTRIBUTOR_CHAINLINK_FACTOR)
         );
         uint256 wntForTreasury = chainlinkTreasuryWntAmount - wntForChainlink - keeperCostsV2;
 
         return (wntForChainlink, wntForTreasury);
     }
 
-    function calculateWntForReferralRewards(
+    function _calculateWntForReferralRewards(
         uint256 wntReferralRewardsInUsd,
         uint256 feesV1Usd
     ) internal view returns (uint256) {
-        uint256 maxWntReferralRewardsInUsdAmount = getUint(Keys2.FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_AMOUNT);
+        uint256 maxWntReferralRewardsInUsdAmount = _getUint(Keys2.FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_AMOUNT);
         if (wntReferralRewardsInUsd > maxWntReferralRewardsInUsdAmount) {
             revert Errors.MaxWntReferralRewardsInUsdAmountExceeded(
                 wntReferralRewardsInUsd,
@@ -675,39 +687,39 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
             );
         }
 
-        uint256 maxWntReferralRewardsInUsdFactor = getUint(Keys2.FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_FACTOR);
+        uint256 maxWntReferralRewardsInUsdFactor = _getUint(Keys2.FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_FACTOR);
         uint256 maxWntReferralRewardsInUsd = Precision.applyFactor(feesV1Usd, maxWntReferralRewardsInUsdFactor);
         if (wntReferralRewardsInUsd > maxWntReferralRewardsInUsd) {
             revert Errors.MaxWntReferralRewardsInUsdExceeded(wntReferralRewardsInUsd, maxWntReferralRewardsInUsd);
         }
 
-        uint256 scaledWntPrice = getUint(Keys2.FEE_DISTRIBUTOR_WNT_PRICE) * Precision.FLOAT_PRECISION;
+        uint256 scaledWntPrice = _getUint(Keys2.FEE_DISTRIBUTOR_WNT_PRICE) * Precision.FLOAT_PRECISION;
         uint256 wntForReferralRewards = Precision.toFactor(wntReferralRewardsInUsd, scaledWntPrice);
 
         return wntForReferralRewards;
     }
 
-    function getUint(bytes32 fullKey) internal view returns (uint256) {
+    function _getUint(bytes32 fullKey) internal view returns (uint256) {
         return dataStore.getUint(fullKey);
     }
 
-    function getAddress(bytes32 fullKey) internal view returns (address) {
+    function _getAddress(bytes32 fullKey) internal view returns (address) {
         return dataStore.getAddress(fullKey);
     }
 
-    function getAddressInfo(bytes32 addressKey) internal view returns (address) {
-        return getAddress(Keys2.feeDistributorAddressInfoKey(addressKey));
+    function _getAddressInfo(bytes32 addressKey) internal view returns (address) {
+        return _getAddress(Keys2.feeDistributorAddressInfoKey(addressKey));
     }
 
-    function getAddressInfoForChain(uint256 chainId, bytes32 addressKey) internal view returns (address) {
-        return getAddress(Keys2.feeDistributorAddressInfoForChainKey(chainId, addressKey));
+    function _getAddressInfoForChain(uint256 chainId, bytes32 addressKey) internal view returns (address) {
+        return _getAddress(Keys2.feeDistributorAddressInfoForChainKey(chainId, addressKey));
     }
 
-    function getFeeDistributorVaultBalance(address token) internal view returns (uint256) {
+    function _getFeeDistributorVaultBalance(address token) internal view returns (uint256) {
         return IERC20(token).balanceOf(address(feeDistributorVault));
     }
 
-    function getOraclePrice(address token) internal view returns (uint256) {
+    function _getOraclePrice(address token) internal view returns (uint256) {
         // ChainlinkPriceProvider.getOraclePrice() is not used since the prices are for non-stablecoin tokens
         (bool hasPriceFeed, uint256 price) = ChainlinkPriceFeedUtils.getPriceFeedPrice(dataStoreForOracle, token);
 
@@ -718,41 +730,31 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         return price;
     }
 
-    function validateReadResponseTimestamp(uint256 readResponseTimestamp) internal view {
-        if (block.timestamp - readResponseTimestamp > getUint(Keys2.FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY)) {
+    function _validateReadResponseTimestamp(uint256 readResponseTimestamp) internal view {
+        if (block.timestamp - readResponseTimestamp > _getUint(Keys2.FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY)) {
             revert Errors.OutdatedReadResponse(readResponseTimestamp);
         }
     }
 
-    function validateDistributionState(DistributionState allowedDistributionState) internal view {
-        uint256 distributionStateUint = getUint(Keys2.FEE_DISTRIBUTOR_STATE);
+    function _validateDistributionState(DistributionState allowedDistributionState) internal view {
+        uint256 distributionStateUint = _getUint(Keys2.FEE_DISTRIBUTOR_STATE);
         if (allowedDistributionState != DistributionState(distributionStateUint)) {
             revert Errors.InvalidDistributionState(distributionStateUint);
         }
     }
 
-    function validateDistributionNotCompleted() internal view {
+    function _validateDistributionNotCompleted() internal view {
         uint256 dayOfWeek = ((block.timestamp / 1 days) + 4) % 7;
-        uint256 daysSinceDistributionDay = (dayOfWeek + 7 - getUint(Keys2.FEE_DISTRIBUTOR_DISTRIBUTION_DAY)) % 7;
+        uint256 daysSinceDistributionDay = (dayOfWeek + 7 - _getUint(Keys2.FEE_DISTRIBUTOR_DISTRIBUTION_DAY)) % 7;
         uint256 midnightToday = block.timestamp - (block.timestamp % 1 days);
         uint256 startOfDistributionWeek = midnightToday - (daysSinceDistributionDay * 1 days);
-        uint256 lastDistributionTime = getUint(Keys2.FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP);
+        uint256 lastDistributionTime = _getUint(Keys2.FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP);
         if (lastDistributionTime > startOfDistributionWeek) {
             revert Errors.FeeDistributionAlreadyCompleted(lastDistributionTime, startOfDistributionWeek);
         }
     }
 
-    function setUintItem(
-        EventUtils.EventLogData memory eventData,
-        uint256 itemNumber,
-        string memory itemName,
-        uint256 uintItem
-    ) internal pure returns (EventUtils.EventLogData memory) {
-        eventData.uintItems.setItem(itemNumber, itemName, uintItem);
-        return eventData;
-    }
-
-    function setReadRequestInput(
+    function _setReadRequestInput(
         uint32 chainId,
         address target,
         bytes memory callData
@@ -760,15 +762,15 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         return MultichainReaderUtils.ReadRequestInputs(chainId, target, callData);
     }
 
-    function createUintArray(uint256 arrayLength) internal pure returns (uint256[] memory) {
+    function _createUintArray(uint256 arrayLength) internal pure returns (uint256[] memory) {
         return new uint256[](arrayLength);
     }
 
-    function createAddressArray(uint256 arrayLength) internal pure returns (address[] memory) {
+    function _createAddressArray(uint256 arrayLength) internal pure returns (address[] memory) {
         return new address[](arrayLength);
     }
 
-    function decodeReadData(
+    function _decodeReadData(
         bytes calldata readData,
         uint256 targetChainIndex
     ) internal pure returns (uint256, uint256) {
@@ -781,7 +783,16 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         return (feeAmount, stakedGmx);
     }
 
-    function removeDust(uint256 amount, uint256 decimalConversionRate) internal pure returns (uint256) {
+    function _removeDust(uint256 amount, uint256 decimalConversionRate) internal pure returns (uint256) {
         return (amount / decimalConversionRate) * decimalConversionRate;
+    }
+
+    function _setUintItem(
+        EventUtils.EventLogData memory eventData,
+        uint256 itemNumber,
+        string memory itemName,
+        uint256 uintItem
+    ) internal pure {
+        eventData.uintItems.setItem(itemNumber, itemName, uintItem);
     }
 }

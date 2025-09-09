@@ -3,7 +3,7 @@ import { addressToBytes32 } from "@layerzerolabs/lz-v2-utilities";
 
 import { expect } from "chai";
 import { grantRole } from "../../utils/role";
-import { expandDecimals, bigNumberify } from "../../utils/math";
+import { FLOAT_PRECISION, expandDecimals, bigNumberify } from "../../utils/math";
 import { deployFixture } from "../../utils/fixture";
 import { encodeData } from "../../utils/hash";
 import { deployContract } from "../../utils/deploy";
@@ -251,9 +251,11 @@ describe("FeeDistributor", function () {
     initialTimestamp = block.timestamp;
     await dataStore.setUint(keys.FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP, initialTimestamp);
 
+    await config.setUint(keys.FEE_DISTRIBUTOR_V1_FEES_WNT_FACTOR, "0x", expandDecimals(70, 28));
+    await config.setUint(keys.FEE_DISTRIBUTOR_V2_FEES_WNT_FACTOR, "0x", expandDecimals(10, 28));
     await config.setUint(keys.FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_AMOUNT, "0x", expandDecimals(1_000_000, 30));
     await config.setUint(keys.FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_ESGMX_AMOUNT, "0x", expandDecimals(10, 18));
-    await config.setUint(keys.FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY, "0x", 600);
+    await config.setUint(keys.FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY, "0x", 259200);
     await config.setUint(keys.FEE_DISTRIBUTOR_GAS_LIMIT, "0x", 5_000_000);
     await dataStore.setUintArray(keys.FEE_DISTRIBUTOR_CHAIN_ID, chainIds);
     await config.setUint(keys.FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID, encodeData(["uint256"], [chainIdA]), eidA);
@@ -386,8 +388,8 @@ describe("FeeDistributor", function () {
 
     wntReferralRewardsInUsd = expandDecimals(1_000, 30);
     esGmxForReferralRewards = expandDecimals(10, 18);
-    feesV1Usd = expandDecimals(40_000, 30);
-    feesV2Usd = expandDecimals(100_000, 30);
+    feesV1Usd = expandDecimals(60_000, 30);
+    feesV2Usd = expandDecimals(1_000_000, 30);
   });
 
   it("initiateDistribute() can only be executed by FEE_DISTRIBUTION_KEEPER", async function () {
@@ -824,10 +826,14 @@ describe("FeeDistributor", function () {
     const keeperCostsV1 = sentToKeeper2;
     const keeperCostsV2 = sentToKeeper1;
     const wntForKeepers = sentToKeeper1.add(sentToKeeper2);
-    const totalFees = feesV1Usd.add(feesV2Usd);
-    const chainlinkTreasuryWntAmount = totalWntBalance.mul(feesV2Usd).div(totalFees);
+    const v1FeesWntFactor = await dataStore.getUint(keys.FEE_DISTRIBUTOR_V1_FEES_WNT_FACTOR);
+    const feesV1UsdInWnt = feesV1Usd.mul(v1FeesWntFactor).div(FLOAT_PRECISION);
+    const v2FeesWntFactor = await dataStore.getUint(keys.FEE_DISTRIBUTOR_V2_FEES_WNT_FACTOR);
+    const feesV2UsdInWnt = feesV2Usd.mul(v2FeesWntFactor).div(FLOAT_PRECISION);
+    const totalFeesInWnt = feesV1UsdInWnt.add(feesV2UsdInWnt);
+    const chainlinkTreasuryWntAmount = totalWntBalance.mul(feesV2UsdInWnt).div(totalFeesInWnt);
     const chainlinkFactor = await dataStore.getUint(keys.FEE_DISTRIBUTOR_CHAINLINK_FACTOR);
-    const wntForChainlink = chainlinkTreasuryWntAmount.mul(chainlinkFactor).div(expandDecimals(1, 30));
+    const wntForChainlink = chainlinkTreasuryWntAmount.mul(chainlinkFactor).div(FLOAT_PRECISION);
     let wntForTreasury = chainlinkTreasuryWntAmount.sub(wntForChainlink).sub(keeperCostsV2);
     const wntForReferralRewards = wntReferralRewardsInUsd.div(wntPrice);
     const remainingWnt = totalWntBalance
@@ -1055,10 +1061,14 @@ describe("FeeDistributor", function () {
     const keeperCostsV1 = sentToKeeper2;
     const keeperCostsV2 = sentToKeeper1;
     const wntForKeepers = sentToKeeper1.add(sentToKeeper2);
-    const totalFees = feesV1Usd.add(feesV2Usd);
-    const chainlinkTreasuryWntAmount = totalWntBalance.mul(feesV2Usd).div(totalFees);
+    const v1FeesWntFactor = await dataStore.getUint(keys.FEE_DISTRIBUTOR_V1_FEES_WNT_FACTOR);
+    const feesV1UsdInWnt = feesV1Usd.mul(v1FeesWntFactor).div(FLOAT_PRECISION);
+    const v2FeesWntFactor = await dataStore.getUint(keys.FEE_DISTRIBUTOR_V2_FEES_WNT_FACTOR);
+    const feesV2UsdInWnt = feesV2Usd.mul(v2FeesWntFactor).div(FLOAT_PRECISION);
+    const totalFeesInWnt = feesV1UsdInWnt.add(feesV2UsdInWnt);
+    const chainlinkTreasuryWntAmount = totalWntBalance.mul(feesV2UsdInWnt).div(totalFeesInWnt);
     const chainlinkFactor = await dataStore.getUint(keys.FEE_DISTRIBUTOR_CHAINLINK_FACTOR);
-    const wntForChainlink = chainlinkTreasuryWntAmount.mul(chainlinkFactor).div(expandDecimals(1, 30));
+    const wntForChainlink = chainlinkTreasuryWntAmount.mul(chainlinkFactor).div(FLOAT_PRECISION);
     let wntForTreasury = chainlinkTreasuryWntAmount.sub(wntForChainlink).sub(keeperCostsV2);
     const wntForReferralRewards = wntReferralRewardsInUsd.div(wntPrice);
     const remainingWnt = totalWntBalance
@@ -1170,8 +1180,8 @@ describe("FeeDistributor", function () {
 
     await feeDistributor.initiateDistribute();
 
-    const feesV1Usd = expandDecimals(10_000, 30);
-    const feesV2Usd = expandDecimals(40_000, 30);
+    const feesV1Usd = expandDecimals(15_000, 30);
+    const feesV2Usd = expandDecimals(400_000, 30);
 
     const keeperCosts = await dataStore.getUintArray(keys.FEE_DISTRIBUTOR_KEEPER_COSTS);
 
@@ -1185,12 +1195,16 @@ describe("FeeDistributor", function () {
 
     const totalWntBalance = await wnt.balanceOf(feeDistributorVault.address);
 
-    const totalFeesUsd = feesV1Usd.add(feesV2Usd);
-    const chainlinkTreasuryWnt = totalWntBalance.mul(feesV2Usd).div(totalFeesUsd);
+    const v1FeesWntFactor = await dataStore.getUint(keys.FEE_DISTRIBUTOR_V1_FEES_WNT_FACTOR);
+    const feesV1UsdInWnt = feesV1Usd.mul(v1FeesWntFactor).div(FLOAT_PRECISION);
+    const v2FeesWntFactor = await dataStore.getUint(keys.FEE_DISTRIBUTOR_V2_FEES_WNT_FACTOR);
+    const feesV2UsdInWnt = feesV2Usd.mul(v2FeesWntFactor).div(FLOAT_PRECISION);
+    const totalFeesInWnt = feesV1UsdInWnt.add(feesV2UsdInWnt);
+    const chainlinkTreasuryWntAmount = totalWntBalance.mul(feesV2UsdInWnt).div(totalFeesInWnt);
 
     const chainlinkFactor = await dataStore.getUint(keys.FEE_DISTRIBUTOR_CHAINLINK_FACTOR);
-    const wntForChainlink = chainlinkTreasuryWnt.mul(chainlinkFactor).div(expandDecimals(1, 30));
-    const wntForTreasuryPre = chainlinkTreasuryWnt.sub(wntForChainlink).sub(keeperCostsV2);
+    const wntForChainlink = chainlinkTreasuryWntAmount.mul(chainlinkFactor).div(FLOAT_PRECISION);
+    const wntForTreasuryPre = chainlinkTreasuryWntAmount.sub(wntForChainlink).sub(keeperCostsV2);
     const wntReferralRewardsInUsd = expandDecimals(35, 30);
     const wntPrice = await dataStore.getUint(keys.FEE_DISTRIBUTOR_WNT_PRICE);
     const wntForReferralRewards = wntReferralRewardsInUsd.div(wntPrice);
@@ -1430,13 +1444,15 @@ describe("FeeDistributor", function () {
     await dataStore.setUint(keys.FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP, initialTimestamp);
     await dataStoreD.setUint(keys.FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP, initialTimestamp);
 
+    await configD.setUint(keys.FEE_DISTRIBUTOR_V1_FEES_WNT_FACTOR, "0x", expandDecimals(70, 28));
+    await configD.setUint(keys.FEE_DISTRIBUTOR_V2_FEES_WNT_FACTOR, "0x", expandDecimals(10, 28));
     await configD.setUint(
       keys.FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_AMOUNT,
       "0x",
       expandDecimals(1_000_000, 30)
     );
     await configD.setUint(keys.FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_ESGMX_AMOUNT, "0x", expandDecimals(10, 18));
-    await configD.setUint(keys.FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY, "0x", 600);
+    await configD.setUint(keys.FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY, "0x", 259200);
     await configD.setUint(keys.FEE_DISTRIBUTOR_GAS_LIMIT, "0x", 5_000_000);
     await dataStoreD.setUintArray(keys.FEE_DISTRIBUTOR_CHAIN_ID, chainIdsD);
     await configD.setUint(keys.FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID, encodeData(["uint256"], [chainIdA]), eidA);

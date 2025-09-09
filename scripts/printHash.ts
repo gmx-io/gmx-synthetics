@@ -1,5 +1,5 @@
 async function main() {
-  const str = "MAX_PNL_FACTOR_FOR_TRADERS";
+  const str = process.env.STR;
   console.log(ethers.utils.id(str));
   console.log(ethers.BigNumber.from(ethers.utils.id(str)).toString());
 }

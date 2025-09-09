@@ -60,8 +60,12 @@ contract ContributorHandler is ReentrancyGuard, RoleModule, BasicMulticall {
         dataStore.removeAddress(Keys.CONTRIBUTOR_TOKEN_LIST, token);
     }
 
-    function setContributorFundingAccount(address token, address account) external nonReentrant onlyContributorKeeper {
-        dataStore.setAddress(Keys.contributorFundingAccountKey(token), account);
+    function setContributorFundingAccount(address token, address fundingAccount) external nonReentrant onlyContributorKeeper {
+        dataStore.setAddress(Keys.contributorFundingAccountKey(token), fundingAccount);
+    }
+
+    function setCustomContributorFundingAccount(address account, address token, address fundingAccount) external nonReentrant onlyContributorKeeper {
+        dataStore.setAddress(Keys.customContributorFundingAccountKey(account, token), fundingAccount);
     }
 
     function setMinContributorPaymentInterval(uint256 interval) external nonReentrant onlyController {
@@ -108,18 +112,24 @@ contract ContributorHandler is ReentrancyGuard, RoleModule, BasicMulticall {
 
         for (uint256 i; i < tokenCount; i++) {
             address token = tokens[i];
-            address vault = dataStore.getAddress(Keys.contributorFundingAccountKey(token));
+            address mainFundingAccount = dataStore.getAddress(Keys.contributorFundingAccountKey(token));
 
             for (uint256 j; j < accountCount; j++) {
                 address account = accounts[j];
+                address fundingAccount = dataStore.getAddress(Keys.customContributorFundingAccountKey(account, token));
+                if (fundingAccount == address(0)) {
+                    fundingAccount = mainFundingAccount;
+                }
+
                 uint256 amount = dataStore.getUint(Keys.contributorTokenAmountKey(account, token));
 
-                IERC20(token).safeTransferFrom(vault, account, amount);
+                IERC20(token).safeTransferFrom(fundingAccount, account, amount);
 
                 EventUtils.EventLogData memory eventData;
-                eventData.addressItems.initItems(2);
-                eventData.addressItems.setItem(0, "account", account);
-                eventData.addressItems.setItem(1, "token", token);
+                eventData.addressItems.initItems(3);
+                eventData.addressItems.setItem(0, "fundingAccount", fundingAccount);
+                eventData.addressItems.setItem(1, "account", account);
+                eventData.addressItems.setItem(2, "token", token);
                 eventData.uintItems.initItems(1);
                 eventData.uintItems.setItem(0, "amount", amount);
                 eventEmitter.emitEventLog1(

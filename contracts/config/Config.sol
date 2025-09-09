@@ -569,6 +569,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_KEEPER_COSTS] = true;
         allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_CHAINLINK_FACTOR] = true;
         allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY] = true;
+        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_V1_FEES_WNT_FACTOR] = true;
+        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_V2_FEES_WNT_FACTOR] = true;
     }
 
     function _initAllowedLimitedBaseKeys() internal {
