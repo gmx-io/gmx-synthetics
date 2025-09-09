@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 
 import "./Order.sol";
 import "../market/Market.sol";
-
+import "../position/Position.sol";
 import "../data/DataStore.sol";
 import "../event/EventEmitter.sol";
 import "../referral/IReferralStorage.sol";
