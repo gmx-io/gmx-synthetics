@@ -102,7 +102,7 @@ async function main() {
   const provider = hre.ethers.provider;
 
   const predecessor = ethers.constants.HashZero;
-  const salt = ethers.constants.HashZero;
+  const salt = process.env.SALT || ethers.constants.HashZero;
 
   // Check that deployed contracts are matching with local sources
   const contractInfos: Map<string, ContractInfo> = new Map();
