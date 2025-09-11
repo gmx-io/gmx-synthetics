@@ -267,6 +267,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0xC1D1354A948bf717d6d873e5c0bE614359AF954D": true, // MultichainTransferRouter
       },
       ROLE_ADMIN: {
+        "0x4bd1cdAab4254fC43ef6424653cA2375b4C94C0E": true, // GMX DAO
         "0xC181eB022F33b8ba808AD96348B03e8A753A859b": true, // TimelockConfig
         "0x8c6e20A2211D1b70cD7c0789EcE44fDB19567621": true, // ConfigTimelockController
       },
