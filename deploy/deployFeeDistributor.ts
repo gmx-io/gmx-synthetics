@@ -46,6 +46,11 @@ const func = createDeployFunction({
     await grantRoleIfNotGranted(deployedContract, "CONTROLLER");
     await grantRoleIfNotGranted(deployedContract, "FEE_KEEPER");
   },
+  // FeeDistributor should not be automatically re-deployed as the
+  // new FeeDistributor would not be whitelisted for bridging GMX tokens
+  // if a new FeeDistributor is deployed, action is required to whitelist it
+  // after deployment
+  id: "FeeDistributor_1",
 });
 
 export default func;
