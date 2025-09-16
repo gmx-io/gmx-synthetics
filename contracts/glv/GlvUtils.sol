@@ -44,7 +44,8 @@ library GlvUtils {
         bool forceCalculation
     ) public view returns (uint256) {
         if (!forceCalculation) {
-            Price.Props memory glvTokenPrice = oracle.getPrimaryPriceIfNotEmpty(glv);
+            (uint256 minPrice, uint256 maxPrice) = oracle.primaryPrices(glv);
+            Price.Props memory glvTokenPrice = Price.Props(minPrice, maxPrice);
             if (!glvTokenPrice.isEmpty()) {
                 uint256 supply = ERC20(glv).totalSupply();
                 return (maximize ? glvTokenPrice.max : glvTokenPrice.min) * supply;

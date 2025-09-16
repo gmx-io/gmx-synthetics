@@ -159,27 +159,12 @@ contract Oracle is IOracle, RoleModule {
 
     // @dev get the primary price of a token
     // @param token the token to get the price for
-    // @return the primary price of a token. reverts if the price is empty and token is not zero address
-    function getPrimaryPrice(address token) external view returns (Price.Props memory) {
-        return _getPrimaryPrice(token, true);
-    }
-
-    // @dev get the primary price of a token
-    // @param token the token to get the price for
-    // @return the primary price of a token. returns empty price if price was not set
-    function getPrimaryPriceIfNotEmpty(address token) external view returns (Price.Props memory) {
-        return _getPrimaryPrice(token, false);
-    }
-
-    // @dev get the primary price of a token
-    // @param token the token to get the price for
-    // @param raiseOnEmpty whether to revert if the price is empty
     // @return the primary price of a token
-    function _getPrimaryPrice(address token, bool raiseOnEmpty) internal view returns (Price.Props memory) {
+    function getPrimaryPrice(address token) external view returns (Price.Props memory) {
         if (token == address(0)) { return Price.Props(0, 0); }
 
         Price.Props memory price = primaryPrices[token];
-        if (price.isEmpty() && raiseOnEmpty) {
+        if (price.isEmpty()) {
             revert Errors.EmptyPrimaryPrice(token);
         }
 
