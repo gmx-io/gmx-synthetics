@@ -2,8 +2,6 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-
 import "../glv/glvShift/GlvShiftUtils.sol";
 import "./BaseOrderHandler.sol";
 import "../oracle/Oracle.sol";
