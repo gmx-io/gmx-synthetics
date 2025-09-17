@@ -273,7 +273,7 @@ describe("MultichainLifeCycle", () => {
     ); // GLV
     // user's multichain assets
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.approximately(
-      "5089442976715544", // 0.0051 ETH --> execution fee refunds (from deposit + glvDeposit)
+      "5093772976750184", // 0.0051 ETH --> execution fee refunds (from deposit + glvDeposit)
       expandDecimals(1, 12)
     );
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0);

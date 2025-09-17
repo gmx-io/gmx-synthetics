@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "../../event/EventEmitter.sol";
 import "../../multichain/MultichainVault.sol";
 import "../../shift/ShiftUtils.sol";
+import "../../exchange/IShiftHandler.sol";
 import "../GlvUtils.sol";
 import "../GlvVault.sol";
 
@@ -34,6 +35,7 @@ library GlvShiftUtils {
         IDepositHandler depositHandler;
         IWithdrawalHandler withdrawalHandler;
         ISwapHandler swapHandler;
+        IShiftHandler shiftHandler;
         bytes32 key;
         address keeper;
     }
@@ -183,7 +185,7 @@ library GlvShiftUtils {
             startingGas: gasleft()
         });
 
-        cache.receivedMarketTokens = ShiftUtils.executeShift(executeShiftParams, cache.shift, true);
+        cache.receivedMarketTokens = params.shiftHandler.executeShiftFromController(executeShiftParams, cache.shift);
 
         GlvToken(payable(glvShift.glv())).syncTokenBalance(glvShift.toMarket());
 

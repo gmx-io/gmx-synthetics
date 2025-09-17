@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./BaseHandler.sol";
 
 import "../glv/glvShift/GlvShiftUtils.sol";
+import "../exchange/IShiftHandler.sol";
 
 contract GlvShiftHandler is BaseHandler, ReentrancyGuard {
     using GlvShift for GlvShift.Props;
@@ -14,6 +15,7 @@ contract GlvShiftHandler is BaseHandler, ReentrancyGuard {
     MultichainVault public immutable multichainVault;
     GlvVault public immutable glvVault;
     ShiftVault public immutable shiftVault;
+    IShiftHandler public immutable shiftHandler;
     IDepositHandler public immutable depositHandler;
     IWithdrawalHandler public immutable withdrawalHandler;
     ISwapHandler public immutable swapHandler;
@@ -28,6 +30,7 @@ contract GlvShiftHandler is BaseHandler, ReentrancyGuard {
         ShiftVault _shiftVault,
         IDepositHandler _depositHandler,
         IWithdrawalHandler _withdrawalHandler,
+        IShiftHandler _shiftHandler,
         ISwapHandler _swapHandler
     ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {
         multichainVault = _multichainVault;
@@ -35,6 +38,7 @@ contract GlvShiftHandler is BaseHandler, ReentrancyGuard {
         shiftVault = _shiftVault;
         depositHandler = _depositHandler;
         withdrawalHandler = _withdrawalHandler;
+        shiftHandler = _shiftHandler;
         swapHandler = _swapHandler;
     }
 
@@ -81,6 +85,7 @@ contract GlvShiftHandler is BaseHandler, ReentrancyGuard {
             depositHandler: depositHandler,
             withdrawalHandler: withdrawalHandler,
             swapHandler: swapHandler,
+            shiftHandler: shiftHandler,
             oracle: oracle,
             keeper: keeper
         });
