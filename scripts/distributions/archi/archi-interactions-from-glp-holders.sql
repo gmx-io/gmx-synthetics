@@ -1,6 +1,6 @@
 -- Dune Query to find GLP holders who interacted with Archi Finance vault contracts
 -- This query identifies addresses from the 44,910 GLP holders that have interacted with Archi vaults
--- query here: https://dune.com/queries/5784056
+-- query here: https://dune.com/queries/5791912
 
 -- 1. Define Archi Finance contract addresses and their names
 WITH archi_contracts AS (
@@ -93,7 +93,7 @@ archi_interactions AS (
   INNER JOIN archi_contracts ac ON t.to = ac.contract_address
   INNER JOIN glp_holders gh ON t."from" = gh.account
   WHERE t.success = true
-    AND t.type IN ('call', 'create', 'create2')
+    AND t.type IN ('call', 'delegatecall')
     AND t.block_time >= TIMESTAMP '2022-11-11' -- archi deployer funded at Nov-29-2022
   GROUP BY 1, 2, 3
 )
@@ -105,16 +105,14 @@ SELECT
   gh.pool_share,
   gh.approximate_distribution_usd,
   gh.is_contract,
-  gh.contract_name as user_contract_name,
   COUNT(DISTINCT ai.archi_contract) as unique_archi_contracts_interacted,
   SUM(ai.tx_count) as total_transactions,
   MIN(ai.first_interaction) as earliest_archi_interaction,
   MAX(ai.last_interaction) as latest_archi_interaction,
   SUM(ai.total_eth_sent) as total_eth_sent_to_archi,
-  ARRAY_AGG(DISTINCT ai.contract_name ORDER BY ai.contract_name) as archi_contracts_used,
-
+  ARRAY_AGG(DISTINCT ai.contract_name ORDER BY ai.contract_name) as archi_contracts_used
 
 FROM glp_holders gh
 INNER JOIN archi_interactions ai ON gh.account = ai.user_address
-GROUP BY 1, 2, 3, 4, 5, 6
+GROUP BY 1, 2, 3, 4, 5
 ORDER BY gh.approximate_distribution_usd DESC, SUM(ai.tx_count) DESC;
