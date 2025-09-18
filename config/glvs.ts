@@ -100,6 +100,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("VVV", arbitrum_ethUsdcDefaultCap, 1),
           createGlvMarketConfig("MORPHO", arbitrum_ethUsdcDefaultCap, 1),
           createGlvMarketConfig("LINK", arbitrum_ethUsdcDefaultCap, 1),
+          // createGlvMarketConfig("ZORA", arbitrum_ethUsdcDefaultCap, 1),
+          // createGlvMarketConfig("KTA", arbitrum_ethUsdcDefaultCap, 1),
         ],
       },
       {

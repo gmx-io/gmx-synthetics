@@ -876,6 +876,20 @@ const config: {
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },
+    ZORA: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x000318ed7a378324925d265f0dd2908a3802241fed9a3317da12b53ec8ecc399",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    KTA: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003007a5c72695f6f389c161d8851c2496ab5fc9b8978b9bf66ff0f3ecd4e6b",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
     WLFI: {
       synthetic: true,
       decimals: 18, // https://etherscan.io/token/0xdA5e1988097297dCdc1f90D4dFE7909e847CBeF6#readProxyContract
