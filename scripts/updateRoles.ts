@@ -19,15 +19,15 @@ async function getTimelock(): Promise<TimelockConfig> {
   const network = hre.network.name;
 
   if (network === "arbitrum") {
-    return await ethers.getContractAt("TimelockConfig", "0x625D4b5456f065756De8d618dE094bE7618e8A0d");
+    return await ethers.getContractAt("TimelockConfig", "0xC181eB022F33b8ba808AD96348B03e8A753A859b");
   }
 
   if (network === "avalanche") {
-    return await ethers.getContractAt("TimelockConfig", "0x40794bcBCFb347689fa8c4da69f6405Cf0ECf2C5");
+    return await ethers.getContractAt("TimelockConfig", "0xdD67459D3e98EdDAA9770EbB7C38fF8F643f229f");
   }
 
   if (network === "botanix") {
-    return await ethers.getContractAt("TimelockConfig", "0x8fB97fEfF5f7CfbE9c63D51F6CbBC914E425d965");
+    return await ethers.getContractAt("TimelockConfig", "0xc7D8E3561f1247EBDa491bA5f042699C2807C33C");
   }
 
   throw new Error("Unsupported network");
@@ -102,7 +102,7 @@ async function main() {
   const provider = hre.ethers.provider;
 
   const predecessor = ethers.constants.HashZero;
-  const salt = ethers.constants.HashZero;
+  const salt = process.env.SALT || ethers.constants.HashZero;
 
   // Check that deployed contracts are matching with local sources
   const contractInfos: Map<string, ContractInfo> = new Map();

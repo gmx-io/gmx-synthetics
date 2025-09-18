@@ -483,7 +483,7 @@ const config: {
       // minCollateralFactor of 0.005 (0.5%) when open interest is 83,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6e-11"),
 
-      maxOpenInterest: decimalToFloat(60_000_000),
+      maxOpenInterest: decimalToFloat(95_000_000),
 
       atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },
@@ -580,7 +580,7 @@ const config: {
       // minCollateralFactor of 0.005 (0.5%) when open interest is 83,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("6e-11"),
 
-      maxOpenInterest: decimalToFloat(80_000_000),
+      maxOpenInterest: decimalToFloat(110_000_000),
 
       atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
@@ -3042,7 +3042,7 @@ const config: {
 
       maxPnlFactorForTraders: percentageToFloat("90%"), // default is 60%
 
-      maxOpenInterest: decimalToFloat(1_000_000),
+      maxOpenInterest: decimalToFloat(1),
       maxPoolUsdForDeposit: decimalToFloat(1_500_000), // 1.5x the max open interest
 
       maxLongTokenPoolAmount: expandDecimals(1000, 18), // ~2M USD (2x the max open interest)
@@ -3549,11 +3549,11 @@ const config: {
       openInterestReserveFactor: percentageToFloat("100%"),
       maxPnlFactorForTraders: percentageToFloat("50%"),
 
-      maxOpenInterest: decimalToFloat(500_000),
-      maxPoolUsdForDeposit: decimalToFloat(750_000),
+      maxOpenInterest: decimalToFloat(1_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(1_500_000),
 
-      maxLongTokenPoolAmount: expandDecimals(210, 18),
-      maxShortTokenPoolAmount: expandDecimals(900000, 6),
+      maxLongTokenPoolAmount: expandDecimals(400, 18),
+      maxShortTokenPoolAmount: expandDecimals(1_800_000, 6),
     },
     {
       tokens: { indexToken: "BRETT", longToken: "WETH", shortToken: "USDC" },
