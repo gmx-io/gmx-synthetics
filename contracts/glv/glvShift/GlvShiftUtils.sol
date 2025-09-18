@@ -275,12 +275,12 @@ library GlvShiftUtils {
 
         uint256 glvMaxShiftPriceImpactFactor = dataStore.getUint(Keys.glvShiftMaxLossFactorKey(glv));
 
-        uint256 effectivePriceImpactFactor = Precision.toFactor(
+        uint256 glvShiftLoss = Precision.toFactor(
             marketTokensUsd - receivedMarketTokensUsd,
             marketTokensUsd
         );
-        if (effectivePriceImpactFactor > glvMaxShiftPriceImpactFactor) {
-            revert Errors.GlvShiftMaxLossExceeded(effectivePriceImpactFactor, glvMaxShiftPriceImpactFactor);
+        if (glvShiftLoss > glvMaxShiftPriceImpactFactor) {
+            revert Errors.GlvShiftMaxLossExceeded(glvShiftLoss, glvMaxShiftPriceImpactFactor);
         }
     }
 }
