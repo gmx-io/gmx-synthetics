@@ -502,6 +502,16 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 12_000,
     },
+    ZORA: {
+      negativePositionImpactFactor: exponentToFloat("2.35e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    KTA: {
+      negativePositionImpactFactor: exponentToFloat("2.23e-7"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 11_989,
+    },
     ALGO: {
       negativePositionImpactFactor: exponentToFloat("1.47e-8"),
       expectedSwapImpactRatio: 20_000,
