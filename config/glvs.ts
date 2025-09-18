@@ -1,6 +1,6 @@
 import { BigNumberish } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { percentageToFloat, expandDecimals, numberToBigNumber } from "../utils/math";
+import { percentageToFloat, expandDecimals, numberToBigNumber, bigNumberify } from "../utils/math";
 
 type GlvConfig = {
   name: string;
@@ -29,13 +29,14 @@ type GlvConfig = {
 function createGlvMarketConfig(
   tokenSymbol: string,
   usdCap: number,
-  tokenPrice: number
+  tokenPrice: number,
+  isMarketDisabled = false
 ): GlvConfig[any]["markets"][number] {
   return {
     indexToken: tokenSymbol,
-    glvMaxMarketTokenBalanceAmount: numberToBigNumber(usdCap / tokenPrice, 18),
-    glvMaxMarketTokenBalanceUsd: numberToBigNumber(usdCap, 30),
-    isMarketDisabled: false,
+    glvMaxMarketTokenBalanceAmount: isMarketDisabled ? bigNumberify(0) : numberToBigNumber(usdCap / tokenPrice, 18),
+    glvMaxMarketTokenBalanceUsd: isMarketDisabled ? bigNumberify(0) : numberToBigNumber(usdCap, 30),
+    isMarketDisabled,
   };
 }
 
@@ -83,7 +84,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("ONDO", arbitrum_ethUsdcDefaultCap, 1.32),
           createGlvMarketConfig("FET", arbitrum_ethUsdcDefaultCap, 1.35),
           createGlvMarketConfig("AIXBT", arbitrum_ethUsdcDefaultCap, 1.45),
-          createGlvMarketConfig("MKR", arbitrum_ethUsdcDefaultCap, 1.51),
+          createGlvMarketConfig("MKR", arbitrum_ethUsdcDefaultCap, 1.51, true),
           createGlvMarketConfig("DOLO", arbitrum_ethUsdcDefaultCap, 1.25),
           createGlvMarketConfig("ZRO", arbitrum_ethUsdcDefaultCap, 1.54),
           createGlvMarketConfig("CRV", arbitrum_ethUsdcDefaultCap, 1.23),
