@@ -878,14 +878,14 @@ const config: {
     },
     ZORA: {
       synthetic: true,
-      decimals: 18,
+      decimals: 18, // https://basescan.org/token/0x1111111111166b7fe7bd91427724b487980afc69#readContract
       dataStreamFeedId: "0x000318ed7a378324925d265f0dd2908a3802241fed9a3317da12b53ec8ecc399",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },
     KTA: {
       synthetic: true,
-      decimals: 18,
+      decimals: 18, // https://basescan.org/address/0xc0634090F2Fe6c6d75e61Be2b949464aBB498973#readContract
       dataStreamFeedId: "0x0003007a5c72695f6f389c161d8851c2496ab5fc9b8978b9bf66ff0f3ecd4e6b",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
