@@ -975,8 +975,8 @@ const config: {
       // minCollateralFactor of 0.005 (0.5%) when open interest is 25,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2e-10"),
 
-      reserveFactor: percentageToFloat("355%"),
-      openInterestReserveFactor: percentageToFloat("350%"),
+      reserveFactor: percentageToFloat("380%"),
+      openInterestReserveFactor: percentageToFloat("375%"),
 
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(22, 30 + 9).div(SECONDS_PER_DAY), // 22 SOL / day
       minPositionImpactPoolAmount: expandDecimals(9574, 9), // 9574 SOL
