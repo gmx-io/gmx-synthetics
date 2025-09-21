@@ -109,7 +109,7 @@ export async function validateSourceCode(provider: JsonRpcProvider, contractInfo
     // also extracts contract name
     await validateWithExplorer(contractInfo);
   } catch (error) {
-    console.error(`Sourcify validation failed: ${error}.\nFallback to compilation artifact validation`);
+    console.error(`Explorer validation failed: ${error}.\nFallback to compilation artifact validation`);
     await compareContractBytecodes(provider, contractInfo);
   }
 }
@@ -118,12 +118,16 @@ export async function validateSourceCode(provider: JsonRpcProvider, contractInfo
 const SOURCIFY_API_ENDPOINT = "https://sourcify.dev/server/v2/contract";
 
 const SOURCIFY_CACHE_VERSION = 1;
-const sourcifyCache = new FileCache<SourcifyResponse>("sourcifyInfo.json", SOURCIFY_CACHE_VERSION);
+const sourcifyCache = new FileCache<SourcifyResponse>(
+  `sourcifyInfo-${hre.network.config.chainId}.json`,
+  SOURCIFY_CACHE_VERSION
+);
 
 async function getSourcifyData(contractAddress: string): Promise<SourcifyResponse> {
+  console.log(`Trying to validate ${contractAddress} via sourcify`);
   const chainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
-  if (sourcifyCache.has(`${contractAddress}-${chainId}`)) {
-    return sourcifyCache.get(`${contractAddress}-${chainId}`);
+  if (sourcifyCache.has(`${contractAddress}`)) {
+    return sourcifyCache.get(`${contractAddress}`);
   }
   const url = `${SOURCIFY_API_ENDPOINT}/${chainId}/${contractAddress}`;
 
@@ -136,14 +140,15 @@ async function getSourcifyData(contractAddress: string): Promise<SourcifyRespons
   if (response.status != 200) {
     throw new Error("sources are not validated");
   }
-  sourcifyCache.set(`${contractAddress}-${chainId}`, response.data);
+  sourcifyCache.set(`${contractAddress}`, response.data);
   return response.data;
 }
 
 async function getSourcesFromRoutescan(contractAddress: string): Promise<SourcifyResponse> {
+  console.log(`Trying to validate ${contractAddress} via routescan`);
   const chainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
-  if (sourcifyCache.has(`${contractAddress}-${chainId}`)) {
-    return sourcifyCache.get(`${contractAddress}-${chainId}`);
+  if (sourcifyCache.has(`${contractAddress}`)) {
+    return sourcifyCache.get(`${contractAddress}`);
   }
 
   const apiUrl = getExplorerUrl(hre.network.name);
@@ -151,6 +156,7 @@ async function getSourcesFromRoutescan(contractAddress: string): Promise<Sourcif
   const response: any = await got
     .get(`${apiUrl}api`, {
       searchParams: {
+        chainid: hre.network.config.chainId,
         module: "contract",
         action: "getsourcecode",
         address: contractAddress,
@@ -178,20 +184,17 @@ async function getSourcesFromRoutescan(contractAddress: string): Promise<Sourcif
     match: "EXACT",
     creationMatch: "EXACT",
   };
-  sourcifyCache.set(`${contractAddress}-${chainId}`, sourcifyResponse);
+  sourcifyCache.set(`${contractAddress}`, sourcifyResponse);
   return sourcifyResponse;
 }
 
 async function validateWithExplorer(contractInfo: ContractInfo): Promise<boolean> {
   let sourcifyData: SourcifyResponse;
-  const chainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
-  if (chainId === 3637) {
-    //botanix
-    console.log(`Trying to validate ${contractInfo.address} via routescan`);
-    sourcifyData = await getSourcesFromRoutescan(contractInfo.address);
-  } else {
-    console.log(`Trying to validate ${contractInfo.address} via sourcify`);
+  try {
     sourcifyData = await getSourcifyData(contractInfo.address);
+  } catch (error) {
+    console.error(`Failed to validate with sourcify, fallback to routescan: ${error}`);
+    sourcifyData = await getSourcesFromRoutescan(contractInfo.address);
   }
 
   contractInfo.name = sourcifyData.compilation.name;
