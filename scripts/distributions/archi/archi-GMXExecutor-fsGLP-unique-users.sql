@@ -4,6 +4,9 @@
 -- GMXExecutor created: April 3, 2023
 -- query here: https://dune.com/queries/5811632
 
+-- archi deployer seems to burn remaining fsGLP tokens
+-- https://arbiscan.io/tx/0xab2a1df67f1bce9fa215d818b876d9e1884cc85a42eca6954f078db26eea393a
+
 WITH fsglp_transfers AS (
   SELECT
     evt_block_number,
