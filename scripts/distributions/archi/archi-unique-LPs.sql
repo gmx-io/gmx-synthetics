@@ -1,9 +1,8 @@
 -- All Vaults User Summary Analysis
--- Combines LP activity (addLiquidity, removeLiquidity) across WETH, WBTC, USDT, and USDC vaults
+-- Combines activity across WETH, WBTC, USDT, and USDC vaults
 -- Shows each user's positions across all vaults in a single row
+-- net positive amount means more funds were deposited, negatie means more funds were withdrawn
 -- https://dune.com/queries/5818540
-
--- Note: Unclaimed rewards are not included in this analysis. Would need to export csv and read `pendingRewards(user)`
 
 WITH all_vault_transactions AS (
     -- WETH Vault transactions
