@@ -5,7 +5,7 @@
 -- HOW THIS QUERY WORKS:
 -- This query shows ALL individual CreditCaller transactions (unique by tx_hash),
 -- with decoded parameters showing tokens used and amounts for each transaction.
--- Each row represents one transaction with full details.
+-- Each row represents one transaction with full details, ordered chronologically.
 --
 -- TRANSACTION TYPES TRACKED:
 -- 1. openLendCredit: Create leveraged position (position goes to _recipient)
@@ -13,12 +13,14 @@
 -- 3. liquidate: Liquidate someone else's position (affects both liquidator and victim)
 --
 -- COLUMNS EXPLAINED:
--- - tx_hash: Unique transaction hash
--- - method_name: Function called (openLendCredit, repayCredit, liquidate)
+-- - #: Row number (chronological order)
 -- - tx_sender: Who sent the transaction (msg.sender)
 -- - recipient: Target user (position owner or liquidation victim)
+-- - block_time: When the transaction occurred
+-- - method_name: Function called (openLendCredit, repayCredit, liquidate)
 -- - token_used: Token symbol used as collateral (WETH, WBTC, USDC, USDT)
 -- - amount: Decoded token amount from transaction parameters
+-- - estimated_usd: Estimated USD value (using prices as of Jul 9, 2025, 12:30 UTC)
 -- - eth_sent: ETH value sent with transaction
 -- - arbiscan_link: Direct link to transaction on Arbiscan
 
@@ -84,7 +86,7 @@ WITH credit_transactions AS (
 
 -- Final result with unique rows by transaction hash
 SELECT
-    ROW_NUMBER() OVER (ORDER BY block_time DESC) as "#",
+    ROW_NUMBER() OVER (ORDER BY block_time ASC) as "#",
 
     -- User info
     CAST(tx_sender AS VARCHAR) as tx_sender,
@@ -108,6 +110,20 @@ SELECT
     END as token_used,
 
     ROUND(amount, 6) as amount,
+
+    -- Estimated USD value (using prices as of Jul 9, 2025, 12:30 UTC)
+    ROUND(
+        CASE
+            WHEN token_address = '0x82af49447d8a07e3bd95bd0d56f35241523fbab1' THEN amount * 2750  -- WETH = $2,750
+            WHEN token_address = '0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f' THEN amount * 110000  -- WBTC = $110,000
+            WHEN token_address = '0xff970a61a04b1ca14834a43f5de4533ebddb5cc8' THEN amount * 1  -- USDC = $1
+            WHEN token_address = '0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9' THEN amount * 1  -- USDT = $1
+            WHEN token_address = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee' THEN eth_sent * 2750  -- ETH = $2,750
+            ELSE 0
+        END,
+        2
+    ) as estimated_usd,
+
     ROUND(eth_sent, 6) as eth_sent,
 
     -- Arbiscan link
@@ -115,4 +131,4 @@ SELECT
 
 FROM credit_transactions
 WHERE method_name IN ('openLendCredit', 'repayCredit', 'liquidate')
-ORDER BY block_time DESC
+ORDER BY block_time ASC
