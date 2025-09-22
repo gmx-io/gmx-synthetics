@@ -1,6 +1,6 @@
--- Find contracts deployed by 0x60A3D336c39e8faC40647142d3068780B4Bc4C93 and check their GLP balances
--- GLP Token (Reward Tracker): 0x1aDDD80E6039594eE970E5872D247bf0414C8903
--- query here: https://dune.com/queries/5786459
+-- Find contracts deployed by Archi Deployer 0x60A3D336c39e8faC40647142d3068780B4Bc4C93 and check their GLP balances
+-- fsGLP (Reward Tracker): 0x1aDDD80E6039594eE970E5872D247bf0414C8903
+-- https://dune.com/queries/5786459
 
 WITH deployed_contracts AS (
   -- First, find all contracts deployed by the address
@@ -11,7 +11,7 @@ WITH deployed_contracts AS (
   FROM arbitrum.traces t
   LEFT JOIN arbitrum.contracts c ON c.address = t.address
   WHERE
-    t."from" = 0x60A3D336c39e8faC40647142d3068780B4Bc4C93
+    t."from" = 0x60A3D336c39e8faC40647142d3068780B4Bc4C93  -- Archi Deployer
     AND t.type IN ('create', 'create2')
     AND t.success = true
     AND t.address IS NOT NULL
@@ -33,7 +33,7 @@ glp_transfers AS (
       ELSE -bytearray_to_uint256(l.data) / 1e18 -- Sent
     END as balance_change
   FROM arbitrum.logs l
-  WHERE l.contract_address = 0x1aDDD80E6039594eE970E5872D247bf0414C8903
+  WHERE l.contract_address = 0x1aDDD80E6039594eE970E5872D247bf0414C8903  -- fsGLP
     AND l.topic1 = 0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef
 ),
 
@@ -54,12 +54,7 @@ SELECT
   contract_address,
   contract_name,
   DATE_TRUNC('minute', deployment_time) as deployed_at,
-  ROUND(glp_balance, 6) as glp_balance,
-  CASE
-    WHEN glp_balance > 0 THEN '✅ Has GLP'
-    ELSE '❌ No GLP'
-  END as glp_status,
-  CONCAT('https://arbiscan.io/address/', CAST(contract_address AS VARCHAR)) as arbiscan_link
+  ROUND(glp_balance, 6) as glp_balance
 
 FROM glp_balances
 ORDER BY glp_balance DESC, deployment_time ASC

@@ -2,7 +2,7 @@ import { ethers } from "ethers";
 import fs from "fs";
 import path from "path";
 
-// npx hardhat run --network arbitrum scripts/distributions/archi/checkArchiGLPFromList.ts
+// npx hardhat run --network arbitrum scripts/distributions/archi/checkArchiGLP.ts
 
 // GLP Token contract address on Arbitrum
 // https://docs.gmx.io/docs/providing-liquidity/v1

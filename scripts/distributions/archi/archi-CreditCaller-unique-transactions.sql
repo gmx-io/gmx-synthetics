@@ -1,6 +1,6 @@
 -- CreditCaller Transaction Analysis
 -- Contract: 0xcEd4D9293002964fEA40F984c6d7e20c5eD49D35 (CreditCallerProxy)
--- https://dune.com/queries/5818949
+-- https://dune.com/queries/5819159
 --
 -- HOW THIS QUERY WORKS:
 -- This query shows ALL individual CreditCaller transactions (unique by tx_hash),
