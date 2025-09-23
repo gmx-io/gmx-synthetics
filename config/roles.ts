@@ -234,6 +234,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x7F01614cA5198Ec979B1aAd1DAF0DE7e0a215BDF": true, // Oracle
         "0xb8fc96d7a413C462F611A7aC0C912c2FE26EAbC4": true, // FeeHandler Oracle
         "0x87d66368cD08a7Ca42252f5ab44B2fb6d1Fb8d15": true, // ExchangeRouter
+        "0x5aC4e27341e4cCcb3e5FD62f9E62db2Adf43dd57": true, // V2.1 ExchangeRouter
         "0x5b9A353F18d543B9F8a57B2AE50a4FBc80033EC1": true, // SubaccountRouter
         "0x10Fa5Bd343373101654E896B43Ca38Fd8f3789F9": true, // GlvRouter
         "0x0C08518C41755C6907135266dCCf09d51aE53CC4": true, // GelatoRelayRouter
@@ -262,6 +263,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       },
       ROUTER_PLUGIN: {
         "0x87d66368cD08a7Ca42252f5ab44B2fb6d1Fb8d15": true, // ExchangeRouter
+        "0x5aC4e27341e4cCcb3e5FD62f9E62db2Adf43dd57": true, // V2.1 ExchangeRouter
         "0x5b9A353F18d543B9F8a57B2AE50a4FBc80033EC1": true, // SubaccountRouter
         "0x10Fa5Bd343373101654E896B43Ca38Fd8f3789F9": true, // GlvRouter
         "0x0C08518C41755C6907135266dCCf09d51aE53CC4": true, // GelatoRelayRouter
