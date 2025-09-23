@@ -4602,6 +4602,8 @@ const config: {
       ...fundingRateConfig_Low,
       ...borrowingRateConfig_LowMax_WithLowerBase,
 
+      swapFeeFactorForNegativeImpact: percentageToFloat("0.5%"), // default is 0.07%
+
       reserveFactor: percentageToFloat("135%"),
       openInterestReserveFactor: percentageToFloat("130%"),
 
