@@ -380,7 +380,7 @@ task("dependencies", "Print dependencies for a contract")
     const dependencies = graph.getResolvedFiles().map((value) => {
       return value.sourceName;
     });
-    console.log(dependencies);
+    console.log(JSON.stringify(dependencies, null, 2));
     return graph;
   });
 
