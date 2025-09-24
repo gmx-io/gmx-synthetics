@@ -1,12 +1,14 @@
 export const ROLES_TO_ADD = [
   {
-    role: "CONTROLLER",
-    member: "0x5ac4e27341e4cccb3e5fd62f9e62db2adf43dd57",
-    contractName: "ExchangeRouter",
+    role: "CONFIG_KEEPER",
+    member: "0xF86EF7f0BB90a05A932781C5Cb6eEFe55e486107",
   },
   {
-    role: "ROUTER_PLUGIN",
-    member: "0x5ac4e27341e4cccb3e5fd62f9e62db2adf43dd57",
-    contractName: "ExchangeRouter",
+    role: "CLAIM_ADMIN",
+    member: "0xF86EF7f0BB90a05A932781C5Cb6eEFe55e486107",
+  },
+  {
+    role: "MARKET_KEEPER",
+    member: "0xF86EF7f0BB90a05A932781C5Cb6eEFe55e486107",
   },
 ];
