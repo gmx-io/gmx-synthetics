@@ -1009,6 +1009,13 @@ const config: {
       },
       buybackMaxPriceImpactFactor: MID_BUYBACK_IMPACT,
     },
+    XPL: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003214a4da85e2fed5cdee4f7edb5f1205dec8dffaf0186e7663ddab99e1772",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
     ANIME: {
       address: "0x37a645648df29205c6261289983fb04ecd70b4b3",
       decimals: 18, // https://arbiscan.io/address/0x37a645648df29205c6261289983fb04ecd70b4b3#readContract
