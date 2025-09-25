@@ -1012,14 +1012,9 @@ const config: {
     XPL: {
       synthetic: true,
       decimals: 18,
-      dataStreamFeedId: "", // TODO: Get from Chainlink Data Streams
+      dataStreamFeedId: "0x0003214a4da85e2fed5cdee4f7edb5f1205dec8dffaf0186e7663ddab99e1772",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
-      priceFeed: {
-        address: "", // TODO: Get from Chainlink Price Feeds
-        decimals: 8,
-        heartbeatDuration: (24 + 1) * 60 * 60,
-      },
     },
     ANIME: {
       address: "0x37a645648df29205c6261289983fb04ecd70b4b3",
