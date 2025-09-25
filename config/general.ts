@@ -226,10 +226,12 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         "0x1a44076050125825900e736c501f859c50fE728c": true, // LZ Endpoint
       },
       srcChainIds: {
+        56: true, // BNB Smart Chain (BSC)
         8453: true, // Base
         42161: true, // Arbitrum
       },
       eids: {
+        56: 30184, // BNB Smart Chain (BSC)
         8453: 30184, // Base
         42161: 30110, // Arbitrum
       },
