@@ -355,7 +355,7 @@ const config: HardhatUserConfig = {
     ],
   },
   sourcify: {
-    enabled: false,
+    enabled: true,
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS ? true : false,
