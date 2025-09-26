@@ -221,9 +221,9 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       multichainProviders: {
         "0xA45B5130f36CDcA45667738e2a258AB09f4A5f7F": true, // StargatePoolNative
         "0xe8CDF27AcD73a434D661C84887215F7598e7d0d3": true, // StargatePoolUSDC
-        "0x91dd54AA8BA9Dfde8b956Cfb709a7c418f870e21": true, // WBTC-USDC GM Adapter
+        "0x91dd54AA8BA9Dfde8b956Cfb709a7c418f870e21": true, // BTC [WBTC-USDC] GM Adapter
         "0x27Ef981E6fcB274a6C5C75983725d265Fd3dCdac": true, // WBTC-USDC GLV Adapter
-        "0xfcff5015627B8ce9CeAA7F5b38a6679F65fE39a7": true, // WETH-USDC GM Adapter
+        "0xfcff5015627B8ce9CeAA7F5b38a6679F65fE39a7": true, // ETH [WETH-USDC] GM Adapter
         "0x8c92eaE643040fF0Fb65B423433001c176cB0bb6": true, // WETH-USDC GLV Adapter
       },
       multichainEndpoints: {
