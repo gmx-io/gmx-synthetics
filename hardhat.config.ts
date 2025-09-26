@@ -102,7 +102,7 @@ export const getBlockExplorerUrl = (network) => {
 // for etherscan, a single string is expected to be returned
 // for other networks / explorers, an object is needed
 const getEtherscanApiKey = () => {
-  if (process.env.HARDHAT_NETWORK === "arbitrum") {
+  if (["arbitrum", "arbitrumSepolia"].includes(process.env.HARDHAT_NETWORK)) {
     return process.env.ARBISCAN_API_KEY;
   }
 
@@ -303,7 +303,7 @@ const config: HardhatUserConfig = {
   // hardhat-deploy has issues with some contracts
   // https://github.com/wighawag/hardhat-deploy/issues/264
   etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY, // etherscan v2 uses a single apiKey for all networks
+    apiKey: getEtherscanApiKey(),
     customChains: [
       {
         network: "snowtrace",
