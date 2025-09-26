@@ -221,6 +221,10 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       multichainProviders: {
         "0xA45B5130f36CDcA45667738e2a258AB09f4A5f7F": true, // StargatePoolNative
         "0xe8CDF27AcD73a434D661C84887215F7598e7d0d3": true, // StargatePoolUSDC
+        "0x91dd54AA8BA9Dfde8b956Cfb709a7c418f870e21": true, // WBTC-USDC GM Adapter
+        "0x27Ef981E6fcB274a6C5C75983725d265Fd3dCdac": true, // WBTC-USDC GLV Adapter
+        "0xfcff5015627B8ce9CeAA7F5b38a6679F65fE39a7": true, // WETH-USDC GM Adapter
+        "0x8c92eaE643040fF0Fb65B423433001c176cB0bb6": true, // WETH-USDC GLV Adapter
       },
       multichainEndpoints: {
         "0x1a44076050125825900e736c501f859c50fE728c": true, // LZ Endpoint
@@ -228,10 +232,18 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       srcChainIds: {
         8453: true, // Base
         42161: true, // Arbitrum
+        1: true, // Ethereum
+        56: true, // BSC
+        3637: true, // Botanix
+        80094: true, // Berachain
       },
       eids: {
         8453: 30184, // Base
         42161: 30110, // Arbitrum
+        1: 30101, // Ethereum
+        56: 30102, // BSC
+        3637: 30376, // Botanix
+        80094: 30362, // Berachain
       },
     },
     avalanche: {
