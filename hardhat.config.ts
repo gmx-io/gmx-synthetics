@@ -34,6 +34,13 @@ import { collectDependents } from "./utils/dependencies";
 import { deleteFile, writeJsonFile } from "./utils/file";
 import { TASK_VERIFY } from "@nomicfoundation/hardhat-verify/internal/task-names";
 
+const getNetworkFromCLI = () => {
+  const i = process.argv.indexOf("--network");
+  return i !== -1 && process.argv[i + 1] ? process.argv[i + 1] : "hardhat";
+};
+
+const HARDHAT_NETWORK = getNetworkFromCLI();
+
 const getRpcUrl = (network) => {
   const defaultRpcs = {
     arbitrum: "https://arb1.arbitrum.io/rpc",
@@ -102,7 +109,7 @@ export const getBlockExplorerUrl = (network) => {
 // for etherscan, a single string is expected to be returned
 // for other networks / explorers, an object is needed
 const getEtherscanApiKey = () => {
-  if (["arbitrum", "arbitrumSepolia"].includes(process.env.HARDHAT_NETWORK)) {
+  if (["arbitrum", "arbitrumSepolia"].includes(HARDHAT_NETWORK)) {
     return process.env.ARBISCAN_API_KEY;
   }
 
