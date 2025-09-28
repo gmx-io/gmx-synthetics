@@ -12,7 +12,8 @@
     "lint:prettier": "prettier --write .prettierrc.json $(git diff --name-only --cached --diff-filter=AM | grep '\\.ts')",
     "fork:avalancheFuji": "npx hardhat node --fork https://api.avax-test.network/ext/bc/C/rpc --no-deploy --fork-block-number 16658163",
     "fork:avalanche": "npx hardhat node --fork https://api.avax.network/ext/bc/C/rpc --no-deploy",
-    "fork:arbitrum": "npx hardhat node --fork https://arb1.arbitrum.io/rpc --no-deploy"
+    "fork:arbitrum": "npx hardhat node --fork https://arb1.arbitrum.io/rpc --no-deploy",
+    "verify:tenderly": "npx hardhat --config hardhat.config.tenderly.ts run scripts/verifyTenderly.ts --network"
   },
   "author": "",
   "license": "ISC",

@@ -18,9 +18,6 @@ import "@nomiclabs/hardhat-ethers";
 import "@nomicfoundation/hardhat-chai-matchers";
 import "hardhat-abi-exporter";
 
-// Tenderly verification plugin - must be imported after hardhat plugins
-import "@tenderly/hardhat-tenderly";
-
 // extends hre with gmx domain data
 import "./config";
 
@@ -371,11 +368,6 @@ const config: HardhatUserConfig = {
   },
   abiExporter: {
     flat: true,
-  },
-  tenderly: {
-    username: process.env.TENDERLY_USERNAME,
-    project: process.env.TENDERLY_PROJECT || "gmx-synthetics",
-    privateVerification: process.env.TENDERLY_PRIVATE_VERIFICATION === "true",
   },
 };
 
