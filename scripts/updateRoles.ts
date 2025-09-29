@@ -103,6 +103,7 @@ async function main() {
 
   const predecessor = ethers.constants.HashZero;
   const salt = process.env.SALT || ethers.constants.HashZero;
+  console.log("salt", salt);
 
   // Check that deployed contracts are matching with local sources
   const contractInfos: Map<string, ContractInfo> = new Map();
