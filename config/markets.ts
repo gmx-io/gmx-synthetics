@@ -3549,11 +3549,11 @@ const config: {
       openInterestReserveFactor: percentageToFloat("100%"),
       maxPnlFactorForTraders: percentageToFloat("50%"),
 
-      maxOpenInterest: decimalToFloat(1_000_000),
-      maxPoolUsdForDeposit: decimalToFloat(1_500_000),
+      maxOpenInterest: decimalToFloat(1_300_000),
+      maxPoolUsdForDeposit: decimalToFloat(1_950_000),
 
-      maxLongTokenPoolAmount: expandDecimals(400, 18),
-      maxShortTokenPoolAmount: expandDecimals(1_800_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(563, 18),
+      maxShortTokenPoolAmount: expandDecimals(2_340_000, 6),
     },
     {
       tokens: { indexToken: "BRETT", longToken: "WETH", shortToken: "USDC" },
