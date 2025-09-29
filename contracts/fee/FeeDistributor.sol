@@ -17,10 +17,9 @@ import "../v1/IVesterV1.sol";
 import "../v1/IMintable.sol";
 
 contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
-    using EventUtils for EventUtils.AddressItems;
     using EventUtils for EventUtils.UintItems;
     using EventUtils for EventUtils.BytesItems;
-    using EventUtils for EventUtils.BoolItems;
+    using EventUtils for EventUtils.StringItems;
 
     // constant and immutable variables are internal to reduce the contract size
     bytes internal constant EMPTY_BYTES = "";
@@ -150,10 +149,11 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         multichainReader.sendReadRequests{ value: messagingFee.nativeFee }(readRequestInputs, extraOptionsInputs);
 
         EventUtils.EventLogData memory eventData;
+        _setEventDescription(eventData, "FeeDistributionInitiated");
         eventData.uintItems.initItems(2);
         _setUintItem(eventData, 0, "numberOfChainsReadRequests", chainIdsLength - 1);
         _setUintItem(eventData, 1, "messagingFee.nativeFee", messagingFee.nativeFee);
-        _emitEventLog("FeeDistributionInitiated", eventData);
+        _emitEventLog(eventData);
     }
 
     // @dev receive and process the LZRead request received data and bridge GMX to other chains if necessary
@@ -206,13 +206,13 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         _setTokenPrices();
 
         uint256 requiredGmxAmount = Precision.mulDiv(totalFeeAmountGmx, stakedGmxCurrentChain, totalStakedGmx);
-        bool isBridgingCompleted;
+        uint256 totalGmxBridgedOut;
         // validate that the this chain has sufficient GMX to distribute fees
         if (feeAmountGmxCurrentChain >= requiredGmxAmount) {
             // only attempt to bridge to other chains if this chain has a surplus of GMX
             if (feeAmountGmxCurrentChain > requiredGmxAmount) {
                 // Call the internal bridging function
-                uint256 totalGmxBridgedOut = _calculateAndBridgeGmx(
+                totalGmxBridgedOut = _calculateAndBridgeGmx(
                     chainIds,
                     totalFeeAmountGmx,
                     stakedAmountsGmx,
@@ -232,21 +232,19 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
                 }
                 _setUint(Keys2.feeDistributorFeeAmountGmxKey(block.chainid), newFeeAmountGmxCurrentChain);
             }
-            isBridgingCompleted = true;
             _setDistributionState(uint256(DistributionState.BridgingCompleted));
         } else {
-            isBridgingCompleted = false;
             _setDistributionState(uint256(DistributionState.ReadDataReceived));
         }
 
         EventUtils.EventLogData memory eventData;
-        eventData.uintItems.initItems(1);
+        _setEventDescription(eventData, "FeeDistributionDataReceived");
+        eventData.uintItems.initItems(2);
         _setUintItem(eventData, 0, "feeAmountGmxCurrentChain", feeAmountGmxCurrentChain);
+        _setUintItem(eventData, 1, "totalGmxBridgedOut", totalGmxBridgedOut);
         eventData.bytesItems.initItems(1);
         eventData.bytesItems.setItem(0, "receivedData", abi.encode(receivedData));
-        eventData.boolItems.initItems(1);
-        eventData.boolItems.setItem(0, "isBridgingCompleted", isBridgingCompleted);
-        _emitEventLog("FeeDistributionDataReceived", eventData);
+        _emitEventLog(eventData);
     }
 
     // @dev function executed via an automated Gelato transaction when bridged GMX is received on this chain
@@ -287,10 +285,11 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         uint256 gmxReceived = feeAmountGmxCurrentChain - origFeeAmountGmxCurrentChain;
 
         EventUtils.EventLogData memory eventData;
+        _setEventDescription(eventData, "FeeDistributionBridgedGmxReceived");
         eventData.uintItems.initItems(2);
         _setUintItem(eventData, 0, "gmxReceived", gmxReceived);
         _setUintItem(eventData, 1, "feeAmountGmxCurrentChain", feeAmountGmxCurrentChain);
-        _emitEventLog("FeeDistributionBridgedGmxReceived", eventData);
+        _emitEventLog(eventData);
     }
 
     // @dev complete the fee distribution calculations, token transfers and if necessary bridge GMX cross-chain
@@ -335,6 +334,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         _setDistributionState(uint256(DistributionState.None));
 
         EventUtils.EventLogData memory eventData;
+        _setEventDescription(eventData, "FeeDistributionCompleted");
         eventData.uintItems.initItems(7);
         _setUintItem(eventData, 0, "feesV1Usd", feesV1Usd);
         _setUintItem(eventData, 1, "feesV2Usd", feesV2Usd);
@@ -343,7 +343,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         _setUintItem(eventData, 4, "wntForTreasury", wntForTreasury);
         _setUintItem(eventData, 5, "wntForReferralRewards", wntForReferralRewards);
         _setUintItem(eventData, 6, "esGmxForReferralRewards", esGmxForReferralRewards);
-        _emitEventLog("FeeDistributionCompleted", eventData);
+        _emitEventLog(eventData);
     }
 
     // @dev deposit the calculated referral rewards in the ClaimVault for the specified accounts
@@ -380,9 +380,6 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
                 IVester(vester).setBonusRewards(param.account, totalEsGmxRewards);
 
                 EventUtils.EventLogData memory eventData;
-                eventData.addressItems.initItems(1);
-                eventData.addressItems.setItem(0, "account", param.account);
-
                 eventData.uintItems.initItems(2);
                 _setUintItem(eventData, 0, "amount", param.amount);
                 _setUintItem(eventData, 1, "totalEsGmxRewards", totalEsGmxRewards);
@@ -491,11 +488,6 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
             // Add to the total bridged out
             totalGmxBridgedOut += sendAmount;
         }
-
-        EventUtils.EventLogData memory eventData;
-        eventData.uintItems.initItems(1);
-        _setUintItem(eventData, 0, "totalGmxBridgedOut", totalGmxBridgedOut);
-        _emitEventLog("FeeDistributionGmxBridgedOut", eventData);
 
         return totalGmxBridgedOut;
     }
@@ -620,8 +612,8 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         feeDistributorVault.transferOut(token, receiver, amount);
     }
 
-    function _emitEventLog(string memory eventName, EventUtils.EventLogData memory eventData) internal {
-        eventEmitter.emitEventLog(eventName, eventData);
+    function _emitEventLog(EventUtils.EventLogData memory eventData) internal {
+        eventEmitter.emitEventLog("FeeDistributionEvent", eventData);
     }
 
     function _setTokenPrices() internal withOraclePrices(_retrieveSetPricesParams()) {
@@ -781,5 +773,13 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         uint256 uintItem
     ) internal pure {
         eventData.uintItems.setItem(itemNumber, itemName, uintItem);
+    }
+
+    function _setEventDescription(
+        EventUtils.EventLogData memory eventData,
+        string memory eventDescription
+    ) internal pure {
+        eventData.stringItems.initItems(1);
+        eventData.stringItems.setItem(0, "eventDescription", eventDescription);
     }
 }
