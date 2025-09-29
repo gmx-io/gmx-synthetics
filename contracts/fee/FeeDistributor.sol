@@ -149,11 +149,10 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         multichainReader.sendReadRequests{ value: messagingFee.nativeFee }(readRequestInputs, extraOptionsInputs);
 
         EventUtils.EventLogData memory eventData;
-        _setEventDescription(eventData, "FeeDistributionInitiated");
         eventData.uintItems.initItems(2);
         _setUintItem(eventData, 0, "numberOfChainsReadRequests", chainIdsLength - 1);
         _setUintItem(eventData, 1, "messagingFee.nativeFee", messagingFee.nativeFee);
-        _emitEventLog(eventData);
+        _emitFeeDistributionEvent(eventData, "FeeDistributionInitiated");
     }
 
     // @dev receive and process the LZRead request received data and bridge GMX to other chains if necessary
@@ -238,13 +237,12 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         }
 
         EventUtils.EventLogData memory eventData;
-        _setEventDescription(eventData, "FeeDistributionDataReceived");
         eventData.uintItems.initItems(2);
         _setUintItem(eventData, 0, "feeAmountGmxCurrentChain", feeAmountGmxCurrentChain);
         _setUintItem(eventData, 1, "totalGmxBridgedOut", totalGmxBridgedOut);
         eventData.bytesItems.initItems(1);
         eventData.bytesItems.setItem(0, "receivedData", abi.encode(receivedData));
-        _emitEventLog(eventData);
+        _emitFeeDistributionEvent(eventData, "FeeDistributionDataReceived");
     }
 
     // @dev function executed via an automated Gelato transaction when bridged GMX is received on this chain
@@ -285,11 +283,10 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         uint256 gmxReceived = feeAmountGmxCurrentChain - origFeeAmountGmxCurrentChain;
 
         EventUtils.EventLogData memory eventData;
-        _setEventDescription(eventData, "FeeDistributionBridgedGmxReceived");
         eventData.uintItems.initItems(2);
         _setUintItem(eventData, 0, "gmxReceived", gmxReceived);
         _setUintItem(eventData, 1, "feeAmountGmxCurrentChain", feeAmountGmxCurrentChain);
-        _emitEventLog(eventData);
+        _emitFeeDistributionEvent(eventData, "FeeDistributionBridgedGmxReceived");
     }
 
     // @dev complete the fee distribution calculations, token transfers and if necessary bridge GMX cross-chain
@@ -334,7 +331,6 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         _setDistributionState(uint256(DistributionState.None));
 
         EventUtils.EventLogData memory eventData;
-        _setEventDescription(eventData, "FeeDistributionCompleted");
         eventData.uintItems.initItems(7);
         _setUintItem(eventData, 0, "feesV1Usd", feesV1Usd);
         _setUintItem(eventData, 1, "feesV2Usd", feesV2Usd);
@@ -343,7 +339,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         _setUintItem(eventData, 4, "wntForTreasury", wntForTreasury);
         _setUintItem(eventData, 5, "wntForReferralRewards", wntForReferralRewards);
         _setUintItem(eventData, 6, "esGmxForReferralRewards", esGmxForReferralRewards);
-        _emitEventLog(eventData);
+        _emitFeeDistributionEvent(eventData, "FeeDistributionCompleted");
     }
 
     // @dev deposit the calculated referral rewards in the ClaimVault for the specified accounts
@@ -612,7 +608,12 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         feeDistributorVault.transferOut(token, receiver, amount);
     }
 
-    function _emitEventLog(EventUtils.EventLogData memory eventData) internal {
+    function _emitFeeDistributionEvent(
+        EventUtils.EventLogData memory eventData,
+        string memory eventDescription
+    ) internal {
+        eventData.stringItems.initItems(1);
+        eventData.stringItems.setItem(0, "eventDescription", eventDescription);
         eventEmitter.emitEventLog("FeeDistributionEvent", eventData);
     }
 
@@ -773,13 +774,5 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         uint256 uintItem
     ) internal pure {
         eventData.uintItems.setItem(itemNumber, itemName, uintItem);
-    }
-
-    function _setEventDescription(
-        EventUtils.EventLogData memory eventData,
-        string memory eventDescription
-    ) internal pure {
-        eventData.stringItems.initItems(1);
-        eventData.stringItems.setItem(0, "eventDescription", eventDescription);
     }
 }
