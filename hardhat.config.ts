@@ -102,7 +102,7 @@ export const getBlockExplorerUrl = (network) => {
 // for etherscan, a single string is expected to be returned
 // for other networks / explorers, an object is needed
 const getEtherscanApiKey = () => {
-  if (process.env.HARDHAT_NETWORK === "arbitrum") {
+  if (["arbitrum", "arbitrumSepolia"].includes(process.env.HARDHAT_NETWORK)) {
     return process.env.ARBISCAN_API_KEY;
   }
 
@@ -112,7 +112,6 @@ const getEtherscanApiKey = () => {
     avalanche: process.env.SNOWTRACE_API_KEY,
     arbitrumGoerli: process.env.ARBISCAN_API_KEY,
     sepolia: process.env.ETHERSCAN_API_KEY,
-    arbitrumSepolia: process.env.ARBISCAN_API_KEY,
     avalancheFujiTestnet: process.env.SNOWTRACE_API_KEY,
     snowtrace: "snowtrace", // apiKey is not required, just set a placeholder
     arbitrumBlockscout: "arbitrumBlockscout",
