@@ -26,5 +26,5 @@ The documentation is generated from the deployment artifacts in `/deployments/` 
 
 | Network | Contracts | Documentation | Last Updated |
 |---------|-----------|---------------|-------------|
-| Arbitrum Sepolia | 127 | [View](./arbitrumSepolia-deployments.md) | Sep 29, 2025, 01:52 PM UTC |
+| Arbitrum Sepolia | 127 | [View](./arbitrumSepolia-deployments.md) | Sep 29, 2025, 01:55 PM UTC |
 | Avalanche Fuji | 142 | [View](./avalancheFuji-deployments.md) | Jul 30, 2025, 02:23 PM UTC |
