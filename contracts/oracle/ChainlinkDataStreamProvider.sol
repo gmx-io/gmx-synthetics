@@ -137,4 +137,3 @@ contract ChainlinkDataStreamProvider is IOracleProvider {
         return abi.encode(feeToken);
     }
 }
-// SKIP_AUTO_HANDLER_REDEPLOYMENT=true npx hardhat deploy --network arbitrumSepolia | tee out/deploy-arb-sep-false.txt
