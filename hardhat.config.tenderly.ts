@@ -1,6 +1,6 @@
 // Hardhat config WITH Tenderly enabled
 // Use this for Tenderly verification only
-// npx hardhat --config hardhat.config.tenderly.ts run scripts/verifyTenderly.ts --network <network>
+// TENDERLY_USERNAME=<username> npx hardhat --config hardhat.config.tenderly.ts run scripts/verifyTenderly.ts --network <network>
 
 // First, import the main config
 import config from "./hardhat.config";

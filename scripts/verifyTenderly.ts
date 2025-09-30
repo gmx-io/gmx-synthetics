@@ -1,7 +1,7 @@
 import hre from "hardhat";
 import { setTimeout as delay } from "timers/promises";
 
-// npx hardhat --config hardhat.config.tenderly.ts run scripts/verifyTenderly.ts --network <network>
+// TENDERLY_USERNAME=<username> npx hardhat --config hardhat.config.tenderly.ts run scripts/verifyTenderly.ts --network <network>
 
 async function main() {
   const network = hre.network.name;
