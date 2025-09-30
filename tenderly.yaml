@@ -1,0 +1,3 @@
+account_id: ${TENDERLY_ACCOUNT_ID}
+project_slug: gmx-synthetics
+provider: Hardhat
