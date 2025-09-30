@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import { SendParam, MessagingFee, IOFT } from "@layerzerolabs/oft-evm/contracts/interfaces/IOFT.sol";
+import "@layerzerolabs/oft-evm/contracts/OFTCore.sol";
 
 import "./FeeDistributorUtils.sol";
 import "./FeeDistributorVault.sol";
@@ -437,9 +437,8 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
 
     function _bridgeGmx(uint256[] memory chainIds, uint256[] memory bridgingAmounts) internal returns (uint256) {
         // Execute bridging transactions from current chain
-        address layerzeroOft = _getAddressInfo(LAYERZERO_OFT);
-        uint256 sharedDecimals = IOFT(layerzeroOft).sharedDecimals();
-        uint256 decimalConversionRate = 10 ** (18 - sharedDecimals);
+        OFTCore layerzeroOft = OFTCore(_getAddressInfo(LAYERZERO_OFT));
+        uint256 decimalConversionRate = layerzeroOft.decimalConversionRate();
         uint256 totalGmxBridgedOut;
         for (uint256 i; i < chainIds.length; i++) {
             uint256 bridgingAmount = bridgingAmounts[i];
@@ -451,8 +450,8 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
             _transferOut(gmx, address(this), sendAmount);
 
             // If the Layerzero OFT contract on this chain is not also the GMX token, approve the sendAmount
-            if (layerzeroOft != gmx) {
-                IERC20(gmx).approve(layerzeroOft, sendAmount);
+            if (layerzeroOft.approvalRequired()) {
+                IERC20(gmx).approve(address(layerzeroOft), sendAmount);
             }
 
             // Prepare remaining params needed for the bridging transaction
@@ -472,14 +471,10 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
                 EMPTY_BYTES,
                 EMPTY_BYTES
             );
-            MessagingFee memory messagingFee = IOFT(layerzeroOft).quoteSend(sendParam, false);
+            MessagingFee memory messagingFee = layerzeroOft.quoteSend(sendParam, false);
 
             // Make the bridge call to the OFT contract
-            IOFT(layerzeroOft).send{ value: messagingFee.nativeFee }(
-                sendParam,
-                messagingFee,
-                address(feeDistributorVault)
-            );
+            layerzeroOft.send{ value: messagingFee.nativeFee }(sendParam, messagingFee, address(feeDistributorVault));
 
             // Add to the total bridged out
             totalGmxBridgedOut += sendAmount;
