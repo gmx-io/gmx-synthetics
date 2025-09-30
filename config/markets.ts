@@ -1722,8 +1722,8 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 4,000,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
 
-      reserveFactor: percentageToFloat("75%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("70%"), // default is 90%
+      reserveFactor: percentageToFloat("105%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
 
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
@@ -2213,8 +2213,8 @@ const config: {
       // minCollateralFactor of 0.01 (1%)
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
 
-      reserveFactor: percentageToFloat("100%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("95%"), // default is 90%
+      reserveFactor: percentageToFloat("105%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
 
       maxPnlFactorForTraders: percentageToFloat("90%"), // default is 60%
 
@@ -2506,8 +2506,8 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2e-8"),
 
-      reserveFactor: percentageToFloat("85%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("80%"), // default is 90%
+      reserveFactor: percentageToFloat("105%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
 
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
@@ -2570,8 +2570,8 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2e-10"),
 
-      reserveFactor: percentageToFloat("95%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("90%"), // default is 90%
+      reserveFactor: percentageToFloat("105%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
 
       maxPnlFactorForTraders: percentageToFloat("90%"), // default is 60%
 
@@ -2601,8 +2601,8 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2e-10"),
 
-      reserveFactor: percentageToFloat("85%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("80%"), // default is 90%
+      reserveFactor: percentageToFloat("105%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
 
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
@@ -2633,8 +2633,8 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2e-10"),
 
-      reserveFactor: percentageToFloat("75%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("70%"), // default is 90%
+      reserveFactor: percentageToFloat("105%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
 
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
@@ -2693,8 +2693,8 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2e-10"),
 
-      reserveFactor: percentageToFloat("95%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("90%"), // default is 90%
+      reserveFactor: percentageToFloat("105%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
 
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
@@ -2724,8 +2724,8 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2e-10"),
 
-      reserveFactor: percentageToFloat("95%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("90%"), // default is 90%
+      reserveFactor: percentageToFloat("105%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
 
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
@@ -2755,8 +2755,8 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2e-10"),
 
-      reserveFactor: percentageToFloat("75%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("70%"), // default is 90%
+      reserveFactor: percentageToFloat("105%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
 
       maxPnlFactorForTraders: percentageToFloat("90%"), // default is 60%
 
@@ -2786,8 +2786,8 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2e-10"),
 
-      reserveFactor: percentageToFloat("85%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("80%"), // default is 90%
+      reserveFactor: percentageToFloat("105%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
 
       maxPnlFactorForTraders: percentageToFloat("90%"), // default is 60%
 
@@ -2910,8 +2910,8 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2e-10"),
 
-      reserveFactor: percentageToFloat("85%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("80%"), // default is 90%
+      reserveFactor: percentageToFloat("105%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
 
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
@@ -2941,8 +2941,8 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2e-10"),
 
-      reserveFactor: percentageToFloat("65%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("60%"), // default is 90%
+      reserveFactor: percentageToFloat("105%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
 
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
@@ -3006,8 +3006,8 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2e-10"),
 
-      reserveFactor: percentageToFloat("95%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("90%"), // default is 90%
+      reserveFactor: percentageToFloat("105%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
 
       maxPnlFactorForTraders: percentageToFloat("90%"), // default is 60%
 
@@ -3068,8 +3068,8 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2e-10"),
 
-      reserveFactor: percentageToFloat("55%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("50%"), // default is 90%
+      reserveFactor: percentageToFloat("105%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
 
       maxPnlFactorForTraders: percentageToFloat("90%"), // default is 60%
 
@@ -3099,8 +3099,8 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("1.78e-7"),
 
-      reserveFactor: percentageToFloat("75%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("70%"), // default is 90%
+      reserveFactor: percentageToFloat("105%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
 
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
@@ -3128,8 +3128,8 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.7e-8"),
 
-      reserveFactor: percentageToFloat("95%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("90%"), // default is 90%
+      reserveFactor: percentageToFloat("105%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
 
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
@@ -3157,8 +3157,8 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.7e-8"),
 
-      reserveFactor: percentageToFloat("95%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("90%"), // default is 90%
+      reserveFactor: percentageToFloat("105%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
       maxOpenInterest: decimalToFloat(3_000_000),
@@ -3185,8 +3185,8 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.7e-8"),
 
-      reserveFactor: percentageToFloat("65%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("60%"), // default is 90%
+      reserveFactor: percentageToFloat("105%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
       maxOpenInterest: decimalToFloat(500_000),
@@ -3213,8 +3213,8 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("1.59e-8"),
 
-      reserveFactor: percentageToFloat("95%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("90%"), // default is 90%
+      reserveFactor: percentageToFloat("105%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
       maxPnlFactorForTraders: percentageToFloat("90%"), // default is 60%
 
       maxOpenInterest: decimalToFloat(1_000_000),
@@ -3241,8 +3241,8 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("1.59e-8"),
 
-      reserveFactor: percentageToFloat("85%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("80%"), // default is 90%
+      reserveFactor: percentageToFloat("105%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
       maxPnlFactorForTraders: percentageToFloat("90%"), // default is 60%
 
       maxOpenInterest: decimalToFloat(1_000_000),
@@ -3269,8 +3269,8 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("8.89e-8"),
 
-      reserveFactor: percentageToFloat("55%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("50%"), // default is 90%
+      reserveFactor: percentageToFloat("105%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
       maxOpenInterest: decimalToFloat(1_000_000),
@@ -3325,8 +3325,8 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.7e-8"),
 
-      reserveFactor: percentageToFloat("75%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("70%"), // default is 90%
+      reserveFactor: percentageToFloat("105%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
       maxPnlFactorForTraders: percentageToFloat("90%"), // default is 60%
 
       maxOpenInterest: decimalToFloat(500_000),
@@ -3353,8 +3353,8 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("7.41e-8"),
 
-      reserveFactor: percentageToFloat("65%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("60%"), // default is 90%
+      reserveFactor: percentageToFloat("105%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
       maxOpenInterest: decimalToFloat(250_000),
@@ -3381,8 +3381,8 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.7e-8"),
 
-      reserveFactor: percentageToFloat("75%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("70%"), // default is 90%
+      reserveFactor: percentageToFloat("105%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
       maxPnlFactorForTraders: percentageToFloat("90%"), // default is 60%
 
       maxOpenInterest: decimalToFloat(500_000),
@@ -3409,8 +3409,8 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.7e-8"),
 
-      reserveFactor: percentageToFloat("75%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("70%"), // default is 90%
+      reserveFactor: percentageToFloat("105%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
       maxPnlFactorForTraders: percentageToFloat("90%"), // default is 60%
 
       maxOpenInterest: decimalToFloat(500_000),
@@ -3464,8 +3464,8 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("7.41e-8"),
 
-      reserveFactor: percentageToFloat("65%"),
-      openInterestReserveFactor: percentageToFloat("60%"),
+      reserveFactor: percentageToFloat("105%"),
+      openInterestReserveFactor: percentageToFloat("100%"),
       maxPnlFactorForTraders: percentageToFloat("50%"),
 
       maxOpenInterest: decimalToFloat(250_000),
@@ -3491,8 +3491,8 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.7e-8"),
 
-      reserveFactor: percentageToFloat("75%"),
-      openInterestReserveFactor: percentageToFloat("70%"),
+      reserveFactor: percentageToFloat("105%"),
+      openInterestReserveFactor: percentageToFloat("100%"),
       maxPnlFactorForTraders: percentageToFloat("90%"),
 
       maxOpenInterest: decimalToFloat(500_000),
@@ -3518,8 +3518,8 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.7e-8"),
 
-      reserveFactor: percentageToFloat("75%"), // default is 95%
-      openInterestReserveFactor: percentageToFloat("70%"), // default is 90%
+      reserveFactor: percentageToFloat("105%"), // default is 95%
+      openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
       maxPnlFactorForTraders: percentageToFloat("90%"), // default is 60%
 
       maxOpenInterest: decimalToFloat(500_000),
@@ -3572,8 +3572,8 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("7.41e-8"),
 
-      reserveFactor: percentageToFloat("65%"),
-      openInterestReserveFactor: percentageToFloat("60%"),
+      reserveFactor: percentageToFloat("105%"),
+      openInterestReserveFactor: percentageToFloat("100%"),
       maxPnlFactorForTraders: percentageToFloat("50%"),
 
       maxOpenInterest: decimalToFloat(250_000),
@@ -3599,8 +3599,8 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.47e-08"),
 
-      reserveFactor: percentageToFloat("95%"),
-      openInterestReserveFactor: percentageToFloat("90%"),
+      reserveFactor: percentageToFloat("105%"),
+      openInterestReserveFactor: percentageToFloat("100%"),
       maxPnlFactorForTraders: percentageToFloat("50%"),
 
       maxOpenInterest: decimalToFloat(500_000),
@@ -3626,7 +3626,7 @@ const config: {
 
       minCollateralFactor: percentageToFloat("1%"), // 100x leverage
 
-      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("1.78e-06"),
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("7.41e-8"),
 
       reserveFactor: percentageToFloat("105%"),
       openInterestReserveFactor: percentageToFloat("100%"),
@@ -3876,8 +3876,8 @@ const config: {
 
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("1.39e-9"),
 
-      reserveFactor: percentageToFloat("100%"),
-      openInterestReserveFactor: percentageToFloat("95%"),
+      reserveFactor: percentageToFloat("105%"),
+      openInterestReserveFactor: percentageToFloat("100%"),
       maxPnlFactorForTraders: percentageToFloat("90%"),
 
       maxOpenInterest: decimalToFloat(2_000_000),
