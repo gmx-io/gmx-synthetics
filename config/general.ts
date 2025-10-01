@@ -93,7 +93,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     minAdditionalGasForExecution: 1_000_000,
     refundExecutionFeeGasLimit: 200_000,
 
-    depositGasLimit: 1_800_000,
+    depositGasLimit: 1_950_000,
     withdrawalGasLimit: 1_500_000,
     shiftGasLimit: 2_500_000,
 
@@ -104,9 +104,9 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     createGlvWithdrawalGasLimit: 5_000_000,
 
     singleSwapGasLimit: 1_000_000, // measured gas required for a swap in a market increase order: ~600,000
-    increaseOrderGasLimit: 3_500_000,
-    decreaseOrderGasLimit: 3_500_000,
-    swapOrderGasLimit: 3_000_000,
+    increaseOrderGasLimit: 3_700_000,
+    decreaseOrderGasLimit: 3_700_000,
+    swapOrderGasLimit: 3_200_000,
 
     glvPerMarketGasLimit: 100_000,
     glvDepositGasLimit: 2_000_000,
