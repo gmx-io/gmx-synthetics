@@ -1253,6 +1253,7 @@ describe("FeeDistributor", function () {
     const treasuryBalanceAfter = await wnt.balanceOf(user6.address);
     const sentFromTreasury = treasuryBalancePre.sub(treasuryBalanceAfter);
 
+    expect(sentFromTreasury).is.greaterThan(0);
     expect(sentFromTreasury).to.equal(additionalWntFromTreasury);
 
     const wntForTreasury = 0;

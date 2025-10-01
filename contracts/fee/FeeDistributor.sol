@@ -355,6 +355,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         _validateDistributionState(DistributionState.None);
 
         uint256 tokensForReferralRewards = _getUint(Keys2.feeDistributorReferralRewardsAmountKey(token));
+        uint256 cumulativeDepositAmount = _getUint(Keys2.feeDistributorReferralRewardsDepositedKey(token));
         if (token == esGmx) {
             // validate the esGMX amount is valid and that there are sufficient esGMX in the feeDistributorVault
             uint256 maxEsGmxReferralRewards = _getUint(Keys2.FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_ESGMX_AMOUNT);
@@ -363,8 +364,9 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
             }
 
             uint256 vaultEsGmxBalance = _getFeeDistributorVaultBalance(esGmx);
-            if (tokensForReferralRewards > vaultEsGmxBalance) {
-                IMintable(esGmx).mint(address(feeDistributorVault), tokensForReferralRewards - vaultEsGmxBalance);
+            uint256 esGmxToBeDeposited = tokensForReferralRewards - cumulativeDepositAmount;
+            if (esGmxToBeDeposited > vaultEsGmxBalance) {
+                IMintable(esGmx).mint(address(feeDistributorVault), esGmxToBeDeposited - vaultEsGmxBalance);
             }
 
             // update esGMX bonus reward amounts for each account in the vester contract
@@ -399,13 +401,12 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         ClaimUtils._validateTotalClaimableFundsAmount(dataStore, token, claimVault);
 
         // validate that the cumulative referral rewards deposited is not greater than the total calculated amount
-        uint256 cumulativeTransferAmount = _getUint(Keys2.feeDistributorReferralRewardsDepositedKey(token)) +
-            totalTransferAmount;
-        if (cumulativeTransferAmount > tokensForReferralRewards) {
-            revert Errors.MaxReferralRewardsExceeded(token, cumulativeTransferAmount, tokensForReferralRewards);
+        cumulativeDepositAmount += totalTransferAmount;
+        if (cumulativeDepositAmount > tokensForReferralRewards) {
+            revert Errors.MaxReferralRewardsExceeded(token, cumulativeDepositAmount, tokensForReferralRewards);
         }
 
-        _setUint(Keys2.feeDistributorReferralRewardsDepositedKey(token), cumulativeTransferAmount);
+        _setUint(Keys2.feeDistributorReferralRewardsDepositedKey(token), cumulativeDepositAmount);
     }
 
     function _calculateAndBridgeGmx(
