@@ -209,6 +209,21 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 12_000,
     },
+    XPL: {
+      negativePositionImpactFactor: exponentToFloat("6.00e-08"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    "BNB:WBTC.e:USDC": {
+      negativePositionImpactFactor: exponentToFloat("4.99e-09"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 11_995,
+    },
+    "SOL:WBTC.e:USDC": {
+      negativePositionImpactFactor: exponentToFloat("8.26e-09"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_005,
+    },
     POL: {
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       expectedSwapImpactRatio: 20_000,
@@ -501,6 +516,16 @@ const recommendedMarketConfig = {
       negativePositionImpactFactor: exponentToFloat("2.69e-8"),
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 12_000,
+    },
+    ZORA: {
+      negativePositionImpactFactor: exponentToFloat("2.35e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    KTA: {
+      negativePositionImpactFactor: exponentToFloat("2.23e-7"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 11_989,
     },
     ALGO: {
       negativePositionImpactFactor: exponentToFloat("1.47e-8"),
