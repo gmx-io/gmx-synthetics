@@ -666,8 +666,8 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_LowMax_WithHigherBase,
 
-      reserveFactor: percentageToFloat("185%"),
-      openInterestReserveFactor: percentageToFloat("180%"),
+      reserveFactor: percentageToFloat("211%"),
+      openInterestReserveFactor: percentageToFloat("206%"),
 
       maxLongTokenPoolAmount: expandDecimals(7_250, 18),
       maxShortTokenPoolAmount: expandDecimals(5_000_000, 6),
@@ -3895,8 +3895,8 @@ const config: {
 
       ...baseMarketConfig,
 
-      reserveFactor: percentageToFloat("105%"),
-      openInterestReserveFactor: percentageToFloat("100%"),
+      reserveFactor: percentageToFloat("243%"),
+      openInterestReserveFactor: percentageToFloat("238%"),
 
       maxLongTokenPoolAmount: expandDecimals(350, 8),
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
@@ -3962,8 +3962,8 @@ const config: {
 
       ...baseMarketConfig,
 
-      reserveFactor: percentageToFloat("105%"),
-      openInterestReserveFactor: percentageToFloat("100%"),
+      reserveFactor: percentageToFloat("172%"),
+      openInterestReserveFactor: percentageToFloat("167%"),
 
       maxLongTokenPoolAmount: expandDecimals(5000, 18),
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6),
@@ -4095,8 +4095,8 @@ const config: {
 
       ...baseMarketConfig,
 
-      reserveFactor: percentageToFloat("105%"),
-      openInterestReserveFactor: percentageToFloat("100%"),
+      reserveFactor: percentageToFloat("163%"),
+      openInterestReserveFactor: percentageToFloat("158%"),
 
       maxLongTokenPoolAmount: expandDecimals(50_000, 9),
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6),
