@@ -3,7 +3,6 @@ import hre from "hardhat";
 import * as keys from "../utils/keys";
 import { toLoggableObject } from "../utils/print";
 import got from "got";
-import { bigNumberify } from "../utils/math";
 
 function getValues() {
   if (hre.network.name === "arbitrum") {
@@ -90,7 +89,7 @@ async function main() {
 
     console.log(`Block ${index}: ${block}`);
     console.log("Price for market %s is %s", marketToken, data[0]);
-    // console.log(toLoggableObject(data[1]));
+    console.log(toLoggableObject(data[1]));
   }
 }
 
