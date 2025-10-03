@@ -349,6 +349,7 @@ library PositionUtils {
                 market,
                 prices.indexTokenPrice,
                 cache.usdDeltaForPriceImpact,
+                -position.sizeInTokens().toInt256(),
                 position.isLong()
             )
         );
@@ -657,12 +658,21 @@ library PositionUtils {
 
         GetExecutionPriceForIncreaseCache memory cache;
 
+        if (params.position.isLong()) {
+            // round the number of tokens for long positions down
+            cache.baseSizeDeltaInTokens = params.order.sizeDeltaUsd() / prices.indexTokenPrice.max;
+        } else {
+            // round the number of tokens for short positions up
+            cache.baseSizeDeltaInTokens = Calc.roundUpDivision(params.order.sizeDeltaUsd(), prices.indexTokenPrice.min);
+        }
+
         (cache.priceImpactUsd, cache.balanceWasImproved) = PositionPricingUtils.getPriceImpactUsd(
             PositionPricingUtils.GetPriceImpactUsdParams(
                 params.contracts.dataStore,
                 params.market,
                 prices.indexTokenPrice,
                 params.order.sizeDeltaUsd().toInt256(),
+                cache.baseSizeDeltaInTokens.toInt256(),
                 params.order.isLong()
             )
         );
@@ -709,14 +719,6 @@ library PositionUtils {
             cache.priceImpactAmount = Calc.roundUpMagnitudeDivision(cache.priceImpactUsd, prices.indexTokenPrice.min);
         }
 
-        if (params.position.isLong()) {
-            // round the number of tokens for long positions down
-            cache.baseSizeDeltaInTokens = params.order.sizeDeltaUsd() / prices.indexTokenPrice.max;
-        } else {
-            // round the number of tokens for short positions up
-            cache.baseSizeDeltaInTokens = Calc.roundUpDivision(params.order.sizeDeltaUsd(), prices.indexTokenPrice.min);
-        }
-
         int256 sizeDeltaInTokens;
         if (params.position.isLong()) {
             sizeDeltaInTokens = cache.baseSizeDeltaInTokens.toInt256() + cache.priceImpactAmount;
@@ -747,7 +749,8 @@ library PositionUtils {
     // returns priceImpactUsd, executionPrice, balanceWasImproved
     function getExecutionPriceForDecrease(
         UpdatePositionParams memory params,
-        Price.Props memory indexTokenPrice
+        Price.Props memory indexTokenPrice,
+        uint256 sizeDeltaInTokens
     ) external view returns (int256, uint256, bool) {
         uint256 sizeDeltaUsd = params.order.sizeDeltaUsd();
 
@@ -769,6 +772,7 @@ library PositionUtils {
                 params.market,
                 indexTokenPrice,
                 -sizeDeltaUsd.toInt256(),
+                -sizeDeltaInTokens.toInt256(),
                 params.order.isLong()
             )
         );

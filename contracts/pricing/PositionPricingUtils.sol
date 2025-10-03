@@ -55,6 +55,7 @@ library PositionPricingUtils {
         Market.Props market;
         Price.Props indexTokenPrice;
         int256 usdDelta;
+        int256 tokenDelta;
         bool isLong;
     }
 
@@ -249,19 +250,8 @@ library PositionPricingUtils {
         // the index token price decreases to $4500
         // the user decreases the long position
         // openInterestInTokensInUsd is $4500 but sizeDeltaUsd is $5000
+        // to prevent overflow issues, the tokenDelta is used to calculate the usdDelta if useOpenInterestInTokens is true
         bool useOpenInterestInTokens = params.dataStore.getBool(Keys.USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE);
-
-        uint256 longOpenInterestUsd = MarketUtils.getOpenInterest(
-            params.dataStore,
-            params.market,
-            true
-        );
-
-        uint256 shortOpenInterestUsd = MarketUtils.getOpenInterest(
-            params.dataStore,
-            params.market,
-            false
-        );
 
         uint256 longOpenInterest;
         uint256 shortOpenInterest;
@@ -281,15 +271,22 @@ library PositionPricingUtils {
                 params.indexTokenPrice.max
             );
 
-            uint256 sizeDeltaDivisor = params.isLong ? longOpenInterestUsd : shortOpenInterestUsd;
-
-            if (sizeDeltaDivisor != 0) {
-                uint256 sizeDeltaMultiplier = params.isLong ? longOpenInterest : shortOpenInterest;
-                params.usdDelta = Precision.mulDiv(params.usdDelta, sizeDeltaMultiplier, sizeDeltaDivisor);
-            }
+            // note that for decrease position, tokenDelta is based on the
+            // ratio of position.sizeInUsd and position.sizeInTokens
+            // so different users would experience different price impacts
+            // for the same decrease in USD size
+            params.usdDelta = params.tokenDelta * params.indexTokenPrice.max.toInt256();
         } else {
-            longOpenInterest = longOpenInterestUsd;
-            shortOpenInterest = shortOpenInterestUsd;
+            longOpenInterest = MarketUtils.getOpenInterest(
+                params.dataStore,
+                params.market,
+                true
+            );
+            shortOpenInterest = MarketUtils.getOpenInterest(
+                params.dataStore,
+                params.market,
+                false
+            );
         }
 
         return getNextOpenInterestParams(params, longOpenInterest, shortOpenInterest);
