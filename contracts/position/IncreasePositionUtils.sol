@@ -212,15 +212,18 @@ library IncreasePositionUtils {
 
         // validatePosition should be called after open interest and all other market variables
         // have been updated
-        PositionUtils.validatePosition(
-            params.contracts.dataStore,
-            params.contracts.referralStorage,
-            params.position,
-            params.market,
-            prices,
-            true, // shouldValidateMinPositionSize
-            true // shouldValidateMinCollateralUsd
-        );
+        // validatePosition is only called if the position size will change
+        if (params.order.sizeDeltaUsd() > 0) {
+            PositionUtils.validatePosition(
+                params.contracts.dataStore,
+                params.contracts.referralStorage,
+                params.position,
+                params.market,
+                prices,
+                true, // shouldValidateMinPositionSize
+                true // shouldValidateMinCollateralUsd
+            );
+        }
 
         PositionEventUtils.emitPositionFeesCollected(
             params.contracts.eventEmitter,
