@@ -408,24 +408,19 @@ library Keys {
     bytes32 public constant CLAIMABLE_COLLATERAL_DELAY = keccak256(abi.encode("CLAIMABLE_COLLATERAL_DELAY"));
     // @dev key for claimed collateral amount
     bytes32 public constant CLAIMED_COLLATERAL_AMOUNT = keccak256(abi.encode("CLAIMED_COLLATERAL_AMOUNT"));
-    // @dev key for optimal usage factor
+
     bytes32 public constant OPTIMAL_USAGE_FACTOR = keccak256(abi.encode("OPTIMAL_USAGE_FACTOR"));
-    // @dev key for base borrowing factor
     bytes32 public constant BASE_BORROWING_FACTOR = keccak256(abi.encode("BASE_BORROWING_FACTOR"));
-    // @dev key for above optimal usage borrowing factor
     bytes32 public constant ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR = keccak256(abi.encode("ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR"));
-    // @dev key for borrowing factor
     bytes32 public constant BORROWING_FACTOR = keccak256(abi.encode("BORROWING_FACTOR"));
-    // @dev key for borrowing factor
     bytes32 public constant BORROWING_EXPONENT_FACTOR = keccak256(abi.encode("BORROWING_EXPONENT_FACTOR"));
-    // @dev key for skipping the borrowing factor for the smaller side
     bytes32 public constant SKIP_BORROWING_FEE_FOR_SMALLER_SIDE = keccak256(abi.encode("SKIP_BORROWING_FEE_FOR_SMALLER_SIDE"));
-    // @dev key for cumulative borrowing factor
     bytes32 public constant CUMULATIVE_BORROWING_FACTOR = keccak256(abi.encode("CUMULATIVE_BORROWING_FACTOR"));
-    // @dev key for when the cumulative borrowing factor was last updated at
     bytes32 public constant CUMULATIVE_BORROWING_FACTOR_UPDATED_AT = keccak256(abi.encode("CUMULATIVE_BORROWING_FACTOR_UPDATED_AT"));
-    // @dev key for total borrowing amount
     bytes32 public constant TOTAL_BORROWING = keccak256(abi.encode("TOTAL_BORROWING"));
+
+    bytes32 public constant USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE = keccak256(abi.encode("USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE"));
+
     // @dev key for affiliate reward
     bytes32 public constant MIN_AFFILIATE_REWARD_FACTOR = keccak256(abi.encode("MIN_AFFILIATE_REWARD_FACTOR"));
     bytes32 public constant AFFILIATE_REWARD = keccak256(abi.encode("AFFILIATE_REWARD"));
@@ -1028,9 +1023,6 @@ library Keys {
         ));
     }
 
-    // @dev key for oracle provider for token
-    // @param token the token
-    // @return key for oracle provider for token
     function oracleProviderForTokenKey(address oracle, address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             ORACLE_PROVIDER_FOR_TOKEN,

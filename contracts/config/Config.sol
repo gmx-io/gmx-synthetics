@@ -502,6 +502,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.BORROWING_EXPONENT_FACTOR] = true;
         allowedBaseKeys[Keys.SKIP_BORROWING_FEE_FOR_SMALLER_SIDE] = true;
 
+        allowedBaseKeys[Keys.USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE] = true;
+
         allowedBaseKeys[Keys.PRICE_FEED_HEARTBEAT_DURATION] = true;
 
         allowedBaseKeys[Keys.IS_GLV_MARKET_DISABLED] = true;

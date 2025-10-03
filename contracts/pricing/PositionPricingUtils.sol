@@ -53,6 +53,7 @@ library PositionPricingUtils {
     struct GetPriceImpactUsdParams {
         DataStore dataStore;
         Market.Props market;
+        Price.Props indexTokenPrice;
         int256 usdDelta;
         bool isLong;
     }
@@ -231,17 +232,37 @@ library PositionPricingUtils {
     function getNextOpenInterest(
         GetPriceImpactUsdParams memory params
     ) internal view returns (OpenInterestParams memory) {
-        uint256 longOpenInterest = MarketUtils.getOpenInterest(
-            params.dataStore,
-            params.market,
-            true
-        );
+        bool useOpenInterestInTokens = params.dataStore.getBool(Keys.USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE);
+        uint256 longOpenInterest;
+        uint256 shortOpenInterest;
 
-        uint256 shortOpenInterest = MarketUtils.getOpenInterest(
-            params.dataStore,
-            params.market,
-            false
-        );
+        if (useOpenInterestInTokens) {
+            longOpenInterest = MarketUtils.getOpenInterestInTokensInUsd(
+                params.dataStore,
+                params.market,
+                true,
+                params.indexTokenPrice.max
+            );
+
+            shortOpenInterest = MarketUtils.getOpenInterestInTokensInUsd(
+                params.dataStore,
+                params.market,
+                false,
+                params.indexTokenPrice.max
+            );
+        } else {
+            longOpenInterest = MarketUtils.getOpenInterest(
+                params.dataStore,
+                params.market,
+                true
+            );
+
+            shortOpenInterest = MarketUtils.getOpenInterest(
+                params.dataStore,
+                params.market,
+                false
+            );
+        }
 
         return getNextOpenInterestParams(params, longOpenInterest, shortOpenInterest);
     }

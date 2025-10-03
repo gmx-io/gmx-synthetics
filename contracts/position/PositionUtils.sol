@@ -347,6 +347,7 @@ library PositionUtils {
             PositionPricingUtils.GetPriceImpactUsdParams(
                 dataStore,
                 market,
+                prices.indexTokenPrice,
                 cache.usdDeltaForPriceImpact,
                 position.isLong()
             )
@@ -660,6 +661,7 @@ library PositionUtils {
             PositionPricingUtils.GetPriceImpactUsdParams(
                 params.contracts.dataStore,
                 params.market,
+                prices.indexTokenPrice,
                 params.order.sizeDeltaUsd().toInt256(),
                 params.order.isLong()
             )
@@ -765,6 +767,7 @@ library PositionUtils {
             PositionPricingUtils.GetPriceImpactUsdParams(
                 params.contracts.dataStore,
                 params.market,
+                indexTokenPrice,
                 -sizeDeltaUsd.toInt256(),
                 params.order.isLong()
             )

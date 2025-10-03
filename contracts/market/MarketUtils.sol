@@ -52,6 +52,14 @@ library MarketUtils {
         Price.Props shortTokenPrice;
     }
 
+    struct GetOpenInterestForFundingParams {
+        DataStore dataStore;
+        address market;
+        uint256 divisor;
+        bool useOpenInterestInTokens;
+        uint256 indexTokenPrice;
+    }
+
     struct CollateralType {
         uint256 longToken;
         uint256 shortToken;
@@ -1329,12 +1337,40 @@ library MarketUtils {
         GetNextFundingAmountPerSizeCache memory cache;
 
         uint256 divisor = getPoolDivisor(market.longToken, market.shortToken);
+        bool useOpenInterestInTokens = dataStore.getBool(Keys.USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE);
+
+        GetOpenInterestForFundingParams memory getOpenInterestParams = GetOpenInterestForFundingParams({
+            dataStore: dataStore,
+            market: market.marketToken,
+            divisor: divisor,
+            useOpenInterestInTokens: useOpenInterestInTokens,
+            indexTokenPrice: prices.indexTokenPrice.max
+        });
 
         // get the open interest values by long / short and by collateral used
-        cache.openInterest.long.longToken = getOpenInterest(dataStore, market.marketToken, market.longToken, true, divisor);
-        cache.openInterest.long.shortToken = getOpenInterest(dataStore, market.marketToken, market.shortToken, true, divisor);
-        cache.openInterest.short.longToken = getOpenInterest(dataStore, market.marketToken, market.longToken, false, divisor);
-        cache.openInterest.short.shortToken = getOpenInterest(dataStore, market.marketToken, market.shortToken, false, divisor);
+        cache.openInterest.long.longToken = getOpenInterestForFunding({
+            params: getOpenInterestParams,
+            collateralToken: market.longToken,
+            isLong: true
+        });
+
+        cache.openInterest.long.shortToken = getOpenInterestForFunding({
+            params: getOpenInterestParams,
+            collateralToken: market.shortToken,
+            isLong: true
+        });
+
+        cache.openInterest.short.longToken = getOpenInterestForFunding({
+            params: getOpenInterestParams,
+            collateralToken: market.longToken,
+            isLong: false
+        });
+
+        cache.openInterest.short.shortToken = getOpenInterestForFunding({
+            params: getOpenInterestParams,
+            collateralToken: market.shortToken,
+            isLong: false
+        });
 
         // sum the open interest values to get the total long and short open interest values
         cache.longOpenInterest = cache.openInterest.long.longToken + cache.openInterest.long.shortToken;
@@ -2112,13 +2148,6 @@ library MarketUtils {
         return longOpenInterest + shortOpenInterest;
     }
 
-    // @dev get either the long or short open interest for a market
-    // @param dataStore DataStore
-    // @param market the market to check
-    // @param longToken the long token of the market
-    // @param shortToken the short token of the market
-    // @param isLong whether to get the long or short open interest
-    // @return the long or short open interest for a market
     function getOpenInterest(
         DataStore dataStore,
         Market.Props memory market,
@@ -2131,11 +2160,6 @@ library MarketUtils {
         return openInterestUsingLongTokenAsCollateral + openInterestUsingShortTokenAsCollateral;
     }
 
-    // @dev the long and short open interest for a market based on the collateral token used
-    // @param dataStore DataStore
-    // @param market the market to check
-    // @param collateralToken the collateral token to check
-    // @param isLong whether to check the long or short side
     function getOpenInterest(
         DataStore dataStore,
         address market,
@@ -2146,11 +2170,46 @@ library MarketUtils {
         return dataStore.getUint(Keys.openInterestKey(market, collateralToken, isLong)) / divisor;
     }
 
+    function getOpenInterestForFunding(
+        GetOpenInterestForFundingParams memory params,
+        address collateralToken,
+        bool isLong
+    ) internal view returns (uint256) {
+        if (params.useOpenInterestInTokens) {
+            uint256 openInterestInTokens = getOpenInterestInTokens(
+                params.dataStore,
+                params.market,
+                collateralToken,
+                isLong,
+                params.divisor
+            );
+
+            return openInterestInTokens * params.indexTokenPrice;
+        }
+
+        return getOpenInterest(params.dataStore, params.market, collateralToken, isLong, params.divisor);
+    }
+
     // this is used to divide the values of getPoolAmount and getOpenInterest
     // if the longToken and shortToken are the same, then these values have to be divided by two
     // to avoid double counting
     function getPoolDivisor(address longToken, address shortToken) internal pure returns (uint256) {
         return longToken == shortToken ? 2 : 1;
+    }
+
+    function getOpenInterestInTokensInUsd(
+        DataStore dataStore,
+        Market.Props memory market,
+        bool isLong,
+        uint256 indexTokenPrice
+    ) internal view returns (uint256) {
+        uint256 openInterestInTokens = getOpenInterestInTokens(
+            dataStore,
+            market,
+            isLong
+        );
+
+        return openInterestInTokens * indexTokenPrice;
     }
 
     // @dev the long and short open interest in tokens for a market
