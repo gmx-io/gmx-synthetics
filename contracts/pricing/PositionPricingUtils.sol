@@ -232,7 +232,37 @@ library PositionPricingUtils {
     function getNextOpenInterest(
         GetPriceImpactUsdParams memory params
     ) internal view returns (OpenInterestParams memory) {
+        // if useOpenInterestInTokens is true, then the price impact can vary depending on the index token price
+        // this occurs if a curve is used and the openInterestInTokens is not entirely balanced
+        //
+        // balanced case: longOpenInterestInTokens is 1, shortOpenInterestInTokens is 1, price is $5000
+        // price impact is 0.01% per $500
+        // if sizeDeltaUsd is $1000, then price impact would be 0.02%, this would not change even if the price is different
+        //
+        // imbalanced case: longOpenInterestInTokens is 2, shortOpenInterestInTokens is 1, price is $5000
+        // if long sizeDeltaUsd is $1000, then the action reduces balance from (2 - 1) * ($5000) = $5000 to $6000
+        // if the price is $6000
+        // then the action would reduce balance from (2 - 1) * ($6000) = $6000 to $7000
+        //
+        // there is also a case where the sizeDeltaUsd can exceed the openInterestInTokensInUsd value
+        // e.g. a user opens a 1 index token long and short position at price $5000, so long / short sizeInUsd is 5000, long / short sizeInTokens is 1
+        // the index token price decreases to $4500
+        // the user decreases the long position
+        // openInterestInTokensInUsd is $4500 but sizeDeltaUsd is $5000
         bool useOpenInterestInTokens = params.dataStore.getBool(Keys.USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE);
+
+        uint256 longOpenInterestUsd = MarketUtils.getOpenInterest(
+            params.dataStore,
+            params.market,
+            true
+        );
+
+        uint256 shortOpenInterestUsd = MarketUtils.getOpenInterest(
+            params.dataStore,
+            params.market,
+            false
+        );
+
         uint256 longOpenInterest;
         uint256 shortOpenInterest;
 
@@ -250,18 +280,16 @@ library PositionPricingUtils {
                 false,
                 params.indexTokenPrice.max
             );
-        } else {
-            longOpenInterest = MarketUtils.getOpenInterest(
-                params.dataStore,
-                params.market,
-                true
-            );
 
-            shortOpenInterest = MarketUtils.getOpenInterest(
-                params.dataStore,
-                params.market,
-                false
-            );
+            uint256 sizeDeltaDivisor = params.isLong ? longOpenInterestUsd : shortOpenInterestUsd;
+
+            if (sizeDeltaDivisor != 0) {
+                uint256 sizeDeltaMultiplier = params.isLong ? longOpenInterest : shortOpenInterest;
+                params.usdDelta = Precision.mulDiv(params.usdDelta, sizeDeltaMultiplier, sizeDeltaDivisor);
+            }
+        } else {
+            longOpenInterest = longOpenInterestUsd;
+            shortOpenInterest = shortOpenInterestUsd;
         }
 
         return getNextOpenInterestParams(params, longOpenInterest, shortOpenInterest);
