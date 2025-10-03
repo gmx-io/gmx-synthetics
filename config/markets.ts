@@ -4285,7 +4285,7 @@ const config: {
       openInterestReserveFactor: percentageToFloat("150%"),
 
       maxLongTokenPoolAmount: expandDecimals(775_000, 18),
-      maxShortTokenPoolAmount: expandDecimals(14_000_000, 6),
+      maxShortTokenPoolAmount: expandDecimals(14_405_300, 6),
 
       maxPoolUsdForDeposit: decimalToFloat(13_000_000),
 
@@ -4301,7 +4301,7 @@ const config: {
       positionImpactPoolDistributionRate: expandDecimals(166, 43), // ~143 AVAX/day
       minPositionImpactPoolAmount: expandDecimals(141, 18),
 
-      maxOpenInterest: decimalToFloat(9_800_000),
+      maxOpenInterest: decimalToFloat(12_000_000),
 
       fundingIncreaseFactorPerSecond: exponentToFloat("1.6e-12"), // 0.0000000000016, at least 3.5 hours to reach max funding
       maxFundingFactorPerSecond: exponentToFloat("2e-8"), // 0.000002%,  0.0072% per hour, 63% per year
