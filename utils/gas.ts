@@ -1,4 +1,5 @@
 import { TransactionReceipt } from "@ethersproject/providers";
+import { expandDecimals } from "./math";
 
 export async function printGasUsage(provider, txn, label) {
   const { gasUsed } = await provider.getTransactionReceipt(txn.hash);
@@ -17,3 +18,15 @@ export async function logGasUsage({ tx, label }): Promise<TransactionReceipt> {
 
   return txReceipt;
 }
+
+// Gas cost tolerance buffers in wei
+// These represent acceptable variation in gas refunds for different operation types
+// Increase these values if contract changes cause gas-related test failures
+export const GAS_BUFFER = {
+  DEPOSIT: expandDecimals(5, 12), //  5k gwei = 0.000005 ETH
+  GLV_DEPOSIT: expandDecimals(5, 12), //  5k gwei = 0.000005 ETH
+  WITHDRAWAL: expandDecimals(5, 12), //  5k gwei = 0.000005 ETH
+  GLV_WITHDRAWAL: expandDecimals(5, 12), //  5k gwei = 0.000005 ETH
+  ORDER: expandDecimals(10, 12), // 10k gwei = 0.00001 ETH
+  CUMULATIVE_ACTIONS: expandDecimals(50, 12), // 50k gwei = 0.00005 ETH e.g. deposit + glvDeposit + withdrawal + glvWithdrawal
+};
