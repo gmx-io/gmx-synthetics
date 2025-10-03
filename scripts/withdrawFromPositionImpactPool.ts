@@ -43,17 +43,17 @@ async function fetchChainlinkPriceFeedInfo({ indexToken, longToken, shortToken }
 
   return {
     indexToken: {
-      address: indexToken.toLowerCase(),
+      address: indexToken.address.toLowerCase(),
       provider: chainlinkPriceFeedProvider.address,
       data: "0x",
     },
     longToken: {
-      address: longToken.toLowerCase(),
+      address: longToken.address.toLowerCase(),
       provider: chainlinkPriceFeedProvider.address,
       data: "0x",
     },
     shortToken: {
-      address: shortToken.toLowerCase(),
+      address: shortToken.address.toLowerCase(),
       provider: chainlinkPriceFeedProvider.address,
       data: "0x",
     },
@@ -67,19 +67,19 @@ async function fetchChainlinkDataStreamInfo({ indexToken, longToken, shortToken 
   const signedPrices = await fetchSignedPrices();
   return {
     indexToken: {
-      address: indexToken.toLowerCase(),
+      address: indexToken.address.toLowerCase(),
       provider: chainlinkDataStreamProvider.address,
-      data: signedPrices[indexToken.toLowerCase()].blob,
+      data: signedPrices[indexToken.address.toLowerCase()].blob,
     },
     longToken: {
-      address: longToken.toLowerCase(),
+      address: longToken.address.toLowerCase(),
       provider: chainlinkDataStreamProvider.address,
-      data: signedPrices[longToken.toLowerCase()].blob,
+      data: signedPrices[longToken.address.toLowerCase()].blob,
     },
     shortToken: {
-      address: shortToken.toLowerCase(),
+      address: shortToken.address.toLowerCase(),
       provider: chainlinkDataStreamProvider.address,
-      data: signedPrices[shortToken.toLowerCase()].blob,
+      data: signedPrices[shortToken.address.toLowerCase()].blob,
     },
   };
 }
@@ -136,86 +136,6 @@ async function fetchOracleParams({ indexToken, longToken, shortToken }) {
     providers: uniqueProviders,
     data: uniqueData,
   };
-}
-
-async function handleWithdrawalItem({
-  marketKey,
-  amount,
-  receiver,
-  timelockMethod,
-  multicallWriteParams,
-  timelock,
-  salt,
-  tokens,
-  marketFactory,
-  roleStore,
-  dataStore,
-}) {
-  const tokenSymbols = marketKey.split(":");
-  const indexTokenSymbol = tokenSymbols[0];
-  const longTokenSymbol = tokenSymbols[1];
-  const shortTokenSymbol = tokenSymbols[2];
-
-  const indexToken = tokens[indexTokenSymbol];
-  const longToken = tokens[longTokenSymbol];
-  const shortToken = tokens[shortTokenSymbol];
-
-  if (!indexToken) {
-    throw new Error(`Invalid indexToken: ${indexToken}`);
-  }
-
-  if (!longToken) {
-    throw new Error(`Invalid longToken: ${longToken}`);
-  }
-
-  if (!shortToken) {
-    throw new Error(`Invalid shortToken: ${shortToken}`);
-  }
-
-  const marketAddress = await fetchMarketAddress(indexToken.address, longToken.address, shortToken.address);
-
-  const adjustedAmount = expandDecimals(amount, indexToken.decimals);
-  console.log("marketAddress", marketAddress);
-  const priceImpactPoolAmount = await dataStore.getUint(keys.positionImpactPoolAmountKey(marketAddress));
-
-  if (adjustedAmount.gt(priceImpactPoolAmount)) {
-    throw new Error(
-      `adjustedAmount > priceImpactPoolAmount for ${marketKey}: ${adjustedAmount.toString()}, ${priceImpactPoolAmount.toString()}`
-    );
-  }
-
-  const percentage = adjustedAmount.mul(10_000).div(priceImpactPoolAmount);
-  console.log(
-    `withdrawing ${adjustedAmount.toString()} from ${marketKey}, percentage: ${formatAmount(percentage, 2, 2)}`
-  );
-
-  if (timelockMethod === "signalWithdrawFromPositionImpactPool") {
-    multicallWriteParams.push(
-      timelock.interface.encodeFunctionData(timelockMethod, [
-        marketAddress,
-        receiver,
-        adjustedAmount,
-        constants.HashZero, // predecessor
-        salt,
-      ])
-    );
-  }
-
-  if (timelockMethod === "executeWithOraclePrice") {
-    const { target, payload } = await getPositionImpactPoolWithdrawalPayload(marketAddress, receiver, adjustedAmount);
-
-    const oracleParams = await fetchOracleParams({ indexToken, longToken, shortToken });
-
-    multicallWriteParams.push(
-      timelock.interface.encodeFunctionData("executeWithOraclePrice", [
-        target,
-        payload,
-        constants.HashZero, // predecessor
-        salt,
-        oracleParams,
-      ])
-    );
-  }
 }
 
 async function main() {
@@ -300,27 +220,88 @@ async function main() {
 
   const multicallWriteParams = [];
   const timelock = await hre.ethers.getContract("TimelockConfig");
-  const marketFactory = await ethers.getContract("MarketFactory");
-  const roleStore = await ethers.getContract("RoleStore");
   const dataStore = await ethers.getContract("DataStore");
 
   const tokens = await hre.gmx.getTokens();
-  const marketConfigs = await hre.gmx.getMarkets();
 
   for (const withdrawalItem of withdrawalItems) {
-    await handleWithdrawalItem({
-      ...withdrawalItem,
-      receiver,
-      timelockMethod,
-      multicallWriteParams,
-      timelock,
-      salt,
-      tokens,
-      marketConfigs,
-      marketFactory,
-      roleStore,
-      dataStore,
-    });
+    const { marketKey, amount } = withdrawalItem;
+
+    const tokenSymbols = marketKey.split(":");
+    const indexTokenSymbol = tokenSymbols[0];
+    const longTokenSymbol = tokenSymbols[1];
+    const shortTokenSymbol = tokenSymbols[2];
+
+    const indexToken = tokens[indexTokenSymbol];
+    const longToken = tokens[longTokenSymbol];
+    const shortToken = tokens[shortTokenSymbol];
+
+    if (!indexToken) {
+      throw new Error(`Invalid indexToken: ${indexToken}`);
+    }
+
+    if (!longToken) {
+      throw new Error(`Invalid longToken: ${longToken}`);
+    }
+
+    if (!shortToken) {
+      throw new Error(`Invalid shortToken: ${shortToken}`);
+    }
+
+    const marketAddress = await fetchMarketAddress(indexToken.address, longToken.address, shortToken.address);
+
+    const adjustedAmount = expandDecimals(amount, indexToken.decimals);
+    console.log("marketAddress", marketAddress);
+    const priceImpactPoolAmount = await dataStore.getUint(keys.positionImpactPoolAmountKey(marketAddress));
+
+    if (adjustedAmount.gt(priceImpactPoolAmount)) {
+      throw new Error(
+        `adjustedAmount > priceImpactPoolAmount for ${marketKey}: ${adjustedAmount.toString()}, ${priceImpactPoolAmount.toString()}`
+      );
+    }
+
+    const percentage = adjustedAmount.mul(10_000).div(priceImpactPoolAmount);
+    console.log(
+      `withdrawing ${adjustedAmount.toString()} from ${marketKey}, percentage: ${formatAmount(percentage, 2, 2)}`
+    );
+
+    withdrawalItem.adjustedAmount = adjustedAmount;
+    withdrawalItem.indexToken = indexToken;
+    withdrawalItem.longToken = longToken;
+    withdrawalItem.shortToken = shortToken;
+    withdrawalItem.marketAddress = marketAddress;
+  }
+
+  for (const withdrawalItem of withdrawalItems) {
+    const { adjustedAmount, marketAddress, indexToken, longToken, shortToken } = withdrawalItem;
+
+    if (timelockMethod === "signalWithdrawFromPositionImpactPool") {
+      multicallWriteParams.push(
+        timelock.interface.encodeFunctionData(timelockMethod, [
+          marketAddress,
+          receiver,
+          adjustedAmount,
+          constants.HashZero, // predecessor
+          salt,
+        ])
+      );
+    }
+
+    if (timelockMethod === "executeWithOraclePrice") {
+      const { target, payload } = await getPositionImpactPoolWithdrawalPayload(marketAddress, receiver, adjustedAmount);
+
+      const oracleParams = await fetchOracleParams({ indexToken, longToken, shortToken });
+
+      multicallWriteParams.push(
+        timelock.interface.encodeFunctionData("executeWithOraclePrice", [
+          target,
+          payload,
+          constants.HashZero, // predecessor
+          salt,
+          oracleParams,
+        ])
+      );
+    }
   }
 
   console.log(`sending ${multicallWriteParams.length} updates`);

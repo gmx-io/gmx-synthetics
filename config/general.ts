@@ -58,7 +58,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
 
       minPositionSizeUsd: decimalToFloat(1),
       claimableCollateralTimeDivisor: 60 * 60,
-      claimableCollateralDelay: 14 * 24 * 60 * 60,
+      claimableCollateralDelay: 5 * 24 * 60 * 60,
 
       positionFeeReceiverFactor: 0,
       swapFeeReceiverFactor: 0,
@@ -93,7 +93,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     minAdditionalGasForExecution: 1_000_000,
     refundExecutionFeeGasLimit: 200_000,
 
-    depositGasLimit: 1_800_000,
+    depositGasLimit: 1_950_000,
     withdrawalGasLimit: 1_500_000,
     shiftGasLimit: 2_500_000,
 
@@ -104,9 +104,9 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     createGlvWithdrawalGasLimit: 5_000_000,
 
     singleSwapGasLimit: 1_000_000, // measured gas required for a swap in a market increase order: ~600,000
-    increaseOrderGasLimit: 3_500_000,
-    decreaseOrderGasLimit: 3_500_000,
-    swapOrderGasLimit: 3_000_000,
+    increaseOrderGasLimit: 3_700_000,
+    decreaseOrderGasLimit: 3_700_000,
+    swapOrderGasLimit: 3_200_000,
 
     glvPerMarketGasLimit: 100_000,
     glvDepositGasLimit: 2_000_000,
@@ -163,6 +163,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     arbitrumSepolia: {
       maxAutoCancelOrders: 11,
       maxTotalCallbackGasLimitForAutoCancelOrders: 10_000_000,
+      claimableCollateralDelay: 24 * 60 * 60,
       multichainProviders: {
         "0x6fddB6270F6c71f31B62AE0260cfa8E2e2d186E0": true, // StargatePoolNative
         "0x543BdA7c6cA4384FE90B1F5929bb851F52888983": true, // StargatePoolUSDC
@@ -220,6 +221,10 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       multichainProviders: {
         "0xA45B5130f36CDcA45667738e2a258AB09f4A5f7F": true, // StargatePoolNative
         "0xe8CDF27AcD73a434D661C84887215F7598e7d0d3": true, // StargatePoolUSDC
+        "0x91dd54AA8BA9Dfde8b956Cfb709a7c418f870e21": true, // BTC [WBTC-USDC] GM Adapter
+        "0x27Ef981E6fcB274a6C5C75983725d265Fd3dCdac": true, // WBTC-USDC GLV Adapter
+        "0xfcff5015627B8ce9CeAA7F5b38a6679F65fE39a7": true, // ETH [WETH-USDC] GM Adapter
+        "0x8c92eaE643040fF0Fb65B423433001c176cB0bb6": true, // WETH-USDC GLV Adapter
       },
       multichainEndpoints: {
         "0x1a44076050125825900e736c501f859c50fE728c": true, // LZ Endpoint
@@ -227,10 +232,18 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       srcChainIds: {
         8453: true, // Base
         42161: true, // Arbitrum
+        1: true, // Ethereum
+        56: true, // BSC
+        3637: true, // Botanix
+        80094: true, // Berachain
       },
       eids: {
         8453: 30184, // Base
         42161: 30110, // Arbitrum
+        1: 30101, // Ethereum
+        56: 30102, // BSC
+        3637: 30376, // Botanix
+        80094: 30362, // Berachain
       },
     },
     avalanche: {
