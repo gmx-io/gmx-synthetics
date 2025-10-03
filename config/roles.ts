@@ -126,6 +126,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745": true, // general_keeper_1
       "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
       "0xD5F8b9ba4255B2F73b06f245fcca73D114D1D460": true, // general_keeper_3
+      "0xF86EF7f0BB90a05A932781C5Cb6eEFe55e486107": true, // general_keeper_4
     },
   };
 
@@ -227,7 +228,9 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0x8c6e20A2211D1b70cD7c0789EcE44fDB19567621": true, // ConfigTimelockController
         "0xC181eB022F33b8ba808AD96348B03e8A753A859b": true, // TimelockConfig
         "0x7F01614cA5198Ec979B1aAd1DAF0DE7e0a215BDF": true, // Oracle
+        "0xb8fc96d7a413C462F611A7aC0C912c2FE26EAbC4": true, // FeeHandler Oracle
         "0x87d66368cD08a7Ca42252f5ab44B2fb6d1Fb8d15": true, // ExchangeRouter
+        "0x5aC4e27341e4cCcb3e5FD62f9E62db2Adf43dd57": true, // V2.1 ExchangeRouter
         "0x5b9A353F18d543B9F8a57B2AE50a4FBc80033EC1": true, // SubaccountRouter
         "0x10Fa5Bd343373101654E896B43Ca38Fd8f3789F9": true, // GlvRouter
         "0x0C08518C41755C6907135266dCCf09d51aE53CC4": true, // GelatoRelayRouter
@@ -256,6 +259,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       },
       ROUTER_PLUGIN: {
         "0x87d66368cD08a7Ca42252f5ab44B2fb6d1Fb8d15": true, // ExchangeRouter
+        "0x5aC4e27341e4cCcb3e5FD62f9E62db2Adf43dd57": true, // V2.1 ExchangeRouter
         "0x5b9A353F18d543B9F8a57B2AE50a4FBc80033EC1": true, // SubaccountRouter
         "0x10Fa5Bd343373101654E896B43Ca38Fd8f3789F9": true, // GlvRouter
         "0x0C08518C41755C6907135266dCCf09d51aE53CC4": true, // GelatoRelayRouter
@@ -267,6 +271,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0xC1D1354A948bf717d6d873e5c0bE614359AF954D": true, // MultichainTransferRouter
       },
       ROLE_ADMIN: {
+        "0x4bd1cdAab4254fC43ef6424653cA2375b4C94C0E": true, // GMX DAO
         "0xC181eB022F33b8ba808AD96348B03e8A753A859b": true, // TimelockConfig
         "0x8c6e20A2211D1b70cD7c0789EcE44fDB19567621": true, // ConfigTimelockController
       },
@@ -318,6 +323,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0xB8cAEF9245cbd9064a50830f8330B0D3a5d0D206": true, // ConfigTimelockController
         "0xdD67459D3e98EdDAA9770EbB7C38fF8F643f229f": true, // TimelockConfig
         "0xE1d5a068c5b75E0c7Ea1A9Fe8EA056f9356C6fFD": true, // Oracle
+        "0xAd7a7568F500F65AEA3D9417A210CBc5dcD7b273": true, // FeeHandler Oracle
         "0xF0864BE1C39C0AB28a8f1918BC8321beF8F7C317": true, // ExchangeRouter
         "0x88a5c6D94634Abd7745f5348e5D8C42868ed4AC3": true, // SubaccountRouter
         "0x4729D9f61c0159F5e02D2C2e5937B3225e55442C": true, // GlvRouter

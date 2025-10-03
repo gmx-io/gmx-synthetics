@@ -34,6 +34,13 @@ import { collectDependents } from "./utils/dependencies";
 import { deleteFile, writeJsonFile } from "./utils/file";
 import { TASK_VERIFY } from "@nomicfoundation/hardhat-verify/internal/task-names";
 
+const getNetworkFromCLI = () => {
+  const i = process.argv.indexOf("--network");
+  return i !== -1 && process.argv[i + 1] ? process.argv[i + 1] : "hardhat";
+};
+
+const HARDHAT_NETWORK = getNetworkFromCLI();
+
 const getRpcUrl = (network) => {
   const defaultRpcs = {
     arbitrum: "https://arb1.arbitrum.io/rpc",
@@ -68,8 +75,8 @@ export const getExplorerUrl = (network) => {
     botanix: "https://api.routescan.io/v2/network/mainnet/evm/3637/etherscan/",
     snowscan: "https://api.snowscan.xyz/",
     arbitrumGoerli: "https://api-goerli.arbiscan.io/",
-    arbitrumSepolia: "https://api-sepolia.arbiscan.io/",
-    sepolia: "https://sepolia.etherscan.io/",
+    arbitrumSepolia: "https://api.etherscan.io/v2/api?chainid=421614",
+    sepolia: "https://api.etherscan.io/v2/api?chainid=11155111",
     avalancheFuji: "https://api-testnet.snowtrace.io/",
     arbitrumBlockscout: "https://arbitrum.blockscout.com/api",
   };
@@ -102,7 +109,7 @@ export const getBlockExplorerUrl = (network) => {
 // for etherscan, a single string is expected to be returned
 // for other networks / explorers, an object is needed
 const getEtherscanApiKey = () => {
-  if (process.env.HARDHAT_NETWORK === "arbitrum") {
+  if (["arbitrum", "arbitrumSepolia"].includes(HARDHAT_NETWORK)) {
     return process.env.ARBISCAN_API_KEY;
   }
 
@@ -317,7 +324,7 @@ const config: HardhatUserConfig = {
         network: "arbitrumSepolia",
         chainId: 421614,
         urls: {
-          apiURL: "https://api-sepolia.arbiscan.io/api",
+          apiURL: "https://api.etherscan.io/v2/api",
           browserURL: "https://sepolia.arbiscan.io/",
         },
       },
@@ -348,7 +355,7 @@ const config: HardhatUserConfig = {
     ],
   },
   sourcify: {
-    enabled: false,
+    enabled: true,
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS ? true : false,
@@ -380,7 +387,7 @@ task("dependencies", "Print dependencies for a contract")
     const dependencies = graph.getResolvedFiles().map((value) => {
       return value.sourceName;
     });
-    console.log(dependencies);
+    console.log(JSON.stringify(dependencies, null, 2));
     return graph;
   });
 

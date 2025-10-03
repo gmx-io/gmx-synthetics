@@ -1,6 +1,6 @@
 import { BigNumberish } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { percentageToFloat, expandDecimals, numberToBigNumber } from "../utils/math";
+import { percentageToFloat, expandDecimals, numberToBigNumber, bigNumberify } from "../utils/math";
 
 type GlvConfig = {
   name: string;
@@ -29,12 +29,14 @@ type GlvConfig = {
 function createGlvMarketConfig(
   tokenSymbol: string,
   usdCap: number,
-  tokenPrice: number
+  tokenPrice: number,
+  isMarketDisabled = false
 ): GlvConfig[any]["markets"][number] {
   return {
     indexToken: tokenSymbol,
-    glvMaxMarketTokenBalanceAmount: numberToBigNumber(usdCap / tokenPrice, 18),
-    glvMaxMarketTokenBalanceUsd: numberToBigNumber(usdCap, 30),
+    glvMaxMarketTokenBalanceAmount: isMarketDisabled ? bigNumberify(0) : numberToBigNumber(usdCap / tokenPrice, 18),
+    glvMaxMarketTokenBalanceUsd: isMarketDisabled ? bigNumberify(0) : numberToBigNumber(usdCap, 30),
+    isMarketDisabled,
   };
 }
 
@@ -82,12 +84,25 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("ONDO", arbitrum_ethUsdcDefaultCap, 1.32),
           createGlvMarketConfig("FET", arbitrum_ethUsdcDefaultCap, 1.35),
           createGlvMarketConfig("AIXBT", arbitrum_ethUsdcDefaultCap, 1.45),
-          createGlvMarketConfig("MKR", arbitrum_ethUsdcDefaultCap, 1.51),
+          createGlvMarketConfig("MKR", arbitrum_ethUsdcDefaultCap, 1.51, true),
           createGlvMarketConfig("DOLO", arbitrum_ethUsdcDefaultCap, 1.25),
           createGlvMarketConfig("ZRO", arbitrum_ethUsdcDefaultCap, 1.54),
           createGlvMarketConfig("CRV", arbitrum_ethUsdcDefaultCap, 1.23),
           createGlvMarketConfig("MNT", arbitrum_ethUsdcDefaultCap, 1.02),
           createGlvMarketConfig("SPX6900", arbitrum_ethUsdcDefaultCap, 1.02),
+          createGlvMarketConfig("CVX", arbitrum_ethUsdcDefaultCap, 1),
+          createGlvMarketConfig("OKB", arbitrum_ethUsdcDefaultCap, 1),
+          createGlvMarketConfig("PEPE", arbitrum_ethUsdcDefaultCap, 1),
+          createGlvMarketConfig("AAVE", arbitrum_ethUsdcDefaultCap, 1),
+          createGlvMarketConfig("AERO", arbitrum_ethUsdcDefaultCap, 1),
+          createGlvMarketConfig("BRETT", arbitrum_ethUsdcDefaultCap, 1),
+          createGlvMarketConfig("WLFI", arbitrum_ethUsdcDefaultCap, 1),
+          createGlvMarketConfig("WELL", arbitrum_ethUsdcDefaultCap, 1),
+          createGlvMarketConfig("VVV", arbitrum_ethUsdcDefaultCap, 1),
+          createGlvMarketConfig("MORPHO", arbitrum_ethUsdcDefaultCap, 1),
+          createGlvMarketConfig("LINK", arbitrum_ethUsdcDefaultCap, 1),
+          createGlvMarketConfig("ZORA", arbitrum_ethUsdcDefaultCap, 1),
+          createGlvMarketConfig("KTA", arbitrum_ethUsdcDefaultCap, 1),
         ],
       },
       {
@@ -130,6 +145,14 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("XMR", arbitrum_btcUsdcDefaultCap, 1.06),
           createGlvMarketConfig("PI", arbitrum_btcUsdcDefaultCap, 1.07),
           createGlvMarketConfig("PUMP", arbitrum_btcUsdcDefaultCap, 1.05),
+          createGlvMarketConfig("ALGO", arbitrum_btcUsdcDefaultCap, 1),
+          createGlvMarketConfig("HBAR", arbitrum_btcUsdcDefaultCap, 1),
+          createGlvMarketConfig("CRO", arbitrum_btcUsdcDefaultCap, 1),
+          createGlvMarketConfig("KAS", arbitrum_btcUsdcDefaultCap, 1),
+          createGlvMarketConfig("WIF", arbitrum_btcUsdcDefaultCap, 1),
+          createGlvMarketConfig("XPL", arbitrum_btcUsdcDefaultCap, 1),
+          createGlvMarketConfig("BNB", arbitrum_btcUsdcDefaultCap, 1),
+          createGlvMarketConfig("SOL", arbitrum_btcUsdcDefaultCap, 1),
         ],
       },
     ],
@@ -151,6 +174,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("TRUMP", avalanche_avaxUsdcDefaultCap, 1.06),
           createGlvMarketConfig("MELANIA", avalanche_avaxUsdcDefaultCap, 1.03),
           createGlvMarketConfig("PUMP", avalanche_avaxUsdcDefaultCap, 1),
+          createGlvMarketConfig("WLFI", avalanche_avaxUsdcDefaultCap, 1),
         ],
       },
     ],

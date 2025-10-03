@@ -19,6 +19,7 @@ out
 #Hardhat files
 /cache
 /data
+/scripts/distributions/out
 /artifacts
 /deployments/localhost
 /deployments.txt
