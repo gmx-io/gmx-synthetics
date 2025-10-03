@@ -2170,6 +2170,37 @@ library MarketUtils {
         return dataStore.getUint(Keys.openInterestKey(market, collateralToken, isLong)) / divisor;
     }
 
+    function getOpenInterestForBorrowing(
+        DataStore dataStore,
+        Market.Props memory market,
+        bool useOpenInterestInTokens,
+        uint256 indexTokenPrice,
+        bool isLong
+    ) internal view returns (uint256) {
+        uint256 divisor = getPoolDivisor(market.longToken, market.shortToken);
+        GetOpenInterestForFundingParams memory params = GetOpenInterestForFundingParams({
+            dataStore: dataStore,
+            market: market.marketToken,
+            divisor: divisor,
+            useOpenInterestInTokens: useOpenInterestInTokens,
+            indexTokenPrice: indexTokenPrice
+        });
+
+        uint256 openInterestUsingLongTokenAsCollateral = getOpenInterestForFunding(
+            params,
+            market.longToken,
+            isLong
+        );
+
+        uint256 openInterestUsingShortTokenAsCollateral = getOpenInterestForFunding(
+            params,
+            market.shortToken,
+            isLong
+        );
+
+        return openInterestUsingLongTokenAsCollateral + openInterestUsingShortTokenAsCollateral;
+    }
+
     function getOpenInterestForFunding(
         GetOpenInterestForFundingParams memory params,
         address collateralToken,
@@ -2694,8 +2725,22 @@ library MarketUtils {
         // then the borrowing fee would be charged for both sides, this should be very rare
         bool skipBorrowingFeeForSmallerSide = dataStore.getBool(Keys.SKIP_BORROWING_FEE_FOR_SMALLER_SIDE);
         if (skipBorrowingFeeForSmallerSide) {
-            uint256 longOpenInterest = getOpenInterest(dataStore, market, true);
-            uint256 shortOpenInterest = getOpenInterest(dataStore, market, false);
+            bool useOpenInterestInTokens = dataStore.getBool(Keys.USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE);
+            uint256 longOpenInterest = getOpenInterestForBorrowing({
+                dataStore: dataStore,
+                market: market,
+                useOpenInterestInTokens: useOpenInterestInTokens,
+                indexTokenPrice: prices.indexTokenPrice.max,
+                isLong: true
+            });
+
+            uint256 shortOpenInterest = getOpenInterestForBorrowing({
+                dataStore: dataStore,
+                market: market,
+                useOpenInterestInTokens: useOpenInterestInTokens,
+                indexTokenPrice: prices.indexTokenPrice.max,
+                isLong: false
+            });
 
             // if getting the borrowing factor for longs and if the longOpenInterest
             // is smaller than the shortOpenInterest, then return zero
