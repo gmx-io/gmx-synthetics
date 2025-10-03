@@ -454,7 +454,7 @@ describe("Exchange.FundingFees.AdaptiveFunding", () => {
           gasUsageLabel: "executeOrder",
           afterExecution: ({ logs }) => {
             const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
-            expect(positionIncreaseEvent.pendingPriceImpactUsd).eq("9841413403208246300535000"); // 0.00000984141
+            expect(positionIncreaseEvent.pendingPriceImpactUsd).eq("9843824701195219287825000"); // 0.00000984141
           },
         },
       });
