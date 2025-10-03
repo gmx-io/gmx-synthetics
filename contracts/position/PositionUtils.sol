@@ -244,6 +244,19 @@ library PositionUtils {
         }
     }
 
+    function validateBasicPositionInfo(
+        DataStore dataStore,
+        Position.Props memory position,
+        Market.Props memory market
+    ) internal view {
+        if (position.sizeInUsd() == 0 || position.sizeInTokens() == 0) {
+            revert Errors.InvalidPositionSizeValues(position.sizeInUsd(), position.sizeInTokens());
+        }
+
+        MarketUtils.validateEnabledMarket(dataStore, market.marketToken);
+        MarketUtils.validateMarketCollateralToken(market, position.collateralToken());
+    }
+
     // @dev check if a position is valid
     // @param dataStore DataStore
     // @param referralStorage IReferralStorage
@@ -270,12 +283,7 @@ library PositionUtils {
         bool shouldValidateMinPositionSize,
         bool shouldValidateMinCollateralUsd
     ) public view {
-        if (position.sizeInUsd() == 0 || position.sizeInTokens() == 0) {
-            revert Errors.InvalidPositionSizeValues(position.sizeInUsd(), position.sizeInTokens());
-        }
-
-        MarketUtils.validateEnabledMarket(dataStore, market.marketToken);
-        MarketUtils.validateMarketCollateralToken(market, position.collateralToken());
+        validateBasicPositionInfo(dataStore, position, market);
 
         if (shouldValidateMinPositionSize) {
             uint256 minPositionSizeUsd = dataStore.getUint(Keys.MIN_POSITION_SIZE_USD);

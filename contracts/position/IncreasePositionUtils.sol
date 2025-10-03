@@ -223,6 +223,12 @@ library IncreasePositionUtils {
                 true, // shouldValidateMinPositionSize
                 true // shouldValidateMinCollateralUsd
             );
+        } else {
+            PositionUtils.validateBasicPositionInfo(
+                params.contracts.dataStore,
+                params.position,
+                params.market
+            );
         }
 
         PositionEventUtils.emitPositionFeesCollected(
