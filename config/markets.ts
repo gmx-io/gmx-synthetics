@@ -23,6 +23,17 @@ export type BaseMarketConfig = {
   maxLongTokenPoolAmount: BigNumberish;
   maxShortTokenPoolAmount: BigNumberish;
 
+  // note that maxCollateralSum is used to fill maxLongCollateralSum and maxShortCollateralSum
+  // these values indicate the max sum of collaterals for a market
+  // maxLongCollateralSum and maxShortCollateralSum is duplicated for long and short positions
+  // e.g. if maxLongCollateralSum is 1000 tokens, then maxLongCollateralSum for longs
+  // and maxLongCollateralSum for shorts would both be 1000 tokens
+  // to make the configuration more intuitive, the maxLongCollateralSum and maxShortCollateralSum is divided by two
+  // in updateMarketConfigUtils
+  maxCollateralSum: BigNumberish;
+  maxLongCollateralSum?: BigNumberish;
+  maxShortCollateralSum?: BigNumberish;
+
   maxPoolUsdForDeposit?: BigNumberish;
   maxLongTokenPoolUsdForDeposit?: BigNumberish;
   maxShortTokenPoolUsdForDeposit?: BigNumberish;
@@ -297,6 +308,7 @@ const baseMarketConfig: Partial<BaseMarketConfig> = {
   swapImpactExponentFactor: exponentToFloat("2e0"), // 2
 
   minCollateralUsd: decimalToFloat(1, 0), // 1 USD
+  maxCollateralSum: expandDecimals(10_000_000_000_000, 18), // 10 trillion with 18 decimals
 
   // factor in open interest reserve factor 80%
   borrowingFactor: decimalToFloat(625, 11), // 0.00000000625 * 80% = 0.000000005, 0.0000005% / second, 15.77% per year if the pool is 100% utilized
@@ -396,6 +408,8 @@ const hardhatBaseMarketConfig: Partial<BaseMarketConfig> = {
 
   maxLongTokenPoolAmount: expandDecimals(1_000_000_000, 18),
   maxShortTokenPoolAmount: expandDecimals(1_000_000_000, 18),
+
+  maxCollateralSum: expandDecimals(10_000_000_000_000, 18), // 10 trillion with 18 decimals
 
   maxPoolUsdForDeposit: decimalToFloat(1_000_000_000_000_000),
   maxOpenInterest: decimalToFloat(1_000_000_000),
@@ -5051,6 +5065,8 @@ export default async function (hre: HardhatRuntimeEnvironment) {
         "maxLongTokenPoolUsdForDeposit",
         "maxShortTokenPoolUsdForDeposit"
       );
+
+      fillLongShortValues(market, "maxCollateralSum", "maxLongCollateralSum", "maxShortCollateralSum");
 
       fillLongShortValues(market, "maxOpenInterest", "maxOpenInterestForLongs", "maxOpenInterestForShorts");
 
