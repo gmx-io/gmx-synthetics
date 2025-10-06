@@ -250,6 +250,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     avalanche: {
       multichainProviders: {
         "0x5634c4a5FEd09819E3c46D86A965Dd9447d86e47": true, // StargatePoolUSDC
+        "0x12dC9256Acc9895B076f6638D628382881e62CeE": true, // StargatePoolUSDT
       },
       multichainEndpoints: {
         "0x1a44076050125825900e736c501f859c50fE728c": true, // LZ Endpoint
