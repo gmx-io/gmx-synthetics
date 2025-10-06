@@ -436,49 +436,30 @@ describe("Exchange.FundingFees.AdaptiveFunding", () => {
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 8));
     await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
 
-    if (useOpenInterestInTokensForBalance) {
-      // is useOpenInterestInTokensForBalance, there should be a small positive price impact
-      // since the openInterestInTokens for longs is slightly smaller than for shorts
-      await handleOrder(fixture, {
-        create: {
-          account: user0,
-          market: ethUsdMarket,
-          initialCollateralDeltaAmount: expandDecimals(10, 18),
-          initialCollateralToken: wnt,
-          sizeDeltaUsd: decimalToFloat(30),
-          acceptablePrice: expandDecimals(5050, 12),
-          orderType: OrderType.MarketIncrease,
-          isLong: true,
+    // is useOpenInterestInTokensForBalance, there should be a small positive price impact
+    // since the openInterestInTokens for longs is slightly smaller than for shorts
+    await handleOrder(fixture, {
+      create: {
+        account: user0,
+        market: ethUsdMarket,
+        initialCollateralDeltaAmount: expandDecimals(10, 18),
+        initialCollateralToken: wnt,
+        sizeDeltaUsd: decimalToFloat(30),
+        acceptablePrice: expandDecimals(5050, 12),
+        orderType: OrderType.MarketIncrease,
+        isLong: true,
+      },
+      execute: {
+        gasUsageLabel: "executeOrder",
+        afterExecution: ({ logs }) => {
+          const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
+          //  0.00000984141 / -0.000009
+          expect(positionIncreaseEvent.pendingPriceImpactUsd).eq(
+            useOpenInterestInTokensForBalance ? "9843824701195219287825000" : "-8999999999999999859640000"
+          );
         },
-        execute: {
-          gasUsageLabel: "executeOrder",
-          afterExecution: ({ logs }) => {
-            const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
-            expect(positionIncreaseEvent.pendingPriceImpactUsd).eq("9843824701195219287825000"); // 0.00000984141
-          },
-        },
-      });
-    } else {
-      await handleOrder(fixture, {
-        create: {
-          account: user0,
-          market: ethUsdMarket,
-          initialCollateralDeltaAmount: expandDecimals(10, 18),
-          initialCollateralToken: wnt,
-          sizeDeltaUsd: decimalToFloat(30),
-          acceptablePrice: expandDecimals(5050, 12),
-          orderType: OrderType.MarketIncrease,
-          isLong: true,
-        },
-        execute: {
-          gasUsageLabel: "executeOrder",
-          afterExecution: ({ logs }) => {
-            const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
-            expect(positionIncreaseEvent.pendingPriceImpactUsd).eq("-8999999999999999859640000"); // -0.000009
-          },
-        },
-      });
-    }
+      },
+    });
 
     // the position should be fully closeable
     await handleOrder(fixture, {
@@ -497,6 +478,11 @@ describe("Exchange.FundingFees.AdaptiveFunding", () => {
         afterExecution: ({ logs }) => {
           const positionDecreaseEvent = getEventData(logs, "PositionDecrease");
           expect(positionDecreaseEvent.sizeInUsd).eq("0");
+          expect(positionDecreaseEvent.priceImpactUsd).eq(
+            useOpenInterestInTokensForBalance
+              ? "-111465017696232642237559789270000" // -111.465017696
+              : "-112362115509999998076470009600000" // -112.36211551
+          );
         },
       },
     });
