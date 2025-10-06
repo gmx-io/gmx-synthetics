@@ -258,10 +258,12 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       srcChainIds: {
         8453: true, // Base
         43114: true, // Avalanche
+        56: true, // BSC
       },
       eids: {
         8453: 30184, // Base
         43114: 30106, // Avalanche
+        56: 30102, // BSC
       },
     },
     botanix: {
