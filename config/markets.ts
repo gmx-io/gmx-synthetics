@@ -3661,11 +3661,11 @@ const config: {
       openInterestReserveFactor: percentageToFloat("100%"),
       maxPnlFactorForTraders: percentageToFloat("90%"),
 
-      maxOpenInterest: decimalToFloat(1_000_000),
-      maxPoolUsdForDeposit: decimalToFloat(1_500_000),
+      maxOpenInterest: decimalToFloat(1_500_000),
+      maxPoolUsdForDeposit: decimalToFloat(2_250_000),
 
-      maxLongTokenPoolAmount: expandDecimals(18, 8), // ~2M USD (2x max open interest)
-      maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x max open interest)
+      maxLongTokenPoolAmount: expandDecimals(21, 8), // ~2M USD (2x max open interest)
+      maxShortTokenPoolAmount: expandDecimals(2_700_000, 6), // ~2M USD (2x max open interest)
     },
     {
       tokens: { indexToken: "SOL", longToken: "WBTC.e", shortToken: "USDC" },
