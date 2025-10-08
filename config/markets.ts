@@ -4645,7 +4645,7 @@ const config: {
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.78e-9"),
 
       maxOpenInterest: decimalToFloat(2_000_000),
-      maxPoolUsdForDeposit: decimalToFloat(3_000_000), // 1.5x max open interest
+      maxPoolUsdForDeposit: decimalToFloat(3_250_000),
 
       maxLongTokenPoolAmount: expandDecimals(36, 18), // ~4M USD (2x max open interest)
       maxShortTokenPoolAmount: expandDecimals(36, 18), // ~4M USD (2x max open interest)
