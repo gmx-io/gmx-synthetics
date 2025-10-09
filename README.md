@@ -701,6 +701,8 @@ After the initial setup:
 
 - For callback contracts instead of maintaining a separate whitelist for DepositHandlers, OrderHandlers, WithdrawalHandlers, a possible solution would be to validate the role of the msg.sender in the RoleStore, e.g. `RoleStore.hasRole(msg.sender, Role.CONTROLLER)`, this would check that the msg.sender is a valid handler
 
+- If the user is able to choose which ExchangeRouter to interact with, then it should not be assumed that the callback params will be of a fixed format, this is because when new ExchangeRouters and handlers are deployed there may be a transition period where both the old and new contracts can be used, so the callbacks for e.g. afterOrderCancellation could be of either the new or old format. If it is enforced that only a specific ExchangeRouter can be used to validly trigger the callback, then this would not be an issue.
+
 - If using contracts such as the ExchangeRouter, Oracle or Reader do note that their addresses will change as new logic is added
 
 - If contracts such as the ExchangeRouter, Oracle or Reader are updated, effort should be made to keep the function parameters the same, however, this may not always be possible, e.g. if a new order property is to be supported, the ExchangeRouter.createOrder params will have to be changed

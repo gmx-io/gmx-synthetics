@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import { SendParam, MessagingFee, IOFT } from "@layerzerolabs/oft-evm/contracts/interfaces/IOFT.sol";
+import "@layerzerolabs/oft-evm/contracts/OFTCore.sol";
 
 import "../fee/FeeDistributorUtils.sol";
 import "../fee/FeeDistributorVault.sol";
@@ -17,10 +17,9 @@ import "../v1/IVesterV1.sol";
 import "../v1/IMintable.sol";
 
 contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
-    using EventUtils for EventUtils.AddressItems;
     using EventUtils for EventUtils.UintItems;
     using EventUtils for EventUtils.BytesItems;
-    using EventUtils for EventUtils.BoolItems;
+    using EventUtils for EventUtils.StringItems;
 
     // constant and immutable variables are internal to reduce the contract size
     bytes internal constant EMPTY_BYTES = "";
@@ -166,7 +165,7 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         eventData.uintItems.initItems(2);
         _setUintItem(eventData, 0, "numberOfChainsReadRequests", chainIdsLength - 1);
         _setUintItem(eventData, 1, "messagingFee.nativeFee", messagingFee.nativeFee);
-        _emitEventLog("FeeDistributionInitiated", eventData);
+        _emitFeeDistributionEvent(eventData, "FeeDistributionInitiated");
     }
 
     // @dev receive and process the LZRead request received data and bridge GMX to other chains if necessary
@@ -219,13 +218,13 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         _setTokenPrices();
 
         uint256 requiredGmxAmount = Precision.mulDiv(totalFeeAmountGmx, stakedGmxCurrentChain, totalStakedGmx);
-        bool isBridgingCompleted;
+        uint256 totalGmxBridgedOut;
         // validate that the this chain has sufficient GMX to distribute fees
         if (feeAmountGmxCurrentChain >= requiredGmxAmount) {
             // only attempt to bridge to other chains if this chain has a surplus of GMX
             if (feeAmountGmxCurrentChain > requiredGmxAmount) {
                 // Call the internal bridging function
-                uint256 totalGmxBridgedOut = _calculateAndBridgeGmx(
+                totalGmxBridgedOut = _calculateAndBridgeGmx(
                     chainIds,
                     totalFeeAmountGmx,
                     stakedAmountsGmx,
@@ -245,21 +244,18 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
                 }
                 _setUint(Keys2.feeDistributorFeeAmountGmxKey(mockChainId), newFeeAmountGmxCurrentChain);
             }
-            isBridgingCompleted = true;
             _setDistributionState(uint256(DistributionState.BridgingCompleted));
         } else {
-            isBridgingCompleted = false;
             _setDistributionState(uint256(DistributionState.ReadDataReceived));
         }
 
         EventUtils.EventLogData memory eventData;
-        eventData.uintItems.initItems(1);
+        eventData.uintItems.initItems(2);
         _setUintItem(eventData, 0, "feeAmountGmxCurrentChain", feeAmountGmxCurrentChain);
+        _setUintItem(eventData, 1, "totalGmxBridgedOut", totalGmxBridgedOut);
         eventData.bytesItems.initItems(1);
         eventData.bytesItems.setItem(0, "receivedData", abi.encode(receivedData));
-        eventData.boolItems.initItems(1);
-        eventData.boolItems.setItem(0, "isBridgingCompleted", isBridgingCompleted);
-        _emitEventLog("FeeDistributionDataReceived", eventData);
+        _emitFeeDistributionEvent(eventData, "FeeDistributionDataReceived");
     }
 
     // @dev function executed via an automated Gelato transaction when bridged GMX is received on this chain
@@ -303,7 +299,7 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         eventData.uintItems.initItems(2);
         _setUintItem(eventData, 0, "gmxReceived", gmxReceived);
         _setUintItem(eventData, 1, "feeAmountGmxCurrentChain", feeAmountGmxCurrentChain);
-        _emitEventLog("FeeDistributionBridgedGmxReceived", eventData);
+        _emitFeeDistributionEvent(eventData, "FeeDistributionBridgedGmxReceived");
     }
 
     // @dev complete the fee distribution calculations, token transfers and if necessary bridge GMX cross-chain
@@ -356,7 +352,7 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         _setUintItem(eventData, 4, "wntForTreasury", wntForTreasury);
         _setUintItem(eventData, 5, "wntForReferralRewards", wntForReferralRewards);
         _setUintItem(eventData, 6, "esGmxForReferralRewards", esGmxForReferralRewards);
-        _emitEventLog("FeeDistributionCompleted", eventData);
+        _emitFeeDistributionEvent(eventData, "FeeDistributionCompleted");
     }
 
     // @dev deposit the calculated referral rewards in the ClaimVault for the specified accounts
@@ -372,6 +368,7 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         _validateDistributionState(DistributionState.None);
 
         uint256 tokensForReferralRewards = _getUint(Keys2.feeDistributorReferralRewardsAmountKey(token));
+        uint256 cumulativeDepositAmount = _getUint(Keys2.feeDistributorReferralRewardsDepositedKey(token));
         if (token == esGmx) {
             // validate the esGMX amount is valid and that there are sufficient esGMX in the feeDistributorVault
             uint256 maxEsGmxReferralRewards = _getUint(Keys2.FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_ESGMX_AMOUNT);
@@ -380,8 +377,9 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
             }
 
             uint256 vaultEsGmxBalance = _getFeeDistributorVaultBalance(esGmx);
-            if (tokensForReferralRewards > vaultEsGmxBalance) {
-                IMintable(esGmx).mint(address(feeDistributorVault), tokensForReferralRewards - vaultEsGmxBalance);
+            uint256 esGmxToBeDeposited = tokensForReferralRewards - cumulativeDepositAmount;
+            if (esGmxToBeDeposited > vaultEsGmxBalance) {
+                IMintable(esGmx).mint(address(feeDistributorVault), esGmxToBeDeposited - vaultEsGmxBalance);
             }
 
             // update esGMX bonus reward amounts for each account in the vester contract
@@ -393,9 +391,6 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
                 IVester(vester).setBonusRewards(param.account, totalEsGmxRewards);
 
                 EventUtils.EventLogData memory eventData;
-                eventData.addressItems.initItems(1);
-                eventData.addressItems.setItem(0, "account", param.account);
-
                 eventData.uintItems.initItems(2);
                 _setUintItem(eventData, 0, "amount", param.amount);
                 _setUintItem(eventData, 1, "totalEsGmxRewards", totalEsGmxRewards);
@@ -419,13 +414,12 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         ClaimUtils._validateTotalClaimableFundsAmount(dataStore, token, claimVault);
 
         // validate that the cumulative referral rewards deposited is not greater than the total calculated amount
-        uint256 cumulativeTransferAmount = _getUint(Keys2.feeDistributorReferralRewardsDepositedKey(token)) +
-            totalTransferAmount;
-        if (cumulativeTransferAmount > tokensForReferralRewards) {
-            revert Errors.MaxReferralRewardsExceeded(token, cumulativeTransferAmount, tokensForReferralRewards);
+        cumulativeDepositAmount += totalTransferAmount;
+        if (cumulativeDepositAmount > tokensForReferralRewards) {
+            revert Errors.MaxReferralRewardsExceeded(token, cumulativeDepositAmount, tokensForReferralRewards);
         }
 
-        _setUint(Keys2.feeDistributorReferralRewardsDepositedKey(token), cumulativeTransferAmount);
+        _setUint(Keys2.feeDistributorReferralRewardsDepositedKey(token), cumulativeDepositAmount);
     }
 
     function _calculateAndBridgeGmx(
@@ -457,9 +451,8 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
 
     function _bridgeGmx(uint256[] memory chainIds, uint256[] memory bridgingAmounts) internal returns (uint256) {
         // Execute bridging transactions from current chain
-        address layerzeroOft = _getAddressInfo(LAYERZERO_OFT);
-        uint256 sharedDecimals = IOFT(layerzeroOft).sharedDecimals();
-        uint256 decimalConversionRate = 10 ** (18 - sharedDecimals);
+        OFTCore layerzeroOft = OFTCore(_getAddressInfo(LAYERZERO_OFT));
+        uint256 decimalConversionRate = layerzeroOft.decimalConversionRate();
         uint256 totalGmxBridgedOut;
         for (uint256 i; i < chainIds.length; i++) {
             uint256 bridgingAmount = bridgingAmounts[i];
@@ -470,9 +463,9 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
             // Move GMX needed for bridging to this contract from FeeDistributorVault
             _transferOut(gmx, address(this), sendAmount);
 
-            // If the Layerzero OFT contract on this chain is not also the GMX token, approve the sendAmount
-            if (layerzeroOft != gmx) {
-                IERC20(gmx).approve(layerzeroOft, sendAmount);
+            // If the Layerzero OFT contract on this chain requires GMX approval, approve the sendAmount
+            if (layerzeroOft.approvalRequired()) {
+                IERC20(gmx).approve(address(layerzeroOft), sendAmount);
             }
 
             // Prepare remaining params needed for the bridging transaction
@@ -492,23 +485,14 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
                 EMPTY_BYTES,
                 EMPTY_BYTES
             );
-            MessagingFee memory messagingFee = IOFT(layerzeroOft).quoteSend(sendParam, false);
+            MessagingFee memory messagingFee = layerzeroOft.quoteSend(sendParam, false);
 
             // Make the bridge call to the OFT contract
-            IOFT(layerzeroOft).send{ value: messagingFee.nativeFee }(
-                sendParam,
-                messagingFee,
-                address(feeDistributorVault)
-            );
+            layerzeroOft.send{ value: messagingFee.nativeFee }(sendParam, messagingFee, address(feeDistributorVault));
 
             // Add to the total bridged out
             totalGmxBridgedOut += sendAmount;
         }
-
-        EventUtils.EventLogData memory eventData;
-        eventData.uintItems.initItems(1);
-        _setUintItem(eventData, 0, "totalGmxBridgedOut", totalGmxBridgedOut);
-        _emitEventLog("FeeDistributionGmxBridgedOut", eventData);
 
         return totalGmxBridgedOut;
     }
@@ -633,8 +617,13 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         feeDistributorVault.transferOut(token, receiver, amount);
     }
 
-    function _emitEventLog(string memory eventName, EventUtils.EventLogData memory eventData) internal {
-        eventEmitter.emitEventLog(eventName, eventData);
+    function _emitFeeDistributionEvent(
+        EventUtils.EventLogData memory eventData,
+        string memory eventDescription
+    ) internal {
+        eventData.stringItems.initItems(1);
+        eventData.stringItems.setItem(0, "eventDescription", eventDescription);
+        eventEmitter.emitEventLog("FeeDistributionEvent", eventData);
     }
 
     function _setTokenPrices() internal withOraclePrices(_retrieveSetPricesParams()) {

@@ -488,7 +488,7 @@ describe("FeeDistributor", function () {
     const distributeTimestamp = await dataStore.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
 
     const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[6].parsedEventData;
-    const feeDistributionDataReceived = parseLogs(fixture, receipt)[3].parsedEventData;
+    const feeDistributionDataReceivedEventData = parseLogs(fixture, receipt)[3].parsedEventData;
 
     const feeAmountGmxA = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdA));
     const feeAmountGmxB = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB));
@@ -505,8 +505,10 @@ describe("FeeDistributor", function () {
 
     expect(distributeTimestamp).to.equal(timestamp);
 
+    expect(feeDistributionInitiatedEventData.eventDescription).to.equal("FeeDistributionInitiated");
     expect(feeDistributionInitiatedEventData.numberOfChainsReadRequests).to.equal(2);
-    expect(feeDistributionDataReceived.isBridgingCompleted).is.false;
+    expect(feeDistributionDataReceivedEventData.eventDescription).to.equal("FeeDistributionDataReceived");
+    expect(feeDistributionDataReceivedEventData.totalGmxBridgedOut).to.equal(0);
 
     expect(feeAmountGmxA).to.equal(expandDecimals(160_000, 18));
     expect(feeAmountGmxB).to.equal(expandDecimals(50_000, 18));
@@ -598,9 +600,8 @@ describe("FeeDistributor", function () {
 
     const distributeTimestamp = await dataStore.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
 
-    const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[19].parsedEventData;
-    const feeDistributionDataReceived = parseLogs(fixture, receipt)[16].parsedEventData;
-    const feeDistributionGmxBridgedOut = parseLogs(fixture, receipt)[15].parsedEventData;
+    const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[16].parsedEventData;
+    const feeDistributionDataReceivedEventData = parseLogs(fixture, receipt)[13].parsedEventData;
 
     const feeAmountGmxA = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdA));
     const feeAmountGmxB = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB));
@@ -621,9 +622,10 @@ describe("FeeDistributor", function () {
 
     expect(distributeTimestamp).to.equal(timestamp);
 
+    expect(feeDistributionInitiatedEventData.eventDescription).to.equal("FeeDistributionInitiated");
     expect(feeDistributionInitiatedEventData.numberOfChainsReadRequests).to.equal(2);
-    expect(feeDistributionDataReceived.isBridgingCompleted).is.true;
-    expect(feeDistributionGmxBridgedOut.totalGmxBridgedOut).to.equal(expandDecimals(40_000, 18));
+    expect(feeDistributionDataReceivedEventData.eventDescription).to.equal("FeeDistributionDataReceived");
+    expect(feeDistributionDataReceivedEventData.totalGmxBridgedOut).to.equal(expandDecimals(40_000, 18));
 
     expect(feeAmountGmxA).to.equal(expandDecimals(50_000, 18));
     expect(feeAmountGmxB).to.equal(expandDecimals(120_000, 18));
@@ -722,7 +724,7 @@ describe("FeeDistributor", function () {
     const distributeTimestamp = await dataStore.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
 
     const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[6].parsedEventData;
-    const feeDistributionDataReceived = parseLogs(fixture, receipt)[3].parsedEventData;
+    const feeDistributionDataReceivedEventData = parseLogs(fixture, receipt)[3].parsedEventData;
 
     const feeAmountGmxA = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdA));
     const feeAmountGmxB = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB));
@@ -741,8 +743,10 @@ describe("FeeDistributor", function () {
 
     expect(distributeTimestamp).to.equal(timestamp);
 
+    expect(feeDistributionInitiatedEventData.eventDescription).to.equal("FeeDistributionInitiated");
     expect(feeDistributionInitiatedEventData.numberOfChainsReadRequests).to.equal(2);
-    expect(feeDistributionDataReceived.isBridgingCompleted).is.false;
+    expect(feeDistributionDataReceivedEventData.eventDescription).to.equal("FeeDistributionDataReceived");
+    expect(feeDistributionDataReceivedEventData.totalGmxBridgedOut).to.equal(0);
 
     expect(feeAmountGmxA).to.equal(expandDecimals(160_000, 18));
     expect(feeAmountGmxB).to.equal(expandDecimals(50_000, 18));
@@ -850,6 +854,7 @@ describe("FeeDistributor", function () {
     expect(keeper2Balance).to.eq(keeperCosts[1]);
     expect(keeper3Balance).gte(keeperCosts[2]);
 
+    expect(distributeEventData.eventDescription).to.equal("FeeDistributionCompleted");
     expect(distributeEventData.feesV1Usd).to.eq(feesV1Usd);
     expect(distributeEventData.feesV2Usd).to.eq(feesV2Usd);
     expect(distributeEventData.wntForKeepers).to.eq(wntForKeepers);
@@ -985,9 +990,8 @@ describe("FeeDistributor", function () {
 
     const distributeTimestamp = await dataStore.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
 
-    const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[19].parsedEventData;
-    const feeDistributionDataReceived = parseLogs(fixture, receipt)[16].parsedEventData;
-    const feeDistributionGmxBridgedOut = parseLogs(fixture, receipt)[15].parsedEventData;
+    const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[16].parsedEventData;
+    const feeDistributionDataReceivedEventData = parseLogs(fixture, receipt)[13].parsedEventData;
 
     const feeAmountGmxA = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdA));
     const feeAmountGmxB = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB));
@@ -1010,9 +1014,10 @@ describe("FeeDistributor", function () {
 
     expect(distributeTimestamp).to.equal(timestamp);
 
+    expect(feeDistributionInitiatedEventData.eventDescription).to.equal("FeeDistributionInitiated");
     expect(feeDistributionInitiatedEventData.numberOfChainsReadRequests).to.equal(2);
-    expect(feeDistributionDataReceived.isBridgingCompleted).is.true;
-    expect(feeDistributionGmxBridgedOut.totalGmxBridgedOut).to.equal(expandDecimals(40_000, 18));
+    expect(feeDistributionDataReceivedEventData.eventDescription).to.equal("FeeDistributionDataReceived");
+    expect(feeDistributionDataReceivedEventData.totalGmxBridgedOut).to.equal(expandDecimals(40_000, 18));
 
     expect(feeAmountGmxA).to.equal(expandDecimals(50_000, 18));
     expect(feeAmountGmxB).to.equal(expandDecimals(120_000, 18));
@@ -1085,6 +1090,7 @@ describe("FeeDistributor", function () {
     expect(keeper2Balance).to.eq(keeperCosts[1]);
     expect(keeper3Balance).gte(keeperCosts[2]);
 
+    expect(distributeEventData.eventDescription).to.equal("FeeDistributionCompleted");
     expect(distributeEventData.feesV1Usd).to.eq(feesV1Usd);
     expect(distributeEventData.feesV2Usd).to.eq(feesV2Usd);
     expect(distributeEventData.wntForKeepers).to.eq(wntForKeepers);
@@ -1249,6 +1255,7 @@ describe("FeeDistributor", function () {
     const treasuryBalanceAfter = await wnt.balanceOf(user6.address);
     const sentFromTreasury = treasuryBalancePre.sub(treasuryBalanceAfter);
 
+    expect(sentFromTreasury).is.greaterThan(0);
     expect(sentFromTreasury).to.equal(additionalWntFromTreasury);
 
     const wntForTreasury = 0;
@@ -1264,6 +1271,7 @@ describe("FeeDistributor", function () {
     expect(keeper2Balance).to.eq(keeperCosts[1]);
     expect(keeper3Balance).gte(keeperCosts[2]);
 
+    expect(distributeEventData.eventDescription).to.equal("FeeDistributionCompleted");
     expect(distributeEventData.feesV1Usd).to.eq(feesV1Usd);
     expect(distributeEventData.feesV2Usd).to.eq(feesV2Usd);
     expect(distributeEventData.wntForKeepers).to.eq(wntForKeepers);
@@ -1736,13 +1744,11 @@ describe("FeeDistributor", function () {
     const distributeTimestamp = await dataStore.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
     const distributeTimestampD = await dataStoreD.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
 
-    const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[19].parsedEventData;
-    const feeDistributionDataReceived = parseLogs(fixture, receipt)[16].parsedEventData;
-    const feeDistributionGmxBridgedOut = parseLogs(fixture, receipt)[15].parsedEventData;
+    const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[16].parsedEventData;
+    const feeDistributionDataReceivedEventData = parseLogs(fixture, receipt)[13].parsedEventData;
 
-    const feeDistributionInitiatedEventDataD = parseLogs(fixture, receiptD)[13].parsedEventData;
-    const feeDistributionDataReceivedD = parseLogs(fixture, receiptD)[10].parsedEventData;
-    const feeDistributionGmxBridgedOutD = parseLogs(fixture, receiptD)[9].parsedEventData;
+    const feeDistributionInitiatedEventDataD = parseLogs(fixture, receiptD)[11].parsedEventData;
+    const feeDistributionDataReceivedEventDataD = parseLogs(fixture, receiptD)[8].parsedEventData;
 
     const feeAmountGmxA = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdA));
     const feeAmountGmxB = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB));
@@ -1770,12 +1776,12 @@ describe("FeeDistributor", function () {
     expect(distributeTimestamp).to.equal(timestamp);
     expect(distributeTimestampD).to.equal(timestampD);
 
+    expect(feeDistributionInitiatedEventData.eventDescription).to.equal("FeeDistributionInitiated");
     expect(feeDistributionInitiatedEventData.numberOfChainsReadRequests).to.equal(3);
-    expect(feeDistributionDataReceived.isBridgingCompleted).is.true;
-    expect(feeDistributionGmxBridgedOut.totalGmxBridgedOut).to.equal(expandDecimals(40_000, 18));
+    expect(feeDistributionDataReceivedEventData.totalGmxBridgedOut).to.equal(expandDecimals(40_000, 18));
+    expect(feeDistributionInitiatedEventDataD.eventDescription).to.equal("FeeDistributionInitiated");
     expect(feeDistributionInitiatedEventDataD.numberOfChainsReadRequests).to.equal(3);
-    expect(feeDistributionDataReceivedD.isBridgingCompleted).is.true;
-    expect(feeDistributionGmxBridgedOutD.totalGmxBridgedOut).to.equal(expandDecimals(10_000, 18));
+    expect(feeDistributionDataReceivedEventDataD.totalGmxBridgedOut).to.equal(expandDecimals(10_000, 18));
 
     expect(feeAmountGmxA).to.equal(expandDecimals(40_000, 18));
     expect(feeAmountGmxB).to.equal(expandDecimals(120_000, 18));
