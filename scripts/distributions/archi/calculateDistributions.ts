@@ -607,6 +607,130 @@ function writeOutputFiles(
 }
 
 // ============================================================================
+// UPDATE MARKDOWN WITH DISTRIBUTION TABLES
+// ============================================================================
+
+function updateMarkdownTables(farmerDistributions: FarmerDistribution[], lpDistributions: LPDistribution[]) {
+  console.log("=".repeat(80));
+  console.log("Updating ARCHI_DISTRIBUTIONS.md with distribution tables");
+  console.log("=".repeat(80) + "\n");
+
+  const mdPath = path.join(__dirname, "ARCHI_DISTRIBUTIONS.md");
+
+  if (!fs.existsSync(mdPath)) {
+    console.log("⚠️  ARCHI_DISTRIBUTIONS.md not found, skipping markdown update\n");
+    return;
+  }
+
+  let mdContent = fs.readFileSync(mdPath, "utf-8");
+
+  // Calculate farmer percentages
+  const farmerTotal = farmerDistributions.reduce((sum, f) => sum + parseFloat(f.totalFsGLP), 0);
+
+  // Generate farmer table
+  const farmerTableRows = farmerDistributions
+    .sort((a, b) => parseFloat(b.totalFsGLP) - parseFloat(a.totalFsGLP))
+    .map((f) => {
+      const collateral = parseFloat(f.collateralFsGLP);
+      const fees = parseFloat(f.liquidatorFeesShare);
+      const total = parseFloat(f.totalFsGLP);
+      const pct = ((total / farmerTotal) * 100).toFixed(2);
+      return `| ${f.farmer} | ${collateral.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} | ${fees
+        .toFixed(2)
+        .replace(/\B(?=(\d{3})+(?!\d))/g, ",")} | **${total
+        .toFixed(2)
+        .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | ${pct}% |`;
+    });
+
+  const farmerTotalCollateral = farmerDistributions.reduce((sum, f) => sum + parseFloat(f.collateralFsGLP), 0);
+  const farmerTotalFees = farmerDistributions.reduce((sum, f) => sum + parseFloat(f.liquidatorFeesShare), 0);
+
+  const farmerTable = `### Farmer Distributions (${farmerDistributions.length} farmers)
+
+| Farmer Address | Collateral fsGLP | Liquidator Fees Share | Total fsGLP | % of Farmer Total |
+|----------------|------------------|----------------------|-------------|-------------------|
+${farmerTableRows.join("\n")}
+| **TOTAL** | **${farmerTotalCollateral.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | **${farmerTotalFees
+    .toFixed(2)
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | **${farmerTotal
+    .toFixed(2)
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | **100%** |`;
+
+  // Generate LP table (top 25)
+  const top25LPs = lpDistributions.slice(0, 25);
+  const lpTableRows = top25LPs.map((lp, idx) => {
+    const wbtc = parseFloat(ethers.utils.formatEther(lp.wbtc_fsGLP));
+    const weth = parseFloat(ethers.utils.formatEther(lp.weth_fsGLP));
+    const usdt = parseFloat(ethers.utils.formatEther(lp.usdt_fsGLP));
+    const usdc = parseFloat(ethers.utils.formatEther(lp.usdc_fsGLP));
+    const total = parseFloat(ethers.utils.formatEther(lp.total_fsGLP));
+
+    return `| ${idx + 1} | ${lp.address} | ${wbtc.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} | ${weth
+      .toFixed(2)
+      .replace(/\B(?=(\d{3})+(?!\d))/g, ",")} | ${usdt.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} | ${usdc
+      .toFixed(2)
+      .replace(/\B(?=(\d{3})+(?!\d))/g, ",")} | **${total.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** |`;
+  });
+
+  const lpTotalWbtc = lpDistributions.reduce((sum, lp) => sum + parseFloat(ethers.utils.formatEther(lp.wbtc_fsGLP)), 0);
+  const lpTotalWeth = lpDistributions.reduce((sum, lp) => sum + parseFloat(ethers.utils.formatEther(lp.weth_fsGLP)), 0);
+  const lpTotalUsdt = lpDistributions.reduce((sum, lp) => sum + parseFloat(ethers.utils.formatEther(lp.usdt_fsGLP)), 0);
+  const lpTotalUsdc = lpDistributions.reduce((sum, lp) => sum + parseFloat(ethers.utils.formatEther(lp.usdc_fsGLP)), 0);
+  const lpGrandTotal = lpDistributions.reduce(
+    (sum, lp) => sum + parseFloat(ethers.utils.formatEther(lp.total_fsGLP)),
+    0
+  );
+
+  const lpTable = `### LP Distributions - Top 25 (${lpDistributions.length} LPs total)
+
+| Rank | LP Address | WBTC fsGLP | WETH fsGLP | USDT fsGLP | USDC fsGLP | Total fsGLP |
+|------|------------|------------|------------|------------|------------|-------------|
+${lpTableRows.join("\n")}
+| ... | ... | ... | ... | ... | ... | ... |
+| ${lpDistributions.length} | **TOTAL (All LPs)** | **${lpTotalWbtc
+    .toFixed(2)
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | **${lpTotalWeth
+    .toFixed(2)
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | **${lpTotalUsdt
+    .toFixed(2)
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | **${lpTotalUsdc
+    .toFixed(2)
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | **${lpGrandTotal.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** |
+
+**Note:** Full LP distribution list available in \`lp-distributions.csv\` (${lpDistributions.length} LPs total)`;
+
+  // Generate timestamp
+  const now = new Date();
+  const timestamp = now.toISOString().replace("T", " ").substring(0, 19) + " UTC";
+
+  const newTablesSection = `---
+
+## Detailed Distribution Tables
+
+*Last updated: ${timestamp}*
+
+${farmerTable}
+
+${lpTable}
+`;
+
+  // Find and replace the detailed tables section
+  const detailedTablesRegex = /---\s*\n\s*## Detailed Distribution Tables[\s\S]*$/;
+
+  if (detailedTablesRegex.test(mdContent)) {
+    // Replace existing section
+    mdContent = mdContent.replace(detailedTablesRegex, newTablesSection);
+    console.log("✅ Updated existing distribution tables in ARCHI_DISTRIBUTIONS.md\n");
+  } else {
+    // Append to end of file
+    mdContent += "\n" + newTablesSection;
+    console.log("✅ Appended distribution tables to ARCHI_DISTRIBUTIONS.md\n");
+  }
+
+  fs.writeFileSync(mdPath, mdContent);
+}
+
+// ============================================================================
 // SUMMARY
 // ============================================================================
 
@@ -658,6 +782,7 @@ async function main() {
   const lpDistributions = await step5_calculateLPDistributions(vaultBorrowing);
 
   writeOutputFiles(positions, farmerDistributions, vaultBorrowing, lpDistributions);
+  updateMarkdownTables(farmerDistributions, lpDistributions);
   printSummary(totals, farmerDistributions, lpDistributions);
 }
 
