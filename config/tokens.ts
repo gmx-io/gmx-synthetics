@@ -1009,6 +1009,13 @@ const config: {
       },
       buybackMaxPriceImpactFactor: MID_BUYBACK_IMPACT,
     },
+    XPL: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003214a4da85e2fed5cdee4f7edb5f1205dec8dffaf0186e7663ddab99e1772",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
     ANIME: {
       address: "0x37a645648df29205c6261289983fb04ecd70b4b3",
       decimals: 18, // https://arbiscan.io/address/0x37a645648df29205c6261289983fb04ecd70b4b3#readContract
@@ -1091,6 +1098,34 @@ const config: {
         stablePrice: decimalToFloat(1),
       },
       buybackMaxPriceImpactFactor: LOW_BUYBACK_IMPACT,
+    },
+    ASTER: {
+      synthetic: true,
+      decimals: 18, // https://bscscan.com/token/0x000Ae314E2A2172a039B26378814C252734f556A#readContract
+      dataStreamFeedId: "0x00039637a310686204524a68bf7afe2aec0714574ff56f9af7e8767639624b6f",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    "0G": {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003242d01a117767fb02954edb3fa22523785423ba8690f682cb599530bb2b4",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    AVNT: {
+      synthetic: true,
+      decimals: 18, // https://basescan.org/token/0x696F9436B67233384889472Cd7cD58A6fB5DF4f1#readContract
+      dataStreamFeedId: "0x00035df81aa6d6eddcfad07e6324c60d259fefffbef97fc4cc6192c4d2ccfa87",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    LINEA: {
+      synthetic: true,
+      decimals: 18, // https://etherscan.io/token/0x1789e0043623282d5dcc7f213d703c6d8bafbb04#readProxyContract
+      dataStreamFeedId: "0x0003806ec8cdab47daeb61b97c6b82555f7d6d8478f5afe490231f7073865791",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
     },
   },
   avalanche: {
