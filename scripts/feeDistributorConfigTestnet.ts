@@ -33,6 +33,15 @@ type TestScenario = {
   wntAmount: string;
 };
 
+const resetDistributionTimestampStr = process.env.RESET_DISTRIBUTION_TIMESTAMP;
+if (!resetDistributionTimestampStr) {
+  throw new Error("RESET_DISTRIBUTION_TIMESTAMP environment variable not provided");
+}
+if (resetDistributionTimestampStr !== "true" && resetDistributionTimestampStr !== "false") {
+  throw new Error('RESET_DISTRIBUTION_TIMESTAMP environment must equal "true" or "false"');
+}
+const resetDistributionTimestamp = resetDistributionTimestampStr === "true";
+
 const ZERO = ethers.BigNumber.from(0);
 
 const CHAIN_PAIRS = {
@@ -167,7 +176,7 @@ async function setupTestData(
   console.log("\nSetting up test data");
   console.log(`Scenario: ${scenario.scenario} chain\n`);
 
-  const deployDelay = network === "localhost" ? 0 : 4000;
+  const deployDelay = network === "localhost" ? 0 : 5000;
 
   const DataStore = await getFactory("DataStore");
   const dataStore = DataStore.attach(contracts.dataStore);
@@ -630,9 +639,11 @@ async function configureContracts(
   await gmxAdapter.setEnforcedOptions([{ eid: otherChainInfo.otherEid, msgType: 1, options: options }]);
   await delay(deployDelay);
 
-  // Initialize distribution timestamp
-  await dataStore.setUint(keys.FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP, 0);
-  await delay(deployDelay);
+  // Reset distribution timestamp if resetDistributionTimestamp = true
+  if (resetDistributionTimestamp) {
+    await dataStore.setUint(keys.FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP, 0);
+    await delay(deployDelay);
+  }
 
   console.log("\nConfiguration complete!");
 

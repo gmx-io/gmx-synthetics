@@ -463,7 +463,7 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
             // Move GMX needed for bridging to this contract from FeeDistributorVault
             _transferOut(gmx, address(this), sendAmount);
 
-            // If the Layerzero OFT contract on this chain is not also the GMX token, approve the sendAmount
+            // If the Layerzero OFT contract on this chain requires GMX approval, approve the sendAmount
             if (layerzeroOft.approvalRequired()) {
                 IERC20(gmx).approve(address(layerzeroOft), sendAmount);
             }
