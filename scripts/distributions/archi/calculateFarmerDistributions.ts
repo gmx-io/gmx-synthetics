@@ -32,9 +32,16 @@ import * as path from "path";
  *   - Calculates liquidator fee shares
  *   - Outputs: farmer-distributions.csv
  *
+ * Step 4: Calculate Vault Borrowing
+ *   - Aggregates borrowed fsGLP by vault (WBTC/WETH/USDT/USDC)
+ *   - Uses credit_managers field to map positions to vaults
+ *   - Outputs: vault-borrowing-summary.csv, vault-borrowing-breakdown.csv
+ *
  * Outputs:
  *   - farmer-positions.csv: All 47 active positions with fsGLP breakdown
  *   - farmer-distributions.csv: Final farmer distributions (4 farmers)
+ *   - vault-borrowing-summary.csv: Total borrowed fsGLP by vault
+ *   - vault-borrowing-breakdown.csv: Vault borrowing by position
  */
 
 const CONTRACTS = {
@@ -56,12 +63,16 @@ interface PositionData {
   farmer: string;
   positionIndex: number;
   collateralToken: string;
-  collateralAmount: string;
+  collateralAmount: string; // Original collateral before liquidator fee
+  liquidatorFee: string; // 5% reserved fee
+  netCollateral: string; // Collateral after fee deduction
   borrowedTokens: string[];
   borrowedAmounts: string[];
+  creditManagers: string[]; // Maps to vaults (WETH/WBTC/USDT/USDC)
   collateralFsGLP: string;
   borrowedFsGLP: string[];
   totalFsGLP: string;
+  leverage: string; // Effective leverage ratio
 }
 
 interface FarmerDistribution {
@@ -194,16 +205,26 @@ async function step2_extractPositions(provider: any): Promise<PositionData[]> {
     }
     const totalFsGLP = execution._collateralMintedAmount.add(totalBorrowedFsGLP);
 
+    // Calculate leverage ratio
+    const leverage = execution._collateralMintedAmount.gt(0)
+      ? parseFloat(ethers.utils.formatEther(totalFsGLP)) /
+        parseFloat(ethers.utils.formatEther(execution._collateralMintedAmount))
+      : 0;
+
     positions.push({
       farmer: farmerLower,
       positionIndex,
       collateralToken: event.args._token,
-      collateralAmount: ethers.utils.formatEther(netCollateral),
+      collateralAmount: ethers.utils.formatEther(originalAmount),
+      liquidatorFee: ethers.utils.formatEther(liquidatorFee),
+      netCollateral: ethers.utils.formatEther(netCollateral),
       borrowedTokens: event.args._borrowedTokens,
       borrowedAmounts: execution._borrowedAmountOuts.map((a: any) => ethers.utils.formatEther(a)),
+      creditManagers: execution._creditManagers,
       collateralFsGLP: ethers.utils.formatEther(execution._collateralMintedAmount),
       borrowedFsGLP: execution._borrowedMintedAmount.map((a: any) => ethers.utils.formatEther(a)),
       totalFsGLP: ethers.utils.formatEther(totalFsGLP),
+      leverage: leverage.toFixed(2),
     });
   }
 
@@ -337,6 +358,101 @@ async function step3_calculateDistributions(
 }
 
 // ============================================================================
+// STEP 4: CALCULATE VAULT BORROWING TOTALS
+// ============================================================================
+
+interface VaultBorrowing {
+  vault: string;
+  totalBorrowed: ethers.BigNumber;
+  positionCount: number;
+}
+
+// Map credit manager addresses to vault tokens
+const CREDIT_MANAGER_TO_VAULT: Record<string, string> = {
+  // WETH vault managers
+  "0xb99d8d7fc3f59b38fde1b79aedf07c52ca05d63a": "WETH",
+  "0xf5eb3768b9b50e6e019e50e62da8ac0444c6af98": "WETH",
+  // WBTC vault managers
+  "0x21aae858bf9a3668e95576e45df785f1f6bb9ee7": "WBTC",
+  "0xc2a4aae7f7534f9e6b84827e44d7dc0b23fa79f3": "WBTC",
+  // USDT vault managers
+  "0x8de15602ac68427a5d16da9ef956408852c2c29c": "USDT",
+  "0x14192d4c06e223e54cf72a03da6ff21689802794": "USDT",
+  // USDC vault managers
+  "0x08dcf2fc5ea34e1615689095646520d18d324f0a": "USDC",
+  "0x0ea8c08c3b682a3cd964c416a2966b089b4497ba": "USDC",
+  "0xaf32b65b4e7a833040b24d41aec2962c047c4440": "USDC",
+};
+
+function step4_calculateVaultBorrowing(positions: PositionData[]): Record<string, VaultBorrowing> {
+  console.log("=".repeat(80));
+  console.log("STEP 4: Calculate Vault Borrowing Totals");
+  console.log("=".repeat(80) + "\n");
+
+  // Initialize vault tracking
+  const vaultBorrowing: Record<string, VaultBorrowing> = {
+    WETH: { vault: "WETH", totalBorrowed: ethers.BigNumber.from(0), positionCount: 0 },
+    WBTC: { vault: "WBTC", totalBorrowed: ethers.BigNumber.from(0), positionCount: 0 },
+    USDT: { vault: "USDT", totalBorrowed: ethers.BigNumber.from(0), positionCount: 0 },
+    USDC: { vault: "USDC", totalBorrowed: ethers.BigNumber.from(0), positionCount: 0 },
+  };
+
+  let totalBorrowedAcrossAllVaults = ethers.BigNumber.from(0);
+
+  // Process each position
+  for (const position of positions) {
+    const creditManagers = position.creditManagers;
+    const borrowedFsGLP = position.borrowedFsGLP;
+
+    // Process each borrowed amount
+    for (let i = 0; i < creditManagers.length; i++) {
+      const manager = creditManagers[i].toLowerCase();
+      const amount = ethers.utils.parseEther(borrowedFsGLP[i]);
+      const vault = CREDIT_MANAGER_TO_VAULT[manager];
+
+      if (!vault) {
+        console.warn(`⚠️  Unknown credit manager: ${manager}`);
+        continue;
+      }
+
+      // Update vault totals
+      vaultBorrowing[vault].totalBorrowed = vaultBorrowing[vault].totalBorrowed.add(amount);
+      totalBorrowedAcrossAllVaults = totalBorrowedAcrossAllVaults.add(amount);
+    }
+
+    // Count unique positions per vault
+    const vaultsUsed = new Set(creditManagers.map((m) => CREDIT_MANAGER_TO_VAULT[m.toLowerCase()]).filter(Boolean));
+    for (const vault of vaultsUsed) {
+      vaultBorrowing[vault].positionCount++;
+    }
+  }
+
+  // Display results
+  console.log("Vault Borrowing Breakdown:\n");
+  const vaultOrder = ["WBTC", "WETH", "USDT", "USDC"];
+  for (const vault of vaultOrder) {
+    const data = vaultBorrowing[vault];
+    const formatted = parseFloat(ethers.utils.formatEther(data.totalBorrowed));
+    const percentage = totalBorrowedAcrossAllVaults.gt(0)
+      ? (Number(data.totalBorrowed.mul(10000).div(totalBorrowedAcrossAllVaults)) / 100).toFixed(2)
+      : "0.00";
+
+    console.log(
+      `  ${vault}: ${formatted.toFixed(2).padStart(12)} fsGLP (${percentage.padStart(6)}%) - ${
+        data.positionCount
+      } positions`
+    );
+  }
+
+  const totalFormatted = parseFloat(ethers.utils.formatEther(totalBorrowedAcrossAllVaults));
+  console.log(`  ${"TOTAL".padEnd(4)}: ${totalFormatted.toFixed(2).padStart(12)} fsGLP (100.00%)\n`);
+
+  console.log(`✅ Vault borrowing calculated for ${positions.length} positions\n`);
+
+  return vaultBorrowing;
+}
+
+// ============================================================================
 // MAIN EXECUTION
 // ============================================================================
 
@@ -357,6 +473,9 @@ async function main() {
   // Step 3: Calculate distributions
   const distributions = await step3_calculateDistributions(positions, totals.creditUser2);
 
+  // Step 4: Calculate vault borrowing
+  const vaultBorrowing = step4_calculateVaultBorrowing(positions);
+
   // ========================================================================
   // WRITE OUTPUT FILES
   // ========================================================================
@@ -368,18 +487,22 @@ async function main() {
   // Output 1: Positions CSV
   const positionsPath = path.join(__dirname, "farmer-positions.csv");
   const positionRows = [
-    "farmer,position_index,collateral_token,collateral_amount,borrowed_tokens,borrowed_amounts,collateral_fsGLP,borrowed_fsGLP,total_fsGLP",
+    "farmer,position_index,collateral_token,collateral_amount,liquidator_fee,net_collateral,borrowed_tokens,borrowed_amounts,credit_managers,collateral_fsGLP,borrowed_fsGLP,total_fsGLP,leverage",
     ...positions.map((p) =>
       [
         p.farmer,
         p.positionIndex,
         p.collateralToken,
         p.collateralAmount,
+        p.liquidatorFee,
+        p.netCollateral,
         `"${JSON.stringify(p.borrowedTokens)}"`,
         `"${JSON.stringify(p.borrowedAmounts)}"`,
+        `"${JSON.stringify(p.creditManagers)}"`,
         p.collateralFsGLP,
         `"${JSON.stringify(p.borrowedFsGLP)}"`,
         p.totalFsGLP,
+        p.leverage,
       ].join(",")
     ),
   ];
@@ -397,21 +520,56 @@ async function main() {
   console.log(`✅ Distributions written to: farmer-distributions.csv`);
   console.log(`   (${distributions.length} farmers)\n`);
 
+  // Output 3: Vault Borrowing Summary CSV
+  const vaultSummaryPath = path.join(__dirname, "vault-borrowing-summary.csv");
+  const vaultOrder = ["WBTC", "WETH", "USDT", "USDC"];
+  const totalBorrowed = Object.values(vaultBorrowing).reduce(
+    (sum, v) => sum.add(v.totalBorrowed),
+    ethers.BigNumber.from(0)
+  );
+  const vaultSummaryRows = [
+    "vault,borrowed_fsGLP,percentage,position_count",
+    ...vaultOrder.map((vault) => {
+      const data = vaultBorrowing[vault];
+      const formatted = parseFloat(ethers.utils.formatEther(data.totalBorrowed));
+      const pct = totalBorrowed.gt(0)
+        ? (Number(data.totalBorrowed.mul(10000).div(totalBorrowed)) / 100).toFixed(2)
+        : "0.00";
+      return `${vault},${formatted.toFixed(2)},${pct},${data.positionCount}`;
+    }),
+  ];
+  fs.writeFileSync(vaultSummaryPath, vaultSummaryRows.join("\n"));
+  console.log(`✅ Vault borrowing summary written to: vault-borrowing-summary.csv`);
+  console.log(`   (4 vaults)\n`);
+
+  // Output 4: Vault Borrowing Breakdown CSV (by position)
+  const vaultBreakdownPath = path.join(__dirname, "vault-borrowing-breakdown.csv");
+  const breakdownRows: string[] = ["farmer,position_index,vault,borrowed_fsGLP"];
+  for (const position of positions) {
+    for (let i = 0; i < position.creditManagers.length; i++) {
+      const manager = position.creditManagers[i].toLowerCase();
+      const vault = CREDIT_MANAGER_TO_VAULT[manager];
+      if (vault) {
+        breakdownRows.push(`${position.farmer},${position.positionIndex},${vault},${position.borrowedFsGLP[i]}`);
+      }
+    }
+  }
+  fs.writeFileSync(vaultBreakdownPath, breakdownRows.join("\n"));
+  console.log(`✅ Vault borrowing breakdown written to: vault-borrowing-breakdown.csv`);
+  console.log(`   (${breakdownRows.length - 1} vault borrowings across ${positions.length} positions)\n`);
+
   console.log("=".repeat(80));
-  console.log("COMPLETE: All farmer calculations finished successfully!");
+  console.log("COMPLETE: All calculations finished successfully!");
   console.log("=".repeat(80) + "\n");
 
   console.log("Output Files:");
   console.log("  1. farmer-positions.csv - All active position details");
-  console.log("  2. farmer-distributions.csv - Final farmer distributions\n");
+  console.log("  2. farmer-distributions.csv - Final farmer distributions");
+  console.log("  3. vault-borrowing-summary.csv - Vault borrowing totals");
+  console.log("  4. vault-borrowing-breakdown.csv - Vault borrowing by position\n");
 
   console.log("Next Step:");
-  console.log("  Run LP distribution calculation (Step 4) to distribute the");
-  console.log(
-    `  remaining ${
-      totals.total - totals.creditUser2 - distributions.reduce((s, d) => s + parseFloat(d.collateralFsGLP), 0)
-    } fsGLP to LPs\n`
-  );
+  console.log("  Run LP distribution calculation (Step 5) to distribute vault borrowing to LPs\n");
 }
 
 main()

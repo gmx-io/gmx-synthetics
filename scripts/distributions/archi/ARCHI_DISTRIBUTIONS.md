@@ -20,15 +20,53 @@
 
 ### Vault Borrowing (for LP distribution)
 
-Total borrowed fsGLP: 1,445,599.59 (89.50% of protocol) --> each vault's LPs only receive share of what was borrowed from their vault (i.e. vault-specific LP distribution)
+Total borrowed fsGLP: 1,445,599.59 (89.50% of protocol)
+
+Each vault's LPs only receive share of what was borrowed from their vault (vault-specific LP distribution)
 
 | Vault | Borrowed fsGLP | % of LP Total |
 |-------|----------------|---------------|
-| **WBTC** | 848,962.09 | 58.73% |
-| **WETH** | 248,165.92 | 17.17% |
+| **WBTC** | 848,962.09 | 58.72% |
+| **WETH** | 248,165.92 | 17.16% |
 | **USDT** | 190,986.02 | 13.21% |
 | **USDC** | 157,485.56 | 10.89% |
 | **TOTAL** | **1,445,599.59** | **100.00%** |
+
+<details>
+<summary><strong>How vault borrowing is calculated</strong></summary>
+
+These amounts are calculated by analyzing all 47 active positions and aggregating borrowed fsGLP by vault.
+
+**Prerequisites:**
+```bash
+# Step 4a: Extract complete position details from blockchain
+npx hardhat run --network arbitrum scripts/distributions/archi/step4a_extractPositionDetails.ts
+```
+
+**Then calculate vault borrowing:**
+```bash
+# Step 4b: Calculate vault borrowing totals
+npx hardhat run --network arbitrum scripts/distributions/archi/step4b_calculateVaultBorrowing.ts
+```
+
+**Process:**
+1. `step4a_extractPositionDetails.ts` queries CreditUser #2 contract for all active positions and generates `step4a_position-details-complete.csv`
+2. `step4b_calculateVaultBorrowing.ts` reads the CSV and:
+   - Maps `credit_managers` addresses to vault tokens (WETH/WBTC/USDT/USDC)
+   - Aggregates `borrowed_fsGLP` amounts per vault
+3. Outputs:
+   - `step4b_vault-borrowing-summary.csv` - Totals per vault (matches table above)
+   - `step4b_vault-borrowing-breakdown.csv` - Detailed per-position borrowing
+
+**Why this matters for LPs:**
+- Farmer positions can borrow from multiple vaults simultaneously
+- Each vault's LPs are only entitled to share of their vault's borrowed amount
+- Example: If a farmer borrowed 10 fsGLP from WETH vault and 20 fsGLP from WBTC vault:
+  - WETH LPs split the 10 fsGLP proportionally
+  - WBTC LPs split the 20 fsGLP proportionally
+  - No cross-vault subsidization
+
+</details>
 
 ### Archi fsGLP holdings
 
@@ -68,8 +106,14 @@ npx hardhat run --network arbitrum scripts/distributions/archi/calculateFarmerDi
 ```
 
 **Output Files:**
-- **`farmer-positions.csv`** - All 47 active positions with fsGLP breakdown
-- **`farmer-distributions.csv`** - Final distributions for 4 farmers (see "Farmer Breakdown" table above)
+
+**`farmer-positions.csv`** - All 47 active positions with complete details
+
+**`farmer-distributions.csv`** - Final distributions for 4 farmers (see "Farmer Breakdown" table above)
+
+**`vault-borrowing-summary.csv`** - Total borrowed fsGLP by vault (see "Vault Borrowing" table above)
+
+**`vault-borrowing-breakdown.csv`** - Detailed vault borrowing per position (71 vault borrowings across 47 positions)
 
 <details>
 <summary><strong>Alternative: Step-by-Step Scripts</strong></summary>
@@ -85,6 +129,12 @@ npx hardhat run --network arbitrum scripts/distributions/archi/step2_extractPosi
 
 # Step 3: Calculate distributions
 npx hardhat run --network arbitrum scripts/distributions/archi/step3_calculateDistributions.ts
+
+# Step 4a: Extract complete position details (prerequisite for 4b)
+npx hardhat run --network arbitrum scripts/distributions/archi/step4a_extractPositionDetails.ts
+
+# Step 4b: Calculate vault borrowing
+npx hardhat run --network arbitrum scripts/distributions/archi/step4b_calculateVaultBorrowing.ts
 ```
 
 #### Step 1: Verify Total fsGLP
@@ -120,10 +170,22 @@ Liquidator Fee Context:
 - Returned to farmers on normal position closure
 - All 47 active positions use 5% fee (changed from 10% on Apr 5, 2023)
 
-Vault Borrowing Tracked:
-- Each position can borrow from multiple vaults (WETH, WBTC, USDT, USDC)
-- `credit_managers` array maps to specific vaults
-- Critical for fair LP distribution (each vault's LPs receive share of their vault's borrowed fsGLP)
+#### Step 4: Calculate Vault Borrowing
+
+**Step 4a** extracts complete position details including:
+- All borrowed tokens and amounts per position
+- Credit manager addresses that map to vaults
+- Calculates fsGLP equivalents for all borrowed amounts
+
+**Step 4b** aggregates vault borrowing:
+- Maps `credit_managers` addresses to vault tokens (WETH/WBTC/USDT/USDC)
+- Sums borrowed fsGLP per vault across all 47 positions
+- Outputs vault totals needed for LP distribution
+
+Why this matters:
+- Each position can borrow from multiple vaults simultaneously
+- Each vault's LPs only receive share of their vault's borrowed fsGLP
+- No cross-vault subsidization in LP distributions
 
 </details>
 
