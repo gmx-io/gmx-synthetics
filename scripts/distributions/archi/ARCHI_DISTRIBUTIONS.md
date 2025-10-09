@@ -193,6 +193,94 @@ Why this matters:
 
 ## LP Distributions
 
-- **Total to distribute:** 1,445,599.59 fsGLP
-- **Method:** Per-vault distribution based on vsToken holdings
-- **Formula:** `LP_fsGLP = (LP_vsTokens / Total_vsTokens) × Vault_Borrowed_fsGLP`
+Total to distribute: **1,445,599.59 fsGLP** (89.50% of protocol)
+
+### LP Breakdown (469 LPs across 4 vaults, 469 out of 1383 have > $1)
+
+| Vault | Distributed fsGLP | % of LP Total | Number of LPs |
+|-------|------------------|---------------|---------------|
+| **WBTC** | 848,962.09 | 58.72% | 23 |
+| **WETH** | 248,165.92 | 17.16% | 221 |
+| **USDT** | 190,986.02 | 13.21% | 196 |
+| **USDC** | 157,485.56 | 10.89% | 103 |
+| **TOTAL** | **1,445,599.59** | **100.00%** | **469** |
+
+**Distribution Method:**
+- Based on net positions (deposits - withdrawals) from Dune SQL query
+- Formula: `LP_fsGLP = (LP_net_deposit / total_net_deposits) × vault_borrowed_fsGLP`
+- Each vault distributes independently to its LPs
+
+### Run Complete Calculation
+
+```bash
+npx hardhat run --network arbitrum scripts/distributions/archi/calculateLPDistributions.ts
+```
+
+**Prerequisites:**
+1. `archi-unique-LPs.csv` - LP addresses with net positions from [Dune query](https://dune.com/queries/5818540)
+2. `step4b_vault-borrowing-summary.csv` - Vault borrowed amounts (from farmer calculation)
+
+**Output Files:**
+
+**`lp-distributions.csv`** - Final LP distributions (469 LPs)
+
+**`lp-distributions-by-vault.csv`** - Detailed per-vault breakdown
+
+<details>
+<summary><strong>How LP distribution is calculated</strong></summary>
+
+**Data Source:**
+- [archi-unique-LPs.sql](https://dune.com/queries/5818540) tracks all `addLiquidity()` and `removeLiquidity()` transactions
+- Net position = total deposits - total withdrawals per vault per LP
+- Captures complete transaction history from protocol launch to shutdown
+
+**Calculation Process:**
+
+1. **Read LP net positions** from `archi-unique-LPs.csv`:
+   - Columns: `address`, `net_wbtc`, `net_weth`, `net_usdt`, `net_usdc`
+   - Net positions represent current LP holdings in each vault
+
+2. **For each vault** (WBTC, WETH, USDT, USDC):
+   - Sum all positive net positions: `total_net_deposits = Σ(LP_net_deposits)`
+   - For each LP: `share = LP_net_deposit / total_net_deposits`
+   - Calculate entitlement: `fsGLP = share × vault_borrowed_fsGLP`
+
+3. **Aggregate** across vaults per LP to get total distribution
+
+**Key Points:**
+- **Vault-specific distribution**: Each vault's LPs only receive share of that vault's borrowed fsGLP
+- **No on-chain queries needed**: All data from Dune SQL transaction history
+- **100% distributed**: All borrowed fsGLP allocated to LPs (precision: 99.9999999998%)
+- **No cross-vault subsidization**: WETH LPs don't share WBTC vault's borrowed amounts
+
+**Example:**
+```
+LP has:
+  - 1 WETH deposited (net_weth = 1.0)
+  - 0.5 WBTC deposited (net_wbtc = 0.5)
+
+If total_net_deposits:
+  - WETH vault: 100 WETH total
+  - WBTC vault: 20 WBTC total
+
+LP receives:
+  - WETH: (1.0 / 100) × 248,165.92 = 2,481.66 fsGLP
+  - WBTC: (0.5 / 20) × 848,962.09 = 21,224.05 fsGLP
+  - Total: 23,705.71 fsGLP
+```
+
+</details>
+
+---
+
+## Complete Distribution Summary
+
+| Category | Amount (fsGLP) | % of Total | Recipients |
+|----------|---------------|------------|------------|
+| **Farmers** | 169,573.39 | 10.50% | 4 farmers (47 positions) |
+| **LPs** | 1,445,599.59 | 89.50% | 469 LPs (across 4 vaults) |
+| **TOTAL** | **1,615,172.98** | **100%** | **473 unique addresses** |
+
+**Not Distributed:**
+- CreditAggregator: 99.81 fsGLP (source unknown, excluded from distribution)
+- LPs having less than $1 in vaults (i.e. only the first 469 out of 1383 LPs receive distributions)
