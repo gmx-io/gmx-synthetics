@@ -261,14 +261,14 @@ library PositionPricingUtils {
                 params.dataStore,
                 params.market,
                 true,
-                params.indexTokenPrice.max
+                params.indexTokenPrice.midPrice()
             );
 
             shortOpenInterest = MarketUtils.getOpenInterestInTokensInUsd(
                 params.dataStore,
                 params.market,
                 false,
-                params.indexTokenPrice.max
+                params.indexTokenPrice.midPrice()
             );
 
             // note that for decrease position, tokenDelta is based on the
