@@ -210,26 +210,19 @@ library IncreasePositionUtils {
 
         PositionUtils.handleReferral(params, fees);
 
-        // validatePosition should be called after open interest and all other market variables
-        // have been updated
-        // validatePosition is only called if the position size will change
-        if (params.order.sizeDeltaUsd() > 0) {
-            PositionUtils.validatePosition(
-                params.contracts.dataStore,
-                params.contracts.referralStorage,
-                params.position,
-                params.market,
-                prices,
-                true, // shouldValidateMinPositionSize
-                true // shouldValidateMinCollateralUsd
-            );
-        } else {
-            PositionUtils.validateBasicPositionInfo(
-                params.contracts.dataStore,
-                params.position,
-                params.market
-            );
-        }
+        // if order.sizeDeltaUsd == 0, we validate that the position is not liquidatable
+        // this helps to prevent a deposit from being executed if the position would be
+        // liquidated shortly after
+        PositionUtils.validatePosition({
+            dataStore: params.contracts.dataStore,
+            referralStorage: params.contracts.referralStorage,
+            position: params.position,
+            market: params.market,
+            prices: prices,
+            shouldValidateMinPositionSize: true,
+            shouldValidateMinCollateralUsd: true,
+            forLiquidation: params.order.sizeDeltaUsd() == 0
+        });
 
         PositionEventUtils.emitPositionFeesCollected(
             params.contracts.eventEmitter,

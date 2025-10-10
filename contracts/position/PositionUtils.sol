@@ -281,7 +281,8 @@ library PositionUtils {
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices,
         bool shouldValidateMinPositionSize,
-        bool shouldValidateMinCollateralUsd
+        bool shouldValidateMinCollateralUsd,
+        bool forLiquidation
     ) public view {
         validateBasicPositionInfo(dataStore, position, market);
 
@@ -299,7 +300,7 @@ library PositionUtils {
             market,
             prices,
             shouldValidateMinCollateralUsd,
-            false // forLiquidation
+            forLiquidation
         );
 
         if (isLiquidatable) {
