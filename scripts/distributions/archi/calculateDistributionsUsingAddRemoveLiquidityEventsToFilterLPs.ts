@@ -2,10 +2,9 @@ import { ethers } from "hardhat";
 import * as fs from "fs";
 import * as path from "path";
 
-// npx hardhat run --network arbitrum scripts/distributions/archi/calculateDistributions.ts
+// npx hardhat run --network arbitrum scripts/distributions/archi/calculateDistributionsUsingAddRemoveLiquidityEventsToFilterLPs.ts
 
-// Using StakeFor events is finding all LPs (vs Add / RemoveLiquidity events which is only 99.52% accurate)
-
+// Using AddLiquidity / RemoveLiquidity events is missing some LPs (vs StakeFor event which is 100% accurate)
 
 /**
  * ARCHI DISTRIBUTIONS: Complete End-to-End Calculation
@@ -86,6 +85,14 @@ interface VaultBorrowing {
   vault: string;
   totalBorrowed: ethers.BigNumber;
   positionCount: number;
+}
+
+interface LPData {
+  address: string;
+  netWbtc: number;
+  netWeth: number;
+  netUsdt: number;
+  netUsdc: number;
 }
 
 interface LPDistribution {
@@ -332,39 +339,6 @@ function step4_calculateVaultBorrowing(positions: PositionData[]): Record<string
 // STEP 5: CALCULATE LP DISTRIBUTIONS
 // ============================================================================
 
-const VAULT_CONFIGS = [
-  {
-    name: "WETH",
-    baseRewardAddress: "0x9eBC025393d86f211A720b95650dff133b270684",
-    decimals: 6,
-    deployBlock: 76000000,
-  },
-  {
-    name: "WBTC",
-    baseRewardAddress: "0x12e14fDc843Fb9c64B84Dfa6fB03350D6810d8e5",
-    decimals: 6,
-    deployBlock: 76000000,
-  },
-  {
-    name: "USDT",
-    baseRewardAddress: "0xEca975BeEc3bC90C424FF101605ECBCef22b66eA",
-    decimals: 6,
-    deployBlock: 76000000,
-  },
-  {
-    name: "USDC",
-    baseRewardAddress: "0x670c4391f6421e4cE64D108F810C56479ADFE4B3",
-    decimals: 6,
-    deployBlock: 76000000,
-  },
-];
-
-const BASE_REWARD_ABI = [
-  "event StakeFor(address indexed _recipient, uint256 _amountIn, uint256 _totalSupply, uint256 _totalUnderlying)",
-  "function balanceOf(address account) view returns (uint256)",
-  "function totalSupply() view returns (uint256)",
-];
-
 async function step5_calculateLPDistributions(
   vaultBorrowing: Record<string, VaultBorrowing>
 ): Promise<LPDistribution[]> {
@@ -372,44 +346,51 @@ async function step5_calculateLPDistributions(
   console.log("STEP 5: Calculate LP Distributions");
   console.log("=".repeat(80) + "\n");
 
-  const [signer] = await ethers.getSigners();
-  const provider = signer.provider!;
-  const currentBlock = await provider.getBlockNumber();
-
-  // Query BaseReward StakeFor events to find ALL LP addresses
-  const allLPAddresses = new Set<string>();
-
-  console.log("Discovering LP addresses from BaseReward StakeFor events...\n");
-
-  for (const config of VAULT_CONFIGS) {
-    const baseReward = new ethers.Contract(config.baseRewardAddress, BASE_REWARD_ABI, provider);
-
-    const stakeForEvents = await baseReward.queryFilter(
-      baseReward.filters.StakeFor(),
-      config.deployBlock,
-      currentBlock
-    );
-
-    const vaultLPs = new Set<string>();
-    for (const event of stakeForEvents) {
-      if (event.args && event.args._recipient) {
-        const recipient = event.args._recipient.toLowerCase();
-        vaultLPs.add(recipient);
-        allLPAddresses.add(recipient);
-      }
-    }
-
-    console.log(`  ${config.name}: ${stakeForEvents.length} StakeFor events, ${vaultLPs.size} unique LPs`);
+  // Read LP data from CSV
+  const lpCsvPath = path.join(__dirname, "archi-unique-LPs.csv");
+  if (!fs.existsSync(lpCsvPath)) {
+    throw new Error(`File not found: ${lpCsvPath}`);
   }
 
-  console.log(`\nTotal unique LP addresses: ${allLPAddresses.size}\n`);
+  const lpCsv = fs.readFileSync(lpCsvPath, "utf-8");
+  const lpLines = lpCsv.split("\n").filter((line) => line.trim());
 
-  // Initialize distributions
+  const header = lpLines[0].toLowerCase().split(",");
+  const addressIdx = header.indexOf("address");
+  const netWbtcIdx = header.indexOf("net_wbtc");
+  const netWethIdx = header.indexOf("net_weth");
+  const netUsdtIdx = header.indexOf("net_usdt");
+  const netUsdcIdx = header.indexOf("net_usdc");
+
+  if (addressIdx === -1 || netWbtcIdx === -1 || netWethIdx === -1 || netUsdtIdx === -1 || netUsdcIdx === -1) {
+    throw new Error("CSV missing required columns");
+  }
+
+  const lpData: LPData[] = [];
+
+  for (let i = 1; i < lpLines.length; i++) {
+    const parts = lpLines[i].split(",");
+    if (parts.length <= addressIdx) continue;
+
+    const address = parts[addressIdx].trim().toLowerCase();
+    if (!address.startsWith("0x")) continue;
+
+    lpData.push({
+      address: address,
+      netWbtc: parseFloat(parts[netWbtcIdx] || "0"),
+      netWeth: parseFloat(parts[netWethIdx] || "0"),
+      netUsdt: parseFloat(parts[netUsdtIdx] || "0"),
+      netUsdc: parseFloat(parts[netUsdcIdx] || "0"),
+    });
+  }
+
+  console.log(`Found ${lpData.length} LP addresses\n`);
+
   const lpDistributions = new Map<string, LPDistribution>();
 
-  for (const address of allLPAddresses) {
-    lpDistributions.set(address, {
-      address,
+  for (const lp of lpData) {
+    lpDistributions.set(lp.address, {
+      address: lp.address,
       wbtc_vsTokens: "0",
       wbtc_fsGLP: "0",
       weth_vsTokens: "0",
@@ -424,67 +405,63 @@ async function step5_calculateLPDistributions(
 
   const vaultOrder = ["WBTC", "WETH", "USDT", "USDC"];
 
-  console.log("Querying vsToken balances and calculating distributions (parallelized)...\n");
+  for (const vaultName of vaultOrder) {
+    const borrowedFsGLP = vaultBorrowing[vaultName].totalBorrowed;
 
-  // Process all vaults in parallel
-  const vaultResults = await Promise.all(
-    vaultOrder.map(async (vaultName) => {
-      const config = VAULT_CONFIGS.find((v) => v.name === vaultName)!;
-      const baseRewardPool = new ethers.Contract(config.baseRewardAddress, BASE_REWARD_ABI, provider);
-      const borrowedFsGLP = vaultBorrowing[vaultName].totalBorrowed;
+    const netField =
+      vaultName === "WBTC"
+        ? "netWbtc"
+        : vaultName === "WETH"
+        ? "netWeth"
+        : vaultName === "USDT"
+        ? "netUsdt"
+        : "netUsdc";
 
-      const totalSupply = await baseRewardPool.totalSupply();
+    const relevantLPs = lpData.filter((lp) => lp[netField] > 0);
 
-      if (totalSupply.isZero()) {
-        return { vaultName, balances: new Map<string, ethers.BigNumber>() };
+    let totalNetDeposits = 0;
+    for (const lp of relevantLPs) {
+      totalNetDeposits += lp[netField];
+    }
+
+    if (totalNetDeposits === 0) continue;
+
+    let totalNetDepositsBN: ethers.BigNumber;
+    if (vaultName === "WBTC") {
+      totalNetDepositsBN = ethers.utils.parseUnits(totalNetDeposits.toFixed(8), 8);
+    } else if (vaultName === "WETH") {
+      totalNetDepositsBN = ethers.utils.parseUnits(totalNetDeposits.toFixed(18), 18);
+    } else {
+      totalNetDepositsBN = ethers.utils.parseUnits(totalNetDeposits.toFixed(6), 6);
+    }
+
+    for (const lp of relevantLPs) {
+      const netDeposit = lp[netField];
+
+      let netDepositWei: ethers.BigNumber;
+      if (vaultName === "WBTC") {
+        netDepositWei = ethers.utils.parseUnits(netDeposit.toFixed(8), 8);
+      } else if (vaultName === "WETH") {
+        netDepositWei = ethers.utils.parseUnits(netDeposit.toFixed(18), 18);
+      } else {
+        netDepositWei = ethers.utils.parseUnits(netDeposit.toFixed(6), 6);
       }
 
-      // Batch balance queries
-      const BATCH_SIZE = 25;
-      const addressArray = Array.from(allLPAddresses);
-      const balances = new Map<string, ethers.BigNumber>();
+      const fsGLPEntitlement = borrowedFsGLP.mul(netDepositWei).div(totalNetDepositsBN);
 
-      for (let i = 0; i < addressArray.length; i += BATCH_SIZE) {
-        const batch = addressArray.slice(i, Math.min(i + BATCH_SIZE, addressArray.length));
-
-        const batchResults = await Promise.all(
-          batch.map(async (address) => {
-            const balance = await baseRewardPool.balanceOf(address);
-            return { address, balance };
-          })
-        );
-
-        for (const { address, balance } of batchResults) {
-          if (balance.gt(0)) {
-            balances.set(address, balance);
-          }
-        }
-      }
-
-      return { vaultName, balances, borrowedFsGLP, totalSupply };
-    })
-  );
-
-  // Apply results to lpDistributions
-  for (const { vaultName, balances, borrowedFsGLP, totalSupply } of vaultResults) {
-    if (!totalSupply || totalSupply.isZero()) continue;
-
-    for (const [address, balance] of balances) {
-      const fsGLPEntitlement = borrowedFsGLP.mul(balance).div(totalSupply);
-
-      const dist = lpDistributions.get(address)!;
+      const dist = lpDistributions.get(lp.address)!;
 
       if (vaultName === "WBTC") {
-        dist.wbtc_vsTokens = balance.toString();
+        dist.wbtc_vsTokens = netDepositWei.toString();
         dist.wbtc_fsGLP = fsGLPEntitlement.toString();
       } else if (vaultName === "WETH") {
-        dist.weth_vsTokens = balance.toString();
+        dist.weth_vsTokens = netDepositWei.toString();
         dist.weth_fsGLP = fsGLPEntitlement.toString();
       } else if (vaultName === "USDT") {
-        dist.usdt_vsTokens = balance.toString();
+        dist.usdt_vsTokens = netDepositWei.toString();
         dist.usdt_fsGLP = fsGLPEntitlement.toString();
       } else if (vaultName === "USDC") {
-        dist.usdc_vsTokens = balance.toString();
+        dist.usdc_vsTokens = netDepositWei.toString();
         dist.usdc_fsGLP = fsGLPEntitlement.toString();
       }
 
@@ -492,7 +469,7 @@ async function step5_calculateLPDistributions(
       dist.total_fsGLP = currentTotal.add(fsGLPEntitlement).toString();
     }
 
-    console.log(`  ${vaultName}: ${balances.size} LPs with balances`);
+    console.log(`  ${vaultName}: ${relevantLPs.length} LPs`);
   }
 
   const nonZeroDistributions = Array.from(lpDistributions.values()).filter((dist) =>

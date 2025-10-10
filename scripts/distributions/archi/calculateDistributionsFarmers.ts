@@ -2,7 +2,7 @@ import { ethers } from "hardhat";
 import * as fs from "fs";
 import * as path from "path";
 
-// npx hardhat run --network arbitrum scripts/distributions/archi/calculateFarmerDistributions.ts
+// npx hardhat run --network arbitrum scripts/distributions/archi/calculateDistributionsFarmers.ts
 
 /**
  * FARMER DISTRIBUTIONS: Complete End-to-End Calculation
