@@ -1349,7 +1349,7 @@ library MarketUtils {
             market: market.marketToken,
             divisor: divisor,
             useOpenInterestInTokens: useOpenInterestInTokens,
-            indexTokenPrice: prices.indexTokenPrice.max
+            indexTokenPrice: prices.indexTokenPrice.midPrice()
         });
 
         // get the open interest values by long / short and by collateral used
@@ -2735,7 +2735,7 @@ library MarketUtils {
                 dataStore: dataStore,
                 market: market,
                 useOpenInterestInTokens: useOpenInterestInTokens,
-                indexTokenPrice: prices.indexTokenPrice.max,
+                indexTokenPrice: prices.indexTokenPrice.midPrice(),
                 isLong: true
             });
 
@@ -2743,7 +2743,7 @@ library MarketUtils {
                 dataStore: dataStore,
                 market: market,
                 useOpenInterestInTokens: useOpenInterestInTokens,
-                indexTokenPrice: prices.indexTokenPrice.max,
+                indexTokenPrice: prices.indexTokenPrice.midPrice(),
                 isLong: false
             });
 

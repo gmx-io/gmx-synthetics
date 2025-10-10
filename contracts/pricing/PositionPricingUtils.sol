@@ -275,7 +275,7 @@ library PositionPricingUtils {
             // ratio of position.sizeInUsd and position.sizeInTokens
             // so different users would experience different price impacts
             // for the same decrease in USD size
-            params.usdDelta = params.tokenDelta * params.indexTokenPrice.max.toInt256();
+            params.usdDelta = params.tokenDelta * params.indexTokenPrice.midPrice().toInt256();
         } else {
             longOpenInterest = MarketUtils.getOpenInterest(
                 params.dataStore,
