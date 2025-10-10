@@ -27,6 +27,6 @@ export const GAS_BUFFER = {
   GLV_DEPOSIT: expandDecimals(5, 12), //  5k gwei = 0.000005 ETH
   WITHDRAWAL: expandDecimals(5, 12), //  5k gwei = 0.000005 ETH
   GLV_WITHDRAWAL: expandDecimals(5, 12), //  5k gwei = 0.000005 ETH
-  ORDER: expandDecimals(10, 12), // 10k gwei = 0.00001 ETH
+  ORDER: expandDecimals(20, 12), // 20k gwei = 0.00002 ETH
   CUMULATIVE_ACTIONS: expandDecimals(50, 12), // 50k gwei = 0.00005 ETH e.g. deposit + glvDeposit + withdrawal + glvWithdrawal
 };

@@ -308,8 +308,8 @@ library Keys {
     bytes32 public constant OPEN_INTEREST = keccak256(abi.encode("OPEN_INTEREST"));
     // @dev key for open interest in tokens
     bytes32 public constant OPEN_INTEREST_IN_TOKENS = keccak256(abi.encode("OPEN_INTEREST_IN_TOKENS"));
-    // @dev key for collateral sum for a market
     bytes32 public constant COLLATERAL_SUM = keccak256(abi.encode("COLLATERAL_SUM"));
+    bytes32 public constant MAX_COLLATERAL_SUM = keccak256(abi.encode("MAX_COLLATERAL_SUM"));
     // @dev key for pool amount
     bytes32 public constant POOL_AMOUNT = keccak256(abi.encode("POOL_AMOUNT"));
     // @dev key for max pool amount
@@ -1337,6 +1337,15 @@ library Keys {
     function collateralSumKey(address market, address collateralToken, bool isLong) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             COLLATERAL_SUM,
+            market,
+            collateralToken,
+            isLong
+        ));
+    }
+
+    function maxCollateralSumKey(address market, address collateralToken, bool isLong) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            MAX_COLLATERAL_SUM,
             market,
             collateralToken,
             isLong
