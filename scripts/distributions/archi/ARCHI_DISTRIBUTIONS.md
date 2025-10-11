@@ -289,9 +289,23 @@ LP receives:
 
 ## Detailed Distribution Tables
 
-*Last updated: 2025-10-09 19:58:24 UTC*
+*Last updated: 2025-10-11 12:28:08 UTC*
+
+### Vault Borrowing Summary (Farmers)
+
+Farmers borrowed fsGLP from these vaults to create leveraged positions. This borrowed fsGLP is distributed to LPs based on their vsToken holdings.
+
+| Vault | Borrowed fsGLP | % of Total | Farmer Positions |
+|-------|----------------|------------|------------------|
+| WBTC | 848,962.09 | 58.72% | 33 |
+| WETH | 248,165.92 | 17.16% | 19 |
+| USDT | 190,986.02 | 13.21% | 8 |
+| USDC | 157,485.56 | 10.89% | 11 |
+| **TOTAL** | **1,445,599.59** | **100%** | **71** |
 
 ### Farmer Distributions (4 farmers)
+
+Farmers deposited collateral and borrowed from vaults to create leveraged fsGLP positions. They receive their collateral fsGLP plus a proportional share of liquidator fees.
 
 | Farmer Address | Collateral fsGLP | Liquidator Fees Share | Total fsGLP | % of Farmer Total |
 |----------------|------------------|----------------------|-------------|-------------------|
@@ -301,7 +315,11 @@ LP receives:
 | 0x500dd643792a3d283c0d3db3af9b69ad6b862aae | 99.45 | 2.10 | **101.55** | 0.06% |
 | **TOTAL** | **161,094.72** | **8,478.67** | **169,573.39** | **100%** |
 
-### LP Distributions - Top 25 (369 LPs total)
+**Note:** Full farmer distribution details available in `farmer-distributions.csv` (4 farmers total)
+
+### LP Distributions - Top 20 (405 LPs total)
+
+LPs provided liquidity to vaults and received vsTokens. They earn fsGLP rewards proportional to their vsToken holdings when farmers borrow from their vault.
 
 | Rank | LP Address | WBTC fsGLP | WETH fsGLP | USDT fsGLP | USDC fsGLP | Total fsGLP |
 |------|------------|------------|------------|------------|------------|-------------|
@@ -325,14 +343,7 @@ LP receives:
 | 18 | 0xecca7559a64d3005c8c0cbeef7ce04dc2c8ff814 | 0.00 | 5,084.74 | 0.00 | 0.00 | **5,084.74** |
 | 19 | 0xec9ebe950cad79fde4139714283145137ce24aad | 0.00 | 0.00 | 0.00 | 5,054.08 | **5,054.08** |
 | 20 | 0xff2779e68e24b725c625f514acb36736a23391e8 | 5,007.57 | 0.00 | 0.00 | 0.00 | **5,007.57** |
-| 21 | 0x6c68601d1063b963f1dff2a1cd138d7f6e96963d | 0.00 | 4,019.55 | 0.00 | 0.00 | **4,019.55** |
-| 22 | 0x689dcb6c727a18c60c42635f99c78bef67367ff0 | 3,977.43 | 0.11 | 0.00 | 0.00 | **3,977.54** |
-| 23 | 0xdc308f2d2f00889041e74b9c3d6e6b8ad57d81de | 0.00 | 0.00 | 3,725.09 | 0.00 | **3,725.09** |
-| 24 | 0x31a636802504bac68a69a639c66e246c6f1cc6b4 | 0.00 | 0.00 | 66.49 | 3,626.65 | **3,693.14** |
-| 25 | 0x1ef91043d3cdb315a5c97a03b843e6095ba6ea02 | 0.00 | 426.07 | 183.95 | 2,182.97 | **2,793.00** |
 | ... | ... | ... | ... | ... | ... | ... |
-| 369 | **TOTAL (All LPs)** | **848,962.09** | **245,434.60** | **190,067.93** | **155,327.98** | **1,439,792.59** |
+| 405 | **All LPs** | **848,962.09** | **248,165.92** | **190,986.02** | **157,485.56** | **1,445,599.59** |
 
-**Note:** Full LP distribution list available in `lp-distributions-events.csv` (369 LPs total)
-
-*LP table last updated: 2025-10-09 20:23:08 UTC*
+**Note:** Full LP distribution list available in `lp-distributions.csv` (405 LPs total)

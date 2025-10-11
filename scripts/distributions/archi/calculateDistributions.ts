@@ -2,10 +2,11 @@ import { ethers } from "hardhat";
 import * as fs from "fs";
 import * as path from "path";
 
-// npx hardhat run --network arbitrum scripts/distributions/archi/calculateDistributions.ts
+// FAST_RPC=<true> PREVIEW_ALL_LPS=<true> npx hardhat run --network arbitrum scripts/distributions/archi/calculateDistributions.ts
+
+declare const process: any;
 
 // Using StakeFor events is finding all LPs (vs Add / RemoveLiquidity events which is only 99.52% accurate)
-
 
 /**
  * ARCHI DISTRIBUTIONS: Complete End-to-End Calculation
@@ -20,16 +21,20 @@ import * as path from "path";
  *   5. Calculate LP distributions based on vault borrowing
  *
  * Prerequisites:
- *   - archi-unique-LPs.csv: LP addresses with net positions from Dune query
+ *   - None (uses StakeFor events to discover LPs automatically)
  *
  * Outputs:
- *   - farmer-positions.csv: All 47 active positions
+ *   - farmer-positions.csv: All 47 active positions with borrowing details
  *   - farmer-distributions.csv: Final farmer distributions (4 farmers)
- *   - vault-borrowing-summary.csv: Vault borrowing totals
- *   - vault-borrowing-breakdown.csv: Vault borrowing by position
- *   - lp-distributions.csv: LP distributions (469 LPs)
- *   - lp-distributions-by-vault.csv: Detailed LP breakdown by vault
+ *   - lp-distributions.csv: LP distributions with vsToken balances
+ *   - ARCHI_DISTRIBUTIONS.md: Updated with distribution tables and vault borrowing summary
  */
+
+// Configuration for public | fast RPC rate limiting (for paid RPCs use higher BATCH_SIZE and lower DELAY_MS)
+const BATCH_SIZE = process.env.FAST_RPC == "true" ? 100 : 25;
+const DELAY_MS = process.env.FAST_RPC == "true" ? 0 : 100;
+// Set to -1 to display all LPs in markdown table
+const TOP_LPS = process.env.PREVIEW_ALL_LPS == "true" ? -1 : 20;
 
 const CONTRACTS = {
   GMXExecutor: "0x49ee14e37cb47bff8c512b3a0d672302a3446eb1",
@@ -149,7 +154,7 @@ async function step2_extractPositions(provider: any): Promise<PositionData[]> {
 
   const creditUser = new ethers.Contract(CONTRACTS.CreditUser2, CREDIT_USER_ABI, provider);
 
-  const startBlock = 73828000;
+  const startBlock = 42029909; // 2022-11-29 --> Archi Deployer got funded (main archi contracts deployed in Apr-2023)
   const endBlock = await provider.getBlockNumber();
 
   console.log(`Querying events from block ${startBlock} to ${endBlock}...\n`);
@@ -174,8 +179,14 @@ async function step2_extractPositions(provider: any): Promise<PositionData[]> {
   const positions: PositionData[] = [];
   let activeCount = 0;
 
-  for (const event of openingEvents) {
+  for (let i = 0; i < openingEvents.length; i++) {
+    const event = openingEvents[i];
     if (!event.args) continue;
+
+    // Progress indicator every 10 positions
+    if ((i + 1) % 10 === 0 || i === openingEvents.length - 1) {
+      process.stdout.write(`\r  Checked ${i + 1}/${openingEvents.length} positions...`);
+    }
 
     const farmer = event.args._recipient;
     const positionIndex = event.args._borrowedIndex.toNumber();
@@ -189,7 +200,7 @@ async function step2_extractPositions(provider: any): Promise<PositionData[]> {
 
     const execution = executionMap.get(key);
     if (!execution) {
-      console.log(`⚠️  Warning: No execution data for ${farmer} position ${positionIndex}`);
+      console.log(`\n⚠️  Warning: No execution data for ${farmer} position ${positionIndex}`);
       continue;
     }
 
@@ -376,8 +387,8 @@ async function step5_calculateLPDistributions(
   const provider = signer.provider!;
   const currentBlock = await provider.getBlockNumber();
 
-  // Query BaseReward StakeFor events to find ALL LP addresses
-  const allLPAddresses = new Set<string>();
+  // Query BaseReward StakeFor events to find LP addresses per vault
+  const vaultLPAddresses = new Map<string, Set<string>>();
 
   console.log("Discovering LP addresses from BaseReward StakeFor events...\n");
 
@@ -395,11 +406,19 @@ async function step5_calculateLPDistributions(
       if (event.args && event.args._recipient) {
         const recipient = event.args._recipient.toLowerCase();
         vaultLPs.add(recipient);
-        allLPAddresses.add(recipient);
       }
     }
 
+    vaultLPAddresses.set(config.name, vaultLPs);
     console.log(`  ${config.name}: ${stakeForEvents.length} StakeFor events, ${vaultLPs.size} unique LPs`);
+  }
+
+  // Get all unique LP addresses across all vaults
+  const allLPAddresses = new Set<string>();
+  for (const lpSet of vaultLPAddresses.values()) {
+    for (const address of lpSet) {
+      allLPAddresses.add(address);
+    }
   }
 
   console.log(`\nTotal unique LP addresses: ${allLPAddresses.size}\n`);
@@ -424,46 +443,63 @@ async function step5_calculateLPDistributions(
 
   const vaultOrder = ["WBTC", "WETH", "USDT", "USDC"];
 
-  console.log("Querying vsToken balances and calculating distributions (parallelized)...\n");
+  console.log("Querying vsToken balances and calculating distributions...");
 
-  // Process all vaults in parallel
-  const vaultResults = await Promise.all(
-    vaultOrder.map(async (vaultName) => {
-      const config = VAULT_CONFIGS.find((v) => v.name === vaultName)!;
-      const baseRewardPool = new ethers.Contract(config.baseRewardAddress, BASE_REWARD_ABI, provider);
-      const borrowedFsGLP = vaultBorrowing[vaultName].totalBorrowed;
+  // Process vaults sequentially to maintain consistent RPC load
+  const vaultResults = [];
 
-      const totalSupply = await baseRewardPool.totalSupply();
+  for (const vaultName of vaultOrder) {
+    const config = VAULT_CONFIGS.find((v) => v.name === vaultName)!;
+    const baseRewardPool = new ethers.Contract(config.baseRewardAddress, BASE_REWARD_ABI, provider);
+    const borrowedFsGLP = vaultBorrowing[vaultName].totalBorrowed;
 
-      if (totalSupply.isZero()) {
-        return { vaultName, balances: new Map<string, ethers.BigNumber>() };
-      }
+    const totalSupply = await baseRewardPool.totalSupply();
 
-      // Batch balance queries
-      const BATCH_SIZE = 25;
-      const addressArray = Array.from(allLPAddresses);
-      const balances = new Map<string, ethers.BigNumber>();
+    if (totalSupply.isZero()) {
+      console.log(`  ${vaultName}: No supply, skipping`);
+      vaultResults.push({ vaultName, balances: new Map<string, ethers.BigNumber>() });
+      continue;
+    }
 
-      for (let i = 0; i < addressArray.length; i += BATCH_SIZE) {
-        const batch = addressArray.slice(i, Math.min(i + BATCH_SIZE, addressArray.length));
+    // Only query addresses that have StakeFor events for this vault
+    const vaultSpecificAddresses = vaultLPAddresses.get(vaultName)!;
+    const addressArray = Array.from(vaultSpecificAddresses);
+    const balances = new Map<string, ethers.BigNumber>();
+    const totalBatches = Math.ceil(addressArray.length / BATCH_SIZE);
 
-        const batchResults = await Promise.all(
-          batch.map(async (address) => {
-            const balance = await baseRewardPool.balanceOf(address);
-            return { address, balance };
-          })
-        );
+    console.log(`  ${vaultName}: Processing ${addressArray.length} addresses (${totalBatches} batches)...`);
 
-        for (const { address, balance } of batchResults) {
-          if (balance.gt(0)) {
-            balances.set(address, balance);
-          }
+    for (let i = 0; i < addressArray.length; i += BATCH_SIZE) {
+      const batch = addressArray.slice(i, Math.min(i + BATCH_SIZE, addressArray.length));
+      const currentBatch = Math.floor(i / BATCH_SIZE) + 1;
+
+      const batchResults = await Promise.all(
+        batch.map(async (address) => {
+          const balance = await baseRewardPool.balanceOf(address);
+          return { address, balance };
+        })
+      );
+
+      for (const { address, balance } of batchResults) {
+        if (balance.gt(0)) {
+          balances.set(address, balance);
         }
       }
 
-      return { vaultName, balances, borrowedFsGLP, totalSupply };
-    })
-  );
+      // Progress indicator
+      process.stdout.write(`\r    Batch ${currentBatch}/${totalBatches} (${balances.size} LPs with balance)...`);
+
+      // Add delay between batches to avoid rate limiting
+      if (i + BATCH_SIZE < addressArray.length) {
+        await new Promise((resolve) => setTimeout(resolve, DELAY_MS));
+      }
+    }
+
+    console.log(`\r    ✅ Completed: ${balances.size} LPs with balances                    `);
+    vaultResults.push({ vaultName, balances, borrowedFsGLP, totalSupply });
+  }
+
+  console.log();
 
   // Apply results to lpDistributions
   for (const { vaultName, balances, borrowedFsGLP, totalSupply } of vaultResults) {
@@ -491,8 +527,6 @@ async function step5_calculateLPDistributions(
       const currentTotal = ethers.BigNumber.from(dist.total_fsGLP);
       dist.total_fsGLP = currentTotal.add(fsGLPEntitlement).toString();
     }
-
-    console.log(`  ${vaultName}: ${balances.size} LPs with balances`);
   }
 
   const nonZeroDistributions = Array.from(lpDistributions.values()).filter((dist) =>
@@ -554,62 +588,8 @@ function writeOutputFiles(
   fs.writeFileSync(farmerDistPath, farmerRows.join("\n"));
   console.log(`✅ farmer-distributions.csv (${farmerDistributions.length} farmers)`);
 
-  // 3. Vault borrowing summary
-  const vaultSummaryPath = path.join(__dirname, "vault-borrowing-summary.csv");
-  const vaultOrder = ["WBTC", "WETH", "USDT", "USDC"];
-  const totalBorrowed = Object.values(vaultBorrowing).reduce(
-    (sum, v) => sum.add(v.totalBorrowed),
-    ethers.BigNumber.from(0)
-  );
-  const vaultSummaryRows = [
-    "vault,borrowed_fsGLP,percentage,position_count",
-    ...vaultOrder.map((vault) => {
-      const data = vaultBorrowing[vault];
-      const formatted = parseFloat(ethers.utils.formatEther(data.totalBorrowed));
-      const pct = totalBorrowed.gt(0)
-        ? (Number(data.totalBorrowed.mul(10000).div(totalBorrowed)) / 100).toFixed(2)
-        : "0.00";
-      return `${vault},${formatted.toFixed(2)},${pct},${data.positionCount}`;
-    }),
-  ];
-  fs.writeFileSync(vaultSummaryPath, vaultSummaryRows.join("\n"));
-  console.log(`✅ vault-borrowing-summary.csv (4 vaults)`);
-
-  // 4. Vault borrowing breakdown
-  const vaultBreakdownPath = path.join(__dirname, "vault-borrowing-breakdown.csv");
-  const breakdownRows: string[] = ["farmer,position_index,vault,borrowed_fsGLP"];
-  for (const position of positions) {
-    for (let i = 0; i < position.creditManagers.length; i++) {
-      const manager = position.creditManagers[i].toLowerCase();
-      const vault = CREDIT_MANAGER_TO_VAULT[manager];
-      if (vault) {
-        breakdownRows.push(`${position.farmer},${position.positionIndex},${vault},${position.borrowedFsGLP[i]}`);
-      }
-    }
-  }
-  fs.writeFileSync(vaultBreakdownPath, breakdownRows.join("\n"));
-  console.log(`✅ vault-borrowing-breakdown.csv (${breakdownRows.length - 1} borrowings)`);
-
-  // 5. LP distributions
-  const lpDistPath = path.join(__dirname, "lp-distributions.csv");
-  const lpRows = [
-    "address,wbtc_fsGLP,weth_fsGLP,usdt_fsGLP,usdc_fsGLP,total_fsGLP",
-    ...lpDistributions.map((d) =>
-      [
-        d.address,
-        ethers.utils.formatEther(d.wbtc_fsGLP),
-        ethers.utils.formatEther(d.weth_fsGLP),
-        ethers.utils.formatEther(d.usdt_fsGLP),
-        ethers.utils.formatEther(d.usdc_fsGLP),
-        ethers.utils.formatEther(d.total_fsGLP),
-      ].join(",")
-    ),
-  ];
-  fs.writeFileSync(lpDistPath, lpRows.join("\n"));
-  console.log(`✅ lp-distributions.csv (${lpDistributions.length} LPs)`);
-
-  // 6. LP distributions by vault (detailed)
-  const lpDetailPath = path.join(__dirname, "lp-distributions-by-vault.csv");
+  // 3. LP distributions (detailed with vsToken balances)
+  const lpDetailPath = path.join(__dirname, "lp-distributions.csv");
   const lpDetailRows = [
     "address,wbtc_vsTokens,wbtc_fsGLP,weth_vsTokens,weth_fsGLP,usdt_vsTokens,usdt_fsGLP,usdc_vsTokens,usdc_fsGLP,total_fsGLP",
     ...lpDistributions.map((d) =>
@@ -628,14 +608,18 @@ function writeOutputFiles(
     ),
   ];
   fs.writeFileSync(lpDetailPath, lpDetailRows.join("\n"));
-  console.log(`✅ lp-distributions-by-vault.csv (${lpDistributions.length} LPs)\n`);
+  console.log(`✅ lp-distributions.csv (${lpDistributions.length} LPs)\n`);
 }
 
 // ============================================================================
 // UPDATE MARKDOWN WITH DISTRIBUTION TABLES
 // ============================================================================
 
-function updateMarkdownTables(farmerDistributions: FarmerDistribution[], lpDistributions: LPDistribution[]) {
+function updateMarkdownTables(
+  farmerDistributions: FarmerDistribution[],
+  lpDistributions: LPDistribution[],
+  vaultBorrowing: Record<string, VaultBorrowing>
+) {
   console.log("=".repeat(80));
   console.log("Updating ARCHI_DISTRIBUTIONS.md with distribution tables");
   console.log("=".repeat(80) + "\n");
@@ -648,6 +632,38 @@ function updateMarkdownTables(farmerDistributions: FarmerDistribution[], lpDistr
   }
 
   let mdContent = fs.readFileSync(mdPath, "utf-8");
+
+  // Generate vault borrowing table
+  const vaultOrder = ["WBTC", "WETH", "USDT", "USDC"];
+  const totalBorrowed = Object.values(vaultBorrowing).reduce(
+    (sum, v) => sum.add(v.totalBorrowed),
+    ethers.BigNumber.from(0)
+  );
+
+  const vaultTableRows = vaultOrder.map((vault) => {
+    const data = vaultBorrowing[vault];
+    const formatted = parseFloat(ethers.utils.formatEther(data.totalBorrowed));
+    const pct = totalBorrowed.gt(0)
+      ? (Number(data.totalBorrowed.mul(10000).div(totalBorrowed)) / 100).toFixed(2)
+      : "0.00";
+    return `| ${vault} | ${formatted.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} | ${pct}% | ${
+      data.positionCount
+    } |`;
+  });
+
+  const totalBorrowedFormatted = parseFloat(ethers.utils.formatEther(totalBorrowed));
+  const totalPositions = Object.values(vaultBorrowing).reduce((sum, v) => sum + v.positionCount, 0);
+
+  const vaultTable = `### Vault Borrowing Summary (Farmers)
+
+Farmers borrowed fsGLP from these vaults to create leveraged positions. This borrowed fsGLP is distributed to LPs based on their vsToken holdings.
+
+| Vault | Borrowed fsGLP | % of Total | Farmer Positions |
+|-------|----------------|------------|------------------|
+${vaultTableRows.join("\n")}
+| **TOTAL** | **${totalBorrowedFormatted
+    .toFixed(2)
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | **100%** | **${totalPositions}** |`;
 
   // Calculate farmer percentages
   const farmerTotal = farmerDistributions.reduce((sum, f) => sum + parseFloat(f.totalFsGLP), 0);
@@ -672,6 +688,8 @@ function updateMarkdownTables(farmerDistributions: FarmerDistribution[], lpDistr
 
   const farmerTable = `### Farmer Distributions (${farmerDistributions.length} farmers)
 
+Farmers deposited collateral and borrowed from vaults to create leveraged fsGLP positions. They receive their collateral fsGLP plus a proportional share of liquidator fees.
+
 | Farmer Address | Collateral fsGLP | Liquidator Fees Share | Total fsGLP | % of Farmer Total |
 |----------------|------------------|----------------------|-------------|-------------------|
 ${farmerTableRows.join("\n")}
@@ -679,11 +697,15 @@ ${farmerTableRows.join("\n")}
     .toFixed(2)
     .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | **${farmerTotal
     .toFixed(2)
-    .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | **100%** |`;
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | **100%** |
 
-  // Generate LP table (top 25)
-  const top25LPs = lpDistributions.slice(0, 25);
-  const lpTableRows = top25LPs.map((lp, idx) => {
+**Note:** Full farmer distribution details available in \`farmer-distributions.csv\` (${
+    farmerDistributions.length
+  } farmers total)`;
+
+  // Generate LP displayed in table
+  const topLPs = TOP_LPS === -1 ? lpDistributions : lpDistributions.slice(0, TOP_LPS);
+  const lpTableRows = topLPs.map((lp, idx) => {
     const wbtc = parseFloat(ethers.utils.formatEther(lp.wbtc_fsGLP));
     const weth = parseFloat(ethers.utils.formatEther(lp.weth_fsGLP));
     const usdt = parseFloat(ethers.utils.formatEther(lp.usdt_fsGLP));
@@ -706,13 +728,18 @@ ${farmerTableRows.join("\n")}
     0
   );
 
-  const lpTable = `### LP Distributions - Top 25 (${lpDistributions.length} LPs total)
+  // Conditionally show separator line and adjust total row based on whether all LPs are displayed
+  const separatorLine = TOP_LPS === -1 ? "" : "| ... | ... | ... | ... | ... | ... | ... |\n";
+  const totalRowRank = TOP_LPS === -1 ? "**TOTAL**" : `${lpDistributions.length}`;
+
+  const lpTable = `### LP Distributions - Top ${TOP_LPS === -1 ? "All" : TOP_LPS} (${lpDistributions.length} LPs total)
+
+LPs provided liquidity to vaults and received vsTokens. They earn fsGLP rewards proportional to their vsToken holdings when farmers borrow from their vault.
 
 | Rank | LP Address | WBTC fsGLP | WETH fsGLP | USDT fsGLP | USDC fsGLP | Total fsGLP |
 |------|------------|------------|------------|------------|------------|-------------|
 ${lpTableRows.join("\n")}
-| ... | ... | ... | ... | ... | ... | ... |
-| ${lpDistributions.length} | **TOTAL (All LPs)** | **${lpTotalWbtc
+${separatorLine}| ${totalRowRank} | **All LPs** | **${lpTotalWbtc
     .toFixed(2)
     .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | **${lpTotalWeth
     .toFixed(2)
@@ -733,6 +760,8 @@ ${lpTableRows.join("\n")}
 ## Detailed Distribution Tables
 
 *Last updated: ${timestamp}*
+
+${vaultTable}
 
 ${farmerTable}
 
@@ -807,7 +836,7 @@ async function main() {
   const lpDistributions = await step5_calculateLPDistributions(vaultBorrowing);
 
   writeOutputFiles(positions, farmerDistributions, vaultBorrowing, lpDistributions);
-  updateMarkdownTables(farmerDistributions, lpDistributions);
+  updateMarkdownTables(farmerDistributions, lpDistributions, vaultBorrowing);
   printSummary(totals, farmerDistributions, lpDistributions);
 }
 
