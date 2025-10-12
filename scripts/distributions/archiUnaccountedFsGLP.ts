@@ -1,6 +1,6 @@
 import { ethers } from "hardhat";
 
-// npx hardhat run --network arbitrum scripts/distributions/archi/traceUnaccountedFsGLP.ts
+// npx hardhat run --network arbitrum scripts/distributions/archiUnaccountedFsGLP.ts
 
 /**
  * Traces all fsGLP transfers to/from CreditAggregator contract

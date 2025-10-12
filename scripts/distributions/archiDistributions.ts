@@ -2,7 +2,7 @@ import { ethers } from "hardhat";
 import * as fs from "fs";
 import * as path from "path";
 
-// FAST_RPC=<true> PREVIEW_ALL_LPS=<true> npx hardhat run --network arbitrum scripts/distributions/archi/calculateDistributions.ts
+// FAST_RPC=true PREVIEW_ALL_LPS=true npx hardhat run --network arbitrum scripts/distributions/archiDistributions.ts
 
 declare const process: any;
 
@@ -21,12 +21,17 @@ declare const process: any;
  *   5. Calculate LP distributions based on vault borrowing
  *
  * Prerequisites:
- *   - None (uses StakeFor events to discover LPs automatically)
+ *   - Core contract addresses (GMXExecutor, CreditUser2, CreditAggregator, fsGLP)
+ *     Found by analyzing contracts deployed by Archi Deployer (0x60A3D336c39e8faC40647142d3068780B4Bc4C93)
+ *     https://dune.com/queries/5781806
+ *   - Vault BaseReward contract addresses (WETH, WBTC, USDT, USDC)
+ *     Found from vault deployment transactions and contract interactions
+ *   - Once addresses are known, LPs are discovered automatically via StakeFor events (100% accurate vs Add/RemoveLiquidity which was 98.52% accurate)
  *
  * Outputs:
- *   - farmer-positions.csv: All 47 active positions with borrowing details
- *   - farmer-distributions.csv: Final farmer distributions (4 farmers)
- *   - lp-distributions.csv: LP distributions with vsToken balances
+ *   - archi-farmer-positions.csv: All 47 active positions with borrowing details
+ *   - archi-farmer-distributions.csv: Final farmer distributions (4 farmers)
+ *   - archi-lp-distributions.csv: LP distributions with vsToken balances
  *   - ARCHI_DISTRIBUTIONS.md: Updated with distribution tables and vault borrowing summary
  */
 
@@ -35,6 +40,8 @@ const BATCH_SIZE = process.env.FAST_RPC == "true" ? 100 : 25;
 const DELAY_MS = process.env.FAST_RPC == "true" ? 0 : 100;
 // Set to -1 to display all LPs in markdown table
 const TOP_LPS = process.env.PREVIEW_ALL_LPS == "true" ? -1 : 20;
+
+const START_BLOCK = 42029909; // 2022-11-29 - archi deployer got funded (most archi contracts deployed in Apr-2023)
 
 const CONTRACTS = {
   GMXExecutor: "0x49ee14e37cb47bff8c512b3a0d672302a3446eb1",
@@ -154,7 +161,7 @@ async function step2_extractPositions(provider: any): Promise<PositionData[]> {
 
   const creditUser = new ethers.Contract(CONTRACTS.CreditUser2, CREDIT_USER_ABI, provider);
 
-  const startBlock = 42029909; // 2022-11-29 --> Archi Deployer got funded (main archi contracts deployed in Apr-2023)
+  const startBlock = START_BLOCK;
   const endBlock = await provider.getBlockNumber();
 
   console.log(`Querying events from block ${startBlock} to ${endBlock}...\n`);
@@ -348,25 +355,25 @@ const VAULT_CONFIGS = [
     name: "WETH",
     baseRewardAddress: "0x9eBC025393d86f211A720b95650dff133b270684",
     decimals: 6,
-    deployBlock: 76000000,
+    deployBlock: START_BLOCK,
   },
   {
     name: "WBTC",
     baseRewardAddress: "0x12e14fDc843Fb9c64B84Dfa6fB03350D6810d8e5",
     decimals: 6,
-    deployBlock: 76000000,
+    deployBlock: START_BLOCK,
   },
   {
     name: "USDT",
     baseRewardAddress: "0xEca975BeEc3bC90C424FF101605ECBCef22b66eA",
     decimals: 6,
-    deployBlock: 76000000,
+    deployBlock: START_BLOCK,
   },
   {
     name: "USDC",
     baseRewardAddress: "0x670c4391f6421e4cE64D108F810C56479ADFE4B3",
     decimals: 6,
-    deployBlock: 76000000,
+    deployBlock: START_BLOCK,
   },
 ];
 
@@ -555,7 +562,7 @@ function writeOutputFiles(
   console.log("=".repeat(80) + "\n");
 
   // 1. Farmer positions
-  const positionsPath = path.join(__dirname, "farmer-positions.csv");
+  const positionsPath = path.join(__dirname, "out/archi-farmer-positions.csv");
   const positionRows = [
     "farmer,position_index,collateral_token,collateral_amount,liquidator_fee,net_collateral,borrowed_tokens,borrowed_amounts,credit_managers,collateral_fsGLP,borrowed_fsGLP,total_fsGLP,leverage",
     ...positions.map((p) =>
@@ -577,19 +584,19 @@ function writeOutputFiles(
     ),
   ];
   fs.writeFileSync(positionsPath, positionRows.join("\n"));
-  console.log(`✅ farmer-positions.csv (${positions.length} positions)`);
+  console.log(`✅ out/archi-farmer-positions.csv (${positions.length} positions)`);
 
   // 2. Farmer distributions
-  const farmerDistPath = path.join(__dirname, "farmer-distributions.csv");
+  const farmerDistPath = path.join(__dirname, "out/archi-farmer-distributions.csv");
   const farmerRows = [
     "farmer,collateral_fsGLP,liquidator_fees_share,total_fsGLP",
     ...farmerDistributions.map((d) => `${d.farmer},${d.collateralFsGLP},${d.liquidatorFeesShare},${d.totalFsGLP}`),
   ];
   fs.writeFileSync(farmerDistPath, farmerRows.join("\n"));
-  console.log(`✅ farmer-distributions.csv (${farmerDistributions.length} farmers)`);
+  console.log(`✅ out/archi-farmer-distributions.csv (${farmerDistributions.length} farmers)`);
 
   // 3. LP distributions (detailed with vsToken balances)
-  const lpDetailPath = path.join(__dirname, "lp-distributions.csv");
+  const lpDetailPath = path.join(__dirname, "out/archi-lp-distributions.csv");
   const lpDetailRows = [
     "address,wbtc_vsTokens,wbtc_fsGLP,weth_vsTokens,weth_fsGLP,usdt_vsTokens,usdt_fsGLP,usdc_vsTokens,usdc_fsGLP,total_fsGLP",
     ...lpDistributions.map((d) =>
@@ -608,7 +615,7 @@ function writeOutputFiles(
     ),
   ];
   fs.writeFileSync(lpDetailPath, lpDetailRows.join("\n"));
-  console.log(`✅ lp-distributions.csv (${lpDistributions.length} LPs)\n`);
+  console.log(`✅ out/archi-lp-distributions.csv (${lpDistributions.length} LPs)\n`);
 }
 
 // ============================================================================
@@ -699,7 +706,7 @@ ${farmerTableRows.join("\n")}
     .toFixed(2)
     .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | **100%** |
 
-**Note:** Full farmer distribution details available in \`farmer-distributions.csv\` (${
+**Note:** Full farmer distribution details available in \`out/archi-farmer-distributions.csv\` (${
     farmerDistributions.length
   } farmers total)`;
 
@@ -749,7 +756,7 @@ ${separatorLine}| ${totalRowRank} | **All LPs** | **${lpTotalWbtc
     .toFixed(2)
     .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | **${lpGrandTotal.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** |
 
-**Note:** Full LP distribution list available in \`lp-distributions.csv\` (${lpDistributions.length} LPs total)`;
+**Note:** Full LP distribution list available in \`out/archi-lp-distributions.csv\` (${lpDistributions.length} LPs total)`;
 
   // Generate timestamp
   const now = new Date();

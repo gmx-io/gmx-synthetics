@@ -35,28 +35,14 @@ Each vault's LPs only receive share of what was borrowed from their vault (vault
 <details>
 <summary><strong>How vault borrowing is calculated</strong></summary>
 
-These amounts are calculated by analyzing all 47 active positions and aggregating borrowed fsGLP by vault.
-
-**Prerequisites:**
-```bash
-# Step 4a: Extract complete position details from blockchain
-npx hardhat run --network arbitrum scripts/distributions/archi/step4a_extractPositionDetails.ts
-```
-
-**Then calculate vault borrowing:**
-```bash
-# Step 4b: Calculate vault borrowing totals
-npx hardhat run --network arbitrum scripts/distributions/archi/step4b_calculateVaultBorrowing.ts
-```
+The `calculateDistributions.ts` script analyzes all 47 active positions and aggregates borrowed fsGLP by vault.
 
 **Process:**
-1. `step4a_extractPositionDetails.ts` queries CreditUser #2 contract for all active positions and generates `step4a_position-details-complete.csv`
-2. `step4b_calculateVaultBorrowing.ts` reads the CSV and:
-   - Maps `credit_managers` addresses to vault tokens (WETH/WBTC/USDT/USDC)
-   - Aggregates `borrowed_fsGLP` amounts per vault
-3. Outputs:
-   - `step4b_vault-borrowing-summary.csv` - Totals per vault (matches table above)
-   - `step4b_vault-borrowing-breakdown.csv` - Detailed per-position borrowing
+1. Queries `CreateUserLendCredit` events from CreditUser #2 contract (all position openings)
+2. Queries `CreateUserBorrowed` events (execution details with fsGLP amounts)
+3. Checks `isTerminated()` to filter for active positions only
+4. Maps credit manager addresses to vault tokens (WETH/WBTC/USDT/USDC)
+5. Aggregates borrowed fsGLP per vault across all active positions
 
 **Why this matters for LPs:**
 - Farmer positions can borrow from multiple vaults simultaneously
@@ -102,50 +88,41 @@ Total:  1,615,172.98 + 99.81 = 1,615,272.79
 ### Run Complete Calculation (time: ~2-3 minutes)
 
 ```bash
-npx hardhat run --network arbitrum scripts/distributions/archi/calculateFarmerDistributions.ts
+# Use public RPC (slower with rate limiting)
+npx hardhat run --network arbitrum scripts/distributions/archi/calculateDistributions.ts
+
+# Or use fast RPC (paid Alchemy/Infura)
+FAST_RPC=true npx hardhat run --network arbitrum scripts/distributions/archi/calculateDistributions.ts
+
+# Preview all LPs in markdown (default shows top 20)
+PREVIEW_ALL_LPS=true npx hardhat run --network arbitrum scripts/distributions/archi/calculateDistributions.ts
 ```
+
+**What it does:**
+1. **Step 1**: Verifies total fsGLP holdings across GMXExecutor, CreditUser #2, and CreditAggregator
+2. **Step 2**: Extracts all active farmer positions from blockchain events
+3. **Step 3**: Calculates farmer distributions (collateral + liquidator fee share)
+4. **Step 4**: Calculates vault borrowing totals for LP distribution
+5. **Step 5**: Calculates LP distributions based on vsToken holdings
 
 **Output Files:**
-
-**`farmer-positions.csv`** - All 47 active positions with complete details
-
-**`farmer-distributions.csv`** - Final distributions for 4 farmers (see "Farmer Breakdown" table above)
-
-**`vault-borrowing-summary.csv`** - Total borrowed fsGLP by vault (see "Vault Borrowing" table above)
-
-**`vault-borrowing-breakdown.csv`** - Detailed vault borrowing per position (71 vault borrowings across 47 positions)
+- **`archi-farmer-positions.csv`** - All 47 active positions with complete details
+- **`archi-farmer-distributions.csv`** - Final distributions for 4 farmers
+- **`archi-lp-distributions.csv`** - LP distributions with vsToken balances per vault
+- **`ARCHI_DISTRIBUTIONS.md`** - Updated distribution tables (this file)
 
 <details>
-<summary><strong>Alternative: Step-by-Step Scripts</strong></summary>
+<summary><strong>How calculations work</strong></summary>
 
-If you need to debug or verify individual steps:
-
-```bash
-# Step 1: Verify total fsGLP
-npx hardhat run --network arbitrum scripts/distributions/archi/step1_verifyTotalFsGLP.ts
-
-# Step 2: Extract active positions
-npx hardhat run --network arbitrum scripts/distributions/archi/step2_extractPositionData.ts
-
-# Step 3: Calculate distributions
-npx hardhat run --network arbitrum scripts/distributions/archi/step3_calculateDistributions.ts
-
-# Step 4a: Extract complete position details (prerequisite for 4b)
-npx hardhat run --network arbitrum scripts/distributions/archi/step4a_extractPositionDetails.ts
-
-# Step 4b: Calculate vault borrowing
-npx hardhat run --network arbitrum scripts/distributions/archi/step4b_calculateVaultBorrowing.ts
-```
-
-#### Step 1: Verify Total fsGLP
+### Step 1: Verify Total fsGLP
 
 Queries on-chain balances:
 - **GMXExecutor** (`0x49ee14e37cb47bff8c512b3a0d672302a3446eb1`): 1,606,694.32 fsGLP
 - **CreditUser #2** (`0xe854358Bc324Cd5a73DEb5552a698e462A9CC38E`): 8,478.67 fsGLP
-- **CreditAggregator** (`0x437a182b571390c7e5d14cc7103d3b9d7628faca`): ~100 fsGLP (not distributed, source unknown)
+- **CreditAggregator** (`0x437a182b571390c7e5d14cc7103d3b9d7628faca`): ~100 fsGLP (not distributed)
 - **Total:** 1,615,172.99 fsGLP
 
-#### Step 2: Extract Active Positions
+### Step 2: Extract Active Positions
 
 Queries blockchain events from CreditUser #2:
 1. **CreateUserLendCredit** events (112 position openings)
@@ -155,7 +132,7 @@ Queries blockchain events from CreditUser #2:
 3. **Filters** via `isTerminated()` on-chain calls
    - Result: 47 active positions
 
-#### Step 3: Calculate Distributions
+### Step 3: Calculate Farmer Distributions
 
 For each farmer:
 ```
@@ -170,22 +147,28 @@ Liquidator Fee Context:
 - Returned to farmers on normal position closure
 - All 47 active positions use 5% fee (changed from 10% on Apr 5, 2023)
 
-#### Step 4: Calculate Vault Borrowing
+### Step 4: Calculate Vault Borrowing
 
-**Step 4a** extracts complete position details including:
-- All borrowed tokens and amounts per position
-- Credit manager addresses that map to vaults
-- Calculates fsGLP equivalents for all borrowed amounts
-
-**Step 4b** aggregates vault borrowing:
-- Maps `credit_managers` addresses to vault tokens (WETH/WBTC/USDT/USDC)
+Aggregates borrowed fsGLP by vault:
+- Maps credit manager addresses to vault tokens (WETH/WBTC/USDT/USDC)
 - Sums borrowed fsGLP per vault across all 47 positions
-- Outputs vault totals needed for LP distribution
-
-Why this matters:
 - Each position can borrow from multiple vaults simultaneously
 - Each vault's LPs only receive share of their vault's borrowed fsGLP
-- No cross-vault subsidization in LP distributions
+
+### Step 5: Calculate LP Distributions
+
+Discovers LPs and calculates distributions:
+1. **Query StakeFor events** from each vault's BaseReward contract (100% accurate)
+2. **Query current vsToken balances** for each LP
+3. **Calculate share**: `LP_fsGLP = (LP_vsTokens / total_vsTokens) × vault_borrowed_fsGLP`
+4. **Aggregate** across vaults per LP
+
+**Prerequisites:**
+- Core contract addresses (GMXExecutor, CreditUser2, CreditAggregator, fsGLP)
+  - Found by analyzing contracts deployed by Archi Deployer (0x60A3D336c39e8faC40647142d3068780B4Bc4C93)
+- Vault BaseReward contract addresses (WETH, WBTC, USDT, USDC)
+  - Found from vault deployment transactions and contract interactions
+- LP addresses are discovered automatically via StakeFor events
 
 </details>
 
@@ -195,81 +178,21 @@ Why this matters:
 
 Total to distribute: **1,445,599.59 fsGLP** (89.50% of protocol)
 
-### LP Breakdown (469 LPs across 4 vaults, 469 out of 1383 have > $1)
+### LP Breakdown (405 LPs across 4 vaults)
 
 | Vault | Distributed fsGLP | % of LP Total | Number of LPs |
 |-------|------------------|---------------|---------------|
-| **WBTC** | 848,962.09 | 58.72% | 23 |
-| **WETH** | 248,165.92 | 17.16% | 221 |
-| **USDT** | 190,986.02 | 13.21% | 196 |
-| **USDC** | 157,485.56 | 10.89% | 103 |
-| **TOTAL** | **1,445,599.59** | **100.00%** | **469** |
+| **WBTC** | 848,962.09 | 58.72% | 193 |
+| **WETH** | 248,165.92 | 17.16% | 278 |
+| **USDT** | 190,986.02 | 13.21% | 169 |
+| **USDC** | 157,485.56 | 10.89% | 248 |
+
+**Note:** LPs can provide to multiple vaults. Total unique LPs: 405
 
 **Distribution Method:**
-- Based on net positions (deposits - withdrawals) from Dune SQL query
-- Formula: `LP_fsGLP = (LP_net_deposit / total_net_deposits) × vault_borrowed_fsGLP`
+- Based on current vsToken holdings (queried on-chain from BaseReward contracts)
+- Formula: `LP_fsGLP = (LP_vsTokens / total_vsTokens) × vault_borrowed_fsGLP`
 - Each vault distributes independently to its LPs
-
-### Run Complete Calculation
-
-```bash
-npx hardhat run --network arbitrum scripts/distributions/archi/calculateLPDistributions.ts
-```
-
-**Prerequisites:**
-1. `archi-unique-LPs.csv` - LP addresses with net positions from [Dune query](https://dune.com/queries/5818540)
-2. `step4b_vault-borrowing-summary.csv` - Vault borrowed amounts (from farmer calculation)
-
-**Output Files:**
-
-**`lp-distributions.csv`** - Final LP distributions (469 LPs)
-
-**`lp-distributions-by-vault.csv`** - Detailed per-vault breakdown
-
-<details>
-<summary><strong>How LP distribution is calculated</strong></summary>
-
-**Data Source:**
-- [archi-unique-LPs.sql](https://dune.com/queries/5818540) tracks all `addLiquidity()` and `removeLiquidity()` transactions
-- Net position = total deposits - total withdrawals per vault per LP
-- Captures complete transaction history from protocol launch to shutdown
-
-**Calculation Process:**
-
-1. **Read LP net positions** from `archi-unique-LPs.csv`:
-   - Columns: `address`, `net_wbtc`, `net_weth`, `net_usdt`, `net_usdc`
-   - Net positions represent current LP holdings in each vault
-
-2. **For each vault** (WBTC, WETH, USDT, USDC):
-   - Sum all positive net positions: `total_net_deposits = Σ(LP_net_deposits)`
-   - For each LP: `share = LP_net_deposit / total_net_deposits`
-   - Calculate entitlement: `fsGLP = share × vault_borrowed_fsGLP`
-
-3. **Aggregate** across vaults per LP to get total distribution
-
-**Key Points:**
-- **Vault-specific distribution**: Each vault's LPs only receive share of that vault's borrowed fsGLP
-- **No on-chain queries needed**: All data from Dune SQL transaction history
-- **100% distributed**: All borrowed fsGLP allocated to LPs (precision: 99.9999999998%)
-- **No cross-vault subsidization**: WETH LPs don't share WBTC vault's borrowed amounts
-
-**Example:**
-```
-LP has:
-  - 1 WETH deposited (net_weth = 1.0)
-  - 0.5 WBTC deposited (net_wbtc = 0.5)
-
-If total_net_deposits:
-  - WETH vault: 100 WETH total
-  - WBTC vault: 20 WBTC total
-
-LP receives:
-  - WETH: (1.0 / 100) × 248,165.92 = 2,481.66 fsGLP
-  - WBTC: (0.5 / 20) × 848,962.09 = 21,224.05 fsGLP
-  - Total: 23,705.71 fsGLP
-```
-
-</details>
 
 ---
 
@@ -278,18 +201,17 @@ LP receives:
 | Category | Amount (fsGLP) | % of Total | Recipients |
 |----------|---------------|------------|------------|
 | **Farmers** | 169,573.39 | 10.50% | 4 farmers (47 positions) |
-| **LPs** | 1,445,599.59 | 89.50% | 469 LPs (across 4 vaults) |
-| **TOTAL** | **1,615,172.98** | **100%** | **473 unique addresses** |
+| **LPs** | 1,445,599.59 | 89.50% | 405 unique LPs |
+| **TOTAL** | **1,615,172.98** | **100%** | **409 unique addresses** |
 
 **Not Distributed:**
 - CreditAggregator: 99.81 fsGLP (source unknown, excluded from distribution)
-- LPs having less than $1 in vaults (i.e. only the first 469 out of 1383 LPs receive distributions)
 
 ---
 
 ## Detailed Distribution Tables
 
-*Last updated: 2025-10-11 12:28:08 UTC*
+*Last updated: 2025-10-12 19:25:04 UTC*
 
 ### Vault Borrowing Summary (Farmers)
 
@@ -315,7 +237,7 @@ Farmers deposited collateral and borrowed from vaults to create leveraged fsGLP 
 | 0x500dd643792a3d283c0d3db3af9b69ad6b862aae | 99.45 | 2.10 | **101.55** | 0.06% |
 | **TOTAL** | **161,094.72** | **8,478.67** | **169,573.39** | **100%** |
 
-**Note:** Full farmer distribution details available in `farmer-distributions.csv` (4 farmers total)
+**Note:** Full farmer distribution details available in `out/archi-farmer-distributions.csv` (4 farmers total)
 
 ### LP Distributions - Top 20 (405 LPs total)
 
@@ -346,4 +268,4 @@ LPs provided liquidity to vaults and received vsTokens. They earn fsGLP rewards 
 | ... | ... | ... | ... | ... | ... | ... |
 | 405 | **All LPs** | **848,962.09** | **248,165.92** | **190,986.02** | **157,485.56** | **1,445,599.59** |
 
-**Note:** Full LP distribution list available in `lp-distributions.csv` (405 LPs total)
+**Note:** Full LP distribution list available in `out/archi-lp-distributions.csv` (405 LPs total)
