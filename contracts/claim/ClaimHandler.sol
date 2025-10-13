@@ -10,6 +10,7 @@ import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 
 import "../role/RoleModule.sol";
 import "../utils/GlobalReentrancyGuard.sol";
+import "../utils/StringUtils.sol";
 import "../event/EventEmitter.sol";
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
@@ -48,6 +49,7 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
         address token;
         uint256 distributionId;
         bytes termsSignature;
+        string acceptedTerms;
     }
 
     struct TransferClaimParam {
@@ -186,7 +188,7 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
     // @dev claim funds for the calling account for multiple tokens
     // @param params array of claim parameters
     // @param receiver the receiver of the funds
-    function claimFunds(ClaimParam[] calldata params, address receiver) external globalNonReentrant {
+    function acceptTermsAndClaim(ClaimParam[] calldata params, address receiver) external globalNonReentrant {
         if (params.length == 0) {
             revert Errors.InvalidParams("claim params length is 0");
         }
@@ -200,7 +202,7 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
             ClaimUtils._validateNonEmptyToken(param.token);
             ClaimUtils._validateNonZeroDistributionId(param.distributionId);
 
-            _validateTermsSignature(param.distributionId, msg.sender, param.termsSignature);
+            _validateTermsSignature(param.distributionId, msg.sender, param.termsSignature, param.acceptedTerms);
 
             bytes32 claimableKey = Keys.claimableFundsAmountKey(msg.sender, param.token, param.distributionId);
             uint256 claimableAmount = dataStore.getUint(claimableKey);
@@ -285,9 +287,18 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
     }
 
     // note that signature can be empty here for signing by contracts
-    function _validateTermsSignature(uint256 distributionId, address account, bytes memory signature) internal view {
+    function _validateTermsSignature(
+        uint256 distributionId,
+        address account,
+        bytes memory signature,
+        string memory acceptedTerms
+    ) internal view {
         string memory terms = dataStore.getString(Keys.claimTermsKey(distributionId));
         if (bytes(terms).length == 0) {
+            return;
+        }
+
+        if (StringUtils.compareStrings(terms, acceptedTerms)) {
             return;
         }
 
