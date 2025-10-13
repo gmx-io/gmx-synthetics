@@ -1127,7 +1127,8 @@ library MarketUtils {
         Market.Props memory market,
         address collateralToken,
         bool isLong,
-        int256 delta
+        int256 delta,
+        bool useOpenInterestInTokens
     ) internal returns (uint256) {
         if (market.indexToken == address(0)) {
             revert Errors.OpenInterestCannotBeUpdatedForSwapOnlyMarket(market.marketToken);
@@ -1147,12 +1148,14 @@ library MarketUtils {
         // so the virtual inventory should be increased
         // if the open interest for shorts is decreased then tokens were virtually bought from the pool
         // so the virtual inventory should be decreased
-        applyDeltaToVirtualInventoryForPositions(
-            dataStore,
-            eventEmitter,
-            market.indexToken,
-            isLong ? -delta : delta
-        );
+        if (!useOpenInterestInTokens) {
+            applyDeltaToVirtualInventoryForPositions(
+                dataStore,
+                eventEmitter,
+                market.indexToken,
+                isLong ? -delta : delta
+            );
+        }
 
         if (delta > 0) {
             validateOpenInterest(
@@ -1178,15 +1181,34 @@ library MarketUtils {
         DataStore dataStore,
         EventEmitter eventEmitter,
         address market,
+        address indexToken,
         address collateralToken,
         bool isLong,
-        int256 delta
+        int256 delta,
+        bool useOpenInterestInTokens
     ) internal returns (uint256) {
         uint256 nextValue = dataStore.applyDeltaToUint(
             Keys.openInterestInTokensKey(market, collateralToken, isLong),
             delta,
             "Invalid state: negative open interest in tokens"
         );
+
+        // if the open interest for longs is increased then tokens were virtually bought from the pool
+        // so the virtual inventory should be decreased
+        // if the open interest for longs is decreased then tokens were virtually sold to the pool
+        // so the virtual inventory should be increased
+        // if the open interest for shorts is increased then tokens were virtually sold to the pool
+        // so the virtual inventory should be increased
+        // if the open interest for shorts is decreased then tokens were virtually bought from the pool
+        // so the virtual inventory should be decreased
+        if (useOpenInterestInTokens) {
+            applyDeltaToVirtualInventoryForPositionsInTokens(
+                dataStore,
+                eventEmitter,
+                indexToken,
+                isLong ? -delta : delta
+            );
+        }
 
         MarketEventUtils.emitOpenInterestInTokensUpdated(eventEmitter, market, collateralToken, isLong, delta, nextValue);
 
@@ -2057,9 +2079,6 @@ library MarketUtils {
         return token == market.longToken;
     }
 
-    // @dev get the virtual inventory for positions
-    // @param dataStore DataStore
-    // @param token the token to check
     function getVirtualInventoryForPositions(DataStore dataStore, address token) internal view returns (bool, int256) {
         bytes32 virtualTokenId = dataStore.getBytes32(Keys.virtualTokenIdKey(token));
         if (virtualTokenId == bytes32(0)) {
@@ -2067,6 +2086,15 @@ library MarketUtils {
         }
 
         return (true, dataStore.getInt(Keys.virtualInventoryForPositionsKey(virtualTokenId)));
+    }
+
+    function getVirtualInventoryForPositionsInTokens(DataStore dataStore, address token) internal view returns (bool, int256) {
+        bytes32 virtualTokenId = dataStore.getBytes32(Keys.virtualTokenIdKey(token));
+        if (virtualTokenId == bytes32(0)) {
+            return (false, 0);
+        }
+
+        return (true, dataStore.getInt(Keys.virtualInventoryForPositionsInTokensKey(virtualTokenId)));
     }
 
     // @dev update the virtual inventory for swaps
@@ -2098,11 +2126,6 @@ library MarketUtils {
         return (true, nextValue);
     }
 
-    // @dev update the virtual inventory for positions
-    // @param dataStore DataStore
-    // @param eventEmitter EventEmitter
-    // @param token the token to update
-    // @param delta the update amount
     function applyDeltaToVirtualInventoryForPositions(
         DataStore dataStore,
         EventEmitter eventEmitter,
@@ -2116,6 +2139,27 @@ library MarketUtils {
 
         int256 nextValue = dataStore.applyDeltaToInt(
             Keys.virtualInventoryForPositionsKey(virtualTokenId),
+            delta
+        );
+
+        MarketEventUtils.emitVirtualPositionInventoryUpdated(eventEmitter, token, virtualTokenId, delta, nextValue);
+
+        return (true, nextValue);
+    }
+
+    function applyDeltaToVirtualInventoryForPositionsInTokens(
+        DataStore dataStore,
+        EventEmitter eventEmitter,
+        address token,
+        int256 delta
+    ) internal returns (bool, int256) {
+        bytes32 virtualTokenId = dataStore.getBytes32(Keys.virtualTokenIdKey(token));
+        if (virtualTokenId == bytes32(0)) {
+            return (false, 0);
+        }
+
+        int256 nextValue = dataStore.applyDeltaToInt(
+            Keys.virtualInventoryForPositionsInTokensKey(virtualTokenId),
             delta
         );
 

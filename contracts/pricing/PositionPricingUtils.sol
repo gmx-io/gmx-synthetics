@@ -159,7 +159,8 @@ library PositionPricingUtils {
     // @dev get the price impact in USD for a position increase / decrease and whether the balance was improved
     // @param params GetPriceImpactUsdParams and the balanceWasImproved boolean
     function getPriceImpactUsd(GetPriceImpactUsdParams memory params) internal view returns (int256, bool) {
-        OpenInterestParams memory openInterestParams = getNextOpenInterest(params);
+        bool useOpenInterestInTokens = params.dataStore.getBool(Keys.USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE);
+        OpenInterestParams memory openInterestParams = getNextOpenInterest(params, useOpenInterestInTokens);
 
         (int256 priceImpactUsd, bool balanceWasImproved) = _getPriceImpactUsd(params.dataStore, params.market.marketToken, openInterestParams);
 
@@ -174,8 +175,18 @@ library PositionPricingUtils {
         // disincentivise the balancing of pools
         if (priceImpactUsd >= 0) { return (priceImpactUsd, balanceWasImproved); }
 
-        (bool hasVirtualInventory, int256 virtualInventory) = MarketUtils.getVirtualInventoryForPositions(params.dataStore, params.market.indexToken);
-        if (!hasVirtualInventory) { return (priceImpactUsd, balanceWasImproved); }
+        bool hasVirtualInventory;
+        int256 virtualInventory;
+
+        if (useOpenInterestInTokens) {
+            (hasVirtualInventory, virtualInventory) = MarketUtils.getVirtualInventoryForPositionsInTokens(params.dataStore, params.market.indexToken);
+            virtualInventory = virtualInventory * params.indexTokenPrice.midPrice().toInt256();
+            if (!hasVirtualInventory) { return (priceImpactUsd, balanceWasImproved); }
+        } else {
+            (hasVirtualInventory, virtualInventory) = MarketUtils.getVirtualInventoryForPositions(params.dataStore, params.market.indexToken);
+            if (!hasVirtualInventory) { return (priceImpactUsd, balanceWasImproved); }
+        }
+
 
         OpenInterestParams memory openInterestParamsForVirtualInventory = getNextOpenInterestForVirtualInventory(params, virtualInventory);
         (int256 priceImpactUsdForVirtualInventory, bool balanceWasImprovedForVirtualInventory) = _getPriceImpactUsd(params.dataStore, params.market.marketToken, openInterestParamsForVirtualInventory);
@@ -231,7 +242,8 @@ library PositionPricingUtils {
     // @param params GetPriceImpactUsdParams
     // @return OpenInterestParams
     function getNextOpenInterest(
-        GetPriceImpactUsdParams memory params
+        GetPriceImpactUsdParams memory params,
+        bool useOpenInterestInTokens
     ) internal view returns (OpenInterestParams memory) {
         // if useOpenInterestInTokens is true, then the price impact can vary depending on the index token price
         // this occurs if a curve is used and the openInterestInTokens is not entirely balanced
@@ -251,7 +263,6 @@ library PositionPricingUtils {
         // the user decreases the long position
         // openInterestInTokensInUsd is $4500 but sizeDeltaUsd is $5000
         // to prevent overflow issues, the tokenDelta is used to calculate the usdDelta if useOpenInterestInTokens is true
-        bool useOpenInterestInTokens = params.dataStore.getBool(Keys.USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE);
 
         uint256 longOpenInterest;
         uint256 shortOpenInterest;

@@ -608,22 +608,27 @@ library PositionUtils {
         int256 sizeDeltaInTokens
     ) internal {
         if (sizeDeltaUsd != 0) {
+            bool useOpenInterestInTokens = params.contracts.dataStore.getBool(Keys.USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE);
+
             MarketUtils.applyDeltaToOpenInterest(
                 params.contracts.dataStore,
                 params.contracts.eventEmitter,
                 params.market,
                 params.position.collateralToken(),
                 params.position.isLong(),
-                sizeDeltaUsd
+                sizeDeltaUsd,
+                useOpenInterestInTokens
             );
 
             MarketUtils.applyDeltaToOpenInterestInTokens(
                 params.contracts.dataStore,
                 params.contracts.eventEmitter,
                 params.position.market(),
+                params.market.indexToken,
                 params.position.collateralToken(),
                 params.position.isLong(),
-                sizeDeltaInTokens
+                sizeDeltaInTokens,
+                useOpenInterestInTokens
             );
         }
     }

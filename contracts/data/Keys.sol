@@ -268,14 +268,11 @@ library Keys {
     // @dev key for the min allowed position size in USD
     bytes32 public constant MIN_POSITION_SIZE_USD = keccak256(abi.encode("MIN_POSITION_SIZE_USD"));
 
-    // @dev key for the virtual id of tokens
     bytes32 public constant VIRTUAL_TOKEN_ID = keccak256(abi.encode("VIRTUAL_TOKEN_ID"));
-    // @dev key for the virtual id of markets
     bytes32 public constant VIRTUAL_MARKET_ID = keccak256(abi.encode("VIRTUAL_MARKET_ID"));
-    // @dev key for the virtual inventory for swaps
     bytes32 public constant VIRTUAL_INVENTORY_FOR_SWAPS = keccak256(abi.encode("VIRTUAL_INVENTORY_FOR_SWAPS"));
-    // @dev key for the virtual inventory for positions
     bytes32 public constant VIRTUAL_INVENTORY_FOR_POSITIONS = keccak256(abi.encode("VIRTUAL_INVENTORY_FOR_POSITIONS"));
+    bytes32 public constant VIRTUAL_INVENTORY_FOR_POSITIONS_IN_TOKENS = keccak256(abi.encode("VIRTUAL_INVENTORY_FOR_POSITIONS_IN_TOKENS"));
 
     // @dev key for the position impact factor
     bytes32 public constant POSITION_IMPACT_FACTOR = keccak256(abi.encode("POSITION_IMPACT_FACTOR"));
@@ -1118,11 +1115,16 @@ library Keys {
        ));
    }
 
-   // @dev the key for the virtual inventory for positions
-   // @param the virtualTokenId the virtual token id
    function virtualInventoryForPositionsKey(bytes32 virtualTokenId) internal pure returns (bytes32) {
        return keccak256(abi.encode(
            VIRTUAL_INVENTORY_FOR_POSITIONS,
+           virtualTokenId
+       ));
+   }
+
+   function virtualInventoryForPositionsInTokensKey(bytes32 virtualTokenId) internal pure returns (bytes32) {
+       return keccak256(abi.encode(
+           VIRTUAL_INVENTORY_FOR_POSITIONS_IN_TOKENS,
            virtualTokenId
        ));
    }
