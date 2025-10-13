@@ -1031,6 +1031,13 @@ library Keys {
         ));
     }
 
+    function oracleProviderForTokenKey(address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            ORACLE_PROVIDER_FOR_TOKEN,
+            token
+        ));
+    }
+
     // @dev key for oracle provider update time
     // @param token the token
     // @param provider address
