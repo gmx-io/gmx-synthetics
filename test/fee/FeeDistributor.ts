@@ -485,8 +485,8 @@ describe("FeeDistributor", function () {
 
     const distributeTimestamp = await dataStore.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
 
-    const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[6].parsedEventData;
-    const feeDistributionDataReceivedEventData = parseLogs(fixture, receipt)[3].parsedEventData;
+    const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[4].parsedEventData;
+    const feeDistributionDataReceivedEventData = parseLogs(fixture, receipt)[1].parsedEventData;
 
     const feeAmountGmxA = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdA));
     const feeAmountGmxB = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB));
@@ -598,8 +598,8 @@ describe("FeeDistributor", function () {
 
     const distributeTimestamp = await dataStore.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
 
-    const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[16].parsedEventData;
-    const feeDistributionDataReceivedEventData = parseLogs(fixture, receipt)[13].parsedEventData;
+    const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[14].parsedEventData;
+    const feeDistributionDataReceivedEventData = parseLogs(fixture, receipt)[11].parsedEventData;
 
     const feeAmountGmxA = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdA));
     const feeAmountGmxB = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB));
@@ -721,8 +721,8 @@ describe("FeeDistributor", function () {
 
     const distributeTimestamp = await dataStore.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
 
-    const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[6].parsedEventData;
-    const feeDistributionDataReceivedEventData = parseLogs(fixture, receipt)[3].parsedEventData;
+    const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[4].parsedEventData;
+    const feeDistributionDataReceivedEventData = parseLogs(fixture, receipt)[1].parsedEventData;
 
     const feeAmountGmxA = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdA));
     const feeAmountGmxB = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB));
@@ -988,8 +988,8 @@ describe("FeeDistributor", function () {
 
     const distributeTimestamp = await dataStore.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
 
-    const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[16].parsedEventData;
-    const feeDistributionDataReceivedEventData = parseLogs(fixture, receipt)[13].parsedEventData;
+    const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[14].parsedEventData;
+    const feeDistributionDataReceivedEventData = parseLogs(fixture, receipt)[11].parsedEventData;
 
     const feeAmountGmxA = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdA));
     const feeAmountGmxB = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB));
@@ -1332,7 +1332,6 @@ describe("FeeDistributor", function () {
       "MockFeeDistributor",
       [
         roleStore.address,
-        oracle.address,
         feeDistributorVaultD.address,
         feeHandlerD.address,
         dataStoreD.address,
@@ -1738,11 +1737,11 @@ describe("FeeDistributor", function () {
     const distributeTimestamp = await dataStore.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
     const distributeTimestampD = await dataStoreD.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
 
-    const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[16].parsedEventData;
-    const feeDistributionDataReceivedEventData = parseLogs(fixture, receipt)[13].parsedEventData;
+    const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[14].parsedEventData;
+    const feeDistributionDataReceivedEventData = parseLogs(fixture, receipt)[11].parsedEventData;
 
-    const feeDistributionInitiatedEventDataD = parseLogs(fixture, receiptD)[11].parsedEventData;
-    const feeDistributionDataReceivedEventDataD = parseLogs(fixture, receiptD)[8].parsedEventData;
+    const feeDistributionInitiatedEventDataD = parseLogs(fixture, receiptD)[9].parsedEventData;
+    const feeDistributionDataReceivedEventDataD = parseLogs(fixture, receiptD)[6].parsedEventData;
 
     const feeAmountGmxA = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdA));
     const feeAmountGmxB = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB));

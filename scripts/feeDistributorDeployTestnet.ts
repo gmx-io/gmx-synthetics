@@ -513,7 +513,6 @@ async function deployContracts(): Promise<DeploymentResult> {
     });
     const feeDistributor: Contract = await FeeDistributor.deploy(
       contracts.roleStore,
-      contracts.oracle,
       contracts.feeDistributorVault,
       contracts.feeHandler,
       contracts.dataStore,

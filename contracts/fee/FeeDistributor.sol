@@ -16,7 +16,7 @@ import "../v1/IRewardDistributorV1.sol";
 import "../v1/IVesterV1.sol";
 import "../v1/IMintable.sol";
 
-contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
+contract FeeDistributor is ReentrancyGuard, RoleModule {
     using EventUtils for EventUtils.UintItems;
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
@@ -47,7 +47,6 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
 
     constructor(
         RoleStore _roleStore,
-        IOracle _oracle,
         FeeDistributorVault _feeDistributorVault,
         FeeHandler _feeHandler,
         DataStore _dataStore,
@@ -57,7 +56,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         address _gmx,
         address _esGmx,
         address _wnt
-    ) RoleModule(_roleStore) OracleModule(_oracle) {
+    ) RoleModule(_roleStore) {
         feeDistributorVault = _feeDistributorVault;
         feeHandler = _feeHandler;
         dataStore = _dataStore;
@@ -613,20 +612,9 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         eventEmitter.emitEventLog("FeeDistributionEvent", eventData);
     }
 
-    function _setTokenPrices() internal withOraclePrices(_retrieveSetPricesParams()) {
+    function _setTokenPrices() internal {
         _setUint(Keys2.FEE_DISTRIBUTOR_GMX_PRICE, _getOraclePrice(gmx));
         _setUint(Keys2.FEE_DISTRIBUTOR_WNT_PRICE, _getOraclePrice(wnt));
-    }
-
-    function _retrieveSetPricesParams() internal view returns (OracleUtils.SetPricesParams memory) {
-        address[] memory tokens = _createAddressArray(2);
-        tokens[0] = gmx;
-        tokens[1] = wnt;
-        address[] memory providers = _createAddressArray(2);
-        providers[0] = _getAddress(Keys.oracleProviderForTokenKey(address(oracle), gmx));
-        providers[1] = _getAddress(Keys.oracleProviderForTokenKey(address(oracle), wnt));
-        bytes[] memory data = new bytes[](2);
-        return (OracleUtils.SetPricesParams(tokens, providers, data));
     }
 
     function _calculateChainlinkAndTreasuryAmounts(
@@ -696,7 +684,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
     }
 
     function _getOraclePrice(address token) internal view returns (uint256) {
-        // ChainlinkPriceProvider.getOraclePrice() is not used since the prices are for non-stablecoin tokens
+        // ChainlinkPriceFeedProvider.getOraclePrice() is not used since the prices are for non-stablecoin tokens
         (bool hasPriceFeed, uint256 price) = ChainlinkPriceFeedUtils.getPriceFeedPrice(dataStore, token);
 
         if (!hasPriceFeed) {

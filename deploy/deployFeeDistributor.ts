@@ -3,7 +3,6 @@ import { createDeployFunction } from "../utils/deploy";
 
 const constructorContracts = [
   "RoleStore",
-  "Oracle",
   "FeeDistributorVault",
   "FeeHandler",
   "DataStore",
