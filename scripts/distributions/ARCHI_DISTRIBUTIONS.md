@@ -6,6 +6,124 @@
 
 ---
 
+## How Archi Finance Works
+
+Archi Finance is a **two-sided leveraged yield farming protocol** that connects passive liquidity providers with leveraged farmers seeking amplified exposure to GMX GLP yields.
+
+### The Two Sides
+
+#### 1. Liquidity Providers (LPs)
+- deposit single assets (WETH, USDT, USDC, or WBTC) into vault contracts
+- receive vsTokens (vault share tokens) that are auto-staked in BaseReward pools
+- earn fsGLP proportional to their vault's borrowed amounts. fsGLP earns GMX trading fees (WETH rewards)
+- low risk (1:1 asset backing, no liquidation risk)
+
+#### 2. Leveraged Farmers
+- Deposit collateral and borrow from LP vaults to create leveraged GLP positions (up to 10x)
+- Borrow actual tokens (WETH, WBTC, USDT, USDC) from multiple vaults, then converts all borrowed tokens + collateral to fsGLP
+- earn amplified GMX trading fees and esGMX rewards via leveraged fsGLP exposure
+- high risk (liquidation if health factor < 40% or position open > 365 days)
+
+```
+LP deposits USDC → Vault → vsUSDC tokens → Earns yield
+                      ↓
+                   Borrowed by Farmer
+                      ↓
+Farmer's Collateral + Borrowed USDC → Converted to fsGLP → Earns GMX rewards
+```
+
+When a farmer borrows tokens from vaults, those tokens are converted to fsGLP for the leveraged position. The protocol tracks which vault each portion came from. Upon distribution, LPs get back the fsGLP value that originated from their vault's borrowed tokens, proportional to their vault share.
+
+Current distribution returns collateral from active positions that remained open.
+
+### Distributions Example
+
+LP1 deposits: 10 WETH --> WETH Vault mints: 10 vsWETH (which is auto-staked in BaseReward pool)
+
+LP2 deposits: 50,000 USDC --> USDC Vault mints: 50,000 vsUSDC (which is auto-staked in BaseReward pool)
+
+Farmer Opens Position (Borrows from BOTH vaults):
+- Farmer deposits: 5,000 USDC (collateral)
+- Protocol reserves: 250 USDC (5% liquidator fee) → Net collateral: 4,750 USDC
+- Farmer borrows: 10 WETH from WETH vault → WETH Vault mints: 10 vsWETH
+- Protocol sends to GMX: 10 WETH + 20000 USDC + 5000 USDC (borrowed + collateral)
+- GMX mints (if considerring $1 / fsGLP): 
+  - fsGLP for farmer's collateral --> 4,750 fsGLP
+  - fsGLP for WETH vault portion --> 50,000 fsGLP
+  - fsGLP for USDC vault postion --> 20,000 fsGLP
+Protocol records:
+- Collateral portion: 4,750 fsGLP (from 4,750 USDC collateral)
+- Liquidator fee: 250 USDC (5%): 250 fsGLP (held in CreditUser#2)
+- WETH vault portion: 50,000 fsGLP (from 10 WETH borrowed)
+- USDC vault portion: 20,000 fsGLP (from 20,000 USDC borrowed)
+
+
+Distributions script splits the fsGLP according the farmer/vaults proportionally:
+- farmer's share (i.e. collateral + liquidator's fee)
+- vaults get back fsGLP proportional to the amounts borrowed (when position is created, events emit the fsGLP amounts, which are then mapped to vault addresses)
+- from each vault, LPs get a proportional share (vsTokens / totalSupply)
+
+Liquidator fee is held in CreditUser#2 (~8k) and the rest in GMXExecutor (~1.6M).
+
+---
+
+
+### Real-tx Example
+
+This example shows an actual position that borrowed from **2 vaults simultaneously**: WETH and USDC.
+
+#### Opening Position (April 5, 2023)
+
+**Transaction:** [0x0914fd...09adac](https://arbiscan.io/tx/0x0914fd43c5607f2c680f973e616ba32e224559d4c631364ca744710f3409adac)
+
+**Farmer Action:**
+- Deposits **0.45 ETH** as collateral ($1,800 at the time)
+- Borrows from **2 vaults**:
+  - **WETH vault**: 1.71 WETH (ratio: 400 = 40%)
+  - **USDC vault**: 4,081.23 USDC (ratio: 500 = 50%)
+- Protocol takes 10% liquidator fee: **0.045 ETH** (note: early position with 10% fee)
+
+**Position Created:**
+```
+Total borrowed: 1.71 WETH + 4,081.23 USDC (~$11,000 combined)
+├── Collateral: 0.4275 ETH (after 10% fee) → 826.23 fsGLP
+├── Liquidator fee: 0.0225 ETH → held in escrow (returned to farmer on normal close, or to liquidator if liquidated)
+├── From WETH vault: 1.71 WETH → 3,304.93 fsGLP
+└── From USDC vault: 4,081.23 USDC → 4,128.68 fsGLP
+
+Total position: 8,259.84 fsGLP (~10x leverage)
+```
+
+**LP Outcomes:**
+- WETH vault receive **1.71 vsWETH** tokens (representing their proportional share of vault liquidity)
+- USDC vault receive **4,081.23 vsUSDC** tokens (representing their proportional share of vault liquidity)
+- Each vault's earn returns only on what their vault lent
+
+**Note:** The farmer borrowed actual tokens (1.71 WETH and 4,081.23 USDC), which along with the collateral were converted to fsGLP. The protocol tracks which vault each fsGLP portion came from via the CreateUserBorrowed event.
+
+#### Closing Position (April 10, 2023) - 5 days later
+
+**Transaction:** [0x342165...6fe7e3](https://arbiscan.io/tx/0x34216585484b65fbb5c00b3dda176ae8d509a20de5323fb53e11cd8a196fe7e3)
+
+**Protocol Burns fsGLP:**
+- Burns WETH borrowed portion: **3,247.32 fsGLP** → receives 1.71 WETH
+- Burns USDC borrowed portion: **4,185.31 fsGLP** → receives 4,085.31 USDC
+- Burns collateral portion: **827.21 fsGLP** → receives 0.436 WETH
+
+**Repayment:**
+- Repays WETH vault: **1.71 WETH** (borrowed 1.71 WETH, +0.0017 WETH profit)
+- Repays USDC vault: **4,085.31 USDC** (borrowed 4,081.23 USDC, +4.08 USDC profit)
+
+**Final Outcomes:**
+
+|              | Deposited | Received | Gain/Loss | Return |
+|--------------|-----------|----------|-----------|--------|
+| **Farmer**   | 0.45 ETH | 0.436 ETH | -0.014 ETH | -3.1% |
+| **WETH LPs** | 1.71 WETH | 1.71 WETH | +0.0017 WETH | +0.1% (5 days) |
+| **USDC LPs** | 4,081.23 USDC | 4,085.31 USDC | +4.08 USDC | +0.1% (5 days) |
+
+---
+
 ## Farmer Distributions
 
 ### Farmer Breakdown (4 farmers, 47 positions)
@@ -22,7 +140,7 @@
 
 Total borrowed fsGLP: 1,445,599.59 (89.50% of protocol)
 
-Each vault's LPs only receive share of what was borrowed from their vault (vault-specific LP distribution)
+Farmers borrowed actual tokens (WETH, WBTC, USDT, USDC) from vaults, which were converted to fsGLP. Each vault's LPs receive their proportional share of the fsGLP that originated from their vault's borrowed tokens.
 
 | Vault | Borrowed fsGLP | % of LP Total |
 |-------|----------------|---------------|
@@ -211,11 +329,11 @@ Total to distribute: **1,445,599.59 fsGLP** (89.50% of protocol)
 
 ## Detailed Distribution Tables
 
-*Last updated: 2025-10-12 19:25:04 UTC*
+*Last updated: 2025-10-14 20:41:44 UTC*
 
 ### Vault Borrowing Summary (Farmers)
 
-Farmers borrowed fsGLP from these vaults to create leveraged positions. This borrowed fsGLP is distributed to LPs based on their vsToken holdings.
+Farmers borrowed tokens (WETH, WBTC, USDT, USDC) from these vaults to create leveraged positions. The borrowed tokens were converted to fsGLP and tracked by vault. This fsGLP is distributed to LPs based on their vsToken holdings.
 
 | Vault | Borrowed fsGLP | % of Total | Farmer Positions |
 |-------|----------------|------------|------------------|
@@ -227,7 +345,7 @@ Farmers borrowed fsGLP from these vaults to create leveraged positions. This bor
 
 ### Farmer Distributions (4 farmers)
 
-Farmers deposited collateral and borrowed from vaults to create leveraged fsGLP positions. They receive their collateral fsGLP plus a proportional share of liquidator fees.
+Farmers deposited collateral and borrowed tokens from vaults to create leveraged fsGLP positions. All assets were converted to fsGLP. They receive their collateral fsGLP entitlement plus a proportional share of liquidator fees.
 
 | Farmer Address | Collateral fsGLP | Liquidator Fees Share | Total fsGLP | % of Farmer Total |
 |----------------|------------------|----------------------|-------------|-------------------|
@@ -241,7 +359,7 @@ Farmers deposited collateral and borrowed from vaults to create leveraged fsGLP 
 
 ### LP Distributions - Top 20 (405 LPs total)
 
-LPs provided liquidity to vaults and received vsTokens. They earn fsGLP rewards proportional to their vsToken holdings when farmers borrow from their vault.
+LPs provided liquidity to vaults and received vsTokens. They receive fsGLP distributions proportional to their vsToken holdings, based on what farmers borrowed from their vault (tracked as fsGLP value).
 
 | Rank | LP Address | WBTC fsGLP | WETH fsGLP | USDT fsGLP | USDC fsGLP | Total fsGLP |
 |------|------------|------------|------------|------------|------------|-------------|
