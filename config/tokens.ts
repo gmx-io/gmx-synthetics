@@ -1343,7 +1343,7 @@ const config: {
       buybackMaxPriceImpactFactor: MID_BUYBACK_IMPACT,
     },
     XAUt0: {
-      address: "0x40461291347e1ecbb09499f3371d3f17f10d7159",
+      address: "0x2775d5105276781b4b85ba6ea6a6653beed1dd32",
       decimals: 6, // https://c.snowtrace.io/token/0x2775d5105276781B4b85bA6eA6a6653bEeD1dd32/contract/readProxyContract
       dataStreamFeedId: "0x0003b8b3f33c4c06a7947e86c5b4db4ef0991637d9821b9cdf897c0b5d488468", // XAUt
       dataStreamFeedDecimals: 18,
