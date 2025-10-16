@@ -116,4 +116,9 @@ library Role {
      * Hash: 0x3816efacf145d41a12de1ee8ae9dc340b887f4ca0f3bba62a645b2fefa4cab33
      */
     bytes32 public constant CLAIM_ADMIN = keccak256(abi.encode("CLAIM_ADMIN"));
+    /**
+     * @dev The MULTICHAIN_READER role.
+     * Hash: 0xdb34a94d601aa170c498f99c1628bd6182669f4ea4522eb87795649193ee93f8
+     */
+    bytes32 public constant MULTICHAIN_READER = keccak256(abi.encode("MULTICHAIN_READER"));
 }
