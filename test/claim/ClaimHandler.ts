@@ -513,7 +513,7 @@ describe("ClaimHandler", () => {
     });
   });
 
-  describe("claimFunds", () => {
+  describe("acceptTermsAndClaim", () => {
     it("should handle claims correctly - happy path", async () => {
       const wntDepositParams = [
         { account: user0.address, amount: expandDecimals(100, 18) },
@@ -538,10 +538,10 @@ describe("ClaimHandler", () => {
       expect(await claimHandler.getClaimableAmount(user1.address, usdc.address, [1])).to.equal(expandDecimals(2000, 6));
 
       const claimParams = [
-        { token: wnt.address, distributionId: 1, termsSignature: "0x" },
-        { token: usdc.address, distributionId: 1, termsSignature: "0x" },
+        { token: wnt.address, distributionId: 1, termsSignature: "0x", acceptedTerms: "" },
+        { token: usdc.address, distributionId: 1, termsSignature: "0x", acceptedTerms: "" },
       ];
-      const tx = await claimHandler.connect(user0).claimFunds(claimParams, user2.address);
+      const tx = await claimHandler.connect(user0).acceptTermsAndClaim(claimParams, user2.address);
 
       const txReceipt = await ethers.provider.getTransactionReceipt(tx.hash);
       const logs = parseLogs(fixture, txReceipt);
@@ -574,8 +574,8 @@ describe("ClaimHandler", () => {
       expect(await wnt.balanceOf(user2.address)).to.equal(initialUser2WntBalance.add(expandDecimals(100, 18)));
       expect(await usdc.balanceOf(user2.address)).to.equal(initialUser2UsdcBalance.add(expandDecimals(1000, 6)));
 
-      const claimParams2 = [{ token: wnt.address, distributionId: 1, termsSignature: "0x" }];
-      await claimHandler.connect(user1).claimFunds(claimParams2, user1.address);
+      const claimParams2 = [{ token: wnt.address, distributionId: 1, termsSignature: "0x", acceptedTerms: "" }];
+      await claimHandler.connect(user1).acceptTermsAndClaim(claimParams2, user1.address);
 
       expect(await claimHandler.getClaimableAmount(user1.address, wnt.address, [1])).to.equal(0);
       expect(await claimHandler.getClaimableAmount(user1.address, usdc.address, [1])).to.equal(expandDecimals(2000, 6)); // unchanged
@@ -585,8 +585,8 @@ describe("ClaimHandler", () => {
       expect(await wnt.balanceOf(user1.address)).to.equal(initialUser1WntBalance.add(expandDecimals(200, 18)));
       expect(await usdc.balanceOf(user1.address)).to.equal(initialUser1UsdcBalance); // unchanged
 
-      const claimParams3 = [{ token: usdc.address, distributionId: 1, termsSignature: "0x" }];
-      await claimHandler.connect(user1).claimFunds(claimParams3, user2.address);
+      const claimParams3 = [{ token: usdc.address, distributionId: 1, termsSignature: "0x", acceptedTerms: "" }];
+      await claimHandler.connect(user1).acceptTermsAndClaim(claimParams3, user2.address);
 
       expect(await claimHandler.getClaimableAmount(user1.address, usdc.address, [1])).to.equal(0);
       expect(await claimHandler.getTotalClaimableAmount(usdc.address)).to.equal(0);
@@ -624,15 +624,17 @@ describe("ClaimHandler", () => {
             const initialVaultBalance = await wnt.balanceOf(claimVault.address);
 
             if (tt.shouldFail) {
-              const claimParams = [{ token: wnt.address, distributionId, termsSignature: signature }];
+              const claimParams = [
+                { token: wnt.address, distributionId, termsSignature: signature, acceptedTerms: "" },
+              ];
               await expect(
-                claimHandler.connect(user0).claimFunds(claimParams, user0.address)
+                claimHandler.connect(user0).acceptTermsAndClaim(claimParams, user0.address)
               ).to.be.revertedWithCustomError(errorsContract, "InvalidClaimTermsSignature");
               return;
             }
 
-            const claimParams = [{ token: wnt.address, distributionId, termsSignature: signature }];
-            await claimHandler.connect(user0).claimFunds(claimParams, user0.address);
+            const claimParams = [{ token: wnt.address, distributionId, termsSignature: signature, acceptedTerms: "" }];
+            await claimHandler.connect(user0).acceptTermsAndClaim(claimParams, user0.address);
 
             expect(await wnt.balanceOf(user0.address)).to.equal(initialBalance.add(expandDecimals(100, 18)));
             expect(await wnt.balanceOf(claimVault.address)).to.equal(initialVaultBalance.sub(expandDecimals(100, 18)));
@@ -655,41 +657,40 @@ describe("ClaimHandler", () => {
       const malformedSignatures = ["0x", "0x1234"];
 
       for (const malformedSig of malformedSignatures) {
-        const claimParams = [{ token: wnt.address, distributionId, termsSignature: malformedSig }];
-        await expect(claimHandler.connect(user0).claimFunds(claimParams, user0.address)).to.be.revertedWithCustomError(
-          errorsContract,
-          "InvalidClaimTermsSignature"
-        );
+        const claimParams = [{ token: wnt.address, distributionId, termsSignature: malformedSig, acceptedTerms: "" }];
+        await expect(
+          claimHandler.connect(user0).acceptTermsAndClaim(claimParams, user0.address)
+        ).to.be.revertedWithCustomError(errorsContract, "InvalidClaimTermsSignature");
       }
     });
 
     it("should revert with InvalidParams when params array is empty", async () => {
-      await expect(claimHandler.connect(user0).claimFunds([], user0.address))
+      await expect(claimHandler.connect(user0).acceptTermsAndClaim([], user0.address))
         .to.be.revertedWithCustomError(errorsContract, "InvalidParams")
         .withArgs("claim params length is 0");
     });
 
     it("should revert with EmptyReceiver when receiver address is zero", async () => {
-      const claimParams = [{ token: wnt.address, distributionId: 1, termsSignature: "0x" }];
+      const claimParams = [{ token: wnt.address, distributionId: 1, termsSignature: "0x", acceptedTerms: "" }];
       await expect(
-        claimHandler.connect(user0).claimFunds(claimParams, ethers.constants.AddressZero)
+        claimHandler.connect(user0).acceptTermsAndClaim(claimParams, ethers.constants.AddressZero)
       ).to.be.revertedWithCustomError(errorsContract, "EmptyReceiver");
     });
 
     it("should revert with EmptyToken when token address is zero", async () => {
-      const claimParams = [{ token: ethers.constants.AddressZero, distributionId: 1, termsSignature: "0x" }];
-      await expect(claimHandler.connect(user0).claimFunds(claimParams, user0.address)).to.be.revertedWithCustomError(
-        errorsContract,
-        "EmptyToken"
-      );
+      const claimParams = [
+        { token: ethers.constants.AddressZero, distributionId: 1, termsSignature: "0x", acceptedTerms: "" },
+      ];
+      await expect(
+        claimHandler.connect(user0).acceptTermsAndClaim(claimParams, user0.address)
+      ).to.be.revertedWithCustomError(errorsContract, "EmptyToken");
     });
 
     it("should revert with EmptyClaimableAmount when user has no claimable amount", async () => {
-      const claimParams = [{ token: wnt.address, distributionId: 1, termsSignature: "0x" }];
-      await expect(claimHandler.connect(user0).claimFunds(claimParams, user0.address)).to.be.revertedWithCustomError(
-        errorsContract,
-        "EmptyClaimableAmount"
-      );
+      const claimParams = [{ token: wnt.address, distributionId: 1, termsSignature: "0x", acceptedTerms: "" }];
+      await expect(
+        claimHandler.connect(user0).acceptTermsAndClaim(claimParams, user0.address)
+      ).to.be.revertedWithCustomError(errorsContract, "EmptyClaimableAmount");
     });
 
     it("should revert with InsufficientFunds when final state is inconsistent", async () => {
@@ -701,11 +702,10 @@ describe("ClaimHandler", () => {
 
       await usdc.burn(claimVault.address, expandDecimals(1, 6));
 
-      const claimParams = [{ token: usdc.address, distributionId: 1, termsSignature: "0x" }];
-      await expect(claimHandler.connect(user0).claimFunds(claimParams, user0.address)).to.be.revertedWithCustomError(
-        errorsContract,
-        "InsufficientFunds"
-      );
+      const claimParams = [{ token: usdc.address, distributionId: 1, termsSignature: "0x", acceptedTerms: "" }];
+      await expect(
+        claimHandler.connect(user0).acceptTermsAndClaim(claimParams, user0.address)
+      ).to.be.revertedWithCustomError(errorsContract, "InsufficientFunds");
     });
 
     it("should revert if feature is disabled", async () => {
@@ -717,11 +717,10 @@ describe("ClaimHandler", () => {
 
       await config.setBool(keys.GENERAL_CLAIM_FEATURE_DISABLED, encodeData(["uint256"], [1]), true);
 
-      const claimParams = [{ token: usdc.address, distributionId: 1, termsSignature: "0x" }];
-      await expect(claimHandler.connect(user0).claimFunds(claimParams, user0.address)).to.be.revertedWithCustomError(
-        errorsContract,
-        "DisabledFeature"
-      );
+      const claimParams = [{ token: usdc.address, distributionId: 1, termsSignature: "0x", acceptedTerms: "" }];
+      await expect(
+        claimHandler.connect(user0).acceptTermsAndClaim(claimParams, user0.address)
+      ).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
     });
 
     it("should handle claims across multiple distributionIds and tokens", async () => {
@@ -741,12 +740,12 @@ describe("ClaimHandler", () => {
       const receiver = ethers.Wallet.createRandom();
 
       const claimParams1 = [
-        { token: wnt.address, distributionId: 1, termsSignature: "0x" },
-        { token: wnt.address, distributionId: 2, termsSignature: "0x" },
-        { token: usdc.address, distributionId: 1, termsSignature: "0x" },
-        { token: usdc.address, distributionId: 3, termsSignature: "0x" },
+        { token: wnt.address, distributionId: 1, termsSignature: "0x", acceptedTerms: "" },
+        { token: wnt.address, distributionId: 2, termsSignature: "0x", acceptedTerms: "" },
+        { token: usdc.address, distributionId: 1, termsSignature: "0x", acceptedTerms: "" },
+        { token: usdc.address, distributionId: 3, termsSignature: "0x", acceptedTerms: "" },
       ];
-      await claimHandler.connect(user0).claimFunds(claimParams1, receiver.address);
+      await claimHandler.connect(user0).acceptTermsAndClaim(claimParams1, receiver.address);
 
       expect(await claimHandler.getClaimableAmount(user0.address, wnt.address, [1, 2])).to.equal(0);
       expect(await claimHandler.getClaimableAmount(user0.address, usdc.address, [1, 3])).to.equal(0);
@@ -911,8 +910,8 @@ describe("ClaimHandler", () => {
           .depositFunds(wnt.address, distributionId, [{ account: user0.address, amount: expandDecimals(100, 18) }]);
 
         // can claim without signature
-        const claimParams = [{ token: wnt.address, distributionId, termsSignature: "0x" }];
-        await claimHandler.connect(user0).claimFunds(claimParams, user0.address);
+        const claimParams = [{ token: wnt.address, distributionId, termsSignature: "0x", acceptedTerms: "" }];
+        await claimHandler.connect(user0).acceptTermsAndClaim(claimParams, user0.address);
       });
 
       it("should revert when trying to remove non-existent terms", async () => {
