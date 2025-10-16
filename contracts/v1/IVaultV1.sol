@@ -8,4 +8,5 @@ interface IVaultV1 {
     function gov() external view returns (address);
     function feeReserves(address feeToken) external view returns (uint256);
     function withdrawFees(address _token, address _receiver) external returns (uint256);
+    function getMaxPrice(address _token) external returns (uint256);
 }

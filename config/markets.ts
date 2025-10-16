@@ -4507,6 +4507,61 @@ const config: {
 
       atomicSwapFeeFactor: percentageToFloat("0.5%"),
     },
+    {
+      tokens: { indexToken: "XAUt0", longToken: "XAUt0", shortToken: "XAUt0" },
+      virtualTokenIdForIndexToken: hashString("PERP:XAUt0/USD"),
+      virtualMarketId: hashString("SPOT:XAUt0/USD"),
+
+      ...singleTokenMarketConfig,
+      ...fundingRateConfig_Low,
+      ...borrowingRateConfig_LowMax_WithLowerBase,
+
+      negativePositionImpactFactor: exponentToFloat("9.29e-9"),
+      positivePositionImpactFactor: exponentToFloat("7.74e-9"),
+
+      minCollateralFactor: percentageToFloat("0.5%"), // 200x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.78e-9"),
+
+      reserveFactor: percentageToFloat("105%"),
+      openInterestReserveFactor: percentageToFloat("100%"),
+      maxPnlFactorForTraders: percentageToFloat("90%"),
+
+      maxOpenInterest: decimalToFloat(2_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(3_000_000),
+
+      maxLongTokenPoolAmount: expandDecimals(940, 6), // ~4M USD (2x max open interest)
+      maxShortTokenPoolAmount: expandDecimals(940, 6), // ~4M USD (2x max open interest)
+    },
+    {
+      tokens: { indexToken: "XAUt0", longToken: "XAUt0", shortToken: "USDT" },
+      virtualTokenIdForIndexToken: hashString("PERP:XAUt0/USD"),
+      virtualMarketId: hashString("SPOT:XAUt0/USDT"),
+
+      ...baseMarketConfig,
+      ...fundingRateConfig_Low,
+      ...borrowingRateConfig_LowMax_WithLowerBase,
+
+      negativePositionImpactFactor: exponentToFloat("9.29e-9"),
+      positivePositionImpactFactor: exponentToFloat("7.74e-9"),
+
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
+
+      minCollateralFactor: percentageToFloat("0.5%"),
+      minCollateralFactorForLiquidation: percentageToFloat("0.5%"),
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.14e-9"),
+
+      reserveFactor: percentageToFloat("135%"),
+      openInterestReserveFactor: percentageToFloat("130%"),
+      maxPnlFactorForTraders: percentageToFloat("90%"),
+
+      maxOpenInterest: decimalToFloat(2_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(3_000_000),
+
+      maxLongTokenPoolAmount: expandDecimals(940, 6), // ~4M USD (2x max open interest)
+      maxShortTokenPoolAmount: expandDecimals(4_000_000, 6), // ~4M USD (2x max open interest)
+    },
   ],
   arbitrumSepolia: [
     {

@@ -660,6 +660,18 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 12_000,
     },
+    "XAUt0:XAUt0:XAUt0": {
+      negativePositionImpactFactor: exponentToFloat("9.29e-9"),
+      negativeSwapImpactFactor: 0,
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 12_002,
+    },
+    XAUt0: {
+      negativePositionImpactFactor: exponentToFloat("9.29e-9"),
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_002,
+    },
   },
   arbitrumSepolia: {
     BTC: {
