@@ -461,19 +461,13 @@ library Keys {
     // @dev key for the latest updateId that has been applied by ConfigSyncer
     bytes32 public constant SYNC_CONFIG_LATEST_UPDATE_ID = keccak256(abi.encode("SYNC_CONFIG_LATEST_UPDATE_ID"));
 
-    // @dev key for the contributor account list
     bytes32 public constant CONTRIBUTOR_ACCOUNT_LIST = keccak256(abi.encode("CONTRIBUTOR_ACCOUNT_LIST"));
-    // @dev key for the contributor token list
     bytes32 public constant CONTRIBUTOR_TOKEN_LIST = keccak256(abi.encode("CONTRIBUTOR_TOKEN_LIST"));
-    // @dev key for the contributor token amount
     bytes32 public constant CONTRIBUTOR_TOKEN_AMOUNT = keccak256(abi.encode("CONTRIBUTOR_TOKEN_AMOUNT"));
-    // @dev key for the max total contributor token amount
     bytes32 public constant MAX_TOTAL_CONTRIBUTOR_TOKEN_AMOUNT = keccak256(abi.encode("MAX_TOTAL_CONTRIBUTOR_TOKEN_AMOUNT"));
-    // @dev key for the contributor token vault
-    bytes32 public constant CONTRIBUTOR_TOKEN_VAULT = keccak256(abi.encode("CONTRIBUTOR_TOKEN_VAULT"));
-    // @dev key for the contributor last payment at
+    bytes32 public constant CONTRIBUTOR_FUNDING_ACCOUNT = keccak256(abi.encode("CONTRIBUTOR_FUNDING_ACCOUNT"));
+    bytes32 public constant CUSTOM_CONTRIBUTOR_FUNDING_ACCOUNT = keccak256(abi.encode("CUSTOM_CONTRIBUTOR_FUNDING_ACCOUNT"));
     bytes32 public constant CONTRIBUTOR_LAST_PAYMENT_AT = keccak256(abi.encode("CONTRIBUTOR_LAST_PAYMENT_AT"));
-    // @dev key for the min contributor payment interval
     bytes32 public constant MIN_CONTRIBUTOR_PAYMENT_INTERVAL = keccak256(abi.encode("MIN_CONTRIBUTOR_PAYMENT_INTERVAL"));
 
     // @dev key for the buyback batch amount used when claiming and swapping fees
@@ -2234,12 +2228,17 @@ library Keys {
         ));
     }
 
-    // @dev key for the contributor token vault
-    // @param token the contributor token
-    // @return key for the contributor token vault
-    function contributorTokenVaultKey(address token) internal pure returns (bytes32) {
+    function contributorFundingAccountKey(address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            CONTRIBUTOR_TOKEN_VAULT,
+            CONTRIBUTOR_FUNDING_ACCOUNT,
+            token
+        ));
+    }
+
+    function customContributorFundingAccountKey(address account, address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            CUSTOM_CONTRIBUTOR_FUNDING_ACCOUNT,
+            account,
             token
         ));
     }

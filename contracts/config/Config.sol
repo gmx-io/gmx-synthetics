@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
+import "../data/Keys2.sol";
 import "../role/RoleModule.sol";
 import "../event/EventEmitter.sol";
 import "../utils/BasicMulticall.sol";
@@ -570,6 +571,28 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.GELATO_RELAY_FEE_BASE_AMOUNT] = true;
         allowedBaseKeys[Keys.GELATO_RELAY_FEE_MULTIPLIER_FACTOR] = true;
         allowedBaseKeys[Keys.MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT] = true;
+
+        allowedBaseKeys[Keys2.MULTICHAIN_READ_CHANNEL] = true;
+        allowedBaseKeys[Keys2.MULTICHAIN_PEERS] = true;
+        allowedBaseKeys[Keys2.MULTICHAIN_CONFIRMATIONS] = true;
+        allowedBaseKeys[Keys2.MULTICHAIN_AUTHORIZED_ORIGINATORS] = true;
+
+        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_DISTRIBUTION_DAY] = true;
+        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_AMOUNT] = true;
+        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_FACTOR] = true;
+        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_ESGMX_AMOUNT] = true;
+        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY] = true;
+        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_CHAIN_ID] = true;
+        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_FACTOR] = true;
+        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID] = true;
+        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_ADDRESS_INFO] = true;
+        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN] = true;
+        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_KEEPER_COSTS] = true;
+        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_CHAINLINK_FACTOR] = true;
+        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY] = true;
+        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_V1_FEES_WNT_FACTOR] = true;
+        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_V2_FEES_WNT_FACTOR] = true;
     }
 
     function _initAllowedLimitedBaseKeys() internal {

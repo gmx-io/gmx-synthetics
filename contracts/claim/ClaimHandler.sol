@@ -10,11 +10,13 @@ import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 
 import "../role/RoleModule.sol";
 import "../utils/GlobalReentrancyGuard.sol";
+import "../utils/StringUtils.sol";
 import "../event/EventEmitter.sol";
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
 import "../error/Errors.sol";
 import "./ClaimVault.sol";
+import "./ClaimUtils.sol";
 import "./ClaimEventUtils.sol";
 import "../feature/FeatureUtils.sol";
 import "../safe/SafeUtils.sol";
@@ -38,11 +40,6 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
         claimVault = _claimVault;
     }
 
-    struct DepositParam {
-        address account;
-        uint256 amount;
-    }
-
     struct WithdrawParam {
         address account;
         uint256 distributionId;
@@ -52,6 +49,7 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
         address token;
         uint256 distributionId;
         bytes termsSignature;
+        string acceptedTerms;
     }
 
     struct TransferClaimParam {
@@ -77,45 +75,20 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
     function depositFunds(
         address token,
         uint256 distributionId,
-        DepositParam[] calldata params
+        ClaimUtils.DepositParam[] calldata params
     ) external globalNonReentrant onlyClaimAdmin {
-        if (params.length == 0) {
-            revert Errors.InvalidParams("deposit params length is 0");
-        }
-        _validateNonEmptyToken(token);
-        _validateNonZeroDistributionId(distributionId);
-
-        uint256 totalTransferAmount;
-
-        for (uint256 i = 0; i < params.length; i++) {
-            DepositParam memory param = params[i];
-
-            _validateNonEmptyAccount(param.account);
-            if (param.amount == 0) {
-                revert Errors.EmptyAmount();
-            }
-
-            uint256 nextAmount = dataStore.incrementUint(
-                Keys.claimableFundsAmountKey(param.account, token, distributionId),
-                param.amount
-            );
-
-            totalTransferAmount += param.amount;
-
-            ClaimEventUtils.emitClaimFundsDeposited(
-                eventEmitter,
-                param.account,
-                token,
-                distributionId,
-                param.amount,
-                nextAmount
-            );
-        }
+        uint256 totalTransferAmount = ClaimUtils.incrementClaims(
+            dataStore,
+            eventEmitter,
+            token,
+            distributionId,
+            params
+        );
 
         IERC20(token).safeTransferFrom(msg.sender, address(claimVault), totalTransferAmount);
         dataStore.incrementUint(Keys.totalClaimableFundsAmountKey(token), totalTransferAmount);
 
-        _validateTotalClaimableFundsAmount(token);
+        ClaimUtils._validateTotalClaimableFundsAmount(dataStore, token, address(claimVault));
     }
 
     // @dev withdraw funds from the claim vault for multiple accounts in batch
@@ -130,7 +103,7 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
         WithdrawParam[] calldata params,
         address receiver
     ) external globalNonReentrant onlyTimelockMultisig {
-        _validateNonEmptyToken(token);
+        ClaimUtils._validateNonEmptyToken(token);
         _validateNonEmptyReceiver(receiver);
 
         if (params.length == 0) {
@@ -141,8 +114,8 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
         for (uint256 i = 0; i < params.length; i++) {
             WithdrawParam memory param = params[i];
 
-            _validateNonEmptyAccount(param.account);
-            _validateNonZeroDistributionId(param.distributionId);
+            ClaimUtils._validateNonEmptyAccount(param.account);
+            ClaimUtils._validateNonZeroDistributionId(param.distributionId);
 
             bytes32 claimableKey = Keys.claimableFundsAmountKey(param.account, token, param.distributionId);
             uint256 amount = dataStore.getUint(claimableKey);
@@ -160,7 +133,7 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
         }
         claimVault.transferOut(token, receiver, totalWithdrawnAmount);
         dataStore.decrementUint(Keys.totalClaimableFundsAmountKey(token), totalWithdrawnAmount);
-        _validateTotalClaimableFundsAmount(token);
+        ClaimUtils._validateTotalClaimableFundsAmount(dataStore, token, address(claimVault));
     }
 
     // @dev transfer claim funds between accounts
@@ -175,7 +148,7 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
         if (params.length == 0) {
             revert Errors.InvalidParams("transfer params length is 0");
         }
-        _validateNonEmptyToken(token);
+        ClaimUtils._validateNonEmptyToken(token);
 
         TransferClaimCache memory cache;
         for (uint256 i = 0; i < params.length; i++) {
@@ -185,9 +158,9 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
                 revert Errors.InvalidParams("fromAccount and toAccount cannot be the same");
             }
 
-            _validateNonEmptyAccount(param.fromAccount);
+            ClaimUtils._validateNonEmptyAccount(param.fromAccount);
             _validateNonEmptyReceiver(param.toAccount);
-            _validateNonZeroDistributionId(param.distributionId);
+            ClaimUtils._validateNonZeroDistributionId(param.distributionId);
 
             cache.fromAccountKey = Keys.claimableFundsAmountKey(param.fromAccount, token, param.distributionId);
             cache.amount = dataStore.getUint(cache.fromAccountKey);
@@ -209,13 +182,13 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
             }
         }
 
-        _validateTotalClaimableFundsAmount(token);
+        ClaimUtils._validateTotalClaimableFundsAmount(dataStore, token, address(claimVault));
     }
 
     // @dev claim funds for the calling account for multiple tokens
     // @param params array of claim parameters
     // @param receiver the receiver of the funds
-    function claimFunds(ClaimParam[] calldata params, address receiver) external globalNonReentrant {
+    function acceptTermsAndClaim(ClaimParam[] calldata params, address receiver) external globalNonReentrant {
         if (params.length == 0) {
             revert Errors.InvalidParams("claim params length is 0");
         }
@@ -226,10 +199,10 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
 
             FeatureUtils.validateFeature(dataStore, Keys.generalClaimFeatureDisabled(param.distributionId));
 
-            _validateNonEmptyToken(param.token);
-            _validateNonZeroDistributionId(param.distributionId);
+            ClaimUtils._validateNonEmptyToken(param.token);
+            ClaimUtils._validateNonZeroDistributionId(param.distributionId);
 
-            _validateTermsSignature(param.distributionId, msg.sender, param.termsSignature);
+            _validateTermsSignature(param.distributionId, msg.sender, param.termsSignature, param.acceptedTerms);
 
             bytes32 claimableKey = Keys.claimableFundsAmountKey(msg.sender, param.token, param.distributionId);
             uint256 claimableAmount = dataStore.getUint(claimableKey);
@@ -252,12 +225,12 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
 
             claimVault.transferOut(param.token, receiver, claimableAmount);
 
-            _validateTotalClaimableFundsAmount(param.token);
+            ClaimUtils._validateTotalClaimableFundsAmount(dataStore, param.token, address(claimVault));
         }
     }
 
     function setTerms(uint256 distributionId, string calldata terms) external globalNonReentrant onlyClaimAdmin {
-        _validateNonZeroDistributionId(distributionId);
+        ClaimUtils._validateNonZeroDistributionId(distributionId);
         if (bytes(terms).length == 0) {
             revert Errors.InvalidParams("terms is empty");
         }
@@ -314,9 +287,18 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
     }
 
     // note that signature can be empty here for signing by contracts
-    function _validateTermsSignature(uint256 distributionId, address account, bytes memory signature) internal view {
+    function _validateTermsSignature(
+        uint256 distributionId,
+        address account,
+        bytes memory signature,
+        string memory acceptedTerms
+    ) internal view {
         string memory terms = dataStore.getString(Keys.claimTermsKey(distributionId));
         if (bytes(terms).length == 0) {
+            return;
+        }
+
+        if (StringUtils.compareStrings(terms, acceptedTerms)) {
             return;
         }
 
@@ -355,35 +337,9 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
         revert Errors.InvalidClaimTermsSignatureForContract(account);
     }
 
-    function _validateNonZeroDistributionId(uint256 distributionId) internal pure {
-        if (distributionId == 0) {
-            revert Errors.InvalidParams("distributionId is 0");
-        }
-    }
-
-    function _validateNonEmptyAccount(address account) internal pure {
-        if (account == address(0)) {
-            revert Errors.EmptyAccount();
-        }
-    }
-
     function _validateNonEmptyReceiver(address receiver) internal pure {
         if (receiver == address(0)) {
             revert Errors.EmptyReceiver();
-        }
-    }
-
-    function _validateNonEmptyToken(address token) internal pure {
-        if (token == address(0)) {
-            revert Errors.EmptyToken();
-        }
-    }
-
-    function _validateTotalClaimableFundsAmount(address token) internal view {
-        // invariant check
-        uint256 totalAmountLeft = dataStore.getUint(Keys.totalClaimableFundsAmountKey(token));
-        if (totalAmountLeft > IERC20(token).balanceOf(address(claimVault))) {
-            revert Errors.InsufficientFunds(token);
         }
     }
 }
