@@ -1,4 +1,4 @@
-export function getRoles({ syntheticKeepers, generalConfigKeepers }) {
+export function getRoles({ syntheticKeepers, generalConfigKeepers, claimAdmins }) {
   return {
     ADL_KEEPER: syntheticKeepers.mainnet,
     FROZEN_ORDER_KEEPER: syntheticKeepers.mainnet,
@@ -7,7 +7,7 @@ export function getRoles({ syntheticKeepers, generalConfigKeepers }) {
     LIMITED_CONFIG_KEEPER: syntheticKeepers.mainnet,
     CLAIM_ADMIN: {
       "0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D": true, // security_multisig_1
-      "0x2B5765633b7059a10a25af47B45409ea47AbC689": true, // claim_admin_1
+      ...claimAdmins.mainnet,
       ...generalConfigKeepers.mainnet,
     },
     CONFIG_KEEPER: {
@@ -19,7 +19,7 @@ export function getRoles({ syntheticKeepers, generalConfigKeepers }) {
     FEE_KEEPER: {
       "0x43CE1d475e06c65DD879f4ec644B8e0E10ff2b6D": true, // fee_keeper_1
     },
-    FEE_DISTRIBUTION_KEEPER: generalConfigKeepers.mainnet,
+    // FEE_DISTRIBUTION_KEEPER: generalConfigKeepers.mainnet,
     MARKET_KEEPER: {
       ...generalConfigKeepers.mainnet,
     },

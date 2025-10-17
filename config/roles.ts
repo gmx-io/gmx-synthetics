@@ -132,6 +132,14 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
     },
   };
 
+  const claimAdmins = {
+    mainnet: {
+      "0x2B5765633b7059a10a25af47B45409ea47AbC689": true, // claim_admin_1
+      "0xD2E217d800C41c86De1e01FD72009d4Eafc539a3": true, // claim_admin_2
+      "0xc5e038d696d9cB757fFdf53AA34e515D0e42f7cd": true, // claim_admin_3
+    },
+  };
+
   const testnetAdmins = {
     "0xC84f3398eDf6336E1Ef55b50Ca3F9f9f96B8b504": true,
     "0xFb11f15f206bdA02c224EDC744b0E50E46137046": true,
@@ -164,7 +172,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
     TIMELOCK_ADMIN: testnetAdmins,
   };
 
-  const roleInfo = { syntheticKeepers, chainlinkKeepers, gelatoKeepers, generalConfigKeepers };
+  const roleInfo = { syntheticKeepers, chainlinkKeepers, gelatoKeepers, generalConfigKeepers, claimAdmins };
 
   const roles: {
     [network: string]: {
