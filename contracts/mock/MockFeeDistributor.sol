@@ -81,6 +81,21 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule {
         gmxForOracle = _mockVariables.gmxForOracle;
     }
 
+    // @dev withdraw the specified 'amount' of native token from this contract to 'receiver'
+    // @param receiver the receiver of the native token
+    // @param amount the amount of native token to withdraw
+    function withdrawNativeToken(address receiver, uint256 amount) external onlyTimelockAdmin {
+        FeeDistributorUtils.withdrawNativeToken(dataStore, receiver, amount);
+    }
+
+    // @dev withdraw the specified 'amount' of `token` from this contract to `receiver`
+    // @param token the token to withdraw
+    // @param amount the amount to withdraw
+    // @param receiver the address to withdraw to
+    function withdrawToken(address token, address receiver, uint256 amount) external onlyTimelockAdmin {
+        FeeDistributorUtils.withdrawToken(dataStore, token, receiver, amount);
+    }
+
     // @dev initiate the weekly fee distribution process
     //
     // The fee distribution process relies on the premise that this function is executed synchronously
@@ -218,6 +233,8 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule {
 
         uint256 requiredGmxAmount = Precision.mulDiv(totalFeeAmountGmx, stakedGmxCurrentChain, totalStakedGmx);
         uint256 totalGmxBridgedOut;
+        EventUtils.EventLogData memory eventData;
+        eventData.uintItems.initItems(3);
         // validate that the this chain has sufficient GMX to distribute fees
         if (feeAmountGmxCurrentChain >= requiredGmxAmount) {
             // only attempt to bridge to other chains if this chain has a surplus of GMX
@@ -243,15 +260,17 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule {
                 }
                 _setUint(Keys2.feeDistributorFeeAmountGmxKey(mockChainId), newFeeAmountGmxCurrentChain);
             }
-            _setDistributionState(uint256(DistributionState.BridgingCompleted));
+            uint256 distributionState = uint256(DistributionState.BridgingCompleted);
+            _setDistributionState(distributionState);
+            _setUintItem(eventData, 0, "distributionState", distributionState);
         } else {
-            _setDistributionState(uint256(DistributionState.ReadDataReceived));
+            uint256 distributionState = uint256(DistributionState.ReadDataReceived);
+            _setDistributionState(distributionState);
+            _setUintItem(eventData, 0, "distributionState", distributionState);
         }
 
-        EventUtils.EventLogData memory eventData;
-        eventData.uintItems.initItems(2);
-        _setUintItem(eventData, 0, "feeAmountGmxCurrentChain", feeAmountGmxCurrentChain);
-        _setUintItem(eventData, 1, "totalGmxBridgedOut", totalGmxBridgedOut);
+        _setUintItem(eventData, 1, "feeAmountGmxCurrentChain", feeAmountGmxCurrentChain);
+        _setUintItem(eventData, 2, "totalGmxBridgedOut", totalGmxBridgedOut);
         eventData.bytesItems.initItems(1);
         eventData.bytesItems.setItem(0, "receivedData", abi.encode(receivedData));
         _emitFeeDistributionEvent(eventData, "FeeDistributionDataReceived");
