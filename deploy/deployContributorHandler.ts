@@ -13,6 +13,7 @@ const func = createDeployFunction({
   afterDeploy: async ({ deployedContract }) => {
     await grantRoleIfNotGranted(deployedContract, "CONTROLLER");
   },
+  id: "ContributorHandler_1",
 });
 
 func.skip = async (hre: HardhatRuntimeEnvironment) => {
