@@ -360,8 +360,8 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         _emitFeeDistributionEvent(eventData, "FeeDistributionCompleted");
     }
 
-    // @dev deposit the calculated referral rewards in the ClaimVault for the specified accounts
-    // @param token the token in which the referral rewards will be sent
+    // @dev deposit the calculated referral rewards into the ClaimVault for the specified accounts
+    // @param token the token in which the referral rewards will be deposited
     // @param distributionId the distribution id
     // @param params array of referral rewards deposit parameters
     function depositReferralRewards(
@@ -369,7 +369,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         uint256 distributionId,
         ClaimUtils.DepositParam[] calldata params
     ) external nonReentrant onlyFeeDistributionKeeper {
-        // validate the distribution state and that the accounts and amounts arrays are valid lengths
+        // validate the distribution state
         _validateDistributionState(DistributionState.None);
 
         uint256 tokensForReferralRewards = _getUint(Keys2.feeDistributorReferralRewardsAmountKey(token));
@@ -381,10 +381,10 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
                 revert Errors.MaxEsGmxReferralRewardsAmountExceeded(tokensForReferralRewards, maxEsGmxReferralRewards);
             }
 
-            uint256 vaultEsGmxBalance = _getFeeDistributorVaultBalance(esGmx);
+            uint256 vaultEsGmxBalance = _getFeeDistributorVaultBalance(token);
             uint256 esGmxToBeDeposited = tokensForReferralRewards - cumulativeDepositAmount;
             if (esGmxToBeDeposited > vaultEsGmxBalance) {
-                IMintable(esGmx).mint(address(feeDistributorVault), esGmxToBeDeposited - vaultEsGmxBalance);
+                IMintable(token).mint(address(feeDistributorVault), esGmxToBeDeposited - vaultEsGmxBalance);
             }
 
             // update esGMX bonus reward amounts for each account in the vester contract
