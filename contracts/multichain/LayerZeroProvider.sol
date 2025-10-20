@@ -105,6 +105,28 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         (address account, uint256 srcChainId, uint256 amountLD, bytes memory data) = _decodeLzComposeMsg(message);
 
         address token = IStargate(from).token();
+
+        // Handle native token top-up from source chain to user's multichain balance
+        // This feature allows users to receive native tokens alongside bridged tokens to cover execution fees
+        // The msg.value represents ONLY the top-up amount specified in lzComposeOption (not the bridged tokens)
+        // Bridged tokens are already transferred to this contract separately via Stargate's flow
+        if (msg.value != 0) {
+            /// @dev The executor is trusted to deliver the msg.value as specified in the lzCompose options.
+            // msg.value is not enforced to the expected value because:
+            // 1. Reverting would cause bridged tokens (already delivered by Stargate) to be locked in this contract
+            // 2. This feature is intended for small amounts (execution fees), not large value transfers
+
+            TokenUtils.depositAndSendWrappedNativeToken(dataStore, address(multichainVault), msg.value);
+            MultichainUtils.recordTransferIn(
+                dataStore,
+                eventEmitter,
+                multichainVault,
+                TokenUtils.wnt(dataStore),
+                account,
+                srcChainId
+            );
+        }
+
         if (token == address(0x0)) {
             // `from` is StargatePoolNative
             TokenUtils.depositAndSendWrappedNativeToken(dataStore, address(multichainVault), amountLD);
