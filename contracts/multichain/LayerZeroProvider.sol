@@ -117,10 +117,11 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             // 2. This feature is intended for small amounts (execution fees), not large value transfers
 
             TokenUtils.depositAndSendWrappedNativeToken(dataStore, address(multichainVault), msg.value);
-            MultichainUtils.recordTransferIn(
+            MultichainUtils.recordBridgeIn(
                 dataStore,
                 eventEmitter,
                 multichainVault,
+                this,
                 TokenUtils.wnt(dataStore),
                 account,
                 srcChainId
