@@ -10,6 +10,9 @@ export function getRoles({ syntheticKeepers, chainlinkKeepers, gelatoKeepers, cl
       ...claimAdmins.mainnet,
       ...generalConfigKeepers.mainnet,
     },
+    CONTRIBUTOR_KEEPER: {
+      "0x49B373D422BdA4C6BfCdd5eC1E48A9a26fdA2F8b": true, // contributor_keeper_1
+    },
     CONFIG_KEEPER: {
       "0x4b6ACC5b2db1757bD49408FeE92e32D39608B5d9": true, // multisig_1
       "0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D": true, // security_multisig_1
