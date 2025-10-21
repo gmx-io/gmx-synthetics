@@ -1,7 +1,6 @@
 export const ROLES_TO_ADD = [
   {
-    role: "CONTROLLER",
-    member: "0xb8fc96d7a413c462f611a7ac0c912c2fe26eabc4",
-    contractName: "Oracle",
+    role: "CONTRIBUTOR_KEEPER",
+    member: "0x49b373d422bda4c6bfcdd5ec1e48a9a26fda2f8b",
   },
 ];

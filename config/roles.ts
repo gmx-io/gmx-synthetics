@@ -1,4 +1,5 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
+import * as roleConfigs from "./roleConfigs";
 
 export type RolesConfig = {
   roles: {
@@ -16,6 +17,7 @@ const requiredRolesForContracts = {
     "Config",
     "ConfigSyncer",
     "ConfigTimelockController",
+    "ContributorHandler",
 
     "MarketFactory",
     "GlvFactory",
@@ -126,6 +128,15 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       "0xF09d66CF7dEBcdEbf965F1Ac6527E1Aa5D47A745": true, // general_keeper_1
       "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
       "0xD5F8b9ba4255B2F73b06f245fcca73D114D1D460": true, // general_keeper_3
+      "0xF86EF7f0BB90a05A932781C5Cb6eEFe55e486107": true, // general_keeper_4
+    },
+  };
+
+  const claimAdmins = {
+    mainnet: {
+      "0x2B5765633b7059a10a25af47B45409ea47AbC689": true, // claim_admin_1
+      "0xD2E217d800C41c86De1e01FD72009d4Eafc539a3": true, // claim_admin_2
+      "0xc5e038d696d9cB757fFdf53AA34e515D0e42f7cd": true, // claim_admin_3
     },
   };
 
@@ -161,6 +172,8 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
     TIMELOCK_ADMIN: testnetAdmins,
   };
 
+  const roleInfo = { syntheticKeepers, chainlinkKeepers, gelatoKeepers, generalConfigKeepers, claimAdmins };
+
   const roles: {
     [network: string]: {
       [role: string]: {
@@ -179,275 +192,9 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       LIMITED_CONFIG_KEEPER: { [deployer]: true },
       TIMELOCK_ADMIN: { [deployer]: true },
     },
-    arbitrum: {
-      ADL_KEEPER: syntheticKeepers.mainnet,
-      FROZEN_ORDER_KEEPER: syntheticKeepers.mainnet,
-      LIQUIDATION_KEEPER: syntheticKeepers.mainnet,
-      ORDER_KEEPER: { ...syntheticKeepers.mainnet, ...chainlinkKeepers.arbitrum, ...gelatoKeepers.arbitrum },
-      LIMITED_CONFIG_KEEPER: syntheticKeepers.mainnet,
-      CLAIM_ADMIN: {
-        "0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D": true, // security_multisig_1
-        "0x2B5765633b7059a10a25af47B45409ea47AbC689": true, // claim_admin_1
-        "0xD2E217d800C41c86De1e01FD72009d4Eafc539a3": true, // claim_admin_2
-        ...generalConfigKeepers.mainnet,
-      },
-      CONFIG_KEEPER: {
-        "0x4b6ACC5b2db1757bD49408FeE92e32D39608B5d9": true, // multisig_1
-        "0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D": true, // security_multisig_1
-        "0xd41e09434CDFe20ceA9411f55D86dDb314b6Af94": true, // ConfigSyncer
-        ...generalConfigKeepers.mainnet,
-      },
-      FEE_KEEPER: {
-        "0x43CE1d475e06c65DD879f4ec644B8e0E10ff2b6D": true, // fee_keeper_1
-      },
-      MARKET_KEEPER: {
-        ...generalConfigKeepers.mainnet,
-      },
-      TIMELOCK_ADMIN: {
-        "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // timelock_admin_1
-        "0xE014cbD60A793901546178E1c16ad9132C927483": true, // timelock_admin_2
-        "0x4b6ACC5b2db1757bD49408FeE92e32D39608B5d9": true, // multisig_1
-        "0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D": true, // security_multisig_1
-      },
-      TIMELOCK_MULTISIG: {
-        "0x4b6ACC5b2db1757bD49408FeE92e32D39608B5d9": true, // multisig_1
-        "0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D": true, // security_multisig_1
-      },
-      GOV_TOKEN_CONTROLLER: {
-        "0x5E4766F932ce00aA4a1A82d3Da85adf15C5694A1": true, // RewardRouterV2
-      },
-      CONTROLLER: {
-        "0xf5F30B10141E1F63FC11eD772931A8294a591996": true, // MarketFactory
-        "0xdaFa7Deb67805d7498Aa926002bB2d713D1d9256": true, // GlvFactory
-        "0xA8AF9B86fC47deAde1bc66B12673706615E2B011": true, // OracleStore
-        "0x7EB417637a3E6d1C19E6d69158c47610b7a5d9B3": true, // FeeHandler
-
-        "0x1d3dbe2F913dcA27E943b2837A4Cdad6653B02E2": true, // Config
-        "0xd41e09434CDFe20ceA9411f55D86dDb314b6Af94": true, // ConfigSyncer
-        "0x8c6e20A2211D1b70cD7c0789EcE44fDB19567621": true, // ConfigTimelockController
-        "0xC181eB022F33b8ba808AD96348B03e8A753A859b": true, // TimelockConfig
-        "0x7F01614cA5198Ec979B1aAd1DAF0DE7e0a215BDF": true, // Oracle
-        "0xb8fc96d7a413C462F611A7aC0C912c2FE26EAbC4": true, // FeeHandler Oracle
-        "0x87d66368cD08a7Ca42252f5ab44B2fb6d1Fb8d15": true, // ExchangeRouter
-        "0x5b9A353F18d543B9F8a57B2AE50a4FBc80033EC1": true, // SubaccountRouter
-        "0x10Fa5Bd343373101654E896B43Ca38Fd8f3789F9": true, // GlvRouter
-        "0x0C08518C41755C6907135266dCCf09d51aE53CC4": true, // GelatoRelayRouter
-        "0xA1D94802EcD642051B677dBF37c8E78ce6dd3784": true, // SubaccountGelatoRelayRouter
-        "0x04315E233C1c6FfA61080B76E29d5e8a1f7B4A35": true, // OrderHandler
-        "0x1DAa9A375132a3cDe9133B0a5DA67B57Ef21d102": true, // IncreaseOrderExecutor
-        "0x3F4ee93723C2F14eeC5a44a2Cb66edA006A171fd": true, // DecreaseOrderExecutor
-        "0x455D555350D5CcCD1E3Eb3D563B411Ef24697050": true, // SwapOrderExecutor
-        "0x563E8cDB5Ba929039c2Bb693B78CE12dC0AAfaDa": true, // DepositHandler
-        "0x1EC018d2b6ACCA20a0bEDb86450b7E27D1D8355B": true, // WithdrawalHandler
-        "0xDd20D75f92bF27e17d86D74424ce7435843E8df0": true, // AdlHandler
-        "0xdFc557EdF817bCd69F3b82d54f6338ecad2667CA": true, // LiquidationHandler
-        "0x763fD06BaF6bBcE1A06ab94C6dFd13813E517938": true, // ShiftHandler
-        "0xBB4C47CDfb90e281cAAE873c9531A25eBe2eD343": true, // GlvDepositHandler
-        "0x7A74946892569Fd488012D015436a5a9cBf37BEf": true, // GlvWithdrawalHandler
-        "0x632b763B31f9A1cB28c4f93925A591Cd34073AD6": true, // GlvShiftHandler
-        "0xDb2AB9566732710d02b23325F79A8832118b97c5": true, // SwapHandler
-        "0x28f1F4AA95F49FAB62464536A269437B13d48976": true, // ClaimHandler
-        "0x7129Ea01F0826c705d6F7ab01Cf3C06bb83E9397": true, // LayerZeroProvider
-        "0x2A7244EE5373D2F161cE99F0D144c12860D651Af": true, // MultichainClaimsRouter
-        "0xFdaFa6fbd4B480017FD37205Cb3A24AE93823956": true, // MultichainGlvRouter
-        "0xF53e30CE07f148fdE6e531Be7dC0b6ad670E8C6e": true, // MultichainGmRouter
-        "0x3c796504d47013Ea0552CCa57373B59DF03D34a0": true, // MultichainOrderRouter
-        "0x99CD306B777C5aAb842bA65e4f7FF0554ECDe808": true, // MultichainSubaccountRouter
-        "0xC1D1354A948bf717d6d873e5c0bE614359AF954D": true, // MultichainTransferRouter
-      },
-      ROUTER_PLUGIN: {
-        "0x87d66368cD08a7Ca42252f5ab44B2fb6d1Fb8d15": true, // ExchangeRouter
-        "0x5b9A353F18d543B9F8a57B2AE50a4FBc80033EC1": true, // SubaccountRouter
-        "0x10Fa5Bd343373101654E896B43Ca38Fd8f3789F9": true, // GlvRouter
-        "0x0C08518C41755C6907135266dCCf09d51aE53CC4": true, // GelatoRelayRouter
-        "0xA1D94802EcD642051B677dBF37c8E78ce6dd3784": true, // SubaccountGelatoRelayRouter
-        "0xFdaFa6fbd4B480017FD37205Cb3A24AE93823956": true, // MultichainGlvRouter
-        "0xF53e30CE07f148fdE6e531Be7dC0b6ad670E8C6e": true, // MultichainGmRouter
-        "0x3c796504d47013Ea0552CCa57373B59DF03D34a0": true, // MultichainOrderRouter
-        "0x99CD306B777C5aAb842bA65e4f7FF0554ECDe808": true, // MultichainSubaccountRouter
-        "0xC1D1354A948bf717d6d873e5c0bE614359AF954D": true, // MultichainTransferRouter
-      },
-      ROLE_ADMIN: {
-        "0x4bd1cdAab4254fC43ef6424653cA2375b4C94C0E": true, // GMX DAO
-        "0xC181eB022F33b8ba808AD96348B03e8A753A859b": true, // TimelockConfig
-        "0x8c6e20A2211D1b70cD7c0789EcE44fDB19567621": true, // ConfigTimelockController
-      },
-    },
-    avalanche: {
-      ADL_KEEPER: syntheticKeepers.mainnet,
-      FROZEN_ORDER_KEEPER: syntheticKeepers.mainnet,
-      LIQUIDATION_KEEPER: syntheticKeepers.mainnet,
-      ORDER_KEEPER: syntheticKeepers.mainnet,
-      LIMITED_CONFIG_KEEPER: syntheticKeepers.mainnet,
-      CLAIM_ADMIN: {
-        "0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D": true, // security_multisig_1
-        "0x2B5765633b7059a10a25af47B45409ea47AbC689": true, // claim_admin_1
-        ...generalConfigKeepers.mainnet,
-      },
-      CONFIG_KEEPER: {
-        "0x15F9eBC71c539926B8f652a534d29B4Af57CaD55": true, // multisig_1
-        "0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D": true, // security_multisig_1
-        "0x372aaDF1921c6f92346a4D5E9E5186bd00fF0562": true, // ConfigSyncer
-        ...generalConfigKeepers.mainnet,
-      },
-      FEE_KEEPER: {
-        "0x43CE1d475e06c65DD879f4ec644B8e0E10ff2b6D": true, // fee_keeper_1
-      },
-      MARKET_KEEPER: {
-        ...generalConfigKeepers.mainnet,
-      },
-      TIMELOCK_ADMIN: {
-        "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // timelock_admin_1
-        "0xE014cbD60A793901546178E1c16ad9132C927483": true, // timelock_admin_2
-        "0x15F9eBC71c539926B8f652a534d29B4Af57CaD55": true, // multisig_1
-        "0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D": true, // security_multisig_1
-      },
-      TIMELOCK_MULTISIG: {
-        "0x15F9eBC71c539926B8f652a534d29B4Af57CaD55": true, // multisig_1
-        "0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D": true, // security_multisig_1
-      },
-      GOV_TOKEN_CONTROLLER: {
-        "0x091eD806490Cc58Fd514441499e58984cCce0630": true, // RewardRouterV2_2
-      },
-      CONTROLLER: {
-        "0xc57C155FacCd93F62546F329D1483E0E5b9C1241": true, // MarketFactory
-        "0x5d6B84086DA6d4B0b6C0dF7E02f8a6A039226530": true, // GlvFactory
-        "0xA6aC2e08C6d6bbD9B237e0DaaEcd7577996f4e84": true, // OracleStore
-        "0x1A3A103F9F536a0456C9b205152A3ac2b3c54490": true, // FeeHandler
-
-        "0xA421Fa4581b37CAE2E43502D205460a57B7D7a4b": true, // Config
-        "0x372aaDF1921c6f92346a4D5E9E5186bd00fF0562": true, // ConfigSyncer
-        "0xB8cAEF9245cbd9064a50830f8330B0D3a5d0D206": true, // ConfigTimelockController
-        "0xdD67459D3e98EdDAA9770EbB7C38fF8F643f229f": true, // TimelockConfig
-        "0xE1d5a068c5b75E0c7Ea1A9Fe8EA056f9356C6fFD": true, // Oracle
-        "0xAd7a7568F500F65AEA3D9417A210CBc5dcD7b273": true, // FeeHandler Oracle
-        "0xF0864BE1C39C0AB28a8f1918BC8321beF8F7C317": true, // ExchangeRouter
-        "0x88a5c6D94634Abd7745f5348e5D8C42868ed4AC3": true, // SubaccountRouter
-        "0x4729D9f61c0159F5e02D2C2e5937B3225e55442C": true, // GlvRouter
-        "0xa61f92ab63cc5C3d60574d40A6e73861c37aaC95": true, // GelatoRelayRouter
-        "0x58b09FD12863218F2ca156808C2Ae48aaCD0c072": true, // SubaccountGelatoRelayRouter
-        "0xDd20D75f92bF27e17d86D74424ce7435843E8df0": true, // OrderHandler
-        "0x24F52966Fc663b3e206f0DCbD40b6FF2df567880": true, // IncreaseOrderExecutor
-        "0x74bfc9c1E496D96bbAF87A8231aAD1c79DDbf7bA": true, // DecreaseOrderExecutor
-        "0x459058505A7c7252efE93aa69D03F6198601DA9e": true, // SwapOrderExecutor
-        "0x640dFe87059fEe3Ad59132ABb858191D7Fa5B219": true, // DepositHandler
-        "0x87d66368cD08a7Ca42252f5ab44B2fb6d1Fb8d15": true, // WithdrawalHandler
-        "0x2954C692cc26EF139f3B01435cd901A39a8cA830": true, // AdlHandler
-        "0x2e5D10A48C00cFcc6A31af873118d739323Ff71B": true, // LiquidationHandler
-        "0x0C08518C41755C6907135266dCCf09d51aE53CC4": true, // ShiftHandler
-        "0x632b763B31f9A1cB28c4f93925A591Cd34073AD6": true, // GlvDepositHandler
-        "0xdFc557EdF817bCd69F3b82d54f6338ecad2667CA": true, // GlvWithdrawalHandler
-        "0xF6e667bD3C914A336aFB57C38ABbF6ef41e2e7c8": true, // GlvShiftHandler
-        "0x0AF4d7c87339d3A4b40233439A4aBE13d97007f9": true, // SwapHandler
-        "0x7FfedCAC2eCb2C29dDc027B60D6F8107295Ff2eA": true, // ClaimHandler
-        "0xA1D94802EcD642051B677dBF37c8E78ce6dd3784": true, // LayerZeroProvider
-        "0x9080f8A35Da53F4200a68533FB1dC1cA05357bDB": true, // MultichainClaimsRouter
-        "0x2A7244EE5373D2F161cE99F0D144c12860D651Af": true, // MultichainGlvRouter
-        "0x10Fa5Bd343373101654E896B43Ca38Fd8f3789F9": true, // MultichainGmRouter
-        "0x99CD306B777C5aAb842bA65e4f7FF0554ECDe808": true, // MultichainOrderRouter
-        "0xB36a4c6cDeDea3f31b3d16F33553F93b96b178F4": true, // MultichainSubaccountRouter
-        "0x8c6e20A2211D1b70cD7c0789EcE44fDB19567621": true, // MultichainTransferRouter
-      },
-      ROUTER_PLUGIN: {
-        "0xF0864BE1C39C0AB28a8f1918BC8321beF8F7C317": true, // ExchangeRouter
-        "0x88a5c6D94634Abd7745f5348e5D8C42868ed4AC3": true, // SubaccountRouter
-        "0x4729D9f61c0159F5e02D2C2e5937B3225e55442C": true, // GlvRouter
-        "0xa61f92ab63cc5C3d60574d40A6e73861c37aaC95": true, // GelatoRelayRouter
-        "0x58b09FD12863218F2ca156808C2Ae48aaCD0c072": true, // SubaccountGelatoRelayRouter
-        "0x2A7244EE5373D2F161cE99F0D144c12860D651Af": true, // MultichainGlvRouter
-        "0x10Fa5Bd343373101654E896B43Ca38Fd8f3789F9": true, // MultichainGmRouter
-        "0x99CD306B777C5aAb842bA65e4f7FF0554ECDe808": true, // MultichainOrderRouter
-        "0xB36a4c6cDeDea3f31b3d16F33553F93b96b178F4": true, // MultichainSubaccountRouter
-        "0x8c6e20A2211D1b70cD7c0789EcE44fDB19567621": true, // MultichainTransferRouter
-      },
-      ROLE_ADMIN: {
-        "0xdD67459D3e98EdDAA9770EbB7C38fF8F643f229f": true, // TimelockConfig
-        "0xB8cAEF9245cbd9064a50830f8330B0D3a5d0D206": true, // ConfigTimelockController
-      },
-    },
-    botanix: {
-      ADL_KEEPER: syntheticKeepers.mainnet,
-      FROZEN_ORDER_KEEPER: syntheticKeepers.mainnet,
-      LIQUIDATION_KEEPER: syntheticKeepers.mainnet,
-      ORDER_KEEPER: syntheticKeepers.mainnet,
-      LIMITED_CONFIG_KEEPER: syntheticKeepers.mainnet,
-      CLAIM_ADMIN: {
-        "0x656fa39BdB5984b477FA6aB443195D72D1Accc1c": true, // security_multisig_botanix
-        "0x2B5765633b7059a10a25af47B45409ea47AbC689": true, // claim_admin_1
-        ...generalConfigKeepers.mainnet,
-      },
-      CONFIG_KEEPER: {
-        "0x656fa39BdB5984b477FA6aB443195D72D1Accc1c": true, // security_multisig_botanix
-        ...generalConfigKeepers.mainnet,
-      },
-      FEE_KEEPER: {
-        "0x43CE1d475e06c65DD879f4ec644B8e0E10ff2b6D": true, // fee_keeper_1
-      },
-      MARKET_KEEPER: {
-        ...generalConfigKeepers.mainnet,
-      },
-      TIMELOCK_ADMIN: {
-        "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // timelock_admin_1
-        "0xE014cbD60A793901546178E1c16ad9132C927483": true, // timelock_admin_2
-        "0x656fa39BdB5984b477FA6aB443195D72D1Accc1c": true, // security_multisig_botanix
-      },
-      TIMELOCK_MULTISIG: {
-        "0x656fa39BdB5984b477FA6aB443195D72D1Accc1c": true, // multisig_1
-      },
-      GOV_TOKEN_CONTROLLER: {},
-      CONTROLLER: {
-        "0xcb7656751B0f8aFCBe15D135D7aC58727DE06768": true, // MarketFactory
-        "0x3e04e6b37B23969F3Ca1c2aAc8568322bd90BA90": true, // GlvFactory
-        "0xfFC63573B55B39b75b1e44e54C308e44505E0D28": true, // OracleStore
-
-        "0xB65F74fBa4E2A5db9302b33FB4459AbBC593370f": true, // Config
-        "0xB4085c68765bEAf991D3e4EEbC48427EDECBA778": true, // ConfigTimelockController
-        "0xc7D8E3561f1247EBDa491bA5f042699C2807C33C": true, // TimelockConfig
-        "0x40d680E41FC4Bf973F0EA664981f6359195a6383": true, // Oracle
-        "0x72fa3978E2E330C7B2debc23CB676A3ae63333F6": true, // ExchangeRouter
-        "0x11E590f6092D557bF71BaDEd50D81521674F8275": true, // SubaccountRouter
-        "0x348Eca94e7c6F35430aF1cAccE27C29E9Bef9ae3": true, // GlvRouter
-        "0x7f8eF83C92B48a4B5B954A24D98a6cD0Ed4D160a": true, // GelatoRelayRouter
-        "0xfbb9C41046E27405224a911f44602C3667f9D8f6": true, // SubaccountGelatoRelayRouter
-        "0xb92b643950f57d0aCCf79950d6436557c869c5F8": true, // OrderHandler
-        "0x4f97e3589aE036e95F7ec091f0B373576987A01d": true, // IncreaseOrderExecutor
-        "0xa3c7575c56DA54b6e04DB4e4a9eE28bD670e2ba9": true, // DecreaseOrderExecutor
-        "0x61B6ae0dd5f5F4fC79D94f118fd4ab2864f0eEf9": true, // SwapOrderExecutor
-        "0x17b80086D9b00f1eE4C245409b03383e9cee2A7E": true, // DepositHandler
-        "0x5104257d85df1aF13b267e161E289847dd8950C6": true, // WithdrawalHandler
-        "0xb5fbb36853a136DD5DFf9314c48dF6AC0278dc72": true, // AdlHandler
-        "0x6EBfF697250ae729AD0752f5Ca6CE98Bc62D4213": true, // LiquidationHandler
-        "0x0eaAbf9234333FF67CB8FDBc3Dafe13F7E7c2B71": true, // ShiftHandler
-        "0x80EDF3eA04D30FEc027C4B397ab034D7FA98b894": true, // GlvDepositHandler
-        "0x090FA7eb8B4647DaDbEA315E68f8f88e8E62Bd54": true, // GlvWithdrawalHandler
-        "0x8622db0e78671e3C5696AF763D6679dE5c18890c": true, // GlvShiftHandler
-        "0xf6BE2059947535c12615FDb642583A3547550eb7": true, // SwapHandler
-        "0x3cA0F3AD78A9d0b2a0c060fE86D1141118A285c4": true, // ClaimHandler
-        "0x61af99b07995cb7Ee8c2FACF6D8fb6042FeAA0d9": true, // LayerZeroProvider
-        "0x790Ee987b9B253374d700b07F16347a7d4C4ff2e": true, // MultichainClaimsRouter
-        "0xEE027373517a6D96Fe62f70E9A0A395cB5a39Eee": true, // MultichainGlvRouter
-        "0x4ef8394CD5DD7E3EE6D30824689eF461783a3360": true, // MultichainGmRouter
-        "0x5c5DBbcDf420B5d81d4FfDBa5b26Eb24E6E60d52": true, // MultichainOrderRouter
-        "0xd3B6E962f135634C43415d57A28E688Fb4f15A58": true, // MultichainSubaccountRouter
-        "0x901f26a57edCe65Ef3FBcCD260433De9B2279852": true, // MultichainTransferRouter
-      },
-      ROUTER_PLUGIN: {
-        "0x72fa3978E2E330C7B2debc23CB676A3ae63333F6": true, // ExchangeRouter
-        "0x11E590f6092D557bF71BaDEd50D81521674F8275": true, // SubaccountRouter
-        "0x348Eca94e7c6F35430aF1cAccE27C29E9Bef9ae3": true, // GlvRouter
-        "0x7f8eF83C92B48a4B5B954A24D98a6cD0Ed4D160a": true, // GelatoRelayRouter
-        "0xfbb9C41046E27405224a911f44602C3667f9D8f6": true, // SubaccountGelatoRelayRouter
-        "0xEE027373517a6D96Fe62f70E9A0A395cB5a39Eee": true, // MultichainGlvRouter
-        "0x4ef8394CD5DD7E3EE6D30824689eF461783a3360": true, // MultichainGmRouter
-        "0x5c5DBbcDf420B5d81d4FfDBa5b26Eb24E6E60d52": true, // MultichainOrderRouter
-        "0xd3B6E962f135634C43415d57A28E688Fb4f15A58": true, // MultichainSubaccountRouter
-        "0x901f26a57edCe65Ef3FBcCD260433De9B2279852": true, // MultichainTransferRouter
-      },
-      ROLE_ADMIN: {
-        "0xc7D8E3561f1247EBDa491bA5f042699C2807C33C": true, // TimelockConfig
-        "0xB4085c68765bEAf991D3e4EEbC48427EDECBA778": true, // ConfigTimelockController
-      },
-    },
+    arbitrum: roleConfigs.arbitrum(roleInfo),
+    avalanche: roleConfigs.avalanche(roleInfo),
+    botanix: roleConfigs.botanix(roleInfo),
     avalancheFuji: {
       CONFIG_KEEPER: {
         "0xFb11f15f206bdA02c224EDC744b0E50E46137046": true,

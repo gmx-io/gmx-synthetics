@@ -19,6 +19,11 @@ const _cache = new FileCache<ContractInfo>(`contractInfoCache-${hre.network.name
 const GMX_V2_DEPLOYER_ADDRESS = "0xe7bfff2ab721264887230037940490351700a068";
 const GMX_V1_DEPLOYER_ADDRESS = "0x5f799f365fa8a2b60ac0429c48b153ca5a6f0cf8";
 
+const FEE_HANDLER_ORACLES = {
+  arbitrum: "0xb8fc96d7a413C462F611A7aC0C912c2FE26EAbC4",
+  avalanche: "0xAd7a7568F500F65AEA3D9417A210CBc5dcD7b273",
+};
+
 const trustedExternalContracts = new Set(
   [
     "0x4b6ACC5b2db1757bD49408FeE92e32D39608B5d9",
@@ -114,6 +119,14 @@ export async function validateRoles() {
         console.log("error", e);
       }
     }
+  }
+
+  const feeHandlerOracle = FEE_HANDLER_ORACLES[hre.network.name];
+
+  if (feeHandlerOracle && !_expectedRoles["CONTROLLER"][feeHandlerOracle]) {
+    errors.push(
+      `role CONTROLLER is not configured for contract FeeHandler Oracle. "${feeHandlerOracle}": true, // FeeHandler Oracle`
+    );
   }
 
   const expectedRoles = {};

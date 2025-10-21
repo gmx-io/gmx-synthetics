@@ -209,6 +209,21 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 12_000,
     },
+    XPL: {
+      negativePositionImpactFactor: exponentToFloat("6.00e-08"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    "BNB:WBTC.e:USDC": {
+      negativePositionImpactFactor: exponentToFloat("4.99e-09"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 11_995,
+    },
+    "SOL:WBTC.e:USDC": {
+      negativePositionImpactFactor: exponentToFloat("8.26e-09"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_005,
+    },
     POL: {
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       expectedSwapImpactRatio: 20_000,
@@ -502,6 +517,16 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 12_000,
     },
+    ZORA: {
+      negativePositionImpactFactor: exponentToFloat("2.35e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    KTA: {
+      negativePositionImpactFactor: exponentToFloat("2.23e-7"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 11_989,
+    },
     ALGO: {
       negativePositionImpactFactor: exponentToFloat("1.47e-8"),
       expectedSwapImpactRatio: 20_000,
@@ -550,6 +575,26 @@ const recommendedMarketConfig = {
     "wstETH-WETH": {
       negativeSwapImpactFactor: exponentToFloat("5e-9"),
       expectedSwapImpactRatio: 10_000,
+    },
+    ASTER: {
+      negativePositionImpactFactor: exponentToFloat("9.69e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 11_992,
+    },
+    "0G": {
+      negativePositionImpactFactor: exponentToFloat("1.26e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    AVNT: {
+      negativePositionImpactFactor: exponentToFloat("9.5e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 11_994,
+    },
+    LINEA: {
+      negativePositionImpactFactor: exponentToFloat("1.08e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 11_973,
     },
   },
   avalanche: {
@@ -614,6 +659,18 @@ const recommendedMarketConfig = {
       negativePositionImpactFactor: exponentToFloat("6e-8"),
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 12_000,
+    },
+    "XAUt0:XAUt0:XAUt0": {
+      negativePositionImpactFactor: exponentToFloat("9.29e-9"),
+      negativeSwapImpactFactor: 0,
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 12_002,
+    },
+    XAUt0: {
+      negativePositionImpactFactor: exponentToFloat("9.29e-9"),
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_002,
     },
   },
   arbitrumSepolia: {

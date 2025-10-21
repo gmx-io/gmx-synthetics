@@ -29,7 +29,11 @@ export async function createSigningServer() {
     setTimeout(() => {
       console.info("go to http://localhost:5173/signer");
       console.info('connect a wallet and click on the "Sign" button');
-      // spawn("open", ["http://localhost:5173/signer"]);
+      if (process.env.OPEN_BROWSER === "true") {
+        spawn("open", ["http://localhost:5173/signer"]);
+      } else {
+        console.log("use OPEN_BROWSER=true to open the browser automatically");
+      }
     }, 1000);
 
     subProcess = spawn("yarn", ["app", "--logLevel", "warn"], {

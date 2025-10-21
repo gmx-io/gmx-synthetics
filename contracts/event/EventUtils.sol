@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "../error/Errors.sol";
+import "../utils/StringUtils.sol";
 
 library EventUtils {
 
@@ -515,6 +516,6 @@ library EventUtils {
     }
 
     function compareStrings(string memory a, string memory b) public pure returns (bool) {
-        return (keccak256(abi.encodePacked((a))) == keccak256(abi.encodePacked((b))));
+        return StringUtils.compareStrings(a, b);
     }
 }
