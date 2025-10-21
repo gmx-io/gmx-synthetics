@@ -58,6 +58,10 @@ const CREDIT_USER_ABI = [
 
 const ERC20_ABI = ["function balanceOf(address) view returns (uint256)"];
 
+const GMX_GLP_MANAGER_ABI = ["function getPrice(bool _maximise) external view returns (uint256)"];
+
+const GMX_GLP_MANAGER = "0x3963FfC9dff443c2A94f21b129D429891E32ec18";
+
 // Map credit manager addresses to vault tokens
 const CREDIT_MANAGER_TO_VAULT: Record<string, string> = {
   "0xb99d8d7fc3f59b38fde1b79aedf07c52ca05d63a": "WETH",
@@ -71,9 +75,21 @@ const CREDIT_MANAGER_TO_VAULT: Record<string, string> = {
   "0xaf32b65b4e7a833040b24d41aec2962c047c4440": "USDC",
 };
 
+// Token addresses for identifying original collateral
+const TOKEN_ADDRESSES: Record<string, string> = {
+  "0x82af49447d8a07e3bd95bd0d56f35241523fbab1": "WETH",
+  "0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f": "WBTC",
+  "0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9": "USDT",
+  "0xff970a61a04b1ca14834a43f5de4533ebddb5cc8": "USDC",
+  "0x5402b5f40310bded796c7d0f3ff6683f5c0cffdf": "fsGLP",
+  "0x1addd80e6039594ee970e5872d247bf0414c8903": "fsGLP",
+};
+
 interface PositionData {
   farmer: string;
   positionIndex: number;
+  originalCollateralToken: string;
+  originalCollateralAmount: string;
   collateralToken: string;
   collateralAmount: string;
   liquidatorFee: string;
@@ -85,6 +101,14 @@ interface PositionData {
   borrowedFsGLP: string[];
   totalFsGLP: string;
   leverage: string;
+  // Historical data
+  txHash: string;
+  blockNumber: number;
+  timestamp: number;
+  date: string;
+  glpPriceUsd: string;
+  collateralValueUsd: string;
+  priceSource: string;
 }
 
 interface FarmerDistribution {
@@ -92,6 +116,9 @@ interface FarmerDistribution {
   collateralFsGLP: string;
   liquidatorFeesShare: string;
   totalFsGLP: string;
+  avgFsGlpPriceAtOpen: string;
+  fsGlpPriceAtIncident: string;
+  cappedTotalFsGLP: string;
 }
 
 interface VaultBorrowing {
@@ -108,9 +135,106 @@ interface LPDistribution {
   weth_fsGLP: string;
   usdt_vsTokens: string;
   usdt_fsGLP: string;
+  usdt_deposit_usd: string;
+  usdt_fsGLP_capped: string;
   usdc_vsTokens: string;
   usdc_fsGLP: string;
+  usdc_deposit_usd: string;
+  usdc_fsGLP_capped: string;
   total_fsGLP: string;
+  wbtc_fsGLP_final: string;
+  weth_fsGLP_final: string;
+  usdt_fsGLP_final: string;
+  usdc_fsGLP_final: string;
+  total_fsGLP_final: string;
+}
+
+// ============================================================================
+// HELPER: EXTRACT ORIGINAL COLLATERAL FROM TRANSACTION
+// ============================================================================
+
+async function extractOriginalCollateral(
+  provider: any,
+  txHash: string,
+  eventAmountIn: ethers.BigNumber
+): Promise<{ token: string; amount: string; symbol: string }> {
+  try {
+    const tx = await provider.getTransaction(txHash);
+
+    // Try newer signature first (with _token parameter)
+    // Function signature: openLendCredit(address _depositor, address _token, uint256 _amountIn, address[] _borrowedTokens, uint256[] _ratios, address _recipient)
+    const ifaceNew = new ethers.utils.Interface([
+      "function openLendCredit(address _depositor, address _token, uint256 _amountIn, address[] _borrowedTokens, uint256[] _ratios, address _recipient)",
+    ]);
+
+    try {
+      const decoded = ifaceNew.parseTransaction({ data: tx.data });
+      const tokenAddress = decoded.args._token.toLowerCase();
+      const amountIn = decoded.args._amountIn;
+
+      // Check if it's ETH placeholder address
+      if (tokenAddress === "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee") {
+        return {
+          token: tokenAddress,
+          amount: ethers.utils.formatEther(amountIn),
+          symbol: "ETH",
+        };
+      }
+
+      // Look up token symbol
+      const tokenSymbol = TOKEN_ADDRESSES[tokenAddress];
+      if (tokenSymbol) {
+        // Determine decimals (WBTC has 8 decimals, others have 18)
+        const decimals = tokenSymbol === "WBTC" ? 8 : 18;
+        const formattedAmount = ethers.utils.formatUnits(amountIn, decimals);
+
+        return {
+          token: tokenAddress,
+          amount: formattedAmount,
+          symbol: tokenSymbol,
+        };
+      }
+
+      // Unknown token
+      return {
+        token: tokenAddress,
+        amount: ethers.utils.formatEther(amountIn),
+        symbol: "UNKNOWN",
+      };
+    } catch (decodeError) {
+      // Try older signature (without _token parameter - fsGLP was deposited directly)
+      // Function signature: openLendCredit(address _depositor, uint256 _amountIn, address[] _borrowedTokens, uint256[] _ratios, address _recipient)
+      const ifaceOld = new ethers.utils.Interface([
+        "function openLendCredit(address _depositor, uint256 _amountIn, address[] _borrowedTokens, uint256[] _ratios, address _recipient)",
+      ]);
+
+      try {
+        ifaceOld.parseTransaction({ data: tx.data });
+        // Successfully decoded with old signature - this means fsGLP was deposited directly
+        return {
+          token: "0x1addd80e6039594ee970e5872d247bf0414c8903",
+          amount: ethers.utils.formatEther(eventAmountIn),
+          symbol: "fsGLP",
+        };
+      } catch (oldDecodeError) {
+        console.warn(`  Could not decode transaction input for ${txHash} with either signature. Using fallback fsGLP`);
+
+        // Fallback: return fsGLP with amount from event
+        return {
+          token: "0x1addd80e6039594ee970e5872d247bf0414c8903",
+          amount: ethers.utils.formatEther(eventAmountIn),
+          symbol: "fsGLP",
+        };
+      }
+    }
+  } catch (error) {
+    console.warn(`  ⚠️  Could not extract original collateral from tx ${txHash}: ${error}`);
+    return {
+      token: "0x1addd80e6039594ee970e5872d247bf0414c8903",
+      amount: ethers.utils.formatEther(eventAmountIn),
+      symbol: "fsGLP",
+    };
+  }
 }
 
 // ============================================================================
@@ -160,6 +284,7 @@ async function step2_extractPositions(provider: any): Promise<PositionData[]> {
   console.log("=".repeat(80) + "\n");
 
   const creditUser = new ethers.Contract(CONTRACTS.CreditUser2, CREDIT_USER_ABI, provider);
+  const glpManager = new ethers.Contract(GMX_GLP_MANAGER, GMX_GLP_MANAGER_ABI, provider);
 
   const startBlock = START_BLOCK;
   const endBlock = await provider.getBlockNumber();
@@ -182,7 +307,7 @@ async function step2_extractPositions(provider: any): Promise<PositionData[]> {
     }
   }
 
-  console.log("Checking position termination status...");
+  console.log("Checking position termination status and extracting original collateral...");
   const positions: PositionData[] = [];
   let activeCount = 0;
 
@@ -211,7 +336,10 @@ async function step2_extractPositions(provider: any): Promise<PositionData[]> {
       continue;
     }
 
+    // Extract original collateral from transaction
+    const txHash = event.transactionHash;
     const originalAmount = event.args._amountIn;
+    const originalCollateral = await extractOriginalCollateral(provider, txHash, originalAmount);
     const liquidatorFee = originalAmount.mul(50).div(1000);
     const netCollateral = originalAmount.sub(liquidatorFee);
 
@@ -226,9 +354,33 @@ async function step2_extractPositions(provider: any): Promise<PositionData[]> {
         parseFloat(ethers.utils.formatEther(execution._collateralMintedAmount))
       : 0;
 
+    // Get block data for historical context
+    const block = await provider.getBlock(event.blockNumber);
+    const date = new Date(block.timestamp * 1000);
+
+    // Query historical GLP price at the block when position was opened
+    let glpPriceUsd = "N/A";
+    let collateralValueUsd = "N/A";
+    let priceSource = "unavailable";
+
+    try {
+      const glpPriceBN = await glpManager.getPrice(false, { blockTag: event.blockNumber });
+      glpPriceUsd = ethers.utils.formatUnits(glpPriceBN, 30);
+
+      // Calculate collateral value in USD
+      const collateralValueBN = originalAmount.mul(glpPriceBN).div(ethers.BigNumber.from(10).pow(30));
+      collateralValueUsd = ethers.utils.formatEther(collateralValueBN);
+      priceSource = "historical";
+    } catch (error: any) {
+      // Archive data not available - mark as N/A
+      // This will happen on non-archive RPC nodes for old blocks
+    }
+
     positions.push({
       farmer: farmerLower,
       positionIndex,
+      originalCollateralToken: originalCollateral.symbol,
+      originalCollateralAmount: originalCollateral.amount,
       collateralToken: event.args._token,
       collateralAmount: ethers.utils.formatEther(originalAmount),
       liquidatorFee: ethers.utils.formatEther(liquidatorFee),
@@ -240,6 +392,14 @@ async function step2_extractPositions(provider: any): Promise<PositionData[]> {
       borrowedFsGLP: execution._borrowedMintedAmount.map((a: any) => ethers.utils.formatEther(a)),
       totalFsGLP: ethers.utils.formatEther(totalFsGLP),
       leverage: leverage.toFixed(2),
+      // Historical data
+      txHash,
+      blockNumber: event.blockNumber,
+      timestamp: block.timestamp,
+      date: date.toISOString(),
+      glpPriceUsd,
+      collateralValueUsd,
+      priceSource,
     });
   }
 
@@ -260,21 +420,44 @@ async function step3_calculateFarmerDistributions(
   console.log("STEP 3: Calculate Farmer Distributions");
   console.log("=".repeat(80) + "\n");
 
-  const farmerData = new Map<string, { collateralFsGLP: number; totalFsGLP: number }>();
+  const FSGLP_PRICE_AT_INCIDENT = 1.45;
+
+  const farmerData = new Map<
+    string,
+    {
+      collateralFsGLP: number;
+      totalFsGLP: number;
+      glpPrices: number[];
+      collateralAmounts: number[];
+    }
+  >();
   let totalPositionFsGLP = 0;
 
   for (const pos of positions) {
     const collateralFsGLP = parseFloat(pos.collateralFsGLP);
     const totalFsGLP = parseFloat(pos.totalFsGLP);
+    const glpPrice = pos.glpPriceUsd !== "N/A" ? parseFloat(pos.glpPriceUsd) : 0;
+    const collateralAmount = parseFloat(pos.collateralFsGLP);
 
     if (!farmerData.has(pos.farmer)) {
-      farmerData.set(pos.farmer, { collateralFsGLP: 0, totalFsGLP: 0 });
+      farmerData.set(pos.farmer, {
+        collateralFsGLP: 0,
+        totalFsGLP: 0,
+        glpPrices: [],
+        collateralAmounts: [],
+      });
     }
 
     const data = farmerData.get(pos.farmer)!;
     data.collateralFsGLP += collateralFsGLP;
     data.totalFsGLP += totalFsGLP;
     totalPositionFsGLP += totalFsGLP;
+
+    // Track prices and collateral amounts for weighted average
+    if (glpPrice > 0) {
+      data.glpPrices.push(glpPrice);
+      data.collateralAmounts.push(collateralAmount);
+    }
   }
 
   const distributions: FarmerDistribution[] = [];
@@ -283,11 +466,26 @@ async function step3_calculateFarmerDistributions(
     const liquidatorFeesShare = (data.totalFsGLP / totalPositionFsGLP) * liquidatorFeesTotal;
     const totalFarmerFsGLP = data.collateralFsGLP + liquidatorFeesShare;
 
+    // Calculate weighted average fsGLP price at open
+    let avgFsGlpPriceAtOpen = 0;
+    if (data.glpPrices.length > 0) {
+      const totalCollateral = data.collateralAmounts.reduce((sum, amt) => sum + amt, 0);
+      const weightedSum = data.glpPrices.reduce((sum, price, idx) => sum + price * data.collateralAmounts[idx], 0);
+      avgFsGlpPriceAtOpen = totalCollateral > 0 ? weightedSum / totalCollateral : 0;
+    }
+
+    // Calculate capped total fsGLP
+    const cappedTotalFsGLP =
+      avgFsGlpPriceAtOpen > 0 ? (totalFarmerFsGLP * avgFsGlpPriceAtOpen) / FSGLP_PRICE_AT_INCIDENT : totalFarmerFsGLP;
+
     distributions.push({
       farmer,
       collateralFsGLP: data.collateralFsGLP.toFixed(18),
       liquidatorFeesShare: liquidatorFeesShare.toFixed(18),
       totalFsGLP: totalFarmerFsGLP.toFixed(18),
+      avgFsGlpPriceAtOpen: avgFsGlpPriceAtOpen.toFixed(18),
+      fsGlpPriceAtIncident: FSGLP_PRICE_AT_INCIDENT.toFixed(18),
+      cappedTotalFsGLP: cappedTotalFsGLP.toFixed(18),
     });
   }
 
@@ -442,9 +640,18 @@ async function step5_calculateLPDistributions(
       weth_fsGLP: "0",
       usdt_vsTokens: "0",
       usdt_fsGLP: "0",
+      usdt_deposit_usd: "0",
+      usdt_fsGLP_capped: "0",
       usdc_vsTokens: "0",
       usdc_fsGLP: "0",
+      usdc_deposit_usd: "0",
+      usdc_fsGLP_capped: "0",
       total_fsGLP: "0",
+      wbtc_fsGLP_final: "0",
+      weth_fsGLP_final: "0",
+      usdt_fsGLP_final: "0",
+      usdc_fsGLP_final: "0",
+      total_fsGLP_final: "0",
     });
   }
 
@@ -548,6 +755,154 @@ async function step5_calculateLPDistributions(
 }
 
 // ============================================================================
+// STEP 6: APPLY STABLECOIN CAPPING AND REDISTRIBUTE EXCESS
+// ============================================================================
+
+function step6_applyStablecoinCapping(
+  lpDistributions: LPDistribution[],
+  farmerDistributions: FarmerDistribution[]
+): LPDistribution[] {
+  console.log("=".repeat(80));
+  console.log("STEP 6: Apply Stablecoin Capping and Redistribute Excess");
+  console.log("=".repeat(80) + "\n");
+
+  const FSGLP_PRICE_AT_INCIDENT = 1.45;
+  const STABLECOIN_PRICE = 1.0;
+
+  // Step 0: Calculate farmer excess from IL adjustment
+  const farmerTotalOriginal = farmerDistributions.reduce((sum, f) => sum + parseFloat(f.totalFsGLP), 0);
+  const farmerTotalCapped = farmerDistributions.reduce((sum, f) => sum + parseFloat(f.cappedTotalFsGLP), 0);
+  const farmerExcess = farmerTotalOriginal - farmerTotalCapped;
+
+  console.log(`Farmer IL adjustment:`);
+  console.log(`  Original farmer total: ${farmerTotalOriginal.toFixed(2)} fsGLP`);
+  console.log(`  Capped farmer total:   ${farmerTotalCapped.toFixed(2)} fsGLP`);
+  console.log(`  Farmer excess:         ${farmerExcess.toFixed(2)} fsGLP\n`);
+
+  let totalUsdcExcess = 0;
+  let totalUsdtExcess = 0;
+
+  // Step 1: Calculate deposit values and capped amounts for stablecoins
+  console.log("Calculating stablecoin deposit values and capped amounts...\n");
+
+  for (const dist of lpDistributions) {
+    // USDC calculations
+    const usdcVsTokens = parseFloat(dist.usdc_vsTokens);
+    const usdcDepositUsd = (usdcVsTokens / 1e6) * STABLECOIN_PRICE;
+    const usdcFsGLP = parseFloat(ethers.utils.formatEther(dist.usdc_fsGLP));
+    const usdcFsGLPValue = usdcFsGLP * FSGLP_PRICE_AT_INCIDENT;
+    const usdcCappedFsGLP = Math.min(usdcFsGLP, usdcDepositUsd / FSGLP_PRICE_AT_INCIDENT);
+    const usdcExcess = usdcFsGLP - usdcCappedFsGLP;
+
+    dist.usdc_deposit_usd = usdcDepositUsd.toFixed(18);
+    dist.usdc_fsGLP_capped = ethers.utils.parseEther(usdcCappedFsGLP.toFixed(18)).toString();
+    totalUsdcExcess += usdcExcess;
+
+    // USDT calculations
+    const usdtVsTokens = parseFloat(dist.usdt_vsTokens);
+    const usdtDepositUsd = (usdtVsTokens / 1e6) * STABLECOIN_PRICE;
+    const usdtFsGLP = parseFloat(ethers.utils.formatEther(dist.usdt_fsGLP));
+    const usdtFsGLPValue = usdtFsGLP * FSGLP_PRICE_AT_INCIDENT;
+    const usdtCappedFsGLP = Math.min(usdtFsGLP, usdtDepositUsd / FSGLP_PRICE_AT_INCIDENT);
+    const usdtExcess = usdtFsGLP - usdtCappedFsGLP;
+
+    dist.usdt_deposit_usd = usdtDepositUsd.toFixed(18);
+    dist.usdt_fsGLP_capped = ethers.utils.parseEther(usdtCappedFsGLP.toFixed(18)).toString();
+    totalUsdtExcess += usdtExcess;
+  }
+
+  const stablecoinExcess = totalUsdcExcess + totalUsdtExcess;
+  const totalExcess = farmerExcess + stablecoinExcess;
+
+  console.log(`Stablecoin LP excess:`);
+  console.log(`  USDC excess: ${totalUsdcExcess.toFixed(2)} fsGLP`);
+  console.log(`  USDT excess: ${totalUsdtExcess.toFixed(2)} fsGLP`);
+  console.log(`  Total stablecoin excess: ${stablecoinExcess.toFixed(2)} fsGLP\n`);
+  console.log(
+    `Total excess to redistribute to volatile LPs: ${totalExcess.toFixed(2)} fsGLP (${farmerExcess.toFixed(
+      2
+    )} from farmers + ${stablecoinExcess.toFixed(2)} from stablecoin LPs)\n`
+  );
+
+  // Step 2: Calculate total volatile value across all LPs
+  console.log("Calculating volatile asset values for redistribution...\n");
+
+  let totalVolatileValue = 0;
+  const lpVolatileValues = new Map<string, number>();
+
+  for (const dist of lpDistributions) {
+    const wbtcFsGLP = parseFloat(ethers.utils.formatEther(dist.wbtc_fsGLP));
+    const wethFsGLP = parseFloat(ethers.utils.formatEther(dist.weth_fsGLP));
+    const volatileValue = wbtcFsGLP * FSGLP_PRICE_AT_INCIDENT + wethFsGLP * FSGLP_PRICE_AT_INCIDENT;
+
+    lpVolatileValues.set(dist.address, volatileValue);
+    totalVolatileValue += volatileValue;
+  }
+
+  console.log(`Total volatile asset value: $${totalVolatileValue.toFixed(2)}\n`);
+
+  // Step 3: Redistribute excess to WBTC/WETH LPs proportionally
+  console.log("Redistributing excess to WBTC/WETH LPs...\n");
+
+  for (const dist of lpDistributions) {
+    const wbtcFsGLP = parseFloat(ethers.utils.formatEther(dist.wbtc_fsGLP));
+    const wethFsGLP = parseFloat(ethers.utils.formatEther(dist.weth_fsGLP));
+    const usdcCappedFsGLP = parseFloat(ethers.utils.formatEther(dist.usdc_fsGLP_capped));
+    const usdtCappedFsGLP = parseFloat(ethers.utils.formatEther(dist.usdt_fsGLP_capped));
+
+    const lpVolatileValue = lpVolatileValues.get(dist.address)!;
+
+    // Calculate this LP's share of the excess
+    const excessShare = totalVolatileValue > 0 ? (lpVolatileValue / totalVolatileValue) * totalExcess : 0;
+
+    // Split excess between WBTC and WETH based on their value ratio within this LP
+    let wbtcExcessShare = 0;
+    let wethExcessShare = 0;
+
+    if (lpVolatileValue > 0) {
+      const wbtcValue = wbtcFsGLP * FSGLP_PRICE_AT_INCIDENT;
+      const wethValue = wethFsGLP * FSGLP_PRICE_AT_INCIDENT;
+      const wbtcRatio = wbtcValue / lpVolatileValue;
+      const wethRatio = wethValue / lpVolatileValue;
+
+      wbtcExcessShare = excessShare * wbtcRatio;
+      wethExcessShare = excessShare * wethRatio;
+    }
+
+    // Calculate final distributions
+    const wbtcFinal = wbtcFsGLP + wbtcExcessShare;
+    const wethFinal = wethFsGLP + wethExcessShare;
+    const usdcFinal = usdcCappedFsGLP;
+    const usdtFinal = usdtCappedFsGLP;
+    const totalFinal = wbtcFinal + wethFinal + usdcFinal + usdtFinal;
+
+    dist.wbtc_fsGLP_final = ethers.utils.parseEther(wbtcFinal.toFixed(18)).toString();
+    dist.weth_fsGLP_final = ethers.utils.parseEther(wethFinal.toFixed(18)).toString();
+    dist.usdc_fsGLP_final = dist.usdc_fsGLP_capped;
+    dist.usdt_fsGLP_final = dist.usdt_fsGLP_capped;
+    dist.total_fsGLP_final = ethers.utils.parseEther(totalFinal.toFixed(18)).toString();
+  }
+
+  // Calculate totals for summary
+  const totalOriginal = lpDistributions.reduce(
+    (sum, d) => sum + parseFloat(ethers.utils.formatEther(d.total_fsGLP)),
+    0
+  );
+  const totalFinal = lpDistributions.reduce(
+    (sum, d) => sum + parseFloat(ethers.utils.formatEther(d.total_fsGLP_final)),
+    0
+  );
+
+  console.log(`Total original distribution: ${totalOriginal.toFixed(2)} fsGLP`);
+  console.log(`Total final distribution: ${totalFinal.toFixed(2)} fsGLP`);
+  console.log(`Difference (should be ~0): ${(totalFinal - totalOriginal).toFixed(6)} fsGLP\n`);
+
+  console.log(`✅ Applied stablecoin capping and redistributed ${totalExcess.toFixed(2)} fsGLP to volatile LPs\n`);
+
+  return lpDistributions;
+}
+
+// ============================================================================
 // WRITE OUTPUT FILES
 // ============================================================================
 
@@ -564,11 +919,13 @@ function writeOutputFiles(
   // 1. Farmer positions
   const positionsPath = path.join(__dirname, "out/archi-farmer-positions.csv");
   const positionRows = [
-    "farmer,position_index,collateral_token,collateral_amount,liquidator_fee,net_collateral,borrowed_tokens,borrowed_amounts,credit_managers,collateral_fsGLP,borrowed_fsGLP,total_fsGLP,leverage",
+    "farmer,position_index,original_collateral_token,original_collateral_amount,collateral_token,collateral_amount,liquidator_fee,net_collateral,borrowed_tokens,borrowed_amounts,credit_managers,collateral_fsGLP,borrowed_fsGLP,total_fsGLP,leverage,tx_hash,block_number,timestamp,date,glp_price_usd,collateral_value_usd,price_source",
     ...positions.map((p) =>
       [
         p.farmer,
         p.positionIndex,
+        p.originalCollateralToken,
+        p.originalCollateralAmount,
         p.collateralToken,
         p.collateralAmount,
         p.liquidatorFee,
@@ -580,25 +937,46 @@ function writeOutputFiles(
         `"${JSON.stringify(p.borrowedFsGLP)}"`,
         p.totalFsGLP,
         p.leverage,
+        p.txHash,
+        p.blockNumber,
+        p.timestamp,
+        p.date,
+        p.glpPriceUsd,
+        p.collateralValueUsd,
+        p.priceSource,
       ].join(",")
     ),
   ];
   fs.writeFileSync(positionsPath, positionRows.join("\n"));
+
+  // Count positions with/without price data
+  const withPrice = positions.filter((p) => p.priceSource === "historical").length;
+  const withoutPrice = positions.filter((p) => p.priceSource === "unavailable").length;
+
   console.log(`✅ out/archi-farmer-positions.csv (${positions.length} positions)`);
+  if (withPrice > 0) {
+    console.log(`   📊 Historical prices: ${withPrice}/${positions.length} positions`);
+  }
+  if (withoutPrice > 0) {
+    console.log(`   ⚠️  Missing prices: ${withoutPrice}/${positions.length} (requires archive node)`);
+  }
 
   // 2. Farmer distributions
   const farmerDistPath = path.join(__dirname, "out/archi-farmer-distributions.csv");
   const farmerRows = [
-    "farmer,collateral_fsGLP,liquidator_fees_share,total_fsGLP",
-    ...farmerDistributions.map((d) => `${d.farmer},${d.collateralFsGLP},${d.liquidatorFeesShare},${d.totalFsGLP}`),
+    "farmer,collateral_fsGLP,liquidator_fees_share,total_fsGLP,avg_fsGLP_price_at_open,fsGLP_price_at_incident,capped_total_fsGLP",
+    ...farmerDistributions.map(
+      (d) =>
+        `${d.farmer},${d.collateralFsGLP},${d.liquidatorFeesShare},${d.totalFsGLP},${d.avgFsGlpPriceAtOpen},${d.fsGlpPriceAtIncident},${d.cappedTotalFsGLP}`
+    ),
   ];
   fs.writeFileSync(farmerDistPath, farmerRows.join("\n"));
   console.log(`✅ out/archi-farmer-distributions.csv (${farmerDistributions.length} farmers)`);
 
-  // 3. LP distributions (detailed with vsToken balances)
+  // 3. LP distributions (detailed with vsToken balances and capping)
   const lpDetailPath = path.join(__dirname, "out/archi-lp-distributions.csv");
   const lpDetailRows = [
-    "address,wbtc_vsTokens,wbtc_fsGLP,weth_vsTokens,weth_fsGLP,usdt_vsTokens,usdt_fsGLP,usdc_vsTokens,usdc_fsGLP,total_fsGLP",
+    "address,wbtc_vsTokens,wbtc_fsGLP,weth_vsTokens,weth_fsGLP,usdt_vsTokens,usdt_fsGLP,usdt_deposit_usd,usdt_fsGLP_capped,usdc_vsTokens,usdc_fsGLP,usdc_deposit_usd,usdc_fsGLP_capped,total_fsGLP,wbtc_fsGLP_final,weth_fsGLP_final,usdt_fsGLP_final,usdc_fsGLP_final,total_fsGLP_final",
     ...lpDistributions.map((d) =>
       [
         d.address,
@@ -608,9 +986,18 @@ function writeOutputFiles(
         ethers.utils.formatEther(d.weth_fsGLP),
         d.usdt_vsTokens,
         ethers.utils.formatEther(d.usdt_fsGLP),
+        d.usdt_deposit_usd,
+        ethers.utils.formatEther(d.usdt_fsGLP_capped),
         d.usdc_vsTokens,
         ethers.utils.formatEther(d.usdc_fsGLP),
+        d.usdc_deposit_usd,
+        ethers.utils.formatEther(d.usdc_fsGLP_capped),
         ethers.utils.formatEther(d.total_fsGLP),
+        ethers.utils.formatEther(d.wbtc_fsGLP_final),
+        ethers.utils.formatEther(d.weth_fsGLP_final),
+        ethers.utils.formatEther(d.usdt_fsGLP_final),
+        ethers.utils.formatEther(d.usdc_fsGLP_final),
+        ethers.utils.formatEther(d.total_fsGLP_final),
       ].join(",")
     ),
   ];
@@ -623,6 +1010,7 @@ function writeOutputFiles(
 // ============================================================================
 
 function updateMarkdownTables(
+  positions: PositionData[],
   farmerDistributions: FarmerDistribution[],
   lpDistributions: LPDistribution[],
   vaultBorrowing: Record<string, VaultBorrowing>
@@ -663,7 +1051,7 @@ function updateMarkdownTables(
 
   const vaultTable = `### Vault Borrowing Summary (Farmers)
 
-Farmers borrowed fsGLP from these vaults to create leveraged positions. This borrowed fsGLP is distributed to LPs based on their vsToken holdings.
+Farmers borrowed tokens (WETH, WBTC, USDT, USDC) from these vaults to create leveraged positions. The borrowed tokens were converted to fsGLP and tracked by vault. This fsGLP is distributed to LPs based on their vsToken holdings.
 
 | Vault | Borrowed fsGLP | % of Total | Farmer Positions |
 |-------|----------------|------------|------------------|
@@ -675,6 +1063,9 @@ ${vaultTableRows.join("\n")}
   // Calculate farmer percentages
   const farmerTotal = farmerDistributions.reduce((sum, f) => sum + parseFloat(f.totalFsGLP), 0);
 
+  // Calculate total capped fsGLP for percentage calculations
+  const farmerTotalCapped = farmerDistributions.reduce((sum, f) => sum + parseFloat(f.cappedTotalFsGLP), 0);
+
   // Generate farmer table
   const farmerTableRows = farmerDistributions
     .sort((a, b) => parseFloat(b.totalFsGLP) - parseFloat(a.totalFsGLP))
@@ -682,12 +1073,18 @@ ${vaultTableRows.join("\n")}
       const collateral = parseFloat(f.collateralFsGLP);
       const fees = parseFloat(f.liquidatorFeesShare);
       const total = parseFloat(f.totalFsGLP);
-      const pct = ((total / farmerTotal) * 100).toFixed(2);
+      const avgPrice = parseFloat(f.avgFsGlpPriceAtOpen);
+      const incidentPrice = parseFloat(f.fsGlpPriceAtIncident);
+      const cappedTotal = parseFloat(f.cappedTotalFsGLP);
+      const recoveryPct = ((cappedTotal / total) * 100).toFixed(2);
+      const avgPriceDisplay = avgPrice > 0 ? `$${avgPrice.toFixed(4)}` : "N/A";
       return `| ${f.farmer} | ${collateral.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} | ${fees
         .toFixed(2)
         .replace(/\B(?=(\d{3})+(?!\d))/g, ",")} | **${total
         .toFixed(2)
-        .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | ${pct}% |`;
+        .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | ${avgPriceDisplay} | $${incidentPrice.toFixed(2)} | **${cappedTotal
+        .toFixed(2)
+        .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | ${recoveryPct}% |`;
     });
 
   const farmerTotalCollateral = farmerDistributions.reduce((sum, f) => sum + parseFloat(f.collateralFsGLP), 0);
@@ -695,43 +1092,121 @@ ${vaultTableRows.join("\n")}
 
   const farmerTable = `### Farmer Distributions (${farmerDistributions.length} farmers)
 
-Farmers deposited collateral and borrowed from vaults to create leveraged fsGLP positions. They receive their collateral fsGLP plus a proportional share of liquidator fees.
+Farmers deposited collateral and borrowed tokens from vaults to create leveraged fsGLP positions. All assets were converted to fsGLP. They receive their collateral fsGLP entitlement plus a proportional share of liquidator fees.
 
-| Farmer Address | Collateral fsGLP | Liquidator Fees Share | Total fsGLP | % of Farmer Total |
-|----------------|------------------|----------------------|-------------|-------------------|
+The **Capped Total fsGLP** column accounts for the difference between the average fsGLP price when farmers opened their positions versus the fsGLP price at the time of the incident ($1.45), calculated as: \`total_fsGLP * avg_price_at_open / price_at_incident\`.
+
+The **Recovery %** column shows what percentage of their original total fsGLP each farmer receives back after the cap is applied (i.e., \`capped_total / total_fsGLP * 100\`).
+
+| Farmer Address | Collateral fsGLP | Liquidator Fees Share | Total fsGLP | Avg Price at Open | Price at Incident | Capped Total fsGLP | Recovery % |
+|----------------|------------------|----------------------|-------------|-------------------|-------------------|--------------------|------------|
 ${farmerTableRows.join("\n")}
 | **TOTAL** | **${farmerTotalCollateral.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | **${farmerTotalFees
     .toFixed(2)
     .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | **${farmerTotal
     .toFixed(2)
-    .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | **100%** |
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | - | **$1.45** | **${farmerTotalCapped
+    .toFixed(2)
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | **${((farmerTotalCapped / farmerTotal) * 100).toFixed(2)}%** |
 
 **Note:** Full farmer distribution details available in \`out/archi-farmer-distributions.csv\` (${
     farmerDistributions.length
   } farmers total)`;
 
-  // Generate LP displayed in table
+  // Generate farmer positions table with historical data
+  const positionsTableRows = positions
+    .sort((a, b) => {
+      // Sort by farmer, then by position index
+      if (a.farmer !== b.farmer) return a.farmer.localeCompare(b.farmer);
+      return a.positionIndex - b.positionIndex;
+    })
+    .map((p, idx) => {
+      const dateStr = p.date.split("T")[0];
+      const collateralFmt = parseFloat(p.collateralAmount).toFixed(2);
+      const totalFsGLPFmt = parseFloat(p.totalFsGLP).toFixed(2);
+      const leverageFmt = p.leverage;
+      const priceDisplay = p.priceSource === "historical" ? `$${parseFloat(p.glpPriceUsd).toFixed(4)}` : "N/A";
+      const valueDisplay =
+        p.priceSource === "historical"
+          ? `$${parseFloat(p.collateralValueUsd)
+              .toFixed(2)
+              .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`
+          : "N/A";
+      const txLink = `[${p.txHash.substring(0, 6)}...](https://arbiscan.io/tx/${p.txHash})`;
+
+      return `| ${idx + 1} | ${p.farmer} | ${
+        p.positionIndex
+      } | ${dateStr} | ${collateralFmt} | ${priceDisplay} | ${valueDisplay} | ${totalFsGLPFmt} | ${leverageFmt}x | ${txLink} |`;
+    });
+
+  const positionsWithPrice = positions.filter((p) => p.priceSource === "historical").length;
+  const positionsWithoutPrice = positions.filter((p) => p.priceSource === "unavailable").length;
+
+  const priceNote =
+    positionsWithoutPrice > 0
+      ? `\n\n⚠️ **Note on Prices:** ${positionsWithPrice}/${positions.length} positions have historical price data. ${positionsWithoutPrice} position(s) require archive node for historical prices.`
+      : `\n\n✅ **All positions have historical price data.**`;
+
+  const positionsTable = `<details>
+<summary><strong>All Farmer Positions (${positions.length} positions)</strong></summary>
+
+Complete details for all active farmer positions including opening dates, historical GLP prices, and transaction hashes.
+
+| # | Farmer | Pos# | Opening Date | Collateral (fsGLP) | GLP Price | Collateral Value (USD) | Total fsGLP | Leverage | Transaction |
+|---|--------|------|--------------|-------------------|-----------|----------------------|-------------|----------|-------------|
+${positionsTableRows.join("\n")}
+
+**Column Definitions:**
+- **Farmer**: Address of the farmer who created the position
+- **Pos#**: Position index number
+- **Opening Date**: Date when position was opened (YYYY-MM-DD)
+- **Collateral (fsGLP)**: Amount of fsGLP deposited as collateral
+- **GLP Price**: Historical GLP price in USD at the time of opening
+- **Collateral Value (USD)**: USD value of collateral at opening (collateral × GLP price)
+- **Total fsGLP**: Total fsGLP including borrowed amounts (collateral + borrowed)
+- **Leverage**: Leverage multiplier (total fsGLP ÷ collateral fsGLP)
+- **Transaction**: Link to opening transaction on Arbiscan${priceNote}
+
+**Full Details:** See \`out/archi-farmer-positions.csv\` for complete data including block numbers, timestamps, borrowed tokens, credit managers, and more.
+
+</details>`;
+
+  // Generate LP displayed in table (showing final distributions after capping)
   const topLPs = TOP_LPS === -1 ? lpDistributions : lpDistributions.slice(0, TOP_LPS);
   const lpTableRows = topLPs.map((lp, idx) => {
-    const wbtc = parseFloat(ethers.utils.formatEther(lp.wbtc_fsGLP));
-    const weth = parseFloat(ethers.utils.formatEther(lp.weth_fsGLP));
-    const usdt = parseFloat(ethers.utils.formatEther(lp.usdt_fsGLP));
-    const usdc = parseFloat(ethers.utils.formatEther(lp.usdc_fsGLP));
-    const total = parseFloat(ethers.utils.formatEther(lp.total_fsGLP));
+    const wbtcFinal = parseFloat(ethers.utils.formatEther(lp.wbtc_fsGLP_final));
+    const wethFinal = parseFloat(ethers.utils.formatEther(lp.weth_fsGLP_final));
+    const usdtFinal = parseFloat(ethers.utils.formatEther(lp.usdt_fsGLP_final));
+    const usdcFinal = parseFloat(ethers.utils.formatEther(lp.usdc_fsGLP_final));
+    const totalFinal = parseFloat(ethers.utils.formatEther(lp.total_fsGLP_final));
 
-    return `| ${idx + 1} | ${lp.address} | ${wbtc.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} | ${weth
+    return `| ${idx + 1} | ${lp.address} | ${wbtcFinal.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} | ${wethFinal
       .toFixed(2)
-      .replace(/\B(?=(\d{3})+(?!\d))/g, ",")} | ${usdt.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} | ${usdc
+      .replace(/\B(?=(\d{3})+(?!\d))/g, ",")} | ${usdtFinal
       .toFixed(2)
-      .replace(/\B(?=(\d{3})+(?!\d))/g, ",")} | **${total.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** |`;
+      .replace(/\B(?=(\d{3})+(?!\d))/g, ",")} | ${usdcFinal
+      .toFixed(2)
+      .replace(/\B(?=(\d{3})+(?!\d))/g, ",")} | **${totalFinal.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** |`;
   });
 
-  const lpTotalWbtc = lpDistributions.reduce((sum, lp) => sum + parseFloat(ethers.utils.formatEther(lp.wbtc_fsGLP)), 0);
-  const lpTotalWeth = lpDistributions.reduce((sum, lp) => sum + parseFloat(ethers.utils.formatEther(lp.weth_fsGLP)), 0);
-  const lpTotalUsdt = lpDistributions.reduce((sum, lp) => sum + parseFloat(ethers.utils.formatEther(lp.usdt_fsGLP)), 0);
-  const lpTotalUsdc = lpDistributions.reduce((sum, lp) => sum + parseFloat(ethers.utils.formatEther(lp.usdc_fsGLP)), 0);
-  const lpGrandTotal = lpDistributions.reduce(
-    (sum, lp) => sum + parseFloat(ethers.utils.formatEther(lp.total_fsGLP)),
+  const lpTotalWbtcFinal = lpDistributions.reduce(
+    (sum, lp) => sum + parseFloat(ethers.utils.formatEther(lp.wbtc_fsGLP_final)),
+    0
+  );
+  const lpTotalWethFinal = lpDistributions.reduce(
+    (sum, lp) => sum + parseFloat(ethers.utils.formatEther(lp.weth_fsGLP_final)),
+    0
+  );
+  const lpTotalUsdtFinal = lpDistributions.reduce(
+    (sum, lp) => sum + parseFloat(ethers.utils.formatEther(lp.usdt_fsGLP_final)),
+    0
+  );
+  const lpTotalUsdcFinal = lpDistributions.reduce(
+    (sum, lp) => sum + parseFloat(ethers.utils.formatEther(lp.usdc_fsGLP_final)),
+    0
+  );
+  const lpGrandTotalFinal = lpDistributions.reduce(
+    (sum, lp) => sum + parseFloat(ethers.utils.formatEther(lp.total_fsGLP_final)),
     0
   );
 
@@ -741,22 +1216,30 @@ ${farmerTableRows.join("\n")}
 
   const lpTable = `### LP Distributions - Top ${TOP_LPS === -1 ? "All" : TOP_LPS} (${lpDistributions.length} LPs total)
 
-LPs provided liquidity to vaults and received vsTokens. They earn fsGLP rewards proportional to their vsToken holdings when farmers borrow from their vault.
+LPs provided liquidity to vaults and received vsTokens. They receive fsGLP distributions proportional to their vsToken holdings, based on what farmers borrowed from their vault (tracked as fsGLP value).
+
+**Stablecoin Capping Applied:** USDC and USDT distributions are capped so that their fsGLP value at $1.45 does not exceed their original deposit value. The excess fsGLP from this capping is redistributed proportionally to WBTC and WETH LPs based on their volatile asset holdings.
+
+**These are final distributions** after stablecoin capping and excess redistribution.
 
 | Rank | LP Address | WBTC fsGLP | WETH fsGLP | USDT fsGLP | USDC fsGLP | Total fsGLP |
 |------|------------|------------|------------|------------|------------|-------------|
 ${lpTableRows.join("\n")}
-${separatorLine}| ${totalRowRank} | **All LPs** | **${lpTotalWbtc
+${separatorLine}| ${totalRowRank} | **All LPs** | **${lpTotalWbtcFinal
     .toFixed(2)
-    .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | **${lpTotalWeth
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | **${lpTotalWethFinal
     .toFixed(2)
-    .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | **${lpTotalUsdt
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | **${lpTotalUsdtFinal
     .toFixed(2)
-    .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | **${lpTotalUsdc
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | **${lpTotalUsdcFinal
     .toFixed(2)
-    .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | **${lpGrandTotal.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** |
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | **${lpGrandTotalFinal
+    .toFixed(2)
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** |
 
-**Note:** Full LP distribution list available in \`out/archi-lp-distributions.csv\` (${lpDistributions.length} LPs total)`;
+**Note:** Full LP distribution list available in \`out/archi-lp-distributions.csv\` (${
+    lpDistributions.length
+  } LPs total)`;
 
   // Generate timestamp
   const now = new Date();
@@ -771,6 +1254,8 @@ ${separatorLine}| ${totalRowRank} | **All LPs** | **${lpTotalWbtc
 ${vaultTable}
 
 ${farmerTable}
+
+${positionsTable}
 
 ${lpTable}
 `;
@@ -804,15 +1289,41 @@ function printSummary(
   console.log("SUMMARY");
   console.log("=".repeat(80) + "\n");
 
-  const farmerTotal = farmerDistributions.reduce((sum, f) => sum + parseFloat(f.totalFsGLP), 0);
-  const lpTotal = lpDistributions.reduce((sum, lp) => sum + parseFloat(ethers.utils.formatEther(lp.total_fsGLP)), 0);
-  const distributed = farmerTotal + lpTotal;
+  const farmerTotalOriginal = farmerDistributions.reduce((sum, f) => sum + parseFloat(f.totalFsGLP), 0);
+  const farmerTotalCapped = farmerDistributions.reduce((sum, f) => sum + parseFloat(f.cappedTotalFsGLP), 0);
+  const lpTotalOriginal = lpDistributions.reduce(
+    (sum, lp) => sum + parseFloat(ethers.utils.formatEther(lp.total_fsGLP)),
+    0
+  );
+  const lpTotalFinal = lpDistributions.reduce(
+    (sum, lp) => sum + parseFloat(ethers.utils.formatEther(lp.total_fsGLP_final)),
+    0
+  );
+  const distributedOriginal = farmerTotalOriginal + lpTotalOriginal;
+  const distributedFinal = farmerTotalCapped + lpTotalFinal;
+
+  const farmerExcess = farmerTotalOriginal - farmerTotalCapped;
+  const lpGain = lpTotalFinal - lpTotalOriginal;
 
   console.log("Distribution Breakdown:");
-  console.log(`  Farmers:    ${farmerTotal.toFixed(2)} fsGLP (${farmerDistributions.length} farmers)`);
-  console.log(`  LPs:        ${lpTotal.toFixed(2)} fsGLP (${lpDistributions.length} LPs)`);
-  console.log(`  Total:      ${distributed.toFixed(2)} fsGLP`);
-  console.log(`  Expected:   ${(totals.gmxExecutor + totals.creditUser2).toFixed(2)} fsGLP\n`);
+  console.log(`  Farmers (original): ${farmerTotalOriginal.toFixed(2)} fsGLP`);
+  console.log(
+    `  Farmers (capped):   ${farmerTotalCapped.toFixed(2)} fsGLP (after IL adjustment) (${
+      farmerDistributions.length
+    } farmers)`
+  );
+  console.log(`  Farmer excess:      ${farmerExcess.toFixed(2)} fsGLP (redistributed to LPs)\n`);
+  console.log(`  LPs (original):     ${lpTotalOriginal.toFixed(2)} fsGLP`);
+  console.log(`  LPs (final):        ${lpTotalFinal.toFixed(2)} fsGLP (${lpDistributions.length} LPs)`);
+  console.log(`  LP gain:            ${lpGain.toFixed(2)} fsGLP (from farmer excess + stablecoin capping)\n`);
+  console.log(`  Total (original):   ${distributedOriginal.toFixed(2)} fsGLP`);
+  console.log(`  Total (final):      ${distributedFinal.toFixed(2)} fsGLP`);
+  console.log(`  Expected:           ${(totals.gmxExecutor + totals.creditUser2).toFixed(2)} fsGLP`);
+  console.log(
+    `  Difference:         ${(distributedFinal - (totals.gmxExecutor + totals.creditUser2)).toFixed(
+      6
+    )} fsGLP (should be ~0)\n`
+  );
 
   const totalUnique = new Set([...farmerDistributions.map((f) => f.farmer), ...lpDistributions.map((lp) => lp.address)])
     .size;
@@ -841,10 +1352,11 @@ async function main() {
   const farmerDistributions = await step3_calculateFarmerDistributions(positions, totals.creditUser2);
   const vaultBorrowing = step4_calculateVaultBorrowing(positions);
   const lpDistributions = await step5_calculateLPDistributions(vaultBorrowing);
+  const lpDistributionsFinal = step6_applyStablecoinCapping(lpDistributions, farmerDistributions);
 
-  writeOutputFiles(positions, farmerDistributions, vaultBorrowing, lpDistributions);
-  updateMarkdownTables(farmerDistributions, lpDistributions, vaultBorrowing);
-  printSummary(totals, farmerDistributions, lpDistributions);
+  writeOutputFiles(positions, farmerDistributions, vaultBorrowing, lpDistributionsFinal);
+  updateMarkdownTables(positions, farmerDistributions, lpDistributionsFinal, vaultBorrowing);
+  printSummary(totals, farmerDistributions, lpDistributionsFinal);
 }
 
 main()
