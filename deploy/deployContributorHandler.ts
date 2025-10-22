@@ -13,6 +13,9 @@ const func = createDeployFunction({
   afterDeploy: async ({ deployedContract }) => {
     await grantRoleIfNotGranted(deployedContract, "CONTROLLER");
   },
+  // NOTE: this id should not be changed unless absolutely necessary
+  // if a new ContributorHandler is deployed, the funding accounts / treasuries
+  // would need to re-approve spending of tokens for the new ContributorHandler
   id: "ContributorHandler_1",
 });
 

@@ -140,6 +140,12 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
     },
   };
 
+  const fundDistributors = {
+    mainnet: {
+      "0x9494410EC39ce9660ACb4562963dd8841B3e926C": true, // fund_distributor_1
+    },
+  };
+
   const testnetAdmins = {
     "0xC84f3398eDf6336E1Ef55b50Ca3F9f9f96B8b504": true,
     "0xFb11f15f206bdA02c224EDC744b0E50E46137046": true,
@@ -172,7 +178,14 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
     TIMELOCK_ADMIN: testnetAdmins,
   };
 
-  const roleInfo = { syntheticKeepers, chainlinkKeepers, gelatoKeepers, generalConfigKeepers, claimAdmins };
+  const roleInfo = {
+    syntheticKeepers,
+    chainlinkKeepers,
+    gelatoKeepers,
+    generalConfigKeepers,
+    claimAdmins,
+    fundDistributors,
+  };
 
   const roles: {
     [network: string]: {
