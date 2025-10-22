@@ -260,6 +260,12 @@ const borrowingRateConfig_HighMax_WithHigherBase: BorrowingRateConfig = {
   aboveOptimalUsageBorrowingFactor: percentageToFloat("130%").div(SECONDS_PER_YEAR),
 };
 
+const borrowingRateConfig_LowerMax_WithHigherOptimal: BorrowingRateConfig = {
+  optimalUsageFactor: percentageToFloat("85%"),
+  baseBorrowingFactor: percentageToFloat("45%").div(SECONDS_PER_YEAR),
+  aboveOptimalUsageBorrowingFactor: percentageToFloat("90%").div(SECONDS_PER_YEAR),
+};
+
 const baseMarketConfig: Partial<BaseMarketConfig> = {
   minCollateralFactor: percentageToFloat("1%"), // 1%
   minCollateralFactorForLiquidation: percentageToFloat("1%"), // 1%
@@ -458,7 +464,7 @@ const config: {
 
       ...baseMarketConfig,
       ...fundingRateConfig_Low,
-      ...borrowingRateConfig_LowMax_WithLowerBase,
+      ...borrowingRateConfig_LowerMax_WithHigherOptimal,
 
       reserveFactor: percentageToFloat("350%"),
       openInterestReserveFactor: percentageToFloat("345%"),
@@ -555,7 +561,7 @@ const config: {
 
       ...baseMarketConfig,
       ...fundingRateConfig_Low,
-      ...borrowingRateConfig_LowMax_WithLowerBase,
+      ...borrowingRateConfig_LowerMax_WithHigherOptimal,
 
       reserveFactor: percentageToFloat("275%"),
       openInterestReserveFactor: percentageToFloat("270%"),
@@ -956,7 +962,7 @@ const config: {
 
       ...baseMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowMax_WithLowerBase,
+      ...borrowingRateConfig_LowerMax_WithHigherOptimal,
 
       maxLongTokenPoolAmount: expandDecimals(110_000, 9),
       maxShortTokenPoolAmount: expandDecimals(20_000_000, 6),
@@ -1128,7 +1134,7 @@ const config: {
 
       ...baseMarketConfig,
       ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowMax_WithLowerBase,
+      ...borrowingRateConfig_LowerMax_WithHigherOptimal,
 
       reserveFactor: percentageToFloat("305%"),
       openInterestReserveFactor: percentageToFloat("300%"),
