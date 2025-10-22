@@ -1,4 +1,11 @@
-export function getRoles({ syntheticKeepers, chainlinkKeepers, gelatoKeepers, claimAdmins, generalConfigKeepers }) {
+export function getRoles({
+  syntheticKeepers,
+  chainlinkKeepers,
+  gelatoKeepers,
+  claimAdmins,
+  generalConfigKeepers,
+  fundDistributors,
+}) {
   return {
     ADL_KEEPER: syntheticKeepers.mainnet,
     FROZEN_ORDER_KEEPER: syntheticKeepers.mainnet,
@@ -12,6 +19,10 @@ export function getRoles({ syntheticKeepers, chainlinkKeepers, gelatoKeepers, cl
     },
     CONTRIBUTOR_KEEPER: {
       "0x49B373D422BdA4C6BfCdd5eC1E48A9a26fdA2F8b": true, // contributor_keeper_1
+    },
+    CONTRIBUTOR_DISTRIBUTOR: {
+      ...generalConfigKeepers.mainnet,
+      ...fundDistributors.mainnet,
     },
     CONFIG_KEEPER: {
       "0x4b6ACC5b2db1757bD49408FeE92e32D39608B5d9": true, // multisig_1
