@@ -760,6 +760,10 @@ async function validatePerpConfig({
     });
   }
 
+  if (marketConfig.minCollateralFactor.lt(marketConfig.minCollateralFactorForLiquidation)) {
+    throw new Error(`minCollateralFactor < minCollateralFactorForLiquidation for ${marketLabel}`);
+  }
+
   console.log("validatePerpConfig", indexTokenSymbol);
   const recommendedPerpConfig =
     recommendedMarketConfig[hre.network.name][`${indexTokenSymbol}:${longTokenSymbol}:${shortTokenSymbol}`] ??
