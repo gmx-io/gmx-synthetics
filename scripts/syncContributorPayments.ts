@@ -86,11 +86,9 @@ async function main() {
         const decimals = tokenDecimalsBySymbol[symbol];
         const parsedAmount = hre.ethers.utils.parseUnits(sanitizeNumeric(cell), decimals);
         console.log(`${account}: ${parsedAmount.toString()} ${symbol}`);
-        if (parsedAmount.gt(0)) {
-          desiredAmountsByAccount[account][symbol] = (desiredAmountsByAccount[account][symbol] ?? bigNumberify(0)).add(
-            parsedAmount
-          );
-        }
+        desiredAmountsByAccount[account][symbol] = (desiredAmountsByAccount[account][symbol] ?? bigNumberify(0)).add(
+          parsedAmount
+        );
       }
     }
   }
@@ -107,9 +105,7 @@ async function main() {
   for (const [account, tokenMap] of Object.entries(desiredAmountsByAccount)) {
     for (const symbol of TOKENS) {
       const desired = tokenMap[symbol] ?? bigNumberify(0);
-      if (desired.gt(0)) {
-        accountTokenPairs.push({ account, tokenAddr: tokenAddressesBySymbol[symbol], desired });
-      }
+      accountTokenPairs.push({ account, tokenAddr: tokenAddressesBySymbol[symbol], desired });
     }
   }
 
@@ -156,14 +152,12 @@ async function main() {
     const amountsToSet: any[] = [];
     for (const symbol of TOKENS) {
       const desired = tokenMap[symbol] ?? bigNumberify(0);
-      if (desired.gt(0)) {
-        const tokenAddr = tokenAddressesBySymbol[symbol];
-        const current = currentValuesByAccountToken[account]?.[tokenAddr] ?? bigNumberify(0);
-        if (!current.eq(desired)) {
-          tokenAddressesToSet.push(tokenAddr);
-          amountsToSet.push(desired);
-          totalsBySymbol[symbol] = (totalsBySymbol[symbol] ?? bigNumberify(0)).add(desired);
-        }
+      const tokenAddr = tokenAddressesBySymbol[symbol];
+      const current = currentValuesByAccountToken[account]?.[tokenAddr] ?? bigNumberify(0);
+      totalsBySymbol[symbol] = (totalsBySymbol[symbol] ?? bigNumberify(0)).add(desired);
+      if (!current.eq(desired)) {
+        tokenAddressesToSet.push(tokenAddr);
+        amountsToSet.push(desired);
       }
     }
     if (tokenAddressesToSet.length) {
