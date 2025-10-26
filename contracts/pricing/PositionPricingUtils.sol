@@ -343,18 +343,23 @@ library PositionPricingUtils {
         uint256 nextLongOpenInterest = longOpenInterest;
         uint256 nextShortOpenInterest = shortOpenInterest;
 
+        // with single token markets, because getOpenInterest is rounded down when divided by two
+        // it is possible for the usdDelta to exceed the calculated open interest
+        // to prevent reverts here, nextLongOpenInterest and nextShortOpenInterest is set to 0 for this case
+        // there is a separate validation in applyDeltaToOpenInterest and applyDeltaToOpenInterestInTokens
+        // to prevent orders that would result in a negative open interest
         if (params.isLong) {
             if (params.usdDelta < 0 && (-params.usdDelta).toUint256() > longOpenInterest) {
-                revert Errors.UsdDeltaExceedsLongOpenInterest(params.usdDelta, longOpenInterest);
+                nextLongOpenInterest = 0;
+            } else {
+                nextLongOpenInterest = Calc.sumReturnUint256(longOpenInterest, params.usdDelta);
             }
-
-            nextLongOpenInterest = Calc.sumReturnUint256(longOpenInterest, params.usdDelta);
         } else {
             if (params.usdDelta < 0 && (-params.usdDelta).toUint256() > shortOpenInterest) {
-                revert Errors.UsdDeltaExceedsShortOpenInterest(params.usdDelta, shortOpenInterest);
+                nextShortOpenInterest = 0;
+            } else {
+                nextShortOpenInterest = Calc.sumReturnUint256(shortOpenInterest, params.usdDelta);
             }
-
-            nextShortOpenInterest = Calc.sumReturnUint256(shortOpenInterest, params.usdDelta);
         }
 
         OpenInterestParams memory openInterestParams = OpenInterestParams(
