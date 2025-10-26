@@ -474,6 +474,138 @@ describe("LayerZeroProvider", () => {
       });
     });
 
+    describe("Native Token Top-Up via msg.value", () => {
+      beforeEach(async () => {
+        await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolUsdc.SRC_EID()), chainId);
+      });
+
+      it("should credit msg.value to user's multichain balance when bridging USDC", async () => {
+        const usdcAmount = expandDecimals(1000, 6);
+        const nativeTopUp = expandDecimals(1, 17); // 0.1 ETH
+
+        const wntBalanceBefore = await dataStore.getUint(keys.multichainBalanceKey(user0.address, wnt.address));
+        const usdcBalanceBefore = await dataStore.getUint(keys.multichainBalanceKey(user0.address, usdc.address));
+
+        await bridgeInTokens(fixture, {
+          account: user0,
+          token: usdc,
+          amount: usdcAmount,
+          nativeTopUpAmount: nativeTopUp,
+        });
+
+        // Verify USDC was credited
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, usdc.address))).eq(
+          usdcBalanceBefore.add(usdcAmount)
+        );
+
+        // Verify native token was credited (wrapped to WNT)
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, wnt.address))).eq(
+          wntBalanceBefore.add(nativeTopUp)
+        );
+      });
+
+      it("should credit msg.value when bridging native ETH", async () => {
+        const ethBridgeAmount = expandDecimals(1, 18); // 1 ETH for bridging
+        const nativeTopUp = expandDecimals(5, 17); // 0.5 ETH for top-up
+        const totalMsgValue = ethBridgeAmount.add(nativeTopUp);
+
+        const wntBalanceBefore = await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address));
+
+        await bridgeInTokens(fixture, {
+          account: user1,
+          token: undefined, // undefined means sending native tokens (ETH)
+          amount: ethBridgeAmount,
+          nativeTopUpAmount: nativeTopUp,
+        });
+
+        // Should credit both: bridged ETH + top-up ETH
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).eq(
+          wntBalanceBefore.add(totalMsgValue)
+        );
+      });
+
+      it("should work with msg.value = 0", async () => {
+        const usdcAmount = expandDecimals(1000, 6);
+
+        const usdcBalanceBefore = await dataStore.getUint(keys.multichainBalanceKey(user0.address, usdc.address));
+        const wntBalanceBefore = await dataStore.getUint(keys.multichainBalanceKey(user0.address, wnt.address));
+
+        // No native top-up (nativeTopUpAmount not specified)
+        await bridgeInTokens(fixture, {
+          account: user0,
+          token: usdc,
+          amount: usdcAmount,
+        });
+
+        // Should succeed with msg.value = 0
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, usdc.address))).eq(
+          usdcBalanceBefore.add(usdcAmount)
+        );
+
+        // WNT balance should not change
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, wnt.address))).eq(wntBalanceBefore);
+      });
+
+      it("should revert if msg.value is less than expectedNativeValue", async () => {
+        const usdcAmount = expandDecimals(1000, 6);
+        const expectedNativeValue = expandDecimals(2, 17); // 0.2 ETH expected
+        const actualSent = expandDecimals(1, 17); // 0.1 ETH actually sent (insufficient)
+
+        await usdc.mint(user0.address, usdcAmount);
+        await usdc.connect(user0).approve(mockStargatePoolUsdc.address, usdcAmount);
+
+        // Encode message without action but with expectedNativeValue
+        const data = ethers.utils.defaultAbiCoder.encode(
+          ["uint8", "uint256", "bytes"],
+          [0, expectedNativeValue, "0x"] // ActionType.None, expectedNativeValue, no actionData
+        );
+
+        const encodedMessage = ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [user0.address, data]);
+
+        // Should revert because actualSent (0.1 ETH) < expectedNativeValue (0.2 ETH)
+        await expect(
+          mockStargatePoolUsdc
+            .connect(user0)
+            .sendToken(layerZeroProvider.address, usdcAmount, encodedMessage, { value: actualSent })
+        ).to.be.revertedWithCustomError(layerZeroProvider, "InsufficientNativeTokenAmount");
+      });
+
+      it("should succeed when msg.value >= expectedNativeValue and credit full amount", async () => {
+        const usdcAmount = expandDecimals(1000, 6);
+        const expectedNativeValue = expandDecimals(5, 16); // 0.05 ETH expected
+        const actualSent = expandDecimals(2, 17); // 0.2 ETH sent (more than expected)
+
+        await usdc.mint(user0.address, usdcAmount);
+        await usdc.connect(user0).approve(mockStargatePoolUsdc.address, usdcAmount);
+
+        // Encode message without action but with expectedNativeValue
+        const data = ethers.utils.defaultAbiCoder.encode(
+          ["uint8", "uint256", "bytes"],
+          [0, expectedNativeValue, "0x"] // ActionType.None, expectedNativeValue, no actionData
+        );
+
+        const encodedMessage = ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [user0.address, data]);
+
+        const wntBalanceBefore = await dataStore.getUint(keys.multichainBalanceKey(user0.address, wnt.address));
+        const usdcBalanceBefore = await dataStore.getUint(keys.multichainBalanceKey(user0.address, usdc.address));
+
+        // Should succeed because actualSent (0.2 ETH) >= expectedNativeValue (0.05 ETH)
+        await mockStargatePoolUsdc
+          .connect(user0)
+          .sendToken(layerZeroProvider.address, usdcAmount, encodedMessage, { value: actualSent });
+
+        // USDC should be credited normally
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, usdc.address))).eq(
+          usdcBalanceBefore.add(usdcAmount)
+        );
+
+        // User gets the full actualSent amount (0.2 ETH), not just expectedNativeValue
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, wnt.address))).eq(
+          wntBalanceBefore.add(actualSent)
+        );
+      });
+    });
+
     describe("actionType: SetTraderReferralCode", () => {
       const referralCode = hashString("referralCode");
 
