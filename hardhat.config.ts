@@ -35,6 +35,7 @@ import { deleteFile, writeJsonFile } from "./utils/file";
 import { TASK_VERIFY } from "@nomicfoundation/hardhat-verify/internal/task-names";
 
 const getNetworkFromCLI = () => {
+  if (process.env.HARDHAT_NETWORK) return process.env.HARDHAT_NETWORK;
   const i = process.argv.indexOf("--network");
   return i !== -1 && process.argv[i + 1] ? process.argv[i + 1] : "hardhat";
 };
