@@ -3,25 +3,37 @@ import { ethers } from "ethers";
 import got from "got";
 import fs from "fs";
 import path from "path";
-import prompts from "prompts";
 import { formatAmount, bigNumberify, expandDecimals } from "../utils/math";
 import * as keys from "../utils/keys";
-import { hashData } from "../utils/hash";
 import { getPositionCount, getPositionKeys } from "../utils/position";
 
-// MARKET=0x2aE5c5Cd4843cf588AA8D1289894318130acc823 npx hardhat run scripts/generateMarketClaimsData.ts --network arbitrum
+// MARKET=<address> DISTRIBUTION_TYPE_ID=<number> START_BLOCK=<number> npx hardhat run scripts/generateMarketClaimsData.ts --network arbitrum
+// e.g. MKR
+// MARKET=0x2aE5c5Cd4843cf588AA8D1289894318130acc823 DISTRIBUTION_TYPE_ID=3001 START_BLOCK=314831762 npx hardhat run scripts/generateMarketClaimsData.ts --network arbitrum
+
+if (!process.env.MARKET) {
+  throw new Error("MARKET environment variable is required");
+}
+if (!process.env.DISTRIBUTION_TYPE_ID) {
+  throw new Error("DISTRIBUTION_TYPE_ID environment variable is required");
+}
+if (!process.env.START_BLOCK) {
+  throw new Error(
+    "START_BLOCK environment variable is required (should be market deployment block or earlier to capture all GM token transfers)"
+  );
+}
 
 const MARKET = process.env.MARKET;
-const DISTRIBUTION_TOKEN = process.env.DISTRIBUTION_TOKEN || "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"; // Arbitrum USDC
 const DISTRIBUTION_TYPE_ID = process.env.DISTRIBUTION_TYPE_ID;
-const START_BLOCK = process.env.START_BLOCK ? parseInt(process.env.START_BLOCK) : 314831762; // Default start block for MKR market deployment
+const START_BLOCK = parseInt(process.env.START_BLOCK);
+const DISTRIBUTION_TOKEN = process.env.DISTRIBUTION_TOKEN || "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"; // Arbitrum USDC
 const OUTPUT_DIR = process.env.OUTPUT_DIR || "scripts/distributions/out";
 
 // Use deployed address on arbitrum mainnet
 const REFERRAL_STORAGE_ADDRESS = "0xe6fab3F0c7199b0d34d7FbE83394fc0e0D06e99d";
 
 // Performance configuration
-const BATCH_SIZE = 50; // Number of positions to fetch concurrently (reduced to avoid rate limits)
+const BATCH_SIZE = 50; // Number of positions to fetch concurrently (reduce to avoid rate limits)
 const BATCH_DELAY_MS = 100; // Delay between batches to avoid rate limiting
 
 interface PositionData {
@@ -57,7 +69,6 @@ async function getMarketPrices(market: any): Promise<any> {
 
   // Check for missing prices and fail if any are not found
   const missingPrices: string[] = [];
-
   if (!indexTicker && market.indexToken !== ethers.constants.AddressZero) {
     missingPrices.push(`Index token (${market.indexToken})`);
   }
@@ -67,7 +78,6 @@ async function getMarketPrices(market: any): Promise<any> {
   if (!shortTicker) {
     missingPrices.push(`Short token (${market.shortToken})`);
   }
-
   if (missingPrices.length > 0) {
     console.error("Missing prices for:");
     missingPrices.forEach((token) => console.error(`  - ${token}`));
@@ -325,18 +335,11 @@ async function analyzeGMHolders(
 }
 
 function generateTraderClaimsData(
-  marketAddress: string,
-  blockNumber: number | string,
   positions: PositionData[],
   distributionToken: string,
   distributionTokenDecimals: number,
-  distributionTypeId: string | undefined
+  distributionTypeId: string
 ): ClaimsData {
-  // Generate distribution type ID if not provided
-  const finalDistributionTypeId =
-    distributionTypeId ||
-    hashData(["string", "address", "uint256"], ["MARKET_ANALYSIS", marketAddress, blockNumber]).slice(0, 40); // Use more chars for uniqueness
-
   // Aggregate positions by account (traders may have multiple positions)
   const accountTotals = new Map<string, ethers.BigNumber>();
 
@@ -364,7 +367,7 @@ function generateTraderClaimsData(
 
   return {
     chainId: 42161, // Arbitrum
-    distributionTypeId: finalDistributionTypeId,
+    distributionTypeId: distributionTypeId,
     token: distributionToken,
     totalAmount: totalAmount.toString(),
     amounts,
@@ -373,28 +376,12 @@ function generateTraderClaimsData(
 
 async function main() {
   // Get configuration from environment variables
-  let marketAddress = MARKET;
+  const marketAddress = MARKET;
   const blockNumberParam = await hre.ethers.provider.getBlockNumber().then((n) => n.toString());
   const blockNumber = parseInt(blockNumberParam);
   const distributionToken = DISTRIBUTION_TOKEN;
   const distributionTypeId = DISTRIBUTION_TYPE_ID;
   const outputDir = OUTPUT_DIR;
-
-  // Prompt for market if not provided
-  if (!marketAddress) {
-    const response = await prompts({
-      type: "text",
-      name: "market",
-      message: "Enter the market token address:",
-      validate: (value) => ethers.utils.isAddress(value) || "Invalid address",
-    });
-
-    if (!response.market) {
-      console.log("Market address is required");
-      process.exit(1);
-    }
-    marketAddress = response.market;
-  }
 
   console.log("=".repeat(80));
   console.log("MARKET ANALYSIS & DISTRIBUTION");
@@ -504,8 +491,6 @@ async function main() {
 
   // Generate claims data for traders
   const claimsData = generateTraderClaimsData(
-    marketAddress,
-    blockNumber,
     positions,
     distributionToken,
     distributionTokenDecimals,
