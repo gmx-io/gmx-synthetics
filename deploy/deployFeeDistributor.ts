@@ -1,5 +1,6 @@
 import { grantRoleIfNotGranted } from "../utils/role";
 import { createDeployFunction } from "../utils/deploy";
+import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 const constructorContracts = [
   "RoleStore",
@@ -51,5 +52,9 @@ const func = createDeployFunction({
   // after deployment
   id: "FeeDistributor_1",
 });
+
+func.skip = async ({ network }: HardhatRuntimeEnvironment) => {
+  return ["arbitrumSepolia"].includes(network.name);
+};
 
 export default func;
