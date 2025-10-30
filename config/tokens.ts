@@ -1803,8 +1803,8 @@ function getTokens(hre: HardhatRuntimeEnvironment) {
       token.oracleType = TOKEN_ORACLE_TYPES.DEFAULT;
     }
 
-    if (token.stablePriceUsd) {
-      token.stablePrice = token.stablePriceUsd.div(expandDecimals(1, token.decimals));
+    if (token.priceFeed && token.priceFeed.stablePriceUsd) {
+      token.priceFeed.stablePrice = token.priceFeed.stablePriceUsd.div(expandDecimals(1, token.decimals));
     }
 
     if (token.dataStreamSpreadReductionFactor === undefined) {
