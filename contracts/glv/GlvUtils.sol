@@ -22,7 +22,6 @@ library GlvUtils {
         Price.Props indexTokenPrice;
         Price.Props longTokenPrice;
         Price.Props shortTokenPrice;
-        Market.Props market;
     }
 
     // @dev get the USD value of the GLV
@@ -40,15 +39,13 @@ library GlvUtils {
         DataStore dataStore,
         IOracle oracle,
         address glv,
-        bool maximize,
-        bool forceCalculation
-    ) public view returns (uint256) {
-        if (!forceCalculation) {
-            (uint256 minPrice, uint256 maxPrice) = oracle.primaryPrices(glv);
-            Price.Props memory glvTokenPrice = Price.Props(minPrice, maxPrice);
+        bool maximize
+    ) public view returns (uint256 glvValue, bool glvTokenPriceUsed) {
+        {
+            Price.Props memory glvTokenPrice = getGlvTokenPrice(oracle, glv);
             if (!glvTokenPrice.isEmpty()) {
                 uint256 supply = ERC20(glv).totalSupply();
-                return (maximize ? glvTokenPrice.max : glvTokenPrice.min) * supply;
+                return ((maximize ? glvTokenPrice.max : glvTokenPrice.min) * supply, true);
             }
         }
 
@@ -75,7 +72,16 @@ library GlvUtils {
             );
         }
 
-        return cache.glvValue;
+        return (cache.glvValue, false);
+    }
+
+    function getGlvTokenPrice(
+        IOracle oracle,
+        address glv
+    ) internal view returns (Price.Props memory) {
+        (uint256 minPrice, uint256 maxPrice) = oracle.primaryPrices(glv);
+        Price.Props memory glvTokenPrice = Price.Props(minPrice, maxPrice);
+        return glvTokenPrice;
     }
 
     function getGlvValue(

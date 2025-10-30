@@ -237,12 +237,11 @@ library GlvShiftUtils {
 
         GlvShiftEventUtils.emitGlvShiftExecuted(params.eventEmitter, params.key, cache.receivedMarketTokens);
 
-        cache.glvValue = GlvUtils.getGlvValue(
+        (cache.glvValue, ) = GlvUtils.getGlvValue(
             params.dataStore,
             params.oracle,
             glvShift.glv(),
-            true, // maximize
-            false // forceCalculation
+            true // maximize
         );
         cache.glvSupply = GlvToken(payable(glvShift.glv())).totalSupply();
         GlvEventUtils.emitGlvValueUpdated(params.eventEmitter, glvShift.glv(), cache.glvValue, cache.glvSupply);

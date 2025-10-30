@@ -41,6 +41,7 @@ library ExecuteGlvDepositUtils {
         uint256 marketCount;
         uint256 oraclePriceCount;
         uint256 glvValue;
+        bool glvTokenPriceUsed;
         uint256 glvSupply;
     }
 
@@ -60,12 +61,11 @@ library ExecuteGlvDepositUtils {
 
         cache.receivedMarketTokens = _processMarketDeposit(params, glvDeposit, params.glvVault);
 
-        cache.glvValue = GlvUtils.getGlvValue(
+        (cache.glvValue, ) = GlvUtils.getGlvValue(
             params.dataStore,
             params.oracle,
             glvDeposit.glv(),
-            true, // maximize
-            false // forceCalculation
+            true // maximize
         );
         GlvToken(payable(glvDeposit.glv())).syncTokenBalance(glvDeposit.market());
 
@@ -116,12 +116,11 @@ library ExecuteGlvDepositUtils {
             cache.mintAmount
         );
 
-        cache.glvValue = GlvUtils.getGlvValue(
+        (cache.glvValue, cache.glvTokenPriceUsed) = GlvUtils.getGlvValue(
             params.dataStore,
             params.oracle,
             glvDeposit.glv(),
-            true, // maximize
-            false // forceCalculation
+            true // maximize
         );
         cache.glvSupply = GlvToken(payable(glvDeposit.glv())).totalSupply();
         GlvEventUtils.emitGlvValueUpdated(params.eventEmitter, glvDeposit.glv(), cache.glvValue, cache.glvSupply);
@@ -146,7 +145,8 @@ library ExecuteGlvDepositUtils {
         cache.marketCount = GlvUtils.getGlvMarketCount(params.dataStore, glvDeposit.glv());
         cache.oraclePriceCount = GasUtils.estimateGlvDepositOraclePriceCount(
             cache.marketCount,
-            glvDeposit.longTokenSwapPath().length + glvDeposit.shortTokenSwapPath().length
+            glvDeposit.longTokenSwapPath().length + glvDeposit.shortTokenSwapPath().length,
+            cache.glvTokenPriceUsed
         );
         GasUtils.payExecutionFee(
             GasUtils.PayExecutionFeeContracts(
