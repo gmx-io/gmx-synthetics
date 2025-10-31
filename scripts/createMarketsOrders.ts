@@ -6,19 +6,32 @@ import { contractAt } from "../utils/deploy";
 import * as keys from "../utils/keys";
 import { ethers } from "ethers";
 
+// Creates long and short orders for all (or specified) markets using USDC as collateral.
+//
+// Collateral Token:
+// - Only USDC is supported as the initial collateral token
+// - The script automatically generates a swap path when needed to convert USDC to a valid market collateral token
+//
+// Swap Path:
+// - Each market accepts only its longToken or shortToken as collateral
+// - If USDC is already a market's longToken or shortToken, no swap is needed (swapPath = [])
+// - If USDC is NOT a market collateral token, the script finds a swap market to convert:
+//   * USDC → market.shortToken (preferred), or
+//   * USDC → market.longToken (fallback)
+// - Example: For WETH/WETH market, the script finds WETH/USDC market and uses it to swap USDC → WETH
+// - Markets with no available swap path are automatically skipped
+//
 // Usage:
-// - COLLATERAL_AMOUNT_USD: For stablecoins (USDC/USDT/DAI), this is USD value. For other tokens, this is token amount (default: 2)
+// - COLLATERAL_AMOUNT: USDC amount (default: 2)
 // - LEVERAGE: Leverage multiplier (default: 2)
-// - COLLATERAL_TOKEN: Token symbol for collateral (default: "USDC")
 // - MARKETS: Comma-separated market addresses (if empty, creates orders for all markets)
 // - ACCOUNT_KEY: Private key for signing (required)
 //
-// Examples:
-// With USDC (interpreted as $2 USD):
-// MARKETS=0x70d95587d40A2caf56bd97485aB3Eec10Bee6336 COLLATERAL_AMOUNT_USD=2 ACCOUNT_KEY=0x... npx hardhat run --network arbitrum scripts/createSmallOrders.ts
+// Example for all markets with defaults ($2 USDC, 2x leverage):
+// npx hardhat run --network arbitrum scripts/createMarketsOrders.ts
 //
-// With WETH (interpreted as 0.001 WETH):
-// MARKETS=0x70d95587d40A2caf56bd97485aB3Eec10Bee6336 COLLATERAL_AMOUNT_USD=0.001 COLLATERAL_TOKEN=WETH ACCOUNT_KEY=0x... npx hardhat run --network arbitrum scripts/createSmallOrders.ts
+// Example for specific market with custom values:
+// COLLATERAL_AMOUNT=5 LEVERAGE=3 MARKETS=0x70d95587d40A2caf56bd97485aB3Eec10Bee6336 npx hardhat run --network arbitrum scripts/createMarketsOrders.ts
 
 async function getMarketPrices(market: any): Promise<any> {
   const tickersUrl = "https://arbitrum-api.gmxinfra2.io/prices/tickers";
@@ -52,11 +65,55 @@ async function getMarketPrices(market: any): Promise<any> {
   };
 }
 
+function findSwapPath(
+  market: any,
+  allMarkets: any[],
+  usdcAddress: string
+): { swapPath: string[]; targetCollateralToken: string } | null {
+  const usdcLower = usdcAddress.toLowerCase();
+
+  // Check if USDC is already a collateral token in this market
+  if (market.longToken.toLowerCase() === usdcLower) {
+    return { swapPath: [], targetCollateralToken: market.longToken };
+  }
+  if (market.shortToken.toLowerCase() === usdcLower) {
+    return { swapPath: [], targetCollateralToken: market.shortToken };
+  }
+
+  // USDC is not a collateral token, need to find a swap path
+  console.log("Try to find a market that can swap USDC to shortToken (preferred) or longToken");
+  for (const swapMarket of allMarkets) {
+    const hasUsdc =
+      swapMarket.longToken.toLowerCase() === usdcLower || swapMarket.shortToken.toLowerCase() === usdcLower;
+    if (!hasUsdc) {
+      continue;
+    }
+
+    // First, try to find a market to swap USDC -> market.shortToken
+    const hasShortToken =
+      swapMarket.longToken.toLowerCase() === market.shortToken.toLowerCase() ||
+      swapMarket.shortToken.toLowerCase() === market.shortToken.toLowerCase();
+    if (hasShortToken) {
+      return { swapPath: [swapMarket.marketToken], targetCollateralToken: market.shortToken };
+    }
+
+    // Second, try to find a market to swap USDC -> market.longToken
+    const hasLongToken =
+      swapMarket.longToken.toLowerCase() === market.longToken.toLowerCase() ||
+      swapMarket.shortToken.toLowerCase() === market.longToken.toLowerCase();
+    if (hasLongToken) {
+      return { swapPath: [swapMarket.marketToken], targetCollateralToken: market.longToken };
+    }
+  }
+
+  // No swap path found
+  return null;
+}
+
 async function main() {
   // Parse configuration from environment variables
-  const collateralAmountUsd = parseFloat(process.env.COLLATERAL_AMOUNT_USD || "2");
+  const collateralAmount = parseFloat(process.env.COLLATERAL_AMOUNT || "2");
   const leverage = parseFloat(process.env.LEVERAGE || "2");
-  const collateralTokenSymbol = process.env.COLLATERAL_TOKEN || "USDC";
   const marketsFilter = process.env.MARKETS ? process.env.MARKETS.split(",").map((m) => m.trim()) : [];
 
   if (!process.env.ACCOUNT_KEY) {
@@ -64,14 +121,13 @@ async function main() {
   }
 
   console.log("Configuration:");
-  console.log("  Collateral Amount (USD): $%s", collateralAmountUsd);
+  console.log("  Collateral Amount: $%s USDC", collateralAmount);
   console.log("  Leverage: %sx", leverage);
-  console.log("  Collateral Token: %s", collateralTokenSymbol);
   console.log("  Markets Filter: %s", marketsFilter.length > 0 ? marketsFilter.join(", ") : "all markets");
   console.log("");
 
   // Calculate position size
-  const positionSizeUsd = collateralAmountUsd * leverage;
+  const positionSizeUsd = collateralAmount * leverage;
   console.log("Position size (USD): $%s", positionSizeUsd);
   console.log("");
 
@@ -87,7 +143,7 @@ async function main() {
   const referralCode = hre.ethers.constants.HashZero;
 
   // Get all markets
-  const allMarkets = await reader.getMarkets(dataStore.address, 0, 100);
+  const allMarkets = await reader.getMarkets(dataStore.address, 0, 1000); // currently there are ~115 markets
   console.log("Found %s total markets", allMarkets.length);
 
   // Filter markets if specified
@@ -117,39 +173,40 @@ async function main() {
     throw new Error("No enabled markets found");
   }
 
-  // Get tokens and find collateral token
+  // Get USDC token
   const tokens = await hre.gmx.getTokens();
-  const collateralTokenConfig = tokens[collateralTokenSymbol];
-  if (!collateralTokenConfig) {
-    throw new Error(`Token ${collateralTokenSymbol} not found in token config`);
+  const usdcConfig = tokens.USDC;
+  if (!usdcConfig) {
+    throw new Error("USDC not found in token config");
   }
 
-  const collateralToken = await contractAt("MintableToken", collateralTokenConfig.address, signer);
+  const collateralToken = await contractAt("MintableToken", usdcConfig.address, signer);
   const collateralDecimals = await collateralToken.decimals();
-  console.log("Collateral token: %s (%s decimals)", collateralTokenSymbol, collateralDecimals);
+  console.log("Collateral token: USDC (%s decimals)", collateralDecimals);
 
-  // Calculate collateral amount
-  // For simplicity, for stablecoins we assume 1:1 USD ratio
-  // For other tokens, the user should specify the token amount they want
-  const stablecoins = ["USDC", "USDT", "DAI", "USDC.e"];
-  const collateralTokenAmount = expandDecimals(collateralAmountUsd, collateralDecimals);
-
-  if (stablecoins.includes(collateralTokenSymbol)) {
-    console.log("Using 1:1 USD conversion for stablecoin");
-  } else {
-    console.log("Non-stablecoin detected. COLLATERAL_AMOUNT_USD will be interpreted as token amount (not USD value)");
-  }
+  // Calculate collateral amount (USDC uses 6 decimals)
+  const collateralTokenAmount = expandDecimals(collateralAmount, collateralDecimals);
 
   console.log(
-    "Collateral token amount: %s %s",
-    hre.ethers.utils.formatUnits(collateralTokenAmount, collateralDecimals),
-    collateralTokenSymbol
+    "Collateral token amount: %s USDC",
+    hre.ethers.utils.formatUnits(collateralTokenAmount, collateralDecimals)
   );
   console.log("");
 
+  // Check USDC balance
+  const totalCollateralNeeded = collateralTokenAmount.mul(enabledMarkets.length).mul(2); // 2 orders per market
+  const usdcBalance = await collateralToken.balanceOf(receiver);
+  if (usdcBalance.lt(totalCollateralNeeded)) {
+    throw new Error(
+      `Insufficient USDC balance. Need ${hre.ethers.utils.formatUnits(
+        totalCollateralNeeded,
+        collateralDecimals
+      )} USDC but only have ${hre.ethers.utils.formatUnits(usdcBalance, collateralDecimals)} USDC`
+    );
+  }
+
   // Check and approve collateral token if needed
   const approvedAmount = await collateralToken.allowance(receiver, router.address);
-  const totalCollateralNeeded = collateralTokenAmount.mul(enabledMarkets.length).mul(2); // 2 orders per market
   if (approvedAmount.lt(totalCollateralNeeded)) {
     console.log("Approving collateral token...");
     const approveTx = await collateralToken.approve(router.address, bigNumberify(2).pow(256).sub(1));
@@ -205,6 +262,21 @@ async function main() {
     console.log("  Acceptable price (long, +5%%): %s", acceptablePriceLong.toString());
     console.log("  Acceptable price (short, -5%%): %s", acceptablePriceShort.toString());
 
+    // Determine swap path from USDC to market collateral token
+    const swapPathResult = findSwapPath(market, allMarkets, usdcConfig.address);
+    if (!swapPathResult) {
+      console.log("  ⚠️  No swap path found from USDC to market collateral tokens. Skipping market...\n");
+      errorCount += 2; // Count as 2 errors (long + short)
+      continue;
+    }
+
+    const { swapPath, targetCollateralToken } = swapPathResult;
+    if (swapPath.length === 0) {
+      console.log("  USDC is already a collateral token for this market (no swap needed)");
+    } else {
+      console.log("  Swap path: USDC -> %s (via market %s)", targetCollateralToken, swapPath[0]);
+    }
+
     // Create LONG order
     try {
       const longOrderParams = {
@@ -215,7 +287,7 @@ async function main() {
           uiFeeReceiver: hre.ethers.constants.AddressZero,
           market: market.marketToken,
           initialCollateralToken: collateralToken.address,
-          swapPath: [],
+          swapPath: swapPath,
         },
         numbers: {
           sizeDeltaUsd,
@@ -268,7 +340,7 @@ async function main() {
           uiFeeReceiver: hre.ethers.constants.AddressZero,
           market: market.marketToken,
           initialCollateralToken: collateralToken.address,
-          swapPath: [],
+          swapPath: swapPath,
         },
         numbers: {
           sizeDeltaUsd,
