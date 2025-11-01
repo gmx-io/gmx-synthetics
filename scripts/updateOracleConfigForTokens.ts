@@ -210,11 +210,11 @@ export async function updateOracleConfigForTokens() {
             priceFeed.address,
             priceFeedMultiplier,
             priceFeed.heartbeatDuration,
-            stablePrice,
-            predecessor,
-            salt
+            stablePrice
           );
-          multicallWriteParams.push(timelock.interface.encodeFunctionData("executeBatch", [targets, values, payloads]));
+          multicallWriteParams.push(
+            timelock.interface.encodeFunctionData("executeBatch", [targets, values, payloads, predecessor, salt])
+          );
         }
       }
     }
