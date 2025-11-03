@@ -308,18 +308,28 @@ async function main() {
         dataList: [],
       };
 
-      const longTx = await exchangeRouter.multicall(
-        [
-          exchangeRouter.interface.encodeFunctionData("sendWnt", [orderVault.address, executionFee]),
-          exchangeRouter.interface.encodeFunctionData("sendTokens", [
-            collateralToken.address,
-            orderVault.address,
-            collateralTokenAmount,
-          ]),
-          exchangeRouter.interface.encodeFunctionData("createOrder", [longOrderParams]),
-        ],
-        { value: executionFee }
-      );
+      const longMulticallData = [
+        exchangeRouter.interface.encodeFunctionData("sendWnt", [orderVault.address, executionFee]),
+        exchangeRouter.interface.encodeFunctionData("sendTokens", [
+          collateralToken.address,
+          orderVault.address,
+          collateralTokenAmount,
+        ]),
+        exchangeRouter.interface.encodeFunctionData("createOrder", [longOrderParams]),
+      ];
+
+      // Estimate gas with 50% buffer
+      let longGasLimit;
+      try {
+        const estimatedGas = await exchangeRouter.estimateGas.multicall(longMulticallData, { value: executionFee });
+        longGasLimit = estimatedGas.mul(150).div(100); // 50% buffer
+        console.log("  Estimated gas: %s, using: %s", estimatedGas.toString(), longGasLimit.toString());
+      } catch (estimationError) {
+        longGasLimit = 2_000_000; // Conservative fallback
+        console.log("  Gas estimation failed, using fallback: %s", longGasLimit);
+      }
+
+      const longTx = await exchangeRouter.multicall(longMulticallData, { value: executionFee, gasLimit: longGasLimit });
 
       console.log("  Long order tx: %s", longTx.hash);
       await longTx.wait();
@@ -361,18 +371,31 @@ async function main() {
         dataList: [],
       };
 
-      const shortTx = await exchangeRouter.multicall(
-        [
-          exchangeRouter.interface.encodeFunctionData("sendWnt", [orderVault.address, executionFee]),
-          exchangeRouter.interface.encodeFunctionData("sendTokens", [
-            collateralToken.address,
-            orderVault.address,
-            collateralTokenAmount,
-          ]),
-          exchangeRouter.interface.encodeFunctionData("createOrder", [shortOrderParams]),
-        ],
-        { value: executionFee }
-      );
+      const shortMulticallData = [
+        exchangeRouter.interface.encodeFunctionData("sendWnt", [orderVault.address, executionFee]),
+        exchangeRouter.interface.encodeFunctionData("sendTokens", [
+          collateralToken.address,
+          orderVault.address,
+          collateralTokenAmount,
+        ]),
+        exchangeRouter.interface.encodeFunctionData("createOrder", [shortOrderParams]),
+      ];
+
+      // Estimate gas with 50% buffer
+      let shortGasLimit;
+      try {
+        const estimatedGas = await exchangeRouter.estimateGas.multicall(shortMulticallData, { value: executionFee });
+        shortGasLimit = estimatedGas.mul(150).div(100); // 50% buffer
+        console.log("  Estimated gas: %s, using: %s", estimatedGas.toString(), shortGasLimit.toString());
+      } catch (estimationError) {
+        shortGasLimit = 2_000_000; // Conservative fallback
+        console.log("  Gas estimation failed, using fallback: %s", shortGasLimit);
+      }
+
+      const shortTx = await exchangeRouter.multicall(shortMulticallData, {
+        value: executionFee,
+        gasLimit: shortGasLimit,
+      });
 
       console.log("  Short order tx: %s", shortTx.hash);
       await shortTx.wait();
