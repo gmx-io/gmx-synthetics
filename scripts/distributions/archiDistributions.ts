@@ -1006,6 +1006,101 @@ function writeOutputFiles(
 }
 
 // ============================================================================
+// GENERATE SIMPLIFIED DISTRIBUTIONS
+// ============================================================================
+
+/**
+ * Generates simplified 3-column CSV files for farmer and LP distributions.
+ *
+ * This function reads the detailed distribution CSVs from `out/` directory and creates
+ * simplified versions containing only the essential columns needed for final distributions:
+ * - Column 1: Sequential number (#)
+ * - Column 2: Wallet address
+ * - Column 3: Final fsGLP distribution amount
+ *
+ * For farmers: Uses `capped_total_fsGLP` which accounts for IL adjustment based on
+ *              the difference between avg opening price and incident price ($1.45)
+ *
+ * For LPs: Uses `total_fsGLP_final` which includes stablecoin capping and the
+ *          redistributed excess from farmers and stablecoin LPs to volatile asset LPs
+ *
+ * Input files:
+ * - `out/archi-farmer-distributions.csv` (detailed farmer distributions)
+ * - `out/archi-lp-distributions.csv` (detailed LP distributions)
+ *
+ * Output files:
+ * - `archi-farmer-distributions.csv` (simplified 3-column format)
+ * - `archi-lp-distributions.csv` (simplified 3-column format)
+ */
+function parseCsvSimple(content: string): any[] {
+  const lines = content.trim().split("\n");
+  const headers = lines[0].split(",");
+  const records = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const values = lines[i].split(",");
+    const record: any = {};
+    headers.forEach((header, index) => {
+      record[header] = values[index];
+    });
+    records.push(record);
+  }
+
+  return records;
+}
+
+function createCsvSimple(headers: string[], rows: string[][]): string {
+  const lines = [headers.join(",")];
+  rows.forEach((row) => {
+    lines.push(row.join(","));
+  });
+  return lines.join("\n");
+}
+
+function generateSimplifiedDistributions() {
+  console.log("=".repeat(80));
+  console.log("Generating Simplified Distribution CSVs");
+  console.log("=".repeat(80) + "\n");
+
+  const outDir = path.join(__dirname, "out");
+  const distributionsDir = __dirname;
+
+  // Process farmer distributions
+  console.log("Processing simplified farmer distributions...");
+  const farmerCsvPath = path.join(outDir, "archi-farmer-distributions.csv");
+  const farmerCsvContent = fs.readFileSync(farmerCsvPath, "utf-8");
+  const farmerRecords = parseCsvSimple(farmerCsvContent);
+
+  const farmerRows = farmerRecords.map((record: any, index: number) => [
+    String(index + 1),
+    record.farmer,
+    record.capped_total_fsGLP,
+  ]);
+
+  const farmerOutputPath = path.join(distributionsDir, "archi-farmer-distributions.csv");
+  const farmerCsvOutput = createCsvSimple(["#", "address", "fsGLP_distribution"], farmerRows);
+  fs.writeFileSync(farmerOutputPath, farmerCsvOutput);
+  console.log(`✅ ${farmerOutputPath} (${farmerRecords.length} farmers)`);
+
+  // Process LP distributions
+  console.log("Processing simplified LP distributions...");
+  const lpCsvPath = path.join(outDir, "archi-lp-distributions.csv");
+  const lpCsvContent = fs.readFileSync(lpCsvPath, "utf-8");
+  const lpRecords = parseCsvSimple(lpCsvContent);
+
+  const lpRows = lpRecords.map((record: any, index: number) => [
+    String(index + 1),
+    record.address,
+    record.total_fsGLP_final,
+  ]);
+
+  const lpOutputPath = path.join(distributionsDir, "archi-lp-distributions.csv");
+  const lpCsvOutput = createCsvSimple(["#", "address", "fsGLP_distribution"], lpRows);
+  fs.writeFileSync(lpOutputPath, lpCsvOutput);
+  console.log(`✅ ${lpOutputPath} (${lpRecords.length} LPs)\n`);
+}
+
+// ============================================================================
 // UPDATE MARKDOWN WITH DISTRIBUTION TABLES
 // ============================================================================
 
@@ -1356,6 +1451,7 @@ async function main() {
 
   writeOutputFiles(positions, farmerDistributions, vaultBorrowing, lpDistributionsFinal);
   updateMarkdownTables(positions, farmerDistributions, lpDistributionsFinal, vaultBorrowing);
+  generateSimplifiedDistributions();
   printSummary(totals, farmerDistributions, lpDistributionsFinal);
 }
 
