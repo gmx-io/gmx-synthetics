@@ -329,7 +329,7 @@ Total to distribute: **1,445,599.59 fsGLP** (89.50% of protocol)
 
 ## Detailed Distribution Tables
 
-*Last updated: 2025-10-21 06:53:41 UTC*
+*Last updated: 2025-11-03 05:50:16 UTC*
 
 ### Vault Borrowing Summary (Farmers)
 
