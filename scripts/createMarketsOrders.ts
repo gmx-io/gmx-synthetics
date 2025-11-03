@@ -7,6 +7,7 @@ import * as keys from "../utils/keys";
 import { ethers } from "ethers";
 
 // Creates long and short orders for all (or specified) markets using USDC as collateral.
+// Supports both Arbitrum and Avalanche networks.
 //
 // Collateral Token:
 // - Only USDC is supported as the initial collateral token
@@ -29,12 +30,23 @@ import { ethers } from "ethers";
 //
 // Example for all markets with defaults ($2 USDC, 2x leverage):
 // npx hardhat run --network arbitrum scripts/createMarketsOrders.ts
+// npx hardhat run --network avalanche scripts/createMarketsOrders.ts
 //
 // Example for specific market with custom values:
 // COLLATERAL_AMOUNT=5 LEVERAGE=3 MARKETS=0x70d95587d40A2caf56bd97485aB3Eec10Bee6336 npx hardhat run --network arbitrum scripts/createMarketsOrders.ts
 
+function getTickersUrl(): string {
+  if (hre.network.name === "arbitrum") {
+    return "https://arbitrum-api.gmxinfra2.io/prices/tickers";
+  } else if (hre.network.name === "avalanche") {
+    return "https://avalanche-api.gmxinfra2.io/prices/tickers";
+  } else {
+    throw new Error(`Unsupported network: ${hre.network.name}`);
+  }
+}
+
 async function getMarketPrices(market: any): Promise<any> {
-  const tickersUrl = "https://arbitrum-api.gmxinfra2.io/prices/tickers";
+  const tickersUrl = getTickersUrl();
   const tickers = (await got(tickersUrl).json()) as any[];
 
   const indexTicker = tickers.find((t) => t.tokenAddress.toLowerCase() === market.indexToken.toLowerCase());
