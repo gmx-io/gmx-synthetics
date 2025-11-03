@@ -1,6 +1,18 @@
 import fs from "fs";
 import path from "path";
 
+/**
+ * Converts Archi distribution CSV files into a formatted markdown report.
+ *
+ * Takes the CSV outputs from archiDistributions script and generates a single markdown file
+ * containing two sections:
+ * 1. Farmer Positions - Shows borrowed positions across different tokens with fsGLP values
+ * 2. LP Distributions - Shows LP deposits and fsGLP distributions across different markets
+ *
+ * The script formats token amounts based on their decimals, expands array columns into
+ * separate columns per token, and creates readable tables with proper formatting.
+ */
+
 // must run archiDistributions first to generate the CSV files
 // npx hardhat run --network arbitrum scripts/distributions/archiDistributionsToMarkdown.ts
 
