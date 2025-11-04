@@ -6,6 +6,13 @@ import * as path from "path";
 
 declare const process: any;
 
+// GLP to GLV conversion constants
+// These ratios represent the conversion from fsGLP to ETH GLV and BTC GLV tokens
+// Based on the GLP price at the time of the incident ($1.4522064768)
+const FSGLP_PRICE_AT_INCIDENT = 1.4522064768; // GLP price in USD at incident
+const FSGLP_TO_ETH_GLV_RATIO = 0.4421373997; // ETH GLV tokens per 1 fsGLP
+const FSGLP_TO_BTC_GLV_RATIO = 0.406777949; // BTC GLV tokens per 1 fsGLP
+
 // Using StakeFor events is finding all LPs (vs Add / RemoveLiquidity events which is only 99.52% accurate)
 
 /**
@@ -419,8 +426,6 @@ async function step3_calculateFarmerDistributions(
   console.log("=".repeat(80));
   console.log("STEP 3: Calculate Farmer Distributions");
   console.log("=".repeat(80) + "\n");
-
-  const FSGLP_PRICE_AT_INCIDENT = 1.45;
 
   const farmerData = new Map<
     string,
@@ -1010,13 +1015,15 @@ function writeOutputFiles(
 // ============================================================================
 
 /**
- * Generates simplified 3-column CSV files for farmer and LP distributions.
+ * Generates simplified CSV files for farmer and LP distributions with GLV conversions.
  *
  * This function reads the detailed distribution CSVs from `out/` directory and creates
- * simplified versions containing only the essential columns needed for final distributions:
+ * simplified versions containing the essential columns needed for final distributions:
  * - Column 1: Sequential number (#)
  * - Column 2: Wallet address
  * - Column 3: Final fsGLP distribution amount
+ * - Column 4: ETH GLV distribution amount
+ * - Column 5: BTC GLV distribution amount
  *
  * For farmers: Uses `capped_total_fsGLP` which accounts for IL adjustment based on
  *              the difference between avg opening price and incident price ($1.45)
@@ -1024,13 +1031,28 @@ function writeOutputFiles(
  * For LPs: Uses `total_fsGLP_final` which includes stablecoin capping and the
  *          redistributed excess from farmers and stablecoin LPs to volatile asset LPs
  *
+ * GLV Conversion Formula:
+ * ----------------------
+ * The fsGLP amounts are converted to ETH GLV and BTC GLV tokens using fixed ratios:
+ *
+ * ETH_GLV_amount = fsGLP_amount × FSGLP_TO_ETH_GLV_RATIO
+ * BTC_GLV_amount = fsGLP_amount × FSGLP_TO_BTC_GLV_RATIO
+ *
+ * Where:
+ * - FSGLP_TO_ETH_GLV_RATIO = 0.4421373997 (ETH GLV tokens per 1 fsGLP)
+ * - FSGLP_TO_BTC_GLV_RATIO = 0.4067779490 (BTC GLV tokens per 1 fsGLP)
+ *
+ * These ratios were derived from the historical GLP-to-GLV conversion rates at the time
+ * of the incident, where the GLP price was $1.4522064768. The ratios ensure that users
+ * receive the appropriate amount of ETH and BTC GLV tokens proportional to their fsGLP holdings.
+ *
  * Input files:
  * - `out/archi-farmer-distributions.csv` (detailed farmer distributions)
  * - `out/archi-lp-distributions.csv` (detailed LP distributions)
  *
  * Output files:
- * - `archi-farmer-distributions.csv` (simplified 3-column format)
- * - `archi-lp-distributions.csv` (simplified 3-column format)
+ * - `archi-farmer-distributions.csv` (simplified 5-column format with GLV amounts)
+ * - `archi-lp-distributions.csv` (simplified 5-column format with GLV amounts)
  */
 function parseCsvSimple(content: string): any[] {
   const lines = content.trim().split("\n");
@@ -1071,14 +1093,24 @@ function generateSimplifiedDistributions() {
   const farmerCsvContent = fs.readFileSync(farmerCsvPath, "utf-8");
   const farmerRecords = parseCsvSimple(farmerCsvContent);
 
-  const farmerRows = farmerRecords.map((record: any, index: number) => [
-    String(index + 1),
-    record.farmer,
-    record.capped_total_fsGLP,
-  ]);
+  const farmerRows = farmerRecords.map((record: any, index: number) => {
+    const fsGlpAmount = parseFloat(record.capped_total_fsGLP);
+    const ethGlvAmount = fsGlpAmount * FSGLP_TO_ETH_GLV_RATIO;
+    const btcGlvAmount = fsGlpAmount * FSGLP_TO_BTC_GLV_RATIO;
+    return [
+      String(index + 1),
+      record.farmer,
+      record.capped_total_fsGLP,
+      ethGlvAmount.toFixed(18),
+      btcGlvAmount.toFixed(18),
+    ];
+  });
 
   const farmerOutputPath = path.join(distributionsDir, "archi-farmer-distributions.csv");
-  const farmerCsvOutput = createCsvSimple(["#", "address", "fsGLP_distribution"], farmerRows);
+  const farmerCsvOutput = createCsvSimple(
+    ["#", "address", "fsGLP_distribution", "eth_glv_distribution", "btc_glv_distribution"],
+    farmerRows
+  );
   fs.writeFileSync(farmerOutputPath, farmerCsvOutput);
   console.log(`✅ ${farmerOutputPath} (${farmerRecords.length} farmers)`);
 
@@ -1088,14 +1120,24 @@ function generateSimplifiedDistributions() {
   const lpCsvContent = fs.readFileSync(lpCsvPath, "utf-8");
   const lpRecords = parseCsvSimple(lpCsvContent);
 
-  const lpRows = lpRecords.map((record: any, index: number) => [
-    String(index + 1),
-    record.address,
-    record.total_fsGLP_final,
-  ]);
+  const lpRows = lpRecords.map((record: any, index: number) => {
+    const fsGlpAmount = parseFloat(record.total_fsGLP_final);
+    const ethGlvAmount = fsGlpAmount * FSGLP_TO_ETH_GLV_RATIO;
+    const btcGlvAmount = fsGlpAmount * FSGLP_TO_BTC_GLV_RATIO;
+    return [
+      String(index + 1),
+      record.address,
+      record.total_fsGLP_final,
+      ethGlvAmount.toFixed(18),
+      btcGlvAmount.toFixed(18),
+    ];
+  });
 
   const lpOutputPath = path.join(distributionsDir, "archi-lp-distributions.csv");
-  const lpCsvOutput = createCsvSimple(["#", "address", "fsGLP_distribution"], lpRows);
+  const lpCsvOutput = createCsvSimple(
+    ["#", "address", "fsGLP_distribution", "eth_glv_distribution", "btc_glv_distribution"],
+    lpRows
+  );
   fs.writeFileSync(lpOutputPath, lpCsvOutput);
   console.log(`✅ ${lpOutputPath} (${lpRecords.length} LPs)\n`);
 }
