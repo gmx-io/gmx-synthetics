@@ -20,16 +20,14 @@ contract MintableToken is ERC20Permit {
     // @dev mint tokens to an account
     // @param account the account to mint to
     // @param amount the amount of tokens to mint
-    function mint(address account, uint256 amount) external returns (bool) {
+    function mint(address account, uint256 amount) external {
         _mint(account, amount);
-        return true;
     }
 
     // @dev burn tokens from an account
     // @param account the account to burn tokens for
     // @param amount the amount of tokens to burn
-    function burn(address account, uint256 amount) external returns (bool) {
+    function burn(address account, uint256 amount) external {
         _burn(account, amount);
-        return true;
     }
 }
