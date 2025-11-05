@@ -356,21 +356,36 @@ library GasUtils {
 
     function estimateGlvDepositOraclePriceCount(
         uint256 marketCount,
-        uint256 swapsCount
+        uint256 swapsCount,
+        bool glvTokenPriceUsed
     ) external pure returns (uint256) {
         // for single asset markets oracle price count will be overestimated by 1
         // it should not be an issue for GLV with multiple markets
         // because relative difference would be insignificant
+        // if swapPath contains the deposit's market then that market will be counted twice
+
+        // for example ETH/USDC GLV has 10 markets and deposit to DOGE market is created
+        // 1. no swaps and glv token price is used then oracle prices are: GLV, ETH, USDC, DOGE, 4 in total
+        // 2. swap through XRP and glv token price is used: GLV, ETH, USDC, DOGE, XRP, 5 in total
+        // 3. swap through DOGE and glv token price is used: GLV, ETH, USDC, DOGE, 4 in total
+        // 4. no swaps and glv token price is not used: 10 index prices and USDC, 11 in total
+        // 5. swap through XRP and glv token price is not used: 10 index prices and USDC, 11 in total. in theory GLV may not contain a market with index token ETH. in this the total would be 12
+        // 5. swap through BTC and glv token price is not used: 10 index prices, USDC, BTC, 12 in total. in theory GLV may not contain a market with index token ETH. in this the total would be 13
+
+        if (glvTokenPriceUsed) {
+            return 4 + swapsCount;
+        }
         return 2 + marketCount + swapsCount;
     }
 
     function estimateGlvWithdrawalOraclePriceCount(
         uint256 marketCount,
-        uint256 swapsCount
+        uint256 swapsCount,
+        bool glvTokenPriceUsed
     ) internal pure returns (uint256) {
-        // for single asset markets oracle price count will be overestimated by 1
-        // it should not be an issue for GLV with multiple markets
-        // because relative difference would be insignificant
+        if (glvTokenPriceUsed) {
+            return 4 + swapsCount;
+        }
         return 2 + marketCount + swapsCount;
     }
 
