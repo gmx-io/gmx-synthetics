@@ -175,6 +175,14 @@ contract RoleModule {
     }
 
     /**
+     * @dev Only allows addresses with the CRE_FORWARDER role to call the function.
+     */
+    modifier onlyCreForwarder() {
+        _validateRole(Role.CRE_FORWARDER, "CRE_FORWARDER");
+        _;
+    }
+
+    /**
      * @dev Validates that the caller has the specified role.
      *
      * If the caller does not have the specified role, the transaction is reverted.
