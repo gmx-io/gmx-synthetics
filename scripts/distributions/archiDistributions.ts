@@ -7,11 +7,11 @@ import * as path from "path";
 declare const process: any;
 
 // GLP to GLV conversion constants
-// These ratios represent the conversion from fsGLP to ETH GLV and BTC GLV tokens
-// Based on the GLP price at the time of the incident ($1.4522064768)
+// Total GLV amounts to be distributed across all farmers and LPs
+// Each address receives a proportional share based on their fsGLP allocation
 const FSGLP_PRICE_AT_INCIDENT = 1.4522064768; // GLP price in USD at incident
-const FSGLP_TO_ETH_GLV_RATIO = 0.4421373997; // ETH GLV tokens per 1 fsGLP
-const FSGLP_TO_BTC_GLV_RATIO = 0.406777949; // BTC GLV tokens per 1 fsGLP
+const TOTAL_ETH_GLV = 710379.6304; // Total ETH GLV to distribute
+const TOTAL_BTC_GLV = 653567.8033; // Total BTC GLV to distribute
 
 // Using StakeFor events is finding all LPs (vs Add / RemoveLiquidity events which is only 99.52% accurate)
 
@@ -1033,18 +1033,19 @@ function writeOutputFiles(
  *
  * GLV Conversion Formula:
  * ----------------------
- * The fsGLP amounts are converted to ETH GLV and BTC GLV tokens using fixed ratios:
+ * The fsGLP amounts are converted to ETH GLV and BTC GLV tokens proportionally:
  *
- * ETH_GLV_amount = fsGLP_amount × FSGLP_TO_ETH_GLV_RATIO
- * BTC_GLV_amount = fsGLP_amount × FSGLP_TO_BTC_GLV_RATIO
+ * Total fsGLP = Sum of all farmer capped_total_fsGLP + Sum of all LP total_fsGLP_final
+ * ETH_GLV_amount = (address_fsGLP / Total_fsGLP) × TOTAL_ETH_GLV
+ * BTC_GLV_amount = (address_fsGLP / Total_fsGLP) × TOTAL_BTC_GLV
  *
  * Where:
- * - FSGLP_TO_ETH_GLV_RATIO = 0.4421373997 (ETH GLV tokens per 1 fsGLP)
- * - FSGLP_TO_BTC_GLV_RATIO = 0.4067779490 (BTC GLV tokens per 1 fsGLP)
+ * - TOTAL_ETH_GLV = 710379.6304 (Total ETH GLV tokens to distribute)
+ * - TOTAL_BTC_GLV = 653567.8033 (Total BTC GLV tokens to distribute)
  *
- * These ratios were derived from the historical GLP-to-GLV conversion rates at the time
- * of the incident, where the GLP price was $1.4522064768. The ratios ensure that users
- * receive the appropriate amount of ETH and BTC GLV tokens proportional to their fsGLP holdings.
+ * This proportional approach ensures that the total GLV distributed exactly matches
+ * the target amounts, with each address receiving their proportional share based on
+ * their fsGLP allocation.
  *
  * Input files:
  * - `out/archi-farmer-distributions.csv` (detailed farmer distributions)
@@ -1087,16 +1088,39 @@ function generateSimplifiedDistributions() {
   const outDir = path.join(__dirname, "out");
   const distributionsDir = __dirname;
 
-  // Process farmer distributions
-  console.log("Processing simplified farmer distributions...");
+  // Read farmer and LP distributions
+  console.log("Reading distribution data...");
   const farmerCsvPath = path.join(outDir, "archi-farmer-distributions.csv");
   const farmerCsvContent = fs.readFileSync(farmerCsvPath, "utf-8");
   const farmerRecords = parseCsvSimple(farmerCsvContent);
 
+  const lpCsvPath = path.join(outDir, "archi-lp-distributions.csv");
+  const lpCsvContent = fs.readFileSync(lpCsvPath, "utf-8");
+  const lpRecords = parseCsvSimple(lpCsvContent);
+
+  // Calculate total fsGLP across farmers and LPs
+  const totalFarmerFsGLP = farmerRecords.reduce((sum: number, record: any) => {
+    return sum + parseFloat(record.capped_total_fsGLP);
+  }, 0);
+
+  const totalLPFsGLP = lpRecords.reduce((sum: number, record: any) => {
+    return sum + parseFloat(record.total_fsGLP_final);
+  }, 0);
+
+  const totalFsGLP = totalFarmerFsGLP + totalLPFsGLP;
+
+  console.log(
+    `Total fsGLP: ${totalFsGLP.toFixed(2)} (Farmers: ${totalFarmerFsGLP.toFixed(2)}, LPs: ${totalLPFsGLP.toFixed(2)})`
+  );
+  console.log(`Total ETH GLV to distribute: ${TOTAL_ETH_GLV.toFixed(2)}`);
+  console.log(`Total BTC GLV to distribute: ${TOTAL_BTC_GLV.toFixed(2)}\n`);
+
+  // Process farmer distributions
+  console.log("Processing simplified farmer distributions...");
   const farmerRows = farmerRecords.map((record: any, index: number) => {
     const fsGlpAmount = parseFloat(record.capped_total_fsGLP);
-    const ethGlvAmount = fsGlpAmount * FSGLP_TO_ETH_GLV_RATIO;
-    const btcGlvAmount = fsGlpAmount * FSGLP_TO_BTC_GLV_RATIO;
+    const ethGlvAmount = (fsGlpAmount / totalFsGLP) * TOTAL_ETH_GLV;
+    const btcGlvAmount = (fsGlpAmount / totalFsGLP) * TOTAL_BTC_GLV;
     return [
       String(index + 1),
       record.farmer,
@@ -1116,14 +1140,10 @@ function generateSimplifiedDistributions() {
 
   // Process LP distributions
   console.log("Processing simplified LP distributions...");
-  const lpCsvPath = path.join(outDir, "archi-lp-distributions.csv");
-  const lpCsvContent = fs.readFileSync(lpCsvPath, "utf-8");
-  const lpRecords = parseCsvSimple(lpCsvContent);
-
   const lpRows = lpRecords.map((record: any, index: number) => {
     const fsGlpAmount = parseFloat(record.total_fsGLP_final);
-    const ethGlvAmount = fsGlpAmount * FSGLP_TO_ETH_GLV_RATIO;
-    const btcGlvAmount = fsGlpAmount * FSGLP_TO_BTC_GLV_RATIO;
+    const ethGlvAmount = (fsGlpAmount / totalFsGLP) * TOTAL_ETH_GLV;
+    const btcGlvAmount = (fsGlpAmount / totalFsGLP) * TOTAL_BTC_GLV;
     return [
       String(index + 1),
       record.address,
@@ -1203,6 +1223,13 @@ ${vaultTableRows.join("\n")}
   // Calculate total capped fsGLP for percentage calculations
   const farmerTotalCapped = farmerDistributions.reduce((sum, f) => sum + parseFloat(f.cappedTotalFsGLP), 0);
 
+  // Calculate total fsGLP for GLV distribution calculations (farmers + LPs)
+  const lpTotalFsGLPForGLV = lpDistributions.reduce(
+    (sum, lp) => sum + parseFloat(ethers.utils.formatEther(lp.total_fsGLP_final)),
+    0
+  );
+  const totalFsGLPForGLV = farmerTotalCapped + lpTotalFsGLPForGLV;
+
   // Generate farmer table
   const farmerTableRows = farmerDistributions
     .sort((a, b) => parseFloat(b.totalFsGLP) - parseFloat(a.totalFsGLP))
@@ -1215,17 +1242,34 @@ ${vaultTableRows.join("\n")}
       const cappedTotal = parseFloat(f.cappedTotalFsGLP);
       const recoveryPct = ((cappedTotal / total) * 100).toFixed(2);
       const avgPriceDisplay = avgPrice > 0 ? `$${avgPrice.toFixed(4)}` : "N/A";
+
+      // Calculate GLV distributions
+      const ethGlv = (cappedTotal / totalFsGLPForGLV) * TOTAL_ETH_GLV;
+      const btcGlv = (cappedTotal / totalFsGLPForGLV) * TOTAL_BTC_GLV;
+
       return `| ${f.farmer} | ${collateral.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} | ${fees
         .toFixed(2)
         .replace(/\B(?=(\d{3})+(?!\d))/g, ",")} | **${total
         .toFixed(2)
         .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | ${avgPriceDisplay} | $${incidentPrice.toFixed(2)} | **${cappedTotal
         .toFixed(2)
-        .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | ${recoveryPct}% |`;
+        .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | ${recoveryPct}% | ${ethGlv
+        .toFixed(2)
+        .replace(/\B(?=(\d{3})+(?!\d))/g, ",")} | ${btcGlv.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} |`;
     });
 
   const farmerTotalCollateral = farmerDistributions.reduce((sum, f) => sum + parseFloat(f.collateralFsGLP), 0);
   const farmerTotalFees = farmerDistributions.reduce((sum, f) => sum + parseFloat(f.liquidatorFeesShare), 0);
+
+  // Calculate total GLV for farmers
+  const farmerTotalEthGLV = farmerDistributions.reduce((sum, f) => {
+    const cappedTotal = parseFloat(f.cappedTotalFsGLP);
+    return sum + (cappedTotal / totalFsGLPForGLV) * TOTAL_ETH_GLV;
+  }, 0);
+  const farmerTotalBtcGLV = farmerDistributions.reduce((sum, f) => {
+    const cappedTotal = parseFloat(f.cappedTotalFsGLP);
+    return sum + (cappedTotal / totalFsGLPForGLV) * TOTAL_BTC_GLV;
+  }, 0);
 
   const farmerTable = `### Farmer Distributions (${farmerDistributions.length} farmers)
 
@@ -1235,8 +1279,10 @@ The **Capped Total fsGLP** column accounts for the difference between the averag
 
 The **Recovery %** column shows what percentage of their original total fsGLP each farmer receives back after the cap is applied (i.e., \`capped_total / total_fsGLP * 100\`).
 
-| Farmer Address | Collateral fsGLP | Liquidator Fees Share | Total fsGLP | Avg Price at Open | Price at Incident | Capped Total fsGLP | Recovery % |
-|----------------|------------------|----------------------|-------------|-------------------|-------------------|--------------------|------------|
+The **ETH GLV** and **BTC GLV** columns show the GLV token distributions, calculated proportionally based on each farmer's share of the total fsGLP distribution.
+
+| Farmer Address | Collateral fsGLP | Liquidator Fees Share | Total fsGLP | Avg Price at Open | Price at Incident | Capped Total fsGLP | Recovery % | ETH GLV | BTC GLV |
+|----------------|------------------|----------------------|-------------|-------------------|-------------------|--------------------|------------|---------|---------|
 ${farmerTableRows.join("\n")}
 | **TOTAL** | **${farmerTotalCollateral.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | **${farmerTotalFees
     .toFixed(2)
@@ -1244,7 +1290,11 @@ ${farmerTableRows.join("\n")}
     .toFixed(2)
     .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | - | **$1.45** | **${farmerTotalCapped
     .toFixed(2)
-    .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | **${((farmerTotalCapped / farmerTotal) * 100).toFixed(2)}%** |
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | **${((farmerTotalCapped / farmerTotal) * 100).toFixed(
+    2
+  )}%** | **${farmerTotalEthGLV.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | **${farmerTotalBtcGLV
+    .toFixed(2)
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** |
 
 **Note:** Full farmer distribution details available in \`out/archi-farmer-distributions.csv\` (${
     farmerDistributions.length
@@ -1317,13 +1367,21 @@ ${positionsTableRows.join("\n")}
     const usdcFinal = parseFloat(ethers.utils.formatEther(lp.usdc_fsGLP_final));
     const totalFinal = parseFloat(ethers.utils.formatEther(lp.total_fsGLP_final));
 
+    // Calculate GLV distributions
+    const ethGlv = (totalFinal / totalFsGLPForGLV) * TOTAL_ETH_GLV;
+    const btcGlv = (totalFinal / totalFsGLPForGLV) * TOTAL_BTC_GLV;
+
     return `| ${idx + 1} | ${lp.address} | ${wbtcFinal.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} | ${wethFinal
       .toFixed(2)
       .replace(/\B(?=(\d{3})+(?!\d))/g, ",")} | ${usdtFinal
       .toFixed(2)
       .replace(/\B(?=(\d{3})+(?!\d))/g, ",")} | ${usdcFinal
       .toFixed(2)
-      .replace(/\B(?=(\d{3})+(?!\d))/g, ",")} | **${totalFinal.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** |`;
+      .replace(/\B(?=(\d{3})+(?!\d))/g, ",")} | **${totalFinal
+      .toFixed(2)
+      .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | ${ethGlv.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} | ${btcGlv
+      .toFixed(2)
+      .replace(/\B(?=(\d{3})+(?!\d))/g, ",")} |`;
   });
 
   const lpTotalWbtcFinal = lpDistributions.reduce(
@@ -1347,8 +1405,18 @@ ${positionsTableRows.join("\n")}
     0
   );
 
+  // Calculate total GLV for LPs
+  const lpTotalEthGLV = lpDistributions.reduce((sum, lp) => {
+    const totalFinal = parseFloat(ethers.utils.formatEther(lp.total_fsGLP_final));
+    return sum + (totalFinal / totalFsGLPForGLV) * TOTAL_ETH_GLV;
+  }, 0);
+  const lpTotalBtcGLV = lpDistributions.reduce((sum, lp) => {
+    const totalFinal = parseFloat(ethers.utils.formatEther(lp.total_fsGLP_final));
+    return sum + (totalFinal / totalFsGLPForGLV) * TOTAL_BTC_GLV;
+  }, 0);
+
   // Conditionally show separator line and adjust total row based on whether all LPs are displayed
-  const separatorLine = TOP_LPS === -1 ? "" : "| ... | ... | ... | ... | ... | ... | ... |\n";
+  const separatorLine = TOP_LPS === -1 ? "" : "| ... | ... | ... | ... | ... | ... | ... | ... | ... |\n";
   const totalRowRank = TOP_LPS === -1 ? "**TOTAL**" : `${lpDistributions.length}`;
 
   const lpTable = `### LP Distributions - Top ${TOP_LPS === -1 ? "All" : TOP_LPS} (${lpDistributions.length} LPs total)
@@ -1359,8 +1427,10 @@ LPs provided liquidity to vaults and received vsTokens. They receive fsGLP distr
 
 **These are final distributions** after stablecoin capping and excess redistribution.
 
-| Rank | LP Address | WBTC fsGLP | WETH fsGLP | USDT fsGLP | USDC fsGLP | Total fsGLP |
-|------|------------|------------|------------|------------|------------|-------------|
+The **ETH GLV** and **BTC GLV** columns show the GLV token distributions, calculated proportionally based on each LP's share of the total fsGLP distribution.
+
+| Rank | LP Address | WBTC fsGLP | WETH fsGLP | USDT fsGLP | USDC fsGLP | Total fsGLP | ETH GLV | BTC GLV |
+|------|------------|------------|------------|------------|------------|-------------|---------|---------|
 ${lpTableRows.join("\n")}
 ${separatorLine}| ${totalRowRank} | **All LPs** | **${lpTotalWbtcFinal
     .toFixed(2)
@@ -1372,7 +1442,9 @@ ${separatorLine}| ${totalRowRank} | **All LPs** | **${lpTotalWbtcFinal
     .toFixed(2)
     .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | **${lpGrandTotalFinal
     .toFixed(2)
-    .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** |
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | **${lpTotalEthGLV
+    .toFixed(2)
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** | **${lpTotalBtcGLV.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}** |
 
 **Note:** Full LP distribution list available in \`out/archi-lp-distributions.csv\` (${
     lpDistributions.length
