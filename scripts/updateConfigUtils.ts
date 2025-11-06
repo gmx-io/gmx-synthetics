@@ -64,7 +64,17 @@ export async function handleConfigChanges(
     }
   }
 
-  const result = await multicall.callStatic.aggregate3(multicallReadParams);
+  let result = [];
+
+  if (batchSize == 0) {
+    batchSize = 50;
+  }
+
+  await handleInBatches(multicallReadParams, batchSize, async (batch) => {
+    const batchResult = await multicall.callStatic.aggregate3(batch);
+    result = result.concat(batchResult);
+  });
+
   const dataCache = {};
   for (let i = 0; i < configKeys.length; i++) {
     const type = types[i];
@@ -126,9 +136,6 @@ export async function handleConfigChanges(
 
   const { roles } = await hre.gmx.getRoles();
   const from = Object.keys(roles.CONFIG_KEEPER)[0];
-  if (batchSize == 0) {
-    batchSize = multicallWriteParams.length;
-  }
   await handleInBatches(multicallWriteParams, batchSize, async (batch) => {
     await config.connect(from).callStatic.multicall(batch);
   });
