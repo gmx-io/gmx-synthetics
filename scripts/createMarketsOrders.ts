@@ -34,6 +34,7 @@ import { ethers } from "ethers";
 //
 // Example for specific market with custom values:
 // COLLATERAL_AMOUNT=5 LEVERAGE=3 MARKETS=0x70d95587d40A2caf56bd97485aB3Eec10Bee6336 npx hardhat run --network arbitrum scripts/createMarketsOrders.ts
+// COLLATERAL_AMOUNT=5 LEVERAGE=3 MARKETS=0xB7e69749E3d2EDd90ea59A4932EFEa2D41E245d7 npx hardhat run --network avalanche scripts/createMarketsOrders.ts
 
 function getTickersUrl(): string {
   if (hre.network.name === "arbitrum") {
@@ -120,6 +121,47 @@ function findSwapPath(
 
   // No swap path found
   return null;
+}
+
+interface GasConfig {
+  baseGasLimit: any;
+  gasPerOraclePrice: any;
+  gasFeeMultiplier: any;
+}
+
+// Calculate execution fee based on DataStore configuration
+// This matches the logic in GasUtils.sol adjustGasLimitForEstimate()
+function calculateExecutionFee(
+  estimatedGasLimit: any,
+  oraclePriceCount: number,
+  currentGasPrice: any,
+  gasConfig: GasConfig
+) {
+  // adjustedGasLimit = baseGasLimit + (gasPerOraclePrice * oraclePriceCount) + applyFactor(estimatedGasLimit, multiplier)
+  let adjustedGasLimit = gasConfig.baseGasLimit.add(gasConfig.gasPerOraclePrice.mul(oraclePriceCount));
+
+  // Apply multiplier factor if it's set (non-zero)
+  if (!gasConfig.gasFeeMultiplier.isZero()) {
+    // Precision.applyFactor(value, factor) = value * factor / FLOAT_PRECISION (1e30)
+    const multipliedGas = estimatedGasLimit.mul(gasConfig.gasFeeMultiplier).div(expandDecimals(1, 30));
+    adjustedGasLimit = adjustedGasLimit.add(multipliedGas);
+  } else {
+    adjustedGasLimit = adjustedGasLimit.add(estimatedGasLimit);
+  }
+
+  // Use a safe gas price for calculation
+  // On Avalanche, gas price can be very low when queried but spike to 200+ gwei during execution
+  // The contract validates using tx.gasprice, so we need to ensure execution fee covers the spike
+  let safeGasPrice = currentGasPrice;
+  if (hre.network.name === "avalanche") {
+    const minGasPrice = hre.ethers.utils.parseUnits("200", "gwei"); // 200 gwei minimum for Avalanche
+    safeGasPrice = currentGasPrice.gt(minGasPrice) ? currentGasPrice : minGasPrice;
+  }
+
+  // Calculate execution fee with 20% additional buffer
+  const executionFee = safeGasPrice.mul(adjustedGasLimit).mul(120).div(100);
+
+  return executionFee;
 }
 
 async function main() {
@@ -227,12 +269,17 @@ async function main() {
     console.log("");
   }
 
-  // Calculate execution fee
-  const estimatedGasLimit = 10_000_000;
-  const gasPrice = await signer.getGasPrice();
-  const executionFee = gasPrice.mul(estimatedGasLimit);
-  console.log("Execution fee per order: %s ETH", hre.ethers.utils.formatEther(executionFee));
-  console.log("");
+  // Query gas configuration from DataStore
+  // These values are used by the contract to calculate minimum execution fee
+  const gasConfig: GasConfig = {
+    baseGasLimit: await dataStore.getUint(keys.ESTIMATED_GAS_FEE_BASE_AMOUNT_V2_1),
+    gasPerOraclePrice: await dataStore.getUint(keys.ESTIMATED_GAS_FEE_PER_ORACLE_PRICE),
+    gasFeeMultiplier: await dataStore.getUint(keys.ESTIMATED_GAS_FEE_MULTIPLIER_FACTOR),
+  };
+
+  // Query order execution gas limits
+  const increaseOrderGasLimit = await dataStore.getUint(keys.increaseOrderGasLimitKey());
+  const singleSwapGasLimit = await dataStore.getUint(keys.singleSwapGasLimitKey());
 
   // Position size in 30 decimal format
   const sizeDeltaUsd = decimalToFloat(positionSizeUsd);
@@ -289,6 +336,22 @@ async function main() {
       console.log("  Swap path: USDC -> %s (via market %s)", targetCollateralToken, swapPath[0]);
     }
 
+    // Calculate order estimated gas limit (matches GasUtils.estimateExecuteIncreaseOrderGasLimit)
+    const orderEstimatedGasLimit = increaseOrderGasLimit.add(singleSwapGasLimit.mul(swapPath.length));
+    // Calculate oracle price count: 3 base prices + 1 per swap
+    // See GasUtils.sol estimateOrderOraclePriceCount()
+    const oraclePriceCount = 3 + swapPath.length;
+
+    // Calculate execution fee using proper gas limits
+    const currentGasPrice = await signer.getGasPrice();
+    const executionFee = calculateExecutionFee(orderEstimatedGasLimit, oraclePriceCount, currentGasPrice, gasConfig);
+
+    console.log(
+      "  Execution fee per order: %s %s",
+      hre.ethers.utils.formatEther(executionFee),
+      hre.network.name === "avalanche" ? "AVAX" : "ETH"
+    );
+
     // Create LONG order
     try {
       const longOrderParams = {
@@ -330,18 +393,7 @@ async function main() {
         exchangeRouter.interface.encodeFunctionData("createOrder", [longOrderParams]),
       ];
 
-      // Estimate gas with 50% buffer
-      let longGasLimit;
-      try {
-        const estimatedGas = await exchangeRouter.estimateGas.multicall(longMulticallData, { value: executionFee });
-        longGasLimit = estimatedGas.mul(150).div(100); // 50% buffer
-        console.log("  Estimated gas: %s, using: %s", estimatedGas.toString(), longGasLimit.toString());
-      } catch (estimationError) {
-        longGasLimit = 2_000_000; // Conservative fallback
-        console.log("  Gas estimation failed, using fallback: %s", longGasLimit);
-      }
-
-      const longTx = await exchangeRouter.multicall(longMulticallData, { value: executionFee, gasLimit: longGasLimit });
+      const longTx = await exchangeRouter.multicall(longMulticallData, { value: executionFee });
 
       console.log("  Long order tx: %s", longTx.hash);
       await longTx.wait();
@@ -393,21 +445,7 @@ async function main() {
         exchangeRouter.interface.encodeFunctionData("createOrder", [shortOrderParams]),
       ];
 
-      // Estimate gas with 50% buffer
-      let shortGasLimit;
-      try {
-        const estimatedGas = await exchangeRouter.estimateGas.multicall(shortMulticallData, { value: executionFee });
-        shortGasLimit = estimatedGas.mul(150).div(100); // 50% buffer
-        console.log("  Estimated gas: %s, using: %s", estimatedGas.toString(), shortGasLimit.toString());
-      } catch (estimationError) {
-        shortGasLimit = 2_000_000; // Conservative fallback
-        console.log("  Gas estimation failed, using fallback: %s", shortGasLimit);
-      }
-
-      const shortTx = await exchangeRouter.multicall(shortMulticallData, {
-        value: executionFee,
-        gasLimit: shortGasLimit,
-      });
+      const shortTx = await exchangeRouter.multicall(shortMulticallData, { value: executionFee });
 
       console.log("  Short order tx: %s", shortTx.hash);
       await shortTx.wait();
