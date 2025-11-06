@@ -1,6 +1,5 @@
 import { grantRoleIfNotGranted } from "../utils/role";
 import { createDeployFunction } from "../utils/deploy";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 const constructorContracts = [
   "RoleStore",
