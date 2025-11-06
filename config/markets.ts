@@ -290,7 +290,7 @@ const baseMarketConfig: Partial<BaseMarketConfig> = {
   positionImpactExponentFactor: exponentToFloat("2e0"), // 2
 
   negativeMaxPositionImpactFactor: percentageToFloat("0.5%"),
-  positiveMaxPositionImpactFactor: percentageToFloat("0.5%"),
+  positiveMaxPositionImpactFactor: percentageToFloat("0.4%"),
   maxPositionImpactFactorForLiquidations: bigNumberify(0), // 0%
 
   swapFeeFactorForPositiveImpact: percentageToFloat("0.05%"),
