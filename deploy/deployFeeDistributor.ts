@@ -53,8 +53,12 @@ const func = createDeployFunction({
   id: "FeeDistributor_1",
 });
 
-func.skip = async ({ network }: HardhatRuntimeEnvironment) => {
-  return ["arbitrumSepolia"].includes(network.name);
+func.skip = async (hre) => {
+  if (["botanix", "avalancheFuji", "arbitrumSepolia"].includes(hre.network.name)) {
+    return true;
+  }
+
+  return false;
 };
 
 export default func;

@@ -372,7 +372,7 @@ const config: HardhatUserConfig = {
     ],
   },
   sourcify: {
-    enabled: true,
+    enabled: false,
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS ? true : false,
@@ -426,6 +426,7 @@ task("generate-deployment-docs", "Generate deployment documentation for all netw
   .setAction(async (taskArgs) => {
     const networks = taskArgs.networks ? taskArgs.networks.split(",") : undefined;
     await generateDeploymentDocs(networks);
+    await collectDeployments();
   });
 
 task("measure-contract-sizes", "Check if contract characters count hit 900k limit").setAction(async (taskArgs, env) => {

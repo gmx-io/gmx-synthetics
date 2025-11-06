@@ -197,6 +197,9 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler, ReentrancyGuard {
             );
         }
 
+        // note that order.account would receive the execution fee for the
+        // gas cost of cancelling the order
+        // the cancellationReceiver would receive the excess executionf fee refund
         OrderUtils.cancelOrder(
             OrderUtils.CancelOrderParams(
                 dataStore,
@@ -204,7 +207,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler, ReentrancyGuard {
                 multichainVault,
                 orderVault,
                 key,
-                order.account(),
+                order.account(), // keeper
                 startingGas,
                 true, // isExternalCall
                 false, // isAutoCancel
