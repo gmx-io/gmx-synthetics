@@ -875,6 +875,23 @@ library MarketUtils {
         return (positiveImpactFactor, negativeImpactFactor);
     }
 
+    function getAdjustedPositionImpactExponentFactor(DataStore dataStore, address market, bool isPositive) internal view returns (uint256) {
+        (uint256 positiveExponentFactor, uint256 negativeExponentFactor) = getAdjustedPositionImpactExponentFactors(dataStore, market);
+
+        return isPositive ? positiveExponentFactor : negativeExponentFactor;
+    }
+
+    function getAdjustedPositionImpactExponentFactors(DataStore dataStore, address market) internal view returns (uint256, uint256) {
+        uint256 positiveExponentFactor = dataStore.getUint(Keys.positionImpactExponentFactorKey(market, true));
+        uint256 negativeExponentFactor = dataStore.getUint(Keys.positionImpactExponentFactorKey(market, false));
+
+        if (positiveExponentFactor > negativeExponentFactor) {
+            positiveExponentFactor = negativeExponentFactor;
+        }
+
+        return (positiveExponentFactor, negativeExponentFactor);
+    }
+
     // @dev cap the input priceImpactUsd by the available amount in the
     // position impact pool
     // Note that since the price impact can be capped, a malicious

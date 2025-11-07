@@ -675,8 +675,8 @@ export function positionImpactFactorKey(market: string, isPositive: boolean) {
   return hashData(["bytes32", "address", "bool"], [POSITION_IMPACT_FACTOR, market, isPositive]);
 }
 
-export function positionImpactExponentFactorKey(market: string) {
-  return hashData(["bytes32", "address"], [POSITION_IMPACT_EXPONENT_FACTOR, market]);
+export function positionImpactExponentFactorKey(market: string, isPositive: boolean) {
+  return hashData(["bytes32", "address", "bool"], [POSITION_IMPACT_EXPONENT_FACTOR, market, isPositive]);
 }
 
 export function maxPositionImpactFactorKey(market: string, isPositive: boolean) {

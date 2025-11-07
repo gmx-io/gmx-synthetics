@@ -1149,10 +1149,11 @@ library Keys {
     // @dev key for position impact exponent factor
     // @param market the market address to check
     // @return key for position impact exponent factor
-    function positionImpactExponentFactorKey(address market) internal pure returns (bytes32) {
+    function positionImpactExponentFactorKey(address market, bool isPositive) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             POSITION_IMPACT_EXPONENT_FACTOR,
-            market
+            market,
+            isPositive
         ));
     }
 

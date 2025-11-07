@@ -458,8 +458,16 @@ const processMarkets = async ({
     addConfigItem(
       "uint",
       keys.POSITION_IMPACT_EXPONENT_FACTOR,
-      encodeData(["address"], [marketToken]),
-      marketConfig.positionImpactExponentFactor,
+      encodeData(["address", "bool"], [marketToken, false]),
+      marketConfig.negativePositionImpactExponentFactor,
+      `positionImpactExponentFactor ${marketLabel} (${marketToken})`
+    );
+
+    addConfigItem(
+      "uint",
+      keys.POSITION_IMPACT_EXPONENT_FACTOR,
+      encodeData(["address", "bool"], [marketToken, true]),
+      marketConfig.positivePositionImpactExponentFactor,
       `positionImpactExponentFactor ${marketLabel} (${marketToken})`
     );
 

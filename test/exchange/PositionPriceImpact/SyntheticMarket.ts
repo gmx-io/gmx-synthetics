@@ -35,7 +35,11 @@ describe("Exchange.PositionPriceImpact.SyntheticMarket", () => {
   it("price impact synthetic market", async () => {
     await dataStore.setUint(keys.positionImpactFactorKey(solUsdMarket.marketToken, true), decimalToFloat(5, 9));
     await dataStore.setUint(keys.positionImpactFactorKey(solUsdMarket.marketToken, false), decimalToFloat(1, 8));
-    await dataStore.setUint(keys.positionImpactExponentFactorKey(solUsdMarket.marketToken), decimalToFloat(2, 0));
+    await dataStore.setUint(keys.positionImpactExponentFactorKey(solUsdMarket.marketToken, true), decimalToFloat(2, 0));
+    await dataStore.setUint(
+      keys.positionImpactExponentFactorKey(solUsdMarket.marketToken, false),
+      decimalToFloat(2, 0)
+    );
 
     expect(await getOrderCount(dataStore)).eq(0);
 

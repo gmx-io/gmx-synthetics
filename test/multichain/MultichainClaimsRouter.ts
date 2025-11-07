@@ -302,7 +302,14 @@ describe("MultichainClaimsRouter", () => {
 
     beforeEach(async () => {
       await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 7));
-      await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
+      await dataStore.setUint(
+        keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, true),
+        decimalToFloat(2, 0)
+      );
+      await dataStore.setUint(
+        keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, false),
+        decimalToFloat(2, 0)
+      );
       await dataStore.setUint(keys.maxPositionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 3));
 
       await handleOrder(fixture, {

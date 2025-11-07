@@ -207,11 +207,11 @@ library PositionPricingUtils {
         // adding $1999 USDC into the pool will reduce absolute balance from $1000 to $999 but it does not
         // help rebalance the pool much, the isSameSideRebalance value helps avoid gaming using this case
         bool isSameSideRebalance = openInterestParams.longOpenInterest <= openInterestParams.shortOpenInterest == openInterestParams.nextLongOpenInterest <= openInterestParams.nextShortOpenInterest;
-        uint256 impactExponentFactor = dataStore.getUint(Keys.positionImpactExponentFactorKey(market));
 
         bool balanceWasImproved = nextDiffUsd < initialDiffUsd;
         if (isSameSideRebalance) {
             uint256 impactFactor = MarketUtils.getAdjustedPositionImpactFactor(dataStore, market, balanceWasImproved);
+            uint256 impactExponentFactor = MarketUtils.getAdjustedPositionImpactExponentFactor(dataStore, market, balanceWasImproved);
 
             return (
                 PricingUtils.getPriceImpactUsdForSameSideRebalance(
@@ -224,6 +224,7 @@ library PositionPricingUtils {
             );
         } else {
             (uint256 positiveImpactFactor, uint256 negativeImpactFactor) = MarketUtils.getAdjustedPositionImpactFactors(dataStore, market);
+            (uint256 positiveExponentFactor, uint256 negativeExponentFactor) = MarketUtils.getAdjustedPositionImpactExponentFactors(dataStore, market);
 
             return (
                 PricingUtils.getPriceImpactUsdForCrossoverRebalance(
@@ -231,7 +232,8 @@ library PositionPricingUtils {
                     nextDiffUsd,
                     positiveImpactFactor,
                     negativeImpactFactor,
-                    impactExponentFactor
+                    positiveExponentFactor,
+                    negativeExponentFactor
                 ),
                 balanceWasImproved
             );
