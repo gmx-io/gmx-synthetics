@@ -1267,6 +1267,8 @@ const config: {
       maxOpenInterest: decimalToFloat(2_100_000), // ~2% of global OI
 
       atomicSwapFeeFactor: percentageToFloat("2.25%"),
+
+      negativeMaxPositionImpactFactor: percentageToFloat("1.4%"),
     },
     {
       tokens: { indexToken: "ATOM", longToken: "WETH", shortToken: "USDC" },
@@ -2993,6 +2995,8 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(5_500_000, 6),
 
       atomicSwapFeeFactor: percentageToFloat("0.75%"),
+
+      negativeMaxPositionImpactFactor: percentageToFloat("1.4%"),
     },
     {
       tokens: { indexToken: "JUP", longToken: "WBTC.e", shortToken: "USDC" },
@@ -4424,6 +4428,8 @@ const config: {
       borrowingFactor: exponentToFloat("2e-8"), // 0.00000002 * 150% max reserve, 94.6% per year
 
       atomicSwapFeeFactor: percentageToFloat("2%"),
+
+      negativeMaxPositionImpactFactor: percentageToFloat("1.4%"),
     },
     {
       tokens: { indexToken: "WAVAX", longToken: "WAVAX", shortToken: "WAVAX" },
