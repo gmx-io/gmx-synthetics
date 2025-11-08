@@ -4458,6 +4458,8 @@ const config: {
 
       // factor in open interest reserve factor 35%
       borrowingFactor: exponentToFloat("3.6e-8"), // 3.60-8, 40% at 100% utilisation
+
+      negativeMaxPositionImpactFactor: percentageToFloat("1.4%"),
     },
     {
       tokens: { longToken: "USDC", shortToken: "USDT.e" },
