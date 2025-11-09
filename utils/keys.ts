@@ -339,6 +339,8 @@ export const CONTRIBUTOR_LAST_PAYMENT_AT = hashString("CONTRIBUTOR_LAST_PAYMENT_
 export const CONTRIBUTOR_ACCOUNT_LIST = hashString("CONTRIBUTOR_ACCOUNT_LIST");
 export const CONTRIBUTOR_TOKEN_AMOUNT = hashString("CONTRIBUTOR_TOKEN_AMOUNT");
 
+export const CRE_RECEIVER_AUTHORIZED_WORKFLOW_IDS = hashString("CRE_RECEIVER_AUTHORIZED_WORKFLOW_IDS");
+
 export function accountDepositListKey(account) {
   return hashData(["bytes32", "address"], [ACCOUNT_DEPOSIT_LIST, account]);
 }
@@ -1009,4 +1011,8 @@ export function feeDistributorAddressInfoForChainKey(chainId: number, addressNam
 
 export function contributorTokenAmountKey(account: string, token: string) {
   return hashData(["bytes32", "address", "address"], [CONTRIBUTOR_TOKEN_AMOUNT, account, token]);
+}
+
+export function creReceiverAuthorizedWorkflowIdsKey(workflowId: string) {
+  return hashData(["bytes32", "bytes32"], [CRE_RECEIVER_AUTHORIZED_WORKFLOW_IDS, workflowId]);
 }
