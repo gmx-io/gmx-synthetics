@@ -11,7 +11,7 @@ export function readJsonFile(path) {
 }
 
 export function writeJsonFile(path, content) {
-  return fs.writeFileSync(path, JSON.stringify(content));
+  return fs.writeFileSync(path, JSON.stringify(content, null, 2));
 }
 
 // Recursively iterates over all files in a directory and calls a callback on every file

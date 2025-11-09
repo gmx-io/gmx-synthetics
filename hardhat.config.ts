@@ -35,6 +35,7 @@ import { deleteFile, writeJsonFile } from "./utils/file";
 import { TASK_VERIFY } from "@nomicfoundation/hardhat-verify/internal/task-names";
 
 const getNetworkFromCLI = () => {
+  if (process.env.HARDHAT_NETWORK) return process.env.HARDHAT_NETWORK;
   const i = process.argv.indexOf("--network");
   return i !== -1 && process.argv[i + 1] ? process.argv[i + 1] : "hardhat";
 };
@@ -425,6 +426,7 @@ task("generate-deployment-docs", "Generate deployment documentation for all netw
   .setAction(async (taskArgs) => {
     const networks = taskArgs.networks ? taskArgs.networks.split(",") : undefined;
     await generateDeploymentDocs(networks);
+    await collectDeployments();
   });
 
 task("measure-contract-sizes", "Check if contract characters count hit 900k limit").setAction(async (taskArgs, env) => {

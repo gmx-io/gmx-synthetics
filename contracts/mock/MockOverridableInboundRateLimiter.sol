@@ -2,12 +2,6 @@
 pragma solidity ^0.8.22;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { MintBurnOFTAdapter } from "@layerzerolabs/oft-evm/contracts/MintBurnOFTAdapter.sol";
-import { IMintableBurnable } from "@layerzerolabs/oft-evm/contracts/interfaces/IMintableBurnable.sol";
-import { SendParam, MessagingFee, MessagingReceipt, OFTReceipt } from "@layerzerolabs/oft-evm/contracts/OFTCore.sol";
-import { Origin } from "@layerzerolabs/oapp-evm/contracts/oapp/OApp.sol";
-import { OFTMsgCodec } from "@layerzerolabs/oft-evm/contracts/libs/OFTMsgCodec.sol";
-import { OFTComposeMsgCodec } from "@layerzerolabs/oft-evm/contracts/libs/OFTComposeMsgCodec.sol";
 import { RateLimiter } from "@layerzerolabs/oapp-evm/contracts/oapp/utils/RateLimiter.sol";
 
 struct RateLimitExemptAddress {
@@ -15,11 +9,10 @@ struct RateLimitExemptAddress {
     bool isExempt;
 }
 
-interface IOverridableInboundRatelimit {
+interface IOverridableInboundRateLimiter {
     error InputLengthMismatch(uint256 addressOrGUIDLength, uint256 overridableLength); // 0x6b7f6f0e
 
     event RateLimitUpdated(RateLimiter.RateLimitConfig[] newConfigs);
-
     event RateLimitOverrider_ModifiedAddress(RateLimitExemptAddress[] indexed addresses);
     event RateLimitOverrider_ModifiedGUID(bytes32[] indexed guid, bool canOverride);
 
@@ -56,28 +49,18 @@ interface IOverridableInboundRatelimit {
 }
 
 /**
- * @title MintBurnOFTAdapter Contract
+ * @title OverridableRateLimiter
  * @author LayerZero Labs (@shankars99)
- * @dev MintBurnOFTAdapter is a contract that adapts an ERC-20 token with external mint and burn logic to the OFT functionality.
- * @dev For existing ERC20 tokens with exposed mint and burn permissions, this can be used to convert the token to crosschain compatibility.
- * @dev Unlike the vanilla OFT Adapter, multiple of these can exist for a given global mesh.
+ * @dev Abstract contract that provides overridable inbound rate limiting functionality for OFT contracts.
+ * @dev This contract can be inherited by any LayerZero OFT adapter (MintBurnOFTAdapter, OFTAdapter, NativeOFTAdapter, etc.)
+ * @dev to add rate limiting with exemption and override capabilities.
  */
-contract MockGMX_Adapter is MintBurnOFTAdapter, RateLimiter, IOverridableInboundRatelimit {
-    using OFTMsgCodec for bytes;
-    using OFTMsgCodec for bytes32;
-
+abstract contract MockOverridableInboundRateLimiter is RateLimiter, Ownable, IOverridableInboundRateLimiter {
+    /// @dev Mapping to track addresses exempt from rate limiting
     mapping(address => bool) public exemptAddresses;
-    mapping(bytes32 => bool) public guidOverrides;
 
-    constructor(
-        RateLimitConfig[] memory _rateLimitConfigs,
-        address _token,
-        IMintableBurnable _minterBurner,
-        address _lzEndpoint,
-        address _delegate
-    ) MintBurnOFTAdapter(_token, _minterBurner, _lzEndpoint, _delegate) Ownable() {
-        _setRateLimits(_rateLimitConfigs);
-    }
+    /// @dev Mapping to track GUIDs that can override rate limiting
+    mapping(bytes32 => bool) public guidOverrides;
 
     /**
      * @notice Sets the rate limits for the contract.
@@ -119,59 +102,36 @@ contract MockGMX_Adapter is MintBurnOFTAdapter, RateLimiter, IOverridableInbound
     }
 
     /**
-     * @notice Override the base _debit() function to consume rate limit before super._debit()
-     * @dev This function is called when a debit is made from the OFT.
+     * @notice Apply rate limiting for outbound transfers (inverted to act as inbound rate limit)
+     * @dev Uses LayerZero's outbound rate limiter in reverse - calling _inflow() to consume capacity
      * @param _from The address from which the debit is made.
      * @param _amountLD The amount to debit in local denomination.
-     * @param _minAmountLD The minimum amount to debit in local denomination.
      * @param _dstEid The destination endpoint ID.
      */
-    function _debit(
-        address _from,
-        uint256 _amountLD,
-        uint256 _minAmountLD,
-        uint32 _dstEid
-    ) internal virtual override returns (uint256 amountSentLD, uint256 amountReceivedLD) {
-        /// @dev amountSentLD is amountLD with dust removed
-        /// @dev amountReceivedLD is amountSentLD with other token amount changes such as fee, etc.
-        /// @dev GMX does not have any "changes" and so the following is true:
-        ///         amountSentLD = amountReceivedLD
-        (amountSentLD, amountReceivedLD) = super._debit(_from, _amountLD, _minAmountLD, _dstEid);
-
-        /// @dev If the sender is an exemptAddress (FeeDistributor) then we do NOT refill the rate limiter.
-        if (!exemptAddresses[msg.sender]) {
-            /// @dev The original layerzero rate limiter is an outbound rate limit.
+    function _outflowOverridable(address _from, uint256 _amountLD, uint32 _dstEid) internal virtual {
+        /// @dev Apply outbound rate limiting if sender is not exempt
+        if (!exemptAddresses[_from]) {
+            /// @dev The original LayerZero rate limiter is an outbound rate limit.
             /// @dev A unidirectional graph can be inverted by swapping the inflow and outflow functions.
             /// @dev This makes the rate limiter an inbound rate limit.
-            super._inflow(_dstEid, amountReceivedLD);
+            super._inflow(_dstEid, _amountLD);
         }
     }
 
     /**
-     * @notice Override the base _lzReceive() function to use _inflowOverridable() before super._lzReceive()
-     * @dev This function is called when a message is received from another chain.
-     * @param _origin The origin of the message.
+     * @notice Apply rate limiting for inbound transfers (inverted to act as inbound rate limit)
+     * @dev Uses LayerZero's outbound rate limiter in reverse - calling _outflow() to consume capacity
      * @param _guid The GUID of the message.
-     * @param _message The message data.
-     * @param _executor The address of the executor.
-     * @param _extraData Additional data for the message.
+     * @param _to The address of the recipient.
+     * @param _amountLD The amount of tokens received in local decimals.
+     * @param _srcEid The source chain ID.
      */
-    function _lzReceive(
-        Origin calldata _origin,
-        bytes32 _guid,
-        bytes calldata _message,
-        address _executor, // @dev unused in the default implementation.
-        bytes calldata _extraData // @dev unused in the default implementation.
-    ) internal virtual override {
-        address toAddress = _message.sendTo().bytes32ToAddress();
-
-        /// @dev If the address is exempt or the GUID is overridable, skip the rate limit check else apply the rate limit.
-        if (!exemptAddresses[toAddress] && !guidOverrides[_guid]) {
-            /// @dev The original layerzero rate limiter is an outbound rate limit.
+    function _inflowOverridable(bytes32 _guid, address _to, uint256 _amountLD, uint32 _srcEid) internal virtual {
+        /// @dev Apply inbound rate limiting if recipient is not exempt and GUID is not overridable
+        if (!exemptAddresses[_to] && !guidOverrides[_guid]) {
+            /// @dev The original LayerZero rate limiter is an outbound rate limit.
             /// @dev Switching `inflow` and `outflow` makes the rate limiter an inbound rate limit.
-            super._outflow(_origin.srcEid, _toLD(_message.amountSD()));
+            super._outflow(_srcEid, _amountLD);
         }
-
-        super._lzReceive(_origin, _guid, _message, _executor, _extraData);
     }
 }

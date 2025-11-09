@@ -167,10 +167,18 @@ contract RoleModule {
     }
 
     /**
-     * @dev Only allows addresses with the CONTRIBUTOR_DISTRIBUTOR role to call the function.
+     * @dev Only allows addresses with the MULTICHAIN_READER role to call the function.
      */
     modifier onlyMultichainReader() {
         _validateRole(Role.MULTICHAIN_READER, "MULTICHAIN_READER");
+        _;
+    }
+
+    /**
+     * @dev Only allows addresses with the CRE_FORWARDER role to call the function.
+     */
+    modifier onlyCreForwarder() {
+        _validateRole(Role.CRE_FORWARDER, "CRE_FORWARDER");
         _;
     }
 

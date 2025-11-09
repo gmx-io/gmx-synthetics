@@ -16,7 +16,7 @@ import "../v1/IRewardDistributorV1.sol";
 import "../v1/IVesterV1.sol";
 import "../v1/IMintable.sol";
 
-contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
+contract MockFeeDistributor is ReentrancyGuard, RoleModule {
     using EventUtils for EventUtils.UintItems;
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
@@ -56,7 +56,6 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
 
     constructor(
         RoleStore _roleStore,
-        IOracle _oracle,
         FeeDistributorVault _feeDistributorVault,
         FeeHandler _feeHandler,
         DataStore _dataStore,
@@ -67,7 +66,7 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         address _esGmx,
         address _wnt,
         MockVariables memory _mockVariables
-    ) RoleModule(_roleStore) OracleModule(_oracle) {
+    ) RoleModule(_roleStore) {
         feeDistributorVault = _feeDistributorVault;
         feeHandler = _feeHandler;
         dataStore = _dataStore;
@@ -80,6 +79,21 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
 
         dataStoreForOracle = _mockVariables.dataStoreForOracle;
         gmxForOracle = _mockVariables.gmxForOracle;
+    }
+
+    // @dev withdraw the specified 'amount' of native token from this contract to 'receiver'
+    // @param receiver the receiver of the native token
+    // @param amount the amount of native token to withdraw
+    function withdrawNativeToken(address receiver, uint256 amount) external onlyTimelockAdmin {
+        FeeDistributorUtils.withdrawNativeToken(dataStore, receiver, amount);
+    }
+
+    // @dev withdraw the specified 'amount' of `token` from this contract to `receiver`
+    // @param token the token to withdraw
+    // @param amount the amount to withdraw
+    // @param receiver the address to withdraw to
+    function withdrawToken(address token, address receiver, uint256 amount) external onlyTimelockAdmin {
+        FeeDistributorUtils.withdrawToken(dataStore, token, receiver, amount);
     }
 
     // @dev initiate the weekly fee distribution process
@@ -219,6 +233,8 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
 
         uint256 requiredGmxAmount = Precision.mulDiv(totalFeeAmountGmx, stakedGmxCurrentChain, totalStakedGmx);
         uint256 totalGmxBridgedOut;
+        EventUtils.EventLogData memory eventData;
+        eventData.uintItems.initItems(3);
         // validate that the this chain has sufficient GMX to distribute fees
         if (feeAmountGmxCurrentChain >= requiredGmxAmount) {
             // only attempt to bridge to other chains if this chain has a surplus of GMX
@@ -244,15 +260,17 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
                 }
                 _setUint(Keys2.feeDistributorFeeAmountGmxKey(mockChainId), newFeeAmountGmxCurrentChain);
             }
-            _setDistributionState(uint256(DistributionState.BridgingCompleted));
+            uint256 distributionState = uint256(DistributionState.BridgingCompleted);
+            _setDistributionState(distributionState);
+            _setUintItem(eventData, 0, "distributionState", distributionState);
         } else {
-            _setDistributionState(uint256(DistributionState.ReadDataReceived));
+            uint256 distributionState = uint256(DistributionState.ReadDataReceived);
+            _setDistributionState(distributionState);
+            _setUintItem(eventData, 0, "distributionState", distributionState);
         }
 
-        EventUtils.EventLogData memory eventData;
-        eventData.uintItems.initItems(2);
-        _setUintItem(eventData, 0, "feeAmountGmxCurrentChain", feeAmountGmxCurrentChain);
-        _setUintItem(eventData, 1, "totalGmxBridgedOut", totalGmxBridgedOut);
+        _setUintItem(eventData, 1, "feeAmountGmxCurrentChain", feeAmountGmxCurrentChain);
+        _setUintItem(eventData, 2, "totalGmxBridgedOut", totalGmxBridgedOut);
         eventData.bytesItems.initItems(1);
         eventData.bytesItems.setItem(0, "receivedData", abi.encode(receivedData));
         _emitFeeDistributionEvent(eventData, "FeeDistributionDataReceived");
@@ -355,8 +373,8 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         _emitFeeDistributionEvent(eventData, "FeeDistributionCompleted");
     }
 
-    // @dev deposit the calculated referral rewards in the ClaimVault for the specified accounts
-    // @param token the token in which the referral rewards will be sent
+    // @dev deposit the calculated referral rewards into the ClaimVault for the specified accounts
+    // @param token the token in which the referral rewards will be deposited
     // @param distributionId the distribution id
     // @param params array of referral rewards deposit parameters
     function depositReferralRewards(
@@ -364,7 +382,7 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         uint256 distributionId,
         ClaimUtils.DepositParam[] calldata params
     ) external nonReentrant onlyFeeDistributionKeeper {
-        // validate the distribution state and that the accounts and amounts arrays are valid lengths
+        // validate the distribution state
         _validateDistributionState(DistributionState.None);
 
         uint256 tokensForReferralRewards = _getUint(Keys2.feeDistributorReferralRewardsAmountKey(token));
@@ -376,10 +394,10 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
                 revert Errors.MaxEsGmxReferralRewardsAmountExceeded(tokensForReferralRewards, maxEsGmxReferralRewards);
             }
 
-            uint256 vaultEsGmxBalance = _getFeeDistributorVaultBalance(esGmx);
+            uint256 vaultEsGmxBalance = _getFeeDistributorVaultBalance(token);
             uint256 esGmxToBeDeposited = tokensForReferralRewards - cumulativeDepositAmount;
             if (esGmxToBeDeposited > vaultEsGmxBalance) {
-                IMintable(esGmx).mint(address(feeDistributorVault), esGmxToBeDeposited - vaultEsGmxBalance);
+                IMintable(token).mint(address(feeDistributorVault), esGmxToBeDeposited - vaultEsGmxBalance);
             }
 
             // update esGMX bonus reward amounts for each account in the vester contract
@@ -626,20 +644,9 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
         eventEmitter.emitEventLog("FeeDistributionEvent", eventData);
     }
 
-    function _setTokenPrices() internal withOraclePrices(_retrieveSetPricesParams()) {
+    function _setTokenPrices() internal {
         _setUint(Keys2.FEE_DISTRIBUTOR_GMX_PRICE, _getOraclePrice(gmxForOracle));
         _setUint(Keys2.FEE_DISTRIBUTOR_WNT_PRICE, _getOraclePrice(wnt));
-    }
-
-    function _retrieveSetPricesParams() internal view returns (OracleUtils.SetPricesParams memory) {
-        address[] memory tokens = _createAddressArray(2);
-        tokens[0] = gmxForOracle;
-        tokens[1] = wnt;
-        address[] memory providers = _createAddressArray(2);
-        providers[0] = _getAddress(Keys.oracleProviderForTokenKey(address(oracle), gmxForOracle));
-        providers[1] = _getAddress(Keys.oracleProviderForTokenKey(address(oracle), wnt));
-        bytes[] memory data = new bytes[](2);
-        return (OracleUtils.SetPricesParams(tokens, providers, data));
     }
 
     function _calculateChainlinkAndTreasuryAmounts(
@@ -709,7 +716,7 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule, OracleModule {
     }
 
     function _getOraclePrice(address token) internal view returns (uint256) {
-        // ChainlinkPriceProvider.getOraclePrice() is not used since the prices are for non-stablecoin tokens
+        // ChainlinkPriceFeedProvider.getOraclePrice() is not used since the prices are for non-stablecoin tokens
         (bool hasPriceFeed, uint256 price) = ChainlinkPriceFeedUtils.getPriceFeedPrice(dataStoreForOracle, token);
 
         if (!hasPriceFeed) {
