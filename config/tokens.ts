@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { getSyntheticTokenAddress } from "../utils/token";
-import { decimalToFloat, percentageToFloat } from "../utils/math";
+import { decimalToFloat, percentageToFloat, expandDecimals } from "../utils/math";
 import { BigNumberish } from "ethers";
 import { TOKEN_ORACLE_TYPES } from "../utils/oracle";
 
@@ -11,7 +11,7 @@ type OracleRealPriceFeed = {
   address: string;
   decimals: number;
   heartbeatDuration: number;
-  stablePrice?: BigNumberish;
+  stablePriceUsd?: BigNumberish;
   deploy?: never;
   initPrice?: never;
 };
@@ -20,7 +20,7 @@ type OracleTestPriceFeed = {
   address?: never;
   decimals: number;
   heartbeatDuration: number;
-  stablePrice?: BigNumberish;
+  stablePriceUsd?: BigNumberish;
   deploy: true;
   initPrice: string;
 };
@@ -1035,7 +1035,7 @@ const config: {
         address: "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3",
         decimals: 8,
         heartbeatDuration: (24 + 1) * 60 * 60,
-        stablePrice: decimalToFloat(1),
+        stablePriceUsd: decimalToFloat(1),
       },
       buybackMaxPriceImpactFactor: LOW_BUYBACK_IMPACT,
       dataStreamSpreadReductionFactor: percentageToFloat("100%"),
@@ -1050,7 +1050,7 @@ const config: {
         address: "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3",
         decimals: 8,
         heartbeatDuration: (24 + 1) * 60 * 60,
-        stablePrice: decimalToFloat(1),
+        stablePriceUsd: decimalToFloat(1),
       },
       buybackMaxPriceImpactFactor: LOW_BUYBACK_IMPACT,
     },
@@ -1065,7 +1065,7 @@ const config: {
         address: "0x3f3f5dF88dC9F13eac63DF89EC16ef6e7E25DdE7",
         decimals: 8,
         heartbeatDuration: (24 + 1) * 60 * 60,
-        stablePrice: decimalToFloat(1),
+        stablePriceUsd: decimalToFloat(1),
       },
       buybackMaxPriceImpactFactor: LOW_BUYBACK_IMPACT,
     },
@@ -1080,7 +1080,7 @@ const config: {
         address: "0xc5C8E77B397E531B8EC06BFb0048328B30E9eCfB",
         decimals: 8,
         heartbeatDuration: (24 + 1) * 60 * 60,
-        stablePrice: decimalToFloat(1),
+        stablePriceUsd: decimalToFloat(1),
       },
       buybackMaxPriceImpactFactor: LOW_BUYBACK_IMPACT,
     },
@@ -1095,7 +1095,7 @@ const config: {
         address: "0x88AC7Bca36567525A866138F03a6F6844868E0Bc",
         decimals: 8,
         heartbeatDuration: (24 + 1) * 60 * 60,
-        stablePrice: decimalToFloat(1),
+        stablePriceUsd: decimalToFloat(1),
       },
       buybackMaxPriceImpactFactor: LOW_BUYBACK_IMPACT,
     },
@@ -1251,7 +1251,7 @@ const config: {
         address: "0xF096872672F44d6EBA71458D74fe67F9a77a23B9",
         decimals: 8,
         heartbeatDuration: (24 + 1) * 60 * 60,
-        stablePrice: decimalToFloat(1),
+        stablePriceUsd: decimalToFloat(1),
       },
       buybackMaxPriceImpactFactor: LOW_BUYBACK_IMPACT,
     },
@@ -1265,7 +1265,7 @@ const config: {
         address: "0xF096872672F44d6EBA71458D74fe67F9a77a23B9",
         decimals: 8,
         heartbeatDuration: (24 + 1) * 60 * 60,
-        stablePrice: decimalToFloat(1),
+        stablePriceUsd: decimalToFloat(1),
       },
       buybackMaxPriceImpactFactor: LOW_BUYBACK_IMPACT,
     },
@@ -1280,7 +1280,7 @@ const config: {
         address: "0xEBE676ee90Fe1112671f19b6B7459bC678B67e8a",
         decimals: 8,
         heartbeatDuration: (24 + 1) * 60 * 60,
-        stablePrice: decimalToFloat(1),
+        stablePriceUsd: decimalToFloat(1),
       },
       buybackMaxPriceImpactFactor: LOW_BUYBACK_IMPACT,
     },
@@ -1295,7 +1295,7 @@ const config: {
         address: "0xEBE676ee90Fe1112671f19b6B7459bC678B67e8a",
         decimals: 8,
         heartbeatDuration: (24 + 1) * 60 * 60,
-        stablePrice: decimalToFloat(1),
+        stablePriceUsd: decimalToFloat(1),
       },
       buybackMaxPriceImpactFactor: LOW_BUYBACK_IMPACT,
     },
@@ -1310,7 +1310,7 @@ const config: {
         address: "0x51D7180edA2260cc4F6e4EebB82FEF5c3c2B8300",
         decimals: 8,
         heartbeatDuration: (24 + 1) * 60 * 60,
-        stablePrice: decimalToFloat(1),
+        stablePriceUsd: decimalToFloat(1),
       },
       buybackMaxPriceImpactFactor: LOW_BUYBACK_IMPACT,
     },
@@ -1453,7 +1453,7 @@ const config: {
         address: "0x0153002d20B96532C639313c2d54c3dA09109309", // Circle USDC
         decimals: 8,
         heartbeatDuration: 144 * 60 * 60,
-        stablePrice: decimalToFloat(1),
+        stablePriceUsd: decimalToFloat(1),
       },
     },
   },
@@ -1801,6 +1801,10 @@ function getTokens(hre: HardhatRuntimeEnvironment) {
 
     if (token.oracleType === undefined) {
       token.oracleType = TOKEN_ORACLE_TYPES.DEFAULT;
+    }
+
+    if (token.priceFeed && token.priceFeed.stablePriceUsd) {
+      token.priceFeed.stablePrice = token.priceFeed.stablePriceUsd.div(expandDecimals(1, token.decimals));
     }
 
     if (token.dataStreamSpreadReductionFactor === undefined) {

@@ -125,18 +125,24 @@ export async function updateOracleConfigForTokens() {
   const multicallWriteParams = [];
   const testnetTasks: (() => Promise<void>)[] = [];
 
+  const predecessor = ethers.constants.HashZero;
+  const salt = ethers.constants.HashZero;
+
   for (const tokenSymbol of tokenSymbols) {
     console.log(`checking: ${tokenSymbol}`);
     const token = tokens[tokenSymbol];
     const onchainConfig = onchainOracleConfig[tokenSymbol];
 
-    if (token.priceFeed && onchainConfig.priceFeed.toLowerCase() !== token.priceFeed.address.toLowerCase()) {
+    if (token.priceFeed) {
+      let shouldUpdate = onchainConfig.priceFeed.toLowerCase() !== token.priceFeed.address.toLowerCase();
+
       const { priceFeed } = token;
       const priceFeedMultiplier =
         token.priceFeed.address === ethers.constants.AddressZero
           ? 0
           : expandDecimals(1, 60 - token.decimals - priceFeed.decimals);
       const stablePrice = priceFeed.stablePrice ? priceFeed.stablePrice : 0;
+      console.log(`    stablePrice: ${stablePrice.toString()}, ${onchainConfig.stablePrice.toString()}`);
 
       if (
         !onchainConfig.priceFeedMultiplier.eq(priceFeedMultiplier) &&
@@ -149,56 +155,67 @@ export async function updateOracleConfigForTokens() {
       }
 
       if (!onchainConfig.stablePrice.eq(stablePrice)) {
-        throw new Error(
-          `stablePrice mismatch for ${tokenSymbol}: ${stablePrice.toString()}, ${onchainConfig.stablePrice.toString()}`
-        );
+        if (process.env.ALLOW_STABLE_PRICE_UPDATE) {
+          shouldUpdate = true;
+        } else {
+          throw new Error(
+            `stablePrice mismatch for ${tokenSymbol}: ${stablePrice.toString()}, ${onchainConfig.stablePrice.toString()}`
+          );
+        }
       }
 
-      await validatePriceFeed(tokenSymbol, token);
+      await validatePriceFeed(tokenSymbol, token, priceFeedMultiplier);
       console.log(
         `setPriceFeed(${tokenSymbol}, ${priceFeed.address}, ${priceFeedMultiplier.toString()}, ${
           priceFeed.heartbeatDuration
         }, ${stablePrice.toString()})`
       );
 
-      if (isTestnet) {
-        testnetTasks.push(async () => {
-          printTxHash(
-            `set price feed ${token.address}`,
-            await dataStore.setAddress(keys.priceFeedKey(token.address), priceFeed.address)
+      if (shouldUpdate) {
+        console.log(`adding update for ${token.symbol}`);
+        if (isTestnet) {
+          testnetTasks.push(async () => {
+            printTxHash(
+              `set price feed ${token.address}`,
+              await dataStore.setAddress(keys.priceFeedKey(token.address), priceFeed.address)
+            );
+            printTxHash(
+              `set price feed multiplier ${token.address}`,
+              await dataStore.setUint(keys.priceFeedMultiplierKey(token.address), priceFeedMultiplier)
+            );
+            printTxHash(
+              `set price feed heartbeat duration ${token.address}`,
+              await dataStore.setUint(keys.priceFeedHeartbeatDurationKey(token.address), priceFeed.heartbeatDuration)
+            );
+            printTxHash(
+              `set stable price ${token.address}`,
+              await dataStore.setUint(keys.stablePriceKey(token.address), stablePrice)
+            );
+          });
+        } else if (phase === "signal") {
+          multicallWriteParams.push(
+            timelock.interface.encodeFunctionData("signalSetPriceFeed", [
+              token.address,
+              priceFeed.address,
+              priceFeedMultiplier,
+              priceFeed.heartbeatDuration,
+              stablePrice,
+              predecessor,
+              salt,
+            ])
           );
-          printTxHash(
-            `set price feed multiplier ${token.address}`,
-            await dataStore.setUint(keys.priceFeedMultiplierKey(token.address), priceFeedMultiplier)
-          );
-          printTxHash(
-            `set price feed heartbeat duration ${token.address}`,
-            await dataStore.setUint(keys.priceFeedHeartbeatDurationKey(token.address), priceFeed.heartbeatDuration)
-          );
-          printTxHash(
-            `set stable price ${token.address}`,
-            await dataStore.setUint(keys.stablePriceKey(token.address), stablePrice)
-          );
-        });
-      } else if (phase === "signal") {
-        multicallWriteParams.push(
-          timelock.interface.encodeFunctionData("signalSetPriceFeed", [
+        } else {
+          const { targets, values, payloads } = await setPriceFeedPayload(
             token.address,
             priceFeed.address,
             priceFeedMultiplier,
             priceFeed.heartbeatDuration,
-            stablePrice,
-          ])
-        );
-      } else {
-        const { targets, values, payloads } = await setPriceFeedPayload(
-          token.address,
-          priceFeed.address,
-          priceFeedMultiplier,
-          priceFeed.heartbeatDuration,
-          stablePrice
-        );
-        multicallWriteParams.push(timelock.interface.encodeFunctionData("executeBatch", [targets, values, payloads]));
+            stablePrice
+          );
+          multicallWriteParams.push(
+            timelock.interface.encodeFunctionData("executeBatch", [targets, values, payloads, predecessor, salt])
+          );
+        }
       }
     }
 

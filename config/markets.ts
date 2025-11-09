@@ -290,7 +290,7 @@ const baseMarketConfig: Partial<BaseMarketConfig> = {
   positionImpactExponentFactor: exponentToFloat("2e0"), // 2
 
   negativeMaxPositionImpactFactor: percentageToFloat("0.5%"),
-  positiveMaxPositionImpactFactor: percentageToFloat("0.5%"),
+  positiveMaxPositionImpactFactor: percentageToFloat("0.4%"),
   maxPositionImpactFactorForLiquidations: bigNumberify(0), // 0%
 
   swapFeeFactorForPositiveImpact: percentageToFloat("0.05%"),
@@ -1267,6 +1267,8 @@ const config: {
       maxOpenInterest: decimalToFloat(2_100_000), // ~2% of global OI
 
       atomicSwapFeeFactor: percentageToFloat("2.25%"),
+
+      negativeMaxPositionImpactFactor: percentageToFloat("1.4%"),
     },
     {
       tokens: { indexToken: "ATOM", longToken: "WETH", shortToken: "USDC" },
@@ -2644,7 +2646,7 @@ const config: {
 
       maxPnlFactorForTraders: percentageToFloat("50%"), // default is 60%
 
-      maxOpenInterest: decimalToFloat(500_000),
+      maxOpenInterest: bigNumberify(100),
       maxPoolUsdForDeposit: decimalToFloat(750_000), // 1.5x the max open interest
 
       maxLongTokenPoolAmount: expandDecimals(10, 8), // ~1M USD (2x the max open interest)
@@ -2993,6 +2995,8 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(5_500_000, 6),
 
       atomicSwapFeeFactor: percentageToFloat("0.75%"),
+
+      negativeMaxPositionImpactFactor: percentageToFloat("1.4%"),
     },
     {
       tokens: { indexToken: "JUP", longToken: "WBTC.e", shortToken: "USDC" },
@@ -4424,6 +4428,8 @@ const config: {
       borrowingFactor: exponentToFloat("2e-8"), // 0.00000002 * 150% max reserve, 94.6% per year
 
       atomicSwapFeeFactor: percentageToFloat("2%"),
+
+      negativeMaxPositionImpactFactor: percentageToFloat("1.4%"),
     },
     {
       tokens: { indexToken: "WAVAX", longToken: "WAVAX", shortToken: "WAVAX" },
@@ -4452,6 +4458,8 @@ const config: {
 
       // factor in open interest reserve factor 35%
       borrowingFactor: exponentToFloat("3.6e-8"), // 3.60-8, 40% at 100% utilisation
+
+      negativeMaxPositionImpactFactor: percentageToFloat("1.4%"),
     },
     {
       tokens: { longToken: "USDC", shortToken: "USDT.e" },
