@@ -560,6 +560,12 @@ library GasUtils {
         return dataStore.getUint(Keys.SET_TRADER_REFERRAL_CODE_GAS_LIMIT);
     }
 
+    function estimateRegisterCodeGasLimit(
+        DataStore dataStore
+    ) internal view returns (uint256) {
+        return dataStore.getUint(Keys.REGISTER_CODE_GAS_LIMIT);
+    }
+
     function emitKeeperExecutionFee(EventEmitter eventEmitter, address keeper, uint256 executionFeeAmount) internal {
         EventUtils.EventLogData memory eventData;
 

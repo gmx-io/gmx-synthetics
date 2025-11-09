@@ -440,6 +440,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.DECREASE_ORDER_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.SWAP_ORDER_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.SET_TRADER_REFERRAL_CODE_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.REGISTER_CODE_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.TOKEN_TRANSFER_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.NATIVE_TOKEN_TRANSFER_GAS_LIMIT] = true;
 

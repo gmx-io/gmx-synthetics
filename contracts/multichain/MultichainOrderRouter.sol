@@ -91,4 +91,16 @@ contract MultichainOrderRouter is IMultichainOrderRouter, MultichainRouter {
 
         referralStorage.setTraderReferralCode(account, referralCode);
     }
+
+    function registerCode(
+        IRelayUtils.RelayParams calldata relayParams,
+        address account,
+        uint256 srcChainId,
+        bytes32 referralCode
+    ) external nonReentrant withRelay(relayParams, account, srcChainId, false) {
+        bytes32 structHash = RelayUtils.getRegisterCodeStructHash(relayParams, referralCode);
+        _validateCall(relayParams, account, structHash, srcChainId);
+
+        referralStorage.registerCodeForAccount(account, referralCode);
+    }
 }

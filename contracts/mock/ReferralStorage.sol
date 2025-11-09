@@ -112,14 +112,18 @@ contract ReferralStorage is IReferralStorage, Governable {
         _setTraderReferralCode(msg.sender, _code);
     }
 
+    // @dev register a referral code on behalf of an account (for multichain flows)
+    // @param _account the account that will own the referral code
+    // @param _code the referral code to register
+    function registerCodeForAccount(address _account, bytes32 _code) external onlyHandler {
+        require(_account != address(0), "ReferralStorage: invalid _account");
+        _registerCode(_account, _code);
+    }
+
     // @dev register a referral code
     // @param _code the referral code to register
     function registerCode(bytes32 _code) external {
-        require(_code != bytes32(0), "ReferralStorage: invalid _code");
-        require(codeOwners[_code] == address(0), "ReferralStorage: code already exists");
-
-        codeOwners[_code] = msg.sender;
-        emit RegisterCode(msg.sender, _code);
+        _registerCode(msg.sender, _code);
     }
 
     // @dev for affiliates to set a new owner for a referral code they own
@@ -162,5 +166,16 @@ contract ReferralStorage is IReferralStorage, Governable {
     function _setTraderReferralCode(address _account, bytes32 _code) private {
         traderReferralCodes[_account] = _code;
         emit SetTraderReferralCode(_account, _code);
+    }
+
+    // @dev register a referral code for an account
+    // @param _account the account that will own the referral code
+    // @param _code the referral code to register
+    function _registerCode(address _account, bytes32 _code) private {
+        require(_code != bytes32(0), "ReferralStorage: invalid _code");
+        require(codeOwners[_code] == address(0), "ReferralStorage: code already exists");
+
+        codeOwners[_code] = _account;
+        emit RegisterCode(_account, _code);
     }
 }

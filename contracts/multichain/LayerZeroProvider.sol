@@ -144,6 +144,8 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
                 _handleGlvDeposit(account, srcChainId, actionType, actionData);
             } else if (actionType == ActionType.SetTraderReferralCode) {
                 _handleSetTraderReferralCode(account, srcChainId, actionType, actionData);
+            } else if (actionType == ActionType.RegisterCode) {
+                _handleRegisterCode(account, srcChainId, actionType, actionData);
             } else if (actionType == ActionType.Withdrawal) {
                 _handleWithdrawal(account, srcChainId, actionType, actionData);
             } else if (actionType == ActionType.GlvWithdrawal) {
@@ -423,6 +425,31 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         _validateGasLeft(estimatedGasLimit);
 
         try multichainOrderRouter.setTraderReferralCode(relayParams, account, srcChainId, referralCode) {
+        } catch Error(string memory reason) {
+            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
+        } catch (bytes memory reasonBytes) {
+            (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
+            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
+        }
+    }
+
+    /// @dev `account` is expected to be `msg.sender` from the source chain, as
+    /// MultichainOrderRouter would use it to validate the signature.
+    function _handleRegisterCode(
+        address account,
+        uint256 srcChainId,
+        ActionType actionType,
+        bytes memory actionData
+    ) private {
+        (
+            IRelayUtils.RelayParams memory relayParams,
+            bytes32 referralCode
+        ) = abi.decode(actionData, (IRelayUtils.RelayParams, bytes32));
+
+        uint256 estimatedGasLimit = GasUtils.estimateRegisterCodeGasLimit(dataStore);
+        _validateGasLeft(estimatedGasLimit);
+
+        try multichainOrderRouter.registerCode(relayParams, account, srcChainId, referralCode) {
         } catch Error(string memory reason) {
             MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
         } catch (bytes memory reasonBytes) {
