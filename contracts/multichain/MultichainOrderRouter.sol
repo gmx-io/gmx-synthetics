@@ -107,7 +107,7 @@ contract MultichainOrderRouter is IMultichainOrderRouter, MultichainRouter {
             revert Errors.ReferralCodeAlreadyExists(referralCode);
         }
 
-        // Register code directly with the user as owner
+        // Register code on behalf of the user via the gov flow (normal registerCode uses msg.sender)
         referralStorage.govSetCodeOwner(referralCode, account);
     }
 }
