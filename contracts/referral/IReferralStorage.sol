@@ -29,10 +29,9 @@ interface IReferralStorage {
     // @param _account the address of the trader
     // @param _code the referral code
     function setTraderReferralCode(address _account, bytes32 _code) external;
-    // @dev register a referral code for an account
-    // @param _account the account that will own the referral code
+    // @dev register a referral code
     // @param _code the referral code to register
-    function registerCodeForAccount(address _account, bytes32 _code) external;
+    function registerCode(bytes32 _code) external;
     // @dev set the values for a tier
     // @param _tierId the tier level
     // @param _totalRebate the total rebate for the tier (affiliate reward + trader discount)

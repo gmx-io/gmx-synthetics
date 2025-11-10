@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.0;
 
+import "../error/Errors.sol";
 import "../referral/IReferralStorage.sol";
 import "./IMultichainOrderRouter.sol";
 import "./MultichainRouter.sol";
@@ -101,6 +102,15 @@ contract MultichainOrderRouter is IMultichainOrderRouter, MultichainRouter {
         bytes32 structHash = RelayUtils.getRegisterCodeStructHash(relayParams, referralCode);
         _validateCall(relayParams, account, structHash, srcChainId);
 
-        referralStorage.registerCodeForAccount(account, referralCode);
+        // Check if code already exists (govSetCodeOwner doesn't prevent overrides)
+        if (referralStorage.codeOwners(referralCode) != address(0)) {
+            revert Errors.ReferralCodeAlreadyExists(referralCode);
+        }
+
+        // Register code with this contract as owner
+        referralStorage.registerCode(referralCode);
+
+        // Transfer ownership to the actual user
+        referralStorage.govSetCodeOwner(referralCode, account);
     }
 }
