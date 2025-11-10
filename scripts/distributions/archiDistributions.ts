@@ -9,9 +9,17 @@ declare const process: any;
 // GLP to GLV conversion constants
 // Total GLV amounts to be distributed across all farmers and LPs
 // Each address receives a proportional share based on their fsGLP allocation
+const STABLECOIN_PRICE = 1.0;
 const FSGLP_PRICE_AT_INCIDENT = 1.4522064768; // GLP price in USD at incident
-const TOTAL_ETH_GLV = 710379.6304; // Total ETH GLV to distribute
-const TOTAL_BTC_GLV = 653567.8033; // Total BTC GLV to distribute
+
+// distributions include all recovered funds from all archi contracts --> the 3 contracts bellow hold fsGLP
+// GMXExecutor: 0x49ee14e37cb47bff8c512b3a0d672302a3446eb1 --> 1,606,694.32 fsGLP --> 710379.6304 ETH GLV  & 653567.8033 BTC GLV
+// CreditUser2: 0xe854358Bc324Cd5a73DEb5552a698e462A9CC38E --> 8,478.67 fsGLP --> 3748.736826 ETH GLV & 3448.935734 BTC GLV
+// CreditAggregator: 0x437a182b571390c7e5d14cc7103d3b9d7628faca --> 99.81549889 fsGLP --> 44.13216409 ETH GLV & 40.60274296 BTC GLV
+// Total ETH GLV to distribute = 710379.6304 + 3748.736826 + 44.13216409 = 714172.49939009
+const TOTAL_ETH_GLV = 714172.49939009;
+// Total BTC GLV to distribute = 653567.8033 + 3448.935734 + 40.60274296 = 657057.34177696
+const TOTAL_BTC_GLV = 657057.34177696;
 
 // Using StakeFor events is finding all LPs (vs Add / RemoveLiquidity events which is only 99.52% accurate)
 
@@ -770,9 +778,6 @@ function step6_applyStablecoinCapping(
   console.log("=".repeat(80));
   console.log("STEP 6: Apply Stablecoin Capping and Redistribute Excess");
   console.log("=".repeat(80) + "\n");
-
-  const FSGLP_PRICE_AT_INCIDENT = 1.45;
-  const STABLECOIN_PRICE = 1.0;
 
   // Step 0: Calculate farmer excess from IL adjustment
   const farmerTotalOriginal = farmerDistributions.reduce((sum, f) => sum + parseFloat(f.totalFsGLP), 0);
