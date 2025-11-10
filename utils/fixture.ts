@@ -136,6 +136,7 @@ async function setup() {
   const positionUtils = await hre.ethers.getContract("PositionUtils");
   const swapUtils = await hre.ethers.getContract("SwapUtils");
   const referralStorage = await hre.ethers.getContract("ReferralStorage");
+  const mockTimelockV1 = await hre.ethers.getContract("MockTimelockV1");
   const feeHandler = await hre.ethers.getContract("FeeHandler");
   const mockVaultV1 = await hre.ethers.getContract("MockVaultV1");
   const multichainVault = await hre.ethers.getContract("MultichainVault");
@@ -347,6 +348,7 @@ async function setup() {
       positionUtils,
       swapUtils,
       referralStorage,
+      mockTimelockV1,
       usdcPriceFeed,
       wethPriceFeed,
       gmxPriceFeed,

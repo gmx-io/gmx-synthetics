@@ -8,11 +8,12 @@ import {
   encodeGlvDepositMessage,
   encodeGlvWithdrawalMessage,
   encodeSetTraderReferralCodeMessage,
+  encodeRegisterCodeMessage,
   encodeWithdrawalMessage,
   bridgeInTokens,
 } from "../../utils/multichain";
 import { hashString } from "../../utils/hash";
-import { sendSetTraderReferralCode } from "../../utils/relay/gelatoRelay";
+import { sendSetTraderReferralCode, sendRegisterCode } from "../../utils/relay/gelatoRelay";
 import {
   sendCreateDeposit,
   sendCreateGlvDeposit,
@@ -42,7 +43,8 @@ describe("LayerZeroProvider", () => {
     multichainOrderRouter,
     mockStargatePoolNative,
     mockStargatePoolUsdc,
-    referralStorage;
+    referralStorage,
+    mockTimelockV1;
   let chainId;
 
   beforeEach(async () => {
@@ -66,6 +68,7 @@ describe("LayerZeroProvider", () => {
       mockStargatePoolNative,
       mockStargatePoolUsdc,
       referralStorage,
+      mockTimelockV1,
     } = fixture.contracts);
 
     chainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
@@ -527,6 +530,83 @@ describe("LayerZeroProvider", () => {
         expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(usdcAmount);
         expect(await usdc.balanceOf(layerZeroProvider.address)).to.eq(0); // does not change
         expect(await referralStorage.traderReferralCodes(user1.address)).eq(referralCode);
+      });
+    });
+
+    describe("actionType: RegisterCode", () => {
+      const referralCode = hashString("newRefCode");
+
+      let registerCodeParams: Parameters<typeof sendRegisterCode>[0];
+      beforeEach(async () => {
+        registerCodeParams = {
+          sender: user1, // sender is user1 on the source chain, not GELATO_RELAY_ADDRESS
+          signer: user1,
+          feeParams: {
+            feeToken: wnt.address,
+            feeAmount: 0,
+            feeSwapPath: [],
+          },
+          account: user1.address,
+          referralCode,
+          deadline: 9999999999,
+          srcChainId: chainId, // 0 means non-multichain action
+          desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
+          relayRouter: multichainOrderRouter,
+          chainId,
+          gelatoRelayFeeToken: wnt.address,
+          gelatoRelayFeeAmount: 0,
+        };
+
+        // Set MockTimelockV1 as gov of ReferralStorage using two-step pattern
+        await referralStorage.transferOwnership(mockTimelockV1.address);
+        await mockTimelockV1.acceptGov(referralStorage.address);
+      });
+
+      it("registers referral code without paying relayFee if LayerZeroProvider is whitelisted", async () => {
+        await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolUsdc.SRC_EID()), chainId);
+        // whitelist LayerZeroProvider to be excluded from paying the relay fee
+        await dataStore.setBool(keys.isRelayFeeExcludedKey(layerZeroProvider.address), true);
+
+        const usdcAmount = expandDecimals(1, 5); // 0.1 USDC --> e.g. minimum amount required by a stargate pool to bridge a message
+        await usdc.mint(user1.address, usdcAmount);
+        await usdc.connect(user1).approve(mockStargatePoolUsdc.address, usdcAmount);
+
+        expect(await usdc.balanceOf(user1.address)).to.eq(usdcAmount);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0);
+        expect(await usdc.balanceOf(layerZeroProvider.address)).to.eq(0);
+        expect(await referralStorage.codeOwners(referralCode)).eq(ethers.constants.AddressZero);
+
+        const message = await encodeRegisterCodeMessage(registerCodeParams, referralCode, user1.address);
+        await mockStargatePoolUsdc.connect(user1).sendToken(layerZeroProvider.address, usdcAmount, message);
+
+        // referralCode is registered, usdcAmount is added to user's multichain balance
+        expect(await usdc.balanceOf(user1.address)).to.eq(0);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(usdcAmount);
+        expect(await usdc.balanceOf(layerZeroProvider.address)).to.eq(0); // does not change
+        expect(await referralStorage.codeOwners(referralCode)).eq(user1.address);
+      });
+
+      it("fails to register code that already exists", async () => {
+        await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolUsdc.SRC_EID()), chainId);
+        await dataStore.setBool(keys.isRelayFeeExcludedKey(layerZeroProvider.address), true);
+
+        // Register the code first
+        await referralStorage.connect(user0).registerCode(referralCode);
+        expect(await referralStorage.codeOwners(referralCode)).eq(user0.address);
+
+        const usdcAmount = expandDecimals(1, 5);
+        await usdc.mint(user1.address, usdcAmount);
+        await usdc.connect(user1).approve(mockStargatePoolUsdc.address, usdcAmount);
+
+        const message = await encodeRegisterCodeMessage(registerCodeParams, referralCode, user1.address);
+
+        // Should not fail silently but emits an event (i.e. MultichainBridgeActionFailed)
+        await mockStargatePoolUsdc.connect(user1).sendToken(layerZeroProvider.address, usdcAmount, message);
+
+        // Code owner should still be user0
+        expect(await referralStorage.codeOwners(referralCode)).eq(user0.address);
+        // usdcAmount is still added to user's multichain balance
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(usdcAmount);
       });
     });
   });
