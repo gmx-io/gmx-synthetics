@@ -37,7 +37,7 @@ const func = createDeployFunction({
   },
   libraryNames: ["GasUtils", "MultichainUtils", "OrderStoreUtils", "RelayUtils"],
 
-  afterDeploy: async ({ gmx, deployedContract, deployments, deployer }) => {
+  afterDeploy: async ({ deployedContract, deployments }) => {
     await grantRoleIfNotGranted(deployedContract, "CONTROLLER");
     await grantRoleIfNotGranted(deployedContract, "ROUTER_PLUGIN");
 
@@ -45,10 +45,17 @@ const func = createDeployFunction({
 
     const mockTimelockV1 = await get("MockTimelockV1");
     const timelockV1 = await ethers.getContractAt("MockTimelockV1", mockTimelockV1.address);
+
     console.log(`Set MultichainOrderRouter as keeper on MockTimelockV1: ${timelockV1.address}`);
     // Grant keeper role to MultichainOrderRouter to register code using govSetCodeOwner
     await timelockV1.setKeeper(deployedContract.address, true);
     console.log(`MultichainOrderRouter is now keeper on MockTimelockV1`);
+
+    // Set MultichainOrderRouter as handler on ReferralStorage for setTraderReferralCode
+    const referralStorage = await get("ReferralStorage");
+    console.log(`Setting MultichainOrderRouter as handler on ReferralStorage: ${referralStorage.address}`);
+    await timelockV1.setHandler(referralStorage.address, deployedContract.address, true);
+    console.log(`MultichainOrderRouter is now handler on ReferralStorage`);
   },
 });
 

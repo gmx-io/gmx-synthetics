@@ -5,6 +5,11 @@ pragma solidity ^0.8.0;
 import "../referral/IReferralStorage.sol";
 import "./Governable.sol";
 
+interface IHandlerTarget {
+    function isHandler(address _account) external returns (bool);
+    function setHandler(address _handler, bool _isActive) external;
+}
+
 /**
  * @notice Simplified V1 Timelock contract for testnet use with ReferralStorage
  * @dev This mock version removes time delays and complex governance features
@@ -16,10 +21,6 @@ contract MockTimelockV1 {
 
     mapping(address => bool) public isHandler;
     mapping(address => bool) public isKeeper;
-
-    event SetAdmin(address admin);
-    event SetHandler(address handler, bool isActive);
-    event SetKeeper(address keeper, bool isActive);
 
     modifier onlyAdmin() {
         require(msg.sender == admin, "MockTimelock: forbidden");
@@ -34,7 +35,6 @@ contract MockTimelockV1 {
     constructor(address _admin) {
         require(_admin != address(0), "MockTimelock: invalid admin address");
         admin = _admin;
-        emit SetAdmin(_admin);
     }
 
     // ========== Admin Management ==========
@@ -42,20 +42,21 @@ contract MockTimelockV1 {
     function setAdmin(address _admin) external onlyAdmin {
         require(_admin != address(0), "MockTimelock: invalid admin address");
         admin = _admin;
-        emit SetAdmin(_admin);
     }
 
-    function setHandler(address _handler, bool _isActive) external onlyAdmin {
+    function setContractHandler(address _handler, bool _isActive) external onlyAdmin {
         isHandler[_handler] = _isActive;
-        emit SetHandler(_handler, _isActive);
     }
 
     function setKeeper(address _keeper, bool _isActive) external onlyAdmin {
         isKeeper[_keeper] = _isActive;
-        emit SetKeeper(_keeper, _isActive);
     }
 
     // ========== ReferralStorage Functions ==========
+
+    function setHandler(address _target, address _handler, bool _isActive) external onlyAdmin {
+        IHandlerTarget(_target).setHandler(_handler, _isActive);
+    }
 
     function setGov(address _referralStorage, address _newGov) external onlyAdmin {
         Governable(_referralStorage).transferOwnership(_newGov);
@@ -71,5 +72,13 @@ contract MockTimelockV1 {
         address _newAccount
     ) external onlyKeeperAndAbove {
         IReferralStorage(_referralStorage).govSetCodeOwner(_code, _newAccount);
+    }
+
+    function setTier(address _referralStorage, uint256 _tierId, uint256 _totalRebate, uint256 _discountShare) external onlyKeeperAndAbove {
+        IReferralStorage(_referralStorage).setTier(_tierId, _totalRebate, _discountShare);
+    }
+
+    function setReferrerTier(address _referralStorage, address _referrer, uint256 _tierId) external onlyKeeperAndAbove {
+        IReferralStorage(_referralStorage).setReferrerTier(_referrer, _tierId);
     }
 }

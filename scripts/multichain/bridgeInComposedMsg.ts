@@ -11,6 +11,7 @@ import {
   encodeGlvDepositMessage,
   encodeGlvWithdrawalMessage,
   encodeSetTraderReferralCodeMessage,
+  encodeRegisterCodeMessage,
   encodeWithdrawalMessage,
 } from "../../utils/multichain";
 import {
@@ -102,6 +103,7 @@ enum ActionType {
   SetTraderReferralCode,
   Withdrawal,
   GlvWithdrawal,
+  RegisterCode,
 }
 
 async function getComposedMsg({
@@ -475,6 +477,36 @@ async function getComposedMsg({
     return message;
   }
 
+  if (actionType === ActionType.RegisterCode) {
+    const referralCode = process.env.REFERRAL_CODE
+      ? ethers.utils.formatBytes32String(process.env.REFERRAL_CODE)
+      : ethers.utils.keccak256(ethers.utils.toUtf8Bytes(`RefCode-${Date.now()}`));
+    const { multichainOrderRouter } = await getDeployments();
+
+    const registerCodeParams = {
+      sender: await hre.ethers.getSigner(account),
+      signer: await hre.ethers.getSigner(account),
+      feeParams: {
+        feeToken: wntAddress, // feeToken must default to WNT, otherwise the Gelato Relay will revert with UnexpectedRelayFeeToken
+        feeAmount: 0,
+        feeSwapPath: [],
+      },
+      account,
+      referralCode,
+      deadline,
+      srcChainId, // 0 means non-multichain action
+      desChainId: DST_CHAIN_ID, // for non-multichain actions, desChainId is the same as chainId
+      relayRouter: multichainOrderRouter,
+      chainId: srcChainId,
+      gelatoRelayFeeToken: ethers.constants.AddressZero,
+      gelatoRelayFeeAmount: 0,
+    };
+
+    const message = await encodeRegisterCodeMessage(registerCodeParams, referralCode, account);
+
+    return message;
+  }
+
   if (actionType === ActionType.BridgeOut) {
     if (!["Deposit", "Withdrawal", "GlvDeposit", "GlvWithdrawal"].includes(process.env.EXECUTE)) {
       throw new Error("Invalid execute action for bridge out. Use Deposit, Withdrawal, GlvDeposit, or GlvWithdrawal.");
@@ -829,11 +861,13 @@ async function getComposedMsg({
   }
 }
 
-// ACTION_TYPE=<None/Deposit/GlvDeposit/SetTraderReferralCode/Withdrawal/GlvWithdrawal> npx hardhat run --network sepolia scripts/multichain/bridgeInComposedMsg.ts
+// ACTION_TYPE=RegisterCode npx hardhat run --network sepolia scripts/multichain/bridgeInComposedMsg.ts
+// ACTION_TYPE=SetTraderReferralCode npx hardhat run --network sepolia scripts/multichain/bridgeInComposedMsg.ts
+
 async function main() {
   if (!process.env.ACTION_TYPE) {
     throw new Error(
-      "⚠️ ACTION_TYPE is mandatory: None / Deposit / GlvDeposit / SetTraderReferralCode / Withdrawal / GlvWithdrawal"
+      "⚠️ ACTION_TYPE is mandatory: None / Deposit / GlvDeposit / SetTraderReferralCode / RegisterCode / Withdrawal / GlvWithdrawal"
     );
   }
 

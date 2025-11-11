@@ -924,8 +924,7 @@ describe("MultichainOrderRouter", () => {
     });
 
     it("sets trader referral code and sends relayer fee", async () => {
-      // enable MultichainOrderRouter to call ReferralStorage.setTraderReferralCode
-      await referralStorage.setHandler(multichainOrderRouter.address, true);
+      // MultichainOrderRouter is already enabled, at deploy time, to call ReferralStorage.setTraderReferralCode
 
       await bridgeInTokens(fixture, {
         account: user1,
@@ -967,10 +966,6 @@ describe("MultichainOrderRouter", () => {
         gelatoRelayFeeToken: wnt.address,
         gelatoRelayFeeAmount: relayFeeAmount, // 0.002 ETH
       };
-
-      // Set MockTimelockV1 as gov of ReferralStorage using two-step pattern
-      await referralStorage.transferOwnership(mockTimelockV1.address);
-      await mockTimelockV1.acceptGov(referralStorage.address);
     });
 
     it("registers referral code and sends relayer fee", async () => {

@@ -9,12 +9,7 @@ const func = createDeployFunction({
     const { deployer } = await getNamedAccounts();
     return [deployer]; // admin address
   },
-  afterDeploy: async ({ deployedContract, deployments, network }) => {
-    if (network.name === "hardhat") {
-      // skip ownership transfer for hardhat
-      return;
-    }
-
+  afterDeploy: async ({ deployedContract, deployments }) => {
     const { get } = deployments;
     const referralStorage = await get("ReferralStorage");
     const referralStorageContract = await ethers.getContractAt("ReferralStorage", referralStorage.address);

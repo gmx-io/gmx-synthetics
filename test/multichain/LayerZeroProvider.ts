@@ -43,8 +43,7 @@ describe("LayerZeroProvider", () => {
     multichainOrderRouter,
     mockStargatePoolNative,
     mockStargatePoolUsdc,
-    referralStorage,
-    mockTimelockV1;
+    referralStorage;
   let chainId;
 
   beforeEach(async () => {
@@ -68,7 +67,6 @@ describe("LayerZeroProvider", () => {
       mockStargatePoolNative,
       mockStargatePoolUsdc,
       referralStorage,
-      mockTimelockV1,
     } = fixture.contracts);
 
     chainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
@@ -506,8 +504,7 @@ describe("LayerZeroProvider", () => {
         await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolUsdc.SRC_EID()), chainId);
         // whitelist LayerZeroProvider to be excluded from paying the relay fee
         await dataStore.setBool(keys.isRelayFeeExcludedKey(layerZeroProvider.address), true);
-        // enable MultichainOrderRouter to call ReferralStorage.setTraderReferralCode
-        await referralStorage.setHandler(multichainOrderRouter.address, true);
+        // MultichainOrderRouter is already enabled, at deploy time, to call ReferralStorage.setTraderReferralCode
 
         const usdcAmount = expandDecimals(1, 5); // 0.1 USDC --> e.g. minimum amount required by a stargate pool to bridge a message
         await usdc.mint(user1.address, usdcAmount);
@@ -556,10 +553,6 @@ describe("LayerZeroProvider", () => {
           gelatoRelayFeeToken: wnt.address,
           gelatoRelayFeeAmount: 0,
         };
-
-        // Set MockTimelockV1 as gov of ReferralStorage using two-step pattern
-        await referralStorage.transferOwnership(mockTimelockV1.address);
-        await mockTimelockV1.acceptGov(referralStorage.address);
       });
 
       it("registers referral code without paying relayFee if LayerZeroProvider is whitelisted", async () => {
