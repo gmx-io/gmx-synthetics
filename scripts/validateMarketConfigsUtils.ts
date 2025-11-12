@@ -775,7 +775,8 @@ async function validatePerpConfig({
 
   let negativePositionImpactFactor = bigNumberify(marketConfig.negativePositionImpactFactor);
   let positivePositionImpactFactor = bigNumberify(marketConfig.positivePositionImpactFactor);
-  let positionImpactExponentFactor = bigNumberify(marketConfig.positionImpactExponentFactor);
+  let negativePositionImpactExponentFactor = bigNumberify(marketConfig.negativePositionImpactExponentFactor);
+  let positivePositionImpactExponentFactor = bigNumberify(marketConfig.positivePositionImpactExponentFactor);
   let openInterestReserveFactorLongs = bigNumberify(marketConfig.openInterestReserveFactorLongs);
   let openInterestReserveFactorShorts = bigNumberify(marketConfig.openInterestReserveFactorShorts);
   let borrowingFactorForLongs = bigNumberify(marketConfig.borrowingFactorForLongs);
@@ -828,9 +829,18 @@ async function validatePerpConfig({
       target: dataStore.address,
       allowFailure: false,
       callData: dataStore.interface.encodeFunctionData("getUint", [
-        keys.positionImpactExponentFactorKey(market.marketToken),
+        keys.positionImpactExponentFactorKey(market.marketToken, false),
       ]),
-      label: "positionImpactExponentFactor",
+      label: "negativePositionImpactExponentFactor",
+    });
+
+    multicallReadParams.push({
+      target: dataStore.address,
+      allowFailure: false,
+      callData: dataStore.interface.encodeFunctionData("getUint", [
+        keys.positionImpactExponentFactorKey(market.marketToken, true),
+      ]),
+      label: "positivePositionImpactExponentFactor",
     });
 
     multicallReadParams.push({
@@ -901,7 +911,8 @@ async function validatePerpConfig({
     ({
       negativePositionImpactFactor,
       positivePositionImpactFactor,
-      positionImpactExponentFactor,
+      negativePositionImpactExponentFactor,
+      positivePositionImpactExponentFactor,
       openInterestReserveFactorLongs,
       openInterestReserveFactorShorts,
       borrowingFactorForLongs,
@@ -930,7 +941,7 @@ async function validatePerpConfig({
       `    Negative (${formatAmount(priceImpactBps, 2, 2)}%): $${formatAmount(
         getTradeSizeForImpact({
           priceImpactBps,
-          impactExponentFactor: positionImpactExponentFactor,
+          impactExponentFactor: negativePositionImpactExponentFactor,
           impactFactor: negativePositionImpactFactor,
         }),
         0,
@@ -939,7 +950,7 @@ async function validatePerpConfig({
       )}, Positive (${formatAmount(priceImpactBps, 2, 2)}%): $${formatAmount(
         getTradeSizeForImpact({
           priceImpactBps,
-          impactExponentFactor: positionImpactExponentFactor,
+          impactExponentFactor: positivePositionImpactExponentFactor,
           impactFactor: positivePositionImpactFactor,
         }),
         0,
@@ -947,6 +958,14 @@ async function validatePerpConfig({
         true
       )}`
     );
+  }
+
+  if (negativePositionImpactExponentFactor.lt(positivePositionImpactExponentFactor)) {
+    throw new Error(`Invalid position impact exponent factors for ${marketLabel}`);
+  }
+
+  if (!positivePositionImpactExponentFactor.eq(decimalToFloat(1))) {
+    throw new Error(`Invalid positive position impact exponent for ${marketLabel}`);
   }
 
   if (negativePositionImpactFactor.eq(0)) {

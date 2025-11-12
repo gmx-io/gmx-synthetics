@@ -1,17 +1,10 @@
-import { contractAt, deployContract } from "../../utils/deploy";
+import { contractAt } from "../../utils/deploy";
 import { deployFixture } from "../../utils/fixture";
 
-import { grantRole } from "../../utils/role";
-import { validateStoreUtils } from "../../utils/storeUtils";
-import {
-  getPositionCount,
-  getPositionKeys,
-  getAccountPositionCount,
-  getAccountPositionKeys,
-} from "../../utils/position";
+import { getPositionKeys } from "../../utils/position";
 import { handleDeposit } from "../../utils/deposit";
-import { applyFactor, bigNumberify, decimalToFloat, expandDecimals } from "../../utils/math";
-import { getOrderKeys, handleOrder, OrderType } from "../../utils/order";
+import { decimalToFloat, expandDecimals } from "../../utils/math";
+import { handleOrder, OrderType } from "../../utils/order";
 import * as keys from "../../utils/keys";
 import { expect } from "chai";
 import { scenes } from "../scenes";
@@ -26,7 +19,7 @@ import { constants } from "ethers";
 // eslint-disable-next-line no-undef
 describe("Hedge GM", () => {
   let fixture;
-  let dataStore, exchangeRouter, reader, referralStorage, ethUsdMarket, wnt, usdc;
+  let dataStore, reader, referralStorage, ethUsdMarket, wnt, usdc;
   let user0, user1;
 
   const highPrices = {
@@ -61,12 +54,16 @@ describe("Hedge GM", () => {
 
   beforeEach(async () => {
     fixture = await deployFixture();
-    ({ dataStore, reader, exchangeRouter, referralStorage, ethUsdMarket, wnt, usdc } = fixture.contracts);
+    ({ dataStore, reader, referralStorage, ethUsdMarket, wnt, usdc } = fixture.contracts);
     ({ user0, user1 } = fixture.accounts);
 
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 9));
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 8));
-    await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
+    await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(2, 0));
+    await dataStore.setUint(
+      keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, false),
+      decimalToFloat(2, 0)
+    );
 
     await setMarketState(ethUsdMarket);
   });
@@ -90,7 +87,7 @@ describe("Hedge GM", () => {
 
     await usingResult(
       getMarketTokenPriceWithPoolValue(fixture, { prices: prices.ethUsdMarket }),
-      ([marketTokenPrice, poolValueInfo]) => {
+      ([, poolValueInfo]) => {
         expect(poolValueInfo.poolValue).eq(expandDecimals(5_000_000, 30));
       }
     );
@@ -216,7 +213,7 @@ describe("Hedge GM", () => {
     const PIPool = await dataStore.getUint(keys.positionImpactPoolAmountKey(market.marketToken));
     console.log(`\n\nPI pool: ${PIPool.toString()}`);
 
-    const [marketTokenPrice, poolValueInfo] = await getMarketTokenPriceWithPoolValue(fixture, {
+    const [, poolValueInfo] = await getMarketTokenPriceWithPoolValue(fixture, {
       prices,
       market: market,
     });
@@ -372,7 +369,7 @@ describe("Hedge GM", () => {
   });
 
   // eslint-disable-next-line no-undef
-  xit("calc hedge amount for a single asset deposit", async () => {
+  it("calc hedge amount for a single asset deposit", async () => {
     // User mints GM tokens for a $550k worth @ $5500 /ETH
     // deposit in a single asset
     const userEthBalance = await wnt.balanceOf(user1.address);

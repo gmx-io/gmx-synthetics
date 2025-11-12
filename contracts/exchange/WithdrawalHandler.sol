@@ -136,7 +136,7 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler, ReentrancyGuard {
         Withdrawal.Props calldata withdrawal
     ) external nonReentrant onlyController returns (IExecuteWithdrawalUtils.ExecuteWithdrawalResult memory) {
         FeatureUtils.validateFeature(dataStore, Keys.executeWithdrawalFeatureDisabledKey(address(this)));
-        return ExecuteWithdrawalUtils.executeWithdrawal(executeWithdrawalParams, withdrawal);
+        return ExecuteWithdrawalUtils.executeWithdrawal(executeWithdrawalParams, withdrawal, true);
     }
 
     // @notice this function can only be called for markets where Chainlink
@@ -196,7 +196,6 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler, ReentrancyGuard {
         ISwapPricingUtils.SwapPricingType swapPricingType
     ) external
         override
-        onlyController
         withSimulatedOraclePrices(params)
         globalNonReentrant
     {
@@ -240,7 +239,7 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler, ReentrancyGuard {
             swapPricingType
         );
 
-        ExecuteWithdrawalUtils.executeWithdrawal(params, withdrawal);
+        ExecuteWithdrawalUtils.executeWithdrawal(params, withdrawal, false);
     }
 
     function _handleWithdrawalError(

@@ -21,5 +21,6 @@
   "ClaimVault_1": 1753245825,
   "ChainlinkPriceFeedProvider_6": 1755053038,
   "Oracle_6": 1755053052,
-  "ChainlinkDataStreamProvider_6": 1755053255
+  "ChainlinkDataStreamProvider_6": 1755053255,
+  "FeeDistributorVault_1": 1762332468
 }

@@ -119,13 +119,16 @@ async function verifyForNetwork(verificationNetwork) {
       console.log("command", command);
 
       if (!isContractVerified) {
-        await delay(200);
+        await delay(5000);
         console.log(`checking contract verification ${address}`);
         isContractVerified = await getIsContractVerified(apiUrl, address);
       }
 
       if (isContractVerified) {
         console.log(`${name} already verified: ${address}`);
+        console.log(`updating cache ${address}`, cache[address]);
+        cache[address] = true;
+        writeJsonFile(cacheFilePath, cache);
         continue;
       }
 
@@ -160,9 +163,10 @@ async function verifyForNetwork(verificationNetwork) {
       console.error("Failed to verify contract %s in %ss", address, (Date.now() - start) / 1000);
       console.error("error", ex);
     }
-  }
 
-  writeJsonFile(cacheFilePath, cache);
+    console.log(`updating cache ${address}`, cache[address]);
+    writeJsonFile(cacheFilePath, cache);
+  }
 
   if (unverifiedContracts.length > 0) {
     console.log(`${unverifiedContracts.length} contracts were not verified`);

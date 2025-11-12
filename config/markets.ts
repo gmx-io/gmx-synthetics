@@ -23,6 +23,17 @@ export type BaseMarketConfig = {
   maxLongTokenPoolAmount: BigNumberish;
   maxShortTokenPoolAmount: BigNumberish;
 
+  // note that maxCollateralSum is used to fill maxLongCollateralSum and maxShortCollateralSum
+  // these values indicate the max sum of collaterals for a market
+  // maxLongCollateralSum and maxShortCollateralSum is duplicated for long and short positions
+  // e.g. if maxLongCollateralSum is 1000 tokens, then maxLongCollateralSum for longs
+  // and maxLongCollateralSum for shorts would both be 1000 tokens
+  // to make the configuration more intuitive, the maxLongCollateralSum and maxShortCollateralSum is divided by two
+  // in updateMarketConfigUtils
+  maxCollateralSum: BigNumberish;
+  maxLongCollateralSum?: BigNumberish;
+  maxShortCollateralSum?: BigNumberish;
+
   maxPoolUsdForDeposit?: BigNumberish;
   maxLongTokenPoolUsdForDeposit?: BigNumberish;
   maxShortTokenPoolUsdForDeposit?: BigNumberish;
@@ -64,7 +75,8 @@ export type BaseMarketConfig = {
 
   negativePositionImpactFactor: BigNumberish;
   positivePositionImpactFactor: BigNumberish;
-  positionImpactExponentFactor: BigNumberish;
+  negativePositionImpactExponentFactor: BigNumberish;
+  positivePositionImpactExponentFactor: BigNumberish;
 
   negativeMaxPositionImpactFactor: BigNumberish;
   positiveMaxPositionImpactFactor: BigNumberish;
@@ -287,7 +299,8 @@ const baseMarketConfig: Partial<BaseMarketConfig> = {
 
   negativePositionImpactFactor: percentageToFloat("0.00001%"),
   positivePositionImpactFactor: percentageToFloat("0.000005%"),
-  positionImpactExponentFactor: exponentToFloat("2e0"), // 2
+  negativePositionImpactExponentFactor: exponentToFloat("2e0"), // 2
+  positivePositionImpactExponentFactor: exponentToFloat("1e0"),
 
   negativeMaxPositionImpactFactor: percentageToFloat("0.5%"),
   positiveMaxPositionImpactFactor: percentageToFloat("0.4%"),
@@ -303,6 +316,7 @@ const baseMarketConfig: Partial<BaseMarketConfig> = {
   swapImpactExponentFactor: exponentToFloat("2e0"), // 2
 
   minCollateralUsd: decimalToFloat(1, 0), // 1 USD
+  maxCollateralSum: expandDecimals(10_000_000_000_000, 18), // 10 trillion with 18 decimals
 
   // factor in open interest reserve factor 80%
   borrowingFactor: decimalToFloat(625, 11), // 0.00000000625 * 80% = 0.000000005, 0.0000005% / second, 15.77% per year if the pool is 100% utilized
@@ -403,6 +417,8 @@ const hardhatBaseMarketConfig: Partial<BaseMarketConfig> = {
   maxLongTokenPoolAmount: expandDecimals(1_000_000_000, 18),
   maxShortTokenPoolAmount: expandDecimals(1_000_000_000, 18),
 
+  maxCollateralSum: expandDecimals(10_000_000_000_000, 18), // 10 trillion with 18 decimals
+
   maxPoolUsdForDeposit: decimalToFloat(1_000_000_000_000_000),
   maxOpenInterest: decimalToFloat(1_000_000_000),
 
@@ -433,7 +449,7 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_HighMax_WithHigherBase,
 
-      positionImpactExponentFactor: exponentToFloat("2.2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2.2e0"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"), // 0.05% for ~90,000 USD of imbalance
       negativePositionImpactFactor: exponentToFloat("5e-10"), // 0.05% for ~45,000 USD of imbalance
 
@@ -509,7 +525,7 @@ const config: {
 
       maxPoolUsdForDeposit: decimalToFloat(42_500_000),
 
-      positionImpactExponentFactor: exponentToFloat("1e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("1e0"),
       negativePositionImpactFactor: exponentToFloat("2e-15"),
       positivePositionImpactFactor: exponentToFloat("1e-15"),
 
@@ -606,7 +622,7 @@ const config: {
 
       maxPoolUsdForDeposit: decimalToFloat(45_000_000),
 
-      positionImpactExponentFactor: exponentToFloat("1e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("1e0"),
       negativePositionImpactFactor: exponentToFloat("2e-15"),
       positivePositionImpactFactor: exponentToFloat("1e-15"),
 
@@ -682,7 +698,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("3.8e-11"), // 3.8e-11
       positivePositionImpactFactor: exponentToFloat("1.9e-11"), // 1.9e-11
-      positionImpactExponentFactor: exponentToFloat("2.36e0"), // 2.36
+      negativePositionImpactExponentFactor: exponentToFloat("2.36e0"), // 2.36
 
       negativeSwapImpactFactor: exponentToFloat("4e-8"),
       positiveSwapImpactFactor: exponentToFloat("2e-8"),
@@ -744,7 +760,7 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_HighMax_WithLowerBase,
 
-      positionImpactExponentFactor: exponentToFloat("1.62e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("1.62e0"),
       negativePositionImpactFactor: exponentToFloat("3.18e-7"),
       positivePositionImpactFactor: exponentToFloat("1.06e-7"),
 
@@ -782,7 +798,7 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_HighMax_WithHigherBase,
 
-      positionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
+      negativePositionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
       positivePositionImpactFactor: exponentToFloat("2.5e-10"), // 2.5e-10,
       negativePositionImpactFactor: exponentToFloat("5e-10"), // 5e-10
 
@@ -820,7 +836,7 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(636, 18), // ~2M USD
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD
 
-      positionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
+      negativePositionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
 
       negativePositionImpactFactor: exponentToFloat("5e-10"), // 0.05% for ~45,000 USD of imbalance
       positivePositionImpactFactor: exponentToFloat("2.5e-10"), // 0.05% for ~90,000 USD of imbalance
@@ -846,7 +862,7 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_HighMax_WithLowerBase,
 
-      positionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
+      negativePositionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
 
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
       negativePositionImpactFactor: exponentToFloat("5e-10"),
@@ -882,7 +898,7 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_HighMax_WithLowerBase,
 
-      positionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2e0"),
 
       negativePositionImpactFactor: exponentToFloat("3.15e-8"),
       positivePositionImpactFactor: exponentToFloat("1.05e-8"),
@@ -920,7 +936,7 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_HighMax_WithHigherBase,
 
-      positionImpactExponentFactor: exponentToFloat("2.2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2.2e0"),
 
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
       negativePositionImpactFactor: exponentToFloat("5e-10"),
@@ -971,7 +987,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("1.35e-9"), // 1.35e-9
       positivePositionImpactFactor: exponentToFloat("0.45e-9"), // 0.45e-9
-      positionImpactExponentFactor: exponentToFloat("2e0"), // 2.0
+      negativePositionImpactExponentFactor: exponentToFloat("2e0"), // 2.0
 
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
@@ -1000,7 +1016,7 @@ const config: {
       ...fundingRateConfig_High,
       ...borrowingRateConfig_HighMax_WithHigherBase,
 
-      positionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
+      negativePositionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
       positivePositionImpactFactor: exponentToFloat("2.5e-10"), // 0.05% for ~90,000 USD of imbalance
       negativePositionImpactFactor: exponentToFloat("5e-10"), // 0.05% for ~45,000 USD of imbalance
 
@@ -1033,7 +1049,7 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_HighMax_WithHigherBase,
 
-      positionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
+      negativePositionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
       positivePositionImpactFactor: exponentToFloat("2.5e-10"), // 0.05% for ~90,000 USD of imbalance
       negativePositionImpactFactor: exponentToFloat("5e-10"), // 0.05% for ~45,000 USD of imbalance
 
@@ -1146,7 +1162,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("3e-10"),
       positivePositionImpactFactor: exponentToFloat("1e-10"),
-      positionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
+      negativePositionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
 
       negativeSwapImpactFactor: exponentToFloat("6e-9"),
       positiveSwapImpactFactor: exponentToFloat("3e-9"),
@@ -1179,7 +1195,7 @@ const config: {
 
       negativePositionImpactFactor: decimalToFloat(375, 12),
       positivePositionImpactFactor: decimalToFloat(125, 12),
-      positionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
+      negativePositionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
 
       negativeSwapImpactFactor: exponentToFloat("5e-9"),
       positiveSwapImpactFactor: exponentToFloat("2.5e-9"),
@@ -1218,7 +1234,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("5e-10"), // 0.05% for ~45,000 USD of imbalance
       positivePositionImpactFactor: exponentToFloat("2.5e-10"), // 0.05% for ~90,000 USD of imbalance
-      positionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
+      negativePositionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
 
       negativeSwapImpactFactor: exponentToFloat("6e-9"),
       positiveSwapImpactFactor: exponentToFloat("3e-9"),
@@ -1355,7 +1371,7 @@ const config: {
 
       negativePositionImpactFactor: decimalToFloat(7, 10), // 0.05% for ~45,000 USD of imbalance
       positivePositionImpactFactor: decimalToFloat(35, 11), // 0.05% for ~80,000 USD of imbalance
-      positionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
+      negativePositionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
 
       negativeSwapImpactFactor: exponentToFloat("8e-9"), // 0.05% for 62,500 USD of imbalance
       positiveSwapImpactFactor: exponentToFloat("4e-9"), // 0.05% for 125,000 USD of imbalance
@@ -1382,7 +1398,7 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_HighMax_WithHigherBase,
 
-      positionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
+      negativePositionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
       positivePositionImpactFactor: exponentToFloat("2.5e-10"), // 0.05% for ~90,000 USD of imbalance
       negativePositionImpactFactor: exponentToFloat("5e-10"), // 0.05% for ~45,000 USD of imbalance
 
@@ -1419,7 +1435,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("0.795469e-6"),
       positivePositionImpactFactor: exponentToFloat("2.65156e-07"),
-      positionImpactExponentFactor: exponentToFloat("1.76045e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("1.76045e0"),
 
       negativeSwapImpactFactor: exponentToFloat("12e-9"),
       positiveSwapImpactFactor: exponentToFloat("6e-9"),
@@ -1456,7 +1472,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
-      positionImpactExponentFactor: exponentToFloat("2.2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2.2e0"),
 
       positiveMaxPositionImpactFactor: percentageToFloat("0.5%"),
       negativeMaxPositionImpactFactor: percentageToFloat("0.5%"),
@@ -1488,7 +1504,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("5e-10"), // 0.05% for ~100,000 USD of imbalance
       positivePositionImpactFactor: exponentToFloat("2.5e-10"), // 0.05% for ~178,180 USD of imbalance
-      positionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
+      negativePositionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
 
       negativeSwapImpactFactor: exponentToFloat("3e-8"), // 0.05% for 16,667 USD of imbalance
       positiveSwapImpactFactor: exponentToFloat("1.5e-8"), // 0.05% for 33,333 USD of imbalance
@@ -1516,7 +1532,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("5e-10"), // 0.05% for ~100,000 USD of imbalance
       positivePositionImpactFactor: exponentToFloat("2.5e-10"), // 0.05% for ~178,180 USD of imbalance
-      positionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
+      negativePositionImpactExponentFactor: exponentToFloat("2.2e0"), // 2.2
 
       negativeSwapImpactFactor: exponentToFloat("3e-8"), // 0.05% for 16,667 USD of imbalance
       positiveSwapImpactFactor: exponentToFloat("1.5e-8"), // 0.05% for 33,333 USD of imbalance
@@ -1549,7 +1565,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
-      positionImpactExponentFactor: exponentToFloat("2.2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2.2e0"),
 
       negativeSwapImpactFactor: exponentToFloat("5e-9"),
       positiveSwapImpactFactor: exponentToFloat("2.5e-9"),
@@ -1582,7 +1598,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
-      positionImpactExponentFactor: exponentToFloat("2.2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2.2e0"),
 
       negativeSwapImpactFactor: exponentToFloat("4.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("3e-9"),
@@ -1617,7 +1633,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
-      positionImpactExponentFactor: exponentToFloat("2.2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2.2e0"),
 
       negativeSwapImpactFactor: exponentToFloat("4.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("3e-9"),
@@ -1652,7 +1668,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
-      positionImpactExponentFactor: exponentToFloat("2.2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2.2e0"),
 
       negativeSwapImpactFactor: exponentToFloat("4.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("3e-9"),
@@ -1687,7 +1703,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
-      positionImpactExponentFactor: exponentToFloat("2.2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2.2e0"),
 
       negativeSwapImpactFactor: exponentToFloat("4.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("3e-9"),
@@ -1722,7 +1738,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
-      positionImpactExponentFactor: exponentToFloat("2.2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2.2e0"),
 
       negativeSwapImpactFactor: exponentToFloat("5e-9"),
       positiveSwapImpactFactor: exponentToFloat("2.5e-9"),
@@ -1757,7 +1773,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
-      positionImpactExponentFactor: exponentToFloat("2.2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2.2e0"),
 
       negativeSwapImpactFactor: exponentToFloat("5e-9"),
       positiveSwapImpactFactor: exponentToFloat("2.5e-9"),
@@ -1793,7 +1809,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
-      positionImpactExponentFactor: exponentToFloat("2.2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2.2e0"),
 
       negativeSwapImpactFactor: exponentToFloat("5e-9"),
       positiveSwapImpactFactor: exponentToFloat("2.5e-9"),
@@ -1828,7 +1844,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
-      positionImpactExponentFactor: exponentToFloat("2.2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2.2e0"),
 
       negativeSwapImpactFactor: exponentToFloat("5e-9"),
       positiveSwapImpactFactor: exponentToFloat("2.5e-9"),
@@ -1863,7 +1879,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
-      positionImpactExponentFactor: exponentToFloat("2.2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2.2e0"),
 
       negativeSwapImpactFactor: exponentToFloat("5e-9"),
       positiveSwapImpactFactor: exponentToFloat("2.5e-9"),
@@ -1898,7 +1914,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
-      positionImpactExponentFactor: exponentToFloat("2.2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2.2e0"),
 
       negativeSwapImpactFactor: exponentToFloat("5e-9"),
       positiveSwapImpactFactor: exponentToFloat("2.5e-9"),
@@ -1934,7 +1950,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
-      positionImpactExponentFactor: exponentToFloat("2.2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2.2e0"),
 
       negativeSwapImpactFactor: exponentToFloat("5e-9"),
       positiveSwapImpactFactor: exponentToFloat("2.5e-9"),
@@ -1970,7 +1986,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
-      positionImpactExponentFactor: exponentToFloat("2.2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2.2e0"),
 
       negativeSwapImpactFactor: exponentToFloat("5e-9"),
       positiveSwapImpactFactor: exponentToFloat("2.5e-9"),
@@ -2005,7 +2021,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
-      positionImpactExponentFactor: exponentToFloat("2.2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2.2e0"),
 
       negativeSwapImpactFactor: exponentToFloat("5e-9"),
       positiveSwapImpactFactor: exponentToFloat("2.5e-9"),
@@ -2147,7 +2163,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
-      positionImpactExponentFactor: exponentToFloat("2.2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2.2e0"),
 
       negativeSwapImpactFactor: exponentToFloat("5e-9"),
       positiveSwapImpactFactor: exponentToFloat("2.5e-9"),
@@ -2183,7 +2199,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("1.35e-9"),
       positivePositionImpactFactor: exponentToFloat("4.5e-10"),
-      positionImpactExponentFactor: exponentToFloat("2.0e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2.0e0"),
 
       positiveMaxPositionImpactFactor: percentageToFloat("0.5%"),
       negativeMaxPositionImpactFactor: percentageToFloat("0.5%"),
@@ -2213,7 +2229,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
-      positionImpactExponentFactor: exponentToFloat("2.0e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2.0e0"),
 
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
@@ -2245,7 +2261,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
-      positionImpactExponentFactor: exponentToFloat("2.0e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2.0e0"),
 
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
@@ -2277,7 +2293,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("2.5e-9"),
       positivePositionImpactFactor: exponentToFloat("1.25e-9"),
-      positionImpactExponentFactor: exponentToFloat("2.0e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2.0e0"),
 
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
@@ -2309,7 +2325,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("2.5e-9"),
       positivePositionImpactFactor: exponentToFloat("1.25e-9"),
-      positionImpactExponentFactor: exponentToFloat("2.0e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2.0e0"),
 
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
@@ -2341,7 +2357,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("2.5e-9"),
       positivePositionImpactFactor: exponentToFloat("1.25e-9"),
-      positionImpactExponentFactor: exponentToFloat("2.0e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2.0e0"),
 
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
@@ -2373,7 +2389,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
-      positionImpactExponentFactor: exponentToFloat("2.0e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2.0e0"),
 
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
@@ -2407,7 +2423,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("9e-9"),
       positivePositionImpactFactor: exponentToFloat("4.5e-9"),
-      positionImpactExponentFactor: exponentToFloat("2.0e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2.0e0"),
 
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
@@ -2441,7 +2457,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("9e-9"),
       positivePositionImpactFactor: exponentToFloat("4.5e-9"),
-      positionImpactExponentFactor: exponentToFloat("2.0e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2.0e0"),
 
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
@@ -2473,7 +2489,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("2.5e-9"),
       positivePositionImpactFactor: exponentToFloat("1.25e-9"),
-      positionImpactExponentFactor: exponentToFloat("2.0e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2.0e0"),
 
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
@@ -2505,7 +2521,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("9.39e-7"),
       positivePositionImpactFactor: exponentToFloat("6.26e-7"),
-      positionImpactExponentFactor: exponentToFloat("1.7e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("1.7e0"),
 
       negativeSwapImpactFactor: exponentToFloat("4.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("3e-9"),
@@ -2538,7 +2554,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("9.39e-7"),
       positivePositionImpactFactor: exponentToFloat("6.26e-7"),
-      positionImpactExponentFactor: exponentToFloat("1.7e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("1.7e0"),
 
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
@@ -2571,7 +2587,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("8e-7"),
       positivePositionImpactFactor: exponentToFloat("4e-7"),
-      positionImpactExponentFactor: exponentToFloat("1.6e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("1.6e0"),
 
       negativeSwapImpactFactor: exponentToFloat("4.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("3e-9"),
@@ -2602,7 +2618,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("5e-7"),
       positivePositionImpactFactor: exponentToFloat("2.5e-7"),
-      positionImpactExponentFactor: exponentToFloat("1.7e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("1.7e0"),
 
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
@@ -2634,7 +2650,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("5e-7"),
       positivePositionImpactFactor: exponentToFloat("2.5e-7"),
-      positionImpactExponentFactor: exponentToFloat("1.7e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("1.7e0"),
 
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
@@ -2665,7 +2681,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("5e-7"),
       positivePositionImpactFactor: exponentToFloat("2.5e-7"),
-      positionImpactExponentFactor: exponentToFloat("1.7e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("1.7e0"),
 
       negativeSwapImpactFactor: exponentToFloat("3e-8"),
       positiveSwapImpactFactor: exponentToFloat("1.5e-8"),
@@ -2694,7 +2710,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("1.4e-8"),
       positivePositionImpactFactor: exponentToFloat("7e-9"),
-      positionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2e0"),
 
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
@@ -2725,7 +2741,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("1e-7"),
       positivePositionImpactFactor: exponentToFloat("5e-8"),
-      positionImpactExponentFactor: exponentToFloat("1.7e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("1.7e0"),
 
       negativeSwapImpactFactor: exponentToFloat("4.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("3e-9"),
@@ -2756,7 +2772,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("2e-8"),
       positivePositionImpactFactor: exponentToFloat("1e-8"),
-      positionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2e0"),
 
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
@@ -2787,7 +2803,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("1.6e-8"),
       positivePositionImpactFactor: exponentToFloat("8e-9"),
-      positionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2e0"),
 
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
@@ -2818,7 +2834,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("8e-9"),
       positivePositionImpactFactor: exponentToFloat("4e-9"),
-      positionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2e0"),
 
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
@@ -2849,7 +2865,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("1e-8"),
       positivePositionImpactFactor: exponentToFloat("5e-9"),
-      positionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2e0"),
 
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
@@ -2880,7 +2896,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("1.2e-8"),
       positivePositionImpactFactor: exponentToFloat("6e-9"),
-      positionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2e0"),
 
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
@@ -2911,7 +2927,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("1.8e-8"),
       positivePositionImpactFactor: exponentToFloat("9e-9"),
-      positionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2e0"),
 
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
@@ -2942,7 +2958,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("2e-8"),
       positivePositionImpactFactor: exponentToFloat("1e-8"),
-      positionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2e0"),
 
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
@@ -2973,7 +2989,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("4e-7"),
       positivePositionImpactFactor: exponentToFloat("2e-7"),
-      positionImpactExponentFactor: exponentToFloat("1.75e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("1.75e0"),
 
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
@@ -3009,7 +3025,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("1.5e-8"),
       positivePositionImpactFactor: exponentToFloat("7.5e-9"),
-      positionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2e0"),
 
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
@@ -3040,7 +3056,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("1.6e-8"),
       positivePositionImpactFactor: exponentToFloat("8e-9"),
-      positionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2e0"),
 
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
@@ -3071,7 +3087,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("5e-8"),
       positivePositionImpactFactor: exponentToFloat("2.5e-8"),
-      positionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2e0"),
 
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
@@ -3102,7 +3118,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("1e-7"),
       positivePositionImpactFactor: exponentToFloat("8.33e-8"),
-      positionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2e0"),
 
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
@@ -3131,7 +3147,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("5e-8"),
       positivePositionImpactFactor: exponentToFloat("4.17e-8"),
-      positionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2e0"),
 
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
@@ -3158,7 +3174,7 @@ const config: {
       ...fundingRateConfig_High,
       ...borrowingRateConfig_HighMax_WithHigherBase,
 
-      positionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2e0"),
       negativePositionImpactFactor: exponentToFloat("1.4e-8"),
       positivePositionImpactFactor: exponentToFloat("1.2e-8"),
 
@@ -3186,7 +3202,7 @@ const config: {
       ...fundingRateConfig_High,
       ...borrowingRateConfig_HighMax_WithHigherBase,
 
-      positionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2e0"),
       negativePositionImpactFactor: exponentToFloat("1.2e-8"),
       positivePositionImpactFactor: exponentToFloat("1.0e-8"),
 
@@ -3214,7 +3230,7 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_LowMax_WithHigherBase,
 
-      positionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2e0"),
       negativePositionImpactFactor: exponentToFloat("1.8e-8"),
       positivePositionImpactFactor: exponentToFloat("1.5e-8"),
 
@@ -3242,7 +3258,7 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_LowMax_WithHigherBase,
 
-      positionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2e0"),
       negativePositionImpactFactor: exponentToFloat("2.54e-8"),
       positivePositionImpactFactor: exponentToFloat("2.11e-8"),
 
@@ -3270,7 +3286,7 @@ const config: {
       ...fundingRateConfig_High,
       ...borrowingRateConfig_HighMax_WithHigherBase,
 
-      positionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2e0"),
       negativePositionImpactFactor: exponentToFloat("6e-8"),
       positivePositionImpactFactor: exponentToFloat("5e-8"),
 
@@ -3303,7 +3319,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("8.4e-9"),
       positivePositionImpactFactor: exponentToFloat("7e-9"),
-      positionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2e0"),
 
       positiveMaxPositionImpactFactor: percentageToFloat("0.5%"),
       negativeMaxPositionImpactFactor: percentageToFloat("0.5%"),
@@ -3326,7 +3342,7 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_LowMax_WithHigherBase,
 
-      positionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2e0"),
       negativePositionImpactFactor: exponentToFloat("4.12e-8"),
       positivePositionImpactFactor: exponentToFloat("3.43e-8"),
 
@@ -3354,7 +3370,7 @@ const config: {
       ...fundingRateConfig_High,
       ...borrowingRateConfig_HighMax_WithLowerBase,
 
-      positionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2e0"),
       negativePositionImpactFactor: exponentToFloat("1.44e-8"),
       positivePositionImpactFactor: exponentToFloat("1.2e-8"),
 
@@ -3382,7 +3398,7 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_LowMax_WithHigherBase,
 
-      positionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2e0"),
       negativePositionImpactFactor: exponentToFloat("1.47e-8"),
       positivePositionImpactFactor: exponentToFloat("1.22e-8"),
 
@@ -3410,7 +3426,7 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_LowMax_WithHigherBase,
 
-      positionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2e0"),
       negativePositionImpactFactor: exponentToFloat("7.4e-8"),
       positivePositionImpactFactor: exponentToFloat("6.16e-8"),
 
@@ -3438,7 +3454,7 @@ const config: {
       ...fundingRateConfig_Default,
       ...borrowingRateConfig_LowMax_WithHigherBase,
 
-      positionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2e0"),
       negativePositionImpactFactor: exponentToFloat("2.42e-8"),
       positivePositionImpactFactor: exponentToFloat("2.01e-8"),
 
@@ -4285,7 +4301,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("5e-7"),
       positivePositionImpactFactor: exponentToFloat("2.5e-7"),
-      positionImpactExponentFactor: exponentToFloat("1.7e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("1.7e0"),
 
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
@@ -4316,7 +4332,7 @@ const config: {
 
       negativePositionImpactFactor: exponentToFloat("5e-7"),
       positivePositionImpactFactor: exponentToFloat("2.5e-7"),
-      positionImpactExponentFactor: exponentToFloat("1.7e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("1.7e0"),
 
       negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
       positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
@@ -4345,7 +4361,7 @@ const config: {
       ...fundingRateConfig_High,
       ...borrowingRateConfig_HighMax_WithHigherBase,
 
-      positionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2e0"),
       negativePositionImpactFactor: exponentToFloat("6e-8"),
       positivePositionImpactFactor: exponentToFloat("5e-8"),
 
@@ -4625,7 +4641,7 @@ const config: {
       ...fundingRateConfig_High,
       ...borrowingRateConfig_HighMax_WithHigherBase,
 
-      positionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2e0"),
       negativePositionImpactFactor: exponentToFloat("1.4e-8"),
       positivePositionImpactFactor: exponentToFloat("1.2e-8"),
 
@@ -4769,7 +4785,7 @@ const config: {
       },
       negativePositionImpactFactor: decimalToFloat(26, 6), // 0.0025 %
       positivePositionImpactFactor: decimalToFloat(125, 7), // 0.00125 %
-      positionImpactExponentFactor: exponentToFloat("2e0"), // 2
+      negativePositionImpactExponentFactor: exponentToFloat("2e0"), // 2
       negativeSwapImpactFactor: decimalToFloat(1, 5), // 0.001 %
       positiveSwapImpactFactor: decimalToFloat(5, 6), // 0.0005 %
       swapImpactExponentFactor: exponentToFloat("2e0"), // 2
@@ -4809,7 +4825,7 @@ const config: {
       ...fundingRateConfig_Low,
       ...borrowingRateConfig_LowMax_WithLowerBase,
 
-      positionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2e0"),
       negativePositionImpactFactor: exponentToFloat("3e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
 
@@ -4843,7 +4859,7 @@ const config: {
 
       maxPoolUsdForDeposit: decimalToFloat(3_000_000),
 
-      positionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2e0"),
       negativePositionImpactFactor: exponentToFloat("3e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
 
@@ -4876,7 +4892,7 @@ const config: {
 
       maxPoolUsdForDeposit: decimalToFloat(3_000_000),
 
-      positionImpactExponentFactor: exponentToFloat("2e0"),
+      negativePositionImpactExponentFactor: exponentToFloat("2e0"),
       negativePositionImpactFactor: exponentToFloat("3e-10"),
       positivePositionImpactFactor: exponentToFloat("2.5e-10"),
 
@@ -5082,7 +5098,7 @@ const config: {
       },
       negativePositionImpactFactor: decimalToFloat(25, 6), // 0.0025 %
       positivePositionImpactFactor: decimalToFloat(125, 7), // 0.00125 %
-      positionImpactExponentFactor: exponentToFloat("2e0"), // 2
+      negativePositionImpactExponentFactor: exponentToFloat("2e0"), // 2
       negativeSwapImpactFactor: decimalToFloat(1, 5), // 0.001 %
       positiveSwapImpactFactor: decimalToFloat(5, 6), // 0.0005 %
       swapImpactExponentFactor: exponentToFloat("2e0"), // 2
@@ -5228,6 +5244,8 @@ export default async function (hre: HardhatRuntimeEnvironment) {
         "maxLongTokenPoolUsdForDeposit",
         "maxShortTokenPoolUsdForDeposit"
       );
+
+      fillLongShortValues(market, "maxCollateralSum", "maxLongCollateralSum", "maxShortCollateralSum");
 
       fillLongShortValues(market, "maxOpenInterest", "maxOpenInterestForLongs", "maxOpenInterestForShorts");
 

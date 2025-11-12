@@ -3,6 +3,7 @@
   "OrderVault_1": 1688460263,
   "DepositVault_1": 1688460263,
   "WithdrawalVault_1": 1688460263,
+  "FeeDistributorVault_1": 1688460263,
   "Router_1": 1688460263,
   "RoleStore_3": 1688460263,
   "DataStore_3": 1688460372,
@@ -23,5 +24,6 @@
   "ChainlinkPriceFeedProvider_6": 1755053077,
   "Oracle_6": 1755053081,
   "ChainlinkDataStreamProvider_6": 1755053143,
-  "ContributorHandler_1": 1760597761
+  "ContributorHandler_1": 1760597761,
+  "FeeDistributor_1": 1762330876
 }

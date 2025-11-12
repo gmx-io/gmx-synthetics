@@ -295,40 +295,6 @@ describe("Timelock", () => {
     expect(await roleStore.hasRole(user3.address, orderKeeperRole)).eq(false);
   });
 
-  it("setOracleProviderForToken", async () => {
-    const salt = getRandomSalt();
-    await expect(
-      timelockConfig
-        .connect(user2)
-        .signalSetOracleProviderForToken(oracle.address, wnt.address, user3.address, constants.HashZero, salt)
-    )
-      .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
-      .withArgs(user2.address, "TIMELOCK_ADMIN");
-
-    await timelockConfig
-      .connect(timelockAdmin)
-      .signalSetOracleProviderForToken(oracle.address, wnt.address, user3.address, constants.HashZero, salt);
-
-    const { target, payload } = await setOracleProviderForTokenPayload(oracle.address, wnt.address, user3.address);
-    await expect(timelockConfig.connect(user2).execute(target, payload, constants.HashZero, salt))
-      .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
-      .withArgs(user2.address, "TIMELOCK_ADMIN");
-
-    await expect(
-      timelockConfig.connect(timelockAdmin).execute(target, payload, constants.HashZero, salt)
-    ).to.be.revertedWith("TimelockController: operation is not ready");
-
-    await time.increase(1 * 24 * 60 * 60 + 10);
-
-    expect(await dataStore.getAddress(keys.oracleProviderForTokenKey(oracle.address, wnt.address))).eq(
-      fixture.contracts.gmOracleProvider.address
-    );
-
-    await timelockConfig.connect(timelockAdmin).execute(target, payload, constants.HashZero, salt);
-
-    expect(await dataStore.getAddress(keys.oracleProviderForTokenKey(oracle.address, wnt.address))).eq(user3.address);
-  });
-
   it("setOracleProviderEnabled", async () => {
     const salt = getRandomSalt();
     expect(await dataStore.getBool(keys.isOracleProviderEnabledKey(user3.address))).eq(false);
