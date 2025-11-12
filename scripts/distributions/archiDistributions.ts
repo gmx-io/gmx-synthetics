@@ -82,10 +82,8 @@ const CREDIT_MANAGER_TO_VAULT: Record<string, string> = {
   "0xb99d8d7fc3f59b38fde1b79aedf07c52ca05d63a": "WETH",
   "0xf5eb3768b9b50e6e019e50e62da8ac0444c6af98": "WETH",
   "0x21aae858bf9a3668e95576e45df785f1f6bb9ee7": "WBTC",
-  "0xc2a4aae7f7534f9e6b84827e44d7dc0b23fa79f3": "WBTC",
   "0x8de15602ac68427a5d16da9ef956408852c2c29c": "USDT",
   "0x14192d4c06e223e54cf72a03da6ff21689802794": "USDT",
-  "0x08dcf2fc5ea34e1615689095646520d18d324f0a": "USDC",
   "0x0ea8c08c3b682a3cd964c416a2966b089b4497ba": "USDC",
   "0xaf32b65b4e7a833040b24d41aec2962c047c4440": "USDC",
 };
@@ -96,7 +94,6 @@ const TOKEN_ADDRESSES: Record<string, string> = {
   "0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f": "WBTC",
   "0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9": "USDT",
   "0xff970a61a04b1ca14834a43f5de4533ebddb5cc8": "USDC",
-  "0x5402b5f40310bded796c7d0f3ff6683f5c0cffdf": "fsGLP",
   "0x1addd80e6039594ee970e5872d247bf0414c8903": "fsGLP",
 };
 
@@ -302,7 +299,7 @@ async function step2_extractPositions(provider: any): Promise<PositionData[]> {
   const glpManager = new ethers.Contract(GMX_GLP_MANAGER, GMX_GLP_MANAGER_ABI, provider);
 
   const startBlock = START_BLOCK;
-  const endBlock = await provider.getBlockNumber();
+  const endBlock = await provider.getBlockNumber(); // but no distribution changes if running up to the incident block (i.e. 355880237)
 
   console.log(`Querying events from block ${startBlock} to ${endBlock}...\n`);
 
@@ -389,6 +386,9 @@ async function step2_extractPositions(provider: any): Promise<PositionData[]> {
     } catch (error: any) {
       // Archive data not available - mark as N/A
       // This will happen on non-archive RPC nodes for old blocks
+      console.log(
+        `  ⚠️  Could not fetch GLP price at block ${event.blockNumber} for position ${farmer} #${positionIndex}: ${error.message}`
+      );
     }
 
     positions.push({
@@ -905,7 +905,7 @@ function step6_applyStablecoinCapping(
 
   console.log(`Total original distribution: ${totalOriginal.toFixed(2)} fsGLP`);
   console.log(`Total final distribution: ${totalFinal.toFixed(2)} fsGLP`);
-  console.log(`Difference (should be ~0): ${(totalFinal - totalOriginal).toFixed(6)} fsGLP\n`);
+  console.log(`Difference: ${(totalFinal - totalOriginal).toFixed(6)} fsGLP\n`);
 
   console.log(`✅ Applied stablecoin capping and redistributed ${totalExcess.toFixed(2)} fsGLP to volatile LPs\n`);
 
