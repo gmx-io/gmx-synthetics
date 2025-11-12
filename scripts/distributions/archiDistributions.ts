@@ -386,7 +386,7 @@ async function step2_extractPositions(provider: any): Promise<PositionData[]> {
     } catch (error: any) {
       // Archive data not available - mark as N/A
       // This will happen on non-archive RPC nodes for old blocks
-      console.log(
+      throw new Error(
         `  ⚠️  Could not fetch GLP price at block ${event.blockNumber} for position ${farmer} #${positionIndex}: ${error.message}`
       );
     }
