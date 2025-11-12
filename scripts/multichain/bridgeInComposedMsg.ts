@@ -530,7 +530,7 @@ async function getComposedMsg({
       gelatoRelayFeeAmount: 0,
     };
 
-    const message = await encodeRegisterCodeMessage(registerCodeParams, referralCode, account);
+    const message = await encodeRegisterCodeMessage(registerCodeParams, referralCode, account, expectedNativeValue);
 
     return message;
   }

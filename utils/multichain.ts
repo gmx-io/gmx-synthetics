@@ -322,7 +322,8 @@ export async function encodeSetTraderReferralCodeMessage(
 export async function encodeRegisterCodeMessage(
   registerCodeParams: Parameters<typeof sendSetTraderReferralCode>[0], // Using same type as setTraderReferralCode
   referralCode: string,
-  account: string
+  account: string,
+  expectedNativeValue: BigNumberish = 0
 ): Promise<string> {
   const relayParams = await getRelayParams(registerCodeParams);
 
@@ -338,7 +339,10 @@ export async function encodeRegisterCodeMessage(
   );
 
   const ActionType = 7; // RegisterCode
-  const data = ethers.utils.defaultAbiCoder.encode(["uint8", "bytes"], [ActionType, actionData]);
+  const data = ethers.utils.defaultAbiCoder.encode(
+    ["uint8", "uint256", "bytes"],
+    [ActionType, expectedNativeValue, actionData]
+  );
 
   const message = ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, data]);
 
