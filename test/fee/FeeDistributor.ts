@@ -160,35 +160,32 @@ describe("FeeDistributor", function () {
     mockEndpointV2C = await deployContract("MockEndpointV2", [eidC]);
     gmxA = await deployContract("MintableToken", ["GMX", "GMX", 18]);
     gmxC = await deployContract("MintableToken", ["GMX", "GMX", 18]);
-    mockGmxAdapterA = await deployContract("MockGMX_Adapter", [
+    mockGmxAdapterA = await deployContract("MockGMX_MintBurnAdapter", [
       [
         { dstEid: eidB, limit: expandDecimals(1000000, 18), window: 60 },
         { dstEid: eidC, limit: expandDecimals(1000000, 18), window: 60 },
         { dstEid: eidD, limit: expandDecimals(1000000, 18), window: 60 },
       ],
-      gmxA.address,
       gmxA.address,
       mockEndpointV2A.address,
       wallet.address,
     ]);
-    mockGmxAdapterB = await deployContract("MockGMX_Adapter", [
+    mockGmxAdapterB = await deployContract("MockGMX_LockboxAdapter", [
       [
         { dstEid: eidA, limit: expandDecimals(1000000, 18), window: 60 },
         { dstEid: eidC, limit: expandDecimals(1000000, 18), window: 60 },
         { dstEid: eidD, limit: expandDecimals(1000000, 18), window: 60 },
       ],
       gmx.address,
-      gmx.address,
       mockEndpointV2B.address,
       wallet.address,
     ]);
-    mockGmxAdapterC = await deployContract("MockGMX_Adapter", [
+    mockGmxAdapterC = await deployContract("MockGMX_MintBurnAdapter", [
       [
         { dstEid: eidA, limit: expandDecimals(1000000, 18), window: 60 },
         { dstEid: eidB, limit: expandDecimals(1000000, 18), window: 60 },
         { dstEid: eidD, limit: expandDecimals(1000000, 18), window: 60 },
       ],
-      gmxC.address,
       gmxC.address,
       mockEndpointV2C.address,
       wallet.address,
@@ -435,6 +432,7 @@ describe("FeeDistributor", function () {
     await gmx.mint(feeHandler.address, expandDecimals(10_000, 18));
 
     await gmx.mint(wallet.address, expandDecimals(170_000, 18));
+    await gmx.approve(mockGmxAdapterB.address, expandDecimals(130_000, 18));
     let sendParam = {
       dstEid: eidA,
       to: addressToBytes32(user0.address),
@@ -544,6 +542,7 @@ describe("FeeDistributor", function () {
     await gmx.mint(feeHandler.address, expandDecimals(40_000, 18));
 
     await gmx.mint(wallet.address, expandDecimals(170_000, 18));
+    await gmx.approve(mockGmxAdapterB.address, expandDecimals(50_000, 18));
     let sendParam = {
       dstEid: eidA,
       to: addressToBytes32(user0.address),
@@ -598,8 +597,8 @@ describe("FeeDistributor", function () {
 
     const distributeTimestamp = await dataStore.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
 
-    const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[14].parsedEventData;
-    const feeDistributionDataReceivedEventData = parseLogs(fixture, receipt)[11].parsedEventData;
+    const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[18].parsedEventData;
+    const feeDistributionDataReceivedEventData = parseLogs(fixture, receipt)[15].parsedEventData;
 
     const feeAmountGmxA = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdA));
     const feeAmountGmxB = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB));
@@ -669,6 +668,7 @@ describe("FeeDistributor", function () {
     await gmx.mint(feeHandler.address, expandDecimals(10_000, 18));
 
     await gmx.mint(wallet.address, expandDecimals(170_000, 18));
+    await gmx.approve(mockGmxAdapterB.address, expandDecimals(130_000, 18));
     let sendParam = {
       dstEid: eidA,
       to: addressToBytes32(user0.address),
@@ -932,6 +932,7 @@ describe("FeeDistributor", function () {
     await gmx.mint(feeHandler.address, expandDecimals(40_000, 18));
 
     await gmx.mint(wallet.address, expandDecimals(170_000, 18));
+    await gmx.approve(mockGmxAdapterB.address, expandDecimals(50_000, 18));
     let sendParam = {
       dstEid: eidA,
       to: addressToBytes32(user0.address),
@@ -988,8 +989,8 @@ describe("FeeDistributor", function () {
 
     const distributeTimestamp = await dataStore.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
 
-    const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[14].parsedEventData;
-    const feeDistributionDataReceivedEventData = parseLogs(fixture, receipt)[11].parsedEventData;
+    const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[18].parsedEventData;
+    const feeDistributionDataReceivedEventData = parseLogs(fixture, receipt)[15].parsedEventData;
 
     const feeAmountGmxA = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdA));
     const feeAmountGmxB = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB));
@@ -1299,13 +1300,12 @@ describe("FeeDistributor", function () {
     const mockEndpointV2DMultichain = await deployContract("MockEndpointV2", [eidD]);
     const mockEndpointV2D = await deployContract("MockEndpointV2", [eidD]);
     const gmxD = await deployContract("MintableToken", ["GMX", "GMX", 18]);
-    const mockGmxAdapterD = await deployContract("MockGMX_Adapter", [
+    const mockGmxAdapterD = await deployContract("MockGMX_MintBurnAdapter", [
       [
         { dstEid: eidA, limit: expandDecimals(1000000, 18), window: 60 },
         { dstEid: eidB, limit: expandDecimals(1000000, 18), window: 60 },
         { dstEid: eidC, limit: expandDecimals(1000000, 18), window: 60 },
       ],
-      gmxD.address,
       gmxD.address,
       mockEndpointV2D.address,
       wallet.address,
@@ -1638,6 +1638,7 @@ describe("FeeDistributor", function () {
     await dataStoreD.setUint(keys.withdrawableBuybackTokenAmountKey(gmxD.address), expandDecimals(50_000, 18));
 
     await gmx.mint(wallet.address, expandDecimals(290_000, 18));
+    await gmx.approve(mockGmxAdapterB.address, expandDecimals(170_000, 18));
     let sendParam = {
       dstEid: eidA,
       to: addressToBytes32(user0.address),
@@ -1737,8 +1738,8 @@ describe("FeeDistributor", function () {
     const distributeTimestamp = await dataStore.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
     const distributeTimestampD = await dataStoreD.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
 
-    const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[14].parsedEventData;
-    const feeDistributionDataReceivedEventData = parseLogs(fixture, receipt)[11].parsedEventData;
+    const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[18].parsedEventData;
+    const feeDistributionDataReceivedEventData = parseLogs(fixture, receipt)[15].parsedEventData;
 
     const feeDistributionInitiatedEventDataD = parseLogs(fixture, receiptD)[9].parsedEventData;
     const feeDistributionDataReceivedEventDataD = parseLogs(fixture, receiptD)[6].parsedEventData;

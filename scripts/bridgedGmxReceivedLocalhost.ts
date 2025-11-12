@@ -54,32 +54,29 @@ async function main() {
   const mockEndpointV2C = await deployContract("MockEndpointV2", [eidC]);
   const gmxA = await deployContract("MintableToken", ["GMX", "GMX", 18]);
   const gmxC = await deployContract("MintableToken", ["GMX", "GMX", 18]);
-  const mockGmxAdapterA = await deployContract("MockGMX_Adapter", [
+  const mockGmxAdapterA = await deployContract("MockGMX_MintBurnAdapter", [
     [
       { dstEid: eidB, limit: expandDecimals(1000000, 18), window: 60 },
       { dstEid: eidC, limit: expandDecimals(1000000, 18), window: 60 },
     ],
-    gmxA.address,
     gmxA.address,
     mockEndpointV2A.address,
     accounts[0].address,
   ]);
-  const mockGmxAdapterB = await deployContract("MockGMX_Adapter", [
+  const mockGmxAdapterB = await deployContract("MockGMX_LockboxAdapter", [
     [
       { dstEid: eidA, limit: expandDecimals(1000000, 18), window: 60 },
       { dstEid: eidC, limit: expandDecimals(1000000, 18), window: 60 },
     ],
     gmx.address,
-    gmx.address,
     mockEndpointV2B.address,
     accounts[0].address,
   ]);
-  const mockGmxAdapterC = await deployContract("MockGMX_Adapter", [
+  const mockGmxAdapterC = await deployContract("MockGMX_MintBurnAdapter", [
     [
       { dstEid: eidA, limit: expandDecimals(1000000, 18), window: 60 },
       { dstEid: eidB, limit: expandDecimals(1000000, 18), window: 60 },
     ],
-    gmxC.address,
     gmxC.address,
     mockEndpointV2C.address,
     accounts[0].address,
@@ -278,6 +275,7 @@ async function main() {
   await gmx.mint(feeHandler.address, expandDecimals(10_000, 18));
 
   await gmx.mint(accounts[0].address, expandDecimals(170_000, 18));
+  await gmx.approve(mockGmxAdapterB.address, expandDecimals(130_000, 18));
   let sendParam = {
     dstEid: eidA,
     to: addressToBytes32(accounts[1].address),

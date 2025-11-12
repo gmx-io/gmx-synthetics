@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "../data/DataStore.sol";
 import "../data/Keys2.sol";
 import "../error/Errors.sol";
+import "../token/TokenUtils.sol";
 
 enum DistributionState {
     None,
@@ -21,6 +22,14 @@ struct Transfer {
 
 // @title FeeDistributorUtils
 library FeeDistributorUtils {
+    function withdrawNativeToken(DataStore dataStore, address receiver, uint256 amount) external {
+        TokenUtils.sendNativeToken(dataStore, receiver, amount);
+    }
+
+    function withdrawToken(DataStore dataStore, address token, address receiver, uint256 amount) external {
+        TokenUtils.transfer(dataStore, token, receiver, amount);
+    }
+
     function calculateKeeperCosts(DataStore dataStore) external view returns (uint256, uint256) {
         address[] memory keepers = dataStore.getAddressArray(Keys2.FEE_DISTRIBUTOR_KEEPER_COSTS);
         uint256[] memory keepersTargetBalance = dataStore.getUintArray(Keys2.FEE_DISTRIBUTOR_KEEPER_COSTS);
@@ -46,7 +55,7 @@ library FeeDistributorUtils {
 
         return (keeperCostsV1, keeperCostsV2);
     }
-    
+
     function retrieveChainIds(DataStore dataStore) external view returns (uint256[] memory) {
         uint256[] memory chainIds = dataStore.getUintArray(Keys2.FEE_DISTRIBUTOR_CHAIN_ID);
         sort(chainIds, 0, int256(chainIds.length - 1));
