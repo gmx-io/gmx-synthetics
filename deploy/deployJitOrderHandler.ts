@@ -26,8 +26,16 @@ const func = createDeployFunction({
     const { deployer } = await getNamedAccounts();
     const { execute } = deployments;
 
+    const referralStorage = await deployments.get("ReferralStorage");
     if (!["arbitrum", "avalanche", "botanix"].includes(network.name)) {
-      await execute("ReferralStorage", { from: deployer, log: true }, "setHandler", deployedContract.address, true);
+      await execute(
+        "MockTimelockV1",
+        { from: deployer, log: true },
+        "setHandler",
+        referralStorage.address,
+        deployedContract.address,
+        true
+      );
     }
 
     await grantRoleIfNotGranted(deployedContract, "CONTROLLER");
