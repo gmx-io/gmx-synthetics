@@ -42,6 +42,9 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       tokenTransferGasLimit: 200_000,
       nativeTokenTransferGasLimit: 50_000,
 
+      setTraderReferralCodeGasLimit: 200_000,
+      registerCodeGasLimit: 200_000,
+
       estimatedGasFeeBaseAmount: 0,
       estimatedGasPerOraclePrice: 0,
       estimatedGasFeeMultiplierFactor: 0,
@@ -115,6 +118,9 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
 
     tokenTransferGasLimit: 200_000,
     nativeTokenTransferGasLimit: 50_000,
+
+    setTraderReferralCodeGasLimit: 200_000,
+    registerCodeGasLimit: 200_000,
 
     estimatedGasFeeBaseAmount: 600_000,
     estimatedGasPerOraclePrice: 250_000,
