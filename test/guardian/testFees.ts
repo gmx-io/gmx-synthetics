@@ -17,13 +17,32 @@ import { BigNumber } from "ethers";
 describe("Guardian.Fees", () => {
   let fixture;
   let wallet, user0, user1;
-  let roleStore, dataStore, wnt, usdc, ethUsdMarket, referralStorage, exchangeRouter, reader, decreasePositionUtils;
+  let roleStore,
+    dataStore,
+    wnt,
+    usdc,
+    ethUsdMarket,
+    referralStorage,
+    mockTimelockV1,
+    exchangeRouter,
+    reader,
+    decreasePositionUtils;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ wallet, user0, user1 } = fixture.accounts);
-    ({ roleStore, dataStore, ethUsdMarket, wnt, usdc, referralStorage, exchangeRouter, reader, decreasePositionUtils } =
-      fixture.contracts);
+    ({
+      roleStore,
+      dataStore,
+      ethUsdMarket,
+      wnt,
+      usdc,
+      referralStorage,
+      mockTimelockV1,
+      exchangeRouter,
+      reader,
+      decreasePositionUtils,
+    } = fixture.contracts);
 
     await handleDeposit(fixture, {
       create: {
@@ -44,9 +63,9 @@ describe("Guardian.Fees", () => {
     // Register referral code
     const code = hashData(["bytes32"], [hashString("CODE4")]);
     await referralStorage.connect(user1).registerCode(code);
-    await referralStorage.setTier(1, 2000, 10000); // 20% discount code
+    await mockTimelockV1.setTier(referralStorage.address, 1, 2000, 10000); // 20% discount code
     await referralStorage.connect(user1).setReferrerDiscountShare(5000); // 50% discount share
-    await referralStorage.setReferrerTier(user1.address, 1);
+    await mockTimelockV1.setReferrerTier(referralStorage.address, user1.address, 1);
 
     await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 3)); // 50 BIPs position fee
 

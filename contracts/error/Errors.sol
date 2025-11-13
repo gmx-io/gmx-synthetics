@@ -474,6 +474,7 @@ library Errors {
     error InvalidInitializer();
     error InvalidMultichainProvider(address provider);
     error InvalidMultichainEndpoint(address endpoint);
+    error ReferralCodeAlreadyExists(bytes32 code);
     error UnableToPayOrderFee();
     error UnableToPayOrderFeeFromCollateral();
     error InvalidBridgeOutToken(address token);

@@ -9,6 +9,7 @@ import {
   sendCreateOrder,
   sendUpdateOrder,
   sendSetTraderReferralCode,
+  sendRegisterCode,
 } from "../../utils/relay/gelatoRelay";
 import * as keys from "../../utils/keys";
 import { handleDeposit } from "../../utils/deposit";
@@ -44,6 +45,7 @@ describe("MultichainOrderRouter", () => {
     wnt,
     usdc,
     referralStorage,
+    mockTimelockV1,
     chainlinkPriceFeedProvider,
     mockStargatePoolUsdc,
     mockStargatePoolNative;
@@ -65,6 +67,7 @@ describe("MultichainOrderRouter", () => {
       wnt,
       usdc,
       referralStorage,
+      mockTimelockV1,
       chainlinkPriceFeedProvider,
       mockStargatePoolUsdc,
       mockStargatePoolNative,
@@ -922,8 +925,7 @@ describe("MultichainOrderRouter", () => {
     });
 
     it("sets trader referral code and sends relayer fee", async () => {
-      // enable MultichainOrderRouter to call ReferralStorage.setTraderReferralCode
-      await referralStorage.setHandler(multichainOrderRouter.address, true);
+      // MultichainOrderRouter is already enabled, at deploy time, to call ReferralStorage.setTraderReferralCode
 
       await bridgeInTokens(fixture, {
         account: user1,
@@ -939,6 +941,66 @@ describe("MultichainOrderRouter", () => {
       expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(relayFeeAmount);
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0);
       expect(await referralStorage.traderReferralCodes(user1.address)).eq(referralCode);
+    });
+  });
+
+  describe("registerCode", () => {
+    const newReferralCode = hashString("newReferralCode");
+    let registerCodeParams: Parameters<typeof sendRegisterCode>[0];
+
+    beforeEach(async () => {
+      registerCodeParams = {
+        sender: relaySigner,
+        signer: user1,
+        feeParams: {
+          feeToken: wnt.address,
+          feeAmount: relayFeeAmount, // 0.002 ETH
+          feeSwapPath: [],
+        },
+        account: user1.address,
+        referralCode: newReferralCode,
+        deadline: 9999999999,
+        srcChainId: chainId, // 0 means non-multichain action
+        desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
+        relayRouter: multichainOrderRouter,
+        chainId,
+        gelatoRelayFeeToken: wnt.address,
+        gelatoRelayFeeAmount: relayFeeAmount, // 0.002 ETH
+      };
+    });
+
+    it("registers referral code and sends relayer fee", async () => {
+      await bridgeInTokens(fixture, {
+        account: user1,
+        amount: relayFeeAmount,
+      });
+
+      expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(0);
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(relayFeeAmount);
+      expect(await referralStorage.codeOwners(newReferralCode)).eq(ethers.constants.AddressZero);
+
+      await sendRegisterCode(registerCodeParams);
+
+      expect(await wnt.balanceOf(GELATO_RELAY_ADDRESS)).to.eq(relayFeeAmount);
+      expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.eq(0);
+      expect(await referralStorage.codeOwners(newReferralCode)).eq(user1.address);
+    });
+
+    it("fails to register code that already exists", async () => {
+      // Register the code first
+      await referralStorage.connect(user0).registerCode(newReferralCode);
+      expect(await referralStorage.codeOwners(newReferralCode)).eq(user0.address);
+
+      await bridgeInTokens(fixture, {
+        account: user1,
+        amount: relayFeeAmount,
+      });
+
+      // Should revert when trying to register an existing code
+      await expect(sendRegisterCode(registerCodeParams)).to.be.revertedWithCustomError(
+        { interface: multichainOrderRouter.interface },
+        "ReferralCodeAlreadyExists"
+      );
     });
   });
 });

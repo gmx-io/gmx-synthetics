@@ -26,7 +26,8 @@ describe("MultichainClaimsRouter", () => {
     multichainClaimsRouter,
     mockStargatePoolUsdc,
     mockStargatePoolNative,
-    referralStorage;
+    referralStorage,
+    mockTimelockV1;
   let relaySigner;
   let chainId;
 
@@ -43,6 +44,7 @@ describe("MultichainClaimsRouter", () => {
       mockStargatePoolUsdc,
       mockStargatePoolNative,
       referralStorage,
+      mockTimelockV1,
     } = fixture.contracts);
 
     await impersonateAccount(GELATO_RELAY_ADDRESS);
@@ -497,10 +499,9 @@ describe("MultichainClaimsRouter", () => {
       // Register referral code
       const code = hashData(["bytes32"], [hashString("CODE4")]);
       await referralStorage.connect(user1).registerCode(code);
-      await referralStorage.setTier(1, 2000, 10000); // 20% discount code
+      await mockTimelockV1.setTier(referralStorage.address, 1, 2000, 10000); // 20% discount code
       await referralStorage.connect(user1).setReferrerDiscountShare(5000); // 50% discount share
-      await referralStorage.setReferrerTier(user1.address, 1);
-
+      await mockTimelockV1.setReferrerTier(referralStorage.address, user1.address, 1);
       // Set 50 BIPs position fee
       await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 3));
 

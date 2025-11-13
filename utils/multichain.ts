@@ -1,7 +1,7 @@
 import { BigNumberish, Contract } from "ethers";
 import { sendSetTraderReferralCode } from "./relay/gelatoRelay";
 import { getRelayParams } from "./relay/helpers";
-import { getSetTraderReferralCodeSignature } from "./relay/signatures";
+import { getSetTraderReferralCodeSignature, getRegisterCodeSignature } from "./relay/signatures";
 import {
   getCreateDepositSignature,
   getCreateWithdrawalSignature,
@@ -309,6 +309,36 @@ export async function encodeSetTraderReferralCodeMessage(
   );
 
   const ActionType = 4; // SetTraderReferralCode
+  const data = ethers.utils.defaultAbiCoder.encode(
+    ["uint8", "uint256", "bytes"],
+    [ActionType, expectedNativeValue, actionData]
+  );
+
+  const message = ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, data]);
+
+  return message;
+}
+
+export async function encodeRegisterCodeMessage(
+  registerCodeParams: Parameters<typeof sendSetTraderReferralCode>[0], // Using same type as setTraderReferralCode
+  referralCode: string,
+  account: string,
+  expectedNativeValue: BigNumberish = 0
+): Promise<string> {
+  const relayParams = await getRelayParams(registerCodeParams);
+
+  const signature = await getRegisterCodeSignature({
+    ...registerCodeParams,
+    relayParams,
+    verifyingContract: registerCodeParams.relayRouter.address,
+  });
+
+  const actionData = ethers.utils.defaultAbiCoder.encode(
+    [relayParamsType, "bytes32"],
+    [{ ...relayParams, signature }, referralCode]
+  );
+
+  const ActionType = 7; // RegisterCode
   const data = ethers.utils.defaultAbiCoder.encode(
     ["uint8", "uint256", "bytes"],
     [ActionType, expectedNativeValue, actionData]
