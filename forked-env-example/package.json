@@ -1,0 +1,37 @@
+{
+  "name": "gmx-forked-env-example",
+  "version": "1.0.0",
+  "description": "Example environment for testing GMX Synthetics V2 on forked Arbitrum using Foundry or Anvil",
+  "main": "index.js",
+  "scripts": {
+    "anvil:start": "anvil --fork-url $ARBITRUM_RPC_URL --fork-block-number 392496384 --host 127.0.0.1 --port 8545",
+    "verify": "npx hardhat run scripts/verifySetup.ts --network anvil",
+    "test:open": "npx hardhat run scripts/testOpenPosition.ts --network anvil",
+    "test:close": "npx hardhat run scripts/testClosePosition.ts --network anvil",
+    "test:all": "npm run test:open && npm run test:close",
+    "compile": "npx hardhat compile"
+  },
+  "keywords": [
+    "gmx",
+    "defi",
+    "perpetuals",
+    "testing",
+    "foundry",
+    "anvil"
+  ],
+  "author": "GMX",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-chai-matchers": "^1.0.3",
+    "@nomicfoundation/hardhat-network-helpers": "^1.1.2",
+    "@nomiclabs/hardhat-ethers": "^2.2.3",
+    "@typechain/ethers-v5": "^10.1.1",
+    "@typechain/hardhat": "^6.1.4",
+    "@types/node": "^20.9.3",
+    "ethers": "^5.7.2",
+    "hardhat": "^2.26.1",
+    "ts-node": "^10.9.1",
+    "typechain": "^8.1.1",
+    "typescript": "^4.8.4"
+  }
+}

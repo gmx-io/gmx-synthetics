@@ -1,0 +1,26 @@
+const { ethers } = require("hardhat");
+
+async function main() {
+  // Check current block
+  const blockNumber = await ethers.provider.getBlockNumber();
+  console.log("Current fork block:", blockNumber);
+  
+  // Try getting keeper at latest block
+  await ethers.provider.send("anvil_mine", ["0x" + (24000000 - blockNumber).toString(16)]);
+  
+  const newBlock = await ethers.provider.getBlockNumber();
+  console.log("After mining to:", newBlock);
+  
+  const roleStore = await ethers.getContractAt("IRoleStore", "0x3c3d99FD298f679DBC2CEcd132b4eC4d0F5e6e72");
+  const ORDER_KEEPER = ethers.keccak256(ethers.toUtf8Bytes("ORDER_KEEPER"));
+  
+  const count = await roleStore.getRoleMemberCount(ORDER_KEEPER);
+  console.log("Keeper count at block", newBlock, ":", count.toString());
+  
+  if (count > 0) {
+    const keepers = await roleStore.getRoleMembers(ORDER_KEEPER, 0, 1);
+    console.log("First keeper:", keepers[0]);
+  }
+}
+
+main().catch(console.error);
