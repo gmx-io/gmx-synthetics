@@ -23,5 +23,7 @@
   "Oracle_6": 1751877977,
   "ChainlinkDataStreamProvider_6": 1751877989,
   "ClaimVault_1": 1755765475,
-  "ContributorHandler_1": 1761770214
+  "ContributorHandler_1": 1761770214,
+  "MockTimelockV1": 1763068970,
+  "FeeDistributorVault_1": 1763069805
 }

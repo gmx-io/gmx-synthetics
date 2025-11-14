@@ -18,7 +18,7 @@ const contractName = "OrderHandler";
 
 const func = createDeployFunction({
   contractName: contractName,
-  dependencyNames: constructorContracts,
+  dependencyNames: [...constructorContracts, "MockTimelockV1"],
   getDeployArgs: async ({ dependencyContracts }) => {
     return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
   },
@@ -26,9 +26,18 @@ const func = createDeployFunction({
   afterDeploy: async ({ deployedContract, getNamedAccounts, deployments, network }) => {
     const { deployer } = await getNamedAccounts();
     const { execute } = deployments;
+    const { get } = deployments;
 
     if (!["arbitrum", "avalanche", "botanix"].includes(network.name)) {
-      await execute("ReferralStorage", { from: deployer, log: true }, "setHandler", deployedContract.address, true);
+      const referralStorage = await get("ReferralStorage");
+      await execute(
+        "MockTimelockV1",
+        { from: deployer, log: true },
+        "setHandler",
+        referralStorage.address,
+        deployedContract.address,
+        true
+      );
     }
 
     await grantRoleIfNotGranted(deployedContract, "CONTROLLER");

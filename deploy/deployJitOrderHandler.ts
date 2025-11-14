@@ -17,7 +17,7 @@ const contractName = "JitOrderHandler";
 
 const func = createDeployFunction({
   contractName: contractName,
-  dependencyNames: constructorContracts,
+  dependencyNames: [...constructorContracts, "MockTimelockV1"],
   getDeployArgs: async ({ dependencyContracts }) => {
     return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
   },
