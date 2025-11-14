@@ -34,7 +34,7 @@ library IncreaseOrderUtils {
             ISwapPricingUtils.SwapPricingType.Swap
         ));
 
-        MarketUtils.validateMarketCollateralToken(params.market, collateralToken);
+        MarketUtils.validateMarketCollateralToken(params.contracts.dataStore, params.market, collateralToken);
 
         bytes32 positionKey = Position.getPositionKey(params.order.account(), params.order.market(), collateralToken, params.order.isLong());
         Position.Props memory position = PositionStoreUtils.get(params.contracts.dataStore, positionKey);
@@ -49,6 +49,12 @@ library IncreaseOrderUtils {
             position.setMarket(params.order.market());
             position.setCollateralToken(collateralToken);
             position.setIsLong(params.order.isLong());
+        } else {
+            // validate that the existing position's collateralToken matches the collateralToken from the swap
+            // this ensures that a position can only have one collateral type
+            if (position.collateralToken() != collateralToken) {
+                revert Errors.InvalidCollateralTokenForMarket(params.market.marketToken, collateralToken);
+            }
         }
 
         if (params.minOracleTimestamp < params.order.updatedAtTime()) {

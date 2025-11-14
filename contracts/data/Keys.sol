@@ -90,6 +90,9 @@ library Keys {
     bytes32 public constant ACCOUNT_GLV_WITHDRAWAL_LIST = keccak256(abi.encode("ACCOUNT_GLV_WITHDRAWAL_LIST"));
     bytes32 public constant GLV_SUPPORTED_MARKET_LIST = keccak256(abi.encode("GLV_SUPPORTED_MARKET_LIST"));
 
+    // @dev key for the collateral whitelist
+    bytes32 public constant COLLATERAL_WHITELIST = keccak256(abi.encode("COLLATERAL_WHITELIST"));
+
     // @dev key for the position list
     bytes32 public constant POSITION_LIST = keccak256(abi.encode("POSITION_LIST"));
     // @dev key for the account position list

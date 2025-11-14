@@ -275,7 +275,7 @@ library PositionUtils {
         }
 
         MarketUtils.validateEnabledMarket(dataStore, market.marketToken);
-        MarketUtils.validateMarketCollateralToken(market, position.collateralToken());
+        MarketUtils.validateMarketCollateralToken(dataStore, market, position.collateralToken());
 
         if (shouldValidateMinPositionSize) {
             uint256 minPositionSizeUsd = dataStore.getUint(Keys.MIN_POSITION_SIZE_USD);

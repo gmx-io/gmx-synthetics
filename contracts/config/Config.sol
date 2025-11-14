@@ -16,6 +16,7 @@ import "../utils/Cast.sol";
 import "../market/MarketUtils.sol";
 
 import "./ConfigUtils.sol";
+import "../market/CollateralWhitelistUtils.sol";
 
 // @title Config
 contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
@@ -619,5 +620,72 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         }
 
         revert Errors.InvalidBaseKey(baseKey);
+    }
+
+    // @dev add a token to the collateral whitelist
+    // @param token the token to add to the whitelist
+    function addCollateralToWhitelist(address token) external onlyConfigKeeper nonReentrant {
+        if (token == address(0)) {
+            revert Errors.EmptyToken();
+        }
+
+        if (CollateralWhitelistUtils.isWhitelistedCollateral(dataStore, token)) {
+            // Token is already whitelisted, no-op
+            return;
+        }
+
+        CollateralWhitelistUtils.addToWhitelist(dataStore, token);
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "token", token);
+        eventEmitter.emitEventLog(
+            "AddCollateralToWhitelist",
+            eventData
+        );
+    }
+
+    // @dev remove a token from the collateral whitelist
+    // @param token the token to remove from the whitelist
+    function removeCollateralFromWhitelist(address token) external onlyConfigKeeper nonReentrant {
+        if (token == address(0)) {
+            revert Errors.EmptyToken();
+        }
+
+        if (!CollateralWhitelistUtils.isWhitelistedCollateral(dataStore, token)) {
+            // Token is not whitelisted, no-op
+            return;
+        }
+
+        CollateralWhitelistUtils.removeFromWhitelist(dataStore, token);
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "token", token);
+        eventEmitter.emitEventLog(
+            "RemoveCollateralFromWhitelist",
+            eventData
+        );
+    }
+
+    // @dev check if a token is whitelisted as collateral
+    // @param token the token to check
+    // @return true if the token is whitelisted
+    function isCollateralWhitelisted(address token) external view returns (bool) {
+        return CollateralWhitelistUtils.isWhitelistedCollateral(dataStore, token);
+    }
+
+    // @dev get the count of whitelisted collateral tokens
+    // @return the count of whitelisted tokens
+    function getCollateralWhitelistCount() external view returns (uint256) {
+        return CollateralWhitelistUtils.getWhitelistCount(dataStore);
+    }
+
+    // @dev get whitelisted collateral tokens in a range
+    // @param start the start index
+    // @param end the end index
+    // @return array of whitelisted token addresses
+    function getCollateralWhitelistedTokens(uint256 start, uint256 end) external view returns (address[] memory) {
+        return CollateralWhitelistUtils.getWhitelistedTokens(dataStore, start, end);
     }
 }

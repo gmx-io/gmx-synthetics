@@ -12,6 +12,7 @@ import "./MarketPoolValueInfo.sol";
 import "./MarketToken.sol";
 import "./MarketEventUtils.sol";
 import "./MarketStoreUtils.sol";
+import "./CollateralWhitelistUtils.sol";
 
 import "../position/Position.sol";
 import "../order/Order.sol";
@@ -2929,17 +2930,25 @@ library MarketUtils {
     }
 
     // @dev check if the given token is a collateral token of the market
+    // @param dataStore DataStore
     // @param market the market to check
     // @param token the token to check
-    function isMarketCollateralToken(Market.Props memory market, address token) internal pure returns (bool) {
-        return token == market.longToken || token == market.shortToken;
+    // @return true if the token is either a market collateral token (long/short) or whitelisted
+    function isMarketCollateralToken(DataStore dataStore, Market.Props memory market, address token) internal view returns (bool) {
+        // First check if it's the market's long or short token (backward compatibility)
+        if (token == market.longToken || token == market.shortToken) {
+            return true;
+        }
+        // Then check if it's in the whitelist
+        return CollateralWhitelistUtils.isWhitelistedCollateral(dataStore, token);
     }
 
     // @dev validate if the given token is a collateral token of the market
+    // @param dataStore DataStore
     // @param market the market to check
     // @param token the token to check
-    function validateMarketCollateralToken(Market.Props memory market, address token) internal pure {
-        if (!isMarketCollateralToken(market, token)) {
+    function validateMarketCollateralToken(DataStore dataStore, Market.Props memory market, address token) internal view {
+        if (!isMarketCollateralToken(dataStore, market, token)) {
             revert Errors.InvalidCollateralTokenForMarket(market.marketToken, token);
         }
     }
