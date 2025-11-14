@@ -1,11 +1,13 @@
 import hre from "hardhat";
 import got from "got";
-import { toLoggableObject } from "../utils/print";
-import { Position } from "../typechain-types/contracts/position/PositionUtils";
-import { hashData } from "../utils/hash";
-import { getBlockByTimestamp } from "./helpers";
-import { TokenConfig, TokensConfig } from "../config/tokens";
-import { expandDecimals, formatAmount } from "../utils/math";
+import { toLoggableObject } from "../../utils/print";
+import { Position } from "../../typechain-types/contracts/position/PositionUtils";
+import { hashData } from "../../utils/hash";
+import { TokenConfig, TokensConfig } from "../../config/tokens";
+import { expandDecimals, formatAmount } from "../../utils/math";
+import { DecreasePositionSwapType, OrderType } from "../../utils/order";
+import { ExchangeRouter, IBaseOrderUtils } from "../../typechain-types/contracts/router/ExchangeRouter";
+
 const ethers = hre.ethers;
 
 function getAvalancheFujiValues() {
@@ -127,6 +129,9 @@ async function main() {
   const tokens = (await (hre as any).gmx.getTokens()) as TokensConfig;
 
   const dataStoreDeployment = await hre.deployments.get("DataStore");
+  const reader = await hre.ethers.getContract("Reader");
+  const exchangeRouter: ExchangeRouter = await ethers.getContract("ExchangeRouter");
+  const orderVault = await ethers.getContract("OrderVault");
 
   let referralStorageAddress = _referralStorageAddess;
   if (!referralStorageAddress) {
@@ -137,92 +142,109 @@ async function main() {
     throw new Error("no referralStorageAddress");
   }
 
-  let blockTag: number | "latest" = "latest";
-  let timestamp: number | undefined = undefined;
+  const blockTag = "latest";
+  const timestamp: number | undefined = undefined;
 
-  if (process.env.DATE) {
-    const date = new Date(process.env.DATE);
-    timestamp = Number(date) / 1000;
-    const block = await getBlockByTimestamp(timestamp);
-    blockTag = block.number;
-  }
-
-  const reader = await hre.ethers.getContract("Reader");
   const _positionKey = process.env.POSITION_KEY;
 
-  let positions: Position.PropsStructOutput[];
+  let position: Position.PropsStructOutput;
 
   if (_positionKey) {
-    positions = [await reader.getPosition(dataStoreDeployment.address, _positionKey, { blockTag })];
+    position = await reader.getPosition(dataStoreDeployment.address, _positionKey, { blockTag });
   } else {
-    const traderAddress = process.env.TRADER || "0x6744a9c6e3a9b8f7243ace5b20d51a500fcd0353";
-    console.log("using trader address %s", traderAddress);
-    const traderPositions = await reader.getAccountPositions(dataStoreDeployment.address, traderAddress, 0, 20, {
-      blockTag,
-    });
-
-    if (traderPositions.length === 0) {
-      throw new Error("POSITION_KEY is required");
-    }
-
-    positions = traderPositions;
+    throw new Error("POSITION_KEY is required");
   }
 
-  const _market = process.env.MARKET;
+  const positionKey = hashData(
+    ["address", "address", "address", "bool"],
+    [position.addresses.account, position.addresses.market, position.addresses.collateralToken, position.flags.isLong]
+  );
 
-  for (const position of positions) {
-    if (_market && _market.toLowerCase() !== position.addresses.market.toLowerCase()) {
-      continue;
-    }
+  console.log("position", toLoggableObject(position));
 
-    const positionKey = hashData(
-      ["address", "address", "address", "bool"],
-      [position.addresses.account, position.addresses.market, position.addresses.collateralToken, position.flags.isLong]
-    );
+  const marketAddress = position.addresses.market;
+  const market = await reader.getMarket(dataStoreDeployment.address, marketAddress, { blockTag });
 
-    console.log("position", toLoggableObject(position));
-    console.log("positionKey", positionKey);
+  const prices = await getPrices(oracleApi, market, tokens, timestamp);
+  const isCollateralTokenLong = position.addresses.collateralToken === market.longToken;
+  const collateralTokenPrice = prices[isCollateralTokenLong ? "longTokenPrice" : "shortTokenPrice"].min;
+  const [collateralSymbol, collateralToken] = Object.entries(tokens).find(
+    (data) => data[1].address === position.addresses.collateralToken
+  );
 
-    const marketAddress = position.addresses.market;
-    const market = await reader.getMarket(dataStoreDeployment.address, marketAddress, { blockTag });
+  console.log("prices", toLoggableObject(prices));
 
-    console.log("market %s %s %s", market.indexToken, market.longToken, market.shortToken);
+  console.log("reader %s", reader.address);
+  console.log("dataStore %s", dataStoreDeployment.address);
+  console.log("referralStorageAddress %s", referralStorageAddress);
 
-    const prices = await getPrices(oracleApi, market, tokens, timestamp);
-    const isCollateralTokenLong = position.addresses.collateralToken === market.longToken;
-    const collateralTokenPrice = prices[isCollateralTokenLong ? "longTokenPrice" : "shortTokenPrice"].min;
-    const [collateralSymbol, collateralToken] = Object.entries(tokens).find(
-      (data) => data[1].address === position.addresses.collateralToken
-    );
+  const positionInfo = await reader.getPositionInfo(
+    dataStoreDeployment.address,
+    referralStorageAddress,
+    positionKey,
+    prices as any,
+    0,
+    ethers.constants.AddressZero,
+    true,
+    { blockTag }
+  );
 
-    console.log("prices", toLoggableObject(prices));
+  console.log(toLoggableObject(positionInfo));
 
-    console.log("reader %s", reader.address);
-    console.log("dataStore %s", dataStoreDeployment.address);
-    console.log("referralStorageAddress %s", referralStorageAddress);
+  console.log(
+    "pending pnl %s pending fees %s (%s %s) price impact %s",
+    formatAmount(positionInfo.basePnlUsd, 30, 2),
+    formatAmount(positionInfo.fees.totalCostAmount.mul(collateralTokenPrice), 30, 2),
+    formatAmount(positionInfo.fees.totalCostAmount, collateralToken.decimals),
+    collateralSymbol,
+    formatAmount(positionInfo.executionPriceResult.priceImpactUsd, 30, 2)
+  );
 
-    const positionInfo = await reader.getPositionInfo(
-      dataStoreDeployment.address,
-      referralStorageAddress,
-      positionKey,
-      prices as any,
-      0,
-      ethers.constants.AddressZero,
-      true,
-      { blockTag }
-    );
+  const executionFee = expandDecimals(3, 14);
+  const decreaseParams: IBaseOrderUtils.CreateOrderParamsStruct = {
+    addresses: {
+      receiver: position.addresses.account,
+      cancellationReceiver: ethers.constants.AddressZero,
+      uiFeeReceiver: ethers.constants.AddressZero,
+      callbackContract: ethers.constants.AddressZero,
+      market: position.addresses.market,
+      initialCollateralToken: position.addresses.collateralToken,
+      swapPath: [],
+    },
+    numbers: {
+      sizeDeltaUsd: positionInfo.position.numbers.sizeInUsd,
+      triggerPrice: 0,
+      acceptablePrice: prices.indexTokenPrice.max,
+      executionFee,
+      callbackGasLimit: 0,
+      minOutputAmount: 0,
+      initialCollateralDeltaAmount: positionInfo.position.numbers.collateralAmount,
+      validFromTime: 0,
+    },
+    orderType: OrderType.MarketDecrease,
+    isLong: true,
+    shouldUnwrapNativeToken: false,
+    decreasePositionSwapType: DecreasePositionSwapType.SwapPnlTokenToCollateralToken,
+    autoCancel: true,
+    referralCode: positionInfo.fees.referral.referralCode,
+    dataList: [],
+  };
 
-    console.log(toLoggableObject(positionInfo));
+  console.log("decreaseParams", decreaseParams);
 
-    console.log(
-      "pending pnl %s pending fees %s (%s %s) price impact %s",
-      formatAmount(positionInfo.basePnlUsd, 30, 2),
-      formatAmount(positionInfo.fees.totalCostAmount.mul(collateralTokenPrice), 30, 2),
-      formatAmount(positionInfo.fees.totalCostAmount, collateralToken.decimals),
-      collateralSymbol,
-      formatAmount(positionInfo.executionPriceResult.priceImpactUsd, 30, 2)
-    );
-  }
+  const multicallArgs = [
+    exchangeRouter.interface.encodeFunctionData("sendWnt", [orderVault.address, executionFee]),
+    exchangeRouter.interface.encodeFunctionData("createOrder", [decreaseParams]),
+  ];
+  console.log("multicall args", multicallArgs);
+
+  const tx = await exchangeRouter.multicall(multicallArgs, {
+    value: executionFee,
+    gasLimit: 1_500_000,
+  });
+
+  console.log("transaction sent", tx.hash);
+  await tx.wait();
 }
 
 main()
