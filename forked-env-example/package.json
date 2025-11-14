@@ -5,10 +5,7 @@
   "main": "index.js",
   "scripts": {
     "anvil:start": "anvil --fork-url $ARBITRUM_RPC_URL --fork-block-number 392496384 --host 127.0.0.1 --port 8545",
-    "verify": "npx hardhat run scripts/verifySetup.ts --network anvil",
-    "test:open": "npx hardhat run scripts/testOpenPosition.ts --network anvil",
-    "test:close": "npx hardhat run scripts/testClosePosition.ts --network anvil",
-    "test:all": "npm run test:open && npm run test:close",
+    "test": "npx hardhat run scripts/testOpenPosition.ts --network anvil",
     "compile": "npx hardhat compile"
   },
   "keywords": [

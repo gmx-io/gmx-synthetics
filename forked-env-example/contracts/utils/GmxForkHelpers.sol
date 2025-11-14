@@ -20,7 +20,6 @@ abstract contract GmxForkHelpers is Test {
     IExchangeRouter internal exchangeRouter;
     IOrderHandler internal orderHandler;
     IOracle internal oracle;
-    IReader internal reader;
     IDataStore internal dataStore;
     IRoleStore internal roleStore;
     IOracleStore internal oracleStore;
@@ -255,21 +254,6 @@ abstract contract GmxForkHelpers is Test {
     // ============================================================================
     // Position Queries
     // ============================================================================
-
-    /// Get position for an account
-    /// @param account Position owner
-    /// @param market Market address
-    /// @param collateralToken Collateral token
-    /// @param isLong Long or short position
-    function getPosition(
-        address account,
-        address market,
-        address collateralToken,
-        bool isLong
-    ) internal view returns (Position.Props memory) {
-        bytes32 positionKey = getPositionKey(account, market, collateralToken, isLong);
-        return reader.getPosition(address(dataStore), positionKey);
-    }
 
     /// Get total position count from global position list
     /// @return count Number of positions in the global list

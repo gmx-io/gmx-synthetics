@@ -90,22 +90,13 @@ source .env
 
 **Terminal 1** - Start Anvil fork:
 ```bash
-npm run anvil:start
-
-# Or run directly:
-# anvil --fork-url $ARBITRUM_RPC_URL --fork-block-number 392496384 --host 127.0.0.1 --port 8545
+anvil --fork-url $ARBITRUM_RPC_URL --fork-block-number 392496384 --host 127.0.0.1 --port 8545
 ```
 
-**Terminal 2** - Run TypeScript tests:
+**Terminal 2** - Run TypeScript test:
 ```bash
-# Test opening a long position
-npm run test:open
-
-# Test closing a position
-npm run test:close
-
-# Run all tests sequentially
-npm run test:all
+# Test opening and closing a long position
+npm test
 ```
 
 ### Stop/Restart Anvil
@@ -116,15 +107,9 @@ To stop Anvil:
 pkill -9 anvil
 ```
 
-**Note**: Anvil maintains state between test runs. Restart it for a fresh fork state:
-```bash
-pkill -9 anvil && npm run anvil:start
-```
-
 ### Key Files (Anvil)
 
-- `scripts/testOpenPosition.ts` - Open long position test
-- `scripts/testClosePosition.ts` - Close position test
+- `scripts/testOpenPosition.ts` - Complete test (opens and closes long position)
 - `scripts/helpers.ts` - Reusable utilities (uses Anvil RPC methods)
 - `hardhat.config.ts` - Hardhat/Anvil configuration
 
@@ -166,8 +151,7 @@ Both methods achieve the same result: bypass signature verification by replacing
 
 **Anvil-specific**:
 - `scripts/helpers.ts` - TypeScript utilities using Anvil RPC methods
-- `scripts/testOpenPosition.ts` - Open position test script
-- `scripts/testClosePosition.ts` - Close position test script
+- `scripts/testOpenPosition.ts` - Complete test (opens and closes position)
 - `hardhat.config.ts` - Hardhat configuration for Anvil network
 
 ---
@@ -202,89 +186,6 @@ Both methods achieve the same result: bypass signature verification by replacing
 
 ---
 
-## Troubleshooting
-
-### "Connection refused" or "Cannot connect to Anvil"
-
-**Issue**: Anvil is not running or not accessible.
-
-**Solution**:
-- Check that Anvil terminal is still running
-- Verify it's listening on `127.0.0.1:8545`
-- Restart Anvil: `pkill -9 anvil && npm run anvil:start`
-
-### "Insufficient funds" error
-
-**Issue**: Test accounts don't have enough ETH.
-
-**Solution**: The scripts automatically fund accounts using `anvil_setBalance`. If this fails, check that Anvil RPC is accessible.
-
-### "Invalid RPC URL" or fork errors
-
-**Issue**: ARBITRUM_RPC_URL is not set or invalid.
-
-**Solution**:
-- Check `.env` file has `ARBITRUM_RPC_URL` set
-- Test the URL: `curl -X POST $ARBITRUM_RPC_URL -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}'`
-- Try a different RPC provider (Alchemy, Infura, public endpoints in `.env.example`)
-
-### "Order execution failed"
-
-**Issue**: Oracle mocking might have failed.
-
-**Solution**:
-- Check Anvil logs for errors
-- Verify `MockOracleProvider` deployed successfully (check script output)
-- Ensure `anvil_setCode` succeeded
-
-### TypeScript compilation errors
-
-**Issue**: TypeScript or typechain types not generated.
-
-**Solution**:
-```bash
-npm install
-npx hardhat compile
-```
-
----
-
-## Advanced Usage
-
-### Custom Fork Block
-
-To fork at a different block, modify `package.json`:
-
-```json
-{
-  "scripts": {
-    "anvil:start": "anvil --fork-url $ARBITRUM_RPC_URL --fork-block-number YOUR_BLOCK_NUMBER"
-  }
-}
-```
-
-Or use `hardhat.config.ts` for Hardhat network forking.
-
-### Different Test Parameters
-
-Edit test scripts (`scripts/testOpenPosition.ts`, etc.) to modify:
-
-- **Collateral amount**: Change `ETH_COLLATERAL` constant
-- **Leverage**: Change `LEVERAGE` constant
-- **Prices**: Adjust `ETH_PRICE_USD`, `USDC_PRICE_USD` in `setupMockOracleProvider()`
-- **Markets**: Use different market addresses from `GMX_ADDRESSES`
-
-### Running Against Different Networks
-
-To test on Avalanche or other GMX-supported networks:
-
-1. Update `GMX_ADDRESSES` constants in `scripts/helpers.ts`
-2. Change `ARBITRUM_RPC_URL` to your network's RPC
-3. Update whale addresses for token funding
-4. Adjust fork block number to a recent block on that network
-
----
-
 ## Technical Details
 
 ### Key Versions
@@ -298,16 +199,9 @@ To test on Avalanche or other GMX-supported networks:
 - **Network**: Arbitrum One (Chain ID: 42161)
 - **Oracle provider**: `0xE1d5a068c5b75E0c7Ea1A9Fe8EA056f9356C6fFD` (Chainlink Data Streams, verified from mainnet)
 
-### Package Size
-- **node_modules**: ~50MB after `npm install`
-- **Build artifacts**: ~15MB after compilation
-
 ---
 
 ## Resources
 
 - [GMX Synthetics Documentation](https://docs.gmx.io)
 - [GMX Arbitrum Deployments](https://github.com/gmx-io/gmx-synthetics/blob/main/docs/arbitrum-deployments.md)
-- [Foundry Book - Anvil](https://book.getfoundry.sh/anvil/)
-- [Hardhat Documentation](https://hardhat.org/docs)
-- [Ethers.js v5 Docs](https://docs.ethers.org/v5/)

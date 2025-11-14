@@ -144,3 +144,23 @@ interface IRoleStore {
     function getRoleMembers(bytes32 roleKey, uint256 start, uint256 end) external view returns (address[] memory);
     function getRoleMemberCount(bytes32 roleKey) external view returns (uint256);
 }
+
+// ============================================================================
+// Foundry Compatibility - Keys library for Solidity tests
+// ============================================================================
+
+library Keys {
+    bytes32 internal constant ORDER_LIST = keccak256(abi.encode("ORDER_LIST"));
+    bytes32 internal constant POSITION_LIST = keccak256(abi.encode("POSITION_LIST"));
+    bytes32 internal constant ORDER_KEEPER = keccak256(abi.encode("ORDER_KEEPER"));
+    bytes32 internal constant ACCOUNT_ORDER_LIST = keccak256(abi.encode("ACCOUNT_ORDER_LIST"));
+    bytes32 internal constant ACCOUNT_POSITION_LIST = keccak256(abi.encode("ACCOUNT_POSITION_LIST"));
+
+    function accountOrderListKey(address account) internal pure returns (bytes32) {
+        return keccak256(abi.encode(ACCOUNT_ORDER_LIST, account));
+    }
+
+    function accountPositionListKey(address account) internal pure returns (bytes32) {
+        return keccak256(abi.encode(ACCOUNT_POSITION_LIST, account));
+    }
+}

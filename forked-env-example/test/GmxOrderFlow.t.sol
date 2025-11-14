@@ -61,7 +61,6 @@ contract GmxOrderFlowTest is Test, GmxForkHelpers {
         exchangeRouter = IExchangeRouter(GmxArbitrumAddresses.EXCHANGE_ROUTER);
         orderHandler = IOrderHandler(GmxArbitrumAddresses.ORDER_HANDLER);
         oracle = IOracle(GmxArbitrumAddresses.ORACLE);
-        reader = IReader(GmxArbitrumAddresses.READER);
         dataStore = IDataStore(GmxArbitrumAddresses.DATA_STORE);
         roleStore = IRoleStore(GmxArbitrumAddresses.ROLE_STORE);
         oracleStore = IOracleStore(GmxArbitrumAddresses.ORACLE_STORE);
