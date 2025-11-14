@@ -6,18 +6,21 @@ import {
   getActiveKeeper,
   setupMockOracleProvider,
   createIncreaseOrderParams,
+  createDecreaseOrderParams,
   createOracleParams,
   getOrderCount,
   getAccountOrderCount,
   getAccountPositionCount,
   getPositionCount,
   getPositionKey,
+  getPositionSizeInUsd,
+  getAccountPositionKeys,
   logBalances,
   GMX_ADDRESSES,
 } from "./helpers";
 
 /**
- * Test script demonstrating how to open a long ETH position on GMX V2
+ * Test script demonstrating how to open and close a long ETH position on GMX V2
  *
  * This script:
  * 1. Forks Arbitrum at block 392496384 (using Anvil)
@@ -25,7 +28,10 @@ import {
  * 3. Mocks the Chainlink oracle provider to return preset prices
  * 4. Creates a MarketIncrease order (2.5x leverage long ETH)
  * 5. Executes the order as a keeper
- * 6. Verifies the position was created successfully
+ * 6. Verifies the position was created/increased
+ * 7. Creates a MarketDecrease order to close the position
+ * 8. Executes the close order as a keeper
+ * 9. Verifies the position was closed and collateral returned
  *
  * Prerequisites:
  * - Anvil must be running: `npm run anvil:start`
@@ -33,9 +39,9 @@ import {
  */
 
 async function main() {
-  console.log("\n╔════════════════════════════════════════════════════════════╗");
-  console.log("║          GMX V2 - Open Long Position Test (Anvil)         ║");
-  console.log("╚════════════════════════════════════════════════════════════╝\n");
+  console.log("\n╔══════════════════════════════════════════════╗");
+  console.log("║          Open Long Position (Anvil)          ║");
+  console.log("╚══════════════════════════════════════════════╝\n");
 
   // ============================================================================
   // Setup
@@ -46,22 +52,22 @@ async function main() {
   const blockNumber = await ethers.provider.getBlockNumber();
   console.log(`Chain ID: ${chainId}`);
   console.log(`Block number: ${blockNumber}`);
-  console.log("==================\n");
 
-  // Load GMX contracts
   const gmx = await loadGMXContracts();
-  console.log("GMX contracts loaded ✓\n");
-
-  // Get signers - Anvil provides default accounts
   const [user] = await ethers.getSigners();
   console.log(`User address: ${user.address}`);
-
-  // Fund user with ETH (100 ETH for testing)
-  const INITIAL_ETH_BALANCE = ethers.utils.parseEther("100");
-  await dealETH(user.address, INITIAL_ETH_BALANCE);
-
-  // Get active keeper
   const keeperAddress = await getActiveKeeper(gmx.roleStore);
+
+  // Top-up user & keeper balances if low (preserve keeper's fork balance for realistic execution)
+  const initialUserBalance = await ethers.provider.getBalance(user.address);
+  if (initialUserBalance.lt(ethers.utils.parseEther("1"))) {
+    await dealETH(user.address, initialUserBalance.add(ethers.utils.parseEther("100")));
+  }
+
+  const initialKeeperBalance = await ethers.provider.getBalance(keeperAddress);
+  if (initialKeeperBalance.lt(ethers.utils.parseEther("1"))) {
+    await dealETH(keeperAddress, initialKeeperBalance.add(ethers.utils.parseEther("100")));
+  }
 
   // ============================================================================
   // Test Parameters - Match Mainnet Order
@@ -74,24 +80,12 @@ async function main() {
   const ETH_COLLATERAL = ethers.utils.parseEther("0.001"); // 0.001 ETH collateral
   const LEVERAGE = 2.5;
 
-  console.log("\n=== Position Parameters ===");
-  console.log(
-    `Collateral: ${ethers.utils.formatEther(ETH_COLLATERAL)} ETH (~$${
-      Number(ethers.utils.formatEther(ETH_COLLATERAL)) * ETH_PRICE_USD
-    } at $${ETH_PRICE_USD}/ETH)`
-  );
+  console.log("\n=== Order Parameters ===");
+  const ethCollateral = Number(ethers.utils.formatEther(ETH_COLLATERAL));
+  console.log(`Collateral: ${ethCollateral} ETH (~$${ethCollateral * ETH_PRICE_USD} at $${ETH_PRICE_USD}/ETH)`);
   console.log(`Leverage: ${LEVERAGE}x`);
-  console.log(`Position Size: ~$${Number(ethers.utils.formatEther(ETH_COLLATERAL)) * ETH_PRICE_USD * LEVERAGE}`);
-  console.log(`Direction: LONG`);
-  console.log("===========================\n");
-
-  // Record initial balances (preserve keeper's fork balance for realistic execution)
-  const initialUserBalance = await ethers.provider.getBalance(user.address);
-  const initialKeeperBalance = await ethers.provider.getBalance(keeperAddress);
-  await logBalances("Initial Balances", [
-    { name: "User", address: user.address },
-    { name: "Keeper", address: keeperAddress },
-  ]);
+  console.log(`Size: ~$${ethCollateral * ETH_PRICE_USD * LEVERAGE}`);
+  console.log(`Direction: LONG\n`);
 
   // ============================================================================
   // Step 1: Record Initial State
@@ -102,12 +96,15 @@ async function main() {
   const initialUserPositionCount = await getAccountPositionCount(gmx.dataStore, user.address);
   const initialPositionCount = await getPositionCount(gmx.dataStore);
 
+  // Calculate position key for this specific position
+  const positionKey = getPositionKey(user.address, GMX_ADDRESSES.ETH_USD_MARKET, GMX_ADDRESSES.WETH, true);
+
   console.log("=== Initial State ===");
   console.log(`Global order count: ${initialOrderCount}`);
   console.log(`User order count: ${initialUserOrderCount}`);
   console.log(`User position count: ${initialUserPositionCount}`);
   console.log(`Global position count: ${initialPositionCount}`);
-  console.log("====================\n");
+  console.log(`Position key: ${positionKey}`);
 
   // ============================================================================
   // Step 2: Setup Mock Oracle
@@ -119,7 +116,12 @@ async function main() {
   // Step 3: Create Order
   // ============================================================================
 
-  console.log("=== Creating Order ===");
+  await logBalances("Initial Balances", [
+    { name: "User", address: user.address },
+    { name: "Keeper", address: keeperAddress },
+  ]);
+
+  console.log("\n=== Creating Order ===");
 
   // Calculate position size in USD (30 decimals)
   // GMX uses 30 decimals for USD values
@@ -156,15 +158,12 @@ async function main() {
   });
   await createOrderTx.wait();
 
-  console.log(`Order created successfully! ✓`);
-  console.log(`Order key: ${orderKey}`);
-  console.log("======================\n");
+  console.log(`Create order key: ${orderKey}`);
 
   // Verify order was created
   const afterCreateOrderCount = await getOrderCount(gmx.dataStore);
   const afterCreateUserOrderCount = await getAccountOrderCount(gmx.dataStore, user.address);
 
-  console.log("=== After Order Creation ===");
   console.log(`Global order count: ${afterCreateOrderCount} (expected: ${initialOrderCount.add(1)})`);
   console.log(`User order count: ${afterCreateUserOrderCount} (expected: ${initialUserOrderCount.add(1)})`);
 
@@ -174,21 +173,14 @@ async function main() {
   if (!afterCreateUserOrderCount.eq(initialUserOrderCount.add(1))) {
     throw new Error("User order count did not increase by 1!");
   }
-  console.log("============================\n");
+
+  const positionSizeBefore = await getPositionSizeInUsd(gmx.dataStore, positionKey);
 
   // ============================================================================
   // Step 4: Execute Order (as Keeper)
   // ============================================================================
 
-  console.log("=== Executing Order (as Keeper) ===");
-
-  // Preserve keeper's mainnet balance for realistic execution economics
-  // (dealETH sets balance, not adds to it, so we restore the fork state balance)
-  await dealETH(keeperAddress, initialKeeperBalance);
-  console.log(`Keeper balance preserved at ${ethers.utils.formatEther(initialKeeperBalance)} ETH (mainnet fork state)`);
-
-  // Setup mock oracle provider again right before execution (like Foundry test does)
-  await setupMockOracleProvider(ETH_PRICE_USD, USDC_PRICE_USD);
+  console.log("\n=== Executing Order (as Keeper) ===");
 
   // Impersonate keeper using Anvil RPC
   // We need to use a direct JsonRpcProvider to bypass Hardhat's account checks
@@ -211,41 +203,35 @@ async function main() {
   // Debug: Log transaction details
   console.log(`Transaction hash: ${executeOrderReceipt.transactionHash}`);
   console.log(`Gas used: ${executeOrderReceipt.gasUsed.toString()}`);
-  console.log(`Status: ${executeOrderReceipt.status}`);
   console.log(`Number of logs: ${executeOrderReceipt.logs.length}`);
 
-  // Check for key events (GMX uses EventLog1 wrapper, so check for specific event name hashes)
-  const positionIncreaseHash = "0xf94196ccb31f81a3e67df18f2a62cbfb50009c80a7d3c728a3f542e3abc5cb63"; // keccak256("PositionIncrease")
-  const positionFeesHash = "0xe096982abd597114bdaa4a60612f87fabfcc7206aa12d61c50e7ba1e6c291100"; // keccak256("PositionFeesCollected")
-
+  // Check for key events
+  const positionIncreaseHash = ethers.utils.id("PositionIncrease");
   const hasPositionIncrease = executeOrderReceipt.logs.some(
     (log) => log.topics.length > 1 && log.topics[1] === positionIncreaseHash
   );
-  const hasPositionFees = executeOrderReceipt.logs.some(
-    (log) => log.topics.length > 1 && log.topics[1] === positionFeesHash
-  );
 
-  console.log(`\nEvent verification:`);
-  console.log(`PositionIncrease event: ${hasPositionIncrease ? "✓" : "✗"}`);
-  console.log(`PositionFeesCollected event: ${hasPositionFees ? "✓" : "✗"}`);
-
-  console.log("Order executed successfully! ✓");
+  console.log(`PositionIncrease event: ${hasPositionIncrease ? "YES" : "NO"}`);
+  console.log("Order executed successfully!");
 
   // Stop impersonating keeper
   await anvilProvider.send("anvil_stopImpersonatingAccount", [keeperAddress]);
-  console.log("===================================\n");
 
   // ============================================================================
-  // Step 5: Verify Position Key
+  // Step 5: Verify Position Was Created/Increased
   // ============================================================================
 
   console.log("\n=== Position Verification ===");
-
-  // Calculate position key for reference
-  const positionKey = getPositionKey(user.address, GMX_ADDRESSES.ETH_USD_MARKET, GMX_ADDRESSES.WETH, true);
   console.log(`Position key: ${positionKey}`);
-  console.log(`Position successfully created! ✓`);
-  console.log("============================");
+
+  const positionSizeAfter = await getPositionSizeInUsd(gmx.dataStore, positionKey);
+  const positionSizeIncrease = positionSizeAfter.sub(positionSizeBefore);
+  if (positionSizeAfter.gt(positionSizeBefore)) {
+    console.log(`Position size after order execution: ${ethers.utils.formatUnits(positionSizeAfter, 30)} USD`);
+    console.log(`Position size increase: ${ethers.utils.formatUnits(positionSizeIncrease, 30)} USD`);
+  } else {
+    throw new Error("Position size did not increase after order execution!");
+  }
 
   // ============================================================================
   // Step 6: Verify Final State
@@ -256,51 +242,184 @@ async function main() {
   const finalUserPositionCount = await getAccountPositionCount(gmx.dataStore, user.address);
   const finalPositionCount = await getPositionCount(gmx.dataStore);
 
+  // Determine if position was created or increased based on position count changes
+  // If position count didn't change, the position already existed and was increased
+  const positionCountIncreased = finalUserPositionCount.gt(initialUserPositionCount);
+
   console.log("\n=== Final State ===");
   console.log(`Global order count: ${finalOrderCount} (expected: ${initialOrderCount})`);
   console.log(`User order count: ${finalUserOrderCount} (expected: ${initialUserOrderCount})`);
-  console.log(`User position count: ${finalUserPositionCount} (expected: ${initialUserPositionCount.add(1)})`);
-  console.log(`Global position count: ${finalPositionCount} (expected: ${initialPositionCount.add(1)})`);
-  console.log("===================\n");
+  console.log(`User position count: ${finalUserPositionCount} (initial: ${initialUserPositionCount})`);
+  console.log(`Global position count: ${finalPositionCount} (initial: ${initialPositionCount})`);
+  console.log(`Position was: ${positionCountIncreased ? "CREATED (new)" : "INCREASED (existing)"}`);
+
+  // Check account-specific position list after execution
+  const accountPositionKeys = await getAccountPositionKeys(gmx.dataStore, user.address);
+  console.log(`All user's position keys (${accountPositionKeys.length} total):`);
+  accountPositionKeys.forEach((key: string, index: number) => {
+    const isOurPosition = key.toLowerCase() === positionKey.toLowerCase();
+    console.log(`  [${index}]: ${key}${isOurPosition ? " <-- CURRENT POSITION" : ""}`);
+  });
 
   // Verify state changes
   if (!finalOrderCount.eq(initialOrderCount)) {
-    throw new Error("Order count did not return to initial (order not consumed)!");
+    throw new Error("Global order count did not return to initial!");
   }
   if (!finalUserOrderCount.eq(initialUserOrderCount)) {
     throw new Error("User order count did not return to initial!");
   }
-  if (!finalUserPositionCount.eq(initialUserPositionCount.add(1))) {
-    throw new Error("User position count did not increase by 1!");
+
+  // Positions count should either stay same (increase) or go up by 1 (create)
+  const positionCountDiff = finalUserPositionCount.sub(initialUserPositionCount);
+  if (!positionCountDiff.eq(0) && !positionCountDiff.eq(1)) {
+    throw new Error(`Unexpected position count change: ${positionCountDiff.toString()}`);
   }
-  if (!finalPositionCount.eq(initialPositionCount.add(1))) {
-    throw new Error("Global position count did not increase by 1!");
+
+  await logBalances("Balances After Increase Order", [
+    { name: "User", address: user.address },
+    { name: "Keeper", address: keeperAddress },
+  ]);
+
+  // ============================================================================
+  // CLOSE POSITION
+  // ============================================================================
+
+  console.log("\n\n╔══════════════════════════════════════════════╗");
+  console.log("║         Close Long Position (Anvil)          ║");
+  console.log("╚══════════════════════════════════════════════╝\n");
+
+  // ============================================================================
+  // Step 7: Close Position
+  // ============================================================================
+
+  console.log("=== Closing Position ===");
+
+  // Record WETH balance before closing
+  const weth = await ethers.getContractAt("IERC20", GMX_ADDRESSES.WETH);
+  const wethBalanceBefore = await weth.balanceOf(user.address);
+
+  // Create decrease order to close entire position
+  const closeOrderParams = createDecreaseOrderParams({
+    market: GMX_ADDRESSES.ETH_USD_MARKET,
+    collateralToken: GMX_ADDRESSES.WETH,
+    sizeDeltaUsd: positionSizeUsd, // close the FULL position to receive collateral back
+    isLong: true,
+    receiver: user.address,
+  });
+
+  // Send execution fee
+  const executionFee = closeOrderParams.numbers.executionFee;
+  await gmx.exchangeRouter.connect(user).sendWnt(GMX_ADDRESSES.ORDER_VAULT, executionFee, {
+    value: executionFee,
+  });
+
+  // Get close order key from callStatic
+  const closeOrderKey = await gmx.exchangeRouter.connect(user).callStatic.createOrder(closeOrderParams, {
+    value: 0,
+  });
+
+  // Create decrease order
+  const createCloseOrderTx = await gmx.exchangeRouter.connect(user).createOrder(closeOrderParams, {
+    value: 0,
+  });
+  await createCloseOrderTx.wait();
+
+  console.log(`Close order key: ${closeOrderKey}`);
+
+  // ============================================================================
+  // Step 8: Execute Close Order (as Keeper)
+  // ============================================================================
+
+  await setupMockOracleProvider(ETH_PRICE_USD, USDC_PRICE_USD);
+
+  console.log("\n=== Executing Close Order (as Keeper) ===");
+
+  await anvilProvider.send("anvil_impersonateAccount", [keeperAddress]);
+  const keeperSignerForClose = anvilProvider.getUncheckedSigner(keeperAddress);
+  const keeperOrderHandlerForClose = gmx.orderHandler.connect(keeperSignerForClose);
+
+  const executeCloseTx = await keeperOrderHandlerForClose.executeOrder(closeOrderKey, oracleParams);
+  const executeCloseReceipt = await executeCloseTx.wait();
+
+  console.log(`Transaction hash: ${executeCloseReceipt.transactionHash}`);
+  console.log(`Gas used: ${executeCloseReceipt.gasUsed.toString()}`);
+
+  // Check for key events
+  const positionDecreaseHash = ethers.utils.id("PositionDecrease");
+  const orderExecutedHash = ethers.utils.id("OrderExecuted");
+
+  const eventsFound = {
+    PositionDecrease: executeCloseReceipt.logs.some(
+      (log) => log.topics.length > 1 && log.topics[1] === positionDecreaseHash
+    ),
+    OrderExecuted: executeCloseReceipt.logs.some((log) => log.topics.length > 1 && log.topics[1] === orderExecutedHash),
+  };
+
+  console.log("\n=== Order Execution Events ===");
+  console.log(`PositionDecrease: ${eventsFound.PositionDecrease ? "YES" : "NO"}`);
+  console.log(`OrderExecuted: ${eventsFound.OrderExecuted ? "YES" : "NO"}`);
+
+  await anvilProvider.send("anvil_stopImpersonatingAccount", [keeperAddress]);
+
+  // ============================================================================
+  // Step 9: Verify Position Closed
+  // ============================================================================
+
+  console.log("\n=== Close Verification ===");
+
+  const finalPositionSize = await getPositionSizeInUsd(gmx.dataStore, positionKey);
+  const positionSizeDecrease = positionSizeAfter.sub(finalPositionSize);
+
+  if (finalPositionSize.eq(0)) {
+    console.log(`Position fully closed!`);
+    console.log(`Position size decrease: ${ethers.utils.formatUnits(positionSizeDecrease, 30)} USD`);
+  } else if (finalPositionSize.lt(positionSizeAfter)) {
+    console.log(`Position size after close: ${ethers.utils.formatUnits(finalPositionSize, 30)} USD`);
+    console.log(`Position size decrease: ${ethers.utils.formatUnits(positionSizeDecrease, 30)} USD`);
+  } else {
+    throw new Error("Position size did not decrease after close order execution!");
   }
 
-  // Log final balances with differences
-  const finalUserBalance = await ethers.provider.getBalance(user.address);
-  const finalKeeperBalance = await ethers.provider.getBalance(keeperAddress);
+  await logBalances("Balances After Decrease Order", [
+    { name: "User", address: user.address },
+    { name: "Keeper", address: keeperAddress },
+  ]);
 
-  const userDiff = finalUserBalance.sub(initialUserBalance);
-  const keeperDiff = finalKeeperBalance.sub(initialKeeperBalance);
+  // Check WETH balance - should have received collateral back
+  const wethBalanceAfter = await weth.balanceOf(user.address);
+  const wethReceived = wethBalanceAfter.sub(wethBalanceBefore);
 
-  console.log("\n=== Final Balances ===");
+  console.log(`\n=== Collateral Returned ===`);
+  console.log(`WETH received: ${ethers.utils.formatEther(wethReceived)} WETH`);
+
+  if (wethReceived.eq(0)) {
+    if (finalPositionSize.eq(0)) {
+      throw new Error("No collateral received after close (WETH balance did not increase)!");
+    } else {
+      console.log("⚠️ Position partially closed --> no collateral received yet (position still open)!");
+    }
+  } else {
+    console.log("Position fully closed!");
+  }
+
+  // ============================================================================
+  // Final Summary
+  // ============================================================================
+
+  await logBalances("Final Balances", [
+    { name: "User", address: user.address },
+    { name: "Keeper", address: keeperAddress },
+  ]);
   console.log(
-    `User: ${ethers.utils.formatEther(finalUserBalance)} ETH (${
-      userDiff.isNegative() ? "" : "+"
-    }${ethers.utils.formatEther(userDiff)} ETH)`
+    "User diff: ",
+    ethers.utils.formatEther((await ethers.provider.getBalance(user.address)).sub(initialUserBalance)),
+    "ETH"
   );
   console.log(
-    `Keeper: ${ethers.utils.formatEther(finalKeeperBalance)} ETH (${
-      keeperDiff.isNegative() ? "" : "+"
-    }${ethers.utils.formatEther(keeperDiff)} ETH)`
+    "Keeper diff: ",
+    ethers.utils.formatEther((await ethers.provider.getBalance(keeperAddress)).sub(initialKeeperBalance)),
+    "ETH"
   );
-  console.log("======================\n");
-
-  console.log("╔════════════════════════════════════════════════════════════╗");
-  console.log("║                    TEST PASSED ✓                           ║");
-  console.log("║          Long position opened successfully!                ║");
-  console.log("╚════════════════════════════════════════════════════════════╝\n");
 }
 
 // Execute the script
