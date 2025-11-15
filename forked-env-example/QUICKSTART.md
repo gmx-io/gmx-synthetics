@@ -83,14 +83,15 @@ npm install
 # Set Arbitrum RPC URL
 cp .env.example .env
 # Edit .env and set your ARBITRUM_RPC_URL
-source .env
+# Note: npm scripts automatically source .env, so you don't need to run 'source .env'
 ```
 
 ### Run Tests
 
 **Terminal 1** - Start Anvil fork:
 ```bash
-anvil --fork-url $ARBITRUM_RPC_URL --fork-block-number 392496384 --host 127.0.0.1 --port 8545
+# Using npm script (automatically sources .env)
+npm run anvil:start
 ```
 
 **Terminal 2** - Run TypeScript test:
