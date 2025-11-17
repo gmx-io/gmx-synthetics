@@ -14,7 +14,8 @@ const baseConstructorContracts = [
   "MultichainVault",
 ];
 
-const orderConstructorContracts = ["ReferralStorage", "MockTimelockV1"];
+const requireMockTimelock = !["arbitrum", "avalanche", "botanix"].includes(hre.network.name);
+const orderConstructorContracts = ["ReferralStorage"];
 
 const func = createDeployFunction({
   contractName: "MultichainOrderRouter",
@@ -33,7 +34,7 @@ const func = createDeployFunction({
       multichainVault: dependencyContracts.MultichainVault.address,
     };
 
-    return [baseParams, dependencyContracts.ReferralStorage.address, dependencyContracts.MockTimelockV1.address];
+    return [baseParams, dependencyContracts.ReferralStorage.address];
   },
   libraryNames: ["GasUtils", "MultichainUtils", "OrderStoreUtils", "RelayUtils"],
 
@@ -41,21 +42,23 @@ const func = createDeployFunction({
     await grantRoleIfNotGranted(deployedContract, "CONTROLLER");
     await grantRoleIfNotGranted(deployedContract, "ROUTER_PLUGIN");
 
-    const { get } = deployments;
+    if (requireMockTimelock) {
+      const { get } = deployments;
 
-    const mockTimelockV1 = await get("MockTimelockV1");
-    const timelockV1 = await ethers.getContractAt("MockTimelockV1", mockTimelockV1.address);
+      const mockTimelockV1 = await get("MockTimelockV1");
+      const timelockV1 = await ethers.getContractAt("MockTimelockV1", mockTimelockV1.address);
 
-    console.log(`Set MultichainOrderRouter as keeper on MockTimelockV1: ${timelockV1.address}`);
-    // Grant keeper role to MultichainOrderRouter to register code using govSetCodeOwner
-    await timelockV1.setKeeper(deployedContract.address, true);
-    console.log(`MultichainOrderRouter is now keeper on MockTimelockV1`);
+      console.log(`Set MultichainOrderRouter as keeper on MockTimelockV1: ${timelockV1.address}`);
+      // Grant keeper role to MultichainOrderRouter to register code using govSetCodeOwner
+      await timelockV1.setKeeper(deployedContract.address, true);
+      console.log(`MultichainOrderRouter is now keeper on MockTimelockV1`);
 
-    // Set MultichainOrderRouter as handler on ReferralStorage for setTraderReferralCode
-    const referralStorage = await get("ReferralStorage");
-    console.log(`Setting MultichainOrderRouter as handler on ReferralStorage: ${referralStorage.address}`);
-    await timelockV1.setHandler(referralStorage.address, deployedContract.address, true);
-    console.log(`MultichainOrderRouter is now handler on ReferralStorage`);
+      // Set MultichainOrderRouter as handler on ReferralStorage for setTraderReferralCode
+      const referralStorage = await get("ReferralStorage");
+      console.log(`Setting MultichainOrderRouter as handler on ReferralStorage: ${referralStorage.address}`);
+      await timelockV1.setHandler(referralStorage.address, deployedContract.address, true);
+      console.log(`MultichainOrderRouter is now handler on ReferralStorage`);
+    }
   },
 });
 
