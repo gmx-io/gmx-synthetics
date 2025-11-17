@@ -3,7 +3,7 @@
 **Network Type:** Testnet  
 **Chain ID:** 421614  
 **Total Contracts:** 135  
-**Last Updated:** Nov 13, 2025, 09:42 PM UTC
+**Last Updated:** Nov 17, 2025, 08:47 AM UTC
 
 ## Deployed Contracts
 
@@ -77,7 +77,7 @@
 | IncreaseOrderUtils | `0x2Ce4C21B46fECa23822F0d75414Cd711D015ba82` | [View on Explorer](https://sepolia.arbiscan.io/address/0x2Ce4C21B46fECa23822F0d75414Cd711D015ba82) |
 | IncreasePositionUtils | `0xFe25514FAA9136722EeBf9fb8fbb6036F3CE1D8e` | [View on Explorer](https://sepolia.arbiscan.io/address/0xFe25514FAA9136722EeBf9fb8fbb6036F3CE1D8e) |
 | JitOrderHandler | `0x1010fFe7cfeb449fC715BA3982F4F7E75B2e5F4B` | [View on Explorer](https://sepolia.arbiscan.io/address/0x1010fFe7cfeb449fC715BA3982F4F7E75B2e5F4B) |
-| LayerZeroProvider | `0x03693DeBC902c7220472339A4515101E53359D00` | [View on Explorer](https://sepolia.arbiscan.io/address/0x03693DeBC902c7220472339A4515101E53359D00) |
+| LayerZeroProvider | `0x2E3d6B4c471C50983F21b54d3Ed8e3dAC7dAFF2e` | [View on Explorer](https://sepolia.arbiscan.io/address/0x2E3d6B4c471C50983F21b54d3Ed8e3dAC7dAFF2e) |
 | LiquidationHandler | `0x268FA5c1dafeefd5E7Bc31CF517c780cb36E7a84` | [View on Explorer](https://sepolia.arbiscan.io/address/0x268FA5c1dafeefd5E7Bc31CF517c780cb36E7a84) |
 | LiquidationUtils | `0xb9dDD88333D250a0918C37024579D54C4289286F` | [View on Explorer](https://sepolia.arbiscan.io/address/0xb9dDD88333D250a0918C37024579D54C4289286F) |
 | MarketEventUtils | `0xc7ADc10AC435Ea5b2213F58cA658705f3DD38ee3` | [View on Explorer](https://sepolia.arbiscan.io/address/0xc7ADc10AC435Ea5b2213F58cA658705f3DD38ee3) |
@@ -91,10 +91,10 @@
 | MultichainClaimsRouter | `0x0896f77B7dcE6923c58Ab1a1A91fFF617606E30b` | [View on Explorer](https://sepolia.arbiscan.io/address/0x0896f77B7dcE6923c58Ab1a1A91fFF617606E30b) |
 | MultichainGlvRouter | `0x10f3D7c30cabe91Cdd2785E5af37374842a1089C` | [View on Explorer](https://sepolia.arbiscan.io/address/0x10f3D7c30cabe91Cdd2785E5af37374842a1089C) |
 | MultichainGmRouter | `0x94dB1F9CAa86E86cD90F231411D31E5a3815bced` | [View on Explorer](https://sepolia.arbiscan.io/address/0x94dB1F9CAa86E86cD90F231411D31E5a3815bced) |
-| MultichainOrderRouter | `0x8928A23ECD8f3Db1D8dF8671a5c705d84211C678` | [View on Explorer](https://sepolia.arbiscan.io/address/0x8928A23ECD8f3Db1D8dF8671a5c705d84211C678) |
+| MultichainOrderRouter | `0xc9670CCD86d150C91f1f154813786f1Ec809Ae08` | [View on Explorer](https://sepolia.arbiscan.io/address/0xc9670CCD86d150C91f1f154813786f1Ec809Ae08) |
 | MultichainReader | `0xb9a51870Ce92378Fe8E71aA60A653Cc47c51D72F` | [View on Explorer](https://sepolia.arbiscan.io/address/0xb9a51870Ce92378Fe8E71aA60A653Cc47c51D72F) |
 | MultichainSubaccountRouter | `0x2E883D945AB36DC8491693c8870648a232b540a1` | [View on Explorer](https://sepolia.arbiscan.io/address/0x2E883D945AB36DC8491693c8870648a232b540a1) |
-| MultichainTransferRouter | `0xBDB2D11160396a705ff4FF695652C7efa9344C57` | [View on Explorer](https://sepolia.arbiscan.io/address/0xBDB2D11160396a705ff4FF695652C7efa9344C57) |
+| MultichainTransferRouter | `0xEaba39494d17e722f2Ef49929656b82d561b4460` | [View on Explorer](https://sepolia.arbiscan.io/address/0xEaba39494d17e722f2Ef49929656b82d561b4460) |
 | MultichainUtils | `0x1F753eCEb6A291f717DaDf31BE177A958D5EbBd6` | [View on Explorer](https://sepolia.arbiscan.io/address/0x1F753eCEb6A291f717DaDf31BE177A958D5EbBd6) |
 | MultichainVault | `0xCd46EF5ed7d08B345c47b5a193A719861Aa2CD91` | [View on Explorer](https://sepolia.arbiscan.io/address/0xCd46EF5ed7d08B345c47b5a193A719861Aa2CD91) |
 | Oracle | `0x0dC4e24C63C24fE898Dda574C962Ba7Fbb146964` | [View on Explorer](https://sepolia.arbiscan.io/address/0x0dC4e24C63C24fE898Dda574C962Ba7Fbb146964) |
