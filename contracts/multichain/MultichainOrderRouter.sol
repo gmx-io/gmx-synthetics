@@ -5,20 +5,18 @@ pragma solidity ^0.8.0;
 import "../error/Errors.sol";
 import "../referral/IReferralStorage.sol";
 import "../referral/ITimelock.sol";
+import "../referral/IGov.sol";
 import "./IMultichainOrderRouter.sol";
 import "./MultichainRouter.sol";
 
 contract MultichainOrderRouter is IMultichainOrderRouter, MultichainRouter {
     IReferralStorage public immutable referralStorage;
-    ITimelock public immutable timelock;
 
     constructor(
         BaseConstructorParams memory params,
-        IReferralStorage _referralStorage,
-        ITimelock _timelock
+        IReferralStorage _referralStorage
     ) MultichainRouter(params) BaseRouter(params.router, params.roleStore, params.dataStore, params.eventEmitter) {
         referralStorage = _referralStorage;
-        timelock = _timelock;
     }
 
     function batch(
@@ -111,6 +109,7 @@ contract MultichainOrderRouter is IMultichainOrderRouter, MultichainRouter {
             revert Errors.ReferralCodeAlreadyExists(referralCode);
         }
 
+        ITimelock timelock = ITimelock(IGov(address(referralStorage)).gov());
         // Register code on behalf of the user via timelock keeper access (calls referralStorage.govSetCodeOwner)
         timelock.govSetCodeOwner(address(referralStorage), referralCode, account);
     }
