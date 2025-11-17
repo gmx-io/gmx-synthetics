@@ -32,6 +32,7 @@ const requiredRolesForContracts = {
     "SubaccountGelatoRelayRouter",
 
     "OrderHandler",
+    "JitOrderHandler",
     "IncreaseOrderExecutor",
     "DecreaseOrderExecutor",
     "SwapOrderExecutor",

@@ -14,20 +14,21 @@ const constructorContracts = [
   "GlvShiftHandler",
 ];
 const contractName = "JitOrderHandler";
+const requireMockTimelock = !["arbitrum", "avalanche", "botanix"].includes(hre.network.name);
 
 const func = createDeployFunction({
   contractName: contractName,
-  dependencyNames: [...constructorContracts, "MockTimelockV1"],
+  dependencyNames: [...constructorContracts, ...(requireMockTimelock ? ["MockTimelockV1"] : [])],
   getDeployArgs: async ({ dependencyContracts }) => {
     return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
   },
   libraryNames: ["GasUtils", "MarketUtils", "OrderStoreUtils", "GlvUtils", "GlvShiftEventUtils"],
-  afterDeploy: async ({ deployedContract, getNamedAccounts, deployments, network }) => {
+  afterDeploy: async ({ deployedContract, getNamedAccounts, deployments }) => {
     const { deployer } = await getNamedAccounts();
     const { execute } = deployments;
 
-    const referralStorage = await deployments.get("ReferralStorage");
-    if (!["arbitrum", "avalanche", "botanix"].includes(network.name)) {
+    if (requireMockTimelock) {
+      const referralStorage = await deployments.get("ReferralStorage");
       await execute(
         "MockTimelockV1",
         { from: deployer, log: true },
