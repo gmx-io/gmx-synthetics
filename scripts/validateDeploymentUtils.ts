@@ -96,6 +96,8 @@ export async function validateSourceCode(provider: JsonRpcProvider, contractInfo
 
   if (isExternalContractAllowed) {
     contractInfo.isCodeValidated = true;
+    contractInfo.name = contractInfo.address; // no name for external contract. Can be unverified or EOA
+    contractInfo.signalledRoles = [];
     return;
   }
 
