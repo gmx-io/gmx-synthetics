@@ -240,7 +240,7 @@ async function main() {
 
   const tx = await exchangeRouter.multicall(multicallArgs, {
     value: executionFee,
-    gasLimit: 1_500_000,
+    gasLimit: 2_500_000,
   });
 
   console.log("transaction sent", tx.hash);
