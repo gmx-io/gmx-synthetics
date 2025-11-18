@@ -63,8 +63,8 @@ async function getTokenSymbol(address: string): Promise<string> {
     const token = await ethers.getContractAt(["function symbol() view returns (string)"], address);
     return await token.symbol();
   } catch (error) {
-    // If symbol() fails, return shortened address
-    return address.substring(0, 8);
+    // If symbol() fails, return hardcoded "synthetic". Could be improved with a reverse lookup to get the symbol.
+    return "synthetic";
   }
 }
 
@@ -123,47 +123,62 @@ async function getMarketPrices(
   dataStore: any,
   pricesByTokenAddress: any
 ): Promise<MarketPriceData[]> {
+  // Process markets in batches to avoid overwhelming Anvil
+  const BATCH_SIZE = 20; // Process 20 markets at a time
   const results: MarketPriceData[] = [];
 
-  for (const market of markets) {
-    const indexTokenSymbol = await getTokenSymbol(market.indexToken);
-    const longTokenSymbol = await getTokenSymbol(market.longToken);
-    const shortTokenSymbol = await getTokenSymbol(market.shortToken);
-    const marketLabel = `${
-      indexTokenSymbol === "SPOT" ? "spot" : indexTokenSymbol
-    } ${longTokenSymbol}-${shortTokenSymbol}`;
+  for (let i = 0; i < markets.length; i += BATCH_SIZE) {
+    const batch = markets.slice(i, i + BATCH_SIZE);
+    console.log(`Processed ${i} of ${markets.length}...`);
 
-    try {
-      const marketPrices = {
-        indexTokenPrice: getTokenPrice({ token: market.indexToken, pricesByTokenAddress }),
-        longTokenPrice: getTokenPrice({ token: market.longToken, pricesByTokenAddress }),
-        shortTokenPrice: getTokenPrice({ token: market.shortToken, pricesByTokenAddress }),
-      };
+    const batchResults = await Promise.all(
+      batch.map(async (market) => {
+        // Fetch token symbols in parallel for 3x speedup
+        const [indexTokenSymbol, longTokenSymbol, shortTokenSymbol] = await Promise.all([
+          getTokenSymbol(market.indexToken),
+          getTokenSymbol(market.longToken),
+          getTokenSymbol(market.shortToken),
+        ]);
 
-      const [price] = await reader.getMarketTokenPrice(
-        dataStore.address,
-        market,
-        marketPrices.indexTokenPrice,
-        marketPrices.longTokenPrice,
-        marketPrices.shortTokenPrice,
-        MAX_PNL_FACTOR_FOR_TRADERS,
-        true
-      );
+        const marketLabel = `${
+          indexTokenSymbol === "SPOT" ? "spot" : indexTokenSymbol
+        } ${longTokenSymbol}-${shortTokenSymbol}`;
 
-      results.push({
-        marketToken: market.marketToken,
-        marketLabel,
-        price,
-      });
-    } catch (error) {
-      console.error(`Error processing market ${marketLabel}:`, error.message);
-      results.push({
-        marketToken: market.marketToken,
-        marketLabel,
-        price: bigNumberify(0),
-        error: error.message.substring(0, 100),
-      });
-    }
+        try {
+          const marketPrices = {
+            indexTokenPrice: getTokenPrice({ token: market.indexToken, pricesByTokenAddress }),
+            longTokenPrice: getTokenPrice({ token: market.longToken, pricesByTokenAddress }),
+            shortTokenPrice: getTokenPrice({ token: market.shortToken, pricesByTokenAddress }),
+          };
+
+          const [price] = await reader.getMarketTokenPrice(
+            dataStore.address,
+            market,
+            marketPrices.indexTokenPrice,
+            marketPrices.longTokenPrice,
+            marketPrices.shortTokenPrice,
+            MAX_PNL_FACTOR_FOR_TRADERS,
+            true
+          );
+
+          return {
+            marketToken: market.marketToken,
+            marketLabel,
+            price,
+          };
+        } catch (error) {
+          console.error(`Error processing market ${marketLabel}:`, error.message);
+          return {
+            marketToken: market.marketToken,
+            marketLabel,
+            price: bigNumberify(0),
+            error: error.message.substring(0, 100),
+          };
+        }
+      })
+    );
+
+    results.push(...batchResults);
   }
 
   return results;
@@ -209,11 +224,33 @@ function compareMarketPrices(currentPrices: MarketPriceData[], simulatedPrices: 
   return results;
 }
 
+async function fetchMarketsWithRetry(reader: any, dataStore: any, maxRetries = 3): Promise<any[]> {
+  const MARKET_LIMIT = 150; // large limit to fetch all markets in one call
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`Fetching markets (attempt ${attempt}/${maxRetries})...`);
+      const markets = await reader.getMarkets(dataStore.address, 0, MARKET_LIMIT);
+      console.log(`Found ${markets.length} markets`);
+      return markets;
+    } catch (error) {
+      if (attempt === maxRetries) {
+        console.error(`Failed to fetch markets after ${maxRetries} attempts`);
+        throw error;
+      }
+      const delay = Math.pow(2, attempt) * 1000; // Exponential backoff: 2s, 4s, 8s
+      console.log(`Retrying in ${delay / 1000}s...`);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+  return [];
+}
+
 async function main() {
   const { dataStore, reader, roleStore } = await getContracts(hre.network.name);
   const pricesByTokenAddress = await fetchTickerPrices(hre.network.name);
-  const markets = await reader.getMarkets(dataStore.address, 0, 25); // large limit to get all markets
-  console.log(`Found ${markets.length} markets`);
+
+  const markets = await fetchMarketsWithRetry(reader, dataStore);
 
   // Step 1: Get current prices (with current settings)
   console.log("\nStep 1: Getting current GM prices...");
