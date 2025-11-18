@@ -35,51 +35,52 @@ export function getRoles({ syntheticKeepers, generalConfigKeepers, claimAdmins }
       "0xfFC63573B55B39b75b1e44e54C308e44505E0D28": true, // OracleStore
       "0x40d680E41FC4Bf973F0EA664981f6359195a6383": true, // Oracle
 
-      "0x6fd82De6A45eDa17c999B1DF19e1D45AF5390E0b": true, // Config
-      "0x9799E846Fa5b8bBBa428ad743eeB95D79566CD6e": true, // ConfigTimelockController
-      "0x8514fc704317057FA86961Ba9b9490956993A5ed": true, // TimelockConfig
-      "0x805a15bf16582eC8d76841062A47dFfEa7903131": true, // ExchangeRouter
-      "0xF6b804F6Cc847a22F2D022C9b0373190850bE34D": true, // SubaccountRouter
-      "0xAC3D81b7a9CEaC542c556734799c0f68Ae1CDA4d": true, // GlvRouter
-      "0xb34A6e9Dc8E721361a9C620EEF245535d6A5B234": true, // GelatoRelayRouter
-      "0xa11B501c2dd83Acd29F6727570f2502FAaa617F2": true, // SubaccountGelatoRelayRouter
-      "0x6E41023Dc3c5C41C90B509b0D829fBd5f2eE5E9D": true, // OrderHandler
-      "0x87DA97cdb839692154b67a5E5bffFcf828a12fA5": true, // IncreaseOrderExecutor
-      "0xaCF0802CA3C991463ED5769Aea0f98Be3939f87B": true, // DecreaseOrderExecutor
-      "0xf86aE903B5866bCf8723B9C3642758C87f2F3Ef2": true, // SwapOrderExecutor
-      "0xEd861a9Ce09b5452ab50953Db4B4301A833A3615": true, // DepositHandler
-      "0xD6C9bBB1B0384AD25594dE7521dbFF3B30E0Bd38": true, // WithdrawalHandler
-      "0xdfE1EA56e7200B04ee596737CAee714937824304": true, // AdlHandler
-      "0x0F9BB54Ec2cC65344Cde88CFB06C71F68599D2A4": true, // LiquidationHandler
-      "0xd5F2FD52eF8850019F6558403DF8fA6521a0B7BE": true, // ShiftHandler
-      "0xfAd0f8142eb6C9Bf15960565e3782466B2B51b0f": true, // GlvDepositHandler
-      "0xA51d1BF3e015533698b67F12F46b7A848625B5e4": true, // GlvWithdrawalHandler
-      "0x7ffF7ef2fc8Db5159B0046ad49d018A5aB40dB11": true, // GlvShiftHandler
-      "0x84b288b3348Ba6346FF1972B528eefb3e0F47C87": true, // SwapHandler
-      "0x9A23a6e51B886B642D156a248795a9A84dec89Cc": true, // ClaimHandler
-      "0xA2F2f7F0766cb06Fff3241Ff7D3469eFC961b907": true, // LayerZeroProvider
-      "0x7f397B555f71F711d5331241519825180dc78489": true, // MultichainClaimsRouter
-      "0x113d352eD6c40C856536c6826497f6971880e036": true, // MultichainGlvRouter
-      "0xc9c45D216Bc4C7c5A28ca926E1087Fa745d7a4fA": true, // MultichainGmRouter
-      "0x6Ee83F82757C5B10468855753F5374FFF826BDCB": true, // MultichainOrderRouter
-      "0x86e92E21a0773cF542FEcBc791c05E4bae35a92f": true, // MultichainSubaccountRouter
-      "0xA3e0c948AaB11ed932A9F89dd010ba79dABE1514": true, // MultichainTransferRouter
+      "0xAd7a7568F500F65AEA3D9417A210CBc5dcD7b273": true, // Config (CONTROLLER)
+      "0x3d6BA4a91Ffde7C519379F8dCA5FE58b7125c294": true, // ConfigTimelockController (CONTROLLER)
+      "0x72a30e76827Ce83cEf0b1BEd7e9aAF9F4a576990": true, // TimelockConfig (CONTROLLER)
+      "0xBCB5eA3a84886Ce45FBBf09eBF0e883071cB2Dc8": true, // ExchangeRouter (CONTROLLER)
+      "0xa1793126B6Dc2f7F254a6c0E2F8013D2180C0D10": true, // SubaccountRouter (CONTROLLER)
+      "0xC92741F0a0D20A95529873cBB3480b1f8c228d9F": true, // GlvRouter (CONTROLLER)
+      "0x98e86155abf8bCbA566b4a909be8cF4e3F227FAf": true, // GelatoRelayRouter (CONTROLLER)
+      "0xd6b16f5ceE328310B1cf6d8C0401C23dCd3c40d4": true, // SubaccountGelatoRelayRouter (CONTROLLER)
+      "0xBAD04dDcc5CC284A86493aFA75D2BEb970C72216": true, // OrderHandler (CONTROLLER)
+      "0x00EfaE2C4a62f48C4F4e6381a231002508C86953": true, // JitOrderHandler (CONTROLLER)
+      "0xAe2453Dca7704080052AF3c212E862cab50d65C0": true, // IncreaseOrderExecutor (CONTROLLER)
+      "0x08f5144D078E119dF361443CAD413f4738d391f9": true, // DecreaseOrderExecutor (CONTROLLER)
+      "0x78cE5527A7D4725BB72c4FdB5a163aa512cc4C35": true, // SwapOrderExecutor (CONTROLLER)
+      "0x839B6e19E54A5862da61974A01675a5f6CC5c8b4": true, // DepositHandler (CONTROLLER)
+      "0x5bB6DCb09010069228B2aA766FAE513EF7923472": true, // WithdrawalHandler (CONTROLLER)
+      "0xec0e4A27a9fbfc64e4915c254B961260df28054c": true, // AdlHandler (CONTROLLER)
+      "0x1bC32eeCAa8F504D2225096649A0347153A37f10": true, // LiquidationHandler (CONTROLLER)
+      "0xAD712E1667bC8AAa6C4EA5f47dcD487ddd96BC35": true, // ShiftHandler (CONTROLLER)
+      "0xF5DB5dfAa43a5F069e27041BD062229724482Bf5": true, // GlvDepositHandler (CONTROLLER)
+      "0x7499376D158194ce811f98DC6225cf8788632A35": true, // GlvWithdrawalHandler (CONTROLLER)
+      "0x4C9211a59A8C678444c1044ec1736eF64dceF662": true, // GlvShiftHandler (CONTROLLER)
+      "0x352f684ab9e97a6321a13CF03A61316B681D9fD2": true, // SwapHandler (CONTROLLER)
+      "0x162e3a5B47C9a45ff762E5b4b23D048D6780C14e": true, // ClaimHandler (CONTROLLER)
+      "0x9E721ef9b908B4814Aa18502692E4c5666d1942e": true, // LayerZeroProvider (CONTROLLER)
+      "0x421eB756B8f887f036e7332801288BC2bbA600aC": true, // MultichainClaimsRouter (CONTROLLER)
+      "0x9C11DFa4DAFA9227Ef172cc1d87D4D5008804C47": true, // MultichainGlvRouter (CONTROLLER)
+      "0x6a960F397eB8F2300F9FfA746F11375A613C5027": true, // MultichainGmRouter (CONTROLLER)
+      "0xbC074fF8b85f9b66884E1EdDcE3410fde96bd798": true, // MultichainOrderRouter (CONTROLLER)
+      "0x8138Ce254Bc0AfE40369FDC2D1e46cE90944406d": true, // MultichainSubaccountRouter (CONTROLLER)
+      "0x844D38f2c3875b8351feB4764718E1c64bD55c46": true, // MultichainTransferRouter (CONTROLLER)
     },
     ROUTER_PLUGIN: {
-      "0x805a15bf16582eC8d76841062A47dFfEa7903131": true, // ExchangeRouter
-      "0xF6b804F6Cc847a22F2D022C9b0373190850bE34D": true, // SubaccountRouter
-      "0xAC3D81b7a9CEaC542c556734799c0f68Ae1CDA4d": true, // GlvRouter
-      "0xb34A6e9Dc8E721361a9C620EEF245535d6A5B234": true, // GelatoRelayRouter
-      "0xa11B501c2dd83Acd29F6727570f2502FAaa617F2": true, // SubaccountGelatoRelayRouter
-      "0x113d352eD6c40C856536c6826497f6971880e036": true, // MultichainGlvRouter
-      "0xc9c45D216Bc4C7c5A28ca926E1087Fa745d7a4fA": true, // MultichainGmRouter
-      "0x6Ee83F82757C5B10468855753F5374FFF826BDCB": true, // MultichainOrderRouter
-      "0x86e92E21a0773cF542FEcBc791c05E4bae35a92f": true, // MultichainSubaccountRouter
-      "0xA3e0c948AaB11ed932A9F89dd010ba79dABE1514": true, // MultichainTransferRouter
+      "0xBCB5eA3a84886Ce45FBBf09eBF0e883071cB2Dc8": true, // ExchangeRouter (ROUTER_PLUGIN)
+      "0xa1793126B6Dc2f7F254a6c0E2F8013D2180C0D10": true, // SubaccountRouter (ROUTER_PLUGIN)
+      "0xC92741F0a0D20A95529873cBB3480b1f8c228d9F": true, // GlvRouter (ROUTER_PLUGIN)
+      "0x98e86155abf8bCbA566b4a909be8cF4e3F227FAf": true, // GelatoRelayRouter (ROUTER_PLUGIN)
+      "0xd6b16f5ceE328310B1cf6d8C0401C23dCd3c40d4": true, // SubaccountGelatoRelayRouter (ROUTER_PLUGIN)
+      "0x9C11DFa4DAFA9227Ef172cc1d87D4D5008804C47": true, // MultichainGlvRouter (ROUTER_PLUGIN)
+      "0x6a960F397eB8F2300F9FfA746F11375A613C5027": true, // MultichainGmRouter (ROUTER_PLUGIN)
+      "0xbC074fF8b85f9b66884E1EdDcE3410fde96bd798": true, // MultichainOrderRouter (ROUTER_PLUGIN)
+      "0x8138Ce254Bc0AfE40369FDC2D1e46cE90944406d": true, // MultichainSubaccountRouter (ROUTER_PLUGIN)
+      "0x844D38f2c3875b8351feB4764718E1c64bD55c46": true, // MultichainTransferRouter (ROUTER_PLUGIN)
     },
     ROLE_ADMIN: {
-      "0x8514fc704317057FA86961Ba9b9490956993A5ed": true, // TimelockConfig
-      "0x9799E846Fa5b8bBBa428ad743eeB95D79566CD6e": true, // ConfigTimelockController
+      "0x72a30e76827Ce83cEf0b1BEd7e9aAF9F4a576990": true, // TimelockConfig (ROLE_ADMIN)
+      "0x3d6BA4a91Ffde7C519379F8dCA5FE58b7125c294": true, // ConfigTimelockController (ROLE_ADMIN)
     },
   };
 }

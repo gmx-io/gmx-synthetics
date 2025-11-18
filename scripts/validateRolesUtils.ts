@@ -31,6 +31,13 @@ const trustedExternalContracts = new Set(
     "0xD2E217d800C41c86De1e01FD72009d4Eafc539a3",
     "0x15F9eBC71c539926B8f652a534d29B4Af57CaD55",
     "0x656fa39BdB5984b477FA6aB443195D72D1Accc1c",
+    "0xE0886d9baAaD385F37d460A4ec7b32b79a3731e0", // Gelato
+    "0x5051FD154320584c9Cc2071aed772656E8fcd855", // Gelato
+    "0x49d30B3035c647BF57f3845DA287bD84d80bDa2C", // Gelato
+    "0x8e36C6106B053aD32D20a426f3faF2d32b49cFBd", // Gelato
+    "0x0BA63427862eBEc8492d0236EEc065D6f9978ad6", // Gelato
+    "0xbD88efB162a4157d5B223Bc99CE1bc80E740152f", // Gelato
+    "0xcc25DCe071B75196D27aD95906dbfA45218d5eC6", // Gelato
   ].map((address) => address.toLowerCase())
 );
 
@@ -111,9 +118,7 @@ export async function validateRoles() {
           (member) => member.toLowerCase() === lowercaseAddress
         );
         if (!ok) {
-          errors.push(
-            `role ${requiredRole} is not configured for contract ${contractName}. "${deployment.address}": true, // ${contractName}`
-          );
+          errors.push(`"${deployment.address}": true, // ${contractName} (${requiredRole})`);
         }
       } catch (e) {
         console.log("error", e);
@@ -124,9 +129,7 @@ export async function validateRoles() {
   const feeHandlerOracle = FEE_HANDLER_ORACLES[hre.network.name];
 
   if (feeHandlerOracle && !_expectedRoles["CONTROLLER"][feeHandlerOracle]) {
-    errors.push(
-      `role CONTROLLER is not configured for contract FeeHandler Oracle. "${feeHandlerOracle}": true, // FeeHandler Oracle`
-    );
+    errors.push(`"${feeHandlerOracle}": true, // FeeHandler Oracle (CONTROLLER)`);
   }
 
   const expectedRoles = {};
@@ -323,7 +326,7 @@ async function validateIsReferralStorageHandler() {
   if (referralStorageAddress) {
     const referralStorage = new hre.ethers.Contract(
       referralStorageAddress,
-      ["function isHandler(address) view returns (bool)"],
+      ["function isHandler(address) view returns (bool)", "function gov() view returns (address)"],
       hre.ethers.provider
     );
     const orderHandlerDeployment = await hre.deployments.get("OrderHandler");
@@ -344,6 +347,34 @@ async function validateIsReferralStorageHandler() {
         "🟠 MultichainOrderRouter %s is missing the handler role in ReferralStorage %s",
         multichainOrderRouterDeployment.address,
         referralStorageAddress
+      );
+    }
+
+    const jitOrderHandlerDeployment = await hre.deployments.get("JitOrderHandler");
+    const isJitOderHandler = await referralStorage.isHandler(jitOrderHandlerDeployment.address);
+    if (!isJitOderHandler) {
+      console.warn(
+        "🟠 JitOrderHandler %s is missing the handler role in ReferralStorage %s",
+        jitOrderHandlerDeployment.address,
+        referralStorageAddress
+      );
+    }
+
+    const referralStorageTimelock = new hre.ethers.Contract(
+      await referralStorage.gov(),
+      ["function isHandler(address) view returns (bool)"],
+      hre.ethers.provider
+    );
+
+    const isMultichainOrderRouterTimelockHandler = await referralStorageTimelock.isHandler(
+      multichainOrderRouterDeployment.address
+    );
+
+    if (!isMultichainOrderRouterTimelockHandler) {
+      console.warn(
+        "🟠 MultichainOrderRouter %s is missing the handler role in ReferralStorage Timelock %s",
+        multichainOrderRouterDeployment.address,
+        referralStorageTimelock.address
       );
     }
   }

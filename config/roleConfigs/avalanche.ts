@@ -13,7 +13,7 @@ export function getRoles({ syntheticKeepers, generalConfigKeepers, claimAdmins }
     CONFIG_KEEPER: {
       "0x15F9eBC71c539926B8f652a534d29B4Af57CaD55": true, // multisig_1
       "0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D": true, // security_multisig_1
-      "0x704a713CAe6068D1959a782B20933F105287825d": true, // ConfigSyncer
+      "0x4BdCaB27bB7e03308Fe20AE166103BF7fdA71A06": true, // ConfigSyncer (CONFIG_KEEPER)
       ...generalConfigKeepers.mainnet,
     },
     FEE_KEEPER: {
@@ -44,52 +44,53 @@ export function getRoles({ syntheticKeepers, generalConfigKeepers, claimAdmins }
       "0xAd7a7568F500F65AEA3D9417A210CBc5dcD7b273": true, // FeeHandler Oracle
       "0xE1d5a068c5b75E0c7Ea1A9Fe8EA056f9356C6fFD": true, // Oracle
 
-      "0x5e13a7d1Ff2313e579387a7145f106c8D6B9c2F2": true, // Config
-      "0x704a713CAe6068D1959a782B20933F105287825d": true, // ConfigSyncer
-      "0x40f686cE9Fbb8eE1e069d91d59a96F0Ac3770841": true, // ConfigTimelockController
-      "0xD52b78E81289A9b056B583460bfb605f9887EE4E": true, // TimelockConfig
-      "0x9Ade8D48d3B1d88c640eed52D61F5becF18e7Aef": true, // ExchangeRouter
-      "0x91c72741d491C48DBF303230D162f457D404f7B9": true, // SubaccountRouter
-      "0xaE896FA1Ae013F43Bf379A8659f47D07Fb500F95": true, // GlvRouter
-      "0xa086FFe1fC62859c5BB587510b93Cc316C2023A3": true, // GelatoRelayRouter
-      "0x39E68cE7F613c24ec4706bdD682160363E24E611": true, // SubaccountGelatoRelayRouter
-      "0x8862338a70C27f1A343DD7b1AD18F52387BbaAcF": true, // OrderHandler
-      "0x99799226EeAAd9B33171D47a95e1305869c64961": true, // IncreaseOrderExecutor
-      "0x205dd9E03987BD5180ad2A4fA1dc64776A5480E2": true, // DecreaseOrderExecutor
-      "0x84579DeB73F09D4Ca7FE1D732ffb0Bb2E9A70119": true, // SwapOrderExecutor
-      "0xfb0f84A55dc9982d96Ae62109B5A7F4E05Ba3B5a": true, // DepositHandler
-      "0x2FCB6cD8d29006cCDc067797E1f468a730a7EC54": true, // WithdrawalHandler
-      "0x6cc7ed093B89A47A209562CF0184F392178dce85": true, // AdlHandler
-      "0xEB472754dbc1e4F234708C26599112F3Cc6844EF": true, // LiquidationHandler
-      "0x96A0CEB943ab377e5aB57D5b11c1bec4ab022162": true, // ShiftHandler
-      "0x0eC1F54cd316A9Db85fEcafDd2CCdE8Dd36458d6": true, // GlvDepositHandler
-      "0x441e058004487B364Eda07145Fb9C0245fc892D1": true, // GlvWithdrawalHandler
-      "0xc658ACff903559304Bf716dB57dE4E06dD5ec5ff": true, // GlvShiftHandler
-      "0x5b25a0F6D84C6163c38348adDB70aae38BEA6551": true, // SwapHandler
-      "0x4eF055DA26000C807ea986CC8632E00B68f8FF4B": true, // ClaimHandler
-      "0x7BDab864100Cb55B1770A8F8871FB25f2458cE89": true, // LayerZeroProvider
-      "0x1391325227384096ad164e85f69a36CeDd5B6fD7": true, // MultichainClaimsRouter
-      "0x93e3ae5Ba6F5b6685a03c8F45B61034580B5b9E5": true, // MultichainGlvRouter
-      "0xC13b0fDD57886D5b66A5930Ce7Bb919cEAC91F2B": true, // MultichainGmRouter
-      "0x5D6edFdCb872b0F913AE5F92107DdeFE6F579a14": true, // MultichainOrderRouter
-      "0xDe87e3Ec75793B72D39030a00579abD4014Ebe51": true, // MultichainSubaccountRouter
-      "0x58708dD4C9A5e5117fa7EC39Aa5164e60cB12860": true, // MultichainTransferRouter
+      "0x7591b82203C3B33b5cb233C40517f1bC872db774": true, // Config (CONTROLLER)
+      "0x4BdCaB27bB7e03308Fe20AE166103BF7fdA71A06": true, // ConfigSyncer (CONTROLLER)
+      "0x20D56cf90fD3C8f3bEb9BAC03AfdA3241093DE36": true, // ConfigTimelockController (CONTROLLER)
+      "0x37e1AeB6118B0106810D2eF7662875C414e39Ca4": true, // TimelockConfig (CONTROLLER)
+      "0x8f550E53DFe96C055D5Bdb267c21F268fCAF63B2": true, // ExchangeRouter (CONTROLLER)
+      "0xf43F559774d2cF7882e6E846fCb87BDe183a6Da7": true, // SubaccountRouter (CONTROLLER)
+      "0x7E425c47b2Ff0bE67228c842B9C792D0BCe58ae6": true, // GlvRouter (CONTROLLER)
+      "0xEE2d3339CbcE7A42573C96ACc1298A79a5C996Df": true, // GelatoRelayRouter (CONTROLLER)
+      "0xfaBEb65bB877600be3A2C2a03aA56a95F9f845B9": true, // SubaccountGelatoRelayRouter (CONTROLLER)
+      "0x823b558B4bC0a2C4974a0d8D7885AA1102D15dEC": true, // OrderHandler (CONTROLLER)
+      "0xF90fec8bF858D3445938Fb202d962889c37874ae": true, // JitOrderHandler (CONTROLLER)
+      "0x63AbC52A2750c7cB65D560B52627EC8f6207D9F9": true, // IncreaseOrderExecutor (CONTROLLER)
+      "0x40Fe9EA67c9D29e77661837E986Ef20A78C5E9Ce": true, // DecreaseOrderExecutor (CONTROLLER)
+      "0x92a542690F8A347E2eE9e51c2Da0ea38e1186cDB": true, // SwapOrderExecutor (CONTROLLER)
+      "0xCC2645E961514A694bca228686ec664933c70647": true, // DepositHandler (CONTROLLER)
+      "0x334237f7d75497a22B1443f44DDCcF95e72904A0": true, // WithdrawalHandler (CONTROLLER)
+      "0x858559D39fe8B2fDfE452f895db36077859130e1": true, // AdlHandler (CONTROLLER)
+      "0xad7F00b4080BACFfAaE7f44d67560C818d8e5468": true, // LiquidationHandler (CONTROLLER)
+      "0x6AdF7026D53057CED269DFDa318103db4F0Aa4Ba": true, // ShiftHandler (CONTROLLER)
+      "0x2337E7E4B9Ec811C7F99d0D16897e5DB12BD8B39": true, // GlvDepositHandler (CONTROLLER)
+      "0xd27BBE7937f39cc5cDe6D9F041e42174eD509B96": true, // GlvWithdrawalHandler (CONTROLLER)
+      "0x441541167b041EC507b5308B7005075a13A28aA7": true, // GlvShiftHandler (CONTROLLER)
+      "0x0DC24Af5BbBEc90C1deFd8f5F72E47c7D298c0AE": true, // SwapHandler (CONTROLLER)
+      "0xefCAdA759241D10B45d9Cb6265B19ADec97ceced": true, // ClaimHandler (CONTROLLER)
+      "0xF85Fd576bBe22Bce785B68922C1c9849d62737c0": true, // LayerZeroProvider (CONTROLLER)
+      "0xd10B10b816030347ff4E6767d340371B40b9F03D": true, // MultichainClaimsRouter (CONTROLLER)
+      "0xEEE61742bC4cf361c60Cd65826864560Bf2D0bB6": true, // MultichainGlvRouter (CONTROLLER)
+      "0xA191Bc0B72332e4c2022dB50a9d619079cc6c4fD": true, // MultichainGmRouter (CONTROLLER)
+      "0xd099565957046a2d2CF41B0CC9F95e14a8afD13b": true, // MultichainOrderRouter (CONTROLLER)
+      "0x5872E84e5ea23292b40183BE86D25fb428621fC1": true, // MultichainSubaccountRouter (CONTROLLER)
+      "0x5A44a3b026d50EC039582fDb3aFDD88e2092E211": true, // MultichainTransferRouter (CONTROLLER)
     },
     ROUTER_PLUGIN: {
-      "0x9Ade8D48d3B1d88c640eed52D61F5becF18e7Aef": true, // ExchangeRouter
-      "0x91c72741d491C48DBF303230D162f457D404f7B9": true, // SubaccountRouter
-      "0xaE896FA1Ae013F43Bf379A8659f47D07Fb500F95": true, // GlvRouter
-      "0xa086FFe1fC62859c5BB587510b93Cc316C2023A3": true, // GelatoRelayRouter
-      "0x39E68cE7F613c24ec4706bdD682160363E24E611": true, // SubaccountGelatoRelayRouter
-      "0x93e3ae5Ba6F5b6685a03c8F45B61034580B5b9E5": true, // MultichainGlvRouter
-      "0xC13b0fDD57886D5b66A5930Ce7Bb919cEAC91F2B": true, // MultichainGmRouter
-      "0x5D6edFdCb872b0F913AE5F92107DdeFE6F579a14": true, // MultichainOrderRouter
-      "0xDe87e3Ec75793B72D39030a00579abD4014Ebe51": true, // MultichainSubaccountRouter
-      "0x58708dD4C9A5e5117fa7EC39Aa5164e60cB12860": true, // MultichainTransferRouter
+      "0x8f550E53DFe96C055D5Bdb267c21F268fCAF63B2": true, // ExchangeRouter (ROUTER_PLUGIN)
+      "0xf43F559774d2cF7882e6E846fCb87BDe183a6Da7": true, // SubaccountRouter (ROUTER_PLUGIN)
+      "0x7E425c47b2Ff0bE67228c842B9C792D0BCe58ae6": true, // GlvRouter (ROUTER_PLUGIN)
+      "0xEE2d3339CbcE7A42573C96ACc1298A79a5C996Df": true, // GelatoRelayRouter (ROUTER_PLUGIN)
+      "0xfaBEb65bB877600be3A2C2a03aA56a95F9f845B9": true, // SubaccountGelatoRelayRouter (ROUTER_PLUGIN)
+      "0xEEE61742bC4cf361c60Cd65826864560Bf2D0bB6": true, // MultichainGlvRouter (ROUTER_PLUGIN)
+      "0xA191Bc0B72332e4c2022dB50a9d619079cc6c4fD": true, // MultichainGmRouter (ROUTER_PLUGIN)
+      "0xd099565957046a2d2CF41B0CC9F95e14a8afD13b": true, // MultichainOrderRouter (ROUTER_PLUGIN)
+      "0x5872E84e5ea23292b40183BE86D25fb428621fC1": true, // MultichainSubaccountRouter (ROUTER_PLUGIN)
+      "0x5A44a3b026d50EC039582fDb3aFDD88e2092E211": true, // MultichainTransferRouter (ROUTER_PLUGIN)
     },
     ROLE_ADMIN: {
-      "0xD52b78E81289A9b056B583460bfb605f9887EE4E": true, // TimelockConfig
-      "0x40f686cE9Fbb8eE1e069d91d59a96F0Ac3770841": true, // ConfigTimelockController
+      "0x37e1AeB6118B0106810D2eF7662875C414e39Ca4": true, // TimelockConfig (ROLE_ADMIN)
+      "0x20D56cf90fD3C8f3bEb9BAC03AfdA3241093DE36": true, // ConfigTimelockController (ROLE_ADMIN)
     },
   };
 }
