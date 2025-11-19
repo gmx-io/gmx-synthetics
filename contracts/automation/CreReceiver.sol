@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "./IReceiver.sol";
 import "../data/DataStore.sol";
 import "../data/Keys2.sol";
-import "../event/EventEmitter.sol";
+import "../event/EventHandler.sol";
 import "../utils/Cast.sol";
 
 contract CreReceiver is IReceiver, RoleModule {
@@ -15,11 +15,11 @@ contract CreReceiver is IReceiver, RoleModule {
     using EventUtils for EventUtils.BytesItems;
 
     DataStore internal immutable dataStore;
-    EventEmitter internal immutable eventEmitter;
+    EventHandler internal immutable eventHandler;
 
-    constructor(RoleStore _roleStore, DataStore _dataStore, EventEmitter _eventEmitter) RoleModule(_roleStore) {
+    constructor(RoleStore _roleStore, DataStore _dataStore, EventHandler _eventHandler) RoleModule(_roleStore) {
         dataStore = _dataStore;
-        eventEmitter = _eventEmitter;
+        eventHandler = _eventHandler;
     }
 
     function onReport(bytes calldata metadata, bytes calldata report) external override onlyCreForwarder {
@@ -40,7 +40,7 @@ contract CreReceiver is IReceiver, RoleModule {
         eventData.bytesItems.setItem(0, "metadata", metadata);
         eventData.bytesItems.setItem(1, "report", report);
 
-        eventEmitter.emitEventLog2("CRE Workflow Executed", workflowId, Cast.toBytes32(workflowOwner), eventData);
+        eventHandler.emitEventLog2("CRE Workflow Executed", workflowId, Cast.toBytes32(workflowOwner), eventData);
     }
 
     /// @notice Extracts all metadata fields from the onReport metadata parameter

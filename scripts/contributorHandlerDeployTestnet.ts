@@ -139,6 +139,13 @@ async function deployContracts(): Promise<DeploymentResult> {
     contracts.eventEmitter = eventEmitter.address;
     await delay(txDelay);
 
+    const EventHandler: ContractFactory = await getFactory(deployer, "EventHandler");
+    const eventHandler: Contract = await EventHandler.deploy(roleStore.address, eventEmitter.address);
+    await eventHandler.deployed();
+    console.log("EventHandler deployed to:", eventHandler.address);
+    contracts.eventHandler = eventHandler.address;
+    await delay(txDelay);
+
     saveCheckpoint(1, contracts);
   }
 
@@ -182,7 +189,7 @@ async function deployContracts(): Promise<DeploymentResult> {
     const creReceiver: Contract = await CreReceiver.deploy(
       contracts.roleStore,
       contracts.dataStore,
-      contracts.eventEmitter
+      contracts.eventHandler
     );
     await creReceiver.deployed();
     console.log("CreReceiver deployed to:", creReceiver.address);
@@ -216,7 +223,9 @@ async function deployContracts(): Promise<DeploymentResult> {
     await delay(txDelay);
     await (await roleStore.grantRole(contracts.creReceiver, hashString("CONTRIBUTOR_DISTRIBUTOR"))).wait();
     await delay(txDelay);
-    await (await roleStore.grantRole(contracts.creReceiver, hashString("CONTROLLER"))).wait();
+    await (await roleStore.grantRole(contracts.creReceiver, hashString("EVENT_CONTROLLER"))).wait();
+    await delay(txDelay);
+    await (await roleStore.grantRole(contracts.eventHandler, hashString("EVENT_HANDLER"))).wait();
     await delay(txDelay);
 
     console.log("Roles granted successfully");

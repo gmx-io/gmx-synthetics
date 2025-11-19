@@ -53,6 +53,23 @@ contract EventEmitter is RoleModule {
         );
     }
 
+    // @dev allow contracts to emit a general event log via EventHandler
+    // @param msgSender the contract emitting the event via EventHandler
+    // @param eventName the name of the event
+    // @param eventData the event data
+    function emitEventLog(
+        address msgSender,
+        string memory eventName,
+        EventUtils.EventLogData memory eventData
+    ) external onlyEventHandler {
+        emit EventLog(
+            msgSender,
+            eventName,
+            eventName,
+            eventData
+        );
+    }
+
     // @dev emit a general event log
     // @param eventName the name of the event
     // @param topic1 topic1 for indexing
@@ -64,6 +81,26 @@ contract EventEmitter is RoleModule {
     ) external onlyController {
         emit EventLog1(
             msg.sender,
+            eventName,
+            eventName,
+            topic1,
+            eventData
+        );
+    }
+
+    // @dev allow contracts to emit a general event log via EventHandler
+    // @param msgSender the contract emitting the event via EventHandler
+    // @param eventName the name of the event
+    // @param topic1 topic1 for indexing
+    // @param eventData the event data
+    function emitEventLog1(
+        address msgSender,
+        string memory eventName,
+        bytes32 topic1,
+        EventUtils.EventLogData memory eventData
+    ) external onlyEventHandler {
+        emit EventLog1(
+            msgSender,
             eventName,
             eventName,
             topic1,
@@ -84,6 +121,29 @@ contract EventEmitter is RoleModule {
     ) external onlyController {
         emit EventLog2(
             msg.sender,
+            eventName,
+            eventName,
+            topic1,
+            topic2,
+            eventData
+        );
+    }
+
+    // @dev allow contracts to emit a general event log via EventHandler
+    // @param msgSender the contract emitting the event via EventHandler
+    // @param eventName the name of the event
+    // @param topic1 topic1 for indexing
+    // @param topic2 topic2 for indexing
+    // @param eventData the event data
+    function emitEventLog2(
+        address msgSender,
+        string memory eventName,
+        bytes32 topic1,
+        bytes32 topic2,
+        EventUtils.EventLogData memory eventData
+    ) external onlyEventHandler {
+        emit EventLog2(
+            msgSender,
             eventName,
             eventName,
             topic1,
