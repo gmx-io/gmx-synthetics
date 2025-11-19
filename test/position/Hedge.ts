@@ -1,17 +1,10 @@
-import { contractAt, deployContract } from "../../utils/deploy";
+import { contractAt } from "../../utils/deploy";
 import { deployFixture } from "../../utils/fixture";
 
-import { grantRole } from "../../utils/role";
-import { validateStoreUtils } from "../../utils/storeUtils";
-import {
-  getPositionCount,
-  getPositionKeys,
-  getAccountPositionCount,
-  getAccountPositionKeys,
-} from "../../utils/position";
+import { getPositionKeys } from "../../utils/position";
 import { handleDeposit } from "../../utils/deposit";
-import { applyFactor, bigNumberify, decimalToFloat, expandDecimals } from "../../utils/math";
-import { getOrderKeys, handleOrder, OrderType } from "../../utils/order";
+import { decimalToFloat, expandDecimals } from "../../utils/math";
+import { handleOrder, OrderType } from "../../utils/order";
 import * as keys from "../../utils/keys";
 import { expect } from "chai";
 import { scenes } from "../scenes";
@@ -26,7 +19,7 @@ import { constants } from "ethers";
 // eslint-disable-next-line no-undef
 describe("Hedge GM", () => {
   let fixture;
-  let dataStore, exchangeRouter, reader, referralStorage, ethUsdMarket, wnt, usdc;
+  let dataStore, reader, referralStorage, ethUsdMarket, wnt, usdc;
   let user0, user1;
 
   const highPrices = {
@@ -61,11 +54,11 @@ describe("Hedge GM", () => {
 
   beforeEach(async () => {
     fixture = await deployFixture();
-    ({ dataStore, reader, exchangeRouter, referralStorage, ethUsdMarket, wnt, usdc } = fixture.contracts);
+    ({ dataStore, reader, referralStorage, ethUsdMarket, wnt, usdc } = fixture.contracts);
     ({ user0, user1 } = fixture.accounts);
 
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 9));
-    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 8));
+    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 8));
     await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
 
     await setMarketState(ethUsdMarket);
@@ -88,6 +81,10 @@ describe("Hedge GM", () => {
       },
     });
 
+    const currentMaxPositionImpactFactor = await dataStore.getUint(
+      keys.maxPositionImpactFactorKey(ethUsdMarket.marketToken, false)
+    );
+
     await usingResult(
       getMarketTokenPriceWithPoolValue(fixture, { prices: prices.ethUsdMarket }),
       ([, poolValueInfo]) => {
@@ -102,24 +99,31 @@ describe("Hedge GM", () => {
       },
     });
 
-    for (let i = 0; i < 22; i++) {
-      await scenes.increasePosition.long(fixture, {
-        create: {
-          sizeDeltaUsd: decimalToFloat(11_500_000),
-          initialCollateralDeltaAmount: expandDecimals(2_000_000, 6),
-          acceptablePrice: expandDecimals(5_800, 12),
-        },
-      });
+    // Set max position impact factor to 100%
+    await dataStore.setUint(keys.maxPositionImpactFactorKey(ethUsdMarket.marketToken, false), expandDecimals(1, 30));
 
-      await scenes.decreasePosition.long.positivePnl(fixture, {
-        create: {
-          receiver: user0,
-          initialCollateralDeltaAmount: 0,
-          sizeDeltaUsd: decimalToFloat(11_500_000),
-          acceptablePrice: expandDecimals(4_800, 12),
-        },
-      });
-    }
+    await scenes.increasePosition.long(fixture, {
+      create: {
+        sizeDeltaUsd: decimalToFloat(10_400_000),
+        initialCollateralDeltaAmount: expandDecimals(10_000_000, 6),
+        acceptablePrice: expandDecimals(11_000, 12),
+      },
+    });
+
+    await scenes.decreasePosition.long.positivePnl(fixture, {
+      create: {
+        receiver: user0,
+        initialCollateralDeltaAmount: 0,
+        sizeDeltaUsd: decimalToFloat(10_400_000),
+        acceptablePrice: expandDecimals(4_800, 12),
+      },
+    });
+
+    // restore max position impact factor
+    await dataStore.setUint(
+      keys.maxPositionImpactFactorKey(ethUsdMarket.marketToken, false),
+      currentMaxPositionImpactFactor
+    );
 
     await scenes.decreasePosition.short(fixture, {
       create: {
@@ -131,7 +135,7 @@ describe("Hedge GM", () => {
     // PriceImpactPool generated
     // 1000 ETH ~ $5_000_000 = 10% of initial pool size
     expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(market.marketToken))).closeTo(
-      "1008008127490039840630",
+      "999285737051792828679",
       "10000000"
     );
 
@@ -149,7 +153,7 @@ describe("Hedge GM", () => {
         initialCollateralDeltaAmount: expandDecimals(200, 18),
         swapPath: [],
         sizeDeltaUsd: decimalToFloat(6_000_000),
-        acceptablePrice: expandDecimals(5600, 12),
+        acceptablePrice: expandDecimals(7600, 12),
         executionFee: expandDecimals(1, 15),
         minOutputAmount: 0,
         orderType: OrderType.MarketIncrease,
@@ -180,7 +184,7 @@ describe("Hedge GM", () => {
     // about $7.5m(15% pool value) transferred to the pool as borrowing fees.
     const position0 = await getPositionInfo(0);
     expect(position0.fees.borrowing.borrowingFeeUsd).closeTo(
-      "7778523690154558990555288886784000000",
+      "7476819288868449579307115616840000000",
       "1000000000000000000000"
     );
   }
@@ -218,7 +222,7 @@ describe("Hedge GM", () => {
     const PIPool = await dataStore.getUint(keys.positionImpactPoolAmountKey(market.marketToken));
     console.log(`\n\nPI pool: ${PIPool.toString()}`);
 
-    const [marketTokenPrice, poolValueInfo] = await getMarketTokenPriceWithPoolValue(fixture, {
+    const [poolValueInfo] = await getMarketTokenPriceWithPoolValue(fixture, {
       prices,
       market: market,
     });
@@ -303,7 +307,7 @@ describe("Hedge GM", () => {
     // estimate USD value of GM tokens
     const marketTokenUSDValue = gmTokenPrice.mul(userGMTokenAmount).div(expandDecimals(1, 48));
     console.log("MarketTokenUSDValue: ", marketTokenUSDValue.toString());
-    expect(marketTokenUSDValue).eq("531874");
+    expect(marketTokenUSDValue).eq("531083");
 
     // estimate amount of tokens to widthdrawal
     const withdrawalAmountOut = await reader.getWithdrawalAmountOut(
