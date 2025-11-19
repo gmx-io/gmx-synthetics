@@ -5,18 +5,16 @@ import { bigNumberify } from "../utils/math";
 
 const write = process.env.WRITE === "true";
 
-// This script migrates position impact factor values from v2.2 to v2.2b format
-// v2.2: positionImpactFactorKey(market) - single parameter
-// v2.2b: positionImpactFactorKey(market, isPositive) - two parameters
+// This script migrates position impact exponent factor values from v2.2 to v2.2b format
+// v2.2: positionImpactExponentFactorKey(market) - single parameter
+// v2.2b: positionImpactExponentFactorKey(market, isPositive) - two parameters
 //
 // The script reads on-chain values from old keys and writes them to new keys
 // with both isPositive=true and isPositive=false set to the same value
 
 // Keys to migrate from old format (market only) to new format (market, isPositive)
 const KEYS_TO_MIGRATE: { baseKey: string; name: string }[] = [
-  { baseKey: keys.POSITION_IMPACT_FACTOR, name: "POSITION_IMPACT_FACTOR" },
-  // { baseKey: keys.POSITION_IMPACT_EXPONENT_FACTOR, name: "POSITION_IMPACT_EXPONENT_FACTOR" },
-  // { baseKey: keys.MAX_POSITION_IMPACT_FACTOR, name: "MAX_POSITION_IMPACT_FACTOR" },
+  { baseKey: keys.POSITION_IMPACT_EXPONENT_FACTOR, name: "POSITION_IMPACT_EXPONENT_FACTOR" },
 ];
 
 interface MarketData {
@@ -39,7 +37,7 @@ function generateOldKey(baseKey: string, market: string): string {
 }
 
 async function main() {
-  console.log("Starting position impact factor migration...\n");
+  console.log("Starting position impact exponent factor migration...\n");
 
   // Get contracts
   const dataStore = await hre.ethers.getContract("DataStore");
