@@ -138,6 +138,14 @@ export const distributionTypes: Record<
       name: "GLV V1 DISTRIBUTION",
       incentivesType: "lp",
     },
+    [GLV_V1_BONUS_TEST_DISTRIBUTION_ID]: {
+      name: "GLV V1 BONUS TEST DISTRIBUTION",
+      incentivesType: "lp",
+    },
+    [GLV_V1_3_MONTHS_BONUS_DISTRIBUTION_ID]: {
+      name: "GLV V1 3 MONTHS BONUS DISTRIBUTION",
+      incentivesType: "lp",
+    },
   },
   [43114]: {
     [AVALANCHE_RUSH_LP_ID]: {
