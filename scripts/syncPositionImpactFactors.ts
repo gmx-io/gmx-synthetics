@@ -5,35 +5,28 @@ import { bigNumberify } from "../utils/math";
 
 const write = process.env.WRITE === "true";
 
-// This script migrates position impact exponent factor values from v2.2 to v2.2b format
+// This script migrates POSITION_IMPACT_EXPONENT_FACTOR values from v2.2 to v2.2b format
 // v2.2: positionImpactExponentFactorKey(market) - single parameter
 // v2.2b: positionImpactExponentFactorKey(market, isPositive) - two parameters
 //
 // The script reads on-chain values from old keys and writes them to new keys
 // with both isPositive=true and isPositive=false set to the same value
 
-// Keys to migrate from old format (market only) to new format (market, isPositive)
-const KEYS_TO_MIGRATE: { baseKey: string; name: string }[] = [
-  { baseKey: keys.POSITION_IMPACT_EXPONENT_FACTOR, name: "POSITION_IMPACT_EXPONENT_FACTOR" },
-];
-
-interface MarketData {
+interface MarketProps {
   marketToken: string;
   indexToken: string;
   longToken: string;
   shortToken: string;
 }
 
-interface OldKeyValue {
-  market: string;
-  keyName: string;
-  baseKey: string;
-  value: string;
+// OLD v2.2 format: keccak256(abi.encode(POSITION_IMPACT_EXPONENT_FACTOR, market))
+function generateOldKey(market: string): string {
+  return hashData(["bytes32", "address"], [keys.POSITION_IMPACT_EXPONENT_FACTOR, market]);
 }
 
-// Generate old key format: keccak256(abi.encode(baseKey, market))
-function generateOldKey(baseKey: string, market: string): string {
-  return hashData(["bytes32", "address"], [baseKey, market]);
+// NEW v2.2b format: keccak256(abi.encode(POSITION_IMPACT_EXPONENT_FACTOR, market, isPositive))
+function generateNewKey(market: string, isPositive: boolean): string {
+  return hashData(["bytes32", "address", "bool"], [keys.POSITION_IMPACT_EXPONENT_FACTOR, market, isPositive]);
 }
 
 async function main() {
@@ -52,7 +45,7 @@ async function main() {
 
   // Step 1: Discover all markets
   console.log("Step 1: Discovering markets...");
-  const markets: MarketData[] = await reader.getMarkets(dataStore.address, 0, 1000);
+  const markets: MarketProps[] = await reader.getMarkets(dataStore.address, 0, 1000);
   console.log(`Found ${markets.length} markets\n`);
 
   if (markets.length === 0) {
@@ -65,37 +58,35 @@ async function main() {
   const multicallReadParams = [];
 
   for (const market of markets) {
-    for (const keyConfig of KEYS_TO_MIGRATE) {
-      // Read OLD format (market only)
-      const oldKey = generateOldKey(keyConfig.baseKey, market.marketToken);
-      multicallReadParams.push({
-        target: dataStore.address,
-        allowFailure: false,
-        callData: dataStore.interface.encodeFunctionData("getUint", [oldKey]),
-      });
+    // Read OLD format
+    const oldKey = generateOldKey(market.marketToken);
+    multicallReadParams.push({
+      target: dataStore.address,
+      allowFailure: false,
+      callData: dataStore.interface.encodeFunctionData("getUint", [oldKey]),
+    });
 
-      // Read NEW format (market, isPositive=true)
-      const newKeyPositive = hashData(["bytes32", "address", "bool"], [keyConfig.baseKey, market.marketToken, true]);
-      multicallReadParams.push({
-        target: dataStore.address,
-        allowFailure: false,
-        callData: dataStore.interface.encodeFunctionData("getUint", [newKeyPositive]),
-      });
+    // Read NEW format (isPositive=true)
+    const newKeyPositive = generateNewKey(market.marketToken, true);
+    multicallReadParams.push({
+      target: dataStore.address,
+      allowFailure: false,
+      callData: dataStore.interface.encodeFunctionData("getUint", [newKeyPositive]),
+    });
 
-      // Read NEW format (market, isPositive=false)
-      const newKeyNegative = hashData(["bytes32", "address", "bool"], [keyConfig.baseKey, market.marketToken, false]);
-      multicallReadParams.push({
-        target: dataStore.address,
-        allowFailure: false,
-        callData: dataStore.interface.encodeFunctionData("getUint", [newKeyNegative]),
-      });
-    }
+    // Read NEW format (isPositive=false)
+    const newKeyNegative = generateNewKey(market.marketToken, false);
+    multicallReadParams.push({
+      target: dataStore.address,
+      allowFailure: false,
+      callData: dataStore.interface.encodeFunctionData("getUint", [newKeyNegative]),
+    });
   }
 
   const readResults = await multicall.callStatic.aggregate3(multicallReadParams);
 
   // Parse results
-  const oldKeyValues: OldKeyValue[] = [];
+  const oldKeyValues: { market: string; value: string }[] = [];
   let resultIndex = 0;
 
   for (const market of markets) {
@@ -104,29 +95,25 @@ async function main() {
     console.log(`  Long: ${market.longToken}`);
     console.log(`  Short: ${market.shortToken}`);
 
-    for (const keyConfig of KEYS_TO_MIGRATE) {
-      const oldValue = bigNumberify(readResults[resultIndex].returnData).toString();
-      resultIndex++;
+    const oldValue = bigNumberify(readResults[resultIndex].returnData).toString();
+    resultIndex++;
 
-      const newValuePositive = bigNumberify(readResults[resultIndex].returnData).toString();
-      resultIndex++;
+    const newValuePositive = bigNumberify(readResults[resultIndex].returnData).toString();
+    resultIndex++;
 
-      const newValueNegative = bigNumberify(readResults[resultIndex].returnData).toString();
-      resultIndex++;
+    const newValueNegative = bigNumberify(readResults[resultIndex].returnData).toString();
+    resultIndex++;
 
-      console.log(`  ${keyConfig.name} (OLD): ${oldValue}`);
-      console.log(`  ${keyConfig.name} (NEW positive): ${newValuePositive}`);
-      console.log(`  ${keyConfig.name} (NEW negative): ${newValueNegative}`);
+    console.log(`  POSITION_IMPACT_EXPONENT_FACTOR (OLD): ${oldValue}`);
+    console.log(`  POSITION_IMPACT_EXPONENT_FACTOR (NEW positive): ${newValuePositive}`);
+    console.log(`  POSITION_IMPACT_EXPONENT_FACTOR (NEW negative): ${newValueNegative}`);
 
-      // Only track non-zero OLD values for migration
-      if (oldValue !== "0") {
-        oldKeyValues.push({
-          market: market.marketToken,
-          keyName: keyConfig.name,
-          baseKey: keyConfig.baseKey,
-          value: oldValue,
-        });
-      }
+    // Only track non-zero OLD values for migration
+    if (oldValue !== "0") {
+      oldKeyValues.push({
+        market: market.marketToken,
+        value: oldValue,
+      });
     }
   }
 
@@ -147,10 +134,12 @@ async function main() {
       const keyData = encodeData(["address", "bool"], [oldValue.market, isPositive]);
 
       configMulticallParams.push(
-        config.interface.encodeFunctionData("setUint", [oldValue.baseKey, keyData, oldValue.value])
+        config.interface.encodeFunctionData("setUint", [keys.POSITION_IMPACT_EXPONENT_FACTOR, keyData, oldValue.value])
       );
 
-      console.log(`  ${oldValue.keyName}(${oldValue.market.slice(0, 8)}..., ${isPositive}) = ${oldValue.value}`);
+      console.log(
+        `  POSITION_IMPACT_EXPONENT_FACTOR(${oldValue.market.slice(0, 8)}..., ${isPositive}) = ${oldValue.value}`
+      );
     }
   }
 
@@ -190,10 +179,10 @@ async function main() {
   console.log("After migration, the following keys will be set:");
 
   for (const oldValue of oldKeyValues) {
-    const positiveKey = hashData(["bytes32", "address", "bool"], [oldValue.baseKey, oldValue.market, true]);
-    const negativeKey = hashData(["bytes32", "address", "bool"], [oldValue.baseKey, oldValue.market, false]);
+    const positiveKey = generateNewKey(oldValue.market, true);
+    const negativeKey = generateNewKey(oldValue.market, false);
 
-    console.log(`\n${oldValue.keyName} for market ${oldValue.market}:`);
+    console.log(`\nPOSITION_IMPACT_EXPONENT_FACTOR for market ${oldValue.market}:`);
     console.log(`  Positive key (${positiveKey.slice(0, 10)}...): ${oldValue.value}`);
     console.log(`  Negative key (${negativeKey.slice(0, 10)}...): ${oldValue.value}`);
   }
