@@ -222,7 +222,7 @@ describe("Hedge GM", () => {
     const PIPool = await dataStore.getUint(keys.positionImpactPoolAmountKey(market.marketToken));
     console.log(`\n\nPI pool: ${PIPool.toString()}`);
 
-    const [poolValueInfo] = await getMarketTokenPriceWithPoolValue(fixture, {
+    const [, poolValueInfo] = await getMarketTokenPriceWithPoolValue(fixture, {
       prices,
       market: market,
     });
