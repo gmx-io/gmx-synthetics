@@ -37,6 +37,8 @@ import { ethers } from "ethers";
 // Example for specific market with custom values:
 // COLLATERAL_AMOUNT=5 LEVERAGE=3 MARKETS=0x70d95587d40A2caf56bd97485aB3Eec10Bee6336 npx hardhat run --network arbitrum scripts/createMarketsOrders.ts
 // COLLATERAL_AMOUNT=5 LEVERAGE=3 MARKETS=0xB7e69749E3d2EDd90ea59A4932EFEa2D41E245d7 npx hardhat run --network avalanche scripts/createMarketsOrders.ts
+// COLLATERAL_TOKEN=ETH COLLATERAL_AMOUNT=0.00075 npx hardhat run --network arbitrum scripts/createMarketsOrders.ts
+// COLLATERAL_TOKEN=BTC COLLATERAL_AMOUNT=0.000025 npx hardhat run --network botanix scripts/createMarketsOrders.ts
 //
 // Example using tBTC as collateral (no swap path for this market, collateral should be obtained externally):
 // MARKETS=0xd62068697bCc92AF253225676D618B0C9f17C663 COLLATERAL_TOKEN=tBTC COLLATERAL_AMOUNT=0.00005 npx hardhat run --network arbitrum scripts/createMarketsOrders.ts
@@ -46,6 +48,8 @@ function getTickersUrl(): string {
     return "https://arbitrum-api.gmxinfra2.io/prices/tickers";
   } else if (hre.network.name === "avalanche") {
     return "https://avalanche-api.gmxinfra2.io/prices/tickers";
+  } else if (hre.network.name === "botanix") {
+    return "https://botanix-api.gmxinfra2.io/prices/tickers";
   } else {
     throw new Error(`Unsupported network: ${hre.network.name}`);
   }
@@ -174,7 +178,21 @@ async function main() {
   const collateralAmount = parseFloat(process.env.COLLATERAL_AMOUNT || "2");
   const leverage = parseFloat(process.env.LEVERAGE || "2");
   const marketsFilter = process.env.MARKETS ? process.env.MARKETS.split(",").map((m) => m.trim()) : [];
-  const collateralTokenSymbol = process.env.COLLATERAL_TOKEN || "USDC";
+  let collateralTokenSymbol = process.env.COLLATERAL_TOKEN || "USDC";
+
+  // Map native token symbols to their wrapped equivalents
+  // This allows users to use ETH/AVAX/BTC as convenient aliases for WETH/WAVAX/pBTC
+  const nativeTokenMap: { [key: string]: string } = {
+    ETH: "WETH",
+    AVAX: "WAVAX",
+    BTC: hre.network.name === "botanix" ? "pBTC" : "WBTC", // Botanix uses pBTC, others use WBTC
+  };
+
+  const originalSymbol = collateralTokenSymbol;
+  if (nativeTokenMap[collateralTokenSymbol]) {
+    collateralTokenSymbol = nativeTokenMap[collateralTokenSymbol];
+    console.log("Note: Converting native token '%s' to wrapped token '%s'\n", originalSymbol, collateralTokenSymbol);
+  }
 
   if (!process.env.ACCOUNT_KEY) {
     throw new Error("ACCOUNT_KEY environment variable is required");
@@ -323,24 +341,38 @@ async function main() {
 
   // Check collateral balance
   const totalCollateralNeeded = collateralTokenAmount.mul(enabledMarkets.length).mul(2); // 2 orders per market
-  const collateralBalance = await collateralToken.balanceOf(receiver);
+  const isNativeToken = originalSymbol === "ETH" || originalSymbol === "AVAX" || originalSymbol === "BTC";
+
+  let collateralBalance;
+  if (isNativeToken) {
+    // For native tokens (ETH/AVAX/BTC), check the native balance
+    collateralBalance = await signer.getBalance();
+  } else {
+    // For ERC20 tokens (WETH, USDC, etc.), check token balance
+    collateralBalance = await collateralToken.balanceOf(receiver);
+  }
+
   if (collateralBalance.lt(totalCollateralNeeded)) {
     throw new Error(
-      `Insufficient ${collateralTokenSymbol} balance. Need ${hre.ethers.utils.formatUnits(
+      `Insufficient ${originalSymbol} balance. Need ${hre.ethers.utils.formatUnits(
         totalCollateralNeeded,
         collateralDecimals
       )}, have ${hre.ethers.utils.formatUnits(collateralBalance, collateralDecimals)}`
     );
   }
 
-  // Check and approve collateral token if needed
-  const approvedAmount = await collateralToken.allowance(receiver, router.address);
-  if (approvedAmount.lt(totalCollateralNeeded)) {
-    console.log("Approving collateral token...");
-    const approveTx = await collateralToken.approve(router.address, bigNumberify(2).pow(256).sub(1));
-    await approveTx.wait();
-    console.log("Approval tx: %s", approveTx.hash);
-    console.log("");
+  // Check and approve collateral token if needed (skip for native tokens)
+  if (!isNativeToken) {
+    const approvedAmount = await collateralToken.allowance(receiver, router.address);
+    if (approvedAmount.lt(totalCollateralNeeded)) {
+      console.log("Approving collateral token...");
+      const approveTx = await collateralToken.approve(router.address, bigNumberify(2).pow(256).sub(1));
+      await approveTx.wait();
+      console.log("Approval tx: %s", approveTx.hash);
+      console.log("");
+    }
+  } else {
+    console.log("Using native token, no approval needed");
   }
 
   // Query gas configuration from DataStore
@@ -462,17 +494,33 @@ async function main() {
         dataList: [],
       };
 
-      const longMulticallData = [
-        exchangeRouter.interface.encodeFunctionData("sendWnt", [orderVault.address, executionFee]),
-        exchangeRouter.interface.encodeFunctionData("sendTokens", [
-          collateralToken.address,
-          orderVault.address,
-          collateralTokenAmount,
-        ]),
-        exchangeRouter.interface.encodeFunctionData("createOrder", [longOrderParams]),
-      ];
+      let longMulticallData;
+      let longTxValue;
 
-      const longTx = await exchangeRouter.multicall(longMulticallData, { value: executionFee });
+      if (isNativeToken) {
+        // For native tokens: single sendWnt call for both collateral + execution fee
+        // The native ETH is sent in msg.value and wrapped to WETH by the router
+        const totalWntAmount = collateralTokenAmount.add(executionFee);
+        longMulticallData = [
+          exchangeRouter.interface.encodeFunctionData("sendWnt", [orderVault.address, totalWntAmount]),
+          exchangeRouter.interface.encodeFunctionData("createOrder", [longOrderParams]),
+        ];
+        longTxValue = totalWntAmount;
+      } else {
+        // For ERC20 tokens: separate sendWnt (execution fee) and sendTokens (collateral)
+        longMulticallData = [
+          exchangeRouter.interface.encodeFunctionData("sendWnt", [orderVault.address, executionFee]),
+          exchangeRouter.interface.encodeFunctionData("sendTokens", [
+            collateralToken.address,
+            orderVault.address,
+            collateralTokenAmount,
+          ]),
+          exchangeRouter.interface.encodeFunctionData("createOrder", [longOrderParams]),
+        ];
+        longTxValue = executionFee;
+      }
+
+      const longTx = await exchangeRouter.multicall(longMulticallData, { value: longTxValue });
 
       console.log("  Long order tx: %s", longTx.hash);
       await longTx.wait();
@@ -514,17 +562,33 @@ async function main() {
         dataList: [],
       };
 
-      const shortMulticallData = [
-        exchangeRouter.interface.encodeFunctionData("sendWnt", [orderVault.address, executionFee]),
-        exchangeRouter.interface.encodeFunctionData("sendTokens", [
-          collateralToken.address,
-          orderVault.address,
-          collateralTokenAmount,
-        ]),
-        exchangeRouter.interface.encodeFunctionData("createOrder", [shortOrderParams]),
-      ];
+      let shortMulticallData;
+      let shortTxValue;
 
-      const shortTx = await exchangeRouter.multicall(shortMulticallData, { value: executionFee });
+      if (isNativeToken) {
+        // For native tokens: single sendWnt call for both collateral + execution fee
+        // The native ETH is sent in msg.value and wrapped to WETH by the router
+        const totalWntAmount = collateralTokenAmount.add(executionFee);
+        shortMulticallData = [
+          exchangeRouter.interface.encodeFunctionData("sendWnt", [orderVault.address, totalWntAmount]),
+          exchangeRouter.interface.encodeFunctionData("createOrder", [shortOrderParams]),
+        ];
+        shortTxValue = totalWntAmount;
+      } else {
+        // For ERC20 tokens: separate sendWnt (execution fee) and sendTokens (collateral)
+        shortMulticallData = [
+          exchangeRouter.interface.encodeFunctionData("sendWnt", [orderVault.address, executionFee]),
+          exchangeRouter.interface.encodeFunctionData("sendTokens", [
+            collateralToken.address,
+            orderVault.address,
+            collateralTokenAmount,
+          ]),
+          exchangeRouter.interface.encodeFunctionData("createOrder", [shortOrderParams]),
+        ];
+        shortTxValue = executionFee;
+      }
+
+      const shortTx = await exchangeRouter.multicall(shortMulticallData, { value: shortTxValue });
 
       console.log("  Short order tx: %s", shortTx.hash);
       await shortTx.wait();
