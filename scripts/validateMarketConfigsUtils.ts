@@ -752,6 +752,22 @@ async function validatePerpConfig({
 
   const marketLabel = `${indexTokenSymbol} [${longTokenSymbol}-${shortTokenSymbol}]`;
 
+  if (!marketConfig.maxPnlFactorForTraders.eq(marketConfig.maxPnlFactorForDeposits)) {
+    throw new Error(`maxPnlFactorForTraders != maxPnlFactorForDeposits for ${marketLabel}`);
+  }
+
+  if (marketConfig.maxPnlFactorForTraders.lt(marketConfig.maxPnlFactorForAdl)) {
+    throw new Error(`maxPnlFactorForTraders < maxPnlFactorForAdl for ${marketLabel}`);
+  }
+
+  if (marketConfig.maxPnlFactorForAdl.lt(marketConfig.minPnlFactorAfterAdl)) {
+    throw new Error(`maxPnlFactorForAdl < minPnlFactorAfterAdl for ${marketLabel}`);
+  }
+
+  if (marketConfig.maxPnlFactorForDeposits.lt(marketConfig.maxPnlFactorForWithdrawals)) {
+    throw new Error(`maxPnlFactorForDeposits < maxPnlFactorForWithdrawals for ${marketLabel}`);
+  }
+
   if (!marketConfig.minCollateralFactor.eq(marketConfig.minCollateralFactorForLiquidation)) {
     warnings.push({
       message: `marketConfig.minCollateralFactor != marketConfig.minCollateralFactorForLiquidation for ${marketLabel}`,
