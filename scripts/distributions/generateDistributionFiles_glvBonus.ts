@@ -24,6 +24,7 @@ type Row = {
   shareFactor_beforeExcluding: BigNumber;
   shareFactor: BigNumber;
   shareUsd: BigNumber;
+  isEligible: boolean;
 
   amount: BigNumber;
 };
@@ -49,39 +50,20 @@ const tokenToTokenType = {
   [BTC_GLV_ADDRESS]: "btcGlv",
 };
 
-async function processFile({
+async function getRows({
   filePath,
   token,
-  outputFile,
-  totalUsd,
-  totalAmount,
 }: {
   filePath: string;
   token: { address: string; type: string; name: string };
-  outputFile: string;
-  totalUsd: BigNumber;
-  totalAmount: BigNumber;
 }) {
-  console.log(`Processing ${token.name}`);
-
   const stream = fs.createReadStream(filePath).pipe(parse({ headers: true }));
 
   const rows: Row[] = [];
 
-  const skips = {
-    notEligible: 0,
-    sizeTooSmall: 0,
-  };
-
   for await (const rowRaw of stream) {
     if (rowRaw.is_eligible_per_market !== "TRUE" && rowRaw.is_eligible_per_market !== "FALSE") {
       throw new Error(`Invalid is_eligible_per_market: ${JSON.stringify(rowRaw)}`);
-    }
-
-    if (rowRaw.is_eligible_per_market === "FALSE") {
-      // console.log("skipping non-eligible row", rowRaw.account, rowRaw.claimable_amount);
-      skips.notEligible++;
-      continue;
     }
 
     const newRow: Row = {
@@ -92,19 +74,58 @@ async function processFile({
       shareFactor: BigNumber.from(0),
       shareUsd: parseDecimalToUnits(rowRaw["Share in USD"].slice(1).replace(/,/g, "")),
       amount: BigNumber.from(0),
+      isEligible: rowRaw.is_eligible_per_market === "TRUE",
     };
 
-    if (newRow.shareUsd.lt(MIN_SHARE_USD)) {
-      skips.sizeTooSmall++;
-      continue;
-    }
-
     if (newRow.token !== token.address) {
-      continue;
+      throw new Error(`Unexpected token: ${newRow.token} !== ${token.address}`);
     }
 
     rows.push(newRow);
   }
+
+  return rows;
+}
+
+async function processFile({
+  rows,
+  token,
+  outputFile,
+  totalUsd,
+  totalAmount,
+  whitelistedAccounts,
+}: {
+  rows: Row[];
+  token: { address: string; type: string; name: string };
+  outputFile: string;
+  totalUsd: BigNumber;
+  totalAmount: BigNumber;
+  whitelistedAccounts: Record<string, boolean>;
+}) {
+  console.log(`Processing ${token.name}`);
+
+  const skips = {
+    notEligible: 0,
+    sizeTooSmall: 0,
+  };
+
+  rows = rows.filter((row) => {
+    if (!row.isEligible) {
+      skips.notEligible++;
+      return false;
+    }
+
+    if (!whitelistedAccounts[row.account]) {
+      skips.sizeTooSmall++;
+      return false;
+    }
+
+    if (row.token !== token.address) {
+      throw new Error(`Unexpected token: ${row.token} !== ${token.address}`);
+    }
+
+    return true;
+  });
 
   let sumUsd = bigNumberify(0);
   let sumFactor_beforeExcluding = bigNumberify(0);
@@ -136,7 +157,6 @@ async function processFile({
   console.log(`total skips: ${skips.notEligible + skips.sizeTooSmall}`);
   console.log(`skips (not eligible): ${skips.notEligible}`);
   console.log(`skips (size too small): ${skips.sizeTooSmall}`);
-  console.log("======");
   console.log("");
 
   console.log(`sum USD: ${formatUnits(sumUsd, 30)}`);
@@ -144,7 +164,7 @@ async function processFile({
   console.log(`sum factor (before excluding): ${formatUnits(sumFactor_beforeExcluding, 28)}%`);
   console.log(`sum factor: ${formatUnits(sumFactor, 28)}%`);
   console.log(`total amount: ${formatUnits(totalAmount, 18)} ${token.name}`);
-  console.log("======");
+  console.log("");
 
   const output = {
     chainId,
@@ -160,23 +180,70 @@ async function processFile({
   fs.writeFileSync(outputFile, JSON.stringify(output, null, 2));
 }
 
+function getAccountsStats(rows: Row[]) {
+  const whitelistedAccounts: Record<string, boolean> = {};
+  const sumByWallet = {};
+  const allAccounts = {};
+  for (const row of rows) {
+    allAccounts[row.account] = 1;
+    if (!sumByWallet[row.account]) {
+      sumByWallet[row.account] = bigNumberify(0);
+    }
+    sumByWallet[row.account] = sumByWallet[row.account].add(row.shareUsd);
+  }
+
+  for (const account in sumByWallet) {
+    if (sumByWallet[account].gt(MIN_SHARE_USD)) {
+      whitelistedAccounts[account] = true;
+    }
+  }
+
+  return { whitelistedAccounts, allAccounts: Object.keys(allAccounts) };
+}
+
 async function main() {
-  await processFile({
+  const btcToken = { address: BTC_GLV_ADDRESS, type: "btcGlv", name: "BTC GLV" };
+  const ethToken = { address: ETH_GLV_ADDRESS, type: "ethGlv", name: "ETH GLV" };
+
+  const btcRows = await getRows({
     filePath: `scripts/distributions/data/glp/bonusGlvBtcDistribution.csv`,
-    token: { address: BTC_GLV_ADDRESS, type: "btcGlv", name: "BTC GLV" },
+    token: btcToken,
+  });
+
+  const ethRows = await getRows({
+    filePath: `scripts/distributions/data/glp/bonusGlvEthDistribution.csv`,
+    token: ethToken,
+  });
+
+  const { whitelistedAccounts, allAccounts } = getAccountsStats([...btcRows, ...ethRows]);
+
+  console.log(`all accounts: ${allAccounts.length}`);
+  console.log(`whitelisted accounts: ${Object.keys(whitelistedAccounts).length}`);
+  console.log(`ETH rows: ${ethRows.length}`);
+  console.log(`BTC rows: ${btcRows.length}`);
+
+  console.log();
+  console.log("============================");
+  console.log();
+
+  await processFile({
+    rows: btcRows,
+    token: btcToken,
     outputFile: `scripts/distributions/data/glp/GLP_GLV_3month-bonus_btcGlv.json`,
     totalUsd: TOTAL_BTC_GLV_USD,
     totalAmount: TOTAL_BTC_GLV_AMOUNT,
+    whitelistedAccounts,
   });
   console.log();
   console.log("============================");
   console.log();
   await processFile({
-    filePath: `scripts/distributions/data/glp/bonusGlvEthDistribution.csv`,
-    token: { address: ETH_GLV_ADDRESS, type: "ethGlv", name: "ETH GLV" },
+    rows: ethRows,
+    token: ethToken,
     outputFile: `scripts/distributions/data/glp/GLP_GLV_3month-bonus_ethGlv.json`,
     totalUsd: TOTAL_ETH_GLV_USD,
     totalAmount: TOTAL_ETH_GLV_AMOUNT,
+    whitelistedAccounts,
   });
 }
 
