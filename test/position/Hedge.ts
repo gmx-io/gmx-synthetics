@@ -58,7 +58,7 @@ describe("Hedge GM", () => {
     ({ user0, user1 } = fixture.accounts);
 
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 9));
-    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 8));
+    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 8));
     await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(2, 0));
     await dataStore.setUint(
       keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, false),
@@ -75,15 +75,19 @@ describe("Hedge GM", () => {
     expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(market.marketToken))).eq(0);
 
     // 5m$ pool value with prices 5000$ per ETH
-    // 500 ETH * 5000$ + 2_500_000 USDC
+    // 5000 ETH * 5000$ + 25_000_000 USDC
     await handleDeposit(fixture, {
       create: {
         account: user0,
         market: market,
-        longTokenAmount: expandDecimals(500, 18),
-        shortTokenAmount: expandDecimals(2_500_000, 6),
+        longTokenAmount: expandDecimals(5_000, 18),
+        shortTokenAmount: expandDecimals(25_000_000, 6),
       },
     });
+
+    const currentMaxPositionImpactFactor = await dataStore.getUint(
+      keys.maxPositionImpactFactorKey(ethUsdMarket.marketToken, false)
+    );
 
     await usingResult(
       getMarketTokenPriceWithPoolValue(fixture, { prices: prices.ethUsdMarket }),
@@ -94,39 +98,48 @@ describe("Hedge GM", () => {
 
     await scenes.increasePosition.short(fixture, {
       create: {
-        sizeDeltaUsd: decimalToFloat(20_000),
+        sizeDeltaUsd: decimalToFloat(200_000),
         initialCollateralDeltaAmount: expandDecimals(1, 18),
       },
     });
 
-    for (let i = 0; i < 200; i++) {
-      await scenes.increasePosition.long(fixture, {
-        create: {
-          sizeDeltaUsd: decimalToFloat(750_000),
-          initialCollateralDeltaAmount: expandDecimals(200_000, 6),
-        },
-      });
+    // Set max position impact factor to 100%
+    await dataStore.setUint(keys.maxPositionImpactFactorKey(ethUsdMarket.marketToken, false), expandDecimals(1, 30));
 
-      await scenes.decreasePosition.long.positivePnl(fixture, {
-        create: {
-          receiver: user0,
-          initialCollateralDeltaAmount: 0,
-          sizeDeltaUsd: decimalToFloat(750_000),
-        },
-      });
-    }
+    await scenes.increasePosition.long(fixture, {
+      create: {
+        sizeDeltaUsd: decimalToFloat(10_400_000),
+        initialCollateralDeltaAmount: expandDecimals(10_000_000, 6),
+        acceptablePrice: expandDecimals(11_000, 12),
+      },
+    });
+
+    await scenes.decreasePosition.long.positivePnl(fixture, {
+      create: {
+        receiver: user0,
+        initialCollateralDeltaAmount: 0,
+        sizeDeltaUsd: decimalToFloat(10_400_000),
+        acceptablePrice: expandDecimals(4_800, 12),
+      },
+    });
+
+    // restore max position impact factor
+    await dataStore.setUint(
+      keys.maxPositionImpactFactorKey(ethUsdMarket.marketToken, false),
+      currentMaxPositionImpactFactor
+    );
 
     await scenes.decreasePosition.short(fixture, {
       create: {
-        sizeDeltaUsd: decimalToFloat(20_000),
+        sizeDeltaUsd: decimalToFloat(200_000),
         initialCollateralDeltaAmount: 0,
       },
     });
 
     // PriceImpactPool generated
-    // 100 ETH ~ $500_000 = 10% of initial pool size
+    // 1000 ETH ~ $5_000_000 = 10% of initial pool size
     expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(market.marketToken))).closeTo(
-      "107084384063745019801",
+      "999285737051792828679",
       "10000000"
     );
 
@@ -141,10 +154,10 @@ describe("Hedge GM", () => {
         account: user1,
         market: market,
         initialCollateralToken: wnt,
-        initialCollateralDeltaAmount: expandDecimals(10, 18),
+        initialCollateralDeltaAmount: expandDecimals(200, 18),
         swapPath: [],
-        sizeDeltaUsd: decimalToFloat(500_000),
-        acceptablePrice: expandDecimals(5050, 12),
+        sizeDeltaUsd: decimalToFloat(6_000_000),
+        acceptablePrice: expandDecimals(7600, 12),
         executionFee: expandDecimals(1, 15),
         minOutputAmount: 0,
         orderType: OrderType.MarketIncrease,
@@ -158,9 +171,9 @@ describe("Hedge GM", () => {
         account: user1,
         market: market,
         initialCollateralToken: wnt,
-        initialCollateralDeltaAmount: expandDecimals(15, 18),
+        initialCollateralDeltaAmount: expandDecimals(150, 18),
         swapPath: [],
-        sizeDeltaUsd: decimalToFloat(450_000),
+        sizeDeltaUsd: decimalToFloat(4_500_000),
         acceptablePrice: expandDecimals(4950, 12),
         executionFee: expandDecimals(1, 15),
         minOutputAmount: 0,
@@ -172,10 +185,10 @@ describe("Hedge GM", () => {
 
     await time.increase(60 * 24 * 60 * 60);
 
-    // about $650k(15% pool value) transferred to the pool as borrowing fees.
+    // about $7.5m(15% pool value) transferred to the pool as borrowing fees.
     const position0 = await getPositionInfo(0);
     expect(position0.fees.borrowing.borrowingFeeUsd).closeTo(
-      "681247976991655602198406137576000000",
+      "7476819288868449579307115616840000000",
       "1000000000000000000000"
     );
   }
@@ -298,7 +311,7 @@ describe("Hedge GM", () => {
     // estimate USD value of GM tokens
     const marketTokenUSDValue = gmTokenPrice.mul(userGMTokenAmount).div(expandDecimals(1, 48));
     console.log("MarketTokenUSDValue: ", marketTokenUSDValue.toString());
-    expect(marketTokenUSDValue).eq("533562");
+    expect(marketTokenUSDValue).eq("531083");
 
     // estimate amount of tokens to widthdrawal
     const withdrawalAmountOut = await reader.getWithdrawalAmountOut(
