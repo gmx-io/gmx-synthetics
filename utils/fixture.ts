@@ -147,6 +147,7 @@ async function setup() {
   const edgeDataStreamProvider = await hre.ethers.getContract("EdgeDataStreamProvider");
   const claimHandler = await hre.ethers.getContract("ClaimHandler");
   const claimVault = await hre.ethers.getContract("ClaimVault");
+  const feeVault = await hre.ethers.getContract("FeeVault");
 
   const ethUsdMarketAddress = getMarketTokenAddress(
     wnt.address,
@@ -382,6 +383,7 @@ async function setup() {
       edgeDataStreamProvider,
       claimHandler,
       claimVault,
+      feeVault,
     },
     props: { oracleSalt, signerIndexes: [0, 1, 2, 3, 4, 5, 6], executionFee: "1000000000000000" },
   };
