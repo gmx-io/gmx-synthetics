@@ -183,14 +183,6 @@ contract RoleModule {
     }
 
     /**
-     * @dev Only allows addresses with the EVENT_HANDLER role to call the function.
-     */
-    modifier onlyEventHandler() {
-        _validateRole(Role.EVENT_HANDLER, "EVENT_HANDLER");
-        _;
-    }
-
-    /**
      * @dev Only allows addresses with the EVENT_CONTROLLER role to call the function.
      */
     modifier onlyEventController() {

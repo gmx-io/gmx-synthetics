@@ -135,12 +135,6 @@ library Role {
     bytes32 public constant CRE_KEEPER = keccak256(abi.encode("CRE_KEEPER"));
 
     /**
-     * @dev The EVENT_HANDLER role.
-     * Hash: 0x6d8f413d07f984724018237a4b4b5e10d098c0e950149842c1c7c229c37a3edb
-     */
-    bytes32 public constant EVENT_HANDLER = keccak256(abi.encode("EVENT_HANDLER"));
-
-    /**
      * @dev The EVENT_CONTROLLER role.
      * Hash: 0x167b6a9c6941785f0049bcd964167c25e8d10aa0e12ebd1d11c178969795355c
      */

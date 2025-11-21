@@ -217,15 +217,13 @@ async function deployContracts(): Promise<DeploymentResult> {
     await delay(txDelay);
     await (await roleStore.grantRole(config.creForwarder, hashString("CRE_FORWARDER"))).wait();
     await delay(txDelay);
-    await (await roleStore.grantRole("0xD41263567DdfeAd91504199b8c6c87371e83ca5d", hashString("CRE_FORWARDER"))).wait();
-    await delay(txDelay);
     await (await roleStore.grantRole(contracts.contributorHandler, hashString("CONTROLLER"))).wait();
     await delay(txDelay);
     await (await roleStore.grantRole(contracts.creReceiver, hashString("CONTRIBUTOR_DISTRIBUTOR"))).wait();
     await delay(txDelay);
     await (await roleStore.grantRole(contracts.creReceiver, hashString("EVENT_CONTROLLER"))).wait();
     await delay(txDelay);
-    await (await roleStore.grantRole(contracts.eventHandler, hashString("EVENT_HANDLER"))).wait();
+    await (await roleStore.grantRole(contracts.eventHandler, hashString("CONTROLLER"))).wait();
     await delay(txDelay);
 
     console.log("Roles granted successfully");

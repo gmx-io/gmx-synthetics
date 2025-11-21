@@ -65,6 +65,11 @@ if (setupDataStr !== "true" && setupDataStr !== "false") {
 }
 const setupData = setupDataStr === "true";
 
+const workflowId = process.env.WORKFLOW_ID;
+if (!workflowId) {
+  throw new Error("WORKFLOW_ID not set in .env file");
+}
+
 const ZERO = BigNumber.from(0);
 
 async function delay(ms: number) {
@@ -139,12 +144,7 @@ async function configureContracts(nativeTokenTargetBalance: BigNumber) {
   if (setupData) {
     console.log("\nSetting up test data");
 
-    await (
-      await dataStore.setBool(
-        keys.creReceiverAuthorizedWorkflowIdsKey("0x00de77814a7cdb51dc27e457a5b8d3b2fa5c4ae9ed676d09bbbeb5822bfd1da6"),
-        true
-      )
-    ).wait();
+    await (await dataStore.setBool(keys.creReceiverAuthorizedWorkflowIdsKey(workflowId), true)).wait();
     await delay(txDelay);
     await (await contributorHandler.addContributorAccount(user1.address)).wait();
     await delay(txDelay);
