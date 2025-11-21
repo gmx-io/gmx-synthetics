@@ -28,7 +28,7 @@ async function main() {
     `toggling generalClaimFeatureDisabled for distributionId: ${distributionId}, new value: ${isDisabled}, current value: ${currentValue}`
   );
 
-  if (currentValue === newValue) {
+  if (String(currentValue) === String(newValue)) {
     console.warn("WARN: No change needed");
   }
 
