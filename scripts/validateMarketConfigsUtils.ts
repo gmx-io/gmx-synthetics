@@ -179,18 +179,18 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 20_000,
     },
-    GMX: {
-      negativePositionImpactFactor: exponentToFloat("5e-10"),
-      negativeSwapImpactFactor: exponentToFloat("8e-9"),
-      expectedSwapImpactRatio: 20_000,
-      expectedPositionImpactRatio: 20_000,
-    },
-    "GMX:GMX:GMX": {
-      negativePositionImpactFactor: exponentToFloat("5e-10"),
-      negativeSwapImpactFactor: 0,
-      expectedSwapImpactRatio: 10_000,
-      expectedPositionImpactRatio: 20_000,
-    },
+    // GMX: {
+    //   negativePositionImpactFactor: exponentToFloat("5e-10"),
+    //   negativeSwapImpactFactor: exponentToFloat("8e-9"),
+    //   expectedSwapImpactRatio: 20_000,
+    //   expectedPositionImpactRatio: 20_000,
+    // },
+    // "GMX:GMX:GMX": {
+    //   negativePositionImpactFactor: exponentToFloat("5e-10"),
+    //   negativeSwapImpactFactor: 0,
+    //   expectedSwapImpactRatio: 10_000,
+    //   expectedPositionImpactRatio: 20_000,
+    // },
     PEPE: {
       negativePositionImpactFactor: exponentToFloat("5e-10"),
       negativeSwapImpactFactor: exponentToFloat("3e-8"),
