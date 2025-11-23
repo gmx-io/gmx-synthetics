@@ -1264,7 +1264,7 @@ const config: {
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(1643, 41), // 1.64325E+44, 14,2 AVAX / day
       minPositionImpactPoolAmount: expandDecimals(79, 18), // 79.18 AVAX
 
-      maxOpenInterest: decimalToFloat(2_100_000), // ~2% of global OI
+      maxOpenInterest: decimalToFloat(3), // ~2% of global OI
 
       atomicSwapFeeFactor: percentageToFloat("2.25%"),
 
@@ -1408,70 +1408,70 @@ const config: {
 
       atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },
-    // {
-    //   tokens: { indexToken: "GMX", longToken: "GMX", shortToken: "USDC" },
-    //   virtualTokenIdForIndexToken: hashString("PERP:GMX/USD"),
-    //   virtualMarketId: hashString("SPOT:GMX/USD"),
+    {
+      tokens: { indexToken: "GMX", longToken: "GMX", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:GMX/USD"),
+      virtualMarketId: hashString("SPOT:GMX/USD"),
 
-    //   ...baseMarketConfig,
-    //   ...fundingRateConfig_Default,
-    //   ...borrowingRateConfig_LowMax_WithHigherBase,
+      ...baseMarketConfig,
+      ...fundingRateConfig_Default,
+      ...borrowingRateConfig_LowMax_WithHigherBase,
 
-    //   negativePositionImpactFactor: exponentToFloat("0.795469e-6"),
-    //   positivePositionImpactFactor: exponentToFloat("2.65156e-07"),
-    //   positionImpactExponentFactor: exponentToFloat("1.76045e0"),
+      negativePositionImpactFactor: exponentToFloat("0.795469e-6"),
+      positivePositionImpactFactor: exponentToFloat("2.65156e-07"),
+      positionImpactExponentFactor: exponentToFloat("1.76045e0"),
 
-    //   negativeSwapImpactFactor: exponentToFloat("12e-9"),
-    //   positiveSwapImpactFactor: exponentToFloat("6e-9"),
+      negativeSwapImpactFactor: exponentToFloat("12e-9"),
+      positiveSwapImpactFactor: exponentToFloat("6e-9"),
 
-    //   // minCollateralFactor of 0.01 (1%) when open interest is 2,632,000 USD
-    //   minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.8e-9"),
+      // minCollateralFactor of 0.01 (1%) when open interest is 2,632,000 USD
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.8e-9"),
 
-    //   reserveFactor: percentageToFloat("205%"),
-    //   openInterestReserveFactor: percentageToFloat("200%"),
+      reserveFactor: percentageToFloat("205%"),
+      openInterestReserveFactor: percentageToFloat("200%"),
 
-    //   positionImpactPoolDistributionRate: bigNumberify(0),
-    //   minPositionImpactPoolAmount: expandDecimals(11534, 18), // 11534 GMX
+      positionImpactPoolDistributionRate: bigNumberify(0),
+      minPositionImpactPoolAmount: expandDecimals(11534, 18), // 11534 GMX
 
-    //   maxOpenInterest: decimalToFloat(1_800_000),
+      maxOpenInterest: decimalToFloat(1_800_000),
 
-    //   maxPoolUsdForDeposit: decimalToFloat(3_500_000),
+      maxPoolUsdForDeposit: decimalToFloat(3_500_000),
 
-    //   maxLongTokenPoolAmount: expandDecimals(340_000, 18),
-    //   maxShortTokenPoolAmount: expandDecimals(4_000_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(340_000, 18),
+      maxShortTokenPoolAmount: expandDecimals(4_000_000, 6),
 
-    //   atomicSwapFeeFactor: percentageToFloat("3%"),
-    // },
-    // {
-    //   tokens: { indexToken: "GMX", longToken: "GMX", shortToken: "GMX" },
-    //   virtualTokenIdForIndexToken: hashString("PERP:GMX/USD"),
+      atomicSwapFeeFactor: percentageToFloat("3%"),
+    },
+    {
+      tokens: { indexToken: "GMX", longToken: "GMX", shortToken: "GMX" },
+      virtualTokenIdForIndexToken: hashString("PERP:GMX/USD"),
 
-    //   ...singleTokenMarketConfig,
-    //   reserveFactor: percentageToFloat("105%"),
-    //   openInterestReserveFactor: percentageToFloat("100%"),
-    //   maxPnlFactorForTraders: percentageToFloat("50%"),
+      ...singleTokenMarketConfig,
+      reserveFactor: percentageToFloat("105%"),
+      openInterestReserveFactor: percentageToFloat("100%"),
+      maxPnlFactorForTraders: percentageToFloat("50%"),
 
-    //   ...fundingRateConfig_High,
-    //   ...borrowingRateConfig_HighMax_WithHigherBase,
+      ...fundingRateConfig_High,
+      ...borrowingRateConfig_HighMax_WithHigherBase,
 
-    //   negativePositionImpactFactor: exponentToFloat("5e-10"),
-    //   positivePositionImpactFactor: exponentToFloat("2.5e-10"),
-    //   positionImpactExponentFactor: exponentToFloat("2.2e0"),
+      negativePositionImpactFactor: exponentToFloat("5e-10"),
+      positivePositionImpactFactor: exponentToFloat("2.5e-10"),
+      positionImpactExponentFactor: exponentToFloat("2.2e0"),
 
-    //   positiveMaxPositionImpactFactor: percentageToFloat("0.5%"),
-    //   negativeMaxPositionImpactFactor: percentageToFloat("0.5%"),
-    //   maxPositionImpactFactorForLiquidations: bigNumberify(0), // 0%
+      positiveMaxPositionImpactFactor: percentageToFloat("0.5%"),
+      negativeMaxPositionImpactFactor: percentageToFloat("0.5%"),
+      maxPositionImpactFactorForLiquidations: bigNumberify(0), // 0%
 
-    //   minCollateralFactor: percentageToFloat("1%"), // 100x leverage
-    //   minCollateralFactorForLiquidation: percentageToFloat("1%"), // 200x leverage
-    //   minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
+      minCollateralFactor: percentageToFloat("1%"), // 100x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("1%"), // 200x leverage
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
 
-    //   maxOpenInterest: decimalToFloat(750_000),
-    //   maxPoolUsdForDeposit: decimalToFloat(1250_000),
+      maxOpenInterest: decimalToFloat(750_000),
+      maxPoolUsdForDeposit: decimalToFloat(1250_000),
 
-    //   maxLongTokenPoolAmount: expandDecimals(55_000, 18),
-    //   maxShortTokenPoolAmount: expandDecimals(55_000, 18),
-    // },
+      maxLongTokenPoolAmount: expandDecimals(55_000, 18),
+      maxShortTokenPoolAmount: expandDecimals(55_000, 18),
+    },
     {
       tokens: { indexToken: "PEPE", longToken: "PEPE", shortToken: "USDC" },
       virtualTokenIdForIndexToken: hashString("PERP:PEPE/USD"),
@@ -4419,7 +4419,7 @@ const config: {
       positionImpactPoolDistributionRate: expandDecimals(166, 43), // ~143 AVAX/day
       minPositionImpactPoolAmount: expandDecimals(141, 18),
 
-      maxOpenInterest: decimalToFloat(12_000_000),
+      maxOpenInterest: decimalToFloat(3),
 
       fundingIncreaseFactorPerSecond: exponentToFloat("1.6e-12"), // 0.0000000000016, at least 3.5 hours to reach max funding
       maxFundingFactorPerSecond: exponentToFloat("2e-8"), // 0.000002%,  0.0072% per hour, 63% per year
