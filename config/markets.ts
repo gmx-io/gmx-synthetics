@@ -1159,7 +1159,7 @@ const config: {
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(173, 30 + 18).div(SECONDS_PER_DAY), // 173 LINK / day
       minPositionImpactPoolAmount: expandDecimals(41779, 18), // 41779 LINK
 
-      maxOpenInterest: decimalToFloat(3_000_000),
+      maxOpenInterest: decimalToFloat(3_800_000),
 
       atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
