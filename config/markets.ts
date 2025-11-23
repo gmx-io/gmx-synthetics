@@ -4451,7 +4451,7 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 500,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2e-8"),
 
-      maxOpenInterest: decimalToFloat(1_000_000),
+      maxOpenInterest: decimalToFloat(3),
 
       fundingIncreaseFactorPerSecond: exponentToFloat("1.6e-12"), // 0.0000000000016, at least 3.5 hours to reach max funding
       maxFundingFactorPerSecond: exponentToFloat("2e-8"), // 0.000002%,  0.0072% per hour, 63% per year
