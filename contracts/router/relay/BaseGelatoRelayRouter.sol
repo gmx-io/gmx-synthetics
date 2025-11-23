@@ -51,12 +51,11 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     }
 
     constructor(
-        IOracle _oracle,
         IOrderHandler _orderHandler,
         OrderVault _orderVault,
         ISwapHandler _swapHandler,
         IExternalHandler _externalHandler
-    ) OracleModule(_oracle) {
+    ) {
         orderHandler = _orderHandler;
         orderVault = _orderVault;
         swapHandler = _swapHandler;
@@ -277,6 +276,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
         }
 
         if (relayParams.fee.feeSwapPath.length != 0) {
+            IOracle oracle = getOracle();
             if (isSubaccount) {
                 // a malicious subaccount could create a large swap with a negative price impact
                 // and then execute a personal swap with a positive price impact

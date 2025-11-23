@@ -7,24 +7,24 @@ import "../oracle/IOracle.sol";
 import "../oracle/OracleModule.sol";
 import "../role/RoleModule.sol";
 import "../utils/GlobalReentrancyGuard.sol";
+import "../data/DataStoreClient.sol";
 import "../error/ErrorUtils.sol";
 import "../feature/FeatureUtils.sol";
 import "../chain/Chain.sol";
 
-contract BaseHandler is RoleModule, GlobalReentrancyGuard, OracleModule {
+contract BaseHandler is RoleModule, DataStoreClient, GlobalReentrancyGuard, OracleModule {
     EventEmitter public immutable eventEmitter;
 
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
-        EventEmitter _eventEmitter,
-        IOracle _oracle
-    ) RoleModule(_roleStore) GlobalReentrancyGuard(_dataStore) OracleModule(_oracle) {
+        EventEmitter _eventEmitter
+    ) RoleModule(_roleStore) DataStoreClient(_dataStore) {
         eventEmitter = _eventEmitter;
     }
 
     receive() external payable {
-        address wnt = dataStore.getAddress(Keys.WNT);
+        address wnt = _dataStore().getAddress(Keys.WNT);
         if (msg.sender != wnt) {
             revert Errors.InvalidNativeTokenSender(msg.sender);
         }
@@ -34,7 +34,7 @@ contract BaseHandler is RoleModule, GlobalReentrancyGuard, OracleModule {
         uint256 createdAtTime,
         string memory requestType
     ) internal view {
-        uint256 requestExpirationTime = dataStore.getUint(Keys.REQUEST_EXPIRATION_TIME);
+        uint256 requestExpirationTime = _dataStore().getUint(Keys.REQUEST_EXPIRATION_TIME);
         uint256 requestAge = Chain.currentTimestamp() - createdAtTime;
         if (requestAge < requestExpirationTime) {
             revert Errors.RequestNotYetCancellable(requestAge, requestExpirationTime, requestType);
@@ -53,7 +53,7 @@ contract BaseHandler is RoleModule, GlobalReentrancyGuard, OracleModule {
     }
 
     function validateDataListLength(uint256 dataLength) internal view {
-        uint256 maxDataLength = dataStore.getUint(Keys.MAX_DATA_LENGTH);
+        uint256 maxDataLength = _dataStore().getUint(Keys.MAX_DATA_LENGTH);
         if (dataLength > maxDataLength) {
             revert Errors.MaxDataListLengthExceeded(dataLength, maxDataLength);
         }

@@ -9,13 +9,14 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../role/RoleModule.sol";
 import "../oracle/OracleModule.sol";
 import "../utils/BasicMulticall.sol";
+import "../data/DataStoreClient.sol";
 import "../fee/FeeUtils.sol";
 import "../fee/FeeVault.sol";
 import "../v1/IVaultV1.sol";
 import "../v1/IVaultGovV1.sol";
 
 // @title FeeHandler
-contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall {
+contract FeeHandler is ReentrancyGuard, RoleModule, DataStoreClient, OracleModule, BasicMulticall {
     using SafeERC20 for IERC20;
     using EventUtils for EventUtils.AddressItems;
     using EventUtils for EventUtils.UintItems;
@@ -28,7 +29,6 @@ contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall
     uint256 public constant v1 = 1;
     uint256 public constant v2 = 2;
 
-    DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
     IVaultV1 public immutable vaultV1;
     FeeVault public immutable feeVault;
@@ -37,14 +37,12 @@ contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall
 
     constructor(
         RoleStore _roleStore,
-        IOracle _oracle,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
         FeeVault _feeVault,
         IVaultV1 _vaultV1,
         address _gmx
-    ) RoleModule(_roleStore) OracleModule(_oracle) {
-        dataStore = _dataStore;
+    ) RoleModule(_roleStore) DataStoreClient(_dataStore) {
         eventEmitter = _eventEmitter;
         feeVault = _feeVault;
         vaultV1 = _vaultV1;
@@ -251,6 +249,7 @@ contract FeeHandler is ReentrancyGuard, RoleModule, OracleModule, BasicMulticall
         address buybackToken,
         uint256 batchSize
     ) internal view returns (uint256) {
+        IOracle oracle = getOracle();
         uint256 priceTimestamp = oracle.minTimestamp();
         uint256 maxPriceAge = _getUint(Keys.BUYBACK_MAX_PRICE_AGE);
         uint256 currentTimestamp = Chain.currentTimestamp();

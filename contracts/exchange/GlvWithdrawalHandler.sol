@@ -22,12 +22,11 @@ contract GlvWithdrawalHandler is IGlvWithdrawalHandler, BaseHandler, ReentrancyG
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        IOracle _oracle,
         MultichainVault _multichainVault,
         IMultichainTransferRouter _multichainTransferRouter,
         GlvVault _glvVault,
         ISwapHandler _swapHandler
-    ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {
+    ) BaseHandler(_roleStore, _dataStore, _eventEmitter) {
         multichainVault = _multichainVault;
         multichainTransferRouter = _multichainTransferRouter;
         glvVault = _glvVault;
@@ -90,7 +89,7 @@ contract GlvWithdrawalHandler is IGlvWithdrawalHandler, BaseHandler, ReentrancyG
             multichainVault: multichainVault,
             multichainTransferRouter: multichainTransferRouter,
             glvVault: glvVault,
-            oracle: oracle,
+            oracle: getOracle(),
             swapHandler: swapHandler,
             startingGas: startingGas,
             keeper: keeper
