@@ -1159,7 +1159,7 @@ const config: {
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(173, 30 + 18).div(SECONDS_PER_DAY), // 173 LINK / day
       minPositionImpactPoolAmount: expandDecimals(41779, 18), // 41779 LINK
 
-      maxOpenInterest: decimalToFloat(2.1),
+      maxOpenInterest: decimalToFloat(3),
 
       atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
@@ -1408,70 +1408,70 @@ const config: {
 
       atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },
-    {
-      tokens: { indexToken: "GMX", longToken: "GMX", shortToken: "USDC" },
-      virtualTokenIdForIndexToken: hashString("PERP:GMX/USD"),
-      virtualMarketId: hashString("SPOT:GMX/USD"),
+    // {
+    //   tokens: { indexToken: "GMX", longToken: "GMX", shortToken: "USDC" },
+    //   virtualTokenIdForIndexToken: hashString("PERP:GMX/USD"),
+    //   virtualMarketId: hashString("SPOT:GMX/USD"),
 
-      ...baseMarketConfig,
-      ...fundingRateConfig_Default,
-      ...borrowingRateConfig_LowMax_WithHigherBase,
+    //   ...baseMarketConfig,
+    //   ...fundingRateConfig_Default,
+    //   ...borrowingRateConfig_LowMax_WithHigherBase,
 
-      negativePositionImpactFactor: exponentToFloat("0.795469e-6"),
-      positivePositionImpactFactor: exponentToFloat("2.65156e-07"),
-      positionImpactExponentFactor: exponentToFloat("1.76045e0"),
+    //   negativePositionImpactFactor: exponentToFloat("0.795469e-6"),
+    //   positivePositionImpactFactor: exponentToFloat("2.65156e-07"),
+    //   positionImpactExponentFactor: exponentToFloat("1.76045e0"),
 
-      negativeSwapImpactFactor: exponentToFloat("12e-9"),
-      positiveSwapImpactFactor: exponentToFloat("6e-9"),
+    //   negativeSwapImpactFactor: exponentToFloat("12e-9"),
+    //   positiveSwapImpactFactor: exponentToFloat("6e-9"),
 
-      // minCollateralFactor of 0.01 (1%) when open interest is 2,632,000 USD
-      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.8e-9"),
+    //   // minCollateralFactor of 0.01 (1%) when open interest is 2,632,000 USD
+    //   minCollateralFactorForOpenInterestMultiplier: exponentToFloat("3.8e-9"),
 
-      reserveFactor: percentageToFloat("205%"),
-      openInterestReserveFactor: percentageToFloat("200%"),
+    //   reserveFactor: percentageToFloat("205%"),
+    //   openInterestReserveFactor: percentageToFloat("200%"),
 
-      positionImpactPoolDistributionRate: bigNumberify(0),
-      minPositionImpactPoolAmount: expandDecimals(11534, 18), // 11534 GMX
+    //   positionImpactPoolDistributionRate: bigNumberify(0),
+    //   minPositionImpactPoolAmount: expandDecimals(11534, 18), // 11534 GMX
 
-      maxOpenInterest: decimalToFloat(1_800_000),
+    //   maxOpenInterest: decimalToFloat(1_800_000),
 
-      maxPoolUsdForDeposit: decimalToFloat(3_500_000),
+    //   maxPoolUsdForDeposit: decimalToFloat(3_500_000),
 
-      maxLongTokenPoolAmount: expandDecimals(340_000, 18),
-      maxShortTokenPoolAmount: expandDecimals(4_000_000, 6),
+    //   maxLongTokenPoolAmount: expandDecimals(340_000, 18),
+    //   maxShortTokenPoolAmount: expandDecimals(4_000_000, 6),
 
-      atomicSwapFeeFactor: percentageToFloat("3%"),
-    },
-    {
-      tokens: { indexToken: "GMX", longToken: "GMX", shortToken: "GMX" },
-      virtualTokenIdForIndexToken: hashString("PERP:GMX/USD"),
+    //   atomicSwapFeeFactor: percentageToFloat("3%"),
+    // },
+    // {
+    //   tokens: { indexToken: "GMX", longToken: "GMX", shortToken: "GMX" },
+    //   virtualTokenIdForIndexToken: hashString("PERP:GMX/USD"),
 
-      ...singleTokenMarketConfig,
-      reserveFactor: percentageToFloat("105%"),
-      openInterestReserveFactor: percentageToFloat("100%"),
-      maxPnlFactorForTraders: percentageToFloat("50%"),
+    //   ...singleTokenMarketConfig,
+    //   reserveFactor: percentageToFloat("105%"),
+    //   openInterestReserveFactor: percentageToFloat("100%"),
+    //   maxPnlFactorForTraders: percentageToFloat("50%"),
 
-      ...fundingRateConfig_High,
-      ...borrowingRateConfig_HighMax_WithHigherBase,
+    //   ...fundingRateConfig_High,
+    //   ...borrowingRateConfig_HighMax_WithHigherBase,
 
-      negativePositionImpactFactor: exponentToFloat("5e-10"),
-      positivePositionImpactFactor: exponentToFloat("2.5e-10"),
-      positionImpactExponentFactor: exponentToFloat("2.2e0"),
+    //   negativePositionImpactFactor: exponentToFloat("5e-10"),
+    //   positivePositionImpactFactor: exponentToFloat("2.5e-10"),
+    //   positionImpactExponentFactor: exponentToFloat("2.2e0"),
 
-      positiveMaxPositionImpactFactor: percentageToFloat("0.5%"),
-      negativeMaxPositionImpactFactor: percentageToFloat("0.5%"),
-      maxPositionImpactFactorForLiquidations: bigNumberify(0), // 0%
+    //   positiveMaxPositionImpactFactor: percentageToFloat("0.5%"),
+    //   negativeMaxPositionImpactFactor: percentageToFloat("0.5%"),
+    //   maxPositionImpactFactorForLiquidations: bigNumberify(0), // 0%
 
-      minCollateralFactor: percentageToFloat("1%"), // 100x leverage
-      minCollateralFactorForLiquidation: percentageToFloat("1%"), // 200x leverage
-      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
+    //   minCollateralFactor: percentageToFloat("1%"), // 100x leverage
+    //   minCollateralFactorForLiquidation: percentageToFloat("1%"), // 200x leverage
+    //   minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.5e-9"),
 
-      maxOpenInterest: decimalToFloat(750_000),
-      maxPoolUsdForDeposit: decimalToFloat(1250_000),
+    //   maxOpenInterest: decimalToFloat(750_000),
+    //   maxPoolUsdForDeposit: decimalToFloat(1250_000),
 
-      maxLongTokenPoolAmount: expandDecimals(55_000, 18),
-      maxShortTokenPoolAmount: expandDecimals(55_000, 18),
-    },
+    //   maxLongTokenPoolAmount: expandDecimals(55_000, 18),
+    //   maxShortTokenPoolAmount: expandDecimals(55_000, 18),
+    // },
     {
       tokens: { indexToken: "PEPE", longToken: "PEPE", shortToken: "USDC" },
       virtualTokenIdForIndexToken: hashString("PERP:PEPE/USD"),
@@ -3890,7 +3890,7 @@ const config: {
       openInterestReserveFactor: percentageToFloat("100%"),
       maxPnlFactorForTraders: percentageToFloat("90%"),
 
-      maxOpenInterest: decimalToFloat(2.1),
+      maxOpenInterest: decimalToFloat(3),
       maxPoolUsdForDeposit: decimalToFloat(3_000_000),
 
       maxLongTokenPoolAmount: expandDecimals(915, 18), // ~4M USD (2x max open interest)
