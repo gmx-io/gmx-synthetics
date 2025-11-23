@@ -1159,7 +1159,7 @@ const config: {
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(173, 30 + 18).div(SECONDS_PER_DAY), // 173 LINK / day
       minPositionImpactPoolAmount: expandDecimals(41779, 18), // 41779 LINK
 
-      maxOpenInterest: decimalToFloat(16_000_000),
+      maxOpenInterest: decimalToFloat(2.1),
 
       atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
@@ -3890,7 +3890,7 @@ const config: {
       openInterestReserveFactor: percentageToFloat("100%"),
       maxPnlFactorForTraders: percentageToFloat("90%"),
 
-      maxOpenInterest: decimalToFloat(2_000_000),
+      maxOpenInterest: decimalToFloat(2.1),
       maxPoolUsdForDeposit: decimalToFloat(3_000_000),
 
       maxLongTokenPoolAmount: expandDecimals(915, 18), // ~4M USD (2x max open interest)
