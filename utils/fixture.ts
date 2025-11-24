@@ -156,6 +156,7 @@ async function setup() {
   const feeDistributor = await hre.ethers.getContract("FeeDistributor");
   const feeDistributorUtils = await hre.ethers.getContract("FeeDistributorUtils");
   const contributorHandler = await hre.ethers.getContract("ContributorHandler");
+  const mockFlags = await hre.ethers.getContract("MockFlags");
 
   const ethUsdMarketAddress = getMarketTokenAddress(
     wnt.address,
@@ -400,6 +401,7 @@ async function setup() {
       feeDistributor,
       feeDistributorUtils,
       contributorHandler,
+      mockFlags,
     },
     props: { oracleSalt, signerIndexes: [0, 1, 2, 3, 4, 5, 6], executionFee: "1000000000000000" },
   };

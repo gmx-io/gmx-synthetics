@@ -14,6 +14,7 @@ import vaultV1Config from "./vaultV1";
 import { isExistingMainnetDeployment } from "./chains";
 import layerZeroEndpointConfig from "./layerZero";
 import feeDistributorConfig from "./feeDistributor";
+import chainlinkFlagsConfig from "./chainlink";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 extendEnvironment(async (hre: HardhatRuntimeEnvironment) => {
@@ -32,5 +33,6 @@ extendEnvironment(async (hre: HardhatRuntimeEnvironment) => {
     isExistingMainnetDeployment: isExistingMainnetDeployment(hre),
     getLayerZeroEndpoint: _.memoize(async () => layerZeroEndpointConfig(hre)),
     getFeeDistributor: _.memoize(async () => feeDistributorConfig(hre)),
+    getChainlinkFlags: _.memoize(async () => chainlinkFlagsConfig(hre)),
   };
 });
