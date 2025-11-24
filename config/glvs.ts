@@ -15,7 +15,7 @@ type GlvConfig = {
   // not required, default value will be used if not specified
   transferGasLimit?: number;
 
-  shiftMaxPriceImpactFactor: BigNumberish;
+  shiftMaxLossFactor: BigNumberish;
   shiftMinInterval: number;
   minTokensForFirstGlvDeposit: BigNumberish;
   markets: {
@@ -53,7 +53,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         address: "0x528A5bac7E746C9A509A1f4F6dF58A03d44279F9",
         longToken: "WETH",
         shortToken: "USDC",
-        shiftMaxPriceImpactFactor: percentageToFloat("0.025%"),
+        shiftMaxLossFactor: percentageToFloat("0.025%"),
         shiftMinInterval: 30 * 60, // 30 minutes
         minTokensForFirstGlvDeposit: expandDecimals(1, 18),
         markets: [
@@ -70,7 +70,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("NEAR", arbitrum_ethUsdcDefaultCap, 1.6),
           createGlvMarketConfig("SHIB", arbitrum_ethUsdcDefaultCap, 1.51),
           createGlvMarketConfig("EIGEN", arbitrum_ethUsdcDefaultCap, 1.75),
-          createGlvMarketConfig("UNI", arbitrum_ethUsdcDefaultCap, 1.28),
+          createGlvMarketConfig("UNI", arbitrum_ethUsdcDefaultCap, 1.28, true),
           createGlvMarketConfig("POL", arbitrum_ethUsdcDefaultCap, 1.36),
           createGlvMarketConfig("SEI", arbitrum_ethUsdcDefaultCap, 1.33),
           createGlvMarketConfig("APT", arbitrum_ethUsdcDefaultCap, 1.36),
@@ -93,7 +93,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("CVX", arbitrum_ethUsdcDefaultCap, 1),
           createGlvMarketConfig("OKB", arbitrum_ethUsdcDefaultCap, 1),
           createGlvMarketConfig("PEPE", arbitrum_ethUsdcDefaultCap, 1),
-          createGlvMarketConfig("AAVE", arbitrum_ethUsdcDefaultCap, 1),
+          createGlvMarketConfig("AAVE", arbitrum_ethUsdcDefaultCap, 1, true),
           createGlvMarketConfig("AERO", arbitrum_ethUsdcDefaultCap, 1),
           createGlvMarketConfig("BRETT", arbitrum_ethUsdcDefaultCap, 1),
           createGlvMarketConfig("WLFI", arbitrum_ethUsdcDefaultCap, 1),
@@ -103,6 +103,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("LINK", arbitrum_ethUsdcDefaultCap, 1),
           createGlvMarketConfig("ZORA", arbitrum_ethUsdcDefaultCap, 1),
           createGlvMarketConfig("KTA", arbitrum_ethUsdcDefaultCap, 1),
+          createGlvMarketConfig("AVNT", arbitrum_ethUsdcDefaultCap, 1),
+          createGlvMarketConfig("LINEA", arbitrum_ethUsdcDefaultCap, 1),
         ],
       },
       {
@@ -111,7 +113,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         address: "0xdF03EEd325b82bC1d4Db8b49c30ecc9E05104b96",
         longToken: "WBTC.e",
         shortToken: "USDC",
-        shiftMaxPriceImpactFactor: percentageToFloat("0.025%"),
+        shiftMaxLossFactor: percentageToFloat("0.025%"),
         shiftMinInterval: 30 * 60, // 30 minutes
         minTokensForFirstGlvDeposit: expandDecimals(1, 18),
         markets: [
@@ -153,6 +155,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("XPL", arbitrum_btcUsdcDefaultCap, 1),
           createGlvMarketConfig("BNB", arbitrum_btcUsdcDefaultCap, 1),
           createGlvMarketConfig("SOL", arbitrum_btcUsdcDefaultCap, 1),
+          createGlvMarketConfig("ASTER", arbitrum_btcUsdcDefaultCap, 1),
+          createGlvMarketConfig("0G", arbitrum_btcUsdcDefaultCap, 1),
         ],
       },
     ],
@@ -163,7 +167,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         symbol: "GLV [WAVAX-USDC]",
         longToken: "WAVAX",
         shortToken: "USDC",
-        shiftMaxPriceImpactFactor: percentageToFloat("0.1%"),
+        shiftMaxLossFactor: percentageToFloat("0.1%"),
         shiftMinInterval: 60 * 60, // 1 hour
         minTokensForFirstGlvDeposit: expandDecimals(1, 18),
         markets: [
@@ -186,7 +190,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         address: "0xAb3567e55c205c62B141967145F37b7695a9F854",
         longToken: "WETH",
         shortToken: "USDC.SG",
-        shiftMaxPriceImpactFactor: percentageToFloat("0.025%"),
+        shiftMaxLossFactor: percentageToFloat("0.025%"),
         shiftMinInterval: 300, // 5 minutes
         minTokensForFirstGlvDeposit: expandDecimals(1, 18),
         markets: [
@@ -203,7 +207,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         longToken: "WETH",
         shortToken: "USDC",
         transferGasLimit: 200_000,
-        shiftMaxPriceImpactFactor: percentageToFloat("2%"),
+        shiftMaxLossFactor: percentageToFloat("2%"),
         shiftMinInterval: 300, // 5 minutes
         minTokensForFirstGlvDeposit: expandDecimals(2, 18),
         markets: [
@@ -242,7 +246,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         longToken: "WBTC",
         shortToken: "USDC",
         transferGasLimit: 200_000,
-        shiftMaxPriceImpactFactor: percentageToFloat("2%"),
+        shiftMaxLossFactor: percentageToFloat("2%"),
         shiftMinInterval: 300, // 5 minutes
         minTokensForFirstGlvDeposit: expandDecimals(2, 18),
         markets: [

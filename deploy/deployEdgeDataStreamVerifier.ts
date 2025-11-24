@@ -6,6 +6,7 @@ const func = createDeployFunction({
     const oracleConfig = await hre.gmx.getOracle();
     return [oracleConfig.edgeOracleSigner];
   },
+  id: "EdgeDataStreamVerifier_6",
 });
 
 export default func;

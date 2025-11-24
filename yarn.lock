@@ -1698,6 +1698,16 @@
   resolved "https://registry.yarnpkg.com/@layerzerolabs/lz-evm-messagelib-v2/-/lz-evm-messagelib-v2-2.0.11.tgz#8437a2a30e9794c56393d83b3f9d2671aadf2648"
   integrity sha512-i6nZvzxzH+3bMzGRxIzf6fFXTzxQIZ1vyduAoFTy3U2zK9xZUHunKFfpC+vqCY1goNzjBquX4VnClWMWlc5ZIA==
 
+"@layerzerolabs/lz-evm-messagelib-v2@3.0.74":
+  version "3.0.74"
+  resolved "https://registry.yarnpkg.com/@layerzerolabs/lz-evm-messagelib-v2/-/lz-evm-messagelib-v2-3.0.74.tgz#63108f0681ec76df30370477452058aacbccda2d"
+  integrity sha512-bXgnnr6ZZLqf0OSpOkXEpSP/t7sCoI6bheUyP/nZg3GvNutbseTkGXlv46+QG447KovuTURZCBM4NB//bj8hsQ==
+
+"@layerzerolabs/lz-evm-oapp-v2@3.0.75":
+  version "3.0.75"
+  resolved "https://registry.yarnpkg.com/@layerzerolabs/lz-evm-oapp-v2/-/lz-evm-oapp-v2-3.0.75.tgz#e0666cea2bb61ffe113c1e3af9c9c62aa7dbeb77"
+  integrity sha512-O2B56PVTltUjjTbb8JVVS+l4S9zws9lgi/ufXU5yFwMqwgByRv+PJapBZn359a6dhe9wZpjRaDDbjor7FEth7g==
+
 "@layerzerolabs/lz-evm-oapp-v2@~2.3.25":
   version "2.3.44"
   resolved "https://registry.yarnpkg.com/@layerzerolabs/lz-evm-oapp-v2/-/lz-evm-oapp-v2-2.3.44.tgz#e6a2e9fc60e7f21009138405cc21e3bcfe48177d"
@@ -1781,6 +1791,11 @@
   integrity sha512-QqazLEl9KEPsipU/3m5eFDhyse+sG4bO2FWUEf/Kuee4JW6P3iIBI9wg0QfalUqLj0HL0ChFHL3yRTZVqzxrww==
   dependencies:
     ethers "^5.7.2"
+
+"@layerzerolabs/oft-evm@3.1.2":
+  version "3.1.2"
+  resolved "https://registry.yarnpkg.com/@layerzerolabs/oft-evm/-/oft-evm-3.1.2.tgz#599056728ea065038092084ba490579f8e88de55"
+  integrity sha512-2aqbnZW8SuLzhSBpQEraEl4LJYi97oNqxg5GTWoIvQNebQ/qkbppEs6kaEQxFqgo+I78v6Vu3SB7XIwpvG7K/w==
 
 "@ledgerhq/connect-kit-loader@^1.1.0":
   version "1.1.2"
@@ -12648,6 +12663,11 @@ solidity-ast@^0.4.60:
   version "0.4.61"
   resolved "https://registry.yarnpkg.com/solidity-ast/-/solidity-ast-0.4.61.tgz#b51720ece553a2c7d84551ee5a7a2306080d23d0"
   integrity sha512-OYBJYcYyG7gLV0VuXl9CUrvgJXjV/v0XnR4+1YomVe3q+QyENQXJJxAEASUz4vN6lMAl+C8RSRSr5MBAz09f6w==
+
+solidity-bytes-utils@0.8.3:
+  version "0.8.3"
+  resolved "https://registry.yarnpkg.com/solidity-bytes-utils/-/solidity-bytes-utils-0.8.3.tgz#e509fc41d9a6200395afaae2efd1525bd4cb2d7f"
+  integrity sha512-sbOHjKF9miqASaqYYC1vvxNnBrzA/wuFPQlOle7rZOSkDiFmCd5x8wQfx2vN95tNGfy8Cf1e5QumW8ZwcByBuQ==
 
 solidity-code-metrics@^0.0.22:
   version "0.0.22"

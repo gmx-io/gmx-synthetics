@@ -42,6 +42,9 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       tokenTransferGasLimit: 200_000,
       nativeTokenTransferGasLimit: 50_000,
 
+      setTraderReferralCodeGasLimit: 200_000,
+      registerCodeGasLimit: 200_000,
+
       estimatedGasFeeBaseAmount: 0,
       estimatedGasPerOraclePrice: 0,
       estimatedGasFeeMultiplierFactor: 0,
@@ -93,7 +96,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     minAdditionalGasForExecution: 1_000_000,
     refundExecutionFeeGasLimit: 200_000,
 
-    depositGasLimit: 1_950_000,
+    depositGasLimit: 2_050_000,
     withdrawalGasLimit: 1_500_000,
     shiftGasLimit: 2_500_000,
 
@@ -104,9 +107,9 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     createGlvWithdrawalGasLimit: 5_000_000,
 
     singleSwapGasLimit: 1_000_000, // measured gas required for a swap in a market increase order: ~600,000
-    increaseOrderGasLimit: 3_700_000,
-    decreaseOrderGasLimit: 3_700_000,
-    swapOrderGasLimit: 3_200_000,
+    increaseOrderGasLimit: 3_900_000,
+    decreaseOrderGasLimit: 3_900_000,
+    swapOrderGasLimit: 3_400_000,
 
     glvPerMarketGasLimit: 100_000,
     glvDepositGasLimit: 2_000_000,
@@ -115,6 +118,9 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
 
     tokenTransferGasLimit: 200_000,
     nativeTokenTransferGasLimit: 50_000,
+
+    setTraderReferralCodeGasLimit: 200_000,
+    registerCodeGasLimit: 200_000,
 
     estimatedGasFeeBaseAmount: 600_000,
     estimatedGasPerOraclePrice: 250_000,
@@ -167,6 +173,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       multichainProviders: {
         "0x6fddB6270F6c71f31B62AE0260cfa8E2e2d186E0": true, // StargatePoolNative
         "0x543BdA7c6cA4384FE90B1F5929bb851F52888983": true, // StargatePoolUSDC
+        "0xB956d6FDFB235636DE7885C5166756823bb27e3a": true, // StargatePoolUSDT
         "0xe4EBcAC4a2e6CBEE385eE407f7D5E278Bc07e11e": true, // MarketToken_Adapter
         "0xD5BdEa6dC8E4B7429b72675386fC903DEf06599d": true, // GlvToken_Adapter
       },
@@ -221,6 +228,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       multichainProviders: {
         "0xA45B5130f36CDcA45667738e2a258AB09f4A5f7F": true, // StargatePoolNative
         "0xe8CDF27AcD73a434D661C84887215F7598e7d0d3": true, // StargatePoolUSDC
+        "0xcE8CcA271Ebc0533920C83d39F417ED6A0abB7D0": true, // StargatePoolUSDT
         "0x91dd54AA8BA9Dfde8b956Cfb709a7c418f870e21": true, // BTC [WBTC-USDC] GM Adapter
         "0x27Ef981E6fcB274a6C5C75983725d265Fd3dCdac": true, // WBTC-USDC GLV Adapter
         "0xfcff5015627B8ce9CeAA7F5b38a6679F65fE39a7": true, // ETH [WETH-USDC] GM Adapter
@@ -249,6 +257,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     avalanche: {
       multichainProviders: {
         "0x5634c4a5FEd09819E3c46D86A965Dd9447d86e47": true, // StargatePoolUSDC
+        "0x12dC9256Acc9895B076f6638D628382881e62CeE": true, // StargatePoolUSDT
       },
       multichainEndpoints: {
         "0x1a44076050125825900e736c501f859c50fE728c": true, // LZ Endpoint
@@ -256,10 +265,12 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       srcChainIds: {
         8453: true, // Base
         43114: true, // Avalanche
+        56: true, // BSC
       },
       eids: {
         8453: 30184, // Base
         43114: 30106, // Avalanche
+        56: 30102, // BSC
       },
     },
     botanix: {

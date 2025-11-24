@@ -46,7 +46,8 @@ contract BaseHandler is RoleModule, DataStoreClient, GlobalReentrancyGuard, Orac
             OracleUtils.isOracleError(errorSelector) ||
             errorSelector == Errors.DisabledFeature.selector ||
             errorSelector == Errors.InsufficientGasLeftForCallback.selector ||
-            errorSelector == Errors.InsufficientGasForCancellation.selector
+            errorSelector == Errors.InsufficientGasForCancellation.selector ||
+            errorSelector == Errors.InsufficientGasForAutoCancellation.selector
         ) {
             ErrorUtils.revertWithCustomError(reasonBytes);
         }

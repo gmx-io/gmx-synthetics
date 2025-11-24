@@ -27,7 +27,11 @@ describe("Exchange.DecreasePosition", () => {
   it("uncapped price impact", async () => {
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 8));
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 7));
-    await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
+    await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(2, 0));
+    await dataStore.setUint(
+      keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, false),
+      decimalToFloat(2, 0)
+    );
 
     await dataStore.setUint(keys.maxLendableImpactFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 1)); // 20%
 
@@ -149,7 +153,11 @@ describe("Exchange.DecreasePosition", () => {
   it("capped price impact", async () => {
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 8));
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 7));
-    await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
+    await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(2, 0));
+    await dataStore.setUint(
+      keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, false),
+      decimalToFloat(2, 0)
+    );
 
     await dataStore.setUint(keys.maxPositionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 4));
     await dataStore.setUint(keys.maxPositionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 3));

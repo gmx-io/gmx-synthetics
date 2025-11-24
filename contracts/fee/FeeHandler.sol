@@ -52,7 +52,6 @@ contract FeeHandler is ReentrancyGuard, RoleModule, DataStoreClient, OracleModul
     // @dev withdraw fees in buybackTokens from this contract
     // note that claimFees should be called to claim pending fees if needed
     // before calling this function
-    // @param marketTokens the markets from which to withdraw fees
     // @param buybackToken the token for which to withdraw fees
     function withdrawFees(address buybackToken) external nonReentrant onlyFeeKeeper {
         _validateBuybackToken(_getBatchSize(buybackToken), buybackToken);

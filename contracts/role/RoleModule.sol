@@ -20,6 +20,13 @@ contract RoleModule {
         roleStore = _roleStore;
     }
 
+    modifier onlySelfOrController() {
+        if (msg.sender != address(this) && !roleStore.hasRole(msg.sender, Role.CONTROLLER)) {
+            revert Errors.Unauthorized(msg.sender, "SELF_OR_CONTROLLER");
+        }
+        _;
+    }
+
     /**
      * @dev Only allows the contract's own address to call the function.
      */
@@ -163,6 +170,14 @@ contract RoleModule {
      */
     modifier onlyClaimAdmin() {
         _validateRole(Role.CLAIM_ADMIN, "CLAIM_ADMIN");
+        _;
+    }
+
+    /**
+     * @dev Only allows addresses with the MULTICHAIN_READER role to call the function.
+     */
+    modifier onlyMultichainReader() {
+        _validateRole(Role.MULTICHAIN_READER, "MULTICHAIN_READER");
         _;
     }
 

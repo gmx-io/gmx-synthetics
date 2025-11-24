@@ -53,7 +53,9 @@ library PositionPricingUtils {
     struct GetPriceImpactUsdParams {
         DataStore dataStore;
         Market.Props market;
+        Price.Props indexTokenPrice;
         int256 usdDelta;
+        int256 tokenDelta;
         bool isLong;
     }
 
@@ -157,7 +159,8 @@ library PositionPricingUtils {
     // @dev get the price impact in USD for a position increase / decrease and whether the balance was improved
     // @param params GetPriceImpactUsdParams and the balanceWasImproved boolean
     function getPriceImpactUsd(GetPriceImpactUsdParams memory params) internal view returns (int256, bool) {
-        OpenInterestParams memory openInterestParams = getNextOpenInterest(params);
+        bool useOpenInterestInTokens = params.dataStore.getBool(Keys.USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE);
+        OpenInterestParams memory openInterestParams = getNextOpenInterest(params, useOpenInterestInTokens);
 
         (int256 priceImpactUsd, bool balanceWasImproved) = _getPriceImpactUsd(params.dataStore, params.market.marketToken, openInterestParams);
 
@@ -172,8 +175,18 @@ library PositionPricingUtils {
         // disincentivise the balancing of pools
         if (priceImpactUsd >= 0) { return (priceImpactUsd, balanceWasImproved); }
 
-        (bool hasVirtualInventory, int256 virtualInventory) = MarketUtils.getVirtualInventoryForPositions(params.dataStore, params.market.indexToken);
-        if (!hasVirtualInventory) { return (priceImpactUsd, balanceWasImproved); }
+        bool hasVirtualInventory;
+        int256 virtualInventory;
+
+        if (useOpenInterestInTokens) {
+            (hasVirtualInventory, virtualInventory) = MarketUtils.getVirtualInventoryForPositionsInTokens(params.dataStore, params.market.indexToken);
+            virtualInventory = virtualInventory * params.indexTokenPrice.midPrice().toInt256();
+            if (!hasVirtualInventory) { return (priceImpactUsd, balanceWasImproved); }
+        } else {
+            (hasVirtualInventory, virtualInventory) = MarketUtils.getVirtualInventoryForPositions(params.dataStore, params.market.indexToken);
+            if (!hasVirtualInventory) { return (priceImpactUsd, balanceWasImproved); }
+        }
+
 
         OpenInterestParams memory openInterestParamsForVirtualInventory = getNextOpenInterestForVirtualInventory(params, virtualInventory);
         (int256 priceImpactUsdForVirtualInventory, bool balanceWasImprovedForVirtualInventory) = _getPriceImpactUsd(params.dataStore, params.market.marketToken, openInterestParamsForVirtualInventory);
@@ -194,11 +207,11 @@ library PositionPricingUtils {
         // adding $1999 USDC into the pool will reduce absolute balance from $1000 to $999 but it does not
         // help rebalance the pool much, the isSameSideRebalance value helps avoid gaming using this case
         bool isSameSideRebalance = openInterestParams.longOpenInterest <= openInterestParams.shortOpenInterest == openInterestParams.nextLongOpenInterest <= openInterestParams.nextShortOpenInterest;
-        uint256 impactExponentFactor = dataStore.getUint(Keys.positionImpactExponentFactorKey(market));
 
         bool balanceWasImproved = nextDiffUsd < initialDiffUsd;
         if (isSameSideRebalance) {
             uint256 impactFactor = MarketUtils.getAdjustedPositionImpactFactor(dataStore, market, balanceWasImproved);
+            uint256 impactExponentFactor = MarketUtils.getAdjustedPositionImpactExponentFactor(dataStore, market, balanceWasImproved);
 
             return (
                 PricingUtils.getPriceImpactUsdForSameSideRebalance(
@@ -211,6 +224,7 @@ library PositionPricingUtils {
             );
         } else {
             (uint256 positiveImpactFactor, uint256 negativeImpactFactor) = MarketUtils.getAdjustedPositionImpactFactors(dataStore, market);
+            (uint256 positiveExponentFactor, uint256 negativeExponentFactor) = MarketUtils.getAdjustedPositionImpactExponentFactors(dataStore, market);
 
             return (
                 PricingUtils.getPriceImpactUsdForCrossoverRebalance(
@@ -218,7 +232,8 @@ library PositionPricingUtils {
                     nextDiffUsd,
                     positiveImpactFactor,
                     negativeImpactFactor,
-                    impactExponentFactor
+                    positiveExponentFactor,
+                    negativeExponentFactor
                 ),
                 balanceWasImproved
             );
@@ -229,19 +244,63 @@ library PositionPricingUtils {
     // @param params GetPriceImpactUsdParams
     // @return OpenInterestParams
     function getNextOpenInterest(
-        GetPriceImpactUsdParams memory params
+        GetPriceImpactUsdParams memory params,
+        bool useOpenInterestInTokens
     ) internal view returns (OpenInterestParams memory) {
-        uint256 longOpenInterest = MarketUtils.getOpenInterest(
-            params.dataStore,
-            params.market,
-            true
-        );
+        // if useOpenInterestInTokens is true, then the price impact can vary depending on the index token price
+        // this occurs if a curve is used and the openInterestInTokens is not entirely balanced
+        //
+        // balanced case: longOpenInterestInTokens is 1, shortOpenInterestInTokens is 1, price is $5000
+        // price impact is 0.01% per $500
+        // if sizeDeltaUsd is $1000, then price impact would be 0.02%, this would not change even if the price is different
+        //
+        // imbalanced case: longOpenInterestInTokens is 2, shortOpenInterestInTokens is 1, price is $5000
+        // if long sizeDeltaUsd is $1000, then the action reduces balance from (2 - 1) * ($5000) = $5000 to $6000
+        // if the price is $6000
+        // then the action would reduce balance from (2 - 1) * ($6000) = $6000 to $7000
+        //
+        // there is also a case where the sizeDeltaUsd can exceed the openInterestInTokensInUsd value
+        // e.g. a user opens a 1 index token long and short position at price $5000, so long / short sizeInUsd is 5000, long / short sizeInTokens is 1
+        // the index token price decreases to $4500
+        // the user decreases the long position
+        // openInterestInTokensInUsd is $4500 but sizeDeltaUsd is $5000
+        // to prevent overflow issues, the tokenDelta is used to calculate the usdDelta if useOpenInterestInTokens is true
 
-        uint256 shortOpenInterest = MarketUtils.getOpenInterest(
-            params.dataStore,
-            params.market,
-            false
-        );
+        uint256 longOpenInterest;
+        uint256 shortOpenInterest;
+
+        if (useOpenInterestInTokens) {
+            longOpenInterest = MarketUtils.getOpenInterestInTokensInUsd(
+                params.dataStore,
+                params.market,
+                true,
+                params.indexTokenPrice.midPrice()
+            );
+
+            shortOpenInterest = MarketUtils.getOpenInterestInTokensInUsd(
+                params.dataStore,
+                params.market,
+                false,
+                params.indexTokenPrice.midPrice()
+            );
+
+            // note that for decrease position, tokenDelta is based on the
+            // ratio of position.sizeInUsd and position.sizeInTokens
+            // so different users would experience different price impacts
+            // for the same decrease in USD size
+            params.usdDelta = params.tokenDelta * params.indexTokenPrice.midPrice().toInt256();
+        } else {
+            longOpenInterest = MarketUtils.getOpenInterest(
+                params.dataStore,
+                params.market,
+                true
+            );
+            shortOpenInterest = MarketUtils.getOpenInterest(
+                params.dataStore,
+                params.market,
+                false
+            );
+        }
 
         return getNextOpenInterestParams(params, longOpenInterest, shortOpenInterest);
     }
@@ -286,18 +345,23 @@ library PositionPricingUtils {
         uint256 nextLongOpenInterest = longOpenInterest;
         uint256 nextShortOpenInterest = shortOpenInterest;
 
+        // with single token markets, because getOpenInterest is rounded down when divided by two
+        // it is possible for the usdDelta to exceed the calculated open interest
+        // to prevent reverts here, nextLongOpenInterest and nextShortOpenInterest is set to 0 for this case
+        // there is a separate validation in applyDeltaToOpenInterest and applyDeltaToOpenInterestInTokens
+        // to prevent orders that would result in a negative open interest
         if (params.isLong) {
             if (params.usdDelta < 0 && (-params.usdDelta).toUint256() > longOpenInterest) {
-                revert Errors.UsdDeltaExceedsLongOpenInterest(params.usdDelta, longOpenInterest);
+                nextLongOpenInterest = 0;
+            } else {
+                nextLongOpenInterest = Calc.sumReturnUint256(longOpenInterest, params.usdDelta);
             }
-
-            nextLongOpenInterest = Calc.sumReturnUint256(longOpenInterest, params.usdDelta);
         } else {
             if (params.usdDelta < 0 && (-params.usdDelta).toUint256() > shortOpenInterest) {
-                revert Errors.UsdDeltaExceedsShortOpenInterest(params.usdDelta, shortOpenInterest);
+                nextShortOpenInterest = 0;
+            } else {
+                nextShortOpenInterest = Calc.sumReturnUint256(shortOpenInterest, params.usdDelta);
             }
-
-            nextShortOpenInterest = Calc.sumReturnUint256(shortOpenInterest, params.usdDelta);
         }
 
         OpenInterestParams memory openInterestParams = OpenInterestParams(

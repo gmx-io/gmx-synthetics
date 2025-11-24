@@ -17,6 +17,7 @@ contract GlvDepositHandler is IGlvDepositHandler, BaseHandler, ReentrancyGuard {
     IMultichainTransferRouter public immutable multichainTransferRouter;
     GlvVault public immutable glvVault;
     ISwapHandler public immutable swapHandler;
+    IDepositHandler public immutable depositHandler;
 
     constructor(
         RoleStore _roleStore,
@@ -25,12 +26,14 @@ contract GlvDepositHandler is IGlvDepositHandler, BaseHandler, ReentrancyGuard {
         MultichainVault _multichainVault,
         IMultichainTransferRouter _multichainTransferRouter,
         GlvVault _glvVault,
-        ISwapHandler _swapHandler
+        ISwapHandler _swapHandler,
+        IDepositHandler _depositHandler
     ) BaseHandler(_roleStore, _dataStore, _eventEmitter) {
         multichainVault = _multichainVault;
         multichainTransferRouter = _multichainTransferRouter;
         glvVault = _glvVault;
         swapHandler = _swapHandler;
+        depositHandler = _depositHandler;
     }
 
     function createGlvDeposit(
@@ -77,6 +80,7 @@ contract GlvDepositHandler is IGlvDepositHandler, BaseHandler, ReentrancyGuard {
             key: key,
             dataStore: dataStore,
             eventEmitter: eventEmitter,
+            depositHandler: depositHandler,
             multichainVault: multichainVault,
             multichainTransferRouter: multichainTransferRouter,
             glvVault: glvVault,
@@ -103,6 +107,7 @@ contract GlvDepositHandler is IGlvDepositHandler, BaseHandler, ReentrancyGuard {
             eventEmitter: eventEmitter,
             multichainVault: multichainVault,
             glvVault: glvVault,
+            oracle: oracle,
             key: key,
             keeper: msg.sender,
             startingGas: startingGas,
@@ -126,6 +131,7 @@ contract GlvDepositHandler is IGlvDepositHandler, BaseHandler, ReentrancyGuard {
             eventEmitter: eventEmitter,
             multichainVault: multichainVault,
             glvVault: glvVault,
+            oracle: oracle,
             key: key,
             keeper: glvDeposit.account(),
             startingGas: startingGas,

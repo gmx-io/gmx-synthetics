@@ -98,6 +98,9 @@ library RelayUtils {
     bytes32 public constant SET_TRADER_REFERRAL_CODE_TYPEHASH =
         keccak256(bytes("SetTraderReferralCode(bytes32 referralCode,bytes32 relayParams)"));
 
+    bytes32 public constant REGISTER_CODE_TYPEHASH =
+        keccak256(bytes("RegisterCode(bytes32 referralCode,bytes32 relayParams)"));
+
     bytes32 public constant CREATE_DEPOSIT_TYPEHASH =
         keccak256(
             bytes(
@@ -596,6 +599,20 @@ library RelayUtils {
             keccak256(
                 abi.encode(
                     SET_TRADER_REFERRAL_CODE_TYPEHASH,
+                    referralCode,
+                    _getRelayParamsHash(relayParams)
+                )
+            );
+    }
+
+    function getRegisterCodeStructHash(
+        IRelayUtils.RelayParams calldata relayParams,
+        bytes32 referralCode
+    ) external pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    REGISTER_CODE_TYPEHASH,
                     referralCode,
                     _getRelayParamsHash(relayParams)
                 )

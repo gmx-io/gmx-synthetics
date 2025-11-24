@@ -105,6 +105,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         (address account, uint256 srcChainId, uint256 amountLD, bytes memory data) = _decodeLzComposeMsg(message);
 
         address token = IStargate(from).token();
+
         if (token == address(0x0)) {
             // `from` is StargatePoolNative
             TokenUtils.depositAndSendWrappedNativeToken(dataStore, address(multichainVault), amountLD);
@@ -125,13 +126,25 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
             srcChainId
         );
 
+        // Handle native token top-up before other actions to ensure the user has the ability to
+        // pay relay and execution fees required by subsequent actions (Deposit, Withdrawal, etc.)
+        uint256 expectedNativeValue = 0;
+        if (data.length != 0) {
+            (, uint256 decodedExpectedNativeValue, ) = abi.decode(data, (ActionType, uint256, bytes));
+            expectedNativeValue = decodedExpectedNativeValue;
+        }
+        if (expectedNativeValue != 0 || msg.value != 0) {
+            _handleNativeTopUp(account, srcChainId, expectedNativeValue);
+        }
+
+
         // note that for these functions, the remaining gas must be sufficient
         // otherwise the function will revert
         // if the action cannot be completed due to gas issues, the user would
         // need to manually call the function with the right amount of gas
         // srcChainId could be zero when returned from _decodeLzComposeMsg, skip follow up actions in this case
         if (srcChainId != 0 && data.length != 0) {
-            (ActionType actionType, bytes memory actionData) = abi.decode(data, (ActionType, bytes));
+            (ActionType actionType, , bytes memory actionData) = abi.decode(data, (ActionType, uint256, bytes));
 
             // this event is emitted even though the actionType may not be valid
             MultichainEventUtils.emitMultichainBridgeAction(eventEmitter, address(this), account, srcChainId, uint256(actionType));
@@ -144,6 +157,8 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
                 _handleGlvDeposit(account, srcChainId, actionType, actionData);
             } else if (actionType == ActionType.SetTraderReferralCode) {
                 _handleSetTraderReferralCode(account, srcChainId, actionType, actionData);
+            } else if (actionType == ActionType.RegisterCode) {
+                _handleRegisterCode(account, srcChainId, actionType, actionData);
             } else if (actionType == ActionType.Withdrawal) {
                 _handleWithdrawal(account, srcChainId, actionType, actionData);
             } else if (actionType == ActionType.GlvWithdrawal) {
@@ -338,6 +353,33 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         return true;
     }
 
+    function _handleNativeTopUp(
+        address account,
+        uint256 srcChainId,
+        uint256 expectedNativeValue
+    ) private {
+        // Enforce msg.value matches expected native top-up amount
+        // Note: This may cause bridged tokens to be locked if executor underpays,
+        // but other executors or users can retry lzCompose with correct msg.value
+        if (msg.value < expectedNativeValue) {
+            revert Errors.InsufficientNativeTokenAmount(msg.value, expectedNativeValue);
+        }
+
+        // Allow receiving native tokens alongside bridged tokens to cover execution fees
+        // msg.value represents ONLY the top-up amount specified in lzComposeOption (not the bridged tokens)
+        // Bridged tokens are already transferred to this contract separately via Stargate's flow
+        TokenUtils.depositAndSendWrappedNativeToken(dataStore, address(multichainVault), msg.value);
+        MultichainUtils.recordBridgeIn(
+            dataStore,
+            eventEmitter,
+            multichainVault,
+            this,
+            TokenUtils.wnt(dataStore),
+            account,
+            srcChainId
+        );
+    }
+
     /// @dev long/short tokens are deposited from user's multichain balance
     /// GM tokens are minted and transferred to user's multichain balance
     function _handleDeposit(
@@ -423,6 +465,31 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         _validateGasLeft(estimatedGasLimit);
 
         try multichainOrderRouter.setTraderReferralCode(relayParams, account, srcChainId, referralCode) {
+        } catch Error(string memory reason) {
+            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
+        } catch (bytes memory reasonBytes) {
+            (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
+            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
+        }
+    }
+
+    /// @dev `account` is expected to be `msg.sender` from the source chain, as
+    /// MultichainOrderRouter would use it to validate the signature.
+    function _handleRegisterCode(
+        address account,
+        uint256 srcChainId,
+        ActionType actionType,
+        bytes memory actionData
+    ) private {
+        (
+            IRelayUtils.RelayParams memory relayParams,
+            bytes32 referralCode
+        ) = abi.decode(actionData, (IRelayUtils.RelayParams, bytes32));
+
+        uint256 estimatedGasLimit = GasUtils.estimateRegisterCodeGasLimit(dataStore);
+        _validateGasLeft(estimatedGasLimit);
+
+        try multichainOrderRouter.registerCode(relayParams, account, srcChainId, referralCode) {
         } catch Error(string memory reason) {
             MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
         } catch (bytes memory reasonBytes) {

@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./BaseHandler.sol";
 
 import "../glv/glvShift/GlvShiftUtils.sol";
+import "../exchange/IShiftHandler.sol";
 
 contract GlvShiftHandler is BaseHandler, ReentrancyGuard {
     using GlvShift for GlvShift.Props;
@@ -14,6 +15,7 @@ contract GlvShiftHandler is BaseHandler, ReentrancyGuard {
     MultichainVault public immutable multichainVault;
     GlvVault public immutable glvVault;
     ShiftVault public immutable shiftVault;
+    IShiftHandler public immutable shiftHandler;
     IDepositHandler public immutable depositHandler;
     IWithdrawalHandler public immutable withdrawalHandler;
     ISwapHandler public immutable swapHandler;
@@ -27,6 +29,7 @@ contract GlvShiftHandler is BaseHandler, ReentrancyGuard {
         ShiftVault _shiftVault,
         IDepositHandler _depositHandler,
         IWithdrawalHandler _withdrawalHandler,
+        IShiftHandler _shiftHandler,
         ISwapHandler _swapHandler
     ) BaseHandler(_roleStore, _dataStore, _eventEmitter) {
         multichainVault = _multichainVault;
@@ -34,6 +37,7 @@ contract GlvShiftHandler is BaseHandler, ReentrancyGuard {
         shiftVault = _shiftVault;
         depositHandler = _depositHandler;
         withdrawalHandler = _withdrawalHandler;
+        shiftHandler = _shiftHandler;
         swapHandler = _swapHandler;
     }
 
@@ -61,12 +65,13 @@ contract GlvShiftHandler is BaseHandler, ReentrancyGuard {
 
         uint256 executionGas = GasUtils.getExecutionGas(_dataStore, startingGas);
 
-        try this._executeGlvShift{gas: executionGas}(key, glvShift, msg.sender) {} catch (bytes memory reasonBytes) {
+        try this.doExecuteGlvShift{gas: executionGas}(key, glvShift, msg.sender, false) {} catch (bytes memory reasonBytes) {
             _handleGlvShiftError(key, reasonBytes);
         }
     }
 
-    function _executeGlvShift(bytes32 key, GlvShift.Props memory glvShift, address keeper) external onlySelf {
+    // @note the caller function should be protected by global reentrancy guard
+    function doExecuteGlvShift(bytes32 key, GlvShift.Props memory glvShift, address keeper, bool skipRemoval) external nonReentrant onlySelfOrController {
         FeatureUtils.validateFeature(dataStore, Keys.executeGlvShiftFeatureDisabledKey(address(this)));
 
         GlvShiftUtils.ExecuteGlvShiftParams memory params = GlvShiftUtils.ExecuteGlvShiftParams({
@@ -79,11 +84,12 @@ contract GlvShiftHandler is BaseHandler, ReentrancyGuard {
             depositHandler: depositHandler,
             withdrawalHandler: withdrawalHandler,
             swapHandler: swapHandler,
+            shiftHandler: shiftHandler,
             oracle: getOracle(),
             keeper: keeper
         });
 
-        GlvShiftUtils.executeGlvShift(params, glvShift);
+        GlvShiftUtils.executeGlvShift(params, glvShift, skipRemoval);
     }
 
     function _handleGlvShiftError(bytes32 key, bytes memory reasonBytes) internal {

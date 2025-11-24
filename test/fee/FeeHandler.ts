@@ -4,10 +4,6 @@ import { deployFixture } from "../../utils/fixture";
 import { expandDecimals, decimalToFloat, applyFactor, percentageToFloat, FLOAT_PRECISION } from "../../utils/math";
 import { handleDeposit } from "../../utils/deposit";
 import { OrderType, handleOrder } from "../../utils/order";
-import * as keys from "../../utils/keys";
-import { grantRole } from "../../utils/role";
-import { encodeData } from "../../utils/hash";
-
 import { grantRole } from "../../utils/role";
 import { encodeData } from "../../utils/hash";
 import { errorsContract } from "../../utils/error";

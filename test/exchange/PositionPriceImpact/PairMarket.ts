@@ -37,7 +37,11 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
   it("price impact pair market", async () => {
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 9));
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 8));
-    await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
+    await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(2, 0));
+    await dataStore.setUint(
+      keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, false),
+      decimalToFloat(2, 0)
+    );
 
     await dataStore.setUint(keys.maxLendableImpactFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 1)); // 20%
 
@@ -461,7 +465,11 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
     // 0.001 / 50,000 => 2 * (10 ** -8)
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 9));
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 8));
-    await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
+    await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(2, 0));
+    await dataStore.setUint(
+      keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, false),
+      decimalToFloat(2, 0)
+    );
 
     await dataStore.setUint(keys.maxLendableImpactFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 1)); // 20%
 
@@ -548,7 +556,11 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
     // 0.001 / 50,000 => 2 * (10 ** -8)
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 9));
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 8));
-    await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
+    await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(2, 0));
+    await dataStore.setUint(
+      keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, false),
+      decimalToFloat(2, 0)
+    );
 
     await dataStore.setUint(keys.maxLendableImpactFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 1)); // 20%
     await dataStore.setUint(keys.maxLendableImpactUsdKey(ethUsdMarket.marketToken), decimalToFloat(20 * 1000)); // 20k USD
@@ -767,7 +779,11 @@ describe("Exchange.PositionPriceImpact.PairMarket", () => {
   it("difference in pnl should be equal to price impact amount", async () => {
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 9));
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 8));
-    await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
+    await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(2, 0));
+    await dataStore.setUint(
+      keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, false),
+      decimalToFloat(2, 0)
+    );
 
     const marketPrices = {
       indexTokenPrice: {

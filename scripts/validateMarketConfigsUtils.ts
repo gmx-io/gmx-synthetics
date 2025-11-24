@@ -576,6 +576,26 @@ const recommendedMarketConfig = {
       negativeSwapImpactFactor: exponentToFloat("5e-9"),
       expectedSwapImpactRatio: 10_000,
     },
+    ASTER: {
+      negativePositionImpactFactor: exponentToFloat("9.69e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 11_992,
+    },
+    "0G": {
+      negativePositionImpactFactor: exponentToFloat("1.26e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    AVNT: {
+      negativePositionImpactFactor: exponentToFloat("9.5e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 11_994,
+    },
+    LINEA: {
+      negativePositionImpactFactor: exponentToFloat("1.08e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 11_973,
+    },
   },
   avalanche: {
     "BTC.b": {
@@ -639,6 +659,18 @@ const recommendedMarketConfig = {
       negativePositionImpactFactor: exponentToFloat("6e-8"),
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 12_000,
+    },
+    "XAUt0:XAUt0:XAUt0": {
+      negativePositionImpactFactor: exponentToFloat("9.29e-9"),
+      negativeSwapImpactFactor: 0,
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 12_002,
+    },
+    XAUt0: {
+      negativePositionImpactFactor: exponentToFloat("9.29e-9"),
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 12_002,
     },
   },
   arbitrumSepolia: {
@@ -720,12 +752,32 @@ async function validatePerpConfig({
 
   const marketLabel = `${indexTokenSymbol} [${longTokenSymbol}-${shortTokenSymbol}]`;
 
+  if (!marketConfig.maxPnlFactorForTraders.eq(marketConfig.maxPnlFactorForDeposits)) {
+    throw new Error(`maxPnlFactorForTraders != maxPnlFactorForDeposits for ${marketLabel}`);
+  }
+
+  if (marketConfig.maxPnlFactorForTraders.lt(marketConfig.maxPnlFactorForAdl)) {
+    throw new Error(`maxPnlFactorForTraders < maxPnlFactorForAdl for ${marketLabel}`);
+  }
+
+  if (marketConfig.maxPnlFactorForAdl.lt(marketConfig.minPnlFactorAfterAdl)) {
+    throw new Error(`maxPnlFactorForAdl < minPnlFactorAfterAdl for ${marketLabel}`);
+  }
+
+  if (marketConfig.maxPnlFactorForDeposits.lt(marketConfig.maxPnlFactorForWithdrawals)) {
+    throw new Error(`maxPnlFactorForDeposits < maxPnlFactorForWithdrawals for ${marketLabel}`);
+  }
+
   if (!marketConfig.minCollateralFactor.eq(marketConfig.minCollateralFactorForLiquidation)) {
     warnings.push({
       message: `marketConfig.minCollateralFactor != marketConfig.minCollateralFactorForLiquidation for ${marketLabel}`,
       expected: marketConfig.minCollateralFactor,
       actual: marketConfig.minCollateralFactorForLiquidation,
     });
+  }
+
+  if (marketConfig.minCollateralFactor.lt(marketConfig.minCollateralFactorForLiquidation)) {
+    throw new Error(`minCollateralFactor < minCollateralFactorForLiquidation for ${marketLabel}`);
   }
 
   console.log("validatePerpConfig", indexTokenSymbol);
@@ -739,7 +791,8 @@ async function validatePerpConfig({
 
   let negativePositionImpactFactor = bigNumberify(marketConfig.negativePositionImpactFactor);
   let positivePositionImpactFactor = bigNumberify(marketConfig.positivePositionImpactFactor);
-  let positionImpactExponentFactor = bigNumberify(marketConfig.positionImpactExponentFactor);
+  let negativePositionImpactExponentFactor = bigNumberify(marketConfig.negativePositionImpactExponentFactor);
+  let positivePositionImpactExponentFactor = bigNumberify(marketConfig.positivePositionImpactExponentFactor);
   let openInterestReserveFactorLongs = bigNumberify(marketConfig.openInterestReserveFactorLongs);
   let openInterestReserveFactorShorts = bigNumberify(marketConfig.openInterestReserveFactorShorts);
   let borrowingFactorForLongs = bigNumberify(marketConfig.borrowingFactorForLongs);
@@ -792,9 +845,18 @@ async function validatePerpConfig({
       target: dataStore.address,
       allowFailure: false,
       callData: dataStore.interface.encodeFunctionData("getUint", [
-        keys.positionImpactExponentFactorKey(market.marketToken),
+        keys.positionImpactExponentFactorKey(market.marketToken, false),
       ]),
-      label: "positionImpactExponentFactor",
+      label: "negativePositionImpactExponentFactor",
+    });
+
+    multicallReadParams.push({
+      target: dataStore.address,
+      allowFailure: false,
+      callData: dataStore.interface.encodeFunctionData("getUint", [
+        keys.positionImpactExponentFactorKey(market.marketToken, true),
+      ]),
+      label: "positivePositionImpactExponentFactor",
     });
 
     multicallReadParams.push({
@@ -865,7 +927,8 @@ async function validatePerpConfig({
     ({
       negativePositionImpactFactor,
       positivePositionImpactFactor,
-      positionImpactExponentFactor,
+      negativePositionImpactExponentFactor,
+      positivePositionImpactExponentFactor,
       openInterestReserveFactorLongs,
       openInterestReserveFactorShorts,
       borrowingFactorForLongs,
@@ -894,7 +957,7 @@ async function validatePerpConfig({
       `    Negative (${formatAmount(priceImpactBps, 2, 2)}%): $${formatAmount(
         getTradeSizeForImpact({
           priceImpactBps,
-          impactExponentFactor: positionImpactExponentFactor,
+          impactExponentFactor: negativePositionImpactExponentFactor,
           impactFactor: negativePositionImpactFactor,
         }),
         0,
@@ -903,7 +966,7 @@ async function validatePerpConfig({
       )}, Positive (${formatAmount(priceImpactBps, 2, 2)}%): $${formatAmount(
         getTradeSizeForImpact({
           priceImpactBps,
-          impactExponentFactor: positionImpactExponentFactor,
+          impactExponentFactor: positivePositionImpactExponentFactor,
           impactFactor: positivePositionImpactFactor,
         }),
         0,
@@ -911,6 +974,14 @@ async function validatePerpConfig({
         true
       )}`
     );
+  }
+
+  if (negativePositionImpactExponentFactor.lt(positivePositionImpactExponentFactor)) {
+    throw new Error(`Invalid position impact exponent factors for ${marketLabel}`);
+  }
+
+  if (!positivePositionImpactExponentFactor.eq(decimalToFloat(1))) {
+    throw new Error(`Invalid positive position impact exponent for ${marketLabel}`);
   }
 
   if (negativePositionImpactFactor.eq(0)) {

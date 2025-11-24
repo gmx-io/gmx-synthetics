@@ -2,6 +2,8 @@
 
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+
 import "../exchange/IWithdrawalHandler.sol";
 
 import "../shift/Shift.sol";
@@ -11,7 +13,7 @@ import "../shift/ShiftUtils.sol";
 import "./IShiftHandler.sol";
 import "./BaseHandler.sol";
 
-contract ShiftHandler is IShiftHandler, BaseHandler {
+contract ShiftHandler is IShiftHandler, BaseHandler, ReentrancyGuard {
     using Shift for Shift.Props;
 
     MultichainVault public immutable multichainVault;
@@ -111,12 +113,19 @@ contract ShiftHandler is IShiftHandler, BaseHandler {
         }
     }
 
+    function executeShiftFromController(
+        ShiftUtils.ExecuteShiftParams memory params,
+        Shift.Props memory shift
+    ) external nonReentrant onlyController returns (uint256) {
+        FeatureUtils.validateFeature(dataStore, Keys.executeShiftFeatureDisabledKey(address(this)));
+        return ShiftUtils.executeShift(params, shift, true);
+    }
+
     function simulateExecuteShift(
         bytes32 key,
         OracleUtils.SimulatePricesParams memory params
     ) external
         override
-        onlyController
         withSimulatedOraclePrices(params)
         globalNonReentrant
     {
@@ -152,7 +161,7 @@ contract ShiftHandler is IShiftHandler, BaseHandler {
             startingGas
         );
 
-        ShiftUtils.executeShift(params, shift);
+        ShiftUtils.executeShift(params, shift, false);
     }
 
     function _handleShiftError(

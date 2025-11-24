@@ -11,6 +11,7 @@ const constructorContracts = [
   "ShiftHandler",
   "OrderHandler",
   "ExternalHandler",
+  "JitOrderHandler",
 ];
 
 const func = createDeployFunction({

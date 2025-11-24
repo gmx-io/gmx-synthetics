@@ -8,6 +8,7 @@ const func = createDeployFunction({
   getDeployArgs: async ({ dependencyContracts }) => {
     return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
   },
+  id: "EdgeDataStreamProvider_6",
 });
 
 export default func;

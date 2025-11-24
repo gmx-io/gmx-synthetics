@@ -96,7 +96,7 @@ library Errors {
     error GlvInvalidLongToken(address glv, address provided, address expected);
     error GlvInvalidShortToken(address glv, address provided, address expected);
     // GlvShiftUtils
-    error GlvShiftMaxPriceImpactExceeded(uint256 effectivePriceImpactFactor, uint256 glvMaxShiftPriceImpactFactor);
+    error GlvShiftMaxLossExceeded(uint256 effectivePriceImpactFactor, uint256 glvMaxShiftPriceImpactFactor);
     error GlvShiftIntervalNotYetPassed(uint256 currentTimestamp, uint256 lastGlvShiftExecutedAt, uint256 glvShiftMinInterval);
     // GlvFactory
     error GlvAlreadyExists(bytes32 salt, address glv);
@@ -104,6 +104,10 @@ library Errors {
     error GlvNameTooLong();
     // GlvStoreUtils
     error GlvNotFound(address key);
+    // Jit
+    error JitInvalidToMarket(address market, address expectedMarket);
+    error JitEmptyShiftParams();
+    error JitUnsupportedOrderType(uint256 orderType);
 
     // DepositStoreUtils errors
     error DepositNotFound(bytes32 key);
@@ -163,6 +167,7 @@ library Errors {
     // GasUtils errors
     error InsufficientExecutionFee(uint256 minExecutionFee, uint256 executionFee);
     error InsufficientWntAmountForExecutionFee(uint256 wntAmount, uint256 executionFee);
+    error InsufficientNativeTokenAmount(uint256 msgValue, uint256 expectedNativeValue);
     error InsufficientExecutionGasForErrorHandling(uint256 startingGas, uint256 minHandleErrorGas);
     error InsufficientExecutionGas(uint256 startingGas, uint256 estimatedGasLimit, uint256 minAdditionalGasForExecution);
     error InsufficientHandleExecutionErrorGas(uint256 gas, uint256 minHandleExecutionErrorGas);
@@ -194,6 +199,7 @@ library Errors {
     error OpenInterestCannotBeUpdatedForSwapOnlyMarket(address market);
     error MaxOpenInterestExceeded(uint256 openInterest, uint256 maxOpenInterest);
     error MaxPoolAmountExceeded(uint256 poolAmount, uint256 maxPoolAmount);
+    error MaxCollateralSumExceeded(uint256 collateralSum, uint256 maxCollateralSum);
     error MaxPoolUsdForDepositExceeded(uint256 poolUsd, uint256 maxPoolUsdForDeposit);
     error UnexpectedBorrowingFactor(uint256 positionBorrowingFactor, uint256 cumulativeBorrowingFactor);
     error UnableToGetBorrowingFactorEmptyPoolUsd();
@@ -469,6 +475,7 @@ library Errors {
     error InvalidInitializer();
     error InvalidMultichainProvider(address provider);
     error InvalidMultichainEndpoint(address endpoint);
+    error ReferralCodeAlreadyExists(bytes32 code);
     error UnableToPayOrderFee();
     error UnableToPayOrderFeeFromCollateral();
     error InvalidBridgeOutToken(address token);
@@ -511,4 +518,29 @@ library Errors {
     error RelayCalldataTooLong(uint256 calldataLength);
     error InvalidExternalCalls(uint256 sendTokensLength, uint256 sendAmountsLength);
     error MaxRelayFeeSwapForSubaccountExceeded(uint256 feeUsd, uint256 maxFeeUsd);
+
+    error RemovalShouldNotBeSkipped(bytes32 listKey, bytes32 entityKey);
+
+    // MultichainReader errors
+    error InsufficientMultichainNativeFee(uint256 msgValue);
+    error EmptyPeer(uint32 eid);
+
+    // FeeDistributor errors
+    error FeeDistributionAlreadyCompleted(uint256 lastDistributionTime, uint256 startOfCurrentWeek);
+    error OutdatedReadResponse(uint256 timestamp);
+    error InvalidDistributionState(uint256 distributionStateUint);
+    error BridgedAmountNotSufficient(uint256 minRequiredFeeAmount, uint256 currentChainFeeAmount);
+    error BridgingTransactionFailed(bytes result);
+    error MaxWntReferralRewardsInUsdAmountExceeded(uint256 wntReferralRewardsInUsd, uint256 maxWntReferralRewardsInUsdAmount);
+    error MaxWntReferralRewardsInUsdExceeded(uint256 wntReferralRewardsInUsd, uint256 maxWntReferralRewardsInUsd);
+    error MaxEsGmxReferralRewardsAmountExceeded(uint256 tokensForReferralRewards, uint256 maxEsGmxReferralRewards);
+    error MaxReferralRewardsExceeded(address token, uint256 cumulativeTransferAmount, uint256 tokensForReferralRewards);
+    error MaxWntFromTreasuryExceeded(uint256 maxWntFromTreasury, uint256 additionalWntFromTreasury);
+    error KeeperArrayLengthMismatch(uint256 keepersLength, uint256 keeperTargetBalancesLength, uint256 keeperVersionsLength);
+    error SendEthToKeeperFailed(address keeper, uint256 sendAmount, bytes result);
+    error KeeperAmountMismatch(uint256 wntForKeepers, uint256 wntToKeepers);
+    error AttemptedBridgeAmountTooHigh(uint256 minRequiredFeeAmount, uint256 feeAmountCurrentChain, uint256 amountToBridgeOut);
+    error InvalidReferralRewardToken(address token);
+    error BridgingBalanceArrayMismatch(uint256 balancesLength, uint256 targetBalancesLength);
+    error ZeroTreasuryAddress();
 }

@@ -164,6 +164,38 @@ const processMarkets = async ({
 
     addConfigItem(
       "uint",
+      keys.MAX_COLLATERAL_SUM,
+      encodeData(["address", "address", "bool"], [marketToken, longToken, true]),
+      marketConfig.maxLongCollateralSum.div(2),
+      `maxLongCollateralSum ${marketLabel} (${marketToken}), ${longToken}, true`
+    );
+
+    addConfigItem(
+      "uint",
+      keys.MAX_COLLATERAL_SUM,
+      encodeData(["address", "address", "bool"], [marketToken, longToken, false]),
+      marketConfig.maxLongCollateralSum.div(2),
+      `maxLongCollateralSum ${marketLabel} (${marketToken}), ${longToken}, false`
+    );
+
+    addConfigItem(
+      "uint",
+      keys.MAX_COLLATERAL_SUM,
+      encodeData(["address", "address", "bool"], [marketToken, shortToken, true]),
+      marketConfig.maxShortCollateralSum.div(2),
+      `maxShortCollateralSum ${marketLabel} (${marketToken}), ${shortToken}, true`
+    );
+
+    addConfigItem(
+      "uint",
+      keys.MAX_COLLATERAL_SUM,
+      encodeData(["address", "address", "bool"], [marketToken, shortToken, false]),
+      marketConfig.maxShortCollateralSum.div(2),
+      `maxShortCollateralSum ${marketLabel} (${marketToken}), ${shortToken}, false`
+    );
+
+    addConfigItem(
+      "uint",
       keys.SWAP_IMPACT_EXPONENT_FACTOR,
       encodeData(["address"], [marketToken]),
       marketConfig.swapImpactExponentFactor,
@@ -426,8 +458,16 @@ const processMarkets = async ({
     addConfigItem(
       "uint",
       keys.POSITION_IMPACT_EXPONENT_FACTOR,
-      encodeData(["address"], [marketToken]),
-      marketConfig.positionImpactExponentFactor,
+      encodeData(["address", "bool"], [marketToken, false]),
+      marketConfig.negativePositionImpactExponentFactor,
+      `positionImpactExponentFactor ${marketLabel} (${marketToken})`
+    );
+
+    addConfigItem(
+      "uint",
+      keys.POSITION_IMPACT_EXPONENT_FACTOR,
+      encodeData(["address", "bool"], [marketToken, true]),
+      marketConfig.positivePositionImpactExponentFactor,
       `positionImpactExponentFactor ${marketLabel} (${marketToken})`
     );
 
