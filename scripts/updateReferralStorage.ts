@@ -18,14 +18,26 @@ export async function main() {
   const gov = await hre.ethers.getContractAt("MockTimelock", govAddress);
 
   const orderHandler = await hre.ethers.getContract("OrderHandler");
-  const multichainOrderHandler = await hre.ethers.getContract("MultichainOrderRouter");
+  const jitOrderHandler = await hre.ethers.getContract("JitOrderHandler");
+  const multichainOrderRouter = await hre.ethers.getContract("MultichainOrderRouter");
 
-  await signExternally(
-    await gov.populateTransaction[timelockMethod](referralStorage.address, orderHandler.address, true)
+  const multicallWriteParams = [];
+
+  multicallWriteParams.push(
+    gov.interface.encodeFunctionData(timelockMethod, [referralStorage.address, orderHandler.address, true])
   );
-  await signExternally(
-    await gov.populateTransaction[timelockMethod](referralStorage.address, multichainOrderHandler.address, true)
+
+  multicallWriteParams.push(
+    gov.interface.encodeFunctionData(timelockMethod, [referralStorage.address, jitOrderHandler.address, true])
   );
+
+  multicallWriteParams.push(
+    gov.interface.encodeFunctionData(timelockMethod, [referralStorage.address, multichainOrderRouter.address, true])
+  );
+
+  multicallWriteParams.push(gov.interface.encodeFunctionData("setKeeper", [multichainOrderRouter.address, true]));
+
+  await signExternally(await gov.populateTransaction.multicall(multicallWriteParams));
 }
 
 main().catch((ex) => {
