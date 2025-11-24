@@ -2605,10 +2605,10 @@ const config: {
       openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
 
       maxOpenInterest: bigNumberify(0),
-      maxPoolUsdForDeposit: bigNumberify(0),
+      maxPoolUsdForDeposit: decimalToFloat(0),
 
-      maxLongTokenPoolAmount: bigNumberify(0),
-      maxShortTokenPoolAmount: bigNumberify(0),
+      maxLongTokenPoolAmount: expandDecimals(10, 8), // ~1M USD (2x the max open interest)
+      maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x the max open interest)
 
       atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },
@@ -2987,7 +2987,7 @@ const config: {
       openInterestReserveFactor: percentageToFloat("130%"), // default is 90%
 
       maxOpenInterest: decimalToFloat(0),
-      maxPoolUsdForDeposit: decimalToFloat(1_500_000), // 1.5x the max open interest
+      maxPoolUsdForDeposit: decimalToFloat(0),
 
       maxLongTokenPoolAmount: expandDecimals(1000, 18), // ~2M USD (2x the max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x the max open interest)
