@@ -1456,6 +1456,32 @@ const config: {
         stablePriceUsd: decimalToFloat(1),
       },
     },
+    "USDT.SG": {
+      address: "0x095f40616FA98Ff75D1a7D0c68685c5ef806f110", // Stargate USDT
+      decimals: 6,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003dc85e8b01946bf9dfd8b0db860129181eb6105a8c8981d9f28e00b6f60d9", // Circle USDC
+      dataStreamFeedDecimals: 18,
+      priceFeed: {
+        address: "0x0153002d20B96532C639313c2d54c3dA09109309", // Circle USDC
+        decimals: 8,
+        heartbeatDuration: 144 * 60 * 60,
+        stablePrice: decimalToFloat(1),
+      },
+    },
+    "USDT.SG": {
+      address: "0x095f40616FA98Ff75D1a7D0c68685c5ef806f110", // Stargate USDT
+      decimals: 6,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003dc85e8b01946bf9dfd8b0db860129181eb6105a8c8981d9f28e00b6f60d9", // Circle USDC
+      dataStreamFeedDecimals: 18,
+      priceFeed: {
+        address: "0x0153002d20B96532C639313c2d54c3dA09109309", // Circle USDC
+        decimals: 8,
+        heartbeatDuration: 144 * 60 * 60,
+        stablePrice: decimalToFloat(1),
+      },
+    },
   },
   arbitrumGoerli: {
     WETH: {

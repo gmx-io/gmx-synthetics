@@ -16,19 +16,30 @@ const constructorContracts = [
 ];
 const contractName = "OrderHandler";
 
+const requireMockTimelock = !["arbitrum", "avalanche", "botanix"].includes(hre.network.name);
+
 const func = createDeployFunction({
   contractName: contractName,
-  dependencyNames: constructorContracts,
+  dependencyNames: [...constructorContracts, ...(requireMockTimelock ? ["MockTimelockV1"] : [])],
   getDeployArgs: async ({ dependencyContracts }) => {
     return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
   },
   libraryNames: ["GasUtils", "MarketUtils", "ExecuteOrderUtils", "OrderEventUtils", "OrderStoreUtils", "OrderUtils"],
-  afterDeploy: async ({ deployedContract, getNamedAccounts, deployments, network }) => {
+  afterDeploy: async ({ deployedContract, getNamedAccounts, deployments }) => {
     const { deployer } = await getNamedAccounts();
     const { execute } = deployments;
+    const { get } = deployments;
 
-    if (!["arbitrum", "avalanche", "botanix"].includes(network.name)) {
-      await execute("ReferralStorage", { from: deployer, log: true }, "setHandler", deployedContract.address, true);
+    if (requireMockTimelock) {
+      const referralStorage = await get("ReferralStorage");
+      await execute(
+        "MockTimelockV1",
+        { from: deployer, log: true },
+        "setHandler",
+        referralStorage.address,
+        deployedContract.address,
+        true
+      );
     }
 
     await grantRoleIfNotGranted(deployedContract, "CONTROLLER");

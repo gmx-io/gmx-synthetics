@@ -186,7 +186,7 @@ export async function executeOrder(fixture, overrides: any = {}) {
   }
 
   const params = {
-    key: orderKey,
+    args: [orderKey],
     oracleBlockNumber,
     tokens,
     precisions,

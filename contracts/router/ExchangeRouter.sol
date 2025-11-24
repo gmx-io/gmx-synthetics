@@ -7,6 +7,7 @@ import "../exchange/IWithdrawalHandler.sol";
 import "../exchange/IShiftHandler.sol";
 import "../exchange/IOrderHandler.sol";
 import "../external/IExternalHandler.sol";
+import "../exchange/IJitOrderHandler.sol";
 
 import "../deposit/DepositStoreUtils.sol";
 import "../withdrawal/WithdrawalStoreUtils.sol";
@@ -21,6 +22,7 @@ import "../referral/ReferralUtils.sol";
 
 import "./BaseRouter.sol";
 import "./IExchangeRouter.sol";
+import "../glv/glvShift/GlvShiftUtils.sol";
 
 /**
  * @title ExchangeRouter
@@ -71,6 +73,7 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
     IShiftHandler public immutable shiftHandler;
     IOrderHandler public immutable orderHandler;
     IExternalHandler public immutable externalHandler;
+    IJitOrderHandler public immutable jitOrderHandler;
 
     // @dev Constructor that initializes the contract with the provided Router, RoleStore, DataStore,
     // EventEmitter, IDepositHandler, IWithdrawalHandler, IOrderHandler, and OrderStore instances
@@ -83,13 +86,15 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         IWithdrawalHandler _withdrawalHandler,
         IShiftHandler _shiftHandler,
         IOrderHandler _orderHandler,
-        IExternalHandler _externalHandler
+        IExternalHandler _externalHandler,
+        IJitOrderHandler _jitOrderHandler
     ) BaseRouter(_router, _roleStore, _dataStore, _eventEmitter) {
         depositHandler = _depositHandler;
         withdrawalHandler = _withdrawalHandler;
         shiftHandler = _shiftHandler;
         orderHandler = _orderHandler;
         externalHandler = _externalHandler;
+        jitOrderHandler = _jitOrderHandler;
     }
 
     // makeExternalCalls can be used to perform an external swap before
@@ -152,13 +157,6 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         depositHandler.cancelDeposit(key);
     }
 
-    function simulateExecuteDeposit(
-        bytes32 key,
-        OracleUtils.SimulatePricesParams memory simulatedOracleParams
-    ) external payable nonReentrant {
-        depositHandler.simulateExecuteDeposit(key, simulatedOracleParams);
-    }
-
     function simulateExecuteLatestDeposit(
         OracleUtils.SimulatePricesParams memory simulatedOracleParams
     ) external payable nonReentrant {
@@ -200,14 +198,6 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         );
     }
 
-    function simulateExecuteWithdrawal(
-        bytes32 key,
-        OracleUtils.SimulatePricesParams memory simulatedOracleParams,
-        ISwapPricingUtils.SwapPricingType swapPricingType
-    ) external payable nonReentrant {
-        withdrawalHandler.simulateExecuteWithdrawal(key, simulatedOracleParams, swapPricingType);
-    }
-
     function simulateExecuteLatestWithdrawal(
         OracleUtils.SimulatePricesParams memory simulatedOracleParams,
         ISwapPricingUtils.SwapPricingType swapPricingType
@@ -235,13 +225,6 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         }
 
         shiftHandler.cancelShift(key);
-    }
-
-    function simulateExecuteShift(
-        bytes32 key,
-        OracleUtils.SimulatePricesParams memory simulatedOracleParams
-    ) external payable nonReentrant {
-        shiftHandler.simulateExecuteShift(key, simulatedOracleParams);
     }
 
     function simulateExecuteLatestShift(
@@ -346,13 +329,6 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         orderHandler.cancelOrder(key);
     }
 
-    function simulateExecuteOrder(
-        bytes32 key,
-        OracleUtils.SimulatePricesParams memory simulatedOracleParams
-    ) external payable nonReentrant {
-        orderHandler.simulateExecuteOrder(key, simulatedOracleParams);
-    }
-
     function simulateExecuteLatestOrder(
         OracleUtils.SimulatePricesParams memory simulatedOracleParams
     ) external payable nonReentrant {
@@ -445,5 +421,13 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
     ) external payable nonReentrant returns (uint256[] memory) {
         address uiFeeReceiver = msg.sender;
         return FeeUtils.batchClaimUiFees(dataStore, eventEmitter, markets, tokens, receiver, uiFeeReceiver);
+    }
+
+    function simulateExecuteLatestJitOrder(
+        GlvShiftUtils.CreateGlvShiftParams[] memory shiftParamsList,
+        OracleUtils.SimulatePricesParams memory simulatedOracleParams
+    ) external payable nonReentrant {
+        bytes32 key = NonceUtils.getCurrentKey(dataStore);
+        jitOrderHandler.simulateExecuteJitOrder(shiftParamsList, key, simulatedOracleParams);
     }
 }

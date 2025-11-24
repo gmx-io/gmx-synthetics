@@ -195,6 +195,10 @@ const config: HardhatUserConfig = {
       //   blockNumber: 370370866,
       // },
     },
+    anvil: {
+      url: "http://127.0.0.1:8545",
+      chainId: Number(process.env.FORK_ID) || 42161, // default to Arbitrum One
+    },
     localhost: {
       saveDeployments: true,
     },
@@ -372,7 +376,7 @@ const config: HardhatUserConfig = {
     ],
   },
   sourcify: {
-    enabled: true,
+    enabled: false,
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS ? true : false,

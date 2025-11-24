@@ -20,6 +20,13 @@ contract RoleModule {
         roleStore = _roleStore;
     }
 
+    modifier onlySelfOrController() {
+        if (msg.sender != address(this) && !roleStore.hasRole(msg.sender, Role.CONTROLLER)) {
+            revert Errors.Unauthorized(msg.sender, "SELF_OR_CONTROLLER");
+        }
+        _;
+    }
+
     /**
      * @dev Only allows the contract's own address to call the function.
      */
