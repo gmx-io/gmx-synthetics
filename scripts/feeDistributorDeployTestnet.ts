@@ -432,6 +432,13 @@ async function deployContracts(): Promise<DeploymentResult> {
   if (!checkpoint || checkpoint.step < 7) {
     console.log("\n7. Deploying fee contracts...");
 
+    const FeeVault: ContractFactory = await getFactory(deployer, "FeeVault");
+    const feeVault: Contract = await FeeVault.deploy(contracts.roleStore, contracts.dataStore);
+    await feeVault.deployed();
+    console.log("FeeVault deployed to:", feeVault.address);
+    contracts.feeVault = feeVault.address;
+    await delay(txDelay);
+
     const FeeHandler: ContractFactory = await getFactory(deployer, "FeeHandler", {
       libraries: {
         MarketUtils: contracts.marketUtils,
@@ -439,9 +446,9 @@ async function deployContracts(): Promise<DeploymentResult> {
     });
     const feeHandler: Contract = await FeeHandler.deploy(
       contracts.roleStore,
-      contracts.oracle,
       contracts.dataStore,
       contracts.eventEmitter,
+      feeVault.address,
       contracts.mockVaultV1,
       contracts.gmx
     );
