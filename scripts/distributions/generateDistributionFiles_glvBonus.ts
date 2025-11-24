@@ -38,8 +38,8 @@ const BTC_GLV_ADDRESS = getAddress("0xdf03eed325b82bc1d4db8b49c30ecc9e05104b96")
 const TOTAL_ETH_GLV_USD = parseDecimalToUnits("250_000");
 const TOTAL_BTC_GLV_USD = parseDecimalToUnits("250_000");
 
-const TOTAL_ETH_GLV_AMOUNT = expandDecimals(186_567, 18);
-const TOTAL_BTC_GLV_AMOUNT = expandDecimals(177_116, 18);
+const TOTAL_ETH_GLV_AMOUNT = BigNumber.from("180916526556863106000000"); // 180916526556863106117160
+const TOTAL_BTC_GLV_AMOUNT = BigNumber.from("172334174884604648000000"); // 172334174884604648773019
 
 const chainId = 42161;
 
