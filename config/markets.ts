@@ -1175,7 +1175,7 @@ const config: {
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(173, 30 + 18).div(SECONDS_PER_DAY), // 173 LINK / day
       minPositionImpactPoolAmount: expandDecimals(41779, 18), // 41779 LINK
 
-      maxOpenInterest: decimalToFloat(16_000_000),
+      maxOpenInterest: decimalToFloat(3_800_000),
 
       atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
@@ -1280,7 +1280,7 @@ const config: {
       positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(1643, 41), // 1.64325E+44, 14,2 AVAX / day
       minPositionImpactPoolAmount: expandDecimals(79, 18), // 79.18 AVAX
 
-      maxOpenInterest: decimalToFloat(2_100_000), // ~2% of global OI
+      maxOpenInterest: decimalToFloat(200_000), // ~2% of global OI
 
       atomicSwapFeeFactor: percentageToFloat("2.25%"),
 
@@ -3906,7 +3906,7 @@ const config: {
       openInterestReserveFactor: percentageToFloat("100%"),
       maxPnlFactorForTraders: percentageToFloat("90%"),
 
-      maxOpenInterest: decimalToFloat(2_000_000),
+      maxOpenInterest: decimalToFloat(100_000),
       maxPoolUsdForDeposit: decimalToFloat(3_000_000),
 
       maxLongTokenPoolAmount: expandDecimals(915, 18), // ~4M USD (2x max open interest)
@@ -4435,7 +4435,7 @@ const config: {
       positionImpactPoolDistributionRate: expandDecimals(166, 43), // ~143 AVAX/day
       minPositionImpactPoolAmount: expandDecimals(141, 18),
 
-      maxOpenInterest: decimalToFloat(12_000_000),
+      maxOpenInterest: decimalToFloat(900_000),
 
       fundingIncreaseFactorPerSecond: exponentToFloat("1.6e-12"), // 0.0000000000016, at least 3.5 hours to reach max funding
       maxFundingFactorPerSecond: exponentToFloat("2e-8"), // 0.000002%,  0.0072% per hour, 63% per year
@@ -4467,7 +4467,7 @@ const config: {
       // minCollateralFactor of 0.01 (1%) when open interest is 500,000 USD
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2e-8"),
 
-      maxOpenInterest: decimalToFloat(1_000_000),
+      maxOpenInterest: decimalToFloat(50_000),
 
       fundingIncreaseFactorPerSecond: exponentToFloat("1.6e-12"), // 0.0000000000016, at least 3.5 hours to reach max funding
       maxFundingFactorPerSecond: exponentToFloat("2e-8"), // 0.000002%,  0.0072% per hour, 63% per year
