@@ -69,7 +69,7 @@ export async function executeGlvShift(fixture, overrides: any = {}) {
 
   const params: any = {
     glv: glv,
-    key: glvShiftKey,
+    args: [glvShiftKey],
     tokens,
     precisions,
     minPrices,

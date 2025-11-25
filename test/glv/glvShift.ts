@@ -17,11 +17,14 @@ import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
 import { expectBalances } from "../../utils/validation";
 import { DEFAULT_MARKET_TYPE, getMarketTokenAddress } from "../../utils/market";
+import { setBytes32IfDifferent } from "../../utils/dataStore";
+import { TOKEN_ORACLE_TYPES } from "../../utils/oracle";
 
 describe("Glv Shifts", () => {
   const { provider } = ethers;
 
   let fixture;
+  let user1;
   let glvReader,
     dataStore,
     ethUsdMarket,
@@ -35,7 +38,10 @@ describe("Glv Shifts", () => {
     glvShiftHandler,
     ethUsdSingleTokenMarket2,
     wnt,
-    sol;
+    sol,
+    usdc,
+    gmOracleProvider,
+    oracle;
 
   beforeEach(async () => {
     fixture = await deployFixture();
@@ -55,7 +61,12 @@ describe("Glv Shifts", () => {
       ethUsdSingleTokenMarket2,
       sol,
       wnt,
+      usdc,
+      gmOracleProvider,
+      oracle,
     } = fixture.contracts);
+
+    ({ user1 } = fixture.accounts);
   });
 
   it("create glv shift", async () => {
@@ -112,6 +123,19 @@ describe("Glv Shifts", () => {
       await expect(createGlvShift(fixture, { ...params, toMarket: btcUsdMarket }))
         .to.be.revertedWithCustomError(errorsContract, "GlvUnsupportedMarket")
         .withArgs(ethUsdGlvAddress, btcUsdMarket.marketToken);
+    });
+
+    it("ShiftFromAndToMarketAreEqual", async () => {
+      await handleGlvDeposit(fixture, {
+        create: {
+          longTokenAmount: expandDecimals(1, 18),
+          shortTokenAmount: expandDecimals(5000, 6),
+        },
+      });
+
+      await expect(createGlvShift(fixture, { fromMarket: ethUsdMarket, toMarket: ethUsdMarket }))
+        .to.be.revertedWithCustomError(errorsContract, "ShiftFromAndToMarketAreEqual")
+        .withArgs(ethUsdMarket.marketToken);
     });
 
     it("GlvDisabledMarket", async () => {
@@ -177,7 +201,64 @@ describe("Glv Shifts", () => {
         marketTokenAmount: expandDecimals(1000, 18),
         minMarketTokens: expandDecimals(1000, 18),
       },
+      execute: {
+        gasUsageLabel: "executeGlvShift",
+      },
     });
+
+    await expectBalances({
+      [ethUsdGlvAddress]: {
+        [ethUsdMarket.marketToken]: expandDecimals(9000, 18),
+        [solUsdMarket.marketToken]: expandDecimals(1000, 18),
+      },
+    });
+  });
+
+  it("execute glv shift with oracle GLV price", async () => {
+    const oracleTypeKey = keys.oracleTypeKey(ethUsdGlvAddress);
+    await setBytes32IfDifferent(oracleTypeKey, TOKEN_ORACLE_TYPES.DEFAULT, "oracle type");
+    await dataStore.setAddress(
+      keys.oracleProviderForTokenKey(oracle.address, ethUsdGlvAddress),
+      gmOracleProvider.address
+    );
+
+    await expectBalances({
+      [ethUsdGlvAddress]: {
+        [ethUsdMarket.marketToken]: 0,
+      },
+    });
+
+    await handleGlvDeposit(fixture, {
+      create: {
+        longTokenAmount: expandDecimals(1, 18),
+        shortTokenAmount: expandDecimals(5000, 6),
+      },
+    });
+
+    await expectBalances({
+      [ethUsdGlvAddress]: {
+        [ethUsdMarket.marketToken]: expandDecimals(10000, 18),
+        [solUsdMarket.marketToken]: 0,
+      },
+    });
+
+    const { executeResult } = await handleGlvShift(fixture, {
+      create: {
+        fromMarket: ethUsdMarket,
+        toMarket: solUsdMarket,
+        marketTokenAmount: expandDecimals(1000, 18),
+        minMarketTokens: expandDecimals(1000, 18),
+      },
+      execute: {
+        tokens: [wnt.address, usdc.address, sol.address, ethUsdGlvAddress],
+        precisions: [8, 18, 8, 8],
+        minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(600, 4), expandDecimals(1, 4)],
+        maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(600, 4), expandDecimals(1, 4)],
+      },
+    });
+
+    const glvValueUpdatedLog = executeResult.logs.find((log) => log.parsedEventInfo?.eventName === "GlvValueUpdated");
+    expect(glvValueUpdatedLog.parsedEventData.value).eq(expandDecimals(10000, 30));
 
     await expectBalances({
       [ethUsdGlvAddress]: {
@@ -424,7 +505,7 @@ describe("Glv Shifts", () => {
       });
     });
 
-    it("GlvShiftMaxPriceImpactExceeded", async () => {
+    it("GlvShiftMaxLossExceeded", async () => {
       // make first pool imbalanced
       await handleGlvDeposit(fixture, {
         create: {
@@ -453,7 +534,7 @@ describe("Glv Shifts", () => {
         },
         execute: {
           expectedCancellationReason: {
-            name: "GlvShiftMaxPriceImpactExceeded",
+            name: "GlvShiftMaxLossExceeded",
 
             // 0.1%
             args: [decimalToFloat(1, 3), 0],
@@ -461,7 +542,7 @@ describe("Glv Shifts", () => {
         },
       });
 
-      await dataStore.setUint(keys.glvShiftMaxPriceImpactFactorKey(ethUsdGlvAddress), decimalToFloat(9, 4)); // 0.09%
+      await dataStore.setUint(keys.glvShiftMaxLossFactorKey(ethUsdGlvAddress), decimalToFloat(9, 4)); // 0.09%
       await handleGlvShift(fixture, {
         create: {
           fromMarket: ethUsdMarket,
@@ -470,7 +551,7 @@ describe("Glv Shifts", () => {
         },
         execute: {
           expectedCancellationReason: {
-            name: "GlvShiftMaxPriceImpactExceeded",
+            name: "GlvShiftMaxLossExceeded",
 
             // 0.1%
             args: [decimalToFloat(1, 3), decimalToFloat(9, 4)],
@@ -478,7 +559,7 @@ describe("Glv Shifts", () => {
         },
       });
 
-      await dataStore.setUint(keys.glvShiftMaxPriceImpactFactorKey(ethUsdGlvAddress), decimalToFloat(1, 3)); // 0.1%
+      await dataStore.setUint(keys.glvShiftMaxLossFactorKey(ethUsdGlvAddress), decimalToFloat(1, 3)); // 0.1%
       await handleGlvShift(fixture, {
         create: {
           fromMarket: ethUsdMarket,
@@ -496,7 +577,7 @@ describe("Glv Shifts", () => {
       });
 
       // positive impact is always allowed
-      await dataStore.setUint(keys.glvShiftMaxPriceImpactFactorKey(ethUsdGlvAddress), 0);
+      await dataStore.setUint(keys.glvShiftMaxLossFactorKey(ethUsdGlvAddress), 0);
       await handleGlvShift(fixture, {
         create: {
           fromMarket: ethUsdMarket,
@@ -505,5 +586,27 @@ describe("Glv Shifts", () => {
         },
       });
     });
+  });
+
+  it("GlvShiftHandler.doExecuteGlvShift Unauthorized", async () => {
+    await expect(
+      glvShiftHandler.connect(user1).doExecuteGlvShift(
+        ethers.constants.HashZero,
+        {
+          addresses: {
+            fromMarket: ethUsdMarket.marketToken,
+            toMarket: solUsdMarket.marketToken,
+            glv: ethUsdGlvAddress,
+          },
+          numbers: {
+            marketTokenAmount: expandDecimals(1000, 18),
+            minMarketTokens: expandDecimals(1000, 18),
+            updatedAtTime: 123123,
+          },
+        },
+        ethers.constants.AddressZero,
+        false
+      )
+    ).to.be.revertedWithCustomError(errorsContract, "Unauthorized");
   });
 });

@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
+import "../data/Keys2.sol";
 import "../role/RoleModule.sol";
 import "../event/EventEmitter.sol";
 import "../utils/BasicMulticall.sol";
@@ -78,6 +79,33 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         eventData.addressItems.setItem(2, "provider", provider);
         eventEmitter.emitEventLog(
             "InitOracleProviderForToken",
+            eventData
+        );
+    }
+
+    function setOracleProviderForFeeHandlerToken(address token, address provider) external onlyConfigKeeper nonReentrant {
+        if (token == address(0)) {
+            revert Errors.EmptyToken();
+        }
+
+        if (!dataStore.getBool(Keys.isOracleProviderEnabledKey(provider))) {
+            revert Errors.InvalidOracleProvider(provider);
+        }
+
+        if (Chain.currentTimestamp() - dataStore.getUint(Keys.oracleProviderUpdatedAt(token, provider))
+            < dataStore.getUint(Keys.ORACLE_PROVIDER_MIN_CHANGE_DELAY)) {
+            revert Errors.OracleProviderMinChangeDelayNotYetPassed(token, provider);
+        }
+
+        dataStore.setUint(Keys.oracleProviderUpdatedAt(token, provider), Chain.currentTimestamp());
+        dataStore.setAddress(Keys.oracleProviderForTokenKey(token), provider);
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(3);
+        eventData.addressItems.setItem(1, "token", token);
+        eventData.addressItems.setItem(2, "provider", provider);
+        eventEmitter.emitEventLog(
+            "SetOracleProviderForFeeHandlerToken",
             eventData
         );
     }
@@ -353,6 +381,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
         allowedBaseKeys[Keys.MAX_POOL_AMOUNT] = true;
         allowedBaseKeys[Keys.MAX_POOL_USD_FOR_DEPOSIT] = true;
+        allowedBaseKeys[Keys.MAX_COLLATERAL_SUM] = true;
         allowedBaseKeys[Keys.MAX_OPEN_INTEREST] = true;
 
         allowedBaseKeys[Keys.MIN_MARKET_TOKENS_FOR_FIRST_DEPOSIT] = true;
@@ -392,6 +421,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.CLAIM_AFFILIATE_REWARDS_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.CLAIM_UI_FEES_FEATURE_DISABLED] = true;
         allowedBaseKeys[Keys.GENERAL_CLAIM_FEATURE_DISABLED] = true;
+
+        allowedBaseKeys[Keys.JIT_FEATURE_DISABLED] = true;
 
         allowedBaseKeys[Keys.MIN_AFFILIATE_REWARD_FACTOR] = true;
 
@@ -439,6 +470,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.DECREASE_ORDER_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.SWAP_ORDER_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.SET_TRADER_REFERRAL_CODE_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys.REGISTER_CODE_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.TOKEN_TRANSFER_GAS_LIMIT] = true;
         allowedBaseKeys[Keys.NATIVE_TOKEN_TRANSFER_GAS_LIMIT] = true;
 
@@ -452,6 +484,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.VIRTUAL_MARKET_ID] = true;
         allowedBaseKeys[Keys.VIRTUAL_INVENTORY_FOR_SWAPS] = true;
         allowedBaseKeys[Keys.VIRTUAL_INVENTORY_FOR_POSITIONS] = true;
+        allowedBaseKeys[Keys.VIRTUAL_INVENTORY_FOR_POSITIONS_IN_TOKENS] = true;
 
         allowedBaseKeys[Keys.POSITION_IMPACT_FACTOR] = true;
         allowedBaseKeys[Keys.POSITION_IMPACT_EXPONENT_FACTOR] = true;
@@ -500,12 +533,14 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.BORROWING_EXPONENT_FACTOR] = true;
         allowedBaseKeys[Keys.SKIP_BORROWING_FEE_FOR_SMALLER_SIDE] = true;
 
+        allowedBaseKeys[Keys.USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE] = true;
+
         allowedBaseKeys[Keys.PRICE_FEED_HEARTBEAT_DURATION] = true;
 
         allowedBaseKeys[Keys.IS_GLV_MARKET_DISABLED] = true;
         allowedBaseKeys[Keys.GLV_MAX_MARKET_TOKEN_BALANCE_USD] = true;
         allowedBaseKeys[Keys.GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT] = true;
-        allowedBaseKeys[Keys.GLV_SHIFT_MAX_PRICE_IMPACT_FACTOR] = true;
+        allowedBaseKeys[Keys.GLV_SHIFT_MAX_LOSS_FACTOR] = true;
         allowedBaseKeys[Keys.GLV_SHIFT_MIN_INTERVAL] = true;
         allowedBaseKeys[Keys.MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT] = true;
         allowedBaseKeys[Keys.GLV_MAX_MARKET_COUNT] = true;
@@ -537,6 +572,28 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.GELATO_RELAY_FEE_BASE_AMOUNT] = true;
         allowedBaseKeys[Keys.GELATO_RELAY_FEE_MULTIPLIER_FACTOR] = true;
         allowedBaseKeys[Keys.MAX_RELAY_FEE_SWAP_USD_FOR_SUBACCOUNT] = true;
+
+        allowedBaseKeys[Keys2.MULTICHAIN_READ_CHANNEL] = true;
+        allowedBaseKeys[Keys2.MULTICHAIN_PEERS] = true;
+        allowedBaseKeys[Keys2.MULTICHAIN_CONFIRMATIONS] = true;
+        allowedBaseKeys[Keys2.MULTICHAIN_AUTHORIZED_ORIGINATORS] = true;
+
+        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_DISTRIBUTION_DAY] = true;
+        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_AMOUNT] = true;
+        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_FACTOR] = true;
+        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_ESGMX_AMOUNT] = true;
+        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY] = true;
+        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_GAS_LIMIT] = true;
+        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_CHAIN_ID] = true;
+        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_BRIDGE_SLIPPAGE_FACTOR] = true;
+        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_LAYERZERO_CHAIN_ID] = true;
+        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_ADDRESS_INFO] = true;
+        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN] = true;
+        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_KEEPER_COSTS] = true;
+        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_CHAINLINK_FACTOR] = true;
+        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY] = true;
+        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_V1_FEES_WNT_FACTOR] = true;
+        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_V2_FEES_WNT_FACTOR] = true;
     }
 
     function _initAllowedLimitedBaseKeys() internal {

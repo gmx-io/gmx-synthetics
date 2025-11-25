@@ -127,6 +127,8 @@ library Keys {
     bytes32 public constant CREATE_GLV_SHIFT_FEATURE_DISABLED = keccak256(abi.encode("CREATE_GLV_SHIFT_FEATURE_DISABLED"));
     bytes32 public constant EXECUTE_GLV_SHIFT_FEATURE_DISABLED = keccak256(abi.encode("EXECUTE_GLV_SHIFT_FEATURE_DISABLED"));
 
+    bytes32 public constant JIT_FEATURE_DISABLED = keccak256(abi.encode("JIT_FEATURE_DISABLED"));
+
     // @dev key for whether the create deposit feature is disabled
     bytes32 public constant CREATE_DEPOSIT_FEATURE_DISABLED = keccak256(abi.encode("CREATE_DEPOSIT_FEATURE_DISABLED"));
     // @dev key for whether the cancel deposit feature is disabled
@@ -245,6 +247,7 @@ library Keys {
     bytes32 public constant DECREASE_ORDER_GAS_LIMIT = keccak256(abi.encode("DECREASE_ORDER_GAS_LIMIT"));
     bytes32 public constant SWAP_ORDER_GAS_LIMIT = keccak256(abi.encode("SWAP_ORDER_GAS_LIMIT"));
     bytes32 public constant SET_TRADER_REFERRAL_CODE_GAS_LIMIT = keccak256(abi.encode("SET_TRADER_REFERRAL_CODE_GAS_LIMIT"));
+    bytes32 public constant REGISTER_CODE_GAS_LIMIT = keccak256(abi.encode("REGISTER_CODE_GAS_LIMIT"));
 
     bytes32 public constant TOKEN_TRANSFER_GAS_LIMIT = keccak256(abi.encode("TOKEN_TRANSFER_GAS_LIMIT"));
     bytes32 public constant NATIVE_TOKEN_TRANSFER_GAS_LIMIT = keccak256(abi.encode("NATIVE_TOKEN_TRANSFER_GAS_LIMIT"));
@@ -266,14 +269,11 @@ library Keys {
     // @dev key for the min allowed position size in USD
     bytes32 public constant MIN_POSITION_SIZE_USD = keccak256(abi.encode("MIN_POSITION_SIZE_USD"));
 
-    // @dev key for the virtual id of tokens
     bytes32 public constant VIRTUAL_TOKEN_ID = keccak256(abi.encode("VIRTUAL_TOKEN_ID"));
-    // @dev key for the virtual id of markets
     bytes32 public constant VIRTUAL_MARKET_ID = keccak256(abi.encode("VIRTUAL_MARKET_ID"));
-    // @dev key for the virtual inventory for swaps
     bytes32 public constant VIRTUAL_INVENTORY_FOR_SWAPS = keccak256(abi.encode("VIRTUAL_INVENTORY_FOR_SWAPS"));
-    // @dev key for the virtual inventory for positions
     bytes32 public constant VIRTUAL_INVENTORY_FOR_POSITIONS = keccak256(abi.encode("VIRTUAL_INVENTORY_FOR_POSITIONS"));
+    bytes32 public constant VIRTUAL_INVENTORY_FOR_POSITIONS_IN_TOKENS = keccak256(abi.encode("VIRTUAL_INVENTORY_FOR_POSITIONS_IN_TOKENS"));
 
     // @dev key for the position impact factor
     bytes32 public constant POSITION_IMPACT_FACTOR = keccak256(abi.encode("POSITION_IMPACT_FACTOR"));
@@ -306,8 +306,8 @@ library Keys {
     bytes32 public constant OPEN_INTEREST = keccak256(abi.encode("OPEN_INTEREST"));
     // @dev key for open interest in tokens
     bytes32 public constant OPEN_INTEREST_IN_TOKENS = keccak256(abi.encode("OPEN_INTEREST_IN_TOKENS"));
-    // @dev key for collateral sum for a market
     bytes32 public constant COLLATERAL_SUM = keccak256(abi.encode("COLLATERAL_SUM"));
+    bytes32 public constant MAX_COLLATERAL_SUM = keccak256(abi.encode("MAX_COLLATERAL_SUM"));
     // @dev key for pool amount
     bytes32 public constant POOL_AMOUNT = keccak256(abi.encode("POOL_AMOUNT"));
     // @dev key for max pool amount
@@ -406,24 +406,19 @@ library Keys {
     bytes32 public constant CLAIMABLE_COLLATERAL_DELAY = keccak256(abi.encode("CLAIMABLE_COLLATERAL_DELAY"));
     // @dev key for claimed collateral amount
     bytes32 public constant CLAIMED_COLLATERAL_AMOUNT = keccak256(abi.encode("CLAIMED_COLLATERAL_AMOUNT"));
-    // @dev key for optimal usage factor
+
     bytes32 public constant OPTIMAL_USAGE_FACTOR = keccak256(abi.encode("OPTIMAL_USAGE_FACTOR"));
-    // @dev key for base borrowing factor
     bytes32 public constant BASE_BORROWING_FACTOR = keccak256(abi.encode("BASE_BORROWING_FACTOR"));
-    // @dev key for above optimal usage borrowing factor
     bytes32 public constant ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR = keccak256(abi.encode("ABOVE_OPTIMAL_USAGE_BORROWING_FACTOR"));
-    // @dev key for borrowing factor
     bytes32 public constant BORROWING_FACTOR = keccak256(abi.encode("BORROWING_FACTOR"));
-    // @dev key for borrowing factor
     bytes32 public constant BORROWING_EXPONENT_FACTOR = keccak256(abi.encode("BORROWING_EXPONENT_FACTOR"));
-    // @dev key for skipping the borrowing factor for the smaller side
     bytes32 public constant SKIP_BORROWING_FEE_FOR_SMALLER_SIDE = keccak256(abi.encode("SKIP_BORROWING_FEE_FOR_SMALLER_SIDE"));
-    // @dev key for cumulative borrowing factor
     bytes32 public constant CUMULATIVE_BORROWING_FACTOR = keccak256(abi.encode("CUMULATIVE_BORROWING_FACTOR"));
-    // @dev key for when the cumulative borrowing factor was last updated at
     bytes32 public constant CUMULATIVE_BORROWING_FACTOR_UPDATED_AT = keccak256(abi.encode("CUMULATIVE_BORROWING_FACTOR_UPDATED_AT"));
-    // @dev key for total borrowing amount
     bytes32 public constant TOTAL_BORROWING = keccak256(abi.encode("TOTAL_BORROWING"));
+
+    bytes32 public constant USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE = keccak256(abi.encode("USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE"));
+
     // @dev key for affiliate reward
     bytes32 public constant MIN_AFFILIATE_REWARD_FACTOR = keccak256(abi.encode("MIN_AFFILIATE_REWARD_FACTOR"));
     bytes32 public constant AFFILIATE_REWARD = keccak256(abi.encode("AFFILIATE_REWARD"));
@@ -449,7 +444,7 @@ library Keys {
     bytes32 public constant GLV_MAX_MARKET_TOKEN_BALANCE_USD = keccak256(abi.encode("GLV_MAX_MARKET_TOKEN_BALANCE_USD"));
     bytes32 public constant GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT = keccak256(abi.encode("GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT"));
     bytes32 public constant IS_GLV_MARKET_DISABLED = keccak256(abi.encode("IS_GLV_MARKET_DISABLED"));
-    bytes32 public constant GLV_SHIFT_MAX_PRICE_IMPACT_FACTOR = keccak256(abi.encode("GLV_SHIFT_MAX_PRICE_IMPACT_FACTOR"));
+    bytes32 public constant GLV_SHIFT_MAX_LOSS_FACTOR = keccak256(abi.encode("GLV_SHIFT_MAX_LOSS_FACTOR"));
     bytes32 public constant GLV_SHIFT_LAST_EXECUTED_AT = keccak256(abi.encode("GLV_SHIFT_LAST_EXECUTED_AT"));
     bytes32 public constant GLV_SHIFT_MIN_INTERVAL = keccak256(abi.encode("GLV_SHIFT_MIN_INTERVAL"));
     bytes32 public constant MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT = keccak256(abi.encode("MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT"));
@@ -467,19 +462,13 @@ library Keys {
     // @dev key for the latest updateId that has been applied by ConfigSyncer
     bytes32 public constant SYNC_CONFIG_LATEST_UPDATE_ID = keccak256(abi.encode("SYNC_CONFIG_LATEST_UPDATE_ID"));
 
-    // @dev key for the contributor account list
     bytes32 public constant CONTRIBUTOR_ACCOUNT_LIST = keccak256(abi.encode("CONTRIBUTOR_ACCOUNT_LIST"));
-    // @dev key for the contributor token list
     bytes32 public constant CONTRIBUTOR_TOKEN_LIST = keccak256(abi.encode("CONTRIBUTOR_TOKEN_LIST"));
-    // @dev key for the contributor token amount
     bytes32 public constant CONTRIBUTOR_TOKEN_AMOUNT = keccak256(abi.encode("CONTRIBUTOR_TOKEN_AMOUNT"));
-    // @dev key for the max total contributor token amount
     bytes32 public constant MAX_TOTAL_CONTRIBUTOR_TOKEN_AMOUNT = keccak256(abi.encode("MAX_TOTAL_CONTRIBUTOR_TOKEN_AMOUNT"));
-    // @dev key for the contributor token vault
-    bytes32 public constant CONTRIBUTOR_TOKEN_VAULT = keccak256(abi.encode("CONTRIBUTOR_TOKEN_VAULT"));
-    // @dev key for the contributor last payment at
+    bytes32 public constant CONTRIBUTOR_FUNDING_ACCOUNT = keccak256(abi.encode("CONTRIBUTOR_FUNDING_ACCOUNT"));
+    bytes32 public constant CUSTOM_CONTRIBUTOR_FUNDING_ACCOUNT = keccak256(abi.encode("CUSTOM_CONTRIBUTOR_FUNDING_ACCOUNT"));
     bytes32 public constant CONTRIBUTOR_LAST_PAYMENT_AT = keccak256(abi.encode("CONTRIBUTOR_LAST_PAYMENT_AT"));
-    // @dev key for the min contributor payment interval
     bytes32 public constant MIN_CONTRIBUTOR_PAYMENT_INTERVAL = keccak256(abi.encode("MIN_CONTRIBUTOR_PAYMENT_INTERVAL"));
 
     // @dev key for the buyback batch amount used when claiming and swapping fees
@@ -760,6 +749,13 @@ library Keys {
         ));
     }
 
+    function jitFeatureDisabledKey(address module) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            JIT_FEATURE_DISABLED,
+            module
+        ));
+    }
+
 
     // @dev key for whether create deposit is disabled
     // @param the create deposit module
@@ -1019,13 +1015,17 @@ library Keys {
         ));
     }
 
-    // @dev key for oracle provider for token
-    // @param token the token
-    // @return key for oracle provider for token
     function oracleProviderForTokenKey(address oracle, address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             ORACLE_PROVIDER_FOR_TOKEN,
             oracle,
+            token
+        ));
+    }
+
+    function oracleProviderForTokenKey(address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            ORACLE_PROVIDER_FOR_TOKEN,
             token
         ));
     }
@@ -1110,11 +1110,16 @@ library Keys {
        ));
    }
 
-   // @dev the key for the virtual inventory for positions
-   // @param the virtualTokenId the virtual token id
    function virtualInventoryForPositionsKey(bytes32 virtualTokenId) internal pure returns (bytes32) {
        return keccak256(abi.encode(
            VIRTUAL_INVENTORY_FOR_POSITIONS,
+           virtualTokenId
+       ));
+   }
+
+   function virtualInventoryForPositionsInTokensKey(bytes32 virtualTokenId) internal pure returns (bytes32) {
+       return keccak256(abi.encode(
+           VIRTUAL_INVENTORY_FOR_POSITIONS_IN_TOKENS,
            virtualTokenId
        ));
    }
@@ -1145,10 +1150,11 @@ library Keys {
     // @dev key for position impact exponent factor
     // @param market the market address to check
     // @return key for position impact exponent factor
-    function positionImpactExponentFactorKey(address market) internal pure returns (bytes32) {
+    function positionImpactExponentFactorKey(address market, bool isPositive) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             POSITION_IMPACT_EXPONENT_FACTOR,
-            market
+            market,
+            isPositive
         ));
     }
 
@@ -1336,6 +1342,15 @@ library Keys {
     function collateralSumKey(address market, address collateralToken, bool isLong) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             COLLATERAL_SUM,
+            market,
+            collateralToken,
+            isLong
+        ));
+    }
+
+    function maxCollateralSumKey(address market, address collateralToken, bool isLong) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            MAX_COLLATERAL_SUM,
             market,
             collateralToken,
             isLong
@@ -2104,9 +2119,9 @@ library Keys {
 
     // @dev key for max allowed price impact for glv shifts
     // if effective price impact exceeds max price impact then glv shift fails
-    function glvShiftMaxPriceImpactFactorKey(address glv) internal pure returns (bytes32) {
+    function glvShiftMaxLossFactorKey(address glv) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            GLV_SHIFT_MAX_PRICE_IMPACT_FACTOR,
+            GLV_SHIFT_MAX_LOSS_FACTOR,
             glv
         ));
     }
@@ -2215,12 +2230,17 @@ library Keys {
         ));
     }
 
-    // @dev key for the contributor token vault
-    // @param token the contributor token
-    // @return key for the contributor token vault
-    function contributorTokenVaultKey(address token) internal pure returns (bytes32) {
+    function contributorFundingAccountKey(address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(
-            CONTRIBUTOR_TOKEN_VAULT,
+            CONTRIBUTOR_FUNDING_ACCOUNT,
+            token
+        ));
+    }
+
+    function customContributorFundingAccountKey(address account, address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            CUSTOM_CONTRIBUTOR_FUNDING_ACCOUNT,
+            account,
             token
         ));
     }

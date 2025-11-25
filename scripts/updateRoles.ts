@@ -128,7 +128,7 @@ async function main() {
     if (!contractInfo.isCodeValidated) {
       console.log(`❌${contractInfo.name} is not valid. Sources do not match. See diff in validation folder`);
     } else {
-      console.log(`✅${contractInfo.name} is valid`);
+      console.log(`✅${contractInfo.name}, ${contractInfo.address} is valid`);
     }
   }
 

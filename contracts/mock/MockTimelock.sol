@@ -8,4 +8,10 @@ contract MockTimelock {
 
     function setHandler(address /* _target */, address /* _handler */, bool /* _isActive */) external pure {
     }
+
+    function setKeeper(address /* _keeper */, bool /* _isActive */) external pure {
+    }
+
+    function multicall(bytes[] calldata /* data */) external pure returns (bytes[] memory results) {
+    }
 }

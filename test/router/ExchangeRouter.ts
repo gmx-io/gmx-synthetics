@@ -8,7 +8,6 @@ import { getDepositKeys } from "../../utils/deposit";
 import { getWithdrawalKeys } from "../../utils/withdrawal";
 import { handleDeposit } from "../../utils/deposit";
 import { hashString } from "../../utils/hash";
-import { getNextKey } from "../../utils/nonce";
 import { errorsContract } from "../../utils/error";
 import { OrderType, DecreasePositionSwapType, getOrderKeys } from "../../utils/order";
 import * as keys from "../../utils/keys";
@@ -254,11 +253,9 @@ describe("ExchangeRouter", () => {
     });
   });
 
-  it("simulateExecuteDeposit", async () => {
+  it("simulateExecuteLatestDeposit", async () => {
     await usdc.mint(user0.address, expandDecimals(50 * 1000, 6));
     await usdc.connect(user0).approve(router.address, expandDecimals(50 * 1000, 6));
-
-    const depositKey = await getNextKey(dataStore);
 
     const currentTimestamp = (await ethers.provider.getBlock()).timestamp + 2;
 
@@ -291,8 +288,7 @@ describe("ExchangeRouter", () => {
               dataList: [],
             },
           ]),
-          exchangeRouter.interface.encodeFunctionData("simulateExecuteDeposit", [
-            depositKey,
+          exchangeRouter.interface.encodeFunctionData("simulateExecuteLatestDeposit", [
             {
               primaryTokens: [wnt.address, usdc.address],
               primaryPrices: [

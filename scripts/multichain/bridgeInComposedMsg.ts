@@ -11,6 +11,7 @@ import {
   encodeGlvDepositMessage,
   encodeGlvWithdrawalMessage,
   encodeSetTraderReferralCodeMessage,
+  encodeRegisterCodeMessage,
   encodeWithdrawalMessage,
 } from "../../utils/multichain";
 import {
@@ -47,17 +48,32 @@ async function prepareSend(
   composeMsg: string,
   stargatePoolAddress: string,
   decimals: number,
+  nativeTopUpAmount: BigNumber = BigNumber.from(0), // Amount of native tokens to top up user's multichain balance
   extraGas = 500000,
   slippageBps = 100 // Default 1% slippage tolerance
 ) {
   const GAS_LIMIT = 8000000; // 8M gas limit for the executor
   const LZ_RECEIVE_GAS_ESTIMATION = 8000000; // 8M gas units needed for lzCompose
-  // Calculate msgValue for lzReceive on destination chain
-  // e.g. 50,000 gas * 0.1 gwei (100,000,000 wei) = 5,000,000,000,000 wei
+  // Calculate msgValue for lzCompose on destination chain
+  // This includes:
+  // 1. Gas cost for executing lzCompose: LZ_RECEIVE_GAS_ESTIMATION * gasPrice
+  // 2. Native token top-up amount to credit to user's multichain balance: nativeTopUpAmount
   const destProvider = new ethers.providers.JsonRpcProvider("https://sepolia-rollup.arbitrum.io/rpc");
   const gasPrice = await destProvider.getGasPrice();
-  const msgValue = LZ_RECEIVE_GAS_ESTIMATION * gasPrice.toNumber();
-  const extraOptions = Options.newOptions().addExecutorComposeOption(0, GAS_LIMIT, msgValue);
+  const gasValueForCompose = BigNumber.from(LZ_RECEIVE_GAS_ESTIMATION).mul(gasPrice);
+  const msgValue = gasValueForCompose.add(nativeTopUpAmount);
+
+  console.log(`lzCompose msg.value breakdown:`);
+  console.log(
+    `  Gas cost (${LZ_RECEIVE_GAS_ESTIMATION} gas * ${ethers.utils.formatUnits(
+      gasPrice,
+      "gwei"
+    )} gwei): ${ethers.utils.formatEther(gasValueForCompose)} ETH`
+  );
+  console.log(`  Native top-up: ${ethers.utils.formatEther(nativeTopUpAmount)} ETH`);
+  console.log(`  Total msg.value: ${ethers.utils.formatEther(msgValue)} ETH`);
+
+  const extraOptions = Options.newOptions().addExecutorComposeOption(0, GAS_LIMIT, msgValue.toString());
 
   const stargatePool: IStargate = await ethers.getContractAt("IStargate", stargatePoolAddress);
   console.log(`extraOptions: ${extraOptions.toHex()}`);
@@ -102,6 +118,7 @@ enum ActionType {
   SetTraderReferralCode,
   Withdrawal,
   GlvWithdrawal,
+  RegisterCode,
 }
 
 async function getComposedMsg({
@@ -111,6 +128,7 @@ async function getComposedMsg({
   usdcAmount,
   gmAmount,
   glvAmount,
+  expectedNativeValue = 0,
 }: {
   account: string;
   actionType: ActionType;
@@ -118,9 +136,16 @@ async function getComposedMsg({
   usdcAmount: BigNumber;
   gmAmount: BigNumber;
   glvAmount: BigNumber;
+  expectedNativeValue?: number | string | BigNumber;
 }): Promise<string> {
   if (actionType === ActionType.None) {
-    return ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, "0x"]);
+    // Encode message data: (ActionType, expectedNativeValue, actionData)
+    // ActionType.None = 0, no actionData = "0x"
+    const data = ethers.utils.defaultAbiCoder.encode(
+      ["uint8", "uint256", "bytes"],
+      [0 /* ActionType.None */, expectedNativeValue, "0x"]
+    );
+    return ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, data]);
   }
 
   const srcChainId = await hre.ethers.provider.getNetwork().then((network) => network.chainId);
@@ -203,7 +228,7 @@ async function getComposedMsg({
       ethUsdMarket.marketToken
     );
 
-    const message = await encodeDepositMessage(depositParams, account);
+    const message = await encodeDepositMessage(depositParams, account, expectedNativeValue);
 
     return message;
   }
@@ -284,7 +309,7 @@ async function getComposedMsg({
       throw new Error("Insufficient GM in user's multichain account");
     }
 
-    const message = await encodeWithdrawalMessage(withdrawalParams, account);
+    const message = await encodeWithdrawalMessage(withdrawalParams, account, expectedNativeValue);
 
     return message;
   }
@@ -364,7 +389,7 @@ async function getComposedMsg({
       ETH_USD_GLV_ADDRESS
     );
 
-    const message = await encodeGlvDepositMessage(createGlvDepositParams, account);
+    const message = await encodeGlvDepositMessage(createGlvDepositParams, account, expectedNativeValue);
 
     return message;
   }
@@ -442,7 +467,7 @@ async function getComposedMsg({
       ETH_USD_GLV_ADDRESS
     );
 
-    const message = await encodeGlvWithdrawalMessage(createGlvWithdrawalParams, account);
+    const message = await encodeGlvWithdrawalMessage(createGlvWithdrawalParams, account, expectedNativeValue);
 
     return message;
   }
@@ -470,7 +495,42 @@ async function getComposedMsg({
       gelatoRelayFeeAmount: 0,
     };
 
-    const message = await encodeSetTraderReferralCodeMessage(setTraderReferralCodeParams, referralCode, account);
+    const message = await encodeSetTraderReferralCodeMessage(
+      setTraderReferralCodeParams,
+      referralCode,
+      account,
+      expectedNativeValue
+    );
+
+    return message;
+  }
+
+  if (actionType === ActionType.RegisterCode) {
+    const referralCode = process.env.REFERRAL_CODE
+      ? ethers.utils.formatBytes32String(process.env.REFERRAL_CODE)
+      : ethers.utils.keccak256(ethers.utils.toUtf8Bytes(`RefCode-${Date.now()}`));
+    const { multichainOrderRouter } = await getDeployments();
+
+    const registerCodeParams = {
+      sender: await hre.ethers.getSigner(account),
+      signer: await hre.ethers.getSigner(account),
+      feeParams: {
+        feeToken: wntAddress, // feeToken must default to WNT, otherwise the Gelato Relay will revert with UnexpectedRelayFeeToken
+        feeAmount: 0,
+        feeSwapPath: [],
+      },
+      account,
+      referralCode,
+      deadline,
+      srcChainId, // 0 means non-multichain action
+      desChainId: DST_CHAIN_ID, // for non-multichain actions, desChainId is the same as chainId
+      relayRouter: multichainOrderRouter,
+      chainId: srcChainId,
+      gelatoRelayFeeToken: ethers.constants.AddressZero,
+      gelatoRelayFeeAmount: 0,
+    };
+
+    const message = await encodeRegisterCodeMessage(registerCodeParams, referralCode, account, expectedNativeValue);
 
     return message;
   }
@@ -561,7 +621,7 @@ async function getComposedMsg({
         ethUsdMarket.marketToken
       );
 
-      const message = await encodeDepositMessage(depositParams, account);
+      const message = await encodeDepositMessage(depositParams, account, expectedNativeValue);
 
       return message;
     }
@@ -642,7 +702,7 @@ async function getComposedMsg({
         ethUsdMarket.marketToken
       );
 
-      const message = await encodeWithdrawalMessage(withdrawalParams, account);
+      const message = await encodeWithdrawalMessage(withdrawalParams, account, expectedNativeValue);
 
       return message;
     }
@@ -731,7 +791,7 @@ async function getComposedMsg({
         ETH_USD_GLV_ADDRESS
       );
 
-      const message = await encodeGlvDepositMessage(createGlvDepositParams, account);
+      const message = await encodeGlvDepositMessage(createGlvDepositParams, account, expectedNativeValue);
 
       return message;
     }
@@ -822,23 +882,28 @@ async function getComposedMsg({
         ETH_USD_GLV_ADDRESS
       );
 
-      const message = await encodeGlvWithdrawalMessage(createGlvWithdrawalParams, account);
+      const message = await encodeGlvWithdrawalMessage(createGlvWithdrawalParams, account, expectedNativeValue);
 
       return message;
     }
   }
 }
 
-// ACTION_TYPE=<None/Deposit/GlvDeposit/SetTraderReferralCode/Withdrawal/GlvWithdrawal> npx hardhat run --network sepolia scripts/multichain/bridgeInComposedMsg.ts
+// ACTION_TYPE=<None/Deposit/GlvDeposit/SetTraderReferralCode/RegisterCode/Withdrawal/GlvWithdrawal> NATIVE_TOPUP=0.01 npx hardhat run --network sepolia scripts/multichain/bridgeInComposedMsg.ts
 async function main() {
   if (!process.env.ACTION_TYPE) {
     throw new Error(
-      "⚠️ ACTION_TYPE is mandatory: None / Deposit / GlvDeposit / SetTraderReferralCode / Withdrawal / GlvWithdrawal"
+      "⚠️ ACTION_TYPE is mandatory: None / Deposit / GlvDeposit / SetTraderReferralCode / RegisterCode / Withdrawal / GlvWithdrawal"
     );
   }
 
   const [wallet] = await hre.ethers.getSigners();
   const account = wallet.address;
+
+  // Parse native token top-up amount from environment variable (in ETH)
+  const nativeTopUpEth = process.env.NATIVE_TOPUP || "0";
+  const nativeTopUpAmount = ethers.utils.parseEther(nativeTopUpEth);
+  console.log(`Native token top-up: ${nativeTopUpEth} ETH (${nativeTopUpAmount.toString()} wei)`);
 
   // Bridge USDC (ETH bridging fails due to Stargate insufficient funds for path)
   const usdc: ERC20 = await ethers.getContractAt("ERC20", STARGATE_USDC_SEPOLIA);
@@ -864,6 +929,7 @@ async function main() {
     usdcAmount,
     gmAmount,
     glvAmount,
+    expectedNativeValue: nativeTopUpAmount,
   });
 
   const {
@@ -871,7 +937,7 @@ async function main() {
     sendParam,
     messagingFee,
     stargatePool: stargatePoolUsdc,
-  } = await prepareSend(usdcAmount, composedMsg, STARGATE_POOL_USDC_SEPOLIA, 6);
+  } = await prepareSend(usdcAmount, composedMsg, STARGATE_POOL_USDC_SEPOLIA, 6, nativeTopUpAmount);
 
   const { gasPrice, gasLimit } = await getIncreasedValues({
     sendParam,

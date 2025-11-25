@@ -39,4 +39,11 @@ interface IMultichainOrderRouter {
         uint256 srcChainId,
         bytes32 referralCode
     ) external;
+
+    function registerCode(
+        IRelayUtils.RelayParams calldata relayParams,
+        address account,
+        uint256 srcChainId,
+        bytes32 referralCode
+    ) external;
 }
