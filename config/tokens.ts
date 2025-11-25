@@ -1810,6 +1810,8 @@ const config: {
   },
 };
 
+config["anvil"] = config.arbitrum;
+
 function getTokens(hre: HardhatRuntimeEnvironment) {
   const tokens = config[hre.network.name];
 
