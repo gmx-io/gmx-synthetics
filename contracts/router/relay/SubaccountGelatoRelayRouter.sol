@@ -14,13 +14,12 @@ contract SubaccountGelatoRelayRouter is BaseGelatoRelayRouter {
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        IOracle _oracle,
         IOrderHandler _orderHandler,
         OrderVault _orderVault,
         ISwapHandler _swapHandler,
         IExternalHandler _externalHandler
     )
-        BaseGelatoRelayRouter(_oracle, _orderHandler, _orderVault, _swapHandler, _externalHandler)
+        BaseGelatoRelayRouter(_orderHandler, _orderVault, _swapHandler, _externalHandler)
         BaseRouter(_router, _roleStore, _dataStore, _eventEmitter)
     {}
 

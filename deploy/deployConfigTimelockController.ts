@@ -14,7 +14,6 @@ const func = createDeployFunction({
       timelockDelay,
       executors,
       executors,
-      dependencyContracts["Oracle"].address,
       dependencyContracts["DataStore"].address,
       dependencyContracts["EventEmitter"].address,
     ];

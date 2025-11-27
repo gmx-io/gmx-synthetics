@@ -13,26 +13,24 @@ import {RoleStore} from "../role/RoleStore.sol";
 import {Precision} from "../utils/Precision.sol";
 import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
 import {OracleModule} from "../oracle/OracleModule.sol";
+import {DataStoreClient} from "../data/DataStoreClient.sol";
 import {OracleUtils} from "../oracle/OracleUtils.sol";
 import {Oracle} from "../oracle/Oracle.sol";
 import {PositionImpactPoolUtils} from "../market/PositionImpactPoolUtils.sol";
 import {Chain} from "../chain/Chain.sol";
 import {AccountUtils} from "../utils/AccountUtils.sol";
 
-contract ConfigTimelockController is TimelockController, OracleModule {
+contract ConfigTimelockController is TimelockController, DataStoreClient, OracleModule {
 
-    DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
 
     constructor(
         uint256 minDelay,
         address[] memory proposers,
         address[] memory executors,
-        Oracle oracle,
         DataStore _dataStore,
         EventEmitter _eventEmitter
-    ) TimelockController(minDelay, proposers, executors, msg.sender) OracleModule(oracle) {
-        dataStore = _dataStore;
+    ) TimelockController(minDelay, proposers, executors, msg.sender) DataStoreClient(_dataStore) {
         eventEmitter = _eventEmitter;
     }
 
@@ -68,7 +66,7 @@ contract ConfigTimelockController is TimelockController, OracleModule {
         PositionImpactPoolUtils.withdrawFromPositionImpactPool(
             dataStore,
             eventEmitter,
-            oracle,
+            getOracle(),
             market,
             receiver,
             amount
@@ -83,7 +81,7 @@ contract ConfigTimelockController is TimelockController, OracleModule {
         PositionImpactPoolUtils.reduceLentAmount(
             dataStore,
             eventEmitter,
-            oracle,
+            getOracle(),
             market,
             fundingAccount,
             reductionAmount

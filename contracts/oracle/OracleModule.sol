@@ -2,15 +2,21 @@
 
 pragma solidity ^0.8.0;
 
+import "../data/Keys.sol";
 import "./IOracle.sol";
+import "../data/DataStoreAccessor.sol";
 
 // @title OracleModule
 // @dev Provides convenience functions for interacting with the Oracle
-contract OracleModule {
-    IOracle public immutable oracle;
+abstract contract OracleModule is DataStoreAccessor {
 
-    constructor(IOracle _oracle) {
-        oracle = _oracle;
+    function getOracle() internal view returns (IOracle) {
+        DataStore store = _dataStore();
+        address oracleAddress = store.getAddress(Keys.ORACLE_ADDRESS);
+        if (oracleAddress == address(0)) {
+            revert Errors.OracleAddressNotSet();
+        }
+        return IOracle(oracleAddress);
     }
 
     // @dev sets oracle prices, perform any additional tasks required,
@@ -26,6 +32,7 @@ contract OracleModule {
     modifier withOraclePrices(
         OracleUtils.SetPricesParams memory params
     ) {
+        IOracle oracle = getOracle();
         oracle.setPrices(params);
         _;
         oracle.clearAllPrices();
@@ -34,6 +41,7 @@ contract OracleModule {
     modifier withOraclePricesForAtomicAction(
         OracleUtils.SetPricesParams memory params
     ) {
+        IOracle oracle = getOracle();
         oracle.setPricesForAtomicAction(params);
         _;
         oracle.clearAllPrices();
@@ -55,6 +63,8 @@ contract OracleModule {
         if (params.primaryTokens.length != params.primaryPrices.length) {
             revert Errors.InvalidPrimaryPricesForSimulation(params.primaryTokens.length, params.primaryPrices.length);
         }
+
+        IOracle oracle = getOracle();
 
         for (uint256 i; i < params.primaryTokens.length; i++) {
             address token = params.primaryTokens[i];

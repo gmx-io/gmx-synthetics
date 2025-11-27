@@ -43,6 +43,8 @@ const func = createDeployFunction({
       "chainlinkPaymentToken"
     );
 
+    await setAddressIfDifferent(keys.ORACLE_ADDRESS, deployedContract.address, "oracle address");
+
     // the Oracle contract requires the CONTROLLER to emit events
     await grantRoleIfNotGranted(deployedContract, "CONTROLLER", "oracle");
   },

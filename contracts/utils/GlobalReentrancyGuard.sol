@@ -3,9 +3,9 @@
 pragma solidity ^0.8.0;
 
 import "../data/Keys.sol";
-import "../data/DataStore.sol";
+import "../data/DataStoreAccessor.sol";
 
-abstract contract GlobalReentrancyGuard {
+abstract contract GlobalReentrancyGuard is DataStoreAccessor {
     // Booleans are more expensive than uint256 or any type that takes up a full
     // word because each write operation emits an extra SLOAD to first read the
     // slot's contents, replace the bits taken up by the boolean, and then write
@@ -14,11 +14,6 @@ abstract contract GlobalReentrancyGuard {
     uint256 private constant NOT_ENTERED = 0;
     uint256 private constant ENTERED = 1;
 
-    DataStore public immutable dataStore;
-
-    constructor(DataStore _dataStore) {
-        dataStore = _dataStore;
-    }
 
     modifier globalNonReentrant() {
         _globalNonReentrantBefore();
@@ -27,14 +22,15 @@ abstract contract GlobalReentrancyGuard {
     }
 
     function _globalNonReentrantBefore() private {
-        uint256 status = dataStore.getUint(Keys.REENTRANCY_GUARD_STATUS);
+        DataStore store = _dataStore();
+        uint256 status = store.getUint(Keys.REENTRANCY_GUARD_STATUS);
 
         require(status == NOT_ENTERED, "ReentrancyGuard: reentrant call");
 
-        dataStore.setUint(Keys.REENTRANCY_GUARD_STATUS, ENTERED);
+        store.setUint(Keys.REENTRANCY_GUARD_STATUS, ENTERED);
     }
 
     function _globalNonReentrantAfter() private {
-        dataStore.setUint(Keys.REENTRANCY_GUARD_STATUS, NOT_ENTERED);
+        _dataStore().setUint(Keys.REENTRANCY_GUARD_STATUS, NOT_ENTERED);
     }
 }

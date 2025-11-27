@@ -123,6 +123,8 @@ export const GELATO_RELAY_FEE_MULTIPLIER_FACTOR = hashString("GELATO_RELAY_FEE_M
 
 export const RELAY_FEE_ADDRESS = hashString("RELAY_FEE_ADDRESS");
 
+export const ORACLE_ADDRESS = hashString("ORACLE_ADDRESS");
+
 export const REQUEST_EXPIRATION_TIME = hashString("REQUEST_EXPIRATION_TIME");
 
 export const PRICE_FEED = hashString("PRICE_FEED");
