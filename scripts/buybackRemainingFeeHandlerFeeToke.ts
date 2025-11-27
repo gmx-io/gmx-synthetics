@@ -1,4 +1,3 @@
-import { BuybackBatchAmount } from "./../config/buyback";
 /**
  * Script to migrate buybacks from FeeHandler to FeeVault
  *
