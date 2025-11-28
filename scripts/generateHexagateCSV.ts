@@ -25,7 +25,7 @@ import fs from "fs";
 interface Deployment {
   contractAddress: string;
   contractName: string;
-  txHash?: string;
+  txHash: string;
 }
 
 interface NetworkDeployments {
@@ -71,7 +71,7 @@ async function main() {
     }
 
     for (const contract of contracts) {
-      const address = contract.contractAddress.toLowerCase();
+      const address = contract.contractAddress;
       const tagValue = TAGS || "";
       rows.push(`"${chainId}","${address}","${tagValue}"`);
       totalContracts++;
