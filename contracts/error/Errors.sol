@@ -542,4 +542,10 @@ library Errors {
     error InvalidReferralRewardToken(address token);
     error BridgingBalanceArrayMismatch(uint256 balancesLength, uint256 targetBalancesLength);
     error ZeroTreasuryAddress();
+
+    // CreReceiver errors
+    error UnauthorizedWorkflowOwner(address workflowOwner);
+    error UnauthorizedWorkflow(bytes32 workflowId, bytes10 workflowName, address workflowOwner);
+    error InvalidCreReceiverTarget(address target);
+    error CreReceiverCallFailed(bytes data);
 }

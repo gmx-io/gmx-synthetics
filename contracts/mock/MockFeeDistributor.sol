@@ -179,7 +179,7 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule {
         eventData.uintItems.initItems(2);
         _setUintItem(eventData, 0, "numberOfChainsReadRequests", chainIdsLength - 1);
         _setUintItem(eventData, 1, "messagingFee.nativeFee", messagingFee.nativeFee);
-        _emitFeeDistributionEvent(eventData, "FeeDistributionInitiated");
+        _emitFeeDistributionEvent("FeeDistributionInitiated", eventData);
     }
 
     // @dev receive and process the LZRead request received data and bridge GMX to other chains if necessary
@@ -273,7 +273,7 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule {
         _setUintItem(eventData, 2, "totalGmxBridgedOut", totalGmxBridgedOut);
         eventData.bytesItems.initItems(1);
         eventData.bytesItems.setItem(0, "receivedData", abi.encode(receivedData));
-        _emitFeeDistributionEvent(eventData, "FeeDistributionDataReceived");
+        _emitFeeDistributionEvent("FeeDistributionDataReceived", eventData);
     }
 
     // @dev function executed via an automated Gelato transaction when bridged GMX is received on this chain
@@ -317,7 +317,7 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule {
         eventData.uintItems.initItems(2);
         _setUintItem(eventData, 0, "gmxReceived", gmxReceived);
         _setUintItem(eventData, 1, "feeAmountGmxCurrentChain", feeAmountGmxCurrentChain);
-        _emitFeeDistributionEvent(eventData, "FeeDistributionBridgedGmxReceived");
+        _emitFeeDistributionEvent("FeeDistributionBridgedGmxReceived", eventData);
     }
 
     // @dev complete the fee distribution calculations, token transfers and if necessary bridge GMX cross-chain
@@ -370,7 +370,7 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule {
         _setUintItem(eventData, 4, "wntForTreasury", wntForTreasury);
         _setUintItem(eventData, 5, "wntForReferralRewards", wntForReferralRewards);
         _setUintItem(eventData, 6, "esGmxForReferralRewards", esGmxForReferralRewards);
-        _emitFeeDistributionEvent(eventData, "FeeDistributionCompleted");
+        _emitFeeDistributionEvent("FeeDistributionCompleted", eventData);
     }
 
     // @dev deposit the calculated referral rewards into the ClaimVault for the specified accounts
@@ -635,13 +635,8 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule {
         feeDistributorVault.transferOut(token, receiver, amount);
     }
 
-    function _emitFeeDistributionEvent(
-        EventUtils.EventLogData memory eventData,
-        string memory eventDescription
-    ) internal {
-        eventData.stringItems.initItems(1);
-        eventData.stringItems.setItem(0, "eventDescription", eventDescription);
-        eventEmitter.emitEventLog("FeeDistributionEvent", eventData);
+    function _emitFeeDistributionEvent(string memory eventName, EventUtils.EventLogData memory eventData) internal {
+        eventEmitter.emitEventLog(eventName, eventData);
     }
 
     function _setTokenPrices() internal {
