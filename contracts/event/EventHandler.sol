@@ -22,7 +22,7 @@ contract EventHandler is RoleModule {
         string memory eventName,
         EventUtils.EventLogData memory eventData
     ) external onlyEventController {
-        eventEmitter.emitEventLog(msg.sender, eventName, eventData);
+        eventEmitter.emitEventLog(eventName, eventData);
     }
 
     // @dev emit a general event log
@@ -34,7 +34,7 @@ contract EventHandler is RoleModule {
         bytes32 topic1,
         EventUtils.EventLogData memory eventData
     ) external onlyEventController {
-        eventEmitter.emitEventLog1(msg.sender, eventName, topic1, eventData);
+        eventEmitter.emitEventLog1(eventName, topic1, eventData);
     }
 
     // @dev emit a general event log
@@ -48,6 +48,6 @@ contract EventHandler is RoleModule {
         bytes32 topic2,
         EventUtils.EventLogData memory eventData
     ) external onlyEventController {
-        eventEmitter.emitEventLog2(msg.sender, eventName, topic1, topic2, eventData);
+        eventEmitter.emitEventLog2(eventName, topic1, topic2, eventData);
     }
 }

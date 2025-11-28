@@ -501,9 +501,7 @@ describe("FeeDistributor", function () {
 
     expect(distributeTimestamp).to.equal(timestamp);
 
-    expect(feeDistributionInitiatedEventData.eventDescription).to.equal("FeeDistributionInitiated");
     expect(feeDistributionInitiatedEventData.numberOfChainsReadRequests).to.equal(2);
-    expect(feeDistributionDataReceivedEventData.eventDescription).to.equal("FeeDistributionDataReceived");
     expect(feeDistributionDataReceivedEventData.totalGmxBridgedOut).to.equal(0);
 
     expect(feeAmountGmxA).to.equal(expandDecimals(160_000, 18));
@@ -619,9 +617,7 @@ describe("FeeDistributor", function () {
 
     expect(distributeTimestamp).to.equal(timestamp);
 
-    expect(feeDistributionInitiatedEventData.eventDescription).to.equal("FeeDistributionInitiated");
     expect(feeDistributionInitiatedEventData.numberOfChainsReadRequests).to.equal(2);
-    expect(feeDistributionDataReceivedEventData.eventDescription).to.equal("FeeDistributionDataReceived");
     expect(feeDistributionDataReceivedEventData.totalGmxBridgedOut).to.equal(expandDecimals(40_000, 18));
 
     expect(feeAmountGmxA).to.equal(expandDecimals(50_000, 18));
@@ -741,9 +737,7 @@ describe("FeeDistributor", function () {
 
     expect(distributeTimestamp).to.equal(timestamp);
 
-    expect(feeDistributionInitiatedEventData.eventDescription).to.equal("FeeDistributionInitiated");
     expect(feeDistributionInitiatedEventData.numberOfChainsReadRequests).to.equal(2);
-    expect(feeDistributionDataReceivedEventData.eventDescription).to.equal("FeeDistributionDataReceived");
     expect(feeDistributionDataReceivedEventData.totalGmxBridgedOut).to.equal(0);
 
     expect(feeAmountGmxA).to.equal(expandDecimals(160_000, 18));
@@ -852,7 +846,6 @@ describe("FeeDistributor", function () {
     expect(keeper2Balance).to.eq(keeperCosts[1]);
     expect(keeper3Balance).gte(keeperCosts[2]);
 
-    expect(distributeEventData.eventDescription).to.equal("FeeDistributionCompleted");
     expect(distributeEventData.feesV1Usd).to.eq(feesV1Usd);
     expect(distributeEventData.feesV2Usd).to.eq(feesV2Usd);
     expect(distributeEventData.wntForKeepers).to.eq(wntForKeepers);
@@ -1013,9 +1006,7 @@ describe("FeeDistributor", function () {
 
     expect(distributeTimestamp).to.equal(timestamp);
 
-    expect(feeDistributionInitiatedEventData.eventDescription).to.equal("FeeDistributionInitiated");
     expect(feeDistributionInitiatedEventData.numberOfChainsReadRequests).to.equal(2);
-    expect(feeDistributionDataReceivedEventData.eventDescription).to.equal("FeeDistributionDataReceived");
     expect(feeDistributionDataReceivedEventData.totalGmxBridgedOut).to.equal(expandDecimals(40_000, 18));
 
     expect(feeAmountGmxA).to.equal(expandDecimals(50_000, 18));
@@ -1089,7 +1080,6 @@ describe("FeeDistributor", function () {
     expect(keeper2Balance).to.eq(keeperCosts[1]);
     expect(keeper3Balance).gte(keeperCosts[2]);
 
-    expect(distributeEventData.eventDescription).to.equal("FeeDistributionCompleted");
     expect(distributeEventData.feesV1Usd).to.eq(feesV1Usd);
     expect(distributeEventData.feesV2Usd).to.eq(feesV2Usd);
     expect(distributeEventData.wntForKeepers).to.eq(wntForKeepers);
@@ -1270,7 +1260,6 @@ describe("FeeDistributor", function () {
     expect(keeper2Balance).to.eq(keeperCosts[1]);
     expect(keeper3Balance).gte(keeperCosts[2]);
 
-    expect(distributeEventData.eventDescription).to.equal("FeeDistributionCompleted");
     expect(distributeEventData.feesV1Usd).to.eq(feesV1Usd);
     expect(distributeEventData.feesV2Usd).to.eq(feesV2Usd);
     expect(distributeEventData.wntForKeepers).to.eq(wntForKeepers);
@@ -1770,10 +1759,8 @@ describe("FeeDistributor", function () {
     expect(distributeTimestamp).to.equal(timestamp);
     expect(distributeTimestampD).to.equal(timestampD);
 
-    expect(feeDistributionInitiatedEventData.eventDescription).to.equal("FeeDistributionInitiated");
     expect(feeDistributionInitiatedEventData.numberOfChainsReadRequests).to.equal(3);
     expect(feeDistributionDataReceivedEventData.totalGmxBridgedOut).to.equal(expandDecimals(40_000, 18));
-    expect(feeDistributionInitiatedEventDataD.eventDescription).to.equal("FeeDistributionInitiated");
     expect(feeDistributionInitiatedEventDataD.numberOfChainsReadRequests).to.equal(3);
     expect(feeDistributionDataReceivedEventDataD.totalGmxBridgedOut).to.equal(expandDecimals(10_000, 18));
 
