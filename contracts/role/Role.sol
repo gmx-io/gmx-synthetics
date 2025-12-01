@@ -121,4 +121,22 @@ library Role {
      * Hash: 0xdb34a94d601aa170c498f99c1628bd6182669f4ea4522eb87795649193ee93f8
      */
     bytes32 public constant MULTICHAIN_READER = keccak256(abi.encode("MULTICHAIN_READER"));
+
+    /**
+     * @dev The CRE_FORWARDER role.
+     * Hash: 0x004cc573a46f09c75bed090e0360c9fb035915d999feb0c87e7cc8aad77aa351
+     */
+    bytes32 public constant CRE_FORWARDER = keccak256(abi.encode("CRE_FORWARDER"));
+
+    /**
+     * @dev The CRE_KEEPER role.
+     * Hash: 0x96bb0a1ac89c130b142793072c7f651c2fec1db1bc56f7f4434485c7d06ecfdf
+     */
+    bytes32 public constant CRE_KEEPER = keccak256(abi.encode("CRE_KEEPER"));
+
+    /**
+     * @dev The EVENT_CONTROLLER role.
+     * Hash: 0x167b6a9c6941785f0049bcd964167c25e8d10aa0e12ebd1d11c178969795355c
+     */
+    bytes32 public constant EVENT_CONTROLLER = keccak256(abi.encode("EVENT_CONTROLLER"));
 }
