@@ -1,6 +1,7 @@
 import hre from "hardhat";
 
 import { getMarketKey, getMarketTokenAddresses, getOnchainMarkets } from "../utils/market";
+import { handleConfigChanges } from "../utils/updateConfigUtils";
 import { encodeData } from "../utils/hash";
 import * as keys from "../utils/keys";
 import { getFullKey } from "../utils/config";
@@ -18,7 +19,6 @@ async function processMarketGroup({
   onchainMarketsByTokens,
   multicall,
   dataStore,
-  config,
 }) {
   console.log(
     `checking ${markets.length} markets for ${virtualTokenIdForIndexToken}, ${
@@ -101,22 +101,16 @@ async function processMarketGroup({
   console.log(`    totalShortOpenInterestInTokens: ${totalShortOpenInterestInTokens.toString()}`);
   console.log(`    virtualInventoryInTokens: ${virtualInventoryInTokens.toString()}`);
 
-  if (write) {
-    const tx = await config.setInt(
-      keys.VIRTUAL_INVENTORY_FOR_POSITIONS_IN_TOKENS,
-      virtualTokenIdForIndexToken,
-      virtualInventoryInTokens
-    );
-
-    console.log("transaction sent", tx.hash);
-    await tx.wait();
-    console.log("receipt received");
-  }
+  return {
+    type: "uint",
+    baseKey: keys.VIRTUAL_INVENTORY_FOR_POSITIONS_IN_TOKENS,
+    keyData: encodeData(["bytes32"], [virtualTokenIdForIndexToken]),
+    value: virtualInventoryInTokens,
+  };
 }
 
 async function main() {
   const dataStore = await hre.ethers.getContract("DataStore");
-  const config = await hre.ethers.getContract("Config");
   const multicall = await hre.ethers.getContract("Multicall3");
   const { read } = hre.deployments;
 
@@ -132,21 +126,24 @@ async function main() {
     return acc;
   }, {});
 
+  const configItems = [];
+
   for (const [virtualTokenIdForIndexToken, markets] of Object.entries(marketsByVirtualTokenId)) {
-    await processMarketGroup({
+    const configItem = await processMarketGroup({
       virtualTokenIdForIndexToken,
       markets,
       onchainMarketsByTokens,
       tokens,
       multicall,
       dataStore,
-      config,
     });
+
+    if (configItem) {
+      configItems.push(configItem);
+    }
   }
 
-  if (!write) {
-    console.warn("Script ran in read-only mode, no txns were sent");
-  }
+  await handleConfigChanges(configItems, write);
 }
 
 main()
