@@ -183,6 +183,88 @@ describe("ExchangeRouter", () => {
     });
   });
 
+  it("createTwapOrder", async () => {
+    const twapCount = 2;
+    const refTime = (await ethers.provider.getBlock()).timestamp;
+    const interval = 300;
+    const referralCode = hashString("referralCode");
+    await dataStore.setUint(keys.MAX_DATA_LENGTH, 256);
+    const dataList = [ethers.utils.formatBytes32String("customData")];
+    await usdc.mint(user0.address, expandDecimals(50 * 1000, 6));
+    await usdc.connect(user0).approve(router.address, expandDecimals(50 * 1000, 6));
+    const wntAmount = expandDecimals(11, 18);
+    const tx = await exchangeRouter.connect(user0).multicall(
+      [
+        exchangeRouter.interface.encodeFunctionData("sendWnt", [orderVault.address, wntAmount]),
+        exchangeRouter.interface.encodeFunctionData("createTwapOrder", [
+          {
+            addresses: {
+              receiver: user1.address,
+              cancellationReceiver: user1.address,
+              callbackContract: user2.address,
+              uiFeeReceiver: user3.address,
+              market: ethUsdMarket.marketToken,
+              initialCollateralToken: ethUsdMarket.longToken,
+              swapPath: [ethUsdMarket.marketToken],
+            },
+            numbers: {
+              sizeDeltaUsd: decimalToFloat(1000),
+              initialCollateralDeltaAmount: 0,
+              triggerPrice: decimalToFloat(4800),
+              acceptablePrice: decimalToFloat(4900),
+              executionFee,
+              callbackGasLimit: "200000",
+              minOutputAmount: 700,
+              validFromTime: refTime,
+            },
+            orderType: OrderType.LimitIncrease,
+            decreasePositionSwapType: DecreasePositionSwapType.SwapCollateralTokenToPnlToken,
+            isLong: true,
+            shouldUnwrapNativeToken: true,
+            referralCode,
+            dataList,
+          },
+          twapCount,
+          interval,
+        ]),
+      ],
+      { value: expandDecimals(11, 18) }
+    );
+
+    const orderKeys = await getOrderKeys(dataStore, 0, twapCount);
+    for (let i = 0; i < twapCount; i++) {
+      const order = await reader.getOrder(dataStore.address, orderKeys[i]);
+      expect(order.addresses.account).eq(user0.address);
+      expect(order.addresses.receiver).eq(user1.address);
+      expect(order.addresses.callbackContract).eq(user2.address);
+      expect(order.addresses.market).eq(ethUsdMarket.marketToken);
+      expect(order.addresses.initialCollateralToken).eq(ethUsdMarket.longToken);
+      expect(order.addresses.swapPath).deep.eq([ethUsdMarket.marketToken]);
+      expect(order.numbers.orderType).eq(OrderType.LimitIncrease);
+      expect(order.numbers.decreasePositionSwapType).eq(DecreasePositionSwapType.SwapCollateralTokenToPnlToken);
+      expect(order.numbers.sizeDeltaUsd).eq(decimalToFloat(1000));
+      expect(order.numbers.initialCollateralDeltaAmount).eq(wntAmount.sub(executionFee.mul(twapCount)).div(twapCount));
+      expect(order.numbers.triggerPrice).eq(decimalToFloat(4800));
+      expect(order.numbers.acceptablePrice).eq(decimalToFloat(4900));
+      expect(order.numbers.executionFee).eq(expandDecimals(1, 18));
+      expect(order.numbers.callbackGasLimit).eq("200000");
+      expect(order.numbers.minOutputAmount).eq(700);
+      expect(order.numbers.srcChainId).eq(0);
+      expect(order.numbers.validFromTime).eq(refTime + i * interval);
+
+      expect(order.flags.isLong).eq(true);
+      expect(order.flags.shouldUnwrapNativeToken).eq(true);
+      expect(order.flags.isFrozen).eq(false);
+
+      expect(order._dataList).deep.eq(dataList);
+    }
+
+    await logGasUsage({
+      tx,
+      label: "exchangeRouter.createTwapOrder",
+    });
+  });
+
   it("createWithdrawal", async () => {
     await handleDeposit(fixture, {
       create: {

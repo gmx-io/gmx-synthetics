@@ -253,6 +253,22 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         );
     }
 
+    /*
+     * @dev Creates new twap orders with the given order parameters. The orders are
+     * created by transferring the specified amount of collateral tokens from the caller's account to the
+     * order store, and then calling the `createTwapOrder()` function on the order handler contract. The
+     * referral code is also set on the caller's account using the referral storage contract.
+     * twapCount should be greater than 1 and interval should be greater than 0.
+     */
+    function createTwapOrder(
+        IBaseOrderUtils.CreateOrderParams calldata params,
+        uint256 twapCount,
+        uint256 interval
+    ) external override payable nonReentrant returns (bytes32[] memory orderKeys) {
+        address account = msg.sender;
+        return orderHandler.createTwapOrder(account, 0, params, false, twapCount, interval);
+    }
+
     function setSavedCallbackContract(
         address market,
         address callbackContract

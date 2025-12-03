@@ -74,6 +74,26 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler, ReentrancyGuard {
         );
     }
 
+    // @dev creates a twap order in the order store
+    // @param account the order's account
+    // @param srcChainId the source chain id
+    // @param params BaseOrderUtils.CreateOrderParams
+    // @param shouldCapMaxExecutionFee whether to cap the max execution fee
+    // @param twapCount the number of twap orders to create
+    // @param interval the interval between twap orders
+    function createTwapOrder(
+        address account,
+        uint256 srcChainId,
+        IBaseOrderUtils.CreateOrderParams calldata params,
+        bool shouldCapMaxExecutionFee,
+        uint256 twapCount,
+        uint256 interval
+    ) external override globalNonReentrant onlyController returns (bytes32[] memory orderKeys) {
+        FeatureUtils.validateFeature(dataStore, Keys.createOrderFeatureDisabledKey(address(this), uint256(params.orderType)));
+        validateDataListLength(params.dataList.length);
+        return OrderUtils.createTwapOrder(dataStore, eventEmitter, orderVault, referralStorage, account, srcChainId, params, shouldCapMaxExecutionFee, twapCount, interval);
+    }
+
     struct UpdateOrderCache {
         address wnt;
         uint256 receivedWnt;
