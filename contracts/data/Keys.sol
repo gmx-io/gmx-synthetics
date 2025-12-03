@@ -17,6 +17,9 @@ library Keys {
     bytes32 public constant HOLDING_ADDRESS = keccak256(abi.encode("HOLDING_ADDRESS"));
     bytes32 public constant RELAY_FEE_ADDRESS = keccak256(abi.encode("RELAY_FEE_ADDRESS"));
 
+    // @dev key for oracle address
+    bytes32 public constant ORACLE_ADDRESS = keccak256(abi.encode("ORACLE_ADDRESS"));
+
     // @dev key for the minimum gas for execution error
     bytes32 public constant MIN_HANDLE_EXECUTION_ERROR_GAS = keccak256(abi.encode("MIN_HANDLE_EXECUTION_ERROR_GAS"));
 

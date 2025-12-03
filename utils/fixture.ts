@@ -150,6 +150,7 @@ async function setup() {
   const edgeDataStreamProvider = await hre.ethers.getContract("EdgeDataStreamProvider");
   const claimHandler = await hre.ethers.getContract("ClaimHandler");
   const claimVault = await hre.ethers.getContract("ClaimVault");
+  const feeVault = await hre.ethers.getContract("FeeVault");
   const claimUtils = await hre.ethers.getContract("ClaimUtils");
   const multichainReader = await hre.ethers.getContract("MultichainReader");
   const mockEndpointV2 = await hre.ethers.getContract("MockEndpointV2");
@@ -158,6 +159,7 @@ async function setup() {
   const feeDistributor = await hre.ethers.getContract("FeeDistributor");
   const feeDistributorUtils = await hre.ethers.getContract("FeeDistributorUtils");
   const contributorHandler = await hre.ethers.getContract("ContributorHandler");
+
 
   const ethUsdMarketAddress = getMarketTokenAddress(
     wnt.address,
@@ -396,6 +398,7 @@ async function setup() {
       edgeDataStreamProvider,
       claimHandler,
       claimVault,
+      feeVault,
       claimUtils,
       multichainReader,
       mockEndpointV2,

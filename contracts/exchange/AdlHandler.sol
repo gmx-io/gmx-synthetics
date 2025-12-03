@@ -32,7 +32,6 @@ contract AdlHandler is BaseOrderHandler {
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        IOracle _oracle,
         MultichainVault _multichainVault,
         OrderVault _orderVault,
         ISwapHandler _swapHandler,
@@ -42,7 +41,6 @@ contract AdlHandler is BaseOrderHandler {
         _roleStore,
         _dataStore,
         _eventEmitter,
-        _oracle,
         MultichainVault(_multichainVault),
         _orderVault,
         _swapHandler,
@@ -67,7 +65,7 @@ contract AdlHandler is BaseOrderHandler {
         AdlUtils.updateAdlState(
             dataStore,
             eventEmitter,
-            oracle,
+            getOracle(),
             market,
             isLong
         );
@@ -102,6 +100,7 @@ contract AdlHandler is BaseOrderHandler {
         ExecuteAdlCache memory cache;
 
         cache.startingGas = gasleft();
+        IOracle oracle = getOracle();
 
         AdlUtils.validateAdl(
             dataStore,

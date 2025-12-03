@@ -10,16 +10,16 @@ import "../utils/PayableMulticall.sol";
 import "../utils/AccountUtils.sol";
 
 import "../data/DataStore.sol";
+import "../data/DataStoreClient.sol";
 import "../event/EventEmitter.sol";
 import "../token/TokenUtils.sol";
 
 import "./Router.sol";
 
-contract BaseRouter is ReentrancyGuard, PayableMulticall, RoleModule {
+contract BaseRouter is ReentrancyGuard, PayableMulticall, RoleModule, DataStoreClient {
     using SafeERC20 for IERC20;
 
     Router public immutable router;
-    DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
 
     constructor(
@@ -27,9 +27,8 @@ contract BaseRouter is ReentrancyGuard, PayableMulticall, RoleModule {
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter
-    ) RoleModule(_roleStore) {
+    ) DataStoreClient(_dataStore) RoleModule(_roleStore) {
         router = _router;
-        dataStore = _dataStore;
         eventEmitter = _eventEmitter;
     }
 
