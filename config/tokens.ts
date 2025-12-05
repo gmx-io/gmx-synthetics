@@ -1127,6 +1127,20 @@ const config: {
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },
+    "GLV [WETH-USDC]": {
+      address: "0x528A5bac7E746C9A509A1f4F6dF58A03d44279F9",
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x000319859be77f93df82481c065d292ce34aff1f8ba01797f805227ba98ea774",
+      dataStreamFeedDecimals: 18,
+    },
+    "GLV [WBTC.e-USDC]": {
+      address: "0xdF03EEd325b82bC1d4Db8b49c30ecc9E05104b96",
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x000389b9405ab00e6af390557003b0e3dfff6b22cd069819397e39837aeb63c8",
+      dataStreamFeedDecimals: 18,
+    },
   },
   avalanche: {
     "BTC.b": {
