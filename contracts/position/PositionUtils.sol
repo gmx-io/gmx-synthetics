@@ -14,6 +14,8 @@ import "../data/Keys.sol";
 import "../pricing/PositionPricingUtils.sol";
 import "../order/BaseOrderUtils.sol";
 
+import "../utils/Printer.sol";
+
 // @title PositionUtils
 // @dev Library for position functions
 library PositionUtils {
@@ -134,6 +136,7 @@ library PositionUtils {
         int256 remainingCollateralUsd;
         int256 minCollateralUsd;
         int256 minCollateralUsdForLeverage;
+        uint256 notionalCollateralValue;
     }
 
     struct IsPositionLiquidatableCache {
@@ -418,10 +421,20 @@ library PositionUtils {
         // validate if (remaining collateral) / position.size is less than the min collateral factor (max leverage exceeded)
         // this validation includes the position fee to be paid when closing the position
         // i.e. if the position does not have sufficient collateral after closing fees it is considered a liquidatable position
-        info.minCollateralUsdForLeverage = Precision.applyFactor(position.sizeInUsd(), cache.minCollateralFactor).toInt256();
+        console.log("SizeUSD: ", position.sizeInUsd());
+        console.log("Notional: ", position.sizeInTokens());
+        Printer.log("remainingCollateralUsd: ", info.remainingCollateralUsd);
+        info.notionalCollateralValue = position.isLong()
+            ? position.sizeInTokens() * prices.indexTokenPrice.max
+            : position.sizeInTokens() * prices.indexTokenPrice.min;
+
+        console.log("Value: ", info.notionalCollateralValue);
+        info.minCollateralUsdForLeverage = Precision.applyFactor(info.notionalCollateralValue, cache.minCollateralFactor).toInt256();
+        Printer.log("minCollateralUsdForLeverage: ", info.minCollateralUsdForLeverage);
 
         if (shouldValidateMinCollateralUsd) {
             info.minCollateralUsd = dataStore.getUint(Keys.MIN_COLLATERAL_USD).toInt256();
+            Printer.log("minCollateralUsd: ", info.minCollateralUsd);
             if (info.remainingCollateralUsd < info.minCollateralUsd) {
                 return (true, "min collateral", info);
             }

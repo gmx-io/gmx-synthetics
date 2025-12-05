@@ -76,8 +76,8 @@ describe("Guardian.Callback", () => {
       market: ethUsdMarket,
       collateralToken: usdc,
       isLong: true,
-      minPrices: [expandDecimals(4424, 4), expandDecimals(1, 6)], // Barely liquidatable
-      maxPrices: [expandDecimals(4424, 4), expandDecimals(1, 6)],
+      minPrices: [expandDecimals(4875, 4), expandDecimals(1, 6)], // Barely liquidatable
+      maxPrices: [expandDecimals(4875, 4), expandDecimals(1, 6)],
     });
 
     // Callback contract is called
