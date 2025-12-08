@@ -13,7 +13,7 @@ library Keys2 {
     bytes32 public constant MULTICHAIN_CONFIRMATIONS = keccak256(abi.encode("MULTICHAIN_CONFIRMATIONS"));
     // @dev key for MultichainReader guid to originator mapping
     bytes32 public constant MULTICHAIN_GUID_TO_ORIGINATOR = keccak256(abi.encode("MULTICHAIN_GUID_TO_ORIGINATOR"));
-    // @dev key for MultichainReader authorized orginators
+    // @dev key for MultichainReader authorized originators
     bytes32 public constant MULTICHAIN_AUTHORIZED_ORIGINATORS = keccak256(abi.encode("MULTICHAIN_AUTHORIZED_ORIGINATORS"));
 
     // @dev key for FeeDistributor day of the week (0 = Sunday, 6 = Saturday)
@@ -73,6 +73,9 @@ library Keys2 {
     // @dev key for factor used to determine amount of total V2 fees USD that are in WNT
     bytes32 public constant FEE_DISTRIBUTOR_V2_FEES_WNT_FACTOR = keccak256(abi.encode("FEE_DISTRIBUTOR_V2_FEES_WNT_FACTOR"));
 
+    // @dev key for CreReceiver authorized workflow IDs
+    bytes32 public constant CRE_RECEIVER_AUTHORIZED_WORKFLOW_IDS = keccak256(abi.encode("CRE_RECEIVER_AUTHORIZED_WORKFLOW_IDS"));
+
     // @dev key for the multichain peers mapping (peer address stored as bytes32)
     // @param readChannel the readChannel for which to retrieve the respective peer
     // @return key for multichain peers
@@ -96,7 +99,7 @@ library Keys2 {
 
     // @dev key for the multichain authorized originators
     // @param originator the originator address to validate if authorized
-    // @return key for multichain authorized originator
+    // @return key for multichain authorized originators
     function multichainAuthorizedOriginatorsKey(address originator) internal pure returns (bytes32) {
         return keccak256(abi.encode(MULTICHAIN_AUTHORIZED_ORIGINATORS, originator));
     }
@@ -163,5 +166,12 @@ library Keys2 {
     // @return key for FeeDistributor referral rewards deposited in a given week
     function feeDistributorReferralRewardsDepositedKey(address token) internal pure returns (bytes32) {
         return keccak256(abi.encode(FEE_DISTRIBUTOR_REFERRAL_REWARDS_DEPOSITED, token));
+    }
+
+    // @dev key for CreReceiver authorized workflow IDs
+    // @param workflowId the workflow ID to validate if authorized
+    // @return key for CreReceiver authorized workflow IDs
+    function creReceiverAuthorizedWorkflowIdsKey(bytes32 workflowId) internal pure returns (bytes32) {
+        return keccak256(abi.encode(CRE_RECEIVER_AUTHORIZED_WORKFLOW_IDS, workflowId));
     }
 }
