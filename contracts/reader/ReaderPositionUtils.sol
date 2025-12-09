@@ -23,7 +23,7 @@ library ReaderPositionUtils {
         ReaderPricingUtils.ExecutionPriceResult executionPriceResult;
         int256 basePnlUsd;
         int256 uncappedBasePnlUsd;
-        int256 pnlAfterPriceImpactUsd;
+        int256 positionValueInUsd;
     }
 
     struct GetPositionInfoCache {
@@ -270,9 +270,6 @@ library ReaderPositionUtils {
             sizeDeltaUsd
         );
 
-        // with totalImpactUsd the pnlAfterPriceImpactUsd may not be a very useful value to return and may be deprecated in a future iteration
-        positionInfo.pnlAfterPriceImpactUsd = positionInfo.executionPriceResult.priceImpactUsd + positionInfo.basePnlUsd;
-
         positionInfo.fees.totalCostAmountExcludingFunding =
             positionInfo.fees.positionFeeAmount
             + positionInfo.fees.borrowing.borrowingFeeAmount
@@ -282,6 +279,15 @@ library ReaderPositionUtils {
         positionInfo.fees.totalCostAmount =
             positionInfo.fees.totalCostAmountExcludingFunding
             + positionInfo.fees.funding.fundingFeeAmount;
+
+        positionInfo.positionValueInUsd = (
+            positionInfo.position.collateralAmount() * cache.collateralTokenPrice.min +
+            positionInfo.fees.funding.claimableLongTokenAmount * prices.longTokenPrice.min +
+            positionInfo.fees.funding.claimableShortTokenAmount * prices.shortTokenPrice.min).toInt256() +
+            positionInfo.basePnlUsd +
+            positionInfo.executionPriceResult.totalImpactUsd -
+            // substracted as int256 to avoid underflow operating in uint256 space if cost is greater than collateral amount
+            (positionInfo.fees.totalCostAmount * cache.collateralTokenPrice.min).toInt256();
 
         return positionInfo;
     }

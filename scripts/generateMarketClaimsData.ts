@@ -216,7 +216,7 @@ async function analyzePositions(
       const collateralUsd = collateralAmount.mul(collateralTokenPrice);
 
       // Use calculated values from positionInfo
-      const pnlUsd = positionInfo.pnlAfterPriceImpactUsd || bigNumberify(0); // Real-time PnL including price impact at close
+      const pnlUsd = positionInfo.executionPriceResult.priceImpactUsd.add(positionInfo.basePnlUsd) || bigNumberify(0); // Real-time PnL including price impact at close
 
       // Convert total fees from tokens to USD
       // totalCostAmount is in collateral tokens
