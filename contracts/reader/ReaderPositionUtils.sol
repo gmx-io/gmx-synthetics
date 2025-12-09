@@ -287,7 +287,7 @@ library ReaderPositionUtils {
             positionInfo.basePnlUsd +
             positionInfo.executionPriceResult.totalImpactUsd -
             // substracted as int256 to avoid underflow operating in uint256 space if cost is greater than collateral amount
-            (positionInfo.fees.totalCostAmount * cache.collateralTokenPrice.min).toInt256();
+            (positionInfo.fees.totalCostAmount * cache.collateralTokenPrice.max).toInt256();
 
         return positionInfo;
     }
