@@ -1133,6 +1133,7 @@ const config: {
       transferGasLimit: 200 * 1000,
       dataStreamFeedId: "0x000319859be77f93df82481c065d292ce34aff1f8ba01797f805227ba98ea774",
       dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
     },
     "GLV [WBTC.e-USDC]": {
       address: "0xdF03EEd325b82bC1d4Db8b49c30ecc9E05104b96",
@@ -1140,6 +1141,7 @@ const config: {
       transferGasLimit: 200 * 1000,
       dataStreamFeedId: "0x000389b9405ab00e6af390557003b0e3dfff6b22cd069819397e39837aeb63c8",
       dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
     },
   },
   avalanche: {
