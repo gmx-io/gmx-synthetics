@@ -19,7 +19,6 @@ contract LiquidationHandler is BaseOrderHandler {
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        IOracle _oracle,
         MultichainVault _multichainVault,
         OrderVault _orderVault,
         ISwapHandler _swapHandler,
@@ -29,7 +28,6 @@ contract LiquidationHandler is BaseOrderHandler {
         _roleStore,
         _dataStore,
         _eventEmitter,
-        _oracle,
         _multichainVault,
         _orderVault,
         _swapHandler,
@@ -57,7 +55,7 @@ contract LiquidationHandler is BaseOrderHandler {
     {
         uint256 startingGas = gasleft();
 
-        oracle.validateSequencerUp();
+        getOracle().validateSequencerUp();
 
         bytes32 key = LiquidationUtils.createLiquidationOrder(
             dataStore,

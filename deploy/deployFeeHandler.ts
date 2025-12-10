@@ -2,7 +2,7 @@ import { grantRoleIfNotGranted } from "../utils/role";
 import { createDeployFunction, skipHandlerFunction } from "../utils/deploy";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
-const constructorContracts = ["RoleStore", "Oracle", "DataStore", "EventEmitter"];
+const constructorContracts = ["RoleStore", "DataStore", "EventEmitter", "FeeVault"];
 const contractName = "FeeHandler";
 
 const func = createDeployFunction({

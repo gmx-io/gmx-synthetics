@@ -12,7 +12,6 @@ abstract contract MultichainRouter is BaseGelatoRelayRouter {
         RoleStore roleStore;
         DataStore dataStore;
         EventEmitter eventEmitter;
-        IOracle oracle;
         OrderVault orderVault;
         IOrderHandler orderHandler;
         ISwapHandler swapHandler;
@@ -24,7 +23,7 @@ abstract contract MultichainRouter is BaseGelatoRelayRouter {
 
     constructor(
         BaseConstructorParams memory params
-    ) BaseGelatoRelayRouter(params.oracle, params.orderHandler, params.orderVault, params.swapHandler, params.externalHandler) {
+    ) BaseGelatoRelayRouter(params.orderHandler, params.orderVault, params.swapHandler, params.externalHandler) {
         multichainVault = params.multichainVault;
     }
 

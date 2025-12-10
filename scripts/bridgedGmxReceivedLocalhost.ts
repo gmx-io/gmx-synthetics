@@ -34,7 +34,7 @@ async function main() {
   const wnt = await ethers.getContract("WETH");
   const gmx = await ethers.getContract("GMX");
   const roleStore = await ethers.getContract("RoleStore");
-  const feeHandler = await ethers.getContract("FeeHandler");
+  const feeVault = await ethers.getContract("FeeVault");
   const chainlinkPriceFeedProvider = await ethers.getContract("ChainlinkPriceFeedProvider");
   const oracle = await ethers.getContract("Oracle");
 
@@ -272,7 +272,7 @@ async function main() {
   });
 
   await wnt.mint(feeDistributorVault.address, expandDecimals(1000, 18));
-  await gmx.mint(feeHandler.address, expandDecimals(10_000, 18));
+  await gmx.mint(feeVault.address, expandDecimals(10_000, 18));
 
   await gmx.mint(accounts[0].address, expandDecimals(170_000, 18));
   await gmx.approve(mockGmxAdapterB.address, expandDecimals(130_000, 18));

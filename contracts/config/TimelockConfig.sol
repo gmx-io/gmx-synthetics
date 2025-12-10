@@ -12,7 +12,6 @@ import {DataStore} from "../data/DataStore.sol";
 import {BasicMulticall} from "../utils/BasicMulticall.sol";
 import {Precision} from "../utils/Precision.sol";
 import {ConfigTimelockController} from "./ConfigTimelockController.sol";
-import {OracleModule} from "../oracle/OracleModule.sol";
 import {OracleUtils} from "../oracle/OracleUtils.sol";
 import {MarketUtils} from "../market/MarketUtils.sol";
 

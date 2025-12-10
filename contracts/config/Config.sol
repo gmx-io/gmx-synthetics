@@ -507,6 +507,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.MAX_TOTAL_CALLBACK_GAS_LIMIT_FOR_AUTO_CANCEL_ORDERS] = true;
 
         allowedBaseKeys[Keys.ORACLE_TYPE] = true;
+        allowedBaseKeys[Keys.ORACLE_ADDRESS] = true;
 
         allowedBaseKeys[Keys.RESERVE_FACTOR] = true;
         allowedBaseKeys[Keys.OPEN_INTEREST_RESERVE_FACTOR] = true;

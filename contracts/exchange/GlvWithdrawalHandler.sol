@@ -23,13 +23,12 @@ contract GlvWithdrawalHandler is IGlvWithdrawalHandler, BaseHandler, ReentrancyG
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
-        IOracle _oracle,
         MultichainVault _multichainVault,
         IMultichainTransferRouter _multichainTransferRouter,
         GlvVault _glvVault,
         ISwapHandler _swapHandler,
         IWithdrawalHandler _withdrawalHandler
-    ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {
+    ) BaseHandler(_roleStore, _dataStore, _eventEmitter) {
         multichainVault = _multichainVault;
         multichainTransferRouter = _multichainTransferRouter;
         glvVault = _glvVault;
@@ -93,7 +92,7 @@ contract GlvWithdrawalHandler is IGlvWithdrawalHandler, BaseHandler, ReentrancyG
             multichainVault: multichainVault,
             multichainTransferRouter: multichainTransferRouter,
             glvVault: glvVault,
-            oracle: oracle,
+            oracle: getOracle(),
             swapHandler: swapHandler,
             withdrawalHandler: withdrawalHandler,
             startingGas: startingGas,
@@ -117,7 +116,7 @@ contract GlvWithdrawalHandler is IGlvWithdrawalHandler, BaseHandler, ReentrancyG
             eventEmitter: eventEmitter,
             multichainVault: multichainVault,
             glvVault: glvVault,
-            oracle: oracle,
+            oracle: getOracle(),
             key: key,
             keeper: msg.sender,
             startingGas: startingGas,
@@ -141,7 +140,7 @@ contract GlvWithdrawalHandler is IGlvWithdrawalHandler, BaseHandler, ReentrancyG
             eventEmitter: eventEmitter,
             multichainVault: multichainVault,
             glvVault: glvVault,
-            oracle: oracle,
+            oracle: getOracle(),
             key: key,
             keeper: glvWithdrawal.account(),
             startingGas: startingGas,
