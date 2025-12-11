@@ -34,12 +34,18 @@ library Errors {
     error OracleProviderAlreadyExistsForToken(address oracle, address token);
     error OracleProviderMinChangeDelayNotYetPassed(address token, address provider);
     error PriceFeedAlreadyExistsForToken(address token);
+    error PriceFeedAddressNotValidForToken(address token);
+    error PriceFeedDescriptionMismatchForToken(address token);
     error DataStreamIdAlreadyExistsForToken(address token);
     error EdgeDataStreamIdAlreadyExistsForToken(address token);
     error MaxFundingFactorPerSecondLimitExceeded(uint256 maxFundingFactorPerSecond, uint256 limit);
     error InvalidPositionImpactPoolDistributionRate(uint256 distributionAmount, uint256 positionImpactPoolAmount);
     error MaxDataListLengthExceeded(uint256 dataLength, uint256 maxDataLength);
     error EmptyToken();
+    error NewVirtualMarketIdAlreadySetForMarket(bytes32 newVirtualMarketId, address market);
+    error OldVirtualMarketIdStillInUse(bytes32 oldVirtualMarketId, uint256 remainingMarkets);
+    error NewVirtualMarketIdLongTokenMismatch(bytes32 newVirtualMarketId, address market);
+    error NewVirtualMarketIdShortTokenMismatch(bytes32 newVirtualMarketId, address market);
 
     // ContributorHandler errors
     error InvalidSetContributorPaymentInput(uint256 tokensLength, uint256 amountsLength);

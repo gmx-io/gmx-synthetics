@@ -3,7 +3,10 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { FlagsInterface } from "@chainlink/contracts/src/v0.8/interfaces/FlagsInterface.sol";
 
+import "../oracle/IFlags.sol";
+import "../oracle/IPriceFeed.sol";
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
 import "../event/EventEmitter.sol";
@@ -21,6 +24,7 @@ library ConfigUtils {
 
     struct InitOracleConfigPriceFeedParams {
         address feedAddress;
+        bytes32 descriptionHash;
         uint256 multiplier;
         uint256 heartbeatDuration;
         uint256 stablePrice;
@@ -44,6 +48,11 @@ library ConfigUtils {
         InitOracleConfigEdgeParams edge;
     }
 
+    struct SetVirtualMarketIdsParams {
+        address market;
+        bytes32 newVirtualMarketId;
+    }
+
     // 0.00001% per second, ~315% per year
     uint256 public constant MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND = 100000000000000000000000;
     // at this rate max allowed funding rate will be reached in 1 hour at 100% imbalance if max funding rate is 315%
@@ -61,6 +70,7 @@ library ConfigUtils {
     function initOracleConfig(
         DataStore dataStore,
         EventEmitter eventEmitter,
+        FlagsInterface flags,
         InitOracleConfigParams memory params
     ) external {
         if (dataStore.getAddress(Keys.priceFeedKey(params.token)) != address(0)) {
@@ -73,6 +83,14 @@ library ConfigUtils {
 
         if (dataStore.getBytes32(Keys.edgeDataStreamIdKey(params.token)) != bytes32(0)) {
             revert Errors.EdgeDataStreamIdAlreadyExistsForToken(params.token);
+        }
+        
+        if (!flags.getFlag(params.priceFeed.feedAddress)) {
+            revert Errors.PriceFeedAddressNotValidForToken(params.token);
+        }
+
+        if (params.priceFeed.descriptionHash != keccak256(bytes(IPriceFeed(params.priceFeed.feedAddress).description()))) {
+            revert Errors.PriceFeedDescriptionMismatchForToken(params.token);
         }
 
         dataStore.setAddress(Keys.priceFeedKey(params.token), params.priceFeed.feedAddress);
@@ -254,6 +272,91 @@ library ConfigUtils {
             Cast.toBytes32(market),
             eventData
         );
+    }
+
+    function setVirtualMarketIds(DataStore dataStore, SetVirtualMarketIdsParams[] memory params) external {
+        uint256 paramsCount = params.length;
+        bytes32[] memory oldVirtualMarketIds = new bytes32[](paramsCount);
+        uint256 marketListCount = dataStore.getAddressCount(Keys.MARKET_LIST);
+        address[] memory marketList = dataStore.getAddressValuesAt(Keys.MARKET_LIST, 0, marketListCount);
+
+        // Apply all virtualMarketId updates
+        for (uint256 i; i < paramsCount; i++) {
+            address market = params[i].market;
+            bytes32 oldVirtualMarketId = dataStore.getBytes32(Keys.virtualMarketIdKey(market));
+            bytes32 newVirtualMarketId = params[i].newVirtualMarketId;
+            if (oldVirtualMarketId == newVirtualMarketId) {
+                revert Errors.NewVirtualMarketIdAlreadySetForMarket(newVirtualMarketId, market);
+            }
+
+            oldVirtualMarketIds[i] = oldVirtualMarketId;
+            dataStore.setBytes32(Keys.virtualMarketIdKey(market), newVirtualMarketId);
+        }
+
+        // Set virtual inventory for swaps for each oldVirtualMarketId to zero or throw error if still in use
+        for (uint256 i; i < paramsCount; i++) {
+            bytes32 oldVirtualMarketId = oldVirtualMarketIds[i];
+            bool found;
+            for (uint256 j; j < i; j++) {
+                if (oldVirtualMarketIds[j] == oldVirtualMarketId) {
+                    found = true;
+                    break;
+                }
+            }
+            if (found) continue;
+
+            uint256 remainingMarkets;
+            for (uint256 j; j < marketListCount; j++) {
+                address market = marketList[j];
+                if (dataStore.getBytes32(Keys.virtualMarketIdKey(market)) == oldVirtualMarketId) {
+                    ++remainingMarkets;
+                }
+            }
+            if (remainingMarkets != 0) {
+                revert Errors.OldVirtualMarketIdStillInUse(oldVirtualMarketId, remainingMarkets);
+            }
+
+            dataStore.setUint(Keys.virtualInventoryForSwapsKey(oldVirtualMarketId, true), 0);
+            dataStore.setUint(Keys.virtualInventoryForSwapsKey(oldVirtualMarketId, false), 0);
+        }
+
+        // Recalculate virtual swap inventory for each newVirtualMarketId for all markets
+        for (uint256 i; i < paramsCount; i++) {
+            bytes32 newVirtualMarketId = params[i].newVirtualMarketId;
+            bool found;
+            for (uint256 j; j < i; j++) {
+                if (params[j].newVirtualMarketId == newVirtualMarketId) {
+                    found = true;
+                    break;
+                }
+            }
+            if (found) continue;
+
+            address longToken = dataStore.getAddress(
+                keccak256(abi.encode(params[i].market, MarketStoreUtils.LONG_TOKEN))
+            );
+            address shortToken = dataStore.getAddress(
+                keccak256(abi.encode(params[i].market, MarketStoreUtils.SHORT_TOKEN))
+            );
+            uint256 sumLongPool;
+            uint256 sumShortPool;
+            for (uint256 j; j < marketListCount; j++) {
+                address market = marketList[j];
+                if (dataStore.getBytes32(Keys.virtualMarketIdKey(market)) != newVirtualMarketId) continue;
+                if (dataStore.getAddress(keccak256(abi.encode(market, MarketStoreUtils.LONG_TOKEN))) != longToken) {
+                    revert Errors.NewVirtualMarketIdLongTokenMismatch(newVirtualMarketId, market);
+                }
+                if (dataStore.getAddress(keccak256(abi.encode(market, MarketStoreUtils.SHORT_TOKEN))) != shortToken) {
+                    revert Errors.NewVirtualMarketIdShortTokenMismatch(newVirtualMarketId, market);
+                }
+
+                sumLongPool += dataStore.getUint(Keys.poolAmountKey(market, longToken));
+                sumShortPool += dataStore.getUint(Keys.poolAmountKey(market, shortToken));
+            }
+
+            dataStore.setUint(Keys.virtualInventoryForSwapsKey(newVirtualMarketId, true), sumLongPool);
+            dataStore.setUint(Keys.virtualInventoryForSwapsKey(newVirtualMarketId, false), sumShortPool);
+        }
     }
 
     // @dev validate that the value is within the allowed range

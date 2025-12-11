@@ -50,6 +50,7 @@ describe("FeeDistributor", function () {
     mockVaultV1,
     claimVault,
     claimUtils,
+    mockFlags,
     wallet,
     user0,
     user1,
@@ -122,6 +123,7 @@ describe("FeeDistributor", function () {
       mockVaultV1,
       claimVault,
       claimUtils,
+      mockFlags,
     } = fixture.contracts);
 
     ({
@@ -1281,11 +1283,15 @@ describe("FeeDistributor", function () {
     await feeDistributorConfig.moveToNextDistributionDay(distributionDay);
 
     const dataStoreD = await deployContract("DataStore", [roleStore.address]);
-    const configD = await deployContract("Config", [roleStore.address, dataStoreD.address, eventEmitter.address], {
-      libraries: {
-        "contracts/config/ConfigUtils.sol:ConfigUtils": configUtils.address,
-      },
-    });
+    const configD = await deployContract(
+      "Config",
+      [roleStore.address, dataStoreD.address, eventEmitter.address, mockFlags.address],
+      {
+        libraries: {
+          "contracts/config/ConfigUtils.sol:ConfigUtils": configUtils.address,
+        },
+      }
+    );
     const mockEndpointV2DMultichain = await deployContract("MockEndpointV2", [eidD]);
     const mockEndpointV2D = await deployContract("MockEndpointV2", [eidD]);
     const gmxD = await deployContract("MintableToken", ["GMX", "GMX", 18]);

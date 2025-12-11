@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import { FlagsInterface } from "@chainlink/contracts/src/v0.8/interfaces/FlagsInterface.sol";
 
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
@@ -28,6 +29,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
+    FlagsInterface public immutable flags;
 
     // @dev the base keys that can be set
     mapping (bytes32 => bool) public allowedBaseKeys;
@@ -37,10 +39,12 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
-        EventEmitter _eventEmitter
+        EventEmitter _eventEmitter,
+        FlagsInterface _flags
     ) RoleModule(_roleStore) {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
+        flags = _flags;
 
         _initAllowedBaseKeys();
         _initAllowedLimitedBaseKeys();
@@ -117,6 +121,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         ConfigUtils.initOracleConfig(
             dataStore,
             eventEmitter,
+            flags,
             params
         );
     }
@@ -185,6 +190,12 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
             minPositionImpactPoolAmount,
             positionImpactPoolDistributionRate
         );
+    }
+
+    function setVirtualMarketIds(
+        ConfigUtils.SetVirtualMarketIdsParams[] memory params
+    ) external onlyConfigKeeper nonReentrant {
+        ConfigUtils.setVirtualMarketIds(dataStore, params);
     }
 
     // @dev set a bool value
