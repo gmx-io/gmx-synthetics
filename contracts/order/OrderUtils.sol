@@ -129,6 +129,8 @@ library OrderUtils {
                     }
                     params.numbers.initialCollateralDeltaAmount = (initialCollateralDeltaAmountTwap - executionFeeTwap) / twapCount;
                     shouldRecordSeparateExecutionFeeTransfer = false;
+                } else {
+                    params.numbers.initialCollateralDeltaAmount = initialCollateralDeltaAmountTwap / twapCount;
                 }
             }
 

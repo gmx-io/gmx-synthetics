@@ -56,6 +56,33 @@ describe("Exchange.TwapOrder", () => {
     );
   });
 
+  it.only("createTwapOrder: initial collateral amount is adjusted by the number of twap orders", async () => {
+    const params = {
+      market: ethUsdMarket,
+      initialCollateralToken: usdc,
+      initialCollateralDeltaAmount: expandDecimals(100 * 1000, 6),
+      swapPath: [ethUsdMarket.marketToken],
+      sizeDeltaUsd: decimalToFloat(200 * 1000),
+      triggerPrice: expandDecimals(5000, 12),
+      acceptablePrice: expandDecimals(5001, 12),
+      executionFee,
+      minOutputAmount: expandDecimals(50000, 6),
+      orderType: OrderType.LimitIncrease,
+      isLong: true,
+      shouldUnwrapNativeToken: false,
+      initialCollateralToMint: expandDecimals(100 * 1000, 6), // less than the indicated initial collateral delta amount which is twapCount * initialCollateralDeltaAmount
+      interval: 300,
+    };
+    const twapCount = 2;
+
+    await createTwapOrder(fixture, { ...params, twapCount }); // passes since the initial collateral mint amount is determined by amount sent to the order vault
+    const orderKeys = await getOrderKeys(dataStore, 0, twapCount);
+    for (let i = 0; i < twapCount; i++) {
+      const order = await reader.getOrder(dataStore.address, orderKeys[i]);
+      expect(order.numbers.initialCollateralDeltaAmount).eq(expandDecimals(50 * 1000, 6));
+    }
+  });
+
   it("createTwapOrder: can create twap order with less than the indicated initial collateral", async () => {
     const params = {
       market: ethUsdMarket,
