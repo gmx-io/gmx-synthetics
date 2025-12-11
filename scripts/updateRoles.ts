@@ -19,15 +19,15 @@ async function getTimelock(): Promise<TimelockConfig> {
   const network = hre.network.name;
 
   if (network === "arbitrum") {
-    return await ethers.getContractAt("TimelockConfig", "0xC181eB022F33b8ba808AD96348B03e8A753A859b");
+    return await ethers.getContractAt("TimelockConfig", "0x4A1D9e342E2dB5f4a02c9eF5cB29CaF289f31599");
   }
 
   if (network === "avalanche") {
-    return await ethers.getContractAt("TimelockConfig", "0xdD67459D3e98EdDAA9770EbB7C38fF8F643f229f");
+    return await ethers.getContractAt("TimelockConfig", "0x37e1AeB6118B0106810D2eF7662875C414e39Ca4");
   }
 
   if (network === "botanix") {
-    return await ethers.getContractAt("TimelockConfig", "0xc7D8E3561f1247EBDa491bA5f042699C2807C33C");
+    return await ethers.getContractAt("TimelockConfig", "0x72a30e76827Ce83cEf0b1BEd7e9aAF9F4a576990");
   }
 
   throw new Error("Unsupported network");
