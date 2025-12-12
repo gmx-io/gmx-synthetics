@@ -56,7 +56,7 @@ describe("Exchange.TwapOrder", () => {
     );
   });
 
-  it.only("createTwapOrder: initial collateral amount is adjusted by the number of twap orders", async () => {
+  it("createTwapOrder: initial collateral amount is adjusted by the number of twap orders", async () => {
     const params = {
       market: ethUsdMarket,
       initialCollateralToken: usdc,
