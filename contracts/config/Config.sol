@@ -618,6 +618,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedLimitedBaseKeys[Keys.GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT] = true;
 
         allowedLimitedBaseKeys[Keys.PRO_TRADER_TIER] = true;
+        allowedLimitedBaseKeys[Keys.SYNC_CONFIG_MARKET_PARAMETER_DISABLED] = true;
     }
 
     // @dev validate that the baseKey is allowed to be used
