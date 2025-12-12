@@ -233,6 +233,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         "0x27Ef981E6fcB274a6C5C75983725d265Fd3dCdac": true, // WBTC-USDC GLV Adapter
         "0xfcff5015627B8ce9CeAA7F5b38a6679F65fE39a7": true, // ETH [WETH-USDC] GM Adapter
         "0x8c92eaE643040fF0Fb65B423433001c176cB0bb6": true, // WETH-USDC GLV Adapter
+        "0x661E1faD17124471a59c37E9c4590BA809599f30": true, // BTC-BTC GLV Adapter
+        "0x0110424A21D5DF818f4a789E5d9d9141a4E29A3C": true, // WETH-WETH GLV Adapter
       },
       multichainEndpoints: {
         "0x1a44076050125825900e736c501f859c50fE728c": true, // LZ Endpoint
