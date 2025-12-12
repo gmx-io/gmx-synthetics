@@ -491,6 +491,17 @@ describe("Config", () => {
       },
     };
 
+    // invalid price feed
+    await expect(config.initOracleConfig(oracleConfig)).to.be.revertedWithCustomError(
+      errorsContract,
+      "InvalidPriceFeed"
+    );
+
+    // valid price feed
+    const mockPriceFeedFactory = await ethers.getContractFactory("MockPriceFeed");
+    const mockedPriceFeed = await mockPriceFeedFactory.deploy();
+    await mockedPriceFeed.deployed();
+    oracleConfig.priceFeed.feedAddress = mockedPriceFeed.address;
     await config.initOracleConfig(oracleConfig);
 
     expect(await dataStore.getAddress(keys.priceFeedKey(token.address))).eq(oracleConfig.priceFeed.feedAddress);
