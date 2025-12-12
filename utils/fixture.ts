@@ -108,6 +108,7 @@ async function setup() {
   const swapOrderExecutor = await hre.ethers.getContract("SwapOrderExecutor");
   const router = await hre.ethers.getContract("Router");
   const exchangeRouter = await hre.ethers.getContract("ExchangeRouter");
+  const simulationRouter = await hre.ethers.getContract("SimulationRouter");
   const gelatoRelayRouter = await hre.ethers.getContract("GelatoRelayRouter");
   const subaccountGelatoRelayRouter = await hre.ethers.getContract("SubaccountGelatoRelayRouter");
   const subaccountRouter = await hre.ethers.getContract("SubaccountRouter");
@@ -321,6 +322,7 @@ async function setup() {
       swapOrderExecutor,
       router,
       exchangeRouter,
+      simulationRouter,
       gelatoRelayRouter,
       subaccountGelatoRelayRouter,
       subaccountRouter,

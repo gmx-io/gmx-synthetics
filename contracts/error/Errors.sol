@@ -299,6 +299,8 @@ library Errors {
     error MaxTotalCallbackGasLimitForAutoCancelOrdersExceeded(uint256 totalCallbackGasLimit, uint256 maxTotalCallbackGasLimit);
     error InvalidReceiver(address receiver);
     error UnexpectedValidFromTime(uint256 orderType);
+    error InvalidTwapCount(uint256 twapCount);
+    error InvalidInterval(uint256 interval);
 
     // OrderStoreUtils errors
     error OrderNotFound(bytes32 key);
@@ -543,3 +545,4 @@ library Errors {
     error BridgingBalanceArrayMismatch(uint256 balancesLength, uint256 targetBalancesLength);
     error ZeroTreasuryAddress();
 }
+

@@ -17,12 +17,10 @@ import "../order/OrderStoreUtils.sol";
 
 import "../callback/CallbackUtils.sol";
 import "../fee/FeeUtils.sol";
-import "../nonce/NonceUtils.sol";
 import "../referral/ReferralUtils.sol";
 
 import "./BaseRouter.sol";
 import "./IExchangeRouter.sol";
-import "../glv/glvShift/GlvShiftUtils.sol";
 
 /**
  * @title ExchangeRouter
@@ -156,13 +154,7 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
 
         depositHandler.cancelDeposit(key);
     }
-
-    function simulateExecuteLatestDeposit(
-        OracleUtils.SimulatePricesParams memory simulatedOracleParams
-    ) external payable nonReentrant {
-        bytes32 key = NonceUtils.getCurrentKey(dataStore);
-        depositHandler.simulateExecuteDeposit(key, simulatedOracleParams);
-    }
+ 
 
     function createWithdrawal(
         IWithdrawalUtils.CreateWithdrawalParams calldata params
@@ -198,14 +190,6 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         );
     }
 
-    function simulateExecuteLatestWithdrawal(
-        OracleUtils.SimulatePricesParams memory simulatedOracleParams,
-        ISwapPricingUtils.SwapPricingType swapPricingType
-    ) external payable nonReentrant {
-        bytes32 key = NonceUtils.getCurrentKey(dataStore);
-        withdrawalHandler.simulateExecuteWithdrawal(key, simulatedOracleParams, swapPricingType);
-    }
-
     function createShift(
         IShiftUtils.CreateShiftParams calldata params
     ) external override payable nonReentrant returns (bytes32) {
@@ -227,13 +211,6 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         shiftHandler.cancelShift(key);
     }
 
-    function simulateExecuteLatestShift(
-        OracleUtils.SimulatePricesParams memory simulatedOracleParams
-    ) external payable nonReentrant {
-        bytes32 key = NonceUtils.getCurrentKey(dataStore);
-        shiftHandler.simulateExecuteShift(key, simulatedOracleParams);
-    }
-
     /**
      * @dev Creates a new order with the given amount, order parameters. The order is
      * created by transferring the specified amount of collateral tokens from the caller's account to the
@@ -251,6 +228,22 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
             params,
             false
         );
+    }
+
+    /*
+     * @dev Creates new twap orders with the given order parameters. The orders are
+     * created by transferring the specified amount of collateral tokens from the caller's account to the
+     * order store, and then calling the `createTwapOrder()` function on the order handler contract. The
+     * referral code is also set on the caller's account using the referral storage contract.
+     * twapCount should be greater than 1 and interval should be greater than 0.
+     */
+    function createTwapOrder(
+        IBaseOrderUtils.CreateOrderParams calldata params,
+        uint256 twapCount,
+        uint256 interval
+    ) external override payable nonReentrant returns (bytes32[] memory orderKeys) {
+        address account = msg.sender;
+        return orderHandler.createTwapOrder(account, 0, params, false, twapCount, interval);
     }
 
     function setSavedCallbackContract(
@@ -327,14 +320,7 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         }
 
         orderHandler.cancelOrder(key);
-    }
-
-    function simulateExecuteLatestOrder(
-        OracleUtils.SimulatePricesParams memory simulatedOracleParams
-    ) external payable nonReentrant {
-        bytes32 key = NonceUtils.getCurrentKey(dataStore);
-        orderHandler.simulateExecuteOrder(key, simulatedOracleParams);
-    }
+    } 
 
     /**
      * @dev Claims funding fees for the given markets and tokens on behalf of the caller, and sends the
@@ -421,13 +407,5 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
     ) external payable nonReentrant returns (uint256[] memory) {
         address uiFeeReceiver = msg.sender;
         return FeeUtils.batchClaimUiFees(dataStore, eventEmitter, markets, tokens, receiver, uiFeeReceiver);
-    }
-
-    function simulateExecuteLatestJitOrder(
-        GlvShiftUtils.CreateGlvShiftParams[] memory shiftParamsList,
-        OracleUtils.SimulatePricesParams memory simulatedOracleParams
-    ) external payable nonReentrant {
-        bytes32 key = NonceUtils.getCurrentKey(dataStore);
-        jitOrderHandler.simulateExecuteJitOrder(shiftParamsList, key, simulatedOracleParams);
     }
 }
