@@ -20,7 +20,11 @@
   "GlvVault_1": 1725253003,
   "MultichainVault_1": 1753239352,
   "ClaimVault_1": 1753241017,
-  "ChainlinkPriceFeedProvider_6": 1755052994,
   "Oracle_6": 1755053009,
-  "ChainlinkDataStreamProvider_6": 1755053173
+  "ChainlinkPriceFeedProvider_6": 1755052994,
+  "ChainlinkDataStreamProvider_6": 1755053173,
+  "EdgeDataStreamProvider_6": 1755053143,
+  "EdgeDataStreamVerifier_6": 1755053143,
+  "FeeDistributorVault_1": 1762332292,
+  "FeeDistributor_1": 1762332332
 }

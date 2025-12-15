@@ -323,15 +323,16 @@ library DecreasePositionUtils {
             // the only difference is that if the position has insufficient / negative
             // collateral a liquidation transaction should still complete
             // while a manual close transaction should revert
-            PositionUtils.validatePosition(
-                params.contracts.dataStore,
-                params.contracts.referralStorage,
-                params.position,
-                params.market,
-                cache.prices,
-                false, // shouldValidateMinPositionSize
-                false // shouldValidateMinCollateralUsd
-            );
+            PositionUtils.validatePosition({
+                dataStore: params.contracts.dataStore,
+                referralStorage: params.contracts.referralStorage,
+                position: params.position,
+                market: params.market,
+                prices: cache.prices,
+                shouldValidateMinPositionSize: false,
+                shouldValidateMinCollateralUsd: false,
+                forLiquidation: false
+            });
         }
 
         PositionEventUtils.emitPositionFeesCollected(

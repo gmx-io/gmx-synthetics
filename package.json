@@ -84,7 +84,7 @@
     "node-fetch": "^2.6.1",
     "prb-math": "2.4.3",
     "prompts": "^2.4.2",
-    "react": "^18.2.0",
+    "react": "^19.2.3",
     "react-dom": "^18.2.0",
     "react-query": "^3.39.3",
     "react-router-dom": "^6.19.0",

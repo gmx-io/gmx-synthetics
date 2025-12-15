@@ -7,6 +7,7 @@ import "../exchange/IWithdrawalHandler.sol";
 import "../exchange/IShiftHandler.sol";
 import "../exchange/IOrderHandler.sol";
 import "../external/IExternalHandler.sol";
+import "../exchange/IJitOrderHandler.sol";
 
 import "../deposit/DepositStoreUtils.sol";
 import "../withdrawal/WithdrawalStoreUtils.sol";
@@ -16,7 +17,6 @@ import "../order/OrderStoreUtils.sol";
 
 import "../callback/CallbackUtils.sol";
 import "../fee/FeeUtils.sol";
-import "../nonce/NonceUtils.sol";
 import "../referral/ReferralUtils.sol";
 
 import "./BaseRouter.sol";
@@ -71,6 +71,7 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
     IShiftHandler public immutable shiftHandler;
     IOrderHandler public immutable orderHandler;
     IExternalHandler public immutable externalHandler;
+    IJitOrderHandler public immutable jitOrderHandler;
 
     // @dev Constructor that initializes the contract with the provided Router, RoleStore, DataStore,
     // EventEmitter, IDepositHandler, IWithdrawalHandler, IOrderHandler, and OrderStore instances
@@ -83,13 +84,15 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         IWithdrawalHandler _withdrawalHandler,
         IShiftHandler _shiftHandler,
         IOrderHandler _orderHandler,
-        IExternalHandler _externalHandler
+        IExternalHandler _externalHandler,
+        IJitOrderHandler _jitOrderHandler
     ) BaseRouter(_router, _roleStore, _dataStore, _eventEmitter) {
         depositHandler = _depositHandler;
         withdrawalHandler = _withdrawalHandler;
         shiftHandler = _shiftHandler;
         orderHandler = _orderHandler;
         externalHandler = _externalHandler;
+        jitOrderHandler = _jitOrderHandler;
     }
 
     // makeExternalCalls can be used to perform an external swap before
@@ -151,20 +154,7 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
 
         depositHandler.cancelDeposit(key);
     }
-
-    function simulateExecuteDeposit(
-        bytes32 key,
-        OracleUtils.SimulatePricesParams memory simulatedOracleParams
-    ) external payable nonReentrant {
-        depositHandler.simulateExecuteDeposit(key, simulatedOracleParams);
-    }
-
-    function simulateExecuteLatestDeposit(
-        OracleUtils.SimulatePricesParams memory simulatedOracleParams
-    ) external payable nonReentrant {
-        bytes32 key = NonceUtils.getCurrentKey(dataStore);
-        depositHandler.simulateExecuteDeposit(key, simulatedOracleParams);
-    }
+ 
 
     function createWithdrawal(
         IWithdrawalUtils.CreateWithdrawalParams calldata params
@@ -200,22 +190,6 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         );
     }
 
-    function simulateExecuteWithdrawal(
-        bytes32 key,
-        OracleUtils.SimulatePricesParams memory simulatedOracleParams,
-        ISwapPricingUtils.SwapPricingType swapPricingType
-    ) external payable nonReentrant {
-        withdrawalHandler.simulateExecuteWithdrawal(key, simulatedOracleParams, swapPricingType);
-    }
-
-    function simulateExecuteLatestWithdrawal(
-        OracleUtils.SimulatePricesParams memory simulatedOracleParams,
-        ISwapPricingUtils.SwapPricingType swapPricingType
-    ) external payable nonReentrant {
-        bytes32 key = NonceUtils.getCurrentKey(dataStore);
-        withdrawalHandler.simulateExecuteWithdrawal(key, simulatedOracleParams, swapPricingType);
-    }
-
     function createShift(
         IShiftUtils.CreateShiftParams calldata params
     ) external override payable nonReentrant returns (bytes32) {
@@ -237,20 +211,6 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         shiftHandler.cancelShift(key);
     }
 
-    function simulateExecuteShift(
-        bytes32 key,
-        OracleUtils.SimulatePricesParams memory simulatedOracleParams
-    ) external payable nonReentrant {
-        shiftHandler.simulateExecuteShift(key, simulatedOracleParams);
-    }
-
-    function simulateExecuteLatestShift(
-        OracleUtils.SimulatePricesParams memory simulatedOracleParams
-    ) external payable nonReentrant {
-        bytes32 key = NonceUtils.getCurrentKey(dataStore);
-        shiftHandler.simulateExecuteShift(key, simulatedOracleParams);
-    }
-
     /**
      * @dev Creates a new order with the given amount, order parameters. The order is
      * created by transferring the specified amount of collateral tokens from the caller's account to the
@@ -268,6 +228,22 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
             params,
             false
         );
+    }
+
+    /*
+     * @dev Creates new twap orders with the given order parameters. The orders are
+     * created by transferring the specified amount of collateral tokens from the caller's account to the
+     * order store, and then calling the `createTwapOrder()` function on the order handler contract. The
+     * referral code is also set on the caller's account using the referral storage contract.
+     * twapCount should be greater than 1 and interval should be greater than 0.
+     */
+    function createTwapOrder(
+        IBaseOrderUtils.CreateOrderParams calldata params,
+        uint256 twapCount,
+        uint256 interval
+    ) external override payable nonReentrant returns (bytes32[] memory orderKeys) {
+        address account = msg.sender;
+        return orderHandler.createTwapOrder(account, 0, params, false, twapCount, interval);
     }
 
     function setSavedCallbackContract(
@@ -344,21 +320,7 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
         }
 
         orderHandler.cancelOrder(key);
-    }
-
-    function simulateExecuteOrder(
-        bytes32 key,
-        OracleUtils.SimulatePricesParams memory simulatedOracleParams
-    ) external payable nonReentrant {
-        orderHandler.simulateExecuteOrder(key, simulatedOracleParams);
-    }
-
-    function simulateExecuteLatestOrder(
-        OracleUtils.SimulatePricesParams memory simulatedOracleParams
-    ) external payable nonReentrant {
-        bytes32 key = NonceUtils.getCurrentKey(dataStore);
-        orderHandler.simulateExecuteOrder(key, simulatedOracleParams);
-    }
+    } 
 
     /**
      * @dev Claims funding fees for the given markets and tokens on behalf of the caller, and sends the

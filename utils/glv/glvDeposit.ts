@@ -144,8 +144,8 @@ export async function executeGlvDeposit(fixture, overrides: any = {}) {
     oracleBlockNumber = await ethers.provider.getBlockNumber();
   }
 
-  const params: any = {
-    key: glvDepositKey,
+  const params = {
+    args: [glvDepositKey],
     tokens,
     precisions,
     minPrices,
@@ -157,10 +157,8 @@ export async function executeGlvDeposit(fixture, overrides: any = {}) {
     dataStreamData,
     priceFeedTokens,
     oracleBlockNumber,
+    gasUsageLabel: gasUsageLabel ?? undefined,
   };
-  if (gasUsageLabel) {
-    params.gasUsageLabel = gasUsageLabel;
-  }
 
   const txReceipt = await executeWithOracleParams(fixture, params);
 

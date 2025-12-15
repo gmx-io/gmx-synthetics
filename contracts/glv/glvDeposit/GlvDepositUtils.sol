@@ -16,6 +16,7 @@ import "./GlvDepositStoreUtils.sol";
 
 library GlvDepositUtils {
     using GlvDeposit for GlvDeposit.Props;
+    using Price for Price.Props;
 
     struct CreateGlvDepositCache {
         uint256 marketTokenAmount;
@@ -28,6 +29,7 @@ library GlvDepositUtils {
         EventEmitter eventEmitter;
         MultichainVault multichainVault;
         GlvVault glvVault;
+        IOracle oracle;
         bytes32 key;
         address keeper;
         uint256 startingGas;
@@ -153,7 +155,8 @@ library GlvDepositUtils {
         uint256 estimatedGasLimit = GasUtils.estimateExecuteGlvDepositGasLimit(dataStore, glvDeposit, marketCount);
         uint256 oraclePriceCount = GasUtils.estimateGlvDepositOraclePriceCount(
             marketCount,
-            params.addresses.longTokenSwapPath.length + params.addresses.shortTokenSwapPath.length
+            params.addresses.longTokenSwapPath.length + params.addresses.shortTokenSwapPath.length,
+            false // glvTokenPriceUsed. at this point we don't know if the GLV token price will be used
         );
         GasUtils.validateExecutionFee(dataStore, estimatedGasLimit, params.executionFee, oraclePriceCount);
 
@@ -263,10 +266,12 @@ library GlvDepositUtils {
         EventUtils.EventLogData memory eventData;
         CallbackUtils.afterGlvDepositCancellation(params.key, glvDeposit, eventData);
 
+        bool glvTokenPriceUsed = !GlvUtils.getGlvTokenPrice(params.oracle, glvDeposit.glv()).isEmpty();
         uint256 marketCount = GlvUtils.getGlvMarketCount(params.dataStore, glvDeposit.glv());
         uint256 oraclePriceCount = GasUtils.estimateGlvDepositOraclePriceCount(
             marketCount,
-            glvDeposit.longTokenSwapPath().length + glvDeposit.shortTokenSwapPath().length
+            glvDeposit.longTokenSwapPath().length + glvDeposit.shortTokenSwapPath().length,
+            glvTokenPriceUsed
         );
         GasUtils.payExecutionFee(
             GasUtils.PayExecutionFeeContracts(

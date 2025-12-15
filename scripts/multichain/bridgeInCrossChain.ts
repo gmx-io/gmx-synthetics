@@ -22,6 +22,9 @@ const { ethers } = hre;
 // IOFT is being used since it's more general, but IStargate has identical
 // interface, tho only difference being the additional `sendToken` method
 
+// Fully qualified name to resolve ambiguity between multiple IOFT artifacts
+const IOFT_FQN = "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol:IOFT";
+
 // Sepolia
 const STARGATE_POOL_USDC_SEPOLIA = "0x4985b8fcEA3659FD801a5b857dA1D00e985863F0";
 const GM_OFT = "0xe4EBcAC4a2e6CBEE385eE407f7D5E278Bc07e11e";
@@ -36,8 +39,20 @@ const ETH_USD_GLV_ADDRESS = "0xAb3567e55c205c62B141967145F37b7695a9F854"; // GMX
 
 const layerZeroProviderJson = import("../../deployments/arbitrumSepolia/LayerZeroProvider.json");
 
-async function getComposedMsg({ account }: { account: string }): Promise<string> {
-  return ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, "0x"]);
+async function getComposedMsg({
+  account,
+  expectedNativeValue = 0,
+}: {
+  account: string;
+  expectedNativeValue?: number | string | BigNumber;
+}): Promise<string> {
+  // Encode message data: (ActionType, expectedNativeValue, actionData)
+  // ActionType.None = 0, no actionData = "0x"
+  const data = ethers.utils.defaultAbiCoder.encode(
+    ["uint8", "uint256", "bytes"],
+    [0 /* ActionType.None */, expectedNativeValue, "0x"]
+  );
+  return ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, data]);
 }
 
 async function prepareSend(
@@ -45,20 +60,35 @@ async function prepareSend(
   composeMsg: string,
   oftAddress: string,
   decimals: number,
+  nativeTopUpAmount: BigNumber = BigNumber.from(0), // Amount of native tokens to top up user's multichain balance
   gasLimit = 500000,
   extraGasForLzCompose = 500000,
   slippageBps = 100 // Default 1% slippage tolerance
 ) {
-  // Calculate msgValue for lzReceive on destination chain
-  // e.g. 50,000 gas * 0.1 gwei (100,000,000 wei) = 5,000,000,000,000 wei
+  // Calculate msgValue for lzCompose on destination chain
+  // This includes:
+  // 1. Gas cost for executing lzCompose: extraGasForLzCompose * gasPrice
+  // 2. Native token top-up amount to credit to user's multichain balance: nativeTopUpAmount
   const destProvider = new ethers.providers.JsonRpcProvider("https://sepolia-rollup.arbitrum.io/rpc");
   const gasPrice = await destProvider.getGasPrice();
-  const msgValue = extraGasForLzCompose * gasPrice.toNumber();
+  const gasValueForCompose = BigNumber.from(extraGasForLzCompose).mul(gasPrice);
+  const msgValue = gasValueForCompose.add(nativeTopUpAmount);
+
+  console.log(`lzCompose msg.value breakdown:`);
+  console.log(
+    `  Gas cost (${extraGasForLzCompose} gas * ${ethers.utils.formatUnits(
+      gasPrice,
+      "gwei"
+    )} gwei): ${ethers.utils.formatEther(gasValueForCompose)} ETH`
+  );
+  console.log(`  Native top-up: ${ethers.utils.formatEther(nativeTopUpAmount)} ETH`);
+  console.log(`  Total msg.value: ${ethers.utils.formatEther(msgValue)} ETH`);
+
   const extraOptions = Options.newOptions()
     .addExecutorLzReceiveOption(gasLimit, 0)
-    .addExecutorComposeOption(0, gasLimit, msgValue);
+    .addExecutorComposeOption(0, gasLimit, msgValue.toString());
 
-  const oft: IOFT = await ethers.getContractAt("IOFT", oftAddress);
+  const oft: IOFT = await ethers.getContractAt(IOFT_FQN, oftAddress);
   console.log(`extraOptions: ${extraOptions.toHex()}`);
   // Calculate minAmountLD with slippage tolerance
   const amountBN = BigNumber.from(amount);
@@ -92,17 +122,22 @@ async function prepareSend(
   };
 }
 
-// TOKEN=USDC npx hardhat run --network sepolia scripts/multichain/bridgeInCrossChain.ts
+// TOKEN=USDC NATIVE_TOPUP=0.01 npx hardhat run --network sepolia scripts/multichain/bridgeInCrossChain.ts
 async function main() {
   const [wallet] = await hre.ethers.getSigners();
   const account = wallet.address;
+
+  // Parse native token top-up amount from environment variable (in ETH)
+  const nativeTopUpEth = process.env.NATIVE_TOPUP || "0";
+  const nativeTopUpAmount = ethers.utils.parseEther(nativeTopUpEth);
+  console.log(`Native token top-up: ${nativeTopUpEth} ETH (${nativeTopUpAmount.toString()} wei)`);
 
   let amount: BigNumber;
   let valueToSend;
   let sendParam;
   let messagingFee;
   let oft;
-  const composedMsg = await getComposedMsg({ account });
+  const composedMsg = await getComposedMsg({ account, expectedNativeValue: nativeTopUpAmount });
 
   if (process.env.TOKEN === "ETH") {
     amount = expandDecimals(Number(process.env.AMOUNT) || 20, 16); // 0.2 ETH
@@ -110,7 +145,8 @@ async function main() {
       amount,
       composedMsg,
       STARGATE_POOL_NATIVE_SEPOLIA,
-      6
+      6,
+      nativeTopUpAmount
     ));
     const { wntAddress } = await getDeployments();
     await logMultichainBalance(account, "WNT", wntAddress);
@@ -120,16 +156,29 @@ async function main() {
       amount,
       composedMsg,
       STARGATE_POOL_USDC_SEPOLIA,
-      6
+      6,
+      nativeTopUpAmount
     ));
     await logMultichainBalance(account, "USDC", STARGATE_POOL_USDC_SEPOLIA, 6);
   } else if (process.env.TOKEN === "GM") {
     amount = expandDecimals(Number(process.env.AMOUNT) || 3, 18); // 3 GM
-    ({ valueToSend, sendParam, messagingFee, oft } = await prepareSend(amount, composedMsg, GM_OFT, 18));
+    ({ valueToSend, sendParam, messagingFee, oft } = await prepareSend(
+      amount,
+      composedMsg,
+      GM_OFT,
+      18,
+      nativeTopUpAmount
+    ));
     await logMultichainBalance(account, "GM", ETH_USD_MARKET_TOKEN);
   } else if (process.env.TOKEN === "GLV") {
     amount = expandDecimals(Number(process.env.AMOUNT) || 1, 18); // 1 GLV
-    ({ valueToSend, sendParam, messagingFee, oft } = await prepareSend(amount, composedMsg, GLV_OFT, 18));
+    ({ valueToSend, sendParam, messagingFee, oft } = await prepareSend(
+      amount,
+      composedMsg,
+      GLV_OFT,
+      18,
+      nativeTopUpAmount
+    ));
     await logMultichainBalance(account, "GLV", ETH_USD_GLV_ADDRESS);
   } else {
     throw new Error("⚠️ Unsupported TOKEN type. Use 'USDC', 'GM', or 'GLV'.");

@@ -146,7 +146,11 @@ describe("Exchange.StopIncreaseOrder", () => {
   it("uses execution price with price impact", async () => {
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 9));
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 8));
-    await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
+    await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(2, 0));
+    await dataStore.setUint(
+      keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, false),
+      decimalToFloat(2, 0)
+    );
 
     const params = {
       market: ethUsdMarket,

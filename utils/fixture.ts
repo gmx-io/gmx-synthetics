@@ -96,6 +96,7 @@ async function setup() {
   const withdrawalHandler = await hre.ethers.getContract("WithdrawalHandler");
   const shiftHandler = await hre.ethers.getContract("ShiftHandler");
   const orderHandler = await hre.ethers.getContract("OrderHandler");
+  const jitOrderHandler = await hre.ethers.getContract("JitOrderHandler");
   const swapHandler = await hre.ethers.getContract("SwapHandler");
   const externalHandler = await hre.ethers.getContract("ExternalHandler");
   const baseOrderUtils = await hre.ethers.getContract("BaseOrderUtils");
@@ -107,6 +108,7 @@ async function setup() {
   const swapOrderExecutor = await hre.ethers.getContract("SwapOrderExecutor");
   const router = await hre.ethers.getContract("Router");
   const exchangeRouter = await hre.ethers.getContract("ExchangeRouter");
+  const simulationRouter = await hre.ethers.getContract("SimulationRouter");
   const gelatoRelayRouter = await hre.ethers.getContract("GelatoRelayRouter");
   const subaccountGelatoRelayRouter = await hre.ethers.getContract("SubaccountGelatoRelayRouter");
   const subaccountRouter = await hre.ethers.getContract("SubaccountRouter");
@@ -136,6 +138,7 @@ async function setup() {
   const positionUtils = await hre.ethers.getContract("PositionUtils");
   const swapUtils = await hre.ethers.getContract("SwapUtils");
   const referralStorage = await hre.ethers.getContract("ReferralStorage");
+  const mockTimelockV1 = await hre.ethers.getContract("MockTimelockV1");
   const feeHandler = await hre.ethers.getContract("FeeHandler");
   const mockVaultV1 = await hre.ethers.getContract("MockVaultV1");
   const multichainVault = await hre.ethers.getContract("MultichainVault");
@@ -307,6 +310,7 @@ async function setup() {
       withdrawalHandler,
       shiftHandler,
       orderHandler,
+      jitOrderHandler,
       swapHandler,
       externalHandler,
       baseOrderUtils,
@@ -318,6 +322,7 @@ async function setup() {
       swapOrderExecutor,
       router,
       exchangeRouter,
+      simulationRouter,
       gelatoRelayRouter,
       subaccountGelatoRelayRouter,
       subaccountRouter,
@@ -347,6 +352,7 @@ async function setup() {
       positionUtils,
       swapUtils,
       referralStorage,
+      mockTimelockV1,
       usdcPriceFeed,
       wethPriceFeed,
       gmxPriceFeed,

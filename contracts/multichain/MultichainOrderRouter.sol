@@ -2,7 +2,10 @@
 
 pragma solidity ^0.8.0;
 
+import "../error/Errors.sol";
 import "../referral/IReferralStorage.sol";
+import "../referral/ITimelock.sol";
+import "../referral/IGov.sol";
 import "./IMultichainOrderRouter.sol";
 import "./MultichainRouter.sol";
 
@@ -90,5 +93,24 @@ contract MultichainOrderRouter is IMultichainOrderRouter, MultichainRouter {
         _validateCall(relayParams, account, structHash, srcChainId);
 
         referralStorage.setTraderReferralCode(account, referralCode);
+    }
+
+    function registerCode(
+        IRelayUtils.RelayParams calldata relayParams,
+        address account,
+        uint256 srcChainId,
+        bytes32 referralCode
+    ) external nonReentrant withRelay(relayParams, account, srcChainId, false) {
+        bytes32 structHash = RelayUtils.getRegisterCodeStructHash(relayParams, referralCode);
+        _validateCall(relayParams, account, structHash, srcChainId);
+
+        // Check if code already exists (govSetCodeOwner doesn't prevent overrides)
+        if (referralStorage.codeOwners(referralCode) != address(0)) {
+            revert Errors.ReferralCodeAlreadyExists(referralCode);
+        }
+
+        ITimelock timelock = ITimelock(IGov(address(referralStorage)).gov());
+        // Register code on behalf of the user via timelock keeper access (calls referralStorage.govSetCodeOwner)
+        timelock.govSetCodeOwner(address(referralStorage), referralCode, account);
     }
 }

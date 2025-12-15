@@ -96,7 +96,7 @@ library Errors {
     error GlvInvalidLongToken(address glv, address provided, address expected);
     error GlvInvalidShortToken(address glv, address provided, address expected);
     // GlvShiftUtils
-    error GlvShiftMaxPriceImpactExceeded(uint256 effectivePriceImpactFactor, uint256 glvMaxShiftPriceImpactFactor);
+    error GlvShiftMaxLossExceeded(uint256 effectivePriceImpactFactor, uint256 glvMaxShiftPriceImpactFactor);
     error GlvShiftIntervalNotYetPassed(uint256 currentTimestamp, uint256 lastGlvShiftExecutedAt, uint256 glvShiftMinInterval);
     // GlvFactory
     error GlvAlreadyExists(bytes32 salt, address glv);
@@ -104,6 +104,10 @@ library Errors {
     error GlvNameTooLong();
     // GlvStoreUtils
     error GlvNotFound(address key);
+    // Jit
+    error JitInvalidToMarket(address market, address expectedMarket);
+    error JitEmptyShiftParams();
+    error JitUnsupportedOrderType(uint256 orderType);
 
     // DepositStoreUtils errors
     error DepositNotFound(bytes32 key);
@@ -163,6 +167,7 @@ library Errors {
     // GasUtils errors
     error InsufficientExecutionFee(uint256 minExecutionFee, uint256 executionFee);
     error InsufficientWntAmountForExecutionFee(uint256 wntAmount, uint256 executionFee);
+    error InsufficientNativeTokenAmount(uint256 msgValue, uint256 expectedNativeValue);
     error InsufficientExecutionGasForErrorHandling(uint256 startingGas, uint256 minHandleErrorGas);
     error InsufficientExecutionGas(uint256 startingGas, uint256 estimatedGasLimit, uint256 minAdditionalGasForExecution);
     error InsufficientHandleExecutionErrorGas(uint256 gas, uint256 minHandleExecutionErrorGas);
@@ -194,6 +199,7 @@ library Errors {
     error OpenInterestCannotBeUpdatedForSwapOnlyMarket(address market);
     error MaxOpenInterestExceeded(uint256 openInterest, uint256 maxOpenInterest);
     error MaxPoolAmountExceeded(uint256 poolAmount, uint256 maxPoolAmount);
+    error MaxCollateralSumExceeded(uint256 collateralSum, uint256 maxCollateralSum);
     error MaxPoolUsdForDepositExceeded(uint256 poolUsd, uint256 maxPoolUsdForDeposit);
     error UnexpectedBorrowingFactor(uint256 positionBorrowingFactor, uint256 cumulativeBorrowingFactor);
     error UnableToGetBorrowingFactorEmptyPoolUsd();
@@ -293,6 +299,8 @@ library Errors {
     error MaxTotalCallbackGasLimitForAutoCancelOrdersExceeded(uint256 totalCallbackGasLimit, uint256 maxTotalCallbackGasLimit);
     error InvalidReceiver(address receiver);
     error UnexpectedValidFromTime(uint256 orderType);
+    error InvalidTwapCount(uint256 twapCount);
+    error InvalidInterval(uint256 interval);
 
     // OrderStoreUtils errors
     error OrderNotFound(bytes32 key);
@@ -468,6 +476,7 @@ library Errors {
     error InvalidInitializer();
     error InvalidMultichainProvider(address provider);
     error InvalidMultichainEndpoint(address endpoint);
+    error ReferralCodeAlreadyExists(bytes32 code);
     error UnableToPayOrderFee();
     error UnableToPayOrderFeeFromCollateral();
     error InvalidBridgeOutToken(address token);
@@ -511,6 +520,8 @@ library Errors {
     error InvalidExternalCalls(uint256 sendTokensLength, uint256 sendAmountsLength);
     error MaxRelayFeeSwapForSubaccountExceeded(uint256 feeUsd, uint256 maxFeeUsd);
 
+    error RemovalShouldNotBeSkipped(bytes32 listKey, bytes32 entityKey);
+
     // MultichainReader errors
     error InsufficientMultichainNativeFee(uint256 msgValue);
     error EmptyPeer(uint32 eid);
@@ -534,3 +545,4 @@ library Errors {
     error BridgingBalanceArrayMismatch(uint256 balancesLength, uint256 targetBalancesLength);
     error ZeroTreasuryAddress();
 }
+

@@ -61,10 +61,16 @@ export function parseError(reasonBytes, shouldThrow = true) {
 }
 
 export function formatParsedError(error: { name: string; args: any[] }) {
-  return `${error.name}(${Object.entries(error.args)
-    .filter(([key]) => isNaN(parseInt(key)))
-    .map(([key, value]) => `${key}=${value}`)
-    .join(", ")})`;
+  const isSimpleArray = error.args.length === Object.keys(error.args).length;
+
+  const formattedArgs = isSimpleArray
+    ? error.args.join(", ")
+    : Object.entries(error.args)
+        .filter(([key]) => isNaN(parseInt(key)))
+        .map(([key, value]) => `${key}=${value}`)
+        .join(", ");
+
+  return `${error.name}(${formattedArgs})`;
 }
 
 export function getCancellationReason({ logs, eventName }) {

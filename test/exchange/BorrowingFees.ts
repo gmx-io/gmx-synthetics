@@ -39,7 +39,11 @@ describe("Exchange.BorrowingFees", () => {
     });
   });
 
-  it("borrowing fees", async () => {
+  async function testBorrowingFees(skipBorrowingFeeForSmallerSide) {
+    if (skipBorrowingFeeForSmallerSide) {
+      await dataStore.setBool(keys.SKIP_BORROWING_FEE_FOR_SMALLER_SIDE, true);
+    }
+
     await dataStore.setUint(keys.borrowingFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(1, 7));
     await dataStore.setUint(keys.borrowingFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(2, 7));
     await dataStore.setUint(keys.borrowingExponentFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(1));
@@ -138,7 +142,7 @@ describe("Exchange.BorrowingFees", () => {
     ); // $967.684
 
     expect(position1.fees.borrowing.borrowingFeeUsd).closeTo(
-      "5443200000000000000000000000000000",
+      skipBorrowingFeeForSmallerSide ? "0" : "5443200000000000000000000000000000",
       decimalToFloat(10, 3)
     ); // $5443.2
 
@@ -171,7 +175,7 @@ describe("Exchange.BorrowingFees", () => {
       decimalToFloat(10, 8)
     );
     expect(await dataStore.getUint(keys.cumulativeBorrowingFactorKey(ethUsdMarket.marketToken, false))).eq(
-      "36288120000000000000000000000"
+      skipBorrowingFeeForSmallerSide ? "0" : "36288120000000000000000000000"
     );
 
     // user1 increase short position by $1000
@@ -198,18 +202,23 @@ describe("Exchange.BorrowingFees", () => {
     ); // 0.004838432
 
     expect(await dataStore.getUint(keys.cumulativeBorrowingFactorKey(ethUsdMarket.marketToken, false))).closeTo(
-      "36288240000000000000000000000",
+      skipBorrowingFeeForSmallerSide ? "0" : "36288240000000000000000000000",
       decimalToFloat(10, 8)
     ); // 0.03628824
 
     await usingResult(
       getMarketTokenPriceWithPoolValue(fixture, { prices: prices.ethUsdMarket }),
       ([marketTokenPrice, poolValueInfo]) => {
-        expect(marketTokenPrice).closeTo("1001068487605242432177935697848", "10000000000000000000000"); // 1.00106848761
+        expect(marketTokenPrice).closeTo(
+          skipBorrowingFeeForSmallerSide ? "1000161281605242432177935697848" : "1001068487605242432177935697848",
+          "10000000000000000000000"
+        ); // 1.00016128161 / 1.00106848761
         expect(poolValueInfo.poolValue).closeTo(
-          "6006410925631454593067614187093608000",
+          skipBorrowingFeeForSmallerSide
+            ? "6000967689631454593067614187093608000"
+            : "6006410925631454593067614187093608000",
           "100000000000000000000000000000"
-        ); // 6006410.92563
+        ); // 6,000,967.68963 // 6,006,410.92563
       }
     );
 
@@ -250,13 +259,26 @@ describe("Exchange.BorrowingFees", () => {
     await usingResult(
       getMarketTokenPriceWithPoolValue(fixture, { prices: prices.ethUsdMarket }),
       ([marketTokenPrice, poolValueInfo]) => {
-        expect(marketTokenPrice).closeTo("1001068492544674256310833333333", "10000000000000000000000"); // 1.00106849254
+        expect(marketTokenPrice).closeTo(
+          skipBorrowingFeeForSmallerSide ? "1000161284289174256310833333333" : "1001068492544674256310833333333",
+          "10000000000000000000000"
+        ); // 1.00106849254
         expect(poolValueInfo.poolValue).closeTo(
-          "6006410955268045537865000000000000000",
+          skipBorrowingFeeForSmallerSide
+            ? "6000967705735045537865000000000000000"
+            : "6006410955268045537865000000000000000",
           "100000000000000000000000000000"
         ); // 6006410.95527
       }
     );
+  }
+
+  it("borrowing fees", async () => {
+    await testBorrowingFees(false);
+  });
+
+  it("borrowing fees, SKIP_BORROWING_FEE_FOR_SMALLER_SIDE as true", async () => {
+    await testBorrowingFees(true);
   });
 
   it("borrowing fees vary with time", async () => {

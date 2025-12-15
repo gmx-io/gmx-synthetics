@@ -17,24 +17,24 @@ import { OrderType, getOrderCount } from "../../utils/order";
 describe("Guardian.Lifecycle", () => {
   let fixture;
   let user0, user1, user2, user3;
-  let dataStore, exchangeRouter, ethUsdMarket, referralStorage, wnt, usdc;
+  let dataStore, exchangeRouter, ethUsdMarket, referralStorage, mockTimelockV1, wnt, usdc;
 
   const referralCode0 = hashString("example code 0");
   const referralCode1 = hashString("example code 1");
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1, user2, user3 } = fixture.accounts);
-    ({ dataStore, exchangeRouter, ethUsdMarket, referralStorage, wnt, usdc } = fixture.contracts);
+    ({ dataStore, exchangeRouter, ethUsdMarket, referralStorage, mockTimelockV1, wnt, usdc } = fixture.contracts);
 
     // REFERRAL
     await referralStorage.connect(user2).registerCode(referralCode0);
     await referralStorage.connect(user3).registerCode(referralCode1);
 
-    await referralStorage.setTier(1, 1000, 2000); // tier 1, totalRebate: 10%, discountShare: 20%
-    await referralStorage.setTier(2, 2000, 2500); // tier 2, totalRebate: 20%, discountShare: 25%
+    await mockTimelockV1.setTier(referralStorage.address, 1, 1000, 2000); // tier 1, totalRebate: 10%, discountShare: 20%
+    await mockTimelockV1.setTier(referralStorage.address, 2, 2000, 2500); // tier 2, totalRebate: 20%, discountShare: 25%
 
-    await referralStorage.setReferrerTier(user2.address, 1);
-    await referralStorage.setReferrerTier(user3.address, 2);
+    await mockTimelockV1.setReferrerTier(referralStorage.address, user2.address, 1);
+    await mockTimelockV1.setReferrerTier(referralStorage.address, user3.address, 2);
   });
 
   it("Life Cycle Test", async () => {
@@ -46,7 +46,11 @@ describe("Guardian.Lifecycle", () => {
     // PRICE IMPACT
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(2, 8));
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 8));
-    await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
+    await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(2, 0));
+    await dataStore.setUint(
+      keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, false),
+      decimalToFloat(2, 0)
+    );
     await dataStore.setUint(keys.maxLendableImpactFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 1)); // 20%
 
     // BORROWING FEES
@@ -588,7 +592,11 @@ describe("Guardian.Lifecycle", () => {
     // PRICE IMPACT
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(2, 8));
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 8));
-    await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
+    await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(2, 0));
+    await dataStore.setUint(
+      keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, false),
+      decimalToFloat(2, 0)
+    );
     await dataStore.setUint(keys.maxLendableImpactFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 1)); // 20%
 
     // BORROWING FEES
@@ -1138,7 +1146,11 @@ describe("Guardian.Lifecycle", () => {
     // PRICE IMPACT
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(2, 8));
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 8));
-    await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
+    await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(2, 0));
+    await dataStore.setUint(
+      keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, false),
+      decimalToFloat(2, 0)
+    );
     await dataStore.setUint(keys.maxLendableImpactFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 1)); // 20%
 
     // BORROWING FEES

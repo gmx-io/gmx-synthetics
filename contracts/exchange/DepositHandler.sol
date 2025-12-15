@@ -138,7 +138,7 @@ contract DepositHandler is IDepositHandler, BaseHandler, ReentrancyGuard {
         Deposit.Props calldata deposit
     ) external nonReentrant onlyController returns (uint256) {
         FeatureUtils.validateFeature(dataStore, Keys.executeDepositFeatureDisabledKey(address(this)));
-        return ExecuteDepositUtils.executeDeposit(executeDepositParams, deposit);
+        return ExecuteDepositUtils.executeDeposit(executeDepositParams, deposit, true);
     }
 
     // @dev simulate execution of a deposit to check for any errors
@@ -149,7 +149,6 @@ contract DepositHandler is IDepositHandler, BaseHandler, ReentrancyGuard {
         OracleUtils.SimulatePricesParams memory params
     ) external
         override
-        onlyController
         withSimulatedOraclePrices(params)
         globalNonReentrant
     {
@@ -190,7 +189,7 @@ contract DepositHandler is IDepositHandler, BaseHandler, ReentrancyGuard {
             true // includeVirtualInventoryImpact
         );
 
-        ExecuteDepositUtils.executeDeposit(params, deposit);
+        ExecuteDepositUtils.executeDeposit(params, deposit, false);
     }
 
     // @dev handle errors from deposits

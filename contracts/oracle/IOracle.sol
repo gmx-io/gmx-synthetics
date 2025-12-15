@@ -21,6 +21,7 @@ interface IOracle {
     function getTokensWithPricesCount() external view returns (uint256);
     function getTokensWithPrices(uint256 start, uint256 end) external view returns (address[] memory);
     function getPrimaryPrice(address token) external view returns (Price.Props memory);
+    function primaryPrices(address token) external view returns (uint256 min, uint256 max);
     function validatePrices(
         OracleUtils.SetPricesParams memory params,
         bool forAtomicAction

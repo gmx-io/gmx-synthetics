@@ -84,7 +84,6 @@ library DecreasePositionCollateralUtils {
                 params.secondaryOrderType == Order.SecondaryOrderType.Adl
             );
 
-        (values.priceImpactUsd, values.executionPrice, collateralCache.balanceWasImproved) = PositionUtils.getExecutionPriceForDecrease(params, cache.prices.indexTokenPrice);
 
         // the totalPositionPnl is calculated based on the current indexTokenPrice instead of the executionPrice
         // since the executionPrice factors in price impact which should be accounted for separately
@@ -97,6 +96,12 @@ library DecreasePositionCollateralUtils {
             cache.prices,
             params.position,
             params.order.sizeDeltaUsd()
+        );
+
+        (values.priceImpactUsd, values.executionPrice, collateralCache.balanceWasImproved) = PositionUtils.getExecutionPriceForDecrease(
+            params,
+            cache.prices.indexTokenPrice,
+            values.sizeDeltaInTokens
         );
 
         PositionPricingUtils.GetPositionFeesParams memory getPositionFeesParams = PositionPricingUtils.GetPositionFeesParams(

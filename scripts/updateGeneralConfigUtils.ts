@@ -176,6 +176,18 @@ const getConfigItems = async (generalConfig, oracleConfig) => {
     },
     {
       type: "uint",
+      baseKey: keys.SET_TRADER_REFERRAL_CODE_GAS_LIMIT,
+      value: generalConfig.setTraderReferralCodeGasLimit,
+      label: `setTraderReferralCodeGasLimit`,
+    },
+    {
+      type: "uint",
+      baseKey: keys.REGISTER_CODE_GAS_LIMIT,
+      value: generalConfig.registerCodeGasLimit,
+      label: `registerCodeGasLimit`,
+    },
+    {
+      type: "uint",
       baseKey: keys.NATIVE_TOKEN_TRANSFER_GAS_LIMIT,
       value: generalConfig.nativeTokenTransferGasLimit,
       label: `nativeTokenTransferGasLimit`,

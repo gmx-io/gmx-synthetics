@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "../../withdrawal/ExecuteWithdrawalUtils.sol";
+import "../../exchange/IWithdrawalHandler.sol";
 
 import "../../nonce/NonceUtils.sol";
 
@@ -18,6 +19,7 @@ library GlvWithdrawalUtils {
     using SafeCast for uint256;
     using EventUtils for EventUtils.UintItems;
     using EventUtils for EventUtils.AddressItems;
+    using Price for Price.Props;
 
     struct ExecuteGlvWithdrawalParams {
         DataStore dataStore;
@@ -27,6 +29,7 @@ library GlvWithdrawalUtils {
         GlvVault glvVault;
         IOracle oracle;
         ISwapHandler swapHandler;
+        IWithdrawalHandler withdrawalHandler;
         bytes32 key;
         uint256 startingGas;
         address keeper;
@@ -34,6 +37,7 @@ library GlvWithdrawalUtils {
 
     struct ExecuteGlvWithdrawalCache {
         uint256 glvValue;
+        bool glvTokenPriceUsed;
         uint256 marketCount;
         uint256 oraclePriceCount;
         uint256 marketTokenAmount;
@@ -44,6 +48,7 @@ library GlvWithdrawalUtils {
         EventEmitter eventEmitter;
         MultichainVault multichainVault;
         GlvVault glvVault;
+        IOracle oracle;
         bytes32 key;
         address keeper;
         uint256 startingGas;
@@ -113,7 +118,11 @@ library GlvWithdrawalUtils {
             dataStore,
             GasUtils.estimateExecuteGlvWithdrawalGasLimit(dataStore, glvWithdrawal, marketCount), // estimatedGasLimit
             params.executionFee,
-            GasUtils.estimateGlvWithdrawalOraclePriceCount(marketCount, params.addresses.longTokenSwapPath.length + params.addresses.shortTokenSwapPath.length) // oraclePriceCount
+            GasUtils.estimateGlvWithdrawalOraclePriceCount(
+                marketCount,
+                params.addresses.longTokenSwapPath.length + params.addresses.shortTokenSwapPath.length,
+                false // glvTokenPriceUsed. at this point we don't know if the GLV token price will be used
+            ) // oraclePriceCount
         );
 
         bytes32 key = NonceUtils.getNextKey(dataStore);
@@ -151,11 +160,11 @@ library GlvWithdrawalUtils {
 
         GlvWithdrawalEventUtils.emitGlvWithdrawalExecuted(params.eventEmitter, params.key, glvWithdrawal.account());
 
-        cache.glvValue = GlvUtils.getGlvValue(
+        (cache.glvValue, cache.glvTokenPriceUsed) = GlvUtils.getGlvValue(
             params.dataStore,
             params.oracle,
             glvWithdrawal.glv(),
-            true
+            true // maximize
         );
         GlvEventUtils.emitGlvValueUpdated(
             params.eventEmitter,
@@ -192,7 +201,8 @@ library GlvWithdrawalUtils {
         cache.marketCount = GlvUtils.getGlvMarketCount(params.dataStore, glvWithdrawal.glv());
         cache.oraclePriceCount = GasUtils.estimateGlvWithdrawalOraclePriceCount(
             cache.marketCount,
-            glvWithdrawal.longTokenSwapPath().length + glvWithdrawal.shortTokenSwapPath().length
+            glvWithdrawal.longTokenSwapPath().length + glvWithdrawal.shortTokenSwapPath().length,
+            cache.glvTokenPriceUsed
         );
 
         GasUtils.payExecutionFee(
@@ -245,8 +255,7 @@ library GlvWithdrawalUtils {
             new bytes32[](0)
         );
 
-        bytes32 withdrawalKey = NonceUtils.getNextKey(params.dataStore);
-        params.dataStore.addBytes32(Keys.WITHDRAWAL_LIST, withdrawalKey);
+        bytes32 withdrawalKey = keccak256(abi.encode(params.key, "withdrawal"));
         WithdrawalEventUtils.emitWithdrawalCreated(
             params.eventEmitter,
             withdrawalKey,
@@ -276,7 +285,7 @@ library GlvWithdrawalUtils {
                 swapPricingType: ISwapPricingUtils.SwapPricingType.Withdrawal
             });
 
-        return ExecuteWithdrawalUtils.executeWithdrawal(executeWithdrawalParams, withdrawal);
+        return params.withdrawalHandler.executeWithdrawalFromController(executeWithdrawalParams, withdrawal);
     }
 
     function _getMarketTokenAmount(
@@ -284,7 +293,7 @@ library GlvWithdrawalUtils {
         IOracle oracle,
         GlvWithdrawal.Props memory glvWithdrawal
     ) internal view returns (uint256) {
-        uint256 glvValue = GlvUtils.getGlvValue(
+        (uint256 glvValue, ) = GlvUtils.getGlvValue(
             dataStore,
             oracle,
             glvWithdrawal.glv(),
@@ -343,7 +352,6 @@ library GlvWithdrawalUtils {
             );
         }
 
-
         GlvWithdrawalEventUtils.emitGlvWithdrawalCancelled(
             params.eventEmitter,
             params.key,
@@ -356,6 +364,7 @@ library GlvWithdrawalUtils {
         CallbackUtils.afterGlvWithdrawalCancellation(params.key, glvWithdrawal, eventData);
 
         uint256 marketCount = GlvUtils.getGlvMarketCount(params.dataStore, glvWithdrawal.glv());
+        bool glvTokenPriceUsed = !GlvUtils.getGlvTokenPrice(params.oracle, glvWithdrawal.glv()).isEmpty();
         GasUtils.payExecutionFee(
             GasUtils.PayExecutionFeeContracts(
                 params.dataStore,
@@ -369,7 +378,8 @@ library GlvWithdrawalUtils {
             params.startingGas,
             GasUtils.estimateGlvWithdrawalOraclePriceCount(
                 marketCount,
-                glvWithdrawal.longTokenSwapPath().length + glvWithdrawal.shortTokenSwapPath().length
+                glvWithdrawal.longTokenSwapPath().length + glvWithdrawal.shortTokenSwapPath().length,
+                glvTokenPriceUsed
             ),
             params.keeper,
             glvWithdrawal.receiver(),

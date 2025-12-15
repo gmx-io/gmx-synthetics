@@ -23,39 +23,13 @@ library ReaderPositionUtils {
         ReaderPricingUtils.ExecutionPriceResult executionPriceResult;
         int256 basePnlUsd;
         int256 uncappedBasePnlUsd;
-        int256 pnlAfterPriceImpactUsd;
+        int256 positionValueInUsd;
     }
 
     struct GetPositionInfoCache {
         Market.Props market;
         Price.Props collateralTokenPrice;
         uint256 pendingBorrowingFeeUsd;
-    }
-
-    function getNextBorrowingFees(
-        DataStore dataStore,
-        Position.Props memory position,
-        Market.Props memory market,
-        MarketUtils.MarketPrices memory prices
-    ) internal view returns (uint256) {
-        return MarketUtils.getNextBorrowingFees(
-            dataStore,
-            position,
-            market,
-            prices
-        );
-    }
-
-    function getBorrowingFees(
-        DataStore dataStore,
-        Price.Props memory collateralTokenPrice,
-        uint256 borrowingFeeUsd
-    ) internal view returns (PositionPricingUtils.PositionBorrowingFees memory) {
-        return PositionPricingUtils.getBorrowingFees(
-            dataStore,
-            collateralTokenPrice,
-            borrowingFeeUsd
-        );
     }
 
     function getPositionInfoList(
@@ -127,18 +101,6 @@ library ReaderPositionUtils {
         }
 
         revert Errors.EmptyMarketPrice(market);
-    }
-
-    function getNextFundingAmountPerSize(
-        DataStore dataStore,
-        Market.Props memory market,
-        MarketUtils.MarketPrices memory prices
-    ) public view returns (MarketUtils.GetNextFundingAmountPerSizeResult memory) {
-        return MarketUtils.getNextFundingAmountPerSize(
-            dataStore,
-            market,
-            prices
-        );
     }
 
     function getAccountPositions(
@@ -230,15 +192,15 @@ library ReaderPositionUtils {
 
         // borrowing and funding fees need to be overwritten with pending values otherwise they
         // would be using storage values that have not yet been updated
-        cache.pendingBorrowingFeeUsd = getNextBorrowingFees(dataStore, positionInfo.position, cache.market, prices);
+        cache.pendingBorrowingFeeUsd = MarketUtils.getNextBorrowingFees(dataStore, positionInfo.position, cache.market, prices);
 
-        positionInfo.fees.borrowing = getBorrowingFees(
+        positionInfo.fees.borrowing = PositionPricingUtils.getBorrowingFees(
             dataStore,
             cache.collateralTokenPrice,
             cache.pendingBorrowingFeeUsd
         );
 
-        MarketUtils.GetNextFundingAmountPerSizeResult memory nextFundingAmountResult = getNextFundingAmountPerSize(dataStore, cache.market, prices);
+        MarketUtils.GetNextFundingAmountPerSizeResult memory nextFundingAmountResult = MarketUtils.getNextFundingAmountPerSize(dataStore, cache.market, prices);
 
         positionInfo.fees.funding.latestFundingFeeAmountPerSize = MarketUtils.getFundingFeeAmountPerSize(
             dataStore,
@@ -308,9 +270,6 @@ library ReaderPositionUtils {
             sizeDeltaUsd
         );
 
-        // with totalImpactUsd the pnlAfterPriceImpactUsd may not be a very useful value to return and may be deprecated in a future iteration
-        positionInfo.pnlAfterPriceImpactUsd = positionInfo.executionPriceResult.priceImpactUsd + positionInfo.basePnlUsd;
-
         positionInfo.fees.totalCostAmountExcludingFunding =
             positionInfo.fees.positionFeeAmount
             + positionInfo.fees.borrowing.borrowingFeeAmount
@@ -320,6 +279,15 @@ library ReaderPositionUtils {
         positionInfo.fees.totalCostAmount =
             positionInfo.fees.totalCostAmountExcludingFunding
             + positionInfo.fees.funding.fundingFeeAmount;
+
+        positionInfo.positionValueInUsd = (
+            positionInfo.position.collateralAmount() * cache.collateralTokenPrice.min +
+            positionInfo.fees.funding.claimableLongTokenAmount * prices.longTokenPrice.min +
+            positionInfo.fees.funding.claimableShortTokenAmount * prices.shortTokenPrice.min).toInt256() +
+            positionInfo.basePnlUsd +
+            positionInfo.executionPriceResult.totalImpactUsd -
+            // substracted as int256 to avoid underflow operating in uint256 space if cost is greater than collateral amount
+            (positionInfo.fees.totalCostAmount * cache.collateralTokenPrice.max).toInt256();
 
         return positionInfo;
     }

@@ -244,6 +244,19 @@ library PositionUtils {
         }
     }
 
+    function validateBasicPositionInfo(
+        DataStore dataStore,
+        Position.Props memory position,
+        Market.Props memory market
+    ) internal view {
+        if (position.sizeInUsd() == 0 || position.sizeInTokens() == 0) {
+            revert Errors.InvalidPositionSizeValues(position.sizeInUsd(), position.sizeInTokens());
+        }
+
+        MarketUtils.validateEnabledMarket(dataStore, market.marketToken);
+        MarketUtils.validateMarketCollateralToken(market, position.collateralToken());
+    }
+
     // @dev check if a position is valid
     // @param dataStore DataStore
     // @param referralStorage IReferralStorage
@@ -268,14 +281,10 @@ library PositionUtils {
         Market.Props memory market,
         MarketUtils.MarketPrices memory prices,
         bool shouldValidateMinPositionSize,
-        bool shouldValidateMinCollateralUsd
+        bool shouldValidateMinCollateralUsd,
+        bool forLiquidation
     ) public view {
-        if (position.sizeInUsd() == 0 || position.sizeInTokens() == 0) {
-            revert Errors.InvalidPositionSizeValues(position.sizeInUsd(), position.sizeInTokens());
-        }
-
-        MarketUtils.validateEnabledMarket(dataStore, market.marketToken);
-        MarketUtils.validateMarketCollateralToken(market, position.collateralToken());
+        validateBasicPositionInfo(dataStore, position, market);
 
         if (shouldValidateMinPositionSize) {
             uint256 minPositionSizeUsd = dataStore.getUint(Keys.MIN_POSITION_SIZE_USD);
@@ -291,7 +300,7 @@ library PositionUtils {
             market,
             prices,
             shouldValidateMinCollateralUsd,
-            false // forLiquidation
+            forLiquidation
         );
 
         if (isLiquidatable) {
@@ -339,7 +348,9 @@ library PositionUtils {
             PositionPricingUtils.GetPriceImpactUsdParams(
                 dataStore,
                 market,
+                prices.indexTokenPrice,
                 cache.usdDeltaForPriceImpact,
+                -position.sizeInTokens().toInt256(),
                 position.isLong()
             )
         );
@@ -597,22 +608,27 @@ library PositionUtils {
         int256 sizeDeltaInTokens
     ) internal {
         if (sizeDeltaUsd != 0) {
+            bool useOpenInterestInTokens = params.contracts.dataStore.getBool(Keys.USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE);
+
             MarketUtils.applyDeltaToOpenInterest(
                 params.contracts.dataStore,
                 params.contracts.eventEmitter,
                 params.market,
                 params.position.collateralToken(),
                 params.position.isLong(),
-                sizeDeltaUsd
+                sizeDeltaUsd,
+                useOpenInterestInTokens
             );
 
             MarketUtils.applyDeltaToOpenInterestInTokens(
                 params.contracts.dataStore,
                 params.contracts.eventEmitter,
                 params.position.market(),
+                params.market.indexToken,
                 params.position.collateralToken(),
                 params.position.isLong(),
-                sizeDeltaInTokens
+                sizeDeltaInTokens,
+                useOpenInterestInTokens
             );
         }
     }
@@ -648,11 +664,21 @@ library PositionUtils {
 
         GetExecutionPriceForIncreaseCache memory cache;
 
+        if (params.position.isLong()) {
+            // round the number of tokens for long positions down
+            cache.baseSizeDeltaInTokens = params.order.sizeDeltaUsd() / prices.indexTokenPrice.max;
+        } else {
+            // round the number of tokens for short positions up
+            cache.baseSizeDeltaInTokens = Calc.roundUpDivision(params.order.sizeDeltaUsd(), prices.indexTokenPrice.min);
+        }
+
         (cache.priceImpactUsd, cache.balanceWasImproved) = PositionPricingUtils.getPriceImpactUsd(
             PositionPricingUtils.GetPriceImpactUsdParams(
                 params.contracts.dataStore,
                 params.market,
+                prices.indexTokenPrice,
                 params.order.sizeDeltaUsd().toInt256(),
+                cache.baseSizeDeltaInTokens.toInt256(),
                 params.order.isLong()
             )
         );
@@ -699,14 +725,6 @@ library PositionUtils {
             cache.priceImpactAmount = Calc.roundUpMagnitudeDivision(cache.priceImpactUsd, prices.indexTokenPrice.min);
         }
 
-        if (params.position.isLong()) {
-            // round the number of tokens for long positions down
-            cache.baseSizeDeltaInTokens = params.order.sizeDeltaUsd() / prices.indexTokenPrice.max;
-        } else {
-            // round the number of tokens for short positions up
-            cache.baseSizeDeltaInTokens = Calc.roundUpDivision(params.order.sizeDeltaUsd(), prices.indexTokenPrice.min);
-        }
-
         int256 sizeDeltaInTokens;
         if (params.position.isLong()) {
             sizeDeltaInTokens = cache.baseSizeDeltaInTokens.toInt256() + cache.priceImpactAmount;
@@ -737,7 +755,8 @@ library PositionUtils {
     // returns priceImpactUsd, executionPrice, balanceWasImproved
     function getExecutionPriceForDecrease(
         UpdatePositionParams memory params,
-        Price.Props memory indexTokenPrice
+        Price.Props memory indexTokenPrice,
+        uint256 sizeDeltaInTokens
     ) external view returns (int256, uint256, bool) {
         uint256 sizeDeltaUsd = params.order.sizeDeltaUsd();
 
@@ -757,7 +776,9 @@ library PositionUtils {
             PositionPricingUtils.GetPriceImpactUsdParams(
                 params.contracts.dataStore,
                 params.market,
+                indexTokenPrice,
                 -sizeDeltaUsd.toInt256(),
+                -sizeDeltaInTokens.toInt256(),
                 params.order.isLong()
             )
         );
