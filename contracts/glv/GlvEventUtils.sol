@@ -42,6 +42,8 @@ library GlvEventUtils {
         eventData.addressItems.setItem(0, "glv", glv);
 
         eventData.uintItems.initItems(2);
+        // @note the value might be slightly inaccurate if GLV oracle price is used
+        // because it doesn't account for fees paid during the shift, deposit or withdrawal
         eventData.uintItems.setItem(0, "value", value);
         eventData.uintItems.setItem(1, "supply", supply);
 

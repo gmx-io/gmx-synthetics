@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "../../event/EventEmitter.sol";
 import "../../multichain/MultichainVault.sol";
 import "../../shift/ShiftUtils.sol";
+import "../../exchange/IShiftHandler.sol";
 import "../GlvUtils.sol";
 import "../GlvVault.sol";
 
@@ -34,6 +35,7 @@ library GlvShiftUtils {
         IDepositHandler depositHandler;
         IWithdrawalHandler withdrawalHandler;
         ISwapHandler swapHandler;
+        IShiftHandler shiftHandler;
         bytes32 key;
         address keeper;
     }
@@ -59,6 +61,31 @@ library GlvShiftUtils {
         EventEmitter eventEmitter,
         CreateGlvShiftParams memory params
     ) external returns (bytes32) {
+        validateGlvShift(dataStore, params);
+
+        GlvShift.Props memory glvShift = GlvShift.Props(
+            GlvShift.Addresses({ glv: params.glv, fromMarket: params.fromMarket, toMarket: params.toMarket }),
+            GlvShift.Numbers({
+                marketTokenAmount: params.marketTokenAmount,
+                minMarketTokens: params.minMarketTokens,
+                updatedAtTime: Chain.currentTimestamp()
+            })
+        );
+
+        bytes32 key = NonceUtils.getNextKey(dataStore);
+
+        GlvShiftStoreUtils.set(dataStore, key, glvShift);
+
+        GlvShiftEventUtils.emitGlvShiftCreated(eventEmitter, key, glvShift);
+
+        return key;
+    }
+
+    function validateGlvShift(DataStore dataStore, CreateGlvShiftParams memory params) internal view {
+        if (params.fromMarket == params.toMarket) {
+            revert Errors.ShiftFromAndToMarketAreEqual(params.fromMarket);
+        }
+
         GlvUtils.validateGlv(dataStore, params.glv);
         GlvUtils.validateGlvMarket(dataStore, params.glv, params.fromMarket, false);
         GlvUtils.validateGlvMarket(dataStore, params.glv, params.toMarket, true);
@@ -77,23 +104,6 @@ library GlvShiftUtils {
 
         MarketUtils.validateEnabledMarket(dataStore, params.fromMarket);
         MarketUtils.validateEnabledMarket(dataStore, params.toMarket);
-
-        GlvShift.Props memory glvShift = GlvShift.Props(
-            GlvShift.Addresses({glv: params.glv, fromMarket: params.fromMarket, toMarket: params.toMarket}),
-            GlvShift.Numbers({
-                marketTokenAmount: params.marketTokenAmount,
-                minMarketTokens: params.minMarketTokens,
-                updatedAtTime: Chain.currentTimestamp()
-            })
-        );
-
-        bytes32 key = NonceUtils.getNextKey(dataStore);
-
-        GlvShiftStoreUtils.set(dataStore, key, glvShift);
-
-        GlvShiftEventUtils.emitGlvShiftCreated(eventEmitter, key, glvShift);
-
-        return key;
     }
 
     function validateGlvShiftInterval(DataStore dataStore, address glv) internal view {
@@ -114,9 +124,16 @@ library GlvShiftUtils {
 
     function executeGlvShift(
         ExecuteGlvShiftParams memory params,
-        GlvShift.Props memory glvShift
+        GlvShift.Props memory glvShift,
+        bool skipRemoval
     ) external returns (uint256) {
-        GlvShiftStoreUtils.remove(params.dataStore, params.key);
+        if (skipRemoval) {
+            if (params.dataStore.containsBytes32(Keys.GLV_SHIFT_LIST, params.key)) {
+                revert Errors.RemovalShouldNotBeSkipped(Keys.GLV_SHIFT_LIST, params.key);
+            }
+        } else {
+            GlvShiftStoreUtils.remove(params.dataStore, params.key);
+        }
 
         validateGlvShiftInterval(params.dataStore, glvShift.glv());
         params.dataStore.setUint(Keys.glvShiftLastExecutedAtKey(glvShift.glv()), Chain.currentTimestamp());
@@ -149,8 +166,7 @@ library GlvShiftUtils {
             new bytes32[](0)
         );
 
-        cache.shiftKey = NonceUtils.getNextKey(params.dataStore);
-        params.dataStore.addBytes32(Keys.SHIFT_LIST, cache.shiftKey);
+        cache.shiftKey = keccak256(abi.encode(params.key, "shift"));
         ShiftEventUtils.emitShiftCreated(params.eventEmitter, cache.shiftKey, cache.shift);
 
         ShiftUtils.ExecuteShiftParams memory executeShiftParams = ShiftUtils.ExecuteShiftParams({
@@ -164,13 +180,12 @@ library GlvShiftUtils {
             swapHandler: params.swapHandler,
             key: cache.shiftKey,
             keeper: params.keeper,
-
             // executionFee is not used for GlvShift's
             // pass gasleft() not to break startGas calculations inside ShiftUtils
             startingGas: gasleft()
         });
 
-        cache.receivedMarketTokens = ShiftUtils.executeShift(executeShiftParams, cache.shift);
+        cache.receivedMarketTokens = params.shiftHandler.executeShiftFromController(executeShiftParams, cache.shift);
 
         GlvToken(payable(glvShift.glv())).syncTokenBalance(glvShift.toMarket());
 
@@ -218,11 +233,11 @@ library GlvShiftUtils {
             cache.fromMarketTokenSupply
         );
 
-        validatePriceImpact(params.dataStore, glvShift.glv(), cache.marketTokensUsd, cache.receivedMarketTokensUsd);
+        validateGlvShiftMaxLoss(params.dataStore, glvShift.glv(), cache.marketTokensUsd, cache.receivedMarketTokensUsd);
 
         GlvShiftEventUtils.emitGlvShiftExecuted(params.eventEmitter, params.key, cache.receivedMarketTokens);
 
-        cache.glvValue = GlvUtils.getGlvValue(
+        (cache.glvValue, ) = GlvUtils.getGlvValue(
             params.dataStore,
             params.oracle,
             glvShift.glv(),
@@ -246,7 +261,7 @@ library GlvShiftUtils {
         GlvShiftEventUtils.emitGlvShiftCancelled(eventEmitter, key, reason, reasonBytes);
     }
 
-    function validatePriceImpact(
+    function validateGlvShiftMaxLoss(
         DataStore dataStore,
         address glv,
         uint256 marketTokensUsd,
@@ -257,14 +272,14 @@ library GlvShiftUtils {
             return;
         }
 
-        uint256 glvMaxShiftPriceImpactFactor = dataStore.getUint(Keys.glvShiftMaxPriceImpactFactorKey(glv));
+        uint256 glvMaxShiftPriceImpactFactor = dataStore.getUint(Keys.glvShiftMaxLossFactorKey(glv));
 
-        uint256 effectivePriceImpactFactor = Precision.toFactor(
+        uint256 glvShiftLoss = Precision.toFactor(
             marketTokensUsd - receivedMarketTokensUsd,
             marketTokensUsd
         );
-        if (effectivePriceImpactFactor > glvMaxShiftPriceImpactFactor) {
-            revert Errors.GlvShiftMaxPriceImpactExceeded(effectivePriceImpactFactor, glvMaxShiftPriceImpactFactor);
+        if (glvShiftLoss > glvMaxShiftPriceImpactFactor) {
+            revert Errors.GlvShiftMaxLossExceeded(glvShiftLoss, glvMaxShiftPriceImpactFactor);
         }
     }
 }

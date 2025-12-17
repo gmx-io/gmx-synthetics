@@ -3,6 +3,7 @@ import {
   appendAddressConfigIfDifferent,
   appendBoolConfigIfDifferent,
   appendUintConfigIfDifferent,
+  appendIntConfigIfDifferent,
   getFullKey,
 } from "../utils/config";
 import { bigNumberify } from "../utils/math";
@@ -82,6 +83,8 @@ export async function handleConfigChanges(
     const value = result[i].returnData;
     if (type === "uint") {
       dataCache[key] = bigNumberify(value);
+    } else if (type === "int") {
+      dataCache[key] = bigNumberify(value);
     } else if (type === "address") {
       dataCache[key] = ethers.utils.defaultAbiCoder.decode(["address"], value)[0];
     } else if (type === "bool") {
@@ -96,6 +99,15 @@ export async function handleConfigChanges(
   for (const item of items) {
     if (item.type === "uint") {
       await appendUintConfigIfDifferent(
+        multicallWriteParams,
+        dataCache,
+        item.baseKey,
+        item.keyData,
+        item.value,
+        item.label
+      );
+    } else if (item.type === "int") {
+      await appendIntConfigIfDifferent(
         multicallWriteParams,
         dataCache,
         item.baseKey,

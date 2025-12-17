@@ -174,7 +174,7 @@ library ReaderUtils {
 
         BaseFundingValues memory baseFunding = getBaseFundingValues(dataStore, market);
 
-        MarketUtils.GetNextFundingAmountPerSizeResult memory nextFunding = ReaderPositionUtils.getNextFundingAmountPerSize(
+        MarketUtils.GetNextFundingAmountPerSizeResult memory nextFunding = MarketUtils.getNextFundingAmountPerSize(
             dataStore,
             market,
             prices

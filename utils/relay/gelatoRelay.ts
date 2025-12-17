@@ -6,6 +6,7 @@ import {
   getUpdateOrderSignature,
   getCancelOrderSignature,
   getSetTraderReferralCodeSignature,
+  getRegisterCodeSignature,
 } from "./signatures";
 
 export async function getSendCreateOrderCalldata(p: {
@@ -306,6 +307,61 @@ export async function sendSetTraderReferralCode(p: {
 
   return sendRelayTransaction({
     calldata: setTraderReferralCodeCalldata,
+    ...p,
+  });
+}
+
+export async function sendRegisterCode(p: {
+  sender: ethers.Signer;
+  signer: ethers.Signer;
+  oracleParams?: {
+    tokens: string[];
+    providers: string[];
+    data: string[];
+  };
+  tokenPermits?: {
+    token: string;
+    spender: string;
+    value: BigNumberish;
+    deadline: BigNumberish;
+  }[];
+  feeParams: {
+    feeToken: string;
+    feeAmount: BigNumberish;
+    feeSwapPath: string[];
+  };
+  referralCode: string;
+  chainId: BigNumberish;
+  account: string;
+  deadline: BigNumberish;
+  srcChainId?: BigNumberish; // for multichain actions
+  desChainId: BigNumberish;
+  userNonce?: BigNumberish;
+  relayRouter: ethers.Contract;
+  signature?: string;
+  gelatoRelayFeeToken: string;
+  gelatoRelayFeeAmount: BigNumberish;
+}) {
+  const relayParams = await getRelayParams(p);
+
+  let signature = p.signature;
+  if (!signature) {
+    signature = await getRegisterCodeSignature({
+      ...p,
+      relayParams,
+      verifyingContract: p.relayRouter.address,
+    });
+  }
+
+  const registerCodeCalldata = p.relayRouter.interface.encodeFunctionData("registerCode", [
+    { ...relayParams, signature },
+    p.account,
+    p.srcChainId,
+    p.referralCode,
+  ]);
+
+  return sendRelayTransaction({
+    calldata: registerCodeCalldata,
     ...p,
   });
 }

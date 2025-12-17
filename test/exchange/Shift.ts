@@ -197,19 +197,6 @@ describe("Exchange.Shift", () => {
     ).to.be.revertedWithCustomError(errorsContract, "EmptyShift");
   });
 
-  it("simulateExecuteShift", async () => {
-    await expect(
-      shiftHandler.connect(user0).simulateExecuteShift(HashZero, {
-        primaryTokens: [],
-        primaryPrices: [],
-        minTimestamp: 0,
-        maxTimestamp: 0,
-      })
-    )
-      .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
-      .withArgs(user0.address, "CONTROLLER");
-  });
-
   it("_executeShift", async () => {
     const shiftStoreUtilsTest = await deployContract("ShiftStoreUtilsTest", [], {
       libraries: {

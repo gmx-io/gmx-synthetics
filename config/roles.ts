@@ -13,6 +13,7 @@ export type RolesConfig = {
 };
 
 const requiredRolesForContracts = {
+  CONFIG_KEEPER: ["ConfigSyncer"],
   CONTROLLER: [
     "Config",
     "ConfigSyncer",
@@ -32,6 +33,7 @@ const requiredRolesForContracts = {
     "SubaccountGelatoRelayRouter",
 
     "OrderHandler",
+    "JitOrderHandler",
     "IncreaseOrderExecutor",
     "DecreaseOrderExecutor",
     "SwapOrderExecutor",
@@ -71,7 +73,6 @@ const requiredRolesForContracts = {
     "MultichainTransferRouter",
   ],
   ROLE_ADMIN: ["TimelockConfig", "ConfigTimelockController"],
-  CONFIG_KEEPER: ["ConfigSyncer"],
 };
 
 // roles are granted in deploy/configureRoles.ts
@@ -129,6 +130,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
       "0x0765678B4f2B45fa9604264a63762E2fE460df64": true, // general_keeper_2
       "0xD5F8b9ba4255B2F73b06f245fcca73D114D1D460": true, // general_keeper_3
       "0xF86EF7f0BB90a05A932781C5Cb6eEFe55e486107": true, // general_keeper_4
+      "0xB10e24b211D2321B12B21C52EaC38AC6e00799Cc": true, // general_keeper_5
     },
   };
 

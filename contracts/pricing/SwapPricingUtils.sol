@@ -203,6 +203,7 @@ library SwapPricingUtils {
                     nextDiffUsd,
                     positiveImpactFactor,
                     negativeImpactFactor,
+                    impactExponentFactor,
                     impactExponentFactor
                 ),
                 balanceWasImproved

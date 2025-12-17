@@ -27,7 +27,11 @@ describe("Exchange.DecreasePosition", () => {
   it("positive price impact, DecreasePositionSwapType: SwapPnlTokenToCollateralToken", async () => {
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 9));
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 8));
-    await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(2, 0));
+    await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(2, 0));
+    await dataStore.setUint(
+      keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, false),
+      decimalToFloat(2, 0)
+    );
 
     expect(await dataStore.getUint(keys.positionImpactPoolAmountKey(ethUsdMarket.marketToken))).eq(0);
 

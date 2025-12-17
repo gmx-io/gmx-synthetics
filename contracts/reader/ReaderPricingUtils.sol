@@ -171,9 +171,18 @@ library ReaderPricingUtils {
                 prices
             );
         } else {
-             (result.priceImpactUsd, result.executionPrice, result.balanceWasImproved) = PositionUtils.getExecutionPriceForDecrease(
+            (/* basePnlUsd */, /* uncappedBasePnlUsd */, uint256 sizeDeltaInTokens) = PositionUtils.getPositionPnlUsd(
+                dataStore,
+                market,
+                prices,
+                params.position,
+                params.order.sizeDeltaUsd()
+            );
+
+            (result.priceImpactUsd, result.executionPrice, result.balanceWasImproved) = PositionUtils.getExecutionPriceForDecrease(
                 params,
-                prices.indexTokenPrice
+                prices.indexTokenPrice,
+                sizeDeltaInTokens
             );
 
             result.proportionalPendingImpactUsd = _getProportionalPendingImpactValues(

@@ -48,11 +48,7 @@ async function main() {
   await setUintIfDifferent(keys.glvShiftGasLimitKey(), 3_000_000, "glvShiftGasLimitKey");
   await setUintIfDifferent(keys.glvDepositGasLimitKey(), 3_000_000, "glvDepositGasLimitKey");
   await setUintIfDifferent(keys.glvWithdrawalGasLimitKey(), 3_000_000, "glvWithdrawalGasLimitKey");
-  await setUintIfDifferent(
-    keys.glvShiftMaxPriceImpactFactorKey(glvAddress),
-    decimalToFloat(1, 2),
-    "glvShiftMaxPriceImpactFactorKey"
-  );
+  await setUintIfDifferent(keys.glvShiftMaxLossFactorKey(glvAddress), decimalToFloat(1, 2), "glvShiftMaxLossFactorKey");
   await setUintIfDifferent(keys.glvShiftMinIntervalKey(glvAddress), 30, "glvShiftMinIntervalKey");
 
   const markets = [

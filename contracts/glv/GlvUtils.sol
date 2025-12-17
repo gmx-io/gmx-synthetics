@@ -11,6 +11,7 @@ import "./GlvEventUtils.sol";
 import "./GlvStoreUtils.sol";
 
 library GlvUtils {
+    using Price for Price.Props;
     using SafeCast for int256;
     using SafeCast for uint256;
 
@@ -21,21 +22,33 @@ library GlvUtils {
         Price.Props indexTokenPrice;
         Price.Props longTokenPrice;
         Price.Props shortTokenPrice;
-        Market.Props market;
     }
 
-    // @dev get the USD value of the Glv
+    // @dev get the USD value of the GLV
     // @param dataStore DataStore
     // @param oracle IOracle
-    // @param glv Glv
+    // @param glv GLV
     // @param maximize
-    // @return the USD value of the Glv
+    // @param forceCalculation if true, the GLV value will be calculated even if the GLV token price is not empty
+    // @return the USD value of the GLV
+    // NOTE GLV value can be calculated with GLV oracle price, the actual value may be changed slightly after the shift, deposit or withdrawal due to paid fees
+    // and the oracle price timestamp always lag behind the current block and may be calculated based on different contracts state
+    // so GLV glv value might be slightly inaccurate
+    // if accuracy is critical then pass forceCalculation = true
     function getGlvValue(
         DataStore dataStore,
         IOracle oracle,
         address glv,
         bool maximize
-    ) public view returns (uint256) {
+    ) public view returns (uint256 glvValue, bool glvTokenPriceUsed) {
+        {
+            Price.Props memory glvTokenPrice = getGlvTokenPrice(oracle, glv);
+            if (!glvTokenPrice.isEmpty()) {
+                uint256 supply = ERC20(glv).totalSupply();
+                return ((maximize ? glvTokenPrice.max : glvTokenPrice.min) * supply, true);
+            }
+        }
+
         GetGlvValueCache memory cache;
         cache.marketListKey = Keys.glvSupportedMarketListKey(glv);
         cache.marketCount = dataStore.getAddressCount(cache.marketListKey);
@@ -59,7 +72,16 @@ library GlvUtils {
             );
         }
 
-        return cache.glvValue;
+        return (cache.glvValue, false);
+    }
+
+    function getGlvTokenPrice(
+        IOracle oracle,
+        address glv
+    ) internal view returns (Price.Props memory) {
+        (uint256 minPrice, uint256 maxPrice) = oracle.primaryPrices(glv);
+        Price.Props memory glvTokenPrice = Price.Props(minPrice, maxPrice);
+        return glvTokenPrice;
     }
 
     function getGlvValue(
@@ -125,18 +147,6 @@ library GlvUtils {
 
         return
             MarketUtils.marketTokenAmountToUsd(balance, marketPoolValueInfo.poolValue.toUint256(), marketTokenSupply);
-    }
-
-    function getGlvTokenPrice(
-        DataStore dataStore,
-        IOracle oracle,
-        address glv,
-        bool maximize
-    ) internal view returns (uint256, uint256, uint256) {
-        uint256 value = getGlvValue(dataStore, oracle, glv, maximize);
-        uint256 supply = ERC20(glv).totalSupply();
-
-        return _getGlvTokenPrice(value, supply);
     }
 
     function getGlvTokenPrice(

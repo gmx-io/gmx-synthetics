@@ -1,7 +1,7 @@
 import { BigNumberish, Contract } from "ethers";
 import { sendSetTraderReferralCode } from "./relay/gelatoRelay";
 import { getRelayParams } from "./relay/helpers";
-import { getSetTraderReferralCodeSignature } from "./relay/signatures";
+import { getSetTraderReferralCodeSignature, getRegisterCodeSignature } from "./relay/signatures";
 import {
   getCreateDepositSignature,
   getCreateWithdrawalSignature,
@@ -22,6 +22,7 @@ export async function bridgeInTokens(
     amount: BigNumberish;
     data?: string;
     stargatePool?: Contract;
+    nativeTopUpAmount?: BigNumberish;
   }
 ) {
   const { layerZeroProvider, mockStargatePoolUsdc, mockStargatePoolNative } = fixture.contracts;
@@ -31,12 +32,23 @@ export async function bridgeInTokens(
   const token = overrides.token;
   const amount = overrides.amount;
   const stargatePool = overrides.stargatePool || token ? mockStargatePoolUsdc : mockStargatePoolNative;
-  const msgValue = token ? 0 : amount; // if token is provided, we don't send native token
+  let msgValue = token ? 0 : amount; // if token is provided, we don't send native token
+
+  if (overrides.nativeTopUpAmount) {
+    msgValue = ethers.BigNumber.from(msgValue).add(overrides.nativeTopUpAmount);
+  }
 
   if (token) {
     // e.g. StargatePoolUsdc is being used to bridge USDC
     await token.mint(account.address, amount);
     await token.connect(account).approve(stargatePool.address, amount);
+  }
+
+  if (!overrides.data && overrides.nativeTopUpAmount) {
+    overrides.data = ethers.utils.defaultAbiCoder.encode(
+      ["uint8", "uint256", "bytes"],
+      [0 /* ActionType.None */, overrides.nativeTopUpAmount, "0x"]
+    );
   }
 
   // mock token bridging (increase user's multichain balance)
@@ -163,7 +175,8 @@ const createGlvWithdrawalParamsType = `tuple(
 
 export async function encodeDepositMessage(
   depositParams: Parameters<typeof sendCreateDeposit>[0],
-  account: string
+  account: string,
+  expectedNativeValue: BigNumberish = 0
 ): Promise<string> {
   const relayParams = await getRelayParams(depositParams);
 
@@ -179,7 +192,10 @@ export async function encodeDepositMessage(
   );
 
   const ActionType = 1; // Deposit
-  const data = ethers.utils.defaultAbiCoder.encode(["uint8", "bytes"], [ActionType, actionData]);
+  const data = ethers.utils.defaultAbiCoder.encode(
+    ["uint8", "uint256", "bytes"],
+    [ActionType, expectedNativeValue, actionData]
+  );
 
   const message = ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, data]);
 
@@ -188,7 +204,8 @@ export async function encodeDepositMessage(
 
 export async function encodeWithdrawalMessage(
   withdrawalParams: Parameters<typeof sendCreateWithdrawal>[0],
-  account: string
+  account: string,
+  expectedNativeValue: BigNumberish = 0
 ): Promise<string> {
   const relayParams = await getRelayParams(withdrawalParams);
 
@@ -204,7 +221,10 @@ export async function encodeWithdrawalMessage(
   );
 
   const ActionType = 5; // Withdrawal
-  const data = ethers.utils.defaultAbiCoder.encode(["uint8", "bytes"], [ActionType, actionData]);
+  const data = ethers.utils.defaultAbiCoder.encode(
+    ["uint8", "uint256", "bytes"],
+    [ActionType, expectedNativeValue, actionData]
+  );
 
   const message = ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, data]);
 
@@ -213,7 +233,8 @@ export async function encodeWithdrawalMessage(
 
 export async function encodeGlvDepositMessage(
   glvDepositParams: Parameters<typeof sendCreateGlvDeposit>[0],
-  account: string
+  account: string,
+  expectedNativeValue: BigNumberish = 0
 ): Promise<string> {
   const relayParams = await getRelayParams(glvDepositParams);
 
@@ -229,7 +250,10 @@ export async function encodeGlvDepositMessage(
   );
 
   const ActionType = 2; // GlvDeposit
-  const data = ethers.utils.defaultAbiCoder.encode(["uint8", "bytes"], [ActionType, actionData]);
+  const data = ethers.utils.defaultAbiCoder.encode(
+    ["uint8", "uint256", "bytes"],
+    [ActionType, expectedNativeValue, actionData]
+  );
 
   const message = ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, data]);
 
@@ -238,7 +262,8 @@ export async function encodeGlvDepositMessage(
 
 export async function encodeGlvWithdrawalMessage(
   glvWithdrawalParams: Parameters<typeof sendCreateGlvWithdrawal>[0],
-  account: string
+  account: string,
+  expectedNativeValue: BigNumberish = 0
 ): Promise<string> {
   const relayParams = await getRelayParams(glvWithdrawalParams);
 
@@ -254,7 +279,10 @@ export async function encodeGlvWithdrawalMessage(
   );
 
   const ActionType = 6; // GlvWithdrawal
-  const data = ethers.utils.defaultAbiCoder.encode(["uint8", "bytes"], [ActionType, actionData]);
+  const data = ethers.utils.defaultAbiCoder.encode(
+    ["uint8", "uint256", "bytes"],
+    [ActionType, expectedNativeValue, actionData]
+  );
 
   const message = ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, data]);
 
@@ -264,7 +292,8 @@ export async function encodeGlvWithdrawalMessage(
 export async function encodeSetTraderReferralCodeMessage(
   setTraderReferralCodeParams: Parameters<typeof sendSetTraderReferralCode>[0],
   referralCode: string,
-  account: string
+  account: string,
+  expectedNativeValue: BigNumberish = 0
 ): Promise<string> {
   const relayParams = await getRelayParams(setTraderReferralCodeParams);
 
@@ -280,7 +309,40 @@ export async function encodeSetTraderReferralCodeMessage(
   );
 
   const ActionType = 4; // SetTraderReferralCode
-  const data = ethers.utils.defaultAbiCoder.encode(["uint8", "bytes"], [ActionType, actionData]);
+  const data = ethers.utils.defaultAbiCoder.encode(
+    ["uint8", "uint256", "bytes"],
+    [ActionType, expectedNativeValue, actionData]
+  );
+
+  const message = ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, data]);
+
+  return message;
+}
+
+export async function encodeRegisterCodeMessage(
+  registerCodeParams: Parameters<typeof sendSetTraderReferralCode>[0], // Using same type as setTraderReferralCode
+  referralCode: string,
+  account: string,
+  expectedNativeValue: BigNumberish = 0
+): Promise<string> {
+  const relayParams = await getRelayParams(registerCodeParams);
+
+  const signature = await getRegisterCodeSignature({
+    ...registerCodeParams,
+    relayParams,
+    verifyingContract: registerCodeParams.relayRouter.address,
+  });
+
+  const actionData = ethers.utils.defaultAbiCoder.encode(
+    [relayParamsType, "bytes32"],
+    [{ ...relayParams, signature }, referralCode]
+  );
+
+  const ActionType = 7; // RegisterCode
+  const data = ethers.utils.defaultAbiCoder.encode(
+    ["uint8", "uint256", "bytes"],
+    [ActionType, expectedNativeValue, actionData]
+  );
 
   const message = ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, data]);
 

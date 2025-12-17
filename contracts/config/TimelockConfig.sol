@@ -117,22 +117,6 @@ contract TimelockConfig is RoleModule, BasicMulticall {
         );
     }
 
-    function signalSetOracleProviderForToken(address oracle, address token, address provider, bytes32 predecessor, bytes32 salt) external onlyTimelockAdmin {
-        bytes memory payload = abi.encodeWithSignature("setAddress(bytes32,address)",
-            Keys.oracleProviderForTokenKey(oracle, token), provider);
-        _schedule(dataStore, payload, predecessor, salt);
-
-        EventUtils.EventLogData memory eventData;
-        eventData.addressItems.initItems(3);
-        eventData.addressItems.setItem(0, "oracle", oracle);
-        eventData.addressItems.setItem(1, "token", token);
-        eventData.addressItems.setItem(2, "provider", provider);
-        _signalPendingAction(
-            "SignalSetOracleProviderForToken",
-            eventData
-        );
-    }
-
     function signalSetAtomicOracleProvider(address provider, bool value, bytes32 predecessor, bytes32 salt) external onlyTimelockAdmin {
         bytes memory payload = abi.encodeWithSignature("setBool(bytes32,bool)",
             Keys.isAtomicOracleProviderKey(provider), value);
