@@ -118,7 +118,7 @@ describe("Exchange.DepositCollateral", () => {
   });
 
   // eslint-disable-next-line no-undef
-  xit("deposits collateral with pending PnL and fees", async () => {
+  it("deposits collateral with pending PnL and fees", async () => {
     // Test precondition:
     // Provide enough collateral to support fees
     await dataStore.setUint(
