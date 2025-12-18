@@ -14,18 +14,19 @@ Prerequisites:
 Post-execution:
 1. Revoke CONTROLLER role from old provider after all retries complete
 
-How to get parameters:
-- TOKEN & GUID: from LZ Scan tx page
-- MESSAGE: from Arbiscan destination tx -> Logs -> ComposeSent event (NOT from LZ Scan - different format)
-- VALUE: check "compose.0.value" on LZ Scan. If [0], no VALUE needed
+Usage:
 
-Example:
-https://layerzeroscan.com/tx/0x95967b3945915515da0ad3f5251201f05d4e79b868d0da4ceaf785819b3a3aa0
+1. Auto-extract from destination tx (recommended):
+TX_HASH=0x... npx hardhat run --network arbitrum scripts/multichain/retryLzCompose.ts
 
+2. Manual (if auto-extract fails):
 TOKEN=USDC \
-GUID=0xef02247717a81cd4b4f8139edf37fc0aaa080cbdd5a1183321037c6c3359fb62 \
-MESSAGE=0x000000000008B551000075E8000000000000000000000000000000000000000000000000000000003B95C8BF0000000000000000000000003FD588EE3177D9C42F37830BF6B7E9D3AFF6B29E0000000000000000000000003FD588EE3177D9C42F37830BF6B7E9D3AFF6B29E00000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000000 \
+GUID=0x... \
+MESSAGE=0x... \
 npx hardhat run --network arbitrum scripts/multichain/retryLzCompose.ts
+
+Notes:
+- VALUE: check "compose.0.value" on LZ Scan. If non-zero, add VALUE=<wei> to env vars
 */
 
 const GMX_LZ_PROVIDER = "0x7129Ea01F0826c705d6F7ab01Cf3C06bb83E9397";
@@ -38,25 +39,82 @@ const STARGATE_POOLS: Record<string, string> = {
   USDT: "0xcE8CcA271Ebc0533920C83d39F417ED6A0abB7D0", // StargatePoolUSDT
 };
 
+// Reverse lookup: pool address -> token name
+const POOL_TO_TOKEN: Record<string, string> = Object.fromEntries(
+  Object.entries(STARGATE_POOLS).map(([token, pool]) => [pool.toLowerCase(), token])
+);
+
+// ComposeSent event: emitted by LZ EndpointV2 when a compose message is sent
+const COMPOSE_SENT_ABI = ["event ComposeSent(address from, address to, bytes32 guid, uint16 index, bytes message)"];
+
 const LZ_ENDPOINT_ABI = [
   "function lzCompose(address _from, address _to, bytes32 _guid, uint16 _index, bytes calldata _message, bytes calldata _extraData) external payable",
 ];
 
+async function parseComposeSentFromTx(txHash: string): Promise<{ token: string; guid: string; message: string }> {
+  const receipt = await hre.ethers.provider.getTransactionReceipt(txHash);
+  if (!receipt) {
+    throw new Error(`Transaction not found: ${txHash}`);
+  }
+
+  const iface = new hre.ethers.utils.Interface(COMPOSE_SENT_ABI);
+  const composeSentTopic = iface.getEventTopic("ComposeSent");
+
+  for (const log of receipt.logs) {
+    if (log.topics[0] === composeSentTopic) {
+      const parsed = iface.parseLog(log);
+      const from = parsed.args.from.toLowerCase();
+      const token = POOL_TO_TOKEN[from];
+
+      if (!token) {
+        throw new Error(`Unknown Stargate pool address: ${from}. Known pools: ${JSON.stringify(STARGATE_POOLS)}`);
+      }
+
+      return {
+        token,
+        guid: parsed.args.guid,
+        message: parsed.args.message,
+      };
+    }
+  }
+
+  throw new Error(`ComposeSent event not found in tx ${txHash}. This may not be a LayerZero compose transaction.`);
+}
+
 async function main() {
-  const token = process.env.TOKEN?.toUpperCase();
-  const guid = process.env.GUID;
-  const message = process.env.MESSAGE;
   const value = process.env.VALUE || "0";
 
-  // Validate inputs
-  if (!token || !STARGATE_POOLS[token]) {
-    throw new Error(`TOKEN must be one of: ${Object.keys(STARGATE_POOLS).join(", ")}`);
-  }
-  if (!guid) {
-    throw new Error("GUID is required. Get from ComposeSent event 'guid' field on Arbiscan.");
-  }
-  if (!message) {
-    throw new Error("MESSAGE is required. Get from ComposeSent event 'message' field on Arbiscan.");
+  let token: string;
+  let guid: string;
+  let message: string;
+
+  // Auto-extract from TX_HASH or use manual env vars
+  if (process.env.TX_HASH) {
+    console.log("Auto-extracting from TX:", process.env.TX_HASH);
+    const parsed = await parseComposeSentFromTx(process.env.TX_HASH);
+    token = parsed.token;
+    guid = parsed.guid;
+    message = parsed.message;
+    console.log("Extracted TOKEN:", token);
+    console.log("Extracted GUID:", guid);
+    console.log("Extracted MESSAGE:", message.slice(0, 66) + "...\n");
+  } else {
+    // Manual input
+    const manualToken = process.env.TOKEN?.toUpperCase();
+    if (!manualToken || !STARGATE_POOLS[manualToken]) {
+      throw new Error(
+        `TX_HASH or TOKEN must be provided. TOKEN must be one of: ${Object.keys(STARGATE_POOLS).join(", ")}`
+      );
+    }
+    if (!process.env.GUID) {
+      throw new Error("GUID is required. Get from ComposeSent event 'guid' field on Arbiscan.");
+    }
+    if (!process.env.MESSAGE) {
+      throw new Error("MESSAGE is required. Get from ComposeSent event 'message' field on Arbiscan.");
+    }
+    token = manualToken;
+    guid = process.env.GUID;
+    message = process.env.MESSAGE;
   }
 
   const stargatePool = STARGATE_POOLS[token];
