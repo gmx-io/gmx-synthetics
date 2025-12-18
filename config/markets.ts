@@ -3712,11 +3712,11 @@ const config: {
       reserveFactor: percentageToFloat("105%"),
       openInterestReserveFactor: percentageToFloat("100%"),
 
-      maxOpenInterest: decimalToFloat(500_000),
-      maxPoolUsdForDeposit: decimalToFloat(750_000),
+      maxOpenInterest: decimalToFloat(10_000),
+      maxPoolUsdForDeposit: decimalToFloat(15_000),
 
-      maxLongTokenPoolAmount: expandDecimals(230, 18), // ~1M USD (2x max open interest)
-      maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x max open interest)
+      maxLongTokenPoolAmount: expandDecimals(6, 18), // ~18K USD (2x max open interest)
+      maxShortTokenPoolAmount: expandDecimals(18_000, 6), // ~18K USD (2x max open interest)
     },
     {
       tokens: { indexToken: "VVV", longToken: "WETH", shortToken: "USDC" },
