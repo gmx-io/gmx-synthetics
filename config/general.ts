@@ -69,6 +69,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       liquidationFeeReceiverFactor: 0,
 
       skipBorrowingFeeForSmallerSide: false,
+      useOpenInterestInTokensForBalance: false,
 
       maxExecutionFeeMultiplierFactor: decimalToFloat(100),
       oracleProviderMinChangeDelay: 3600,
@@ -146,6 +147,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     liquidationFeeReceiverFactor: decimalToFloat(37, 2), // 37%
 
     skipBorrowingFeeForSmallerSide: true,
+    useOpenInterestInTokensForBalance: false,
 
     maxExecutionFeeMultiplierFactor: decimalToFloat(100),
     oracleProviderMinChangeDelay: 3600,
