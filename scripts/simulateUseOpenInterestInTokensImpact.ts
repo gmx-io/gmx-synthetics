@@ -22,6 +22,7 @@
  *
  * Environment Variables:
  *   SHOW_ALL=true  - Show all markets (by default only markets with changes are displayed) --> e.g. on arbiturm 6 markets have no changes
+ *   CSV=true       - Export results to CSV file (outputs to simulateUseOpenInterestInTokensImpact.csv)
  */
 
 import hre, { ethers } from "hardhat";
@@ -663,6 +664,34 @@ async function main() {
   if (marketsWithErrors.length > 0) {
     console.log(`\nMarkets with errors:`);
     console.table(marketsWithErrors);
+  }
+
+  // Export to CSV if requested
+  if (process.env.CSV === "true") {
+    const allResults = [...marketsToDisplay, ...marketsWithErrors];
+    if (allResults.length > 0) {
+      const headers = Object.keys(allResults[0]);
+      const csvRows = [
+        headers.join(","),
+        ...allResults.map((row) =>
+          headers
+            .map((header) => {
+              const value = row[header] ?? "";
+              // Escape values containing commas, quotes, or newlines
+              const strValue = String(value);
+              if (strValue.includes(",") || strValue.includes('"') || strValue.includes("\n")) {
+                return `"${strValue.replace(/"/g, '""')}"`;
+              }
+              return strValue;
+            })
+            .join(",")
+        ),
+      ];
+      const csvContent = csvRows.join("\n");
+      const csvPath = path.join(__dirname, "../out/simulateUseOpenInterestInTokensImpact.csv");
+      fs.writeFileSync(csvPath, csvContent);
+      console.log(`\nCSV exported to: ${csvPath}`);
+    }
   }
 }
 
