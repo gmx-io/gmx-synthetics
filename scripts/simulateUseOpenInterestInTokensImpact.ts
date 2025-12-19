@@ -500,22 +500,38 @@ function compareMarketData(currentData: MarketData[], simulatedData: MarketData[
         current.indexToken === ethers.constants.AddressZero
           ? "N/A"
           : formatImpact(current.priceImpactLong100k, simulated.priceImpactLong100k),
-      "impact long diff":
+      "impact long diff (% / $)":
         current.indexToken === ethers.constants.AddressZero
           ? "N/A"
           : current.priceImpactLong100k === null || simulated.priceImpactLong100k === null
           ? "err"
-          : formatPercentDiff(current.priceImpactLong100k.abs(), simulated.priceImpactLong100k.abs()),
+          : (() => {
+              const pctDiff = formatPercentDiff(
+                current.priceImpactLong100k!.abs(),
+                simulated.priceImpactLong100k!.abs()
+              );
+              const usdDiff = simulated.priceImpactLong100k!.sub(current.priceImpactLong100k!);
+              const usdSign = usdDiff.gte(0) ? "+" : "-";
+              return `${pctDiff} / ${usdSign}$${formatAmount(usdDiff.abs(), 30, 2)}`;
+            })(),
       "impact short $100k (cur / sim)":
         current.indexToken === ethers.constants.AddressZero
           ? "N/A"
           : formatImpact(current.priceImpactShort100k, simulated.priceImpactShort100k),
-      "impact short diff":
+      "impact short diff (% / $)":
         current.indexToken === ethers.constants.AddressZero
           ? "N/A"
           : current.priceImpactShort100k === null || simulated.priceImpactShort100k === null
           ? "err"
-          : formatPercentDiff(current.priceImpactShort100k.abs(), simulated.priceImpactShort100k.abs()),
+          : (() => {
+              const pctDiff = formatPercentDiff(
+                current.priceImpactShort100k!.abs(),
+                simulated.priceImpactShort100k!.abs()
+              );
+              const usdDiff = simulated.priceImpactShort100k!.sub(current.priceImpactShort100k!);
+              const usdSign = usdDiff.gte(0) ? "+" : "-";
+              return `${pctDiff} / ${usdSign}$${formatAmount(usdDiff.abs(), 30, 2)}`;
+            })(),
     });
   }
 
