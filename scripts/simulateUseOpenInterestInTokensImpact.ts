@@ -5,11 +5,15 @@
  * - Open Interest Balance (USD vs tokens × price calculation)
  * - Borrowing Rate (borrowingFactorPerSecond for longs/shorts)
  * - Funding Rate (fundingFactorPerSecond + 1-hour projected change)
+ * - Price Impact for $100k positions (long and short)
  *
  * IMPORTANT: This script REQUIRES Anvil to be running because it:
  * - Impersonates a CONTROLLER account
- * - Modifies contract state (sets USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE)
- * - Compares values before/after the change
+ * - Modifies contract state:
+ *   1. Sets USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE = true
+ *   2. Syncs VIRTUAL_INVENTORY_FOR_POSITIONS_IN_TOKENS for all virtualTokenIds
+ *      (calculates shortOI - longOI in tokens across markets sharing the same virtualTokenId)
+ * - Compares values before/after the changes
  *
  * Usage:
  *   For Arbitrum:
@@ -21,7 +25,7 @@
  *     Terminal 2: FORK=avalanche FORK_ID=43114 npx hardhat run scripts/simulateUseOpenInterestInTokensImpact.ts --network anvil
  *
  * Environment Variables:
- *   SHOW_ALL=true  - Show all markets (by default only markets with changes are displayed) --> e.g. on arbiturm 6 markets have no changes
+ *   SHOW_ALL=true  - Show all markets (by default only markets with changes are displayed)
  *   CSV=true       - Export results to CSV file (outputs to simulateUseOpenInterestInTokensImpact.csv)
  */
 
@@ -30,8 +34,14 @@ import { BigNumber } from "ethers";
 import * as path from "path";
 import * as fs from "fs";
 import { bigNumberify, formatAmount } from "../utils/math";
-import { hashString } from "../utils/hash";
+import { hashString, encodeData } from "../utils/hash";
+import { getMarketKey, createMarketConfigByKey } from "../utils/market";
+import { getFullKey } from "../utils/config";
 import fetch from "node-fetch";
+
+// Import config modules directly for anvil fork support
+import tokensConfig from "../config/tokens";
+import marketsConfig from "../config/markets";
 
 // Keys
 const USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE = hashString("USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE");
@@ -39,6 +49,7 @@ const CONTROLLER = hashString("CONTROLLER");
 const OPEN_INTEREST = hashString("OPEN_INTEREST");
 const OPEN_INTEREST_IN_TOKENS = hashString("OPEN_INTEREST_IN_TOKENS");
 const IS_MARKET_DISABLED = hashString("IS_MARKET_DISABLED");
+const VIRTUAL_INVENTORY_FOR_POSITIONS_IN_TOKENS = hashString("VIRTUAL_INVENTORY_FOR_POSITIONS_IN_TOKENS");
 
 // Precision constants
 const FLOAT_PRECISION = bigNumberify(10).pow(30);
@@ -169,6 +180,97 @@ async function getController(roleStore: any) {
   await anvilProvider.send("anvil_setBalance", [controller, "0x1000000000000000000"]);
 
   return anvilProvider.getUncheckedSigner(controller);
+}
+
+/**
+ * Syncs VIRTUAL_INVENTORY_FOR_POSITIONS_IN_TOKENS for all virtualTokenIds.
+ * This calculates (shortOI - longOI) in tokens across all markets sharing the same virtualTokenId.
+ */
+async function syncVirtualInventory(
+  enabledMarkets: any[],
+  currentData: MarketData[],
+  dataStore: any,
+  controller: any
+): Promise<void> {
+  console.log("\n  Syncing virtual inventory for positions in tokens...");
+
+  // Load market configs to get virtualTokenIdForIndexToken
+  // For anvil forks, we need to create a mock hre with the correct network name
+  const networkName = hre.network.name === "anvil" ? process.env.FORK || "arbitrum" : hre.network.name;
+
+  // Create a mock hre with the correct network name for config loading
+  const mockHre = {
+    ...hre,
+    network: { ...hre.network, name: networkName },
+    gmx: {
+      getTokens: async () => tokensConfig({ ...hre, network: { ...hre.network, name: networkName } } as any),
+    },
+  } as any;
+
+  const tokens = await mockHre.gmx.getTokens();
+  const marketConfigs = await marketsConfig(mockHre);
+  const marketConfigByKey = createMarketConfigByKey({ marketConfigs, tokens });
+
+  // Build a map from marketToken address to config
+  const marketConfigByAddress: Record<string, any> = {};
+  for (const market of enabledMarkets) {
+    const marketKey = getMarketKey(market.indexToken, market.longToken, market.shortToken);
+    const config = marketConfigByKey[marketKey];
+    if (config) {
+      marketConfigByAddress[market.marketToken.toLowerCase()] = config;
+    }
+  }
+
+  // Group markets by virtualTokenIdForIndexToken
+  const marketsByVirtualTokenId: Record<string, { market: any; data: MarketData }[]> = {};
+  for (let i = 0; i < enabledMarkets.length; i++) {
+    const market = enabledMarkets[i];
+    const data = currentData[i];
+    const config = marketConfigByAddress[market.marketToken.toLowerCase()];
+
+    if (!config?.virtualTokenIdForIndexToken) {
+      continue; // Skip markets without virtualTokenId
+    }
+
+    const vtid = config.virtualTokenIdForIndexToken;
+    if (!marketsByVirtualTokenId[vtid]) {
+      marketsByVirtualTokenId[vtid] = [];
+    }
+    marketsByVirtualTokenId[vtid].push({ market, data });
+  }
+
+  // Calculate and write virtual inventory for each group
+  let syncCount = 0;
+  for (const [virtualTokenId, markets] of Object.entries(marketsByVirtualTokenId)) {
+    // Sum up OI in tokens across all markets in this group
+    let totalLongOiTokens = bigNumberify(0);
+    let totalShortOiTokens = bigNumberify(0);
+
+    for (const { data } of markets) {
+      totalLongOiTokens = totalLongOiTokens.add(data.longOpenInterestInTokens);
+      totalShortOiTokens = totalShortOiTokens.add(data.shortOpenInterestInTokens);
+    }
+
+    // Virtual inventory = shorts - longs (positive = short-heavy, negative = long-heavy)
+    const virtualInventoryInTokens = totalShortOiTokens.sub(totalLongOiTokens);
+
+    // Build the DataStore key
+    const fullKey = getFullKey(VIRTUAL_INVENTORY_FOR_POSITIONS_IN_TOKENS, encodeData(["bytes32"], [virtualTokenId]));
+
+    // Write to DataStore
+    await dataStore.connect(controller).setInt(fullKey, virtualInventoryInTokens);
+    syncCount++;
+
+    // Log progress for first few
+    if (syncCount <= 3) {
+      const direction = virtualInventoryInTokens.lt(0) ? "longs" : "shorts";
+      console.log(
+        `    ${markets[0].data.marketLabel.split(" ")[0]}: ${virtualInventoryInTokens.toString()} tokens (${direction})`
+      );
+    }
+  }
+
+  console.log(`  Synced ${syncCount} virtual token IDs\n`);
 }
 
 async function getMarketData(
@@ -459,11 +561,11 @@ function compareMarketData(currentData: MarketData[], simulatedData: MarketData[
       market: current.marketLabel,
       address: current.marketToken.slice(0, 10) + "...",
       // Raw token counts
-      "long tokens": current.longOpenInterestInTokens.toString(),
-      "short tokens": current.shortOpenInterestInTokens.toString(),
+      "long OI tokens": current.longOpenInterestInTokens.toString(),
+      "short OI tokens": current.shortOpenInterestInTokens.toString(),
       // Open Interest - current (stored USD) / simulated (tokens × current price)
-      "long OI (cur / sim)": `$${formatAmount(current.longOpenInterestUsd, 30, 0)} / ${longOiNotional}`,
-      "short OI (cur / sim)": `$${formatAmount(current.shortOpenInterestUsd, 30, 0)} / ${shortOiNotional}`,
+      "long OI $ (cur / sim)": `$${formatAmount(current.longOpenInterestUsd, 30, 0)} / ${longOiNotional}`,
+      "short OI $ (cur / sim)": `$${formatAmount(current.shortOpenInterestUsd, 30, 0)} / ${shortOiNotional}`,
       "larger (cur / sim)": `${largerByUsd} / ${largerByTokens}${flipped ? " FLIP" : ""}`,
       // Borrowing rates
       "borrow long (cur / sim)": `${formatFactorPerSecond(
@@ -607,7 +709,11 @@ async function main() {
     throw new Error("Failed to set USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE flag!");
   }
 
-  // Step 3: Get simulated data (with flag=TRUE)
+  // Step 2b: Sync virtual inventory for positions in tokens
+  // This ensures price impact calculations use correct token-based values
+  await syncVirtualInventory(enabledMarkets, currentData, dataStore, controller);
+
+  // Step 3: Get simulated data (with flag=TRUE + synced virtual inventory)
   console.log("\nStep 3: Getting simulated market data (flag=TRUE)...");
   const simulatedData = await getAllMarketData(enabledMarkets, reader, dataStore, tickersByTokenAddress);
 
@@ -621,11 +727,12 @@ async function main() {
   // Display summary table
   console.log("=".repeat(80));
   console.log("SUMMARY: Impact of USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE = true");
+  console.log("         (with VIRTUAL_INVENTORY_FOR_POSITIONS_IN_TOKENS synced)");
   console.log("=".repeat(80));
   console.log("");
   console.log("Column Legend:");
-  console.log("  - long/short tokens: raw token count (index token units)");
-  console.log("  - OI (cur / sim): cur=stored USD, sim=tokens × currentPrice");
+  console.log("  - long/short OI tokens: raw token count (index token units)");
+  console.log("  - OI $ (cur / sim): cur=stored USD, sim=tokens × currentPrice");
   console.log("  - larger (cur / sim): Longs|Shorts, append FLIP if side changes");
   console.log("  - borrow/funding (cur / sim): rate per second with flag=false / flag=true");
   console.log(
@@ -651,6 +758,7 @@ async function main() {
         !isNoChange(r["funding diff"]) ||
         !isNoChange(r["impact long diff"]) ||
         !isNoChange(r["impact short diff"]))
+    // r.market == "BTC tBTC-tBTC"
   );
 
   const marketsWithErrors = results.filter((r) => r.error);
