@@ -261,6 +261,7 @@ library Errors {
     );
     error InvalidBlockRangeSet(uint256 largestMinBlockNumber, uint256 smallestMaxBlockNumber);
     error NonAtomicOracleProvider(address provider);
+    error StaticPriceNotSet(address token);
 
     // OracleModule errors
     error InvalidPrimaryPricesForSimulation(uint256 primaryTokensLength, uint256 primaryPricesLength);
