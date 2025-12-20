@@ -23,7 +23,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
     testSigners = (await hre.ethers.getSigners()).slice(10).map((signer) => signer.address);
   }
 
-  const maxOraclePriceAge = 5 * 60;
+  const maxOraclePriceAge = 120 * 60; // 2h
   const maxAtomicOraclePriceAge = 30;
   const maxOracleTimestampRange = 60;
 
