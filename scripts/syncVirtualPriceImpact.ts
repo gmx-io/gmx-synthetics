@@ -75,7 +75,7 @@ async function processMarketGroup({
       callData: dataStore.interface.encodeFunctionData("getUint", [
         getFullKey(
           keys.OPEN_INTEREST_IN_TOKENS,
-          encodeData(["address", "address", "bool"], [onchainMarket.marketToken, onchainMarket.shortToken, true])
+          encodeData(["address", "address", "bool"], [onchainMarket.marketToken, onchainMarket.shortToken, false])
         ),
       ]),
     });
