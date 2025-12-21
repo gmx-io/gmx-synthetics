@@ -520,7 +520,11 @@ async function main() {
         longTxValue = executionFee;
       }
 
-      const longTx = await exchangeRouter.multicall(longMulticallData, { value: longTxValue });
+      const longEstimatedGas = await exchangeRouter.estimateGas.multicall(longMulticallData, { value: longTxValue });
+      const longTx = await exchangeRouter.multicall(longMulticallData, {
+        value: longTxValue,
+        gasLimit: longEstimatedGas.mul(120).div(100),
+      });
 
       console.log("  Long order tx: %s", longTx.hash);
       await longTx.wait();
@@ -588,7 +592,11 @@ async function main() {
         shortTxValue = executionFee;
       }
 
-      const shortTx = await exchangeRouter.multicall(shortMulticallData, { value: shortTxValue });
+      const shortEstimatedGas = await exchangeRouter.estimateGas.multicall(shortMulticallData, { value: shortTxValue });
+      const shortTx = await exchangeRouter.multicall(shortMulticallData, {
+        value: shortTxValue,
+        gasLimit: shortEstimatedGas.mul(120).div(100),
+      });
 
       console.log("  Short order tx: %s", shortTx.hash);
       await shortTx.wait();
