@@ -78,8 +78,6 @@ contract LiquidationHandler is BaseOrderHandler {
             Order.SecondaryOrderType.None
         );
 
-        FeatureUtils.validateFeature(params.contracts.dataStore, Keys.EXECUTE_ORDER_FEATURE_DISABLED, address(this), market);
-
         ExecuteOrderUtils.executeOrder(decreaseOrderExecutor, params);
     }
 }

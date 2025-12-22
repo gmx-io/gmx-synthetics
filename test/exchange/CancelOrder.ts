@@ -83,6 +83,7 @@ describe("Exchange.CancelOrder", () => {
 
     expect(await getOrderCount(dataStore)).eq(1);
 
+    await dataStore.setUint(keys.REQUEST_EXPIRATION_TIME, 0);
     await expect(exchangeRouter.connect(user0).cancelOrder(orderKeys[0]))
       .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForModule")
       .withArgs(keys.CANCEL_ORDER_FEATURE_DISABLED, orderHandler.address);
@@ -90,6 +91,16 @@ describe("Exchange.CancelOrder", () => {
     expect(await getOrderCount(dataStore)).eq(1);
 
     await dataStore.setBool(_cancelOrderFeatureDisabledKey, false);
+
+    // Test market-specific feature disabled
+    const order = await reader.getOrder(dataStore.address, orderKeys[0]);
+    const _cancelOrderFeatureDisabledForMarketKey = keys.cancelOrderFeatureDisabledForMarketKey(order.addresses.market);
+    await dataStore.setBool(_cancelOrderFeatureDisabledForMarketKey, true);
+    await expect(exchangeRouter.connect(user0).cancelOrder(orderKeys[0]))
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForMarket")
+      .withArgs(keys.CANCEL_ORDER_FEATURE_DISABLED, order.addresses.market);
+    await dataStore.setBool(_cancelOrderFeatureDisabledForMarketKey, false);
+    await dataStore.setUint(keys.REQUEST_EXPIRATION_TIME, requestExpirationTime);
 
     await expect(exchangeRouter.connect(user0).cancelOrder(orderKeys[0])).to.be.revertedWithCustomError(
       errorsContract,

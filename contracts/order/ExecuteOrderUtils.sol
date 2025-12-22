@@ -30,6 +30,8 @@ library ExecuteOrderUtils {
     // @dev executes an order
     // @param params BaseOrderUtils.ExecuteOrderParams
     function executeOrder(IOrderExecutor orderExecutor, BaseOrderUtils.ExecuteOrderParams memory params) external {
+        FeatureUtils.validateFeature(params.contracts.dataStore, Keys.EXECUTE_ORDER_FEATURE_DISABLED, address(this), params.order.market());
+
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
         params.startingGas -= gasleft() / 63;
 

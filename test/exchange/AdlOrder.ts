@@ -7,17 +7,18 @@ import { OrderType, handleOrder } from "../../utils/order";
 import { getIsAdlEnabled, updateAdlState, executeAdl } from "../../utils/adl";
 import { grantRole } from "../../utils/role";
 import { getEventData } from "../../utils/event";
+import { errorsContract } from "../../utils/error";
 import * as keys from "../../utils/keys";
 
 describe("Exchange.AdlOrder", () => {
   let fixture;
   let wallet, user0;
-  let roleStore, dataStore, ethUsdMarket, wethPriceFeed, wnt, usdc;
+  let roleStore, dataStore, ethUsdMarket, btcUsdMarket, wethPriceFeed, wnt, usdc;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ wallet, user0 } = fixture.accounts);
-    ({ roleStore, dataStore, ethUsdMarket, wethPriceFeed, wnt, usdc } = fixture.contracts);
+    ({ roleStore, dataStore, ethUsdMarket, btcUsdMarket, wethPriceFeed, wnt, usdc } = fixture.contracts);
 
     await handleDeposit(fixture, {
       create: {
@@ -75,5 +76,94 @@ describe("Exchange.AdlOrder", () => {
         expect(orderExecutedEvent.secondaryOrderType).eq(1);
       },
     });
+  });
+
+  it("executeAdl validations", async () => {
+    await handleOrder(fixture, {
+      create: {
+        market: ethUsdMarket,
+        initialCollateralToken: wnt,
+        initialCollateralDeltaAmount: expandDecimals(100, 18),
+        sizeDeltaUsd: decimalToFloat(2000 * 1000),
+        acceptablePrice: expandDecimals(5001, 12),
+        orderType: OrderType.MarketIncrease,
+        isLong: true,
+      },
+    });
+
+    const maxPnlFactorForAdlKey = keys.maxPnlFactorKey(keys.MAX_PNL_FACTOR_FOR_ADL, ethUsdMarket.marketToken, true);
+    const minPnlFactorAfterAdlKey = keys.minPnlFactorAfterAdl(ethUsdMarket.marketToken, true);
+
+    await dataStore.setUint(maxPnlFactorForAdlKey, decimalToFloat(10, 2)); // 10%
+    await dataStore.setUint(minPnlFactorAfterAdlKey, decimalToFloat(2, 2)); // 2%
+    await grantRole(roleStore, wallet.address, "ADL_KEEPER");
+
+    await wethPriceFeed.setAnswer(expandDecimals(10000, 8));
+
+    await updateAdlState(fixture, {
+      market: ethUsdMarket,
+      isLong: true,
+      tokens: [wnt.address, usdc.address],
+      minPrices: [expandDecimals(10000, 4), expandDecimals(1, 6)],
+      maxPrices: [expandDecimals(10000, 4), expandDecimals(1, 6)],
+      gasUsageLabel: "updateAdlState",
+    });
+
+    expect(await getIsAdlEnabled(dataStore, ethUsdMarket.marketToken, true)).eq(true);
+
+    // Test ALL_FEATURES_DISABLED
+    await dataStore.setBool(keys.ALL_FEATURES_DISABLED, true);
+    await expect(
+      executeAdl(fixture, {
+        account: user0.address,
+        market: ethUsdMarket,
+        collateralToken: wnt,
+        isLong: true,
+        sizeDeltaUsd: decimalToFloat(100 * 1000),
+        tokens: [wnt.address, usdc.address],
+        minPrices: [expandDecimals(10000, 4), expandDecimals(1, 6)],
+        maxPrices: [expandDecimals(10000, 4), expandDecimals(1, 6)],
+        gasUsageLabel: "executeAdl",
+      })
+    ).to.be.revertedWithCustomError(errorsContract, "AllFeaturesDisabled");
+    await dataStore.setBool(keys.ALL_FEATURES_DISABLED, false);
+
+    // Test ALL_MARKETS_DISABLED
+    await dataStore.setBool(keys.ALL_MARKETS_DISABLED, true);
+    await expect(
+      executeAdl(fixture, {
+        account: user0.address,
+        market: ethUsdMarket,
+        collateralToken: wnt,
+        isLong: true,
+        sizeDeltaUsd: decimalToFloat(100 * 1000),
+        tokens: [wnt.address, usdc.address],
+        minPrices: [expandDecimals(10000, 4), expandDecimals(1, 6)],
+        maxPrices: [expandDecimals(10000, 4), expandDecimals(1, 6)],
+        gasUsageLabel: "executeAdl",
+      })
+    ).to.be.revertedWithCustomError(errorsContract, "AllMarketsDisabled");
+    await dataStore.setBool(keys.ALL_MARKETS_DISABLED, false);
+
+    // Test market-specific feature disabled
+    const _executeAdlFeatureDisabledForMarketKey = keys.executeAdlFeatureDisabledForMarketKey(ethUsdMarket.marketToken);
+    await dataStore.setBool(_executeAdlFeatureDisabledForMarketKey, true);
+    console.log("executeAdlFeatureDisabledForMarketKey", _executeAdlFeatureDisabledForMarketKey);
+    await expect(
+      executeAdl(fixture, {
+        account: user0.address,
+        market: ethUsdMarket,
+        collateralToken: wnt,
+        isLong: true,
+        sizeDeltaUsd: decimalToFloat(100 * 1000),
+        tokens: [wnt.address, usdc.address],
+        minPrices: [expandDecimals(10000, 4), expandDecimals(1, 6)],
+        maxPrices: [expandDecimals(10000, 4), expandDecimals(1, 6)],
+        gasUsageLabel: "executeAdl",
+      })
+    )
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForMarket")
+      .withArgs(keys.EXECUTE_ADL_FEATURE_DISABLED, ethUsdMarket.marketToken);
+    await dataStore.setBool(_executeAdlFeatureDisabledForMarketKey, false);
   });
 });

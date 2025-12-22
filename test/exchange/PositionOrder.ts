@@ -100,6 +100,16 @@ describe("Exchange.PositionOrder", () => {
 
     await dataStore.setBool(_createOrderFeatureDisabledKey, false);
 
+    // Test market-specific feature disabled
+    const _createOrderFeatureDisabledForMarketKey = keys.createOrderFeatureDisabledForMarketKey(
+      ethUsdMarket.marketToken
+    );
+    await dataStore.setBool(_createOrderFeatureDisabledForMarketKey, true);
+    await expect(createOrder(fixture, params))
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForMarket")
+      .withArgs(keys.CREATE_ORDER_FEATURE_DISABLED, ethUsdMarket.marketToken);
+    await dataStore.setBool(_createOrderFeatureDisabledForMarketKey, false);
+
     await expect(createOrder(fixture, { ...params, account: { address: AddressZero } })).to.be.revertedWithCustomError(
       errorsContract,
       "EmptyAccount"
@@ -406,5 +416,19 @@ describe("Exchange.PositionOrder", () => {
       .withArgs(keys.EXECUTE_ORDER_FEATURE_DISABLED, orderHandler.address);
 
     await dataStore.setBool(_executeOrderFeatureDisabledKey, false);
+
+    // Test market-specific feature disabled
+    const _executeOrderFeatureDisabledForMarketKey = keys.executeOrderFeatureDisabledForMarketKey(
+      ethUsdMarket.marketToken
+    );
+    await dataStore.setBool(_executeOrderFeatureDisabledForMarketKey, true);
+    await expect(
+      handleOrder(fixture, {
+        create: params,
+      })
+    )
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForMarket")
+      .withArgs(keys.EXECUTE_ORDER_FEATURE_DISABLED, ethUsdMarket.marketToken);
+    await dataStore.setBool(_executeOrderFeatureDisabledForMarketKey, false);
   });
 });

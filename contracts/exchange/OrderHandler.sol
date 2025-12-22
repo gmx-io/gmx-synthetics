@@ -59,7 +59,6 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler, ReentrancyGuard {
         IBaseOrderUtils.CreateOrderParams calldata params,
         bool shouldCapMaxExecutionFee
     ) external override globalNonReentrant onlyController returns (bytes32) {
-        FeatureUtils.validateFeature(dataStore, Keys.CREATE_ORDER_FEATURE_DISABLED, address(this), params.addresses.market);
         validateDataListLength(params.dataList.length);
 
         return OrderUtils.createOrder(
@@ -188,8 +187,6 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler, ReentrancyGuard {
         DataStore _dataStore = dataStore;
         Order.Props memory order = OrderStoreUtils.get(_dataStore, key);
 
-        FeatureUtils.validateFeature(_dataStore, Keys.CANCEL_ORDER_FEATURE_DISABLED, address(this), order.market());
-
         if (Order.isMarketOrder(order.orderType())) {
             validateRequestCancellation(
                 order.updatedAtTime(),
@@ -295,8 +292,6 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler, ReentrancyGuard {
         if (!isSimulation && (params.order.isFrozen() || params.order.orderType() == Order.OrderType.LimitSwap)) {
             _validateFrozenOrderKeeper(keeper);
         }
-
-        FeatureUtils.validateFeature(params.contracts.dataStore, Keys.EXECUTE_ORDER_FEATURE_DISABLED, address(this), params.order.market());
 
         ExecuteOrderUtils.executeOrder(getOrderExecutor(params.order.orderType()), params);
     }

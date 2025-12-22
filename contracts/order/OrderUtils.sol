@@ -76,6 +76,7 @@ library OrderUtils {
         IBaseOrderUtils.CreateOrderParams memory params,
         bool shouldCapMaxExecutionFee
     ) external returns (bytes32) {
+        FeatureUtils.validateFeature(dataStore, Keys.CREATE_ORDER_FEATURE_DISABLED, address(this), params.addresses.market);
         AccountUtils.validateAccount(account);
 
         ReferralUtils.setTraderReferralCode(referralStorage, account, params.referralCode);
@@ -234,6 +235,9 @@ library OrderUtils {
     }
 
     function cancelOrder(CancelOrderParams memory params) public {
+        Order.Props memory order = OrderStoreUtils.get(params.dataStore, params.key);
+        FeatureUtils.validateFeature(params.dataStore, Keys.CANCEL_ORDER_FEATURE_DISABLED, address(this), order.market());
+
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
         if (params.isExternalCall) {
             params.startingGas -= gasleft() / 63;
@@ -252,7 +256,6 @@ library OrderUtils {
             }
         }
 
-        Order.Props memory order = OrderStoreUtils.get(params.dataStore, params.key);
         BaseOrderUtils.validateNonEmptyOrder(order);
 
         // this could happen if the order was created in new contracts that support new order types

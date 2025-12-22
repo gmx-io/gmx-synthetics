@@ -105,6 +105,25 @@ describe("Exchange.UpdateOrder", () => {
 
     await dataStore.setBool(_updateOrderFeatureDisabledKey, false);
 
+    // Test market-specific feature disabled
+    const order = await reader.getOrder(dataStore.address, orderKeys[0]);
+    const _updateOrderFeatureDisabledForMarketKey = keys.updateOrderFeatureDisabledForMarketKey(order.addresses.market);
+    await dataStore.setBool(_updateOrderFeatureDisabledForMarketKey, true);
+    await expect(
+      exchangeRouter.connect(user0).updateOrder(
+        orderKeys[0],
+        decimalToFloat(250 * 1000),
+        expandDecimals(4950, 12),
+        expandDecimals(5050, 12),
+        expandDecimals(52000, 6),
+        validFromTime,
+        false // autoCancel
+      )
+    )
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForMarket")
+      .withArgs(keys.UPDATE_ORDER_FEATURE_DISABLED, order.addresses.market);
+    await dataStore.setBool(_updateOrderFeatureDisabledForMarketKey, false);
+
     await expect(
       exchangeRouter.connect(user0).updateOrder(
         orderKeys[0],
