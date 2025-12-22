@@ -52,7 +52,6 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler, ReentrancyGuard {
         uint256 srcChainId,
         IWithdrawalUtils.CreateWithdrawalParams calldata params
     ) external override globalNonReentrant onlyController returns (bytes32) {
-        FeatureUtils.validateFeature(dataStore, Keys.CREATE_WITHDRAWAL_FEATURE_DISABLED, address(this), params.addresses.market);
         validateDataListLength(params.dataList.length);
 
         return WithdrawalUtils.createWithdrawal(
@@ -73,8 +72,6 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler, ReentrancyGuard {
 
         DataStore _dataStore = dataStore;
         Withdrawal.Props memory withdrawal = WithdrawalStoreUtils.get(_dataStore, key);
-
-        FeatureUtils.validateFeature(_dataStore, Keys.CANCEL_WITHDRAWAL_FEATURE_DISABLED, address(this), withdrawal.market());
 
         validateRequestCancellation(
             withdrawal.updatedAtTime(),
@@ -135,7 +132,6 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler, ReentrancyGuard {
         IExecuteWithdrawalUtils.ExecuteWithdrawalParams calldata executeWithdrawalParams,
         Withdrawal.Props calldata withdrawal
     ) external nonReentrant onlyController returns (IExecuteWithdrawalUtils.ExecuteWithdrawalResult memory) {
-        FeatureUtils.validateFeature(dataStore, Keys.EXECUTE_WITHDRAWAL_FEATURE_DISABLED, address(this), withdrawal.addresses.market);
         return ExecuteWithdrawalUtils.executeWithdrawal(executeWithdrawalParams, withdrawal, true);
     }
 
@@ -154,7 +150,6 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler, ReentrancyGuard {
         onlyController
         withOraclePricesForAtomicAction(oracleParams)
     {
-        FeatureUtils.validateFeature(dataStore, Keys.EXECUTE_ATOMIC_WITHDRAWAL_FEATURE_DISABLED, address(this), params.addresses.market);
         validateDataListLength(params.dataList.length);
 
         if (
@@ -222,8 +217,6 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler, ReentrancyGuard {
         ISwapPricingUtils.SwapPricingType swapPricingType
     ) external onlySelf {
         uint256 startingGas = gasleft();
-
-        FeatureUtils.validateFeature(dataStore, Keys.EXECUTE_WITHDRAWAL_FEATURE_DISABLED, address(this), withdrawal.market());
 
         IExecuteWithdrawalUtils.ExecuteWithdrawalParams memory params = IExecuteWithdrawalUtils.ExecuteWithdrawalParams(
             dataStore,

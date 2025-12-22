@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 
 import "../../withdrawal/ExecuteWithdrawalUtils.sol";
 import "../../exchange/IWithdrawalHandler.sol";
+import "../../feature/FeatureUtils.sol";
 
 import "../../nonce/NonceUtils.sol";
 
@@ -64,6 +65,7 @@ library GlvWithdrawalUtils {
         uint256 srcChainId,
         IGlvWithdrawalUtils.CreateGlvWithdrawalParams memory params
     ) external returns (bytes32) {
+        FeatureUtils.validateFeature(dataStore, Keys.CREATE_GLV_WITHDRAWAL_FEATURE_DISABLED, address(this), params.addresses.market);
         AccountUtils.validateAccount(account);
         GlvUtils.validateGlv(dataStore, params.addresses.glv);
         GlvUtils.validateGlvMarket(dataStore, params.addresses.glv, params.addresses.market, false);
@@ -138,6 +140,8 @@ library GlvWithdrawalUtils {
         ExecuteGlvWithdrawalParams memory params,
         GlvWithdrawal.Props memory glvWithdrawal
     ) external {
+        FeatureUtils.validateFeature(params.dataStore, Keys.EXECUTE_GLV_WITHDRAWAL_FEATURE_DISABLED, address(this), glvWithdrawal.market());
+
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
         params.startingGas -= gasleft() / 63;
 
@@ -326,6 +330,9 @@ library GlvWithdrawalUtils {
         params.startingGas -= gasleft() / 63;
 
         GlvWithdrawal.Props memory glvWithdrawal = GlvWithdrawalStoreUtils.get(params.dataStore, params.key);
+
+        FeatureUtils.validateFeature(params.dataStore, Keys.CANCEL_GLV_WITHDRAWAL_FEATURE_DISABLED, address(this), glvWithdrawal.market());
+
         GlvWithdrawalStoreUtils.remove(params.dataStore, params.key, glvWithdrawal.account());
 
         if (glvWithdrawal.srcChainId() == 0) {

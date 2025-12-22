@@ -42,7 +42,6 @@ contract GlvDepositHandler is IGlvDepositHandler, BaseHandler, ReentrancyGuard {
         uint256 srcChainId,
         IGlvDepositUtils.CreateGlvDepositParams calldata params
     ) external globalNonReentrant onlyController returns (bytes32) {
-        FeatureUtils.validateFeature(dataStore, Keys.CREATE_GLV_DEPOSIT_FEATURE_DISABLED, address(this), params.addresses.market);
         validateDataListLength(params.dataList.length);
 
         return GlvDepositUtils.createGlvDeposit(dataStore, eventEmitter, glvVault, account, srcChainId, params);
@@ -74,8 +73,6 @@ contract GlvDepositHandler is IGlvDepositHandler, BaseHandler, ReentrancyGuard {
 
     function _executeGlvDeposit(bytes32 key, GlvDeposit.Props memory glvDeposit, address keeper) external onlySelf {
         uint256 startingGas = gasleft();
-
-        FeatureUtils.validateFeature(dataStore, Keys.EXECUTE_GLV_DEPOSIT_FEATURE_DISABLED, address(this), glvDeposit.market());
 
         ExecuteGlvDepositUtils.ExecuteGlvDepositParams memory params = ExecuteGlvDepositUtils.ExecuteGlvDepositParams({
             key: key,
@@ -123,7 +120,6 @@ contract GlvDepositHandler is IGlvDepositHandler, BaseHandler, ReentrancyGuard {
 
         DataStore _dataStore = dataStore;
         GlvDeposit.Props memory glvDeposit = GlvDepositStoreUtils.get(_dataStore, key);
-        FeatureUtils.validateFeature(_dataStore, Keys.CANCEL_GLV_DEPOSIT_FEATURE_DISABLED, address(this), glvDeposit.market());
         validateRequestCancellation(glvDeposit.updatedAtTime(), "GlvDeposit");
 
         GlvDepositUtils.CancelGlvDepositParams memory params = GlvDepositUtils.CancelGlvDepositParams({

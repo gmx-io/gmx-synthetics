@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "../../deposit/ExecuteDepositUtils.sol";
 import "../../nonce/NonceUtils.sol";
 import "../../exchange/IDepositHandler.sol";
+import "../../feature/FeatureUtils.sol";
 
 import "../GlvVault.sol";
 import "../GlvUtils.sol";
@@ -49,6 +50,8 @@ library ExecuteGlvDepositUtils {
         ExecuteGlvDepositParams memory params,
         GlvDeposit.Props memory glvDeposit
     ) external returns (uint256) {
+        FeatureUtils.validateFeature(params.dataStore, Keys.EXECUTE_GLV_DEPOSIT_FEATURE_DISABLED, address(this), glvDeposit.market());
+
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
         params.startingGas -= gasleft() / 63;
 

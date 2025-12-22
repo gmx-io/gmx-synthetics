@@ -234,9 +234,14 @@ describe("Exchange.Deposit", () => {
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
       .withArgs(user0.address, "CONTROLLER");
 
+    // skip request expiration time validation
+    const requestExpirationTime = await dataStore.getUint(keys.REQUEST_EXPIRATION_TIME);
+    await dataStore.setUint(keys.REQUEST_EXPIRATION_TIME, 0);
+
     await expect(depositHandler.cancelDeposit(depositKeys[0]))
       .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForModule")
       .withArgs(keys.CANCEL_DEPOSIT_FEATURE_DISABLED, depositHandler.address);
+    await dataStore.setUint(keys.REQUEST_EXPIRATION_TIME, requestExpirationTime);
   });
 
   it("executeDeposit validations", async () => {

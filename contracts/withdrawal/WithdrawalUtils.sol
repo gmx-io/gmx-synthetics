@@ -20,6 +20,7 @@ import "../utils/Array.sol";
 import "../utils/AccountUtils.sol";
 
 import "../multichain/MultichainVault.sol";
+import "../feature/FeatureUtils.sol";
 
 /**
  * @title WithdrawalUtils
@@ -61,6 +62,12 @@ library WithdrawalUtils {
         IWithdrawalUtils.CreateWithdrawalParams memory params,
         bool isAtomicWithdrawal
     ) external returns (bytes32) {
+        if (isAtomicWithdrawal) {
+            FeatureUtils.validateFeature(dataStore, Keys.EXECUTE_ATOMIC_WITHDRAWAL_FEATURE_DISABLED, address(this), params.addresses.market);
+        } else {
+            FeatureUtils.validateFeature(dataStore, Keys.CREATE_WITHDRAWAL_FEATURE_DISABLED, address(this), params.addresses.market);
+        }
+
         AccountUtils.validateAccount(account);
 
         address wnt = TokenUtils.wnt(dataStore);
@@ -149,6 +156,8 @@ library WithdrawalUtils {
         startingGas -= gasleft() / 63;
 
         Withdrawal.Props memory withdrawal = WithdrawalStoreUtils.get(dataStore, key);
+
+        FeatureUtils.validateFeature(dataStore, Keys.CANCEL_WITHDRAWAL_FEATURE_DISABLED, address(this), withdrawal.market());
 
         if (withdrawal.account() == address(0)) {
             revert Errors.EmptyWithdrawal();

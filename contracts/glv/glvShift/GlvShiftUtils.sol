@@ -8,6 +8,7 @@ import "../../shift/ShiftUtils.sol";
 import "../../exchange/IShiftHandler.sol";
 import "../GlvUtils.sol";
 import "../GlvVault.sol";
+import "../../feature/FeatureUtils.sol";
 
 import "./GlvShiftStoreUtils.sol";
 import "./GlvShiftEventUtils.sol";
@@ -61,6 +62,9 @@ library GlvShiftUtils {
         EventEmitter eventEmitter,
         CreateGlvShiftParams memory params
     ) external returns (bytes32) {
+        FeatureUtils.validateFeature(dataStore, Keys.CREATE_GLV_SHIFT_FEATURE_DISABLED, address(this), params.fromMarket);
+        FeatureUtils.validateFeature(dataStore, Keys.CREATE_GLV_SHIFT_FEATURE_DISABLED, address(this), params.toMarket);
+
         validateGlvShift(dataStore, params);
 
         GlvShift.Props memory glvShift = GlvShift.Props(
@@ -127,6 +131,9 @@ library GlvShiftUtils {
         GlvShift.Props memory glvShift,
         bool skipRemoval
     ) external returns (uint256) {
+        FeatureUtils.validateFeature(params.dataStore, Keys.EXECUTE_GLV_SHIFT_FEATURE_DISABLED, address(this), glvShift.fromMarket());
+        FeatureUtils.validateFeature(params.dataStore, Keys.EXECUTE_GLV_SHIFT_FEATURE_DISABLED, address(this), glvShift.toMarket());
+
         if (skipRemoval) {
             if (params.dataStore.containsBytes32(Keys.GLV_SHIFT_LIST, params.key)) {
                 revert Errors.RemovalShouldNotBeSkipped(Keys.GLV_SHIFT_LIST, params.key);

@@ -6,6 +6,7 @@ pragma solidity ^0.8.0;
 import "../../nonce/NonceUtils.sol";
 import "../../gas/GasUtils.sol";
 import "../../multichain/MultichainVault.sol";
+import "../../feature/FeatureUtils.sol";
 
 import "../GlvVault.sol";
 import "../GlvUtils.sol";
@@ -47,6 +48,8 @@ library GlvDepositUtils {
         uint256 srcChainId,
         IGlvDepositUtils.CreateGlvDepositParams memory params
     ) external returns (bytes32) {
+        FeatureUtils.validateFeature(dataStore, Keys.CREATE_GLV_DEPOSIT_FEATURE_DISABLED, address(this), params.addresses.market);
+
         AccountUtils.validateAccount(account);
         GlvUtils.validateGlv(dataStore, params.addresses.glv);
         GlvUtils.validateGlvMarket(dataStore, params.addresses.glv, params.addresses.market, true);
@@ -174,6 +177,9 @@ library GlvDepositUtils {
         params.startingGas -= gasleft() / 63;
 
         GlvDeposit.Props memory glvDeposit = GlvDepositStoreUtils.get(params.dataStore, params.key);
+
+        FeatureUtils.validateFeature(params.dataStore, Keys.CANCEL_GLV_DEPOSIT_FEATURE_DISABLED, address(this), glvDeposit.market());
+
         GlvDepositStoreUtils.remove(params.dataStore, params.key, glvDeposit.account());
 
         if (glvDeposit.isMarketTokenDeposit()) {
