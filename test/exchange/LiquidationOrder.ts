@@ -78,4 +78,43 @@ describe("Exchange.LiquidationOrder", () => {
     expect(await getAccountPositionCount(dataStore, user0.address)).eq(0);
     expect(await getOrderCount(dataStore)).eq(0);
   });
+
+  it("should not liquidate if pending pnl is positive", async () => {
+    expect(await getAccountPositionCount(dataStore, user0.address)).eq(0);
+
+    await handleOrder(fixture, {
+      create: {
+        market: ethUsdMarket,
+        initialCollateralToken: wnt,
+        initialCollateralDeltaAmount: expandDecimals(10, 18),
+        sizeDeltaUsd: decimalToFloat(200 * 1000),
+        acceptablePrice: expandDecimals(5001, 12),
+        orderType: OrderType.MarketIncrease,
+        isLong: true,
+      },
+      execute: {
+        tokens: [wnt.address, usdc.address],
+      },
+    });
+
+    expect(await getAccountPositionCount(dataStore, user0.address)).eq(1);
+    expect(await getOrderCount(dataStore)).eq(0);
+
+    await grantRole(roleStore, wallet.address, "LIQUIDATION_KEEPER");
+
+    await expect(
+      executeLiquidation(fixture, {
+        account: user0.address,
+        market: ethUsdMarket,
+        collateralToken: wnt,
+        isLong: true,
+        minPrices: [expandDecimals(7500, 4), expandDecimals(1, 6)],
+        maxPrices: [expandDecimals(7500, 4), expandDecimals(1, 6)],
+        gasUsageLabel: "liquidationHandler.executeLiquidation",
+      })
+    ).to.be.revertedWithCustomError(errorsContract, "PositionShouldNotBeLiquidated");
+
+    expect(await getAccountPositionCount(dataStore, user0.address)).eq(1);
+    expect(await getOrderCount(dataStore)).eq(0);
+  });
 });
