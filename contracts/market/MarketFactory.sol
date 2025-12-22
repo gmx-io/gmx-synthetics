@@ -57,7 +57,7 @@ contract MarketFactory is RoleModule {
             revert Errors.MarketAlreadyExists(salt, existingMarketAddress);
         }
 
-        MarketToken marketToken = new MarketToken{salt: salt}(roleStore, dataStore);
+        MarketToken marketToken = new MarketToken{salt: salt}(roleStore, dataStore, eventEmitter);
 
         // the marketType is not stored with the market, it is mainly used to ensure
         // markets with the same indexToken, longToken and shortToken can be created if needed

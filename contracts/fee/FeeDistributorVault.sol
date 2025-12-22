@@ -5,7 +5,8 @@ pragma solidity ^0.8.0;
 import "../bank/Bank.sol";
 
 contract FeeDistributorVault is Bank {
-    constructor(RoleStore _roleStore, DataStore _dataStore) Bank(_roleStore, _dataStore) {}
+    constructor(RoleStore _roleStore, DataStore _dataStore, EventEmitter _eventEmitter)
+        Bank(_roleStore, _dataStore, _eventEmitter) {}
 
     // @dev withdraw the specified 'amount' of native token from this contract to 'receiver'
     // @param receiver the receiver of the native token

@@ -5,5 +5,6 @@ pragma solidity ^0.8.0;
 import "../bank/StrictBank.sol";
 
 contract GlvVault is StrictBank {
-    constructor(RoleStore _roleStore, DataStore _dataStore) StrictBank(_roleStore, _dataStore) {}
+    constructor(RoleStore _roleStore, DataStore _dataStore, EventEmitter _eventEmitter)
+        StrictBank(_roleStore, _dataStore, _eventEmitter) {}
 }

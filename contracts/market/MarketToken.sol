@@ -9,7 +9,8 @@ import "../bank/Bank.sol";
 // @dev The market token for a market, stores funds for the market and keeps track
 // of the liquidity owners
 contract MarketToken is ERC20, Bank {
-    constructor(RoleStore _roleStore, DataStore _dataStore) ERC20("GMX Market", "GM") Bank(_roleStore, _dataStore) {
+    constructor(RoleStore _roleStore, DataStore _dataStore, EventEmitter _eventEmitter)
+        ERC20("GMX Market", "GM") Bank(_roleStore, _dataStore, _eventEmitter) {
     }
 
     // @dev mint market tokens to an account

@@ -513,6 +513,16 @@ library Keys {
     bytes32 public constant CLAIM_TERMS = keccak256(abi.encode("CLAIM_TERMS"));
     // @dev key for the terms hash for a specific distribution
     bytes32 public constant CLAIM_TERMS_BACKREF = keccak256(abi.encode("CLAIM_TERMS_BACKREF"));
+    // @dev key for the last recorded bank withdrawal level
+    bytes32 public constant BANK_LAST_TRANSFER_OUT_LEVEL = keccak256(abi.encode("BANK_LAST_TRANSFER_OUT_LEVEL"));
+    // @dev key for the last bank withdrawal time
+    bytes32 public constant BANK_LAST_TRANSFER_OUT_TIME = keccak256(abi.encode("BANK_LAST_TRANSFER_OUT_TIME"));
+    // @dev key for the bank withdrawal limit per time period
+    bytes32 public constant BANK_TRANSFER_OUT_LEVEL_CAP = keccak256(abi.encode("BANK_TRANSFER_OUT_LEVEL_CAP"));
+    // @dev key for the bank withdrawals amount sliding window duration
+    bytes32 public constant BANK_TRANSFER_OUT_THRESHOLD_PERIOD = keccak256(abi.encode("BANK_TRANSFER_OUT_THRESHOLD_PERIOD"));
+    // @dev key for the manual withdrawal confirmation flag
+    bytes32 public constant BANK_MANUAL_TRANSFER_OUT = keccak256(abi.encode("BANK_TRANSFER_OUT_MANUAL"));
 
     // @dev constant for user initiated cancel reason
     string public constant USER_INITIATED_CANCEL = "USER_INITIATED_CANCEL";
@@ -2415,6 +2425,41 @@ library Keys {
         return keccak256(abi.encode(
             CLAIM_TERMS_BACKREF,
             termsHash
+        ));
+    }
+
+    function bankTransferOutLevelKey(address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            BANK_LAST_TRANSFER_OUT_LEVEL,
+            token
+        ));
+    }
+
+    function bankTransferOutTimeKey(address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            BANK_LAST_TRANSFER_OUT_TIME,
+            token
+        ));
+    }
+
+    function bankTransferOutCapKey(address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            BANK_TRANSFER_OUT_LEVEL_CAP,
+            token
+        ));
+    }
+
+    function bankTransferOutThresholdPeriodKey(address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            BANK_TRANSFER_OUT_THRESHOLD_PERIOD,
+            token
+        ));
+    }
+
+    function bankManualTransferOutKey(address token) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            BANK_MANUAL_TRANSFER_OUT,
+            token
         ));
     }
 }

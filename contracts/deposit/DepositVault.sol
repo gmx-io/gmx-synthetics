@@ -7,5 +7,6 @@ import "../bank/StrictBank.sol";
 // @title DepositVault
 // @dev Vault for deposits
 contract DepositVault is StrictBank {
-    constructor(RoleStore _roleStore, DataStore _dataStore) StrictBank(_roleStore, _dataStore) {}
+    constructor(RoleStore _roleStore, DataStore _dataStore, EventEmitter _eventEmitter)
+        StrictBank(_roleStore, _dataStore, _eventEmitter) {}
 }
