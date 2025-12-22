@@ -416,7 +416,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
     }
 
     function _validateGaslessFeature() internal view {
-        FeatureUtils.validateFeature(dataStore, Keys.gaslessFeatureDisabledKey(address(this)));
+        FeatureUtils.validateFeature(dataStore, Keys.GASLESS_FEATURE_DISABLED, address(this), address(0));
     }
 
     function _validateCallWithoutSignature(uint256 srcChainId, uint256 desChainId, uint256 deadline, uint256 tokenPermitsLength) internal view {

@@ -61,10 +61,7 @@ describe("Exchange.CancelOrder", () => {
 
     const orderKeys = await getOrderKeys(dataStore, 0, 1);
 
-    const _cancelOrderFeatureDisabledKey = keys.cancelOrderFeatureDisabledKey(
-      orderHandler.address,
-      OrderType.MarketIncrease
-    );
+    const _cancelOrderFeatureDisabledKey = keys.cancelOrderFeatureDisabledKey(orderHandler.address);
 
     await dataStore.setBool(_cancelOrderFeatureDisabledKey, true);
 
@@ -75,8 +72,8 @@ describe("Exchange.CancelOrder", () => {
     expect(await getOrderCount(dataStore)).eq(1);
 
     await expect(exchangeRouter.connect(user0).cancelOrder(orderKeys[0]))
-      .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
-      .withArgs(_cancelOrderFeatureDisabledKey);
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForModule")
+      .withArgs(keys.CANCEL_ORDER_FEATURE_DISABLED, orderHandler.address);
 
     expect(await getOrderCount(dataStore)).eq(1);
 

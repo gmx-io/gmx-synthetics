@@ -107,13 +107,14 @@ library FeeUtils {
             revert Errors.InvalidClaimFundingFeesInput(markets.length, tokens.length);
         }
 
-        FeatureUtils.validateFeature(dataStore, Keys.claimFundingFeesFeatureDisabledKey(address(this)));
+        FeatureUtils.validateFeature(dataStore, Keys.CLAIM_FUNDING_FEES_FEATURE_DISABLED, address(this), address(0));
 
         AccountUtils.validateReceiver(receiver);
 
         uint256[] memory claimedAmounts = new uint256[](markets.length);
 
         for (uint256 i; i < markets.length; i++) {
+            FeatureUtils.validateFeature(dataStore, Keys.CLAIM_FUNDING_FEES_FEATURE_DISABLED, address(this), markets[i]);
             claimedAmounts[i] = MarketUtils.claimFundingFees(
                 dataStore,
                 eventEmitter,
@@ -177,13 +178,14 @@ library FeeUtils {
             revert Errors.InvalidClaimUiFeesInput(markets.length, tokens.length);
         }
 
-        FeatureUtils.validateFeature(dataStore, Keys.claimUiFeesFeatureDisabledKey(address(this)));
+        FeatureUtils.validateFeature(dataStore, Keys.CLAIM_UI_FEES_FEATURE_DISABLED, address(this), address(0));
 
         AccountUtils.validateReceiver(receiver);
 
         uint256[] memory claimedAmounts = new uint256[](markets.length);
 
         for (uint256 i; i < markets.length; i++) {
+            FeatureUtils.validateFeature(dataStore, Keys.CLAIM_UI_FEES_FEATURE_DISABLED, address(this), markets[i]);
             claimedAmounts[i] = _claimUiFees(
                 dataStore,
                 eventEmitter,

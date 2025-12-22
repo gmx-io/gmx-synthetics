@@ -209,7 +209,7 @@ contract SubaccountRouter is BaseRouter {
     }
 
     function _handleSubaccountAction(address account, bytes32 actionType) internal {
-        FeatureUtils.validateFeature(dataStore, Keys.subaccountFeatureDisabledKey(address(this)));
+        FeatureUtils.validateFeature(dataStore, Keys.SUBACCOUNT_FEATURE_DISABLED, address(this), address(0));
 
         address subaccount = msg.sender;
 

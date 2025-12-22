@@ -145,7 +145,7 @@ contract AdlHandler is BaseOrderHandler {
             Order.SecondaryOrderType.Adl
         );
 
-        FeatureUtils.validateFeature(params.contracts.dataStore, Keys.executeAdlFeatureDisabledKey(address(this), uint256(params.order.orderType())));
+        FeatureUtils.validateFeature(params.contracts.dataStore, Keys.EXECUTE_ADL_FEATURE_DISABLED, address(this), market);
 
         ExecuteOrderUtils.executeOrder(decreaseOrderExecutor, params);
 

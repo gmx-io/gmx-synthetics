@@ -138,7 +138,9 @@ describe("SubaccountGelatoRelayRouter", () => {
   describe("createOrder", () => {
     it("DisabledFeature", async () => {
       await dataStore.setBool(keys.gaslessFeatureDisabledKey(subaccountGelatoRelayRouter.address), true);
-      await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
+      await expect(sendCreateOrder(createOrderParams))
+        .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForModule")
+        .withArgs(keys.GASLESS_FEATURE_DISABLED, subaccountGelatoRelayRouter.address);
     });
 
     it("InvalidReceiverForSubaccountOrder", async () => {
@@ -895,7 +897,9 @@ describe("SubaccountGelatoRelayRouter", () => {
 
     it("DisabledFeature", async () => {
       await dataStore.setBool(keys.gaslessFeatureDisabledKey(subaccountGelatoRelayRouter.address), true);
-      await expect(sendUpdateOrder(updateOrderParams)).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
+      await expect(sendUpdateOrder(updateOrderParams))
+        .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForModule")
+        .withArgs(keys.GASLESS_FEATURE_DISABLED, subaccountGelatoRelayRouter.address);
     });
 
     it("InvalidSignature", async () => {
@@ -1022,8 +1026,8 @@ describe("SubaccountGelatoRelayRouter", () => {
       order = await reader.getOrder(dataStore.address, orderKeys[0]);
 
       // 0.2 WETH in total (initial 0.001 + 0.199 from update)
-      expect(order.numbers.executionFee).closeTo("8039135020000000", "10000000000000");
-      expect(await wnt.balanceOf(holdingAddress)).closeTo("92960864980000000", "10000000000000");
+      expect(order.numbers.executionFee).closeTo("8049502660000000", "10000000000000");
+      expect(await wnt.balanceOf(holdingAddress)).closeTo("92950497340000000", "10000000000000");
     });
 
     it("EmptyOrder", async () => {
@@ -1116,7 +1120,9 @@ describe("SubaccountGelatoRelayRouter", () => {
 
     it("DisabledFeature", async () => {
       await dataStore.setBool(keys.gaslessFeatureDisabledKey(subaccountGelatoRelayRouter.address), true);
-      await expect(sendCancelOrder(cancelOrderParams)).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
+      await expect(sendCancelOrder(cancelOrderParams))
+        .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForModule")
+        .withArgs(keys.GASLESS_FEATURE_DISABLED, subaccountGelatoRelayRouter.address);
     });
 
     it("InvalidSignature", async () => {
@@ -1216,7 +1222,9 @@ describe("SubaccountGelatoRelayRouter", () => {
 
     it("DisabledFeature", async () => {
       await dataStore.setBool(keys.gaslessFeatureDisabledKey(subaccountGelatoRelayRouter.address), true);
-      await expect(sendRemoveSubaccount(params)).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
+      await expect(sendRemoveSubaccount(params))
+        .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForModule")
+        .withArgs(keys.GASLESS_FEATURE_DISABLED, subaccountGelatoRelayRouter.address);
     });
 
     it("InvalidSignature", async () => {
@@ -1368,7 +1376,9 @@ describe("SubaccountGelatoRelayRouter", () => {
     });
     it("DisabledFeature", async () => {
       await dataStore.setBool(keys.gaslessFeatureDisabledKey(subaccountGelatoRelayRouter.address), true);
-      await expect(sendBatch({ ...batchParams })).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
+      await expect(sendBatch({ ...batchParams }))
+        .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForModule")
+        .withArgs(keys.GASLESS_FEATURE_DISABLED, subaccountGelatoRelayRouter.address);
     });
 
     it("InvalidSignature", async () => {

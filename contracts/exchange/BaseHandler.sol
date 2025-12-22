@@ -44,7 +44,11 @@ contract BaseHandler is RoleModule, GlobalReentrancyGuard, OracleModule {
     function validateNonKeeperError(bytes4 errorSelector, bytes memory reasonBytes) internal pure {
         if (
             OracleUtils.isOracleError(errorSelector) ||
+            errorSelector == Errors.AllFeaturesDisabled.selector ||
+            errorSelector == Errors.AllMarketsDisabled.selector ||
             errorSelector == Errors.DisabledFeature.selector ||
+            errorSelector == Errors.DisabledFeatureForModule.selector ||
+            errorSelector == Errors.DisabledFeatureForMarket.selector ||
             errorSelector == Errors.InsufficientGasLeftForCallback.selector ||
             errorSelector == Errors.InsufficientGasForCancellation.selector ||
             errorSelector == Errors.InsufficientGasForAutoCancellation.selector

@@ -47,7 +47,7 @@ contract ConfigSyncer is ReentrancyGuard, RoleModule {
         address[] calldata markets,
         string[] calldata parameters
     ) external onlyLimitedConfigKeeper nonReentrant {
-        FeatureUtils.validateFeature(dataStore, Keys.syncConfigFeatureDisabledKey(address(this)));
+        FeatureUtils.validateFeature(dataStore, Keys.SYNC_CONFIG_FEATURE_DISABLED, address(this), address(0));
 
         if (markets.length != parameters.length) {
             revert Errors.SyncConfigInvalidInputLengths(markets.length, parameters.length);

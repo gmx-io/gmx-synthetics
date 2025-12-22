@@ -45,7 +45,8 @@ contract ShiftHandler is IShiftHandler, BaseHandler, ReentrancyGuard {
         uint256 srcChainId,
         IShiftUtils.CreateShiftParams calldata params
     ) external override globalNonReentrant onlyController returns (bytes32) {
-        FeatureUtils.validateFeature(dataStore, Keys.createShiftFeatureDisabledKey(address(this)));
+        FeatureUtils.validateFeature(dataStore, Keys.CREATE_SHIFT_FEATURE_DISABLED, address(this), params.addresses.fromMarket);
+        FeatureUtils.validateFeature(dataStore, Keys.CREATE_SHIFT_FEATURE_DISABLED, address(this), params.addresses.toMarket);
         validateDataListLength(params.dataList.length);
 
         return ShiftUtils.createShift(
@@ -64,7 +65,8 @@ contract ShiftHandler is IShiftHandler, BaseHandler, ReentrancyGuard {
         DataStore _dataStore = dataStore;
         Shift.Props memory shift = ShiftStoreUtils.get(_dataStore, key);
 
-        FeatureUtils.validateFeature(_dataStore, Keys.cancelShiftFeatureDisabledKey(address(this)));
+        FeatureUtils.validateFeature(_dataStore, Keys.CANCEL_SHIFT_FEATURE_DISABLED, address(this), shift.fromMarket());
+        FeatureUtils.validateFeature(_dataStore, Keys.CANCEL_SHIFT_FEATURE_DISABLED, address(this), shift.toMarket());
 
         validateRequestCancellation(
             shift.updatedAtTime(),
@@ -118,7 +120,8 @@ contract ShiftHandler is IShiftHandler, BaseHandler, ReentrancyGuard {
         ShiftUtils.ExecuteShiftParams memory params,
         Shift.Props memory shift
     ) external nonReentrant onlyController returns (uint256) {
-        FeatureUtils.validateFeature(dataStore, Keys.executeShiftFeatureDisabledKey(address(this)));
+        FeatureUtils.validateFeature(dataStore, Keys.EXECUTE_SHIFT_FEATURE_DISABLED, address(this), shift.fromMarket());
+        FeatureUtils.validateFeature(dataStore, Keys.EXECUTE_SHIFT_FEATURE_DISABLED, address(this), shift.toMarket());
         return ShiftUtils.executeShift(params, shift, true);
     }
 
@@ -146,7 +149,8 @@ contract ShiftHandler is IShiftHandler, BaseHandler, ReentrancyGuard {
     ) external onlySelf {
         uint256 startingGas = gasleft();
 
-        FeatureUtils.validateFeature(dataStore, Keys.executeShiftFeatureDisabledKey(address(this)));
+        FeatureUtils.validateFeature(dataStore, Keys.EXECUTE_SHIFT_FEATURE_DISABLED, address(this), shift.fromMarket());
+        FeatureUtils.validateFeature(dataStore, Keys.EXECUTE_SHIFT_FEATURE_DISABLED, address(this), shift.toMarket());
 
         ShiftUtils.ExecuteShiftParams memory params = ShiftUtils.ExecuteShiftParams(
             dataStore,

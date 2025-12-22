@@ -76,10 +76,7 @@ describe("Exchange.PositionOrder", () => {
       gasUsageLabel: "createOrder",
     };
 
-    const _createOrderFeatureDisabledKey = keys.createOrderFeatureDisabledKey(
-      orderHandler.address,
-      OrderType.MarketIncrease
-    );
+    const _createOrderFeatureDisabledKey = keys.createOrderFeatureDisabledKey(orderHandler.address);
 
     await dataStore.setBool(_createOrderFeatureDisabledKey, true);
 
@@ -88,8 +85,8 @@ describe("Exchange.PositionOrder", () => {
       .withArgs(user0.address, "CONTROLLER");
 
     await expect(createOrder(fixture, params))
-      .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
-      .withArgs(_createOrderFeatureDisabledKey);
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForModule")
+      .withArgs(keys.CREATE_ORDER_FEATURE_DISABLED, orderHandler.address);
 
     await dataStore.setBool(_createOrderFeatureDisabledKey, false);
 
@@ -368,10 +365,7 @@ describe("Exchange.PositionOrder", () => {
       shouldUnwrapNativeToken: false,
     };
 
-    const _executeOrderFeatureDisabledKey = keys.executeOrderFeatureDisabledKey(
-      orderHandler.address,
-      OrderType.MarketIncrease
-    );
+    const _executeOrderFeatureDisabledKey = keys.executeOrderFeatureDisabledKey(orderHandler.address);
 
     await dataStore.setBool(_executeOrderFeatureDisabledKey, true);
 
@@ -380,8 +374,8 @@ describe("Exchange.PositionOrder", () => {
         create: params,
       })
     )
-      .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
-      .withArgs(_executeOrderFeatureDisabledKey);
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForModule")
+      .withArgs(keys.EXECUTE_ORDER_FEATURE_DISABLED, orderHandler.address);
 
     await dataStore.setBool(_executeOrderFeatureDisabledKey, false);
   });

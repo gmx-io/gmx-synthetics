@@ -401,24 +401,44 @@ export function executeDepositFeatureDisabledKey(contract) {
   return hashData(["bytes32", "address"], [EXECUTE_DEPOSIT_FEATURE_DISABLED, contract]);
 }
 
-export function createOrderFeatureDisabledKey(contract, orderType) {
-  return hashData(["bytes32", "address", "uint256"], [CREATE_ORDER_FEATURE_DISABLED, contract, orderType]);
+export function createOrderFeatureDisabledKey(contract) {
+  return hashData(["bytes32", "address"], [CREATE_ORDER_FEATURE_DISABLED, contract]);
 }
 
-export function executeOrderFeatureDisabledKey(contract, orderType) {
-  return hashData(["bytes32", "address", "uint256"], [EXECUTE_ORDER_FEATURE_DISABLED, contract, orderType]);
+export function createOrderFeatureDisabledForMarketKey(contract, market) {
+  return hashData(["bytes32", "address", "address"], [CREATE_ORDER_FEATURE_DISABLED, contract, market]);
 }
 
-export function executeAdlFeatureDisabledKey(contract, orderType) {
-  return hashData(["bytes32", "address", "uint256"], [EXECUTE_ADL_FEATURE_DISABLED, contract, orderType]);
+export function executeOrderFeatureDisabledForMarketKey(contract, market) {
+  return hashData(["bytes32", "address", "address"], [EXECUTE_ORDER_FEATURE_DISABLED, contract, market]);
 }
 
-export function updateOrderFeatureDisabledKey(contract, orderType) {
-  return hashData(["bytes32", "address", "uint256"], [UPDATE_ORDER_FEATURE_DISABLED, contract, orderType]);
+export function executeOrderFeatureDisabledKey(contract) {
+  return hashData(["bytes32", "address"], [EXECUTE_ORDER_FEATURE_DISABLED, contract]);
 }
 
-export function cancelOrderFeatureDisabledKey(contract, orderType) {
-  return hashData(["bytes32", "address", "uint256"], [CANCEL_ORDER_FEATURE_DISABLED, contract, orderType]);
+export function executeAdlFeatureDisabledForMarketKey(contract, market) {
+  return hashData(["bytes32", "address", "address"], [EXECUTE_ADL_FEATURE_DISABLED, contract, market]);
+}
+
+export function executeAdlFeatureDisabledKey(contract) {
+  return hashData(["bytes32", "address"], [EXECUTE_ADL_FEATURE_DISABLED, contract]);
+}
+
+export function updateOrderFeatureDisabledForMarketKey(contract, market) {
+  return hashData(["bytes32", "address", "address"], [UPDATE_ORDER_FEATURE_DISABLED, contract, market]);
+}
+
+export function updateOrderFeatureDisabledKey(contract) {
+  return hashData(["bytes32", "address"], [UPDATE_ORDER_FEATURE_DISABLED, contract]);
+}
+
+export function cancelOrderFeatureDisabledForMarketKey(contract, market) {
+  return hashData(["bytes32", "address", "address"], [CANCEL_ORDER_FEATURE_DISABLED, contract, market]);
+}
+
+export function cancelOrderFeatureDisabledKey(contract) {
+  return hashData(["bytes32", "address"], [CANCEL_ORDER_FEATURE_DISABLED, contract]);
 }
 
 export function generalClaimFeatureDisabled(distributionId) {

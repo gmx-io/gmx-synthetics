@@ -153,7 +153,10 @@ library Errors {
     error InvalidKeeperForFrozenOrder(address keeper);
 
     // FeatureUtils errors
+    error AllFeaturesDisabled();
     error DisabledFeature(bytes32 key);
+    error DisabledFeatureForModule(bytes32 featureKey, address module);
+    error DisabledFeatureForMarket(bytes32 featureKey, address market);
 
     // FeeHandler errors
     error InvalidBuybackToken(address buybackToken);
@@ -186,6 +189,7 @@ library Errors {
     // MarketUtils errors
     error EmptyMarket();
     error DisabledMarket(address market);
+    error AllMarketsDisabled();
     error MaxSwapPathLengthExceeded(uint256 swapPathLengh, uint256 maxSwapPathLength);
     error InsufficientPoolAmount(uint256 poolAmount, uint256 amount);
     error InsufficientReserve(uint256 reservedUsd, uint256 maxReservedUsd);

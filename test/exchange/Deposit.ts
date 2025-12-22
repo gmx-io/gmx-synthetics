@@ -82,8 +82,8 @@ describe("Exchange.Deposit", () => {
       .withArgs(user0.address, "CONTROLLER");
 
     await expect(createDeposit(fixture, params))
-      .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
-      .withArgs(_createDepositFeatureDisabledKey);
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForModule")
+      .withArgs(keys.CREATE_DEPOSIT_FEATURE_DISABLED, depositHandler.address);
 
     await dataStore.setBool(_createDepositFeatureDisabledKey, false);
 
@@ -235,8 +235,8 @@ describe("Exchange.Deposit", () => {
       .withArgs(user0.address, "CONTROLLER");
 
     await expect(depositHandler.cancelDeposit(depositKeys[0]))
-      .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
-      .withArgs(_cancelDepositFeatureDisabledKey);
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForModule")
+      .withArgs(keys.CANCEL_DEPOSIT_FEATURE_DISABLED, depositHandler.address);
   });
 
   it("executeDeposit validations", async () => {
@@ -276,8 +276,8 @@ describe("Exchange.Deposit", () => {
         maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
       })
     )
-      .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
-      .withArgs(_executeDepositFeatureDisabledKey);
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForModule")
+      .withArgs(keys.EXECUTE_DEPOSIT_FEATURE_DISABLED, depositHandler.address);
 
     await dataStore.setBool(_executeDepositFeatureDisabledKey, false);
 

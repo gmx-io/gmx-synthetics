@@ -259,7 +259,9 @@ describe("Jit", () => {
         orderKey: "0x0000000000000000000000000000000000000000000000000000000000000000",
         glvShifts: [],
       } as Parameters<typeof executeJitOrder>[1])
-    ).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
+    )
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForModule")
+      .withArgs(keys.JIT_FEATURE_DISABLED, jitOrderHandler.address);
   });
 
   it("JitInvalidToMarket", async () => {

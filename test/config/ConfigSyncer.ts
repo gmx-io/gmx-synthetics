@@ -131,7 +131,7 @@ describe("ConfigSyncer", () => {
 
     await expect(configSyncer.connect(user1).sync([market], [parameter])).to.be.revertedWithCustomError(
       errorsContract,
-      "DisabledFeature"
+      "DisabledFeatureForModule"
     );
   });
 

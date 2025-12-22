@@ -54,10 +54,7 @@ describe("Exchange.UpdateOrder", () => {
 
     const orderKeys = await getOrderKeys(dataStore, 0, 1);
 
-    const _updateOrderFeatureDisabledKey = keys.updateOrderFeatureDisabledKey(
-      orderHandler.address,
-      OrderType.MarketIncrease
-    );
+    const _updateOrderFeatureDisabledKey = keys.updateOrderFeatureDisabledKey(orderHandler.address);
 
     await dataStore.setBool(_updateOrderFeatureDisabledKey, true);
 
@@ -88,8 +85,8 @@ describe("Exchange.UpdateOrder", () => {
         false // autoCancel
       )
     )
-      .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
-      .withArgs(_updateOrderFeatureDisabledKey);
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForModule")
+      .withArgs(keys.UPDATE_ORDER_FEATURE_DISABLED, orderHandler.address);
 
     await dataStore.setBool(_updateOrderFeatureDisabledKey, false);
 

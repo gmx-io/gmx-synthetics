@@ -163,7 +163,9 @@ describe("GelatoRelayRouter", () => {
   describe("createOrder", () => {
     it("DisabledFeature", async () => {
       await dataStore.setBool(keys.gaslessFeatureDisabledKey(gelatoRelayRouter.address), true);
-      await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
+      await expect(sendCreateOrder(createOrderParams))
+        .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForModule")
+        .withArgs(keys.GASLESS_FEATURE_DISABLED, gelatoRelayRouter.address);
     });
 
     it("InsufficientRelayFee", async () => {
@@ -1220,7 +1222,9 @@ describe("GelatoRelayRouter", () => {
 
     it("DisabledFeature", async () => {
       await dataStore.setBool(keys.gaslessFeatureDisabledKey(gelatoRelayRouter.address), true);
-      await expect(sendUpdateOrder(updateOrderParams)).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
+      await expect(sendUpdateOrder(updateOrderParams))
+        .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForModule")
+        .withArgs(keys.GASLESS_FEATURE_DISABLED, gelatoRelayRouter.address);
     });
 
     it("InsufficientRelayFee", async () => {
@@ -1378,7 +1382,9 @@ describe("GelatoRelayRouter", () => {
 
     it("DisabledFeature", async () => {
       await dataStore.setBool(keys.gaslessFeatureDisabledKey(gelatoRelayRouter.address), true);
-      await expect(sendCancelOrder(cancelOrderParams)).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
+      await expect(sendCancelOrder(cancelOrderParams))
+        .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForModule")
+        .withArgs(keys.GASLESS_FEATURE_DISABLED, gelatoRelayRouter.address);
     });
 
     it("InsufficientRelayFee", async () => {
@@ -1443,7 +1449,9 @@ describe("GelatoRelayRouter", () => {
   describe("batch", () => {
     it("DisabledFeature", async () => {
       await dataStore.setBool(keys.gaslessFeatureDisabledKey(gelatoRelayRouter.address), true);
-      await expect(sendBatch({ ...batchParams })).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
+      await expect(sendBatch({ ...batchParams }))
+        .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForModule")
+        .withArgs(keys.GASLESS_FEATURE_DISABLED, gelatoRelayRouter.address);
     });
 
     it("InvalidSignature", async () => {
