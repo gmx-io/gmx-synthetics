@@ -980,10 +980,6 @@ async function validatePerpConfig({
     throw new Error(`Invalid position impact exponent factors for ${marketLabel}`);
   }
 
-  if (!positivePositionImpactExponentFactor.eq(decimalToFloat(1))) {
-    throw new Error(`Invalid positive position impact exponent for ${marketLabel}`);
-  }
-
   if (negativePositionImpactFactor.eq(0)) {
     console.warn(`Position price impact for ${marketLabel} is zero`);
   }
