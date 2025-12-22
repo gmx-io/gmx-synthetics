@@ -48,8 +48,7 @@ export async function handleConfigChanges(
         allowFailure: false,
         callData: dataStore.interface.encodeFunctionData("getUint", [key]),
       });
-    }
-    if (item.type === "int") {
+    } else if (item.type === "int") {
       multicallReadParams.push({
         target: dataStore.address,
         allowFailure: false,
