@@ -320,25 +320,49 @@ async function getMarketData(
     );
 
     // Fetch open interest values directly
-    const [longOiUsdLong, longOiUsdShort, shortOiUsdLong, shortOiUsdShort] = await Promise.all([
-      dataStore.getUint(generateOiKey(OPEN_INTEREST, market.marketToken, market.longToken, true)),
-      dataStore.getUint(generateOiKey(OPEN_INTEREST, market.marketToken, market.shortToken, true)),
-      dataStore.getUint(generateOiKey(OPEN_INTEREST, market.marketToken, market.longToken, false)),
-      dataStore.getUint(generateOiKey(OPEN_INTEREST, market.marketToken, market.shortToken, false)),
-    ]);
+    // Check for homogeneous markets (longToken === shortToken) to avoid double-counting
+    const isHomogeneous = market.longToken.toLowerCase() === market.shortToken.toLowerCase();
 
-    const [longOiTokensLong, longOiTokensShort, shortOiTokensLong, shortOiTokensShort] = await Promise.all([
-      dataStore.getUint(generateOiKey(OPEN_INTEREST_IN_TOKENS, market.marketToken, market.longToken, true)),
-      dataStore.getUint(generateOiKey(OPEN_INTEREST_IN_TOKENS, market.marketToken, market.shortToken, true)),
-      dataStore.getUint(generateOiKey(OPEN_INTEREST_IN_TOKENS, market.marketToken, market.longToken, false)),
-      dataStore.getUint(generateOiKey(OPEN_INTEREST_IN_TOKENS, market.marketToken, market.shortToken, false)),
-    ]);
+    let longOpenInterestUsd: BigNumber;
+    let shortOpenInterestUsd: BigNumber;
+    let longOpenInterestInTokens: BigNumber;
+    let shortOpenInterestInTokens: BigNumber;
 
-    // Total open interest (combined from both collateral tokens)
-    const longOpenInterestUsd = longOiUsdLong.add(longOiUsdShort);
-    const shortOpenInterestUsd = shortOiUsdLong.add(shortOiUsdShort);
-    const longOpenInterestInTokens = longOiTokensLong.add(longOiTokensShort);
-    const shortOpenInterestInTokens = shortOiTokensLong.add(shortOiTokensShort);
+    if (isHomogeneous) {
+      // Homogeneous market: only 2 distinct keys (one per isLong)
+      // Querying with longToken or shortToken gives the same result
+      const [longOiUsd, shortOiUsd, longOiTokens, shortOiTokens] = await Promise.all([
+        dataStore.getUint(generateOiKey(OPEN_INTEREST, market.marketToken, market.longToken, true)),
+        dataStore.getUint(generateOiKey(OPEN_INTEREST, market.marketToken, market.longToken, false)),
+        dataStore.getUint(generateOiKey(OPEN_INTEREST_IN_TOKENS, market.marketToken, market.longToken, true)),
+        dataStore.getUint(generateOiKey(OPEN_INTEREST_IN_TOKENS, market.marketToken, market.longToken, false)),
+      ]);
+      longOpenInterestUsd = longOiUsd;
+      shortOpenInterestUsd = shortOiUsd;
+      longOpenInterestInTokens = longOiTokens;
+      shortOpenInterestInTokens = shortOiTokens;
+    } else {
+      // Heterogeneous market: 4 distinct keys (2 collateral tokens × 2 directions)
+      const [longOiUsdLong, longOiUsdShort, shortOiUsdLong, shortOiUsdShort] = await Promise.all([
+        dataStore.getUint(generateOiKey(OPEN_INTEREST, market.marketToken, market.longToken, true)),
+        dataStore.getUint(generateOiKey(OPEN_INTEREST, market.marketToken, market.shortToken, true)),
+        dataStore.getUint(generateOiKey(OPEN_INTEREST, market.marketToken, market.longToken, false)),
+        dataStore.getUint(generateOiKey(OPEN_INTEREST, market.marketToken, market.shortToken, false)),
+      ]);
+
+      const [longOiTokensLong, longOiTokensShort, shortOiTokensLong, shortOiTokensShort] = await Promise.all([
+        dataStore.getUint(generateOiKey(OPEN_INTEREST_IN_TOKENS, market.marketToken, market.longToken, true)),
+        dataStore.getUint(generateOiKey(OPEN_INTEREST_IN_TOKENS, market.marketToken, market.shortToken, true)),
+        dataStore.getUint(generateOiKey(OPEN_INTEREST_IN_TOKENS, market.marketToken, market.longToken, false)),
+        dataStore.getUint(generateOiKey(OPEN_INTEREST_IN_TOKENS, market.marketToken, market.shortToken, false)),
+      ]);
+
+      // Total open interest (combined from both collateral tokens)
+      longOpenInterestUsd = longOiUsdLong.add(longOiUsdShort);
+      shortOpenInterestUsd = shortOiUsdLong.add(shortOiUsdShort);
+      longOpenInterestInTokens = longOiTokensLong.add(longOiTokensShort);
+      shortOpenInterestInTokens = shortOiTokensLong.add(shortOiTokensShort);
+    }
 
     // Fetch price impact for $100k positions (skip for swapOnly markets)
     let priceImpactLong100k: BigNumber | null = null;
