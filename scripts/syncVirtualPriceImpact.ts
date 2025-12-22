@@ -49,7 +49,7 @@ async function processMarketGroup({
       ]),
     });
 
-    if (longToken.toLowerCase() === shortToken.toLowerCase()) {
+    if (longToken.toLowerCase() !== shortToken.toLowerCase()) {
       multicallReadParams.push({
         target: dataStore.address,
         allowFailure: false,
@@ -79,7 +79,7 @@ async function processMarketGroup({
       ]),
     });
 
-    if (longToken.toLowerCase() === shortToken.toLowerCase()) {
+    if (longToken.toLowerCase() !== shortToken.toLowerCase()) {
       multicallReadParams.push({
         target: dataStore.address,
         allowFailure: false,
