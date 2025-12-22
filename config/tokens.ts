@@ -1149,7 +1149,7 @@ const config: {
       oracleTimestampAdjustment: 1,
       priceFeed: {
         address: "0x0225781042C46dB247e009FFEAd5aEf044f3E7BE",
-        decimals: 8,
+        decimals: 18,
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
     },
