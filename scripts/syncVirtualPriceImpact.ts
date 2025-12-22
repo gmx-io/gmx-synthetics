@@ -1,8 +1,8 @@
 import hre from "hardhat";
 
 import { getMarketKey, getMarketTokenAddresses, getOnchainMarkets } from "../utils/market";
-import { handleConfigChanges } from "../utils/updateConfigUtils";
-import { encodeData } from "../utils/hash";
+import { handleConfigChanges } from "./updateConfigUtils";
+import { encodeData, hashString } from "../utils/hash";
 import * as keys from "../utils/keys";
 import { getFullKey } from "../utils/config";
 import { bigNumberify } from "../utils/math";
@@ -11,6 +11,8 @@ const write = process.env.WRITE === "true";
 
 // NOTE: it should be ensured that the market virtualTokenIdForIndexToken
 // matches the on-chain value, before running this script
+
+const EMPTY_KEY = hashString("EMPTY_KEY");
 
 async function processMarketGroup({
   virtualTokenIdForIndexToken,
@@ -47,16 +49,24 @@ async function processMarketGroup({
       ]),
     });
 
-    multicallReadParams.push({
-      target: dataStore.address,
-      allowFailure: false,
-      callData: dataStore.interface.encodeFunctionData("getUint", [
-        getFullKey(
-          keys.OPEN_INTEREST_IN_TOKENS,
-          encodeData(["address", "address", "bool"], [onchainMarket.marketToken, onchainMarket.shortToken, true])
-        ),
-      ]),
-    });
+    if (longToken.toLowerCase() === shortToken.toLowerCase()) {
+      multicallReadParams.push({
+        target: dataStore.address,
+        allowFailure: false,
+        callData: dataStore.interface.encodeFunctionData("getUint", [
+          getFullKey(
+            keys.OPEN_INTEREST_IN_TOKENS,
+            encodeData(["address", "address", "bool"], [onchainMarket.marketToken, onchainMarket.shortToken, true])
+          ),
+        ]),
+      });
+    } else {
+      multicallReadParams.push({
+        target: dataStore.address,
+        allowFailure: false,
+        callData: dataStore.interface.encodeFunctionData("getUint", [EMPTY_KEY]),
+      });
+    }
 
     multicallReadParams.push({
       target: dataStore.address,
@@ -69,16 +79,24 @@ async function processMarketGroup({
       ]),
     });
 
-    multicallReadParams.push({
-      target: dataStore.address,
-      allowFailure: false,
-      callData: dataStore.interface.encodeFunctionData("getUint", [
-        getFullKey(
-          keys.OPEN_INTEREST_IN_TOKENS,
-          encodeData(["address", "address", "bool"], [onchainMarket.marketToken, onchainMarket.shortToken, false])
-        ),
-      ]),
-    });
+    if (longToken.toLowerCase() === shortToken.toLowerCase()) {
+      multicallReadParams.push({
+        target: dataStore.address,
+        allowFailure: false,
+        callData: dataStore.interface.encodeFunctionData("getUint", [
+          getFullKey(
+            keys.OPEN_INTEREST_IN_TOKENS,
+            encodeData(["address", "address", "bool"], [onchainMarket.marketToken, onchainMarket.shortToken, false])
+          ),
+        ]),
+      });
+    } else {
+      multicallReadParams.push({
+        target: dataStore.address,
+        allowFailure: false,
+        callData: dataStore.interface.encodeFunctionData("getUint", [EMPTY_KEY]),
+      });
+    }
   }
 
   const result = await multicall.callStatic.aggregate3(multicallReadParams);
@@ -102,7 +120,7 @@ async function processMarketGroup({
   console.log(`    virtualInventoryInTokens: ${virtualInventoryInTokens.toString()}`);
 
   return {
-    type: "uint",
+    type: "int",
     baseKey: keys.VIRTUAL_INVENTORY_FOR_POSITIONS_IN_TOKENS,
     keyData: encodeData(["bytes32"], [virtualTokenIdForIndexToken]),
     value: virtualInventoryInTokens,
@@ -126,8 +144,6 @@ async function main() {
     return acc;
   }, {});
 
-  const configItems = [];
-
   for (const [virtualTokenIdForIndexToken, markets] of Object.entries(marketsByVirtualTokenId)) {
     const configItem = await processMarketGroup({
       virtualTokenIdForIndexToken,
@@ -139,11 +155,9 @@ async function main() {
     });
 
     if (configItem) {
-      configItems.push(configItem);
+      await handleConfigChanges([configItem], write);
     }
   }
-
-  await handleConfigChanges(configItems, write);
 }
 
 main()
