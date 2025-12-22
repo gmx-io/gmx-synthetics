@@ -90,7 +90,7 @@ export async function handleConfigChanges(
     if (type === "uint") {
       dataCache[key] = bigNumberify(value);
     } else if (type === "int") {
-      dataCache[key] = bigNumberify(value);
+      dataCache[key] = ethers.utils.defaultAbiCoder.decode(["int256"], value)[0];
     } else if (type === "address") {
       dataCache[key] = ethers.utils.defaultAbiCoder.decode(["address"], value)[0];
     } else if (type === "bool") {
@@ -99,6 +99,7 @@ export async function handleConfigChanges(
       throw new Error(`Unsupported type: ${type}`);
     }
   }
+  console.log("dataCache", dataCache);
 
   const multicallWriteParams = [];
 
