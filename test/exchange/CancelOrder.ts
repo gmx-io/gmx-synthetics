@@ -61,6 +61,18 @@ describe("Exchange.CancelOrder", () => {
 
     const orderKeys = await getOrderKeys(dataStore, 0, 1);
 
+    // skip request expiration time validation
+    const requestExpirationTime = await dataStore.getUint(keys.REQUEST_EXPIRATION_TIME);
+    await dataStore.setUint(keys.REQUEST_EXPIRATION_TIME, 0);
+    // Test ALL_FEATURES_DISABLED
+    await dataStore.setBool(keys.ALL_FEATURES_DISABLED, true);
+    await expect(exchangeRouter.connect(user0).cancelOrder(orderKeys[0])).to.be.revertedWithCustomError(
+      errorsContract,
+      "AllFeaturesDisabled"
+    );
+    await dataStore.setBool(keys.ALL_FEATURES_DISABLED, false);
+    await dataStore.setUint(keys.REQUEST_EXPIRATION_TIME, requestExpirationTime);
+
     const _cancelOrderFeatureDisabledKey = keys.cancelOrderFeatureDisabledKey(orderHandler.address);
 
     await dataStore.setBool(_cancelOrderFeatureDisabledKey, true);

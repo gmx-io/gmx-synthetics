@@ -76,6 +76,16 @@ describe("Exchange.PositionOrder", () => {
       gasUsageLabel: "createOrder",
     };
 
+    // Test ALL_FEATURES_DISABLED
+    await dataStore.setBool(keys.ALL_FEATURES_DISABLED, true);
+    await expect(createOrder(fixture, params)).to.be.revertedWithCustomError(errorsContract, "AllFeaturesDisabled");
+    await dataStore.setBool(keys.ALL_FEATURES_DISABLED, false);
+
+    // Test ALL_MARKETS_DISABLED
+    await dataStore.setBool(keys.ALL_MARKETS_DISABLED, true);
+    await expect(createOrder(fixture, params)).to.be.revertedWithCustomError(errorsContract, "AllMarketsDisabled");
+    await dataStore.setBool(keys.ALL_MARKETS_DISABLED, false);
+
     const _createOrderFeatureDisabledKey = keys.createOrderFeatureDisabledKey(orderHandler.address);
 
     await dataStore.setBool(_createOrderFeatureDisabledKey, true);
@@ -364,6 +374,24 @@ describe("Exchange.PositionOrder", () => {
       isLong: true,
       shouldUnwrapNativeToken: false,
     };
+
+    // Test ALL_FEATURES_DISABLED
+    await dataStore.setBool(keys.ALL_FEATURES_DISABLED, true);
+    await expect(
+      handleOrder(fixture, {
+        create: params,
+      })
+    ).to.be.revertedWithCustomError(errorsContract, "AllFeaturesDisabled");
+    await dataStore.setBool(keys.ALL_FEATURES_DISABLED, false);
+
+    // Test ALL_MARKETS_DISABLED
+    await dataStore.setBool(keys.ALL_MARKETS_DISABLED, true);
+    await expect(
+      handleOrder(fixture, {
+        create: params,
+      })
+    ).to.be.revertedWithCustomError(errorsContract, "AllMarketsDisabled");
+    await dataStore.setBool(keys.ALL_MARKETS_DISABLED, false);
 
     const _executeOrderFeatureDisabledKey = keys.executeOrderFeatureDisabledKey(orderHandler.address);
 

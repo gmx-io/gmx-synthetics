@@ -74,6 +74,21 @@ describe("Exchange.UpdateOrder", () => {
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
       .withArgs(user1.address, "account for updateOrder");
 
+    // Test ALL_FEATURES_DISABLED
+    await dataStore.setBool(keys.ALL_FEATURES_DISABLED, true);
+    await expect(
+      exchangeRouter.connect(user0).updateOrder(
+        orderKeys[0],
+        decimalToFloat(250 * 1000),
+        expandDecimals(4950, 12),
+        expandDecimals(5050, 12),
+        expandDecimals(52000, 6),
+        validFromTime,
+        false // autoCancel
+      )
+    ).to.be.revertedWithCustomError(errorsContract, "AllFeaturesDisabled");
+    await dataStore.setBool(keys.ALL_FEATURES_DISABLED, false);
+
     await expect(
       exchangeRouter.connect(user0).updateOrder(
         orderKeys[0],

@@ -137,6 +137,14 @@ describe("SubaccountGelatoRelayRouter", () => {
   //#region createOrder
   describe("createOrder", () => {
     it("DisabledFeature", async () => {
+      // Test ALL_FEATURES_DISABLED
+      await dataStore.setBool(keys.ALL_FEATURES_DISABLED, true);
+      await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "AllFeaturesDisabled"
+      );
+      await dataStore.setBool(keys.ALL_FEATURES_DISABLED, false);
+
       await dataStore.setBool(keys.gaslessFeatureDisabledKey(subaccountGelatoRelayRouter.address), true);
       await expect(sendCreateOrder(createOrderParams))
         .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForModule")
@@ -896,6 +904,14 @@ describe("SubaccountGelatoRelayRouter", () => {
     });
 
     it("DisabledFeature", async () => {
+      // Test ALL_FEATURES_DISABLED
+      await dataStore.setBool(keys.ALL_FEATURES_DISABLED, true);
+      await expect(sendUpdateOrder(updateOrderParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "AllFeaturesDisabled"
+      );
+      await dataStore.setBool(keys.ALL_FEATURES_DISABLED, false);
+
       await dataStore.setBool(keys.gaslessFeatureDisabledKey(subaccountGelatoRelayRouter.address), true);
       await expect(sendUpdateOrder(updateOrderParams))
         .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForModule")
@@ -1119,6 +1135,14 @@ describe("SubaccountGelatoRelayRouter", () => {
     });
 
     it("DisabledFeature", async () => {
+      // Test ALL_FEATURES_DISABLED
+      await dataStore.setBool(keys.ALL_FEATURES_DISABLED, true);
+      await expect(sendCancelOrder(cancelOrderParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "AllFeaturesDisabled"
+      );
+      await dataStore.setBool(keys.ALL_FEATURES_DISABLED, false);
+
       await dataStore.setBool(keys.gaslessFeatureDisabledKey(subaccountGelatoRelayRouter.address), true);
       await expect(sendCancelOrder(cancelOrderParams))
         .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForModule")
@@ -1221,6 +1245,11 @@ describe("SubaccountGelatoRelayRouter", () => {
     });
 
     it("DisabledFeature", async () => {
+      // Test ALL_FEATURES_DISABLED
+      await dataStore.setBool(keys.ALL_FEATURES_DISABLED, true);
+      await expect(sendRemoveSubaccount(params)).to.be.revertedWithCustomError(errorsContract, "AllFeaturesDisabled");
+      await dataStore.setBool(keys.ALL_FEATURES_DISABLED, false);
+
       await dataStore.setBool(keys.gaslessFeatureDisabledKey(subaccountGelatoRelayRouter.address), true);
       await expect(sendRemoveSubaccount(params))
         .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForModule")
@@ -1375,6 +1404,11 @@ describe("SubaccountGelatoRelayRouter", () => {
       };
     });
     it("DisabledFeature", async () => {
+      // Test ALL_FEATURES_DISABLED
+      await dataStore.setBool(keys.ALL_FEATURES_DISABLED, true);
+      await expect(sendBatch({ ...batchParams })).to.be.revertedWithCustomError(errorsContract, "AllFeaturesDisabled");
+      await dataStore.setBool(keys.ALL_FEATURES_DISABLED, false);
+
       await dataStore.setBool(keys.gaslessFeatureDisabledKey(subaccountGelatoRelayRouter.address), true);
       await expect(sendBatch({ ...batchParams }))
         .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForModule")
