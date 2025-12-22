@@ -144,8 +144,6 @@ async function main() {
     return acc;
   }, {});
 
-  const configItems = [];
-
   for (const [virtualTokenIdForIndexToken, markets] of Object.entries(marketsByVirtualTokenId)) {
     const configItem = await processMarketGroup({
       virtualTokenIdForIndexToken,
@@ -157,11 +155,9 @@ async function main() {
     });
 
     if (configItem) {
-      configItems.push(configItem);
+      await handleConfigChanges([configItem], write);
     }
   }
-
-  await handleConfigChanges(configItems, write);
 }
 
 main()
