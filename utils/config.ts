@@ -219,10 +219,6 @@ async function appendConfigIfDifferent(
 
   const currentValue: string = dataCache[key];
 
-  console.log("key", key);
-  console.log("setMethod", setMethod);
-  console.log("currentValue", currentValue.toString());
-
   if (currentValue === undefined) {
     throw new Error(`currentValue is undefined for ${label}`);
   }

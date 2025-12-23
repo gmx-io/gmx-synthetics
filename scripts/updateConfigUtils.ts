@@ -99,7 +99,6 @@ export async function handleConfigChanges(
       throw new Error(`Unsupported type: ${type}`);
     }
   }
-  console.log("dataCache", dataCache);
 
   const multicallWriteParams = [];
 
