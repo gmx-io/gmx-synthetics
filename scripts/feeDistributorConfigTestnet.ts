@@ -43,6 +43,11 @@ if (resetDistributionTimestampStr !== "true" && resetDistributionTimestampStr !=
 }
 const resetDistributionTimestamp = resetDistributionTimestampStr === "true";
 
+const workflowId = process.env.WORKFLOW_ID;
+if (!workflowId) {
+  throw new Error("WORKFLOW_ID not set in .env file");
+}
+
 const ZERO = BigNumber.from(0);
 
 const CHAIN_PAIRS = {
@@ -137,14 +142,14 @@ function determineOtherChain(network: string, currentChainId: number, DEPLOYMENT
     if (currentChainId === CHAIN_PAIRS.testnet.arbitrum.chainId) {
       return {
         otherChainId: CHAIN_PAIRS.testnet.base.chainId,
-        otherTag: undefined,
+        otherTag: "chainA",
         otherNetwork: CHAIN_PAIRS.testnet.base.network,
         otherEid: CHAIN_PAIRS.testnet.base.eid,
       };
     } else if (currentChainId === CHAIN_PAIRS.testnet.base.chainId) {
       return {
         otherChainId: CHAIN_PAIRS.testnet.arbitrum.chainId,
-        otherTag: undefined,
+        otherTag: "chainB",
         otherNetwork: CHAIN_PAIRS.testnet.arbitrum.network,
         otherEid: CHAIN_PAIRS.testnet.arbitrum.eid,
       };
@@ -402,6 +407,8 @@ async function configureContracts(
   console.log("\n2. Configuring FeeDistributor parameters...");
 
   // Basic configuration
+  await (await dataStore.setBool(keys.creReceiverAuthorizedWorkflowIdsKey(workflowId), true)).wait();
+  await delay(txDelay);
   const distributionDay = 3; // Wednesday
   await config.setUint(keys.FEE_DISTRIBUTOR_DISTRIBUTION_DAY, "0x", distributionDay);
   console.log("Set distribution day to:", distributionDay);
@@ -639,7 +646,7 @@ async function configureContracts(
     await delay(txDelay);
   }
 
-  const MockGMXAdapter: ContractFactory = await getFactory("MockGMX_MintBurnAdapter");
+  const MockGMXAdapter: ContractFactory = await getFactory(deployer, "MockGMX_MintBurnAdapter");
   const gmxAdapter: Contract = MockGMXAdapter.attach(contracts.gmxAdapter);
   await gmxAdapter.setPeer(otherChainInfo.otherEid, ethers.utils.zeroPad(otherContracts.gmxAdapter, 32));
   await delay(txDelay);

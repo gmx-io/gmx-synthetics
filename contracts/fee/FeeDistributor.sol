@@ -20,6 +20,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
     using EventUtils for EventUtils.UintItems;
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
+    using EventUtils for EventUtils.AddressItems;
 
     // constant and immutable variables are internal to reduce the contract size
     bytes internal constant EMPTY_BYTES = "";
@@ -263,47 +264,32 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         _emitFeeDistributionEvent("FeeDistributionDataReceived", eventData);
     }
 
-    // @dev function executed via an automated Gelato transaction when bridged GMX is received on this chain
+    // @dev function executed via an automated transaction when bridged GMX is received on this chain
     function bridgedGmxReceived() external nonReentrant onlyFeeDistributionKeeper {
         _validateDistributionState(DistributionState.ReadDataReceived);
         _validateReadResponseTimestamp(_getUint(Keys2.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP));
         _validateDistributionNotCompleted();
 
-        uint256 totalFeeAmountGmx = _getUint(Keys2.FEE_DISTRIBUTOR_TOTAL_FEE_AMOUNT_GMX);
-        uint256 stakedGmxCurrentChain = _getUint(Keys2.feeDistributorStakedGmxKey(block.chainid));
-        uint256 totalStakedGmx = _getUint(Keys2.FEE_DISTRIBUTOR_TOTAL_STAKED_GMX);
-        uint256 requiredGmxAmount = Precision.mulDiv(totalFeeAmountGmx, stakedGmxCurrentChain, totalStakedGmx);
-        uint256 origFeeAmountGmxCurrentChain = _getUint(Keys2.feeDistributorFeeAmountGmxKey(block.chainid));
+        (uint256 origFeeAmountGmx, uint256 minRequiredGmxAmount, uint256 feeAmountGmx) = getGmxAmounts();
 
-        // the gross amount of GMX that should be received, before taking into account slippage
-        uint256 grossGmxReceived = requiredGmxAmount - origFeeAmountGmxCurrentChain;
-        // the slippage factor used when bridging to account for bridging fees and potential slippage
-        uint256 slippageFactor = _getUint(Keys2.feeDistributorBridgeSlippageFactorKey(block.chainid));
-        // calculate the minimum acceptable amount of bridged GMX received, taking into account allowed slippage
-        uint256 minGmxReceived = Precision.applyFactor(grossGmxReceived, slippageFactor);
-        // the minimum allowed GMX amount after bridging, taking into account slippage
-        uint256 minRequiredGmxAmount = origFeeAmountGmxCurrentChain + minGmxReceived;
-        // retrieve the current GMX available to distribute now that bridging has been completed
-        uint256 feeAmountGmxCurrentChain = _getFeeDistributorVaultBalance(gmx);
-
-        // if the calculated amount doesn't meet the min bridging requirement, revert
-        if (feeAmountGmxCurrentChain < minRequiredGmxAmount) {
-            revert Errors.BridgedAmountNotSufficient(minRequiredGmxAmount, feeAmountGmxCurrentChain);
+        // if the calculated amount doesn't meet the minimum bridging requirement, revert
+        if (feeAmountGmx < minRequiredGmxAmount) {
+            revert Errors.BridgedAmountNotSufficient(minRequiredGmxAmount, feeAmountGmx);
         }
-
-        // now that the GMX available to distribute has been validated, update in dataStore and update DistributionState
-        _setUint(Keys2.feeDistributorFeeAmountGmxKey(block.chainid), feeAmountGmxCurrentChain);
-        _setDistributionState(uint256(DistributionState.BridgingCompleted));
 
         // infer the bridged GMX received - note that it is technically possible for this value to not match the actual
         // bridged GMX received if for example, GMX is sent to the FeeDistributorVault from another source or GMX fees
         // are withdrawn from the FeeHandler after processLzReceive() is executed but before this function is executed
-        uint256 gmxReceived = feeAmountGmxCurrentChain - origFeeAmountGmxCurrentChain;
+        uint256 gmxReceived = feeAmountGmx - origFeeAmountGmx;
+
+        // now that the GMX available to distribute has been validated, update in dataStore and update DistributionState
+        _setUint(Keys2.feeDistributorFeeAmountGmxKey(block.chainid), feeAmountGmx);
+        _setDistributionState(uint256(DistributionState.BridgingCompleted));
 
         EventUtils.EventLogData memory eventData;
         eventData.uintItems.initItems(2);
         _setUintItem(eventData, 0, "gmxReceived", gmxReceived);
-        _setUintItem(eventData, 1, "feeAmountGmxCurrentChain", feeAmountGmxCurrentChain);
+        _setUintItem(eventData, 1, "feeAmountGmx", feeAmountGmx);
         _emitFeeDistributionEvent("FeeDistributionBridgedGmxReceived", eventData);
     }
 
@@ -372,6 +358,9 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         // validate the distribution state
         _validateDistributionState(DistributionState.None);
 
+        EventUtils.EventLogData memory eventData;
+        eventData.uintItems.initItems(2);
+
         uint256 tokensForReferralRewards = _getUint(Keys2.feeDistributorReferralRewardsAmountKey(token));
         uint256 cumulativeDepositAmount = _getUint(Keys2.feeDistributorReferralRewardsDepositedKey(token));
         if (token == esGmx) {
@@ -395,8 +384,6 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
                 uint256 totalEsGmxRewards = IVester(vester).bonusRewards(param.account) + param.amount;
                 IVester(vester).setBonusRewards(param.account, totalEsGmxRewards);
 
-                EventUtils.EventLogData memory eventData;
-                eventData.uintItems.initItems(2);
                 _setUintItem(eventData, 0, "amount", param.amount);
                 _setUintItem(eventData, 1, "totalEsGmxRewards", totalEsGmxRewards);
 
@@ -406,25 +393,46 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
             revert Errors.InvalidReferralRewardToken(token);
         }
 
-        uint256 totalTransferAmount = ClaimUtils.incrementClaims(
-            dataStore,
-            eventEmitter,
-            token,
-            distributionId,
-            params
-        );
-        _transferOut(token, claimVault, totalTransferAmount);
-        dataStore.incrementUint(Keys.totalClaimableFundsAmountKey(token), totalTransferAmount);
+        uint256 depositAmount = ClaimUtils.incrementClaims(dataStore, eventEmitter, token, distributionId, params);
+        _transferOut(token, claimVault, depositAmount);
+        dataStore.incrementUint(Keys.totalClaimableFundsAmountKey(token), depositAmount);
 
         ClaimUtils._validateTotalClaimableFundsAmount(dataStore, token, claimVault);
 
         // validate that the cumulative referral rewards deposited is not greater than the total calculated amount
-        cumulativeDepositAmount += totalTransferAmount;
+        cumulativeDepositAmount += depositAmount;
         if (cumulativeDepositAmount > tokensForReferralRewards) {
             revert Errors.MaxReferralRewardsExceeded(token, cumulativeDepositAmount, tokensForReferralRewards);
         }
 
         _setUint(Keys2.feeDistributorReferralRewardsDepositedKey(token), cumulativeDepositAmount);
+
+        eventData.addressItems.initItems(1);
+        eventData.addressItems.setItem(0, "token", token);
+        _setUintItem(eventData, 0, "depositAmount", depositAmount);
+        _setUintItem(eventData, 1, "cumulativeDepositAmount", cumulativeDepositAmount);
+        _emitFeeDistributionEvent("FeeDistributionDepositReferralRewards", eventData);
+    }
+
+    function getGmxAmounts() public view returns (uint256, uint256, uint256) {
+        uint256 totalFeeAmountGmx = _getUint(Keys2.FEE_DISTRIBUTOR_TOTAL_FEE_AMOUNT_GMX);
+        uint256 stakedGmxCurrentChain = _getUint(Keys2.feeDistributorStakedGmxKey(block.chainid));
+        uint256 totalStakedGmx = _getUint(Keys2.FEE_DISTRIBUTOR_TOTAL_STAKED_GMX);
+        uint256 requiredGmxAmount = Precision.mulDiv(totalFeeAmountGmx, stakedGmxCurrentChain, totalStakedGmx);
+        uint256 origFeeAmountGmx = _getUint(Keys2.feeDistributorFeeAmountGmxKey(block.chainid));
+
+        // the gross amount of GMX that should be received, before taking into account slippage
+        uint256 grossGmxReceived = requiredGmxAmount - origFeeAmountGmx;
+        // the slippage factor used when bridging to account for bridging fees and potential slippage
+        uint256 slippageFactor = _getUint(Keys2.feeDistributorBridgeSlippageFactorKey(block.chainid));
+        // calculate the minimum acceptable amount of bridged GMX received, taking into account allowed slippage
+        uint256 minGmxReceived = Precision.applyFactor(grossGmxReceived, slippageFactor);
+        // the minimum allowed GMX amount after bridging, taking into account slippage
+        uint256 minRequiredGmxAmount = origFeeAmountGmx + minGmxReceived;
+        // retrieve the current GMX available to distribute now that bridging has been completed
+        uint256 feeAmountGmx = _getFeeDistributorVaultBalance(gmx);
+
+        return (origFeeAmountGmx, minRequiredGmxAmount, feeAmountGmx);
     }
 
     function _calculateAndBridgeGmx(
