@@ -22,10 +22,20 @@ contract Bank is RoleModule {
     using EventUtils for EventUtils.BytesItems;
     using EventUtils for EventUtils.StringItems;
 
-    uint256 public constant PRECISION = 1000;
+    uint256 public constant WITHDRAWAL_LEVEL_PRECISION = 1000;
 
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
+
+    modifier onlyKeeper() {
+        if (
+            !roleStore.hasRole(msg.sender, Role.FEE_DISTRIBUTION_KEEPER)
+        ) {
+            revert Errors.Unauthorized(msg.sender, "FEE DISTRIBUTION KEEPER");
+        }
+
+        _;
+    }
 
     constructor(RoleStore _roleStore, DataStore _dataStore, EventEmitter _eventEmitter) RoleModule(_roleStore) {
         dataStore = _dataStore;
@@ -49,7 +59,7 @@ contract Bank is RoleModule {
         address receiver,
         uint256 amount
     ) external onlyController {
-        _transferOut(token, receiver, amount);
+        transferOut(token, receiver, amount, false);
     }
 
     // @dev transfer tokens from this contract to a receiver
@@ -66,31 +76,14 @@ contract Bank is RoleModule {
         uint256 amount,
         bool shouldUnwrapNativeToken
     ) external onlyController {
-        address wnt = TokenUtils.wnt(dataStore);
-
         bool isManualTransferEnabled = _applyRateLimit(receiver, token, amount);
         if (isManualTransferEnabled) {
             // Skip transfer and emit manual event. Keepers should handle it later
-            EventUtils.EventLogData memory eventData;
-            eventData.addressItems.initItems(2);
-            eventData.addressItems.setItem(0, "receiver", receiver);
-            eventData.addressItems.setItem(1, "token", token);
-            eventData.uintItems.initItems(2);
-            eventData.uintItems.setItem(0, "amount", amount);
-            eventData.boolItems.initItems(1);
-            eventData.boolItems.setItem(0, "shouldUnwrapNativeToken", shouldUnwrapNativeToken);
-            eventEmitter.emitEventLog(
-                "ManualWithdrawalRequest",
-                eventData
-            );
+            _recordManualWithdrawal(receiver, token, amount, shouldUnwrapNativeToken);
             return;
         }
 
-        if (token == wnt && shouldUnwrapNativeToken) {
-            _transferOutNativeToken(token, receiver, amount);
-        } else {
-            _transferOut(token, receiver, amount);
-        }
+        _transferOut(token, receiver, amount, shouldUnwrapNativeToken);
     }
 
     // @dev transfer native tokens from this contract to a receiver
@@ -105,7 +98,7 @@ contract Bank is RoleModule {
         uint256 amount
     ) external onlyController {
         address wnt = TokenUtils.wnt(dataStore);
-        _transferOutNativeToken(wnt, receiver, amount);
+        _transferOut(wnt, receiver, amount, true);
     }
 
     // @dev transfer tokens from this contract to a receiver
@@ -116,13 +109,24 @@ contract Bank is RoleModule {
     function _transferOut(
         address token,
         address receiver,
-        uint256 amount
+        uint256 amount,
+        bool shouldUnwrapNativeToken
     ) internal {
         if (receiver == address(this)) {
             revert Errors.SelfTransferNotSupported(receiver);
         }
 
-        TokenUtils.transfer(dataStore, token, receiver, amount);
+        address wnt = TokenUtils.wnt(dataStore);
+        if (token == wnt && shouldUnwrapNativeToken) {
+            TokenUtils.withdrawAndSendNativeToken(
+                dataStore,
+                token,
+                receiver,
+                amount
+            );
+        } else {
+            TokenUtils.transfer(dataStore, token, receiver, amount);
+        }
 
         _afterTransferOut(token);
     }
@@ -176,9 +180,9 @@ contract Bank is RoleModule {
 
         // N is slope parameter. We are using N == 16 to effectively power it using bitwise shift
         uint256 currentWithdrawalLevel = Precision.mulDiv(
-            timeSinceLastWithdrawal, PRECISION, withdrawalRatePeriod
+            timeSinceLastWithdrawal, WITHDRAWAL_LEVEL_PRECISION, withdrawalRatePeriod
         ) << 4;
-        currentWithdrawalLevel = (PRECISION - currentWithdrawalLevel) * lastWithdrawalLevel;
+        currentWithdrawalLevel = (WITHDRAWAL_LEVEL_PRECISION - currentWithdrawalLevel) * lastWithdrawalLevel;
         // add current amount to check whether it will fit in the cap
         currentWithdrawalLevel += amount;
 
@@ -205,6 +209,52 @@ contract Bank is RoleModule {
 
         dataStore.setUint(Keys.bankTransferOutTimeKey(token), block.timestamp);
         dataStore.setUint(Keys.bankTransferOutLevelKey(token), currentWithdrawalLevel);
+    }
+
+    function _recordManualWithdrawal(address receiver, address token, uint256 amount, bool shouldUnwrapNativeToken) internal {
+        bytes32 withdrawalId = keccak256(abi.encode(receiver, token, amount, shouldUnwrapNativeToken, block.timestamp));
+        dataStore.setUint(Keys.bankManualWithdrawalAmountKey(withdrawalId), amount);
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "receiver", receiver);
+        eventData.addressItems.setItem(1, "token", token);
+        eventData.uintItems.initItems(2);
+        eventData.uintItems.setItem(0, "amount", amount);
+        eventData.boolItems.initItems(1);
+        eventData.boolItems.setItem(0, "shouldUnwrapNativeToken", shouldUnwrapNativeToken);
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "withdrawalId", withdrawalId);
+        eventEmitter.emitEventLog(
+            "ManualWithdrawalRequest",
+            eventData
+        );
+    }
+
+    function manualWithdrawal(address receiver, address token, bool shouldUnwrapNativeToken, bytes32 withdrawalId) external onlyKeeper {
+        uint256 amount = dataStore.getUint(Keys.bankManualWithdrawalAmountKey(withdrawalId));
+        if (amount == 0) {
+            revert Errors.EmptyAmount();
+        }
+
+        dataStore.setUint(Keys.bankManualWithdrawalAmountKey(withdrawalId), 0);
+
+        _transferOut(token, receiver, amount);
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "receiver", receiver);
+        eventData.addressItems.setItem(1, "token", token);
+        eventData.uintItems.initItems(2);
+        eventData.uintItems.setItem(0, "amount", amount);
+        eventData.boolItems.initItems(1);
+        eventData.boolItems.setItem(0, "shouldUnwrapNativeToken", shouldUnwrapNativeToken);
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "withdrawalId", withdrawalId);
+        eventEmitter.emitEventLog(
+            "ManualWithdrawalProcessed",
+            eventData
+        );
     }
 
     function _afterTransferOut(address /* token */) internal virtual {}

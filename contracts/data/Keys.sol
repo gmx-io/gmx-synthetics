@@ -523,6 +523,8 @@ library Keys {
     bytes32 public constant BANK_TRANSFER_OUT_THRESHOLD_PERIOD = keccak256(abi.encode("BANK_TRANSFER_OUT_THRESHOLD_PERIOD"));
     // @dev key for the manual withdrawal confirmation flag
     bytes32 public constant BANK_MANUAL_TRANSFER_OUT = keccak256(abi.encode("BANK_TRANSFER_OUT_MANUAL"));
+    // @dev key for the manual withdrawal amount per user and token
+    bytes32 public constant BANK_MANUAL_WITHDRAWAL_AMOUNT = keccak256(abi.encode("BANK_MANUAL_WITHDRAWAL_AMOUNT"));
 
     // @dev constant for user initiated cancel reason
     string public constant USER_INITIATED_CANCEL = "USER_INITIATED_CANCEL";
@@ -2460,6 +2462,13 @@ library Keys {
         return keccak256(abi.encode(
             BANK_MANUAL_TRANSFER_OUT,
             token
+        ));
+    }
+
+    function bankManualWithdrawalAmountKey(bytes32 withdrawalId) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            BANK_MANUAL_WITHDRAWAL_AMOUNT,
+            withdrawalId
         ));
     }
 }
