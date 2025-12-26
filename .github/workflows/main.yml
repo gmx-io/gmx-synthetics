@@ -25,3 +25,25 @@ jobs:
       - name: Run Tests
         run: yarn hardhat test
         shell: bash
+
+  scan_functions_for_reentrancy_attacks:
+    name: Scan functions for possible reentrancy attacks
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install packages
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
+      - run: yarn --ignore-scripts
+        shell: bash
+      - name: Scan functions for possible reentrancy attacks
+        env:
+          DEPLOYMENT_NETWORK: arbitrum
+          SCAN_MAX_STATE_UPDATES: 400000
+          SCAN_MAX_STEPS: 800000
+        run: yarn hardhat run --no-compile scripts/scanAddressParamExternalCalls.ts
+        shell: bash
