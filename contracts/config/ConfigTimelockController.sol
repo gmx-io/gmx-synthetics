@@ -12,25 +12,27 @@ import {OracleStore} from "../oracle/OracleStore.sol";
 import {RoleStore} from "../role/RoleStore.sol";
 import {Precision} from "../utils/Precision.sol";
 import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
-import {OracleModule} from "../oracle/OracleModule.sol";
-import {DataStoreClient} from "../data/DataStoreClient.sol";
+import {OracleModule, IOracle} from "../oracle/OracleModule.sol";
 import {OracleUtils} from "../oracle/OracleUtils.sol";
 import {Oracle} from "../oracle/Oracle.sol";
 import {PositionImpactPoolUtils} from "../market/PositionImpactPoolUtils.sol";
 import {Chain} from "../chain/Chain.sol";
 import {AccountUtils} from "../utils/AccountUtils.sol";
 
-contract ConfigTimelockController is TimelockController, DataStoreClient, OracleModule {
+contract ConfigTimelockController is TimelockController, OracleModule {
 
+    DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
 
     constructor(
         uint256 minDelay,
         address[] memory proposers,
         address[] memory executors,
+        IOracle _oracle,
         DataStore _dataStore,
         EventEmitter _eventEmitter
-    ) TimelockController(minDelay, proposers, executors, msg.sender) DataStoreClient(_dataStore) {
+    ) TimelockController(minDelay, proposers, executors, msg.sender) OracleModule(_oracle) {
+        dataStore = _dataStore;
         eventEmitter = _eventEmitter;
     }
 
@@ -66,7 +68,7 @@ contract ConfigTimelockController is TimelockController, DataStoreClient, Oracle
         PositionImpactPoolUtils.withdrawFromPositionImpactPool(
             dataStore,
             eventEmitter,
-            getOracle(),
+            oracle,
             market,
             receiver,
             amount
@@ -81,7 +83,7 @@ contract ConfigTimelockController is TimelockController, DataStoreClient, Oracle
         PositionImpactPoolUtils.reduceLentAmount(
             dataStore,
             eventEmitter,
-            getOracle(),
+            oracle,
             market,
             fundingAccount,
             reductionAmount

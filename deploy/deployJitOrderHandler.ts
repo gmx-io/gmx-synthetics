@@ -6,6 +6,7 @@ const constructorContracts = [
   "DataStore",
   "EventEmitter",
   "MultichainVault",
+  "Oracle",
   "OrderVault",
   "SwapHandler",
   "ReferralStorage",

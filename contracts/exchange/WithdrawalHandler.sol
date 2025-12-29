@@ -31,11 +31,12 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler, ReentrancyGuard {
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
+        IOracle _oracle,
         MultichainVault _multichainVault,
         IMultichainTransferRouter _multichainTransferRouter,
         WithdrawalVault _withdrawalVault,
         ISwapHandler _swapHandler
-    ) BaseHandler(_roleStore, _dataStore, _eventEmitter) {
+    ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {
         multichainVault = _multichainVault;
         multichainTransferRouter = _multichainTransferRouter;
         withdrawalVault = _withdrawalVault;
@@ -107,7 +108,7 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler, ReentrancyGuard {
     {
         uint256 startingGas = gasleft();
 
-        getOracle().validateSequencerUp();
+        oracle.validateSequencerUp();
 
         Withdrawal.Props memory withdrawal = WithdrawalStoreUtils.get(dataStore, key);
         uint256 estimatedGasLimit = GasUtils.estimateExecuteWithdrawalGasLimit(dataStore, withdrawal);
@@ -198,7 +199,7 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler, ReentrancyGuard {
         withSimulatedOraclePrices(params)
         globalNonReentrant
     {
-        getOracle().validateSequencerUp();
+        oracle.validateSequencerUp();
 
         Withdrawal.Props memory withdrawal = WithdrawalStoreUtils.get(dataStore, key);
 
@@ -230,7 +231,7 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler, ReentrancyGuard {
             multichainVault,
             multichainTransferRouter,
             withdrawalVault,
-            getOracle(),
+            oracle,
             swapHandler,
             key,
             keeper,

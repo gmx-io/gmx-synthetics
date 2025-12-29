@@ -24,6 +24,7 @@ contract GlvShiftHandler is BaseHandler, ReentrancyGuard {
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
+        IOracle _oracle,
         MultichainVault _multichainVault,
         GlvVault _glvVault,
         ShiftVault _shiftVault,
@@ -31,7 +32,7 @@ contract GlvShiftHandler is BaseHandler, ReentrancyGuard {
         IWithdrawalHandler _withdrawalHandler,
         IShiftHandler _shiftHandler,
         ISwapHandler _swapHandler
-    ) BaseHandler(_roleStore, _dataStore, _eventEmitter) {
+    ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {
         multichainVault = _multichainVault;
         glvVault = _glvVault;
         shiftVault = _shiftVault;
@@ -85,7 +86,7 @@ contract GlvShiftHandler is BaseHandler, ReentrancyGuard {
             withdrawalHandler: withdrawalHandler,
             swapHandler: swapHandler,
             shiftHandler: shiftHandler,
-            oracle: getOracle(),
+            oracle: oracle,
             keeper: keeper
         });
 

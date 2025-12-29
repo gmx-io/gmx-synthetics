@@ -32,11 +32,12 @@ contract DepositHandler is IDepositHandler, BaseHandler, ReentrancyGuard {
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
+        IOracle _oracle,
         MultichainVault _multichainVault,
         IMultichainTransferRouter _multichainTransferRouter,
         DepositVault _depositVault,
         ISwapHandler _swapHandler
-    ) BaseHandler(_roleStore, _dataStore, _eventEmitter) {
+    ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {
         multichainVault = _multichainVault;
         multichainTransferRouter = _multichainTransferRouter;
         depositVault = _depositVault;
@@ -179,7 +180,7 @@ contract DepositHandler is IDepositHandler, BaseHandler, ReentrancyGuard {
             multichainVault,
             multichainTransferRouter,
             depositVault,
-            getOracle(),
+            oracle,
             swapHandler,
             key,
             keeper,

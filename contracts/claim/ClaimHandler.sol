@@ -10,7 +10,6 @@ import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 
 import "../role/RoleModule.sol";
 import "../utils/GlobalReentrancyGuard.sol";
-import "../data/DataStoreClient.sol";
 import "../utils/StringUtils.sol";
 import "../event/EventEmitter.sol";
 import "../data/DataStore.sol";
@@ -24,7 +23,7 @@ import "../safe/SafeUtils.sol";
 
 // @title ClaimHandler
 // @dev Contract for distributing lost funds to users
-contract ClaimHandler is RoleModule, DataStoreClient, GlobalReentrancyGuard {
+contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
     using Address for address;
     using SafeERC20 for IERC20;
 
@@ -36,7 +35,7 @@ contract ClaimHandler is RoleModule, DataStoreClient, GlobalReentrancyGuard {
         DataStore _dataStore,
         EventEmitter _eventEmitter,
         ClaimVault _claimVault
-    ) RoleModule(_roleStore) DataStoreClient(_dataStore) {
+    ) RoleModule(_roleStore) GlobalReentrancyGuard(_dataStore) {
         eventEmitter = _eventEmitter;
         claimVault = _claimVault;
     }

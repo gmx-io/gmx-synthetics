@@ -6,6 +6,7 @@ const constructorContracts = [
   "RoleStore",
   "DataStore",
   "EventEmitter",
+  "Oracle",
   "OrderHandler",
   "OrderVault",
   "SwapHandler",

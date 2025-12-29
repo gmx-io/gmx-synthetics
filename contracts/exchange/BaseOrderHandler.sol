@@ -28,11 +28,12 @@ contract BaseOrderHandler is BaseHandler {
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
+        IOracle _oracle,
         MultichainVault _multichainVault,
         OrderVault _orderVault,
         ISwapHandler _swapHandler,
         IReferralStorage _referralStorage
-    ) BaseHandler(_roleStore, _dataStore, _eventEmitter) {
+    ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {
         multichainVault = _multichainVault;
         orderVault = _orderVault;
         swapHandler = _swapHandler;
@@ -57,7 +58,6 @@ contract BaseOrderHandler is BaseHandler {
             params.order.swapPath()
         );
 
-        IOracle oracle = getOracle();
 
         params.contracts.dataStore = dataStore;
         params.contracts.eventEmitter = eventEmitter;

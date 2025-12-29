@@ -263,7 +263,6 @@ library Errors {
     error NonAtomicOracleProvider(address provider);
 
     // OracleModule errors
-    error OracleAddressNotSet();
     error InvalidPrimaryPricesForSimulation(uint256 primaryTokensLength, uint256 primaryPricesLength);
     error EndOfOracleSimulation();
 

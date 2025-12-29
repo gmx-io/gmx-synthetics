@@ -1315,6 +1315,7 @@ describe("FeeDistributor", function () {
       "FeeHandler",
       [
         roleStore.address,
+        oracle.address,
         dataStoreD.address,
         eventEmitter.address,
         feeVaultD.address,

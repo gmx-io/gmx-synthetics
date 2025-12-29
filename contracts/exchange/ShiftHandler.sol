@@ -26,12 +26,13 @@ contract ShiftHandler is IShiftHandler, BaseHandler, ReentrancyGuard {
         RoleStore _roleStore,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
+        IOracle _oracle,
         MultichainVault _multichainVault,
         ShiftVault _shiftVault,
         IDepositHandler _depositHandler,
         IWithdrawalHandler _withdrawalHandler,
         ISwapHandler _swapHandler
-    ) BaseHandler(_roleStore, _dataStore, _eventEmitter) {
+    ) BaseHandler(_roleStore, _dataStore, _eventEmitter, _oracle) {
         multichainVault = _multichainVault;
         shiftVault = _shiftVault;
         depositHandler = _depositHandler;
@@ -152,7 +153,7 @@ contract ShiftHandler is IShiftHandler, BaseHandler, ReentrancyGuard {
             eventEmitter,
             multichainVault,
             shiftVault,
-            getOracle(),
+            oracle,
             depositHandler,
             withdrawalHandler,
             swapHandler,

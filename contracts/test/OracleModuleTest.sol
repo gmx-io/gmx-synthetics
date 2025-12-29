@@ -4,7 +4,6 @@
 pragma solidity ^0.8.0;
 
 import "../oracle/OracleModule.sol";
-import "../data/DataStoreClient.sol";
 import "../oracle/Oracle.sol";
 import "../oracle/GmOracleUtils.sol";
 import "../utils/Uint256Mask.sol";
@@ -14,10 +13,10 @@ import "../chain/Chain.sol";
  * @title OracleModuleTest
  * @dev Contract to help test the OracleModule contract
  */
-contract OracleModuleTest is DataStoreClient, OracleModule {
+contract OracleModuleTest is OracleModule {
     using Uint256Mask for Uint256Mask.Mask;
 
-    constructor(DataStore _dataStore) DataStoreClient(_dataStore) {}
+    constructor(IOracle _oracle) OracleModule(_oracle) {}
 
     function withOraclePricesTest(
         OracleUtils.SetPricesParams memory oracleParams
