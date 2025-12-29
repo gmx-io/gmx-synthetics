@@ -160,7 +160,6 @@ async function setup() {
   const feeDistributorUtils = await hre.ethers.getContract("FeeDistributorUtils");
   const contributorHandler = await hre.ethers.getContract("ContributorHandler");
 
-
   const ethUsdMarketAddress = getMarketTokenAddress(
     wnt.address,
     wnt.address,

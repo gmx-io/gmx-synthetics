@@ -58,7 +58,6 @@ contract BaseOrderHandler is BaseHandler {
             params.order.swapPath()
         );
 
-
         params.contracts.dataStore = dataStore;
         params.contracts.eventEmitter = eventEmitter;
         params.contracts.multichainVault = multichainVault;

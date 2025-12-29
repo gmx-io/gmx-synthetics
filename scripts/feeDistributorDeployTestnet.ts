@@ -446,6 +446,7 @@ async function deployContracts(): Promise<DeploymentResult> {
     });
     const feeHandler: Contract = await FeeHandler.deploy(
       contracts.roleStore,
+      contracts.oracle,
       contracts.dataStore,
       contracts.eventEmitter,
       feeVault.address,

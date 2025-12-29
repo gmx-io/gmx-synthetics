@@ -12,7 +12,7 @@ import {OracleStore} from "../oracle/OracleStore.sol";
 import {RoleStore} from "../role/RoleStore.sol";
 import {Precision} from "../utils/Precision.sol";
 import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
-import {OracleModule, IOracle} from "../oracle/OracleModule.sol";
+import {OracleModule} from "../oracle/OracleModule.sol";
 import {OracleUtils} from "../oracle/OracleUtils.sol";
 import {Oracle} from "../oracle/Oracle.sol";
 import {PositionImpactPoolUtils} from "../market/PositionImpactPoolUtils.sol";
@@ -28,10 +28,10 @@ contract ConfigTimelockController is TimelockController, OracleModule {
         uint256 minDelay,
         address[] memory proposers,
         address[] memory executors,
-        IOracle _oracle,
+        Oracle oracle,
         DataStore _dataStore,
         EventEmitter _eventEmitter
-    ) TimelockController(minDelay, proposers, executors, msg.sender) OracleModule(_oracle) {
+    ) TimelockController(minDelay, proposers, executors, msg.sender) OracleModule(oracle) {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
     }
