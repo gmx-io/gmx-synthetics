@@ -3044,11 +3044,11 @@ const config: {
       reserveFactor: percentageToFloat("105%"), // default is 95%
       openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
 
-      maxOpenInterest: decimalToFloat(1_000_000),
-      maxPoolUsdForDeposit: decimalToFloat(2_000_000),
+      maxOpenInterest: decimalToFloat(250_000),
+      maxPoolUsdForDeposit: decimalToFloat(375_000),
 
-      maxLongTokenPoolAmount: expandDecimals(522, 18),
-      maxShortTokenPoolAmount: expandDecimals(2_400_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(151, 18),
+      maxShortTokenPoolAmount: expandDecimals(450_000, 6),
     },
     {
       tokens: { indexToken: "ZRO", longToken: "WETH", shortToken: "USDC" },
