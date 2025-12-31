@@ -47,3 +47,10 @@ jobs:
           SCAN_MAX_STEPS: 800000
         run: yarn hardhat run --no-compile scripts/scanAddressParamExternalCalls.ts
         shell: bash
+      - name: Check reentrancy test coverage
+        env:
+          DEPLOYMENT_NETWORK: arbitrum
+          SCAN_MAX_STATE_UPDATES: 400000
+          SCAN_MAX_STEPS: 800000
+        run: yarn hardhat run --no-compile scripts/checkReentrancyCoverage.ts
+        shell: bash

@@ -2,15 +2,13 @@ import { expect } from "chai";
 import { impersonateAccount, setBalance } from "@nomicfoundation/hardhat-network-helpers";
 
 import { contractAt, deployContract } from "../../utils/deploy";
-import { createDeposit, getDepositKeys, handleDeposit } from "../../utils/deposit";
-import { createOrder, executeOrder, handleOrder, DecreasePositionSwapType, OrderType } from "../../utils/order";
-import { createShift, getShiftKeys } from "../../utils/shift";
-import { createWithdrawal, getWithdrawalKeys } from "../../utils/withdrawal";
+import { handleDeposit } from "../../utils/deposit";
+import { createOrder, handleOrder, DecreasePositionSwapType, OrderType, getOrderKeys } from "../../utils/order";
 import { decimalToFloat, expandDecimals, bigNumberify } from "../../utils/math";
 import { increaseTime } from "../../utils/time";
 import { parseError } from "../../utils/error";
 import { grantRole } from "../../utils/role";
-import { hashString } from "../../utils/hash";
+import { encodeData, hashString } from "../../utils/hash";
 import { executeLiquidation } from "../../utils/liquidation";
 import { executeAdl, updateAdlState } from "../../utils/adl";
 import { getTokenPermit } from "../../utils/relay/tokenPermit";
@@ -21,10 +19,24 @@ import {
   sendBatch as sendGelatoBatch,
   sendCancelOrder as sendGelatoCancelOrder,
   sendCreateOrder as sendGelatoCreateOrder,
+  sendUpdateOrder as sendGelatoUpdateOrder,
+  sendRegisterCode,
+  sendSetTraderReferralCode,
 } from "../../utils/relay/gelatoRelay";
 import {
+  getEmptySubaccountApproval,
+  sendBatch as sendSubaccountBatch,
+  sendCancelOrder as sendSubaccountCancelOrder,
+  sendCreateOrder as sendSubaccountCreateOrder,
+  sendRemoveSubaccount as sendSubaccountRemoveSubaccount,
+  sendUpdateOrder as sendSubaccountUpdateOrder,
+} from "../../utils/relay/subaccountGelatoRelay";
+import {
   sendBridgeOut as sendMultichainBridgeOut,
-  sendCreateOrder as sendMultichainCreateOrder,
+  sendCreateDeposit,
+  sendCreateGlvWithdrawal,
+  sendCreateShift,
+  sendCreateWithdrawal,
   sendClaimAffiliateRewards,
   sendClaimCollateral,
   sendClaimFundingFees,
@@ -45,16 +57,9 @@ export type ReentrancyCaseContext = {
 };
 
 const FALLBACK_CALLDATA = "0xdeadbeef";
-
-async function getCallbackGasLimit(dataStore) {
-  const maxCallbackGasLimit = await dataStore.getUint(keys.MAX_CALLBACK_GAS_LIMIT);
-  if (maxCallbackGasLimit.eq(0)) {
-    throw new Error("MAX_CALLBACK_GAS_LIMIT is not configured");
-  }
-
-  const fallback = bigNumberify(1_000_000);
-  return maxCallbackGasLimit.lt(fallback) ? maxCallbackGasLimit : fallback;
-}
+const RELAY_FEE_AMOUNT = expandDecimals(2, 15);
+const EXECUTION_FEE = expandDecimals(4, 15);
+const EXTERNAL_CALL_AMOUNT = expandDecimals(1, 15);
 
 async function increaseTimeForCancellation(dataStore) {
   const expiration = await dataStore.getUint(keys.REQUEST_EXPIRATION_TIME);
@@ -73,11 +78,6 @@ async function expectReentrancyGuard(reentrancyTest) {
   expect(parsed?.args?.[0]).eq("ReentrancyGuard: reentrant call");
 }
 
-async function expectReentrancyBlocked(reentrancyTest) {
-  expect(await reentrancyTest.reenterDepth()).eq(1);
-  expect(await reentrancyTest.lastReenterSuccess()).eq(false);
-}
-
 async function expectTokenReentrancyGuard(reentrantToken) {
   expect(await reentrantToken.reenterDepth()).eq(1);
   expect(await reentrantToken.lastReenterSuccess()).eq(false);
@@ -86,11 +86,6 @@ async function expectTokenReentrancyGuard(reentrantToken) {
   const parsed = parseError(lastResult, false);
   expect(parsed?.name).eq("Error");
   expect(parsed?.args?.[0]).eq("ReentrancyGuard: reentrant call");
-}
-
-async function expectTokenReentrancyBlocked(reentrantToken) {
-  expect(await reentrantToken.reenterDepth()).eq(1);
-  expect(await reentrantToken.lastReenterSuccess()).eq(false);
 }
 
 async function getRelaySignerAndChainId() {
@@ -168,6 +163,29 @@ function getDefaultRelayOrderParams(ctx, overrides: Partial<any> = {}) {
   };
 }
 
+function getSubaccountOrderParams(ctx, accountAddress: string, overrides: Partial<any> = {}) {
+  const base = getDefaultRelayOrderParams(ctx);
+  const params = {
+    ...base,
+    addresses: {
+      ...base.addresses,
+      receiver: accountAddress,
+      cancellationReceiver: accountAddress,
+    },
+    numbers: {
+      ...base.numbers,
+      executionFee: EXECUTION_FEE,
+    },
+  };
+
+  return {
+    ...params,
+    ...overrides,
+    addresses: { ...params.addresses, ...(overrides as any).addresses },
+    numbers: { ...params.numbers, ...(overrides as any).numbers },
+  };
+}
+
 function getEmptyGlvDepositParams() {
   return {
     addresses: {
@@ -190,37 +208,67 @@ function getEmptyGlvDepositParams() {
   };
 }
 
-async function deployReentrantToken() {
-  return deployContract("ReentrantToken", ["ReentrantToken", "RNT", 18]);
+function getEmptyTransferRequests() {
+  return { tokens: [], receivers: [], amounts: [] };
 }
 
-async function createOrderForCallback(ctx, callbackContract) {
-  const callbackGasLimit = await getCallbackGasLimit(ctx.dataStore);
-  await handleDeposit(ctx.fixture, {
-    create: {
-      market: ctx.ethUsdMarket,
-      longTokenAmount: expandDecimals(1000, 18),
-      shortTokenAmount: expandDecimals(1000 * 1000, 6),
+function getEmptyDepositParams() {
+  return {
+    addresses: {
+      receiver: ethers.constants.AddressZero,
+      callbackContract: ethers.constants.AddressZero,
+      uiFeeReceiver: ethers.constants.AddressZero,
+      market: ethers.constants.AddressZero,
+      initialLongToken: ethers.constants.AddressZero,
+      initialShortToken: ethers.constants.AddressZero,
+      longTokenSwapPath: [],
+      shortTokenSwapPath: [],
     },
-  });
-
-  const { key } = await createOrder(ctx.fixture, {
-    market: ctx.ethUsdMarket,
-    callbackContract,
-    callbackGasLimit,
-    initialCollateralToken: ctx.wnt,
-    initialCollateralDeltaAmount: expandDecimals(10, 18),
-    swapPath: [],
-    sizeDeltaUsd: decimalToFloat(200 * 1000),
-    acceptablePrice: expandDecimals(5001, 12),
-    executionFee: ctx.executionFee,
-    minOutputAmount: expandDecimals(50_000, 6),
-    orderType: OrderType.MarketIncrease,
-    isLong: true,
+    minMarketTokens: 0,
     shouldUnwrapNativeToken: false,
-  });
+    executionFee: 0,
+    callbackGasLimit: 0,
+    dataList: [],
+  };
+}
 
-  return key;
+function getEmptyWithdrawalParams() {
+  return {
+    addresses: {
+      receiver: ethers.constants.AddressZero,
+      callbackContract: ethers.constants.AddressZero,
+      uiFeeReceiver: ethers.constants.AddressZero,
+      market: ethers.constants.AddressZero,
+      longTokenSwapPath: [],
+      shortTokenSwapPath: [],
+    },
+    minLongTokenAmount: 0,
+    minShortTokenAmount: 0,
+    shouldUnwrapNativeToken: false,
+    executionFee: 0,
+    callbackGasLimit: 0,
+    dataList: [],
+  };
+}
+
+function getEmptyShiftParams() {
+  return {
+    addresses: {
+      receiver: ethers.constants.AddressZero,
+      callbackContract: ethers.constants.AddressZero,
+      uiFeeReceiver: ethers.constants.AddressZero,
+      fromMarket: ethers.constants.AddressZero,
+      toMarket: ethers.constants.AddressZero,
+    },
+    minMarketTokens: 0,
+    executionFee: 0,
+    callbackGasLimit: 0,
+    dataList: [],
+  };
+}
+
+async function deployReentrantToken() {
+  return deployContract("ReentrantToken", ["ReentrantToken", "RNT", 18]);
 }
 
 async function setupMultichainRelay(ctx, account, amount = expandDecimals(1, 18)) {
@@ -240,6 +288,53 @@ async function setupMultichainRelay(ctx, account, amount = expandDecimals(1, 18)
   }
 
   return { relaySigner, chainId };
+}
+
+async function seedMultichainBalance(
+  ctx,
+  account,
+  tokenAddress,
+  amount,
+  tokenName: "MarketToken" | "GlvToken" = "MarketToken"
+) {
+  const { dataStore, multichainVault } = ctx.fixture.contracts;
+  const { wallet } = ctx.fixture.accounts;
+  const token = await contractAt(tokenName, tokenAddress);
+  const accountAddress = typeof account === "string" ? account : account.address;
+
+  await token.connect(wallet).mint(multichainVault.address, amount);
+
+  const balanceKey = keys.multichainBalanceKey(accountAddress, tokenAddress);
+  const currentBalance = await dataStore.getUint(balanceKey);
+  await dataStore.connect(wallet).setUint(balanceKey, currentBalance.add(amount));
+}
+
+async function seedMultichainBalanceForToken(ctx, account, token, amount) {
+  const { dataStore, multichainVault } = ctx.fixture.contracts;
+  const { wallet } = ctx.fixture.accounts;
+  const accountAddress = typeof account === "string" ? account : account.address;
+
+  await token.connect(wallet).mint(multichainVault.address, amount);
+
+  const balanceKey = keys.multichainBalanceKey(accountAddress, token.address);
+  const currentBalance = await dataStore.getUint(balanceKey);
+  await dataStore.connect(wallet).setUint(balanceKey, currentBalance.add(amount));
+}
+
+async function enableSubaccount(ctx, account, subaccount) {
+  const { dataStore } = ctx.fixture.contracts;
+  const accountAddress = typeof account === "string" ? account : account.address;
+  const subaccountAddress = typeof subaccount === "string" ? subaccount : subaccount.address;
+
+  await dataStore.addAddress(keys.subaccountListKey(accountAddress), subaccountAddress);
+  await dataStore.setUint(
+    keys.subaccountExpiresAtKey(accountAddress, subaccountAddress, keys.SUBACCOUNT_ORDER_ACTION),
+    9999999999
+  );
+  await dataStore.setUint(
+    keys.maxAllowedSubaccountActionCountKey(accountAddress, subaccountAddress, keys.SUBACCOUNT_ORDER_ACTION),
+    10
+  );
 }
 
 export const REENTRANCY_CASES: Record<string, (ctx: ReentrancyCaseContext) => Promise<void>> = {
@@ -791,7 +886,13 @@ export const REENTRANCY_CASES: Record<string, (ctx: ReentrancyCaseContext) => Pr
       .connect(user0)
       .lzCompose(mockStargatePoolUsdc.address, ethers.constants.HashZero, message, user0.address, "0x");
 
-    await expectTokenReentrancyBlocked(reentrancyToken);
+    expect(await reentrancyToken.reenterDepth()).eq(1);
+    expect(await reentrancyToken.lastReenterSuccess()).eq(false);
+
+    const lastResult = await reentrancyToken.lastReenterResult();
+    const parsed = parseError(lastResult, false);
+    expect(parsed?.name).eq("Unauthorized");
+    expect(parsed?.args?.[1]).eq("CONTROLLER");
   },
   "LiquidationHandler.executeLiquidation -> OrderHandler.executeOrder": async (ctx) => {
     const { wallet, user0 } = ctx.fixture.accounts;
@@ -1046,453 +1147,676 @@ export const REENTRANCY_CASES: Record<string, (ctx: ReentrancyCaseContext) => Pr
 
     await expectReentrancyGuard(reentrancyTest);
   },
-  /*
-  "ExchangeRouter.cancelDeposit(bytes32)": async (ctx) => {
-    const reentrancyTest = await deployContract("ReentrancyTest", []);
-    const callbackGasLimit = await getCallbackGasLimit(ctx.dataStore);
-
-    await createDeposit(ctx.fixture, {
-      account: ctx.user0,
-      callbackContract: reentrancyTest,
-      callbackGasLimit,
-      longTokenAmount: expandDecimals(10, 18),
-      executionFee: ctx.executionFee,
-    });
-
-    const depositKeys = await getDepositKeys(ctx.dataStore, 0, 1);
-    const reenterCalldata = ctx.exchangeRouter.interface.encodeFunctionData("setUiFeeFactor", [0]);
-    await reentrancyTest.setReenterConfig(ctx.exchangeRouter.address, reenterCalldata, 0, 1, false);
-
-    await increaseTimeForCancellation(ctx.dataStore);
-
-    await ctx.exchangeRouter.connect(ctx.user0).cancelDeposit(depositKeys[0]);
-
-    await expectReentrancyGuard(reentrancyTest);
-  },
-
-  "ExchangeRouter.cancelOrder(bytes32)": async (ctx) => {
-    const reentrancyTest = await deployContract("ReentrancyTest", []);
-    const callbackGasLimit = await getCallbackGasLimit(ctx.dataStore);
-
-    const { key } = await createOrder(ctx.fixture, {
-      market: ctx.ethUsdMarket,
-      callbackContract: reentrancyTest,
-      callbackGasLimit,
-      initialCollateralToken: ctx.wnt,
-      initialCollateralDeltaAmount: expandDecimals(10, 18),
-      swapPath: [ctx.ethUsdMarket.marketToken],
-      sizeDeltaUsd: decimalToFloat(200 * 1000),
-      triggerPrice: expandDecimals(5000, 12),
-      acceptablePrice: expandDecimals(5001, 12),
-      executionFee: ctx.executionFee,
-      minOutputAmount: expandDecimals(50_000, 6),
-      orderType: OrderType.LimitIncrease,
-      isLong: true,
-      shouldUnwrapNativeToken: false,
-    });
-
-    const reenterCalldata = ctx.exchangeRouter.interface.encodeFunctionData("setUiFeeFactor", [0]);
-    await reentrancyTest.setReenterConfig(ctx.exchangeRouter.address, reenterCalldata, 0, 1, false);
-
-    const refTime = (await ethers.provider.getBlock()).timestamp;
-    await increaseTime(refTime, 300);
-
-    await ctx.exchangeRouter.connect(ctx.user0).cancelOrder(key);
-
-    await expectReentrancyGuard(reentrancyTest);
-  },
-
-  "ExchangeRouter.cancelShift(bytes32)": async (ctx) => {
-    const reentrancyTest = await deployContract("ReentrancyTest", []);
-    const callbackGasLimit = await getCallbackGasLimit(ctx.dataStore);
-    const marketToken = await contractAt("MarketToken", ctx.ethUsdMarket.marketToken);
-
-    await marketToken.mint(ctx.user0.address, expandDecimals(1, 18));
-    await createShift(ctx.fixture, {
-      account: ctx.user0,
-      callbackContract: reentrancyTest,
-      callbackGasLimit,
-      marketTokenAmount: expandDecimals(1, 18),
-      executionFee: ctx.executionFee,
-    });
-
-    const shiftKeys = await getShiftKeys(ctx.dataStore, 0, 1);
-    const reenterCalldata = ctx.exchangeRouter.interface.encodeFunctionData("setUiFeeFactor", [0]);
-    await reentrancyTest.setReenterConfig(ctx.exchangeRouter.address, reenterCalldata, 0, 1, false);
-
-    await increaseTimeForCancellation(ctx.dataStore);
-
-    await ctx.exchangeRouter.connect(ctx.user0).cancelShift(shiftKeys[0]);
-
-    await expectReentrancyGuard(reentrancyTest);
-  },
-
-  "ExchangeRouter.cancelWithdrawal(bytes32)": async (ctx) => {
-    const reentrancyTest = await deployContract("ReentrancyTest", []);
-    const callbackGasLimit = await getCallbackGasLimit(ctx.dataStore);
-    const marketToken = await contractAt("MarketToken", ctx.ethUsdMarket.marketToken);
-
-    await marketToken.mint(ctx.user0.address, expandDecimals(1, 18));
-    await createWithdrawal(ctx.fixture, {
-      account: ctx.user0,
-      callbackContract: reentrancyTest,
-      callbackGasLimit,
-      marketTokenAmount: expandDecimals(1, 18),
-      executionFee: ctx.executionFee,
-    });
-
-    const withdrawalKeys = await getWithdrawalKeys(ctx.dataStore, 0, 1);
-    const reenterCalldata = ctx.exchangeRouter.interface.encodeFunctionData("setUiFeeFactor", [0]);
-    await reentrancyTest.setReenterConfig(ctx.exchangeRouter.address, reenterCalldata, 0, 1, false);
-
-    await increaseTimeForCancellation(ctx.dataStore);
-
-    await ctx.exchangeRouter.connect(ctx.user0).cancelWithdrawal(withdrawalKeys[0]);
-
-    await expectReentrancyGuard(reentrancyTest);
-  },
-
-  "ExchangeRouter.makeExternalCalls(address[],bytes[],address[],address[])": async (ctx) => {
-    const reentrancyTest = await deployContract("ReentrancyTest", []);
-    const reenterCalldata = ctx.exchangeRouter.interface.encodeFunctionData("setUiFeeFactor", [0]);
-    await reentrancyTest.setReenterConfig(ctx.exchangeRouter.address, reenterCalldata, 0, 1, false);
-
-    const externalCallData = FALLBACK_CALLDATA;
-
-    await ctx.exchangeRouter.connect(ctx.user0).makeExternalCalls(
-      [reentrancyTest.address],
-      [externalCallData],
-      [],
-      []
-    );
-
-    await expectReentrancyGuard(reentrancyTest);
-  },
-
-  "ExchangeRouter.sendNativeToken(address,uint256)": async (ctx) => {
-    const reentrancyTest = await deployContract("ReentrancyTest", []);
-    const reenterCalldata = ctx.exchangeRouter.interface.encodeFunctionData("setUiFeeFactor", [0]);
-    await reentrancyTest.setReenterConfig(ctx.exchangeRouter.address, reenterCalldata, 0, 1, false);
-
-    await ctx.dataStore.setUint(keys.NATIVE_TOKEN_TRANSFER_GAS_LIMIT, bigNumberify(2_000_000));
-
-    const amount = expandDecimals(1, 15);
-    await ctx.exchangeRouter.connect(ctx.user0).sendNativeToken(reentrancyTest.address, amount, { value: amount });
-
-    await expectReentrancyGuard(reentrancyTest);
-  },
-
-  "OrderHandler.executeOrder(bytes32,(address[],address[],bytes[])) -> ExchangeRouter.cancelOrder(bytes32)": async (ctx) => {
-    const reentrancyTest = await deployContract("ReentrancyTest", []);
-
-    const key = await createOrderForCallback(ctx, reentrancyTest);
-    const reenterCalldata = ctx.exchangeRouter.interface.encodeFunctionData("cancelOrder", [ethers.constants.HashZero]);
-    await reentrancyTest.setReenterConfig(ctx.exchangeRouter.address, reenterCalldata, 0, 1, false);
-
-    await executeOrder(ctx.fixture, { orderKey: key });
-
-    await expectReentrancyBlocked(reentrancyTest);
-  },
-
-  "OrderHandler.executeOrder(bytes32,(address[],address[],bytes[])) -> ExchangeRouter.updateOrder(bytes32,uint256,uint256,uint256,uint256,uint256,bool)": async (ctx) => {
-    const reentrancyTest = await deployContract("ReentrancyTest", []);
-
-    const key = await createOrderForCallback(ctx, reentrancyTest);
-    const reenterCalldata = ctx.exchangeRouter.interface.encodeFunctionData("updateOrder", [
-      ethers.constants.HashZero,
-      0,
-      0,
-      0,
-      0,
-      0,
-      false,
-    ]);
-    await reentrancyTest.setReenterConfig(ctx.exchangeRouter.address, reenterCalldata, 0, 1, false);
-
-    await executeOrder(ctx.fixture, { orderKey: key });
-
-    await expectReentrancyBlocked(reentrancyTest);
-  },
-
-  "OrderHandler.executeOrder(bytes32,(address[],address[],bytes[])) -> ExchangeRouter.createOrder((address,address,address,address,address,address,address[]),(uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256),uint8,uint8,bool,bool,bool,bytes32,bytes32[])": async (ctx) => {
-    const reentrancyTest = await deployContract("ReentrancyTest", []);
-
-    const key = await createOrderForCallback(ctx, reentrancyTest);
-    const invalidCreateOrderParams = {
-      addresses: {
-        receiver: ethers.constants.AddressZero,
-        cancellationReceiver: ethers.constants.AddressZero,
-        callbackContract: ethers.constants.AddressZero,
-        uiFeeReceiver: ethers.constants.AddressZero,
-        market: ethers.constants.AddressZero,
-        initialCollateralToken: ethers.constants.AddressZero,
-        swapPath: [],
-      },
-      numbers: {
-        sizeDeltaUsd: 0,
-        initialCollateralDeltaAmount: 0,
-        triggerPrice: 0,
-        acceptablePrice: 0,
-        executionFee: 0,
-        callbackGasLimit: 0,
-        minOutputAmount: 0,
-        validFromTime: 0,
-      },
-      orderType: 0,
-      decreasePositionSwapType: 0,
-      isLong: true,
-      shouldUnwrapNativeToken: false,
-      autoCancel: false,
-      referralCode: ethers.constants.HashZero,
-      dataList: [],
-    };
-    const reenterCalldata = ctx.exchangeRouter.interface.encodeFunctionData("createOrder", [invalidCreateOrderParams]);
-    await reentrancyTest.setReenterConfig(ctx.exchangeRouter.address, reenterCalldata, 0, 1, false);
-
-    await executeOrder(ctx.fixture, { orderKey: key });
-
-    await expectReentrancyBlocked(reentrancyTest);
-  },
-
-  "OrderHandler.executeOrder(bytes32,(address[],address[],bytes[]))": async (ctx) => {
-    const reentrancyTest = await deployContract("ReentrancyTest", []);
-    const key = await createOrderForCallback(ctx, reentrancyTest);
-
-    const oracleParams = { tokens: [], providers: [], data: [] };
-    const reenterCalldata = ctx.orderHandler.interface.encodeFunctionData("executeOrder", [key, oracleParams]);
-    await reentrancyTest.setReenterConfig(ctx.orderHandler.address, reenterCalldata, 0, 1, false);
-
-    await executeOrder(ctx.fixture, { orderKey: key });
-
-    await expectReentrancyGuard(reentrancyTest);
-  },
-
-  "LiquidationHandler.executeLiquidation(address,address,address,bool,(address[],address[],bytes[])) -> OrderHandler.executeOrder(bytes32,(address[],address[],bytes[]))": async (
-    ctx
-  ) => {
-    const { wallet, user0 } = ctx.fixture.accounts;
-    const { roleStore, usdc, exchangeRouter, orderHandler } = ctx.fixture.contracts;
-    const reentrancyTest = await deployContract("ReentrancyTest", []);
-
-    await handleDeposit(ctx.fixture, {
-      create: {
-        market: ctx.ethUsdMarket,
-        longTokenAmount: expandDecimals(1000, 18),
-      },
-    });
-
-    await handleOrder(ctx.fixture, {
-      create: {
-        market: ctx.ethUsdMarket,
-        initialCollateralToken: ctx.wnt,
-        initialCollateralDeltaAmount: expandDecimals(10, 18),
-        sizeDeltaUsd: decimalToFloat(200 * 1000),
-        acceptablePrice: expandDecimals(5001, 12),
-        orderType: OrderType.MarketIncrease,
-        isLong: true,
-      },
-      execute: {
-        tokens: [ctx.wnt.address, usdc.address],
-      },
-    });
-
-    await grantRole(roleStore, wallet.address, "LIQUIDATION_KEEPER");
-    await exchangeRouter.connect(user0).setSavedCallbackContract(ctx.ethUsdMarket.marketToken, reentrancyTest.address);
-
-    const oracleParams = { tokens: [], providers: [], data: [] };
-    const reenterCalldata = orderHandler.interface.encodeFunctionData("executeOrder", [
-      ethers.constants.HashZero,
-      oracleParams,
-    ]);
-    await reentrancyTest.setReenterConfig(orderHandler.address, reenterCalldata, 0, 1, false);
-
-    await executeLiquidation(ctx.fixture, {
-      account: user0.address,
-      market: ctx.ethUsdMarket,
-      collateralToken: ctx.wnt,
-      isLong: true,
-      minPrices: [expandDecimals(4000, 4), expandDecimals(1, 6)],
-      maxPrices: [expandDecimals(4000, 4), expandDecimals(1, 6)],
-    });
-
-    await expectReentrancyGuard(reentrancyTest);
-  },
-
-  "AdlHandler.executeAdl(address,address,address,bool,uint256,(address[],address[],bytes[])) -> LiquidationHandler.executeLiquidation(address,address,address,bool,(address[],address[],bytes[]))": async (
-    ctx
-  ) => {
-    const { wallet, user0 } = ctx.fixture.accounts;
-    const { roleStore, dataStore, wethPriceFeed, usdc, exchangeRouter, liquidationHandler } = ctx.fixture.contracts;
-    const reentrancyTest = await deployContract("ReentrancyTest", []);
-
-    await handleDeposit(ctx.fixture, {
-      create: {
-        market: ctx.ethUsdMarket,
-        longTokenAmount: expandDecimals(1000, 18),
-      },
-    });
-
-    await handleOrder(ctx.fixture, {
-      create: {
-        market: ctx.ethUsdMarket,
-        initialCollateralToken: ctx.wnt,
-        initialCollateralDeltaAmount: expandDecimals(100, 18),
-        sizeDeltaUsd: decimalToFloat(2000 * 1000),
-        acceptablePrice: expandDecimals(5001, 12),
-        orderType: OrderType.MarketIncrease,
-        isLong: true,
-      },
-    });
-
-    const maxPnlFactorForAdlKey = keys.maxPnlFactorKey(keys.MAX_PNL_FACTOR_FOR_ADL, ctx.ethUsdMarket.marketToken, true);
-    const minPnlFactorAfterAdlKey = keys.minPnlFactorAfterAdl(ctx.ethUsdMarket.marketToken, true);
-
-    await dataStore.setUint(maxPnlFactorForAdlKey, decimalToFloat(10, 2));
-    await dataStore.setUint(minPnlFactorAfterAdlKey, decimalToFloat(2, 2));
-    await grantRole(roleStore, wallet.address, "ADL_KEEPER");
-
-    await wethPriceFeed.setAnswer(expandDecimals(10000, 8));
-    await updateAdlState(ctx.fixture, {
-      market: ctx.ethUsdMarket,
-      isLong: true,
-      tokens: [ctx.wnt.address, usdc.address],
-      minPrices: [expandDecimals(10000, 4), expandDecimals(1, 6)],
-      maxPrices: [expandDecimals(10000, 4), expandDecimals(1, 6)],
-    });
-
-    await exchangeRouter.connect(user0).setSavedCallbackContract(ctx.ethUsdMarket.marketToken, reentrancyTest.address);
-
-    const oracleParams = { tokens: [], providers: [], data: [] };
-    const reenterCalldata = liquidationHandler.interface.encodeFunctionData("executeLiquidation", [
-      user0.address,
-      ctx.ethUsdMarket.marketToken,
-      ctx.wnt.address,
-      true,
-      oracleParams,
-    ]);
-    await reentrancyTest.setReenterConfig(liquidationHandler.address, reenterCalldata, 0, 1, false);
-
-    await executeAdl(ctx.fixture, {
-      account: user0.address,
-      market: ctx.ethUsdMarket,
-      collateralToken: ctx.wnt,
-      isLong: true,
-      sizeDeltaUsd: decimalToFloat(100 * 1000),
-      tokens: [ctx.wnt.address, usdc.address],
-      minPrices: [expandDecimals(10000, 4), expandDecimals(1, 6)],
-      maxPrices: [expandDecimals(10000, 4), expandDecimals(1, 6)],
-    });
-
-    await expectReentrancyGuard(reentrancyTest);
-  },
-
-  "GelatoRelayRouter.createOrder(((address[],address[],bytes[]),(address[],uint256[],address[],bytes[],address[],address[]),(address,address,uint256,uint256,uint8,bytes32,bytes32,address)[],(address,uint256,address[]),uint256,uint256,bytes,uint256),address,((address,address,address,address,address,address,address[]),(uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256),uint8,uint8,bool,bool,bool,bytes32,bytes32[])) -> GelatoRelayRouter.cancelOrder(((address[],address[],bytes[]),(address[],uint256[],address[],bytes[],address[],address[]),(address,address,uint256,uint256,uint8,bytes32,bytes32,address)[],(address,uint256,address[]),uint256,uint256,bytes,uint256),address,bytes32)": async (
-    ctx
-  ) => {
+  "MultichainGlvRouter.createGlvWithdrawal -> MultichainGlvRouter.createGlvDeposit": async (ctx) => {
     const { user0 } = ctx.fixture.accounts;
-    const { dataStore, gelatoRelayRouter, router, wnt } = ctx.fixture.contracts;
+    const { dataStore, multichainGlvRouter, glvVault, ethUsdGlvAddress, wnt } = ctx.fixture.contracts;
     const reentrancyTest = await deployContract("ReentrancyTest", []);
-    const { relaySigner, chainId } = await getRelaySignerAndChainId();
 
-    await dataStore.setBool(keys.isSrcChainIdEnabledKey(chainId), true);
-    await wnt.connect(user0).deposit({ value: expandDecimals(1, 18) });
+    const feeAmount = EXECUTION_FEE.add(RELAY_FEE_AMOUNT);
+    const { relaySigner, chainId } = await setupMultichainRelay(ctx, user0, feeAmount.add(EXTERNAL_CALL_AMOUNT));
 
-    const tokenPermit = await getTokenPermit(
-      wnt,
-      user0,
-      router.address,
-      expandDecimals(1, 18),
-      0,
-      9999999999,
-      chainId
-    );
+    await dataStore.setUint(keys.tokenTransferGasLimit(ethUsdGlvAddress), 2_000_000);
 
-    const params = getDefaultRelayOrderParams(ctx);
-    const externalCalls = getRelayReentrancyCalls(reentrancyTest, wnt.address, expandDecimals(1, 15));
+    const glvAmount = expandDecimals(1_000, 18);
+    await seedMultichainBalance(ctx, user0, ethUsdGlvAddress, glvAmount, "GlvToken");
 
-    const createOrderParams = {
+    const emptyRelayParams = getEmptyRelayParams(chainId);
+    const reenterCalldata = multichainGlvRouter.interface.encodeFunctionData("createGlvDeposit", [
+      emptyRelayParams,
+      user0.address,
+      chainId,
+      getEmptyTransferRequests(),
+      getEmptyGlvDepositParams(),
+    ]);
+    await reentrancyTest.setReenterConfig(multichainGlvRouter.address, reenterCalldata, 0, 1, false);
+
+    const externalCalls = getRelayReentrancyCalls(reentrancyTest, wnt.address, EXTERNAL_CALL_AMOUNT);
+    const createGlvWithdrawalParams: any = {
       sender: relaySigner,
       signer: user0,
       feeParams: {
         feeToken: wnt.address,
-        feeAmount: expandDecimals(2, 15),
+        feeAmount,
         feeSwapPath: [],
       },
-      tokenPermits: [tokenPermit],
+      transferRequests: {
+        tokens: [ethUsdGlvAddress],
+        receivers: [glvVault.address],
+        amounts: [glvAmount],
+      },
       account: user0.address,
-      params,
+      params: {
+        addresses: {
+          receiver: user0.address,
+          callbackContract: user0.address,
+          uiFeeReceiver: user0.address,
+          market: ctx.ethUsdMarket.marketToken,
+          glv: ethUsdGlvAddress,
+          longTokenSwapPath: [],
+          shortTokenSwapPath: [],
+        },
+        minLongTokenAmount: 0,
+        minShortTokenAmount: 0,
+        shouldUnwrapNativeToken: false,
+        executionFee: EXECUTION_FEE,
+        callbackGasLimit: "200000",
+        dataList: [],
+      },
       deadline: 9999999999,
-      desChainId: chainId,
-      relayRouter: gelatoRelayRouter,
       chainId,
-      gelatoRelayFeeToken: wnt.address,
-      gelatoRelayFeeAmount: expandDecimals(1, 15),
+      srcChainId: chainId,
+      desChainId: chainId,
+      relayRouter: multichainGlvRouter,
+      relayFeeToken: wnt.address,
+      relayFeeAmount: RELAY_FEE_AMOUNT,
       externalCalls,
     };
 
-    const emptyRelayParams = getEmptyRelayParams(chainId);
-    const reenterCalldata = gelatoRelayRouter.interface.encodeFunctionData("cancelOrder", [
-      emptyRelayParams,
-      user0.address,
-      ethers.constants.HashZero,
-    ]);
-    await reentrancyTest.setReenterConfig(gelatoRelayRouter.address, reenterCalldata, 0, 1, false);
-
-    await sendGelatoCreateOrder(createOrderParams);
+    await sendCreateGlvWithdrawal(createGlvWithdrawalParams);
 
     await expectReentrancyGuard(reentrancyTest);
   },
-
-  "GelatoRelayRouter.batch(((address[],address[],bytes[]),(address[],uint256[],address[],bytes[],address[],address[]),(address,address,uint256,uint256,uint8,bytes32,bytes32,address)[],(address,uint256,address[]),uint256,uint256,bytes,uint256),address,(((address,address,address,address,address,address,address[]),(uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256),uint8,uint8,bool,bool,bool,bytes32,bytes32[])[],(bytes32,uint256,uint256,uint256,uint256,uint256,bool,uint256)[],bytes32[])) -> GelatoRelayRouter.updateOrder(((address[],address[],bytes[]),(address[],uint256[],address[],bytes[],address[],address[]),(address,address,uint256,uint256,uint8,bytes32,bytes32,address)[],(address,uint256,address[]),uint256,uint256,bytes,uint256),address,(bytes32,uint256,uint256,uint256,uint256,uint256,bool,uint256))": async (
-    ctx
-  ) => {
+  "MultichainGmRouter.createDeposit -> MultichainGmRouter.createWithdrawal": async (ctx) => {
     const { user0 } = ctx.fixture.accounts;
-    const { dataStore, gelatoRelayRouter, router, wnt } = ctx.fixture.contracts;
+    const { dataStore, multichainGmRouter, depositVault, ethUsdMarket, wnt, usdc } = ctx.fixture.contracts;
     const reentrancyTest = await deployContract("ReentrancyTest", []);
-    const { relaySigner, chainId } = await getRelaySignerAndChainId();
 
-    await dataStore.setBool(keys.isSrcChainIdEnabledKey(chainId), true);
-    await wnt.connect(user0).deposit({ value: expandDecimals(1, 18) });
+    const wntAmount = expandDecimals(1, 18);
+    const usdcAmount = expandDecimals(1_000, 6);
+    const feeAmount = EXECUTION_FEE.add(RELAY_FEE_AMOUNT);
+    const totalWntAmount = wntAmount.add(feeAmount).add(EXTERNAL_CALL_AMOUNT);
+    const { relaySigner, chainId } = await setupMultichainRelay(ctx, user0, totalWntAmount);
 
-    const tokenPermit = await getTokenPermit(
-      wnt,
-      user0,
-      router.address,
-      expandDecimals(1, 18),
-      0,
-      9999999999,
-      chainId
-    );
+    await dataStore.setUint(keys.tokenTransferGasLimit(usdc.address), 2_000_000);
+    await bridgeInTokens(ctx.fixture, { account: user0, token: usdc, amount: usdcAmount });
 
-    const params = getDefaultRelayOrderParams(ctx);
-    const externalCalls = getRelayReentrancyCalls(reentrancyTest, wnt.address, expandDecimals(1, 15));
+    const emptyRelayParams = getEmptyRelayParams(chainId);
+    const reenterCalldata = multichainGmRouter.interface.encodeFunctionData("createWithdrawal", [
+      emptyRelayParams,
+      user0.address,
+      chainId,
+      getEmptyTransferRequests(),
+      getEmptyWithdrawalParams(),
+    ]);
+    await reentrancyTest.setReenterConfig(multichainGmRouter.address, reenterCalldata, 0, 1, false);
 
+    const externalCalls = getRelayReentrancyCalls(reentrancyTest, wnt.address, EXTERNAL_CALL_AMOUNT);
+    const createDepositParams: any = {
+      sender: relaySigner,
+      signer: user0,
+      feeParams: {
+        feeToken: wnt.address,
+        feeAmount,
+        feeSwapPath: [],
+      },
+      transferRequests: {
+        tokens: [wnt.address, usdc.address],
+        receivers: [depositVault.address, depositVault.address],
+        amounts: [wntAmount, usdcAmount],
+      },
+      account: user0.address,
+      params: {
+        addresses: {
+          receiver: user0.address,
+          callbackContract: user0.address,
+          uiFeeReceiver: user0.address,
+          market: ethUsdMarket.marketToken,
+          initialLongToken: ethUsdMarket.longToken,
+          initialShortToken: ethUsdMarket.shortToken,
+          longTokenSwapPath: [],
+          shortTokenSwapPath: [],
+        },
+        minMarketTokens: 100,
+        shouldUnwrapNativeToken: false,
+        executionFee: EXECUTION_FEE,
+        callbackGasLimit: "200000",
+        dataList: [],
+      },
+      deadline: 9999999999,
+      chainId,
+      srcChainId: chainId,
+      desChainId: chainId,
+      relayRouter: multichainGmRouter,
+      relayFeeToken: wnt.address,
+      relayFeeAmount: RELAY_FEE_AMOUNT,
+      externalCalls,
+    };
+
+    await sendCreateDeposit(createDepositParams);
+
+    await expectReentrancyGuard(reentrancyTest);
+  },
+  "MultichainGmRouter.createShift -> MultichainGmRouter.createDeposit": async (ctx) => {
+    const { user0 } = ctx.fixture.accounts;
+    const { dataStore, multichainGmRouter, shiftVault, ethUsdMarket, solUsdMarket, wnt } = ctx.fixture.contracts;
+    const reentrancyTest = await deployContract("ReentrancyTest", []);
+
+    const feeAmount = EXECUTION_FEE.add(RELAY_FEE_AMOUNT);
+    const { relaySigner, chainId } = await setupMultichainRelay(ctx, user0, feeAmount.add(EXTERNAL_CALL_AMOUNT));
+
+    await dataStore.setUint(keys.tokenTransferGasLimit(ethUsdMarket.marketToken), 2_000_000);
+
+    const marketTokenAmount = expandDecimals(1_000, 18);
+    await seedMultichainBalance(ctx, user0, ethUsdMarket.marketToken, marketTokenAmount);
+
+    const emptyRelayParams = getEmptyRelayParams(chainId);
+    const reenterCalldata = multichainGmRouter.interface.encodeFunctionData("createDeposit", [
+      emptyRelayParams,
+      user0.address,
+      chainId,
+      getEmptyTransferRequests(),
+      getEmptyDepositParams(),
+    ]);
+    await reentrancyTest.setReenterConfig(multichainGmRouter.address, reenterCalldata, 0, 1, false);
+
+    const externalCalls = getRelayReentrancyCalls(reentrancyTest, wnt.address, EXTERNAL_CALL_AMOUNT);
+    const createShiftParams: any = {
+      sender: relaySigner,
+      signer: user0,
+      feeParams: {
+        feeToken: wnt.address,
+        feeAmount,
+        feeSwapPath: [],
+      },
+      transferRequests: {
+        tokens: [ethUsdMarket.marketToken],
+        receivers: [shiftVault.address],
+        amounts: [marketTokenAmount],
+      },
+      account: user0.address,
+      params: {
+        addresses: {
+          receiver: user0.address,
+          callbackContract: user0.address,
+          uiFeeReceiver: user0.address,
+          fromMarket: ethUsdMarket.marketToken,
+          toMarket: solUsdMarket.marketToken,
+        },
+        minMarketTokens: 0,
+        executionFee: EXECUTION_FEE,
+        callbackGasLimit: "200000",
+        dataList: [],
+      },
+      deadline: 9999999999,
+      chainId,
+      srcChainId: chainId,
+      desChainId: chainId,
+      relayRouter: multichainGmRouter,
+      relayFeeToken: wnt.address,
+      relayFeeAmount: RELAY_FEE_AMOUNT,
+      externalCalls,
+    };
+
+    await sendCreateShift(createShiftParams);
+
+    await expectReentrancyGuard(reentrancyTest);
+  },
+  "MultichainGmRouter.createWithdrawal -> MultichainGmRouter.createShift": async (ctx) => {
+    const { user0 } = ctx.fixture.accounts;
+    const { dataStore, multichainGmRouter, withdrawalVault, ethUsdMarket, wnt } = ctx.fixture.contracts;
+    const reentrancyTest = await deployContract("ReentrancyTest", []);
+
+    const feeAmount = EXECUTION_FEE.add(RELAY_FEE_AMOUNT);
+    const { relaySigner, chainId } = await setupMultichainRelay(ctx, user0, feeAmount.add(EXTERNAL_CALL_AMOUNT));
+
+    await dataStore.setUint(keys.tokenTransferGasLimit(ethUsdMarket.marketToken), 2_000_000);
+
+    const marketTokenAmount = expandDecimals(1_000, 18);
+    await seedMultichainBalance(ctx, user0, ethUsdMarket.marketToken, marketTokenAmount);
+
+    const emptyRelayParams = getEmptyRelayParams(chainId);
+    const reenterCalldata = multichainGmRouter.interface.encodeFunctionData("createShift", [
+      emptyRelayParams,
+      user0.address,
+      chainId,
+      getEmptyTransferRequests(),
+      getEmptyShiftParams(),
+    ]);
+    await reentrancyTest.setReenterConfig(multichainGmRouter.address, reenterCalldata, 0, 1, false);
+
+    const externalCalls = getRelayReentrancyCalls(reentrancyTest, wnt.address, EXTERNAL_CALL_AMOUNT);
+    const createWithdrawalParams: any = {
+      sender: relaySigner,
+      signer: user0,
+      feeParams: {
+        feeToken: wnt.address,
+        feeAmount,
+        feeSwapPath: [],
+      },
+      transferRequests: {
+        tokens: [ethUsdMarket.marketToken],
+        receivers: [withdrawalVault.address],
+        amounts: [marketTokenAmount],
+      },
+      account: user0.address,
+      params: {
+        addresses: {
+          receiver: user0.address,
+          callbackContract: user0.address,
+          uiFeeReceiver: user0.address,
+          market: ethUsdMarket.marketToken,
+          longTokenSwapPath: [],
+          shortTokenSwapPath: [],
+        },
+        minLongTokenAmount: 0,
+        minShortTokenAmount: 0,
+        shouldUnwrapNativeToken: false,
+        executionFee: EXECUTION_FEE,
+        callbackGasLimit: "200000",
+        dataList: [],
+      },
+      deadline: 9999999999,
+      chainId,
+      srcChainId: chainId,
+      desChainId: chainId,
+      relayRouter: multichainGmRouter,
+      relayFeeToken: wnt.address,
+      relayFeeAmount: RELAY_FEE_AMOUNT,
+      externalCalls,
+    };
+
+    await sendCreateWithdrawal(createWithdrawalParams);
+
+    await expectReentrancyGuard(reentrancyTest);
+  },
+  "MultichainGmRouter.sendNativeToken -> MultichainGmRouter.createDeposit": async (ctx) => {
+    const { user0 } = ctx.fixture.accounts;
+    const { dataStore, multichainGmRouter } = ctx.fixture.contracts;
+    const reentrancyTest = await deployContract("ReentrancyTest", []);
+    const chainId = await ethers.provider.getNetwork().then((network) => network.chainId);
+
+    const emptyRelayParams = getEmptyRelayParams(chainId);
+    const reenterCalldata = multichainGmRouter.interface.encodeFunctionData("createDeposit", [
+      emptyRelayParams,
+      user0.address,
+      chainId,
+      getEmptyTransferRequests(),
+      getEmptyDepositParams(),
+    ]);
+    await reentrancyTest.setReenterConfig(multichainGmRouter.address, reenterCalldata, 0, 1, false);
+
+    await dataStore.setUint(keys.NATIVE_TOKEN_TRANSFER_GAS_LIMIT, bigNumberify(2_000_000));
+
+    const amount = expandDecimals(1, 15);
+    await multichainGmRouter.connect(user0).sendNativeToken(reentrancyTest.address, amount, { value: amount });
+
+    await expectReentrancyGuard(reentrancyTest);
+  },
+  "MultichainOrderRouter.batch -> MultichainOrderRouter.updateOrder": async (ctx) => {
+    const { user0 } = ctx.fixture.accounts;
+    const { multichainOrderRouter, wnt } = ctx.fixture.contracts;
+    const reentrancyTest = await deployContract("ReentrancyTest", []);
+
+    const createOrderParams = getDefaultRelayOrderParams(ctx);
+    const initialCollateralAmount = bigNumberify(createOrderParams.numbers.initialCollateralDeltaAmount);
+    const executionFee = bigNumberify(createOrderParams.numbers.executionFee);
+    const feeAmount = executionFee.add(RELAY_FEE_AMOUNT);
+    const totalWntAmount = initialCollateralAmount.add(feeAmount).add(EXTERNAL_CALL_AMOUNT);
+    const { relaySigner, chainId } = await setupMultichainRelay(ctx, user0, totalWntAmount);
+
+    const emptyRelayParams = getEmptyRelayParams(chainId);
+    const reenterCalldata = multichainOrderRouter.interface.encodeFunctionData("updateOrder", [
+      emptyRelayParams,
+      user0.address,
+      chainId,
+      {
+        key: ethers.constants.HashZero,
+        sizeDeltaUsd: 0,
+        acceptablePrice: 0,
+        triggerPrice: 0,
+        minOutputAmount: 0,
+        validFromTime: 0,
+        autoCancel: false,
+        executionFeeIncrease: 0,
+      },
+    ]);
+    await reentrancyTest.setReenterConfig(multichainOrderRouter.address, reenterCalldata, 0, 1, false);
+
+    const externalCalls = getRelayReentrancyCalls(reentrancyTest, wnt.address, EXTERNAL_CALL_AMOUNT);
     const batchParams: any = {
       sender: relaySigner,
       signer: user0,
       feeParams: {
         feeToken: wnt.address,
-        feeAmount: expandDecimals(2, 15),
+        feeAmount,
         feeSwapPath: [],
       },
-      tokenPermits: [tokenPermit],
       account: user0.address,
-      userNonce: 1,
-      createOrderParamsList: [params],
+      createOrderParamsList: [createOrderParams],
       updateOrderParamsList: [],
       cancelOrderKeys: [],
       deadline: 9999999999,
-      relayRouter: gelatoRelayRouter,
+      relayRouter: multichainOrderRouter,
       chainId,
+      srcChainId: chainId,
       desChainId: chainId,
       gelatoRelayFeeToken: wnt.address,
-      gelatoRelayFeeAmount: expandDecimals(1, 15),
+      gelatoRelayFeeAmount: RELAY_FEE_AMOUNT,
       externalCalls,
     };
 
+    await sendGelatoBatch(batchParams);
+
+    await expectReentrancyGuard(reentrancyTest);
+  },
+  "MultichainOrderRouter.cancelOrder -> MultichainOrderRouter.updateOrder": async (ctx) => {
+    const { user0 } = ctx.fixture.accounts;
+    const { multichainOrderRouter, wnt } = ctx.fixture.contracts;
+    const reentrancyTest = await deployContract("ReentrancyTest", []);
+
+    const { key } = await createOrder(ctx.fixture, {
+      account: user0,
+      market: ctx.ethUsdMarket,
+      initialCollateralToken: ctx.wnt,
+      initialCollateralDeltaAmount: expandDecimals(10, 18),
+      swapPath: [],
+      sizeDeltaUsd: decimalToFloat(200 * 1000),
+      triggerPrice: expandDecimals(5000, 12),
+      acceptablePrice: expandDecimals(5001, 12),
+      executionFee: ctx.executionFee,
+      minOutputAmount: 0,
+      orderType: OrderType.LimitIncrease,
+      isLong: true,
+      shouldUnwrapNativeToken: false,
+    });
+
+    const { relaySigner, chainId } = await setupMultichainRelay(ctx, user0, RELAY_FEE_AMOUNT.add(EXTERNAL_CALL_AMOUNT));
+
     const emptyRelayParams = getEmptyRelayParams(chainId);
-    const reenterCalldata = gelatoRelayRouter.interface.encodeFunctionData("updateOrder", [
+    const reenterCalldata = multichainOrderRouter.interface.encodeFunctionData("updateOrder", [
       emptyRelayParams,
+      user0.address,
+      chainId,
+      {
+        key: ethers.constants.HashZero,
+        sizeDeltaUsd: 0,
+        acceptablePrice: 0,
+        triggerPrice: 0,
+        minOutputAmount: 0,
+        validFromTime: 0,
+        autoCancel: false,
+        executionFeeIncrease: 0,
+      },
+    ]);
+    await reentrancyTest.setReenterConfig(multichainOrderRouter.address, reenterCalldata, 0, 1, false);
+
+    await increaseTimeForCancellation(ctx.dataStore);
+
+    const externalCalls = getRelayReentrancyCalls(reentrancyTest, wnt.address, EXTERNAL_CALL_AMOUNT);
+    const cancelOrderParams: any = {
+      sender: relaySigner,
+      signer: user0,
+      feeParams: {
+        feeToken: wnt.address,
+        feeAmount: RELAY_FEE_AMOUNT,
+        feeSwapPath: [],
+      },
+      key,
+      account: user0.address,
+      deadline: 9999999999,
+      srcChainId: chainId,
+      desChainId: chainId,
+      relayRouter: multichainOrderRouter,
+      chainId,
+      gelatoRelayFeeToken: wnt.address,
+      gelatoRelayFeeAmount: RELAY_FEE_AMOUNT,
+      externalCalls,
+    };
+
+    await sendGelatoCancelOrder(cancelOrderParams);
+
+    await expectReentrancyGuard(reentrancyTest);
+  },
+  "MultichainOrderRouter.createOrder -> MultichainOrderRouter.cancelOrder": async (ctx) => {
+    const { user0 } = ctx.fixture.accounts;
+    const { multichainOrderRouter, wnt } = ctx.fixture.contracts;
+    const reentrancyTest = await deployContract("ReentrancyTest", []);
+
+    const params = getDefaultRelayOrderParams(ctx);
+    const initialCollateralAmount = bigNumberify(params.numbers.initialCollateralDeltaAmount);
+    const executionFee = bigNumberify(params.numbers.executionFee);
+    const feeAmount = executionFee.add(RELAY_FEE_AMOUNT);
+    const totalWntAmount = initialCollateralAmount.add(feeAmount).add(EXTERNAL_CALL_AMOUNT);
+    const { relaySigner, chainId } = await setupMultichainRelay(ctx, user0, totalWntAmount);
+
+    const emptyRelayParams = getEmptyRelayParams(chainId);
+    const reenterCalldata = multichainOrderRouter.interface.encodeFunctionData("cancelOrder", [
+      emptyRelayParams,
+      user0.address,
+      chainId,
+      ethers.constants.HashZero,
+    ]);
+    await reentrancyTest.setReenterConfig(multichainOrderRouter.address, reenterCalldata, 0, 1, false);
+
+    const externalCalls = getRelayReentrancyCalls(reentrancyTest, wnt.address, EXTERNAL_CALL_AMOUNT);
+    const createOrderParams: any = {
+      sender: relaySigner,
+      signer: user0,
+      feeParams: {
+        feeToken: wnt.address,
+        feeAmount,
+        feeSwapPath: [],
+      },
+      account: user0.address,
+      params,
+      deadline: 9999999999,
+      srcChainId: chainId,
+      desChainId: chainId,
+      relayRouter: multichainOrderRouter,
+      chainId,
+      gelatoRelayFeeToken: wnt.address,
+      gelatoRelayFeeAmount: RELAY_FEE_AMOUNT,
+      externalCalls,
+    };
+
+    await sendGelatoCreateOrder(createOrderParams);
+
+    await expectReentrancyGuard(reentrancyTest);
+  },
+  "MultichainOrderRouter.registerCode -> MultichainOrderRouter.setTraderReferralCode": async (ctx) => {
+    const { user0 } = ctx.fixture.accounts;
+    const { multichainOrderRouter, wnt } = ctx.fixture.contracts;
+    const reentrancyTest = await deployContract("ReentrancyTest", []);
+    const { relaySigner, chainId } = await setupMultichainRelay(ctx, user0, RELAY_FEE_AMOUNT.add(EXTERNAL_CALL_AMOUNT));
+
+    const referralCode = hashString("reentrancy-register-code");
+    const reenterCode = hashString("reentrancy-set-code");
+
+    const emptyRelayParams = getEmptyRelayParams(chainId);
+    const reenterCalldata = multichainOrderRouter.interface.encodeFunctionData("setTraderReferralCode", [
+      emptyRelayParams,
+      user0.address,
+      chainId,
+      reenterCode,
+    ]);
+    await reentrancyTest.setReenterConfig(multichainOrderRouter.address, reenterCalldata, 0, 1, false);
+
+    const externalCalls = getRelayReentrancyCalls(reentrancyTest, wnt.address, EXTERNAL_CALL_AMOUNT);
+    const registerCodeParams: any = {
+      sender: relaySigner,
+      signer: user0,
+      feeParams: {
+        feeToken: wnt.address,
+        feeAmount: RELAY_FEE_AMOUNT,
+        feeSwapPath: [],
+      },
+      account: user0.address,
+      referralCode,
+      deadline: 9999999999,
+      srcChainId: chainId,
+      desChainId: chainId,
+      relayRouter: multichainOrderRouter,
+      chainId,
+      gelatoRelayFeeToken: wnt.address,
+      gelatoRelayFeeAmount: RELAY_FEE_AMOUNT,
+      externalCalls,
+    };
+
+    await sendRegisterCode(registerCodeParams);
+
+    await expectReentrancyGuard(reentrancyTest);
+  },
+  "MultichainOrderRouter.sendNativeToken -> MultichainOrderRouter.cancelOrder": async (ctx) => {
+    const { user0 } = ctx.fixture.accounts;
+    const { dataStore, multichainOrderRouter } = ctx.fixture.contracts;
+    const reentrancyTest = await deployContract("ReentrancyTest", []);
+    const chainId = await ethers.provider.getNetwork().then((network) => network.chainId);
+
+    const emptyRelayParams = getEmptyRelayParams(chainId);
+    const reenterCalldata = multichainOrderRouter.interface.encodeFunctionData("cancelOrder", [
+      emptyRelayParams,
+      user0.address,
+      chainId,
+      ethers.constants.HashZero,
+    ]);
+    await reentrancyTest.setReenterConfig(multichainOrderRouter.address, reenterCalldata, 0, 1, false);
+
+    await dataStore.setUint(keys.NATIVE_TOKEN_TRANSFER_GAS_LIMIT, bigNumberify(2_000_000));
+
+    const amount = expandDecimals(1, 15);
+    await multichainOrderRouter.connect(user0).sendNativeToken(reentrancyTest.address, amount, { value: amount });
+
+    await expectReentrancyGuard(reentrancyTest);
+  },
+  "MultichainOrderRouter.setTraderReferralCode -> MultichainOrderRouter.registerCode": async (ctx) => {
+    const { user0 } = ctx.fixture.accounts;
+    const { multichainOrderRouter, wnt } = ctx.fixture.contracts;
+    const reentrancyTest = await deployContract("ReentrancyTest", []);
+    const { relaySigner, chainId } = await setupMultichainRelay(ctx, user0, RELAY_FEE_AMOUNT.add(EXTERNAL_CALL_AMOUNT));
+
+    const referralCode = hashString("reentrancy-set-referral-code");
+    const reenterCode = hashString("reentrancy-register-code");
+
+    const emptyRelayParams = getEmptyRelayParams(chainId);
+    const reenterCalldata = multichainOrderRouter.interface.encodeFunctionData("registerCode", [
+      emptyRelayParams,
+      user0.address,
+      chainId,
+      reenterCode,
+    ]);
+    await reentrancyTest.setReenterConfig(multichainOrderRouter.address, reenterCalldata, 0, 1, false);
+
+    const externalCalls = getRelayReentrancyCalls(reentrancyTest, wnt.address, EXTERNAL_CALL_AMOUNT);
+    const setReferralParams: any = {
+      sender: relaySigner,
+      signer: user0,
+      feeParams: {
+        feeToken: wnt.address,
+        feeAmount: RELAY_FEE_AMOUNT,
+        feeSwapPath: [],
+      },
+      account: user0.address,
+      referralCode,
+      deadline: 9999999999,
+      srcChainId: chainId,
+      desChainId: chainId,
+      relayRouter: multichainOrderRouter,
+      chainId,
+      gelatoRelayFeeToken: wnt.address,
+      gelatoRelayFeeAmount: RELAY_FEE_AMOUNT,
+      externalCalls,
+    };
+
+    await sendSetTraderReferralCode(setReferralParams);
+
+    await expectReentrancyGuard(reentrancyTest);
+  },
+  "MultichainOrderRouter.updateOrder -> MultichainOrderRouter.cancelOrder": async (ctx) => {
+    const { user0 } = ctx.fixture.accounts;
+    const { multichainOrderRouter, wnt } = ctx.fixture.contracts;
+    const reentrancyTest = await deployContract("ReentrancyTest", []);
+
+    const { key } = await createOrder(ctx.fixture, {
+      account: user0,
+      market: ctx.ethUsdMarket,
+      initialCollateralToken: ctx.wnt,
+      initialCollateralDeltaAmount: expandDecimals(10, 18),
+      swapPath: [],
+      sizeDeltaUsd: decimalToFloat(200 * 1000),
+      triggerPrice: expandDecimals(5000, 12),
+      acceptablePrice: expandDecimals(5001, 12),
+      executionFee: ctx.executionFee,
+      minOutputAmount: 0,
+      orderType: OrderType.LimitIncrease,
+      isLong: true,
+      shouldUnwrapNativeToken: false,
+    });
+
+    const { relaySigner, chainId } = await setupMultichainRelay(ctx, user0, RELAY_FEE_AMOUNT.add(EXTERNAL_CALL_AMOUNT));
+
+    const emptyRelayParams = getEmptyRelayParams(chainId);
+    const reenterCalldata = multichainOrderRouter.interface.encodeFunctionData("cancelOrder", [
+      emptyRelayParams,
+      user0.address,
+      chainId,
+      ethers.constants.HashZero,
+    ]);
+    await reentrancyTest.setReenterConfig(multichainOrderRouter.address, reenterCalldata, 0, 1, false);
+
+    const externalCalls = getRelayReentrancyCalls(reentrancyTest, wnt.address, EXTERNAL_CALL_AMOUNT);
+    const updateOrderParams: any = {
+      sender: relaySigner,
+      signer: user0,
+      feeParams: {
+        feeToken: wnt.address,
+        feeAmount: RELAY_FEE_AMOUNT,
+        feeSwapPath: [],
+      },
+      account: user0.address,
+      params: {
+        key,
+        sizeDeltaUsd: decimalToFloat(150 * 1000),
+        acceptablePrice: expandDecimals(5002, 12),
+        triggerPrice: expandDecimals(5001, 12),
+        minOutputAmount: 0,
+        validFromTime: 0,
+        autoCancel: false,
+        executionFeeIncrease: 0,
+      },
+      deadline: 9999999999,
+      srcChainId: chainId,
+      desChainId: chainId,
+      relayRouter: multichainOrderRouter,
+      chainId,
+      gelatoRelayFeeToken: wnt.address,
+      gelatoRelayFeeAmount: RELAY_FEE_AMOUNT,
+      externalCalls,
+    };
+
+    await sendGelatoUpdateOrder(updateOrderParams);
+
+    await expectReentrancyGuard(reentrancyTest);
+  },
+  "SubaccountGelatoRelayRouter.batch -> SubaccountGelatoRelayRouter.updateOrder": async (ctx) => {
+    const { user0, user1, wallet } = ctx.fixture.accounts;
+    const { dataStore, subaccountGelatoRelayRouter, router, wnt } = ctx.fixture.contracts;
+    const reentrancyToken = await deployReentrantToken();
+    const { relaySigner, chainId } = await getRelaySignerAndChainId();
+
+    await dataStore.setAddress(keys.HOLDING_ADDRESS, wallet.address);
+    await dataStore.setAddress(keys.WNT, reentrancyToken.address);
+    await dataStore.setUint(keys.tokenTransferGasLimit(reentrancyToken.address), 2_000_000);
+
+    await enableSubaccount(ctx, user1, user0);
+
+    const executionFee = EXECUTION_FEE;
+    const feeAmount = executionFee.add(RELAY_FEE_AMOUNT);
+    const params = getSubaccountOrderParams(ctx, user1.address, {
+      numbers: { executionFee },
+    });
+    const initialCollateralAmount = bigNumberify(params.numbers.initialCollateralDeltaAmount);
+    const totalFeeAmount = feeAmount;
+
+    await reentrancyToken.mint(user1.address, totalFeeAmount);
+    await reentrancyToken.connect(user1).approve(router.address, totalFeeAmount);
+    await wnt.connect(user1).deposit({ value: initialCollateralAmount });
+    await wnt.connect(user1).approve(router.address, initialCollateralAmount);
+
+    const emptyRelayParams = getEmptyRelayParams(chainId);
+    const reenterCalldata = subaccountGelatoRelayRouter.interface.encodeFunctionData("updateOrder", [
+      emptyRelayParams,
+      getEmptySubaccountApproval(),
+      user1.address,
       user0.address,
       {
         key: ethers.constants.HashZero,
@@ -1505,84 +1829,911 @@ export const REENTRANCY_CASES: Record<string, (ctx: ReentrancyCaseContext) => Pr
         executionFeeIncrease: 0,
       },
     ]);
-    await reentrancyTest.setReenterConfig(gelatoRelayRouter.address, reenterCalldata, 0, 1, false);
+    await reentrancyToken.setReenterConfig(subaccountGelatoRelayRouter.address, reenterCalldata, 0, 1, false);
 
-    await sendGelatoBatch(batchParams);
+    const batchParams: any = {
+      sender: relaySigner,
+      signer: user0,
+      feeParams: {
+        feeToken: reentrancyToken.address,
+        feeAmount,
+        feeSwapPath: [],
+      },
+      account: user1.address,
+      subaccount: user0.address,
+      subaccountApproval: getEmptySubaccountApproval(),
+      subaccountApprovalSigner: user1,
+      createOrderParamsList: [params],
+      updateOrderParamsList: [],
+      cancelOrderKeys: [],
+      deadline: 9999999999,
+      relayRouter: subaccountGelatoRelayRouter,
+      chainId,
+      desChainId: chainId,
+      gelatoRelayFeeToken: reentrancyToken.address,
+      gelatoRelayFeeAmount: RELAY_FEE_AMOUNT,
+    };
 
-    await expectReentrancyGuard(reentrancyTest);
+    await sendSubaccountBatch(batchParams);
+
+    await expectTokenReentrancyGuard(reentrancyToken);
   },
+  "SubaccountGelatoRelayRouter.cancelOrder -> SubaccountGelatoRelayRouter.updateOrder": async (ctx) => {
+    const { user0, user1, wallet } = ctx.fixture.accounts;
+    const { dataStore, subaccountGelatoRelayRouter, router, wnt } = ctx.fixture.contracts;
+    const reentrancyToken = await deployReentrantToken();
+    const { relaySigner, chainId } = await getRelaySignerAndChainId();
 
-  "MultichainOrderRouter.createOrder(((address[],address[],bytes[]),(address[],uint256[],address[],bytes[],address[],address[]),(address,address,uint256,uint256,uint8,bytes32,bytes32,address)[],(address,uint256,address[]),uint256,uint256,bytes,uint256),address,uint256,((address,address,address,address,address,address,address[]),(uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256),uint8,uint8,bool,bool,bool,bytes32,bytes32[])) -> MultichainOrderRouter.cancelOrder(((address[],address[],bytes[]),(address[],uint256[],address[],bytes[],address[],address[]),(address,address,uint256,uint256,uint8,bytes32,bytes32,address)[],(address,uint256,address[]),uint256,uint256,bytes,uint256),address,uint256,bytes32)": async (
-    ctx
-  ) => {
-    const { user0 } = ctx.fixture.accounts;
-    const { dataStore, multichainOrderRouter, wnt, mockStargatePoolNative, mockStargatePoolUsdc } =
-      ctx.fixture.contracts;
+    await dataStore.setAddress(keys.HOLDING_ADDRESS, wallet.address);
+    await dataStore.setAddress(keys.WNT, reentrancyToken.address);
+    await dataStore.setUint(keys.tokenTransferGasLimit(reentrancyToken.address), 2_000_000);
+
+    await enableSubaccount(ctx, user1, user0);
+
+    const executionFee = EXECUTION_FEE;
+    const feeAmount = executionFee.add(RELAY_FEE_AMOUNT);
+    const params = getSubaccountOrderParams(ctx, user1.address, {
+      numbers: { executionFee },
+    });
+    const initialCollateralAmount = bigNumberify(params.numbers.initialCollateralDeltaAmount);
+    const totalFeeAmount = feeAmount.mul(2);
+
+    await reentrancyToken.mint(user1.address, totalFeeAmount);
+    await reentrancyToken.connect(user1).approve(router.address, totalFeeAmount);
+    await wnt.connect(user1).deposit({ value: initialCollateralAmount });
+    await wnt.connect(user1).approve(router.address, initialCollateralAmount);
+
+    await sendSubaccountCreateOrder({
+      sender: relaySigner,
+      signer: user0,
+      feeParams: {
+        feeToken: reentrancyToken.address,
+        feeAmount,
+        feeSwapPath: [],
+      },
+      account: user1.address,
+      subaccount: user0.address,
+      subaccountApproval: getEmptySubaccountApproval(),
+      subaccountApprovalSigner: user1,
+      params,
+      deadline: 9999999999,
+      relayRouter: subaccountGelatoRelayRouter,
+      chainId,
+      desChainId: chainId,
+      gelatoRelayFeeToken: reentrancyToken.address,
+      gelatoRelayFeeAmount: RELAY_FEE_AMOUNT,
+    });
+
+    const orderKeys = await getOrderKeys(ctx.dataStore, 0, 1);
+    const key = orderKeys[0];
+
+    const emptyRelayParams = getEmptyRelayParams(chainId);
+    const reenterCalldata = subaccountGelatoRelayRouter.interface.encodeFunctionData("updateOrder", [
+      emptyRelayParams,
+      getEmptySubaccountApproval(),
+      user1.address,
+      user0.address,
+      {
+        key: ethers.constants.HashZero,
+        sizeDeltaUsd: 0,
+        acceptablePrice: 0,
+        triggerPrice: 0,
+        minOutputAmount: 0,
+        validFromTime: 0,
+        autoCancel: false,
+        executionFeeIncrease: 0,
+      },
+    ]);
+    await reentrancyToken.setReenterConfig(subaccountGelatoRelayRouter.address, reenterCalldata, 0, 1, false);
+
+    await increaseTimeForCancellation(ctx.dataStore);
+
+    await sendSubaccountCancelOrder({
+      sender: relaySigner,
+      signer: user0,
+      feeParams: {
+        feeToken: reentrancyToken.address,
+        feeAmount,
+        feeSwapPath: [],
+      },
+      account: user1.address,
+      subaccount: user0.address,
+      subaccountApproval: getEmptySubaccountApproval(),
+      subaccountApprovalSigner: user1,
+      key,
+      deadline: 9999999999,
+      relayRouter: subaccountGelatoRelayRouter,
+      chainId,
+      desChainId: chainId,
+      gelatoRelayFeeToken: reentrancyToken.address,
+      gelatoRelayFeeAmount: RELAY_FEE_AMOUNT,
+    });
+
+    await expectTokenReentrancyGuard(reentrancyToken);
+  },
+  "SubaccountGelatoRelayRouter.createOrder -> SubaccountGelatoRelayRouter.cancelOrder": async (ctx) => {
+    const { user0, user1, wallet } = ctx.fixture.accounts;
+    const { dataStore, subaccountGelatoRelayRouter, router, wnt } = ctx.fixture.contracts;
+    const reentrancyToken = await deployReentrantToken();
+    const { relaySigner, chainId } = await getRelaySignerAndChainId();
+
+    await dataStore.setAddress(keys.HOLDING_ADDRESS, wallet.address);
+    await dataStore.setAddress(keys.WNT, reentrancyToken.address);
+    await dataStore.setUint(keys.tokenTransferGasLimit(reentrancyToken.address), 2_000_000);
+
+    await enableSubaccount(ctx, user1, user0);
+
+    const executionFee = EXECUTION_FEE;
+    const feeAmount = executionFee.add(RELAY_FEE_AMOUNT);
+    const params = getSubaccountOrderParams(ctx, user1.address, {
+      numbers: { executionFee },
+    });
+    const initialCollateralAmount = bigNumberify(params.numbers.initialCollateralDeltaAmount);
+    const totalFeeAmount = feeAmount;
+
+    await reentrancyToken.mint(user1.address, totalFeeAmount);
+    await reentrancyToken.connect(user1).approve(router.address, totalFeeAmount);
+    await wnt.connect(user1).deposit({ value: initialCollateralAmount });
+    await wnt.connect(user1).approve(router.address, initialCollateralAmount);
+
+    const emptyRelayParams = getEmptyRelayParams(chainId);
+    const reenterCalldata = subaccountGelatoRelayRouter.interface.encodeFunctionData("cancelOrder", [
+      emptyRelayParams,
+      getEmptySubaccountApproval(),
+      user1.address,
+      user0.address,
+      ethers.constants.HashZero,
+    ]);
+    await reentrancyToken.setReenterConfig(subaccountGelatoRelayRouter.address, reenterCalldata, 0, 1, false);
+
+    await sendSubaccountCreateOrder({
+      sender: relaySigner,
+      signer: user0,
+      feeParams: {
+        feeToken: reentrancyToken.address,
+        feeAmount,
+        feeSwapPath: [],
+      },
+      account: user1.address,
+      subaccount: user0.address,
+      subaccountApproval: getEmptySubaccountApproval(),
+      subaccountApprovalSigner: user1,
+      params,
+      deadline: 9999999999,
+      relayRouter: subaccountGelatoRelayRouter,
+      chainId,
+      desChainId: chainId,
+      gelatoRelayFeeToken: reentrancyToken.address,
+      gelatoRelayFeeAmount: RELAY_FEE_AMOUNT,
+    });
+
+    await expectTokenReentrancyGuard(reentrancyToken);
+  },
+  "SubaccountGelatoRelayRouter.removeSubaccount -> SubaccountGelatoRelayRouter.updateOrder": async (ctx) => {
+    const { user0, user1 } = ctx.fixture.accounts;
+    const { subaccountGelatoRelayRouter, router, wnt } = ctx.fixture.contracts;
     const reentrancyTest = await deployContract("ReentrancyTest", []);
     const { relaySigner, chainId } = await getRelaySignerAndChainId();
 
-    await dataStore.setBool(keys.isSrcChainIdEnabledKey(chainId), true);
-    await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolNative.address), true);
-    await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolNative.address), true);
-    await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolUsdc.address), true);
-    await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolUsdc.address), true);
-    await bridgeInTokens(ctx.fixture, { account: user0, amount: expandDecimals(5, 18) });
+    await enableSubaccount(ctx, user1, user0);
 
-    const params = getDefaultRelayOrderParams(ctx);
-    const externalCalls = getRelayReentrancyCalls(reentrancyTest, wnt.address, expandDecimals(1, 15));
+    await wnt.connect(user1).deposit({ value: expandDecimals(1, 18) });
+    await wnt.connect(user1).approve(router.address, expandDecimals(1, 18));
+
+    const emptyRelayParams = getEmptyRelayParams(chainId);
+    const reenterCalldata = subaccountGelatoRelayRouter.interface.encodeFunctionData("updateOrder", [
+      emptyRelayParams,
+      getEmptySubaccountApproval(),
+      user1.address,
+      user0.address,
+      {
+        key: ethers.constants.HashZero,
+        sizeDeltaUsd: 0,
+        acceptablePrice: 0,
+        triggerPrice: 0,
+        minOutputAmount: 0,
+        validFromTime: 0,
+        autoCancel: false,
+        executionFeeIncrease: 0,
+      },
+    ]);
+    await reentrancyTest.setReenterConfig(subaccountGelatoRelayRouter.address, reenterCalldata, 0, 1, false);
+
+    const externalCalls = getRelayReentrancyCalls(reentrancyTest, wnt.address, EXTERNAL_CALL_AMOUNT);
+    await sendSubaccountRemoveSubaccount({
+      sender: relaySigner,
+      signer: user1,
+      feeParams: {
+        feeToken: wnt.address,
+        feeAmount: RELAY_FEE_AMOUNT,
+        feeSwapPath: [],
+      },
+      externalCalls,
+      subaccount: user0.address,
+      chainId,
+      account: user1.address,
+      deadline: 9999999999,
+      relayRouter: subaccountGelatoRelayRouter,
+      desChainId: chainId,
+      gelatoRelayFeeToken: wnt.address,
+      gelatoRelayFeeAmount: RELAY_FEE_AMOUNT,
+    });
+
+    await expectReentrancyGuard(reentrancyTest);
+  },
+  "SubaccountGelatoRelayRouter.sendNativeToken -> SubaccountGelatoRelayRouter.cancelOrder": async (ctx) => {
+    const { user0 } = ctx.fixture.accounts;
+    const { dataStore, subaccountGelatoRelayRouter } = ctx.fixture.contracts;
+    const reentrancyTest = await deployContract("ReentrancyTest", []);
+    const chainId = await ethers.provider.getNetwork().then((network) => network.chainId);
+
+    const emptyRelayParams = getEmptyRelayParams(chainId);
+    const reenterCalldata = subaccountGelatoRelayRouter.interface.encodeFunctionData("cancelOrder", [
+      emptyRelayParams,
+      getEmptySubaccountApproval(),
+      user0.address,
+      user0.address,
+      ethers.constants.HashZero,
+    ]);
+    await reentrancyTest.setReenterConfig(subaccountGelatoRelayRouter.address, reenterCalldata, 0, 1, false);
+
+    await dataStore.setUint(keys.NATIVE_TOKEN_TRANSFER_GAS_LIMIT, bigNumberify(2_000_000));
+
+    const amount = expandDecimals(1, 15);
+    await subaccountGelatoRelayRouter.connect(user0).sendNativeToken(reentrancyTest.address, amount, { value: amount });
+
+    await expectReentrancyGuard(reentrancyTest);
+  },
+  "SubaccountGelatoRelayRouter.updateOrder -> SubaccountGelatoRelayRouter.cancelOrder": async (ctx) => {
+    const { user0, user1, wallet } = ctx.fixture.accounts;
+    const { dataStore, subaccountGelatoRelayRouter, router, wnt } = ctx.fixture.contracts;
+    const reentrancyToken = await deployReentrantToken();
+    const { relaySigner, chainId } = await getRelaySignerAndChainId();
+
+    await dataStore.setAddress(keys.HOLDING_ADDRESS, wallet.address);
+    await dataStore.setAddress(keys.WNT, reentrancyToken.address);
+    await dataStore.setUint(keys.tokenTransferGasLimit(reentrancyToken.address), 2_000_000);
+
+    await enableSubaccount(ctx, user1, user0);
+
+    const executionFee = EXECUTION_FEE;
+    const feeAmount = executionFee.add(RELAY_FEE_AMOUNT);
+    const params = getSubaccountOrderParams(ctx, user1.address, {
+      numbers: { executionFee },
+    });
+    const initialCollateralAmount = bigNumberify(params.numbers.initialCollateralDeltaAmount);
+    const totalFeeAmount = feeAmount.mul(2);
+
+    await reentrancyToken.mint(user1.address, totalFeeAmount);
+    await reentrancyToken.connect(user1).approve(router.address, totalFeeAmount);
+    await wnt.connect(user1).deposit({ value: initialCollateralAmount });
+    await wnt.connect(user1).approve(router.address, initialCollateralAmount);
+
+    await sendSubaccountCreateOrder({
+      sender: relaySigner,
+      signer: user0,
+      feeParams: {
+        feeToken: reentrancyToken.address,
+        feeAmount,
+        feeSwapPath: [],
+      },
+      account: user1.address,
+      subaccount: user0.address,
+      subaccountApproval: getEmptySubaccountApproval(),
+      subaccountApprovalSigner: user1,
+      params,
+      deadline: 9999999999,
+      relayRouter: subaccountGelatoRelayRouter,
+      chainId,
+      desChainId: chainId,
+      gelatoRelayFeeToken: reentrancyToken.address,
+      gelatoRelayFeeAmount: RELAY_FEE_AMOUNT,
+    });
+
+    const orderKeys = await getOrderKeys(ctx.dataStore, 0, 1);
+    const key = orderKeys[0];
+
+    const emptyRelayParams = getEmptyRelayParams(chainId);
+    const reenterCalldata = subaccountGelatoRelayRouter.interface.encodeFunctionData("cancelOrder", [
+      emptyRelayParams,
+      getEmptySubaccountApproval(),
+      user1.address,
+      user0.address,
+      ethers.constants.HashZero,
+    ]);
+    await reentrancyToken.setReenterConfig(subaccountGelatoRelayRouter.address, reenterCalldata, 0, 1, false);
+
+    await sendSubaccountUpdateOrder({
+      sender: relaySigner,
+      signer: user0,
+      feeParams: {
+        feeToken: reentrancyToken.address,
+        feeAmount,
+        feeSwapPath: [],
+      },
+      account: user1.address,
+      subaccount: user0.address,
+      subaccountApproval: getEmptySubaccountApproval(),
+      subaccountApprovalSigner: user1,
+      params: {
+        key,
+        sizeDeltaUsd: decimalToFloat(150 * 1000),
+        acceptablePrice: expandDecimals(5002, 12),
+        triggerPrice: expandDecimals(5001, 12),
+        minOutputAmount: 0,
+        validFromTime: 0,
+        autoCancel: false,
+        executionFeeIncrease: 0,
+      },
+      deadline: 9999999999,
+      relayRouter: subaccountGelatoRelayRouter,
+      chainId,
+      desChainId: chainId,
+      gelatoRelayFeeToken: reentrancyToken.address,
+      gelatoRelayFeeAmount: RELAY_FEE_AMOUNT,
+    });
+
+    await expectTokenReentrancyGuard(reentrancyToken);
+  },
+  "SubaccountRouter.sendNativeToken -> SubaccountRouter.removeSubaccount": async (ctx) => {
+    const { user0 } = ctx.fixture.accounts;
+    const { dataStore, subaccountRouter } = ctx.fixture.contracts;
+    const reentrancyTest = await deployContract("ReentrancyTest", []);
+
+    const reenterCalldata = subaccountRouter.interface.encodeFunctionData("removeSubaccount", [user0.address]);
+    await reentrancyTest.setReenterConfig(subaccountRouter.address, reenterCalldata, 0, 1, false);
+
+    await dataStore.setUint(keys.NATIVE_TOKEN_TRANSFER_GAS_LIMIT, bigNumberify(2_000_000));
+
+    const amount = expandDecimals(1, 15);
+    await subaccountRouter.connect(user0).sendNativeToken(reentrancyTest.address, amount, { value: amount });
+
+    await expectReentrancyGuard(reentrancyTest);
+  },
+  "MultichainReader.lzReceive -> MultichainReader.sendReadRequests": async (ctx) => {
+    const { config, multichainReader, mockEndpointV2, roleStore } = ctx.fixture.contracts;
+    const { user0 } = ctx.fixture.accounts;
+    const reentrancyOriginator = await deployContract("ReentrantMultichainReaderOriginator", [
+      multichainReader.address,
+    ]);
+    const mockLzReadResponse = await deployContract("MockLzReadResponse", []);
+
+    const channelId = 1001;
+    const targetChainEid = 1000;
+
+    await mockEndpointV2.setDestLzEndpoint(multichainReader.address, mockEndpointV2.address);
+    await mockEndpointV2.setReadChannelId(channelId);
+
+    await config.setBool(
+      keys.MULTICHAIN_AUTHORIZED_ORIGINATORS,
+      encodeData(["address"], [reentrancyOriginator.address]),
+      "true"
+    );
+    await config.setUint(keys.MULTICHAIN_READ_CHANNEL, "0x", channelId);
+    await config.setBytes32(
+      keys.MULTICHAIN_PEERS,
+      encodeData(["uint256"], [channelId]),
+      ethers.utils.hexZeroPad(multichainReader.address, 32)
+    );
+
+    const currentChainEid = await multichainReader.currentChainEid();
+    await config.setUint(keys.MULTICHAIN_CONFIRMATIONS, encodeData(["uint256"], [targetChainEid]), 1);
+    await config.setUint(keys.MULTICHAIN_CONFIRMATIONS, encodeData(["uint256"], [currentChainEid]), 1);
+
+    await grantRole(roleStore, reentrancyOriginator.address, "CONTROLLER");
+
+    const functionSignature = new ethers.utils.Interface(["function getUint(bytes32) external view returns (uint256)"]);
+    const callData = functionSignature.encodeFunctionData("getUint", [
+      keys.withdrawableBuybackTokenAmountKey(user0.address),
+    ]);
+    const readRequestInputs = [
+      {
+        targetChainEid,
+        target: mockLzReadResponse.address,
+        callData,
+      },
+    ];
+    const extraOptionsInputs = {
+      gasLimit: 500000,
+      returnDataSize: 40,
+      msgValue: 0,
+    };
+
+    const encodedReadRequestInputs = ethers.utils.defaultAbiCoder.encode(
+      ["tuple(uint32 targetChainEid,address target,bytes callData)[]"],
+      [readRequestInputs]
+    );
+    await reentrancyOriginator.setReenterConfig(encodedReadRequestInputs, extraOptionsInputs, 1);
+
+    const nativeFee = await multichainReader.quoteReadFee(readRequestInputs, extraOptionsInputs);
+    await reentrancyOriginator.callSendReadRequests(readRequestInputs, extraOptionsInputs, {
+      value: nativeFee.nativeFee,
+    });
+
+    expect(await reentrancyOriginator.reenterDepth()).eq(1);
+    expect(await reentrancyOriginator.lastReenterSuccess()).eq(false);
+
+    const lastResult = await reentrancyOriginator.lastReenterResult();
+    const parsed = parseError(lastResult, false);
+    if (parsed) {
+      expect(parsed.name).eq("Error");
+      expect(parsed.args?.[0]).eq("LayerZeroMock: no receive reentrancy");
+    } else if (lastResult === "0x") {
+      expect(lastResult).eq("0x");
+    } else {
+      const lzSendReentrancySig = ethers.utils.id("LZ_SendReentrancy()").slice(0, 10);
+      expect(lastResult.slice(0, 10)).eq(lzSendReentrancySig);
+    }
+  },
+  "MultichainSubaccountRouter.batch -> MultichainSubaccountRouter.updateOrder": async (ctx) => {
+    const { user0, user1, wallet } = ctx.fixture.accounts;
+    const { dataStore, multichainSubaccountRouter } = ctx.fixture.contracts;
+    const reentrancyToken = await deployReentrantToken();
+
+    await dataStore.setAddress(keys.HOLDING_ADDRESS, wallet.address);
+    await dataStore.setAddress(keys.WNT, reentrancyToken.address);
+    await dataStore.setUint(keys.tokenTransferGasLimit(reentrancyToken.address), 2_000_000);
+
+    await enableSubaccount(ctx, user1, user0);
+
+    const { relaySigner, chainId } = await setupMultichainRelay(ctx, user1, 0);
+    const executionFee = EXECUTION_FEE;
+    const feeAmount = executionFee.add(RELAY_FEE_AMOUNT);
+
+    await seedMultichainBalanceForToken(ctx, user1, reentrancyToken, feeAmount);
+
+    const params = getSubaccountOrderParams(ctx, user1.address, {
+      numbers: { executionFee },
+    });
+    const initialCollateralAmount = bigNumberify(params.numbers.initialCollateralDeltaAmount);
+    const initialCollateralToken = await contractAt("MintableToken", params.addresses.initialCollateralToken);
+    await dataStore.setUint(keys.tokenTransferGasLimit(initialCollateralToken.address), 2_000_000);
+    await seedMultichainBalanceForToken(ctx, user1, initialCollateralToken, initialCollateralAmount);
+
+    const emptyRelayParams = getEmptyRelayParams(chainId);
+    const reenterCalldata = multichainSubaccountRouter.interface.encodeFunctionData("updateOrder", [
+      emptyRelayParams,
+      getEmptySubaccountApproval(),
+      user1.address,
+      chainId,
+      user0.address,
+      {
+        key: ethers.constants.HashZero,
+        sizeDeltaUsd: 0,
+        acceptablePrice: 0,
+        triggerPrice: 0,
+        minOutputAmount: 0,
+        validFromTime: 0,
+        autoCancel: false,
+        executionFeeIncrease: 0,
+      },
+    ]);
+    await reentrancyToken.setReenterConfig(multichainSubaccountRouter.address, reenterCalldata, 0, 1, false);
+
+    const batchParams: any = {
+      sender: relaySigner,
+      signer: user0,
+      feeParams: {
+        feeToken: reentrancyToken.address,
+        feeAmount,
+        feeSwapPath: [],
+      },
+      account: user1.address,
+      subaccount: user0.address,
+      subaccountApproval: getEmptySubaccountApproval(),
+      subaccountApprovalSigner: user1,
+      createOrderParamsList: [params],
+      updateOrderParamsList: [],
+      cancelOrderKeys: [],
+      deadline: 9999999999,
+      relayRouter: multichainSubaccountRouter,
+      chainId,
+      srcChainId: chainId,
+      desChainId: chainId,
+      gelatoRelayFeeToken: reentrancyToken.address,
+      gelatoRelayFeeAmount: RELAY_FEE_AMOUNT,
+    };
+
+    await sendSubaccountBatch(batchParams);
+
+    await expectTokenReentrancyGuard(reentrancyToken);
+  },
+  "MultichainSubaccountRouter.cancelOrder -> MultichainSubaccountRouter.createOrder": async (ctx) => {
+    const { user0, user1, wallet } = ctx.fixture.accounts;
+    const { dataStore, multichainSubaccountRouter } = ctx.fixture.contracts;
+    const reentrancyToken = await deployReentrantToken();
+
+    await dataStore.setAddress(keys.HOLDING_ADDRESS, wallet.address);
+    await dataStore.setAddress(keys.WNT, reentrancyToken.address);
+    await dataStore.setUint(keys.tokenTransferGasLimit(reentrancyToken.address), 2_000_000);
+
+    await enableSubaccount(ctx, user1, user0);
+
+    const { relaySigner, chainId } = await setupMultichainRelay(ctx, user1, 0);
+    const executionFee = EXECUTION_FEE;
+    const params = getSubaccountOrderParams(ctx, user1.address, {
+      numbers: { executionFee },
+    });
+    const initialCollateralAmount = bigNumberify(params.numbers.initialCollateralDeltaAmount);
+    const initialCollateralToken = await contractAt("MintableToken", params.addresses.initialCollateralToken);
+    const totalFeeAmount = executionFee.mul(2).add(RELAY_FEE_AMOUNT.mul(3));
+
+    await dataStore.setUint(keys.tokenTransferGasLimit(initialCollateralToken.address), 2_000_000);
+    await seedMultichainBalanceForToken(ctx, user1, initialCollateralToken, initialCollateralAmount.mul(2));
+    await seedMultichainBalanceForToken(ctx, user1, reentrancyToken, totalFeeAmount);
 
     const createOrderParams: any = {
       sender: relaySigner,
       signer: user0,
       feeParams: {
-        feeToken: wnt.address,
-        feeAmount: expandDecimals(2, 15),
+        feeToken: reentrancyToken.address,
+        feeAmount: executionFee.add(RELAY_FEE_AMOUNT),
         feeSwapPath: [],
       },
-      account: user0.address,
+      account: user1.address,
+      subaccount: user0.address,
+      subaccountApproval: getEmptySubaccountApproval(),
+      subaccountApprovalSigner: user1,
       params,
       deadline: 9999999999,
+      relayRouter: multichainSubaccountRouter,
       chainId,
       srcChainId: chainId,
       desChainId: chainId,
-      relayRouter: multichainOrderRouter,
-      relayFeeToken: wnt.address,
-      relayFeeAmount: expandDecimals(1, 15),
-      externalCalls,
+      gelatoRelayFeeToken: reentrancyToken.address,
+      gelatoRelayFeeAmount: RELAY_FEE_AMOUNT,
     };
 
+    await sendSubaccountCreateOrder(createOrderParams);
+
+    const orderKeys = await getOrderKeys(ctx.dataStore, 0, 1);
+    const key = orderKeys[0];
+
     const emptyRelayParams = getEmptyRelayParams(chainId);
-    const reenterCalldata = multichainOrderRouter.interface.encodeFunctionData("cancelOrder", [
+    const reenterCalldata = multichainSubaccountRouter.interface.encodeFunctionData("createOrder", [
       emptyRelayParams,
-      user0.address,
+      getEmptySubaccountApproval(),
+      user1.address,
       chainId,
+      user0.address,
+      getSubaccountOrderParams(ctx, user1.address),
+    ]);
+    await reentrancyToken.setReenterConfig(multichainSubaccountRouter.address, reenterCalldata, 0, 1, false);
+
+    await increaseTimeForCancellation(ctx.dataStore);
+
+    const cancelOrderParams: any = {
+      sender: relaySigner,
+      signer: user0,
+      feeParams: {
+        feeToken: reentrancyToken.address,
+        feeAmount: RELAY_FEE_AMOUNT,
+        feeSwapPath: [],
+      },
+      subaccount: user0.address,
+      subaccountApproval: getEmptySubaccountApproval(),
+      subaccountApprovalSigner: user1,
+      chainId,
+      account: user1.address,
+      key,
+      deadline: 9999999999,
+      srcChainId: chainId,
+      desChainId: chainId,
+      relayRouter: multichainSubaccountRouter,
+      gelatoRelayFeeToken: reentrancyToken.address,
+      gelatoRelayFeeAmount: RELAY_FEE_AMOUNT,
+    };
+
+    await sendSubaccountCancelOrder(cancelOrderParams);
+
+    await expectTokenReentrancyGuard(reentrancyToken);
+  },
+  "MultichainSubaccountRouter.createOrder -> MultichainSubaccountRouter.cancelOrder": async (ctx) => {
+    const { user0, user1, wallet } = ctx.fixture.accounts;
+    const { dataStore, multichainSubaccountRouter } = ctx.fixture.contracts;
+    const reentrancyToken = await deployReentrantToken();
+
+    await dataStore.setAddress(keys.HOLDING_ADDRESS, wallet.address);
+    await dataStore.setAddress(keys.WNT, reentrancyToken.address);
+    await dataStore.setUint(keys.tokenTransferGasLimit(reentrancyToken.address), 2_000_000);
+
+    await enableSubaccount(ctx, user1, user0);
+
+    const { relaySigner, chainId } = await setupMultichainRelay(ctx, user1, 0);
+    const executionFee = EXECUTION_FEE;
+    const feeAmount = executionFee.add(RELAY_FEE_AMOUNT);
+
+    await seedMultichainBalanceForToken(ctx, user1, reentrancyToken, feeAmount);
+
+    const params = getSubaccountOrderParams(ctx, user1.address, {
+      numbers: { executionFee },
+    });
+    const initialCollateralAmount = bigNumberify(params.numbers.initialCollateralDeltaAmount);
+    const initialCollateralToken = await contractAt("MintableToken", params.addresses.initialCollateralToken);
+    await dataStore.setUint(keys.tokenTransferGasLimit(initialCollateralToken.address), 2_000_000);
+    await seedMultichainBalanceForToken(ctx, user1, initialCollateralToken, initialCollateralAmount);
+
+    const emptyRelayParams = getEmptyRelayParams(chainId);
+    const reenterCalldata = multichainSubaccountRouter.interface.encodeFunctionData("cancelOrder", [
+      emptyRelayParams,
+      getEmptySubaccountApproval(),
+      user1.address,
+      chainId,
+      user0.address,
       ethers.constants.HashZero,
     ]);
-    await reentrancyTest.setReenterConfig(multichainOrderRouter.address, reenterCalldata, 0, 1, false);
+    await reentrancyToken.setReenterConfig(multichainSubaccountRouter.address, reenterCalldata, 0, 1, false);
 
-    await sendMultichainCreateOrder(createOrderParams);
+    const createOrderParams: any = {
+      sender: relaySigner,
+      signer: user0,
+      feeParams: {
+        feeToken: reentrancyToken.address,
+        feeAmount,
+        feeSwapPath: [],
+      },
+      account: user1.address,
+      subaccount: user0.address,
+      subaccountApproval: getEmptySubaccountApproval(),
+      subaccountApprovalSigner: user1,
+      params,
+      deadline: 9999999999,
+      relayRouter: multichainSubaccountRouter,
+      chainId,
+      srcChainId: chainId,
+      desChainId: chainId,
+      gelatoRelayFeeToken: reentrancyToken.address,
+      gelatoRelayFeeAmount: RELAY_FEE_AMOUNT,
+    };
+
+    await sendSubaccountCreateOrder(createOrderParams);
+
+    await expectTokenReentrancyGuard(reentrancyToken);
+  },
+  "MultichainSubaccountRouter.removeSubaccount -> MultichainSubaccountRouter.updateOrder": async (ctx) => {
+    const { user0, user1 } = ctx.fixture.accounts;
+    const { multichainSubaccountRouter, wnt } = ctx.fixture.contracts;
+    const reentrancyTest = await deployContract("ReentrancyTest", []);
+
+    await enableSubaccount(ctx, user1, user0);
+
+    const { relaySigner, chainId } = await setupMultichainRelay(ctx, user1, RELAY_FEE_AMOUNT.add(EXTERNAL_CALL_AMOUNT));
+
+    const emptyRelayParams = getEmptyRelayParams(chainId);
+    const reenterCalldata = multichainSubaccountRouter.interface.encodeFunctionData("updateOrder", [
+      emptyRelayParams,
+      getEmptySubaccountApproval(),
+      user1.address,
+      chainId,
+      user0.address,
+      {
+        key: ethers.constants.HashZero,
+        sizeDeltaUsd: 0,
+        acceptablePrice: 0,
+        triggerPrice: 0,
+        minOutputAmount: 0,
+        validFromTime: 0,
+        autoCancel: false,
+        executionFeeIncrease: 0,
+      },
+    ]);
+    await reentrancyTest.setReenterConfig(multichainSubaccountRouter.address, reenterCalldata, 0, 1, false);
+
+    const externalCalls = getRelayReentrancyCalls(reentrancyTest, wnt.address, EXTERNAL_CALL_AMOUNT);
+    const removeSubaccountParams: any = {
+      sender: relaySigner,
+      signer: user1,
+      feeParams: {
+        feeToken: wnt.address,
+        feeAmount: RELAY_FEE_AMOUNT,
+        feeSwapPath: [],
+      },
+      externalCalls,
+      subaccount: user0.address,
+      chainId,
+      account: user1.address,
+      deadline: 9999999999,
+      srcChainId: chainId,
+      desChainId: chainId,
+      relayRouter: multichainSubaccountRouter,
+      gelatoRelayFeeToken: wnt.address,
+      gelatoRelayFeeAmount: RELAY_FEE_AMOUNT,
+    };
+
+    await sendSubaccountRemoveSubaccount(removeSubaccountParams);
 
     await expectReentrancyGuard(reentrancyTest);
   },
-
-  "MultichainTransferRouter.bridgeOut(((address[],address[],bytes[]),(address[],uint256[],address[],bytes[],address[],address[]),(address,address,uint256,uint256,uint8,bytes32,bytes32,address)[],(address,uint256,address[]),uint256,uint256,bytes,uint256),address,uint256,(address,uint256,uint256,address,bytes)) -> MultichainTransferRouter.bridgeIn(address,address)": async (
-    ctx
-  ) => {
+  "MultichainSubaccountRouter.sendNativeToken -> MultichainSubaccountRouter.cancelOrder": async (ctx) => {
     const { user0 } = ctx.fixture.accounts;
-    const { dataStore, multichainTransferRouter, wnt, mockStargatePoolNative, mockStargatePoolUsdc } =
-      ctx.fixture.contracts;
-    const reentrancyToken = await deployReentrantToken();
-    const { relaySigner, chainId } = await getRelaySignerAndChainId();
+    const { dataStore, multichainSubaccountRouter } = ctx.fixture.contracts;
+    const reentrancyTest = await deployContract("ReentrancyTest", []);
+    const chainId = await ethers.provider.getNetwork().then((network) => network.chainId);
 
-    await dataStore.setBool(keys.isSrcChainIdEnabledKey(chainId), true);
-    await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolNative.address), true);
-    await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolNative.address), true);
-    await dataStore.setBool(keys.isMultichainProviderEnabledKey(mockStargatePoolUsdc.address), true);
-    await dataStore.setBool(keys.isMultichainEndpointEnabledKey(mockStargatePoolUsdc.address), true);
-    await dataStore.setUint(keys.tokenTransferGasLimit(reentrancyToken.address), 30_000_000);
-    await mockStargatePoolUsdc.updateToken(reentrancyToken.address);
-    await bridgeInTokens(ctx.fixture, { account: user0, token: reentrancyToken, amount: expandDecimals(10, 18) });
-    await bridgeInTokens(ctx.fixture, { account: user0, amount: expandDecimals(2, 18) });
+    const emptyRelayParams = getEmptyRelayParams(chainId);
+    const reenterCalldata = multichainSubaccountRouter.interface.encodeFunctionData("cancelOrder", [
+      emptyRelayParams,
+      getEmptySubaccountApproval(),
+      user0.address,
+      chainId,
+      user0.address,
+      ethers.constants.HashZero,
+    ]);
+    await reentrancyTest.setReenterConfig(multichainSubaccountRouter.address, reenterCalldata, 0, 1, false);
+
+    await dataStore.setUint(keys.NATIVE_TOKEN_TRANSFER_GAS_LIMIT, bigNumberify(2_000_000));
+
+    const amount = expandDecimals(1, 15);
+    await multichainSubaccountRouter.connect(user0).sendNativeToken(reentrancyTest.address, amount, { value: amount });
+
+    await expectReentrancyGuard(reentrancyTest);
+  },
+  "MultichainSubaccountRouter.updateOrder -> MultichainSubaccountRouter.cancelOrder": async (ctx) => {
+    const { user0, user1, wallet } = ctx.fixture.accounts;
+    const { dataStore, multichainSubaccountRouter } = ctx.fixture.contracts;
+    const reentrancyToken = await deployReentrantToken();
+
+    await dataStore.setAddress(keys.HOLDING_ADDRESS, wallet.address);
+    await dataStore.setAddress(keys.WNT, reentrancyToken.address);
+    await dataStore.setUint(keys.tokenTransferGasLimit(reentrancyToken.address), 2_000_000);
+
+    await enableSubaccount(ctx, user1, user0);
+
+    const { relaySigner, chainId } = await setupMultichainRelay(ctx, user1, 0);
+    const executionFee = EXECUTION_FEE;
+    const params = getSubaccountOrderParams(ctx, user1.address, {
+      numbers: { executionFee },
+    });
+    const initialCollateralAmount = bigNumberify(params.numbers.initialCollateralDeltaAmount);
+    const initialCollateralToken = await contractAt("MintableToken", params.addresses.initialCollateralToken);
+    const totalFeeAmount = executionFee.add(RELAY_FEE_AMOUNT.mul(2));
+
+    await dataStore.setUint(keys.tokenTransferGasLimit(initialCollateralToken.address), 2_000_000);
+    await seedMultichainBalanceForToken(ctx, user1, initialCollateralToken, initialCollateralAmount);
+    await seedMultichainBalanceForToken(ctx, user1, reentrancyToken, totalFeeAmount);
+
+    const createOrderParams: any = {
+      sender: relaySigner,
+      signer: user0,
+      feeParams: {
+        feeToken: reentrancyToken.address,
+        feeAmount: executionFee.add(RELAY_FEE_AMOUNT),
+        feeSwapPath: [],
+      },
+      account: user1.address,
+      subaccount: user0.address,
+      subaccountApproval: getEmptySubaccountApproval(),
+      subaccountApprovalSigner: user1,
+      params,
+      deadline: 9999999999,
+      relayRouter: multichainSubaccountRouter,
+      chainId,
+      srcChainId: chainId,
+      desChainId: chainId,
+      gelatoRelayFeeToken: reentrancyToken.address,
+      gelatoRelayFeeAmount: RELAY_FEE_AMOUNT,
+    };
+
+    await sendSubaccountCreateOrder(createOrderParams);
+
+    const orderKeys = await getOrderKeys(ctx.dataStore, 0, 1);
+    const key = orderKeys[0];
+
+    const emptyRelayParams = getEmptyRelayParams(chainId);
+    const reenterCalldata = multichainSubaccountRouter.interface.encodeFunctionData("cancelOrder", [
+      emptyRelayParams,
+      getEmptySubaccountApproval(),
+      user1.address,
+      chainId,
+      user0.address,
+      ethers.constants.HashZero,
+    ]);
+    await reentrancyToken.setReenterConfig(multichainSubaccountRouter.address, reenterCalldata, 0, 1, false);
+
+    const updateOrderParams: any = {
+      sender: relaySigner,
+      signer: user0,
+      feeParams: {
+        feeToken: reentrancyToken.address,
+        feeAmount: RELAY_FEE_AMOUNT,
+        feeSwapPath: [],
+      },
+      account: user1.address,
+      subaccount: user0.address,
+      subaccountApproval: getEmptySubaccountApproval(),
+      subaccountApprovalSigner: user1,
+      chainId,
+      srcChainId: chainId,
+      desChainId: chainId,
+      relayRouter: multichainSubaccountRouter,
+      gelatoRelayFeeToken: reentrancyToken.address,
+      gelatoRelayFeeAmount: RELAY_FEE_AMOUNT,
+      deadline: 9999999999,
+      params: {
+        key,
+        sizeDeltaUsd: decimalToFloat(150 * 1000),
+        acceptablePrice: expandDecimals(5002, 12),
+        triggerPrice: expandDecimals(5001, 12),
+        minOutputAmount: 0,
+        validFromTime: 0,
+        autoCancel: false,
+        executionFeeIncrease: 0,
+      },
+    };
+
+    await sendSubaccountUpdateOrder(updateOrderParams);
+
+    await expectTokenReentrancyGuard(reentrancyToken);
+  },
+  "MultichainTransferRouter.bridgeIn -> MultichainTransferRouter.bridgeOut": async (ctx) => {
+    const { user0 } = ctx.fixture.accounts;
+    const {
+      router,
+      roleStore,
+      dataStore,
+      eventEmitter,
+      oracle,
+      orderVault,
+      orderHandler,
+      swapHandler,
+      externalHandler,
+      wnt,
+      gasUtils,
+      relayUtils,
+      multichainUtils,
+    } = ctx.fixture.contracts;
+    const reentrancyVault = await deployContract("ReentrancyTest", []);
+    const multichainTransferRouterFactory = await ethers.getContractFactory("MultichainTransferRouter", {
+      libraries: {
+        GasUtils: gasUtils.address,
+        MultichainUtils: multichainUtils.address,
+        RelayUtils: relayUtils.address,
+      },
+    });
+    const multichainTransferRouter = await multichainTransferRouterFactory.deploy({
+      router: router.address,
+      roleStore: roleStore.address,
+      dataStore: dataStore.address,
+      eventEmitter: eventEmitter.address,
+      oracle: oracle.address,
+      orderVault: orderVault.address,
+      orderHandler: orderHandler.address,
+      swapHandler: swapHandler.address,
+      externalHandler: externalHandler.address,
+      multichainVault: reentrancyVault.address,
+    });
+    await grantRole(roleStore, multichainTransferRouter.address, "CONTROLLER");
+    const chainId = await ethers.provider.getNetwork().then((network) => network.chainId);
+
+    const emptyRelayParams = getEmptyRelayParams(chainId);
+    const reenterCalldata = multichainTransferRouter.interface.encodeFunctionData("bridgeOut", [
+      emptyRelayParams,
+      user0.address,
+      chainId,
+      {
+        token: wnt.address,
+        amount: 0,
+        minAmountOut: 0,
+        provider: ethers.constants.AddressZero,
+        data: "0x",
+      },
+    ]);
+    await reentrancyVault.setReenterConfig(multichainTransferRouter.address, reenterCalldata, 0, 1, false);
+
+    await multichainTransferRouter.connect(user0).bridgeIn(user0.address, wnt.address);
+    await expectReentrancyGuard(reentrancyVault);
+  },
+  "MultichainTransferRouter.bridgeOut -> MultichainTransferRouter.bridgeIn": async (ctx) => {
+    const { user0 } = ctx.fixture.accounts;
+    const { dataStore, multichainTransferRouter, wnt } = ctx.fixture.contracts;
+    const reentrancyToken = await deployReentrantToken();
+
+    await dataStore.setUint(keys.tokenTransferGasLimit(reentrancyToken.address), 2_000_000);
+
+    const { relaySigner, chainId } = await setupMultichainRelay(ctx, user0, RELAY_FEE_AMOUNT);
+    const bridgeAmount = expandDecimals(1, 18);
+
+    await seedMultichainBalanceForToken(ctx, user0, reentrancyToken, bridgeAmount);
 
     const reenterCalldata = multichainTransferRouter.interface.encodeFunctionData("bridgeIn", [
       user0.address,
@@ -1590,189 +2741,60 @@ export const REENTRANCY_CASES: Record<string, (ctx: ReentrancyCaseContext) => Pr
     ]);
     await reentrancyToken.setReenterConfig(multichainTransferRouter.address, reenterCalldata, 0, 1, false);
 
-    const bridgeOutParams = {
-      token: reentrancyToken.address,
-      amount: expandDecimals(1, 18),
-      minAmountOut: 0,
-      provider: ethers.constants.AddressZero,
-      data: "0x",
-    };
-
-    await sendMultichainBridgeOut({
+    const bridgeOutParams: any = {
       sender: relaySigner,
       signer: user0,
       feeParams: {
         feeToken: wnt.address,
-        feeAmount: expandDecimals(2, 15),
+        feeAmount: RELAY_FEE_AMOUNT,
         feeSwapPath: [],
       },
       account: user0.address,
-      params: bridgeOutParams,
+      params: {
+        token: reentrancyToken.address,
+        amount: bridgeAmount,
+        minAmountOut: 0,
+        provider: ethers.constants.AddressZero,
+        data: "0x",
+      },
       deadline: 9999999999,
       srcChainId: chainId,
       desChainId: chainId,
       relayRouter: multichainTransferRouter,
       relayFeeToken: wnt.address,
-      relayFeeAmount: expandDecimals(1, 15),
-    });
+      relayFeeAmount: RELAY_FEE_AMOUNT,
+    };
+
+    await sendMultichainBridgeOut(bridgeOutParams);
 
     await expectTokenReentrancyGuard(reentrancyToken);
   },
-
-  "ClaimHandler.acceptTermsAndClaim((address,uint256,bytes,string)[],address) -> ClaimHandler.withdrawFunds(address,(address,uint256)[],address)": async (
-    ctx
-  ) => {
-    const { wallet, user0 } = ctx.fixture.accounts;
-    const { roleStore, dataStore, claimHandler, claimVault } = ctx.fixture.contracts;
-    const reentrancyToken = await deployReentrantToken();
-
-    const distributionId = 1;
-    const claimableAmount = expandDecimals(1, 18);
-
-    await grantRole(roleStore, wallet.address, "CONTROLLER");
-    await dataStore.setAddress(keys.HOLDING_ADDRESS, wallet.address);
-    await dataStore.setUint(keys.tokenTransferGasLimit(reentrancyToken.address), 30_000_000);
-    await dataStore.setUint(keys.claimableFundsAmountKey(user0.address, reentrancyToken.address, distributionId), claimableAmount);
-    await dataStore.setUint(keys.totalClaimableFundsAmountKey(reentrancyToken.address), claimableAmount);
-    await reentrancyToken.mint(claimVault.address, claimableAmount);
-
-    const reenterCalldata = claimHandler.interface.encodeFunctionData("withdrawFunds", [
-      reentrancyToken.address,
-      [{ account: user0.address, distributionId }],
-      user0.address,
-    ]);
-    await reentrancyToken.setReenterConfig(claimHandler.address, reenterCalldata, 0, 1, false);
-
-    await claimHandler.connect(user0).acceptTermsAndClaim(
-      [
-        {
-          token: reentrancyToken.address,
-          distributionId,
-          termsSignature: "0x",
-          acceptedTerms: "",
-        },
-      ],
-      user0.address
-    );
-
-    await expectTokenReentrancyGuard(reentrancyToken);
-  },
-
-  "ClaimHandler.withdrawFunds(address,(address,uint256)[],address) -> ClaimHandler.transferClaim(address,(address,uint256,address,address)[])": async (
-    ctx
-  ) => {
-    const { wallet, user0, user1 } = ctx.fixture.accounts;
-    const { roleStore, dataStore, claimHandler, claimVault } = ctx.fixture.contracts;
-    const reentrancyToken = await deployReentrantToken();
-
-    const distributionId = 1;
-    const claimableAmount = expandDecimals(1, 18);
-
-    await grantRole(roleStore, wallet.address, "CONTROLLER");
-    await grantRole(roleStore, wallet.address, "TIMELOCK_MULTISIG");
-    await dataStore.setAddress(keys.HOLDING_ADDRESS, wallet.address);
-    await dataStore.setUint(keys.tokenTransferGasLimit(reentrancyToken.address), 30_000_000);
-
-    await dataStore.setUint(keys.claimableFundsAmountKey(user0.address, reentrancyToken.address, distributionId), claimableAmount);
-    await dataStore.setUint(keys.totalClaimableFundsAmountKey(reentrancyToken.address), claimableAmount);
-    await reentrancyToken.mint(claimVault.address, claimableAmount.mul(2));
-
-    const reenterCalldata = claimHandler.interface.encodeFunctionData("transferClaim", [
-      reentrancyToken.address,
-      [{ token: reentrancyToken.address, distributionId, fromAccount: user0.address, toAccount: user1.address }],
-    ]);
-    await reentrancyToken.setReenterConfig(claimHandler.address, reenterCalldata, 0, 1, false);
-
-    await claimHandler.connect(wallet).withdrawFunds(
-      reentrancyToken.address,
-      [{ account: user0.address, distributionId }],
-      user1.address
-    );
-
-    await expectTokenReentrancyGuard(reentrancyToken);
-  },
-
-  "FeeHandler.claimFees(address,address,uint256) -> FeeHandler.withdrawFees(address)": async (ctx) => {
-    const { user0, wallet } = ctx.fixture.accounts;
-    const { roleStore, dataStore, feeHandler } = ctx.fixture.contracts;
-    const reentrancyToken = await deployReentrantToken();
-
-    const feeAmount = expandDecimals(1, 18);
-
-    await grantRole(roleStore, wallet.address, "CONTROLLER");
-    await dataStore.setUint(keys.tokenTransferGasLimit(reentrancyToken.address), 200_000);
-    await dataStore.setUint(keys.claimableFeeAmountKey(ctx.ethUsdMarket.marketToken, reentrancyToken.address), feeAmount);
-    await reentrancyToken.mint(ctx.ethUsdMarket.marketToken, feeAmount);
-
-    const reenterCalldata = feeHandler.interface.encodeFunctionData("withdrawFees", [reentrancyToken.address]);
-    await reentrancyToken.setReenterConfig(feeHandler.address, reenterCalldata, 0, 1, false);
-
-    await feeHandler.connect(user0).claimFees(ctx.ethUsdMarket.marketToken, reentrancyToken.address, 2);
-
-    await expectTokenReentrancyGuard(reentrancyToken);
-  },
-
-  "ExchangeRouter.sendNativeToken(address,uint256) -> ExchangeRouter.cancelOrder(bytes32)": async (ctx) => {
+  "MultichainTransferRouter.sendNativeToken -> MultichainTransferRouter.bridgeOut": async (ctx) => {
+    const { user0 } = ctx.fixture.accounts;
+    const { dataStore, multichainTransferRouter } = ctx.fixture.contracts;
     const reentrancyTest = await deployContract("ReentrancyTest", []);
-    const reenterCalldata = ctx.exchangeRouter.interface.encodeFunctionData("cancelOrder", [ethers.constants.HashZero]);
-    await reentrancyTest.setReenterConfig(ctx.exchangeRouter.address, reenterCalldata, 0, 1, false);
+    const chainId = await ethers.provider.getNetwork().then((network) => network.chainId);
 
-    await ctx.dataStore.setUint(keys.NATIVE_TOKEN_TRANSFER_GAS_LIMIT, bigNumberify(2_000_000));
+    const emptyRelayParams = getEmptyRelayParams(chainId);
+    const reenterCalldata = multichainTransferRouter.interface.encodeFunctionData("bridgeOut", [
+      emptyRelayParams,
+      user0.address,
+      chainId,
+      {
+        token: ethers.constants.AddressZero,
+        amount: 0,
+        minAmountOut: 0,
+        provider: ethers.constants.AddressZero,
+        data: "0x",
+      },
+    ]);
+    await reentrancyTest.setReenterConfig(multichainTransferRouter.address, reenterCalldata, 0, 1, false);
+
+    await dataStore.setUint(keys.NATIVE_TOKEN_TRANSFER_GAS_LIMIT, bigNumberify(2_000_000));
 
     const amount = expandDecimals(1, 15);
-    await ctx.exchangeRouter.connect(ctx.user0).sendNativeToken(reentrancyTest.address, amount, { value: amount });
+    await multichainTransferRouter.connect(user0).sendNativeToken(reentrancyTest.address, amount, { value: amount });
 
     await expectReentrancyGuard(reentrancyTest);
   },
-
-  "Router.pluginTransfer(address,address,address,uint256) -> ExchangeRouter.createOrder((address,address,address,address,address,address,address[]),(uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256),uint8,uint8,bool,bool,bool,bytes32,bytes32[])": async (
-    ctx
-  ) => {
-    const { wallet, user0 } = ctx.fixture.accounts;
-    const { roleStore, router } = ctx.fixture.contracts;
-    const reentrancyToken = await deployReentrantToken();
-
-    await grantRole(roleStore, wallet.address, "ROUTER_PLUGIN");
-
-    await reentrancyToken.mint(user0.address, expandDecimals(1, 18));
-    await reentrancyToken.connect(user0).approve(router.address, expandDecimals(1, 18));
-
-    const invalidCreateOrderParams = {
-      addresses: {
-        receiver: ethers.constants.AddressZero,
-        cancellationReceiver: ethers.constants.AddressZero,
-        callbackContract: ethers.constants.AddressZero,
-        uiFeeReceiver: ethers.constants.AddressZero,
-        market: ethers.constants.AddressZero,
-        initialCollateralToken: ethers.constants.AddressZero,
-        swapPath: [],
-      },
-      numbers: {
-        sizeDeltaUsd: 0,
-        initialCollateralDeltaAmount: 0,
-        triggerPrice: 0,
-        acceptablePrice: 0,
-        executionFee: 0,
-        callbackGasLimit: 0,
-        minOutputAmount: 0,
-        validFromTime: 0,
-      },
-      orderType: 0,
-      decreasePositionSwapType: 0,
-      isLong: true,
-      shouldUnwrapNativeToken: false,
-      autoCancel: false,
-      referralCode: ethers.constants.HashZero,
-      dataList: [],
-    };
-    const reenterCalldata = ctx.exchangeRouter.interface.encodeFunctionData("createOrder", [invalidCreateOrderParams]);
-    await reentrancyToken.setReenterConfig(ctx.exchangeRouter.address, reenterCalldata, 0, 1, false);
-
-    await router
-      .connect(wallet)
-      .pluginTransfer(reentrancyToken.address, user0.address, wallet.address, expandDecimals(1, 18));
-
-    await expectTokenReentrancyBlocked(reentrancyToken);
-  },
-  */
 };

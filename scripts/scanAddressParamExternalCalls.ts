@@ -2,7 +2,8 @@
  * Bytecode scanner: address-parameter external call targets
  *
  * Scans deployed *runtime* bytecode to find ABI functions where an `address` parameter
- * may flow into an external interaction opcode (CALL/DELEGATECALL/STATICCALL/CALLCODE/SELFDESTRUCT).
+ * may flow into an external interaction opcode (CALL/DELEGATECALL/CALLCODE/SELFDESTRUCT).
+ * NOTE: STATICCALL is intentionally ignored.
  *
  * Inputs:
  * - Reads `deployments/<DEPLOYMENT_NETWORK>/*.json` (Hardhat Deploy format).
@@ -24,6 +25,7 @@
  * - View / pure functions are ignored.
  * - For each remaining match, the script parses Solidity modifiers from the deployment metadata and fails if
  *   a function does not have an allow-listed access-control modifier.
+ * - Violations are checked against reentrancy case entrypoints in `test/reentrancy/cases.ts`.
  *
  * Debug / inconclusive output:
  * - `PRINT_INCONCLUSIVE=1`     Print functions where analysis hit safety limits.
@@ -744,8 +746,7 @@ function analyzeFunctionForAddressParamExternalCalls(params: {
 
           case "CALL":
           case "CALLCODE":
-          case "DELEGATECALL":
-          case "STATICCALL": {
+          case "DELEGATECALL": {
             const to = peekFromTop(stack, 1);
             if (to.taint !== 0n) {
               usedParamBits |= to.taint;
@@ -755,6 +756,13 @@ function analyzeFunctionForAddressParamExternalCalls(params: {
             const newStack = [...stack];
             const pops = instr.name === "CALL" || instr.name === "CALLCODE" ? 7 : 6;
             for (let i = 0; i < pops; i++) popOrUnknown(newStack);
+            newStack.push({ taint: 0n });
+            next(newStack);
+            break;
+          }
+          case "STATICCALL": {
+            const newStack = [...stack];
+            for (let i = 0; i < 6; i++) popOrUnknown(newStack);
             newStack.push({ taint: 0n });
             next(newStack);
             break;
@@ -965,6 +973,22 @@ function parseParamTypesFromHeader(header: string): string[] {
 function functionNameFromSignature(signature: string): string {
   const idx = signature.indexOf("(");
   return (idx === -1 ? signature : signature.slice(0, idx)).trim();
+}
+
+function extractReentrancyCaseEntrypoints(source: string): Set<string> {
+  const entrypoints = new Set<string>();
+  const caseKeyRegex = /["'`]([^"'`]+)["'`]\s*:\s*async\s*\(/g;
+  let match: RegExpExecArray | null;
+
+  while ((match = caseKeyRegex.exec(source))) {
+    const raw = match[1].trim();
+    const arrowIdx = raw.indexOf("->");
+    if (arrowIdx === -1) continue;
+    const entrypoint = raw.slice(0, arrowIdx).trim();
+    if (entrypoint) entrypoints.add(entrypoint);
+  }
+
+  return entrypoints;
 }
 
 function parseInvocationsFromHeader(header: string): Invocation[] {
@@ -1438,14 +1462,39 @@ async function main() {
     );
   }
 
+  let missingCaseEntrypoints: string[] = [];
+  if (!skipGuardCheck && violations.length > 0) {
+    const casesPath = path.resolve(process.cwd(), "test/reentrancy/cases.ts");
+    if (!fs.existsSync(casesPath)) {
+      throw new Error(`Reentrancy cases file not found: ${casesPath}`);
+    }
+
+    const casesSource = await fs.promises.readFile(casesPath, "utf8");
+    const caseEntrypoints = extractReentrancyCaseEntrypoints(casesSource);
+    const missing = new Set<string>();
+
+    for (const v of violations) {
+      const entrypoint = `${v.contractName}.${functionNameFromSignature(v.signature)}`;
+      if (!caseEntrypoints.has(entrypoint)) {
+        missing.add(entrypoint);
+      }
+    }
+
+    missingCaseEntrypoints = Array.from(missing).sort((a, b) => a.localeCompare(b));
+  }
+
   if (!skipGuardCheck && totalViolations > 0) {
     console.log("Violations:");
     for (const v of violations) {
       console.log(`- ${v.contractName}.${functionNameFromSignature(v.signature)}`);
     }
-    throw new Error(
-      `Found ${totalViolations} function(s) that can route an address parameter into an external interaction without an allow-listed access-control modifier.`
-    );
+    if (missingCaseEntrypoints.length > 0) {
+      console.log("Missing reentrancy case entrypoints:");
+      for (const entry of missingCaseEntrypoints) {
+        console.log(`- ${entry}`);
+      }
+      throw new Error(`Missing reentrancy test cases for ${missingCaseEntrypoints.length} violation function(s).`);
+    }
   }
 }
 

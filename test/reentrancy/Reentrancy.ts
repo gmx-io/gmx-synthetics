@@ -1,7 +1,7 @@
 import { deployFixture } from "../../utils/fixture";
 import { REENTRANCY_CASES, ReentrancyCaseContext } from "./cases";
 
-describe.only("Reentrancy", () => {
+describe("Reentrancy tests", () => {
   let ctx: ReentrancyCaseContext;
 
   beforeEach(async () => {
