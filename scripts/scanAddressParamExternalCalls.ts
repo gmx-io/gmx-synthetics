@@ -16,10 +16,14 @@
  * - `CONTRACT_FILTER=Config`   Only scan deployment filenames containing this substring.
  * - `FUNCTION_FILTER=set`      Only scan ABI function names containing this substring.
  *
+ * Coverage output:
+ * - `OUTPUT_MATCHES_PATH=/tmp/scan.json`  Write all matched functions to a JSON file.
+ * - `SKIP_GUARD_CHECK=1`                 Skip modifier parsing and guard filtering (list-only mode).
+ *
  * Guard check:
  * - View / pure functions are ignored.
  * - For each remaining match, the script parses Solidity modifiers from the deployment metadata and fails if
- *   a function has neither an allow-listed access-control modifier nor a reentrancy guard.
+ *   a function does not have an allow-listed access-control modifier.
  *
  * Debug / inconclusive output:
  * - `PRINT_INCONCLUSIVE=1`     Print functions where analysis hit safety limits.
@@ -78,18 +82,18 @@ const ACCESS_CONTROL_MODIFIERS = new Set<string>([
   "onlySelf",
   "onlyTimelockMultisig",
   "onlyTimelockAdmin",
-  "onlyConfigKeeper",
+  //"onlyConfigKeeper",
   "onlyLimitedConfigKeeper",
   "onlyController",
   "onlyGovTokenController",
   "onlyRouterPlugin",
   "onlyMarketKeeper",
-  "onlyFeeKeeper",
+  //"onlyFeeKeeper",
   "onlyFeeDistributionKeeper",
-  "onlyOrderKeeper",
+  //"onlyOrderKeeper",
   "onlyPricingKeeper",
-  "onlyLiquidationKeeper",
-  "onlyAdlKeeper",
+  //"onlyLiquidationKeeper",
+  //"onlyAdlKeeper",
   "onlyContributorKeeper",
   "onlyContributorDistributor",
   "onlyClaimAdmin",
@@ -1214,6 +1218,8 @@ async function main() {
   const deploymentNetwork = process.env.DEPLOYMENT_NETWORK || process.env.DEPLOYMENTS_NETWORK || hre.network.name;
   const deploymentsDir = path.resolve(process.cwd(), "deployments", deploymentNetwork);
   const printInconclusive = process.env.PRINT_INCONCLUSIVE === "1" || process.env.PRINT_INCONCLUSIVE === "true";
+  const skipGuardCheck = process.env.SKIP_GUARD_CHECK === "1" || process.env.SKIP_GUARD_CHECK === "true";
+  const outputMatchesPath = process.env.OUTPUT_MATCHES_PATH;
   const contractFilter = process.env.CONTRACT_FILTER;
   const functionFilter = process.env.FUNCTION_FILTER;
 
@@ -1236,6 +1242,13 @@ async function main() {
   let totalViolations = 0;
   let totalInconclusive = 0;
   const violations: Array<{ contractName: string; signature: string; suffix: string; guards: FunctionGuards }> = [];
+  const allMatches: Array<{
+    contractName: string;
+    signature: string;
+    canonicalSignature: string;
+    functionName: string;
+    id: string;
+  }> = [];
 
   for (const file of files) {
     const contractName = file.replace(/\.json$/, "");
@@ -1334,7 +1347,21 @@ async function main() {
 
     if (flaggedFunctions.length === 0 && (!printInconclusive || inconclusiveFunctions.length === 0)) continue;
 
+    for (const match of flaggedFunctions) {
+      const canonicalSignature = match.fragment.format(FormatTypes.sighash);
+      const fnName = match.fragment.name;
+      allMatches.push({
+        contractName,
+        signature: match.signature,
+        canonicalSignature,
+        functionName: fnName,
+        id: `${contractName}.${canonicalSignature}`,
+      });
+    }
+
     totalMatches += flaggedFunctions.length;
+
+    if (skipGuardCheck) continue;
 
     // Cache stripped sources per deployment to avoid re-processing huge metadata strings for every function.
     const cleanCache = new Map<string, string>();
@@ -1356,10 +1383,9 @@ async function main() {
         continue;
       }
 
-      // Filter out functions that are protected by either:
-      // - an allow-listed access-control modifier (e.g. onlyController), OR
-      // - a reentrancy guard modifier (nonReentrant/globalNonReentrant).
-      if (guards.hasAllowedAccessControl || guards.hasReentrancyGuard) {
+      // Filter out functions that are protected by an allow-listed access-control modifier.
+      // Note: reentrancy guards are not treated as access control exceptions.
+      if (guards.hasAllowedAccessControl) {
         totalFilteredByGuards++;
         continue;
       }
@@ -1404,13 +1430,21 @@ async function main() {
     `Done. Checked ${totalMatches} mutable function(s). Filtered by guards: ${totalFilteredByGuards}. Violations: ${totalViolations} across ${totalContractsWithViolations} contract(s). Inconclusive scans: ${totalInconclusive}${inconclusiveNote}.`
   );
 
-  if (totalViolations > 0) {
+  if (outputMatchesPath) {
+    const sorted = allMatches.sort((a, b) => a.id.localeCompare(b.id));
+    await fs.promises.writeFile(
+      outputMatchesPath,
+      JSON.stringify({ network: deploymentNetwork, matches: sorted }, null, 2)
+    );
+  }
+
+  if (!skipGuardCheck && totalViolations > 0) {
     console.log("Violations:");
     for (const v of violations) {
       console.log(`- ${v.contractName}.${functionNameFromSignature(v.signature)}`);
     }
     throw new Error(
-      `Found ${totalViolations} function(s) that can route an address parameter into an external interaction without an allow-listed access-control modifier or a reentrancy guard.`
+      `Found ${totalViolations} function(s) that can route an address parameter into an external interaction without an allow-listed access-control modifier.`
     );
   }
 }

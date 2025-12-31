@@ -77,6 +77,8 @@ export const CLAIMABLE_COLLATERAL_FACTOR = hashString("CLAIMABLE_COLLATERAL_FACT
 export const CLAIMABLE_COLLATERAL_REDUCTION_FACTOR = hashString("CLAIMABLE_COLLATERAL_REDUCTION_FACTOR");
 export const CLAIMABLE_COLLATERAL_TIME_DIVISOR = hashString("CLAIMABLE_COLLATERAL_TIME_DIVISOR");
 export const CLAIMABLE_COLLATERAL_DELAY = hashString("CLAIMABLE_COLLATERAL_DELAY");
+export const CLAIMABLE_FUNDS_AMOUNT = hashString("CLAIMABLE_FUNDS_AMOUNT");
+export const TOTAL_CLAIMABLE_FUNDS_AMOUNT = hashString("TOTAL_CLAIMABLE_FUNDS_AMOUNT");
 
 export const CLAIMABLE_UI_FEE_AMOUNT = hashString("CLAIMABLE_UI_FEE_AMOUNT");
 export const AFFILIATE_REWARD = hashString("AFFILIATE_REWARD");
@@ -433,7 +435,11 @@ export function claimableFundingAmountKey(market: string, token: string, account
   return hashData(["bytes32", "address", "address", "address"], [CLAIMABLE_FUNDING_AMOUNT, market, token, account]);
 }
 
-export function claimableCollateralAmountKey(market: string, token: string, timeKey: number, account: string) {
+export function claimableCollateralAmountKey(market: string, token: string, timeKey?: number, account?: string) {
+  if (timeKey === undefined || account === undefined) {
+    return hashData(["bytes32", "address", "address"], [CLAIMABLE_COLLATERAL_AMOUNT, market, token]);
+  }
+
   return hashData(
     ["bytes32", "address", "address", "uint256", "address"],
     [CLAIMABLE_COLLATERAL_AMOUNT, market, token, timeKey, account]
@@ -466,6 +472,17 @@ export function claimableCollateralReductionFactorForAccountKey(
     ["bytes32", "address", "address", "uint256", "address"],
     [CLAIMABLE_COLLATERAL_REDUCTION_FACTOR, market, token, timeKey, account]
   );
+}
+
+export function claimableFundsAmountKey(account: string, token: string, distributionId: number) {
+  return hashData(
+    ["bytes32", "address", "address", "uint256"],
+    [CLAIMABLE_FUNDS_AMOUNT, account, token, distributionId]
+  );
+}
+
+export function totalClaimableFundsAmountKey(token: string) {
+  return hashData(["bytes32", "address"], [TOTAL_CLAIMABLE_FUNDS_AMOUNT, token]);
 }
 
 export function claimableUiFeeAmountKey(market: string, token: string, uiFeeReceiver: string) {
