@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import { FlagsInterface } from "@chainlink/contracts/src/v0.8/interfaces/FlagsInterface.sol";
 
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
@@ -31,6 +32,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
     address public immutable staticOracleProvider;
+    FlagsInterface public immutable flags;
 
     // @dev the base keys that can be set
     mapping (bytes32 => bool) public allowedBaseKeys;
@@ -42,11 +44,13 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
         DataStore _dataStore,
         EventEmitter _eventEmitter,
         IOracle _oracle,
-        address _staticOracleProvider
+        address _staticOracleProvider,
+        FlagsInterface _flags
     ) RoleModule(_roleStore) OracleModule(_oracle) {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
         staticOracleProvider = _staticOracleProvider;
+        flags = _flags;
 
         _initAllowedBaseKeys();
         _initAllowedLimitedBaseKeys();
@@ -184,6 +188,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
         ConfigUtils.initOracleConfig(
             dataStore,
             eventEmitter,
+            flags,
             params
         );
     }

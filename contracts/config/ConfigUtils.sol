@@ -3,7 +3,10 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { FlagsInterface } from "@chainlink/contracts/src/v0.8/interfaces/FlagsInterface.sol";
 
+import "../oracle/IFlags.sol";
+import "../oracle/IPriceFeed.sol";
 import "../data/DataStore.sol";
 import "../data/Keys.sol";
 import "../event/EventEmitter.sol";
@@ -21,6 +24,7 @@ library ConfigUtils {
 
     struct InitOracleConfigPriceFeedParams {
         address feedAddress;
+        bytes32 descriptionHash;
         uint256 multiplier;
         uint256 heartbeatDuration;
         uint256 stablePrice;
@@ -61,6 +65,7 @@ library ConfigUtils {
     function initOracleConfig(
         DataStore dataStore,
         EventEmitter eventEmitter,
+        FlagsInterface flags,
         InitOracleConfigParams memory params
     ) external {
         if (dataStore.getAddress(Keys.priceFeedKey(params.token)) != address(0)) {
@@ -73,6 +78,14 @@ library ConfigUtils {
 
         if (dataStore.getBytes32(Keys.edgeDataStreamIdKey(params.token)) != bytes32(0)) {
             revert Errors.EdgeDataStreamIdAlreadyExistsForToken(params.token);
+        }
+
+        if (!flags.getFlag(params.priceFeed.feedAddress)) {
+            revert Errors.PriceFeedAddressNotValidForToken(params.token);
+        }
+
+        if (params.priceFeed.descriptionHash != keccak256(bytes(IPriceFeed(params.priceFeed.feedAddress).description()))) {
+            revert Errors.PriceFeedDescriptionMismatchForToken(params.token);
         }
 
         dataStore.setAddress(Keys.priceFeedKey(params.token), params.priceFeed.feedAddress);
