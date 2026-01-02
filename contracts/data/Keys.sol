@@ -1033,11 +1033,11 @@ library Keys {
     }
 
     // @dev key for the token static price
-    // values should be stored in the uint256 array as [price.min, price.max]
-    function staticOraclePriceKey(address token) internal pure returns (bytes32) {
+    function staticOraclePriceKey(address token, bool isMax) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             STATIC_ORACLE_PRICE,
-            token
+            token,
+            isMax
         ));
     }
 
