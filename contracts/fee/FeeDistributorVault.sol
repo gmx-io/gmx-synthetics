@@ -20,6 +20,6 @@ contract FeeDistributorVault is Bank {
     // @param amount the amount to withdraw
     // @param receiver the address to withdraw to
     function withdrawToken(address token, address receiver, uint256 amount) external onlyTimelockAdmin {
-        _transferOut(token, receiver, amount);
+        _transferOut(token, receiver, amount, false);
     }
 }

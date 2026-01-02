@@ -1,6 +1,6 @@
 import { createDeployFunction } from "../utils/deploy";
 
-const constructorContracts = ["RoleStore", "DataStore"];
+const constructorContracts = ["RoleStore", "DataStore", "EventEmitter"];
 
 const func = createDeployFunction({
   contractName: "OrderVault",

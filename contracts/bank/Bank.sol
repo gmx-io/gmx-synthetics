@@ -75,7 +75,7 @@ contract Bank is RoleModule {
         address receiver,
         uint256 amount,
         bool shouldUnwrapNativeToken
-    ) external onlyController {
+    ) public onlyController {
         bool isManualTransferEnabled = _applyRateLimit(receiver, token, amount);
         if (isManualTransferEnabled) {
             // Skip transfer and emit manual event. Keepers should handle it later
@@ -239,7 +239,7 @@ contract Bank is RoleModule {
 
         dataStore.setUint(Keys.bankManualWithdrawalAmountKey(withdrawalId), 0);
 
-        _transferOut(token, receiver, amount);
+        _transferOut(token, receiver, amount, shouldUnwrapNativeToken);
 
         EventUtils.EventLogData memory eventData;
         eventData.addressItems.initItems(2);

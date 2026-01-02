@@ -20,13 +20,14 @@ export function getGlvAddress(
   glvSymbol: string,
   glvFactoryAddress: string,
   roleStoreAddress: string,
-  dataStoreAddress: string
+  dataStoreAddress: string,
+  eventEmitterAddress: string
 ) {
   const salt = hashData(["string", "address", "address", "bytes32"], ["GMX_GLV", longToken, shortToken, glvType]);
   const byteCode = GlvTokenArtifact.bytecode;
   return calculateCreate2(glvFactoryAddress, salt, byteCode, {
-    types: ["address", "address", "string", "string"],
-    params: [roleStoreAddress, dataStoreAddress, glvName, glvSymbol],
+    types: ["address", "address", "address", "string", "string"],
+    params: [roleStoreAddress, dataStoreAddress, eventEmitterAddress, glvName, glvSymbol],
   });
 }
 

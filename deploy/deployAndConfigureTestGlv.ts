@@ -33,6 +33,7 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
   const roleStore = await get("RoleStore");
   const glvFactory = await get("GlvFactory");
   const marketFactory = await get("MarketFactory");
+  const eventEmitter = await get("EventEmitter");
 
   const glvShiftAddress = getGlvAddress(
     weth.address,
@@ -42,7 +43,8 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
     glvSymbol,
     glvFactory.address,
     roleStore.address,
-    dataStore.address
+    dataStore.address,
+    eventEmitter.address
   );
 
   const ethUsdMarketAddress = getMarketTokenAddress(
@@ -52,7 +54,8 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
     DEFAULT_MARKET_TYPE,
     marketFactory.address,
     roleStore.address,
-    dataStore.address
+    dataStore.address,
+    eventEmitter.address
   );
   const solUsdMarketAddress = getMarketTokenAddress(
     sol.address,
@@ -61,7 +64,8 @@ const func = async ({ deployments, getNamedAccounts, gmx }: HardhatRuntimeEnviro
     DEFAULT_MARKET_TYPE,
     marketFactory.address,
     roleStore.address,
-    dataStore.address
+    dataStore.address,
+    eventEmitter.address
   );
 
   await execute(
@@ -92,5 +96,5 @@ func.skip = async ({ network }) => {
 };
 func.runAtTheEnd = true;
 func.tags = ["Glv"];
-func.dependencies = ["GlvFactory", "Tokens", "DataStore", "Roles", "Markets"];
+func.dependencies = ["GlvFactory", "Tokens", "DataStore", "Roles", "Markets", "EventEmitter"];
 export default func;
