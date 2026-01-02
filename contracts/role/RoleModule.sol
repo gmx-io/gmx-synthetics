@@ -129,7 +129,7 @@ contract RoleModule {
     * @dev Only allows addresses with the ORDER_KEEPER or CONTROLLER role to call the function.
      */
     modifier onlyOrderKeeperOrController() {
-        if (!roleStore.hasRole(msg.sender, Role.ORDER_KEEPER) ||
+        if (!roleStore.hasRole(msg.sender, Role.ORDER_KEEPER) &&
             !roleStore.hasRole(msg.sender, Role.CONTROLLER)) {
             revert Errors.Unauthorized(msg.sender, "ORDER_KEEPER|CONTROLLER");
         }
