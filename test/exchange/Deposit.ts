@@ -79,7 +79,7 @@ describe("Exchange.Deposit", () => {
 
     await expect(createDeposit(fixture, { ...params, sender: user0 }))
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
-      .withArgs(user0.address, "CONTROLLER");
+      .withArgs(user0.address, "ORDER_KEEPER|CONTROLLER");
 
     await expect(createDeposit(fixture, params))
       .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
