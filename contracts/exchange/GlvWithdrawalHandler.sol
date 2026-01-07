@@ -124,7 +124,7 @@ contract GlvWithdrawalHandler is IGlvWithdrawalHandler, BaseHandler, ReentrancyG
         GlvWithdrawalUtils.cancelGlvWithdrawal(params);
     }
 
-    function cancelGlvWithdrawal(bytes32 key) external globalNonReentrant onlyController {
+    function cancelGlvWithdrawal(bytes32 key) external globalNonReentrant onlyOrderKeeperOrController {
         uint256 startingGas = gasleft();
 
         DataStore _dataStore = dataStore;

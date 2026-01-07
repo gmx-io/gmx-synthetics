@@ -200,7 +200,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler, ReentrancyGuard {
      *
      * @param key The unique ID of the order to be cancelled
      */
-    function cancelOrder(bytes32 key) external override globalNonReentrant onlyController {
+    function cancelOrder(bytes32 key) external override globalNonReentrant onlyOrderKeeperOrController {
         uint256 startingGas = gasleft();
 
         DataStore _dataStore = dataStore;

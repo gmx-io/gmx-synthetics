@@ -115,7 +115,7 @@ contract GlvDepositHandler is IGlvDepositHandler, BaseHandler, ReentrancyGuard {
         GlvDepositUtils.cancelGlvDeposit(params);
     }
 
-    function cancelGlvDeposit(bytes32 key) external globalNonReentrant onlyController {
+    function cancelGlvDeposit(bytes32 key) external globalNonReentrant onlyOrderKeeperOrController {
         uint256 startingGas = gasleft();
 
         DataStore _dataStore = dataStore;
