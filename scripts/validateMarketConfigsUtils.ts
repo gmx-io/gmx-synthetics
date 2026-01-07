@@ -611,6 +611,31 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 15_000,
     },
+    AR: {
+      negativePositionImpactFactor: exponentToFloat("1.3e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 15_011,
+    },
+    DASH: {
+      negativePositionImpactFactor: exponentToFloat("3.89e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 15_019,
+    },
+    SYRUP: {
+      negativePositionImpactFactor: exponentToFloat("5.65e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 14_986,
+    },
+    JTO: {
+      negativePositionImpactFactor: exponentToFloat("3.52e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 14_978,
+    },
+    CHZ: {
+      negativePositionImpactFactor: exponentToFloat("3.93e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 15_000,
+    },
   },
   avalanche: {
     "BTC.b": {
