@@ -157,11 +157,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
         }
 
         Price.Props memory price = oracle.getPrimaryPrice(token);
-        uint256[] memory priceArray = new uint256[](2);
-        priceArray[0] = price.min;
-        priceArray[1] = price.max;
-
-        dataStore.setUintArray(Keys.staticOraclePriceKey(token), priceArray);
+        dataStore.setUint(Keys.staticOraclePriceKey(token, false), price.min);
+        dataStore.setUint(Keys.staticOraclePriceKey(token, true), price.max);
 
         _setOracleProviderForToken(address(oracle), token, staticOracleProvider);
 
@@ -170,8 +167,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
         eventData.addressItems.setItem(0, "token", token);
         eventData.addressItems.setItem(1, "provider", staticOracleProvider);
         eventData.uintItems.initItems(2);
-        eventData.uintItems.setItem(0, "price_min", priceArray[0]);
-        eventData.uintItems.setItem(1, "price_max", priceArray[1]);
+        eventData.uintItems.setItem(0, "priceMin", price.min);
+        eventData.uintItems.setItem(1, "priceMax", price.max);
         eventEmitter.emitEventLog(
             "SetStaticPriceForToken",
             eventData

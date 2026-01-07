@@ -24,14 +24,7 @@ describe("StaticOracleProvider", function () {
 
   beforeEach(async function () {
     fixture = await deployFixture();
-    ({
-      config,
-      staticOracle: staticOracleProvider,
-      dataStore,
-      chainlinkPriceFeedProvider,
-      oracle,
-      wnt,
-    } = fixture.contracts);
+    ({ config, staticOracleProvider, dataStore, chainlinkPriceFeedProvider, oracle, wnt } = fixture.contracts);
 
     feedId = "0x0000000000000000000000000000000000000000000000000000000000000001";
 
