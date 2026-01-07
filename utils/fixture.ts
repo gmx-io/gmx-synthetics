@@ -149,6 +149,7 @@ async function setup() {
   const mockOracleProvider = await hre.ethers.getContract("MockOracleProvider");
   const edgeDataStreamVerifier = await hre.ethers.getContract("EdgeDataStreamVerifier");
   const edgeDataStreamProvider = await hre.ethers.getContract("EdgeDataStreamProvider");
+  const staticOracleProvider = await hre.ethers.getContract("StaticOracleProvider");
   const claimHandler = await hre.ethers.getContract("ClaimHandler");
   const claimVault = await hre.ethers.getContract("ClaimVault");
   const claimUtils = await hre.ethers.getContract("ClaimUtils");
@@ -406,6 +407,7 @@ async function setup() {
       feeDistributor,
       feeDistributorUtils,
       contributorHandler,
+      staticOracleProvider,
     },
     props: { oracleSalt, signerIndexes: [0, 1, 2, 3, 4, 5, 6], executionFee: "1000000000000000" },
   };
