@@ -50,8 +50,10 @@ describe("Exchange.FundingFees.AdaptiveFunding", () => {
     await dataStore.setUint(keys.thresholdForDecreaseFundingKey(ethUsdMarket.marketToken), decimalToFloat(3, 2)); // 3%
     await dataStore.setUint(keys.fundingIncreaseFactorPerSecondKey(ethUsdMarket.marketToken), decimalToFloat(1, 6)); // 0.0001%
     await dataStore.setUint(keys.fundingDecreaseFactorPerSecondKey(ethUsdMarket.marketToken), decimalToFloat(2, 8)); // 0.000002%
-    await dataStore.setUint(keys.minFundingFactorPerSecondKey(ethUsdMarket.marketToken), 0);
-    await dataStore.setUint(keys.maxFundingFactorPerSecondKey(ethUsdMarket.marketToken), decimalToFloat(1));
+    await dataStore.setUint(keys.minFundingFactorPerSecondKey(ethUsdMarket.marketToken, true), 0);
+    await dataStore.setUint(keys.minFundingFactorPerSecondKey(ethUsdMarket.marketToken, false), 0);
+    await dataStore.setUint(keys.maxFundingFactorPerSecondKey(ethUsdMarket.marketToken, true), decimalToFloat(1));
+    await dataStore.setUint(keys.maxFundingFactorPerSecondKey(ethUsdMarket.marketToken, false), decimalToFloat(1));
 
     // user0 opens a $106k long position, using wnt as collateral
     await handleOrder(fixture, {

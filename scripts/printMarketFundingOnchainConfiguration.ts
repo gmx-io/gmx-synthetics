@@ -28,16 +28,25 @@ async function main() {
     }
     const longTokenSymbol = addressToSymbol[market.longToken];
     const shortTokenSymbol = addressToSymbol[market.shortToken];
-    const [minFundingFactorPerSecondKey, maxFundingFactorPerSecondKey] = await Promise.all([
-      dataStore.getUint(keys.minFundingFactorPerSecondKey(market.marketToken)),
-      dataStore.getUint(keys.maxFundingFactorPerSecondKey(market.marketToken)),
+    const [
+      minFundingFactorPerSecondLong,
+      minFundingFactorPerSecondShort,
+      maxFundingFactorPerSecondLong,
+      maxFundingFactorPerSecondShort,
+    ] = await Promise.all([
+      dataStore.getUint(keys.minFundingFactorPerSecondKey(market.marketToken, true)),
+      dataStore.getUint(keys.minFundingFactorPerSecondKey(market.marketToken, false)),
+      dataStore.getUint(keys.maxFundingFactorPerSecondKey(market.marketToken, true)),
+      dataStore.getUint(keys.maxFundingFactorPerSecondKey(market.marketToken, false)),
     ]);
     console.log(
-      "market: %s %s min funding rate %s max funding rate %s",
+      "market: %s %s min funding rate (long/short) %s / %s max funding rate (long/short) %s / %s",
       market.marketToken,
       `(${indexTokenSymbol}/USD [${longTokenSymbol}/${shortTokenSymbol}])`.padEnd(25),
-      formatAmount(minFundingFactorPerSecondKey.mul(86400).mul(365), 30, 2),
-      formatAmount(maxFundingFactorPerSecondKey.mul(86400).mul(365), 30, 2)
+      formatAmount(minFundingFactorPerSecondLong.mul(86400).mul(365), 30, 2),
+      formatAmount(minFundingFactorPerSecondShort.mul(86400).mul(365), 30, 2),
+      formatAmount(maxFundingFactorPerSecondLong.mul(86400).mul(365), 30, 2),
+      formatAmount(maxFundingFactorPerSecondShort.mul(86400).mul(365), 30, 2)
     );
   }
 }

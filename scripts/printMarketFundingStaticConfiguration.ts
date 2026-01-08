@@ -22,9 +22,16 @@ async function main() {
       continue;
     }
     const marketToken = getMarketToken(market, tokens, onchainMarketsByTokens);
-    const maxFundingRate = Math.round(
-      formatAmount(bigNumberify(market.maxFundingFactorPerSecond).mul(86400).mul(365).mul(100), 30, 2)
+    const maxFundingFactorLong = bigNumberify(
+      market.maxFundingFactorPerSecondForLongs ?? market.maxFundingFactorPerSecond ?? 0
     );
+    const maxFundingFactorShort = bigNumberify(
+      market.maxFundingFactorPerSecondForShorts ?? market.maxFundingFactorPerSecond ?? 0
+    );
+    const maxFundingFactorPerSecond = maxFundingFactorLong.gt(maxFundingFactorShort)
+      ? maxFundingFactorLong
+      : maxFundingFactorShort;
+    const maxFundingRate = Math.round(formatAmount(maxFundingFactorPerSecond.mul(86400).mul(365).mul(100), 30, 2));
     const maxFundingRateFloor = maxFundingRate / 100 - 0.1;
     const maxFundingRateCap = maxFundingRate / 100 + 0.2;
     console.log('"%s": {', marketToken);

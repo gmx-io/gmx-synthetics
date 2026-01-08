@@ -119,8 +119,10 @@ export type BaseMarketConfig = {
   fundingDecreaseFactorPerSecond: BigNumberish;
   thresholdForStableFunding: BigNumberish;
   thresholdForDecreaseFunding: BigNumberish;
-  minFundingFactorPerSecond: BigNumberish;
-  maxFundingFactorPerSecond: BigNumberish;
+  minFundingFactorPerSecondForLongs?: BigNumberish;
+  minFundingFactorPerSecondForShorts?: BigNumberish;
+  maxFundingFactorPerSecondForLongs?: BigNumberish;
+  maxFundingFactorPerSecondForShorts?: BigNumberish;
 
   // note that this is in the index token, so the amount should be based
   // on how many decimals the index token is configured to have
@@ -168,8 +170,10 @@ type FundingRateConfig = Partial<{
   fundingDecreaseFactorPerSecond: BigNumberish;
   thresholdForStableFunding: BigNumberish;
   thresholdForDecreaseFunding: BigNumberish;
-  minFundingFactorPerSecond: BigNumberish;
-  maxFundingFactorPerSecond: BigNumberish;
+  minFundingFactorPerSecondForLongs?: BigNumberish;
+  minFundingFactorPerSecondForShorts?: BigNumberish;
+  maxFundingFactorPerSecondForLongs?: BigNumberish;
+  maxFundingFactorPerSecondForShorts?: BigNumberish;
 }>;
 
 const fundingRateConfig_Low: FundingRateConfig = {
@@ -184,7 +188,8 @@ const fundingRateConfig_Low: FundingRateConfig = {
     .div(SECONDS_PER_YEAR)
     .div(SECONDS_PER_HOUR * 48),
 
-  maxFundingFactorPerSecond: percentageToFloat("75%").div(SECONDS_PER_YEAR),
+  maxFundingFactorPerSecondForLongs: percentageToFloat("75%").div(SECONDS_PER_YEAR),
+  maxFundingFactorPerSecondForShorts: percentageToFloat("75%").div(SECONDS_PER_YEAR),
 
   thresholdForStableFunding: percentageToFloat("4%"),
   thresholdForDecreaseFunding: 0,
@@ -202,7 +207,8 @@ const fundingRateConfig_Default: FundingRateConfig = {
     .div(SECONDS_PER_YEAR)
     .div(SECONDS_PER_HOUR * 48),
 
-  maxFundingFactorPerSecond: percentageToFloat("90%").div(SECONDS_PER_YEAR),
+  maxFundingFactorPerSecondForLongs: percentageToFloat("90%").div(SECONDS_PER_YEAR),
+  maxFundingFactorPerSecondForShorts: percentageToFloat("90%").div(SECONDS_PER_YEAR),
 
   thresholdForStableFunding: percentageToFloat("4%"),
   thresholdForDecreaseFunding: 0,
@@ -220,7 +226,8 @@ const fundingRateConfig_High: FundingRateConfig = {
     .div(SECONDS_PER_YEAR)
     .div(SECONDS_PER_HOUR * 48),
 
-  maxFundingFactorPerSecond: percentageToFloat("100%").div(SECONDS_PER_YEAR),
+  maxFundingFactorPerSecondForLongs: percentageToFloat("100%").div(SECONDS_PER_YEAR),
+  maxFundingFactorPerSecondForShorts: percentageToFloat("100%").div(SECONDS_PER_YEAR),
 
   thresholdForStableFunding: percentageToFloat("4%"),
   thresholdForDecreaseFunding: 0,
@@ -238,7 +245,8 @@ const fundingRateConfig_SingleToken: FundingRateConfig = {
     .div(SECONDS_PER_YEAR)
     .div(SECONDS_PER_HOUR * 48),
 
-  maxFundingFactorPerSecond: percentageToFloat("90%").div(SECONDS_PER_YEAR),
+  maxFundingFactorPerSecondForLongs: percentageToFloat("90%").div(SECONDS_PER_YEAR),
+  maxFundingFactorPerSecondForShorts: percentageToFloat("90%").div(SECONDS_PER_YEAR),
 
   thresholdForStableFunding: percentageToFloat("4%"),
   thresholdForDecreaseFunding: 0,
@@ -330,8 +338,10 @@ const baseMarketConfig: Partial<BaseMarketConfig> = {
   fundingFactor: exponentToFloat("2e-8"), // ~63% per year for a 100% skew
   fundingExponentFactor: decimalToFloat(1),
 
-  minFundingFactorPerSecond: percentageToFloat("1%").div(SECONDS_PER_YEAR),
-  maxFundingFactorPerSecond: percentageToFloat("90%").div(SECONDS_PER_YEAR), // ~0.246% per day
+  minFundingFactorPerSecondForLongs: percentageToFloat("1%").div(SECONDS_PER_YEAR),
+  minFundingFactorPerSecondForShorts: percentageToFloat("1%").div(SECONDS_PER_YEAR),
+  maxFundingFactorPerSecondForLongs: percentageToFloat("90%").div(SECONDS_PER_YEAR), // ~0.246% per day
+  maxFundingFactorPerSecondForShorts: percentageToFloat("90%").div(SECONDS_PER_YEAR),
   fundingIncreaseFactorPerSecond: percentageToFloat("90%")
     .div(SECONDS_PER_YEAR)
     .div(SECONDS_PER_HOUR * 3),
@@ -433,7 +443,8 @@ const hardhatBaseMarketConfig: Partial<BaseMarketConfig> = {
   negativeMaxPositionImpactFactor: decimalToFloat(2, 2), // 2%
   maxPositionImpactFactorForLiquidations: percentageToFloat("1%"), // 1%
 
-  maxFundingFactorPerSecond: "100000000000000000000000",
+  maxFundingFactorPerSecondForLongs: "100000000000000000000000",
+  maxFundingFactorPerSecondForShorts: "100000000000000000000000",
 };
 
 const config: {
@@ -967,7 +978,8 @@ const config: {
       fundingDecreaseFactorPerSecond: percentageToFloat("125%")
         .div(SECONDS_PER_YEAR)
         .div(SECONDS_PER_HOUR * 48),
-      maxFundingFactorPerSecond: percentageToFloat("125%").div(SECONDS_PER_YEAR),
+      maxFundingFactorPerSecondForLongs: percentageToFloat("125%").div(SECONDS_PER_YEAR),
+      maxFundingFactorPerSecondForShorts: percentageToFloat("125%").div(SECONDS_PER_YEAR),
 
       atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
@@ -3930,7 +3942,8 @@ const config: {
 
       fundingIncreaseFactorPerSecond: exponentToFloat("1.36e-12"), // 0.00000000000136, at least 3.5 hours to reach max funding
       fundingDecreaseFactorPerSecond: decimalToFloat(0), // not applicable if thresholdForDecreaseFunding = 0
-      maxFundingFactorPerSecond: exponentToFloat("1.7e-8"), // 0.0000017%,  0.14212% per hour, 53.61% per year
+      maxFundingFactorPerSecondForLongs: exponentToFloat("1.7e-8"), // 0.0000017%,  0.14212% per hour, 53.61% per year
+      maxFundingFactorPerSecondForShorts: exponentToFloat("1.7e-8"),
       thresholdForDecreaseFunding: decimalToFloat(0), // 0%
 
       // for OI reserve factor = 100%
@@ -3964,7 +3977,8 @@ const config: {
       maxOpenInterest: decimalToFloat(3_000_000),
 
       fundingIncreaseFactorPerSecond: exponentToFloat("1.36e-12"), // 0.00000000000136, at least 3.5 hours to reach max funding
-      maxFundingFactorPerSecond: exponentToFloat("1.7e-8"), // 0.0000017%,  0.14212% per hour, 53.61% per year
+      maxFundingFactorPerSecondForLongs: exponentToFloat("1.7e-8"), // 0.0000017%,  0.14212% per hour, 53.61% per year
+      maxFundingFactorPerSecondForShorts: exponentToFloat("1.7e-8"),
 
       // factor in open interest reserve factor 45%
       borrowingFactor: decimalToFloat(282, 10), // 2.82-8, 40% at 100% utilisation
@@ -3996,7 +4010,8 @@ const config: {
       maxOpenInterest: decimalToFloat(1_000_000),
 
       fundingIncreaseFactorPerSecond: exponentToFloat("1.36e-12"), // 0.00000000000136, at least 3.5 hours to reach max funding
-      maxFundingFactorPerSecond: exponentToFloat("1.7e-8"), // 0.0000017%,  0.14212% per hour, 53.61% per year
+      maxFundingFactorPerSecondForLongs: exponentToFloat("1.7e-8"), // 0.0000017%,  0.14212% per hour, 53.61% per year
+      maxFundingFactorPerSecondForShorts: exponentToFloat("1.7e-8"),
 
       // for OI reserve factor = 100%
       borrowingFactor: decimalToFloat(1900, 11), // 0.000000019 * 100% max reserve, 60% per year
@@ -4026,7 +4041,8 @@ const config: {
       maxOpenInterest: decimalToFloat(3_000_000),
 
       fundingIncreaseFactorPerSecond: exponentToFloat("1.36e-12"), // 0.00000000000136, at least 3.5 hours to reach max funding
-      maxFundingFactorPerSecond: exponentToFloat("1.7e-8"), // 0.0000017%,  0.14212% per hour, 53.61% per year
+      maxFundingFactorPerSecondForLongs: exponentToFloat("1.7e-8"), // 0.0000017%,  0.14212% per hour, 53.61% per year
+      maxFundingFactorPerSecondForShorts: exponentToFloat("1.7e-8"),
 
       // factor in open interest reserve factor 35%
       borrowingFactor: exponentToFloat("3.6e-8"), // 3.60-8, 40% at 100% utilisation
@@ -4060,7 +4076,8 @@ const config: {
       maxOpenInterest: decimalToFloat(5_000_000),
 
       fundingIncreaseFactorPerSecond: exponentToFloat("1.6e-12"), // 0.0000000000016, at least 3.5 hours to reach max funding
-      maxFundingFactorPerSecond: exponentToFloat("2e-8"), // 0.000002%,  0.0072% per hour, 63% per year
+      maxFundingFactorPerSecondForLongs: exponentToFloat("2e-8"), // 0.000002%,  0.0072% per hour, 63% per year
+      maxFundingFactorPerSecondForShorts: exponentToFloat("2e-8"),
 
       // for OI reserve factor = 75%
       borrowingFactor: exponentToFloat("2.95e-8"), // 0.0000000295 * 75% max reserve, ~70%
@@ -4095,7 +4112,8 @@ const config: {
       maxOpenInterest: decimalToFloat(1_000_000),
 
       fundingIncreaseFactorPerSecond: exponentToFloat("1.6e-12"), // 0.0000000000016, at least 3.5 hours to reach max funding
-      maxFundingFactorPerSecond: exponentToFloat("2e-8"), // 0.000002%,  0.0072% per hour, 63% per year
+      maxFundingFactorPerSecondForLongs: exponentToFloat("2e-8"), // 0.000002%,  0.0072% per hour, 63% per year
+      maxFundingFactorPerSecondForShorts: exponentToFloat("2e-8"),
 
       // for OI reserve factor = 75%
       borrowingFactor: exponentToFloat("2.95e-8"), // 0.0000000295 * 75% max reserve, ~70%
@@ -4129,7 +4147,8 @@ const config: {
       maxOpenInterest: decimalToFloat(1_000_000),
 
       fundingIncreaseFactorPerSecond: exponentToFloat("1.6e-12"), // 0.0000000000016, at least 3.5 hours to reach max funding
-      maxFundingFactorPerSecond: exponentToFloat("2e-8"), // 0.000002%,  0.0072% per hour, 63% per year
+      maxFundingFactorPerSecondForLongs: exponentToFloat("2e-8"), // 0.000002%,  0.0072% per hour, 63% per year
+      maxFundingFactorPerSecondForShorts: exponentToFloat("2e-8"),
 
       // for OI reserve factor = 100%
       borrowingFactor: exponentToFloat("2.22e-8"), // 0.0000000222 * 100% max reserve, 70% per year
@@ -4163,7 +4182,8 @@ const config: {
       maxOpenInterest: decimalToFloat(1_000_000),
 
       fundingIncreaseFactorPerSecond: exponentToFloat("1.6e-12"), // 0.0000000000016, at least 3.5 hours to reach max funding
-      maxFundingFactorPerSecond: exponentToFloat("2e-8"), // 0.000002%,  0.0072% per hour, 63% per year
+      maxFundingFactorPerSecondForLongs: exponentToFloat("2e-8"), // 0.000002%,  0.0072% per hour, 63% per year
+      maxFundingFactorPerSecondForShorts: exponentToFloat("2e-8"),
 
       // for OI reserve factor = 75%
       borrowingFactor: exponentToFloat("2.95e-8"), // 0.0000000295 * 75% max reserve, ~70%
@@ -4311,7 +4331,8 @@ const config: {
       maxOpenInterest: decimalToFloat(900_000),
 
       fundingIncreaseFactorPerSecond: exponentToFloat("1.6e-12"), // 0.0000000000016, at least 3.5 hours to reach max funding
-      maxFundingFactorPerSecond: exponentToFloat("2e-8"), // 0.000002%,  0.0072% per hour, 63% per year
+      maxFundingFactorPerSecondForLongs: exponentToFloat("2e-8"), // 0.000002%,  0.0072% per hour, 63% per year
+      maxFundingFactorPerSecondForShorts: exponentToFloat("2e-8"),
 
       // for OI reserve factor = 150%
       borrowingFactor: exponentToFloat("2e-8"), // 0.00000002 * 150% max reserve, 94.6% per year
@@ -4343,7 +4364,8 @@ const config: {
       maxOpenInterest: decimalToFloat(50_000),
 
       fundingIncreaseFactorPerSecond: exponentToFloat("1.6e-12"), // 0.0000000000016, at least 3.5 hours to reach max funding
-      maxFundingFactorPerSecond: exponentToFloat("2e-8"), // 0.000002%,  0.0072% per hour, 63% per year
+      maxFundingFactorPerSecondForLongs: exponentToFloat("2e-8"), // 0.000002%,  0.0072% per hour, 63% per year
+      maxFundingFactorPerSecondForShorts: exponentToFloat("2e-8"),
 
       // factor in open interest reserve factor 35%
       borrowingFactor: exponentToFloat("3.6e-8"), // 3.60-8, 40% at 100% utilisation
@@ -4572,8 +4594,10 @@ const config: {
 
       fundingIncreaseFactorPerSecond: decimalToFloat(1, 11), // 0.000000001% per second,  0,0000036% per hour
       fundingDecreaseFactorPerSecond: decimalToFloat(5, 12), // 0.0000000005% per second, 0.0000018% per hour
-      minFundingFactorPerSecond: exponentToFloat("1e-9"), // 0,0000001% per second, 0.00036% per.hour
-      maxFundingFactorPerSecond: exponentToFloat("3e-8"), // 0,000003% per second,  0,0108% per hour
+      minFundingFactorPerSecondForLongs: exponentToFloat("1e-9"), // 0,0000001% per second, 0.00036% per.hour
+      minFundingFactorPerSecondForShorts: exponentToFloat("1e-9"),
+      maxFundingFactorPerSecondForLongs: exponentToFloat("3e-8"), // 0,000003% per second,  0,0108% per hour
+      maxFundingFactorPerSecondForShorts: exponentToFloat("3e-8"),
 
       thresholdForStableFunding: percentageToFloat("5%"), // 5%
       thresholdForDecreaseFunding: decimalToFloat(2, 2), // 2%
