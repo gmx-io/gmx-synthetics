@@ -492,7 +492,7 @@ describe("Exchange.FundingFees.AdaptiveFunding", () => {
     });
   }
 
-  it.only("uses min funding increase rate when calculated increase is lower", async () => {
+  it("uses min funding increase rate when calculated increase is lower", async () => {
     await dataStore.setUint(keys.fundingFactorKey(ethUsdMarket.marketToken), decimalToFloat(1, 10));
     await dataStore.setUint(keys.fundingExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(1));
 
