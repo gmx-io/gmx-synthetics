@@ -418,7 +418,7 @@ describe("Config", () => {
   });
 
   it("validates min funding increase rate", async () => {
-    const validValue = bigNumberify("100000000000000000000000").div(3600);
+    const validValue = bigNumberify("100000000000000000000000");
     await expect(
       config.setUint(
         keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND,
