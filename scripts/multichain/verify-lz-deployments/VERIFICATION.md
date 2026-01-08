@@ -29,10 +29,14 @@
    - `npx hardhat run --network ethereum scripts/multichain/verify-lz-deployments/verifyOFTs.ts`
    - Networks: `ethereum`, `base`, `bsc`, `bera`, `botanix`
 
-3. **verifyDvnConfigs.ts** - DVN configuration verification (queries Arbitrum LZ endpoint, hub → spoke)
-   - Checks 6 contracts: GM (WETH-USDC, WBTC-USDC, BTC-BTC, WETH-WETH) + GLV (WETH-USDC, WBTC-USDC)
+3. **verifyDvnConfigs.ts** - DVN configuration verification (multi-network, all directions)
+   - Checks 6 contracts × 6 networks × 5 destinations = 180 checks
    - Validates: Required DVNs (LZ Labs + Canary), Optional DVNs (1 of Deutsche + Horizen)
-   - `npx hardhat run --network arbitrum scripts/multichain/verify-lz-deployments/verifyDvnConfigs.ts`
+   - Uses per-network DVN addresses from [LZ docs](https://docs.layerzero.network/v2/deployments/dvn-addresses)
+   - RPC URLs: Uses `.env` variables if set, otherwise hardhat.config.ts defaults
+   ```bash
+   npx ts-node scripts/multichain/verify-lz-deployments/verifyDvnConfigs.ts
+   ```
 
 4. **verifyConfirmations.ts** - ⚠️ CRITICAL: Bidirectional confirmation verification (multi-network)
    - Prevents "bricked sends" caused by confirmation mismatches between networks
@@ -132,7 +136,7 @@ cast call <CONTRACT> "totalSupply()" --rpc-url <RPC>     # 0 initially
 - [ ] Required DVNs: LayerZero Labs + Canary (both must verify)
 - [ ] Optional DVNs: Deutsche Telekom + Horizen (1 of 2 must verify)
 - [ ] Threshold = 3 (2 required + 1 optional)
-- [ ] Config verified for all 6 contracts × 5 destinations
+- [ ] Config verified for all 6 contracts × 6 networks × 5 destinations (180 checks)
 
 ### ⚠️ Confirmation Verification (CRITICAL) — `verifyConfirmations.ts`
 - [ ] Lib addresses match endpoint.getSendLibrary() for all networks

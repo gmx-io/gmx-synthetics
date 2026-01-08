@@ -147,28 +147,62 @@ export const glvWbtcUsdc: GlvContract = {
 };
 
 // =============================================================================
-// DVN Addresses (lowercase for comparison)
+// DVN Addresses per Network (lowercase for comparison)
+// Source: https://docs.layerzero.network/v2/deployments/dvn-addresses
 // =============================================================================
 
-export const dvnAddresses = {
-  layerzero: "0x2f55c492897526677c5b68fb199ea31e2c126416",
-  canary: "0xf2e380c90e6c09721297526dbc74f870e114dfcb",
-  horizen: "0x19670df5e16bea2ba9b9e68b48c054c5baea06b8",
-  deutsche: "0xeae839784e5f6c79bbaf34b6023a2f62e134ab39",
+export interface DVNAddresses {
+  layerzero: string;
+  canary: string;
+  horizen: string;
+  deutsche: string;
+}
+
+export const dvnAddressesByNetwork: Record<NetworkName, DVNAddresses> = {
+  arbitrum: {
+    layerzero: "0x2f55c492897526677c5b68fb199ea31e2c126416",
+    canary: "0xf2e380c90e6c09721297526dbc74f870e114dfcb",
+    horizen: "0x19670df5e16bea2ba9b9e68b48c054c5baea06b8",
+    deutsche: "0xeae839784e5f6c79bbaf34b6023a2f62e134ab39",
+  },
+  ethereum: {
+    layerzero: "0x589dedbd617e0cbcb916a9223f4d1300c294236b",
+    canary: "0xa4fe5a5b9a846458a70cd0748228aed3bf65c2cd",
+    horizen: "0x380275805876ff19055ea900cdb2b46a94ecf20d",
+    deutsche: "0x373a6e5c0c4e89e24819f00aa37ea370917aaff4",
+  },
+  base: {
+    layerzero: "0x9e059a54699a285714207b43b055483e78faac25",
+    canary: "0x554833698ae0fb22ecc90b01222903fd62ca4b47",
+    horizen: "0xa7b5189bca84cd304d8553977c7c614329750d99",
+    deutsche: "0xc2a0c36f5939a14966705c7cec813163faeea1f0",
+  },
+  bsc: {
+    layerzero: "0xfd6865c841c2d64565562fcc7e05e619a30615f0",
+    canary: "0xfa9ba83c102283958b997adc8b44ed3a3cdb5dda",
+    horizen: "0x247624e2143504730aec22912ed41f092498bef2",
+    deutsche: "0xf0a5c5306adbfd4e3dfd5d4b148b451c411d3878",
+  },
+  bera: {
+    layerzero: "0x282b3386571f7f794450d5789911a9804fa346b4",
+    canary: "0x06e8042729cef3ae6d6db5350f48f9d736c3675d",
+    horizen: "0xecbaa45c33ce6fa284995e5f8314f5bc7f1c2008",
+    deutsche: "0x0273fbff931704884668a9efe50e7a2b3fc30505",
+  },
+  botanix: {
+    layerzero: "0x282b3386571f7f794450d5789911a9804fa346b4",
+    canary: "0xbcefdadb8d24b1d36c26b522235012cd4cf162f6",
+    horizen: "0x713d826aaa1f974c1dc0472fc71219e93c3b1614",
+    deutsche: "0x7a3d18e2324536294cd6f054cdde7c994f40391a",
+  },
 };
-
-// =============================================================================
-// LayerZero Infrastructure
-// =============================================================================
-
-export const sendLib = "0x975bcd720be66659e3eb3c0e4f1866a3020e493a"; // Arbitrum Send Library
 
 // =============================================================================
 // SendLib / ReceiveLib Addresses per Network
 // Used for querying UlnConfig to verify confirmations
 // =============================================================================
 
-export const libAddresses: Record<NetworkName, { sendLib: string; receiveLib: string }> = {
+export const libAddressesByNetwork: Record<NetworkName, { sendLib: string; receiveLib: string }> = {
   arbitrum: {
     sendLib: "0x975bcd720be66659e3eb3c0e4f1866a3020e493a", // SendUln302
     receiveLib: "0x7B9E184e07a6EE1aC23eAe0fe8D6Be2f663f05e6", // ReceiveUln302

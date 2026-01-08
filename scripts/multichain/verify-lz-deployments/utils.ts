@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
 import * as fs from "fs";
-import { dvnAddresses, NetworkName, networks } from "./addresses";
+import { NetworkName, networks } from "./addresses";
 
 // =============================================================================
 // Logging Utilities
@@ -436,90 +436,6 @@ export function decodeDVNConfig(encodedHex: string): DVNConfig | null {
   } catch {
     return null;
   }
-}
-
-export function validateDVNConfig(config: DVNConfig, network: string): boolean {
-  let success = true;
-
-  log(`  Configuration:`);
-  log(`    Confirmations: ${config.confirmations}`);
-  log(`    Required DVNs: ${config.requiredCount}`);
-  log(`    Optional DVNs: ${config.optionalCount}`);
-  log(`    Optional threshold: ${config.optionalThreshold}`);
-  log("");
-
-  // Check required DVNs
-  log(`  Required DVNs (all must verify):`);
-  let hasLayerzero = false;
-  let hasCanary = false;
-
-  for (const addr of config.requiredDVNs) {
-    if (addr === dvnAddresses.layerzero) {
-      logSuccess(`    LayerZero Labs: ${addr}`);
-      hasLayerzero = true;
-    } else if (addr === dvnAddresses.canary) {
-      logSuccess(`    Canary: ${addr}`);
-      hasCanary = true;
-    } else if (addr === dvnAddresses.deutsche) {
-      logWarning(`    Deutsche Telekom: ${addr} (SHOULD BE OPTIONAL)`);
-      success = false;
-    } else if (addr === dvnAddresses.horizen) {
-      logWarning(`    Horizen: ${addr} (SHOULD BE OPTIONAL)`);
-      success = false;
-    } else {
-      logError(`    Unknown DVN: ${addr}`);
-      success = false;
-    }
-  }
-
-  // Check optional DVNs
-  log(`  Optional DVNs (${config.optionalThreshold} of ${config.optionalCount} must verify):`);
-  let hasDeutsche = false;
-  let hasHorizen = false;
-
-  for (const addr of config.optionalDVNs) {
-    if (addr === dvnAddresses.deutsche) {
-      logSuccess(`    Deutsche Telekom: ${addr}`);
-      hasDeutsche = true;
-    } else if (addr === dvnAddresses.horizen) {
-      logSuccess(`    Horizen: ${addr}`);
-      hasHorizen = true;
-    } else if (addr === dvnAddresses.layerzero) {
-      logWarning(`    LayerZero Labs: ${addr} (SHOULD BE REQUIRED)`);
-      success = false;
-    } else if (addr === dvnAddresses.canary) {
-      logWarning(`    Canary: ${addr} (SHOULD BE REQUIRED)`);
-      success = false;
-    } else {
-      logError(`    Unknown DVN: ${addr}`);
-      success = false;
-    }
-  }
-
-  // Validate overall configuration
-  log(`  Validation:`);
-
-  if (config.requiredCount === 2 && hasLayerzero && hasCanary) {
-    logSuccess(`    Required DVNs: Correct (LayerZero + Canary)`);
-  } else {
-    logError(`    Required DVNs: Incorrect configuration`);
-    success = false;
-  }
-
-  if (config.optionalCount === 2 && config.optionalThreshold === 1 && hasDeutsche && hasHorizen) {
-    logSuccess(`    Optional DVNs: Correct (1 of Deutsche + Horizen)`);
-  } else {
-    logError(`    Optional DVNs: Incorrect configuration`);
-    success = false;
-  }
-
-  if (success) {
-    logSuccess(`    Overall: DVN configuration CORRECT for ${network}`);
-  } else {
-    logError(`    Overall: DVN configuration INCORRECT for ${network}`);
-  }
-
-  return success;
 }
 
 // =============================================================================

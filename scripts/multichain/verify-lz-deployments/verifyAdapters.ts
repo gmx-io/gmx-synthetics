@@ -14,7 +14,7 @@ import {
   getGlvContract,
   getGmUnderlying,
   getGlvUnderlying,
-  sendLib,
+  libAddressesByNetwork,
   NetworkName,
 } from "./addresses";
 import {
@@ -61,7 +61,7 @@ async function verifyDvnConfigExists(
 ): Promise<boolean> {
   try {
     const eid = networks[network].eid;
-    const dvnConfig = await endpoint.getConfig(adapterAddress, sendLib, eid, 2);
+    const dvnConfig = await endpoint.getConfig(adapterAddress, libAddressesByNetwork.arbitrum.sendLib, eid, 2);
 
     if (dvnConfig && dvnConfig !== "0x" && dvnConfig.length > 10) {
       logSuccess(`DVN config exists for ${network} (EID ${eid})`);

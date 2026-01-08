@@ -28,7 +28,7 @@ import {
   glvMarkets,
   getGmContract,
   getGlvContract,
-  libAddresses,
+  libAddressesByNetwork,
   NetworkName,
 } from "./addresses";
 import {
@@ -160,7 +160,7 @@ async function verifyNetworkLibAddresses(
   for (const network of allNetworks) {
     logSubsection(`${network.toUpperCase()}`);
     const { endpoint } = providers[network];
-    const expectedSendLib = libAddresses[network].sendLib;
+    const expectedSendLib = libAddressesByNetwork[network].sendLib;
 
     // Check for one contract to one destination (if libs match for one, they match for all)
     const contract = contracts[0];
@@ -223,7 +223,7 @@ async function verifyConfirmationConsistency(
   const sendConfirmations = await getConfirmations(
     sourceEndpoint,
     sourceContractAddr,
-    libAddresses[sourceNetwork].sendLib,
+    libAddressesByNetwork[sourceNetwork].sendLib,
     destEid
   );
 
@@ -231,7 +231,7 @@ async function verifyConfirmationConsistency(
   const receiveConfirmations = await getConfirmations(
     destEndpoint,
     destContractAddr,
-    libAddresses[destNetwork].receiveLib,
+    libAddressesByNetwork[destNetwork].receiveLib,
     sourceEid
   );
 
