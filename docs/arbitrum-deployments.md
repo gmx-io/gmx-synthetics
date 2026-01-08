@@ -3,7 +3,7 @@
 **Network Type:** Mainnet  
 **Chain ID:** 42161  
 **Total Contracts:** 139  
-**Last Updated:** Nov 17, 2025, 08:12 AM UTC
+**Last Updated:** Dec 19, 2025, 06:06 AM UTC
 
 ## Deployed Contracts
 
@@ -22,8 +22,8 @@
 | ClaimHandler | `0x8a83F2a71A53d3860a60C9F2E68AB2C46Ff9624e` | [View on Explorer](https://arbiscan.io/address/0x8a83F2a71A53d3860a60C9F2E68AB2C46Ff9624e) |
 | ClaimUtils | `0x0Bbf4665243Ab8b5e8e73d6f9Ce02BA4006aF761` | [View on Explorer](https://arbiscan.io/address/0x0Bbf4665243Ab8b5e8e73d6f9Ce02BA4006aF761) |
 | ClaimVault | `0x6a5771a57445400c00a8656C34ECC309996657e4` | [View on Explorer](https://arbiscan.io/address/0x6a5771a57445400c00a8656C34ECC309996657e4) |
-| Config | `0x0BBbbF9D0cbdE8069e926c859E530B00Bfe90072` | [View on Explorer](https://arbiscan.io/address/0x0BBbbF9D0cbdE8069e926c859E530B00Bfe90072) |
-| ConfigSyncer | `0x2966bE26c325796c0e63D769AbD457532411Ffed` | [View on Explorer](https://arbiscan.io/address/0x2966bE26c325796c0e63D769AbD457532411Ffed) |
+| Config | `0x33D1a645B9E9fc19b06Fe02981180c8DDAeE75B1` | [View on Explorer](https://arbiscan.io/address/0x33D1a645B9E9fc19b06Fe02981180c8DDAeE75B1) |
+| ConfigSyncer | `0x4C8569E2F8A8Af32E0464E53d76449Ca7a004baF` | [View on Explorer](https://arbiscan.io/address/0x4C8569E2F8A8Af32E0464E53d76449Ca7a004baF) |
 | ConfigTimelockController | `0xC77E6C0ca99E02660A23c00A860Dd5a8912DEaF5` | [View on Explorer](https://arbiscan.io/address/0xC77E6C0ca99E02660A23c00A860Dd5a8912DEaF5) |
 | ConfigUtils | `0xF85Fd576bBe22Bce785B68922C1c9849d62737c0` | [View on Explorer](https://arbiscan.io/address/0xF85Fd576bBe22Bce785B68922C1c9849d62737c0) |
 | ContributorHandler | `0x4729D9f61c0159F5e02D2C2e5937B3225e55442C` | [View on Explorer](https://arbiscan.io/address/0x4729D9f61c0159F5e02D2C2e5937B3225e55442C) |
