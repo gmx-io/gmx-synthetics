@@ -1153,6 +1153,41 @@ const config: {
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
     },
+    AR: {
+      synthetic: true,
+      decimals: 12, // https://www.arweave.org/yellow-paper.pdf (winston units)
+      dataStreamFeedId: "0x0003e9203edf4b8903234a85043f0a4bba6d976b6a10123c0eaee57b245ef3b4",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    DASH: {
+      synthetic: true,
+      decimals: 8, // bitcoin fork
+      dataStreamFeedId: "0x00030af2822a97c3a29f256449ddf8390cbf052452d93bcd5a55ddc2e6bece22",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    SYRUP: {
+      synthetic: true,
+      decimals: 18, // https://etherscan.io/token/0x643C4E15d7d62Ad0aBeC4a9BD4b001aA3Ef52d66#readProxyContract
+      dataStreamFeedId: "0x0003e2c8ee282f518aee9efd1e14a5fd51da7a0e3207041f5db1785d0729cd1d",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    JTO: {
+      synthetic: true,
+      decimals: 9, // https://solscan.io/token/jtojtomepa8beP8AuQc6eXt5FriJwfFMwQx2v2f9mCL
+      dataStreamFeedId: "0x00031b01b4e8d1ae01b7045c41518048ec38afcf486a2b3f876036dede607735",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    CHZ: {
+      synthetic: true,
+      decimals: 18, // https://etherscan.io/token/0x3506424f91fd33084466f402d5d97f05f8e3b4af#readContract
+      dataStreamFeedId: "0x000308c666c2adb7e67738ced80cfc711c364e8980032f612578ab1a83022a93",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
     "GLV [WETH-USDC]": {
       address: "0x528A5bac7E746C9A509A1f4F6dF58A03d44279F9",
       decimals: 18,
