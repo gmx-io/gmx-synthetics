@@ -1635,7 +1635,14 @@ library MarketUtils {
 
         if (fundingRateChangeType == FundingRateChangeType.Increase) {
             // increase funding rate
-            int256 increaseValue = Precision.applyFactor(cache.diffUsdToOpenInterestFactor, configCache.fundingIncreaseFactorPerSecond).toInt256() * durationInSeconds.toInt256();
+            uint256 minFundingIncreaseRatePerSecond = dataStore.getUint(Keys.minFundingIncreaseRatePerSecondKey(market.marketToken));
+            // increase funding rate
+            uint256 increaseFactorPerSecond = Precision.applyFactor(cache.diffUsdToOpenInterestFactor, configCache.fundingIncreaseFactorPerSecond);
+            if (cache.diffUsdToOpenInterestFactor > 0 && increaseFactorPerSecond < minFundingIncreaseRatePerSecond) {
+                increaseFactorPerSecond = minFundingIncreaseRatePerSecond;
+            }
+            int256 increaseValue = (increaseFactorPerSecond * durationInSeconds).toInt256();
+
 
             // if there are more longs than shorts, then the savedFundingFactorPerSecond should increase
             // otherwise the savedFundingFactorPerSecond should increase in the opposite direction / decrease
@@ -3226,33 +3233,6 @@ library MarketUtils {
         bool isExceeded = pnlToPoolFactor > 0 && pnlToPoolFactor.toUint256() > maxPnlFactor;
 
         return (isExceeded, pnlToPoolFactor, maxPnlFactor);
-    }
-
-    function getUiFeeFactor(DataStore dataStore, address account) internal view returns (uint256) {
-        uint256 maxUiFeeFactor = dataStore.getUint(Keys.MAX_UI_FEE_FACTOR);
-        uint256 uiFeeFactor = dataStore.getUint(Keys.uiFeeFactorKey(account));
-
-        return uiFeeFactor < maxUiFeeFactor ? uiFeeFactor : maxUiFeeFactor;
-    }
-
-    function setUiFeeFactor(
-        DataStore dataStore,
-        EventEmitter eventEmitter,
-        address account,
-        uint256 uiFeeFactor
-    ) internal {
-        uint256 maxUiFeeFactor = dataStore.getUint(Keys.MAX_UI_FEE_FACTOR);
-
-        if (uiFeeFactor > maxUiFeeFactor) {
-            revert Errors.InvalidUiFeeFactor(uiFeeFactor, maxUiFeeFactor);
-        }
-
-        dataStore.setUint(
-            Keys.uiFeeFactorKey(account),
-            uiFeeFactor
-        );
-
-        MarketEventUtils.emitUiFeeFactorUpdated(eventEmitter, account, uiFeeFactor);
     }
 
     function validateMarketTokenBalance(
