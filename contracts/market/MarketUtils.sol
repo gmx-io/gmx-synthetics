@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import "../data/DataStore.sol";
+import "../data/DataStoreOps.sol";
 import "../event/EventEmitter.sol";
 
 import "./Market.sol";
@@ -30,6 +31,7 @@ library MarketUtils {
     using SignedMath for int256;
     using SafeCast for int256;
     using SafeCast for uint256;
+    using DataStoreOps for DataStore;
 
     using Market for Market.Props;
     using Position for Position.Props;
@@ -334,7 +336,7 @@ library MarketUtils {
             false
         );
 
-        result.borrowingFeePoolFactor = Precision.FLOAT_PRECISION - dataStore.getUint(Keys.BORROWING_FEE_RECEIVER_FACTOR);
+        result.borrowingFeePoolFactor = Precision.FLOAT_PRECISION - dataStore.getUintValueFromDataStore(Keys.BORROWING_FEE_RECEIVER_FACTOR);
         result.poolValue += Precision.applyFactor(result.totalBorrowingFees, result.borrowingFeePoolFactor).toInt256();
 
         // !maximize should be used for net pnl as a larger pnl leads to a smaller pool value
@@ -390,7 +392,7 @@ library MarketUtils {
 
         result.poolValue -= impactPoolUsd.toInt256();
 
-        result.lentImpactPoolAmount = dataStore.getUint(Keys.lentPositionImpactPoolAmountKey(market.marketToken));
+        result.lentImpactPoolAmount = dataStore.getUintValueFromDataStore(Keys.lentPositionImpactPoolAmountKey(market.marketToken));
         // use maximize for pickPrice since the lentImpactPoolUsd is added to the poolValue
         uint256 lentImpactPoolUsd = result.lentImpactPoolAmount * indexTokenPrice.pickPrice(maximize);
 
@@ -509,7 +511,7 @@ library MarketUtils {
         // if the longToken and shortToken are the same, return half of the token amount, so that
         // calculations of pool value, etc would be correct
         uint256 divisor = getPoolDivisor(market.longToken, market.shortToken);
-        return dataStore.getUint(Keys.poolAmountKey(market.marketToken, token)) / divisor;
+        return dataStore.getUintValueFromDataStore(Keys.poolAmountKey(market.marketToken, token)) / divisor;
     }
 
     // @dev get the max amount of tokens allowed to be in the pool
@@ -518,11 +520,11 @@ library MarketUtils {
     // @param token the token to check
     // @return the max amount of tokens that are allowed in the pool
     function getMaxPoolAmount(DataStore dataStore, address market, address token) internal view returns (uint256) {
-        return dataStore.getUint(Keys.maxPoolAmountKey(market, token));
+        return dataStore.getUintValueFromDataStore(Keys.maxPoolAmountKey(market, token));
     }
 
     function getMaxPoolUsdForDeposit(DataStore dataStore, address market, address token) internal view returns (uint256) {
-        return dataStore.getUint(Keys.maxPoolUsdForDepositKey(market, token));
+        return dataStore.getUintValueFromDataStore(Keys.maxPoolUsdForDepositKey(market, token));
     }
 
     function getUsageFactor(
@@ -545,7 +547,7 @@ library MarketUtils {
     // @param isLong whether this is for the long or short side
     // @return the max open interest allowed for the market
     function getMaxOpenInterest(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
-        return dataStore.getUint(Keys.maxOpenInterestKey(market, isLong));
+        return dataStore.getUintValueFromDataStore(Keys.maxOpenInterestKey(market, isLong));
     }
 
     // @dev increment the claimable collateral amount
@@ -563,7 +565,7 @@ library MarketUtils {
         address account,
         uint256 delta
     ) internal {
-        uint256 divisor = dataStore.getUint(Keys.CLAIMABLE_COLLATERAL_TIME_DIVISOR);
+        uint256 divisor = dataStore.getUintValueFromDataStore(Keys.CLAIMABLE_COLLATERAL_TIME_DIVISOR);
         uint256 timeKey = Chain.currentTimestamp() / divisor;
 
         uint256 nextValue = dataStore.incrementUint(
@@ -641,7 +643,7 @@ library MarketUtils {
     ) internal returns (uint256) {
         bytes32 key = Keys.claimableFundingAmountKey(market, token, account);
 
-        uint256 claimableAmount = dataStore.getUint(key);
+        uint256 claimableAmount = dataStore.getUintValueFromDataStore(key);
         dataStore.setUint(key, 0);
 
         uint256 nextPoolValue = dataStore.decrementUint(
@@ -721,7 +723,7 @@ library MarketUtils {
         address account,
         address receiver
     ) internal returns (uint256) {
-        uint256 claimableAmount = dataStore.getUint(Keys.claimableCollateralAmountKey(market, token, timeKey, account));
+        uint256 claimableAmount = dataStore.getUintValueFromDataStore(Keys.claimableCollateralAmountKey(market, token, timeKey, account));
 
         uint256 claimableFactor = _getClaimableFactor(dataStore, market, token, timeKey, account);
 
@@ -729,7 +731,7 @@ library MarketUtils {
             revert Errors.InvalidClaimableFactor(claimableFactor);
         }
 
-        uint256 claimedAmount = dataStore.getUint(Keys.claimedCollateralAmountKey(market, token, timeKey, account));
+        uint256 claimedAmount = dataStore.getUintValueFromDataStore(Keys.claimedCollateralAmountKey(market, token, timeKey, account));
 
         uint256 adjustedClaimableAmount = Precision.applyFactor(claimableAmount, claimableFactor);
         if (adjustedClaimableAmount <= claimedAmount) {
@@ -777,18 +779,18 @@ library MarketUtils {
         uint256 timeKey,
         address account
     ) internal view returns (uint256) {
-        uint256 claimableFactorForTime = dataStore.getUint(Keys.claimableCollateralFactorKey(market, token, timeKey));
-        uint256 claimableFactorForAccount = dataStore.getUint(Keys.claimableCollateralFactorKey(market, token, timeKey, account));
+        uint256 claimableFactorForTime = dataStore.getUintValueFromDataStore(Keys.claimableCollateralFactorKey(market, token, timeKey));
+        uint256 claimableFactorForAccount = dataStore.getUintValueFromDataStore(Keys.claimableCollateralFactorKey(market, token, timeKey, account));
         uint256 claimableFactor = claimableFactorForTime > claimableFactorForAccount
             ? claimableFactorForTime
             : claimableFactorForAccount;
 
         // if the divisor is changed the timeDiff calculation would no longer be accurate
-        uint256 divisor = dataStore.getUint(Keys.CLAIMABLE_COLLATERAL_TIME_DIVISOR);
+        uint256 divisor = dataStore.getUintValueFromDataStore(Keys.CLAIMABLE_COLLATERAL_TIME_DIVISOR);
 
-        uint256 claimableReductionFactor = dataStore.getUint(Keys.claimableCollateralReductionFactorKey(market, token, timeKey, account));
+        uint256 claimableReductionFactor = dataStore.getUintValueFromDataStore(Keys.claimableCollateralReductionFactorKey(market, token, timeKey, account));
         uint256 timeDiff = Chain.currentTimestamp() - timeKey * divisor;
-        uint256 claimableCollateralDelay = dataStore.getUint(Keys.CLAIMABLE_COLLATERAL_DELAY);
+        uint256 claimableCollateralDelay = dataStore.getUintValueFromDataStore(Keys.CLAIMABLE_COLLATERAL_DELAY);
 
         if (claimableFactor == 0 && claimableReductionFactor == 0 && timeDiff > claimableCollateralDelay) {
             claimableFactor = Precision.FLOAT_PRECISION;
@@ -844,8 +846,8 @@ library MarketUtils {
     }
 
     function getAdjustedSwapImpactFactors(DataStore dataStore, address market) internal view returns (uint256, uint256) {
-        uint256 positiveImpactFactor = dataStore.getUint(Keys.swapImpactFactorKey(market, true));
-        uint256 negativeImpactFactor = dataStore.getUint(Keys.swapImpactFactorKey(market, false));
+        uint256 positiveImpactFactor = dataStore.getUintValueFromDataStore(Keys.swapImpactFactorKey(market, true));
+        uint256 negativeImpactFactor = dataStore.getUintValueFromDataStore(Keys.swapImpactFactorKey(market, false));
 
         // if the positive impact factor is more than the negative impact factor, positions could be opened
         // and closed immediately for a profit if the difference is sufficient to cover the position fees
@@ -863,8 +865,8 @@ library MarketUtils {
     }
 
     function getAdjustedPositionImpactFactors(DataStore dataStore, address market) internal view returns (uint256, uint256) {
-        uint256 positiveImpactFactor = dataStore.getUint(Keys.positionImpactFactorKey(market, true));
-        uint256 negativeImpactFactor = dataStore.getUint(Keys.positionImpactFactorKey(market, false));
+        uint256 positiveImpactFactor = dataStore.getUintValueFromDataStore(Keys.positionImpactFactorKey(market, true));
+        uint256 negativeImpactFactor = dataStore.getUintValueFromDataStore(Keys.positionImpactFactorKey(market, false));
 
         // if the positive impact factor is more than the negative impact factor, positions could be opened
         // and closed immediately for a profit if the difference is sufficient to cover the position fees
@@ -882,8 +884,8 @@ library MarketUtils {
     }
 
     function getAdjustedPositionImpactExponentFactors(DataStore dataStore, address market) internal view returns (uint256, uint256) {
-        uint256 positiveExponentFactor = dataStore.getUint(Keys.positionImpactExponentFactorKey(market, true));
-        uint256 negativeExponentFactor = dataStore.getUint(Keys.positionImpactExponentFactorKey(market, false));
+        uint256 positiveExponentFactor = dataStore.getUintValueFromDataStore(Keys.positionImpactExponentFactorKey(market, true));
+        uint256 negativeExponentFactor = dataStore.getUintValueFromDataStore(Keys.positionImpactExponentFactorKey(market, false));
 
         if (positiveExponentFactor > negativeExponentFactor) {
             positiveExponentFactor = negativeExponentFactor;
@@ -942,7 +944,7 @@ library MarketUtils {
 
         // if usdRequiredToBeLent > 0, check how much is lendable
         if (cache.usdRequiredToBeLent > 0) {
-            cache.lentAmount = dataStore.getUint(Keys.lentPositionImpactPoolAmountKey(market.marketToken));
+            cache.lentAmount = dataStore.getUintValueFromDataStore(Keys.lentPositionImpactPoolAmountKey(market.marketToken));
             // capping the max lendable amount to a factor of the pool amount is mainly a sanity check to prevent
             // the lent amount from being too large relative to the amounts in the pool
             // trader pnl, borrowing fees, etc is not factored into this calculation
@@ -973,10 +975,10 @@ library MarketUtils {
         uint256 indexTokenPrice,
         uint256 lentAmount
     ) internal view returns (uint256) {
-        uint256 maxLendableFactor = dataStore.getUint(Keys.maxLendableImpactFactorKey(market));
+        uint256 maxLendableFactor = dataStore.getUintValueFromDataStore(Keys.maxLendableImpactFactorKey(market));
         uint256 maxLendableUsd = Precision.applyFactor(poolUsd, maxLendableFactor);
 
-        uint256 maxLendableUsdConfig = dataStore.getUint(Keys.maxLendableImpactUsdKey(market));
+        uint256 maxLendableUsdConfig = dataStore.getUintValueFromDataStore(Keys.maxLendableImpactUsdKey(market));
         if (maxLendableUsd > maxLendableUsdConfig) {
             maxLendableUsd = maxLendableUsdConfig;
         }
@@ -1018,7 +1020,7 @@ library MarketUtils {
     }
 
     function getTotalPendingImpactAmount(DataStore dataStore, address market) internal view returns (int256) {
-        return dataStore.getInt(Keys.totalPendingImpactAmountKey(market));
+        return dataStore.getIntValueFromDataStore(Keys.totalPendingImpactAmountKey(market));
     }
 
     // @dev get the position impact pool amount
@@ -1026,7 +1028,7 @@ library MarketUtils {
     // @param market the market to check
     // @return the position impact pool amount
     function getPositionImpactPoolAmount(DataStore dataStore, address market) internal view returns (uint256) {
-        return dataStore.getUint(Keys.positionImpactPoolAmountKey(market));
+        return dataStore.getUintValueFromDataStore(Keys.positionImpactPoolAmountKey(market));
     }
 
     // @dev get the swap impact pool amount
@@ -1035,7 +1037,7 @@ library MarketUtils {
     // @param token the token to check
     // @return the swap impact pool amount
     function getSwapImpactPoolAmount(DataStore dataStore, address market, address token) internal view returns (uint256) {
-        return dataStore.getUint(Keys.swapImpactPoolAmountKey(market, token));
+        return dataStore.getUintValueFromDataStore(Keys.swapImpactPoolAmountKey(market, token));
     }
 
     // @dev apply a delta to the swap impact pool
@@ -1098,7 +1100,7 @@ library MarketUtils {
 
         if (delta < 0) {
             cache.positionImpactPoolAmountKey = Keys.positionImpactPoolAmountKey(market);
-            cache.poolAmount = dataStore.getUint(cache.positionImpactPoolAmountKey);
+            cache.poolAmount = dataStore.getUintValueFromDataStore(cache.positionImpactPoolAmountKey);
 
             if (cache.deltaMagnitude > cache.poolAmount) {
                 cache.excessAmount = cache.deltaMagnitude - cache.poolAmount;
@@ -1114,7 +1116,7 @@ library MarketUtils {
             }
         } else {
             cache.lentPositionImpactPoolAmountKey = Keys.lentPositionImpactPoolAmountKey(market);
-            cache.poolAmount = dataStore.getUint(cache.lentPositionImpactPoolAmountKey);
+            cache.poolAmount = dataStore.getUintValueFromDataStore(cache.lentPositionImpactPoolAmountKey);
 
             if (cache.deltaMagnitude > cache.poolAmount) {
                 cache.excessAmount = cache.deltaMagnitude - cache.poolAmount;
@@ -1547,7 +1549,7 @@ library MarketUtils {
     ) internal view returns (uint256, bool, int256) {
         GetNextFundingFactorPerSecondCache memory cache;
 
-        bool useOpenInterestInTokens = dataStore.getBool(Keys.USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE);
+        bool useOpenInterestInTokens = dataStore.getBoolValueFromDataStore(Keys.USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE);
 
         uint256 longOpenInterest = getOpenInterestForBalance({
             dataStore: dataStore,
@@ -1569,7 +1571,7 @@ library MarketUtils {
         cache.totalOpenInterest = longOpenInterest + shortOpenInterest;
 
         FundingConfigCache memory configCache;
-        configCache.fundingIncreaseFactorPerSecond = dataStore.getUint(Keys.fundingIncreaseFactorPerSecondKey(market.marketToken));
+        configCache.fundingIncreaseFactorPerSecond = dataStore.getUintValueFromDataStore(Keys.fundingIncreaseFactorPerSecondKey(market.marketToken));
 
         // if the open interest difference is zero and adaptive funding
         // is not enabled, then return zero as the funding factor
@@ -1618,7 +1620,7 @@ library MarketUtils {
         // the default will be NoChange
         FundingRateChangeType fundingRateChangeType;
 
-        // check if is skew the same direction as funding 
+        // check if is skew the same direction as funding
         if ((cache.savedFundingFactorPerSecond > 0 && longOpenInterest > shortOpenInterest) || (cache.savedFundingFactorPerSecond < 0 && shortOpenInterest > longOpenInterest)) {
             if (cache.diffUsdToOpenInterestFactor > configCache.thresholdForStableFunding) {
                 fundingRateChangeType = FundingRateChangeType.Increase;
@@ -1633,15 +1635,13 @@ library MarketUtils {
         }
 
         if (fundingRateChangeType == FundingRateChangeType.Increase) {
-            // increase funding rate
-            uint256 minFundingIncreaseRatePerSecond = dataStore.getUint(Keys.minFundingIncreaseRatePerSecondKey(market.marketToken));
+            uint256 minFundingIncreaseRatePerSecond = dataStore.getUintValueFromDataStore(Keys.minFundingIncreaseRatePerSecondKey(market.marketToken));
             // increase funding rate
             uint256 increaseFactorPerSecond = Precision.applyFactor(cache.diffUsdToOpenInterestFactor, configCache.fundingIncreaseFactorPerSecond);
             if (cache.diffUsdToOpenInterestFactor > 0 && increaseFactorPerSecond < minFundingIncreaseRatePerSecond) {
                 increaseFactorPerSecond = minFundingIncreaseRatePerSecond;
             }
             int256 increaseValue = (increaseFactorPerSecond * durationInSeconds).toInt256();
-
 
             // if there are more longs than shorts, then the savedFundingFactorPerSecond should increase
             // otherwise the savedFundingFactorPerSecond should increase in the opposite direction / decrease
@@ -2786,9 +2786,9 @@ library MarketUtils {
         // check if the borrowing fee for the smaller side should be skipped
         // if skipBorrowingFeeForSmallerSide is true, and the longOpenInterest is exactly the same as the shortOpenInterest
         // then the borrowing fee would be charged for both sides, this should be very rare
-        bool skipBorrowingFeeForSmallerSide = dataStore.getBool(Keys.SKIP_BORROWING_FEE_FOR_SMALLER_SIDE);
+        bool skipBorrowingFeeForSmallerSide = dataStore.getBoolValueFromDataStore(Keys.SKIP_BORROWING_FEE_FOR_SMALLER_SIDE);
         if (skipBorrowingFeeForSmallerSide) {
-            bool useOpenInterestInTokens = dataStore.getBool(Keys.USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE);
+            bool useOpenInterestInTokens = dataStore.getBoolValueFromDataStore(Keys.USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE);
             uint256 longOpenInterest = getOpenInterestForBalance({
                 dataStore: dataStore,
                 market: market,
@@ -3068,7 +3068,7 @@ library MarketUtils {
             revert Errors.EmptyMarket();
         }
 
-        bool isMarketDisabled = dataStore.getBool(Keys.isMarketDisabledKey(market.marketToken));
+        bool isMarketDisabled = dataStore.getBoolValueFromDataStore(Keys.isMarketDisabledKey(market.marketToken));
         if (isMarketDisabled) {
             revert Errors.DisabledMarket(market.marketToken);
         }
@@ -3294,7 +3294,7 @@ library MarketUtils {
             revert Errors.InvalidMarketTokenBalanceForCollateralAmount(market.marketToken, token, balance, collateralAmount);
         }
 
-        uint256 claimableFundingFeeAmount = dataStore.getUint(Keys.claimableFundingAmountKey(market.marketToken, token));
+        uint256 claimableFundingFeeAmount = dataStore.getUintValueFromDataStore(Keys.claimableFundingAmountKey(market.marketToken, token));
 
         // in case of late liquidations, it may be possible for the claimableFundingFeeAmount to exceed the market token balance
         // but this should be very rare
