@@ -414,6 +414,9 @@ export function decodeDVNConfig(encodedHex: string): DVNConfig | null {
       return null;
     }
 
+    // The getConfig function returns bytes memory containing the ABI-encoded UlnConfig.
+    // When called via ethers, the outer bytes wrapper is already decoded, so we get the raw
+    // UlnConfig encoding directly. Decode as the tuple directly.
     // UlnConfig struct: (uint64 confirmations, uint8 requiredDVNCount, uint8 optionalDVNCount,
     //                    uint8 optionalDVNThreshold, address[] requiredDVNs, address[] optionalDVNs)
     const decoded = ethers.utils.defaultAbiCoder.decode(
@@ -545,3 +548,84 @@ export function generateSummary(passCount: number, failCount: number) {
     log(`Full verification log saved to: ${logFile}`);
   }
 }
+
+// =============================================================================
+// Confirmation Verification (for bidirectional consistency checks)
+// =============================================================================
+
+/**
+ * Verify that confirmation config matches expected value
+ * @param endpoint - LZ endpoint contract
+ * @param oappAddress - OFT/Adapter address
+ * @param lib - SendLib or ReceiveLib address
+ * @param peerEid - EID of the peer network
+ * @param expectedConfirmations - Expected confirmation count
+ * @param direction - "send" for sendLib, "receive" for receiveLib
+ */
+export async function verifyConfirmationConfig(
+  endpoint: ethers.Contract,
+  oappAddress: string,
+  lib: string,
+  peerEid: number,
+  expectedConfirmations: number,
+  direction: "send" | "receive"
+): Promise<{ success: boolean; actual: number | null }> {
+  try {
+    const configHex = await endpoint.getConfig(oappAddress, lib, peerEid, 2);
+    const config = decodeDVNConfig(configHex);
+
+    if (!config) {
+      logError(`${direction} to EID ${peerEid}: Failed to decode config`);
+      return { success: false, actual: null };
+    }
+
+    if (config.confirmations === expectedConfirmations) {
+      logSuccess(`${direction} to EID ${peerEid}: confirmations = ${config.confirmations}`);
+      return { success: true, actual: config.confirmations };
+    }
+
+    logError(
+      `${direction} to EID ${peerEid}: confirmations = ${config.confirmations} (expected ${expectedConfirmations})`
+    );
+    return { success: false, actual: config.confirmations };
+  } catch (error) {
+    logError(`${direction} to EID ${peerEid}: Failed to get config - ${error}`);
+    return { success: false, actual: null };
+  }
+}
+
+/**
+ * Verify that the hardcoded lib addresses match what the endpoint returns
+ */
+export async function verifyLibAddresses(
+  endpoint: ethers.Contract,
+  oappAddress: string,
+  expectedSendLib: string,
+  destEid: number
+): Promise<boolean> {
+  try {
+    const actualSendLib = await endpoint.getSendLibrary(oappAddress, destEid);
+
+    if (actualSendLib.toLowerCase() === expectedSendLib.toLowerCase()) {
+      logSuccess(`SendLib for EID ${destEid}: ${actualSendLib}`);
+      return true;
+    }
+
+    logError(`SendLib mismatch for EID ${destEid}: expected ${expectedSendLib}, got ${actualSendLib}`);
+    return false;
+  } catch (error) {
+    logError(`Failed to verify lib addresses for EID ${destEid}: ${error}`);
+    return false;
+  }
+}
+
+/**
+ * Extended LZ Endpoint ABI including getReceiveLibrary
+ */
+export const LZ_ENDPOINT_ABI_EXTENDED = [
+  "function delegates(address oapp) view returns (address)",
+  "function getConfig(address oapp, address lib, uint32 eid, uint32 configType) view returns (bytes)",
+  "function getSendLibrary(address oapp, uint32 eid) view returns (address)",
+  "function getReceiveLibrary(address oapp, uint32 eid) view returns (address, bool)",
+  "function defaultReceiveLibrary(uint32 eid) view returns (address)",
+];

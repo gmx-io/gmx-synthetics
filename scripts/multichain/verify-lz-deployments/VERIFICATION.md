@@ -34,6 +34,15 @@
    - Validates: Required DVNs (LZ Labs + Canary), Optional DVNs (1 of Deutsche + Horizen)
    - `npx hardhat run --network arbitrum scripts/multichain/verify-lz-deployments/verifyDvnConfigs.ts`
 
+4. **verifyConfirmations.ts** - ⚠️ CRITICAL: Bidirectional confirmation verification (multi-network)
+   - Prevents "bricked sends" caused by confirmation mismatches between networks
+   - Checks 6 contracts × 6 networks × 5 destinations × 2 directions (send + receive)
+   - Validates: SendLib confirmations, ReceiveLib confirmations, bidirectional consistency
+   - RPC URLs: Uses `.env` variables if set, otherwise hardhat.config.ts defaults
+   ```bash
+   npx ts-node scripts/multichain/verify-lz-deployments/verifyConfirmations.ts
+   ```
+
 **Log files:** `out/_lz-verification/`
 
 ---
@@ -124,6 +133,14 @@ cast call <CONTRACT> "totalSupply()" --rpc-url <RPC>     # 0 initially
 - [ ] Optional DVNs: Deutsche Telekom + Horizen (1 of 2 must verify)
 - [ ] Threshold = 3 (2 required + 1 optional)
 - [ ] Config verified for all 6 contracts × 5 destinations
+
+### ⚠️ Confirmation Verification (CRITICAL) — `verifyConfirmations.ts`
+- [ ] Lib addresses match endpoint.getSendLibrary() for all networks
+- [ ] Bidirectional consistency verified for all network pairs:
+  - For each pair (A → B): A's sendLib confirmations = B's receiveLib expectations from A
+- [ ] Config verified for all 6 contracts × 30 network pairs (6×5 directional pairs)
+
+**Why this matters:** If Network A sends with 60 confirmations but Network B expects 15, messages get stuck ("bricked") until the mismatch is fixed. This script queries actual values from contracts rather than comparing against hardcoded expectations.
 
 ### Manual Verification
 - [ ] Bytecode verified on block explorers (Arbiscan, Etherscan, etc.)

@@ -164,6 +164,38 @@ export const dvnAddresses = {
 export const sendLib = "0x975bcd720be66659e3eb3c0e4f1866a3020e493a"; // Arbitrum Send Library
 
 // =============================================================================
+// SendLib / ReceiveLib Addresses per Network
+// Used for querying UlnConfig to verify confirmations
+// =============================================================================
+
+export const libAddresses: Record<NetworkName, { sendLib: string; receiveLib: string }> = {
+  arbitrum: {
+    sendLib: "0x975bcd720be66659e3eb3c0e4f1866a3020e493a", // SendUln302
+    receiveLib: "0x7B9E184e07a6EE1aC23eAe0fe8D6Be2f663f05e6", // ReceiveUln302
+  },
+  ethereum: {
+    sendLib: "0xbB2Ea70C9E858123480642Cf96acbcCE1372dCe1", // SendUln302
+    receiveLib: "0xc02Ab410f0734EFa3F14628780e6e695156024C2", // ReceiveUln302
+  },
+  base: {
+    sendLib: "0xB5320B0B3a13cC860893E2Bd79FCd7e13484Dda2", // SendUln302
+    receiveLib: "0xc70AB6f32772f59fBfc23889Caf4Ba3376C84bAf", // ReceiveUln302
+  },
+  bsc: {
+    sendLib: "0x9F8C645f2D0b2159767Bd6E0839DE4BE49e823DE", // SendUln302
+    receiveLib: "0xB217266c3A98C8B2709Ee26836C98cf12f6cCEC1", // ReceiveUln302
+  },
+  bera: {
+    sendLib: "0xC39161c743D0307EB9BCc9FEF03eeb9Dc4802de7", // SendUln302
+    receiveLib: "0xe1844c5D63a9543023008D332Bd3d2e6f1FE1043", // ReceiveUln302
+  },
+  botanix: {
+    sendLib: "0xC39161c743D0307EB9BCc9FEF03eeb9Dc4802de7", // SendUln302
+    receiveLib: "0xe1844c5D63a9543023008D332Bd3d2e6f1FE1043", // ReceiveUln302
+  },
+};
+
+// =============================================================================
 // Helper Functions
 // =============================================================================
 
