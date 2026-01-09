@@ -20,6 +20,12 @@
 ---
 
 ## 2. GMX Verification Scripts (run these in current repo)
+
+**Run all 3 scripts at once:**
+```bash
+yarn verify:lz
+```
+
 1. **verifyContracts.ts** - Combined OFTAdapter and OFT verification (multi-network)
    - Checks Arbitrum hub: 6 OFTAdapter contracts (deployment, underlying, peers, DVN config, enforced options, quotes)
    - Checks spoke networks: 6 OFT contracts × 5 networks = 30 OFTs (deployment, token props, peers, enforced options, quotes)
@@ -145,10 +151,37 @@ cast call <CONTRACT> "totalSupply()" --rpc-url <RPC>     # 0 initially
   - For each pair (A → B): A's sendLib confirmations = B's receiveLib expectations from A
 - [ ] Config verified for all 6 contracts × 30 network pairs (6×5 directional pairs)
 
-**Why this matters:** If Network A sends with 60 confirmations but Network B expects 15, messages get stuck ("bricked") until the mismatch is fixed. This script queries actual values from contracts rather than comparing against hardcoded expectations.
+**Why this matters:** If Network A sends with 20 confirmations but Network B expects 15, messages get stuck ("bricked") until the mismatch is fixed. This script queries actual values from contracts rather than comparing against hardcoded expectations.
 
 ### Manual Verification
 - [ ] Bytecode verified on block explorers (Arbiscan, Etherscan, etc.)
 - [ ] Test transfer successful (small amount, both directions)
 - [ ] Tokens lock on adapter, mint on OFT (and reverse)
 - [ ] Contracts visible on [LayerZero Scan](https://layerzeroscan.com)
+
+---
+
+## 6. Adding New Markets
+
+To add a new GM/GLV market to verification, update `addresses.ts` only (search for `// === ADD NEW ...` markers):
+
+1. **Add contract config** → `// === ADD NEW GM CONTRACTS HERE ===` (or GLV equivalent)
+2. **Add to markets array** → `// === ADD NEW MARKET NAMES HERE ===`
+3. **Update getGmContract/getGlvContract** → `// === ADD NEW GM CASE HERE ===` (or GLV equivalent)
+4. **Update getGmUnderlying/getGlvUnderlying** → `// === ADD NEW GM UNDERLYING CASE HERE ===` (or GLV equivalent)
+
+Example for uniform address (same on all networks):
+```typescript
+export const gmNewMarket: UniformGmContract = {
+  address: "0x...",
+  underlying: "0x...",
+};
+```
+
+Example for per-network addresses:
+```typescript
+export const gmNewMarket: PerNetworkGmContract = {
+  underlying: "0x...",
+  perNetwork: { arbitrum: "0x...", ethereum: "0x...", base: "0x...", bsc: "0x...", bera: "0x...", botanix: "0x..." },
+};
+```

@@ -116,6 +116,9 @@ export const gmWethWeth: PerNetworkGmContract = {
   },
 };
 
+// === ADD NEW GM CONTRACTS HERE ===
+// Use UniformGmContract if same address on all networks, PerNetworkGmContract if different
+
 // =============================================================================
 // GLV Contract Addresses
 // =============================================================================
@@ -145,6 +148,8 @@ export const glvWbtcUsdc: GlvContract = {
     botanix: "0xbCB170fEDDa90cd7593f016DFdabA032Ca1F222b", // OFT
   },
 };
+
+// === ADD NEW GLV CONTRACTS HERE ===
 
 // =============================================================================
 // DVN Addresses per Network (lowercase for comparison)
@@ -237,6 +242,7 @@ export function getNetworkConfig(network: NetworkName): NetworkConfig {
   return networks[network];
 }
 
+// === ADD NEW GM CASE HERE ===
 export function getGmContract(market: string, network: NetworkName): string {
   switch (market) {
     case "WETH_USDC":
@@ -252,6 +258,7 @@ export function getGmContract(market: string, network: NetworkName): string {
   }
 }
 
+// === ADD NEW GLV CASE HERE ===
 export function getGlvContract(market: string, network: NetworkName): string {
   switch (market) {
     case "WETH_USDC":
@@ -271,11 +278,11 @@ export function isUniformAddress(market: string): boolean {
   return market === "WETH_USDC" || market === "WBTC_USDC";
 }
 
-// All GM markets for iteration
+// === ADD NEW MARKET NAMES HERE ===
 export const gmMarkets = ["WETH_USDC", "WBTC_USDC", "BTC_BTC", "WETH_WETH"] as const;
 export const glvMarkets = ["WETH_USDC", "WBTC_USDC"] as const;
 
-// Get underlying token address for a market
+// === ADD NEW GM UNDERLYING CASE HERE ===
 export function getGmUnderlying(market: string): string {
   switch (market) {
     case "WETH_USDC":
@@ -291,6 +298,7 @@ export function getGmUnderlying(market: string): string {
   }
 }
 
+// === ADD NEW GLV UNDERLYING CASE HERE ===
 export function getGlvUnderlying(market: string): string {
   switch (market) {
     case "WETH_USDC":
