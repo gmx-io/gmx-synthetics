@@ -14,7 +14,7 @@ const baseConstructorContracts = [
   "MultichainVault",
 ];
 
-const requireMockTimelock = !["arbitrum", "avalanche", "botanix"].includes(hre.network.name);
+const requireMockTimelock = !["arbitrum", "avalanche", "botanix", "megaEth"].includes(hre.network.name);
 const orderConstructorContracts = ["ReferralStorage"];
 
 const func = createDeployFunction({

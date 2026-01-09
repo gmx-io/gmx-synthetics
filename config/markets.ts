@@ -5027,6 +5027,7 @@ const config: {
       maxOpenInterest: decimalToFloat(2_000_000),
     },
   ],
+  megaEth: [],
   avalancheFuji: [
     {
       ...baseMarketConfig,

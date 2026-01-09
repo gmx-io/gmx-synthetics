@@ -210,6 +210,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
     arbitrum: roleConfigs.arbitrum(roleInfo),
     avalanche: roleConfigs.avalanche(roleInfo),
     botanix: roleConfigs.botanix(roleInfo),
+    megaEth: roleConfigs.megaEth(roleInfo),
     avalancheFuji: {
       CONFIG_KEEPER: {
         "0xFb11f15f206bdA02c224EDC744b0E50E46137046": true,

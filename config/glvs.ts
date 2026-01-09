@@ -191,6 +191,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       },
     ],
     botanix: [],
+    megaEth: [],
     arbitrumSepolia: [
       {
         name: "GMX Liquidity Vault [WETH-USDC.SG]",
