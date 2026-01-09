@@ -1391,8 +1391,14 @@ library MarketUtils {
         cache.shortOpenInterest = cache.openInterest.short.longToken + cache.openInterest.short.shortToken;
 
         // if either long or short open interest is zero, then funding should not be updated
-        // as there would not be any user to pay the funding to
+        // as there would not be any user to pay the funding to, preserve the saved funding factor
         if (cache.longOpenInterest == 0 || cache.shortOpenInterest == 0) {
+            int256 savedFundingFactorPerSecond = getSavedFundingFactorPerSecond(dataStore, market.marketToken);
+
+            result.nextSavedFundingFactorPerSecond = savedFundingFactorPerSecond;
+            result.fundingFactorPerSecond = savedFundingFactorPerSecond.abs();
+            result.longsPayShorts = savedFundingFactorPerSecond > 0;
+
             return result;
         }
 
