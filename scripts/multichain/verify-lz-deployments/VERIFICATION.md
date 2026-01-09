@@ -20,16 +20,16 @@
 ---
 
 ## 2. GMX Verification Scripts (run these in current repo)
-1. **verifyAdapters.ts** - Arbitrum OFTAdapter verification
-   - Checks: adapter deployment, underlying tokens, peer matrix (5 EIDs), ownership, DVN config, quotes
-   - `npx hardhat run --network arbitrum scripts/multichain/verify-lz-deployments/verifyAdapters.ts`
+1. **verifyContracts.ts** - Combined OFTAdapter and OFT verification (multi-network)
+   - Checks Arbitrum hub: 6 OFTAdapter contracts (deployment, underlying, peers, DVN config, enforced options, quotes)
+   - Checks spoke networks: 6 OFT contracts × 5 networks = 30 OFTs (deployment, token props, peers, enforced options, quotes)
+   - Total: 474 checks across all 6 networks
+   - RPC URLs: Uses `.env` variables if set, otherwise hardhat.config.ts defaults
+   ```bash
+   npx ts-node scripts/multichain/verify-lz-deployments/verifyContracts.ts
+   ```
 
-2. **verifyOFTs.ts** - OFT verification per expansion network
-   - Checks: OFT deployment, decimals/sharedDecimals, ownership, peers, delegate, enforced options, quotes
-   - `npx hardhat run --network ethereum scripts/multichain/verify-lz-deployments/verifyOFTs.ts`
-   - Networks: `ethereum`, `base`, `bsc`, `bera`, `botanix`
-
-3. **verifyDvnConfigs.ts** - DVN configuration verification (multi-network, all directions)
+2. **verifyDvnConfigs.ts** - DVN configuration verification (multi-network, all directions)
    - Checks 6 contracts × 6 networks × 5 destinations = 180 checks
    - Validates: Required DVNs (LZ Labs + Canary), Optional DVNs (1 of Deutsche + Horizen)
    - Uses per-network DVN addresses from [LZ docs](https://docs.layerzero.network/v2/deployments/dvn-addresses)
@@ -38,7 +38,7 @@
    npx ts-node scripts/multichain/verify-lz-deployments/verifyDvnConfigs.ts
    ```
 
-4. **verifyConfirmations.ts** - ⚠️ CRITICAL: Bidirectional confirmation verification (multi-network)
+3. **verifyConfirmations.ts** - ⚠️ CRITICAL: Bidirectional confirmation verification (multi-network)
    - Prevents "bricked sends" caused by confirmation mismatches between networks
    - Checks 6 contracts × 6 networks × 5 destinations × 2 directions (send + receive)
    - Validates: SendLib confirmations, ReceiveLib confirmations, bidirectional consistency
@@ -113,8 +113,9 @@ cast call <CONTRACT> "totalSupply()" --rpc-url <RPC>     # 0 initially
 
 ## 5. Verification Checklist
 
-### Adapters (Arbitrum) — `verifyAdapters.ts`
-- [ ] All adapters deployed (currently 4 GM + 2 GLV)
+### Contract Verification — `verifyContracts.ts`
+**Adapters (Arbitrum hub):**
+- [ ] All adapters deployed (4 GM + 2 GLV = 6 adapters)
 - [ ] Underlying token addresses correct
 - [ ] Owner = multisig
 - [ ] Delegate = multisig on LZ endpoint
@@ -123,8 +124,8 @@ cast call <CONTRACT> "totalSupply()" --rpc-url <RPC>     # 0 initially
 - [ ] Enforced options: msgType 1 = 80k gas
 - [ ] quoteSend() works to all 5 destinations
 
-### OFTs (Expansion Networks) — `verifyOFTs.ts`
-- [ ] All OFTs deployed per network (currently 4 GM + 2 GLV)
+**OFTs (5 spoke networks × 6 OFTs = 30 OFTs):**
+- [ ] All OFTs deployed per network
 - [ ] Token properties: decimals=18, sharedDecimals=6
 - [ ] Owner = multisig (Botanix uses different multisig)
 - [ ] Delegate = multisig on LZ endpoint
