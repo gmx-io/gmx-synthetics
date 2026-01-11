@@ -1127,13 +1127,39 @@ const config: {
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },
+    SKY: {
+      synthetic: true,
+      decimals: 18, // https://etherscan.io/token/0x56072c95faa701256059aa122697b133aded9279#readContract
+      dataStreamFeedId: "0x00038607f1bc7b204d91f31a33845ea6bc2f4a522c49219b5458a2648de758ac",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    ZEC: {
+      synthetic: true,
+      decimals: 8, // zatoshi units
+      dataStreamFeedId: "0x00039f8a144f4a62715ca60aec1cf848c4821375c57e2259c6c90b7fa49db693",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    MON: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x000317771c39ba3313945902e3b482165f1d6c51d3d5edf9912f81d695d7f742",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x0225781042C46dB247e009FFEAd5aEf044f3E7BE",
+        decimals: 18,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+    },
     "GLV [WETH-USDC]": {
       address: "0x528A5bac7E746C9A509A1f4F6dF58A03d44279F9",
       decimals: 18,
       transferGasLimit: 200 * 1000,
       dataStreamFeedId: "0x000319859be77f93df82481c065d292ce34aff1f8ba01797f805227ba98ea774",
       dataStreamFeedDecimals: 18,
-      oracleTimestampAdjustment: 1,
+      oracleTimestampAdjustment: 2,
     },
     "GLV [WBTC.e-USDC]": {
       address: "0xdF03EEd325b82bC1d4Db8b49c30ecc9E05104b96",
@@ -1141,7 +1167,7 @@ const config: {
       transferGasLimit: 200 * 1000,
       dataStreamFeedId: "0x000389b9405ab00e6af390557003b0e3dfff6b22cd069819397e39837aeb63c8",
       dataStreamFeedDecimals: 18,
-      oracleTimestampAdjustment: 1,
+      oracleTimestampAdjustment: 2,
     },
   },
   avalanche: {

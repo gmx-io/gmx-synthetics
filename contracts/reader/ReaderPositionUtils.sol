@@ -255,6 +255,9 @@ library ReaderPositionUtils {
             sizeDeltaUsd
         );
 
+        // with totalImpactUsd the pnlAfterPriceImpactUsd may not be a very useful value to return and may be deprecated in a future iteration
+        positionInfo.pnlAfterPriceImpactUsd = positionInfo.executionPriceResult.priceImpactUsd + positionInfo.basePnlUsd;
+
         positionInfo.fees.totalCostAmountExcludingFunding =
             positionInfo.fees.positionFeeAmount
             + positionInfo.fees.borrowing.borrowingFeeAmount
