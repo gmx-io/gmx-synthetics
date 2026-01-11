@@ -1487,6 +1487,18 @@ const config: {
       },
     },
   },
+  megaEth: {
+    WETH: {
+      address: "0x4200000000000000000000000000000000000006",
+      decimals: 18,
+      wrappedNative: true,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x000362205e10b3a147d02792eccee483dca6c7b44ecce7012cb8c6e0b68b3ae9",
+      dataStreamFeedDecimals: 18,
+      buybackMaxPriceImpactFactor: LOW_BUYBACK_IMPACT,
+      dataStreamSpreadReductionFactor: percentageToFloat("100%"),
+    },
+  },
   arbitrumSepolia: {
     WETH: {
       address: "0x980b62da83eff3d4576c647993b0c1d7faf17c73", // not verified
