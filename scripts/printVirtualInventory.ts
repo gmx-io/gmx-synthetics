@@ -1,32 +1,37 @@
 import hre from "hardhat";
-import { DEFAULT_MARKET_TYPE, getMarketTokenAddress } from "../utils/market";
+import { getOnchainMarkets, getMarketKey } from "../utils/market";
 import * as keys from "../utils/keys";
 
 async function main() {
   const markets = await hre.gmx.getMarkets();
   const tokens = await hre.gmx.getTokens();
-  const reader = await hre.ethers.getContract("Reader");
   const dataStore = await hre.ethers.getContract("DataStore");
+  const { read } = hre.deployments;
 
-  const marketFactory = await ethers.getContract("MarketFactory");
-  const roleStore = await ethers.getContract("RoleStore");
+  console.log("reading data from DataStore %s", dataStore.address);
 
-  console.log("reading data from DataStore %s Reader %s", dataStore.address, reader.address);
+  // Fetch all on-chain markets once (uses actual deployed addresses, not CREATE2 calculation)
+  const onchainMarketsByTokens = await getOnchainMarkets(read, dataStore.address);
 
   for (const market of markets) {
-    const indexToken = tokens[market.tokens.indexToken] || { address: ethers.constants.AddressZero };
+    const indexToken = tokens[market.tokens.indexToken] || { address: hre.ethers.constants.AddressZero };
     const longToken = tokens[market.tokens.longToken];
     const shortToken = tokens[market.tokens.shortToken];
 
-    const marketTokenAddress = await getMarketTokenAddress(
-      indexToken.address,
-      longToken.address,
-      shortToken.address,
-      DEFAULT_MARKET_TYPE,
-      marketFactory.address,
-      roleStore.address,
-      dataStore.address
-    );
+    // Look up actual on-chain market address
+    const marketKey = getMarketKey(indexToken.address, longToken.address, shortToken.address);
+    const onchainMarket = onchainMarketsByTokens[marketKey];
+
+    if (!onchainMarket) {
+      console.log(
+        `[SKIP] ${market.tokens.indexToken || "SWAP-ONLY"} [${market.tokens.longToken}-${
+          market.tokens.shortToken
+        }] - not deployed`
+      );
+      continue;
+    }
+
+    const marketTokenAddress = onchainMarket.marketToken;
     console.log("marketTokenAddress", marketTokenAddress);
 
     const marketName = market.tokens.indexToken ? `${market.tokens.indexToken}/USD` : "SWAP-ONLY";
