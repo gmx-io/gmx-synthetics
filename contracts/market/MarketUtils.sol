@@ -1255,7 +1255,7 @@ library MarketUtils {
             "Invalid state: negative collateralSum"
         );
 
-        uint256 maxValue = dataStore.getUint(Keys.maxCollateralSumKey(market, collateralToken, isLong));
+        uint256 maxValue = dataStore.getUintValueFromDataStore(Keys.maxCollateralSumKey(market, collateralToken, isLong));
         if (nextValue > maxValue) {
             revert Errors.MaxCollateralSumExceeded(nextValue, maxValue);
         }
@@ -1590,7 +1590,7 @@ library MarketUtils {
 
         if (configCache.fundingIncreaseFactorPerSecond == 0) {
             cache.fundingFactor = getFundingFactor(dataStore, market.marketToken);
-            uint256 maxFundingFactorPerSecond = dataStore.getUint(Keys.maxFundingFactorPerSecondKey(market.marketToken));
+            uint256 maxFundingFactorPerSecond = dataStore.getUintValueFromDataStore(Keys.maxFundingFactorPerSecondKey(market.marketToken));
 
             // if there is no fundingIncreaseFactorPerSecond then return the static fundingFactor based on open interest difference
             uint256 fundingFactorPerSecond = Precision.applyFactor(cache.diffUsdToOpenInterestFactor, cache.fundingFactor);
@@ -1611,8 +1611,8 @@ library MarketUtils {
         cache.savedFundingFactorPerSecond = getSavedFundingFactorPerSecond(dataStore, market.marketToken);
         cache.savedFundingFactorPerSecondMagnitude = cache.savedFundingFactorPerSecond.abs();
 
-        configCache.thresholdForStableFunding = dataStore.getUint(Keys.thresholdForStableFundingKey(market.marketToken));
-        configCache.thresholdForDecreaseFunding = dataStore.getUint(Keys.thresholdForDecreaseFundingKey(market.marketToken));
+        configCache.thresholdForStableFunding = dataStore.getUintValueFromDataStore(Keys.thresholdForStableFundingKey(market.marketToken));
+        configCache.thresholdForDecreaseFunding = dataStore.getUintValueFromDataStore(Keys.thresholdForDecreaseFundingKey(market.marketToken));
 
         // set the default of nextSavedFundingFactorPerSecond as the savedFundingFactorPerSecond
         cache.nextSavedFundingFactorPerSecond = cache.savedFundingFactorPerSecond;
@@ -1653,7 +1653,7 @@ library MarketUtils {
         }
 
         if (fundingRateChangeType == FundingRateChangeType.Decrease && cache.savedFundingFactorPerSecondMagnitude != 0) {
-            configCache.fundingDecreaseFactorPerSecond = dataStore.getUint(Keys.fundingDecreaseFactorPerSecondKey(market.marketToken));
+            configCache.fundingDecreaseFactorPerSecond = dataStore.getUintValueFromDataStore(Keys.fundingDecreaseFactorPerSecondKey(market.marketToken));
             uint256 decreaseValue = configCache.fundingDecreaseFactorPerSecond * durationInSeconds;
 
             if (cache.savedFundingFactorPerSecondMagnitude <= decreaseValue) {
@@ -1666,8 +1666,8 @@ library MarketUtils {
             }
         }
 
-        configCache.minFundingFactorPerSecond = dataStore.getUint(Keys.minFundingFactorPerSecondKey(market.marketToken));
-        configCache.maxFundingFactorPerSecond = dataStore.getUint(Keys.maxFundingFactorPerSecondKey(market.marketToken));
+        configCache.minFundingFactorPerSecond = dataStore.getUintValueFromDataStore(Keys.minFundingFactorPerSecondKey(market.marketToken));
+        configCache.maxFundingFactorPerSecond = dataStore.getUintValueFromDataStore(Keys.maxFundingFactorPerSecondKey(market.marketToken));
 
         cache.nextSavedFundingFactorPerSecond = Calc.boundMagnitude(
             cache.nextSavedFundingFactorPerSecond,
@@ -2089,8 +2089,8 @@ library MarketUtils {
 
         return (
             true,
-            dataStore.getUint(Keys.virtualInventoryForSwapsKey(virtualMarketId, true)),
-            dataStore.getUint(Keys.virtualInventoryForSwapsKey(virtualMarketId, false))
+            dataStore.getUintValueFromDataStore(Keys.virtualInventoryForSwapsKey(virtualMarketId, true)),
+            dataStore.getUintValueFromDataStore(Keys.virtualInventoryForSwapsKey(virtualMarketId, false))
         );
     }
 
@@ -2225,7 +2225,7 @@ library MarketUtils {
         bool isLong,
         uint256 divisor
     ) internal view returns (uint256) {
-        return dataStore.getUint(Keys.openInterestKey(market, collateralToken, isLong)) / divisor;
+        return dataStore.getUintValueFromDataStore(Keys.openInterestKey(market, collateralToken, isLong)) / divisor;
     }
 
     function getOpenInterestForBalance(
@@ -2336,7 +2336,7 @@ library MarketUtils {
         bool isLong,
         uint256 divisor
     ) internal view returns (uint256) {
-        return dataStore.getUint(Keys.openInterestInTokensKey(market, collateralToken, isLong)) / divisor;
+        return dataStore.getUintValueFromDataStore(Keys.openInterestInTokensKey(market, collateralToken, isLong)) / divisor;
     }
 
     // @dev get the sum of open interest and pnl for a market
@@ -2373,8 +2373,8 @@ library MarketUtils {
     }
 
     function getMaxPositionImpactFactors(DataStore dataStore, address market) internal view returns (uint256, uint256) {
-        uint256 maxPositiveImpactFactor = dataStore.getUint(Keys.maxPositionImpactFactorKey(market, true));
-        uint256 maxNegativeImpactFactor = dataStore.getUint(Keys.maxPositionImpactFactorKey(market, false));
+        uint256 maxPositiveImpactFactor = dataStore.getUintValueFromDataStore(Keys.maxPositionImpactFactorKey(market, true));
+        uint256 maxNegativeImpactFactor = dataStore.getUintValueFromDataStore(Keys.maxPositionImpactFactorKey(market, false));
 
         if (maxPositiveImpactFactor > maxNegativeImpactFactor) {
             maxPositiveImpactFactor = maxNegativeImpactFactor;
@@ -2387,7 +2387,7 @@ library MarketUtils {
     // @param dataStore DataStore
     // @param market the market to check
     function getMaxPositionImpactFactorForLiquidations(DataStore dataStore, address market) internal view returns (uint256) {
-        return dataStore.getUint(Keys.maxPositionImpactFactorForLiquidationsKey(market));
+        return dataStore.getUintValueFromDataStore(Keys.maxPositionImpactFactorForLiquidationsKey(market));
     }
 
     // @dev get the min collateral factor
@@ -2396,7 +2396,7 @@ library MarketUtils {
     // @notice Should always be larger than minCollateralFactorForLiquidation
     // to ensure users cannot create immediately liquidatable positions.
     function getMinCollateralFactor(DataStore dataStore, address market) internal view returns (uint256) {
-        return dataStore.getUint(Keys.minCollateralFactorKey(market));
+        return dataStore.getUintValueFromDataStore(Keys.minCollateralFactorKey(market));
     }
 
     // @dev get the min collateral factor for liquidation
@@ -2404,7 +2404,7 @@ library MarketUtils {
     // @param market the market to check
     // @notice Should be lower than minCollateralFactor to prevent immediately liquidatable positions.
     function getMinCollateralFactorForLiquidation(DataStore dataStore, address market) internal view returns (uint256) {
-        return dataStore.getUint(Keys.minCollateralFactorForLiquidationKey(market));
+        return dataStore.getUintValueFromDataStore(Keys.minCollateralFactorForLiquidationKey(market));
     }
 
     // @dev get the min collateral factor for open interest multiplier
@@ -2412,7 +2412,7 @@ library MarketUtils {
     // @param market the market to check
     // @param isLong whether it is for the long or short side
     function getMinCollateralFactorForOpenInterestMultiplier(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
-        return dataStore.getUint(Keys.minCollateralFactorForOpenInterestMultiplierKey(market, isLong));
+        return dataStore.getUintValueFromDataStore(Keys.minCollateralFactorForOpenInterestMultiplierKey(market, isLong));
     }
 
     // @dev get the min collateral factor for open interest
@@ -2441,7 +2441,7 @@ library MarketUtils {
     // @param isLong whether to get the value for longs or shorts
     // @return the total amount of position collateral for a market
     function getCollateralSum(DataStore dataStore, address market, address collateralToken, bool isLong, uint256 divisor) internal view returns (uint256) {
-        return dataStore.getUint(Keys.collateralSumKey(market, collateralToken, isLong)) / divisor;
+        return dataStore.getUintValueFromDataStore(Keys.collateralSumKey(market, collateralToken, isLong)) / divisor;
     }
 
     // @dev get the reserve factor for a market
@@ -2450,7 +2450,7 @@ library MarketUtils {
     // @param isLong whether to get the value for longs or shorts
     // @return the reserve factor for a market
     function getReserveFactor(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
-        return dataStore.getUint(Keys.reserveFactorKey(market, isLong));
+        return dataStore.getUintValueFromDataStore(Keys.reserveFactorKey(market, isLong));
     }
 
     // @dev get the open interest reserve factor for a market
@@ -2459,7 +2459,7 @@ library MarketUtils {
     // @param isLong whether to get the value for longs or shorts
     // @return the open interest reserve factor for a market
     function getOpenInterestReserveFactor(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
-        return dataStore.getUint(Keys.openInterestReserveFactorKey(market, isLong));
+        return dataStore.getUintValueFromDataStore(Keys.openInterestReserveFactorKey(market, isLong));
     }
 
     // @dev get the max pnl factor for a market
@@ -2469,7 +2469,7 @@ library MarketUtils {
     // @param isLong whether to get the value for longs or shorts
     // @return the max pnl factor for a market
     function getMaxPnlFactor(DataStore dataStore, bytes32 pnlFactorType, address market, bool isLong) internal view returns (uint256) {
-        return dataStore.getUint(Keys.maxPnlFactorKey(pnlFactorType, market, isLong));
+        return dataStore.getUintValueFromDataStore(Keys.maxPnlFactorKey(pnlFactorType, market, isLong));
     }
 
     // @dev get the min pnl factor after ADL
@@ -2477,7 +2477,7 @@ library MarketUtils {
     // @param market the market to check
     // @param isLong whether to check the long or short side
     function getMinPnlFactorAfterAdl(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
-        return dataStore.getUint(Keys.minPnlFactorAfterAdlKey(market, isLong));
+        return dataStore.getUintValueFromDataStore(Keys.minPnlFactorAfterAdlKey(market, isLong));
     }
 
     // @dev get the funding factor for a market
@@ -2485,7 +2485,7 @@ library MarketUtils {
     // @param market the market to check
     // @return the funding factor for a market
     function getFundingFactor(DataStore dataStore, address market) internal view returns (uint256) {
-        return dataStore.getUint(Keys.fundingFactorKey(market));
+        return dataStore.getUintValueFromDataStore(Keys.fundingFactorKey(market));
     }
 
     // @dev get the saved funding factor for a market
@@ -2508,7 +2508,7 @@ library MarketUtils {
     // @param market the market to check
     // @return the funding exponent factor for a market
     function getFundingExponentFactor(DataStore dataStore, address market) internal view returns (uint256) {
-        return dataStore.getUint(Keys.fundingExponentFactorKey(market));
+        return dataStore.getUintValueFromDataStore(Keys.fundingExponentFactorKey(market));
     }
 
     // @dev get the funding fee amount per size for a market
@@ -2518,7 +2518,7 @@ library MarketUtils {
     // @param isLong whether to check the long or short size
     // @return the funding fee amount per size for a market based on collateralToken
     function getFundingFeeAmountPerSize(DataStore dataStore, address market, address collateralToken, bool isLong) internal view returns (uint256) {
-        return dataStore.getUint(Keys.fundingFeeAmountPerSizeKey(market, collateralToken, isLong));
+        return dataStore.getUintValueFromDataStore(Keys.fundingFeeAmountPerSizeKey(market, collateralToken, isLong));
     }
 
     // @dev get the claimable funding amount per size for a market
@@ -2528,7 +2528,7 @@ library MarketUtils {
     // @param isLong whether to check the long or short size
     // @return the claimable funding amount per size for a market based on collateralToken
     function getClaimableFundingAmountPerSize(DataStore dataStore, address market, address collateralToken, bool isLong) internal view returns (uint256) {
-        return dataStore.getUint(Keys.claimableFundingAmountPerSizeKey(market, collateralToken, isLong));
+        return dataStore.getUintValueFromDataStore(Keys.claimableFundingAmountPerSizeKey(market, collateralToken, isLong));
     }
 
     // @dev apply delta to the funding fee amount per size for a market
@@ -2597,7 +2597,7 @@ library MarketUtils {
     // @param market the market to check
     // @return the number of seconds since funding was updated for a market
     function getSecondsSinceFundingUpdated(DataStore dataStore, address market) internal view returns (uint256) {
-        uint256 updatedAt = dataStore.getUint(Keys.fundingUpdatedAtKey(market));
+        uint256 updatedAt = dataStore.getUintValueFromDataStore(Keys.fundingUpdatedAtKey(market));
         if (updatedAt == 0) { return 0; }
         return Chain.currentTimestamp() - updatedAt;
     }
@@ -2608,11 +2608,11 @@ library MarketUtils {
     // @param isLong whether to check the long or short side
     // @return the borrowing factor for a market
     function getBorrowingFactor(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
-        return dataStore.getUint(Keys.borrowingFactorKey(market, isLong));
+        return dataStore.getUintValueFromDataStore(Keys.borrowingFactorKey(market, isLong));
     }
 
     function getOptimalUsageFactor(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
-        return dataStore.getUint(Keys.optimalUsageFactorKey(market, isLong));
+        return dataStore.getUintValueFromDataStore(Keys.optimalUsageFactorKey(market, isLong));
     }
 
     // @dev get the borrowing exponent factor for a market
@@ -2621,7 +2621,7 @@ library MarketUtils {
     // @param isLong whether to check the long or short side
     // @return the borrowing exponent factor for a market
     function getBorrowingExponentFactor(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
-        return dataStore.getUint(Keys.borrowingExponentFactorKey(market, isLong));
+        return dataStore.getUintValueFromDataStore(Keys.borrowingExponentFactorKey(market, isLong));
     }
 
     // @dev get the cumulative borrowing factor for a market
@@ -2630,7 +2630,7 @@ library MarketUtils {
     // @param isLong whether to check the long or short side
     // @return the cumulative borrowing factor for a market
     function getCumulativeBorrowingFactor(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
-        return dataStore.getUint(Keys.cumulativeBorrowingFactorKey(market, isLong));
+        return dataStore.getUintValueFromDataStore(Keys.cumulativeBorrowingFactorKey(market, isLong));
     }
 
     // @dev increase the cumulative borrowing factor
@@ -2666,7 +2666,7 @@ library MarketUtils {
     // @param isLong whether to check the long or short side
     // @return the timestamp of when the cumulative borrowing factor was last updated
     function getCumulativeBorrowingFactorUpdatedAt(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
-        return dataStore.getUint(Keys.cumulativeBorrowingFactorUpdatedAtKey(market, isLong));
+        return dataStore.getUintValueFromDataStore(Keys.cumulativeBorrowingFactorUpdatedAtKey(market, isLong));
     }
 
     // @dev get the number of seconds since the cumulative borrowing factor was last updated
@@ -2862,7 +2862,7 @@ library MarketUtils {
             poolUsd
         );
 
-        uint256 baseBorrowingFactor = dataStore.getUint(Keys.baseBorrowingFactorKey(market.marketToken, isLong));
+        uint256 baseBorrowingFactor = dataStore.getUintValueFromDataStore(Keys.baseBorrowingFactorKey(market.marketToken, isLong));
 
         uint256 borrowingFactorPerSecond = Precision.applyFactor(
             usageFactor,
@@ -2872,7 +2872,7 @@ library MarketUtils {
         if (usageFactor > optimalUsageFactor && Precision.FLOAT_PRECISION > optimalUsageFactor) {
             uint256 diff = usageFactor - optimalUsageFactor;
 
-            uint256 aboveOptimalUsageBorrowingFactor = dataStore.getUint(Keys.aboveOptimalUsageBorrowingFactorKey(market.marketToken, isLong));
+            uint256 aboveOptimalUsageBorrowingFactor = dataStore.getUintValueFromDataStore(Keys.aboveOptimalUsageBorrowingFactorKey(market.marketToken, isLong));
             uint256 additionalBorrowingFactorPerSecond;
 
             if (aboveOptimalUsageBorrowingFactor > baseBorrowingFactor) {
@@ -2930,10 +2930,10 @@ library MarketUtils {
         uint256 positionImpactPoolAmount = getPositionImpactPoolAmount(dataStore, market);
         if (positionImpactPoolAmount == 0) { return (0, positionImpactPoolAmount); }
 
-        uint256 distributionRate = dataStore.getUint(Keys.positionImpactPoolDistributionRateKey(market));
+        uint256 distributionRate = dataStore.getUintValueFromDataStore(Keys.positionImpactPoolDistributionRateKey(market));
         if (distributionRate == 0) { return (0, positionImpactPoolAmount); }
 
-        uint256 minPositionImpactPoolAmount = dataStore.getUint(Keys.minPositionImpactPoolAmountKey(market));
+        uint256 minPositionImpactPoolAmount = dataStore.getUintValueFromDataStore(Keys.minPositionImpactPoolAmountKey(market));
         if (positionImpactPoolAmount <= minPositionImpactPoolAmount) { return (0, positionImpactPoolAmount); }
 
         uint256 maxDistributionAmount = positionImpactPoolAmount - minPositionImpactPoolAmount;
@@ -2952,7 +2952,7 @@ library MarketUtils {
         DataStore dataStore,
         address market
     ) internal view returns (uint256) {
-        uint256 distributedAt = dataStore.getUint(Keys.positionImpactPoolDistributedAtKey(market));
+        uint256 distributedAt = dataStore.getUintValueFromDataStore(Keys.positionImpactPoolDistributedAtKey(market));
         if (distributedAt == 0) { return 0; }
         return Chain.currentTimestamp() - distributedAt;
     }
@@ -2999,7 +2999,7 @@ library MarketUtils {
     // @param isLong whether to check the long or short side
     // @return the total borrowing value
     function getTotalBorrowing(DataStore dataStore, address market, bool isLong) internal view returns (uint256) {
-        return dataStore.getUint(Keys.totalBorrowingKey(market, isLong));
+        return dataStore.getUintValueFromDataStore(Keys.totalBorrowingKey(market, isLong));
     }
 
     // @dev set the total borrowing value
@@ -3140,7 +3140,7 @@ library MarketUtils {
     }
 
     function validateSwapPath(DataStore dataStore, address[] memory swapPath) external view {
-        uint256 maxSwapPathLength = dataStore.getUint(Keys.MAX_SWAP_PATH_LENGTH);
+        uint256 maxSwapPathLength = dataStore.getUintValueFromDataStore(Keys.MAX_SWAP_PATH_LENGTH);
         if (swapPath.length > maxSwapPathLength) {
             revert Errors.MaxSwapPathLengthExceeded(swapPath.length, maxSwapPathLength);
         }
@@ -3312,12 +3312,12 @@ library MarketUtils {
 
         // get the pool amount directly as MarketUtils.getPoolAmount will divide the amount by 2
         // for markets with the same long and short token
-        cache.poolAmount = dataStore.getUint(Keys.poolAmountKey(market.marketToken, token));
+        cache.poolAmount = dataStore.getUintValueFromDataStore(Keys.poolAmountKey(market.marketToken, token));
         cache.swapImpactPoolAmount = getSwapImpactPoolAmount(dataStore, market.marketToken, token);
-        cache.claimableCollateralAmount = dataStore.getUint(Keys.claimableCollateralAmountKey(market.marketToken, token));
-        cache.claimableFeeAmount = dataStore.getUint(Keys.claimableFeeAmountKey(market.marketToken, token));
-        cache.claimableUiFeeAmount = dataStore.getUint(Keys.claimableUiFeeAmountKey(market.marketToken, token));
-        cache.affiliateRewardAmount = dataStore.getUint(Keys.affiliateRewardKey(market.marketToken, token));
+        cache.claimableCollateralAmount = dataStore.getUintValueFromDataStore(Keys.claimableCollateralAmountKey(market.marketToken, token));
+        cache.claimableFeeAmount = dataStore.getUintValueFromDataStore(Keys.claimableFeeAmountKey(market.marketToken, token));
+        cache.claimableUiFeeAmount = dataStore.getUintValueFromDataStore(Keys.claimableUiFeeAmountKey(market.marketToken, token));
+        cache.affiliateRewardAmount = dataStore.getUintValueFromDataStore(Keys.affiliateRewardKey(market.marketToken, token));
 
         // funding fees are excluded from this summation as claimable funding fees
         // are incremented without a corresponding decrease of the collateral of
