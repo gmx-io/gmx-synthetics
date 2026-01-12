@@ -53,7 +53,7 @@ const func = createDeployFunction({
 });
 
 func.skip = async (hre) => {
-  if (["botanix", "avalancheFuji", "arbitrumSepolia"].includes(hre.network.name)) {
+  if (["botanix", "avalancheFuji", "arbitrumSepolia", "megaEth"].includes(hre.network.name)) {
     return true;
   }
 

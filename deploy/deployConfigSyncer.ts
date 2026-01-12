@@ -27,7 +27,7 @@ const func = createDeployFunction({
 });
 
 func.skip = async ({ network }) => {
-  return network.name === "botanix";
+  return network.name === "botanix" || network.name === "megaEth";
 };
 
 func.dependencies = func.dependencies.concat(["MockRiskOracle"]);

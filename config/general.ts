@@ -147,7 +147,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     liquidationFeeReceiverFactor: decimalToFloat(37, 2), // 37%
 
     skipBorrowingFeeForSmallerSide: true,
-    useOpenInterestInTokensForBalance: false,
+    useOpenInterestInTokensForBalance: true,
 
     maxExecutionFeeMultiplierFactor: decimalToFloat(100),
     oracleProviderMinChangeDelay: 3600,
@@ -276,6 +276,9 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       },
     },
     botanix: {
+      positionFeeReceiverFactor: decimalToFloat(50, 2), // 50%
+    },
+    megaEth: {
       positionFeeReceiverFactor: decimalToFloat(50, 2), // 50%
     },
   }[network.name];

@@ -90,6 +90,19 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
       edgeOracleSigner: "0xf09229eb438BA30395BDE5cB088E775b4895596A",
     },
 
+    megaEth: {
+      signers: [],
+      maxOraclePriceAge,
+      maxAtomicOraclePriceAge,
+      maxOracleTimestampRange,
+      maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
+      minOracleBlockConfirmations: 255,
+      minOracleSigners: 1,
+      dataStreamFeedVerifier: "0xC539169910DE08D237Df0d73BcDa9074c787A4a1",
+      chainlinkPaymentToken: "0x0000000000000000000000000000000000000000",
+      edgeOracleSigner: "0xf09229eb438BA30395BDE5cB088E775b4895596A",
+    },
+
     arbitrumSepolia: {
       signers: ["0xb38302e27bAe8932536A84ab362c3d1013420Cb4"],
       maxOraclePriceAge,
