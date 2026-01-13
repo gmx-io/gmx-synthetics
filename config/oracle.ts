@@ -98,7 +98,7 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<OracleCo
       maxRefPriceDeviationFactor: decimalToFloat(5, 1), // 50%
       minOracleBlockConfirmations: 255,
       minOracleSigners: 1,
-      dataStreamFeedVerifier: "0xC539169910DE08D237Df0d73BcDa9074c787A4a1",
+      dataStreamFeedVerifier: "0xf514688BC967c31e946B03A1fc10F55ddd69169C",
       chainlinkPaymentToken: "0x0000000000000000000000000000000000000000",
       edgeOracleSigner: "0xf09229eb438BA30395BDE5cB088E775b4895596A",
     },
