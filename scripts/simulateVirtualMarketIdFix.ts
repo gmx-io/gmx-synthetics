@@ -78,9 +78,16 @@ async function main() {
 
   // Group markets by virtualMarketId from config
   const marketsByVirtualMarketId: Record<string, any[]> = {};
+  const marketsWithoutConfig: string[] = [];
   for (const market of markets) {
     const key = market.virtualMarketId;
-    if (key === undefined) continue;
+    if (key === undefined) {
+      const name = market.tokens.indexToken
+        ? `${market.tokens.indexToken} [${market.tokens.longToken}-${market.tokens.shortToken}]`
+        : `SWAP-ONLY [${market.tokens.longToken}-${market.tokens.shortToken}]`;
+      marketsWithoutConfig.push(name);
+      continue;
+    }
     if (!marketsByVirtualMarketId[key]) marketsByVirtualMarketId[key] = [];
     marketsByVirtualMarketId[key].push(market);
   }
@@ -230,8 +237,18 @@ async function main() {
   const setCount = results.filter((r) => r.virtualIdSet === "YES").length;
 
   console.log("\n=== Summary ===");
-  console.log(`Markets with virtualMarketId set: ${setCount}`);
-  console.log(`Markets missing virtualMarketId: ${missingCount}`);
+  console.log(`Total markets in config: ${markets.length}`);
+  console.log(`Markets with virtualMarketId in config: ${markets.length - marketsWithoutConfig.length}`);
+  console.log(`Markets without virtualMarketId in config: ${marketsWithoutConfig.length}`);
+  console.log(`  - On-chain virtualMarketId set: ${setCount}`);
+  console.log(`  - On-chain virtualMarketId missing: ${missingCount}`);
+
+  if (marketsWithoutConfig.length > 0) {
+    console.log(`\n=== Markets without virtualMarketId in config (${marketsWithoutConfig.length}) ===`);
+    for (const name of marketsWithoutConfig) {
+      console.log(`  ${name}`);
+    }
+  }
 
   // Show high-impact markets (those in large groups that are missing)
   const highImpactMarkets = results.filter((r) => r.virtualIdSet === "NO" && r.marketsInGroup > 5);
