@@ -115,7 +115,7 @@ async function main() {
           console.log(`setting virtualTokenId: ${virtualTokenId}`);
           const tx2 = await config.setBytes32(
             keys.VIRTUAL_TOKEN_ID,
-            encodeData(["address"], [marketToken]),
+            encodeData(["address"], [indexTokenAddress]),
             marketConfig.virtualTokenIdForIndexToken
           );
           console.log(`set virtualTokenId tx sent: ${tx2.hash}`);
