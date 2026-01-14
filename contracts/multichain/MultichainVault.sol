@@ -9,6 +9,5 @@ import "../bank/StrictBank.sol";
  * @dev Vault for crosschain deposits
  */
 contract MultichainVault is StrictBank {
-    constructor(RoleStore _roleStore, DataStore _dataStore, EventEmitter _eventEmitter)
-        StrictBank(_roleStore, _dataStore, _eventEmitter) {}
+    constructor(RoleStore _roleStore, DataStore _dataStore) StrictBank(_roleStore, _dataStore) {}
 }

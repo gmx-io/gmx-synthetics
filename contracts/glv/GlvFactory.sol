@@ -49,9 +49,7 @@ contract GlvFactory is RoleModule {
             revert Errors.GlvAlreadyExists(glvType, existingGlvAddress);
         }
 
-        GlvToken glvToken = new GlvToken{salt: salt}(
-            roleStore, dataStore, eventEmitter, name, symbol
-        );
+        GlvToken glvToken = new GlvToken{salt: salt}(roleStore, dataStore, name, symbol);
 
         Glv.Props memory glv = Glv.Props({glvToken: address(glvToken), longToken: longToken, shortToken: shortToken});
 

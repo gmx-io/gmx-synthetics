@@ -93,7 +93,6 @@ export function getMarketTokenAddress(
   marketFactoryAddress: string,
   roleStoreAddress: string,
   dataStoreAddress: string,
-  eventEmitterAddress: string,
   byteCode?
 ): string {
   const salt = hashData(
@@ -107,8 +106,8 @@ export function getMarketTokenAddress(
     byteCode = MarketTokenArtifact.bytecode;
   }
   return calculateCreate2(marketFactoryAddress, salt, byteCode, {
-    params: [roleStoreAddress, dataStoreAddress, eventEmitterAddress],
-    types: ["address", "address", "address"],
+    params: [roleStoreAddress, dataStoreAddress],
+    types: ["address", "address"],
   });
 }
 

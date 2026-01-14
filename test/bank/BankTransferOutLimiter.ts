@@ -10,16 +10,16 @@ import {
   getAccountWithdrawalKeys,
 } from "../../utils/withdrawal";
 import { sendCreateDeposit, sendCreateWithdrawal } from "../../utils/relay/multichain";
-import { executeDeposit } from "../../utils/deposit";
+import { createDeposit, executeDeposit } from "../../utils/deposit";
 import { bridgeInTokens } from "../../utils/multichain";
 import { expect } from "chai";
 import { getBalanceOf } from "../../utils/token";
 import { expandDecimals } from "../../utils/math";
 import { getPoolAmount } from "../../utils/market";
 
-describe("Bank.TransferOut", () => {
+describe("Bank.TransferOutLimiter", () => {
   let fixture;
-  let roleStore, dataStore, reader, ethUsdMarket, wnt, usdc;
+  let user0, roleStore, dataStore, reader, ethUsdMarket, wnt, usdc;
 
   let defaultWithdrawalParams;
   let createWithdrawalParams: Parameters<typeof sendCreateWithdrawal>[0];
@@ -27,6 +27,7 @@ describe("Bank.TransferOut", () => {
 
   beforeEach(async () => {
     fixture = await deployFixture();
+    ({ user0 } = fixture.accounts);
     ({ roleStore, reader, dataStore, ethUsdMarket, wnt, usdc } = fixture.contracts);
 
     // defaultWithdrawalParams = {
@@ -72,7 +73,21 @@ describe("Bank.TransferOut", () => {
   });
 
   it("rate limit withdrawal", async () => {
-    await sendCreateDeposit(createDepositParams);
+    // await sendCreateDeposit(createDepositParams);
+    await createDeposit(fixture, {
+      receiver: user0,
+      market: ethUsdMarket,
+      longTokenAmount: expandDecimals(10, 18),
+      shortTokenAmount: expandDecimals(10 * 5000, 6),
+      initialLongToken: ethUsdMarket.longToken,
+      initialShortToken: ethUsdMarket.shortToken,
+      minMarketTokens: 100,
+      shouldUnwrapNativeToken: false,
+      executionFee: "500",
+      callbackGasLimit: "200000",
+      gasUsageLabel: "createDeposit",
+    });
+
     await executeDeposit(fixture, { gasUsageLabel: "executeDeposit" });
 
     expect(await getPoolAmount(dataStore, ethUsdMarket.marketToken, wnt.address)).eq(expandDecimals(10, 18)); // $50,000

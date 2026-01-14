@@ -9,10 +9,9 @@ contract GlvToken is ERC20, StrictBank {
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
-        EventEmitter _eventEmitter,
         string memory _name,
         string memory _symbol
-    ) ERC20(_name, _symbol) StrictBank(_roleStore, _dataStore, _eventEmitter) {}
+    ) ERC20(_name, _symbol) StrictBank(_roleStore, _dataStore) {}
 
     function mint(address account, uint256 amount) external onlyController {
         _mint(account, amount);

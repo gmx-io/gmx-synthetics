@@ -24,8 +24,7 @@ contract StrictBank is Bank {
     // used to record token balances to evaluate amounts transferred in
     mapping (address => uint256) public tokenBalances;
 
-    constructor(RoleStore _roleStore, DataStore _dataStore, EventEmitter _eventEmitter)
-        Bank(_roleStore, _dataStore, _eventEmitter) {}
+    constructor(RoleStore _roleStore, DataStore _dataStore) Bank(_roleStore, _dataStore) {}
 
     // @dev records a token transfer into the contract
     // @param token the token to record the transfer for

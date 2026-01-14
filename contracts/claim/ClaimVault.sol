@@ -7,6 +7,5 @@ import "../bank/Bank.sol";
 // @title ClaimVault
 // @dev Vault contract for holding claimable funds
 contract ClaimVault is Bank {
-    constructor(RoleStore _roleStore, DataStore _dataStore, EventEmitter _eventEmitter)
-        Bank(_roleStore, _dataStore, _eventEmitter) {}
+    constructor(RoleStore _roleStore, DataStore _dataStore) Bank(_roleStore, _dataStore) {}
 }

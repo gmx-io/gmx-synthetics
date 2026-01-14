@@ -35,15 +35,16 @@ contract StaticOracleProvider is IOracleProvider, ReentrancyGuard {
         bytes memory /*data*/
     ) external view returns (OracleUtils.ValidatedPrice memory) {
 
-        uint256[] memory prices = dataStore.getUintArray(Keys.staticOraclePriceKey(token));
-        if (prices.length != 2) {
+        uint256 priceMin = dataStore.getUint(Keys.staticOraclePriceKey(token, false));
+        uint256 priceMax = dataStore.getUint(Keys.staticOraclePriceKey(token, true));
+        if (priceMin == 0 || priceMax == 0) {
             revert Errors.StaticPriceNotSet(token);
         }
 
         return OracleUtils.ValidatedPrice({
             token: token,
-            min: prices[0],
-            max: prices[1],
+            min: priceMax,
+            max: priceMin,
             timestamp: block.timestamp,
             provider: address(this)
         });
