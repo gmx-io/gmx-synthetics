@@ -53,7 +53,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       executionGasPerOraclePrice: 0,
       executionGasFeeMultiplierFactor: 0,
 
-      requestExpirationTime: 3600,
+      requestExpirationTime: 300,
 
       maxSwapPathLength: 5,
       maxCallbackGasLimit: 2_000_000,
@@ -131,7 +131,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     executionGasPerOraclePrice: 250_000,
     executionGasFeeMultiplierFactor: expandDecimals(1, 30), // 1x
 
-    requestExpirationTime: 3600,
+    requestExpirationTime: 300,
 
     maxSwapPathLength: 3,
     maxCallbackGasLimit: 2_000_000,
