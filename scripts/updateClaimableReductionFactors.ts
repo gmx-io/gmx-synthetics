@@ -1,9 +1,10 @@
 import hre from "hardhat";
+import prompts from "prompts";
 
 import { expandDecimals, bigNumberify } from "../utils/math";
 import { getFullKey } from "../utils/config";
 import { encodeData } from "../utils/hash";
-import { CLAIMABLE_REDUCTION_FACTOR_LIST } from "../data/claimableReductionFactors.js";
+import { CLAIMABLE_REDUCTION_FACTOR_LIST } from "../data/claimableReductionFactors.ts";
 import * as keys from "../utils/keys";
 
 async function updateMultipleFactors(reductionList) {
@@ -84,7 +85,7 @@ async function updateMultipleFactors(reductionList) {
     const time = parseInt(reductionItem.timeKey) * 60 * 60;
 
     if (time < startTime || time > endTime) {
-      throw new Error("time is not within range");
+      throw new Error(`time is not within range, time: ${time}, start: ${startTime}, end: ${endTime}`);
       continue;
     }
 
@@ -101,12 +102,21 @@ async function updateMultipleFactors(reductionList) {
     }
   }
 
-  if (process.env.WRITE === "true") {
+  let write = process.env.WRITE === "true";
+  if (!write) {
+    ({ write } = await prompts({
+      type: "confirm",
+      name: "write",
+      message: "Do you want to execute the transactions?",
+    }));
+  }
+
+  if (!write) {
+    console.info("NOTE: executed in read-only mode, no transactions were sent");
+  } else {
     const tx = await config.multicall(multicallWriteParams);
     await tx.wait(2);
     console.info(`tx sent: ${tx.hash}`);
-  } else {
-    console.info("NOTE: executed in read-only mode, no transactions were sent");
   }
 }
 
