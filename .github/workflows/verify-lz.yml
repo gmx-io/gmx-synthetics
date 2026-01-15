@@ -1,0 +1,40 @@
+name: LayerZero Verification
+
+on:
+  pull_request:
+    paths:
+      - 'config/general.ts'
+      - 'scripts/multichain/verify-lz-deployments/**'
+
+jobs:
+  verify-lz:
+    runs-on: ubuntu-latest
+    env:
+      ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn --ignore-scripts
+
+      - name: Verify LayerZero Contracts
+        run: npx ts-node scripts/multichain/verify-lz-deployments/verifyContracts.ts
+
+      - name: Verify DVN Configs
+        run: npx ts-node scripts/multichain/verify-lz-deployments/verifyDvnConfigs.ts
+
+      - name: Verify Confirmations
+        run: npx ts-node scripts/multichain/verify-lz-deployments/verifyConfirmations.ts
+
+      - name: Upload verification logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lz-verification-logs
+          path: out/_lz-verification/
+          retention-days: 30

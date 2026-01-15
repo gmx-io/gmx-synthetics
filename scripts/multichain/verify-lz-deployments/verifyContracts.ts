@@ -46,6 +46,7 @@ import {
   verifyEnforcedOptionsSpokeToHub,
   testQuoteSend,
   verifyLibAddresses,
+  getRpcUrl,
   OFT_ABI,
   ERC20_ABI,
   LZ_ENDPOINT_ABI_EXTENDED,
@@ -68,34 +69,6 @@ interface NetworkResults {
 // =============================================================================
 // Provider Initialization
 // =============================================================================
-
-const defaultRpcs: Record<NetworkName, string> = {
-  arbitrum: "https://arb1.arbitrum.io/rpc",
-  ethereum: "https://mainnet.gateway.tenderly.co",
-  base: "https://base.gateway.tenderly.co",
-  bsc: "https://bsc-dataseed.binance.org",
-  bera: "https://rpc.berachain.com",
-  botanix: "https://rpc.botanixlabs.com",
-};
-
-function getRpcUrl(network: NetworkName): string {
-  const envVarMap: Record<NetworkName, string> = {
-    arbitrum: "ARBITRUM_RPC_URL",
-    ethereum: "ETHEREUM_RPC_URL",
-    base: "BASE_RPC_URL",
-    bsc: "BSC_RPC_URL",
-    bera: "BERA_RPC_URL",
-    botanix: "BOTANIX_RPC_URL",
-  };
-
-  const envVar = envVarMap[network];
-  const envRpcUrl = process.env[envVar];
-  if (envRpcUrl) {
-    return envRpcUrl;
-  }
-
-  return defaultRpcs[network];
-}
 
 function initializeProviders(): Record<NetworkName, NetworkProvider> {
   const providers: Partial<Record<NetworkName, NetworkProvider>> = {};
@@ -626,6 +599,7 @@ async function main() {
     logSuccess("All contract verifications passed!");
   } else {
     logError(`${totalFailed} verification(s) failed - review output above`);
+    process.exit(1);
   }
 
   log(`\n  Completed at: ${new Date().toISOString()}`);
