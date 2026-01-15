@@ -3056,11 +3056,11 @@ const config: {
       reserveFactor: percentageToFloat("105%"), // default is 95%
       openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
 
-      maxOpenInterest: decimalToFloat(250_000),
-      maxPoolUsdForDeposit: decimalToFloat(375_000),
+      maxOpenInterest: decimalToFloat(200_000),
+      maxPoolUsdForDeposit: decimalToFloat(300_000),
 
-      maxLongTokenPoolAmount: expandDecimals(151, 18),
-      maxShortTokenPoolAmount: expandDecimals(450_000, 6),
+      maxLongTokenPoolAmount: expandDecimals(114, 18),
+      maxShortTokenPoolAmount: expandDecimals(360_000, 6),
     },
     {
       tokens: { indexToken: "ZRO", longToken: "WETH", shortToken: "USDC" },
@@ -3299,11 +3299,11 @@ const config: {
       reserveFactor: percentageToFloat("105%"), // default is 95%
       openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
 
-      maxOpenInterest: decimalToFloat(400_000),
-      maxPoolUsdForDeposit: decimalToFloat(600_000), // 1.5x the max open interest
+      maxOpenInterest: decimalToFloat(250_000),
+      maxPoolUsdForDeposit: decimalToFloat(375_000), // 1.5x the max open interest
 
-      maxLongTokenPoolAmount: expandDecimals(173, 18), // ~720k USD (2x the max open interest)
-      maxShortTokenPoolAmount: expandDecimals(720_000, 6), // ~720k USD (2x the max open interest)
+      maxLongTokenPoolAmount: expandDecimals(143, 18), // ~450k USD (2x the max open interest)
+      maxShortTokenPoolAmount: expandDecimals(450_000, 6), // ~450k USD (2x the max open interest)
     },
     {
       tokens: { indexToken: "ALGO", longToken: "WBTC.e", shortToken: "USDC" },
@@ -3380,11 +3380,11 @@ const config: {
       reserveFactor: percentageToFloat("105%"), // default is 95%
       openInterestReserveFactor: percentageToFloat("100%"), // default is 90%
 
-      maxOpenInterest: decimalToFloat(500_000),
-      maxPoolUsdForDeposit: decimalToFloat(750_000),
+      maxOpenInterest: decimalToFloat(375_000),
+      maxPoolUsdForDeposit: decimalToFloat(560_500),
 
-      maxLongTokenPoolAmount: expandDecimals(8, 8), // ~1M USD (2x the max open interest)
-      maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x the max open interest)
+      maxLongTokenPoolAmount: expandDecimals(173, 8), // ~0.67M USD
+      maxShortTokenPoolAmount: expandDecimals(670_000, 6), // ~0.67M USD
     },
     {
       tokens: { indexToken: "CVX", longToken: "WETH", shortToken: "USDC" },
@@ -3484,11 +3484,11 @@ const config: {
       reserveFactor: percentageToFloat("105%"),
       openInterestReserveFactor: percentageToFloat("100%"),
 
-      maxOpenInterest: decimalToFloat(500_000),
-      maxPoolUsdForDeposit: decimalToFloat(750_000),
+      maxOpenInterest: decimalToFloat(375_000),
+      maxPoolUsdForDeposit: decimalToFloat(562_000),
 
-      maxLongTokenPoolAmount: expandDecimals(280, 18), // ~0.9M USD (2x max open interest)
-      maxShortTokenPoolAmount: expandDecimals(900_000, 6), // ~0.9M USD (2x max open interest)
+      maxLongTokenPoolAmount: expandDecimals(214, 18), // ~0.67M USD
+      maxShortTokenPoolAmount: expandDecimals(670_000, 6), // ~0.67M USD
     },
     {
       tokens: { indexToken: "BRETT", longToken: "WETH", shortToken: "USDC" },
@@ -3672,11 +3672,11 @@ const config: {
       reserveFactor: percentageToFloat("105%"),
       openInterestReserveFactor: percentageToFloat("100%"),
 
-      maxOpenInterest: decimalToFloat(300_000),
-      maxPoolUsdForDeposit: decimalToFloat(450_000),
+      maxOpenInterest: decimalToFloat(375_000),
+      maxPoolUsdForDeposit: decimalToFloat(560_500),
 
-      maxLongTokenPoolAmount: expandDecimals(175, 18), // ~0.5M USD (2x max open interest)
-      maxShortTokenPoolAmount: expandDecimals(540_000, 6), // ~0.54M USD (2x max open interest)
+      maxLongTokenPoolAmount: expandDecimals(214, 18), // ~0.67M USD
+      maxShortTokenPoolAmount: expandDecimals(670_000, 6), // ~0.67M USD
     },
     {
       tokens: { indexToken: "WLFI", longToken: "WETH", shortToken: "USDC" },
@@ -3724,11 +3724,11 @@ const config: {
       reserveFactor: percentageToFloat("105%"),
       openInterestReserveFactor: percentageToFloat("100%"),
 
-      maxOpenInterest: decimalToFloat(10_000),
-      maxPoolUsdForDeposit: decimalToFloat(15_000),
+      maxOpenInterest: decimalToFloat(12_000),
+      maxPoolUsdForDeposit: decimalToFloat(18_000),
 
-      maxLongTokenPoolAmount: expandDecimals(6, 18), // ~18K USD (2x max open interest)
-      maxShortTokenPoolAmount: expandDecimals(18_000, 6), // ~18K USD (2x max open interest)
+      maxLongTokenPoolAmount: expandDecimals(6, 18), // ~21K USD
+      maxShortTokenPoolAmount: expandDecimals(21_000, 6), // ~21K USD
     },
     {
       tokens: { indexToken: "VVV", longToken: "WETH", shortToken: "USDC" },
@@ -3750,11 +3750,11 @@ const config: {
       reserveFactor: percentageToFloat("105%"),
       openInterestReserveFactor: percentageToFloat("100%"),
 
-      maxOpenInterest: decimalToFloat(500_000),
-      maxPoolUsdForDeposit: decimalToFloat(750_000),
+      maxOpenInterest: decimalToFloat(375_000),
+      maxPoolUsdForDeposit: decimalToFloat(562_000),
 
-      maxLongTokenPoolAmount: expandDecimals(230, 18), // ~1M USD (2x max open interest)
-      maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x max open interest)
+      maxLongTokenPoolAmount: expandDecimals(214, 18), // ~0.67M USD
+      maxShortTokenPoolAmount: expandDecimals(675_000, 6), // ~0.67M USD
     },
     {
       tokens: { indexToken: "MORPHO", longToken: "WETH", shortToken: "USDC" },
@@ -3828,11 +3828,11 @@ const config: {
       reserveFactor: percentageToFloat("105%"),
       openInterestReserveFactor: percentageToFloat("100%"),
 
-      maxOpenInterest: decimalToFloat(1_500_000),
-      maxPoolUsdForDeposit: decimalToFloat(2_250_000),
+      maxOpenInterest: decimalToFloat(1_320_000),
+      maxPoolUsdForDeposit: decimalToFloat(1_980_000),
 
-      maxLongTokenPoolAmount: expandDecimals(25, 8), // ~2.7M USD (2x max open interest)
-      maxShortTokenPoolAmount: expandDecimals(2_700_000, 6), // ~2.7M USD (2x max open interest)
+      maxLongTokenPoolAmount: expandDecimals(25, 8), // ~2.37M USD (2x max open interest)
+      maxShortTokenPoolAmount: expandDecimals(2_376_000, 6), // ~2.37M USD (2x max open interest)
     },
     {
       tokens: { indexToken: "0G", longToken: "WBTC.e", shortToken: "USDC" },
@@ -3854,11 +3854,11 @@ const config: {
       reserveFactor: percentageToFloat("105%"),
       openInterestReserveFactor: percentageToFloat("100%"),
 
-      maxOpenInterest: decimalToFloat(500_000),
-      maxPoolUsdForDeposit: decimalToFloat(750_000),
+      maxOpenInterest: decimalToFloat(625_000),
+      maxPoolUsdForDeposit: decimalToFloat(937_000),
 
-      maxLongTokenPoolAmount: expandDecimals(8, 8), // ~1M USD (2x max open interest)
-      maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x max open interest)
+      maxLongTokenPoolAmount: expandDecimals(12, 8), // ~1.12M USD (2x max open interest)
+      maxShortTokenPoolAmount: expandDecimals(1_125_000, 6), // ~1.2M USD (2x max open interest)
     },
     {
       tokens: { indexToken: "AVNT", longToken: "WETH", shortToken: "USDC" },
@@ -3880,11 +3880,11 @@ const config: {
       reserveFactor: percentageToFloat("105%"),
       openInterestReserveFactor: percentageToFloat("100%"),
 
-      maxOpenInterest: decimalToFloat(500_000),
-      maxPoolUsdForDeposit: decimalToFloat(750_000),
+      maxOpenInterest: decimalToFloat(625_000),
+      maxPoolUsdForDeposit: decimalToFloat(937_000),
 
-      maxLongTokenPoolAmount: expandDecimals(280, 18), // ~0.9M USD (2x max open interest)
-      maxShortTokenPoolAmount: expandDecimals(900_000, 6), // ~0.9M USD (2x max open interest)
+      maxLongTokenPoolAmount: expandDecimals(358, 18), // ~1.12M USD (2x max open interest)
+      maxShortTokenPoolAmount: expandDecimals(1_125_000, 6), // ~1.2M USD (2x max open interest)
     },
     {
       tokens: { indexToken: "LINEA", longToken: "WETH", shortToken: "USDC" },
@@ -3906,11 +3906,11 @@ const config: {
       reserveFactor: percentageToFloat("105%"),
       openInterestReserveFactor: percentageToFloat("100%"),
 
-      maxOpenInterest: decimalToFloat(500_000),
-      maxPoolUsdForDeposit: decimalToFloat(750_000),
+      maxOpenInterest: decimalToFloat(375_000),
+      maxPoolUsdForDeposit: decimalToFloat(560_500),
 
-      maxLongTokenPoolAmount: expandDecimals(220, 18), // ~1M USD (2x max open interest)
-      maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x max open interest)
+      maxLongTokenPoolAmount: expandDecimals(214, 18), // ~0.67M USD (2x max open interest)
+      maxShortTokenPoolAmount: expandDecimals(670_000, 6), // ~0.67M USD (2x max open interest)
     },
     {
       tokens: { indexToken: "SKY", longToken: "WETH", shortToken: "USDC" },
@@ -3935,11 +3935,11 @@ const config: {
       reserveFactor: percentageToFloat("105%"),
       openInterestReserveFactor: percentageToFloat("100%"),
 
-      maxOpenInterest: decimalToFloat(1_000_000),
-      maxPoolUsdForDeposit: decimalToFloat(1_500_000),
+      maxOpenInterest: decimalToFloat(500_000),
+      maxPoolUsdForDeposit: decimalToFloat(750_000),
 
-      maxLongTokenPoolAmount: expandDecimals(680, 18), // ~2M USD (2x max open interest)
-      maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x max open interest)
+      maxLongTokenPoolAmount: expandDecimals(287, 18), // ~0.9M USD (2x max open interest)
+      maxShortTokenPoolAmount: expandDecimals(900_000, 6), // ~0.9M USD (2x max open interest)
     },
     {
       tokens: { indexToken: "ZEC", longToken: "WBTC.e", shortToken: "USDC" },
@@ -3964,11 +3964,11 @@ const config: {
       reserveFactor: percentageToFloat("105%"),
       openInterestReserveFactor: percentageToFloat("100%"),
 
-      maxOpenInterest: decimalToFloat(1_000_000),
-      maxPoolUsdForDeposit: decimalToFloat(1_500_000),
+      maxOpenInterest: decimalToFloat(1_250_000),
+      maxPoolUsdForDeposit: decimalToFloat(1_875_000),
 
-      maxLongTokenPoolAmount: expandDecimals(23, 8), // ~2M USD (2x max open interest)
-      maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x max open interest)
+      maxLongTokenPoolAmount: expandDecimals(24, 8), // ~2.25M USD (2x max open interest)
+      maxShortTokenPoolAmount: expandDecimals(2_250_000, 6), // ~2.25M USD (2x max open interest)
     },
     {
       tokens: { indexToken: "MON", longToken: "WETH", shortToken: "USDC" },
@@ -3993,11 +3993,11 @@ const config: {
       reserveFactor: percentageToFloat("105%"),
       openInterestReserveFactor: percentageToFloat("100%"),
 
-      maxOpenInterest: decimalToFloat(500_000),
-      maxPoolUsdForDeposit: decimalToFloat(750_000),
+      maxOpenInterest: decimalToFloat(375_000),
+      maxPoolUsdForDeposit: decimalToFloat(562_000),
 
-      maxLongTokenPoolAmount: expandDecimals(340, 18), // ~1M USD (2x max open interest)
-      maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x max open interest)
+      maxLongTokenPoolAmount: expandDecimals(214, 18), // ~0.67M USD (2x max open interest)
+      maxShortTokenPoolAmount: expandDecimals(670_000, 6), // ~0.67M USD (2x max open interest)
     },
     {
       tokens: { indexToken: "AR", longToken: "WBTC.e", shortToken: "USDC" },
