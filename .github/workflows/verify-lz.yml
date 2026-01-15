@@ -9,6 +9,7 @@ on:
 jobs:
   verify-lz:
     runs-on: ubuntu-latest
+    environment: ci-tests
     env:
       ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
     steps:
