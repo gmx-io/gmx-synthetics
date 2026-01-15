@@ -580,19 +580,12 @@ export function getRpcUrl(network: NetworkName): string {
   };
 
   const envRpcUrl = process.env[envVarMap[network]];
-  if (envRpcUrl) {
-    console.log(`  RPC source for ${network}: env var`);
-    return envRpcUrl;
-  }
+  if (envRpcUrl) return envRpcUrl;
 
   // 2. Check ALCHEMY_API_KEY and construct URL
   const alchemyKey = process.env.ALCHEMY_API_KEY;
-  if (alchemyKey) {
-    console.log(`  RPC source for ${network}: Alchemy`);
-    return `${alchemyRpcs[network]}/${alchemyKey}`;
-  }
+  if (alchemyKey) return `${alchemyRpcs[network]}/${alchemyKey}`;
 
   // 3. Fallback to public RPCs
-  console.log(`  RPC source for ${network}: public`);
   return defaultRpcs[network];
 }
