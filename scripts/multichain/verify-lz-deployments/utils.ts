@@ -545,3 +545,47 @@ export const LZ_ENDPOINT_ABI_EXTENDED = [
   "function getReceiveLibrary(address oapp, uint32 eid) view returns (address, bool)",
   "function defaultReceiveLibrary(uint32 eid) view returns (address)",
 ];
+
+// =============================================================================
+// RPC URL Resolution
+// =============================================================================
+
+const defaultRpcs: Record<NetworkName, string> = {
+  arbitrum: "https://arb1.arbitrum.io/rpc",
+  ethereum: "https://mainnet.gateway.tenderly.co",
+  base: "https://base.gateway.tenderly.co",
+  bsc: "https://bsc-dataseed.binance.org",
+  bera: "https://rpc.berachain.com",
+  botanix: "https://rpc.botanixlabs.com",
+};
+
+const alchemyRpcs: Record<NetworkName, string> = {
+  arbitrum: "https://arb-mainnet.g.alchemy.com/v2",
+  ethereum: "https://eth-mainnet.g.alchemy.com/v2",
+  base: "https://base-mainnet.g.alchemy.com/v2",
+  bsc: "https://bnb-mainnet.g.alchemy.com/v2",
+  bera: "https://berachain-mainnet.g.alchemy.com/v2",
+  botanix: "https://botanix-mainnet.g.alchemy.com/v2",
+};
+
+export function getRpcUrl(network: NetworkName): string {
+  // 1. Check network-specific env var (e.g., ARBITRUM_RPC_URL)
+  const envVarMap: Record<NetworkName, string> = {
+    arbitrum: "ARBITRUM_RPC_URL",
+    ethereum: "ETHEREUM_RPC_URL",
+    base: "BASE_RPC_URL",
+    bsc: "BSC_RPC_URL",
+    bera: "BERA_RPC_URL",
+    botanix: "BOTANIX_RPC_URL",
+  };
+
+  const envRpcUrl = process.env[envVarMap[network]];
+  if (envRpcUrl) return envRpcUrl;
+
+  // 2. Check ALCHEMY_API_KEY and construct URL
+  const alchemyKey = process.env.ALCHEMY_API_KEY;
+  if (alchemyKey) return `${alchemyRpcs[network]}/${alchemyKey}`;
+
+  // 3. Fallback to public RPCs
+  return defaultRpcs[network];
+}
