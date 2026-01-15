@@ -47,6 +47,11 @@ const getRpcUrl = (network) => {
     arbitrum: "https://arb1.arbitrum.io/rpc",
     avalanche: "https://api.avax.network/ext/bc/C/rpc",
     botanix: "https://rpc.botanixlabs.com",
+    megaEth: "https://mainnet.megaeth.com/rpc",
+    ethereum: "https://mainnet.gateway.tenderly.co",
+    base: "https://base.gateway.tenderly.co",
+    bsc: "https://bsc-dataseed.binance.org",
+    bera: "https://rpc.berachain.com",
     arbitrumGoerli: "https://goerli-rollup.arbitrum.io/rpc",
     arbitrumSepolia: "https://sepolia-rollup.arbitrum.io/rpc",
     sepolia: "https://ethereum-sepolia-rpc.publicnode.com",
@@ -75,6 +80,7 @@ export const getExplorerUrl = (network) => {
     // avalanche: "https://api.snowtrace.io/",
     avalanche: "https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan/",
     botanix: "https://api.routescan.io/v2/network/mainnet/evm/3637/etherscan/",
+    megaEth: "https://megaeth.blockscout.com/",
     snowscan: "https://api.snowscan.xyz/",
     arbitrumGoerli: "https://api-goerli.arbiscan.io/",
     arbitrumSepolia: "https://api.etherscan.io/v2/api?chainid=421614",
@@ -97,6 +103,7 @@ export const getBlockExplorerUrl = (network) => {
     arbitrum: "https://arbiscan.io",
     avalanche: "https://snowtrace.io",
     botanix: "https://botanixscan.io",
+    megaEth: "https://megaeth.blockscout.com",
     arbitrumSepolia: "https://sepolia.arbiscan.io",
     baseSepolia: "https://sepolia.basescan.io",
     avalancheFuji: "https://testnet.snowtrace.io",
@@ -129,6 +136,7 @@ const getEtherscanApiKey = () => {
     snowtrace: "snowtrace", // apiKey is not required, just set a placeholder
     arbitrumBlockscout: "arbitrumBlockscout",
     botanix: process.env.BOTANIX_SCAN_API_KEY,
+    megaEth: process.env.MEGA_ETH_EXPLORER_API_KEY,
   };
 };
 
@@ -238,6 +246,38 @@ const config: HardhatUserConfig = {
         },
       },
       blockGasLimit: 20_000_000,
+    },
+    megaEth: {
+      url: getRpcUrl("megaEth"),
+      chainId: 4326,
+      accounts: getEnvAccounts(),
+      verify: {
+        etherscan: {
+          apiUrl: getExplorerUrl("megaEth"),
+          apiKey: process.env.MEGA_ETH_EXPLORER_API_KEY,
+        },
+      },
+      blockGasLimit: 20_000_000,
+    },
+    ethereum: {
+      url: getRpcUrl("ethereum"),
+      chainId: 1,
+      accounts: getEnvAccounts(),
+    },
+    base: {
+      url: getRpcUrl("base"),
+      chainId: 8453,
+      accounts: getEnvAccounts(),
+    },
+    bsc: {
+      url: getRpcUrl("bsc"),
+      chainId: 56,
+      accounts: getEnvAccounts(),
+    },
+    bera: {
+      url: getRpcUrl("bera"),
+      chainId: 80094,
+      accounts: getEnvAccounts(),
     },
     snowscan: {
       url: getRpcUrl("avalanche"),
