@@ -18,6 +18,7 @@ export function getRoles({ syntheticKeepers, generalConfigKeepers, claimAdmins }
     },
     MARKET_KEEPER: {
       ...generalConfigKeepers.mainnet,
+      "0xE7BfFf2aB721264887230037940490351700a068": true, // TEMP: deployer
     },
     TIMELOCK_ADMIN: {
       "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // timelock_admin_1

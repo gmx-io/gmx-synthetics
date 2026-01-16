@@ -381,6 +381,14 @@ const config: HardhatUserConfig = {
           browserURL: "https://snowtrace.io",
         },
       },
+      {
+        network: "megaEth",
+        chainId: 4326,
+        urls: {
+          apiURL: "https://megaeth.blockscout.com/api",
+          browserURL: "https://megaeth.blockscout.com/",
+        },
+      },
       // {
       //   network: "arbitrumBlockscout",
       //   chainId: 42161,
