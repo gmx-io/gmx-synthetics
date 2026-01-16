@@ -10,6 +10,8 @@ import "../data/DataStore.sol";
 import "../data/Keys.sol";
 import "../error/ErrorUtils.sol";
 import "../utils/AccountUtils.sol";
+import "../utils/Precision.sol";
+import "../event/EventEmitter.sol";
 
 import "./IWNT.sol";
 import {Bank} from "../bank/Bank.sol";
@@ -259,13 +261,12 @@ library TokenUtils {
     }
 
     // @dev Check if this withdrawal fits into withdrawals threshold for a given time period
-    function _applyRateLimit(
+    function _updateWithdrawalLevel(
         DataStore dataStore,
-        EventEmitter eventEmitter,
         address receiver,
         address token,
         uint256 amount
-    ) internal returns (bool isManualTransferEnabled) {
+    ) internal returns (uint256 currentWithdrawalLevel) {
         uint256 withdrawalRatePeriod = dataStore.getUint(Keys.bankTransferOutThresholdPeriodKey(token));
         // if not set -> skip checks
         if (withdrawalRatePeriod == 0) {
@@ -287,36 +288,13 @@ library TokenUtils {
             : block.timestamp - lastWithdrawal;
 
         // N is slope parameter. We are using N == 16 to effectively power it using bitwise shift
-        uint256 currentWithdrawalLevel = Precision.mulDiv(
+        currentWithdrawalLevel = Precision.mulDiv(
             timeSinceLastWithdrawal, WITHDRAWAL_LEVEL_PRECISION, withdrawalRatePeriod
         ) << 4;
         currentWithdrawalLevel = (WITHDRAWAL_LEVEL_PRECISION - currentWithdrawalLevel) * lastWithdrawalLevel;
         // add current amount to check whether it will fit in the cap
         currentWithdrawalLevel += amount;
 
-        uint256 withdrawalLimit = dataStore.getUint(Keys.bankTransferOutCapKey(token));
-        isManualTransferEnabled = dataStore.getBool(Keys.bankManualTransferOutKey(token));
-        // if withdrawalLevel exceeds withdrawal cap than manual transfer approval should be enabled
-        // if it is already enabled do not emit event
-        // switch back to auto transfer validation if withdrawal level is less than cap
-        if (currentWithdrawalLevel > withdrawalLimit != isManualTransferEnabled) {
-            isManualTransferEnabled = !isManualTransferEnabled;
-            dataStore.setBool(Keys.bankManualTransferOutKey(token), isManualTransferEnabled);
-
-            EventUtils.EventLogData memory eventData;
-            eventData.addressItems.initItems(2);
-            eventData.addressItems.setItem(0, "receiver", receiver);
-            eventData.addressItems.setItem(1, "token", token);
-            eventData.uintItems.initItems(2);
-            eventData.uintItems.setItem(0, "amount", amount);
-            eventData.uintItems.setItem(1, "limit", withdrawalLimit);
-            eventData.boolItems.initItems(1);
-            eventData.boolItems.setItem(0, "isManualWithdrawalEnabled", isManualTransferEnabled);
-            eventEmitter.emitEventLog(
-                "WithdrawalsManualModeChanged",
-                eventData
-            );
-        }
 
         dataStore.setUint(Keys.bankTransferOutTimeKey(token), block.timestamp);
         dataStore.setUint(Keys.bankTransferOutLevelKey(token), currentWithdrawalLevel);
@@ -349,41 +327,45 @@ library TokenUtils {
         );
     }
 
-    function manualWithdrawal(
-        address receiver,
-        address token,
-        bool shouldUnwrapNativeToken,
-        bytes32 withdrawalId
-    ) external onlyKeeper {
-        uint256 amount = dataStore.getUint(Keys.bankManualWithdrawalAmountKey(withdrawalId));
-        if (amount == 0) {
-            revert Errors.EmptyAmount();
-        }
-
-        dataStore.setUint(Keys.bankManualWithdrawalAmountKey(withdrawalId), 0);
-
-        _transferOut(token, receiver, amount, shouldUnwrapNativeToken);
-
-        EventUtils.EventLogData memory eventData;
-        eventData.addressItems.initItems(2);
-        eventData.addressItems.setItem(0, "receiver", receiver);
-        eventData.addressItems.setItem(1, "token", token);
-        eventData.uintItems.initItems(2);
-        eventData.uintItems.setItem(0, "amount", amount);
-        eventData.boolItems.initItems(1);
-        eventData.boolItems.setItem(0, "shouldUnwrapNativeToken", shouldUnwrapNativeToken);
-        eventData.bytes32Items.initItems(1);
-        eventData.bytes32Items.setItem(0, "withdrawalId", withdrawalId);
-        eventEmitter.emitEventLog(
-            "ManualWithdrawalProcessed",
-            eventData
-        );
-    }
-
     function transferOutWithRateLimit(
         DataStore dataStore,
-        Bank bank
+        EventEmitter eventEmitter,
+        Bank bank,
+        address token,
+        address receiver,
+        uint256 amount
     ) external {
+        uint256 currentWithdrawalLevel = _updateWithdrawalLevel(dataStore, receiver, token, amount);
 
+        uint256 withdrawalLimit = dataStore.getUint(Keys.bankTransferOutCapKey(token));
+        bool isManualTransferEnabled = dataStore.getBool(Keys.bankManualTransferOutKey(token));
+        // if withdrawalLevel exceeds withdrawal cap than manual transfer approval should be enabled
+        // if it is already enabled do not emit event
+        // switch back to auto transfer validation if withdrawal level is less than cap
+        if (currentWithdrawalLevel > withdrawalLimit != isManualTransferEnabled) {
+            isManualTransferEnabled = !isManualTransferEnabled;
+            dataStore.setBool(Keys.bankManualTransferOutKey(token), isManualTransferEnabled);
+
+            EventUtils.EventLogData memory eventData;
+            eventData.addressItems.initItems(2);
+            eventData.addressItems.setItem(0, "receiver", receiver);
+            eventData.addressItems.setItem(1, "token", token);
+            eventData.uintItems.initItems(2);
+            eventData.uintItems.setItem(0, "amount", amount);
+            eventData.uintItems.setItem(1, "limit", withdrawalLimit);
+            eventData.boolItems.initItems(1);
+            eventData.boolItems.setItem(0, "isManualWithdrawalEnabled", isManualTransferEnabled);
+            eventEmitter.emitEventLog(
+                "WithdrawalsManualModeChanged",
+                eventData
+            );
+        }
+
+        if (isManualTransferEnabled) {
+            // Skip transfer and emit manual event. Keepers should handle it later
+            _recordManualWithdrawal(receiver, token, amount, false);
+        } else {
+            bank.transferOut(token, receiver, amount);
+        }
     }
 }

@@ -187,6 +187,38 @@ library ExecuteWithdrawalUtils {
         return cache.result;
     }
 
+    function manualWithdrawal(
+        DataStore dataStore,
+        address receiver,
+        address token,
+        bool shouldUnwrapNativeToken,
+        bytes32 withdrawalId
+    ) external onlyKeeper {
+        uint256 amount = dataStore.getUint(Keys.bankManualWithdrawalAmountKey(withdrawalId));
+        if (amount == 0) {
+            revert Errors.EmptyAmount();
+        }
+
+        dataStore.setUint(Keys.bankManualWithdrawalAmountKey(withdrawalId), 0);
+
+        _transferOut(token, receiver, amount, shouldUnwrapNativeToken);
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "receiver", receiver);
+        eventData.addressItems.setItem(1, "token", token);
+        eventData.uintItems.initItems(2);
+        eventData.uintItems.setItem(0, "amount", amount);
+        eventData.boolItems.initItems(1);
+        eventData.boolItems.setItem(0, "shouldUnwrapNativeToken", shouldUnwrapNativeToken);
+        eventData.bytes32Items.initItems(1);
+        eventData.bytes32Items.setItem(0, "withdrawalId", withdrawalId);
+        eventEmitter.emitEventLog(
+            "ManualWithdrawalProcessed",
+            eventData
+        );
+    }
+
     /**
      * @dev executes a withdrawal.
      * @param params ExecuteWithdrawalParams.
