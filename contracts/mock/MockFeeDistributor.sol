@@ -644,7 +644,7 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule {
     }
 
     function _emitFeeDistributionEvent(string memory eventName, EventUtils.EventLogData memory eventData) internal {
-        eventEmitter.emitEventLog(eventName, eventData);
+        eventEmitter.emitEventLog1("FeeDistributorEvent", keccak256(bytes(eventName)), eventData);
     }
 
     function _setTokenPrices() internal {
