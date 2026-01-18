@@ -189,6 +189,7 @@ library ExecuteWithdrawalUtils {
 
     function manualWithdrawal(
         DataStore dataStore,
+        Bank bank,
         address receiver,
         address token,
         bool shouldUnwrapNativeToken,
@@ -201,7 +202,7 @@ library ExecuteWithdrawalUtils {
 
         dataStore.setUint(Keys.bankManualWithdrawalAmountKey(withdrawalId), 0);
 
-        _transferOut(token, receiver, amount, shouldUnwrapNativeToken);
+        bank._transferOut(token, receiver, amount, shouldUnwrapNativeToken);
 
         EventUtils.EventLogData memory eventData;
         eventData.addressItems.initItems(2);

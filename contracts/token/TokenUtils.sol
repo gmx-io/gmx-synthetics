@@ -25,6 +25,14 @@ library TokenUtils {
     using Address for address;
     using SafeERC20 for IERC20;
 
+    using EventUtils for EventUtils.AddressItems;
+    using EventUtils for EventUtils.UintItems;
+    using EventUtils for EventUtils.IntItems;
+    using EventUtils for EventUtils.BoolItems;
+    using EventUtils for EventUtils.Bytes32Items;
+    using EventUtils for EventUtils.BytesItems;
+    using EventUtils for EventUtils.StringItems;
+
     event TokenTransferReverted(string reason, bytes returndata);
     event NativeTokenTransferReverted(string reason);
 
