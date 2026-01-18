@@ -3,8 +3,10 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 
 import "../../data/DataStore.sol";
+import "../../utils/AccountUtils.sol";
 import "../../event/EventEmitter.sol";
 import "../../order/OrderVault.sol";
 import "../../oracle/IOracle.sol";
@@ -213,37 +215,56 @@ library RelayUtils {
             return;
         }
 
-        if (error != ECDSA.RecoverError.NoError) {
-            revert Errors.InvalidSignature(signatureType);
+        // 1. EOA with standard digest
+        if (error == ECDSA.RecoverError.NoError && recovered == expectedSigner) {
+            return;
         }
 
+        // 2. EOA with minified digest
         // for some cases, e.g. ledger, signing does not work because the payload
         // is too large
         // for these cases, the user can sign a minified structHash instead
         // the user should be shown the source data that was used to construct
         // the minified structHash so that they can verify it independently
-        if (recovered != expectedSigner) {
-            bytes32 minifiedStructHash = keccak256(
-                abi.encode(
-                    MINIFIED_TYPEHASH,
-                    digest
-                )
-            );
+        bytes32 minifiedStructHash = keccak256(
+            abi.encode(
+                MINIFIED_TYPEHASH,
+                digest
+            )
+        );
 
-            // since digest is already validated in BaseGelatoRelayRouter,
-            // we do not call _validateDigest on minifiedDigest
-            bytes32 minifiedDigest = ECDSA.toTypedDataHash(domainSeparator, minifiedStructHash);
+        // since digest is already validated in BaseGelatoRelayRouter,
+        // we do not call _validateDigest on minifiedDigest
+        bytes32 minifiedDigest = ECDSA.toTypedDataHash(domainSeparator, minifiedStructHash);
 
-            (address recoveredFromMinified, ECDSA.RecoverError errorFromMinified) = ECDSA.tryRecover(minifiedDigest, signature);
+        (address recoveredFromMinified, ECDSA.RecoverError errorFromMinified) = ECDSA.tryRecover(minifiedDigest, signature);
 
-            if (errorFromMinified != ECDSA.RecoverError.NoError) {
-                revert Errors.InvalidSignature(signatureType);
-            }
-
-            if (recoveredFromMinified != expectedSigner) {
-                revert Errors.InvalidRecoveredSigner(signatureType, recovered, recoveredFromMinified, expectedSigner);
-            }
+        if (errorFromMinified == ECDSA.RecoverError.NoError && recoveredFromMinified == expectedSigner) {
+            return;
         }
+
+        // 3. smart contract wallet (via ERC-1271)
+        if (AccountUtils.isContract(expectedSigner)) {
+            // with standard digest
+            if (SignatureChecker.isValidERC1271SignatureNow(expectedSigner, digest, signature)) {
+                return;
+            }
+
+            // with minified digest
+            if (SignatureChecker.isValidERC1271SignatureNow(expectedSigner, minifiedDigest, signature)) {
+                return;
+            }
+
+            revert Errors.InvalidSignatureForContract(signatureType);
+        }
+
+        // invalid signature format (not 65 bytes)
+        if (error != ECDSA.RecoverError.NoError) {
+            revert Errors.InvalidSignature(signatureType);
+        }
+
+        // valid signature but recovered wrong address
+        revert Errors.InvalidRecoveredSigner(signatureType, recovered, recoveredFromMinified, expectedSigner);
     }
 
     function swapFeeTokens(
