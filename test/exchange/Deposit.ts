@@ -232,7 +232,7 @@ describe("Exchange.Deposit", () => {
 
     await expect(depositHandler.connect(user0).cancelDeposit(depositKeys[0]))
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
-      .withArgs(user0.address, "CONTROLLER");
+      .withArgs(user0.address, "ORDER_KEEPER|CONTROLLER");
 
     await expect(depositHandler.cancelDeposit(depositKeys[0]))
       .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")

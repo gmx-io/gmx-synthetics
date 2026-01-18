@@ -24,6 +24,7 @@ library ReaderPositionUtils {
         int256 basePnlUsd;
         int256 uncappedBasePnlUsd;
         int256 pnlAfterPriceImpactUsd;
+        int256 positionValueInUsd;
     }
 
     struct GetPositionInfoCache {
@@ -101,22 +102,6 @@ library ReaderPositionUtils {
         }
 
         revert Errors.EmptyMarketPrice(market);
-    }
-
-    function getAccountPositions(
-        DataStore dataStore,
-        address account,
-        uint256 start,
-        uint256 end
-    ) external view returns (Position.Props[] memory) {
-        bytes32[] memory positionKeys = PositionStoreUtils.getAccountPositionKeys(dataStore, account, start, end);
-        Position.Props[] memory positions = new Position.Props[](positionKeys.length);
-        for (uint256 i; i < positionKeys.length; i++) {
-            bytes32 positionKey = positionKeys[i];
-            positions[i] = PositionStoreUtils.get(dataStore, positionKey);
-        }
-
-        return positions;
     }
 
     function getPositionInfo(
@@ -282,6 +267,18 @@ library ReaderPositionUtils {
         positionInfo.fees.totalCostAmount =
             positionInfo.fees.totalCostAmountExcludingFunding
             + positionInfo.fees.funding.fundingFeeAmount;
+
+        // with totalImpactUsd the pnlAfterPriceImpactUsd may not be a very useful value to return and may be deprecated in a future iteration
+        positionInfo.pnlAfterPriceImpactUsd = positionInfo.executionPriceResult.priceImpactUsd + positionInfo.basePnlUsd;
+
+        positionInfo.positionValueInUsd = (
+            positionInfo.position.collateralAmount() * cache.collateralTokenPrice.min +
+            positionInfo.fees.funding.claimableLongTokenAmount * prices.longTokenPrice.min +
+            positionInfo.fees.funding.claimableShortTokenAmount * prices.shortTokenPrice.min).toInt256() +
+            positionInfo.basePnlUsd +
+            positionInfo.executionPriceResult.totalImpactUsd -
+            // substracted as int256 to avoid underflow operating in uint256 space if cost is greater than collateral amount
+            (positionInfo.fees.totalCostAmount * cache.collateralTokenPrice.max).toInt256();
 
         return positionInfo;
     }
