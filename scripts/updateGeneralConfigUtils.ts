@@ -348,6 +348,15 @@ const getConfigItems = async (generalConfig, oracleConfig) => {
     });
   }
 
+  if (generalConfig.useOpenInterestInTokensForBalance !== undefined) {
+    configItems.push({
+      type: "bool",
+      baseKey: keys.USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE,
+      value: generalConfig.useOpenInterestInTokensForBalance,
+      label: `useOpenInterestInTokensForBalance`,
+    });
+  }
+
   const layerZeroProvider = await hre.ethers.getContract("LayerZeroProvider");
   configItems.push({
     type: "bool",

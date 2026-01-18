@@ -35,7 +35,7 @@ export function getRoles({ syntheticKeepers, generalConfigKeepers, claimAdmins }
       "0xfFC63573B55B39b75b1e44e54C308e44505E0D28": true, // OracleStore
       "0x40d680E41FC4Bf973F0EA664981f6359195a6383": true, // Oracle
 
-      "0xAd7a7568F500F65AEA3D9417A210CBc5dcD7b273": true, // Config (CONTROLLER)
+      "0x5a1344252f0CdfDB765DD5ab97C98734f1D7ED6d": true, // Config (CONTROLLER)
       "0x3d6BA4a91Ffde7C519379F8dCA5FE58b7125c294": true, // ConfigTimelockController (CONTROLLER)
       "0x72a30e76827Ce83cEf0b1BEd7e9aAF9F4a576990": true, // TimelockConfig (CONTROLLER)
       "0xBCB5eA3a84886Ce45FBBf09eBF0e883071cB2Dc8": true, // ExchangeRouter (CONTROLLER)

@@ -9,6 +9,7 @@ import "../data/Keys.sol";
 import "../market/MarketStoreUtils.sol";
 
 import "../position/Position.sol";
+import "../position/PositionStoreUtils.sol";
 
 import "../order/OrderStoreUtils.sol";
 
@@ -75,6 +76,21 @@ library ReaderUtils {
         }
 
         return orders;
+    }
+
+    function getAccountPositions(
+        DataStore dataStore,
+        address account,
+        uint256 start,
+        uint256 end
+    ) external view returns (Position.Props[] memory) {
+        bytes32[] memory positionKeys = PositionStoreUtils.getAccountPositionKeys(dataStore, account, start, end);
+        Position.Props[] memory positions = new Position.Props[](positionKeys.length);
+        for (uint256 i; i < positionKeys.length; i++) {
+            positions[i] = PositionStoreUtils.get(dataStore, positionKeys[i]);
+        }
+
+        return positions;
     }
 
     function getBaseFundingValues(DataStore dataStore, Market.Props memory market) public view returns (BaseFundingValues memory) {

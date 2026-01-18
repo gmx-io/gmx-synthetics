@@ -362,17 +362,17 @@ async function validateIsReferralStorageHandler() {
 
     const referralStorageTimelock = new hre.ethers.Contract(
       await referralStorage.gov(),
-      ["function isHandler(address) view returns (bool)"],
+      ["function isKeeper(address) view returns (bool)"],
       hre.ethers.provider
     );
 
-    const isMultichainOrderRouterTimelockHandler = await referralStorageTimelock.isHandler(
+    const isMultichainOrderRouterTimelockHandler = await referralStorageTimelock.isKeeper(
       multichainOrderRouterDeployment.address
     );
 
     if (!isMultichainOrderRouterTimelockHandler) {
       console.warn(
-        "🟠 MultichainOrderRouter %s is missing the handler role in ReferralStorage Timelock %s",
+        "🟠 MultichainOrderRouter %s is missing the keeper role in ReferralStorage Timelock %s",
         multichainOrderRouterDeployment.address,
         referralStorageTimelock.address
       );
