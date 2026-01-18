@@ -565,6 +565,42 @@ describe("Exchange.FundingFees.AdaptiveFunding", () => {
     await testAdaptiveFunding(false);
   });
 
+  it("preserves saved funding factor when one side has zero open interest", async () => {
+    // 1. set saved funding factor to 0.0001%
+    // 2. create long position
+    // 3. expect saved funding factor to be 0.0001%
+
+    const savedFundingFactor = decimalToFloat(1, 6);
+
+    await dataStore.setInt(keys.savedFundingFactorPerSecondKey(ethUsdMarket.marketToken), savedFundingFactor);
+
+    await handleOrder(fixture, {
+      create: {
+        account: user0,
+        market: ethUsdMarket,
+        initialCollateralToken: wnt,
+        initialCollateralDeltaAmount: expandDecimals(10, 18),
+        sizeDeltaUsd: decimalToFloat(100_000),
+        acceptablePrice: expandDecimals(5050, 12),
+        orderType: OrderType.MarketIncrease,
+        isLong: true,
+      },
+    });
+
+    expect(await dataStore.getInt(keys.savedFundingFactorPerSecondKey(ethUsdMarket.marketToken))).eq(
+      savedFundingFactor
+    );
+
+    await usingResult(
+      reader.getMarketInfo(dataStore.address, prices.ethUsdMarket, ethUsdMarket.marketToken),
+      (marketInfo) => {
+        expect(marketInfo.nextFunding.fundingFactorPerSecond).eq(savedFundingFactor);
+        expect(marketInfo.nextFunding.nextSavedFundingFactorPerSecond).eq(savedFundingFactor);
+        expect(marketInfo.nextFunding.longsPayShorts).eq(true);
+      }
+    );
+  });
+
   it("adaptive funding with USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE as true", async () => {
     await testAdaptiveFunding(true);
   });
