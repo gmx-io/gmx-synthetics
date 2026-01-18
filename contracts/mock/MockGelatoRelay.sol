@@ -8,6 +8,7 @@ import "../exchange/IOrderHandler.sol";
 import "../order/OrderVault.sol";
 import "../router/Router.sol";
 import "../router/relay/GelatoRelayRouter.sol";
+import "../router/relay/SignatureUtils.sol";
 
 contract MockGelatoRelayRouter is GelatoRelayRouter {
     struct Nested {
@@ -86,7 +87,7 @@ contract MockGelatoRelayRouter is GelatoRelayRouter {
         bytes32 domainSeparator = RelayUtils.getDomainSeparator(chainId);
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
 
-        RelayUtils.validateSignature(
+        SignatureUtils.validateSignature(
             domainSeparator,
             digest,
             signature,

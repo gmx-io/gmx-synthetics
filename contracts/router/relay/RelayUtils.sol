@@ -2,11 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
-
 import "../../data/DataStore.sol";
-import "../../utils/AccountUtils.sol";
 import "../../event/EventEmitter.sol";
 import "../../order/OrderVault.sol";
 import "../../oracle/IOracle.sol";
@@ -76,8 +72,6 @@ library RelayUtils {
                 "SubaccountApproval(address subaccount,bool shouldAdd,uint256 expiresAt,uint256 maxAllowedCount,bytes32 actionType,uint256 nonce,uint256 desChainId,uint256 deadline,bytes32 integrationId)"
             )
         );
-
-    bytes32 public constant MINIFIED_TYPEHASH = keccak256(bytes("Minified(bytes32 digest)"));
 
     bytes32 public constant REMOVE_SUBACCOUNT_TYPEHASH =
         keccak256(bytes("RemoveSubaccount(address subaccount,bytes32 relayParams)"));
@@ -184,9 +178,6 @@ library RelayUtils {
     bytes32 public constant DOMAIN_SEPARATOR_NAME_HASH = keccak256(bytes("GmxBaseGelatoRelayRouter"));
     bytes32 public constant DOMAIN_SEPARATOR_VERSION_HASH = keccak256(bytes("1"));
 
-    address constant GMX_SIMULATION_ORIGIN = address(uint160(uint256(keccak256("GMX SIMULATION ORIGIN"))));
-
-
     function getDomainSeparator(uint256 sourceChainId) external view returns (bytes32) {
         return
             keccak256(
@@ -198,73 +189,6 @@ library RelayUtils {
                     address(this)
                 )
             );
-    }
-
-    function validateSignature(
-        bytes32 domainSeparator,
-        bytes32 digest,
-        bytes calldata signature,
-        address expectedSigner,
-        string memory signatureType
-    ) external view {
-        (address recovered, ECDSA.RecoverError error) = ECDSA.tryRecover(digest, signature);
-
-        // allow to optionally skip signature validation for eth_estimateGas / eth_call if tx.origin is GMX_SIMULATION_ORIGIN
-        // do not use address(0) to avoid relays accidentally skipping signature validation if they use address(0) as the origin
-        if (tx.origin == GMX_SIMULATION_ORIGIN) {
-            return;
-        }
-
-        // 1. EOA with standard digest
-        if (error == ECDSA.RecoverError.NoError && recovered == expectedSigner) {
-            return;
-        }
-
-        // 2. EOA with minified digest
-        // for some cases, e.g. ledger, signing does not work because the payload
-        // is too large
-        // for these cases, the user can sign a minified structHash instead
-        // the user should be shown the source data that was used to construct
-        // the minified structHash so that they can verify it independently
-        bytes32 minifiedStructHash = keccak256(
-            abi.encode(
-                MINIFIED_TYPEHASH,
-                digest
-            )
-        );
-
-        // since digest is already validated in BaseGelatoRelayRouter,
-        // we do not call _validateDigest on minifiedDigest
-        bytes32 minifiedDigest = ECDSA.toTypedDataHash(domainSeparator, minifiedStructHash);
-
-        (address recoveredFromMinified, ECDSA.RecoverError errorFromMinified) = ECDSA.tryRecover(minifiedDigest, signature);
-
-        if (errorFromMinified == ECDSA.RecoverError.NoError && recoveredFromMinified == expectedSigner) {
-            return;
-        }
-
-        // 3. smart contract wallet (via ERC-1271)
-        if (AccountUtils.isContract(expectedSigner)) {
-            // with standard digest
-            if (SignatureChecker.isValidERC1271SignatureNow(expectedSigner, digest, signature)) {
-                return;
-            }
-
-            // with minified digest
-            if (SignatureChecker.isValidERC1271SignatureNow(expectedSigner, minifiedDigest, signature)) {
-                return;
-            }
-
-            revert Errors.InvalidSignatureForContract(signatureType);
-        }
-
-        // invalid signature format (not 65 bytes)
-        if (error != ECDSA.RecoverError.NoError) {
-            revert Errors.InvalidSignature(signatureType);
-        }
-
-        // valid signature but recovered wrong address
-        revert Errors.InvalidRecoveredSigner(signatureType, recovered, recoveredFromMinified, expectedSigner);
     }
 
     function swapFeeTokens(

@@ -43,6 +43,7 @@ const func = createDeployFunction({
     "MultichainUtils",
     "ReferralUtils",
     "RelayUtils",
+    "SignatureUtils",
   ],
 
   afterDeploy: async ({ deployedContract }) => {

@@ -36,7 +36,7 @@ const func = createDeployFunction({
 
     return [baseParams, dependencyContracts.ReferralStorage.address];
   },
-  libraryNames: ["GasUtils", "MultichainUtils", "OrderStoreUtils", "RelayUtils"],
+  libraryNames: ["GasUtils", "MultichainUtils", "OrderStoreUtils", "RelayUtils", "SignatureUtils"],
 
   afterDeploy: async ({ deployedContract, deployments }) => {
     await grantRoleIfNotGranted(deployedContract, "CONTROLLER");
