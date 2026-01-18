@@ -557,6 +557,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
         allowedBaseKeys[Keys.FUNDING_FACTOR] = true;
         allowedBaseKeys[Keys.FUNDING_EXPONENT_FACTOR] = true;
         allowedBaseKeys[Keys.FUNDING_INCREASE_FACTOR_PER_SECOND] = true;
+        allowedBaseKeys[Keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND] = true;
         allowedBaseKeys[Keys.FUNDING_DECREASE_FACTOR_PER_SECOND] = true;
         allowedBaseKeys[Keys.MIN_FUNDING_FACTOR_PER_SECOND] = true;
         allowedBaseKeys[Keys.MAX_FUNDING_FACTOR_PER_SECOND] = true;
@@ -645,6 +646,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
         allowedLimitedBaseKeys[Keys.MAX_FUNDING_FACTOR_PER_SECOND] = true;
         allowedLimitedBaseKeys[Keys.MIN_FUNDING_FACTOR_PER_SECOND] = true;
         allowedLimitedBaseKeys[Keys.FUNDING_INCREASE_FACTOR_PER_SECOND] = true;
+        allowedLimitedBaseKeys[Keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND] = true;
         allowedLimitedBaseKeys[Keys.FUNDING_DECREASE_FACTOR_PER_SECOND] = true;
 
         allowedLimitedBaseKeys[Keys.MAX_POOL_AMOUNT] = true;
