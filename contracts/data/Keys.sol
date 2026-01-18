@@ -378,6 +378,8 @@ library Keys {
     bytes32 public constant SAVED_FUNDING_FACTOR_PER_SECOND = keccak256(abi.encode("SAVED_FUNDING_FACTOR_PER_SECOND"));
     // @dev key for funding increase factor
     bytes32 public constant FUNDING_INCREASE_FACTOR_PER_SECOND = keccak256(abi.encode("FUNDING_INCREASE_FACTOR_PER_SECOND"));
+    // @dev key for min funding increase factor
+    bytes32 public constant MIN_FUNDING_INCREASE_RATE_PER_SECOND = keccak256(abi.encode("MIN_FUNDING_INCREASE_RATE_PER_SECOND"));
     // @dev key for funding decrease factor
     bytes32 public constant FUNDING_DECREASE_FACTOR_PER_SECOND = keccak256(abi.encode("FUNDING_DECREASE_FACTOR_PER_SECOND"));
     // @dev key for min funding factor
@@ -1605,6 +1607,15 @@ library Keys {
     function fundingIncreaseFactorPerSecondKey(address market) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             FUNDING_INCREASE_FACTOR_PER_SECOND,
+            market
+        ));
+    }
+
+    // @dev the key for min funding increase factor
+    // @param market the market for the pool
+    function minFundingIncreaseRatePerSecondKey(address market) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            MIN_FUNDING_INCREASE_RATE_PER_SECOND,
             market
         ));
     }

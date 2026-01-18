@@ -417,6 +417,26 @@ describe("Config", () => {
     expect(onchainValue).eq(validValue);
   });
 
+  it("validates min funding increase rate", async () => {
+    const validValue = bigNumberify("100000000000000000000000");
+    await expect(
+      config.setUint(
+        keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND,
+        encodeData(["address"], [ethUsdMarket.marketToken]),
+        validValue.add(100)
+      )
+    ).to.be.revertedWithCustomError(errorsContract, "ConfigValueExceedsAllowedRange");
+
+    await config.setUint(
+      keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND,
+      encodeData(["address"], [ethUsdMarket.marketToken]),
+      validValue
+    );
+
+    const onchainValue = await dataStore.getUint(keys.minFundingIncreaseRatePerSecondKey(ethUsdMarket.marketToken));
+    expect(onchainValue).eq(validValue);
+  });
+
   it("validates funding decrease factor", async () => {
     const validValue = bigNumberify("100000000000000000000000").div(86400);
     await expect(
@@ -569,6 +589,17 @@ describe("Config", () => {
       },
     };
 
+    // invalid price feed
+    await expect(config.initOracleConfig(oracleConfig)).to.be.revertedWithCustomError(
+      errorsContract,
+      "InvalidPriceFeed"
+    );
+
+    // valid price feed
+    const mockPriceFeedFactory = await ethers.getContractFactory("MockPriceFeed");
+    const mockedPriceFeed = await mockPriceFeedFactory.deploy();
+    await mockedPriceFeed.deployed();
+    oracleConfig.priceFeed.feedAddress = mockedPriceFeed.address;
     await config.initOracleConfig(oracleConfig);
 
     expect(await dataStore.getAddress(keys.priceFeedKey(token.address))).eq(oracleConfig.priceFeed.feedAddress);

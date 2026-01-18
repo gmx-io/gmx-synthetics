@@ -219,6 +219,7 @@ async function appendConfigIfDifferent(
   const setMethod = `set${type[0].toUpperCase()}${type.slice(1)}`;
 
   const currentValue: string = dataCache[key];
+
   if (currentValue === undefined) {
     throw new Error(`currentValue is undefined for ${label}`);
   }

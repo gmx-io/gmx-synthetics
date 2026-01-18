@@ -9,15 +9,16 @@ import { getPositionKeys } from "../../utils/position";
 import { getExecuteParams } from "../../utils/exchange";
 import { getEventData } from "../../utils/event";
 import { prices } from "../../utils/prices";
+import * as keys from "../../utils/keys";
 
 describe("Exchange.DepositCollateral", () => {
   let fixture;
-  let user0;
+  let user0, user1;
   let reader, dataStore, referralStorage, ethUsdMarket, wnt;
 
   beforeEach(async () => {
     fixture = await deployFixture();
-    ({ user0 } = fixture.accounts);
+    ({ user0, user1 } = fixture.accounts);
     ({ reader, dataStore, referralStorage, ethUsdMarket, wnt } = fixture.contracts);
 
     await handleDeposit(fixture, {
@@ -112,5 +113,105 @@ describe("Exchange.DepositCollateral", () => {
         expect(positionInfo.position.numbers.collateralAmount).eq(expandDecimals(20, 18));
       }
     );
+  });
+
+  it("cancels collateral deposit if fees exceed collateral with pending pnl", async () => {
+    await handleOrder(fixture, {
+      create: {
+        account: user0,
+        market: ethUsdMarket,
+        initialCollateralToken: wnt,
+        initialCollateralDeltaAmount: expandDecimals(1, 18),
+        swapPath: [],
+        sizeDeltaUsd: decimalToFloat(200_000),
+        acceptablePrice: expandDecimals(5020, 12),
+        executionFee: expandDecimals(1, 15),
+        minOutputAmount: 0,
+        orderType: OrderType.MarketIncrease,
+        isLong: true,
+        shouldUnwrapNativeToken: false,
+      },
+      execute: {
+        ...getExecuteParams(fixture, { prices: [prices.usdc, prices.wnt.withSpread] }),
+        gasUsageLabel: "executeOrder",
+      },
+    });
+
+    await handleOrder(fixture, {
+      create: {
+        account: user1,
+        market: ethUsdMarket,
+        initialCollateralToken: wnt,
+        initialCollateralDeltaAmount: expandDecimals(10, 18),
+        swapPath: [],
+        sizeDeltaUsd: decimalToFloat(200_000),
+        acceptablePrice: expandDecimals(5020, 12),
+        executionFee: expandDecimals(1, 15),
+        minOutputAmount: 0,
+        orderType: OrderType.MarketIncrease,
+        isLong: true,
+        shouldUnwrapNativeToken: false,
+      },
+      execute: {
+        ...getExecuteParams(fixture, { prices: [prices.usdc, prices.wnt.withSpread] }),
+        gasUsageLabel: "executeOrder",
+      },
+    });
+
+    const positionKeys = await getPositionKeys(dataStore, 0, 10);
+
+    const increasedEthUsdMarketPrices = {
+      ...prices.ethUsdMarket,
+      indexTokenPrice: {
+        min: expandDecimals(7500, 12),
+        max: expandDecimals(7500, 12),
+      },
+      longTokenPrice: {
+        min: expandDecimals(7500, 12),
+        max: expandDecimals(7500, 12),
+      },
+    };
+
+    await usingResult(
+      reader.getPositionInfo(
+        dataStore.address,
+        referralStorage.address,
+        positionKeys[0],
+        increasedEthUsdMarketPrices,
+        0, // sizeDeltaUsd
+        ethers.constants.AddressZero,
+        true // usePositionSizeAsSizeDeltaUsd
+      ),
+      (positionInfo) => {
+        expect(positionInfo.basePnlUsd).gt(0);
+      }
+    );
+
+    await dataStore.setUint(keys.cumulativeBorrowingFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 2));
+
+    const { timestamp } = await ethers.provider.getBlock();
+    await dataStore.setUint(keys.cumulativeBorrowingFactorUpdatedAtKey(ethUsdMarket.marketToken, true), timestamp);
+
+    await handleOrder(fixture, {
+      create: {
+        account: user0,
+        market: ethUsdMarket,
+        initialCollateralToken: wnt,
+        initialCollateralDeltaAmount: expandDecimals(1, 17), // 0.1 WNT
+        swapPath: [],
+        sizeDeltaUsd: decimalToFloat(0),
+        acceptablePrice: expandDecimals(8000, 12),
+        executionFee: expandDecimals(1, 15),
+        minOutputAmount: 0,
+        orderType: OrderType.MarketIncrease,
+        isLong: true,
+        shouldUnwrapNativeToken: false,
+      },
+      execute: {
+        ...getExecuteParams(fixture, { prices: [prices.usdc, prices.wnt.increased.byFiftyPercent] }),
+        gasUsageLabel: "executeOrder",
+        expectedCancellationReason: "InsufficientCollateralAmount",
+      },
+    });
   });
 });
