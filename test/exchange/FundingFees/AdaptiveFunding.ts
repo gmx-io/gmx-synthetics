@@ -4,7 +4,7 @@ import { time } from "@nomicfoundation/hardhat-network-helpers";
 import { usingResult } from "../../../utils/use";
 import { deployFixture } from "../../../utils/fixture";
 import { getExecuteParams } from "../../../utils/exchange";
-import { expandDecimals, decimalToFloat } from "../../../utils/math";
+import { applyFactor, expandDecimals, decimalToFloat } from "../../../utils/math";
 import { handleDeposit } from "../../../utils/deposit";
 import { OrderType, handleOrder } from "../../../utils/order";
 import { getEventData } from "../../../utils/event";
@@ -492,8 +492,113 @@ describe("Exchange.FundingFees.AdaptiveFunding", () => {
     });
   }
 
+  it("uses min funding increase rate when calculated increase is lower", async () => {
+    await dataStore.setUint(keys.fundingFactorKey(ethUsdMarket.marketToken), decimalToFloat(1, 10));
+    await dataStore.setUint(keys.fundingExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(1));
+
+    await dataStore.setUint(keys.thresholdForStableFundingKey(ethUsdMarket.marketToken), 0);
+    await dataStore.setUint(keys.thresholdForDecreaseFundingKey(ethUsdMarket.marketToken), 0);
+
+    const fundingIncreaseFactorPerSecond = decimalToFloat(1, 12); // 0.0000000000001%
+    const minFundingIncreaseRatePerSecond = decimalToFloat(1, 10); // 0.0000000001%
+
+    await dataStore.setUint(
+      keys.fundingIncreaseFactorPerSecondKey(ethUsdMarket.marketToken),
+      fundingIncreaseFactorPerSecond
+    );
+    await dataStore.setUint(
+      keys.minFundingIncreaseRatePerSecondKey(ethUsdMarket.marketToken),
+      minFundingIncreaseRatePerSecond
+    );
+    await dataStore.setUint(keys.fundingDecreaseFactorPerSecondKey(ethUsdMarket.marketToken), 0);
+    await dataStore.setUint(keys.minFundingFactorPerSecondKey(ethUsdMarket.marketToken), 0);
+    await dataStore.setUint(keys.maxFundingFactorPerSecondKey(ethUsdMarket.marketToken), decimalToFloat(1));
+
+    // user0 opens a $106k long position, using wnt as collateral
+    await handleOrder(fixture, {
+      create: {
+        account: user0,
+        market: ethUsdMarket,
+        initialCollateralToken: wnt,
+        initialCollateralDeltaAmount: expandDecimals(10, 18),
+        swapPath: [],
+        sizeDeltaUsd: decimalToFloat(106_000),
+        acceptablePrice: expandDecimals(5050, 12),
+        orderType: OrderType.MarketIncrease,
+        isLong: true,
+      },
+    });
+
+    // user1 opens a $94k short position, using usdc as collateral
+    await handleOrder(fixture, {
+      create: {
+        account: user1,
+        market: ethUsdMarket,
+        initialCollateralToken: usdc,
+        initialCollateralDeltaAmount: expandDecimals(10_000, 6),
+        sizeDeltaUsd: decimalToFloat(94_000),
+        acceptablePrice: expandDecimals(4950, 12),
+        orderType: OrderType.MarketIncrease,
+        isLong: false,
+      },
+    });
+
+    const diffFactor = decimalToFloat(6, 2); // 6%
+    const calculatedIncreaseFactorPerSecond = applyFactor(diffFactor, fundingIncreaseFactorPerSecond);
+    expect(calculatedIncreaseFactorPerSecond).lt(minFundingIncreaseRatePerSecond);
+
+    await time.increase(10 * 60);
+
+    const expectedIncrease = minFundingIncreaseRatePerSecond.mul(10 * 60);
+
+    await usingResult(
+      reader.getMarketInfo(dataStore.address, prices.ethUsdMarket, ethUsdMarket.marketToken),
+      (marketInfo) => {
+        expect(marketInfo.nextFunding.longsPayShorts).eq(true);
+        expect(marketInfo.nextFunding.fundingFactorPerSecond).eq(expectedIncrease);
+        expect(marketInfo.nextFunding.nextSavedFundingFactorPerSecond).eq(expectedIncrease);
+      }
+    );
+  });
+
   it("adaptive funding", async () => {
     await testAdaptiveFunding(false);
+  });
+
+  it("preserves saved funding factor when one side has zero open interest", async () => {
+    // 1. set saved funding factor to 0.0001%
+    // 2. create long position
+    // 3. expect saved funding factor to be 0.0001%
+
+    const savedFundingFactor = decimalToFloat(1, 6);
+
+    await dataStore.setInt(keys.savedFundingFactorPerSecondKey(ethUsdMarket.marketToken), savedFundingFactor);
+
+    await handleOrder(fixture, {
+      create: {
+        account: user0,
+        market: ethUsdMarket,
+        initialCollateralToken: wnt,
+        initialCollateralDeltaAmount: expandDecimals(10, 18),
+        sizeDeltaUsd: decimalToFloat(100_000),
+        acceptablePrice: expandDecimals(5050, 12),
+        orderType: OrderType.MarketIncrease,
+        isLong: true,
+      },
+    });
+
+    expect(await dataStore.getInt(keys.savedFundingFactorPerSecondKey(ethUsdMarket.marketToken))).eq(
+      savedFundingFactor
+    );
+
+    await usingResult(
+      reader.getMarketInfo(dataStore.address, prices.ethUsdMarket, ethUsdMarket.marketToken),
+      (marketInfo) => {
+        expect(marketInfo.nextFunding.fundingFactorPerSecond).eq(savedFundingFactor);
+        expect(marketInfo.nextFunding.nextSavedFundingFactorPerSecond).eq(savedFundingFactor);
+        expect(marketInfo.nextFunding.longsPayShorts).eq(true);
+      }
+    );
   });
 
   it("adaptive funding with USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE as true", async () => {
