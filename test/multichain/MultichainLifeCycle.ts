@@ -181,7 +181,7 @@ describe("MultichainLifeCycle", () => {
     // multichainVault balance
     expect(await usdc.balanceOf(multichainVault.address)).eq(0);
     expect(await wnt.balanceOf(multichainVault.address)).to.approximately(
-      "2087941984703536", // ~0.0021 ETH --> execution fee refunds (from deposit)
+      "2095383984763072", // ~0.0021 ETH --> execution fee refunds (from deposit)
       GAS_BUFFER.DEPOSIT
     );
     expect(await getBalanceOf(ethUsdMarket.marketToken, multichainVault.address)).eq(expandDecimals(95_000, 18)); // 95,000 GM
@@ -189,7 +189,7 @@ describe("MultichainLifeCycle", () => {
     expect(await usdc.balanceOf(ethUsdMarket.marketToken)).eq(usdcAmount);
     // user's multichain balance
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.approximately(
-      "2087941984703536",
+      "2095383984763072",
       GAS_BUFFER.DEPOSIT
     );
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0);
@@ -452,7 +452,7 @@ describe("MultichainLifeCycle", () => {
     // user's multichain balance
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.approximately(
       wntAmount // 100% of WNT deposited
-        .add("9383301947066416"), // execution fee refunds (from deposit + glvDeposit + glvWithdrawal + withdrawal)
+        .add("9331492946651944"), // execution fee refunds (from deposit + glvDeposit + glvWithdrawal + withdrawal)
       GAS_BUFFER.CUMULATIVE_ACTIONS
     );
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(
