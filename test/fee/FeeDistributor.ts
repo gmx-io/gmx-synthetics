@@ -1316,6 +1316,7 @@ describe("FeeDistributor", function () {
       mockEndpointV2D.address,
       wallet.address,
     ]);
+    const feeVaultD = await deployContract("FeeVault", [roleStore.address, dataStoreD.address]);
     const feeHandlerD = await deployContract(
       "FeeHandler",
       [
