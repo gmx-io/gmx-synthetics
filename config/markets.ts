@@ -116,6 +116,7 @@ export type BaseMarketConfig = {
   fundingFactor: BigNumberish;
   fundingExponentFactor: BigNumberish;
   fundingIncreaseFactorPerSecond: BigNumberish;
+  minFundingIncreaseRatePerSecond?: BigNumberish;
   fundingDecreaseFactorPerSecond: BigNumberish;
   thresholdForStableFunding: BigNumberish;
   thresholdForDecreaseFunding: BigNumberish;
@@ -165,6 +166,7 @@ type FundingRateConfig = Partial<{
   fundingExponentFactor: BigNumberish;
 
   fundingIncreaseFactorPerSecond: BigNumberish;
+  minFundingIncreaseRatePerSecond: BigNumberish;
   fundingDecreaseFactorPerSecond: BigNumberish;
   thresholdForStableFunding: BigNumberish;
   thresholdForDecreaseFunding: BigNumberish;

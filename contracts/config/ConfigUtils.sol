@@ -322,6 +322,15 @@ library ConfigUtils {
         }
 
         if (
+            baseKey == Keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND
+        ) {
+            // revert if nominal increase rate per second > max funding factor per second
+            if (value > MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND) {
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
+            }
+        }
+
+        if (
             baseKey == Keys.FUNDING_DECREASE_FACTOR_PER_SECOND
         ) {
             if (value > MAX_ALLOWED_FUNDING_DECREASE_FACTOR_PER_SECOND) {
