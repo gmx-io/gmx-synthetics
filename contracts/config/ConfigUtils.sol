@@ -10,6 +10,7 @@ import "../event/EventEmitter.sol";
 import "../utils/Cast.sol";
 import "../utils/Precision.sol";
 import "../market/MarketUtils.sol";
+import "../oracle/IPriceFeed.sol";
 
 library ConfigUtils {
     using SafeCast for int256;
@@ -73,6 +74,13 @@ library ConfigUtils {
 
         if (dataStore.getBytes32(Keys.edgeDataStreamIdKey(params.token)) != bytes32(0)) {
             revert Errors.EdgeDataStreamIdAlreadyExistsForToken(params.token);
+        }
+
+        (bytes memory payload) = abi.encodeWithSelector(IPriceFeed.latestRoundData.selector);
+        (bool ok, bytes memory data) = params.priceFeed.feedAddress.staticcall(payload);
+        // data length is 160 bytes: uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound
+        if (!ok || data.length < 160) {
+            revert Errors.InvalidPriceFeed(params.priceFeed.feedAddress);
         }
 
         dataStore.setAddress(Keys.priceFeedKey(params.token), params.priceFeed.feedAddress);
@@ -309,6 +317,15 @@ library ConfigUtils {
             baseKey == Keys.FUNDING_INCREASE_FACTOR_PER_SECOND
         ) {
             if (value > MAX_ALLOWED_FUNDING_INCREASE_FACTOR_PER_SECOND) {
+                revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
+            }
+        }
+
+        if (
+            baseKey == Keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND
+        ) {
+            // revert if nominal increase rate per second > max funding factor per second
+            if (value > MAX_ALLOWED_MAX_FUNDING_FACTOR_PER_SECOND) {
                 revert Errors.ConfigValueExceedsAllowedRange(baseKey, value);
             }
         }

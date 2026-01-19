@@ -397,7 +397,7 @@ contract ExchangeRouter is IExchangeRouter, BaseRouter {
 
     function setUiFeeFactor(uint256 uiFeeFactor) external payable nonReentrant {
         address account = msg.sender;
-        MarketUtils.setUiFeeFactor(dataStore, eventEmitter, account, uiFeeFactor);
+        FeeUtils.setUiFeeFactor(dataStore, eventEmitter, account, uiFeeFactor);
     }
 
     function claimUiFees(
