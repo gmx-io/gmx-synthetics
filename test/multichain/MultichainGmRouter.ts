@@ -199,11 +199,11 @@ describe("MultichainGmRouter", () => {
       // state after executing deposit
       expect(await getDepositCount(dataStore)).eq(0);
       expect(await wnt.balanceOf(multichainVault.address)).to.approximately(
-        expandDecimals(2080, 12), // feeAmount - keeperFee = 0.004 - ~0.0019 = ~0.0021 (e.g. 0.002085)
+        expandDecimals(2080, 12), // feeAmount - keeperFee = 0.004 - ~0.0019 = ~0.0021 (e.g. 0.002080)
         GAS_BUFFER.DEPOSIT
       );
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.approximately(
-        expandDecimals(2080, 12), // feeAmount - keeperFee = 0.004 - ~0.0019 = ~0.0021 (e.g. 0.002085)
+        expandDecimals(2080, 12), // feeAmount - keeperFee = 0.004 - ~0.0019 = ~0.0021 (e.g. 0.002080)
         GAS_BUFFER.DEPOSIT
       );
       expect(await usdc.balanceOf(multichainVault.address)).eq(0);
