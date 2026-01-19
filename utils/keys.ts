@@ -440,6 +440,11 @@ export function claimableCollateralAmountKey(market: string, token: string, time
   );
 }
 
+// Total (pool-level) key for claimable collateral - used in validateMarketTokenBalance
+export function claimableCollateralAmountTotalKey(market: string, token: string) {
+  return hashData(["bytes32", "address", "address"], [CLAIMABLE_COLLATERAL_AMOUNT, market, token]);
+}
+
 export function claimableCollateralFactorKey(market: string, token: string, timeKey: number) {
   return hashData(["bytes32", "address", "address", "uint256"], [CLAIMABLE_COLLATERAL_FACTOR, market, token, timeKey]);
 }
@@ -475,8 +480,18 @@ export function claimableUiFeeAmountKey(market: string, token: string, uiFeeRece
   );
 }
 
+// Total (pool-level) key for claimable UI fees
+export function claimableUiFeeAmountTotalKey(market: string, token: string) {
+  return hashData(["bytes32", "address", "address"], [CLAIMABLE_UI_FEE_AMOUNT, market, token]);
+}
+
 export function affiliateRewardKey(market: string, token: string, account: string) {
   return hashData(["bytes32", "address", "address", "address"], [AFFILIATE_REWARD, market, token, account]);
+}
+
+// Total (pool-level) key for affiliate rewards
+export function affiliateRewardTotalKey(market: string, token: string) {
+  return hashData(["bytes32", "address", "address"], [AFFILIATE_REWARD, market, token]);
 }
 
 export function minAffiliateRewardFactorKey(referralTierLevel: number) {
