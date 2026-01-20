@@ -3313,7 +3313,7 @@ library MarketUtils {
         DataStore dataStore,
         Market.Props memory market,
         address token
-    ) internal view returns (uint256) {
+    ) public view returns (uint256) {
         GetExpectedMinTokenBalanceCache memory cache;
 
         // get the pool amount directly as MarketUtils.getPoolAmount will divide the amount by 2
