@@ -215,6 +215,11 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler, ReentrancyGuard {
                 order.updatedAtTime(),
                 "Order"
             );
+        } else {
+            // keeper can only cancel market orders
+            if (!roleStore.hasRole(msg.sender, Role.CONTROLLER)) {
+                revert Errors.Unauthorized(msg.sender, "CONTROLLER");
+            }
         }
 
         // note that order.account would receive the execution fee for the
