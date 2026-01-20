@@ -81,17 +81,19 @@ library ConfigUtils {
             revert Errors.EdgeDataStreamIdAlreadyExistsForToken(params.token);
         }
 
+        (bytes memory payload) = abi.encodeWithSelector(IPriceFeed.latestRoundData.selector);
+        (bool ok, bytes memory data) = params.priceFeed.feedAddress.staticcall(payload);
+        // data length is 160 bytes: uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound
+        if (!ok || data.length < 160) {
+            revert Errors.InvalidPriceFeed(params.priceFeed.feedAddress);
+        }
+
         if (!flags.getFlag(params.priceFeed.feedAddress)) {
             revert Errors.PriceFeedAddressNotValidForToken(params.token);
         }
 
         if (params.priceFeed.descriptionHash != keccak256(bytes(IPriceFeed(params.priceFeed.feedAddress).description()))) {
             revert Errors.PriceFeedDescriptionMismatchForToken(params.token);
-        (bytes memory payload) = abi.encodeWithSelector(IPriceFeed.latestRoundData.selector);
-        (bool ok, bytes memory data) = params.priceFeed.feedAddress.staticcall(payload);
-        // data length is 160 bytes: uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound
-        if (!ok || data.length < 160) {
-            revert Errors.InvalidPriceFeed(params.priceFeed.feedAddress);
         }
 
         dataStore.setAddress(Keys.priceFeedKey(params.token), params.priceFeed.feedAddress);
