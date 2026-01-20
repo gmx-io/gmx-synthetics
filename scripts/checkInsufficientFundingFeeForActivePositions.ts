@@ -27,14 +27,9 @@ import { getPositionCount, getPositionKeys } from "../utils/position";
  *   - If funding fees (in OP) > collateral (in OP), there's an OP shortfall
  *   - BUT position isn't liquidatable because USDC profit covers the overall value
  *
- * When this position closes:
- *   - Protocol needs to deduct e.g. 160 OP in funding fees
- *   - Position only has 53 OP collateral
- *   - Shortfall of 107 OP occurs → InsufficientFundingFeePayment event
- *   - Market's OP balance drops below expected → validateMarketTokenBalance fails
- *
  * Usage:
- *   MARKET=0x... npx hardhat run --network arbitrum scripts/checkInsufficientFundingFeeForActivePositions.ts
+ *   GM: OP/USD [OP-USDC] --> 3 positions found
+ *   MARKET=0x4fDd333FF9cA409df583f306B6F5a7fFdE790739 npx hardhat run --network arbitrum scripts/checkInsufficientFundingFeeForActivePositions.ts
  *
  * Environment variables:
  *   MARKET - Target market address (default: OP/USD [OP-USDC])
@@ -269,6 +264,9 @@ async function main() {
   const longTokenSymbol = findTokenSymbol(market.longToken);
   const shortTokenSymbol = findTokenSymbol(market.shortToken);
   const indexTokenSymbol = findTokenSymbol(market.indexToken);
+  const longTokenDecimals = findTokenDecimals(market.longToken);
+  const shortTokenDecimals = findTokenDecimals(market.shortToken);
+  const indexTokenDecimals = findTokenDecimals(market.indexToken);
 
   console.log(`\nMarket Info:`);
   console.log(`  Index Token: ${indexTokenSymbol} (${market.indexToken})`);
@@ -278,9 +276,15 @@ async function main() {
   // Fetch prices
   console.log(`\nFetching prices from API...`);
   const prices = await getMarketPrices(market);
-  console.log(`  Index Token Price: $${formatAmount(bigNumberify(prices.indexTokenPrice.maxPrice), 30, 4)}`);
-  console.log(`  Long Token Price: $${formatAmount(bigNumberify(prices.longTokenPrice.maxPrice), 30, 4)}`);
-  console.log(`  Short Token Price: $${formatAmount(bigNumberify(prices.shortTokenPrice.maxPrice), 30, 4)}`);
+  console.log(
+    `  Index Token Price: $${formatAmount(bigNumberify(prices.indexTokenPrice.maxPrice), 30 - indexTokenDecimals, 4)}`
+  );
+  console.log(
+    `  Long Token Price: $${formatAmount(bigNumberify(prices.longTokenPrice.maxPrice), 30 - longTokenDecimals, 4)}`
+  );
+  console.log(
+    `  Short Token Price: $${formatAmount(bigNumberify(prices.shortTokenPrice.maxPrice), 30 - shortTokenDecimals, 4)}`
+  );
 
   // Analyze positions
   console.log("");

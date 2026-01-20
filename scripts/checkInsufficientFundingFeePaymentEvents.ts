@@ -34,12 +34,16 @@ const ethers = hre.ethers;
  * pending funding fees > collateral).
  *
  * Usage:
- *   MARKET=0x... npx hardhat run --network arbitrum scripts/checkInsufficientFundingFeePaymentEvents.ts
+ *   GM: OP/USD [OP-USDC] --> 0 events found
+ *   MARKET=0x4fDd333FF9cA409df583f306B6F5a7fFdE790739 EVENT=InsufficientFundingFeePayment FROM_BLOCK=189549886 npx hardhat run --network arbitrum scripts/checkInsufficientFundingFeePaymentEvents.ts
+ *
+ *   GM: BTC/USD [WBTC-USDC] --> 1 event found
+ *   MARKET=0x47c031236e19d024b42f8ae6780e44a573170703 EVENT=InsufficientFundingFeePayment FROM_BLOCK=402331900 npx hardhat run --network arbitrum scripts/checkInsufficientFundingFeePaymentEvents.ts
  *
  * Environment variables:
  *   MARKET - Target market address (default: OP/USD [OP-USDC])
  *   BLOCK - Historical block number to query balance at (default: latest)
- *   FROM_BLOCK - Block to start querying events from (default: market creation ~170000000)
+ *   FROM_BLOCK - Block to start querying events from (default: OP/USD market deployment block)
  *
  * Default market: OP/USD [OP-USDC] on Arbitrum
  */
@@ -103,7 +107,7 @@ async function queryInsufficientFundingFeePaymentEvents(
       for (const log of logs) {
         try {
           const parsed = eventEmitter.interface.parseLog(log);
-          const eventData = parsed.args.eventData;
+          const eventData = parsed.args[4];
 
           // Extract data from eventData structure
           const addressItems = eventData.addressItems.items;
@@ -173,10 +177,31 @@ async function main() {
 
   // Get market info
   const market = await reader.getMarket(dataStoreDeployment.address, targetMarket);
+
+  // Get token symbols and decimals
+  const tokens = await hre.gmx.getTokens();
+  const findTokenSymbol = (address: string): string => {
+    const entry = Object.entries(tokens).find(
+      ([_, token]: [string, any]) => token.address.toLowerCase() === address.toLowerCase()
+    );
+    return entry ? entry[0] : address.slice(0, 10);
+  };
+  const findTokenDecimals = (address: string): number => {
+    const entry = Object.entries(tokens).find(
+      ([_, token]: [string, any]) => token.address.toLowerCase() === address.toLowerCase()
+    );
+    return entry ? (entry[1] as any).decimals : 18;
+  };
+
+  const longTokenSymbol = findTokenSymbol(market.longToken);
+  const shortTokenSymbol = findTokenSymbol(market.shortToken);
+  const longTokenDecimals = findTokenDecimals(market.longToken);
+  const shortTokenDecimals = findTokenDecimals(market.shortToken);
+
   console.log(`\nMarket Info:`);
   console.log(`  Index Token: ${market.indexToken}`);
-  console.log(`  Long Token: ${market.longToken}`);
-  console.log(`  Short Token: ${market.shortToken}`);
+  console.log(`  Long Token: ${longTokenSymbol} (${market.longToken})`);
+  console.log(`  Short Token: ${shortTokenSymbol} (${market.shortToken})`);
 
   const marketTokenAddress = market.marketToken;
 
@@ -258,21 +283,29 @@ async function main() {
   const shortDiscrepancy = shortBalance.sub(shortExpectedMin);
 
   // Display balance analysis
-  console.log(`\nLong Token (${market.longToken}):`);
-  console.log(`  Actual Balance:         ${formatAmount(longBalance, 18)} tokens`);
-  console.log(`  Expected Min Balance:   ${formatAmount(longExpectedMin, 18)} tokens`);
+  console.log(`\nLong Token (${longTokenSymbol}):`);
   console.log(
-    `  DISCREPANCY:            ${formatAmount(longDiscrepancy, 18)} tokens ${
-      longDiscrepancy.lt(0) ? "(SHORTFALL)" : "(OK)"
+    `  Actual Balance:                    ${formatAmount(longBalance, longTokenDecimals)} ${longTokenSymbol}`
+  );
+  console.log(
+    `  Expected Min Balance:              ${formatAmount(longExpectedMin, longTokenDecimals)} ${longTokenSymbol}`
+  );
+  console.log(
+    `  Difference (actual - expectedMin): ${formatAmount(longDiscrepancy, longTokenDecimals)} ${longTokenSymbol} ${
+      longDiscrepancy.lt(0) ? "❌" : "✅"
     }`
   );
 
-  console.log(`\nShort Token (${market.shortToken}):`);
-  console.log(`  Actual Balance:         ${formatAmount(shortBalance, 6)} tokens`);
-  console.log(`  Expected Min Balance:   ${formatAmount(shortExpectedMin, 6)} tokens`);
+  console.log(`\nShort Token (${shortTokenSymbol}):`);
   console.log(
-    `  DISCREPANCY:            ${formatAmount(shortDiscrepancy, 6)} tokens ${
-      shortDiscrepancy.lt(0) ? "(SHORTFALL)" : "(OK)"
+    `  Actual Balance:                    ${formatAmount(shortBalance, shortTokenDecimals)} ${shortTokenSymbol}`
+  );
+  console.log(
+    `  Expected Min Balance:              ${formatAmount(shortExpectedMin, shortTokenDecimals)} ${shortTokenSymbol}`
+  );
+  console.log(
+    `  Difference (actual - expectedMin): ${formatAmount(shortDiscrepancy, shortTokenDecimals)} ${shortTokenSymbol} ${
+      shortDiscrepancy.lt(0) ? "❌" : "✅"
     }`
   );
 
@@ -292,27 +325,38 @@ async function main() {
   let shortTotalShortfall = ethers.BigNumber.from(0);
 
   if (longTokenEvents.length > 0) {
-    console.log(`\nLong Token (OP) - ${longTokenEvents.length} events:`);
+    console.log(`\nLong Token (${longTokenSymbol}) - ${longTokenEvents.length} events:`);
     for (const event of longTokenEvents) {
-      console.log(`  Block ${event.blockNumber}: shortfall ${formatAmount(event.shortfall, 18)} OP`);
+      console.log(
+        `  Block ${event.blockNumber}: shortfall ${formatAmount(event.shortfall, longTokenDecimals)} ${longTokenSymbol}`
+      );
       console.log(`    TX: ${event.txHash}`);
       longTotalShortfall = longTotalShortfall.add(event.shortfall);
     }
-    console.log(`\n  TOTAL LONG TOKEN SHORTFALL: ${formatAmount(longTotalShortfall, 18)} OP`);
+    console.log(
+      `\n  TOTAL LONG TOKEN SHORTFALL: ${formatAmount(longTotalShortfall, longTokenDecimals)} ${longTokenSymbol}`
+    );
   } else {
-    console.log(`\nLong Token (OP): No InsufficientFundingFeePayment events found`);
+    console.log(`\nLong Token (${longTokenSymbol}): No InsufficientFundingFeePayment events found`);
   }
 
   if (shortTokenEvents.length > 0) {
-    console.log(`\nShort Token (USDC) - ${shortTokenEvents.length} events:`);
+    console.log(`\nShort Token (${shortTokenSymbol}) - ${shortTokenEvents.length} events:`);
     for (const event of shortTokenEvents) {
-      console.log(`  Block ${event.blockNumber}: shortfall ${formatAmount(event.shortfall, 6)} USDC`);
+      console.log(
+        `  Block ${event.blockNumber}: shortfall ${formatAmount(
+          event.shortfall,
+          shortTokenDecimals
+        )} ${shortTokenSymbol}`
+      );
       console.log(`    TX: ${event.txHash}`);
       shortTotalShortfall = shortTotalShortfall.add(event.shortfall);
     }
-    console.log(`\n  TOTAL SHORT TOKEN SHORTFALL: ${formatAmount(shortTotalShortfall, 6)} USDC`);
+    console.log(
+      `\n  TOTAL SHORT TOKEN SHORTFALL: ${formatAmount(shortTotalShortfall, shortTokenDecimals)} ${shortTokenSymbol}`
+    );
   } else {
-    console.log(`\nShort Token (USDC): No InsufficientFundingFeePayment events found`);
+    console.log(`\nShort Token (${shortTokenSymbol}): No InsufficientFundingFeePayment events found`);
   }
 
   // === SUMMARY ===
@@ -320,10 +364,12 @@ async function main() {
   console.log(`SUMMARY`);
   console.log(`${"=".repeat(60)}`);
   console.log(`\nInsufficientFundingFeePayment Historical Shortfall:`);
-  console.log(`  Long Token (OP):   ${formatAmount(longTotalShortfall, 18)} OP`);
-  console.log(`  Short Token (USDC): ${formatAmount(shortTotalShortfall, 6)} USDC`);
-  console.log(`\nIf this matches the discrepancy X mentioned (~1 OP), the issue is proven.`);
-  console.log(`X sent 2 OP at block 422877897 to fix this shortfall.`);
+  console.log(
+    `  Long Token (${longTokenSymbol}):  ${formatAmount(longTotalShortfall, longTokenDecimals)} ${longTokenSymbol}`
+  );
+  console.log(
+    `  Short Token (${shortTokenSymbol}): ${formatAmount(shortTotalShortfall, shortTokenDecimals)} ${shortTokenSymbol}`
+  );
 }
 
 main()
