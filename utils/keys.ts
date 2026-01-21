@@ -433,6 +433,10 @@ export function claimableFundingAmountKey(market: string, token: string, account
   return hashData(["bytes32", "address", "address", "address"], [CLAIMABLE_FUNDING_AMOUNT, market, token, account]);
 }
 
+export function claimableFundingAmountTotalKey(market: string, token: string) {
+  return hashData(["bytes32", "address", "address"], [CLAIMABLE_FUNDING_AMOUNT, market, token]);
+}
+
 export function claimableCollateralAmountKey(market: string, token: string, timeKey: number, account: string) {
   return hashData(
     ["bytes32", "address", "address", "uint256", "address"],
