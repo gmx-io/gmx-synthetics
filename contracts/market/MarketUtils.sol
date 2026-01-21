@@ -1596,7 +1596,9 @@ library MarketUtils {
 
         if (configCache.fundingIncreaseFactorPerSecond == 0) {
             cache.fundingFactor = getFundingFactor(dataStore, market.marketToken);
-            uint256 maxFundingFactorPerSecond = dataStore.getUintValueFromDataStore(Keys.maxFundingFactorPerSecondKey(market.marketToken));
+            uint256 maxFundingFactorPerSecond = dataStore.getUintValueFromDataStore(
+                Keys.maxFundingFactorPerSecondKey(market.marketToken, longOpenInterest > shortOpenInterest)
+            );
 
             // if there is no fundingIncreaseFactorPerSecond then return the static fundingFactor based on open interest difference
             uint256 fundingFactorPerSecond = Precision.applyFactor(cache.diffUsdToOpenInterestFactor, cache.fundingFactor);
@@ -1672,8 +1674,13 @@ library MarketUtils {
             }
         }
 
-        configCache.minFundingFactorPerSecond = dataStore.getUintValueFromDataStore(Keys.minFundingFactorPerSecondKey(market.marketToken));
-        configCache.maxFundingFactorPerSecond = dataStore.getUintValueFromDataStore(Keys.maxFundingFactorPerSecondKey(market.marketToken));
+        bool isLongFunding = cache.nextSavedFundingFactorPerSecond >= 0;
+        configCache.minFundingFactorPerSecond = dataStore.getUintValueFromDataStore(
+            Keys.minFundingFactorPerSecondKey(market.marketToken, isLongFunding)
+        );
+        configCache.maxFundingFactorPerSecond = dataStore.getUintValueFromDataStore(
+            Keys.maxFundingFactorPerSecondKey(market.marketToken, isLongFunding)
+        );
 
         cache.nextSavedFundingFactorPerSecond = Calc.boundMagnitude(
             cache.nextSavedFundingFactorPerSecond,

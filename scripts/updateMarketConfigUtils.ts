@@ -513,20 +513,45 @@ const processMarkets = async ({
       `fundingDecreaseFactorPerSecond ${marketLabel} (${marketToken})`
     );
 
+    const minFundingFactorForLongs =
+      marketConfig.minFundingFactorPerSecondForLongs ?? marketConfig.minFundingFactorPerSecond;
+    const minFundingFactorForShorts =
+      marketConfig.minFundingFactorPerSecondForShorts ?? marketConfig.minFundingFactorPerSecond;
+    const maxFundingFactorForLongs =
+      marketConfig.maxFundingFactorPerSecondForLongs ?? marketConfig.maxFundingFactorPerSecond;
+    const maxFundingFactorForShorts =
+      marketConfig.maxFundingFactorPerSecondForShorts ?? marketConfig.maxFundingFactorPerSecond;
+
     addConfigItem(
       "uint",
       keys.MAX_FUNDING_FACTOR_PER_SECOND,
-      encodeData(["address"], [marketToken]),
-      marketConfig.maxFundingFactorPerSecond,
-      `maxFundingFactorPerSecond ${marketLabel} (${marketToken})`
+      encodeData(["address", "bool"], [marketToken, true]),
+      maxFundingFactorForLongs,
+      `maxFundingFactorPerSecondForLongs ${marketLabel} (${marketToken})`
+    );
+
+    addConfigItem(
+      "uint",
+      keys.MAX_FUNDING_FACTOR_PER_SECOND,
+      encodeData(["address", "bool"], [marketToken, false]),
+      maxFundingFactorForShorts,
+      `maxFundingFactorPerSecondForShorts ${marketLabel} (${marketToken})`
     );
 
     addConfigItem(
       "uint",
       keys.MIN_FUNDING_FACTOR_PER_SECOND,
-      encodeData(["address"], [marketToken]),
-      marketConfig.minFundingFactorPerSecond,
-      `minFundingFactorPerSecond ${marketLabel} (${marketToken})`
+      encodeData(["address", "bool"], [marketToken, true]),
+      minFundingFactorForLongs,
+      `minFundingFactorPerSecondForLongs ${marketLabel} (${marketToken})`
+    );
+
+    addConfigItem(
+      "uint",
+      keys.MIN_FUNDING_FACTOR_PER_SECOND,
+      encodeData(["address", "bool"], [marketToken, false]),
+      minFundingFactorForShorts,
+      `minFundingFactorPerSecondForShorts ${marketLabel} (${marketToken})`
     );
 
     addConfigItem(
