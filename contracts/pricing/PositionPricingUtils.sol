@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/utils/math/SignedMath.sol";
 
 import "../market/MarketUtils.sol";
+import "../fee/FeeUtils.sol";
 
 import "../utils/Precision.sol";
 import "../utils/Calc.sol";
@@ -522,7 +523,7 @@ library PositionPricingUtils {
         }
 
         uiFees.uiFeeReceiver = uiFeeReceiver;
-        uiFees.uiFeeReceiverFactor = MarketUtils.getUiFeeFactor(dataStore, uiFeeReceiver);
+        uiFees.uiFeeReceiverFactor = FeeUtils.getUiFeeFactor(dataStore, uiFeeReceiver);
         uiFees.uiFeeAmount = Precision.applyFactor(sizeDeltaUsd, uiFees.uiFeeReceiverFactor) / collateralTokenPrice.min;
 
         return uiFees;

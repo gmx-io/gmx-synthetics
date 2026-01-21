@@ -152,6 +152,7 @@ async function setup() {
   const staticOracleProvider = await hre.ethers.getContract("StaticOracleProvider");
   const claimHandler = await hre.ethers.getContract("ClaimHandler");
   const claimVault = await hre.ethers.getContract("ClaimVault");
+  const feeVault = await hre.ethers.getContract("FeeVault");
   const claimUtils = await hre.ethers.getContract("ClaimUtils");
   const multichainReader = await hre.ethers.getContract("MultichainReader");
   const mockEndpointV2 = await hre.ethers.getContract("MockEndpointV2");
@@ -400,6 +401,7 @@ async function setup() {
       edgeDataStreamProvider,
       claimHandler,
       claimVault,
+      feeVault,
       claimUtils,
       multichainReader,
       mockEndpointV2,

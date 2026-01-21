@@ -26,7 +26,7 @@ describe("FeeDistributor", function () {
     gmxC,
     esGmx,
     roleStore,
-    feeHandler,
+    feeVault,
     mockExtendedGmxDistributor,
     mockLzReadResponseChainA,
     mockExtendedGmxTracker,
@@ -112,7 +112,7 @@ describe("FeeDistributor", function () {
       gmx,
       esGmx,
       roleStore,
-      feeHandler,
+      feeVault,
       chainlinkPriceFeedProvider,
       wethPriceFeed,
       gmxPriceFeed,
@@ -433,7 +433,7 @@ describe("FeeDistributor", function () {
       expandDecimals(20_000, 18)
     );
     await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(10_000, 18));
-    await gmx.mint(feeHandler.address, expandDecimals(10_000, 18));
+    await gmx.mint(feeVault.address, expandDecimals(10_000, 18));
 
     await gmx.mint(wallet.address, expandDecimals(170_000, 18));
     await gmx.approve(mockGmxAdapterB.address, expandDecimals(130_000, 18));
@@ -543,7 +543,7 @@ describe("FeeDistributor", function () {
       expandDecimals(20_000, 18)
     );
     await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(40_000, 18));
-    await gmx.mint(feeHandler.address, expandDecimals(40_000, 18));
+    await gmx.mint(feeVault.address, expandDecimals(40_000, 18));
 
     await gmx.mint(wallet.address, expandDecimals(170_000, 18));
     await gmx.approve(mockGmxAdapterB.address, expandDecimals(50_000, 18));
@@ -669,7 +669,7 @@ describe("FeeDistributor", function () {
       expandDecimals(20_000, 18)
     );
     await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(10_000, 18));
-    await gmx.mint(feeHandler.address, expandDecimals(10_000, 18));
+    await gmx.mint(feeVault.address, expandDecimals(10_000, 18));
 
     await gmx.mint(wallet.address, expandDecimals(170_000, 18));
     await gmx.approve(mockGmxAdapterB.address, expandDecimals(130_000, 18));
@@ -817,7 +817,7 @@ describe("FeeDistributor", function () {
       feesV2Usd
     );
     const distributeReceipt = await distributeTx.wait();
-    const distributeEventData = parseLogs(fixture, distributeReceipt)[6].parsedEventData;
+    const distributeEventData = parseLogs(fixture, distributeReceipt)[5].parsedEventData;
 
     distributionState = await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE);
 
@@ -933,7 +933,7 @@ describe("FeeDistributor", function () {
       expandDecimals(20_000, 18)
     );
     await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(40_000, 18));
-    await gmx.mint(feeHandler.address, expandDecimals(40_000, 18));
+    await gmx.mint(feeVault.address, expandDecimals(40_000, 18));
 
     await gmx.mint(wallet.address, expandDecimals(170_000, 18));
     await gmx.approve(mockGmxAdapterB.address, expandDecimals(50_000, 18));
@@ -1054,7 +1054,7 @@ describe("FeeDistributor", function () {
       feesV2Usd
     );
     const distributeReceipt = await distributeTx.wait();
-    const distributeEventData = parseLogs(fixture, distributeReceipt)[6].parsedEventData;
+    const distributeEventData = parseLogs(fixture, distributeReceipt)[5].parsedEventData;
 
     distributionState = await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE);
 
@@ -1167,7 +1167,7 @@ describe("FeeDistributor", function () {
       expandDecimals(20_000, 18)
     );
     await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(40_000, 18));
-    await gmx.mint(feeHandler.address, expandDecimals(40_000, 18));
+    await gmx.mint(feeVault.address, expandDecimals(40_000, 18));
 
     await gmx.mint(wallet.address, expandDecimals(170_000, 18));
     await gmx.transfer(feeDistributorVault.address, expandDecimals(120_000, 18));
@@ -1253,7 +1253,7 @@ describe("FeeDistributor", function () {
 
     const distributeReceipt = await distributeTx.wait();
 
-    const distributeEventData = parseLogs(fixture, distributeReceipt)[7].parsedEventData;
+    const distributeEventData = parseLogs(fixture, distributeReceipt)[6].parsedEventData;
 
     const treasuryBalanceAfter = await wnt.balanceOf(user6.address);
     const sentFromTreasury = treasuryBalancePre.sub(treasuryBalanceAfter);
@@ -1325,9 +1325,18 @@ describe("FeeDistributor", function () {
       mockEndpointV2D.address,
       wallet.address,
     ]);
+    const feeVaultD = await deployContract("FeeVault", [roleStore.address, dataStoreD.address]);
     const feeHandlerD = await deployContract(
       "FeeHandler",
-      [roleStore.address, oracle.address, dataStoreD.address, eventEmitter.address, mockVaultV1.address, gmxD.address],
+      [
+        roleStore.address,
+        oracle.address,
+        dataStoreD.address,
+        eventEmitter.address,
+        feeVaultD.address,
+        mockVaultV1.address,
+        gmxD.address,
+      ],
       {
         libraries: {
           "contracts/market/MarketUtils.sol:MarketUtils": marketUtils.address,
@@ -1649,7 +1658,7 @@ describe("FeeDistributor", function () {
       expandDecimals(20_000, 18)
     );
     await dataStore.setUint(keys.withdrawableBuybackTokenAmountKey(gmx.address), expandDecimals(40_000, 18));
-    await gmx.mint(feeHandler.address, expandDecimals(40_000, 18));
+    await gmx.mint(feeVault.address, expandDecimals(40_000, 18));
     await dataStoreD.setUint(keys.withdrawableBuybackTokenAmountKey(gmxD.address), expandDecimals(50_000, 18));
 
     await gmx.mint(wallet.address, expandDecimals(290_000, 18));
@@ -1688,7 +1697,7 @@ describe("FeeDistributor", function () {
 
     sendParam = {
       dstEid: eidD,
-      to: addressToBytes32(feeHandlerD.address),
+      to: addressToBytes32(feeVaultD.address),
       amountLD: expandDecimals(50_000, 18),
       minAmountLD: expandDecimals(50_000, 18),
       extraOptions: ethers.utils.arrayify("0x"),
