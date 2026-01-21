@@ -9,6 +9,7 @@ import { GlvConfig } from "./glvs";
 import { BuybackConfig } from "./buyback";
 import { LayerZeroEndpointConfig } from "./layerZero";
 import { FeeDistributorConfig } from "./feeDistributor";
+import { ChainlinkFlagsConfig } from "./chainlink";
 
 export type OracleProvider = "gmOracle" | "chainlinkDataStream" | "chainlinkPriceFeed";
 
@@ -27,6 +28,7 @@ declare module "hardhat/types/runtime" {
       getBuyback: () => Promise<BuybackConfig>;
       getLayerZeroEndpoint: () => Promise<LayerZeroEndpointConfig>;
       getFeeDistributor: () => Promise<FeeDistributorConfig>;
+      getChainlinkFlags: () => Promise<ChainlinkFlagsConfig>;
     };
     deployTags: string;
   }

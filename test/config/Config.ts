@@ -3,7 +3,7 @@ import { deployFixture } from "../../utils/fixture";
 
 import { EXCLUDED_CONFIG_KEYS } from "../../utils/config";
 import { grantRole } from "../../utils/role";
-import { encodeData, hashString } from "../../utils/hash";
+import { encodeData, hashString, keccakString } from "../../utils/hash";
 import { bigNumberify, decimalToFloat, expandDecimals, percentageToFloat } from "../../utils/math";
 import { TOKEN_ORACLE_TYPES } from "../../utils/oracle";
 import { errorsContract } from "../../utils/error";
@@ -15,12 +15,12 @@ import { mine } from "@nomicfoundation/hardhat-network-helpers";
 describe("Config", () => {
   let fixture;
   let user0, user1, user2;
-  let config, oracle, configUtils, dataStore, roleStore, ethUsdMarket, wnt;
+  let config, oracle, configUtils, dataStore, roleStore, mockFlags, ethUsdMarket, wnt;
   const { AddressZero } = ethers.constants;
 
   beforeEach(async () => {
     fixture = await deployFixture();
-    ({ config, oracle, configUtils, dataStore, roleStore, ethUsdMarket, wnt } = fixture.contracts);
+    ({ config, oracle, configUtils, dataStore, roleStore, mockFlags, ethUsdMarket, wnt } = fixture.contracts);
     ({ user0, user1, user2 } = fixture.accounts);
 
     await grantRole(roleStore, user0.address, "CONFIG_KEEPER");
@@ -560,6 +560,7 @@ describe("Config", () => {
 
   it("initOracleConfig", async () => {
     const token = { address: "0x7f9FBf9bDd3F4105C478b996B648FE6e828a1e98" };
+
     expect(await dataStore.getAddress(keys.priceFeedKey(token.address))).eq(ethers.constants.AddressZero);
     expect(await dataStore.getUint(keys.priceFeedMultiplierKey(token.address))).eq(0);
     expect(await dataStore.getUint(keys.priceFeedHeartbeatDurationKey(token.address))).eq(0);
@@ -574,6 +575,7 @@ describe("Config", () => {
       token: token.address,
       priceFeed: {
         feedAddress: "0x221912ce795669f628c51c69b7d0873eDA9C03bB",
+        descriptionHash: keccakString("description"),
         multiplier: expandDecimals(1, 60 - 18 - 8),
         heartbeatDuration: (24 + 1) * 60 * 60,
         stablePrice: decimalToFloat(100),
@@ -600,6 +602,11 @@ describe("Config", () => {
     const mockedPriceFeed = await mockPriceFeedFactory.deploy();
     await mockedPriceFeed.deployed();
     oracleConfig.priceFeed.feedAddress = mockedPriceFeed.address;
+
+    expect(await mockFlags.getFlag(mockedPriceFeed.address)).is.false;
+    await mockFlags.setFlag(mockedPriceFeed.address, true);
+    expect(await mockFlags.getFlag(mockedPriceFeed.address)).is.true;
+
     await config.initOracleConfig(oracleConfig);
 
     expect(await dataStore.getAddress(keys.priceFeedKey(token.address))).eq(oracleConfig.priceFeed.feedAddress);
