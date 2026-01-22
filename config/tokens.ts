@@ -1204,6 +1204,27 @@ const config: {
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 2,
     },
+    XAUT: {
+      synthetic: true,
+      decimals: 6,
+      dataStreamFeedId: "0x0003b8b3f33c4c06a7947e86c5b4db4ef0991637d9821b9cdf897c0b5d488468",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    IP: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003e994b96b6929f62f9118707113da2baa8dd3fb6916c0d521da82896c86b1",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    LIT: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x00033b02ff589d0d5693a4603c172a625440c02039611b0f6e7e80ab985dbd8c",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
   },
   avalanche: {
     "BTC.b": {
