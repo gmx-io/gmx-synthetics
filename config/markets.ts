@@ -4172,6 +4172,7 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(22, 8), // ~2M USD (2x max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x max open interest)
+      isDisabled: true,
     },
     {
       tokens: { indexToken: "IP", longToken: "WBTC.e", shortToken: "USDC" },
