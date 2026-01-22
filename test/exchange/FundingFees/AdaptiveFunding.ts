@@ -513,8 +513,10 @@ describe("Exchange.FundingFees.AdaptiveFunding", () => {
       minFundingIncreaseRatePerSecond
     );
     await dataStore.setUint(keys.fundingDecreaseFactorPerSecondKey(ethUsdMarket.marketToken), 0);
-    await dataStore.setUint(keys.minFundingFactorPerSecondKey(ethUsdMarket.marketToken), 0);
-    await dataStore.setUint(keys.maxFundingFactorPerSecondKey(ethUsdMarket.marketToken), decimalToFloat(1));
+    await dataStore.setUint(keys.minFundingFactorPerSecondKey(ethUsdMarket.marketToken, true), 0);
+    await dataStore.setUint(keys.maxFundingFactorPerSecondKey(ethUsdMarket.marketToken, true), decimalToFloat(1));
+    await dataStore.setUint(keys.minFundingFactorPerSecondKey(ethUsdMarket.marketToken, false), 0);
+    await dataStore.setUint(keys.maxFundingFactorPerSecondKey(ethUsdMarket.marketToken, false), decimalToFloat(1));
 
     // user0 opens a $106k long position, using wnt as collateral
     await handleOrder(fixture, {
@@ -605,5 +607,76 @@ describe("Exchange.FundingFees.AdaptiveFunding", () => {
 
   it("adaptive funding with USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE as true", async () => {
     await testAdaptiveFunding(true);
+  });
+
+  it("keeps saved funding under min when skew is unchanged", async () => {
+    const minFundingFactorPerSecond = decimalToFloat(25, 2);
+    await dataStore.setUint(keys.fundingExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(1));
+    await dataStore.setUint(keys.thresholdForStableFundingKey(ethUsdMarket.marketToken), 0);
+    await dataStore.setUint(keys.thresholdForDecreaseFundingKey(ethUsdMarket.marketToken), 0);
+    await dataStore.setUint(keys.fundingIncreaseFactorPerSecondKey(ethUsdMarket.marketToken), decimalToFloat(1, 6));
+    await dataStore.setUint(keys.fundingDecreaseFactorPerSecondKey(ethUsdMarket.marketToken), decimalToFloat(1, 6));
+    await dataStore.setUint(
+      keys.minFundingFactorPerSecondKey(ethUsdMarket.marketToken, false),
+      minFundingFactorPerSecond
+    );
+    await dataStore.setUint(keys.maxFundingFactorPerSecondKey(ethUsdMarket.marketToken, false), decimalToFloat(1));
+
+    const savedFundingFactorPerSecond = decimalToFloat(1, 4).mul(-1);
+    await dataStore.setInt(keys.savedFundingFactorPerSecondKey(ethUsdMarket.marketToken), savedFundingFactorPerSecond);
+    expect(savedFundingFactorPerSecond).lt(minFundingFactorPerSecond);
+
+    await handleOrder(fixture, {
+      create: {
+        account: user0,
+        market: ethUsdMarket,
+        initialCollateralToken: wnt,
+        initialCollateralDeltaAmount: expandDecimals(10, 18),
+        sizeDeltaUsd: decimalToFloat(100_000),
+        acceptablePrice: expandDecimals(4950, 12),
+        orderType: OrderType.MarketIncrease,
+        isLong: false,
+      },
+    });
+
+    await usingResult(
+      reader.getMarketInfo(dataStore.address, prices.ethUsdMarket, ethUsdMarket.marketToken),
+      (marketInfo) => {
+        expect(marketInfo.nextFunding.longsPayShorts).eq(false);
+        expect(marketInfo.nextFunding.fundingFactorPerSecond.abs()).lt(minFundingFactorPerSecond);
+      }
+    );
+
+    await handleOrder(fixture, {
+      create: {
+        account: user1,
+        market: ethUsdMarket,
+        initialCollateralToken: wnt,
+        initialCollateralDeltaAmount: expandDecimals(1, 18),
+        sizeDeltaUsd: decimalToFloat(100),
+        acceptablePrice: expandDecimals(4950, 12),
+        orderType: OrderType.MarketIncrease,
+        isLong: false,
+      },
+    });
+
+    await usingResult(
+      reader.getMarketInfo(dataStore.address, prices.ethUsdMarket, ethUsdMarket.marketToken),
+      (marketInfo) => {
+        expect(marketInfo.nextFunding.longsPayShorts).eq(false);
+        expect(marketInfo.nextFunding.fundingFactorPerSecond.abs()).lt(minFundingFactorPerSecond);
+      }
+    );
+
+    await dataStore.setUint(keys.fundingUpdatedAtKey(ethUsdMarket.marketToken), await time.latest());
+    await time.increase(10 * 60);
+
+    await usingResult(
+      reader.getMarketInfo(dataStore.address, prices.ethUsdMarket, ethUsdMarket.marketToken),
+      (marketInfo) => {
+        expect(marketInfo.nextFunding.longsPayShorts).eq(false);
+        expect(marketInfo.nextFunding.fundingFactorPerSecond.abs()).lt(minFundingFactorPerSecond);
+      }
+    );
   });
 });

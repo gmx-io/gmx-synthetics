@@ -106,6 +106,8 @@ library MarketUtils {
 
         int256 nextSavedFundingFactorPerSecond;
         int256 nextSavedFundingFactorPerSecondWithMinBound;
+
+        bool isSkewTheSameDirectionAsFunding;
     }
 
     struct FundingConfigCache {
@@ -1628,8 +1630,8 @@ library MarketUtils {
         // the default will be NoChange
         FundingRateChangeType fundingRateChangeType;
 
-        // check if is skew the same direction as funding
-        if ((cache.savedFundingFactorPerSecond > 0 && longOpenInterest > shortOpenInterest) || (cache.savedFundingFactorPerSecond < 0 && shortOpenInterest > longOpenInterest)) {
+        cache.isSkewTheSameDirectionAsFunding = (cache.savedFundingFactorPerSecond > 0 && longOpenInterest > shortOpenInterest) || (cache.savedFundingFactorPerSecond < 0 && shortOpenInterest > longOpenInterest);
+        if (cache.isSkewTheSameDirectionAsFunding) {
             if (cache.diffUsdToOpenInterestFactor > configCache.thresholdForStableFunding) {
                 fundingRateChangeType = FundingRateChangeType.Increase;
             } else if (cache.diffUsdToOpenInterestFactor < configCache.thresholdForDecreaseFunding) {
@@ -1688,11 +1690,15 @@ library MarketUtils {
             configCache.maxFundingFactorPerSecond
         );
 
-        cache.nextSavedFundingFactorPerSecondWithMinBound = Calc.boundMagnitude(
-            cache.nextSavedFundingFactorPerSecond,
-            configCache.minFundingFactorPerSecond,
-            configCache.maxFundingFactorPerSecond
-        );
+        if (cache.isSkewTheSameDirectionAsFunding && cache.nextSavedFundingFactorPerSecond.abs() <= configCache.minFundingFactorPerSecond) {
+            cache.nextSavedFundingFactorPerSecondWithMinBound = cache.nextSavedFundingFactorPerSecond;
+        } else {
+            cache.nextSavedFundingFactorPerSecondWithMinBound = Calc.boundMagnitude(
+                cache.nextSavedFundingFactorPerSecond,
+                configCache.minFundingFactorPerSecond,
+                configCache.maxFundingFactorPerSecond
+            );
+        }
 
         return (
             cache.nextSavedFundingFactorPerSecondWithMinBound.abs(),
