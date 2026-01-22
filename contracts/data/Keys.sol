@@ -1631,19 +1631,23 @@ library Keys {
 
     // @dev the key for min funding factor
     // @param market the market for the pool
-    function minFundingFactorPerSecondKey(address market) internal pure returns (bytes32) {
+    // @param isLong whether the min funding factor applies to longs or shorts
+    function minFundingFactorPerSecondKey(address market, bool isLong) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             MIN_FUNDING_FACTOR_PER_SECOND,
-            market
+            market,
+            isLong
         ));
     }
 
     // @dev the key for max funding factor
     // @param market the market for the pool
-    function maxFundingFactorPerSecondKey(address market) internal pure returns (bytes32) {
+    // @param isLong whether the max funding factor applies to longs or shorts
+    function maxFundingFactorPerSecondKey(address market, bool isLong) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             MAX_FUNDING_FACTOR_PER_SECOND,
-            market
+            market,
+            isLong
         ));
     }
 

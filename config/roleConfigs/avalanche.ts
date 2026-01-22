@@ -13,7 +13,7 @@ export function getRoles({ syntheticKeepers, generalConfigKeepers, claimAdmins }
     CONFIG_KEEPER: {
       "0x15F9eBC71c539926B8f652a534d29B4Af57CaD55": true, // multisig_1
       "0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D": true, // security_multisig_1
-      "0x4BdCaB27bB7e03308Fe20AE166103BF7fdA71A06": true, // ConfigSyncer (CONFIG_KEEPER)
+      "0xFe6bDB87e59484Db1494a467CdbA7C051FB2A604": true, // ConfigSyncer (CONFIG_KEEPER)
       ...generalConfigKeepers.mainnet,
     },
     FEE_KEEPER: {
@@ -44,8 +44,8 @@ export function getRoles({ syntheticKeepers, generalConfigKeepers, claimAdmins }
       "0xAd7a7568F500F65AEA3D9417A210CBc5dcD7b273": true, // FeeHandler Oracle
       "0xE1d5a068c5b75E0c7Ea1A9Fe8EA056f9356C6fFD": true, // Oracle
 
-      "0x7591b82203C3B33b5cb233C40517f1bC872db774": true, // Config (CONTROLLER)
-      "0x4BdCaB27bB7e03308Fe20AE166103BF7fdA71A06": true, // ConfigSyncer (CONTROLLER)
+      "0x11e9E7464f3Bc887a7290ec41fCd22f619b177fd": true, // Config (CONTROLLER)
+      "0xFe6bDB87e59484Db1494a467CdbA7C051FB2A604": true, // ConfigSyncer (CONTROLLER)
       "0x20D56cf90fD3C8f3bEb9BAC03AfdA3241093DE36": true, // ConfigTimelockController (CONTROLLER)
       "0x37e1AeB6118B0106810D2eF7662875C414e39Ca4": true, // TimelockConfig (CONTROLLER)
       "0x8f550E53DFe96C055D5Bdb267c21F268fCAF63B2": true, // ExchangeRouter (CONTROLLER)

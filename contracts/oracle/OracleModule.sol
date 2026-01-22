@@ -2,11 +2,13 @@
 
 pragma solidity ^0.8.0;
 
+import "../data/Keys.sol";
 import "./IOracle.sol";
 
 // @title OracleModule
 // @dev Provides convenience functions for interacting with the Oracle
-contract OracleModule {
+abstract contract OracleModule {
+
     IOracle public immutable oracle;
 
     constructor(IOracle _oracle) {
@@ -55,6 +57,7 @@ contract OracleModule {
         if (params.primaryTokens.length != params.primaryPrices.length) {
             revert Errors.InvalidPrimaryPricesForSimulation(params.primaryTokens.length, params.primaryPrices.length);
         }
+
 
         for (uint256 i; i < params.primaryTokens.length; i++) {
             address token = params.primaryTokens[i];
