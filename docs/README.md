@@ -18,9 +18,9 @@ The documentation is generated from the deployment artifacts in `/deployments/` 
 
 | Network | Contracts | Documentation | Last Updated |
 |---------|-----------|---------------|-------------|
-| Arbitrum One | 139 | [View](./arbitrum-deployments.md) | Nov 17, 2025, 08:12 AM UTC |
-| Avalanche C-Chain | 137 | [View](./avalanche-deployments.md) | Nov 17, 2025, 08:12 AM UTC |
-| Botanix | 132 | [View](./botanix-deployments.md) | Nov 17, 2025, 08:12 AM UTC |
+| Arbitrum One | 139 | [View](./arbitrum-deployments.md) | Dec 19, 2025, 06:06 AM UTC |
+| Avalanche C-Chain | 137 | [View](./avalanche-deployments.md) | Dec 19, 2025, 06:06 AM UTC |
+| Botanix | 132 | [View](./botanix-deployments.md) | Dec 19, 2025, 06:06 AM UTC |
 
 ### Testnet
 

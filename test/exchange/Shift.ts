@@ -149,7 +149,7 @@ describe("Exchange.Shift", () => {
 
     await expect(shiftHandler.connect(user0).cancelShift(shiftKeys[0]))
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
-      .withArgs(user0.address, "CONTROLLER");
+      .withArgs(user0.address, "ORDER_KEEPER|CONTROLLER");
 
     await executeShift(fixture, {
       gasUsageLabel: "executeShift",

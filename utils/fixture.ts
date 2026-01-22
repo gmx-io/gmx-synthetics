@@ -108,6 +108,7 @@ async function setup() {
   const swapOrderExecutor = await hre.ethers.getContract("SwapOrderExecutor");
   const router = await hre.ethers.getContract("Router");
   const exchangeRouter = await hre.ethers.getContract("ExchangeRouter");
+  const simulationRouter = await hre.ethers.getContract("SimulationRouter");
   const gelatoRelayRouter = await hre.ethers.getContract("GelatoRelayRouter");
   const subaccountGelatoRelayRouter = await hre.ethers.getContract("SubaccountGelatoRelayRouter");
   const subaccountRouter = await hre.ethers.getContract("SubaccountRouter");
@@ -148,6 +149,7 @@ async function setup() {
   const mockOracleProvider = await hre.ethers.getContract("MockOracleProvider");
   const edgeDataStreamVerifier = await hre.ethers.getContract("EdgeDataStreamVerifier");
   const edgeDataStreamProvider = await hre.ethers.getContract("EdgeDataStreamProvider");
+  const staticOracleProvider = await hre.ethers.getContract("StaticOracleProvider");
   const claimHandler = await hre.ethers.getContract("ClaimHandler");
   const claimVault = await hre.ethers.getContract("ClaimVault");
   const claimUtils = await hre.ethers.getContract("ClaimUtils");
@@ -321,6 +323,7 @@ async function setup() {
       swapOrderExecutor,
       router,
       exchangeRouter,
+      simulationRouter,
       gelatoRelayRouter,
       subaccountGelatoRelayRouter,
       subaccountRouter,
@@ -404,6 +407,7 @@ async function setup() {
       feeDistributor,
       feeDistributorUtils,
       contributorHandler,
+      staticOracleProvider,
     },
     props: { oracleSalt, signerIndexes: [0, 1, 2, 3, 4, 5, 6], executionFee: "1000000000000000" },
   };

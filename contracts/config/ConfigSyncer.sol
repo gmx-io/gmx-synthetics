@@ -39,7 +39,7 @@ contract ConfigSyncer is ReentrancyGuard, RoleModule {
 
     // @dev Allows the LIMITED_CONFIG_KEEPER to apply updates with the provided markets and parameters
     // Values for parameters with the following base keys are not currently validated on-chain, they should be
-    // validated off-chain if needed: MIN_FUNDING_FACTOR_PER_SECOND, MAX_POOL_AMOUNT, MAX_POOL_USD_FOR_DEPOSIT,
+    // validated off-chain if needed: MIN_FUNDING_INCREASE_RATE_PER_SECOND, MIN_FUNDING_FACTOR_PER_SECOND, MAX_POOL_AMOUNT, MAX_POOL_USD_FOR_DEPOSIT,
     // MAX_OPEN_INTEREST, POSITION_IMPACT_FACTOR, SWAP_IMPACT_FACTOR, RESERVE_FACTOR, OPEN_INTEREST_RESERVE_FACTOR
     // @param markets An array of market addresses for which updates are to be applied
     // @param parameters An array of parameters corresponding to each market for which updates are to be applied
@@ -132,6 +132,7 @@ contract ConfigSyncer is ReentrancyGuard, RoleModule {
         allowedBaseKeys[Keys.SWAP_IMPACT_EXPONENT_FACTOR] = true;
 
         allowedBaseKeys[Keys.FUNDING_INCREASE_FACTOR_PER_SECOND] = true;
+        allowedBaseKeys[Keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND] = true;
         allowedBaseKeys[Keys.FUNDING_DECREASE_FACTOR_PER_SECOND] = true;
         allowedBaseKeys[Keys.MIN_FUNDING_FACTOR_PER_SECOND] = true;
         allowedBaseKeys[Keys.MAX_FUNDING_FACTOR_PER_SECOND] = true;

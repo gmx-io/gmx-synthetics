@@ -193,11 +193,15 @@ async function main() {
   }
   console.log("Encoded calls:", encodedFunctionCalls.length);
 
-  const shouldWrite = process.env.WRITE === "true";
-  if (shouldWrite) {
-    await signExternally(await contributorHandler.populateTransaction.multicall(encodedFunctionCalls));
+  if (encodedFunctionCalls.length === 0) {
+    console.log("No changes to apply");
   } else {
-    console.log("NOTE: executed in read-only mode, no transactions were sent");
+    const shouldWrite = process.env.WRITE === "true";
+    if (shouldWrite) {
+      await signExternally(await contributorHandler.populateTransaction.multicall(encodedFunctionCalls));
+    } else {
+      console.log("NOTE: executed in read-only mode, no transactions were sent");
+    }
   }
 }
 

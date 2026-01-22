@@ -58,7 +58,7 @@ contract ShiftHandler is IShiftHandler, BaseHandler, ReentrancyGuard {
         );
     }
 
-    function cancelShift(bytes32 key) external override globalNonReentrant onlyController {
+    function cancelShift(bytes32 key) external override globalNonReentrant onlyOrderKeeperOrController {
         uint256 startingGas = gasleft();
 
         DataStore _dataStore = dataStore;

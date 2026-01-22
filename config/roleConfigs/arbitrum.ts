@@ -27,7 +27,7 @@ export function getRoles({
     CONFIG_KEEPER: {
       "0x4b6ACC5b2db1757bD49408FeE92e32D39608B5d9": true, // multisig_1
       "0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D": true, // security_multisig_1
-      "0x2966bE26c325796c0e63D769AbD457532411Ffed": true, // ConfigSyncer (CONFIG_KEEPER)
+      "0x4C8569E2F8A8Af32E0464E53d76449Ca7a004baF": true, // ConfigSyncer (CONFIG_KEEPER)
       ...generalConfigKeepers.mainnet,
     },
     FEE_KEEPER: {
@@ -59,8 +59,8 @@ export function getRoles({
       "0x4729D9f61c0159F5e02D2C2e5937B3225e55442C": true, // ContributorHandler
       "0x7F01614cA5198Ec979B1aAd1DAF0DE7e0a215BDF": true, // Oracle
 
-      "0x0BBbbF9D0cbdE8069e926c859E530B00Bfe90072": true, // Config (CONTROLLER)
-      "0x2966bE26c325796c0e63D769AbD457532411Ffed": true, // ConfigSyncer (CONTROLLER)
+      "0x33D1a645B9E9fc19b06Fe02981180c8DDAeE75B1": true, // Config (CONTROLLER)
+      "0x4C8569E2F8A8Af32E0464E53d76449Ca7a004baF": true, // ConfigSyncer (CONTROLLER)
       "0xC77E6C0ca99E02660A23c00A860Dd5a8912DEaF5": true, // ConfigTimelockController (CONTROLLER)
       "0x4A1D9e342E2dB5f4a02c9eF5cB29CaF289f31599": true, // TimelockConfig (CONTROLLER)
       "0x1C3fa76e6E1088bCE750f23a5BFcffa1efEF6A41": true, // ExchangeRouter (CONTROLLER)

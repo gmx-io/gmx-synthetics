@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/utils/math/SignedMath.sol";
 
 import "../market/MarketUtils.sol";
+import "../fee/FeeUtils.sol";
 
 import "../utils/Precision.sol";
 import "../utils/Calc.sol";
@@ -299,7 +300,7 @@ library SwapPricingUtils {
         fees.feeAmountForPool = feeAmount - fees.feeReceiverAmount;
 
         fees.uiFeeReceiver = uiFeeReceiver;
-        fees.uiFeeReceiverFactor = MarketUtils.getUiFeeFactor(dataStore, uiFeeReceiver);
+        fees.uiFeeReceiverFactor = FeeUtils.getUiFeeFactor(dataStore, uiFeeReceiver);
         fees.uiFeeAmount = Precision.applyFactor(amount, fees.uiFeeReceiverFactor);
 
         fees.amountAfterFees = amount - feeAmount - fees.uiFeeAmount;

@@ -3,7 +3,7 @@
 **Network Type:** Mainnet  
 **Chain ID:** 3637  
 **Total Contracts:** 132  
-**Last Updated:** Nov 17, 2025, 08:12 AM UTC
+**Last Updated:** Dec 19, 2025, 06:06 AM UTC
 
 ## Deployed Contracts
 
@@ -21,7 +21,7 @@
 | ClaimHandler | `0x162e3a5B47C9a45ff762E5b4b23D048D6780C14e` | [View on Explorer](https://botanixscan.io/address/0x162e3a5B47C9a45ff762E5b4b23D048D6780C14e) |
 | ClaimUtils | `0x9Dd6EB1069385D85Ae204543BabB7333181ec8A5` | [View on Explorer](https://botanixscan.io/address/0x9Dd6EB1069385D85Ae204543BabB7333181ec8A5) |
 | ClaimVault | `0x1D5d64d691FBcD8C80A2FD6A9382dF0fe544cBd8` | [View on Explorer](https://botanixscan.io/address/0x1D5d64d691FBcD8C80A2FD6A9382dF0fe544cBd8) |
-| Config | `0xAd7a7568F500F65AEA3D9417A210CBc5dcD7b273` | [View on Explorer](https://botanixscan.io/address/0xAd7a7568F500F65AEA3D9417A210CBc5dcD7b273) |
+| Config | `0x5a1344252f0CdfDB765DD5ab97C98734f1D7ED6d` | [View on Explorer](https://botanixscan.io/address/0x5a1344252f0CdfDB765DD5ab97C98734f1D7ED6d) |
 | ConfigTimelockController | `0x3d6BA4a91Ffde7C519379F8dCA5FE58b7125c294` | [View on Explorer](https://botanixscan.io/address/0x3d6BA4a91Ffde7C519379F8dCA5FE58b7125c294) |
 | ConfigUtils | `0x713c6a2479f6C079055A6AD3690D95dEDCEf9e1e` | [View on Explorer](https://botanixscan.io/address/0x713c6a2479f6C079055A6AD3690D95dEDCEf9e1e) |
 | DataStore | `0xA23B81a89Ab9D7D89fF8fc1b5d8508fB75Cc094d` | [View on Explorer](https://botanixscan.io/address/0xA23B81a89Ab9D7D89fF8fc1b5d8508fB75Cc094d) |

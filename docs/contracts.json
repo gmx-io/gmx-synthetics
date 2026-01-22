@@ -67,13 +67,13 @@
     },
     {
       "contractName": "Config",
-      "contractAddress": "0x0BBbbF9D0cbdE8069e926c859E530B00Bfe90072",
-      "txHash": "0x1c7bc84d988e4d0aa280bf167be9fcb44e28a9a076502a01571066acae56f7be"
+      "contractAddress": "0x33D1a645B9E9fc19b06Fe02981180c8DDAeE75B1",
+      "txHash": "0xcf0a40a3cd1e3fb1073fd0b195a089a906295707e812744c592beebc0dcffe55"
     },
     {
       "contractName": "ConfigSyncer",
-      "contractAddress": "0x2966bE26c325796c0e63D769AbD457532411Ffed",
-      "txHash": "0x987a5df3cce2231a4ecbb13fb40a9b56313fdd7d0d9e1bf53b75067956a356ec"
+      "contractAddress": "0x4C8569E2F8A8Af32E0464E53d76449Ca7a004baF",
+      "txHash": "0xb44283da7dca80f5ef2a1604c520068c0aa2c91f94d4548b8771241ffee606a5"
     },
     {
       "contractName": "ConfigTimelockController",
@@ -759,13 +759,13 @@
     },
     {
       "contractName": "Config",
-      "contractAddress": "0x7591b82203C3B33b5cb233C40517f1bC872db774",
-      "txHash": "0x102daea3446461fb5f21eaa10a5f1f26fbb0ce5e24bb30d85efe20e07b64d2dd"
+      "contractAddress": "0x11e9E7464f3Bc887a7290ec41fCd22f619b177fd",
+      "txHash": "0xd3809d4ec07249369f970bfc154af8c9477967443cb3e9e54d5b185b4444472b"
     },
     {
       "contractName": "ConfigSyncer",
-      "contractAddress": "0x4BdCaB27bB7e03308Fe20AE166103BF7fdA71A06",
-      "txHash": "0x6a4546b84850200a12ccc617b3f446df0263428318f2f514fd327bf16a26eac5"
+      "contractAddress": "0xFe6bDB87e59484Db1494a467CdbA7C051FB2A604",
+      "txHash": "0xbf73e015245111ce8d11311c5d7b85b172636740b793410a04d65036ee94d59a"
     },
     {
       "contractName": "ConfigTimelockController",
@@ -1446,8 +1446,8 @@
     },
     {
       "contractName": "Config",
-      "contractAddress": "0xAd7a7568F500F65AEA3D9417A210CBc5dcD7b273",
-      "txHash": "0xc0c9813bb754e321a10c3297d79bd641816b26b29e493bfc653597f1247db782"
+      "contractAddress": "0x5a1344252f0CdfDB765DD5ab97C98734f1D7ED6d",
+      "txHash": "0xf4c37decea0ed9de9cae284547ad1091294d3ccd3924e3a3aedfbe278447e750"
     },
     {
       "contractName": "ConfigTimelockController",

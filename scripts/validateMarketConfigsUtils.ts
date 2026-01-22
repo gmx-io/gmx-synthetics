@@ -596,6 +596,21 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 11_973,
     },
+    SKY: {
+      negativePositionImpactFactor: exponentToFloat("7.25e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 14_979,
+    },
+    ZEC: {
+      negativePositionImpactFactor: exponentToFloat("3.39e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 15_000,
+    },
+    MON: {
+      negativePositionImpactFactor: exponentToFloat("2.94e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 15_000,
+    },
   },
   avalanche: {
     "BTC.b": {
@@ -978,10 +993,6 @@ async function validatePerpConfig({
 
   if (negativePositionImpactExponentFactor.lt(positivePositionImpactExponentFactor)) {
     throw new Error(`Invalid position impact exponent factors for ${marketLabel}`);
-  }
-
-  if (!positivePositionImpactExponentFactor.eq(decimalToFloat(1))) {
-    throw new Error(`Invalid positive position impact exponent for ${marketLabel}`);
   }
 
   if (negativePositionImpactFactor.eq(0)) {

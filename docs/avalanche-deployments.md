@@ -3,7 +3,7 @@
 **Network Type:** Mainnet  
 **Chain ID:** 43114  
 **Total Contracts:** 137  
-**Last Updated:** Nov 17, 2025, 08:12 AM UTC
+**Last Updated:** Dec 19, 2025, 06:06 AM UTC
 
 ## Deployed Contracts
 
@@ -21,8 +21,8 @@
 | ClaimHandler | `0xefCAdA759241D10B45d9Cb6265B19ADec97ceced` | [View on Explorer](https://snowtrace.io/address/0xefCAdA759241D10B45d9Cb6265B19ADec97ceced) |
 | ClaimUtils | `0x32c206D8eA6903C3Ca5BDEd94877C72d92BDE82a` | [View on Explorer](https://snowtrace.io/address/0x32c206D8eA6903C3Ca5BDEd94877C72d92BDE82a) |
 | ClaimVault | `0x093a1A45b1C67F88f61087b2632e0599F4a7bFd9` | [View on Explorer](https://snowtrace.io/address/0x093a1A45b1C67F88f61087b2632e0599F4a7bFd9) |
-| Config | `0x7591b82203C3B33b5cb233C40517f1bC872db774` | [View on Explorer](https://snowtrace.io/address/0x7591b82203C3B33b5cb233C40517f1bC872db774) |
-| ConfigSyncer | `0x4BdCaB27bB7e03308Fe20AE166103BF7fdA71A06` | [View on Explorer](https://snowtrace.io/address/0x4BdCaB27bB7e03308Fe20AE166103BF7fdA71A06) |
+| Config | `0x11e9E7464f3Bc887a7290ec41fCd22f619b177fd` | [View on Explorer](https://snowtrace.io/address/0x11e9E7464f3Bc887a7290ec41fCd22f619b177fd) |
+| ConfigSyncer | `0xFe6bDB87e59484Db1494a467CdbA7C051FB2A604` | [View on Explorer](https://snowtrace.io/address/0xFe6bDB87e59484Db1494a467CdbA7C051FB2A604) |
 | ConfigTimelockController | `0x20D56cf90fD3C8f3bEb9BAC03AfdA3241093DE36` | [View on Explorer](https://snowtrace.io/address/0x20D56cf90fD3C8f3bEb9BAC03AfdA3241093DE36) |
 | ConfigUtils | `0xF967Ddb18Dc039d4f1D81672430500a08ed98E13` | [View on Explorer](https://snowtrace.io/address/0xF967Ddb18Dc039d4f1D81672430500a08ed98E13) |
 | DataStore | `0x2F0b22339414ADeD7D5F06f9D604c7fF5b2fe3f6` | [View on Explorer](https://snowtrace.io/address/0x2F0b22339414ADeD7D5F06f9D604c7fF5b2fe3f6) |

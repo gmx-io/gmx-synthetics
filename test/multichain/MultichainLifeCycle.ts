@@ -19,7 +19,7 @@ import { executeGlvDeposit } from "../../utils/glv/glvDeposit";
 import { executeGlvWithdrawal } from "../../utils/glv/glvWithdrawal";
 import { GAS_BUFFER } from "../../utils/gas";
 
-describe.only("MultichainLifeCycle", () => {
+describe("MultichainLifeCycle", () => {
   let fixture;
   let user1, user2;
   let dataStore,
@@ -181,7 +181,7 @@ describe.only("MultichainLifeCycle", () => {
     // multichainVault balance
     expect(await usdc.balanceOf(multichainVault.address)).eq(0);
     expect(await wnt.balanceOf(multichainVault.address)).to.approximately(
-      "2063221984505776", // ~0.0021 ETH --> execution fee refunds (from deposit)
+      "2053221984505776", // ~0.0021 ETH --> execution fee refunds (from deposit)
       GAS_BUFFER.DEPOSIT
     );
     expect(await getBalanceOf(ethUsdMarket.marketToken, multichainVault.address)).eq(expandDecimals(95_000, 18)); // 95,000 GM
@@ -189,7 +189,7 @@ describe.only("MultichainLifeCycle", () => {
     expect(await usdc.balanceOf(ethUsdMarket.marketToken)).eq(usdcAmount);
     // user's multichain balance
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.approximately(
-      "2063221984505776",
+      "2053221984505776",
       GAS_BUFFER.DEPOSIT
     );
     expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0);

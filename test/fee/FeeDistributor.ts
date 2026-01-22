@@ -43,6 +43,7 @@ describe("FeeDistributor", function () {
     wethPriceFeed,
     gmxPriceFeed,
     oracle,
+    staticOracleProvider,
     eventEmitter,
     configUtils,
     marketUtils,
@@ -115,6 +116,7 @@ describe("FeeDistributor", function () {
       wethPriceFeed,
       gmxPriceFeed,
       oracle,
+      staticOracleProvider,
       eventEmitter,
       configUtils,
       marketUtils,
@@ -1292,11 +1294,15 @@ describe("FeeDistributor", function () {
     await feeDistributorConfig.moveToNextDistributionDay(distributionDay);
 
     const dataStoreD = await deployContract("DataStore", [roleStore.address]);
-    const configD = await deployContract("Config", [roleStore.address, dataStoreD.address, eventEmitter.address], {
-      libraries: {
-        "contracts/config/ConfigUtils.sol:ConfigUtils": configUtils.address,
-      },
-    });
+    const configD = await deployContract(
+      "Config",
+      [roleStore.address, dataStoreD.address, eventEmitter.address, oracle.address, staticOracleProvider.address],
+      {
+        libraries: {
+          "contracts/config/ConfigUtils.sol:ConfigUtils": configUtils.address,
+        },
+      }
+    );
     const mockEndpointV2DMultichain = await deployContract("MockEndpointV2", [eidD]);
     const mockEndpointV2D = await deployContract("MockEndpointV2", [eidD]);
     const gmxD = await deployContract("MintableToken", ["GMX", "GMX", 18]);

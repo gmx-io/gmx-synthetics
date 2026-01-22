@@ -73,6 +73,7 @@ export const EXCLUDED_CONFIG_KEYS = {
   ORACLE_TIMESTAMP_ADJUSTMENT: true,
   ORACLE_PROVIDER_FOR_TOKEN: true,
   ORACLE_PROVIDER_UPDATED_AT: true,
+  STATIC_ORACLE_PRICE: true,
   ORDER_LIST: true,
   POOL_AMOUNT: true,
   POSITION_FEE_TYPE: true,
@@ -218,6 +219,7 @@ async function appendConfigIfDifferent(
   const setMethod = `set${type[0].toUpperCase()}${type.slice(1)}`;
 
   const currentValue: string = dataCache[key];
+
   if (currentValue === undefined) {
     throw new Error(`currentValue is undefined for ${label}`);
   }
