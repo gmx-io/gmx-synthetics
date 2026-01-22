@@ -54,14 +54,17 @@ contract MockUnlimitedToken is IERC20 {
     }
 
     function transfer(address to, uint256 amount) public returns (bool) {
+        require(amount <= balanceOf(msg.sender), "MockUnlimitedToken: Insufficient balance");
         _balances[msg.sender] = balanceOf(msg.sender) - amount;
-        _balances[to] = balanceOf(msg.sender) + amount;
+        _balances[to] = balanceOf(to) + amount;
         emit Transfer(msg.sender, to, amount);
         return true;
     }
 
     function transferFrom(address from, address to, uint256 amount) public returns (bool) {
+        require(amount <= allowance(from, msg.sender), "MockUnlimitedToken: Insufficient allowance");
         _allowances[from][msg.sender] = allowance(from, msg.sender) - amount;
+        require(amount <= balanceOf(from), "MockUnlimitedToken: Insufficient balance");
         _balances[from] = balanceOf(from) - amount;
         _balances[to] = balanceOf(to) + amount;
         emit Transfer(from, to, amount);
@@ -72,5 +75,17 @@ contract MockUnlimitedToken is IERC20 {
         _allowances[msg.sender][spender] = amount;
         emit Approval(msg.sender, spender, amount);
         return true;
+    }
+
+    function deposit() external payable {
+        if (msg.value > 0) {
+            emit Transfer(address(0), msg.sender, msg.value);
+        }
+    }
+
+    function withdraw(uint256 amount) external {
+        if (amount > 0) {
+            emit Transfer(msg.sender, address(0), amount);
+        }
     }
 }
