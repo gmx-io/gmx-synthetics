@@ -45,8 +45,6 @@ contract GlvShiftHandler is BaseHandler, ReentrancyGuard {
     function createGlvShift(
         GlvShiftUtils.CreateGlvShiftParams memory params
     ) external globalNonReentrant onlyOrderKeeper returns (bytes32) {
-        FeatureUtils.validateFeature(dataStore, Keys.createGlvShiftFeatureDisabledKey(address(this)));
-
         return GlvShiftUtils.createGlvShift(dataStore, eventEmitter, params);
     }
 
@@ -73,8 +71,6 @@ contract GlvShiftHandler is BaseHandler, ReentrancyGuard {
 
     // @note the caller function should be protected by global reentrancy guard
     function doExecuteGlvShift(bytes32 key, GlvShift.Props memory glvShift, address keeper, bool skipRemoval) external nonReentrant onlySelfOrController {
-        FeatureUtils.validateFeature(dataStore, Keys.executeGlvShiftFeatureDisabledKey(address(this)));
-
         GlvShiftUtils.ExecuteGlvShiftParams memory params = GlvShiftUtils.ExecuteGlvShiftParams({
             key: key,
             dataStore: dataStore,

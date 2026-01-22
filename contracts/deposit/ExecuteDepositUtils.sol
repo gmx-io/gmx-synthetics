@@ -21,6 +21,7 @@ import "../multichain/BridgeOutFromControllerUtils.sol";
 
 import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
+import "../feature/FeatureUtils.sol";
 
 import "../utils/Array.sol";
 
@@ -82,6 +83,8 @@ library ExecuteDepositUtils {
     // @param skipRemoval if true, the deposit will not be removed from the data store.
     // This is used when executing a deposit as part of a shift or a glv deposit and the deposit is not stored in the data store
     function executeDeposit(IExecuteDepositUtils.ExecuteDepositParams memory params, Deposit.Props memory deposit, bool skipRemoval) external returns (uint256 receivedMarketTokens) {
+        FeatureUtils.validateFeature(params.dataStore, Keys.EXECUTE_DEPOSIT_FEATURE_DISABLED, address(this), deposit.market());
+
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
         params.startingGas -= gasleft() / 63;
 

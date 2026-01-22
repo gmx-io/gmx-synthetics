@@ -167,8 +167,18 @@ describe("MultichainSubaccountRouter", () => {
   //#region createOrder
   describe("createOrder", () => {
     it("DisabledFeature", async () => {
+      // Test ALL_FEATURES_DISABLED
+      await dataStore.setBool(keys.ALL_FEATURES_DISABLED, true);
+      await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "AllFeaturesDisabled"
+      );
+      await dataStore.setBool(keys.ALL_FEATURES_DISABLED, false);
+
       await dataStore.setBool(keys.gaslessFeatureDisabledKey(multichainSubaccountRouter.address), true);
-      await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
+      await expect(sendCreateOrder(createOrderParams))
+        .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForModule")
+        .withArgs(keys.GASLESS_FEATURE_DISABLED, multichainSubaccountRouter.address);
     });
 
     it("InvalidReceiverForSubaccountOrder", async () => {
@@ -841,8 +851,18 @@ describe("MultichainSubaccountRouter", () => {
     });
 
     it("DisabledFeature", async () => {
+      // Test ALL_FEATURES_DISABLED
+      await dataStore.setBool(keys.ALL_FEATURES_DISABLED, true);
+      await expect(sendUpdateOrder(updateOrderParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "AllFeaturesDisabled"
+      );
+      await dataStore.setBool(keys.ALL_FEATURES_DISABLED, false);
+
       await dataStore.setBool(keys.gaslessFeatureDisabledKey(multichainSubaccountRouter.address), true);
-      await expect(sendUpdateOrder(updateOrderParams)).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
+      await expect(sendUpdateOrder(updateOrderParams))
+        .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForModule")
+        .withArgs(keys.GASLESS_FEATURE_DISABLED, multichainSubaccountRouter.address);
     });
 
     it("InvalidSignature", async () => {
@@ -1054,8 +1074,18 @@ describe("MultichainSubaccountRouter", () => {
     });
 
     it("DisabledFeature", async () => {
+      // Test ALL_FEATURES_DISABLED
+      await dataStore.setBool(keys.ALL_FEATURES_DISABLED, true);
+      await expect(sendCancelOrder(cancelOrderParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "AllFeaturesDisabled"
+      );
+      await dataStore.setBool(keys.ALL_FEATURES_DISABLED, false);
+
       await dataStore.setBool(keys.gaslessFeatureDisabledKey(multichainSubaccountRouter.address), true);
-      await expect(sendCancelOrder(cancelOrderParams)).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
+      await expect(sendCancelOrder(cancelOrderParams))
+        .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForModule")
+        .withArgs(keys.GASLESS_FEATURE_DISABLED, multichainSubaccountRouter.address);
     });
 
     it("InvalidSignature", async () => {
@@ -1139,8 +1169,15 @@ describe("MultichainSubaccountRouter", () => {
     });
 
     it("DisabledFeature", async () => {
+      // Test ALL_FEATURES_DISABLED
+      await dataStore.setBool(keys.ALL_FEATURES_DISABLED, true);
+      await expect(sendRemoveSubaccount(params)).to.be.revertedWithCustomError(errorsContract, "AllFeaturesDisabled");
+      await dataStore.setBool(keys.ALL_FEATURES_DISABLED, false);
+
       await dataStore.setBool(keys.gaslessFeatureDisabledKey(multichainSubaccountRouter.address), true);
-      await expect(sendRemoveSubaccount(params)).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
+      await expect(sendRemoveSubaccount(params))
+        .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForModule")
+        .withArgs(keys.GASLESS_FEATURE_DISABLED, multichainSubaccountRouter.address);
     });
 
     it("InvalidSignature", async () => {
@@ -1273,8 +1310,15 @@ describe("MultichainSubaccountRouter", () => {
       };
     });
     it("DisabledFeature", async () => {
+      // Test ALL_FEATURES_DISABLED
+      await dataStore.setBool(keys.ALL_FEATURES_DISABLED, true);
+      await expect(sendBatch({ ...batchParams })).to.be.revertedWithCustomError(errorsContract, "AllFeaturesDisabled");
+      await dataStore.setBool(keys.ALL_FEATURES_DISABLED, false);
+
       await dataStore.setBool(keys.gaslessFeatureDisabledKey(multichainSubaccountRouter.address), true);
-      await expect(sendBatch({ ...batchParams })).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
+      await expect(sendBatch({ ...batchParams }))
+        .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForModule")
+        .withArgs(keys.GASLESS_FEATURE_DISABLED, multichainSubaccountRouter.address);
     });
 
     it("InvalidSignature", async () => {

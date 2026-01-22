@@ -27,6 +27,196 @@ describe("Config", () => {
     await grantRole(roleStore, user2.address, "LIMITED_CONFIG_KEEPER");
   });
 
+  describe("FEATURE_ADMIN permissions", () => {
+    let featureAdmin;
+
+    beforeEach(async () => {
+      featureAdmin = fixture.accounts.user1;
+      await grantRole(roleStore, featureAdmin.address, "FEATURE_ADMIN");
+    });
+
+    it("allows FEATURE_ADMIN to set ALL_FEATURES_DISABLED", async () => {
+      expect(await dataStore.getBool(keys.ALL_FEATURES_DISABLED)).eq(false);
+      await config.connect(featureAdmin).setBool(keys.ALL_FEATURES_DISABLED, "0x", true);
+      expect(await dataStore.getBool(keys.ALL_FEATURES_DISABLED)).eq(true);
+      await config.connect(featureAdmin).setBool(keys.ALL_FEATURES_DISABLED, "0x", false);
+      expect(await dataStore.getBool(keys.ALL_FEATURES_DISABLED)).eq(false);
+    });
+
+    it("allows FEATURE_ADMIN to set ALL_MARKETS_DISABLED", async () => {
+      expect(await dataStore.getBool(keys.ALL_MARKETS_DISABLED)).eq(false);
+      await config.connect(featureAdmin).setBool(keys.ALL_MARKETS_DISABLED, "0x", true);
+      expect(await dataStore.getBool(keys.ALL_MARKETS_DISABLED)).eq(true);
+      await config.connect(featureAdmin).setBool(keys.ALL_MARKETS_DISABLED, "0x", false);
+      expect(await dataStore.getBool(keys.ALL_MARKETS_DISABLED)).eq(false);
+    });
+
+    it("allows FEATURE_ADMIN to set IS_MARKET_DISABLED", async () => {
+      const key = keys.isMarketDisabledKey(ethUsdMarket.marketToken);
+      expect(await dataStore.getBool(key)).eq(false);
+      await config
+        .connect(featureAdmin)
+        .setBool(keys.IS_MARKET_DISABLED, encodeData(["address"], [ethUsdMarket.marketToken]), true);
+      expect(await dataStore.getBool(key)).eq(true);
+      await config
+        .connect(featureAdmin)
+        .setBool(keys.IS_MARKET_DISABLED, encodeData(["address"], [ethUsdMarket.marketToken]), false);
+      expect(await dataStore.getBool(key)).eq(false);
+    });
+
+    it("allows FEATURE_ADMIN to set feature disabled keys", async () => {
+      const featureKeys = [
+        keys.CREATE_DEPOSIT_FEATURE_DISABLED,
+        keys.CANCEL_DEPOSIT_FEATURE_DISABLED,
+        keys.EXECUTE_DEPOSIT_FEATURE_DISABLED,
+        keys.CREATE_WITHDRAWAL_FEATURE_DISABLED,
+        keys.CANCEL_WITHDRAWAL_FEATURE_DISABLED,
+        keys.EXECUTE_WITHDRAWAL_FEATURE_DISABLED,
+        keys.EXECUTE_ATOMIC_WITHDRAWAL_FEATURE_DISABLED,
+        keys.CREATE_SHIFT_FEATURE_DISABLED,
+        keys.CANCEL_SHIFT_FEATURE_DISABLED,
+        keys.EXECUTE_SHIFT_FEATURE_DISABLED,
+        keys.CREATE_ORDER_FEATURE_DISABLED,
+        keys.EXECUTE_ORDER_FEATURE_DISABLED,
+        keys.EXECUTE_ADL_FEATURE_DISABLED,
+        keys.UPDATE_ORDER_FEATURE_DISABLED,
+        keys.CANCEL_ORDER_FEATURE_DISABLED,
+        keys.CREATE_GLV_DEPOSIT_FEATURE_DISABLED,
+        keys.CANCEL_GLV_DEPOSIT_FEATURE_DISABLED,
+        keys.EXECUTE_GLV_DEPOSIT_FEATURE_DISABLED,
+        keys.CREATE_GLV_WITHDRAWAL_FEATURE_DISABLED,
+        keys.CANCEL_GLV_WITHDRAWAL_FEATURE_DISABLED,
+        keys.EXECUTE_GLV_WITHDRAWAL_FEATURE_DISABLED,
+        keys.CREATE_GLV_SHIFT_FEATURE_DISABLED,
+        keys.EXECUTE_GLV_SHIFT_FEATURE_DISABLED,
+        keys.CLAIM_FUNDING_FEES_FEATURE_DISABLED,
+        keys.CLAIM_COLLATERAL_FEATURE_DISABLED,
+        keys.CLAIM_AFFILIATE_REWARDS_FEATURE_DISABLED,
+        keys.CLAIM_UI_FEES_FEATURE_DISABLED,
+        keys.GENERAL_CLAIM_FEATURE_DISABLED,
+        keys.SUBACCOUNT_FEATURE_DISABLED,
+        keys.GASLESS_FEATURE_DISABLED,
+        keys.JIT_FEATURE_DISABLED,
+        keys.SYNC_CONFIG_FEATURE_DISABLED,
+      ];
+
+      for (const featureKey of featureKeys) {
+        expect(await dataStore.getBool(featureKey)).eq(false);
+        await config.connect(featureAdmin).setBool(featureKey, "0x", true);
+        expect(await dataStore.getBool(featureKey)).eq(true);
+        await config.connect(featureAdmin).setBool(featureKey, "0x", false);
+        expect(await dataStore.getBool(featureKey)).eq(false);
+      }
+    });
+
+    it("allows FEATURE_ADMIN to set module-specific feature disabled keys", async () => {
+      const depositHandler = fixture.contracts.depositHandler;
+      const orderHandler = fixture.contracts.orderHandler;
+
+      // Test CREATE_DEPOSIT_FEATURE_DISABLED with module
+      const createDepositKey = keys.createDepositFeatureDisabledKey(depositHandler.address);
+      expect(await dataStore.getBool(createDepositKey)).eq(false);
+      await config
+        .connect(featureAdmin)
+        .setBool(keys.CREATE_DEPOSIT_FEATURE_DISABLED, encodeData(["address"], [depositHandler.address]), true);
+      expect(await dataStore.getBool(createDepositKey)).eq(true);
+
+      // Test CREATE_ORDER_FEATURE_DISABLED with module
+      const createOrderKey = keys.createOrderFeatureDisabledKey(orderHandler.address);
+      expect(await dataStore.getBool(createOrderKey)).eq(false);
+      await config
+        .connect(featureAdmin)
+        .setBool(keys.CREATE_ORDER_FEATURE_DISABLED, encodeData(["address"], [orderHandler.address]), true);
+      expect(await dataStore.getBool(createOrderKey)).eq(true);
+    });
+
+    it("allows FEATURE_ADMIN to set market-specific feature disabled keys", async () => {
+      // Test CREATE_ORDER_FEATURE_DISABLED with market
+      const createOrderMarketKey = keys.createOrderFeatureDisabledForMarketKey(ethUsdMarket.marketToken);
+      expect(await dataStore.getBool(createOrderMarketKey)).eq(false);
+      await config
+        .connect(featureAdmin)
+        .setBool(keys.CREATE_ORDER_FEATURE_DISABLED, encodeData(["address"], [ethUsdMarket.marketToken]), true);
+      expect(await dataStore.getBool(createOrderMarketKey)).eq(true);
+
+      // Test EXECUTE_ORDER_FEATURE_DISABLED with market
+      const executeOrderMarketKey = keys.executeOrderFeatureDisabledForMarketKey(ethUsdMarket.marketToken);
+      expect(await dataStore.getBool(executeOrderMarketKey)).eq(false);
+      await config
+        .connect(featureAdmin)
+        .setBool(keys.EXECUTE_ORDER_FEATURE_DISABLED, encodeData(["address"], [ethUsdMarket.marketToken]), true);
+      expect(await dataStore.getBool(executeOrderMarketKey)).eq(true);
+    });
+
+    it("reverts when FEATURE_ADMIN tries to set non-allowed keys", async () => {
+      await expect(
+        config
+          .connect(featureAdmin)
+          .setBool(keys.POOL_AMOUNT, encodeData(["address", "address"], [ethUsdMarket.marketToken, wnt.address]), true)
+      )
+        .to.be.revertedWithCustomError(errorsContract, "InvalidBaseKey")
+        .withArgs(keys.POOL_AMOUNT);
+
+      await expect(
+        config
+          .connect(featureAdmin)
+          .setUint(keys.SWAP_IMPACT_FACTOR, encodeData(["address", "bool"], [ethUsdMarket.marketToken, true]), 700)
+      )
+        .to.be.revertedWithCustomError(errorsContract, "InvalidBaseKey")
+        .withArgs(keys.SWAP_IMPACT_FACTOR);
+
+      await expect(config.connect(featureAdmin).setAddress(keys.HOLDING_ADDRESS, "0x", user1.address))
+        .to.be.revertedWithCustomError(errorsContract, "InvalidBaseKey")
+        .withArgs(keys.HOLDING_ADDRESS);
+    });
+
+    it("reverts when non-FEATURE_ADMIN tries to set feature admin keys", async () => {
+      // Get a new signer that hasn't been granted any role
+      const [, , , , , userWithoutRole] = await ethers.getSigners();
+
+      // userWithoutRole has no roles, so should revert with Unauthorized at the onlyKeeper modifier
+      await expect(config.connect(userWithoutRole).setBool(keys.ALL_FEATURES_DISABLED, "0x", true))
+        .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
+        .withArgs(userWithoutRole.address, "LIMITED / CONFIG KEEPER / FEATURE ADMIN");
+
+      await expect(config.connect(userWithoutRole).setBool(keys.CREATE_ORDER_FEATURE_DISABLED, "0x", true))
+        .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
+        .withArgs(userWithoutRole.address, "LIMITED / CONFIG KEEPER / FEATURE ADMIN");
+
+      // Also test that LIMITED_CONFIG_KEEPER (user2) cannot set feature admin keys
+      // They pass the onlyKeeper modifier but fail in _validateKey with InvalidBaseKey
+      await expect(config.connect(user2).setBool(keys.ALL_FEATURES_DISABLED, "0x", true))
+        .to.be.revertedWithCustomError(errorsContract, "InvalidBaseKey")
+        .withArgs(keys.ALL_FEATURES_DISABLED);
+
+      await expect(config.connect(user2).setBool(keys.CREATE_ORDER_FEATURE_DISABLED, "0x", true))
+        .to.be.revertedWithCustomError(errorsContract, "InvalidBaseKey")
+        .withArgs(keys.CREATE_ORDER_FEATURE_DISABLED);
+    });
+
+    it("allows FEATURE_ADMIN to set IS_GLV_MARKET_DISABLED", async () => {
+      const { ethUsdGlvAddress } = fixture.contracts;
+      const key = keys.isGlvMarketDisabledKey(ethUsdGlvAddress, ethUsdMarket.marketToken);
+      expect(await dataStore.getBool(key)).eq(false);
+      await config
+        .connect(featureAdmin)
+        .setBool(
+          keys.IS_GLV_MARKET_DISABLED,
+          encodeData(["address", "address"], [ethUsdGlvAddress, ethUsdMarket.marketToken]),
+          true
+        );
+      expect(await dataStore.getBool(key)).eq(true);
+      await config
+        .connect(featureAdmin)
+        .setBool(
+          keys.IS_GLV_MARKET_DISABLED,
+          encodeData(["address", "address"], [ethUsdGlvAddress, ethUsdMarket.marketToken]),
+          false
+        );
+      expect(await dataStore.getBool(key)).eq(false);
+    });
+  });
+
   it("allows required keys", async () => {
     const keys = Keys.abi.map((i) => i.name);
     console.info(`checking ${keys.length} keys`);

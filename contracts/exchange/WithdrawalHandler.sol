@@ -52,7 +52,6 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler, ReentrancyGuard {
         uint256 srcChainId,
         IWithdrawalUtils.CreateWithdrawalParams calldata params
     ) external override globalNonReentrant onlyController returns (bytes32) {
-        FeatureUtils.validateFeature(dataStore, Keys.createWithdrawalFeatureDisabledKey(address(this)));
         validateDataListLength(params.dataList.length);
 
         return WithdrawalUtils.createWithdrawal(
@@ -73,8 +72,6 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler, ReentrancyGuard {
 
         DataStore _dataStore = dataStore;
         Withdrawal.Props memory withdrawal = WithdrawalStoreUtils.get(_dataStore, key);
-
-        FeatureUtils.validateFeature(_dataStore, Keys.cancelWithdrawalFeatureDisabledKey(address(this)));
 
         validateRequestCancellation(
             withdrawal.updatedAtTime(),
@@ -135,7 +132,6 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler, ReentrancyGuard {
         IExecuteWithdrawalUtils.ExecuteWithdrawalParams calldata executeWithdrawalParams,
         Withdrawal.Props calldata withdrawal
     ) external nonReentrant onlyController returns (IExecuteWithdrawalUtils.ExecuteWithdrawalResult memory) {
-        FeatureUtils.validateFeature(dataStore, Keys.executeWithdrawalFeatureDisabledKey(address(this)));
         return ExecuteWithdrawalUtils.executeWithdrawal(executeWithdrawalParams, withdrawal, true);
     }
 
@@ -154,7 +150,6 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler, ReentrancyGuard {
         onlyController
         withOraclePricesForAtomicAction(oracleParams)
     {
-        FeatureUtils.validateFeature(dataStore, Keys.executeAtomicWithdrawalFeatureDisabledKey(address(this)));
         validateDataListLength(params.dataList.length);
 
         if (
@@ -222,8 +217,6 @@ contract WithdrawalHandler is IWithdrawalHandler, BaseHandler, ReentrancyGuard {
         ISwapPricingUtils.SwapPricingType swapPricingType
     ) external onlySelf {
         uint256 startingGas = gasleft();
-
-        FeatureUtils.validateFeature(dataStore, Keys.executeWithdrawalFeatureDisabledKey(address(this)));
 
         IExecuteWithdrawalUtils.ExecuteWithdrawalParams memory params = IExecuteWithdrawalUtils.ExecuteWithdrawalParams(
             dataStore,

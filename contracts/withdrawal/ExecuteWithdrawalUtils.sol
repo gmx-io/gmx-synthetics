@@ -21,6 +21,7 @@ import "../multichain/BridgeOutFromControllerUtils.sol";
 
 import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
+import "../feature/FeatureUtils.sol";
 
 import "../utils/Array.sol";
 
@@ -79,6 +80,8 @@ library ExecuteWithdrawalUtils {
         Withdrawal.Props memory withdrawal,
         bool skipRemoval
     ) external returns (IExecuteWithdrawalUtils.ExecuteWithdrawalResult memory) {
+        FeatureUtils.validateFeature(params.dataStore, Keys.EXECUTE_WITHDRAWAL_FEATURE_DISABLED, address(this), withdrawal.market());
+
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
         params.startingGas -= gasleft() / 63;
 

@@ -194,6 +194,8 @@ contract ClaimHandler is RoleModule, GlobalReentrancyGuard {
         }
         _validateNonEmptyReceiver(receiver);
 
+        FeatureUtils.validateFeature(dataStore, Keys.GENERAL_CLAIM_FEATURE_DISABLED, address(this), address(0));
+
         for (uint256 i = 0; i < params.length; i++) {
             ClaimParam memory param = params[i];
 

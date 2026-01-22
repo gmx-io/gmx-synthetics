@@ -162,8 +162,18 @@ describe("GelatoRelayRouter", () => {
   //#region createOrder
   describe("createOrder", () => {
     it("DisabledFeature", async () => {
+      // Test ALL_FEATURES_DISABLED
+      await dataStore.setBool(keys.ALL_FEATURES_DISABLED, true);
+      await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "AllFeaturesDisabled"
+      );
+      await dataStore.setBool(keys.ALL_FEATURES_DISABLED, false);
+
       await dataStore.setBool(keys.gaslessFeatureDisabledKey(gelatoRelayRouter.address), true);
-      await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
+      await expect(sendCreateOrder(createOrderParams))
+        .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForModule")
+        .withArgs(keys.GASLESS_FEATURE_DISABLED, gelatoRelayRouter.address);
     });
 
     it("InsufficientRelayFee", async () => {
@@ -1219,8 +1229,18 @@ describe("GelatoRelayRouter", () => {
     });
 
     it("DisabledFeature", async () => {
+      // Test ALL_FEATURES_DISABLED
+      await dataStore.setBool(keys.ALL_FEATURES_DISABLED, true);
+      await expect(sendUpdateOrder(updateOrderParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "AllFeaturesDisabled"
+      );
+      await dataStore.setBool(keys.ALL_FEATURES_DISABLED, false);
+
       await dataStore.setBool(keys.gaslessFeatureDisabledKey(gelatoRelayRouter.address), true);
-      await expect(sendUpdateOrder(updateOrderParams)).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
+      await expect(sendUpdateOrder(updateOrderParams))
+        .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForModule")
+        .withArgs(keys.GASLESS_FEATURE_DISABLED, gelatoRelayRouter.address);
     });
 
     it("InsufficientRelayFee", async () => {
@@ -1377,8 +1397,18 @@ describe("GelatoRelayRouter", () => {
     });
 
     it("DisabledFeature", async () => {
+      // Test ALL_FEATURES_DISABLED
+      await dataStore.setBool(keys.ALL_FEATURES_DISABLED, true);
+      await expect(sendCancelOrder(cancelOrderParams)).to.be.revertedWithCustomError(
+        errorsContract,
+        "AllFeaturesDisabled"
+      );
+      await dataStore.setBool(keys.ALL_FEATURES_DISABLED, false);
+
       await dataStore.setBool(keys.gaslessFeatureDisabledKey(gelatoRelayRouter.address), true);
-      await expect(sendCancelOrder(cancelOrderParams)).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
+      await expect(sendCancelOrder(cancelOrderParams))
+        .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForModule")
+        .withArgs(keys.GASLESS_FEATURE_DISABLED, gelatoRelayRouter.address);
     });
 
     it("InsufficientRelayFee", async () => {
@@ -1442,8 +1472,15 @@ describe("GelatoRelayRouter", () => {
   //#region batch
   describe("batch", () => {
     it("DisabledFeature", async () => {
+      // Test ALL_FEATURES_DISABLED
+      await dataStore.setBool(keys.ALL_FEATURES_DISABLED, true);
+      await expect(sendBatch({ ...batchParams })).to.be.revertedWithCustomError(errorsContract, "AllFeaturesDisabled");
+      await dataStore.setBool(keys.ALL_FEATURES_DISABLED, false);
+
       await dataStore.setBool(keys.gaslessFeatureDisabledKey(gelatoRelayRouter.address), true);
-      await expect(sendBatch({ ...batchParams })).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
+      await expect(sendBatch({ ...batchParams }))
+        .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForModule")
+        .withArgs(keys.GASLESS_FEATURE_DISABLED, gelatoRelayRouter.address);
     });
 
     it("InvalidSignature", async () => {

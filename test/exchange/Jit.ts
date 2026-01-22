@@ -251,6 +251,17 @@ describe("Jit", () => {
   });
 
   it("DisabledFeature", async () => {
+    // Test ALL_FEATURES_DISABLED
+    await dataStore.setBool(keys.ALL_FEATURES_DISABLED, true);
+    await expect(
+      executeJitOrder(fixture, {
+        gasUsageLabel: "executeJitOrder",
+        orderKey: "0x0000000000000000000000000000000000000000000000000000000000000000",
+        glvShifts: [],
+      } as Parameters<typeof executeJitOrder>[1])
+    ).to.be.revertedWithCustomError(errorsContract, "AllFeaturesDisabled");
+    await dataStore.setBool(keys.ALL_FEATURES_DISABLED, false);
+
     await dataStore.setBool(keys.jitFeatureDisabledKey(jitOrderHandler.address), true);
 
     await expect(
@@ -259,7 +270,9 @@ describe("Jit", () => {
         orderKey: "0x0000000000000000000000000000000000000000000000000000000000000000",
         glvShifts: [],
       } as Parameters<typeof executeJitOrder>[1])
-    ).to.be.revertedWithCustomError(errorsContract, "DisabledFeature");
+    )
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForModule")
+      .withArgs(keys.JIT_FEATURE_DISABLED, jitOrderHandler.address);
   });
 
   it("JitInvalidToMarket", async () => {

@@ -73,6 +73,16 @@ describe("Exchange.Deposit", () => {
       gasUsageLabel: "createDeposit",
     };
 
+    // Test ALL_FEATURES_DISABLED
+    await dataStore.setBool(keys.ALL_FEATURES_DISABLED, true);
+    await expect(createDeposit(fixture, params)).to.be.revertedWithCustomError(errorsContract, "AllFeaturesDisabled");
+    await dataStore.setBool(keys.ALL_FEATURES_DISABLED, false);
+
+    // Test ALL_MARKETS_DISABLED
+    await dataStore.setBool(keys.ALL_MARKETS_DISABLED, true);
+    await expect(createDeposit(fixture, params)).to.be.revertedWithCustomError(errorsContract, "AllMarketsDisabled");
+    await dataStore.setBool(keys.ALL_MARKETS_DISABLED, false);
+
     const _createDepositFeatureDisabledKey = keys.createDepositFeatureDisabledKey(depositHandler.address);
 
     await dataStore.setBool(_createDepositFeatureDisabledKey, true);
@@ -82,8 +92,8 @@ describe("Exchange.Deposit", () => {
       .withArgs(user0.address, "CONTROLLER");
 
     await expect(createDeposit(fixture, params))
-      .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
-      .withArgs(_createDepositFeatureDisabledKey);
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForModule")
+      .withArgs(keys.CREATE_DEPOSIT_FEATURE_DISABLED, depositHandler.address);
 
     await dataStore.setBool(_createDepositFeatureDisabledKey, false);
 
@@ -226,6 +236,18 @@ describe("Exchange.Deposit", () => {
 
     const depositKeys = await getDepositKeys(dataStore, 0, 1);
 
+    // skip request expiration time validation
+    const requestExpirationTime = await dataStore.getUint(keys.REQUEST_EXPIRATION_TIME);
+    await dataStore.setUint(keys.REQUEST_EXPIRATION_TIME, 0);
+
+    // Test ALL_FEATURES_DISABLED
+    await dataStore.setBool(keys.ALL_FEATURES_DISABLED, true);
+    await expect(depositHandler.cancelDeposit(depositKeys[0])).to.be.revertedWithCustomError(
+      errorsContract,
+      "AllFeaturesDisabled"
+    );
+    await dataStore.setBool(keys.ALL_FEATURES_DISABLED, false);
+
     const _cancelDepositFeatureDisabledKey = keys.cancelDepositFeatureDisabledKey(depositHandler.address);
 
     await dataStore.setBool(_cancelDepositFeatureDisabledKey, true);
@@ -235,8 +257,9 @@ describe("Exchange.Deposit", () => {
       .withArgs(user0.address, "ORDER_KEEPER|CONTROLLER");
 
     await expect(depositHandler.cancelDeposit(depositKeys[0]))
-      .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
-      .withArgs(_cancelDepositFeatureDisabledKey);
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForModule")
+      .withArgs(keys.CANCEL_DEPOSIT_FEATURE_DISABLED, depositHandler.address);
+    await dataStore.setUint(keys.REQUEST_EXPIRATION_TIME, requestExpirationTime);
   });
 
   it("executeDeposit validations", async () => {
@@ -265,6 +288,30 @@ describe("Exchange.Deposit", () => {
     expect(deposit.addresses.account).eq(user0.address);
     expect(await getDepositCount(dataStore)).eq(1);
 
+    // Test ALL_FEATURES_DISABLED
+    await dataStore.setBool(keys.ALL_FEATURES_DISABLED, true);
+    await expect(
+      executeDeposit(fixture, {
+        tokens: [wnt.address],
+        tokenOracleTypes: [TOKEN_ORACLE_TYPES.DEFAULT],
+        minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+        maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+      })
+    ).to.be.revertedWithCustomError(errorsContract, "AllFeaturesDisabled");
+    await dataStore.setBool(keys.ALL_FEATURES_DISABLED, false);
+
+    // Test ALL_MARKETS_DISABLED
+    await dataStore.setBool(keys.ALL_MARKETS_DISABLED, true);
+    await expect(
+      executeDeposit(fixture, {
+        tokens: [wnt.address],
+        tokenOracleTypes: [TOKEN_ORACLE_TYPES.DEFAULT],
+        minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+        maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+      })
+    ).to.be.revertedWithCustomError(errorsContract, "AllMarketsDisabled");
+    await dataStore.setBool(keys.ALL_MARKETS_DISABLED, false);
+
     const _executeDepositFeatureDisabledKey = keys.executeDepositFeatureDisabledKey(depositHandler.address);
     await dataStore.setBool(_executeDepositFeatureDisabledKey, true);
 
@@ -276,8 +323,8 @@ describe("Exchange.Deposit", () => {
         maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
       })
     )
-      .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
-      .withArgs(_executeDepositFeatureDisabledKey);
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForModule")
+      .withArgs(keys.EXECUTE_DEPOSIT_FEATURE_DISABLED, depositHandler.address);
 
     await dataStore.setBool(_executeDepositFeatureDisabledKey, false);
 

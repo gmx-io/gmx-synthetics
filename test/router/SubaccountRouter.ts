@@ -268,7 +268,7 @@ describe("SubaccountRouter", () => {
 
     // 0.1 WETH in total
     expect(order.numbers.executionFee).closeTo("2411149120000000", "1000000000000000");
-    await expectBalance(wnt.address, user2.address, ["97887749120000000", "1000000000000"]);
+    await expectBalance(wnt.address, user2.address, ["97885886180000000", "1000000000000"]);
 
     expect(
       await dataStore.getUint(
@@ -677,7 +677,7 @@ describe("SubaccountRouter", () => {
 
     await subaccountRouter.connect(subaccount).cancelOrder(orderKey);
 
-    expect(initialWntBalance0.sub(await wnt.balanceOf(user0.address))).closeTo("1659893219353356", "10000000000000"); // 0.001635869004900372 ETH
+    expect(initialWntBalance0.sub(await wnt.balanceOf(user0.address))).closeTo("1690023969320718", "10000000000000"); // 0.001689998483859760 ETH
 
     expect(await usdc.balanceOf(user0.address)).eq(expandDecimals(101, 6));
 

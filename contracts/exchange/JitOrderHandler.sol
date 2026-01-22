@@ -67,7 +67,7 @@ contract JitOrderHandler is IJitOrderHandler, BaseOrderHandler {
         bool isSimulation
     ) internal {
         DataStore _dataStore = dataStore;
-        FeatureUtils.validateFeature(_dataStore, Keys.jitFeatureDisabledKey(address(this)));
+        FeatureUtils.validateFeature(_dataStore, Keys.JIT_FEATURE_DISABLED, address(this), address(0));
         Order.Props memory order = OrderStoreUtils.get(_dataStore, orderKey);
         _validateOrder(order);
 

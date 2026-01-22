@@ -18,6 +18,7 @@ import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
 import "../utils/AccountUtils.sol";
 import "../multichain/MultichainUtils.sol";
+import "../feature/FeatureUtils.sol";
 
 // @title DepositUtils
 // @dev Library for deposit functions, to help with the depositing of liquidity
@@ -45,6 +46,8 @@ library DepositUtils {
         uint256 srcChainId,
         IDepositUtils.CreateDepositParams memory params
     ) external returns (bytes32) {
+        FeatureUtils.validateFeature(dataStore, Keys.CREATE_DEPOSIT_FEATURE_DISABLED, address(this), params.addresses.market);
+
         AccountUtils.validateAccount(account);
 
         Market.Props memory market = MarketUtils.getEnabledMarket(dataStore, params.addresses.market);
@@ -145,6 +148,8 @@ library DepositUtils {
         startingGas -= gasleft() / 63;
 
         Deposit.Props memory deposit = DepositStoreUtils.get(dataStore, key);
+
+        FeatureUtils.validateFeature(dataStore, Keys.CANCEL_DEPOSIT_FEATURE_DISABLED, address(this), deposit.market());
         if (deposit.account() == address(0)) {
             revert Errors.EmptyDeposit();
         }

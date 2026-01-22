@@ -29,6 +29,13 @@ library Keys {
     // @dev for a global reentrancy guard
     bytes32 public constant REENTRANCY_GUARD_STATUS = keccak256(abi.encode("REENTRANCY_GUARD_STATUS"));
 
+    // @dev global kill switch for all feature checks using FeatureUtils
+    bytes32 public constant ALL_FEATURES_DISABLED = keccak256(abi.encode("ALL_FEATURES_DISABLED"));
+
+    // @dev global kill switch for all markets
+    // this is checked in MarketUtils.validateEnabledMarket
+    bytes32 public constant ALL_MARKETS_DISABLED = keccak256(abi.encode("ALL_MARKETS_DISABLED"));
+
     // @dev key for deposit fees
     bytes32 public constant DEPOSIT_FEE_TYPE = keccak256(abi.encode("DEPOSIT_FEE_TYPE"));
     // @dev key for withdrawal fees
@@ -530,6 +537,20 @@ library Keys {
         return keccak256(bytes.concat(baseKey, data));
     }
 
+    // @dev key for whether a feature is disabled for a specific module
+    // @param featureKey the base feature key
+    // @param module the module to scope the feature to
+    function featureModuleKey(bytes32 featureKey, address module) internal pure returns (bytes32) {
+        return keccak256(abi.encode(featureKey, module));
+    }
+
+    // @dev key for whether a feature is disabled for a specific market
+    // @param featureKey the base feature key
+    // @param market the market to scope the feature to
+    function featureMarketKey(bytes32 featureKey, address market) internal pure returns (bytes32) {
+        return keccak256(abi.encode(featureKey, market));
+    }
+
     // @dev key for the account deposit list
     // @param account the account for the list
     function accountDepositListKey(address account) internal pure returns (bytes32) {
@@ -676,297 +697,6 @@ library Keys {
         return keccak256(abi.encode(
             SWAP_PATH_MARKET_FLAG,
             market
-        ));
-    }
-
-    // @dev key for whether create glv deposit is disabled
-    // @param the create deposit module
-    // @return key for whether create deposit is disabled
-    function createGlvDepositFeatureDisabledKey(address module) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            CREATE_GLV_DEPOSIT_FEATURE_DISABLED,
-            module
-        ));
-    }
-
-    // @dev key for whether cancel glv deposit is disabled
-    // @param the cancel deposit module
-    // @return key for whether cancel deposit is disabled
-    function cancelGlvDepositFeatureDisabledKey(address module) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            CANCEL_GLV_DEPOSIT_FEATURE_DISABLED,
-            module
-        ));
-    }
-
-    // @dev key for whether execute glv deposit is disabled
-    // @param the execute deposit module
-    // @return key for whether execute deposit is disabled
-    function executeGlvDepositFeatureDisabledKey(address module) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            EXECUTE_GLV_DEPOSIT_FEATURE_DISABLED,
-            module
-        ));
-    }
-
-    // @dev key for whether create glv withdrawal is disabled
-    // @param the create withdrawal module
-    // @return key for whether create withdrawal is disabled
-    function createGlvWithdrawalFeatureDisabledKey(address module) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            CREATE_GLV_WITHDRAWAL_FEATURE_DISABLED,
-            module
-        ));
-    }
-
-    // @dev key for whether cancel glv withdrawal is disabled
-    // @param the cancel withdrawal module
-    // @return key for whether cancel withdrawal is disabled
-    function cancelGlvWithdrawalFeatureDisabledKey(address module) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            CANCEL_GLV_WITHDRAWAL_FEATURE_DISABLED,
-            module
-        ));
-    }
-
-    // @dev key for whether execute glv withdrawal is disabled
-    // @param the execute withdrawal module
-    // @return key for whether execute withdrawal is disabled
-    function executeGlvWithdrawalFeatureDisabledKey(address module) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            EXECUTE_GLV_WITHDRAWAL_FEATURE_DISABLED,
-            module
-        ));
-    }
-
-    function createGlvShiftFeatureDisabledKey(address module) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            CREATE_GLV_SHIFT_FEATURE_DISABLED,
-            module
-        ));
-    }
-
-    function executeGlvShiftFeatureDisabledKey(address module) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            EXECUTE_GLV_SHIFT_FEATURE_DISABLED,
-            module
-        ));
-    }
-
-    function jitFeatureDisabledKey(address module) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            JIT_FEATURE_DISABLED,
-            module
-        ));
-    }
-
-
-    // @dev key for whether create deposit is disabled
-    // @param the create deposit module
-    // @return key for whether create deposit is disabled
-    function createDepositFeatureDisabledKey(address module) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            CREATE_DEPOSIT_FEATURE_DISABLED,
-            module
-        ));
-    }
-
-    // @dev key for whether cancel deposit is disabled
-    // @param the cancel deposit module
-    // @return key for whether cancel deposit is disabled
-    function cancelDepositFeatureDisabledKey(address module) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            CANCEL_DEPOSIT_FEATURE_DISABLED,
-            module
-        ));
-    }
-
-    // @dev key for whether execute deposit is disabled
-    // @param the execute deposit module
-    // @return key for whether execute deposit is disabled
-    function executeDepositFeatureDisabledKey(address module) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            EXECUTE_DEPOSIT_FEATURE_DISABLED,
-            module
-        ));
-    }
-
-    // @dev key for whether create withdrawal is disabled
-    // @param the create withdrawal module
-    // @return key for whether create withdrawal is disabled
-    function createWithdrawalFeatureDisabledKey(address module) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            CREATE_WITHDRAWAL_FEATURE_DISABLED,
-            module
-        ));
-    }
-
-    // @dev key for whether cancel withdrawal is disabled
-    // @param the cancel withdrawal module
-    // @return key for whether cancel withdrawal is disabled
-    function cancelWithdrawalFeatureDisabledKey(address module) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            CANCEL_WITHDRAWAL_FEATURE_DISABLED,
-            module
-        ));
-    }
-
-    // @dev key for whether execute withdrawal is disabled
-    // @param the execute withdrawal module
-    // @return key for whether execute withdrawal is disabled
-    function executeWithdrawalFeatureDisabledKey(address module) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            EXECUTE_WITHDRAWAL_FEATURE_DISABLED,
-            module
-        ));
-    }
-
-    // @dev key for whether execute atomic withdrawal is disabled
-    // @param the execute atomic withdrawal module
-    // @return key for whether execute atomic withdrawal is disabled
-    function executeAtomicWithdrawalFeatureDisabledKey(address module) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            EXECUTE_ATOMIC_WITHDRAWAL_FEATURE_DISABLED,
-            module
-        ));
-    }
-
-    // @dev key for whether create shift is disabled
-    // @param the create shift module
-    // @return key for whether create shift is disabled
-    function createShiftFeatureDisabledKey(address module) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            CREATE_SHIFT_FEATURE_DISABLED,
-            module
-        ));
-    }
-
-    // @dev key for whether cancel shift is disabled
-    // @param the cancel shift module
-    // @return key for whether cancel shift is disabled
-    function cancelShiftFeatureDisabledKey(address module) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            CANCEL_SHIFT_FEATURE_DISABLED,
-            module
-        ));
-    }
-
-    // @dev key for whether execute shift is disabled
-    // @param the execute shift module
-    // @return key for whether execute shift is disabled
-    function executeShiftFeatureDisabledKey(address module) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            EXECUTE_SHIFT_FEATURE_DISABLED,
-            module
-        ));
-    }
-
-    // @dev key for whether create order is disabled
-    // @param the create order module
-    // @return key for whether create order is disabled
-    function createOrderFeatureDisabledKey(address module, uint256 orderType) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            CREATE_ORDER_FEATURE_DISABLED,
-            module,
-            orderType
-        ));
-    }
-
-    // @dev key for whether execute order is disabled
-    // @param the execute order module
-    // @return key for whether execute order is disabled
-    function executeOrderFeatureDisabledKey(address module, uint256 orderType) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            EXECUTE_ORDER_FEATURE_DISABLED,
-            module,
-            orderType
-        ));
-    }
-
-    // @dev key for whether execute adl is disabled
-    // @param the execute adl module
-    // @return key for whether execute adl is disabled
-    function executeAdlFeatureDisabledKey(address module, uint256 orderType) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            EXECUTE_ADL_FEATURE_DISABLED,
-            module,
-            orderType
-        ));
-    }
-
-    // @dev key for whether update order is disabled
-    // @param the update order module
-    // @return key for whether update order is disabled
-    function updateOrderFeatureDisabledKey(address module, uint256 orderType) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            UPDATE_ORDER_FEATURE_DISABLED,
-            module,
-            orderType
-        ));
-    }
-
-    // @dev key for whether cancel order is disabled
-    // @param the cancel order module
-    // @return key for whether cancel order is disabled
-    function cancelOrderFeatureDisabledKey(address module, uint256 orderType) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            CANCEL_ORDER_FEATURE_DISABLED,
-            module,
-            orderType
-        ));
-    }
-
-    // @dev key for whether claim funding fees is disabled
-    // @param the claim funding fees module
-    function claimFundingFeesFeatureDisabledKey(address module) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            CLAIM_FUNDING_FEES_FEATURE_DISABLED,
-            module
-        ));
-    }
-
-    // @dev key for whether claim colltareral is disabled
-    // @param the claim funding fees module
-    function claimCollateralFeatureDisabledKey(address module) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            CLAIM_COLLATERAL_FEATURE_DISABLED,
-            module
-        ));
-    }
-
-    // @dev key for whether claim affiliate rewards is disabled
-    // @param the claim affiliate rewards module
-    function claimAffiliateRewardsFeatureDisabledKey(address module) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            CLAIM_AFFILIATE_REWARDS_FEATURE_DISABLED,
-            module
-        ));
-    }
-
-    // @dev key for whether claim ui fees is disabled
-    // @param the claim ui fees module
-    function claimUiFeesFeatureDisabledKey(address module) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            CLAIM_UI_FEES_FEATURE_DISABLED,
-            module
-        ));
-    }
-
-    // @dev key for whether subaccounts are disabled
-    // @param the subaccount module
-    function subaccountFeatureDisabledKey(address module) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            SUBACCOUNT_FEATURE_DISABLED,
-            module
-        ));
-    }
-
-    // @dev key for whether subaccounts are disabled
-    // @param the gasless module
-    function gaslessFeatureDisabledKey(address module) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            GASLESS_FEATURE_DISABLED,
-            module
         ));
     }
 
@@ -2173,16 +1903,6 @@ library Keys {
         return keccak256(abi.encode(
             MIN_GLV_TOKENS_FOR_FIRST_DEPOSIT,
             glv
-        ));
-    }
-
-    // @dev key for whether the sync config feature is disabled
-    // @param module the sync config module
-    // @return key for sync config feature disabled
-    function syncConfigFeatureDisabledKey(address module) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            SYNC_CONFIG_FEATURE_DISABLED,
-            module
         ));
     }
 

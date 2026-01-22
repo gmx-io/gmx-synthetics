@@ -38,6 +38,12 @@ library Role {
     bytes32 public constant LIMITED_CONFIG_KEEPER = keccak256(abi.encode("LIMITED_CONFIG_KEEPER"));
 
     /**
+     * @dev The FEATURE_ADMIN role.
+     * Hash: 0xa45ef3b1a2fd007678beceffb3ca7077cb9c23133d04097904e5fb2b4861ed50
+     */
+    bytes32 public constant FEATURE_ADMIN = keccak256(abi.encode("FEATURE_ADMIN"));
+
+    /**
      * @dev The CONTROLLER role.
      * Hash: 0x97adf037b2472f4a6a9825eff7d2dd45e37f2dc308df2a260d6a72af4189a65b
      */

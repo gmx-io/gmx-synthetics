@@ -685,13 +685,14 @@ library MarketUtils {
             revert Errors.InvalidClaimCollateralInput(markets.length, tokens.length, timeKeys.length);
         }
 
-        FeatureUtils.validateFeature(dataStore, Keys.claimCollateralFeatureDisabledKey(address(this)));
+        FeatureUtils.validateFeature(dataStore, Keys.CLAIM_COLLATERAL_FEATURE_DISABLED, address(this), address(0));
 
         AccountUtils.validateReceiver(receiver);
 
         uint256[] memory claimedAmounts = new uint256[](markets.length);
 
         for (uint256 i; i < markets.length; i++) {
+            FeatureUtils.validateFeature(dataStore, Keys.CLAIM_COLLATERAL_FEATURE_DISABLED, address(this), markets[i]);
             claimedAmounts[i] = MarketUtils.claimCollateral(
                 dataStore,
                 eventEmitter,
@@ -3077,6 +3078,10 @@ library MarketUtils {
     // @param dataStore DataStore
     // @param market the market to check
     function validateEnabledMarket(DataStore dataStore, Market.Props memory market) public view {
+        if (dataStore.getBool(Keys.ALL_MARKETS_DISABLED)) {
+            revert Errors.AllMarketsDisabled();
+        }
+
         if (market.marketToken == address(0)) {
             revert Errors.EmptyMarket();
         }

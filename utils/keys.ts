@@ -68,7 +68,23 @@ export const EXECUTE_SHIFT_FEATURE_DISABLED = hashString("EXECUTE_SHIFT_FEATURE_
 export const CANCEL_SHIFT_FEATURE_DISABLED = hashString("CANCEL_SHIFT_FEATURE_DISABLED");
 
 export const CREATE_GLV_DEPOSIT_FEATURE_DISABLED = hashString("CREATE_GLV_DEPOSIT_FEATURE_DISABLED");
+export const CANCEL_GLV_DEPOSIT_FEATURE_DISABLED = hashString("CANCEL_GLV_DEPOSIT_FEATURE_DISABLED");
+export const EXECUTE_GLV_DEPOSIT_FEATURE_DISABLED = hashString("EXECUTE_GLV_DEPOSIT_FEATURE_DISABLED");
+
+export const CREATE_GLV_WITHDRAWAL_FEATURE_DISABLED = hashString("CREATE_GLV_WITHDRAWAL_FEATURE_DISABLED");
+export const CANCEL_GLV_WITHDRAWAL_FEATURE_DISABLED = hashString("CANCEL_GLV_WITHDRAWAL_FEATURE_DISABLED");
+export const EXECUTE_GLV_WITHDRAWAL_FEATURE_DISABLED = hashString("EXECUTE_GLV_WITHDRAWAL_FEATURE_DISABLED");
+
+export const CREATE_GLV_SHIFT_FEATURE_DISABLED = hashString("CREATE_GLV_SHIFT_FEATURE_DISABLED");
+export const EXECUTE_GLV_SHIFT_FEATURE_DISABLED = hashString("EXECUTE_GLV_SHIFT_FEATURE_DISABLED");
+
+export const CLAIM_FUNDING_FEES_FEATURE_DISABLED = hashString("CLAIM_FUNDING_FEES_FEATURE_DISABLED");
+export const CLAIM_COLLATERAL_FEATURE_DISABLED = hashString("CLAIM_COLLATERAL_FEATURE_DISABLED");
+export const CLAIM_AFFILIATE_REWARDS_FEATURE_DISABLED = hashString("CLAIM_AFFILIATE_REWARDS_FEATURE_DISABLED");
+export const CLAIM_UI_FEES_FEATURE_DISABLED = hashString("CLAIM_UI_FEES_FEATURE_DISABLED");
 export const GENERAL_CLAIM_FEATURE_DISABLED = hashString("GENERAL_CLAIM_FEATURE_DISABLED");
+
+export const SUBACCOUNT_FEATURE_DISABLED = hashString("SUBACCOUNT_FEATURE_DISABLED");
 
 export const CLAIMABLE_FEE_AMOUNT = hashString("CLAIMABLE_FEE_AMOUNT");
 export const CLAIMABLE_FUNDING_AMOUNT = hashString("CLAIMABLE_FUNDING_AMOUNT");
@@ -88,6 +104,8 @@ export const MAX_TOTAL_CALLBACK_GAS_LIMIT_FOR_AUTO_CANCEL_ORDERS = hashString(
   "MAX_TOTAL_CALLBACK_GAS_LIMIT_FOR_AUTO_CANCEL_ORDERS"
 );
 
+export const ALL_FEATURES_DISABLED = hashString("ALL_FEATURES_DISABLED");
+export const ALL_MARKETS_DISABLED = hashString("ALL_MARKETS_DISABLED");
 export const IS_MARKET_DISABLED = hashString("IS_MARKET_DISABLED");
 export const MAX_SWAP_PATH_LENGTH = hashString("MAX_SWAP_PATH_LENGTH");
 export const MIN_MARKET_TOKENS_FOR_FIRST_DEPOSIT = hashString("MIN_MARKET_TOKENS_FOR_FIRST_DEPOSIT");
@@ -398,28 +416,48 @@ export function jitFeatureDisabledKey(contract) {
   return hashData(["bytes32", "address"], [JIT_FEATURE_DISABLED, contract]);
 }
 
+export function executeOrderFeatureDisabledKey(contract) {
+  return hashData(["bytes32", "address"], [EXECUTE_ORDER_FEATURE_DISABLED, contract]);
+}
+
+export function executeOrderFeatureDisabledForMarketKey(market) {
+  return hashData(["bytes32", "address"], [EXECUTE_ORDER_FEATURE_DISABLED, market]);
+}
+
 export function executeDepositFeatureDisabledKey(contract) {
   return hashData(["bytes32", "address"], [EXECUTE_DEPOSIT_FEATURE_DISABLED, contract]);
 }
 
-export function createOrderFeatureDisabledKey(contract, orderType) {
-  return hashData(["bytes32", "address", "uint256"], [CREATE_ORDER_FEATURE_DISABLED, contract, orderType]);
+export function createOrderFeatureDisabledForMarketKey(market) {
+  return hashData(["bytes32", "address"], [CREATE_ORDER_FEATURE_DISABLED, market]);
 }
 
-export function executeOrderFeatureDisabledKey(contract, orderType) {
-  return hashData(["bytes32", "address", "uint256"], [EXECUTE_ORDER_FEATURE_DISABLED, contract, orderType]);
+export function createOrderFeatureDisabledKey(contract) {
+  return hashData(["bytes32", "address"], [CREATE_ORDER_FEATURE_DISABLED, contract]);
 }
 
-export function executeAdlFeatureDisabledKey(contract, orderType) {
-  return hashData(["bytes32", "address", "uint256"], [EXECUTE_ADL_FEATURE_DISABLED, contract, orderType]);
+export function executeAdlFeatureDisabledForMarketKey(market) {
+  return hashData(["bytes32", "address"], [EXECUTE_ADL_FEATURE_DISABLED, market]);
 }
 
-export function updateOrderFeatureDisabledKey(contract, orderType) {
-  return hashData(["bytes32", "address", "uint256"], [UPDATE_ORDER_FEATURE_DISABLED, contract, orderType]);
+export function executeAdlFeatureDisabledKey(contract) {
+  return hashData(["bytes32", "address"], [EXECUTE_ADL_FEATURE_DISABLED, contract]);
 }
 
-export function cancelOrderFeatureDisabledKey(contract, orderType) {
-  return hashData(["bytes32", "address", "uint256"], [CANCEL_ORDER_FEATURE_DISABLED, contract, orderType]);
+export function updateOrderFeatureDisabledForMarketKey(market) {
+  return hashData(["bytes32", "address"], [UPDATE_ORDER_FEATURE_DISABLED, market]);
+}
+
+export function updateOrderFeatureDisabledKey(contract) {
+  return hashData(["bytes32", "address"], [UPDATE_ORDER_FEATURE_DISABLED, contract]);
+}
+
+export function cancelOrderFeatureDisabledForMarketKey(market) {
+  return hashData(["bytes32", "address"], [CANCEL_ORDER_FEATURE_DISABLED, market]);
+}
+
+export function cancelOrderFeatureDisabledKey(contract) {
+  return hashData(["bytes32", "address"], [CANCEL_ORDER_FEATURE_DISABLED, contract]);
 }
 
 export function generalClaimFeatureDisabled(distributionId) {

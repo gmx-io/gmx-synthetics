@@ -59,7 +59,6 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler, ReentrancyGuard {
         IBaseOrderUtils.CreateOrderParams calldata params,
         bool shouldCapMaxExecutionFee
     ) external override globalNonReentrant onlyController returns (bytes32) {
-        FeatureUtils.validateFeature(dataStore, Keys.createOrderFeatureDisabledKey(address(this), uint256(params.orderType)));
         validateDataListLength(params.dataList.length);
 
         return OrderUtils.createOrder(
@@ -89,7 +88,6 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler, ReentrancyGuard {
         uint256 twapCount,
         uint256 interval
     ) external override globalNonReentrant onlyController returns (bytes32[] memory orderKeys) {
-        FeatureUtils.validateFeature(dataStore, Keys.createOrderFeatureDisabledKey(address(this), uint256(params.orderType)));
         validateDataListLength(params.dataList.length);
         return OrderUtils.createTwapOrder(dataStore, eventEmitter, orderVault, referralStorage, account, srcChainId, params, shouldCapMaxExecutionFee, twapCount, interval);
     }
@@ -135,7 +133,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler, ReentrancyGuard {
         Order.Props memory order,
         bool shouldCapMaxExecutionFee
     ) external override globalNonReentrant onlyController {
-        FeatureUtils.validateFeature(dataStore, Keys.updateOrderFeatureDisabledKey(address(this), uint256(order.orderType())));
+        FeatureUtils.validateFeature(dataStore, Keys.UPDATE_ORDER_FEATURE_DISABLED, address(this), order.market());
 
         if (Order.isMarketOrder(order.orderType())) {
             revert Errors.OrderNotUpdatable(uint256(order.orderType()));
@@ -207,8 +205,6 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler, ReentrancyGuard {
 
         DataStore _dataStore = dataStore;
         Order.Props memory order = OrderStoreUtils.get(_dataStore, key);
-
-        FeatureUtils.validateFeature(_dataStore, Keys.cancelOrderFeatureDisabledKey(address(this), uint256(order.orderType())));
 
         if (Order.isMarketOrder(order.orderType())) {
             validateRequestCancellation(
@@ -315,8 +311,6 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler, ReentrancyGuard {
         if (!isSimulation && (params.order.isFrozen() || params.order.orderType() == Order.OrderType.LimitSwap)) {
             _validateFrozenOrderKeeper(keeper);
         }
-
-        FeatureUtils.validateFeature(params.contracts.dataStore, Keys.executeOrderFeatureDisabledKey(address(this), uint256(params.order.orderType())));
 
         ExecuteOrderUtils.executeOrder(getOrderExecutor(params.order.orderType()), params);
     }

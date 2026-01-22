@@ -43,7 +43,6 @@ contract GlvWithdrawalHandler is IGlvWithdrawalHandler, BaseHandler, ReentrancyG
         IGlvWithdrawalUtils.CreateGlvWithdrawalParams calldata params
     ) external globalNonReentrant onlyController returns (bytes32) {
         DataStore _dataStore = dataStore;
-        FeatureUtils.validateFeature(_dataStore, Keys.createGlvWithdrawalFeatureDisabledKey(address(this)));
         validateDataListLength(params.dataList.length);
 
         return GlvWithdrawalUtils.createGlvWithdrawal(_dataStore, eventEmitter, glvVault, account, srcChainId, params);
@@ -83,8 +82,6 @@ contract GlvWithdrawalHandler is IGlvWithdrawalHandler, BaseHandler, ReentrancyG
         address keeper
     ) external onlySelf {
         uint256 startingGas = gasleft();
-
-        FeatureUtils.validateFeature(dataStore, Keys.executeGlvWithdrawalFeatureDisabledKey(address(this)));
 
         GlvWithdrawalUtils.ExecuteGlvWithdrawalParams memory params = GlvWithdrawalUtils.ExecuteGlvWithdrawalParams({
             key: key,
@@ -131,8 +128,6 @@ contract GlvWithdrawalHandler is IGlvWithdrawalHandler, BaseHandler, ReentrancyG
         uint256 startingGas = gasleft();
 
         DataStore _dataStore = dataStore;
-        FeatureUtils.validateFeature(_dataStore, Keys.cancelGlvWithdrawalFeatureDisabledKey(address(this)));
-
         GlvWithdrawal.Props memory glvWithdrawal = GlvWithdrawalStoreUtils.get(_dataStore, key);
         validateRequestCancellation(glvWithdrawal.updatedAtTime(), "GlvWithdrawal");
 

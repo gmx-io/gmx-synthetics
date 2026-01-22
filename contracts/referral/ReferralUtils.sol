@@ -130,13 +130,14 @@ library ReferralUtils {
             revert Errors.InvalidClaimAffiliateRewardsInput(markets.length, tokens.length);
         }
 
-        FeatureUtils.validateFeature(dataStore, Keys.claimAffiliateRewardsFeatureDisabledKey(address(this)));
+        FeatureUtils.validateFeature(dataStore, Keys.CLAIM_AFFILIATE_REWARDS_FEATURE_DISABLED, address(this), address(0));
 
         AccountUtils.validateReceiver(receiver);
 
         uint256[] memory claimedAmounts = new uint256[](markets.length);
 
         for (uint256 i; i < markets.length; i++) {
+            FeatureUtils.validateFeature(dataStore, Keys.CLAIM_AFFILIATE_REWARDS_FEATURE_DISABLED, address(this), markets[i]);
             claimedAmounts[i] = _claimAffiliateReward(
                 dataStore,
                 eventEmitter,

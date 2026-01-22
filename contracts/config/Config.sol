@@ -36,6 +36,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
     mapping (bytes32 => bool) public allowedBaseKeys;
     // @dev the limited base keys that can be set
     mapping (bytes32 => bool) public allowedLimitedBaseKeys;
+    // @dev the base keys that can be set by FEATURE_ADMIN
+    mapping (bytes32 => bool) public allowedFeatureAdminKeys;
 
     constructor(
         RoleStore _roleStore,
@@ -50,14 +52,16 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
 
         _initAllowedBaseKeys();
         _initAllowedLimitedBaseKeys();
+        _initAllowedFeatureAdminBaseKeys();
     }
 
     modifier onlyKeeper() {
         if (
             !roleStore.hasRole(msg.sender, Role.LIMITED_CONFIG_KEEPER) &&
-            !roleStore.hasRole(msg.sender, Role.CONFIG_KEEPER)
+            !roleStore.hasRole(msg.sender, Role.CONFIG_KEEPER) &&
+            !roleStore.hasRole(msg.sender, Role.FEATURE_ADMIN)
         ) {
-            revert Errors.Unauthorized(msg.sender, "LIMITED / CONFIG KEEPER");
+            revert Errors.Unauthorized(msg.sender, "LIMITED / CONFIG KEEPER / FEATURE ADMIN");
         }
 
         _;
@@ -407,6 +411,8 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
         allowedBaseKeys[Keys.MIN_HANDLE_EXECUTION_ERROR_GAS_TO_FORWARD] = true;
         allowedBaseKeys[Keys.MIN_ADDITIONAL_GAS_FOR_EXECUTION] = true;
 
+        allowedBaseKeys[Keys.ALL_FEATURES_DISABLED] = true;
+        allowedBaseKeys[Keys.ALL_MARKETS_DISABLED] = true;
         allowedBaseKeys[Keys.IS_MARKET_DISABLED] = true;
 
         allowedBaseKeys[Keys.MAX_SWAP_PATH_LENGTH] = true;
@@ -660,6 +666,55 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
         allowedLimitedBaseKeys[Keys.SYNC_CONFIG_MARKET_PARAMETER_DISABLED] = true;
     }
 
+    function _initAllowedFeatureAdminBaseKeys() internal {
+        allowedFeatureAdminKeys[Keys.ALL_FEATURES_DISABLED] = true;
+        allowedFeatureAdminKeys[Keys.ALL_MARKETS_DISABLED] = true;
+
+        allowedFeatureAdminKeys[Keys.IS_MARKET_DISABLED] = true;
+        allowedFeatureAdminKeys[Keys.IS_GLV_MARKET_DISABLED] = true;
+
+        allowedFeatureAdminKeys[Keys.CREATE_DEPOSIT_FEATURE_DISABLED] = true;
+        allowedFeatureAdminKeys[Keys.CANCEL_DEPOSIT_FEATURE_DISABLED] = true;
+        allowedFeatureAdminKeys[Keys.EXECUTE_DEPOSIT_FEATURE_DISABLED] = true;
+
+        allowedFeatureAdminKeys[Keys.CREATE_WITHDRAWAL_FEATURE_DISABLED] = true;
+        allowedFeatureAdminKeys[Keys.CANCEL_WITHDRAWAL_FEATURE_DISABLED] = true;
+        allowedFeatureAdminKeys[Keys.EXECUTE_WITHDRAWAL_FEATURE_DISABLED] = true;
+        allowedFeatureAdminKeys[Keys.EXECUTE_ATOMIC_WITHDRAWAL_FEATURE_DISABLED] = true;
+
+        allowedFeatureAdminKeys[Keys.CREATE_SHIFT_FEATURE_DISABLED] = true;
+        allowedFeatureAdminKeys[Keys.CANCEL_SHIFT_FEATURE_DISABLED] = true;
+        allowedFeatureAdminKeys[Keys.EXECUTE_SHIFT_FEATURE_DISABLED] = true;
+
+        allowedFeatureAdminKeys[Keys.CREATE_ORDER_FEATURE_DISABLED] = true;
+        allowedFeatureAdminKeys[Keys.EXECUTE_ORDER_FEATURE_DISABLED] = true;
+        allowedFeatureAdminKeys[Keys.EXECUTE_ADL_FEATURE_DISABLED] = true;
+        allowedFeatureAdminKeys[Keys.UPDATE_ORDER_FEATURE_DISABLED] = true;
+        allowedFeatureAdminKeys[Keys.CANCEL_ORDER_FEATURE_DISABLED] = true;
+
+        allowedFeatureAdminKeys[Keys.CREATE_GLV_DEPOSIT_FEATURE_DISABLED] = true;
+        allowedFeatureAdminKeys[Keys.CANCEL_GLV_DEPOSIT_FEATURE_DISABLED] = true;
+        allowedFeatureAdminKeys[Keys.EXECUTE_GLV_DEPOSIT_FEATURE_DISABLED] = true;
+
+        allowedFeatureAdminKeys[Keys.CREATE_GLV_WITHDRAWAL_FEATURE_DISABLED] = true;
+        allowedFeatureAdminKeys[Keys.CANCEL_GLV_WITHDRAWAL_FEATURE_DISABLED] = true;
+        allowedFeatureAdminKeys[Keys.EXECUTE_GLV_WITHDRAWAL_FEATURE_DISABLED] = true;
+
+        allowedFeatureAdminKeys[Keys.CREATE_GLV_SHIFT_FEATURE_DISABLED] = true;
+        allowedFeatureAdminKeys[Keys.EXECUTE_GLV_SHIFT_FEATURE_DISABLED] = true;
+
+        allowedFeatureAdminKeys[Keys.CLAIM_FUNDING_FEES_FEATURE_DISABLED] = true;
+        allowedFeatureAdminKeys[Keys.CLAIM_COLLATERAL_FEATURE_DISABLED] = true;
+        allowedFeatureAdminKeys[Keys.CLAIM_AFFILIATE_REWARDS_FEATURE_DISABLED] = true;
+        allowedFeatureAdminKeys[Keys.CLAIM_UI_FEES_FEATURE_DISABLED] = true;
+        allowedFeatureAdminKeys[Keys.GENERAL_CLAIM_FEATURE_DISABLED] = true;
+
+        allowedFeatureAdminKeys[Keys.SUBACCOUNT_FEATURE_DISABLED] = true;
+        allowedFeatureAdminKeys[Keys.GASLESS_FEATURE_DISABLED] = true;
+        allowedFeatureAdminKeys[Keys.JIT_FEATURE_DISABLED] = true;
+        allowedFeatureAdminKeys[Keys.SYNC_CONFIG_FEATURE_DISABLED] = true;
+    }
+
     // @dev validate that the baseKey is allowed to be used
     // @param baseKey the base key to validate
     function _validateKey(bytes32 baseKey) internal view {
@@ -673,6 +728,14 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
 
         if (roleStore.hasRole(msg.sender, Role.LIMITED_CONFIG_KEEPER)) {
             if (!allowedLimitedBaseKeys[baseKey]) {
+                revert Errors.InvalidBaseKey(baseKey);
+            }
+
+            return;
+        }
+
+        if (roleStore.hasRole(msg.sender, Role.FEATURE_ADMIN)) {
+            if (!allowedFeatureAdminKeys[baseKey]) {
                 revert Errors.InvalidBaseKey(baseKey);
             }
 

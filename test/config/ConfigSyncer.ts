@@ -127,11 +127,19 @@ describe("ConfigSyncer", () => {
     const market = ethUsdMarket.marketToken;
     const parameter = parametersList[0].parameterName;
 
+    // Test ALL_FEATURES_DISABLED
+    await dataStore.connect(user2).setBool(keys.ALL_FEATURES_DISABLED, true);
+    await expect(configSyncer.connect(user1).sync([market], [parameter])).to.be.revertedWithCustomError(
+      errorsContract,
+      "AllFeaturesDisabled"
+    );
+    await dataStore.connect(user2).setBool(keys.ALL_FEATURES_DISABLED, false);
+
     await dataStore.connect(user2).setBool(keys.syncConfigFeatureDisabledKey(configSyncer.address), true);
 
     await expect(configSyncer.connect(user1).sync([market], [parameter])).to.be.revertedWithCustomError(
       errorsContract,
-      "DisabledFeature"
+      "DisabledFeatureForModule"
     );
   });
 

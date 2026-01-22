@@ -19,7 +19,7 @@ library SubaccountRouterUtils {
         SubaccountApproval calldata subaccountApproval,
         mapping(address => uint256) storage subaccountApprovalNonces
     ) external {
-        FeatureUtils.validateFeature(dataStore, Keys.subaccountFeatureDisabledKey(address(this)));
+        FeatureUtils.validateFeature(dataStore, Keys.SUBACCOUNT_FEATURE_DISABLED, address(this), address(0));
 
         SubaccountUtils.validateIntegrationId(dataStore, account, subaccount);
 

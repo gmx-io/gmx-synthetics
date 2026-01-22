@@ -16,6 +16,7 @@ import "../gas/GasUtils.sol";
 import "../callback/CallbackUtils.sol";
 import "../utils/AccountUtils.sol";
 import "../market/MarketUtils.sol";
+import "../feature/FeatureUtils.sol";
 
 import "../deposit/DepositVault.sol";
 import "../exchange/IDepositHandler.sol";
@@ -78,6 +79,9 @@ library ShiftUtils {
         uint256 srcChainId,
         IShiftUtils.CreateShiftParams memory params
     ) external returns (bytes32) {
+        FeatureUtils.validateFeature(dataStore, Keys.CREATE_SHIFT_FEATURE_DISABLED, address(this), params.addresses.fromMarket);
+        FeatureUtils.validateFeature(dataStore, Keys.CREATE_SHIFT_FEATURE_DISABLED, address(this), params.addresses.toMarket);
+
         AccountUtils.validateAccount(account);
 
         if (params.addresses.fromMarket == params.addresses.toMarket) {
@@ -164,6 +168,9 @@ library ShiftUtils {
         Shift.Props memory shift,
         bool skipRemoval
     ) external returns (uint256) {
+        FeatureUtils.validateFeature(params.dataStore, Keys.EXECUTE_SHIFT_FEATURE_DISABLED, address(this), shift.fromMarket());
+        FeatureUtils.validateFeature(params.dataStore, Keys.EXECUTE_SHIFT_FEATURE_DISABLED, address(this), shift.toMarket());
+
         // 63/64 gas is forwarded to external calls, reduce the startingGas to account for this
         params.startingGas -= gasleft() / 63;
 
@@ -360,6 +367,9 @@ library ShiftUtils {
         startingGas -= gasleft() / 63;
 
         Shift.Props memory shift = ShiftStoreUtils.get(dataStore, key);
+
+        FeatureUtils.validateFeature(dataStore, Keys.CANCEL_SHIFT_FEATURE_DISABLED, address(this), shift.fromMarket());
+        FeatureUtils.validateFeature(dataStore, Keys.CANCEL_SHIFT_FEATURE_DISABLED, address(this), shift.toMarket());
 
         if (shift.account() == address(0)) {
             revert Errors.EmptyShift();

@@ -45,7 +45,6 @@ contract ShiftHandler is IShiftHandler, BaseHandler, ReentrancyGuard {
         uint256 srcChainId,
         IShiftUtils.CreateShiftParams calldata params
     ) external override globalNonReentrant onlyController returns (bytes32) {
-        FeatureUtils.validateFeature(dataStore, Keys.createShiftFeatureDisabledKey(address(this)));
         validateDataListLength(params.dataList.length);
 
         return ShiftUtils.createShift(
@@ -63,8 +62,6 @@ contract ShiftHandler is IShiftHandler, BaseHandler, ReentrancyGuard {
 
         DataStore _dataStore = dataStore;
         Shift.Props memory shift = ShiftStoreUtils.get(_dataStore, key);
-
-        FeatureUtils.validateFeature(_dataStore, Keys.cancelShiftFeatureDisabledKey(address(this)));
 
         validateRequestCancellation(
             shift.updatedAtTime(),
@@ -118,7 +115,6 @@ contract ShiftHandler is IShiftHandler, BaseHandler, ReentrancyGuard {
         ShiftUtils.ExecuteShiftParams memory params,
         Shift.Props memory shift
     ) external nonReentrant onlyController returns (uint256) {
-        FeatureUtils.validateFeature(dataStore, Keys.executeShiftFeatureDisabledKey(address(this)));
         return ShiftUtils.executeShift(params, shift, true);
     }
 
@@ -145,8 +141,6 @@ contract ShiftHandler is IShiftHandler, BaseHandler, ReentrancyGuard {
         address keeper
     ) external onlySelf {
         uint256 startingGas = gasleft();
-
-        FeatureUtils.validateFeature(dataStore, Keys.executeShiftFeatureDisabledKey(address(this)));
 
         ShiftUtils.ExecuteShiftParams memory params = ShiftUtils.ExecuteShiftParams(
             dataStore,

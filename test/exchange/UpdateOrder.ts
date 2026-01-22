@@ -54,10 +54,7 @@ describe("Exchange.UpdateOrder", () => {
 
     const orderKeys = await getOrderKeys(dataStore, 0, 1);
 
-    const _updateOrderFeatureDisabledKey = keys.updateOrderFeatureDisabledKey(
-      orderHandler.address,
-      OrderType.MarketIncrease
-    );
+    const _updateOrderFeatureDisabledKey = keys.updateOrderFeatureDisabledKey(orderHandler.address);
 
     await dataStore.setBool(_updateOrderFeatureDisabledKey, true);
 
@@ -77,6 +74,21 @@ describe("Exchange.UpdateOrder", () => {
       .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
       .withArgs(user1.address, "account for updateOrder");
 
+    // Test ALL_FEATURES_DISABLED
+    await dataStore.setBool(keys.ALL_FEATURES_DISABLED, true);
+    await expect(
+      exchangeRouter.connect(user0).updateOrder(
+        orderKeys[0],
+        decimalToFloat(250 * 1000),
+        expandDecimals(4950, 12),
+        expandDecimals(5050, 12),
+        expandDecimals(52000, 6),
+        validFromTime,
+        false // autoCancel
+      )
+    ).to.be.revertedWithCustomError(errorsContract, "AllFeaturesDisabled");
+    await dataStore.setBool(keys.ALL_FEATURES_DISABLED, false);
+
     await expect(
       exchangeRouter.connect(user0).updateOrder(
         orderKeys[0],
@@ -88,10 +100,29 @@ describe("Exchange.UpdateOrder", () => {
         false // autoCancel
       )
     )
-      .to.be.revertedWithCustomError(errorsContract, "DisabledFeature")
-      .withArgs(_updateOrderFeatureDisabledKey);
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForModule")
+      .withArgs(keys.UPDATE_ORDER_FEATURE_DISABLED, orderHandler.address);
 
     await dataStore.setBool(_updateOrderFeatureDisabledKey, false);
+
+    // Test market-specific feature disabled
+    const order = await reader.getOrder(dataStore.address, orderKeys[0]);
+    const _updateOrderFeatureDisabledForMarketKey = keys.updateOrderFeatureDisabledForMarketKey(order.addresses.market);
+    await dataStore.setBool(_updateOrderFeatureDisabledForMarketKey, true);
+    await expect(
+      exchangeRouter.connect(user0).updateOrder(
+        orderKeys[0],
+        decimalToFloat(250 * 1000),
+        expandDecimals(4950, 12),
+        expandDecimals(5050, 12),
+        expandDecimals(52000, 6),
+        validFromTime,
+        false // autoCancel
+      )
+    )
+      .to.be.revertedWithCustomError(errorsContract, "DisabledFeatureForMarket")
+      .withArgs(keys.UPDATE_ORDER_FEATURE_DISABLED, order.addresses.market);
+    await dataStore.setBool(_updateOrderFeatureDisabledForMarketKey, false);
 
     await expect(
       exchangeRouter.connect(user0).updateOrder(

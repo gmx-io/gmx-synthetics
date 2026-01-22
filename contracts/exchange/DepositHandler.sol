@@ -53,7 +53,6 @@ contract DepositHandler is IDepositHandler, BaseHandler, ReentrancyGuard {
         uint256 srcChainId,
         IDepositUtils.CreateDepositParams calldata params
     ) external override globalNonReentrant onlyController returns (bytes32) {
-        FeatureUtils.validateFeature(dataStore, Keys.createDepositFeatureDisabledKey(address(this)));
         validateDataListLength(params.dataList.length);
 
         return DepositUtils.createDeposit(
@@ -73,8 +72,6 @@ contract DepositHandler is IDepositHandler, BaseHandler, ReentrancyGuard {
 
         DataStore _dataStore = dataStore;
         Deposit.Props memory deposit = DepositStoreUtils.get(_dataStore, key);
-
-        FeatureUtils.validateFeature(_dataStore, Keys.cancelDepositFeatureDisabledKey(address(this)));
 
         validateRequestCancellation(
             deposit.updatedAtTime(),
@@ -137,7 +134,6 @@ contract DepositHandler is IDepositHandler, BaseHandler, ReentrancyGuard {
         IExecuteDepositUtils.ExecuteDepositParams calldata executeDepositParams,
         Deposit.Props calldata deposit
     ) external nonReentrant onlyController returns (uint256) {
-        FeatureUtils.validateFeature(dataStore, Keys.executeDepositFeatureDisabledKey(address(this)));
         return ExecuteDepositUtils.executeDeposit(executeDepositParams, deposit, true);
     }
 
@@ -171,8 +167,6 @@ contract DepositHandler is IDepositHandler, BaseHandler, ReentrancyGuard {
         address keeper
     ) external onlySelf {
         uint256 startingGas = gasleft();
-
-        FeatureUtils.validateFeature(dataStore, Keys.executeDepositFeatureDisabledKey(address(this)));
 
         IExecuteDepositUtils.ExecuteDepositParams memory params = IExecuteDepositUtils.ExecuteDepositParams(
             dataStore,
