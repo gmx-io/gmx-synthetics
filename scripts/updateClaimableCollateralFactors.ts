@@ -1,146 +1,127 @@
 import hre from "hardhat";
+import prompts from "prompts";
 
-import { gql } from "@apollo/client";
+import { expandDecimals, bigNumberify } from "../utils/math";
+import { getFullKey } from "../utils/config";
+import { encodeData } from "../utils/hash";
+import { CLAIMABLE_COLLATERAL_FACTOR_LIST } from "../data/claimableCollateralFactors.ts";
+import * as keys from "../utils/keys";
 
-import { getSubgraphClient } from "../utils/stats";
-import { fetchTickerPrices } from "../utils/prices";
-import { bigNumberify, formatAmount, expandDecimals } from "../utils/math";
-import { handleInBatches } from "../utils/batch";
-
-async function updateSingleFactor() {
+async function updateMultipleFactors(reductionList) {
   const config = await hre.ethers.getContract("Config");
-
-  for (const key of ["MARKET", "TOKEN", "TIME_KEY", "FACTOR"]) {
-    if (!process.env[key]) {
-      throw new Error(`${key} env var is required`);
-    }
-  }
-
-  const market = process.env.MARKET;
-  const token = process.env.TOKEN;
-  const timeKey = process.env.TIME_KEY;
-  const account = process.env.ACCOUNT;
-  const factor = process.env.FACTOR;
-
-  if (account) {
-    const tx = await config.setClaimableCollateralFactorForAccount(market, token, timeKey, account, factor);
-    console.info(`tx sent: ${tx.hash}`);
-  } else {
-    const tx = await config.setClaimableCollateralFactorForTime(market, token, timeKey, factor);
-    console.info(`tx sent: ${tx.hash}`);
-  }
-}
-
-async function updateMultipleFactors() {
-  const client = getSubgraphClient(hre.network.name);
+  const dataStore = await hre.ethers.getContract("DataStore");
 
   const day = 24 * 60 * 60;
   let startTime = parseInt(process.env.START);
   let endTime = parseInt(process.env.END);
 
   if (isNaN(endTime)) {
-    endTime = parseInt(parseInt(Date.now() / 1000) / day) * day - 2 * day;
+    endTime = parseInt(parseInt(Date.now() / 1000) / day) * day;
   }
 
   if (isNaN(startTime)) {
-    startTime = endTime - 7 * day;
+    startTime = endTime - 5 * day;
   }
 
-  console.log("time", startTime, endTime);
+  if (reductionList.length === 0) {
+    throw new Error("Empty reductionList");
+  }
 
-  const pageIndex = 0;
-  const pageSize = 1000;
-
-  const query = gql(`{
-      claimableCollateralGroups(
-        skip: ${pageIndex * pageSize}
-        first: ${pageSize}
-        orderBy: timeKey
-        orderDirection: desc
-        where: { factor: 0 }
-      ) {
-          id
-          timeKey
-          marketAddress
-          tokenAddress
-          factor
-          claimables {
-            id
-            account
-            value
-            factor
-         }
-    }
-  }`);
-
-  const { data } = await client.query({ query, fetchPolicy: "no-cache" });
-  const { claimableCollateralGroups } = data;
-
-  const tickerPrices = await fetchTickerPrices();
-  let totalValueInUsd = bigNumberify(0);
-
-  for (const claimableGroup of claimableCollateralGroups) {
-    const tokenPrice = tickerPrices[claimableGroup.tokenAddress];
-    for (const claimable of claimableGroup.claimables) {
-      const valueInUsd = bigNumberify(claimable.value).mul(tokenPrice.max);
-      totalValueInUsd = totalValueInUsd.add(valueInUsd);
+  const multicallReadParams = [];
+  for (const reductionItem of reductionList) {
+    for (const account of reductionItem.accounts) {
+      multicallReadParams.push({
+        target: dataStore.address,
+        allowFailure: false,
+        callData: dataStore.interface.encodeFunctionData("getUint", [
+          getFullKey(
+            keys.CLAIMABLE_COLLATERAL_AMOUNT,
+            encodeData(
+              ["address", "address", "uint256", "address"],
+              [reductionItem.market, reductionItem.token, reductionItem.timeKey, account]
+            )
+          ),
+        ]),
+      });
+      multicallReadParams.push({
+        target: dataStore.address,
+        allowFailure: false,
+        callData: dataStore.interface.encodeFunctionData("getUint", [
+          getFullKey(
+            keys.CLAIMABLE_COLLATERAL_FACTOR,
+            encodeData(
+              ["address", "address", "uint256", "address"],
+              [reductionItem.market, reductionItem.token, reductionItem.timeKey, account]
+            )
+          ),
+        ]),
+      });
     }
   }
+  const multicall = await hre.ethers.getContract("Multicall3");
+  const result = await multicall.callStatic.aggregate3(multicallReadParams);
 
-  console.info("total value in USD", formatAmount(totalValueInUsd, 30, 2, true));
-
-  let threshold = expandDecimals(10_000, 30);
-  if (process.env.THRESHOLD) {
-    threshold = expandDecimals(process.env.THRESHOLD, 30);
+  const paramsCount = 2;
+  let i = 0;
+  let sum = bigNumberify(0);
+  for (const reductionItem of reductionList) {
+    for (const account of reductionItem.accounts) {
+      const amount = bigNumberify(result[i * paramsCount].returnData);
+      console.log(
+        `${account}, ${reductionItem.timeKey}, ${reductionItem.market}, ${
+          reductionItem.token
+        }, amount: ${amount.toString()}, collateral factor: ${bigNumberify(
+          result[i * paramsCount + 1].returnData
+        ).toString()}`
+      );
+      sum = sum.add(amount);
+      i++;
+    }
   }
+  console.log("sum:", sum.toString());
 
-  if (totalValueInUsd.gt(threshold)) {
-    throw new Error("totalValueInUsd exceeds threshold");
-  }
+  const multicallWriteParams = [];
+  for (const reductionItem of reductionList) {
+    const time = parseInt(reductionItem.timeKey) * 60 * 60;
 
-  const config = await hre.ethers.getContract("Config");
+    if (time < startTime || time > endTime) {
+      throw new Error(`time is not within range, time: ${time}, start: ${startTime}, end: ${endTime}`);
+      continue;
+    }
 
-  await handleInBatches(claimableCollateralGroups, 20, async (batch) => {
-    const multicallWriteParams = [];
-
-    for (const claimableGroup of batch) {
-      const time = parseInt(claimableGroup.timeKey) * 60 * 60;
-
-      if (time < startTime || time > endTime) {
-        continue;
-      }
-
+    for (const account of reductionItem.accounts) {
       multicallWriteParams.push(
-        config.interface.encodeFunctionData("setClaimableCollateralFactorForTime", [
-          claimableGroup.marketAddress,
-          claimableGroup.tokenAddress,
-          claimableGroup.timeKey,
+        config.interface.encodeFunctionData("setClaimableCollateralFactorForAccount", [
+          reductionItem.market,
+          reductionItem.token,
+          reductionItem.timeKey,
+          account,
           expandDecimals(1, 30), // factor
         ])
       );
     }
+  }
 
-    if (multicallWriteParams.length === 0) {
-      return;
-    }
+  let write = process.env.WRITE === "true";
+  if (!write) {
+    ({ write } = await prompts({
+      type: "confirm",
+      name: "write",
+      message: "Do you want to execute the transactions?",
+    }));
+  }
 
-    if (process.env.WRITE === "true") {
-      const tx = await config.multicall(multicallWriteParams);
-      await tx.wait(2);
-      console.info(`tx sent: ${tx.hash}`);
-    } else {
-      console.info("NOTE: executed in read-only mode, no transactions were sent");
-    }
-  });
+  if (!write) {
+    console.info("NOTE: executed in read-only mode, no transactions were sent");
+  } else {
+    const tx = await config.multicall(multicallWriteParams);
+    await tx.wait(2);
+    console.info(`tx sent: ${tx.hash}`);
+  }
 }
 
 async function main() {
-  if (process.env.SINGLE === "true") {
-    await updateSingleFactor();
-    return;
-  }
-
-  await updateMultipleFactors();
+  await updateMultipleFactors(CLAIMABLE_COLLATERAL_FACTOR_LIST[hre.network.name]);
 }
 
 main()

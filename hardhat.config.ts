@@ -48,6 +48,10 @@ const getRpcUrl = (network) => {
     avalanche: "https://api.avax.network/ext/bc/C/rpc",
     botanix: "https://rpc.botanixlabs.com",
     megaEth: "https://mainnet.megaeth.com/rpc",
+    ethereum: "https://mainnet.gateway.tenderly.co",
+    base: "https://base.gateway.tenderly.co",
+    bsc: "https://bsc-dataseed.binance.org",
+    bera: "https://rpc.berachain.com",
     arbitrumGoerli: "https://goerli-rollup.arbitrum.io/rpc",
     arbitrumSepolia: "https://sepolia-rollup.arbitrum.io/rpc",
     sepolia: "https://ethereum-sepolia-rpc.publicnode.com",
@@ -249,11 +253,31 @@ const config: HardhatUserConfig = {
       accounts: getEnvAccounts(),
       verify: {
         etherscan: {
-          apiURL: getExplorerUrl("megaEth"),
+          apiUrl: getExplorerUrl("megaEth"),
           apiKey: process.env.MEGA_ETH_EXPLORER_API_KEY,
         },
       },
       blockGasLimit: 20_000_000,
+    },
+    ethereum: {
+      url: getRpcUrl("ethereum"),
+      chainId: 1,
+      accounts: getEnvAccounts(),
+    },
+    base: {
+      url: getRpcUrl("base"),
+      chainId: 8453,
+      accounts: getEnvAccounts(),
+    },
+    bsc: {
+      url: getRpcUrl("bsc"),
+      chainId: 56,
+      accounts: getEnvAccounts(),
+    },
+    bera: {
+      url: getRpcUrl("bera"),
+      chainId: 80094,
+      accounts: getEnvAccounts(),
     },
     snowscan: {
       url: getRpcUrl("avalanche"),
