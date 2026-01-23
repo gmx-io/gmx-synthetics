@@ -166,7 +166,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("AR", arbitrum_btcUsdcDefaultCap, 1),
           createGlvMarketConfig("DASH", arbitrum_btcUsdcDefaultCap, 1),
           createGlvMarketConfig("JTO", arbitrum_btcUsdcDefaultCap, 1),
-          // createGlvMarketConfig("XAUT", arbitrum_btcUsdcDefaultCap, 1),
+          // createGlvMarketConfig("XAUT.v2", arbitrum_btcUsdcDefaultCap, 1),
           // createGlvMarketConfig("IP", arbitrum_btcUsdcDefaultCap, 1),
         ],
       },

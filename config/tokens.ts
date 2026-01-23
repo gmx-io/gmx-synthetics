@@ -1204,9 +1204,17 @@ const config: {
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 2,
     },
+    // deprecated, use XAUT.v2 instead
     XAUT: {
       synthetic: true,
       decimals: 6,
+      dataStreamFeedId: "0x0003b8b3f33c4c06a7947e86c5b4db4ef0991637d9821b9cdf897c0b5d488468",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    "XAUT.v2": {
+      synthetic: true,
+      decimals: 18,
       dataStreamFeedId: "0x0003b8b3f33c4c06a7947e86c5b4db4ef0991637d9821b9cdf897c0b5d488468",
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,

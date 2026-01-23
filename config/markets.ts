@@ -4144,8 +4144,39 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(320, 18), // ~1M USD (2x max open interest)
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 6), // ~1M USD (2x max open interest)
     },
+    // deprecated and disabled, XAUT.v2 is used instead
     {
       tokens: { indexToken: "XAUT", longToken: "WBTC.e", shortToken: "USDC" },
+      virtualTokenIdForIndexToken: hashString("PERP:XAUT/USD"),
+      virtualMarketId: hashString("SPOT:BTC/USD"),
+
+      ...syntheticMarketConfig,
+      ...fundingRateConfig_Default,
+      ...borrowingRateConfig_LowMax_WithHigherBase,
+
+      negativePositionImpactFactor: exponentToFloat("1.07e-10"),
+      positivePositionImpactFactor: exponentToFloat("7.15e-11"),
+
+      negativeSwapImpactFactor: exponentToFloat("3.5e-9"),
+      positiveSwapImpactFactor: exponentToFloat("1.75e-9"),
+
+      minCollateralFactor: percentageToFloat("2%"), // 50x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("1%"), // 100x leverage
+
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("2.22e-8"),
+
+      reserveFactor: percentageToFloat("105%"),
+      openInterestReserveFactor: percentageToFloat("100%"),
+
+      maxOpenInterest: decimalToFloat(2),
+      maxPoolUsdForDeposit: decimalToFloat(3),
+
+      maxLongTokenPoolAmount: bigNumberify(400000000),
+      maxShortTokenPoolAmount: expandDecimals(4, 6),
+      isDisabled: true,
+    },
+    {
+      tokens: { indexToken: "XAUT.v2", longToken: "WBTC.e", shortToken: "USDC" },
       virtualTokenIdForIndexToken: hashString("PERP:XAUT/USD"),
       virtualMarketId: hashString("SPOT:BTC/USD"),
 
@@ -4172,7 +4203,6 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(22, 8), // ~2M USD (2x max open interest)
       maxShortTokenPoolAmount: expandDecimals(2_000_000, 6), // ~2M USD (2x max open interest)
-      isDisabled: true,
     },
     {
       tokens: { indexToken: "IP", longToken: "WBTC.e", shortToken: "USDC" },
