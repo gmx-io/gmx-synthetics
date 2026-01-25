@@ -487,7 +487,6 @@ library Errors {
 
     // Gelato relay errors
     error InvalidSignature(string signatureType);
-    error InvalidSignatureForContract(string signatureType);
     error InvalidRecoveredSigner(string signatureType, address recovered, address recoveredFromMinified, address expectedSigner);
     // User sent incorrect fee token or incorrect swap path
     error UnexpectedRelayFeeTokenAfterSwap(address feeToken, address expectedFeeToken);

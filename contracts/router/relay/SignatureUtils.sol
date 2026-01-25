@@ -4,9 +4,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
-import "@openzeppelin/contracts/interfaces/IERC1271.sol";
 
-import "../../utils/AccountUtils.sol";
 import "../../error/Errors.sol";
 
 /**
@@ -21,12 +19,12 @@ library SignatureUtils {
     // EIP-6492 magic bytes appended to signatures for counterfactual contracts
     // https://eips.ethereum.org/EIPS/eip-6492
     bytes32 constant EIP6492_MAGIC_BYTES = 0x6492649264926492649264926492649264926492649264926492649264926492;
-    bytes4 constant ERC1271_MAGIC_VALUE = 0x1626ba7e;
 
     /**
      * @dev Validates a signature for both EOAs and smart contract wallets.
-     * Tries EIP-6492 first (for counterfactual contracts), then ECDSA (for EOAs),
-     * then ERC-1271 (for deployed smart contracts).
+     * Tries EIP-6492 first (for counterfactual contracts),
+     *  then ECDSA (for EOAs),
+     *  then ERC-1271 (for deployed smart contracts).
      * All paths try standard digest first, then minified digest (for Ledger).
      *
      * For some cases, e.g. Ledger, signing does not work because the payload
@@ -71,46 +69,20 @@ library SignatureUtils {
             if (_validateEIP6492Signature(expectedSigner, minifiedDigest, signature)) {
                 return;
             }
-            revert Errors.InvalidSignatureForContract(signatureType);
-        }
-
-        ECDSA.RecoverError error;
-        ECDSA.RecoverError errorFromMinified;
-        address recovered;
-        address recoveredFromMinified;
-
-        // 2. EOA with standard digest
-        (recovered, error) = ECDSA.tryRecover(digest, signature);
-        if (error == ECDSA.RecoverError.NoError && recovered == expectedSigner) {
-            return;
-        }
-
-        // 3. EOA with minified digest
-        (recoveredFromMinified, errorFromMinified) = ECDSA.tryRecover(minifiedDigest, signature);
-        if (errorFromMinified == ECDSA.RecoverError.NoError && recoveredFromMinified == expectedSigner) {
-            return;
-        }
-
-        // 4. smart contract wallet (via ERC-1271)
-        if (AccountUtils.isContract(expectedSigner)) {
-            // with standard digest
-            if (SignatureChecker.isValidERC1271SignatureNow(expectedSigner, digest, signature)) {
-                return;
-            }
-            // with minified digest
-            if (SignatureChecker.isValidERC1271SignatureNow(expectedSigner, minifiedDigest, signature)) {
-                return;
-            }
-            revert Errors.InvalidSignatureForContract(signatureType);
-        }
-
-        // EOA validation failed - invalid signature format (not 65 bytes)
-        if (error != ECDSA.RecoverError.NoError) {
             revert Errors.InvalidSignature(signatureType);
         }
 
-        // valid signature but recovered wrong address
-        revert Errors.InvalidRecoveredSigner(signatureType, recovered, recoveredFromMinified, expectedSigner);
+        // 2. Standard digest - handles both EOA (ECDSA) and smart contract wallets (ERC-1271)
+        if (SignatureChecker.isValidSignatureNow(expectedSigner, digest, signature)) {
+            return;
+        }
+
+        // 3. Minified digest - handles both EOA (ECDSA) and smart contract wallets (ERC-1271)
+        if (SignatureChecker.isValidSignatureNow(expectedSigner, minifiedDigest, signature)) {
+            return;
+        }
+
+        revert Errors.InvalidSignature(signatureType);
     }
 
     /**
@@ -120,10 +92,7 @@ library SignatureUtils {
      */
     function _isEIP6492Signature(bytes calldata signature) private pure returns (bool) {
         if (signature.length < 32) return false;
-        bytes32 tail;
-        assembly {
-            tail := calldataload(add(signature.offset, sub(signature.length, 32)))
-        }
+        bytes32 tail = bytes32(signature[signature.length - 32:]);
         return tail == EIP6492_MAGIC_BYTES;
     }
 
@@ -145,13 +114,11 @@ library SignatureUtils {
         // Remove the magic bytes (last 32 bytes)
         bytes calldata wrappedSig = signature[:signature.length - 32];
 
-        // Decode: (address factory, bytes factoryCalldata, bytes originalSignature)
         (address factory, bytes memory factoryCalldata, bytes memory originalSignature) =
             abi.decode(wrappedSig, (address, bytes, bytes));
 
         // If contract not deployed, deploy it via factory
         if (signer.code.length == 0) {
-            // solhint-disable-next-line avoid-low-level-calls
             (bool success, ) = factory.call(factoryCalldata);
             if (!success) return false;
             // Verify deployment succeeded
@@ -159,27 +126,6 @@ library SignatureUtils {
         }
 
         // Validate via ERC-1271
-        return _isValidERC1271Signature(signer, hash, originalSignature);
-    }
-
-    /**
-     * @dev Checks if a signature is valid via ERC-1271.
-     * @param signer The contract to validate against
-     * @param hash The hash that was signed
-     * @param signature The signature to validate
-     * @return True if the contract returns the ERC-1271 magic value
-     */
-    function _isValidERC1271Signature(
-        address signer,
-        bytes32 hash,
-        bytes memory signature
-    ) private view returns (bool) {
-        // solhint-disable-next-line avoid-low-level-calls
-        (bool success, bytes memory result) = signer.staticcall(
-            abi.encodeWithSelector(IERC1271.isValidSignature.selector, hash, signature)
-        );
-        return success &&
-               result.length >= 32 &&
-               abi.decode(result, (bytes32)) == bytes32(ERC1271_MAGIC_VALUE);
+        return SignatureChecker.isValidERC1271SignatureNow(signer, hash, originalSignature);
     }
 }

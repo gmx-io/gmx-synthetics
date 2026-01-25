@@ -247,10 +247,7 @@ describe("MultichainTransferRouter", () => {
       await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
 
       bridgeOutParams.signer = user2; // incorrect signer
-      await expect(sendBridgeOut(bridgeOutParams)).to.be.revertedWithCustomError(
-        errorsContract,
-        "InvalidRecoveredSigner"
-      );
+      await expect(sendBridgeOut(bridgeOutParams)).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
 
       bridgeOutParams.signer = user1; // correct signer
       await expect(sendBridgeOut(bridgeOutParams)).to.not.be.reverted;
@@ -309,10 +306,7 @@ describe("MultichainTransferRouter", () => {
       bridgeOutParams.signature = signature;
 
       bridgeOutParams.params.minAmountOut = 1; // tamper a param field
-      await expect(sendBridgeOut(bridgeOutParams)).to.be.revertedWithCustomError(
-        errorsContract,
-        "InvalidRecoveredSigner"
-      );
+      await expect(sendBridgeOut(bridgeOutParams)).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
 
       bridgeOutParams.params.minAmountOut = 0; // use the original value again
       await expect(sendBridgeOut(bridgeOutParams)).to.not.be.reverted;

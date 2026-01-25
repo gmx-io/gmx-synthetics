@@ -203,13 +203,13 @@ describe("GelatoRelayRouter", () => {
       ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
     });
 
-    it("InvalidRecoveredSigner", async () => {
+    it("InvalidSignature", async () => {
       await expect(
         sendCreateOrder({
           ...createOrderParams,
           signer: ethers.Wallet.createRandom(),
         })
-      ).to.be.revertedWithCustomError(errorsContract, "InvalidRecoveredSigner");
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
     });
 
     it("InvalidUserDigest", async () => {
@@ -481,7 +481,7 @@ describe("GelatoRelayRouter", () => {
           userNonce: 2,
           signature: signature,
         })
-      ).to.be.revertedWithCustomError(errorsContract, "InvalidRecoveredSigner");
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
 
       await sendCreateOrder({
         ...createOrderParams,
@@ -1245,13 +1245,13 @@ describe("GelatoRelayRouter", () => {
       ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
     });
 
-    it("InvalidRecoveredSigner", async () => {
+    it("InvalidSignature", async () => {
       await expect(
         sendUpdateOrder({
           ...updateOrderParams,
           signer: ethers.Wallet.createRandom(),
         })
-      ).to.be.revertedWithCustomError(errorsContract, "InvalidRecoveredSigner");
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
     });
 
     it("Unauthorized", async () => {
@@ -1402,13 +1402,13 @@ describe("GelatoRelayRouter", () => {
       ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
     });
 
-    it("InvalidRecoveredSigner", async () => {
+    it("InvalidSignature", async () => {
       await expect(
         sendCancelOrder({
           ...cancelOrderParams,
           signer: ethers.Wallet.createRandom(),
         })
-      ).to.be.revertedWithCustomError(errorsContract, "InvalidRecoveredSigner");
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
     });
 
     it("Unauthorized", async () => {
@@ -1453,10 +1453,10 @@ describe("GelatoRelayRouter", () => {
       );
     });
 
-    it("InvalidRecoveredSigner", async () => {
+    it("InvalidSignature", async () => {
       await expect(sendBatch({ ...batchParams, signer: ethers.Wallet.createRandom() })).to.be.revertedWithCustomError(
         errorsContract,
-        "InvalidRecoveredSigner"
+        "InvalidSignature"
       );
     });
 

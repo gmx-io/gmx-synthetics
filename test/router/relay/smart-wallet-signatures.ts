@@ -7,7 +7,6 @@ import { deployFixture } from "../../../utils/fixture";
 import { errorsContract } from "../../../utils/error";
 
 const EIP6492_MAGIC_BYTES = "0x6492649264926492649264926492649264926492649264926492649264926492";
-const chainId = 42161;
 
 // Helper to sign with minified digest (for Ledger hardware wallet support)
 async function signMinified(signer, domain, types, value) {
@@ -23,6 +22,7 @@ async function signMinified(signer, domain, types, value) {
 describe("Smart Wallet Signatures", () => {
   let fixture;
   let user0, user1;
+  let chainId;
   let domain;
   let dataStore,
     roleStore,
@@ -42,6 +42,7 @@ describe("Smart Wallet Signatures", () => {
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1 } = fixture.accounts);
+    ({ chainId } = await ethers.provider.getNetwork());
     ({
       dataStore,
       roleStore,
@@ -131,7 +132,7 @@ describe("Smart Wallet Signatures", () => {
       ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
     });
 
-    it("should return InvalidRecoveredSigner for valid signature from wrong address", async () => {
+    it("should reject valid signature from wrong address", async () => {
       const types = {
         PrimaryStruct: [{ name: "account", type: "address" }],
       };
@@ -143,9 +144,10 @@ describe("Smart Wallet Signatures", () => {
       // Sign with user1's key but expect user0 as signer
       const signature = await user1._signTypedData(domain, types, value);
 
-      await expect(
-        mockContract.testSimpleSignature(user0.address, signature, chainId)
-      ).to.be.revertedWithCustomError(errorsContract, "InvalidRecoveredSigner");
+      await expect(mockContract.testSimpleSignature(user0.address, signature, chainId)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidSignature"
+      );
     });
 
     it("should reject signature shorter than 32 bytes", async () => {
@@ -227,10 +229,11 @@ describe("Smart Wallet Signatures", () => {
       // This goes through: ECDSA fails → isContract(walletAddress)=true → ERC-1271 → wallet returns 0xffffffff
       const signature = await user1._signTypedData(domain, types, value);
 
-      // Should hit ERC-1271 path (line 104) and fail with InvalidSignatureForContract
-      await expect(
-        mockContract.testEIP6492Signature(walletAddress, signature, chainId)
-      ).to.be.revertedWithCustomError(errorsContract, "InvalidSignatureForContract");
+      // Should hit ERC-1271 path and fail with InvalidSignature
+      await expect(mockContract.testEIP6492Signature(walletAddress, signature, chainId)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidSignature"
+      );
     });
 
     it("should reject minified ERC-1271 signature with wrong owner", async () => {
@@ -251,9 +254,10 @@ describe("Smart Wallet Signatures", () => {
       const signature = await signMinified(user1, domain, types, value);
 
       // Should try both standard and minified ERC-1271 paths, both fail
-      await expect(
-        mockContract.testEIP6492Signature(walletAddress, signature, chainId)
-      ).to.be.revertedWithCustomError(errorsContract, "InvalidSignatureForContract");
+      await expect(mockContract.testEIP6492Signature(walletAddress, signature, chainId)).to.be.revertedWithCustomError(
+        errorsContract,
+        "InvalidSignature"
+      );
     });
   });
 
@@ -403,7 +407,7 @@ describe("Smart Wallet Signatures", () => {
 
       await expect(
         mockContract.testEIP6492Signature(walletAddress, wrappedSignature, chainId)
-      ).to.be.revertedWithCustomError(errorsContract, "InvalidSignatureForContract");
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
     });
 
     it("should reject EIP-6492 signature with failing factory call", async () => {
@@ -436,7 +440,7 @@ describe("Smart Wallet Signatures", () => {
 
       await expect(
         mockContract.testEIP6492Signature(walletAddress, wrappedSignature, chainId)
-      ).to.be.revertedWithCustomError(errorsContract, "InvalidSignatureForContract");
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
     });
 
     it("should reject EIP-6492 when factory deploys to wrong address", async () => {
@@ -471,7 +475,7 @@ describe("Smart Wallet Signatures", () => {
       // Factory deploys to different address than expected, so validation should fail
       await expect(
         mockContract.testEIP6492Signature(expectedWalletAddress, wrappedSignature, chainId)
-      ).to.be.revertedWithCustomError(errorsContract, "InvalidSignatureForContract");
+      ).to.be.revertedWithCustomError(errorsContract, "InvalidSignature");
     });
   });
 });

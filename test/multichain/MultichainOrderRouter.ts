@@ -351,7 +351,7 @@ describe("MultichainOrderRouter", () => {
       createOrderParams.signer = user2; // incorrect signer
       await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(
         errorsContract,
-        "InvalidRecoveredSigner"
+        "InvalidSignature"
       );
 
       createOrderParams.signer = user1; // correct signer
@@ -391,7 +391,7 @@ describe("MultichainOrderRouter", () => {
       createOrderParams.params.numbers.minOutputAmount = 699; // tamper a param field
       await expect(sendCreateOrder(createOrderParams)).to.be.revertedWithCustomError(
         errorsContract,
-        "InvalidRecoveredSigner"
+        "InvalidSignature"
       );
 
       createOrderParams.params.numbers.minOutputAmount = 700; // use the original value again
