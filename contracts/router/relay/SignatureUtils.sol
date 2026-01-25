@@ -72,14 +72,32 @@ library SignatureUtils {
             revert Errors.InvalidSignature(signatureType);
         }
 
-        // 2. Standard digest - handles both EOA (ECDSA) and smart contract wallets (ERC-1271)
-        if (SignatureChecker.isValidSignatureNow(expectedSigner, digest, signature)) {
+        // 2. Try ECDSA first (for granular EOA errors)
+        // Check standard digest
+        (address recovered, ECDSA.RecoverError error) = ECDSA.tryRecover(digest, signature);
+        if (error == ECDSA.RecoverError.NoError && recovered == expectedSigner) {
+            return;
+        }
+        // Check minified digest
+        (address recoveredMinified, ECDSA.RecoverError errorMinified) = ECDSA.tryRecover(minifiedDigest, signature);
+        if (errorMinified == ECDSA.RecoverError.NoError && recoveredMinified == expectedSigner) {
             return;
         }
 
-        // 3. Minified digest - handles both EOA (ECDSA) and smart contract wallets (ERC-1271)
-        if (SignatureChecker.isValidSignatureNow(expectedSigner, minifiedDigest, signature)) {
-            return;
+        // 3. If signer is a contract, try ERC-1271
+        if (expectedSigner.code.length > 0) {
+            if (SignatureChecker.isValidERC1271SignatureNow(expectedSigner, digest, signature)) {
+                return;
+            }
+            if (SignatureChecker.isValidERC1271SignatureNow(expectedSigner, minifiedDigest, signature)) {
+                return;
+            }
+        }
+
+        // 4. Determine error type
+        if (error == ECDSA.RecoverError.NoError || errorMinified == ECDSA.RecoverError.NoError) {
+            // Valid signature format but wrong signer
+            revert Errors.InvalidRecoveredSigner(signatureType, recovered, recoveredMinified, expectedSigner);
         }
 
         revert Errors.InvalidSignature(signatureType);

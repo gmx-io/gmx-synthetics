@@ -214,7 +214,7 @@ describe("MultichainClaimsRouter", () => {
       createClaimParams.signer = user2; // incorrect signer
       await expect(sendClaimFundingFees(createClaimParams)).to.be.revertedWithCustomError(
         errorsContract,
-        "InvalidSignature"
+        "InvalidRecoveredSigner"
       );
 
       createClaimParams.signer = user1; // correct signer
@@ -256,7 +256,7 @@ describe("MultichainClaimsRouter", () => {
       await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
       await expect(sendClaimFundingFees(createClaimParams)).to.be.revertedWithCustomError(
         errorsContract,
-        "InvalidSignature"
+        "InvalidRecoveredSigner"
       );
 
       createClaimParams.deadline = 9999999999; // use the original value again
@@ -434,7 +434,7 @@ describe("MultichainClaimsRouter", () => {
       createClaimParams.signer = user2; // incorrect signer
       await expect(sendClaimCollateral(createClaimParams)).to.be.revertedWithCustomError(
         errorsContract,
-        "InvalidSignature"
+        "InvalidRecoveredSigner"
       );
 
       createClaimParams.signer = user1; // correct signer
@@ -476,7 +476,7 @@ describe("MultichainClaimsRouter", () => {
       await bridgeInTokens(fixture, { account: user1, amount: feeAmount });
       await expect(sendClaimCollateral(createClaimParams)).to.be.revertedWithCustomError(
         errorsContract,
-        "InvalidSignature"
+        "InvalidRecoveredSigner"
       );
 
       createClaimParams.deadline = 9999999999; // use the original value again

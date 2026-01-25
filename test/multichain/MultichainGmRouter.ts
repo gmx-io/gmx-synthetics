@@ -221,7 +221,7 @@ describe("MultichainGmRouter", () => {
       createDepositParams.signer = user2; // incorrect signer
       await expect(sendCreateDeposit(createDepositParams)).to.be.revertedWithCustomError(
         errorsContract,
-        "InvalidSignature"
+        "InvalidRecoveredSigner"
       );
 
       createDepositParams.signer = user0; // correct signer
@@ -259,7 +259,7 @@ describe("MultichainGmRouter", () => {
       createDepositParams.params.minMarketTokens = 123456; // tamper a param field
       await expect(sendCreateDeposit(createDepositParams)).to.be.revertedWithCustomError(
         errorsContract,
-        "InvalidSignature"
+        "InvalidRecoveredSigner"
       );
 
       createDepositParams.params.minMarketTokens = 100; // use the original value again
@@ -447,7 +447,7 @@ describe("MultichainGmRouter", () => {
       createWithdrawalParams.signer = user2; // incorrect signer
       await expect(sendCreateWithdrawal(createWithdrawalParams)).to.be.revertedWithCustomError(
         errorsContract,
-        "InvalidSignature"
+        "InvalidRecoveredSigner"
       );
 
       createWithdrawalParams.signer = user1; // correct signer
@@ -497,7 +497,7 @@ describe("MultichainGmRouter", () => {
       createWithdrawalParams.params.minLongTokenAmount = 1; // tamper a param field
       await expect(sendCreateWithdrawal(createWithdrawalParams)).to.be.revertedWithCustomError(
         errorsContract,
-        "InvalidSignature"
+        "InvalidRecoveredSigner"
       );
 
       createWithdrawalParams.params.minLongTokenAmount = 0; // use the original value again
@@ -596,7 +596,7 @@ describe("MultichainGmRouter", () => {
       });
 
       // TODO: Enable test once hardhat supports changing the chain id during the test
-      // without changing the chainId, tx reverts with InvalidSignature (signature fails)
+      // without changing the chainId, tx reverts with InvalidRecoveredSigner (signature fails)
       // to test the bridgeOut flow, could temporarily disable the signature verification (e.g. comment out the SignatureUtils.validateSignature call)
       it.skip("create deposit and bridge out from controller the GM tokens, on the source chain", async () => {
         // use the StargatePoolUSDC as the StargatePoolGM --> StargatePoolGM.token() will be the GM token
@@ -770,7 +770,7 @@ describe("MultichainGmRouter", () => {
       createShiftParams.signer = user2; // incorrect signer
       await expect(sendCreateShift(createShiftParams)).to.be.revertedWithCustomError(
         errorsContract,
-        "InvalidSignature"
+        "InvalidRecoveredSigner"
       );
 
       createShiftParams.signer = user1; // correct signer
@@ -817,7 +817,7 @@ describe("MultichainGmRouter", () => {
       createShiftParams.params.minMarketTokens = 51; // tamper a param field
       await expect(sendCreateShift(createShiftParams)).to.be.revertedWithCustomError(
         errorsContract,
-        "InvalidSignature"
+        "InvalidRecoveredSigner"
       );
 
       createShiftParams.params.minMarketTokens = 50; // use the original value again

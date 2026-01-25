@@ -146,7 +146,7 @@ describe("Smart Wallet Signatures", () => {
 
       await expect(mockContract.testSimpleSignature(user0.address, signature, chainId)).to.be.revertedWithCustomError(
         errorsContract,
-        "InvalidSignature"
+        "InvalidRecoveredSigner"
       );
     });
 
@@ -226,13 +226,14 @@ describe("Smart Wallet Signatures", () => {
       };
 
       // Sign with user1's key (wrong owner) - NO EIP-6492 wrapper
-      // This goes through: ECDSA fails → isContract(walletAddress)=true → ERC-1271 → wallet returns 0xffffffff
+      // Flow: ECDSA recovers user1 (not wallet) → isContract(walletAddress)=true → ERC-1271 → wallet returns 0xffffffff
+      // Since ECDSA recovered a valid address (just wrong one), we get InvalidRecoveredSigner
       const signature = await user1._signTypedData(domain, types, value);
 
-      // Should hit ERC-1271 path and fail with InvalidSignature
+      // Should try ECDSA (wrong signer), then ERC-1271 (wallet rejects), then InvalidRecoveredSigner
       await expect(mockContract.testEIP6492Signature(walletAddress, signature, chainId)).to.be.revertedWithCustomError(
         errorsContract,
-        "InvalidSignature"
+        "InvalidRecoveredSigner"
       );
     });
 
@@ -253,10 +254,10 @@ describe("Smart Wallet Signatures", () => {
       // Sign minified digest with user1's key (wrong owner)
       const signature = await signMinified(user1, domain, types, value);
 
-      // Should try both standard and minified ERC-1271 paths, both fail
+      // Flow: ECDSA recovers user1 → ERC-1271 fails → InvalidRecoveredSigner (valid sig, wrong address)
       await expect(mockContract.testEIP6492Signature(walletAddress, signature, chainId)).to.be.revertedWithCustomError(
         errorsContract,
-        "InvalidSignature"
+        "InvalidRecoveredSigner"
       );
     });
   });

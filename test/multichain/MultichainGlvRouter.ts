@@ -244,7 +244,7 @@ describe("MultichainGlvRouter", () => {
       createGlvDepositParams.signer = user2; // incorrect signer
       await expect(sendCreateGlvDeposit(createGlvDepositParams)).to.be.revertedWithCustomError(
         errorsContract,
-        "InvalidSignature"
+        "InvalidRecoveredSigner"
       );
 
       createGlvDepositParams.signer = user1; // correct signer
@@ -293,7 +293,7 @@ describe("MultichainGlvRouter", () => {
       createGlvDepositParams.params.minGlvTokens = 99; // tamper a param field
       await expect(sendCreateGlvDeposit(createGlvDepositParams)).to.be.revertedWithCustomError(
         errorsContract,
-        "InvalidSignature"
+        "InvalidRecoveredSigner"
       );
 
       createGlvDepositParams.params.minGlvTokens = 100; // use the original value again
@@ -471,7 +471,7 @@ describe("MultichainGlvRouter", () => {
       createGlvWithdrawalParams.signer = user2; // incorrect signer
       await expect(sendCreateGlvWithdrawal(createGlvWithdrawalParams)).to.be.revertedWithCustomError(
         errorsContract,
-        "InvalidSignature"
+        "InvalidRecoveredSigner"
       );
 
       await bridgeInTokens(fixture, { account: user1, amount: wntAmount.add(relayFeeAmount) });
@@ -533,7 +533,7 @@ describe("MultichainGlvRouter", () => {
       // await sendCreateGlvWithdrawal(createGlvWithdrawalParams)
       await expect(sendCreateGlvWithdrawal(createGlvWithdrawalParams)).to.be.revertedWithCustomError(
         errorsContract,
-        "InvalidSignature"
+        "InvalidRecoveredSigner"
       );
 
       createGlvWithdrawalParams.deadline = 9999999999; // use the original value again
