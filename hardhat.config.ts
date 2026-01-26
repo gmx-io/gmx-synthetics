@@ -247,6 +247,9 @@ const config: HardhatUserConfig = {
       },
       blockGasLimit: 20_000_000,
     },
+    // for MegaETH, note that the "Gas forwarding rule" and "Gas model" is
+    // slightly different (https://docs.megaeth.com/megaevm)
+    // this should be noted as it can lead to some inaccuracy in gas calculations
     megaEth: {
       url: getRpcUrl("megaEth"),
       chainId: 4326,
