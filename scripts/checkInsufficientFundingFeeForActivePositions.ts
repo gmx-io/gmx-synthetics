@@ -5,7 +5,7 @@ import { formatAmount, bigNumberify } from "../utils/math";
 import { getPositionCount, getPositionKeys } from "../utils/position";
 
 /**
- * Find current positions for which (InsufficientFundingFeePayment would be emitted if closed now):
+ * Find current positions for which:
  *   1. pendingFundingFees > 0 (position owes funding fees)
  *   2. basePnlUsd > 0 (position is in profit → not liquidatable)
  *   3. pnlToken != collateralToken (token mismatch)
@@ -18,7 +18,11 @@ import { getPositionCount, getPositionKeys } from "../utils/position";
  * - Funding fees are always deducted from the collateral token
  *
  * Problem:
- * A position can become "underwater" on its collateral token while still being healthy overall.
+ * A position can become "undercollateralized" on its collateral token while still being healthy overall.
+ * This would result in an InvalidMarketTokenBalance revert for users claiming funding fees (i.e. because market balance < expectedMinBalance).
+ *
+ * Solution:
+ * Run this script to identify such markets which have a "Potential shortfall" and top-up that market with the required shortfall amount.
  *
  * Example (OP/USD market):
  *   - User opens SHORT position with OP as collateral (not USDC)
