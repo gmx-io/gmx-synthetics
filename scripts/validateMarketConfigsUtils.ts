@@ -772,6 +772,14 @@ const recommendedMarketConfig = {
       negativeSwapImpactFactor: exponentToFloat("5e-9").div(2),
     },
   },
+  megaEth: {
+    "WETH:WETH:WETH": {
+      negativePositionImpactFactor: 0,
+      negativeSwapImpactFactor: 0,
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 20_000,
+    },
+  },
 };
 
 const configTokenMapping = {

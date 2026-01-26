@@ -11,12 +11,14 @@ export function getRoles({ syntheticKeepers, generalConfigKeepers, claimAdmins }
     },
     CONFIG_KEEPER: {
       ...generalConfigKeepers.mainnet,
+      "0xE7BfFf2aB721264887230037940490351700a068": true, // TEMP: deployer
     },
     FEE_KEEPER: {
       "0x43CE1d475e06c65DD879f4ec644B8e0E10ff2b6D": true, // fee_keeper_1
     },
     MARKET_KEEPER: {
       ...generalConfigKeepers.mainnet,
+      "0xE7BfFf2aB721264887230037940490351700a068": true, // TEMP: deployer
     },
     TIMELOCK_ADMIN: {
       "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // timelock_admin_1
@@ -25,7 +27,9 @@ export function getRoles({ syntheticKeepers, generalConfigKeepers, claimAdmins }
       "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // timelock_admin_1
     },
     GOV_TOKEN_CONTROLLER: {},
-    CONTROLLER: {},
+    CONTROLLER: {
+      "0xE7BfFf2aB721264887230037940490351700a068": true, // TEMP: deployer
+    },
     ROUTER_PLUGIN: {},
     ROLE_ADMIN: {
       "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // timelock_admin_1
