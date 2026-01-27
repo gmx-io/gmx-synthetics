@@ -611,6 +611,51 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 15_000,
     },
+    AR: {
+      negativePositionImpactFactor: exponentToFloat("1.3e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 15_011,
+    },
+    DASH: {
+      negativePositionImpactFactor: exponentToFloat("3.89e-9"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 15_019,
+    },
+    SYRUP: {
+      negativePositionImpactFactor: exponentToFloat("5.65e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 14_986,
+    },
+    JTO: {
+      negativePositionImpactFactor: exponentToFloat("3.52e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 14_978,
+    },
+    CHZ: {
+      negativePositionImpactFactor: exponentToFloat("3.93e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 15_000,
+    },
+    XAUT: {
+      negativePositionImpactFactor: exponentToFloat("1.07e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 14_965,
+    },
+    "XAUT.v2": {
+      negativePositionImpactFactor: exponentToFloat("1.07e-10"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 14_965,
+    },
+    IP: {
+      negativePositionImpactFactor: exponentToFloat("1.25e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 15_006,
+    },
+    LIT: {
+      negativePositionImpactFactor: exponentToFloat("2.51e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 14_940,
+    },
   },
   avalanche: {
     "BTC.b": {
@@ -725,6 +770,14 @@ const recommendedMarketConfig = {
     stBTC: {
       expectedSwapImpactRatio: 10_000,
       negativeSwapImpactFactor: exponentToFloat("5e-9").div(2),
+    },
+  },
+  megaEth: {
+    "WETH:WETH:WETH": {
+      negativePositionImpactFactor: 0,
+      negativeSwapImpactFactor: 0,
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 20_000,
     },
   },
 };

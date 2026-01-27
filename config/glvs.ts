@@ -107,6 +107,9 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("LINEA", arbitrum_ethUsdcDefaultCap, 1),
           createGlvMarketConfig("SKY", arbitrum_ethUsdcDefaultCap, 1),
           createGlvMarketConfig("MON", arbitrum_ethUsdcDefaultCap, 1),
+          createGlvMarketConfig("SYRUP", arbitrum_ethUsdcDefaultCap, 1),
+          createGlvMarketConfig("CHZ", arbitrum_ethUsdcDefaultCap, 1),
+          createGlvMarketConfig("LIT", arbitrum_ethUsdcDefaultCap, 1),
         ],
       },
       {
@@ -160,6 +163,11 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("ASTER", arbitrum_btcUsdcDefaultCap, 1),
           createGlvMarketConfig("0G", arbitrum_btcUsdcDefaultCap, 1),
           createGlvMarketConfig("ZEC", arbitrum_btcUsdcDefaultCap, 1),
+          createGlvMarketConfig("AR", arbitrum_btcUsdcDefaultCap, 1),
+          createGlvMarketConfig("DASH", arbitrum_btcUsdcDefaultCap, 1),
+          createGlvMarketConfig("JTO", arbitrum_btcUsdcDefaultCap, 1),
+          createGlvMarketConfig("XAUT.v2", arbitrum_btcUsdcDefaultCap, 1),
+          createGlvMarketConfig("IP", arbitrum_btcUsdcDefaultCap, 1),
         ],
       },
     ],
@@ -186,6 +194,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       },
     ],
     botanix: [],
+    megaEth: [],
     arbitrumSepolia: [
       {
         name: "GMX Liquidity Vault [WETH-USDC.SG]",

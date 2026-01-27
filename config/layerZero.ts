@@ -16,6 +16,9 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<LayerZer
     botanix: {
       endpoint: "0x6F475642a6e85809B1c36Fa62763669b1b48DD5B",
     },
+    megaEth: {
+      endpoint: "0x6F475642a6e85809B1c36Fa62763669b1b48DD5B",
+    },
     avalancheFuji: {
       endpoint: "0x6EDCE65403992e310A62460808c4b910D972f10f",
     },
