@@ -194,7 +194,23 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       },
     ],
     botanix: [],
-    megaEth: [],
+    megaEth: [
+      {
+        name: "GMX Liquidity Vault [USDm-USDm]",
+        symbol: "GLV [USDm-USDm]",
+        address: "0x...", // TODO: add address
+        longToken: "USDm",
+        shortToken: "USDm",
+        shiftMaxLossFactor: percentageToFloat("0.1%"), // TODO: confirm value
+        shiftMinInterval: 60 * 60, // 1 hour // TODO: confirm value
+        minTokensForFirstGlvDeposit: expandDecimals(1, 18),
+        markets: [
+          // createGlvMarketConfig("BTC", 5_000_000, 1),
+          // createGlvMarketConfig("ETH", 5_000_000, 1),
+          // createGlvMarketConfig("SOL", 5_000_000, 1),
+        ],
+      },
+    ],
     arbitrumSepolia: [
       {
         name: "GMX Liquidity Vault [WETH-USDC.SG]",

@@ -1527,6 +1527,49 @@ const config: {
       buybackMaxPriceImpactFactor: LOW_BUYBACK_IMPACT,
       dataStreamSpreadReductionFactor: percentageToFloat("100%"),
     },
+    USDm: {
+      address: "0xFAfDdbb3FC7688494971a79cc65DCa3EF82079E7",
+      decimals: 6,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x00030446e1f0ce990ee10744ed4b0d78fe4ff53090a7f98b9f78b7e64144515f", // USDTB // TODO: change to USDm feed
+      dataStreamFeedDecimals: 18,
+    },
+    BTC: {
+      synthetic: true,
+      decimals: 8,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x00039d9e45394f473ab1f050a1b963e6b05351e52d71e507509ada0c95ed75b8",
+      dataStreamFeedDecimals: 18,
+      priceFeed: {
+        address: "0xc6E3007B597f6F5a6330d43053D1EF73cCbbE721",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+    },
+    ETH: {
+      synthetic: true,
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x000362205e10b3a147d02792eccee483dca6c7b44ecce7012cb8c6e0b68b3ae9",
+      dataStreamFeedDecimals: 18,
+      priceFeed: {
+        address: "0xC3E01CC87A99A48081282F6566E1286fccC80d36",
+        decimals: 18,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+    },
+    SOL: {
+      synthetic: true,
+      decimals: 9,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003b778d3f6b2ac4991302b89cb313f99a42467d6c9c5f96f57c29c0d2bc24f",
+      dataStreamFeedDecimals: 18,
+      priceFeed: {
+        address: "0x53c05390FdfDB63526Ac0814825093A68eaddC87",
+        decimals: 18,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+    },
   },
   arbitrumSepolia: {
     WETH: {
