@@ -630,8 +630,8 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         feeDistributorVault.transferOut(token, receiver, amount);
     }
 
-    function _emitFeeDistributionEvent(string memory eventName, EventUtils.EventLogData memory eventData) internal {
-        eventEmitter.emitEventLog1("FeeDistributorEvent", keccak256(bytes(eventName)), eventData);
+    function _emitFeeDistributionEvent(string memory eventDesc, EventUtils.EventLogData memory eventData) internal {
+        eventEmitter.emitEventLog1("FeeDistributorEvent", keccak256(bytes(eventDesc)), eventData);
     }
 
     function _setTokenPrices() internal {
