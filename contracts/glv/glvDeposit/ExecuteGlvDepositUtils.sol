@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 
 import "../../deposit/ExecuteDepositUtils.sol";
 import "../../nonce/NonceUtils.sol";
+import "../../exchange/IDepositHandler.sol";
 
 import "../GlvVault.sol";
 import "../GlvUtils.sol";
@@ -25,6 +26,7 @@ library ExecuteGlvDepositUtils {
         GlvVault glvVault;
         IOracle oracle;
         ISwapHandler swapHandler;
+        IDepositHandler depositHandler;
         bytes32 key;
         uint256 startingGas;
         address keeper;
@@ -39,6 +41,7 @@ library ExecuteGlvDepositUtils {
         uint256 marketCount;
         uint256 oraclePriceCount;
         uint256 glvValue;
+        bool glvTokenPriceUsed;
         uint256 glvSupply;
     }
 
@@ -58,10 +61,7 @@ library ExecuteGlvDepositUtils {
 
         cache.receivedMarketTokens = _processMarketDeposit(params, glvDeposit, params.glvVault);
 
-        // glvValue should be calculated after funds are deposited into GM market
-        // but before GLV syncs GM token balance for glvValue to account for
-        // slightly increased GM market price because of paid fees
-        cache.glvValue = GlvUtils.getGlvValue(
+        (cache.glvValue, ) = GlvUtils.getGlvValue(
             params.dataStore,
             params.oracle,
             glvDeposit.glv(),
@@ -116,7 +116,7 @@ library ExecuteGlvDepositUtils {
             cache.mintAmount
         );
 
-        cache.glvValue = GlvUtils.getGlvValue(
+        (cache.glvValue, cache.glvTokenPriceUsed) = GlvUtils.getGlvValue(
             params.dataStore,
             params.oracle,
             glvDeposit.glv(),
@@ -145,7 +145,8 @@ library ExecuteGlvDepositUtils {
         cache.marketCount = GlvUtils.getGlvMarketCount(params.dataStore, glvDeposit.glv());
         cache.oraclePriceCount = GasUtils.estimateGlvDepositOraclePriceCount(
             cache.marketCount,
-            glvDeposit.longTokenSwapPath().length + glvDeposit.shortTokenSwapPath().length
+            glvDeposit.longTokenSwapPath().length + glvDeposit.shortTokenSwapPath().length,
+            cache.glvTokenPriceUsed
         );
         GasUtils.payExecutionFee(
             GasUtils.PayExecutionFeeContracts(
@@ -173,22 +174,22 @@ library ExecuteGlvDepositUtils {
         GlvDeposit.Props memory glvDeposit,
         GlvVault glvVault
     ) private returns (uint256) {
+        Market.Props memory market = MarketUtils.getEnabledMarket(params.dataStore, glvDeposit.market());
+
+        MarketUtils.MarketPrices memory marketPrices = MarketUtils.MarketPrices(
+            params.oracle.getPrimaryPrice(market.indexToken),
+            params.oracle.getPrimaryPrice(market.longToken),
+            params.oracle.getPrimaryPrice(market.shortToken)
+        );
+        MarketUtils.validateMaxPnl(
+            params.dataStore,
+            market,
+            marketPrices,
+            Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
+            Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS
+        );
+
         if (glvDeposit.isMarketTokenDeposit()) {
-            Market.Props memory market = MarketUtils.getEnabledMarket(params.dataStore, glvDeposit.market());
-
-            MarketUtils.MarketPrices memory marketPrices = MarketUtils.MarketPrices(
-                params.oracle.getPrimaryPrice(market.indexToken),
-                params.oracle.getPrimaryPrice(market.longToken),
-                params.oracle.getPrimaryPrice(market.shortToken)
-            );
-            MarketUtils.validateMaxPnl(
-                params.dataStore,
-                market,
-                marketPrices,
-                Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS,
-                Keys.MAX_PNL_FACTOR_FOR_WITHDRAWALS
-            );
-
             // user deposited GM tokens
             glvVault.transferOut(glvDeposit.market(), glvDeposit.glv(), glvDeposit.marketTokenAmount());
             return glvDeposit.marketTokenAmount();
@@ -219,8 +220,7 @@ library ExecuteGlvDepositUtils {
             new bytes32[](0) // dataList
         );
 
-        bytes32 depositKey = NonceUtils.getNextKey(params.dataStore);
-        params.dataStore.addBytes32(Keys.DEPOSIT_LIST, depositKey);
+        bytes32 depositKey = keccak256(abi.encode(params.key, "deposit"));
         DepositEventUtils.emitDepositCreated(params.eventEmitter, depositKey, deposit, Deposit.DepositType.Glv);
 
         IExecuteDepositUtils.ExecuteDepositParams memory executeDepositParams = IExecuteDepositUtils.ExecuteDepositParams(
@@ -238,7 +238,7 @@ library ExecuteGlvDepositUtils {
             true // includeVirtualInventoryImpact
         );
 
-        uint256 receivedMarketTokens = ExecuteDepositUtils.executeDeposit(executeDepositParams, deposit);
+        uint256 receivedMarketTokens = params.depositHandler.executeDepositFromController(executeDepositParams, deposit);
         return receivedMarketTokens;
     }
 }

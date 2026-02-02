@@ -13,7 +13,8 @@
     "fork:avalancheFuji": "npx hardhat node --fork https://api.avax-test.network/ext/bc/C/rpc --no-deploy --fork-block-number 16658163",
     "fork:avalanche": "npx hardhat node --fork https://api.avax.network/ext/bc/C/rpc --no-deploy",
     "fork:arbitrum": "npx hardhat node --fork https://arb1.arbitrum.io/rpc --no-deploy",
-    "verify:tenderly": "npx hardhat --config hardhat.config.tenderly.ts run scripts/verifyTenderly.ts --network"
+    "verify:tenderly": "npx hardhat --config hardhat.config.tenderly.ts run scripts/verifyTenderly.ts --network",
+    "verify:lz": "npx ts-node scripts/multichain/verify-lz-deployments/verifyContracts.ts && npx ts-node scripts/multichain/verify-lz-deployments/verifyDvnConfigs.ts && npx ts-node scripts/multichain/verify-lz-deployments/verifyConfirmations.ts"
   },
   "author": "",
   "license": "ISC",
@@ -84,7 +85,7 @@
     "node-fetch": "^2.6.1",
     "prb-math": "2.4.3",
     "prompts": "^2.4.2",
-    "react": "^18.2.0",
+    "react": "^19.2.3",
     "react-dom": "^18.2.0",
     "react-query": "^3.39.3",
     "react-router-dom": "^6.19.0",

@@ -37,7 +37,11 @@ describe("Exchange.FundingFees.SingleTokenMarket", () => {
     });
   });
 
-  it("funding fees, single token market", async () => {
+  async function testFunding(useOpenInterestInTokensForBalance) {
+    if (useOpenInterestInTokensForBalance) {
+      await dataStore.setBool(keys.USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE, true);
+    }
+
     await dataStore.setUint(keys.fundingFactorKey(ethUsdSingleTokenMarket.marketToken), decimalToFloat(1, 10));
     await dataStore.setUint(keys.fundingExponentFactorKey(ethUsdSingleTokenMarket.marketToken), decimalToFloat(1));
 
@@ -186,5 +190,13 @@ describe("Exchange.FundingFees.SingleTokenMarket", () => {
         keys.claimableFundingAmountKey(ethUsdSingleTokenMarket.marketToken, usdc.address, user1.address)
       )
     ).eq("8064018"); // 8.064018 USD
+  }
+
+  it("funding fees, single token market", async () => {
+    await testFunding(false);
+  });
+
+  it("funding fees, single token market, USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE as true", async () => {
+    await testFunding(true);
   });
 });

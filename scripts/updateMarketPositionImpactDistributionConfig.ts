@@ -78,7 +78,7 @@ async function main() {
       console.warn(
         "WARN: only one of impact fields is set for market %s positionImpactPoolDistributionRate=%s minPositionImpactPoolAmount=%s",
         marketToken,
-        marketConfig.positionImpactExponentFactor,
+        marketConfig.positionImpactPoolDistributionRate,
         marketConfig.minPositionImpactPoolAmount
       );
     }

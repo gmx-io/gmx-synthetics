@@ -34,10 +34,10 @@ const processGlvs = async ({
 
     configItems.push({
       type: "uint",
-      baseKey: keys.GLV_SHIFT_MAX_PRICE_IMPACT_FACTOR,
+      baseKey: keys.GLV_SHIFT_MAX_LOSS_FACTOR,
       keyData: encodeData(["address"], [glvAddress]),
-      value: glvConfig.shiftMaxPriceImpactFactor,
-      label: `shiftMaxPriceImpactFactor ${glvSymbol}`,
+      value: glvConfig.shiftMaxLossFactor,
+      label: `shiftMaxLossFactor ${glvSymbol}`,
     });
 
     configItems.push({

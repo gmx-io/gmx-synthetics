@@ -1,5 +1,5 @@
 import fetch from "node-fetch";
-import hre, { ethers } from "hardhat";
+import hre from "hardhat";
 import { expandDecimals, bigNumberify } from "./math";
 
 export async function fetchTickerPrices() {

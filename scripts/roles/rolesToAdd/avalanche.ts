@@ -1,14 +1,17 @@
 export const ROLES_TO_ADD = [
   {
     role: "CONFIG_KEEPER",
-    member: "0xF86EF7f0BB90a05A932781C5Cb6eEFe55e486107",
+    member: "0xfe6bdb87e59484db1494a467cdba7c051fb2a604",
+    contractName: "ConfigSyncer",
   },
   {
-    role: "CLAIM_ADMIN",
-    member: "0xF86EF7f0BB90a05A932781C5Cb6eEFe55e486107",
+    role: "CONTROLLER",
+    member: "0x11e9e7464f3bc887a7290ec41fcd22f619b177fd",
+    contractName: "Config",
   },
   {
-    role: "MARKET_KEEPER",
-    member: "0xF86EF7f0BB90a05A932781C5Cb6eEFe55e486107",
+    role: "CONTROLLER",
+    member: "0xfe6bdb87e59484db1494a467cdba7c051fb2a604",
+    contractName: "ConfigSyncer",
   },
 ];

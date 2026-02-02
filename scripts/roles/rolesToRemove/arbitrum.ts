@@ -1,16 +1,22 @@
 export const ROLES_TO_REMOVE = [
   {
-    role: "CONTROLLER",
-    member: "0x5ac4e27341e4cccb3e5fd62f9e62db2adf43dd57",
-    contractName: "ExchangeRouter",
-  },
-  {
-    role: "ROUTER_PLUGIN",
-    member: "0x5ac4e27341e4cccb3e5fd62f9e62db2adf43dd57",
-    contractName: "ExchangeRouter",
+    role: "CONFIG_KEEPER",
+    member: "0x2966bE26c325796c0e63D769AbD457532411Ffed",
+    contractName: "ConfigSyncer",
   },
   {
     role: "CONTROLLER",
-    member: "0xe68CAAACdf6439628DFD2fe624847602991A31eB",
+    member: "0x2966bE26c325796c0e63D769AbD457532411Ffed",
+    contractName: "ConfigSyncer",
+  },
+  {
+    role: "CONTROLLER",
+    member: "0x0BBbbF9D0cbdE8069e926c859E530B00Bfe90072",
+    contractName: "Config",
+  },
+  {
+    role: "CONTROLLER",
+    member: "0x7129Ea01F0826c705d6F7ab01Cf3C06bb83E9397",
+    contractName: "LayerZeroProvider",
   },
 ];

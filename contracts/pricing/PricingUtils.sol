@@ -80,19 +80,16 @@ library PricingUtils {
     // a crossover in balance is for example if the long open interest is larger
     // than the short open interest, and a short position is opened such that the
     // short open interest becomes larger than the long open interest
-    // @param initialDiffUsd the initial difference in USD
-    // @param nextDiffUsd the next difference in USD
-    // @param impactFactor the impact factor
-    // @param impactExponentFactor the impact exponent factor
     function getPriceImpactUsdForCrossoverRebalance(
         uint256 initialDiffUsd,
         uint256 nextDiffUsd,
         uint256 positiveImpactFactor,
         uint256 negativeImpactFactor,
-        uint256 impactExponentFactor
+        uint256 positiveExponentFactor,
+        uint256 negativeExponentFactor
     ) internal pure returns (int256) {
-        uint256 positiveImpactUsd = applyImpactFactor(initialDiffUsd, positiveImpactFactor, impactExponentFactor);
-        uint256 negativeImpactUsd = applyImpactFactor(nextDiffUsd, negativeImpactFactor, impactExponentFactor);
+        uint256 positiveImpactUsd = applyImpactFactor(initialDiffUsd, positiveImpactFactor, positiveExponentFactor);
+        uint256 negativeImpactUsd = applyImpactFactor(nextDiffUsd, negativeImpactFactor, negativeExponentFactor);
         uint256 deltaDiffUsd = Calc.diff(positiveImpactUsd, negativeImpactUsd);
 
         int256 priceImpactUsd = Calc.toSigned(deltaDiffUsd, positiveImpactUsd > negativeImpactUsd);

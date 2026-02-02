@@ -111,7 +111,7 @@ export async function executeDeposit(fixture, overrides: any = {}) {
   }
 
   const params = {
-    key: depositKey,
+    args: [depositKey],
     oracleBlockNumber,
     tokens,
     precisions,

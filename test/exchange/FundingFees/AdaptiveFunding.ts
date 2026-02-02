@@ -3,9 +3,11 @@ import { time } from "@nomicfoundation/hardhat-network-helpers";
 
 import { usingResult } from "../../../utils/use";
 import { deployFixture } from "../../../utils/fixture";
+import { getExecuteParams } from "../../../utils/exchange";
 import { expandDecimals, decimalToFloat } from "../../../utils/math";
 import { handleDeposit } from "../../../utils/deposit";
 import { OrderType, handleOrder } from "../../../utils/order";
+import { getEventData } from "../../../utils/event";
 import { prices } from "../../../utils/prices";
 import * as keys from "../../../utils/keys";
 
@@ -36,7 +38,11 @@ describe("Exchange.FundingFees.AdaptiveFunding", () => {
     });
   });
 
-  it("adaptive funding", async () => {
+  async function testAdaptiveFunding(useOpenInterestInTokensForBalance) {
+    if (useOpenInterestInTokensForBalance) {
+      await dataStore.setBool(keys.USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE, true);
+    }
+
     await dataStore.setUint(keys.fundingFactorKey(ethUsdMarket.marketToken), decimalToFloat(1, 10));
     await dataStore.setUint(keys.fundingExponentFactorKey(ethUsdMarket.marketToken), decimalToFloat(1));
 
@@ -361,5 +367,136 @@ describe("Exchange.FundingFees.AdaptiveFunding", () => {
         ); // -0.00475%
       }
     );
+
+    // increase position at a different wnt price to create some difference between openInterestInTokens and openInterestInUsd
+    // the open interest in USD should be balanced after this order, the open interest in tokens should not be balanced
+    await handleOrder(fixture, {
+      create: {
+        account: user0,
+        market: ethUsdMarket,
+        initialCollateralToken: wnt,
+        sizeDeltaUsd: decimalToFloat(12_001),
+        acceptablePrice: expandDecimals(5050, 12),
+        orderType: OrderType.MarketIncrease,
+        isLong: true,
+      },
+      execute: { ...getExecuteParams(fixture, { prices: [prices.usdc, prices.wnt.increased] }) },
+    });
+
+    expect(await dataStore.getUint(keys.openInterestKey(ethUsdMarket.marketToken, wnt.address, true))).eq(
+      "106001000000000000000000000000000000"
+    ); // 106,001
+    expect(await dataStore.getUint(keys.openInterestKey(ethUsdMarket.marketToken, usdc.address, false))).eq(
+      "106001000000000000000000000000000000"
+    ); // 106,001
+
+    expect(await dataStore.getUint(keys.openInterestInTokensKey(ethUsdMarket.marketToken, wnt.address, true))).eq(
+      "21190637450199203187"
+    ); // 21.190637450199203187
+    expect(await dataStore.getUint(keys.openInterestInTokensKey(ethUsdMarket.marketToken, usdc.address, false))).eq(
+      "21200200000000000000"
+    ); // 21.2002
+
+    await time.increase(10 * 60);
+
+    if (useOpenInterestInTokensForBalance) {
+      await usingResult(
+        reader.getMarketInfo(dataStore.address, prices.ethUsdMarket, ethUsdMarket.marketToken),
+        (marketInfo) => {
+          expect(marketInfo.nextFunding.longsPayShorts).eq(false);
+          expect(marketInfo.nextFunding.fundingFactorPerSecond).closeTo(
+            "35773029394356302617778206",
+            "100000000000000000000000"
+          ); // 0.00357%
+          expect(marketInfo.nextFunding.nextSavedFundingFactorPerSecond).closeTo(
+            "-35773029394356302617778206",
+            "100000000000000000000000"
+          ); // -0.00357%
+        }
+      );
+    } else {
+      // if !useOpenInterestInTokensForBalance there should only be a minor change in funding
+      await usingResult(
+        reader.getMarketInfo(dataStore.address, prices.ethUsdMarket, ethUsdMarket.marketToken),
+        (marketInfo) => {
+          expect(marketInfo.nextFunding.longsPayShorts).eq(false);
+          expect(marketInfo.nextFunding.fundingFactorPerSecond).closeTo(
+            "47773029394356302617778206",
+            "100000000000000000000000"
+          ); // 0.00475%
+          expect(marketInfo.nextFunding.nextSavedFundingFactorPerSecond).closeTo(
+            "-47773029394356302617778206",
+            "100000000000000000000000"
+          ); // -0.00475%
+        }
+      );
+    }
+
+    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 9));
+    await dataStore.setUint(keys.positionImpactFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(1, 8));
+    await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(2, 0));
+    await dataStore.setUint(
+      keys.positionImpactExponentFactorKey(ethUsdMarket.marketToken, false),
+      decimalToFloat(2, 0)
+    );
+
+    // is useOpenInterestInTokensForBalance, there should be a small positive price impact
+    // since the openInterestInTokens for longs is slightly smaller than for shorts
+    await handleOrder(fixture, {
+      create: {
+        account: user0,
+        market: ethUsdMarket,
+        initialCollateralDeltaAmount: expandDecimals(10, 18),
+        initialCollateralToken: wnt,
+        sizeDeltaUsd: decimalToFloat(30),
+        acceptablePrice: expandDecimals(5050, 12),
+        orderType: OrderType.MarketIncrease,
+        isLong: true,
+      },
+      execute: {
+        gasUsageLabel: "executeOrder",
+        afterExecution: ({ logs }) => {
+          const positionIncreaseEvent = getEventData(logs, "PositionIncrease");
+          //  0.00000984141 / -0.000009
+          expect(positionIncreaseEvent.pendingPriceImpactUsd).eq(
+            useOpenInterestInTokensForBalance ? "9843824701195219287825000" : "-8999999999999999859640000"
+          );
+        },
+      },
+    });
+
+    // the position should be fully closeable
+    await handleOrder(fixture, {
+      create: {
+        account: user0,
+        market: ethUsdMarket,
+        initialCollateralToken: wnt,
+        sizeDeltaUsd: decimalToFloat(106_031),
+        acceptablePrice: expandDecimals(4050, 12),
+        orderType: OrderType.MarketDecrease,
+        isLong: true,
+      },
+      execute: {
+        ...getExecuteParams(fixture, { prices: [prices.usdc, prices.wnt.decreased] }),
+        gasUsageLabel: "executeOrder",
+        afterExecution: ({ logs }) => {
+          const positionDecreaseEvent = getEventData(logs, "PositionDecrease");
+          expect(positionDecreaseEvent.sizeInUsd).eq("0");
+          expect(positionDecreaseEvent.priceImpactUsd).eq(
+            useOpenInterestInTokensForBalance
+              ? "-111465017696232642237559789270000" // -111.465017696
+              : "-112362115509999998076470009600000" // -112.36211551
+          );
+        },
+      },
+    });
+  }
+
+  it("adaptive funding", async () => {
+    await testAdaptiveFunding(false);
+  });
+
+  it("adaptive funding with USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE as true", async () => {
+    await testAdaptiveFunding(true);
   });
 });

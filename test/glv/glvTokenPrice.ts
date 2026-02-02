@@ -30,7 +30,7 @@ describe("Glv Token Price", () => {
   });
 
   it("glv token price", async () => {
-    await dataStore.setUint(keys.glvShiftMaxPriceImpactFactorKey(ethUsdGlvAddress), decimalToFloat(1, 3));
+    await dataStore.setUint(keys.glvShiftMaxLossFactorKey(ethUsdGlvAddress), decimalToFloat(1, 3));
 
     async function expectGlvTokenPrice({
       price: expectedPrice,

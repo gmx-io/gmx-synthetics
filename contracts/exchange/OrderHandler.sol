@@ -2,6 +2,8 @@
 
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+
 import "./BaseOrderHandler.sol";
 import "../error/ErrorUtils.sol";
 import "./IOrderHandler.sol";
@@ -11,7 +13,7 @@ import "../multichain/MultichainVault.sol";
 
 // @title OrderHandler
 // @dev Contract to handle creation, execution and cancellation of orders
-contract OrderHandler is IOrderHandler, BaseOrderHandler {
+contract OrderHandler is IOrderHandler, BaseOrderHandler, ReentrancyGuard {
     using SafeCast for uint256;
     using Order for Order.Props;
     using Array for uint256[];
@@ -195,6 +197,9 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
             );
         }
 
+        // note that order.account would receive the execution fee for the
+        // gas cost of cancelling the order
+        // the cancellationReceiver would receive the excess executionf fee refund
         OrderUtils.cancelOrder(
             OrderUtils.CancelOrderParams(
                 dataStore,
@@ -202,7 +207,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
                 multichainVault,
                 orderVault,
                 key,
-                order.account(),
+                order.account(), // keeper
                 startingGas,
                 true, // isExternalCall
                 false, // isAutoCancel
@@ -220,13 +225,12 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
         OracleUtils.SimulatePricesParams memory params
     ) external
         override
-        onlyController
         withSimulatedOraclePrices(params)
         globalNonReentrant
     {
         Order.Props memory order = OrderStoreUtils.get(dataStore, key);
 
-        this._executeOrder(
+        this.doExecuteOrder(
             key,
             order,
             msg.sender,
@@ -253,7 +257,7 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
 
         uint256 executionGas = GasUtils.getExecutionGas(dataStore, startingGas);
 
-        try this._executeOrder{ gas: executionGas }(
+        try this.doExecuteOrder{ gas: executionGas }(
             key,
             order,
             msg.sender,
@@ -268,13 +272,13 @@ contract OrderHandler is IOrderHandler, BaseOrderHandler {
     // @param key the key of the order to execute
     // @param oracleParams OracleUtils.SetPricesParams
     // @param keeper the keeper executing the order
-    // @param startingGas the starting gas
-    function _executeOrder(
+    // @note the caller function should be protected by global reentrancy guard
+    function doExecuteOrder(
         bytes32 key,
         Order.Props memory order,
         address keeper,
         bool isSimulation
-    ) external onlySelf {
+    ) external nonReentrant onlySelfOrController {
         uint256 startingGas = gasleft();
 
         BaseOrderUtils.ExecuteOrderParams memory params = _getExecuteOrderParams(

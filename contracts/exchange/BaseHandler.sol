@@ -46,7 +46,8 @@ contract BaseHandler is RoleModule, GlobalReentrancyGuard, OracleModule {
             OracleUtils.isOracleError(errorSelector) ||
             errorSelector == Errors.DisabledFeature.selector ||
             errorSelector == Errors.InsufficientGasLeftForCallback.selector ||
-            errorSelector == Errors.InsufficientGasForCancellation.selector
+            errorSelector == Errors.InsufficientGasForCancellation.selector ||
+            errorSelector == Errors.InsufficientGasForAutoCancellation.selector
         ) {
             ErrorUtils.revertWithCustomError(reasonBytes);
         }

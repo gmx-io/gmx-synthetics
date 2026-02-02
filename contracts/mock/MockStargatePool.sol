@@ -26,6 +26,9 @@ contract MockStargatePool {
      * @param layerZeroProvider The recipient contract (LayerZeroProvider)
      * @param _amount The amount of tokens to send
      * @param _message The encoded message containing account, token, srcChainId
+     * @dev Simulates real Stargate behavior:
+     *      1. For ERC20: transfers tokens to LayerZeroProvider, then calls lzCompose with msg.value (top-up)
+     *      2. For native ETH: transfers bridged ETH to LayerZeroProvider, then calls lzCompose with remaining msg.value (top-up)
      */
     function sendToken(LayerZeroProvider layerZeroProvider, uint256 _amount, bytes calldata _message) external payable {
         // prepend composeFrom (msg.sender) to the user payload
@@ -41,14 +44,25 @@ contract MockStargatePool {
             encodedMsg
         );
 
+        uint256 composeValue = msg.value;
         if (token == address(0)) {
-            require(msg.value == _amount, "Incorrect ETH amount sent");
+            // For native token: msg.value should include both bridged amount + top-up
+            require(msg.value >= _amount, "Insufficient ETH sent");
+
+            // Transfer bridged ETH to LayerZeroProvider (simulates Stargate's _outflow)
+            (bool success, ) = address(layerZeroProvider).call{value: _amount}("");
+            require(success, "ETH transfer failed");
+
+            // Remaining msg.value is the top-up amount for lzCompose
+            composeValue -= _amount;
         } else {
+            // For ERC20: msg.value includes just the top-up
             IERC20(token).transferFrom(msg.sender, address(layerZeroProvider), _amount);
         }
 
         // Simulate cross-chain message delivery by directly calling lzCompose on the LayerZeroProvider contract
-        layerZeroProvider.lzCompose{value: msg.value}(
+        // The composeValue represents ONLY the top-up amount (not the bridged tokens)
+        layerZeroProvider.lzCompose{value: composeValue}(
             address(this),
             bytes32(uint256(1)), // mock guid
             composedMsg,

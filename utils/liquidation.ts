@@ -28,7 +28,7 @@ export async function executeLiquidation(fixture, overrides) {
     dataStreamTokens,
     dataStreamData,
     priceFeedTokens,
-    execute: async (key, oracleParams) => {
+    execute: async (oracleParams) => {
       return await liquidationHandler.executeLiquidation(
         account,
         market.marketToken,

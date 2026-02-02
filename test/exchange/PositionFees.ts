@@ -12,14 +12,14 @@ import * as keys from "../../utils/keys";
 describe("Exchange.PositionFees", () => {
   let fixture;
   let user0, user1, user2, user3;
-  let dataStore, ethUsdMarket, referralStorage, wnt, usdc;
+  let dataStore, ethUsdMarket, referralStorage, mockTimelockV1, wnt, usdc;
   const referralCode0 = hashString("example code 0");
   const referralCode1 = hashString("example code 1");
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1, user2, user3 } = fixture.accounts);
-    ({ dataStore, ethUsdMarket, referralStorage, wnt, usdc } = fixture.contracts);
+    ({ dataStore, ethUsdMarket, referralStorage, mockTimelockV1, wnt, usdc } = fixture.contracts);
 
     await handleDeposit(fixture, {
       create: {
@@ -32,11 +32,11 @@ describe("Exchange.PositionFees", () => {
     await referralStorage.connect(user2).registerCode(referralCode0);
     await referralStorage.connect(user3).registerCode(referralCode1);
 
-    await referralStorage.setTier(1, 1000, 2000); // tier 1, totalRebate: 10%, discountShare: 20%
-    await referralStorage.setTier(2, 2000, 2500); // tier 2, totalRebate: 20%, discountShare: 25%
+    await mockTimelockV1.setTier(referralStorage.address, 1, 1000, 2000); // tier 1, totalRebate: 10%, discountShare: 20%
+    await mockTimelockV1.setTier(referralStorage.address, 2, 2000, 2500); // tier 2, totalRebate: 20%, discountShare: 25%
 
-    await referralStorage.setReferrerTier(user2.address, 1);
-    await referralStorage.setReferrerTier(user3.address, 2);
+    await mockTimelockV1.setReferrerTier(referralStorage.address, user2.address, 1);
+    await mockTimelockV1.setReferrerTier(referralStorage.address, user3.address, 2);
 
     await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken, true), decimalToFloat(5, 4)); // 0.05%
     await dataStore.setUint(keys.positionFeeFactorKey(ethUsdMarket.marketToken, false), decimalToFloat(5, 4)); // 0.05%

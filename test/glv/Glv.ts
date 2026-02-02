@@ -272,6 +272,6 @@ describe("Glv", () => {
       1
     );
     // TODO add GLV_MAX_MARKET_TOKEN_BALANCE_AMOUNT
-    await config.setUint(keys.GLV_SHIFT_MAX_PRICE_IMPACT_FACTOR, encodeData(["address"], [ethUsdGlvAddress]), 1);
+    await config.setUint(keys.GLV_SHIFT_MAX_LOSS_FACTOR, encodeData(["address"], [ethUsdGlvAddress]), 1);
   });
 });

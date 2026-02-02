@@ -15,4 +15,8 @@ const func = createDeployFunction({
   },
 });
 
+func.skip = async ({ network }) => {
+  return network.name !== "hardhat";
+};
+
 export default func;

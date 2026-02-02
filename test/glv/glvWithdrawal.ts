@@ -23,6 +23,8 @@ import { errorsContract } from "../../utils/error";
 import { increaseTime } from "../../utils/time";
 import { printGasUsage } from "../../utils/gas";
 import { expectBalances } from "../../utils/validation";
+import { setBytes32IfDifferent } from "../../utils/dataStore";
+import { TOKEN_ORACLE_TYPES } from "../../utils/oracle";
 
 describe("Glv Withdrawals", () => {
   const { provider } = ethers;
@@ -36,12 +38,15 @@ describe("Glv Withdrawals", () => {
     btcUsdMarket,
     glvRouter,
     wnt,
+    sol,
     usdc,
     glvFactory,
     glvVault,
     roleStore,
+    gmOracleProvider,
     glvShiftHandler,
-    ethUsdSingleTokenMarket2;
+    ethUsdSingleTokenMarket2,
+    oracle;
 
   beforeEach(async () => {
     fixture = await deployFixture();
@@ -57,11 +62,14 @@ describe("Glv Withdrawals", () => {
       glvRouter,
       wnt,
       usdc,
+      sol,
       glvFactory,
       glvVault,
       roleStore,
       glvShiftHandler,
       ethUsdSingleTokenMarket2,
+      gmOracleProvider,
+      oracle,
     } = fixture.contracts);
   });
 
@@ -495,6 +503,79 @@ describe("Glv Withdrawals", () => {
       },
       [ethUsdGlvAddress]: {
         [ethUsdMarket.marketToken]: 0,
+      },
+    });
+  });
+
+  it("execute glv withdrawal with oracle GLV price", async () => {
+    const oracleTypeKey = keys.oracleTypeKey(ethUsdGlvAddress);
+    await setBytes32IfDifferent(oracleTypeKey, TOKEN_ORACLE_TYPES.DEFAULT, "oracle type");
+    await dataStore.setAddress(
+      keys.oracleProviderForTokenKey(oracle.address, ethUsdGlvAddress),
+      gmOracleProvider.address
+    );
+
+    await expectBalances({
+      [user0.address]: {
+        [wnt.address]: 0,
+        [usdc.address]: 0,
+      },
+    });
+
+    await handleGlvDeposit(fixture, {
+      create: {
+        longTokenAmount: expandDecimals(1, 18),
+        shortTokenAmount: expandDecimals(5_000, 6),
+      },
+    });
+
+    expect(await getSupplyOf(ethUsdGlvAddress)).to.be.eq(expandDecimals(10_000, 18));
+    await expectBalances({
+      [user0.address]: {
+        [ethUsdGlvAddress]: expandDecimals(10_000, 18),
+      },
+      [ethUsdGlvAddress]: {
+        [ethUsdMarket.marketToken]: expandDecimals(10_000, 18),
+      },
+    });
+
+    await expect(
+      handleGlvWithdrawal(fixture, {
+        create: {
+          glvTokenAmount: expandDecimals(1000, 18),
+        },
+        execute: {
+          tokens: [wnt.address, usdc.address],
+          precisions: [8, 18],
+          minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+          maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6)],
+        },
+      })
+    )
+      .to.be.revertedWithCustomError(errorsContract, "EmptyPrimaryPrice")
+      .withArgs(ethers.utils.getAddress(sol.address));
+
+    await handleGlvWithdrawal(fixture, {
+      create: {
+        glvTokenAmount: expandDecimals(1000, 18),
+      },
+      execute: {
+        tokens: [wnt.address, usdc.address, ethUsdGlvAddress],
+        precisions: [8, 18, 8],
+        minPrices: [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(1, 4)],
+        maxPrices: [expandDecimals(5000, 4), expandDecimals(1, 6), expandDecimals(1, 4)],
+      },
+    });
+
+    expect(await getSupplyOf(ethUsdGlvAddress)).to.be.eq(expandDecimals(9000, 18));
+    expectBalances({
+      [user0.address]: {
+        [wnt.address]: expandDecimals(1, 17),
+        [usdc.address]: expandDecimals(500, 6),
+        [ethUsdGlvAddress]: expandDecimals(9000, 18),
+      },
+      [ethUsdGlvAddress]: {
+        [ethUsdMarket.marketToken]: expandDecimals(9000, 18),
       },
     });
   });

@@ -32,32 +32,6 @@ library ReaderPositionUtils {
         uint256 pendingBorrowingFeeUsd;
     }
 
-    function getNextBorrowingFees(
-        DataStore dataStore,
-        Position.Props memory position,
-        Market.Props memory market,
-        MarketUtils.MarketPrices memory prices
-    ) internal view returns (uint256) {
-        return MarketUtils.getNextBorrowingFees(
-            dataStore,
-            position,
-            market,
-            prices
-        );
-    }
-
-    function getBorrowingFees(
-        DataStore dataStore,
-        Price.Props memory collateralTokenPrice,
-        uint256 borrowingFeeUsd
-    ) internal view returns (PositionPricingUtils.PositionBorrowingFees memory) {
-        return PositionPricingUtils.getBorrowingFees(
-            dataStore,
-            collateralTokenPrice,
-            borrowingFeeUsd
-        );
-    }
-
     function getPositionInfoList(
         DataStore dataStore,
         IReferralStorage referralStorage,
@@ -127,18 +101,6 @@ library ReaderPositionUtils {
         }
 
         revert Errors.EmptyMarketPrice(market);
-    }
-
-    function getNextFundingAmountPerSize(
-        DataStore dataStore,
-        Market.Props memory market,
-        MarketUtils.MarketPrices memory prices
-    ) public view returns (MarketUtils.GetNextFundingAmountPerSizeResult memory) {
-        return MarketUtils.getNextFundingAmountPerSize(
-            dataStore,
-            market,
-            prices
-        );
     }
 
     function getAccountPositions(
@@ -230,15 +192,15 @@ library ReaderPositionUtils {
 
         // borrowing and funding fees need to be overwritten with pending values otherwise they
         // would be using storage values that have not yet been updated
-        cache.pendingBorrowingFeeUsd = getNextBorrowingFees(dataStore, positionInfo.position, cache.market, prices);
+        cache.pendingBorrowingFeeUsd = MarketUtils.getNextBorrowingFees(dataStore, positionInfo.position, cache.market, prices);
 
-        positionInfo.fees.borrowing = getBorrowingFees(
+        positionInfo.fees.borrowing = PositionPricingUtils.getBorrowingFees(
             dataStore,
             cache.collateralTokenPrice,
             cache.pendingBorrowingFeeUsd
         );
 
-        MarketUtils.GetNextFundingAmountPerSizeResult memory nextFundingAmountResult = getNextFundingAmountPerSize(dataStore, cache.market, prices);
+        MarketUtils.GetNextFundingAmountPerSizeResult memory nextFundingAmountResult = MarketUtils.getNextFundingAmountPerSize(dataStore, cache.market, prices);
 
         positionInfo.fees.funding.latestFundingFeeAmountPerSize = MarketUtils.getFundingFeeAmountPerSize(
             dataStore,

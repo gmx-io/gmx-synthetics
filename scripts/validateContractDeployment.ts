@@ -1,6 +1,6 @@
 import hre, { ethers } from "hardhat";
 import dotenv from "dotenv";
-import { Result } from "@ethersproject/abi";
+import { Result, LogDescription } from "@ethersproject/abi";
 import { TransactionReceipt } from "@ethersproject/providers";
 import { ContractInfo, SignalRoleInfo, validateSourceCode } from "./validateDeploymentUtils";
 import path from "path";
@@ -99,15 +99,29 @@ function printResults(contractInfos: ContractInfo[]) {
 
 // Roles
 
+function isRoleSignalEvent(eventEmitterLog: LogDescription): boolean {
+  if (eventEmitterLog.name !== "EventLog1" && eventEmitterLog.name !== "EventLog") {
+    return false;
+  }
+  return eventEmitterLog.args[1] === "SignalGrantRole";
+}
+
+// Construct array of contracts with roles signalled to them
 async function extractRolesFromTx(txReceipt: TransactionReceipt): Promise<ContractInfo[]> {
   const contractInfos = new Map<string, ContractInfo>();
   const EventEmitter = await ethers.getContractFactory("EventEmitter");
   const eventEmitterInterface = EventEmitter.interface;
 
   for (const log of txReceipt.logs) {
-    const parsedLog = eventEmitterInterface.parseLog(log);
+    let parsedLog: LogDescription;
+    try {
+      parsedLog = eventEmitterInterface.parseLog(log);
+    } catch (error) {
+      // console.log("Not an event emitter event. Skipping event with index ", log.logIndex)
+      continue;
+    }
 
-    if (parsedLog.name == "EventLog1" && parsedLog.args[1] === "SignalGrantRole") {
+    if (isRoleSignalEvent(parsedLog)) {
       const signal = parseSignalGrantRoleEvent(parsedLog.args);
       if (contractInfos.has(signal.account)) {
         contractInfos.get(signal.account).signalledRoles.push(signal.roleKey);
@@ -140,8 +154,8 @@ async function validateRoles(contractInfo: ContractInfo, rolesConfig: RolesConfi
 }
 
 function parseSignalGrantRoleEvent(eventArg: Result): SignalRoleInfo {
-  const account = eventArg[4][0][0][0].value;
-  const roleKey = eventArg[4][4][0][0].value;
+  const account = eventArg[3][0][0][0].value;
+  const roleKey = eventArg[3][4][0][0].value;
   return {
     account: account,
     roleKey: roleKey,

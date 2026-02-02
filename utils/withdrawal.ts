@@ -86,7 +86,7 @@ export async function executeWithdrawal(fixture, overrides: any = {}) {
   const withdrawalKeys = await getWithdrawalKeys(dataStore, 0, 1);
 
   const params = {
-    key: withdrawalKeys[0],
+    args: [withdrawalKeys[0]],
     oracleBlockNumber: await ethers.provider.getBlockNumber(),
     tokens,
     precisions,

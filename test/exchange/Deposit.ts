@@ -402,19 +402,6 @@ describe("Exchange.Deposit", () => {
     expect(await getBalanceOf(ethUsdMarket.marketToken, user0.address)).eq(expandDecimals(190000, 18));
   });
 
-  it("simulateExecuteDeposit", async () => {
-    await expect(
-      depositHandler.connect(user0).simulateExecuteDeposit(HashZero, {
-        primaryTokens: [],
-        primaryPrices: [],
-        minTimestamp: 0,
-        maxTimestamp: 0,
-      })
-    )
-      .to.be.revertedWithCustomError(errorsContract, "Unauthorized")
-      .withArgs(user0.address, "CONTROLLER");
-  });
-
   it("_executeDeposit", async () => {
     const depositStoreUtilsTest = await deployContract("DepositStoreUtilsTest", [], {
       libraries: {

@@ -94,7 +94,7 @@ export async function executeShift(fixture, overrides: any = {}) {
   }
 
   const params = {
-    key: shiftKey,
+    args: [shiftKey],
     oracleBlockNumber,
     tokens,
     precisions,

@@ -31,6 +31,13 @@ const trustedExternalContracts = new Set(
     "0xD2E217d800C41c86De1e01FD72009d4Eafc539a3",
     "0x15F9eBC71c539926B8f652a534d29B4Af57CaD55",
     "0x656fa39BdB5984b477FA6aB443195D72D1Accc1c",
+    "0xE0886d9baAaD385F37d460A4ec7b32b79a3731e0", // Gelato
+    "0x5051FD154320584c9Cc2071aed772656E8fcd855", // Gelato
+    "0x49d30B3035c647BF57f3845DA287bD84d80bDa2C", // Gelato
+    "0x8e36C6106B053aD32D20a426f3faF2d32b49cFBd", // Gelato
+    "0x0BA63427862eBEc8492d0236EEc065D6f9978ad6", // Gelato
+    "0xbD88efB162a4157d5B223Bc99CE1bc80E740152f", // Gelato
+    "0xcc25DCe071B75196D27aD95906dbfA45218d5eC6", // Gelato
   ].map((address) => address.toLowerCase())
 );
 
@@ -38,7 +45,7 @@ async function validateMember({ role, member, errors }) {
   if (["ROLE_ADMIN", "TIMELOCK_MULTISIG", "CONTROLLER"].includes(role)) {
     const code = await hre.ethers.provider.getCode(member);
     if (code === "0x") {
-      errors.push(`EOA (Externally Owned Account) with ${role} role`);
+      errors.push(`EOA (Externally Owned Account) with ${role} role: ${member.toLowerCase()}`);
     }
   }
 }
@@ -57,6 +64,13 @@ function getAvalancheValues() {
   };
 }
 
+function getMegaEthValues() {
+  return {
+    referralStorageAddress: "0xAd917849372eaEF498E982F90bA6459a43ecbd31",
+    dataStreamVerifierAddress: "0xf514688BC967c31e946B03A1fc10F55ddd69169C",
+  };
+}
+
 function getValues(): { referralStorageAddress?: string; dataStreamVerifierAddress?: string } {
   if (hre.network.name === "avalancheFuji") {
     return {};
@@ -64,6 +78,8 @@ function getValues(): { referralStorageAddress?: string; dataStreamVerifierAddre
     return getArbitrumValues();
   } else if (hre.network.name === "avalanche") {
     return getAvalancheValues();
+  } else if (hre.network.name === "megaEth") {
+    return getMegaEthValues();
   }
   throw new Error("Unsupported network");
 }
@@ -111,9 +127,7 @@ export async function validateRoles() {
           (member) => member.toLowerCase() === lowercaseAddress
         );
         if (!ok) {
-          errors.push(
-            `role ${requiredRole} is not configured for contract ${contractName}. "${deployment.address}": true, // ${contractName}`
-          );
+          errors.push(`"${deployment.address}": true, // ${contractName} (${requiredRole})`);
         }
       } catch (e) {
         console.log("error", e);
@@ -124,9 +138,7 @@ export async function validateRoles() {
   const feeHandlerOracle = FEE_HANDLER_ORACLES[hre.network.name];
 
   if (feeHandlerOracle && !_expectedRoles["CONTROLLER"][feeHandlerOracle]) {
-    errors.push(
-      `role CONTROLLER is not configured for contract FeeHandler Oracle. "${feeHandlerOracle}": true, // FeeHandler Oracle`
-    );
+    errors.push(`"${feeHandlerOracle}": true, // FeeHandler Oracle (CONTROLLER)`);
   }
 
   const expectedRoles = {};
@@ -170,6 +182,7 @@ export async function validateRoles() {
       if (unexpectedDeployer) {
         warns.push(`contract ${contractName} ${member} with role ${role} was not deployed by GMX deployer`);
       }
+      console.log(`checking ${role}, ${member}`);
       if (!expectedRoles[role][member.toLowerCase()]) {
         const { isContract, contractName } = await getContractInfo(contractNameByAddress, member);
         if (isContract && !contractName) {
@@ -276,7 +289,7 @@ export function getIsGmxDeployer(contractAddress: string) {
 
 async function validateDataStreamProviderHasDiscount() {
   // fee discount is not needed on certain networks like Botanix
-  if (hre.network.name === "botanix") {
+  if (hre.network.name === "botanix" || hre.network.name === "megaEth") {
     return;
   }
   console.log("validating data stream provider has discount");
@@ -315,7 +328,7 @@ async function validateDataStreamProviderHasDiscount() {
 
 async function validateIsReferralStorageHandler() {
   // the ReferralStorage is not deployed on Botanix
-  if (hre.network.name === "botanix") {
+  if (hre.network.name === "botanix" || hre.network.name === "megaEth") {
     return;
   }
   console.log("validating is referral storage handler");
@@ -323,7 +336,7 @@ async function validateIsReferralStorageHandler() {
   if (referralStorageAddress) {
     const referralStorage = new hre.ethers.Contract(
       referralStorageAddress,
-      ["function isHandler(address) view returns (bool)"],
+      ["function isHandler(address) view returns (bool)", "function gov() view returns (address)"],
       hre.ethers.provider
     );
     const orderHandlerDeployment = await hre.deployments.get("OrderHandler");
@@ -344,6 +357,34 @@ async function validateIsReferralStorageHandler() {
         "🟠 MultichainOrderRouter %s is missing the handler role in ReferralStorage %s",
         multichainOrderRouterDeployment.address,
         referralStorageAddress
+      );
+    }
+
+    const jitOrderHandlerDeployment = await hre.deployments.get("JitOrderHandler");
+    const isJitOderHandler = await referralStorage.isHandler(jitOrderHandlerDeployment.address);
+    if (!isJitOderHandler) {
+      console.warn(
+        "🟠 JitOrderHandler %s is missing the handler role in ReferralStorage %s",
+        jitOrderHandlerDeployment.address,
+        referralStorageAddress
+      );
+    }
+
+    const referralStorageTimelock = new hre.ethers.Contract(
+      await referralStorage.gov(),
+      ["function isKeeper(address) view returns (bool)"],
+      hre.ethers.provider
+    );
+
+    const isMultichainOrderRouterTimelockHandler = await referralStorageTimelock.isKeeper(
+      multichainOrderRouterDeployment.address
+    );
+
+    if (!isMultichainOrderRouterTimelockHandler) {
+      console.warn(
+        "🟠 MultichainOrderRouter %s is missing the keeper role in ReferralStorage Timelock %s",
+        multichainOrderRouterDeployment.address,
+        referralStorageTimelock.address
       );
     }
   }

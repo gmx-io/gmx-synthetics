@@ -8,11 +8,12 @@ import {
   encodeGlvDepositMessage,
   encodeGlvWithdrawalMessage,
   encodeSetTraderReferralCodeMessage,
+  encodeRegisterCodeMessage,
   encodeWithdrawalMessage,
   bridgeInTokens,
 } from "../../utils/multichain";
 import { hashString } from "../../utils/hash";
-import { sendSetTraderReferralCode } from "../../utils/relay/gelatoRelay";
+import { sendSetTraderReferralCode, sendRegisterCode } from "../../utils/relay/gelatoRelay";
 import {
   sendCreateDeposit,
   sendCreateGlvDeposit,
@@ -474,6 +475,138 @@ describe("LayerZeroProvider", () => {
       });
     });
 
+    describe("Native Token Top-Up via msg.value", () => {
+      beforeEach(async () => {
+        await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolUsdc.SRC_EID()), chainId);
+      });
+
+      it("should credit msg.value to user's multichain balance when bridging USDC", async () => {
+        const usdcAmount = expandDecimals(1000, 6);
+        const nativeTopUp = expandDecimals(1, 17); // 0.1 ETH
+
+        const wntBalanceBefore = await dataStore.getUint(keys.multichainBalanceKey(user0.address, wnt.address));
+        const usdcBalanceBefore = await dataStore.getUint(keys.multichainBalanceKey(user0.address, usdc.address));
+
+        await bridgeInTokens(fixture, {
+          account: user0,
+          token: usdc,
+          amount: usdcAmount,
+          nativeTopUpAmount: nativeTopUp,
+        });
+
+        // Verify USDC was credited
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, usdc.address))).eq(
+          usdcBalanceBefore.add(usdcAmount)
+        );
+
+        // Verify native token was credited (wrapped to WNT)
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, wnt.address))).eq(
+          wntBalanceBefore.add(nativeTopUp)
+        );
+      });
+
+      it("should credit msg.value when bridging native ETH", async () => {
+        const ethBridgeAmount = expandDecimals(1, 18); // 1 ETH for bridging
+        const nativeTopUp = expandDecimals(5, 17); // 0.5 ETH for top-up
+        const totalMsgValue = ethBridgeAmount.add(nativeTopUp);
+
+        const wntBalanceBefore = await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address));
+
+        await bridgeInTokens(fixture, {
+          account: user1,
+          token: undefined, // undefined means sending native tokens (ETH)
+          amount: ethBridgeAmount,
+          nativeTopUpAmount: nativeTopUp,
+        });
+
+        // Should credit both: bridged ETH + top-up ETH
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).eq(
+          wntBalanceBefore.add(totalMsgValue)
+        );
+      });
+
+      it("should work with msg.value = 0", async () => {
+        const usdcAmount = expandDecimals(1000, 6);
+
+        const usdcBalanceBefore = await dataStore.getUint(keys.multichainBalanceKey(user0.address, usdc.address));
+        const wntBalanceBefore = await dataStore.getUint(keys.multichainBalanceKey(user0.address, wnt.address));
+
+        // No native top-up (nativeTopUpAmount not specified)
+        await bridgeInTokens(fixture, {
+          account: user0,
+          token: usdc,
+          amount: usdcAmount,
+        });
+
+        // Should succeed with msg.value = 0
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, usdc.address))).eq(
+          usdcBalanceBefore.add(usdcAmount)
+        );
+
+        // WNT balance should not change
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, wnt.address))).eq(wntBalanceBefore);
+      });
+
+      it("should revert if msg.value is less than expectedNativeValue", async () => {
+        const usdcAmount = expandDecimals(1000, 6);
+        const expectedNativeValue = expandDecimals(2, 17); // 0.2 ETH expected
+        const actualSent = expandDecimals(1, 17); // 0.1 ETH actually sent (insufficient)
+
+        await usdc.mint(user0.address, usdcAmount);
+        await usdc.connect(user0).approve(mockStargatePoolUsdc.address, usdcAmount);
+
+        // Encode message without action but with expectedNativeValue
+        const data = ethers.utils.defaultAbiCoder.encode(
+          ["uint8", "uint256", "bytes"],
+          [0, expectedNativeValue, "0x"] // ActionType.None, expectedNativeValue, no actionData
+        );
+
+        const encodedMessage = ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [user0.address, data]);
+
+        // Should revert because actualSent (0.1 ETH) < expectedNativeValue (0.2 ETH)
+        await expect(
+          mockStargatePoolUsdc
+            .connect(user0)
+            .sendToken(layerZeroProvider.address, usdcAmount, encodedMessage, { value: actualSent })
+        ).to.be.revertedWithCustomError(layerZeroProvider, "InsufficientNativeTokenAmount");
+      });
+
+      it("should succeed when msg.value >= expectedNativeValue and credit full amount", async () => {
+        const usdcAmount = expandDecimals(1000, 6);
+        const expectedNativeValue = expandDecimals(5, 16); // 0.05 ETH expected
+        const actualSent = expandDecimals(2, 17); // 0.2 ETH sent (more than expected)
+
+        await usdc.mint(user0.address, usdcAmount);
+        await usdc.connect(user0).approve(mockStargatePoolUsdc.address, usdcAmount);
+
+        // Encode message without action but with expectedNativeValue
+        const data = ethers.utils.defaultAbiCoder.encode(
+          ["uint8", "uint256", "bytes"],
+          [0, expectedNativeValue, "0x"] // ActionType.None, expectedNativeValue, no actionData
+        );
+
+        const encodedMessage = ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [user0.address, data]);
+
+        const wntBalanceBefore = await dataStore.getUint(keys.multichainBalanceKey(user0.address, wnt.address));
+        const usdcBalanceBefore = await dataStore.getUint(keys.multichainBalanceKey(user0.address, usdc.address));
+
+        // Should succeed because actualSent (0.2 ETH) >= expectedNativeValue (0.05 ETH)
+        await mockStargatePoolUsdc
+          .connect(user0)
+          .sendToken(layerZeroProvider.address, usdcAmount, encodedMessage, { value: actualSent });
+
+        // USDC should be credited normally
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, usdc.address))).eq(
+          usdcBalanceBefore.add(usdcAmount)
+        );
+
+        // User gets the full actualSent amount (0.2 ETH), not just expectedNativeValue
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user0.address, wnt.address))).eq(
+          wntBalanceBefore.add(actualSent)
+        );
+      });
+    });
+
     describe("actionType: SetTraderReferralCode", () => {
       const referralCode = hashString("referralCode");
 
@@ -503,8 +636,7 @@ describe("LayerZeroProvider", () => {
         await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolUsdc.SRC_EID()), chainId);
         // whitelist LayerZeroProvider to be excluded from paying the relay fee
         await dataStore.setBool(keys.isRelayFeeExcludedKey(layerZeroProvider.address), true);
-        // enable MultichainOrderRouter to call ReferralStorage.setTraderReferralCode
-        await referralStorage.setHandler(multichainOrderRouter.address, true);
+        // MultichainOrderRouter is already enabled, at deploy time, to call ReferralStorage.setTraderReferralCode
 
         const usdcAmount = expandDecimals(1, 5); // 0.1 USDC --> e.g. minimum amount required by a stargate pool to bridge a message
         await usdc.mint(user1.address, usdcAmount);
@@ -527,6 +659,79 @@ describe("LayerZeroProvider", () => {
         expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(usdcAmount);
         expect(await usdc.balanceOf(layerZeroProvider.address)).to.eq(0); // does not change
         expect(await referralStorage.traderReferralCodes(user1.address)).eq(referralCode);
+      });
+    });
+
+    describe("actionType: RegisterCode", () => {
+      const referralCode = hashString("newRefCode");
+
+      let registerCodeParams: Parameters<typeof sendRegisterCode>[0];
+      beforeEach(async () => {
+        registerCodeParams = {
+          sender: user1, // sender is user1 on the source chain, not GELATO_RELAY_ADDRESS
+          signer: user1,
+          feeParams: {
+            feeToken: wnt.address,
+            feeAmount: 0,
+            feeSwapPath: [],
+          },
+          account: user1.address,
+          referralCode,
+          deadline: 9999999999,
+          srcChainId: chainId, // 0 means non-multichain action
+          desChainId: chainId, // for non-multichain actions, desChainId is the same as chainId
+          relayRouter: multichainOrderRouter,
+          chainId,
+          gelatoRelayFeeToken: wnt.address,
+          gelatoRelayFeeAmount: 0,
+        };
+      });
+
+      it("registers referral code without paying relayFee if LayerZeroProvider is whitelisted", async () => {
+        await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolUsdc.SRC_EID()), chainId);
+        // whitelist LayerZeroProvider to be excluded from paying the relay fee
+        await dataStore.setBool(keys.isRelayFeeExcludedKey(layerZeroProvider.address), true);
+
+        const usdcAmount = expandDecimals(1, 5); // 0.1 USDC --> e.g. minimum amount required by a stargate pool to bridge a message
+        await usdc.mint(user1.address, usdcAmount);
+        await usdc.connect(user1).approve(mockStargatePoolUsdc.address, usdcAmount);
+
+        expect(await usdc.balanceOf(user1.address)).to.eq(usdcAmount);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(0);
+        expect(await usdc.balanceOf(layerZeroProvider.address)).to.eq(0);
+        expect(await referralStorage.codeOwners(referralCode)).eq(ethers.constants.AddressZero);
+
+        const message = await encodeRegisterCodeMessage(registerCodeParams, referralCode, user1.address);
+        await mockStargatePoolUsdc.connect(user1).sendToken(layerZeroProvider.address, usdcAmount, message);
+
+        // referralCode is registered, usdcAmount is added to user's multichain balance
+        expect(await usdc.balanceOf(user1.address)).to.eq(0);
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(usdcAmount);
+        expect(await usdc.balanceOf(layerZeroProvider.address)).to.eq(0); // does not change
+        expect(await referralStorage.codeOwners(referralCode)).eq(user1.address);
+      });
+
+      it("fails to register code that already exists", async () => {
+        await dataStore.setUint(keys.eidToSrcChainId(await mockStargatePoolUsdc.SRC_EID()), chainId);
+        await dataStore.setBool(keys.isRelayFeeExcludedKey(layerZeroProvider.address), true);
+
+        // Register the code first
+        await referralStorage.connect(user0).registerCode(referralCode);
+        expect(await referralStorage.codeOwners(referralCode)).eq(user0.address);
+
+        const usdcAmount = expandDecimals(1, 5);
+        await usdc.mint(user1.address, usdcAmount);
+        await usdc.connect(user1).approve(mockStargatePoolUsdc.address, usdcAmount);
+
+        const message = await encodeRegisterCodeMessage(registerCodeParams, referralCode, user1.address);
+
+        // Should not fail silently but emits an event (i.e. MultichainBridgeActionFailed)
+        await mockStargatePoolUsdc.connect(user1).sendToken(layerZeroProvider.address, usdcAmount, message);
+
+        // Code owner should still be user0
+        expect(await referralStorage.codeOwners(referralCode)).eq(user0.address);
+        // usdcAmount is still added to user's multichain balance
+        expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, usdc.address))).to.eq(usdcAmount);
       });
     });
   });

@@ -156,7 +156,7 @@ async function main() {
     positions = [await reader.getPosition(dataStoreDeployment.address, _positionKey, { blockTag })];
   } else {
     const traderAddress = process.env.TRADER || "0x6744a9c6e3a9b8f7243ace5b20d51a500fcd0353";
-    console.warn("using default trader address %s", traderAddress);
+    console.log("using trader address %s", traderAddress);
     const traderPositions = await reader.getAccountPositions(dataStoreDeployment.address, traderAddress, 0, 20, {
       blockTag,
     });
@@ -181,6 +181,7 @@ async function main() {
     );
 
     console.log("position", toLoggableObject(position));
+    console.log("positionKey", positionKey);
 
     const marketAddress = position.addresses.market;
     const market = await reader.getMarket(dataStoreDeployment.address, marketAddress, { blockTag });

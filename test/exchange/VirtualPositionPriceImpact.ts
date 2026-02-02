@@ -52,11 +52,25 @@ describe("Exchange.VirtualPositionPriceImpact", () => {
     // 0.001 / 100,000 => 1 * (10 ** -8)
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdcMarket.marketToken, true), decimalToFloat(5, 9));
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdcMarket.marketToken, false), decimalToFloat(1, 8));
-    await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdcMarket.marketToken), decimalToFloat(2, 0));
+    await dataStore.setUint(
+      keys.positionImpactExponentFactorKey(ethUsdcMarket.marketToken, true),
+      decimalToFloat(2, 0)
+    );
+    await dataStore.setUint(
+      keys.positionImpactExponentFactorKey(ethUsdcMarket.marketToken, false),
+      decimalToFloat(2, 0)
+    );
 
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdtMarket.marketToken, true), decimalToFloat(5, 9));
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdtMarket.marketToken, false), decimalToFloat(1, 8));
-    await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdtMarket.marketToken), decimalToFloat(2, 0));
+    await dataStore.setUint(
+      keys.positionImpactExponentFactorKey(ethUsdtMarket.marketToken, true),
+      decimalToFloat(2, 0)
+    );
+    await dataStore.setUint(
+      keys.positionImpactExponentFactorKey(ethUsdtMarket.marketToken, false),
+      decimalToFloat(2, 0)
+    );
 
     // check the base price impact for opening a long position in the ethUsdcMarket
     // the ethUsdcMarket should have an imbalance of more longs than shorts after
@@ -117,11 +131,25 @@ describe("Exchange.VirtualPositionPriceImpact", () => {
     // 0.001 / 100,000 => 1 * (10 ** -8)
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdcMarket.marketToken, true), decimalToFloat(5, 9));
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdcMarket.marketToken, false), decimalToFloat(1, 8));
-    await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdcMarket.marketToken), decimalToFloat(2, 0));
+    await dataStore.setUint(
+      keys.positionImpactExponentFactorKey(ethUsdcMarket.marketToken, true),
+      decimalToFloat(2, 0)
+    );
+    await dataStore.setUint(
+      keys.positionImpactExponentFactorKey(ethUsdcMarket.marketToken, false),
+      decimalToFloat(2, 0)
+    );
 
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdtMarket.marketToken, true), decimalToFloat(5, 9));
     await dataStore.setUint(keys.positionImpactFactorKey(ethUsdtMarket.marketToken, false), decimalToFloat(1, 8));
-    await dataStore.setUint(keys.positionImpactExponentFactorKey(ethUsdtMarket.marketToken), decimalToFloat(2, 0));
+    await dataStore.setUint(
+      keys.positionImpactExponentFactorKey(ethUsdtMarket.marketToken, true),
+      decimalToFloat(2, 0)
+    );
+    await dataStore.setUint(
+      keys.positionImpactExponentFactorKey(ethUsdtMarket.marketToken, false),
+      decimalToFloat(2, 0)
+    );
 
     // open a long position in the ethUsdcMarket
     // the ethUsdcMarket should have an imbalance of more longs than shorts after

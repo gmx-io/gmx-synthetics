@@ -36,7 +36,7 @@ export async function updateAdlState(fixture, overrides = {}) {
     dataStreamTokens,
     dataStreamData,
     priceFeedTokens,
-    execute: async (key, oracleParams) => {
+    execute: async (oracleParams) => {
       return await adlHandler.updateAdlState(market.marketToken, isLong, oracleParams);
     },
     gasUsageLabel,
@@ -70,7 +70,7 @@ export async function executeAdl(fixture, overrides = {}) {
     dataStreamTokens,
     dataStreamData,
     priceFeedTokens,
-    execute: async (key, oracleParams) => {
+    execute: async (oracleParams) => {
       return await adlHandler.executeAdl(
         account,
         market.marketToken,

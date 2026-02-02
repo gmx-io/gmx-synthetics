@@ -3,17 +3,10 @@
 pragma solidity ^0.8.0;
 
 interface IWithdrawalUtils {
-    /**
-     * @param receiver The address that will receive the withdrawal tokens.
-     * @param callbackContract The contract that will be called back.
-     * @param market The market on which the withdrawal will be executed.
-     * @param minLongTokenAmount The minimum amount of long tokens that must be withdrawn.
-     * @param minShortTokenAmount The minimum amount of short tokens that must be withdrawn.
-     * @param shouldUnwrapNativeToken Whether the native token should be unwrapped when executing the withdrawal.
-     * @param executionFee The execution fee for the withdrawal.
-     * @param callbackGasLimit The gas limit for calling the callback contract.
-     * @param dataList a list of bytes32 values that can be used for additional data.
-     */
+    // NOTE: if a longTokenSwapPath or shortTokenSwapPath is present
+    // then the minLongTokenAmount and minShortTokenAmount are the minimum amounts
+    // after the swap, i.e. the token amounts validated here would not be in
+    // the long token or short token in this case
     struct CreateWithdrawalParams {
         CreateWithdrawalParamsAddresses addresses;
         uint256 minLongTokenAmount;

@@ -8,6 +8,19 @@ This section provides a general overview of how the system works.
 
 For a Technical Overview, please see the section further below.
 
+## Action Lifecycle
+
+This section describes the lifecycle of an action with more details for each part in the following sections.
+
+Examples of actions would be deposits, withdrawals, orders.
+
+- The create(Action) transaction is sent by a user on-chain, e.g. createDeposit
+- create(Action) transactions are monitored by keepers, and a follow up execute(Action) transaction is sent by the keeper
+- Note that only keepers can call the execute(Action) functions
+- The execute(Action) uses try / catch statements to catch any reverts
+- In the catch block, if the reason for the error is a keeper issue, e.g. insufficient gas provided or missing oracle prices, the entire transaction reverts so that the user's action is not unnecessarily cancelled
+- If keepers are not executing actions for some reason, users have the option to cancel the action on their own, after the configured request expiration time has passed
+
 ## Markets
 
 Markets support both spot and perp trading, they are created by specifying a long collateral token, short collateral token and index token.

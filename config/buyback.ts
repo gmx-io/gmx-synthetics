@@ -78,6 +78,8 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<BuybackC
     avalancheFuji: defaultEmptyConfig,
 
     botanix: defaultEmptyConfig,
+
+    megaEth: defaultEmptyConfig,
   };
 
   const networkConfig: BuybackConfig = config[hre.network.name];

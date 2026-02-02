@@ -1,0 +1,328 @@
+{
+  "address": "0x0331d2c207476e55cA64e996669600749fa158D3",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_admin",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_referralStorage",
+          "type": "address"
+        }
+      ],
+      "name": "acceptGov",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "admin",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_referralStorage",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "_code",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "_newAccount",
+          "type": "address"
+        }
+      ],
+      "name": "govSetCodeOwner",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "isHandler",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "isKeeper",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_admin",
+          "type": "address"
+        }
+      ],
+      "name": "setAdmin",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_handler",
+          "type": "address"
+        },
+        {
+          "internalType": "bool",
+          "name": "_isActive",
+          "type": "bool"
+        }
+      ],
+      "name": "setContractHandler",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_referralStorage",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_newGov",
+          "type": "address"
+        }
+      ],
+      "name": "setGov",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_target",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_handler",
+          "type": "address"
+        },
+        {
+          "internalType": "bool",
+          "name": "_isActive",
+          "type": "bool"
+        }
+      ],
+      "name": "setHandler",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_keeper",
+          "type": "address"
+        },
+        {
+          "internalType": "bool",
+          "name": "_isActive",
+          "type": "bool"
+        }
+      ],
+      "name": "setKeeper",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_referralStorage",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_referrer",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_tierId",
+          "type": "uint256"
+        }
+      ],
+      "name": "setReferrerTier",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_referralStorage",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_tierId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_totalRebate",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_discountShare",
+          "type": "uint256"
+        }
+      ],
+      "name": "setTier",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0x4d4b83e8bb4df6e540bc3b31de852293a6740c25c62c26c2521d5a3664bef109",
+  "receipt": {
+    "to": null,
+    "from": "0xCD9706B6B71fdC4351091B5b1D910cEe7Fde28D0",
+    "contractAddress": "0x0331d2c207476e55cA64e996669600749fa158D3",
+    "transactionIndex": 3,
+    "gasUsed": "575087",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x4fac7fa45331a04ba29e560bd29d77b5cfb145c709aca3f7cc4547bce04ca349",
+    "transactionHash": "0x4d4b83e8bb4df6e540bc3b31de852293a6740c25c62c26c2521d5a3664bef109",
+    "logs": [],
+    "blockNumber": 214921607,
+    "cumulativeGasUsed": "1177029",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [
+    "0xCD9706B6B71fdC4351091B5b1D910cEe7Fde28D0"
+  ],
+  "numDeployments": 1,
+  "solcInputHash": "a8f08a50b1857f459bad4d5d99a5e97c",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.29+commit.ab55807c\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_admin\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_referralStorage\",\"type\":\"address\"}],\"name\":\"acceptGov\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"admin\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_referralStorage\",\"type\":\"address\"},{\"internalType\":\"bytes32\",\"name\":\"_code\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"_newAccount\",\"type\":\"address\"}],\"name\":\"govSetCodeOwner\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"isHandler\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"isKeeper\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_admin\",\"type\":\"address\"}],\"name\":\"setAdmin\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_handler\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"_isActive\",\"type\":\"bool\"}],\"name\":\"setContractHandler\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_referralStorage\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_newGov\",\"type\":\"address\"}],\"name\":\"setGov\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_target\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_handler\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"_isActive\",\"type\":\"bool\"}],\"name\":\"setHandler\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_keeper\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"_isActive\",\"type\":\"bool\"}],\"name\":\"setKeeper\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_referralStorage\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_referrer\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_tierId\",\"type\":\"uint256\"}],\"name\":\"setReferrerTier\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_referralStorage\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_tierId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_totalRebate\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_discountShare\",\"type\":\"uint256\"}],\"name\":\"setTier\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"This mock version removes time delays and complex governance features      for faster testnet iteration while maintaining access control structure Mainnet V1 Timelock contract deployed on arbitrum at 0xe7E740Fa40CA16b15B621B49de8E9F0D69CF4858\",\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"notice\":\"Simplified V1 Timelock contract for testnet use with ReferralStorage\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/mock/MockTimelockV1.sol\":\"MockTimelockV1\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":10},\"remappings\":[]},\"sources\":{\"contracts/error/Errors.sol\":{\"content\":\"// SPDX-License-Identifier: BUSL-1.1\\n\\npragma solidity ^0.8.0;\\n\\nlibrary Errors {\\n    // AdlHandler errors\\n    error AdlNotRequired(int256 pnlToPoolFactor, uint256 maxPnlFactorForAdl);\\n    error InvalidAdl(int256 nextPnlToPoolFactor, int256 pnlToPoolFactor);\\n    error PnlOvercorrected(int256 nextPnlToPoolFactor, uint256 minPnlFactorForAdl);\\n\\n    // AdlUtils errors\\n    error InvalidSizeDeltaForAdl(uint256 sizeDeltaUsd, uint256 positionSizeInUsd);\\n    error AdlNotEnabled();\\n\\n    // AutoCancelUtils errors\\n    error MaxAutoCancelOrdersExceeded(uint256 count, uint256 maxAutoCancelOrders);\\n\\n    // Bank errors\\n    error SelfTransferNotSupported(address receiver);\\n    error InvalidNativeTokenSender(address msgSender);\\n\\n    // BaseHandler errors\\n    error RequestNotYetCancellable(uint256 requestAge, uint256 requestExpirationAge, string requestType);\\n\\n    // CallbackUtils errors\\n    error MaxCallbackGasLimitExceeded(uint256 callbackGasLimit, uint256 maxCallbackGasLimit);\\n    error InsufficientGasLeftForCallback(uint256 gasToBeForwarded, uint256 callbackGasLimit);\\n\\n    // Config errors\\n    error InvalidBaseKey(bytes32 baseKey);\\n    error ConfigValueExceedsAllowedRange(bytes32 baseKey, uint256 value);\\n    error InvalidClaimableFactor(uint256 value);\\n    error InvalidClaimableReductionFactor(uint256 value);\\n    error OracleProviderAlreadyExistsForToken(address oracle, address token);\\n    error OracleProviderMinChangeDelayNotYetPassed(address token, address provider);\\n    error PriceFeedAlreadyExistsForToken(address token);\\n    error DataStreamIdAlreadyExistsForToken(address token);\\n    error EdgeDataStreamIdAlreadyExistsForToken(address token);\\n    error MaxFundingFactorPerSecondLimitExceeded(uint256 maxFundingFactorPerSecond, uint256 limit);\\n    error InvalidPositionImpactPoolDistributionRate(uint256 distributionAmount, uint256 positionImpactPoolAmount);\\n    error MaxDataListLengthExceeded(uint256 dataLength, uint256 maxDataLength);\\n    error EmptyToken();\\n\\n    // ContributorHandler errors\\n    error InvalidSetContributorPaymentInput(uint256 tokensLength, uint256 amountsLength);\\n    error InvalidContributorToken(address token);\\n    error MaxTotalContributorTokenAmountExceeded(address token, uint256 totalAmount, uint256 maxTotalAmount);\\n    error MinContributorPaymentIntervalNotYetPassed(uint256 minPaymentInterval);\\n    error MinContributorPaymentIntervalBelowAllowedRange(uint256 interval);\\n    error InvalidSetMaxTotalContributorTokenAmountInput(uint256 tokensLength, uint256 amountsLength);\\n\\n    // Timelock errors\\n    error ActionAlreadySignalled();\\n    error ActionNotSignalled();\\n    error SignalTimeNotYetPassed(uint256 signalTime);\\n    error InvalidTimelockDelay(uint256 timelockDelay);\\n    error MaxTimelockDelayExceeded(uint256 timelockDelay);\\n    error InvalidFeeReceiver(address receiver);\\n    error InvalidOracleSigner(address signer);\\n    error InvalidHoldingAddress(address account);\\n    error EmptyPositionImpactWithdrawalAmount();\\n    error OraclePriceOutdated();\\n    error EmptyTarget();\\n    error EmptyFundingAccount();\\n    error EmptyReduceLentAmount();\\n    error ReductionExceedsLentAmount(uint256 lentAmount, uint256 totalReductionAmount);\\n\\n    // GlvDepositStoreUtils errors\\n    error GlvDepositNotFound(bytes32 key);\\n    // GlvShiftStoreUtils errors\\n    error GlvShiftNotFound(bytes32 key);\\n    // GlvWithdrawalStoreUtils errors\\n    error GlvWithdrawalNotFound(bytes32 key);\\n    // GlvDepositUtils errors\\n    error EmptyGlvDepositAmounts();\\n    error EmptyGlvMarketAmount();\\n    error EmptyGlvDeposit();\\n    error InvalidMinGlvTokensForFirstGlvDeposit(uint256 minGlvTokens, uint256 expectedMinGlvTokens);\\n    error InvalidReceiverForFirstGlvDeposit(address receiver, address expectedReceiver);\\n    // GlvWithdrawalUtils errors\\n    error EmptyGlvWithdrawal();\\n    error EmptyGlvWithdrawalAmount();\\n    // GlvUtils errors\\n    error EmptyGlv(address glv);\\n    error EmptyGlvTokenSupply();\\n    error GlvNegativeMarketPoolValue(address glv, address market);\\n    error GlvUnsupportedMarket(address glv, address market);\\n    error GlvDisabledMarket(address glv, address market);\\n    error GlvEnabledMarket(address glv, address market);\\n    error GlvNonZeroMarketBalance(address glv, address market);\\n    error GlvMaxMarketCountExceeded(address glv, uint256 glvMaxMarketCount);\\n    error GlvMaxMarketTokenBalanceUsdExceeded(address glv, address market, uint256 maxMarketTokenBalanceUsd, uint256 marketTokenBalanceUsd);\\n    error GlvMaxMarketTokenBalanceAmountExceeded(address glv, address market, uint256 maxMarketTokenBalanceAmount, uint256 marketTokenBalanceAmount);\\n    error GlvInsufficientMarketTokenBalance(address glv, address market, uint256 marketTokenBalance, uint256 marketTokenAmount);\\n    error GlvMarketAlreadyExists(address glv, address market);\\n    error GlvInvalidLongToken(address glv, address provided, address expected);\\n    error GlvInvalidShortToken(address glv, address provided, address expected);\\n    // GlvShiftUtils\\n    error GlvShiftMaxLossExceeded(uint256 effectivePriceImpactFactor, uint256 glvMaxShiftPriceImpactFactor);\\n    error GlvShiftIntervalNotYetPassed(uint256 currentTimestamp, uint256 lastGlvShiftExecutedAt, uint256 glvShiftMinInterval);\\n    // GlvFactory\\n    error GlvAlreadyExists(bytes32 salt, address glv);\\n    error GlvSymbolTooLong();\\n    error GlvNameTooLong();\\n    // GlvStoreUtils\\n    error GlvNotFound(address key);\\n    // Jit\\n    error JitInvalidToMarket(address market, address expectedMarket);\\n    error JitEmptyShiftParams();\\n    error JitUnsupportedOrderType(uint256 orderType);\\n\\n    // DepositStoreUtils errors\\n    error DepositNotFound(bytes32 key);\\n\\n    // DepositUtils errors\\n    error EmptyDeposit();\\n    error EmptyDepositAmounts();\\n\\n    // ExecuteDepositUtils errors\\n    error MinMarketTokens(uint256 received, uint256 expected);\\n    error EmptyDepositAmountsAfterSwap();\\n    error InvalidPoolValueForDeposit(int256 poolValue);\\n    error InvalidSwapOutputToken(address outputToken, address expectedOutputToken);\\n    error InvalidReceiverForFirstDeposit(address receiver, address expectedReceiver);\\n    error InvalidMinMarketTokensForFirstDeposit(uint256 minMarketTokens, uint256 expectedMinMarketTokens);\\n\\n    // ExternalHandler errors\\n    error ExternalCallFailed(bytes data);\\n    error InvalidExternalCallInput(uint256 targetsLength, uint256 dataListLength);\\n    error InvalidExternalReceiversInput(uint256 refundTokensLength, uint256 refundReceiversLength);\\n    error InvalidExternalCallTarget(address target);\\n\\n    // FeeBatchStoreUtils errors\\n    error FeeBatchNotFound(bytes32 key);\\n\\n    // FeeDistributor errors\\n    error InvalidFeeBatchTokenIndex(uint256 tokenIndex, uint256 feeBatchTokensLength);\\n    error InvalidAmountInForFeeBatch(uint256 amountIn, uint256 remainingAmount);\\n    error InvalidSwapPathForV1(address[] path, address bridgingToken);\\n\\n    // GlpMigrator errors\\n    error InvalidGlpAmount(uint256 totalGlpAmountToRedeem, uint256 totalGlpAmount);\\n    error InvalidExecutionFeeForMigration(uint256 totalExecutionFee, uint256 msgValue);\\n\\n    // GlvHandler errors\\n    error InvalidGlvDepositInitialLongToken(address initialLongToken);\\n    error InvalidGlvDepositInitialShortToken(address initialShortToken);\\n    error InvalidGlvDepositSwapPath(uint256 longTokenSwapPathLength, uint256 shortTokenSwapPathLength);\\n    error MinGlvTokens(uint256 received, uint256 expected);\\n\\n    // OrderHandler errors\\n    error OrderNotUpdatable(uint256 orderType);\\n    error InvalidKeeperForFrozenOrder(address keeper);\\n\\n    // FeatureUtils errors\\n    error DisabledFeature(bytes32 key);\\n\\n    // FeeHandler errors\\n    error InvalidBuybackToken(address buybackToken);\\n    error InvalidVersion(uint256 version);\\n    error InsufficientBuybackOutputAmount(address feeToken, address buybackToken, uint256 outputAmount, uint256 minOutputAmount);\\n    error BuybackAndFeeTokenAreEqual(address feeToken, address buybackToken);\\n    error AvailableFeeAmountIsZero(address feeToken, address buybackToken, uint256 availableFeeAmount);\\n    error MaxBuybackPriceAgeExceeded(uint256 priceTimestamp, uint256 buybackMaxPriceAge, uint256 currentTimestamp);\\n    error EmptyClaimFeesMarket();\\n\\n    // GasUtils errors\\n    error InsufficientExecutionFee(uint256 minExecutionFee, uint256 executionFee);\\n    error InsufficientWntAmountForExecutionFee(uint256 wntAmount, uint256 executionFee);\\n    error InsufficientNativeTokenAmount(uint256 msgValue, uint256 expectedNativeValue);\\n    error InsufficientExecutionGasForErrorHandling(uint256 startingGas, uint256 minHandleErrorGas);\\n    error InsufficientExecutionGas(uint256 startingGas, uint256 estimatedGasLimit, uint256 minAdditionalGasForExecution);\\n    error InsufficientHandleExecutionErrorGas(uint256 gas, uint256 minHandleExecutionErrorGas);\\n    error InsufficientGasForCancellation(uint256 gas, uint256 minHandleExecutionErrorGas);\\n    error InsufficientGasForAutoCancellation(uint256 gas, uint256 minHandleExecutionErrorGas);\\n    error InsufficientGasLeft(uint256 gas, uint256 estimatedGasLimit);\\n    error InvalidExecutionFee(uint256 executionFee, uint256 minExecutionFee, uint256 maxExecutionFee);\\n    error EmptyRelayFeeAddress();\\n\\n    // MarketFactory errors\\n    error MarketAlreadyExists(bytes32 salt, address existingMarketAddress);\\n\\n    // MarketStoreUtils errors\\n    error MarketNotFound(address key);\\n\\n    // MarketUtils errors\\n    error EmptyMarket();\\n    error DisabledMarket(address market);\\n    error MaxSwapPathLengthExceeded(uint256 swapPathLengh, uint256 maxSwapPathLength);\\n    error InsufficientPoolAmount(uint256 poolAmount, uint256 amount);\\n    error InsufficientReserve(uint256 reservedUsd, uint256 maxReservedUsd);\\n    error InsufficientReserveForOpenInterest(uint256 reservedUsd, uint256 maxReservedUsd);\\n    error UnableToGetOppositeToken(address inputToken, address market);\\n    error UnexpectedTokenForVirtualInventory(address token, address market);\\n    error EmptyMarketTokenSupply();\\n    error InvalidSwapMarket(address market);\\n    error UnableToGetCachedTokenPrice(address token, address market);\\n    error CollateralAlreadyClaimed(uint256 adjustedClaimableAmount, uint256 claimedAmount);\\n    error OpenInterestCannotBeUpdatedForSwapOnlyMarket(address market);\\n    error MaxOpenInterestExceeded(uint256 openInterest, uint256 maxOpenInterest);\\n    error MaxPoolAmountExceeded(uint256 poolAmount, uint256 maxPoolAmount);\\n    error MaxCollateralSumExceeded(uint256 collateralSum, uint256 maxCollateralSum);\\n    error MaxPoolUsdForDepositExceeded(uint256 poolUsd, uint256 maxPoolUsdForDeposit);\\n    error UnexpectedBorrowingFactor(uint256 positionBorrowingFactor, uint256 cumulativeBorrowingFactor);\\n    error UnableToGetBorrowingFactorEmptyPoolUsd();\\n    error UnableToGetFundingFactorEmptyOpenInterest();\\n    error InvalidPositionMarket(address market);\\n    error InvalidCollateralTokenForMarket(address market, address token);\\n    error PnlFactorExceededForLongs(int256 pnlToPoolFactor, uint256 maxPnlFactor);\\n    error PnlFactorExceededForShorts(int256 pnlToPoolFactor, uint256 maxPnlFactor);\\n    error InvalidUiFeeFactor(uint256 uiFeeFactor, uint256 maxUiFeeFactor);\\n    error EmptyAddressInMarketTokenBalanceValidation(address market, address token);\\n    error InvalidMarketTokenBalance(address market, address token, uint256 balance, uint256 expectedMinBalance);\\n    error InvalidMarketTokenBalanceForCollateralAmount(address market, address token, uint256 balance, uint256 collateralAmount);\\n    error InvalidMarketTokenBalanceForClaimableFunding(address market, address token, uint256 balance, uint256 claimableFundingFeeAmount);\\n    error UnexpectedPoolValue(int256 poolValue);\\n\\n    // MarketPositionImpactUtils errors\\n    error InsufficientImpactPoolValueForWithdrawal(uint256 withdrawalAmount, uint256 poolValue, int256 totalPendingImpactAmount);\\n\\n    // Oracle errors\\n    error SequencerDown();\\n    error SequencerGraceDurationNotYetPassed(uint256 timeSinceUp, uint256 sequencerGraceDuration);\\n    error EmptyValidatedPrices(); // not used, kept for compatibility\\n    error InvalidOracleProvider(address provider);\\n    error InvalidOracleProviderForToken(address provider, address expectedProvider);\\n    error GmEmptySigner(uint256 signerIndex);\\n    error InvalidOracleSetPricesProvidersParam(uint256 tokensLength, uint256 providersLength);\\n    error InvalidOracleSetPricesDataParam(uint256 tokensLength, uint256 dataLength);\\n    error GmInvalidBlockNumber(uint256 minOracleBlockNumber, uint256 currentBlockNumber);\\n    error GmInvalidMinMaxBlockNumber(uint256 minOracleBlockNumber, uint256 maxOracleBlockNumber);\\n    error EmptyDataStreamFeedId(address token);\\n    error InvalidDataStreamFeedId(address token, bytes32 feedId, bytes32 expectedFeedId);\\n    error InvalidDataStreamBidAsk(address token, int192 bid, int192 ask);\\n    error InvalidDataStreamPrices(address token, int192 bid, int192 ask);\\n    error MaxPriceAgeExceeded(uint256 oracleTimestamp, uint256 currentTimestamp);\\n    error MaxOracleTimestampRangeExceeded(uint256 range, uint256 maxRange);\\n    error GmMinOracleSigners(uint256 oracleSigners, uint256 minOracleSigners);\\n    error GmMaxOracleSigners(uint256 oracleSigners, uint256 maxOracleSigners);\\n    error BlockNumbersNotSorted(uint256 minOracleBlockNumber, uint256 prevMinOracleBlockNumber);\\n    error GmMinPricesNotSorted(address token, uint256 price, uint256 prevPrice);\\n    error GmMaxPricesNotSorted(address token, uint256 price, uint256 prevPrice);\\n    error EmptyChainlinkPriceFeedMultiplier(address token);\\n    error EmptyDataStreamMultiplier(address token);\\n    error InvalidDataStreamSpreadReductionFactor(address token, uint256 spreadReductionFactor);\\n    error InvalidFeedPrice(address token, int256 price);\\n    error ChainlinkPriceFeedNotUpdated(address token, uint256 timestamp, uint256 heartbeatDuration);\\n    error GmMaxSignerIndex(uint256 signerIndex, uint256 maxSignerIndex);\\n    error InvalidGmOraclePrice(address token);\\n    error InvalidGmSignerMinMaxPrice(uint256 minPrice, uint256 maxPrice);\\n    error InvalidGmMedianMinMaxPrice(uint256 minPrice, uint256 maxPrice);\\n    error NonEmptyTokensWithPrices(uint256 tokensWithPricesLength);\\n    error InvalidMinMaxForPrice(address token, uint256 min, uint256 max);\\n    error EmptyChainlinkPriceFeed(address token);\\n    error PriceAlreadySet(address token, uint256 minPrice, uint256 maxPrice);\\n    error MaxRefPriceDeviationExceeded(\\n        address token,\\n        uint256 price,\\n        uint256 refPrice,\\n        uint256 maxRefPriceDeviationFactor\\n    );\\n    error InvalidBlockRangeSet(uint256 largestMinBlockNumber, uint256 smallestMaxBlockNumber);\\n    error NonAtomicOracleProvider(address provider);\\n\\n    // OracleModule errors\\n    error InvalidPrimaryPricesForSimulation(uint256 primaryTokensLength, uint256 primaryPricesLength);\\n    error EndOfOracleSimulation();\\n\\n    // OracleUtils errors\\n    error InvalidGmSignature(address recoveredSigner, address expectedSigner);\\n\\n    error EmptyPrimaryPrice(address token);\\n\\n    error OracleTimestampsAreSmallerThanRequired(uint256 minOracleTimestamp, uint256 expectedTimestamp);\\n    error OracleTimestampsAreLargerThanRequestExpirationTime(uint256 maxOracleTimestamp, uint256 requestTimestamp, uint256 requestExpirationTime);\\n\\n    // BaseOrderUtils errors\\n    error EmptyOrder();\\n    error UnsupportedOrderType(uint256 orderType);\\n    error UnsupportedOrderTypeForAutoCancellation(uint256 orderType);\\n    error InvalidOrderPrices(\\n        uint256 primaryPriceMin,\\n        uint256 primaryPriceMax,\\n        uint256 triggerPrice,\\n        uint256 orderType\\n    );\\n    error EmptySizeDeltaInTokens();\\n    error PriceImpactLargerThanOrderSize(int256 priceImpactUsd, uint256 sizeDeltaUsd);\\n    error NegativeExecutionPrice(int256 executionPrice, uint256 price, uint256 positionSizeInUsd, int256 priceImpactUsd, uint256 sizeDeltaUsd);\\n    error OrderNotFulfillableAtAcceptablePrice(uint256 price, uint256 acceptablePrice);\\n    error OrderValidFromTimeNotReached(uint256 validFromTime, uint256 currentTimestamp);\\n\\n    // IncreaseOrderUtils errors\\n    error UnexpectedPositionState();\\n\\n    // OrderUtils errors\\n    error OrderTypeCannotBeCreated(uint256 orderType);\\n    error OrderAlreadyFrozen();\\n    error MaxTotalCallbackGasLimitForAutoCancelOrdersExceeded(uint256 totalCallbackGasLimit, uint256 maxTotalCallbackGasLimit);\\n    error InvalidReceiver(address receiver);\\n    error UnexpectedValidFromTime(uint256 orderType);\\n\\n    // OrderStoreUtils errors\\n    error OrderNotFound(bytes32 key);\\n\\n    // SwapOrderUtils errors\\n    error UnexpectedMarket();\\n\\n    // DecreasePositionCollateralUtils errors\\n    error InsufficientFundsToPayForCosts(uint256 remainingCostUsd, string step);\\n    error InvalidOutputToken(address tokenOut, address expectedTokenOut);\\n\\n    // DecreasePositionUtils errors\\n    error InvalidDecreaseOrderSize(uint256 sizeDeltaUsd, uint256 positionSizeInUsd);\\n    error UnableToWithdrawCollateral(int256 estimatedRemainingCollateralUsd);\\n    error InvalidDecreasePositionSwapType(uint256 decreasePositionSwapType);\\n    error PositionShouldNotBeLiquidated(\\n        string reason,\\n        int256 remainingCollateralUsd,\\n        int256 minCollateralUsd,\\n        int256 minCollateralUsdForLeverage\\n    );\\n\\n    // IncreasePositionUtils errors\\n    error InsufficientCollateralAmount(uint256 collateralAmount, int256 collateralDeltaAmount);\\n    error InsufficientCollateralUsd(int256 remainingCollateralUsd);\\n\\n    // PositionStoreUtils errors\\n    error PositionNotFound(bytes32 key);\\n\\n    // PositionUtils errors\\n    error LiquidatablePosition(\\n        string reason,\\n        int256 remainingCollateralUsd,\\n        int256 minCollateralUsd,\\n        int256 minCollateralUsdForLeverage\\n    );\\n\\n    error EmptyPosition();\\n    error InvalidPositionSizeValues(uint256 sizeInUsd, uint256 sizeInTokens);\\n    error MinPositionSize(uint256 positionSizeInUsd, uint256 minPositionSizeUsd);\\n\\n    // PositionPricingUtils errors\\n    error UsdDeltaExceedsLongOpenInterest(int256 usdDelta, uint256 longOpenInterest);\\n    error UsdDeltaExceedsShortOpenInterest(int256 usdDelta, uint256 shortOpenInterest);\\n\\n    // ShiftStoreUtils errors\\n    error ShiftNotFound(bytes32 key);\\n\\n    // ShiftUtils errors\\n    error EmptyShift();\\n    error EmptyShiftAmount();\\n    error ShiftFromAndToMarketAreEqual(address market);\\n    error LongTokensAreNotEqual(address fromMarketLongToken, address toMarketLongToken);\\n    error ShortTokensAreNotEqual(address fromMarketLongToken, address toMarketLongToken);\\n    error BridgeOutNotSupportedDuringShift();\\n\\n    // SwapPricingUtils errors\\n    error UsdDeltaExceedsPoolValue(int256 usdDelta, uint256 poolUsd);\\n\\n    // RoleModule errors\\n    error Unauthorized(address msgSender, string role);\\n\\n    // RoleStore errors\\n    error ThereMustBeAtLeastOneRoleAdmin();\\n    error ThereMustBeAtLeastOneTimelockMultiSig();\\n\\n    // ExchangeRouter errors\\n    error InvalidClaimFundingFeesInput(uint256 marketsLength, uint256 tokensLength);\\n    error InvalidClaimCollateralInput(uint256 marketsLength, uint256 tokensLength, uint256 timeKeysLength);\\n    error InvalidClaimAffiliateRewardsInput(uint256 marketsLength, uint256 tokensLength);\\n    error InvalidClaimUiFeesInput(uint256 marketsLength, uint256 tokensLength);\\n\\n    // SwapUtils errors\\n    error InvalidTokenIn(address tokenIn, address market);\\n    error InsufficientOutputAmount(uint256 outputAmount, uint256 minOutputAmount);\\n    error InsufficientSwapOutputAmount(uint256 outputAmount, uint256 minOutputAmount);\\n    error DuplicatedMarketInSwapPath(address market);\\n    error SwapPriceImpactExceedsAmountIn(uint256 amountAfterFees, int256 negativeImpactAmount);\\n\\n    // SubaccountRouter errors\\n    error InvalidReceiverForSubaccountOrder(address receiver, address expectedReceiver);\\n    error InvalidCancellationReceiverForSubaccountOrder(address cancellationReceiver, address expectedCancellationReceiver);\\n\\n    // SubaccountUtils errors\\n    error SubaccountNotAuthorized(address account, address subaccount);\\n    error MaxSubaccountActionCountExceeded(address account, address subaccount, uint256 count, uint256 maxCount);\\n    error SubaccountApprovalExpired(address account, address subaccount, uint256 deadline, uint256 currentTimestamp);\\n    error SubaccountIntegrationIdDisabled(bytes32 integrationId);\\n\\n    // TokenUtils errors\\n    error TokenTransferError(address token, address receiver, uint256 amount);\\n    error EmptyHoldingAddress();\\n    // Note that Transfer is misspelled as Tranfer in the EmptyTokenTranferGasLimit error\\n    // some contracts with this error cannot be re-deployed so it has been left as is\\n    error EmptyTokenTranferGasLimit(address token);\\n\\n    // AccountUtils errors\\n    error EmptyAccount();\\n    error EmptyReceiver();\\n    error DataListLengthExceeded();\\n\\n    // ClaimHandler errors\\n    error EmptyAmount();\\n    error EmptyClaimableAmount(address token);\\n    error InvalidToken(address token);\\n    error InvalidParams(string reason);\\n    error InsufficientFunds(address token);\\n    error InvalidClaimTermsSignature(address recoveredSigner, address expectedSigner);\\n    error InvalidClaimTermsSignatureForContract(address expectedSigner);\\n    error DuplicateClaimTerms(uint256 existingDistributionId);\\n\\n    // Array errors\\n    error CompactedArrayOutOfBounds(\\n        uint256[] compactedValues,\\n        uint256 index,\\n        uint256 slotIndex,\\n        string label\\n    );\\n\\n    error ArrayOutOfBoundsUint256(\\n        uint256[] values,\\n        uint256 index,\\n        string label\\n    );\\n\\n    error ArrayOutOfBoundsBytes(\\n        bytes[] values,\\n        uint256 index,\\n        string label\\n    );\\n\\n    // WithdrawalHandler errors\\n    error SwapsNotAllowedForAtomicWithdrawal(uint256 longTokenSwapPathLength, uint256 shortTokenSwapPathLength);\\n\\n    // WithdrawalStoreUtils errors\\n    error WithdrawalNotFound(bytes32 key);\\n\\n    // WithdrawalUtils errors\\n    error EmptyWithdrawal();\\n    error EmptyWithdrawalAmount();\\n    error MinLongTokens(uint256 received, uint256 expected);\\n    error MinShortTokens(uint256 received, uint256 expected);\\n    error InsufficientMarketTokens(uint256 balance, uint256 expected);\\n    error InvalidPoolValueForWithdrawal(int256 poolValue);\\n    error MaxLendableFactorForWithdrawalsExceeded(uint256 poolUsd, uint256 maxLendableUsd, uint256 lentUsd);\\n\\n    // Uint256Mask errors\\n    error MaskIndexOutOfBounds(uint256 index, string label);\\n    error DuplicatedIndex(uint256 index, string label);\\n\\n    // Cast errors\\n    error Uint256AsBytesLengthExceeds32Bytes(uint256 length);\\n\\n    // ConfigSyncer errors\\n    error SyncConfigInvalidInputLengths(uint256 marketsLength, uint256 parametersLength);\\n    error SyncConfigUpdatesDisabledForMarket(address market);\\n    error SyncConfigUpdatesDisabledForParameter(string parameter);\\n    error SyncConfigUpdatesDisabledForMarketParameter(address market, string parameter);\\n    error SyncConfigInvalidMarketFromData(address market, address marketFromData);\\n\\n    // Reader errors\\n    error EmptyMarketPrice(address market);\\n\\n    // Multichain errors\\n    error InvalidTransferRequestsLength();\\n    error EmptyMultichainTransferInAmount(address account, address token);\\n    error EmptyMultichainTransferOutAmount(address account, address token);\\n    error InsufficientMultichainBalance(address account, address token, uint256 balance, uint256 amount);\\n    error InvalidSrcChainId(uint256 srcChainId);\\n    error InvalidEid(uint256 eid);\\n    error InvalidDestinationChainId(uint256 desChainId);\\n    error TokenPermitsNotAllowedForMultichain();\\n    error InvalidInitializer();\\n    error InvalidMultichainProvider(address provider);\\n    error InvalidMultichainEndpoint(address endpoint);\\n    error ReferralCodeAlreadyExists(bytes32 code);\\n    error UnableToPayOrderFee();\\n    error UnableToPayOrderFeeFromCollateral();\\n    error InvalidBridgeOutToken(address token);\\n    error InsufficientFee(uint256 feeProvided, uint256 feeRequired);\\n\\n    enum SignatureType {\\n        Call,\\n        SubaccountApproval\\n    }\\n\\n    // Gelato relay errors\\n    error InvalidSignature(string signatureType);\\n    error InvalidRecoveredSigner(string signatureType, address recovered, address recoveredFromMinified, address expectedSigner);\\n    // User sent incorrect fee token or incorrect swap path\\n    error UnexpectedRelayFeeTokenAfterSwap(address feeToken, address expectedFeeToken);\\n    error UnexpectedRelayFeeToken(address feeToken, address expectedFeeToken);\\n    // Contract received unsupported fee token from Gelato relay\\n    error UnsupportedRelayFeeToken(address feeToken, address expectedFeeToken);\\n    error InvalidPermitSpender(address spender, address expectedSpender);\\n    error InvalidUserDigest(bytes32 digest);\\n    error SubaccountApprovalDeadlinePassed(uint256 currentTimestamp, uint256 deadline);\\n    error InvalidSubaccountApprovalNonce(uint256 storedNonce, uint256 nonce);\\n    error InvalidSubaccountApprovalDesChainId(uint256 desChainId);\\n    error DeadlinePassed(uint256 currentTimestamp, uint256 deadline);\\n    error InsufficientRelayFee(uint256 requiredRelayFee, uint256 availableFeeAmount);\\n    error InvalidSubaccountApprovalSubaccount();\\n    error NonEmptyExternalCallsForSubaccountOrder();\\n\\n    // EventUtils error\\n    error EventItemNotFound(string key);\\n\\n    // EdgeOracle verifier errors\\n    error InvalidTrustedSignerAddress();\\n    error InvalidEdgeSigner();\\n    error InvalidEdgeSignature(uint256 recoverError);\\n    error InvalidEdgeDataStreamBidAsk(address token, uint256 bid, uint256 ask);\\n    error InvalidEdgeDataStreamPrices(address token, uint256 bid, uint256 ask);\\n    error InvalidEdgeDataStreamExpo(int256 expo);\\n    error RelayEmptyBatch();\\n    error RelayCalldataTooLong(uint256 calldataLength);\\n    error InvalidExternalCalls(uint256 sendTokensLength, uint256 sendAmountsLength);\\n    error MaxRelayFeeSwapForSubaccountExceeded(uint256 feeUsd, uint256 maxFeeUsd);\\n\\n    error RemovalShouldNotBeSkipped(bytes32 listKey, bytes32 entityKey);\\n\\n    // MultichainReader errors\\n    error InsufficientMultichainNativeFee(uint256 msgValue);\\n    error EmptyPeer(uint32 eid);\\n\\n    // FeeDistributor errors\\n    error FeeDistributionAlreadyCompleted(uint256 lastDistributionTime, uint256 startOfCurrentWeek);\\n    error OutdatedReadResponse(uint256 timestamp);\\n    error InvalidDistributionState(uint256 distributionStateUint);\\n    error BridgedAmountNotSufficient(uint256 minRequiredFeeAmount, uint256 currentChainFeeAmount);\\n    error BridgingTransactionFailed(bytes result);\\n    error MaxWntReferralRewardsInUsdAmountExceeded(uint256 wntReferralRewardsInUsd, uint256 maxWntReferralRewardsInUsdAmount);\\n    error MaxWntReferralRewardsInUsdExceeded(uint256 wntReferralRewardsInUsd, uint256 maxWntReferralRewardsInUsd);\\n    error MaxEsGmxReferralRewardsAmountExceeded(uint256 tokensForReferralRewards, uint256 maxEsGmxReferralRewards);\\n    error MaxReferralRewardsExceeded(address token, uint256 cumulativeTransferAmount, uint256 tokensForReferralRewards);\\n    error MaxWntFromTreasuryExceeded(uint256 maxWntFromTreasury, uint256 additionalWntFromTreasury);\\n    error KeeperArrayLengthMismatch(uint256 keepersLength, uint256 keeperTargetBalancesLength, uint256 keeperVersionsLength);\\n    error SendEthToKeeperFailed(address keeper, uint256 sendAmount, bytes result);\\n    error KeeperAmountMismatch(uint256 wntForKeepers, uint256 wntToKeepers);\\n    error AttemptedBridgeAmountTooHigh(uint256 minRequiredFeeAmount, uint256 feeAmountCurrentChain, uint256 amountToBridgeOut);\\n    error InvalidReferralRewardToken(address token);\\n    error BridgingBalanceArrayMismatch(uint256 balancesLength, uint256 targetBalancesLength);\\n    error ZeroTreasuryAddress();\\n}\\n\",\"keccak256\":\"0x4c9e9fdbf998ce32c8a06d5cb2917d277138c9e127c0dbe3a711ca0dfda8ddaf\",\"license\":\"BUSL-1.1\"},\"contracts/mock/Governable.sol\":{\"content\":\"// SPDX-License-Identifier: BUSL-1.1\\n\\npragma solidity ^0.8.0;\\n\\nimport \\\"../error/Errors.sol\\\";\\n\\n// @title Governable\\n// @dev Contract to allow for governance restricted functions\\ncontract Governable {\\n    address public gov;\\n    address public pendingGov;\\n\\n    event SetGov(address prevGov, address nextGov);\\n\\n    constructor() {\\n        _setGov(msg.sender);\\n    }\\n\\n    modifier onlyGov() {\\n        if (msg.sender != gov) {\\n            revert Errors.Unauthorized(msg.sender, \\\"GOV\\\");\\n        }\\n        _;\\n    }\\n\\n    function transferOwnership(address _newGov) external onlyGov {\\n        pendingGov = _newGov;\\n    }\\n\\n    function acceptOwnership() external {\\n        if (msg.sender != pendingGov) {\\n            revert Errors.Unauthorized(msg.sender, \\\"PendingGov\\\");\\n        }\\n\\n        _setGov(msg.sender);\\n    }\\n\\n    // @dev updates the gov value to the input _gov value\\n    // @param _gov the value to update to\\n    function _setGov(address _gov) internal {\\n        address prevGov = gov;\\n        gov = _gov;\\n\\n        emit SetGov(prevGov, _gov);\\n    }\\n}\\n\",\"keccak256\":\"0x0fa14ff15656ceddd8e95e290621a25de5ed7af679c8bf1bac6d07f4c26b1ce5\",\"license\":\"BUSL-1.1\"},\"contracts/mock/MockTimelockV1.sol\":{\"content\":\"// SPDX-License-Identifier: BUSL-1.1\\n\\npragma solidity ^0.8.0;\\n\\nimport \\\"../referral/IReferralStorage.sol\\\";\\nimport \\\"./Governable.sol\\\";\\n\\ninterface IHandlerTarget {\\n    function isHandler(address _account) external returns (bool);\\n    function setHandler(address _handler, bool _isActive) external;\\n}\\n\\n/**\\n * @notice Simplified V1 Timelock contract for testnet use with ReferralStorage\\n * @dev This mock version removes time delays and complex governance features\\n *      for faster testnet iteration while maintaining access control structure\\n * Mainnet V1 Timelock contract deployed on arbitrum at 0xe7E740Fa40CA16b15B621B49de8E9F0D69CF4858\\n */\\ncontract MockTimelockV1 {\\n    address public admin;\\n\\n    mapping(address => bool) public isHandler;\\n    mapping(address => bool) public isKeeper;\\n\\n    modifier onlyAdmin() {\\n        require(msg.sender == admin, \\\"MockTimelock: forbidden\\\");\\n        _;\\n    }\\n\\n    modifier onlyKeeperAndAbove() {\\n        require(msg.sender == admin || isHandler[msg.sender] || isKeeper[msg.sender], \\\"forbidden\\\");\\n        _;\\n    }\\n\\n    constructor(address _admin) {\\n        require(_admin != address(0), \\\"MockTimelock: invalid admin address\\\");\\n        admin = _admin;\\n    }\\n\\n    // ========== Admin Management ==========\\n\\n    function setAdmin(address _admin) external onlyAdmin {\\n        require(_admin != address(0), \\\"MockTimelock: invalid admin address\\\");\\n        admin = _admin;\\n    }\\n\\n    function setContractHandler(address _handler, bool _isActive) external onlyAdmin {\\n        isHandler[_handler] = _isActive;\\n    }\\n\\n    function setKeeper(address _keeper, bool _isActive) external onlyAdmin {\\n        isKeeper[_keeper] = _isActive;\\n    }\\n\\n    // ========== ReferralStorage Functions ==========\\n\\n    function setHandler(address _target, address _handler, bool _isActive) external onlyAdmin {\\n        IHandlerTarget(_target).setHandler(_handler, _isActive);\\n    }\\n\\n    function setGov(address _referralStorage, address _newGov) external onlyAdmin {\\n        Governable(_referralStorage).transferOwnership(_newGov);\\n    }\\n\\n    function acceptGov(address _referralStorage) external onlyAdmin {\\n        Governable(_referralStorage).acceptOwnership();\\n    }\\n\\n    function govSetCodeOwner(\\n        address _referralStorage,\\n        bytes32 _code,\\n        address _newAccount\\n    ) external onlyKeeperAndAbove {\\n        IReferralStorage(_referralStorage).govSetCodeOwner(_code, _newAccount);\\n    }\\n\\n    function setTier(address _referralStorage, uint256 _tierId, uint256 _totalRebate, uint256 _discountShare) external onlyKeeperAndAbove {\\n        IReferralStorage(_referralStorage).setTier(_tierId, _totalRebate, _discountShare);\\n    }\\n\\n    function setReferrerTier(address _referralStorage, address _referrer, uint256 _tierId) external onlyKeeperAndAbove {\\n        IReferralStorage(_referralStorage).setReferrerTier(_referrer, _tierId);\\n    }\\n}\\n\",\"keccak256\":\"0xe16f965d630c09dec0f430736a3557aa7766bab56960f30a194a57fe09600c71\",\"license\":\"BUSL-1.1\"},\"contracts/referral/IReferralStorage.sol\":{\"content\":\"// SPDX-License-Identifier: BUSL-1.1\\n\\npragma solidity ^0.8.0;\\n\\n// @title IReferralStorage\\n// @dev Interface for ReferralStorage\\ninterface IReferralStorage {\\n    // @dev get the owner of a referral code\\n    // @param _code the referral code\\n    // @return the owner of the referral code\\n    function codeOwners(bytes32 _code) external view returns (address);\\n    // @dev get the referral code of a trader\\n    // @param _account the address of the trader\\n    // @return the referral code\\n    function traderReferralCodes(address _account) external view returns (bytes32);\\n    // @dev get the trader discount share for an affiliate\\n    // @param _account the address of the affiliate\\n    // @return the trader discount share\\n    function referrerDiscountShares(address _account) external view returns (uint256);\\n    // @dev get the tier level of an affiliate\\n    // @param _account the address of the affiliate\\n    // @return the tier level of the affiliate\\n    function referrerTiers(address _account) external view returns (uint256);\\n    // @dev get the referral info for a trader\\n    // @param _account the address of the trader\\n    // @return (referral code, affiliate)\\n    function getTraderReferralInfo(address _account) external view returns (bytes32, address);\\n    // @dev set the referral code for a trader\\n    // @param _account the address of the trader\\n    // @param _code the referral code\\n    function setTraderReferralCode(address _account, bytes32 _code) external;\\n    // @dev register a referral code\\n    // @param _code the referral code to register\\n    function registerCode(bytes32 _code) external;\\n    // @dev set the values for a tier\\n    // @param _tierId the tier level\\n    // @param _totalRebate the total rebate for the tier (affiliate reward + trader discount)\\n    // @param _discountShare the share of the totalRebate for traders\\n    function setTier(uint256 _tierId, uint256 _totalRebate, uint256 _discountShare) external;\\n    // @dev set the tier for an affiliate\\n    // @param _tierId the tier level\\n    function setReferrerTier(address _referrer, uint256 _tierId) external;\\n    // @dev set the owner for a referral code\\n    // @param _code the referral code\\n    // @param _newAccount the new owner\\n    function govSetCodeOwner(bytes32 _code, address _newAccount) external;\\n\\n    // @dev get the tier values for a tier level\\n    // @param _tierLevel the tier level\\n    // @return (totalRebate, discountShare)\\n    function tiers(uint256 _tierLevel) external view returns (uint256, uint256);\\n}\\n\",\"keccak256\":\"0x857bf3ef4a2031370094aa9938b16eea1b1f5d6589d74fe649f907280c58d12a\",\"license\":\"BUSL-1.1\"}},\"version\":1}",
+  "bytecode": "0x6080604052348015600f57600080fd5b506040516109ea3803806109ea833981016040819052602c9160b5565b6001600160a01b03811660915760405162461bcd60e51b815260206004820152602360248201527f4d6f636b54696d656c6f636b3a20696e76616c69642061646d696e206164647260448201526265737360e81b606482015260840160405180910390fd5b600080546001600160a01b0319166001600160a01b039290921691909117905560e3565b60006020828403121560c657600080fd5b81516001600160a01b038116811460dc57600080fd5b9392505050565b6108f8806100f26000396000f3fe608060405234801561001057600080fd5b50600436106100a45760003560e01c80631154e808146100a9578063185051c1146100be578063204bbc54146100d157806346ea87af146100e457806351a6de0d1461011c578063524f10081461012f57806355818294146101425780636ba42aaa14610155578063704b6c0214610178578063c142940a1461018b578063d1b9e8531461019e578063f851a440146101b1575b600080fd5b6100bc6100b73660046106ef565b6101d1565b005b6100bc6100cc366004610732565b61026d565b6100bc6100df366004610765565b6102c2565b6101076100f2366004610798565b60016020526000908152604090205460ff1681565b60405190151581526020015b60405180910390f35b6100bc61012a3660046107ba565b610355565b6100bc61013d366004610798565b6103e1565b6100bc6101503660046107e4565b610461565b610107610163366004610798565b60026020526000908152604090205460ff1681565b6100bc610186366004610798565b61052d565b6100bc61019936600461081d565b6105db565b6100bc6101ac366004610732565b61066e565b6000546101c4906001600160a01b031681565b604051610113919061085a565b6000546001600160a01b031633146102045760405162461bcd60e51b81526004016101fb9061086e565b60405180910390fd5b604051639cb7de4b60e01b81526001600160a01b0383811660048301528215156024830152841690639cb7de4b906044015b600060405180830381600087803b15801561025057600080fd5b505af1158015610264573d6000803e3d6000fd5b50505050505050565b6000546001600160a01b031633146102975760405162461bcd60e51b81526004016101fb9061086e565b6001600160a01b03919091166000908152600160205260409020805460ff1916911515919091179055565b6000546001600160a01b03163314806102ea57503360009081526001602052604090205460ff165b8061030457503360009081526002602052604090205460ff165b6103205760405162461bcd60e51b81526004016101fb9061089f565b604051630dfcfa2560e41b8152600481018390526001600160a01b03828116602483015284169063dfcfa25090604401610236565b6000546001600160a01b0316331461037f5760405162461bcd60e51b81526004016101fb9061086e565b60405163f2fde38b60e01b81526001600160a01b0383169063f2fde38b906103ab90849060040161085a565b600060405180830381600087803b1580156103c557600080fd5b505af11580156103d9573d6000803e3d6000fd5b505050505050565b6000546001600160a01b0316331461040b5760405162461bcd60e51b81526004016101fb9061086e565b806001600160a01b03166379ba50976040518163ffffffff1660e01b8152600401600060405180830381600087803b15801561044657600080fd5b505af115801561045a573d6000803e3d6000fd5b5050505050565b6000546001600160a01b031633148061048957503360009081526001602052604090205460ff165b806104a357503360009081526002602052604090205460ff165b6104bf5760405162461bcd60e51b81526004016101fb9061089f565b60405163836a018760e01b81526004810184905260248101839052604481018290526001600160a01b0385169063836a018790606401600060405180830381600087803b15801561050f57600080fd5b505af1158015610523573d6000803e3d6000fd5b5050505050505050565b6000546001600160a01b031633146105575760405162461bcd60e51b81526004016101fb9061086e565b6001600160a01b0381166105b95760405162461bcd60e51b815260206004820152602360248201527f4d6f636b54696d656c6f636b3a20696e76616c69642061646d696e206164647260448201526265737360e81b60648201526084016101fb565b600080546001600160a01b0319166001600160a01b0392909216919091179055565b6000546001600160a01b031633148061060357503360009081526001602052604090205460ff165b8061061d57503360009081526002602052604090205460ff165b6106395760405162461bcd60e51b81526004016101fb9061089f565b604051633fb8b32360e01b81526001600160a01b03838116600483015260248201839052841690633fb8b32390604401610236565b6000546001600160a01b031633146106985760405162461bcd60e51b81526004016101fb9061086e565b6001600160a01b03919091166000908152600260205260409020805460ff1916911515919091179055565b80356001600160a01b03811681146106da57600080fd5b919050565b803580151581146106da57600080fd5b60008060006060848603121561070457600080fd5b61070d846106c3565b925061071b602085016106c3565b9150610729604085016106df565b90509250925092565b6000806040838503121561074557600080fd5b61074e836106c3565b915061075c602084016106df565b90509250929050565b60008060006060848603121561077a57600080fd5b610783846106c3565b925060208401359150610729604085016106c3565b6000602082840312156107aa57600080fd5b6107b3826106c3565b9392505050565b600080604083850312156107cd57600080fd5b6107d6836106c3565b915061075c602084016106c3565b600080600080608085870312156107fa57600080fd5b610803856106c3565b966020860135965060408601359560600135945092505050565b60008060006060848603121561083257600080fd5b61083b846106c3565b9250610849602085016106c3565b929592945050506040919091013590565b6001600160a01b0391909116815260200190565b60208082526017908201527626b7b1b5aa34b6b2b637b1b59d103337b93134b23232b760491b604082015260600190565b6020808252600990820152683337b93134b23232b760b91b60408201526060019056fea264697066735822122085b92741dbeabb5453dc9e0482a994d2ca578c9249aa947afcdfa1d23fa2160a64736f6c634300081d0033",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106100a45760003560e01c80631154e808146100a9578063185051c1146100be578063204bbc54146100d157806346ea87af146100e457806351a6de0d1461011c578063524f10081461012f57806355818294146101425780636ba42aaa14610155578063704b6c0214610178578063c142940a1461018b578063d1b9e8531461019e578063f851a440146101b1575b600080fd5b6100bc6100b73660046106ef565b6101d1565b005b6100bc6100cc366004610732565b61026d565b6100bc6100df366004610765565b6102c2565b6101076100f2366004610798565b60016020526000908152604090205460ff1681565b60405190151581526020015b60405180910390f35b6100bc61012a3660046107ba565b610355565b6100bc61013d366004610798565b6103e1565b6100bc6101503660046107e4565b610461565b610107610163366004610798565b60026020526000908152604090205460ff1681565b6100bc610186366004610798565b61052d565b6100bc61019936600461081d565b6105db565b6100bc6101ac366004610732565b61066e565b6000546101c4906001600160a01b031681565b604051610113919061085a565b6000546001600160a01b031633146102045760405162461bcd60e51b81526004016101fb9061086e565b60405180910390fd5b604051639cb7de4b60e01b81526001600160a01b0383811660048301528215156024830152841690639cb7de4b906044015b600060405180830381600087803b15801561025057600080fd5b505af1158015610264573d6000803e3d6000fd5b50505050505050565b6000546001600160a01b031633146102975760405162461bcd60e51b81526004016101fb9061086e565b6001600160a01b03919091166000908152600160205260409020805460ff1916911515919091179055565b6000546001600160a01b03163314806102ea57503360009081526001602052604090205460ff165b8061030457503360009081526002602052604090205460ff165b6103205760405162461bcd60e51b81526004016101fb9061089f565b604051630dfcfa2560e41b8152600481018390526001600160a01b03828116602483015284169063dfcfa25090604401610236565b6000546001600160a01b0316331461037f5760405162461bcd60e51b81526004016101fb9061086e565b60405163f2fde38b60e01b81526001600160a01b0383169063f2fde38b906103ab90849060040161085a565b600060405180830381600087803b1580156103c557600080fd5b505af11580156103d9573d6000803e3d6000fd5b505050505050565b6000546001600160a01b0316331461040b5760405162461bcd60e51b81526004016101fb9061086e565b806001600160a01b03166379ba50976040518163ffffffff1660e01b8152600401600060405180830381600087803b15801561044657600080fd5b505af115801561045a573d6000803e3d6000fd5b5050505050565b6000546001600160a01b031633148061048957503360009081526001602052604090205460ff165b806104a357503360009081526002602052604090205460ff165b6104bf5760405162461bcd60e51b81526004016101fb9061089f565b60405163836a018760e01b81526004810184905260248101839052604481018290526001600160a01b0385169063836a018790606401600060405180830381600087803b15801561050f57600080fd5b505af1158015610523573d6000803e3d6000fd5b5050505050505050565b6000546001600160a01b031633146105575760405162461bcd60e51b81526004016101fb9061086e565b6001600160a01b0381166105b95760405162461bcd60e51b815260206004820152602360248201527f4d6f636b54696d656c6f636b3a20696e76616c69642061646d696e206164647260448201526265737360e81b60648201526084016101fb565b600080546001600160a01b0319166001600160a01b0392909216919091179055565b6000546001600160a01b031633148061060357503360009081526001602052604090205460ff165b8061061d57503360009081526002602052604090205460ff165b6106395760405162461bcd60e51b81526004016101fb9061089f565b604051633fb8b32360e01b81526001600160a01b03838116600483015260248201839052841690633fb8b32390604401610236565b6000546001600160a01b031633146106985760405162461bcd60e51b81526004016101fb9061086e565b6001600160a01b03919091166000908152600260205260409020805460ff1916911515919091179055565b80356001600160a01b03811681146106da57600080fd5b919050565b803580151581146106da57600080fd5b60008060006060848603121561070457600080fd5b61070d846106c3565b925061071b602085016106c3565b9150610729604085016106df565b90509250925092565b6000806040838503121561074557600080fd5b61074e836106c3565b915061075c602084016106df565b90509250929050565b60008060006060848603121561077a57600080fd5b610783846106c3565b925060208401359150610729604085016106c3565b6000602082840312156107aa57600080fd5b6107b3826106c3565b9392505050565b600080604083850312156107cd57600080fd5b6107d6836106c3565b915061075c602084016106c3565b600080600080608085870312156107fa57600080fd5b610803856106c3565b966020860135965060408601359560600135945092505050565b60008060006060848603121561083257600080fd5b61083b846106c3565b9250610849602085016106c3565b929592945050506040919091013590565b6001600160a01b0391909116815260200190565b60208082526017908201527626b7b1b5aa34b6b2b637b1b59d103337b93134b23232b760491b604082015260600190565b6020808252600990820152683337b93134b23232b760b91b60408201526060019056fea264697066735822122085b92741dbeabb5453dc9e0482a994d2ca578c9249aa947afcdfa1d23fa2160a64736f6c634300081d0033",
+  "libraries": {},
+  "devdoc": {
+    "details": "This mock version removes time delays and complex governance features      for faster testnet iteration while maintaining access control structure Mainnet V1 Timelock contract deployed on arbitrum at 0xe7E740Fa40CA16b15B621B49de8E9F0D69CF4858",
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "notice": "Simplified V1 Timelock contract for testnet use with ReferralStorage",
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 93170,
+        "contract": "contracts/mock/MockTimelockV1.sol:MockTimelockV1",
+        "label": "admin",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_address"
+      },
+      {
+        "astId": 93174,
+        "contract": "contracts/mock/MockTimelockV1.sol:MockTimelockV1",
+        "label": "isHandler",
+        "offset": 0,
+        "slot": "1",
+        "type": "t_mapping(t_address,t_bool)"
+      },
+      {
+        "astId": 93178,
+        "contract": "contracts/mock/MockTimelockV1.sol:MockTimelockV1",
+        "label": "isKeeper",
+        "offset": 0,
+        "slot": "2",
+        "type": "t_mapping(t_address,t_bool)"
+      }
+    ],
+    "types": {
+      "t_address": {
+        "encoding": "inplace",
+        "label": "address",
+        "numberOfBytes": "20"
+      },
+      "t_bool": {
+        "encoding": "inplace",
+        "label": "bool",
+        "numberOfBytes": "1"
+      },
+      "t_mapping(t_address,t_bool)": {
+        "encoding": "mapping",
+        "key": "t_address",
+        "label": "mapping(address => bool)",
+        "numberOfBytes": "32",
+        "value": "t_bool"
+      }
+    }
+  }
+}

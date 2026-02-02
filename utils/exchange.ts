@@ -3,6 +3,7 @@ import { logGasUsage } from "./gas";
 import { bigNumberify } from "./math";
 import { getOracleParams, getOracleParamsForSimulation, TOKEN_ORACLE_TYPES } from "./oracle";
 import { prices as refPrices } from "./prices";
+import { BigNumberish } from "ethers";
 
 export function getExecuteParams(fixture, { tokens, prices }) {
   const { wnt, wbtc, usdc, usdt } = fixture.contracts;
@@ -47,9 +48,32 @@ export function getExecuteParams(fixture, { tokens, prices }) {
   return params;
 }
 
-export async function executeWithOracleParams(fixture, overrides) {
+export async function executeWithOracleParams(
+  fixture,
+  overrides: {
+    args?: any[];
+    oracleBlocks?: any[];
+    oracleBlockNumber?: number;
+    tokens: string[];
+    precisions: number[];
+    minPrices: BigNumberish[];
+    maxPrices: BigNumberish[];
+    execute: (...args: any[]) => Promise<void>;
+    simulateExecute?: (...args: any[]) => Promise<void>;
+    simulate: boolean;
+    gasUsageLabel?: string;
+    dataStreamTokens?: string[];
+    dataStreamData?: string[];
+    priceFeedTokens?: string[];
+    tokenOracleTypes?: string[];
+    minOracleBlockNumbers?: number[];
+    maxOracleBlockNumbers?: number[];
+    oracleTimestamps?: number[];
+    gasLimit?: number;
+  }
+) {
   const {
-    key,
+    args = [],
     oracleBlocks,
     oracleBlockNumber,
     tokens,
@@ -63,6 +87,7 @@ export async function executeWithOracleParams(fixture, overrides) {
     dataStreamTokens,
     dataStreamData,
     priceFeedTokens,
+    gasLimit,
   } = overrides;
   const { provider } = ethers;
   const { signers } = fixture.accounts;
@@ -109,7 +134,7 @@ export async function executeWithOracleParams(fixture, overrides) {
     blockHashes = Array(tokens.length).fill(block.hash, 0, tokens.length);
   }
 
-  const args = {
+  const oracleArgs = {
     oracleSalt,
     minOracleBlockNumbers,
     maxOracleBlockNumbers,
@@ -128,19 +153,20 @@ export async function executeWithOracleParams(fixture, overrides) {
   };
 
   let oracleParams;
+
   if (overrides.simulate) {
-    oracleParams = await getOracleParamsForSimulation(args);
+    oracleParams = await getOracleParamsForSimulation(oracleArgs);
     try {
-      await simulateExecute(key, oracleParams);
+      await simulateExecute(...args, oracleParams);
     } catch (ex) {
       if (!ex.toString().includes("EndOfOracleSimulation")) {
         throw ex;
       }
     }
   } else {
-    oracleParams = await getOracleParams(args);
+    oracleParams = await getOracleParams(oracleArgs);
     return logGasUsage({
-      tx: execute(key, oracleParams),
+      tx: execute(...args, oracleParams, { gasLimit }),
       label: gasUsageLabel,
     });
   }

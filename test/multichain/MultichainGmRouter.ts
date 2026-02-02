@@ -20,6 +20,7 @@ import { executeShift, getShiftCount, getShiftKeys } from "../../utils/shift";
 import { encodeBridgeOutDataList, bridgeInTokens } from "../../utils/multichain";
 import { getRelayParams } from "../../utils/relay/helpers";
 import { errorsContract } from "../../utils/error";
+import { GAS_BUFFER } from "../../utils/gas";
 
 describe("MultichainGmRouter", () => {
   let fixture;
@@ -199,11 +200,11 @@ describe("MultichainGmRouter", () => {
       expect(await getDepositCount(dataStore)).eq(0);
       expect(await wnt.balanceOf(multichainVault.address)).to.approximately(
         expandDecimals(2095, 12), // feeAmount - keeperFee = 0.004 - ~0.0019 = ~0.0021 (e.g. 0.002095)
-        expandDecimals(1, 12)
+        GAS_BUFFER.DEPOSIT
       );
       expect(await dataStore.getUint(keys.multichainBalanceKey(user1.address, wnt.address))).to.approximately(
         expandDecimals(2095, 12), // feeAmount - keeperFee = 0.004 - ~0.0019 = ~0.0021 (e.g. 0.002095)
-        expandDecimals(5, 12)
+        GAS_BUFFER.DEPOSIT
       );
       expect(await usdc.balanceOf(multichainVault.address)).eq(0);
       expect(await wnt.balanceOf(depositVault.address)).eq(0);
