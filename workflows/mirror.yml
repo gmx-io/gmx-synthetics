@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout mirror
+      - name: Checkout source
         uses: actions/checkout@v4
         with:
           fetch-depth: 2
@@ -22,4 +22,4 @@ jobs:
         with:
           destination: ${{ secrets.MIRROR_REPO }}
           branch: '${{ github.ref_name }}'
-          excluded: '"workflows/mirror.yml","fuzz","fuzzy"'
+          exclude: '"workflows","fuzz","fuzzing"'
