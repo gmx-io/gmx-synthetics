@@ -45,7 +45,7 @@ async function validateMember({ role, member, errors }) {
   if (["ROLE_ADMIN", "TIMELOCK_MULTISIG", "CONTROLLER"].includes(role)) {
     const code = await hre.ethers.provider.getCode(member);
     if (code === "0x") {
-      errors.push(`EOA (Externally Owned Account) with ${role} role`);
+      errors.push(`EOA (Externally Owned Account) with ${role} role: ${member.toLowerCase()}`);
     }
   }
 }
@@ -64,6 +64,13 @@ function getAvalancheValues() {
   };
 }
 
+function getMegaEthValues() {
+  return {
+    referralStorageAddress: "0xAd917849372eaEF498E982F90bA6459a43ecbd31",
+    dataStreamVerifierAddress: "0xf514688BC967c31e946B03A1fc10F55ddd69169C",
+  };
+}
+
 function getValues(): { referralStorageAddress?: string; dataStreamVerifierAddress?: string } {
   if (hre.network.name === "avalancheFuji") {
     return {};
@@ -71,6 +78,8 @@ function getValues(): { referralStorageAddress?: string; dataStreamVerifierAddre
     return getArbitrumValues();
   } else if (hre.network.name === "avalanche") {
     return getAvalancheValues();
+  } else if (hre.network.name === "megaEth") {
+    return getMegaEthValues();
   }
   throw new Error("Unsupported network");
 }
@@ -173,6 +182,7 @@ export async function validateRoles() {
       if (unexpectedDeployer) {
         warns.push(`contract ${contractName} ${member} with role ${role} was not deployed by GMX deployer`);
       }
+      console.log(`checking ${role}, ${member}`);
       if (!expectedRoles[role][member.toLowerCase()]) {
         const { isContract, contractName } = await getContractInfo(contractNameByAddress, member);
         if (isContract && !contractName) {
@@ -279,7 +289,7 @@ export function getIsGmxDeployer(contractAddress: string) {
 
 async function validateDataStreamProviderHasDiscount() {
   // fee discount is not needed on certain networks like Botanix
-  if (hre.network.name === "botanix") {
+  if (hre.network.name === "botanix" || hre.network.name === "megaEth") {
     return;
   }
   console.log("validating data stream provider has discount");
@@ -318,7 +328,7 @@ async function validateDataStreamProviderHasDiscount() {
 
 async function validateIsReferralStorageHandler() {
   // the ReferralStorage is not deployed on Botanix
-  if (hre.network.name === "botanix") {
+  if (hre.network.name === "botanix" || hre.network.name === "megaEth") {
     return;
   }
   console.log("validating is referral storage handler");
