@@ -21,6 +21,8 @@ import {AccountUtils} from "../utils/AccountUtils.sol";
 
 contract ConfigTimelockController is TimelockController, OracleModule {
 
+    uint256 public constant MAX_DELAY = 5 days;
+
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
 
@@ -41,6 +43,13 @@ contract ConfigTimelockController is TimelockController, OracleModule {
             revert Errors.Unauthorized(msg.sender, "SELF");
         }
         _;
+    }
+
+    function updateDelay(uint256 newDelay) external override {
+        if (newDelay > MAX_DELAY) {
+            revert Errors.InvalidTimelockDelay(newDelay);
+        }
+        super.updateDelay(newDelay);
     }
 
     // note that if on-chain prices are used for market operations, there may
