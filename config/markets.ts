@@ -545,7 +545,8 @@ const config: {
     },
     {
       tokens: { indexToken: "BTC", longToken: "tBTC", shortToken: "tBTC" },
-      virtualTokenIdForIndexToken: hashString("PERP:BTC/USD"),
+      virtualTokenIdForIndexToken: ethers.constants.HashZero,
+      virtualMarketId: ethers.constants.HashZero,
 
       ...singleTokenMarketConfig,
       ...fundingRateConfig_SingleToken,
