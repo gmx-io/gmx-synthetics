@@ -1,0 +1,74 @@
+type EventLog @entity(immutable: true) {
+  id: Bytes!
+  msgSender: Bytes! # address
+  eventName: String! # string
+  eventNameHash: Bytes! # string
+  eventData_addressItems_items: [Bytes!]! # tuple[]
+  eventData_addressItems_arrayItems: [Bytes!]! # tuple[]
+  eventData_uintItems_items: [Bytes!]! # tuple[]
+  eventData_uintItems_arrayItems: [Bytes!]! # tuple[]
+  eventData_intItems_items: [Bytes!]! # tuple[]
+  eventData_intItems_arrayItems: [Bytes!]! # tuple[]
+  eventData_boolItems_items: [Bytes!]! # tuple[]
+  eventData_boolItems_arrayItems: [Bytes!]! # tuple[]
+  eventData_bytes32Items_items: [Bytes!]! # tuple[]
+  eventData_bytes32Items_arrayItems: [Bytes!]! # tuple[]
+  eventData_bytesItems_items: [Bytes!]! # tuple[]
+  eventData_bytesItems_arrayItems: [Bytes!]! # tuple[]
+  eventData_stringItems_items: [Bytes!]! # tuple[]
+  eventData_stringItems_arrayItems: [Bytes!]! # tuple[]
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type EventLog1 @entity(immutable: true) {
+  id: Bytes!
+  msgSender: Bytes! # address
+  eventName: String! # string
+  eventNameHash: Bytes! # string
+  topic1: Bytes! # bytes32
+  eventData_addressItems_items: [Bytes!]! # tuple[]
+  eventData_addressItems_arrayItems: [Bytes!]! # tuple[]
+  eventData_uintItems_items: [Bytes!]! # tuple[]
+  eventData_uintItems_arrayItems: [Bytes!]! # tuple[]
+  eventData_intItems_items: [Bytes!]! # tuple[]
+  eventData_intItems_arrayItems: [Bytes!]! # tuple[]
+  eventData_boolItems_items: [Bytes!]! # tuple[]
+  eventData_boolItems_arrayItems: [Bytes!]! # tuple[]
+  eventData_bytes32Items_items: [Bytes!]! # tuple[]
+  eventData_bytes32Items_arrayItems: [Bytes!]! # tuple[]
+  eventData_bytesItems_items: [Bytes!]! # tuple[]
+  eventData_bytesItems_arrayItems: [Bytes!]! # tuple[]
+  eventData_stringItems_items: [Bytes!]! # tuple[]
+  eventData_stringItems_arrayItems: [Bytes!]! # tuple[]
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type EventLog2 @entity(immutable: true) {
+  id: Bytes!
+  msgSender: Bytes! # address
+  eventName: String! # string
+  eventNameHash: Bytes! # string
+  topic1: Bytes! # bytes32
+  topic2: Bytes! # bytes32
+  eventData_addressItems_items: [Bytes!]! # tuple[]
+  eventData_addressItems_arrayItems: [Bytes!]! # tuple[]
+  eventData_uintItems_items: [Bytes!]! # tuple[]
+  eventData_uintItems_arrayItems: [Bytes!]! # tuple[]
+  eventData_intItems_items: [Bytes!]! # tuple[]
+  eventData_intItems_arrayItems: [Bytes!]! # tuple[]
+  eventData_boolItems_items: [Bytes!]! # tuple[]
+  eventData_boolItems_arrayItems: [Bytes!]! # tuple[]
+  eventData_bytes32Items_items: [Bytes!]! # tuple[]
+  eventData_bytes32Items_arrayItems: [Bytes!]! # tuple[]
+  eventData_bytesItems_items: [Bytes!]! # tuple[]
+  eventData_bytesItems_arrayItems: [Bytes!]! # tuple[]
+  eventData_stringItems_items: [Bytes!]! # tuple[]
+  eventData_stringItems_arrayItems: [Bytes!]! # tuple[]
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
