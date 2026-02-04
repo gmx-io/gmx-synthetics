@@ -27,7 +27,26 @@ const botanix = {
   testnet: false,
 };
 
-const { chains, publicClient } = configureChains([arbitrum, avalanche, botanix], [publicProvider()]);
+const megaEth = {
+  id: 4326,
+  name: "MegaETH",
+  network: "megaeth",
+  nativeCurrency: {
+    name: "Ethereum",
+    symbol: "ETH",
+    decimals: 18,
+  },
+  rpcUrls: {
+    default: { http: ["https://mainnet.megaeth.com/rpc"] },
+    public: { http: ["https://mainnet.megaeth.com/rpc"] },
+  },
+  blockExplorers: {
+    default: { name: "MegaETH Explorer", url: "https://megaeth.blockscout.com/" },
+  },
+  testnet: false,
+};
+
+const { chains, publicClient } = configureChains([arbitrum, avalanche, botanix, megaEth], [publicProvider()]);
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
