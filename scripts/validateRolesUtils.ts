@@ -90,6 +90,7 @@ export async function validateRoles() {
   const contractNameByAddress = Object.fromEntries(
     Object.entries(deployments).map(([contractName, deployment]) => [deployment.address, contractName])
   );
+  contractNameByAddress["0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D"] = "Safe";
   console.log(`checking ${roles.length} roles`);
   console.log(roles);
 
@@ -262,6 +263,7 @@ async function getContractInfo(
   if (!contractName) {
     const code = await hre.ethers.provider.getCode(contractAddress);
     if (code !== "0x") {
+      console.log(`getting contract info for ${contractAddress}`);
       let isVerified: boolean;
       ({ contractName, isVerified } = await getContractNameFromEtherscan(contractAddress));
       shouldCache = isVerified;

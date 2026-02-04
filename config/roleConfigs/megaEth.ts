@@ -6,30 +6,29 @@ export function getRoles({ syntheticKeepers, generalConfigKeepers, claimAdmins }
     ORDER_KEEPER: syntheticKeepers.mainnet,
     LIMITED_CONFIG_KEEPER: syntheticKeepers.mainnet,
     CLAIM_ADMIN: {
+      "0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D": true, // security_multisig_1
       ...claimAdmins.mainnet,
       ...generalConfigKeepers.mainnet,
     },
     CONFIG_KEEPER: {
       ...generalConfigKeepers.mainnet,
-      "0xE7BfFf2aB721264887230037940490351700a068": true, // TEMP: deployer
     },
     FEE_KEEPER: {
       "0x43CE1d475e06c65DD879f4ec644B8e0E10ff2b6D": true, // fee_keeper_1
     },
     MARKET_KEEPER: {
       ...generalConfigKeepers.mainnet,
-      "0xE7BfFf2aB721264887230037940490351700a068": true, // TEMP: deployer
     },
     TIMELOCK_ADMIN: {
       "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // timelock_admin_1
+      "0xE014cbD60A793901546178E1c16ad9132C927483": true, // timelock_admin_2
+      "0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D": true, // security_multisig_1
     },
     TIMELOCK_MULTISIG: {
-      "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // timelock_admin_1
+      "0x8D1d2e24eC641eDC6a1ebe0F3aE7af0EBC573e0D": true, // security_multisig_1
     },
     GOV_TOKEN_CONTROLLER: {},
     CONTROLLER: {
-      "0xE7BfFf2aB721264887230037940490351700a068": true, // TEMP: deployer
-
       "0x5Fb9121Ca153B93dD70ae53280Dc3b64E1805940": true, // MarketFactory (CONTROLLER)
       "0xA3E4c933D2227cEe0aaa2823a056843c0303a1a5": true, // GlvFactory (CONTROLLER)
       "0xc0E91b6CBd2982e92969c685227d103378Ef3762": true, // OracleStore (CONTROLLER)
@@ -79,7 +78,6 @@ export function getRoles({ syntheticKeepers, generalConfigKeepers, claimAdmins }
       "0xCa62C570D8667a00A56EB989881ECbA4364BFe9e": true, // MultichainTransferRouter (ROUTER_PLUGIN)
     },
     ROLE_ADMIN: {
-      "0x35ea3066F90Db13e737BBd41f1ED7B4bfF8323b3": true, // timelock_admin_1
       "0x9d5f3fac443748c28FB5dc964D74F8419F686F6D": true, // TimelockConfig (ROLE_ADMIN)
       "0xBf96f66932C1D826C172a80bE7c062ab6b26a4CC": true, // ConfigTimelockController (ROLE_ADMIN)
     },
