@@ -1531,7 +1531,7 @@ const config: {
       address: "0xFAfDdbb3FC7688494971a79cc65DCa3EF82079E7",
       decimals: 6,
       transferGasLimit: 200 * 1000,
-      dataStreamFeedId: "0x00030446e1f0ce990ee10744ed4b0d78fe4ff53090a7f98b9f78b7e64144515f", // USDTB // TODO: change to USDm feed
+      dataStreamFeedId: "0x0003ea225e4b8cfc71e2f3cf853d07dbd144047f1c2dd8aecedd846749784a29",
       dataStreamFeedDecimals: 18,
     },
     BTC: {
