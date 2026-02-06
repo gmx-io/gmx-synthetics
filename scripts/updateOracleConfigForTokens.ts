@@ -221,15 +221,19 @@ export async function updateOracleConfigForTokens() {
       }
     }
 
-    if (token.dataStreamFeedId && onchainConfig.dataStreamId !== token.dataStreamFeedId) {
+    const dataStreamMultiplier = expandDecimals(1, 60 - token.decimals - token.dataStreamFeedDecimals);
+    if (
+      token.dataStreamFeedId &&
+      (onchainConfig.dataStreamId !== token.dataStreamFeedId ||
+        !onchainConfig.dataStreamMultiplier.eq(dataStreamMultiplier))
+    ) {
       const dataStreamSpreadReductionFactor = bigNumberify(token.dataStreamSpreadReductionFactor ?? 0);
-      const dataStreamMultiplier = expandDecimals(1, 60 - token.decimals - token.dataStreamFeedDecimals);
 
-      if (!onchainConfig.dataStreamMultiplier.eq(dataStreamMultiplier)) {
-        throw new Error(
-          `dataStreamMultiplier mismatch for ${tokenSymbol}: ${dataStreamMultiplier.toString()}, ${onchainConfig.dataStreamMultiplier.toString()}`
-        );
-      }
+      // if (!onchainConfig.dataStreamMultiplier.eq(dataStreamMultiplier)) {
+      //   throw new Error(
+      //     `dataStreamMultiplier mismatch for ${tokenSymbol}: ${dataStreamMultiplier.toString()}, ${onchainConfig.dataStreamMultiplier.toString()}`
+      //   );
+      // }
 
       console.log(
         `setDataStream(${tokenSymbol} ${
@@ -262,6 +266,8 @@ export async function updateOracleConfigForTokens() {
             token.dataStreamFeedId,
             dataStreamMultiplier,
             dataStreamSpreadReductionFactor,
+            predecessor,
+            salt,
           ])
         );
       } else {

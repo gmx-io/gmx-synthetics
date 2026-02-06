@@ -1539,6 +1539,7 @@ const config: {
         address: "0xdFe0063491d9DeD8F8abCdd7AE04238A1e70D270",
         decimals: 18,
         heartbeatDuration: (24 + 1) * 60 * 60,
+        stablePriceUsd: decimalToFloat(1),
         customFeedDescription: "USDM-USD (USDtb Underlying)",
       },
     },
