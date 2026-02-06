@@ -5377,6 +5377,96 @@ const config: {
 
       maxOpenInterest: decimalToFloat(12_000_000),
     },
+    {
+      tokens: { indexToken: "BTC", longToken: "USDm", shortToken: "USDm" },
+      virtualTokenIdForIndexToken: hashString("PERP:BTC/USD"),
+
+      ...syntheticMarketConfig,
+      ...fundingRateConfig_Low,
+      ...borrowingRateConfig_LowMax_WithLowerBase,
+
+      negativePositionImpactExponentFactor: exponentToFloat("1.5e0"),
+      positivePositionImpactExponentFactor: exponentToFloat("1.5e0"),
+      negativePositionImpactFactor: exponentToFloat("1.93e-7"),
+      positivePositionImpactFactor: exponentToFloat("1.61e-7"),
+
+      swapFeeFactorForNegativeImpact: bigNumberify(0),
+      swapFeeFactorForPositiveImpact: bigNumberify(0),
+      atomicSwapFeeFactor: bigNumberify(0),
+      swapImpactExponentFactor: bigNumberify(0),
+      negativeSwapImpactFactor: bigNumberify(0),
+      positiveSwapImpactFactor: bigNumberify(0),
+
+      minCollateralFactor: percentageToFloat("1%"), // 100x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("1.23e-9"),
+
+      maxOpenInterest: decimalToFloat(5_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(7_500_000),
+
+      maxLongTokenPoolAmount: expandDecimals(10_000_000, 6), // ~10M USD (2x max open interest)
+      maxShortTokenPoolAmount: expandDecimals(10_000_000, 6), // ~10M USD (2x max open interest)
+    },
+    {
+      tokens: { indexToken: "WETH", longToken: "USDm", shortToken: "USDm" },
+      virtualTokenIdForIndexToken: hashString("PERP:ETH/USD"),
+
+      ...syntheticMarketConfig,
+      ...fundingRateConfig_Low,
+      ...borrowingRateConfig_LowMax_WithLowerBase,
+
+      negativePositionImpactExponentFactor: exponentToFloat("1.63e0"),
+      positivePositionImpactExponentFactor: exponentToFloat("1.63e0"),
+      negativePositionImpactFactor: exponentToFloat("3.06e-8"),
+      positivePositionImpactFactor: exponentToFloat("2.55e-8"),
+
+      swapFeeFactorForNegativeImpact: bigNumberify(0),
+      swapFeeFactorForPositiveImpact: bigNumberify(0),
+      atomicSwapFeeFactor: bigNumberify(0),
+      swapImpactExponentFactor: bigNumberify(0),
+      negativeSwapImpactFactor: bigNumberify(0),
+      positiveSwapImpactFactor: bigNumberify(0),
+
+      minCollateralFactor: percentageToFloat("1%"), // 100x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("1.23e-9"),
+
+      maxOpenInterest: decimalToFloat(5_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(7_500_000),
+
+      maxLongTokenPoolAmount: expandDecimals(10_000_000, 6), // ~10M USD (2x max open interest)
+      maxShortTokenPoolAmount: expandDecimals(10_000_000, 6), // ~10M USD (2x max open interest)
+    },
+    {
+      tokens: { indexToken: "SOL", longToken: "USDm", shortToken: "USDm" },
+      virtualTokenIdForIndexToken: hashString("PERP:SOL/USD"),
+
+      ...syntheticMarketConfig,
+      ...fundingRateConfig_Low,
+      ...borrowingRateConfig_LowMax_WithLowerBase,
+
+      negativePositionImpactExponentFactor: exponentToFloat("1.81e0"),
+      positivePositionImpactExponentFactor: exponentToFloat("1.81e0"),
+      negativePositionImpactFactor: exponentToFloat("8.51e-9"),
+      positivePositionImpactFactor: exponentToFloat("7.09e-9"),
+
+      swapFeeFactorForNegativeImpact: bigNumberify(0),
+      swapFeeFactorForPositiveImpact: bigNumberify(0),
+      atomicSwapFeeFactor: bigNumberify(0),
+      swapImpactExponentFactor: bigNumberify(0),
+      negativeSwapImpactFactor: bigNumberify(0),
+      positiveSwapImpactFactor: bigNumberify(0),
+
+      minCollateralFactor: percentageToFloat("1%"), // 100x leverage
+      minCollateralFactorForLiquidation: percentageToFloat("0.5%"), // 200x leverage
+      minCollateralFactorForOpenInterestMultiplier: exponentToFloat("1.23e-9"),
+
+      maxOpenInterest: decimalToFloat(5_000_000),
+      maxPoolUsdForDeposit: decimalToFloat(7_500_000),
+
+      maxLongTokenPoolAmount: expandDecimals(10_000_000, 6), // ~10M USD (2x max open interest)
+      maxShortTokenPoolAmount: expandDecimals(10_000_000, 6), // ~10M USD (2x max open interest)
+    },
   ],
   avalancheFuji: [
     {

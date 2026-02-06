@@ -779,6 +779,24 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 10_000,
       expectedPositionImpactRatio: 20_000,
     },
+    BTC: {
+      negativePositionImpactFactor: exponentToFloat("1.93e-7"),
+      negativeSwapImpactFactor: 0,
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 11_987,
+    },
+    "WETH:USDm:USDm": {
+      negativePositionImpactFactor: exponentToFloat("3.06e-8"),
+      negativeSwapImpactFactor: 0,
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 12_000,
+    },
+    SOL: {
+      negativePositionImpactFactor: exponentToFloat("8.51e-9"),
+      negativeSwapImpactFactor: 0,
+      expectedSwapImpactRatio: 10_000,
+      expectedPositionImpactRatio: 12_000,
+    },
   },
 };
 
