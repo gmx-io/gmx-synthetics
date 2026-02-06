@@ -80,7 +80,7 @@ export const getExplorerUrl = (network) => {
     // avalanche: "https://api.snowtrace.io/",
     avalanche: "https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan/",
     botanix: "https://api.routescan.io/v2/network/mainnet/evm/3637/etherscan/",
-    megaEth: "https://megaeth.blockscout.com/",
+    megaEth: "https://megaeth.blockscout.com/api",
     snowscan: "https://api.snowscan.xyz/",
     arbitrumGoerli: "https://api-goerli.arbiscan.io/",
     arbitrumSepolia: "https://api.etherscan.io/v2/api?chainid=421614",

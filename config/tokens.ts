@@ -1531,7 +1531,7 @@ const config: {
     },
     USDm: {
       address: "0xFAfDdbb3FC7688494971a79cc65DCa3EF82079E7",
-      decimals: 6,
+      decimals: 18,
       transferGasLimit: 200 * 1000,
       dataStreamFeedId: "0x0003ea225e4b8cfc71e2f3cf853d07dbd144047f1c2dd8aecedd846749784a29",
       dataStreamFeedDecimals: 18,
