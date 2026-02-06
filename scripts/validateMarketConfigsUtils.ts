@@ -785,7 +785,7 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 10_000,
       expectedPositionImpactRatio: 11_987,
     },
-    ETH: {
+    "WETH:USDm:USDm": {
       negativePositionImpactFactor: exponentToFloat("3.06e-8"),
       negativeSwapImpactFactor: 0,
       expectedSwapImpactRatio: 10_000,
