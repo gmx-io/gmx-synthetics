@@ -268,7 +268,9 @@ export async function validatePriceFeed(tokenSymbol: string, token: TokenConfig,
     tokenSymbolReplaced = "USDT";
   }
 
-  if (description !== `${tokenSymbolReplaced} / USD`) {
+  const expectedDescription = priceFeed.customFeedDescription ?? `${tokenSymbolReplaced} / USD`;
+
+  if (description !== expectedDescription) {
     throw new Error(
       `Description mismatch for ${tokenSymbol}: ${description} !== ${tokenSymbolReplaced} / USD. price feed: ${priceFeed.address}`
     );
