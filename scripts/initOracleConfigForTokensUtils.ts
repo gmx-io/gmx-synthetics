@@ -8,11 +8,15 @@ import { bigNumberify, expandDecimals } from "../utils/math";
 import { TokenConfig } from "../config/tokens";
 import * as keys from "../utils/keys";
 import { getOracleProviderAddress } from "../utils/oracle";
+import { validateTokens } from "./validateTokenUtils";
 
 import IPriceFeed from "../artifacts/contracts/oracle/IPriceFeed.sol/IPriceFeed.json";
 
 export async function initOracleConfigForTokens({ write }) {
   const tokens = await hre.gmx.getTokens();
+
+  // Validate tokens before proceeding - ensures config decimals match on-chain
+  await validateTokens();
 
   const dataStore = await hre.ethers.getContract("DataStore");
   const multicall = await hre.ethers.getContract("Multicall3");
