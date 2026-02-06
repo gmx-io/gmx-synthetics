@@ -1533,6 +1533,11 @@ const config: {
       transferGasLimit: 200 * 1000,
       dataStreamFeedId: "0x0003ea225e4b8cfc71e2f3cf853d07dbd144047f1c2dd8aecedd846749784a29",
       dataStreamFeedDecimals: 18,
+      priceFeed: {
+        address: "0xdFe0063491d9DeD8F8abCdd7AE04238A1e70D270",
+        decimals: 18,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
     },
     BTC: {
       synthetic: true,
@@ -1543,18 +1548,6 @@ const config: {
       priceFeed: {
         address: "0xc6E3007B597f6F5a6330d43053D1EF73cCbbE721",
         decimals: 8,
-        heartbeatDuration: (24 + 1) * 60 * 60,
-      },
-    },
-    ETH: {
-      synthetic: true,
-      decimals: 18,
-      transferGasLimit: 200 * 1000,
-      dataStreamFeedId: "0x000362205e10b3a147d02792eccee483dca6c7b44ecce7012cb8c6e0b68b3ae9",
-      dataStreamFeedDecimals: 18,
-      priceFeed: {
-        address: "0xC3E01CC87A99A48081282F6566E1286fccC80d36",
-        decimals: 18,
         heartbeatDuration: (24 + 1) * 60 * 60,
       },
     },

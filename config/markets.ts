@@ -5408,7 +5408,7 @@ const config: {
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 6), // ~10M USD (2x max open interest)
     },
     {
-      tokens: { indexToken: "ETH", longToken: "USDm", shortToken: "USDm" },
+      tokens: { indexToken: "WETH", longToken: "USDm", shortToken: "USDm" },
       virtualTokenIdForIndexToken: hashString("PERP:ETH/USD"),
 
       ...syntheticMarketConfig,
