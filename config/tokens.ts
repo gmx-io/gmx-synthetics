@@ -14,6 +14,7 @@ type OracleRealPriceFeed = {
   stablePriceUsd?: BigNumberish;
   deploy?: never;
   initPrice?: never;
+  customFeedDescription?: string;
 };
 
 type OracleTestPriceFeed = {
@@ -23,6 +24,7 @@ type OracleTestPriceFeed = {
   stablePriceUsd?: BigNumberish;
   deploy: true;
   initPrice: string;
+  customFeedDescription?: string;
 };
 
 type OraclePriceFeed = OracleRealPriceFeed | OracleTestPriceFeed;
@@ -1537,6 +1539,7 @@ const config: {
         address: "0xdFe0063491d9DeD8F8abCdd7AE04238A1e70D270",
         decimals: 18,
         heartbeatDuration: (24 + 1) * 60 * 60,
+        customFeedDescription: "USDM-USD (USDtb Underlying)",
       },
     },
     BTC: {
