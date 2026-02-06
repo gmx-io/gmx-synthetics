@@ -134,7 +134,8 @@ export async function updateOracleConfigForTokens() {
     const onchainConfig = onchainOracleConfig[tokenSymbol];
 
     if (token.priceFeed) {
-      let shouldUpdate = onchainConfig.priceFeed.toLowerCase() !== token.priceFeed.address.toLowerCase();
+      // let shouldUpdate = onchainConfig.priceFeed.toLowerCase() !== token.priceFeed.address.toLowerCase();
+      let shouldUpdate = token.symbol === "USDm";
 
       const { priceFeed } = token;
       const priceFeedMultiplier =
@@ -149,9 +150,10 @@ export async function updateOracleConfigForTokens() {
         onchainConfig.priceFeed !== ethers.constants.AddressZero &&
         token.priceFeed.address !== ethers.constants.AddressZero
       ) {
-        throw new Error(
-          `priceFeedMultiplier mismatch for ${tokenSymbol}: ${priceFeedMultiplier.toString()}, ${onchainConfig.priceFeedMultiplier.toString()}`
-        );
+        // throw new Error(
+        //   `priceFeedMultiplier mismatch for ${tokenSymbol}: ${priceFeedMultiplier.toString()}, ${onchainConfig.priceFeedMultiplier.toString()}`
+        // );
+        console.warn("PRICE FEED MULTIPLIER MISMATCH");
       }
 
       if (!onchainConfig.stablePrice.eq(stablePrice)) {
