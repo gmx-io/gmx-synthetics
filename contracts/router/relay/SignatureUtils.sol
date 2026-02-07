@@ -126,9 +126,10 @@ library SignatureUtils {
     }
 
     /**
-     * @dev Validates an EIP-6492 signature for a counterfactual contract.
+     * @dev Validates an EIP-6492 signature for a counterfactual or deployed contract.
      * If the contract is not deployed, calls the factory to deploy it first.
-     * Then validates the signature via ERC-1271.
+     * If already deployed and validation fails, executes factoryCalldata as a
+     * preparation call and retries (per EIP-6492 spec).
      *
      * @param signer The expected signer address (counterfactual or deployed)
      * @param hash The hash to validate against
@@ -146,8 +147,10 @@ library SignatureUtils {
         (address factory, bytes memory factoryCalldata, bytes memory originalSignature) =
             abi.decode(wrappedSig, (address, bytes, bytes));
 
+        bool alreadyDeployed = signer.code.length > 0;
+
         // If contract not deployed, deploy it via factory
-        if (signer.code.length == 0) {
+        if (!alreadyDeployed) {
             (bool success, ) = factory.call(factoryCalldata);
             if (!success) return false;
             // Verify deployment succeeded
@@ -155,6 +158,17 @@ library SignatureUtils {
         }
 
         // Validate via ERC-1271
-        return SignatureChecker.isValidERC1271SignatureNow(signer, hash, originalSignature);
+        if (SignatureChecker.isValidERC1271SignatureNow(signer, hash, originalSignature)) {
+            return true;
+        }
+
+        // if wallet was already deployed, execute factoryCalldata as a prep call and retry validation
+        if (alreadyDeployed) {
+            (bool success, ) = factory.call(factoryCalldata);
+            if (!success) return false;
+            return SignatureChecker.isValidERC1271SignatureNow(signer, hash, originalSignature);
+        }
+
+        return false;
     }
 }
