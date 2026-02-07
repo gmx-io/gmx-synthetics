@@ -72,7 +72,18 @@ library SignatureUtils {
             revert Errors.InvalidSignature(signatureType);
         }
 
-        // 2. Try ECDSA first (for granular EOA errors)
+        // 2. Try ECDSA before ERC-1271
+        //
+        // EIP-6492 recommends ERC-1271 before ecrecover to prevent wrong attribution
+        // when discovering unknown signers (a contract's signature format might also
+        // be a valid ecrecover signature for a different EOA address).
+        //
+        // This concern doesn't apply here because we validate against a known
+        // expectedSigner - if ecrecover returns a different address, the comparison
+        // fails and we fall through to ERC-1271.
+        //
+        // ECDSA-first is more gas efficient for EOAs (the common case).
+        //
         // Check standard digest
         (address recovered, ECDSA.RecoverError error) = ECDSA.tryRecover(digest, signature);
         if (error == ECDSA.RecoverError.NoError && recovered == expectedSigner) {
