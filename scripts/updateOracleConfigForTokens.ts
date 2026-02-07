@@ -226,20 +226,20 @@ export async function updateOracleConfigForTokens() {
       }
     }
 
-    if (token.dataStreamFeedId && onchainConfig.dataStreamId !== token.dataStreamFeedId) {
+    const dataStreamMultiplier = expandDecimals(1, 60 - token.decimals - token.dataStreamFeedDecimals);
+    if (token.dataStreamFeedId && (
+      onchainConfig.dataStreamId !== token.dataStreamFeedId || !onchainConfig.dataStreamMultiplier.eq(dataStreamMultiplier)
+    )) {
       const dataStreamSpreadReductionFactor = bigNumberify(token.dataStreamSpreadReductionFactor ?? 0);
-      const dataStreamMultiplier = expandDecimals(1, 60 - token.decimals - token.dataStreamFeedDecimals);
 
-      if (!onchainConfig.dataStreamMultiplier.eq(dataStreamMultiplier)) {
-        if (process.env.ALLOW_MULTIPLIER_UPDATE) {
-          console.log(
-            `dataStreamMultiplier mismatch for ${tokenSymbol}: config=${dataStreamMultiplier.toString()}, onchain=${onchainConfig.dataStreamMultiplier.toString()}`
-          );
-        } else {
-          throw new Error(
-            `dataStreamMultiplier mismatch for ${tokenSymbol}: ${dataStreamMultiplier.toString()}, ${onchainConfig.dataStreamMultiplier.toString()}`
-          );
-        }
+      if (process.env.ALLOW_MULTIPLIER_UPDATE) {
+        console.log(
+          `dataStreamMultiplier mismatch for ${tokenSymbol}: config=${dataStreamMultiplier.toString()}, onchain=${onchainConfig.dataStreamMultiplier.toString()}`
+        );
+      } else {
+        throw new Error(
+          `dataStreamMultiplier mismatch for ${tokenSymbol}: ${dataStreamMultiplier.toString()}, ${onchainConfig.dataStreamMultiplier.toString()}`
+        );
       }
 
       console.log(
