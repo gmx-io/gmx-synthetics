@@ -149,9 +149,16 @@ export async function updateOracleConfigForTokens() {
         onchainConfig.priceFeed !== ethers.constants.AddressZero &&
         token.priceFeed.address !== ethers.constants.AddressZero
       ) {
-        throw new Error(
-          `priceFeedMultiplier mismatch for ${tokenSymbol}: ${priceFeedMultiplier.toString()}, ${onchainConfig.priceFeedMultiplier.toString()}`
-        );
+        if (process.env.ALLOW_MULTIPLIER_UPDATE) {
+          console.log(
+            `priceFeedMultiplier mismatch for ${tokenSymbol}: config=${priceFeedMultiplier.toString()}, onchain=${onchainConfig.priceFeedMultiplier.toString()}`
+          );
+          shouldUpdate = true;
+        } else {
+          throw new Error(
+            `priceFeedMultiplier mismatch for ${tokenSymbol}: ${priceFeedMultiplier.toString()}, ${onchainConfig.priceFeedMultiplier.toString()}`
+          );
+        }
       }
 
       if (!onchainConfig.stablePrice.eq(stablePrice)) {
@@ -224,9 +231,15 @@ export async function updateOracleConfigForTokens() {
       const dataStreamMultiplier = expandDecimals(1, 60 - token.decimals - token.dataStreamFeedDecimals);
 
       if (!onchainConfig.dataStreamMultiplier.eq(dataStreamMultiplier)) {
-        throw new Error(
-          `dataStreamMultiplier mismatch for ${tokenSymbol}: ${dataStreamMultiplier.toString()}, ${onchainConfig.dataStreamMultiplier.toString()}`
-        );
+        if (process.env.ALLOW_MULTIPLIER_UPDATE) {
+          console.log(
+            `dataStreamMultiplier mismatch for ${tokenSymbol}: config=${dataStreamMultiplier.toString()}, onchain=${onchainConfig.dataStreamMultiplier.toString()}`
+          );
+        } else {
+          throw new Error(
+            `dataStreamMultiplier mismatch for ${tokenSymbol}: ${dataStreamMultiplier.toString()}, ${onchainConfig.dataStreamMultiplier.toString()}`
+          );
+        }
       }
 
       console.log(
@@ -260,6 +273,8 @@ export async function updateOracleConfigForTokens() {
             token.dataStreamFeedId,
             dataStreamMultiplier,
             dataStreamSpreadReductionFactor,
+            predecessor,
+            salt,
           ])
         );
       } else {
@@ -269,7 +284,9 @@ export async function updateOracleConfigForTokens() {
           dataStreamMultiplier,
           dataStreamSpreadReductionFactor
         );
-        multicallWriteParams.push(timelock.interface.encodeFunctionData("executeBatch", [targets, values, payloads]));
+        multicallWriteParams.push(
+          timelock.interface.encodeFunctionData("executeBatch", [targets, values, payloads, predecessor, salt])
+        );
       }
     }
 
