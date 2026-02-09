@@ -284,6 +284,8 @@ export const SYNC_CONFIG_MARKET_PARAMETER_DISABLED = hashString("SYNC_CONFIG_MAR
 export const SYNC_CONFIG_UPDATE_COMPLETED = hashString("SYNC_CONFIG_UPDATE_COMPLETED");
 export const SYNC_CONFIG_LATEST_UPDATE_ID = hashString("SYNC_CONFIG_LATEST_UPDATE_ID");
 
+export const MAX_TOTAL_CONTRIBUTOR_TOKEN_AMOUNT = hashString("MAX_TOTAL_CONTRIBUTOR_TOKEN_AMOUNT");
+
 export const BUYBACK_BATCH_AMOUNT = hashString("BUYBACK_BATCH_AMOUNT");
 export const BUYBACK_AVAILABLE_FEE_AMOUNT = hashString("BUYBACK_AVAILABLE_FEE_AMOUNT");
 export const BUYBACK_GMX_FACTOR = hashString("BUYBACK_GMX_FACTOR");
@@ -950,6 +952,10 @@ export function syncConfigLatestUpdateIdKey() {
 
 export function buybackBatchAmountKey(token: string) {
   return hashData(["bytes32", "address"], [BUYBACK_BATCH_AMOUNT, token]);
+}
+
+export function maxTotalContributorTokenAmountKey(token: string) {
+  return hashData(["bytes32", "address"], [MAX_TOTAL_CONTRIBUTOR_TOKEN_AMOUNT, token]);
 }
 
 export function buybackAvailableFeeAmountKey(feeToken: string, swapToken: string) {
