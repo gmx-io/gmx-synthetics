@@ -206,7 +206,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         minTokensForFirstGlvDeposit: expandDecimals(1, 18),
         markets: [
           createGlvMarketConfig("BTC", 5_000_000, 1),
-          createGlvMarketConfig("ETH", 5_000_000, 1),
+          createGlvMarketConfig("WETH", 5_000_000, 1),
           createGlvMarketConfig("SOL", 5_000_000, 1),
         ],
       },
