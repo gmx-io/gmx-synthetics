@@ -282,7 +282,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     },
     megaEth: {
       positionFeeReceiverFactor: decimalToFloat(50, 2), // 50%
-      executionGasFeeMultiplierFactor: false,
+      executionGasFeeMultiplierFactor: expandDecimals(15556, 26), // 1.5556x
+      estimatedGasFeeMultiplierFactor: expandDecimals(15556, 26), // 1.5556x
       maxCallbackGasLimit: 0,
       nativeTokenTransferGasLimit: 0,
       refundExecutionFeeGasLimit: 0,
