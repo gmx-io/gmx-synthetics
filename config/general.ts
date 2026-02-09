@@ -282,6 +282,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
     },
     megaEth: {
       positionFeeReceiverFactor: decimalToFloat(50, 2), // 50%
+      maxCallbackGasLimit: 0,
     },
   }[network.name];
 
