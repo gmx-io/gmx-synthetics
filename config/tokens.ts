@@ -1528,6 +1528,11 @@ const config: {
       dataStreamFeedDecimals: 18,
       buybackMaxPriceImpactFactor: LOW_BUYBACK_IMPACT,
       dataStreamSpreadReductionFactor: percentageToFloat("100%"),
+      priceFeed: {
+        address: "0xC3E01CC87A99A48081282F6566E1286fccC80d36",
+        decimals: 18,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
     },
     USDm: {
       address: "0xFAfDdbb3FC7688494971a79cc65DCa3EF82079E7",
