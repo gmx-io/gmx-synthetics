@@ -288,7 +288,9 @@ export async function updateOracleConfigForTokens() {
           dataStreamMultiplier,
           dataStreamSpreadReductionFactor
         );
-        multicallWriteParams.push(timelock.interface.encodeFunctionData("executeBatch", [targets, values, payloads]));
+        multicallWriteParams.push(
+          timelock.interface.encodeFunctionData("executeBatch", [targets, values, payloads, predecessor, salt])
+        );
       }
     }
 
