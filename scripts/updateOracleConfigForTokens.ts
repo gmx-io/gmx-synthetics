@@ -134,8 +134,7 @@ export async function updateOracleConfigForTokens() {
     const onchainConfig = onchainOracleConfig[tokenSymbol];
 
     if (token.priceFeed) {
-      // let shouldUpdate = onchainConfig.priceFeed.toLowerCase() !== token.priceFeed.address.toLowerCase();
-      let shouldUpdate = token.symbol === "USDm";
+      let shouldUpdate = onchainConfig.priceFeed.toLowerCase() !== token.priceFeed.address.toLowerCase();
 
       const { priceFeed } = token;
       const priceFeedMultiplier =
@@ -150,10 +149,16 @@ export async function updateOracleConfigForTokens() {
         onchainConfig.priceFeed !== ethers.constants.AddressZero &&
         token.priceFeed.address !== ethers.constants.AddressZero
       ) {
-        // throw new Error(
-        //   `priceFeedMultiplier mismatch for ${tokenSymbol}: ${priceFeedMultiplier.toString()}, ${onchainConfig.priceFeedMultiplier.toString()}`
-        // );
-        console.warn("PRICE FEED MULTIPLIER MISMATCH");
+        if (process.env.ALLOW_PRICE_FEED_MULTIPLIER_UPDATE) {
+          shouldUpdate = true;
+          console.log(
+            `PRICE FEED MULTIPLIER MISMATCH for ${tokenSymbol}: ${priceFeedMultiplier.toString()}, ${onchainConfig.priceFeedMultiplier.toString()}`
+          );
+        } else {
+          throw new Error(
+            `priceFeedMultiplier mismatch for ${tokenSymbol}: ${priceFeedMultiplier.toString()}, ${onchainConfig.priceFeedMultiplier.toString()}`
+          );
+        }
       }
 
       if (!onchainConfig.stablePrice.eq(stablePrice)) {
@@ -229,11 +234,17 @@ export async function updateOracleConfigForTokens() {
     ) {
       const dataStreamSpreadReductionFactor = bigNumberify(token.dataStreamSpreadReductionFactor ?? 0);
 
-      // if (!onchainConfig.dataStreamMultiplier.eq(dataStreamMultiplier)) {
-      //   throw new Error(
-      //     `dataStreamMultiplier mismatch for ${tokenSymbol}: ${dataStreamMultiplier.toString()}, ${onchainConfig.dataStreamMultiplier.toString()}`
-      //   );
-      // }
+      if (!onchainConfig.dataStreamMultiplier.eq(dataStreamMultiplier)) {
+        if (process.env.ALLOW_DATA_STREAM_MULTIPLIER_UPDATE) {
+          console.log(
+            `DATA STREAM MULTIPLIER MISMATCH for ${tokenSymbol}: ${dataStreamMultiplier.toString()}, ${onchainConfig.dataStreamMultiplier.toString()}`
+          );
+        } else {
+          throw new Error(
+            `dataStreamMultiplier mismatch for ${tokenSymbol}: ${dataStreamMultiplier.toString()}, ${onchainConfig.dataStreamMultiplier.toString()}`
+          );
+        }
+      }
 
       console.log(
         `setDataStream(${tokenSymbol} ${
