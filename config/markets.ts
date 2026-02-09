@@ -5404,8 +5404,8 @@ const config: {
       maxOpenInterest: decimalToFloat(5_000_000),
       maxPoolUsdForDeposit: decimalToFloat(7_500_000),
 
-      maxLongTokenPoolAmount: expandDecimals(10_000_000, 6), // ~10M USD (2x max open interest)
-      maxShortTokenPoolAmount: expandDecimals(10_000_000, 6), // ~10M USD (2x max open interest)
+      maxLongTokenPoolAmount: expandDecimals(10_000_000, 18), // ~10M USD (2x max open interest)
+      maxShortTokenPoolAmount: expandDecimals(10_000_000, 18), // ~10M USD (2x max open interest)
     },
     {
       tokens: { indexToken: "WETH", longToken: "USDm", shortToken: "USDm" },
@@ -5434,8 +5434,8 @@ const config: {
       maxOpenInterest: decimalToFloat(5_000_000),
       maxPoolUsdForDeposit: decimalToFloat(7_500_000),
 
-      maxLongTokenPoolAmount: expandDecimals(10_000_000, 6), // ~10M USD (2x max open interest)
-      maxShortTokenPoolAmount: expandDecimals(10_000_000, 6), // ~10M USD (2x max open interest)
+      maxLongTokenPoolAmount: expandDecimals(10_000_000, 18), // ~10M USD (2x max open interest)
+      maxShortTokenPoolAmount: expandDecimals(10_000_000, 18), // ~10M USD (2x max open interest)
     },
     {
       tokens: { indexToken: "SOL", longToken: "USDm", shortToken: "USDm" },
@@ -5464,8 +5464,8 @@ const config: {
       maxOpenInterest: decimalToFloat(5_000_000),
       maxPoolUsdForDeposit: decimalToFloat(7_500_000),
 
-      maxLongTokenPoolAmount: expandDecimals(10_000_000, 6), // ~10M USD (2x max open interest)
-      maxShortTokenPoolAmount: expandDecimals(10_000_000, 6), // ~10M USD (2x max open interest)
+      maxLongTokenPoolAmount: expandDecimals(10_000_000, 18), // ~10M USD (2x max open interest)
+      maxShortTokenPoolAmount: expandDecimals(10_000_000, 18), // ~10M USD (2x max open interest)
     },
   ],
   avalancheFuji: [
