@@ -5402,7 +5402,7 @@ const config: {
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("1.23e-9"),
 
       maxOpenInterest: decimalToFloat(100), // 5_000_000
-      maxPoolUsdForDeposit: decimalToFloat(100), // 7_500_000
+      maxPoolUsdForDeposit: decimalToFloat(500_100), // 7_500_000
 
       maxLongTokenPoolAmount: expandDecimals(10_000_000, 18), // ~10M USD (2x max open interest)
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 18), // ~10M USD (2x max open interest)
@@ -5432,7 +5432,7 @@ const config: {
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("1.23e-9"),
 
       maxOpenInterest: decimalToFloat(100), // 5_000_000
-      maxPoolUsdForDeposit: decimalToFloat(100), // 7_500_000
+      maxPoolUsdForDeposit: decimalToFloat(500_100), // 7_500_000
 
       maxLongTokenPoolAmount: expandDecimals(10_000_000, 18), // ~10M USD (2x max open interest)
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 18), // ~10M USD (2x max open interest)
@@ -5462,7 +5462,7 @@ const config: {
       minCollateralFactorForOpenInterestMultiplier: exponentToFloat("1.23e-9"),
 
       maxOpenInterest: decimalToFloat(100), // 5_000_000
-      maxPoolUsdForDeposit: decimalToFloat(100), // 7_500_000
+      maxPoolUsdForDeposit: decimalToFloat(500_100), // 7_500_000
 
       maxLongTokenPoolAmount: expandDecimals(10_000_000, 18), // ~10M USD (2x max open interest)
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 18), // ~10M USD (2x max open interest)
