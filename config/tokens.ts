@@ -1235,6 +1235,20 @@ const config: {
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },
+    CC: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003111e1c2212376d4c196bf7635919e4b28368809dda6f515c396453d53770",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    MET: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003024c8e73e74f3f43352a1745975eeb5cd0a2b9d310f8da2d13d518544c00",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
   },
   avalanche: {
     "BTC.b": {

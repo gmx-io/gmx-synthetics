@@ -656,6 +656,16 @@ const recommendedMarketConfig = {
       expectedSwapImpactRatio: 20_000,
       expectedPositionImpactRatio: 14_940,
     },
+    CC: {
+      negativePositionImpactFactor: exponentToFloat("5.85e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 15_000,
+    },
+    MET: {
+      negativePositionImpactFactor: exponentToFloat("3.44e-8"),
+      expectedSwapImpactRatio: 20_000,
+      expectedPositionImpactRatio: 15_021,
+    },
   },
   avalanche: {
     "BTC.b": {
