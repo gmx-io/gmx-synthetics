@@ -836,6 +836,8 @@ library MarketUtils {
 
         MarketEventUtils.emitPoolAmountUpdated(eventEmitter, market.marketToken, token, delta, nextValue);
 
+        validateMarketTokenBalance(dataStore, market, token);
+
         return nextValue;
     }
 
