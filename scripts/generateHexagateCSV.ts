@@ -10,7 +10,7 @@
  * Output:
  *   - File: docs/hexagate-import-address.csv
  *   - Format: "chainId","address","tags"
- *   - Networks: Arbitrum (42161), Avalanche (43114), Botanix (3637)
+ *   - Networks: Arbitrum (42161), Avalanche (43114), Botanix (3637), MegaETH (4326)
  *
  * ⚠️  WARNING:
  * Before generating the CSV, verify that the format matches Hexagate's current import requirements
@@ -37,6 +37,7 @@ const NETWORK_CHAIN_IDS = {
   arbitrum: 42161,
   avalanche: 43114,
   botanix: 3637,
+  megaEth: 4326,
 };
 
 const TAGS = process.env.TAGS;
