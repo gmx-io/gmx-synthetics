@@ -21,6 +21,7 @@ The documentation is generated from the deployment artifacts in `/deployments/` 
 | Arbitrum One | 139 | [View](./arbitrum-deployments.md) | Dec 19, 2025, 06:06 AM UTC |
 | Avalanche C-Chain | 137 | [View](./avalanche-deployments.md) | Dec 19, 2025, 06:06 AM UTC |
 | Botanix | 132 | [View](./botanix-deployments.md) | Dec 19, 2025, 06:06 AM UTC |
+| MegaETH | 128 | [View](./megaEth-deployments.md) | Feb 13, 2026, 08:34 AM UTC |
 
 ### Testnet
 
