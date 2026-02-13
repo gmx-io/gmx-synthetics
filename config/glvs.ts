@@ -168,6 +168,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("JTO", arbitrum_btcUsdcDefaultCap, 1),
           createGlvMarketConfig("XAUT.v2", arbitrum_btcUsdcDefaultCap, 1),
           createGlvMarketConfig("IP", arbitrum_btcUsdcDefaultCap, 1),
+          // createGlvMarketConfig("CC", arbitrum_btcUsdcDefaultCap, 1),
+          // createGlvMarketConfig("MET", arbitrum_btcUsdcDefaultCap, 1),
         ],
       },
     ],
