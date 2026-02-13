@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Check if any deployment files have been modified in the last commit
-DEPLOYMENT_CHANGED=$(git diff --name-only HEAD~1 HEAD | grep -E "deployments/(arbitrum|avalanche|botanix|arbitrumSepolia|avalancheFuji)/.*\.json$")
+DEPLOYMENT_CHANGED=$(git diff --name-only HEAD~1 HEAD | grep -E "deployments/(arbitrum|avalanche|botanix|megaEth|arbitrumSepolia|avalancheFuji)/.*\.json$")
 
 if [ ! -z "$DEPLOYMENT_CHANGED" ]; then
   echo "Deployment files changed, updating documentation..."
