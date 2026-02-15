@@ -605,7 +605,8 @@ library PositionUtils {
     function updateOpenInterest(
         PositionUtils.UpdatePositionParams memory params,
         int256 sizeDeltaUsd,
-        int256 sizeDeltaInTokens
+        int256 sizeDeltaInTokens,
+        MarketUtils.MarketPrices memory prices
     ) internal {
         if (sizeDeltaUsd != 0) {
             bool useOpenInterestInTokens = params.contracts.dataStore.getBool(Keys.USE_OPEN_INTEREST_IN_TOKENS_FOR_BALANCE);
@@ -630,6 +631,47 @@ library PositionUtils {
                 sizeDeltaInTokens,
                 useOpenInterestInTokens
             );
+
+            MarketUtils.validateOpenInterest(
+                params.contracts.dataStore,
+                params.market,
+                params.position.isLong()
+            );
+
+            MarketUtils.validateReserve(
+                params.contracts.dataStore,
+                params.market,
+                prices,
+                params.position.isLong()
+            );
+
+            MarketUtils.validateOpenInterestReserve(
+                params.contracts.dataStore,
+                params.market,
+                prices,
+                params.position.isLong()
+            );
+
+            if (sizeDeltaUsd < 0) {
+                uint256 poolUsd = MarketUtils.getPoolUsdWithoutPnl(
+                    params.contracts.dataStore,
+                    params.market,
+                    prices,
+                    params.position.isLong(),
+                    false
+                );
+                uint256 reservedUsd = MarketUtils.getReservedUsd(
+                    params.contracts.dataStore,
+                    params.market,
+                    prices,
+                    params.position.isLong()
+                );
+
+                // if reservedUsd is greater than poolUsd, the pool is not sufficient to cover reserved open interest amount
+                if (reservedUsd > poolUsd) {
+                    revert Errors.InsufficientReserve(reservedUsd, poolUsd);
+                }
+            }
         }
     }
 

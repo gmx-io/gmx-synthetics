@@ -8,16 +8,18 @@ import "../data/DataStore.sol";
 import "../data/Keys.sol";
 import "../data/Keys2.sol";
 import "../role/RoleModule.sol";
+import "../oracle/OracleModule.sol";
 import "../event/EventEmitter.sol";
 import "../utils/BasicMulticall.sol";
 import "../utils/Precision.sol";
 import "../utils/Cast.sol";
 import "../market/MarketUtils.sol";
+import "../oracle/IOracle.sol";
 
 import "./ConfigUtils.sol";
 
 // @title Config
-contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
+contract Config is ReentrancyGuard, RoleModule, BasicMulticall, OracleModule {
     using EventUtils for EventUtils.AddressItems;
     using EventUtils for EventUtils.UintItems;
     using EventUtils for EventUtils.IntItems;
@@ -28,6 +30,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
 
     DataStore public immutable dataStore;
     EventEmitter public immutable eventEmitter;
+    address public immutable staticOracleProvider;
 
     // @dev the base keys that can be set
     mapping (bytes32 => bool) public allowedBaseKeys;
@@ -37,10 +40,13 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
     constructor(
         RoleStore _roleStore,
         DataStore _dataStore,
-        EventEmitter _eventEmitter
-    ) RoleModule(_roleStore) {
+        EventEmitter _eventEmitter,
+        IOracle _oracle,
+        address _staticOracleProvider
+    ) RoleModule(_roleStore) OracleModule(_oracle) {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
+        staticOracleProvider = _staticOracleProvider;
 
         _initAllowedBaseKeys();
         _initAllowedLimitedBaseKeys();
@@ -110,7 +116,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         );
     }
 
-    function setOracleProviderForToken(address oracle, address token, address provider) external onlyConfigKeeper nonReentrant {
+    function _setOracleProviderForToken(address oracle, address token, address provider) internal {
         if (token == address(0)) {
             revert Errors.EmptyToken();
         }
@@ -134,6 +140,37 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         eventData.addressItems.setItem(2, "provider", provider);
         eventEmitter.emitEventLog(
             "SetOracleProviderForToken",
+            eventData
+        );
+    }
+
+    function setOracleProviderForToken(address oracle, address token, address provider) external onlyConfigKeeper nonReentrant {
+        _setOracleProviderForToken(oracle, token, provider);
+    }
+
+    function setStaticPriceForToken(
+        address token,
+        OracleUtils.SetPricesParams memory pricesParams
+    ) external onlyConfigKeeper nonReentrant withOraclePricesForAtomicAction(pricesParams) {
+        if (token == address(0)) {
+            revert Errors.EmptyToken();
+        }
+
+        Price.Props memory price = oracle.getPrimaryPrice(token);
+        dataStore.setUint(Keys.staticOraclePriceKey(token, false), price.min);
+        dataStore.setUint(Keys.staticOraclePriceKey(token, true), price.max);
+
+        _setOracleProviderForToken(address(oracle), token, staticOracleProvider);
+
+        EventUtils.EventLogData memory eventData;
+        eventData.addressItems.initItems(2);
+        eventData.addressItems.setItem(0, "token", token);
+        eventData.addressItems.setItem(1, "provider", staticOracleProvider);
+        eventData.uintItems.initItems(2);
+        eventData.uintItems.setItem(0, "priceMin", price.min);
+        eventData.uintItems.setItem(1, "priceMax", price.max);
+        eventEmitter.emitEventLog(
+            "SetStaticPriceForToken",
             eventData
         );
     }
@@ -520,6 +557,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys.FUNDING_FACTOR] = true;
         allowedBaseKeys[Keys.FUNDING_EXPONENT_FACTOR] = true;
         allowedBaseKeys[Keys.FUNDING_INCREASE_FACTOR_PER_SECOND] = true;
+        allowedBaseKeys[Keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND] = true;
         allowedBaseKeys[Keys.FUNDING_DECREASE_FACTOR_PER_SECOND] = true;
         allowedBaseKeys[Keys.MIN_FUNDING_FACTOR_PER_SECOND] = true;
         allowedBaseKeys[Keys.MAX_FUNDING_FACTOR_PER_SECOND] = true;
@@ -608,6 +646,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedLimitedBaseKeys[Keys.MAX_FUNDING_FACTOR_PER_SECOND] = true;
         allowedLimitedBaseKeys[Keys.MIN_FUNDING_FACTOR_PER_SECOND] = true;
         allowedLimitedBaseKeys[Keys.FUNDING_INCREASE_FACTOR_PER_SECOND] = true;
+        allowedLimitedBaseKeys[Keys.MIN_FUNDING_INCREASE_RATE_PER_SECOND] = true;
         allowedLimitedBaseKeys[Keys.FUNDING_DECREASE_FACTOR_PER_SECOND] = true;
 
         allowedLimitedBaseKeys[Keys.MAX_POOL_AMOUNT] = true;

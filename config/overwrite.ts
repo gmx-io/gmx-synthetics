@@ -19,7 +19,7 @@ export function getExistingContractAddresses(network) {
 
   if (network.name === "megaEth") {
     return {
-      ReferralStorage: { address: "0x0000000000000000000000000000000000000000" },
+      ReferralStorage: { address: "0xAd917849372eaEF498E982F90bA6459a43ecbd31" },
     };
   }
 

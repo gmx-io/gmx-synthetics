@@ -108,5 +108,6 @@ export function getRoles({
       "0x4A1D9e342E2dB5f4a02c9eF5cB29CaF289f31599": true, // TimelockConfig (ROLE_ADMIN)
       "0xC77E6C0ca99E02660A23c00A860Dd5a8912DEaF5": true, // ConfigTimelockController (ROLE_ADMIN)
     },
+    MULTICHAIN_READER: {},
   };
 }
