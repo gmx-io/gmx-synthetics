@@ -597,7 +597,7 @@ describe("MultichainGmRouter", () => {
 
       // TODO: Enable test once hardhat supports changing the chain id during the test
       // without changing the chainId, tx reverts with InvalidRecoveredSigner (signature fails)
-      // to test the bridgeOut flow, could temporarily disable the signature verification (e.g. comment out the RelayUtils.validateSignature call)
+      // to test the bridgeOut flow, could temporarily disable the signature verification (e.g. comment out the SignatureUtils.validateSignature call)
       it.skip("create deposit and bridge out from controller the GM tokens, on the source chain", async () => {
         // use the StargatePoolUSDC as the StargatePoolGM --> StargatePoolGM.token() will be the GM token
         const mockStargatePoolGM = mockStargatePoolUsdc;

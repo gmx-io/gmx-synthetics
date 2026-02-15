@@ -19,6 +19,7 @@ import "../../token/TokenUtils.sol";
 import "../../gas/GasUtils.sol";
 
 import "./RelayUtils.sol";
+import "./SignatureUtils.sol";
 
 
 /*
@@ -387,7 +388,7 @@ abstract contract BaseGelatoRelayRouter is GelatoRelayContext, ReentrancyGuard, 
 
         _validateDigest(digest);
 
-        RelayUtils.validateSignature(
+        SignatureUtils.validateSignature(
             domainSeparator,
             digest,
             relayParams.signature,

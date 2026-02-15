@@ -1,8 +1,7 @@
 import { createDeployFunction } from "../utils/deploy";
 
 const func = createDeployFunction({
-  contractName: "SubaccountRouterUtils",
-  libraryNames: ["RelayUtils", "SignatureUtils", "SubaccountUtils"],
+  contractName: "SignatureUtils",
 });
 
 export default func;
