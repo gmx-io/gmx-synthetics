@@ -5529,6 +5529,26 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(10_000_000, 18), // ~10M USD (2x max open interest)
       maxShortTokenPoolAmount: expandDecimals(10_000_000, 18), // ~10M USD (2x max open interest)
     },
+    {
+      // Short-lived swap-only pool for Megaeth launch (USDM as gas payment token)
+      // Conservative swap params
+      tokens: { longToken: "WETH", shortToken: "USDm" },
+
+      ...baseMarketConfig,
+
+      swapOnly: true,
+
+      maxLongTokenPoolAmount: expandDecimals(500, 18),
+      maxShortTokenPoolAmount: expandDecimals(1_000_000, 18),
+
+      maxPoolUsdForDeposit: decimalToFloat(900_000),
+
+      swapImpactExponentFactor: exponentToFloat("1.5e0"),
+      negativeSwapImpactFactor: exponentToFloat("3e-7"),
+      positiveSwapImpactFactor: exponentToFloat("2.5e-7"),
+
+      atomicSwapFeeFactor: percentageToFloat("2.25%"),
+    },
   ],
   avalancheFuji: [
     {

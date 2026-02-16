@@ -1554,6 +1554,8 @@ const config: {
       transferGasLimit: 200 * 1000,
       dataStreamFeedId: "0x0003ea225e4b8cfc71e2f3cf853d07dbd144047f1c2dd8aecedd846749784a29",
       dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      buybackMaxPriceImpactFactor: MID_BUYBACK_IMPACT,
       priceFeed: {
         address: "0xdFe0063491d9DeD8F8abCdd7AE04238A1e70D270",
         decimals: 18,
@@ -1580,6 +1582,7 @@ const config: {
       transferGasLimit: 200 * 1000,
       dataStreamFeedId: "0x0003b778d3f6b2ac4991302b89cb313f99a42467d6c9c5f96f57c29c0d2bc24f",
       dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
       priceFeed: {
         address: "0x53c05390FdfDB63526Ac0814825093A68eaddC87",
         decimals: 18,

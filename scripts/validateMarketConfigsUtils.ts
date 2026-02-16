@@ -14,6 +14,7 @@ const stablecoinSymbols = {
   DAI: true,
   "DAI.e": true,
   USDe: true,
+  USDm: true,
 };
 
 const BASIS_POINTS_DIVISOR = 10_000;
@@ -806,6 +807,10 @@ const recommendedMarketConfig = {
       negativeSwapImpactFactor: 0,
       expectedSwapImpactRatio: 10_000,
       expectedPositionImpactRatio: 12_000,
+    },
+    "WETH:USDm": {
+      negativeSwapImpactFactor: exponentToFloat("3e-7"),
+      expectedSwapImpactRatio: 12_000,
     },
   },
 };
