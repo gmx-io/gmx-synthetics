@@ -819,6 +819,9 @@ const configTokenMapping = {
   arbitrum: {
     "WBTC.e": "BTC",
   },
+  megaEth: {
+    WETH: "WETH:USDm",
+  },
 };
 
 function getTradeSizeForImpact({ priceImpactBps, impactExponentFactor, impactFactor }) {
