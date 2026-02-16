@@ -5538,22 +5538,16 @@ const config: {
 
       swapOnly: true,
 
-      minCollateralUsd: decimalToFloat(1, 0),
-
       maxLongTokenPoolAmount: expandDecimals(500, 18),
       maxShortTokenPoolAmount: expandDecimals(1_000_000, 18),
 
       maxPoolUsdForDeposit: decimalToFloat(900_000),
-
-      swapFeeFactorForPositiveImpact: percentageToFloat("0.05%"),
-      swapFeeFactorForNegativeImpact: percentageToFloat("0.07%"),
 
       swapImpactExponentFactor: exponentToFloat("1.5e0"),
       negativeSwapImpactFactor: exponentToFloat("3e-7"),
       positiveSwapImpactFactor: exponentToFloat("2.5e-7"),
 
       atomicSwapFeeFactor: percentageToFloat("2.25%"),
-      atomicWithdrawalFeeFactor: percentageToFloat("0.5%"),
     },
   ],
   avalancheFuji: [
