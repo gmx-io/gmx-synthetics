@@ -6,6 +6,7 @@ import "../../order/IBaseOrderUtils.sol";
 import "../../feature/FeatureUtils.sol";
 import "../../subaccount/SubaccountUtils.sol";
 import "./RelayUtils.sol";
+import "./SignatureUtils.sol";
 
 library SubaccountRouterUtils {
     function handleSubaccountAction(
@@ -63,7 +64,7 @@ library SubaccountRouterUtils {
         bytes32 domainSeparator = RelayUtils.getDomainSeparator(srcChainId);
         bytes32 structHash = RelayUtils.getSubaccountApprovalStructHash(subaccountApproval);
         bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, structHash);
-        RelayUtils.validateSignature(
+        SignatureUtils.validateSignature(
             domainSeparator,
             digest,
             subaccountApproval.signature,
