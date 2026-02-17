@@ -237,11 +237,13 @@ export default async function (hre: HardhatRuntimeEnvironment): Promise<RolesCon
         "0xb38302e27bAe8932536A84ab362c3d1013420Cb4": true,
         "0xCD9706B6B71fdC4351091B5b1D910cEe7Fde28D0": true, // Max
         "0x508cbC56Ab57A9b0221cf1810a483f8013c92Ff3": true, // An
+        "0xC2bBF836C0F23F40e9E379BF1c23FaA82B4cD151": true, // Solar
         [deployer]: true,
       },
       ROLE_ADMIN: {
         "0xCD9706B6B71fdC4351091B5b1D910cEe7Fde28D0": true, // Max
         "0x508cbC56Ab57A9b0221cf1810a483f8013c92Ff3": true, // An
+        "0xC2bBF836C0F23F40e9E379BF1c23FaA82B4cD151": true, // Solar
       },
       ...testnetConfig,
     },
