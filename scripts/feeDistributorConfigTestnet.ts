@@ -43,6 +43,24 @@ if (resetDistributionTimestampStr !== "true" && resetDistributionTimestampStr !=
 }
 const resetDistributionTimestamp = resetDistributionTimestampStr === "true";
 
+const resetDistributionStateStr = process.env.RESET_DISTRIBUTION_TIMESTAMP;
+if (!resetDistributionStateStr) {
+  throw new Error("RESET_DISTRIBUTION_STATE environment variable not provided");
+}
+if (resetDistributionStateStr !== "true" && resetDistributionStateStr !== "false") {
+  throw new Error('RESET_DISTRIBUTION_STATE environment must equal "true" or "false"');
+}
+const resetDistributionState = resetDistributionStateStr === "true";
+
+const distributeFeesStr = process.env.DISTRIBUTE_FEES;
+if (!distributeFeesStr) {
+  throw new Error("DISTRIBUTE_FEES environment variable not provided");
+}
+if (distributeFeesStr !== "true" && distributeFeesStr !== "false") {
+  throw new Error('DISTRIBUTE_FEES environment must equal "true" or "false"');
+}
+const distributeFees = distributeFeesStr === "true";
+
 const workflowId = process.env.WORKFLOW_ID;
 if (!workflowId) {
   throw new Error("WORKFLOW_ID not set in .env file");
@@ -192,10 +210,16 @@ async function setupTestData(
   const MintableToken = await getFactory(deployer, "MintableToken");
   const gmx = MintableToken.attach(contracts.gmx);
   const wnt = MintableToken.attach(contracts.wnt);
-  const esGmx = MintableToken.attach(contracts.esGmx);
 
   const MockRewardTrackerV1 = await getFactory(deployer, "MockRewardTrackerV1");
   const mockExtendedGmxTracker = MockRewardTrackerV1.attach(contracts.mockExtendedGmxTracker);
+
+  const shouldDistributeFees = await dataStore.getBool(keys.FEE_DISTRIBUTOR_DISTRIBUTE_FEES);
+  if (distributeFees !== shouldDistributeFees) {
+    console.log(`Setting distributeFees to: ${distributeFees}...`);
+    await dataStore.setBool(keys.FEE_DISTRIBUTOR_DISTRIBUTE_FEES, distributeFees);
+    await delay(txDelay);
+  }
 
   // Set up mock staked GMX amount
   await mockExtendedGmxTracker.setTotalSupply(scenario.stakedGmxAmount);
@@ -238,17 +262,6 @@ async function setupTestData(
   }
   await wnt.mint(contracts.feeDistributorVault, scenario.wntAmount);
   console.log(`Minted WNT to FeeDistributorVault: ${ethers.utils.formatEther(scenario.wntAmount)}`);
-  await delay(txDelay);
-
-  // Mint some esGMX to FeeDistributorVault for referral rewards
-  currentBalance = await esGmx.balanceOf(contracts.feeDistributorVault);
-  if (currentBalance > ZERO) {
-    await esGmx.burn(contracts.feeDistributorVault, currentBalance);
-    console.log(`Burned esGMX in FeeDistributorVault: ${ethers.utils.formatEther(currentBalance)}`);
-    await delay(txDelay);
-  }
-  await esGmx.mint(contracts.feeDistributorVault, expandDecimals(10, 18));
-  console.log("Minted 10 esGMX to FeeDistributorVault for referral rewards");
   await delay(txDelay);
 
   // Fund FeeDistributor with ETH for gas
@@ -358,66 +371,15 @@ async function configureContracts(
     await delay(txDelay);
   }
 
+  if (resetDistributionState) {
+    console.log("Resetting distribution state...");
+    await dataStore.setUint(keys.FEE_DISTRIBUTOR_STATE, 0n);
+    await delay(txDelay);
+  }
+
   // initial configuration if requested
   if (initialConfig === "true" || initialConfig === "1") {
-    console.log("\n1. Configuring Oracle Price Feeds...");
-
-    // Enable the ChainlinkPriceFeedProvider as an oracle provider
-    await dataStore.setBool(keys.isOracleProviderEnabledKey(contracts.chainlinkPriceFeedProvider), true);
-    console.log("Enabled ChainlinkPriceFeedProvider as oracle provider");
-    await delay(txDelay);
-
-    // Set as atomic oracle provider
-    await dataStore.setBool(keys.isAtomicOracleProviderKey(contracts.chainlinkPriceFeedProvider), true);
-    console.log("Set ChainlinkPriceFeedProvider as atomic oracle provider");
-    await delay(txDelay);
-
-    // Configure oracle providers for tokens
-    await dataStore.setAddress(
-      keys.oracleProviderForTokenKey(contracts.oracle, contracts.wnt),
-      contracts.chainlinkPriceFeedProvider
-    );
-    console.log("Set oracle provider for WNT");
-    await delay(txDelay);
-
-    await dataStore.setAddress(
-      keys.oracleProviderForTokenKey(contracts.oracle, contracts.gmx),
-      contracts.chainlinkPriceFeedProvider
-    );
-    console.log("Set oracle provider for GMX");
-    await delay(txDelay);
-
-    // Configure price feed addresses directly in DataStore
-    await dataStore.setAddress(keys.priceFeedKey(contracts.wnt), contracts.wethPriceFeed);
-    console.log("Set WETH price feed in DataStore");
-    await delay(txDelay);
-
-    await dataStore.setAddress(keys.priceFeedKey(contracts.gmx), contracts.gmxPriceFeed);
-    console.log("Set GMX price feed in DataStore");
-    await delay(txDelay);
-
-    // Set price feed multipliers
-    await dataStore.setUint(keys.priceFeedMultiplierKey(contracts.wnt), expandDecimals(1, 34));
-    await delay(txDelay);
-
-    await dataStore.setUint(keys.priceFeedMultiplierKey(contracts.gmx), expandDecimals(1, 34));
-    console.log("Set price feed multipliers");
-    await delay(txDelay);
-
-    // Set heartbeat durations
-    await dataStore.setUint(
-      keys.priceFeedHeartbeatDurationKey(contracts.wnt),
-      3600 // 1 hour
-    );
-    await delay(txDelay);
-
-    await dataStore.setUint(keys.priceFeedHeartbeatDurationKey(contracts.gmx), 3600);
-    console.log("Set heartbeat durations");
-    await delay(txDelay);
-
-    console.log("Oracle price feeds configured");
-
-    console.log("\n2. Configuring FeeDistributor parameters...");
+    console.log("\n1. Configuring FeeDistributor parameters...");
 
     // Basic configuration
     const distributionDay = 3; // Wednesday
@@ -425,22 +387,9 @@ async function configureContracts(
     console.log("Set distribution day to:", distributionDay);
     await delay(txDelay);
 
-    await dataStore.setUint(keys.FEE_DISTRIBUTOR_STATE, 0);
-    await delay(txDelay);
-
-    await config.setUint(keys.FEE_DISTRIBUTOR_V1_FEES_WNT_FACTOR, "0x", expandDecimals(70, 28));
-    await delay(txDelay);
-    await config.setUint(keys.FEE_DISTRIBUTOR_V2_FEES_WNT_FACTOR, "0x", expandDecimals(10, 28));
-    await delay(txDelay);
-    await config.setUint(keys.FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_AMOUNT, "0x", expandDecimals(1_000_000, 30));
-    await delay(txDelay);
-    await config.setUint(keys.FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_ESGMX_AMOUNT, "0x", expandDecimals(5000, 18));
-    await delay(txDelay);
     await config.setUint(keys.FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY, "0x", 259200); // 3 days
     await delay(txDelay);
     await config.setUint(keys.FEE_DISTRIBUTOR_GAS_LIMIT, "0x", 5_000_000);
-    await delay(txDelay);
-    await config.setUint(keys.FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_FACTOR, "0x", expandDecimals(20, 28));
     await delay(txDelay);
     await config.setUint(keys.FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY, "0x", expandDecimals(1, 16));
     await delay(txDelay);
@@ -464,7 +413,7 @@ async function configureContracts(
     }
 
     // Configure addresses for each chain
-    console.log("\n3. Configuring chain-specific addresses...");
+    console.log("\n2. Configuring chain-specific addresses...");
 
     for (let i = 0; i < chainConfig.chainIds.length; i++) {
       const chainId = chainConfig.chainIds[i];
@@ -572,17 +521,14 @@ async function configureContracts(
     console.log("General addresses configured");
 
     // Configure keeper costs
-    console.log("\n4. Configuring keeper costs...");
+    console.log("\n3. Configuring keeper costs...");
 
     const keeperAddresses = [deployerAddress];
     const keeperTargetBalances = [expandDecimals(1, 15)];
-    const keepersV2 = [true];
 
     await dataStore.setAddressArray(keys.FEE_DISTRIBUTOR_KEEPER_COSTS, keeperAddresses);
     await delay(txDelay);
     await dataStore.setUintArray(keys.FEE_DISTRIBUTOR_KEEPER_COSTS, keeperTargetBalances);
-    await delay(txDelay);
-    await dataStore.setBoolArray(keys.FEE_DISTRIBUTOR_KEEPER_COSTS, keepersV2);
     await delay(txDelay);
 
     console.log("Keeper costs configured");
@@ -598,11 +544,9 @@ async function configureContracts(
     await delay(txDelay);
     await dataStore.setUint(keys.tokenTransferGasLimit(contracts.wnt), 200_000);
     await delay(txDelay);
-    await dataStore.setUint(keys.tokenTransferGasLimit(contracts.esGmx), 200_000);
-    await delay(txDelay);
 
     // Configure MultichainReader
-    console.log("\n5. Configuring MultichainReader...");
+    console.log("\n4. Configuring MultichainReader...");
 
     await config.setBool(
       keys.MULTICHAIN_AUTHORIZED_ORIGINATORS,
@@ -635,7 +579,7 @@ async function configureContracts(
 
     // Configure mock endpoints for local testing
     if (network === "localhost") {
-      console.log("\n6. Configuring mock endpoints for local testing...");
+      console.log("\n5. Configuring mock endpoints for local testing...");
 
       const MockEndpointV2: ContractFactory = await getFactory(deployer, "MockEndpointV2");
 

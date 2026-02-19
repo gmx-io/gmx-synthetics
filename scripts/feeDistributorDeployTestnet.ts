@@ -268,13 +268,6 @@ async function deployContracts(): Promise<DeploymentResult> {
     contracts.feeDistributorUtils = feeDistributorUtils.address;
     await delay(txDelay);
 
-    const ClaimUtils: ContractFactory = await getFactory(deployer, "ClaimUtils");
-    const claimUtils: Contract = await ClaimUtils.deploy();
-    await claimUtils.deployed();
-    console.log("ClaimUtils deployed to:", claimUtils.address);
-    contracts.claimUtils = claimUtils.address;
-    await delay(txDelay);
-
     // Config
     const Config: ContractFactory = await getFactory(deployer, "Config", {
       libraries: {
@@ -312,12 +305,6 @@ async function deployContracts(): Promise<DeploymentResult> {
     contracts.gmx = gmx.address;
     await delay(txDelay);
 
-    const esGmx: Contract = await MintableToken.deploy("esGMX", "esGMX", 18);
-    await esGmx.deployed();
-    console.log("esGMX deployed to:", esGmx.address);
-    contracts.esGmx = esGmx.address;
-    await delay(txDelay);
-
     const wnt: Contract = await MintableToken.deploy("WETH", "WETH", 18);
     await wnt.deployed();
     console.log("WNT deployed to:", wnt.address);
@@ -327,61 +314,8 @@ async function deployContracts(): Promise<DeploymentResult> {
     saveCheckpoint(3, contracts);
   }
 
-  // Deploy Oracle components
-  if (!checkpoint || checkpoint.step < 4) {
-    console.log("\n4. Deploying Oracle components...");
-
-    const Oracle: ContractFactory = await getFactory(deployer, "Oracle");
-    const oracle: Contract = await Oracle.deploy(
-      contracts.roleStore,
-      contracts.dataStore,
-      contracts.eventEmitter,
-      ethers.constants.AddressZero
-    );
-    await oracle.deployed();
-    console.log("Oracle deployed to:", oracle.address);
-    contracts.oracle = oracle.address;
-    await delay(txDelay);
-
-    const ChainlinkPriceFeedProvider: ContractFactory = await getFactory(deployer, "ChainlinkPriceFeedProvider");
-    const chainlinkPriceFeedProvider: Contract = await ChainlinkPriceFeedProvider.deploy(contracts.dataStore);
-    await chainlinkPriceFeedProvider.deployed();
-    console.log("ChainlinkPriceFeedProvider deployed to:", chainlinkPriceFeedProvider.address);
-    contracts.chainlinkPriceFeedProvider = chainlinkPriceFeedProvider.address;
-    await delay(txDelay);
-
-    // Grant role to price feed provider and oracle
-    const RoleStoreContract = await getFactory(deployer, "RoleStore");
-    const roleStore = RoleStoreContract.attach(contracts.roleStore);
-    await (await roleStore.grantRole(contracts.chainlinkPriceFeedProvider, hashString("CONTROLLER"))).wait();
-    await delay(txDelay);
-    await (await roleStore.grantRole(contracts.oracle, hashString("CONTROLLER"))).wait();
-    await delay(txDelay);
-
-    // Deploy mock price feeds
-    const WETHPriceFeed: ContractFactory = await getFactory(deployer, "MockPriceFeed");
-    const wethPriceFeed: Contract = await WETHPriceFeed.deploy();
-    await wethPriceFeed.deployed();
-    await delay(txDelay);
-    await (await wethPriceFeed.setAnswer(expandDecimals(5_000, 8))).wait(); // $5000
-    console.log("WETH Price Feed deployed to:", wethPriceFeed.address);
-    contracts.wethPriceFeed = wethPriceFeed.address;
-    await delay(txDelay);
-
-    const GMXPriceFeed: ContractFactory = await getFactory(deployer, "MockPriceFeed");
-    const gmxPriceFeed: Contract = await GMXPriceFeed.deploy();
-    await gmxPriceFeed.deployed();
-    await delay(txDelay);
-    await (await gmxPriceFeed.setAnswer(expandDecimals(20, 8))).wait(); // $20
-    console.log("GMX Price Feed deployed to:", gmxPriceFeed.address);
-    contracts.gmxPriceFeed = gmxPriceFeed.address;
-    await delay(txDelay);
-
-    saveCheckpoint(4, contracts);
-  }
-
   // Handle endpoint deployment/configuration
-  if (!checkpoint || checkpoint.step < 5) {
+  if (!checkpoint || checkpoint.step < 4) {
     console.log("\n5. Setting up LayerZero endpoint...");
 
     let endpointAddressForMultichainReader: string;
@@ -422,11 +356,11 @@ async function deployContracts(): Promise<DeploymentResult> {
       contracts.mockEndpointGmxAdapter = "N/A";
     }
 
-    saveCheckpoint(5, contracts);
+    saveCheckpoint(4, contracts);
   }
 
   // Deploy other mock contracts
-  if (!checkpoint || checkpoint.step < 6) {
+  if (!checkpoint || checkpoint.step < 5) {
     console.log("\n6. Deploying mock contracts...");
 
     const MockVaultV1: ContractFactory = await getFactory(deployer, "MockVaultV1");
@@ -457,12 +391,23 @@ async function deployContracts(): Promise<DeploymentResult> {
     contracts.mockVester = mockVester.address;
     await delay(txDelay);
 
-    saveCheckpoint(6, contracts);
+    saveCheckpoint(5, contracts);
   }
 
   // Deploy fee-related contracts
   if (!checkpoint || checkpoint.step < 7) {
-    console.log("\n7. Deploying fee contracts...");
+    console.log("\n7. Deploying oracle and fee contracts...");
+
+    const Oracle: ContractFactory = await getFactory(deployer, "Oracle");
+    const oracle: Contract = await Oracle.deploy(
+      contracts.roleStore,
+      contracts.dataStore,
+      contracts.eventEmitter,
+      ethers.constants.AddressZero
+    );
+    await oracle.deployed();
+    console.log("Oracle deployed to:", oracle.address);
+    await delay(txDelay);
 
     const FeeHandler: ContractFactory = await getFactory(deployer, "FeeHandler", {
       libraries: {
@@ -471,7 +416,7 @@ async function deployContracts(): Promise<DeploymentResult> {
     });
     const feeHandler: Contract = await FeeHandler.deploy(
       contracts.roleStore,
-      contracts.oracle,
+      oracle.address,
       contracts.dataStore,
       contracts.eventEmitter,
       contracts.mockVaultV1,
@@ -487,13 +432,6 @@ async function deployContracts(): Promise<DeploymentResult> {
     await feeDistributorVault.deployed();
     console.log("FeeDistributorVault deployed to:", feeDistributorVault.address);
     contracts.feeDistributorVault = feeDistributorVault.address;
-    await delay(txDelay);
-
-    const ClaimVault: ContractFactory = await getFactory(deployer, "ClaimVault");
-    const claimVault: Contract = await ClaimVault.deploy(contracts.roleStore, contracts.dataStore);
-    await claimVault.deployed();
-    console.log("ClaimVault deployed to:", claimVault.address);
-    contracts.claimVault = claimVault.address;
     await delay(txDelay);
 
     // Deploy MultichainReader with its dedicated endpoint
@@ -521,17 +459,16 @@ async function deployContracts(): Promise<DeploymentResult> {
     contracts.gmxAdapter = gmxAdapter.address;
     await delay(txDelay);
 
-    saveCheckpoint(7, contracts);
+    saveCheckpoint(6, contracts);
   }
 
   // Deploy FeeDistributor
-  if (!checkpoint || checkpoint.step < 8) {
+  if (!checkpoint || checkpoint.step < 7) {
     console.log("\n8. Deploying FeeDistributor...");
 
     const FeeDistributor: ContractFactory = await getFactory(deployer, "FeeDistributor", {
       libraries: {
         FeeDistributorUtils: contracts.feeDistributorUtils,
-        ClaimUtils: contracts.claimUtils,
       },
     });
     const feeDistributor: Contract = await FeeDistributor.deploy(
@@ -541,9 +478,7 @@ async function deployContracts(): Promise<DeploymentResult> {
       contracts.dataStore,
       contracts.eventEmitter,
       contracts.multichainReader,
-      contracts.claimVault,
       contracts.gmx,
-      contracts.esGmx,
       contracts.wnt
     );
     await feeDistributor.deployed();
@@ -551,11 +486,11 @@ async function deployContracts(): Promise<DeploymentResult> {
     contracts.feeDistributor = feeDistributor.address;
     await delay(txDelay);
 
-    saveCheckpoint(8, contracts);
+    saveCheckpoint(7, contracts);
   }
 
   // Grant remaining roles
-  if (!checkpoint || checkpoint.step < 9) {
+  if (!checkpoint || checkpoint.step < 8) {
     console.log("\n9. Granting remaining roles...");
 
     const RoleStoreContract = await getFactory(deployer, "RoleStore");
@@ -575,7 +510,7 @@ async function deployContracts(): Promise<DeploymentResult> {
 
     console.log("Roles granted successfully");
 
-    saveCheckpoint(9, contracts);
+    saveCheckpoint(8, contracts);
   }
 
   // Clear checkpoint after successful deployment

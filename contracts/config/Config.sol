@@ -579,9 +579,6 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys2.MULTICHAIN_AUTHORIZED_ORIGINATORS] = true;
 
         allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_DISTRIBUTION_DAY] = true;
-        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_AMOUNT] = true;
-        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_WNT_USD_FACTOR] = true;
-        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_MAX_REFERRAL_REWARDS_ESGMX_AMOUNT] = true;
         allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_MAX_READ_RESPONSE_DELAY] = true;
         allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_GAS_LIMIT] = true;
         allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_CHAIN_ID] = true;
@@ -592,8 +589,7 @@ contract Config is ReentrancyGuard, RoleModule, BasicMulticall {
         allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_KEEPER_COSTS] = true;
         allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_CHAINLINK_FACTOR] = true;
         allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_MAX_WNT_AMOUNT_FROM_TREASURY] = true;
-        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_V1_FEES_WNT_FACTOR] = true;
-        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_V2_FEES_WNT_FACTOR] = true;
+        allowedBaseKeys[Keys2.FEE_DISTRIBUTOR_DISTRIBUTE_FEES] = true;
 
         allowedBaseKeys[Keys2.CRE_RECEIVER_AUTHORIZED_WORKFLOW_IDS] = true;
     }
