@@ -30,6 +30,10 @@ async function getTimelock(): Promise<TimelockConfig> {
     return await ethers.getContractAt("TimelockConfig", "0x72a30e76827Ce83cEf0b1BEd7e9aAF9F4a576990");
   }
 
+  if (network === "megaEth") {
+    return await ethers.getContractAt("TimelockConfig", "0x9d5f3fac443748c28FB5dc964D74F8419F686F6D");
+  }
+
   throw new Error("Unsupported network");
 }
 

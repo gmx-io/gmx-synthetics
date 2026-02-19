@@ -54,7 +54,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         longToken: "WETH",
         shortToken: "USDC",
         shiftMaxLossFactor: percentageToFloat("0.025%"),
-        shiftMinInterval: 30 * 60, // 30 minutes
+        shiftMinInterval: 4 * 60, // 4 minutes (will be 0 after new keeper testing)
         minTokensForFirstGlvDeposit: expandDecimals(1, 18),
         markets: [
           createGlvMarketConfig("WETH", 35_000_000, 1.98),
@@ -119,7 +119,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         longToken: "WBTC.e",
         shortToken: "USDC",
         shiftMaxLossFactor: percentageToFloat("0.025%"),
-        shiftMinInterval: 30 * 60, // 30 minutes
+        shiftMinInterval: 4 * 60, // 4 minutes (will be 0 after new keeper testing)
         minTokensForFirstGlvDeposit: expandDecimals(1, 18),
         markets: [
           createGlvMarketConfig("BTC", 30_000_000, 2.7),
@@ -168,6 +168,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("JTO", arbitrum_btcUsdcDefaultCap, 1),
           createGlvMarketConfig("XAUT.v2", arbitrum_btcUsdcDefaultCap, 1),
           createGlvMarketConfig("IP", arbitrum_btcUsdcDefaultCap, 1),
+          createGlvMarketConfig("CC", arbitrum_btcUsdcDefaultCap, 1),
+          createGlvMarketConfig("MET", arbitrum_btcUsdcDefaultCap, 1),
         ],
       },
     ],
@@ -194,7 +196,23 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
       },
     ],
     botanix: [],
-    megaEth: [],
+    megaEth: [
+      {
+        name: "GMX Liquidity Vault [USDm-USDm]",
+        symbol: "GLV [USDm-USDm]",
+        address: "0x3782d91C5888dE31F627495e6aAAC3f09499fe72",
+        longToken: "USDm",
+        shortToken: "USDm",
+        shiftMaxLossFactor: percentageToFloat("0.1%"),
+        shiftMinInterval: 60 * 60, // 1 hour
+        minTokensForFirstGlvDeposit: expandDecimals(1, 18),
+        markets: [
+          createGlvMarketConfig("BTC", 5_000_000, 1),
+          createGlvMarketConfig("WETH", 5_000_000, 1),
+          createGlvMarketConfig("SOL", 5_000_000, 1),
+        ],
+      },
+    ],
     arbitrumSepolia: [
       {
         name: "GMX Liquidity Vault [WETH-USDC.SG]",

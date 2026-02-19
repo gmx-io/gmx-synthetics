@@ -149,9 +149,16 @@ export async function updateOracleConfigForTokens() {
         onchainConfig.priceFeed !== ethers.constants.AddressZero &&
         token.priceFeed.address !== ethers.constants.AddressZero
       ) {
-        throw new Error(
-          `priceFeedMultiplier mismatch for ${tokenSymbol}: ${priceFeedMultiplier.toString()}, ${onchainConfig.priceFeedMultiplier.toString()}`
-        );
+        if (process.env.ALLOW_PRICE_FEED_MULTIPLIER_UPDATE) {
+          shouldUpdate = true;
+          console.log(
+            `PRICE FEED MULTIPLIER MISMATCH for ${tokenSymbol}: ${priceFeedMultiplier.toString()}, ${onchainConfig.priceFeedMultiplier.toString()}`
+          );
+        } else {
+          throw new Error(
+            `priceFeedMultiplier mismatch for ${tokenSymbol}: ${priceFeedMultiplier.toString()}, ${onchainConfig.priceFeedMultiplier.toString()}`
+          );
+        }
       }
 
       if (!onchainConfig.stablePrice.eq(stablePrice)) {
@@ -219,14 +226,24 @@ export async function updateOracleConfigForTokens() {
       }
     }
 
-    if (token.dataStreamFeedId && onchainConfig.dataStreamId !== token.dataStreamFeedId) {
+    const dataStreamMultiplier = expandDecimals(1, 60 - token.decimals - token.dataStreamFeedDecimals);
+    if (
+      token.dataStreamFeedId &&
+      (onchainConfig.dataStreamId !== token.dataStreamFeedId ||
+        !onchainConfig.dataStreamMultiplier.eq(dataStreamMultiplier))
+    ) {
       const dataStreamSpreadReductionFactor = bigNumberify(token.dataStreamSpreadReductionFactor ?? 0);
-      const dataStreamMultiplier = expandDecimals(1, 60 - token.decimals - token.dataStreamFeedDecimals);
 
       if (!onchainConfig.dataStreamMultiplier.eq(dataStreamMultiplier)) {
-        throw new Error(
-          `dataStreamMultiplier mismatch for ${tokenSymbol}: ${dataStreamMultiplier.toString()}, ${onchainConfig.dataStreamMultiplier.toString()}`
-        );
+        if (process.env.ALLOW_DATA_STREAM_MULTIPLIER_UPDATE) {
+          console.log(
+            `DATA STREAM MULTIPLIER MISMATCH for ${tokenSymbol}: ${dataStreamMultiplier.toString()}, ${onchainConfig.dataStreamMultiplier.toString()}`
+          );
+        } else {
+          throw new Error(
+            `dataStreamMultiplier mismatch for ${tokenSymbol}: ${dataStreamMultiplier.toString()}, ${onchainConfig.dataStreamMultiplier.toString()}`
+          );
+        }
       }
 
       console.log(
@@ -260,6 +277,8 @@ export async function updateOracleConfigForTokens() {
             token.dataStreamFeedId,
             dataStreamMultiplier,
             dataStreamSpreadReductionFactor,
+            predecessor,
+            salt,
           ])
         );
       } else {
@@ -269,7 +288,9 @@ export async function updateOracleConfigForTokens() {
           dataStreamMultiplier,
           dataStreamSpreadReductionFactor
         );
-        multicallWriteParams.push(timelock.interface.encodeFunctionData("executeBatch", [targets, values, payloads]));
+        multicallWriteParams.push(
+          timelock.interface.encodeFunctionData("executeBatch", [targets, values, payloads, predecessor, salt])
+        );
       }
     }
 
