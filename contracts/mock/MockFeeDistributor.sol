@@ -218,10 +218,14 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule {
         uint256 totalGmxBridgedOut;
         EventUtils.EventLogData memory eventData;
         eventData.uintItems.initItems(3);
-        // validate that the this chain has sufficient GMX to distribute fees
-        if (feeAmountGmxCurrentChain >= requiredGmxAmount) {
-            // only attempt to bridge to other chains if this chain has a surplus of GMX
-            if (feeAmountGmxCurrentChain > requiredGmxAmount) {
+        // validate that the this chain has sufficient GMX to distribute fees or if fees aren't being distributed
+        if (
+            feeAmountGmxCurrentChain >= requiredGmxAmount || !dataStore.getBool(Keys2.FEE_DISTRIBUTOR_DISTRIBUTE_FEES)
+        ) {
+            // only attempt to bridge to other chains if this chain has a surplus of GMX and fees are being distributed
+            if (
+                feeAmountGmxCurrentChain > requiredGmxAmount && dataStore.getBool(Keys2.FEE_DISTRIBUTOR_DISTRIBUTE_FEES)
+            ) {
                 // Call the internal bridging function
                 totalGmxBridgedOut = _calculateAndBridgeGmx(
                     chainIds,
@@ -310,7 +314,7 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule {
         // retrieve the amount of GMX to be paid out to GMX token stakers
         uint256 feeAmountGmx = _getUint(Keys2.feeDistributorFeeAmountGmxKey(mockChainId));
 
-        _distributeFees(wntForKeepers, wntForChainlink, wntForTreasury, feeAmountGmx);
+        _distributeFees(wntForKeepers, wntForChainlink, wntForTreasury, feeAmountGmx, treasuryAddress);
 
         _setUint(Keys2.FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP, block.timestamp);
         _setDistributionState(uint256(DistributionState.None));
@@ -477,7 +481,8 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule {
         uint256 wntForKeepers,
         uint256 wntForChainlink,
         uint256 wntForTreasury,
-        uint256 feeAmountGmx
+        uint256 feeAmountGmx,
+        address treasuryAddress
     ) internal {
         // transfer the WNT that needs to be sent to each keeper
         address[] memory keepers = dataStore.getAddressArray(Keys2.FEE_DISTRIBUTOR_KEEPER_COSTS);
@@ -499,16 +504,17 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule {
 
         // transfer the WNT for chainlink costs and WNT for the treasury
         _transferOut(wnt, _getAddressInfo(CHAINLINK), wntForChainlink);
-        _transferOut(wnt, _getAddressInfo(TREASURY), wntForTreasury);
+        _transferOut(wnt, treasuryAddress, wntForTreasury);
 
-        bool distributeFees = dataStore.getBool(Keys2.FEE_DISTRIBUTOR_DISTRIBUTE_FEES);
-        if (distributeFees) {
+        if (dataStore.getBool(Keys2.FEE_DISTRIBUTOR_DISTRIBUTE_FEES)) {
             // transfer gmx fees for the week and update the last distribution time and tokens per interval
             address extendedGmxTracker = _getAddressInfoForChain(mockChainId, EXTENDED_GMX_TRACKER);
             address distributor = IRewardTracker(extendedGmxTracker).distributor();
             _transferOut(gmx, extendedGmxTracker, feeAmountGmx);
             IRewardDistributor(distributor).updateLastDistributionTime();
             IRewardDistributor(distributor).setTokensPerInterval(feeAmountGmx / 1 weeks);
+        } else {
+            _transferOut(gmx, treasuryAddress, feeAmountGmx);
         }
     }
 
