@@ -66,6 +66,11 @@
       "txHash": "0x0d108b5039ce1096b39481320316d29f493473d459fad62372d442e4c4d11619"
     },
     {
+      "contractName": "CollateralFactorManager",
+      "contractAddress": "0x5278b356FB24d06a33ce394b23Db073df2038070",
+      "txHash": "0x6287c099193d2e300de907a6c12e58f370970a744c549a55f9f05ffd8ad08401"
+    },
+    {
       "contractName": "Config",
       "contractAddress": "0x33D1a645B9E9fc19b06Fe02981180c8DDAeE75B1",
       "txHash": "0xcf0a40a3cd1e3fb1073fd0b195a089a906295707e812744c592beebc0dcffe55"
