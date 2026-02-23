@@ -2,8 +2,8 @@
 
 **Network Type:** Testnet  
 **Chain ID:** 421614  
-**Total Contracts:** 135  
-**Last Updated:** Nov 17, 2025, 08:47 AM UTC
+**Total Contracts:** 136  
+**Last Updated:** Feb 23, 2026, 08:54 AM UTC
 
 ## Deployed Contracts
 
@@ -128,6 +128,7 @@
 | ShiftStoreUtils | `0xfc9Ee8ab3743449f066F35021f38D0bFeb165666` | [View on Explorer](https://sepolia.arbiscan.io/address/0xfc9Ee8ab3743449f066F35021f38D0bFeb165666) |
 | ShiftUtils | `0xB8B19490AAa368E21E3315899bB102105f83507e` | [View on Explorer](https://sepolia.arbiscan.io/address/0xB8B19490AAa368E21E3315899bB102105f83507e) |
 | ShiftVault | `0x6b6F9B7B9a6b69942DAE74FB95E694ec277117af` | [View on Explorer](https://sepolia.arbiscan.io/address/0x6b6F9B7B9a6b69942DAE74FB95E694ec277117af) |
+| StaticOracleProvider | `0x703b9b98d6BE52d86095A75A1bE738378186B333` | [View on Explorer](https://sepolia.arbiscan.io/address/0x703b9b98d6BE52d86095A75A1bE738378186B333) |
 | SubaccountGelatoRelayRouter | `0x43947140EEE26b82155baA18FDB746A05C700DCE` | [View on Explorer](https://sepolia.arbiscan.io/address/0x43947140EEE26b82155baA18FDB746A05C700DCE) |
 | SubaccountRouter | `0xCF45A7E8bB46738f454eC6766631E5612DA90836` | [View on Explorer](https://sepolia.arbiscan.io/address/0xCF45A7E8bB46738f454eC6766631E5612DA90836) |
 | SubaccountRouterUtils | `0xFA33A8b227325C4293C0970B9824848F9CF60943` | [View on Explorer](https://sepolia.arbiscan.io/address/0xFA33A8b227325C4293C0970B9824848F9CF60943) |
