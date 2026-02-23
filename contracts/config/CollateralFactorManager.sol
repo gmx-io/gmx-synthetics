@@ -29,6 +29,9 @@ contract CollateralFactorManager is RoleModule {
     }
 
     function setMinCollateralFactorForLiquidation(address market, uint256 value) external onlyKeeper {
+        // OM/USD market
+        require(market == address(0x89EB78679921499632fF16B1be3ee48295cfCD91), "Only OM market values can be set");
+
         dataStore.setUint(Keys.minCollateralFactorForLiquidationKey(market), value);
 
         emit MinCollateralFactorForLiquidationSet(msg.sender, market, value);
