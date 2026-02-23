@@ -2,8 +2,8 @@
 
 **Network Type:** Testnet  
 **Chain ID:** 421614  
-**Total Contracts:** 136  
-**Last Updated:** Feb 17, 2026, 09:27 AM UTC
+**Total Contracts:** 137  
+**Last Updated:** Feb 23, 2026, 11:06 PM UTC
 
 ## Deployed Contracts
 
@@ -13,7 +13,7 @@
 | AdlUtils | `0xAada46a4daD2766643ea8416A336d25Ac1fC962A` | [View on Explorer](https://sepolia.arbiscan.io/address/0xAada46a4daD2766643ea8416A336d25Ac1fC962A) |
 | AutoCancelSyncer | `0xA2E33C8D48D4C2Ef98682D5aFf118553b4010DF8` | [View on Explorer](https://sepolia.arbiscan.io/address/0xA2E33C8D48D4C2Ef98682D5aFf118553b4010DF8) |
 | BaseOrderUtils | `0x61b2af274171f8941921E16902c1626c10e3B876` | [View on Explorer](https://sepolia.arbiscan.io/address/0x61b2af274171f8941921E16902c1626c10e3B876) |
-| BridgeOutFromControllerUtils | `0xEC51f70E9D69A8046E0c791792D15B162d7B17fB` | [View on Explorer](https://sepolia.arbiscan.io/address/0xEC51f70E9D69A8046E0c791792D15B162d7B17fB) |
+| BridgeOutFromControllerUtils | `0x0Ed8E855Ef056c9aF48D09A8Bd0f9d4c5eabC0D8` | [View on Explorer](https://sepolia.arbiscan.io/address/0x0Ed8E855Ef056c9aF48D09A8Bd0f9d4c5eabC0D8) |
 | CallbackUtils | `0x88734F71Dba3c5192460eA16966a890Ed1Af69d6` | [View on Explorer](https://sepolia.arbiscan.io/address/0x88734F71Dba3c5192460eA16966a890Ed1Af69d6) |
 | ChainlinkDataStreamProvider | `0x13d6133F9ceE27B6C9A4559849553F10A45Bd9a4` | [View on Explorer](https://sepolia.arbiscan.io/address/0x13d6133F9ceE27B6C9A4559849553F10A45Bd9a4) |
 | ChainlinkPriceFeedProvider | `0xa76BF7f977E80ac0bff49BDC98a27b7b070a937d` | [View on Explorer](https://sepolia.arbiscan.io/address/0xa76BF7f977E80ac0bff49BDC98a27b7b070a937d) |
@@ -21,7 +21,7 @@
 | ClaimHandler | `0xdB980712cCB142A11296c1b9cf70C24E1e90002A` | [View on Explorer](https://sepolia.arbiscan.io/address/0xdB980712cCB142A11296c1b9cf70C24E1e90002A) |
 | ClaimUtils | `0x189F75906A6a18529eA16BA5A61d8E2aC8CD81C7` | [View on Explorer](https://sepolia.arbiscan.io/address/0x189F75906A6a18529eA16BA5A61d8E2aC8CD81C7) |
 | ClaimVault | `0xeB428ddF34D25Fc516DF81216c49b8fc2dAE5279` | [View on Explorer](https://sepolia.arbiscan.io/address/0xeB428ddF34D25Fc516DF81216c49b8fc2dAE5279) |
-| Config | `0xad593AE6079a313f9dfa03dE702056D7e2746b5d` | [View on Explorer](https://sepolia.arbiscan.io/address/0xad593AE6079a313f9dfa03dE702056D7e2746b5d) |
+| Config | `0xC85E2D35B9A94f21556b67c0414b85f0d886C8aa` | [View on Explorer](https://sepolia.arbiscan.io/address/0xC85E2D35B9A94f21556b67c0414b85f0d886C8aa) |
 | ConfigSyncer | `0x9E2F04805C4283B86502CaeAA39F07efCd02255A` | [View on Explorer](https://sepolia.arbiscan.io/address/0x9E2F04805C4283B86502CaeAA39F07efCd02255A) |
 | ConfigTimelockController | `0x8722Df9218bA7d7ee06AE48e990ef38B76750111` | [View on Explorer](https://sepolia.arbiscan.io/address/0x8722Df9218bA7d7ee06AE48e990ef38B76750111) |
 | ConfigUtils | `0x7858b4f4D7B25b4b83F0Cf6243C26FE056414FfE` | [View on Explorer](https://sepolia.arbiscan.io/address/0x7858b4f4D7B25b4b83F0Cf6243C26FE056414FfE) |
@@ -34,28 +34,28 @@
 | DecreasePositionUtils | `0x8B91a43cbDA355CB08a6cE37A26Ed9193B3359c6` | [View on Explorer](https://sepolia.arbiscan.io/address/0x8B91a43cbDA355CB08a6cE37A26Ed9193B3359c6) |
 | DepositEventUtils | `0x0C978D581fe01A1BF7343249669cAAa232C7fFE9` | [View on Explorer](https://sepolia.arbiscan.io/address/0x0C978D581fe01A1BF7343249669cAAa232C7fFE9) |
 | DepositHandler | `0xdD0228e2806A348209F777c82C90515f9da1b790` | [View on Explorer](https://sepolia.arbiscan.io/address/0xdD0228e2806A348209F777c82C90515f9da1b790) |
-| DepositStoreUtils | `0x02d40b7743F35B87ba3667F13d173D946d78D447` | [View on Explorer](https://sepolia.arbiscan.io/address/0x02d40b7743F35B87ba3667F13d173D946d78D447) |
-| DepositUtils | `0xaDc17626e4E432F176cC80ed3521c90DE2b71c1D` | [View on Explorer](https://sepolia.arbiscan.io/address/0xaDc17626e4E432F176cC80ed3521c90DE2b71c1D) |
+| DepositStoreUtils | `0x208bF6AE3CC4dF9f2783765c655f35fA5b1E856D` | [View on Explorer](https://sepolia.arbiscan.io/address/0x208bF6AE3CC4dF9f2783765c655f35fA5b1E856D) |
+| DepositUtils | `0x171ADbc795682db6631933C0cbdD38Ee01661336` | [View on Explorer](https://sepolia.arbiscan.io/address/0x171ADbc795682db6631933C0cbdD38Ee01661336) |
 | DepositVault | `0x809Ea82C394beB993c2b6B0d73b8FD07ab92DE5A` | [View on Explorer](https://sepolia.arbiscan.io/address/0x809Ea82C394beB993c2b6B0d73b8FD07ab92DE5A) |
 | EdgeDataStreamProvider | `0x50d80976B11cF4Fd7B887C9d4F67c835DCa036be` | [View on Explorer](https://sepolia.arbiscan.io/address/0x50d80976B11cF4Fd7B887C9d4F67c835DCa036be) |
 | EdgeDataStreamVerifier | `0x4ac0991D23E5D9092A7A4930DA71Bd1925667EB9` | [View on Explorer](https://sepolia.arbiscan.io/address/0x4ac0991D23E5D9092A7A4930DA71Bd1925667EB9) |
 | EventEmitter | `0xa973c2692C1556E1a3d478e745e9a75624AEDc73` | [View on Explorer](https://sepolia.arbiscan.io/address/0xa973c2692C1556E1a3d478e745e9a75624AEDc73) |
 | ExchangeRouter | `0xEd50B2A1eF0C35DAaF08Da6486971180237909c3` | [View on Explorer](https://sepolia.arbiscan.io/address/0xEd50B2A1eF0C35DAaF08Da6486971180237909c3) |
-| ExecuteDepositUtils | `0x2c100dB3fdECC9Db8e7aeB64f5E6cDcCfaB4DA69` | [View on Explorer](https://sepolia.arbiscan.io/address/0x2c100dB3fdECC9Db8e7aeB64f5E6cDcCfaB4DA69) |
-| ExecuteGlvDepositUtils | `0xC541d40b45651858b15F600fB2aE97122fB2E54F` | [View on Explorer](https://sepolia.arbiscan.io/address/0xC541d40b45651858b15F600fB2aE97122fB2E54F) |
+| ExecuteDepositUtils | `0x65cf26012eed51543E719b159e1a66cF382b9ef6` | [View on Explorer](https://sepolia.arbiscan.io/address/0x65cf26012eed51543E719b159e1a66cF382b9ef6) |
+| ExecuteGlvDepositUtils | `0x76569433fA485209c7Cc3074F2aE618718D100c4` | [View on Explorer](https://sepolia.arbiscan.io/address/0x76569433fA485209c7Cc3074F2aE618718D100c4) |
 | ExecuteOrderUtils | `0xd9A3F4ee5956342ff36bCB73C8505CAD48950CA4` | [View on Explorer](https://sepolia.arbiscan.io/address/0xd9A3F4ee5956342ff36bCB73C8505CAD48950CA4) |
-| ExecuteWithdrawalUtils | `0x1341dcc90ba4Da6D2d38a7724a8C4af5C241A523` | [View on Explorer](https://sepolia.arbiscan.io/address/0x1341dcc90ba4Da6D2d38a7724a8C4af5C241A523) |
+| ExecuteWithdrawalUtils | `0xcB75FCBC789075EaAAEC0265A5b59A054c1184d6` | [View on Explorer](https://sepolia.arbiscan.io/address/0xcB75FCBC789075EaAAEC0265A5b59A054c1184d6) |
 | ExternalHandler | `0x2303b33c2895871ae45AD8fEBCB52275657c9F9d` | [View on Explorer](https://sepolia.arbiscan.io/address/0x2303b33c2895871ae45AD8fEBCB52275657c9F9d) |
 | FeeDistributorUtils | `0xEE8404cd7710a45C2b1915F0334d82a9e8223654` | [View on Explorer](https://sepolia.arbiscan.io/address/0xEE8404cd7710a45C2b1915F0334d82a9e8223654) |
 | FeeDistributorVault | `0x98B4fD712dF0B4a99109Af0B71fB36d74FcB20fF` | [View on Explorer](https://sepolia.arbiscan.io/address/0x98B4fD712dF0B4a99109Af0B71fB36d74FcB20fF) |
 | FeeUtils | `0x31193104b0012512d859B00ce87Aa2DDE023A82B` | [View on Explorer](https://sepolia.arbiscan.io/address/0x31193104b0012512d859B00ce87Aa2DDE023A82B) |
 | GasUtils | `0xcbae80Cd3107eE0AC6e1FE5a475F39754e196F0a` | [View on Explorer](https://sepolia.arbiscan.io/address/0xcbae80Cd3107eE0AC6e1FE5a475F39754e196F0a) |
 | GelatoRelayRouter | `0xD2f52a70224d3453ea17944ABC12772793987FA6` | [View on Explorer](https://sepolia.arbiscan.io/address/0xD2f52a70224d3453ea17944ABC12772793987FA6) |
-| GlvDepositCalc | `0xB908E19A901e10750563E7167Fe22f8fbb217A24` | [View on Explorer](https://sepolia.arbiscan.io/address/0xB908E19A901e10750563E7167Fe22f8fbb217A24) |
+| GlvDepositCalc | `0x6217059d1b05C9fF6CDc15e9f4E1fc8781fd8651` | [View on Explorer](https://sepolia.arbiscan.io/address/0x6217059d1b05C9fF6CDc15e9f4E1fc8781fd8651) |
 | GlvDepositEventUtils | `0xdBc04602ea6520756cE3df4C790E060Be98b18A3` | [View on Explorer](https://sepolia.arbiscan.io/address/0xdBc04602ea6520756cE3df4C790E060Be98b18A3) |
 | GlvDepositHandler | `0x7b8ea00b2A9f38a21df18Bdf2D0230BC226A2e22` | [View on Explorer](https://sepolia.arbiscan.io/address/0x7b8ea00b2A9f38a21df18Bdf2D0230BC226A2e22) |
-| GlvDepositStoreUtils | `0xD8423088eEE004d31BeF6Ea7044221f52bF73c97` | [View on Explorer](https://sepolia.arbiscan.io/address/0xD8423088eEE004d31BeF6Ea7044221f52bF73c97) |
-| GlvDepositUtils | `0x30fE2912B5cd68955F3AE59eB325739bb1D1C2Ca` | [View on Explorer](https://sepolia.arbiscan.io/address/0x30fE2912B5cd68955F3AE59eB325739bb1D1C2Ca) |
+| GlvDepositStoreUtils | `0xc80C7dF59f44C32878FB0d555E12d9E3f15F7eF2` | [View on Explorer](https://sepolia.arbiscan.io/address/0xc80C7dF59f44C32878FB0d555E12d9E3f15F7eF2) |
+| GlvDepositUtils | `0xE92B95A55FA575C0d5E8D35F814d921AddF5C866` | [View on Explorer](https://sepolia.arbiscan.io/address/0xE92B95A55FA575C0d5E8D35F814d921AddF5C866) |
 | GlvFactory | `0x69b3F09A3161e2FB9bf351e4F58575b512099994` | [View on Explorer](https://sepolia.arbiscan.io/address/0x69b3F09A3161e2FB9bf351e4F58575b512099994) |
 | GlvReader | `0x9B7D08AB020D9c180E4bAc370fB545317124Cf22` | [View on Explorer](https://sepolia.arbiscan.io/address/0x9B7D08AB020D9c180E4bAc370fB545317124Cf22) |
 | GlvRouter | `0x21b044Bb4a2Ba667723aA3d15ba7b4bCc628084D` | [View on Explorer](https://sepolia.arbiscan.io/address/0x21b044Bb4a2Ba667723aA3d15ba7b4bCc628084D) |
@@ -63,13 +63,13 @@
 | GlvShiftHandler | `0x208Fd55DbB270A95E50Cf069fbea5bD0c10887b7` | [View on Explorer](https://sepolia.arbiscan.io/address/0x208Fd55DbB270A95E50Cf069fbea5bD0c10887b7) |
 | GlvShiftStoreUtils | `0x0C9b7F6F8F47a9464f6189713B48384C4a46dF8F` | [View on Explorer](https://sepolia.arbiscan.io/address/0x0C9b7F6F8F47a9464f6189713B48384C4a46dF8F) |
 | GlvShiftUtils | `0x4d3f46B2C1E2c4111Fe76622aEa3BCC8f9D7A06a` | [View on Explorer](https://sepolia.arbiscan.io/address/0x4d3f46B2C1E2c4111Fe76622aEa3BCC8f9D7A06a) |
-| GlvStoreUtils | `0x5B9842d094C92861d30fc7223f239A8bEee22FEb` | [View on Explorer](https://sepolia.arbiscan.io/address/0x5B9842d094C92861d30fc7223f239A8bEee22FEb) |
-| GlvUtils | `0x439A7dA3BAeF22C094573584638fFC85673121aC` | [View on Explorer](https://sepolia.arbiscan.io/address/0x439A7dA3BAeF22C094573584638fFC85673121aC) |
+| GlvStoreUtils | `0x6dC79073bF53a13E06d76EEd674aB3D5d6A26136` | [View on Explorer](https://sepolia.arbiscan.io/address/0x6dC79073bF53a13E06d76EEd674aB3D5d6A26136) |
+| GlvUtils | `0x75fF39eEC13b80b7bD91c842de444bFb85dB7530` | [View on Explorer](https://sepolia.arbiscan.io/address/0x75fF39eEC13b80b7bD91c842de444bFb85dB7530) |
 | GlvVault | `0x40bD50de0977c68ecB958ED4A065E14E1091ce64` | [View on Explorer](https://sepolia.arbiscan.io/address/0x40bD50de0977c68ecB958ED4A065E14E1091ce64) |
 | GlvWithdrawalEventUtils | `0x8E86994EB9eB989eAB011A7d84e04C874bF6671d` | [View on Explorer](https://sepolia.arbiscan.io/address/0x8E86994EB9eB989eAB011A7d84e04C874bF6671d) |
 | GlvWithdrawalHandler | `0x2334d57C02dc1Ee385760290a09da30743B60844` | [View on Explorer](https://sepolia.arbiscan.io/address/0x2334d57C02dc1Ee385760290a09da30743B60844) |
-| GlvWithdrawalStoreUtils | `0x62Bea6e846c4952206216dC460d8f6c2c690Ab48` | [View on Explorer](https://sepolia.arbiscan.io/address/0x62Bea6e846c4952206216dC460d8f6c2c690Ab48) |
-| GlvWithdrawalUtils | `0xc271BE322DcaE58f2dCe26E01dedF4c61Cf3DF89` | [View on Explorer](https://sepolia.arbiscan.io/address/0xc271BE322DcaE58f2dCe26E01dedF4c61Cf3DF89) |
+| GlvWithdrawalStoreUtils | `0xE445A31D56Fa716345E4E99607617d36dDB0cffA` | [View on Explorer](https://sepolia.arbiscan.io/address/0xE445A31D56Fa716345E4E99607617d36dDB0cffA) |
+| GlvWithdrawalUtils | `0x9106c5285bF196f888d643101421c65Ef73a6496` | [View on Explorer](https://sepolia.arbiscan.io/address/0x9106c5285bF196f888d643101421c65Ef73a6496) |
 | GmOracleProvider | `0xFcE6f3D7a312C16ddA64dB049610f3fa4a477627` | [View on Explorer](https://sepolia.arbiscan.io/address/0xFcE6f3D7a312C16ddA64dB049610f3fa4a477627) |
 | GovTimelockController | `0xb1854C5CfB3D25be6198972d5c3AEa0592e933a4` | [View on Explorer](https://sepolia.arbiscan.io/address/0xb1854C5CfB3D25be6198972d5c3AEa0592e933a4) |
 | GovToken | `0x709ffF9f1d8D890521D48D3FfC86E6a88244edF8` | [View on Explorer](https://sepolia.arbiscan.io/address/0x709ffF9f1d8D890521D48D3FfC86E6a88244edF8) |
@@ -89,12 +89,12 @@
 | MockTimelockV1 | `0x0331d2c207476e55cA64e996669600749fa158D3` | [View on Explorer](https://sepolia.arbiscan.io/address/0x0331d2c207476e55cA64e996669600749fa158D3) |
 | Multicall3 | `0xD84793ae65842fFac5C20Ab8eaBD699ea1FC79F3` | [View on Explorer](https://sepolia.arbiscan.io/address/0xD84793ae65842fFac5C20Ab8eaBD699ea1FC79F3) |
 | MultichainClaimsRouter | `0x0896f77B7dcE6923c58Ab1a1A91fFF617606E30b` | [View on Explorer](https://sepolia.arbiscan.io/address/0x0896f77B7dcE6923c58Ab1a1A91fFF617606E30b) |
-| MultichainGlvRouter | `0x10f3D7c30cabe91Cdd2785E5af37374842a1089C` | [View on Explorer](https://sepolia.arbiscan.io/address/0x10f3D7c30cabe91Cdd2785E5af37374842a1089C) |
-| MultichainGmRouter | `0x94dB1F9CAa86E86cD90F231411D31E5a3815bced` | [View on Explorer](https://sepolia.arbiscan.io/address/0x94dB1F9CAa86E86cD90F231411D31E5a3815bced) |
-| MultichainOrderRouter | `0xc9670CCD86d150C91f1f154813786f1Ec809Ae08` | [View on Explorer](https://sepolia.arbiscan.io/address/0xc9670CCD86d150C91f1f154813786f1Ec809Ae08) |
+| MultichainGlvRouter | `0x5aDeD3D75d1992FB03E050659609ce7B701BDD7a` | [View on Explorer](https://sepolia.arbiscan.io/address/0x5aDeD3D75d1992FB03E050659609ce7B701BDD7a) |
+| MultichainGmRouter | `0x345Aaef618bC0362f57621c754918E38A111cAF3` | [View on Explorer](https://sepolia.arbiscan.io/address/0x345Aaef618bC0362f57621c754918E38A111cAF3) |
+| MultichainOrderRouter | `0xAb168aeB15023c99D85dF2483Fe1575BD9D62591` | [View on Explorer](https://sepolia.arbiscan.io/address/0xAb168aeB15023c99D85dF2483Fe1575BD9D62591) |
 | MultichainReader | `0xb9a51870Ce92378Fe8E71aA60A653Cc47c51D72F` | [View on Explorer](https://sepolia.arbiscan.io/address/0xb9a51870Ce92378Fe8E71aA60A653Cc47c51D72F) |
 | MultichainSubaccountRouter | `0x2E883D945AB36DC8491693c8870648a232b540a1` | [View on Explorer](https://sepolia.arbiscan.io/address/0x2E883D945AB36DC8491693c8870648a232b540a1) |
-| MultichainTransferRouter | `0xEaba39494d17e722f2Ef49929656b82d561b4460` | [View on Explorer](https://sepolia.arbiscan.io/address/0xEaba39494d17e722f2Ef49929656b82d561b4460) |
+| MultichainTransferRouter | `0x367Ff6bD4E1fe86F053eCFEC67a369b1a35C2695` | [View on Explorer](https://sepolia.arbiscan.io/address/0x367Ff6bD4E1fe86F053eCFEC67a369b1a35C2695) |
 | MultichainUtils | `0x720a787393f5D64bF9Fb1dF936463355fEa4607e` | [View on Explorer](https://sepolia.arbiscan.io/address/0x720a787393f5D64bF9Fb1dF936463355fEa4607e) |
 | MultichainVault | `0xCd46EF5ed7d08B345c47b5a193A719861Aa2CD91` | [View on Explorer](https://sepolia.arbiscan.io/address/0xCd46EF5ed7d08B345c47b5a193A719861Aa2CD91) |
 | Oracle | `0x0dC4e24C63C24fE898Dda574C962Ba7Fbb146964` | [View on Explorer](https://sepolia.arbiscan.io/address/0x0dC4e24C63C24fE898Dda574C962Ba7Fbb146964) |
@@ -120,15 +120,16 @@
 | ReferralEventUtils | `0x2e2c0f556AF8a3969DC75493B4dF671Fee5CEFFE` | [View on Explorer](https://sepolia.arbiscan.io/address/0x2e2c0f556AF8a3969DC75493B4dF671Fee5CEFFE) |
 | ReferralStorage | `0xBbCdA58c228Bb29B5769778181c81Ac8aC546c11` | [View on Explorer](https://sepolia.arbiscan.io/address/0xBbCdA58c228Bb29B5769778181c81Ac8aC546c11) |
 | ReferralUtils | `0xc814c610F89D3e75F67f54f57f61fF402528a1fe` | [View on Explorer](https://sepolia.arbiscan.io/address/0xc814c610F89D3e75F67f54f57f61fF402528a1fe) |
-| RelayUtils | `0xB6D2F33Bf32552F370Eaf97af6954E4C248a10a9` | [View on Explorer](https://sepolia.arbiscan.io/address/0xB6D2F33Bf32552F370Eaf97af6954E4C248a10a9) |
+| RelayUtils | `0x36a95Da3bD1118592f9117d53cfAd286f3e145a0` | [View on Explorer](https://sepolia.arbiscan.io/address/0x36a95Da3bD1118592f9117d53cfAd286f3e145a0) |
 | RoleStore | `0x433E3C47885b929aEcE4149E3c835E565a20D95c` | [View on Explorer](https://sepolia.arbiscan.io/address/0x433E3C47885b929aEcE4149E3c835E565a20D95c) |
 | Router | `0x72F13a44C8ba16a678CAD549F17bc9e06d2B8bD2` | [View on Explorer](https://sepolia.arbiscan.io/address/0x72F13a44C8ba16a678CAD549F17bc9e06d2B8bD2) |
 | ShiftEventUtils | `0x35426a97FA347c71FCfD9BD996140026884dB7Ed` | [View on Explorer](https://sepolia.arbiscan.io/address/0x35426a97FA347c71FCfD9BD996140026884dB7Ed) |
 | ShiftHandler | `0xC72ea16031bd6731dE2812074cEca8028B8493b9` | [View on Explorer](https://sepolia.arbiscan.io/address/0xC72ea16031bd6731dE2812074cEca8028B8493b9) |
-| ShiftStoreUtils | `0xfc9Ee8ab3743449f066F35021f38D0bFeb165666` | [View on Explorer](https://sepolia.arbiscan.io/address/0xfc9Ee8ab3743449f066F35021f38D0bFeb165666) |
-| ShiftUtils | `0xB8B19490AAa368E21E3315899bB102105f83507e` | [View on Explorer](https://sepolia.arbiscan.io/address/0xB8B19490AAa368E21E3315899bB102105f83507e) |
+| ShiftStoreUtils | `0x2bf0184f8624E77f2573c1fd6f57e5d7e45B398A` | [View on Explorer](https://sepolia.arbiscan.io/address/0x2bf0184f8624E77f2573c1fd6f57e5d7e45B398A) |
+| ShiftUtils | `0x90D7FdC2f634A7Ed56E9CEE4e3d198531e50C02a` | [View on Explorer](https://sepolia.arbiscan.io/address/0x90D7FdC2f634A7Ed56E9CEE4e3d198531e50C02a) |
 | ShiftVault | `0x6b6F9B7B9a6b69942DAE74FB95E694ec277117af` | [View on Explorer](https://sepolia.arbiscan.io/address/0x6b6F9B7B9a6b69942DAE74FB95E694ec277117af) |
-| StaticOracleProvider | `0x703b9b98d6BE52d86095A75A1bE738378186B333` | [View on Explorer](https://sepolia.arbiscan.io/address/0x703b9b98d6BE52d86095A75A1bE738378186B333) |
+| SignatureUtils | `0x678ad1ba1f86F55F6DE9943D241Bb970b30c9B54` | [View on Explorer](https://sepolia.arbiscan.io/address/0x678ad1ba1f86F55F6DE9943D241Bb970b30c9B54) |
+| StaticOracleProvider | `0x133658fB053E50297C82f8C11F568CFCfeEAd3F8` | [View on Explorer](https://sepolia.arbiscan.io/address/0x133658fB053E50297C82f8C11F568CFCfeEAd3F8) |
 | SubaccountGelatoRelayRouter | `0x43947140EEE26b82155baA18FDB746A05C700DCE` | [View on Explorer](https://sepolia.arbiscan.io/address/0x43947140EEE26b82155baA18FDB746A05C700DCE) |
 | SubaccountRouter | `0xCF45A7E8bB46738f454eC6766631E5612DA90836` | [View on Explorer](https://sepolia.arbiscan.io/address/0xCF45A7E8bB46738f454eC6766631E5612DA90836) |
 | SubaccountRouterUtils | `0xFA33A8b227325C4293C0970B9824848F9CF60943` | [View on Explorer](https://sepolia.arbiscan.io/address/0xFA33A8b227325C4293C0970B9824848F9CF60943) |
@@ -142,6 +143,6 @@
 | TimestampInitializer | `0xAB6A1e0619cA635Ce467c3517907D8b8F4F027Df` | [View on Explorer](https://sepolia.arbiscan.io/address/0xAB6A1e0619cA635Ce467c3517907D8b8F4F027Df) |
 | WithdrawalEventUtils | `0xFeFaa747ae64Ab10dD25E983202f1498E56d06aA` | [View on Explorer](https://sepolia.arbiscan.io/address/0xFeFaa747ae64Ab10dD25E983202f1498E56d06aA) |
 | WithdrawalHandler | `0x039Ddee97368eb6ed20CE921dE7AD37A92A1A566` | [View on Explorer](https://sepolia.arbiscan.io/address/0x039Ddee97368eb6ed20CE921dE7AD37A92A1A566) |
-| WithdrawalStoreUtils | `0x7f4650a25515C94c2656806Ae1d8f6D1cb6a73EF` | [View on Explorer](https://sepolia.arbiscan.io/address/0x7f4650a25515C94c2656806Ae1d8f6D1cb6a73EF) |
-| WithdrawalUtils | `0x2caFa07727eF97A7c5Ed66F72231fD7bC0aBF0D1` | [View on Explorer](https://sepolia.arbiscan.io/address/0x2caFa07727eF97A7c5Ed66F72231fD7bC0aBF0D1) |
+| WithdrawalStoreUtils | `0xFfA056AbD6FA3Bc4aEea8E88cdb1505005D20318` | [View on Explorer](https://sepolia.arbiscan.io/address/0xFfA056AbD6FA3Bc4aEea8E88cdb1505005D20318) |
+| WithdrawalUtils | `0x9725F529B7154FE973e328e6001faE11C2f29301` | [View on Explorer](https://sepolia.arbiscan.io/address/0x9725F529B7154FE973e328e6001faE11C2f29301) |
 | WithdrawalVault | `0x7601c9dBbDCf1f5ED1E7Adba4EFd9f2cADa037A5` | [View on Explorer](https://sepolia.arbiscan.io/address/0x7601c9dBbDCf1f5ED1E7Adba4EFd9f2cADa037A5) |
