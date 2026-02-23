@@ -67,8 +67,8 @@
     },
     {
       "contractName": "CollateralFactorManager",
-      "contractAddress": "0x5278b356FB24d06a33ce394b23Db073df2038070",
-      "txHash": "0x6287c099193d2e300de907a6c12e58f370970a744c549a55f9f05ffd8ad08401"
+      "contractAddress": "0xF302C3583E4e6D3A34236539Cf7AeAcFdBcD84C4",
+      "txHash": "0x43fd5ce6f074bacccecaf185673100d8bc346b9207bb050fdbcb7a13f60d8451"
     },
     {
       "contractName": "Config",
