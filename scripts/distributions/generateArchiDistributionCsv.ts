@@ -146,7 +146,7 @@ async function main() {
     );
   }
 
-  const outPath = path.resolve(outDir, "archi_redistribution_summary.csv");
+  const outPath = path.resolve(outDir, "archi_redistribution.csv");
   fs.writeFileSync(outPath, csvLines.join("\n"));
   console.log("CSV written to: %s", outPath);
 }

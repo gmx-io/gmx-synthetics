@@ -10,10 +10,11 @@ Split into multiple files if rows exceed BATCH_SIZE.
 
 Usage:
   CSV_PATH=path/to/file.csv \
-  npx ts-node scripts/distributions/generateSafeTxBuilderParamsFromCSV.ts
+  npx ts-node scripts/distributions/generateSafeTxBuilderParams.ts
   
   Example for ethGlv archi distributions:
-  CSV_PATH=out/archi_redistribution_summary.csv ADDRESS_COLUMN=account AMOUNT_COLUMN=ethGlv_amount_wei npx ts-node scripts/distributions/generateSafeTxBuilderParamsFromCSV.ts
+  CSV_PATH=out/archi_redistribution.csv ADDRESS_COLUMN=account AMOUNT_COLUMN=ethGlv_amount_wei \
+  npx ts-node scripts/distributions/generateSafeTxBuilderParams.ts
 
 Env vars:
   CSV_PATH         - path to input CSV, relative to this script's directory (required)
