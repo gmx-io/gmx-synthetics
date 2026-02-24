@@ -20,7 +20,7 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule {
     bytes internal constant EMPTY_BYTES = "";
 
     bytes32 internal constant GMX = keccak256(abi.encode("GMX"));
-    bytes32 internal constant EXTENDED_GMX_TRACKER = keccak256(abi.encode("EXTENDED_GMX_TRACKER"));
+    bytes32 internal constant REWARD_TRACKER = keccak256(abi.encode("REWARD_TRACKER"));
     bytes32 internal constant DATASTORE = keccak256(abi.encode("DATASTORE"));
     bytes32 internal constant TREASURY = keccak256(abi.encode("TREASURY"));
     bytes32 internal constant LAYERZERO_OFT = keccak256(abi.encode("LAYERZERO_OFT"));
@@ -110,12 +110,12 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule {
         uint256 targetChainIndex;
         for (uint256 i; i < chainIdsLength; i++) {
             uint256 chainId = chainIds[i];
-            address extendedGmxTracker = _getAddressInfoForChain(chainId, EXTENDED_GMX_TRACKER);
+            address rewardTracker = _getAddressInfoForChain(chainId, REWARD_TRACKER);
 
             if (chainId == mockChainId) {
                 uint256 feeAmountGmxCurrentChain = _getUint(Keys.withdrawableBuybackTokenAmountKey(gmx)) +
                     _getFeeDistributorVaultBalance(gmx);
-                uint256 stakedGmx = IERC20(extendedGmxTracker).totalSupply();
+                uint256 stakedGmx = IERC20(rewardTracker).totalSupply();
                 _setUint(Keys2.feeDistributorFeeAmountGmxKey(chainId), feeAmountGmxCurrentChain);
                 _setUint(Keys2.feeDistributorStakedGmxKey(chainId), stakedGmx);
                 continue;
@@ -143,7 +143,7 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule {
 
             readRequestInputs[readRequestIndex] = _setReadRequestInput(
                 layerZeroChainId,
-                extendedGmxTracker,
+                rewardTracker,
                 abi.encodeWithSelector(IERC20.totalSupply.selector)
             );
             targetChainIndex++;
@@ -506,11 +506,11 @@ contract MockFeeDistributor is ReentrancyGuard, RoleModule {
         _transferOut(wnt, _getAddressInfo(CHAINLINK), wntForChainlink);
         _transferOut(wnt, treasuryAddress, wntForTreasury);
 
-        address extendedGmxTracker = _getAddressInfoForChain(mockChainId, EXTENDED_GMX_TRACKER);
-        address distributor = IRewardTracker(extendedGmxTracker).distributor();
+        address rewardTracker = _getAddressInfoForChain(mockChainId, REWARD_TRACKER);
+        address distributor = IRewardTracker(rewardTracker).distributor();
         if (dataStore.getBool(Keys2.FEE_DISTRIBUTOR_DISTRIBUTE_FEES)) {
             // transfer gmx fees for the week and update the last distribution time and tokens per interval
-            _transferOut(gmx, extendedGmxTracker, feeAmountGmx);
+            _transferOut(gmx, rewardTracker, feeAmountGmx);
             if (IRewardDistributor(distributor).lastDistributionTime() == 0) {
                 IRewardDistributor(distributor).updateLastDistributionTime();
             }

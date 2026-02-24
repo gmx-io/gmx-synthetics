@@ -1,13 +1,11 @@
 import { hashString } from "./hash";
 
 export const gmxKey = hashString("GMX");
-export const extendedGmxTrackerKey = hashString("EXTENDED_GMX_TRACKER");
+export const rewardTrackerKey = hashString("REWARD_TRACKER");
 export const dataStoreKey = hashString("DATASTORE");
 export const treasuryKey = hashString("TREASURY");
 export const layerzeroOftKey = hashString("LAYERZERO_OFT");
-export const feeGlpTrackerKey = hashString("FEE_GLP_TRACKER");
 export const chainlinkKey = hashString("CHAINLINK");
-export const esGmxVesterKey = hashString("ESGMX_VESTER");
 
 const SECONDS_IN_DAY = 86400;
 const TARGET_OFFSET_SECONDS = 60;
@@ -32,9 +30,9 @@ function getNextDistributionTimestampFixed(currentTimestamp: number, distributio
 }
 
 export async function moveToNextDistributionDay(distributionDay: number) {
-  const block = await ethers.provider.getBlock("latest");
+  const block = await hre.ethers.provider.getBlock("latest");
   const nextTimestamp = getNextDistributionTimestampFixed(block.timestamp, distributionDay);
 
-  await ethers.provider.send("evm_setNextBlockTimestamp", [nextTimestamp]);
-  await ethers.provider.send("evm_mine");
+  await hre.ethers.provider.send("evm_setNextBlockTimestamp", [nextTimestamp]);
+  await hre.ethers.provider.send("evm_mine");
 }

@@ -26,9 +26,9 @@ describe("FeeDistributor", function () {
     gmxC,
     roleStore,
     feeHandler,
-    mockExtendedGmxDistributor,
+    mockRewardDistributor,
     mockLzReadResponseChainA,
-    mockExtendedGmxTracker,
+    mockRewardTracker,
     mockLzReadResponseChainC,
     mockEndpointV2A,
     mockEndpointV2B,
@@ -106,9 +106,9 @@ describe("FeeDistributor", function () {
     ({ wallet, user0, user1, user2, user3, user4, user5, user6, signer0, signer1, signer2, signer3, signer4 } =
       fixture.accounts);
 
-    mockExtendedGmxDistributor = await deployContract("MockRewardDistributorV1", []);
+    mockRewardDistributor = await deployContract("MockRewardDistributorV1", []);
     mockLzReadResponseChainA = await deployContract("MockLzReadResponse", []);
-    mockExtendedGmxTracker = await deployContract("MockRewardTrackerV1", [mockExtendedGmxDistributor.address]);
+    mockRewardTracker = await deployContract("MockRewardTrackerV1", [mockRewardDistributor.address]);
     mockLzReadResponseChainC = await deployContract("MockLzReadResponse", []);
     mockEndpointV2A = await deployContract("MockEndpointV2", [eidA]);
     // use separate mockEndpointV2B endpoint to avoid reentrancy issues when using mockEndpointV2
@@ -199,7 +199,7 @@ describe("FeeDistributor", function () {
     await config.setBool(keys.FEE_DISTRIBUTOR_DISTRIBUTE_FEES, "0x", true);
     await config.setUint(keys.FEE_DISTRIBUTOR_DISTRIBUTION_DAY, "0x", distributionDay);
     await feeDistributorConfig.moveToNextDistributionDay(distributionDay);
-    const block = await ethers.provider.getBlock("latest");
+    const block = await hre.ethers.provider.getBlock("latest");
     initialTimestamp = block.timestamp;
     await dataStore.setUint(keys.FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP, initialTimestamp);
 
@@ -226,17 +226,17 @@ describe("FeeDistributor", function () {
     );
     await config.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
-      encodeData(["uint256", "bytes32"], [chainIdA, feeDistributorConfig.extendedGmxTrackerKey]),
+      encodeData(["uint256", "bytes32"], [chainIdA, feeDistributorConfig.rewardTrackerKey]),
       mockLzReadResponseChainA.address
     );
     await config.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
-      encodeData(["uint256", "bytes32"], [chainIdB, feeDistributorConfig.extendedGmxTrackerKey]),
-      mockExtendedGmxTracker.address
+      encodeData(["uint256", "bytes32"], [chainIdB, feeDistributorConfig.rewardTrackerKey]),
+      mockRewardTracker.address
     );
     await config.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
-      encodeData(["uint256", "bytes32"], [chainIdC, feeDistributorConfig.extendedGmxTrackerKey]),
+      encodeData(["uint256", "bytes32"], [chainIdC, feeDistributorConfig.rewardTrackerKey]),
       mockLzReadResponseChainC.address
     );
     await config.setAddress(
@@ -336,6 +336,7 @@ describe("FeeDistributor", function () {
     await expect(feeDistributor.connect(user0).initiateDistribute()).to.be.revertedWithCustomError(
       errorsContract,
       "Unauthorized",
+      // @ts-expect-error: types don't reflect 3rd argument support
       "FEE_DISTRIBUTION_KEEPER"
     );
   });
@@ -347,6 +348,7 @@ describe("FeeDistributor", function () {
     await expect(feeDistributor.initiateDistribute()).to.be.revertedWithCustomError(
       errorsContract,
       "FeeDistributionAlreadyCompleted",
+      // @ts-expect-error: types don't reflect 3rd and 4th argument support
       initialTimestamp,
       initialTimestamp - 60
     );
@@ -359,7 +361,7 @@ describe("FeeDistributor", function () {
     await feeDistributorConfig.moveToNextDistributionDay(distributionDay);
 
     await mockLzReadResponseChainA.setTotalSupply(expandDecimals(6_000_000, 18));
-    await mockExtendedGmxTracker.setTotalSupply(expandDecimals(3_000_000, 18));
+    await mockRewardTracker.setTotalSupply(expandDecimals(3_000_000, 18));
     await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
 
     await mockLzReadResponseChainA.setUint(
@@ -414,7 +416,7 @@ describe("FeeDistributor", function () {
 
     const tx = await feeDistributor.initiateDistribute();
     const receipt = await tx.wait();
-    const block = await ethers.provider.getBlock(receipt.blockNumber);
+    const block = await hre.ethers.provider.getBlock(receipt.blockNumber);
     const timestamp = block.timestamp;
 
     const readResponseTimestamp = await dataStore.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
@@ -455,7 +457,7 @@ describe("FeeDistributor", function () {
     await feeDistributorConfig.moveToNextDistributionDay(distributionDay);
 
     await mockLzReadResponseChainA.setTotalSupply(expandDecimals(3_000_000, 18));
-    await mockExtendedGmxTracker.setTotalSupply(expandDecimals(6_000_000, 18));
+    await mockRewardTracker.setTotalSupply(expandDecimals(6_000_000, 18));
     await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
 
     await mockLzReadResponseChainA.setUint(
@@ -514,7 +516,7 @@ describe("FeeDistributor", function () {
 
     const tx = await feeDistributor.initiateDistribute();
     const receipt = await tx.wait();
-    const block = await ethers.provider.getBlock(receipt.blockNumber);
+    const block = await hre.ethers.provider.getBlock(receipt.blockNumber);
     const timestamp = block.timestamp;
 
     const readResponseTimestamp = await dataStore.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
@@ -567,7 +569,7 @@ describe("FeeDistributor", function () {
     await feeDistributorConfig.moveToNextDistributionDay(distributionDay);
 
     await mockLzReadResponseChainA.setTotalSupply(expandDecimals(6_000_000, 18));
-    await mockExtendedGmxTracker.setTotalSupply(expandDecimals(3_000_000, 18));
+    await mockRewardTracker.setTotalSupply(expandDecimals(3_000_000, 18));
     await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
 
     await mockLzReadResponseChainA.setUint(
@@ -622,7 +624,7 @@ describe("FeeDistributor", function () {
 
     const tx = await feeDistributor.initiateDistribute();
     const receipt = await tx.wait();
-    const block = await ethers.provider.getBlock(receipt.blockNumber);
+    const block = await hre.ethers.provider.getBlock(receipt.blockNumber);
     const timestamp = block.timestamp;
 
     distributionState = await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE);
@@ -702,25 +704,25 @@ describe("FeeDistributor", function () {
     distributionState = await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE);
     expect(distributionState).to.eq(3);
 
-    const keeper1BalancePreDistribute = await ethers.provider.getBalance(user2.address);
-    const keeper2BalancePreDistribute = await ethers.provider.getBalance(user3.address);
+    const keeper1BalancePreDistribute = await hre.ethers.provider.getBalance(user2.address);
+    const keeper2BalancePreDistribute = await hre.ethers.provider.getBalance(user3.address);
     const totalWntBalance = await wnt.balanceOf(feeDistributorVault.address);
-    const gmxBalancePreDistribute = await gmx.balanceOf(mockExtendedGmxTracker.address);
+    const gmxBalancePreDistribute = await gmx.balanceOf(mockRewardTracker.address);
 
     const distributeTx = await feeDistributor.distribute();
     const distributeReceipt = await distributeTx.wait();
     const distributeEventData = parseLogs(fixture, distributeReceipt)[6].parsedEventData;
-    const distributeBlock = await ethers.provider.getBlock(distributeReceipt.blockNumber);
-    const distributeTimestamp = block.timestamp;
-    const lastDistributionTime = await mockExtendedGmxDistributor.lastDistributionTime();
+    const distributeBlock = await hre.ethers.provider.getBlock(distributeReceipt.blockNumber);
+    const distributeTimestamp = distributeBlock.timestamp;
+    const lastDistributionTime = await mockRewardDistributor.lastDistributionTime();
 
     distributionState = await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE);
 
     const keeperCosts = await dataStore.getUintArray(keys.FEE_DISTRIBUTOR_KEEPER_COSTS);
 
-    const keeper1Balance = await ethers.provider.getBalance(user2.address);
-    const keeper2Balance = await ethers.provider.getBalance(user3.address);
-    const keeper3Balance = await ethers.provider.getBalance(user4.address);
+    const keeper1Balance = await hre.ethers.provider.getBalance(user2.address);
+    const keeper2Balance = await hre.ethers.provider.getBalance(user3.address);
+    const keeper3Balance = await hre.ethers.provider.getBalance(user4.address);
 
     const sentToKeeper1 = keeperCosts[0].sub(keeper1BalancePreDistribute);
     const sentToKeeper2 = keeperCosts[1].sub(keeper2BalancePreDistribute);
@@ -731,7 +733,7 @@ describe("FeeDistributor", function () {
     const remainingWnt = totalWntBalance.sub(wntForKeepers).sub(wntForChainlink).sub(wntForTreasury);
     wntForTreasury = wntForTreasury.add(remainingWnt);
     const feeAmountGmx = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB));
-    const gmxBalancePostDistribute = await gmx.balanceOf(mockExtendedGmxTracker.address);
+    const gmxBalancePostDistribute = await gmx.balanceOf(mockRewardTracker.address);
     const gmxFeesDistributed = gmxBalancePostDistribute.sub(gmxBalancePreDistribute);
 
     expect(distributionState).to.eq(0);
@@ -756,7 +758,7 @@ describe("FeeDistributor", function () {
     await feeDistributorConfig.moveToNextDistributionDay(distributionDay);
 
     await mockLzReadResponseChainA.setTotalSupply(expandDecimals(3_000_000, 18));
-    await mockExtendedGmxTracker.setTotalSupply(expandDecimals(6_000_000, 18));
+    await mockRewardTracker.setTotalSupply(expandDecimals(6_000_000, 18));
     await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
 
     await mockLzReadResponseChainA.setUint(
@@ -815,7 +817,7 @@ describe("FeeDistributor", function () {
 
     const tx = await feeDistributor.initiateDistribute();
     const receipt = await tx.wait();
-    const block = await ethers.provider.getBlock(receipt.blockNumber);
+    const block = await hre.ethers.provider.getBlock(receipt.blockNumber);
     const timestamp = block.timestamp;
 
     distributionState = await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE);
@@ -864,25 +866,25 @@ describe("FeeDistributor", function () {
     expect(feeReceiverAmountAfterBridgingB).to.equal(expandDecimals(120_000, 18));
     expect(feeReceiverAmountAfterBridgingC).to.equal(expandDecimals(40_000, 18));
 
-    const keeper1BalancePreDistribute = await ethers.provider.getBalance(user2.address);
-    const keeper2BalancePreDistribute = await ethers.provider.getBalance(user3.address);
+    const keeper1BalancePreDistribute = await hre.ethers.provider.getBalance(user2.address);
+    const keeper2BalancePreDistribute = await hre.ethers.provider.getBalance(user3.address);
     const totalWntBalance = await wnt.balanceOf(feeDistributorVault.address);
-    const gmxBalancePreDistribute = await gmx.balanceOf(mockExtendedGmxTracker.address);
+    const gmxBalancePreDistribute = await gmx.balanceOf(mockRewardTracker.address);
 
     const distributeTx = await feeDistributor.distribute();
     const distributeReceipt = await distributeTx.wait();
     const distributeEventData = parseLogs(fixture, distributeReceipt)[6].parsedEventData;
-    const distributeBlock = await ethers.provider.getBlock(distributeReceipt.blockNumber);
-    const distributeTimestamp = block.timestamp;
-    const lastDistributionTime = await mockExtendedGmxDistributor.lastDistributionTime();
+    const distributeBlock = await hre.ethers.provider.getBlock(distributeReceipt.blockNumber);
+    const distributeTimestamp = distributeBlock.timestamp;
+    const lastDistributionTime = await mockRewardDistributor.lastDistributionTime();
 
     distributionState = await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE);
 
     const keeperCosts = await dataStore.getUintArray(keys.FEE_DISTRIBUTOR_KEEPER_COSTS);
 
-    const keeper1Balance = await ethers.provider.getBalance(user2.address);
-    const keeper2Balance = await ethers.provider.getBalance(user3.address);
-    const keeper3Balance = await ethers.provider.getBalance(user4.address);
+    const keeper1Balance = await hre.ethers.provider.getBalance(user2.address);
+    const keeper2Balance = await hre.ethers.provider.getBalance(user3.address);
+    const keeper3Balance = await hre.ethers.provider.getBalance(user4.address);
 
     const sentToKeeper1 = keeperCosts[0].sub(keeper1BalancePreDistribute);
     const sentToKeeper2 = keeperCosts[1].sub(keeper2BalancePreDistribute);
@@ -893,7 +895,7 @@ describe("FeeDistributor", function () {
     const remainingWnt = totalWntBalance.sub(wntForKeepers).sub(wntForChainlink).sub(wntForTreasury);
     wntForTreasury = wntForTreasury.add(remainingWnt);
     const feeAmountGmx = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB));
-    const gmxBalancePostDistribute = await gmx.balanceOf(mockExtendedGmxTracker.address);
+    const gmxBalancePostDistribute = await gmx.balanceOf(mockRewardTracker.address);
     const gmxFeesDistributed = gmxBalancePostDistribute.sub(gmxBalancePreDistribute);
 
     expect(distributionState).to.eq(0);
@@ -920,7 +922,7 @@ describe("FeeDistributor", function () {
     await feeDistributorConfig.moveToNextDistributionDay(distributionDay);
 
     await mockLzReadResponseChainA.setTotalSupply(expandDecimals(3_000_000, 18));
-    await mockExtendedGmxTracker.setTotalSupply(expandDecimals(6_000_000, 18));
+    await mockRewardTracker.setTotalSupply(expandDecimals(6_000_000, 18));
     await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
 
     await mockLzReadResponseChainA.setUint(
@@ -979,7 +981,7 @@ describe("FeeDistributor", function () {
 
     const tx = await feeDistributor.initiateDistribute();
     const receipt = await tx.wait();
-    const block = await ethers.provider.getBlock(receipt.blockNumber);
+    const block = await hre.ethers.provider.getBlock(receipt.blockNumber);
     const timestamp = block.timestamp;
 
     distributionState = await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE);
@@ -1028,23 +1030,23 @@ describe("FeeDistributor", function () {
     expect(feeReceiverAmountAfterBridgingB).to.equal(expandDecimals(160_000, 18));
     expect(feeReceiverAmountAfterBridgingC).to.equal(expandDecimals(10_000, 18));
 
-    const keeper1BalancePreDistribute = await ethers.provider.getBalance(user2.address);
-    const keeper2BalancePreDistribute = await ethers.provider.getBalance(user3.address);
+    const keeper1BalancePreDistribute = await hre.ethers.provider.getBalance(user2.address);
+    const keeper2BalancePreDistribute = await hre.ethers.provider.getBalance(user3.address);
     const totalWntBalance = await wnt.balanceOf(feeDistributorVault.address);
-    const gmxBalancePreDistribute = await gmx.balanceOf(mockExtendedGmxTracker.address);
+    const gmxBalancePreDistribute = await gmx.balanceOf(mockRewardTracker.address);
 
     const distributeTx = await feeDistributor.distribute();
     const distributeReceipt = await distributeTx.wait();
     const distributeEventData = parseLogs(fixture, distributeReceipt)[6].parsedEventData;
-    const lastDistributionTime = await mockExtendedGmxDistributor.lastDistributionTime();
+    const lastDistributionTime = await mockRewardDistributor.lastDistributionTime();
 
     distributionState = await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE);
 
     const keeperCosts = await dataStore.getUintArray(keys.FEE_DISTRIBUTOR_KEEPER_COSTS);
 
-    const keeper1Balance = await ethers.provider.getBalance(user2.address);
-    const keeper2Balance = await ethers.provider.getBalance(user3.address);
-    const keeper3Balance = await ethers.provider.getBalance(user4.address);
+    const keeper1Balance = await hre.ethers.provider.getBalance(user2.address);
+    const keeper2Balance = await hre.ethers.provider.getBalance(user3.address);
+    const keeper3Balance = await hre.ethers.provider.getBalance(user4.address);
 
     const sentToKeeper1 = keeperCosts[0].sub(keeper1BalancePreDistribute);
     const sentToKeeper2 = keeperCosts[1].sub(keeper2BalancePreDistribute);
@@ -1055,7 +1057,7 @@ describe("FeeDistributor", function () {
     const remainingWnt = totalWntBalance.sub(wntForKeepers).sub(wntForChainlink).sub(wntForTreasury);
     wntForTreasury = wntForTreasury.add(remainingWnt);
     const feeAmountGmx = await dataStore.getUint(keys.feeDistributorFeeAmountGmxKey(chainIdB));
-    const gmxBalancePostDistribute = await gmx.balanceOf(mockExtendedGmxTracker.address);
+    const gmxBalancePostDistribute = await gmx.balanceOf(mockRewardTracker.address);
     const gmxFeesDistributed = gmxBalancePostDistribute.sub(gmxBalancePreDistribute);
 
     expect(distributionState).to.eq(0);
@@ -1077,7 +1079,7 @@ describe("FeeDistributor", function () {
     await feeDistributorConfig.moveToNextDistributionDay(distributionDay);
 
     await mockLzReadResponseChainA.setTotalSupply(expandDecimals(3_000_000, 18));
-    await mockExtendedGmxTracker.setTotalSupply(expandDecimals(6_000_000, 18));
+    await mockRewardTracker.setTotalSupply(expandDecimals(6_000_000, 18));
     await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
 
     await mockLzReadResponseChainA.setUint(
@@ -1113,8 +1115,8 @@ describe("FeeDistributor", function () {
 
     const keeperCosts = await dataStore.getUintArray(keys.FEE_DISTRIBUTOR_KEEPER_COSTS);
 
-    const keeper1BalancePreDistribute = await ethers.provider.getBalance(user2.address);
-    const keeper2BalancePreDistribute = await ethers.provider.getBalance(user3.address);
+    const keeper1BalancePreDistribute = await hre.ethers.provider.getBalance(user2.address);
+    const keeper2BalancePreDistribute = await hre.ethers.provider.getBalance(user3.address);
 
     const sentToKeeper1 = keeperCosts[0].sub(keeper1BalancePreDistribute);
     const sentToKeeper2 = keeperCosts[1].sub(keeper2BalancePreDistribute);
@@ -1137,6 +1139,7 @@ describe("FeeDistributor", function () {
     await expect(feeDistributor.distribute()).to.be.revertedWithCustomError(
       errorsContract,
       "MaxWntFromTreasuryExceeded",
+      // @ts-expect-error: types don't reflect 3rd and 4th argument support
       maxWntFromTreasury,
       additionalWntFromTreasury
     );
@@ -1159,9 +1162,9 @@ describe("FeeDistributor", function () {
 
     const wntForTreasury = 0;
 
-    const keeper1Balance = await ethers.provider.getBalance(user2.address);
-    const keeper2Balance = await ethers.provider.getBalance(user3.address);
-    const keeper3Balance = await ethers.provider.getBalance(user4.address);
+    const keeper1Balance = await hre.ethers.provider.getBalance(user2.address);
+    const keeper2Balance = await hre.ethers.provider.getBalance(user3.address);
+    const keeper3Balance = await hre.ethers.provider.getBalance(user4.address);
 
     expect(distributionState).to.eq(0);
 
@@ -1243,8 +1246,8 @@ describe("FeeDistributor", function () {
       }
     );
 
-    const mockExtendedGmxDistributorD = await deployContract("MockRewardDistributorV1", []);
-    const mockExtendedGmxTrackerD = await deployContract("MockRewardTrackerV1", [mockExtendedGmxDistributorD.address]);
+    const mockRewardDistributorD = await deployContract("MockRewardDistributorV1", []);
+    const mockRewardTrackerD = await deployContract("MockRewardTrackerV1", [mockRewardDistributorD.address]);
 
     await grantRole(roleStore, configD.address, "CONTROLLER");
     await grantRole(roleStore, multichainReaderD.address, "CONTROLLER");
@@ -1290,8 +1293,8 @@ describe("FeeDistributor", function () {
     );
     await config.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
-      encodeData(["uint256", "bytes32"], [chainIdD, feeDistributorConfig.extendedGmxTrackerKey]),
-      mockExtendedGmxTrackerD.address
+      encodeData(["uint256", "bytes32"], [chainIdD, feeDistributorConfig.rewardTrackerKey]),
+      mockRewardTrackerD.address
     );
     await config.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
@@ -1328,7 +1331,7 @@ describe("FeeDistributor", function () {
     // Setting mockFeeDistributor configuration in config and dataStore
     await configD.setUint(keys.FEE_DISTRIBUTOR_DISTRIBUTION_DAY, "0x", distributionDay);
     await feeDistributorConfig.moveToNextDistributionDay(distributionDay);
-    const initialBlock = await ethers.provider.getBlock("latest");
+    const initialBlock = await hre.ethers.provider.getBlock("latest");
     initialTimestamp = initialBlock.timestamp;
     await dataStore.setUint(keys.FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP, initialTimestamp);
     await dataStoreD.setUint(keys.FEE_DISTRIBUTOR_DISTRIBUTION_TIMESTAMP, initialTimestamp);
@@ -1363,23 +1366,23 @@ describe("FeeDistributor", function () {
     );
     await configD.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
-      encodeData(["uint256", "bytes32"], [chainIdA, feeDistributorConfig.extendedGmxTrackerKey]),
+      encodeData(["uint256", "bytes32"], [chainIdA, feeDistributorConfig.rewardTrackerKey]),
       mockLzReadResponseChainA.address
     );
     await configD.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
-      encodeData(["uint256", "bytes32"], [chainIdB, feeDistributorConfig.extendedGmxTrackerKey]),
-      mockExtendedGmxTracker.address
+      encodeData(["uint256", "bytes32"], [chainIdB, feeDistributorConfig.rewardTrackerKey]),
+      mockRewardTracker.address
     );
     await configD.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
-      encodeData(["uint256", "bytes32"], [chainIdC, feeDistributorConfig.extendedGmxTrackerKey]),
+      encodeData(["uint256", "bytes32"], [chainIdC, feeDistributorConfig.rewardTrackerKey]),
       mockLzReadResponseChainC.address
     );
     await configD.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
-      encodeData(["uint256", "bytes32"], [chainIdD, feeDistributorConfig.extendedGmxTrackerKey]),
-      mockExtendedGmxTrackerD.address
+      encodeData(["uint256", "bytes32"], [chainIdD, feeDistributorConfig.rewardTrackerKey]),
+      mockRewardTrackerD.address
     );
     await configD.setAddress(
       keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
@@ -1496,9 +1499,9 @@ describe("FeeDistributor", function () {
     await feeDistributorConfig.moveToNextDistributionDay(distributionDay);
 
     await mockLzReadResponseChainA.setTotalSupply(expandDecimals(3_000_000, 18));
-    await mockExtendedGmxTracker.setTotalSupply(expandDecimals(6_000_000, 18));
+    await mockRewardTracker.setTotalSupply(expandDecimals(6_000_000, 18));
     await mockLzReadResponseChainC.setTotalSupply(expandDecimals(3_000_000, 18));
-    await mockExtendedGmxTrackerD.setTotalSupply(expandDecimals(6_000_000, 18));
+    await mockRewardTrackerD.setTotalSupply(expandDecimals(6_000_000, 18));
 
     await mockLzReadResponseChainA.setUint(
       keys.withdrawableBuybackTokenAmountKey(gmxA.address),
@@ -1593,12 +1596,12 @@ describe("FeeDistributor", function () {
 
     const tx = await feeDistributor.initiateDistribute();
     const receipt = await tx.wait();
-    const block = await ethers.provider.getBlock(receipt.blockNumber);
+    const block = await hre.ethers.provider.getBlock(receipt.blockNumber);
     const timestamp = block.timestamp;
 
     const txD = await mockFeeDistributor.initiateDistribute();
     const receiptD = await txD.wait();
-    const blockD = await ethers.provider.getBlock(receiptD.blockNumber);
+    const blockD = await hre.ethers.provider.getBlock(receiptD.blockNumber);
     const timestampD = blockD.timestamp;
 
     distributionState = await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE);

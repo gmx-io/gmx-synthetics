@@ -106,7 +106,7 @@ async function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function getFactory(deployer: ethers.SignerWithAddress, contractName: string, libraries?: any) {
+async function getFactory(deployer: Signer, contractName: string, libraries?: any) {
   if (libraries) {
     return await ethers.getContractFactory(contractName, {
       signer: deployer,
@@ -265,7 +265,7 @@ async function setupTestData(
   await delay(txDelay);
 
   // Fund FeeDistributor with ETH for gas
-  currentBalance = await ethers.provider.getBalance(contracts.feeDistributor);
+  currentBalance = await hre.ethers.provider.getBalance(contracts.feeDistributor);
   console.log("Current FeeDistributor ETH balance: ", ethers.utils.formatEther(currentBalance));
   const sendAmount = wntTargetBalance.sub(currentBalance);
   console.log("ETH send amount: ", ethers.utils.formatEther(sendAmount));
@@ -451,7 +451,7 @@ async function configureContracts(
 
         await config.setAddress(
           keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
-          encodeData(["uint256", "bytes32"], [chainId, hashString("EXTENDED_GMX_TRACKER")]),
+          encodeData(["uint256", "bytes32"], [chainId, hashString("REWARD_TRACKER")]),
           trackerAddress
         );
         await delay(txDelay);
