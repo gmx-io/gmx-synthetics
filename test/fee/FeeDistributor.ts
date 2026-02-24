@@ -417,7 +417,7 @@ describe("FeeDistributor", function () {
     const block = await ethers.provider.getBlock(receipt.blockNumber);
     const timestamp = block.timestamp;
 
-    const distributeTimestamp = await dataStore.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
+    const readResponseTimestamp = await dataStore.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
 
     const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[4].parsedEventData;
     const feeDistributionDataReceivedEventData = parseLogs(fixture, receipt)[1].parsedEventData;
@@ -432,7 +432,7 @@ describe("FeeDistributor", function () {
     const stakedGmxC = await dataStore.getUint(keys.feeDistributorStakedGmxKey(chainIdC));
     const totalStakedGmx = await dataStore.getUint(keys.FEE_DISTRIBUTOR_TOTAL_STAKED_GMX);
 
-    expect(distributeTimestamp).to.equal(timestamp);
+    expect(readResponseTimestamp).to.equal(timestamp);
 
     expect(feeDistributionInitiatedEventData.numberOfChainsReadRequests).to.equal(2);
     expect(feeDistributionDataReceivedEventData.totalGmxBridgedOut).to.equal(0);
@@ -517,7 +517,7 @@ describe("FeeDistributor", function () {
     const block = await ethers.provider.getBlock(receipt.blockNumber);
     const timestamp = block.timestamp;
 
-    const distributeTimestamp = await dataStore.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
+    const readResponseTimestamp = await dataStore.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
 
     const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[18].parsedEventData;
     const feeDistributionDataReceivedEventData = parseLogs(fixture, receipt)[15].parsedEventData;
@@ -536,7 +536,7 @@ describe("FeeDistributor", function () {
     const feeReceiverAmountAfterBridgingB = await gmx.balanceOf(feeDistributorVault.address);
     const feeReceiverAmountAfterBridgingC = await gmxC.balanceOf(user1.address);
 
-    expect(distributeTimestamp).to.equal(timestamp);
+    expect(readResponseTimestamp).to.equal(timestamp);
 
     expect(feeDistributionInitiatedEventData.numberOfChainsReadRequests).to.equal(2);
     expect(feeDistributionDataReceivedEventData.totalGmxBridgedOut).to.equal(expandDecimals(40_000, 18));
@@ -627,7 +627,7 @@ describe("FeeDistributor", function () {
 
     distributionState = await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE);
 
-    const distributeTimestamp = await dataStore.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
+    const readResponseTimestamp = await dataStore.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
 
     const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[4].parsedEventData;
     const feeDistributionDataReceivedEventData = parseLogs(fixture, receipt)[1].parsedEventData;
@@ -644,7 +644,7 @@ describe("FeeDistributor", function () {
 
     expect(distributionState).to.eq(2);
 
-    expect(distributeTimestamp).to.equal(timestamp);
+    expect(readResponseTimestamp).to.equal(timestamp);
 
     expect(feeDistributionInitiatedEventData.numberOfChainsReadRequests).to.equal(2);
     expect(feeDistributionDataReceivedEventData.totalGmxBridgedOut).to.equal(0);
@@ -710,6 +710,9 @@ describe("FeeDistributor", function () {
     const distributeTx = await feeDistributor.distribute();
     const distributeReceipt = await distributeTx.wait();
     const distributeEventData = parseLogs(fixture, distributeReceipt)[6].parsedEventData;
+    const distributeBlock = await ethers.provider.getBlock(distributeReceipt.blockNumber);
+    const distributeTimestamp = block.timestamp;
+    const lastDistributionTime = await mockExtendedGmxDistributor.lastDistributionTime();
 
     distributionState = await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE);
 
@@ -732,6 +735,7 @@ describe("FeeDistributor", function () {
     const gmxFeesDistributed = gmxBalancePostDistribute.sub(gmxBalancePreDistribute);
 
     expect(distributionState).to.eq(0);
+    expect(lastDistributionTime).to.eq(distributeTimestamp);
 
     expect(keeper1Balance).to.eq(keeperCosts[0]);
     expect(keeper2Balance).to.eq(keeperCosts[1]);
@@ -816,7 +820,7 @@ describe("FeeDistributor", function () {
 
     distributionState = await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE);
 
-    const distributeTimestamp = await dataStore.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
+    const readResponseTimestamp = await dataStore.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
 
     const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[18].parsedEventData;
     const feeDistributionDataReceivedEventData = parseLogs(fixture, receipt)[15].parsedEventData;
@@ -837,7 +841,7 @@ describe("FeeDistributor", function () {
 
     expect(distributionState).to.eq(3);
 
-    expect(distributeTimestamp).to.equal(timestamp);
+    expect(readResponseTimestamp).to.equal(timestamp);
 
     expect(feeDistributionInitiatedEventData.numberOfChainsReadRequests).to.equal(2);
     expect(feeDistributionDataReceivedEventData.totalGmxBridgedOut).to.equal(expandDecimals(40_000, 18));
@@ -868,6 +872,9 @@ describe("FeeDistributor", function () {
     const distributeTx = await feeDistributor.distribute();
     const distributeReceipt = await distributeTx.wait();
     const distributeEventData = parseLogs(fixture, distributeReceipt)[6].parsedEventData;
+    const distributeBlock = await ethers.provider.getBlock(distributeReceipt.blockNumber);
+    const distributeTimestamp = block.timestamp;
+    const lastDistributionTime = await mockExtendedGmxDistributor.lastDistributionTime();
 
     distributionState = await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE);
 
@@ -890,6 +897,7 @@ describe("FeeDistributor", function () {
     const gmxFeesDistributed = gmxBalancePostDistribute.sub(gmxBalancePreDistribute);
 
     expect(distributionState).to.eq(0);
+    expect(lastDistributionTime).to.eq(distributeTimestamp);
 
     expect(keeper1Balance).to.eq(keeperCosts[0]);
     expect(keeper2Balance).to.eq(keeperCosts[1]);
@@ -976,7 +984,7 @@ describe("FeeDistributor", function () {
 
     distributionState = await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE);
 
-    const distributeTimestamp = await dataStore.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
+    const readResponseTimestamp = await dataStore.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
 
     const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[4].parsedEventData;
     const feeDistributionDataReceivedEventData = parseLogs(fixture, receipt)[1].parsedEventData;
@@ -997,7 +1005,7 @@ describe("FeeDistributor", function () {
 
     expect(distributionState).to.eq(3);
 
-    expect(distributeTimestamp).to.equal(timestamp);
+    expect(readResponseTimestamp).to.equal(timestamp);
 
     expect(feeDistributionInitiatedEventData.numberOfChainsReadRequests).to.equal(2);
     expect(feeDistributionDataReceivedEventData.totalGmxBridgedOut).to.equal(expandDecimals(0, 18));
@@ -1028,6 +1036,7 @@ describe("FeeDistributor", function () {
     const distributeTx = await feeDistributor.distribute();
     const distributeReceipt = await distributeTx.wait();
     const distributeEventData = parseLogs(fixture, distributeReceipt)[6].parsedEventData;
+    const lastDistributionTime = await mockExtendedGmxDistributor.lastDistributionTime();
 
     distributionState = await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE);
 
@@ -1050,6 +1059,7 @@ describe("FeeDistributor", function () {
     const gmxFeesDistributed = gmxBalancePostDistribute.sub(gmxBalancePreDistribute);
 
     expect(distributionState).to.eq(0);
+    expect(lastDistributionTime).to.eq(0);
 
     expect(keeper1Balance).to.eq(keeperCosts[0]);
     expect(keeper2Balance).to.eq(keeperCosts[1]);
@@ -1594,8 +1604,8 @@ describe("FeeDistributor", function () {
     distributionState = await dataStore.getUint(keys.FEE_DISTRIBUTOR_STATE);
     const distributionStateD = await dataStoreD.getUint(keys.FEE_DISTRIBUTOR_STATE);
 
-    const distributeTimestamp = await dataStore.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
-    const distributeTimestampD = await dataStoreD.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
+    const readResponseTimestamp = await dataStore.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
+    const readResponseTimestampD = await dataStoreD.getUint(keys.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP);
 
     const feeDistributionInitiatedEventData = parseLogs(fixture, receipt)[18].parsedEventData;
     const feeDistributionDataReceivedEventData = parseLogs(fixture, receipt)[15].parsedEventData;
@@ -1623,8 +1633,8 @@ describe("FeeDistributor", function () {
     expect(distributionState).to.eq(3);
     expect(distributionStateD).to.eq(3);
 
-    expect(distributeTimestamp).to.equal(timestamp);
-    expect(distributeTimestampD).to.equal(timestampD);
+    expect(readResponseTimestamp).to.equal(timestamp);
+    expect(readResponseTimestampD).to.equal(timestampD);
 
     expect(feeDistributionInitiatedEventData.numberOfChainsReadRequests).to.equal(3);
     expect(feeDistributionDataReceivedEventData.totalGmxBridgedOut).to.equal(expandDecimals(40_000, 18));

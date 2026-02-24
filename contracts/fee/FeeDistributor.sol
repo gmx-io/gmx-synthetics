@@ -493,15 +493,21 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         _transferOut(wnt, _getAddressInfo(CHAINLINK), wntForChainlink);
         _transferOut(wnt, treasuryAddress, wntForTreasury);
 
+        address extendedGmxTracker = _getAddressInfoForChain(block.chainid, EXTENDED_GMX_TRACKER);
+        address distributor = IRewardTracker(extendedGmxTracker).distributor();
         if (dataStore.getBool(Keys2.FEE_DISTRIBUTOR_DISTRIBUTE_FEES)) {
             // transfer gmx fees for the week and update the last distribution time and tokens per interval
-            address extendedGmxTracker = _getAddressInfoForChain(block.chainid, EXTENDED_GMX_TRACKER);
-            address distributor = IRewardTracker(extendedGmxTracker).distributor();
             _transferOut(gmx, extendedGmxTracker, feeAmountGmx);
-            IRewardDistributor(distributor).updateLastDistributionTime();
+            if (IRewardDistributor(distributor).lastDistributionTime() == 0) {
+                IRewardDistributor(distributor).updateLastDistributionTime();
+            }
             IRewardDistributor(distributor).setTokensPerInterval(feeAmountGmx / 1 weeks);
         } else {
+            // if gmx fees are not being distributed, transfer gmx fees and ensure tokens per interval = 0
             _transferOut(gmx, treasuryAddress, feeAmountGmx);
+            if (IRewardDistributor(distributor).tokensPerInterval() > 0) {
+                IRewardDistributor(distributor).setTokensPerInterval(0);
+            }
         }
     }
 
