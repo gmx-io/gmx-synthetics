@@ -3,7 +3,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { expandDecimals, exponentToFloat, decimalToFloat, bigNumberify, percentageToFloat } from "../utils/math";
 import { hashString } from "../utils/hash";
-import { SECONDS_PER_HOUR, SECONDS_PER_YEAR } from "../utils/constants";
+import { SECONDS_PER_DAY, SECONDS_PER_HOUR, SECONDS_PER_YEAR } from "../utils/constants";
 
 export type BaseMarketConfig = {
   reserveFactor: BigNumberish;
@@ -1658,8 +1658,8 @@ const config: {
       reserveFactor: percentageToFloat("155%"), // default is 95%
       openInterestReserveFactor: percentageToFloat("150%"), // default is 90%
 
-      positionImpactPoolDistributionRate: bigNumberify(0), // expandDecimals(265, 30 + 9).div(SECONDS_PER_DAY), // 265 SUI / day
-      minPositionImpactPoolAmount: expandDecimals(13793, 9), // 13793 SUI
+      positionImpactPoolDistributionRate: expandDecimals(814, 9 + 30).div(SECONDS_PER_DAY), // 814 SUI / day
+      minPositionImpactPoolAmount: expandDecimals(11421, 9), // 11421 SUI
 
       maxOpenInterest: decimalToFloat(9_000_000),
 
@@ -2811,6 +2811,9 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(1850, 18),
       maxShortTokenPoolAmount: expandDecimals(3_500_000, 6),
 
+      positionImpactPoolDistributionRate: expandDecimals(4552, 18 + 30).div(SECONDS_PER_DAY), // 4552 BERA / day
+      minPositionImpactPoolAmount: expandDecimals(63905, 18), // 63905 BERA
+
       atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
     {
@@ -3154,6 +3157,9 @@ const config: {
       maxLongTokenPoolAmount: BigNumber.from(20000),
       maxShortTokenPoolAmount: BigNumber.from(1000000),
 
+      positionImpactPoolDistributionRate: expandDecimals(85405, 18 + 30), // 85405 OM per SECOND (intentionally high to extract immediately)
+      minPositionImpactPoolAmount: bigNumberify(0), // extract everything
+
       atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },
     {
@@ -3184,6 +3190,9 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(114, 18),
       maxShortTokenPoolAmount: expandDecimals(360_000, 6),
+
+      positionImpactPoolDistributionRate: expandDecimals(28433, 18 + 30).div(SECONDS_PER_DAY), // 28433 DOLO / day
+      minPositionImpactPoolAmount: expandDecimals(399129, 18), // 399129 DOLO
     },
     {
       tokens: { indexToken: "ZRO", longToken: "WETH", shortToken: "USDC" },
@@ -3242,6 +3251,9 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(1470, 18),
       maxShortTokenPoolAmount: expandDecimals(5_700_000, 6),
+
+      positionImpactPoolDistributionRate: expandDecimals(3386, 18 + 30).div(SECONDS_PER_DAY), // 3386 CRV / day
+      minPositionImpactPoolAmount: expandDecimals(47526, 18), // 47526 CRV
     },
     {
       tokens: { indexToken: "MOODENG", longToken: "WBTC.e", shortToken: "USDC" },
@@ -3840,6 +3852,9 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(214, 18), // ~0.67M USD
       maxShortTokenPoolAmount: expandDecimals(670_000, 6), // ~0.67M USD
+
+      positionImpactPoolDistributionRate: expandDecimals(20062, 18 + 30).div(SECONDS_PER_DAY), // 20062 KTA / day
+      minPositionImpactPoolAmount: expandDecimals(281623, 18), // 281623 KTA
     },
     {
       tokens: { indexToken: "WLFI", longToken: "WETH", shortToken: "USDC" },
@@ -3924,6 +3939,9 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(214, 18), // ~0.67M USD
       maxShortTokenPoolAmount: expandDecimals(675_000, 6), // ~0.67M USD
+
+      positionImpactPoolDistributionRate: expandDecimals(761, 18 + 30).div(SECONDS_PER_DAY), // 761 VVV / day
+      minPositionImpactPoolAmount: expandDecimals(10679, 18), // 10679 VVV
     },
     {
       tokens: { indexToken: "MORPHO", longToken: "WETH", shortToken: "USDC" },
@@ -4064,6 +4082,9 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(358, 18), // ~1.12M USD (2x max open interest)
       maxShortTokenPoolAmount: expandDecimals(1_125_000, 6), // ~1.2M USD (2x max open interest)
+
+      positionImpactPoolDistributionRate: expandDecimals(12787, 18 + 30).div(SECONDS_PER_DAY), // 12787 AVNT / day
+      minPositionImpactPoolAmount: expandDecimals(179493, 18), // 179493 AVNT
     },
     {
       tokens: { indexToken: "LINEA", longToken: "WETH", shortToken: "USDC" },
