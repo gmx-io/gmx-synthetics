@@ -3157,8 +3157,8 @@ const config: {
       maxLongTokenPoolAmount: BigNumber.from(20000),
       maxShortTokenPoolAmount: BigNumber.from(1000000),
 
-      positionImpactPoolDistributionRate: expandDecimals(85405, 18 + 30), // 85405 OM per SECOND (intentionally high to extract immediately)
-      minPositionImpactPoolAmount: bigNumberify(0), // extract everything
+      positionImpactPoolDistributionRate: expandDecimals(12200, 18 + 30).div(SECONDS_PER_DAY), // 12200 OM per day (MIN_POSITION_IMPACT_POOL_DISTRIBUTION_TIME = 7 days)
+      minPositionImpactPoolAmount: bigNumberify(0), // extract everything (default)
 
       atomicSwapFeeFactor: percentageToFloat("0.75%"),
     },
