@@ -1,30 +1,26 @@
 import fs from "fs";
 import path from "path";
 import hre, { ethers } from "hardhat";
-import { formatAmount } from "../../utils/math";
-import { GLV_V1_DISTRIBUTION_ID } from "../helpers";
 
 /*
-Checks the GLV distribution status for every address in the input CSV, classifying each into one of three states:
-  - Claimed:      funds deposited and claimed (getClaimableAmount == 0, deposit event exists)
-  - Unclaimed:    funds deposited but not yet claimed (getClaimableAmount > 0)
-  - Unreimbursed: funds were never deposited (getClaimableAmount == 0, no deposit event)
+Checks whether funds have been deposited for addresses in the input CSV
+by looking for ClaimFundsDeposited events on-chain.
+
+Classifies each address as:
+  - Deposited:    ClaimFundsDeposited event exists (funds were sent, regardless of claim status)
+  - Not deposited: no deposit event found — should be reimbursed
 
 The input CSV is exported from the GLP_GLV-for-CONTRACT spreadsheet.
-Checks on-chain via multicall (ClaimHandler.getClaimableAmount) and ClaimFundsDeposited events.
-Outputs a summary and writes out/unreimbursed.csv with addresses still owed funds.
-
-CSV format: #,account,fsGLP_distribution,ethGlv,btcGlv, ...
+Outputs a summary and writes out/remaining_distributions.csv with addresses still owed funds.
 
 Usage:
 CSV_PATH=scripts/distributions/data/GLP_GLV-for-CONTRACT.csv npx hardhat --network arbitrum run scripts/distributions/checkClaimFundsDeposited.ts
 
+CSV format: #,account,fsGLP_distribution,ethGlv,btcGlv, ...
 */
 
 const ETH_GLV = "0x528A5bac7E746C9A509A1f4F6dF58A03d44279F9";
 const BTC_GLV = "0xdf03eed325b82bc1d4db8b49c30ecc9e05104b96";
-
-const BATCH_SIZE = 100;
 
 // Addresses confirmed reimbursed to a different address via Safe multisig.
 // Includes both original contract addresses and deposit-target addresses (although just the original should be sufficient).
@@ -70,7 +66,7 @@ interface CsvRow {
   btcGlv: string;
 }
 
-// Parse a CSV line respecting quoted fields (handles "710,379.63" style values)
+// Parse a CSV line respecting quoted fields (handles "xx,xxx.xx" style values)
 function parseCsvLine(line: string): string[] {
   const values: string[] = [];
   let current = "";
@@ -97,6 +93,7 @@ function parseNum(val: string): number {
 }
 
 // Convert human-readable amount to wei string (18 decimals)
+// Precision is limited to the CSV's decimal places (typically 2). If possible, use the original wei amounts
 function toWei(val: string): string {
   const cleaned = (val || "0").replace(/,/g, "");
   if (!cleaned || cleaned === "0") return "0";
@@ -108,7 +105,6 @@ function parseCsv(filePath: string): CsvRow[] {
   const lines = content.trim().split("\n");
   const headers = parseCsvLine(lines[0]);
 
-  //
   const accountIdx = headers.indexOf("account") !== -1 ? headers.indexOf("account") : headers.indexOf("address");
   const ethGlvIdx =
     headers.indexOf("ethGlv") !== -1 ? headers.indexOf("ethGlv") : headers.indexOf("eth_glv_distribution");
@@ -144,8 +140,7 @@ function sumAmounts(rows: CsvRow[]): { totalEthGlv: number; totalBtcGlv: number 
   return { totalEthGlv, totalBtcGlv };
 }
 
-// Query ClaimFundsDeposited events from EventEmitter to find addresses
-// that had funds deposited but have since claimed (getClaimableAmount == 0)
+// Query ClaimFundsDeposited events from EventEmitter to find addresses for which funds have been deposited
 async function getDepositedAccounts(eventEmitterContract: any, tokenAddresses: string[]): Promise<Set<string>> {
   const depositedAccounts = new Set<string>();
 
@@ -224,103 +219,28 @@ async function main() {
   const excludedCount = allRows.length - rows.length;
   console.log("Found %s addresses in CSV (%s excluded as manually reimbursed)\n", allRows.length, excludedCount);
 
-  const claimHandler = await hre.ethers.getContract("ClaimHandler");
-  const multicall = await hre.ethers.getContract("Multicall3");
   const eventEmitter = await hre.ethers.getContract("EventEmitter");
 
-  const tokens = [
-    { address: ETH_GLV, name: "ETH GLV", decimals: 18 },
-    { address: BTC_GLV, name: "BTC GLV", decimals: 18 },
-  ];
-
-  const distributionId = GLV_V1_DISTRIBUTION_ID;
-
-  // Step 1: Check getClaimableAmount via multicall
-  console.log("Checking getClaimableAmount via multicall...");
-  const accounts = rows.map((r) => r.account);
-  const unclaimed: Map<string, { ethGlv: string; btcGlv: string }> = new Map();
-
-  const totalBatches = Math.ceil(accounts.length / BATCH_SIZE);
-
-  for (let batchIdx = 0; batchIdx < totalBatches; batchIdx++) {
-    const from = batchIdx * BATCH_SIZE;
-    const batch = accounts.slice(from, from + BATCH_SIZE);
-
-    // Each account gets 2 calls (one per token)
-    const payload = batch.flatMap((account) =>
-      tokens.map((token) => ({
-        target: claimHandler.address,
-        callData: claimHandler.interface.encodeFunctionData("getClaimableAmount", [
-          account,
-          token.address,
-          [distributionId],
-        ]),
-      }))
-    );
-
-    const result = await multicall.callStatic.aggregate3(payload);
-
-    for (let i = 0; i < batch.length; i++) {
-      const account = batch[i];
-      const ethGlvResult = claimHandler.interface.decodeFunctionResult(
-        "getClaimableAmount",
-        result[i * 2].returnData
-      )[0];
-      const btcGlvResult = claimHandler.interface.decodeFunctionResult(
-        "getClaimableAmount",
-        result[i * 2 + 1].returnData
-      )[0];
-
-      if (ethGlvResult.gt(0) || btcGlvResult.gt(0)) {
-        unclaimed.set(account.toLowerCase(), {
-          ethGlv: formatAmount(ethGlvResult, 18, 4, true),
-          btcGlv: formatAmount(btcGlvResult, 18, 4, true),
-        });
-      }
-    }
-
-    process.stdout.write(`\rChecked ${Math.min(from + BATCH_SIZE, accounts.length)}/${accounts.length} addresses...`);
-  }
-
-  console.log("\n");
-
-  // Step 2: Check ClaimFundsDeposited events for addresses with getClaimableAmount == 0
-  // This catches addresses that were deposited but have since claimed
-  console.log("Checking ClaimFundsDeposited events for already-claimed addresses...");
+  // Check ClaimFundsDeposited events for all addresses
+  console.log("Checking ClaimFundsDeposited events...");
   const allDeposited = await getDepositedAccounts(eventEmitter, [ETH_GLV, BTC_GLV]);
 
-  // Classify addresses into three categories
-  const claimed = new Set<string>();
-  for (const row of rows) {
-    const addr = row.account.toLowerCase();
-    if (!unclaimed.has(addr) && allDeposited.has(addr)) {
-      claimed.add(addr);
-    }
-  }
-
-  const unreimbursed = rows.filter((r) => {
-    const addr = r.account.toLowerCase();
-    return !unclaimed.has(addr) && !claimed.has(addr);
-  });
-  const unclaimedRows = rows.filter((r) => unclaimed.has(r.account.toLowerCase()));
-  const claimedRows = rows.filter((r) => claimed.has(r.account.toLowerCase()));
+  // Classify addresses into two categories
+  const deposited = rows.filter((r) => allDeposited.has(r.account.toLowerCase()));
+  const notDeposited = rows.filter((r) => !allDeposited.has(r.account.toLowerCase()));
 
   // Print results — single list in CSV order with status icons
   console.log("=".repeat(60));
   console.log("RESULTS");
   console.log("=".repeat(60));
-  console.log("Total addresses:    %s", accounts.length);
-  console.log("✅  Claimed:        %s", claimed.size);
-  console.log("⚠️  Unclaimed:      %s", unclaimed.size);
-  console.log("🛑  Unreimbursed:   %s", unreimbursed.length);
+  console.log("Total addresses:    %s", rows.length);
+  console.log("✅  Deposited:      %s", deposited.length);
+  console.log("🛑  Not deposited:  %s (no deposits made, should be reimbursed)", notDeposited.length);
   console.log();
 
   for (const row of rows) {
     const addr = row.account.toLowerCase();
-    if (unclaimed.has(addr)) {
-      const amounts = unclaimed.get(addr)!;
-      console.log("⚠️  %s  ETH GLV: %s  BTC GLV: %s", row.account, amounts.ethGlv, amounts.btcGlv);
-    } else if (claimed.has(addr)) {
+    if (allDeposited.has(addr)) {
       console.log("✅  %s", row.account);
     } else {
       console.log("🛑  %s  ETH GLV: %s  BTC GLV: %s", row.account, row.ethGlv, row.btcGlv);
@@ -330,9 +250,8 @@ async function main() {
 
   // Print totals
   const allTotals = sumAmounts(rows);
-  const unreimbursedTotals = sumAmounts(unreimbursed);
-  const unclaimedTotals = sumAmounts(unclaimedRows);
-  const claimedTotals = sumAmounts(claimedRows);
+  const notDepositedTotals = sumAmounts(notDeposited);
+  const depositedTotals = sumAmounts(deposited);
 
   console.log("=".repeat(60));
   console.log("TOTALS");
@@ -343,23 +262,18 @@ async function main() {
     allTotals.totalBtcGlv.toFixed(2)
   );
   console.log(
-    "✅  Claimed:          ETH GLV: %s  BTC GLV: %s",
-    claimedTotals.totalEthGlv.toFixed(2),
-    claimedTotals.totalBtcGlv.toFixed(2)
+    "✅  Deposited:        ETH GLV: %s  BTC GLV: %s",
+    depositedTotals.totalEthGlv.toFixed(2),
+    depositedTotals.totalBtcGlv.toFixed(2)
   );
   console.log(
-    "⚠️  Unclaimed:        ETH GLV: %s  BTC GLV: %s",
-    unclaimedTotals.totalEthGlv.toFixed(2),
-    unclaimedTotals.totalBtcGlv.toFixed(2)
-  );
-  console.log(
-    "🛑  To be reimbursed: ETH GLV: %s  BTC GLV: %s",
-    unreimbursedTotals.totalEthGlv.toFixed(2),
-    unreimbursedTotals.totalBtcGlv.toFixed(2)
+    "🛑  Not deposited:    ETH GLV: %s  BTC GLV: %s",
+    notDepositedTotals.totalEthGlv.toFixed(2),
+    notDepositedTotals.totalBtcGlv.toFixed(2)
   );
   console.log();
 
-  // Write filtered CSV (addresses that are truly unreimbursed)
+  // Write filtered CSV (addresses for which no deposits have been made)
   const outDir = path.join(__dirname, "out");
   if (!fs.existsSync(outDir)) {
     fs.mkdirSync(outDir, { recursive: true });
@@ -367,7 +281,7 @@ async function main() {
 
   const csvLines = [
     "account,ethGlv,btcGlv,ethGlv_amount_wei,btcGlv_amount_wei",
-    ...unreimbursed.map((r) => {
+    ...notDeposited.map((r) => {
       const ethGlv = r.ethGlv.replace(/,/g, "");
       const btcGlv = r.btcGlv.replace(/,/g, "");
       return `${r.account},${ethGlv},${btcGlv},${toWei(r.ethGlv)},${toWei(r.btcGlv)}`;
@@ -376,7 +290,7 @@ async function main() {
 
   const outPath = path.join(outDir, "remaining_distributions.csv");
   fs.writeFileSync(outPath, csvLines.join("\n"));
-  console.log("Wrote %s unreimbursed addresses to %s", unreimbursed.length, outPath);
+  console.log("Wrote %s addresses (no deposits made, should be reimbursed) to %s", notDeposited.length, outPath);
 }
 
 main()
