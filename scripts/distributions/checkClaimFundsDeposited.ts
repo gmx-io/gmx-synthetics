@@ -17,7 +17,7 @@ Outputs a summary and writes out/unreimbursed.csv with addresses still owed fund
 CSV format: #,account,fsGLP_distribution,ethGlv,btcGlv, ...
 
 Usage:
-CSV_PATH=out/archi/remaining-distributions.csv npx hardhat --network arbitrum run scripts/distributions/checkClaimFundsDeposited.ts
+CSV_PATH=out/archi/GLP_GLV-for-CONTRACT.csv npx hardhat --network arbitrum run scripts/distributions/checkClaimFundsDeposited.ts
 
 */
 
@@ -94,6 +94,13 @@ function parseCsvLine(line: string): string[] {
 function parseNum(val: string): number {
   if (!val || val === "") return 0;
   return parseFloat(val.replace(/,/g, "")) || 0;
+}
+
+// Convert human-readable amount to wei string (18 decimals)
+function toWei(val: string): string {
+  const cleaned = (val || "0").replace(/,/g, "");
+  if (!cleaned || cleaned === "0") return "0";
+  return ethers.utils.parseUnits(cleaned, 18).toString();
 }
 
 function parseCsv(filePath: string): CsvRow[] {
@@ -358,9 +365,16 @@ async function main() {
     fs.mkdirSync(outDir, { recursive: true });
   }
 
-  const csvLines = ["account,ethGlv,btcGlv", ...unreimbursed.map((r) => `${r.account},${r.ethGlv},${r.btcGlv}`)];
+  const csvLines = [
+    "account,ethGlv,btcGlv,ethGlv_amount_wei,btcGlv_amount_wei",
+    ...unreimbursed.map((r) => {
+      const ethGlv = r.ethGlv.replace(/,/g, "");
+      const btcGlv = r.btcGlv.replace(/,/g, "");
+      return `${r.account},${ethGlv},${btcGlv},${toWei(r.ethGlv)},${toWei(r.btcGlv)}`;
+    }),
+  ];
 
-  const outPath = path.join(outDir, "unreimbursed.csv");
+  const outPath = path.join(outDir, "remaining_distributions.csv");
   fs.writeFileSync(outPath, csvLines.join("\n"));
   console.log("Wrote %s unreimbursed addresses to %s", unreimbursed.length, outPath);
 }
