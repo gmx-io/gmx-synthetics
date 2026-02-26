@@ -25,6 +25,7 @@ Env vars:
   BATCH_SIZE       - max items per batch (default: 50)
   ADDRESS_COLUMN   - CSV column name for address (default: "account")
   AMOUNT_COLUMN    - CSV column name for wei amount (default: "amount")
+  MAX_BATCHES_PER_TX - max depositFunds batches per Safe TX file (default: 8)
 */
 
 if (!process.env.CSV_PATH) throw new Error("CSV_PATH env var is required");
@@ -35,11 +36,12 @@ const TOKEN_ADDRESS = process.env.TOKEN_ADDRESS;
 const BATCH_SIZE = process.env.BATCH_SIZE ? parseInt(process.env.BATCH_SIZE) : 50;
 const ADDRESS_COLUMN = process.env.ADDRESS_COLUMN || "account";
 const AMOUNT_COLUMN = process.env.AMOUNT_COLUMN || "amount";
+const MAX_BATCHES_PER_TX = process.env.MAX_BATCHES_PER_TX ? parseInt(process.env.MAX_BATCHES_PER_TX) : 8;
 
 async function main() {
   const CHAIN_ID = hre.network.config.chainId!;
   const csvPath = path.resolve(__dirname, process.env.CSV_PATH!);
-  const csvBasename = path.basename(csvPath, path.extname(csvPath));
+  const csvBasename = path.basename(csvPath, path.extname(csvPath)) + `_${AMOUNT_COLUMN}`;
   console.log("Reading CSV: %s", csvPath);
 
   const content = fs.readFileSync(csvPath, "utf-8");
@@ -134,73 +136,80 @@ async function main() {
 
   console.log("Txn payloads written to: %s (%s batches of %s)", txnPayloadDir, batches.length, BATCH_SIZE);
 
-  // Save Safe TX Builder JSON
-  const safeTxs: Record<string, unknown>[] = [];
+  // Save Safe TX Builder JSON(s)
+  const maxPerTx = MAX_BATCHES_PER_TX > 0 ? MAX_BATCHES_PER_TX : batches.length;
+  const batchGroups = chunk(batches, maxPerTx);
 
-  // 1. Approve ClaimHandler to spend token
-  safeTxs.push({
-    to: TOKEN_ADDRESS,
-    value: "0",
-    data: null,
-    contractMethod: {
-      inputs: [
-        { name: "spender", type: "address" },
-        { name: "amount", type: "uint256" },
-      ],
-      name: "approve",
-      payable: false,
-    },
-    contractInputsValues: {
-      spender: claimHandler.address,
-      amount: totalAmount.toString(),
-    },
-  });
+  for (const [groupIdx, group] of batchGroups.entries()) {
+    const groupTotal = group.flat().reduce((acc: BigNumber, { amount }) => acc.add(amount), BigNumber.from(0));
+    const safeTxs: Record<string, unknown>[] = [];
 
-  // 2. depositFunds for each batch
-  for (const batch of batches) {
+    // 1. Approve ClaimHandler to spend token (for this group's total)
     safeTxs.push({
-      to: claimHandler.address,
+      to: TOKEN_ADDRESS,
       value: "0",
       data: null,
       contractMethod: {
         inputs: [
-          { name: "token", type: "address" },
-          { name: "distributionId", type: "uint256" },
-          {
-            name: "params",
-            type: "tuple[]",
-            components: [
-              { name: "account", type: "address" },
-              { name: "amount", type: "uint256" },
-            ],
-          },
+          { name: "spender", type: "address" },
+          { name: "amount", type: "uint256" },
         ],
-        name: "depositFunds",
+        name: "approve",
         payable: false,
       },
       contractInputsValues: {
-        token: TOKEN_ADDRESS,
-        distributionId: DISTRIBUTION_ID,
-        params: JSON.stringify(batch.map(({ account, amount }) => [account, amount.toString()])),
+        spender: claimHandler.address,
+        amount: groupTotal.toString(),
       },
     });
-  }
 
-  const safeTxPath = path.resolve(__dirname, `out/${csvBasename}_safeTx.json`);
-  fs.writeFileSync(
-    safeTxPath,
-    JSON.stringify(
-      {
-        version: "1.0",
-        chainId: String(CHAIN_ID),
-        meta: { name: csvBasename },
-        transactions: safeTxs,
-      },
-      null,
-      2
-    )
-  );
-  console.log("Safe TX Builder JSON written to: %s (%s transactions)", safeTxPath, safeTxs.length);
+    // 2. depositFunds for each batch in this group
+    for (const batch of group) {
+      safeTxs.push({
+        to: claimHandler.address,
+        value: "0",
+        data: null,
+        contractMethod: {
+          inputs: [
+            { name: "token", type: "address" },
+            { name: "distributionId", type: "uint256" },
+            {
+              name: "params",
+              type: "tuple[]",
+              components: [
+                { name: "account", type: "address" },
+                { name: "amount", type: "uint256" },
+              ],
+            },
+          ],
+          name: "depositFunds",
+          payable: false,
+        },
+        contractInputsValues: {
+          token: TOKEN_ADDRESS,
+          distributionId: DISTRIBUTION_ID,
+          params: JSON.stringify(batch.map(({ account, amount }) => [account, amount.toString()])),
+        },
+      });
+    }
+
+    const suffix = batchGroups.length > 1 ? `_${groupIdx + 1}` : "";
+    const safeTxPath = path.resolve(__dirname, `out/${csvBasename}_safeTx${suffix}.json`);
+    fs.writeFileSync(
+      safeTxPath,
+      JSON.stringify(
+        {
+          version: "1.0",
+          chainId: String(CHAIN_ID),
+          meta: { name: `${csvBasename}${suffix}` },
+          transactions: safeTxs,
+        },
+        null,
+        2
+      )
+    );
+    console.log("Safe TX Builder JSON written to: %s (%s transactions)", safeTxPath, safeTxs.length);
+  }
 
   console.log("\nClaimHandler: %s", claimHandler.address);
   console.log("Distribution ID: %s", DISTRIBUTION_ID);
