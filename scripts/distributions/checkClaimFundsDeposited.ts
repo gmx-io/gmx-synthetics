@@ -17,7 +17,7 @@ Outputs a summary and writes out/unreimbursed.csv with addresses still owed fund
 CSV format: #,account,fsGLP_distribution,ethGlv,btcGlv, ...
 
 Usage:
-CSV_PATH=out/archi/GLP_GLV-for-CONTRACT.csv npx hardhat --network arbitrum run scripts/distributions/checkClaimFundsDeposited.ts
+CSV_PATH=scripts/distributions/data/GLP_GLV-for-CONTRACT.csv npx hardhat --network arbitrum run scripts/distributions/checkClaimFundsDeposited.ts
 
 */
 
