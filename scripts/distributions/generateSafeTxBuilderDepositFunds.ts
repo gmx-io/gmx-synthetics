@@ -6,8 +6,7 @@ import { chunk } from "lodash";
 import { GLV_V1_DISTRIBUTION_ID } from "../helpers";
 
 /*
-Reads a CSV and generates distribution JSON, transaction payloads, and a Safe TX Builder JSON
-for depositing tokens via ClaimHandler.
+Reads a CSV and generates a Safe TX Builder JSON for depositing tokens via ClaimHandler.
 
 Usage:
   CSV_PATH=path/to/file.csv \
@@ -71,70 +70,8 @@ async function main() {
   console.log("Addresses: %s", distributions.length);
   console.log("Total amount: %s (%s wei)\n", ethers.utils.formatEther(totalAmount), totalAmount.toString());
 
-  // Save distribution JSON
-  const distributionDir = path.resolve(__dirname, `data/${csvBasename}`);
-  if (!fs.existsSync(distributionDir)) {
-    fs.mkdirSync(distributionDir, { recursive: true });
-  }
-
-  const amounts: Record<string, string> = {};
-  for (const { account, amount } of distributions) {
-    amounts[account] = amount.toString();
-  }
-
-  const distributionPath = path.resolve(distributionDir, `${csvBasename}.json`);
-  fs.writeFileSync(
-    distributionPath,
-    JSON.stringify(
-      {
-        chainId: CHAIN_ID,
-        distributionTypeId: DISTRIBUTION_ID,
-        token: TOKEN_ADDRESS,
-        totalAmount: totalAmount.toString(),
-        amounts,
-      },
-      null,
-      2
-    )
-  );
-  console.log("Distribution JSON written to: %s", distributionPath);
-
-  // Save transaction payloads
   const claimHandler = await hre.ethers.getContract("ClaimHandler");
-
-  const txnPayloadDir = path.resolve(__dirname, `out/txn-payload/${csvBasename}`);
-  if (!fs.existsSync(txnPayloadDir)) {
-    fs.mkdirSync(txnPayloadDir, { recursive: true });
-  }
-
   const batches = chunk(distributions, BATCH_SIZE);
-  for (const [i, batch] of batches.entries()) {
-    const params = [
-      TOKEN_ADDRESS,
-      DISTRIBUTION_ID,
-      batch.map(({ account, amount }) => ({ account, amount: amount.toString() })),
-    ];
-    const txnPayload = claimHandler.interface.encodeFunctionData("depositFunds", params);
-    const batchTotal = batch.reduce((acc, { amount }) => acc.add(amount), BigNumber.from(0));
-
-    fs.writeFileSync(
-      path.resolve(txnPayloadDir, `${i}.json`),
-      JSON.stringify(
-        {
-          chainId: CHAIN_ID,
-          totalAmount: batchTotal.toString(),
-          tokenAddress: TOKEN_ADDRESS,
-          batchIndex: i,
-          params,
-          txnPayload,
-        },
-        null,
-        2
-      )
-    );
-  }
-
-  console.log("Txn payloads written to: %s (%s batches of %s)", txnPayloadDir, batches.length, BATCH_SIZE);
 
   // Save Safe TX Builder JSON(s)
   const maxPerTx = MAX_BATCHES_PER_TX > 0 ? MAX_BATCHES_PER_TX : batches.length;
