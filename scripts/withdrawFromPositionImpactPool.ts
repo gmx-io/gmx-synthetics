@@ -158,7 +158,7 @@ async function main() {
   const withdrawalItems = [
     {
       marketKey: "OM:WBTC.e:USDC",
-      amount: 57_798,
+      amount: 57_798, // ignored when FULL_WITHDRAWAL=true
     },
   ];
 
@@ -199,14 +199,19 @@ async function main() {
 
     const marketAddress = await fetchMarketAddress(indexToken.address, longToken.address, shortToken.address);
 
-    const adjustedAmount = expandDecimals(amount, indexToken.decimals);
     console.log("marketAddress", marketAddress);
     const priceImpactPoolAmount = await dataStore.getUint(keys.positionImpactPoolAmountKey(marketAddress));
 
-    if (adjustedAmount.gt(priceImpactPoolAmount)) {
-      throw new Error(
-        `adjustedAmount > priceImpactPoolAmount for ${marketKey}: ${adjustedAmount.toString()}, ${priceImpactPoolAmount.toString()}`
-      );
+    let adjustedAmount;
+    if (process.env.FULL_WITHDRAWAL === "true") {
+      adjustedAmount = priceImpactPoolAmount;
+    } else {
+      adjustedAmount = expandDecimals(amount, indexToken.decimals);
+      if (adjustedAmount.gt(priceImpactPoolAmount)) {
+        throw new Error(
+          `adjustedAmount > priceImpactPoolAmount for ${marketKey}: ${adjustedAmount.toString()}, ${priceImpactPoolAmount.toString()}`
+        );
+      }
     }
 
     const percentage = adjustedAmount.mul(10_000).div(priceImpactPoolAmount);
