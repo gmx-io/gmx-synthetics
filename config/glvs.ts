@@ -54,7 +54,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         longToken: "WETH",
         shortToken: "USDC",
         shiftMaxLossFactor: percentageToFloat("0.025%"),
-        shiftMinInterval: 4 * 60, // 4 minutes (will be 0 after new keeper testing)
+        // shiftMinInterval: 4 * 60, // 4 minutes (will be 0 after new keeper testing)
+        shiftMinInterval: 0,
         minTokensForFirstGlvDeposit: expandDecimals(1, 18),
         markets: [
           createGlvMarketConfig("WETH", 35_000_000, 1.98),
