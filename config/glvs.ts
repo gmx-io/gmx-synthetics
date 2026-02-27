@@ -148,7 +148,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("CAKE", arbitrum_btcUsdcDefaultCap, 1.14),
           createGlvMarketConfig("HYPE", arbitrum_btcUsdcDefaultCap, 2.63),
           createGlvMarketConfig("JUP", arbitrum_btcUsdcDefaultCap, 1.1),
-          createGlvMarketConfig("OM", arbitrum_btcUsdcDefaultCap, 1.21),
+          createGlvMarketConfig("OM", arbitrum_btcUsdcDefaultCap, 1.21, true),
           createGlvMarketConfig("MOODENG", arbitrum_btcUsdcDefaultCap, 1),
           createGlvMarketConfig("XMR", arbitrum_btcUsdcDefaultCap, 0.93),
           createGlvMarketConfig("PI", arbitrum_btcUsdcDefaultCap, 1.07),
