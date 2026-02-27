@@ -147,69 +147,18 @@ async function main() {
 
   const receiver = "0x4bd1cdAab4254fC43ef6424653cA2375b4C94C0E";
 
-  // NOTE: amount is the human readable token amount
-  // e.g. to withdraw 500 ETH, amount would be "500"
-  // and not 500 * (10 ** 18)
+  /*
+  // OM market address: 0x89EB78679921499632fF16B1be3ee48295cfCD91
+  Retrieve position impact pool amount:
+    POOL_KEY=$(cast keccak $(cast abi-encode "f(bytes32,address)" "0x8d05e344d016decb2483e1a2db6dfebdef3f67c47ac787f0ac505b4d45d3e16c" "0x89EB78679921499632fF16B1be3ee48295cfCD91")) \
+    cast call 0xFD70de6b91282D8017aA4E741e9Ae325CAb992d8 "getUint(bytes32)(uint256)" "$POOL_KEY" --rpc-url https://arb1.arbitrum.io/rpc
+
+  output: 57798402402081225282171 (57798.4024 OM)
+  */
   const withdrawalItems = [
     {
-      marketKey: "WETH:WETH:USDC",
-      amount: 1500,
-    },
-    {
-      marketKey: "BTC:WBTC.e:USDC",
-      amount: 35,
-    },
-    {
-      marketKey: "LINK:LINK:USDC",
-      amount: 35_000,
-    },
-    {
-      marketKey: "XRP:WETH:USDC",
-      amount: 250_000,
-    },
-    {
-      marketKey: "SOL:SOL:USDC",
-      amount: 8400,
-    },
-    {
-      marketKey: "HYPE:WBTC.e:USDC",
-      amount: 1900,
-    },
-    {
-      marketKey: "DOGE:WETH:USDC",
-      amount: 1_400_000,
-    },
-    {
-      marketKey: "AAVE:AAVE:USDC",
-      amount: 850,
-    },
-    {
-      marketKey: "GMX:GMX:USDC",
-      amount: 8300,
-    },
-    {
-      marketKey: "ARB:ARB:USDC",
-      amount: 350_000,
-    },
-    {
-      marketKey: "UNI:UNI:USDC",
-      amount: 13_000,
-    },
-    {
-      marketKey: "PEPE:PEPE:USDC",
-      amount: 6_000_000_000,
-    },
-    {
-      marketKey: "NEAR:WETH:USDC",
-      amount: 20_000,
-    },
-    {
-      marketKey: "LTC:WETH:USDC",
-      amount: 700,
-    },
-    {
-      marketKey: "WIF:WIF:USDC",
-      amount: 65_000,
+      marketKey: "OM:WBTC.e:USDC",
+      amount: 57_798,
     },
   ];
 
