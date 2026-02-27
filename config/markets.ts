@@ -3161,6 +3161,8 @@ const config: {
       minPositionImpactPoolAmount: bigNumberify(0), // extract everything (default)
 
       atomicSwapFeeFactor: percentageToFloat("0.75%"),
+
+      isDisabled: true,
     },
     {
       tokens: { indexToken: "DOLO", longToken: "WETH", shortToken: "USDC" },
