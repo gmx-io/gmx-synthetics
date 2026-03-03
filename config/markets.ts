@@ -1658,8 +1658,8 @@ const config: {
       reserveFactor: percentageToFloat("155%"), // default is 95%
       openInterestReserveFactor: percentageToFloat("150%"), // default is 90%
 
-      positionImpactPoolDistributionRate: expandDecimals(814, 9 + 30).div(SECONDS_PER_DAY), // 814 SUI / day
-      minPositionImpactPoolAmount: expandDecimals(11421, 9), // 11421 SUI
+      positionImpactPoolDistributionRate: expandDecimals(1083, 9 + 30).div(SECONDS_PER_DAY), // 1,083 SUI / day
+      minPositionImpactPoolAmount: expandDecimals(6986, 9), // 6,986 SUI
 
       maxOpenInterest: decimalToFloat(9_000_000),
 
@@ -2811,8 +2811,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(1850, 18),
       maxShortTokenPoolAmount: expandDecimals(3_500_000, 6),
 
-      positionImpactPoolDistributionRate: expandDecimals(4552, 18 + 30).div(SECONDS_PER_DAY), // 4552 BERA / day
-      minPositionImpactPoolAmount: expandDecimals(63905, 18), // 63905 BERA
+      positionImpactPoolDistributionRate: expandDecimals(6054, 18 + 30).div(SECONDS_PER_DAY), // 6,054 BERA / day
+      minPositionImpactPoolAmount: expandDecimals(26361, 18), // 26,361 BERA
 
       atomicSwapFeeFactor: percentageToFloat("2.25%"),
     },
@@ -3193,8 +3193,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(114, 18),
       maxShortTokenPoolAmount: expandDecimals(360_000, 6),
 
-      positionImpactPoolDistributionRate: expandDecimals(28433, 18 + 30).div(SECONDS_PER_DAY), // 28433 DOLO / day
-      minPositionImpactPoolAmount: expandDecimals(399129, 18), // 399129 DOLO
+      positionImpactPoolDistributionRate: expandDecimals(37816, 18 + 30).div(SECONDS_PER_DAY), // 37,816 DOLO / day
+      minPositionImpactPoolAmount: expandDecimals(161673, 18), // 161,673 DOLO
     },
     {
       tokens: { indexToken: "ZRO", longToken: "WETH", shortToken: "USDC" },
@@ -3254,8 +3254,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(1470, 18),
       maxShortTokenPoolAmount: expandDecimals(5_700_000, 6),
 
-      positionImpactPoolDistributionRate: expandDecimals(3386, 18 + 30).div(SECONDS_PER_DAY), // 3386 CRV / day
-      minPositionImpactPoolAmount: expandDecimals(47526, 18), // 47526 CRV
+      positionImpactPoolDistributionRate: expandDecimals(4503, 18 + 30).div(SECONDS_PER_DAY), // 4,503 CRV / day
+      minPositionImpactPoolAmount: expandDecimals(19110, 18), // 19,110 CRV
     },
     {
       tokens: { indexToken: "MOODENG", longToken: "WBTC.e", shortToken: "USDC" },
@@ -3855,8 +3855,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(214, 18), // ~0.67M USD
       maxShortTokenPoolAmount: expandDecimals(670_000, 6), // ~0.67M USD
 
-      positionImpactPoolDistributionRate: expandDecimals(20062, 18 + 30).div(SECONDS_PER_DAY), // 20062 KTA / day
-      minPositionImpactPoolAmount: expandDecimals(281623, 18), // 281623 KTA
+      positionImpactPoolDistributionRate: expandDecimals(26682, 18 + 30).div(SECONDS_PER_DAY), // 26,682 KTA / day
+      minPositionImpactPoolAmount: expandDecimals(121361, 18), // 121,361 KTA
     },
     {
       tokens: { indexToken: "WLFI", longToken: "WETH", shortToken: "USDC" },
@@ -3913,6 +3913,9 @@ const config: {
 
       maxLongTokenPoolAmount: expandDecimals(6, 18), // ~21K USD
       maxShortTokenPoolAmount: expandDecimals(21_000, 6), // ~21K USD
+
+      positionImpactPoolDistributionRate: expandDecimals(1033990, 18 + 30).div(SECONDS_PER_DAY), // 1,033,990 WELL / day
+      minPositionImpactPoolAmount: bigNumberify(0),
     },
     {
       tokens: { indexToken: "VVV", longToken: "WETH", shortToken: "USDC" },
@@ -3942,8 +3945,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(214, 18), // ~0.67M USD
       maxShortTokenPoolAmount: expandDecimals(675_000, 6), // ~0.67M USD
 
-      positionImpactPoolDistributionRate: expandDecimals(761, 18 + 30).div(SECONDS_PER_DAY), // 761 VVV / day
-      minPositionImpactPoolAmount: expandDecimals(10679, 18), // 10679 VVV
+      positionImpactPoolDistributionRate: expandDecimals(1012, 18 + 30).div(SECONDS_PER_DAY), // 1,012 VVV / day
+      minPositionImpactPoolAmount: expandDecimals(4875, 18), // 4,875 VVV
     },
     {
       tokens: { indexToken: "MORPHO", longToken: "WETH", shortToken: "USDC" },
@@ -4085,8 +4088,8 @@ const config: {
       maxLongTokenPoolAmount: expandDecimals(358, 18), // ~1.12M USD (2x max open interest)
       maxShortTokenPoolAmount: expandDecimals(1_125_000, 6), // ~1.2M USD (2x max open interest)
 
-      positionImpactPoolDistributionRate: expandDecimals(12787, 18 + 30).div(SECONDS_PER_DAY), // 12787 AVNT / day
-      minPositionImpactPoolAmount: expandDecimals(179493, 18), // 179493 AVNT
+      positionImpactPoolDistributionRate: expandDecimals(17007, 18 + 30).div(SECONDS_PER_DAY), // 17,007 AVNT / day
+      minPositionImpactPoolAmount: expandDecimals(72124, 18), // 72,124 AVNT
     },
     {
       tokens: { indexToken: "LINEA", longToken: "WETH", shortToken: "USDC" },
