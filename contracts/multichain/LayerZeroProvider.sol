@@ -21,6 +21,7 @@ import "./IMultichainProvider.sol";
 import "./IMultichainGmRouter.sol";
 import "./IMultichainGlvRouter.sol";
 import "./IMultichainOrderRouter.sol";
+import "./IMultichainStakingRouter.sol";
 
 import "./MultichainVault.sol";
 import "./MultichainUtils.sol";
@@ -52,6 +53,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
     IMultichainGmRouter public immutable multichainGmRouter;
     IMultichainGlvRouter public immutable multichainGlvRouter;
     IMultichainOrderRouter public immutable multichainOrderRouter;
+    IMultichainStakingRouter public immutable multichainStakingRouter;
 
     constructor(
         DataStore _dataStore,
@@ -60,7 +62,8 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         MultichainVault _multichainVault,
         IMultichainGmRouter _multichainGmRouter,
         IMultichainGlvRouter _multichainGlvRouter,
-        IMultichainOrderRouter _multichainOrderRouter
+        IMultichainOrderRouter _multichainOrderRouter,
+        IMultichainStakingRouter _multichainStakingRouter
     ) RoleModule(_roleStore) {
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
@@ -68,6 +71,7 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
         multichainGmRouter = _multichainGmRouter;
         multichainGlvRouter = _multichainGlvRouter;
         multichainOrderRouter = _multichainOrderRouter;
+        multichainStakingRouter = _multichainStakingRouter;
     }
 
     /**
@@ -163,6 +167,28 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
                 _handleWithdrawal(account, srcChainId, actionType, actionData);
             } else if (actionType == ActionType.GlvWithdrawal) {
                 _handleGlvWithdrawal(account, srcChainId, actionType, actionData);
+            } else if (actionType == ActionType.StakeGmx) {
+                _handleStakeGmx(account, srcChainId, actionType, actionData);
+            } else if (actionType == ActionType.UnstakeGmx) {
+                _handleUnstakeGmx(account, srcChainId, actionType, actionData);
+            } else if (actionType == ActionType.StakeEsGmx) {
+                _handleStakeEsGmx(account, srcChainId, actionType, actionData);
+            } else if (actionType == ActionType.UnstakeEsGmx) {
+                _handleUnstakeEsGmx(account, srcChainId, actionType, actionData);
+            } else if (actionType == ActionType.HandleStakingRewards) {
+                _handleHandleStakingRewards(account, srcChainId, actionType, actionData);
+            } else if (actionType == ActionType.CompoundStakingRewards) {
+                _handleCompoundStakingRewards(account, srcChainId, actionType, actionData);
+            } else if (actionType == ActionType.VestEsGmx) {
+                _handleVestEsGmx(account, srcChainId, actionType, actionData);
+            } else if (actionType == ActionType.DelegateGovGmx) {
+                _handleDelegateGovGmx(account, srcChainId, actionType, actionData);
+            } else if (actionType == ActionType.SignalStakingTransfer) {
+                _handleSignalStakingTransfer(account, srcChainId, actionType, actionData);
+            } else if (actionType == ActionType.AcceptStakingTransfer) {
+                _handleAcceptStakingTransfer(account, srcChainId, actionType, actionData);
+            } else if (actionType == ActionType.WithdrawFromWallet) {
+                _handleWithdrawFromWallet(account, srcChainId, actionType, actionData);
             }
         }
     }
@@ -559,6 +585,151 @@ contract LayerZeroProvider is IMultichainProvider, ILayerZeroComposer, RoleModul
                 (string memory reason, /* bool hasRevertMessage */) = ErrorUtils.getRevertMessage(reasonBytes);
                 MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
             }
+        }
+    }
+
+    // Staking handlers
+
+    function _handleStakeGmx(address account, uint256 srcChainId, ActionType actionType, bytes memory actionData) private {
+        (IRelayUtils.RelayParams memory relayParams, uint256 amount) = abi.decode(actionData, (IRelayUtils.RelayParams, uint256));
+        uint256 estimatedGasLimit = GasUtils.estimateStakingActionGasLimit(dataStore, Keys.STAKE_GMX_GAS_LIMIT);
+        _validateGasLeft(estimatedGasLimit);
+        try multichainStakingRouter.stakeGmx(relayParams, account, srcChainId, amount) {
+        } catch Error(string memory reason) {
+            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
+        } catch (bytes memory reasonBytes) {
+            (string memory reason, ) = ErrorUtils.getRevertMessage(reasonBytes);
+            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
+        }
+    }
+
+    function _handleUnstakeGmx(address account, uint256 srcChainId, ActionType actionType, bytes memory actionData) private {
+        (IRelayUtils.RelayParams memory relayParams, uint256 amount) = abi.decode(actionData, (IRelayUtils.RelayParams, uint256));
+        uint256 estimatedGasLimit = GasUtils.estimateStakingActionGasLimit(dataStore, Keys.UNSTAKE_GMX_GAS_LIMIT);
+        _validateGasLeft(estimatedGasLimit);
+        try multichainStakingRouter.unstakeGmx(relayParams, account, srcChainId, amount) {
+        } catch Error(string memory reason) {
+            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
+        } catch (bytes memory reasonBytes) {
+            (string memory reason, ) = ErrorUtils.getRevertMessage(reasonBytes);
+            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
+        }
+    }
+
+    function _handleStakeEsGmx(address account, uint256 srcChainId, ActionType actionType, bytes memory actionData) private {
+        (IRelayUtils.RelayParams memory relayParams, uint256 amount) = abi.decode(actionData, (IRelayUtils.RelayParams, uint256));
+        uint256 estimatedGasLimit = GasUtils.estimateStakingActionGasLimit(dataStore, Keys.STAKE_ES_GMX_GAS_LIMIT);
+        _validateGasLeft(estimatedGasLimit);
+        try multichainStakingRouter.stakeEsGmx(relayParams, account, srcChainId, amount) {
+        } catch Error(string memory reason) {
+            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
+        } catch (bytes memory reasonBytes) {
+            (string memory reason, ) = ErrorUtils.getRevertMessage(reasonBytes);
+            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
+        }
+    }
+
+    function _handleUnstakeEsGmx(address account, uint256 srcChainId, ActionType actionType, bytes memory actionData) private {
+        (IRelayUtils.RelayParams memory relayParams, uint256 amount) = abi.decode(actionData, (IRelayUtils.RelayParams, uint256));
+        uint256 estimatedGasLimit = GasUtils.estimateStakingActionGasLimit(dataStore, Keys.UNSTAKE_ES_GMX_GAS_LIMIT);
+        _validateGasLeft(estimatedGasLimit);
+        try multichainStakingRouter.unstakeEsGmx(relayParams, account, srcChainId, amount) {
+        } catch Error(string memory reason) {
+            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
+        } catch (bytes memory reasonBytes) {
+            (string memory reason, ) = ErrorUtils.getRevertMessage(reasonBytes);
+            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
+        }
+    }
+
+    function _handleHandleStakingRewards(address account, uint256 srcChainId, ActionType actionType, bytes memory actionData) private {
+        (IRelayUtils.RelayParams memory relayParams, IRelayUtils.HandleStakingRewardsParams memory params) = abi.decode(actionData, (IRelayUtils.RelayParams, IRelayUtils.HandleStakingRewardsParams));
+        uint256 estimatedGasLimit = GasUtils.estimateStakingActionGasLimit(dataStore, Keys.HANDLE_STAKING_REWARDS_GAS_LIMIT);
+        _validateGasLeft(estimatedGasLimit);
+        try multichainStakingRouter.handleStakingRewards(relayParams, account, srcChainId, params) {
+        } catch Error(string memory reason) {
+            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
+        } catch (bytes memory reasonBytes) {
+            (string memory reason, ) = ErrorUtils.getRevertMessage(reasonBytes);
+            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
+        }
+    }
+
+    function _handleCompoundStakingRewards(address account, uint256 srcChainId, ActionType actionType, bytes memory actionData) private {
+        IRelayUtils.RelayParams memory relayParams = abi.decode(actionData, (IRelayUtils.RelayParams));
+        uint256 estimatedGasLimit = GasUtils.estimateStakingActionGasLimit(dataStore, Keys.COMPOUND_STAKING_REWARDS_GAS_LIMIT);
+        _validateGasLeft(estimatedGasLimit);
+        try multichainStakingRouter.compoundStakingRewards(relayParams, account, srcChainId) {
+        } catch Error(string memory reason) {
+            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
+        } catch (bytes memory reasonBytes) {
+            (string memory reason, ) = ErrorUtils.getRevertMessage(reasonBytes);
+            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
+        }
+    }
+
+    function _handleVestEsGmx(address account, uint256 srcChainId, ActionType actionType, bytes memory actionData) private {
+        (IRelayUtils.RelayParams memory relayParams, uint256 amount) = abi.decode(actionData, (IRelayUtils.RelayParams, uint256));
+        uint256 estimatedGasLimit = GasUtils.estimateStakingActionGasLimit(dataStore, Keys.VEST_ES_GMX_GAS_LIMIT);
+        _validateGasLeft(estimatedGasLimit);
+        try multichainStakingRouter.vestEsGmx(relayParams, account, srcChainId, amount) {
+        } catch Error(string memory reason) {
+            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
+        } catch (bytes memory reasonBytes) {
+            (string memory reason, ) = ErrorUtils.getRevertMessage(reasonBytes);
+            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
+        }
+    }
+
+    function _handleDelegateGovGmx(address account, uint256 srcChainId, ActionType actionType, bytes memory actionData) private {
+        (IRelayUtils.RelayParams memory relayParams, address delegatee) = abi.decode(actionData, (IRelayUtils.RelayParams, address));
+        uint256 estimatedGasLimit = GasUtils.estimateStakingActionGasLimit(dataStore, Keys.DELEGATE_GOV_GMX_GAS_LIMIT);
+        _validateGasLeft(estimatedGasLimit);
+        try multichainStakingRouter.delegateGovGmx(relayParams, account, srcChainId, delegatee) {
+        } catch Error(string memory reason) {
+            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
+        } catch (bytes memory reasonBytes) {
+            (string memory reason, ) = ErrorUtils.getRevertMessage(reasonBytes);
+            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
+        }
+    }
+
+    function _handleSignalStakingTransfer(address account, uint256 srcChainId, ActionType actionType, bytes memory actionData) private {
+        (IRelayUtils.RelayParams memory relayParams, address receiver) = abi.decode(actionData, (IRelayUtils.RelayParams, address));
+        uint256 estimatedGasLimit = GasUtils.estimateStakingActionGasLimit(dataStore, Keys.SIGNAL_STAKING_TRANSFER_GAS_LIMIT);
+        _validateGasLeft(estimatedGasLimit);
+        try multichainStakingRouter.signalStakingTransfer(relayParams, account, srcChainId, receiver) {
+        } catch Error(string memory reason) {
+            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
+        } catch (bytes memory reasonBytes) {
+            (string memory reason, ) = ErrorUtils.getRevertMessage(reasonBytes);
+            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
+        }
+    }
+
+    function _handleAcceptStakingTransfer(address account, uint256 srcChainId, ActionType actionType, bytes memory actionData) private {
+        (IRelayUtils.RelayParams memory relayParams, address sender) = abi.decode(actionData, (IRelayUtils.RelayParams, address));
+        uint256 estimatedGasLimit = GasUtils.estimateStakingActionGasLimit(dataStore, Keys.ACCEPT_STAKING_TRANSFER_GAS_LIMIT);
+        _validateGasLeft(estimatedGasLimit);
+        try multichainStakingRouter.acceptStakingTransfer(relayParams, account, srcChainId, sender) {
+        } catch Error(string memory reason) {
+            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
+        } catch (bytes memory reasonBytes) {
+            (string memory reason, ) = ErrorUtils.getRevertMessage(reasonBytes);
+            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
+        }
+    }
+
+    function _handleWithdrawFromWallet(address account, uint256 srcChainId, ActionType actionType, bytes memory actionData) private {
+        (IRelayUtils.RelayParams memory relayParams, address token, uint256 amount) = abi.decode(actionData, (IRelayUtils.RelayParams, address, uint256));
+        uint256 estimatedGasLimit = GasUtils.estimateStakingActionGasLimit(dataStore, Keys.WITHDRAW_FROM_WALLET_GAS_LIMIT);
+        _validateGasLeft(estimatedGasLimit);
+        try multichainStakingRouter.withdrawFromWallet(relayParams, account, srcChainId, token, amount) {
+        } catch Error(string memory reason) {
+            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
+        } catch (bytes memory reasonBytes) {
+            (string memory reason, ) = ErrorUtils.getRevertMessage(reasonBytes);
+            MultichainEventUtils.emitMultichainBridgeActionFailed(eventEmitter, address(this), account, srcChainId, uint256(actionType), reason);
         }
     }
 

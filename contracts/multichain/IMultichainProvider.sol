@@ -16,7 +16,18 @@ interface IMultichainProvider {
         SetTraderReferralCode,
         Withdrawal,
         GlvWithdrawal,
-        RegisterCode
+        RegisterCode,
+        StakeGmx,
+        UnstakeGmx,
+        StakeEsGmx,
+        UnstakeEsGmx,
+        HandleStakingRewards,
+        CompoundStakingRewards,
+        VestEsGmx,
+        DelegateGovGmx,
+        SignalStakingTransfer,
+        AcceptStakingTransfer,
+        WithdrawFromWallet
     }
 
     function bridgeOut(address account, uint256 srcChainId, IRelayUtils.BridgeOutParams memory params) external returns (uint256);
