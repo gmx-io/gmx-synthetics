@@ -1,7 +1,34 @@
 import { BigNumberish, Contract } from "ethers";
-import { sendSetTraderReferralCode } from "./relay/gelatoRelay";
+import {
+  sendSetTraderReferralCode,
+  sendStakeGmx,
+  sendUnstakeGmx,
+  sendStakeEsGmx,
+  sendUnstakeEsGmx,
+  sendHandleStakingRewards,
+  sendCompoundStakingRewards,
+  sendVestEsGmx,
+  sendDelegateGovGmx,
+  sendSignalStakingTransfer,
+  sendAcceptStakingTransfer,
+  sendWithdrawFromWallet,
+} from "./relay/gelatoRelay";
 import { getRelayParams } from "./relay/helpers";
-import { getSetTraderReferralCodeSignature, getRegisterCodeSignature } from "./relay/signatures";
+import {
+  getSetTraderReferralCodeSignature,
+  getRegisterCodeSignature,
+  getStakeGmxSignature,
+  getUnstakeGmxSignature,
+  getStakeEsGmxSignature,
+  getUnstakeEsGmxSignature,
+  getHandleStakingRewardsSignature,
+  getCompoundStakingRewardsSignature,
+  getVestEsGmxSignature,
+  getDelegateGovGmxSignature,
+  getSignalStakingTransferSignature,
+  getAcceptStakingTransferSignature,
+  getWithdrawFromWalletSignature,
+} from "./relay/signatures";
 import {
   getCreateDepositSignature,
   getCreateWithdrawalSignature,
@@ -60,6 +87,22 @@ export async function bridgeInTokens(
   await stargatePool
     .connect(account)
     .sendToken(layerZeroProvider.address, amount, encodedMessageEth, { value: msgValue });
+}
+
+export async function fundMultichainBalance(
+  fixture,
+  overrides: {
+    account: string;
+    token: Contract;
+    amount: BigNumberish;
+  }
+) {
+  const { multichainVault, dataStore } = fixture.contracts;
+  const { account, token, amount } = overrides;
+
+  await token.mint(multichainVault.address, amount);
+  await multichainVault.syncTokenBalance(token.address);
+  await dataStore.incrementUint(keys.multichainBalanceKey(account, token.address), amount);
 }
 
 const relayParamsType = `tuple(
@@ -347,6 +390,299 @@ export async function encodeRegisterCodeMessage(
   const message = ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, data]);
 
   return message;
+}
+
+const handleStakingRewardsParamsType = `tuple(
+    bool shouldClaimGmx,
+    bool shouldStakeGmx,
+    bool shouldClaimEsGmx,
+    bool shouldStakeEsGmx,
+    bool shouldStakeMultiplierPoints,
+    bool shouldClaimWeth
+  )`;
+
+export async function encodeStakeGmxMessage(
+  params: Parameters<typeof sendStakeGmx>[0],
+  account: string,
+  expectedNativeValue: BigNumberish = 0
+): Promise<string> {
+  const relayParams = await getRelayParams(params);
+  const signature = await getStakeGmxSignature({
+    ...params,
+    relayParams,
+    verifyingContract: params.relayRouter.address,
+  });
+
+  const actionData = ethers.utils.defaultAbiCoder.encode(
+    [relayParamsType, "uint256"],
+    [{ ...relayParams, signature }, params.amount]
+  );
+
+  const ActionType = 8; // StakeGmx
+  const data = ethers.utils.defaultAbiCoder.encode(
+    ["uint8", "uint256", "bytes"],
+    [ActionType, expectedNativeValue, actionData]
+  );
+
+  return ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, data]);
+}
+
+export async function encodeUnstakeGmxMessage(
+  params: Parameters<typeof sendUnstakeGmx>[0],
+  account: string,
+  expectedNativeValue: BigNumberish = 0
+): Promise<string> {
+  const relayParams = await getRelayParams(params);
+  const signature = await getUnstakeGmxSignature({
+    ...params,
+    relayParams,
+    verifyingContract: params.relayRouter.address,
+  });
+
+  const actionData = ethers.utils.defaultAbiCoder.encode(
+    [relayParamsType, "uint256"],
+    [{ ...relayParams, signature }, params.amount]
+  );
+
+  const ActionType = 9; // UnstakeGmx
+  const data = ethers.utils.defaultAbiCoder.encode(
+    ["uint8", "uint256", "bytes"],
+    [ActionType, expectedNativeValue, actionData]
+  );
+
+  return ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, data]);
+}
+
+export async function encodeStakeEsGmxMessage(
+  params: Parameters<typeof sendStakeEsGmx>[0],
+  account: string,
+  expectedNativeValue: BigNumberish = 0
+): Promise<string> {
+  const relayParams = await getRelayParams(params);
+  const signature = await getStakeEsGmxSignature({
+    ...params,
+    relayParams,
+    verifyingContract: params.relayRouter.address,
+  });
+
+  const actionData = ethers.utils.defaultAbiCoder.encode(
+    [relayParamsType, "uint256"],
+    [{ ...relayParams, signature }, params.amount]
+  );
+
+  const ActionType = 10; // StakeEsGmx
+  const data = ethers.utils.defaultAbiCoder.encode(
+    ["uint8", "uint256", "bytes"],
+    [ActionType, expectedNativeValue, actionData]
+  );
+
+  return ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, data]);
+}
+
+export async function encodeUnstakeEsGmxMessage(
+  params: Parameters<typeof sendUnstakeEsGmx>[0],
+  account: string,
+  expectedNativeValue: BigNumberish = 0
+): Promise<string> {
+  const relayParams = await getRelayParams(params);
+  const signature = await getUnstakeEsGmxSignature({
+    ...params,
+    relayParams,
+    verifyingContract: params.relayRouter.address,
+  });
+
+  const actionData = ethers.utils.defaultAbiCoder.encode(
+    [relayParamsType, "uint256"],
+    [{ ...relayParams, signature }, params.amount]
+  );
+
+  const ActionType = 11; // UnstakeEsGmx
+  const data = ethers.utils.defaultAbiCoder.encode(
+    ["uint8", "uint256", "bytes"],
+    [ActionType, expectedNativeValue, actionData]
+  );
+
+  return ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, data]);
+}
+
+export async function encodeHandleStakingRewardsMessage(
+  params: Parameters<typeof sendHandleStakingRewards>[0],
+  account: string,
+  expectedNativeValue: BigNumberish = 0
+): Promise<string> {
+  const relayParams = await getRelayParams(params);
+  const signature = await getHandleStakingRewardsSignature({
+    ...params,
+    relayParams,
+    verifyingContract: params.relayRouter.address,
+  });
+
+  const actionData = ethers.utils.defaultAbiCoder.encode(
+    [relayParamsType, handleStakingRewardsParamsType],
+    [{ ...relayParams, signature }, params.params]
+  );
+
+  const ActionType = 12; // HandleStakingRewards
+  const data = ethers.utils.defaultAbiCoder.encode(
+    ["uint8", "uint256", "bytes"],
+    [ActionType, expectedNativeValue, actionData]
+  );
+
+  return ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, data]);
+}
+
+export async function encodeCompoundStakingRewardsMessage(
+  params: Parameters<typeof sendCompoundStakingRewards>[0],
+  account: string,
+  expectedNativeValue: BigNumberish = 0
+): Promise<string> {
+  const relayParams = await getRelayParams(params);
+  const signature = await getCompoundStakingRewardsSignature({
+    ...params,
+    relayParams,
+    verifyingContract: params.relayRouter.address,
+  });
+
+  const actionData = ethers.utils.defaultAbiCoder.encode([relayParamsType], [{ ...relayParams, signature }]);
+
+  const ActionType = 13; // CompoundStakingRewards
+  const data = ethers.utils.defaultAbiCoder.encode(
+    ["uint8", "uint256", "bytes"],
+    [ActionType, expectedNativeValue, actionData]
+  );
+
+  return ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, data]);
+}
+
+export async function encodeVestEsGmxMessage(
+  params: Parameters<typeof sendVestEsGmx>[0],
+  account: string,
+  expectedNativeValue: BigNumberish = 0
+): Promise<string> {
+  const relayParams = await getRelayParams(params);
+  const signature = await getVestEsGmxSignature({
+    ...params,
+    relayParams,
+    verifyingContract: params.relayRouter.address,
+  });
+
+  const actionData = ethers.utils.defaultAbiCoder.encode(
+    [relayParamsType, "uint256"],
+    [{ ...relayParams, signature }, params.amount]
+  );
+
+  const ActionType = 14; // VestEsGmx
+  const data = ethers.utils.defaultAbiCoder.encode(
+    ["uint8", "uint256", "bytes"],
+    [ActionType, expectedNativeValue, actionData]
+  );
+
+  return ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, data]);
+}
+
+export async function encodeDelegateGovGmxMessage(
+  params: Parameters<typeof sendDelegateGovGmx>[0],
+  account: string,
+  expectedNativeValue: BigNumberish = 0
+): Promise<string> {
+  const relayParams = await getRelayParams(params);
+  const signature = await getDelegateGovGmxSignature({
+    ...params,
+    relayParams,
+    verifyingContract: params.relayRouter.address,
+  });
+
+  const actionData = ethers.utils.defaultAbiCoder.encode(
+    [relayParamsType, "address"],
+    [{ ...relayParams, signature }, params.delegatee]
+  );
+
+  const ActionType = 15; // DelegateGovGmx
+  const data = ethers.utils.defaultAbiCoder.encode(
+    ["uint8", "uint256", "bytes"],
+    [ActionType, expectedNativeValue, actionData]
+  );
+
+  return ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, data]);
+}
+
+export async function encodeSignalStakingTransferMessage(
+  params: Parameters<typeof sendSignalStakingTransfer>[0],
+  account: string,
+  expectedNativeValue: BigNumberish = 0
+): Promise<string> {
+  const relayParams = await getRelayParams(params);
+  const signature = await getSignalStakingTransferSignature({
+    ...params,
+    relayParams,
+    verifyingContract: params.relayRouter.address,
+  });
+
+  const actionData = ethers.utils.defaultAbiCoder.encode(
+    [relayParamsType, "address"],
+    [{ ...relayParams, signature }, params.receiver]
+  );
+
+  const ActionType = 16; // SignalStakingTransfer
+  const data = ethers.utils.defaultAbiCoder.encode(
+    ["uint8", "uint256", "bytes"],
+    [ActionType, expectedNativeValue, actionData]
+  );
+
+  return ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, data]);
+}
+
+export async function encodeAcceptStakingTransferMessage(
+  params: Parameters<typeof sendAcceptStakingTransfer>[0],
+  account: string,
+  expectedNativeValue: BigNumberish = 0
+): Promise<string> {
+  const relayParams = await getRelayParams(params);
+  const signature = await getAcceptStakingTransferSignature({
+    ...params,
+    relayParams,
+    verifyingContract: params.relayRouter.address,
+    sender: params.stakingSender,
+  });
+
+  const actionData = ethers.utils.defaultAbiCoder.encode(
+    [relayParamsType, "address"],
+    [{ ...relayParams, signature }, params.stakingSender]
+  );
+
+  const ActionType = 17; // AcceptStakingTransfer
+  const data = ethers.utils.defaultAbiCoder.encode(
+    ["uint8", "uint256", "bytes"],
+    [ActionType, expectedNativeValue, actionData]
+  );
+
+  return ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, data]);
+}
+
+export async function encodeWithdrawFromWalletMessage(
+  params: Parameters<typeof sendWithdrawFromWallet>[0],
+  account: string,
+  expectedNativeValue: BigNumberish = 0
+): Promise<string> {
+  const relayParams = await getRelayParams(params);
+  const signature = await getWithdrawFromWalletSignature({
+    ...params,
+    relayParams,
+    verifyingContract: params.relayRouter.address,
+  });
+
+  const actionData = ethers.utils.defaultAbiCoder.encode(
+    [relayParamsType, "address", "uint256"],
+    [{ ...relayParams, signature }, params.token, params.amount]
+  );
+
+  const ActionType = 18; // WithdrawFromWallet
+  const data = ethers.utils.defaultAbiCoder.encode(
+    ["uint8", "uint256", "bytes"],
+    [ActionType, expectedNativeValue, actionData]
+  );
+
+  return ethers.utils.defaultAbiCoder.encode(["address", "bytes"], [account, data]);
 }
 
 export function encodeBridgeOutDataList(

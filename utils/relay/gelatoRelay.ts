@@ -7,6 +7,17 @@ import {
   getCancelOrderSignature,
   getSetTraderReferralCodeSignature,
   getRegisterCodeSignature,
+  getStakeGmxSignature,
+  getUnstakeGmxSignature,
+  getStakeEsGmxSignature,
+  getUnstakeEsGmxSignature,
+  getHandleStakingRewardsSignature,
+  getCompoundStakingRewardsSignature,
+  getVestEsGmxSignature,
+  getDelegateGovGmxSignature,
+  getSignalStakingTransferSignature,
+  getAcceptStakingTransferSignature,
+  getWithdrawFromWalletSignature,
 } from "./signatures";
 
 export async function getSendCreateOrderCalldata(p: {
@@ -364,4 +375,204 @@ export async function sendRegisterCode(p: {
     calldata: registerCodeCalldata,
     ...p,
   });
+}
+
+// Staking relay helpers
+
+interface StakingRelayParams {
+  sender: ethers.Signer;
+  signer: ethers.Signer;
+  feeParams: {
+    feeToken: string;
+    feeAmount: BigNumberish;
+    feeSwapPath: string[];
+  };
+  chainId: BigNumberish;
+  account: string;
+  deadline: BigNumberish;
+  srcChainId?: BigNumberish;
+  desChainId: BigNumberish;
+  userNonce?: BigNumberish;
+  relayRouter: ethers.Contract;
+  signature?: string;
+  gelatoRelayFeeToken: string;
+  gelatoRelayFeeAmount: BigNumberish;
+}
+
+export async function sendStakeGmx(p: StakingRelayParams & { amount: BigNumberish }) {
+  const relayParams = await getRelayParams(p);
+  let signature = p.signature;
+  if (!signature) {
+    signature = await getStakeGmxSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
+  }
+  const calldata = p.relayRouter.interface.encodeFunctionData("stakeGmx", [
+    { ...relayParams, signature },
+    p.account,
+    p.srcChainId,
+    p.amount,
+  ]);
+  return sendRelayTransaction({ calldata, ...p });
+}
+
+export async function sendUnstakeGmx(p: StakingRelayParams & { amount: BigNumberish }) {
+  const relayParams = await getRelayParams(p);
+  let signature = p.signature;
+  if (!signature) {
+    signature = await getUnstakeGmxSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
+  }
+  const calldata = p.relayRouter.interface.encodeFunctionData("unstakeGmx", [
+    { ...relayParams, signature },
+    p.account,
+    p.srcChainId,
+    p.amount,
+  ]);
+  return sendRelayTransaction({ calldata, ...p });
+}
+
+export async function sendStakeEsGmx(p: StakingRelayParams & { amount: BigNumberish }) {
+  const relayParams = await getRelayParams(p);
+  let signature = p.signature;
+  if (!signature) {
+    signature = await getStakeEsGmxSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
+  }
+  const calldata = p.relayRouter.interface.encodeFunctionData("stakeEsGmx", [
+    { ...relayParams, signature },
+    p.account,
+    p.srcChainId,
+    p.amount,
+  ]);
+  return sendRelayTransaction({ calldata, ...p });
+}
+
+export async function sendUnstakeEsGmx(p: StakingRelayParams & { amount: BigNumberish }) {
+  const relayParams = await getRelayParams(p);
+  let signature = p.signature;
+  if (!signature) {
+    signature = await getUnstakeEsGmxSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
+  }
+  const calldata = p.relayRouter.interface.encodeFunctionData("unstakeEsGmx", [
+    { ...relayParams, signature },
+    p.account,
+    p.srcChainId,
+    p.amount,
+  ]);
+  return sendRelayTransaction({ calldata, ...p });
+}
+
+export async function sendHandleStakingRewards(p: StakingRelayParams & { params: any }) {
+  const relayParams = await getRelayParams(p);
+  let signature = p.signature;
+  if (!signature) {
+    signature = await getHandleStakingRewardsSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
+  }
+  const calldata = p.relayRouter.interface.encodeFunctionData("handleStakingRewards", [
+    { ...relayParams, signature },
+    p.account,
+    p.srcChainId,
+    p.params,
+  ]);
+  return sendRelayTransaction({ calldata, ...p });
+}
+
+export async function sendCompoundStakingRewards(p: StakingRelayParams) {
+  const relayParams = await getRelayParams(p);
+  let signature = p.signature;
+  if (!signature) {
+    signature = await getCompoundStakingRewardsSignature({
+      ...p,
+      relayParams,
+      verifyingContract: p.relayRouter.address,
+    });
+  }
+  const calldata = p.relayRouter.interface.encodeFunctionData("compoundStakingRewards", [
+    { ...relayParams, signature },
+    p.account,
+    p.srcChainId,
+  ]);
+  return sendRelayTransaction({ calldata, ...p });
+}
+
+export async function sendVestEsGmx(p: StakingRelayParams & { amount: BigNumberish }) {
+  const relayParams = await getRelayParams(p);
+  let signature = p.signature;
+  if (!signature) {
+    signature = await getVestEsGmxSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
+  }
+  const calldata = p.relayRouter.interface.encodeFunctionData("vestEsGmx", [
+    { ...relayParams, signature },
+    p.account,
+    p.srcChainId,
+    p.amount,
+  ]);
+  return sendRelayTransaction({ calldata, ...p });
+}
+
+export async function sendDelegateGovGmx(p: StakingRelayParams & { delegatee: string }) {
+  const relayParams = await getRelayParams(p);
+  let signature = p.signature;
+  if (!signature) {
+    signature = await getDelegateGovGmxSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
+  }
+  const calldata = p.relayRouter.interface.encodeFunctionData("delegateGovGmx", [
+    { ...relayParams, signature },
+    p.account,
+    p.srcChainId,
+    p.delegatee,
+  ]);
+  return sendRelayTransaction({ calldata, ...p });
+}
+
+export async function sendSignalStakingTransfer(p: StakingRelayParams & { receiver: string }) {
+  const relayParams = await getRelayParams(p);
+  let signature = p.signature;
+  if (!signature) {
+    signature = await getSignalStakingTransferSignature({
+      ...p,
+      relayParams,
+      verifyingContract: p.relayRouter.address,
+    });
+  }
+  const calldata = p.relayRouter.interface.encodeFunctionData("signalStakingTransfer", [
+    { ...relayParams, signature },
+    p.account,
+    p.srcChainId,
+    p.receiver,
+  ]);
+  return sendRelayTransaction({ calldata, ...p });
+}
+
+export async function sendAcceptStakingTransfer(p: StakingRelayParams & { stakingSender: string }) {
+  const relayParams = await getRelayParams(p);
+  let signature = p.signature;
+  if (!signature) {
+    signature = await getAcceptStakingTransferSignature({
+      ...p,
+      relayParams,
+      verifyingContract: p.relayRouter.address,
+      sender: p.stakingSender,
+    });
+  }
+  const calldata = p.relayRouter.interface.encodeFunctionData("acceptStakingTransfer", [
+    { ...relayParams, signature },
+    p.account,
+    p.srcChainId,
+    p.stakingSender,
+  ]);
+  return sendRelayTransaction({ calldata, ...p });
+}
+
+export async function sendWithdrawFromWallet(p: StakingRelayParams & { token: string; amount: BigNumberish }) {
+  const relayParams = await getRelayParams(p);
+  let signature = p.signature;
+  if (!signature) {
+    signature = await getWithdrawFromWalletSignature({ ...p, relayParams, verifyingContract: p.relayRouter.address });
+  }
+  const calldata = p.relayRouter.interface.encodeFunctionData("withdrawFromWallet", [
+    { ...relayParams, signature },
+    p.account,
+    p.srcChainId,
+    p.token,
+    p.amount,
+  ]);
+  return sendRelayTransaction({ calldata, ...p });
 }
