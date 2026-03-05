@@ -39,7 +39,7 @@ const func = createDeployFunction({
       dependencyContracts.MockRewardRouterV2.address,
     ];
   },
-  libraryNames: ["GasUtils", "MultichainUtils", "RelayUtils"],
+  libraryNames: ["GasUtils", "MultichainUtils", "RelayUtils", "StakingUtils", "MultichainStakingUtils"],
 
   afterDeploy: async ({ deployedContract }) => {
     await grantRoleIfNotGranted(deployedContract, "CONTROLLER");

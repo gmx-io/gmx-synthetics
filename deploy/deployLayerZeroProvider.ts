@@ -15,7 +15,7 @@ const constructorContracts = [
 
 const func = createDeployFunction({
   contractName: "LayerZeroProvider",
-  libraryNames: ["GasUtils", "GlvUtils", "MultichainUtils"],
+  libraryNames: ["GasUtils", "GlvUtils", "MultichainUtils", "LayerZeroProviderUtils"],
   dependencyNames: constructorContracts,
   getDeployArgs: async ({ dependencyContracts }) => {
     return constructorContracts.map((dependencyName) => dependencyContracts[dependencyName].address);
