@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import hre, { ethers } from "hardhat";
+import { getEventDataFromLog } from "../../utils/event";
 
 /*
 Checks whether funds have been deposited for addresses in the input CSV
@@ -140,9 +141,15 @@ function sumAmounts(rows: CsvRow[]): { totalEthGlv: number; totalBtcGlv: number 
   return { totalEthGlv, totalBtcGlv };
 }
 
+interface DepositedResult {
+  accounts: Set<string>;
+  distributionIdCounts: Map<string, number>; // distributionId → event count
+}
+
 // Query ClaimFundsDeposited events from EventEmitter to find addresses for which funds have been deposited
-async function getDepositedAccounts(eventEmitterContract: any, tokenAddresses: string[]): Promise<Set<string>> {
+async function getDepositedAccounts(eventEmitterContract: any, tokenAddresses: string[]): Promise<DepositedResult> {
   const depositedAccounts = new Set<string>();
+  const distributionIdCounts = new Map<string, number>();
 
   // EventLog2 topics:
   // topic[0] = EventLog2 event selector (from ABI)
@@ -181,6 +188,12 @@ async function getDepositedAccounts(eventEmitterContract: any, tokenAddresses: s
           const accountBytes32 = log.topics[2];
           const account = ethers.utils.getAddress("0x" + accountBytes32.slice(26)).toLowerCase();
           depositedAccounts.add(account);
+
+          // Decode event data to extract distributionId
+          const parsedLog = eventEmitterContract.interface.parseLog(log);
+          const eventData: any = getEventDataFromLog(parsedLog);
+          const distId = eventData.distributionId.toString();
+          distributionIdCounts.set(distId, (distributionIdCounts.get(distId) || 0) + 1);
         }
 
         totalLogs += logs.length;
@@ -202,7 +215,7 @@ async function getDepositedAccounts(eventEmitterContract: any, tokenAddresses: s
     console.log("Found %s ClaimFundsDeposited events for token %s", totalLogs, token);
   }
 
-  return depositedAccounts;
+  return { accounts: depositedAccounts, distributionIdCounts };
 }
 
 async function main() {
@@ -223,7 +236,20 @@ async function main() {
 
   // Check ClaimFundsDeposited events for all addresses
   console.log("Checking ClaimFundsDeposited events...");
-  const allDeposited = await getDepositedAccounts(eventEmitter, [ETH_GLV, BTC_GLV]);
+  const { accounts: allDeposited, distributionIdCounts } = await getDepositedAccounts(eventEmitter, [ETH_GLV, BTC_GLV]);
+
+  // Print distribution ID summary
+  console.log("\n" + "=".repeat(60));
+  console.log("DISTRIBUTION IDS");
+  console.log("=".repeat(60));
+  console.log("Distinct distribution IDs: %s", distributionIdCounts.size);
+  for (const [distId, count] of distributionIdCounts) {
+    console.log("  ID %s: %s events", distId, count);
+  }
+  if (distributionIdCounts.size > 1) {
+    console.log("⚠️  WARNING: Multiple distribution IDs found — events may include unrelated distributions");
+  }
+  console.log();
 
   // Classify addresses into two categories
   const deposited = rows.filter((r) => allDeposited.has(r.account.toLowerCase()));
