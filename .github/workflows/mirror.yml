@@ -22,4 +22,4 @@ jobs:
         with:
           destination: ${{ secrets.MIRROR_REPO }}
           branch: '${{ github.ref_name }}'
-          excluded: '"workflows/mirror.yml","fuzz","fuzzy"'
+          exclude: '"workflows","fuzz","fuzzy"'
