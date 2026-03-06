@@ -24,6 +24,8 @@ const INCIDENT_BLOCK = 0; // incident block 355880237
 
 const GLP_HOLDERS_CSV = path.join(__dirname, "data/GMX_GLP_holders_at_incident.csv");
 const USER_DATA_CSV = path.join(__dirname, "data/GLV-Distribution_UserData.csv");
+const ARCHI_LP_CSV = path.join(__dirname, "archi-lp-distributions.csv");
+const ARCHI_FARMER_CSV = path.join(__dirname, "archi-farmer-distributions.csv");
 
 // Known integration addresses (both receiver and original account from integrations-claims.csv)
 const INTEGRATIONS = new Set([
@@ -211,7 +213,13 @@ async function main() {
   console.log("Loading distribution user data from %s", USER_DATA_CSV);
   const userDataAccounts = loadCsvColumn(USER_DATA_CSV, "account");
 
-  // 4. Compute differences
+  // 5. Load Archi Finance addresses
+  const archiLp = loadCsvColumn(ARCHI_LP_CSV, "address");
+  const archiFarmer = loadCsvColumn(ARCHI_FARMER_CSV, "address");
+  const archiAccounts = new Set([...archiLp, ...archiFarmer]);
+  console.log("Archi Finance accounts: %s (LP: %s, Farmer: %s)", archiAccounts.size, archiLp.size, archiFarmer.size);
+
+  // 6. Compute differences
   const notGlpHolder = new Set<string>();
   for (const account of depositedAccounts) {
     if (!glpHolders.has(account)) {
@@ -226,7 +234,17 @@ async function main() {
     }
   }
 
-  // 5. Print summary
+  const flaggedInArchi = new Set<string>();
+  const flaggedNotInArchi = new Set<string>();
+  for (const account of flagged) {
+    if (archiAccounts.has(account)) {
+      flaggedInArchi.add(account);
+    } else {
+      flaggedNotInArchi.add(account);
+    }
+  }
+
+  // 7. Print summary
   console.log("\n" + "=".repeat(60));
   console.log("CROSS-CHECK SUMMARY");
   console.log("=".repeat(60));
@@ -235,7 +253,10 @@ async function main() {
   console.log("Known integration addresses:         %s", INTEGRATIONS.size);
   console.log("Distribution user data accounts:     %s", userDataAccounts.size);
   console.log("Deposited but not GLP holder:        %s", notGlpHolder.size);
+  console.log("Archi Finance accounts:              %s", archiAccounts.size);
   console.log("Flagged (not GLP holder, not integration): %s", flagged.size);
+  console.log("  Flagged in Archi:                  %s", flaggedInArchi.size);
+  console.log("  Flagged NOT in Archi:              %s", flaggedNotInArchi.size);
   console.log();
 
   if (notGlpHolder.size > 0) {
@@ -256,7 +277,7 @@ async function main() {
     );
     console.log();
 
-    const csvLines: string[] = ["account,ethGlv,btcGlv,distributionIds,inUserData,byDistribution"];
+    const csvLines: string[] = ["account,ethGlv,btcGlv,distributionIds,inUserData,inArchi,byDistribution"];
     let sumEth = BigNumber.from(0);
     let sumBtc = BigNumber.from(0);
     let notInUserData = 0;
@@ -276,7 +297,12 @@ async function main() {
       const distIds = allDistKeys.map(shortDistId).join(";");
       const inUserData = userDataAccounts.has(account);
       if (!inUserData) notInUserData++;
-      const flag = inUserData ? "" : "  ⚠️  NOT IN USER DATA";
+      const inArchi = archiAccounts.has(account);
+      const labels: string[] = [];
+      if (inArchi) labels.push("(archi)");
+      if (!inUserData) labels.push("⚠️  NOT IN USER DATA");
+      if (!inArchi) labels.push("⚠️  NOT ARCHI");
+      const flag = labels.length > 0 ? "  " + labels.join("  ") : "";
       console.log("  %s  ETH GLV=%s  BTC GLV=%s  distId=[%s]%s", account, onChainEth, onChainBtc, distIds, flag);
       if (info) {
         const allDists = [...new Set([...info.ethGlvByDist.keys(), ...info.btcGlvByDist.keys()])];
@@ -297,7 +323,7 @@ async function main() {
           })
           .join("|");
       }
-      csvLines.push(`${account},${onChainEth},${onChainBtc},${distIds},${inUserData},${byDist}`);
+      csvLines.push(`${account},${onChainEth},${onChainBtc},${distIds},${inUserData},${inArchi},${byDist}`);
     }
 
     console.log();
@@ -308,6 +334,22 @@ async function main() {
     const csvPath = path.join(__dirname, "data/flagged-accounts.csv");
     fs.writeFileSync(csvPath, csvLines.join("\n") + "\n");
     console.log("\nWrote %s flagged accounts to %s", flagged.size, csvPath);
+
+    if (flaggedNotInArchi.size > 0) {
+      console.log("\n" + "=".repeat(60));
+      console.log("ACCOUNTS NOT EXPLAINED BY ANY LIST (%s)", flaggedNotInArchi.size);
+      console.log("=".repeat(60));
+      for (const account of flaggedNotInArchi) {
+        const info = accountInfo.get(account);
+        const ethTotal = info
+          ? [...info.ethGlvByDist.values()].reduce((a, b) => a.add(b), BigNumber.from(0))
+          : BigNumber.from(0);
+        const btcTotal = info
+          ? [...info.btcGlvByDist.values()].reduce((a, b) => a.add(b), BigNumber.from(0))
+          : BigNumber.from(0);
+        console.log("  %s  ETH GLV=%s  BTC GLV=%s", account, fmt(ethTotal), fmt(btcTotal));
+      }
+    }
   } else {
     console.log(
       "✅  No suspicious accounts found — all deposited accounts are either GLP holders or known integrations."
