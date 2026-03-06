@@ -20,7 +20,7 @@ jobs:
         env:
           PERSONAL_ACCESS_TOKEN: ${{ secrets.MIRROR_PAT }}
         with:
-          destination: ${{ secrets.MIRROR_REPO }}
-          branch: '${{ github.ref_name }}'
-          exclude: '"workflows","fuzz","fuzzy"'
-          include: '"audits","config","contracts","deploy","deployments","docs","scripts","test","utils"'
+          destination: 'gmx-io/gmx-synthetics'
+          #branch: '${{ github.ref_name }}'
+          #exclude: '"workflows","fuzz","fuzzy"'
+          #include: '"audits","config","contracts","deploy","deployments","docs","scripts","test","utils"'
