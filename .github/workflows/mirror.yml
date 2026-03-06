@@ -23,3 +23,4 @@ jobs:
           destination: ${{ secrets.MIRROR_REPO }}
           branch: '${{ github.ref_name }}'
           exclude: '"workflows","fuzz","fuzzy"'
+          include: '"audits","config","contracts","deploy","deployments","docs","scripts","test","utils"'
