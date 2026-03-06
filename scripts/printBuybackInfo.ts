@@ -50,7 +50,9 @@ async function main() {
 
   const tokensLength = Object.values(tokens).length;
 
+  let totalFeesUsd = 0;
   for (const [i, buybackToken] of buybackTokens.entries()) {
+    let feesTotalUsdPerBuybackToken = 0;
     console.log(`Buyback token: ${buybackToken.symbol}`);
     const withdrawableAmount = await dataStore.getUint(keys.withdrawableBuybackTokenAmountKey(buybackToken.address));
     const contractBalance = await getBalanceOf(buybackToken.address, feeHandler.address);
@@ -67,15 +69,29 @@ async function main() {
         continue;
       }
       const price = pricesByToken[feeToken.address];
+      const usdAmount = amount.mul(price);
+      feesTotalUsdPerBuybackToken = usdAmount.add(feesTotalUsdPerBuybackToken);
       console.log(
         `    Fee token: ${feeToken.symbol.padEnd(6)} amount: ${formatAmount(
           amount,
           feeToken.decimals,
           4
-        )} ($${formatAmount(amount.mul(price), 30, 2)})`
+        )} ($${formatAmount(usdAmount, 30, 2)})`
       );
     }
+    const buybackTokenUsdAmount = withdrawableAmount.mul(pricesByToken[buybackToken.address]);
+    console.log(
+      `[${buybackToken.symbol}] $${formatAmount(buybackTokenUsdAmount, 30, 2)} Fees: $${formatAmount(
+        feesTotalUsdPerBuybackToken,
+        30,
+        2
+      )}`
+    );
+    feesTotalUsdPerBuybackToken = feesTotalUsdPerBuybackToken.add(buybackTokenUsdAmount);
+    console.log(`Sum: $${formatAmount(feesTotalUsdPerBuybackToken, 30, 2)}`);
+    totalFeesUsd = feesTotalUsdPerBuybackToken.add(totalFeesUsd);
   }
+  console.log(`Total: $${formatAmount(totalFeesUsd, 30, 2)}`);
 }
 
 main()
