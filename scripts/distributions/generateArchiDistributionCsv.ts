@@ -18,6 +18,11 @@ Outputs a combined CSV showing each address's share and ETH GLV distribution.
 
 const TOTAL_ETH_GLV = BigNumber.from("259007468584440052922745"); // 259,007.468584440052922745
 
+// Excluded addresses — flagged by Safe as having malicious activity recorded
+const EXCLUDED = new Set([
+  "0x09c4eea8ad5e12e1979a9edda897c4cac13baed9", // ethGlv: 19.745274910464100770, btcGlv: 18.166168336647757542
+]);
+
 function parseCsvLine(line: string): string[] {
   const fields: string[] = [];
   let current = "";
@@ -88,14 +93,29 @@ async function main() {
     merged.set(row.account, existing.add(amount));
   }
 
-  console.log("\nMerged: %s unique addresses", merged.size);
-
-  // Compute total fsGLP
+  // Compute total fsGLP before exclusions (so excluded share is kept aside, not redistributed)
   let totalFsGlp = BigNumber.from(0);
   for (const amount of merged.values()) {
     totalFsGlp = totalFsGlp.add(amount);
   }
   console.log("Total fsGLP_distribution: %s", ethers.utils.formatEther(totalFsGlp));
+
+  // Remove excluded addresses (their share stays unallocated)
+  for (const addr of EXCLUDED) {
+    const excludedAmount = merged.get(addr);
+    if (excludedAmount) {
+      merged.delete(addr);
+      const excludedEthGlv = excludedAmount.mul(TOTAL_ETH_GLV).div(totalFsGlp);
+      console.log(
+        "  Excluded: %s (fsGLP: %s, ~%s ETH GLV kept aside)",
+        addr,
+        ethers.utils.formatEther(excludedAmount),
+        ethers.utils.formatEther(excludedEthGlv)
+      );
+    }
+  }
+
+  console.log("\nMerged: %s unique addresses (after exclusions)", merged.size);
 
   // Compute each address's proportional ETH GLV amount
   const distributions: { account: string; fsGlp: BigNumber; amount: BigNumber }[] = [];
@@ -132,7 +152,7 @@ async function main() {
     fs.mkdirSync(outDir, { recursive: true });
   }
 
-  const csvLines = ["account,fsGLP_distribution,share,ethGlv_amount,ethGlv_amount_wei"];
+  const csvLines = ["account,fsGLP_distribution,share,ethGlv_formatted,ethGlv"];
   for (const { account, fsGlp, amount } of distributions) {
     const sharePercent = fsGlp.mul(10000).div(totalFsGlp).toNumber() / 100;
     csvLines.push(

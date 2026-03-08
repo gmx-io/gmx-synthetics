@@ -14,7 +14,15 @@ Usage:
   npx hardhat --network arbitrum run scripts/distributions/generateSafeTxBuilderDepositFunds.ts
 
   Example for ethGlv archi distributions:
-  ADDRESS_COLUMN=account AMOUNT_COLUMN=ethGlv_amount_wei CSV_PATH=out/archi_redistribution.csv TOKEN_ADDRESS=0x528A5bac7E746C9A509A1f4F6dF58A03d44279F9 \
+  MAX_BATCHES_PER_TX=2 ADDRESS_COLUMN=account AMOUNT_COLUMN=ethGlv CSV_PATH=out/archi_redistribution.csv TOKEN_ADDRESS=0x528A5bac7E746C9A509A1f4F6dF58A03d44279F9 \
+  npx hardhat --network arbitrum run scripts/distributions/generateSafeTxBuilderDepositFunds.ts
+
+  Example for ethGlv remaining distributions:
+  ADDRESS_COLUMN=account AMOUNT_COLUMN=ethGlv CSV_PATH=out/remaining_distributions.csv TOKEN_ADDRESS=0x528A5bac7E746C9A509A1f4F6dF58A03d44279F9 \
+  npx hardhat --network arbitrum run scripts/distributions/generateSafeTxBuilderDepositFunds.ts
+
+  Example for btcGlv remaining distributions:
+  ADDRESS_COLUMN=account AMOUNT_COLUMN=btcGlv CSV_PATH=out/remaining_distributions.csv TOKEN_ADDRESS=0xdf03eed325b82bc1d4db8b49c30ecc9e05104b96 \
   npx hardhat --network arbitrum run scripts/distributions/generateSafeTxBuilderDepositFunds.ts
 
 Env vars:
@@ -74,31 +82,38 @@ async function main() {
   const batches = chunk(distributions, BATCH_SIZE);
 
   // Save Safe TX Builder JSON(s)
+  // First file: approve (full total) + (MAX_BATCHES_PER_TX - 1) deposit batches
+  // Subsequent files: MAX_BATCHES_PER_TX deposit batches each (no approve)
   const maxPerTx = MAX_BATCHES_PER_TX > 0 ? MAX_BATCHES_PER_TX : batches.length;
-  const batchGroups = chunk(batches, maxPerTx);
+  const firstGroupSize = Math.max(maxPerTx - 1, 1);
+  const firstGroup = batches.slice(0, firstGroupSize);
+  const remaining = batches.slice(firstGroupSize);
+  const restGroups = chunk(remaining, maxPerTx);
+  const batchGroups = [firstGroup, ...restGroups].filter((g) => g.length > 0);
 
   for (const [groupIdx, group] of batchGroups.entries()) {
-    const groupTotal = group.flat().reduce((acc: BigNumber, { amount }) => acc.add(amount), BigNumber.from(0));
     const safeTxs: Record<string, unknown>[] = [];
 
-    // 1. Approve ClaimHandler to spend token (for this group's total)
-    safeTxs.push({
-      to: TOKEN_ADDRESS,
-      value: "0",
-      data: null,
-      contractMethod: {
-        inputs: [
-          { name: "spender", type: "address" },
-          { name: "amount", type: "uint256" },
-        ],
-        name: "approve",
-        payable: false,
-      },
-      contractInputsValues: {
-        spender: claimHandler.address,
-        amount: groupTotal.toString(),
-      },
-    });
+    // 1. Approve ClaimHandler to spend token (only in first file, for full total)
+    if (groupIdx === 0) {
+      safeTxs.push({
+        to: TOKEN_ADDRESS,
+        value: "0",
+        data: null,
+        contractMethod: {
+          inputs: [
+            { name: "spender", type: "address" },
+            { name: "amount", type: "uint256" },
+          ],
+          name: "approve",
+          payable: false,
+        },
+        contractInputsValues: {
+          spender: claimHandler.address,
+          amount: totalAmount.toString(),
+        },
+      });
+    }
 
     // 2. depositFunds for each batch in this group
     for (const batch of group) {

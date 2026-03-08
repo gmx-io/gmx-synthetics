@@ -306,7 +306,7 @@ async function main() {
   }
 
   const csvLines = [
-    "account,ethGlv,btcGlv,ethGlv_amount_wei,btcGlv_amount_wei",
+    "account,ethGlv_formatted,btcGlv_formatted,ethGlv,btcGlv",
     ...notDeposited.map((r) => {
       const ethGlv = r.ethGlv.replace(/,/g, "");
       const btcGlv = r.btcGlv.replace(/,/g, "");
