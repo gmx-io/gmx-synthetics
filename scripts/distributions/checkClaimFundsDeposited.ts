@@ -61,6 +61,24 @@ const ALREADY_REIMBURSED = new Set([
   "0x437a182b571390c7e5d14cc7103d3b9d7628faca", // Archi (CreditAggregator)
 ]);
 
+// Excluded addresses — flagged by Safe as having malicious activity recorded
+// Total excluded: ethGlv: 895.87, btcGlv: 824.23
+const EXCLUDED = new Set([
+  "0x98c1ca1bbc0b7849ea94d70cc6584e808913dbc2", // ethGlv: 53.12, btcGlv: 48.87
+  "0x5dc1c7a64fdbccedb565b2e9e39c8b4bb94ec2c7", // ethGlv: 350.55, btcGlv: 322.51
+  "0xf50d66d5a98fdf6e78679a9f7063d9bcf7439392", // ethGlv: 38.30, btcGlv: 35.24
+  "0x7d955dfeb4bfd1ff5e70541885a8603d4bec95b7", // ethGlv: 206.30, btcGlv: 189.80
+  "0x620e3ae45a5601f88314b4253884e8e596187fc3", // ethGlv: 41.07, btcGlv: 37.79
+  "0x5fba399072cb248bb2800f95af89e7a9feebbef6", // ethGlv: 39.18, btcGlv: 36.05
+  "0x4a010c14f5ffb748de056927c0aeb96ad44410c7", // ethGlv: 37.78, btcGlv: 34.76
+  "0x136ed306a2d786e85a1499baa36c09e4935a1c80", // ethGlv: 22.11, btcGlv: 20.34
+  "0x1e69f1ad7adda2d709059c5ee017c0df46792a84", // ethGlv: 39.03, btcGlv: 35.91
+  "0x90ea2e10db52cfb9f8daade67dcb6edaa56f5e85", // ethGlv: 62.56, btcGlv: 57.56
+  "0x79f3a6c6b4b486c01eefd32e01496f982476615f", // ethGlv: 0.88, btcGlv: 0.81
+  "0x3f0ccb0ef48d44f384bcc1f97e9c029dda1e2d40", // ethGlv: 0.44, btcGlv: 0.41
+  "0xf1d8d621adbdda54c465f6242e3fc1fbc0c289fe", // ethGlv: 4.55, btcGlv: 4.18
+]);
+
 interface CsvRow {
   account: string;
   ethGlv: string;
@@ -228,9 +246,16 @@ async function main() {
   console.log("Reading CSV: %s", resolvedPath);
 
   const allRows = parseCsv(resolvedPath);
-  const rows = allRows.filter((r) => !ALREADY_REIMBURSED.has(r.account.toLowerCase()));
-  const excludedCount = allRows.length - rows.length;
-  console.log("Found %s addresses in CSV (%s excluded as manually reimbursed)\n", allRows.length, excludedCount);
+  const afterReimbursed = allRows.filter((r) => !ALREADY_REIMBURSED.has(r.account.toLowerCase()));
+  const rows = afterReimbursed.filter((r) => !EXCLUDED.has(r.account.toLowerCase()));
+  const reimbursedCount = allRows.length - afterReimbursed.length;
+  const excludedCount = afterReimbursed.length - rows.length;
+  console.log(
+    "Found %s addresses in CSV (%s excluded as manually reimbursed, %s excluded as malicious)\n",
+    allRows.length,
+    reimbursedCount,
+    excludedCount
+  );
 
   const eventEmitter = await hre.ethers.getContract("EventEmitter");
 

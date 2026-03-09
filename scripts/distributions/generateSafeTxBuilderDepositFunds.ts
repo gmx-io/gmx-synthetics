@@ -18,11 +18,11 @@ Usage:
   npx hardhat --network arbitrum run scripts/distributions/generateSafeTxBuilderDepositFunds.ts
 
   Example for ethGlv remaining distributions:
-  ADDRESS_COLUMN=account AMOUNT_COLUMN=ethGlv CSV_PATH=out/remaining_distributions.csv TOKEN_ADDRESS=0x528A5bac7E746C9A509A1f4F6dF58A03d44279F9 \
+  MAX_BATCHES_PER_TX=2 ADDRESS_COLUMN=account AMOUNT_COLUMN=ethGlv CSV_PATH=out/remaining_distributions.csv TOKEN_ADDRESS=0x528A5bac7E746C9A509A1f4F6dF58A03d44279F9 \
   npx hardhat --network arbitrum run scripts/distributions/generateSafeTxBuilderDepositFunds.ts
 
   Example for btcGlv remaining distributions:
-  ADDRESS_COLUMN=account AMOUNT_COLUMN=btcGlv CSV_PATH=out/remaining_distributions.csv TOKEN_ADDRESS=0xdf03eed325b82bc1d4db8b49c30ecc9e05104b96 \
+  MAX_BATCHES_PER_TX=2 ADDRESS_COLUMN=account AMOUNT_COLUMN=btcGlv CSV_PATH=out/remaining_distributions.csv TOKEN_ADDRESS=0xdf03eed325b82bc1d4db8b49c30ecc9e05104b96 \
   npx hardhat --network arbitrum run scripts/distributions/generateSafeTxBuilderDepositFunds.ts
 
 Env vars:
