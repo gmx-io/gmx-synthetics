@@ -54,7 +54,8 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
         longToken: "WETH",
         shortToken: "USDC",
         shiftMaxLossFactor: percentageToFloat("0.025%"),
-        shiftMinInterval: 4 * 60, // 4 minutes (will be 0 after new keeper testing)
+        // shiftMinInterval: 4 * 60, // 4 minutes (will be 0 after new keeper testing)
+        shiftMinInterval: 0,
         minTokensForFirstGlvDeposit: expandDecimals(1, 18),
         markets: [
           createGlvMarketConfig("WETH", 35_000_000, 1.98),
@@ -147,7 +148,7 @@ export default async function ({ network }: HardhatRuntimeEnvironment) {
           createGlvMarketConfig("CAKE", arbitrum_btcUsdcDefaultCap, 1.14),
           createGlvMarketConfig("HYPE", arbitrum_btcUsdcDefaultCap, 2.63),
           createGlvMarketConfig("JUP", arbitrum_btcUsdcDefaultCap, 1.1),
-          createGlvMarketConfig("OM", arbitrum_btcUsdcDefaultCap, 1.21),
+          createGlvMarketConfig("OM", arbitrum_btcUsdcDefaultCap, 1.21, true),
           createGlvMarketConfig("MOODENG", arbitrum_btcUsdcDefaultCap, 1),
           createGlvMarketConfig("XMR", arbitrum_btcUsdcDefaultCap, 0.93),
           createGlvMarketConfig("PI", arbitrum_btcUsdcDefaultCap, 1.07),
