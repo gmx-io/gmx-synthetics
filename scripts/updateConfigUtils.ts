@@ -152,10 +152,10 @@ export async function handleConfigChanges(
   console.log(`updating ${multicallWriteParams.length} params`);
   console.log("multicallWriteParams", multicallWriteParams);
 
-  const { roles } = await hre.gmx.getRoles();
-  const from = Object.keys(roles.CONFIG_KEEPER)[0];
+  const [signer] = await hre.ethers.getSigners();
+  console.log("config update signer:", signer.address);
   await handleInBatches(multicallWriteParams, batchSize, async (batch) => {
-    await config.connect(from).callStatic.multicall(batch);
+    await config.connect(signer).callStatic.multicall(batch);
   });
 
   if (!write) {
@@ -169,7 +169,7 @@ export async function handleConfigChanges(
   try {
     if (write) {
       await handleInBatches(multicallWriteParams, batchSize, async (batch) => {
-        const tx = await config.multicall(batch);
+        const tx = await config.connect(signer).multicall(batch);
         console.log(`tx sent: ${tx.hash}`);
       });
       return ChangeResult.WRITE;

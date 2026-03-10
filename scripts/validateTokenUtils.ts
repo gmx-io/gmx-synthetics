@@ -28,6 +28,7 @@ const whitelistedTokens = {
   botanix: [
     // doesn't have the ERC1820_ABI
   ],
+  megaEth: [],
 };
 
 const callbackFunctionNames = [

@@ -14,6 +14,7 @@ type OracleRealPriceFeed = {
   stablePriceUsd?: BigNumberish;
   deploy?: never;
   initPrice?: never;
+  customFeedDescription?: string;
 };
 
 type OracleTestPriceFeed = {
@@ -23,6 +24,7 @@ type OracleTestPriceFeed = {
   stablePriceUsd?: BigNumberish;
   deploy: true;
   initPrice: string;
+  customFeedDescription?: string;
 };
 
 type OraclePriceFeed = OracleRealPriceFeed | OracleTestPriceFeed;
@@ -1233,6 +1235,20 @@ const config: {
       dataStreamFeedDecimals: 18,
       oracleTimestampAdjustment: 1,
     },
+    CC: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003111e1c2212376d4c196bf7635919e4b28368809dda6f515c396453d53770",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
+    MET: {
+      synthetic: true,
+      decimals: 18,
+      dataStreamFeedId: "0x0003024c8e73e74f3f43352a1745975eeb5cd0a2b9d310f8da2d13d518544c00",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+    },
   },
   avalanche: {
     "BTC.b": {
@@ -1526,6 +1542,52 @@ const config: {
       dataStreamFeedDecimals: 18,
       buybackMaxPriceImpactFactor: LOW_BUYBACK_IMPACT,
       dataStreamSpreadReductionFactor: percentageToFloat("100%"),
+      priceFeed: {
+        address: "0xC3E01CC87A99A48081282F6566E1286fccC80d36",
+        decimals: 18,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+    },
+    USDm: {
+      address: "0xFAfDdbb3FC7688494971a79cc65DCa3EF82079E7",
+      decimals: 18,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003ea225e4b8cfc71e2f3cf853d07dbd144047f1c2dd8aecedd846749784a29",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      buybackMaxPriceImpactFactor: MID_BUYBACK_IMPACT,
+      priceFeed: {
+        address: "0xdFe0063491d9DeD8F8abCdd7AE04238A1e70D270",
+        decimals: 18,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+        stablePriceUsd: decimalToFloat(1),
+        customFeedDescription: "USDM-USD (USDtb Underlying)",
+      },
+    },
+    BTC: {
+      synthetic: true,
+      decimals: 8,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x00039d9e45394f473ab1f050a1b963e6b05351e52d71e507509ada0c95ed75b8",
+      dataStreamFeedDecimals: 18,
+      priceFeed: {
+        address: "0xc6E3007B597f6F5a6330d43053D1EF73cCbbE721",
+        decimals: 8,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
+    },
+    SOL: {
+      synthetic: true,
+      decimals: 9,
+      transferGasLimit: 200 * 1000,
+      dataStreamFeedId: "0x0003b778d3f6b2ac4991302b89cb313f99a42467d6c9c5f96f57c29c0d2bc24f",
+      dataStreamFeedDecimals: 18,
+      oracleTimestampAdjustment: 1,
+      priceFeed: {
+        address: "0x53c05390FdfDB63526Ac0814825093A68eaddC87",
+        decimals: 18,
+        heartbeatDuration: (24 + 1) * 60 * 60,
+      },
     },
   },
   arbitrumSepolia: {
