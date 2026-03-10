@@ -6,6 +6,7 @@ export const dataStoreKey = hashString("DATASTORE");
 export const treasuryKey = hashString("TREASURY");
 export const layerzeroOftKey = hashString("LAYERZERO_OFT");
 export const chainlinkKey = hashString("CHAINLINK");
+export const feeDistributorVaultKey = hashString("FEE_DISTRIBUTOR_VAULT");
 
 const SECONDS_IN_DAY = 86400;
 const TARGET_OFFSET_SECONDS = 60;

@@ -7,8 +7,10 @@ import "@layerzerolabs/oft-evm/contracts/OFTCore.sol";
 
 import "./FeeDistributorUtils.sol";
 import "./FeeDistributorVault.sol";
-import "./FeeHandler.sol";
+import "./IFeeWithdrawer.sol";
 import "../multichain/MultichainReader.sol";
+import "../utils/Precision.sol";
+import "../utils/Cast.sol";
 import "../v1/IRewardTrackerV1.sol";
 import "../v1/IRewardDistributorV1.sol";
 
@@ -25,9 +27,10 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
     bytes32 internal constant TREASURY = keccak256(abi.encode("TREASURY"));
     bytes32 internal constant LAYERZERO_OFT = keccak256(abi.encode("LAYERZERO_OFT"));
     bytes32 internal constant CHAINLINK = keccak256(abi.encode("CHAINLINK"));
+    bytes32 internal constant FEE_DISTRIBUTOR_VAULT = keccak256(abi.encode("FEE_DISTRIBUTOR_VAULT"));
 
     FeeDistributorVault internal immutable feeDistributorVault;
-    FeeHandler internal immutable feeHandler;
+    IFeeWithdrawer internal immutable feeWithdrawer;
     DataStore internal immutable dataStore;
     EventEmitter internal immutable eventEmitter;
     MultichainReader internal immutable multichainReader;
@@ -40,7 +43,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
     constructor(
         RoleStore _roleStore,
         FeeDistributorVault _feeDistributorVault,
-        FeeHandler _feeHandler,
+        IFeeWithdrawer _feeWithdrawer,
         DataStore _dataStore,
         EventEmitter _eventEmitter,
         MultichainReader _multichainReader,
@@ -48,7 +51,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         address _wnt
     ) RoleModule(_roleStore) {
         feeDistributorVault = _feeDistributorVault;
-        feeHandler = _feeHandler;
+        feeWithdrawer = _feeWithdrawer;
         dataStore = _dataStore;
         eventEmitter = _eventEmitter;
         multichainReader = _multichainReader;
@@ -79,9 +82,9 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
     // In cases in which a chain encounters downtime or a keeper experiences issues, a contingency
     // should be in place to ensure the fee distribution is completed without issues
     function initiateDistribute() external nonReentrant onlyFeeDistributionKeeper {
-        // validate that the FEE_RECEIVER address stored in dataStore = FeeDistributorVault
+        // validate that the FEE_RECEIVER address stored in dataStore != zero address
         address feeReceiver = _getAddress(Keys.FEE_RECEIVER);
-        if (feeReceiver != address(feeDistributorVault)) {
+        if (feeReceiver == address(0)) {
             revert Errors.InvalidFeeReceiver(feeReceiver);
         }
 
@@ -164,8 +167,8 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         _validateDistributionState(DistributionState.Initiated);
         _validateReadResponseTimestamp(receivedData.timestamp);
 
-        // withdraw any GMX fees remaining in the feeHandler
-        feeHandler.withdrawFees(gmx);
+        // withdraw any remaining GMX fees via the feeWithdrawer
+        feeWithdrawer.withdrawFees(gmx);
 
         // set the current chain and LZRead response fee amounts, staked GMX amounts and timestamp
         uint256[] memory chainIds = FeeDistributorUtils.retrieveChainIds(dataStore);
@@ -265,7 +268,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
 
         // infer the bridged GMX received - note that it is technically possible for this value to not match the actual
         // bridged GMX received if for example, GMX is sent to the FeeDistributorVault from another source or GMX fees
-        // are withdrawn from the FeeHandler after processLzReceive() is executed but before this function is executed
+        // are withdrawn via the feeWithdrawer after processLzReceive() is executed but before this function is executed
         uint256 gmxReceived = feeAmountGmx - origFeeAmountGmx;
 
         // now that the GMX available to distribute has been validated, update in dataStore and update DistributionState
@@ -292,8 +295,8 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
         _validateReadResponseTimestamp(_getUint(Keys2.FEE_DISTRIBUTOR_READ_RESPONSE_TIMESTAMP));
         _validateDistributionNotCompleted();
 
-        // withdraw any WNT fees remaining in the feeHandler
-        feeHandler.withdrawFees(wnt);
+        // withdraw any remaining WNT fees via the feeWithdrawer
+        feeWithdrawer.withdrawFees(wnt);
 
         // calculate the WNT that needs to be sent to the keepers, chainlink and treasury
         (uint256 wntForKeepers, uint256 wntForChainlink, uint256 wntForTreasury) = _calculateWntAmounts();
@@ -385,7 +388,7 @@ contract FeeDistributor is ReentrancyGuard, RoleModule {
             // Prepare remaining params needed for the bridging transaction
             uint256 chainId = chainIds[i];
             uint32 layerzeroChainId = uint32(_getUint(Keys2.feeDistributorLayerZeroChainIdKey(chainId)));
-            bytes32 to = Cast.toBytes32(_getAddressInfoForChain(chainId, Keys.FEE_RECEIVER));
+            bytes32 to = Cast.toBytes32(_getAddressInfoForChain(chainId, FEE_DISTRIBUTOR_VAULT));
             uint256 minAmountOut = _removeDust(
                 Precision.applyFactor(sendAmount, _getUint(Keys2.feeDistributorBridgeSlippageFactorKey(chainId))),
                 decimalConversionRate

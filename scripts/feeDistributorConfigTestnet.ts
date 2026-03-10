@@ -4,6 +4,7 @@ import * as path from "path";
 import { Contract, ContractFactory, Signer, BigNumber } from "ethers";
 
 import * as keys from "../utils/keys";
+import * as feeDistributorConfig from "../utils/feeDistributor";
 import { hashString, encodeData } from "../utils/hash";
 import { expandDecimals } from "../utils/math";
 import { Options } from "@layerzerolabs/lz-v2-utilities";
@@ -419,7 +420,7 @@ async function configureContracts(
       const chainId = chainConfig.chainIds[i];
       const isCurrentChain = chainId === chainConfig.currentChainId;
 
-      let gmxAddress, trackerAddress, dataStoreAddress, feeReceiverAddress;
+      let gmxAddress, trackerAddress, dataStoreAddress, feeReceiverAddress, feeDistributorVaultAddress;
 
       if (isCurrentChain) {
         // Use current chain's contracts
@@ -427,18 +428,21 @@ async function configureContracts(
         trackerAddress = contracts.mockExtendedGmxTracker;
         dataStoreAddress = contracts.dataStore;
         feeReceiverAddress = contracts.feeDistributorVault;
+        feeDistributorVaultAddress = contracts.feeDistributorVault;
       } else if (otherContracts) {
         // Use other chain's contracts if available
         gmxAddress = otherContracts.gmx;
         trackerAddress = otherContracts.mockExtendedGmxTracker;
         dataStoreAddress = otherContracts.dataStore;
         feeReceiverAddress = otherContracts.feeDistributorVault;
+        feeDistributorVaultAddress = otherContracts.feeDistributorVault;
       } else {
         // Use AddressZero if other chain not deployed yet
         gmxAddress = ethers.constants.AddressZero;
         trackerAddress = ethers.constants.AddressZero;
         dataStoreAddress = ethers.constants.AddressZero;
         feeReceiverAddress = ethers.constants.AddressZero;
+        feeDistributorVaultAddress = ethers.constants.AddressZero;
       }
 
       if (gmxAddress !== ethers.constants.AddressZero) {
@@ -463,13 +467,21 @@ async function configureContracts(
         );
         await delay(txDelay);
 
-        await config.setAddress(
-          keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
-          encodeData(["uint256", "bytes32"], [chainId, keys.FEE_RECEIVER]),
-          feeReceiverAddress
-        );
-        await delay(txDelay);
+        if (!isCurrentChain) {
+          await config.setAddress(
+            keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
+            encodeData(["uint256", "bytes32"], [chainId, keys.FEE_RECEIVER]),
+            feeReceiverAddress
+          );
+          await delay(txDelay);
 
+          await config.setAddress(
+            keys.FEE_DISTRIBUTOR_ADDRESS_INFO_FOR_CHAIN,
+            encodeData(["uint256", "bytes32"], [chainId, feeDistributorConfig.feeDistributorVaultKey]),
+            feeDistributorVaultAddress
+          );
+          await delay(txDelay);
+        }
         console.log(`Configured addresses for chain ${chainId} (${isCurrentChain ? "current" : "other"})`);
       } else {
         console.log(`Skipped chain ${chainId} - no deployment found`);
