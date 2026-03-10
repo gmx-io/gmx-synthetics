@@ -21,11 +21,11 @@ The documentation is generated from the deployment artifacts in `/deployments/` 
 | Arbitrum One | 140 | [View](./arbitrum-deployments.md) | Feb 23, 2026, 12:19 PM UTC |
 | Avalanche C-Chain | 137 | [View](./avalanche-deployments.md) | Dec 19, 2025, 06:06 AM UTC |
 | Botanix | 132 | [View](./botanix-deployments.md) | Dec 19, 2025, 06:06 AM UTC |
-| MegaETH | 128 | [View](./megaEth-deployments.md) | Feb 13, 2026, 08:34 AM UTC |
+| MegaETH | 128 | [View](./megaEth-deployments.md) | Jan 15, 2026, 06:35 AM UTC |
 
 ### Testnet
 
 | Network | Contracts | Documentation | Last Updated |
 |---------|-----------|---------------|-------------|
-| Arbitrum Sepolia | 138 | [View](./arbitrumSepolia-deployments.md) | Mar 5, 2026, 07:02 AM UTC |
+| Arbitrum Sepolia | 138 | [View](./arbitrumSepolia-deployments.md) | Mar 10, 2026, 01:28 AM UTC |
 | Avalanche Fuji | 142 | [View](./avalancheFuji-deployments.md) | Aug 21, 2025, 11:02 AM UTC |
