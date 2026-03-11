@@ -3,15 +3,20 @@
 pragma solidity ^0.8.0;
 
 import "./GmxAccountWallet.sol";
+import "../data/DataStore.sol";
+import "../data/Keys.sol";
 import "../role/RoleStore.sol";
+import "../error/Errors.sol";
 
 contract GmxAccountWalletFactory {
     RoleStore public immutable roleStore;
+    DataStore public immutable dataStore;
 
     event WalletCreated(address indexed account, address indexed wallet);
 
-    constructor(RoleStore _roleStore) {
+    constructor(RoleStore _roleStore, DataStore _dataStore) {
         roleStore = _roleStore;
+        dataStore = _dataStore;
     }
 
     function getWalletAddress(address account) public view returns (address) {
@@ -30,12 +35,17 @@ contract GmxAccountWalletFactory {
     function getOrCreateWallet(address account) external returns (address) {
         address predicted = getWalletAddress(account);
         if (predicted.code.length > 0) {
+            if (!dataStore.getBool(Keys.isDeployedWalletKey(predicted))) {
+                revert Errors.InvalidWallet(predicted);
+            }
             return predicted;
         }
 
         bytes32 salt = _getSalt(account);
         GmxAccountWallet wallet = new GmxAccountWallet{salt: salt}(roleStore);
         address walletAddress = address(wallet);
+
+        dataStore.setBool(Keys.isDeployedWalletKey(walletAddress), true);
 
         emit WalletCreated(account, walletAddress);
 

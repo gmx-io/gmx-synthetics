@@ -500,6 +500,9 @@ library Keys {
     // @dev key for the buyback withdrawable fees
     bytes32 public constant WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT = keccak256(abi.encode("WITHDRAWABLE_BUYBACK_TOKEN_AMOUNT"));
 
+    // @dev key for whether a wallet was deployed by the protocol
+    bytes32 public constant IS_DEPLOYED_WALLET = keccak256(abi.encode("IS_DEPLOYED_WALLET"));
+
     // @dev key for user's multichain balance
     bytes32 public constant MULTICHAIN_BALANCE = keccak256(abi.encode("MULTICHAIN_BALANCE"));
     // @dev key for the flag if a multichain provider is enabled
@@ -2438,6 +2441,15 @@ library Keys {
         return keccak256(abi.encode(
             CLAIM_TERMS_BACKREF,
             termsHash
+        ));
+    }
+
+    // @param wallet the wallet address
+    // @return key for whether a wallet was deployed by the protocol
+    function isDeployedWalletKey(address wallet) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            IS_DEPLOYED_WALLET,
+            wallet
         ));
     }
 }

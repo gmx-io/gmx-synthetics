@@ -2,16 +2,17 @@ import { expect } from "chai";
 import { deployFixture } from "../../utils/fixture";
 import { grantRole } from "../../utils/role";
 import { expandDecimals } from "../../utils/math";
+import * as keys from "../../utils/keys";
 
 describe("GmxAccountWallet", () => {
   let fixture;
   let user0, user1, user2;
-  let roleStore, gmxAccountWalletFactory, gmx;
+  let roleStore, dataStore, gmxAccountWalletFactory, gmx;
 
   beforeEach(async () => {
     fixture = await deployFixture();
     ({ user0, user1, user2 } = fixture.accounts);
-    ({ roleStore, gmxAccountWalletFactory, gmx } = fixture.contracts);
+    ({ roleStore, dataStore, gmxAccountWalletFactory, gmx } = fixture.contracts);
   });
 
   describe("GmxAccountWalletFactory", () => {
@@ -46,6 +47,17 @@ describe("GmxAccountWallet", () => {
 
       const addr2 = await gmxAccountWalletFactory.callStatic.getOrCreateWallet(user0.address);
       expect(addr1).to.equal(addr2);
+    });
+
+    it("wallet is not marked as deployed before creation", async () => {
+      const predicted = await gmxAccountWalletFactory.getWalletAddress(user0.address);
+      expect(await dataStore.getBool(keys.isDeployedWalletKey(predicted))).to.be.false;
+    });
+
+    it("wallet is marked as deployed after creation", async () => {
+      await gmxAccountWalletFactory.getOrCreateWallet(user0.address);
+      const predicted = await gmxAccountWalletFactory.getWalletAddress(user0.address);
+      expect(await dataStore.getBool(keys.isDeployedWalletKey(predicted))).to.be.true;
     });
   });
 
